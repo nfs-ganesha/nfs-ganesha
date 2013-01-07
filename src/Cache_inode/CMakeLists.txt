@@ -21,7 +21,6 @@ SET(cache_inode_STAT_SRCS
    cache_inode_readlink.c
    cache_inode_rdwr.c
    cache_inode_commit.c
-   cache_inode_truncate.c
    cache_inode_get.c
    cache_inode_setattr.c
    cache_inode_invalidate.c

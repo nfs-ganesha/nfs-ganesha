@@ -547,7 +547,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_stat_type_t stat_type;
   sockaddr_t hostaddr;
-  exportlist_client_entry_t related_client;
+  exportlist_client_entry_t * related_client = &worker_data->related_client;
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
   dupreq_status_t dpq_status;
@@ -556,7 +556,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   int port, rc;
   bool slocked = false;
 
-  memset(&related_client, 0, sizeof(exportlist_client_entry_t));
+  memset(related_client, 0, sizeof(exportlist_client_entry_t));
 
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
@@ -984,7 +984,7 @@ static void nfs_rpc_execute(request_data_t *preq,
          nfs_param.core_param.program[P_MNT],
          worker_data->ht_ip_stats,
          ip_stats_pool,
-         &related_client,
+         related_client,
          &user_credentials,
          (preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE)
          == MAKES_WRITE);
@@ -1051,7 +1051,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(preqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED)
         {
             /* Swap the anonymous uid/gid if the user should be anonymous */
-          if(nfs_check_anon(&related_client, pexport, &user_credentials)
+          if(nfs_check_anon(related_client, pexport, &user_credentials)
              == false)
             {
               LogInfo(COMPONENT_DISPATCH,

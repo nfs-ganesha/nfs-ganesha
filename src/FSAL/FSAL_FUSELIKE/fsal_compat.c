@@ -77,7 +77,6 @@ fsal_functions_t fsal_fuse_functions = {
       COMMON_load_FS_common_parameter_from_conf,
   .fsal_load_fs_specific_parameter_from_conf =
       FUSEFSAL_load_FS_specific_parameter_from_conf,
-  .fsal_truncate = FUSEFSAL_truncate,
   .fsal_unlink = FUSEFSAL_unlink,
   .fsal_getfsname = FUSEFSAL_GetFSName,
   .fsal_getxattrattrs = FUSEFSAL_GetXAttrAttrs,

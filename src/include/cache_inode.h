@@ -592,6 +592,10 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 					fsal_accessflags_t access_type,
 					struct req_op_context
 					   *req_ctx);
+cache_inode_status_t
+cache_inode_check_setattr_perms(cache_entry_t        * entry,
+                                struct attrlist *attr,
+                                struct req_op_context *req_ctx);
 
 bool is_open(cache_entry_t *entry);
 bool is_open_for_read(cache_entry_t *entry);
@@ -695,14 +699,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 					 struct attrlist *attr,
 					 struct req_op_context *req_ctx);
 
-cache_inode_status_t
-cache_inode_truncate_impl(cache_entry_t *entry,
-			  uint64_t length,
-			  struct req_op_context *req_ctx);
-cache_inode_status_t cache_inode_truncate(
-	cache_entry_t *entry,
-	uint64_t length,
-	struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
@@ -936,18 +932,28 @@ static inline changeid4 cache_inode_get_changeid4(cache_entry_t *entry)
 
 static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	cache_entry_t *entry,
-	const struct req_op_context *opctx)
+	const struct req_op_context *opctx,
+	bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-
-	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	if (need_wr_lock)
+	{
+	    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	}
+	else
+	{
+	    PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	}
 	/* Do we need to refresh? */
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			   ATTR_RDATTR_ERR)) {
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	    if (!need_wr_lock)
+	    {
+	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	    }
 		/* Has someone else done it for us? */
 		if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 		    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,

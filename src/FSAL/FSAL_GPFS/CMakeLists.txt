@@ -11,7 +11,6 @@ SET(fsalgpfs_LIB_SRCS
   fsal_ds.c
   fsal_mds.c
   fsal_unlink.c
-  fsal_truncate.c
   fsal_symlinks.c
   fsal_rename.c
   fsal_create.c

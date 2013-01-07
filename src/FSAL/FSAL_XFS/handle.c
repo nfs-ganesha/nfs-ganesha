@@ -1035,7 +1035,10 @@ xfs_setattrs(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct xfs_fsal_obj_handle, obj_handle);
 	switch(obj_hdl->type) {
 	case REGULAR_FILE:
-		open_flags = O_RDONLY;
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE))
+			open_flags = O_RDWR;
+		else
+			open_flags = O_RDONLY;
 		break;
 	case DIRECTORY:
 		open_flags = O_DIRECTORY;
@@ -1055,6 +1058,18 @@ xfs_setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 	if (fstat(fd, &stat) < 0)
 		goto fileerr;
+
+	/** TRUNCATE **/
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+		if(obj_hdl->type != REGULAR_FILE) {
+		fsal_error = ERR_FSAL_INVAL;
+		goto fileerr;
+		}
+		retval = ftruncate(fd, attrs->filesize);
+		if(retval != 0) {
+			goto fileerr;
+		}
+	}
 
 	/** CHMOD **/
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
@@ -1085,21 +1100,38 @@ xfs_setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 		
 	/**  UTIME  **/
-	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME)) {
-		struct timeval timebuf[2];
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME | ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)) {
+		struct timespec timebuf[2];
+		struct timespec *ptimebuf = timebuf;
 
 		/* Atime */
-		timebuf[0].tv_sec =
-			(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME) ?
-                         (time_t) attrs->atime.seconds : stat.st_atime);
-		timebuf[0].tv_usec = 0;
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
+		{
+			timebuf[0].tv_sec = 0;
+			timebuf[0].tv_nsec = UTIME_NOW;
+		} else if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME))
+		{
+			timebuf[0].tv_sec  = attrs->atime.seconds;
+			timebuf[0].tv_nsec = attrs->atime.nseconds;
+		} else {
+			timebuf[0].tv_sec  = 0;
+			timebuf[0].tv_nsec = UTIME_OMIT;
+		}
 
 		/* Mtime */
-		timebuf[1].tv_sec =
-			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
-			 (time_t) attrs->mtime.seconds : stat.st_mtime);
-		timebuf[1].tv_usec = 0;
-		retval = futimes(fd, timebuf);
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+		{
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
+			timebuf[1].tv_sec = attrs->mtime.seconds;
+			timebuf[1].tv_nsec = attrs->mtime.nseconds;
+		} else {
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_OMIT;
+		}
+
+		retval = futimens(fd, timebuf);
 		if(retval != 0) {
 			goto fileerr;
 		}
@@ -1113,46 +1145,6 @@ out:
 	close(fd);
 errout:
 	return fsalstat(fsal_error, retval);
-}
-
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
-
-static fsal_status_t 
-xfs_file_truncate(struct fsal_obj_handle *obj_hdl,
-                  const struct req_op_context *opctx,
-		  uint64_t length)
-{
-	struct xfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int fd;
-	int retval = 0;
-
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct xfs_fsal_obj_handle, obj_handle);
-	fd = open_by_handle(myself->xfs_hdl.data, myself->xfs_hdl.len, O_RDWR);
-	if(fd < 0) {
-		retval = errno;
-		if(retval == ENOENT)
-			fsal_error = ERR_FSAL_STALE;
-		else
-			fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	retval = ftruncate(fd, length);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-	close(fd);
-	
-errout:
-	return fsalstat(fsal_error, retval);	
 }
 
 static fsal_status_t 
@@ -1326,7 +1318,6 @@ void xfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = xfs_linkfile;
 	ops->rename = xfs_renamefile;
 	ops->unlink = xfs_unlink;
-	ops->truncate = xfs_file_truncate;
 	ops->open = xfs_open;
 	ops->status = xfs_status;
 	ops->read = xfs_read;

@@ -68,11 +68,14 @@ cache_inode_setattr(cache_entry_t *entry,
 		    struct req_op_context *req_ctx)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
-     const struct user_cred *creds = req_ctx->creds;
      fsal_status_t fsal_status = {0, 0};
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+     /* True if we have taken the content lock on 'entry' */
+     bool content_locked = false;
+
 
      if ((attr->mask & ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
@@ -91,96 +94,25 @@ cache_inode_setattr(cache_entry_t *entry,
              goto out;
      }
 
-     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+     /* Get wrlock on attr_lock and verify attrs */
+     status = cache_inode_lock_trust_attrs(entry, req_ctx, true);
+     if(status != CACHE_INODE_SUCCESS)
+           return status;
 
-     /* Only superuser and the owner get a free pass.
-      * Everybody else gets a full body scan
-      * we do this here because this is an exception/extension to the usual access check.
-      */
-     if(creds->caller_uid != 0 &&
-        creds->caller_uid != obj_handle->attributes.owner) {
-             if(FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
-                     LogFullDebug(COMPONENT_FSAL,
-                                  "Permission denied for CHMOD operation: "
-                                  "current owner=%"PRIu64
-                                  ", credential=%d",
-                                  obj_handle->attributes.owner, creds->caller_uid);
-                     status = CACHE_INODE_FSAL_EACCESS;
-                     goto unlock;
-             }
-             if(FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
-                     LogFullDebug(COMPONENT_FSAL,
-                                  "Permission denied for CHOWN operation: "
-                                  "current owner=%"PRIu64", credential=%d",
-                                  obj_handle->attributes.owner,
-                                  creds->caller_uid);
-                     status = CACHE_INODE_FSAL_EACCESS;
-                     goto unlock;
-             }
-             if(FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-                     int in_group = 0, i;
 
-                     if(creds->caller_gid == obj_handle->attributes.group) {
-                             in_group = 1;
-                     } else {
-                             for(i = 0; i < creds->caller_glen; i++) {
-                                     if(creds->caller_garray[i] == obj_handle->attributes.group) {
-                                             in_group = 1;
-                                             break;
-                                     }
-                             }
-                     }
-                     if( !in_group) {
-                             LogFullDebug(COMPONENT_FSAL,
-                                          "Permission denied for CHOWN operation: "
-                                          "current group=%"PRIu64
-                                          ", credential=%d, new group=%"PRIu64,
-                                          obj_handle->attributes.group,
-                                          creds->caller_gid, attr->group);
-                             status = CACHE_INODE_FSAL_EACCESS;
-                             goto unlock;
-                     }
-             }
-             if(FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
-                     fsal_status =
-                             obj_handle->ops->test_access(obj_handle,
-                                                          req_ctx, FSAL_R_OK);
-                     if(FSAL_IS_ERROR(fsal_status)) {
-                             status = cache_inode_error_convert(fsal_status);
-                             goto unlock;
-                     }
-             }
-             if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME)) {
-                     fsal_status =
-                             obj_handle->ops->test_access(obj_handle,
-                                                          req_ctx, FSAL_W_OK);
-                     if(FSAL_IS_ERROR(fsal_status)) {
-                             status = cache_inode_error_convert(fsal_status);
-                             goto unlock;
-                     }
-             }
-             if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
-                     fsal_status
-                             = obj_handle->ops->test_access(obj_handle,
-                                                            req_ctx,
-                                                            FSAL_W_OK);
-                     if (FSAL_IS_ERROR(fsal_status)) {
-                             status = cache_inode_error_convert(fsal_status);
-                             goto unlock;
-                     }
-             }
+     /* Do permission checks */
+     status = cache_inode_check_setattr_perms(entry,
+             attr,
+             req_ctx);
+     if (status != CACHE_INODE_SUCCESS)
+     {
+         goto unlock;
      }
+
+
      if (attr->mask & ATTR_SIZE) {
-             fsal_status = obj_handle->ops->truncate(obj_handle, req_ctx,
-                                                     attr->filesize);
-             if (FSAL_IS_ERROR(fsal_status)) {
-                     status = cache_inode_error_convert(fsal_status);
-                     if (fsal_status.major == ERR_FSAL_STALE) {
-                             cache_inode_kill_entry(entry);
-                     }
-                     goto unlock;
-             }
-             attr->mask &= ~ATTR_SIZE;
+         PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+         content_locked = true;
      }
 
      saved_acl = obj_handle->attributes.acl;
@@ -218,7 +150,12 @@ cache_inode_setattr(cache_entry_t *entry,
      status = CACHE_INODE_SUCCESS;
 
 unlock:
+     if (content_locked)
+     {
+         PTHREAD_RWLOCK_unlock(&entry->content_lock);
+     }
      PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
 
 out:
 

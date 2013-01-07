@@ -1515,21 +1515,6 @@ struct fsal_obj_ops {
                                 const struct req_op_context *opctx,
                                 const char *name);
 
-/**
- * @brief Truncate a file
- *
- * This function truncates a regular file to the given length (which
- * must be less than or equal to the current length.)
- *
- * @param[in] obj_hdl File to truncate
- * @param[in] opctx   Request context, includes credentials
- * @param[in] length  New length
- *
- * @return FSAL status
- */
-        fsal_status_t (*truncate)(struct fsal_obj_handle *obj_hdl,
-                                  const struct req_op_context *opctx,
-                                  uint64_t length);
 /*@}*/
 
 /*@{*/

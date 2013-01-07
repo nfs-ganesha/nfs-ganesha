@@ -496,6 +496,7 @@ struct nfs_worker_data__ {
 	wait_q_entry_t wqe;
 	pthread_mutex_t request_pool_mutex;
 	nfs_tcb_t wcb; /* Worker control block */
+	exportlist_client_entry_t related_client;
 
 	nfs_worker_stat_t stats;
 	sockaddr_t hostaddr;
