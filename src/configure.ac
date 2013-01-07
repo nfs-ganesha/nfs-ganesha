@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE)
-AC_SUBST(DIST_VER, [_19])
+AC_SUBST(DIST_VER, [_20])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
