@@ -14,7 +14,7 @@ SET(fsallustre_LIB_SRCS
 
 add_library(fsallustre SHARED ${fsallustre_LIB_SRCS})
 
-target_link_libraries(fsallustre)
+target_link_libraries(fsallustre lustreapi)
 
 set_target_properties(fsallustre PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsallustre COMPONENT fsal DESTINATION lib)
