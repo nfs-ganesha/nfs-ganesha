@@ -15,6 +15,7 @@
 
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "include/gpfs.h"
