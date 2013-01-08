@@ -30,14 +30,7 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -125,8 +118,8 @@ nfs3_Fsinfo(nfs_arg_t *arg,
         FSINFO_FIELD->dtpref = export->PrefReaddir;
 
         FSINFO_FIELD->maxfilesize = FSINFO_MAX_FILESIZE;
-        FSINFO_FIELD->time_delta.seconds = 1;
-        FSINFO_FIELD->time_delta.nseconds = 0;
+        FSINFO_FIELD->time_delta.tv_sec = 1;
+        FSINFO_FIELD->time_delta.tv_nsec = 0;
 
         LogFullDebug(COMPONENT_NFSPROTO,
                      "rtmax = %d | rtpref = %d | trmult = %d",

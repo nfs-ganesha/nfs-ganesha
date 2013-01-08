@@ -33,14 +33,7 @@
  * @brief NFSv4 state functions.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>

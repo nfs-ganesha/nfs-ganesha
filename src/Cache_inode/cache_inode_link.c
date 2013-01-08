@@ -32,14 +32,7 @@
  * @file    cache_inode_link.c
  * @brief   Creation of hard links
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "log.h"
 #include "HashTable.h"
 #include "fsal.h"

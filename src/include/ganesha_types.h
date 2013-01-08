@@ -34,19 +34,6 @@
 #define GANESHA_TYPES__
 
 /**
- * @brief Store high-res time
- *
- * Stores a time with nanosecond accuracy.
- */
-
-typedef struct gsh_time__
-{
-        uint64_t seconds; /*< Seconds since Epoch */
-        uint32_t nseconds; /*< Nanoseconds after current second, must
-                               be less that 1 × 10⁹ */
-} gsh_time_t;
-
-/**
  * @brief Compare two times
  *
  * Determine if @c t1 is less-than, equal-to, or greater-than @c t2.
@@ -60,17 +47,17 @@ typedef struct gsh_time__
  */
 
 static inline int
-gsh_time_cmp(gsh_time_t t1,
-             gsh_time_t t2)
+gsh_time_cmp(struct timespec t1,
+             struct timespec t2)
 {
-        if (t1.seconds < t2.seconds) {
+        if (t1.tv_sec < t2.tv_sec) {
                 return -1;
-        } else if (t1.seconds > t2.seconds) {
+        } else if (t1.tv_sec > t2.tv_sec) {
                 return 1;
         } else {
-                if (t1.nseconds < t2.nseconds) {
+                if (t1.tv_nsec < t2.tv_nsec) {
                         return -1;
-                } else if (t1.nseconds > t2.nseconds) {
+                } else if (t1.tv_nsec > t2.tv_nsec) {
                         return 1;
                 }
         }

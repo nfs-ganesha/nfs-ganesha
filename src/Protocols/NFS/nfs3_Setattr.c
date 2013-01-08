@@ -28,14 +28,7 @@
  * @file  nfs3_Setattr.c
  * @brief Everything you need for NFSv3 SETATTR
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -141,15 +134,15 @@ nfs_Setattr(nfs_arg_t *arg,
                  * different clients */
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "css=%d acs=%d csn=%d acn=%d",
-                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
-                             pre_attr.pre_op_attr_u.attributes.ctime.seconds,
-                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
-                             pre_attr.pre_op_attr_u.attributes.ctime.nseconds);
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec,
+                             pre_attr.pre_op_attr_u.attributes.ctime.tv_sec,
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec,
+                             pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec);
 
-                if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
-                     pre_attr.pre_op_attr_u.attributes.ctime.seconds) ||
-                    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
-                     pre_attr.pre_op_attr_u.attributes.ctime.nseconds)) {
+                if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
+                    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
                         res->res_setattr3.status = NFS3ERR_NOT_SYNC;
                         rc = NFS_REQ_OK;
                         goto out;

@@ -31,14 +31,7 @@
  * @file  cache_inode_misc.c
  * @brief Miscellaneous functions, especially new_entry
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "abstract_atomic.h"
 #include "log.h"
 #include "HashTable.h"
@@ -244,7 +237,7 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
  * @return 0 if keys if successfully build, -1 otherwise
  *
  */
-int cache_inode_set_time_current(gsh_time_t *time)
+int cache_inode_set_time_current(struct timespec *time)
 {
   struct timeval t;
 
@@ -254,8 +247,8 @@ int cache_inode_set_time_current(gsh_time_t *time)
   if (gettimeofday(&t, NULL) != 0)
     return -1;
 
-  time->seconds  = t.tv_sec;
-  time->nseconds = 1000*t.tv_usec;
+  time->tv_sec  = t.tv_sec;
+  time->tv_nsec = 1000*t.tv_usec;
 
   return 0;
 } /* cache_inode_set_time_current */
@@ -312,7 +305,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
-                   "entry. Found entry %p type: %d, New type: %d",
+                   "entry 1. Found entry %p type: %d, New type: %d",
                    *entry, (*entry)->type, new_obj->type);
           if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
@@ -359,7 +352,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
-                   "entry. Found entry %p type: %d, New type: %d",
+                   "entry 2. Found entry %p type: %d, New type: %d",
                    *entry, (*entry)->obj_handle->type, new_obj->type);
           if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
@@ -818,7 +811,7 @@ cache_inode_check_trust(cache_entry_t *entry,
      PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
      current_time = time(NULL);
 
-     oldmtime = entry->obj_handle->attributes.mtime.seconds;
+     oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
      /* Do we need a refresh? */
      if (((cache_inode_params.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
@@ -852,7 +845,7 @@ cache_inode_check_trust(cache_entry_t *entry,
      }
 
      if ((entry->type == DIRECTORY) &&
-                (oldmtime < entry->obj_handle->attributes.mtime.seconds)) {
+                (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 

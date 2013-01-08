@@ -28,14 +28,7 @@
  * @brief The file that contain the 'main' routine for the nfsd.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "nfs_init.h"
 #include "fsal.h"
 #include "log.h"

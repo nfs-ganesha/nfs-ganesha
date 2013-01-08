@@ -30,14 +30,7 @@
  *
  * Routines used for managing the NFS4 pseudo file system.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -319,9 +312,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 	attrs.numlinks = 2; /* not 1.  for '.' and '../me' */
 	attrs.owner = 0; /* root */
 	attrs.group = 2; /* daemon? */
-	attrs.atime.seconds = ServerBootTime;
-	attrs.ctime.seconds = ServerBootTime;
-	attrs.chgtime.seconds = ServerBootTime;
+	attrs.atime.tv_sec = ServerBootTime;
+	attrs.ctime.tv_sec = ServerBootTime;
+	attrs.chgtime.tv_sec = ServerBootTime;
 	attrs.change = ServerBootTime;
 	attrs.spaceused = DEV_BSIZE;
 	attrs.mounted_on_fileid = psfsp->pseudo_id;

@@ -32,14 +32,7 @@
  * @file    cache_inode_getattr.c
  * @brief   Gets the attributes for an entry.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "log.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -275,8 +268,8 @@ cache_inode_create_verify(cache_entry_t *entry,
                                    ATTR_ATIME) &&
                     FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                                    ATTR_MTIME) &&
-                    entry->obj_handle->attributes.atime.seconds != verf_hi &&
-                    entry->obj_handle->attributes.mtime.seconds != verf_lo) {
+                    entry->obj_handle->attributes.atime.tv_sec != verf_hi &&
+                    entry->obj_handle->attributes.mtime.tv_sec != verf_lo) {
                         verified = true;
                 }
         }

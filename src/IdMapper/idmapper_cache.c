@@ -26,14 +26,7 @@
  * @file    idmapper_cache.c
  * @brief   Id mapping cache functions
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "HashTable.h"
 #include "log.h"
 #include "nfs_core.h"

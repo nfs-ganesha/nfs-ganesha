@@ -21,14 +21,7 @@
  * @file    fsal_up_thread.c
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #define FSAL_UP_THREAD_C
 
 #include <stdio.h>

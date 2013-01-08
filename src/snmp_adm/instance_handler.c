@@ -5,9 +5,7 @@
  *          Those function are called when daemon receive a SNMP request.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

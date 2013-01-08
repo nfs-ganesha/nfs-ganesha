@@ -3,14 +3,7 @@
  * It was generated using rpcgen.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "ganesha_rpc.h"
 #include "nlm4.h"
 

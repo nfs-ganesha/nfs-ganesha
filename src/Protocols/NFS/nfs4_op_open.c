@@ -31,14 +31,7 @@
  * Function implementing the NFS4_OP_OPEN operation and support code.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -632,11 +625,11 @@ open4_create(OPEN4args           * arg,
                         memset(&sattr, 0, sizeof(struct attrlist));
                         sattr_provided = true;
                 }
-                sattr.atime.seconds = verf_hi;
-                sattr.atime.nseconds = 0;
+                sattr.atime.tv_sec = verf_hi;
+                sattr.atime.tv_nsec = 0;
                 FSAL_SET_MASK(sattr.mask, ATTR_ATIME);
-                sattr.mtime.seconds = verf_lo;
-                sattr.mtime.nseconds = 0;
+                sattr.mtime.tv_sec = verf_lo;
+                sattr.mtime.tv_nsec = 0;
                 FSAL_SET_MASK(sattr.mask, ATTR_MTIME);
         }
 

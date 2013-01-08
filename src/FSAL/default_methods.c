@@ -37,9 +37,7 @@
  * @brief System wide default FSAL methods
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <stdint.h>
 #include <stddef.h>
@@ -403,9 +401,9 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
  * default case is zero interval time
  */
 
-static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-        gsh_time_t lease_time = {0,0};
+        struct timespec lease_time = {0,0};
 
         return lease_time;
 }

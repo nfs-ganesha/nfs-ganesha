@@ -6,13 +6,7 @@
 #ifndef _RQUOTA_H_RPCGEN
 #define _RQUOTA_H_RPCGEN
 
-#ifndef _USE_SWIG
 #include "ganesha_rpc.h"
-#endif                          /* SWIG */
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
 #include "extended_types.h"
 
 #ifdef __cplusplus

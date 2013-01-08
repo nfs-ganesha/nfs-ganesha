@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -29,9 +30,7 @@
  * \brief   Attributes functions.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"
@@ -416,20 +415,20 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_ATIME))
         {
           attr_changed |= XATTR_ATIME;
-          buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
+          buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.tv_sec;
           LogDebug(COMPONENT_FSAL,
                    "current atime = %lu, new atime = %lu",
-                   (unsigned long)current_attrs.atime.seconds, (unsigned long)buffxstat.buffstat.st_atime);
+                   (unsigned long)current_attrs.atime.tv_sec, (unsigned long)buffxstat.buffstat.st_atime);
         }
 
       /* Fill wanted mtime. */
       if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MTIME))
         {
           attr_changed |= XATTR_CTIME;
-          buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
+          buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.tv_sec;
           LogDebug(COMPONENT_FSAL,
                    "current mtime = %lu, new mtime = %lu",
-                   (unsigned long)current_attrs.mtime.seconds, (unsigned long)buffxstat.buffstat.st_mtime);
+                   (unsigned long)current_attrs.mtime.tv_sec, (unsigned long)buffxstat.buffstat.st_mtime);
         }
     }
 

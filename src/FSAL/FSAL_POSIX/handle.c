@@ -19,15 +19,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ------------- 
  */
 
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_handle_syscalls.h"
@@ -785,11 +784,11 @@ static fsal_status_t setattrs (struct fsal_obj_handle *obj_hdl,
         struct timeval timebuf[2];
 
         /* Atime */
-        timebuf[0].tv_sec = (FSAL_TEST_MASK (attrs->mask, ATTR_ATIME) ? (time_t) attrs->atime.seconds : stat.st_atime);
+        timebuf[0].tv_sec = (FSAL_TEST_MASK (attrs->mask, ATTR_ATIME) ? (time_t) attrs->atime.tv_sec : stat.st_atime);
         timebuf[0].tv_usec = 0;
 
         /* Mtime */
-        timebuf[1].tv_sec = (FSAL_TEST_MASK (attrs->mask, ATTR_MTIME) ? (time_t) attrs->mtime.seconds : stat.st_mtime);
+        timebuf[1].tv_sec = (FSAL_TEST_MASK (attrs->mask, ATTR_MTIME) ? (time_t) attrs->mtime.tv_sec : stat.st_mtime);
         timebuf[1].tv_usec = 0;
         retval = utimes (path, timebuf);
         if (retval != 0) {

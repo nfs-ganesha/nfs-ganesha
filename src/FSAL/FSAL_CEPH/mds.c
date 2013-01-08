@@ -20,6 +20,7 @@
  * -------------
  */
 
+#include "ganesha_rpc.h"
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"
@@ -126,20 +127,21 @@ getdeviceinfo(struct fsal_export *export_pub,
         }
 
         /* Retrieve and calculate storage parameters of layout */
-
         memset(&file_layout, 0, sizeof(struct ceph_file_layout));
-        ceph_ll_file_layout(export->cmount, vinode, &file_layout);
+        if (ceph_ll_file_layout(export->cmount, vinode, &file_layout) != 0) {
+            LogCrit(COMPONENT_PNFS, "Failed to get Ceph layout for inode");
+                return NFS4ERR_SERVERFAULT;
+        }
 
         /* As this is large, we encode as we go rather than building a
            structure and encoding it all at once. */
-
 
         /* The first entry in the nfsv4_1_file_ds_addr4 is the array
            of stripe indices. First we encode the count of stripes.
            Since our pattern doesn't repeat, we have as many indices
            as we do stripes. */
 
-        if (!xdr_uint32_t(da_addr_body, &stripes)) {
+        if (! inline_xdr_u_int32_t(da_addr_body, &stripes)) {
                 LogCrit(COMPONENT_PNFS, "Failed to encode length of "
                         "stripe_indices array: %" PRIu32 ".", stripes);
                 return NFS4ERR_SERVERFAULT;
@@ -158,7 +160,7 @@ getdeviceinfo(struct fsal_export *export_pub,
                                 stripe, deviceid->devid, -stripe_osd);
                         return NFS4ERR_SERVERFAULT;
                 }
-                if (!xdr_uint32_t(da_addr_body, &stripe_osd)) {
+                if (! inline_xdr_u_int32_t(da_addr_body, &stripe_osd)) {
                         LogCrit(COMPONENT_PNFS,
                                 "Failed to encode OSD for stripe %lu.",
                                 stripe);
@@ -169,7 +171,7 @@ getdeviceinfo(struct fsal_export *export_pub,
         /* The number of OSDs in our cluster is the length of our
            array of multipath_lists */
 
-        if (!xdr_uint32_t(da_addr_body, &num_osds)) {
+        if (! inline_xdr_u_int32_t(da_addr_body, &num_osds)) {
                 LogCrit(COMPONENT_PNFS, "Failed to encode length of "
                         "multipath_ds_list array: %u", num_osds);
                 return NFS4ERR_SERVERFAULT;
@@ -424,6 +426,11 @@ layoutget(struct fsal_obj_handle *obj_pub,
                 res->segment.length = stripe_width * BIGGEST_PATTERN;
         }
 
+        LogFullDebug(COMPONENT_PNFS,
+                     "will issue layout offset: %"PRIu64 " length: %" PRIu64,
+                     res->segment.offset,
+                     res->segment.length);
+
         /* We are using sparse layouts with commit-through-DS, so our
            utility word contains only the stripe width, our first
            stripe is always at the beginning of the layout, and there
@@ -478,8 +485,10 @@ layoutget(struct fsal_obj_handle *obj_pub,
                         pthread_mutex_unlock(&handle->handle.lock);
                         return NFS4ERR_BADLAYOUT;
                 }
+#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS /* sigh */
                 res->segment.length = (handle->rw_max_len
                                        - res->segment.offset);
+#endif
                 ++handle->rw_issued;
         }
         pthread_mutex_unlock(&handle->handle.lock);

@@ -6,13 +6,7 @@
 #ifndef _NFS23_H_RPCGEN
 #define	_NFS23_H_RPCGEN
 
-#ifndef _USE_SWIG
 #include "ganesha_rpc.h"
-#endif                          /* SWIG */
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
 #include "extended_types.h"
 
 #include "mount.h"
@@ -182,8 +176,8 @@ typedef struct nfs_fh3 nfs_fh3;
 
 struct nfstime3
 {
-  nfs3_uint32 seconds;
-  nfs3_uint32 nseconds;
+  nfs3_uint32 tv_sec;
+  nfs3_uint32 tv_nsec;
 };
 typedef struct nfstime3 nfstime3;
 
@@ -1170,8 +1164,6 @@ typedef struct COMMIT3res COMMIT3res;
 #define	NFSPROC3_PATHCONF	20
 #define	NFSPROC3_COMMIT	21
 
-#ifndef _USE_SWIG
-
 /* the xdr functions */
 
 extern bool xdr_nfs3_uint64(XDR *, nfs3_uint64 *);
@@ -1311,7 +1303,4 @@ extern bool xdr_COMMIT3res(XDR *, COMMIT3res *);
 extern bool xdr_fhandle2(XDR *, fhandle2);
 extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
 
-
-#endif                          /* ifndef _USE_SWIG */
-
-#endif                          /* !_NFS23_H_RPCGEN */
+#endif /* !_NFS23_H_RPCGEN */

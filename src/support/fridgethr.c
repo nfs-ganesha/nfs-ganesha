@@ -31,13 +31,8 @@
  * fridgethr.c : A small pthread-based thread pool.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
 #include "log.h"
 #include <stdlib.h>
 #include <string.h>

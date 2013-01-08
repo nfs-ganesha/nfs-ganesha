@@ -28,14 +28,7 @@
  * @file    idmapper.c
  * @brief   Id mapping functions
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
@@ -175,12 +168,8 @@ int uid2name(char *name, uid_t * puid)
         }
       else
         {
-#ifdef _SOLARIS
-          if(getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN) != 0)
-#else
           if((getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN, &pp) != 0) ||
     	 (pp == NULL))
-#endif                          /* _SOLARIS */
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "uid2name: getpwuid_r %d failed",
@@ -253,11 +242,7 @@ int name2uid(char *name, uid_t *puid)
     }
   else
     {
-#ifdef _SOLARIS
-      if((res = getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
-#else
       if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &res) != 0)
-#endif                          /* _SOLARIS */
         {
           LogFullDebug(COMPONENT_IDMAPPER,
                        "name2uid: getpwnam_r %s failed",
@@ -552,9 +537,7 @@ principal_found:
 int gid2name(char *name, gid_t * pgid)
 {
   struct group g;
-#ifndef _SOLARIS
   struct group *pg = NULL;
-#endif
   static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 
   if (NFSIDMAP_ENABLED)
@@ -618,12 +601,8 @@ int gid2name(char *name, gid_t * pgid)
         }
       else
         {
-#ifdef _SOLARIS
-          if(getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN) != 0)
-#else
           if((getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0) ||
     	 (pg == NULL))
-#endif                          /* _SOLARIS */
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "gid2name: getgrgid_r %d failed",
@@ -715,11 +694,7 @@ int name2gid(char *name, gid_t *pgid)
           struct group *pg = NULL;
           static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
     
-    #ifdef _SOLARIS
-          if((pg = getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
-    #else
           if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0)
-    #endif
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "name2gid: getgrnam_r %s failed",

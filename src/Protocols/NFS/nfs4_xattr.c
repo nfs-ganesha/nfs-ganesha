@@ -33,14 +33,7 @@ t*
  * nfs4_xattr.c: Routines used for managing the NFS4 xattrs
  * 
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -84,10 +77,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 	attrs.numlinks = 2; /* not 1.  for '.' and '../me' */
 	attrs.owner = NFS4_ROOT_UID; /* is this right? shouldn't it mirror the file's owner? */
 	attrs.group = 2; /* daemon? same here */
-	attrs.atime.seconds = time(NULL);
-	attrs.ctime.seconds = attrs.atime.seconds;
-	attrs.chgtime.seconds = attrs.atime.seconds;
-	attrs.change = attrs.atime.seconds;
+	attrs.atime.tv_sec = time(NULL);
+	attrs.ctime.tv_sec = attrs.atime.tv_sec;
+	attrs.chgtime.tv_sec = attrs.atime.tv_sec;
+	attrs.change = attrs.atime.tv_sec;
 	attrs.spaceused = DEV_BSIZE;
 	attrs.mounted_on_fileid = attrs.fileid;
 	return nfs4_FSALattr_To_Fattr(&attrs, Fattr, data, objFH, Bitmap);

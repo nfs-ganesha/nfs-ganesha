@@ -10,9 +10,7 @@
  * \brief   HPSS-FSAL type translation functions.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include <sys/types.h>
@@ -344,16 +342,12 @@ fsal_nodetype_t hpss2fsal_type(unsigned32 hpss_type_in)
 /**
  * hpss2fsal_time:
  * Convert HPSS time structure (timestamp_sec_t)
- * to FSAL time type (fsal_time_t).
+ * to FSAL time type (struct timespec).
  */
-fsal_time_t hpss2fsal_time(timestamp_sec_t tsec)
+struct timespec hpss2fsal_time(timestamp_sec_t tsec)
 {
-  fsal_time_t fsaltime;
-
-  fsaltime.seconds = (fsal_uint_t) tsec;
-  fsaltime.nseconds = 0;
-
-  return fsaltime;
+  struct timespec ts = { .tv_sec = tsec, .tv_nsec = 0 };
+  return ts;
 }
 
 /* fsal2hpss_time is a macro */

@@ -30,14 +30,7 @@
 #ifndef NFS_RPC_CALLBACK_H
 #define NFS_RPC_CALLBACK_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 #include "wait_queue.h"

@@ -6,9 +6,7 @@
  * @file  FSAL_VFS/fsal_convert.c
  * @brief VFS-FSAL type translation functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -219,7 +217,7 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
   fsalattr->chgtime
     = posix2fsal_time(MAX_2(buffstat->st_mtime,
                             buffstat->st_ctime), 0);
-  fsalattr->change = fsalattr->chgtime.seconds;
+  fsalattr->change = fsalattr->chgtime.tv_sec;
   FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
   fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;

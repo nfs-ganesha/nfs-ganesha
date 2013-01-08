@@ -77,15 +77,15 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 /**
  * hpss2fsal_time:
  * Convert HPSS time structure (timestamp_sec_t)
- * to FSAL time type (fsal_time_t).
+ * to FSAL time type (now struct timespec).
  */
-fsal_time_t hpss2fsal_time(timestamp_sec_t tsec);
+struct timespec hpss2fsal_time(timestamp_sec_t tsec);
 
 /**
  * fsal2hpss_time:
  * Converts FSAL time structure (fsal_time_t)
  * to HPSS time type (timestamp_sec_t).
  */
-#define fsal2hpss_time(_time_) ((timestamp_sec_t)(_time_).seconds)
+#define fsal2hpss_time(_time_) ((timestamp_sec_t)(_time_).tv_sec)
 
 #endif

@@ -35,16 +35,8 @@
  * cache_inode_lru.c
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "fsal.h"
-
 #include "abstract_atomic.h"
 #include "log.h"
 #include "HashTable.h"

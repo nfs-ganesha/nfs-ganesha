@@ -43,7 +43,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit f8e9f1dd7036e563046fbe33f5926db4f91e792f)
+set(tirpc_commit 749d0745de4f3bfc079d719c7fbd46da8f8a9241)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -134,6 +134,15 @@ IF(BUILD_CONFIG)
 ENDIF()
 
 # Build source locations and parameters
+IF(USE_FSAL_CEPH)
+  IF(CEPH_PREFIX)
+    set(CEPH_PREFIX ${CEPH_PREFIX} CACHE PATH "Path to Ceph installation")
+    LIST(APPEND CMAKE_PREFIX_PATH "${CEPH_PREFIX}")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${CEPH_PREFIX}/lib")
+  ELSE()
+    set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+  ENDIF()
+ENDIF()
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
@@ -145,7 +154,6 @@ if(USE_9P_RDMA AND NOT USE_9P)
   set(USE_9P ON)
 endif(USE_9P_RDMA AND NOT USE_9P)
 
-set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
   "specify the memory allocator to use: jemalloc|tcmalloc|libc")
 
@@ -192,6 +200,7 @@ set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 # Validate fsal dependencies
 if(USE_FSAL_CEPH)
+  find_library(CEPH_FS cephfs)
   check_library_exists(
     cephfs
     ceph_ll_connectable_x
@@ -329,8 +338,6 @@ if(_MSPAC_SUPPORT)
   endif(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
 endif(_MSPAC_SUPPORT)
 
-add_definitions(-DHAVE_CONFIG_H)
-
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"
@@ -360,7 +367,7 @@ ExternalProject_Add(
   GIT_REPOSITORY ${tirpc_repo}
   GIT_TAG ${tirpc_commit}
   UPDATE_COMMAND sh "${PROJECT_BINARY_DIR}/libtirpc/autogen.sh"
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/libtirpc/configure
+  CONFIGURE_COMMAND env CFLAGS=${CMAKE_C_FLAGS} ${PROJECT_BINARY_DIR}/libtirpc/configure
     --enable-gss
     --prefix=${PROJECT_BINARY_DIR}/libtirpc
   BUILD_IN_SOURCE 1
@@ -523,6 +530,7 @@ message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
+message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 
 #force command line options to be stored in cache

@@ -31,14 +31,7 @@
  * 9p_flush_hook.c.c : routines for TFLUSH management.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

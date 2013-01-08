@@ -21,9 +21,7 @@
  * @file    fsal_up.c
  * @brief   FSAL Upcall Interface
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_up.h"

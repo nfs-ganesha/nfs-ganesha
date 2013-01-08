@@ -28,14 +28,7 @@
  * @brief NFSv4 recovery
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs4.h"

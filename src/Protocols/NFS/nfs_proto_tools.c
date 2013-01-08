@@ -30,14 +30,7 @@
  *
  * A set of functions used to managed NFS.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -193,14 +186,14 @@ nfs_SetPreOpAttr(cache_entry_t *entry,
         } else {
                 attr->pre_op_attr_u.attributes.size
                         = entry->obj_handle->attributes.filesize;
-                attr->pre_op_attr_u.attributes.mtime.seconds
-                        = entry->obj_handle->attributes.mtime.seconds;
-                attr->pre_op_attr_u.attributes.mtime.nseconds
-                        = entry->obj_handle->attributes.mtime.nseconds;
-                attr->pre_op_attr_u.attributes.ctime.seconds
-                        = entry->obj_handle->attributes.ctime.seconds;
-                attr->pre_op_attr_u.attributes.ctime.nseconds
-                        = entry->obj_handle->attributes.ctime.nseconds;
+                attr->pre_op_attr_u.attributes.mtime.tv_sec
+                        = entry->obj_handle->attributes.mtime.tv_sec;
+                attr->pre_op_attr_u.attributes.mtime.tv_nsec
+                        = entry->obj_handle->attributes.mtime.tv_nsec;
+                attr->pre_op_attr_u.attributes.ctime.tv_sec
+                        = entry->obj_handle->attributes.ctime.tv_sec;
+                attr->pre_op_attr_u.attributes.ctime.tv_nsec
+                        = entry->obj_handle->attributes.ctime.tv_nsec;
                 attr->attributes_follow = TRUE;
                 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
         }
@@ -502,8 +495,8 @@ static fattr_xdr_result decode_change(XDR *xdr, struct xdr_attrs_args *args)
 
 	if( !xdr_u_int64_t(xdr, &change))
 		return FATTR_XDR_FAILED;
-	args->attrs->chgtime.seconds = (uint32_t)change;
-	args->attrs->chgtime.nseconds = 0;
+	args->attrs->chgtime.tv_sec = (uint32_t)change;
+	args->attrs->chgtime.tv_nsec = 0;
 	args->attrs->change =  change;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1755,10 +1748,10 @@ static fattr_xdr_result decode_system(XDR *xdr, struct xdr_attrs_args *args)
  * Time conversions
  */
 
-static inline fattr_xdr_result encode_time(XDR *xdr, gsh_time_t *ts)
+static inline fattr_xdr_result encode_time(XDR *xdr, struct timespec *ts)
 {
-	uint64_t seconds = ts->seconds;
-	uint32_t nseconds = ts->nseconds;
+	uint64_t seconds = ts->tv_sec;
+	uint32_t nseconds = ts->tv_nsec;
 	if( !xdr_u_int64_t(xdr, &seconds))
 		return FATTR_XDR_FAILED;
 	if( !xdr_u_int32_t(xdr, &nseconds))
@@ -1768,7 +1761,7 @@ static inline fattr_xdr_result encode_time(XDR *xdr, gsh_time_t *ts)
 
 static inline fattr_xdr_result decode_time(XDR *xdr,
 					   struct xdr_attrs_args *args,
-					   gsh_time_t *ts)
+					   struct timespec *ts)
 {
 	uint64_t seconds;
 	uint32_t nseconds;
@@ -1777,8 +1770,8 @@ static inline fattr_xdr_result decode_time(XDR *xdr,
 		return FATTR_XDR_FAILED;
 	if( !xdr_u_int32_t(xdr, &nseconds))
 		return FATTR_XDR_FAILED;
-	ts->seconds = (uint32_t)seconds;  /* !!! is this correct?? */
-	ts->nseconds = nseconds;
+	ts->tv_sec = (uint32_t)seconds;  /* !!! is this correct?? */
+	ts->tv_nsec = nseconds;
 	if(nseconds >= 1000000000) { /* overflow */
 		args->nfs_status = NFS4ERR_INVAL;
 		return  FATTR_XDR_FAILED;
@@ -1786,7 +1779,7 @@ static inline fattr_xdr_result decode_time(XDR *xdr,
 	return FATTR_XDR_SUCCESS;
 }
 
-static inline fattr_xdr_result encode_timeset(XDR *xdr, gsh_time_t *ts)
+static inline fattr_xdr_result encode_timeset(XDR *xdr, struct timespec *ts)
 {
 	uint32_t how = SET_TO_CLIENT_TIME4;
 
@@ -1797,7 +1790,7 @@ static inline fattr_xdr_result encode_timeset(XDR *xdr, gsh_time_t *ts)
 
 static inline fattr_xdr_result decode_timeset(XDR *xdr,
 					      struct xdr_attrs_args *args,
-					      gsh_time_t *ts)
+					      struct timespec *ts)
 {
 	uint32_t how;
 
@@ -1811,14 +1804,14 @@ static inline fattr_xdr_result decode_timeset(XDR *xdr,
 			args->nfs_status = NFS4ERR_SERVERFAULT;
 			return FATTR_XDR_FAILED;
 		}
-		ts->seconds = sys_ts.tv_sec;
-		ts->nseconds = sys_ts.tv_nsec;
+		ts->tv_sec = sys_ts.tv_sec;
+		ts->tv_nsec = sys_ts.tv_nsec;
 #else
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 
-		ts->seconds = tv.tv_sec;
-		ts->nseconds = tv.tv_usec * 1000UL;
+		ts->tv_sec = tv.tv_sec;
+		ts->tv_nsec = tv.tv_usec * 1000UL;
 #endif
 	} else {
 		return decode_time(xdr, args, ts);
@@ -1863,10 +1856,10 @@ static fattr_xdr_result decode_accesstimeset(XDR *xdr, struct xdr_attrs_args *ar
 
 static fattr_xdr_result encode_backuptime(XDR *xdr, struct xdr_attrs_args *args)
 {
-	gsh_time_t ts;
+	struct timespec ts;
 	
-	ts.seconds = 0LL;
-	ts.nseconds = 0;
+	ts.tv_sec = 0LL;
+	ts.tv_nsec = 0;
 	return encode_time(xdr, &ts);
 }
 
@@ -1883,10 +1876,10 @@ static fattr_xdr_result decode_backuptime(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_createtime(XDR *xdr, struct xdr_attrs_args *args)
 {
-	gsh_time_t ts;
+	struct timespec ts;
 	
-	ts.seconds = 0LL;
-	ts.nseconds = 0;
+	ts.tv_sec = 0LL;
+	ts.tv_nsec = 0;
 	return encode_time(xdr, &ts);
 }
 
@@ -1905,10 +1898,10 @@ static fattr_xdr_result decode_createtime(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_deltatime(XDR *xdr, struct xdr_attrs_args *args)
 {
-	gsh_time_t ts;
+	struct timespec ts;
 	
-	ts.seconds = 1LL;
-	ts.nseconds = 0;
+	ts.tv_sec = 1LL;
+	ts.tv_nsec = 0;
 	return encode_time(xdr, &ts);
 }
 
@@ -3236,18 +3229,18 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d",
                              sattr->atime.set_it,
-                             sattr->atime.set_atime_u.atime.seconds,
-                             sattr->atime.set_atime_u.atime.nseconds);
+                             sattr->atime.set_atime_u.atime.tv_sec,
+                             sattr->atime.set_atime_u.atime.tv_nsec);
                 if (sattr->atime.set_it == SET_TO_CLIENT_TIME) {
-                        FSAL_attr->atime.seconds
-                                = sattr->atime.set_atime_u.atime.seconds;
-                        FSAL_attr->atime.nseconds = 0;
+                        FSAL_attr->atime.tv_sec
+                                = sattr->atime.set_atime_u.atime.tv_sec;
+                        FSAL_attr->atime.tv_nsec = 0;
                 } else {
                         /* Use the server's current time */
                         gettimeofday(&t, NULL);
 
-                        FSAL_attr->atime.seconds = t.tv_sec;
-                        FSAL_attr->atime.nseconds = 0;
+                        FSAL_attr->atime.tv_sec = t.tv_sec;
+                        FSAL_attr->atime.tv_nsec = 0;
                 }
                 FSAL_attr->mask |= ATTR_ATIME;
         }
@@ -3256,17 +3249,17 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "nfs3_Sattr_To_FSALattr: set=%d mtime = %d",
                              sattr->atime.set_it,
-                             sattr->mtime.set_mtime_u.mtime.seconds);
+                             sattr->mtime.set_mtime_u.mtime.tv_sec);
                 if (sattr->mtime.set_it == SET_TO_CLIENT_TIME) {
-                        FSAL_attr->mtime.seconds
-                                = sattr->mtime.set_mtime_u.mtime.seconds;
-                        FSAL_attr->mtime.nseconds = 0;
+                        FSAL_attr->mtime.tv_sec
+                                = sattr->mtime.set_mtime_u.mtime.tv_sec;
+                        FSAL_attr->mtime.tv_nsec = 0;
                 } else {
                         /* Use the server's current time */
                         gettimeofday(&t, NULL);
-                        FSAL_attr->mtime.seconds
+                        FSAL_attr->mtime.tv_sec
                                 = t.tv_sec;
-                        FSAL_attr->mtime.nseconds
+                        FSAL_attr->mtime.tv_nsec
                                 = 0;
                 }
                 FSAL_attr->mask |= ATTR_MTIME;
@@ -3629,20 +3622,20 @@ nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
         }
 
         if (FSAL_attr->mask & ATTR_ATIME) {
-                Fattr->atime.seconds = FSAL_attr->atime.seconds;
-                Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
+                Fattr->atime.tv_sec = FSAL_attr->atime.tv_sec;
+                Fattr->atime.tv_nsec = FSAL_attr->atime.tv_nsec;
                 *mask |= ATTR_ATIME;
         }
 
         if (FSAL_attr->mask & ATTR_MTIME) {
-                Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
-                Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
+                Fattr->mtime.tv_sec = FSAL_attr->mtime.tv_sec;
+                Fattr->mtime.tv_nsec = FSAL_attr->mtime.tv_nsec;
                 *mask |= ATTR_MTIME;
         }
 
         if (FSAL_attr->mask & ATTR_CTIME) {
-                Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
-                Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
+                Fattr->ctime.tv_sec = FSAL_attr->ctime.tv_sec;
+                Fattr->ctime.tv_nsec = FSAL_attr->ctime.tv_nsec;
                 *mask |= ATTR_CTIME;
         }
 }                         /* nfs3_FSALattr_To_PartialFattr */

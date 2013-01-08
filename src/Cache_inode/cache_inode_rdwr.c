@@ -33,14 +33,7 @@
  * @brief Performs I/O on regular files
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "fsal.h"
 
 #include "log.h"

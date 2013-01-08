@@ -29,9 +29,7 @@
  * VFS FSAL export object
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
@@ -156,11 +154,11 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->total_files = buffstatvfs.f_files;
 	infop->free_files = buffstatvfs.f_ffree;
 	infop->avail_files = buffstatvfs.f_favail;
-	infop->time_delta.seconds = 1;
-	infop->time_delta.nseconds = 0;
+	infop->time_delta.tv_sec = 1;
+	infop->time_delta.tv_nsec = 0;
 
 out:
-	return fsalstat(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);
 }
 
 static bool fs_supports(struct fsal_export *exp_hdl,
@@ -228,7 +226,7 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
 	return fsal_fh_expire_type(info);
 }
 
-static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 

@@ -8,9 +8,7 @@
  * \version $Revision: 1.11 $
  * \brief   Files operations.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"

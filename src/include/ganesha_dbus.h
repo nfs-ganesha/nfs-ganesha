@@ -29,14 +29,7 @@
 #ifndef _GANESHA_DBUS_H
 #define _GANESHA_DBUS_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif                          /* HAVE_CONFIG_H */
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include <dbus/dbus.h>
 #include "log.h"
 

@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -152,36 +145,36 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   if( *valid & _9P_SETATTR_ATIME )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
-      fsalattr.atime.seconds  = t.tv_sec ;
-      fsalattr.atime.nseconds = t.tv_usec * 1000 ;
+      fsalattr.atime.tv_sec  = t.tv_sec ;
+      fsalattr.atime.tv_nsec = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_MTIME )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
-      fsalattr.mtime.seconds  = t.tv_sec ;
-      fsalattr.mtime.nseconds = t.tv_usec * 1000 ;
+      fsalattr.mtime.tv_sec  = t.tv_sec ;
+      fsalattr.mtime.tv_nsec = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_CTIME )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_CTIME);
-      fsalattr.ctime.seconds  = t.tv_sec ;
-      fsalattr.ctime.nseconds = t.tv_usec * 1000 ;
+      fsalattr.ctime.tv_sec  = t.tv_sec ;
+      fsalattr.ctime.tv_nsec = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_ATIME_SET )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
-      fsalattr.atime.seconds  = *atime_sec ;
-      fsalattr.atime.nseconds = *atime_nsec ;
+      fsalattr.atime.tv_sec  = *atime_sec ;
+      fsalattr.atime.tv_nsec = *atime_nsec ;
    }
 
   if( *valid & _9P_SETATTR_MTIME_SET )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
-      fsalattr.mtime.seconds  = *mtime_sec ;
-      fsalattr.mtime.nseconds = *mtime_nsec ;
+      fsalattr.mtime.tv_sec  = *mtime_sec ;
+      fsalattr.mtime.tv_nsec = *mtime_nsec ;
    }
 
   /* Set size if needed */

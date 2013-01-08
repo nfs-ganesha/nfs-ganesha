@@ -32,14 +32,7 @@
  * @brief Management of the 9P owner cache.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>

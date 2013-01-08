@@ -28,14 +28,7 @@
  * @file    nfs_worker_thread.c
  * @brief   The file that contain the 'worker_thread' routine for the nfsd.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #ifdef FREEBSD
 #include <signal.h>
 #endif
@@ -1350,7 +1343,7 @@ void *worker_thread(void *IndexArg)
   nfs_worker_data_t *worker_data = &(workers_data[worker_index]);
   char thr_name[32];
   gsh_xprt_private_t *xu = NULL;
-  uint32_t refcnt;
+  uint32_t reqcnt;
 
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
@@ -1451,17 +1444,18 @@ void *worker_thread(void *IndexArg)
            /* check for destroyed xprts */
            xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->xp_u1;
            pthread_mutex_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
-           if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
+           if (nfsreq->r_u.nfs->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED) {
                pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
                goto finalize_req;
            }
-           refcnt = xu->refcnt;
+           reqcnt = xu->req_cnt;
            pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
            /* execute */
            LogDebug(COMPONENT_DISPATCH,
-                    "NFS protocol request, nfsreq=%p xid=%u xprt=%p refcnt=%u",
-                    nfsreq, nfsreq->r_u.nfs->req.rq_msg->rm_xid,
-                    nfsreq->r_u.nfs->xprt, refcnt);
+                    "NFS protocol request, nfsreq=%p xprt=%p req_cnt=%d",
+                    nfsreq,
+                    nfsreq->r_u.nfs->xprt,
+                    reqcnt);
            nfs_rpc_execute(nfsreq, worker_data);
            break;
 
@@ -1477,17 +1471,14 @@ void *worker_thread(void *IndexArg)
 #endif
        }
 
-      finalize_req:
+    finalize_req:
            /* XXX needed? */
            LogFullDebug(COMPONENT_DISPATCH, "Signaling completion of request");
 
-           /* Drop req_cnt and xprt refcnt, if appropriate */
            switch(nfsreq->rtype) {
            case NFS_REQUEST:
-               pthread_mutex_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
-               --(xu->req_cnt);
-               gsh_xprt_unref(
-                   nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_LOCKED);
+               /* adjust req_cnt and return xprt ref */
+               gsh_xprt_unref(nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_DECREQ);
                break;
            case NFS_CALL:
                break;

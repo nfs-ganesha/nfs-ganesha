@@ -10,14 +10,7 @@
  * \brief   Attributes functions.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

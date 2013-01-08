@@ -27,14 +27,7 @@
  * @file  nfs3_Create.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

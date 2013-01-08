@@ -29,14 +29,7 @@
  * \brief   MOUNTPROC_Dump for Mount protocol v1 and v3.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

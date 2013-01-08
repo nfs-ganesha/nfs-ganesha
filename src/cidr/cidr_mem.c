@@ -1,9 +1,7 @@
 /*
  * Various libcidr memory-related functions
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <errno.h>
 #include <stdlib.h>

@@ -38,12 +38,6 @@
 #ifndef _NFS_DUPREQ_H
 #define _NFS_DUPREQ_H
 
-#ifdef _SOLARIS
-#ifndef _USE_SNMP
-typedef unsigned long u_long;
-#endif
-#endif                          /* _SOLARIS */
-
 #include <stdbool.h>
 #include <string.h>
 #include "nfs_core.h"

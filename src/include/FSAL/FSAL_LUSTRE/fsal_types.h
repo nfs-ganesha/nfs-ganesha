@@ -30,9 +30,7 @@
 #ifndef _FSAL_TYPES_SPECIFIC_H
 #define _FSAL_TYPES_SPECIFIC_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 /*
  * FS relative includes

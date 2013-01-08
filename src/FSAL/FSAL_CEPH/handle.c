@@ -52,22 +52,18 @@
 static fsal_status_t
 release(struct fsal_obj_handle *obj_pub)
 {
-        /* Generic status return */
-        int rc = 0;
         /* The private 'full' handle */
         struct handle *obj
                 = container_of(obj_pub, struct handle, handle);
 
         pthread_mutex_lock(&obj_pub->lock);
         obj_pub->refs--;  /* subtract the reference when we were created */
-        if ((obj_pub->refs != 0) ||
-            (obj_pub->type == REGULAR_FILE)) {
+        if (obj_pub->refs != 0) {
                 pthread_mutex_unlock(&obj_pub->lock);
-                rc = obj_pub->refs > 0 ? -EBUSY : -EINVAL;
                 LogCrit(COMPONENT_FSAL,
                         "Tried to release busy handle, hdl = 0x%p->refs = %d",
                         obj_pub, obj_pub->refs);
-                return ceph2fsal_error(rc);
+                return ceph2fsal_error(-EBUSY);
         }
         fsal_detach_handle(obj_pub->export, &obj_pub->handles);
         pthread_mutex_unlock(&obj_pub->lock);
@@ -543,17 +539,17 @@ setattrs(struct fsal_obj_handle *handle_pub,
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
                 mask |= CEPH_SETATTR_ATIME;
-                st.st_atime = attrs->atime.seconds;
+                st.st_atim = attrs->atime;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
                 mask |= CEPH_SETATTR_MTIME;
-                st.st_mtime = attrs->mtime.seconds;
+                st.st_mtim = attrs->mtime;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_CTIME)) {
                 mask |= CEPH_SETATTR_CTIME;
-                st.st_ctime = attrs->ctime.seconds;
+                st.st_ctim = attrs->ctime;
         }
 
         rc = ceph_ll_setattr(export->cmount, handle->wire.vi,
@@ -1022,7 +1018,7 @@ handle_digest(struct fsal_obj_handle *handle_pub,
                 } else {
                         memcpy(fh_desc->addr, &handle->wire,
                                sizeof(handle->wire));
-                        fh_desc->len = sizeof(handle->wire);;
+                        fh_desc->len = sizeof(handle->wire);
                 }
                 break;
 
