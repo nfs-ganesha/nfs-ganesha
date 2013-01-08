@@ -191,11 +191,11 @@ void *admin_thread(void *UnusedArg)
        * The id mapping may have changed.
        */
 #ifdef _HAVE_GSSAPI
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
       uidgidmap_clear();
       idmap_clear();
       namemap_clear();
-#endif /* _USE_NFSIDMAP */
+#endif /* USE_NFSIDMAP */
 #endif /* _HAVE_GSSAPI */
 
       if (ChangeoverExports())

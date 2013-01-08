@@ -1058,7 +1058,7 @@ int nfs_read_version4_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "UseGetpwnam"))
         {
           pparam->use_getpwnam = StrToBoolean(key_value);
-#ifndef _USE_NFSIDMAP
+#ifndef USE_NFSIDMAP
           if (!pparam->use_getpwnam)
             {
               LogCrit(COMPONENT_CONFIG,

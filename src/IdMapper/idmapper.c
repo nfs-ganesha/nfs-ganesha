@@ -47,7 +47,7 @@
 
 #define NFSIDMAP_ENABLED        (!nfs_param.nfsv4_param.use_getpwnam)
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 
 
 typedef void (*nfs4_idmap_log_function_t) (const char *, ...);
@@ -79,7 +79,7 @@ int nfsidmap_set_conf()
     }
   return 1;
 }
-#endif                          /* _USE_NFSIDMAP */
+#endif                          /* USE_NFSIDMAP */
 
 /**
  * @brief Convert a UID to a name
@@ -95,7 +95,7 @@ int uid2name(char *name, uid_t * puid)
 {
   if (NFSIDMAP_ENABLED)
     {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
       char fqname[NFS4_MAX_DOMAIN_LEN];
     
       int rc;
@@ -148,7 +148,7 @@ int uid2name(char *name, uid_t * puid)
             }
         }
       return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
       assert(!"prohibited by configuration");
       return 1;
 #endif
@@ -211,7 +211,7 @@ int name2uid(char *name, uid_t *puid)
   struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
   uid_t uid;
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
@@ -290,7 +290,7 @@ int name2uid(char *name, uid_t *puid)
       else
         {
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 
           if(!nfsidmap_set_conf())
             {
@@ -347,7 +347,7 @@ int name2uid(char *name, uid_t *puid)
             }
 #endif                          /* _HAVE_GSSAPI */
 
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
           assert(!"prohibited by configuration");
 #endif
 
@@ -381,7 +381,7 @@ int principal2uid(char *principal, uid_t *puid, struct svc_rpc_gss_data *gd)
 int principal2uid(char *principal, uid_t * puid)
 #endif
 {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   gid_t gss_gid;
   uid_t gss_uid;
   int rc;
@@ -392,7 +392,7 @@ int principal2uid(char *principal, uid_t * puid)
     return 0;
   }
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   if(uidmap_get(principal, &gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
@@ -519,7 +519,7 @@ principal_found:
   *puid = gss_uid;
 
   return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
   assert(!"prohibited by configuration");
   return 1;
 #endif
@@ -542,7 +542,7 @@ int gid2name(char *name, gid_t * pgid)
 
   if (NFSIDMAP_ENABLED)
     {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
       int rc;
     
       if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
@@ -584,7 +584,7 @@ int gid2name(char *name, gid_t * pgid)
         }
     
       return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
       assert(!"prohibited by configuration");
       return 1;
 #endif
@@ -653,7 +653,7 @@ int name2gid(char *name, gid_t *pgid)
     {
       if (NFSIDMAP_ENABLED)
         {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
           int rc;
           if(!nfsidmap_set_conf())
             {
@@ -682,7 +682,7 @@ int name2gid(char *name, gid_t *pgid)
                       name, *pgid);
               return 0;
             }
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
           assert(!"prohibited by configuration");
           return 1;
 #endif

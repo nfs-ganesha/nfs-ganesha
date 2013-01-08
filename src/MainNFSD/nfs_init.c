@@ -132,7 +132,7 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   .nfsv4_param.use_getpwnam = false,
 #else
   .nfsv4_param.use_getpwnam = true,
