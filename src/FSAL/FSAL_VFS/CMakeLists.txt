@@ -5,6 +5,10 @@ add_definitions(
 
 add_subdirectory(pnfs_panfs)
 
+if(USE_FSAL_XFS)
+    add_subdirectory(xfs)
+endif(USE_FSAL_XFS)
+
 ########### next target ###############
 
 SET(fsalvfs_LIB_SRCS

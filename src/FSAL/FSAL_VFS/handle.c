@@ -47,42 +47,39 @@
 /* helpers
  */
 
-static int
-vfs_fsal_open_exp(struct fsal_export *exp,
-		  vfs_file_handle_t *fh,
-		  int openflags,
-		  fsal_errors_t *fsal_error)
-{
-	int mount_fd = vfs_get_root_fd(exp);
-	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
-	if(fd < 0) {
-		fd = -errno;
-		if(fd == -ENOENT)
-			*fsal_error = ERR_FSAL_STALE;
-		else
-			*fsal_error = posix2fsal_error(-fd);
-	}
-	return fd;
-}
-
 int
 vfs_fsal_open(struct vfs_fsal_obj_handle *myself,
 	      int openflags,
 	      fsal_errors_t *fsal_error)
 {
-	return vfs_fsal_open_exp(myself->obj_handle.export,
-				 myself->handle, openflags, fsal_error);
+        struct vfs_fsal_export *ve = container_of(myself->obj_handle.export,
+                                                  struct vfs_fsal_export,
+                                                  export);
+	return ve->vex_ops.vex_open_by_handle(myself->obj_handle.export,
+                                              myself->handle, openflags,
+                                              fsal_error);
+}
+
+static int
+vfs_fsal_name_to_handle(struct fsal_export *exp,
+                        int dirfd,
+                        const char *path,
+                        vfs_file_handle_t *fh)
+{
+        struct vfs_fsal_export *ve = container_of(exp, struct vfs_fsal_export,
+                                                  export);
+        return ve->vex_ops.vex_name_to_handle(dirfd, path, fh);
 }
 
 /* alloc_handle
  * allocate and fill in a handle
  */
 
-static struct vfs_fsal_obj_handle *alloc_handle(vfs_file_handle_t *fh,
+static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
+                                                vfs_file_handle_t *fh,
                                                 struct stat *stat,
-                                                const char *link_content,
                                                 vfs_file_handle_t *dir_fh,
-                                                const char *unopenable_name,
+                                                const char *path,
                                                 struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_obj_handle *hdl;
@@ -98,29 +95,44 @@ static struct vfs_fsal_obj_handle *alloc_handle(vfs_file_handle_t *fh,
 	if(hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd = -1;  /* no open on this yet */
 		hdl->u.file.openflags = FSAL_O_CLOSED;
-	} else if(hdl->obj_handle.type == SYMBOLIC_LINK
-	   && link_content != NULL) {
-		size_t len = strlen(link_content) + 1;
+	} else if(hdl->obj_handle.type == SYMBOLIC_LINK) {
+                ssize_t retlink;
+		size_t len = stat->st_size + 1;
+                char *link_content = gsh_malloc(len);
 
-		hdl->u.symlink.link_content = gsh_malloc(len);
-		if(hdl->u.symlink.link_content == NULL) {
+		if(link_content == NULL)
+			goto spcerr;
+
+		retlink = readlinkat(dirfd, path, link_content, len);
+		if(retlink < 0 || retlink == len) {
 			goto spcerr;
 		}
-		memcpy(hdl->u.symlink.link_content, link_content, len);
+		link_content[retlink] = '\0';
+		hdl->u.symlink.link_content =  link_content;
 		hdl->u.symlink.link_size = len;
-	} else if(vfs_unopenable_type(hdl->obj_handle.type)
-		  && dir_fh != NULL
-		  && unopenable_name != NULL) {
+	} else if(vfs_unopenable_type(hdl->obj_handle.type)) {
+                /* AF_UNIX sockets, character special, and block
+                   special files  require craziness */
+                if(dir_fh == NULL) {
+                        int retval;
+                        struct vfs_fsal_export *ve =
+                                container_of(exp_hdl, struct vfs_fsal_export,
+                                             export);
+                        vfs_alloc_handle(dir_fh);
+                        retval = ve->vex_ops.vex_fd_to_handle(dirfd, fh);
+                        if(retval < 0) {
+                                goto spcerr;
+                        }
+                }
 		hdl->u.unopenable.dir = gsh_malloc(vfs_sizeof_handle(dir_fh));
 		if(hdl->u.unopenable.dir == NULL)
 			goto spcerr;
 		memcpy(hdl->u.unopenable.dir,
 		       dir_fh,
                        vfs_sizeof_handle(dir_fh));
-		hdl->u.unopenable.name = gsh_malloc(strlen(unopenable_name) + 1);
+		hdl->u.unopenable.name = gsh_strdup(path);
 		if(hdl->u.unopenable.name == NULL)
 			goto spcerr;
-		strcpy(hdl->u.unopenable.name, unopenable_name);
 	}
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.mask
@@ -168,11 +180,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval, dirfd;
 	struct stat stat;
-	char *link_content = NULL;
-	vfs_file_handle_t *dir_hdl = NULL;
-	const char *unopenable_name = NULL;
-	ssize_t retlink;
-	char link_buff[1024];
 	vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
 
@@ -190,7 +197,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if(dirfd < 0) {
 		return fsalstat(fsal_error, -dirfd);
 	}
-	retval = vfs_name_to_handle_at(dirfd, path, fh);
+	retval = vfs_fsal_name_to_handle(parent->export, dirfd, path, fh);
 	if(retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -200,30 +207,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		retval = errno;
 		goto direrr;
 	}
-	if(S_ISLNK(stat.st_mode)) { /* I could lazy eval this... */
-		retlink = readlinkat(dirfd, path, link_buff, 1024);
-		if(retlink < 0 || retlink == 1024) {
-			retval = errno;
-			if(retlink == 1024)
-				retval = ENAMETOOLONG;
-			goto direrr;
-		}
-		link_buff[retlink] = '\0';
-		link_content = &link_buff[0];
-	} else if(S_ISSOCK(stat.st_mode) ||
-                  S_ISCHR(stat.st_mode) ||
-                  S_ISBLK(stat.st_mode)) {
-		dir_hdl = parent_hdl->handle;
-		unopenable_name = path;
-	}
-	close(dirfd);
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat,
-			   link_content,
-			   dir_hdl,
-			   unopenable_name,
+	hdl = alloc_handle(dirfd, fh, &stat, parent_hdl->handle, path,
 			   parent->export);
+	close(dirfd);
 	if(hdl == NULL) {
 		retval = ENOMEM;
 		goto hdlerr;
@@ -250,16 +238,19 @@ hdlerr:
  */
 
 static inline
-int make_file_safe(int dir_fd,
+int make_file_safe(struct vfs_fsal_obj_handle *dir_hdl,
+                   int dir_fd,
 		   const char *name,
 		   mode_t unix_mode,
 		   uid_t user,
 		   gid_t group,
-		   vfs_file_handle_t *fh,
-		   struct stat *stat)
+                   struct vfs_fsal_obj_handle **hdl)
 {
 	int retval;
+        struct stat stat;
+        vfs_file_handle_t *fh;
 
+        vfs_alloc_handle(fh);
 	
 	retval = fchownat(dir_fd, name,
 			  user, group, AT_SYMLINK_NOFOLLOW);
@@ -273,13 +264,21 @@ int make_file_safe(int dir_fd,
 	if(retval < 0) {
 		goto fileerr;
 	}
-	retval = vfs_name_to_handle_at(dir_fd, name, fh);
+	retval = vfs_fsal_name_to_handle(dir_hdl->obj_handle.export,
+                                         dir_fd, name, fh);
 	if(retval < 0) {
 		goto fileerr;
 	}
-	retval = fstatat(dir_fd, name, stat, AT_SYMLINK_NOFOLLOW);
+	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
 		goto fileerr;
+	}
+
+	/* allocate an obj_handle and fill it up */
+	*hdl = alloc_handle(dir_fd, fh, &stat, dir_hdl->handle,
+                            name, dir_hdl->obj_handle.export);
+	if(*hdl == NULL) {
+	        return ENOMEM;
 	}
 	return 0;
 
@@ -305,8 +304,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	uid_t user;
 	gid_t group;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -341,23 +338,14 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		goto fileerr;
-	}
-	close(dir_fd); /* done with parent */
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd); /* done with parent */
+                close(fd);  /* don't need it anymore. */
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto fileerr;
-	}
-	close(fd);  /* don't need it anymore. */
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-fileerr:
 	unlinkat(dir_fd, name, 0);  /* remove the evidence on errors */
 
 direrr:
@@ -380,8 +368,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	uid_t user;
 	gid_t group;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -413,23 +399,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		retval = errno;
-		goto fileerr;
-	}
-	close(dir_fd);
-
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto fileerr;
-	}
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd);
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 	
-fileerr:
 	unlinkat(dir_fd, name, AT_REMOVEDIR);  /* remove the evidence on errors */
 
 direrr:
@@ -455,10 +431,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	uid_t user;
 	gid_t group;
 	dev_t unix_dev = 0;
-	vfs_file_handle_t *dir_fh = NULL;
-	const char *unopenable_name = NULL;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -504,10 +476,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
                 fsal_error = ERR_FSAL_INVAL;
                 goto errout;
         }
-        if (vfs_unopenable_type(nodetype)) {
-                dir_fh = myself->handle;
-                unopenable_name = name;
-        }
 	dir_fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, &fsal_error);
 	if(dir_fd < 0) {
 		goto errout;
@@ -526,22 +494,13 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		goto nodeerr;
-	}
-
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, dir_fh, unopenable_name, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto nodeerr;
-	}
-	close(dir_fd); /* done with parent */
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd); /* done with parent */
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 	
-nodeerr:
 	unlinkat(dir_fd, name, 0);
 	
 direrr:
@@ -608,7 +567,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto linkerr;
 	}
 
-	retval = vfs_name_to_handle_at(dir_fd, name, fh);
+	retval = vfs_fsal_name_to_handle(dir_hdl->export, dir_fd, name, fh);
 	if(retval < 0) {
 		goto linkerr;
 	}
@@ -617,10 +576,10 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto linkerr;
 	}
-	close(dir_fd);
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, link_path, NULL, NULL, dir_hdl->export);
+	hdl = alloc_handle(dir_fd, fh, &stat, NULL, name, dir_hdl->export);
+	close(dir_fd);
 	if(hdl == NULL) {
 		retval = ENOMEM;
 		goto errout;
@@ -645,6 +604,45 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
+int
+vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
+                  fsal_errors_t *fsal_error)
+{
+        int retval = 0;
+        int fd;
+        ssize_t retlink;
+        char link_buff[1024];
+
+        if(myself->u.symlink.link_content != NULL) {
+                gsh_free(myself->u.symlink.link_content);
+                myself->u.symlink.link_content = NULL;
+                myself->u.symlink.link_size = 0;
+        }
+        fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, fsal_error);
+        if(fd < 0)
+                return fd;
+
+        retlink = readlinkat(fd, "", link_buff, 1024);
+        retval = -errno;
+        close(fd);
+        if(retlink < 0) {
+                *fsal_error = posix2fsal_error(-retval);
+                return retval;
+        }
+
+        myself->u.symlink.link_content = gsh_malloc(retlink + 1);
+        if(myself->u.symlink.link_content == NULL) {
+                *fsal_error = ERR_FSAL_NOMEM;
+                retval = -ENOMEM;
+        } else {
+                memcpy(myself->u.symlink.link_content, link_buff, retlink);
+                myself->u.symlink.link_content[retlink] = '\0';
+                myself->u.symlink.link_size = retlink + 1;
+                retval = 0;
+        }
+        return retval;
+}
+
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
                                  char *link_content,
@@ -652,7 +650,6 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  bool refresh)
 {
 	struct vfs_fsal_obj_handle *myself = NULL;
-	int fd;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -662,36 +659,14 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if(refresh) { /* lazy load or LRU'd storage */
-		ssize_t retlink;
-		char link_buff[1024];
-
-		if(myself->u.symlink.link_content != NULL) {
-			gsh_free(myself->u.symlink.link_content);
-			myself->u.symlink.link_content = NULL;
-			myself->u.symlink.link_size = 0;
-		}
-		fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, &fsal_error);
-		if(fd < 0) {
-			retval = -fd;
-			goto out;
-		}
-		retlink = readlinkat(fd, "", link_buff, 1024);
-		if(retlink < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-			close(fd);
-			goto out;
-		}
-		close(fd);
-
-		myself->u.symlink.link_content = gsh_malloc(retlink + 1);
-		if(myself->u.symlink.link_content == NULL) {
-			fsal_error = ERR_FSAL_NOMEM;
-			goto out;
-		}
-		memcpy(myself->u.symlink.link_content, link_buff, retlink);
-		myself->u.symlink.link_content[retlink] = '\0';
-		myself->u.symlink.link_size = retlink + 1;
+                struct vfs_fsal_export *ve =
+                        container_of(obj_hdl->export, struct vfs_fsal_export,
+                                     export);
+                retval = ve->vex_ops.vex_readlink(myself, &fsal_error);
+                if(retval < 0) {
+                        retval = -retval;
+                        goto out;
+                }
 	}
 	if(myself->u.symlink.link_content == NULL
 	   || *link_len <= myself->u.symlink.link_size) {
@@ -702,8 +677,8 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	       myself->u.symlink.link_content,
 	       myself->u.symlink.link_size);
 
-out:
 	*link_len = myself->u.symlink.link_size;
+out:
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -913,10 +888,14 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 		fd = myself->u.file.fd;
 		retval = fstat(fd, stat);
         } else if(vfs_unopenable_type(obj_hdl->type)) {
-		fd = vfs_fsal_open_exp(obj_hdl->export,
-				       myself->u.unopenable.dir,
-			               O_PATH|O_NOACCESS,
-				       fsal_error);
+                struct vfs_fsal_export *ve =
+                        container_of(obj_hdl->export, struct vfs_fsal_export,
+                                     export);
+
+                fd = ve->vex_ops.vex_open_by_handle(obj_hdl->export,
+                                                    myself->u.unopenable.dir,
+                                                    O_PATH|O_NOACCESS,
+                                                    fsal_error);
 		if(fd < 0) {
 			return fd;
 		}
@@ -926,7 +905,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 				 AT_SYMLINK_NOFOLLOW);
 	} else {
 		if(obj_hdl->type == SYMBOLIC_LINK)
-			open_flags |= O_PATH;
+			open_flags = O_PATH | O_RDWR;
 		else if(obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
 	open_file:
@@ -1056,7 +1035,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 					  user,
 					  group,
 					  AT_SYMLINK_NOFOLLOW);
-		else
+		else if(obj_hdl->type == SYMBOLIC_LINK)
+                        retval = fchownat(fd, "", user, group,
+                                          AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH);
+                else
 			retval = fchown(fd, user, group);
 
 		if(retval) {
@@ -1079,13 +1061,16 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
 			 (time_t) attrs->mtime.tv_sec : stat.st_mtime);
 		timebuf[1].tv_usec = 0;
-		if(vfs_unopenable_type(obj_hdl->type))
+		if(vfs_unopenable_type(obj_hdl->type)) {
 			retval = futimesat(fd,
 					   myself->u.unopenable.name,
 					   timebuf);
-		else
+		} else if(obj_hdl->type != SYMBOLIC_LINK) {
+                        /* futimes does not work on symlinks - just 
+                         * ignore it */
 			retval = futimes(fd, timebuf);
-		if(retval != 0) {
+                }
+		if(retval) {
 			goto fileerr;
 		}
 	}
@@ -1374,12 +1359,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	struct vfs_fsal_obj_handle *hdl;
 	char *basepart;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int mnt_id = 0;
 	int retval = 0;
-	char *link_content = NULL;
-	ssize_t retlink;
-	vfs_file_handle_t *dir_fh = NULL;
-	char *unopenable_name = NULL;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
 
@@ -1414,7 +1394,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	basepart++;
-	retval = vfs_name_to_handle_at(dir_fd, basepart, fh);
+	retval = vfs_fsal_name_to_handle(exp_hdl, dir_fd, basepart, fh);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -1424,35 +1404,10 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	if(retval < 0) {
 		goto fileerr;
 	}
-	if(S_ISLNK(stat.st_mode)) {
-		link_content = gsh_malloc(PATH_MAX);
-		retlink = readlinkat(dir_fd, basepart,
-				     link_content, PATH_MAX);
-		if(retlink < 0 || retlink == PATH_MAX) {
-			retval = errno;
-			if(retlink == PATH_MAX)
-				retval = ENAMETOOLONG;
-			goto linkerr;
-		}
-		link_content[retlink] = '\0';
-	} else if(S_ISSOCK(stat.st_mode) ||
-                  S_ISCHR(stat.st_mode) ||
-                  S_ISBLK(stat.st_mode)) {
-                /* AF_UNIX sockets, character special, and block
-                   special files  require craziness */
-                vfs_alloc_handle(dir_fh);
-		retval = vfs_fd_to_handle(dir_fd, dir_fh, &mnt_id);
-		if(retval < 0) {
-			goto fileerr;
-		}
-		unopenable_name = basepart;
-	}
-	close(dir_fd);
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, link_content, dir_fh, unopenable_name, exp_hdl);
-	if(link_content != NULL)
-		gsh_free(link_content);
+	hdl = alloc_handle(dir_fd, fh, &stat, NULL, basepart, exp_hdl);
+	close(dir_fd);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL; /* poison it */
@@ -1463,9 +1418,6 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 
 fileerr:
 	retval = errno;
-linkerr:
-	if(link_content != NULL)
-		gsh_free(link_content);
 	close(dir_fd);
 	fsal_error = posix2fsal_error(retval);
 
@@ -1496,9 +1448,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	int fd;
-	char *link_content = NULL;
-	ssize_t retlink;
-	char link_buff[PATH_MAX];
+        struct vfs_fsal_export *ve;
 
         vfs_alloc_handle(fh);
 	*handle = NULL; /* poison it first */
@@ -1507,7 +1457,10 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	memcpy(fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
-	fd = vfs_fsal_open_exp(exp_hdl, fh, O_PATH|O_NOACCESS, &fsal_error);
+        ve = container_of(exp_hdl, struct vfs_fsal_export, export);
+
+        fd = ve->vex_ops.vex_open_by_handle(exp_hdl, fh,
+                                            O_PATH|O_NOACCESS, &fsal_error);
 	if(fd < 0) {
 		retval = -fd;
 		goto errout;
@@ -1519,22 +1472,9 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		close(fd);
 		goto errout;
 	}
-	if(S_ISLNK(stat.st_mode)) { /* I could lazy eval this... */
-		retlink = readlinkat(fd, "", link_buff, PATH_MAX);
-		if(retlink < 0 || retlink == PATH_MAX) {
-			retval = errno;
-			if(retlink == PATH_MAX)
-				retval = ENAMETOOLONG;
-			fsal_error = posix2fsal_error(retval);
-			close(fd);
-			goto errout;
-		}
-		link_buff[retlink] = '\0';
-		link_content = link_buff;
-	}
-	close(fd);
 
-	hdl = alloc_handle(fh, &stat, link_content, NULL, NULL, exp_hdl);
+	hdl = alloc_handle(fd, fh, &stat, NULL, "", exp_hdl);
+	close(fd);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		goto errout;
