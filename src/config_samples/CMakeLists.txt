@@ -1,7 +1,7 @@
 
 ########### install files ###############
 
-install(FILES  hosts.ganesha snmp.conf uidgid_mapfile.ganesha DESTINATION etc)
+install(FILES  hosts.ganesha snmp.conf uidgid_mapfile.ganesha COMPONENT daemon DESTINATION etc)
 
 
 

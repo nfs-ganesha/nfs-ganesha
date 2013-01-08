@@ -7,9 +7,7 @@ cmake_minimum_required(VERSION 2.6.3)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 # Add maintainer mode for (mainly) strict builds
-
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
-
 
 project(GANESHA C)
 
@@ -19,6 +17,17 @@ set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
   "GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
+
+# Define CPACK component (to deal with sub packages)
+set(CPACK_COMPONENTS_ALL daemon fsal headers )
+set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
+set(CPACK_COMPONENT_FSAL_DISPLAY_NAME "FSAL Libraries")
+set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
+
+# Include custom config and cpack module
+include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
+include(CPack)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
 git_describe(_GIT_DESCRIBE)
@@ -72,7 +81,6 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
 
 # Build configure options
-
 option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
@@ -131,6 +139,11 @@ if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
+
+if(USE_9P_RDMA AND NOT USE_9P)
+  message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
+  set(USE_9P ON)
+endif(USE_9P_RDMA AND NOT USE_9P)
 
 set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
@@ -416,6 +429,10 @@ if(USE_DBUS)
   set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
 
+if(USE_9P_RDMA)
+  set(GANESHA_CORE ${GANESHA_CORE} mooshika rdmacm ibverbs)
+endif(USE_9P_RDMA)
+
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ConfigParsing
@@ -660,6 +677,6 @@ endif(USE_FSAL_FUSE)
 
 ########### install files ###############
 if(USE_FSAL_FUSE)
-  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" DESTINATION ${LIB_DESTINATION})
+  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
 endif(USE_FSAL_FUSE)
 

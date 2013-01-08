@@ -24,7 +24,7 @@ target_link_libraries(fsalvfs
 )
 
 set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalvfs DESTINATION lib)
+install(TARGETS fsalvfs COMPONENT fsal DESTINATION lib)
 
 
 ########### install files ###############
