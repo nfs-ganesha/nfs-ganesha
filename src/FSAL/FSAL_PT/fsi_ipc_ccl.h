@@ -766,7 +766,8 @@ int update_read_status(struct file_handle_t        * p_pread_hndl,
                        struct CommonMsgHdr         * p_pread_hdr,
                        struct ClientOpPreadReqMsg  * p_pread_req,
                        const ccl_context_t         * handle,
-                       uint64_t                      max_readahead_offset);
+                       uint64_t                      max_readahead_offset,
+                       int                         * p_combined_rc);
 int verify_io_response(int                      transaction_type,
                        int                      cur_index,
                        struct CommonMsgHdr           * p_msg_hdr,
