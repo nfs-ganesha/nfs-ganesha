@@ -64,6 +64,9 @@ struct flock
 
 /* GANESHA common information */
 
+#define GPFS_DEVNAMEX "/dev/ss0"  /* Must be the same as GPFS_DEVNAME */
+#define kGanesha 140             /* Must be the same as Ganesha in enum kxOps */
+
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102

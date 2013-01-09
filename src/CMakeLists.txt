@@ -245,20 +245,6 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
-if(USE_FSAL_GPFS)
-  check_library_exists(
-    gpfs
-    gpfs_ganesha
-    "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib"
-    HAVE_GPFS
-    )
-  check_include_files("gpfs.h" HAVE_GPFS_H)
-  if((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
-    message(WARNING "Cannot find GPFS runtime.  Disabling GPFS build")
-    set(USE_FSAL_GPFS OFF)
-  endif((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
-endif(USE_FSAL_GPFS)
-
 if(USE_FSAL_XFS)
   check_library_exists(
     handle
