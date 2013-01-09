@@ -882,7 +882,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 	int retval = 0;
 
 	if(obj_hdl->type == REGULAR_FILE) {
-		if(myself->u.file.fd < 0  || !(myself->u.file.openflags & open_flags)) {
+		if(myself->u.file.openflags == FSAL_O_CLOSED) {
 			goto open_file;  /* no file open at the moment */
 		}
 		fd = myself->u.file.fd;
@@ -922,7 +922,8 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 	if(retval < 0) {
 		retval = errno;
                 *fsal_error = posix2fsal_error(retval);
-		if(obj_hdl->type != REGULAR_FILE || myself->u.file.fd < 0)
+		if(obj_hdl->type != REGULAR_FILE
+		   || myself->u.file.openflags == FSAL_O_CLOSED)
 			close(fd);
 		return -retval;
 	}
@@ -1106,7 +1107,8 @@ fileerr:
         retval = errno;
         fsal_error = posix2fsal_error(retval);
 out:
-	if( !(obj_hdl->type == REGULAR_FILE && myself->u.file.fd == fd))
+	if(obj_hdl->type != REGULAR_FILE
+	      || myself->u.file.openflags == FSAL_O_CLOSED)
 		close(fd);
 	return fsalstat(fsal_error, retval);
 }
