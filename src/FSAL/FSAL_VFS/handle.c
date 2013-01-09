@@ -1073,8 +1073,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			timebuf[0].tv_nsec = UTIME_NOW;
 		} else if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME))
 		{
-			timebuf[0].tv_sec  = attrs->atime.seconds;
-			timebuf[0].tv_nsec = attrs->atime.nseconds;
+			timebuf[0] = attrs->atime;
 		} else {
 			timebuf[0].tv_sec  = 0;
 			timebuf[0].tv_nsec = UTIME_OMIT;
@@ -1086,8 +1085,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			timebuf[1].tv_sec = 0;
 			timebuf[1].tv_nsec = UTIME_NOW;
 		} else if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
-			timebuf[1].tv_sec = attrs->mtime.seconds;
-			timebuf[1].tv_nsec = attrs->mtime.nseconds;
+			timebuf[1] = attrs->mtime;
 		} else {
 			timebuf[1].tv_sec = 0;
 			timebuf[1].tv_nsec = UTIME_OMIT;

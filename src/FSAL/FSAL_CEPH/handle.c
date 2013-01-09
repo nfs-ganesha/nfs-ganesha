@@ -554,10 +554,13 @@ setattrs(struct fsal_obj_handle *handle_pub,
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
         {
-                flags |= CEPH_SETATTR_ATIME;
-                struct timeval timerbuf;
-                gettimeofday(&timerbuf, NULL);
-                TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_atim);
+                mask |= CEPH_SETATTR_ATIME;
+		struct timespec timestamp;
+
+		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
+		if(rc != 0)
+			return ceph2fsal_error(rc);
+		st.st_atim = timestamp;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
@@ -566,10 +569,13 @@ setattrs(struct fsal_obj_handle *handle_pub,
         }
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
         {
-                flags |= CEPH_SETATTR_MTIME;
-                struct timeval timerbuf;
-                gettimeofday(&timerbuf, NULL);
-                TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_mtim);
+                mask |= CEPH_SETATTR_MTIME;
+		struct timespec timestamp;
+
+		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
+		if(rc != 0)
+			return ceph2fsal_error(rc);
+		st.st_mtim = timestamp;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_CTIME)) {

@@ -944,9 +944,12 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
   if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
   {
       flags |= LZFSW_ATTR_ATIME;
-      struct timeval timerbuf;
-      gettimeofday(&timerbuf, NULL);
-      TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_atim);
+      struct timespec timestamp;
+
+      retval = clock_gettime(CLOCK_REALTIME, &timestamp);
+      if(retval != 0)
+	  goto out;
+      stats.st_atim = timestamp;      struct timeval timerbuf;
   }
   if(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME))
   {
@@ -956,9 +959,12 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
   if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
   {
       flags |= LZFSW_ATTR_MTIME;
-      struct timeval timerbuf;
-      gettimeofday(&timerbuf, NULL);
-      TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_mtim);
+      struct timespec timestamp;
+
+      retval = clock_gettime(CLOCK_REALTIME, &timestamp);
+      if(retval != 0)
+	  goto out;
+      stats.st_mtim = timestamp;
   }
   cred.uid = opctx->creds->caller_uid;
   cred.gid = opctx->creds->caller_gid;
