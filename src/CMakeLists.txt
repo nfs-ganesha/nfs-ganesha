@@ -114,7 +114,7 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
 # MSPAC support -lwbclient link flag
-option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
+option(_MSPAC_SUPPORT "enable mspac Winbind support" OFF)
 
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
