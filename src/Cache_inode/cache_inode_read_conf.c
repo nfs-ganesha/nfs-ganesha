@@ -213,9 +213,6 @@ cache_inode_read_conf_parameter(config_file_t config,
   char *key_value;
   config_item_t block;
 
-  int DebugLevel = -1;
-  char *LogFile = NULL;
-
   /* Is the config tree initialized ? */
   if(config == NULL || param == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -294,23 +291,12 @@ cache_inode_read_conf_parameter(config_file_t config,
         {
           param->use_fsal_hash = StrToBoolean(key_value);
         }
-      else if(!strcasecmp(key_name, "DebugLevel"))
+      else if(!strcasecmp(key_name, "DebugLevel") ||
+              !strcasecmp(key_name, "LogFile"))
         {
-          DebugLevel = ReturnLevelAscii(key_value);
-
-          if(DebugLevel == -1)
-            {
-              LogDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
-                       key_value);
-              return CACHE_INODE_INVALID_ARGUMENT;
-            }
-        }
-      else if(!strcasecmp(key_name, "LogFile"))
-        {
-
-          LogFile = key_value;
-
+          LogWarn(COMPONENT_CONFIG,
+                  "Deprecated %s option %s=\'%s\'",
+                  CONF_LABEL_CACHE_INODE, key_name, key_value);
         }
       else
         {
@@ -320,13 +306,6 @@ cache_inode_read_conf_parameter(config_file_t config,
           return CACHE_INODE_INVALID_ARGUMENT;
         }
     }
-
-  /* init logging */
-  if(LogFile)
-    SetComponentLogFile(COMPONENT_CACHE_INODE, LogFile);
-
-  if(DebugLevel > -1)
-    SetComponentLogLevel(COMPONENT_CACHE_INODE, DebugLevel);
 
   return CACHE_INODE_SUCCESS;
 } /* cache_inode_read_conf_parameter */

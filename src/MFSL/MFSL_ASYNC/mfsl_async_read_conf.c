@@ -146,9 +146,6 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
   char *key_value;
   config_item_t block;
 
-  int DebugLevel = -1;
-  char *LogFile = NULL;
-
   /* Is the config tree initialized ? */
   if(in_config == NULL || pparam == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
@@ -218,23 +215,13 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
         {
           pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "DebugLevel"))
+      else if(!STRCMP(key_name, "DebugLevel") ||
+              !STRCMP(key_name, "LogFile"))
         {
-          DebugLevel = ReturnLevelAscii(key_value);
-
-          if(DebugLevel == -1)
-            {
-              LogMajor(COMPONENT_MFSL,
-                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
-                   key_value);
-              MFSL_return(ERR_FSAL_INVAL, 0);
-            }
+          LogWarn(COMPONENT_CONFIG,
+                  "Deprecated FSAL option %s=\'%s\'",
+                  key_name, key_value);
         }
-      else if(!strcasecmp(key_name, "LogFile"))
-        {
-          LogFile = key_value;
-        }
-
       else
         {
           LogMajor(COMPONENT_MFSL,
@@ -244,12 +231,6 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
         }
 
     }                           /* for */
-
-  if(LogFile)
-    SetComponentLogFile(COMPONENT_FSAL, LogFile);
-
-  if(DebugLevel != -1)
-    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_load_parameter_from_conf */

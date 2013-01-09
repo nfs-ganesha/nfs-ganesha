@@ -57,9 +57,6 @@ int _9p_read_conf( config_file_t   in_config,
   char *key_value;
   config_item_t block;
 
-  int DebugLevel = -1;
-  char *LogFile = NULL;
-
   /* Is the config tree initialized ? */
   if(in_config == NULL || pparam == NULL)
     return -1 ;
@@ -90,21 +87,12 @@ int _9p_read_conf( config_file_t   in_config,
         {
           pparam->_9p_port = atoi( key_value ) ;
         }
-      else if(!strcasecmp(key_name, "DebugLevel"))
+      else if(!STRCMP(key_name, "DebugLevel") ||
+              !STRCMP(key_name, "LogFile"))
         {
-          DebugLevel = ReturnLevelAscii(key_value);
-
-          if(DebugLevel == -1)
-            {
-              fprintf(stderr,
-                      "9P: ERROR: Invalid debug level name: \"%s\".",
-                      key_value);
-              return -1 ;
-            }
-        }
-      else if(!strcasecmp(key_name, "LogFile"))
-        {
-          LogFile = key_value;
+          LogWarn(COMPONENT_CONFIG,
+                  "Deprecated 9P option %s=\'%s\'",
+                  key_name, key_value);
         }
       else
         {
@@ -114,14 +102,6 @@ int _9p_read_conf( config_file_t   in_config,
           return -1 ;
         }
     } /* for */
-
-  /* init logging */
-  if(LogFile)
-    SetComponentLogFile(COMPONENT_9P, LogFile);
-
-  if(DebugLevel > -1)
-    SetComponentLogLevel(COMPONENT_9P, DebugLevel);
-
 
   return 0 ;
 } /* _9p_read_conf */
