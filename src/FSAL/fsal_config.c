@@ -194,8 +194,6 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
   char *key_value;
   config_item_t fsal_block, block = NULL;
   int i, fsal_cnt;
-  int DebugLevel = -1;
-  char *LogFile = NULL;
 
   fsal_block = config_FindItemByName(in_config, CONF_LABEL_FSAL);
   if(fsal_block == NULL) {
@@ -252,25 +250,13 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
           return fsalstat(ERR_FSAL_SERVERFAULT, err);
         }
 
-      if(!STRCMP(key_name, "DebugLevel"))
+      if(!STRCMP(key_name, "DebugLevel") ||
+	 !STRCMP(key_name, "LogFile"))
         {
-          DebugLevel = ReturnLevelAscii(key_value);
-
-          if(DebugLevel == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
-                      key_value);
-              return fsalstat(ERR_FSAL_INVAL, -1);
-            }
-
-        }
-      else if(!STRCMP(key_name, "LogFile"))
-        {
-
-          LogFile = key_value;
-
-        }
+	  LogWarn(COMPONENT_CONFIG,
+                  "Deprecated FSAL option %s=\'%s\'",
+                  key_name, key_value);
+	}
       else if(!STRCMP(key_name, "Max_FS_calls"))
         {
 
@@ -299,14 +285,6 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
         }
 
     }
-
-  /* init logging */
-
-  if(LogFile)
-    SetComponentLogFile(COMPONENT_FSAL, LogFile);
-
-  if(DebugLevel != -1)
-    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
