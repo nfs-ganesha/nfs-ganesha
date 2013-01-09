@@ -522,9 +522,9 @@ setattrs(struct fsal_obj_handle *handle_pub,
                 return fsalstat(ERR_FSAL_INVAL, 0);
         }
 
-        if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+        if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
                 rc = ceph_ll_truncate(export->cmount, handle->wire.vi,
-                                      attr->filesize, 0, 0);
+                                      attrs->filesize, 0, 0);
 
                 if (rc < 0) {
                     return ceph2fsal_error(rc);

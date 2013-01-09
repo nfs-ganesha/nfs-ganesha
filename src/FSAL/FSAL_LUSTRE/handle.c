@@ -988,15 +988,15 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	/** TRUNCATE **/
-	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
 	    if(obj_hdl->type != REGULAR_FILE) {
 	         fsal_error = ERR_FSAL_INVAL;
-	         goto errout;
+	         goto out;
 	     }
-        retval = truncate( mypath, attrs->filesize);
-        if(retval != 0) {
-            goto fileerr;
-        }
+	    retval = truncate( mypath, attrs->filesize);
+	    if(retval != 0) {
+		    goto fileerr;
+	    }
 	}
 	/** CHMOD **/
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
@@ -1102,35 +1102,6 @@ fileerr:
         fsal_error = posix2fsal_error(retval);
 out:
 	return fsalstat(fsal_error, retval);
-}
-
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
-
-static fsal_status_t lustre_file_truncate(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
-					  uint64_t length)
-{
-	struct lustre_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        char mypath[MAXPATHLEN] ;
-	int retval = 0;
-
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-        lustre_handle_to_path( lustre_get_root_path( obj_hdl->export ), myself->handle, mypath ) ;
-	retval = truncate( mypath, length);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-errout:
-	return fsalstat(fsal_error, retval);	
 }
 
 /* file_unlink

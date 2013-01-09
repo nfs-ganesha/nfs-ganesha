@@ -643,34 +643,34 @@ bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
 		      myself->handle->handle_size) ? false : true;
 }
 
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
+/* /\* file_truncate */
+/*  * truncate a file to the size specified. */
+/*  * size should really be off_t... */
+/*  *\/ */
 
-static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
-                                   const struct req_op_context *opctx,
-				   uint64_t length)
-{
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        fsal_status_t status;
-	struct gpfs_fsal_obj_handle *myself;
-/* 	int mount_fd; */
-	int retval = 0;
+/* static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl, */
+/*                                    const struct req_op_context *opctx, */
+/* 				   uint64_t length) */
+/* { */
+/* 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR; */
+/*         fsal_status_t status; */
+/* 	struct gpfs_fsal_obj_handle *myself; */
+/* /\* 	int mount_fd; *\/ */
+/* 	int retval = 0; */
 
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-/* 	mount_fd = gpfs_get_root_fd(obj_hdl->export); */
+/* 	if(obj_hdl->type != REGULAR_FILE) { */
+/* 		fsal_error = ERR_FSAL_INVAL; */
+/* 		goto errout; */
+/* 	} */
+/* 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle); */
+/* /\* 	mount_fd = gpfs_get_root_fd(obj_hdl->export); *\/ */
 	
-        status = GPFSFSAL_truncate(obj_hdl->export, myself->handle, opctx, length, NULL);
-        return (status);
+/*         status = GPFSFSAL_truncate(obj_hdl->export, myself->handle, opctx, length, NULL); */
+/*         return (status); */
 
-errout:
-	return fsalstat(fsal_error, retval);	
-}
+/* errout: */
+/* 	return fsalstat(fsal_error, retval);	 */
+/* } */
 
 /* file_unlink
  * unlink the named file in the directory
@@ -856,7 +856,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->truncate = file_truncate;
 	ops->open = gpfs_open;
 	ops->status = gpfs_status;
 	ops->read = gpfs_read;
