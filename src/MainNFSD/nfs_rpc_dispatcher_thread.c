@@ -528,6 +528,16 @@ void nfs_Init_svc()
   set_tirpc_debug_mask(0);
 #endif
 
+  /* Set TIRPC debug flags */
+  uint32_t tirpc_debug_flags;
+  if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, &tirpc_debug_flags))
+      LogCrit(COMPONENT_INIT, "Failed getting TI-RPC debug flags");
+
+  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_REFCNT;
+
+  if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
+      LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
+
 #define TIRPC_SET_ALLOCATORS 0
 #if TIRPC_SET_ALLOCATORS
   if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) gsh_malloc))
@@ -829,7 +839,7 @@ stallq_should_unstall(gsh_xprt_private_t *xu)
 {
 	return ((xu->req_cnt <
 		 nfs_param.core_param.dispatch_max_reqs_xprt/2) ||
-		(xu->flags & XPRT_PRIVATE_FLAG_DESTROYED));
+		(xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
 void *
