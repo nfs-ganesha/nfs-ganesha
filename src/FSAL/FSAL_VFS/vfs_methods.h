@@ -28,6 +28,7 @@ struct vfs_fsal_export {
 	struct file_handle *root_handle;
 	bool pnfs_panfs_enabled;
 	struct vfs_exp_handle_ops vex_ops;
+	void *pnfs_data;
 };
 
 /* private helpers from export

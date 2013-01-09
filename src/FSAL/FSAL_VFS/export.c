@@ -106,6 +106,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 
+	pnfs_panfs_fini(myself->pnfs_data);
 	pthread_mutex_lock(&exp_hdl->lock);
 	if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
 		LogMajor(COMPONENT_FSAL,
@@ -739,6 +740,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		memcpy(myself->root_handle,
 		       fh,
                        vfs_sizeof_handle(fh));
+	}
+
+	if (myself->pnfs_panfs_enabled) {
+		retval = pnfs_panfs_init(myself->root_fd, &myself->pnfs_data);
+		if (retval) {
+			LogCrit(COMPONENT_FSAL,
+				"vfs export_ops_pnfs faild => %d [%s]",
+				retval, strerror(retval));
+			goto errout;
+		}
 	}
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);

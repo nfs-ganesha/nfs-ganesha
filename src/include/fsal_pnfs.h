@@ -223,7 +223,7 @@ struct fsal_layoutreturn_arg {
 	 *  LAYOUTRECALL.  If this LAYOUTRETURN completly satisfies
 	 *  one or more invoked LAYOUTRECALLs, the tokens of the
 	 *  recalls will be supplied. */
-	const void *recall_cookies[];
+	const void *recall_cookies[1];
 };
 
 /**

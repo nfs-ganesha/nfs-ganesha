@@ -43,3 +43,4 @@ patch-for-HPSS-nfs-ganesha-*
 core.*
 *cmake_install.cmake
 libfsal*.so*
+Doxyfile

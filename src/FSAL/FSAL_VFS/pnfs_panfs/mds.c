@@ -19,8 +19,12 @@
  * -------------
  */
 
+#include <pthread.h>
+#include <stdlib.h>
+
 #include "mds.h"
 #include "panfs_um_pnfs.h"
+#include "fsal_up.h"
 
 #include "../vfs_methods.h"
 
@@ -42,10 +46,9 @@
  *	- etc ... (See linux Documentation/CodingStyle.txt)
  */
 
-/*#define CONFIG_PANFS_DEBUG y
-*/
+#define CONFIG_PANFS_DEBUG y
 
-#define PANFS_ERR(fmt, a...) printf("fsal_panfs: " fmt, ##a)
+#define ERROR(fmt, a...) printf("fsal_panfs: " fmt, ##a)
 
 #ifdef CONFIG_PANFS_DEBUG
 #define DBG_PRNT(fmt, a...) \
@@ -198,11 +201,16 @@ nfsstat4 layoutget(
 	const struct fsal_layoutget_arg *arg,
 	struct fsal_layoutget_res *res)
 {
+	struct vfs_fsal_obj_handle *myself = container_of(obj_hdl,
+							typeof(*myself),
+							obj_handle);
 	struct pan_ioctl_xdr pixdr;
+	uint64_t clientid = req_ctx->clientid ? *req_ctx->clientid : 0;
 	nfsstat4 ret;
 
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
-	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, arg, res);
+	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
+				 myself, arg, res);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(loc_body, &pixdr);
 	DBG_PRNT("ret => %d\n", ret);
@@ -247,6 +255,113 @@ nfsstat4 layoutcommit(
 	return ret;
 }
 
+static void
+initiate_recall(struct vfs_fsal_obj_handle *myself, struct pnfs_segment *seg,
+		void *r_cookie)
+{
+	struct fsal_export *export = myself->obj_handle.export;
+	struct fsal_up_event *event = fsal_up_alloc_event();
+
+	/*TODO: handle alloc errors */
+
+	/* For layoutrecall up_ops are probably set to default recieved at
+	 * vfs_create_export
+	 */
+	event->functions = export->up_ops;
+	event->file.export = export;
+	event->file.key.len = vfs_sizeof_handle(myself->handle);
+	event->file.key.addr = gsh_malloc(event->file.key.len);
+	memcpy(event->file.key.addr, myself->handle, event->file.key.len);
+
+	event->type = FSAL_UP_EVENT_LAYOUTRECALL;
+	event->data.layoutrecall.layout_type = LAYOUT4_OSD2_OBJECTS;
+	event->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
+	event->data.layoutrecall.changed = false;
+	event->data.layoutrecall.segment.offset = seg->offset;
+	event->data.layoutrecall.segment.length = seg->length;
+	event->data.layoutrecall.segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */;
+	event->data.layoutrecall.cookie = r_cookie;
+
+	fsal_up_submit(event);
+}
+
+struct _recall_thread {
+	pthread_t thread;
+	int fd;
+	volatile bool stop;
+};
+
+static void *callback_thread(void *callback_info)
+{
+	struct _recall_thread *_rt = callback_info;
+	enum { E_MAX_EVENTS = 128 };
+	struct pan_cb_layoutrecall_event events[E_MAX_EVENTS];
+	int err = 0;
+
+	while(!_rt->stop) {
+		int num_events = 0;
+		int e;
+
+		err = panfs_um_recieve_layoutrecall(_rt->fd, events,
+						    E_MAX_EVENTS, &num_events);
+
+DBG_PRNT("callback_thread: err=%d\n", err);
+
+		if (err)
+			break;
+
+		for(e = 0; e < num_events; ++e) {
+			struct vfs_fsal_obj_handle *myself =
+						events[e].recall_file_info;
+			struct pnfs_segment seg = events[e].seg;
+			void *r_cookie = events[e].cookie;
+
+DBG_PRNT("callback_thread: myself=%p r_cookie=%p offset=0x%lx length=0x%lx\n",
+	 myself, r_cookie, seg.offset, seg.length);
+
+			initiate_recall(myself, &seg, r_cookie);
+		}
+	}
+
+	return (void *)(long)err;
+}
+
+static int _start_callback_thread(int root_fd, void **pnfs_data)
+{
+	struct _recall_thread *_rt;
+	int err;
+
+	_rt = calloc(1, sizeof(*_rt));
+	if (!_rt) return ENOMEM;
+
+	_rt->fd = root_fd;
+
+	err = pthread_create(&_rt->thread, NULL, &callback_thread, _rt);
+	if (err)  {
+		ERROR("pthread_create => %d: %s\n", err, strerror(err));
+		goto error;
+	}
+
+	*pnfs_data = _rt;
+	return 0;
+
+error:
+	free(_rt);
+	return err;
+}
+
+static void _stop_callback_thread(void *td)
+{
+	struct _recall_thread *_rt = td;
+	void *tret;
+
+	_rt->stop = true;
+	panfs_um_cancel_recalls(_rt->fd, 0);
+	pthread_join(_rt->thread, &tret);
+	DBG_PRNT("_rt->thread => %ld", (long)tret);
+	free(_rt);
+}
+
 /*============================== initialization ==============================*/
 void
 export_ops_pnfs(struct export_ops *ops)
@@ -268,4 +383,18 @@ handle_ops_pnfs(struct fsal_obj_ops *ops)
 	ops->layoutreturn = layoutreturn;
 	ops->layoutcommit = layoutcommit;
 	DBG_PRNT("\n");
+}
+
+int  pnfs_panfs_init(int root_fd, void **pnfs_data/*OUT*/)
+{
+	int err = _start_callback_thread(root_fd, pnfs_data);
+	return err;
+}
+
+void pnfs_panfs_fini(void *pnfs_data)
+{
+	if (!pnfs_data)
+		return
+
+	_stop_callback_thread(pnfs_data);
 }

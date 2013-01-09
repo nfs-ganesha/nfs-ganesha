@@ -19,11 +19,11 @@
  * -------------
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <sys/ioctl.h>
-
 #include <stdio.h>
+#include <sys/ioctl.h>
 
 /* Implementing this */
 #include "panfs_um_pnfs.h"
@@ -59,23 +59,27 @@ nfsstat4 panfs_um_getdeviceinfo(
 	};
 	int ret;
 
+//	_XDR_2_ioctlxdr_out(da_addr_body, &pgi.da_addr_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_DEVICEINFO, &pgi);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
 
-	*da_addr_body = pgi.da_addr_body;
 	return pgi.hdr.nfsstat;
 }
 
 nfsstat4 panfs_um_layoutget(
 		int fd,
 		struct pan_ioctl_xdr *loc_body,
+		uint64_t clientid,
+		void    *recall_file_info,
 		const struct fsal_layoutget_arg *arg,
 		struct fsal_layoutget_res *res)
 {
 	struct pan_layoutget_ioctl pli = {
 		.hdr.size = sizeof(pli),
 		.loc_body = *loc_body,
+		.clientid = clientid,
+		.recall_file_info = recall_file_info,
 		.arg = arg,
 		.res = res,
 	};
@@ -86,12 +90,12 @@ printf("%s: alloc_len=%d, buff=%p len=%d\n", __func__,
 	ioctl_xdr->xdr_alloc_len, ioctl_xdr->xdr_buff, ioctl_xdr->xdr_len);
 
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTGET, &pli);
-	if (ret)
+	if (ret) {
+		printf("%s: PAN_FS_CLIENT_PNFS_LAYOUTGET => %d\n",
+			__func__, errno);
 		return NFS4ERR_SERVERFAULT;
+	}
 
-	*loc_body = pli.loc_body;
-printf("%s: alloc_len=%d, buff=%p len=%d\n", __func__,
-	ioctl_xdr->xdr_alloc_len, ioctl_xdr->xdr_buff, ioctl_xdr->xdr_len);
 	return pli.hdr.nfsstat;
 }
 
@@ -107,6 +111,7 @@ nfsstat4 panfs_um_layoutreturn(
 	};
 	int ret;
 
+// 	_XDR_2_ioctlxdr_in(lrf_body, &plri.lrf_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTRETURN, &plri);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
@@ -128,9 +133,49 @@ nfsstat4 panfs_um_layoutcommit(
 	};
 	int ret;
 
+// 	_XDR_2_ioctlxdr_in(lou_body, &plci.lou_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT, &plci);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
 
 	return plci.hdr.nfsstat;
+}
+
+int panfs_um_recieve_layoutrecall(
+		int fd,
+		struct pan_cb_layoutrecall_event *events,
+		int max_events,
+		int *num_events)
+{
+	struct pan_cb_layoutrecall_ioctl pcli = {
+		.hdr.size = sizeof(pcli) ,
+		.events = events,
+		.max_events = max_events,
+	};
+	int ret;
+
+	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTRECALL, &pcli);
+	*num_events = pcli.num_events;
+	if (ret)
+		return ret;
+
+	return pcli.hdr.nfsstat;
+}
+
+int panfs_um_cancel_recalls(
+		int fd,
+		int debug_magic)
+{
+	struct pan_cancel_recalls_ioctl pcri = {
+		.hdr.size = sizeof(pcri) ,
+		.debug_magic = debug_magic,
+	};
+
+	int ret;
+
+	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_CANCEL_RECALLS, &pcri);
+	if (ret)
+		return ret;
+
+	return pcri.hdr.nfsstat;
 }
