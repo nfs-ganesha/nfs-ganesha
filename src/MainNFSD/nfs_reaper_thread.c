@@ -139,7 +139,7 @@ void *reaper_thread(void *UnusedArg)
   bool_t logged = TRUE;
   bool_t in_grace;
 
-  SetNameFunction("reaper_thr");
+  SetNameFunction("reaper");
 
   if(nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
     reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;

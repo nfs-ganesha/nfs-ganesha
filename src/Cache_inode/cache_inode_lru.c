@@ -671,7 +671,7 @@ lru_thread(void *arg __attribute__((unused)))
      float fdnorm, fdwait_ratio, fdmulti;
      uint64_t threadwait;
      
-     SetNameFunction("lru_thread");
+     SetNameFunction("cache_lru");
 
      fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 

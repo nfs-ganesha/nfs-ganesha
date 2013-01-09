@@ -534,7 +534,7 @@ uint32_t ucnt=0;
 size_t size;
 nfs_grace_start_array_t *nfs_grace_start_array;
 
-        SetNameFunction("recovery_thr");
+        SetNameFunction("recov");
         t_after = 0;
 
         uerr = mkdir(NFS_V4_RECOV_LOCAL, 0755);

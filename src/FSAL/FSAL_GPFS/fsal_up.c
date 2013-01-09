@@ -85,7 +85,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   cache_inode_fsal_data_t   * event_fsal_data;
   int                         retry = 0;
 
-  snprintf(thr_name, sizeof(thr_name), "gpfs_fsal_up_%d.%d",
+  snprintf(thr_name, sizeof(thr_name), "fsal_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
   SetNameFunction(thr_name);
 

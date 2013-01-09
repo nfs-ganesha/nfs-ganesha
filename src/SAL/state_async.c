@@ -67,7 +67,7 @@ void *state_async_thread(void *UnusedArg)
   struct timespec       timeout;
   state_block_data_t  * pblock;
 
-  SetNameFunction("state_async_thread");
+  SetNameFunction("state_async");
 
   if(mark_thread_existing(&state_async_tcb) == PAUSE_EXIT)
     {

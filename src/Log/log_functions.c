@@ -51,6 +51,96 @@
 #include "rpc/rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
+#include "nfs_core.h"
+
+/* Variables to control log fields */
+
+/**
+ * @brief Define an index each of the log fields that are configurable.
+ *
+ * Ganesha log messages have several "header" fields used in every
+ * message. Some of those fields may be configured (mostly display or
+ * not display).
+ *
+ */
+enum log_flag_index_t
+{
+  LF_DATE, /*< Date field. */
+  LF_TIME, /*< Time field. */
+  LF_EPOCH, /*< Server Epoch field (distinguishes server instance. */
+  LF_HOSTAME, /*< Server host name field. */
+  LF_PROGNAME, /*< Ganesha program name field. */
+  LF_PID, /*< Ganesha process identifier. */
+  LF_THREAD_NAME, /*< Name of active thread logging message. */
+  LF_FUNCTION_NAME, /*< Function name message occurred in. */
+  LF_COMPONENT, /*< Log component. */
+  LF_LEVEL, /*< Log level. */
+};
+
+/**
+ * @brief Description of a flag tha controls a log field.
+ *
+ */
+struct log_flag
+{
+  int      lf_idx;  /*< The log field index this flag controls. */
+  bool_t   lf_val;  /*< True/False value for the flag. */
+  int      lf_ext;  /*< Extended value for the flag, if it has one. */
+  char   * lf_name; /*< Name of the flag. */
+};
+
+/**
+ * @brief Define a set of possible time and date formats.
+ *
+ * These values will be stored in lf_ext for the LF_DATE and LF_TIME flags.
+ *
+ */
+enum timedate_formats_t
+{
+  TD_NONE, /*< No time/date. */
+  TD_GANESHA, /*< Legacy Ganesha time and date format. */
+  TD_LOCAL, /*< Use strftime local format for time/date. */
+  TD_8601, /*< Use ISO 8601 time/date format. */
+  TD_SYSLOG, /*< Use a typical syslog time/date format. */
+  TD_SYSLOG_USEC, /*< Use a typical syslog time/date format that also includes
+                      microseconds. */
+  TD_USER, /* Use a user defined time/date format. */
+};
+
+/* Define the maximum length of a user time/date format. */
+#define MAX_TD_USER_LEN 64
+/* Define the maximum overall time/date format length, should have room for both
+ * user date and user time format plus room for blanks around them.
+ */
+#define MAX_TD_FMT_LEN (MAX_TD_USER_LEN * 2 + 4)
+
+/**
+ * @brief Actually define the flag variables with their default values.
+ *
+ * Flags that don't have an extended value will have lf_ext initialized to 0.
+ *
+ */
+struct log_flag tab_log_flag[] =
+{
+/*                          Extended
+ * Index             Flag   Value       Name
+ */
+  {LF_DATE,          TRUE,  TD_GANESHA, "DATE"},
+  {LF_TIME,          TRUE,  TD_GANESHA, "TIME"},
+  {LF_EPOCH,         TRUE,  0,          "EPOCH"},
+  {LF_HOSTAME,       TRUE,  0,          "HOSTAME"},
+  {LF_PROGNAME,      TRUE,  0,          "PROGNAME"},
+  {LF_PID,           TRUE,  0,          "PID"},
+  {LF_THREAD_NAME,   TRUE,  0,          "THREAD_NAME"},
+  {LF_FUNCTION_NAME, TRUE,  0,          "FUNCTION_NAME"},
+  {LF_COMPONENT,     TRUE,  0,          "COMPONENT"},
+  {LF_LEVEL,         TRUE,  0,          "LEVEL"},
+};
+
+char const_log_str[LOG_BUFF_LEN];
+char date_time_fmt[MAX_TD_FMT_LEN];
+char user_date_fmt[MAX_TD_USER_LEN];
+char user_time_fmt[MAX_TD_USER_LEN];
 
 /* La longueur d'une chaine */
 #define MAX_NUM_FAMILY  50
@@ -58,16 +148,16 @@
 
 log_level_t tabLogLevel[] =
 {
-  {NIV_NULL,       "NIV_NULL",       "NULL",       LOG_NOTICE},
-  {NIV_FATAL,      "NIV_FATAL",      "FATAL",      LOG_CRIT},
-  {NIV_MAJ,        "NIV_MAJ",        "MAJ",        LOG_CRIT},
-  {NIV_CRIT,       "NIV_CRIT",       "CRIT",       LOG_ERR},
-  {NIV_WARN,       "NIV_WARN",       "WARN",       LOG_WARNING},
-  {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
-  {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
-  {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
-  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MID_DEBUG",  LOG_DEBUG},
-  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
+  {NIV_NULL,       "NIV_NULL",       "NULL",   LOG_NOTICE},
+  {NIV_FATAL,      "NIV_FATAL",      "FATAL",  LOG_CRIT},
+  {NIV_MAJ,        "NIV_MAJ",        "MAJ",    LOG_CRIT},
+  {NIV_CRIT,       "NIV_CRIT",       "CRIT",   LOG_ERR},
+  {NIV_WARN,       "NIV_WARN",       "WARN",   LOG_WARNING},
+  {NIV_EVENT,      "NIV_EVENT",      "EVENT",  LOG_NOTICE},
+  {NIV_INFO,       "NIV_INFO",       "INFO",   LOG_INFO},
+  {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",  LOG_DEBUG},
+  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MIDDBG", LOG_DEBUG},
+  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULDBG", LOG_DEBUG}
 };
 
 #ifndef ARRAY_SIZE
@@ -464,7 +554,8 @@ int ReturnLevelAscii(const char *LevelInAscii)
 
   for(i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
     if(!strcasecmp(tabLogLevel[i].str, LevelInAscii) ||
-       !strcasecmp(tabLogLevel[i].str + 4, LevelInAscii))
+       !strcasecmp(tabLogLevel[i].str + 4, LevelInAscii) ||
+       !strcasecmp(tabLogLevel[i].short_str, LevelInAscii))
       return tabLogLevel[i].value;
 
   /* If nothing found, return -1 */
@@ -608,9 +699,123 @@ void SetLevelDebug(int level_to_set)
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }
 
+struct log_flag * StrToFlag(const char * str)
+{
+  int i = 0;
+
+  for(i = 0; i < ARRAY_SIZE(tab_log_flag); i++)
+    if(!strcasecmp(tab_log_flag[i].lf_name, str))
+      return &tab_log_flag[i];
+
+  /* If nothing found, return NULL */
+  return NULL;
+}
+
+void set_const_log_str()
+{
+  struct display_buffer dspbuf = {sizeof(const_log_str),
+                                  const_log_str,
+                                  const_log_str};
+  struct display_buffer tdfbuf = {sizeof(date_time_fmt),
+                                  date_time_fmt,
+                                  date_time_fmt};
+  int                   b_left = display_start(&dspbuf);
+
+  const_log_str[0] = '\0';
+
+  if(b_left > 0 && tab_log_flag[LF_EPOCH].lf_val)
+    b_left = display_printf(&dspbuf, ": epoch %08x ", ServerEpoch);
+
+  if(b_left > 0 && tab_log_flag[LF_HOSTAME].lf_val)
+    b_left = display_printf(&dspbuf, ": %s ", hostname);
+
+  if(b_left > 0 && tab_log_flag[LF_PROGNAME].lf_val)
+    b_left = display_printf(&dspbuf, ": %s", program_name);
+
+  if(b_left > 0 &&
+     tab_log_flag[LF_PROGNAME].lf_val &&
+     tab_log_flag[LF_PID].lf_val)
+    b_left = display_cat(&dspbuf, "-");
+
+  if(b_left > 0 && tab_log_flag[LF_PID].lf_val)
+    b_left = display_printf(&dspbuf, "%d", getpid());
+
+  if(b_left > 0 &&
+     (tab_log_flag[LF_PROGNAME].lf_val || tab_log_flag[LF_PID].lf_val) &&
+     !tab_log_flag[LF_THREAD_NAME].lf_val)
+    b_left = display_cat(&dspbuf, " ");
+
+  b_left = display_start(&tdfbuf);
+
+  if(tab_log_flag[LF_DATE].lf_ext == TD_LOCAL &&
+     tab_log_flag[LF_TIME].lf_ext == TD_LOCAL)
+    {
+      if(b_left > 0)
+        b_left = display_cat(&tdfbuf, "%c ");
+    }
+  else
+    {
+      switch(tab_log_flag[LF_DATE].lf_ext)
+        {
+          case TD_GANESHA:
+            b_left = display_cat(&tdfbuf, "%d/%m/%Y ");
+            break;
+          case TD_8601:
+            b_left = display_cat(&tdfbuf, "%F ");
+            break;
+          case TD_LOCAL:
+            b_left = display_cat(&tdfbuf, "%x ");
+            break;
+          case TD_SYSLOG:
+            b_left = display_cat(&tdfbuf, "%b %e ");
+            break;
+          case TD_SYSLOG_USEC:
+            if(tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC)
+              b_left = display_cat(&tdfbuf, "%F");
+            else
+              b_left = display_cat(&tdfbuf, "%F ");
+            break;
+          case TD_USER:
+            b_left = display_printf(&tdfbuf, "%s ", user_date_fmt);
+            break;
+          case TD_NONE:
+          default:
+            break;
+        }
+
+      switch(tab_log_flag[LF_TIME].lf_ext)
+        {
+          case TD_GANESHA:
+            b_left = display_cat(&tdfbuf, "%H:%M:%S ");
+            break;
+          case TD_SYSLOG:
+          case TD_8601:
+          case TD_LOCAL:
+            b_left = display_cat(&tdfbuf, "%X ");
+            break;
+          case TD_SYSLOG_USEC:
+            b_left = display_cat(&tdfbuf, "T%H:%M:%S.%%06u%z ");
+            break;
+          case TD_USER:
+            b_left = display_printf(&tdfbuf, "%s ", user_time_fmt);
+            break;
+          case TD_NONE:
+          default:
+            break;
+        }
+      
+    }
+}
+
 void InitLogging()
 {
   int i;
+
+  /* Initialize const_log_str to defaults. Ganesha can start logging before
+   * the LOG config is processed (in fact, LOG config can itself issue log
+   * messages to indicate errors.
+   */
+  set_const_log_str();
 
   /* Initialisation of tables of families */
   tab_family[ERR_SYS].num_family = 0;
@@ -660,43 +865,78 @@ void ReadLogEnvironment()
  */
 
 static void DisplayLogString_valist(ThreadLogContext_t * context,
-                                    const char         * function,
                                     log_components_t     component,
+                                    const char         * function,
+                                    int                  level,
                                     const char         * format,
                                     va_list              arguments)
 {
-  struct tm the_date;
-  time_t    tm;
   int       b_left;
-
-  tm = time(NULL);
-  Localtime_r(&tm, &the_date);
 
   display_reset_buffer(&context->dspbuf);
 
-  b_left = display_printf(&context->dspbuf,
-                          "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :",
-                          the_date.tm_mday,
-                          the_date.tm_mon + 1,
-                          1900 + the_date.tm_year,
-                          the_date.tm_hour,
-                          the_date.tm_min,
-                          the_date.tm_sec,
-                          tm,
-                          hostname,
-                          program_name,
-                          getpid(),
-                          context->thread_name);
+  b_left = display_start(&context->dspbuf);
 
-  if(LogComponents[component].comp_log_level
-     >= LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level &&
-     b_left > 0)
+  /* Print date and/or time if either flag is enabled. */
+  if(b_left > 0 &&
+     (tab_log_flag[LF_DATE].lf_val || tab_log_flag[LF_TIME].lf_val))
+    {
+      struct tm      the_date;
+      char           tbuf[MAX_TD_FMT_LEN];
+      time_t         tm;
+      struct timeval tv;
+
+      if(tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC)
+        {
+          gettimeofday(&tv, NULL);
+          tm = tv.tv_sec;
+        }
+      else
+        {
+          tm = time(NULL);
+        }
+
+      Localtime_r(&tm, &the_date);
+
+      /* Earlier we build the date/time format string in date_time_fmt, now use
+       * that to format the time and/or date. If time format is TD_SYSLOG_USEC,
+       * then we need an additional step to add the microseconds (since strftime
+       * just takes a struct tm which was filled in from a time_t and thus does
+       * not have microseconds.
+       */
+      if(strftime(tbuf, sizeof(tbuf), date_time_fmt, &the_date) != 0)
+        {
+          if(tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC)
+            b_left = display_printf(&context->dspbuf, tbuf, tv.tv_usec);
+          else
+            b_left = display_cat(&context->dspbuf, tbuf);
+        }
+    }
+
+  if(b_left > 0 && const_log_str[0] != '\0')
+    b_left = display_cat(&context->dspbuf, const_log_str);
+
+  if(b_left > 0)
+    {
+      if(tab_log_flag[LF_THREAD_NAME].lf_val)
+        b_left = display_printf(&context->dspbuf, "[%s] ", context->thread_name);
+      else
+        b_left = display_cat(&context->dspbuf, ": ");
+    }
+
+  if(b_left > 0 && tab_log_flag[LF_FUNCTION_NAME].lf_val)
     b_left = display_printf(&context->dspbuf, "%s :", function);
 
-  if(b_left <= 0)
-    return;
+  if(b_left > 0 && tab_log_flag[LF_COMPONENT].lf_val)
+    b_left = display_printf(&context->dspbuf, "%s :",
+                            LogComponents[component].comp_str);
 
-  (void) display_vprintf(&context->dspbuf, format, arguments);
+  if(b_left > 0 && tab_log_flag[LF_LEVEL].lf_val)
+    b_left = display_printf(&context->dspbuf, "%s :",
+                            tabLogLevel[level].short_str);
+
+  if(b_left > 0)
+    (void) display_vprintf(&context->dspbuf, format, arguments);
 }                               /* DisplayLogString_valist */
 
 static void DisplayLogSyslog_valist(ThreadLogContext_t * context,
@@ -714,19 +954,28 @@ static void DisplayLogSyslog_valist(ThreadLogContext_t * context,
      syslog_opened = 1;
    }
 
-  /* Writing to the chosen file. */
   display_reset_buffer(&context->dspbuf);
 
-  b_left = display_printf(&context->dspbuf, "[%s] :", context->thread_name);
+  b_left = display_start(&context->dspbuf);
 
-  if(LogComponents[component].comp_log_level
-     >= LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level &&
-     b_left > 0)
+  if(b_left > 0 && tab_log_flag[LF_THREAD_NAME].lf_val)
+    b_left = display_printf(&context->dspbuf, "[%s] :", context->thread_name);
+
+  if(b_left > 0 && tab_log_flag[LF_FUNCTION_NAME].lf_val)
     b_left = display_printf(&context->dspbuf, "%s :", function);
+
+  if(b_left > 0 && tab_log_flag[LF_COMPONENT].lf_val)
+    b_left = display_printf(&context->dspbuf, "%s :",
+                            LogComponents[component].comp_str);
+
+  if(b_left > 0 && tab_log_flag[LF_LEVEL].lf_val)
+    b_left = display_printf(&context->dspbuf, "%s :",
+                            tabLogLevel[level].short_str);
 
   if(b_left > 0)
     b_left = display_vprintf(&context->dspbuf, format, arguments);
 
+  /* Writing to syslog. */
   syslog(tabLogLevel[level].syslog_level, "%s", context->buffer);
 
   if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
@@ -744,7 +993,7 @@ static void DisplayLogFlux_valist(ThreadLogContext_t * context,
 {
   int len;
 
-  DisplayLogString_valist(context, function, component, format, arguments);
+  DisplayLogString_valist(context, component, function, level, format, arguments);
 
   len = display_buffer_len(&context->dspbuf);
   context->buffer[len++] = '\n';
@@ -788,7 +1037,7 @@ static void DisplayLogPath_valist(ThreadLogContext_t * context,
 {
   int fd, my_status, len;
 
-  DisplayLogString_valist(context, function, component, format, arguments);
+  DisplayLogString_valist(context, component, function, level, format, arguments);
 
   len = display_buffer_len(&context->dspbuf);
   context->buffer[len++] = '\n';
@@ -1626,6 +1875,9 @@ int read_log_config(config_file_t in_config)
   config_item_t block;
   int component;
   int level;
+  struct log_flag * flag;
+  int date_spec = FALSE;
+  int time_spec = FALSE;
 
   /* Is the config tree initialized ? */
   if(in_config == NULL)
@@ -1665,6 +1917,98 @@ int read_log_config(config_file_t in_config)
           return -1;
         }
 
+      flag = StrToFlag(key_name);
+
+      if(!strcasecmp(key_name, "time") ||
+         !strcasecmp(key_name, "date"))
+        {
+          if((flag->lf_idx == LF_DATE && date_spec) ||
+             (flag->lf_idx == LF_TIME && time_spec))
+            {
+              LogWarn(COMPONENT_CONFIG,
+                      "Can only specify %s once, ignoring %s=\"%s\"",
+                      key_name, key_name, key_value);
+              continue;
+            }
+
+          if(flag->lf_idx == LF_DATE)
+            date_spec = TRUE;
+
+          if(flag->lf_idx == LF_TIME)
+            time_spec = TRUE;
+
+          if(!strcasecmp(key_value, "ganesha") ||
+             !strcasecmp(key_value, "true"))
+            {
+              flag->lf_ext = TD_GANESHA;
+              flag->lf_val = TRUE;
+            }
+          else if(!strcasecmp(key_value, "local"))
+            {
+              flag->lf_ext = TD_LOCAL;
+              flag->lf_val = TRUE;
+            }
+          else if(!strcasecmp(key_value, "8601") ||
+                  !strcasecmp(key_value, "ISO-8601") ||
+                  !strcasecmp(key_value, "ISO 8601") ||
+                  !strcasecmp(key_value, "ISO"))
+            {
+              flag->lf_ext = TD_8601;
+              flag->lf_val = TRUE;
+            }
+          else if(!strcasecmp(key_value, "syslog"))
+            {
+              flag->lf_ext = TD_SYSLOG;
+              flag->lf_val = TRUE;
+            }
+          else if(!strcasecmp(key_value, "syslog_usec"))
+            {
+              flag->lf_ext = TD_SYSLOG_USEC;
+              flag->lf_val = TRUE;
+            }
+          else if(!strcasecmp(key_value, "false") ||
+                  !strcasecmp(key_value, "none"))
+            {
+              flag->lf_val = FALSE;
+              flag->lf_ext = TD_NONE;
+            }
+          else if(flag->lf_idx == LF_DATE)
+            {
+              if(strmaxcpy(user_date_fmt,
+                           key_value,
+                           sizeof(user_date_fmt)) == -1)
+                LogCrit(COMPONENT_CONFIG,
+                        "%s value of \'%s\' too long",
+                        key_name, key_value);
+              else
+                {
+                  flag->lf_ext = TD_USER;
+                  flag->lf_val = TRUE;
+                }
+            }
+          else if(flag->lf_idx == LF_TIME)
+            {
+              if(strmaxcpy(user_time_fmt,
+                           key_value,
+                           sizeof(user_date_fmt)) == -1)
+                LogCrit(COMPONENT_CONFIG,
+                        "%s value of \'%s\' too long",
+                        key_name, key_value);
+              else
+                {
+                  flag->lf_ext = TD_USER;
+                  flag->lf_val = TRUE;
+                }
+            }
+          continue;
+        }
+
+      if(flag != NULL)
+        {
+          flag->lf_val = StrToBoolean(key_value);
+          continue;
+        }
+
       component = ReturnComponentAscii(key_name);
 
       if(component == -1)
@@ -1689,6 +2033,15 @@ int read_log_config(config_file_t in_config)
 
       SetComponentLogLevel(component, level);
     }
+
+  if(date_spec && !time_spec && tab_log_flag[LF_DATE].lf_ext != TD_NONE)
+    tab_log_flag[LF_TIME].lf_ext = tab_log_flag[LF_DATE].lf_ext;
+
+  if(time_spec && !date_spec && tab_log_flag[LF_TIME].lf_ext != TD_NONE)
+    tab_log_flag[LF_DATE].lf_ext = tab_log_flag[LF_TIME].lf_ext;
+
+  /* Now that the LOG config has been processed, rebuild const_log_str. */
+  set_const_log_str();
 
   return 0;
 }                               /* read_log_config */

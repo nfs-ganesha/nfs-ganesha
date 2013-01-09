@@ -1438,7 +1438,7 @@ void *worker_thread(void *IndexArg)
   gsh_xprt_private_t *xu = NULL;
   uint32_t reqcnt;
 
-  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
+  snprintf(thr_name, sizeof(thr_name), "work-%lu", worker_index);
   SetNameFunction(thr_name);
 
   /* save current signal mask */

@@ -575,7 +575,7 @@ void *stat_exporter_thread(void *UnusedArg)
   int rc;
   exportlist_client_entry_t pclient_found;
 
-  SetNameFunction("statistics_exporter");
+  SetNameFunction("stat_ex");
 
   memset(&hints, 0, sizeof hints);
 
