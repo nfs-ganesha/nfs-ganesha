@@ -647,6 +647,8 @@ lru_run(struct fridgethr_context *ctx)
      /* The current count (after reaping) of open FDs */
      size_t currentopen = 0;
      struct lru_q *q;
+     
+     SetNameFunction("cache_lru");
 
      fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 

@@ -155,6 +155,7 @@ static void reaper_run(struct fridgethr_context *ctx)
 {
   struct reaper_state *rst = ctx->arg;
 
+  SetNameFunction("reaper");
   rst->in_grace = nfs_in_grace();
 
   if (!rst->old_state_cleaned)

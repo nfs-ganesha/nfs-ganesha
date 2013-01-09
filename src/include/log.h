@@ -467,8 +467,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
     if (likely(LogComponents[component].comp_log_type != TESTLOG || \
                LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_NULL, \
-                               "%s: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogTest(format, args...) \
@@ -481,72 +480,63 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_FATAL)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FATAL, \
-                               "%s FATAL ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogMajor(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_MAJOR)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MAJ, \
-                               "%s MAJOR ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogCrit(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_CRIT, \
-                               "%s CRITICAL ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
    } while (0)
 
 #define LogWarn(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_WARN)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_WARN, \
-                               "%s WARN: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogEvent(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_EVENT, \
-                               "%s EVENT: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogInfo(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_INFO)) \
       DisplayLogComponentLevel(component, (char *) __FUNCTION__, NIV_INFO, \
-                               "%s INFO: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_DEBUG)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
-                               "%s DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogMidDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_MID_DEBUG)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MID_DEBUG, \
-                               "%s M_DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
-                               "%s F_DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
@@ -557,9 +547,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         struct display_buffer dspbuf = {buf_size, buf, buf};                 \
         (void) display_opaque_value(&dspbuf, value, length);                 \
           DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
-                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
-                                   LogComponents[component].comp_str,        \
-                                   buf, ## args );                           \
+                                   NIV_FULL_DEBUG, format, buf, ## args );   \
       }                                                                      \
   } while (0)
 
@@ -571,17 +559,15 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         struct display_buffer dspbuf = {buf_size, buf, buf};                 \
         (void) display_opaque_bytes(&dspbuf, value, length);                 \
           DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
-                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
-                                   LogComponents[component].comp_str,        \
-                                   buf, ## args );                           \
+                                   NIV_FULL_DEBUG, format, buf, ## args );   \
+      }                                                                      \
   } while (0)
 
 #define LogAtLevel(component, level, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= level)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
-                               "%s %s: " format, \
-                               LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
+                               format, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \
