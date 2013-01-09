@@ -949,7 +949,7 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
       retval = clock_gettime(CLOCK_REALTIME, &timestamp);
       if(retval != 0)
 	  goto out;
-      stats.st_atim = timestamp;      struct timeval timerbuf;
+      stats.st_atim = timestamp;
   }
   if(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME))
   {
