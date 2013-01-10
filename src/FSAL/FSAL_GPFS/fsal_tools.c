@@ -70,7 +70,6 @@ int GPFSFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
 {
   gpfsfsal_handle_t *handle1 = (gpfsfsal_handle_t *)handle_1;
   gpfsfsal_handle_t *handle2 = (gpfsfsal_handle_t *)handle_2;
-  u_int32_t uscan;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -83,13 +82,8 @@ int GPFSFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
   if(handle1->data.handle.handle_size != handle2->data.handle.handle_size)
     return -2;
 
-  if(( handle1->data.handle.handle_fsid[0] != handle2->data.handle.handle_fsid[0])
-   || (handle1->data.handle.handle_fsid[1] != handle2->data.handle.handle_fsid[1])) {
-    return -3;
-  }
-  uscan = handle1->data.handle.handle_key_size - ((char * ) &handle1->data.handle.f_handle - (char *) &handle1->data.handle);
   if(memcmp
-     (handle1->data.handle.f_handle, handle2->data.handle.f_handle, uscan))
+     (&handle1->data.handle, &handle2->data.handle, handle1->data.handle.handle_key_size))
     return -4;
 
   return 0;
@@ -116,33 +110,31 @@ unsigned int GPFSFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
   unsigned int sum = 0;
   unsigned int extract = 0;
   unsigned int mod;
-  u_int32_t uscan;
   gpfsfsal_handle_t *p_handle = (gpfsfsal_handle_t *)handle;
-
-  uscan = p_handle->data.handle.handle_key_size - ((char * ) &p_handle->data.handle.f_handle - (char *) &p_handle->data.handle);
+  unsigned char *handle_ptr = (unsigned char *)&p_handle->data.handle;
 
   /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = uscan % sizeof(unsigned int);
+  mod = p_handle->data.handle.handle_key_size % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < uscan - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(handle_ptr[cpt]), sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = uscan - mod; cpt < uscan;
+      for(cpt = p_handle->data.handle.handle_key_size - mod; cpt < p_handle->data.handle.handle_key_size;
           cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
+          extract |= (unsigned int)handle_ptr[cpt];
         }
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
@@ -169,9 +161,6 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int co
   unsigned int extract = 0;
   unsigned int mod;
   gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)handle;
-  u_int32_t uscan;
-
-  uscan = p_handle->data.handle.handle_key_size - ((char * ) &p_handle->data.handle.f_handle - (char *) &p_handle->data.handle);
 
   h = cookie;
 
@@ -179,23 +168,24 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int co
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = uscan % sizeof(unsigned int);
+  mod = p_handle->data.handle.handle_key_size % sizeof(unsigned int);
+  unsigned char *handle_ptr = (unsigned char *)&p_handle->data.handle;
 
-  for(cpt = 0; cpt < uscan - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(handle_ptr[cpt]), sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = uscan - mod; cpt < uscan;
+      for(cpt = p_handle->data.handle.handle_key_size - mod; cpt < p_handle->data.handle.handle_key_size;
           cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
+          extract |= (unsigned int)handle_ptr[cpt];
         }
       h = (857 * h ^ extract) % 715827883;
     }
