@@ -1605,7 +1605,7 @@ state_status_t state_find_grant(void *cookie,
                    "KEY {%s}", str);
     }
 
-  if(HashTable_Get_and_Del(ht_lock_cookies, &buffkey, &buffval, &buffused_key) != HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key, &buffval) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s} NOTFOUND", str);
