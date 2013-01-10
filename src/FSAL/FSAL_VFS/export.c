@@ -659,14 +659,12 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
         }
 
+#ifdef LINUX
 	if(fs_specific_has(fs_specific, "handle_lib", hdllib, sizeof(hdllib))) {
                 void *dl;
                 void *sym;
-#ifdef LINUX
+
                 dl = dlopen(hdllib, RTLD_NOW|RTLD_LOCAL);
-#elif FREEBSD
-                dl = dlopen(hdllib, RTLD_LAZY|RTLD_LOCAL);
-#endif
                 if(dl == NULL) {
                         LogCrit(COMPONENT_FSAL,
                                 "Could not load handle module '%s' for "
@@ -696,6 +694,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
                         goto errout;
                 }
         }
+#endif
 
 	myself->root_fd = open(mntdir,  O_RDONLY|O_DIRECTORY);
 	if(myself->root_fd < 0) {
