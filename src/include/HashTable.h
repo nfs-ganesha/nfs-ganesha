@@ -45,7 +45,6 @@
 #include <rbt_tree.h>
 #include <pthread.h>
 #include "log.h"
-#include "lookup3.h"
 #include "abstract_mem.h"
 #include "ganesha_types.h"
 
