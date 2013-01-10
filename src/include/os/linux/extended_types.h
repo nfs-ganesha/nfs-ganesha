@@ -39,18 +39,6 @@
 #define _EXTENDED_TYPES_LINUX_H
 
 #include <sys/types.h>
-
-#ifndef _UINT64_T
-# ifndef __int8_t_defined
-
-#if SIZEOF_LONG == 8
-typedef unsigned long int uint64_t;
-typedef long int int64_t;
-#else
-typedef unsigned long long int uint64_t;
-typedef long long int int64_t;
-#endif
-#endif
-#endif
+#include <stdint.h>
 
 #endif                          /* _EXTENDED_TYPES_LINUX_H */
