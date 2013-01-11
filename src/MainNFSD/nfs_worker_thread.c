@@ -551,6 +551,9 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   memset(related_client, 0, sizeof(exportlist_client_entry_t));
 
+  /* Zero out timers prior to starting processing */
+  init_nfs_req_timer(req_timer, worker_data);
+
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
 
@@ -905,9 +908,6 @@ static void nfs_rpc_execute(request_data_t *preq,
             goto freeargs;
         }
     }
-
-  /* Zero out timers prior to starting processing */
-  init_nfs_req_timer(req_timer, worker_data);
 
   /*
    * It is now time for checking if export list allows the machine to perform
