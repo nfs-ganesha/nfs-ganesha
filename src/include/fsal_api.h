@@ -662,14 +662,9 @@ struct export_ops {
 /**
  * @brief Extract an opaque handle
  *
- * This function extracts a "wire" handle from a buffer that may then
- * be passed to create_handle.
- *
- * @note The extracted handle can obviously be used with
- * create_handle, but is it used as a key in the hash table?  If so we
- * run into a serious problem where we may be comparing long "wire"
- * handles against much shorter "key" handles and getting faulty
- * duplicates.
+ * This function extracts a "key" handle from a "wire" handle.  That
+ * is, when given a handle as passed to a client, this method will
+ * extract the unique bits used to index the inode cache.
  *
  * @param[in]     exp_hdl Export in which to look up handle
  * @param[in]     in_type Protocol through which buffer was received.  One
