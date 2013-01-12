@@ -38,11 +38,11 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/syscall.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
+#include <os/subr.h>
 
 /* helpers
  */
@@ -744,24 +744,6 @@ out:
 	return fsalstat(fsal_error, retval);	
 }
 
-/* not defined in linux headers so we do it here
- */
-
-struct linux_dirent {
-	unsigned long  d_ino;     /* Inode number */
-	unsigned long  d_off;     /* Offset to next linux_dirent */
-	unsigned short d_reclen;  /* Length of this linux_dirent */
-	char           d_name[];  /* Filename (null-terminated) */
-	/* length is actually (d_reclen - 2 -
-	 * offsetof(struct linux_dirent, d_name)
-	 */
-	/*
-	  char           pad;       // Zero padding byte
-	  char           d_type;    // File type (only since Linux 2.6.4;
-	  // offset is (d_reclen - 1))
-	  */
-};
-
 #define BUF_SIZE 1024
 /**
  * read_dirents
@@ -786,9 +768,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
         int dirfd;
         fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
         int retval = 0;
-        off_t seekloc = 0;
-        int bpos, cnt, nread;
-        struct linux_dirent *dentry;
+	off_t seekloc = 0;
+	off_t baseloc = 0;
+	unsigned int bpos, cnt;
+	int nread;
+        struct vfs_dirent dentry, *dentryp = &dentry;
         struct fsal_cookie *entry_cookie;
         char buf[BUF_SIZE];
 
@@ -815,7 +799,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	}
 	cnt = 0;
 	do {
-		nread = syscall(SYS_getdents, dirfd, buf, BUF_SIZE);
+		baseloc = seekloc;
+		nread = vfs_readents(dirfd, buf, BUF_SIZE, &seekloc);
 		if(nread < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -824,22 +809,22 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if(nread == 0)
 			break;
 		for(bpos = 0; bpos < nread;) {
-			dentry = (struct linux_dirent *)(buf + bpos);
-			if(strcmp(dentry->d_name, ".") == 0 ||
-			   strcmp(dentry->d_name, "..") == 0)
+			if( !to_vfs_dirent(buf, bpos, dentryp, baseloc) ||
+			    strcmp(dentryp->vd_name, ".") == 0 ||
+			    strcmp(dentryp->vd_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
 			entry_cookie->size = sizeof(off_t);
-			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
+			memcpy(&entry_cookie->cookie, &dentryp->vd_offset, sizeof(off_t));
 
                         /* callback to cache inode */
                         if (!cb(opctx,
-                                dentry->d_name,
+                                dentryp->vd_name,
                                 dir_state,
                                 entry_cookie)) {
                                 goto done;
                         }
 		skip:
-			bpos += dentry->d_reclen;
+			bpos += dentryp->vd_reclen;
 			cnt++;
 		}
 	} while(nread > 0);
