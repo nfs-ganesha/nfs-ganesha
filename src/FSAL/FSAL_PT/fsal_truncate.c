@@ -129,19 +129,21 @@ PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
               fd,length );
     rc = ptfsal_ftruncate(p_context, fd, length);
     errsv = errno;
-    /* convert return code */
+
+    /* Before checking for truncate error, close the fd we opened */
+    file_desc.fd = fd;
+    file_desc.export_id = fsi_export_context->pt_export_id; 
+    file_desc.uid = fsi_op_context->credential.user;
+    file_desc.gid = fsi_op_context->credential.group;
+    PTFSAL_close(&file_desc);
+
+    /* Now check ftruncate and convert return code */
     if(rc) {
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
     }
-
-    /* Close the fd we opened */
-    file_desc.fd = fd;
-    file_desc.export_id = fsi_export_context->pt_export_id; 
-    file_desc.uid = fsi_op_context->credential.user;
-    file_desc.gid = fsi_op_context->credential.group;
   }
 
   /* Optionally retrieve attributes */
