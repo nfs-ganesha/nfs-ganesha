@@ -110,14 +110,14 @@
  *      drop both the entry and queue lock, call pthread_yield, and
  *      reacquire the entry lock before continuing with disposal.
  *    - A thread wishing to operate on an entry picked from a given
- *      queue fragment must lock that queue fragment, find the entry,
+ *      queue partition must lock that queue partition, find the entry,
  *      and increase its reference count by one.  It must then store a
  *      pointer to the entry and release the queue lock before
  *      acquiring the entry lock.  If the LRU_ENTRY_CONDEMNED bit is
  *      set, it must relinquish its lock on the entry and attempt no
  *      further access to it.  Otherwise, it must examine the flags
  *      and lane stored in the entry to determine the current queue
- *      fragment containing it, rather than assuming that the original
+ *      partition containing it, rather than assuming that the original
  *      location is still valid.
  */
 
@@ -220,7 +220,8 @@ static struct lru_thread_state
 /**
  * @brief Initialize a single base queue.
  *
- * This function initializes a single queue fragment (a half-lane)
+ * This function initializes a single queue partition (L1, L1 pinned, L2,
+ * etc)
  */
 
 static inline void
@@ -235,7 +236,7 @@ lru_init_queue(struct lru_q_base *q)
  * @brief Return a pointer to the appropriate queue
  *
  * This function returns a pointer to the appropriate LRU queue
- * fragment corresponding to the given flags and lane.
+ * partition corresponding to the given flags and lane.
  *
  * @param[in] flags  May be any combination of 0, LRU_ENTRY_PINNED,
  *                   and LRU_ENTRY_L2 or'd together.
@@ -282,7 +283,7 @@ lru_lane_of_entry(cache_entry_t *entry)
 }
 
 /**
- * @brief Insert an entry into the specified queue fragment
+ * @brief Insert an entry into the specified queue partition
  *
  * This function determines the queue corresponding to the supplied
  * lane and flags, inserts the entry into that queue, and updates the
@@ -351,7 +352,7 @@ lru_remove_entry(cache_inode_lru_t *lru)
 }
 
 /**
- * @brief Move an entry from one queue fragment to another
+ * @brief Move an entry from one queue partition to another
  *
  * This function moves an entry from the queue containing it to the
  * queue specified by the lane and flags.  The entry MUST be locked
@@ -359,7 +360,7 @@ lru_remove_entry(cache_inode_lru_t *lru)
  *
  * @param[in] lru   The entry to move
  * @param[in] flags As accepted by lru_select_queue
- * @param[in] lane  The lane identifying the fragment
+ * @param[in] lane  The lane identifying the partition
  */
 
 static inline void
@@ -472,7 +473,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
  * returns an lru entry removed from the queue system and which we are
  * permitted to dispose or recycle.
  *
- * @param[in] q  The queue fragment from which to reap.
+ * @param[in] q  The queue partition from which to reap.
  */
 
 static inline cache_inode_lru_t *
@@ -609,7 +610,7 @@ lru_thread_delay_ms(unsigned long ms)
  *    temporarily disabled, re-enable it.
  *
  * This function uses the lock discipline for functions accessing LRU
- * entries through a queue fragment.
+ * entries through a queue partition.
  *
  * @param[in] arg A void pointer, currently ignored.
  *
@@ -764,12 +765,12 @@ lru_thread(void *arg __attribute__((unused)))
                                                          cache_inode_lru_t,
                                                          q))) {
                               /* We currently hold the lane queue
-                                 fragment mutex.  Due to lock
+                                 partition mutex.  Due to lock
                                  ordering, we are forbidden from
                                  acquiring the LRU mutex directly.
                                  therefore, we increase the reference
                                  count of the entry and drop the
-                                 queue fragment mutex. */
+                                 queue partition mutex. */
 
                               atomic_inc_int64_t(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
@@ -804,7 +805,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
-                                      in this queue fragment any more. */
+                                      in this queue partition any more. */
                                    continue;
                               }
 
@@ -831,7 +832,7 @@ lru_thread(void *arg __attribute__((unused)))
                               pthread_mutex_unlock(&lru->mtx);
                               ++workdone;
                               /* Reacquire the lock on the queue
-                                 fragment for the next run through
+                                 partition for the next run through
                                  the loop. */
                               pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                          }
@@ -1155,7 +1156,7 @@ out:
 /**
  * @brief Function to let the state layer pin an entry
  *
- * This function moves the given entry to the pinned queue fragment
+ * This function moves the given entry to the pinned queue partition
  * for its lane.  If the entry is already pinned, it is a no-op.
  *
  * @param[in] entry  The entry to be moved
@@ -1213,7 +1214,7 @@ cache_inode_unpinnable(cache_entry_t *entry)
  * @brief Function to let the state layer rlease a pin
  *
  * This function moves the given entry out of the pinned queue
- * fragment for its lane.  If the entry is not pinned, it is a
+ * partition for its lane.  If the entry is not pinned, it is a
  * no-op.
  *
  * @param[in] entry  The entry to be moved
