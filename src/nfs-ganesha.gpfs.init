@@ -36,6 +36,7 @@ PROG=gpfs.ganesha.nfsd
 LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
+EPOCHFILE=/var/lib/nfs/ganesha-epoch
 
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 
@@ -194,6 +195,17 @@ start() {
 
 	# Start the Ganesha daemon only if it is not running
 	if [ $start_ganesha  -eq 1 ]; then
+		which ctdb &> /dev/null
+		if [ $? -eq 0 ]; then
+			prev_cntr=0
+			[ -f $EPOCHFILE ] && prev_cntr=$(cat $EPOCHFILE)
+			[ -z $prev_cntr ] && prev_cntr=0
+			new_cntr=$(( prev_cntr + 1 ))
+			#Epoch = (ctdb node number << 16) | (new_cntr & 0xFFFF)
+			ganesha_epoch=$(( `ctdb pnn | awk -F : '{print $2}'` << 16 | new_cntr & 0xFFFF ))
+			echo $new_cntr > $EPOCHFILE
+			OPTIONS="$OPTIONS -E $ganesha_epoch"
+		fi
 		echo  -n $"Starting $prog: "
 		daemon numactl -i all $PATHPROG $OPTIONS
 		RETVAL=$?
