@@ -67,6 +67,22 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
          so deffer it to the separate thread. */
       arg->event_process_func = dumb_fsal_up_invalidate_step2;
     }
+  if(arg->event_type == FSAL_UP_EVENT_UPDATE)
+  {
+
+   /* Invalidate first without scheduling */
+    arg->event_process_func(&arg->event_data);
+
+    if ((arg->event_data.type.update.upu_flags & FSAL_UP_NLINK) &&
+        (arg->event_data.type.update.upu_stat_buf.st_nlink == 0) )
+    {
+      /* upu_flags must be set or st_nlink is unreliable. */
+      /* Step2 where we perform close; which could be expensive operation
+         so defer it to the separate thread. */
+      arg->event_process_func = dumb_fsal_up_invalidate_step2;
+    } else
+            return ret;
+  }
 
   /* Now queue them for further process. */
   LogFullDebug(COMPONENT_FSAL_UP, "Schedule %p", arg);
