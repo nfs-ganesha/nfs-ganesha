@@ -247,5 +247,12 @@ uint32_t unix2fsal_mode(mode_t unix_mode);
 
 void display_fsinfo(struct fsal_staticfsinfo_t *info);
 
+/**
+ * @brief If we don't know how big a buffer we want for a link, use
+ * this value.
+ */
+
+static const size_t fsal_default_linksize = 4096;
+
 #endif /* !FSAL_H */
 /** @} */

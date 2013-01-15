@@ -573,8 +573,7 @@ err:
 
 static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	struct zfs_fsal_obj_handle *myself = NULL;
@@ -592,18 +591,32 @@ static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
         cred.uid = opctx->creds->caller_uid;
 	cred.gid = opctx->creds->caller_gid;
 
-        retlink = libzfswrap_readlink( tank_get_root_pvfs( obj_hdl->export ),
-                                       &cred,
-                                       myself->handle->zfs_handle,
-                                       link_content,
-                                       *link_len ) ;
+	/* The link length should be cached in the file handle */
 
-	if(retlink ) {
-		fsal_error = posix2fsal_error(retlink);
-                goto out ;        
+	link_content->len = obj_hdl->attributes.filesize ?
+		(obj_hdl->attributes.filesize + 1) :
+		fsal_default_linksize;
+	link_content->addr = gsh_malloc(link_content->len);
+
+	if (link_content->addr == NULL) {
+		return fsalstat(ERR_FSAL_NOMEM, 0);
 	}
 
-	*link_len = strlen( link_content ) ;
+	retlink = libzfswrap_readlink(tank_get_root_pvfs( obj_hdl->export ),
+				      &cred,
+				      myself->handle->zfs_handle,
+				      link_content->addr,
+				      link_content->len);
+
+	if (retlink) {
+		fsal_error = posix2fsal_error(retlink);
+		gsh_free(link_content->addr);
+		link_content->addr = NULL;
+		link_content->len = 0;
+		goto out;
+	}
+
+	link_content->len = strlen(link_content->addr) + 1;
 out:
 	return fsalstat(fsal_error, retval);	
 }

@@ -77,13 +77,8 @@ nfs_Readlink(nfs_arg_t *arg,
 {
         cache_entry_t *entry = NULL;
         cache_inode_status_t cache_status;
-        /**
-         * @todo ACE: Bogus, fix in callbacification
-         */
-        char symlink_data[1024];
-        char *ptr = NULL;
-        struct gsh_buffdesc link_buffer = {.addr = symlink_data,
-                                           .len  = 1024};
+        struct gsh_buffdesc link_buffer = {.addr = NULL,
+                                           .len  = 0};
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -135,18 +130,9 @@ nfs_Readlink(nfs_arg_t *arg,
                 goto out;
         }
 
-        if ((ptr = gsh_malloc(link_buffer.len+1)) == NULL) {
-                res->res_readlink3.status = NFS3ERR_IO;
-                
-                rc = NFS_REQ_OK;
-                goto out;
-        }
-
-        memcpy(ptr, symlink_data, link_buffer.len);
-        ptr[link_buffer.len] = '\0';
-
         /* Reply to the client */
-        res->res_readlink3.READLINK3res_u.resok.data = ptr;
+        res->res_readlink3.READLINK3res_u.resok.data =
+		link_buffer.addr;
         nfs_SetPostOpAttr(entry,
                           req_ctx,
                           &res->res_readlink3.READLINK3res_u.resok.

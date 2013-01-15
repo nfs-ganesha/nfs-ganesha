@@ -389,24 +389,21 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 /**
  * @brief Retrieve the content of a symlink
  *
- * This function retrieves the content of a symlink, copying it into a
- * user specified buffer.
+ * This function allocates a buffer, copying the symlink content into
+ * it.
  *
- * @param[in]     link_pub    The handle for the link
- * @param[in]     opctx        Request context (user creds, client address etc)
- * @param[out]    content_buf The buffer to which the content are copied
- * @param[in,out] link_len    Length of buffer/length of content
- *                            (including NUL)
- * @param[in]     refresh     true if the underlying content should be
- *                             refreshed.
+ * @param[in]  link_pub    The handle for the link
+ * @param[in]  opctx       Request context (user creds, client address etc)
+ * @param[out] content_buf Buffdesc for symbolic link
+ * @param[in]  refresh     true if the underlying content should be
+ *                         refreshed.
  *
  * @return FSAL status.
  */
 
 static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 				   const struct req_op_context *opctx,
-				   char *content_buf,
-				   size_t *link_len,
+				   struct gsh_buffdesc *content_buf,
 				   bool refresh)
 {
 	/* Generic status return */
@@ -419,8 +416,9 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 		= container_of(link_pub, struct handle, handle);
 	/* Pointer to the Ceph link content */
 	char *content = NULL;
-	/* Size of pathname */
-	size_t size = 0;
+
+	/* Content points into a static buffer in the Ceph client's
+	   cache, so we don't have to free it. */
 
 	rc = ceph_ll_readlink(export->cmount,
 			      link->wire.vi, &content, 0, 0);
@@ -429,15 +427,12 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 		return ceph2fsal_error(rc);
 	}
 
-	size = (strlen(content) + 1);
-	if (size > *link_len) {
-		*link_len = size;
-		return fsalstat(ERR_FSAL_NAMETOOLONG,0);
+	content_buf->len = (strlen(content) + 1);
+	content_buf->addr = gsh_malloc(content_buf->len);
+	if (content_buf->addr == NULL) {
+		return fsalstat(ERR_FSAL_NOMEM, 0);
 	}
-
-	*link_len = size;
-	memcpy(content_buf, content, size);
-
+	memcpy(content_buf->addr, content, content_buf->len);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

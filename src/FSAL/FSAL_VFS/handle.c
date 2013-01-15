@@ -645,8 +645,7 @@ vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	struct vfs_fsal_obj_handle *myself = NULL;
@@ -668,16 +667,21 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                         goto out;
                 }
 	}
-	if(myself->u.symlink.link_content == NULL
-	   || *link_len <= myself->u.symlink.link_size) {
+	if(myself->u.symlink.link_content == NULL) {
 		fsal_error = ERR_FSAL_FAULT; /* probably a better error?? */
 		goto out;
 	}
-	memcpy(link_content,
-	       myself->u.symlink.link_content,
-	       myself->u.symlink.link_size);
 
-	*link_len = myself->u.symlink.link_size;
+	link_content->len = myself->u.symlink.link_size;
+	link_content->addr = gsh_malloc(myself->u.symlink.link_size);
+	if (link_content->addr == NULL) {
+		fsal_error = ERR_FSAL_NOMEM;
+		goto out;
+	}
+	memcpy(link_content->addr,
+	       myself->u.symlink.link_content,
+	       link_content->len);
+
 out:
 	return fsalstat(fsal_error, retval);	
 }
