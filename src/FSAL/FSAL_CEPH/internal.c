@@ -9,7 +9,7 @@
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
@@ -42,32 +42,32 @@
 #include "internal.h"
 
 
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
+#define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
 
 /**
  * The attributes tis FSAL can interpret or supply.
  */
 
 const attrmask_t supported_attributes = (
-        ATTR_SUPPATTR | ATTR_TYPE      | ATTR_SIZE      |
-        ATTR_FSID     | ATTR_FILEID    | ATTR_MODE      |
-        ATTR_NUMLINKS | ATTR_OWNER     | ATTR_GROUP     |
-        ATTR_ATIME    | ATTR_RAWDEV    | ATTR_CTIME     |
-        ATTR_MTIME    | ATTR_SPACEUSED | ATTR_CHGTIME);
+	ATTR_SUPPATTR | ATTR_TYPE      | ATTR_SIZE	|
+	ATTR_FSID     | ATTR_FILEID    | ATTR_MODE	|
+	ATTR_NUMLINKS | ATTR_OWNER     | ATTR_GROUP	|
+	ATTR_ATIME    | ATTR_RAWDEV    | ATTR_CTIME	|
+	ATTR_MTIME    | ATTR_SPACEUSED | ATTR_CHGTIME);
 
 /**
  * The attributes this FSAL can set.
  */
 
 const attrmask_t settable_attributes = (
-        ATTR_MODE     | ATTR_OWNER     | ATTR_GROUP |
-        ATTR_ATIME    | ATTR_CTIME     | ATTR_MTIME);
+	ATTR_MODE     | ATTR_OWNER     | ATTR_GROUP |
+	ATTR_ATIME    | ATTR_CTIME     | ATTR_MTIME);
 
 /**
  * @brief FSAL status from Ceph error
  *
  * This function returns a fsal_status_t with the FSAL error as the
- * major, and the posix error as minor.  (Ceph's error codes are just
+ * major, and the posix error as minor.	 (Ceph's error codes are just
  * negative signed versions of POSIX error codes.)
  *
  * @param[in] ceph_errorcode Ceph error (negative Posix)
@@ -75,123 +75,122 @@ const attrmask_t settable_attributes = (
  * @return FSAL status.
  */
 
-fsal_status_t
-ceph2fsal_error(const int ceph_errorcode)
+fsal_status_t ceph2fsal_error(const int ceph_errorcode)
 {
-        fsal_status_t status;
-        status.minor = -ceph_errorcode;
+	fsal_status_t status;
+	status.minor = -ceph_errorcode;
 
-        switch (-ceph_errorcode) {
+	switch (-ceph_errorcode) {
 
-        case 0:
-                status.major = ERR_FSAL_NO_ERROR;
-                break;
+	case 0:
+		status.major = ERR_FSAL_NO_ERROR;
+		break;
 
-        case EPERM:
-                status.major = ERR_FSAL_PERM;
-                break;
+	case EPERM:
+		status.major = ERR_FSAL_PERM;
+		break;
 
-        case ENOENT:
-                status.major = ERR_FSAL_NOENT;
-                break;
+	case ENOENT:
+		status.major = ERR_FSAL_NOENT;
+		break;
 
-        case ECONNREFUSED:
-        case ECONNABORTED:
-        case ECONNRESET:
-        case EIO:
-        case ENFILE:
-        case EMFILE:
-        case EPIPE:
-                status.major = ERR_FSAL_IO;
-                break;
+	case ECONNREFUSED:
+	case ECONNABORTED:
+	case ECONNRESET:
+	case EIO:
+	case ENFILE:
+	case EMFILE:
+	case EPIPE:
+		status.major = ERR_FSAL_IO;
+		break;
 
-        case ENODEV:
-        case ENXIO:
-                status.major = ERR_FSAL_NXIO;
-                break;
+	case ENODEV:
+	case ENXIO:
+		status.major = ERR_FSAL_NXIO;
+		break;
 
-        case EBADF:
-                /**
-                 * @todo: The EBADF error also happens when file is
-                 *        opened for reading, and we try writting in
-                 *        it.  In this case, we return
-                 *        ERR_FSAL_NOT_OPENED, but it doesn't seems to
-                 *        be a correct error translation.
-                 */
-                status.major = ERR_FSAL_NOT_OPENED;
-                break;
+	case EBADF:
+		/**
+		 * @todo: The EBADF error also happens when file is
+		 *	  opened for reading, and we try writting in
+		 *	  it.  In this case, we return
+		 *	  ERR_FSAL_NOT_OPENED, but it doesn't seems to
+		 *	  be a correct error translation.
+		 */
+		status.major = ERR_FSAL_NOT_OPENED;
+		break;
 
-        case ENOMEM:
-                status.major = ERR_FSAL_NOMEM;
-                break;
+	case ENOMEM:
+		status.major = ERR_FSAL_NOMEM;
+		break;
 
-        case EACCES:
-                status.major = ERR_FSAL_ACCESS;
-                break;
+	case EACCES:
+		status.major = ERR_FSAL_ACCESS;
+		break;
 
-        case EFAULT:
-                status.major = ERR_FSAL_FAULT;
-                break;
+	case EFAULT:
+		status.major = ERR_FSAL_FAULT;
+		break;
 
-        case EEXIST:
-                status.major = ERR_FSAL_EXIST;
-                break;
+	case EEXIST:
+		status.major = ERR_FSAL_EXIST;
+		break;
 
-        case EXDEV:
-                status.major = ERR_FSAL_XDEV;
-                break;
+	case EXDEV:
+		status.major = ERR_FSAL_XDEV;
+		break;
 
-        case ENOTDIR:
-                status.major = ERR_FSAL_NOTDIR;
-                break;
+	case ENOTDIR:
+		status.major = ERR_FSAL_NOTDIR;
+		break;
 
-        case EISDIR:
-                status.major = ERR_FSAL_ISDIR;
-                break;
+	case EISDIR:
+		status.major = ERR_FSAL_ISDIR;
+		break;
 
-        case EINVAL:
-                status.major = ERR_FSAL_INVAL;
-                break;
+	case EINVAL:
+		status.major = ERR_FSAL_INVAL;
+		break;
 
-        case EFBIG:
-                status.major = ERR_FSAL_FBIG;
-                break;
+	case EFBIG:
+		status.major = ERR_FSAL_FBIG;
+		break;
 
-        case ENOSPC:
-                status.major = ERR_FSAL_NOSPC;
-                break;
+	case ENOSPC:
+		status.major = ERR_FSAL_NOSPC;
+		break;
 
-        case EMLINK:
-                status.major = ERR_FSAL_MLINK;
-                break;
+	case EMLINK:
+		status.major = ERR_FSAL_MLINK;
+		break;
 
-        case EDQUOT:
-                status.major = ERR_FSAL_DQUOT;
-                break;
+	case EDQUOT:
+		status.major = ERR_FSAL_DQUOT;
+		break;
 
-        case ENAMETOOLONG:
-                status.major = ERR_FSAL_NAMETOOLONG;
-                break;
+	case ENAMETOOLONG:
+		status.major = ERR_FSAL_NAMETOOLONG;
+		break;
 
-        case ENOTEMPTY:
-                status.major = ERR_FSAL_NOTEMPTY;
-                break;
+	case ENOTEMPTY:
+		status.major = ERR_FSAL_NOTEMPTY;
+		break;
 
-        case ESTALE:
-                status.major = ERR_FSAL_STALE;
-                break;
+	case ESTALE:
+		status.major = ERR_FSAL_STALE;
+		break;
 
-        case EAGAIN:
-        case EBUSY:
-                status.major = ERR_FSAL_DELAY;
-                break;
+	case EAGAIN:
+	case EBUSY:
+		status.major = ERR_FSAL_DELAY;
+		break;
 
-        default:
-                status.major = ERR_FSAL_SERVERFAULT;
-                break;
-        }
+	default:
+		status.major = ERR_FSAL_SERVERFAULT;
+		break;
+	}
 
-        return status;
+	return status;
 }
 
 /**
@@ -204,57 +203,56 @@ ceph2fsal_error(const int ceph_errorcode)
  * @param[out] fsalattr FSAL attributes
  */
 
-void
-ceph2fsal_attributes(const struct stat *buffstat,
-                     struct attrlist *fsalattr)
+void ceph2fsal_attributes(const struct stat *buffstat,
+			  struct attrlist *fsalattr)
 {
-        FSAL_CLEAR_MASK(fsalattr->mask);
+	FSAL_CLEAR_MASK(fsalattr->mask);
 
-        /* Fills the output struct */
-        fsalattr->type = posix2fsal_type(buffstat->st_mode);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
+	/* Fills the output struct */
+	fsalattr->type = posix2fsal_type(buffstat->st_mode);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
 
-        fsalattr->filesize = buffstat->st_size;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
+	fsalattr->filesize = buffstat->st_size;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
 
-        fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
+	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
 
-        fsalattr->fileid = buffstat->st_ino;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
+	fsalattr->fileid = buffstat->st_ino;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
 
-        fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
+	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
 
-        fsalattr->numlinks = buffstat->st_nlink;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
+	fsalattr->numlinks = buffstat->st_nlink;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
 
-        fsalattr->owner = buffstat->st_uid;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
+	fsalattr->owner = buffstat->st_uid;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
 
-        fsalattr->group = buffstat->st_gid;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
+	fsalattr->group = buffstat->st_gid;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
 
-        fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
+	fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
 
-        fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
+	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
 
-        fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
+	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
-        fsalattr->chgtime
+	fsalattr->chgtime
 		= posix2fsal_time(MAX_2(buffstat->st_mtime,
 					buffstat->st_ctime), 0);
-        fsalattr->change = fsalattr->chgtime.tv_sec;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
+	fsalattr->change = fsalattr->chgtime.tv_sec;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
-        fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
-        FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
+	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+	FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
 
-        fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
-        FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
+	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
 }
 
 /**
@@ -271,50 +269,49 @@ ceph2fsal_attributes(const struct stat *buffstat,
  * @return 0 on success, negative error codes on failure.
  */
 
-int
-construct_handle(const struct stat *st,
-                 struct export *export,
-                 struct handle **obj)
+int construct_handle(const struct stat *st,
+		     struct export *export,
+		     struct handle **obj)
 {
-        /* Poitner to the handle under construction */
-        struct handle *constructing = NULL;
-        /* Return code */
-        int rc = 0;
+	/* Poitner to the handle under construction */
+	struct handle *constructing = NULL;
+	/* Return code */
+	int rc = 0;
 
-        *obj = NULL;
+	*obj = NULL;
 
-        constructing = gsh_calloc(1, sizeof(struct handle));
-        if (constructing == NULL) {
-                return -ENOMEM;
-        }
+	constructing = gsh_calloc(1, sizeof(struct handle));
+	if (constructing == NULL) {
+		return -ENOMEM;
+	}
 
-        constructing->wire.vi.ino.val = st->st_ino;
-        constructing->wire.vi.snapid.val = st->st_dev;
+	constructing->wire.vi.ino.val = st->st_ino;
+	constructing->wire.vi.snapid.val = st->st_dev;
 
-        rc = ceph_ll_connectable_x(export->cmount,
-                                   constructing->wire.vi,
-                                   &constructing->wire.parent_ino,
-                                   &constructing->wire.parent_hash);
+	rc = ceph_ll_connectable_x(export->cmount,
+				   constructing->wire.vi,
+				   &constructing->wire.parent_ino,
+				   &constructing->wire.parent_hash);
 
-        if (rc < 0) {
-                gsh_free(constructing);
-                return rc;
-        }
+	if (rc < 0) {
+		gsh_free(constructing);
+		return rc;
+	}
 
-        ceph2fsal_attributes(st, &constructing->handle.attributes);
+	ceph2fsal_attributes(st, &constructing->handle.attributes);
 
-        rc = -(fsal_obj_handle_init(&constructing->handle,
-                                    &export->export,
-                                    constructing->handle.attributes.type));
+	rc = -(fsal_obj_handle_init(&constructing->handle,
+				    &export->export,
+				    constructing->handle.attributes.type));
 
 
-        if (rc < 0) {
-                gsh_free(constructing);
-                return rc;
-        }
+	if (rc < 0) {
+		gsh_free(constructing);
+		return rc;
+	}
 
-        *obj = constructing;
+	*obj = constructing;
 
-        return 0;
+	return 0;
 }
 
