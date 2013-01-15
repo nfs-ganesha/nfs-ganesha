@@ -506,12 +506,12 @@ lru_try_reap_entry(struct lru_q_base *q)
           return NULL;
      }
 
-     atomic_inc_int64_t(&lru->refcount);
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
+     ++(lru->refcount);
      if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
          (lru->flags & LRU_ENTRY_KILLED)) {
-          atomic_dec_int64_t(&lru->refcount);
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -520,7 +520,7 @@ lru_try_reap_entry(struct lru_q_base *q)
           /* Any more than the sentinel and our reference count
              and someone else has a reference.  Plus someone may
              have moved it to the pin queue while we were waiting. */
-          atomic_dec_int64_t(&lru->refcount);
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -533,7 +533,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      if (lru->refcount > LRU_SENTINEL_REFCOUNT + 1) {
           /* Someone took a reference while we were waiting for the
              queue.  */
-          atomic_dec_int64_t(&lru->refcount);
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           pthread_mutex_unlock(&q->mtx);
           return NULL;
@@ -838,7 +838,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  incremented it.) */
 
                               pthread_mutex_lock(&lru->mtx);
-                              atomic_dec_int64_t(&lru->refcount);
+                              --(lru->refcount);
                               if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
                                   (lru->flags & LRU_ENTRY_PINNED) ||
                                   (lru->flags & LRU_ENTRY_L2) ||
@@ -1271,7 +1271,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
      entry->lru.pin_refcnt++;
 
      /* Also take an LRU reference */
-     atomic_inc_int64_t(&entry->lru.refcount);
+     ++(entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1323,7 +1323,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      }
 
      /* Also release an LRU reference */
-     atomic_dec_int64_t(&entry->lru.refcount);
+     --(entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1388,7 +1388,7 @@ cache_inode_lru_ref(cache_entry_t *entry,
      assert(!((flags & LRU_REQ_INITIAL) &&
               (flags & LRU_REQ_SCAN)));
 
-     atomic_inc_int64_t(&entry->lru.refcount);
+     ++(entry->lru.refcount);
 
      /* Move an entry forward if this is an initial reference. */
 
@@ -1471,7 +1471,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
           pthread_mutex_lock(&q->mtx);
-          atomic_dec_int64_t(&entry->lru.refcount);
+          --(entry->lru.refcount);
           if (entry->lru.refcount == 0) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
@@ -1501,7 +1501,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
      } else {
           /* We may decrement the reference count without the queue
              lock, since it cannot go to 0. */
-          atomic_dec_int64_t(&entry->lru.refcount);
+          --(entry->lru.refcount);
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);
