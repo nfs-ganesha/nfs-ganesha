@@ -400,6 +400,7 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %{_includedir}/tirpc/misc/rbtree_x.h
 %ghost %{_includedir}/tirpc/misc/abstract_atomic.h
 %ghost %{_includedir}/tirpc/misc/epoll.h
+%ghost %{_includedir}/tirpc/misc/os_epoll.h
 %ghost %{_includedir}/tirpc/misc/portable.h
 %ghost %{_includedir}/tirpc/misc/socket.h
 %ghost %{_includedir}/tirpc/misc/stdio.h
