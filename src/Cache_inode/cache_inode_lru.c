@@ -52,6 +52,8 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
+#include "cache_inode_weakref.h"
+#include "sal_functions.h"
 
 /**
  *
@@ -159,6 +161,16 @@ struct lru_q_
 };
 
 /**
+ * Cleanup queue variant (pinned partition not needed).
+ */
+
+struct lru_cleanup_q
+{
+     struct lru_q_base lru;
+     CACHE_PAD(0);
+};
+
+/**
  * A multi-level LRU algorithm inspired by MQ [Zhou].  Transition from
  * L1 to L2 implies various checks (open files, etc) have been
  * performed, so ensures they are performed only once.  A
@@ -169,6 +181,12 @@ struct lru_q_
 
 static struct lru_q_ LRU_1[LRU_N_Q_LANES];
 static struct lru_q_ LRU_2[LRU_N_Q_LANES];
+
+/**
+ * Cleanup queue.  Contains entries marked for disposal from request
+ * or upcall context
+ */
+static struct lru_cleanup_q LRU_CQ[LRU_N_Q_LANES];
 
 /**
  * This is a global counter of files opened by cache_inode.  This is
@@ -540,6 +558,34 @@ static const uint32_t S_NSECS = 1000000000UL; /* nsecs in 1s */
 static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
 
 /**
+ * @brief Push a cache_inode_killed entry to the cleanup queue
+ * for out-of-line cleanup
+ *
+ * This function appends entry to the appropriate lane of the
+ * global cleanup queue, and marks the entry.
+ *
+ * @param[in] entry  The entry to clean
+ */
+void cache_inode_lru_cleanup_push(cache_entry_t *entry)
+{
+     uint32_t lane = lru_lane_of_entry(entry);
+     struct lru_q_base *cq = NULL;
+
+     pthread_mutex_lock(&entry->lru.mtx);
+
+     cq = &LRU_CQ[lane].lru;
+     pthread_mutex_lock(&cq->mtx);
+     glist_add(&cq->q, &entry->lru.cq);
+     ++(cq->size);
+     pthread_mutex_unlock(&cq->mtx);
+
+     /* mark entry */
+     entry->lru.flags |= LRU_ENTRY_CLEANUP;
+
+     pthread_mutex_unlock(&entry->lru.mtx);
+}
+
+/**
  * @brief Sleep in the LRU thread for a specified time
  *
  * This function should only be called from the LRU thread.  It sleeps
@@ -628,6 +674,8 @@ lru_thread(void *arg __attribute__((unused)))
      bool extremis = false;
      /* True if we were explicitly woke. */
      bool woke = false;
+     /* Finalized */
+     uint32_t n_finalized;
 
      SetNameFunction("lru_thread");
 
@@ -872,6 +920,42 @@ lru_thread(void *arg __attribute__((unused)))
                   "open_fd_count: %"PRIu64"  t_count:%"PRIu64"\n",
                   (uint64_t) open_fd_count, t_count);
 
+          /* Process LRU cleanup queue */
+          n_finalized = 0;
+          for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+              struct lru_q_base *cq = &LRU_CQ[lane].lru;;
+              cache_inode_lru_t *lru;
+              cache_entry_t *entry;
+              do {
+                  pthread_mutex_lock(&LRU_CQ[lane].lru.mtx);
+                  lru = glist_first_entry(
+                      &LRU_CQ[lane].lru.q, cache_inode_lru_t, cq);
+                  if (! lru) {
+                      pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+                      break;
+                  }
+                  /* XXX it should not be necessary to hold lru->mtx, which
+                   * avoids multiple lock operations required to take it
+                   * before taking the queue lock */
+                  glist_del(&lru->cq);
+                  --(cq->size);
+                  pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+
+                  /* finalize */
+                  entry = container_of(lru, cache_entry_t, lru);
+                  state_wipe_file(entry);
+                  cache_inode_weakref_delete(&entry->weakref);
+                  /* Idempotently return the sentry reference.  (This function
+                     will only decrement the refcount once, no matter how many
+                     times it's called. */
+                  cache_inode_lru_kill(entry);
+                  n_finalized++;
+              } while (lru);
+          }
+
+          LogDebug(COMPONENT_CACHE_INODE_LRU,
+                   "LRU cleanup, reclaimed %d entries", n_finalized);
+
           woke = lru_thread_delay_ms(lru_state.threadwait);
      }
 
@@ -1006,6 +1090,8 @@ cache_inode_lru_pkginit(void)
           lru_init_queue(&LRU_2[ix].lru);
           /* L2, pinned */
           lru_init_queue(&LRU_2[ix].lru_pinned);
+          /* Cleanup */
+          lru_init_queue(&LRU_CQ[ix].lru);
      }
 
      if (pthread_attr_init(&attr_thr) != 0) {

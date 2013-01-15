@@ -123,19 +123,24 @@ static const uint32_t LRU_ENTRY_UNPINNABLE = 0x0008;
 static const uint32_t LRU_ENTRY_KILLED = 0x0010;
 
 /**
+ * The inode is marked for out-of-line cleanup (may still be reachable)
+ */
+static const uint32_t LRU_ENTRY_CLEANUP = 0x0020;
+
+/**
  * The caller is fetching an initial reference
  */
-static const uint32_t LRU_REQ_INITIAL = 0x0020;
+static const uint32_t LRU_REQ_INITIAL = 0x0040;
 
 /**
  * The caller is scanning the entry (READDIR)
  */
-static const uint32_t LRU_REQ_SCAN = 0x0040;
+static const uint32_t LRU_REQ_SCAN = 0x0080;
 
 /**
  * The caller holds the lock on the LRU entry.
  */
-static const uint32_t LRU_FLAG_LOCKED = 0x0080;
+static const uint32_t LRU_FLAG_LOCKED = 0x0100;
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -169,7 +174,12 @@ cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry,
 cache_inode_status_t cache_inode_lru_ref(
 	cache_entry_t *entry,
 	uint32_t flags) __attribute__((warn_unused_result));
+
+
+/* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);
+void cache_inode_lru_cleanup_push(cache_entry_t *entry);
+
 void cache_inode_lru_unref(cache_entry_t *entry,
 				  uint32_t flags);
 void lru_wake_thread(uint32_t flags);
