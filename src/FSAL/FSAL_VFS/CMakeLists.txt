@@ -26,6 +26,7 @@ add_library(fsalvfs SHARED ${fsalvfs_LIB_SRCS})
 target_link_libraries(fsalvfs
   gos
   pnfs_panfs
+  ${SYSTEM_LIBRARIES}
 )
 
 set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)

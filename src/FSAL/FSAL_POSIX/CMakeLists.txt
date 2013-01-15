@@ -18,7 +18,7 @@ add_library(fsalposix MODULE ${fsalposix_LIB_SRCS})
 
 target_link_libraries(fsalposix
   nodedb
-  ${CMAKE_THREAD_LIBS_INIT}
+  ${SYSTEM_LIBRARIES}
 )
 
 set_target_properties(fsalposix PROPERTIES VERSION 4.2.0 SOVERSION 4)

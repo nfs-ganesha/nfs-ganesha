@@ -31,7 +31,7 @@ SET(fsalgpfsext_LIB_SRCS
 
 add_library(fsalgpfsext SHARED ${fsalgpfsext_LIB_SRCS})
 
-target_link_libraries(fsalgpfs fsalgpfsext)
+target_link_libraries(fsalgpfs fsalgpfsext ${SYSTEM_LIBRARIES})
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
