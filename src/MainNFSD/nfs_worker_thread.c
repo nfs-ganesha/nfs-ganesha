@@ -1351,25 +1351,6 @@ void *worker_thread(void *IndexArg)
   /* Worker's infinite loop */
   while(1)
     {
-      /* update memory and FSAL stats,
-       * twice often than stats display.
-       */
-      if(time(NULL) - worker_data->stats.last_stat_update >
-         (int)nfs_param.core_param.stats_update_delay / 2)
-        {
-
-/**
- * @todo disable stats for now.  with new api etc. these are
- * different.  btw, why not take this at core level and save
- * duplication in every fsal??
- */
-/*           FSAL_get_stats(&worker_data->stats.fsal_stats, false); */
-
-          /* reset last stat */
-          worker_data->stats.last_stat_update = time(NULL);
-        }
-
-
       LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu PAUSE/SHUTDOWN check",
                    worker_index);
 
