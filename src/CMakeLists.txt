@@ -86,6 +86,7 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
+option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 
 # TI-RPC former option now on?  Do we really need this anymore?
 # from Matt, NO.  deprecate
@@ -166,6 +167,11 @@ if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
+if(USE_DBUS_STATS AND NOT USE_DBUS)
+  message(WARNING "The DBUS server statistics needs DBUS.  Enabling DBUS")
+  set(USE_DBUS ON)
+endif(USE_DBUS_STATS AND NOT USE_DBUS)
+
 if(USE_9P_RDMA AND NOT USE_9P)
   message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
   set(USE_9P ON)
@@ -184,7 +190,7 @@ check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
 
-# X_ATTRD requires the kernel to have xattrs...
+# X_ATTRD requires the kernel to have xattrs...DBUS_STATS
 if(NOT _NO_XATTRD)
   check_include_files("unistd.h;sys/xattr.h" HAVE_XATTR_H)
   if(NOT HAVE_XATTR_H)
@@ -516,6 +522,7 @@ message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
+message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_TIRPC_IPV6 = ${USE_TIRPC_IPV6}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
@@ -603,6 +610,11 @@ set(USE_DBUS ${USE_DBUS}
 set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
   CACHE BOOL
    "enable callback simulator thread"
+   FORCE)
+
+set(USE_DBUS_STATS ${USE_DBUS_STATS}
+  CACHE BOOL
+   "enable DBUS interface for server statistics"
    FORCE)
 
 set(USE_TIRPC_IPV6 ${USE_TIRPC_IPV6}

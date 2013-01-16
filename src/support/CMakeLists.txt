@@ -2,6 +2,13 @@ include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
 )
 
+if(USE_DBUS_STATS)
+  include_directories(
+    ${DBUS_INCLUDE_DIR}
+    ${DBUS_ARCH_INCLUDE_DIR}
+    )
+endif(USE_DBUS_STATS)
+
 ########### next target ###############
 
 SET(test_timespec_SRCS
@@ -106,6 +113,13 @@ if(APPLE)
     misc.c
     )
 endif(APPLE)
+
+if(USE_DBUS_STATS)
+  set(support_STAT_SRCS
+    ${support_STAT_SRCS}
+    server_stats.c
+    )
+endif(USE_DBUS_STATS)
 
 add_library(support STATIC ${support_STAT_SRCS})
 
