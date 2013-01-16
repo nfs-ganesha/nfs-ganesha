@@ -614,7 +614,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 {
         fsal_status_t status;
 
-        status =  GPFSFSAL_setattrs(obj_hdl, opctx, attrs, NULL);
+        status =  GPFSFSAL_setattrs(obj_hdl, opctx, attrs);
 
 	return(status);
 }
