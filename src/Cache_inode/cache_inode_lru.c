@@ -509,8 +509,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
      ++(lru->refcount);
-     if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
-         (lru->flags & LRU_ENTRY_KILLED)) {
+     if (lru->flags & LRU_ENTRY_POISON) {
           --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
@@ -573,14 +572,17 @@ void cache_inode_lru_cleanup_push(cache_entry_t *entry)
 
      pthread_mutex_lock(&entry->lru.mtx);
 
-     cq = &LRU_CQ[lane].lru;
-     pthread_mutex_lock(&cq->mtx);
-     glist_add(&cq->q, &entry->lru.cq);
-     ++(cq->size);
-     pthread_mutex_unlock(&cq->mtx);
+     /* idempotent */
+     if (! (entry->lru.flags & LRU_ENTRY_CLEANUP)) {
+         cq = &LRU_CQ[lane].lru;
+         pthread_mutex_lock(&cq->mtx);
+         glist_add(&cq->q, &entry->lru.cq);
+         ++(cq->size);
+         pthread_mutex_unlock(&cq->mtx);
 
-     /* mark entry */
-     entry->lru.flags |= LRU_ENTRY_CLEANUP;
+         /* mark entry */
+         entry->lru.flags |= LRU_ENTRY_CLEANUP;
+     }
 
      pthread_mutex_unlock(&entry->lru.mtx);
 }
@@ -615,11 +617,68 @@ lru_thread_delay_ms(unsigned long ms)
 }
 
 /**
+ * @brief Cache entry deferred cleanup helper routine.
+ *
+ * This function consumes the LRU_CQ queue, disposing state and
+ * returning sentinel refs.  Final destruction of the entries
+ * of course happens when their refcounts reach 0.
+ *
+ * @param[in] ms The time to sleep, in milliseconds.
+ *
+ * @retval false if the thread wakes by timeout.
+ * @retval true if the thread wakes by signal.
+ */
+
+static inline uint32_t
+_cache_inode_lru_cleanup(void)
+{
+    uint32_t n_finalized = 0;
+    uint32_t lane = 0;
+
+    for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+        cache_inode_lru_t *lru;
+        cache_entry_t *entry;
+        struct lru_q_base *cq = &LRU_CQ[lane].lru;;
+
+        do {
+            pthread_mutex_lock(&LRU_CQ[lane].lru.mtx);
+            lru = glist_first_entry(
+                &LRU_CQ[lane].lru.q, cache_inode_lru_t, cq);
+            if (! lru) {
+                pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+                break;
+            }
+            /* XXX it should not be necessary to hold lru->mtx, which
+             * avoids multiple lock operations required to take it
+             * before taking the queue lock */
+            glist_del(&lru->cq);
+            --(cq->size);
+            pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+
+            /* finalize */
+            entry = container_of(lru, cache_entry_t, lru);
+            state_wipe_file(entry);
+            cache_inode_weakref_delete(&entry->weakref);
+            /* Idempotently return the sentry reference.  (This function
+               will only decrement the refcount once, no matter how many
+               times it's called. */
+            cache_inode_lru_kill(entry);
+            n_finalized++;
+        } while (lru);
+    }
+
+    return (n_finalized);
+}
+
+/**
  * @brief Function that executes in the lru thread
  *
  * This function performs long-term reorganization, compaction, and
  * other operations that are not performed in-line with referencing
  * and dereferencing.
+ *
+ * This function is responsible for deferred cleanup of cache entries
+ * killed in request or upcall (or most other) contexts.
  *
  * This function is responsible for cleaning the FD cache.  It works
  * by the following rules:
@@ -839,10 +898,8 @@ lru_thread(void *arg __attribute__((unused)))
 
                               pthread_mutex_lock(&lru->mtx);
                               --(lru->refcount);
-                              if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
-                                  (lru->flags & LRU_ENTRY_PINNED) ||
-                                  (lru->flags & LRU_ENTRY_L2) ||
-                                  (lru->flags & LRU_ENTRY_KILLED) ||
+                              if ((lru->flags &
+                                   (LRU_ENTRY_L2|LRU_ENTRY_POISON)) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, then
                                       reacquire the queue lock so we
@@ -921,37 +978,7 @@ lru_thread(void *arg __attribute__((unused)))
                   (uint64_t) open_fd_count, t_count);
 
           /* Process LRU cleanup queue */
-          n_finalized = 0;
-          for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-              struct lru_q_base *cq = &LRU_CQ[lane].lru;;
-              cache_inode_lru_t *lru;
-              cache_entry_t *entry;
-              do {
-                  pthread_mutex_lock(&LRU_CQ[lane].lru.mtx);
-                  lru = glist_first_entry(
-                      &LRU_CQ[lane].lru.q, cache_inode_lru_t, cq);
-                  if (! lru) {
-                      pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
-                      break;
-                  }
-                  /* XXX it should not be necessary to hold lru->mtx, which
-                   * avoids multiple lock operations required to take it
-                   * before taking the queue lock */
-                  glist_del(&lru->cq);
-                  --(cq->size);
-                  pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
-
-                  /* finalize */
-                  entry = container_of(lru, cache_entry_t, lru);
-                  state_wipe_file(entry);
-                  cache_inode_weakref_delete(&entry->weakref);
-                  /* Idempotently return the sentry reference.  (This function
-                     will only decrement the refcount once, no matter how many
-                     times it's called. */
-                  cache_inode_lru_kill(entry);
-                  n_finalized++;
-              } while (lru);
-          }
+          n_finalized = _cache_inode_lru_cleanup();
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
                    "LRU cleanup, reclaimed %d entries", n_finalized);
