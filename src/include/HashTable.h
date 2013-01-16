@@ -45,7 +45,6 @@
 #include <rbt_tree.h>
 #include <pthread.h>
 #include "log.h"
-#include "lookup3.h"
 #include "abstract_mem.h"
 #include "ganesha_types.h"
 
@@ -373,11 +372,6 @@ hash_error_t HashTable_GetRef(struct hash_table *ht,
 			      struct gsh_buffdesc *key,
 			      struct gsh_buffdesc *val,
 			      void (*get_ref)(struct gsh_buffdesc *));
-
-hash_error_t HashTable_Get_and_Del(struct hash_table  *ht,
-				   struct gsh_buffdesc *key,
-				   struct gsh_buffdesc *val,
-				   struct gsh_buffdesc *stored_key);
 hash_error_t HashTable_DelRef(struct hash_table *ht,
 			      struct gsh_buffdesc *key,
 			      struct gsh_buffdesc *stored_key,
