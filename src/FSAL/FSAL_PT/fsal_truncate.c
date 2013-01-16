@@ -135,7 +135,7 @@ PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
     file_desc.export_id = fsi_export_context->pt_export_id; 
     file_desc.uid = fsi_op_context->credential.user;
     file_desc.gid = fsi_op_context->credential.group;
-    PTFSAL_close(&file_desc);
+    PTFSAL_close(&file_desc, p_context);
 
     /* Now check ftruncate and convert return code */
     if(rc) {
