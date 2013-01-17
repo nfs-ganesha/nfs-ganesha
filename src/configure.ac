@@ -5,13 +5,14 @@ AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE)
+AC_SUBST(DIST_VER, [_19])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
 dnl AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/PT/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 #AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -54,7 +55,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
+CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign -DGANESHA_CCL"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -294,7 +295,7 @@ fi
 AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|FUSE|LUSTRE|XFS|GPFS|PT|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
              [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -306,6 +307,7 @@ AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
+AM_CONDITIONAL(USE_FSAL_PT,       test "$FSAL" = "PT")
 AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
@@ -694,6 +696,13 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 		FS_NAME="vfs"
 		;;
+	PT)
+		AC_DEFINE([_USE_PT], 1, [GANESHA exports ProtecTIER Filesystem])
+		FSAL_CFLAGS=
+		FSAL_LDFLAGS=""
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PT/libfsalpt.la"
+		FS_NAME="pt"
+		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
                 PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
@@ -823,6 +832,8 @@ AC_SUBST(ac_configure_args)
 
 # for using fs name in binairies
 AC_DEFINE_UNQUOTED([FS_NAME], "$FS_NAME", [Name of the filesystem])
+AC_DEFINE_UNQUOTED([RELEASE], "$RELEASE", [Release of the software])
+AC_DEFINE_UNQUOTED([DIST_VER], "$DIST_VER", [Distribution version])
 
 AC_CONFIG_FILES([include/Makefile
                  include/FSAL/Makefile
@@ -833,6 +844,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
                  include/FSAL/FSAL_XFS/Makefile
                  include/FSAL/FSAL_GPFS/Makefile
+                 include/FSAL/FSAL_PT/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
@@ -873,6 +885,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
+		 FSAL/FSAL_PT/Makefile
                  FSAL/FSAL_ZFS/Makefile
                  FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile

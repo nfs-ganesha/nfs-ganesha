@@ -307,6 +307,8 @@ const fsal_name_t FSAL_DOT_DOT;
 #include "FSAL/FSAL_XFS/fsal_types.h"
 #elif defined ( _USE_GPFS )
 #include "FSAL/FSAL_GPFS/fsal_types.h"
+#elif defined ( _USE_PT )
+#include "FSAL/FSAL_PT/fsal_types.h"
 #elif defined ( _USE_VFS )
 #include "FSAL/FSAL_VFS/fsal_types.h"
 #elif defined ( _USE_ZFS )
