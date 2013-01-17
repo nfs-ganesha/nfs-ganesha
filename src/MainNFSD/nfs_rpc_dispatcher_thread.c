@@ -940,7 +940,7 @@ nfs_rpc_queue_init(void)
     req_fridge->expiration_delay_s =
         (nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
         nfs_param.core_param.decoder_fridge_expiration_delay : 600;
-    (void) fridgethr_init(req_fridge, "decoder_thr");
+    fridgethr_init(req_fridge, "decoder_thr");
 
     /* queues */
     gsh_mutex_init(&nfs_req_st.reqs.mtx, NULL);

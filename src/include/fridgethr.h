@@ -24,6 +24,20 @@
  * ---------------------------------------
  */
 
+/**
+ * @defgroup fridgethr Thread Fridge
+ *
+ * The thread fridge provides a simple implementation of a thread pool
+ * built atop POSIX threading capabilities.
+ *
+ * @{
+ */
+
+/**
+ * @file fridgethr.c
+ * @brief Header for the thread fridge
+ */
+
 #ifndef FRIDGETHR_H
 #define FRIDGETHR_H
 
@@ -34,52 +48,65 @@
 
 struct thr_fridge;
 
-struct fridge_thr_entry
-{
-    struct fridge_thr_context
-    {
-        uint32_t uflags;
-        pthread_t id;
-        pthread_mutex_t mtx;
-        pthread_cond_t cv;
-        sigset_t sigmask;
-        void *(*func)(void*);
-        void *arg;
-    } ctx;
-    uint32_t flags;
-    bool frozen;
-    struct timespec timeout;
-    struct timeval tp;
-    struct glist_head q;
-    struct thr_fridge *fr;
+/**
+ * @brief A given thread in the fridge
+ */
+
+struct fridge_thr_entry {
+	/**
+	 * @brief Thread context
+	 */
+	struct fridge_thr_context {
+		uint32_t uflags; /*< Flags (for any use) */
+		pthread_t id; /*< Thread ID */
+		pthread_mutex_t mtx; /*< Mutex for fiddling this
+				         thread */
+		pthread_cond_t cv; /*< Condition variable to wait for sync */
+		sigset_t sigmask; /*< This thread's signal mask */
+		void *(*func)(void*); /*< Function being executed */
+		void *arg; /*< Functions argument */
+	} ctx;
+	uint32_t flags; /*< Thread-fridge flags (for handoff) */
+	bool frozen; /*< Thread is frozen */
+	struct timespec timeout; /*< Wait timeout */
+	struct glist_head q; /*< A link in whatever list we're part of */
+	struct thr_fridge *fr; /*< The fridge we belong to */
 };
 
 typedef struct fridge_thr_entry fridge_entry_t;
 typedef struct fridge_thr_context fridge_thr_contex_t;
 
-typedef struct thr_fridge
-{
-    char *s;
-    pthread_mutex_t mtx;
-    uint32_t thr_max;
-    uint32_t stacksize;
-    uint32_t expiration_delay_s;
-    pthread_attr_t attr;
-    uint32_t nthreads;
-    struct glist_head idle_q;
-    uint32_t nidle;
-    uint32_t flags;
+typedef struct thr_fridge {
+	char *s; /*< Name for this fridge */
+	pthread_mutex_t mtx; /*< Mutex */
+	/**
+	 * Maximum number of threads to run
+	 *
+	 * @todo Unimplemented
+	 */
+	uint32_t thr_max;
+	uint32_t stacksize; /*< Thread stack size */
+	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
+	pthread_attr_t attr; /*< Creation attributes */
+	uint32_t nthreads; /*< Number of threads running */
+	struct glist_head idle_q; /*< Idle threads */
+	uint32_t nidle; /*< Number of idle threads */
+	uint32_t flags; /*< Fridge-wide flags */
 } thr_fridge_t;
 
+/** @brief Null flag */
+#define FridgeThr_Flag_None     0x0000
+/** @brief Wait for a rendezvous */
+#define FridgeThr_Flag_WaitSync 0x0001
+/** @brief Completed something */
+#define FridgeThr_Flag_SyncDone 0x0002
 
-#define FridgeThr_Flag_None          0x0000
-#define FridgeThr_Flag_WaitSync      0x0001
-#define FridgeThr_Flag_SyncDone      0x0002
-
-int fridgethr_init(thr_fridge_t *, const char *s);
+void fridgethr_init(thr_fridge_t *, const char *s);
 
 struct fridge_thr_context *
 fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
-              void *arg);
+	      void *arg);
 
 #endif /* FRIDGETHR_H */
+
+/** @} */
