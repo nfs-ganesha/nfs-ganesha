@@ -33,9 +33,6 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#if defined(USE_DBUS)
-#include <dbus/dbus.h>
-#endif /* USE_DBUS */
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -483,9 +480,6 @@ void gsh_dbus_pkgshutdown(void)
 
 void *gsh_dbus_thread(void *arg)
 {
-/*     struct avltree_node *node; */
-/*     ganesha_dbus_handler_t hk, *handler; */
-/*     DBusMessage* msg; */
 
     SetNameFunction("gsh_dbus_thread");
 
