@@ -506,10 +506,14 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 static bool fs_specific_has(const char *fs_specific, const char* key,
 			    char *val, int max_val_bytes)
 {
-	char *fso_copy = strdup(fs_specific); /* enable multiple searches */
-	char *next_comma, *option;
+	char *fso_copy, *fso_dup, *next_comma, *option;
 	bool ret;
-	char *fso_dup = fso_copy;
+
+	if (! fs_specific || ! (fs_specific[0]))
+		goto out;
+
+	fso_copy = strdup(fs_specific); /* enable multiple searches */
+	fso_dup = fso_copy;
 
 	for (option = strtok_r(fso_copy, ",", &next_comma);
 	     option; 
@@ -522,13 +526,14 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 			if(val)
 				strncpy(val, v, max_val_bytes);
 			ret = true;
-			goto out;
+			goto cleanup;
 		}
 	}
 
 	ret = false;
-out:
+cleanup:
 	free(fso_dup);
+out:
 	return ret;
 }
 
