@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.5.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
-AC_SUBST(RELEASE, [1])
-AC_SUBST(DIST_VER, [_23])
+AC_SUBST(RELEASE, [ptv3.3.1])
+AC_SUBST(DIST_VER, [_rev_1])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
