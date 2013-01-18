@@ -18,15 +18,4 @@ endif(_HAVE_GSSAPI)
 
 add_library(rpcal STATIC ${rpcal_STAT_SRCS})
 
-########### next target ###############
-
-SET(test_rpctools_SRCS
-   test_rpctools.c
-)
-
-add_executable(test_rpctools EXCLUDE_FROM_ALL ${test_rpctools_SRCS})
-
-target_link_libraries(test_rpctools rpcal hashtable ${CMAKE_THREAD_LIBS_INIT})
-
-
 ########### install files ###############
