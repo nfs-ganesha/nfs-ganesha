@@ -28,6 +28,7 @@
  */
 #include "config.h"
 #include "HashTable.h"
+#include "lookup3.h"
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
