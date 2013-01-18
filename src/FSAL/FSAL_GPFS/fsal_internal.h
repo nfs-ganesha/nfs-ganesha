@@ -266,8 +266,7 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(int * p_file_descriptor,     /* IN */
 
 fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,        /* IN */
                             const struct req_op_context * p_context,     /* IN */
-                            struct attrlist * p_attrib_set,             /* IN */
-                            struct attrlist * p_object_attributes);  /* IN/OUT */
+                            struct attrlist * p_object_attributes);     /* IN */
 
 fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,       /* IN */
                           const char * p_filename,                   /* IN */

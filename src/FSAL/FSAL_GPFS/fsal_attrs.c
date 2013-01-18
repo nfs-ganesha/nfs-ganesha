@@ -141,8 +141,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
  */
 fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
                             const struct req_op_context * p_context,     /* IN */
-                            struct attrlist * p_attrib_set,             /* IN */
-                            struct attrlist * p_object_attributes)   /* IN/OUT */
+                            struct attrlist * p_object_attributes)       /* IN */
 {
   unsigned int mntfd;
   fsal_status_t status;
@@ -156,11 +155,10 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
   /* Indiate which attribute in stat should be changed. */
   int attr_changed = 0;
 
-
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!dir_hdl || !p_context || !p_attrib_set)
+  if(!dir_hdl || !p_context || !p_object_attributes)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
   myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
@@ -350,21 +348,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
 
       if(FSAL_IS_ERROR(status))
         return(status);
-    }
-
-  /* Optionaly fills output attributes. */
-
-  if(p_object_attributes)
-    {
-      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, myself->handle,
-                                 p_object_attributes);
-
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->mask);
-          FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
-        }
     }
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
