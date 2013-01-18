@@ -67,6 +67,7 @@
 #include "nsm.h"
 #include "sal_functions.h"
 #include "fridgethr.h"
+#include "client_mgr.h"
 
 extern struct fridgethr *req_fridge;
 
@@ -1143,6 +1144,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef USE_DBUS
   /* DBUS init */
   gsh_dbus_pkginit();
+#ifdef USE_DBUS_STATS
+  gsh_client_init();
+#endif
 #endif
 
   if (nfs_param.core_param.enable_FSAL_upcalls)
