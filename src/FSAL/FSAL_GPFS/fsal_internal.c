@@ -534,6 +534,10 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+#endif
+
   harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -541,10 +545,6 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
-#endif
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle for %s",
@@ -584,6 +584,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+#endif
+
   harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
@@ -591,10 +595,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   harg.name = p_fsalname->name;
   harg.dfd = dfd;
   harg.flag = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
-#endif
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle at for %s",
@@ -637,6 +637,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(!p_out_fh || !p_dir_fh || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
+#endif
+
   harg.mountdirfd = dirfd;
   harg.dir_fh = (struct gpfs_file_handle *) &p_gpfs_dir_fh->data.handle;
   harg.out_fh = (struct gpfs_file_handle *) &p_gpfs_out_fh->data.handle;
@@ -645,10 +649,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   harg.out_fh->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.len = p_fsalname->len;
   harg.name = p_fsalname->name;
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(harg.out_fh, 0, harg.out_fh->handle_size);
-#endif
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle for %s",
@@ -687,6 +687,10 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
 /* Function not called If it ever is will need context changes. */
   ReturnCode(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_handle, 0, sizeof(*p_handle));
+#endif
+
   harg.handle = (struct gpfs_file_handle *) &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -694,10 +698,6 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
   harg.name = NULL;
   harg.dfd = fd;
   harg.flag = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
-#endif
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle by fd for %d",
@@ -870,11 +870,18 @@ fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
   int rc;
   int dirfd = 0;
   struct create_name_arg crarg;
+#ifdef _VALGRIND_MEMCHECK
+  gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)p_new_handle;
+#endif
 
   dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
   if(!p_stat_name->name)
     ReturnCode(ERR_FSAL_FAULT, 0);
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_handle, 0, sizeof(*p_handle));
+#endif
 
   crarg.mountdirfd = dirfd;
   crarg.mode = mode;
@@ -887,10 +894,6 @@ fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
   crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
   crarg.new_fh->handle_version = OPENHANDLE_VERSION;
   crarg.buf = buf;
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(crarg.new_fh->f_handle, 0, crarg.new_fh->handle_size);
-#endif
 
   rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
 
