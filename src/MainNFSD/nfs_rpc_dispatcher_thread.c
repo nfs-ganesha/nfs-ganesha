@@ -84,7 +84,7 @@ struct rpc_evchan {
 
 static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 
-thr_fridge_t req_fridge[1]; /*< Decoder thread pool */
+thr_fridge_t *req_fridge; /*< Decoder thread pool */
 struct nfs_req_st nfs_req_st; /*< Shared request queues */
 
 const char *req_q_s[N_REQ_QUEUES] =
@@ -932,15 +932,22 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 void
 nfs_rpc_queue_init(void)
 {
+    struct thr_fridge_params reqparams = {
+	.thr_max = 0,
+	.stacksize = 0,
+	.expiration_delay_s
+	= ((nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
+	   nfs_param.core_param.decoder_fridge_expiration_delay : 600)};
     struct req_q_pair *qpair;
+    int rc = 0;
     int ix;
 
     /* decoder thread pool */
-    req_fridge->stacksize = 16384;
-    req_fridge->expiration_delay_s =
-        (nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
-        nfs_param.core_param.decoder_fridge_expiration_delay : 600;
-    fridgethr_init(req_fridge, "decoder_thr");
+    rc = fridgethr_init(&req_fridge, "decoder_thr", &reqparams);
+    if (rc != 0) {
+	LogFatal(COMPONENT_DISPATCH,
+		 "Unable to initialize decoder thread pool: %d", rc);
+    }
 
     /* queues */
     gsh_mutex_init(&nfs_req_st.reqs.mtx, NULL);

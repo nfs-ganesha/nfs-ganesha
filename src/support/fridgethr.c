@@ -52,28 +52,137 @@
 /**
  * @brief Initialize a thread fridge
  *
- * @todo This interface is rather messy, currently callers can fill in
- * some values of fr while others get overwritten.  This is Not Ideal.
+ * @param[out] frout The fridge to initialize
+ * @param[in]  s     The name of the fridge
+ * @param[in]  p     Fridge parameters
  *
- * @param[in,out] fr The fridge to initialize
- * @param[in]     s  The name of the fridge
+ * @return 0 on success, POSIX errors on failure.
  */
 
-void fridgethr_init(thr_fridge_t *fr, const char *s)
+int fridgethr_init(struct thr_fridge **frout,
+		   const char *s,
+		   const struct thr_fridge_params *p)
 {
-	fr->nthreads = 0;
-	fr->nidle = 0;
-	fr->thr_max = 0; /* XXX implement */
-	fr->s = strdup(s);
-	fr->flags = FridgeThr_Flag_None;
+	/* The fridge under construction */
+	struct thr_fridge *frobj
+		= gsh_malloc(sizeof(struct thr_fridge));
+	/* The return code for this function */
+	int rc = 0;
+	/* True if the thread attributes have been initialized */
+	bool attrinit = false;
+	/* True if the fridge mutex has been initialized */
+	bool mutexinit = false;
 
-	pthread_attr_init(&fr->attr);
-	pthread_attr_setscope(&fr->attr, PTHREAD_SCOPE_SYSTEM);
-	pthread_attr_setdetachstate(&fr->attr, PTHREAD_CREATE_DETACHED);
-	pthread_mutex_init(&fr->mtx, NULL);
+	*frout  = NULL;
+	if (frobj == NULL) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to allocate thread fridge for %s", s);
+		rc = ENOMEM;
+		goto out;
+	}
+	frobj->p = *p;
+
+	frobj->s = NULL;
+	frobj->nthreads = 0;
+	frobj->nidle = 0;
+	frobj->flags = FridgeThr_Flag_None;
+
+	/* This always succeeds on Linux, but it might fail on other
+	   systems or future versions of Linux. */
+	rc = pthread_attr_init(&frobj->attr);
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to initialize thread attributes for "
+			 "fridge %s: %d", s, rc);
+		goto out;
+	}
+	attrinit = true;
+	rc = pthread_attr_setscope(&frobj->attr, PTHREAD_SCOPE_SYSTEM);
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to set thread scope for fridge %s: %d",
+			 s, rc);
+		goto out;
+	}
+	rc = pthread_attr_setdetachstate(&frobj->attr,
+					 PTHREAD_CREATE_DETACHED);
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to set threads detached for fridge %s: %d",
+			 s, rc);
+		goto out;
+	}
+	if (frobj->p.stacksize != 0) {
+		rc = pthread_attr_setstacksize(&frobj->attr,
+					       frobj->p.stacksize);
+		if (rc != 0) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Unable to set thread stack size for "
+				 "fridge %s: %d", s, rc);
+			goto out;
+		}
+	}
+	/* This always succeeds on Linux (if you believe the manual),
+	   but SUS defines errors. */
+	rc = pthread_mutex_init(&frobj->mtx, NULL);
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to initialize mutex for fridge %s: %d",
+			 s, rc);
+		goto out;
+	}
+	mutexinit = true;
+
+	frobj->s = gsh_strdup(s);
+	if (!frobj->s) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to allocate memory in fridge %s",
+			 s);
+		rc = ENOMEM;
+	}
 
 	/* idle threads q */
-	init_glist(&fr->idle_q);
+	init_glist(&frobj->idle_q);
+
+	*frout = frobj;
+	rc = 0;
+
+out:
+
+	if (rc != 0) {
+		if (mutexinit) {
+			pthread_mutex_destroy(&frobj->mtx);
+			mutexinit = false;
+		}
+		if (attrinit) {
+			pthread_attr_destroy(&frobj->attr);
+			attrinit = false;
+		}
+		if (frobj) {
+			if (frobj->s) {
+				gsh_free(frobj->s);
+				frobj->s = NULL;
+			}
+			gsh_free(frobj);
+			frobj = NULL;
+		}
+	}
+
+	return rc;
+}
+
+/**
+ * @brief Destroy a thread fridge
+ *
+ * @param[in] fr The fridge to destroy
+ */
+
+void fridgethr_destroy(struct thr_fridge *fr)
+{
+	pthread_mutex_destroy(&fr->mtx);
+	pthread_attr_destroy(&fr->attr);
+	gsh_free(fr->s);
+	gsh_free(fr);
 }
 
 static bool fridgethr_freeze(thr_fridge_t *fr,
@@ -166,7 +275,7 @@ struct fridge_thr_context *fridgethr_get(thr_fridge_t *fr,
 		if (retval) {
 			LogCrit(COMPONENT_THREAD,
 				"pthread_create bogus: %d", errno);
-			assert(errno == 0);
+			return NULL;
 		}
 
 #ifdef LINUX
@@ -229,9 +338,9 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 	pfe->frozen = true;
 	pfe->flags |= FridgeThr_Flag_WaitSync;
 	while (!(pfe->flags & FridgeThr_Flag_SyncDone)) {
-		if (fr->expiration_delay_s > 0 ) {
+		if (fr->p.expiration_delay_s > 0 ) {
 			pfe->timeout.tv_sec = time(NULL)
-				+ fr->expiration_delay_s;
+				+ fr->p.expiration_delay_s;
 			pfe->timeout.tv_nsec = 0;
 			rc = pthread_cond_timedwait(&pfe->ctx.cv,
 						    &pfe->ctx.mtx,

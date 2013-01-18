@@ -76,17 +76,36 @@ struct fridge_thr_entry {
 typedef struct fridge_thr_entry fridge_entry_t;
 typedef struct fridge_thr_context fridge_thr_contex_t;
 
-typedef struct thr_fridge {
-	char *s; /*< Name for this fridge */
-	pthread_mutex_t mtx; /*< Mutex */
+/**
+ * @brief Parameters set at fridgethr_init
+ */
+
+struct thr_fridge_params {
 	/**
 	 * Maximum number of threads to run
 	 *
 	 * @todo Unimplemented
 	 */
 	uint32_t thr_max;
-	uint32_t stacksize; /*< Thread stack size */
+	/**
+	 * Stack size for created threads.
+	 *
+	 * @note A screwy value here can cause pthread_create to fail
+	 * rather than firdgethr_init.  In general you should just set
+	 * it to 0 and take the default.
+	 */
+	uint32_t stacksize;
 	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
+};
+
+/**
+ * @brief Structure representing a group of threads
+ */
+
+typedef struct thr_fridge {
+	char *s; /*< Name for this fridge */
+	struct thr_fridge_params p; /*< Parameters */
+	pthread_mutex_t mtx; /*< Mutex */
 	pthread_attr_t attr; /*< Creation attributes */
 	uint32_t nthreads; /*< Number of threads running */
 	struct glist_head idle_q; /*< Idle threads */
@@ -101,11 +120,14 @@ typedef struct thr_fridge {
 /** @brief Completed something */
 #define FridgeThr_Flag_SyncDone 0x0002
 
-void fridgethr_init(thr_fridge_t *, const char *s);
+int fridgethr_init(struct thr_fridge **,
+		   const char *,
+		   const struct thr_fridge_params *);
+void fridgethr_destroy(struct thr_fridge *);
 
-struct fridge_thr_context *
-fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
-	      void *arg);
+struct fridge_thr_context *fridgethr_get(thr_fridge_t *,
+					 void *(*)(void*),
+					 void *);
 
 #endif /* FRIDGETHR_H */
 
