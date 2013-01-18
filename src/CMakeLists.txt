@@ -48,7 +48,8 @@ set(tirpc_commit 8d5d55aad5f755f1605f3e796917c1709275c9b3)
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -ggdb")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
     find_library(LIBDL c)  # libc suffices on freebsd 
 endif(FREEBSD)

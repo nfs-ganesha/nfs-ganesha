@@ -18,29 +18,26 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
- * \file    xattr.h
+ * \file    subr.c
  * \author  $Author: Sachin Bhamare $
  * \version $Revision: 1.0 $
- * \brief   platform dependant utils for xattr support on FreeBSD
+ * \brief   platform dependant subroutines for FreeBSD
  *
  */
 
-#ifndef _XATTR_FREEBSD_H
-#define _XATTR_FREEBSD_H
+#include <string.h>
+#include <os/subr.h>
+#include <sys/dirent.h>
 
-#include <sys/errno.h>
-#include <sys/types.h>
-
-#define XATTR_CREATE  0x1
-#define XATTR_REPLACE 0x2
-
-extern ssize_t fgetxattr(int fd, const char *name, void *value, size_t size);
-extern ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags);
-extern ssize_t flistxattr(int fd, const char *list, size_t size);
-extern ssize_t fremovexattr(int fd, const char *name);
-
-#endif                          /* _XATTR_FREEBSD_H */
+void to_vfs_dirent(char *buf, struct vfs_dirent *vd)
+{
+	struct dirent *dp = (struct dirent *)buf;
+	vd->vd_ino = dp->d_fileno;
+	vd->vd_reclen = dp->d_reclen;
+	vd->vd_type = dp->d_type;
+	strncpy(vd->vd_name, dp->d_name, sizeof(dp->d_name));
+}

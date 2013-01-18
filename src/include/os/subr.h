@@ -1,8 +1,6 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright (C) Panasas Inc., 2011
- * Author: Sachin Bhamare sbhamare@panasas.com
+ * contributeur : Sachin Bhamare   sbhamare@panasas.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,29 +16,29 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * ---------------------------------------
  */
 
 /**
- * \file    xattr.h
+ * \file    types.h
  * \author  $Author: Sachin Bhamare $
  * \version $Revision: 1.0 $
- * \brief   platform dependant utils for xattr support on FreeBSD
+ * \brief   platform dependant subroutine type definitions
  *
  */
 
-#ifndef _XATTR_FREEBSD_H
-#define _XATTR_FREEBSD_H
+#ifndef _SUBR_OS_H
+#define _SUBR_OS_H
 
-#include <sys/errno.h>
-#include <sys/types.h>
+#include <extended_types.h>
 
-#define XATTR_CREATE  0x1
-#define XATTR_REPLACE 0x2
+struct vfs_dirent {
+	uint64_t vd_ino;
+	uint32_t vd_reclen;
+	uint32_t vd_type;
+	char     vd_name[255];
+};
 
-extern ssize_t fgetxattr(int fd, const char *name, void *value, size_t size);
-extern ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags);
-extern ssize_t flistxattr(int fd, const char *list, size_t size);
-extern ssize_t fremovexattr(int fd, const char *name);
+void to_vfs_dirent(char *buf, struct vfs_dirent *vd);
 
-#endif                          /* _XATTR_FREEBSD_H */
+#endif                          /* _SUBR_OS_H */

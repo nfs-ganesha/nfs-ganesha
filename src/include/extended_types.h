@@ -38,6 +38,7 @@
 #ifndef _EXTENDED_TYPES_H
 #define _EXTENDED_TYPES_H
 
+#include "config.h"
 #include <sys/types.h>
 
 #ifdef LINUX
@@ -51,7 +52,5 @@ typedef long long longlong_t;
 typedef unsigned long long u_longlong_t;
 
 typedef unsigned int uint_t;
-typedef unsigned int uint32_t;
-
 
 #endif                          /* _EXTENDED_TYPES_H */
