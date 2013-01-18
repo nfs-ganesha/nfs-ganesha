@@ -56,7 +56,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tcb.h"
 #include "wait_queue.h"
-#include "err_LRU_List.h"
 #include "err_HashTable.h"
 
 #include "fsal_up.h"
@@ -185,7 +184,6 @@ typedef char path_str_t[MAXPATHLEN] ;
 
 typedef struct nfs_worker_param__
 {
-  LRU_parameter_t lru_dupreq;
   unsigned int nb_before_gc;
 } nfs_worker_parameter_t;
 
@@ -533,7 +531,6 @@ free_nfs_res(nfs_res_t *res)
 struct nfs_worker_data__
 {
   unsigned int worker_index;
-  LRU_list_t *duplicate_request;
   hash_table_t *ht_ip_stats;
 
   wait_q_entry_t wqe;
@@ -580,8 +577,6 @@ typedef struct ganesha_stats__ {
     hash_stat_t             ip_name_map;
     hash_stat_t             uid_reverse;
     hash_stat_t             gid_reverse;
-    hash_stat_t             drc_udp;
-    hash_stat_t             drc_tcp;
     fsal_statistics_t       global_fsal;
     unsigned long long     total_fsal_calls;
 } ganesha_stats_t;
@@ -724,15 +719,6 @@ void Print_param_worker_in_log(nfs_worker_parameter_t * pparam);
 void Print_param_in_log();
 
 void nfs_reset_stats(void);
-
-int display_req_key(hash_buffer_t * pbuff, char *str);
-int display_req_val(hash_buffer_t * pbuff, char *str);
-int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
-
-int print_entry_dupreq(LRU_data_t data, char *str);
-int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
-
-int print_pending_request(LRU_data_t data, char *str);
 
 const char * auth_stat2str(enum auth_stat);
 

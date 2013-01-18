@@ -45,7 +45,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "abstract_mem.h"

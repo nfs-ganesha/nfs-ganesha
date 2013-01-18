@@ -56,8 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#include "rpcal.h"
-#include "LRU_List.h"
+#include "ganesha_rpc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"

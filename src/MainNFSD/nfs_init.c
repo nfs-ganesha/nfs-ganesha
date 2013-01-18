@@ -221,7 +221,6 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char 
 
   /* Register error families */
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-  AddFamilyError(ERR_LRU, "LRU related Errors", tab_errctx_LRU);
   AddFamilyError(ERR_HASHTABLE, "HashTable related Errors", tab_errctx_hash);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",

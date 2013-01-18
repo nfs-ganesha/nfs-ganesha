@@ -38,7 +38,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "LRU_List.h"
 
 pthread_t mfsl_async_atd_thrid;
 pthread_t *mfsl_async_synclet_thrid;

@@ -46,7 +46,6 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"

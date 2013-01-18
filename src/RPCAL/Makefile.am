@@ -3,8 +3,6 @@ AM_CFLAGS = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS
 noinst_LTLIBRARIES = librpcal.la
 check_PROGRAMS = test_rpctools
 
-EXTRA_DIST = rpcal.h
-
 TESTS = test_rpctools
 
 test_rpctools_SOURCES = test_rpctools.c

@@ -272,7 +272,7 @@ while (my $ligne=<STATS>)
       
       }
     }
-    elsif ( ( $tag eq "CACHE_INODE_HASH" ) || ( $tag eq "DUP_REQ_HASH" ) || ( $tag eq "UIDMAP_HASH" ) || ( $tag eq "IP_NAME_HASH" ) ||
+    elsif ( ( $tag eq "CACHE_INODE_HASH" ) || ( $tag eq "UIDMAP_HASH" ) || ( $tag eq "IP_NAME_HASH" ) ||
 	    ( $tag eq "UNAMEMAP_HASH" )    || ( $tag eq "GIDMAP_HASH" )  || ( $tag eq "GNAMEMAP_HASH" ) )
     {
       next if ( ! ( $reste =~ m/^([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ ) );  # go to next line

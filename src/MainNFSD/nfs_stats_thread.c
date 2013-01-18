@@ -302,10 +302,7 @@ void *stats_thread(void *UnusedArg)
   hash_stat_t            *ip_name_hstat = &ganesha_stats.ip_name_map;
   hash_stat_t            *hstat_uid_reverse = &ganesha_stats.uid_reverse;
   hash_stat_t            *hstat_gid_reverse = &ganesha_stats.gid_reverse;
-  hash_stat_t            *hstat_drc_udp = &ganesha_stats.drc_udp;
-  hash_stat_t            *hstat_drc_tcp = &ganesha_stats.drc_tcp;
   fsal_statistics_t      *global_fsal_stat = &ganesha_stats.global_fsal;
-
 
   SetNameFunction("stat_thr");
 
@@ -526,17 +523,6 @@ void *stats_thread(void *UnusedArg)
                 global_worker_stat->stat_req.stat_req_rquota2[j].success,
                 global_worker_stat->stat_req.stat_req_rquota2[j].dropped);
       fprintf(stats_file, "\n");
-
-      fprintf(stats_file,
-              "DUP_REQ_HASH,%s;%zu,%zu,%zu,%zu\n",
-              strdate,
-              hstat_drc_udp->entries + hstat_drc_tcp->entries,
-              hstat_drc_udp->min_rbt_num_node +
-              hstat_drc_tcp->min_rbt_num_node,
-              hstat_drc_udp->max_rbt_num_node +
-              hstat_drc_tcp->max_rbt_num_node,
-              hstat_drc_udp->average_rbt_num_node +
-              hstat_drc_tcp->average_rbt_num_node);
 
       fprintf(stats_file,
               "UIDMAP_HASH,%s;%zu,%zu,%zu,%zu\n", strdate,

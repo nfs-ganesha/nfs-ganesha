@@ -49,14 +49,12 @@
 #include <sys/param.h>
 
 
-#include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"
 
-#include "err_LRU_List.h"
 #include "err_HashTable.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
