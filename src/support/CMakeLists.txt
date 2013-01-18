@@ -4,6 +4,22 @@ include_directories(
 
 ########### next target ###############
 
+SET(test_timespec_SRCS
+   test_timespec.c
+)
+
+add_executable(test_timespec EXCLUDE_FROM_ALL ${test_timespec_SRCS})
+
+target_link_libraries(
+  test_timespec
+  log
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBRT}
+)
+
+
+########### next target ###############
+
 SET(test_nfs_ip_stats_SRCS
    test_nfs_ip_stats.c
 )
@@ -14,9 +30,9 @@ target_link_libraries(
   test_nfs_ip_stats
   support hashtable
   log
+  
   ${CMAKE_THREAD_LIBS_INIT}
 )
-
 
 ########### next target ###############
 

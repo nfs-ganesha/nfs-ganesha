@@ -34,6 +34,122 @@
 #define GANESHA_TYPES__
 
 /**
+ * @brief Inline functions for timespec math
+ *
+ * This is for timespec math.  If you want to do
+ * do the same kinds of math on timeval values,
+ * See timeradd(3) in GLIBC.
+ *
+ * The primary purpose of nsecs_elapsed_t is for a compact
+ * and quick way to handle time issues relative to server
+ * start and server EPOCH (which is not quite the same thing
+ * but too complicated to explain here).
+ */
+
+#define NS_PER_SEC 1000000000
+
+/* An elapsed time in nanosecs works because an unsigned
+ * 64 bit can hold ~584 years of nanosecs.  If any code I have
+ * ever written stays up that long, I would be amazed (and dead
+ * a very long time...)
+ */
+
+typedef uint64_t nsecs_elapsed_t;
+
+/**
+ * @brief Get the abs difference between two timespecs in nsecs
+ *
+ * useful for cheap time calculation. Works with Dr. Who...
+ *
+ * @param start timespec of before end
+ * @param end   timespec after start time
+ *
+ * @return elapsed time in nsecs
+ */
+
+static
+inline nsecs_elapsed_t timespec_diff(struct timespec *start,
+				     struct timespec *end)
+{
+	if((end->tv_sec > start->tv_sec) ||
+	   (end->tv_sec == start->tv_sec &&
+	    end->tv_nsec >= start->tv_nsec)) {
+		return (end->tv_sec - start->tv_sec) * NS_PER_SEC
+			+ (end->tv_nsec - start->tv_nsec);
+	} else {
+		return (start->tv_sec - end->tv_sec) * NS_PER_SEC
+			+ (start->tv_nsec - end->tv_nsec);
+	}
+}
+
+/**
+ * @brief Convert a timespec to an elapsed time interval
+ *
+ * This will work for wallclock time until 2554.
+ */
+
+static
+inline nsecs_elapsed_t timespec_to_nsecs(struct timespec *timespec)
+{
+	return timespec->tv_sec * NS_PER_SEC + timespec->tv_nsec;
+}
+
+/**
+ * @brief Convert an elapsed time interval to a timespec
+ */
+
+static
+inline void nsecs_to_timespec(nsecs_elapsed_t interval,
+			      struct timespec *timespec)
+{
+	timespec->tv_sec = interval / NS_PER_SEC;
+	timespec->tv_nsec = interval % NS_PER_SEC;
+}
+
+/**
+ * @brief Add an interval to a timespec
+ *
+ * @param interval in nsecs
+ * @param timespec call by reference time
+ */
+
+static
+inline void timespec_add_nsecs(nsecs_elapsed_t interval,
+			      struct timespec *timespec)
+{
+	timespec->tv_sec += (interval / NS_PER_SEC);
+	timespec->tv_nsec += (interval % NS_PER_SEC);
+	if(timespec->tv_nsec > NS_PER_SEC) {
+		timespec->tv_sec += (timespec->tv_nsec / NS_PER_SEC);
+		timespec->tv_nsec = timespec->tv_nsec % NS_PER_SEC;
+	}
+}
+
+/**
+ * @brief Add an interval to a timespec
+ *
+ * @param interval in nsecs
+ * @param timespec call by reference time
+ */
+
+static
+inline void timespec_sub_nsecs(nsecs_elapsed_t interval,
+			      struct timespec *t)
+{
+	struct timespec ts;
+
+	nsecs_to_timespec(interval, &ts);
+
+	if(ts.tv_nsec > t->tv_nsec) {
+		t->tv_sec -= (ts.tv_sec +1);
+		t->tv_nsec = ts.tv_nsec - t->tv_nsec;
+	} else {
+		t->tv_sec -= ts.tv_sec;
+		t->tv_nsec -= ts.tv_nsec;
+	}
+}
+
+/**
  * @brief Compare two times
  *
  * Determine if @c t1 is less-than, equal-to, or greater-than @c t2.
@@ -63,6 +179,23 @@ gsh_time_cmp(struct timespec t1,
         }
 
         return 0;
+}
+
+/**
+ * Get the time right now as a timespec
+ *
+ * @param ts [in] pointer to a timespec struct
+ */
+
+static inline void now(struct timespec *ts)
+{
+	int rc;
+
+	rc = clock_gettime(CLOCK_REALTIME, ts);
+	if(rc != 0) {
+		LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
+		assert(0);  /* if this is broken, we are toast so die */
+	}
 }
 
 /**
