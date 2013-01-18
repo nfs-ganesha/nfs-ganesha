@@ -753,8 +753,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

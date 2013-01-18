@@ -21,16 +21,15 @@
  */
 
 /**
- * @file   FSAL_CEPH/main.c
+ * @file FSAL_CEPH/main.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Thu Jul  5 14:48:33 2012
+ * @date Thu Jul  5 14:48:33 2012
  *
  * @brief Impelmentation of FSAL module founctions for Ceph
  *
  * This file implements the module functions for the Ceph FSAL, for
  * initialization, teardown, configuration, and creation of exports.
  */
-
 
 #include <stdlib.h>
 #include <assert.h>
@@ -74,128 +73,127 @@ static const char *module_name = "Ceph";
  * @return FSAL status.
  */
 
-static fsal_status_t
-create_export(struct fsal_module *module,
-              const char *path,
-              const char *options,
-              struct exportlist__ *list_entry,
-              struct fsal_module *next_fsal,
-              const struct fsal_up_vector *up_ops,
-              struct fsal_export **pub_export)
+static fsal_status_t create_export(struct fsal_module *module,
+				   const char *path,
+				   const char *options,
+				   struct exportlist__ *list_entry,
+				   struct fsal_module *next_fsal,
+				   const struct fsal_up_vector *up_ops,
+				   struct fsal_export **pub_export)
 {
-        /* The status code to return */
-        fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-        /* True if we have called fsal_export_init */
-        bool initialized = false;
-        /* The internal export object */
-        struct export *export = NULL;
-        /* A fake argument list for Ceph */
-        const char *argv[] = {"FSAL_CEPH", path};
-        /* Return code from Ceph calls */
-        int ceph_status = 0;
+	/* The status code to return */
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	/* True if we have called fsal_export_init */
+	bool initialized = false;
+	/* The internal export object */
+	struct export *export = NULL;
+	/* A fake argument list for Ceph */
+	const char *argv[] = {"FSAL_CEPH", path};
+	/* Return code from Ceph calls */
+	int ceph_status = 0;
 
-        if ((path == NULL) ||
-            (strlen(path) == 0)) {
-                status.major = ERR_FSAL_INVAL;
-                LogCrit(COMPONENT_FSAL,
-                        "No path to export.");
-                goto error;
-        }
+	if ((path == NULL) ||
+	    (strlen(path) == 0)) {
+		status.major = ERR_FSAL_INVAL;
+		LogCrit(COMPONENT_FSAL,
+			"No path to export.");
+		goto error;
+	}
 
-        if (next_fsal != NULL) {
-                status.major = ERR_FSAL_INVAL;
-                LogCrit(COMPONENT_FSAL,
-                        "Stacked FSALs unsupported.");
-                goto error;
-        }
+	if (next_fsal != NULL) {
+		status.major = ERR_FSAL_INVAL;
+		LogCrit(COMPONENT_FSAL,
+			"Stacked FSALs unsupported.");
+		goto error;
+	}
 
-        export = gsh_calloc(1, sizeof(struct export));
-        if (export == NULL) {
-                status.major = ERR_FSAL_NOMEM;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to allocate export object for %s.",
-                        path);
-                goto error;
-        }
+	export = gsh_calloc(1, sizeof(struct export));
+	if (export == NULL) {
+		status.major = ERR_FSAL_NOMEM;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to allocate export object for %s.",
+			path);
+		goto error;
+	}
 
 
-        if(fsal_export_init(&export->export,
-                            list_entry) != 0) {
-                status.major =  ERR_FSAL_NOMEM;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to allocate export ops vectors for %s.",
-                        path);
-                goto error;
-        }
-        export_ops_init(export->export.ops);
-        handle_ops_init(export->export.obj_ops);
-        ds_ops_init(export->export.ds_ops);
-        export->export.up_ops = up_ops;
+	if (fsal_export_init(&export->export,
+			     list_entry) != 0) {
+		status.major =  ERR_FSAL_NOMEM;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to allocate export ops vectors for %s.",
+			path);
+		goto error;
+	}
+	export_ops_init(export->export.ops);
+	handle_ops_init(export->export.obj_ops);
+	ds_ops_init(export->export.ds_ops);
+	export->export.up_ops = up_ops;
 
-        initialized = true;
+	initialized = true;
 
-        /* allocates ceph_mount_info */
-        ceph_status = ceph_create(&export->cmount, NULL);
-        if (ceph_status != 0) {
-                status.major = ERR_FSAL_SERVERFAULT;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to create Ceph handle");
-                goto error;
-        }
+	/* allocates ceph_mount_info */
+	ceph_status = ceph_create(&export->cmount, NULL);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create Ceph handle");
+		goto error;
+	}
 
-        ceph_status = ceph_conf_read_file(export->cmount, NULL);
-        if (ceph_status == 0) {
-                ceph_status = ceph_conf_parse_argv(export->cmount, 2,
-                                                   argv);
-        }
+	ceph_status = ceph_conf_read_file(export->cmount, NULL);
+	if (ceph_status == 0) {
+		ceph_status = ceph_conf_parse_argv(export->cmount, 2,
+						   argv);
+	}
 
-        if (ceph_status != 0) {
-                status.major = ERR_FSAL_SERVERFAULT;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to read Ceph configuration");
-                goto error;
-        }
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to read Ceph configuration");
+		goto error;
+	}
 
-        ceph_status = ceph_mount(export->cmount, NULL);
-        if (ceph_status != 0) {
-                status.major = ERR_FSAL_SERVERFAULT;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to mount Ceph cluster.");
-                goto error;
-        }
+	ceph_status = ceph_mount(export->cmount, NULL);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to mount Ceph cluster.");
+		goto error;
+	}
 
-        if (fsal_attach_export(module,
-                               &export->export.exports) != 0) {
-                status.major = ERR_FSAL_SERVERFAULT;
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to attach export.");
-                goto error;
-        }
+	if (fsal_attach_export(module,
+			       &export->export.exports) != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to attach export.");
+		goto error;
+	}
 
-        export->export.fsal = module;
-        export->export.fsal = module;
+	export->export.fsal = module;
+	export->export.fsal = module;
 
-        *pub_export = &export->export;
-        return status;
+	*pub_export = &export->export;
+	return status;
 
 error:
 
-        if (export->cmount != NULL) {
-                ceph_shutdown(export->cmount);
-                export->cmount = NULL;
-        }
+	if (export->cmount != NULL) {
+		ceph_shutdown(export->cmount);
+		export->cmount = NULL;
+	}
 
-        if (initialized) {
-                pthread_mutex_destroy(&export->export.lock);
-                initialized = false;
-        }
+	if (initialized) {
+		pthread_mutex_destroy(&export->export.lock);
+		initialized = false;
+	}
 
-        if (export != NULL) {
-                gsh_free(export);
-                export = NULL;
-        }
+	if (export != NULL) {
+		gsh_free(export);
+		export = NULL;
+	}
 
-        return status;
+	return status;
 }
 
 /**
@@ -208,29 +206,27 @@ error:
  * initialization.
  */
 
-MODULE_INIT void
-init(void)
+MODULE_INIT void init(void)
 {
-        /* register_fsal seems to expect zeroed memory. */
-        module = gsh_calloc(1, sizeof(struct fsal_module));
-        if (module == NULL) {
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to allocate memory for Ceph FSAL module.");
-                return;
-        }
+	/* register_fsal seems to expect zeroed memory. */
+	module = gsh_calloc(1, sizeof(struct fsal_module));
+	if (module == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to allocate memory for Ceph FSAL module.");
+		return;
+	}
 
-        if (register_fsal(module, module_name, FSAL_MAJOR_VERSION,
-                          FSAL_MINOR_VERSION) != 0) {
-                /* The register_fsal function prints its own log
+	if (register_fsal(module, module_name, FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION) != 0) {
+		/* The register_fsal function prints its own log
                    message if it fails*/
-                gsh_free(module);
-                LogCrit(COMPONENT_FSAL,
-                        "Ceph module failed to register.");
-        }
+		gsh_free(module);
+		LogCrit(COMPONENT_FSAL,
+			"Ceph module failed to register.");
+	}
 
-        /* Set up module operations */
-        module->ops->create_export = create_export;
-
+	/* Set up module operations */
+	module->ops->create_export = create_export;
 }
 
 /**
@@ -241,17 +237,16 @@ init(void)
  * level.
  */
 
-MODULE_FINI void
-finish(void)
+MODULE_FINI void finish(void)
 {
-        if (unregister_fsal(module) != 0) {
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to unload FSAL.  Dying with extreme "
-                        "prejudice.");
-                abort();
-        }
+	if (unregister_fsal(module) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to unload FSAL.  Dying with extreme "
+			"prejudice.");
+		abort();
+	}
 
-        gsh_free(module);
-        module = NULL;
+	gsh_free(module);
+	module = NULL;
 }
 

@@ -849,12 +849,14 @@ void dec_state_owner_ref(state_owner_t *owner)
 /**
  * @brief Release all state on a file
  *
+ * This function may not be called in any context which could hold
+ * entry->state_lock.  It will now be reliably called in cleanup
+ * processing.
+ *
  * @param[in,out] entry File to be wiped
  */
 void state_wipe_file(cache_entry_t *entry)
 {
-  bool had_lock = false;
-
   /*
    * currently, only REGULAR files can have state; byte range locks and
    * stateid (for v4).  In the future, 4.1, directories could have
@@ -864,26 +866,13 @@ void state_wipe_file(cache_entry_t *entry)
   if (entry->type != REGULAR_FILE)
     return;
 
-  /* The state lock may have been acquired by the caller. */
-  if (pthread_rwlock_trywrlock(&entry->state_lock))
-    {
-      /* This thread already has some kind of lock, but we don't know
-         if it's a write lock. */
-      had_lock = true;
-      PTHREAD_RWLOCK_unlock(&entry->state_lock);
-    }
   PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
   state_lock_wipe(entry);
-
   state_share_wipe(entry);
-
   state_nfs4_state_wipe(entry);
 
-  if (!had_lock)
-    {
-      PTHREAD_RWLOCK_unlock(&entry->state_lock);
-    }
+  PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
 
 /**

@@ -106,6 +106,7 @@ typedef struct cache_inode_lru__ {
 	struct glist_head q; /*< Link in the physical deque
 			         impelmenting a portion of the logical
 			         LRU. */
+        struct glist_head cq; /*< Link in the cleanup queue */
 	pthread_mutex_t mtx; /*< Mutex protecting this entry with
 			         regard to LRU operations. */
 	int64_t refcount; /*< Reference count.  This is signed to make

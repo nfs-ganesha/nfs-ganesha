@@ -48,21 +48,22 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 #include "nfs4_acls.h"
-#include "sal_functions.h"
 
 /**
  *
- * @brief Forcibly remove an entry from the cache
+ * @brief Forcibly remove an entry from the cache (top half)
  *
- * This function removes an entry from the cache immediately when it
+ * This function is used to invalidate a cache entry when it
  * has become unusable (for example, when the FSAL declares it to be
- * stale.)  This function removes only one reference.  The caller must
- * also un-reference any reference it holds above the sentinel.  This
- * function does not touch locks.  Since the entry isn't actually
- * removed until the refcount falls to 0, we just let the caller
- * remove locks as for any error.
+ * stale).
+ *
+ * To simplify interaction with the SAL, this function no longer
+ * calls finalizes the entry, but schedules the entry for out-of-line
+ * cleanup, after first making it unreachable.
+ *
+ * The entry refcount is not decremented, logically the sentinel
+ * ref is owned by the cleanup queue.
  *
  * @param[in] entry The entry to be killed
  */
@@ -80,7 +81,7 @@ cache_inode_kill_entry(cache_entry_t *entry)
              "Using cache_inode_kill_entry for entry %p", entry);
 
      cache_inode_unpinnable(entry);
-     state_wipe_file(entry);
+     cache_inode_lru_cleanup_push(entry);
 
      /* Use the handle to build the key */
      pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
@@ -101,12 +102,6 @@ cache_inode_kill_entry(cache_entry_t *entry)
           }
      }
 
-     cache_inode_weakref_delete(&entry->weakref);
-
-     /* Idempotently return the sentry reference.  (This function
-        will only decrement the refcount once, no matter how many
-        times it's called. */
-     cache_inode_lru_kill(entry);
 } /* cache_inode_kill_entry */
 /** @} */
 

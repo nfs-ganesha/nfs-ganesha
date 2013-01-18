@@ -43,7 +43,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 749d0745de4f3bfc079d719c7fbd46da8f8a9241)
+set(tirpc_commit 8d5d55aad5f755f1605f3e796917c1709275c9b3)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -318,6 +318,7 @@ if(USE_CUNIT)
 endif(USE_CUNIT)
 
 if(_MSPAC_SUPPORT)
+# need recent 
   find_library(WBCLIENT_LIB wbclient )
   check_include_files("stdint.h;stdbool.h;wbclient.h" HAVE_WBCLIENT_H)
   if(WBCLIENT_LIB AND HAVE_WBCLIENT_H)

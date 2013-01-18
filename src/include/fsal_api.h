@@ -662,14 +662,9 @@ struct export_ops {
 /**
  * @brief Extract an opaque handle
  *
- * This function extracts a "wire" handle from a buffer that may then
- * be passed to create_handle.
- *
- * @note The extracted handle can obviously be used with
- * create_handle, but is it used as a key in the hash table?  If so we
- * run into a serious problem where we may be comparing long "wire"
- * handles against much shorter "key" handles and getting faulty
- * duplicates.
+ * This function extracts a "key" handle from a "wire" handle.  That
+ * is, when given a handle as passed to a client, this method will
+ * extract the unique bits used to index the inode cache.
  *
  * @param[in]     exp_hdl Export in which to look up handle
  * @param[in]     in_type Protocol through which buffer was received.  One
@@ -1390,29 +1385,30 @@ struct fsal_obj_ops {
 /**
  * @brief Read the content of a link
  *
- * This function reads the content of a symbolic link.
+ * This function reads the content of a symbolic link.  The FSAL will
+ * allocate a buffer and store its address and the link length in the
+ * link_content gsh_buffdesc.  The caller *must* free this buffer with
+ * gsh_free.
  *
- * @param[in]     obj_hdl      Link to read
- * @param[in]     opctx        Request context (user creds, client address etc)
- * @param[out]    link_content Buffer to which the contents are copied
- * @param[in,out] link_len     Total buffer size/Size of content
- *                             copied
- * @param[out]    refresh      true if the content are to be retrieved
- *                             from the underlying filesystem rather
- *                             than cache
+ * The symlink content passed back *must* be \NUL terminated and the
+ * length indicated in the buffer description *must* include the
+ * terminator.
  *
- * @deprecated The argument structure of this method will change to
- * take a callback function that can copy the link content directly
- * into some response, rather than the content having to be copied
- * twice.
+ * @param[in]  obj_hdl      Link to read
+ * @param[in]  opctx        Request context (user creds, client address etc)
+ * @param[out] link_content Buffdesc to which the FSAL will store
+ *                          the address of the buffer holding the
+ *                          link and the link length.
+ * @param[out] refresh      true if the content are to be retrieved
+ *                          from the underlying filesystem rather
+ *                          than cache
  *
  * @return FSAL status.
  */
-        fsal_status_t (*readlink)(struct fsal_obj_handle *obj_hdl,
-                                  const struct req_op_context *opctx,
-                                  char *link_content,
-                                  size_t *link_len,
-                                  bool refresh);
+	fsal_status_t (*readlink)(struct fsal_obj_handle *obj_hdl,
+				  const struct req_op_context *opctx,
+				  struct gsh_buffdesc *link_content,
+				  bool refresh);
 
 /**
  * @brief Check access for a given user against a given object

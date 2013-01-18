@@ -52,6 +52,8 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
+#include "cache_inode_weakref.h"
+#include "sal_functions.h"
 
 /**
  *
@@ -110,14 +112,14 @@
  *      drop both the entry and queue lock, call pthread_yield, and
  *      reacquire the entry lock before continuing with disposal.
  *    - A thread wishing to operate on an entry picked from a given
- *      queue fragment must lock that queue fragment, find the entry,
+ *      queue partition must lock that queue partition, find the entry,
  *      and increase its reference count by one.  It must then store a
  *      pointer to the entry and release the queue lock before
  *      acquiring the entry lock.  If the LRU_ENTRY_CONDEMNED bit is
  *      set, it must relinquish its lock on the entry and attempt no
  *      further access to it.  Otherwise, it must examine the flags
  *      and lane stored in the entry to determine the current queue
- *      fragment containing it, rather than assuming that the original
+ *      partition containing it, rather than assuming that the original
  *      location is still valid.
  */
 
@@ -159,6 +161,16 @@ struct lru_q_
 };
 
 /**
+ * Cleanup queue variant (pinned partition not needed).
+ */
+
+struct lru_cleanup_q
+{
+     struct lru_q_base lru;
+     CACHE_PAD(0);
+};
+
+/**
  * A multi-level LRU algorithm inspired by MQ [Zhou].  Transition from
  * L1 to L2 implies various checks (open files, etc) have been
  * performed, so ensures they are performed only once.  A
@@ -169,6 +181,12 @@ struct lru_q_
 
 static struct lru_q_ LRU_1[LRU_N_Q_LANES];
 static struct lru_q_ LRU_2[LRU_N_Q_LANES];
+
+/**
+ * Cleanup queue.  Contains entries marked for disposal from request
+ * or upcall context
+ */
+static struct lru_cleanup_q LRU_CQ[LRU_N_Q_LANES];
 
 /**
  * This is a global counter of files opened by cache_inode.  This is
@@ -220,7 +238,8 @@ static struct lru_thread_state
 /**
  * @brief Initialize a single base queue.
  *
- * This function initializes a single queue fragment (a half-lane)
+ * This function initializes a single queue partition (L1, L1 pinned, L2,
+ * etc)
  */
 
 static inline void
@@ -235,7 +254,7 @@ lru_init_queue(struct lru_q_base *q)
  * @brief Return a pointer to the appropriate queue
  *
  * This function returns a pointer to the appropriate LRU queue
- * fragment corresponding to the given flags and lane.
+ * partition corresponding to the given flags and lane.
  *
  * @param[in] flags  May be any combination of 0, LRU_ENTRY_PINNED,
  *                   and LRU_ENTRY_L2 or'd together.
@@ -282,7 +301,7 @@ lru_lane_of_entry(cache_entry_t *entry)
 }
 
 /**
- * @brief Insert an entry into the specified queue fragment
+ * @brief Insert an entry into the specified queue partition
  *
  * This function determines the queue corresponding to the supplied
  * lane and flags, inserts the entry into that queue, and updates the
@@ -351,7 +370,7 @@ lru_remove_entry(cache_inode_lru_t *lru)
 }
 
 /**
- * @brief Move an entry from one queue fragment to another
+ * @brief Move an entry from one queue partition to another
  *
  * This function moves an entry from the queue containing it to the
  * queue specified by the lane and flags.  The entry MUST be locked
@@ -359,7 +378,7 @@ lru_remove_entry(cache_inode_lru_t *lru)
  *
  * @param[in] lru   The entry to move
  * @param[in] flags As accepted by lru_select_queue
- * @param[in] lane  The lane identifying the fragment
+ * @param[in] lane  The lane identifying the partition
  */
 
 static inline void
@@ -472,7 +491,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
  * returns an lru entry removed from the queue system and which we are
  * permitted to dispose or recycle.
  *
- * @param[in] q  The queue fragment from which to reap.
+ * @param[in] q  The queue partition from which to reap.
  */
 
 static inline cache_inode_lru_t *
@@ -487,12 +506,11 @@ lru_try_reap_entry(struct lru_q_base *q)
           return NULL;
      }
 
-     atomic_inc_int64_t(&lru->refcount);
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
-     if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
-         (lru->flags & LRU_ENTRY_KILLED)) {
-          atomic_dec_int64_t(&lru->refcount);
+     ++(lru->refcount);
+     if (lru->flags & LRU_ENTRY_POISON) {
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -501,7 +519,7 @@ lru_try_reap_entry(struct lru_q_base *q)
           /* Any more than the sentinel and our reference count
              and someone else has a reference.  Plus someone may
              have moved it to the pin queue while we were waiting. */
-          atomic_dec_int64_t(&lru->refcount);
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -514,7 +532,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      if (lru->refcount > LRU_SENTINEL_REFCOUNT + 1) {
           /* Someone took a reference while we were waiting for the
              queue.  */
-          atomic_dec_int64_t(&lru->refcount);
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           pthread_mutex_unlock(&q->mtx);
           return NULL;
@@ -537,6 +555,37 @@ lru_try_reap_entry(struct lru_q_base *q)
 
 static const uint32_t S_NSECS = 1000000000UL; /* nsecs in 1s */
 static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
+
+/**
+ * @brief Push a cache_inode_killed entry to the cleanup queue
+ * for out-of-line cleanup
+ *
+ * This function appends entry to the appropriate lane of the
+ * global cleanup queue, and marks the entry.
+ *
+ * @param[in] entry  The entry to clean
+ */
+void cache_inode_lru_cleanup_push(cache_entry_t *entry)
+{
+     uint32_t lane = lru_lane_of_entry(entry);
+     struct lru_q_base *cq = NULL;
+
+     pthread_mutex_lock(&entry->lru.mtx);
+
+     /* idempotent */
+     if (! (entry->lru.flags & LRU_ENTRY_CLEANUP)) {
+         cq = &LRU_CQ[lane].lru;
+         pthread_mutex_lock(&cq->mtx);
+         glist_add(&cq->q, &entry->lru.cq);
+         ++(cq->size);
+         pthread_mutex_unlock(&cq->mtx);
+
+         /* mark entry */
+         entry->lru.flags |= LRU_ENTRY_CLEANUP;
+     }
+
+     pthread_mutex_unlock(&entry->lru.mtx);
+}
 
 /**
  * @brief Sleep in the LRU thread for a specified time
@@ -568,11 +617,68 @@ lru_thread_delay_ms(unsigned long ms)
 }
 
 /**
+ * @brief Cache entry deferred cleanup helper routine.
+ *
+ * This function consumes the LRU_CQ queue, disposing state and
+ * returning sentinel refs.  Final destruction of the entries
+ * of course happens when their refcounts reach 0.
+ *
+ * @param[in] ms The time to sleep, in milliseconds.
+ *
+ * @retval false if the thread wakes by timeout.
+ * @retval true if the thread wakes by signal.
+ */
+
+static inline uint32_t
+_cache_inode_lru_cleanup(void)
+{
+    uint32_t n_finalized = 0;
+    uint32_t lane = 0;
+
+    for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+        cache_inode_lru_t *lru;
+        cache_entry_t *entry;
+        struct lru_q_base *cq = &LRU_CQ[lane].lru;;
+
+        do {
+            pthread_mutex_lock(&LRU_CQ[lane].lru.mtx);
+            lru = glist_first_entry(
+                &LRU_CQ[lane].lru.q, cache_inode_lru_t, cq);
+            if (! lru) {
+                pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+                break;
+            }
+            /* XXX it should not be necessary to hold lru->mtx, which
+             * avoids multiple lock operations required to take it
+             * before taking the queue lock */
+            glist_del(&lru->cq);
+            --(cq->size);
+            pthread_mutex_unlock(&LRU_CQ[lane].lru.mtx);
+
+            /* finalize */
+            entry = container_of(lru, cache_entry_t, lru);
+            state_wipe_file(entry);
+            cache_inode_weakref_delete(&entry->weakref);
+            /* Idempotently return the sentry reference.  (This function
+               will only decrement the refcount once, no matter how many
+               times it's called. */
+            cache_inode_lru_kill(entry);
+            n_finalized++;
+        } while (lru);
+    }
+
+    return (n_finalized);
+}
+
+/**
  * @brief Function that executes in the lru thread
  *
  * This function performs long-term reorganization, compaction, and
  * other operations that are not performed in-line with referencing
  * and dereferencing.
+ *
+ * This function is responsible for deferred cleanup of cache entries
+ * killed in request or upcall (or most other) contexts.
  *
  * This function is responsible for cleaning the FD cache.  It works
  * by the following rules:
@@ -609,7 +715,7 @@ lru_thread_delay_ms(unsigned long ms)
  *    temporarily disabled, re-enable it.
  *
  * This function uses the lock discipline for functions accessing LRU
- * entries through a queue fragment.
+ * entries through a queue partition.
  *
  * @param[in] arg A void pointer, currently ignored.
  *
@@ -627,6 +733,8 @@ lru_thread(void *arg __attribute__((unused)))
      bool extremis = false;
      /* True if we were explicitly woke. */
      bool woke = false;
+     /* Finalized */
+     uint32_t n_finalized;
 
      SetNameFunction("lru_thread");
 
@@ -764,12 +872,12 @@ lru_thread(void *arg __attribute__((unused)))
                                                          cache_inode_lru_t,
                                                          q))) {
                               /* We currently hold the lane queue
-                                 fragment mutex.  Due to lock
+                                 partition mutex.  Due to lock
                                  ordering, we are forbidden from
                                  acquiring the LRU mutex directly.
                                  therefore, we increase the reference
                                  count of the entry and drop the
-                                 queue fragment mutex. */
+                                 queue partition mutex. */
 
                               atomic_inc_int64_t(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
@@ -789,11 +897,9 @@ lru_thread(void *arg __attribute__((unused)))
                                  incremented it.) */
 
                               pthread_mutex_lock(&lru->mtx);
-                              atomic_dec_int64_t(&lru->refcount);
-                              if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
-                                  (lru->flags & LRU_ENTRY_PINNED) ||
-                                  (lru->flags & LRU_ENTRY_L2) ||
-                                  (lru->flags & LRU_ENTRY_KILLED) ||
+                              --(lru->refcount);
+                              if ((lru->flags &
+                                   (LRU_ENTRY_L2|LRU_ENTRY_POISON)) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, then
                                       reacquire the queue lock so we
@@ -804,7 +910,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
-                                      in this queue fragment any more. */
+                                      in this queue partition any more. */
                                    continue;
                               }
 
@@ -831,7 +937,7 @@ lru_thread(void *arg __attribute__((unused)))
                               pthread_mutex_unlock(&lru->mtx);
                               ++workdone;
                               /* Reacquire the lock on the queue
-                                 fragment for the next run through
+                                 partition for the next run through
                                  the loop. */
                               pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                          }
@@ -870,6 +976,12 @@ lru_thread(void *arg __attribute__((unused)))
           LogDebug(COMPONENT_CACHE_INODE_LRU,
                   "open_fd_count: %"PRIu64"  t_count:%"PRIu64"\n",
                   (uint64_t) open_fd_count, t_count);
+
+          /* Process LRU cleanup queue */
+          n_finalized = _cache_inode_lru_cleanup();
+
+          LogDebug(COMPONENT_CACHE_INODE_LRU,
+                   "LRU cleanup, reclaimed %d entries", n_finalized);
 
           woke = lru_thread_delay_ms(lru_state.threadwait);
      }
@@ -1005,6 +1117,8 @@ cache_inode_lru_pkginit(void)
           lru_init_queue(&LRU_2[ix].lru);
           /* L2, pinned */
           lru_init_queue(&LRU_2[ix].lru_pinned);
+          /* Cleanup */
+          lru_init_queue(&LRU_CQ[ix].lru);
      }
 
      if (pthread_attr_init(&attr_thr) != 0) {
@@ -1155,7 +1269,7 @@ out:
 /**
  * @brief Function to let the state layer pin an entry
  *
- * This function moves the given entry to the pinned queue fragment
+ * This function moves the given entry to the pinned queue partition
  * for its lane.  If the entry is already pinned, it is a no-op.
  *
  * @param[in] entry  The entry to be moved
@@ -1184,7 +1298,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
      entry->lru.pin_refcnt++;
 
      /* Also take an LRU reference */
-     atomic_inc_int64_t(&entry->lru.refcount);
+     ++(entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1213,7 +1327,7 @@ cache_inode_unpinnable(cache_entry_t *entry)
  * @brief Function to let the state layer rlease a pin
  *
  * This function moves the given entry out of the pinned queue
- * fragment for its lane.  If the entry is not pinned, it is a
+ * partition for its lane.  If the entry is not pinned, it is a
  * no-op.
  *
  * @param[in] entry  The entry to be moved
@@ -1236,7 +1350,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      }
 
      /* Also release an LRU reference */
-     atomic_dec_int64_t(&entry->lru.refcount);
+     --(entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1301,7 +1415,7 @@ cache_inode_lru_ref(cache_entry_t *entry,
      assert(!((flags & LRU_REQ_INITIAL) &&
               (flags & LRU_REQ_SCAN)));
 
-     atomic_inc_int64_t(&entry->lru.refcount);
+     ++(entry->lru.refcount);
 
      /* Move an entry forward if this is an initial reference. */
 
@@ -1384,7 +1498,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
           pthread_mutex_lock(&q->mtx);
-          atomic_dec_int64_t(&entry->lru.refcount);
+          --(entry->lru.refcount);
           if (entry->lru.refcount == 0) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
@@ -1414,7 +1528,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
      } else {
           /* We may decrement the reference count without the queue
              lock, since it cannot go to 0. */
-          atomic_dec_int64_t(&entry->lru.refcount);
+          --(entry->lru.refcount);
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);
