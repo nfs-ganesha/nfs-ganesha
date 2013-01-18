@@ -39,4 +39,4 @@ set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
 ########### install files ###############
 
-install(TARGETS fsalgpfs COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalgpfs fsalgpfsext COMPONENT fsal DESTINATION lib)
