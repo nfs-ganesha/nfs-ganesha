@@ -43,6 +43,7 @@
 #include <stdlib.h>             /* for using exit */
 #include <strings.h>
 #include <sys/types.h>
+#include "lookup3.h"
 
 /** @TODO
  * If there is need/desire to have multiple hash functions, an ops
