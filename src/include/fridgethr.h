@@ -121,11 +121,11 @@ typedef struct thr_fridge {
 } thr_fridge_t;
 
 /** @brief Null flag */
-#define FridgeThr_Flag_None     0x0000
+#define fridgethr_flag_none     0x0000
 /** @brief Wait for a rendezvous */
-#define FridgeThr_Flag_WaitSync 0x0001
+#define fridgethr_flag_waitsync 0x0001
 /** @brief Completed something */
-#define FridgeThr_Flag_SyncDone 0x0002
+#define fridgethr_flag_syncdone 0x0002
 
 int fridgethr_init(struct thr_fridge **,
 		   const char *,

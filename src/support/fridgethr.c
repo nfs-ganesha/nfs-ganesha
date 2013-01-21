@@ -85,7 +85,7 @@ int fridgethr_init(struct thr_fridge **frout,
 	frobj->s = NULL;
 	frobj->nthreads = 0;
 	frobj->nidle = 0;
-	frobj->flags = FridgeThr_Flag_None;
+	frobj->flags = fridgethr_flag_none;
 
 	/* This always succeeds on Linux, but it might fail on other
 	   systems or future versions of Linux. */
@@ -278,8 +278,8 @@ int fridgethr_get(thr_fridge_t *fr,
 		fe->frozen = false;
 
 		/* XXX reliable handoff */
-		fe->flags |= FridgeThr_Flag_SyncDone;
-		if (fe->flags & FridgeThr_Flag_WaitSync) {
+		fe->flags |= fridgethr_flag_syncdone;
+		if (fe->flags & fridgethr_flag_waitsync) {
 			/* pthread_cond_signal never returns an
 			   error, at least under Linux. */
 			pthread_cond_signal(&fe->ctx.cv);
@@ -422,8 +422,8 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 	pthread_mutex_unlock(&fr->mtx);
 
 	fe->frozen = true;
-	fe->flags |= FridgeThr_Flag_WaitSync;
-	while (!(fe->flags & FridgeThr_Flag_SyncDone)) {
+	fe->flags |= fridgethr_flag_waitsync;
+	while (!(fe->flags & fridgethr_flag_syncdone)) {
 		if (fr->p.expiration_delay_s > 0 ) {
 			fe->timeout.tv_sec = time(NULL)
 				+ fr->p.expiration_delay_s;
@@ -436,8 +436,8 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 		}
 	}
 
-	fe->flags &= ~(FridgeThr_Flag_WaitSync |
-		       FridgeThr_Flag_SyncDone);
+	fe->flags &= ~(fridgethr_flag_waitsync |
+		       fridgethr_flag_syncdone);
 	pthread_mutex_unlock(&fe->ctx.mtx);
 
 	/* rescheduled */
