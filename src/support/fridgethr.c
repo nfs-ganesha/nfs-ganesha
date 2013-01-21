@@ -141,8 +141,11 @@ int fridgethr_init(struct thr_fridge **frout,
 		rc = ENOMEM;
 	}
 
-	/* idle threads q */
+	/* Idle threads queue */
 	init_glist(&frobj->idle_q);
+
+	/* Work queue */
+	init_glist(&frobj->work_q);
 
 	*frout = frobj;
 	rc = 0;
@@ -194,7 +197,7 @@ static bool fridgethr_freeze(thr_fridge_t *fr,
  * This routine calls the procedure that implements the actual
  * functionality wanted by a thread in a loop, handling rescheduling.
  *
- * @param[in] arg The firdge entry for this thread
+ * @param[in] arg The fridge entry for this thread
  *
  * @return NULL.
  */
@@ -216,7 +219,7 @@ static void *fridgethr_start_routine(void *arg)
 	assert(rc == 0);
 
 	do {
-		(void) fe->ctx.func(&fe->ctx);
+		fe->ctx.func(&fe->ctx);
 		reschedule = fridgethr_freeze(fr, &fe->ctx);
 	} while (reschedule);
 
@@ -237,9 +240,8 @@ static void *fridgethr_start_routine(void *arg)
  * @brief Schedule a thread to perform a function
  *
  * This function finds an idle thread to perform func, creating one if
- * no thread is idle.
- *
- * @todo Support maxthreads.
+ * no thread is idle and we have not reached maxthreads.  If we have
+ * reached maxthreads, queue the request.
  *
  * @param[in] fr   The fridge in which to find a thread
  * @param[in] func The thing to do
@@ -263,12 +265,34 @@ int fridgethr_get(thr_fridge_t *fr,
 
 	PTHREAD_MUTEX_lock(&fr->mtx);
 
-	if (fr->nidle == 0) {
-		/* fr accting */
+	if (fr->nidle > 0) {
+		/* Grab a thread and go */
+		fe = glist_first_entry(&fr->idle_q, fridge_entry_t, q);
+		glist_del(&fe->q);
+		--(fr->nidle);
+
+		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
+
+		fe->ctx.func = func;
+		fe->ctx.arg = arg;
+		fe->frozen = false;
+
+		/* XXX reliable handoff */
+		fe->flags |= FridgeThr_Flag_SyncDone;
+		if (fe->flags & FridgeThr_Flag_WaitSync) {
+			/* pthread_cond_signal never returns an
+			   error, at least under Linux. */
+			pthread_cond_signal(&fe->ctx.cv);
+		}
+		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+	} else if ((fr->p.thr_max == 0) ||
+		   (fr->nthreads < fr->p.thr_max)) {
+		/* Make a enw thread */
+
 		++(fr->nthreads);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 
-		/* new thread */
 		fe = gsh_calloc(sizeof(fridge_entry_t), 1);
 		if (fe == NULL) {
 			goto create_err;
@@ -318,32 +342,33 @@ int fridgethr_get(thr_fridge_t *fr,
 			     fr->nthreads,
 			     fr->nidle);
 #endif
-
 	} else {
-		fe = glist_first_entry(&fr->idle_q, fridge_entry_t, q);
-		glist_del(&fe->q);
-		--(fr->nidle);
+		/* Queue */
+		struct thr_work_queued *q = NULL;
 
-		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 
-		fe->ctx.func = func;
-		fe->ctx.arg = arg;
-		fe->frozen = false;
-
-		/* XXX reliable handoff */
-		fe->flags |= FridgeThr_Flag_SyncDone;
-		if (fe->flags & FridgeThr_Flag_WaitSync) {
-			/* pthread_cond_signal never returns an
-			   error, at least under Linux. */
-			pthread_cond_signal(&fe->ctx.cv);
+		q = gsh_malloc(sizeof(struct thr_work_queued));
+		if (q == NULL) {
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			LogMajor(COMPONENT_DISPATCH,
+				 "Unable to allocate memory for "
+				 "work queue item in fridge %s", fr->s);
+			return ENOMEM;
 		}
-		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+		init_glist(&q->link);
+		q->func = func;
+		q->arg = arg;
+		glist_add_tail(&fr->work_q, &q->link);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	}
 
 	return rc;
 
 create_err:
+
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	--(fr->nthreads);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	if (conditioned) {
 		pthread_cond_destroy(&fe->ctx.cv);
@@ -372,34 +397,48 @@ create_err:
 
 bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 {
-	fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
+	/* Entry for this thread */
+	fridge_entry_t *fe = container_of(thr_ctx, fridge_entry_t, ctx);
+	/* Return code from system calls */
 	int rc = 0;
 
 	pthread_mutex_lock(&fr->mtx);
-	glist_add_tail(&fr->idle_q, &pfe->q);
+	if (!glist_empty(&fr->work_q)) {
+		struct thr_work_queued *q
+			= glist_first_entry(&fr->work_q,
+					    struct thr_work_queued,
+					    link);
+		glist_del(&q->link);
+		pthread_mutex_unlock(&fr->mtx);
+		fe->ctx.func = q->func;
+		fe->ctx.arg = q->arg;
+		gsh_free(q);
+		return true;
+	}
+	glist_add_tail(&fr->idle_q, &fe->q);
 	++(fr->nidle);
 
-	pthread_mutex_lock(&pfe->ctx.mtx);
+	pthread_mutex_lock(&fe->ctx.mtx);
 	pthread_mutex_unlock(&fr->mtx);
 
-	pfe->frozen = true;
-	pfe->flags |= FridgeThr_Flag_WaitSync;
-	while (!(pfe->flags & FridgeThr_Flag_SyncDone)) {
+	fe->frozen = true;
+	fe->flags |= FridgeThr_Flag_WaitSync;
+	while (!(fe->flags & FridgeThr_Flag_SyncDone)) {
 		if (fr->p.expiration_delay_s > 0 ) {
-			pfe->timeout.tv_sec = time(NULL)
+			fe->timeout.tv_sec = time(NULL)
 				+ fr->p.expiration_delay_s;
-			pfe->timeout.tv_nsec = 0;
-			rc = pthread_cond_timedwait(&pfe->ctx.cv,
-						    &pfe->ctx.mtx,
-						    &pfe->timeout);
+			fe->timeout.tv_nsec = 0;
+			rc = pthread_cond_timedwait(&fe->ctx.cv,
+						    &fe->ctx.mtx,
+						    &fe->timeout);
 		} else {
-			rc = pthread_cond_wait(&pfe->ctx.cv, &pfe->ctx.mtx);
+			rc = pthread_cond_wait(&fe->ctx.cv, &fe->ctx.mtx);
 		}
 	}
 
-	pfe->flags &= ~(FridgeThr_Flag_WaitSync |
-			FridgeThr_Flag_SyncDone);
-	pthread_mutex_unlock(&pfe->ctx.mtx);
+	fe->flags &= ~(FridgeThr_Flag_WaitSync |
+		       FridgeThr_Flag_SyncDone);
+	pthread_mutex_unlock(&fe->ctx.mtx);
 
 	/* rescheduled */
 
@@ -411,8 +450,8 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 		   'unsigned long' on Linux */
 		LogFullDebug(COMPONENT_THREAD,
 			     "fr %p re-use idle thread %u (nthreads %u "
-			     "nidle %u)", fr, (unsigned int)
-			     pfe->ctx.id,
+			     "nidle %u)", fr,
+			     (unsigned int) fe->ctx.id,
 			     fr->nthreads, fr->nidle);
 #endif
 		return (true);
@@ -423,7 +462,7 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 	   long' on Linux */
 	LogFullDebug(COMPONENT_THREAD,
 		     "fr %p thread %u idle out (nthreads %u nidle %u)",
-		     fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
+		     fr, (unsigned int) fe->ctx.id, fr->nthreads, fr->nidle);
 #endif
 
 	return (false);

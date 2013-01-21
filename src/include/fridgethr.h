@@ -82,12 +82,7 @@ typedef struct fridge_thr_context fridge_thr_context_t;
  */
 
 struct thr_fridge_params {
-	/**
-	 * Maximum number of threads to run
-	 *
-	 * @todo Unimplemented
-	 */
-	uint32_t thr_max;
+	uint32_t thr_max; /*< Maximum number of threads */
 	/**
 	 * Stack size for created threads.
 	 *
@@ -97,6 +92,16 @@ struct thr_fridge_params {
 	 */
 	uint32_t stacksize;
 	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
+};
+
+/**
+ * @brief Queued requests
+ */
+struct thr_work_queued {
+	struct glist_head link; /*< Link in the work queue */
+	void (*func)(struct fridge_thr_context *); /*< Function being
+						       executed */
+	void *arg; /*< Functions argument */
 };
 
 /**
@@ -110,6 +115,7 @@ typedef struct thr_fridge {
 	pthread_attr_t attr; /*< Creation attributes */
 	uint32_t nthreads; /*< Number of threads running */
 	struct glist_head idle_q; /*< Idle threads */
+	struct glist_head work_q; /*< Work queued */
 	uint32_t nidle; /*< Number of idle threads */
 	uint32_t flags; /*< Fridge-wide flags */
 } thr_fridge_t;
