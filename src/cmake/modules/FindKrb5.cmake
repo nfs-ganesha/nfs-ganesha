@@ -15,11 +15,13 @@
 #  FIND_PACKAGE(KRB5 REQUIRED gssapi)
 
 # First find the config script from which to obtain other values.
-FIND_PROGRAM(KRB5_C_CONFIG NAMES krb5-config
-	PATHS
-	/opt/ganesha/bin
-	NO_DEFAULT_PATH
-)
+IF(KRB5_PREFIX)
+  FIND_PROGRAM(KRB5_C_CONFIG NAMES krb5-config
+    PATHS ${KRB5_PREFIX}
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_DEFAULT_PATH
+    )
+ENDIF(KRB5_PREFIX)
 FIND_PROGRAM(KRB5_C_CONFIG NAMES krb5-config)
 
 MESSAGE(STATUS "found krb5-config here ${KRB5_C_CONFIG}")
@@ -104,6 +106,9 @@ IF(KRB5_FOUND)
         SET(KRB5_LIBRARY_NAMES ${KRB5_LIBRARY_NAMES} "${NAME}")
       ENDIF("${flag}" MATCHES "^-L")
     ENDFOREACH(flag)
+
+    # add gssapi_krb5 (MIT)
+    SET(KRB5_LIBRARY_NAMES ${KRB5_LIBRARY_NAMES} "gssapi_krb5")
 
     # Search for each library needed using the directories given.
     FOREACH(name ${KRB5_LIBRARY_NAMES})
