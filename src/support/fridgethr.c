@@ -201,28 +201,34 @@ static bool fridgethr_freeze(thr_fridge_t *fr,
 
 static void *fridgethr_start_routine(void *arg)
 {
-	fridge_entry_t *pfe = (fridge_entry_t *) arg;
-	thr_fridge_t *fr = pfe->fr;
+	fridge_entry_t *fe = (fridge_entry_t *) arg;
+	thr_fridge_t *fr = fe->fr;
 	bool reschedule;
+	int rc = 0;
 
 	SetNameFunction(fr->s);
 
-	(void) pthread_sigmask(SIG_SETMASK, (sigset_t *) NULL,
-			       &pfe->ctx.sigmask);
+	rc = pthread_sigmask(SIG_SETMASK, (sigset_t *) NULL,
+			     &fe->ctx.sigmask);
+
+	/* The only allowable errors are EFAULT and EINVAL, both of
+	   which would indicate bugs in the code. */
+	assert(rc == 0);
+
 	do {
-		(void) pfe->ctx.func(&pfe->ctx);
-		reschedule = fridgethr_freeze(fr, &pfe->ctx);
+		(void) fe->ctx.func(&fe->ctx);
+		reschedule = fridgethr_freeze(fr, &fe->ctx);
 	} while (reschedule);
 
-	/* finalize this -- note that at present, pfe is not on any
+	/* finalize this -- note that at present, fe is not on any
 	 * thread queue */
 	pthread_mutex_lock(&fr->mtx);
 	--(fr->nthreads);
 	pthread_mutex_unlock(&fr->mtx);
 
-	pthread_mutex_destroy(&pfe->ctx.mtx);
-	pthread_cond_destroy(&pfe->ctx.cv);
-	gsh_free(pfe);
+	pthread_mutex_destroy(&fe->ctx.mtx);
+	pthread_cond_destroy(&fe->ctx.cv);
+	gsh_free(fe);
 
 	return (NULL);
 }
@@ -239,43 +245,68 @@ static void *fridgethr_start_routine(void *arg)
  * @param[in] func The thing to do
  * @param[in] arg  The thing to do it to
  *
- * @return The context of the thread got.
+ * @return 0 on success or POSIX error codes.
  */
 
-struct fridge_thr_context *fridgethr_get(thr_fridge_t *fr,
-					 void *(*func)(void*),
-					 void *arg)
+int fridgethr_get(thr_fridge_t *fr,
+		  void (*func)(fridge_thr_context_t *),
+		  void *arg)
 {
-	fridge_entry_t *pfe;
-	int retval = 0;
+	/* The entry for the new/found thread */
+	fridge_entry_t *fe;
+	/* Return code */
+	int rc = 0;
+	/* The mutex has/not been initialized */
+	bool mutexed = false;
+	/* The condition variable has/not been initialized */
+	bool conditioned = false;
 
-	pthread_mutex_lock(&fr->mtx);
+	PTHREAD_MUTEX_lock(&fr->mtx);
 
 	if (fr->nidle == 0) {
 		/* fr accting */
 		++(fr->nthreads);
-		pthread_mutex_unlock(&fr->mtx);
+		PTHREAD_MUTEX_unlock(&fr->mtx);
 
 		/* new thread */
-		pfe = (fridge_entry_t *) gsh_calloc(sizeof(fridge_entry_t), 1);
-		if (!pfe)
-			Fatal();
+		fe = gsh_calloc(sizeof(fridge_entry_t), 1);
+		if (fe == NULL) {
+			goto create_err;
+		}
 
-		pfe->fr = fr;
-		pfe->ctx.id = pthread_self();
-		pthread_mutex_init(&pfe->ctx.mtx, NULL);
-		pthread_cond_init(&pfe->ctx.cv, NULL);
-		pfe->ctx.func = func;
-		pfe->ctx.arg = arg;
-		pfe->frozen = false;
+		fe->fr = fr;
+		rc = pthread_mutex_init(&fe->ctx.mtx, NULL);
+		if (rc != 0) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Unable to initialize mutex for new thread "
+				 "in fridge %s: %d",
+				 fr->s, rc);
+			goto create_err;
+		}
+		mutexed = true;
 
-		retval = pthread_create(&pfe->ctx.id, &fr->attr,
-					fridgethr_start_routine,
-					pfe);
-		if (retval) {
-			LogCrit(COMPONENT_THREAD,
-				"pthread_create bogus: %d", errno);
-			return NULL;
+		rc = pthread_cond_init(&fe->ctx.cv, NULL);
+		if (rc != 0) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Unable to initialize condition variable "
+				 "for new thread in fridge %s: %d",
+				 fr->s, rc);
+			goto create_err;
+		}
+		conditioned = true;
+
+		fe->ctx.func = func;
+		fe->ctx.arg = arg;
+		fe->frozen = false;
+
+		rc = pthread_create(&fe->ctx.id, &fr->attr,
+				    fridgethr_start_routine,
+				    fe);
+		if (rc != 0) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Unable to create new thread "
+				 "in fridge %s: %d", fr->s, rc);
+			goto create_err;
 		}
 
 #ifdef LINUX
@@ -283,34 +314,50 @@ struct fridge_thr_context *fridgethr_get(thr_fridge_t *fr,
 		   'unsigned long' on Linux */
 		LogFullDebug(COMPONENT_THREAD,
 			     "fr %p created thread %u (nthreads %u nidle %u)",
-			     fr, (unsigned int) pfe->ctx.id,
+			     fr, (unsigned int) fe->ctx.id,
 			     fr->nthreads,
 			     fr->nidle);
 #endif
 
-		goto out;
+	} else {
+		fe = glist_first_entry(&fr->idle_q, fridge_entry_t, q);
+		glist_del(&fe->q);
+		--(fr->nidle);
+
+		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
+
+		fe->ctx.func = func;
+		fe->ctx.arg = arg;
+		fe->frozen = false;
+
+		/* XXX reliable handoff */
+		fe->flags |= FridgeThr_Flag_SyncDone;
+		if (fe->flags & FridgeThr_Flag_WaitSync) {
+			/* pthread_cond_signal never returns an
+			   error, at least under Linux. */
+			pthread_cond_signal(&fe->ctx.cv);
+		}
+		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+		PTHREAD_MUTEX_unlock(&fr->mtx);
 	}
 
-	pfe = glist_first_entry(&fr->idle_q, fridge_entry_t, q);
-	glist_del(&pfe->q);
-	--(fr->nidle);
+	return rc;
 
-	pthread_mutex_lock(&pfe->ctx.mtx);
+create_err:
 
-	pfe->ctx.func = func;
-	pfe->ctx.arg = arg;
-	pfe->frozen = false;
-
-	/* XXX reliable handoff */
-	pfe->flags |= FridgeThr_Flag_SyncDone;
-	if (pfe->flags & FridgeThr_Flag_WaitSync) {
-		pthread_cond_signal(&pfe->ctx.cv);
+	if (conditioned) {
+		pthread_cond_destroy(&fe->ctx.cv);
 	}
-	pthread_mutex_unlock(&pfe->ctx.mtx);
-	pthread_mutex_unlock(&fr->mtx);
 
-out:
-	return (&(pfe->ctx));
+	if (mutexed) {
+		pthread_mutex_destroy(&fe->ctx.mtx);
+	}
+
+	if (fe != NULL) {
+		gsh_free(free);
+	}
+
+	return rc;
 }
 
 /**

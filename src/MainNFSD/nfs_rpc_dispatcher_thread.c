@@ -822,11 +822,9 @@ stallq_should_unstall(gsh_xprt_private_t *xu)
 		(xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
-void *
-thr_stallq(void *arg)
+void
+thr_stallq(fridge_thr_context_t *thr_ctx)
 {
-    fridge_thr_contex_t *thr_ctx  __attribute__((unused)) =
-        (fridge_thr_contex_t *) arg;
     gsh_xprt_private_t *xu;
     struct glist_head *l;
     SVCXPRT *xprt;
@@ -867,8 +865,6 @@ thr_stallq(void *arg)
     }
 
     LogDebug(COMPONENT_DISPATCH, "stallq idle, thread exit");
-
-  return (NULL);
 }
 
 static bool
@@ -921,8 +917,13 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
 
     if (activate) {
+	int rc = 0;
         LogDebug(COMPONENT_DISPATCH, "starting stallq service thread");
-        (void) fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
+        rc = fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
+	if (rc != 0) {
+	    LogCrit(COMPONENT_DISPATCH,
+		    "Failed to start stallq: %d", rc);
+	}
     }
 
     /* stalled */
@@ -1265,16 +1266,16 @@ free_nfs_request(request_data_t *nfsreq)
     pool_free(request_pool, nfsreq);
 }
 
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx,
-                                                nfs_request_data_t *);
-int nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *);
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(fridge_thr_context_t *,
+						nfs_request_data_t *);
+int nfs_rpc_get_args(fridge_thr_context_t *, nfs_request_data_t *);
 
 
 extern enum auth_stat svc_auth_authenticate(struct svc_req *, struct rpc_msg *,
     bool *);
 
 static inline enum auth_stat
-AuthenticateRequest(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *nfsreq,
+AuthenticateRequest(fridge_thr_context_t *thr_ctx, nfs_request_data_t *nfsreq,
                     bool *no_dispatch)
 {
   struct svc_req *req = &(nfsreq->req);
@@ -1370,7 +1371,7 @@ out:
 }
 
 static inline enum xprt_stat
-thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
+thr_decode_rpc_request(fridge_thr_context_t *thr_ctx, SVCXPRT *xprt)
 {
     request_data_t *nfsreq;
     enum xprt_stat stat = XPRT_IDLE;
@@ -1506,11 +1507,10 @@ thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
     return (stat == XPRT_MOREREQS);
 }
 
-void *
-thr_decode_rpc_requests(void *arg)
+void
+thr_decode_rpc_requests(fridge_thr_context_t *thr_ctx)
 {
     enum xprt_stat stat;
-    fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
     LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
@@ -1530,8 +1530,6 @@ thr_decode_rpc_requests(void *arg)
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
-
-  return (NULL);
 }
 
 static bool
@@ -1576,7 +1574,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     /* The following actions are now purely diagnostic, the only side effect
      * is a message to the log. */
-    int code  __attribute__((unused)) = 0;
+    int code = 0;
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
 
@@ -1667,7 +1665,11 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     LogFullDebug(COMPONENT_DISPATCH, "before fridgethr_get");
 
     /* schedule a thread to decode */
-    (void) fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
+    code = fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
+    if (code != 0) {
+	    LogMajor(COMPONENT_DISPATCH,
+		     "Unable to get decode thread: %d", code);
+    }
 
     LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");
 
@@ -1714,7 +1716,7 @@ void *rpc_dispatcher_thread(void *arg)
  * @return True if the request is valid, fals otherwise.
  */
 bool
-is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
+is_rpc_call_valid(fridge_thr_context_t *thr_ctx, SVCXPRT *xprt,
                   struct svc_req *req)
 {
   int lo_vers, hi_vers;
@@ -1909,7 +1911,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
  * Extract RPC argument.
  */
 int
-nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
+nfs_rpc_get_args(fridge_thr_context_t *thr_ctx, nfs_request_data_t *preqnfs)
 {
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;

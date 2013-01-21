@@ -756,4 +756,58 @@ extern const nfs_function_desc_t *INVALID_FUNCDESC;
 void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+
+/**
+ * @brief Logging mutex lock
+ *
+ * Based on Marc Eshel's error checking read-write lock macros, check
+ * the return value of pthread_mutex_lock and log any non-zero value.
+ *
+ * @param[in,out] mtx The mutex to acquire
+ */
+
+#define PTHREAD_MUTEX_lock(mtx)						\
+	do {								\
+		int rc;							\
+									\
+		LogFullDebug(COMPONENT_RW_LOCK,				\
+			     "Lock mutex %p", mtx);			\
+		rc = pthread_mutex_lock(mtx);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Got mutex %p", mtx);		\
+		} else{							\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d acquiring mutex %p",		\
+				rc, mtx);				\
+		}							\
+	} while(0)
+
+/**
+ * @brief Logging mutex unlock
+ *
+ * Based on Marc Eshel's error checking read-write lock macros, check
+ * the return value of pthread_mutex_unlock and log any non-zero
+ * value.
+ *
+ * @param[in,out] mtx The mutex to relinquish
+ */
+
+#define PTHREAD_MUTEX_unlock(mtx)					\
+	do {								\
+		int rc;							\
+									\
+		LogFullDebug(COMPONENT_RW_LOCK,				\
+			     "Unlock mutex %p", mtx);			\
+		rc = pthread_mutex_unlock(mtx);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Released mutex %p", mtx);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d relinquishing mutex %p",	\
+				rc, mtx);				\
+		}							\
+	} while(0)
+
 #endif /* !NFS_CORE_H */

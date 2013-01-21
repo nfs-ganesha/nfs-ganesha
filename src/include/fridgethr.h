@@ -63,7 +63,8 @@ struct fridge_thr_entry {
 				         thread */
 		pthread_cond_t cv; /*< Condition variable to wait for sync */
 		sigset_t sigmask; /*< This thread's signal mask */
-		void *(*func)(void*); /*< Function being executed */
+		void (*func)(struct fridge_thr_context *); /*< Function being
+							      executed */
 		void *arg; /*< Functions argument */
 	} ctx;
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
@@ -74,7 +75,7 @@ struct fridge_thr_entry {
 };
 
 typedef struct fridge_thr_entry fridge_entry_t;
-typedef struct fridge_thr_context fridge_thr_contex_t;
+typedef struct fridge_thr_context fridge_thr_context_t;
 
 /**
  * @brief Parameters set at fridgethr_init
@@ -125,10 +126,9 @@ int fridgethr_init(struct thr_fridge **,
 		   const struct thr_fridge_params *);
 void fridgethr_destroy(struct thr_fridge *);
 
-struct fridge_thr_context *fridgethr_get(thr_fridge_t *,
-					 void *(*)(void*),
-					 void *);
-
+int fridgethr_get(thr_fridge_t *,
+		  void (*)(fridge_thr_context_t *),
+		  void *);
 #endif /* FRIDGETHR_H */
 
 /** @} */

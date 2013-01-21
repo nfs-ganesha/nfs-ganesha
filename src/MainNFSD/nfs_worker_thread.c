@@ -371,8 +371,8 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 extern const char *pause_state_str[];
 
 bool
-is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
-                  struct svc_req *req);
+is_rpc_call_valid(fridge_thr_context_t *thr_ctx, SVCXPRT *xprt,
+		  struct svc_req *req);
 
 /**
  * @brief Extract nfs function descriptor from nfs request.
@@ -387,7 +387,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
  * @return Function vector for program.
  */
 const nfs_function_desc_t *
-nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
+nfs_rpc_get_funcdesc(fridge_thr_context_t *thr_ctx, nfs_request_data_t *preqnfs)
 {
   struct svc_req *req = &preqnfs->req;
   bool slocked = FALSE;
