@@ -428,7 +428,7 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
           short found_uid=false;
           short found_gid=false;
-          if (gd->pac_blob.data != NULL)
+          if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
           {
             struct wbcAuthUserParams params;
             wbcErr wbc_err;
@@ -437,8 +437,8 @@ int principal2uid(char *principal, uid_t * puid)
 
             memset(&params, 0, sizeof(params));
             params.level = WBC_AUTH_USER_LEVEL_PAC;
-            params.password.pac.data = (uint8_t *)gd->pac_blob.data;
-            params.password.pac.length = gd->pac_blob.length;
+            params.password.pac.data = (uint8_t *)gd->pac.ms_pac.value;
+            params.password.pac.length = gd->pac.ms_pac.length;
 
             wbc_err = wbcAuthenticateUserEx(&params, &info, &error);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
