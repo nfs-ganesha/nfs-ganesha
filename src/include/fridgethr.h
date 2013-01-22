@@ -83,14 +83,6 @@ typedef struct fridge_thr_context fridge_thr_context_t;
 
 struct thr_fridge_params {
 	uint32_t thr_max; /*< Maximum number of threads */
-	/**
-	 * Stack size for created threads.
-	 *
-	 * @note A screwy value here can cause pthread_create to fail
-	 * rather than firdgethr_init.  In general you should just set
-	 * it to 0 and take the default.
-	 */
-	uint32_t stacksize;
 	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
 };
 

@@ -935,7 +935,6 @@ nfs_rpc_queue_init(void)
 {
     struct thr_fridge_params reqparams = {
 	.thr_max = 0,
-	.stacksize = 0,
 	.expiration_delay_s
 	= ((nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
 	   nfs_param.core_param.decoder_fridge_expiration_delay : 600)};

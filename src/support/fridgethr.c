@@ -112,16 +112,6 @@ int fridgethr_init(struct thr_fridge **frout,
 			 s, rc);
 		goto out;
 	}
-	if (frobj->p.stacksize != 0) {
-		rc = pthread_attr_setstacksize(&frobj->attr,
-					       frobj->p.stacksize);
-		if (rc != 0) {
-			LogMajor(COMPONENT_DISPATCH,
-				 "Unable to set thread stack size for "
-				 "fridge %s: %d", s, rc);
-			goto out;
-		}
-	}
 	/* This always succeeds on Linux (if you believe the manual),
 	   but SUS defines errors. */
 	rc = pthread_mutex_init(&frobj->mtx, NULL);
