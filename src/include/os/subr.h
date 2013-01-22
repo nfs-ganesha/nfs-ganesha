@@ -36,9 +36,11 @@ struct vfs_dirent {
 	uint64_t vd_ino;
 	uint32_t vd_reclen;
 	uint32_t vd_type;
-	char     vd_name[255];
+	off_t    vd_offset;
+	char     *vd_name;
 };
 
-void to_vfs_dirent(char *buf, struct vfs_dirent *vd);
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp);
+bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base);
 
 #endif                          /* _SUBR_OS_H */

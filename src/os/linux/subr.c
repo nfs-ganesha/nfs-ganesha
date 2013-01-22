@@ -27,9 +27,12 @@
  *
  */
 
+#include "fsal.h"
 #include <stddef.h>
 #include <string.h>
-#include <os/subr.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include "os/subr.h"
 
 /* not defined in linux headers so we do it here
  */
@@ -48,15 +51,45 @@ struct linux_dirent {
 	  */
 };
 
-void to_vfs_dirent(char *buf, struct vfs_dirent *vd)
+/**
+ * @brief Read system directory entries into the buffer
+ *
+ * @param buf    [in] pointer to the buffer
+ * @param bcount [in] buffer size
+ * @param basepp [in/out] pointer to offset into "file" after this read
+ */
+
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
-	struct linux_dirent *dp = (struct linux_dirent *)buf;
+	int retval = 0;
+
+	retval = syscall(SYS_getdents, fd, buf, bcount);
+	if(retval >= 0)
+		*basepp += retval;
+	return retval;
+}
+
+/**
+ * @brief Mash a FreeBSD directory entry into the generic form
+ *
+ * @param buf  [in] pointer into buffer read by vfs_readents
+ * @param bpos [in] byte offset into buf to decode
+ * @param vd   [in] pointer to the generic struct
+ * @param base [in] base file offset for this buffer - not used
+ *
+ * @return true. Linux entries are never empty.
+ */
+
+bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
+{
+	struct linux_dirent *dp = (struct linux_dirent *)(buf + bpos);
 	char type;
 
 	vd->vd_ino = dp->d_ino;
 	vd->vd_reclen = dp->d_reclen;
 	type = buf[dp->d_reclen - 1];
 	vd->vd_type = type;
-	strncpy(vd->vd_name, dp->d_name,
-		dp->d_reclen - 2 - offsetof(struct linux_dirent, d_name));
+	vd->vd_offset = dp->d_off;
+	vd->vd_name = dp->d_name;
+	return true;
 }

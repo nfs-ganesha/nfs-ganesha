@@ -33,11 +33,38 @@
 #include <os/subr.h>
 #include <sys/dirent.h>
 
-void to_vfs_dirent(char *buf, struct vfs_dirent *vd)
+/**
+ * @brief Read system directory entries into the buffer
+ *
+ * @param buf    [in] pointer to the buffer
+ * @param bpos [in] byte offset into buf to decode
+ * @param bcount [in] buffer size
+ * @param basepp [in/out] offset into "file" after this read
+ */
+
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t **basepp);
 {
-	struct dirent *dp = (struct dirent *)buf;
+	return getdirentries(fd, buf, sizeof(buf), basepp);
+}
+
+/**
+ * @brief Mash a FreeBSD directory entry into the generic form
+ *
+ * @param buf  [in] pointer into buffer read by vfs_readents
+ * @param vd   [in] pointer to the generic struct
+ * @param base [in] file offset for this entry in buffer.
+ *
+ * @return true if entry valid, false if not (empty)
+ */
+
+bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
+{
+	struct dirent *dp = (struct dirent *)(buf + bpos);
+
 	vd->vd_ino = dp->d_fileno;
 	vd->vd_reclen = dp->d_reclen;
 	vd->vd_type = dp->d_type;
-	strncpy(vd->vd_name, dp->d_name, sizeof(dp->d_name));
+	vd->vd_offset = base + bpos + dp->d_reclen;
+	vd->vd_name = dp->d_name;
+	return (dp->d_fileno != 0) ? true: false;
 }
