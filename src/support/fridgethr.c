@@ -415,9 +415,9 @@ bool fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 	fe->flags |= fridgethr_flag_waitsync;
 	while (!(fe->flags & fridgethr_flag_syncdone)) {
 		if (fr->p.expiration_delay_s > 0 ) {
-			fe->timeout.tv_sec = time(NULL)
-				+ fr->p.expiration_delay_s;
-			fe->timeout.tv_nsec = 0;
+			clock_gettime(CLOCK_REALTIME,
+				      &fe->timeout);
+			fe->timeout.tv_sec += fr->p.expiration_delay_s;
 			rc = pthread_cond_timedwait(&fe->ctx.cv,
 						    &fe->ctx.mtx,
 						    &fe->timeout);
