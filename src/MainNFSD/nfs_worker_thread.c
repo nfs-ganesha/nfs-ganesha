@@ -539,7 +539,6 @@ static void nfs_rpc_execute(request_data_t *preq,
   struct svc_req *req = &preqnfs->req;
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_stat_type_t stat_type;
-  sockaddr_t hostaddr;
   exportlist_client_entry_t * related_client = &worker_data->related_client;
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
@@ -562,7 +561,12 @@ static void nfs_rpc_execute(request_data_t *preq,
    * capture hostaddr at SVC_RECV).  For TCP, if we intend to use
    * this, we should sprint a buffer once, in when we're setting up
    * xprt private data. */
-  if(copy_xprt_addr(&hostaddr, xprt) == 0)
+  if(copy_xprt_addr(&worker_data->hostaddr, xprt) == 0)
+
+/* can I change this to be call by ref instead of copy?
+ * the xprt is valid for the lifetime here
+ */
+
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "copy_xprt_addr failed for Program %d, Version %d, "
@@ -576,12 +580,12 @@ static void nfs_rpc_execute(request_data_t *preq,
       return;
     }
 
-  port = get_port(&hostaddr);
+  port = get_port(&worker_data->hostaddr);
 
   if(isDebug(COMPONENT_DISPATCH))
     {
       char addrbuf[SOCK_NAME_MAX];
-      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
       LogDebug(COMPONENT_DISPATCH,
                "Request from %s for Program %d, Version %d, Function %d "
                "has xid=%u",
@@ -694,7 +698,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                       char dumpfh[1024];
                       char *reason;
                       char addrbuf[SOCK_NAME_MAX];
-                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else if(pexport == NULL)
@@ -746,7 +750,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                       char dumpfh[1024];
                       char *reason;
                       char addrbuf[SOCK_NAME_MAX];
-                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else if(pexport == NULL)
@@ -852,7 +856,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                   char dumpfh[1024];
                   char *reason;
                   char addrbuf[SOCK_NAME_MAX];
-                  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                  sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                   if(exportid < 0)
                     reason = "has badly formed handle";
                   else if(pexport == NULL)
@@ -913,7 +917,6 @@ static void nfs_rpc_execute(request_data_t *preq,
    * It is now time for checking if export list allows the machine to perform
    * the request
    */
-  worker_data->hostaddr = hostaddr;
 
   /* Check if client is using a privileged port, but only for NFS protocol */
   if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
@@ -993,7 +996,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
       char addrbuf[SOCK_NAME_MAX];
-      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
       LogInfo(COMPONENT_DISPATCH,
               "Host %s is not allowed to access this export entry, vers=%d, "
               "proc=%d",
@@ -1065,7 +1068,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       /* set up the request context
        */
       req_ctx.creds = &user_credentials;
-      req_ctx.caller_addr = &hostaddr;
+      req_ctx.caller_addr = &worker_data->hostaddr;
       req_ctx.clientid = NULL;
       req_ctx.nfs_vers = req->rq_vers;
       req_ctx.req_type = preq->rtype;
@@ -1437,6 +1440,9 @@ void *worker_thread(void *IndexArg)
                    "Processing a new request %p, pause_state: %s",
                    nfsreq,
                    pause_state_str[worker_data->wcb.tcb_state]);
+/* need to do a getpeername(2) on the socket fd before we dive into the
+ * rpc_execute.  9p is messy but we do have the fd....
+ */
 
       switch(nfsreq->rtype)
        {
