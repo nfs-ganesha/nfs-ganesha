@@ -242,9 +242,33 @@ out:
 
 
 /**
+ * @brief Set the create verifier
+ *
+ * This function sets the mtime/atime attributes according to the create verifier
+ *
+ * @param[in] sattr   attrlist to be managed.
+ * @param[in] verf_hi High long of verifier
+ * @param[in] verf_lo Low long of verifier
+ *
+ */
+void
+cache_inode_create_set_verifier(struct attrlist *sattr,
+                          uint32_t verf_hi,
+                          uint32_t verf_lo)
+{
+        sattr->atime.tv_sec = verf_hi;
+        sattr->atime.tv_nsec = 0;
+        FSAL_SET_MASK(sattr->mask, ATTR_ATIME);
+        sattr->mtime.tv_sec = verf_lo;
+        sattr->mtime.tv_nsec = 0;
+        FSAL_SET_MASK(sattr->mask, ATTR_MTIME);
+}
+
+
+/**
  * @brief Return true if create verifier matches
  *
- * This functionr eturns true if the create verifier matches
+ * This function returns true if the create verifier matches
  *
  * @param[in] entry   Entry to be managed.
  * @param[in] req_ctx Request context(user creds, client address etc)
@@ -281,4 +305,5 @@ cache_inode_create_verify(cache_entry_t *entry,
 
         return verified;
 }
+
 /** @} */
