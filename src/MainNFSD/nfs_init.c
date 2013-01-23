@@ -68,6 +68,9 @@
 #include "sal_functions.h"
 #include "nfs_tcb.h"
 #include "nfs_tcb.h"
+#include "fridgethr.h"
+
+extern struct fridgethr *req_fridge;
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param =
@@ -407,6 +410,7 @@ void *sigmgr_thread(void *UnusedArg)
 {
   SetNameFunction("sigmgr");
   int signal_caught = 0;
+  int rc = 0;
 
   /* Loop until we catch SIGTERM */
   while(signal_caught != SIGTERM)
@@ -432,13 +436,24 @@ void *sigmgr_thread(void *UnusedArg)
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
   LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
+  rc = fridgethr_sync_command(req_fridge,
+			      fridgethr_comm_stop,
+			      300);
+
+  if (rc != 0) {
+	  LogMajor(COMPONENT_THREAD,
+		   "Failed to shut down the request thread fridge: %d!",
+		   rc);
+  }
+  
   if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
     LogDebug(COMPONENT_THREAD,
              "Unexpected return code from pause_threads");
   else
     LogDebug(COMPONENT_THREAD,
              "Done waiting for worker threads to exit");
-
+			 
+  
   LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");

@@ -46,24 +46,24 @@
 #include <stdbool.h>
 #include "nfs_core.h"
 
-struct thr_fridge;
+struct fridgethr;
 
 /**
  * @brief A given thread in the fridge
  */
 
-struct fridge_thr_entry {
+struct fridgethr_entry {
 	/**
 	 * @brief Thread context
 	 */
-	struct fridge_thr_context {
+	struct fridgethr_context {
 		uint32_t uflags; /*< Flags (for any use) */
 		pthread_t id; /*< Thread ID */
 		pthread_mutex_t mtx; /*< Mutex for fiddling this
 				         thread */
 		pthread_cond_t cv; /*< Condition variable to wait for sync */
 		sigset_t sigmask; /*< This thread's signal mask */
-		void (*func)(struct fridge_thr_context *); /*< Function being
+		void (*func)(struct fridgethr_context *); /*< Function being
 							      executed */
 		void *arg; /*< Functions argument */
 	} ctx;
@@ -71,17 +71,14 @@ struct fridge_thr_entry {
 	bool frozen; /*< Thread is frozen */
 	struct timespec timeout; /*< Wait timeout */
 	struct glist_head q; /*< A link in whatever list we're part of */
-	struct thr_fridge *fr; /*< The fridge we belong to */
+	struct fridgethr *fr; /*< The fridge we belong to */
 };
-
-typedef struct fridge_thr_entry fridge_entry_t;
-typedef struct fridge_thr_context fridge_thr_context_t;
 
 /**
  * @brief Parameters set at fridgethr_init
  */
 
-struct thr_fridge_params {
+struct fridgethr_params {
 	uint32_t thr_max; /*< Maximum number of threads */
 	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
 };
@@ -89,20 +86,30 @@ struct thr_fridge_params {
 /**
  * @brief Queued requests
  */
-struct thr_work_queued {
+struct fridgethr_work {
 	struct glist_head link; /*< Link in the work queue */
-	void (*func)(struct fridge_thr_context *); /*< Function being
-						       executed */
+	void (*func)(struct fridgethr_context *); /*< Function being
+						      executed */
 	void *arg; /*< Functions argument */
 };
+
+/**
+ * @brief Commands a caller can issue
+ */
+
+typedef enum {
+	fridgethr_comm_run, /*< Demand all threads execute */
+	fridgethr_comm_pause, /*< Demand all threads suspend */
+	fridgethr_comm_stop /*< Demand all threads exit */
+} fridgethr_comm_t;
 
 /**
  * @brief Structure representing a group of threads
  */
 
-typedef struct thr_fridge {
+struct fridgethr {
 	char *s; /*< Name for this fridge */
-	struct thr_fridge_params p; /*< Parameters */
+	struct fridgethr_params p; /*< Parameters */
 	pthread_mutex_t mtx; /*< Mutex */
 	pthread_attr_t attr; /*< Creation attributes */
 	uint32_t nthreads; /*< Number of threads running */
@@ -110,23 +117,39 @@ typedef struct thr_fridge {
 	struct glist_head work_q; /*< Work queued */
 	uint32_t nidle; /*< Number of idle threads */
 	uint32_t flags; /*< Fridge-wide flags */
-} thr_fridge_t;
+	fridgethr_comm_t command; /*< Command state */
+	void (*cb_func)(void *); /*< Callback on command completion */
+	void *cb_arg; /*< Argument for completion callback */
+	bool transitioning; /*< Changing state */
+};
 
-/** @brief Null flag */
-#define fridgethr_flag_none     0x0000
-/** @brief Wait for a rendezvous */
-#define fridgethr_flag_waitsync 0x0001
-/** @brief Completed something */
-#define fridgethr_flag_syncdone 0x0002
+#define fridgethr_flag_none 0x0000 /*< Null flag */
+#define fridgethr_flag_available 0x0001 /*< I am available to be
+					    dispatched */
+#define fridgethr_flag_dispatched 0x0002 /*< You have been dispatched */
 
-int fridgethr_init(struct thr_fridge **,
+int fridgethr_init(struct fridgethr **,
 		   const char *,
-		   const struct thr_fridge_params *);
-void fridgethr_destroy(struct thr_fridge *);
+		   const struct fridgethr_params *);
+void fridgethr_destroy(struct fridgethr *);
 
-int fridgethr_get(thr_fridge_t *,
-		  void (*)(fridge_thr_context_t *),
+int fridgethr_get(struct fridgethr*,
+		  void (*)(struct fridgethr_context *),
 		  void *);
+
+int fridgethr_pause(struct fridgethr *,
+		    void (*)(void *),
+		    void *);
+int fridgethr_stop(struct fridgethr *,
+		   void (*)(void *),
+		   void *);
+int fridgethr_start(struct fridgethr *,
+		    void (*)(void *),
+		    void *);
+int fridgethr_sync_command(struct fridgethr *,
+			   fridgethr_comm_t ,
+			   time_t);
+
 #endif /* FRIDGETHR_H */
 
 /** @} */
