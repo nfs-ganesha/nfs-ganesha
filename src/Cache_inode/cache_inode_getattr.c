@@ -237,45 +237,4 @@ out:
         return status;
 }
 
-/**
- * @brief Return true if create verifier matches
- *
- * This functionr eturns true if the create verifier matches
- *
- * @param[in] entry   Entry to be managed.
- * @param[in] req_ctx Request context(user creds, client address etc)
- * @param[in] verf_hi High long of verifier
- * @param[in] verf_lo Low long of verifier
- *
- * @return Errors from cache_inode_lock_trust_attributes.
- *
- */
-bool
-cache_inode_create_verify(cache_entry_t *entry,
-                          const struct req_op_context *req_ctx,
-                          uint32_t verf_hi,
-                          uint32_t verf_lo)
-{
-        /* True if the verifier matches */
-        bool verified = false;
-
-        /* Lock (and refresh if necessary) the attributes, copy them
-           out, and unlock. */
-
-        if (cache_inode_lock_trust_attrs(entry, req_ctx, false)
-                == CACHE_INODE_SUCCESS) {
-                if (FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-                                   ATTR_ATIME) &&
-                    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-                                   ATTR_MTIME) &&
-                    entry->obj_handle->attributes.atime.tv_sec == verf_hi &&
-                    entry->obj_handle->attributes.mtime.tv_sec == verf_lo) {
-                        verified = true;
-                }
-                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-        }
-
-
-        return verified;
-}
 /** @} */
