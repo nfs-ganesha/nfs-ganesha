@@ -61,6 +61,8 @@
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "fridgethr.h"
+#include "client_mgr.h"
+#include "server_stats.h"
 
 extern struct nfs_worker_data *workers_data; /*< Delendum est */
 
@@ -515,22 +517,21 @@ static void nfs_rpc_execute(request_data_t *preq,
   nfs_request_data_t *preqnfs = preq->r_u.nfs;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
   nfs_res_t *res_nfs;
-  short exportid;
+  int exportid = -1;
   struct svc_req *req = &preqnfs->req;
   SVCXPRT *xprt = preqnfs->xprt;
   exportlist_client_entry_t * related_client = &worker_data->related_client;
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
   dupreq_status_t dpq_status;
-#if 0
   bool update_per_share_stats = false;
   nfs_stat_type_t stat_type;
   struct nfs_req_timer req_timer;
-#endif /* 0 */
-  int port, rc;
+  int port, rc = NFS_REQ_OK;
   bool slocked = false;
 
   memset(related_client, 0, sizeof(exportlist_client_entry_t));
+  memset(&req_ctx, 0, sizeof(struct req_op_context));
 
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
@@ -560,7 +561,15 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
 
   port = get_port(&worker_data->hostaddr);
-
+  req_ctx.client = get_gsh_client(&worker_data->hostaddr, false);
+  if(req_ctx.client == NULL)
+    {
+      LogDebug(COMPONENT_DISPATCH,
+	       "Cannot get client block for Program %d, Version %d, "
+	       "Function %d",
+	       (int)req->rq_prog, (int)req->rq_vers,
+	       (int)req->rq_proc);
+    }
   if(isDebug(COMPONENT_DISPATCH))
     {
       char addrbuf[SOCK_NAME_MAX];
@@ -573,10 +582,15 @@ static void nfs_rpc_execute(request_data_t *preq,
                req->rq_xid);
     }
 
-#if 0
-  /* start the processing clock */
+  /* start the processing clock
+   * we measure all time stats as intervals (elapsed nsecs) from
+   * server boot time.  This gets high precision with simple 64 bit math.
+   */
   now(&(req_timer.timer_start));
-#endif /* 0 */
+  req_ctx.start_time = timespec_diff(&ServerBootTime,
+				     &req_timer.timer_start);
+  req_ctx.queue_wait = req_ctx.start_time - timespec_diff(&ServerBootTime,
+				     &preq->time_queued);
 
   /* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
    * nothing but allocate a result object and mark the request (ie, the
@@ -619,6 +633,9 @@ static void nfs_rpc_execute(request_data_t *preq,
                        errno);
               svcerr_systemerr(xprt, req);
           }
+#ifdef USE_DBUS_STATS
+	server_stats_nfs_done(&req_ctx, exportid, preq, rc, true);
+#endif
 #if 0
         nfs_req_timer_stop(&req_timer, worker_data, req, GANESHA_STAT_SUCCESS);
 #endif /* 0 */
@@ -1019,7 +1036,7 @@ static void nfs_rpc_execute(request_data_t *preq,
               /* All the nfs_res structure in V2 have the status at the same
                * place, and so does V3 ones */
               res_nfs->res_getattr3.status = NFS3ERR_ROFS;
-              rc = NFS_REQ_OK;  /* Processing of the request is done */
+              /* Processing of the request is done */
         }
       else                 /* unexpected protocol (mount doesn't make write) */
         rc = NFS_REQ_DROP;
@@ -1096,8 +1113,14 @@ static void nfs_rpc_execute(request_data_t *preq,
           req,
           res_nfs);
     }
-
-#if 0
+#ifdef USE_DBUS_STATS
+/* NOTE: at this level, any v4 stats are toast because we don't know
+ * anything about exports so we don't even know who to credit the
+ * compound too at this point. Do V4 stats in nfs4_compound()
+ */
+  if(req->rq_vers != NFS_V4)
+	  server_stats_nfs_done(&req_ctx, exportid, preq, rc, false);
+#endif
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
   nfs_req_timer_stop(&req_timer, worker_data, req, stat_type);
 
@@ -1160,7 +1183,6 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(req->rq_proc == NFSPROC4_COMPOUND)
           nfs4_op_stat_update(arg_nfs, res_nfs,
                               &(worker_data->stats.stat_req));
-#endif /* 0 */
 
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
@@ -1247,6 +1269,8 @@ freeargs:
   if (res_nfs)
 	  nfs_dupreq_rele(req, preqnfs->funcdesc);
 
+  if(req_ctx.client != NULL)
+	  put_gsh_client(req_ctx.client);
   return;
 }
 

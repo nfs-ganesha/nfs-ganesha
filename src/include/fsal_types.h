@@ -153,6 +153,9 @@ struct req_op_context {
                                      unknown/not applicable. */
 	uint32_t nfs_vers;       /*< NFS protocol version of request */
 	uint32_t req_type;       /*< request_type */
+	struct gsh_client *client; /*< mostly stats but other bits too */
+	nsecs_elapsed_t start_time; /*< start time of this op/request */
+	nsecs_elapsed_t queue_wait; /*< time in wait queue */
         /* add new context members here */
 };
 
