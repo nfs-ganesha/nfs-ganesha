@@ -660,16 +660,10 @@ open4_create(OPEN4args           * arg,
                         cache_inode_put(entry_newfile);
                         entry_newfile = NULL;
                         return nfs4_Errno(cache_status);
-                } else {
-			/* Clear error code in the case of
-			   UNCHECKED4. */
-			cache_status = CACHE_INODE_SUCCESS;
 		}
-        }
 
-        /* If the object exists already size is the only attribute we
-           set. */
-        if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+                /* If the object exists already size is the only attribute we
+                   set. */
                 if (sattr_provided &&
                     (FSAL_TEST_MASK(sattr.mask,
                                     ATTR_SIZE)) &&
@@ -680,6 +674,9 @@ open4_create(OPEN4args           * arg,
                 } else {
                         sattr_provided = false;
                 }
+
+                /* Clear error code */
+                cache_status = CACHE_INODE_SUCCESS;
         }
 
         if (sattr_provided) {
