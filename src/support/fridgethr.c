@@ -46,8 +46,9 @@
 #elif FREEBSD
 #include <signal.h>
 #endif
-
+#include "abstract_mem.h"
 #include "fridgethr.h"
+#include "nfs_core.h"
 
 /**
  * @brief Initialize a thread fridge

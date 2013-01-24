@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-
 #include "nfs_core.h"
 #include "log.h"
 #include "fsal.h"
@@ -87,19 +86,17 @@ static int32_t cb_completion_func(rpc_call_t* call, rpc_call_hook hook,
  * We call into the cache and invalidate at once, since the operation
  * is inexpensive by design.
  *
- * @param[in]  invalidate Invalidation parameters
- * @param[in]  file       The file to invalidate
- * @param[out] private    Unused
+ * @param[in,out] ctx Thread context, holding event
  *
  * @retval 0 on success.
  * @retval ENOENT if the entry is not in the cache.  (Harmless, since
  *         if it's not cached, there's nothing to invalidate.)
  */
 
-static int invalidate_imm(struct fsal_up_event_invalidate *invalidate,
-			  struct fsal_up_file *file,
-			  void **private)
+static int invalidate_imm(struct fsal_up_event *e)
+
 {
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
@@ -123,18 +120,16 @@ static int invalidate_imm(struct fsal_up_event_invalidate *invalidate,
  *
  * This function just performs basic validation of the parameters.
  *
- * @param[in]  update  Update parameters
- * @param[in]  file    File to update (unused)
- * @param[out] private Unused
+ * @param[in,out] ctx Thread context, containing event
  *
  * @retval 0 on success.
  * @retval EINVAL if the update data are invalid.
  */
 
-static int update_imm(struct fsal_up_event_update *update,
-		      struct fsal_up_file *file,
-		      void **private)
+static int update_imm(struct fsal_up_event *e)
 {
+	struct fsal_up_event_update *update = &e->data.update;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
@@ -188,15 +183,14 @@ static int update_imm(struct fsal_up_event_update *update,
  * Update the entry attributes in accord with the supplied attributes
  * and control flags.
  *
- * @param[in] update  Update data
- * @param[in] file    File to update
- * @param[in] private Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void update_queue(struct fsal_up_event_update *update,
-			 struct fsal_up_file *file,
-			 void *private)
+static void update_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_update *update = &e->data.update;
+	struct fsal_up_file *file = &e->file;
 	/* The cache entry upon which to operate */
 	cache_entry_t *entry = NULL;
 	/* Have necessary changes been made? */
@@ -354,19 +348,18 @@ static void update_queue(struct fsal_up_event_update *update,
  * handled in the immediate phase, because NSM operations have their
  * own queue.
  *
- * @param[in]  grant   Event data
- * @param[in]  file    File on which to grant the lock
- * @param[out] private Unused
+ * @param[in,out] ctx Thread context, containing event
  *
  * @retval 0 if successfully queued.
  * @retval ENOENT if the entry is not in the cache (probably can't
  *         happen).
  */
 
-static int lock_grant_imm(struct fsal_up_event_lock_grant *grant,
-			  struct fsal_up_file *file,
-			  void **private)
+static int lock_grant_imm(struct fsal_up_event *e)
 {
+	struct fsal_up_event_lock_grant *grant
+		= &e->data.lock_grant;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
@@ -398,9 +391,7 @@ static int lock_grant_imm(struct fsal_up_event_lock_grant *grant,
  * Since the SAL has its own queue for such operations, we simply
  * queue there.
  *
- * @param[in]  avail   Details of the available lock
- * @param[in]  file    File on which the lock has become available
- * @param[out] private Unused
+ * @param[in,out] ctx Thread context, containing event
  *
  * @retval 0 on success.
  * @retval ENOENT if the file isn't in the cache (this shouldn't
@@ -408,10 +399,11 @@ static int lock_grant_imm(struct fsal_up_event_lock_grant *grant,
  *         pinned.)
  */
 
-static int lock_avail_imm(struct fsal_up_event_lock_avail *avail,
-			  struct fsal_up_file *file,
-			  void **private)
+static int lock_avail_imm(struct fsal_up_event *e)
 {
+	struct fsal_up_event_lock_avail *avail
+		= &e->data.lock_avail;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
@@ -440,15 +432,14 @@ static int lock_avail_imm(struct fsal_up_event_lock_avail *avail,
  * Add a link to a directory and, if the entry's attributes are valid,
  * increment the link count by one.
  *
- * @param[in] link    Link parameters
- * @param[in] file    Directory in which the link was created
- * @param[in] private Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void link_queue(struct fsal_up_event_link *link,
-		       struct fsal_up_file *file,
-		       void *private)
+static void link_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_link *link = &e->data.link;
+	struct fsal_up_file *file = &e->file;
 	/* The cache entry for the parent directory */
 	cache_entry_t *parent = NULL;
 
@@ -501,15 +492,15 @@ static void link_queue(struct fsal_up_event_link *link,
  * Remove the name from the directory, and if the entry is cached,
  * decrement its link count.
  *
- * @param[in] unlink  Unlink parameters
- * @param[in] file    Directory from we unlinked
- * @param[in] private Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void unlink_queue(struct fsal_up_event_unlink *unlink,
-			 struct fsal_up_file *file,
-			 void *private)
+static void unlink_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_unlink *unlink
+		= &e->data.unlink;
+	struct fsal_up_file *file = &e->file;
 	/* The cache entry for the parent directory */
 	cache_entry_t *parent = NULL;
 
@@ -558,15 +549,15 @@ static void unlink_queue(struct fsal_up_event_unlink *unlink,
  *
  * Remove the name from the directory, do not modify the link count.
  *
- * @param[in] move_from move-from parameters
- * @param[in] file      Directory from we unlinked
- * @param[in] private   Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void move_from_queue(struct fsal_up_event_move_from *move_from,
-			    struct fsal_up_file *file,
-			    void *private)
+static void move_from_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_move_from *move_from
+		= &e->data.move_from;
+	struct fsal_up_file *file = &e->file;
 	/* The cache entry for the parent directory */
 	cache_entry_t *parent = NULL;
 
@@ -586,16 +577,14 @@ static void move_from_queue(struct fsal_up_event_move_from *move_from,
  *
  * Add a link to a directory, do not touch the number of links.
  *
- * @param[in] move_to move-to parameters
- * @param[in] file    Directory in which the link was created
- * @param[in] private Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void move_to_queue(struct fsal_up_event_move_to *move_to,
-			  struct fsal_up_file *file,
-			  void *private)
+static void move_to_queue(struct fridgethr_context *ctx)
 {
-	/* The cache entry for the parent directory */
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_move_to *move_to = &e->data.move_to;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *parent = NULL;
 
 	if (up_get(&file->key, &parent) == 0) {
@@ -640,16 +629,15 @@ static void move_to_queue(struct fsal_up_event_move_to *move_to,
  * If a parent directory is in the queue, rename the given entry.  On
  * error, invalidate the whole thing.
  *
- * @param[in] rename  Rename parameters
- * @param[in] file    The parent directory
- * @param[in] private Unused
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void rename_queue(struct fsal_up_event_rename *rename,
-			 struct fsal_up_file *file,
-			 void *private)
+static void rename_queue(struct fridgethr_context *ctx)
 {
-	/* The cache entry for the parent directory */
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_rename *rename
+		= &e->data.rename;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *parent = NULL;
 
 	if (up_get(&file->key, &parent) == 0) {
@@ -831,9 +819,7 @@ out:
  * produces a work queue of layout states to which to send a
  * CB_LAYOUTRECALL.
  *
- * @param[in]  layoutrecall Event data
- * @param[in]  file         File on which to issue the recall
- * @param[out] private      Layout recall work queue
+ * @param[in,out] ctx Thread context, containing event
  *
  * @retval 0 if scheduled.
  * @retval ENOENT if no matching layouts exist.
@@ -841,10 +827,11 @@ out:
  * @retval EINVAL if a nonsensical layout recall has been specified.
  */
 
-static int layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
-			    struct fsal_up_file *file,
-			    void **private)
+static int layoutrecall_imm(struct fsal_up_event *e)
 {
+	struct fsal_up_event_layoutrecall *layoutrecall
+		= &e->data.layoutrecall;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
@@ -882,7 +869,7 @@ static int layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
 					layoutrecall->layout_type,
 					&layoutrecall->segment,
 					layoutrecall->cookie,
-					private);
+					&e->private);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		cache_inode_put(entry);
 		break;
@@ -995,15 +982,14 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
  * together now, I'm going to make something that works when it works
  * and come back and handle the error cases more generally later.
  *
- * @param[in] layoutrecall Arguments for the recall operation
- * @param[in] file         File to recall
- * @param[in] private      Work queue of states to recall on
+ * @param[in,out] ctx Thread context, containing event
  */
 
-static void layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
-			       struct fsal_up_file *file,
-			       void *private)
+static void layoutrecall_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_layoutrecall *layoutrecall
+		= &e->data.layoutrecall;
 	struct user_cred synthetic_creds = {
 		.caller_uid = 0,
 		.caller_gid = 0,
@@ -1016,7 +1002,7 @@ static void layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 		.clientid = NULL
 	};
 	struct glist_head *queue
-		= (struct glist_head *)private;
+		= (struct glist_head *)e->private;
 	/* Entry in the queue we're disposing */
 	struct glist_head *queue_iter = NULL;
 	int code = 0;
@@ -1122,13 +1108,6 @@ static void layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 	}
 }
 
-static int recallany_imm(struct fsal_up_event_recallany *recallany,
-			 struct fsal_up_file *file,
-			 void **private)
-{
-	return 0;
-}
-
 static void recallany_one(state_t *s,
 			  struct fsal_up_event_recallany *recallany)
 {
@@ -1222,10 +1201,12 @@ static void notifydev_one(state_t *s,
 	return;
 }
 
-static void recallany_queue(struct fsal_up_event_recallany *recallany,
-			    struct fsal_up_file *file,
-			    void *private)
+static void recallany_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_recallany *recallany =
+		&e->data.recallany;
+	struct fsal_up_file *file = &e->file;
 	struct exportlist__ *exp;
 	struct glist_head *glist;
 	state_t *state;
@@ -1250,21 +1231,15 @@ static void recallany_queue(struct fsal_up_event_recallany *recallany,
 	return;
 }
 
-static int notifydevice_imm(struct fsal_up_event_notifydevice *devicenotify,
-			    struct fsal_up_file *file,
-			    void **private)
+static void notifydevice_queue(struct fridgethr_context *ctx)
 {
-	return 0;
-}
-
-static void notifydevice_queue(struct fsal_up_event_notifydevice *devicenotify,
-			       struct fsal_up_file *file,
-			       void *private)
-{
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_event_notifydevice *devicenotify
+		= &e->data.notifydevice;
+	struct fsal_up_file *file = &e->file;
 	struct exportlist__ *exp;
 	struct glist_head *glist;
 	state_t *state;
-
 	exp = file->export->exp_entry;
 
 	pthread_mutex_lock(&exp->exp_state_mutex);
@@ -1359,10 +1334,10 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	return;
 };
 
-static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
-			      struct fsal_up_file *file,
-			      void* private)
+static void delegrecall_queue(struct fridgethr_context *ctx)
 {
+	struct fsal_up_event *e = ctx->arg;
+	struct fsal_up_file *file = &e->file;
 	cache_entry_t *entry = NULL;
 	struct glist_head  *glist;
 	state_lock_entry_t *found_entry = NULL;
@@ -1399,42 +1374,34 @@ static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
 }
 
 struct fsal_up_vector fsal_up_top = {
-	.lock_grant_imm = lock_grant_imm,
-	.lock_grant_queue = NULL,
-
-	.lock_avail_imm = lock_avail_imm,
-	.lock_avail_queue = NULL,
-
-	.invalidate_imm = invalidate_imm,
-	.invalidate_queue = NULL,
-
-	.update_imm = update_imm,
-	.update_queue = update_queue,
-
-	.link_imm = NULL,
-	.link_queue = link_queue,
-
-	.unlink_imm = NULL,
-	.unlink_queue = unlink_queue,
-
-	.move_from_imm = NULL,
-	.move_from_queue = move_from_queue,
-
-	.move_to_imm = NULL,
-	.move_to_queue = move_to_queue,
-
-	.rename_imm = NULL,
-	.rename_queue = rename_queue,
-
-	.layoutrecall_imm = layoutrecall_imm,
-	.layoutrecall_queue = layoutrecall_queue,
-
-	.recallany_imm = recallany_imm,
-	.recallany_queue = recallany_queue,
-
-	.notifydevice_imm = notifydevice_imm,
-	.notifydevice_queue = notifydevice_queue,
-
-	.delegrecall_imm = NULL,
-	.delegrecall_queue = delegrecall_queue
+	.imm = {
+		[FSAL_UP_EVENT_LOCK_GRANT] = lock_grant_imm,
+		[FSAL_UP_EVENT_LOCK_AVAIL] = lock_avail_imm,
+		[FSAL_UP_EVENT_INVALIDATE] = invalidate_imm,
+		[FSAL_UP_EVENT_UPDATE] = update_imm,
+		[FSAL_UP_EVENT_LINK] = NULL,
+		[FSAL_UP_EVENT_UNLINK] = NULL,
+		[FSAL_UP_EVENT_MOVE_FROM] = NULL,
+		[FSAL_UP_EVENT_MOVE_TO] = NULL,
+		[FSAL_UP_EVENT_RENAME] = NULL,
+		[FSAL_UP_EVENT_LAYOUTRECALL] = layoutrecall_imm,
+		[FSAL_UP_EVENT_RECALL_ANY] = NULL,
+		[FSAL_UP_EVENT_NOTIFY_DEVICE] = NULL,
+		[FSAL_UP_EVENT_DELEGATION_RECALL] = NULL
+	},
+	.queue = {
+		[FSAL_UP_EVENT_LOCK_GRANT] = NULL,
+		[FSAL_UP_EVENT_LOCK_AVAIL] = NULL,
+		[FSAL_UP_EVENT_INVALIDATE] = NULL,
+		[FSAL_UP_EVENT_UPDATE] = update_queue,
+		[FSAL_UP_EVENT_LINK] = link_queue,
+		[FSAL_UP_EVENT_UNLINK] = unlink_queue,
+		[FSAL_UP_EVENT_MOVE_FROM] = move_from_queue,
+		[FSAL_UP_EVENT_MOVE_TO] = move_to_queue,
+		[FSAL_UP_EVENT_RENAME] = rename_queue,
+		[FSAL_UP_EVENT_LAYOUTRECALL] = layoutrecall_queue,
+		[FSAL_UP_EVENT_RECALL_ANY] = recallany_queue,
+		[FSAL_UP_EVENT_NOTIFY_DEVICE] = notifydevice_queue,
+		[FSAL_UP_EVENT_DELEGATION_RECALL] = delegrecall_queue
+	}
 };

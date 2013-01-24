@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "nfs_core.h"
+#include "nlm_list.h"
 
 struct fridgethr;
 

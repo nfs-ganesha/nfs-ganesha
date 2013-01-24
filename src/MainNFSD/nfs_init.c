@@ -435,18 +435,25 @@ void *sigmgr_thread(void *UnusedArg)
     }
 
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
-  LogDebug(COMPONENT_THREAD, "Stopping worker threads");
-
+  LogEvent(COMPONENT_MAIN, "Stopping request threads");
   rc = fridgethr_sync_command(req_fridge,
 			      fridgethr_comm_stop,
 			      300);
 
-  if (rc != 0) {
-	  LogMajor(COMPONENT_THREAD,
-		   "Failed to shut down the request thread fridge: %d!",
-		   rc);
-  }
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Failed to shut down the request thread fridge: %d!",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "Request threads shut down.");
+    }
   
+  LogEvent(COMPONENT_MAIN, "Stopping worker threads");
+
   if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
     LogDebug(COMPONENT_THREAD,
              "Unexpected return code from pause_threads");
@@ -456,6 +463,24 @@ void *sigmgr_thread(void *UnusedArg)
 			 
   
   LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
+
+  if (nfs_param.core_param.enable_FSAL_upcalls)
+    {
+      LogEvent(COMPONENT_MAIN,
+	       "Stopping FSAL UPcall thread");
+      rc = fsal_up_shutdown();
+      if (rc != 0)
+	{
+	  LogMajor(COMPONENT_THREAD,
+		   "Error shutting down upcall system: %d",
+		   rc);
+	}
+      else
+	{
+	  LogEvent(COMPONENT_THREAD,
+		   "Upcall system shut down.");
+	}
+    }
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
@@ -1244,7 +1269,13 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   if (nfs_param.core_param.enable_FSAL_upcalls)
     {
-      init_FSAL_up();
+      rc = fsal_up_init();
+      if (rc != 0)
+	{
+	  LogFatal(COMPONENT_INIT,
+		   "FSAL upcall system could not be initialized: %d",
+		   rc);
+	}
     }
 
   /* Cache Inode Initialisation */
