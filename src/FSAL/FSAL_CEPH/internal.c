@@ -60,8 +60,9 @@ const attrmask_t supported_attributes = (
  */
 
 const attrmask_t settable_attributes = (
-	ATTR_MODE     | ATTR_OWNER     | ATTR_GROUP |
-	ATTR_ATIME    | ATTR_CTIME     | ATTR_MTIME);
+	ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |
+	ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |
+	ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER);
 
 /**
  * @brief FSAL status from Ceph error
