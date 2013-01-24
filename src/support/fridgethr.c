@@ -52,6 +52,10 @@
 /**
  * @brief Initialize a thread fridge
  *
+ * @note It is more robust to initialize the parameters to 0 than set
+ * specifically what is desired, otherwise uninitialized memory could
+ * provoke unexpected behaviour when new parameters are added.
+ *
  * @param[out] frout The fridge to initialize
  * @param[in]  s     The name of the fridge
  * @param[in]  p     Fridge parameters
@@ -481,7 +485,11 @@ static void *fridgethr_start_routine(void *arg)
 
 	do {
 		fe->ctx.func(&fe->ctx);
+		if (fr->p.task_cleanup) {
+			fr->p.task_cleanup(&fe->ctx);
+		}
 		reschedule = fridgethr_freeze(fr, &fe->ctx);
+
 	} while (reschedule);
 
 	fe = NULL;

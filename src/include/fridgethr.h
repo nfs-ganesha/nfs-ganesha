@@ -105,6 +105,10 @@ struct fridgethr_params {
 				         fridge */
 	time_t block_delay; /*< How long to wait before a thread
 			        becomes available. */
+	/**
+	 * If non-NULL, run after every submitted job.
+	 */
+	void (*task_cleanup)(struct fridgethr_context *);
 };
 
 /**

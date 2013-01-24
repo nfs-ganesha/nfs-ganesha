@@ -933,19 +933,24 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 void
 nfs_rpc_queue_init(void)
 {
-    struct fridgethr_params reqparams = {
-	.thr_max = 0,
-	.thr_min = 1,
-	.expiration_delay_s
-	= ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
-	   nfs_param.core_param.decoder_fridge_expiration_delay : 600),
-	.deferment = fridgethr_defer_block,
-	.block_delay
-	= ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
-	   nfs_param.core_param.decoder_fridge_block_timeout : 600)};
+    struct fridgethr_params reqparams;
     struct req_q_pair *qpair;
     int rc = 0;
     int ix;
+
+    memset(&reqparams, 0, sizeof(struct fridgethr_params));
+    /**
+     * @todo Add a configuration parameter to set a max.
+     */
+    reqparams.thr_max = 0;
+    reqparams.thr_min = 1;
+    reqparams.expiration_delay_s
+	= ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
+	   nfs_param.core_param.decoder_fridge_expiration_delay : 600);
+    reqparams.deferment = fridgethr_defer_block;
+    reqparams.block_delay
+	= ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
+	   nfs_param.core_param.decoder_fridge_block_timeout : 600);
 
     /* decoder thread pool */
     rc = fridgethr_init(&req_fridge, "decoder_thr", &reqparams);
