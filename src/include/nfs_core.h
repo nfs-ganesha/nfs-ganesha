@@ -502,9 +502,6 @@ struct nfs_worker_data__ {
 	sockaddr_t hostaddr;
 	sigset_t sigmask; /* masked signals */
 	unsigned int current_xid;
-
-	/* Most recent execution start time (or 0) */
-	struct timeval timer_start;
 };
 
 /* flush thread data */
