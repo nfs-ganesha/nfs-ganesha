@@ -167,9 +167,9 @@ int fridgethr_init(struct fridgethr **,
 		   const struct fridgethr_params *);
 void fridgethr_destroy(struct fridgethr *);
 
-int fridgethr_get(struct fridgethr*,
-		  void (*)(struct fridgethr_context *),
-		  void *);
+int fridgethr_submit(struct fridgethr*,
+		     void (*)(struct fridgethr_context *),
+		     void *);
 
 int fridgethr_pause(struct fridgethr *,
 		    void (*)(void *),

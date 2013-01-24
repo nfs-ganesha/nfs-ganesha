@@ -919,7 +919,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     if (activate) {
 	int rc = 0;
         LogDebug(COMPONENT_DISPATCH, "starting stallq service thread");
-        rc = fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
+        rc = fridgethr_submit(req_fridge, thr_stallq, NULL /* no arg */);
 	if (rc != 0) {
 	    LogCrit(COMPONENT_DISPATCH,
 		    "Failed to start stallq: %d", rc);
@@ -1671,7 +1671,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     LogFullDebug(COMPONENT_DISPATCH, "before fridgethr_get");
 
     /* schedule a thread to decode */
-    code = fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
+    code = fridgethr_submit(req_fridge, thr_decode_rpc_requests, xprt);
     if (code == ETIMEDOUT) {
 	LogFullDebug(COMPONENT_RPC,
 		     "Decode dispatch timed out, rearming. xprt=%p",

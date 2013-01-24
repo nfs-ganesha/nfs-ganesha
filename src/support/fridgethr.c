@@ -775,9 +775,9 @@ static int fridgethr_block(struct fridgethr *fr,
  * @retval Other POSIX return codes.
  */
 
-int fridgethr_get(struct fridgethr *fr,
-		  void (*func)(struct fridgethr_context *),
-		  void *arg)
+int fridgethr_submit(struct fridgethr *fr,
+		     void (*func)(struct fridgethr_context *),
+		     void *arg)
 {
 	/* Return code */
 	int rc = 0;
