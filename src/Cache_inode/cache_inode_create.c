@@ -115,24 +115,7 @@ cache_inode_create(cache_entry_t *parent,
           goto out;
         }
 
-     /* Check if an entry of the same name exists */
-     status = cache_inode_lookup(parent,
-				 name,
-				 req_ctx,
-				 entry);
-     if (*entry != NULL) {
-          status = CACHE_INODE_ENTRY_EXISTS;
-          if ((*entry)->type != type) {
-               /* Incompatible types, returns NULL */
-               cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
-               *entry = NULL;
-               goto out;
-          } else {
-               goto out;
-          }
-     }
-
-     /* The entry doesn't exist, so we can create it. */
+    /* Try to create it first */
 
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
@@ -196,7 +179,23 @@ cache_inode_create(cache_entry_t *parent,
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);
+          } else if (fsal_status.major == ERR_FSAL_EXIST) {
+               /* Already exists. Check if type if correct */
+               status = cache_inode_lookup(parent,
+                                           name,
+                                           req_ctx,
+                                           entry);
+               if (*entry != NULL) {
+                    status = CACHE_INODE_ENTRY_EXISTS;
+                    if ((*entry)->type != type) {
+                         /* Incompatible types, returns NULL */
+                         cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
+                         *entry = NULL;
+                    }
+                    goto out;
+               }
           }
+
           status = cache_inode_error_convert(fsal_status);
           *entry = NULL;
           goto out;
