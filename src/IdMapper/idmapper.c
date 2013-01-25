@@ -412,20 +412,19 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
           short found_uid=false;
           short found_gid=false;
-          gid_t gss_gid_tmp=0;
-          uid_t gss_uid_tmp=0;
-          if (gd->pac_blob.data != NULL)
+
+          if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
           {
             wbcErr wbc_err;
-            struct wbcDomainSid *sids;
-            struct wbcUnixId *xids;
-            struct wbcBlob local_pac_blob;
-            uint32_t num_ids;
-            int i;
+            struct wbcAuthUserInfo *info;
+            struct wbcAuthErrorInfo *error = NULL;
 
-            local_pac_blob.data = gd->pac_blob.data;
-            local_pac_blob.length =  gd->pac_blob.length;
-            wbc_err = wbcPacToSids(local_pac_blob, &num_ids, &sids);
+            memset(&params, 0, sizeof(params));
+            params.level = WBC_AUTH_USER_LEVEL_PAC;
+            params.password.pac.data = (uint8_t *)gd->pac.ms_pac.value;
+            params.password.pac.length = gd->pac.ms_pac.length;
+
+            wbc_err = wbcAuthenticateUserEx(&params, &info, &error);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
               LogEvent(COMPONENT_IDMAPPER, "wbcPacToSids returned %s",
                              wbcErrorString(wbc_err));

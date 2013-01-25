@@ -806,7 +806,8 @@ void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
 		chan->auth = NULL;
 	}
 	if (chan->clnt) {
-		chan->clnt->cl_ops->cl_release(chan->clnt);
+		chan->clnt->cl_ops->cl_release(chan->clnt,
+                                               CLNT_RELEASE_FLAG_NONE);
 	}
 }
 

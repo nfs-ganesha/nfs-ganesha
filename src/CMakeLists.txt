@@ -43,7 +43,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 8d5d55aad5f755f1605f3e796917c1709275c9b3)
+set(tirpc_commit d09bbb6549b6742ce1ffbe57ae4b489a38c556eb)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -147,6 +147,14 @@ IF(USE_FSAL_CEPH)
   ELSE()
     set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
   ENDIF()
+ENDIF()
+
+IF(KRB5_PREFIX)
+  set(KRB5_PREFIX ${KRB5_PREFIX} CACHE PATH "Path to Krb5 installation")
+  LIST(APPEND CMAKE_PREFIX_PATH "${KRB5_PREFIX}")
+  LIST(APPEND CMAKE_LIBRARY_PATH "${KRB5_PREFIX}/lib")
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${CEPH_PREFIX}/lib")
 ENDIF()
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
@@ -439,7 +447,6 @@ set(SYSTEM_LIBRARIES
   ${SYSTEM_LIBRARIES}
   ${LIBDL}
   ${KRB5_LIBRARIES}
-  gssapi_krb5
   crypto
   ssl
   ${CMAKE_THREAD_LIBS_INIT}
@@ -521,6 +528,7 @@ message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
+message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
