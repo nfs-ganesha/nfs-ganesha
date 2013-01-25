@@ -1196,42 +1196,6 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD, "admin thread was started successfully");
 
-  /* Starting the stats thread */
-  if((rc =
-      pthread_create(&stat_thrid, &attr_thr, stats_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create stats_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD, "statistics thread was started successfully");
-
-#ifdef _USE_STAT_EXPORTER
-
-  /* Starting the long processing threshold thread */
-  if((rc =
-      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create long_processing_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD,
-           "long processing threshold thread was started successfully");
-
-  /* Starting the stat exporter thread */
-  if((rc =
-      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create stat_exporter_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD,
-           "statistics exporter thread was started successfully");
-
-#endif      /*  _USE_STAT_EXPORTER */
-
   /* Starting the reaper thread */
   if((rc =
       pthread_create(&reaper_thrid, &attr_thr, reaper_thread, NULL)) != 0)
