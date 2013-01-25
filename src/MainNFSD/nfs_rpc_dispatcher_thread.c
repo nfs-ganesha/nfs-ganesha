@@ -533,12 +533,12 @@ void nfs_Init_svc()
   /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get udp netconfig, cannot get a entry for udp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
 
     /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get tcp netconfig, cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get tcp netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
@@ -549,12 +549,12 @@ void nfs_Init_svc()
     /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get udp6 netconfig, cannot get a entry for udp6 in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
   /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get tcp6 netconfig, cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");

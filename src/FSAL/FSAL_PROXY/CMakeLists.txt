@@ -22,6 +22,7 @@ endif(ENABLE_HANDLE_MAPPING)
 
 add_library(fsalproxy SHARED ${fsalproxy_LIB_SRCS})
 
+target_link_libraries(fsalproxy ${SYSTEM_LIBRARIES})
 if(ENABLE_HANDLE_MAPPING)
   target_link_libraries(fsalproxy sqlite3)
 endif(ENABLE_HANDLE_MAPPING)

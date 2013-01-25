@@ -46,7 +46,7 @@ SET(test_namespace_fuse_SRCS
 
 add_executable(test_namespace_fuse ${test_namespace_fuse_SRCS})
 
-target_link_libraries(test_namespace_fuse)
+target_link_libraries(test_namespace_fuse ${SYSTEM_LIBRARIES})
 
 
 ########### install files ###############

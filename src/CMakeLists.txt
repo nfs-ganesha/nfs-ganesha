@@ -446,8 +446,6 @@ endif(USE_9P_RDMA)
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
-  ConfigParsing
-  ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LIBDL}
   ${KRB5_LIBRARIES}

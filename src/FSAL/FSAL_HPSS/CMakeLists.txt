@@ -50,7 +50,7 @@ SET(test_fsal_hpss_SRCS
 
 add_executable(test_fsal_hpss ${test_fsal_hpss_SRCS})
 
-target_link_libraries(test_fsal_hpss pthread)
+target_link_libraries(test_fsal_hpss pthread ${SYSTEM_LIBRARIES})
 
 
 ########### install files ###############
