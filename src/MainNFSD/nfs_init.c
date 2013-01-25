@@ -496,6 +496,21 @@ void *sigmgr_thread(void *UnusedArg)
 	       "State asynchronous request system shut down.");
     }
 
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping LRU thread.");
+  rc = cache_inode_lru_pkgshutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down LRU thread: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "LRU thread system shut down.");
+    }
+
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
   /* Remove pid file. I do not check for status (best effort,
@@ -1276,7 +1291,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Cache Inode LRU (call this here, rather than as part of
      cache_inode_init() so the GC policy has been set */
-  cache_inode_lru_pkginit();
+  rc = cache_inode_lru_pkginit();
+  if (rc != 0) {
+	  LogFatal(COMPONENT_INIT,
+		   "Unable to initialize LRU subsystem: %d.",
+		   rc);
+  }
 
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
                                  sizeof(nfs41_session_t),

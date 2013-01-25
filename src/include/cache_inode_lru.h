@@ -78,9 +78,8 @@ struct lru_state {
 	uint32_t per_lane_work;
 	uint32_t biggest_window;
 	uint32_t flags;
-        uint64_t prev_fd_count; /* previous # of open fds */
-        time_t prev_time; /* previous time the gc thread was run. */
-	uint64_t threadwait;
+	uint64_t prev_fd_count; /* previous # of open fds */
+	time_t prev_time; /* previous time the gc thread was run. */
 	bool caching_fds;
 };
 
@@ -164,10 +163,6 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
 #define LRU_STATE_NONE  0x00
 #define LRU_STATE_RECLAIMING  0x01
 
-#define LRU_SLEEPING  0x00000001
-#define LRU_SHUTDOWN  0x00000002
-
-
 /**
  * The number of lanes comprising a logical queue.  This must be
  * prime.
@@ -177,8 +172,8 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
 
 static const uint32_t LRU_NO_LANE = ~0;
 
-extern void cache_inode_lru_pkginit(void);
-extern void cache_inode_lru_pkgshutdown(void);
+extern int cache_inode_lru_pkginit(void);
+extern int cache_inode_lru_pkgshutdown(void);
 
 extern size_t open_fd_count;
 
@@ -195,7 +190,7 @@ void cache_inode_lru_cleanup_push(cache_entry_t *entry);
 
 void cache_inode_lru_unref(cache_entry_t *entry,
 				  uint32_t flags);
-void lru_wake_thread(uint32_t flags);
+void lru_wake_thread(void);
 cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 void cache_inode_unpinnable(cache_entry_t *entry);
 cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry);
@@ -214,13 +209,13 @@ static inline bool cache_inode_lru_fds_available(void)
 			"FD Hard Limit Exceeded.  Disabling FD Cache and waking"
 			" LRU thread.");
 		lru_state.caching_fds = false;
-		lru_wake_thread(LRU_FLAG_NONE);
+		lru_wake_thread();
 		return false;
 	}
 	if (open_fd_count >= lru_state.fds_hiwat) {
 		LogInfo(COMPONENT_CACHE_INODE_LRU,
 			"FDs above high water mark, waking LRU thread.");
-		lru_wake_thread(LRU_FLAG_NONE);
+		lru_wake_thread();
 	}
 
 	return true;
