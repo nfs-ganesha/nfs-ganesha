@@ -78,6 +78,14 @@ int fridgethr_init(struct fridgethr **frout,
 	/* True if the fridge mutex has been initialized */
 	bool mutexinit = false;
 
+	if ((p->thr_min > p->thr_max) &&
+	    p->thr_max != 0) {
+		LogMajor(COMPONENT_THREAD,
+			 "Minimum of %d is greater than maximum of %d in "
+			 "fridge %s", p->thr_min, p->thr_max, s);
+		return ENOMEM;
+	}
+
 	*frout  = NULL;
 	if (frobj == NULL) {
 		LogMajor(COMPONENT_THREAD,
@@ -142,27 +150,44 @@ int fridgethr_init(struct fridgethr **frout,
 	/* Idle threads queue */
 	init_glist(&frobj->idle_q);
 
-	/* Deferment */
+	/* Flavor */
 
-	switch (frobj->p.deferment) {
-	case fridgethr_defer_queue:
-		init_glist(&frobj->deferment.work_q);
-		break;
+	if (frobj->p.flavor == fridgethr_flavor_worker) {
+		/* Deferment */
+		switch (frobj->p.deferment) {
+		case fridgethr_defer_queue:
+			init_glist(&frobj->deferment.work_q);
+			break;
 
-	case fridgethr_defer_block:
-		pthread_cond_init(&frobj->deferment.block.cond, NULL);
-		frobj->deferment.block.waiters
-			= 0;
-		break;
+		case fridgethr_defer_block:
+			pthread_cond_init(&frobj->deferment.block.cond, NULL);
+			frobj->deferment.block.waiters = 0;
+			break;
 
-	case fridgethr_defer_fail:
-		/* Failing is easy. */
-		break;
+		case fridgethr_defer_fail:
+			/* Failing is easy. */
+			break;
 
-	default:
-		LogFatal(COMPONENT_THREAD,
-			 "Invalid value fridgethr_defer_t of %d in %s",
-			 frobj->p.deferment, s);
+		default:
+			LogMajor(COMPONENT_THREAD,
+				 "Invalid value fridgethr_defer_t of %d in %s",
+				 frobj->p.deferment, s);
+			rc = EINVAL;
+			goto out;
+		}
+	} else if (frobj->p.flavor == fridgethr_flavor_looper) {
+		if (frobj->p.deferment != fridgethr_defer_fail) {
+			LogMajor(COMPONENT_THREAD,
+				 "Deferment is not allowed in looper fridges: "
+				 "In fridge %s, requested deferment of %d.",
+				 s, frobj->p.deferment);
+			rc = EINVAL;
+			goto out;
+		}
+	} else {
+		LogMajor(COMPONENT_THREAD,
+			 "Thread flavor of %d is disallowed in fridge: %s",
+			 frobj->p.flavor, s);
 		rc = EINVAL;
 		goto out;
 	}
@@ -400,10 +425,10 @@ restart:
 	/* It is a state machine, keep going until we have a
 	   transition that gets us out.*/
 	while (true) {
-		if (fr->p.expiration_delay_s > 0 ) {
+		if (fr->p.thread_delay > 0 ) {
 			clock_gettime(CLOCK_REALTIME,
 				      &fe->timeout);
-			fe->timeout.tv_sec += fr->p.expiration_delay_s;
+			fe->timeout.tv_sec += fr->p.thread_delay;
 			rc = pthread_cond_timedwait(&fe->ctx.cv,
 						    &fe->ctx.mtx,
 						    &fe->timeout);
@@ -433,7 +458,8 @@ restart:
 		/* Nothing to do, loop around. */
 		if (fr->command != fridgethr_comm_stop &&
 		    ((fr->command == fridgethr_comm_pause) ||
-		     (!fridgethr_deferredwork(fr)))) {
+		     (!fridgethr_deferredwork(fr))) &&
+		    (fr->p.flavor == fridgethr_flavor_worker)) {
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			fe->frozen = true;
 			fe->flags |= fridgethr_flag_available;
@@ -449,7 +475,12 @@ restart:
 
 		--(fr->nidle);
 		glist_del(&fe->idle_link);
-		goto restart;
+		if (fr->p.flavor == fridgethr_flavor_worker) {
+			goto restart;
+		} else {
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			break;
+		}
 	}
 
 	/* We were already unfrozen and taken off the idle queue, so
@@ -835,6 +866,51 @@ int fridgethr_submit(struct fridgethr *fr,
 	}
 
 	return rc;
+}
+
+/**
+ * @brief Wake idle threads
+ *
+ * This function is intended for use in fridgethr_flavor_looper
+ * fridges, but nothing bad happens if you call it for
+ * fridgethr_flavor_worker fridges.  It wakes all idle threads and
+ * exits.
+ *
+ * @note If there are no idle threads we successfully do nothing.
+ *
+ * @param[in] fr   The fridge in which to find a thread
+ *
+ * @retval 0 all idle threads woke.
+ * @retval EPIPE fridge is stopped or paused.
+ */
+
+int fridgethr_wake(struct fridgethr *fr)
+{
+	/* Iterator over the list */
+	struct glist_head *g = NULL;
+
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	if (fr->command != fridgethr_comm_run) {
+		LogMajor(COMPONENT_THREAD,
+			 "Attempt to wake stopped/paused fridge %s.",
+			 fr->s);
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		return EPIPE;
+	}
+
+	/* Wake the threads */
+	glist_for_each(g, &fr->idle_q) {
+		/* The entry for the found thread */
+		struct fridgethr_entry *fe
+			= container_of(g, struct fridgethr_entry,
+				       idle_link);
+		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
+		pthread_cond_signal(&fe->ctx.cv);
+		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+	}
+
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+	return 0;
 }
 
 /**

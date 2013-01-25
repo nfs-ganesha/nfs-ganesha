@@ -75,18 +75,34 @@ struct fridgethr_entry {
 };
 
 /**
+ * @brief Fridge flavor, governing style of operation.
+ */
+
+typedef enum {
+	fridgethr_flavor_worker = 0, /*< Take submitted jobs, do them,
+					 and then wait for more work
+					 to be submitted. */
+	fridgethr_flavor_looper = 1 /*< Each thread takes a single
+				        job and repeats it. */
+} fridgethr_flavor_t;
+
+
+/**
  * @brief Enumeration governing requests when the fridge is full
  */
 
 typedef enum {
-	fridgethr_defer_queue, /*< If the fridge is full, queue requests for
-				   later and return immediately. */
-	fridgethr_defer_fail, /*< If the fridge is full, return an
-			          error immediately. */
-	fridgethr_defer_block /*< if the fridge is full, wait for a
-			          thread to become available and
-				  execute on it.  Optionally, return
-				  an error on timeout. */
+	fridgethr_defer_fail = 0, /*< If the fridge is full, return an
+			              error immediately.  This is the
+			              only allowable value for
+			              fridgethr_flavor_looper. */
+	fridgethr_defer_queue = 1, /*< If the fridge is full, queue
+				       requests for later and return
+				       immediately. */
+	fridgethr_defer_block = 2 /*< if the fridge is full, wait for
+			              a thread to become available and
+			              execute on it.  Optionally,
+			              return an error on timeout. */
 } fridgethr_defer_t;
 
 /**
@@ -98,9 +114,16 @@ struct fridgethr_params {
 	uint32_t thr_min; /*< Low watermark for threads.  Do not
 			      expire threads out if we have this many
 			      or fewer. */
-	time_t expiration_delay_s; /*< Time frozen threads will wait
-				       without work before terminating.
-				       0 for no expiration. */
+	time_t thread_delay; /*< Time frozen threads will wait after
+			         performing work.  For fridgethr_flavor_worker
+			         fridges, threads exit if they are
+			         above the low water mark and no work
+			         is available after timeout.  For
+			         fridgethr_flavor_looper fridges,
+			         sleep for this period before
+			         re-executing the supplied function. */
+	fridgethr_flavor_t flavor; /*< Execution flavor for this
+				       fridge. */
 	fridgethr_defer_t deferment; /*< Deferment strategy for this
 				         fridge */
 	time_t block_delay; /*< How long to wait before a thread
@@ -174,6 +197,7 @@ void fridgethr_destroy(struct fridgethr *);
 int fridgethr_submit(struct fridgethr*,
 		     void (*)(struct fridgethr_context *),
 		     void *);
+int fridgethr_wake(struct fridgethr *);
 
 int fridgethr_pause(struct fridgethr *,
 		    void (*)(void *),

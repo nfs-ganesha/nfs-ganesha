@@ -944,7 +944,7 @@ nfs_rpc_queue_init(void)
      */
     reqparams.thr_max = 0;
     reqparams.thr_min = 1;
-    reqparams.expiration_delay_s
+    reqparams.thread_delay
 	= ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
 	   nfs_param.core_param.decoder_fridge_expiration_delay : 600);
     reqparams.deferment = fridgethr_defer_block;

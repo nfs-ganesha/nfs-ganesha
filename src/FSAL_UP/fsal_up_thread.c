@@ -129,7 +129,7 @@ int fsal_up_init(void)
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
-	frp.expiration_delay_s = 600;
+	frp.thread_delay = 600;
 	frp.deferment = fridgethr_defer_queue;
 	frp.task_cleanup = fsal_up_event_cleanup;
 
