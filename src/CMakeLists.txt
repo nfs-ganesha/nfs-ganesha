@@ -71,7 +71,7 @@ option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
-option(USE_FSAL_XFS "build XFS FSAL" ON)
+option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
@@ -115,7 +115,7 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
 # MSPAC support -lwbclient link flag
-option(_MSPAC_SUPPORT "enable mspac Winbind support" OFF)
+option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
 
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
