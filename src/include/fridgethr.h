@@ -63,6 +63,8 @@ struct fridgethr_entry {
 				         thread */
 		pthread_cond_t cv; /*< Condition variable to wait for sync */
 		sigset_t sigmask; /*< This thread's signal mask */
+		bool woke; /*< Set to false on first run and if wait
+			       in fridgethr_freeze didn't time out. */
 		void (*func)(struct fridgethr_context *); /*< Function being
 							      executed */
 		void *arg; /*< Functions argument */

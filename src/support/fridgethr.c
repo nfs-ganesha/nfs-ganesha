@@ -435,6 +435,11 @@ restart:
 		} else {
 			rc = pthread_cond_wait(&fe->ctx.cv, &fe->ctx.mtx);
 		}
+		if (rc == ETIMEDOUT) {
+			fe->ctx.woke = false;
+		} else {
+			fe->ctx.woke = true;
+		}
 
 		/* Clear this while we have the lock, we can set it
 		   again before continuing */
