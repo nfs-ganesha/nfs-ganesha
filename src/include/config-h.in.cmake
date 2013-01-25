@@ -18,6 +18,7 @@
 #cmakedefine USE_NFSIDMAP 1
 #cmakedefine USE_DBUS 1
 #cmakedefine _USE_CB_SIMULATOR 1
+#cmakedefine _USE_STAT_EXPORTER 1
 #cmakedefine _HANDLE_MAPPING 1
 #cmakedefine _USE_TIRPC_IPV6 1
 #cmakedefine _USE_9P 1

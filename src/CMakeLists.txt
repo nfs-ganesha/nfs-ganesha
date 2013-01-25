@@ -356,6 +356,10 @@ if(USE_TIRPC_IPV6)
   set(_USE_TIRPC_IPV6 ON)
 endif(USE_TIRPC_IPV6)
 
+if(USE_STAT_EXPORTER)
+  set(_USE_STAT_EXPORTER ON)
+endif(USE_STAT_EXPORTER)
+
 
 # Pull in TIRPC and build it
 
@@ -516,6 +520,7 @@ message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "USE_STAT_EXPORTER = ${USE_STAT_EXPORTER}")
+message(STATUS "_USE_STAT_EXPORTER = ${_USE_STAT_EXPORTER}")
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
 message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
@@ -620,6 +625,11 @@ set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
    FORCE)
 
 set(USE_STAT_EXPORTER ${USE_STAT_EXPORTER}
+  CACHE BOOL
+   "export GANESHA NFS request statistics with a dedicated thread and socket"
+   FORCE)
+
+set(_USE_STAT_EXPORTER ${_USE_STAT_EXPORTER}
   CACHE BOOL
    "export GANESHA NFS request statistics with a dedicated thread and socket"
    FORCE)
