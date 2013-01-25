@@ -935,9 +935,14 @@ nfs_rpc_queue_init(void)
 {
     struct fridgethr_params reqparams = {
 	.thr_max = 0,
+	.thr_min = 1,
 	.expiration_delay_s
-	= ((nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
-	   nfs_param.core_param.decoder_fridge_expiration_delay : 600)};
+	= ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
+	   nfs_param.core_param.decoder_fridge_expiration_delay : 600),
+	.deferment = fridgethr_defer_block,
+	.block_delay
+	= ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
+	   nfs_param.core_param.decoder_fridge_block_timeout : 600)};
     struct req_q_pair *qpair;
     int rc = 0;
     int ix;
@@ -1667,14 +1672,16 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     /* schedule a thread to decode */
     code = fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
-    if (code != 0) {
-	    LogMajor(COMPONENT_DISPATCH,
-		     "Unable to get decode thread: %d", code);
-	    /**
-	     * @todo Implement a timed wait and re-arm in the thread
-	     * fridge in the event of no threads being available to do
-	     * the decode.
-	     */
+    if (code == ETIMEDOUT) {
+	LogFullDebug(COMPONENT_RPC,
+		     "Decode dispatch timed out, rearming. xprt=%p",
+		     xprt);
+
+	svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+	gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+    } else if (code != 0) {
+	LogMajor(COMPONENT_DISPATCH,
+		 "Unable to get decode thread: %d", code);
     }
 
     LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");

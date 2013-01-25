@@ -110,6 +110,7 @@ nfs_parameter_t nfs_param =
   .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
   .core_param.decoder_fridge_expiration_delay = -1,
+  .core_param.decoder_fridge_block_timeout = -1,
   .core_param.dispatch_max_reqs = 5000,
   .core_param.dispatch_max_reqs_xprt =  512,
   .core_param.core_options = CORE_OPTION_ALL_VERS,
@@ -534,6 +535,8 @@ void nfs_print_param_config()
          nfs_param.core_param.long_processing_threshold);
   printf("\tDecoder_Fridge_Expiration_Delay = %d ; \n",
          nfs_param.core_param.decoder_fridge_expiration_delay);
+  printf("\tDecoder_Fridge_Block_Timeout = %d ; \n",
+	 nfs_param.core_param.decoder_fridge_block_timeout);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          nfs_param.core_param.stats_per_client_directory);
 

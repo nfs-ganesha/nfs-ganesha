@@ -249,6 +249,7 @@ typedef struct nfs_core_param__ {
 	unsigned int long_processing_threshold;
 	unsigned int dump_stats_per_client;
 	int decoder_fridge_expiration_delay;
+	int decoder_fridge_block_timeout;
 	char stats_file_path[MAXPATHLEN];
 	char stats_per_client_directory[MAXPATHLEN];
 	unsigned int core_options;

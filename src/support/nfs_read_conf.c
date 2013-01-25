@@ -406,6 +406,10 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->decoder_fridge_expiration_delay = atoi(key_value);
         }
+      else if(!strcasecmp( key_name, "Decoder_Fridge_Block_Timeout" ) )
+        {
+          pparam->decoder_fridge_block_timeout = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {
           pparam->dump_stats_per_client = StrToBoolean(key_value);

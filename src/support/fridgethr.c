@@ -137,8 +137,30 @@ int fridgethr_init(struct fridgethr **frout,
 	/* Idle threads queue */
 	init_glist(&frobj->idle_q);
 
-	/* Work queue */
-	init_glist(&frobj->work_q);
+	/* Deferment */
+
+	switch (frobj->p.deferment) {
+	case fridgethr_defer_queue:
+		init_glist(&frobj->deferment.work_q);
+		break;
+
+	case fridgethr_defer_block:
+		pthread_cond_init(&frobj->deferment.block.cond, NULL);
+		frobj->deferment.block.waiters
+			= 0;
+		break;
+
+	case fridgethr_defer_fail:
+		/* Failing is easy. */
+		break;
+
+	default:
+		LogFatal(COMPONENT_THREAD,
+			 "Invalid value fridgethr_defer_t of %d in %s",
+			 frobj->p.deferment, s);
+		rc = EINVAL;
+		goto out;
+	}
 
 	*frout = frobj;
 	rc = 0;
@@ -222,6 +244,71 @@ static void fridgethr_finish_transition(struct fridgethr *fr)
 }
 
 /**
+ * @brief Test whether the fridge has deferred work waiting
+ *
+ * @note This function must be called with the fridge mutex held.
+ *
+ * @return true if deferred work is waiting.
+ */
+
+static bool fridgethr_deferredwork(struct fridgethr *fr)
+{
+	bool res = false;
+
+	switch (fr->p.deferment) {
+	case fridgethr_defer_queue:
+		res = !glist_empty(&fr->deferment.work_q);
+		break;
+
+	case fridgethr_defer_block:
+		res = (fr->deferment.block.waiters > 0);
+		break;
+
+	case fridgethr_defer_fail:
+		res = false;
+		break;
+	}
+
+	return res;
+}
+
+/**
+ * @brief Get deferred work
+ *
+ * This function only does something in the case of a queueing
+ * fridge.  If work is available, it loads it into the thread context
+ * and returns true.  If work is not available (or the fridge is not a
+ * queueing fridge) it returns false and leaves the context untouched.
+ *
+ * @param[in,out] fr Fridge
+ * @param[in,out] fe Fridge entry
+ *
+ * @note This function must be called with the fridge mutex held.
+ *
+ * @return true if deferred work has been dequeued.
+ */
+
+static bool fridgethr_getwork(struct fridgethr *fr,
+			      struct fridgethr_entry *fe)
+{
+	if ((fr->p.deferment == fridgethr_defer_block) ||
+	    (fr->p.deferment == fridgethr_defer_fail) ||
+	    glist_empty(&fr->deferment.work_q)) {
+		return false;
+	} else {
+		struct fridgethr_work *q
+			= glist_first_entry(&fr->deferment.work_q,
+					    struct fridgethr_work,
+					    link);
+		glist_del(&q->link);
+		fe->ctx.func = q->func;
+		fe->ctx.arg = q->arg;
+		gsh_free(q);
+		return true;
+	}
+}
+
+/**
  * @brief Wait for more work
  *
  * This function, called by a worker thread, will cause it to wait for
@@ -251,31 +338,23 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 restart:
 	/* If we are not paused and there is work left to do in the
 	   queue, do it. */
-	if (!glist_empty(&fr->work_q) &&
-	    !(fr->command == fridgethr_comm_pause)) {
-		struct fridgethr_work *q
-			= glist_first_entry(&fr->work_q,
-					    struct fridgethr_work,
-					    link);
-		glist_del(&q->link);
+	if (!(fr->command == fridgethr_comm_pause) &&
+	    fridgethr_getwork(fr, fe)) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
-		fe->ctx.func = q->func;
-		fe->ctx.arg = q->arg;
-		gsh_free(q);
 		return true;
 	}
 
-	/* If there is no work to do in the queue and we either timed
-	   out from the last cond wait OR we have been told to stop,
-	   destroy ourselves. */
-	if ((rc == ETIMEDOUT) ||
+	/* rc would have been set in the while loop below */
+	if (((rc == ETIMEDOUT) &&
+	     (fr->nthreads > fr->p.thr_min)) ||
 	    (fr->command == fridgethr_comm_stop)) {
-		/* We  do this here since we already have the fridge
+		/* We do this here since we already have the fridge
 		   lock. */
 		--(fr->nthreads);
 		if ((fr->nthreads == 0) &&
 		    (fr->command == fridgethr_comm_stop) &&
-		    (fr->transitioning)) {
+		    (fr->transitioning) &&
+		    !fridgethr_deferredwork(fr)) {
 			/* We're the last thread to exit, signal the
 			   transition to pause complete. */
 			fridgethr_finish_transition(fr);
@@ -292,7 +371,8 @@ restart:
 	}
 
 	assert(fr->command != fridgethr_comm_stop);
-	glist_add_tail(&fr->idle_q, &fe->q);
+
+	glist_add_tail(&fr->idle_q, &fe->idle_link);
 	++(fr->nidle);
 	if ((fr->nidle == fr->nthreads) &&
 	    (fr->command == fridgethr_comm_pause) &&
@@ -305,6 +385,11 @@ restart:
 	PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 	fe->frozen = true;
 	fe->flags |= fridgethr_flag_available;
+	/* Not ideal, but no ideal factoring occurred to me. */
+	if ((fr->p.deferment == fridgethr_defer_block) &&
+	    (fr->deferment.block.waiters > 0)) {
+		pthread_cond_signal(&fr->deferment.block.cond);
+	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	/* It is a state machine, keep going until we have a
@@ -339,19 +424,26 @@ restart:
 		fe->flags &= ~fridgethr_flag_available;
 		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
 		PTHREAD_MUTEX_lock(&fr->mtx);
+
 		/* Nothing to do, loop around. */
 		if (fr->command != fridgethr_comm_stop &&
 		    ((fr->command == fridgethr_comm_pause) ||
-		     (glist_empty(&fr->work_q)))) {
+		     (!fridgethr_deferredwork(fr)))) {
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
-			PTHREAD_MUTEX_unlock(&fr->mtx);
 			fe->frozen = true;
 			fe->flags |= fridgethr_flag_available;
+
+			/* Not ideal, but no ideal factoring occurred to me. */
+			if ((fr->p.deferment == fridgethr_defer_block) &&
+			    (fr->deferment.block.waiters > 0)) {
+				pthread_cond_signal(&fr->deferment.block.cond);
+			}
+			PTHREAD_MUTEX_unlock(&fr->mtx);
 			continue;
 		}
 
 		--(fr->nidle);
-		glist_del(&fe->q);
+		glist_del(&fe->idle_link);
 		goto restart;
 	}
 
@@ -502,25 +594,191 @@ create_err:
 }
 
 /**
- * @brief Schedule a thread to perform a function
+ * @brief Queue a request
  *
- * This function finds an idle thread to perform func, creating one if
- * no thread is idle and we have not reached maxthreads.  If we have
- * reached maxthreads, queue the request.
+ * Put a request on the queue and return immediately.
+ *
+ * @note This function must be called with the fridge lock held.
  *
  * @param[in] fr   The fridge in which to find a thread
  * @param[in] func The thing to do
  * @param[in] arg  The thing to do it to
  *
- * @return 0 on success or POSIX error codes.
+ * @return 0 or POSIX errors.
+ */
+
+static int fridgethr_queue(struct fridgethr *fr,
+			   void (*func)(struct fridgethr_context *),
+			   void *arg)
+{
+	/* Queue */
+	struct fridgethr_work *q;
+
+	assert(fr->p.deferment == fridgethr_defer_queue);
+
+	q = gsh_malloc(sizeof(struct fridgethr_work));
+	if (q == NULL) {
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Unable to allocate memory for "
+			 "work queue item in fridge %s", fr->s);
+		return ENOMEM;
+	}
+	init_glist(&q->link);
+	q->func = func;
+	q->arg = arg;
+	glist_add_tail(&fr->deferment.work_q, &q->link);
+
+	return 0;
+}
+
+/**
+ * @brief Dispatch a job to an idle queue
+ *
+ * @note The fridge lock must be held when calling this routine.
+ *
+ * @param[in] fr   The fridge in which to find a thread
+ * @param[in] func The thing to do
+ * @param[in] arg  The thing to do it to
+ *
+ * @return true if the job was successfully dispatched.
+ */
+
+static bool fridgethr_dispatch(struct fridgethr *fr,
+			       void (*func)(struct fridgethr_context *),
+			       void *arg)
+{
+	/* The entry for the found thread */
+	struct fridgethr_entry *fe;
+	/* Iterator over the list */
+	struct glist_head *g = NULL;
+	/* Saved pointer so we don't trash iteration */
+	struct glist_head *n = NULL;
+	/* If we successfully dispatched */
+	bool dispatched = false;
+
+	/* Try to grab a thread */
+	glist_for_each_safe(g, n, &fr->idle_q) {
+		fe = container_of(g, struct fridgethr_entry, idle_link);
+		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
+		/* Get rid of a potential race condition
+		   where the thread wakes up and exits or
+		   otherwise redirects itself */
+		if (fe->flags & fridgethr_flag_available) {
+			glist_del(&fe->idle_link);
+			--(fr->nidle);
+			fe->ctx.func = func;
+			fe->ctx.arg = arg;
+			fe->frozen = false;
+			fe->flags |= fridgethr_flag_dispatched;
+			pthread_cond_signal(&fe->ctx.cv);
+			PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+			dispatched = true;
+			break;
+		}
+		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+	}
+
+	return dispatched;
+}
+
+/**
+ * @brief Block a request
+ *
+ * Block on thread availability and schedule a thread when one becomes
+ * available.
+ *
+ * @note This function must be called with the fridge lock held.
+ *
+ * @param[in] fr   The fridge in which to find a thread
+ * @param[in] func The thing to do
+ * @param[in] arg  The thing to do it to
+ *
+ * @return 0 or POSIX errors.
+ */
+
+static int fridgethr_block(struct fridgethr *fr,
+			   void (*func)(struct fridgethr_context *),
+			   void *arg)
+{
+	/* Successfully dispatched */
+	bool dispatched = true;
+	/* Return code */
+	int rc = 0;
+
+	++(fr->deferment.block.waiters);
+	do {
+		if (fr->p.block_delay > 0) {
+			struct timespec t;
+			clock_gettime(CLOCK_REALTIME, &t);
+			t.tv_sec += fr->p.block_delay > 0;
+			rc = pthread_cond_timedwait(&fr->deferment.block.cond,
+						    &fr->mtx,
+						    &t);
+		} else {
+			rc = pthread_cond_wait(&fr->deferment.block.cond,
+					       &fr->mtx);
+		}
+		if (rc == 0) {
+			switch (fr->command) {
+			case fridgethr_comm_run:
+				dispatched = fridgethr_dispatch(
+					fr, func, arg);
+				break;
+
+			case fridgethr_comm_stop:
+				rc = EPIPE;
+				break;
+
+			case fridgethr_comm_pause:
+				/* Nothing, just go through the loop
+				   again. */
+				break;
+			}
+		}
+	} while (!dispatched && (rc == 0));
+	if (rc != 0) {
+		/* Get the fridge lock so we can decrement the count
+		   of waiters.  Plus, the caller expects it. */
+		PTHREAD_MUTEX_lock(&fr->mtx);
+	}
+	--(fr->deferment.block.waiters);
+	/* We check here, too, in case we get around to falling out
+	   after the last thread exited. */
+	if ((fr->nthreads == 0) &&
+	    (fr->command == fridgethr_comm_stop) &&
+	    (fr->transitioning) &&
+	    !fridgethr_deferredwork(fr)) {
+		/* We're the last thread to exit, signal the
+		   transition to pause complete. */
+		fridgethr_finish_transition(fr);
+	}
+
+	return rc;
+}
+
+/**
+ * @brief Schedule a thread to perform a function
+ *
+ * This function finds an idle thread to perform func, creating one if
+ * no thread is idle and we have not reached maxthreads.  If we have
+ * reached maxthreads, defer the request in accord with the fridge's
+ * deferment policy.
+ *
+ * @param[in] fr   The fridge in which to find a thread
+ * @param[in] func The thing to do
+ * @param[in] arg  The thing to do it to
+ *
+ * @retval 0 on success.
+ * @retval EPIPE if the fridge is stopped.
+ * @retval EWOULDBLOCK if no threads are available.
+ * @retval Other POSIX return codes.
  */
 
 int fridgethr_get(struct fridgethr *fr,
 		  void (*func)(struct fridgethr_context *),
 		  void *arg)
 {
-	/* The entry for the new/found thread */
-	struct fridgethr_entry *fe;
 	/* Return code */
 	int rc = 0;
 
@@ -537,39 +795,11 @@ int fridgethr_get(struct fridgethr *fr,
 		LogFullDebug(COMPONENT_THREAD,
 			     "Attempt to schedule job in paused "
 			     "fridge %s, pausing.", fr->s);
-		goto queue;
+		goto defer;
 	}
 
 	if (fr->nidle > 0) {
-		/* Iterator over the list */
-		struct glist_head *g = NULL;
-		/* Saved pointer so we don't trash iteration */
-		struct glist_head *n = NULL;
-		/* If we successfully dispatched */
-		bool dispatched = false;
-
-		/* Try to grab a thread */
-		glist_for_each_safe(g, n, &fr->idle_q) {
-			fe = container_of(g, struct fridgethr_entry, q);
-			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
-			/* Get rid of a potential race condition
-			   where the thread wakes up and exits or
-			   otherwise redirects itself */
-			if (fe->flags & fridgethr_flag_available) {
-				glist_del(&fe->q);
-				--(fr->nidle);
-				fe->ctx.func = func;
-				fe->ctx.arg = arg;
-				fe->frozen = false;
-				fe->flags |= fridgethr_flag_dispatched;
-				pthread_cond_signal(&fe->ctx.cv);
-				PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
-				dispatched = true;
-				break;
-			}
-			PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
-		}
-		if (dispatched) {
+		if (fridgethr_dispatch(fr, func, arg)) {
 			PTHREAD_MUTEX_unlock(&fr->mtx);
 			return 0;
 		}
@@ -579,22 +809,19 @@ int fridgethr_get(struct fridgethr *fr,
 	    (fr->nthreads < fr->p.thr_max)) {
 		rc = fridgethr_spawn(fr, func, arg);
 	} else {
-		/* Queue */
-		struct fridgethr_work *q;
+	defer:
+		switch (fr->p.deferment) {
+		case fridgethr_defer_queue:
+			rc = fridgethr_queue(fr, func, arg);
+			break;
 
-	queue:
-		q = gsh_malloc(sizeof(struct fridgethr_work));
-		if (q == NULL) {
-			PTHREAD_MUTEX_unlock(&fr->mtx);
-			LogMajor(COMPONENT_THREAD,
-				 "Unable to allocate memory for "
-				 "work queue item in fridge %s", fr->s);
-			return ENOMEM;
-		}
-		init_glist(&q->link);
-		q->func = func;
-		q->arg = arg;
-		glist_add_tail(&fr->work_q, &q->link);
+		case fridgethr_defer_fail:
+			rc = EWOULDBLOCK;
+			break;
+
+		case fridgethr_defer_block:
+			rc = fridgethr_block(fr, func, arg);
+		};
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	}
 
@@ -650,6 +877,16 @@ int fridgethr_pause(struct fridgethr *fr,
 }
 
 /**
+ * @brief Slightly stupid workaround for an unlikely case
+ *
+ * @param[in] dummy Ignored
+ */
+static void fridgethr_noop(struct fridgethr_context *dummy)
+{
+	return;
+}
+
+/**
  * @brief Stop execution in the fridge
  *
  * Change state to stopped.  Wake up all the idlers so they stop,
@@ -688,10 +925,17 @@ int fridgethr_stop(struct fridgethr *fr,
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
 	if ((fr->nthreads == 0) &&
-	    glist_empty(&fr->work_q)) {
+	    !fridgethr_deferredwork(fr)) {
 		fridgethr_finish_transition(fr);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 		return 0;
+	}
+
+	/* If we're a blocking fridge, let everyone know it's time to
+	   fail. */
+	if ((fr->p.deferment == fridgethr_defer_block) &&
+	    (fr->deferment.block.waiters > 0)) {
+		pthread_cond_broadcast(&fr->deferment.block.cond);
 	}
 
 	if (fr->nthreads > 0) {
@@ -702,7 +946,9 @@ int fridgethr_stop(struct fridgethr *fr,
 
 		glist_for_each(g, &fr->idle_q) {
 			struct fridgethr_entry *fe
-				= container_of(g, struct fridgethr_entry, q);
+				= container_of(g,
+					       struct fridgethr_entry,
+					       idle_link);
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			/* We don't dispatch or anything, just wake
 			   them all up and let them grab work off the
@@ -713,13 +959,21 @@ int fridgethr_stop(struct fridgethr *fr,
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	} else {
 		/* Well, this is embarrassing. */
-		struct fridgethr_work *q
-			= glist_first_entry(&fr->work_q,
-					    struct fridgethr_work,
-					    link);
-		glist_del(&q->link);
-		rc = fridgethr_spawn(fr, q->func, q->arg);
-		gsh_free(q);
+		assert(fr->p.deferment != fridgethr_defer_fail);
+		if (fr->p.deferment == fridgethr_defer_queue) {
+			struct fridgethr_work *q
+				= glist_first_entry(&fr->deferment.work_q,
+						    struct fridgethr_work,
+						    link);
+			glist_del(&q->link);
+			rc = fridgethr_spawn(fr, q->func, q->arg);
+			gsh_free(q);
+		} else {
+			/* Spawn a dummy to clean out the queue */
+			rc = fridgethr_spawn(fr,
+					     fridgethr_noop,
+					     NULL);
+		}
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	}
 	return rc;
@@ -766,7 +1020,7 @@ int fridgethr_start(struct fridgethr *fr,
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
 	if ((fr->nthreads == 0) &&
-	    glist_empty(&fr->work_q)) {
+	    !fridgethr_deferredwork(fr)) {
 		/* No work scheduled and no threads running, but
 		   ready to accept requests once more. */
 		fridgethr_finish_transition(fr);
@@ -780,7 +1034,9 @@ int fridgethr_start(struct fridgethr *fr,
 
 		glist_for_each(g, &fr->idle_q) {
 			struct fridgethr_entry *fe
-				= container_of(g, struct fridgethr_entry, q);
+				= container_of(g,
+					       struct fridgethr_entry,
+					       idle_link);
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			/* We don't dispatch or anything, just wake
 			   them all up and let them grab work off the
@@ -790,21 +1046,30 @@ int fridgethr_start(struct fridgethr *fr,
 		}
 	}
 
-
-	while ((!glist_empty(&fr->work_q)) &&
+	while (fridgethr_deferredwork(fr) &&
 	       (maybe_spawn-- > 0) &&
-	       (fr->nthreads < fr->p.thr_max)) {
+	       ((fr->nthreads < fr->p.thr_max) ||
+		(fr->p.thr_max == 0))) {
+		assert(fr->p.deferment != fridgethr_defer_block);
 		/* Start some threads to finish the work */
-		struct fridgethr_work *q
-			= glist_first_entry(&fr->work_q,
-					    struct fridgethr_work,
-					    link);
-		glist_del(&q->link);
-		rc = fridgethr_spawn(fr, q->func, q->arg);
-		gsh_free(q);
-		PTHREAD_MUTEX_lock(&fr->mtx);
-		if (rc != 0) {
-			break;
+		if (fr->p.deferment == fridgethr_defer_queue) {
+			struct fridgethr_work *q
+				= glist_first_entry(&fr->deferment.work_q,
+						    struct fridgethr_work,
+						    link);
+			glist_del(&q->link);
+			rc = fridgethr_spawn(fr, q->func, q->arg);
+			gsh_free(q);
+			PTHREAD_MUTEX_lock(&fr->mtx);
+			if (rc != 0) {
+				break;
+			}
+		} else {
+			rc = fridgethr_spawn(fr, fridgethr_noop, NULL);
+			PTHREAD_MUTEX_lock(&fr->mtx);
+			if (rc != 0) {
+				break;
+			}
 		}
 	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);

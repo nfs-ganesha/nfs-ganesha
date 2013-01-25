@@ -70,9 +70,24 @@ struct fridgethr_entry {
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
 	bool frozen; /*< Thread is frozen */
 	struct timespec timeout; /*< Wait timeout */
-	struct glist_head q; /*< A link in whatever list we're part of */
+	struct glist_head idle_link; /*< Link in the idle queue */
 	struct fridgethr *fr; /*< The fridge we belong to */
 };
+
+/**
+ * @brief Enumeration governing requests when the fridge is full
+ */
+
+typedef enum {
+	fridgethr_defer_queue, /*< If the fridge is full, queue requests for
+				   later and return immediately. */
+	fridgethr_defer_fail, /*< If the fridge is full, return an
+			          error immediately. */
+	fridgethr_defer_block /*< if the fridge is full, wait for a
+			          thread to become available and
+				  execute on it.  Optionally, return
+				  an error on timeout. */
+} fridgethr_defer_t;
 
 /**
  * @brief Parameters set at fridgethr_init
@@ -80,7 +95,16 @@ struct fridgethr_entry {
 
 struct fridgethr_params {
 	uint32_t thr_max; /*< Maximum number of threads */
-	uint32_t expiration_delay_s; /*< Expiration for frozen threads */
+	uint32_t thr_min; /*< Low watermark for threads.  Do not
+			      expire threads out if we have this many
+			      or fewer. */
+	time_t expiration_delay_s; /*< Time frozen threads will wait
+				       without work before terminating.
+				       0 for no expiration. */
+	fridgethr_defer_t deferment; /*< Deferment strategy for this
+				         fridge */
+	time_t block_delay; /*< How long to wait before a thread
+			        becomes available. */
 };
 
 /**
@@ -114,13 +138,23 @@ struct fridgethr {
 	pthread_attr_t attr; /*< Creation attributes */
 	uint32_t nthreads; /*< Number of threads running */
 	struct glist_head idle_q; /*< Idle threads */
-	struct glist_head work_q; /*< Work queued */
 	uint32_t nidle; /*< Number of idle threads */
 	uint32_t flags; /*< Fridge-wide flags */
 	fridgethr_comm_t command; /*< Command state */
 	void (*cb_func)(void *); /*< Callback on command completion */
 	void *cb_arg; /*< Argument for completion callback */
 	bool transitioning; /*< Changing state */
+	union {
+		struct glist_head work_q; /*< Work queued */
+		struct {
+			pthread_cond_t cond; /*< Condition variable
+					         on which we wait for a
+					         thread to become
+					         available. */
+			uint32_t waiters; /*< Requests blocked waiting
+					      for a thread. */
+		} block;
+	} deferment;
 };
 
 #define fridgethr_flag_none 0x0000 /*< Null flag */
