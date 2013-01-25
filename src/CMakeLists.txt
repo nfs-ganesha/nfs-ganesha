@@ -153,9 +153,13 @@ IF(KRB5_PREFIX)
   set(KRB5_PREFIX ${KRB5_PREFIX} CACHE PATH "Path to Krb5 installation")
   LIST(APPEND CMAKE_PREFIX_PATH "${KRB5_PREFIX}")
   LIST(APPEND CMAKE_LIBRARY_PATH "${KRB5_PREFIX}/lib")
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${CEPH_PREFIX}/lib")
 ENDIF()
+
+if(SAMBA4_PREFIX)
+  set(SAMBA4_PREFIX ${SAMBA4_PREFIX} CACHE PATH "Path to Samba4 installation")
+  LIST(APPEND CMAKE_PREFIX_PATH "${SAMBA4_PREFIX}")
+  LIST(APPEND CMAKE_LIBRARY_PATH "${SAMBA4_PREFIX}/lib")
+endif()
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
@@ -173,6 +177,7 @@ set(ALLOCATOR "jemalloc" CACHE STRING
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
+include(CheckCSourceCompiles)
 include(TestBigEndian)
 
 check_include_files(stdbool.h HAVE_STDBOOL_H)
@@ -327,15 +332,7 @@ if(USE_CUNIT)
 endif(USE_CUNIT)
 
 if(_MSPAC_SUPPORT)
-# need recent 
-  find_library(WBCLIENT_LIB wbclient )
-  check_include_files("stdint.h;stdbool.h;wbclient.h" HAVE_WBCLIENT_H)
-  if(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
-    set(SYSTEM_LIBRARIES ${WBCLIENT_LIB} ${SYSTEM_LIBRARIES})
-  else(WBCLIENTT_LIB AND HAVE_WBCLIENT_H)
-    message(WARNING "Could not find wbclient library. Disable MSPAC_SUPPORT")
-    set(_MSPAC_SUPPORT OFF)
-  endif(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
+  find_package(WBclient REQUIRED)
 endif(_MSPAC_SUPPORT)
 
 include_directories(
