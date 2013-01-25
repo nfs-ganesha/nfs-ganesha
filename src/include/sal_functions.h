@@ -645,11 +645,14 @@ void state_share_wipe(cache_entry_t *entry);
 /* Schedule Async Work */
 state_status_t state_async_schedule(state_async_queue_t *arg);
 
+/* Schedule lock notifications */
+state_status_t state_block_schedule(state_block_data_t *block);
+
 /* Signal Async Work */
 void signal_async_work(void);
 
 state_status_t state_async_init(void);
-void state_async_thread_start(void);
+state_status_t state_async_shutdown(void);
 
 void grant_blocked_lock_upcall(cache_entry_t *entry,
                                void *owner,

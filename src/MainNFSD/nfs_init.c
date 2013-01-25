@@ -460,8 +460,7 @@ void *sigmgr_thread(void *UnusedArg)
   else
     LogDebug(COMPONENT_THREAD,
              "Done waiting for worker threads to exit");
-			 
-  
+
   LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
 
   if (nfs_param.core_param.enable_FSAL_upcalls)
@@ -480,6 +479,21 @@ void *sigmgr_thread(void *UnusedArg)
 	  LogEvent(COMPONENT_THREAD,
 		   "Upcall system shut down.");
 	}
+    }
+
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping state asynchronous request thread");
+  rc = state_async_shutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down state asynchronous request system: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "State asynchronous request system shut down.");
     }
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
@@ -1134,9 +1148,6 @@ static void nfs_Start_threads(void)
   LogEvent(COMPONENT_THREAD,
            "%d worker threads were started successfully",
            nfs_param.core_param.nb_worker);
-
-  /* Start State Async threads */
-  state_async_thread_start();
 
   /*
    * Now that all TCB controlled threads (workers, NLM,

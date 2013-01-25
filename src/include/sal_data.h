@@ -689,8 +689,6 @@ typedef struct state_nlm_block_data_t {
 } state_nlm_block_data_t;
 
 extern struct glist_head state_blocked_locks;
-extern struct glist_head state_notified_locks;
-extern pthread_mutex_t blocked_locks_mutex;
 
 /**
  * @brief Grant types

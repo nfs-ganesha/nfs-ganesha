@@ -107,11 +107,6 @@ pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct glist_head state_blocked_locks;
 
 /**
- * @brief All async blocking locks notified by FSAL but not processed
- */
-struct glist_head state_notified_locks;
-
-/**
  * @brief Mutex to protect lock lists
  */
 pthread_mutex_t blocked_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -167,7 +162,6 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
 #endif
 
   init_glist(&state_blocked_locks);
-  init_glist(&state_notified_locks);
 
   status = state_async_init();
 
@@ -3425,14 +3419,15 @@ void find_blocked_lock_upcall(cache_entry_t *entry,
 
       /* Put lock on list of locks granted by FSAL */
       glist_del(&pblock->sbd_list);
-      glist_add_tail(&state_notified_locks, &pblock->sbd_list);
       pblock->sbd_grant_type = grant_type;
+      if (state_block_schedule(pblock) != STATE_SUCCESS) {
+	      LogMajor(COMPONENT_STATE,
+		       "Unable to schedule lock notification.");
+      }
 
       LogEntry("Blocked Lock found", found_entry);
 
       V(blocked_locks_mutex);
-
-      signal_async_work();
 
       return;
     } /* glist_for_each_safe */
