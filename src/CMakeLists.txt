@@ -333,6 +333,12 @@ endif(USE_CUNIT)
 
 if(_MSPAC_SUPPORT)
   find_package(WBclient REQUIRED)
+  if(WBCLIENT_FOUND AND WBCLIENT4_H)
+    set(SYSTEM_LIBRARIES ${WBCLIENT_LIB} ${SYSTEM_LIBRARIES})
+  else(WBCLIENT_FOUND AND WBCLIENT4_H)
+    message(WARNING "Samba 4 wbclient not found.  Disabling MSPAC_SUPPORT")
+    set(_MSPAC_SUPPORT OFF)
+  endif(WBCLIENT_FOUND AND WBCLIENT4_H)
 endif(_MSPAC_SUPPORT)
 
 include_directories(

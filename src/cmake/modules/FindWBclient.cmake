@@ -41,7 +41,6 @@ endif(WBCLIENT_H)
 
 if(WBCLIENT_LIB AND WBCLIENT4_H)
   set(WBCLIENT_FOUND 1)
-  set(SYSTEM_LIBRARIES ${WBCLIENT_LIB} ${SYSTEM_LIBRARIES})
   message(STATUS "Found Winbind4 client: ${WBCLIENT_LIB}")
 else(WBCLIENT_LIB AND WBCLIENT4_H)
   message(STATUS "Winbind4 client not found ${SAMBA4_PREFIX}/lib")
