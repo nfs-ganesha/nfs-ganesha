@@ -1,5 +1,6 @@
 include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
+  ${WBCLIENT_INCLUDE_DIR}
 )
 
 ########### next target ###############
