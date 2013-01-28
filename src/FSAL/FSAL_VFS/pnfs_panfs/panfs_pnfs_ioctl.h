@@ -118,7 +118,7 @@ struct pan_layoutreturn_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRETURN \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
+  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
 
 /**
  * @brief Commit on a writable layout
@@ -139,7 +139,7 @@ struct pan_layoutcommit_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
+  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
 
 /**
  * @brief Retrieve next layout Recall
