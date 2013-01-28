@@ -115,24 +115,7 @@ cache_inode_create(cache_entry_t *parent,
           goto out;
         }
 
-     /* Check if an entry of the same name exists */
-     status = cache_inode_lookup(parent,
-				 name,
-				 req_ctx,
-				 entry);
-     if (*entry != NULL) {
-          status = CACHE_INODE_ENTRY_EXISTS;
-          if ((*entry)->type != type) {
-               /* Incompatible types, returns NULL */
-               cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
-               *entry = NULL;
-               goto out;
-          } else {
-               goto out;
-          }
-     }
-
-     /* The entry doesn't exist, so we can create it. */
+    /* Try to create it first */
 
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
@@ -196,7 +179,23 @@ cache_inode_create(cache_entry_t *parent,
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);
+          } else if (fsal_status.major == ERR_FSAL_EXIST) {
+               /* Already exists. Check if type if correct */
+               status = cache_inode_lookup(parent,
+                                           name,
+                                           req_ctx,
+                                           entry);
+               if (*entry != NULL) {
+                    status = CACHE_INODE_ENTRY_EXISTS;
+                    if ((*entry)->type != type) {
+                         /* Incompatible types, returns NULL */
+                         cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
+                         *entry = NULL;
+                    }
+                    goto out;
+               }
           }
+
           status = cache_inode_error_convert(fsal_status);
           *entry = NULL;
           goto out;
@@ -239,4 +238,71 @@ out:
 
      return status;
 }
+
+
+/**
+ * @brief Set the create verifier
+ *
+ * This function sets the mtime/atime attributes according to the create verifier
+ *
+ * @param[in] sattr   attrlist to be managed.
+ * @param[in] verf_hi High long of verifier
+ * @param[in] verf_lo Low long of verifier
+ *
+ */
+void
+cache_inode_create_set_verifier(struct attrlist *sattr,
+                          uint32_t verf_hi,
+                          uint32_t verf_lo)
+{
+        sattr->atime.tv_sec = verf_hi;
+        sattr->atime.tv_nsec = 0;
+        FSAL_SET_MASK(sattr->mask, ATTR_ATIME);
+        sattr->mtime.tv_sec = verf_lo;
+        sattr->mtime.tv_nsec = 0;
+        FSAL_SET_MASK(sattr->mask, ATTR_MTIME);
+}
+
+
+/**
+ * @brief Return true if create verifier matches
+ *
+ * This function returns true if the create verifier matches
+ *
+ * @param[in] entry   Entry to be managed.
+ * @param[in] req_ctx Request context(user creds, client address etc)
+ * @param[in] verf_hi High long of verifier
+ * @param[in] verf_lo Low long of verifier
+ *
+ * @return Errors from cache_inode_lock_trust_attributes.
+ *
+ */
+bool
+cache_inode_create_verify(cache_entry_t *entry,
+                          const struct req_op_context *req_ctx,
+                          uint32_t verf_hi,
+                          uint32_t verf_lo)
+{
+        /* True if the verifier matches */
+        bool verified = false;
+
+        /* Lock (and refresh if necessary) the attributes, copy them
+           out, and unlock. */
+
+        if (cache_inode_lock_trust_attrs(entry, req_ctx, false)
+                == CACHE_INODE_SUCCESS) {
+                if (FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
+                                   ATTR_ATIME) &&
+                    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
+                                   ATTR_MTIME) &&
+                    entry->obj_handle->attributes.atime.tv_sec == verf_hi &&
+                    entry->obj_handle->attributes.mtime.tv_sec == verf_lo) {
+                        verified = true;
+                }
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+        }
+
+        return verified;
+}
+
 /** @} */

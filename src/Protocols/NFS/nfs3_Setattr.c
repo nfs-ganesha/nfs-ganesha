@@ -165,11 +165,12 @@ nfs_Setattr(nfs_arg_t *arg,
             cache_status = cache_inode_setattr(entry,
                                                &setattr,
                                                req_ctx);
+
+            if (cache_status != CACHE_INODE_SUCCESS) {
+                    goto out_fail;
+            }
         }
 
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                goto out_fail;
-        }
 
         /* Set the NFS return */
         /* Build Weak Cache Coherency data */
