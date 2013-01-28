@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/acl.h>
+#include <sys/syscall.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +39,13 @@ extern "C" {
 #include "../fsi_ipc_common.h"
 
 // FSI IPC defines
+
+// CCL Version to ensure that Ganesha FSAL and CCL does not go out of sync
+// We use "PT-Version.Minor" the build number when this file changes. The
+// intent is not to change this for every minor. For instance, the current
+// minor may be 132, but the version may remain "3.3.1.102", indicating that
+// the last minor this file changed is in minor 102.
+#define PT_FSI_CCL_VERSION "3.3.1.102" 
 
 #define UNUSED_ARG(arg) do { (void)(arg); } while (0)
 
@@ -58,6 +66,7 @@ extern "C" {
 #define CCL_ON_DEMAND_HANDLE_TIMEOUT_SEC       15   // Timeout for on-demand
                                                     // thread looking for
                                                     // handles to close
+
 
 // FSI IPC getlock constants
 #define FSI_IPC_GETLOCK_PTYPE                  2
@@ -406,7 +415,8 @@ struct acl_handles_struct_t {
 #define uint32 uint32_t
 
 #define NONIO_MSG_TYPE \
-  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid)
+  ((g_multithreaded) ? (unsigned long)(syscall(SYS_gettid)) : g_client_pid)
+
 #define MULTITHREADED 1
 #define NON_MULTITHREADED 0
 
@@ -583,6 +593,8 @@ struct ipc_client_stats_t {
 // ---------------------------------------------------------------------------
 // Function Prototypes
 // ---------------------------------------------------------------------------
+int ccl_check_version(char *version);
+char *ccl_get_version(void);
 int ccl_init(int                        multi_threaded,
              log_function_t             log_fn,
              log_level_check_function_t log_level_check_fn,
@@ -655,6 +667,7 @@ int wait_for_response(const int                   msg_id,
                       const size_t                msg_size,
                       const long                  msg_type,
                       const struct CommonMsgHdr * p_hdr,
+                      const uint64_t              transaction_id,
                       const uint64_t              transaction_type,
                       const int                   min_rsp_msg_bytes);
 int send_msg(int          msg_id,
@@ -864,7 +877,7 @@ int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,
                                    char                * fsal_name);
 int ccl_find_oldest_handle();
 bool ccl_can_close_handle(int handle_index,
-			  int timeout);
+                          int timeout);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
@@ -891,6 +904,11 @@ extern pthread_mutex_t g_statistics_mutex;
 extern pthread_mutex_t g_close_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
 // Global I/O mutex
 extern pthread_mutex_t g_io_mutex;
+// Per stream fsync and ftrunc mutex
+// used to control concurrent i/o on stream during
+// fsync or ftrunc
+extern pthread_mutex_t g_io_handle_mutex[];
+
 #endif // ifndef __FSI_IPC_CCL_H__
 
 #ifdef __cplusplus

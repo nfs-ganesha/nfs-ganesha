@@ -123,6 +123,15 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
+  // Check the CCL version from the header we got with the version
+  // in the CCL library itself before CCL initialization.
+  int rc = ccl_check_version(PT_FSI_CCL_VERSION);
+  if (rc != 0) {
+    LogCrit(COMPONENT_FSAL, "CCL version mismatch have <%s> got <%s>",
+    PT_FSI_CCL_VERSION, ccl_get_version()); 
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+  }
+
   /* init mutexes */
   pthread_mutex_init(&g_dir_mutex,NULL);
   pthread_mutex_init(&g_acl_mutex,NULL);
@@ -152,7 +161,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   ipc_ccl_to_component_trc_level_map[FSI_DEBUG]    = NIV_DEBUG;
 
   /* FSI CCL Layer INIT */
-  int rc = ccl_init(MULTITHREADED, PTFSAL_log, PTFSAL_log_level_check,
+  rc = ccl_init(MULTITHREADED, PTFSAL_log, PTFSAL_log_level_check,
                     ipc_ccl_to_component_trc_level_map);
 
   if (rc == -1) {
