@@ -74,6 +74,10 @@ int DisplayOpaqueValue(char *value, int len, char *str);
 
 void state_wipe_file(cache_entry_t *entry);
 
+#ifdef DEBUG_SAL
+void dump_all_owners(void);
+#endif
+
 /*****************************************************************************
  *
  * 9P State functions
@@ -569,6 +573,10 @@ void state_nfs4_state_wipe(cache_entry_t *entry);
 
 void release_lockstate(state_owner_t *lock_owner);
 void release_openstate(state_owner_t *open_owner);
+
+#ifdef DEBUG_SAL
+void dump_all_states(void);
+#endif
 
 /******************************************************************************
  *

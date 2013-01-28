@@ -162,6 +162,8 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
 
 #ifdef DEBUG_SAL
   init_glist(&state_all_locks);
+  init_glist(&state_owners_all);
+  init_glist(&state_v4_all);
 #endif
 
   init_glist(&state_blocked_locks);

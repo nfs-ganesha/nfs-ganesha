@@ -269,6 +269,9 @@ struct state_t {
 	struct glist_head state_owner_list; /*< List of states for an owner */
 	struct glist_head state_export_list; /*< List of states on the same
 					         export */
+#ifdef DEBUG_SAL
+	struct glist_head state_list_all; /*< Global list of all stateids */
+#endif
 	exportlist_t *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner; /*< State Owner related to this state */
 	cache_entry_t *state_entry; /*< Related entry */
@@ -446,6 +449,9 @@ struct state_nfs4_owner_t {
 struct state_owner_t {
 	state_owner_type_t so_type; /*< Owner type */
 	struct glist_head so_lock_list; /*< Locks for this owner */
+#ifdef DEBUG_SAL
+	struct glist_head so_all_owners; /**< Global list of all state owners */
+#endif /* _DEBUG_MEMLEAKS */
 	pthread_mutex_t so_mutex; /*< Mutex on this owner */
 	int so_refcount; /*< Reference count for lifecyce management */
 	int so_owner_len; /*< Length of owner name */
@@ -905,6 +911,11 @@ struct state_nlm_share_t {
 	int sns_access; /*< Access mode */
 	int sns_deny; /*< Deny mode */
 };
+
+#ifdef DEBUG_SAL
+extern struct glist_head state_v4_all;
+extern struct glist_head state_owners_all;
+#endif
 
 #endif /* SAL_DATA_H */
 /** @} */
