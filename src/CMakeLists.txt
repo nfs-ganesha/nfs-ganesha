@@ -186,7 +186,7 @@ check_include_files(string.h HAVE_STRING_H)
 
 # X_ATTRD requires the kernel to have xattrs...
 if(NOT _NO_XATTRD)
-  check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
+  check_include_files("unistd.h;sys/xattr.h" HAVE_XATTR_H)
   if(NOT HAVE_XATTR_H)
     message(WARNING "Cannot find xattr.h. Disabling XATTRD support: ${HAVE_XATTR_H}")
     set(_NO_XATTRD ON)

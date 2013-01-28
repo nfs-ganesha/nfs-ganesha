@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
