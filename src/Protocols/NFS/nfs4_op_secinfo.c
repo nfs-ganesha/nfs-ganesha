@@ -101,14 +101,26 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
-	cache_status = cache_inode_lookup(data->current_entry,
-					  secinfo_fh_name,
-					  data->req_ctx,
-					  &entry_src);
-        if (entry_src == NULL) {
-                res_SECINFO4.status = nfs4_Errno(cache_status);
-                goto out;
-        }
+	if(nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+		if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK) ||
+		    (data->pexport == NULL)) {
+			/* reuse lookup routine, need to set the correct OP */
+			resp->resop = NFS4_OP_SECINFO;
+			res_SECINFO4.status = NFS4ERR_INVAL;
+			return res_SECINFO4.status;
+		}
+		/* reuse lookup routine, need to set the correct OP */
+		resp->resop = NFS4_OP_SECINFO;
+	} else {
+		cache_status = cache_inode_lookup(data->current_entry,
+						  secinfo_fh_name,
+						  data->req_ctx,
+						  &entry_src);
+		if (entry_src == NULL) {
+			res_SECINFO4.status = nfs4_Errno(cache_status);
+			goto out;
+	       }
+	}
 
         /* Get the number of entries */
         if (data->pexport->options & EXPORT_OPTION_AUTH_NONE) {
@@ -130,7 +142,8 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
         if ((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
              gsh_calloc(num_entry, sizeof(secinfo4))) == NULL) {
                 res_SECINFO4.status = NFS4ERR_SERVERFAULT;
-                cache_inode_put(entry_src);
+                if(entry_src != NULL)
+                	cache_inode_put(entry_src);
                 goto out;
         }
 
@@ -182,7 +195,8 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
         }
         res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-        cache_inode_put(entry_src);
+        if(entry_src != NULL)
+	        cache_inode_put(entry_src);
 
 out:
 
