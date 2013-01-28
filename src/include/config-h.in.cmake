@@ -23,6 +23,7 @@
 #cmakedefine _USE_TIRPC_IPV6 1
 #cmakedefine _USE_9P 1
 #cmakedefine _USE_9P_RDMA 1
+#cmakedefine DEBUG_SAL 1
 #cmakedefine _NO_MOUNT_LIST 1
 #cmakedefine HAVE_STDBOOL_H 1
 #cmakedefine HAVE_KRB5 1

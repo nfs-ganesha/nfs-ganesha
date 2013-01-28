@@ -717,9 +717,9 @@ struct state_lock_entry_t {
 	struct glist_head sle_list; /*< Ranges on this lock */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
 	struct glist_head sle_locks; /*< Locks on this state/client */
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
 	struct glist_head sle_all_locks; /*< Link on the global lock list */
-#endif /* _DEBUG_MEMLEAKS */
+#endif /* DEBUG_SAL */
 	struct glist_head sle_export_locks; /*< Link on the export
 					      lock list */
 	exportlist_t *sle_export;

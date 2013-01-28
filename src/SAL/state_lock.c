@@ -90,7 +90,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
  */
 #define STATE_ERR_MAX 100
 
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
 /**
  * @brief All locks.
  */
@@ -160,7 +160,7 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
       return status;
     }
 
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
   init_glist(&state_all_locks);
 #endif
 
@@ -502,7 +502,7 @@ void LogLockDesc(log_components_t component,
  */
 void dump_all_locks(const char *label)
 {
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
   struct glist_head *glist;
 
   P(all_locks_mutex);
@@ -608,7 +608,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
   inc_state_owner_ref_locked(owner);
 
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
   P(all_locks_mutex);
 
   glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
@@ -687,7 +687,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
           gsh_free(lock_entry->sle_block_data);
         }
 
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
       P(all_locks_mutex);
       glist_del(&lock_entry->sle_all_locks);
       V(all_locks_mutex);
