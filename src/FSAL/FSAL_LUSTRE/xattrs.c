@@ -46,7 +46,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"
 #include "FSAL/fsal_commonlib.h"
-#include <FSAL/FSAL_LUSTRE/fsal_handle.h>
+#include "fsal_handle.h"
 #include "lustre_methods.h"
 #include <stdbool.h>
 
