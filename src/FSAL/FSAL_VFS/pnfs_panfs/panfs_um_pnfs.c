@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <sys/ioctl.h>
 
 /* Implementing this */
@@ -59,7 +58,6 @@ nfsstat4 panfs_um_getdeviceinfo(
 	};
 	int ret;
 
-//	_XDR_2_ioctlxdr_out(da_addr_body, &pgi.da_addr_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_DEVICEINFO, &pgi);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
@@ -85,14 +83,8 @@ nfsstat4 panfs_um_layoutget(
 	};
 	int ret;
 
-struct pan_ioctl_xdr *ioctl_xdr = &pli.loc_body;
-printf("%s: alloc_len=%d, buff=%p len=%d\n", __func__,
-	ioctl_xdr->xdr_alloc_len, ioctl_xdr->xdr_buff, ioctl_xdr->xdr_len);
-
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTGET, &pli);
 	if (ret) {
-		printf("%s: PAN_FS_CLIENT_PNFS_LAYOUTGET => %d\n",
-			__func__, errno);
 		return NFS4ERR_SERVERFAULT;
 	}
 
@@ -111,7 +103,6 @@ nfsstat4 panfs_um_layoutreturn(
 	};
 	int ret;
 
-// 	_XDR_2_ioctlxdr_in(lrf_body, &plri.lrf_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTRETURN, &plri);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
@@ -133,7 +124,6 @@ nfsstat4 panfs_um_layoutcommit(
 	};
 	int ret;
 
-// 	_XDR_2_ioctlxdr_in(lou_body, &plci.lou_body);
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT, &plci);
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
@@ -155,10 +145,10 @@ int panfs_um_recieve_layoutrecall(
 	int ret;
 
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTRECALL, &pcli);
-	*num_events = pcli.num_events;
 	if (ret)
-		return ret;
+		return errno;
 
+	*num_events = pcli.num_events;
 	return pcli.hdr.nfsstat;
 }
 
@@ -175,7 +165,7 @@ int panfs_um_cancel_recalls(
 
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_CANCEL_RECALLS, &pcri);
 	if (ret)
-		return ret;
+		return errno;
 
 	return pcri.hdr.nfsstat;
 }
