@@ -634,6 +634,10 @@ cache_inode_status_t cache_inode_size(cache_entry_t *entry,
 				      const struct req_op_context *req_ctx,
 				      uint64_t *size);
 
+void cache_inode_create_set_verifier(struct attrlist *sattr,
+                                     uint32_t verf_hi,
+                                     uint32_t verf_lo);
+
 bool cache_inode_create_verify(cache_entry_t *entry,
 			       const struct req_op_context *req_ctx,
 			       uint32_t verf_hi,
