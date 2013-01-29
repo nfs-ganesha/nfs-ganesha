@@ -503,17 +503,6 @@ struct nfs_worker_data__ {
 	unsigned int current_xid;
 };
 
-/* flush thread data */
-typedef struct nfs_flush_thread_data__ {
-	unsigned int thread_index;
-
-	/* stats */
-	unsigned int nb_flushed;
-	unsigned int nb_too_young;
-	unsigned int nb_errors;
-	unsigned int nb_orphans;
-} nfs_flush_thread_data_t;
-
 /**
  * group together all of NFS-Ganesha's statistics
  */

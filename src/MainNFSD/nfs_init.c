@@ -67,7 +67,6 @@
 #include "nsm.h"
 #include "sal_functions.h"
 #include "nfs_tcb.h"
-#include "nfs_tcb.h"
 #include "fridgethr.h"
 
 extern struct fridgethr *req_fridge;
@@ -375,18 +374,9 @@ nfs_start_info_t nfs_start_info;
 
 pthread_t worker_thrid[NB_MAX_WORKER_THREAD];
 
-pthread_t flusher_thrid[NB_MAX_FLUSHER_THREAD];
-nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
-
-pthread_t stat_thrid;
-pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
-pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
-pthread_t reaper_thrid;
 pthread_t gsh_dbus_thrid;
-pthread_t upp_thrid;
-nfs_tcb_t gccb;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
