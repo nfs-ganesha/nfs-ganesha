@@ -758,6 +758,9 @@ void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
+int reaper_init(void);
+int reaper_shutdown(void);
+
 /**
  * @brief Logging mutex lock
  *

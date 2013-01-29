@@ -511,6 +511,21 @@ void *sigmgr_thread(void *UnusedArg)
 	       "LRU thread system shut down.");
     }
 
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping reaper thread.");
+  rc = reaper_shutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down reaper thread: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "Reaper thread shut down.");
+    }
+
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
   /* Remove pid file. I do not check for status (best effort,
@@ -1223,8 +1238,8 @@ static void nfs_Start_threads(void)
   LogEvent(COMPONENT_THREAD, "admin thread was started successfully");
 
   /* Starting the reaper thread */
-  if((rc =
-      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, NULL)) != 0)
+  rc = reaper_init();
+  if(rc != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create reaper_thread, error = %d (%s)",

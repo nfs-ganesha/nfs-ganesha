@@ -13,15 +13,17 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * nfs_reaper_thread.c : check for expired clients and whack them.
- *
+ * @file nfs_reaper_thread.c
+ * @brief check for expired clients and whack them.
  */
+
 #include "config.h"
 #include <pthread.h>
 #include <unistd.h>
@@ -31,10 +33,13 @@
 #include "nfs_proto_functions.h"
 #include "nfs_core.h"
 #include "log.h"
+#include "fridgethr.h"
 
 #define REAPER_DELAY 10
 
 unsigned int reaper_delay = REAPER_DELAY;
+
+static struct fridgethr *reaper_fridge;
 
 static int reap_hash_table(hash_table_t * ht_reap)
 {
@@ -125,56 +130,108 @@ static int reap_hash_table(hash_table_t * ht_reap)
   return count;
 }
 
-void *reaper_thread(void *UnusedArg)
-{
-  int    old_state_cleaned = 0;
-  int    count = 0;
-  bool logged = true;
-  bool in_grace;
+struct reaper_state {
+	bool old_state_cleaned;
+	size_t count;
+	bool logged;
+	bool in_grace;
+};
 
-  SetNameFunction("reaper_thr");
+static struct reaper_state reaper_state = {
+  .old_state_cleaned = false,
+  .count = 0,
+  .logged = false,
+  .in_grace = false
+};
+
+static void reaper_run(struct fridgethr_context *ctx)
+{
+  struct reaper_state *rst = ctx->arg;
+
+  rst->in_grace = nfs_in_grace();
+
+  if (!rst->old_state_cleaned)
+    {
+      /* if not in grace period, clean up the old state */
+      if(!rst->in_grace)
+	{
+	  nfs4_clean_old_recov_dir();
+	  rst->old_state_cleaned = true;
+	}
+    }
+
+  if(isDebug(COMPONENT_CLIENTID) && ((rst->count > 0) || !rst->logged))
+    {
+      LogDebug(COMPONENT_CLIENTID,
+	       "Now checking NFS4 clients for expiration");
+
+      rst->logged = (rst->count == 0);
+
+#ifdef DEBUG_SAL
+      if(count == 0)
+	{
+	  dump_all_states();
+	  dump_all_owners();
+	}
+#endif
+    }
+
+  rst->count = (reap_hash_table(ht_confirmed_client_id) +
+		reap_hash_table(ht_unconfirmed_client_id));
+}
+
+int reaper_init(void)
+{
+  struct fridgethr_params frp;
+  int rc = 0;
 
   if(nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
     reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;
 
-  while(1)
+  memset(&frp, 0, sizeof(struct fridgethr_params));
+  frp.thr_max = 1;
+  frp.thr_min = 1;
+  frp.thread_delay = reaper_delay;
+  frp.flavor = fridgethr_flavor_looper;
+
+  rc = fridgethr_init(&reaper_fridge,
+		      /* You may be a king or a little street sweeper
+			 but sooner or later you'll dance with */
+		      "The Reaper",
+		      &frp);
+  if (rc != 0)
     {
-      /* Initial wait */
-      /** @todo: should this be configurable? */
-      /* sleep(nfs_param.core_param.reaper_delay); */
-      sleep(reaper_delay);
+      LogMajor(COMPONENT_CLIENTID,
+	       "Unable to initialize reaper fridge, error code %d.",
+	       rc);
+      return rc;
+    }
 
-      in_grace = nfs_in_grace();
+  rc = fridgethr_submit(reaper_fridge,
+			reaper_run,
+			&reaper_state);
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_CLIENTID,
+	       "Unable to start reaper thread, error code %d.",
+	       rc);
+      return rc;
+    }
 
-      if (old_state_cleaned == 0)
-        {
-          /* if not in grace period, clean up the old state */
-          if(!in_grace)
-            {
-              nfs4_clean_old_recov_dir();
-              old_state_cleaned = 1;
-            }
-        }
+  return 0;
+}
 
-      if(isDebug(COMPONENT_CLIENTID) && ((count > 0) || !logged))
-        {
-          LogDebug(COMPONENT_CLIENTID,
-                   "Now checking NFS4 clients for expiration");
+int reaper_shutdown(void)
+{
+  int rc = fridgethr_sync_command(reaper_fridge,
+				  fridgethr_comm_stop,
+				  300);
 
-          logged = count == 0;
-
-#ifdef DEBUG_SAL
-          if(count == 0)
-            {
-              dump_all_states();
-              dump_all_owners();
-            }
-#endif
-        }
-
-      count = reap_hash_table(ht_confirmed_client_id) +
-              reap_hash_table(ht_unconfirmed_client_id);
-    }                           /* while ( 1 ) */
-
-  return NULL;
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_CLIENTID,
+	       "Failed shutting down reaper thread: %d",
+	       rc);
+    }
+  return rc;
 }
