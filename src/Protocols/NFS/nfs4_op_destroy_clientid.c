@@ -144,7 +144,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op,
             if (isFullDebug(COMPONENT_CLIENTID)) {
                 char str[HASHTABLE_DISPLAY_STRLEN];
 
-                display_client_id_rec(unconf, str);
+                display_client_id_rec(conf, str);
 
                 LogDebug(COMPONENT_CLIENTID,
                          "Removing confirmed clientid %s",
