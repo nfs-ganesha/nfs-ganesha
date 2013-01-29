@@ -33,8 +33,6 @@
  */
 
 #include "config.h"
-#include "abstract_atomic.h"
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
@@ -46,6 +44,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <unistd.h>
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -53,6 +52,8 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
+#include "abstract_atomic.h"
+#include "gsh_intrinsic.h"
 #include "sal_functions.h"
 
 /**
@@ -498,6 +499,7 @@ static inline cache_inode_lru_t *
 lru_try_reap_entry(struct lru_q_base *q)
 {
      cache_inode_lru_t *lru = NULL;
+     int64_t refcnt;
 
      pthread_mutex_lock(&q->mtx);
      lru = glist_first_entry(&q->q, cache_inode_lru_t, q);
@@ -508,18 +510,20 @@ lru_try_reap_entry(struct lru_q_base *q)
 
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
-     ++(lru->refcount);
-     if (lru->flags & LRU_ENTRY_POISON) {
-          --(lru->refcount);
+
+     if (unlikely(lru->flags & LRU_ENTRY_POISON)) {
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
-     if ((lru->refcount > (LRU_SENTINEL_REFCOUNT + 1)) ||
-         (lru->flags & LRU_ENTRY_PINNED)) {
+
+     refcnt = atomic_inc_int64_t(&lru->refcount);
+     if (unlikely((refcnt > (LRU_SENTINEL_REFCOUNT + 1)) ||
+                  (lru->flags & LRU_ENTRY_PINNED))) {
           /* Any more than the sentinel and our reference count
-             and someone else has a reference.  Plus someone may
-             have moved it to the pin queue while we were waiting. */
-          --(lru->refcount);
+           * and someone else has a reference.  Plus someone may
+           * have moved it to the pin queue while we were waiting.
+           * Sorry for the extra barriers. */
+          atomic_dec_int64_t(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -897,7 +901,10 @@ lru_thread(void *arg __attribute__((unused)))
                                  incremented it.) */
 
                               pthread_mutex_lock(&lru->mtx);
-                              --(lru->refcount);
+
+                              /* Sorry for the extra barrier. */
+                              atomic_dec_int64_t(&lru->refcount);
+
                               if ((lru->flags &
                                    (LRU_ENTRY_L2|LRU_ENTRY_POISON)) ||
                                   (lru->lane == LRU_NO_LANE)) {
@@ -1298,8 +1305,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
      entry->lru.pin_refcnt++;
 
      /* Also take an LRU reference */
-     ++(entry->lru.refcount);
-
+     atomic_inc_int64_t(&entry->lru.refcount);
      pthread_mutex_unlock(&entry->lru.mtx);
 
      return rc;
@@ -1397,12 +1403,14 @@ cache_inode_status_t
 cache_inode_lru_ref(cache_entry_t *entry,
                     uint32_t flags)
 {
+     uint64_t refcnt;
      pthread_mutex_lock(&entry->lru.mtx);
 
      /* Refuse to grant a reference if we're below the sentinel value
         or the entry is being removed or recycled. */
-     if ((entry->lru.refcount == 0) ||
-         (entry->lru.flags & LRU_ENTRY_CONDEMNED)) {
+     refcnt = atomic_fetch_int64_t(&entry->lru.refcount);
+     if (unlikely((refcnt == 0) ||
+         (entry->lru.flags & LRU_ENTRY_CONDEMNED))) {
           pthread_mutex_unlock(&entry->lru.mtx);
           return CACHE_INODE_DEAD_ENTRY;
      }
@@ -1411,14 +1419,12 @@ cache_inode_lru_ref(cache_entry_t *entry,
      flags &= ~(LRU_ENTRY_PINNED | LRU_ENTRY_L2);
 
      /* Initial and Scan are mutually exclusive. */
-
      assert(!((flags & LRU_REQ_INITIAL) &&
               (flags & LRU_REQ_SCAN)));
 
-     ++(entry->lru.refcount);
+     atomic_inc_int64_t(&entry->lru.refcount);
 
      /* Move an entry forward if this is an initial reference. */
-
      if (flags & LRU_REQ_INITIAL) {
           lru_move_entry(&entry->lru,
                          /* Pinned stays pinned */
@@ -1457,7 +1463,7 @@ cache_inode_lru_ref(cache_entry_t *entry,
 void cache_inode_lru_kill(cache_entry_t *entry)
 {
      pthread_mutex_lock(&entry->lru.mtx);
-     if (entry->lru.flags & LRU_ENTRY_KILLED) {
+     if (unlikely(entry->lru.flags & LRU_ENTRY_KILLED)) {
           pthread_mutex_unlock(&entry->lru.mtx);
      } else {
           entry->lru.flags |= LRU_ENTRY_KILLED;
@@ -1487,19 +1493,27 @@ void
 cache_inode_lru_unref(cache_entry_t *entry,
                       uint32_t flags)
 {
+     uint64_t refcnt;
+
      if (!(flags & LRU_FLAG_LOCKED)) {
           pthread_mutex_lock(&entry->lru.mtx);
      }
 
-     assert(entry->lru.refcount >= 1);
+     refcnt = atomic_fetch_int64_t(&entry->lru.refcount);
+     assert(refcnt >= 1);
 
-     if (entry->lru.refcount == 1) {
+     if (unlikely(refcnt == 1)) {
           struct lru_q_base *q
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
           pthread_mutex_lock(&q->mtx);
-          --(entry->lru.refcount);
-          if (entry->lru.refcount == 0) {
+
+          /* Until the lock-free revolution, we must re-read
+           * stable entry refcnt, having first taken the lane
+           * queue partition mutex (see lru_thread). */
+
+          refcnt = atomic_dec_int64_t(&entry->lru.refcount);
+          if (likely(refcnt == 0)) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
                entry->lru.flags = LRU_ENTRY_CONDEMNED;
@@ -1528,7 +1542,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
      } else {
           /* We may decrement the reference count without the queue
              lock, since it cannot go to 0. */
-          --(entry->lru.refcount);
+         atomic_dec_int64_t(&entry->lru.refcount);
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);
