@@ -76,7 +76,6 @@ nfs_parameter_t nfs_param =
 {
   /* Core parameters */
   .core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
-  .core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG,
   .core_param.drc.disabled = false,
   .core_param.drc.tcp.npart = DRC_TCP_NPART,
   .core_param.drc.tcp.size = DRC_TCP_SIZE,
@@ -567,8 +566,6 @@ void nfs_print_param_config()
   printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
-  printf("\tb_Call_Before_Queue_Avg = %u ; \n",
-         nfs_param.core_param.nb_call_before_queue_avg);
   printf("\tDRC_TCP_Npart = %u ; \n", nfs_param.core_param.drc.tcp.npart);
   printf("\tDRC_TCP_Size = %u ; \n", nfs_param.core_param.drc.tcp.size);
   printf("\tDRC_TCP_Cachesz = %u ; \n", nfs_param.core_param.drc.tcp.cachesz);

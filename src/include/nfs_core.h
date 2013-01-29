@@ -70,7 +70,6 @@
 /* NFS daemon behavior default values */
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
-#define NB_REQUEST_BEFORE_QUEUE_AVG  1000
 #define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_REQUEST_BEFORE_GC 50
@@ -217,7 +216,6 @@ typedef struct nfs_core_param__ {
 	struct sockaddr_in bind_addr; // IPv4 only for now...
 	unsigned int program[P_COUNT];
 	unsigned int nb_worker;
-	unsigned int nb_call_before_queue_avg;
 	long core_dump_size;
 	int nb_max_fd;
 	unsigned int drop_io_errors;
