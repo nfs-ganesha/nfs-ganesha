@@ -507,7 +507,7 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 			    char *val, int max_val_bytes)
 {
 	char *fso_copy, *fso_dup, *next_comma, *option;
-	bool ret = false;
+	bool ret;
 
 	if (! fs_specific || ! (fs_specific[0]))
 		goto out;
@@ -530,6 +530,7 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 		}
 	}
 
+	ret = false;
 cleanup:
 	free(fso_dup);
 out:
