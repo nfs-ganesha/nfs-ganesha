@@ -27,6 +27,7 @@ SET(MainServices_STAT_SRCS
    nfs_init.c
    nfs_tools.c
    nfs_reaper_thread.c
+   ../Protocols/client_mgr.c
 )
 
 if(USE_DBUS)
