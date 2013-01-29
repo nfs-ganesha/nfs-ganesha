@@ -15,6 +15,7 @@ add_library(fsalzfs SHARED ${fsalzfs_LIB_SRCS})
 
 target_link_libraries(fsalzfs
   zfswrap
+  ${SYSTEM_LIBRARIES}
 )
 
 set_target_properties(fsalzfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
