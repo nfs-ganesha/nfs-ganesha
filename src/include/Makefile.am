@@ -61,7 +61,8 @@ noinst_HEADERS = abstract_atomic.h               \
                  timers.h                        \
                  wait_queue.h                    \
                  fridgethr.h                     \
-                 rpc/svc_auth.h
+                 rpc/svc_auth.h                  \
+                 city.h
 
 if USE_NLM
 noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h
