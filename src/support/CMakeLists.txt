@@ -64,6 +64,7 @@ add_library(string_utils STATIC ${string_utils_STAT_SRCS})
 set(hash_SRCS
    lookup3.c
    murmur3.c
+   city.c
 )
 
 add_library(hash STATIC ${hash_SRCS})
