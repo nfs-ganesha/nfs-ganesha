@@ -170,7 +170,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
 
 static int getuptime(snmp_adm_type_union * param, void *opt)
 {
-  param->time = time(NULL) - ServerBootTime;
+	param->time = time(NULL) - (time_t)ServerBootTime.tv_sec;
   return 0;
 }
 

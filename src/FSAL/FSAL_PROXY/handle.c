@@ -799,7 +799,7 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         cb_client4 cbproxy;
         char clientid_name[MAXNAMLEN];
         SETCLIENTID4resok *sok;
-        extern time_t ServerBootTime;
+        extern struct timespec ServerBootTime;
         struct sockaddr_in sin;
         socklen_t slen = sizeof(sin);
         char addrbuf[sizeof("255.255.255.255")];
@@ -815,12 +815,12 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
                  getpid());
         nfsclientid.id.id_len = strlen(clientid_name);
         nfsclientid.id.id_val = clientid_name;
-        if(sizeof(ServerBootTime) == NFS4_VERIFIER_SIZE)
-                memcpy(&nfsclientid.verifier, &ServerBootTime,
+        if(sizeof(ServerBootTime.tv_sec) == NFS4_VERIFIER_SIZE)
+                memcpy(&nfsclientid.verifier, &ServerBootTime.tv_sec,
                        sizeof(nfsclientid.verifier));
         else
                 snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%08x",
-                         (int)ServerBootTime);
+                         (int)ServerBootTime.tv_sec);
 
         cbproxy.cb_program = 0;
         cbproxy.cb_location.r_netid = "tcp";

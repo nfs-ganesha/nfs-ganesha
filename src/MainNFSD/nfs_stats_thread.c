@@ -338,9 +338,9 @@ void *stats_thread(void *UnusedArg)
                current_time_struct->tm_sec);
 
       /* Printing the general Stats */
-      boot_time_struct = localtime(&ServerBootTime);
+      boot_time_struct = localtime((time_t *)&ServerBootTime.tv_sec);
       snprintf(strbootdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
-               (unsigned int)ServerBootTime,
+               (unsigned int)ServerBootTime.tv_sec,
                boot_time_struct->tm_mday,
                boot_time_struct->tm_mon + 1,
                1900 + boot_time_struct->tm_year,

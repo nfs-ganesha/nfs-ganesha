@@ -363,7 +363,7 @@ nfs_parameter_t nfs_param =
 };
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
-time_t ServerBootTime;
+struct timespec ServerBootTime;
 time_t ServerEpoch;
 
 nfs_worker_data_t *workers_data = NULL;

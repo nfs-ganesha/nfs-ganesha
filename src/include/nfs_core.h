@@ -540,7 +540,7 @@ typedef struct ganesha_stats__ {
 extern nfs_parameter_t nfs_param;
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
-extern time_t ServerBootTime;
+extern struct timespec ServerBootTime;
 extern time_t ServerEpoch;
 
 extern verifier4 NFS4_write_verifier;  /*< NFS V4 write verifier */

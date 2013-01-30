@@ -402,7 +402,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   /* BUGAZOMEU: management of the cookie verifier */
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
-      memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
+      memcpy(cookie_verifier, &ServerBootTime.tv_sec, sizeof(cookie_verifier));
       if(cookie != 0)
         {
           if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
