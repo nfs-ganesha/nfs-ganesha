@@ -1315,6 +1315,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
  *
  * @return NULL.
  */
+
 void *worker_thread(void *IndexArg)
 {
   request_data_t *nfsreq;

@@ -65,6 +65,10 @@ struct fridgethr_entry {
 		sigset_t sigmask; /*< This thread's signal mask */
 		bool woke; /*< Set to false on first run and if wait
 			       in fridgethr_freeze didn't time out. */
+		void *thread_info; /*< Information belonging to the
+				       user and associated with the
+				       thread.  Never modified by the
+				       fridgethr code. */
 		void (*func)(struct fridgethr_context *); /*< Function being
 							      executed */
 		void *arg; /*< Functions argument */
@@ -134,6 +138,17 @@ struct fridgethr_params {
 	 * If non-NULL, run after every submitted job.
 	 */
 	void (*task_cleanup)(struct fridgethr_context *);
+	/**
+	 * If non-NULL, called on thread creation just before we start
+	 * work, but after we set the function name (so it can be
+	 * overridden.)
+	 */
+	void (*thread_initialize)(struct fridgethr_context *);
+	/**
+	 * If non-NULL, called on thread exit, just before the context
+	 * is freed.
+	 */
+	void (*thread_finalize)(struct fridgethr_context *);
 };
 
 /**

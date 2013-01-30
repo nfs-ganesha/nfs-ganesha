@@ -390,13 +390,8 @@ restart:
 			fridgethr_finish_transition(fr);
 		}
 		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
-		fe->ctx.func = NULL;
-		fe->ctx.arg = NULL;
 		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
-		pthread_mutex_destroy(&fe->ctx.mtx);
-		pthread_cond_destroy(&fe->ctx.cv);
-		gsh_free(fe);
 		return false;
 	}
 
@@ -520,6 +515,10 @@ static void *fridgethr_start_routine(void *arg)
 	   which would indicate bugs in the code. */
 	assert(rc == 0);
 
+	if (fr->p.thread_initialize) {
+		fr->p.thread_initialize(&fe->ctx);
+	}
+
 	do {
 		fe->ctx.func(&fe->ctx);
 		if (fr->p.task_cleanup) {
@@ -529,10 +528,15 @@ static void *fridgethr_start_routine(void *arg)
 
 	} while (reschedule);
 
+	if (fr->p.thread_finalize) {
+		fr->p.thread_finalize(&fe->ctx);
+	}
+	pthread_mutex_destroy(&fe->ctx.mtx);
+	pthread_cond_destroy(&fe->ctx.cv);
+	gsh_free(fe);
 	fe = NULL;
 	/* At this point the fridge entry no longer exists and must
 	   not be accessed. */
-
 	return NULL;
 }
 
