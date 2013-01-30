@@ -768,6 +768,12 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
       dec_state_owner_ref(popen_owner);
     }
 
+  if (pclientid->cid_server_ip != NULL)
+    {
+      gsh_free(pclientid->cid_server_ip);
+      pclientid->cid_server_ip = NULL;
+    }
+
   if (pclientid->cid_recov_dir != NULL)
     {
       nfs4_rm_clid(pclientid->cid_recov_dir);

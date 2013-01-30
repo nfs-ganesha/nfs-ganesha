@@ -385,6 +385,7 @@ struct nfs_client_id_t
   sockaddr_t                     cid_client_addr;
   int                            cid_allow_reclaim;
   char                         * cid_recov_dir;
+  char                         * cid_server_ip;
   nfs_client_record_t          * cid_client_record;
   struct glist_head              cid_openowners;
   struct glist_head              cid_lockowners;

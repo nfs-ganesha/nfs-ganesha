@@ -157,6 +157,11 @@ nfs4_create_clid_name(nfs_client_record_t * cl_recp,
 {
         int i;
         longlong_t cl_val = 0;
+        char localaddr_str[SOCK_NAME_MAX];
+        struct sockaddr             *local_addr_ptr;
+        sockaddr_t                   local_addr;
+        socklen_t                    addr_len;
+
 
         pclientid->cid_recov_dir = gsh_malloc(256);
         if (pclientid->cid_recov_dir == NULL) {
@@ -169,6 +174,21 @@ nfs4_create_clid_name(nfs_client_record_t * cl_recp,
 
         (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx",
                         data->pworker->hostaddr_str, cl_val);
+
+        local_addr_ptr = (struct sockaddr *)&local_addr;
+        addr_len = sizeof(struct sockaddr);
+        if (getsockname(data->reqp->rq_xprt->xp_fd, local_addr_ptr, &addr_len) == -1) {
+                LogEvent(COMPONENT_CLIENTID, "Failed to get local addr.");
+        }
+        else
+        {
+                sprint_sockip(&local_addr, localaddr_str, sizeof(localaddr_str));
+                pclientid->cid_server_ip = gsh_strdup(localaddr_str);
+                if (pclientid->cid_server_ip == NULL) {
+                        LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
+                        return;
+                }
+        }
 
         LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
             pclientid->cid_recov_dir);

@@ -86,25 +86,19 @@ nfs_release_nlm_state()
 }
 
 static int
-ip_match(char *ip, char *recov_dir)
+ip_match(char *ip, char *cid_server_ip)
 {
-        size_t rdlen = 0;
         char *cp;
 
         /* ip is of the form a.b.c.d_N_interface */
         cp = ip;
-        while(*cp != DELIMIT)
+        /* DELIMIT could be replaced by null with multiple call to ip_match */
+        /* so need to check null as well */
+        while((*cp != DELIMIT) && (*cp != 0x0))
                 cp++;
         *cp = '\0';
 
-        /* recov_dir is of the form a.b.c.d-NN */
-        while (recov_dir[rdlen] != '-')
-                rdlen++;
-
-        if (rdlen != strlen(ip))
-                return 0;
-
-        if (strncmp(ip, recov_dir, rdlen))
+        if (strncmp(ip, cid_server_ip, strlen(cid_server_ip)))
                 return 0;
 
         return 1; /* they match */
@@ -138,7 +132,7 @@ nfs_release_v4_client(char *ip)
 
                         cp = (nfs_client_id_t *)pdata->buffval.pdata;
                         P(cp->cid_mutex);
-                        if (ip_match(ip, cp->cid_recov_dir)) {
+                        if (ip_match(ip, cp->cid_server_ip)) {
                                 inc_client_id_ref(cp);
 
                                 /* Take a reference to the client record */
@@ -197,7 +191,7 @@ char workpath[PATH_MAX];
         notdone = 1;
 
         /* stop at 2 to skip '.' and '..' */
-        for (ientry = (inum - 1); ientry > 2; ientry--) {
+        for (ientry = (inum - 1); ientry >= 2; ientry--) {
                 take = rel = 0;
                 switch (namelist[ientry]->d_name[0]) {
                         case 'r':
