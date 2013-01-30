@@ -83,7 +83,14 @@ int fridgethr_init(struct fridgethr **frout,
 		LogMajor(COMPONENT_THREAD,
 			 "Minimum of %d is greater than maximum of %d in "
 			 "fridge %s", p->thr_min, p->thr_max, s);
-		return ENOMEM;
+		return EINVAL;
+	}
+
+	if ((p->wake_threads != NULL) &&
+	    (p->flavor != fridgethr_flavor_looper)) {
+		LogMajor(COMPONENT_THREAD,
+			 "Wake function only allowed on loopers: %s", s);
+		return EINVAL;
 	}
 
 	*frout  = NULL;
@@ -420,15 +427,19 @@ restart:
 	/* It is a state machine, keep going until we have a
 	   transition that gets us out.*/
 	while (true) {
-		if (fr->p.thread_delay > 0 ) {
-			clock_gettime(CLOCK_REALTIME,
-				      &fe->timeout);
-			fe->timeout.tv_sec += fr->p.thread_delay;
-			rc = pthread_cond_timedwait(&fe->ctx.cv,
-						    &fe->ctx.mtx,
-						    &fe->timeout);
-		} else {
-			rc = pthread_cond_wait(&fe->ctx.cv, &fe->ctx.mtx);
+		if ((fr->p.wake_threads == NULL) ||
+		    (fr->command != fridgethr_comm_run)) {
+			if (fr->p.thread_delay > 0 ) {
+				clock_gettime(CLOCK_REALTIME,
+					      &fe->timeout);
+				fe->timeout.tv_sec += fr->p.thread_delay;
+				rc = pthread_cond_timedwait(&fe->ctx.cv,
+							    &fe->ctx.mtx,
+							    &fe->timeout);
+			} else {
+				rc = pthread_cond_wait(&fe->ctx.cv,
+						       &fe->ctx.mtx);
+			}
 		}
 		if (rc == ETIMEDOUT) {
 			fe->ctx.woke = false;
@@ -566,7 +577,7 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	/* The condition variable has/not been initialized */
 	bool conditioned = false;
 
-	/* Make a enw thread */
+	/* Make a new thread */
 	++(fr->nthreads);
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
@@ -966,6 +977,9 @@ int fridgethr_pause(struct fridgethr *fr,
 	if (fr->nthreads == fr->nidle) {
 		fridgethr_finish_transition(fr);
 	}
+	if (fr->p.wake_threads != NULL) {
+		fr->p.wake_threads(fr->p.wake_threads_arg);
+	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	return 0;
 }
@@ -1049,6 +1063,10 @@ int fridgethr_stop(struct fridgethr *fr,
 			   queue or terminate. */
 			pthread_cond_signal(&fe->ctx.cv);
 			PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
+
+			if (fr->p.wake_threads != NULL) {
+				fr->p.wake_threads(fr->p.wake_threads_arg);
+			}
 		}
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	} else {
@@ -1166,6 +1184,10 @@ int fridgethr_start(struct fridgethr *fr,
 			}
 		}
 	}
+
+	if (fr->p.wake_threads != NULL) {
+		fr->p.wake_threads(fr->p.wake_threads_arg);
+	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	return rc;
 }
@@ -1263,6 +1285,118 @@ int fridgethr_sync_command(struct fridgethr *fr,
 	}
 
 	return rc;
+}
+
+/**
+ * @brief Return true if a looper function should return
+ *
+ * For the moment, this checks if we're in the middle of a state
+ * transition.
+ *
+ * @param[in] ctx The thread context
+ *
+ * @retval true if you should break.
+ * @retval false if you don't have to.  You still can if you want to.
+ */
+
+bool fridgethr_you_should_break(struct fridgethr_context *ctx)
+{
+	/* Entry for this thread */
+	struct fridgethr_entry *fe
+		= container_of(ctx, struct fridgethr_entry,
+			       ctx);
+	struct fridgethr *fr = fe->fr;
+	bool rc;
+
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	rc = fr->transitioning;
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+	return rc;
+}
+
+/**
+ * @brief Populate a fridge with threads all running the same thing
+ *
+ * @param[in,out] fr   Fridge to populate
+ * @param[in]     func Function each thread should run
+ * @param[in]     arg  Argument supplied for that function
+ *
+ * @retval 0 on success.
+ * @retval EINVAL if there is no well-defined thread count.
+ * @retval Other codes from thread creation.
+ */
+
+int frigethr_populate(struct fridgethr *fr,
+		      void (*func)(struct fridgethr_context *),
+		      void *arg)
+{
+	int threads_to_run;
+	int i;
+
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	if (fr->p.thr_min != 0) {
+		threads_to_run = fr->p.thr_min;
+	} else if (fr->p.thr_max != 0) {
+		threads_to_run = fr->p.thr_max;
+	} else {
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Cannot populate fridge with undefined number of "
+			 "threads: %s",
+			 fr->s);
+		return EINVAL;
+	}
+
+	for (i = 0; i < threads_to_run; ++i) {
+		struct fridgethr_entry *fe = NULL;
+		int rc = 0;
+
+		/* Make a new thread */
+		++(fr->nthreads);
+		fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
+		if (fe == NULL) {
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			return ENOMEM;
+		}
+
+		fe->fr = fr;
+		rc = pthread_mutex_init(&fe->ctx.mtx, NULL);
+		if (rc != 0) {
+			LogMajor(COMPONENT_THREAD,
+				 "Unable to initialize mutex for new thread "
+				 "in fridge %s: %d",
+				 fr->s, rc);
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			return rc;
+		}
+		rc = pthread_cond_init(&fe->ctx.cv, NULL);
+		if (rc != 0) {
+			LogMajor(COMPONENT_THREAD,
+				 "Unable to initialize condition variable "
+				 "for new thread in fridge %s: %d",
+				 fr->s, rc);
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			return rc;
+		}
+
+		fe->ctx.func = func;
+		fe->ctx.arg = arg;
+		fe->frozen = false;
+
+		rc = pthread_create(&fe->ctx.id, &fr->attr,
+				    fridgethr_start_routine,
+				    fe);
+		if (rc != 0) {
+			LogMajor(COMPONENT_THREAD,
+				 "Unable to create new thread "
+				 "in fridge %s: %d", fr->s, rc);
+			PTHREAD_MUTEX_unlock(&fr->mtx);
+			return rc;
+		}
+	}
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+
+	return 0;
 }
 
 /**

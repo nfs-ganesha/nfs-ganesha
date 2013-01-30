@@ -149,6 +149,17 @@ struct fridgethr_params {
 	 * is freed.
 	 */
 	void (*thread_finalize)(struct fridgethr_context *);
+	/**
+	 * Use this function to wake up all threads on a state
+	 * transition.  Specifying this function implies that the
+	 * worker in a thread will wait for more work on its own. The
+	 * run function must be written either so that it exits after
+	 * any given piece of work or such that it calls @c
+	 * fridgethr_you_should_break before waiting.
+	 */
+	void (*wake_threads)(void *);
+	/* Argument for wake_threads */
+	void *wake_threads_arg;
 };
 
 /**
@@ -228,6 +239,10 @@ int fridgethr_start(struct fridgethr *,
 int fridgethr_sync_command(struct fridgethr *,
 			   fridgethr_comm_t ,
 			   time_t);
+bool fridgethr_you_should_break(struct fridgethr_context *);
+int frigethr_populate(struct fridgethr *,
+		      void (*)(struct fridgethr_context *),
+		      void *);
 
 void fridgethr_setwait(struct fridgethr_context *ctx,
 		       time_t thread_delay);
