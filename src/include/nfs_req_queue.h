@@ -115,4 +115,20 @@ static inline uint32_t nfs_rpc_q_next_slot(void)
 	return (ix);
 }
 
+static inline void nfs_rpc_queue_awaken(void *arg)
+{
+	struct nfs_req_st *st = arg;
+	struct glist_head *g = NULL;
+	struct glist_head *n = NULL;
+
+	pthread_mutex_lock(&st->reqs.mtx);
+	glist_for_each_safe(g, n, &st->reqs.wait_list) {
+		wait_q_entry_t *wqe
+			= glist_entry(g, wait_q_entry_t, waitq);
+		pthread_cond_signal(&wqe->lwe.cv);
+		pthread_cond_signal(&wqe->rwe.cv);
+	}
+	pthread_mutex_unlock(&st->reqs.mtx);
+}
+
 #endif /* NFS_REQ_QUEUE_H */

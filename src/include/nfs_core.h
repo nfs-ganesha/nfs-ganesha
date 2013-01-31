@@ -484,25 +484,32 @@ typedef enum idmap_type__ {
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool; /* XXX hide */
-extern pool_t *ip_stats_pool;
+extern pool_t *ip_stats_pool; /*< Delendum est */
 
-struct nfs_worker_data__ {
-	unsigned int worker_index;
-	hash_table_t *ht_ip_stats;
+/**
+ * @brief Per-worker data.  Some of this will be destroyed.
+ */
 
-	wait_q_entry_t wqe;
-	pthread_mutex_t request_pool_mutex;
-	nfs_tcb_t wcb; /* Worker control block */
-	exportlist_client_entry_t related_client;
+struct nfs_worker_data {
+	unsigned int worker_index; /*< Index for log messages */
+	hash_table_t *ht_ip_stats; /*< Delendum est */
 
-	nfs_worker_stat_t stats;
-	sockaddr_t hostaddr;
-	sigset_t sigmask; /* masked signals */
-	unsigned int current_xid;
+	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
+	pthread_mutex_t request_pool_mutex; /*< Delendum est */
+	exportlist_client_entry_t related_client; /*< Identity that
+						      governs access to
+						      export */
+
+	nfs_worker_stat_t stats; /*< Delendum est */
+	sockaddr_t hostaddr; /*< Client address */
+	unsigned int current_xid; /*< RPC Transaction ID */
+	struct fridgethr_context *ctx; /*< Link back to thread context */
 };
 
 /**
- * group together all of NFS-Ganesha's statistics
+ * @brief Group together all of NFS-Ganesha's statistics
+ *
+ * @todo Delendum est.
  */
 typedef struct ganesha_stats__ {
 	nfs_worker_stat_t global_worker_stat;
@@ -559,10 +566,6 @@ extern pool_t *nfs_clientid_pool;
 /*
  * function prototypes
  */
-pause_rc pause_workers(pause_reason_t reason);
-pause_rc wake_workers(awaken_reason_t reason);
-pause_rc wait_for_workers_to_awaken(void);
-void *worker_thread(void *IndexArg);
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
 int stats_snmp(void);
@@ -800,5 +803,8 @@ int reaper_shutdown(void);
 				rc, mtx);				\
 		}							\
 	} while(0)
+
+int worker_init(void);
+int worker_shutdown(void);
 
 #endif /* !NFS_CORE_H */

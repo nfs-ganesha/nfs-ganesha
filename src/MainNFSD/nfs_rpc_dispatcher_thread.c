@@ -1193,7 +1193,7 @@ retry_deq:
             timeout.tv_sec  = time(NULL) + 5;
             timeout.tv_nsec = 0;
             pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
-            if ((worker->wcb.tcb_state) == STATE_EXIT) {
+            if (fridgethr_you_should_break(worker->ctx)) {
                 /* We are returning; so take us out of the waitq */
                 pthread_mutex_lock(&nfs_req_st.reqs.mtx);
                 if (wqe->waitq.next != NULL || wqe->waitq.prev != NULL) {

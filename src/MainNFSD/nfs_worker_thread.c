@@ -60,15 +60,17 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "nfs_tcb.h"
 #include "fridgethr.h"
 
-extern nfs_worker_data_t *workers_data;
+extern struct nfs_worker_data *workers_data; /*< Delendum est */
 
 pool_t *request_pool;
 pool_t *request_data_pool;
 pool_t *dupreq_pool;
-pool_t *ip_stats_pool;
+pool_t *ip_stats_pool; /*< Delendum est */
+extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD]; /*< Delendum Est */
+
+static struct fridgethr *worker_fridge;
 
 const nfs_function_desc_t invalid_funcdesc =
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
@@ -368,12 +370,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
         NEEDS_CRED}
 };
 
-extern const char *pause_state_str[];
-
-bool
-is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
-		  struct svc_req *req);
-
 /**
  * @brief Extract nfs function descriptor from nfs request.
  *
@@ -446,6 +442,12 @@ nfs_rpc_get_funcdesc(struct fridgethr_context *thr_ctx,
   return INVALID_FUNCDESC;
 }
 
+/**
+ * @brief Timer structure for long running thread detection
+ *
+ * @todo Delendum est.
+ */
+
 struct nfs_req_timer
 {
     struct timespec timer_start;
@@ -454,6 +456,12 @@ struct nfs_req_timer
     struct timespec queue_timer_diff;
     nfs_request_latency_stat_t latency_stat;
 };
+
+/**
+ * @brief Record the end of an operation
+ *
+ * @todo Delendum est.
+ */
 
 static inline void
 nfs_req_timer_stop(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
@@ -471,6 +479,12 @@ nfs_req_timer_stop(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
                     &t->latency_stat);
 
 }
+
+/**
+ * @brief Get actual time run.
+ *
+ * @todo Delendum est.
+ */
 
 static inline void
 nfs_req_timer_qdiff(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
@@ -504,13 +518,15 @@ static void nfs_rpc_execute(request_data_t *preq,
   short exportid;
   struct svc_req *req = &preqnfs->req;
   SVCXPRT *xprt = preqnfs->xprt;
-  nfs_stat_type_t stat_type;
   exportlist_client_entry_t * related_client = &worker_data->related_client;
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
   dupreq_status_t dpq_status;
+#if 0
   bool update_per_share_stats = false;
+  nfs_stat_type_t stat_type;
   struct nfs_req_timer req_timer;
+#endif /* 0 */
   int port, rc;
   bool slocked = false;
 
@@ -557,8 +573,10 @@ static void nfs_rpc_execute(request_data_t *preq,
                req->rq_xid);
     }
 
+#if 0
   /* start the processing clock */
   now(&(req_timer.timer_start));
+#endif /* 0 */
 
   /* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
    * nothing but allocate a result object and mark the request (ie, the
@@ -600,7 +618,9 @@ static void nfs_rpc_execute(request_data_t *preq,
                        (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
               svcerr_systemerr(xprt, req);
           }
+#if 0
         nfs_req_timer_stop(&req_timer, worker_data, req, GANESHA_STAT_SUCCESS);
+#endif /* 0 */
         goto dupreq_finish;
       break;
 
@@ -1047,12 +1067,14 @@ static void nfs_rpc_execute(request_data_t *preq,
       req_ctx.nfs_vers = req->rq_vers;
       req_ctx.req_type = preq->rtype;
 
+#if 0
       LogDebug(COMPONENT_DISPATCH,
                "NFS DISPATCHER: Calling service function %s start_time "
                "%llu.%.9llu",
                preqnfs->funcdesc->funcname,
                (unsigned long long) req_timer.timer_start.tv_sec,
                (unsigned long long) req_timer.timer_start.tv_nsec);
+#endif /* 0 */
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1074,6 +1096,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           res_nfs);
     }
 
+#if 0
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
   nfs_req_timer_stop(&req_timer, worker_data, req, stat_type);
 
@@ -1136,6 +1159,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(req->rq_proc == NFSPROC4_COMPOUND)
           nfs4_op_stat_update(arg_nfs, res_nfs,
                               &(worker_data->stats.stat_req));
+#endif /* 0 */
 
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
@@ -1231,37 +1255,6 @@ freeargs:
   return;
 }
 
-/**
- * @brief Init the data associated with a worker instance.
- *
- * This function is used to init the nfs_worker_data for a worker thread.
- * These data are used by the worker for RPC processing.
- *
- * @param[out] data Data to be initialized.
- *
- * @return 0 if successfull, -1 otherwise.
- *
- */
-int
-nfs_Init_worker_data(nfs_worker_data_t *data)
-{
-  char thr_name[32];
-
-  if(pthread_mutex_init(&(data->request_pool_mutex), NULL) != 0)
-    return -1;
-
-  snprintf(
-      thr_name, sizeof(thr_name), "Worker Thread #%u", data->worker_index);
-  if(tcb_new(&(data->wcb), thr_name) != 0)
-    return -1;
-
-  /* init thr waitq */
-  init_wait_q_entry(&data->wqe);
-  data->wcb.tcb_ready = false;
-
-  return 0;
-}                               /* nfs_Init_worker_data */
-
 #ifdef _USE_9P
 /**
  * @brief Execute a 9p request
@@ -1303,6 +1296,46 @@ static void _9p_free_reqdata(_9p_request_data_t * preq9p)
 /* XXX include dependency issue prevented declaring in nfs_req_queue.h */
 request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
 
+static uint32_t worker_indexer = 0;
+
+/**
+ * @brief Initialize a worker thread
+ *
+ * @param[in] ctx Thread fridge context
+ */
+
+static void worker_thread_initializer(struct fridgethr_context *ctx)
+{
+  struct nfs_worker_data *wd
+    = gsh_calloc(sizeof(struct nfs_worker_data), 1);
+  char thr_name[32];
+
+  wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
+  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%u", wd->worker_index);
+
+  /**
+   * @todo Delendum est.  Temporary until we get new stats.
+   */
+  wd->ht_ip_stats = ht_ip_stats[wd->worker_index];
+
+  /* Initalize thr waitq */
+  init_wait_q_entry(&wd->wqe);
+  wd->ctx = ctx;
+  ctx->thread_info = wd;
+}
+
+/**
+ * @brief Finalize a worker thread
+ *
+ * @param[in] ctx Thread fridge context
+ */
+
+static void worker_thread_finalizer(struct fridgethr_context *ctx)
+{
+  gsh_free(ctx->thread_info);
+  ctx->thread_info = NULL;
+}
+
 /**
  * @brief The main function for a worker thread
  *
@@ -1311,94 +1344,26 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
  * the worker's index.  It then uses this index to address its own
  * worker data in the array.
  *
- * @param[in] IndexArg Index into the thread table, cast to void *
- *
- * @return NULL.
+ * @param[in] ctx Fridge thread context
  */
 
-void *worker_thread(void *IndexArg)
+static void worker_run(struct fridgethr_context *ctx)
 {
+  struct nfs_worker_data *worker_data = ctx->thread_info;
   request_data_t *nfsreq;
-  int rc = 0;
-  unsigned long worker_index = (unsigned long) IndexArg;
-  nfs_worker_data_t *worker_data = &(workers_data[worker_index]);
-  char thr_name[32];
   gsh_xprt_private_t *xu = NULL;
   uint32_t reqcnt;
 
-  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
-  SetNameFunction(thr_name);
-
-  /* save current signal mask */
-  rc = pthread_sigmask(SIG_SETMASK, (sigset_t *) 0, &worker_data->sigmask);
-  if (rc) {
-      LogFatal(COMPONENT_DISPATCH,
-               "pthread_sigmask returned %d", rc);
-  }
-
-  if (mark_thread_existing(&(worker_data->wcb)) == PAUSE_EXIT)
+  /* Worker's loop */
+  while (!fridgethr_you_should_break(ctx))
     {
-      /* Oops, that didn't last long... exit. */
-      mark_thread_done(&(worker_data->wcb));
-      LogDebug(COMPONENT_DISPATCH,
-               "Worker exiting before initialization");
-      return NULL;
-    }
-
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
-           worker_index, (caddr_t) pthread_self());
-
-  LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
-
-  /* Worker's infinite loop */
-  while(1)
-    {
-      LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu PAUSE/SHUTDOWN check",
-                   worker_index);
-
-      /*
-       * XXX Fiddling with states in the tcp defeats the purpose of
-       * having the abstraction.  If we want to have a lockless pass,
-       * that should be an inline routine, or similar.
-       */
-
-      /* Get the state without lock first, if things are fine
-       * don't bother to check under lock.
-       */
-      if(worker_data->wcb.tcb_state != STATE_AWAKE) {
-          while(1)
-            {
-              P(worker_data->wcb.tcb_mutex);
-              switch(thread_sm_locked(&worker_data->wcb))
-                {
-                  case THREAD_SM_BREAK:
-                      /* XXX ends wait state */
-                      V(worker_data->wcb.tcb_mutex);
-                      goto wbreak;
-                      break;
-
-                  case THREAD_SM_RECHECK:
-                    V(worker_data->wcb.tcb_mutex);
-                    continue;
-
-                  case THREAD_SM_EXIT:
-                    LogDebug(COMPONENT_DISPATCH, "Worker exiting as requested");
-                    V(worker_data->wcb.tcb_mutex);
-                    return NULL;
-                }
-            }
-        }
-
-    wbreak:
       nfsreq = nfs_rpc_dequeue_req(worker_data);
 
       if(!nfsreq)
+	{
           continue;
+	}
 
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Processing a new request %p, pause_state: %s",
-                   nfsreq,
-                   pause_state_str[worker_data->wcb.tcb_state]);
 /* need to do a getpeername(2) on the socket fd before we dive into the
  * rpc_execute.  9p is messy but we do have the fd....
  */
@@ -1469,8 +1434,56 @@ void *worker_thread(void *IndexArg)
           }
 
       pool_free(request_pool, nfsreq);
-    }                           /* while( 1 ) */
+    }
+}
 
-  tcb_remove(&worker_data->wcb);
-  return NULL;
+int worker_init(void)
+{
+  struct fridgethr_params frp;
+  int rc = 0;
+
+  memset(&frp, 0, sizeof(struct fridgethr_params));
+  frp.thr_max = nfs_param.core_param.nb_worker;
+  frp.thr_min = nfs_param.core_param.nb_worker;
+  frp.flavor = fridgethr_flavor_looper;
+  frp.thread_initialize = worker_thread_initializer;
+  frp.thread_finalize = worker_thread_finalizer;
+  frp.wake_threads = nfs_rpc_queue_awaken;
+  frp.wake_threads_arg = &nfs_req_st;
+
+  rc = fridgethr_init(&worker_fridge,
+		      "Workers",
+		      &frp);
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Unable to initialize worker fridge: %d", rc);
+      return rc;
+    }
+
+  rc = frigethr_populate(worker_fridge,
+			 worker_run,
+			 NULL);
+  
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Unable to populate worker fridge: %d", rc);
+    }
+
+  return rc;
+}
+
+int worker_shutdown(void)
+{
+  int rc = fridgethr_sync_command(worker_fridge,
+				  fridgethr_comm_stop,
+				  300);
+
+  if (rc != 0) {
+    LogMajor(COMPONENT_DISPATCH,
+	     "Failed shutting down worker threads: %d",
+	     rc);
+  }
+  return rc;
 }
