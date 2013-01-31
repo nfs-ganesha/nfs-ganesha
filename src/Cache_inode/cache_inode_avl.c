@@ -43,6 +43,7 @@
 #include "cache_inode.h"
 #include "cache_inode_avl.h"
 #include "murmur3.h"
+#include "city.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -206,12 +207,19 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
 int cache_inode_avl_qp_insert(
     cache_entry_t *entry, cache_inode_dir_entry_t *v)
 {
+#if AVL_HASH_MURMUR3
     uint32_t hk[4];
+#endif
     int j, j2, code = -1;
 
     /* don't permit illegal cookies */
+#if AVL_HASH_MURMUR3
     MurmurHash3_x64_128(v->name, strlen(v->name), 67, hk);
     memcpy(&v->hk.k, hk, 8);
+#else
+    v->hk.k = CityHash64WithSeed(v->name, strlen(v->name), 67);
+#endif
+
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
     v->hk.k &= ~(1L<<63);  /* just kill the sign bit, making cookies 63 bits... */
@@ -236,7 +244,6 @@ int cache_inode_avl_qp_insert(
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
             j, v->name);
 
-    memcpy(&v->hk.k, hk, 8);
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
     v->hk.k &= ~(1L<<63);
@@ -307,16 +314,23 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree_node *node;
     cache_inode_dir_entry_t *v2;
+#if AVL_HASH_MURMUR3
     uint32_t hashbuff[4];
+#endif
     int j;
     size_t namelen = strlen(name);
     cache_inode_dir_entry_t v;
 
+#if AVL_HASH_MURMUR3
     MurmurHash3_x64_128(name, namelen, 67, hashbuff);
     /* This seems to be correct.  The avltree_lookup function looks
        as hk.k, but does no namecmp on its own, so there's no need to
        allocate space for or copy the name in the key. */
     memcpy(&v.hk.k, hashbuff, 8);
+#else
+    v.hk.k = CityHash64WithSeed(name, namelen, 67);
+#endif
+
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
     v.hk.k &= ~(1L<<63);

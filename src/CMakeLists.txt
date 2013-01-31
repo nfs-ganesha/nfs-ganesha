@@ -426,7 +426,6 @@ set(GANESHA_CORE
   avltree
   weakref
   hashtable
-  hash
   rpcal
   gssd
   log
@@ -437,6 +436,7 @@ set(GANESHA_CORE
   cidr
   NodeList
   string_utils
+  hash
   )
 
 if(USE_DBUS)
