@@ -29,9 +29,7 @@
  * VFS object (file|dir) handle object
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <fsal_handle_syscalls.h>
@@ -46,7 +44,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"
 #include "FSAL/fsal_commonlib.h"
-#include <FSAL/FSAL_LUSTRE/fsal_handle.h>
+#include "fsal_handle.h"
 #include "lustre_methods.h"
 #include <stdbool.h>
 
@@ -647,8 +645,7 @@ errout:
 
 static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	struct lustre_fsal_obj_handle *myself = NULL;
@@ -687,17 +684,21 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 		myself->u.symlink.link_content[retlink] = '\0';
 		myself->u.symlink.link_size = retlink + 1;
 	}
-	if(myself->u.symlink.link_content == NULL
-	   || *link_len <= myself->u.symlink.link_size) {
+	if(myself->u.symlink.link_content == NULL) {
 		fsal_error = ERR_FSAL_FAULT; /* probably a better error?? */
 		goto out;
 	}
-	memcpy(link_content,
+	link_content->len = myself->u.symlink.link_size;
+	link_content->addr = gsh_malloc(link_content->len);
+	if (link_content->addr == NULL) {
+		fsal_error = ERR_FSAL_NOMEM;
+		goto out;
+	}
+	memcpy(link_content->addr,
 	       myself->u.symlink.link_content,
 	       myself->u.symlink.link_size);
 
 out:
-	*link_len = myself->u.symlink.link_size;
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -989,6 +990,17 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
+	/** TRUNCATE **/
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+	    if(obj_hdl->type != REGULAR_FILE) {
+	         fsal_error = ERR_FSAL_INVAL;
+	         goto out;
+	     }
+	    retval = truncate( mypath, attrs->filesize);
+	    if(retval != 0) {
+		    goto fileerr;
+	    }
+	}
 	/** CHMOD **/
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
 		/* The POSIX chmod call doesn't affect the symlink object, but
@@ -1032,29 +1044,56 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 			goto fileerr;
 		}
 	}
-		
+
 	/**  UTIME  **/
-	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME)) {
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME |
+	        ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)) {
 		struct timeval timebuf[2];
+		struct timeval *ptimebuf = timebuf;
 
 		/* Atime */
 		timebuf[0].tv_sec =
 			(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME) ?
-                         (time_t) attrs->atime.seconds : stat.st_atime);
+			 (time_t) attrs->atime.tv_sec : stat.st_atime);
 		timebuf[0].tv_usec = 0;
 
 		/* Mtime */
 		timebuf[1].tv_sec =
 			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
-			 (time_t) attrs->mtime.seconds : stat.st_mtime);
+			 (time_t) attrs->mtime.tv_sec : stat.st_mtime);
 		timebuf[1].tv_usec = 0;
+		if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER) &&
+		        FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+		{
+		    /* If both times are set to server time, we can shortcut and
+		     * use the utimes interface to set both times to current time.
+		     */
+		    ptimebuf = NULL;
+		}
+		else
+		{
+		    if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
+		    {
+		        /* Since only one time is set to server time, we must
+		         * get time of day to set it.
+		         */
+		        gettimeofday(&timebuf[0], NULL);
+		    }
+		    if(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+		    {
+		        /* Since only one time is set to server time, we must
+		         * get time of day to set it.
+		         */
+		        gettimeofday(&timebuf[1], NULL);
+		    }
+		}
 		if(obj_hdl->type == SOCKET_FILE)
                   {
                      snprintf( mysockpath, MAXPATHLEN, "%s/%s", mypath, myself->u.sock.sock_name ) ;
 		     retval = utimes( mysockpath, timebuf ) ;
                   }
 		else
-			retval = utimes(mypath, timebuf);
+			retval = utimes(mypath, ptimebuf);
 		if(retval != 0) {
 			goto fileerr;
 		}
@@ -1066,35 +1105,6 @@ fileerr:
         fsal_error = posix2fsal_error(retval);
 out:
 	return fsalstat(fsal_error, retval);
-}
-
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
-
-static fsal_status_t lustre_file_truncate(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
-					  uint64_t length)
-{
-	struct lustre_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        char mypath[MAXPATHLEN] ;
-	int retval = 0;
-
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-        lustre_handle_to_path( lustre_get_root_path( obj_hdl->export ), myself->handle, mypath ) ;
-	retval = truncate( mypath, length);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-errout:
-	return fsalstat(fsal_error, retval);	
 }
 
 /* file_unlink
@@ -1286,7 +1296,6 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = lustre_linkfile;
 	ops->rename = lustre_renamefile;
 	ops->unlink = lustre_file_unlink;
-	ops->truncate = lustre_file_truncate;
 	ops->open = lustre_open;
 	ops->status = lustre_status;
 	ops->read = lustre_read;

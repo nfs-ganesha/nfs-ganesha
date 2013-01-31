@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -135,11 +128,11 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->obj_handle->attributes.filesize:&zero64 ; 
   blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9P_BLK_SIZE:0LL ; 
   blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->obj_handle->attributes.filesize/DEV_BSIZE):0LL ; 
-  atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.atime.seconds:&zero64 ;
+  atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.atime.tv_sec:&zero64 ;
   atime_nsec = &zero64 ;
-  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.mtime.seconds:&zero64 ;
+  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.mtime.tv_sec:&zero64 ;
   mtime_nsec = &zero64 ;
-  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.ctime.seconds:&zero64 ;
+  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.ctime.tv_sec:&zero64 ;
   ctime_nsec = &zero64 ;
 
   /* Not yet supported attributes */

@@ -54,34 +54,33 @@
  * @retval ERR_FSAL_BUSY if the export is in use.
  */
 
-static fsal_status_t
-release(struct fsal_export *export_pub)
+static fsal_status_t release(struct fsal_export *export_pub)
 {
-        /* The priate, expanded export */
-        struct export *export
-                = container_of(export_pub, struct export, export);
-        /* Return code */
-        fsal_status_t status = {ERR_FSAL_INVAL, 0};
+	/* The priate, expanded export */
+	struct export *export
+		= container_of(export_pub, struct export, export);
+	/* Return code */
+	fsal_status_t status = {ERR_FSAL_INVAL, 0};
 
-        pthread_mutex_lock(&export->export.lock);
-        if((export->export.refs > 0) ||
-           (!glist_empty(&export->export.handles))) {
-                pthread_mutex_lock(&export->export.lock);
-                status.major = ERR_FSAL_INVAL;
-                return status;
-        }
-        fsal_detach_export(export->export.fsal, &export->export.exports);
-        free_export_ops(&export->export);
-        pthread_mutex_unlock(&export->export.lock);
+	pthread_mutex_lock(&export->export.lock);
+	if((export->export.refs > 0) ||
+	   (!glist_empty(&export->export.handles))) {
+		pthread_mutex_lock(&export->export.lock);
+		status.major = ERR_FSAL_INVAL;
+		return status;
+	}
+	fsal_detach_export(export->export.fsal, &export->export.exports);
+	free_export_ops(&export->export);
+	pthread_mutex_unlock(&export->export.lock);
 
-        export->export.ops = NULL;
-        ceph_shutdown(export->cmount);
-        export->cmount = NULL;
-        pthread_mutex_destroy(&export->export.lock);
-        gsh_free(export);
-        export = NULL;
+	export->export.ops = NULL;
+	ceph_shutdown(export->cmount);
+	export->cmount = NULL;
+	pthread_mutex_destroy(&export->export.lock);
+	gsh_free(export);
+	export = NULL;
 
-        return status;
+	return status;
 }
 
 /**
@@ -100,96 +99,105 @@ release(struct fsal_export *export_pub)
  * @return FSAL status.
  */
 
-static fsal_status_t
-lookup_path(struct fsal_export *export_pub,
-            const struct req_op_context *opctx,
-            const char *path,
-            struct fsal_obj_handle **pub_handle)
+static fsal_status_t lookup_path(struct fsal_export *export_pub,
+				 const struct req_op_context *opctx,
+				 const char *path,
+				 struct fsal_obj_handle **pub_handle)
 {
-        /* The 'private' full export handle */
-        struct export *export = container_of(export_pub,
-                                             struct export,
-                                             export);
-        /* The 'private' full object handle */
-        struct handle *handle = NULL;
-        /* The buffer in which to store stat info */
-        struct stat st;
-        /* FSAL status structure */
-        fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-        /* Return code from Ceph */
-        int rc = 0;
-        /* Find the actual path in the supplied path */
-        const char *realpath;
+	/* The 'private' full export handle */
+	struct export *export = container_of(export_pub,
+					     struct export,
+					     export);
+	/* The 'private' full object handle */
+	struct handle *handle = NULL;
+	/* The buffer in which to store stat info */
+	struct stat st;
+	/* FSAL status structure */
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	/* Return code from Ceph */
+	int rc = 0;
+	/* Find the actual path in the supplied path */
+	const char *realpath;
 
-        if (*path != '/') {
-                realpath = strchr(path, ':');
-                if (realpath == NULL) {
-                        status.major = ERR_FSAL_INVAL;
-                        goto out;
-                }
-                if (*(++realpath) != '/') {
-                        status.major = ERR_FSAL_INVAL;
-                        goto out;
-                }
-        } else {
-                realpath = path;
-        }
+	if (*path != '/') {
+		realpath = strchr(path, ':');
+		if (realpath == NULL) {
+			status.major = ERR_FSAL_INVAL;
+			goto out;
+		}
+		if (*(++realpath) != '/') {
+			status.major = ERR_FSAL_INVAL;
+			goto out;
+		}
+	} else {
+		realpath = path;
+	}
 
-        *pub_handle = NULL;
+	*pub_handle = NULL;
 
-        if (strcmp(realpath, "/") == 0) {
-                vinodeno_t root;
-                root.ino.val = CEPH_INO_ROOT;
-                root.snapid.val = CEPH_NOSNAP;
-                rc = ceph_ll_getattr(export->cmount, root, &st, 0, 0);
-        } else {
-                rc = ceph_ll_walk(export->cmount, realpath, &st);
-        }
-        if (rc < 0) {
-                status = ceph2fsal_error(rc);
-                goto out;
-        }
+	if (strcmp(realpath, "/") == 0) {
+		vinodeno_t root;
+		root.ino.val = CEPH_INO_ROOT;
+		root.snapid.val = CEPH_NOSNAP;
+		rc = ceph_ll_getattr(export->cmount, root, &st, 0, 0);
+	} else {
+		rc = ceph_ll_walk(export->cmount, realpath, &st);
+	}
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
 
-        rc = construct_handle(&st, export, &handle);
-        if (rc < 0) {
-                status = ceph2fsal_error(rc);
-                goto out;
-        }
+	rc = construct_handle(&st, export, &handle);
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
 
-        *pub_handle = &handle->handle;
+	*pub_handle = &handle->handle;
 
 out:
-        return status;
+	return status;
 }
 
 /**
- * @brief Extract handle from buffer
+ * @brief Decode a digested handle
  *
- * This function, in the Ceph FSAL, merely checks that the supplied
- * buffer is the appropriate size, or returns the size of the wire
- * handle if FSAL_DIGEST_SIZEOF is passed as the type.
+ * This function decodes a previously digested handle.
  *
- * @param[in]     export_pub Public export
- * @param[in]     type       The type of digest this buffer represents
- * @param[in,out] fh_desc    The buffer from which to extract/buffer
- *                           containing extracted handle
- *
- * @return FSAL status.
+ * @param[in]  exp_handle  Handle of the relevant fs export
+ * @param[in]  in_type  The type of digest being decoded
+ * @param[out] fh_desc  Address and length of key
  */
-
-static fsal_status_t
-extract_handle(struct fsal_export *export_pub,
-               fsal_digesttype_t type,
-               struct gsh_buffdesc *fh_desc)
+static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
+				    fsal_digesttype_t in_type,
+				    struct gsh_buffdesc *fh_desc)
 {
-        if (type == FSAL_DIGEST_SIZEOF) {
-                fh_desc->len = sizeof(struct wire_handle);
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        } else if (fh_desc->len != sizeof(struct wire_handle)) {
-                return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-        } else {
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        }
+	struct wire_handle *wire
+		= (struct wire_handle *) fh_desc->addr;
+
+	switch (in_type) {
+		/* Digested Handles */
+	case FSAL_DIGEST_NFSV2:
+	case FSAL_DIGEST_NFSV3:
+	case FSAL_DIGEST_NFSV4:
+		/* wire handles */
+		fh_desc->len = sizeof(wire->vi); /* vinodeno_t */
+		break;
+		/* Integer IDs */
+	case FSAL_DIGEST_FILEID2:
+		/* No supported */
+		return fsalstat(ERR_FSAL_TOOSMALL, 0);
+		break;
+	case FSAL_DIGEST_FILEID3:
+	case FSAL_DIGEST_FILEID4:
+		fh_desc->len = sizeof(uint64_t);
+		break;
+	default:
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -206,53 +214,52 @@ extract_handle(struct fsal_export *export_pub,
  *
  * @return NFSv4.1 error codes.
  */
-nfsstat4
-create_ds_handle(struct fsal_export *const export_pub,
-                 const struct gsh_buffdesc *const desc,
-                 struct fsal_ds_handle **const ds_pub)
+nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
+			  const struct gsh_buffdesc *const desc,
+			  struct fsal_ds_handle **const ds_pub)
 {
-        /* Full 'private' export structure */
-        struct export *export = container_of(export_pub,
-                                             struct export,
-                                             export);
-        /* Handle to be created */
-        struct ds *ds = NULL;
+	/* Full 'private' export structure */
+	struct export *export = container_of(export_pub,
+					     struct export,
+					     export);
+	/* Handle to be created */
+	struct ds *ds = NULL;
 
-        *ds_pub= NULL;
+	*ds_pub= NULL;
 
-        if (desc->len != sizeof(struct ds_wire)) {
-                return NFS4ERR_BADHANDLE;
-        }
+	if (desc->len != sizeof(struct ds_wire)) {
+		return NFS4ERR_BADHANDLE;
+	}
 
-        ds = gsh_calloc(1, sizeof(struct ds));
+	ds = gsh_calloc(1, sizeof(struct ds));
 
-        if (ds == NULL) {
-                return NFS4ERR_SERVERFAULT;
-        }
+	if (ds == NULL) {
+		return NFS4ERR_SERVERFAULT;
+	}
 
-        /* Connect lazily when a FILE_SYNC4 write forces us to, not
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
            here. */
 
-        ds->connected = false;
+	ds->connected = false;
 
 
-        memcpy(&ds->wire, desc->addr, desc->len);
+	memcpy(&ds->wire, desc->addr, desc->len);
 
-        if (ds->wire.layout.fl_stripe_unit == 0) {
-                gsh_free(ds);
-                return NFS4ERR_BADHANDLE;
-        }
+	if (ds->wire.layout.fl_stripe_unit == 0) {
+		gsh_free(ds);
+		return NFS4ERR_BADHANDLE;
+	}
 
-        if (fsal_ds_handle_init(&ds->ds,
-                                export->export.ds_ops,
-                                &export->export)) {
-                gsh_free(ds);
-                return NFS4ERR_SERVERFAULT;
-        }
+	if (fsal_ds_handle_init(&ds->ds,
+				export->export.ds_ops,
+				&export->export)) {
+		gsh_free(ds);
+		return NFS4ERR_SERVERFAULT;
+	}
 
-        *ds_pub = &ds->ds;
+	*ds_pub = &ds->ds;
 
-        return NFS4_OK;
+	return NFS4_OK;
 }
 
 /**
@@ -267,59 +274,58 @@ create_ds_handle(struct fsal_export *const export_pub,
  *
  * @return FSAL status.
  */
-static fsal_status_t
-create_handle(struct fsal_export *export_pub,
-	      const struct req_op_context *opctx,
-              struct gsh_buffdesc *desc,
-              struct fsal_obj_handle **pub_handle)
+static fsal_status_t create_handle(struct fsal_export *export_pub,
+				   const struct req_op_context *opctx,
+				   struct gsh_buffdesc *desc,
+				   struct fsal_obj_handle **pub_handle)
 {
-        /* Full 'private' export structure */
-        struct export *export = container_of(export_pub,
-                                             struct export,
-                                             export);
-        /* FSAL status to return */
-        fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-        /* The FSAL specific portion of the handle received by the
+	/* Full 'private' export structure */
+	struct export *export = container_of(export_pub,
+					     struct export,
+					     export);
+	/* FSAL status to return */
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	/* The FSAL specific portion of the handle received by the
            client */
-        struct wire_handle *wire = desc->addr;
-        /* Ceph return code */
-        int rc = 0;
-        /* Stat buffer */
-        struct stat st;
-        /* Handle to be created */
-        struct handle *handle = NULL;
+	struct wire_handle *wire = desc->addr;
+	/* Ceph return code */
+	int rc = 0;
+	/* Stat buffer */
+	struct stat st;
+	/* Handle to be created */
+	struct handle *handle = NULL;
 
-        *pub_handle = NULL;
+	*pub_handle = NULL;
 
-        if (desc->len != sizeof(struct wire_handle)) {
-                status.major = ERR_FSAL_INVAL;
-                goto out;
-        }
+	if (desc->len != sizeof(struct wire_handle)) {
+		status.major = ERR_FSAL_INVAL;
+		goto out;
+	}
 
-        rc = ceph_ll_connectable_m(export->cmount, &wire->vi,
-                                   wire->parent_ino,
-                                   wire->parent_hash);
-        if (rc < 0) {
-                return ceph2fsal_error(rc);
-        }
+	rc = ceph_ll_connectable_m(export->cmount, &wire->vi,
+				   wire->parent_ino,
+				   wire->parent_hash);
+	if (rc < 0) {
+		return ceph2fsal_error(rc);
+	}
 
-        /* The ceph_ll_connectable_m should have populated libceph's
+	/* The ceph_ll_connectable_m should have populated libceph's
            cache with all this anyway */
-        rc = ceph_ll_getattr(export->cmount, wire->vi, &st, 0, 0);
-        if (rc < 0) {
-                return ceph2fsal_error(rc);
-        }
+	rc = ceph_ll_getattr(export->cmount, wire->vi, &st, 0, 0);
+	if (rc < 0) {
+		return ceph2fsal_error(rc);
+	}
 
-        rc = construct_handle(&st, export, &handle);
-        if (rc < 0) {
-                status = ceph2fsal_error(rc);
-                goto out;
-        }
+	rc = construct_handle(&st, export, &handle);
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
 
-        *pub_handle = &handle->handle;
+	*pub_handle = &handle->handle;
 
 out:
-        return status;
+	return status;
 }
 
 /**
@@ -334,41 +340,40 @@ out:
  * @return FSAL status.
  */
 
-static fsal_status_t
-get_fs_dynamic_info(struct fsal_export *export_pub,
-		    const struct req_op_context *opctx,
-                    fsal_dynamicfsinfo_t *info)
+static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
+					 const struct req_op_context *opctx,
+					 fsal_dynamicfsinfo_t *info)
 {
-        /* Full 'private' export */
-        struct export* export
-                = container_of(export_pub, struct export, export);
-        /* Return value from Ceph calls */
-        int rc = 0;
-        /* Filesystem stat */
-        struct statvfs vfs_st;
-        /* The root of whatever filesystem this is */
-        vinodeno_t root;
+	/* Full 'private' export */
+	struct export* export
+		= container_of(export_pub, struct export, export);
+	/* Return value from Ceph calls */
+	int rc = 0;
+	/* Filesystem stat */
+	struct statvfs vfs_st;
+	/* The root of whatever filesystem this is */
+	vinodeno_t root;
 
-        root.ino.val = CEPH_INO_ROOT;
-        root.snapid.val = CEPH_NOSNAP;
+	root.ino.val = CEPH_INO_ROOT;
+	root.snapid.val = CEPH_NOSNAP;
 
-        rc = ceph_ll_statfs(export->cmount, root, &vfs_st);
+	rc = ceph_ll_statfs(export->cmount, root, &vfs_st);
 
-        if (rc < 0) {
-                return ceph2fsal_error(rc);
-        }
+	if (rc < 0) {
+		return ceph2fsal_error(rc);
+	}
 
-        memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
-        info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
-        info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
-        info->avail_bytes = vfs_st.f_frsize * vfs_st.f_bavail;
-        info->total_files = vfs_st.f_files;
-        info->free_files = vfs_st.f_ffree;
-        info->avail_files = vfs_st.f_favail;
-        info->time_delta.seconds = 1;
-        info->time_delta.nseconds = 0;
+	memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
+	info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
+	info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
+	info->avail_bytes = vfs_st.f_frsize * vfs_st.f_bavail;
+	info->total_files = vfs_st.f_files;
+	info->free_files = vfs_st.f_ffree;
+	info->avail_files = vfs_st.f_favail;
+	info->time_delta.tv_sec = 1;
+	info->time_delta.tv_nsec = 0;
 
-        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -383,73 +388,72 @@ get_fs_dynamic_info(struct fsal_export *export_pub,
  * @retval false if the option is unsupported (or unknown).
  */
 
-static bool
-fs_supports(struct fsal_export *export_pub,
-            fsal_fsinfo_options_t option)
+static bool fs_supports(struct fsal_export *export_pub,
+			fsal_fsinfo_options_t option)
 {
-        switch (option) {
-        case fso_no_trunc:
-                return true;
+	switch (option) {
+	case fso_no_trunc:
+		return true;
 
-        case fso_chown_restricted:
-                return true;
+	case fso_chown_restricted:
+		return true;
 
-        case fso_case_insensitive:
-                return false;
+	case fso_case_insensitive:
+		return false;
 
 
-        case fso_case_preserving:
-                return true;
+	case fso_case_preserving:
+		return true;
 
-        case fso_link_support:
-                return true;
+	case fso_link_support:
+		return true;
 
-        case fso_symlink_support:
-                return true;
+	case fso_symlink_support:
+		return true;
 
-        case fso_lock_support:
-                return false;
+	case fso_lock_support:
+		return false;
 
-        case fso_lock_support_owner:
-                return false;
+	case fso_lock_support_owner:
+		return false;
 
-        case fso_lock_support_async_block:
-                return false;
+	case fso_lock_support_async_block:
+		return false;
 
-        case fso_named_attr:
-                return false;
+	case fso_named_attr:
+		return false;
 
-        case fso_unique_handles:
-                return true;
+	case fso_unique_handles:
+		return true;
 
-        case fso_cansettime:
-                return true;
+	case fso_cansettime:
+		return true;
 
-        case fso_homogenous:
-                return true;
+	case fso_homogenous:
+		return true;
 
-        case fso_auth_exportpath_xdev:
-                return false;
+	case fso_auth_exportpath_xdev:
+		return false;
 
-        case fso_dirs_have_sticky_bit:
-                return true;
+	case fso_dirs_have_sticky_bit:
+		return true;
 
-        case fso_accesscheck_support:
-                return false;
+	case fso_accesscheck_support:
+		return false;
 
-        case fso_share_support:
-                return false;
+	case fso_share_support:
+		return false;
 
-        case fso_share_support_owner:
-                return false;
+	case fso_share_support_owner:
+		return false;
 
-        case fso_pnfs_ds_supported:
-                return false;
+	case fso_pnfs_ds_supported:
+		return false;
 	case fso_delegations:
-                return false;
-        }
+		return false;
+	}
 
-        return false;
+	return false;
 }
 
 /**
@@ -462,10 +466,9 @@ fs_supports(struct fsal_export *export_pub,
  * @return UINT64_MAX.
  */
 
-static uint64_t
-fs_maxfilesize(struct fsal_export *export_pub)
+static uint64_t fs_maxfilesize(struct fsal_export *export_pub)
 {
-        return UINT64_MAX;
+	return UINT64_MAX;
 }
 
 /**
@@ -478,10 +481,9 @@ fs_maxfilesize(struct fsal_export *export_pub)
  * @return 4 mebibytes.
  */
 
-static uint32_t
-fs_maxread(struct fsal_export *export_pub)
+static uint32_t fs_maxread(struct fsal_export *export_pub)
 {
-        return 0x400000;
+	return 0x400000;
 }
 
 /**
@@ -494,10 +496,9 @@ fs_maxread(struct fsal_export *export_pub)
  * @return 4 mebibytes.
  */
 
-static uint32_t
-fs_maxwrite(struct fsal_export *export_pub)
+static uint32_t fs_maxwrite(struct fsal_export *export_pub)
 {
-        return 0x400000;
+	return 0x400000;
 }
 
 /**
@@ -511,13 +512,12 @@ fs_maxwrite(struct fsal_export *export_pub)
  * @return 1024.
  */
 
-static uint32_t
-fs_maxlink(struct fsal_export *export_pub)
+static uint32_t fs_maxlink(struct fsal_export *export_pub)
 {
-        /* Ceph does not like hard links.  See the anchor table
+	/* Ceph does not like hard links.  See the anchor table
            design.  We should fix this, but have to do it in the Ceph
            core. */
-        return 1024;
+	return 1024;
 }
 
 /**
@@ -530,13 +530,12 @@ fs_maxlink(struct fsal_export *export_pub)
  * @return UINT32_MAX.
  */
 
-static uint32_t
-fs_maxnamelen(struct fsal_export *export_pub)
+static uint32_t fs_maxnamelen(struct fsal_export *export_pub)
 {
-        /* Ceph actually supports filenames of unlimited length, at
+	/* Ceph actually supports filenames of unlimited length, at
            least according to the protocol docs.  We may wish to
            constrain this later. */
-        return UINT32_MAX;
+	return UINT32_MAX;
 }
 
 /**
@@ -549,11 +548,10 @@ fs_maxnamelen(struct fsal_export *export_pub)
  * @return UINT32_MAX.
  */
 
-static uint32_t
-fs_maxpathlen(struct fsal_export *export_pub)
+static uint32_t fs_maxpathlen(struct fsal_export *export_pub)
 {
-        /* Similarly unlimited int he protocol */
-        return UINT32_MAX;
+	/* Similarly unlimited int he protocol */
+	return UINT32_MAX;
 }
 
 /**
@@ -566,10 +564,9 @@ fs_maxpathlen(struct fsal_export *export_pub)
  * @return FSAL_EXPTYPE_PERSISTENT
  */
 
-static fsal_fhexptype_t
-fs_fh_expire_type(struct fsal_export *export_pub)
+static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *export_pub)
 {
-        return FSAL_EXPTYPE_PERSISTENT;
+	return FSAL_EXPTYPE_PERSISTENT;
 }
 
 /**
@@ -582,12 +579,11 @@ fs_fh_expire_type(struct fsal_export *export_pub)
  * @return five minutes.
  */
 
-static gsh_time_t
-fs_lease_time(struct fsal_export *export_pub)
+static struct timespec fs_lease_time(struct fsal_export *export_pub)
 {
-        gsh_time_t lease = {300, 0};
+	struct timespec lease = {300, 0};
 
-        return lease;
+	return lease;
 }
 
 /**
@@ -600,10 +596,9 @@ fs_lease_time(struct fsal_export *export_pub)
  * @return FSAL_ACLSUPPORT_DENY.
  */
 
-static fsal_aclsupp_t
-fs_acl_support(struct fsal_export *export_pub)
+static fsal_aclsupp_t fs_acl_support(struct fsal_export *export_pub)
 {
-        return FSAL_ACLSUPPORT_DENY;
+	return FSAL_ACLSUPPORT_DENY;
 }
 
 /**
@@ -616,10 +611,9 @@ fs_acl_support(struct fsal_export *export_pub)
  * @return supported_attributes as defined in internal.c.
  */
 
-static attrmask_t
-fs_supported_attrs(struct fsal_export *export_pub)
+static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 {
-        return supported_attributes;
+	return supported_attributes;
 }
 
 /**
@@ -632,10 +626,9 @@ fs_supported_attrs(struct fsal_export *export_pub)
  * @return 0600.
  */
 
-static uint32_t
-fs_umask(struct fsal_export *export_pub)
+static uint32_t fs_umask(struct fsal_export *export_pub)
 {
-        return 0600;
+	return 0600;
 }
 
 /**
@@ -649,10 +642,9 @@ fs_umask(struct fsal_export *export_pub)
  * @return 0644.
  */
 
-static uint32_t
-fs_xattr_access_rights(struct fsal_export *export_pub)
+static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
 {
-        return 0644;
+	return 0644;
 }
 
 /**
@@ -664,28 +656,27 @@ fs_xattr_access_rights(struct fsal_export *export_pub)
  * @param[in,out] ops Operations vector
  */
 
-void
-export_ops_init(struct export_ops *ops)
+void export_ops_init(struct export_ops *ops)
 {
-        ops->release = release;
-        ops->lookup_path = lookup_path;
-        ops->extract_handle = extract_handle;
-        ops->create_handle = create_handle;
-        ops->create_ds_handle = create_ds_handle;
-        ops->get_fs_dynamic_info = get_fs_dynamic_info;
-        ops->fs_supports = fs_supports;
-        ops->fs_maxfilesize = fs_maxfilesize;
-        ops->fs_maxread = fs_maxread;
-        ops->fs_maxwrite = fs_maxwrite;
-        ops->fs_maxlink = fs_maxlink;
-        ops->fs_maxnamelen = fs_maxnamelen;
-        ops->fs_maxpathlen = fs_maxpathlen;
-        ops->fs_fh_expire_type = fs_fh_expire_type;
-        ops->fs_lease_time = fs_lease_time;
-        ops->fs_acl_support = fs_acl_support;
-        ops->fs_supported_attrs = fs_supported_attrs;
-        ops->fs_umask = fs_umask;
-        ops->fs_xattr_access_rights = fs_xattr_access_rights;
-        export_ops_pnfs(ops);
+	ops->release = release;
+	ops->lookup_path = lookup_path;
+	ops->extract_handle = extract_handle;
+	ops->create_handle = create_handle;
+	ops->create_ds_handle = create_ds_handle;
+	ops->get_fs_dynamic_info = get_fs_dynamic_info;
+	ops->fs_supports = fs_supports;
+	ops->fs_maxfilesize = fs_maxfilesize;
+	ops->fs_maxread = fs_maxread;
+	ops->fs_maxwrite = fs_maxwrite;
+	ops->fs_maxlink = fs_maxlink;
+	ops->fs_maxnamelen = fs_maxnamelen;
+	ops->fs_maxpathlen = fs_maxpathlen;
+	ops->fs_fh_expire_type = fs_fh_expire_type;
+	ops->fs_lease_time = fs_lease_time;
+	ops->fs_acl_support = fs_acl_support;
+	ops->fs_supported_attrs = fs_supported_attrs;
+	ops->fs_umask = fs_umask;
+	ops->fs_xattr_access_rights = fs_xattr_access_rights;
+	export_ops_pnfs(ops);
 }
 

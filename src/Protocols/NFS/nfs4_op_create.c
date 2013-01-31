@@ -31,14 +31,7 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -400,6 +393,11 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
     {
+      /* If owner or owner_group are set, and the credential was
+       * squashed, then we must squash the set owner and owner_group.
+       */
+      squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
+
       cache_status = cache_inode_setattr(entry_new,
 					 &sattr,
 					 data->req_ctx);

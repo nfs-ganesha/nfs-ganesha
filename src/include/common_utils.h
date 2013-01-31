@@ -13,6 +13,35 @@
 
 #include <sys/types.h>          /* for caddr_t */
 
+/**
+ * BUILD_BUG_ON - break compile if a condition is true.
+ * @condition: the condition which the compiler should know is false.
+ *
+ * If you have some code which relies on certain constants being equal, or
+ * other compile-time-evaluated condition, you should use BUILD_BUG_ON to
+ * detect if someone changes it.
+ *
+ * The implementation uses gcc's reluctance to create a negative array, but
+ * gcc (as of 4.4) only emits that error for obvious cases (eg. not arguments
+ * to inline functions).  So as a fallback we use the optimizer; if it can't
+ * prove the condition is false, it will cause a link error on the undefined
+ * "__build_bug_on_failed".  This error message can be harder to track down
+ * though, hence the two different methods.
+ *
+ * Blatantly stolen from kernel source, include/linux/kernel.h:651
+ */
+#ifndef __OPTIMIZE__
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+#else
+extern int __build_bug_on_failed;
+#define BUILD_BUG_ON(condition)                                 \
+        do {                                                    \
+                ((void)sizeof(char[1 - 2*!!(condition)]));      \
+                if (condition) __build_bug_on_failed = 1;       \
+        } while(0)
+#endif
+
+
 /* Most machines scandir callback requires a const. But not all */
 #define SCANDIR_CONST           const
 
@@ -125,5 +154,42 @@ extern int portable_clock_gettime(struct timespec *ts);
 /* My habit with mutex */
 #define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
 #define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
+
+
+#define PTHREAD_RWLOCK_wrlock(state_lock)                           \
+  do {                                                              \
+       int rc;                                                      \
+                                                                    \
+       LogFullDebug(COMPONENT_RW_LOCK, "get wr lock %p", state_lock);   \
+       rc = pthread_rwlock_wrlock(state_lock);                      \
+       if (rc == 0)                                                 \
+         LogFullDebug(COMPONENT_RW_LOCK, "got wr lock %p", state_lock); \
+       else                                                         \
+         LogCrit(COMPONENT_RW_LOCK, "error %d wr lock %p", rc, state_lock); \
+     } while(0)                                                      \
+
+#define PTHREAD_RWLOCK_rdlock(state_lock)                           \
+  do {                                                              \
+       int rc;                                                      \
+                                                                    \
+       LogFullDebug(COMPONENT_RW_LOCK, "get rd lock %p", state_lock);   \
+       rc = pthread_rwlock_rdlock(state_lock);                      \
+       if (rc == 0)                                                 \
+         LogFullDebug(COMPONENT_RW_LOCK, "got rd lock %p", state_lock); \
+       else                                                         \
+         LogCrit(COMPONENT_RW_LOCK, "error %d rd lock %p", rc, state_lock); \
+     } while(0)                                                      \
+
+#define PTHREAD_RWLOCK_unlock(state_lock)                           \
+  do {                                                              \
+       int rc;                                                      \
+                                                                    \
+       rc = pthread_rwlock_unlock(state_lock);                      \
+       if (rc == 0)                                                 \
+         LogFullDebug(COMPONENT_RW_LOCK, "unlock %p", state_lock);      \
+       else                                                         \
+         LogCrit(COMPONENT_RW_LOCK, "error %d unlock %p", rc, state_lock); \
+     } while(0)                                                      \
+
 
 #endif

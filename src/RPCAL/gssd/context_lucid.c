@@ -28,9 +28,7 @@
  * SUCH DAMAGES.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif	/* HAVE_CONFIG_H */
+#include "config.h"
 
 #ifdef HAVE_LUCID_CONTEXT_SUPPORT
 

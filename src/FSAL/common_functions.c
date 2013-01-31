@@ -8,9 +8,7 @@
  * @brief Internal and misc functions used by all/most FSALs
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #define fsal_increment_nbcall( _f_,_struct_status_ )
 

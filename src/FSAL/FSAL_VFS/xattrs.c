@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ------------- 
  */
@@ -29,9 +30,7 @@
  * VFS object (file|dir) handle object extended attributes
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_handle_syscalls.h"
@@ -229,7 +228,7 @@ static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
   if(xattr_attrs->mask & ATTR_CHGTIME)
     {
       xattr_attrs->chgtime = file_attrs->chgtime;
-      xattr_attrs->change = (uint64_t) xattr_attrs->chgtime.seconds;
+      xattr_attrs->change = (uint64_t) xattr_attrs->chgtime.tv_sec;
     }
 
   if(xattr_attrs->mask & ATTR_SIZE)

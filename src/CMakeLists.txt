@@ -7,9 +7,7 @@ cmake_minimum_required(VERSION 2.6.3)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 # Add maintainer mode for (mainly) strict builds
-
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
-
 
 project(GANESHA C)
 
@@ -19,6 +17,17 @@ set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
   "GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
+
+# Define CPACK component (to deal with sub packages)
+set(CPACK_COMPONENTS_ALL daemon fsal headers )
+set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
+set(CPACK_COMPONENT_FSAL_DISPLAY_NAME "FSAL Libraries")
+set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
+
+# Include custom config and cpack module
+include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
+include(CPack)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
 git_describe(_GIT_DESCRIBE)
@@ -34,12 +43,13 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit f8e9f1dd7036e563046fbe33f5926db4f91e792f)
+set(tirpc_commit d09bbb6549b6742ce1ffbe57ae4b489a38c556eb)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -ggdb")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
     find_library(LIBDL c)  # libc suffices on freebsd 
 endif(FREEBSD)
@@ -61,7 +71,7 @@ option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
-option(USE_FSAL_XFS "build XFS FSAL" ON)
+option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
@@ -72,7 +82,6 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
 
 # Build configure options
-
 option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
@@ -125,20 +134,50 @@ IF(BUILD_CONFIG)
   ${CMAKE_SOURCE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
 ENDIF()
 
+IF(DEBUG_SYMS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+ENDIF(DEBUG_SYMS)
+
 # Build source locations and parameters
+IF(USE_FSAL_CEPH)
+  IF(CEPH_PREFIX)
+    set(CEPH_PREFIX ${CEPH_PREFIX} CACHE PATH "Path to Ceph installation")
+    LIST(APPEND CMAKE_PREFIX_PATH "${CEPH_PREFIX}")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${CEPH_PREFIX}/lib")
+  ELSE()
+    set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+  ENDIF()
+ENDIF()
+
+IF(KRB5_PREFIX)
+  set(KRB5_PREFIX ${KRB5_PREFIX} CACHE PATH "Path to Krb5 installation")
+  LIST(APPEND CMAKE_PREFIX_PATH "${KRB5_PREFIX}")
+  LIST(APPEND CMAKE_LIBRARY_PATH "${KRB5_PREFIX}/lib")
+ENDIF()
+
+if(SAMBA4_PREFIX)
+  set(SAMBA4_PREFIX ${SAMBA4_PREFIX} CACHE PATH "Path to Samba4 installation")
+  LIST(APPEND CMAKE_PREFIX_PATH "${SAMBA4_PREFIX}")
+  LIST(APPEND CMAKE_LIBRARY_PATH "${SAMBA4_PREFIX}/lib")
+endif()
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
-set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+if(USE_9P_RDMA AND NOT USE_9P)
+  message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
+  set(USE_9P ON)
+endif(USE_9P_RDMA AND NOT USE_9P)
+
 set(ALLOCATOR "jemalloc" CACHE STRING
   "specify the memory allocator to use: jemalloc|tcmalloc|libc")
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
+include(CheckCSourceCompiles)
 include(TestBigEndian)
 
 check_include_files(stdbool.h HAVE_STDBOOL_H)
@@ -147,7 +186,7 @@ check_include_files(string.h HAVE_STRING_H)
 
 # X_ATTRD requires the kernel to have xattrs...
 if(NOT _NO_XATTRD)
-  check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
+  check_include_files("unistd.h;sys/xattr.h" HAVE_XATTR_H)
   if(NOT HAVE_XATTR_H)
     message(WARNING "Cannot find xattr.h. Disabling XATTRD support: ${HAVE_XATTR_H}")
     set(_NO_XATTRD ON)
@@ -179,6 +218,7 @@ set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 # Validate fsal dependencies
 if(USE_FSAL_CEPH)
+  find_library(CEPH_FS cephfs)
   check_library_exists(
     cephfs
     ceph_ll_connectable_x
@@ -218,20 +258,6 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
     set(USE_FSAL_SHOOK OFF)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-
-if(USE_FSAL_GPFS)
-  check_library_exists(
-    gpfs
-    gpfs_ganesha
-    "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib"
-    HAVE_GPFS
-    )
-  check_include_files("gpfs.h" HAVE_GPFS_H)
-  if((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
-    message(WARNING "Cannot find GPFS runtime.  Disabling GPFS build")
-    set(USE_FSAL_GPFS OFF)
-  endif((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
-endif(USE_FSAL_GPFS)
 
 if(USE_FSAL_XFS)
   check_library_exists(
@@ -297,7 +323,7 @@ endif(USE_DBUS)
 
 if(USE_NFSIDMAP)
   find_package(NfsIdmap REQUIRED)
-  set(SYSTEM_LIBRARIES ${NfsIdmap_LIBRARIES} ${SYSTEM_LIBRARIES})
+  set(SYSTEM_LIBRARIES ${NFSIDMAP_LIBRARY} ${SYSTEM_LIBRARIES})
 endif(USE_NFSIDMAP)
 
 if(USE_CUNIT)
@@ -306,17 +332,14 @@ if(USE_CUNIT)
 endif(USE_CUNIT)
 
 if(_MSPAC_SUPPORT)
-  find_library(WBCLIENT_LIB wbclient )
-  check_include_files("stdint.h;stdbool.h;wbclient.h" HAVE_WBCLIENT_H)
-  if(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
-    set(SYSTEM_LIBRARIES ${WBCLIENT_LIB} ${SYSTEM_LIBRARIES})
-  else(WBCLIENTT_LIB AND HAVE_WBCLIENT_H)
-    message(WARNING "Could not find wbclient library. Disable MSPAC_SUPPORT")
+  find_package(WBclient REQUIRED)
+  if(WBCLIENT_FOUND AND WBCLIENT4_H)
+    set(SYSTEM_LIBRARIES ${WBCLIENT_LIBRARIES} ${SYSTEM_LIBRARIES})
+  else(WBCLIENT_FOUND AND WBCLIENT4_H)
+    message(WARNING "Samba 4 wbclient not found.  Disabling MSPAC_SUPPORT")
     set(_MSPAC_SUPPORT OFF)
-  endif(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
+  endif(WBCLIENT_FOUND AND WBCLIENT4_H)
 endif(_MSPAC_SUPPORT)
-
-add_definitions(-DHAVE_CONFIG_H)
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
@@ -336,6 +359,10 @@ if(USE_TIRPC_IPV6)
   set(_USE_TIRPC_IPV6 ON)
 endif(USE_TIRPC_IPV6)
 
+if(USE_STAT_EXPORTER)
+  set(_USE_STAT_EXPORTER ON)
+endif(USE_STAT_EXPORTER)
+
 
 # Pull in TIRPC and build it
 
@@ -347,7 +374,7 @@ ExternalProject_Add(
   GIT_REPOSITORY ${tirpc_repo}
   GIT_TAG ${tirpc_commit}
   UPDATE_COMMAND sh "${PROJECT_BINARY_DIR}/libtirpc/autogen.sh"
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/libtirpc/configure
+  CONFIGURE_COMMAND env CFLAGS=${CMAKE_C_FLAGS} ${PROJECT_BINARY_DIR}/libtirpc/configure
     --enable-gss
     --prefix=${PROJECT_BINARY_DIR}/libtirpc
   BUILD_IN_SOURCE 1
@@ -416,14 +443,15 @@ if(USE_DBUS)
   set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
 
+if(USE_9P_RDMA)
+  set(GANESHA_CORE ${GANESHA_CORE} mooshika rdmacm ibverbs)
+endif(USE_9P_RDMA)
+
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
-  ConfigParsing
-  ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LIBDL}
   ${KRB5_LIBRARIES}
-  gssapi_krb5
   crypto
   ssl
   ${CMAKE_THREAD_LIBS_INIT}
@@ -493,6 +521,7 @@ message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "USE_STAT_EXPORTER = ${USE_STAT_EXPORTER}")
+message(STATUS "_USE_STAT_EXPORTER = ${_USE_STAT_EXPORTER}")
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
 message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
@@ -505,7 +534,9 @@ message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
+message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
+message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 
 #force command line options to be stored in cache
@@ -599,6 +630,11 @@ set(USE_STAT_EXPORTER ${USE_STAT_EXPORTER}
    "export GANESHA NFS request statistics with a dedicated thread and socket"
    FORCE)
 
+set(_USE_STAT_EXPORTER ${_USE_STAT_EXPORTER}
+  CACHE BOOL
+   "export GANESHA NFS request statistics with a dedicated thread and socket"
+   FORCE)
+
 set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
   CACHE BOOL
    "enable mspac winbind support"
@@ -660,6 +696,6 @@ endif(USE_FSAL_FUSE)
 
 ########### install files ###############
 if(USE_FSAL_FUSE)
-  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" DESTINATION ${LIB_DESTINATION})
+  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
 endif(USE_FSAL_FUSE)
 

@@ -34,14 +34,7 @@
  * @brief   Functions used in lock management.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1612,7 +1605,7 @@ state_status_t state_find_grant(void *cookie,
                    "KEY {%s}", str);
     }
 
-  if(HashTable_Get_and_Del(ht_lock_cookies, &buffkey, &buffval, &buffused_key) != HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key, &buffval) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s} NOTFOUND", str);

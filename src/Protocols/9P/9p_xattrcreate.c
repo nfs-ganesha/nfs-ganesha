@@ -32,20 +32,13 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h> 
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"

@@ -28,14 +28,7 @@
  * @file  nfs3_Rmdir.c
  * @brief Everything you need for NFSv3 RMDIR
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

@@ -8,7 +8,6 @@ SET(fsalfuse_STAT_SRCS
    fsal_fsinfo.c
    fsal_rcp.c
    fsal_compat.c
-   fsal_truncate.c
    fsal_attrs.c
    fsal_convert.c
    fsal_init.c
@@ -47,7 +46,7 @@ SET(test_namespace_fuse_SRCS
 
 add_executable(test_namespace_fuse ${test_namespace_fuse_SRCS})
 
-target_link_libraries(test_namespace_fuse)
+target_link_libraries(test_namespace_fuse ${SYSTEM_LIBRARIES})
 
 
 ########### install files ###############

@@ -31,14 +31,7 @@
  * Function implementing the NFS4_OP_OPEN operation and support code.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -632,12 +625,8 @@ open4_create(OPEN4args           * arg,
                         memset(&sattr, 0, sizeof(struct attrlist));
                         sattr_provided = true;
                 }
-                sattr.atime.seconds = verf_hi;
-                sattr.atime.nseconds = 0;
-                FSAL_SET_MASK(sattr.mask, ATTR_ATIME);
-                sattr.mtime.seconds = verf_lo;
-                sattr.mtime.nseconds = 0;
-                FSAL_SET_MASK(sattr.mask, ATTR_MTIME);
+
+                cache_inode_create_set_verifier(&sattr, verf_hi, verf_lo);
         }
 
         cache_status = cache_inode_create(parent,
@@ -671,16 +660,10 @@ open4_create(OPEN4args           * arg,
                         cache_inode_put(entry_newfile);
                         entry_newfile = NULL;
                         return nfs4_Errno(cache_status);
-                } else {
-			/* Clear error code in the case of
-			   UNCHECKED4. */
-			cache_status = CACHE_INODE_SUCCESS;
 		}
-        }
 
-        /* If the object exists already size is the only attribute we
-           set. */
-        if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+                /* If the object exists already size is the only attribute we
+                   set. */
                 if (sattr_provided &&
                     (FSAL_TEST_MASK(sattr.mask,
                                     ATTR_SIZE)) &&
@@ -691,15 +674,23 @@ open4_create(OPEN4args           * arg,
                 } else {
                         sattr_provided = false;
                 }
+
+                /* Clear error code */
+                cache_status = CACHE_INODE_SUCCESS;
         }
 
         if (sattr_provided) {
-                cache_status = cache_inode_setattr(entry_newfile,
-						   &sattr,
-						   data->req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        return nfs4_Errno(cache_status);
-                }
+            /* If owner or owner_group are set, and the credential was
+             * squashed, then we must squash the set owner and owner_group.
+             */
+            squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
+
+            cache_status = cache_inode_setattr(entry_newfile,
+                    &sattr,
+                    data->req_ctx);
+            if (cache_status != CACHE_INODE_SUCCESS) {
+                return nfs4_Errno(cache_status);
+            }
         }
 
         *entry = entry_newfile;

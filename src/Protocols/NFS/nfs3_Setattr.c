@@ -28,14 +28,7 @@
  * @file  nfs3_Setattr.c
  * @brief Everything you need for NFSv3 SETATTR
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -87,7 +80,6 @@ nfs_Setattr(nfs_arg_t *arg,
                 .attributes_follow = false
         };
         cache_inode_status_t cache_status;
-        bool do_trunc = false;
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -141,15 +133,15 @@ nfs_Setattr(nfs_arg_t *arg,
                  * different clients */
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "css=%d acs=%d csn=%d acn=%d",
-                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
-                             pre_attr.pre_op_attr_u.attributes.ctime.seconds,
-                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
-                             pre_attr.pre_op_attr_u.attributes.ctime.nseconds);
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec,
+                             pre_attr.pre_op_attr_u.attributes.ctime.tv_sec,
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec,
+                             pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec);
 
-                if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
-                     pre_attr.pre_op_attr_u.attributes.ctime.seconds) ||
-                    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
-                     pre_attr.pre_op_attr_u.attributes.ctime.nseconds)) {
+                if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
+                    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
                         res->res_setattr3.status = NFS3ERR_NOT_SYNC;
                         rc = NFS_REQ_OK;
                         goto out;
@@ -165,44 +157,20 @@ nfs_Setattr(nfs_arg_t *arg,
              goto out;
           }
 
-        if (arg->arg_setattr3.new_attributes.size.set_it) 
-           do_trunc = true;
-                
-
-
-        /* trunc may change Xtime so we have to start with trunc and finish
-         by the mtime and atime */
-
-        if (do_trunc) {
-                /* Should not be done on a directory */
-                if (entry->type == DIRECTORY) {
-                        cache_status = CACHE_INODE_IS_A_DIRECTORY;
-                } else {
-                        cache_status = cache_inode_truncate(entry,
-							    setattr.filesize,
-							    req_ctx);
-                        FSAL_UNSET_MASK(setattr.mask, ATTR_SPACEUSED);
-                        FSAL_UNSET_MASK(setattr.mask, ATTR_SIZE);
-                }
-        } else {
-                cache_status = CACHE_INODE_SUCCESS;
-        }
-
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                goto out_fail;
-        }
-
         if (setattr.mask != 0) {
-                cache_status = cache_inode_setattr(entry,
-                                                   &setattr,
-                                                   req_ctx);
-        } else {
-                cache_status = CACHE_INODE_SUCCESS;
+            /* If owner or owner_group are set, and the credential was
+             * squashed, then we must squash the set owner and owner_group.
+             */
+            squash_setattr(&worker->related_client, export, req_ctx->creds, &setattr);
+            cache_status = cache_inode_setattr(entry,
+                                               &setattr,
+                                               req_ctx);
+
+            if (cache_status != CACHE_INODE_SUCCESS) {
+                    goto out_fail;
+            }
         }
 
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                goto out_fail;
-        }
 
         /* Set the NFS return */
         /* Build Weak Cache Coherency data */

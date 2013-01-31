@@ -33,14 +33,7 @@
  * @file    cache_inode_lookup.c
  * @brief   Lookups through the cache
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "abstract_atomic.h"
 #include "HashTable.h"
@@ -149,12 +142,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                               status = CACHE_INODE_SUCCESS;
                               goto out;
                          }
-                    } else if (!write_locked) {
-			    /* Get a write ock and do it again. */
-			    PTHREAD_RWLOCK_unlock(&parent->content_lock);
-			    PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-			    continue;
-		    }
+                    }
                     /* If the dirent cache is both fully populated and
                        valid, it can serve negative lookups. */
                     if (!dirent &&
@@ -172,8 +160,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                                 CACHE_INODE_AVL_BOTH);
                     atomic_set_uint32_t_bits(&parent->flags,
                                              CACHE_INODE_TRUST_CONTENT);
-               } else {
-                    /* Get a write ock and do it again. */
+               }
+               if (!write_locked) {
+                    /* Get a write lock and do it again. */
                     PTHREAD_RWLOCK_unlock(&parent->content_lock);
                     PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                }
@@ -191,7 +180,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                cache_inode_kill_entry(parent);
           }
           status = cache_inode_error_convert(fsal_status);
-	  *entry = NULL;
+          *entry = NULL;
           return status;
      }
 
@@ -215,8 +204,11 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 						 name,
 						 *entry,
 						 NULL);
-          if(status != CACHE_INODE_SUCCESS &&
-             status != CACHE_INODE_ENTRY_EXISTS) {
+
+          if (status == CACHE_INODE_ENTRY_EXISTS)
+          {
+              status = CACHE_INODE_SUCCESS;
+          } else if(status != CACHE_INODE_SUCCESS) {
                return status;
           }
      }

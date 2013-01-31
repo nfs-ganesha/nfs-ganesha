@@ -27,14 +27,7 @@
  * @file  nfs3_Getattr.c
  * @brief Implements the NFSv3 GETATTR proc
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

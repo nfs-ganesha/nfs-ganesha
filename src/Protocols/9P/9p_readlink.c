@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -65,9 +58,8 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   cache_inode_status_t cache_status ;
-  char                 symlink_path[MAXPATHLEN];
-  struct gsh_buffdesc  link_buffer = { .addr = symlink_path,
-                                       .len  = MAXPATHLEN};
+  struct gsh_buffdesc link_buffer = {.addr = NULL,
+				     .len  = 0};
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -101,14 +93,16 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RREADLINK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setstr( cursor, strlen( symlink_path ), symlink_path ) ;
+  _9p_setstr( cursor, link_buffer.len - 1, link_buffer.addr ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag, (u32)*fid, symlink_path ) ;
+  LogDebug( COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s",
+	    *msgtag, (u32)*fid, (char *) link_buffer.addr ) ;
 
   _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  gsh_free(link_buffer.addr);
   return 1 ;
 }
 

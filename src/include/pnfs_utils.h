@@ -36,9 +36,7 @@
 #include "fsal_pnfs.h"
 
 /* The next 3 line are mandatory for proper autotools based management */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 /******************************************************
  *		 Utility functions for ranges

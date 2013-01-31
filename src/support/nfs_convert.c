@@ -29,14 +29,7 @@
  * @brief NFS conversion tools.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <string.h>
 #include "ganesha_rpc.h"
 #include "nfs_core.h"

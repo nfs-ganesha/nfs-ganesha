@@ -35,14 +35,7 @@
 #ifndef CACHE_INODE_LRU_H
 #define CACHE_INODE_LRU_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 
@@ -99,62 +92,73 @@ extern struct lru_state lru_state;
 /**
  * No flag at all.
  */
-static const uint32_t LRU_FLAG_NONE = 0x0000;
+#define LRU_FLAG_NONE  0x0000
 
 /**
  * Set on pinned (state-bearing) entries.
  */
-static const uint32_t LRU_ENTRY_PINNED = 0x0001;
+#define LRU_ENTRY_PINNED  0x0001
 
 /**
  * Set on LRU entries in the L2 (scanned and colder) queue.
  */
-static const uint32_t LRU_ENTRY_L2 = 0x0002;
+#define LRU_ENTRY_L2  0x0002
 
 /**
  * Set on LRU entries that are being deleted
  */
-static const uint32_t LRU_ENTRY_CONDEMNED = 0x0004;
+#define LRU_ENTRY_CONDEMNED  0x0004
 
 /**
  * Set if no more state may be granted.  Different from CONDEMNED in
  * that outstanding references may exist on the object, but it is no
  * longer reachable from the hash or weakref tables.
  */
-static const uint32_t LRU_ENTRY_UNPINNABLE = 0x0008;
+#define LRU_ENTRY_UNPINNABLE  0x0008
 
 /**
  * Flag indicating that cache_inode_lru_kill has already been called,
  * making it idempotent and fixing a possible unref leak.
  */
-static const uint32_t LRU_ENTRY_KILLED = 0x0010;
+#define LRU_ENTRY_KILLED  0x0010
+
+/**
+ * The inode is marked for out-of-line cleanup (may still be reachable)
+ */
+#define LRU_ENTRY_CLEANUP  0x0020
 
 /**
  * The caller is fetching an initial reference
  */
-static const uint32_t LRU_REQ_INITIAL = 0x0020;
+#define LRU_REQ_INITIAL  0x0040
 
 /**
  * The caller is scanning the entry (READDIR)
  */
-static const uint32_t LRU_REQ_SCAN = 0x0040;
+#define LRU_REQ_SCAN  0x0080
 
 /**
  * The caller holds the lock on the LRU entry.
  */
-static const uint32_t LRU_FLAG_LOCKED = 0x0080;
+#define LRU_FLAG_LOCKED  0x0100
+
+/**
+ * No further refs or state permitted.
+ */
+#define LRU_ENTRY_POISON \
+    (LRU_ENTRY_CONDEMNED|LRU_ENTRY_KILLED|LRU_ENTRY_CLEANUP)
 
 /**
  * The minimum reference count for a cache entry not being recycled.
  */
 
-static const int32_t LRU_SENTINEL_REFCOUNT = 1;
+#define LRU_SENTINEL_REFCOUNT  1
 
-static const uint32_t LRU_STATE_NONE = 0x00;
-static const uint32_t LRU_STATE_RECLAIMING = 0x01;
+#define LRU_STATE_NONE  0x00
+#define LRU_STATE_RECLAIMING  0x01
 
-static const uint32_t LRU_SLEEPING = 0x00000001;
-static const uint32_t LRU_SHUTDOWN = 0x00000002;
+#define LRU_SLEEPING  0x00000001
+#define LRU_SHUTDOWN  0x00000002
 
 
 /**
@@ -162,9 +166,9 @@ static const uint32_t LRU_SHUTDOWN = 0x00000002;
  * prime.
  */
 
-#define LRU_N_Q_LANES 7
+#define LRU_N_Q_LANES  7
 
-static const uint32_t LRU_NO_LANE = ~0;
+#define LRU_NO_LANE  ~0
 
 extern void cache_inode_lru_pkginit(void);
 extern void cache_inode_lru_pkgshutdown(void);
@@ -176,7 +180,12 @@ cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry,
 cache_inode_status_t cache_inode_lru_ref(
 	cache_entry_t *entry,
 	uint32_t flags) __attribute__((warn_unused_result));
+
+
+/* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);
+void cache_inode_lru_cleanup_push(cache_entry_t *entry);
+
 void cache_inode_lru_unref(cache_entry_t *entry,
 				  uint32_t flags);
 void lru_wake_thread(uint32_t flags);

@@ -28,14 +28,7 @@
  * @file  nfs_init.c
  * @brief Most of the init routines
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "ganesha_rpc.h"
 #include "nfs_init.h"
 #include "log.h"
@@ -139,7 +132,7 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   .nfsv4_param.use_getpwnam = false,
 #else
   .nfsv4_param.use_getpwnam = true,

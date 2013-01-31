@@ -24,9 +24,7 @@
 
 /* Proxy handle methods */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <assert.h>
@@ -280,7 +278,9 @@ static struct
         {ATTR_OWNER, FATTR4_OWNER},
         {ATTR_GROUP, FATTR4_OWNER_GROUP},
         {ATTR_ATIME, FATTR4_TIME_ACCESS_SET},
+        {ATTR_ATIME_SERVER, FATTR4_TIME_ACCESS_SET},
         {ATTR_MTIME, FATTR4_TIME_MODIFY_SET},
+        {ATTR_MTIME_SERVER, FATTR4_TIME_MODIFY_SET},
         {ATTR_CTIME, FATTR4_TIME_METADATA}
 };
 
@@ -1445,8 +1445,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t
 pxy_readlink(struct fsal_obj_handle *obj_hdl,
              const struct req_op_context *opctx,
-             char *link_content,
-             size_t *link_len,
+             struct gsh_buffdesc *link_content,
              bool refresh)
 {
         int rc;
@@ -1457,24 +1456,42 @@ pxy_readlink(struct fsal_obj_handle *obj_hdl,
         nfs_resop4 resoparray[FSAL_READLINK_NB_OP_ALLOC];
         READLINK4resok *rlok;
 
-        if(!obj_hdl || !link_content || !link_len || !opctx)
+        if(!obj_hdl || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
         ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 
+	/* This saves us from having to do one allocation for the XDR,
+	   another allocation for the return, and a copy just to get
+	   the \NUL terminator. The link length should be cached in
+	   the file handle. */
+
+	link_content->len = obj_hdl->attributes.filesize ?
+		(obj_hdl->attributes.filesize + 1) :
+		fsal_default_linksize;
+	link_content->addr = gsh_malloc(link_content->len);
+
+	if (link_content->addr == NULL) {
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
+
         rlok = &resoparray[opcnt].nfs_resop4_u.opreadlink.READLINK4res_u.resok4;
-        rlok->link.utf8string_val = link_content;
-        rlok->link.utf8string_len = *link_len;
+        rlok->link.utf8string_val = link_content->addr;
+        rlok->link.utf8string_len = link_content->len;
         COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argoparray);
 
         rc = pxy_nfsv4_call(obj_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
-        if(rc != NFS4_OK)
+        if(rc != NFS4_OK) {
+		gsh_free(link_content->addr);
+		link_content->addr = NULL;
+		link_content->len = 0;
                 return nfsstat4_to_fsal(rc);
+	}
         
         rlok->link.utf8string_val[rlok->link.utf8string_len] = '\0';
-        *link_len = rlok->link.utf8string_len;
+        link_content->len = rlok->link.utf8string_len + 1;
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -1767,22 +1784,6 @@ pxy_handle_is(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t
-pxy_truncate(struct fsal_obj_handle *obj_hdl,
-             const struct req_op_context *opctx,
-             uint64_t length)
-{
-        struct attrlist size;
-
-        if(!obj_hdl || !opctx || (obj_hdl->type != REGULAR_FILE))
-                return fsalstat(ERR_FSAL_INVAL, EINVAL);
-
-        size.mask = ATTR_SIZE;
-        size.filesize = length;
-
-        return pxy_setattrs(obj_hdl, opctx, &size);
-}
-
-static fsal_status_t
 pxy_unlink(struct fsal_obj_handle *dir_hdl,
            const struct req_op_context *opctx,
            const char *name)
@@ -2065,7 +2066,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = pxy_link;
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;
-	ops->truncate = pxy_truncate;
 	ops->open = pxy_open;
 	ops->read = pxy_read;
 	ops->write = pxy_write;

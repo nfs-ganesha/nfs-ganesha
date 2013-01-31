@@ -9,9 +9,7 @@
  * \brief   miscelaneous FSAL tools that can be called from outside.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"

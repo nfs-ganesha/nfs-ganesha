@@ -31,14 +31,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -224,9 +217,9 @@ void _9p_tools_fsal_attr2stat( struct attrlist * pfsalattr, struct stat * pstat 
   pstat->st_size    = pfsalattr->filesize ;
   pstat->st_blksize = 4096 ;
   pstat->st_blocks  = (pfsalattr->filesize/4096) + 1 ; 
-  pstat->st_atime   = pfsalattr->atime.seconds ;
-  pstat->st_mtime   = pfsalattr->mtime.seconds ;
-  pstat->st_ctime   = pfsalattr->ctime.seconds ;
+  pstat->st_atime   = pfsalattr->atime.tv_sec ;
+  pstat->st_mtime   = pfsalattr->mtime.tv_sec ;
+  pstat->st_ctime   = pfsalattr->ctime.tv_sec ;
 
 } /* _9p_tools_fsal_attr2stat */
 

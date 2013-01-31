@@ -33,9 +33,7 @@
  *
  */
 #define FSAL_INTERNAL_C
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <sys/ioctl.h>
 #include  "fsal.h"

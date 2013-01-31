@@ -29,9 +29,7 @@
  * File I/O methods for VFS module
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <assert.h>
 #include "fsal.h"
@@ -42,7 +40,7 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "lustre_methods.h"
-#include "FSAL/FSAL_LUSTRE/fsal_handle.h"
+#include "fsal_handle.h"
 #include <stdbool.h>
 
 /** lustre_open

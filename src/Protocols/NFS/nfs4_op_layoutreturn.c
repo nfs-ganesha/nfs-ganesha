@@ -30,14 +30,7 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -452,7 +445,7 @@ nfs4_return_one_state(cache_entry_t *entry,
         }
 
         arg = alloca(sizeof(struct fsal_layoutreturn_arg) +
-                     sizeof(void *) * recalls);
+                     sizeof(void *) * (recalls - 1));
 
         memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
 

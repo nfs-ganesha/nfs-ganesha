@@ -41,16 +41,14 @@
  * individual Red-Black Tree.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include "HashTable.h"
 #include "log.h"
-#include "fsal.h"
+#include "common_utils.h"
 #include <assert.h>
 
 /**
@@ -1145,49 +1143,6 @@ hash_error_t HashTable_GetRef(hash_table_t *ht,
 	return rc;
 }
 
-/**
- * @brief Look up, return, and remove an entry
- *
- * If the object specified by key can be found, it will be removed
- * from the hash table and returned to the caller.
- *
- * @param[in]  ht         The hash table to be altered
- * @param[in]  key        The key to search for and remove
- * @param[out] val        The value associated with the found object
- * @param[out] stored_key Buffer descriptor for key actually stored
- *
- * @return HASHTABLE_SUCCESS or errors
- */
-
-hash_error_t HashTable_Get_and_Del(hash_table_t  *ht,
-				   struct gsh_buffdesc *key,
-				   struct gsh_buffdesc *val,
-				   struct gsh_buffdesc *stored_key)
-{
-	/* structure to hold retained state */
-	struct hash_latch latch;
-	/* Stored return code */
-	hash_error_t rc = 0;
-
-	rc = HashTable_GetLatch(ht, key, NULL,
-				true, &latch);
-
-	switch (rc) {
-	case HASHTABLE_SUCCESS:
-		return HashTable_DeleteLatched(ht,
-					       key,
-					       &latch,
-					       stored_key,
-					       val);
-
-
-	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(ht, &latch);
-	default:
-		return rc;
-	}
-
-}
 
 /**
  *

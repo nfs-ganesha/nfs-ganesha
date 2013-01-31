@@ -30,14 +30,7 @@
  *
  * This file implements NFS4_OP_READ within an NFSv4 compound call.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

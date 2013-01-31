@@ -11,9 +11,7 @@
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include <sys/types.h>
@@ -223,7 +221,7 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
   fsalattr->chgtime
     = posix2fsal_time(MAX_2(buffstat->st_mtime,
                             buffstat->st_ctime), 0);
-  fsalattr->change = fsalattr->chgtime.seconds;
+  fsalattr->change = fsalattr->chgtime.tv_sec;
   FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
   fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;

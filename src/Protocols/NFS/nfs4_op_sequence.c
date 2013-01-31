@@ -29,14 +29,7 @@
  * @brief Routines used for managing the NFS4_OP_SEQUENCE operation
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
 

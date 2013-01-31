@@ -33,14 +33,7 @@
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c,v 1.8 2005/11/28 17:02:51 deniel Exp $
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "HashTable.h"
 #include "log.h"
 #include "nfs4.h"

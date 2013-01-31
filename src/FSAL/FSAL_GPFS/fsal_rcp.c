@@ -10,9 +10,7 @@
  * \brief   Transfer operations.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"

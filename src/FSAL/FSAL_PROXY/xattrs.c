@@ -20,9 +20,7 @@
  * ------------- 
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "pxy_fsal_methods.h"

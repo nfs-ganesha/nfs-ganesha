@@ -29,9 +29,7 @@
  * VFS object (file|dir) handle object
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
@@ -380,8 +378,7 @@ errout:
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -422,17 +419,22 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		myself->u.symlink.link_content[retlink] = '\0';
 		myself->u.symlink.link_size = retlink + 1;
 	}
-	if(myself->u.symlink.link_content == NULL
-	   || *link_len <= myself->u.symlink.link_size) {
+	if(myself->u.symlink.link_content == NULL) {
 		fsal_error = ERR_FSAL_FAULT; /* probably a better error?? */
 		goto out;
 	}
-	memcpy(link_content,
+	link_content->len = myself->u.symlink.link_size;
+	link_content->addr = gsh_malloc(link_content->len);
+	if (link_content->addr == NULL) {
+		fsal_error = ERR_FSAL_NOMEM;
+		link_content->len = 0;
+		goto out;
+	}
+	memcpy(link_content->addr,
 	       myself->u.symlink.link_content,
-	       myself->u.symlink.link_size);
+	       link_content->len);
 
 out:
-	*link_len = myself->u.symlink.link_size;
 
 	return fsalstat(fsal_error, retval);	
 }
@@ -616,7 +618,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 {
         fsal_status_t status;
 
-        status =  GPFSFSAL_setattrs(obj_hdl, opctx, attrs, NULL);
+        status =  GPFSFSAL_setattrs(obj_hdl, opctx, attrs);
 
 	return(status);
 }
@@ -645,34 +647,34 @@ bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
 		      myself->handle->handle_size) ? false : true;
 }
 
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
+/* /\* file_truncate */
+/*  * truncate a file to the size specified. */
+/*  * size should really be off_t... */
+/*  *\/ */
 
-static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
-                                   const struct req_op_context *opctx,
-				   uint64_t length)
-{
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        fsal_status_t status;
-	struct gpfs_fsal_obj_handle *myself;
-/* 	int mount_fd; */
-	int retval = 0;
+/* static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl, */
+/*                                    const struct req_op_context *opctx, */
+/* 				   uint64_t length) */
+/* { */
+/* 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR; */
+/*         fsal_status_t status; */
+/* 	struct gpfs_fsal_obj_handle *myself; */
+/* /\* 	int mount_fd; *\/ */
+/* 	int retval = 0; */
 
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-/* 	mount_fd = gpfs_get_root_fd(obj_hdl->export); */
+/* 	if(obj_hdl->type != REGULAR_FILE) { */
+/* 		fsal_error = ERR_FSAL_INVAL; */
+/* 		goto errout; */
+/* 	} */
+/* 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle); */
+/* /\* 	mount_fd = gpfs_get_root_fd(obj_hdl->export); *\/ */
 	
-        status = GPFSFSAL_truncate(obj_hdl->export, myself->handle, opctx, length, NULL);
-        return (status);
+/*         status = GPFSFSAL_truncate(obj_hdl->export, myself->handle, opctx, length, NULL); */
+/*         return (status); */
 
-errout:
-	return fsalstat(fsal_error, retval);	
-}
+/* errout: */
+/* 	return fsalstat(fsal_error, retval);	 */
+/* } */
 
 /* file_unlink
  * unlink the named file in the directory
@@ -858,7 +860,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->truncate = file_truncate;
 	ops->open = gpfs_open;
 	ops->status = gpfs_status;
 	ops->read = gpfs_read;

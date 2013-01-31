@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -29,9 +30,7 @@
  * \brief   Attributes functions.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"
@@ -142,14 +141,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
  */
 fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
                             const struct req_op_context * p_context,     /* IN */
-                            struct attrlist * p_attrib_set,             /* IN */
-                            struct attrlist * p_object_attributes)   /* IN/OUT */
+                            struct attrlist * p_object_attributes)       /* IN */
 {
-  unsigned int i, mntfd;
+  unsigned int mntfd;
   fsal_status_t status;
   struct gpfs_fsal_obj_handle *myself;
   gpfsfsal_xstat_t buffxstat;
-  struct attrlist wanted_attrs, current_attrs;
+  struct attrlist current_attrs;
 
   /* Indicate if stat or acl or both should be changed. */
   int attr_valid = 0;
@@ -157,25 +155,16 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
   /* Indiate which attribute in stat should be changed. */
   int attr_changed = 0;
 
-  fsal_accessflags_t access_mask = 0;
-
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!dir_hdl || !p_context || !p_attrib_set)
+  if(!dir_hdl || !p_context || !p_object_attributes)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
   myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
   mntfd = gpfs_get_root_fd(dir_hdl->export);
 
-  /* local copy of attributes */
-  wanted_attrs = *p_attrib_set;
 
-  /* It does not make sense to setattr on a symlink */
-  /* if(p_filehandle->type == DT_LNK)
-     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
-     p_object_attributes);
-   */
   /* First, check that FSAL attributes changes are allowed. */
 
   /* Is it allowed to change times ? */
@@ -183,8 +172,9 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
   if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_cansettime))
     {
 
-      if(wanted_attrs.mask
-         & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME))
+      if(p_object_attributes->mask
+         & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME |
+                 ATTR_MTIME_SERVER | ATTR_ATIME_SERVER))
         {
           /* handled as an unsettable attribute. */
           return fsalstat(ERR_FSAL_INVAL, 0);
@@ -192,9 +182,9 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
     }
 
   /* apply umask, if mode attribute is to be changed */
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MODE))
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MODE))
     {
-      wanted_attrs.mode &= ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+      p_object_attributes->mode &= ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
     }
 
   /* get current attributes */
@@ -203,11 +193,24 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
                              &current_attrs);
   if(FSAL_IS_ERROR(status))
       return(status);
+  /**************
+   *  TRUNCATE  *
+   **************/
+
+  if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_SIZE)) {
+      attr_changed |= XATTR_SIZE;
+      /* Fill wanted mode. */
+      buffxstat.buffstat.st_size = p_object_attributes->filesize;
+      LogDebug(COMPONENT_FSAL,
+              "current size = %llu, new size = %llu",
+              (unsigned long long) current_attrs.filesize,
+              (unsigned long long) buffxstat.buffstat.st_size);
+  }
 
   /***********
    *  CHMOD  *
    ***********/
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MODE))
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MODE))
     {
 
       /* The POSIX chmod call don't affect the symlink object, but
@@ -215,36 +218,10 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
        */
       if(current_attrs.type != SYMBOLIC_LINK)
         {
-              /* For modifying mode, user must be root or the owner */
-              if((p_context->creds->caller_uid != 0)
-                 && (p_context->creds->caller_uid != current_attrs.owner))
-                {
-                  LogFullDebug(COMPONENT_FSAL,
-                       "Permission denied for CHMOD opeartion: current owner=%ld, credential=%d",
-                        current_attrs.owner, p_context->creds->caller_uid);
-                  return fsalstat(ERR_FSAL_PERM, 0);
-                }
-
-#ifdef _USE_NFS4_ACL
-          /* Check permission using ACL. */
-          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
-                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
-
-          if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-            status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-          else
-            status = fsal_internal_access(mntfd, p_context, myself->handle,
-                                          access_mask, &current_attrs);
-
-          if(FSAL_IS_ERROR(status))
-            return(status);
-#endif
-    
-            attr_valid |= XATTR_STAT;
             attr_changed |= XATTR_MODE;
     
             /* Fill wanted mode. */
-            buffxstat.buffstat.st_mode = fsal2unix_mode(wanted_attrs.mode);
+            buffxstat.buffstat.st_mode = fsal2unix_mode(p_object_attributes->mode);
             LogDebug(COMPONENT_FSAL,
                      "current mode = %o, new mode = %o",
                      fsal2unix_mode(current_attrs.mode), buffxstat.buffstat.st_mode);
@@ -256,110 +233,31 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
   /***********
    *  CHOWN  *
    ***********/
-  /* Only root can change uid and A normal user must be in the group he wants to set */
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER))
-    {
 
-          /* For modifying owner, user must be root or current owner==wanted==client */
-          if((p_context->creds->caller_uid != 0) &&
-             ((p_context->creds->caller_uid != current_attrs.owner) ||
-              (p_context->creds->caller_uid != wanted_attrs.owner)))
-            {
-              LogFullDebug(COMPONENT_FSAL,
-                           "Permission denied for CHOWN opeartion: current owner=%ld, credential=%d, new owner=%ld",
-                           current_attrs.owner, p_context->creds->caller_uid, wanted_attrs.owner);
-              return fsalstat(ERR_FSAL_PERM, 0);
-            }
-
-#ifdef _USE_NFS4_ACL
-          /* Check permission using ACL. */
-          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
-                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-
-        if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-          status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-        else
-          status = fsal_internal_access(mntfd, p_context, myself->handle,
-                                        access_mask, &current_attrs);
-
-          if(FSAL_IS_ERROR(status))
-            return(status);
-#endif
-
-        }
-
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_GROUP))
-        {
-
-          /* For modifying group, user must be root or current owner */
-          if((p_context->creds->caller_uid != 0)
-             && (p_context->creds->caller_uid != current_attrs.owner))
-            {
-              return fsalstat(ERR_FSAL_PERM, 0);
-            }
-    
-          int in_grp = 0;
-          /* set in_grp */
-          if(p_context->creds->caller_gid == wanted_attrs.group)
-            in_grp = 1;
-          else
-            for(i = 0; i < p_context->creds->caller_glen; i++)
-              {
-                if((in_grp = (wanted_attrs.group == p_context->creds->caller_garray[i])))
-                  break;
-              }
-    
-          /* it must also be in target group */
-          if(p_context->creds->caller_uid != 0 && !in_grp)
-            {
-              LogFullDebug(COMPONENT_FSAL,
-                           "Permission denied for CHOWN operation: current group=%ld, credential=%d, new group=%ld",
-                           current_attrs.group, p_context->creds->caller_gid, wanted_attrs.group);
-              return fsalstat(ERR_FSAL_PERM, 0);
-            }
-
-#ifdef _USE_NFS4_ACL
-      /* Check permission using ACL. */
-      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-
-      if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-        status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-      else
-        status = fsal_internal_access(mntfd, p_context, myself->handle,
-                                      access_mask, &current_attrs);
-
-      if(FSAL_IS_ERROR(status))
-        return(status);
-#endif
-
-    }
-
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER | ATTR_GROUP))
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER | ATTR_GROUP))
     {
       /*      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(wanted_attrs.mask,
-                                                      FSAL_ATTR_OWNER) ? (int)wanted_attrs.owner
-                        : -1, FSAL_TEST_MASK(wanted_attrs.mask,
-			FSAL_ATTR_GROUP) ? (int)wanted_attrs.group : -1);*/
+                        fsalpath.path, FSAL_TEST_MASK(p_object_attributes->mask,
+                                                      FSAL_ATTR_OWNER) ? (int)p_object_attributes->owner
+                        : -1, FSAL_TEST_MASK(p_object_attributes->mask,
+			FSAL_ATTR_GROUP) ? (int)p_object_attributes->group : -1);*/
 
-      attr_valid |= XATTR_STAT;
-      attr_changed |= FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER) ?
+      attr_changed |= FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER) ?
                       XATTR_UID : XATTR_GID;
 
       /* Fill wanted owner. */
-      if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER))
+      if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER))
         {
-          buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
+          buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
           LogDebug(COMPONENT_FSAL,
                    "current uid = %ld, new uid = %d",
                    current_attrs.owner, buffxstat.buffstat.st_uid);
         }
 
       /* Fill wanted group. */
-      if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_GROUP))
+      if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_GROUP))
         {
-          buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
+          buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
           LogDebug(COMPONENT_FSAL,
                    "current gid = %ld, new gid = %d",
                    current_attrs.group, buffxstat.buffstat.st_gid);
@@ -371,95 +269,62 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
    *  UTIME  *
    ***********/
 
-  /* user must be the owner or have read access to modify 'atime' */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
+  /* Fill wanted atime. */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ATIME))
+  {
+      attr_changed |= XATTR_ATIME;
+      buffxstat.buffstat.st_atime = (time_t) p_object_attributes->atime.tv_sec;
+      buffxstat.buffstat.st_atim.tv_nsec = p_object_attributes->atime.tv_nsec;
+      LogDebug(COMPONENT_FSAL,
+              "current atime = %lu, new atime = %lu",
+              (unsigned long)current_attrs.atime.tv_sec, (unsigned long)buffxstat.buffstat.st_atime);
+  }
 
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-  else
-    status = fsal_internal_access(mntfd, p_context, myself->handle, access_mask,
-                                  &current_attrs);
+  /* Fill wanted mtime. */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MTIME))
+  {
+      attr_changed |= XATTR_MTIME;
+      buffxstat.buffstat.st_mtime = (time_t) p_object_attributes->mtime.tv_sec;
+      buffxstat.buffstat.st_mtim.tv_nsec = p_object_attributes->mtime.tv_nsec;
+      LogDebug(COMPONENT_FSAL,
+              "current mtime = %lu, new mtime = %lu",
+              (unsigned long)current_attrs.mtime.tv_sec, (unsigned long)buffxstat.buffstat.st_mtime);
+  }
+  /* Asking to set atime to NOW */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ATIME_SERVER))
+  {
+      attr_changed |= XATTR_ATIME_NOW;
+      LogDebug(COMPONENT_FSAL,
+              "current atime = %lu, new atime = NOW",
+              (unsigned long)current_attrs.atime.tv_sec);
+  }
+  /* Asking to set atime to NOW */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MTIME_SERVER))
+  {
+      attr_changed |= XATTR_MTIME_NOW;
+      LogDebug(COMPONENT_FSAL,
+              "current mtime = %lu, new mtime = NOW",
+              (unsigned long)current_attrs.atime.tv_sec);
+  }
 
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_ATIME)
-     && (p_context->creds->caller_uid != 0)
-     && (p_context->creds->caller_uid != current_attrs.owner)
-     && (status.major
-         != ERR_FSAL_NO_ERROR))
-    {
-      return(status);
-    }
-  /* user must be the owner or have write access to modify 'mtime' */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-  else
-    status = fsal_internal_access(mntfd, p_context, myself->handle, access_mask,
-                                  &current_attrs);
-
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MTIME)
-     && (p_context->creds->caller_uid != 0)
-     && (p_context->creds->caller_uid != current_attrs.owner)
-     && (status.major
-         != ERR_FSAL_NO_ERROR))
-    {
-      return(status);
-    }
-
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_ATIME | ATTR_MTIME))
-    {
+  /* If any stat changed, indicate that */
+  if(attr_changed !=0)
       attr_valid |= XATTR_STAT;
-
-      /* Fill wanted atime. */
-      if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_ATIME))
-        {
-          attr_changed |= XATTR_ATIME;
-          buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
-          LogDebug(COMPONENT_FSAL,
-                   "current atime = %lu, new atime = %lu",
-                   (unsigned long)current_attrs.atime.seconds, (unsigned long)buffxstat.buffstat.st_atime);
-        }
-
-      /* Fill wanted mtime. */
-      if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MTIME))
-        {
-          attr_changed |= XATTR_CTIME;
-          buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
-          LogDebug(COMPONENT_FSAL,
-                   "current mtime = %lu, new mtime = %lu",
-                   (unsigned long)current_attrs.mtime.seconds, (unsigned long)buffxstat.buffstat.st_mtime);
-        }
-    }
 
 #ifdef _USE_NFS4_ACL
    /***********
    *  ACL  *
    ***********/
 
-  if(FSAL_TEST_MASK(wanted_attrs.mask, ATTR_ACL))
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ACL))
     {
-      /* Check permission to set ACL. */
-      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
-
-      if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-        status = fsal_internal_testAccess(p_context, access_mask, &current_attrs);
-      else
-        status = fsal_internal_access(mntfd, p_context, myself->handle,
-                                      access_mask, &current_attrs);
-
-      if(FSAL_IS_ERROR(status))
-        return(status);
-
-      if(wanted_attrs.acl)
+      if(p_object_attributes->acl)
         {
           attr_valid |= XATTR_ACL;
-          LogDebug(COMPONENT_FSAL, "setattr acl = %p", wanted_attrs.acl);
+          LogDebug(COMPONENT_FSAL, "setattr acl = %p", p_object_attributes->acl);
 
           /* Convert FSAL ACL to GPFS NFS4 ACL and fill the buffer. */
-          status = fsal_acl_2_gpfs_acl(wanted_attrs.acl, &buffxstat);
+          status = fsal_acl_2_gpfs_acl(p_object_attributes->acl, &buffxstat);
 
           if(FSAL_IS_ERROR(status))
             return(status);
@@ -473,7 +338,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
 #endif                          /* _USE_NFS4_ACL */
 
   /* If there is any change in stat or acl or both, send it down to file system. */
-  if((attr_valid == XATTR_STAT && attr_changed !=0) || attr_valid == XATTR_ACL)
+  if(attr_valid !=0)
     {
       status = fsal_set_xstat_by_handle(mntfd, p_context,
                                         myself->handle,
@@ -483,21 +348,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
 
       if(FSAL_IS_ERROR(status))
         return(status);
-    }
-
-  /* Optionaly fills output attributes. */
-
-  if(p_object_attributes)
-    {
-      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, myself->handle,
-                                 p_object_attributes);
-
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->mask);
-          FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
-        }
     }
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);

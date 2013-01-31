@@ -28,14 +28,7 @@
  * @file  nfs_rpc_dispatcher_thread.c
  * @brief Contains the @c rpc_dispatcher_thread routine and support code
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -107,11 +100,12 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
 static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
-const char *xprt_stat_s[3] =
+const char *xprt_stat_s[4] =
 {
     "XPRT_DIED",
     "XPRT_MOREREQS",
-    "XPRT_IDLE"
+    "XPRT_IDLE",
+    "XPRT_DESTROYED"
 };
 
 /**
@@ -248,7 +242,7 @@ void Create_udp(protos prot)
 
     /* Setup private data */
     (udp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(udp_xprt[prot],
-                                                     XPRT_PRIVATE_FLAG_REF);
+                                                     XPRT_PRIVATE_FLAG_NONE);
 
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
@@ -289,7 +283,7 @@ void Create_tcp(protos prot)
 
     /* Setup private data */
     (tcp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(tcp_xprt[prot],
-                                                     XPRT_PRIVATE_FLAG_REF);
+                                                     XPRT_PRIVATE_FLAG_NONE);
 
 /* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
  * (Matt) */
@@ -493,9 +487,7 @@ void nfs_Init_svc()
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
     svc_params.max_connections = nfs_param.core_param.nb_max_fd;
     svc_params.max_events = 1024; /* length of epoll event queue */
-    svc_params.gss_ctx_hash_partitions = 0;
-    svc_params.gss_max_idle_gen = 0;
-    svc_params.gss_max_gc = 0;
+    svc_params.idle_timeout = 30;
     svc_params.warnx = NULL;
     svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
     svc_params.gss_max_idle_gen = 1024; /* GSS ctx cache expiration */
@@ -512,7 +504,7 @@ void nfs_Init_svc()
   if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, &tirpc_debug_flags))
       LogCrit(COMPONENT_INIT, "Failed getting TI-RPC debug flags");
 
-  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_LOCK;
+  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_REFCNT;
 
   if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
       LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
@@ -541,12 +533,12 @@ void nfs_Init_svc()
   /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get udp netconfig, cannot get a entry for udp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
 
     /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get tcp netconfig, cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get tcp netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
@@ -557,12 +549,12 @@ void nfs_Init_svc()
     /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get udp6 netconfig, cannot get a entry for udp6 in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
   /* Get the netconfig entries from /etc/netconfig */
     if((netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6")) == NULL)
         LogFatal(COMPONENT_DISPATCH,
-                 "Cannot get tcp6 netconfig, cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+                 "Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
@@ -753,7 +745,7 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
         next_chan = TCP_EVCHAN_0;
 
     /* setup private data (freed when xprt is destroyed) */
-    newxprt->xp_u1 = alloc_gsh_xprt_private(newxprt, XPRT_PRIVATE_FLAG_REF);
+    newxprt->xp_u1 = alloc_gsh_xprt_private(newxprt, XPRT_PRIVATE_FLAG_NONE);
 
     /* NB: xu->drc is allocated on first request--we need shared
      * TCP DRC for v3, but per-connection for v4 */
@@ -803,21 +795,22 @@ nfs_rpc_outstanding_reqs_est(void)
     static uint32_t ctr = 0;
     static uint32_t nreqs = 0;
     struct req_q_pair *qpair;
+    uint32_t treqs;
     int ix;
 
-    if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
-        return (nreqs);
-
-    atomic_store_uint32_t(&nreqs, 0);
-    for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
-        qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
-        atomic_add_uint32_t(&nreqs,
-                            atomic_fetch_int32_t(&qpair->producer.size));
-        atomic_add_uint32_t(&nreqs,
-                            atomic_fetch_int32_t(&qpair->consumer.size));
+    if ((atomic_inc_uint32_t(&ctr) % 10) != 0) {
+        return (atomic_fetch_uint32_t(&nreqs));
     }
 
-    return (atomic_fetch_uint32_t(&nreqs));
+    treqs = 0;
+    for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+        qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
+        treqs += atomic_fetch_uint32_t(&qpair->producer.size);
+        treqs += atomic_fetch_uint32_t(&qpair->consumer.size);
+    }
+
+    atomic_store_uint32_t(&nreqs, treqs);
+    return (treqs);
 }
 
 
@@ -826,7 +819,7 @@ stallq_should_unstall(gsh_xprt_private_t *xu)
 {
 	return ((xu->req_cnt <
 		 nfs_param.core_param.dispatch_max_reqs_xprt/2) ||
-		(xu->flags & XPRT_PRIVATE_FLAG_DESTROYED));
+		(xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
 void *
@@ -855,17 +848,18 @@ thr_stallq(void *arg)
                 xprt = xu->xprt;
                 /* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
                 pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+                /* !LOCKED */
+                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
+                         xprt);
                 pthread_mutex_lock(&xprt->xp_lock);
                 pthread_mutex_lock(&nfs_req_st.stallq.mtx);
                 glist_del(&xu->stallq);
                 --(nfs_req_st.stallq.stalled);
                 xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
-                /* drop stallq ref */
-                --(xu->refcnt);
                 pthread_mutex_unlock(&xprt->xp_lock);
-                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
-                         xprt);
                 (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+                /* drop stallq ref */
+                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE);
                 goto restart;
             }
         }
@@ -891,7 +885,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
     LogDebug(COMPONENT_DISPATCH,
             "xprt %p refcnt %d has %d %d reqs active (max %d)",
-            xprt, xu->refcnt, nreqs, xu->req_cnt,
+            xprt, xprt->xp_refcnt, nreqs, xu->req_cnt,
             nfs_param.core_param.dispatch_max_reqs_xprt);
 
     /* check per-xprt quota */
@@ -1454,7 +1448,10 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
             goto finish;
 
         /* update accounting */
-        gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ);
+        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ)) {
+            stat = XPRT_DIED;
+            goto finish;
+        }
 
         /* XXX as above, the call has already passed is_rpc_call_valid,
          * the former check here is removed. */
@@ -1506,24 +1503,23 @@ thr_decode_rpc_requests(void *arg)
     fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
-    /* continue receiving if data is already buffered--failure to do so
-     * will result in stalls (TCP) */
+    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
+                 xprt);
+
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
     } while (thr_continue_decoding(xprt, stat));
 
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
-    /* done decoding, rearm */
+    /* order MUST be SVC_DESTROY, gsh_xprt_unref (current refcnt balancing) */
     if (stat != XPRT_DIED)
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+    else
+        SVC_DESTROY(xprt);
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
-
-    /* XXX EPOLLONESHOT semantics -should- make this safe */
-    if (stat == XPRT_DIED)
-        gsh_xprt_destroy(xprt);
 
   return (NULL);
 }
@@ -1573,6 +1569,8 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     int code  __attribute__((unused)) = 0;
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
+
+    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter, xprt);
 
     if(udp_socket[P_NFS] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request fd %d",
@@ -1632,16 +1630,20 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogFullDebug(COMPONENT_DISPATCH, "before guard_ref");
+    LogFullDebug(COMPONENT_RPC, "%d before decoder guard %p", __tirpc_dcounter,
+                 xprt);
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
-    if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE)) {
+    if (! gsh_xprt_decoder_guard(xprt, XPRT_PRIVATE_FLAG_NONE)) {
+        LogFullDebug(COMPONENT_RPC, "%d already decoding %p",
+                     __tirpc_dcounter, xprt);
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
     }
 
-    LogFullDebug(COMPONENT_DISPATCH, "before cond stall");
+    LogFullDebug(COMPONENT_RPC, "%d before cond stall %p", __tirpc_dcounter,
+                 xprt);
 
     /* Check per-xprt max outstanding quota */
     if (nfs_rpc_cond_stall_xprt(xprt)) {

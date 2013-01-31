@@ -34,14 +34,7 @@
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <ctype.h>              /* for having isalnum */

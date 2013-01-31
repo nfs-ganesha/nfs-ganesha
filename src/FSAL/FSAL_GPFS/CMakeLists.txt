@@ -11,7 +11,6 @@ SET(fsalgpfs_LIB_SRCS
   fsal_ds.c
   fsal_mds.c
   fsal_unlink.c
-  fsal_truncate.c
   fsal_symlinks.c
   fsal_rename.c
   fsal_create.c
@@ -26,9 +25,13 @@ SET(fsalgpfs_LIB_SRCS
 
 add_library(fsalgpfs SHARED ${fsalgpfs_LIB_SRCS})
 
-target_link_libraries(fsalgpfs
-  "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib/libgpfs.so"
+SET(fsalgpfsext_LIB_SRCS
+  gpfsext.c
 )
+
+add_library(fsalgpfsext SHARED ${fsalgpfsext_LIB_SRCS})
+
+target_link_libraries(fsalgpfs fsalgpfsext ${SYSTEM_LIBRARIES})
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
@@ -36,4 +39,4 @@ set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
 ########### install files ###############
 
-install(TARGETS fsalgpfs DESTINATION lib)
+install(TARGETS fsalgpfs COMPONENT fsal DESTINATION lib)

@@ -27,14 +27,7 @@
  * @file  nfs3_Create.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -82,7 +75,7 @@ nfs_Create(nfs_arg_t *arg,
            struct svc_req *req,
            nfs_res_t *res)
 {
-        char *file_name = NULL;
+        const char *file_name = arg->arg_create3.where.name;
         uint32_t mode = 0;
         cache_entry_t *file_entry = NULL;
         cache_entry_t *parent_entry = NULL;
@@ -91,22 +84,24 @@ nfs_Create(nfs_arg_t *arg,
         };
         struct attrlist sattr;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-        cache_inode_status_t cache_status_lookup;
         int rc = NFS_REQ_OK;
         fsal_status_t fsal_status;
+        /* Client provided verifier, split into two pieces */
+        uint32_t verf_hi = 0, verf_lo = 0;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
 
-		file_name = arg->arg_create3.where.name;
                 nfs_FhandleToStr(req->rq_vers,
 				 &(arg->arg_create3.where.dir),
 				 NULL,
 				 str);
                 LogDebug(COMPONENT_NFSPROTO,
                          "REQUEST PROCESSING: Calling nfs_Create handle: "
-                         "%s name: %s", str, file_name);
+                         "%s name: %s", str,  file_name ? file_name : "");
         }
+
+        memset(&sattr, 0, sizeof(struct attrlist));
 
         if(nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir))) {
                 rc = nfs3_Create_Xattr(arg, export, req_ctx, req, res);
@@ -118,7 +113,8 @@ nfs_Create(nfs_arg_t *arg,
                         .before.attributes_follow = FALSE;
         res->res_create3.CREATE3res_u.resfail.dir_wcc.after
                         .attributes_follow = FALSE;
-	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
+
+        parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
 					   req_ctx,
 					   export,
 					   &res->res_create3.status,
@@ -142,23 +138,6 @@ nfs_Create(nfs_arg_t *arg,
                 goto out;
           }
 
-        file_name = arg->arg_create3.where.name;
-        if (arg->arg_create3.how.mode == EXCLUSIVE)
-          {
-                        /* Client has not provided mode
-                           information. If the create works, the
-                           client will issue a separate setattr
-                           request to fix up the file's mode, so pick
-                           arbitrary value for now. */
-                        mode = 0;
-          }
-        else if(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it)
-         {
-           mode = unix2fsal_mode(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_mode3_u.mode);
-         } 
-       else 
-         mode = 0 ;
-
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops
@@ -167,7 +146,7 @@ nfs_Create(nfs_arg_t *arg,
                               FSAL_QUOTA_INODES,
                               req_ctx);
         if (FSAL_IS_ERROR(fsal_status)) {
-		res->res_create3.status = NFS3ERR_DQUOT;
+                res->res_create3.status = NFS3ERR_DQUOT;
                 rc = NFS_REQ_OK;
                 goto out;
         }
@@ -178,67 +157,84 @@ nfs_Create(nfs_arg_t *arg,
                 
                 goto out_fail;
         }
-        /* Lookup file to see if it exists.  If so, use it.  Otherwise
-           create a new one. */
-        cache_status_lookup = cache_inode_lookup(parent_entry,
-						 file_name,
-						 req_ctx,
-						 &file_entry);
 
-        if ((cache_status_lookup != CACHE_INODE_SUCCESS) &&
-            (cache_status_lookup != CACHE_INODE_NOT_FOUND)) {
-                /* Server fault */
-                cache_status = cache_status_lookup;
-                goto out_fail;
-        } else if ((cache_status_lookup == CACHE_INODE_SUCCESS) &&
-                   (req->rq_vers == NFS_V3) &&
-                   (arg->arg_create3.how.mode != UNCHECKED)) {
-                /* Trying to create a file that already exists */
-                cache_status = CACHE_INODE_ENTRY_EXISTS;
-                goto out_fail;
-        } else if (!file_entry) {
-                cache_status = cache_inode_create(parent_entry,
-						  file_name,
-						  REGULAR_FILE,
-						  mode,
-						  NULL,
-						  req_ctx,
-						  &file_entry);
-
-                if (!file_entry) 
-			goto out_fail;
-
-                /* Look at sattr to see if some attributes are to be
-                   set at creation time */
-                FSAL_CLEAR_MASK(sattr.mask);
+        /* Check if asked attributes are correct */
+        if (arg->arg_create3.how.mode == GUARDED ||
+            arg->arg_create3.how.mode == UNCHECKED) {
+                if(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it) {
+                        mode = unix2fsal_mode(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_mode3_u.mode);
+                }
 
                 if (nfs3_Sattr_To_FSALattr(&sattr,
-                                           &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) 
-                  {
-                     res->res_create3.status = NFS3ERR_INVAL;
-                     rc = NFS_REQ_OK;
-                     goto out;
-                  }
+                                           &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) {
+                        res->res_create3.status = NFS3ERR_INVAL;
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
 
-                /* Mode is managed above (in cache_inode_create),
+                /* Mode is managed in cache_inode_create,
                    there is no need to manage it */
                 FSAL_UNSET_MASK(sattr.mask, ATTR_MODE);
+        } else if (arg->arg_create3.how.mode == EXCLUSIVE) {
+                const char *verf = (const char*) &(arg->arg_create3.how.createhow3_u.verf);
+                /* If we knew all our FSALs could store a 64 bit
+                           atime, we could just use that and there would be
+                           no need to split the verifier up. */
+                memcpy(&verf_hi, verf, sizeof(uint32_t));
+                memcpy(&verf_lo, verf + sizeof(uint32_t),
+                                sizeof(uint32_t));
 
+                cache_inode_create_set_verifier(&sattr, verf_hi, verf_lo);
+        }
+
+        cache_status = cache_inode_create(parent_entry,
+					  file_name,
+					  REGULAR_FILE,
+					  mode,
+					  NULL,
+					  req_ctx,
+					  &file_entry);
+
+        /* Complete failure */
+        if ((cache_status != CACHE_INODE_SUCCESS) &&
+            (cache_status != CACHE_INODE_ENTRY_EXISTS)) {
+                  goto out_fail;
+        }
+
+        if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+                 if (arg->arg_create3.how.mode == GUARDED) {
+                         goto out_fail;
+                 } else if (arg->arg_create3.how.mode == EXCLUSIVE &&
+                            !cache_inode_create_verify(file_entry,
+                                                       req_ctx,
+                                                       verf_hi,
+                                                       verf_lo)) {
+                         goto out_fail;
+                 }
+
+                 /* Clear error code */
+                 cache_status = CACHE_INODE_SUCCESS;
+        } else {
                 /* Some clients (like Solaris 10) try to set the size
                    of the file to 0 at creation time. The FSAL create
                    empty file, so we ignore this */
                 FSAL_UNSET_MASK(sattr.mask, ATTR_SIZE);
                 FSAL_UNSET_MASK(sattr.mask, ATTR_SPACEUSED);
+        }
 
-                /* Are there attributes to be set (additional to the mode) ? */
-                if (FSAL_TEST_MASK(sattr.mask, ~ATTR_MODE)) {
-                        /* A call to cache_inode_setattr is required */
-                        cache_status = cache_inode_setattr(file_entry,
-							   &sattr,
-							   req_ctx);
-                        if (cache_status != CACHE_INODE_SUCCESS) {
-                                goto out_fail;
-                        }
+        /* Are there any attributes left to set? */
+        if (sattr.mask) {
+                /* If owner or owner_group are set, and the credential was
+                 * squashed, then we must squash the set owner and owner_group.
+                 */
+                squash_setattr(&worker->related_client, export, req_ctx->creds, &sattr);
+
+                /* A call to cache_inode_setattr is required */
+                cache_status = cache_inode_setattr(file_entry,
+                        &sattr,
+                        req_ctx);
+                if (cache_status != CACHE_INODE_SUCCESS) {
+                    goto out_fail;
                 }
         }
 

@@ -2,9 +2,7 @@
  * cidr_to_str() - Generate a textual representation of the given CIDR
  * subnet.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <errno.h>
 #include <stdio.h>

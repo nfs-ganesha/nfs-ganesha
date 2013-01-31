@@ -30,14 +30,7 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -71,11 +64,8 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
                      struct nfs_resop4 *resp)
 {
   cache_inode_status_t cache_status;
-  /* This is a gross hack that should be fixed by callbackification
-     of Readlink */
-  char                 symlink_path[1024];
-  struct gsh_buffdesc  link_buffer = { .addr = symlink_path,
-                                       .len  = 1024};
+  struct gsh_buffdesc  link_buffer = {.addr = NULL,
+                                      .len  = 0};
 
   resp->resop = NFS4_OP_READLINK;
   res_READLINK4.status = NFS4_OK;
@@ -93,30 +83,18 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   cache_status = cache_inode_readlink(data->current_entry,
 				      &link_buffer,
 				      data->req_ctx);
-  if(cache_status == CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
-      /* Alloc read link */
-
-      if((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-          gsh_malloc(link_buffer.len)) == NULL)
-        {
-          res_READLINK4.status = NFS4ERR_INVAL;
-          return res_READLINK4.status;
-        }
-
-      /* convert the fsal path to a utf8 string */
-      if(str2utf8(link_buffer.addr, &res_READLINK4.READLINK4res_u.resok4.link)
-         == -1)
-        {
-          res_READLINK4.status = NFS4ERR_INVAL;
-          return res_READLINK4.status;
-        }
-
-      res_READLINK4.status = NFS4_OK;
+      res_READLINK4.status = nfs4_Errno(cache_status);
       return res_READLINK4.status;
     }
 
-  res_READLINK4.status = nfs4_Errno(cache_status);
+  res_READLINK4.READLINK4res_u.resok4.link.utf8string_val = link_buffer.addr;
+  /* NFSv4 does not require the \NUL terminator. */
+  res_READLINK4.READLINK4res_u.resok4.link.utf8string_len
+	  = link_buffer.len - 1;
+
+  res_READLINK4.status = NFS4_OK;
   return res_READLINK4.status;
 } /* nfs4_op_readlink */
 

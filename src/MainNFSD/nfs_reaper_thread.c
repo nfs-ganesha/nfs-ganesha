@@ -22,14 +22,7 @@
  * nfs_reaper_thread.c : check for expired clients and whack them.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <pthread.h>
 #include <unistd.h>
 #include "log.h"

@@ -37,14 +37,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -813,7 +806,8 @@ void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
 		chan->auth = NULL;
 	}
 	if (chan->clnt) {
-		chan->clnt->cl_ops->cl_release(chan->clnt);
+		chan->clnt->cl_ops->cl_release(chan->clnt,
+                                               CLNT_RELEASE_FLAG_NONE);
 	}
 }
 
@@ -1120,7 +1114,7 @@ static rpc_call_t *construct_single_call(nfs41_session_t *session,
 	cb_compound_init_v4(&call->cbt, 2,
 			    session->clientid_record->cid_minorversion,
 			    0, NULL, 0);
-	memset(sequence, 0, sizeof(nfs_cb_argop4));
+	memset(sequence, 0, sizeof(CB_SEQUENCE4args));
 	sequenceop.argop = NFS4_OP_CB_SEQUENCE;
 
 	memcpy(sequence->csa_sessionid,

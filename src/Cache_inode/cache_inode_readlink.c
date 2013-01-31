@@ -32,14 +32,7 @@
  * @brief   Reads a symlink.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "abstract_atomic.h"
 #include "log.h"
 #include "HashTable.h"
@@ -56,11 +49,9 @@
 /**
  * @brief Read the target of a symlink
  *
- * Copy the content of a symbolic link into the address pointed to by
- * link_content.
- *
- * @todo ACE: Fix this to remove the grotesque buffer hack as part of
- * callbackification.
+ * Call the FSAL to allocate a buffer and pass back the contents of
+ * the symbolic link.  The buffer must be allocated with gsh_malloc
+ * and freed by the core.
  *
  * @param[in]  entry        The link to read
  * @param[out] link_content The location into which to write the
@@ -77,6 +68,7 @@ cache_inode_readlink(cache_entry_t *entry,
 {
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
+     bool refresh = false;
 
      if (entry->type != SYMBOLIC_LINK) {
           status = CACHE_INODE_BAD_TYPE;
@@ -92,27 +84,17 @@ cache_inode_readlink(cache_entry_t *entry,
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           /* Make sure nobody updated the content while we were
              waiting. */
-          bool refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
-
-          fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
-                  req_ctx,
-                  link_content->addr,
-                  &link_content->len,
-                  refresh);
-
-          if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
-              atomic_set_uint32_t_bits(&entry->flags,
-                      CACHE_INODE_TRUST_CONTENT);
-          }
-
-     } else {
-             fsal_status = entry->obj_handle->ops->readlink(
-                                                         entry->obj_handle,
-                                                         req_ctx,
-                                                         link_content->addr,
-                                                         &link_content->len,
-                                                         false);
+          refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
      }
+     fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
+						    req_ctx,
+						    link_content,
+						    refresh);
+     if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
+	 atomic_set_uint32_t_bits(&entry->flags,
+				  CACHE_INODE_TRUST_CONTENT);
+     }
+
      PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      if (FSAL_IS_ERROR(fsal_status)) {

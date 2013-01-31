@@ -106,6 +106,7 @@ typedef struct cache_inode_lru__ {
 	struct glist_head q; /*< Link in the physical deque
 			         impelmenting a portion of the logical
 			         LRU. */
+        struct glist_head cq; /*< Link in the cleanup queue */
 	pthread_mutex_t mtx; /*< Mutex protecting this entry with
 			         regard to LRU operations. */
 	int64_t refcount; /*< Reference count.  This is signed to make
@@ -592,6 +593,10 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 					fsal_accessflags_t access_type,
 					struct req_op_context
 					   *req_ctx);
+cache_inode_status_t
+cache_inode_check_setattr_perms(cache_entry_t        * entry,
+                                struct attrlist *attr,
+                                struct req_op_context *req_ctx);
 
 bool is_open(cache_entry_t *entry);
 bool is_open_for_read(cache_entry_t *entry);
@@ -628,6 +633,10 @@ cache_inode_status_t cache_inode_fsid(cache_entry_t *entry,
 cache_inode_status_t cache_inode_size(cache_entry_t *entry,
 				      const struct req_op_context *req_ctx,
 				      uint64_t *size);
+
+void cache_inode_create_set_verifier(struct attrlist *sattr,
+                                     uint32_t verf_hi,
+                                     uint32_t verf_lo);
 
 bool cache_inode_create_verify(cache_entry_t *entry,
 			       const struct req_op_context *req_ctx,
@@ -695,14 +704,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 					 struct attrlist *attr,
 					 struct req_op_context *req_ctx);
 
-cache_inode_status_t
-cache_inode_truncate_impl(cache_entry_t *entry,
-			  uint64_t length,
-			  struct req_op_context *req_ctx);
-cache_inode_status_t cache_inode_truncate(
-	cache_entry_t *entry,
-	uint64_t length,
-	struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
@@ -813,7 +814,7 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type,
 			       time_t value,
 			       char *out);
 
-inline int cache_inode_set_time_current(gsh_time_t *time);
+inline int cache_inode_set_time_current(struct timespec *time);
 
 /* Hash functions for hashtables and RBT */
 uint32_t cache_inode_fsal_hash_func(hash_parameter_t *hparam,
@@ -845,7 +846,7 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
 	entry->attr_time = time(NULL);
 	/** @todo ACE: This should really be changed to use sub-second time
 	    resolution when it's available. */
-	entry->change_time = entry->obj_handle->attributes.chgtime.seconds;
+	entry->change_time = entry->obj_handle->attributes.chgtime.tv_sec;
 	/* Almost certainly not necessary */
 	entry->type = entry->obj_handle->attributes.type;
 	/* We have just loaded the attributes from the FSAL. */
@@ -936,18 +937,28 @@ static inline changeid4 cache_inode_get_changeid4(cache_entry_t *entry)
 
 static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	cache_entry_t *entry,
-	const struct req_op_context *opctx)
+	const struct req_op_context *opctx,
+	bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-
-	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	if (need_wr_lock)
+	{
+	    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	}
+	else
+	{
+	    PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	}
 	/* Do we need to refresh? */
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			   ATTR_RDATTR_ERR)) {
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	    if (!need_wr_lock)
+	    {
+	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	    }
 		/* Has someone else done it for us? */
 		if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 		    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,

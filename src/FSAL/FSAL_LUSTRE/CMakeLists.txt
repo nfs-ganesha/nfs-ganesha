@@ -14,10 +14,10 @@ SET(fsallustre_LIB_SRCS
 
 add_library(fsallustre SHARED ${fsallustre_LIB_SRCS})
 
-target_link_libraries(fsallustre)
+target_link_libraries(fsallustre lustreapi ${SYSTEM_LIBRARIES})
 
 set_target_properties(fsallustre PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsallustre DESTINATION lib)
+install(TARGETS fsallustre COMPONENT fsal DESTINATION lib)
 
 
 ########### next target ###############
@@ -36,10 +36,10 @@ if(USE_FSAL_SHOOK)
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})
 
-  target_link_libraries(fsalshook)
+  target_link_libraries(fsalshook ${SYSTEM_LIBRARIES})
 
   set_target_properties(fsalshook PROPERTIES VERSION 4.2.0 SOVERSION 4)
-  install(TARGETS fsalshook DESTINATION lib)
+  install(TARGETS fsalshook COMPONENT fsal DESTINATION lib)
 endif(USE_FSAL_SHOOK)
 
 ########### install files ###############

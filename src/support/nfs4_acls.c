@@ -1,11 +1,4 @@
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "abstract_mem.h"
 #include "fsal.h"
 #include "HashTable.h"
@@ -13,6 +6,7 @@
 #include "nfs4_acls.h"
 #include <openssl/md5.h>
 #include <pthread.h>
+#include "lookup3.h"
 
 pool_t *fsal_acl_pool;
 static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;

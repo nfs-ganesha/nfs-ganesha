@@ -45,10 +45,10 @@
  */
 
 struct export {
-        struct ceph_mount_info *cmount; /*< The mount object used to
+	struct ceph_mount_info *cmount; /*< The mount object used to
                                             access all Ceph methods on
                                             this export. */
-        struct fsal_export export; /*< The public export object */
+	struct fsal_export export; /*< The public export object */
 };
 
 /**
@@ -57,9 +57,9 @@ struct export {
  */
 
 struct __attribute__((packed)) wire_handle {
-        vinodeno_t vi;
-        uint64_t parent_ino;
-        uint32_t parent_hash;
+	vinodeno_t vi;
+	uint64_t parent_ino;
+	uint32_t parent_hash;
 };
 
 /**
@@ -67,26 +67,25 @@ struct __attribute__((packed)) wire_handle {
  */
 
 struct handle {
-        struct wire_handle wire; /*< The Ceph wire handle */
-        struct fsal_obj_handle handle; /*< The public handle */
-        Fh *fd;
-        fsal_openflags_t openflags;
-        uint64_t rd_issued;
-        uint64_t rd_serial;
-        uint64_t rw_issued;
-        uint64_t rw_serial;
-        uint64_t rw_max_len;
+	struct wire_handle wire; /*< The Ceph wire handle */
+	struct fsal_obj_handle handle; /*< The public handle */
+	Fh *fd;
+	fsal_openflags_t openflags;
+	uint64_t rd_issued;
+	uint64_t rd_serial;
+	uint64_t rw_issued;
+	uint64_t rw_serial;
+	uint64_t rw_max_len;
 };
 
 /**
  * The wire content of a DS (data server) handle
  */
 
-struct ds_wire
-{
-        struct wire_handle wire; /*< All the information of a regualr handle */
-        struct ceph_file_layout layout; /*< Layout information */
-        uint64_t snapseq; /*< And a single entry giving a degernate
+struct ds_wire {
+	struct wire_handle wire; /*< All the information of a regualr handle */
+	struct ceph_file_layout layout; /*< Layout information */
+	uint64_t snapseq; /*< And a single entry giving a degernate
                               snaprealm. */
 };
 
@@ -94,11 +93,10 @@ struct ds_wire
  * The full, 'private' DS (data server) handle
  */
 
-struct ds
-{
-        struct ds_wire wire; /*< Wire data */
-        struct fsal_ds_handle ds; /*< Public DS handle */
-        bool connected; /*< True if the handle has been connected
+struct ds {
+	struct ds_wire wire; /*< Wire data */
+	struct fsal_ds_handle ds; /*< Public DS handle */
+	bool connected; /*< True if the handle has been connected
                             (in Ceph) */
 };
 
@@ -119,11 +117,11 @@ static const size_t BIGGEST_PATTERN = 1024;
 /* Prototypes */
 
 int construct_handle(const struct stat *st,
-                     struct export *export,
-                     struct handle **obj);
+		     struct export *export,
+		     struct handle **obj);
 fsal_status_t ceph2fsal_error(const int ceph_errorcode);
 void ceph2fsal_attributes(const struct stat *buffstat,
-                          struct attrlist *fsalattr);
+			  struct attrlist *fsalattr);
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 void ds_ops_init(struct fsal_ds_ops *ops);

@@ -32,14 +32,7 @@
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -70,7 +63,6 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
-        struct timeval         t;
         struct attrlist        sattr;
         cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
         const char           * tag = "SETATTR";
@@ -107,7 +99,7 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 return res_SETATTR4.status;
         }
 
-        /* Convert the fattr4 in the request to a nfs3_sattr structure */
+        /* Convert the fattr4 in the request to a fsal sattr structure */
         res_SETATTR4.status = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
         if (res_SETATTR4.status != NFS4_OK) {
                 return res_SETATTR4.status;
@@ -190,22 +182,14 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                 return res_SETATTR4.status;
                         }
                 }
-
-                cache_status = cache_inode_truncate(data->current_entry,
-						    sattr.filesize,
-						    data->req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        res_SETATTR4.status = nfs4_Errno(cache_status);
-                        return res_SETATTR4.status;
-                }
-
-                /* we just did the truncate, turn off these attrs */
-                FSAL_UNSET_MASK(sattr.mask, (ATTR_SPACEUSED | ATTR_SIZE));
         }
         /* Now, we set the mode */
         if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_OWNER) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_GROUP) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_SIZE) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_MTIME) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_ACL) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) {
@@ -232,18 +216,19 @@ nfs4_op_setattr(struct nfs_argop4 *op,
 #define S_NSECS 1000000000UL  /* nsecs in 1s */
         /* Set the atime and mtime (ctime is not setable) */
 
-        /* get the current time */
-        gettimeofday(&t, NULL);
-
         /* A carry into seconds considered invalid */
-        if (sattr.atime.nseconds >= S_NSECS) {
+        if (sattr.atime.tv_nsec >= S_NSECS) {
                 res_SETATTR4.status = NFS4ERR_INVAL;
                 return res_SETATTR4.status;
         }
-        if (sattr.mtime.nseconds >= S_NSECS) {
+        if (sattr.mtime.tv_nsec >= S_NSECS) {
                 res_SETATTR4.status = NFS4ERR_INVAL;
                 return res_SETATTR4.status;
         }
+        /* If owner or owner_group are set, and the credential was
+         * squashed, then we must squash the set owner and owner_group.
+         */
+        squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
 
         cache_status = cache_inode_setattr(data->current_entry,
 					   &sattr,

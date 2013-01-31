@@ -33,13 +33,7 @@
  * @brief   Glue functions between the FSAL and the Cache inode layers.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
 
 #include "log.h"
 #include "err_fsal.h"
@@ -49,6 +43,7 @@
 #include <stdlib.h>             /* for using exit */
 #include <strings.h>
 #include <sys/types.h>
+#include "lookup3.h"
 
 /** @TODO
  * If there is need/desire to have multiple hash functions, an ops

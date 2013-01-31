@@ -28,14 +28,7 @@
  * @brief This file that contain the routine required for parsing the NFS specific configuraion file.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -1065,7 +1058,7 @@ int nfs_read_version4_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "UseGetpwnam"))
         {
           pparam->use_getpwnam = StrToBoolean(key_value);
-#ifndef _USE_NFSIDMAP
+#ifndef USE_NFSIDMAP
           if (!pparam->use_getpwnam)
             {
               LogCrit(COMPONENT_CONFIG,

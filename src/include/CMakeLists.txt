@@ -5,7 +5,7 @@ add_subdirectory(FSAL)
 
 ########### install files ###############
 
-install(FILES  ganesha_fuse_wrap.h DESTINATION include)
+install(FILES  ganesha_fuse_wrap.h COMPONENT headers DESTINATION include)
 
 
 
@@ -73,7 +73,6 @@ install(FILES  ganesha_fuse_wrap.h DESTINATION include)
 #                 Connectathon_config_parsing.h   \
 #		 ganesha_rpc.h                   \
 #                 Rpc_com_tirpc.h                 \
-#                 solaris_port.h                  \
 #		 rpc/svc_auth.h                  \
 #                 lookup3.h                       \
 #                 config.h                        \

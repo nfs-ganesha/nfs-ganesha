@@ -17,7 +17,6 @@ fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
                                     fsal_attrib_list_t * p_fsalattr_out);
 
 fsal_nodetype_t posix2fsal_type(mode_t posix_type_in);
-fsal_time_t posix2fsal_time(time_t tsec);
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
 fsal_dev_t posix2fsal_devt(dev_t posix_devid);
 

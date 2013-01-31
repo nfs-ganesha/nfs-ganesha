@@ -26,15 +26,7 @@
  * @file  exports.c
  * @brief Export parsing and management
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#define USHRT_MAX       6553
-#endif
-
 #include "cidr.h"
 #include "ganesha_rpc.h"
 #include "log.h"
@@ -1863,36 +1855,20 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL))
         {
-	  if(p_entry->export_hdl != NULL)
+	  if(fsal_hdl != NULL)
 	    {
 	      LogCrit(COMPONENT_CONFIG,
 		      "FSAL is already defined as (%s), new attempt = (%s)",
-		      p_entry->export_hdl->fsal->ops->get_name(p_entry->export_hdl->fsal),
+		      fsal_hdl->ops->get_name(p_entry->export_hdl->fsal),
 		      var_value);
 	      continue;
 	    }
 	  fsal_hdl = lookup_fsal(var_value);
-	  if(fsal_hdl != NULL)
-	    {
-              fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
-								  p_entry->fullpath, /* correct path? */
-								  p_entry->FS_specific,
-								  p_entry,
-								  NULL, /* no stacked fsals for now */
-                                                                  &fsal_up_top,
-								  &p_entry->export_hdl);
-              if(FSAL_IS_ERROR(expres))
- 	        {
-	          LogCrit(COMPONENT_CONFIG,
-			  "Could not create FSAL export for %s", p_entry->fullpath);
-                  err_flag = true;
-                }
-              fsal_hdl->ops->put(fsal_hdl); /* unlock the fsal */
-            }
-          else
+	  if(fsal_hdl == NULL)
 	    {
 		    LogCrit(COMPONENT_CONFIG,
 			    "FSAL %s is not loaded!", var_value);
+		    continue;
 	    }
 	}
       else
@@ -1907,35 +1883,35 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
  * an export doesn't supply it.  Right now, it is VFS for lack of a better
  * idea.
  */
-  if(p_entry->export_hdl == NULL)
+  if(fsal_hdl == NULL)
     {
       LogMajor(COMPONENT_CONFIG,
 	      "No FSAL for this export defined. Fallback to using VFS");
       fsal_hdl = lookup_fsal("VFS"); /* should have a "Default_FSAL" param... */
-      if(fsal_hdl != NULL)
-        {
-          fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
-							      p_entry->fullpath, /* correct path? */
-							      p_entry->FS_specific,
-							      p_entry,
-							      NULL, /* no stacked fsals for now */
-                                                              &fsal_up_top,
-							      &p_entry->export_hdl);
-          if(FSAL_IS_ERROR(expres))
-            {
-	      LogCrit(COMPONENT_CONFIG,
-		      "Could not create FSAL export for %s", p_entry->fullpath);
-              err_flag = true;
-            }
-          fsal_hdl->ops->put(fsal_hdl);
-        }
-      else
+    }
+  if(fsal_hdl != NULL)
+    {
+      fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
+							  p_entry->fullpath,
+							  p_entry->FS_specific,
+							  p_entry,
+							  NULL, /* no stacked fsals for now */
+							  &fsal_up_top,
+							  &p_entry->export_hdl);
+      if(FSAL_IS_ERROR(expres))
         {
 	  LogCrit(COMPONENT_CONFIG,
-		  "HELP! even VFS FSAL is not resident!");
-        }
+		  "Could not create FSAL export for %s", p_entry->fullpath);
+	  err_flag = true;
+	}
+      fsal_hdl->ops->put(fsal_hdl);
     }
-          
+  else
+    {
+      LogCrit(COMPONENT_CONFIG,
+	      "HELP! even VFS FSAL is not resident!");
+    }
+
   /** check for mandatory options */
   if((set_options & mandatory_options) != mandatory_options)
     {
@@ -1984,6 +1960,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
    */
   if(err_flag)
     {
+      if(p_entry->export_hdl != NULL)
+        {
+	  p_entry->export_hdl->ops->release(p_entry->export_hdl);
+	}
       gsh_free(p_entry);
       return -1;
     }

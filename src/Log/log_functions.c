@@ -25,9 +25,7 @@
  * ensemble des fonctions d'affichage et de gestion des erreurs
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <stdlib.h>             /* for malloc */
 #include <ctype.h>              /* for isdigit */

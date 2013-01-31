@@ -29,9 +29,7 @@
  * File I/O methods for GPFS module
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <assert.h>
 #include "fsal.h"
@@ -42,7 +40,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "gpfs_methods.h"
-#include "fsal_handle_syscalls.h"
 
 /** gpfs_open
  * called with appropriate locks taken at the cache inode level

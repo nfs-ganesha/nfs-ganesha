@@ -29,9 +29,7 @@
  * VFS object (file|dir) handle object extended attributes
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <fsal_handle_syscalls.h>
@@ -48,7 +46,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"
 #include "FSAL/fsal_commonlib.h"
-#include <FSAL/FSAL_LUSTRE/fsal_handle.h>
+#include "fsal_handle.h"
 #include "lustre_methods.h"
 #include <stdbool.h>
 
@@ -241,7 +239,7 @@ static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
   if(xattr_attrs->mask & ATTR_CHGTIME)
     {
       xattr_attrs->chgtime = file_attrs->chgtime;
-      xattr_attrs->change = (uint64_t) xattr_attrs->chgtime.seconds;
+      xattr_attrs->change = (uint64_t) xattr_attrs->chgtime.tv_sec;
     }
 
   if(xattr_attrs->mask & ATTR_SIZE)

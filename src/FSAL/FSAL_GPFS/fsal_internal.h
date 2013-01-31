@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -265,8 +266,7 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(int * p_file_descriptor,     /* IN */
 
 fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,        /* IN */
                             const struct req_op_context * p_context,     /* IN */
-                            struct attrlist * p_attrib_set,             /* IN */
-                            struct attrlist * p_object_attributes);  /* IN/OUT */
+                            struct attrlist * p_object_attributes);     /* IN */
 
 fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,       /* IN */
                           const char * p_filename,                   /* IN */
@@ -478,7 +478,7 @@ fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  
 			 fsal_up_event_bus_context_t * pupebcontext); /* INOUT */
 fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,
 		         fsal_count_t * event_nb,                       /* IN */
-		         fsal_time_t timeout,                           /* IN */
+		         struct timespec timeout,                       /* IN */
 		         fsal_count_t * peventfound,                   /* OUT */
 		         fsal_up_event_bus_context_t * pupebcontext);   /* IN */
 #endif

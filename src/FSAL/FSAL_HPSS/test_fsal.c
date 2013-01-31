@@ -10,9 +10,7 @@
  * \brief   Program for testing fsal.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "log.h"

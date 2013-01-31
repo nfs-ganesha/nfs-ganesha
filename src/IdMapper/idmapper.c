@@ -28,14 +28,7 @@
  * @file    idmapper.c
  * @brief   Id mapping functions
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
@@ -54,7 +47,7 @@
 
 #define NFSIDMAP_ENABLED        (!nfs_param.nfsv4_param.use_getpwnam)
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 
 
 typedef void (*nfs4_idmap_log_function_t) (const char *, ...);
@@ -86,7 +79,7 @@ int nfsidmap_set_conf()
     }
   return 1;
 }
-#endif                          /* _USE_NFSIDMAP */
+#endif                          /* USE_NFSIDMAP */
 
 /**
  * @brief Convert a UID to a name
@@ -102,7 +95,7 @@ int uid2name(char *name, uid_t * puid)
 {
   if (NFSIDMAP_ENABLED)
     {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
       char fqname[NFS4_MAX_DOMAIN_LEN];
     
       int rc;
@@ -155,7 +148,7 @@ int uid2name(char *name, uid_t * puid)
             }
         }
       return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
       assert(!"prohibited by configuration");
       return 1;
 #endif
@@ -175,12 +168,8 @@ int uid2name(char *name, uid_t * puid)
         }
       else
         {
-#ifdef _SOLARIS
-          if(getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN) != 0)
-#else
           if((getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN, &pp) != 0) ||
     	 (pp == NULL))
-#endif                          /* _SOLARIS */
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "uid2name: getpwuid_r %d failed",
@@ -222,7 +211,7 @@ int name2uid(char *name, uid_t *puid)
   struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
   uid_t uid;
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
@@ -253,11 +242,7 @@ int name2uid(char *name, uid_t *puid)
     }
   else
     {
-#ifdef _SOLARIS
-      if((res = getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
-#else
       if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &res) != 0)
-#endif                          /* _SOLARIS */
         {
           LogFullDebug(COMPONENT_IDMAPPER,
                        "name2uid: getpwnam_r %s failed",
@@ -305,7 +290,7 @@ int name2uid(char *name, uid_t *puid)
       else
         {
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
 
           if(!nfsidmap_set_conf())
             {
@@ -362,7 +347,7 @@ int name2uid(char *name, uid_t *puid)
             }
 #endif                          /* _HAVE_GSSAPI */
 
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
           assert(!"prohibited by configuration");
 #endif
 
@@ -396,7 +381,7 @@ int principal2uid(char *principal, uid_t *puid, struct svc_rpc_gss_data *gd)
 int principal2uid(char *principal, uid_t * puid)
 #endif
 {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   gid_t gss_gid;
   uid_t gss_uid;
   int rc;
@@ -407,7 +392,7 @@ int principal2uid(char *principal, uid_t * puid)
     return 0;
   }
 
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
   if(uidmap_get(principal, &gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
@@ -427,82 +412,64 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
           short found_uid=false;
           short found_gid=false;
-          gid_t gss_gid_tmp=0;
-          uid_t gss_uid_tmp=0;
-          if (gd->pac_blob.data != NULL)
+          if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
           {
+            struct wbcAuthUserParams params;
             wbcErr wbc_err;
-            struct wbcDomainSid *sids;
-            struct wbcUnixId *xids;
-            struct wbcBlob local_pac_blob;
-            uint32_t num_ids;
-            int i;
+            struct wbcAuthUserInfo *info;
+            struct wbcAuthErrorInfo *error = NULL;
 
-            local_pac_blob.data = gd->pac_blob.data;
-            local_pac_blob.length =  gd->pac_blob.length;
-            wbc_err = wbcPacToSids(local_pac_blob, &num_ids, &sids);
+            memset(&params, 0, sizeof(params));
+            params.level = WBC_AUTH_USER_LEVEL_PAC;
+            params.password.pac.data = (uint8_t *)gd->pac.ms_pac.value;
+            params.password.pac.length = gd->pac.ms_pac.length;
+
+            wbc_err = wbcAuthenticateUserEx(&params, &info, &error);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogEvent(COMPONENT_IDMAPPER, "wbcPacToSids returned %s",
-                             wbcErrorString(wbc_err));
-              return 0;
-            }
-#if 0
-            char sid_str[WBC_SID_STRING_BUFLEN];
-
-            for (i = 0; i < num_ids; i++) {
-              wbcSidToStringBuf(&sids[i], sid_str, sizeof(sid_str));
-              fprintf(stderr, "SID %s\n", sid_str);
-            }
-#endif
-
-            xids = calloc(num_ids, sizeof(*xids));
-
-            if (xids == NULL) {
-              LogEvent(COMPONENT_IDMAPPER, "xids calloc failed\n");
-              wbcFreeMemory(sids);
+              LogCrit(COMPONENT_IDMAPPER,"wbcAuthenticateUserEx returned %s",
+                       wbcErrorString(wbc_err));
               return 0;
             }
 
-            wbc_err = wbcSidsToUnixIds(sids, num_ids, xids);
-            wbcFreeMemory(sids);
+            if (error) {
+              LogCrit(COMPONENT_IDMAPPER,"nt_status: %s, display_string %s",
+                      error->nt_string, error->display_string);
+              wbcFreeMemory(error); 
+              return 0;
+            }
+
+            LogFullDebug(COMPONENT_IDMAPPER,"account_name: %s", info->account_name);
+            LogFullDebug(COMPONENT_IDMAPPER,"domain_name: %s", info->domain_name);
+            LogFullDebug(COMPONENT_IDMAPPER,"num_sids: %d", info->num_sids);
+
+            /* 1st SID is account sid, see wbclient.h */
+            wbc_err = wbcSidToUid(&info->sids[0].sid, &gss_uid);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogFullDebug(COMPONENT_IDMAPPER, "wbcSidsToUnixIds returned %s",
-                             wbcErrorString(wbc_err));
-              free(xids);
+              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for uid returned %s",
+                      wbcErrorString(wbc_err));
+              wbcFreeMemory(info);
               return 0;
             }
-            for (i = 0; i < num_ids; i++) {
-              struct wbcUnixId* id = &xids[i];
 
-              switch(id->type) {
-              case WBC_ID_TYPE_NOT_SPECIFIED:
-                LogFullDebug(COMPONENT_IDMAPPER, "type not specified");
-                break;
-              case WBC_ID_TYPE_UID:
-                LogFullDebug(COMPONENT_IDMAPPER, "uid %d", id->id.uid);
-                gss_uid_tmp = id->id.uid;
-                found_uid = true;
-                break;
-              case WBC_ID_TYPE_GID:
-                LogFullDebug(COMPONENT_IDMAPPER, "gid %d\n", id->id.gid);
-                gss_gid_tmp = id->id.gid;
-                found_gid = true;
-                break;
-              default:
-                break;
-              };
+            /* 2nd SID is primary_group sid, see wbclient.h */
+            wbc_err = wbcSidToGid(&info->sids[1].sid, &gss_gid);
+            if (!WBC_ERROR_IS_OK(wbc_err)) {
+              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for gid returned %s\n",
+                      wbcErrorString(wbc_err));
+              wbcFreeMemory(info);
+              return 0;
             }
-            free(xids);
+            wbcFreeMemory(info);
+            found_uid = true;
+            found_gid = true;
           }
-#endif
+#endif /* _MSPAC_SUPPORT */
           LogFullDebug(COMPONENT_IDMAPPER,
                        "principal2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
                        principal, -rc, strerror(-rc));
 #ifdef _MSPAC_SUPPORT
           if ((found_uid == true) && (found_gid == true))
           {
-            gss_uid = gss_uid_tmp;
-            gss_gid = gss_gid_tmp;
             goto principal_found;
           }
 #endif
@@ -534,7 +501,7 @@ principal_found:
   *puid = gss_uid;
 
   return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
   assert(!"prohibited by configuration");
   return 1;
 #endif
@@ -552,14 +519,12 @@ principal_found:
 int gid2name(char *name, gid_t * pgid)
 {
   struct group g;
-#ifndef _SOLARIS
   struct group *pg = NULL;
-#endif
   static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 
   if (NFSIDMAP_ENABLED)
     {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
       int rc;
     
       if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
@@ -601,7 +566,7 @@ int gid2name(char *name, gid_t * pgid)
         }
     
       return 1;
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
       assert(!"prohibited by configuration");
       return 1;
 #endif
@@ -618,12 +583,8 @@ int gid2name(char *name, gid_t * pgid)
         }
       else
         {
-#ifdef _SOLARIS
-          if(getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN) != 0)
-#else
           if((getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0) ||
     	 (pg == NULL))
-#endif                          /* _SOLARIS */
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "gid2name: getgrgid_r %d failed",
@@ -674,7 +635,7 @@ int name2gid(char *name, gid_t *pgid)
     {
       if (NFSIDMAP_ENABLED)
         {
-#ifdef _USE_NFSIDMAP
+#ifdef USE_NFSIDMAP
           int rc;
           if(!nfsidmap_set_conf())
             {
@@ -703,7 +664,7 @@ int name2gid(char *name, gid_t *pgid)
                       name, *pgid);
               return 0;
             }
-#else           /* !_USE_NFSIDMAP */
+#else           /* !USE_NFSIDMAP */
           assert(!"prohibited by configuration");
           return 1;
 #endif
@@ -715,11 +676,7 @@ int name2gid(char *name, gid_t *pgid)
           struct group *pg = NULL;
           static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
     
-    #ifdef _SOLARIS
-          if((pg = getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
-    #else
           if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0)
-    #endif
             {
               LogFullDebug(COMPONENT_IDMAPPER,
                            "name2gid: getgrnam_r %s failed",

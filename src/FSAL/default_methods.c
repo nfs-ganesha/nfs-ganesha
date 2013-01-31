@@ -37,9 +37,7 @@
  * @brief System wide default FSAL methods
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <stdint.h>
 #include <stddef.h>
@@ -403,9 +401,9 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
  * default case is zero interval time
  */
 
-static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-        gsh_time_t lease_time = {0,0};
+        struct timespec lease_time = {0,0};
 
         return lease_time;
 }
@@ -755,8 +753,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
-                                 char *link_content,
-                                 size_t *link_len,
+                                 struct gsh_buffdesc *link_content,
                                  bool refresh)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -819,16 +816,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
-/* file_truncate
- * default case not supported
- */
-
-static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
-                                   const struct req_op_context *opctx,
-                                   uint64_t length)
-{
-        return fsalstat(ERR_FSAL_NOTSUPP, 0);
-}
 
 /* file_open
  * default case not supported
@@ -1166,7 +1153,6 @@ struct fsal_obj_ops def_handle_ops = {
         .link = linkfile,
         .rename = renamefile,
         .unlink = file_unlink,
-        .truncate = file_truncate,
         .open = file_open,
         .status = file_status,
         .read = file_read,

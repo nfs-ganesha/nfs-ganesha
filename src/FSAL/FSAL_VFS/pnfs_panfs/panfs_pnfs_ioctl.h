@@ -56,6 +56,8 @@ struct pan_ioctl_xdr {
 struct pan_layoutget_ioctl {
 	struct pan_ioctl_hdr hdr;		/* IN/OUT */
 	struct pan_ioctl_xdr loc_body;		/* IN/OUT */
+	uint64_t clientid;			/*   IN   */
+	void    *recall_file_info;		/*   IN   */
 	const struct fsal_layoutget_arg *arg;	/*   IN   */
 	struct fsal_layoutget_res *res;		/* IN/OUT */
 };
@@ -116,7 +118,7 @@ struct pan_layoutreturn_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRETURN \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
+  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
 
 /**
  * @brief Commit on a writable layout
@@ -137,41 +139,45 @@ struct pan_layoutcommit_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
+  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
 
 /**
  * @brief Retrieve next layout Recall
- *	TBD
+ *
+ * @param[out]    events      An array of recall events to recieve one
+ *                            or more events to recall.
+ * @param[in]     max_events  Max elements at @events array
+ * @param[out]    num_events  Num of valid events returned
+ *
  */
 struct pan_cb_layoutrecall_ioctl {
 	struct pan_ioctl_hdr hdr;		/* IN/OUT */
-	/* TBD */
+	struct pan_cb_layoutrecall_event {
+		
+		struct pnfs_segment seg;
+		void *recall_file_info;
+		void *cookie;
+		uint64_t clientid;
+		uint32_t flags;
+	} *events;				/* OUT   */
+	uint32_t max_events;			/* IN    */
+	uint32_t num_events;			/* OUT   */
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRECALL \
   _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 104, struct pan_cb_layoutrecall_ioctl)
 
-#if (KERNEL > 0)
-
 /**
- * For:
- *     PAN_FS_CLIENT_PNFS_LAYOUTGET:
- *     PAN_FS_CLIENT_PNFS_DEVICEINFO:
- *     PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT:
- *     PAN_FS_CLIENT_PNFS_LAYOUTRETURN:
- *     PAN_FS_CLIENT_PNFS_LAYOUTRECALL:
- * Implemented in: pnfs/pan_fs_client_pnfs.c
- * @author bharrosh
- * @version 5.5
+ * @brief Tell Kernel to release any callback threads
  *
- * @since 5.5
  */
-pan_status_t
-pan_fs_client_pnfs_ioctl(
-  pan_fs_client_cache_pannode_t              *pannode,
-  uint32_t                                    command,
-  void                                       *data);
+struct pan_cancel_recalls_ioctl {
+	struct pan_ioctl_hdr hdr;		/* IN/OUT */
+	/* debug_magic must be zero or else ... */
+	uint32_t debug_magic;			/* IN */
+};
 
-#endif /* (KERNEL > 0) */
+#define PAN_FS_CLIENT_PNFS_CANCEL_RECALLS \
+  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 105, struct pan_cancel_recalls_ioctl)
 
 #endif /* __PAN_FS_PNFS_API_H__ */

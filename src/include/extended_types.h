@@ -38,6 +38,7 @@
 #ifndef _EXTENDED_TYPES_H
 #define _EXTENDED_TYPES_H
 
+#include "config.h"
 #include <sys/types.h>
 
 #ifdef LINUX
@@ -51,7 +52,16 @@ typedef long long longlong_t;
 typedef unsigned long long u_longlong_t;
 
 typedef unsigned int uint_t;
-typedef unsigned int uint32_t;
 
+/* conflict between sys/xattr.h and attr/xattr.h
+ * this comes from xfs/linux.h.  Very bad form but we are
+ * stuck with it.  If we didn't pick it up somewhere else
+ * make is so here.
+ * Danger Will Robinson!! this is an overlay of another errno...
+ */
+
+#ifndef ENOATTR
+#define ENOATTR ENODATA        /* No such attribute */
+#endif
 
 #endif                          /* _EXTENDED_TYPES_H */

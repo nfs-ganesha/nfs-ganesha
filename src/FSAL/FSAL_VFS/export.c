@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ------------- 
  */
@@ -29,9 +30,7 @@
  * VFS FSAL export object
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
@@ -41,6 +40,7 @@
 #include <sys/statvfs.h>
 #include <os/mntent.h>
 #include <os/quota.h>
+#include <dlfcn.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -50,20 +50,6 @@
 
 #include "pnfs_panfs/mds.h"
 
-/*
- * VFS internal export
- */
-
-struct vfs_fsal_export {
-	struct fsal_export export;
-	char *mntdir;
-	char *fs_spec;
-	char *fstype;
-	int root_fd;
-	dev_t root_dev;
-	struct file_handle *root_handle;
-	bool pnfs_panfs_enabled;
-};
 
 /* helpers to/from other VFS objects
  */
@@ -77,6 +63,38 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl) {
 	return myself->root_fd;
 }
 
+static int
+vfs_fsal_open_exp(struct fsal_export *exp,
+		  vfs_file_handle_t *fh,
+		  int openflags,
+		  fsal_errors_t *fsal_error)
+{
+	int mount_fd = vfs_get_root_fd(exp);
+	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
+	if(fd < 0) {
+		fd = -errno;
+		if(fd == -ENOENT)
+			*fsal_error = ERR_FSAL_STALE;
+		else
+			*fsal_error = posix2fsal_error(-fd);
+	}
+	return fd;
+}
+
+static int
+vfs_exp_fd_to_handle(int fd, vfs_file_handle_t *fh)
+{
+        int mntid;
+        return vfs_fd_to_handle(fd, fh, &mntid);
+}
+
+static struct vfs_exp_handle_ops defops = {
+        .vex_open_by_handle = vfs_fsal_open_exp,
+        .vex_name_to_handle = vfs_name_to_handle_at,
+        .vex_fd_to_handle = vfs_exp_fd_to_handle,
+        .vex_readlink = vfs_fsal_readlink
+};
+
 /* export object methods
  */
 
@@ -88,6 +106,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 
+	pnfs_panfs_fini(myself->pnfs_data);
 	pthread_mutex_lock(&exp_hdl->lock);
 	if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
 		LogMajor(COMPONENT_FSAL,
@@ -146,8 +165,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->total_files = buffstatvfs.f_files;
 	infop->free_files = buffstatvfs.f_ffree;
 	infop->avail_files = buffstatvfs.f_favail;
-	infop->time_delta.seconds = 1;
-	infop->time_delta.nseconds = 0;
+	infop->time_delta.tv_sec = 1;
+	infop->time_delta.tv_nsec = 0;
 
 out:
 	return fsalstat(fsal_error, retval);
@@ -218,7 +237,7 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
 	return fsal_fh_expire_type(info);
 }
 
-static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -487,12 +506,20 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 static bool fs_specific_has(const char *fs_specific, const char* key,
 			    char *val, int max_val_bytes)
 {
-	char *fso_copy = strdup(fs_specific); /* enable multiple searches */
 	char *next_comma, *option;
 	bool ret;
-	char *fso_dup = fso_copy;
+	char *fso_dup = NULL;
 
-	for (option = strtok_r(fso_copy, ",", &next_comma);
+	if (!fs_specific || !fs_specific[0])
+		return false;
+
+	fso_dup = strdup(fs_specific);
+	if (!fso_dup) {
+		LogCrit(COMPONENT_FSAL,"strdup(%s) failed", fs_specific);
+		return false;
+	}
+
+	for (option = strtok_r(fso_dup, ",", &next_comma);
 	     option; 
 	     option=strtok_r(NULL, ",", &next_comma)) {
 		char *k = option;
@@ -503,12 +530,12 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 			if(val)
 				strncpy(val, v, max_val_bytes);
 			ret = true;
-			goto out;
+			goto cleanup;
 		}
 	}
 
 	ret = false;
-out:
+cleanup:
 	free(fso_dup);
 	return ret;
 }
@@ -534,6 +561,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	size_t pathlen, outlen = 0;
 	char mntdir[MAXPATHLEN];  /* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN];
+        char hdllib[MAXPATHLEN];
+        struct vfs_exp_handle_ops *hops = &defops;
 	char type[MAXNAMLEN];
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -618,12 +647,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 						  pathlen) == 0) &&
 					  ((export_path[pathlen] == '/') ||
 					   (export_path[pathlen] == '\0'))) {
-					if(strcasecmp(p_mnt->mnt_type, "xfs") == 0) {
-						LogDebug(COMPONENT_FSAL,
-							 "Mount (%s) is XFS, skipping",
-							 p_mnt->mnt_dir);
-						continue;
-					}
 					outlen = pathlen;
 					strncpy(mntdir,
 						p_mnt->mnt_dir, MAXPATHLEN);
@@ -643,6 +666,44 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
         }
+
+#ifdef LINUX
+	if(fs_specific_has(fs_specific, "handle_lib", hdllib, sizeof(hdllib))) {
+                void *dl;
+                void *sym;
+
+                dl = dlopen(hdllib, RTLD_NOW|RTLD_LOCAL);
+                if(dl == NULL) {
+                        LogCrit(COMPONENT_FSAL,
+                                "Could not load handle module '%s' for "
+                                "export '%s' - %s",
+                                hdllib, export_path, dlerror());
+                        fsal_error = ERR_FSAL_NOENT;
+                        goto errout;
+                }
+
+                sym = dlsym(dl, "get_handle_ops");
+                if (sym == NULL) {
+                        LogCrit(COMPONENT_FSAL,
+                                "No bootstrap entry in handle module '%s'",
+                                hdllib);
+                        dlclose(dl);
+                        fsal_error = ERR_FSAL_NOENT;
+                        goto errout;
+                }
+                hops = ((struct vfs_exp_handle_ops *(*)(char *))sym)(mntdir);
+                if (hops == NULL) {
+                        LogCrit(COMPONENT_FSAL,
+                                "%s - cannot bootstrap handle module '%s' "
+                                "with %s",
+                                export_path, hdllib, mntdir);
+                        dlclose(dl);
+                        fsal_error = ERR_FSAL_NOENT;
+                        goto errout;
+                }
+        }
+#endif
+
 	myself->root_fd = open(mntdir,  O_RDONLY|O_DIRECTORY);
 	if(myself->root_fd < 0) {
 		LogMajor(COMPONENT_FSAL,
@@ -653,7 +714,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	} else {
 		struct stat root_stat;
-		int mnt_id = 0;
                 vfs_file_handle_t *fh = NULL;
                 vfs_alloc_handle(fh);
 		retval = fstat(myself->root_fd, &root_stat);
@@ -666,7 +726,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			goto errout;
 		}
 		myself->root_dev = root_stat.st_dev;
-		retval = vfs_fd_to_handle(myself->root_fd, fh, &mnt_id);
+		retval = hops->vex_fd_to_handle(myself->root_fd, fh);
 		if(retval != 0) {
 			LogMajor(COMPONENT_FSAL,
 				 "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
@@ -688,9 +748,20 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		       fh,
                        vfs_sizeof_handle(fh));
 	}
+
+	if (myself->pnfs_panfs_enabled) {
+		retval = pnfs_panfs_init(myself->root_fd, &myself->pnfs_data);
+		if (retval) {
+			LogCrit(COMPONENT_FSAL,
+				"vfs export_ops_pnfs faild => %d [%s]",
+				retval, strerror(retval));
+			goto errout;
+		}
+	}
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
+        myself->vex_ops = *hops;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

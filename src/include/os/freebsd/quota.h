@@ -31,10 +31,7 @@
  * kludge to account for differently named member variable
  * (dqb_curspace Vs dqb_curblocks) in struct dqblk on Linux and FreeBSD platforms
 */
-#ifdef dqblk
-#undef dqblk
-
-struct dqblk {
+struct dqblk_os {
 	u_int64_t dqb_bhardlimit;       /* absolute limit on disk blks alloc */
 	u_int64_t dqb_bsoftlimit;       /* preferred limit on disk blks */
 	u_int64_t dqb_curspace;         /* current block count */
@@ -44,6 +41,11 @@ struct dqblk {
 	int64_t   dqb_btime;            /* time limit for excessive disk use */
 	int64_t   dqb_itime;            /* time limit for excessive files */
 };
-#endif /* dqblk */
+
+#if __FreeBSD_cc_version >= 800001
+#undef dqblk
+#endif
+
+#define dqblk dqblk_os
 
 #endif /* _QUOTA_FREEBSD_H */

@@ -34,14 +34,7 @@
   * @brief The management of the NLM owner cache.
   */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <string.h>
 #include <ctype.h>
 #include "sal_functions.h"

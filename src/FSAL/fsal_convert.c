@@ -7,9 +7,7 @@
  * @file  FSAL/fsal_convert.c
  * @brief FSAL type translation functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -121,16 +119,6 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
       return -1;
     }
 
-}
-
-gsh_time_t posix2fsal_time(time_t tsec, time_t nsec)
-{
-  gsh_time_t fsaltime;
-
-  fsaltime.seconds = tsec;
-  fsaltime.nseconds = nsec;
-
-  return fsaltime;
 }
 
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)

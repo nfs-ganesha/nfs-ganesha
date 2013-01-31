@@ -124,7 +124,7 @@ if(USE_FSAL_FUSE)
   target_link_libraries(ganeshaNFS ${CMAKE_THREAD_LIBS_INIT})
 
   set_target_properties(ganeshaNFS PROPERTIES VERSION 4.2.0 SOVERSION 4)
-  install(TARGETS ganeshaNFS DESTINATION lib)
+  install(TARGETS ganeshaNFS COMPONENT daemon DESTINATION lib)
 endif(USE_FSAL_FUSE)
 
 ########### next target ###############
@@ -142,11 +142,13 @@ target_link_libraries(ganesha.nfsd
   MainServices
   ${PROTOCOLS}
   ${GANESHA_CORE}
+  ConfigParsing
+  ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
 )
 
 
-install(TARGETS ganesha.nfsd DESTINATION bin)
+install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
 
 ########### install files ###############

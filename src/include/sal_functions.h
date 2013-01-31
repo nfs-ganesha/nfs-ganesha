@@ -68,7 +68,6 @@ void inc_state_owner_ref_locked(state_owner_t *owner);
 void inc_state_owner_ref(state_owner_t *owner);
 
 void dec_state_owner_ref_locked(state_owner_t *owner);
-
 void dec_state_owner_ref(state_owner_t *owner);
 
 int DisplayOpaqueValue(char *value, int len, char *str);
@@ -213,6 +212,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 
 clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid);
 
+int remove_confirmed_client_id(nfs_client_id_t *clientid);
 int remove_unconfirmed_client_id(nfs_client_id_t *clientid);
 
 clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
@@ -240,13 +240,15 @@ int display_clientid_name(nfs_client_id_t *clientid, char *str);
 
 void free_client_id(nfs_client_id_t *clientid);
 
-void inc_client_id_ref(nfs_client_id_t *clientid);
-void dec_client_id_ref(nfs_client_id_t *clientid);
+bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid);
+
+int32_t inc_client_id_ref(nfs_client_id_t *clientid);
+int32_t dec_client_id_ref(nfs_client_id_t *clientid);
 
 int display_client_record(nfs_client_record_t *record, char *str);
 
-void inc_client_record_ref(nfs_client_record_t *record);
-void dec_client_record_ref(nfs_client_record_t *record);
+int32_t inc_client_record_ref(nfs_client_record_t *record);
+int32_t dec_client_record_ref(nfs_client_record_t *record);
 
 int display_client_record_key(struct gsh_buffdesc *buff, char *str);
 int display_client_record_val(struct gsh_buffdesc *buff, char *str);
