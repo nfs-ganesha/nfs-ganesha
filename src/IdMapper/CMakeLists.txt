@@ -1,7 +1,12 @@
 include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
-  ${WBCLIENT_INCLUDE_DIR}
 )
+
+if(_MSPAC_SUPPORT)
+  include_directories(
+    ${WBCLIENT_INCLUDE_DIR}
+    )
+endif(_MSPAC_SUPPORT)
 
 ########### next target ###############
 
