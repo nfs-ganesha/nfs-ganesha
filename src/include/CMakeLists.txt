@@ -65,7 +65,6 @@ install(FILES  ganesha_fuse_wrap.h COMPONENT headers DESTINATION include)
 #                 nfs_proto_tools.h               \
 #                 nfs_rpc_callback.h              \
 #                 nfs_stat.h                      \
-#                 nfs_tcb.h                       \
 #                 nfs_tools.h                     \
 #                 rbt_node.h                      \
 #                 rbt_tree.h                      \

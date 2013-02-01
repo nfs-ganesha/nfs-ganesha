@@ -48,7 +48,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tcb.h"
 #include "wait_queue.h"
 #include "err_HashTable.h"
 

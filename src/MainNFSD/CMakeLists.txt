@@ -22,7 +22,6 @@ SET(MainServices_STAT_SRCS
    nfs_stats_thread.c
    nfs_rpc_callback.c
    nfs_worker_thread.c
-   nfs_tcb.c
    nfs_rpc_dispatcher_thread.c
    nfs_rpc_tcp_socket_manager_thread.c
    nfs_init.c

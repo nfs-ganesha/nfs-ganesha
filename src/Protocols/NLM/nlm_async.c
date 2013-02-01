@@ -30,7 +30,6 @@
 #include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
-#include "nfs_tcb.h"
 
 pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;

@@ -66,7 +66,6 @@
 #include "nlm_util.h"
 #include "nsm.h"
 #include "sal_functions.h"
-#include "nfs_tcb.h"
 #include "fridgethr.h"
 
 extern struct fridgethr *req_fridge;
@@ -1264,9 +1263,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
                cache_inode_err_str(cache_status));
     }
 
-  /* Initialize thread control block */
-  tcb_head_init();
-
   state_status = state_lock_init(cache_inode_params.cookie_param);
   if(state_status != STATE_SUCCESS)
     {
@@ -1734,20 +1730,12 @@ void nfs_start(nfs_start_info_t * p_start_info)
         LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
     }
 
-  /* Wait for the threads to complete their init step */
-  if(wait_for_threads_to_awaken() != PAUSE_OK)
-    {
-      /* Not quite sure what to do here... */
-    }
-  else
-    {
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
-      LogEvent(COMPONENT_INIT,
-               "             NFS SERVER INITIALIZED");
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
-    }
+  LogEvent(COMPONENT_INIT,
+	   "-------------------------------------------------");
+  LogEvent(COMPONENT_INIT,
+	   "             NFS SERVER INITIALIZED");
+  LogEvent(COMPONENT_INIT,
+	   "-------------------------------------------------");
 
   /* Wait for dispatcher to exit */
   LogDebug(COMPONENT_THREAD,

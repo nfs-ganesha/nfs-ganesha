@@ -36,7 +36,6 @@
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include "log.h"
-#include "nfs_tcb.h"
 
 exportlist_t *temp_pexportlist;
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
@@ -171,15 +170,9 @@ void *admin_thread(void *UnusedArg)
           continue;
         }
 
-      if(pause_threads(PAUSE_RELOAD_EXPORTS) == PAUSE_EXIT)
-        {
-          LogDebug(COMPONENT_MAIN,
-                   "Export reload interrupted by shutdown while pausing threads");
-          /* Be helpfull and exit
-           * (other termination will just blow us away, and that's ok...
-           */
-          break;
-        }
+      /**
+       * @todo Suspend the threads.
+       */
 
       /* Clear the id mapping cache for gss principals to uid/gid.
        * The id mapping may have changed.
@@ -198,21 +191,13 @@ void *admin_thread(void *UnusedArg)
           continue;
         }
 
+      /**
+       * @todo Awaken the threads.
+       */
+
       LogEvent(COMPONENT_MAIN,
                "Exports reloaded and active");
 
-      /* wake_workers could return PAUSE_PAUSE, but we don't have to do
-       * anything special in that case.
-       */
-      if(wake_threads(AWAKEN_RELOAD_EXPORTS) == PAUSE_EXIT)
-        {
-          LogDebug(COMPONENT_MAIN,
-                   "Export reload interrupted by shutdown while waking threads");
-          /* Be helpfull and exit
-           * (other termination will just blow us away, and that's ok...
-           */
-          break;
-        }
     }
 
   return NULL;
