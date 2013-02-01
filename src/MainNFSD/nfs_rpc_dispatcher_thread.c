@@ -1915,11 +1915,11 @@ nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
   if (svc_getargs(xprt, req, preqnfs->funcdesc->xdr_decode_func,
 		  (caddr_t) arg_nfs, &preqnfs->lookahead) == false)
     {
-      LogMajor(COMPONENT_DISPATCH,
-               "svc_getargs failed for Program %d, Version %d, "
-               "Function %d xid=%u",
-               (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
-               req->rq_xid);
+      LogInfo(COMPONENT_DISPATCH,
+              "svc_getargs failed for Program %d, Version %d, "
+              "Function %d xid=%u",
+              (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
+              req->rq_xid);
       /* XXX move this, removing need for thr_ctx */
       DISP_SLOCK(xprt);
       svcerr_decode(xprt, req);

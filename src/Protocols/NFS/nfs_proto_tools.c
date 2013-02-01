@@ -326,6 +326,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_FILE_OPEN:
     case CACHE_INODE_FSAL_XDEV:
     case CACHE_INODE_FSAL_MLINK:
+    case CACHE_INODE_TOOSMALL:
+    case CACHE_INODE_SERVERFAULT:
       /* Non retryable error, return error to client */
       return false;
       break;
@@ -4328,6 +4330,14 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS4ERR_BAD_COOKIE;
       break;
 
+    case CACHE_INODE_TOOSMALL:
+      nfserror = NFS4ERR_TOOSMALL;
+      break;
+
+    case CACHE_INODE_SERVERFAULT:
+      nfserror = NFS4ERR_SERVERFAULT;
+      break;
+
     case CACHE_INODE_FSAL_XDEV:
       nfserror = NFS4ERR_XDEV ;
       break ;
@@ -4475,6 +4485,14 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
     case CACHE_INODE_BAD_COOKIE:
       nfserror = NFS3ERR_BAD_COOKIE;
+      break;
+
+    case CACHE_INODE_TOOSMALL:
+      nfserror = NFS3ERR_TOOSMALL;
+      break;
+
+    case CACHE_INODE_SERVERFAULT:
+      nfserror = NFS3ERR_SERVERFAULT;
       break;
 
     case CACHE_INODE_FSAL_XDEV:

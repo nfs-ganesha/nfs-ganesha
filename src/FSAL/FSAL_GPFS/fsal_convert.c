@@ -80,20 +80,19 @@ int posix2fsal_error(int posix_errorcode)
 
       /* all shown as IO errors */
       if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
-         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_IO, open_fd_count=%d getrlimit failed",
-                        __FUNCTION__, posix_errorcode, open_fd_count);
+         LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_IO, open_fd_count=%d getrlimit failed",
+                        posix_errorcode, open_fd_count);
       }
       else {
-         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_IO, open_fd_count=%d rlim_cur=%ld rlim_max=%ld",
-                        __FUNCTION__, posix_errorcode, open_fd_count, rlim.rlim_cur, rlim.rlim_max);
+         LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_IO, open_fd_count=%d rlim_cur=%ld rlim_max=%ld",
++                       posix_errorcode, open_fd_count, rlim.rlim_cur, rlim.rlim_max);
       }
       return ERR_FSAL_IO;
 
       /* no such device */
     case ENODEV:
     case ENXIO:
-      LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_NXIO",
-                        __FUNCTION__, posix_errorcode);
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NXIO", posix_errorcode);
       return ERR_FSAL_NXIO;
 
       /* invalid file descriptor : */
@@ -111,6 +110,7 @@ int posix2fsal_error(int posix_errorcode)
 
     case ENOMEM:
     case ENOLCK:
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOMEM", posix_errorcode);
       return ERR_FSAL_NOMEM;
 
     case EACCES:
@@ -164,6 +164,8 @@ int posix2fsal_error(int posix_errorcode)
     case ENOTEMPTY:
     case -ENOTEMPTY:
 #endif
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOTEMPTY",
+              posix_errorcode);
       return ERR_FSAL_NOTEMPTY;
 
     case ESTALE:
@@ -172,7 +174,7 @@ int posix2fsal_error(int posix_errorcode)
       /* Error code that needs a retry */
     case EAGAIN:
     case EBUSY:
-
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY", posix_errorcode);
       return ERR_FSAL_DELAY;
 
     case ENOTSUP:
@@ -188,7 +190,8 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_INTERRUPT;
 
     default:
-
+      LogCrit(COMPONENT_FSAL, "Mapping %d(default) to ERR_FSAL_SERVERFAULT",
+              posix_errorcode);
       /* other unexpected errors */
       return ERR_FSAL_SERVERFAULT;
 

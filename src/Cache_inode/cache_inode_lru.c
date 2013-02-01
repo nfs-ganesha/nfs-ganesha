@@ -739,14 +739,21 @@ lru_thread(void *arg __attribute__((unused)))
      bool woke = false;
      /* Finalized */
      uint32_t n_finalized;
+     uint32_t fdratepersec=1, fds_avg, fddelta;
+     float fdnorm, fdwait_ratio, fdmulti;
+     uint64_t threadwait;
 
      SetNameFunction("lru_thread");
+
+     fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 
      while (1) {
           if (lru_thread_state.flags & LRU_SHUTDOWN)
                break;
 
-          extremis = (open_fd_count > lru_state.fds_hiwat);
+          if (cache_inode_gc_policy.use_fd_cache)
+              extremis = (open_fd_count > lru_state.fds_hiwat);
+
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
                        "Reaper awakes.");
 
@@ -757,7 +764,9 @@ lru_thread(void *arg __attribute__((unused)))
                lru_state.futility = 0;
           }
 
+          threadwait = lru_state.threadwait;
           uint64_t t_count = 0;
+          uint64_t pinned_t_count = 0;
 
           /* First, sum the queue counts.  This lets us know where we
              are relative to our watermarks. */
@@ -768,7 +777,7 @@ lru_thread(void *arg __attribute__((unused)))
                pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
 
                pthread_mutex_lock(&LRU_1[lane].lru_pinned.mtx);
-               t_count += LRU_1[lane].lru_pinned.size;
+               pinned_t_count += LRU_1[lane].lru_pinned.size;
                pthread_mutex_unlock(&LRU_1[lane].lru_pinned.mtx);
 
                pthread_mutex_lock(&LRU_2[lane].lru.mtx);
@@ -776,13 +785,20 @@ lru_thread(void *arg __attribute__((unused)))
                pthread_mutex_unlock(&LRU_2[lane].lru.mtx);
 
                pthread_mutex_lock(&LRU_2[lane].lru_pinned.mtx);
-               t_count += LRU_2[lane].lru_pinned.size;
+               pinned_t_count += LRU_2[lane].lru_pinned.size;
                pthread_mutex_unlock(&LRU_2[lane].lru_pinned.mtx);
           }
 
+          LogDebug(COMPONENT_CACHE_INODE_LRU,
+                   "%zu non-pinned entries. %zu pinned entries. %zu open fds.",
+                   t_count, pinned_t_count, open_fd_count);
+
+          t_count += pinned_t_count;
+
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "there are %"PRIu64" entries in cache.",
-                       t_count);
+                       "lru entries: %zu   cache entries: %zu",
+                       t_count, HashTable_GetSize(fh_to_cache_entry_ht));
+
 
           if (tmpflags & LRU_STATE_RECLAIMING) {
               if (t_count < lru_state.entries_lowat) {
@@ -803,18 +819,25 @@ lru_thread(void *arg __attribute__((unused)))
           /* Update global state */
           pthread_mutex_lock(&lru_mtx);
 
-          lru_state.last_count = t_count;
           lru_state.flags = tmpflags;
 
           pthread_mutex_unlock(&lru_mtx);
+
+          /* Total work done in all passes so far.  If this
+           * exceeds the window, stop.
+           */
+          size_t totalwork = 0;
+          uint64_t totalclosed=0;
+          /* The current count (after reaping) of open FDs */
+          size_t currentopen = 0;
 
           /* Reap file descriptors.  This is a preliminary example of
              the L2 functionality rather than something we expect to
              be permanent.  (It will have to adapt heavily to the new
              FSAL API, for example.) */
 
-          if (atomic_fetch_size_t(&open_fd_count)
-              < lru_state.fds_lowat) {
+          if ((atomic_fetch_size_t(&open_fd_count) < lru_state.fds_lowat) &&
+              cache_inode_gc_policy.use_fd_cache) {
                LogDebug(COMPONENT_CACHE_INODE_LRU,
                         "FD count is %zd and low water mark is "
                         "%d: not reaping.",
@@ -830,18 +853,20 @@ lru_thread(void *arg __attribute__((unused)))
                /* The count of open file descriptors before this run
                   of the reaper. */
                size_t formeropen = open_fd_count;
-               /* Total work done in all passes so far.  If this
-                  exceeds the window, stop. */
-               size_t totalwork = 0;
-               /* The current count (after reaping) of open FDs */
-               size_t currentopen = 0;
                /* Work done in the most recent pass of all queues.  if
                   value is less than the work to do in a single queue,
                   don't spin through more passes. */
                size_t workpass = 0;
 
-               LogDebug(COMPONENT_CACHE_INODE_LRU,
-                        "Starting to reap.");
+               time_t curr_time = time(NULL);
+               fdratepersec = (curr_time <= lru_state.prev_time) ?
+                 1 : (open_fd_count - lru_state.prev_fd_count)/
+                 (curr_time - lru_state.prev_time);
+
+               LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                            "fdrate:%u fdcount:%zd slept for %"PRIu64" sec",
+                            fdratepersec, formeropen,
+                            curr_time - lru_state.prev_time);
 
                if (extremis) {
                     LogDebug(COMPONENT_CACHE_INODE_LRU,
@@ -849,6 +874,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  "reapring aggressively.");
                }
 
+               /* Total fds closed between all lanes and all current runs. */
                do {
                     workpass = 0;
                     for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
@@ -867,8 +893,14 @@ lru_thread(void *arg __attribute__((unused)))
 
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Reaping up to %d entries from lane %zd",
-                                  lru_state.per_lane_work,
-                                  lane);
+                                  lru_state.per_lane_work, lane);
+
+                         LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                                      "formeropen=%zd totalwork=%zd "
+                                      "workpass=%zd closed:%zd "
+                                      "totalclosed:%"PRIu64,
+                                      formeropen, totalwork,
+                                      workpass, closed, totalclosed);
 
                          pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                          while ((workdone < lru_state.per_lane_work) &&
@@ -905,8 +937,8 @@ lru_thread(void *arg __attribute__((unused)))
                               /* Sorry for the extra barrier. */
                               atomic_dec_int64_t(&lru->refcount);
 
-                              if ((lru->flags &
-                                   (LRU_ENTRY_L2|LRU_ENTRY_POISON)) ||
+                              if ((lru->flags & (LRU_ENTRY_L2 |
+                                       LRU_ENTRY_POISON | LRU_ENTRY_UNINIT)) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, then
                                       reacquire the queue lock so we
@@ -932,8 +964,10 @@ lru_thread(void *arg __attribute__((unused)))
                                         LogCrit(COMPONENT_CACHE_INODE_LRU,
                                                 "Error closing file in "
                                                 "LRU thread.");
-                                   } else
+                                   } else {
+                                     ++totalclosed;
                                      ++closed;
+                                   }
                               }
                               pthread_rwlock_unlock(&entry->content_lock);
 
@@ -980,9 +1014,41 @@ lru_thread(void *arg __attribute__((unused)))
                }
           }
 
+          /* The following calculation will progressively garbage collect
+           * more frequently as these two factors increase:
+           * 1. current number of open file descriptors
+           * 2. rate at which file descriptors are being used.
+           *
+           * When there is little activity, this thread will sleep at the
+           * "LRU_Run_Interval" from the config.
+           *
+           * When there is a lot of activity, the thread will sleep for a
+           * much shorter time.
+           */
+          lru_state.prev_fd_count = currentopen;
+          lru_state.prev_time = time(NULL);
+
+          fdnorm = (fdratepersec + fds_avg)/fds_avg;
+          fddelta = (currentopen > lru_state.fds_lowat) ?
+                   (currentopen - lru_state.fds_lowat) : 0;
+          fdmulti = (fddelta*10)/fds_avg;
+          fdmulti = fdmulti ? fdmulti : 1;
+          fdwait_ratio = lru_state.fds_hiwat/
+                         ((lru_state.fds_hiwat+fdmulti*fddelta)*fdnorm);
+          threadwait = lru_state.threadwait * fdwait_ratio;
+
           LogDebug(COMPONENT_CACHE_INODE_LRU,
-                  "open_fd_count: %"PRIu64"  t_count:%"PRIu64"\n",
-                  (uint64_t) open_fd_count, t_count);
+                  "After work, open_fd_count:%zd  t_count:%"PRIu64" fdrate:%u "
+                   "threadwait=%"PRIu64"\n",
+                   open_fd_count, t_count - totalwork, fdratepersec,
+                   threadwait);
+          LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                       "currentopen=%zd futility=%d totalwork=%zd "
+                       "biggest_window=%d extremis=%d lanes=%d "
+                       "fds_lowat=%d ",
+                       currentopen, lru_state.futility,
+                       totalwork, lru_state.biggest_window, extremis,
+                       LRU_N_Q_LANES, lru_state.fds_lowat);
 
           /* Process LRU cleanup queue */
           n_finalized = _cache_inode_lru_cleanup();
@@ -1105,7 +1171,7 @@ cache_inode_lru_pkginit(void)
      lru_state.biggest_window = (cache_inode_gc_policy.biggest_window *
                                  lru_state.fds_system_imposed) / 100;
 
-     lru_state.last_count = 0;
+     lru_state.prev_fd_count = 0;
 
      lru_state.threadwait
           = 1000 * cache_inode_gc_policy.lru_run_interval;
@@ -1191,22 +1257,26 @@ cache_inode_status_t
 cache_inode_lru_get(cache_entry_t **entry,
                     uint32_t flags)
 {
+     int rc;
      /* The lane from which we harvest (or into which we store) the
         new entry.  Usually the lane assigned to this thread. */
      uint32_t lane = 0;
      /* The LRU entry */
      cache_inode_lru_t *lru = NULL;
+     static unsigned int lru_seed = 0;
      /* The Cache entry being created */
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* If we are in reclaim state, try to find an entry to recycle. */
      pthread_mutex_lock(&lru_mtx);
      if (lru_state.flags & LRU_STATE_RECLAIMING) {
+          int start_lane;
           pthread_mutex_unlock(&lru_mtx);
 
+          start_lane = (lru_seed++ % LRU_N_Q_LANES);
           /* Search through logical L2 entry. */
-          for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-               lru = lru_try_reap_entry(&LRU_2[lane].lru);
+          for (lane = start_lane; lane < (start_lane + LRU_N_Q_LANES); ++lane) {
+               lru = lru_try_reap_entry(&LRU_2[lane % LRU_N_Q_LANES].lru);
                if (lru)
                     break;
           }
@@ -1214,8 +1284,8 @@ cache_inode_lru_get(cache_entry_t **entry,
           /* Search through logical L1 if nothing was found in L2
              (fall through, otherwise.) */
           if (!lru) {
-               for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-                    lru = lru_try_reap_entry(&LRU_1[lane].lru);
+               for (lane = start_lane; lane < (start_lane + LRU_N_Q_LANES); ++lane) {
+                    lru = lru_try_reap_entry(&LRU_1[lane % LRU_N_Q_LANES].lru);
                     if (lru)
                          break;
                }
@@ -1261,7 +1331,21 @@ cache_inode_lru_get(cache_entry_t **entry,
         nobody can bump the refcount yet. */
      (*entry)->lru.refcount = 2;
      (*entry)->lru.pin_refcnt = 0;
-     (*entry)->lru.flags = 0;
+     (*entry)->flags = LRU_ENTRY_UNINIT;
+     /* Initialize the entry locks */
+     if (((rc = pthread_rwlock_init(&(*entry)->attr_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->content_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->state_lock, NULL)) != 0)) {
+          /* Recycle */
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "pthread_rwlock_init returned %d (%s)",
+                  rc, strerror(rc));
+          status = CACHE_INODE_INIT_ENTRY_FAILED;
+          pool_free(cache_inode_entry_pool, entry);
+          entry = NULL;
+          goto out;
+     }
+
      pthread_mutex_lock(&(*entry)->lru.mtx);
      lru_insert_entry(&(*entry)->lru, 0,
                       lru_lane_of_entry(*entry));

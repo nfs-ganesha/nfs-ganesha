@@ -185,6 +185,10 @@ const char *cache_inode_err_str(cache_inode_status_t err)
 	return "CACHE_INOE_FSAL_XDEV";
       case CACHE_INODE_FSAL_MLINK:
 	return "CACHE_INOE_FSAL_MLINK";
+      case CACHE_INODE_SERVERFAULT:
+        return "CACHE_INODE_SERVERFAULT";
+      case CACHE_INODE_TOOSMALL:
+        return "CACHE_INODE_TOOSMALL";
     }
   return "unknown";
 }
@@ -332,6 +336,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_MALLOC_ERROR;
           goto out;
      }
+     locksinited = true;
      assert(new_entry->lru.refcount > 1);
      /* Now we got the entry; get the latch and see if someone raced us. */
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
@@ -381,19 +386,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 					    not being unenrolled from
 					    the table. */
      weakrefed = true;
-
-     /* Initialize the entry locks */
-     if (((rc = pthread_rwlock_init(&(*entry)->attr_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&(*entry)->content_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&(*entry)->state_lock, NULL)) != 0)) {
-          /* Recycle */
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_new_entry: pthread_rwlock_init "
-                  "returned %d (%s)", rc, strerror(rc));
-          status = CACHE_INODE_INIT_ENTRY_FAILED;
-          goto out;
-     }
-     locksinited = true;
 
      /* Initialize common fields */
 
@@ -472,6 +464,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      (*entry)->obj_handle = new_obj;
      new_obj = NULL; /* mark it as having a home */
      cache_inode_fixup_md(*entry);
+
+     /* Everything ready and we are reaty to insert into hash table.
+      * change the lru state from LRU_ENTRY_UNINIT to LRU_FLAG_NONE
+      */
+     (*entry)->flags = LRU_FLAG_NONE;
 
      /* Adding the entry in the hash table using the key we started with */
 
@@ -605,6 +602,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
       return CACHE_INODE_INVALID_ARGUMENT;
 
     case ERR_FSAL_DQUOT:
+    case ERR_FSAL_NO_QUOTA:
       return CACHE_INODE_QUOTA_EXCEEDED;
 
     case ERR_FSAL_SEC:
@@ -648,17 +646,20 @@ cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_MLINK:
       return CACHE_INODE_FSAL_MLINK ;
 
+    case ERR_FSAL_FAULT:
+    case ERR_FSAL_SERVERFAULT:
     case ERR_FSAL_DEADLOCK:
+      return CACHE_INODE_SERVERFAULT;
+
+    case ERR_FSAL_TOOSMALL:
+      return CACHE_INODE_TOOSMALL;
+
     case ERR_FSAL_BLOCKED:
     case ERR_FSAL_INTERRUPT:
-    case ERR_FSAL_FAULT:
     case ERR_FSAL_NOT_INIT:
     case ERR_FSAL_ALREADY_INIT:
     case ERR_FSAL_BAD_INIT:
-    case ERR_FSAL_NO_QUOTA:
-    case ERR_FSAL_TOOSMALL:
     case ERR_FSAL_TIMEOUT:
-    case ERR_FSAL_SERVERFAULT:
       /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
       LogDebug(COMPONENT_CACHE_INODE,
                "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",

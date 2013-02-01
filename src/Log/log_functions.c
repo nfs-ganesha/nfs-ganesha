@@ -22,7 +22,7 @@
  *
  * ---------------------------------------
  *
- * ensemble des fonctions d'affichage et de gestion des erreurs
+ * All the display functions and error handling.
  *
  */
 #include "config.h"
@@ -42,6 +42,8 @@
 #include <string.h>
 #include <signal.h>
 #include <libgen.h>
+#include <execinfo.h>
+#include <sys/resource.h>
 
 #include "log.h"
 //#include "nfs_core.h"
@@ -71,86 +73,86 @@ log_level_t tabLogLevel[] =
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
-/* les code d'error */
-errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
+/* Error codes */
+errctx_t __attribute__ ((__unused__)) tab_system_err[] =
 {
   {SUCCES, "SUCCES", "No Error"},
-  {ERR_FAILURE, "FAILURE", "Une error est survenue"},
-  {ERR_EVNT, "EVNT", "Evennement survenu"},
+  {ERR_FAILURE, "FAILURE", "Error occurred"},
+  {ERR_EVNT, "EVNT", "Event occurred"},
   {ERR_PTHREAD_KEY_CREATE, "ERR_PTHREAD_KEY_CREATE", "Error in creation of pthread_keys"},
-  {ERR_MALLOC, "ERR_MALLOC", "malloc impossible"},
-  {ERR_SIGACTION, "ERR_SIGACTION", "sigaction impossible"},
-  {ERR_PTHREAD_ONCE, "ERR_PTHREAD_ONCE", "pthread_once impossible"},
-  {ERR_FICHIER_LOG, "ERR_FICHIER_LOG", "impossible d'acceder au fichier de log"},
-  {ERR_GETHOSTBYNAME, "ERR_GETHOSTBYNAME", "gethostbyname impossible"},
-  {ERR_MMAP, "ERR_MMAP", "mmap impossible"},
-  {ERR_SOCKET, "ERR_SOCKET", "socket impossible"},
-  {ERR_BIND, "ERR_BIND", "bind impossible"},
-  {ERR_CONNECT, "ERR_CONNECT", "connect impossible"},
-  {ERR_LISTEN, "ERR_LISTEN", "listen impossible"},
-  {ERR_ACCEPT, "ERR_ACCEPT", "accept impossible"},
-  {ERR_RRESVPORT, "ERR_RRESVPORT", "rresvport impossible"},
-  {ERR_GETHOSTNAME, "ERR_GETHOSTNAME", "gethostname impossible"},
-  {ERR_GETSOCKNAME, "ERR_GETSOCKNAME", "getsockname impossible"},
-  {ERR_IOCTL, "ERR_IOCTL", "ioctl impossible"},
-  {ERR_UTIME, "ERR_UTIME", "utime impossible"},
-  {ERR_XDR, "ERR_XDR", "Un appel XDR a echoue"},
-  {ERR_CHMOD, "ERR_CHMOD", "chmod impossible"},
-  {ERR_SEND, "ERR_SEND", "send impossible"},
-  {ERR_GETHOSTBYADDR, "ERR_GETHOSTBYADDR", "gethostbyaddr impossible"},
-  {ERR_PREAD, "ERR_PREAD", "pread impossible"},
-  {ERR_PWRITE, "ERR_PWRITE", "pwrite impossible"},
-  {ERR_STAT, "ERR_STAT", "stat impossible"},
-  {ERR_GETPEERNAME, "ERR_GETPEERNAME", "getpeername impossible"},
-  {ERR_FORK, "ERR_FORK", "fork impossible"},
-  {ERR_GETSERVBYNAME, "ERR_GETSERVBYNAME", "getservbyname impossible"},
-  {ERR_MUNMAP, "ERR_MUNMAP", "munmap impossible"},
-  {ERR_STATVFS, "ERR_STATVFS", "statvfs impossible"},
-  {ERR_OPENDIR, "ERR_OPENDIR", "opendir impossible"},
-  {ERR_READDIR, "ERR_READDIR", "readdir impossible"},
-  {ERR_CLOSEDIR, "ERR_CLOSEDIR", "closedir impossible"},
-  {ERR_LSTAT, "ERR_LSTAT", "lstat impossible"},
-  {ERR_GETWD, "ERR_GETWD", "getwd impossible"},
-  {ERR_CHDIR, "ERR_CHDIR", "chdir impossible"},
-  {ERR_CHOWN, "ERR_CHOWN", "chown impossible"},
-  {ERR_MKDIR, "ERR_MKDIR", "mkdir impossible"},
-  {ERR_OPEN, "ERR_OPEN", "open impossible"},
-  {ERR_READ, "ERR_READ", "read impossible"},
-  {ERR_WRITE, "ERR_WRITE", "write impossible"},
-  {ERR_UTIMES, "ERR_UTIMES", "utimes impossible"},
-  {ERR_READLINK, "ERR_READLINK", "readlink impossible"},
-  {ERR_SYMLINK, "ERR_SYMLINK", "symlink impossible"},
-  {ERR_SYSTEM, "ERR_SYSTEM", "system impossible"},
-  {ERR_POPEN, "ERR_POPEN", "popen impossible"},
-  {ERR_LSEEK, "ERR_LSEEK", "lseek impossible"},
-  {ERR_PTHREAD_CREATE, "ERR_PTHREAD_CREATE", "pthread_create impossible"},
-  {ERR_RECV, "ERR_RECV", "recv impossible"},
-  {ERR_FOPEN, "ERR_FOPEN", "fopen impossible"},
-  {ERR_GETCWD, "ERR_GETCWD", "getcwd impossible"},
-  {ERR_SETUID, "ERR_SETUID", "setuid impossible"},
-  {ERR_RENAME, "ERR_RENAME", "rename impossible"},
-  {ERR_UNLINK, "ERR_UNLINK", "unlink impossible"},
-  {ERR_SELECT, "ERR_SELECT", "select impossible"},
-  {ERR_WAIT, "ERR_WAIT", "wait impossible"},
-  {ERR_SETSID, "ERR_SETSID", "setsid impossible"},
-  {ERR_SETGID, "ERR_SETGID", "setgid impossible"},
-  {ERR_GETGROUPS, "ERR_GETGROUPS", "getgroups impossible"},
-  {ERR_SETGROUPS, "ERR_SETGROUPS", "setgroups impossible"},
-  {ERR_UMASK, "ERR_UMASK", "umask impossible"},
-  {ERR_CREAT, "ERR_CREAT", "creat impossible"},
-  {ERR_SETSOCKOPT, "ERR_SETSOCKOPT", "setsockopt impossible"},
-  {ERR_DIRECTIO, "ERR_DIRECTIO", "appel a directio impossible"},
-  {ERR_GETRLIMIT, "ERR_GETRLIMIT", "appel a getrlimit impossible"},
-  {ERR_SETRLIMIT, "ERR_SETRLIMIT", "appel a setrlimit"},
-  {ERR_TRUNCATE, "ERR_TRUNCATE", "appel a truncate impossible"},
-  {ERR_PTHREAD_MUTEX_INIT, "ERR_PTHREAD_MUTEX_INIT", "init d'un mutex"},
-  {ERR_PTHREAD_COND_INIT, "ERR_PTHREAD_COND_INIT", "init d'une variable de condition"},
-  {ERR_FCNTL, "ERR_FCNTL", "call to fcntl is impossible"},
+  {ERR_MALLOC, "ERR_MALLOC", "malloc failed"},
+  {ERR_SIGACTION, "ERR_SIGACTION", "sigaction failed"},
+  {ERR_PTHREAD_ONCE, "ERR_PTHREAD_ONCE", "pthread_once failed"},
+  {ERR_FILE_LOG, "ERR_FILE_LOG", "failed to access the log"},
+  {ERR_GETHOSTBYNAME, "ERR_GETHOSTBYNAME", "gethostbyname failed"},
+  {ERR_MMAP, "ERR_MMAP", "mmap failed"},
+  {ERR_SOCKET, "ERR_SOCKET", "socket failed"},
+  {ERR_BIND, "ERR_BIND", "bind failed"},
+  {ERR_CONNECT, "ERR_CONNECT", "connect failed"},
+  {ERR_LISTEN, "ERR_LISTEN", "listen failed"},
+  {ERR_ACCEPT, "ERR_ACCEPT", "accept failed"},
+  {ERR_RRESVPORT, "ERR_RRESVPORT", "rresvport failed"},
+  {ERR_GETHOSTNAME, "ERR_GETHOSTNAME", "gethostname failed"},
+  {ERR_GETSOCKNAME, "ERR_GETSOCKNAME", "getsockname failed"},
+  {ERR_IOCTL, "ERR_IOCTL", "ioctl failed"},
+  {ERR_UTIME, "ERR_UTIME", "utime failed"},
+  {ERR_XDR, "ERR_XDR", "An XDR call failed"},
+  {ERR_CHMOD, "ERR_CHMOD", "chmod failed"},
+  {ERR_SEND, "ERR_SEND", "send failed"},
+  {ERR_GETHOSTBYADDR, "ERR_GETHOSTBYADDR", "gethostbyaddr failed"},
+  {ERR_PREAD, "ERR_PREAD", "pread failed"},
+  {ERR_PWRITE, "ERR_PWRITE", "pwrite failed"},
+  {ERR_STAT, "ERR_STAT", "stat failed"},
+  {ERR_GETPEERNAME, "ERR_GETPEERNAME", "getpeername failed"},
+  {ERR_FORK, "ERR_FORK", "fork failed"},
+  {ERR_GETSERVBYNAME, "ERR_GETSERVBYNAME", "getservbyname failed"},
+  {ERR_MUNMAP, "ERR_MUNMAP", "munmap failed"},
+  {ERR_STATVFS, "ERR_STATVFS", "statvfs failed"},
+  {ERR_OPENDIR, "ERR_OPENDIR", "opendir failed"},
+  {ERR_READDIR, "ERR_READDIR", "readdir failed"},
+  {ERR_CLOSEDIR, "ERR_CLOSEDIR", "closedir failed"},
+  {ERR_LSTAT, "ERR_LSTAT", "lstat failed"},
+  {ERR_GETWD, "ERR_GETWD", "getwd failed"},
+  {ERR_CHDIR, "ERR_CHDIR", "chdir failed"},
+  {ERR_CHOWN, "ERR_CHOWN", "chown failed"},
+  {ERR_MKDIR, "ERR_MKDIR", "mkdir failed"},
+  {ERR_OPEN, "ERR_OPEN", "open failed"},
+  {ERR_READ, "ERR_READ", "read failed"},
+  {ERR_WRITE, "ERR_WRITE", "write failed"},
+  {ERR_UTIMES, "ERR_UTIMES", "utimes failed"},
+  {ERR_READLINK, "ERR_READLINK", "readlink failed"},
+  {ERR_SYMLINK, "ERR_SYMLINK", "symlink failed"},
+  {ERR_SYSTEM, "ERR_SYSTEM", "system failed"},
+  {ERR_POPEN, "ERR_POPEN", "popen failed"},
+  {ERR_LSEEK, "ERR_LSEEK", "lseek failed"},
+  {ERR_PTHREAD_CREATE, "ERR_PTHREAD_CREATE", "pthread_create failed"},
+  {ERR_RECV, "ERR_RECV", "recv failed"},
+  {ERR_FOPEN, "ERR_FOPEN", "fopen failed"},
+  {ERR_GETCWD, "ERR_GETCWD", "getcwd failed"},
+  {ERR_SETUID, "ERR_SETUID", "setuid failed"},
+  {ERR_RENAME, "ERR_RENAME", "rename failed"},
+  {ERR_UNLINK, "ERR_UNLINK", "unlink failed"},
+  {ERR_SELECT, "ERR_SELECT", "select failed"},
+  {ERR_WAIT, "ERR_WAIT", "wait failed"},
+  {ERR_SETSID, "ERR_SETSID", "setsid failed"},
+  {ERR_SETGID, "ERR_SETGID", "setgid failed"},
+  {ERR_GETGROUPS, "ERR_GETGROUPS", "getgroups failed"},
+  {ERR_SETGROUPS, "ERR_SETGROUPS", "setgroups failed"},
+  {ERR_UMASK, "ERR_UMASK", "umask failed"},
+  {ERR_CREAT, "ERR_CREAT", "creat failed"},
+  {ERR_SETSOCKOPT, "ERR_SETSOCKOPT", "setsockopt failed"},
+  {ERR_DIRECTIO, "ERR_DIRECTIO", "directio failed"},
+  {ERR_GETRLIMIT, "ERR_GETRLIMIT", "getrlimit failed"},
+  {ERR_SETRLIMIT, "ERR_SETRLIMIT", "setrlimit"},
+  {ERR_TRUNCATE, "ERR_TRUNCATE", "truncate failed"},
+  {ERR_PTHREAD_MUTEX_INIT, "ERR_PTHREAD_MUTEX_INIT", "pthread mutex initialization failed."},
+  {ERR_PTHREAD_COND_INIT, "ERR_PTHREAD_COND_INIT", "pthread condition initialization failed."},
+  {ERR_FCNTL, "ERR_FCNTL", "call to fcntl is failed"},
   {ERR_NULL, "ERR_NULL", ""}
 };
 
 /* constants */
-static int masque_log = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+static int log_mask = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 /* Array of error families */
 
@@ -158,8 +160,8 @@ static family_t tab_family[MAX_NUM_FAMILY];
 
 /* Global variables */
 
-static char nom_programme[1024];
-static char nom_host[256];
+static char program_name[1024];
+static char hostname[256];
 static int syslog_opened = 0 ;
 
 //extern nfs_parameter_t nfs_param;
@@ -209,6 +211,116 @@ void Fatal(void)
 {
   Cleanup();
   exit(1);
+}
+
+/* Feel free to add what you want here. This is a collection
+ * of debug info that will be printed when a log message is
+ * printed that matches or exceeds the severity level of
+ * component LOG_MESSAGE_DEBUGINFO. */
+extern uint32_t open_fd_count;
+char *get_debug_info(int *size) {
+  int rc, i, bt_str_size, offset, BT_MAX = 256;
+  long bt_data[BT_MAX];
+  char **bt_str, *debug_str, *final_bt_str;
+  int ret;
+
+  struct rlimit rlim = {
+    .rlim_cur = RLIM_INFINITY,
+    .rlim_max = RLIM_INFINITY
+  };
+
+  rc = backtrace((void **)&bt_data, BT_MAX);
+  if (rc > 0)
+    bt_str = backtrace_symbols((void **)&bt_data, rc);
+  else
+    return NULL;
+  if (bt_str == NULL || *bt_str == NULL)
+    return NULL;
+
+  // Form a single printable string from array of backtrace symbols
+  bt_str_size = 0;
+  for(i=0; i < rc; i++)
+    bt_str_size += strlen(bt_str[i]);
+  final_bt_str = malloc(sizeof(char)*(bt_str_size+rc+20));
+  offset = 0;
+  for(i=0; i < rc; i++)
+    {
+      // note: strlen excludes '\0', strcpy includes '\0'
+      strncpy(final_bt_str+offset, bt_str[i], strlen(bt_str[i]));
+      offset += strlen(bt_str[i]);
+      final_bt_str[offset++] = '\n';
+    }
+  final_bt_str[offset-1] = '\0';
+  free(bt_str);
+
+  getrlimit(RLIMIT_NOFILE, &rlim);
+
+  debug_str = malloc(sizeof(char) * strlen(final_bt_str)
+                     + sizeof(char) * 512);
+  if (debug_str == NULL) {
+    return NULL;
+  }
+
+  ret = sprintf(debug_str,
+                "\nDEBUG INFO -->\n"
+                "backtrace:\n%s\n\n"
+                "open_fd_count        = %-6d\n"
+                "rlimit_cur           = %-6ld\n"
+                "rlimit_max           = %-6ld\n"
+                "<--DEBUG INFO\n\n",
+                final_bt_str,
+                open_fd_count,
+                rlim.rlim_cur,
+                rlim.rlim_max);
+  if (size != NULL)
+    *size = ret;
+
+  free(final_bt_str);
+  return debug_str;
+}
+
+void print_debug_info_fd(int fd)
+{
+  char *str = get_debug_info(NULL);
+
+  if (str != NULL)
+    {
+      write(fd, str, strlen(str));
+      free(str);
+    }
+}
+
+void print_debug_info_file(FILE *flux)
+{
+  char *str = get_debug_info(NULL);
+
+  if (str != NULL)
+    {
+      fprintf(flux, "%s", str);
+      free(str);
+    }
+}
+
+void print_debug_info_syslog(int level)
+{
+  int size;
+  char *debug_str = get_debug_info(&size);
+  char *end_c=debug_str, *first_c=debug_str;
+
+  if (debug_str != NULL) {
+    while(*end_c != '\0' && (end_c - debug_str) <= size)
+      {
+        if (*end_c == '\n' || *end_c == '\0')
+          {
+            *end_c = '\0';
+            if ((end_c - debug_str) != 0)
+              syslog(tabLogLevel[level].syslog_level, "%s", first_c);
+            first_c = end_c+1;
+          }
+        end_c++;
+      }
+    free(debug_str);
+  }
 }
 
 #ifdef _DONT_HAVE_LOCALTIME_R
@@ -329,20 +441,18 @@ void GetNameFunction(char *name, int len)
 }
 
 /*
- * Fait la conversion nom du niveau de log
- * en ascii vers valeur numerique du niveau
- *
+ * Convert a numeral log level in ascii to
+ * the numeral value.
  */
-
-int ReturnLevelAscii(const char *LevelEnAscii)
+int ReturnLevelAscii(const char *LevelInAscii)
 {
   int i = 0;
 
   for(i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
-    if(!strcmp(tabLogLevel[i].str, LevelEnAscii))
+    if(!strcmp(tabLogLevel[i].str, LevelInAscii))
       return tabLogLevel[i].value;
 
-  /* Si rien n'est trouve on retourne -1 */
+  /* If nothing found, return -1 */
   return -1;
 }                               /* ReturnLevelAscii */
 
@@ -354,34 +464,30 @@ char *ReturnLevelInt(int level)
     if(tabLogLevel[i].value == level)
       return tabLogLevel[i].str;
 
-  /* Si on n'a rien trouve on retourne NULL */
+  /* If nothing is found, return NULL. */
   return NULL;
 }                               /* ReturnLevelInt */
 
 /*
- * Set le nom du programme en cours.
+ * Set the name of this program.
  */
 void SetNamePgm(char *nom)
 {
 
-  /* Cette fonction n'est pas thread-safe car le nom du programme
-   * est commun a tous les threads */
-  strcpy(nom_programme, nom);
+  /* This function isn't thread-safe because the name of the program
+   * is common among all the threads. */
+  strcpy(program_name, nom);
 }                               /* SetNamePgm */
 
 /*
- * Set le nom d'host en cours
+ * Set the hostname.
  */
-void SetNameHost(char *nom)
+void SetNameHost(char *name)
 {
-  strcpy(nom_host, nom);
+  strcpy(hostname, name);
 }                               /* SetNameHost */
 
-/*
- *
- * Set le nom de la fonction en cours
- *
- */
+/* Set the function name in progress. */
 void SetNameFunction(char *nom)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(0);
@@ -390,36 +496,31 @@ void SetNameFunction(char *nom)
     strcpy(context->nom_fonction, nom);
 }                               /* SetNameFunction */
 
-/*
- * Cette fonction permet d'installer un handler de signal
- */
-
-static void ArmeSignal(int signal, void (*action) ())
+/* Installs a signal handler */
+static void ArmSignal(int signal, void (*action) ())
 {
-  struct sigaction act;         /* Soyons POSIX et puis signal() c'est pas joli */
+  struct sigaction act;
 
-  /* Mise en place des champs du struct sigaction */
+  /* Placing fields of struct sigaction */
   act.sa_flags = 0;
   act.sa_handler = action;
   sigemptyset(&act.sa_mask);
 
   if(sigaction(signal, &act, NULL) == -1)
     LogCrit(COMPONENT_LOG,
-            "Impossible to arm signal %d, error %d (%s)",
+            "Failed to arm signal %d, error %d (%s)",
             signal, errno, strerror(errno));
-}                               /* ArmeSignal */
+}                               /* ArmSignal */
 
 /*
+ * Five functions to manage debug level throug signal
+ * handlers.
  *
- * Cinq fonctions pour gerer le niveau de debug et le controler
- * a distance au travers de handlers de signaux
- *
- * InitDebug
- * IncrementeLevelDebug
- * DecrementeLevelDebug
+ * InitLogging
+ * IncrementLevelDebug
+ * DecrementLevelDebug
  * SetLevelDebug
  * ReturnLevelDebug
- *
  */
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
@@ -463,7 +564,7 @@ void _SetLevelDebug(int level_to_set)
 
   for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
       LogComponents[i].comp_log_level = level_to_set;
-}                               /* SetLevelDebug */
+}                               /* _SetLevelDebug */
 
 void SetLevelDebug(int level_to_set)
 {
@@ -473,21 +574,21 @@ void SetLevelDebug(int level_to_set)
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }
 
-static void IncrementeLevelDebug()
+static void IncrementLevelDebug()
 {
   _SetLevelDebug(ReturnLevelDebug() + 1);
 
   LogChanges("SIGUSR1 Increasing log level for all components to %s",
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
-}                               /* IncrementeLevelDebug */
+}                               /* IncrementLevelDebug */
 
-static void DecrementeLevelDebug()
+static void DecrementLevelDebug()
 {
   _SetLevelDebug(ReturnLevelDebug() - 1);
 
   LogChanges("SIGUSR2 Decreasing log level for all components to %s",
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
-}                               /* DecrementeLevelDebug */
+}                               /* DecrementLevelDebug */
 
 void InitLogging()
 {
@@ -497,14 +598,14 @@ void InitLogging()
 
   /* Initialisation du tableau des familys */
   tab_family[0].num_family = 0;
-  tab_family[0].tab_err = (family_error_t *) tab_systeme_err;
+  tab_family[0].tab_err = (family_error_t *) tab_system_err;
   strcpy(tab_family[0].name_family, "Errors Systeme UNIX");
 
   for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
 
-  ArmeSignal(SIGUSR1, IncrementeLevelDebug);
-  ArmeSignal(SIGUSR2, DecrementeLevelDebug);
+  ArmSignal(SIGUSR1, IncrementLevelDebug);
+  ArmSignal(SIGUSR2, DecrementLevelDebug);
 
   for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
@@ -513,22 +614,24 @@ void InitLogging()
         continue;
       newlevel = ReturnLevelAscii(env_value);
       if (newlevel == -1) {
-        LogMajor(COMPONENT_LOG,
-                 "Environment variable %s exists, but the value %s is not a valid log level.",
-                 LogComponents[component].comp_name, env_value);
+        LogCrit(COMPONENT_LOG,
+                "Environment variable %s exists, but the value %s is not a"
+                " valid log level.",
+                LogComponents[component].comp_name, env_value);
         continue;
       }
       oldlevel = LogComponents[component].comp_log_level;
       LogComponents[component].comp_log_level = newlevel;
-      LogChanges("Using environment variable to switch log level for %s from %s to %s",
+      LogChanges("Using environment variable to switch log level for %s from "
+                 "%s to %s",
                  LogComponents[component].comp_name, ReturnLevelInt(oldlevel),
                  ReturnLevelInt(newlevel));
     }
 
-}                               /* InitLevelDebug */
+}                               /* InitLogging */
 
 /*
- * Une fonction d'affichage tout a fait generique
+ * A generic display function
  */
 
 static void DisplayLogString_valist(char *buff_dest, char * function, log_components_t component, char *format, va_list arguments)
@@ -541,22 +644,23 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
 
-  /* Ecriture sur le fichier choisi */
+  /* Writing to the chosen file. */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
+  if(LogComponents[component].comp_log_level
+     < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
     snprintf(buff_dest, STR_LEN_TXT,
              "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
-             nom_programme, getpid(), threadname,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, hostname,
+             program_name, getpid(), threadname,
              texte);
   else
     snprintf(buff_dest, STR_LEN_TXT,
              "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
-             nom_programme, getpid(), threadname, function,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, hostname,
+             program_name, getpid(), threadname, function,
              texte);
 }                               /* DisplayLogString_valist */
 
@@ -572,7 +676,7 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function,
      syslog_opened = 1;
    }
 
-  /* Ecriture sur le fichier choisi */
+  /* Writing to the chosen file. */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
   if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
@@ -580,18 +684,24 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function,
   else
     syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
 
+  if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+      && level != NIV_NULL)
+      print_debug_info_syslog(level);
+
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, char * function,
-                                 log_components_t component, char *format,
-                                 va_list arguments)
+static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component,
+                                 int level, char *format, va_list arguments)
 {
-  char tampon[STR_LEN_TXT];
+  char buffer[STR_LEN_TXT];
 
-  DisplayLogString_valist(tampon, function, component, format, arguments);
+  DisplayLogString_valist(buffer, function, component, format, arguments);
 
-  fprintf(flux, "%s", tampon);
+  fprintf(flux, "%s", buffer);
+  if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+      && level != NIV_NULL)
+    print_debug_info_file(flux);
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
 
@@ -613,23 +723,23 @@ static int DisplayBuffer_valist(char *buffer, log_components_t component,
 }
 
 static int DisplayLogPath_valist(char *path, char * function,
-                                 log_components_t component, char *format,
-                                 va_list arguments)
+                                 log_components_t component, int level,
+                                 char *format, va_list arguments)
 {
-  char tampon[STR_LEN_TXT];
+  char buffer[STR_LEN_TXT];
   int fd, my_status;
 
-  DisplayLogString_valist(tampon, function, component, format, arguments);
+  DisplayLogString_valist(buffer, function, component, format, arguments);
 
   if(path[0] != '\0')
     {
 #ifdef _LOCK_LOG
-      if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
+      if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, log_mask)) != -1)
         {
-          /* un verrou sur fichier */
+          /* A lock on file */
           struct flock lock_file;
+          int rc = 0;
 
-          /* mise en place de la structure de verrou sur fichier */
           lock_file.l_type = F_WRLCK;
           lock_file.l_whence = SEEK_SET;
           lock_file.l_start = 0;
@@ -637,80 +747,83 @@ static int DisplayLogPath_valist(char *path, char * function,
 
           if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
-              /* Si la prise du verrou est OK */
-              write(fd, tampon, strlen(tampon));
+              rc = write(fd, buffer, strlen(buffer));
+              if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+                  && level != NIV_NULL)
+                print_debug_info_fd(fd);
 
-              /* Relache du verrou sur fichier */
+              /* Release the lock */
               lock_file.l_type = F_UNLCK;
 
               fcntl(fd, F_SETLKW, (char *)&lock_file);
 
-              /* fermeture du fichier */
               close(fd);
+
               return SUCCES;
             }                   /* if fcntl */
           else
             {
-              /* Si la prise du verrou a fait un probleme */
               my_status = errno;
               close(fd);
             }
         }
 
 #else
-      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
+      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, log_mask)) != -1)
         {
-          if(write(fd, tampon, strlen(tampon)) < strlen(tampon))
+          if(write(fd, buffer, strlen(buffer)) < strlen(buffer))
           {
-            fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
+            fprintf(stderr, "Error: couldn't complete write to the log file, "
+                    "ensure disk has not filled up");
             close(fd);
-            return ERR_FICHIER_LOG;
-          }
 
-          /* fermeture du fichier */
+            return ERR_FILE_LOG;
+          }
+          if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+              && level != NIV_NULL)
+            print_debug_info_fd(fd);
+
           close(fd);
+
           return SUCCES;
         }
 #endif
       else
         {
-          /* Si l'ouverture du fichier s'est mal passee */
           my_status = errno;
         }
       fprintf(stderr, "Error %s : %s : status %d on file %s message was:\n%s\n",
-              tab_systeme_err[ERR_FICHIER_LOG].label,
-              tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, path, tampon);
+              tab_system_err[ERR_FILE_LOG].label,
+              tab_system_err[ERR_FILE_LOG].msg, my_status, path, buffer);
 
-      return ERR_FICHIER_LOG;
+      return ERR_FILE_LOG;
     }
   /* if path */
   return SUCCES;
 }                               /* DisplayLogPath_valist */
 
 /*
- *
- * Les routines de gestions des messages d'erreur
- *
+ * Routines for managing error messages
  */
 
 int AddFamilyError(int num_family, char *name_family, family_error_t * tab_err)
 {
   int i = 0;
 
-  /* Le numero de la family est entre -1 et MAX_NUM_FAMILY */
+  /* The number of the family is between -1 and MAX_NUM_FAMILY */
   if((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
     return -1;
 
-  /* On n'occupe pas 0 car ce sont les erreurs du systeme */
+  /* System errors can't be 0 */
   if(num_family == 0)
     return -1;
 
-  /* On cherche une entree vacante */
+  /* Look for a vacant entry. */
   for(i = 0; i < MAX_NUM_FAMILY; i++)
     if(tab_family[i].num_family == UNUSED_SLOT)
       break;
 
-  /* On verifie que la table n'est pas pleine */
+  /* Check if the table is full. */
   if(i == MAX_NUM_FAMILY)
     return -1;
 
@@ -727,18 +840,13 @@ char *ReturnNameFamilyError(int num_family)
 
   for(i = 0; i < MAX_NUM_FAMILY; i++)
     if(tab_family[i].num_family == num_family)
-      {
-        /* A quoi sert cette ligne ??????!!!!!! */
-        /* tab_family[i].num_family = UNUSED_SLOT ; */
-        return tab_family[i].name_family;
-      }
+      return tab_family[i].name_family;
 
-  /* Sinon on retourne NULL */
   return NULL;
 }                               /* ReturnFamilyError */
 
-/* Cette fonction trouve une family dans le tabelau des familys d'erreurs */
-static family_error_t *TrouveTabErr(int num_family)
+/* Finds a family in the table of family errors. */
+static family_error_t *FindTabErr(int num_family)
 {
   int i = 0;
 
@@ -750,11 +858,10 @@ static family_error_t *TrouveTabErr(int num_family)
         }
     }
 
-  /* Sinon on retourne NULL */
   return NULL;
-}                               /* TrouveTabErr */
+}                               /* FindTabErr */
 
-static family_error_t TrouveErr(family_error_t * tab_err, int num)
+static family_error_t FindErr(family_error_t * tab_err, int num)
 {
   int i = 0;
   family_error_t returned_err;
@@ -773,7 +880,7 @@ static family_error_t TrouveErr(family_error_t * tab_err, int num)
   while(1);
 
   return returned_err;
-}                               /* TrouveErr */
+}                               /* FindErr */
 
 int MakeLogError(char *buffer, int num_family, int num_error, int status,
                   int ma_ligne)
@@ -782,11 +889,11 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
   family_error_t the_error;
 
   /* Find the family */
-  if((tab_err = TrouveTabErr(num_family)) == NULL)
+  if((tab_err = FindTabErr(num_family)) == NULL)
     return -1;
 
   /* find the error */
-  the_error = TrouveErr(tab_err, num_error);
+  the_error = FindErr(tab_err, num_error);
 
   if(status == 0)
     {
@@ -808,8 +915,8 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
     }
 }                               /* MakeLogError */
 
-/* Un sprintf personnalisé */
-/* Cette macro est utilisee a chaque fois que l'on avance d'un pas dans le parsing */
+/* A sprintf personnal is é */
+/* This macro is used each time the parsing advances */
 #define ONE_STEP  do { iterformat +=1 ; len += 1; } while(0)
 
 #define NO_TYPE       0
@@ -1109,6 +1216,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { LOG_MESSAGE_DEBUGINFO,        "LOG_MESSAGE_DEBUGINFO",
+                                  "LOG MESSAGE DEBUGINFO",
+    NIV_NULL,
+    SYSLOG,
+    "SYSLOG"
+  },
   { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY",
                                   "LOG MESSAGE VERBOSITY",
     NIV_NULL,
@@ -1132,13 +1245,13 @@ int DisplayLogComponentLevel(log_components_t component,
       rc = DisplayLogSyslog_valist(component, function, level, format, arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, format, arguments);
+      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, level, format, arguments);
       break;
     case STDERRLOG:
-      rc = DisplayLogFlux_valist(stderr, function, component, format, arguments);
+      rc = DisplayLogFlux_valist(stderr, function, component, level, format, arguments);
       break;
     case STDOUTLOG:
-      rc = DisplayLogFlux_valist(stdout, function, component, format, arguments);
+      rc = DisplayLogFlux_valist(stdout, function, component, level, format, arguments);
       break;
     case TESTLOG:
       rc = DisplayTest_valist(component, format, arguments);
@@ -1193,7 +1306,8 @@ static int isValidLogPath(char *pathname)
       break; /* success !! */
     case EACCES:
       LogCrit(COMPONENT_LOG,
-              "Either access is denied to the file or denied to one of the directories in %s",
+              "Either access is denied to the file or denied to one of the "
+              "directories in %s",
               directory_name);
       break;
     case ELOOP:
@@ -1218,7 +1332,8 @@ static int isValidLogPath(char *pathname)
       break;
     case EROFS:
       LogCrit(COMPONENT_LOG,
-              "Write permission was requested for a file on a read-only file system.");
+              "Write permission was requested for a file on a read-only file "
+              "system.");
       break;
     case EFAULT:
       LogCrit(COMPONENT_LOG,
@@ -1327,13 +1442,13 @@ rpc_warnx(/* const */ char *fmt, ...)
       break;
     case FILELOG:
       DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
-                            comp, fmt, ap);
+                            comp, level, fmt, ap);
       break;
     case STDERRLOG:
-      DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stderr, "rpc", comp, level, fmt, ap);
       break;
     case STDOUTLOG:
-      DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stdout, "rpc", comp, level, fmt, ap);
       break;
     case TESTLOG:
       DisplayTest_valist(comp, fmt, ap);
@@ -1350,7 +1465,7 @@ out:
 } /* rpc_warnx */
 
 /*
- * Pour info : Les tags de printf dont on peut se servir:
+ * For info : printf tags that can be used:
  * w DMNOPQTUWX
  */
 

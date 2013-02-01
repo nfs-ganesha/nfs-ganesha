@@ -115,7 +115,7 @@ nfs3_Commit(nfs_arg_t *arg,
 					  arg->arg_commit3.count,
 					  req_ctx);
         if (cache_status != CACHE_INODE_SUCCESS) {
-                res->res_commit3.status = NFS3ERR_IO;;
+                res->res_commit3.status = nfs3_Errno(cache_status);
 
                 nfs_SetWccData(&pre_attr,
                                entry,
