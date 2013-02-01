@@ -392,9 +392,7 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
             avltree_remove(node, &wp->t);
             gsh_free(tref);
             if (wp->cache)
-                atomic_store_voidptr(
-                    (void **) &(wp->cache[cache_offsetof(wt,refk.k.ptr)]),
-                    NULL);
+                wp->cache[cache_offsetof(wt, refk.k.ptr)] = NULL;
         }
     }
     if (!(flags & GWR_FLAG_WLOCKED))
