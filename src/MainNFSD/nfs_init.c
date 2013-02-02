@@ -323,13 +323,7 @@ nfs_parameter_t nfs_param =
 
   /* Cache inode parameters : hash table */
   .cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE,
-  .cache_layers_param.cache_param.hparam.alphabet_length = 10,      /* Buffer seen as a decimal polynom */
-  .cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE,
-  .cache_layers_param.cache_param.hparam.hash_func_both = cache_inode_fsal_rbt_both,
-  .cache_layers_param.cache_param.hparam.compare_key = cache_inode_compare_key_fsal,
-  .cache_layers_param.cache_param.hparam.key_to_str = display_cache,
-  .cache_layers_param.cache_param.hparam.val_to_str = display_cache,
-  .cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE,
+  /* (expired) */
 
   /* Cache inode parameters : cookie hash table */
   .cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID,
@@ -367,7 +361,6 @@ struct timespec ServerBootTime;
 time_t ServerEpoch;
 
 nfs_worker_data_t *workers_data = NULL;
-hash_table_t *fh_to_cache_entry_ht = NULL; /* Cache inode handle lookup table */
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
@@ -1240,8 +1233,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
     }
 
   /* Cache Inode Initialisation */
-  cache_status = cache_inode_init(cache_inode_params,
-				  &fh_to_cache_entry_ht);
+  cache_status = cache_inode_init(cache_inode_params);
   if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,

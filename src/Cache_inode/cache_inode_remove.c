@@ -35,9 +35,9 @@
 
 #include "config.h"
 #include "log.h"
-#include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
 
@@ -61,40 +61,21 @@
 cache_inode_status_t
 cache_inode_clean_internal(cache_entry_t *entry)
 {
-     struct gsh_buffdesc val;
-     struct gsh_buffdesc fh_desc;
      fsal_status_t fsal_status = {0, 0};
-     hash_error_t rc = 0;
 
      if (! entry->obj_handle)
-       goto unref;
+         goto unref;
 
-     entry->obj_handle->ops->handle_to_key(entry->obj_handle,
-					   &fh_desc);
-     val.addr = entry;
-     val.len = sizeof(cache_entry_t);
-
-     rc = HashTable_DelSafe(fh_to_cache_entry_ht,
-			    &fh_desc,
-			    &val);
-
-     /* Nonexistence is as good as success. */
-     if ((rc != HASHTABLE_SUCCESS) &&
-         (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          /* XXX this seems to logically prevent relcaiming the HashTable LRU
-           * reference, and it seems to indicate a very serious problem */
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "HashTable_Del error %d in cache_inode_clean_internal", rc);
-          return CACHE_INODE_INCONSISTENT_ENTRY;
-     }
+     /* Remove from lookup table (with existence check) */
+     cih_remove_checked(entry);
 
 /* release the handle object too
  */
      fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_lru_clean: Couldn't free FSAL ressources "
-                  "fsal_status.major=%u", fsal_status.major);
+                  "Couldn't free FSAL ressources fsal_status.major=%u",
+                  fsal_status.major);
      }
 
      entry->obj_handle = NULL;

@@ -42,6 +42,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
 
 #include <unistd.h>
@@ -78,74 +79,46 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		const struct req_op_context *req_ctx,
 		cache_entry_t **entry)
 {
-     struct gsh_buffdesc key, value;
      fsal_status_t fsal_status = {0, 0};
-     hash_error_t hrc = 0;
      struct fsal_export *exp_hdl = NULL;
      struct fsal_obj_handle *new_hdl;
-     struct hash_latch latch;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     cih_latch_t latch;
 
-     /* Turn the input to a hash key on our own.
-      */
-     key = fsdata->fh_desc;
-
-     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              false,
-                              &latch);
-
-     if ((hrc != HASHTABLE_SUCCESS) &&
-         (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          /* This should not happened */
-          status = CACHE_INODE_HASH_TABLE_ERROR;
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Hash access failed with code %d"
-                  " - this should not have happened",
-                  hrc);
-	  *entry = NULL;
-          return status;
-     }
-
-     if (hrc == HASHTABLE_SUCCESS) {
-          /* Entry exists in the cache and was found */
-          *entry = value.addr;
+     /* Do lookup */
+     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK);
+     if (*entry) {
           /* take an extra reference within the critical section */
           if (cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
               CACHE_INODE_SUCCESS) {
-               /* Dead entry.  Treat like a lookup failure. */
-               *entry = NULL;
+              /* Dead entry.  Treat like a lookup failure. */
           } else {
-               if (*entry == associated) {
-                    /* Take a quick exit so we don't invert lock
-                       ordering. */
-                    HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                    return CACHE_INODE_SUCCESS;
-               }
+              if (*entry == associated) {
+                  /* Take a quick exit so we don't invert lock
+                   * ordering. */
+                  cih_latch_rele(&latch);
+                  return (CACHE_INODE_SUCCESS);
+              }
           }
      }
-     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
+     cih_latch_rele(&latch);
 
+     /* Cache miss, allocate a new entry */
+     exp_hdl = fsdata->export;
+     fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
+                                               &fsdata->fh_desc,
+                                               &new_hdl);
+     if (FSAL_IS_ERROR( fsal_status )) {
+         status = cache_inode_error_convert(fsal_status);
+         LogDebug(COMPONENT_CACHE_INODE,
+                  "could not get create_handle object");
+         *entry = NULL;
+         return status;
+     }
+
+     status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
      if (*entry == NULL) {
-          /* Cache miss, allocate a new entry */
-          exp_hdl = fsdata->export;
-          fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
-                                                    &fsdata->fh_desc,
-                                                    &new_hdl);
-          if (FSAL_IS_ERROR( fsal_status )) {
-               status = cache_inode_error_convert(fsal_status);
-               LogDebug(COMPONENT_CACHE_INODE,
-                        "could not get create_handle object");
-	       *entry = NULL;
-               return status;
-          }
-
-          status = cache_inode_new_entry(new_hdl,
-					 CACHE_INODE_FLAG_NONE,
-					 entry);
-          if (*entry == NULL) {
-               return status;
-          }
-
+         return status;
      }
 
      status = CACHE_INODE_SUCCESS;

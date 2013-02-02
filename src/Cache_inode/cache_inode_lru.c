@@ -796,9 +796,8 @@ lru_thread(void *arg __attribute__((unused)))
           t_count += pinned_t_count;
 
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "lru entries: %zu   cache entries: %zu",
-                       t_count, HashTable_GetSize(fh_to_cache_entry_ht));
-
+                       "lru entries: %zu",
+                       t_count);
 
           if (tmpflags & LRU_STATE_RECLAIMING) {
               if (t_count < lru_state.entries_lowat) {

@@ -79,13 +79,10 @@ static void accum_req_stats(nfs_request_stat_item_t * global,
  */
 void stats_collect (ganesha_stats_t                 *ganesha_stats)
 {
-    hash_stat_t            *cache_inode_stat = &ganesha_stats->cache_inode_hstat;
     nfs_worker_stat_t      *global_worker_stat = &ganesha_stats->global_worker_stat;
     unsigned int           i, j;
 
     memset(ganesha_stats, 0, sizeof(ganesha_stats_t));
-
-    HashTable_GetStats(fh_to_cache_entry_ht, cache_inode_stat);
 
     /* Merging the NFS protocols stats together */
     for (i = 0; i < nfs_param.core_param.nb_worker; i++) {
@@ -246,7 +243,6 @@ void *stats_thread(void *UnusedArg)
 
   ganesha_stats_t        ganesha_stats;
   nfs_worker_stat_t      *global_worker_stat = &ganesha_stats.global_worker_stat;
-  hash_stat_t            *cache_inode_stat = &ganesha_stats.cache_inode_hstat;
   hash_stat_t            *uid_map_hstat = &ganesha_stats.uid_map;
   hash_stat_t            *gid_map_hstat = &ganesha_stats.gid_map;
   hash_stat_t            *ip_name_hstat = &ganesha_stats.ip_name_map;
@@ -352,17 +348,6 @@ void *stats_thread(void *UnusedArg)
 
       /* collect statistics */
       stats_collect(&ganesha_stats);
-
-      /* Pinting the cache inode hash stat */
-      /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
-      HashTable_GetStats(fh_to_cache_entry_ht, cache_inode_stat);
-
-      fprintf(stats_file,
-              "CACHE_INODE_HASH,%s;%zu,%zu,%zu,%zu\n",
-              strdate, cache_inode_stat->entries,
-              cache_inode_stat->min_rbt_num_node,
-              cache_inode_stat->max_rbt_num_node,
-              cache_inode_stat->average_rbt_num_node);
 
       fprintf(stats_file, "NFS/MOUNT STATISTICS,%s;%u,%u,%u|%u,%u,%u,%u,%u\n",
               strdate,

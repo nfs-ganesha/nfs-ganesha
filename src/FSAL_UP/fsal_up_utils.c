@@ -27,6 +27,7 @@
  */
 
 #include "fsal_up.h"
+#include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
 
 /**
@@ -43,48 +44,25 @@
  * @retval CACHE_INODE_SUCCESS on success.
  * @retval CACHE_INODE_NOT_FOUND if the inode could not be found or
  *         referenced.
- * @retval CACHE_INODE_HASH_TABLE_ERROR on some inexplicable failure.
  */
 int
-up_get(const struct gsh_buffdesc *key,
-       cache_entry_t **entry)
+up_get(const struct gsh_buffdesc *key, cache_entry_t **entry)
 {
-        struct gsh_buffdesc hashkey = {
-                .addr = key->addr,
-                .len = key->len
-        };
-        struct gsh_buffdesc hashval;
-        hash_error_t hrc = 0;
-        struct hash_latch latch;
-        cache_entry_t *entry_found = NULL;
+	cih_latch_t latch;
 
-        *entry = NULL;
+	*entry = cih_get_by_fh_latched(key, &latch,
+				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+	if (! *entry)
+		return (CACHE_INODE_NOT_FOUND);
 
-        hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &hashkey, &hashval,
-                                 false,
-                                 &latch);
+	/* Found entry, try to ref it */
+	if (unlikely(cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
+		     CACHE_INODE_SUCCESS)) {
+		/* If ref fails, it's just another NOT_FOUND case */
+		cih_latch_rele(&latch);
+		return (CACHE_INODE_NOT_FOUND);
+	}
+	cih_latch_rele(&latch);
 
-        if (hrc == HASHTABLE_SUCCESS) {
-                /* Entry exists in the cache and was found */
-                entry_found = hashval.addr;
-                if (cache_inode_lru_ref(entry_found, LRU_REQ_INITIAL) !=
-                    CACHE_INODE_SUCCESS) {
-                        HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                        return CACHE_INODE_NOT_FOUND;
-                } else {
-                        *entry = entry_found;
-                }
-        } else if (hrc == HASHTABLE_ERROR_NO_SUCH_KEY) {
-                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                return ENOENT;
-        } else {
-                /* This should not happen */
-                LogCrit(COMPONENT_FSAL_UP,
-                        "Hash access failed with code %d"
-                        " - this should not have happened",
-                        hrc);
-                return EFAULT;
-        }
-	HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-        return CACHE_INODE_SUCCESS;
+        return (CACHE_INODE_SUCCESS);
 }
