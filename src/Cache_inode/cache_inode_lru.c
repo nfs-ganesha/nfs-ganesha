@@ -588,6 +588,9 @@ void cache_inode_lru_cleanup_push(cache_entry_t *entry)
          entry->lru.flags |= LRU_ENTRY_CLEANUP;
      }
 
+     /* now move entry out of LRU altogether */
+     lru_remove_entry(&entry->lru);
+
      pthread_mutex_unlock(&entry->lru.mtx);
 }
 
@@ -634,7 +637,7 @@ lru_thread_delay_ms(unsigned long ms)
  */
 
 static inline uint32_t
-_cache_inode_lru_cleanup(void)
+cache_inode_lru_cleanup(void)
 {
     uint32_t n_finalized = 0;
     uint32_t lane = 0;
@@ -1050,7 +1053,7 @@ lru_thread(void *arg __attribute__((unused)))
                        LRU_N_Q_LANES, lru_state.fds_lowat);
 
           /* Process LRU cleanup queue */
-          n_finalized = _cache_inode_lru_cleanup();
+          n_finalized = cache_inode_lru_cleanup();
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
                    "LRU cleanup, reclaimed %d entries", n_finalized);
@@ -1550,6 +1553,8 @@ void cache_inode_lru_kill(cache_entry_t *entry)
           pthread_mutex_unlock(&entry->lru.mtx);
      } else {
           entry->lru.flags |= LRU_ENTRY_KILLED;
+          /* now move entry out of LRU altogether */
+          lru_remove_entry(&entry->lru);
           /* cache_inode_lru_unref always either unlocks or destroys
              the entry. */
           cache_inode_lru_unref(entry, LRU_FLAG_LOCKED);
