@@ -118,6 +118,7 @@ if(USE_DBUS_STATS)
   set(support_STAT_SRCS
     ${support_STAT_SRCS}
     server_stats.c
+    export_mgr.c
     )
 endif(USE_DBUS_STATS)
 
