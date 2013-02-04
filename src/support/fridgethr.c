@@ -1261,4 +1261,43 @@ int fridgethr_sync_command(struct fridgethr *fr,
 	return rc;
 }
 
+/**
+ * @brief Set the wait time of a running fridge
+ *
+ * @param[in] ctx        Thread context
+ * @param[in] time_delay New time delay
+ */
+
+void fridgethr_setwait(struct fridgethr_context *ctx,
+		       time_t thread_delay)
+{
+	struct fridgethr_entry *fe
+		= container_of(ctx, struct fridgethr_entry,
+			       ctx);
+	struct fridgethr *fr = fe->fr;
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	fr->p.thread_delay = thread_delay;
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+}
+
+/**
+ * @brief Get the wait time of a running fridge
+ *
+ * @param[in] ctx Thread context
+ */
+
+time_t fridgethr_getwait(struct fridgethr_context *ctx)
+{
+	struct fridgethr_entry *fe
+		= container_of(ctx, struct fridgethr_entry,
+			       ctx);
+	struct fridgethr *fr = fe->fr;
+	time_t thread_delay = 0;
+
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	thread_delay = fr->p.thread_delay;
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+	return thread_delay;
+}
+
 /** @} */

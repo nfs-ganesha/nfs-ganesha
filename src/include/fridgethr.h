@@ -214,6 +214,10 @@ int fridgethr_sync_command(struct fridgethr *,
 			   fridgethr_comm_t ,
 			   time_t);
 
+void fridgethr_setwait(struct fridgethr_context *ctx,
+		       time_t thread_delay);
+time_t fridgethr_getwait(struct fridgethr_context *ctx);
+
 #endif /* FRIDGETHR_H */
 
 /** @} */
