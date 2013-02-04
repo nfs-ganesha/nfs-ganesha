@@ -892,6 +892,9 @@ lru_thread(void *arg __attribute__((unused)))
                              CACHE_INODE_SUCCESS;
                          /* a cache entry */
                          cache_entry_t *entry;
+                         /* safe lane traversal */
+                         struct glist_head  *glist;
+                         struct glist_head  *glistn;
 
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Reaping up to %d entries from lane %zd",
@@ -905,10 +908,21 @@ lru_thread(void *arg __attribute__((unused)))
                                       workpass, closed, totalclosed);
 
                          pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-                         while ((workdone < lru_state.per_lane_work) &&
-                                (lru = glist_first_entry(&LRU_1[lane].lru.q,
-                                                         cache_inode_lru_t,
-                                                         q))) {
+
+                         while (workdone < lru_state.per_lane_work) {
+
+                             /* In hindsight, it's really important to avoid
+                              * restarts. */
+                             glist_for_each_safe(glist, glistn,
+                                                 &LRU_1[lane].lru.q) {
+
+                                 /* recheck per-lane work */
+                                 if (workdone >= lru_state.per_lane_work)
+                                     break;
+
+                                 lru =
+                                     glist_entry(glist, cache_inode_lru_t, q);
+
                               /* We currently hold the lane queue
                                  partition mutex.  Due to lock
                                  ordering, we are forbidden from
@@ -952,6 +966,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
                                       in this queue partition any more. */
+                                   workdone++; /* but count it */
                                    continue;
                               }
 
@@ -983,7 +998,9 @@ lru_thread(void *arg __attribute__((unused)))
                                  partition for the next run through
                                  the loop. */
                               pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-                         }
+                             } /* for_each_safe lru */
+                         } /* while (workdone < per-lane work) */
+
                          pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Actually processed %zd entries on lane %zd "
@@ -992,7 +1009,7 @@ lru_thread(void *arg __attribute__((unused)))
                                   lane,
                                   closed);
                          workpass += workdone;
-                    }
+                    } /* foreach lane */
                     totalwork += workpass;
                } while (extremis &&
                         (workpass >= lru_state.per_lane_work) &&
