@@ -1608,10 +1608,14 @@ cache_inode_lru_unref(cache_entry_t *entry,
      assert(refcnt >= 1);
 
      if (unlikely(refcnt == 1)) {
-          struct lru_q_base *q
-               = lru_select_queue(entry->lru.flags,
-                                  entry->lru.lane);
-          pthread_mutex_lock(&q->mtx);
+          struct lru_q_base *q 
+	      = (entry->lru.lane == LRU_NO_LANE ?
+		 NULL :
+		 lru_select_queue(entry->lru.flags,
+                                  entry->lru.lane));
+	  if (q) {
+	      pthread_mutex_lock(&q->mtx);
+	  }
 
           /* Until the lock-free revolution, we must re-read
            * stable entry refcnt, having first taken the lane
@@ -1622,12 +1626,16 @@ cache_inode_lru_unref(cache_entry_t *entry,
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
                entry->lru.flags = LRU_ENTRY_CONDEMNED;
-               glist_del(&entry->lru.q);
-               --(q->size);
+	       if (q) {
+		   glist_del(&entry->lru.q);
+		   --(q->size);
+	       }
                entry->lru.lane = LRU_NO_LANE;
                /* Give other threads a chance to see that */
                pthread_mutex_unlock(&entry->lru.mtx);
-               pthread_mutex_unlock(&q->mtx);
+	       if (q) {
+		   pthread_mutex_unlock(&q->mtx);
+	       }
                pthread_yield();
                /* We should not need to hold the LRU mutex at this
                   point.  The hash table locks will ensure that by
@@ -1642,7 +1650,9 @@ cache_inode_lru_unref(cache_entry_t *entry,
                pool_free(cache_inode_entry_pool, entry);
                return;
           } else {
-               pthread_mutex_unlock(&q->mtx);
+	      if (q) {
+		  pthread_mutex_unlock(&q->mtx);
+	      }
           }
      } else {
           /* We may decrement the reference count without the queue

@@ -175,7 +175,7 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
 
 #define LRU_N_Q_LANES  7
 
-#define LRU_NO_LANE  ~0
+static const uint32_t LRU_NO_LANE = ~0;
 
 extern void cache_inode_lru_pkginit(void);
 extern void cache_inode_lru_pkgshutdown(void);
