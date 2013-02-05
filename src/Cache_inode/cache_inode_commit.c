@@ -75,6 +75,7 @@ cache_inode_commit(cache_entry_t *entry,
      /* True if we opened our own file descriptor */
      bool opened = false;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t cstatus = CACHE_INODE_SUCCESS;
 
      if ((uint64_t)count > ~(uint64_t)offset)
          return NFS4ERR_INVAL;
@@ -86,7 +87,7 @@ cache_inode_commit(cache_entry_t *entry,
         called. */
      status = CACHE_INODE_SUCCESS;
 
-     if (!is_open_for_write(entry)) {
+     while (!is_open_for_write(entry)) {
 	     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	     if (!is_open_for_write(entry)) {
@@ -100,6 +101,8 @@ cache_inode_commit(cache_entry_t *entry,
 		     }
 		     opened = true;
 	     }
+             PTHREAD_RWLOCK_unlock(&entry->content_lock);
+             PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      }
      
      fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
@@ -107,8 +110,8 @@ cache_inode_commit(cache_entry_t *entry,
 						  count);
      if (FSAL_IS_ERROR(fsal_status)) {
 	     LogMajor(COMPONENT_CACHE_INODE,
-		      "cache_inode_rdwr: fsal_commit() failed: "
-		      "fsal_status.major = %d", fsal_status.major);
+		      "fsal_commit() failed: fsal_status.major = %d",
+                      fsal_status.major);
 
 	     status = cache_inode_error_convert(fsal_status);
 	     if (fsal_status.major == ERR_FSAL_STALE) {
@@ -118,7 +121,7 @@ cache_inode_commit(cache_entry_t *entry,
 	     /* Close the FD if we opened it. No need to catch an
 		additional error form a close? */
 	     if (opened) {
-		     status = cache_inode_close(entry,
+		     cstatus = cache_inode_close(entry,
 						CACHE_INODE_FLAG_CONTENT_HAVE |
 						CACHE_INODE_FLAG_CONTENT_HOLD);
 		     opened = false;
@@ -127,13 +130,13 @@ cache_inode_commit(cache_entry_t *entry,
      }
      /* Close the FD if we opened it. */
      if (opened) {
-	     status = cache_inode_close(entry,
+	     cstatus = cache_inode_close(entry,
 					CACHE_INODE_FLAG_CONTENT_HAVE |
 					CACHE_INODE_FLAG_CONTENT_HOLD);
-	     if (status != CACHE_INODE_SUCCESS) {
+	     if (cstatus != CACHE_INODE_SUCCESS) {
 		     LogEvent(COMPONENT_CACHE_INODE,
-			      "cache_inode_commit: cache_inode_close = %d",
-			      status);
+			      "cache_inode_close = %d",
+			      cstatus);
 	     }
      }
 

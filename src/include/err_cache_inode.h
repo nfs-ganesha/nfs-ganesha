@@ -152,6 +152,14 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
   {
   ERR_CACHE_INODE_NOT_SUPPORTED, "ERR_CACHE_INODE_NOT_SUPPORTED",
         "Not supported operation in FSAL"},
+#define ERR_CACHE_INODE_SERVERFAULT CACHE_INODE_SERVERFAULT
+  {ERR_CACHE_INODE_SERVERFAULT, "ERR_CACHE_INODE_SERVERFAULT",
+   "The FSAL layer returned an error that can't be recovered."
+  },
+#define ERR_CACHE_INODE_TOOSMALL CACHE_INODE_TOOSMALL
+  {ERR_CACHE_INODE_TOOSMALL, "ERR_CACHE_INODE_TOOSMALL",
+   "Buffer or request is too small."
+  },
   {
   ERR_NULL, "ERR_NULL", ""}
 };

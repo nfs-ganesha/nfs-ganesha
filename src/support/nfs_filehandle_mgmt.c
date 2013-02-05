@@ -303,7 +303,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
   if(nfs_param.nfsv4_param.fh_expire)
     {
       LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
-      file_handle->srvboot_time = ServerBootTime;
+      file_handle->srvboot_time = (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL);
     }
 
   /* Set the len */
@@ -631,7 +631,7 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
   pfilehandle4 = (file_handle_v4_t *) pfh;
 
   if((nfs_param.nfsv4_param.fh_expire)
-     && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
+     && (pfilehandle4->srvboot_time != (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL)))
     {
       if(nfs_param.nfsv4_param.returns_err_fh_expired)
         return NFS4ERR_FHEXPIRED;

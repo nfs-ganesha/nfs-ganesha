@@ -118,6 +118,8 @@ cache_inode_rdwr(cache_entry_t *entry,
 
     if (*stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
         /* Write to memory */
+        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+        attributes_locked = true;
         PTHREAD_RWLOCK_wrlock(&entry->content_lock);
         content_locked = true;
 
@@ -136,8 +138,6 @@ cache_inode_rdwr(cache_entry_t *entry,
             memcpy(entry->object.file.unstable_data.buffer,
                     buffer, io_size);
 
-            PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-            attributes_locked = true;
             cache_inode_set_time_current(&obj_hdl->attributes.mtime);
             *bytes_moved = io_size;
         } else {
@@ -148,8 +148,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                 memcpy(entry->object.file.unstable_data.buffer +
                         offset, buffer, io_size);
 
-                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-                attributes_locked = true;
                 cache_inode_set_time_current(&obj_hdl->attributes.mtime);
                 *bytes_moved = io_size;
             } else {
@@ -191,9 +189,10 @@ cache_inode_rdwr(cache_entry_t *entry,
                     goto out;
                 }
                 opened = true;
-                PTHREAD_RWLOCK_unlock(&entry->content_lock);
-                PTHREAD_RWLOCK_rdlock(&entry->content_lock);
             }
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+            loflags = obj_hdl->ops->status(obj_hdl);
         }
 
         /* Call FSAL_read or FSAL_write */

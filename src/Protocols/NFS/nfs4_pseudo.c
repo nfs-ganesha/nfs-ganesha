@@ -312,10 +312,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 	attrs.numlinks = 2; /* not 1.  for '.' and '../me' */
 	attrs.owner = 0; /* root */
 	attrs.group = 2; /* daemon? */
-	attrs.atime.tv_sec = ServerBootTime;
-	attrs.ctime.tv_sec = ServerBootTime;
-	attrs.chgtime.tv_sec = ServerBootTime;
-	attrs.change = ServerBootTime;
+	attrs.atime = ServerBootTime;
+	attrs.ctime = ServerBootTime;
+	attrs.chgtime = ServerBootTime;
+	attrs.change = ServerBootTime.tv_sec;
 	attrs.spaceused = DEV_BSIZE;
 	attrs.mounted_on_fileid = psfsp->pseudo_id;
 	return nfs4_FSALattr_To_Fattr(&attrs, Fattr, data, objFH, Bitmap);
@@ -963,7 +963,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* BUGAZOMEU: management of the cookie verifier */
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
-      memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
+      memcpy(cookie_verifier, &ServerBootTime.tv_sec, sizeof(cookie_verifier));
       if(cookie != 0)
         {
           if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)

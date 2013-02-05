@@ -530,6 +530,8 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_FILE_OPEN = 43,
 	CACHE_INODE_FSAL_XDEV = 44,
 	CACHE_INODE_FSAL_MLINK = 45,
+        CACHE_INODE_SERVERFAULT = 46,
+        CACHE_INODE_TOOSMALL = 47,
 } cache_inode_status_t;
 
 /**
@@ -941,6 +943,7 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        time_t current_time = 0;
 
 	if (need_wr_lock)
 	{
@@ -952,6 +955,10 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	}
 	/* Do we need to refresh? */
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
+            ((current_time - entry->attr_time) >
+              cache_inode_params.grace_period_attr) ||
+            ((cache_inode_params.getattr_dir_invalidation) &&
+              (entry->type == DIRECTORY)) ||
 	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			   ATTR_RDATTR_ERR)) {
 	    if (!need_wr_lock)
@@ -959,14 +966,19 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 	    }
-		/* Has someone else done it for us? */
-		if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-		    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-				   ATTR_RDATTR_ERR)) {
-			/* Release the lock on error */
-			cache_status = cache_inode_refresh_attrs(entry, opctx);
-			if (cache_status != CACHE_INODE_SUCCESS) {
-				PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	    /* Has someone else done it for us? */
+	    if (!need_wr_lock &&
+                (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
+                 ((current_time - entry->attr_time) >
+                  cache_inode_params.grace_period_attr) ||
+                 ((cache_inode_params.getattr_dir_invalidation) &&
+                   (entry->type == DIRECTORY)) ||
+	         FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
+			       ATTR_RDATTR_ERR))) {
+		    /* Release the lock on error */
+		    cache_status = cache_inode_refresh_attrs(entry, opctx);
+		    if (cache_status != CACHE_INODE_SUCCESS) {
+		 	    PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			}
 		}
 	}

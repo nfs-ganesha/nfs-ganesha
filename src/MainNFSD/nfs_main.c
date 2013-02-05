@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
   sigset_t signals_to_block;
 
   /* Set the server's boot time and epoch */
-  ServerBootTime = time(NULL);
-  ServerEpoch    = ServerBootTime;
+  now(&ServerBootTime);
+  ServerEpoch    = (time_t)ServerBootTime.tv_sec;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);

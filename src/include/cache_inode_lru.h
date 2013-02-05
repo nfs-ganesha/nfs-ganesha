@@ -78,7 +78,8 @@ struct lru_state {
 	uint32_t per_lane_work;
 	uint32_t biggest_window;
 	uint32_t flags;
-	uint64_t last_count;
+        uint64_t prev_fd_count; /* previous # of open fds */
+        time_t prev_time; /* previous time the gc thread was run. */
 	uint64_t threadwait;
 	bool caching_fds;
 };
@@ -143,6 +144,12 @@ extern struct lru_state lru_state;
 #define LRU_FLAG_LOCKED  0x0100
 
 /**
+ * The entry is not initialized completely.
+ */
+static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
+
+
+/**
  * No further refs or state permitted.
  */
 #define LRU_ENTRY_POISON \
@@ -202,7 +209,7 @@ bool cache_inode_is_pinned(cache_entry_t *entry);
 
 static inline bool cache_inode_lru_fds_available(void)
 {
-	if (open_fd_count >= lru_state.fds_hard_limit) {
+	if ((open_fd_count >= lru_state.fds_hard_limit) && lru_state.caching_fds) {
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
 			"FD Hard Limit Exceeded.  Disabling FD Cache and waking"
 			" LRU thread.");
