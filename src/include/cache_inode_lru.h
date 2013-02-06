@@ -170,6 +170,18 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
 
 #define LRU_N_Q_LANES  7
 
+/**
+ * A single queue structure.
+ */
+
+struct lru_q_base
+{
+     struct glist_head q; /* LRU is at HEAD, MRU at tail */
+     pthread_mutex_t mtx;
+     uint64_t size;
+};
+
+
 static const uint32_t LRU_NO_LANE = ~0;
 
 extern int cache_inode_lru_pkginit(void);

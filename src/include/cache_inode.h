@@ -54,10 +54,6 @@
 #include "nlm_list.h"
 #include "nfs4_acls.h"
 
-/*< Global hash table for servicing lookups by FSAL handle key */
-
-extern hash_table_t *fh_to_cache_entry_ht;
-
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
 
@@ -912,6 +908,7 @@ int display_key(struct gsh_buffdesc *buff, char *str);
 int display_not_implemented(struct gsh_buffdesc *buff,
 			    char *str);
 int display_value(struct gsh_buffdesc *buff, char *str);
+void cache_inode_destroyer(void);
 
 /**
  * @brief Update cache_entry metadata from its attributes

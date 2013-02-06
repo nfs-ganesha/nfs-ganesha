@@ -296,7 +296,7 @@ nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
         return;
 } /* nfs41_op_layoutreturn_Free */
 
-static void
+void
 handle_recalls(struct fsal_layoutreturn_arg *arg,
 	       state_t *state,
 	       const struct pnfs_segment *segment)

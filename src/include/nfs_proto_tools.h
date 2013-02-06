@@ -229,5 +229,8 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data,
                                     object_file_type_t required_type,
                                     bool ds_allowed);
+void handle_recalls(struct fsal_layoutreturn_arg *arg,
+		    state_t *state,
+		    const struct pnfs_segment *segment);
 #endif                          /* _NFS_PROTO_TOOLS_H */
 

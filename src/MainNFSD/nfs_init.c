@@ -513,7 +513,10 @@ void *sigmgr_thread(void *UnusedArg)
     }
 
   LogEvent(COMPONENT_MAIN,
-	   "Stopping reaper thread.");
+	   "Destroying the inode cache.");
+  cache_inode_destroyer();
+  LogEvent(COMPONENT_MAIN,
+	   "Inode cache destroyed.");
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 

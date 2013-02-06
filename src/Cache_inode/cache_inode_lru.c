@@ -125,17 +125,6 @@
 
 struct lru_state lru_state;
 
-/**
- * A single queue structure.
- */
-
-struct lru_q_base
-{
-     struct glist_head q; /* LRU is at HEAD, MRU at tail */
-     pthread_mutex_t mtx;
-     uint64_t size;
-};
-
 /* Cache-line padding macro from MCAS */
 
 #ifndef CACHE_LINE_SIZE
@@ -251,7 +240,7 @@ lru_init_queue(struct lru_q_base *q)
  * @return The queue containing entries with the given lane and state.
  */
 
-static inline struct lru_q_base *
+inline struct lru_q_base *
 lru_select_queue(uint32_t flags, uint32_t lane)
 {
      assert(lane < LRU_N_Q_LANES);
