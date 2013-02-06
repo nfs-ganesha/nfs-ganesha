@@ -473,15 +473,11 @@ nfs_req_timer_stop(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
 
 static inline void
 nfs_req_timer_qdiff(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
-                    struct svc_req *req, nfs_request_data_t *preqnfs)
+                    struct svc_req *req, request_data_t *preq)
 {
-    struct timespec ts;
     nsecs_elapsed_t elapsed;
 
-    /* process time + queue time */
-    ts.tv_sec = preqnfs->time_queued.tv_sec;
-    ts.tv_nsec = preqnfs->time_queued.tv_usec * 1000;
-    elapsed = timespec_diff(&ts, &t->timer_end);
+    elapsed = timespec_diff(&preq->time_queued, &t->timer_start);
     nsecs_to_timespec(elapsed, &t->queue_timer_diff);
     t->latency_stat.type = AWAIT_TIME;
     t->latency_stat.latency = (unsigned int)(elapsed/1000); /* microseconds */
@@ -1094,7 +1090,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                       req, &req_timer.latency_stat);
   }
 
-  nfs_req_timer_qdiff(&req_timer, worker_data, req, preqnfs);
+  nfs_req_timer_qdiff(&req_timer, worker_data, req, preq);
 
   /* Update per-share process time + queue time */
   if (update_per_share_stats) {

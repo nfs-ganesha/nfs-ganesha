@@ -973,15 +973,15 @@ nfs_rpc_enqueue_req(request_data_t *req)
     struct req_q_pair *qpair;
     struct req_q *q;
 
-    LogFullDebug(COMPONENT_DISPATCH,
-                 "enter rq_xid=%u lookahead.flags=%u",
-                 req->r_u.nfs->req.rq_xid,
-                 req->r_u.nfs->lookahead.flags);
 
     nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
 
     switch (req->rtype) {
     case NFS_REQUEST:
+        LogFullDebug(COMPONENT_DISPATCH,
+		     "enter rq_xid=%u lookahead.flags=%u",
+		     req->r_u.nfs->req.rq_xid,
+		     req->r_u.nfs->lookahead.flags);
         if (req->r_u.nfs->lookahead.flags & NFS_LOOKAHEAD_MOUNT) {
             qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
             break;
@@ -1006,6 +1006,9 @@ nfs_rpc_enqueue_req(request_data_t *req)
         break;
     }
 
+    /* this one is real, timestamp it
+     */
+    now(&req->time_queued);
     /* always append to producer queue */
     q = &qpair->producer;
     pthread_mutex_lock(&q->we.mtx);

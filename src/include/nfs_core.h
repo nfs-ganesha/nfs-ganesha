@@ -351,8 +351,6 @@ typedef struct nfs_request_data {
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
-	struct timeval time_queued; /*< The time at which a request was added
-				     *  to the worker thread queue. */
 } nfs_request_data_t;
 
 enum rpc_chan_type {
@@ -429,6 +427,8 @@ typedef struct request_data {
 		_9p_request_data_t _9p;
 #endif
 	} r_u ;
+	struct timespec time_queued; /*< The time at which a request was added
+				     *  to the worker thread queue. */
 } request_data_t;
 
 /**
