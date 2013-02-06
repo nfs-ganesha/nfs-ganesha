@@ -1842,7 +1842,9 @@ fsal_boolean_t fsal_error_is_info(fsal_status_t status)
 {
   switch (status.major)
     {
-    /* vvv TODO: For development FTDC - Production FTDC Remove below section */
+#if 0
+    /* Log infrastructure redesign can enable this error logging under
+       different category; Disabling for Producition level code. */
     case ERR_FSAL_PERM:
     case ERR_FSAL_NOT_OPENED:
     case ERR_FSAL_ACCESS:
@@ -1850,20 +1852,20 @@ fsal_boolean_t fsal_error_is_info(fsal_status_t status)
     case ERR_FSAL_DELAY:
     case ERR_FSAL_NOTEMPTY:
     case ERR_FSAL_DQUOT:
-    /* ^^^ TODO: For development FTDC - Production FTDC Remove above section */
-
-    case ERR_FSAL_NOTDIR:
-    case ERR_FSAL_NOMEM:
-    case ERR_FSAL_FAULT:
-    case ERR_FSAL_EXIST:
-    case ERR_FSAL_XDEV:
-    case ERR_FSAL_ISDIR:
-    case ERR_FSAL_INVAL:
-    case ERR_FSAL_FBIG:
     case ERR_FSAL_NOSPC:
-    case ERR_FSAL_MLINK:
+    case ERR_FSAL_EXIST:
     case ERR_FSAL_NAMETOOLONG:
     case ERR_FSAL_STALE:
+    case ERR_FSAL_ISDIR:
+    case ERR_FSAL_NOTDIR:
+#endif
+
+    case ERR_FSAL_NOMEM:
+    case ERR_FSAL_FAULT:
+    case ERR_FSAL_XDEV:
+    case ERR_FSAL_INVAL:
+    case ERR_FSAL_FBIG:
+    case ERR_FSAL_MLINK:
     case ERR_FSAL_NOTSUPP:
     case ERR_FSAL_OVERFLOW:
     case ERR_FSAL_DEADLOCK:
