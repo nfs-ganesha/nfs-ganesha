@@ -371,7 +371,7 @@ ffilz       d15e277b Frank S. Filz first export may not be v4, but that shouldn'
 ffilz       1748cf12 Frank S. Filz Remove obsolete access_type field from exportlist_t
 ffilz       9f78f330 Frank S. Filz Update test directory to compile considering current state of code.
 ffilz       0ec84704 Frank S. Filz Fix up export permission checking
-????done    24d98f40 Frank S. Filz Fix some IPv6 compile issues
+pushed      24d98f40 Frank S. Filz Fix some IPv6 compile issues
 ????done    39b355c6 Frank S. Filz Strip out some unused cruft from exports
 ????done    969f09b3 Frank S. Filz Add additional export debug and prevent duplicate Export_Ids
 ????done    49c3ee94 Frank S. Filz Fix sub-dir mount issue for v3
@@ -379,27 +379,27 @@ ffilz       0ec84704 Frank S. Filz Fix up export permission checking
             fb7dff88 Jeremy Bongio Fixing setattr and time reporting/setting in general.
 Ported on pre-2.0-dev_19            ba706c89 Venkateswararao Jujjuri (JV) Fix few missing places where the entry contents are being checked without the content lock. Also fix made wrt lock locking order where the attrlock is taken first before content lock if both needs to be held simultaneously.
 ----pass    4481a74a Jim Wahlig need to update the lease for 4.0 as well as 4.1
-????done    9d415e75 Jim Wahlig No need to decrement client reference in this routine.
+pushed      9d415e75 Jim Wahlig No need to decrement client reference in this routine.
 ffilz    ?? 970b58d4 Jim Wahlig return the proper error when using an expired stateid.
             cfce9773 Venkateswararao Jujjuri (JV) Second phase of log changes for fsal_up dumb functions.
-????done    fee6fbff rong zeng fix in compare_nfs4_owner_key.
+pushed      fee6fbff rong zeng fix in compare_nfs4_owner_key.
             cb398a17 suhrud Ganesha stop: Removed a possible race when one process stops Ganesha and another one starts it. Ganesha start: Does not give error if statd/rquotad/Ganesha is already running. Only starts the not running daemons.
 Ported on pre-2.0-dev_19            358ea07e Venkateswararao Jujjuri (JV) Calculation of fd usage and proper thread wait time in lru.
 Ported on pre-2.0-dev_19            13ec5fa1 Venkateswararao Jujjuri (JV) Keep proper account of hash count.
             c6c81b41 Jim Wahlig add support for IP release on the server.
             f29e479b Jim Wahlig update configure.ac to match the new gpfs header files.
             6eb1ae39 Lance Russell Log certain errors as events wherever they are generated in FSAL
-????done    04557189 rong zeng Fix Pynfs RPLY5 RPLY7 RPLY12. Allow seqid based replay cache check if stateid's seqid is one less than curent.
+pushed      04557189 rong zeng Fix Pynfs RPLY5 RPLY7 RPLY12. Allow seqid based replay cache check if stateid's seqid is one less than curent.
 rong        7a347a1e rong zeng Log changes for IdMapper/RPCAL/support
             6fcd09ad Venkateswararao Jujjuri (JV) If GPFS is shutting down it can return whatever rc we want but if it is killed you will get rc EINTR in either case we need to terminate Ganesha, the problem with strace and gdb also will return EINTR so by retrying we will find out if GPFS still there and it was some debugging producing the EINTR or GPFS is really gone. (Fix proposed by Marc)
             7326b543 Venkateswararao Jujjuri (JV) Avoid deadlock between entry(lru) mutex and content lock of the entry.
             a1a87409 Srikrishan Malik Allow read/write for the owner of the file
 
 redo        0ee1edb6 Frank S. Filz Document Cache Inode and NFS Core parameters
-????done    c9b4b4fd Frank S. Filz Strip out unused NFS_Core_Param
+pushed      c9b4b4fd Frank S. Filz Strip out unused NFS_Core_Param
 redo        e7dad8e7 Frank S. Filz Document FSAL options in GPFS sample config and remove obsolete GPFS options
-????done    d132b61e Frank S. Filz With --enable-debug-memleaks, keep list of all state owners and stateids
-????done    a689549b Frank S. Filz Convert state owners to use new HashTable_GetLatch
+pushed      d132b61e Frank S. Filz With --enable-debug-memleaks, keep list of all state owners and stateids
+pushed      a689549b Frank S. Filz Convert state owners to use new HashTable_GetLatch
 62164b23    ba560a75 Frank S. Filz Convert NSM and NLM Client to new HashTable_GetLatch
 6249914e    81ba6a23 Frank S. Filz Clean up grace period reporting
 5613781e    cd493b0c Frank S. Filz Add missing state_share_wipe to wipe NLM shares
@@ -409,8 +409,8 @@ fd406315    1ff028c6 Frank S. Filz Make noisy LogInfo a LogDebug in MainNFSD/nfs
 f6ef15db    50167e27 Frank S. Filz Replace cache_inode_file_holds_state with cache_inode_is_pinned
 51e866bf    adc84f33 Frank S. Filz Check flags in cache_inode_invalidate properly
 ----pass    f95b403d Frank S. Filz Fixup some FSAL_UP log messages
-????done    c37a802a Frank S. Filz Add some sample tests for multilock
-????done    2a943afc Frank S. Filz Add multilock tool to Ganesha tree
+pushed      c37a802a Frank S. Filz Add some sample tests for multilock
+pushed      2a943afc Frank S. Filz Add multilock tool to Ganesha tree
 
 ----pass    c569cba0 rong zeng Rremove the following dead code from Ganesha.
 ????done    8c6e757b rong zeng 1. wbclient interface change. 2. adding support to get group list for RPCSEC_GSS flavor
@@ -441,7 +441,7 @@ Ported on pre-2.0-dev_19            d8c2c504 Jeremy Bongio Added perl script to 
 Ported on pre-2.0-dev_19            bf2652aa Jeremy Bongio Added a new log function to print debug info during specific log levels.
             0a575e90 Lance Russell Changed to call ths FSAL to determine the handle length rather than the embedded handle. This gave the length of the embedded GPFS handle not the Ganesha handle This causes follow on calls to expand handle to break with a size mismatch
 rong        ba2f8612 rong zeng Adding support for new winbind interface to get principal based on mspac obtained from window's kerberos ticket. This is needed for multiple ADS domains environment.
-????done    e26012c8 rong zeng nfs4_op_secinfo need to handle lookup in pseudo fs.
+pushed      e26012c8 rong zeng nfs4_op_secinfo need to handle lookup in pseudo fs.
             66138a1f Jim Wahlig another set of logging updates
             f42543f6 Lance Russell Changed setattr logic for modifying group ownwership. Now to modify group, user must be root, current owner, or in the target group.
 ????done ?? 8f63f968 rong zeng Fix V4 export access check. Don't apply check_access to V4 at proc level and fix the check in nfs4_MakeCred which is invoked in V4 operations.
