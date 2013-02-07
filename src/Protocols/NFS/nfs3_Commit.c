@@ -89,7 +89,8 @@ int nfs3_Commit(nfs_arg_t *parg,
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
+  fsal_attrib_list_t *ppre_attr, *ppost_attr;
+  fsal_attrib_list_t attr;
   uint64_t typeofcommit;
   int rc = NFS_REQ_OK;
 
@@ -157,11 +158,20 @@ int nfs3_Commit(nfs_arg_t *parg,
       goto out;
     }
 
-  /* Set the pre_attr */
+  /* Set the Wcc data */
   ppre_attr = &pre_attr;
 
+  if(cache_inode_getattr(pentry, &attr, pcontext, 
+                          &cache_status) != CACHE_INODE_SUCCESS) {
+    LogEvent(COMPONENT_NFSPROTO, "nfs3_Commit: Failed to get attributes %d", cache_status);
+    ppost_attr = &pre_attr;
+  }
+  else {
+    ppost_attr = &attr;
+  }
+
   nfs_SetWccData(pexport,
-                 ppre_attr, ppre_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
+                 ppre_attr, ppost_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
 
   /* Set the write verifier */
   memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,

@@ -164,6 +164,19 @@ cache_inode_commit(cache_entry_t *entry,
                           *status);
                }
           }
+          /* In other case cache_inode_rdwr call FSAL_Commit */
+          PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
+          if ((*status = cache_inode_refresh_attrs(entry,
+                                                   context)) != 
+                          CACHE_INODE_SUCCESS) {
+               LogMajor(COMPONENT_CACHE_INODE, 
+                       "cache_inode_commit: cache_inode_refresh_attrs = %d", 
+                       *status);
+               PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+               goto out;
+          }
+          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+
      } else {
           /* Ok, it looks like we're using the Ganesha write
            * buffer. This means we will either be writing to the
