@@ -208,6 +208,7 @@ nfsstat4 layoutget(
 	uint64_t clientid = req_ctx->clientid ? *req_ctx->clientid : 0;
 	nfsstat4 ret;
 
+	res->last_segment = true;
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
 	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
 				 myself, arg, res);
