@@ -105,11 +105,12 @@ cache_inode_commit(cache_entry_t *entry,
 						  offset,
 						  count);
      if (FSAL_IS_ERROR(fsal_status)) {
-	     LogMajor(COMPONENT_CACHE_INODE,
-		      "fsal_commit() failed: fsal_status.major = %d",
-                      fsal_status.major);
-
 	     status = cache_inode_error_convert(fsal_status);
+
+	     LogMajor(COMPONENT_CACHE_INODE,
+		      "fsal_commit() failed: fsal_status.major = %d, cache inode status = %s",
+                      fsal_status.major, cache_inode_err_str(status));
+
 	     if (fsal_status.major == ERR_FSAL_STALE) {
 		     cache_inode_kill_entry(entry);
                     goto out;
@@ -130,11 +131,25 @@ cache_inode_commit(cache_entry_t *entry,
 					CACHE_INODE_FLAG_CONTENT_HAVE |
 					CACHE_INODE_FLAG_CONTENT_HOLD);
 	     if (cstatus != CACHE_INODE_SUCCESS) {
-		     LogEvent(COMPONENT_CACHE_INODE,
-			      "cache_inode_close = %d",
-			      cstatus);
+		     LogMajor(COMPONENT_CACHE_INODE,
+			      "cache_inode_close = %s",
+			      cache_inode_err_str(cstatus));
 	     }
      }
+
+     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+     content_locked = false;
+
+     /* In other case cache_inode_rdwr call FSAL_Commit */
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+     if ((cstatus = cache_inode_refresh_attrs(entry,
+                                              req_ctx)) != 
+                     CACHE_INODE_SUCCESS) {
+          LogMajor(COMPONENT_CACHE_INODE, 
+                  "cache_inode_refresh_attrs = %s", 
+                  cache_inode_err_str(cstatus));
+     }
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 
