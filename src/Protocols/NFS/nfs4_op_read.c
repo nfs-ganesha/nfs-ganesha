@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "fsal_pnfs.h"
+#include "server_stats.h"
 
 static int op_dsread(struct nfs_argop4 *op,
                      compound_data_t * data,
@@ -352,6 +353,14 @@ done:
         if (anonymous) {
                 PTHREAD_RWLOCK_unlock(&entry->state_lock);
         }
+#ifdef USE_DBUS_STATS
+	server_stats_io_done(data->req_ctx,
+			     data->pexport->id,
+			     size,
+			     read_size,
+			     (res_READ4.status == NFS4_OK) ? true : false,
+			     false);
+#endif
 
         return res_READ4.status;
 }                               /* nfs4_op_read */

@@ -40,6 +40,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "fsal_pnfs.h"
+#include "server_stats.h"
 
 static int op_dswrite(struct nfs_argop4 *op,
                       compound_data_t *data,
@@ -370,6 +371,14 @@ int nfs4_op_write(struct nfs_argop4 *op,
     {
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
     }
+#ifdef USE_DBUS_STATS
+  server_stats_io_done(data->req_ctx,
+		       data->pexport->id,
+		       size,
+		       written_size,
+		       (res_WRITE4.status == NFS4_OK) ? true : false,
+		       false);
+#endif
 
   return res_WRITE4.status;
 }                               /* nfs4_op_write */
