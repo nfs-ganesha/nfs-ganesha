@@ -38,12 +38,6 @@ fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
                                       fsal_boolean_t is_owner,
                                       fsal_boolean_t is_group);
 
-fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
-                                         fsal_op_context_t *p_context,
-                                         fsal_boolean_t is_dir,
-                                         fsal_boolean_t is_owner,
-                                         fsal_boolean_t is_group);
-
 int display_fsal_v4mask(struct display_buffer * dspbuf,
                         fsal_aceperm_t          v4mask,
                         fsal_boolean_t          is_dir);

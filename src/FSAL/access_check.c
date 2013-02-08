@@ -97,7 +97,8 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
                                          fsal_op_context_t *p_context,
                                          fsal_boolean_t is_dir,
                                          fsal_boolean_t is_owner,
-                                         fsal_boolean_t is_group)
+                                         fsal_boolean_t is_group,
+                                         fsal_boolean_t is_root)
 {
   fsal_boolean_t is_applicable = FALSE;
   fsal_boolean_t is_file = !is_dir;
@@ -130,7 +131,10 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
     }
 
   /* The user should match who value. */
-  is_applicable = fsal_check_ace_matches(pace, p_context, is_owner, is_group);
+  is_applicable = is_root || fsal_check_ace_matches(pace,
+                                                    p_context,
+                                                    is_owner,
+                                                    is_group);
   if(is_applicable)
     LogDebug(COMPONENT_FSAL, "Applicable, flag=0X%x",
              pace->flag);
@@ -388,7 +392,7 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
           LogFullDebug(COMPONENT_FSAL, "allow or deny");
 
           /* Check if this ACE is applicable. */
-          if(fsal_check_ace_applicable(pace, p_context, is_dir, is_owner, is_group))
+          if(fsal_check_ace_applicable(pace, p_context, is_dir, is_owner, is_group, is_root))
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
@@ -411,7 +415,7 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
                       ReturnCode(ERR_FSAL_NO_ERROR, 0);
                     }
                 }
-             else if(pace->perm & missing_access)
+             else if((pace->perm & missing_access) && !is_root)
                {
                  fsal_print_access_by_acl(pacl->naces,
                                           ace_number,
@@ -495,6 +499,9 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
     {
       /* Always grant read/write access to root */
       missing_access &= ~(FSAL_R_OK | FSAL_W_OK);
+      /* Grant execute permission for root if ANYONE has execute permission */
+      if(mode & (FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH))
+        missing_access &= ~FSAL_X_OK;
     }
 
   /* If the uid of the file matches the uid of the user,
