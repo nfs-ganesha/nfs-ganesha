@@ -49,7 +49,7 @@
 #include "nfs_tools.h"
 
 #include "nfs_dupreq.h"
-#include "murmur3.h"
+#include "city.h"
 #include "abstract_mem.h"
 #include "gsh_intrinsic.h"
 #include "wait_queue.h"
@@ -113,6 +113,27 @@ uint32_cmpf(uint32_t lhs, uint32_t rhs)
 }
 
 /**
+ * @brief Comparison function for duplicate request entries.
+ *
+ * @param[in] lhs An integer
+ * @param[in] rhs Another integer
+ *
+ * @return -1 if the left-hand is smaller than the right, 0 if they
+ * are equal, and 1 if the left-hand is larger.
+ */
+static inline int
+uint64_cmpf(uint64_t lhs, uint64_t rhs)
+{
+    if (lhs < rhs)
+        return (-1);
+
+    if (lhs == rhs)
+        return 0;
+
+    return (1);
+}
+
+/**
  * @brief Comparison function for entries in a shared DRC
  *
  * @param[in] lhs  Left-hand-side
@@ -140,9 +161,7 @@ dupreq_shared_cmpf(const struct opr_rbtree_node *lhs,
             break;
         case 0:
             if (lk->hin.drc->flags & DRC_FLAG_HASH) {
-                return (memcmp((char *) lk->hk,
-                               (char *) rk->hk,
-                               sizeof(uint64_t) * 2));
+                return (uint64_cmpf(lk->hk, rk->hk));
             } else
                 return (0);
             break;
@@ -179,9 +198,7 @@ dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 
     if (lk->hin.tcp.rq_xid == rk->hin.tcp.rq_xid) {
         if (lk->hin.drc->flags & DRC_FLAG_HASH) {
-            return (memcmp((char *) lk->hk,
-                           (char *) rk->hk,
-                           sizeof(uint64_t) * 2));
+            return (uint64_cmpf(lk->hk, rk->hk));
         } else
             return (0);
     }
@@ -256,13 +273,13 @@ drc_shared_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
     if (drc->flags & DRC_FLAG_CKSUM) {
         hbuf = alloca(size);
         drc_fill_hbuf(nfs_req, hbuf, &size);
-        MurmurHash3_x64_128(hbuf, size, 911, v->hin.tcp.checksum);
-        MurmurHash3_x64_128(&v->hin, sizeof(v->hin), 911, v->hk);
+        v->hin.tcp.checksum = CityHash64WithSeed(hbuf, size, 911);
+        v->hk = CityHash64WithSeed((char *) &v->hin, sizeof(v->hin), 911);
     } else
-        MurmurHash3_x64_128(&v->hin,
-                            sizeof(v->hin)-sizeof(v->hin.tcp.checksum),
-                            911, v->hk);
-    return (v->hk[0]);
+        v->hk = CityHash64WithSeed((char *) &v->hin,
+                                   sizeof(v->hin)-sizeof(v->hin.tcp.checksum),
+                                   911);
+    return (v->hk);
 }
 
 /**
@@ -291,18 +308,20 @@ drc_tcp_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
         if (drc->flags & DRC_FLAG_CKSUM) {
             hbuf = alloca(size);
             drc_fill_hbuf(nfs_req, hbuf, &size);
-            MurmurHash3_x64_128(hbuf, size, 911, v->hin.tcp.checksum);
-            MurmurHash3_x64_128(&v->hin, sizeof(v->hin), 911, v->hk);
+            v->hin.tcp.checksum = CityHash64WithSeed(hbuf, size, 911);
+            v->hk = CityHash64WithSeed((char *) &v->hin, sizeof(v->hin), 911);
             LogFullDebug(COMPONENT_DUPREQ,
-                         "hash={%"PRIx64",%"PRIx64"} xid=%u req=%p",
-                         v->hk[0], v->hk[1],
-                         v->hin.tcp.rq_xid,
+                         "hash={%"PRIx64"} xid=%u req=%p",
+                         v->hk, v->hin.tcp.rq_xid,
                          nfs_req);
         } else
-            MurmurHash3_x64_128(&v->hin, sizeof(v->hin), 911, v->hk);
+            v->hk =
+                CityHash64WithSeed((char *) &v->hin,
+                                   sizeof(v->hin)-sizeof(v->hin.tcp.checksum),
+                                   911);
     } else
-        v->hk[0] = v->hin.tcp.rq_xid;
-    return (v->hk[0]);
+        v->hk = v->hin.tcp.rq_xid;
+    return (v->hk);
 }
 
 /**
@@ -592,7 +611,7 @@ drc_free_expired(void)
                          "recycle queue",
                          drc);
             t = rbtx_partition_of_scalar(&drc_st->tcp_drc_recycle_t,
-                                         drc->d_u.tcp.hk[0]);
+                                         drc->d_u.tcp.hk);
 
             odrc = opr_rbtree_lookup(&t->t, &drc->d_u.tcp.recycle_k);
             if (! odrc) {
@@ -670,10 +689,10 @@ nfs_dupreq_get_drc(struct svc_req *req)
 
             drc_k.type = dtype;
             (void) copy_xprt_addr(&drc_k.d_u.tcp.addr, req->rq_xprt);
-            MurmurHash3_x64_128(&drc_k.d_u.tcp.addr, sizeof(sockaddr_t),
-                                911, &drc_k.d_u.tcp.hk);
 
-
+            drc_k.d_u.tcp.hk =
+                CityHash64WithSeed((char *)&drc_k.d_u.tcp.addr,
+                                   sizeof(sockaddr_t), 911);
 	    {
 		char str[512];
 		sprint_sockaddr(&drc_k.d_u.tcp.addr, str, 512);
@@ -682,7 +701,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
 	    }
 
             t = rbtx_partition_of_scalar(&drc_st->tcp_drc_recycle_t,
-                                         drc_k.d_u.tcp.hk[0]);
+                                         drc_k.d_u.tcp.hk);
             DRC_ST_LOCK();
             ndrc = opr_rbtree_lookup(&t->t, &drc_k.d_u.tcp.recycle_k);
             if (ndrc) {
@@ -709,8 +728,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
                 memcpy(&drc->d_u.tcp.addr, &drc_k.d_u.tcp.addr,
                        sizeof(sockaddr_t));
                 /* assign already-computed hash */
-                memcpy(drc->d_u.tcp.hk, drc_k.d_u.tcp.hk,
-                       sizeof(uint64_t) * 2);
+                drc->d_u.tcp.hk = drc_k.d_u.tcp.hk;
                 pthread_mutex_lock(&drc->mtx); /* LOCKED */
 		/* xprt ref */
 		drc->refcnt = 1;
@@ -1129,9 +1147,9 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     {
         struct opr_rbtree_node *nv;
         struct rbtree_x_part *t =
-            rbtx_partition_of_scalar(&drc->xt, dk->hk[0]);
+            rbtx_partition_of_scalar(&drc->xt, dk->hk);
         pthread_mutex_lock(&t->mtx); /* partition lock */
-        nv = rbtree_x_cached_lookup(&drc->xt, t, &dk->rbt_k, dk->hk[0]);
+        nv = rbtree_x_cached_lookup(&drc->xt, t, &dk->rbt_k, dk->hk);
         if (nv) {
             /* cached request */
             dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
@@ -1152,7 +1170,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         } else {
             /* new request */
             res = req->rq_u2 = dk->res = alloc_nfs_res();
-            (void) rbtree_x_cached_insert(&drc->xt, t, &dk->rbt_k, dk->hk[0]);
+            (void) rbtree_x_cached_insert(&drc->xt, t, &dk->rbt_k, dk->hk);
             (dk->refcnt)++;
             /* add to q tail */
             pthread_mutex_lock(&drc->mtx);
@@ -1264,15 +1282,15 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
             --(drc->size); 
 
             /* remove dict entry */
-            t = rbtx_partition_of_scalar(&drc->xt, ov->hk[0]);
+            t = rbtx_partition_of_scalar(&drc->xt, ov->hk);
 	    /* interlock */
 	    pthread_mutex_unlock(&drc->mtx);
 	    pthread_mutex_lock(&t->mtx); /* partition lock */
-            rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk[0]);
+            rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
 	    pthread_mutex_unlock(&t->mtx);
 
-            LogFullDebug(COMPONENT_DUPREQ,
-                         "retiring dv=%p xid=%u on DRC=%p state=%s, "
+            LogDebug(COMPONENT_DUPREQ,
+                         "retiring ov=%p xid=%u on DRC=%p state=%s, "
                          "status=%s, refcnt=%d",
                          ov, ov->hin.tcp.rq_xid, ov->hin.drc,
                          dupreq_state_table[dv->state],
@@ -1338,10 +1356,10 @@ nfs_dupreq_delete(struct svc_req *req)
                  dv->refcnt);
 
     /* XXX dv holds a ref on drc */
-    t = rbtx_partition_of_scalar(&drc->xt, dv->hk[0]);
+    t = rbtx_partition_of_scalar(&drc->xt, dv->hk);
 
     pthread_mutex_lock(&t->mtx);
-    rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk[0]);
+    rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk);
 
     pthread_mutex_unlock(&t->mtx);
     pthread_mutex_lock(&drc->mtx);

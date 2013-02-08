@@ -1,7 +1,7 @@
 /*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright (C) 2010, The Linux Box Corporation
+ * Copyright (C) 2012, The Linux Box Corporation
  * Contributor : Matt Benjamin <matt@linuxbox.com>
  *
  * Some portions Copyright CEA/DAM/DIF  (2008)
@@ -35,12 +35,14 @@
 #include <pthread.h>
 #include <assert.h>
 #include <stdint.h>
+#include "abstract_atomic.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "generic_weakref.h"
+#include "gsh_intrinsic.h"
 
 /**
  *
@@ -55,11 +57,6 @@
  * using ordinary object addresses.
  *
  */
-
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE 64
-#endif
-#define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
 
 /**
  * @brief The table partition
@@ -300,7 +297,9 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
 
     /* check cache */
     if (wp->cache)
-        node = wp->cache[cache_offsetof(wt, refk.k.ptr)];
+        node = (struct avltree_node *)
+            atomic_fetch_voidptr((void **)
+                &(wp->cache[cache_offsetof(wt, refk.k.ptr)]));
 
     if (! node)
         node = avltree_lookup(&refk.node_k, &wp->t);
@@ -310,8 +309,10 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
         tref = avltree_container_of(node, gweakref_priv_t, node_k);
         if (tref->k.gen == ref->gen) {
             ret = ref->ptr;
-            if (wp->cache)
-                wp->cache[cache_offsetof(wt, refk.k.ptr)] = node;
+            if (wp->cache) {
+                atomic_store_voidptr((void **)
+                    &(wp->cache[cache_offsetof(wt, refk.k.ptr)]), node);
+            }
         }
     }
 

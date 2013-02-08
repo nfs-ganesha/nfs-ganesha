@@ -48,4 +48,9 @@
 #endif
 #endif
 
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE 64
+#endif
+#define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
+
 #endif /* _GSH_INTRINSIC_H */

@@ -304,8 +304,14 @@ typedef struct cache_inode_dir_entry__ {
 struct cache_entry_t {
 	/** Reader-writer lock for attributes */
 	pthread_rwlock_t attr_lock;
-	/** The FSAL Handle     */
+	/** The FSAL Handle */
 	struct fsal_obj_handle *obj_handle;
+	/** FH hash linkage */
+	struct {
+		struct avltree_node node_k; /*< AVL node in tree */
+		struct gsh_buffdesc *fh_desc_k; /*< Key prototypes ONLY*/
+		uint64_t k;
+	} fh_hk;
 	/** A weakref for this entry (pointer and generation number.)
 	    The generation number is the only interesting part, but
 	    this way the weakref can be easily stashed somewhere. */
@@ -574,8 +580,7 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
 
-cache_inode_status_t cache_inode_init(cache_inode_parameter_t param,
-				      hash_table_t **ht);
+cache_inode_status_t cache_inode_init(cache_inode_parameter_t param);
 
 cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				     cache_entry_t *associated,

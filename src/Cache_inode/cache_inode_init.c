@@ -41,6 +41,7 @@
 #include "sal_data.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
+#include "cache_inode_hash.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -52,20 +53,17 @@
  *
  * @brief Initialize the caching layer
  *
- * This function initializes the memory pools, hash table, and weakref
+ * This function initializes the memory pools, lookup table, and weakref
  * table used for cache management.
  *
  * @param[in]  param  The parameters for this cache
- * @param[out] ht     The cache inode hash table
  *
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */
-cache_inode_status_t cache_inode_init(cache_inode_parameter_t param,
-				      hash_table_t **ht)
+cache_inode_status_t cache_inode_init(cache_inode_parameter_t param)
 {
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
-  *ht = NULL;
 
   cache_inode_entry_pool = pool_init("Entry Pool",
                                      sizeof(cache_entry_t),
@@ -78,14 +76,7 @@ cache_inode_status_t cache_inode_init(cache_inode_parameter_t param,
       status = CACHE_INODE_INVALID_ARGUMENT;
     }
 
-  *ht = HashTable_Init(&param.hparam);
-
-  if(*ht != NULL)
-    status = CACHE_INODE_SUCCESS;
-  else
-    status = CACHE_INODE_INVALID_ARGUMENT;
-  LogInfo(COMPONENT_CACHE_INODE, "Hash Table initiated");
-
+  cih_pkginit();
   cache_inode_weakref_init();
 
   return status;

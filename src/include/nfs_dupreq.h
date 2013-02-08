@@ -83,7 +83,7 @@ typedef struct drc
             struct opr_rbtree_node recycle_k;
             TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
             time_t recycle_time;
-            uint64_t hk[2]; /* hash key */
+            uint64_t hk; /* hash key */
         } tcp;
     } d_u;
 } drc_t;
@@ -105,13 +105,13 @@ struct dupreq_entry
         sockaddr_t addr;
         struct {
             uint32_t rq_xid;
-            uint32_t checksum[4]; /* XXX */
+            uint64_t checksum;
         } tcp;
         uint32_t rq_prog;
         uint32_t rq_vers;
         uint32_t rq_proc;
     } hin;
-    uint64_t hk[2]; /* hash key */
+    uint64_t hk; /* hash key */
     dupreq_state_t state;
     uint32_t refcnt;
     nfs_res_t *res;

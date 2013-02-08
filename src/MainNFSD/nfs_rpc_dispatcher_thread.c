@@ -1173,7 +1173,7 @@ retry_deq:
         ++(nfs_req_st.reqs.waiters);
         pthread_mutex_unlock(&nfs_req_st.reqs.mtx);
         while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
-            timeout.tv_sec  = time(NULL) + 1;
+            timeout.tv_sec  = time(NULL) + 5;
             timeout.tv_nsec = 0;
             pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
             if ((worker->wcb.tcb_state) == STATE_EXIT) {

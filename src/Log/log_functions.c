@@ -282,10 +282,11 @@ char *get_debug_info(int *size) {
 void print_debug_info_fd(int fd)
 {
   char *str = get_debug_info(NULL);
+  int __attribute__((unused)) rc;
 
   if (str != NULL)
     {
-      write(fd, str, strlen(str));
+      rc = write(fd, str, strlen(str));
       free(str);
     }
 }

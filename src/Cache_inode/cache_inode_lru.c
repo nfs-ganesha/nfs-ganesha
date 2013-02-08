@@ -588,6 +588,9 @@ void cache_inode_lru_cleanup_push(cache_entry_t *entry)
          entry->lru.flags |= LRU_ENTRY_CLEANUP;
      }
 
+     /* now move entry out of LRU altogether */
+     lru_remove_entry(&entry->lru);
+
      pthread_mutex_unlock(&entry->lru.mtx);
 }
 
@@ -634,7 +637,7 @@ lru_thread_delay_ms(unsigned long ms)
  */
 
 static inline uint32_t
-_cache_inode_lru_cleanup(void)
+cache_inode_lru_cleanup(void)
 {
     uint32_t n_finalized = 0;
     uint32_t lane = 0;
@@ -796,9 +799,8 @@ lru_thread(void *arg __attribute__((unused)))
           t_count += pinned_t_count;
 
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "lru entries: %zu   cache entries: %zu",
-                       t_count, HashTable_GetSize(fh_to_cache_entry_ht));
-
+                       "lru entries: %zu",
+                       t_count);
 
           if (tmpflags & LRU_STATE_RECLAIMING) {
               if (t_count < lru_state.entries_lowat) {
@@ -890,6 +892,9 @@ lru_thread(void *arg __attribute__((unused)))
                              CACHE_INODE_SUCCESS;
                          /* a cache entry */
                          cache_entry_t *entry;
+                         /* safe lane traversal */
+                         struct glist_head  *glist;
+                         struct glist_head  *glistn;
 
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Reaping up to %d entries from lane %zd",
@@ -903,10 +908,21 @@ lru_thread(void *arg __attribute__((unused)))
                                       workpass, closed, totalclosed);
 
                          pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-                         while ((workdone < lru_state.per_lane_work) &&
-                                (lru = glist_first_entry(&LRU_1[lane].lru.q,
-                                                         cache_inode_lru_t,
-                                                         q))) {
+
+                         while (workdone < lru_state.per_lane_work) {
+
+                             /* In hindsight, it's really important to avoid
+                              * restarts. */
+                             glist_for_each_safe(glist, glistn,
+                                                 &LRU_1[lane].lru.q) {
+
+                                 /* recheck per-lane work */
+                                 if (workdone >= lru_state.per_lane_work)
+                                     break;
+
+                                 lru =
+                                     glist_entry(glist, cache_inode_lru_t, q);
+
                               /* We currently hold the lane queue
                                  partition mutex.  Due to lock
                                  ordering, we are forbidden from
@@ -950,6 +966,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
                                       in this queue partition any more. */
+                                   workdone++; /* but count it */
                                    continue;
                               }
 
@@ -981,7 +998,9 @@ lru_thread(void *arg __attribute__((unused)))
                                  partition for the next run through
                                  the loop. */
                               pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-                         }
+                             } /* for_each_safe lru */
+                         } /* while (workdone < per-lane work) */
+
                          pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Actually processed %zd entries on lane %zd "
@@ -990,7 +1009,7 @@ lru_thread(void *arg __attribute__((unused)))
                                   lane,
                                   closed);
                          workpass += workdone;
-                    }
+                    } /* foreach lane */
                     totalwork += workpass;
                } while (extremis &&
                         (workpass >= lru_state.per_lane_work) &&
@@ -1051,7 +1070,7 @@ lru_thread(void *arg __attribute__((unused)))
                        LRU_N_Q_LANES, lru_state.fds_lowat);
 
           /* Process LRU cleanup queue */
-          n_finalized = _cache_inode_lru_cleanup();
+          n_finalized = cache_inode_lru_cleanup();
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
                    "LRU cleanup, reclaimed %d entries", n_finalized);
@@ -1551,6 +1570,8 @@ void cache_inode_lru_kill(cache_entry_t *entry)
           pthread_mutex_unlock(&entry->lru.mtx);
      } else {
           entry->lru.flags |= LRU_ENTRY_KILLED;
+          /* now move entry out of LRU altogether */
+          lru_remove_entry(&entry->lru);
           /* cache_inode_lru_unref always either unlocks or destroys
              the entry. */
           cache_inode_lru_unref(entry, LRU_FLAG_LOCKED);
@@ -1587,10 +1608,14 @@ cache_inode_lru_unref(cache_entry_t *entry,
      assert(refcnt >= 1);
 
      if (unlikely(refcnt == 1)) {
-          struct lru_q_base *q
-               = lru_select_queue(entry->lru.flags,
-                                  entry->lru.lane);
-          pthread_mutex_lock(&q->mtx);
+          struct lru_q_base *q 
+	      = (entry->lru.lane == LRU_NO_LANE ?
+		 NULL :
+		 lru_select_queue(entry->lru.flags,
+                                  entry->lru.lane));
+	  if (q) {
+	      pthread_mutex_lock(&q->mtx);
+	  }
 
           /* Until the lock-free revolution, we must re-read
            * stable entry refcnt, having first taken the lane
@@ -1601,12 +1626,16 @@ cache_inode_lru_unref(cache_entry_t *entry,
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
                entry->lru.flags = LRU_ENTRY_CONDEMNED;
-               glist_del(&entry->lru.q);
-               --(q->size);
+	       if (q) {
+		   glist_del(&entry->lru.q);
+		   --(q->size);
+	       }
                entry->lru.lane = LRU_NO_LANE;
                /* Give other threads a chance to see that */
                pthread_mutex_unlock(&entry->lru.mtx);
-               pthread_mutex_unlock(&q->mtx);
+	       if (q) {
+		   pthread_mutex_unlock(&q->mtx);
+	       }
                pthread_yield();
                /* We should not need to hold the LRU mutex at this
                   point.  The hash table locks will ensure that by
@@ -1621,7 +1650,9 @@ cache_inode_lru_unref(cache_entry_t *entry,
                pool_free(cache_inode_entry_pool, entry);
                return;
           } else {
-               pthread_mutex_unlock(&q->mtx);
+	      if (q) {
+		  pthread_mutex_unlock(&q->mtx);
+	      }
           }
      } else {
           /* We may decrement the reference count without the queue

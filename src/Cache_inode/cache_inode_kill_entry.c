@@ -47,6 +47,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
 #include "nfs4_acls.h"
 
@@ -71,11 +72,8 @@
 void
 cache_inode_kill_entry(cache_entry_t *entry)
 {
-     struct gsh_buffdesc key;
-     struct gsh_buffdesc val;
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
      struct gsh_buffdesc fh_desc;
-     int rc = 0;
 
      LogInfo(COMPONENT_CACHE_INODE,
              "Using cache_inode_kill_entry for entry %p", entry);
@@ -85,22 +83,9 @@ cache_inode_kill_entry(cache_entry_t *entry)
 
      /* Use the handle to build the key */
      pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
-     key.addr = fh_desc.addr;
-     key.len = fh_desc.len;
 
-     val.addr = entry;
-     val.len = sizeof(cache_entry_t);
-
-     if ((rc = HashTable_DelSafe(fh_to_cache_entry_ht,
-                                 &key,
-                                 &val)) != HASHTABLE_SUCCESS) {
-          if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
-               LogCrit(COMPONENT_CACHE_INODE,
-                       "cache_inode_kill_entry: entry could not be deleted, "
-                       " status = %d",
-                       rc);
-          }
-     }
+     /* And zap it */
+     cih_remove_checked(entry);
 
 } /* cache_inode_kill_entry */
 /** @} */

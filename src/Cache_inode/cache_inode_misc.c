@@ -37,6 +37,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_hash.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
@@ -59,7 +60,7 @@ cache_inode_gc_policy_t cache_inode_gc_policy = {
         .entries_hwmark = 100000,
         .entries_lwmark = 50000,
         .use_fd_cache = true,
-        .lru_run_interval = 600,
+        .lru_run_interval = 60,
         .fd_limit_percent = 99,
         .fd_hwmark_percent = 90,
         .fd_lwmark_percent = 50,
@@ -73,12 +74,6 @@ cache_inode_parameter_t cache_inode_params = {
         /* Cache inode parameters : hash table */
         .hparam.index_size = PRIME_CACHE_INODE,
         .hparam.alphabet_length = 10,
-        .hparam.hash_func_both = cache_inode_fsal_rbt_both,
-        .hparam.compare_key = cache_inode_compare_key_fsal,
-        .hparam.key_to_str = display_cache,
-        .hparam.val_to_str = display_cache,
-        .hparam.ht_name = "Cache Inode",
-        .hparam.flags = HT_FLAG_CACHE,
         .hparam.ht_log_component = COMPONENT_CACHE_INODE,
 
         /* Cache inode parameters : cookie hash table */
@@ -276,36 +271,23 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                       cache_entry_t **entry)
 {
      cache_inode_status_t status;
+     fsal_status_t fsal_status;
      cache_entry_t *new_entry = NULL;
-     struct gsh_buffdesc key, value;
-     int rc = 0;
+     struct gsh_buffdesc fh_desc;
+     cih_latch_t latch;
      bool lrurefed = false;
      bool weakrefed = false;
      bool locksinited = false;
-     bool latched = false;
-     struct hash_latch latch;
-     hash_error_t hrc = 0;
-     struct gsh_buffdesc fh_desc;
-     fsal_status_t fsal_status;
+     int rc = 0;
 
+     /* Get FSAL-specific key */
      new_obj->ops->handle_to_key(new_obj, &fh_desc);
-     key.addr = fh_desc.addr;
-     key.len = fh_desc.len;
 
-     /* Check if the entry doesn't already exists */
-     /* This is slightly ugly, since we make two tries in the event
-        that the lru reference fails. */
-     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              true, &latch);
-     if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          status = CACHE_INODE_HASH_TABLE_ERROR;
-          LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
-                  " - this should not have happened", hrc);
-          goto out;
-     }
-     if (hrc == HASHTABLE_SUCCESS) {
+     /* Check if the entry already exists */
+     *entry = cih_get_by_fh_latched(&fh_desc, &latch,
+				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+     if (*entry) {
           /* Entry is already in the cache, do not add it */
-          *entry = value.addr;
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
@@ -313,71 +295,64 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                    *entry, (*entry)->type, new_obj->type);
           if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
-               /* Release the subtree hash table mutex acquired in
-                  HashTable_GetEx */
-               HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-               goto out;
+		  /* Release the subtree hash table lock */
+		  cih_latch_rele(&latch);
+		  goto out;
           } else {
-               /* Entry is being deconstructed, so just replace it. */
-               (*entry) = NULL;
-               status = CACHE_INODE_SUCCESS;
+		  /* Entry is being deconstructed, so just replace it. */
+		  cih_latch_rele(&latch);
+		  (*entry) = NULL;
+		  status = CACHE_INODE_SUCCESS;
           }
      }
-     /* We did not find the object; we need to get a new one.
-        Let us drop the latch and reacquire before inserting it. */
 
-     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-
-     /* Pull an entry off the LRU */
+     /* We did not find the object.  Pull an entry off the LRU. */
      status = cache_inode_lru_get(&new_entry, 0);
      if (new_entry == NULL) {
           LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_new_entry: cache_inode_lru_get failed");
+                  "cache_inode_lru_get failed");
           status = CACHE_INODE_MALLOC_ERROR;
+	  (*entry) = NULL;
           goto out;
      }
+
      locksinited = true;
+
+     /* XXX needed? */
      assert(new_entry->lru.refcount > 1);
-     /* Now we got the entry; get the latch and see if someone raced us. */
-     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              true, &latch);
-     if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          status = CACHE_INODE_HASH_TABLE_ERROR;
-          LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
-                  " - this should not have happened", hrc);
-          /* Release our reference and the sentinel on the entry we
-             acquired. */
-          cache_inode_lru_kill(new_entry);
-          cache_inode_lru_unref(new_entry, LRU_FLAG_NONE);
-          goto out;
+
+     /* See if someone raced us. */
+     *entry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK);
+     if (*entry) {
+	     /* Entry is already in the cache, do not add it.
+	      *
+	      * XXX might be helpful collect freq. of *entry for branch
+	      * prediction or refactoring.  Perhaps we should not permit
+	      * a race.
+	      */
+	     status = CACHE_INODE_ENTRY_EXISTS;
+	     LogDebug(COMPONENT_CACHE_INODE,
+		      "lost race to add entry %p type: %d, New type: %d",
+		      *entry, (*entry)->obj_handle->type, new_obj->type);
+	     /* Ref it */
+	     if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
+		 CACHE_INODE_SUCCESS) {
+		     /* Release the subtree hash table lock */
+		     cih_latch_rele(&latch);
+		     /* Release the new entry we acquired. */
+		     cache_inode_lru_kill(new_entry);
+		     cache_inode_lru_unref(new_entry, LRU_FLAG_NONE);
+		     goto out;
+	     }
      }
-     if (hrc == HASHTABLE_SUCCESS) {
-          /* Entry is already in the cache, do not add it */
-          *entry = value.addr;
-          status = CACHE_INODE_ENTRY_EXISTS;
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Trying to add an already existing "
-                   "entry 2. Found entry %p type: %d, New type: %d",
-                   *entry, (*entry)->obj_handle->type, new_obj->type);
-          if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
-              CACHE_INODE_SUCCESS) {
-               /* Release the subtree hash table mutex acquired in
-                  HashTable_GetEx */
-               HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-               /* Release the new entry we acquired. */
-               cache_inode_lru_kill(new_entry);
-               cache_inode_lru_unref(new_entry, LRU_FLAG_NONE);
-               goto out;
-          }
-     }
+
      *entry = new_entry;
-     latched = true;
+
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
      lrurefed = true;
 
      /* Enroll the object in the weakref table */
-
      (*entry)->weakref =
           cache_inode_weakref_insert(*entry);
      assert((*entry)->weakref.ptr != 0); /* A NULL pointer here would
@@ -388,7 +363,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      weakrefed = true;
 
      /* Initialize common fields */
-
      (*entry)->type = new_obj->type;
      (*entry)->flags = 0;
      init_glist(&(*entry)->state_list);
@@ -402,7 +376,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
           /* No locks, yet. */
           init_glist(&(*entry)->object.file.lock_list);
-          init_glist(&(*entry)->object.file.nlm_share_list);   /* No associated NLM shares yet */
+          init_glist(&(*entry)->object.file.nlm_share_list); /* No associated NLM shares yet */
 
           memset(&((*entry)->object.file.unstable_data), 0,
                  sizeof(cache_inode_unstable_data_t));
@@ -458,6 +432,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           LogMajor(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: unknown type %u provided",
                    (*entry)->type);
+	  cih_latch_rele(&latch);
           goto out;
      }
 
@@ -470,17 +445,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
       */
      (*entry)->flags = LRU_FLAG_NONE;
 
-     /* Adding the entry in the hash table using the key we started with */
-
-     value.addr = *entry;
-     value.len = sizeof(cache_entry_t);
-
-     rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
-                               &latch, true, NULL, NULL);
-     /* HashTable_SetLatched release the latch irrespective
-      * of success/failure. */
-     latched = false;
-     if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_OVERWRITTEN)) {
+     /* Hash and insert entry */
+     rc = cih_set_latched(*entry, &latch, &fh_desc, CIH_SET_UNLOCK);
+     if (unlikely(rc)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
@@ -504,9 +471,6 @@ out:
           }
           if (weakrefed) {
                cache_inode_weakref_delete(&(*entry)->weakref);
-          }
-          if (latched) {
-               HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
           }
           if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
                cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
