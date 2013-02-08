@@ -94,7 +94,10 @@ cache_inode_commit(cache_entry_t *entry,
      bool_t opened = FALSE;
 
      if ((uint64_t)count > ~(uint64_t)offset)
-         return NFS4ERR_INVAL;
+       {
+         *status = CACHE_INODE_INVALID_ARGUMENT;
+         return CACHE_INODE_INVALID_ARGUMENT;
+       }
 
      PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
      content_locked = TRUE;
