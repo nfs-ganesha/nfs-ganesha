@@ -1094,11 +1094,11 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			timebuf[1].tv_nsec = UTIME_OMIT;
 		}
 		if(vfs_unopenable_type(obj_hdl->type))
-			retval = utimensat(fd,
+                        retval = vfs_utimesat(fd,
 					myself->u.unopenable.name,
 					timebuf, AT_SYMLINK_NOFOLLOW);
 		else
-			retval = futimens(fd, timebuf);
+			retval = vfs_utimes(fd, timebuf);
 		if(retval != 0) {
 			goto fileerr;
 		}
