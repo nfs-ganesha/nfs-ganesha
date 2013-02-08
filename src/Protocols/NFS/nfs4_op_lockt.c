@@ -159,34 +159,22 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
         pthread_mutex_unlock(&clientid->cid_mutex);
 
         /* Is this lock_owner known ? */
-        convert_nfs4_lock_owner(&arg_LOCKT4->owner,
-                                &owner_name,
-                                (data->minorversion == 0 ?
-                                 0LL :
-                                 data->psession->clientid));
+        convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
 
-        if (!nfs4_owner_Get_Pointer(&owner_name, &lock_owner)) {
-                /* This lock owner is not known yet, allocated and set
-                   up a new one */
-                lock_owner = create_nfs4_owner(&owner_name,
-                                               clientid,
-                                               STATE_LOCK_OWNER_NFSV4,
-                                               NULL,
-                                               0);
+        /* This lock owner is not known yet, allocated and set up a new one */
+        lock_owner = create_nfs4_owner(&owner_name,
+                                       clientid,
+                                       STATE_LOCK_OWNER_NFSV4,
+                                       NULL,
+                                       0,
+                                       NULL,
+                                       CARE_ALWAYS);
 
-                if (lock_owner == NULL) {
-                        LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                                     "LOCKT unable to create lock owner");
-                        res_LOCKT4->status = NFS4ERR_SERVERFAULT;
-                        goto out;
-                }
-        } else if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-                char str[HASHTABLE_DISPLAY_STRLEN];
-                DisplayOwner(lock_owner, str);
-
-                LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                             "LOCKT A previously known owner is used %s",
-                             str);
+        if(lock_owner == NULL) {
+             LogEvent(COMPONENT_NFS_V4_LOCK,
+                      "LOCKT unable to create lock owner");
+             res_LOCKT4->status = NFS4ERR_SERVERFAULT;
+             goto out;
         }
 
         LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,

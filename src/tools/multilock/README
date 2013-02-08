@@ -1,0 +1,593 @@
+multilock test tool
+
+OVERVIEW
+--------
+
+Multilock is a test tool for testing functionality of POSIX locks. It is
+directed at testing NFS server and client implementations. The architecture of
+the tool is a console program (ml_console) and client programs (currently 
+ml_posix_chold). The console directs any number of clients in a sequence of
+lock operations. The communication between the console and clients is a TCP
+connection, so the clients may be run on multiple hosts (for example, multiple
+clients of the same NFS server, or even a local process on the NFS server
+itself). Other remote file system protocols may also be tested (any remote
+file system that can be mounted on Linux and provides byte range locks via
+POSIX fcntl may be exercised using ml_posix_client).
+
+The communication protocol with the clients is documented below so additional
+clients may be implemented to implement other OS flavors (such as Windows), or
+even directly drive protocols (such as NFS v3/NLM, NFS v4, or CIFS/Samba).
+
+The client programs are reasonably capable of being run using ssh which allows
+them to be used by an automated test case.
+
+ml_posix_client is also capable of being run standalone (the protocol used over
+TCP is plain text so it is trivial to read input from stdin instead of a TCP
+socket).
+
+EXECUTING THE PROGRAMS
+----------------------
+
+ml_console
+---------
+
+ml_console has two modes, scripted and interractive. Several command line options
+allow some control over output and how errors are handled.
+
+Usage: ml_console [-p port] [-s] [-f] [-q] [-x script] [-d]
+
+  -p port   - specify the port to listen to clients on
+  -s        - specify strict mode (clients are not polled without EXPECT)
+  -f        - specify errors are fatal mode
+  -q        - speficy quiet mode
+  -d        - speficy dup errors mode (errors are sent to stdout and stderr)
+  -x script - specify script to run
+  -k        - syntax check only
+  -e        - non-fatal errors, full accounting of errors to stderr, everything to stdout
+
+Since there is no method of automatic port discovery, the -p option is
+reccomended so that the clients can be told which port to contact the
+server on.
+
+The -k option when combined with -x to specify a script will result in
+the script just being syntax checked. Whenever a script is specified, it is
+completely syntax checked before the console starts up and runs the script.
+
+The -e option results in stderr showing the command leading to the failure,
+the expected output, and the actual response. This is useful for reporting
+problems. The -e option also duplicates stderr to stdout just as per -d.
+
+ml_posix_client
+--------------
+
+ml_posix_client has three modes, interractive (standalone), scripted
+(standalone), and console. There is almost no difference between scripted mode
+and interracive mode where a stdin is redirected from a file.
+
+Usage: ml_posix_client -s server -p port -n name [-q] [-d] [-c path]
+       ml_posix_client -x script [-q] [-d] [-c path]
+       ml_posix_client [-q] [-d] [-c path]
+
+  ml_posix_client may be run in three modes
+  - In the first mode, the client will be driven by a console.
+  - In the second mode, the client is driven by a script.
+  - In the third mode, the client interractive.
+
+  -s server - specify the console's hostname or IP address
+  -p port   - specify the console's port number
+  -n name   - specify the client's name
+  -x script - specify the name of a script to execute
+  -q        - specify quiet mode
+  -d        - specify dup errors mode (errors are sent to stdout and stderr)
+  -c path   - chdir
+
+In console mode, the server's address and port must be specified. Also the
+client must be given a name (which the console will use to identify which
+client commands are intended for and from which responses are expected).
+
+The -c option allows the client to execute in a specific directory. This
+would allow a test client machine to have several different mounts to the
+same server using different protocols and have the script executed from the
+console easily direct testing to any of those mounts without the script needing
+to be modified (for example, the script can just refer to files by file name
+without any path).
+
+THE COMMAND PROTOCOL
+--------------------
+
+The following documents the protocol the console uses to send commands to the
+client. Since this is a plain text protocol, it is also the command language of
+the clients in interractive mode. Note that the console doesn't necessarily
+utilize all the flexibility of this protocol (for example, the console will
+always tag commands, and will always quote strings).
+
+Note that the protocol is almost exclusively case insensitive (except for
+strings).
+
+Strings that are at the end of a command need not be quoted. Any leading
+blanks will not be part of the string. Strings must be quoted if they
+might be mistaken for an optional parameter.
+
+Strings currently can not contain new-line characters.
+
+The general format of a command is:
+
+[tag] command parameters
+
+Commands are terminated with a new-line.
+
+The tag is a numeric label for the command. The purpose of the tag is to
+allow the console to correlate responses with specific commands for
+verification.
+
+The commands and specific parameters are:
+
+[tag] OPEN    file_pos rw|ro|wo|O_RDWR|O_RDONLY|O_WRONLY [create|creat|O_CREAT] "file-name"
+[tag] CLOSE   file_pos
+[tag] READ    file_pos length
+[tag] READ    file_pos "string"
+[tag] WRITE   file_pos "data"
+[tag] SEEK    file_pos offset
+[tag] LOCK    file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+[tag] LOCKW   file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+[tag] UNLOCK  file_pos start length
+[tag] TEST    file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+[tag] LIST    file_pos start length
+[tag] HOP     file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+[tag] UNHOP   file_pos start length
+[tag] COMMENT "string"
+[tag] HELLO   "name"
+[tag] ALARM   seconds
+[tag] QUIT
+
+OPEN
+----
+
+The client maintains an array of file references, file_pos specifies which entry
+is to be used to reference the file for other commands. It operates much like
+a file descriptor.
+
+Files may be opened read-write, read-only, or write-only. Files may also be
+created on open (other open flags may be supported in the future).
+
+CLOSE
+-----
+
+Closes a file and frees the file_pos for re-use.
+
+READ
+----
+
+Read data from the current position in the file (use SEEK to set the position).
+
+This is fundamentally a record read, though the record contents are expected
+to be ascii strings.
+
+If the second form of the command is given, the length of the string is
+used as the read length (this form is to be used with console scripting command
+OK).
+
+WRITE
+-----
+
+Write the string to the current position in the file (use SEEK to set the
+position).
+
+This is fundamentally a record write, though the record contents are expected
+to be ascii strings.
+
+SEEK
+----
+
+Seek will set the current file position. Use this to select the record to
+read or write.
+
+LOCK
+----
+
+Lock requests a non-blocking lock. If the lock can not be granted, the command
+will return immediately with DENIED status. Locks may be read or write locks 
+(aka shared or exclusive).
+
+LOCKW
+-----
+
+LockW requests a blocking lock. If the lock can not be immediately granted, the
+command will block. Locks may be read or write locks (aka shared or exclusive).
+
+Implementation Note: ml_posix_client sets a default alarm of 5 seconds before
+this command if an alarm isn't already set. This will prevent script hangs if
+a lock will never be granted. If a script expects a longer delay, it should
+set an explicit alarm.
+
+TEST
+----
+
+Test will test for lock conflict, and if a lock conflict is found, details of a
+conflicting lock will be returned. Locks may be read or write locks
+(aka shared or exclusive).
+
+LIST
+----
+
+List will return a list of locks overlapping the range specified. The
+expectation is that effectively a series of TEST operations for write locks will
+will be used to discover the list of locks.
+
+COMMENT
+-------
+
+Comment is a do nothing command. It allows the console to send some commentary to
+the clients.
+
+HELLO
+-----
+
+This is another do nothing command. It's real purpose is a response place holder 
+for the console to be able to receive initial "HELLO" communications from the
+clients.
+
+ALARM
+-----
+
+Alarm is used to set an alarm, it may interrupt a blocked lock (which in fact is
+it's primary purpose). If an alarm is already running, the existing alarm will
+be cancelled and a new alarm set. A seconds value of 0 will cancel any existing
+alarm and not set a new one.
+
+QUIT
+----
+
+Quit instructs a client to release all locks, close all files, and exit.
+
+THE RESPONSE PROTOCOL
+---------------------
+
+The following documents the protocol the clients uses to send responses to the
+console. Note that the clients don't utilize all the flexibility of this
+protocol (for example, ml_posix_client will always quote strings).
+
+Note that the protocol is almost exclusively case insensitive (except for
+strings).
+
+Strings that are at the end of a response need not be quoted. Any leading
+blanks will not be part of the string. Strings must be quoted if they
+might be mistaken for an optional parameter.
+
+Strings currently can not contain new-line characters.
+
+The general format is:
+
+tag COMMAND STATUS results
+
+The specific responses are:
+
+tag OPEN    OK file_pos file_number
+tag CLOSE   OK file_pos
+tag READ    OK file_pos length "data"
+tag WRITE   OK file_pos length
+tag SEEK    OK file_pos
+tag LOCK    GRANTED   file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag LOCK    DENIED    file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag LOCKW   GRANTED   file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag LOCKW   CANCELED  file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag LOCKW   DEADLOCK  file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag UNLOCK  GRANTED   file_pos unlock|F_UNLCK start length
+tag TEST    AVAILABLE file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag TEST    CONFLICT  file_pos pid read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag LIST    AVAILABLE file_pos start length
+tag LIST    DENIED    file_pos start length
+tag LIST    CONFLICT  file_pos pid read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag HOP     GRANTED   file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag HOP     DENIED    file_pos read|write|shared|exclusive|F_RDLCK|F_WRLCK start length
+tag UNHOP   GRANTED   file_pos unlock|F_UNLCK start length
+tag COMMENT OK "string"
+tag HELLO   OK "name"
+tag ALARM   OK seconds
+tag ALARM   CANCELED remain
+tag ALARM   COMPLETED
+tag QUIT    OK
+tag cmd     ERRNO value "string"
+
+If a command results in an error, an errno and description of the error will be
+returned in the response. Currently ml_console doesn't really do anything to
+analyze these errors. They will cause failure of scripts of course.
+
+OPEN
+----
+
+Returns OK or ERRNO. A successful OPEN will respond with the file number that
+results from opening the file. This should not be relied on to be any specific 
+value and is merely provided for edification.
+
+CLOSE
+-----
+
+Returns OK or ERRNO.
+
+READ
+----
+
+Returns OK or ERRNO. If successful, the length of data read and the actual
+data will be returned.
+
+WRITE
+-----
+
+Returns OK or ERRNO. If successful, the actual length of data written wil be
+returned.
+
+SEEK
+----
+
+Returns OK or ERRNO.
+
+LOCK
+----
+
+Returns GRANTED, DENIED, or ERRNO.
+
+LOCKW
+-----
+
+Returns GRANTED, CANCELED, DEADLOCK, or ERRNO. If a blocked lock is canceled
+(for example by an alarm triggering), the CANCELED status will be returned.
+If a deadlock is detected, DEADLOCK will be returned.
+
+UNLOCK
+------
+
+Returns GRANTED or ERRNO.
+
+TEST
+----
+
+Returns AVAILABLE, CONLFICT or ERRNO. If there is a conflicting lock, one
+conflicting lock will be returned.
+
+LIST
+----
+
+Returns AVAILABLE, DENIED or ERRNO. Prior to returning DENIED, a list will
+return one or more CONFLICT responses corresponding to locks held that overlap
+the range. An AVAILABLE response indicates an empty list while a DENIED response
+indicates no more CONFLICT responses are forthcoming.
+
+It should be noted that LIST will only be able to return one instance of a read
+lock if there are multiple read locks on the same range. LIST may or may not
+return two read locks if there is one read lock and a second larger read lock
+that completely overlaps the first one. LIST should return two read locks if
+they partially overlap.
+
+For example:
+
+owner1 read 1-3, owner2 read 1-3, owner3 read 1-3 can only return one of those.
+
+onwer1 read 1-3, owner2 read 1-6 may return just owner2 read 1-6 or both.
+
+owner1 read 1-6, owner2 read 3-9 should return both.
+
+This is due to how fcntl with F_GETLK is implemented (or NFS v3 TEST or NFS v4
+LOCKT).
+
+HOP
+---
+
+Returns GRANTED, DENIED, or ERRNO.
+
+HOP is similar to LOCK, except the lock is acquired one byte at a time in an
+alternating pattern (for example, HOP read 0 5 is acquired in order 0, 2, 1, 4,
+3).
+
+UNHOP
+-----
+
+Returns GRANTED or ERRNO.
+
+UNHOP is similar to UNLOCK, except the lock is released one byte at a time in an
+alternating pattern (for example, UNHOP 0 5 is released in order 0, 2, 1, 4, 3).
+
+COMMENT
+-------
+
+Returns OK and reflects back the original comment.
+
+HELLO
+-----
+
+Returns OK and reflects back the original comment. Clients are expected to send
+a HELLO response to identify themselves when first connecting to the console.
+
+ALARM
+-----
+
+Returns OK and CANCELED or COMPLETE. If the alarm is canceled before completion,
+a CANCELED response will be sent. If the alarm triggers, a COMPLETE response
+will be sent.
+
+QUIT
+----
+
+Returns OK. A client should response to QUIT before closing the connection
+with the console.
+
+MASTER SCRIPTING
+----------------
+
+--------------------------------------------------------------------------------
+The console implements a simple script language which allows commands to be
+directed to multiple clients. The scripting language also allows for
+verification of client responses.
+
+The console script commands are:
+
+#
+QUIT
+STRICT    on|off
+FATAL     on|off
+SLEEP     seconds
+name      tag command parameters
+EXPECT    name tag command results
+OK        name command parameters
+GRANTED   name command parameters
+AVAILABLE name command parameters
+DENIED    name command parameters
+DEADLOCK  name command parameters
+CLIENTS   name name...
+{
+}
+
+There are some special tag values that may be used. $ references the line number
+of a command. When used in an EXPECT, it uses the line number of the last
+command. $A to $Z increment the variable when used in a command, and store the
+tag into a slot. When used in an EXPECT, $A to $Z use the value out of the slot.
+This simplifies script writing while still allowing responses to be correlated
+with earlier commands (for example a LOCK, LOCKW (blocks), UNLOCK, GRANTED
+sequence).
+
+#
+-
+
+This allows comments to be placed in scripts.
+
+QUIT
+----
+
+This ends a script. QUIT will be sent to each connected client. Any outstanding
+responses from the clients will be indicated as unexpected and may result in
+script failure.
+
+STRICT
+------
+
+This turns strict mode on and off. It is only effective in interractive mode
+and will make interractive mode function like scripted mode where client
+responses are only processed after EXPECT, }, OK, or GRANTED commands.
+
+FATAL
+-----
+
+This turns fatal mode on and off. When fatal mode is on, any error will cause
+ml_console to exit (after issuing a QUIT command) and indicate script failure.
+
+SLEEP
+-----
+
+This inserts a delay into a script where no responses are expected. In fatal
+mode, any response received during this time will cause failure.
+
+name
+----
+
+The "default" command is to send a command to the named client. Note that the
+console does not block waiting for a response to one of these commands.
+
+EXPECT
+------
+
+This command waits for a client response and compares it to the results expected.
+An "*" may be used to indicate don't care for any parameters (for numeric
+parameters, -1 has the same effect). If any of the parameters in the response
+don't match, an error will be reported (and failure in fatal mode).
+
+OK, AVAILABLE, GRANTED, DENIED, and DEADLOCK
+--------------------------------------------
+
+These commands issue a command to the named client and expect the appropriate
+response. These commands will block awaiting a response.
+
+OK is only valid for the following commands: OPEN, CLOSE, SEEK, READ,
+WRITE, COMMENT, ALARM, HELLO, and QUIT. READ must specify the expected string,
+and the length of that string is sent to the client as the expected length. OPEN
+accepts any file_number.
+
+GRANTED is only valid with LOCK, and UNLOCK. 
+
+AVAILABLE is only valid for TEST and LIST. For LIST, an empty list is expected.
+
+DENIED is only valid with LOCK.
+
+DEADLOCK is only valus with LOCKW.
+
+CLIENTS
+--------
+
+This command creates a list of EXPECT {name} * HELLO OK {name} for each client
+named on the command.
+
+{ and }
+-------
+
+These paired commands are used to group a set of EXPECT commands where the
+responses might arrive in any order. All responses are required for completion
+of this command. There is no restriction to what commands may be included
+inside a pair of braces, however, note that all OK and GRANTED commands
+will immediately block waiting for a response.
+
+IMPLEMENTATION NOTES FOR ml_console
+----------------------------------
+
+ml_console uses select to wait for input from all the clients (and the console
+in interractive mode).
+
+ml_console will respond to SIGINT (ctrl-c) and SIGTERM by cleanly exiting. These
+should be able to interrupt most hung scripts for a clean exit and failure.
+
+IMPLEMENTATION NOTES FOR ml_posix_client
+---------------------------------------
+
+ml_posix_client is single threaded and if a command (primarily LOCKW) blocks,
+the client will not receive new commands or respond to the console.
+
+ml_posix_client uses ALARM and SIGALRM to interrupt a blocked lock.
+
+THOUGHTS ON POSSIBLE OTHER CLIENT IMPLEMENTATIONS
+-------------------------------------------------
+
+Note that all the parsing and response formatting functions are implemented in
+functions.c and separated from the implementation of commands in
+ml_posix_client.c. This would make it easy to implement a client that could, for
+example, send NFS v3 and NLM requests corresponding to the commands.
+
+Such a client should have a command line option to specify the server's address
+and path for initial MOUNT.
+
+An OPEN command would do a LOOKUP (if the asumption was scripts that utilized
+files in a single directory, the LOOKUP implementation would not have to deal
+with path walking.
+
+Such a client of course need not actually block for a LOCKW command, allowing
+the same lock owner to have multiple blocking locks outstanding.
+
+A FEW NOTES ON THE FUNCTIONS IN ml_functions.c
+----------------------------------------------
+
+char * parse_response(char * line, response_t * resp);
+
+This function is used by the console to parse out a response. Then use
+
+int compare_responses(response_t * expected, response_t * received);
+
+to verify that response against an expected response (using parse_response
+to parse the EXPECT command also).
+
+void add_response(response_t * resp, response_t ** list);
+response_t * check_expected_responses(response_t *expected_responses, response_t * client_resp);
+
+These functions implement checking against a list of responses (used by {...})
+
+char * parse_request(char * line, response_t * req, int no_tag);
+
+This would be the center of an alternate client implementation since it will
+parse the command stream. ml_console also uses this to syntax check commands and
+the built request is also used as the basis of the expected response for OK and
+GRANTED.
+
+void respond(response_t * resp);
+
+This function is used by a client to send a response to the output stream
+(console in interractive mode and console socket in console mode).
+
+void send_cmd(response_t * req);
+
+This function is used by the console to send commands to clients.

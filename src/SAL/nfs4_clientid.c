@@ -346,10 +346,10 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 	 * refcount has gone to 0, no other threads can have a pointer
 	 * to the clientid record.
 	 */
-	if (clientid->cid_confirmed != EXPIRED_CLIENT_ID) {
+	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		/* Is not in any hash table, so we can just delete it */
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Free Clientid {%s} refcount now=0",
+			     "Free Clientid refcount now=0 {%s}",
 			     str);
 
 		free_client_id(clientid);
@@ -816,11 +816,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	struct gsh_buffdesc old_value;
 	hash_table_t *ht_expire;
 	nfs_client_record_t *record;
+	char str[HASHTABLE_DISPLAY_STRLEN];
 
 	P(clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
 			display_client_id_rec(clientid, str);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Expired (skipped) {%s}", str);
@@ -831,7 +831,6 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
 		display_client_id_rec(clientid, str);
 		LogDebug(COMPONENT_CLIENTID,
 			 "Expiring {%s}", str);
@@ -902,16 +901,24 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 			glist,
 			state_owner_t,
 			so_owner.so_nfs4_owner.so_perclient);
+		inc_state_owner_ref(plock_owner);
 		release_lockstate(plock_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char owner[HASHTABLE_DISPLAY_STRLEN];
+			int32_t refcount = atomic_fetch_int32_t(&plock_owner->so_refcount);
 
-			DisplayOwner(plock_owner, owner);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Expired lock state for {%s}",
-				     owner);
+			DisplayOwner(plock_owner, str);
+
+                        if(refcount > 1)
+                             LogWarn(COMPONENT_CLIENTID,
+                                     "Expired State, Possibly extra references to {%s}",
+                                     str);
+                        else
+                             LogFullDebug(COMPONENT_CLIENTID,
+                                          "Expired State for {%s}",
+                                          str);
 		}
+        dec_state_owner_ref(plock_owner);
 	}
 
 	/* release the corresponding open states , close files*/
@@ -920,15 +927,22 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 			= glist_entry(glist,
 				      state_owner_t,
 				      so_owner.so_nfs4_owner.so_perclient);
+		inc_state_owner_ref(popen_owner);
 		release_openstate(popen_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char owner[HASHTABLE_DISPLAY_STRLEN];
+			int32_t refcount = atomic_fetch_int32_t(&popen_owner->so_refcount);
 
-			DisplayOwner(popen_owner, owner);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Expired open state for {%s}",
-				     owner);
+			DisplayOwner(popen_owner, str);
+
+                        if(refcount > 1)
+                             LogWarn(COMPONENT_CLIENTID,
+                                     "Expired State, Possibly extra references to {%s}",
+                                     str);
+                        else
+                             LogFullDebug(COMPONENT_CLIENTID,
+                                          "Expired State for {%s}",
+                                          str);
 		}
 	}
 
@@ -939,14 +953,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
 		display_client_id_rec(clientid, str);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Expired (done) {%s}", str);
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
 		display_client_id_rec(clientid, str);
 		LogDebug(COMPONENT_CLIENTID,
 			 "About to release last reference to {%s}", str);
@@ -986,6 +998,7 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht,
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s NOTFOUND (epoch doesn't match, assumed STALE)",
 				     ht->parameter.ht_name);
+		*client_rec = NULL;
 		return CLIENT_ID_STALE;
 	}
 
@@ -1244,8 +1257,8 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 
 	if (refcount > 0) {
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Decrement refcount {%s} refcount now=%"PRId32,
-			     str, refcount);
+                             "Decrement refcount refcount now=%"PRId32" {%s}",
+                             refcount, str);
 
 		return (refcount);
 	}
@@ -1268,17 +1281,21 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 		if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			HashTable_ReleaseLatched(ht_client_record, &latch);
 
-		LogDebug(COMPONENT_CLIENTID,
-			 "Error %s, could not find {%s}",
-			 hash_table_err_to_str(rc), str);
+                display_client_record(record, str);
+
+                LogCrit(COMPONENT_CLIENTID,
+                        "Error %s, could not find {%s}",
+                        hash_table_err_to_str(rc), str);
+
+                return (refcount);
 	}
 
 	refcount = atomic_fetch_int32_t(&record->cr_refcount);
 
 	if (refcount > 0) {
 		LogDebug(COMPONENT_CLIENTID,
-			 "Did not release {%s} refcount now=%"PRId32,
-			 str, refcount);
+			 "Did not release refcount now=%"PRId32" {%s}",
+			 refcount, str);
 
 		HashTable_ReleaseLatched(ht_client_record, &latch);
 		return (refcount);
@@ -1295,9 +1312,13 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 		if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			HashTable_ReleaseLatched(ht_client_record, &latch);
 
-		LogDebug(COMPONENT_CLIENTID,
-			 "Error %s, could not remove {%s}",
-			 hash_table_err_to_str(rc), str);
+                display_client_record(record, str);
+
+                LogCrit(COMPONENT_CLIENTID,
+                        "Error %s, could not remove {%s}",
+                        hash_table_err_to_str(rc), str);
+
+                return (refcount);
 	}
 
 	LogFullDebug(COMPONENT_CLIENTID,

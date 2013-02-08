@@ -378,6 +378,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 			    state_t **state,
 			    compound_data_t *data,
 			    char flags,
+			    seqid4 owner_seqid,
+			    bool check_seqid,
 			    const char *tag)
 {
   uint32_t          epoch = 0;
@@ -530,11 +532,39 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
       diff = stateid->seqid - state2->state_seqid;
       if(diff < 0)
         {
+          /* if this is NFSv4.0 and stateid's seqid is one less than current */
+          /* AND if owner_seqid is current */
+          /* pass state back to allow replay check */
+          if((check_seqid) &&
+             ((diff == -1) ||
+              ((state2->state_seqid == 1) &&
+               (stateid->seqid == seqid_all_one))) &&
+             (owner_seqid == state2->state_owner->so_owner.so_nfs4_owner
+                             .so_seqid))
+          {
+             LogDebug(COMPONENT_STATE,
+                   "possible replay?");
+             *state = state2;
+             return NFS4ERR_REPLAY;
+          }
           /* OLD_STATEID */
           LogDebug(COMPONENT_STATE,
                    "Check %s stateid found OLD stateid %s, expected seqid %u",
                    tag, str, (unsigned int) state2->state_seqid);
           return NFS4ERR_OLD_STATEID;
+        }
+      /* stateid seqid is current and owner seqid is previous, replay (should be
+         an error condition that did not change the stateid, no real need to check
+         since the operation must be the same) */
+      else if((diff == 0) &&
+              (check_seqid) &&
+              (owner_seqid == state2->state_owner->so_owner.so_nfs4_owner
+                              .so_seqid))
+        {
+          LogDebug(COMPONENT_STATE,
+                   "possible replay?");
+          *state = state2;
+          return NFS4ERR_REPLAY;
         }
       else if(diff > 0)
         {

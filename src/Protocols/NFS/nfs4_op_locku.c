@@ -122,12 +122,27 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                                              &state_found,
                                              data,
                                              STATEID_SPECIAL_FOR_LOCK,
+                                             arg_LOCKU4->seqid,
+                                             data->minorversion == 0,
                                              locku_tag)) != NFS4_OK) {
+                /* if state is returned, check replay via seqid */  
+                if ((nfs_status == NFS4ERR_REPLAY) &&
+                    (state_found != NULL) &&
+                    (state_found->state_owner != NULL)) {
+                        lock_owner = state_found->state_owner;
+                        inc_state_owner_ref(lock_owner);
+                        goto check_seqid;
+                }
+
                 res_LOCKU4->status = nfs_status;
                 return res_LOCKU4->status;
         }
 
         lock_owner = state_found->state_owner;
+
+        inc_state_owner_ref(lock_owner);
+
+check_seqid:
 
         /* Check seqid (lock_seqid or open_seqid) */
         if (data->minorversion == 0) {
@@ -139,6 +154,7 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                                       locku_tag)) {
                         /* Response is all setup for us and LogDebug
                            told what was wrong */
+                        dec_state_owner_ref(lock_owner);
                         return res_LOCKU4->status;
                 }
         }
@@ -202,6 +218,8 @@ out:
                 Copy_nfs4_state_req(lock_owner, arg_LOCKU4->seqid, op,
                                     data, resp, locku_tag);
         }
+
+        dec_state_owner_ref(lock_owner);
 
         return res_LOCKU4->status;
 } /* nfs4_op_locku */

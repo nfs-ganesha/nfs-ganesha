@@ -96,6 +96,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                               &state_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
+                              0,
+                              FALSE,
                               tag)) != NFS4_OK)
     {
       res_OPEN_DOWNGRADE4.status = rc;

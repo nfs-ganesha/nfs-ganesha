@@ -1,0 +1,232 @@
+# Copyright IBM Corporation, 2012
+#  Contributor: Frank Filz  <ffilz@us.ibm.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# This test is similar to split_lock, but doesn't use LIST at all
+CLIENTS c1 c2
+
+# open a bunch of files and then close them
+# repeat several times
+OK c1 OPEN  1 rw create splitfile.1.file
+OK c1 OPEN  2 rw create splitfile.2.file
+OK c1 OPEN  3 rw create splitfile.3.file
+OK c1 OPEN  4 rw create splitfile.4.file
+OK c1 OPEN  5 rw create splitfile.5.file
+OK c1 OPEN  6 rw create splitfile.6.file
+OK c1 OPEN  7 rw create splitfile.7.file
+OK c1 OPEN  8 rw create splitfile.8.file
+OK c1 OPEN  9 rw create splitfile.9.file
+OK c1 OPEN 10 rw create splitfile.10.file
+OK c1 CLOSE  1
+OK c1 CLOSE  2
+OK c1 CLOSE  3
+OK c1 CLOSE  4
+OK c1 CLOSE  5
+OK c1 CLOSE  6
+OK c1 CLOSE  7
+OK c1 CLOSE  8
+OK c1 CLOSE  9
+OK c1 CLOSE 10
+OK c1 OPEN  1 rw splitfile.1.file
+OK c1 OPEN  2 rw splitfile.2.file
+OK c1 OPEN  3 rw splitfile.3.file
+OK c1 OPEN  4 rw splitfile.4.file
+OK c1 OPEN  5 rw splitfile.5.file
+OK c1 OPEN  6 rw splitfile.6.file
+OK c1 OPEN  7 rw splitfile.7.file
+OK c1 OPEN  8 rw splitfile.8.file
+OK c1 OPEN  9 rw splitfile.9.file
+OK c1 OPEN 10 rw splitfile.10.file
+OK c1 CLOSE  1
+OK c1 CLOSE  2
+OK c1 CLOSE  3
+OK c1 CLOSE  4
+OK c1 CLOSE  5
+OK c1 CLOSE  6
+OK c1 CLOSE  7
+OK c1 CLOSE  8
+OK c1 CLOSE  9
+OK c1 CLOSE 10
+OK c1 OPEN  1 rw splitfile.1.file
+OK c1 OPEN  2 rw splitfile.2.file
+OK c1 OPEN  3 rw splitfile.3.file
+OK c1 OPEN  4 rw splitfile.4.file
+OK c1 OPEN  5 rw splitfile.5.file
+OK c1 OPEN  6 rw splitfile.6.file
+OK c1 OPEN  7 rw splitfile.7.file
+OK c1 OPEN  8 rw splitfile.8.file
+OK c1 OPEN  9 rw splitfile.9.file
+OK c1 OPEN 10 rw splitfile.10.file
+OK c1 CLOSE  1
+OK c1 CLOSE  2
+OK c1 CLOSE  3
+OK c1 CLOSE  4
+OK c1 CLOSE  5
+OK c1 CLOSE  6
+OK c1 CLOSE  7
+OK c1 CLOSE  8
+OK c1 CLOSE  9
+OK c1 CLOSE 10
+OK c1 OPEN  1 rw splitfile.1.file
+OK c1 OPEN  2 rw splitfile.2.file
+OK c1 OPEN  3 rw splitfile.3.file
+OK c1 OPEN  4 rw splitfile.4.file
+OK c1 OPEN  5 rw splitfile.5.file
+OK c1 OPEN  6 rw splitfile.6.file
+OK c1 OPEN  7 rw splitfile.7.file
+OK c1 OPEN  8 rw splitfile.8.file
+OK c1 OPEN  9 rw splitfile.9.file
+OK c1 OPEN 10 rw splitfile.10.file
+OK c1 CLOSE  1
+OK c1 CLOSE  2
+OK c1 CLOSE  3
+OK c1 CLOSE  4
+OK c1 CLOSE  5
+OK c1 CLOSE  6
+OK c1 CLOSE  7
+OK c1 CLOSE  8
+OK c1 CLOSE  9
+OK c1 CLOSE 10
+
+# Now open a bunch of files and get locks on them
+OK c1 OPEN  1 rw splitfile.1.file
+OK c1 OPEN  2 rw splitfile.2.file
+OK c1 OPEN  3 rw splitfile.3.file
+OK c1 OPEN  4 rw splitfile.4.file
+OK c1 OPEN  5 rw splitfile.5.file
+OK c1 OPEN  6 rw splitfile.6.file
+OK c1 OPEN  7 rw splitfile.7.file
+OK c1 OPEN  8 rw splitfile.8.file
+OK c1 OPEN  9 rw splitfile.9.file
+OK c1 OPEN 10 rw splitfile.10.file
+
+OK c2 OPEN  1 rw splitfile.1.file
+OK c2 OPEN  2 rw splitfile.2.file
+OK c2 OPEN  3 rw splitfile.3.file
+OK c2 OPEN  4 rw splitfile.4.file
+OK c2 OPEN  5 rw splitfile.5.file
+OK c2 OPEN  6 rw splitfile.6.file
+OK c2 OPEN  7 rw splitfile.7.file
+OK c2 OPEN  8 rw splitfile.8.file
+OK c2 OPEN  9 rw splitfile.9.file
+OK c2 OPEN 10 rw splitfile.10.file
+GRANTED c1 LOCK  1 write 0 0
+GRANTED c1 LOCK  2 write 0 0
+GRANTED c1 LOCK  3 write 0 0
+GRANTED c1 LOCK  4 write 0 0
+GRANTED c1 LOCK  5 write 0 0
+GRANTED c1 LOCK  6 write 0 0
+GRANTED c1 LOCK  7 write 0 0
+GRANTED c1 LOCK  8 write 0 0
+GRANTED c1 LOCK  9 write 0 0
+GRANTED c1 LOCK 10 write 0 0
+
+# Now probe the locks
+DENIED c2 LOCK  1 write 0 0
+DENIED c2 LOCK  2 write 0 0
+DENIED c2 LOCK  3 write 0 0
+DENIED c2 LOCK  4 write 0 0
+DENIED c2 LOCK  5 write 0 0
+DENIED c2 LOCK  6 write 0 0
+DENIED c2 LOCK  7 write 0 0
+DENIED c2 LOCK  8 write 0 0
+DENIED c2 LOCK  9 write 0 0
+DENIED c2 LOCK 10 write 0 0
+
+#now release the locks
+GRANTED c1 UNLOCK  1 0 0
+GRANTED c1 UNLOCK  2 0 0
+GRANTED c1 UNLOCK  3 0 0
+GRANTED c1 UNLOCK  4 0 0
+GRANTED c1 UNLOCK  5 0 0
+GRANTED c1 UNLOCK  6 0 0
+GRANTED c1 UNLOCK  7 0 0
+GRANTED c1 UNLOCK  8 0 0
+GRANTED c1 UNLOCK  9 0 0
+GRANTED c1 UNLOCK 10 0 0
+
+# and close the files
+OK c1 CLOSE  1
+OK c1 CLOSE  2
+OK c1 CLOSE  3
+OK c1 CLOSE  4
+OK c1 CLOSE  5
+OK c1 CLOSE  6
+OK c1 CLOSE  7
+OK c1 CLOSE  8
+OK c1 CLOSE  9
+OK c1 CLOSE 10
+OK c2 CLOSE  1
+OK c2 CLOSE  2
+OK c2 CLOSE  3
+OK c2 CLOSE  4
+OK c2 CLOSE  5
+OK c2 CLOSE  6
+OK c2 CLOSE  7
+OK c2 CLOSE  8
+OK c2 CLOSE  9
+OK c2 CLOSE 10
+
+# Now do the split lock tests
+OK c1 OPEN  1 rw splitfile.1.file
+OK c2 OPEN  1 rw splitfile.1.file
+GRANTED c1 LOCK  1 read 0 4
+GRANTED c1 LOCK  1 read 8 4
+GRANTED c1 LOCK  1 read 16 4
+GRANTED c1 LOCK  1 read 24 4
+DENIED c2 LOCK 1 write 0 4
+DENIED c2 LOCK 1 write 8 4
+DENIED c2 LOCK 1 write 16 4
+DENIED c2 LOCK 1 write 24 4
+GRANTED c2 LOCK 1 write 4 4
+GRANTED c2 LOCK 1 write 12 4
+GRANTED c2 LOCK 1 write 20 4
+GRANTED c2 LOCK 1 write 28 0
+GRANTED c2 LOCK 1 read 0 4
+GRANTED c2 LOCK 1 read 8 4
+GRANTED c2 LOCK 1 read 16 4
+GRANTED c2 LOCK 1 read 24 4
+GRANTED c1 UNLOCK 1 0 0
+GRANTED c2 UNLOCK 1 0 0
+
+# now test splitting a lock
+GRANTED c1 LOCK 1 read 0 16
+GRANTED c1 LOCK 1 write 32 16
+DENIED c2 LOCK 1 write 0 16
+DENIED c2 LOCK 1 write 32 16
+DENIED c2 LOCK 1 write 4 4
+DENIED c2 LOCK 1 write 36 4
+GRANTED c1 UNLOCK 1 4 4
+GRANTED c1 UNLOCK 1 36 4
+GRANTED c2 LOCK 1 write 4 4
+GRANTED c2 LOCK 1 write 36 4
+GRANTED c2 UNLOCK 1 0 0
+
+# now combine locks
+GRANTED c1 LOCK 1 read 4 4
+GRANTED c1 LOCK 1 write 36 4
+DENIED c2 LOCK 1 write 4 4
+DENIED c2 LOCK 1 write 36 4
+DENIED c2 LOCK 1 write 0 16
+DENIED c2 LOCK 1 write 32 16
+GRANTED c1 UNLOCK 1 0 0
+
+QUIT

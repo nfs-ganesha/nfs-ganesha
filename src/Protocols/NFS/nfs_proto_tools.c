@@ -4592,11 +4592,10 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 int nfs4_MakeCred(compound_data_t * data)
 {
   exportlist_client_entry_t related_client;
-  struct user_cred user_credentials;
 
   if (!(get_req_uid_gid(data->reqp,
-                      data->pexport,
-                        &user_credentials)))
+                        data->pexport,
+                        data->req_ctx->creds)))
     return NFS4ERR_WRONGSEC;
 
   LogFullDebug(COMPONENT_DISPATCH,

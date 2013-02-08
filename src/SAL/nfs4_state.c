@@ -49,6 +49,13 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 
+pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
+#ifdef DEBUG_SAL
+struct glist_head state_v4_all;
+pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 /**
  * @brief Checks for a conflict between an existing state and a candidate state.
  *
@@ -222,11 +229,22 @@ state_status_t state_add_impl(cache_entry_t *entry,
   /* Add state to list for cache entry */
   glist_add_tail(&entry->state_list, &pnew_state->state_list);
 
+  inc_state_owner_ref(owner_input);
+
   P(owner_input->so_mutex);
+
   glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
                  &pnew_state->state_owner_list);
-  /* This function releases the lock. */
-  inc_state_owner_ref_locked(owner_input);
+
+  V(owner_input->so_mutex);
+
+#ifdef DEBUG_SAL
+  P(all_state_v4_mutex);
+
+  glist_add_tail(&state_v4_all, &pnew_state->state_list_all);
+
+  V(all_state_v4_mutex);
+#endif
 
   /* Copy the result */
   *state = pnew_state;
@@ -335,6 +353,14 @@ state_status_t state_del_locked(state_t *state,
   glist_del(&state->state_export_list);
   V(state->state_export->exp_state_mutex);
 
+#ifdef DEBUG_SAL
+  P(all_state_v4_mutex);
+
+  glist_del(&state->state_list_all);
+
+  V(all_state_v4_mutex);
+#endif
+
   pool_free(state_v4_pool, state);
 
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
@@ -429,9 +455,6 @@ void release_lockstate(state_owner_t *lock_owner)
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(entry, 0);
     }
-
-  /* Release the reference to the lock owner that keeps it in the hash table */
-  dec_state_owner_ref(lock_owner);
 }
 
 /**
@@ -491,8 +514,52 @@ void release_openstate(state_owner_t *open_owner)
       cache_inode_lru_unref(entry,
                             0);
     }
-
-  /* Release the reference to the open owner that keeps it in the hash table */
-  dec_state_owner_ref(open_owner);
 }
+
+#ifdef DEBUG_SAL
+void dump_all_states(void)
+{
+  if(!isDebug(COMPONENT_STATE))
+    return;
+
+  P(all_state_v4_mutex);
+
+  if(!glist_empty(&state_v4_all))
+    {
+      struct glist_head *glist;
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- State List ----------------------");
+
+      glist_for_each(glist, &state_v4_all)
+        {
+          state_t * pstate = glist_entry(glist, state_t, state_list_all);
+          char    * state_type = "unknown";
+          char      str[HASHTABLE_DISPLAY_STRLEN];
+
+          switch(pstate->state_type)
+            {
+              case STATE_TYPE_NONE:   state_type = "NONE";        break;
+              case STATE_TYPE_SHARE:  state_type = "SHARE";       break;
+              case STATE_TYPE_DELEG:  state_type = "DELEGATION";  break;
+              case STATE_TYPE_LOCK:   state_type = "LOCK";        break;
+              case STATE_TYPE_LAYOUT: state_type = "LAYOUT";      break;
+            }
+
+          DisplayOwner(pstate->state_owner, str);
+          LogDebug(COMPONENT_STATE,
+                   "State %p type %s owner {%s}",
+                   pstate, state_type, str);
+        }
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- ---------- ----------------------");
+    }
+  else
+    LogDebug(COMPONENT_STATE, "All states released");
+
+  V(all_state_v4_mutex);
+}
+#endif
+
 /** @} */

@@ -1,0 +1,34 @@
+# Copyright IBM Corporation, 2012
+#  Contributor: Frank Filz  <ffilz@us.ibm.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# This script requests a lock from one process and tries to test it from another process
+
+CLIENTS c1 c2
+OK c1 OPEN 1 rw create try_test.file
+OK c2 OPEN 1 rw try_test.file
+GRANTED c1 LOCK 1 read 102030 123
+c2 $ TEST 1 write 101020 1234
+EXPECT c2 $ TEST CONFLICT 1 * read 102030 123
+GRANTED c1 UNLOCK 1 102030 123
+OK c1 CLOSE 1
+OK c2 CLOSE 1
+QUIT

@@ -105,7 +105,7 @@ option(USE_EFENCE "link with efence memory debug library" OFF)
 option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" ON)
 option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
-option(_DEBUG_MEMLEAKS "enable allocator features for tracking memory usage" OFF)
+option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag 
@@ -527,7 +527,7 @@ message(STATUS "USE_EFENCE = ${USE_EFENCE}")
 message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
 message(STATUS "_NO_PORTMAPPER = ${_NO_PORTMAPPER}")
 message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
-message(STATUS "_DEBUG_MEMLEAKS = ${_DEBUG_MEMLEAKS}")
+message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
 message(STATUS "_HANDLE_MAPPING = ${_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "PROFILING = ${PROFILING}")
@@ -618,6 +618,11 @@ set(USE_NFSIDMAP ${USE_NFSIDMAP}
 set(ENABLE_SNMP_ADM ${ENABLE_SNMP_ADM}
   CACHE BOOL
    "export GANESHA statistics with SNMP"
+   FORCE)
+
+set(DEBUG_SAL ${DEBUG_SAL}
+  CACHE BOOL
+   "enable debug SAL"
    FORCE)
 
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}

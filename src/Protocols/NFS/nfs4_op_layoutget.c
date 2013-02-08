@@ -110,6 +110,8 @@ acquire_layout_state(compound_data_t *data,
                                              &supplied_state,
                                              data,
                                              STATEID_SPECIAL_CURRENT,
+                                             0,
+                                             FALSE,
                                              tag)) != NFS4_OK) {
                 goto out;
         }

@@ -269,6 +269,9 @@ struct state_t {
 	struct glist_head state_owner_list; /*< List of states for an owner */
 	struct glist_head state_export_list; /*< List of states on the same
 					         export */
+#ifdef DEBUG_SAL
+	struct glist_head state_list_all; /*< Global list of all stateids */
+#endif
 	exportlist_t *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner; /*< State Owner related to this state */
 	cache_entry_t *state_entry; /*< Related entry */
@@ -288,6 +291,14 @@ struct state_t {
  *
  *****************************************************************************/
 
+typedef void (state_owner_init_t) (state_owner_t * powner);
+
+extern hash_table_t *ht_nlm_owner;
+#ifdef _USE_9P
+extern hash_table_t *ht_9p_owner;
+#endif
+extern hash_table_t *ht_nfs4_owner;
+
 /**
  * @brief A structure identifying the owner of an NFSv4 open or lock state
  *
@@ -296,10 +307,8 @@ struct state_t {
  */
 
 typedef struct state_nfs4_owner_name_t {
-	clientid4 son_clientid;
 	unsigned int son_owner_len;
-	char son_owner_val[MAXNAMLEN];
-	bool son_islock;
+	char * son_owner_val;
 } state_nfs4_owner_name_t;
 
 /**
@@ -328,6 +337,7 @@ typedef enum state_owner_type_t {
 
 typedef enum care_t {
 	CARE_NOT, /*< Do not care about client's status */
+	CARE_ALWAYS, /*< Always care about client's status */
 	CARE_NO_MONITOR, /*< Care, but will not actively monitor */
 	CARE_MONITOR /*< Will actively monitor client status */
 } care_t;
@@ -416,7 +426,6 @@ struct state_nfs4_owner_t {
 	bool so_confirmed; /*< Confirmation (NFSv4.0 only) */
 	seqid4 so_seqid; /*< Seqid for serialization of operations on
 			   owner (NFSv4.0 only) */
-	uint32_t so_counter; /*< Counter is used to build unique stateids */
 	nfs_argop4_state so_args; /*< Saved args */
 	cache_entry_t *so_last_entry; /*< Last file operated on by
 					  this state owner */
@@ -440,10 +449,13 @@ struct state_nfs4_owner_t {
 struct state_owner_t {
 	state_owner_type_t so_type; /*< Owner type */
 	struct glist_head so_lock_list; /*< Locks for this owner */
+#ifdef DEBUG_SAL
+	struct glist_head so_all_owners; /**< Global list of all state owners */
+#endif /* _DEBUG_MEMLEAKS */
 	pthread_mutex_t so_mutex; /*< Mutex on this owner */
 	int so_refcount; /*< Reference count for lifecyce management */
 	int so_owner_len; /*< Length of owner name */
-	char so_owner_val[NFS4_OPAQUE_LIMIT]; /*< Owner name */
+	char * so_owner_val; /*< Owner name */
 	union {
 		state_nfs4_owner_t so_nfs4_owner; /*< All NFSv4 state owners */
 		state_nlm_owner_t so_nlm_owner; /*< NLM lock and share
@@ -717,9 +729,9 @@ struct state_lock_entry_t {
 	struct glist_head sle_list; /*< Ranges on this lock */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
 	struct glist_head sle_locks; /*< Locks on this state/client */
-#ifdef _DEBUG_MEMLEAKS
+#ifdef DEBUG_SAL
 	struct glist_head sle_all_locks; /*< Link on the global lock list */
-#endif /* _DEBUG_MEMLEAKS */
+#endif /* DEBUG_SAL */
 	struct glist_head sle_export_locks; /*< Link on the export
 					      lock list */
 	exportlist_t *sle_export;
@@ -883,8 +895,6 @@ typedef struct nfs_grace_start {
 /* Memory pools */
 
 extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
-extern pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's
-					       open_owner */
 extern pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
 /**
@@ -901,6 +911,11 @@ struct state_nlm_share_t {
 	int sns_access; /*< Access mode */
 	int sns_deny; /*< Deny mode */
 };
+
+#ifdef DEBUG_SAL
+extern struct glist_head state_v4_all;
+extern struct glist_head state_owners_all;
+#endif
 
 #endif /* SAL_DATA_H */
 /** @} */

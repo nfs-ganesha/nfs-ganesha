@@ -158,6 +158,8 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
                                   &layout_state,
                                   data,
                                   STATEID_SPECIAL_CURRENT,
+                                  0,
+                                  FALSE,
                                   tag)) != NFS4_OK) {
                 goto out;
         }

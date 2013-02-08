@@ -148,6 +148,8 @@ int nfs4_op_write(struct nfs_argop4 *op,
                                          &state_found,
                                          data,
                                          STATEID_SPECIAL_ANY,
+                                         0,
+                                         FALSE,
                                          "WRITE");
   if(res_WRITE4.status != NFS4_OK)
     return res_WRITE4.status;

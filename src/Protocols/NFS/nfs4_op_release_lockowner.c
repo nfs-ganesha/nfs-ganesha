@@ -102,9 +102,18 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
   V(nfs_client_id->cid_mutex);
 
   /* look up the lock owner and see if we can find it */
-  convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4.lock_owner, &owner_name, 0LL);
+  convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4.lock_owner, &owner_name);
 
-  if(!nfs4_owner_Get_Pointer(&owner_name, &lock_owner))
+  /* If this open owner is not known yet, allocated and set up a new one */
+  lock_owner = create_nfs4_owner(&owner_name,
+                                 nfs_client_id,
+                                 STATE_OPEN_OWNER_NFSV4,
+                                 NULL,
+                                 0,
+                                 NULL,
+                                 CARE_NOT);
+
+  if(lock_owner == NULL)
     {
       /* the owner doesn't exist, we are done */
       LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -113,21 +122,26 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
       goto out1;
     }
 
+  P(lock_owner->so_mutex);
+
   /* got the owner, does it still have any locks being held */
   if(!glist_empty(&lock_owner->so_lock_list))
     {
+      V(lock_owner->so_mutex);
+
       res_RELEASE_LOCKOWNER4.status = NFS4ERR_LOCKS_HELD;
     }
   else
     {
+      V(lock_owner->so_mutex);
+
       /* found the lock owner and it doesn't have any locks, release it */
       release_lockstate(lock_owner);
 
       res_RELEASE_LOCKOWNER4.status = NFS4_OK;
     }
 
-  /* Release the reference to the lock owner acquired via
-     nfs4_owner_Get_Pointer */
+  /* Release the reference to the lock owner acquired via create_nfs4_owner */
   dec_state_owner_ref(lock_owner);
 
  out1:
