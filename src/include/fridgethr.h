@@ -76,6 +76,8 @@ struct fridgethr_entry {
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
 	bool frozen; /*< Thread is frozen */
 	struct timespec timeout; /*< Wait timeout */
+	struct glist_head thread_link; /*< Link in the list of all
+					   threads */
 	struct glist_head idle_link; /*< Link in the idle queue */
 	struct fridgethr *fr; /*< The fridge we belong to */
 };
@@ -191,7 +193,8 @@ struct fridgethr {
 	struct fridgethr_params p; /*< Parameters */
 	pthread_mutex_t mtx; /*< Mutex */
 	pthread_attr_t attr; /*< Creation attributes */
-	uint32_t nthreads; /*< Number of threads running */
+	struct glist_head thread_list; /*< List of threads */
+	uint32_t nthreads; /*< Number of threads in fridge */
 	struct glist_head idle_q; /*< Idle threads */
 	uint32_t nidle; /*< Number of idle threads */
 	uint32_t flags; /*< Fridge-wide flags */

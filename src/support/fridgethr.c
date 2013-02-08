@@ -154,6 +154,9 @@ int fridgethr_init(struct fridgethr **frout,
 	frobj->command = fridgethr_comm_run;
 	frobj->transitioning = false;
 
+	/* Thread list */
+	init_glist(&frobj->thread_list);
+
 	/* Idle threads queue */
 	init_glist(&frobj->idle_q);
 
@@ -388,6 +391,7 @@ restart:
 		/* We do this here since we already have the fridge
 		   lock. */
 		--(fr->nthreads);
+		glist_del(&fe->thread_link);
 		if ((fr->nthreads == 0) &&
 		    (fr->command == fridgethr_comm_stop) &&
 		    (fr->transitioning) &&
@@ -577,15 +581,18 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	/* The condition variable has/not been initialized */
 	bool conditioned = false;
 
-	/* Make a new thread */
-	++(fr->nthreads);
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
 	if (fe == NULL) {
 		goto create_err;
 	}
 
+	/* Make a new thread */
+	++(fr->nthreads);
+
 	fe->fr = fr;
+	glist_add_tail(&fr->thread_list,
+		       &fe->thread_link);
 	rc = pthread_mutex_init(&fe->ctx.mtx, NULL);
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
@@ -1351,13 +1358,17 @@ int frigethr_populate(struct fridgethr *fr,
 		struct fridgethr_entry *fe = NULL;
 		int rc = 0;
 
-		/* Make a new thread */
-		++(fr->nthreads);
 		fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
 		if (fe == NULL) {
 			PTHREAD_MUTEX_unlock(&fr->mtx);
 			return ENOMEM;
 		}
+
+		/* Make a new thread */
+		++(fr->nthreads);
+
+		glist_add_tail(&fr->thread_list,
+			       &fe->thread_link);
 
 		fe->fr = fr;
 		rc = pthread_mutex_init(&fe->ctx.mtx, NULL);
