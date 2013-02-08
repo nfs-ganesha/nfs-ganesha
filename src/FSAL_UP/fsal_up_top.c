@@ -33,7 +33,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_avl.h"
-#include "cache_inode_weakref.h"
 #include "cache_inode_lru.h"
 #include "HashTable.h"
 #include "fsal_up.h"
@@ -41,6 +40,21 @@
 #include "pnfs_utils.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_tools.h"
+
+/* Fake root credentials for caching lookup */
+static struct user_cred synthetic_creds = {
+	.caller_uid = 0,
+	.caller_gid = 0,
+	.caller_glen = 0,
+	.caller_garray = NULL
+};
+
+/* Synthetic request context */
+static struct req_op_context synthetic_context = {
+	.creds = &synthetic_creds,
+	.caller_addr = NULL,
+	.clientid = NULL
+};
 
 static int32_t cb_completion_func(rpc_call_t* call, rpc_call_hook hook,
                                  void* arg, uint32_t flags)
@@ -444,21 +458,6 @@ link_queue(struct fsal_up_event_link *link,
 {
         /* The cache entry for the parent directory */
         cache_entry_t *parent = NULL;
-        /* Fake root credentials for caching lookup */
-        struct user_cred synthetic_creds = {
-                .caller_uid = 0,
-                .caller_gid = 0,
-                .caller_glen = 0,
-                .caller_garray = NULL
-        };
-
-        /* Synthetic request context */
-        struct req_op_context synthetic_context = {
-                .creds = &synthetic_creds,
-                .caller_addr = NULL,
-                .clientid = NULL
-        };
-
 
         if (up_get(&file->key, &parent) == 0) {
                 /* The entry to look up */
@@ -532,8 +531,9 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                     ~(dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
                         /* The entry to ding */
                         cache_entry_t *entry = NULL;
-                        if ((entry = cache_inode_weakref_get(&dirent->entry,
-                                                             0))) {
+                        if ((entry = cache_inode_get_keyed(
+                                 &dirent->ckey, &synthetic_context,
+                                 CIG_KEYED_FLAG_CACHED_ONLY))) {
                                 PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
                                 if (entry->flags &
                                     CACHE_INODE_TRUST_ATTRS) {
@@ -552,7 +552,8 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                                 cache_inode_put(entry);
                         }
                         cache_inode_remove_cached_dirent(parent,
-                                                         unlink->name);
+                                                         unlink->name,
+							 &synthetic_context);
                 }
                 PTHREAD_RWLOCK_unlock(&parent->content_lock);
                 cache_inode_put(parent);
@@ -581,7 +582,8 @@ move_from_queue(struct fsal_up_event_move_from *move_from,
         if (up_get(&file->key, &parent) == 0) {
                 PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                 cache_inode_remove_cached_dirent(parent,
-                                                 move_from->name);
+                                                 move_from->name,
+						 &synthetic_context);
                 PTHREAD_RWLOCK_unlock(&parent->content_lock);
                 cache_inode_put(parent);
         }
@@ -605,20 +607,6 @@ move_to_queue(struct fsal_up_event_move_to *move_to,
 {
         /* The cache entry for the parent directory */
         cache_entry_t *parent = NULL;
-        /* Fake root credentials for caching lookup */
-        struct user_cred synthetic_creds = {
-                .caller_uid = 0,
-                .caller_gid = 0,
-                .caller_glen = 0,
-                .caller_garray = NULL
-        };
-
-        /* Synthetic request context */
-        struct req_op_context synthetic_context = {
-                .creds = &synthetic_creds,
-                .caller_addr = NULL,
-                .clientid = NULL
-        };
 
         if (up_get(&file->key, &parent) == 0) {
                 /* The entry to look up */
@@ -683,7 +671,8 @@ rename_queue(struct fsal_up_event_rename *rename,
                 status = cache_inode_rename_cached_dirent(
 			parent,
 			rename->old,
-			rename->new);
+			rename->new,
+			&synthetic_context);
                 if (status != CACHE_INODE_SUCCESS) {
                         cache_inode_invalidate(parent,
                                                CACHE_INODE_INVALIDATE_CONTENT);

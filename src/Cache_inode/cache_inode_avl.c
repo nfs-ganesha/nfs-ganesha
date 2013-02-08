@@ -97,9 +97,9 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 #endif
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
-    v->entry.ptr = (void*)0xdeaddeaddeaddead;
-    v->entry.gen = 0;
+    cache_inode_key_delete(&v->ckey);
 
+    /* save cookie in deleted avl */
     avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
 }
 

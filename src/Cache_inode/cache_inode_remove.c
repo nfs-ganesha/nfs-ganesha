@@ -39,7 +39,6 @@
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -64,7 +63,7 @@ cache_inode_clean_internal(cache_entry_t *entry)
      fsal_status_t fsal_status = {0, 0};
 
      if (! entry->obj_handle)
-         goto unref;
+         goto out;
 
      /* Remove from lookup table (with existence check) */
      cih_remove_checked(entry);
@@ -80,10 +79,7 @@ cache_inode_clean_internal(cache_entry_t *entry)
 
      entry->obj_handle = NULL;
 
- unref:
-     /* Delete from the weakref table */
-     cache_inode_weakref_delete(&entry->weakref);
-
+ out:
      return CACHE_INODE_SUCCESS;
 } /* cache_inode_clean_internal */
 
@@ -250,7 +246,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      /* Remove the entry from parent dir_entries avl */
-     cache_inode_remove_cached_dirent(entry, name);
+     cache_inode_remove_cached_dirent(entry, name, req_ctx);
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_remove_cached_dirent: status=%d", status);

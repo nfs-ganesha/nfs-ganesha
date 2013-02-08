@@ -141,28 +141,14 @@ cih_fh_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, cache_entry_t, fh_hk.node_k);
 	rk = avltree_container_of(rhs, cache_entry_t, fh_hk.node_k);
 
-	if (lk->fh_hk.k < rk->fh_hk.k)
+	if (lk->fh_hk.key.hk < rk->fh_hk.key.hk)
 		return (-1);
 
-	if (lk->fh_hk.k == rk->fh_hk.k) {
+	if (unlikely(lk->fh_hk.key.hk == rk->fh_hk.key.hk)) {
 		/* deep compare */
-		struct gsh_buffdesc lf, rf, *plf, *prf;
-
-		/* Fixup key prototypes */
-		if (lk->fh_hk.fh_desc_k)
-			plf = lk->fh_hk.fh_desc_k;
-		else {
-			plf = &lf;
-			lk->obj_handle->ops->handle_to_key(lk->obj_handle, plf);
-		}
-		if (rk->fh_hk.fh_desc_k)
-			prf = rk->fh_hk.fh_desc_k;
-		else {
-			prf = &rf;
-			rk->obj_handle->ops->handle_to_key(rk->obj_handle, prf);
-		}
-		/* Do it */
-		return (memcmp(plf->addr, prf->addr, MIN(plf->len, prf->len)));
+		return (memcmp(lk->fh_hk.key.kv.addr, lk->fh_hk.key.kv.addr,
+			       MIN(lk->fh_hk.key.kv.len,
+				   rk->fh_hk.key.kv.len)));
 	}
 
 	return (1);
@@ -204,7 +190,8 @@ cih_fhcache_inline_lookup(
 /**
  * @brief Convenience function to compute hash for cache_entry_t
  *
- * Computes hash of entry using input fh_desc.
+ * Computes hash of entry using input fh_desc.  If entry is not a
+ * disposable key prototype, fh_desc is duplicated in entry.
  *
  * @param entry [in] Entry to be hashed
  * @param fh_desc [in] Hash input bytes
@@ -217,12 +204,17 @@ cih_hash_entry(cache_entry_t *entry, const struct gsh_buffdesc *fh_desc,
 {
 	/* fh prototype fixup */
 	if (flags & CIH_HASH_KEY_PROTOTYPE)
-		entry->fh_hk.fh_desc_k = (struct gsh_buffdesc *) fh_desc;
-	else
-		entry->fh_hk.fh_desc_k = NULL;
+		entry->fh_hk.key.kv = *(struct gsh_buffdesc *) fh_desc;
+	else {
+		/* XXX dups fh_desc */
+		entry->fh_hk.key.kv.len = fh_desc->len;
+		entry->fh_hk.key.kv.addr = gsh_malloc(fh_desc->len);
+		memcpy(entry->fh_hk.key.kv.addr, fh_desc->addr, fh_desc->len);
+	}
 
 	/* hash it */
-	entry->fh_hk.k = CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
+	entry->fh_hk.key.hk =
+		CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
 }
 
 #define CIH_GET_NONE           0x0000
@@ -270,7 +262,51 @@ cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
 
 	cih_hash_entry(&k_entry, fh_desc, CIH_HASH_KEY_PROTOTYPE);
 	latch->cp = cp =
-		cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.k);
+		cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
+
+	if (flags & CIH_GET_WLOCK)
+		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
+	else
+		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+
+	node = cih_fhcache_inline_lookup(&cp->t, &k_entry.fh_hk.node_k);
+	if (! node) {
+            if (flags & CIH_GET_UNLOCK_ON_MISS)
+                PTHREAD_RWLOCK_unlock(&cp->lock);
+            goto out;
+        }
+
+	entry = avltree_container_of(node, cache_entry_t, fh_hk.node_k);
+
+out:
+	return (entry);
+}
+
+/**
+ * @brief Lookup cache entry by key, optionally return with hash partition
+ * shared or exclusive locked.
+ *
+ * Lookup cache entry by fh, optionally return with hash partition shared
+ * or exclusive locked.  Differs from the fh variant in using the precomputed
+ * hash stored with key.
+ *
+ * @param key [in] Key being searched
+ * @param latch [out] Pointer to partition
+ * @param flags [in] Flags
+ *
+ * @return Pointer to cache entry if found, else NULL
+ */
+static inline cache_entry_t *
+cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
+		      uint32_t flags)
+{
+	cache_entry_t k_entry, *entry = NULL;
+	struct avltree_node *node;
+	cih_partition_t *cp;
+
+	k_entry.fh_hk.key = *key;
+	latch->cp = cp =
+		cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
 
 	if (flags & CIH_GET_WLOCK)
 		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
@@ -339,14 +375,14 @@ cih_remove_checked(cache_entry_t *entry)
 {
 	struct avltree_node *node;
 	cih_partition_t *cp =
-		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.k);
+		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
 	if (node) {
 		avltree_remove(node, &cp->t);
-		cp->cache[cih_cache_offsetof(&cih_fhcache, entry->fh_hk.k)]
-			= NULL;
+		cp->cache[cih_cache_offsetof(&cih_fhcache,
+					     entry->fh_hk.key.hk)] = NULL;
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
 }

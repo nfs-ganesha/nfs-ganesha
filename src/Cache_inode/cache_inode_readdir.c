@@ -46,7 +46,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_avl.h"
-#include "cache_inode_weakref.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -100,6 +99,7 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
  * @param[in] directory The directory to be operated upon
  * @param[in] name      The name of the relevant entry
  * @param[in] newname   The new name for renames
+ * @param[in] req_ctx   Request context (user creds, client address etc)
  * @param[in] dirent_op The operation (LOOKUP, REMOVE, or RENAME) to
  *                      perform
  *
@@ -117,6 +117,7 @@ cache_inode_status_t
 cache_inode_operate_cached_dirent(cache_entry_t *directory,
                                   const char *name,
                                   const char *newname,
+                                  const struct req_op_context *req_ctx,
                                   cache_inode_dirent_op_t dirent_op)
 {
      cache_inode_dir_entry_t *dirent, *dirent2, *dirent3;
@@ -174,10 +175,12 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              if (directory->flags &
                  CACHE_INODE_TRUST_CONTENT) {
                  /* overwrite, replace entry and expire the old */
-		 cache_entry_t *oldentry = cache_inode_weakref_get(&dirent2->entry, 0);
-
+                 cache_entry_t *oldentry;
 		 avl_dirent_set_deleted(directory, dirent);
-		 dirent2->entry = dirent->entry;
+                 cache_inode_key_dup(&dirent2->ckey, &dirent->ckey);
+                 oldentry =
+                     cache_inode_get_keyed(&dirent2->ckey, req_ctx,
+                                           CIG_KEYED_FLAG_CACHED_ONLY);
 		 if(oldentry) { /* if it is still around, mark it gone/stale */
 		     status = cache_inode_invalidate(oldentry,
 						     (CACHE_INODE_INVALIDATE_ATTRS
@@ -196,7 +199,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
                                   + newnamesize);
              memcpy(dirent3->name, newname, newnamesize);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
-             dirent3->entry = dirent->entry;
+             cache_inode_key_dup(&dirent3->ckey, &dirent->ckey);
              code = cache_inode_avl_qp_insert(directory, dirent3);
              if (code < 0) {
                  /* collision, tree state unchanged (unlikely) */
@@ -267,13 +270,14 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
      memcpy(&new_dir_entry->name, name, namesize);
-     new_dir_entry->entry = entry->weakref;
+     cache_inode_key_dup(&new_dir_entry->ckey, &entry->fh_hk.key);
 
      /* add to avl */
      code = cache_inode_avl_qp_insert(parent, new_dir_entry);
      if (code < 0) {
           /* collision, tree not updated--release both pool objects and return
           * err */
+         gsh_free(new_dir_entry->ckey.kv.addr);
          gsh_free(new_dir_entry);
          status = CACHE_INODE_ENTRY_EXISTS;
          return status;
@@ -305,7 +309,8 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
  */
 cache_inode_status_t
 cache_inode_remove_cached_dirent(cache_entry_t *directory,
-                                 const char *name)
+                                 const char *name,
+                                 const struct req_op_context *req_ctx)
 {
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -319,6 +324,7 @@ cache_inode_remove_cached_dirent(cache_entry_t *directory,
   status = cache_inode_operate_cached_dirent(directory,
 					     name,
 					     NULL,
+                                             req_ctx,
 					     CACHE_INODE_DIRENT_OP_REMOVE);
   return status;
 
@@ -623,30 +629,22 @@ cache_inode_readdir(cache_entry_t *directory,
                                         cache_inode_dir_entry_t,
                                         node_hk);
 
-          if ((entry
-               = cache_inode_weakref_get(&dirent->entry,
-                                         LRU_REQ_SCAN))
-              == NULL) {
-               /* Entry fell out of the cache, load it back in. */
-	    lookup_status = cache_inode_lookup_impl(directory,
-						    dirent->name,
-						    req_ctx,
-						    &entry);
-               if (entry == NULL) {
-                    if (lookup_status == CACHE_INODE_NOT_FOUND) {
-                         /* Directory changed out from under us.
-                            Invalidate it, skip the name, and keep
-                            going. */
-                         atomic_clear_uint32_t_bits(&directory->flags,
-                                                    CACHE_INODE_TRUST_CONTENT);
-                         continue;
-                    } else {
-                         /* Something is more seriously wrong,
-                            probably an inconsistency. */
-                         status = lookup_status;
-                         goto unlock_dir;
-                    }
-               }
+          entry = cache_inode_get_keyed(&dirent->ckey, req_ctx,
+                                        CIG_KEYED_FLAG_NONE);
+          if (! entry) {
+              if (lookup_status == CACHE_INODE_NOT_FOUND) {
+                  /* Directory changed out from under us.
+                     Invalidate it, skip the name, and keep
+                     going. */
+                  atomic_clear_uint32_t_bits(&directory->flags,
+                                             CACHE_INODE_TRUST_CONTENT);
+                  continue;
+              } else {
+                  /* Something is more seriously wrong,
+                     probably an inconsistency. */
+                  status = lookup_status;
+                  goto unlock_dir;
+              }
           }
 
           LogFullDebug(COMPONENT_NFS_READDIR,

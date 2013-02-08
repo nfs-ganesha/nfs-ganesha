@@ -51,7 +51,6 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
@@ -665,7 +664,7 @@ cache_inode_lru_cleanup(void)
             /* finalize */
             entry = container_of(lru, cache_entry_t, lru);
             state_wipe_file(entry);
-            cache_inode_weakref_delete(&entry->weakref);
+            cache_inode_key_delete(&entry->fh_hk.key);
             /* Idempotently return the sentry reference.  (This function
                will only decrement the refcount once, no matter how many
                times it's called. */

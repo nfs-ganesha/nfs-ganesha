@@ -58,6 +58,7 @@
  * @param[in,out] parent The directory to be managed
  * @param[in]    oldname The name of the entry to rename
  * @param[in]    newname The new name for the entry
+ * @param[in]    req_ctx   Request context
  *
  * @return the same as *status
  */
@@ -65,7 +66,8 @@
 cache_inode_status_t
 cache_inode_rename_cached_dirent(cache_entry_t *parent,
                                  const char *oldname,
-                                 const char *newname)
+                                 const char *newname,
+				 const struct req_op_context *req_ctx)
 {
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -79,6 +81,7 @@ cache_inode_rename_cached_dirent(cache_entry_t *parent,
   status = cache_inode_operate_cached_dirent(parent,
                                               oldname,
                                               newname,
+                                              req_ctx,
                                               CACHE_INODE_DIRENT_OP_RENAME);
 
   return status;
@@ -285,8 +288,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
   if(dir_src == dir_dest)
     {
-      cache_inode_status_t tmp_status = cache_inode_rename_cached_dirent(dir_dest, oldname,
-									 newname);
+      cache_inode_status_t tmp_status =
+	      cache_inode_rename_cached_dirent(dir_dest, oldname, newname,
+		      req_ctx);
       if(tmp_status != CACHE_INODE_SUCCESS)
         {
 	  /* We're obviously out of date.  Throw out the cached
@@ -309,8 +313,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
         }
 
       /* Remove the old entry */
-      tmp_status = cache_inode_remove_cached_dirent(dir_src,
-						    oldname);
+      tmp_status = cache_inode_remove_cached_dirent(dir_src, oldname, req_ctx);
       if(tmp_status != CACHE_INODE_SUCCESS)
         {
 	  cache_inode_invalidate_all_cached_dirent(dir_src);

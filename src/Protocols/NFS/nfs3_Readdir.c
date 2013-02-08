@@ -43,7 +43,6 @@
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"

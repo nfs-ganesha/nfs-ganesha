@@ -45,7 +45,6 @@
 #include "abstract_mem.h"
 #include "HashTable.h"
 #include "avltree.h"
-#include "generic_weakref.h"
 #include "fsal.h"
 #include "log.h"
 #include "config_parsing.h"
@@ -221,6 +220,62 @@ typedef struct cache_inode_share__ {
 	unsigned int share_deny_write_v4; /**< Count of v4 share deny write */
 } cache_inode_share_t;
 
+
+/**
+ * @brief Structure representing a cache key.
+ *
+ * Wraps an underlying FSAL-specific key.
+ * 
+ */
+typedef struct cache_inode_key
+{
+	uint64_t hk; /* hash key */
+	struct gsh_buffdesc kv;
+	uint32_t exportid; /* NOT HASHED OR COMPARED! */
+} cache_inode_key_t;
+
+/**
+ * @brief Dup a cache key.
+ *
+ * Deep copies the key passed in src, to tgt.  On return, tgt->kv.addr
+ * is overwritten with a new buffer of length src->kv.len, and the buffer
+ * is copied.
+ *
+ * @param tgt [inout] Destination of copy
+ * @param src [in] Source of copy
+ *
+ * @return 0 on success.
+ */
+static inline int
+cache_inode_key_dup(cache_inode_key_t *tgt, cache_inode_key_t *src)
+{
+	tgt->kv.len = src->kv.len;
+	tgt->kv.addr = gsh_malloc(src->kv.len);
+	if (! tgt->kv.addr)
+		return (ENOMEM);
+	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
+	tgt->hk = src->hk;
+	tgt->exportid = src->exportid;
+	return (0);
+}
+
+/**
+ * @brief Delete a cache key.
+ *
+ * Delete a cache key.
+ *
+ * @param key [in] The key to delete
+ *
+ * @return void.
+ */
+static inline void
+cache_inode_key_delete(cache_inode_key_t *key)
+{
+	key->kv.len = 0;
+	gsh_free(key->kv.addr);
+	key->kv.addr =  (void*) 0xdeaddeaddeaddead;
+}
+
 /**
  * @brief Represents a cached directory entry
  *
@@ -237,11 +292,28 @@ typedef struct cache_inode_dir_entry__ {
 		uint64_t k; /*< Integer cookie */
 		uint32_t p; /*< Number of probes, an efficiency metric */
 	} hk;
-	gweakref_t entry; /*< Weak reference pointing to the cache entry */
+	cache_inode_key_t ckey; /*< Key of cache entry */
 	uint64_t fsal_cookie; /*< The cookie returned by the FSAL. */
 	uint32_t flags; /*< Flags */
 	char name[]; /*< The NUL-terminated filename */
 } cache_inode_dir_entry_t;
+
+/**
+ * @brief Deep free a dirent.
+ *
+ * Deep free a dirent..
+ *
+ * @param dirent [in] Dirent to be freed.
+ *
+ * @return Pointer to node if found, else NULL.
+ */
+static inline void
+cache_inode_free_dirent(cache_inode_dir_entry_t *dirent)
+{
+	if (dirent->ckey.kv.addr)
+		gsh_free(dirent->ckey.kv.addr);
+	gsh_free(dirent);
+}
 
 /**
  * @brief Represents a cached inode
@@ -275,7 +347,7 @@ typedef struct cache_inode_dir_entry__ {
  *     pinning must hold the state lock for read through the operation
  *     of moving the entry from one queue to another.
  *
- * The handle, weakref, and type fields are unprotected, as they are
+ * The handle, cache key, and type fields are unprotected, as they are
  * considered to be immutable throughout the life of the object.
  *
  * The flags field is unprotected, however it should be modified only
@@ -309,13 +381,8 @@ struct cache_entry_t {
 	/** FH hash linkage */
 	struct {
 		struct avltree_node node_k; /*< AVL node in tree */
-		struct gsh_buffdesc *fh_desc_k; /*< Key prototypes ONLY*/
-		uint64_t k;
+		cache_inode_key_t key; /*< Key of this entry */
 	} fh_hk;
-	/** A weakref for this entry (pointer and generation number.)
-	    The generation number is the only interesting part, but
-	    this way the weakref can be easily stashed somewhere. */
-	gweakref_t weakref;
 	/** The type of the entry */
 	object_file_type_t type;
 	/** Flags for this entry */
@@ -367,7 +434,7 @@ struct cache_entry_t {
 			    'referral string' */
 			char *referral;
 			/** The parent of this directory ('..') */
-			gweakref_t parent;
+			cache_inode_key_t parent;
 			struct {
 				/** Children */
 				struct avltree t;
@@ -582,10 +649,16 @@ void cache_inode_release_symlink(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_init(cache_inode_parameter_t param);
 
+#define CIG_KEYED_FLAG_NONE         0x0000
+#define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
+
 cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				     cache_entry_t *associated,
 				     const struct req_op_context *opctx,
 				     cache_entry_t **entry);
+cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
+				     const struct req_op_context *req_ctx,
+				     uint32_t flags);
 void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
@@ -690,16 +763,19 @@ cache_inode_status_t cache_inode_operate_cached_dirent(
 	cache_entry_t *entry_parent,
 	const char *name,
 	const char *newname,
+	const struct req_op_context *req_ctx,
 	cache_inode_dirent_op_t dirent_op);
 
 cache_inode_status_t cache_inode_remove_cached_dirent(
-	cache_entry_t *entry_parent,
-	const char *name);
+		cache_entry_t *entry_parent,
+		const char *name,
+		const struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_rename_cached_dirent(
 	cache_entry_t *entry_parent,
 	const char *oldname,
-	const char *newname);
+	const char *newname,
+	const struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
 					const char *oldname,

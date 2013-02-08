@@ -40,7 +40,6 @@
 #include "cache_inode_hash.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
@@ -223,7 +222,6 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
   /* This line should never be reached */
 } /* cache_inode_compare_key_fsal */
 
-
 /**
  *
  * @brief Set the fsal_time in a pentry struct to the current time.
@@ -276,7 +274,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      struct gsh_buffdesc fh_desc;
      cih_latch_t latch;
      bool lrurefed = false;
-     bool weakrefed = false;
      bool locksinited = false;
      int rc = 0;
 
@@ -352,15 +349,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
         just returned. */
      lrurefed = true;
 
-     /* Enroll the object in the weakref table */
-     (*entry)->weakref =
-          cache_inode_weakref_insert(*entry);
-     assert((*entry)->weakref.ptr != 0); /* A NULL pointer here would
-					    indicate a programming
-					    error, such as an old entry
-					    not being unenrolled from
-					    the table. */
-     weakrefed = true;
+     /* Set cache key */
+     cih_hash_entry(*entry, &fh_desc, CIH_HASH_NONE);
+
+     /* Set export id (unhashed, uncompared key component) */
+     (*entry)->fh_hk.key.exportid = new_obj->export->exp_entry->id;
 
      /* Initialize common fields */
      (*entry)->type = new_obj->type;
@@ -404,8 +397,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           (*entry)->object.dir.avl.collisions = 0;
           (*entry)->object.dir.nbactive = 0;
           (*entry)->object.dir.referral = NULL;
-          (*entry)->object.dir.parent.ptr = NULL;
-          (*entry)->object.dir.parent.gen = 0;
           (*entry)->object.dir.root = false;
           /* init avl tree */
           cache_inode_avl_init(*entry);
@@ -468,9 +459,6 @@ out:
                pthread_rwlock_destroy(&(*entry)->attr_lock);
                pthread_rwlock_destroy(&(*entry)->content_lock);
                pthread_rwlock_destroy(&(*entry)->state_lock);
-          }
-          if (weakrefed) {
-               cache_inode_weakref_delete(&(*entry)->weakref);
           }
           if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
                cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
@@ -666,10 +654,8 @@ void cache_inode_print_dir(cache_entry_t *entry)
       dirent = avltree_container_of(dirent_node, cache_inode_dir_entry_t,
                                     node_hk);
       LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Name = %s, DIRECTORY entry = (%p, %"PRIu64") i=%d",
+                   "Name = %s, i=%d",
                    dirent->name,
-                   dirent->entry.ptr,
-                   dirent->entry.gen,
                    i);
       i++;
   } while ((dirent_node = avltree_next(dirent_node)));
