@@ -46,6 +46,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
+#include "server_stats.h"
 
 static void
 nfs_read_ok(exportlist_t *export,
@@ -288,8 +289,14 @@ out:
         /* return references */
         if (entry) 
           cache_inode_put(entry);
-        
-
+#ifdef USE_DBUS_STATS
+	server_stats_io_done(req_ctx,
+			     export->id,
+			     size,
+			     read_size,
+			     (rc == NFS_REQ_OK) ? true : false,
+			     false);
+#endif
         return rc;
 } /* nfs_Read */
 
