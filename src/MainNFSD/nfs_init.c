@@ -518,6 +518,12 @@ void *sigmgr_thread(void *UnusedArg)
   LogEvent(COMPONENT_MAIN,
 	   "Inode cache destroyed.");
 
+  LogEvent(COMPONENT_MAIN,
+	   "Destroying the FSAL system.");
+  destroy_fsals();
+  LogEvent(COMPONENT_MAIN,
+	   "FSAL system destroyed.");
+
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
   /* Remove pid file. I do not check for status (best effort,
