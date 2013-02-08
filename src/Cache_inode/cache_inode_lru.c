@@ -1185,7 +1185,11 @@ cache_inode_lru_pkgshutdown(void)
 				     fridgethr_comm_stop,
 				     300);
 
-     if (rc != 0) {
+     if (rc == ETIMEDOUT) {
+	  LogMajor(COMPONENT_CACHE_INODE_LRU,
+		   "Shutdown timed out, cancelling threads.");
+	  fridgethr_cancel(lru_fridge);
+     } else if (rc != 0) {
 	  LogMajor(COMPONENT_CACHE_INODE_LRU,
 		   "Failed shutting down LRU thread: %d",
 		   rc);

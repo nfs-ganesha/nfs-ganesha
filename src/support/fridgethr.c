@@ -520,8 +520,24 @@ static void *fridgethr_start_routine(void *arg)
 	struct fridgethr *fr = fe->fr;
 	bool reschedule;
 	int rc = 0;
+	int old_type = 0;
+	int old_state = 0;
 
 	SetNameFunction(fr->s);
+
+	/* Excplicitly and definitely enable cancellation */
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
+
+	/* The only time a thread would be cancelled is if it were to
+	   fail to honor a more civil timeout request that times
+	   out.  In these cases we assume the thread has gone into an
+	   infinite loop or deadlocked or otherwise experienced some
+	   unfortunate state.  Since deferred cancellation is
+	   effective on condition waits, may be effective on
+	   read-write locks and won't be effective on mutices,
+	   asynchronous seems the way to go.  We would only do this
+	   on the way to taking down the system in any case. */
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_type);
 
 	rc = pthread_sigmask(SIG_SETMASK, NULL,
 			     &fe->ctx.sigmask);
@@ -1447,6 +1463,47 @@ time_t fridgethr_getwait(struct fridgethr_context *ctx)
 	thread_delay = fr->p.thread_delay;
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	return thread_delay;
+}
+
+/**
+ * @brief Cancel all of the threads in the fridge
+ *
+ * This function is done only on Ganesha shutdown and only if a
+ * shutdown request has been ignored.  We make no attempt to free the
+ * fridge entries, since the threads are set detached and we're on the
+ * way out anyway.
+ *
+ * @param[in,out] fr Fridge to cancel
+ */
+
+void fridgethr_cancel(struct fridgethr *fr)
+{
+	/* Thread iterator */
+	struct glist_head *ti = NULL;
+	/* Next thread link */
+	struct glist_head *tn = NULL;
+
+	pthread_mutex_lock(&fr->mtx);
+	LogEvent(COMPONENT_THREAD,
+		 "Cancelling %d threads from fridge %s.",
+		 fr->nthreads,
+		 fr->s);
+	glist_for_each_safe(ti, tn, &fr->thread_list) {
+		struct fridgethr_entry *t
+			= glist_entry(ti,
+				      struct fridgethr_entry,
+				      thread_link);
+		/* The only error we can get is no such thread.
+		   Which means the thread isn't running.  Which is
+		   good enough for me. */
+		pthread_cancel(t->ctx.id);
+		glist_del(&t->thread_link);
+		--(fr->nthreads);
+	}
+	pthread_mutex_unlock(&fr->mtx);
+	LogEvent(COMPONENT_THREAD,
+		 "All threads in %s cancelled.",
+		 fr->s);
 }
 
 /** @} */

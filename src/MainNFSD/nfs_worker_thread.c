@@ -1480,7 +1480,12 @@ int worker_shutdown(void)
 				  fridgethr_comm_stop,
 				  300);
 
-  if (rc != 0) {
+  if (rc == ETIMEDOUT) {
+    LogMajor(COMPONENT_DISPATCH,
+	     "Shutdown timed out, cancelling threads.");
+    fridgethr_cancel(worker_fridge);
+  }
+  else if (rc != 0) {
     LogMajor(COMPONENT_DISPATCH,
 	     "Failed shutting down worker threads: %d",
 	     rc);

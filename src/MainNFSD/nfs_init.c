@@ -460,7 +460,13 @@ void *sigmgr_thread(void *UnusedArg)
 			      fridgethr_comm_stop,
 			      300);
 
-  if (rc != 0)
+  if (rc == ETIMEDOUT)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Shutdown timed out, cancelling threads!");
+      fridgethr_cancel(req_fridge);
+    }
+  else if (rc != 0)
     {
       LogMajor(COMPONENT_THREAD,
 	       "Failed to shut down the request thread fridge: %d!",

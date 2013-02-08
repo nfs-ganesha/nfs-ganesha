@@ -227,7 +227,13 @@ int reaper_shutdown(void)
 				  fridgethr_comm_stop,
 				  300);
 
-  if (rc != 0)
+  if (rc == ETIMEDOUT)
+    {
+      LogMajor(COMPONENT_CLIENTID,
+	       "Shutdown timed out, cancelling threads.");
+      fridgethr_cancel(reaper_fridge);
+    }
+  else if (rc != 0)
     {
       LogMajor(COMPONENT_CLIENTID,
 	       "Failed shutting down reaper thread: %d",

@@ -251,6 +251,8 @@ void fridgethr_setwait(struct fridgethr_context *ctx,
 		       time_t thread_delay);
 time_t fridgethr_getwait(struct fridgethr_context *ctx);
 
+void fridgethr_cancel(struct fridgethr *fr);
+
 #endif /* FRIDGETHR_H */
 
 /** @} */

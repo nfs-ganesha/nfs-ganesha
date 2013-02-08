@@ -180,7 +180,11 @@ int fsal_up_shutdown(void)
 					fridgethr_comm_stop,
 					300);
 
-	if (rc != 0) {
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_FSAL_UP,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(fsal_up_fridge);
+	} else if (rc != 0) {
 		LogMajor(COMPONENT_FSAL_UP,
 			 "Failed shutting down upcall thread: %d",
 			 rc);
