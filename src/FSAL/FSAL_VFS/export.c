@@ -735,7 +735,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			retval = errno;
 			goto errout;
 		}
-		myself->root_handle = gsh_malloc(vfs_sizeof_handle(fh));
+		myself->root_handle = gsh_malloc(sizeof(vfs_file_handle_t));
 		if(myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "memory for root handle, errno=(%d) %s",
@@ -746,7 +746,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		}
 		memcpy(myself->root_handle,
 		       fh,
-                       vfs_sizeof_handle(fh));
+                       sizeof(vfs_file_handle_t));
 	}
 
 	if (myself->pnfs_panfs_enabled) {
