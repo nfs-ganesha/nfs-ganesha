@@ -54,7 +54,7 @@ int openat(int dir_fd, const char *file, int oflag, mode_t mode);
 int fchownat (int dir_fd, const char *file, uid_t owner, gid_t group, int flag);
 int futimesat(int dir_fd, char *filename, struct timeval *utimes);
 int fstatat (int dir_fd, const char *file, struct stat *st, int flag);
-int getfhat(int dir_fd, char *fname, struct fhandle *fhp);
+int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag);
 int fhopenat(int dir_fd, const struct fhandle *u_fhp, int flags);
 int fchmodat(int dir_fd, const char *filename, mode_t mode, int flags);
 int faccessat(int dir_fd, char *filename, int mode, int flags);

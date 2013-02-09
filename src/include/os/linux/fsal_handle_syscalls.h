@@ -113,17 +113,12 @@ static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t *fh, int fla
 	return open_by_handle_at(mountfd, (struct file_handle *)fh, flags);
 }
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf)
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf,
+				   int flags)
 {
-	int fd, ret;
-	fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-	if (fd < 0)
-		return fd;
 	/* Must use fstatat() even though fstat() seems like it might work, the Linux
 	 * version rejects the file descriptor we've obtained with the O_NOACCESS flag */
-	ret = fstatat(fd, "", buf, AT_EMPTY_PATH);
-	close(fd);
-	return ret;
+	return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
 }
 
 static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t owner, gid_t group)
