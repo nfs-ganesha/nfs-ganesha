@@ -439,15 +439,13 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	vfs_file_handle_t *hdl;
 	size_t fh_size;
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	hdl = (vfs_file_handle_t *)fh_desc->addr;
-	fh_size = vfs_sizeof_handle(hdl);
+	fh_size = sizeof(vfs_file_handle_t);
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,

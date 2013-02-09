@@ -72,6 +72,8 @@ struct vfs_fsal_obj_handle {
 			fsal_openflags_t openflags;
 		} file;
 		struct {
+			vfs_file_handle_t *dir;
+			char *path;
 			unsigned char *link_content;
 			int link_size;
 		} symlink;
