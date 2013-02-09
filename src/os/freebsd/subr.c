@@ -42,9 +42,9 @@
  * @param basepp [in/out] offset into "file" after this read
  */
 
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t **basepp);
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
-	return getdirentries(fd, buf, sizeof(buf), basepp);
+	return getdirentries(fd, buf, bcount, basepp);
 }
 
 /**

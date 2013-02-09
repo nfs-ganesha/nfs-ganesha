@@ -30,6 +30,7 @@
 #ifndef _SUBR_OS_H
 #define _SUBR_OS_H
 
+#include <stdbool.h>
 #include <extended_types.h>
 
 #ifndef UTIME_NOW
