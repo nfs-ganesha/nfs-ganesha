@@ -142,26 +142,30 @@ cache_inode_commit(cache_entry_t *entry,
                /* Close the FD if we opened it. No need to catch an
                   additional error form a close? */
                if (opened) {
+                    PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+                    PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
+                    if (entry->object.file.open_fd.openflags != FSAL_O_CLOSED) {
+                         cache_inode_close(entry,
+                                           context,
+                                           CACHE_INODE_FLAG_CONTENT_HAVE |
+                                           CACHE_INODE_FLAG_CONTENT_HOLD,
+                                           &cstatus);
+                         opened = FALSE;
+                    }
+               }
+               goto out;
+          }
+          /* Close the FD if we opened it. */
+          if (opened) {
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+               PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
+               if (entry->object.file.open_fd.openflags != FSAL_O_CLOSED) {
                     cache_inode_close(entry,
                                       context,
                                       CACHE_INODE_FLAG_CONTENT_HAVE |
                                       CACHE_INODE_FLAG_CONTENT_HOLD,
                                       &cstatus);
                     opened = FALSE;
-               }
-               goto out;
-          }
-          /* Close the FD if we opened it. */
-          if (opened) {
-               if (cache_inode_close(entry,
-                                     context,
-                                     CACHE_INODE_FLAG_CONTENT_HAVE |
-                                     CACHE_INODE_FLAG_CONTENT_HOLD,
-                                     status) !=
-                   CACHE_INODE_SUCCESS) {
-                  LogEvent(COMPONENT_CACHE_INODE,
-                          "cache_inode_commit: cache_inode_close = %d",
-                          *status);
                }
           }
           /* In other case cache_inode_rdwr call FSAL_Commit */

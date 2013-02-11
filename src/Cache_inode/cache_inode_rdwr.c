@@ -298,15 +298,19 @@ cache_inode_rdwr(cache_entry_t *entry,
                        io_size, *bytes_moved, offset);
 
           if (opened) {
-               if (cache_inode_close(entry,
-                                     context,
-                                     CACHE_INODE_FLAG_CONTENT_HAVE |
-                                     CACHE_INODE_FLAG_CONTENT_HOLD,
-                                     status) != CACHE_INODE_SUCCESS) {
-                    LogEvent(COMPONENT_CACHE_INODE,
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+               PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
+               if (entry->object.file.open_fd.openflags != FSAL_O_CLOSED) {
+                    if (cache_inode_close(entry,
+                                          context,
+                                          CACHE_INODE_FLAG_CONTENT_HAVE |
+                                          CACHE_INODE_FLAG_CONTENT_HOLD,
+                                          status) != CACHE_INODE_SUCCESS) {
+                         LogEvent(COMPONENT_CACHE_INODE,
                              "cache_inode_rdwr: cache_inode_close = %d",
                              *status);
-                    goto out;
+                         goto out;
+                    }
                }
           }
 
