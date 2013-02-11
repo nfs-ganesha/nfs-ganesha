@@ -355,8 +355,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       if(rc)
         {
           LogWarn(COMPONENT_FSAL_UP,
-                  "Event could not be processed for %d rc %d.",
-                  gpfs_fsal_up_ctx->gf_fd, rc);
+                  "Event %d could not be processed for fd %d rc %d",
+                   reason, gpfs_fsal_up_ctx->gf_fd, rc);
         }
     }
 
