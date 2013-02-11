@@ -115,18 +115,27 @@ cache_inode_commit(cache_entry_t *entry,
 		     cache_inode_kill_entry(entry);
                     goto out;
 	     }
+
 	     /* Close the FD if we opened it. No need to catch an
 		additional error form a close? */
 	     if (opened) {
+		     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		     cstatus = cache_inode_close(entry,
 						CACHE_INODE_FLAG_CONTENT_HAVE |
 						CACHE_INODE_FLAG_CONTENT_HOLD);
+		     
+		     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		     opened = false;
+		     content_locked = false;
 	     }
 	     goto out;
      }
+
      /* Close the FD if we opened it. */
      if (opened) {
+	     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	     cstatus = cache_inode_close(entry,
 					CACHE_INODE_FLAG_CONTENT_HAVE |
 					CACHE_INODE_FLAG_CONTENT_HOLD);
