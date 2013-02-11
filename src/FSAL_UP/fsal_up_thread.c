@@ -178,7 +178,7 @@ int fsal_up_shutdown(void)
 {
 	int rc = fridgethr_sync_command(fsal_up_fridge,
 					fridgethr_comm_stop,
-					300);
+					120);
 
 	if (rc == ETIMEDOUT) {
 		LogMajor(COMPONENT_FSAL_UP,

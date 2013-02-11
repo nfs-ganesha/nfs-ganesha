@@ -1183,7 +1183,7 @@ cache_inode_lru_pkgshutdown(void)
 {
      int rc = fridgethr_sync_command(lru_fridge,
 				     fridgethr_comm_stop,
-				     300);
+				     120);
 
      if (rc == ETIMEDOUT) {
 	  LogMajor(COMPONENT_CACHE_INODE_LRU,

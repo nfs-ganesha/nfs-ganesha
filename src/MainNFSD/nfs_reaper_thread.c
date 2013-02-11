@@ -225,7 +225,7 @@ int reaper_shutdown(void)
 {
   int rc = fridgethr_sync_command(reaper_fridge,
 				  fridgethr_comm_stop,
-				  300);
+				  120);
 
   if (rc == ETIMEDOUT)
     {

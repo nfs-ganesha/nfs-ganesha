@@ -201,6 +201,9 @@ struct fridgethr {
 	fridgethr_comm_t command; /*< Command state */
 	void (*cb_func)(void *); /*< Callback on command completion */
 	void *cb_arg; /*< Argument for completion callback */
+	pthread_mutex_t *cb_mtx; /*< Mutex for completion condition variable */
+	pthread_cond_t *cb_cv; /*< Condition variable, signalled on
+				   completion */
 	bool transitioning; /*< Changing state */
 	union {
 		struct glist_head work_q; /*< Work queued */
@@ -231,12 +234,18 @@ int fridgethr_submit(struct fridgethr*,
 int fridgethr_wake(struct fridgethr *);
 
 int fridgethr_pause(struct fridgethr *,
+		    pthread_mutex_t *,
+		    pthread_cond_t *,
 		    void (*)(void *),
 		    void *);
 int fridgethr_stop(struct fridgethr *,
+		   pthread_mutex_t *,
+		   pthread_cond_t *,
 		   void (*)(void *),
 		   void *);
 int fridgethr_start(struct fridgethr *,
+		    pthread_mutex_t *,
+		    pthread_cond_t *,
 		    void (*)(void *),
 		    void *);
 int fridgethr_sync_command(struct fridgethr *,

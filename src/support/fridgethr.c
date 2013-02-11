@@ -246,37 +246,35 @@ void fridgethr_destroy(struct fridgethr *fr)
 /**
  * @brief Finish a transition
  *
- * Notify whoever cares taht we're done and mark the transition as
- * complete.  The fridge lock must be held when calling this
- * function.
+ * Notify whoever cares that we're done and mark the transition as
+ * complete.  The fridge lock must be held when calling this function.
  *
- * @todo ACE: I am not really happy with spawning a thread just to
- * call the completion function, but if we're going to want to be able
- * to do things like wait for the transition to finish, we need to
- * make sure that the completion function is called in a different
- * thread than the one that requested the state change.
- *
- * @param[in,out] fr The fridge
+ * @param[in,out] fr     The fridge
+ * @param[in]     locked The completion mutex is already locked.
+ *                       Neither acquire nor release it.
  */
 
-static void fridgethr_finish_transition(struct fridgethr *fr)
+static void fridgethr_finish_transition(struct fridgethr *fr,
+					bool locked)
 {
-	if ((fr->transitioning == true) &&
-	    (fr->cb_func != NULL)) {
-		int rc = 0;
-		pthread_t thr;
-
-		rc = pthread_create(&thr, &fr->attr,
-				    (void *) fr->cb_func,
-				    fr->cb_arg);
-		if (rc != 0) {
-			/* There is nothing good to do in this
-			   situation but log. */
-			LogMajor(COMPONENT_THREAD,
-				 "Unable to create thread for callback "
-				 "in fridge %s: %d",
-				 fr->s, rc);
-		}
+	if (!fr->transitioning) {
+		return;
+	}
+	if (fr->cb_mtx && !locked) {
+		pthread_mutex_lock(fr->cb_mtx);
+	}
+	if (fr->cb_func != NULL) {
+		fr->cb_func(fr->cb_arg);
+	}
+	if (fr->cb_cv) {
+		pthread_cond_broadcast(fr->cb_cv);
+	}
+	if (fr->cb_mtx && !locked) {
+		pthread_mutex_unlock(fr->cb_mtx);
+	}
+	if (!locked) {
+		fr->cb_mtx = NULL;
+		fr->cb_cv = NULL;
 	}
 	fr->cb_func = NULL;
 	fr->cb_arg = NULL;
@@ -398,7 +396,7 @@ restart:
 		    !fridgethr_deferredwork(fr)) {
 			/* We're the last thread to exit, signal the
 			   transition to pause complete. */
-			fridgethr_finish_transition(fr);
+			fridgethr_finish_transition(fr, false);
 		}
 		PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 		PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
@@ -415,7 +413,7 @@ restart:
 	    (fr->transitioning)) {
 		/* We're the last thread to suspend, signal the
 		   transition to pause complete. */
-		fridgethr_finish_transition(fr);
+		fridgethr_finish_transition(fr, false);
 	}
 
 	PTHREAD_MUTEX_lock(&fe->ctx.mtx);
@@ -834,7 +832,7 @@ static int fridgethr_block(struct fridgethr *fr,
 	    !fridgethr_deferredwork(fr)) {
 		/* We're the last thread to exit, signal the
 		   transition to pause complete. */
-		fridgethr_finish_transition(fr);
+		fridgethr_finish_transition(fr, false);
 	}
 
 	return rc;
@@ -962,7 +960,12 @@ int fridgethr_wake(struct fridgethr *fr)
  * Simply change the state to pause.  If everything is already paused,
  * call the callback.
  *
+ * @note Both @c mtx and @c cv may be NULL if you want to manage
+ * synchrony without any help from the fridge.
+ *
  * @param[in,out] fr  The fridge to pause
+ * @param[in]     mtx Mutex (must be held when this function is called)
+ * @param[in]     cv  Condition variable to be signalled on completion.
  * @param[in]     cb  Function to call once all threads are paused
  * @param[in]     arg Argument to supply
  *
@@ -970,35 +973,58 @@ int fridgethr_wake(struct fridgethr *fr)
  * @retval EBUSY if a state transition is in progress.
  * @retval EALREADY if the fridge is already paused.
  * @retval EINVAL if an invalid transition (from stopped to paused)
- *         was requested.
+ *         was requested or one of @c mtx and @c cv was NULL but not
+ *         both.
  */
 
 int fridgethr_pause(struct fridgethr *fr,
+		    pthread_mutex_t *mtx,
+		    pthread_cond_t *cv,
 		    void (*cb)(void *),
 		    void *arg)
 {
 	PTHREAD_MUTEX_lock(&fr->mtx);
 	if (fr->transitioning) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Transition requested during transition in fridge %s",
+			 fr->s);
 		return EBUSY;
+	}
+
+	if ((mtx && !cv) || (cv && !mtx)) {
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Iff, if you please: %s",
+			 fr->s);
+		return EINVAL;
 	}
 
 	if (fr->command == fridgethr_comm_pause) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Do not pause that which is already paused: %s",
+			 fr->s);
 		return EALREADY;
 	}
 
 	if (fr->command == fridgethr_comm_stop) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Invalid transition, stop to pause: %s",
+			 fr->s);
 		return EINVAL;
 	}
 
 	fr->command = fridgethr_comm_pause;
 	fr->transitioning = true;
+	fr->cb_mtx = mtx;
+	fr->cb_cv = cv;
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
+
 	if (fr->nthreads == fr->nidle) {
-		fridgethr_finish_transition(fr);
+		fridgethr_finish_transition(fr, true);
 	}
 	if (fr->p.wake_threads != NULL) {
 		fr->p.wake_threads(fr->p.wake_threads_arg);
@@ -1025,16 +1051,24 @@ static void fridgethr_noop(struct fridgethr_context *dummy)
  * one up to finish any pending jobs.  (This can happen if we go
  * straight from paused to stopped.)
  *
+ * @note Both @c mtx and @c cv may be NULL if you want to manage
+ * synchrony without any help from the fridge.
+ *
  * @param[in,out] fr  The fridge to pause
+ * @param[in]     mtx Mutex (must be held when this function is called)
+ * @param[in]     cv  Condition variable to be signalled on completion.
  * @param[in]     cb  Function to call once all threads are paused
  * @param[in]     arg Argument to supply
  *
  * @retval 0 on success.
  * @retval EBUSY if a state transition is in progress.
  * @retval EALREADY if the fridge is already paused.
+ * @retval EINVAL if one of @c mtx and @c cv was NULL but not both.
  */
 
 int fridgethr_stop(struct fridgethr *fr,
+		   pthread_mutex_t *mtx,
+		   pthread_cond_t *cv,
 		   void (*cb)(void *),
 		   void *arg)
 {
@@ -1043,21 +1077,37 @@ int fridgethr_stop(struct fridgethr *fr,
 	PTHREAD_MUTEX_lock(&fr->mtx);
 	if (fr->transitioning) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Transition requested during transition in fridge %s",
+			 fr->s);
 		return EBUSY;
 	}
 
 	if (fr->command == fridgethr_comm_stop) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Do not stop that which is already stopped: %s",
+			 fr->s);
 		return EALREADY;
+	}
+
+	if ((mtx && !cv) || (cv && !mtx)) {
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Iff, if you please: %s",
+			 fr->s);
+		return EINVAL;
 	}
 
 	fr->command = fridgethr_comm_stop;
 	fr->transitioning = true;
+	fr->cb_mtx = mtx;
+	fr->cb_cv = cv;
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
 	if ((fr->nthreads == 0) &&
 	    !fridgethr_deferredwork(fr)) {
-		fridgethr_finish_transition(fr);
+		fridgethr_finish_transition(fr, true);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 		return 0;
 	}
@@ -1120,7 +1170,12 @@ int fridgethr_stop(struct fridgethr *fr,
  * Change state to running.  Wake up all the idlers.  If there's work
  * queued and we're below maxthreads, start some more threads.
  *
+ * @note Both @c mtx and @c cv may be NULL if you want to manage
+ * synchrony without any help from the fridge.
+ *
  * @param[in,out] fr  The fridge to pause
+ * @param[in]     mtx Mutex (must be held when this function is called)
+ * @param[in]     cv  Condition variable to be signalled on completion.
  * @param[in]     cb  Function to call once all threads are paused
  * @param[in]     arg Argument to supply
  *
@@ -1130,6 +1185,8 @@ int fridgethr_stop(struct fridgethr *fr,
  */
 
 int fridgethr_start(struct fridgethr *fr,
+		    pthread_mutex_t *mtx,
+		    pthread_cond_t *cv,
 		    void (*cb)(void *),
 		    void *arg)
 {
@@ -1142,23 +1199,39 @@ int fridgethr_start(struct fridgethr *fr,
 	PTHREAD_MUTEX_lock(&fr->mtx);
 	if (fr->transitioning) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Transition requested during transition in fridge %s",
+			 fr->s);
 		return EBUSY;
 	}
 
 	if (fr->command == fridgethr_comm_run) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Do not start that which is already started: %s",
+			 fr->s);
 		return EALREADY;
+	}
+
+	if ((mtx && !cv) || (cv && !mtx)) {
+		PTHREAD_MUTEX_unlock(&fr->mtx);
+		LogMajor(COMPONENT_THREAD,
+			 "Iff, if you please: %s",
+			 fr->s);
+		return EINVAL;
 	}
 
 	fr->command = fridgethr_comm_run;
 	fr->transitioning = true;
+	fr->cb_mtx = mtx;
+	fr->cb_cv = cv;
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
 	if ((fr->nthreads == 0) &&
 	    !fridgethr_deferredwork(fr)) {
 		/* No work scheduled and no threads running, but
 		   ready to accept requests once more. */
-		fridgethr_finish_transition(fr);
+		fridgethr_finish_transition(fr, true);
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 		return 0;
 	}
@@ -1216,32 +1289,21 @@ int fridgethr_start(struct fridgethr *fr,
 }
 
 /**
- * @brief Acquire a mutex and signal a condition variable
+ * @brief Set a flag to true, to prevent racing condition variable
  *
- * @param[in] arg An array whose first argument is a mutex and whose
- *                second is a condition variable
+ * @param[in,out] flag Flag to set
  */
 
-static void fridgethr_state_signal(void *arg)
+static void fridgethr_trivial_syncer(void *flag)
 {
-	void **array = arg;
-	pthread_mutex_t *mtx = array[0];
-	pthread_cond_t *cond = array[1];
-
-	PTHREAD_MUTEX_lock(mtx);
-	pthread_cond_signal(cond);
-	PTHREAD_MUTEX_unlock(mtx);
+	*(bool *)flag = true;
 }
-
 
 /**
  * @brief Synchronously change the state of the fridge
  *
  * A convenience function that issues a state change and waits for it
  * to complete.
- *
- * @todo This is a gross hack, fix it up later after we check that
- * state change actually works.
  *
  * @param[in,out] fr      The fridge to change
  * @param[in]     command Command to issue
@@ -1260,30 +1322,35 @@ int fridgethr_sync_command(struct fridgethr *fr,
 			   time_t timeout)
 {
 	pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
-	pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-	void *arg[2] = {
-		&mtx, &cond
-	};
+	pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
+	bool done = false;
 	int rc = 0;
+	struct timespec ts;
 
 	PTHREAD_MUTEX_lock(&mtx);
 	switch (command) {
 	case fridgethr_comm_run:
 		rc = fridgethr_start(fr,
-				     fridgethr_state_signal,
-				     arg);
+				     &mtx,
+				     &cv,
+				     fridgethr_trivial_syncer,
+				     &done);
 		break;
 
 	case fridgethr_comm_pause:
 		rc = fridgethr_pause(fr,
-				     fridgethr_state_signal,
-				     arg);
+				     &mtx,
+				     &cv,
+				     fridgethr_trivial_syncer,
+				     &done);
 		break;
 
 	case fridgethr_comm_stop:
 		rc = fridgethr_stop(fr,
-				    fridgethr_state_signal,
-				    arg);
+				    &mtx,
+				    &cv,
+				    fridgethr_trivial_syncer,
+				    &done);
 		break;
 
 	default:
@@ -1295,14 +1362,25 @@ int fridgethr_sync_command(struct fridgethr *fr,
 		return rc;
 	}
 
-	if (timeout == 0) {
-		rc = pthread_cond_wait(&cond, &mtx);
-	} else {
-		struct timespec t;
-		clock_gettime(CLOCK_REALTIME, &t);
-		t.tv_sec += timeout;
-		rc = pthread_cond_timedwait(&cond, &mtx, &t);
+	if (timeout != 0) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += timeout;
 	}
+
+retry:
+	while ((rc == 0) && !done) {
+		if (timeout == 0) {
+			rc = pthread_cond_wait(&cv, &mtx);
+		} else {
+			rc = pthread_cond_timedwait(&cv, &mtx, &ts);
+		}
+	}
+
+	if (rc == EINTR) {
+		PTHREAD_MUTEX_lock(&mtx);
+		goto retry;
+	}
+
 	if (rc == 0) {
 		PTHREAD_MUTEX_unlock(&mtx);
 	}

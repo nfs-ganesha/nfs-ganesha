@@ -458,7 +458,7 @@ void *sigmgr_thread(void *UnusedArg)
   LogEvent(COMPONENT_MAIN, "Stopping request threads");
   rc = fridgethr_sync_command(req_fridge,
 			      fridgethr_comm_stop,
-			      300);
+			      120);
 
   if (rc == ETIMEDOUT)
     {
