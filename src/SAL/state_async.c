@@ -183,11 +183,48 @@ state_status_t state_async_shutdown(void)
   int rc = fridgethr_sync_command(state_async_fridge,
 				  fridgethr_comm_stop,
 				  120);
+  if (rc == ETIMEDOUT)
+    {
+      LogMajor(COMPONENT_STATE,
+	       "Shutdown timed out, cancelling threads.");
+      fridgethr_cancel(state_async_fridge);
+    }
+  else if (rc != 0)
+    {
+      LogMajor(COMPONENT_STATE,
+	       "Failed shutting down state async thread: %d",
+	       rc);
+    }
+
+  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+}
+
+state_status_t state_async_pause(void)
+{
+  int rc = fridgethr_sync_command(state_async_fridge,
+				  fridgethr_comm_pause,
+				  120);
 
   if (rc != 0)
     {
       LogMajor(COMPONENT_STATE,
-	       "Unable to shut down state async thread fridge: %d",
+	       "Unable to pause state async thread fridge: %d",
+	       rc);
+    }
+
+  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+}
+
+state_status_t state_async_resume(void)
+{
+  int rc = fridgethr_sync_command(state_async_fridge,
+				  fridgethr_comm_run,
+				  120);
+
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_STATE,
+	       "Unable to resume state async thread fridge: %d",
 	       rc);
     }
 

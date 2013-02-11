@@ -36,30 +36,102 @@
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include "log.h"
+#include "sal_functions.h"
+#include "sal_data.h"
+#include "fsal_up.h"
+#include "cache_inode_lru.h"
 
-exportlist_t *temp_pexportlist;
-pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
-bool reload_exports;
+extern struct fridgethr *req_fridge; /*< Decoder thread pool */
+
+static exportlist_t *temp_pexportlist;
+
+/**
+ * @brief Mutex protecting command and status
+ */
+
+static pthread_mutex_t admin_control_mtx = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Condition variable on which commands and states are
+ * signalled.
+ */
+
+static pthread_cond_t admin_control_cv = PTHREAD_COND_INITIALIZER;
+
+/**
+ * @brief Commands issued to the admin thread
+ */
+
+typedef enum {
+  admin_none_pending, /*< No command.  The admin thread sets this on
+			  startup and after */
+  admin_reload_exports, /*< Reload the exports */
+  admin_shutdown /*< Shut down Ganesha */
+} admin_command_t;
+
+/**
+ * @brief Current state of the admin thread
+ */
+
+typedef enum {
+  admin_stable, /*< The admin thread is not performing an action. */
+  admin_reloading, /*< The admin thread is reloading exports */
+  admin_shutting_down, /*< The admin thread is shutting down Ganesha */
+  admin_halted /*< All threads should exit. */
+} admin_status_t;
+
+static admin_command_t admin_command;
+static admin_status_t admin_status;
+
+/**
+ * @brief Initialize admin thread control state.
+ */
 
 void nfs_Init_admin_data(void)
 {
-  return;
+  admin_command = admin_none_pending;
+  admin_status = admin_stable;
 }
 
-void admin_replace_exports()
+static void admin_issue_command(admin_command_t command)
 {
-  P(mutex_admin_condvar);
-  reload_exports = true;
-  if(pthread_cond_signal(&(admin_condvar)) == -1)
-      LogCrit(COMPONENT_MAIN,
-              "admin_replace_exports - admin cond signal failed , errno = %d (%s)",
-              errno, strerror(errno));
-  V(mutex_admin_condvar);
+  pthread_mutex_lock(&admin_control_mtx);
+  while ((admin_command != admin_none_pending) &&
+	 ((admin_status != admin_stable) ||
+	  (admin_status != admin_halted)))
+    {
+      pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
+    }
+  if (admin_status == admin_halted)
+    {
+      pthread_mutex_unlock(&admin_control_mtx);
+      return;
+    }
+  admin_command = command;
+  pthread_cond_broadcast(&admin_control_cv);
+  pthread_mutex_unlock(&admin_control_mtx);
+}
+
+/**
+ * @brief Signal the admin thread to replace the exports
+ */
+
+void admin_replace_exports(void)
+{
+  admin_issue_command(admin_command);
+}
+
+/**
+ * @brief Signal the admin thread to shut down the system
+ */
+
+void admin_halt(void)
+{
+  admin_issue_command(admin_shutdown);
 }
 
 /* Skips deleting first entry of export list. */
-int rebuild_export_list()
+int rebuild_export_list(void)
 {
   int status = 0;
   config_file_t config_struct;
@@ -152,53 +224,252 @@ static int ChangeoverExports()
   return 0;
 }
 
-void *admin_thread(void *UnusedArg)
+static void redo_exports(void)
 {
-  SetNameFunction("admin_thr");
+  /**
+   * @todo If we make this accessible by DBUS we should have a good
+   * way of indicating error.
+   */
+  int rc = 0;
 
-  while(1)
+  if (rebuild_export_list() <= 0)
     {
-      P(mutex_admin_condvar);
-      while(reload_exports == false)
-            pthread_cond_wait(&(admin_condvar), &(mutex_admin_condvar));
-      reload_exports = false;
-      V(mutex_admin_condvar);
+      return;
+    }
 
-      if (rebuild_export_list() <= 0)
-        {
-          LogCrit(COMPONENT_MAIN, "Could not reload the exports list.");
-          continue;
-        }
+  /* Do these first, since they can call down into the FSAL and
+     provoke callbacks themselves. */
 
-      /**
-       * @todo Suspend the threads.
-       */
+  if (nfs_param.core_param.enable_FSAL_upcalls)
+    {
+      rc = fsal_up_pause();
+      if (rc != 0)
+	{
+	  LogMajor(COMPONENT_THREAD,
+		   "Error pausing upcall system: %d",
+		   rc);
+	}
+      return;
+    }
 
-      /* Clear the id mapping cache for gss principals to uid/gid.
-       * The id mapping may have changed.
-       */
+  rc = state_async_pause();
+  if (rc != STATE_SUCCESS)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error pausing async state thread: %d",
+	       rc);
+      return;
+    }
+
+  if (worker_pause() != 0)
+    {
+      LogMajor(COMPONENT_MAIN,
+	       "Unable to pause workers.");
+      return;
+    }
+
+  /* Clear the id mapping cache for gss principals to uid/gid.  The id
+   * mapping may have changed.
+   */
 #ifdef _HAVE_GSSAPI
 #ifdef USE_NFSIDMAP
-      uidgidmap_clear();
-      idmap_clear();
-      namemap_clear();
+  uidgidmap_clear();
+  idmap_clear();
+  namemap_clear();
 #endif /* USE_NFSIDMAP */
 #endif /* _HAVE_GSSAPI */
 
-      if (ChangeoverExports())
-        {
-          LogCrit(COMPONENT_MAIN, "ChangeoverExports failed.");
-          continue;
-        }
-
-      /**
-       * @todo Awaken the threads.
-       */
-
-      LogEvent(COMPONENT_MAIN,
-               "Exports reloaded and active");
-
+  if (ChangeoverExports())
+    {
+      LogCrit(COMPONENT_MAIN, "ChangeoverExports failed.");
+      return;
     }
+
+  if (worker_resume() != 0)
+    {
+      /* It's not as if there's anything you can do if this
+	 happens... */
+      LogFatal(COMPONENT_MAIN,
+	       "Unable to resume workers.");
+      return;
+    }
+
+  rc = state_async_resume();
+  if (rc != STATE_SUCCESS)
+    {
+      LogFatal(COMPONENT_THREAD,
+	       "Error resumeing down upcall system: %d",
+	       rc);
+    }
+
+  if (nfs_param.core_param.enable_FSAL_upcalls)
+    {
+      rc = fsal_up_resume();
+      if (rc != 0)
+	{
+	  LogMajor(COMPONENT_THREAD,
+		   "Error resuming upcall system: %d",
+		   rc);
+	}
+    }
+
+  LogEvent(COMPONENT_MAIN,
+	   "Exports reloaded and active");
+
+}
+
+static void do_shutdown(void)
+{
+  int rc = 0;
+
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+
+  if (nfs_param.core_param.enable_FSAL_upcalls)
+    {
+      LogEvent(COMPONENT_MAIN,
+	       "Stopping FSAL UPcall thread");
+      rc = fsal_up_shutdown();
+      if (rc != 0)
+	{
+	  LogMajor(COMPONENT_THREAD,
+		   "Error shutting down upcall system: %d",
+		   rc);
+	}
+      else
+	{
+	  LogEvent(COMPONENT_THREAD,
+		   "Upcall system shut down.");
+	}
+    }
+
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping state asynchronous request thread");
+  rc = state_async_shutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down state asynchronous request system: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "State asynchronous request system shut down.");
+    }
+
+  LogEvent(COMPONENT_MAIN, "Stopping request threads");
+  rc = fridgethr_sync_command(req_fridge,
+			      fridgethr_comm_stop,
+			      120);
+
+  if (rc == ETIMEDOUT)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Shutdown timed out, cancelling threads!");
+      fridgethr_cancel(req_fridge);
+    }
+  else if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Failed to shut down the request thread fridge: %d!",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "Request threads shut down.");
+    }
+
+  LogEvent(COMPONENT_MAIN, "Stopping worker threads");
+
+  rc = worker_shutdown();
+
+  if(rc != 0)
+    LogMajor(COMPONENT_THREAD,
+	     "Unable to shut down worker threads: %d",
+	     rc);
+  else
+    LogEvent(COMPONENT_THREAD,
+	     "Worker threads successfully shut down.");
+
+  rc = reaper_shutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down reaper thread: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "Reaper thread shut down.");
+    }
+
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping LRU thread.");
+  rc = cache_inode_lru_pkgshutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down LRU thread: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "LRU thread system shut down.");
+    }
+
+  LogEvent(COMPONENT_MAIN,
+	   "Destroying the inode cache.");
+  cache_inode_destroyer();
+  LogEvent(COMPONENT_MAIN,
+	   "Inode cache destroyed.");
+
+  LogEvent(COMPONENT_MAIN,
+	   "Destroying the FSAL system.");
+  destroy_fsals();
+  LogEvent(COMPONENT_MAIN,
+	   "FSAL system destroyed.");
+
+  unlink(pidfile_path);
+}
+
+void *admin_thread(void *UnusedArg)
+{
+  SetNameFunction("Admin");
+
+  pthread_mutex_lock(&admin_control_mtx);
+  while (admin_command != admin_shutdown)
+    {
+      /* If we add more commands we can expand this into a
+	 switch/case... */
+      if (admin_command == admin_reload_exports)
+	{
+	  admin_command = admin_none_pending;
+	  admin_status = admin_reloading;
+	  pthread_cond_broadcast(&admin_control_cv);
+	  pthread_mutex_unlock(&admin_control_mtx);
+	  redo_exports();
+	  pthread_mutex_lock(&admin_control_mtx);
+	  admin_status = admin_stable;
+	  pthread_cond_broadcast(&admin_control_cv);
+	}
+      if (admin_command != admin_none_pending) {
+	continue;
+      }
+      pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
+    }
+
+  admin_command = admin_none_pending;
+  admin_status = admin_shutting_down;
+  pthread_cond_broadcast(&admin_control_cv);
+  pthread_mutex_unlock(&admin_control_mtx);
+  do_shutdown();
+  pthread_mutex_lock(&admin_control_mtx);
+  admin_status = admin_halted;
+  pthread_cond_broadcast(&admin_control_cv);
+  pthread_mutex_unlock(&admin_control_mtx);
 
   return NULL;
 }                               /* admin_thread */

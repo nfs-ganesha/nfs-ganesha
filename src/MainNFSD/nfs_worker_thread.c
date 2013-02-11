@@ -1464,7 +1464,7 @@ int worker_init(void)
   rc = frigethr_populate(worker_fridge,
 			 worker_run,
 			 NULL);
-  
+
   if (rc != 0)
     {
       LogMajor(COMPONENT_DISPATCH,
@@ -1480,15 +1480,47 @@ int worker_shutdown(void)
 				  fridgethr_comm_stop,
 				  120);
 
-  if (rc == ETIMEDOUT) {
-    LogMajor(COMPONENT_DISPATCH,
-	     "Shutdown timed out, cancelling threads.");
-    fridgethr_cancel(worker_fridge);
-  }
-  else if (rc != 0) {
-    LogMajor(COMPONENT_DISPATCH,
-	     "Failed shutting down worker threads: %d",
-	     rc);
-  }
+  if (rc == ETIMEDOUT)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Shutdown timed out, cancelling threads.");
+      fridgethr_cancel(worker_fridge);
+    }
+  else if (rc != 0)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Failed shutting down worker threads: %d",
+	       rc);
+    }
+  return rc;
+}
+
+int worker_pause(void)
+{
+  int rc = fridgethr_sync_command(worker_fridge,
+				  fridgethr_comm_pause,
+				  120);
+
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Failed pausing worker threads: %d",
+	       rc);
+    }
+  return rc;
+}
+
+int worker_resume(void)
+{
+  int rc = fridgethr_sync_command(worker_fridge,
+				  fridgethr_comm_run,
+				  120);
+
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+	       "Failed resuming worker threads: %d",
+	       rc);
+    }
   return rc;
 }

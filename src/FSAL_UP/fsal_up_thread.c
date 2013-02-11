@@ -192,6 +192,34 @@ int fsal_up_shutdown(void)
 	return rc;
 }
 
+int fsal_up_pause(void)
+{
+	int rc = fridgethr_sync_command(fsal_up_fridge,
+					fridgethr_comm_pause,
+					120);
+
+	if (rc != 0) {
+		LogMajor(COMPONENT_FSAL_UP,
+			 "Failed pausing upcall thread: %d",
+			 rc);
+	}
+	return rc;
+}
+
+int fsal_up_resume(void)
+{
+	int rc = fridgethr_sync_command(fsal_up_fridge,
+					fridgethr_comm_run,
+					120);
+
+	if (rc != 0) {
+		LogMajor(COMPONENT_FSAL_UP,
+			 "Failed resuming thread: %d",
+			 rc);
+	}
+	return rc;
+}
+
 struct fsal_up_event *fsal_up_alloc_event(void)
 {
 	if (fsal_up_pool) {

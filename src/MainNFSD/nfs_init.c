@@ -397,7 +397,6 @@ void *sigmgr_thread(void *UnusedArg)
 {
   SetNameFunction("sigmgr");
   int signal_caught = 0;
-  int rc = 0;
 
   /* Loop until we catch SIGTERM */
   while(signal_caught != SIGTERM)
@@ -419,122 +418,9 @@ void *sigmgr_thread(void *UnusedArg)
           admin_replace_exports();
         }
     }
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
-
-  if (nfs_param.core_param.enable_FSAL_upcalls)
-    {
-      LogEvent(COMPONENT_MAIN,
-	       "Stopping FSAL UPcall thread");
-      rc = fsal_up_shutdown();
-      if (rc != 0)
-	{
-	  LogMajor(COMPONENT_THREAD,
-		   "Error shutting down upcall system: %d",
-		   rc);
-	}
-      else
-	{
-	  LogEvent(COMPONENT_THREAD,
-		   "Upcall system shut down.");
-	}
-    }
-
-  LogEvent(COMPONENT_MAIN,
-	   "Stopping state asynchronous request thread");
-  rc = state_async_shutdown();
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_THREAD,
-	       "Error shutting down state asynchronous request system: %d",
-	       rc);
-    }
-  else
-    {
-      LogEvent(COMPONENT_THREAD,
-	       "State asynchronous request system shut down.");
-    }
-
-  LogEvent(COMPONENT_MAIN, "Stopping request threads");
-  rc = fridgethr_sync_command(req_fridge,
-			      fridgethr_comm_stop,
-			      120);
-
-  if (rc == ETIMEDOUT)
-    {
-      LogMajor(COMPONENT_THREAD,
-	       "Shutdown timed out, cancelling threads!");
-      fridgethr_cancel(req_fridge);
-    }
-  else if (rc != 0)
-    {
-      LogMajor(COMPONENT_THREAD,
-	       "Failed to shut down the request thread fridge: %d!",
-	       rc);
-    }
-  else
-    {
-      LogEvent(COMPONENT_THREAD,
-	       "Request threads shut down.");
-    }
-
-  LogEvent(COMPONENT_MAIN, "Stopping worker threads");
-
-  rc = worker_shutdown();
-
-  if(rc != 0)
-    LogMajor(COMPONENT_THREAD,
-	     "Unable to shut down worker threads: %d",
-	     rc);
-  else
-    LogEvent(COMPONENT_THREAD,
-	     "Worker threads successfully shut down.");
-
-  rc = reaper_shutdown();
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_THREAD,
-	       "Error shutting down reaper thread: %d",
-	       rc);
-    }
-  else
-    {
-      LogEvent(COMPONENT_THREAD,
-	       "Reaper thread shut down.");
-    }
-
-  LogEvent(COMPONENT_MAIN,
-	   "Stopping LRU thread.");
-  rc = cache_inode_lru_pkgshutdown();
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_THREAD,
-	       "Error shutting down LRU thread: %d",
-	       rc);
-    }
-  else
-    {
-      LogEvent(COMPONENT_THREAD,
-	       "LRU thread system shut down.");
-    }
-
-  LogEvent(COMPONENT_MAIN,
-	   "Destroying the inode cache.");
-  cache_inode_destroyer();
-  LogEvent(COMPONENT_MAIN,
-	   "Inode cache destroyed.");
-
-  LogEvent(COMPONENT_MAIN,
-	   "Destroying the FSAL system.");
-  destroy_fsals();
-  LogEvent(COMPONENT_MAIN,
-	   "FSAL system destroyed.");
-
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
-  /* Remove pid file. I do not check for status (best effort,
-   * the daemon is stopping anyway */
-  unlink( pidfile_path ) ;
+  admin_halt();
 
   /* Might as well exit - no need for this thread any more */
   return NULL;
@@ -1754,8 +1640,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
   /* Wait for dispatcher to exit */
   LogDebug(COMPONENT_THREAD,
-           "Wait for sigmgr thread to exit");
-  pthread_join(sigmgr_thrid, NULL);
+           "Wait for admin thread to exit");
+  pthread_join(admin_thrid, NULL);
 
   /* Regular exit */
   LogEvent(COMPONENT_MAIN,

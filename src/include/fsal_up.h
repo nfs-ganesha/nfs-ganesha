@@ -383,6 +383,8 @@ extern struct fsal_up_vector fsal_up_top;
 
 int fsal_up_init(void);
 int fsal_up_shutdown(void);
+int fsal_up_pause(void);
+int fsal_up_resume(void);
 int fsal_up_submit(struct fsal_up_event *event);
 
 int up_get(const struct gsh_buffdesc *key,

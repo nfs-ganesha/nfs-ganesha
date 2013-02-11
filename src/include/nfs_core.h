@@ -602,7 +602,6 @@ void nfs_operate_on_sigterm(void);
 void nfs_operate_on_sighup(void);
 
 void nfs_Init_svc(void);
-void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
@@ -656,8 +655,11 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
 			   exportlist_client_entry_t *pclient_found,
 			   unsigned int export_option);
 
-/* Config reparsing routines */
+/* Admin thread control */
+
+void nfs_Init_admin_data(void);
 void admin_replace_exports(void);
+void admin_halt(void);
 exportlist_t *RemoveExportEntry(exportlist_t *exportEntry);
 exportlist_t *GetExportEntry(char *exportPath);
 
@@ -805,5 +807,7 @@ int reaper_shutdown(void);
 
 int worker_init(void);
 int worker_shutdown(void);
+int worker_pause(void);
+int worker_resume(void);
 
 #endif /* !NFS_CORE_H */
