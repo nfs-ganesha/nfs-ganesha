@@ -44,3 +44,4 @@ core.*
 *cmake_install.cmake
 libfsal*.so*
 Doxyfile
+*~
