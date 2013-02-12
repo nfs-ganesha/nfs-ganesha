@@ -124,25 +124,74 @@ nfs4_readdir_callback(void *opaque,
      memcpy(tracker->entries[tracker->count].name.utf8string_val,
 	    cb_parms->name, namelen);
 
-     if(attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
+     if(cb_parms->attr_allowed &&
+        attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
           if (!nfs4_FSALToFhandle(&entryFH, cb_parms->entry->obj_handle)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+               tracker->entries[tracker->count].name.utf8string_val = NULL;
                cb_parms->in_result = false;
                return CACHE_INODE_SUCCESS;
           }
      }
 
-     memset(&args, 0, sizeof(args));
-     args.attrs = (struct attrlist *) attr;
-     args.data = tracker->data;
-     args.hdl4 = &entryFH;
-     args.mounted_on_fileid = mounted_on_fileid;
-     if (nfs4_FSALattr_To_Fattr(&args,
-                                tracker->req_attr,
-                                &tracker->entries[tracker->count].attrs) != 0) {
-          LogFatal(COMPONENT_NFS_V4,
-                   "nfs4_FSALattr_To_Fattr failed to convert attr");
+     if(!cb_parms->attr_allowed) {
+          /* cache_inode_readdir is signaling us that client didn't have
+           * search permission in this directory, so we can't return any
+           * attributes, but must indicate NFS4ERR_ACCESS.
+           */
+          if(nfs4_Fattr_Fill_Error(&tracker->entries[tracker->count].attrs,
+                                   NFS4ERR_ACCESS) == -1) {
+               tracker->error = NFS4ERR_SERVERFAULT;
+               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+               tracker->entries[tracker->count].name.utf8string_val = NULL;
+               cb_parms->in_result = false;
+               return CACHE_INODE_SUCCESS;
+          }
+     } else {
+          cache_inode_status_t attr_status;
+          fsal_accessflags_t access_mask_attr = 0;
+
+          /* Adjust access mask if ACL is asked for.
+           * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+           */
+          if(attribute_is_set(tracker->req_attr, FATTR4_ACL)) {
+               access_mask_attr |=
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+          }
+
+          /* cache_inode_readdir holds attr_lock while making callback, so we
+           * need to do access check with no mutex.
+           */
+          attr_status = cache_inode_access_no_mutex(cb_parms->entry,
+                                                    access_mask_attr,
+                                                    tracker->data->req_ctx);
+          if (attr_status != CACHE_INODE_SUCCESS) {
+               LogFullDebug(COMPONENT_NFS_V4,
+                            "permission check for attributes status=%s",
+                            cache_inode_err_str(attr_status));
+
+               if(nfs4_Fattr_Fill_Error(&tracker->entries[tracker->count].attrs,
+                                        nfs4_Errno(attr_status)) == -1) {
+                    tracker->error = NFS4ERR_SERVERFAULT;
+                    gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+                    tracker->entries[tracker->count].name.utf8string_val = NULL;
+                    cb_parms->in_result = false;
+                    return CACHE_INODE_SUCCESS;
+               }
+          } else {
+               memset(&args, 0, sizeof(args));
+               args.attrs = (struct attrlist *) attr;
+               args.data = tracker->data;
+               args.hdl4 = &entryFH;
+               args.mounted_on_fileid = mounted_on_fileid;
+               if (nfs4_FSALattr_To_Fattr(&args,
+                                          tracker->req_attr,
+                                          &tracker->entries[tracker->count].attrs) != 0) {
+                    LogFatal(COMPONENT_NFS_V4,
+                             "nfs4_FSALattr_To_Fattr failed to convert attr");
+               }
+          }
      }
 
      if (tracker->mem_left <
@@ -236,6 +285,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      unsigned int num_entries = 0;
      struct nfs4_readdir_cb_data tracker;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     attrmask_t attrmask;
 
      resp->resop = NFS4_OP_READDIR;
      res_READDIR4->status = NFS4_OK;
@@ -335,12 +385,22 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      tracker.req_attr = &arg_READDIR4->attr_request;
      tracker.data = data;
 
+     attrmask = ATTRS_NFS3; /* Assume we need at least the NFS v3 attr.
+                             * Any attr is sufficient for permission checking.
+                             */
+
+     /* If ACL is requested, we need to add that for permission checking. */
+     if(attribute_is_set(tracker.req_attr, FATTR4_ACL)) {
+          attrmask |= ATTR_ACL;
+     }
+
      /* Perform the readdir operation */
      cache_status = cache_inode_readdir(dir_entry,
 					cookie,
 					&num_entries,
 					&eod_met,
 					data->req_ctx,
+					attrmask,
 					nfs4_readdir_callback,
 					&tracker);
      if (cache_status != CACHE_INODE_SUCCESS) {

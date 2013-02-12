@@ -289,6 +289,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 				     &num_entries,
 				     &eod_met,
 				     &pfid->op_context,
+				     0, /* no attr */
 				     _9p_readdir_callback,
 				     &tracker);
   if(cache_status != CACHE_INODE_SUCCESS)

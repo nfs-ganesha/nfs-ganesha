@@ -90,6 +90,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry,
           cb_parms.opaque = tracker;
           cb_parms.name = name;
           cb_parms.entry = entry;
+          cb_parms.attr_allowed = true;
           cb_parms.cookie = cookie;
           cb_parms.in_result = true;
           cache_status = cb(&cb_parms,
@@ -292,7 +293,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                rc = NFS_REQ_OK;
                goto out;
           }
-          cache_inode_lru_unref(parent_dir_entry, 0);
      }
 
      /* Call readdir */
@@ -301,6 +301,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 					&num_entries,
 					&eod_met,
 					req_ctx,
+					ATTRS_NFS3,
 					nfs3_readdirplus_callback,
 					&tracker);
      if (cache_status != CACHE_INODE_SUCCESS) {
@@ -309,7 +310,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                rc = NFS_REQ_DROP;
                goto out;
           }
-
 
           res->res_readdirplus3.status = nfs3_Errno(cache_status);
           nfs_SetPostOpAttr(dir_entry,
@@ -453,34 +453,41 @@ nfs3_readdirplus_callback(void *opaque,
      /* Account for file name + length + cookie */
      tracker->mem_left -= sizeof(ep3->cookie) + ((namelen + 3) & ~3) + 4;
 
-     ep3->name_handle.handle_follows = TRUE;
-     ep3->name_handle.post_op_fh3_u.handle.data.data_val
-          = gsh_malloc(NFS3_FHSIZE);
-     if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
-          LogEvent(COMPONENT_NFS_READDIR, "FAILED to allocate FH");
-          tracker->error = NFS3ERR_SERVERFAULT;
-          gsh_free(ep3->name);
-          cb_parms->in_result = false;
-          return CACHE_INODE_SUCCESS;
+     if(cb_parms->attr_allowed) {
+          ep3->name_handle.handle_follows = TRUE;
+          ep3->name_handle.post_op_fh3_u.handle.data.data_val
+               = gsh_malloc(NFS3_FHSIZE);
+          if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
+               LogEvent(COMPONENT_NFS_READDIR, "FAILED to allocate FH");
+               tracker->error = NFS3ERR_SERVERFAULT;
+               gsh_free(ep3->name);
+               cb_parms->in_result = false;
+               return CACHE_INODE_SUCCESS;
+          }
+
+          if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
+                                  cb_parms->entry->obj_handle)) {
+               tracker->error = NFS3ERR_SERVERFAULT;
+               gsh_free(ep3->name);
+               gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
+               cb_parms->in_result = false;
+               return CACHE_INODE_SUCCESS;
+          }
+
+          /* Account for filehande + length + follows + nextentry */
+          tracker->mem_left -= ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
+
+          ep3->name_attributes.attributes_follow
+               = nfs3_FSALattr_To_Fattr(
+                    cb_parms->entry->obj_handle->export->exp_entry,
+                    attr,
+                    &(ep3->name_attributes.post_op_attr_u.attributes));
+     } else {
+          ep3->name_handle.handle_follows = false;
+          ep3->name_attributes.attributes_follow = false;
+	  tracker->mem_left -= sizeof(ep3->name_handle.handle_follows);
      }
 
-     if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-			     cb_parms->entry->obj_handle)) {
-          tracker->error = NFS3ERR_BADHANDLE;
-          gsh_free(ep3->name);
-          gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
-          cb_parms->in_result = false;
-          return CACHE_INODE_SUCCESS;
-     }
-
-     /* Account for filehande + length + follows + nextentry */
-     tracker->mem_left -= ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
-
-     ep3->name_attributes.attributes_follow
-          = nfs3_FSALattr_To_Fattr(
-               cb_parms->entry->obj_handle->export->exp_entry,
-               attr,
-               &(ep3->name_attributes.post_op_attr_u.attributes));
      if (ep3->name_attributes.attributes_follow) {
           tracker->mem_left -= sizeof(ep3->name_attributes);
      } else {

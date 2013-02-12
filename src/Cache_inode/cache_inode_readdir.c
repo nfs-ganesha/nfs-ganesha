@@ -481,6 +481,9 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
  * @param[out] nbfound   Number of entries returned.
  * @param[out] eod_met   Whether the end of directory was met
  * @param[in]  req_ctx   Request context
+ * @param[in]  attrmask  Attributes requested, used for permission checking
+ *                       really all that matters is ATTR_ACL and any attrs
+ *                       at all, specifics never actually matter.
  * @param[in]  cb        The callback function to receive entries
  * @param[in]  opaque    A pointer passed to be passed in cache_inode_readdir_cb_parms
  *
@@ -494,6 +497,7 @@ cache_inode_readdir(cache_entry_t *directory,
                     unsigned int *nbfound,
                     bool *eod_met,
                     struct req_op_context *req_ctx,
+                    attrmask_t attrmask,
                     cache_inode_getattr_cb_t cb,
                     void *opaque)
 {
@@ -503,13 +507,17 @@ cache_inode_readdir(cache_entry_t *directory,
      struct avltree_node *dirent_node;
      /* The access mask corresponding to permission to list directory
         entries */
-     const fsal_accessflags_t access_mask
+     fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_R_OK) |
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
-     /* True if the most recently traversed directory entry has been
-        added to the caller's result. */
+     fsal_accessflags_t access_mask_attr
+          = (FSAL_MODE_MASK_SET(FSAL_R_OK) |
+             FSAL_MODE_MASK_SET(FSAL_X_OK) |
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     struct cache_inode_readdir_cb_parms cb_parms = {opaque, NULL, NULL, 0, true};
+     cache_inode_status_t attr_status;
+     struct cache_inode_readdir_cb_parms cb_parms = {opaque, NULL, NULL, true, 0, true};
 
      /* readdir can be done only with a directory */
      if (directory->type != DIRECTORY) {
@@ -524,13 +532,39 @@ cache_inode_readdir(cache_entry_t *directory,
      if (status != CACHE_INODE_SUCCESS)
        return status;
 
+     /* Adjust access mask if ACL is asked for.
+      * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+      */
+     if((attrmask & ATTR_ACL) != 0) {
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+          access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+     }
+
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
      status = cache_inode_access_no_mutex(directory,
 					  access_mask,
 					  req_ctx);
      if (status != CACHE_INODE_SUCCESS) {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "permission check for directory status=%s",
+                       cache_inode_err_str(status));
           goto unlock_attrs;
+     }
+
+     if(attrmask != 0) {
+          /* Check for access permission to get attributes */
+          attr_status = cache_inode_access_no_mutex(directory,
+                                                    access_mask_attr,
+                                                    req_ctx);
+          if (attr_status != CACHE_INODE_SUCCESS) {
+               LogFullDebug(COMPONENT_CACHE_INODE,
+                            "permission check for attributes status=%s",
+                            cache_inode_err_str(attr_status));
+          }
+     } else {
+          /* No attributes requested, we don't need permission */
+          attr_status = CACHE_INODE_SUCCESS;
      }
 
      PTHREAD_RWLOCK_rdlock(&directory->content_lock);
@@ -602,7 +636,7 @@ cache_inode_readdir(cache_entry_t *directory,
      *eod_met = false;
 
      for( ; 
-         cb_opaque->in_result && dirent_node;
+         cb_parms.in_result && dirent_node;
          dirent_node = avltree_next(dirent_node)) {
 
           cache_entry_t *entry = NULL;
@@ -641,12 +675,32 @@ cache_inode_readdir(cache_entry_t *directory,
 
           cb_parms.name = dirent->name;
           cb_parms.entry = entry;
+          cb_parms.attr_allowed = attr_status == CACHE_INODE_SUCCESS;
           cb_parms.cookie = dirent->hk.k;
 
           status = cache_inode_getattr(entry, req_ctx, &cb_parms, cb);
 
           if (status != CACHE_INODE_SUCCESS) {
               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+              if(status == CACHE_INODE_FSAL_ESTALE)
+                {
+                  LogDebug(COMPONENT_NFS_READDIR,
+                           "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
+                           cache_inode_err_str(status),
+                           dirent->name);
+
+                  /* Directory changed out from under us.
+                     Indicate we should invalidate it,
+                     skip the name, and keep going. */
+                  //invalid = TRUE;
+                  continue;
+                }
+
+              LogCrit(COMPONENT_NFS_READDIR,
+                      "cache_inode_lock_trust_attrs returned %s for %s - bailing out",
+                      cache_inode_err_str(status),
+                      dirent->name);
+
               goto unlock_dir;
           }
 

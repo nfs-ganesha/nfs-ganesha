@@ -61,7 +61,6 @@ nfs3_readdir_callback(void *opaque,
 
 static void free_entry3s(entry3 *entry3s);
 
-
 /**
  * @brief Opaque bookkeeping structure for NFSv3 readdir
  *
@@ -95,6 +94,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry,
           cb_parms.opaque = tracker;
           cb_parms.name = name;
           cb_parms.entry = entry;
+          cb_parms.attr_allowed = true;
           cb_parms.cookie = cookie;
           cb_parms.in_result = true;
           cache_status = cb(&cb_parms,
@@ -106,7 +106,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry,
                   return tracker->error;
           }
 }
- 
+
 /**
  *
  * @brief The NFS PROC2 and PROC3 READDIR
@@ -311,8 +311,10 @@ nfs_Readdir(nfs_arg_t *arg,
 					&num_entries,
 					&eod_met,
 					req_ctx,
+					0, /* no attr */
 					nfs3_readdir_callback,
 					&tracker);
+
      if (cache_status != CACHE_INODE_SUCCESS) {
           if (nfs_RetryableError(cache_status)) {
                rc = NFS_REQ_DROP;
