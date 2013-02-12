@@ -357,7 +357,10 @@ static void do_shutdown(void)
 	       "State asynchronous request system shut down.");
     }
 
-  LogEvent(COMPONENT_MAIN, "Stopping request threads");
+  LogEvent(COMPONENT_MAIN, "Stopping request listener threads.");
+  nfs_rpc_dispatch_stop();
+
+  LogEvent(COMPONENT_MAIN, "Stopping request decoder threads");
   rc = fridgethr_sync_command(req_fridge,
 			      fridgethr_comm_stop,
 			      120);

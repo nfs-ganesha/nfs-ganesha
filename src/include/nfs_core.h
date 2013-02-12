@@ -605,6 +605,7 @@ void nfs_Init_svc(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
+void nfs_rpc_dispatch_stop(void);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
