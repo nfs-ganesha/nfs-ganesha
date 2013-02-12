@@ -3211,17 +3211,17 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
+void nfs4_attrmap_to_FSAL_attrmask(bitmap4 * attrmap, fsal_attrib_mask_t* attrmask)
 {
   unsigned int offset = 0;
   unsigned int i = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_FattrToSattr";
 
-  for(offset = 0; offset < attrmap.bitmap4_len; offset++)
+  for(offset = 0; offset < attrmap->bitmap4_len; offset++)
     {
       for(i = 0; i < 32; i++)
         {
-          if(attrmap.bitmap4_val[offset] & (1 << i)) {
+          if(attrmap->bitmap4_val[offset] & (1 << i)) {
             uint32_t val = i + 32 * offset;
             switch (val)
               {
@@ -3287,7 +3287,6 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
           }
         }
     }
-  return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
 static int nfstime4_to_fsal_time(fsal_time_t *ts, fattr4 * Fattr, int * LastOffset)

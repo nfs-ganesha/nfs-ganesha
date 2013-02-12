@@ -604,8 +604,8 @@ typedef enum cache_inode_status_t
 typedef bool_t(*cache_inode_readdir_cb_t)(
      void *opaque,
      char *name,
-     fsal_handle_t *handle,
-     fsal_attrib_list_t *attrs,
+     cache_entry_t *entry,
+     fsal_op_context_t *context,
      uint64_t cookie);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
@@ -888,6 +888,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
                                          unsigned int *nbfound,
                                          bool_t *eod_met,
                                          fsal_op_context_t *context,
+                                         fsal_attrib_mask_t attrmask,
                                          cache_inode_readdir_cb_t cb,
                                          void *cb_opaque,
                                          cache_inode_status_t *status);

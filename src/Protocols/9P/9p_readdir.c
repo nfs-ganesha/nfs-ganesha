@@ -74,8 +74,8 @@ typedef struct _9p_cb_data
 
 static bool_t _9p_readdir_callback( void* opaque,
                                     char *name,
-                                    fsal_handle_t *handle,
-                                    fsal_attrib_list_t * pattrs,
+                                    cache_entry_t *entry,
+                                    fsal_op_context_t *context,
                                     uint64_t cookie)
 {
    _9p_cb_data_t * cb_data = opaque ;
@@ -86,11 +86,11 @@ static bool_t _9p_readdir_callback( void* opaque,
   if( cb_data->count > cb_data->max )
    return FALSE ;
 
-  cb_data->entries[cb_data->count].qid_path = pattrs->fileid ;
+  cb_data->entries[cb_data->count].qid_path = entry->attributes.fileid ;
   cb_data->entries[cb_data->count].name_str = name ;
   cb_data->entries[cb_data->count].name_len = strlen( name ) ;
  
-  switch( pattrs->type ) 
+  switch( entry->attributes.type ) 
    {
       case FSAL_TYPE_FIFO:
       case FSAL_TYPE_CHR:
@@ -233,7 +233,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                              cookie,
                              &num_entries,
                              &eod_met,
-                             &pfid->fsal_op_context, 
+                             &pfid->fsal_op_context,
+                             0, /* no attr */
                              _9p_readdir_callback,
                              &cb_data,
                              &cache_status) != CACHE_INODE_SUCCESS)

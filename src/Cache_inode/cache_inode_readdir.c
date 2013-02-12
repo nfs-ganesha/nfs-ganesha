@@ -379,7 +379,6 @@ cache_inode_readdir_populate(cache_entry_t *directory,
 {
   fsal_dir_t dir_handle;
   fsal_status_t fsal_status;
-  fsal_attrib_list_t dir_attributes;
 
   fsal_cookie_t begin_cookie;
   fsal_cookie_t end_cookie;
@@ -423,9 +422,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     return *status;
 
   /* Open the directory */
-  dir_attributes.asked_attributes = cache_inode_params.attrmask;
-  fsal_status = FSAL_opendir(&directory->handle,
-                             context, &dir_handle, &dir_attributes);
+  fsal_status = FSAL_opendir(&directory->handle, context, &dir_handle, NULL);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);
@@ -610,6 +607,7 @@ cache_inode_readdir(cache_entry_t *directory,
                     unsigned int *nbfound,
                     bool_t *eod_met,
                     fsal_op_context_t *context,
+                    fsal_attrib_mask_t attrmask,
                     cache_inode_readdir_cb_t cb,
                     void *cb_opaque,
                     cache_inode_status_t *status)
@@ -620,12 +618,18 @@ cache_inode_readdir(cache_entry_t *directory,
      struct avltree_node *dirent_node;
      /* The access mask corresponding to permission to list directory
         entries */
-     const fsal_accessflags_t access_mask
+     fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_R_OK) |
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+     fsal_accessflags_t access_mask_attr
+          = (FSAL_MODE_MASK_SET(FSAL_R_OK) |
+             FSAL_MODE_MASK_SET(FSAL_X_OK) |
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
      /* True if the most recently traversed directory entry has been
         added to the caller's result. */
      bool_t in_result = TRUE;
+     cache_inode_status_t attr_status;
 
      /* Set to TRUE if we invalidate the directory */
      bool_t invalid = FALSE;
@@ -646,6 +650,14 @@ cache_inode_readdir(cache_entry_t *directory,
      if (*status != CACHE_INODE_SUCCESS)
        return *status;
 
+     /* Adjust access mask if ACL is asked for.
+      * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+      */
+     if((attrmask & FSAL_ATTR_ACL) != 0) {
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+          access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+     }
+
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
      if (cache_inode_access_no_mutex(directory,
@@ -653,7 +665,26 @@ cache_inode_readdir(cache_entry_t *directory,
                                      context,
                                      status)
          != CACHE_INODE_SUCCESS) {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "permission check for directory status=%s",
+                       cache_inode_err_str(*status));
           goto unlock_attrs;
+     }
+
+     if(attrmask != 0) {
+          /* Check for access permission to get attributes */
+          if (cache_inode_access_no_mutex(directory,
+                                          access_mask_attr,
+                                          context,
+                                          &attr_status)
+              != CACHE_INODE_SUCCESS) {
+               LogFullDebug(COMPONENT_CACHE_INODE,
+                            "permission check for attributes status=%s",
+                            cache_inode_err_str(attr_status));
+          }
+     } else {
+          /* No attributes requested, we don't need permission */
+          attr_status = CACHE_INODE_SUCCESS;
      }
 
      PTHREAD_RWLOCK_RDLOCK(&directory->content_lock);
@@ -766,24 +797,55 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent->hk.k, dirent->hk.p);
 
           *status = cache_inode_lock_trust_attrs(entry, context, FALSE);
+
           if (*status != CACHE_INODE_SUCCESS)
             {
               cache_inode_lru_unref(entry, 0);
+              if(*status == CACHE_INODE_FSAL_ESTALE)
+                {
+                  LogDebug(COMPONENT_NFS_READDIR,
+                           "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
+                           cache_inode_err_str(*status),
+                           dirent->name.name);
+
+                  /* Directory changed out from under us.
+                     Indicate we should invalidate it,
+                     skip the name, and keep going. */
+                  invalid = TRUE;
+                  continue;
+                }
+
+              LogCrit(COMPONENT_NFS_READDIR,
+                      "cache_inode_lock_trust_attrs returned %s for %s - bailing out",
+                      cache_inode_err_str(*status),
+                      dirent->name.name);
+
               goto unlock_dir;
             }
 
-          set_mounted_on_fileid(entry,
-                                &entry->attributes,
-                                context->export_context->fe_export);
+          if(attr_status == CACHE_INODE_SUCCESS) {
+                    set_mounted_on_fileid(entry,
+                                           &entry->attributes,
+                                           context->export_context->fe_export);
 
-          in_result = cb(cb_opaque,
-                         dirent->name.name,
-                         &entry->handle,
-                         &entry->attributes,
-                         dirent->hk.k);
+                    in_result = cb(cb_opaque,
+                                   dirent->name.name,
+                                   entry,
+                                   context,
+                                   dirent->hk.k);
+          } else {
+                    in_result = cb(cb_opaque,
+                                   dirent->name.name,
+                                   NULL,
+                                   context,
+                                   dirent->hk.k);
+          }
+
           (*nbfound)++;
+
           PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
           cache_inode_lru_unref(entry, 0);
+
           if (!in_result) {
                break;
           }

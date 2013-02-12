@@ -52,8 +52,8 @@
 
 static bool_t nfs4_readdir_callback(void* opaque,
                                     char *name,
-                                    fsal_handle_t *handle,
-                                    fsal_attrib_list_t *attrs,
+                                    cache_entry_t *entry,
+                                    fsal_op_context_t *context,
                                     uint64_t cookie);
 static void free_entries(entry4 *entries);
 
@@ -76,6 +76,7 @@ struct nfs4_readdir_cb_data
      nfsstat4 error; /*< Set to a value other than NFS4_OK if the
                          callback function finds a fatal error. */
      bitmap4 req_attr; /*< The requested attributes */
+     fsal_attrib_mask_t attrmask; /*< The requested attributes */
      compound_data_t *data; /*< The compound data, so we can produce
                                 nfs_fh4s. */
 };
@@ -209,12 +210,15 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      cb_data.req_attr = arg_READDIR4.attr_request;
      cb_data.data = data;
 
+     nfs4_attrmap_to_FSAL_attrmask(&cb_data.req_attr, &cb_data.attrmask);
+
      /* Perform the readdir operation */
      if (cache_inode_readdir(dir_entry,
                              cookie,
                              &num_entries,
                              &eod_met,
                              data->pcontext,
+                             cb_data.attrmask,
                              nfs4_readdir_callback,
                              &cb_data,
                              &cache_status) != CACHE_INODE_SUCCESS) {
@@ -269,6 +273,15 @@ void nfs4_op_readdir_Free(READDIR4res *resp)
      free_entries(resp->READDIR4res_u.resok4.reply.entries);
 } /* nfs4_op_readdir_Free */
 
+static inline bool attribute_is_set(bitmap4 *bits, int attr)
+{
+	int offset = attr / 32;
+
+	if(offset >= bits->bitmap4_len)
+		return FALSE;
+	return !!(bits->bitmap4_val[offset] & (1 << (attr % 32)));
+}
+
 /**
  * @brief Populate entry4s when called from cache_inode_readdir
  *
@@ -288,8 +301,8 @@ void nfs4_op_readdir_Free(READDIR4res *resp)
 static bool_t
 nfs4_readdir_callback(void* opaque,
                       char *name,
-                      fsal_handle_t *handle,
-                      fsal_attrib_list_t *attrs,
+                      cache_entry_t *entry,
+                      fsal_op_context_t *context,
                       uint64_t cookie)
 {
      struct nfs4_readdir_cb_data *tracker =
@@ -334,23 +347,73 @@ nfs4_readdir_callback(void* opaque,
           return FALSE;
      }
 
-     if ((tracker->req_attr.bitmap4_val != NULL) &&
-         (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
-          if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
-               tracker->error = NFS4ERR_SERVERFAULT;
-               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-               return FALSE;
+     if(entry != NULL) {
+          if ((tracker->req_attr.bitmap4_val != NULL) &&
+              (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
+               if (!nfs4_FSALToFhandle(&entryFH, &entry->handle, tracker->data)) {
+                    tracker->error = NFS4ERR_SERVERFAULT;
+                    gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+                    tracker->entries[tracker->count].name.utf8string_val = NULL;
+                    return FALSE;
+               }
           }
      }
 
-     if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
-                                attrs,
-                                &tracker->entries[tracker->count].attrs,
-                                tracker->data,
-                                &entryFH,
-                                &tracker->req_attr) != 0) {
-          LogFatal(COMPONENT_NFS_V4,
-                   "nfs4_FSALattr_To_Fattr failed to convert attr");
+     if(entry == NULL) {
+          /* cache_inode_readdir is signaling us that client didn't have
+           * search permission in this directory, so we can't return any
+           * attributes, but must indicate NFS4ERR_ACCESS.
+           */
+          if(nfs4_Fattr_Fill_Error(&tracker->entries[tracker->count].attrs,
+                                   NFS4ERR_ACCESS) == -1) {
+               tracker->error = NFS4ERR_SERVERFAULT;
+               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+               tracker->entries[tracker->count].name.utf8string_val = NULL;
+               return FALSE;
+          }
+          
+     } else {
+          cache_inode_status_t attr_status;
+          fsal_accessflags_t access_mask_attr = 0;
+
+          /* Adjust access mask if ACL is asked for.
+           * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+           */
+          if(attribute_is_set(&tracker->req_attr, FATTR4_ACL)) {
+               access_mask_attr |=
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+          }
+
+          /* cache_inode_readdir holds attr_lock while making callback, so we
+           * need to do access check with no mutex.
+           */
+          if (cache_inode_access_no_mutex(entry,
+                                          access_mask_attr,
+                                          context,
+                                          &attr_status)
+              != CACHE_INODE_SUCCESS) {
+               LogFullDebug(COMPONENT_NFS_V4,
+                            "permission check for attributes status=%s",
+                            cache_inode_err_str(attr_status));
+
+               if(nfs4_Fattr_Fill_Error(&tracker->entries[tracker->count].attrs,
+                                        nfs4_Errno(attr_status)) == -1) {
+                    tracker->error = NFS4ERR_SERVERFAULT;
+                    gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+                    tracker->entries[tracker->count].name.utf8string_val = NULL;
+                    return FALSE;
+               }
+          } else {
+               if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
+                                          &entry->attributes,
+                                          &tracker->entries[tracker->count].attrs,
+                                          tracker->data,
+                                          &entryFH,
+                                          &tracker->req_attr) != 0) {
+                    LogFatal(COMPONENT_NFS_V4,
+                             "nfs4_FSALattr_To_Fattr failed to convert attr");
+               }
+          }
      }
 
      if (tracker->mem_left <
@@ -360,9 +423,12 @@ nfs4_readdir_callback(void* opaque,
            .attrs.attr_vals.attrlist4_len))) {
           gsh_free(tracker->entries[tracker->count]
                    .attrs.attrmask.bitmap4_val);
+          tracker->entries[tracker->count].attrs.attrmask.bitmap4_val = NULL;
           gsh_free(tracker->entries[tracker->count]
                    .attrs.attr_vals.attrlist4_val);
+          tracker->entries[tracker->count].attrs.attr_vals.attrlist4_val = NULL;
           gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+          tracker->entries[tracker->count].name.utf8string_val = NULL;
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
@@ -397,7 +463,9 @@ free_entries(entry4 *entries)
           if (entry->attrs.attr_vals.attrlist4_val != NULL) {
                gsh_free(entry->attrs.attr_vals.attrlist4_val);
           }
-          gsh_free(entry->name.utf8string_val);
+          if(entry->name.utf8string_val != NULL) {
+               gsh_free(entry->name.utf8string_val);
+          }
      }
      gsh_free(entries);
 

@@ -1536,7 +1536,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File att
                             uid_t anon_uid,
                             gid_t anon_gid);
 
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
+void nfs4_attrmap_to_FSAL_attrmask(bitmap4 * attrmap, fsal_attrib_mask_t* attrmask);
 
 int nfs4_Fattr_Fill(fattr4 *Fattr, int attrcnt, uint32_t *attrlist,
                     int valsiz, char *attrvals);

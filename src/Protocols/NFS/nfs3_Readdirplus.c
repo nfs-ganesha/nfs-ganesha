@@ -68,8 +68,8 @@
 
 static bool_t nfs3_readdirplus_callback(void* opaque,
                                         char *name,
-                                        fsal_handle_t *handle,
-                                        fsal_attrib_list_t *attrs,
+                                        cache_entry_t *entry,
+                                        fsal_op_context_t *context,
                                         uint64_t cookie);
 static void free_entryplus3s(entryplus3 *entryplus3s);
 
@@ -262,8 +262,8 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           /* Fill in "." */
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           ".",
-                                          &dir_entry->handle,
-                                          &dir_attr,
+                                          dir_entry,
+                                          context,
                                           1))) {
                res->res_readdirplus3.status = cb_opaque.error;
                rc = NFS_REQ_OK;
@@ -298,8 +298,8 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           }
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           "..",
-                                          &parent_dir_entry->handle,
-                                          &parent_dir_attr,
+                                          parent_dir_entry,
+                                          context,
                                           2))) {
                res->res_readdirplus3.status = cb_opaque.error;
                cache_inode_lru_unref(parent_dir_entry, 0);
@@ -315,6 +315,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                              &num_entries,
                              &eod_met,
                              context,
+                             FSAL_ATTRS_V3,
                              nfs3_readdirplus_callback,
                              &cb_opaque,
                              &cache_status) != CACHE_INODE_SUCCESS) {
@@ -406,16 +407,16 @@ void nfs3_Readdirplus_Free(nfs_res_t *resp)
  *                    gives the location of the array and other
  *                    bookeeping information
  * @param name [in] The filename for the current entry
- * @param handle [in] The current entry's filehandle
- * @param attrs [in] The current entry's attributes
+ * @param entry [in] The current entry
+ * @param context [in] The operation context
  * @param cookie [in] The readdir cookie for the current entry
  */
 
 static bool_t
 nfs3_readdirplus_callback(void* opaque,
                           char *name,
-                          fsal_handle_t *handle,
-                          fsal_attrib_list_t *attrs,
+                          cache_entry_t *entry,
+                          fsal_op_context_t *context,
                           uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -442,10 +443,14 @@ nfs3_readdirplus_callback(void* opaque,
           return FALSE;
      }
 
-     FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
-                       FSAL_DIGEST_FILEID3,
-                       handle,
-                       &id_descriptor);
+     if(entry != NULL) {
+          FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
+                            FSAL_DIGEST_FILEID3,
+                            &entry->handle,
+                            &id_descriptor);
+     } else {
+          ep3->fileid = 0;
+     }
 
      ep3->name = gsh_strdup(name);
      if (ep3->name == NULL) {
@@ -458,36 +463,44 @@ nfs3_readdirplus_callback(void* opaque,
      /* Account for file name + length + cookie */
      tracker->mem_left -= sizeof(ep3->cookie) + ((namelen + 3) & ~3) + 4;
 
-     ep3->name_handle.handle_follows = TRUE;
-     ep3->name_handle.post_op_fh3_u.handle.data.data_val
-          = gsh_malloc(NFS3_FHSIZE);
-     if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
-          LogEvent(COMPONENT_NFS_READDIR,
-                  "nfs3_readdirplus_callback FAILED to allocate FH");
-          tracker->error = NFS3ERR_SERVERFAULT;
-          gsh_free(ep3->name);
-          return FALSE;
-     }
+     if(entry != NULL) {
+          ep3->name_handle.handle_follows = TRUE;
+          ep3->name_handle.post_op_fh3_u.handle.data.data_val
+               = gsh_malloc(NFS3_FHSIZE);
+          if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
+               LogEvent(COMPONENT_NFS_READDIR,
+                       "nfs3_readdirplus_callback FAILED to allocate FH");
+               tracker->error = NFS3ERR_SERVERFAULT;
+               gsh_free(ep3->name);
+               return FALSE;
+          }
 
-     if (nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-                            handle,
-                            tracker->export) == 0) {
-          tracker->error = NFS3ERR_BADHANDLE;
-          gsh_free(ep3->name);
-          gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
-          return FALSE;
-     }
+          if (nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
+                                 &entry->handle,
+                                 tracker->export) == 0) {
+               tracker->error = NFS3ERR_BADHANDLE;
+               gsh_free(ep3->name);
+               gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
+               return FALSE;
+          }
 
-     /* Account for filehande + length + follows + nextentry */
-     tracker->mem_left -= ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
-     if (tracker->count > 0) {
-          tracker->entries[tracker->count - 1].nextentry = ep3;
+          /* Account for filehande + length + follows + nextentry */
+          tracker->mem_left -= ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
+          if (tracker->count > 0) {
+               tracker->entries[tracker->count - 1].nextentry = ep3;
+          }
+     } else {
+          ep3->name_handle.handle_follows = FALSE;
+	  tracker->mem_left -= sizeof(ep3->name_handle.handle_follows);
      }
      ep3->name_attributes.attributes_follow = FALSE;
 
-     nfs_SetPostOpAttr(tracker->export,
-                       attrs,
-                       &ep3->name_attributes);
+     if(entry != NULL) {
+          /* NOTE: We intentionally do not check ACE4_READ_ATTR. */
+          nfs_SetPostOpAttr(tracker->export,
+                            &entry->attributes,
+                            &ep3->name_attributes);
+     }
      if (ep3->name_attributes.attributes_follow) {
 	  tracker->mem_left -= sizeof(ep3->name_attributes);
      } else {
