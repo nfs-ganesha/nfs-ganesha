@@ -658,7 +658,7 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
 
 /* Admin thread control */
 
-void nfs_Init_admin_data(void);
+void nfs_Init_admin_thread(void);
 void admin_replace_exports(void);
 void admin_halt(void);
 exportlist_t *RemoveExportEntry(exportlist_t *exportEntry);

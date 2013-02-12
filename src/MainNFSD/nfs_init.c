@@ -1337,7 +1337,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 
   /* Admin initialisation */
-  nfs_Init_admin_data();
+  nfs_Init_admin_thread();
 
   /* Set the stats to zero */
   nfs_reset_stats();

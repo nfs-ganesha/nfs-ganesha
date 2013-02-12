@@ -40,6 +40,7 @@
 #include "sal_data.h"
 #include "fsal_up.h"
 #include "cache_inode_lru.h"
+#include "ganesha_dbus.h"
 
 extern struct fridgethr *req_fridge; /*< Decoder thread pool */
 
@@ -83,14 +84,96 @@ typedef enum {
 static admin_command_t admin_command;
 static admin_status_t admin_status;
 
+#ifdef USE_DBUS
+
 /**
- * @brief Initialize admin thread control state.
+ * @brief Dbus method for reloading configuration
+ *
+ * @param[in]  args  Unused
+ * @param[out] reply Unused
  */
 
-void nfs_Init_admin_data(void)
+static bool admin_dbus_reload(DBusMessageIter *args,
+			      DBusMessage *reply)
 {
-  admin_command = admin_none_pending;
-  admin_status = admin_stable;
+	if (args != NULL) {
+		LogWarn(COMPONENT_DBUS,
+			"Replace exports take no arguments.");
+		return false;
+	}
+
+	admin_replace_exports();
+
+	return true;
+}
+
+static struct gsh_dbus_method method_reload = {
+	.name = "reload",
+	.method = admin_dbus_reload,
+	.args = {{NULL, NULL, NULL}
+	}
+};
+
+/**
+ * @brief Dbus method for shutting down Ganesha
+ *
+ * @param[in]  args  Unused
+ * @param[out] reply Unused
+ */
+
+static bool admin_dbus_shutdown(DBusMessageIter *args,
+				DBusMessage *reply)
+{
+	if (args != NULL) {
+		LogWarn(COMPONENT_DBUS,
+			"Shutdown takes no arguments.");
+		return false;
+	}
+
+	admin_halt();
+
+	return true;
+}
+
+static struct gsh_dbus_method method_shutdown = {
+	.name = "shutdown",
+	.method = admin_dbus_shutdown,
+	.args = {{NULL, NULL, NULL}
+	}
+};
+
+static struct gsh_dbus_method *admin_methods[] = {
+	&method_shutdown,
+	&method_reload,
+	NULL
+};
+
+static struct gsh_dbus_interface admin_interface = {
+	.name = "org.ganesha.nfsd.admin",
+	.props = NULL,
+	.methods = admin_methods,
+	.signals = NULL
+};
+
+static struct gsh_dbus_interface *admin_interfaces[] = {
+	&admin_interface,
+	NULL
+};
+
+#endif /* USE_DBUS */
+
+/**
+ * @brief Initialize admin thread control state and DBUS methods.
+ */
+
+void nfs_Init_admin_thread(void)
+{
+	admin_command = admin_none_pending;
+	admin_status = admin_stable;
+#ifdef USE_DBUS
+	gsh_dbus_register_path("admin", admin_interfaces);
+#endif /* USE_DBUS */
+	LogEvent(COMPONENT_NFS_CB, "Admin thread initialized");
 }
 
 static void admin_issue_command(admin_command_t command)
