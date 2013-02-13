@@ -214,6 +214,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   data.pfullexportlist = export; /* Full export list is provided in
                                     input */
+  data.pexport = export;
   data.pworker = worker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = req;
