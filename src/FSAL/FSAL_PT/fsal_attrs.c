@@ -268,7 +268,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
       status = PTFSAL_truncate( p_filehandle,
                                 p_context,   
-                                0,                
+                                wanted_attrs.filesize,                
                                 &fd,     
                                 p_object_attributes);
 
