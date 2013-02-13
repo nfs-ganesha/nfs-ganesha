@@ -297,6 +297,13 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   else
     {
       cache_inode_status_t tmp_status = CACHE_INODE_SUCCESS;
+
+      /* We may have a cache entry for the destination
+       * filename. 
+       * If we do, we must delete it : it is stale.
+       */
+      cache_inode_remove_cached_dirent(dir_dest, newname);
+
       tmp_status = cache_inode_add_cached_dirent(dir_dest,
 						 newname,
 						 lookup_src,
