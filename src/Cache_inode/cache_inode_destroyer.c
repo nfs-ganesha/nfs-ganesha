@@ -822,12 +822,6 @@ static void destroy_entry(cache_entry_t *entry)
 {
 	/* FSAL Error Code */
 	fsal_status_t fsal_status = {0, 0};
-	struct lru_q_base *q
-		= (entry->lru.lane == LRU_NO_LANE ?
-		   NULL :
-		   lru_select_queue(entry->lru.flags,
-				    entry->lru.lane));
-
 
 	if (entry->type == REGULAR_FILE) {
 		destroy_file_state(entry);
@@ -837,20 +831,6 @@ static void destroy_entry(cache_entry_t *entry)
 		cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
 	}
 
-	if (entry->lru.refcount > 1) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "Entry %p has reference leaks, should be 1, "
-			 "is actually %"PRIu64,
-			 entry,
-			 entry->lru.refcount);
-	}
-
-	entry->lru.flags = LRU_ENTRY_CONDEMNED;
-	if (q) {
-		glist_del(&entry->lru.q);
-		--(q->size);
-	}
-	entry->lru.lane = LRU_NO_LANE;
 	if (entry->obj_handle) {
 		fsal_status = (entry->obj_handle->ops
 			       ->release(entry->obj_handle));
@@ -862,7 +842,6 @@ static void destroy_entry(cache_entry_t *entry)
 		}
 	}
 	entry->obj_handle = NULL;
-	entry->lru.refcount = 0;
 	cache_inode_clean_entry(entry);
 	pthread_mutex_destroy(&entry->lru.mtx);
 }

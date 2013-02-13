@@ -170,18 +170,6 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
 
 #define LRU_N_Q_LANES  7
 
-/**
- * A single queue structure.
- */
-
-struct lru_q_base
-{
-     struct glist_head q; /* LRU is at HEAD, MRU at tail */
-     pthread_mutex_t mtx;
-     uint64_t size;
-};
-
-
 static const uint32_t LRU_NO_LANE = ~0;
 
 extern int cache_inode_lru_pkginit(void);
@@ -207,6 +195,7 @@ cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 void cache_inode_unpinnable(cache_entry_t *entry);
 cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry);
 bool cache_inode_is_pinned(cache_entry_t *entry);
+void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
 
 /**
  * Return true if there are FDs available to serve open requests,
