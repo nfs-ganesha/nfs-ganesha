@@ -1,0 +1,13 @@
+[Unit]
+Description=NFS-Ganesha file server
+Documentation=http://github.com/phdeniel/nfs-ganesha/wiki
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/nfs-ganesha
+ExecStart=/usr/bin/ganesha.nfsd $OPTIONS 
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
