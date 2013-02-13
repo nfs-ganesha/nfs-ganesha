@@ -69,6 +69,7 @@
 #include "idmapper.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
+#include "delayed_exec.h"
 
 extern struct fridgethr *req_fridge;
 
@@ -809,6 +810,10 @@ static void nfs_Start_threads(void)
 
   if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
     LogDebug(COMPONENT_THREAD, "can't set pthread's join state");
+
+  LogEvent(COMPONENT_THREAD,
+	   "Starting delayed executor.");
+  delayed_start();
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, NULL ) ) != 0 )

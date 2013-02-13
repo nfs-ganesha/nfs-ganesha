@@ -41,6 +41,7 @@
 #include "fsal_up.h"
 #include "cache_inode_lru.h"
 #include "idmapper.h"
+#include "delayed_exec.h"
 #ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
@@ -407,6 +408,12 @@ static void do_shutdown(void)
   int rc = 0;
 
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+
+  LogEvent(COMPONENT_MAIN,
+	   "Stopping delayed executor.");
+  delayed_shutdown();
+  LogEvent(COMPONENT_MAIN,
+	   "Delayed executor stopped.");
 
   if (nfs_param.core_param.enable_FSAL_upcalls)
     {
