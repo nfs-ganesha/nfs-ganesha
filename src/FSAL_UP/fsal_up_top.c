@@ -265,8 +265,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_ATIME) &&
 		    ((update->flags & ~fsal_up_update_atime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.atime,
-			     entry->obj_handle->attributes.atime) == 1))) {
+			     &update->attr.atime,
+			     &entry->obj_handle->attributes.atime) == 1))) {
 			entry->obj_handle->attributes.atime =
 				update->attr.atime;
 			mutatis_mutandis = true;
@@ -276,8 +276,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CREATION) &&
 		    ((update->flags & ~fsal_up_update_creation_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.creation,
-			     entry->obj_handle->attributes.creation) == 1))) {
+			     &update->attr.creation,
+			     &entry->obj_handle->attributes.creation) == 1))) {
 			entry->obj_handle->attributes.creation =
 				update->attr.creation;
 			mutatis_mutandis = true;
@@ -287,8 +287,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CTIME) &&
 		    ((update->flags & ~fsal_up_update_ctime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.ctime,
-			     entry->obj_handle->attributes.ctime) == 1))) {
+			     &update->attr.ctime,
+			     &entry->obj_handle->attributes.ctime) == 1))) {
 			entry->obj_handle->attributes.ctime =
 				update->attr.ctime;
 			mutatis_mutandis = true;
@@ -298,8 +298,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_MTIME) &&
 		    ((update->flags & ~fsal_up_update_mtime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.mtime,
-			     entry->obj_handle->attributes.mtime) == 1))) {
+			     &update->attr.mtime,
+			     &entry->obj_handle->attributes.mtime) == 1))) {
 			entry->obj_handle->attributes.mtime =
 				update->attr.mtime;
 			mutatis_mutandis = true;
@@ -319,8 +319,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CHGTIME) &&
 		    ((update->flags & ~fsal_up_update_chgtime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.chgtime,
-			     entry->obj_handle->attributes.chgtime) == 1))) {
+			     &update->attr.chgtime,
+			     &entry->obj_handle->attributes.chgtime) == 1))) {
 			entry->obj_handle->attributes.chgtime =
 				update->attr.chgtime;
 			mutatis_mutandis = true;

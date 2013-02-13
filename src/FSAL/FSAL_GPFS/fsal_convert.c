@@ -272,8 +272,8 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime =
-          (gsh_time_cmp(p_buffstat->st_mtim,
-                        p_buffstat->st_ctim) > 0) ?
+          (gsh_time_cmp(&p_buffstat->st_mtim,
+                        &p_buffstat->st_ctim) > 0) ?
           p_buffstat->st_mtim :
           p_buffstat->st_ctim;
       /* XXX */
