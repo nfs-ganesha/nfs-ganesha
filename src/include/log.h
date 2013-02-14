@@ -374,10 +374,10 @@ char *get_debug_info(int *size);
 
 /* Function prototypes */
 
-void SetNamePgm(char *nom);
-void SetNameHost(char *nom);
-void SetDefaultLogging(char *name);
-void SetNameFunction(char *nom); /* thread safe */
+void SetNamePgm(const char *nom);
+void SetNameHost(const char *nom);
+void SetDefaultLogging(const char *name);
+void SetNameFunction(const char *nom); /* thread safe */
 void GetNameFunction(char *name, int len);
 
 /* AddFamilyError : not thread safe */
@@ -408,7 +408,7 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);
 void Fatal(void);
-int SetComponentLogFile(log_components_t component, char *name);
+int SetComponentLogFile(log_components_t component, const char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
