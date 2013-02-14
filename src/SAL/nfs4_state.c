@@ -438,11 +438,9 @@ void release_lockstate(state_owner_t *lock_owner)
 
       cache_entry_t *entry = state_found->state_entry;
 
-      /* Make sure we hold an lru ref to the cache inode while calling state_del */
-      if(cache_inode_lru_ref(state_found->state_entry,
-                             0) != CACHE_INODE_SUCCESS)
-        LogCrit(COMPONENT_CLIENTID,
-                "Ugliness - cache_inode_lru_ref has returned non-success");
+      /* Make sure we hold an lru ref to the cache inode while calling
+       * state_del */
+      cache_inode_lru_ref(state_found->state_entry, LRU_FLAG_NONE);
 
       state_status = state_del(state_found, false);
       if (state_status != STATE_SUCCESS)
@@ -475,11 +473,9 @@ void release_openstate(state_owner_t *open_owner)
 
       cache_entry_t *entry = state_found->state_entry;
 
-      /* Make sure we hold an lru ref to the cache inode while calling state_del */
-      if(cache_inode_lru_ref(entry,
-                             0) != CACHE_INODE_SUCCESS)
-        LogCrit(COMPONENT_CLIENTID,
-                "Ugliness - cache_inode_lru_ref has returned non-success");
+      /* Make sure we hold an lru ref to the cache inode while calling
+       * state_del */
+      cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
       PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 

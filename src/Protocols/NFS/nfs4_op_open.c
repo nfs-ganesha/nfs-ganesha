@@ -973,13 +973,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* So we still have a reference even after we repalce the
            current FH. */
-
         entry_change = data->current_entry;
-        if (cache_inode_lru_ref(entry_change, 0) !=
-            CACHE_INODE_SUCCESS) {
-                res_OPEN4->status = NFS4ERR_SERVERFAULT;
-                goto out2;
-        }
+        cache_inode_lru_ref(entry_change, LRU_FLAG_NONE);
 
         res_OPEN4->OPEN4res_u.resok4.cinfo.before
                 = cache_inode_get_changeid4(entry_change);

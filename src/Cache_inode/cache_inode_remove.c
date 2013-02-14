@@ -38,7 +38,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
-#include "cache_inode_lru.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -65,11 +64,7 @@ cache_inode_clean_internal(cache_entry_t *entry)
      if (! entry->obj_handle)
          goto out;
 
-     /* Remove from lookup table (with existence check) */
-     cih_remove_checked(entry);
-
-/* release the handle object too
- */
+     /* release the handle object too */
      fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           LogCrit(COMPONENT_CACHE_INODE,
@@ -271,9 +266,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
           /* Destroy the entry when everyone's references to it have
              been relinquished.  Most likely now. */
           PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
-          /* Kill off the sentinel reference (and mark the entry so
-             it doesn't get recycled while a reference exists.) */
-          cache_inode_lru_kill(to_remove_entry);
+          /* Make entry unreachable (returns SENTINEL ref) */
+	  cih_remove_checked(to_remove_entry);
      } else {
      unlock:
 

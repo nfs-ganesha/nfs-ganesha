@@ -90,16 +90,12 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK);
      if (*entry) {
           /* take an extra reference within the critical section */
-          if (cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
-              CACHE_INODE_SUCCESS) {
-              /* Dead entry.  Treat like a lookup failure. */
-          } else {
-              if (*entry == associated) {
-                  /* Take a quick exit so we don't invert lock
-                   * ordering. */
-                  cih_latch_rele(&latch);
-                  return (CACHE_INODE_SUCCESS);
-              }
+          cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+          if (*entry == associated) {
+               /* Take a quick exit so we don't invert lock
+                * ordering. */
+               cih_latch_rele(&latch);
+              return (CACHE_INODE_SUCCESS);
           }
      }
      cih_latch_rele(&latch);
@@ -182,15 +178,11 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 	entry = cih_get_by_key_latched(key, &latch,
 				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
 	if (likely(entry)) {
-		if (likely(cache_inode_lru_ref(entry, LRU_FLAG_NONE) ==
-			   CACHE_INODE_SUCCESS)) {
-			/* Release the subtree hash table lock */
-			cih_latch_rele(&latch);
-			goto out;
-		}
-		/* we raced destruction of that entry, and lost.  oh well. */
-		cih_latch_rele(&latch);
-		entry = NULL;
+             /* Ref entry */
+             cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+             /* Release the subtree hash table lock */
+             cih_latch_rele(&latch);
+             goto out;
 	}
 	/* Cache miss, allocate a new entry */
         if (! (flags & CIG_KEYED_FLAG_CACHED_ONLY)) {

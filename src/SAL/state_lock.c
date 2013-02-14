@@ -3350,9 +3350,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
       lock.lock_length = 0;
 
       /* Make sure we hold an lru ref to the cache inode while calling unlock */
-      if(cache_inode_lru_ref(entry, 0) != CACHE_INODE_SUCCESS)
-        LogCrit(COMPONENT_STATE,
-                "Ugliness - cache_inode_lru_ref has returned non-success");
+      cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
       /* Remove all locks held by this owner on the file */
       status = state_unlock(entry,

@@ -95,64 +95,22 @@ extern struct lru_state lru_state;
 #define LRU_FLAG_NONE  0x0000
 
 /**
- * Set on pinned (state-bearing) entries.
+ * The caller holds the lock on the LRU entry.
  */
-#define LRU_ENTRY_PINNED  0x0001
-
-/**
- * Set on LRU entries in the L2 (scanned and colder) queue.
- */
-#define LRU_ENTRY_L2  0x0002
-
-/**
- * Set on LRU entries that are being deleted
- */
-#define LRU_ENTRY_CONDEMNED  0x0004
-
-/**
- * Set if no more state may be granted.  Different from CONDEMNED in
- * that outstanding references may exist on the object, but it is no
- * longer reachable from the hash or weakref tables.
- */
-#define LRU_ENTRY_UNPINNABLE  0x0008
-
-/**
- * Flag indicating that cache_inode_lru_kill has already been called,
- * making it idempotent and fixing a possible unref leak.
- */
-#define LRU_ENTRY_KILLED  0x0010
-
-/**
- * The inode is marked for out-of-line cleanup (may still be reachable)
- */
-#define LRU_ENTRY_CLEANUP  0x0020
+#define LRU_FLAG_LOCKED  0x0001
 
 /**
  * The caller is fetching an initial reference
  */
-#define LRU_REQ_INITIAL  0x0040
+#define LRU_REQ_INITIAL  0x0002
 
 /**
  * The caller is scanning the entry (READDIR)
  */
-#define LRU_REQ_SCAN  0x0080
+#define LRU_REQ_SCAN  0x0004
 
-/**
- * The caller holds the lock on the LRU entry.
- */
-#define LRU_FLAG_LOCKED  0x0100
-
-/**
- * The entry is not initialized completely.
- */
-static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
-
-
-/**
- * No further refs or state permitted.
- */
-#define LRU_ENTRY_POISON \
-    (LRU_ENTRY_CONDEMNED|LRU_ENTRY_KILLED|LRU_ENTRY_CLEANUP)
+#define LRU_UNREF_CLEANUP 0x0001 /* cleanup code path */
+#define LRU_UNREF_SENTINEL 0x0002 /* returning cache lookup ref */
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -167,10 +125,7 @@ static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
  * The number of lanes comprising a logical queue.  This must be
  * prime.
  */
-
-#define LRU_N_Q_LANES  7
-
-static const uint32_t LRU_NO_LANE = ~0;
+#define LRU_N_Q_LANES  17
 
 extern int cache_inode_lru_pkginit(void);
 extern int cache_inode_lru_pkgshutdown(void);
@@ -179,10 +134,7 @@ extern size_t open_fd_count;
 
 cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry,
 					 uint32_t flags);
-cache_inode_status_t cache_inode_lru_ref(
-	cache_entry_t *entry,
-	uint32_t flags) __attribute__((warn_unused_result));
-
+void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 
 /* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);

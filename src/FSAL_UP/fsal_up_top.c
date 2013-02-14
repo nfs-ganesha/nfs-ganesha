@@ -33,6 +33,7 @@
 #include "cache_inode.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
+#include "cache_inode_hash.h"
 #include "HashTable.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
@@ -512,28 +513,14 @@ static void unlink_queue(struct fridgethr_context *ctx)
 		dirent = cache_inode_avl_qp_lookup_s(parent, unlink->name, 1);
 		if (dirent &&
 		    ~(dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
-			/* The entry to ding */
-			cache_entry_t *entry = NULL;
-			if ((entry = cache_inode_get_keyed(
-				     &dirent->ckey, &synthetic_context,
-				     CIG_KEYED_FLAG_CACHED_ONLY))) {
-				PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-				if (entry->flags &
-				    CACHE_INODE_TRUST_ATTRS) {
-					if (--entry->obj_handle
-					    ->attributes.numlinks
-					    == 0) {
-						PTHREAD_RWLOCK_unlock(
-							&entry->attr_lock);
-						cache_inode_lru_kill(
-							entry);
-					} else {
-						PTHREAD_RWLOCK_unlock(
-							&entry->attr_lock);
-					}
-				}
-				cache_inode_put(entry);
-			}
+			cih_latch_t latch;
+			cache_entry_t *entry =
+				cih_get_by_key_latched(&dirent->ckey,
+						       &latch,
+						       CIH_GET_UNLOCK_ON_MISS);
+			if (entry)
+				cih_remove_latched(entry, &latch,
+						   CIH_REMOVE_UNLOCK);
 			cache_inode_remove_cached_dirent(parent,
 							 unlink->name,
 							 &synthetic_context);
