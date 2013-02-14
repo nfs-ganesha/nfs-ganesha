@@ -118,7 +118,7 @@ open4_do_open(struct nfs_argop4  * op,
 						  FSAL_WRITE_ACCESS,
 						  data->req_ctx);
                 if (cache_status != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
+                        return nfs4_Errno(cache_status);
                 }
         }
 
@@ -127,7 +127,7 @@ open4_do_open(struct nfs_argop4  * op,
 						  FSAL_READ_ACCESS,
 						  data->req_ctx);
 		if (cache_status != CACHE_INODE_SUCCESS) {
-			return NFS4ERR_ACCESS;
+			return nfs4_Errno(cache_status);
 		}
         }
 
