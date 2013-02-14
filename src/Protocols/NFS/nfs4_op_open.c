@@ -1099,7 +1099,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         if(args->share_access & OPEN4_SHARE_ACCESS_READ) {
                 if(cache_inode_access(pentry, rd_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
+                        return nfs4_Errno(cache_status);
                 }
         }
 
@@ -1132,7 +1132,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 if(cache_inode_access(pentry, wr_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
+                        return nfs4_Errno(cache_status);
                 }
         }
 
@@ -1219,7 +1219,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
           if(cache_inode_open(pentry_newfile, openflags, data->pcontext,
                               0, &cache_status) != CACHE_INODE_SUCCESS) {
             *cause2 = " cache_inode_open";
-            return NFS4ERR_ACCESS;
+            return nfs4_Errno(cache_status);
           }
         } else { /* claim previous */
           if (cache_inode_open(pentry_newfile, openflags,

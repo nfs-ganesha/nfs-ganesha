@@ -374,7 +374,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                             data->pcontext,
                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
-                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          res_OPEN4.status = nfs4_Errno(cache_status);
                           goto out;
                         }
                       openflags = FSAL_O_WRONLY;
@@ -388,7 +388,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                             data->pcontext,
                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
-                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          res_OPEN4.status = nfs4_Errno(cache_status);
                           goto out;
                         }
                       openflags = FSAL_O_RDONLY;
@@ -429,7 +429,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                             data->pcontext,
                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
-                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          res_OPEN4.status = nfs4_Errno(cache_status);
                           cause2 = " cache_inode_access";
                           goto out;
                         }
@@ -477,9 +477,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                       0,
                                       &cache_status) != CACHE_INODE_SUCCESS)
                     {
-                      // TODO FSF: huh????
-                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                      res_OPEN4.status = NFS4ERR_ACCESS;
+                      res_OPEN4.status = nfs4_Errno(cache_status);
                       cause2 = " cache_inode_open";
                       goto out;
                     }
@@ -748,7 +746,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               0,
                               &cache_status) != CACHE_INODE_SUCCESS)
             {
-              res_OPEN4.status = NFS4ERR_ACCESS;
+              res_OPEN4.status = nfs4_Errno(cache_status);
               cause2 = " cache_inode_open";
               goto out;
             }
@@ -803,7 +801,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                     write_access,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " OPEN4_SHARE_DENY_WRITE cache_inode_access";
                   goto out;
                 }
@@ -817,7 +815,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                     read_access,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " OPEN4_SHARE_ACCESS_READ cache_inode_access";
                   goto out;
                 }
@@ -831,7 +829,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                     write_access,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " OPEN4_SHARE_ACCESS_WRITE cache_inode_access";
                   goto out;
                 }
@@ -957,7 +955,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               0,
                               &cache_status) != CACHE_INODE_SUCCESS)
             {
-              res_OPEN4.status = NFS4ERR_ACCESS;
+              res_OPEN4.status = nfs4_Errno(cache_status);
               cause2 = " cache_inode_open";
               goto out;
             }
