@@ -93,3 +93,32 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
 	vd->vd_name = dp->d_name;
 	return true;
 }
+
+/**
+ * @brief Platform specific wrapper fro utimensat().
+ *
+ * @param fd       [in] File descriptor
+ * @param path     [in] name of a file
+ * @param timespec [in] pointer to array of struct timespec
+ * @param flags    [in] flags
+ *
+ * @return 0 on success, -1 on error (errno set to indicate the error).
+ */
+int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
+                 int flags)
+{
+	return utimensat(fd, path, ts, flags);
+}
+
+/**
+ * @brief Platform specific wrapper fro futimens().
+ *
+ * @param fd       [in] File descriptor
+ * @param timespec [in] pointer to array of struct timespec
+ *
+ * @return 0 on success, -1 on error (errno set to indicate the error).
+ */
+int vfs_utimes(int fd, const struct timespec *ts)
+{
+	return futimens(fd, ts);
+}

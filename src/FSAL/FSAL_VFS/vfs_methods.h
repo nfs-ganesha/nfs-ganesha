@@ -25,7 +25,7 @@ struct vfs_fsal_export {
 	char *fstype;
 	int root_fd;
 	dev_t root_dev;
-	struct file_handle *root_handle;
+	vfs_file_handle_t *root_handle;
 	bool pnfs_panfs_enabled;
 	struct vfs_exp_handle_ops vex_ops;
 	void *pnfs_data;
@@ -72,6 +72,8 @@ struct vfs_fsal_obj_handle {
 			fsal_openflags_t openflags;
 		} file;
 		struct {
+			vfs_file_handle_t *dir;
+			char *path;
 			unsigned char *link_content;
 			int link_size;
 		} symlink;

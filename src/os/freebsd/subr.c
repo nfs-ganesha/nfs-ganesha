@@ -42,9 +42,9 @@
  * @param basepp [in/out] offset into "file" after this read
  */
 
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t **basepp);
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
-	return getdirentries(fd, buf, sizeof(buf), basepp);
+	return getdirentries(fd, buf, bcount, basepp);
 }
 
 /**
@@ -67,4 +67,56 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
 	vd->vd_offset = base + bpos + dp->d_reclen;
 	vd->vd_name = dp->d_name;
 	return (dp->d_fileno != 0) ? true: false;
+}
+
+/**
+ * @brief Following functions exist to compensate for lack of *times() APIs with
+ * nanosecond granularity on FreeBSD platform. These functions also take care of
+ * timespec <--> timeval conversion.
+ */
+
+#define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
+        do {                                                            \
+                (ts)->tv_sec = (tv)->tv_sec;                            \
+                (ts)->tv_nsec = (tv)->tv_usec * 1000;                   \
+        } while (0)
+#define TIMESPEC_TO_TIMEVAL(tv, ts)                                     \
+        do {                                                            \
+                (tv)->tv_sec = (ts)->tv_sec;                            \
+                (tv)->tv_usec = (ts)->tv_nsec / 1000;                   \
+        } while (0)
+
+int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
+                 int flags)
+{
+        struct timeval tv[2];
+
+        if (ts[0].tv_nsec == UTIME_OMIT || ts[1].tv_nsec == UTIME_OMIT) {
+                /* nothing to do */
+                return 0;
+        } else if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
+                /* set to the current timestamp. achieve this by passing NULL
+                 * timeval to kernel */
+                return futimesat(fd, path, NULL);
+        }
+        TIMESPEC_TO_TIMEVAL(&tv[0], &ts[0]);
+        TIMESPEC_TO_TIMEVAL(&tv[1], &ts[1]);
+        return futimesat(fd, path, tv);
+}
+
+int vfs_utimes(int fd, const struct timespec *ts)
+{
+        struct timeval tv[2];
+
+        if (ts[0].tv_nsec == UTIME_OMIT || ts[1].tv_nsec == UTIME_OMIT) {
+                /* nothing to do */
+                return 0;
+        } else if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
+                /* set to the current timestamp. achieve this by passing NULL
+                 * timeval to kernel */
+                return futimes(fd, NULL);
+        }
+        TIMESPEC_TO_TIMEVAL(&tv[0], &ts[0]);
+        TIMESPEC_TO_TIMEVAL(&tv[1], &ts[1]);
+        return futimes(fd, tv);
 }

@@ -8,6 +8,7 @@ SET(gos_STAT_SRCS
     mntent_compat.c
     subr.c
     xattr.c
+    memstream.c
 )
 
 add_library(gos STATIC ${gos_STAT_SRCS})
