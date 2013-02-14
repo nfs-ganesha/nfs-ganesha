@@ -46,6 +46,8 @@ extern "C" {
 #define FSI_BLOCK_ALIGN(x, blocksize) \
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
 
+#define PT_FSI_CCL_VERSION "3.3.1.102"
+
 #define FSI_COMMAND_TIMEOUT_SEC      900 // When polling for results, number
                                          // of seconds to try before timingout
 #define FSI_COMMAND_LOG_THRESHOLD_SEC 20 // In seconds, if timed responses
@@ -119,7 +121,7 @@ compile_time_check_func(const char * fmt, ...)
 #define FSI_TRACE(level, ... )                                             \
 {                                                                          \
   compile_time_check_func( __VA_ARGS__ );                                  \
-  ccl_log(level, __func__, __VA_ARGS__);                                   \
+  CCL_LOG(level, __func__, __VA_ARGS__);                                   \
 }
 
 #define FSI_TRACE_COND_RC(rc, errVal, ... )                                \
@@ -136,11 +138,12 @@ compile_time_check_func(const char * fmt, ...)
 
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
-  while (g_shm_at == 0) {                                                  \
+  while (g_shm_at_fsal == 0) {                                             \
     FSI_TRACE(FSI_INFO, "waiting for shmem attach");                       \
     sleep(1);                                                              \
   }                                                                        \
 }
+
 #define CCL_CLOSE_STYLE_NORMAL             0
 #define CCL_CLOSE_STYLE_FIRE_AND_FORGET    1
 #define CCL_CLOSE_STYLE_NO_INDEX           2
@@ -149,6 +152,7 @@ compile_time_check_func(const char * fmt, ...)
 
 extern int       g_shm_id;              // SHM ID
 extern char    * g_shm_at;              // SHM Base Address
+extern char    * g_shm_at_fsal;              // SHM Base Address
 extern int       g_io_req_msgq;
 extern int       g_io_rsp_msgq;
 extern int       g_non_io_req_msgq;
@@ -158,12 +162,13 @@ extern int       g_shmem_rsp_msgq;
 extern char      g_chdir_dirpath[PATH_MAX];
 extern uint64_t  g_client_pid;
 extern uint64_t  g_server_pid;
-extern struct    file_handles_struct_t g_fsi_handles;     // FSI client
-                                                          // handles
-extern struct    dir_handles_struct_t  g_fsi_dir_handles; // FSI client Dir
-                                                          // handles
-extern struct    acl_handles_struct_t  g_fsi_acl_handles; // FSI client ACL
-                                                          // handles
+extern struct file_handles_struct_t g_fsi_handles;  // FSI client
+                                                    // handles
+extern struct dir_handles_struct_t  g_fsi_dir_handles; // FSI client Dir
+                                                       // handles
+extern struct acl_handles_struct_t  g_fsi_acl_handles; // FSI client ACL
+                                                       // handles
+
 extern uint64_t  g_client_trans_id;  // FSI global transaction id
 extern int       g_close_trace;      // FSI global trace of io rates at close
 extern int       g_multithreaded;    // ganesha = true, samba = false
@@ -583,6 +588,8 @@ struct ipc_client_stats_t {
 // ---------------------------------------------------------------------------
 // Function Prototypes
 // ---------------------------------------------------------------------------
+int ccl_check_version(char *version);
+char *ccl_get_version(void);
 int ccl_init(int                        multi_threaded,
              log_function_t             log_fn,
              log_level_check_function_t log_level_check_fn,
@@ -655,6 +662,7 @@ int wait_for_response(const int                   msg_id,
                       const size_t                msg_size,
                       const long                  msg_type,
                       const struct CommonMsgHdr * p_hdr,
+                      const uint64_t              transaction_id,
                       const uint64_t              transaction_type,
                       const int                   min_rsp_msg_bytes);
 int send_msg(int          msg_id,
@@ -864,7 +872,7 @@ int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,
                                    char                * fsal_name);
 int ccl_find_oldest_handle();
 bool ccl_can_close_handle(int handle_index,
-			  int timeout);
+                          int timeout);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL

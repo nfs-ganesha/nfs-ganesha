@@ -53,7 +53,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "pt_ganesha.h"
-
+#include <dlfcn.h>
+#include <syslog.h>
 pthread_mutex_t g_dir_mutex; // dir handle mutex
 pthread_mutex_t g_acl_mutex; // acl handle mutex
 pthread_mutex_t g_handle_mutex; // file handle processing mutex
@@ -66,6 +67,12 @@ pthread_mutex_t g_io_mutex;
 pthread_mutex_t g_statistics_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
+
+// FSAL analogs to CCL variables and structures
+char * g_shm_at_fsal;
+struct file_handles_struct_t * g_fsi_handles_fsal;
+struct dir_handles_struct_t  * g_fsi_dir_handles_fsal;
+struct acl_handles_struct_t  * g_fsi_acl_handles_fsal;
 
 #define COMPONENT_FSAL_PT  5   // COMPONENT_FSAL
 
@@ -81,6 +88,7 @@ int PTFSAL_log_level_check(int level)
   return (unlikely(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level));
 }
 
+int pt_ganesha_fsal_ccl_init();
 static int ptfsal_closeHandle_listener_thread_init(void);
 static int ptfsal_polling_closeHandler_thread_init(void);
 void *ptfsal_parallel_close_thread(void *args);
@@ -123,6 +131,12 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
+  /* load CCL module */
+  int rc = pt_ganesha_fsal_ccl_init();
+  if (rc) {
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+  }
+
   /* init mutexes */
   pthread_mutex_init(&g_dir_mutex,NULL);
   pthread_mutex_init(&g_acl_mutex,NULL);
@@ -152,8 +166,8 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   ipc_ccl_to_component_trc_level_map[FSI_DEBUG]    = NIV_DEBUG;
 
   /* FSI CCL Layer INIT */
-  int rc = ccl_init(MULTITHREADED, PTFSAL_log, PTFSAL_log_level_check,
-                    ipc_ccl_to_component_trc_level_map);
+  rc = CCL_INIT(MULTITHREADED, PTFSAL_log, PTFSAL_log_level_check,
+		ipc_ccl_to_component_trc_level_map);
 
   if (rc == -1) {
     FSI_TRACE(FSI_ERR, "ccl_init returned rc = -1, errno = %d", errno);
@@ -178,6 +192,191 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
 
   /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+}
+
+void
+check_dl_error(const char * func_name)
+{
+  char * error = dlerror();
+  
+  if (error != NULL) {
+    if (!func_name) {
+      func_name = "UNKNOWN";
+    }
+
+    FSI_TRACE(FSI_FATAL, "Failed to dynamically load function: %s",
+              func_name);
+  }
+}
+
+void
+load_dynamic_function(void       * fn_map_ptr,
+                      const char * func_name)
+{
+  /* sanity checks */
+  if (!func_name) {
+    FSI_TRACE(FSI_FATAL, "NULL func_name");
+  }
+  
+  /* load function pointers */
+  *(void **)(fn_map_ptr) = dlsym(g_ccl_lib_handle, func_name);
+  
+  /* check for error */
+  check_dl_error(func_name);
+}
+
+int
+pt_ganesha_fsal_ccl_init()
+{
+  g_ccl_lib_handle = dlopen("/usr/lib64/libfsi_ipc_ccl.so", RTLD_LAZY);
+  
+  /* clearn any existing error */
+  dlerror();
+
+  /* load all CCL function pointers */
+  load_dynamic_function(&g_ccl_function_map.init_fn,
+                        "ccl_init");
+  load_dynamic_function(&g_ccl_function_map.check_handle_index_fn,
+                        "ccl_check_handle_index");
+  load_dynamic_function(&g_ccl_function_map.find_handle_by_name_and_export_fn,
+                        "ccl_find_handle_by_name_and_export");
+  load_dynamic_function(&g_ccl_function_map.stat_fn,
+                        "ccl_stat");
+  load_dynamic_function(&g_ccl_function_map.fstat_fn,
+                        "ccl_fstat");
+  load_dynamic_function(&g_ccl_function_map.stat_by_handle_fn,
+                        "ccl_stat_by_handle");
+  load_dynamic_function(&g_ccl_function_map.rcv_msg_nowait_fn,
+                        "rcv_msg_nowait");
+  load_dynamic_function(&g_ccl_function_map.rcv_msg_wait_fn,
+                        "rcv_msg_wait");
+  load_dynamic_function(&g_ccl_function_map.rcv_msg_wait_block_fn,
+                        "rcv_msg_wait_block");
+  load_dynamic_function(&g_ccl_function_map.send_msg_fn,
+                        "send_msg");
+  load_dynamic_function(&g_ccl_function_map.chmod_fn,
+                        "ccl_chmod");
+  load_dynamic_function(&g_ccl_function_map.chown_fn,
+                        "ccl_chown");
+  load_dynamic_function(&g_ccl_function_map.ntimes_fn,
+                        "ccl_ntimes");
+  load_dynamic_function(&g_ccl_function_map.mkdir_fn,
+                        "ccl_mkdir");
+  load_dynamic_function(&g_ccl_function_map.rmdir_fn,
+                        "ccl_rmdir");
+  load_dynamic_function(&g_ccl_function_map.get_real_filename_fn,
+                        "ccl_get_real_filename");
+  load_dynamic_function(&g_ccl_function_map.disk_free_fn,
+                        "ccl_disk_free");
+  load_dynamic_function(&g_ccl_function_map.unlink_fn,
+                        "ccl_unlink");
+  load_dynamic_function(&g_ccl_function_map.rename_fn,
+                        "ccl_rename");
+  load_dynamic_function(&g_ccl_function_map.opendir_fn,
+                        "ccl_opendir");
+  load_dynamic_function(&g_ccl_function_map.closedir_fn,
+                        "ccl_closedir");
+  load_dynamic_function(&g_ccl_function_map.readdir_fn,
+                        "ccl_readdir");
+  load_dynamic_function(&g_ccl_function_map.seekdir_fn,
+                        "ccl_seekdir");
+  load_dynamic_function(&g_ccl_function_map.telldir_fn,
+                        "ccl_telldir");
+  load_dynamic_function(&g_ccl_function_map.chdir_fn,
+                        "ccl_chdir");
+  load_dynamic_function(&g_ccl_function_map.fsync_fn,
+                        "ccl_fsync");
+  load_dynamic_function(&g_ccl_function_map.ftruncate_fn,
+                        "ccl_ftruncate");
+  load_dynamic_function(&g_ccl_function_map.pread_fn,
+                        "ccl_pread");
+  load_dynamic_function(&g_ccl_function_map.pwrite_fn,
+                        "ccl_pwrite");
+  load_dynamic_function(&g_ccl_function_map.open_fn,
+                        "ccl_open");
+  load_dynamic_function(&g_ccl_function_map.close_fn,
+                        "ccl_close");
+  load_dynamic_function(&g_ccl_function_map.get_any_io_responses_fn,
+                        "get_any_io_responses");
+  load_dynamic_function(&g_ccl_function_map.ipc_stats_logger_fn,
+                        "ccl_ipc_stats_logger");
+  load_dynamic_function(&g_ccl_function_map.update_stats_fn,
+                        "update_stats");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_entry_fn,
+                        "ccl_sys_acl_get_entry");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_tag_type_fn,
+                        "ccl_sys_acl_get_tag_type");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_permset_fn,
+                        "ccl_sys_acl_get_permset");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_qualifier_fn,
+                        "ccl_sys_acl_get_qualifier");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_file_fn,
+                        "ccl_sys_acl_get_file");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_clear_perms_fn,
+                        "ccl_sys_acl_clear_perms");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_add_perm_fn,
+                        "ccl_sys_acl_add_perm");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_init_fn,
+                        "ccl_sys_acl_init");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_create_entry_fn,
+                        "ccl_sys_acl_create_entry");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_set_tag_type_fn,
+                        "ccl_sys_acl_set_tag_type");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_set_qualifier_fn,
+                        "ccl_sys_acl_set_qualifier");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_set_permset_fn,
+                        "ccl_sys_acl_set_permset");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_set_file_fn,
+                        "ccl_sys_acl_set_file");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_delete_def_file_fn,
+                        "ccl_sys_acl_delete_def_file");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_get_perm_fn,
+                        "ccl_sys_acl_get_perm");
+  load_dynamic_function(&g_ccl_function_map.sys_acl_free_acl_fn,
+                        "ccl_sys_acl_free_acl");
+  load_dynamic_function(&g_ccl_function_map.name_to_handle_fn,
+                        "ccl_name_to_handle");
+  load_dynamic_function(&g_ccl_function_map.handle_to_name_fn,
+                        "ccl_handle_to_name");
+  load_dynamic_function(&g_ccl_function_map.dynamic_fsinfo_fn,
+                        "ccl_dynamic_fsinfo");
+  load_dynamic_function(&g_ccl_function_map.readlink_fn,
+                        "ccl_readlink");
+  load_dynamic_function(&g_ccl_function_map.symlink_fn,
+                        "ccl_symlink");
+  load_dynamic_function(&g_ccl_function_map.update_handle_nfs_state_fn,
+                        "ccl_update_handle_nfs_state");
+  load_dynamic_function(&g_ccl_function_map.fsal_try_stat_by_index_fn,
+                        "ccl_fsal_try_stat_by_index");
+  load_dynamic_function(&g_ccl_function_map.fsal_try_fastopen_by_index_fn,
+                        "ccl_fsal_try_fastopen_by_index");
+  load_dynamic_function(&g_ccl_function_map.find_oldest_handle_fn,
+                        "ccl_find_oldest_handle");
+  load_dynamic_function(&g_ccl_function_map.can_close_handle_fn,
+                        "ccl_can_close_handle");
+  load_dynamic_function(&g_ccl_function_map.up_mutex_lock_fn,
+                        "ccl_up_mutex_lock");
+  load_dynamic_function(&g_ccl_function_map.up_mutex_unlock_fn,
+                        "ccl_up_mutex_unlock");
+  load_dynamic_function(&g_ccl_function_map.log_fn,
+                        "ccl_log");
+  load_dynamic_function(&g_fsal_fsi_handles,
+                        "g_fsi_handles");
+
+  /* load and map variables that reside in the CCL shared library */
+  void * g_shm_at_obj = dlsym(g_ccl_lib_handle, "g_shm_at");
+  g_shm_at_fsal = (char *)g_shm_at_obj;
+
+  void * g_fsi_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_handles");
+  g_fsi_handles_fsal = (struct file_handles_struct_t *)g_fsi_handles_obj;
+
+  void * g_fsi_dir_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_dir_handles");
+  g_fsi_dir_handles_fsal = (struct file_handles_struct_t *)g_fsi_handles_obj;
+
+  void * g_fsi_acl_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_acl_handles");
+  g_fsi_acl_handles_fsal = (struct file_handles_struct_t *)g_fsi_handles_obj;
+  
+  return 0;
 }
 
 static int
@@ -247,7 +446,7 @@ PTFSAL_terminate()
   CLOSE_THREAD_MAP parallelCloseThreadMap[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
  
   FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
-  rc = ccl_up_mutex_lock(&g_handle_mutex);
+  rc = CCL_UP_MUTEX_LOCK(&g_handle_mutex);
   if (rc != 0) {
     FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
     minor = 1;
@@ -265,11 +464,11 @@ PTFSAL_terminate()
   }
 
   for (index = FSI_CIFS_RESERVED_STREAMS;
-       index < g_fsi_handles.m_count;
+       index < g_fsi_handles_fsal->m_count;
        index++) {
-    if (g_fsi_handles.m_handle[index].m_hndl_in_use != 0) {
-      if ((g_fsi_handles.m_handle[index].m_nfs_state == NFS_CLOSE) ||
-          (g_fsi_handles.m_handle[index].m_nfs_state == NFS_OPEN)) {
+    if (g_fsi_handles_fsal->m_handle[index].m_hndl_in_use != 0) {
+      if ((g_fsi_handles_fsal->m_handle[index].m_nfs_state == NFS_CLOSE) ||
+          (g_fsi_handles_fsal->m_handle[index].m_nfs_state == NFS_OPEN)) {
   
         // ignore error code, just trying to clean up while going down
         // and want to continue trying to close out other open files
@@ -289,7 +488,7 @@ PTFSAL_terminate()
     }
   }
 
-  ccl_up_mutex_unlock(&g_handle_mutex);
+  CCL_UP_MUTEX_UNLOCK(&g_handle_mutex);
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
        index++) {
@@ -329,6 +528,9 @@ PTFSAL_terminate()
     minor = 4;
     major = posix2fsal_error(signal_send_rc);
   }
+
+  /* close dynamically loaded module */
+  dlclose(g_ccl_lib_handle);
 
   ReturnCode(major, minor);
 }

@@ -697,8 +697,8 @@ case $FSAL in
 		;;
 	PT)
 		AC_DEFINE([_USE_PT], 1, [GANESHA exports ProtecTIER Filesystem])
-		FSAL_CFLAGS=
-		FSAL_LDFLAGS=""
+		FSAL_CFLAGS=""
+		FSAL_LDFLAGS="-Wl,-ldl,--unresolved-symbols=ignore-in-object-files"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PT/libfsalpt.la"
 		FS_NAME="pt"
 		AC_SUBST(RELEASE)
