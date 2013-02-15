@@ -62,6 +62,7 @@ nfsstat4 panfs_um_getdeviceinfo(
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
 
+	*da_addr_body = pgi.da_addr_body;
 	return pgi.hdr.nfsstat;
 }
 
@@ -88,6 +89,7 @@ nfsstat4 panfs_um_layoutget(
 		return NFS4ERR_SERVERFAULT;
 	}
 
+	*loc_body  = pli.loc_body;
 	return pli.hdr.nfsstat;
 }
 
@@ -128,6 +130,7 @@ nfsstat4 panfs_um_layoutcommit(
 	if (ret)
 		return NFS4ERR_SERVERFAULT;
 
+	*lou_body = plci.lou_body;
 	return plci.hdr.nfsstat;
 }
 
