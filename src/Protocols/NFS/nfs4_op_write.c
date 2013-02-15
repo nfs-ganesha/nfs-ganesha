@@ -349,7 +349,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
   if (!anonymous &&
       data->minorversion == 0) {
-          data->req_ctx = NULL;
+          data->req_ctx->clientid = NULL;
   }
 
   /* Set the returned value */

@@ -330,7 +330,7 @@ nfs4_op_read(struct nfs_argop4 *op,
 
         if (!anonymous &&
             data->minorversion == 0) {
-                data->req_ctx = NULL;
+                data->req_ctx->clientid = NULL;
         }
 
         res_READ4.READ4res_u.resok4.data.data_len = read_size;
