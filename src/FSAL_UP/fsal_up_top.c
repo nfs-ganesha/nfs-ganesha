@@ -884,30 +884,11 @@ static void free_layoutrec(nfs_cb_argop4 *op)
 		 .layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
 }
 
-
 struct layoutrecall_completion {
 	char stateid_other[OTHERSIZE];  /*< "Other" part of state id */
 	struct pnfs_segment segment; /*< Segment to recall */
 	nfs_cb_argop4 arg;
 };
-
-static int32_t recallany_completion(rpc_call_t* call, rpc_call_hook hook,
-				    void* arg, uint32_t flags)
-{
-	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
-	gsh_free(arg);
-	return 0;
-}
-
-static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
-				    void* arg, uint32_t flags)
-{
-	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
-	gsh_free(arg);
-	return 0;
-}
 
 static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 				    void* arg, uint32_t flags)
@@ -920,17 +901,6 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 	if (hook != RPC_CALL_COMPLETE ||
 	    (call->cbt.v_u.v4.res.status != NFS4_OK &&
 	     call->cbt.v_u.v4.res.status != NFS4ERR_DELAY)) {
-		struct user_cred synthetic_creds = {
-			.caller_uid = 0,
-			.caller_gid = 0,
-			.caller_glen = 0,
-			.caller_garray = NULL
-		};
-		struct req_op_context synthetic_context = {
-			.creds = &synthetic_creds,
-			.caller_addr = NULL,
-			.clientid = NULL
-		};
 		bool deleted = false;
 		state_t *state = NULL;
 		/**
@@ -980,17 +950,6 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event *e = ctx->arg;
 	struct fsal_up_event_layoutrecall *layoutrecall
 		= &e->data.layoutrecall;
-	struct user_cred synthetic_creds = {
-		.caller_uid = 0,
-		.caller_gid = 0,
-		.caller_glen = 0,
-		.caller_garray = NULL
-	};
-	struct req_op_context synthetic_context = {
-		.creds = &synthetic_creds,
-		.caller_addr = NULL,
-		.clientid = NULL
-	};
 	struct glist_head *queue
 		= (struct glist_head *)e->private;
 	/* Entry in the queue we're disposing */
@@ -1097,6 +1056,15 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 	}
 }
 
+static int32_t recallany_completion(rpc_call_t* call, rpc_call_hook hook,
+				    void* arg, uint32_t flags)
+{
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+		     call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
+	return 0;
+}
+
 static void recallany_one(state_t *s,
 			  struct fsal_up_event_recallany *recallany)
 {
@@ -1143,6 +1111,17 @@ struct cb_notify {
 	struct notify4 notify;
 	struct notify_deviceid_delete4 notify_del;
 };
+
+static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
+				    void* arg, uint32_t flags)
+{
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+		     call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
+	return 0;
+}
+
+
 
 static void notifydev_one(state_t *s,
 			  struct fsal_up_event_notifydevice *devicenotify)
