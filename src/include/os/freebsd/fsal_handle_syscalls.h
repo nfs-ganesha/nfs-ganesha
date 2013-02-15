@@ -51,6 +51,28 @@
 #endif
 
 /*
+ * Currently all FreeBSD versions define MAXFIDSZ to be 16 which is not
+ * sufficient for PanFS file handle. Following scheme ensures that on FreeBSD
+ * platform we always use big enough data structure for holding file handle by
+ * using our own file handle data structure instead of struct fhandle from
+ * mount.h
+ *
+ */
+
+#define MAXFIDSIZE 36
+
+struct v_fid {
+        u_short         fid_len;                /* length of data in bytes */
+        u_short         fid_reserved;           /* force longword alignment */
+        char            fid_data[MAXFIDSIZE];     /* data (variable length) */
+};
+
+struct v_fhandle {
+        fsid_t  fh_fsid;        /* Filesystem id of mount point */
+        struct  v_fid fh_fid;     /* Filesys specific id */
+};
+
+/*
  * vfs_file_handle_t has a leading type and byte count that is
  * not aligned the same as the BSD struct fhandle, which begins
  * instead with a struct fsid, which is two 32-bit ints, then
@@ -70,26 +92,28 @@ static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 }
 
 #define vfs_alloc_handle(fh) \
-	(fh) = alloca(offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE); \
-	memset((fh), 0, (offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE)); \
+	(fh) = alloca(sizeof(vfs_file_handle_t)); \
+	memset((fh), 0, sizeof(vfs_file_handle_t)); \
 	(fh)->handle_bytes = offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
 
-static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
+static int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
 	int error;
-	struct fhandle handle;
-	error = getfhat(fd, NULL, &handle);
+	struct v_fhandle handle;
+	error = getfhat(fd, NULL, (struct fhandle *)&handle, AT_SYMLINK_FOLLOW);
 	if (error == 0) {
 		VFS_BSD_HANDLE_INIT(fh, handle);
 	}
 	return error;
 }
 
-static inline int vfs_name_to_handle_at(int atfd, const char *name, vfs_file_handle_t *fh)
+static inline int vfs_name_to_handle_at(int atfd, const char *name,
+					vfs_file_handle_t *fh, int flag)
 {
 	int error;
-	struct fhandle handle;
-	error = getfhat(atfd, (char *)name, &handle);
+	struct v_fhandle handle;
+	error = getfhat(atfd, (char *)name, (struct fhandle *)&handle,
+			AT_SYMLINK_NOFOLLOW);
 	if (error == 0) {
 		VFS_BSD_HANDLE_INIT(fh, handle);
 	}
@@ -101,10 +125,11 @@ static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int fl
 	return fhopen((struct fhandle *)fh->handle, flags);
 }
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf)
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf,
+				     int flags)
 {
 	int fd, ret;
-	fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
+	fd = vfs_open_by_handle(mountfd, fh, flags);
 	if (fd < 0)
 		return fd;
 	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fstat() */

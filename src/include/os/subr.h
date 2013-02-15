@@ -30,7 +30,17 @@
 #ifndef _SUBR_OS_H
 #define _SUBR_OS_H
 
+#include <stdbool.h>
 #include <extended_types.h>
+
+#ifndef UTIME_NOW
+#define UTIME_NOW	-1
+#define UTIME_OMIT	-2
+#endif
+
+int vfs_utimesat(int fd, const char *path, const struct timespec times[2],
+		 int flags);
+int vfs_utimes(int fd, const struct timespec *times);
 
 struct vfs_dirent {
 	uint64_t vd_ino;

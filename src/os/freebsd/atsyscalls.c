@@ -132,9 +132,9 @@ int faccessat(int dir_fd, char *filename, int mode, int flags)
           return syscall(SYS_faccessat, dir_fd, filename, mode, flags);
 }
 
-int getfhat(int dir_fd, char *fname, struct fhandle *fhp)
+int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
 {
-          return syscall(SYS_getfhat, dir_fd, fname, fhp);
+          return syscall(SYS_getfhat, dir_fd, fname, fhp, flag);
 }
 
 #endif /* SYS_openat */
