@@ -195,20 +195,20 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 void nfs4_Fattr_Free(fattr4 *fattr);
 
 
-nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-                               struct req_op_context *req_ctx,
-                               bool synthetic,
-                               bool reclaim,
-                               layoutreturn_type4 return_type,
-                               state_t *layout_state,
-                               struct pnfs_segment spec_segment,
-                               size_t body_len,
-                               const void* body_val,
-                               bool *deleted,
-                               bool hold_lcok);
+nfsstat4 nfs4_return_one_state(
+	cache_entry_t *entry,
+	struct req_op_context *req_ctx,
+	layoutreturn_type4 return_type,
+	enum fsal_layoutreturn_circumstance circumstance,
+	state_t *layout_state,
+	struct pnfs_segment spec_segment,
+	size_t body_len,
+	const void *body_val,
+	bool *deleted,
+	bool hold_lock);
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
-                              object_file_type_t required_type,
-                              bool ds_allowed);
+			      object_file_type_t required_type,
+			      bool ds_allowed);
 
 typedef enum {
         UTF8_SCAN_NONE = 0,    /* do no validation other than size */

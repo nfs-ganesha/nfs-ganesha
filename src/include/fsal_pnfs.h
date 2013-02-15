@@ -179,20 +179,42 @@ struct fsal_layoutget_res {
 };
 
 /**
+ * @brief Circumstance that triggered the layoutreturn
+ */
+
+enum fsal_layoutreturn_circumstance {
+	/** Return initiated by client call. */
+	circumstance_client,
+	/** Indicates that the client is performing a return of a
+	 *  layout it held prior to a server reboot.  As such,
+	 *  cur_segment is meaningless (no record of the layout having
+	 *  been granted exists). */
+	circumstance_reclaim,
+	/** This is a return following from the last close on a file
+	    with return_on_close layouts. */
+	circumstance_roc,
+	/** The client has behaved badly and we are taking its layout
+	    away forcefully. */
+	circumstance_revoke,
+	/** The client forgot this layout and requested a new layout
+	    on the same file without an layout stateid. */
+	circumstance_forgotten,
+	/** This layoutrecall is a result of system shutdown */
+	circumstance_shutdown
+};
+
+/**
  * Input parameters to FSAL_layoutreturn
  */
 
 struct fsal_layoutreturn_arg {
-	/** Indicates that the client is performing a return of a layout
-	 *  it held prior to a server reboot.  As such, cur_segment is
-	 *  meaningless (no record of the layout having been granted
-	 *  exists). */
-	bool reclaim;
 	/** The type of layout being returned */
 	layouttype4 lo_type;
-	/** The return type of the LAYOUTRETURN call.  Meaningless if
-	 *  synthetic is true. */
+	/** The return type of the LAYOUTRETURN call.  Meaningless
+	    if fsal_layoutreturn_synthetic is set. */
 	layoutreturn_type4 return_type;
+	/** The circumstances under which the return was triggered. */
+	enum fsal_layoutreturn_circumstance circumstance;
 	/** Layout for specified for return.  This need not match any
 	 *  actual granted layout.  Offset and length are set to 0 and
 	 *  NFS4_UINT64_MAX in the case of bulk or synthetic returns.
@@ -206,9 +228,6 @@ struct fsal_layoutreturn_arg {
 	 *  dispose is true, any memory allocated for this value must be
 	 *  freed. */
 	void *fsal_seg_data;
-	/** Whether this return was synthesized a result of
-	 *  return_on_close or lease expiration. */
-	bool synthetic;
 	/** If true, the FSAL must free all resources associated with
 	 *  res.segment. */
 	bool dispose;

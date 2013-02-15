@@ -943,9 +943,11 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 					   &state)) {
 			nfs4_return_one_state(state->state_entry,
 					      &synthetic_context,
-					      true,
-					      false,
 					      LAYOUTRETURN4_FILE,
+					      (call->cbt.v_u.v4.res.status ==
+					       NFS4ERR_NOMATCHING_LAYOUT) ?
+					      circumstance_client :
+					      circumstance_revoke,
 					      state,
 					      completion->segment,
 					      0,
@@ -1082,9 +1084,8 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 
 			nfs4_return_one_state(entry,
 					      &synthetic_context,
-					      true,
-					      false,
 					      LAYOUTRETURN4_FILE,
+					      circumstance_revoke,
 					      s,
 					      layoutrecall->segment,
 					      0,
