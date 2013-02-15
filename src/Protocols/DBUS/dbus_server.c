@@ -292,16 +292,48 @@ out:
 	return retval;
 }
 
+/* @brief Stuff a status into the reply
+ *
+ * status reply is the first part of every reply message
+ * dbus has its own error handling but that is for the connection.
+ * this status is for ganesha level method result reporting.
+ * If a NULL is passed for error message, we stuff a default
+ * "BUSY".  The error message is for things like GUI display or
+ * logging but use the status bool for code flow.
+ *
+ * @param iter       [IN] the iterator to append to
+ * @param success    [IN] the method stastus
+ * @param errmessage [IN] an error message string
+ */
+
+void dbus_status_reply(DBusMessageIter *iter,
+			 bool success,
+			 char *errormsg)
+{
+	char *error;
+	int retcode = success;
+
+	dbus_message_iter_append_basic(iter,
+				       DBUS_TYPE_BOOLEAN,
+				       &retcode);
+	if(success) {
+		error = "OK";
+	} else if(errormsg == NULL) {
+		error = "BUSY";
+	} else {
+		error = errormsg;
+	}
+	dbus_message_iter_append_basic(iter,
+				       DBUS_TYPE_STRING,
+				       &error);
+}
+
 void dbus_append_timestamp(DBusMessageIter *iterp)
 {
 	DBusMessageIter ts_iter;
 	struct timespec timestamp;
 
-	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
-		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
-		timestamp.tv_sec = 0;
-		timestamp.tv_nsec = 0;
-	}
+	now(&timestamp);
 	dbus_message_iter_open_container(iterp, DBUS_TYPE_STRUCT,
 					 NULL,
 					 &ts_iter);

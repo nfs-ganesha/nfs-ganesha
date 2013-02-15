@@ -102,6 +102,9 @@ void *gsh_dbus_thread(void *arg);
 
 /* callout method */
 void dbus_append_timestamp(DBusMessageIter *iterp);
+void dbus_status_reply(DBusMessageIter *iter,
+		       bool success,
+		       char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
                                struct gsh_dbus_interface **interfaces);
 
