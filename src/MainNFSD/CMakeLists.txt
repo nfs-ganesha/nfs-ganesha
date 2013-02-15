@@ -22,7 +22,6 @@ SET(MainServices_STAT_SRCS
    nfs_stats_thread.c
    nfs_rpc_callback.c
    nfs_worker_thread.c
-   nfs_tcb.c
    nfs_rpc_dispatcher_thread.c
    nfs_rpc_tcp_socket_manager_thread.c
    nfs_init.c
@@ -91,10 +90,10 @@ endif(USE_CB_SIMULATOR)
 add_library(MainServices STATIC ${MainServices_STAT_SRCS})
 
 # FSAL core sources
-# fsal_manager is the only object referenced by the core server
-# all the rest are for the common support of fsal plugins.
-# we put them here in the core rather than in a lib so that they
-# are always present and available for runtime linkage.
+# fsal_manager and fsal_destroyer are the only objects referenced by the
+# core server all the rest are for the common support of fsal plugins.
+# we put them here in the core rather than in a lib so that they are always
+# present and available for runtime linkage.
 
 set(fsal_CORE_SRCS
    ../FSAL/fsal_errors.c
@@ -106,6 +105,8 @@ set(fsal_CORE_SRCS
    ../FSAL/fsal_config.c
    ../FSAL/default_methods.c
    ../FSAL/common_pnfs.c
+   ../FSAL/fsal_manager.c
+   ../FSAL/fsal_destroyer.c
 )
 
 ########### next target ###############

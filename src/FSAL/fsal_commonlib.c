@@ -148,6 +148,7 @@ int fsal_export_init(struct fsal_export *exp,
         memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
 	init_glist(&exp->handles);
+	init_glist(&exp->ds_handles);
 	init_glist(&exp->exports);
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)

@@ -192,10 +192,6 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->nb_worker = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Nb_Call_Before_Queue_Avg"))
-        {
-          pparam->nb_call_before_queue_avg = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "DRC_Disabled"))
         {
             pparam->drc.disabled = StrToBoolean(key_value);
@@ -405,6 +401,10 @@ int nfs_read_core_conf(config_file_t in_config,
       else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
         {
           pparam->decoder_fridge_expiration_delay = atoi(key_value);
+        }
+      else if(!strcasecmp( key_name, "Decoder_Fridge_Block_Timeout" ) )
+        {
+          pparam->decoder_fridge_block_timeout = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {

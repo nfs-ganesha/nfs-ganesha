@@ -40,7 +40,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_avl.h"
-#include "cache_inode_weakref.h"
 #include "cache_inode_lru.h"
 
 #include <unistd.h>
@@ -84,7 +83,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      struct attrlist object_attributes;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      cache_inode_fsal_data_t new_entry_fsdata;
-     cache_inode_dir_entry_t *broken_dirent = NULL;
 
      memset(&dirent_key, 0, sizeof(dirent_key));
      memset(&new_entry_fsdata, 0, sizeof(new_entry_fsdata));
@@ -124,32 +122,30 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           int write_locked = 0;
           /* We first try avltree_lookup by name.  If that fails, we
            * dispatch to the FSAL. */
+	  /* XXX this ++write_locked idiom is not good style */
           for (write_locked = 0; write_locked < 2; ++write_locked) {
                /* If the dirent cache is untrustworthy, don't even ask it */
                if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
-                    dirent = cache_inode_avl_qp_lookup_s(parent,
-                                                         name, 1);
+                    dirent = cache_inode_avl_qp_lookup_s(parent, name, 1);
                     if (dirent) {
-                         /* Getting a weakref itself increases the refcount. */
-                         *entry = cache_inode_weakref_get(&dirent->entry,
-                                                         LRU_REQ_SCAN);
-                         if (*entry == NULL) {
-                              broken_dirent = dirent;
-                              break;
-                         } else {
+                        *entry = cache_inode_get_keyed(
+                            &dirent->ckey, req_ctx, CIG_KEYED_FLAG_NONE);
+			if (*entry) {
                               /* We have our entry and a valid reference.
                                  Declare victory. */
                               status = CACHE_INODE_SUCCESS;
                               goto out;
-                         }
-                    }
-                    /* If the dirent cache is both fully populated and
-                       valid, it can serve negative lookups. */
-                    if (!dirent &&
-                        (parent->flags & CACHE_INODE_DIR_POPULATED)) {
-                         *entry = NULL;
-                         status = CACHE_INODE_NOT_FOUND;
-                         goto out;
+			}
+                    } else { /* ! dirent */
+			    if (parent->flags & CACHE_INODE_DIR_POPULATED) {
+				    /* If the dirent cache is both fully
+				       populated and valid, it can serve
+				       negative lookups. */
+				    *entry = NULL;
+				    status = CACHE_INODE_NOT_FOUND;
+				    goto out;
+			    }
+			    /* XXX keep going? */
                     }
                } else if (write_locked) {
                     /* We have the write lock and the content is
@@ -188,33 +184,17 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      status = cache_inode_new_entry(object_handle,
 				    CACHE_INODE_FLAG_NONE,
 				    entry);
-     if (*entry == NULL) {
-          return status;
-     }
 
-     if (broken_dirent) {
-          /* Directory entry existed, but the weak reference
-             was broken.  Just update with the new one. */
-          broken_dirent->entry = (*entry)->weakref;
-          status = CACHE_INODE_SUCCESS;
-     } else {
-          /* Entry was found in the FSAL, add this entry to the
-             parent directory */
-          status = cache_inode_add_cached_dirent(parent,
-						 name,
-						 *entry,
-						 NULL);
+     if (unlikely(! *entry))
+	     return status;
 
-          if (status == CACHE_INODE_ENTRY_EXISTS)
-          {
-              status = CACHE_INODE_SUCCESS;
-          } else if(status != CACHE_INODE_SUCCESS) {
-               return status;
-          }
-     }
+     /* Entry was found in the FSAL, add this entry to the
+	parent directory */
+     status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);
+     if (status == CACHE_INODE_ENTRY_EXISTS)
+	     status = CACHE_INODE_SUCCESS;
 
 out:
-
      return status;
 }
 

@@ -40,7 +40,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_weakref.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -102,21 +101,16 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 	  return CACHE_INODE_SUCCESS;
      }
 
-     /* Try the weakref to the parent first.  This increments the
-        refcount. */
-     *parent = cache_inode_weakref_get(&entry->object.dir.parent,
-				       LRU_REQ_INITIAL);
+     /* Try to lookup by key (fh) */
+     *parent = cache_inode_get_keyed(&entry->object.dir.parent, req_ctx,
+				     CIG_KEYED_FLAG_NONE);
      if (!(*parent)) {
           /* If we didn't find it, drop the read lock, get a write
-             lock, and make sure nobody filled it in while we waited. */
+             lock, and got to FSAL. */
+         struct fsal_obj_handle *parent_handle;
+
           PTHREAD_RWLOCK_unlock(&entry->content_lock);
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-          *parent = cache_inode_weakref_get(&entry->object.dir.parent,
-					    LRU_REQ_INITIAL);
-     }
-
-     if (!(*parent)) {
-	  struct fsal_obj_handle *parent_handle;
 
 	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
                                                        req_ctx, "..",
@@ -135,19 +129,15 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
           fsdata.export = parent_handle->export;
 
-	  status = cache_inode_get(&fsdata,
-				   entry,
-				   req_ctx,
-				   parent);
-
-	  if (*parent == NULL) {
+	  status = cache_inode_get(&fsdata, entry, req_ctx, parent);
+	  if (*parent == NULL)
 		  return status;
-	  }
 /** @TODO Danger Will Robinson!  cache_inode_get should consume the
  *  parent_handle but this may be a leak!
  */
-	  /* Link in a weak reference */
-	  entry->object.dir.parent = (*parent)->weakref;
+	  /* Dup keys */
+	  cache_inode_key_dup(
+		  &entry->object.dir.parent, &((*parent)->fh_hk.key));
      }
 
      return status;

@@ -2840,15 +2840,6 @@ bool nfs_export_create_root_entry(exportlist_t *pexportlist)
              
           /* Add this entry to the Cache Inode as a "root" entry */
 
-          /* cache_inode_make_root returns a cache_entry with
-             reference count of 2, where 1 is the sentinel value of
-             a cache entry in the hash table.  The export list in
-             this case owns the extra reference, but other users of
-             cache_inode_make_root MUST put the entry.  In the future
-             if functionality is added to dynamically add and remove
-             export entries, then the function to remove an export
-             entry MUST put the extra reference. */
-
           cache_status = cache_inode_make_root(pcurrent->proot_handle,
 					       &entry);
           if (entry == NULL)
@@ -2873,10 +2864,9 @@ bool nfs_export_create_root_entry(exportlist_t *pexportlist)
             }
         }
 
-  /* Note: As mentioned above, we are returning with an extra
-     reference to the root entry.  This reference is owned by the
-     export list.  If we ever have a function to remove objects from
-     the export list, it must return this extra reference. */
+  /* Since the entry isn't actually stored anywhere, there's no point
+     in hanging on to an extra reference. */
+  cache_inode_put(entry);
 
   return true;
 

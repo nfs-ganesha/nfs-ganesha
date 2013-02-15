@@ -18,12 +18,11 @@
  */
 
 /**
- * @file   fsal_up_utils.c
+ * @file fsal_up_utils.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Mon Sep 24 17:04:22 2012
+ * @date Mon Sep 24 17:04:22 2012
  *
  * @brief Utilities for use by FSAL UP-call handlers and callers
- *
  */
 
 #include "fsal_up.h"
@@ -45,24 +44,25 @@
  * @retval CACHE_INODE_NOT_FOUND if the inode could not be found or
  *         referenced.
  */
-int
-up_get(const struct gsh_buffdesc *key, cache_entry_t **entry)
+
+int up_get(const struct gsh_buffdesc *key, cache_entry_t **entry)
 {
 	cih_latch_t latch;
 
 	*entry = cih_get_by_fh_latched(key, &latch,
 				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
-	if (! *entry)
-		return (CACHE_INODE_NOT_FOUND);
+	if (*entry == NULL) {
+		return CACHE_INODE_NOT_FOUND;
+	}
 
 	/* Found entry, try to ref it */
 	if (unlikely(cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
 		     CACHE_INODE_SUCCESS)) {
 		/* If ref fails, it's just another NOT_FOUND case */
 		cih_latch_rele(&latch);
-		return (CACHE_INODE_NOT_FOUND);
+		return CACHE_INODE_NOT_FOUND;
 	}
 	cih_latch_rele(&latch);
 
-        return (CACHE_INODE_SUCCESS);
+	return CACHE_INODE_SUCCESS;
 }

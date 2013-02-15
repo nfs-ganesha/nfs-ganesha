@@ -48,7 +48,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tcb.h"
 #include "wait_queue.h"
 #include "err_HashTable.h"
 
@@ -70,7 +69,6 @@
 /* NFS daemon behavior default values */
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
-#define NB_REQUEST_BEFORE_QUEUE_AVG  1000
 #define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_REQUEST_BEFORE_GC 50
@@ -217,7 +215,6 @@ typedef struct nfs_core_param__ {
 	struct sockaddr_in bind_addr; // IPv4 only for now...
 	unsigned int program[P_COUNT];
 	unsigned int nb_worker;
-	unsigned int nb_call_before_queue_avg;
 	long core_dump_size;
 	int nb_max_fd;
 	unsigned int drop_io_errors;
@@ -249,6 +246,7 @@ typedef struct nfs_core_param__ {
 	unsigned int long_processing_threshold;
 	unsigned int dump_stats_per_client;
 	int decoder_fridge_expiration_delay;
+	int decoder_fridge_block_timeout;
 	char stats_file_path[MAXPATHLEN];
 	char stats_per_client_directory[MAXPATHLEN];
 	unsigned int core_options;
@@ -485,36 +483,32 @@ typedef enum idmap_type__ {
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool; /* XXX hide */
-extern pool_t *ip_stats_pool;
-
-struct nfs_worker_data__ {
-	unsigned int worker_index;
-	hash_table_t *ht_ip_stats;
-
-	wait_q_entry_t wqe;
-	pthread_mutex_t request_pool_mutex;
-	nfs_tcb_t wcb; /* Worker control block */
-	exportlist_client_entry_t related_client;
-
-	nfs_worker_stat_t stats;
-	sockaddr_t hostaddr;
-	sigset_t sigmask; /* masked signals */
-	unsigned int current_xid;
-};
-
-/* flush thread data */
-typedef struct nfs_flush_thread_data__ {
-	unsigned int thread_index;
-
-	/* stats */
-	unsigned int nb_flushed;
-	unsigned int nb_too_young;
-	unsigned int nb_errors;
-	unsigned int nb_orphans;
-} nfs_flush_thread_data_t;
+extern pool_t *ip_stats_pool; /*< Delendum est */
 
 /**
- * group together all of NFS-Ganesha's statistics
+ * @brief Per-worker data.  Some of this will be destroyed.
+ */
+
+struct nfs_worker_data {
+	unsigned int worker_index; /*< Index for log messages */
+	hash_table_t *ht_ip_stats; /*< Delendum est */
+
+	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
+	pthread_mutex_t request_pool_mutex; /*< Delendum est */
+	exportlist_client_entry_t related_client; /*< Identity that
+						      governs access to
+						      export */
+
+	nfs_worker_stat_t stats; /*< Delendum est */
+	sockaddr_t hostaddr; /*< Client address */
+	unsigned int current_xid; /*< RPC Transaction ID */
+	struct fridgethr_context *ctx; /*< Link back to thread context */
+};
+
+/**
+ * @brief Group together all of NFS-Ganesha's statistics
+ *
+ * @todo Delendum est.
  */
 typedef struct ganesha_stats__ {
 	nfs_worker_stat_t global_worker_stat;
@@ -571,10 +565,6 @@ extern pool_t *nfs_clientid_pool;
 /*
  * function prototypes
  */
-pause_rc pause_workers(pause_reason_t reason);
-pause_rc wake_workers(awaken_reason_t reason);
-pause_rc wait_for_workers_to_awaken(void);
-void *worker_thread(void *IndexArg);
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
 int stats_snmp(void);
@@ -612,10 +602,10 @@ void nfs_operate_on_sigterm(void);
 void nfs_operate_on_sighup(void);
 
 void nfs_Init_svc(void);
-void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
+void nfs_rpc_dispatch_stop(void);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
@@ -666,8 +656,11 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
 			   exportlist_client_entry_t *pclient_found,
 			   unsigned int export_option);
 
-/* Config reparsing routines */
+/* Admin thread control */
+
+void nfs_Init_admin_thread(void);
 void admin_replace_exports(void);
+void admin_halt(void);
 exportlist_t *RemoveExportEntry(exportlist_t *exportEntry);
 exportlist_t *GetExportEntry(char *exportPath);
 
@@ -756,4 +749,66 @@ extern const nfs_function_desc_t *INVALID_FUNCDESC;
 void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+
+int reaper_init(void);
+int reaper_shutdown(void);
+
+/**
+ * @brief Logging mutex lock
+ *
+ * Based on Marc Eshel's error checking read-write lock macros, check
+ * the return value of pthread_mutex_lock and log any non-zero value.
+ *
+ * @param[in,out] mtx The mutex to acquire
+ */
+
+#define PTHREAD_MUTEX_lock(mtx)						\
+	do {								\
+		int rc;							\
+									\
+		LogFullDebug(COMPONENT_RW_LOCK,				\
+			     "Lock mutex %p", mtx);			\
+		rc = pthread_mutex_lock(mtx);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Got mutex %p", mtx);		\
+		} else{							\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d acquiring mutex %p",		\
+				rc, mtx);				\
+		}							\
+	} while(0)
+
+/**
+ * @brief Logging mutex unlock
+ *
+ * Based on Marc Eshel's error checking read-write lock macros, check
+ * the return value of pthread_mutex_unlock and log any non-zero
+ * value.
+ *
+ * @param[in,out] mtx The mutex to relinquish
+ */
+
+#define PTHREAD_MUTEX_unlock(mtx)					\
+	do {								\
+		int rc;							\
+									\
+		LogFullDebug(COMPONENT_RW_LOCK,				\
+			     "Unlock mutex %p", mtx);			\
+		rc = pthread_mutex_unlock(mtx);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Released mutex %p", mtx);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d relinquishing mutex %p",	\
+				rc, mtx);				\
+		}							\
+	} while(0)
+
+int worker_init(void);
+int worker_shutdown(void);
+int worker_pause(void);
+int worker_resume(void);
+
 #endif /* !NFS_CORE_H */

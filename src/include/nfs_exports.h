@@ -314,7 +314,7 @@ typedef struct nfs_client_cred__ {
 	} auth_union;
 } nfs_client_cred_t;
 
-typedef struct nfs_worker_data__ nfs_worker_data_t;
+typedef struct nfs_worker_data nfs_worker_data_t;
 
 /**
  * @brief NFS v4 Compound Data
@@ -356,7 +356,7 @@ typedef struct compoud_data {
 	char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the
 				      current entry */
 	struct svc_req *reqp; /*< RPC Request related to the compound */
-	struct nfs_worker_data__ *pworker; /*< Worker thread data */
+	struct nfs_worker_data *pworker; /*< Worker thread data */
 	nfs_client_cred_t credential; /*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid; /*< clientid that has lease
 					         reserved, if any */

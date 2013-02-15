@@ -66,15 +66,15 @@
 #include "nlm_util.h"
 #include "nsm.h"
 #include "sal_functions.h"
-#include "nfs_tcb.h"
-#include "nfs_tcb.h"
+#include "fridgethr.h"
+
+extern struct fridgethr *req_fridge;
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param =
 {
   /* Core parameters */
   .core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
-  .core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG,
   .core_param.drc.disabled = false,
   .core_param.drc.tcp.npart = DRC_TCP_NPART,
   .core_param.drc.tcp.size = DRC_TCP_SIZE,
@@ -107,6 +107,7 @@ nfs_parameter_t nfs_param =
   .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
   .core_param.decoder_fridge_expiration_delay = -1,
+  .core_param.decoder_fridge_block_timeout = -1,
   .core_param.dispatch_max_reqs = 5000,
   .core_param.dispatch_max_reqs_xprt =  512,
   .core_param.core_options = CORE_OPTION_ALL_VERS,
@@ -359,30 +360,19 @@ nfs_parameter_t nfs_param =
 struct timespec ServerBootTime;
 time_t ServerEpoch;
 
-nfs_worker_data_t *workers_data = NULL;
+nfs_worker_data_t *workers_data = NULL; /*< Delendum est */
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
 /* node ID used to identify an individual node in a cluster */
 ushort g_nodeid = 0;
 
-hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
+hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD]; /*< Delendum Est */
 nfs_start_info_t nfs_start_info;
 
-pthread_t worker_thrid[NB_MAX_WORKER_THREAD];
-
-pthread_t flusher_thrid[NB_MAX_FLUSHER_THREAD];
-nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
-
-pthread_t stat_thrid;
-pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
-pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
-pthread_t reaper_thrid;
 pthread_t gsh_dbus_thrid;
-pthread_t upp_thrid;
-nfs_tcb_t gccb;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
@@ -428,24 +418,9 @@ void *sigmgr_thread(void *UnusedArg)
           admin_replace_exports();
         }
     }
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
-  LogDebug(COMPONENT_THREAD, "Stopping worker threads");
-
-  if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
-    LogDebug(COMPONENT_THREAD,
-             "Unexpected return code from pause_threads");
-  else
-    LogDebug(COMPONENT_THREAD,
-             "Done waiting for worker threads to exit");
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
-
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
-  /* Remove pid file. I do not check for status (best effort,
-   * the daemon is stopping anyway */
-  unlink( pidfile_path ) ;
+  admin_halt();
 
   /* Might as well exit - no need for this thread any more */
   return NULL;
@@ -492,8 +467,6 @@ void nfs_print_param_config()
   printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
-  printf("\tb_Call_Before_Queue_Avg = %u ; \n",
-         nfs_param.core_param.nb_call_before_queue_avg);
   printf("\tDRC_TCP_Npart = %u ; \n", nfs_param.core_param.drc.tcp.npart);
   printf("\tDRC_TCP_Size = %u ; \n", nfs_param.core_param.drc.tcp.size);
   printf("\tDRC_TCP_Cachesz = %u ; \n", nfs_param.core_param.drc.tcp.cachesz);
@@ -519,6 +492,8 @@ void nfs_print_param_config()
          nfs_param.core_param.long_processing_threshold);
   printf("\tDecoder_Fridge_Expiration_Delay = %d ; \n",
          nfs_param.core_param.decoder_fridge_expiration_delay);
+  printf("\tDecoder_Fridge_Block_Timeout = %d ; \n",
+	 nfs_param.core_param.decoder_fridge_block_timeout);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          nfs_param.core_param.stats_per_client_directory);
 
@@ -1049,7 +1024,6 @@ static void nfs_Start_threads(void)
 {
   int rc = 0;
   pthread_attr_t attr_thr;
-  unsigned long i = 0;
 
   LogDebug(COMPONENT_THREAD,
            "Starting threads");
@@ -1077,31 +1051,13 @@ static void nfs_Start_threads(void)
   LogDebug(COMPONENT_THREAD,
            "sigmgr thread started");
 
-  /* Starting all of the worker thread */
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+  rc = worker_init();
+  if (rc != 0)
     {
-      if((rc =
-          pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
-        {
-          LogFatal(COMPONENT_THREAD,
-                   "Could not create worker_thread #%lu, error = %d (%s)",
-                   i, errno, strerror(errno));
-        }
+      LogFatal(COMPONENT_THREAD,
+	       "Could not start worker threads: %d",
+	       errno);
     }
-  LogEvent(COMPONENT_THREAD,
-           "%d worker threads were started successfully",
-           nfs_param.core_param.nb_worker);
-
-  /* Start State Async threads */
-  state_async_thread_start();
-
-  /*
-   * Now that all TCB controlled threads (workers, NLM,
-   * sigmgr) were created, lets wait for them to fully
-   * initialze __before__ we create the threads that listen
-   * for incoming requests.
-   */
-  wait_for_threads_to_awaken();
 
   /* Start event channel service threads */
   nfs_rpc_dispatch_threads(&attr_thr);
@@ -1153,45 +1109,9 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD, "admin thread was started successfully");
 
-  /* Starting the stats thread */
-  if((rc =
-      pthread_create(&stat_thrid, &attr_thr, stats_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create stats_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD, "statistics thread was started successfully");
-
-#ifdef _USE_STAT_EXPORTER
-
-  /* Starting the long processing threshold thread */
-  if((rc =
-      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create long_processing_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD,
-           "long processing threshold thread was started successfully");
-
-  /* Starting the stat exporter thread */
-  if((rc =
-      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create stat_exporter_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD,
-           "statistics exporter thread was started successfully");
-
-#endif      /*  _USE_STAT_EXPORTER */
-
   /* Starting the reaper thread */
-  if((rc =
-      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, NULL)) != 0)
+  rc = reaper_init();
+  if(rc != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create reaper_thread, error = %d (%s)",
@@ -1226,7 +1146,13 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   if (nfs_param.core_param.enable_FSAL_upcalls)
     {
-      init_FSAL_up();
+      rc = fsal_up_init();
+      if (rc != 0)
+	{
+	  LogFatal(COMPONENT_INIT,
+		   "FSAL upcall system could not be initialized: %d",
+		   rc);
+	}
     }
 
   /* Cache Inode Initialisation */
@@ -1237,9 +1163,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
                "Cache Inode Layer could not be initialized, status=%s",
                cache_inode_err_str(cache_status));
     }
-
-  /* Initialize thread control block */
-  tcb_head_init();
 
   state_status = state_lock_init(cache_inode_params.cookie_param);
   if(state_status != STATE_SUCCESS)
@@ -1252,7 +1175,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Cache Inode LRU (call this here, rather than as part of
      cache_inode_init() so the GC policy has been set */
-  cache_inode_lru_pkginit();
+  rc = cache_inode_lru_pkginit();
+  if (rc != 0) {
+	  LogFatal(COMPONENT_INIT,
+		   "Unable to initialize LRU subsystem: %d.",
+		   rc);
+  }
 
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
                                  sizeof(nfs41_session_t),
@@ -1377,7 +1305,13 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   nfs_Init_svc();
   LogInfo(COMPONENT_INIT,  "RPC ressources successfully initialized");
 
-  /* Worker initialisation */
+  /**
+   * This is a fake initialization to allow the stats code to compile
+   * cleanly by giving them their own array of workers data with
+   * nothing in it.
+   *
+   * @todo Delendum est.
+   */
   if((workers_data =
       gsh_calloc(nfs_param.core_param.nb_worker,
                  sizeof(nfs_worker_data_t))) == NULL)
@@ -1389,17 +1323,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   LogDebug(COMPONENT_INIT, "Initializing workers data structure");
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
-      char name[256];
+      char name[256] = "dummy";
 
-      /* Set the index (mostly used for debug purpose */
-      workers_data[i].worker_index = i;
-
-      /* Fill in workers fields (semaphores and other stangenesses */
-      if(nfs_Init_worker_data(&(workers_data[i])) != 0)
-        LogFatal(COMPONENT_INIT,
-                 "Error while initializing worker data #%d", i);
-
-      sprintf(name, "IP Stats for worker %d", i);
       nfs_param.ip_stats_param.hash_param.ht_name = gsh_strdup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
 
@@ -1407,12 +1332,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
         LogFatal(COMPONENT_INIT,
                  "Error while initializing IP/stats cache #%d", i);
 
-      workers_data[i].ht_ip_stats = ht_ip_stats[i];
       LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */
 
+
   /* Admin initialisation */
-  nfs_Init_admin_data();
+  nfs_Init_admin_thread();
 
   /* Set the stats to zero */
   nfs_reset_stats();
@@ -1706,25 +1631,17 @@ void nfs_start(nfs_start_info_t * p_start_info)
         LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
     }
 
-  /* Wait for the threads to complete their init step */
-  if(wait_for_threads_to_awaken() != PAUSE_OK)
-    {
-      /* Not quite sure what to do here... */
-    }
-  else
-    {
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
-      LogEvent(COMPONENT_INIT,
-               "             NFS SERVER INITIALIZED");
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
-    }
+  LogEvent(COMPONENT_INIT,
+	   "-------------------------------------------------");
+  LogEvent(COMPONENT_INIT,
+	   "             NFS SERVER INITIALIZED");
+  LogEvent(COMPONENT_INIT,
+	   "-------------------------------------------------");
 
   /* Wait for dispatcher to exit */
   LogDebug(COMPONENT_THREAD,
-           "Wait for sigmgr thread to exit");
-  pthread_join(sigmgr_thrid, NULL);
+           "Wait for admin thread to exit");
+  pthread_join(admin_thrid, NULL);
 
   /* Regular exit */
   LogEvent(COMPONENT_MAIN,

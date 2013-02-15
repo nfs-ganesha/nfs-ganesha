@@ -27,57 +27,33 @@
 #include "fsal_types.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "fridgethr.h"
 
-/**
- * @brief FSAL upcall thread state
- *
- * This structure encapsulate the data used by the FSAL upcall
- * management thread.
- */
-
-struct fsal_up_state
-{
-        bool stop; /*< Set to true to signal the thread that it
-                       should shut down. */
-        bool running; /*< Is true when the thread is running. */
-        bool shutdown; /*< Set to true to indicate that the thread is
-                           shut down.  running && shutdown indicates
-                           that the thread is in the process of
-                           shutting down. */
-        struct glist_head queue; /*< Event queue */
-        pool_t *pool; /*< Pool from which to allocate events */
-        pthread_t thread_id; /*< Thread ID of FSAL up thread */
-        pthread_mutex_t lock; /*< Lock governing access to this
-                                  structure. */
-        pthread_cond_t cond; /*< Condition variable for thread. */
-};
-
-#ifndef FSAL_UP_THREAD_C
-extern struct fsal_up_state fsal_up_state;
-#endif /* FSAL_UP_THREAD_C */
-
-/**
- * @brief The actual state used to manage the thread
- */
+struct fsal_up_vector;
 
 /**
  * @brief An enumeration of supported events
+ *
+ * @note This must not become discontiguous or terrible things will
+ * happen.  If you add new events, update the check in @c
+ * fsal_up_submit and the array bound in the @c fsal_up_vector
+ * structure.
  */
 
 typedef enum {
-        FSAL_UP_EVENT_LOCK_GRANT,
-        FSAL_UP_EVENT_LOCK_AVAIL,
-        FSAL_UP_EVENT_INVALIDATE,
-        FSAL_UP_EVENT_UPDATE,
-        FSAL_UP_EVENT_LINK,
-        FSAL_UP_EVENT_UNLINK,
-        FSAL_UP_EVENT_MOVE_FROM,
-        FSAL_UP_EVENT_MOVE_TO,
-        FSAL_UP_EVENT_RENAME,
-        FSAL_UP_EVENT_LAYOUTRECALL,
-        FSAL_UP_EVENT_RECALL_ANY,
-        FSAL_UP_EVENT_NOTIFY_DEVICE,
-        FSAL_UP_EVENT_DELEGATION_RECALL
+	FSAL_UP_EVENT_LOCK_GRANT,
+	FSAL_UP_EVENT_LOCK_AVAIL,
+	FSAL_UP_EVENT_INVALIDATE,
+	FSAL_UP_EVENT_UPDATE,
+	FSAL_UP_EVENT_LINK,
+	FSAL_UP_EVENT_UNLINK,
+	FSAL_UP_EVENT_MOVE_FROM,
+	FSAL_UP_EVENT_MOVE_TO,
+	FSAL_UP_EVENT_RENAME,
+	FSAL_UP_EVENT_LAYOUTRECALL,
+	FSAL_UP_EVENT_RECALL_ANY,
+	FSAL_UP_EVENT_NOTIFY_DEVICE,
+	FSAL_UP_EVENT_DELEGATION_RECALL
 } fsal_up_event_type_t;
 
 /**
@@ -86,12 +62,12 @@ typedef enum {
 
 struct fsal_up_file
 {
-        struct gsh_buffdesc key; /*< Hash key identifying the file.
+	struct gsh_buffdesc key; /*< Hash key identifying the file.
                                      This buffer must be allocated
                                      with gsh_malloc and will be
                                      freed after the event is
                                      processed.  Maybe {NULL, 0}. */
-        struct fsal_export *export; /*< The FSAL export object.  A
+	struct fsal_export *export; /*< The FSAL export object.  A
                                         reference will be taken on the
                                         export when the event is
                                         queued and released when it is
@@ -104,8 +80,8 @@ struct fsal_up_file
 
 struct fsal_up_event_lock_grant
 {
-        void              * lock_owner; /*< The lock owner */
-        fsal_lock_param_t   lock_param; /*< A description of the lock */
+	void *lock_owner; /*< The lock owner */
+	fsal_lock_param_t lock_param; /*< A description of the lock */
 };
 
 /**
@@ -114,8 +90,8 @@ struct fsal_up_event_lock_grant
 
 struct fsal_up_event_lock_avail
 {
-        void              * lock_owner; /*< The lock owner */
-        fsal_lock_param_t   lock_param; /*< A description of the lock */
+	void *lock_owner; /*< The lock owner */
+	fsal_lock_param_t lock_param; /*< A description of the lock */
 };
 
 /**
@@ -124,7 +100,7 @@ struct fsal_up_event_lock_avail
 
 struct fsal_up_event_invalidate
 {
-        uint32_t flags; /*< Flags governing invalidate. */
+	uint32_t flags; /*< Flags governing invalidate. */
 };
 
 /**
@@ -133,7 +109,7 @@ struct fsal_up_event_invalidate
 
 struct fsal_up_event_update
 {
-        struct attrlist attr; /*< List of attributes to update.  Note
+	struct attrlist attr; /*< List of attributes to update.  Note
                                   that the @c supported_attributes, @c
                                   type, @c fsid, @c fileid, @c rawdev,
                                   @c mounted_on_fileid, and @c
@@ -141,7 +117,7 @@ struct fsal_up_event_update
                                   updated and the corresponding bits
                                   in the mask must not be set, nor may
                                   the ATTR_RDATA_ERR bit be set. */
-        uint32_t flags; /*< Flags indicating special handling for
+	uint32_t flags; /*< Flags indicating special handling for
                             some attributes. */
 };
 
@@ -204,10 +180,10 @@ static const uint32_t fsal_up_nlink = 0x0080;
 
 struct fsal_up_event_link
 {
-        char *name; /*< The name of the newly created link.  This is
+	char *name; /*< The name of the newly created link.  This is
                         allocated by the FSAL and freed by the FSAL
                         upcall thread. */
-        struct fsal_up_file target; /*< The target of the link, may
+	struct fsal_up_file target; /*< The target of the link, may
                                         be {{0, 0}, 0} if unknown. */
 };
 
@@ -218,7 +194,7 @@ struct fsal_up_event_link
 
 struct fsal_up_event_unlink
 {
-        char *name; /*< The name of the newly created link.  This is
+	char *name; /*< The name of the newly created link.  This is
                         allocated by the FSAL and freed by the FSAL
                         upcall thread. */
 };
@@ -230,7 +206,7 @@ struct fsal_up_event_unlink
 
 struct fsal_up_event_move_from
 {
-        char *name; /*< The name of the newly created link.  This is
+	char *name; /*< The name of the newly created link.  This is
                         allocated by the FSAL and freed by the FSAL
                         upcall thread. */
 };
@@ -242,10 +218,10 @@ struct fsal_up_event_move_from
 
 struct fsal_up_event_move_to
 {
-        char *name; /*< The name of the newly created link.  This is
+	char *name; /*< The name of the newly created link.  This is
                         allocated by the FSAL and freed by the FSAL
                         upcall thread. */
-        struct fsal_up_file target; /*< The target of the link, may
+	struct fsal_up_file target; /*< The target of the link, may
                                         be {{0, 0}, 0} if unknown. */
 };
 
@@ -288,9 +264,9 @@ struct fsal_up_event_layoutrecall
 
 struct fsal_up_event_recallany
 {
-        uint32_t objects_to_keep;
-        struct bitmap4 type_mask;
-        void *cookie; /*< A cookie returned with the return that
+	uint32_t objects_to_keep;
+	struct bitmap4 type_mask;
+	void *cookie; /*< A cookie returned with the return that
                           completely satisfies a recall. */
 };
 
@@ -300,11 +276,11 @@ struct fsal_up_event_recallany
 
 struct fsal_up_event_notifydevice
 {
-        notify_deviceid_type4 notify_type;
-        layouttype4 layout_type;
-        deviceid4 device_id;
-        bool immediate;
-        void *cookie; /*< A cookie returned with the return that
+	notify_deviceid_type4 notify_type;
+	layouttype4 layout_type;
+	deviceid4 device_id;
+	bool immediate;
+	void *cookie; /*< A cookie returned with the return that
                           completely satisfies a recall. */
 };
 
@@ -314,124 +290,8 @@ struct fsal_up_event_notifydevice
 
 struct fsal_up_event_delegrecall
 {
-     int flags; // recall all ???
+	int flags; // recall all ???
 };
-
-/**
- * @brief The vector for up-call operations
- *
- * This structure contains two functions for each operation.  One is
- * immediate (for validation or quick dispatch.  It has the ability to
- * signal failure to the FSAL when the event is queued) and the second
- * is executed by the up-call thread when an event is de-queued.
- * Either may be NULL.
- *
- * Stacked FSAL authors may override functions completely or cascade
- * into them.  An FSAL should save the vector passed to it and pass a
- * vector of its own functions down to FSALs it initializes.  To
- * cascade, the FSAL must call the function in the supplied vector
- * initially.  To disable a function completely (for example to do all
- * processing in the immediate function and have no queued function at
- * all) simply set it to NULL in your vector.
- *
- * If the _imm function for an operation returns non-zero, the event
- * is not queued.
- */
-
-struct fsal_up_vector
-{
-        int (*lock_grant_imm)(struct fsal_up_event_lock_grant *,
-                              struct fsal_up_file *,
-                              void **);
-        void (*lock_grant_queue)(struct fsal_up_event_lock_grant *,
-                                 struct fsal_up_file *,
-                                 void *);
-        int (*lock_avail_imm)(struct fsal_up_event_lock_avail *,
-                              struct fsal_up_file *,
-                              void **);
-        void (*lock_avail_queue)(struct fsal_up_event_lock_avail *,
-                                 struct fsal_up_file *,
-                                 void *);
-
-        int (*invalidate_imm)(struct fsal_up_event_invalidate *,
-                              struct fsal_up_file *,
-                              void **);
-        void (*invalidate_queue)(struct fsal_up_event_invalidate *,
-                                 struct fsal_up_file *,
-                                 void *);
-
-        int (*update_imm)(struct fsal_up_event_update *,
-                          struct fsal_up_file *,
-                          void **);
-        void (*update_queue)(struct fsal_up_event_update *,
-                             struct fsal_up_file *,
-                             void *);
-
-        int (*link_imm)(struct fsal_up_event_link *,
-                        struct fsal_up_file *,
-                        void **);
-        void (*link_queue)(struct fsal_up_event_link *,
-                           struct fsal_up_file *,
-                           void *);
-
-        int (*unlink_imm)(struct fsal_up_event_unlink *,
-                          struct fsal_up_file *,
-                          void **);
-        void (*unlink_queue)(struct fsal_up_event_unlink *,
-                             struct fsal_up_file *,
-                             void *);
-
-        int (*move_from_imm)(struct fsal_up_event_move_from *,
-                             struct fsal_up_file *,
-                             void **);
-        void (*move_from_queue)(struct fsal_up_event_move_from *,
-                                struct fsal_up_file *,
-                                void *);
-
-        int (*move_to_imm)(struct fsal_up_event_move_to *,
-                           struct fsal_up_file *,
-                           void **);
-        void (*move_to_queue)(struct fsal_up_event_move_to *,
-                              struct fsal_up_file *,
-                              void *);
-
-        int (*rename_imm)(struct fsal_up_event_rename *,
-                          struct fsal_up_file *,
-                          void **);
-        void (*rename_queue)(struct fsal_up_event_rename *,
-                             struct fsal_up_file *,
-                             void *);
-
-        int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
-                                struct fsal_up_file *,
-                                void **);
-        void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
-                                   struct fsal_up_file *,
-                                   void *);
-
-        int (*recallany_imm)(struct fsal_up_event_recallany *,
-                             struct fsal_up_file *,
-			     void **);
-        void (*recallany_queue)(struct fsal_up_event_recallany *,
-                                struct fsal_up_file *,
-                                void *);
-
-        int (*notifydevice_imm)(struct fsal_up_event_notifydevice *,
-                                struct fsal_up_file *,
-                                void **);
-        void (*notifydevice_queue)(struct fsal_up_event_notifydevice *,
-                                   struct fsal_up_file *,
-                                   void *);
-
-	int (*delegrecall_imm)(struct fsal_up_event_delegrecall *,
-			       struct fsal_up_file *,
-			       void **);
-	void (*delegrecall_queue)(struct fsal_up_event_delegrecall *,
-				  struct fsal_up_file *,
-				  void *);
-};
-
-extern struct fsal_up_vector fsal_up_top;
 
 /**
  * @brief A single up-call event.
@@ -486,14 +346,45 @@ struct fsal_up_event
                            function. */
 };
 
+typedef int (*fsal_up_immfunc_t)(struct fsal_up_event *);
+typedef void (*fsal_up_queuefunc_t)(struct fridgethr_context *);
 
+/**
+ * @brief The vector for up-call operations
+ *
+ * This structure contains two arrays of function for each operation.
+ * One is immediate (for validation or quick dispatch.  It has the
+ * ability to signal failure to the FSAL when the event is queued) and
+ * the second which is executed by the up-call thread when an event is
+ * de-queued.  Either may be NULL.
+ *
+ * Stacked FSAL authors may override functions completely or cascade
+ * into them.  An FSAL should save the vector passed to it and pass a
+ * vector of its own functions down to FSALs it initializes.  To
+ * cascade, the FSAL must call the function in the supplied vector
+ * initially.  To disable a function completely (for example to do all
+ * processing in the immediate function and have no queued function at
+ * all) simply set it to NULL in your vector.
+ *
+ * If the immediate function for an operation returns non-zero, the
+ * event is not queued.
+ */
+
+struct fsal_up_vector {
+	fsal_up_immfunc_t imm[FSAL_UP_EVENT_DELEGATION_RECALL + 1];
+	fsal_up_queuefunc_t queue[FSAL_UP_EVENT_DELEGATION_RECALL + 1];
+};
+
+extern struct fsal_up_vector fsal_up_top;
 
 /****************************
  * FSAL UP utility functions
  ****************************/
 
-void init_FSAL_up(void);
-int shutdown_FSAL_up(void);
+int fsal_up_init(void);
+int fsal_up_shutdown(void);
+int fsal_up_pause(void);
+int fsal_up_resume(void);
 int fsal_up_submit(struct fsal_up_event *event);
 
 int up_get(const struct gsh_buffdesc *key,

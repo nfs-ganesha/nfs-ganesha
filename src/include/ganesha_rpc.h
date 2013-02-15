@@ -23,6 +23,7 @@
 #include "abstract_mem.h"
 #include "nlm_list.h"
 #include "log.h"
+#include "fridgethr.h"
 
 #define NFS_LOOKAHEAD_NONE      0x0000
 #define NFS_LOOKAHEAD_MOUNT     0x0001
@@ -290,5 +291,8 @@ extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 /* Serialized clnt_create and clnt_destroy */
 CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
 void gsh_clnt_destroy(CLIENT *);
+bool is_rpc_call_valid(struct fridgethr_context *, SVCXPRT *,
+		       struct svc_req *);
+
 
 #endif /* GANESHA_RPC_H */

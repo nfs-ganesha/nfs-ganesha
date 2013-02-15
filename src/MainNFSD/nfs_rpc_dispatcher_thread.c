@@ -56,7 +56,6 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "nfs_tcb.h"
 #include "fridgethr.h"
 
 #ifndef _USE_TIRPC_IPV6
@@ -84,7 +83,7 @@ struct rpc_evchan {
 
 static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 
-thr_fridge_t req_fridge[1]; /*< Decoder thread pool */
+struct fridgethr *req_fridge; /*< Decoder thread pool */
 struct nfs_req_st nfs_req_st; /*< Shared request queues */
 
 const char *req_q_s[N_REQ_QUEUES] =
@@ -714,6 +713,18 @@ void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
              N_EVENT_CHAN); 
 }
 
+void nfs_rpc_dispatch_stop(void)
+{
+    int ix;
+
+    for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
+	svc_rqst_thrd_signal(rpc_evchan[ix].chan_id,
+			     SVC_RQST_SIGNAL_SHUTDOWN);
+    }
+}
+
+
+
 /**
  * @brief Rendezvous callout.  This routine will be called by TI-RPC
  *        after newxprt has been accepted.
@@ -822,11 +833,9 @@ stallq_should_unstall(gsh_xprt_private_t *xu)
 		(xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
-void *
-thr_stallq(void *arg)
+void
+thr_stallq(struct fridgethr_context *thr_ctx)
 {
-    fridge_thr_contex_t *thr_ctx  __attribute__((unused)) =
-        (fridge_thr_contex_t *) arg;
     gsh_xprt_private_t *xu;
     struct glist_head *l;
     SVCXPRT *xprt;
@@ -867,8 +876,6 @@ thr_stallq(void *arg)
     }
 
     LogDebug(COMPONENT_DISPATCH, "stallq idle, thread exit");
-
-  return (NULL);
 }
 
 static bool
@@ -921,8 +928,13 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
 
     if (activate) {
+	int rc = 0;
         LogDebug(COMPONENT_DISPATCH, "starting stallq service thread");
-        (void) fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
+        rc = fridgethr_submit(req_fridge, thr_stallq, NULL /* no arg */);
+	if (rc != 0) {
+	    LogCrit(COMPONENT_DISPATCH,
+		    "Failed to start stallq: %d", rc);
+	}
     }
 
     /* stalled */
@@ -932,15 +944,31 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 void
 nfs_rpc_queue_init(void)
 {
+    struct fridgethr_params reqparams;
     struct req_q_pair *qpair;
+    int rc = 0;
     int ix;
 
+    memset(&reqparams, 0, sizeof(struct fridgethr_params));
+    /**
+     * @todo Add a configuration parameter to set a max.
+     */
+    reqparams.thr_max = 0;
+    reqparams.thr_min = 1;
+    reqparams.thread_delay
+	= ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
+	   nfs_param.core_param.decoder_fridge_expiration_delay : 600);
+    reqparams.deferment = fridgethr_defer_block;
+    reqparams.block_delay
+	= ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
+	   nfs_param.core_param.decoder_fridge_block_timeout : 600);
+
     /* decoder thread pool */
-    req_fridge->stacksize = 16384;
-    req_fridge->expiration_delay_s =
-        (nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
-        nfs_param.core_param.decoder_fridge_expiration_delay : 600;
-    (void) fridgethr_init(req_fridge, "decoder_thr");
+    rc = fridgethr_init(&req_fridge, "decoder_thr", &reqparams);
+    if (rc != 0) {
+	LogFatal(COMPONENT_DISPATCH,
+		 "Unable to initialize decoder thread pool: %d", rc);
+    }
 
     /* queues */
     gsh_mutex_init(&nfs_req_st.reqs.mtx, NULL);
@@ -1176,7 +1204,7 @@ retry_deq:
             timeout.tv_sec  = time(NULL) + 5;
             timeout.tv_nsec = 0;
             pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
-            if ((worker->wcb.tcb_state) == STATE_EXIT) {
+            if (fridgethr_you_should_break(worker->ctx)) {
                 /* We are returning; so take us out of the waitq */
                 pthread_mutex_lock(&nfs_req_st.reqs.mtx);
                 if (wqe->waitq.next != NULL || wqe->waitq.prev != NULL) {
@@ -1258,16 +1286,17 @@ free_nfs_request(request_data_t *nfsreq)
     pool_free(request_pool, nfsreq);
 }
 
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx,
-                                                nfs_request_data_t *);
-int nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *);
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(struct fridgethr_context *,
+						nfs_request_data_t *);
+int nfs_rpc_get_args(struct fridgethr_context *, nfs_request_data_t *);
 
 
 extern enum auth_stat svc_auth_authenticate(struct svc_req *, struct rpc_msg *,
     bool *);
 
 static inline enum auth_stat
-AuthenticateRequest(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *nfsreq,
+AuthenticateRequest(struct fridgethr_context *thr_ctx,
+		    nfs_request_data_t *nfsreq,
                     bool *no_dispatch)
 {
   struct svc_req *req = &(nfsreq->req);
@@ -1363,7 +1392,8 @@ out:
 }
 
 static inline enum xprt_stat
-thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
+thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
+		       SVCXPRT *xprt)
 {
     request_data_t *nfsreq;
     enum xprt_stat stat = XPRT_IDLE;
@@ -1499,11 +1529,10 @@ thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
     return (stat == XPRT_MOREREQS);
 }
 
-void *
-thr_decode_rpc_requests(void *arg)
+void
+thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
 {
     enum xprt_stat stat;
-    fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
     LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
@@ -1523,8 +1552,6 @@ thr_decode_rpc_requests(void *arg)
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
-
-  return (NULL);
 }
 
 static bool
@@ -1569,7 +1596,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     /* The following actions are now purely diagnostic, the only side effect
      * is a message to the log. */
-    int code  __attribute__((unused)) = 0;
+    int code = 0;
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
 
@@ -1660,7 +1687,18 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     LogFullDebug(COMPONENT_DISPATCH, "before fridgethr_get");
 
     /* schedule a thread to decode */
-    (void) fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
+    code = fridgethr_submit(req_fridge, thr_decode_rpc_requests, xprt);
+    if (code == ETIMEDOUT) {
+	LogFullDebug(COMPONENT_RPC,
+		     "Decode dispatch timed out, rearming. xprt=%p",
+		     xprt);
+
+	svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+	gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+    } else if (code != 0) {
+	LogMajor(COMPONENT_DISPATCH,
+		 "Unable to get decode thread: %d", code);
+    }
 
     LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");
 
@@ -1707,7 +1745,7 @@ void *rpc_dispatcher_thread(void *arg)
  * @return True if the request is valid, fals otherwise.
  */
 bool
-is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
+is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
                   struct svc_req *req)
 {
   int lo_vers, hi_vers;
@@ -1902,7 +1940,8 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
  * Extract RPC argument.
  */
 int
-nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
+nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
+		 nfs_request_data_t *preqnfs)
 {
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;

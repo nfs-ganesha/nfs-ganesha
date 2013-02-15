@@ -34,7 +34,6 @@
 #include "nsm.h"
 #include "nlm_async.h"
 #include "nfs_core.h"
-#include "nfs_tcb.h"
 
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;

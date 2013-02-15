@@ -57,7 +57,7 @@
  */
 
 pthread_mutex_t fsal_lock = PTHREAD_MUTEX_INITIALIZER;
-static GLIST_HEAD(fsal_list);
+GLIST_HEAD(fsal_list);
 
 /*
  * vars for passing status/errors between shared object

@@ -179,14 +179,7 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
   hash_stat_t hstat, hstat_reverse;
   long cs = (long)opt;
 
-  /* check mask, the structure contain 16 elements, mask is 0xF0 */
-  if((cs & 0xF0) == 0x00)
-    {
-      /* Pinting the cache inode hash stat */
-      /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
-      HashTable_GetStats(fh_to_cache_entry_ht, &hstat);
-    }
-  else if((cs & 0xF0) == 0x10)
+  if((cs & 0xF0) == 0x10)
     {
 //TODO: This should have taken care by the following commit.
 // Commenting for now. Philippe to fix it ASAP.

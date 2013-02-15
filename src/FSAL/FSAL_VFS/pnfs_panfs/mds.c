@@ -393,8 +393,9 @@ int  pnfs_panfs_init(int root_fd, void **pnfs_data/*OUT*/)
 
 void pnfs_panfs_fini(void *pnfs_data)
 {
-	if (!pnfs_data)
-		return
+	if (!pnfs_data) {
+		return;
+	}
 
 	_stop_callback_thread(pnfs_data);
 }

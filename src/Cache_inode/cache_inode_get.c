@@ -44,6 +44,7 @@
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
+#include "nfs_core.h" /* exportlist_t */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -155,6 +156,79 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      *entry = NULL;
      return status;
 } /* cache_inode_get */
+
+/**
+ * @brief Get an initial reference to a cache entry by its key.
+ *
+ * Lookup a cache entry by key, given an associated entry sharing the
+ * same export (e.g..
+ *
+ * @param key [in] Cache key to use for lookup
+ * @param[in] context FSAL operation context
+ * @param[in] flags flags
+ *
+ * @return Pointer to a ref'd entry if found, else NULL.
+ */
+cache_entry_t *
+cache_inode_get_keyed(cache_inode_key_t *key,
+		      const struct req_op_context *req_ctx,
+		      uint32_t flags)
+{
+	cache_inode_status_t status;
+	cache_entry_t *entry = NULL;
+	cih_latch_t latch;
+
+	/* Check if the entry already exists */
+	entry = cih_get_by_key_latched(key, &latch,
+				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+	if (likely(entry)) {
+		if (likely(cache_inode_lru_ref(entry, LRU_FLAG_NONE) ==
+			   CACHE_INODE_SUCCESS)) {
+			/* Release the subtree hash table lock */
+			cih_latch_rele(&latch);
+			goto out;
+		}
+		/* we raced destruction of that entry, and lost.  oh well. */
+		cih_latch_rele(&latch);
+		entry = NULL;
+	}
+	/* Cache miss, allocate a new entry */
+        if (! (flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
+		struct fsal_obj_handle *new_hdl;
+		struct fsal_export *exp_hdl;
+		exportlist_t *exp_list_ent; /* XXX fixing */
+		fsal_status_t fsal_status;
+
+		exp_list_ent = nfs_Get_export_by_id(nfs_param.pexportlist,
+						    key->exportid);
+		if (!exp_list_ent)
+			goto out;
+		
+		exp_hdl = exp_list_ent->export_hdl;
+		fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
+							  &key->kv, &new_hdl);
+		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
+			status = cache_inode_error_convert(fsal_status);
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "could not get create_handle object");
+			goto out;
+		}
+
+		/* if all else fails, create a new entry */
+		status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
+					       &entry);
+		if (unlikely(! entry))
+			goto out;
+
+		if (unlikely((status = cache_inode_check_trust(entry, req_ctx))
+			     != CACHE_INODE_SUCCESS)) {
+			cache_inode_put(entry);
+			entry = NULL;
+		}
+        } /* ! cached only */
+out:
+	return (entry);
+}
 
 /**
  *
