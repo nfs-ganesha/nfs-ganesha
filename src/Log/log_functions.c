@@ -472,7 +472,7 @@ char *ReturnLevelInt(int level)
 /*
  * Set the name of this program.
  */
-void SetNamePgm(char *nom)
+void SetNamePgm(const char *nom)
 {
 
   /* This function isn't thread-safe because the name of the program
@@ -483,13 +483,13 @@ void SetNamePgm(char *nom)
 /*
  * Set the hostname.
  */
-void SetNameHost(char *name)
+void SetNameHost(const char *name)
 {
   strcpy(hostname, name);
 }                               /* SetNameHost */
 
 /* Set the function name in progress. */
-void SetNameFunction(char *nom)
+void SetNameFunction(const char *nom)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(0);
 
@@ -1287,7 +1287,7 @@ int DisplayErrorComponentLogLine(log_components_t component,
                                   LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
-static int isValidLogPath(char *pathname)
+static int isValidLogPath(const char *pathname)
 {
   char tempname[MAXPATHLEN];
 
@@ -1354,7 +1354,7 @@ static int isValidLogPath(char *pathname)
  * During initialization this is used and separate layer logging defaults to
  * this destination.
  */
-void SetDefaultLogging(char *name)
+void SetDefaultLogging(const char *name)
 {
   int component;
 
@@ -1369,7 +1369,7 @@ void SetDefaultLogging(char *name)
     }
 }                               /* SetDefaultLogging */
 
-int SetComponentLogFile(log_components_t component, char *name)
+int SetComponentLogFile(log_components_t component, const char *name)
 {
   int newtype, changed;
 
