@@ -13,6 +13,7 @@
 
 #include <sys/types.h>          /* for caddr_t */
 #include <time.h>
+#include <assert.h>
 #include "ganesha_types.h"
 #include "log.h"
 
