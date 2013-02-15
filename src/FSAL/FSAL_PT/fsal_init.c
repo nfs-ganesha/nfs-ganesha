@@ -236,7 +236,11 @@ int
 pt_ganesha_fsal_ccl_init()
 {
   g_ccl_lib_handle = dlopen(CCL_SO_PATH, RTLD_LAZY);
-  
+  if (!g_ccl_lib_handle) {
+    FSI_TRACE(FSI_FATAL, "Failed to load library: %s", CCL_SO_PATH);
+    return -1;
+  }
+
   /* clearn any existing error */
   dlerror();
 
