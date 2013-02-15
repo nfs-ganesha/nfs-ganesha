@@ -185,7 +185,8 @@ int nfs4_Compound(nfs_arg_t *arg,
                "The export(id=%u) does not support NFSv4... rejecting it",
                export->id);
       res->res_compound4.status = NFS4ERR_PERM ;
-      res->res_compound4.resarray.resarray_val[0].nfs_resop4_u.opaccess.status = NFS4ERR_PERM ;
+      /* Don't alloc and fill res->res_compound4.resarray.resarray_val[0]
+         as it would not be freed later */
       return NFS_REQ_OK ;
    }
 
