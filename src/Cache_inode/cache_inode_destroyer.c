@@ -281,6 +281,7 @@ static void remove_nlm_owner_for_shutdown(state_owner_t *owner)
  * @param[in] owner Owner to remove
  */
 
+#ifdef _USE_9P
 void remove_9p_owner_for_shutdown(state_owner_t *owner)
 {
 	struct gsh_buffdesc key = {
@@ -291,6 +292,7 @@ void remove_9p_owner_for_shutdown(state_owner_t *owner)
 	ht_unsafe_zap_by_key(ht_9p_owner, &key);
 	gsh_free(owner);
 }
+#endif
 
 /**
  * @brief Remove an NFSv4 owner from the hash table without taking locks
@@ -308,13 +310,15 @@ void remove_nfs4_owner_for_shutdown(state_owner_t *owner)
 	state_nfs4_owner_name_t oname = {
 		.son_owner_len = owner->so_owner_len,
 	};
+	memcpy(oname.son_owner_val, owner->so_owner_val, owner->so_owner_len);
+
+#ifdef _USE_9P
 	struct gsh_buffdesc key = {
 		.addr = &oname,
 		.len  = sizeof(state_nfs4_owner_name_t)
 	};
-	memcpy(oname.son_owner_val, owner->so_owner_val, owner->so_owner_len);
-
 	ht_unsafe_zap_by_key(ht_9p_owner, &key);
+#endif
 
 	if (owner->so_type == STATE_LOCK_OWNER_NFSV4 &&
 	    owner->so_owner.so_nfs4_owner.so_related_owner != NULL)
