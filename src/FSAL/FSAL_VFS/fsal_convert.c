@@ -160,6 +160,9 @@ int posix2fsal_error(int posix_errorcode)
     case EROFS:
        return ERR_FSAL_ROFS ;
 
+    case ESRCH:                /* Returned by quotaclt */
+      return ERR_FSAL_NO_QUOTA;
+
     default:
 
       /* other unexpected errors */
