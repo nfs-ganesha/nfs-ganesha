@@ -168,6 +168,10 @@ cache_inode_commit(cache_entry_t *entry,
                     opened = FALSE;
                }
           }
+
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+          content_locked = FALSE;
+
           /* In other case cache_inode_rdwr call FSAL_Commit */
           PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
           if ((*status = cache_inode_refresh_attrs(entry,
@@ -191,10 +195,11 @@ cache_inode_commit(cache_entry_t *entry,
                *status = CACHE_INODE_SUCCESS;
                goto out;
           }
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+          content_locked = FALSE;
+
           if (count == 0 || count == 0xFFFFFFFFL) {
                /* Count = 0 means "flush all data to permanent storage */
-               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
-               content_locked = FALSE;
                *status = cache_inode_rdwr(entry,
                                          CACHE_INODE_WRITE,
                                          offset,
