@@ -198,6 +198,7 @@ void * _9p_rdma_thread( void * Arg )
       rdata[i]->max_size=_9P_RDMA_CHUNK_SIZE ;
       datamr[i].data = rdata[i];
       datamr[i].mr = mr;
+      pthread_mutex_init(&datamr[i].lock, NULL);
 
       if( i < _9P_RDMA_OUT )
         datamr[i].sender = &datamr[i+_9P_RDMA_OUT] ;
