@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/acl.h>
+#include <sys/syscall.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -411,7 +412,7 @@ struct acl_handles_struct_t {
 #define uint32 uint32_t
 
 #define NONIO_MSG_TYPE \
-  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid)
+  ((g_multithreaded) ? (unsigned long)(syscall(SYS_gettid)) : g_client_pid)
 #define MULTITHREADED 1
 #define NON_MULTITHREADED 0
 
