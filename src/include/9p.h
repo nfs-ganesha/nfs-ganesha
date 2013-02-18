@@ -368,6 +368,7 @@ typedef struct _9p_datamr
   msk_data_t *data;
   struct ibv_mr *mr;
   struct _9p_datamr * sender ;
+  pthread_mutex_t lock;
 } _9p_datamr_t ;
 
 typedef struct _9p_rdma_priv
