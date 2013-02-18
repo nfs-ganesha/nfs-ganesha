@@ -123,9 +123,12 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
       if (rc == 1)
        {
          poutdata->size = outdatalen ;
-         msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, (void*) outdatamr ) ;
-       } else {
-             /* Unlock the buffer right away since we won't use it after all. */
+         if (0 != msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, (void*) outdatamr ))
+                 rc = -1;
+       } 
+       
+       if (rc != 1)  {
+             /* Unlock the buffer right away since no message is being sent */
              pthread_mutex_lock(&outdatamr->lock);
        }
 
