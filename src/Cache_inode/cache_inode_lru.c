@@ -1470,8 +1470,12 @@ cache_inode_lru_unref(cache_entry_t *entry,
 
 		/* Really zero.  Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
-		glist_del(&entry->lru.q);
-		--(q->size);
+		if (q) {
+			/* as of now, entries leaving the cleanup queue
+			 * are LRU_ENTRY_NONE */
+			glist_del(&entry->lru.q);
+			--(q->size);
+		}
 
 		/* XXX now just cleans (ahem) */
 		cache_inode_lru_clean(entry);
