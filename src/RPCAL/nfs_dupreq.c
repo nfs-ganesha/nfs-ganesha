@@ -308,8 +308,7 @@ drc_tcp_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
         if (drc->flags & DRC_FLAG_CKSUM) {
             hbuf = alloca(size);
             drc_fill_hbuf(nfs_req, hbuf, &size);
-            v->hin.tcp.checksum = CityHash64WithSeed(hbuf, size, 911);
-            v->hk = CityHash64WithSeed((char *) &v->hin, sizeof(v->hin), 911);
+            v->hk = CityHash64WithSeed(hbuf, size, 911);
             LogFullDebug(COMPONENT_DUPREQ,
                          "hash={%"PRIx64"} xid=%u req=%p",
                          v->hk, v->hin.tcp.rq_xid,
