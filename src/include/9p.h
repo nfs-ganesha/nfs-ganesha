@@ -68,7 +68,7 @@ typedef uint64_t u64;
 #define _9P_IOUNIT   0
 
 //#define _9P_RDMA_CHUNK_SIZE 8*1024
-#define _9P_RDMA_CHUNK_SIZE 65*1024
+#define _9P_RDMA_CHUNK_SIZE 1024*1024
 #define _9P_RDMA_BUFF_NUM 100 
 #define _9P_RDMA_BACKLOG 10 
 
