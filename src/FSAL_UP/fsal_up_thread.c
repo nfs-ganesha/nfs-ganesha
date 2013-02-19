@@ -39,16 +39,12 @@ struct fridgethr *fsal_up_fridge = NULL;
 /**
  * @brief Clean up after an event is processed
  *
- * Currently we just release our claim on the export and free the
- * event.
- *
  * @param[in] ctx The thread context holding the event
  */
 
 static void fsal_up_event_cleanup(struct fridgethr_context *ctx)
 {
 	struct fsal_up_event *e = ctx->arg;
-	e->file.export->ops->put(e->file.export);
 	fsal_up_free_event(e);
 }
 
@@ -229,15 +225,15 @@ struct fsal_up_event *fsal_up_alloc_event(void)
 	}
 }
 
-void fsal_up_free_event(struct fsal_up_event *event)
+void fsal_up_free_event(struct fsal_up_event *e)
 {
-	if (event->file.key.addr) {
-		gsh_free(event->file.key.addr);
-		event->file.key.addr = NULL;
+	if (e->file.key.addr) {
+		gsh_free(e->file.key.addr);
+		e->file.key.addr = NULL;
 	}
-	if (event->file.export) {
-		event->file.export->ops->put(event->file.export);
-		event->file.export = NULL;
+	if (e->file.export) {
+		e->file.export->ops->put(e->file.export);
+		e->file.export = NULL;
 	}
-	pool_free(fsal_up_pool, event);
+	pool_free(fsal_up_pool, e);
 }

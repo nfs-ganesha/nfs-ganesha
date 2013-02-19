@@ -34,7 +34,6 @@
 #define GANESHA_TYPES__
 
 #include <stdint.h>
-#include "log.h"
 
 /* An elapsed time in nanosecs works because an unsigned
  * 64 bit can hold ~584 years of nanosecs.  If any code I have
@@ -44,6 +43,8 @@
 
 typedef uint64_t nsecs_elapsed_t;
 
+static const nsecs_elapsed_t NS_PER_USEC = 1000;
+static const nsecs_elapsed_t NS_PER_MSEC = 1000000;
 static const nsecs_elapsed_t NS_PER_SEC = 1000000000;
 
 
