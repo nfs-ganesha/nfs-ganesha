@@ -80,7 +80,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   fsal_handle_t           * pnewfsal_handle = NULL;
   fsal_attrib_list_t        attr_parent;
   fsal_attrib_list_t        attr;
-  fsal_attrib_list_t        attr_newfile;
   fsal_attrib_list_t        sattr;
   fsal_openflags_t          openflags = 0;
   cache_inode_status_t      cache_status = CACHE_INODE_SUCCESS;
@@ -368,7 +367,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* Does a file with this name already exist ? */
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
-                                             &attr_newfile,
+                                             NULL,
                                              data->pcontext,
                                              &cache_status);
 
@@ -654,7 +653,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                   REGULAR_FILE,
                                                   mode,
                                                   &create_arg,
-                                                  &attr_newfile,
+                                                  NULL,
                                                   data->pcontext, &cache_status)) == NULL)
             {
               /* If the file already exists, this is not an error if open mode is UNCHECKED */
@@ -775,7 +774,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             {
               if((pentry_newfile = cache_inode_lookup(pentry_parent,
                                                       &filename,
-                                                      &attr_newfile,
+                                                      NULL,
                                                       data->pcontext,
                                                       &cache_status)) == NULL)
                 {

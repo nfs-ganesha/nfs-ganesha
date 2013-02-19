@@ -101,7 +101,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   cache_entry_t           * pentry_newfile = NULL;
   fsal_attrib_list_t        attr_parent;
   fsal_attrib_list_t        attr;
-  fsal_attrib_list_t        attr_newfile;
   fsal_attrib_list_t        sattr;
   fsal_openflags_t          openflags = 0;
   cache_inode_status_t      cache_status = CACHE_INODE_SUCCESS;
@@ -460,7 +459,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           /* Does a file with this name already exist ? */
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
-                                             &attr_newfile,
+                                             NULL,
                                              data->pcontext,
                                              &cache_status);
           if(cache_status != CACHE_INODE_NOT_FOUND)
@@ -664,7 +663,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    REGULAR_FILE,
                                    mode,
                                    NULL,
-                                   &attr_newfile,
+                                   NULL,
                                    data->pcontext,
                                    &cache_status)) == NULL)
             {
@@ -735,7 +734,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if((pentry_newfile
               = cache_inode_lookup(pentry_parent,
                                    &filename,
-                                   &attr_newfile,
+                                   NULL,
                                    data->pcontext,
                                    &cache_status)) == NULL)
             {
@@ -769,17 +768,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
               cache_inode_put(pentry_newfile);
               goto out;
             }
-
-#ifdef WITH_MODE_0_CHECK
-          /* If file mode is 000 then NFS4ERR_ACCESS should be
-             returned for all cases and users */
-          if(attr_newfile.mode == 0)
-            {
-              res_OPEN4.status = NFS4ERR_ACCESS;
-              cause2 = " (mode is 0)";
-              goto out;
-            }
-#endif
 
           PTHREAD_RWLOCK_WRLOCK(&pentry_newfile->state_lock);
           /* Try to find if the same open_owner already has acquired a

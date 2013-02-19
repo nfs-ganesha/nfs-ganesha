@@ -86,7 +86,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   fsal_name_t            name;
   cache_entry_t        * dir_pentry = NULL;
   cache_entry_t        * file_pentry = NULL;
-  fsal_attrib_list_t     attrlookup;
   cache_inode_status_t   cache_status;
   fsal_handle_t        * pfsal_handle = NULL;
 
@@ -134,7 +133,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if((file_pentry
       = cache_inode_lookup(dir_pentry,
                            &name,
-                           &attrlookup,
+                           NULL,
                            data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */

@@ -86,8 +86,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_entry_t        * tst_entry_src = NULL;
   fsal_attrib_list_t     attr_dst;
   fsal_attrib_list_t     attr_src;
-  fsal_attrib_list_t     attr_tst_dst;
-  fsal_attrib_list_t     attr_tst_src;
   cache_inode_status_t   cache_status;
   fsal_status_t          fsal_status;
   fsal_handle_t        * handlenew = NULL;
@@ -227,7 +225,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Lookup oldfile to see if it exists (refcount +1) */
   if((tst_entry_src = cache_inode_lookup(src_entry,
                                          &oldname,
-                                         &attr_tst_src,
+                                         NULL,
                                          data->pcontext,
                                          &cache_status)) == NULL)
     {
@@ -239,7 +237,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * I expect to get NO_ERROR or ENOENT, anything else means an error */
   tst_entry_dst = cache_inode_lookup(dst_entry,
                                      &newname,
-                                     &attr_tst_dst,
+                                     NULL,
                                      data->pcontext,
                                      &cache_status);
   if((cache_status != CACHE_INODE_SUCCESS) &&

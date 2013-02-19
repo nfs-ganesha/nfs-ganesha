@@ -70,7 +70,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
   unsigned int i = 0 ;
 
   fsal_name_t name ; 
-  fsal_attrib_list_t fsalattr ;
   cache_inode_status_t cache_status ;
   cache_entry_t * pentry = NULL ;
 
@@ -133,7 +132,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
            /* refcount +1 */
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
-                                                       &fsalattr,
+                                                       NULL,
                                                        &pfid->fsal_op_context,
                                                        &cache_status ) ) == NULL )
               return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

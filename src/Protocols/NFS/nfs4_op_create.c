@@ -85,7 +85,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_entry_t        * pentry_parent = NULL;
   cache_entry_t        * pentry_new = NULL;
   fsal_attrib_list_t     attr_parent;
-  fsal_attrib_list_t     attr_new;
   fsal_attrib_list_t     sattr;
   fsal_handle_t        * pnewfsal_handle = NULL;
   nfs_fh4                newfh4;
@@ -244,7 +243,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           SYMBOLIC_LINK,
                                           mode,
                                           &create_arg,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
@@ -272,7 +271,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           DIRECTORY,
                                           mode,
                                           &create_arg,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
@@ -296,7 +295,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           SOCKET_FILE,
                                           mode,
                                           NULL,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
@@ -320,7 +319,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           FIFO_FILE,
                                           mode,
                                           NULL,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
@@ -347,7 +346,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           CHARACTER_FILE,
                                           mode,
                                           &create_arg,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
@@ -374,7 +373,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           BLOCK_FILE,
                                           mode,
                                           &create_arg,
-                                          &attr_new,
+                                          NULL,
                                           data->pcontext, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);

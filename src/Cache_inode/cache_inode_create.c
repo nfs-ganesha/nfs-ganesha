@@ -245,7 +245,9 @@ cache_inode_create(cache_entry_t *parent,
      PTHREAD_RWLOCK_UNLOCK(&parent->attr_lock);
 
      /* Copy up the child attributes */
-     *attr = object_attributes;
+     if(attr) {
+          *attr = object_attributes;
+     }
 
      *status = CACHE_INODE_SUCCESS;
 

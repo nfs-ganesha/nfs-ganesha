@@ -315,7 +315,7 @@ cache_inode_lookup(cache_entry_t *parent,
                                      status);
      PTHREAD_RWLOCK_UNLOCK(&parent->content_lock);
 
-     if (entry) {
+     if (entry && attr) {
           *status = cache_inode_lock_trust_attrs(entry,
                                                  context,
                                                  FALSE);
