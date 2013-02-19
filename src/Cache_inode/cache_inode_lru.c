@@ -153,11 +153,15 @@ struct lru_q
 
 struct lru_q_lane
 {
-     struct lru_q L1;
-     struct lru_q L2;
-     struct lru_q pinned;  /* uncollectable, due to state */
-     struct lru_q cleanup; /* deferred cleanup */
-     pthread_mutex_t mtx;
+	struct lru_q L1;
+	struct lru_q L2;
+	struct lru_q pinned;  /* uncollectable, due to state */
+	struct lru_q cleanup; /* deferred cleanup */
+	pthread_mutex_t mtx;
+	struct {
+		char file[32];
+		uint32_t line;
+	} locktrace;
      CACHE_PAD(0);
 };
 
@@ -1322,6 +1326,8 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 		glist_add_tail(&q->q, &lru->q);
 		++(q->size);
 	}
+
+	pthread_mutex_unlock(&qlane->mtx);
 
 	/* Also release an LRU reference */
 	atomic_dec_int32_t(&entry->lru.refcnt);
