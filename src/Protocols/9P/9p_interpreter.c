@@ -178,9 +178,13 @@ int _9p_process_buffer(  _9p_request_data_t * preq9p, nfs_worker_data_t * pworke
   if( *pmsgtype < _9P_TSTATFS || *pmsgtype > _9P_TWSTAT )
    return -1 ;
 
-  *poutlen = _9P_MSG_SIZE  -  _9P_HDR_SIZE ;
-
   LogFullDebug( COMPONENT_9P, "9P msg: length=%u type (%u|%s)",  *pmsglen, (u32)*pmsgtype, _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname ) ;
+
+  /* Temporarily set outlen to maximum message size. This value will be used
+   * inside the protocol functions for additional bound checking,
+   * and then replaced by the actual message size, (see _9p_checkbound())
+   */
+  *poutlen = preq9p->pconn->msize;
 
   /* Call the 9P service function */  
   if( ( ( rc = _9pfuncdesc[_9ptabindex[*pmsgtype]].service_function( preq9p,

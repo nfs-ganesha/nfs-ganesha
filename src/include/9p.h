@@ -481,12 +481,21 @@ do                                                     \
   __cursor += sizeof( u8 ) ;                           \
 } while( 0 ) 
 
+/* _9p_setendptr :
+ * Calculate message size, and write this value in the
+ * header of the 9p message.
+ */
 #define _9p_setendptr( __cursor, __start )         \
 do                                                 \
 {                                                  \
   *((u32 *)__start) =  (u32)(__cursor - __start) ; \
 } while( 0 ) 
 
+
+/* _9p_checkbound : 
+ * Check that the message size is less than *__maxlen,
+ * AND set *__maxlen to actual message size.
+ */
 #define _9p_checkbound( __cursor, __start, __maxlen ) \
 do                                                    \
 {                                                     \

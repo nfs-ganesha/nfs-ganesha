@@ -213,7 +213,7 @@ void * _9p_socket_thread( void * Arg )
      if( fds[0].revents & (POLLIN|POLLRDNORM) )
       {
         /* Prepare to read the message */
-        if( ( _9pmsg = gsh_malloc( _9P_MSG_SIZE ) ) == NULL )
+        if( ( _9pmsg = gsh_malloc( _9p_conn.msize ) ) == NULL )
          {
             LogCrit( COMPONENT_9P, "Could not allocate 9pmsg buffer for client %s on socket %lu", strcaller, tcp_sock ) ;
             goto end;

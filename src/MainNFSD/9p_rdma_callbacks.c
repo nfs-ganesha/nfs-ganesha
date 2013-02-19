@@ -100,7 +100,6 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
    {
       p_9pmsglen = (uint32_t *)pdata->data ;
 
-      outdatalen = _9P_MSG_SIZE  -  _9P_HDR_SIZE ;
       LogFullDebug( COMPONENT_9P,
                     "Received 9P/RDMA message of size %u",
                      *p_9pmsglen ) ;
