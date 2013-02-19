@@ -149,6 +149,9 @@ void * _9p_rdma_thread( void * Arg )
   p_9p_conn->trans_type = _9P_RDMA ;
   p_9p_conn->trans_data.rdma_trans = trans ;
 
+  /* Set initial msize. Client may request a lower value during TVERSION */
+  p_9p_conn->msize = _9P_RDMA_CHUNK_SIZE;
+
   if( gettimeofday( &p_9p_conn->birth, NULL ) == -1 )
    LogMajor( COMPONENT_9P, "Cannot get connection's time of birth" ) ;
 

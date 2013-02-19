@@ -73,6 +73,15 @@ int _9p_version( _9p_request_data_t * preq9p,
       return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOENT, plenout, preply ) ;
    } 
 
+
+  if (preq9p->pconn->msize < *msize)
+          *msize = preq9p->pconn->msize;
+  else
+          preq9p->pconn->msize = *msize;
+  
+  LogDebug( COMPONENT_9P, "Negotiated msize is %u",  *msize  ) ;
+
+
   /* Good version, build the reply */
   _9p_setinitptr( cursor, preply, _9P_RVERSION ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;

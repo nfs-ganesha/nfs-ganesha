@@ -360,6 +360,7 @@ typedef struct _9p_conn__
   _9p_flush_bucket_t flush_buckets[FLUSH_BUCKETS];
   unsigned long sequence ;
   pthread_mutex_t sock_lock;
+  unsigned int msize;
 } _9p_conn_t ;
 
 #ifdef _USE_9P_RDMA

@@ -153,6 +153,9 @@ void * _9p_socket_thread( void * Arg )
   }
   atomic_store_uint32_t(&_9p_conn.refcount, 0);
 
+  /* Set initial msize. Client may request a lower value during TVERSION */
+  _9p_conn.msize = _9P_MSG_SIZE;
+
 
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
    LogFatal( COMPONENT_9P, "Cannot get connection's time of birth" ) ;
