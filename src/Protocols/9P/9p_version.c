@@ -81,6 +81,10 @@ int _9p_version( _9p_request_data_t * preq9p,
   
   LogDebug( COMPONENT_9P, "Negotiated msize is %u",  *msize  ) ;
 
+  /* A too small msize would result in buffer overflows on calls such as STAT. 
+   * Make sure it is not ridiculously low. */
+  if (*msize < 512)
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   /* Good version, build the reply */
   _9p_setinitptr( cursor, preply, _9P_RVERSION ) ;
