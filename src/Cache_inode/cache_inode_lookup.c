@@ -204,7 +204,7 @@ cache_inode_lookup(cache_entry_t *parent,
 {
      fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_X_OK) |
-             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      status = cache_inode_access(parent,
