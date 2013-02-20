@@ -43,8 +43,6 @@
 #include "fsal.h"
 #include "9p.h"
 
-char __thread databuffer[_9p_READ_BUFFER_SIZE] ;
-
 int _9p_read( _9p_request_data_t * preq9p, 
               void  * pworker_data,
               u32 * plenout, 
@@ -53,6 +51,7 @@ int _9p_read( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  char *databuffer;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -89,6 +88,13 @@ int _9p_read( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
 
+  /* Start building the reply already
+   * So we don't need to use an intermediate data buffer
+   */
+  _9p_setinitptr( cursor, preply, _9P_RREAD ) ;
+  _9p_setptr( cursor, msgtag, u16 ) ;
+  databuffer = _9p_getbuffertofill(cursor);
+
   /* Do the job */
   if( pfid->specdata.xattr.xattr_content != NULL )
     {
@@ -113,11 +119,7 @@ int _9p_read( _9p_request_data_t * preq9p,
 
        outcount = (u32)read_size ;
    }
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RREAD ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
-
-  _9p_setbuffer( cursor, outcount, databuffer ) ;
+  _9p_setfilledbuffer( cursor, outcount );
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;

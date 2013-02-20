@@ -52,10 +52,7 @@ typedef uint64_t u64;
 
 #define _9P_TCP_PORT 564
 #define _9P_RDMA_PORT 5640 
-#define _9P_SEND_BUFFER_SIZE 131072
-#define _9P_RECV_BUFFER_SIZE 131072
-#define _9p_READ_BUFFER_SIZE _9P_SEND_BUFFER_SIZE
-#define _9P_MAXDIRCOUNT 2000 /* Must be bigger than _9P_SEND_BUFFER_SIZE / 40 */
+#define _9P_MAXDIRCOUNT 2000 /* Must be bigger than ??? FIXME ??? / 40 */
 #define _9P_LOCK_CLIENT_LEN 64
 #define CONF_LABEL_9P "_9P"
 
@@ -464,6 +461,10 @@ do                                           \
   __cursor += __len ;                        \
 } while( 0 )
 
+/* _9p_setbuffer : 
+ * Copy data from __buffer into the reply,
+ * with a length u32 header.
+ */
 #define _9p_setbuffer( __cursor, __len, __buffer ) \
 do                                           \
 {                                            \
@@ -472,6 +473,23 @@ do                                           \
   memcpy( __cursor, __buffer, __len ) ;         \
   __cursor += __len ;                        \
 } while( 0 )
+
+/* _9p_setfilledbuffer : 
+ * Data has already been copied into the reply.
+ * Only move the cursor and set the length.
+ */
+#define _9p_setfilledbuffer( __cursor, __len ) \
+do                                           \
+{                                            \
+  *((u32 *)__cursor) = __len ;               \
+  __cursor += sizeof( u32 ) + __len ;        \
+} while( 0 )
+
+/* _9p_getbuffertofill :
+ * Get a pointer where to copy data in the reply.
+ * This leaves room in the reply for a u32 len header
+ */
+#define _9p_getbuffertofill( __cursor ) (((char*) (cursor)) + sizeof(u32))
 
 #define _9p_setinitptr( __cursor, __start, __reqtype ) \
 do                                                     \
