@@ -33,6 +33,8 @@ SET(_tcmalloc_SEARCH_DIRS
   /sw # Fink
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
+  /usr/include/google # Debain tcmalloc minimal
+  /usr/include/gperftools # Debian gperftools
 )
 
 FIND_PATH(TCMALLOC_INCLUDE_DIR
