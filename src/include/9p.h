@@ -60,6 +60,8 @@ typedef uint64_t u64;
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
+#define _9P_STD_HDR_SIZE (_9P_HDR_SIZE + _9P_TYPE_SIZE + _9P_TAG_SIZE)
+
 //#define _9P_BLK_SIZE 512
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
@@ -233,8 +235,15 @@ enum _9p_qid_t {
 #define _9P_NONUNAME	(u32)(~0)
 #define _9P_MAXWELEM	16
 
-/* ample room for _9P_TWRITE/_9P_RREAD header */
-#define _9P_IOHDRSZ	24
+
+/* Various header lengths to check message sizes : */
+
+/* size[4] Rread tag[2] count[4] data[count] */
+#define _9P_ROOM_RREAD (_9P_STD_HDR_SIZE + 4 )
+
+/* size[4] Twrite tag[2] fid[4] offset[8] count[4] data[count] */
+#define _9P_ROOM_TWRITE (_9P_STD_HDR_SIZE + 4 + 8 + 4)
+
 
 /* Room for readdir header */
 #define _9P_READDIRHDRSZ	24

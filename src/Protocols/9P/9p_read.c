@@ -81,6 +81,10 @@ int _9p_read( _9p_request_data_t * preq9p,
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
+  /* Make sure the requested amount of data respects negotiated msize */
+  if (*count + _9P_ROOM_RREAD > preq9p->pconn->msize)
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+
   /* Check that it is a valid fid */
   if (pfid->pentry == NULL) 
   {
