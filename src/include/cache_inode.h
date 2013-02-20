@@ -648,7 +648,6 @@ typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
-void cache_inode_clean_entry(cache_entry_t *entry);
 int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
@@ -761,9 +760,6 @@ cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
 					     const char *name,
 					     struct req_op_context *req_ctx,
 					     uint32_t flags);
-
-cache_inode_status_t cache_inode_clean_internal(
-	cache_entry_t *to_remove_entry);
 
 cache_inode_status_t cache_inode_operate_cached_dirent(
 	cache_entry_t *entry_parent,

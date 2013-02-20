@@ -47,38 +47,6 @@
 #include <assert.h>
 
 /**
- * @brief Clean resources associated with entry
- *
- * This function frees the various resources associated wiith a cache
- * entry.
- *
- * @param[in] entry Entry to be cleaned
- *
- * @return CACHE_INODE_SUCCESS or various errors
- */
-cache_inode_status_t
-cache_inode_clean_internal(cache_entry_t *entry)
-{
-     fsal_status_t fsal_status = {0, 0};
-
-     if (! entry->obj_handle)
-         goto out;
-
-     /* release the handle object too */
-     fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
-     if (FSAL_IS_ERROR(fsal_status)) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Couldn't free FSAL ressources fsal_status.major=%u",
-                  fsal_status.major);
-     }
-
-     entry->obj_handle = NULL;
-
- out:
-     return CACHE_INODE_SUCCESS;
-} /* cache_inode_clean_internal */
-
-/**
  *
  * @brief Public function to remove a name from a directory.
  *

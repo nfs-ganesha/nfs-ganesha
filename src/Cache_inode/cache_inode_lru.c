@@ -392,7 +392,8 @@ cond_pin_entry(cache_entry_t *entry, uint32_t flags)
 static inline void
 cache_inode_lru_clean(cache_entry_t *entry)
 {
-    cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     fsal_status_t fsal_status = {0, 0};
 
      if (is_open(entry)) {
           cache_status = cache_inode_close(entry,
@@ -409,9 +410,23 @@ cache_inode_lru_clean(cache_entry_t *entry)
              cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
      }
 
-     /* Clean up the associated ressources in the FSAL */
-     cache_inode_clean_internal(entry);
-     cache_inode_clean_entry(entry);
+     /* Free FSAL resources */
+     if (entry->obj_handle) {
+	  /* release the handle object too */
+	  fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
+	  if (FSAL_IS_ERROR(fsal_status)) {
+	       LogCrit(COMPONENT_CACHE_INODE,
+		       "Couldn't free FSAL ressources fsal_status.major=%u",
+		       fsal_status.major);
+	  }
+	  entry->obj_handle = NULL;
+     }
+
+     /* Finalize last bits of the cache entry */
+     cache_inode_key_delete(&entry->fh_hk.key);
+     pthread_rwlock_destroy(&entry->content_lock);
+     pthread_rwlock_destroy(&entry->state_lock);
+     pthread_rwlock_destroy(&entry->attr_lock);
 }
 
 /**

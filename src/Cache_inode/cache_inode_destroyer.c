@@ -840,7 +840,6 @@ static void destroy_entry(cache_entry_t *entry)
 		}
 	}
 	entry->obj_handle = NULL;
-	cache_inode_clean_entry(entry);
 }
 
 /**

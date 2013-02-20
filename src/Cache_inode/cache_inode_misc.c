@@ -473,21 +473,6 @@ out:
 }                               /* cache_inode_new_entry */
 
 /**
- * @brief Final cleaning of an entry
- *
- * This function performs final cleanup of an entry before recycling or free.
- *
- * @param[in] entry The entry to be cleaned
- */
-void cache_inode_clean_entry(cache_entry_t *entry)
-{
-    cache_inode_key_delete(&entry->fh_hk.key);
-    pthread_rwlock_destroy(&entry->content_lock);
-    pthread_rwlock_destroy(&entry->state_lock);
-    pthread_rwlock_destroy(&entry->attr_lock);
-}
-
-/**
  * @brief Converts an FSAL error to the corresponding cache_inode error
  *
  * This function converts an FSAL error to the corresponding
