@@ -133,6 +133,20 @@ static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t 
         return ret;
 }
 
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
+                                 int srcfd, const char *sname,
+                                 int destdirfd, const char *dname,
+                                 int flags, fsal_errors_t *fsal_error)
+{
+       return linkat(srcfd, sname, destdirfd, dname, flags);
+}
+
+static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh,
+                                 int srcfd, const char *sname,
+				 char *buf, size_t bufsize)
+{
+       return readlinkat(srcfd, sname, buf, bufsize);
+}
 
 #endif /* HANDLE_LINUX_H */
 /** @} */

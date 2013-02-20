@@ -150,5 +150,28 @@ static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t 
 	return ret;
 }
 
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
+                                 int srcfd, const char *sname,
+                                 int destdirfd, const char *dname,
+                                 int flags, fsal_errors_t *fsal_error)
+{
+       int retval;
+       struct fhandle *handle = (struct fhandle *)fh->handle;
+       retval = fhlink(handle, destdirfd, dname, AT_SYMLINK_FOLLOW);
+       if(retval < 0) {
+               retval = -errno;
+               *fsal_error = posix2fsal_error(errno);
+       }
+       return retval;
+}
+
+static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh,
+                                 int srcfd, const char *sname,
+				 char *buf, size_t bufsize)
+{
+       struct fhandle *handle = (struct fhandle *)fh->handle;
+       return fhreadlink(handle, buf, bufsize);
+}
+
 #endif  /* HANDLE_FREEBSD_H */
 /** @} */
