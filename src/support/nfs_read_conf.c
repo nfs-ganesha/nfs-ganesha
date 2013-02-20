@@ -252,6 +252,10 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->dispatch_max_reqs_xprt = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "RPC_Debug_Flags"))
+        {
+          pparam->rpc.debug_flags = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);

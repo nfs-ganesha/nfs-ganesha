@@ -87,6 +87,7 @@ nfs_parameter_t nfs_param =
   .core_param.drc.udp.cachesz = DRC_UDP_CACHESZ,
   .core_param.drc.udp.hiwat = DRC_UDP_HIWAT,
   .core_param.drc.udp.checksum = DRC_UDP_CHECKSUM,
+  .core_param.rpc.debug_flags = TIRPC_DEBUG_FLAGS,
   .core_param.port[P_NFS] = NFS_PORT,
   .core_param.bind_addr.sin_family = AF_INET,       /* IPv4 only right now */
   .core_param.program[P_NFS] = NFS_PROGRAM,
