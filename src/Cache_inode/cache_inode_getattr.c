@@ -81,6 +81,8 @@ cache_inode_getattr(cache_entry_t *entry,
                     fsal_op_context_t *context,
                     cache_inode_status_t *status)
 {
+     fsal_accessflags_t access_mask_attr = 0;
+
      /* sanity check */
      if(entry == NULL || attr == NULL || context == NULL) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
@@ -93,6 +95,13 @@ cache_inode_getattr(cache_entry_t *entry,
      /* Set the return default to CACHE_INODE_SUCCESS */
      *status = CACHE_INODE_SUCCESS;
 
+     /* Adjust access mask if ACL is asked for.
+      * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+      */
+     if((attr->asked_attributes & FSAL_ATTR_ACL) != 0) {
+          access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+     }
+
 /* Lock (and refresh if necessary) the attributes, copy them out, and
    unlock. */
 
@@ -104,8 +113,15 @@ cache_inode_getattr(cache_entry_t *entry,
           goto out;
      }
 
-     *attr = entry->attributes;
-     set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
+     if (cache_inode_access_no_mutex(entry,
+                                     access_mask_attr,
+                                     context,
+                                     status)
+         == CACHE_INODE_SUCCESS) {
+
+          *attr = entry->attributes;
+          set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
+     }
 
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 
