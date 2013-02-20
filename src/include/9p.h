@@ -52,7 +52,6 @@ typedef uint64_t u64;
 
 #define _9P_TCP_PORT 564
 #define _9P_RDMA_PORT 5640 
-#define _9P_MAXDIRCOUNT 2000 /* Must be bigger than ??? FIXME ??? / 40 */
 #define _9P_LOCK_CLIENT_LEN 64
 #define CONF_LABEL_9P "_9P"
 
@@ -243,6 +242,9 @@ enum _9p_qid_t {
 
 /* size[4] Twrite tag[2] fid[4] offset[8] count[4] data[count] */
 #define _9P_ROOM_TWRITE (_9P_STD_HDR_SIZE + 4 + 8 + 4)
+
+/* size[4] Rreaddir tag[2] count[4] data[count] */
+#define _9P_ROOM_RREADDIR (_9P_STD_HDR_SIZE + 4 )
 
 
 /* Room for readdir header */

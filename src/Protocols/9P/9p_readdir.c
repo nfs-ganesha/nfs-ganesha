@@ -188,6 +188,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
+  /* Make sure the requested amount of data respects negotiated msize */
+  if (*count + _9P_ROOM_RREADDIR > preq9p->pconn->msize)
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+
   /* Check that it is a valid fid */
   if (pfid->pentry == NULL) 
   {
@@ -204,8 +208,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    * -------------------
    * total   = ~40 bytes (average size) per dentry */
   estimated_num_entries = (unsigned int)( *count / 40 ) ;
-  if (estimated_num_entries > _9P_MAXDIRCOUNT)
-    estimated_num_entries = _9P_MAXDIRCOUNT ;
 
   if((estimated_num_entries < 2) || /* require room for . and .. */
     ((cb_data.entries = gsh_calloc(estimated_num_entries,
