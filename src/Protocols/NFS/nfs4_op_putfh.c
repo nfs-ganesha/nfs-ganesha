@@ -87,8 +87,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
 
   int                rc;
-  fsal_attrib_list_t attr;
-
 
   resp->resop = NFS4_OP_PUTFH;
   res_PUTFH4.status = NFS4_OK;
@@ -181,14 +179,27 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                        NULL,
                                                        NULL,
                                                        &(res_PUTFH4.status),
-                                                       &attr,
+                                                       NULL,
                                                        data->pcontext,
                                                        &rc)) == NULL)
             {
               return res_PUTFH4.status;
             }
           /* Extract the filetype */
-          data->current_filetype = cache_inode_fsal_type_convert(attr.type);
+          data->current_filetype = data->current_entry->type;
+          LogFullDebug(COMPONENT_FILEHANDLE,
+                       "File handle is of type %s(%d)",
+                       data->current_filetype == REGULAR_FILE ? "FILE" :
+                       data->current_filetype == CHARACTER_FILE ? "CHARACTER" :
+                       data->current_filetype == BLOCK_FILE ? "BLOCK" :
+                       data->current_filetype == SYMBOLIC_LINK ? "SYMLINK" :
+                       data->current_filetype == SOCKET_FILE ? "SOCKET" :
+                       data->current_filetype == FIFO_FILE ? "FIFO" :
+                       data->current_filetype == DIRECTORY ? "DIRECTORY" :
+                       data->current_filetype == FS_JUNCTION ? "JUNCTION" :
+                       data->current_filetype == UNASSIGNED ? "UNASSIGNED" :
+                       "Unknown", data->current_filetype);
+                   
         }
     }
 

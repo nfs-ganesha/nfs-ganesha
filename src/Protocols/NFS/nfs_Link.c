@@ -96,7 +96,6 @@ int nfs_Link(nfs_arg_t *parg,
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t parent_attr;
-  fsal_attrib_list_t target_attr;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
@@ -225,7 +224,7 @@ int nfs_Link(nfs_arg_t *parg,
                                          &(pres->res_stat2),
                                          &(pres->res_link3.status),
                                          NULL,
-                                         &target_attr,
+                                         NULL,
                                          pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
@@ -233,7 +232,7 @@ int nfs_Link(nfs_arg_t *parg,
     }
 
   /* Extract the filetype */
-  parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);
+  parent_filetype = parent_pentry->type;
 
   /*
    * Sanity checks:

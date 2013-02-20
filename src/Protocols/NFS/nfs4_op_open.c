@@ -100,7 +100,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   cache_entry_t           * pentry_lookup = NULL;
   cache_entry_t           * pentry_newfile = NULL;
   fsal_attrib_list_t        attr_parent;
-  fsal_attrib_list_t        attr;
   fsal_attrib_list_t        sattr;
   fsal_openflags_t          openflags = 0;
   cache_inode_status_t      cache_status = CACHE_INODE_SUCCESS;
@@ -195,7 +194,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                    NULL,
                                                    NULL,
                                                    &(res_OPEN4.status),
-                                                   &attr,
+                                                   NULL,
                                                    data->pcontext,
                                                    &retval)) == NULL)
         {
