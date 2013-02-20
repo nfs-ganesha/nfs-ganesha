@@ -3089,6 +3089,22 @@ cache_entry_To_Fattr(cache_entry_t *entry,
                 .Bitmap = Bitmap
         };
 
+        /* Permissiomn check only if ACL is asked for.
+         * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+         */
+        if(attribute_is_set(Bitmap, ATTR_ACL)) {
+                cache_inode_status_t status;
+
+                status = cache_inode_access(
+                        entry,
+                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL),
+                        data->req_ctx);
+
+                if (status != CACHE_INODE_SUCCESS) {
+                        return nfs4_Errno(status);
+                }
+        }
+ 
 	return nfs4_Errno(cache_inode_getattr(entry,
 					      data->req_ctx,
 					      &f,
