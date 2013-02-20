@@ -74,10 +74,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
   fsal_status_t status;
   int parent_fd;
   int mnt_fd;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *parent_hdl;
-//  struct gpfs_file_handle obj_handle;
 
   if(!parent || !p_filename)
     return fsalstat(ERR_FSAL_FAULT, 0);
@@ -85,25 +82,12 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
   mnt_fd = gpfs_get_root_fd(parent->export);
   parent_hdl = container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 
-  /* retrieve directory attributes */
   status = fsal_internal_handle2fd_at(mnt_fd, parent_hdl->handle, &parent_fd, O_RDONLY);
   if(FSAL_IS_ERROR(status))
     return status;
 
-  /* get directory metadata */
-
-  parent_dir_attrs.mask =
-                      parent->export->ops->fs_supported_attrs(parent->export);
-  status = GPFSFSAL_getattrs(parent->export, p_context, parent_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(parent_fd);
-      return status;
-    }
-
   /* Be careful about junction crossing, symlinks, hardlinks,... */
-  switch (parent_dir_attrs.type)
+  switch (parent->type)
     {
     case DIRECTORY:
       // OK
@@ -123,25 +107,6 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
     default:
       close(parent_fd);
       return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-    }
-
-  /* check rights to enter into the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
-
-  if(!parent->export->ops->fs_supports(parent->export,
-                                       fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask,
-                                      &parent_dir_attrs);
-  else
-    status = fsal_internal_access(parent_fd, p_context, parent_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(parent_fd);
-      return(status);
     }
 
   status = fsal_internal_get_handle_at(parent_fd, p_filename, fh);

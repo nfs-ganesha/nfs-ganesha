@@ -74,9 +74,7 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle * dir_hdl,    /* IN */
 
   fsal_status_t status;
   gpfsfsal_xstat_t buffxstat;
-  fsal_accessflags_t access_mask = 0;
   int mount_fd;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
   /* sanity checks. */
@@ -86,43 +84,11 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle * dir_hdl,    /* IN */
   gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
   mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
-  /* get directory metadata */
-  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
-
   /* build the child path */
 
   /* get file metadata */
   status = fsal_internal_stat_name(mount_fd, gpfs_hdl->handle,
                                    p_object_name, &buffxstat.buffstat);
-  if(FSAL_IS_ERROR(status))
-    return(status);
-
-  /* check access rights */
-
-  /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-  if((fsal2unix_mode(parent_dir_attrs.mode) & S_ISVTX)
-     && parent_dir_attrs.owner != p_context->creds->caller_uid
-     && buffxstat.buffstat.st_uid != p_context->creds->caller_uid
-     && p_context->creds->caller_uid != 0)
-    {
-      return fsalstat(ERR_FSAL_ACCESS, 0);
-    }
-
-  /* client must be able to lookup the parent directory and modify it */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK  | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     return(status);
 

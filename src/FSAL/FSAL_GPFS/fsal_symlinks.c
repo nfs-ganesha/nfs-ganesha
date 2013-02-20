@@ -154,9 +154,6 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
   int rc, errsv;
   fsal_status_t status;
   int mount_fd, fd;
-  int setgid_bit = false;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
   /* sanity checks.
@@ -181,34 +178,6 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
   if(FSAL_IS_ERROR(status))
     return(status);
 
-  /* retrieve directory metadata, for checking access */
-  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      return(status);
-    }
-
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = true;
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      return(status);
-    }
-
   /* build symlink path */
 
   /* create the symlink on the filesystem. */
@@ -231,16 +200,6 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
       close(fd);
       return(status);
     }
-
-  /* chown the symlink to the current user/group */
-  rc = fchownat(fd, p_linkname, p_context->creds->caller_uid,
-                setgid_bit ? -1 : p_context->creds->caller_gid, AT_SYMLINK_NOFOLLOW);
-  errsv = errno;
-
-  close(fd);
-
-  if(rc)
-    return fsalstat(posix2fsal_error(errsv), errsv);
 
   /* get attributes if asked */
 

@@ -67,9 +67,6 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
   fsal_status_t st;
   gpfsfsal_xstat_t buffxstat;
   int mntfd;
-#ifdef _USE_NFS4_ACL
-  fsal_accessflags_t access_mask = 0;
-#endif
   uint32_t grace_period_attr = 0; /*< Expiration time for attributes. */
 
   /* sanity checks.
@@ -94,25 +91,6 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
       FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
       return(st);
     }
-
-#ifdef _USE_NFS4_ACL
-   if(p_context == NULL)
-      return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-   /* Check permission to get attributes and ACL. */
-    access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
-                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR |
-                                     FSAL_ACE_PERM_READ_ACL);
-
-    if(!export->ops->fs_supports(export, fso_accesscheck_support))
-      st = fsal_internal_testAccess(p_context, access_mask, p_object_attributes);
-    else
-      st = fsal_internal_access(mntfd, p_context, p_filehandle, access_mask,
-                                p_object_attributes);
-
-      if(FSAL_IS_ERROR(st))
-        return(st);
-#endif
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

@@ -59,8 +59,6 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
   fsal_status_t status;
   int mount_fd;
   mode_t unix_mode;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
   /* sanity checks.
@@ -80,27 +78,6 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
 
   LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
-  /* retrieve directory metadata */
-  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
-
-  /* Check the user can write in the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export,
-                                        fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
   /* call to filesystem */
 
   fsal_set_credentials(p_context->creds);
@@ -172,8 +149,6 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN *
 /*   int setgid_bit = 0; */
   mode_t unix_mode;
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   int mount_fd;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
@@ -193,29 +168,6 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN *
   /* Apply umask */
   unix_mode = unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 
-  /* get directory metadata */
-  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
-
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
-
-/*   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) */
-/*     setgid_bit = 1; */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
-    if(FSAL_IS_ERROR(status))
-      return(status);
   /* build new entry path */
 
   /* creates the directory and get its handle */
@@ -280,8 +232,6 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,   /* IN */
 {
   int mount_fd;
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *dest_dir;
 
   /* sanity checks.
@@ -298,28 +248,6 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,   /* IN */
 
   if(!destdir_hdl->export->ops->fs_supports(destdir_hdl->export, fso_link_support))
     return fsalstat(ERR_FSAL_NOTSUPP, 0);
-
-  /* retrieve target directory metadata */
-  parent_dir_attrs.mask = destdir_hdl->export->ops->fs_supported_attrs(destdir_hdl->export);
-  status = GPFSFSAL_getattrs(destdir_hdl->export, p_context, dest_dir->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-      goto out_status_fsal_err;
-
-  /* check permission on target directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!destdir_hdl->export->ops->fs_supports(destdir_hdl->export,
-                                            fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, dest_dir->handle,
-                                  access_mask, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    goto out_status_fsal_err;
 
   /* Create the link on the filesystem */
 
@@ -404,8 +332,6 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
-  fsal_accessflags_t access_mask = 0;
-  struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
   /* sanity checks.
@@ -452,27 +378,6 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
                "Invalid node type in FSAL_mknode: %d", nodetype);
       return fsalstat(ERR_FSAL_INVAL, 0);
     }
-
-  /* retrieve directory attributes */
-  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                             &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
-
-  /* Check the user can write in the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
-    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
-                                  access_mask, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    return(status);
 
   fsal_set_credentials(p_context->creds);
   status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
