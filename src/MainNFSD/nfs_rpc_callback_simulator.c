@@ -84,10 +84,12 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 	nfs_client_id_t *pclientid;
 	uint64_t clientid;
 	DBusMessageIter iter, sub_iter;
+	struct timespec ts;
 
 	/* create a reply from the message */
+	now(&ts);
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_append_timestamp(&iter);
+	dbus_append_timestamp(&iter, &ts);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,
@@ -156,10 +158,12 @@ nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 	char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
 	nfs41_session_t *session_data;
 	DBusMessageIter iter, sub_iter;
+	struct timespec ts;
 
 	/* create a reply from the message */
+	now(&ts);
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_append_timestamp(&iter);
+	dbus_append_timestamp(&iter, &ts);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,

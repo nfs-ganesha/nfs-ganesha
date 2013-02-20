@@ -328,21 +328,20 @@ void dbus_status_reply(DBusMessageIter *iter,
 				       &error);
 }
 
-void dbus_append_timestamp(DBusMessageIter *iterp)
+void dbus_append_timestamp(DBusMessageIter *iterp,
+			   struct timespec *timestamp)
 {
 	DBusMessageIter ts_iter;
-	struct timespec timestamp;
 
-	now(&timestamp);
 	dbus_message_iter_open_container(iterp, DBUS_TYPE_STRUCT,
 					 NULL,
 					 &ts_iter);
 	dbus_message_iter_append_basic(&ts_iter,
 				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_sec);
+				       &timestamp->tv_sec);
 	dbus_message_iter_append_basic(&ts_iter,
 				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_nsec);
+				       &timestamp->tv_nsec);
 	dbus_message_iter_close_container(iterp, &ts_iter);
 }
 

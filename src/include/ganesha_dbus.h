@@ -101,7 +101,8 @@ void gsh_dbus_pkgshutdown(void);
 void *gsh_dbus_thread(void *arg);
 
 /* callout method */
-void dbus_append_timestamp(DBusMessageIter *iterp);
+void dbus_append_timestamp(DBusMessageIter *iterp,
+			   struct timespec *ts);
 void dbus_status_reply(DBusMessageIter *iter,
 		       bool success,
 		       char *errormsg);
