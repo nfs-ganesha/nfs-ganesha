@@ -55,22 +55,26 @@ typedef uint64_t u64;
 #define _9P_LOCK_CLIENT_LEN 64
 #define CONF_LABEL_9P "_9P"
 
+#define _9P_FID_PER_CONN        1024
+
+/* _9P_MSG_SIZE : maximum message size for 9P/TCP */
 #define _9P_MSG_SIZE 70000 
+
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
 #define _9P_STD_HDR_SIZE (_9P_HDR_SIZE + _9P_TYPE_SIZE + _9P_TAG_SIZE)
 
-//#define _9P_BLK_SIZE 512
+/* _9P_BLK_SIZE : (fake) filesystem block size that we return in getattr() */
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
 
-//#define _9P_RDMA_CHUNK_SIZE 8*1024
-#define _9P_RDMA_CHUNK_SIZE 1024*1024
+/* _9P_RDMA_CHUNK_SIZE : buffer size, and maximum message size for 9P/RDMA */
+#define _9P_RDMA_CHUNK_SIZE (1024*1024)
 #define _9P_RDMA_BUFF_NUM 100 
+/* Half the buffers are for recv, half for send */
+#define _9P_RDMA_OUT (_9P_RDMA_BUFF_NUM/2)
 #define _9P_RDMA_BACKLOG 10 
-
-#define _9P_RDMA_OUT _9P_RDMA_BUFF_NUM/2
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -245,11 +249,6 @@ enum _9p_qid_t {
 
 /* size[4] Rreaddir tag[2] count[4] data[count] */
 #define _9P_ROOM_RREADDIR (_9P_STD_HDR_SIZE + 4 )
-
-
-/* Room for readdir header */
-#define _9P_READDIRHDRSZ	24
-#define _9P_FID_PER_CONN        1024
 
 /**
  * struct _9p_str - length prefixed string type
