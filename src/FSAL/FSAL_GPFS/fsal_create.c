@@ -61,8 +61,6 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   fsal_status_t status;
 
   mode_t unix_mode;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -77,26 +75,6 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   unix_mode = unix_mode & ~global_fs_info.umask;
 
   LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
-
-  /* retrieve directory metadata */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
-
-  /* Check the user can write in the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
 
   /* call to filesystem */
 
@@ -171,8 +149,6 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
 /*   int setgid_bit = 0; */
   mode_t unix_mode;
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -185,29 +161,6 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
 
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
-
-  /* get directory metadata */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
-
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
-
-/*   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) */
-/*     setgid_bit = 1; */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* build new entry path */
 
@@ -281,8 +234,6 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     )
 {
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -295,26 +246,6 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
-
-  /* retrieve target directory metadata */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_dir_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-      goto out_status_fsal_err;
-
-  /* check permission on target directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_dir_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-      goto out_status_fsal_err;
 
   /* Create the link on the filesystem */
 
@@ -369,8 +300,6 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 /*   int flags=(O_RDONLY|O_NOFOLLOW); */
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -413,26 +342,6 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                "Invalid node type in FSAL_mknode: %d", nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
-
-  /* retrieve directory attributes */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(parentdir_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
-
-  /* Check the user can write in the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, parentdir_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
 
   fsal_set_credentials(p_context);
 

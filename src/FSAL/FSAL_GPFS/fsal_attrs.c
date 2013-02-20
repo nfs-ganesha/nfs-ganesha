@@ -76,10 +76,6 @@ fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
   fsal_status_t st;
   gpfsfsal_xstat_t buffxstat;
 
-#ifdef _USE_NFS4_ACL
-  fsal_accessflags_t access_mask = 0;
-#endif
-
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
    */
@@ -103,22 +99,6 @@ fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
       FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
       ReturnStatus(st, INDEX_FSAL_getattrs);
     }
-
-#ifdef _USE_NFS4_ACL
-      /* Check permission to get attributes and ACL. */
-      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR |
-                                       FSAL_ACE_PERM_READ_ACL);
-    
-    if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-      st = fsal_check_access(p_context, access_mask, NULL, p_object_attributes);
-    else
-      st = fsal_internal_access(p_context, p_filehandle, access_mask,
-                                p_object_attributes);
-
-      if(FSAL_IS_ERROR(st))
-        ReturnStatus(st, INDEX_FSAL_getattrs);
-#endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
 

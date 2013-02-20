@@ -77,7 +77,6 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
 {
   fsal_status_t status;
   int parentfd;
-  fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
   gpfsfsal_handle_t *p_object_handle = (gpfsfsal_handle_t *)object_handle;
 
@@ -165,23 +164,6 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
   //               "lookup of %#llx:%#x:%#x/%s", p_parent_directory_handle->seq,
   //               p_parent_directory_handle->oid, p_parent_directory_handle->ver,
   //               p_filename->name);
-
-  /* check rights to enter into the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(parentfd);
-      ReturnStatus(status, INDEX_FSAL_lookup);
-    }
 
   /* get file handle, it it exists */
   /* This might be a race, but it's the best we can currently do */

@@ -162,9 +162,6 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
   int rc, errsv;
   fsal_status_t status;
   int fd;
-  int setgid_bit = FALSE;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -186,33 +183,6 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
-
-  /* retrieve directory metadata, for checking access */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_symlink);
-    }
-
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = TRUE;
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle,access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_symlink);
-    }
 
   /* build symlink path */
 
@@ -238,18 +208,6 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
       close(fd);
       ReturnStatus(status, INDEX_FSAL_symlink);
     }
-
-  /* chown the symlink to the current user/group */
-  TakeTokenFSCall();
-  rc = fchownat(fd, p_linkname->name, p_context->credential.user,
-                setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  close(fd);
-
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
   /* get attributes if asked */
 

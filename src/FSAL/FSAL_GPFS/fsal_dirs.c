@@ -48,8 +48,6 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
     )
 {
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t dir_attrs;
   gpfsfsal_dir_t *p_dir_descriptor = (gpfsfsal_dir_t *)dir_desc;
 
   /* sanity checks
@@ -70,38 +68,26 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
     ReturnStatus(status, INDEX_FSAL_opendir);
 
   /* get directory metadata */
-  dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_dir_handle, p_context, &dir_attrs);
-  if(FSAL_IS_ERROR(status)) {
-    close(p_dir_descriptor->fd);
-    ReturnStatus(status, INDEX_FSAL_opendir);
-  }
+  if(p_dir_attributes)
+    {
+      fsal_attrib_list_t dir_attrs;
 
-  /* Test access rights for this directory */
+      dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
 
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
+      status = GPFSFSAL_getattrs(p_dir_handle, p_context, &dir_attrs);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_dir_handle, access_mask,
-                                  &dir_attrs);
-  if(FSAL_IS_ERROR(status)) {
-    close(p_dir_descriptor->fd);
-    ReturnStatus(status, INDEX_FSAL_opendir);
-  }
+      if(FSAL_IS_ERROR(status)) {
+        close(p_dir_descriptor->fd);
+        ReturnStatus(status, INDEX_FSAL_opendir);
+      }
+
+      p_dir_descriptor->dir_offset = 0;
+    }
 
   /* if everything is OK, fills the dir_desc structure : */
 
   memcpy(&(p_dir_descriptor->context), p_context, sizeof(fsal_op_context_t));
   memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(fsal_handle_t));
-
-  if(p_dir_attributes)
-      *p_dir_attributes = dir_attrs;
-
-  p_dir_descriptor->dir_offset = 0;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
