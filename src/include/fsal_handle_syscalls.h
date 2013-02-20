@@ -77,32 +77,5 @@ typedef struct vfs_file_handle {
 #error "Very old kernel and/or glibc"
 #endif
 
-static inline ssize_t vfs_readlink_by_handle(int mountfd, vfs_file_handle_t *fh, char *buf, size_t bufsize)
-{
-        int fd, ret;
-
-        fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = readlinkat(fd, "", buf, bufsize);
-        close(fd);
-        return ret;
-}
-
-/* 
-FIXME: need to factor this out for FreeBSD platform which dosn't support AT_EMPTY_PATH
-*/
-
-static inline int vfs_link_by_handle(int mountfd, vfs_file_handle_t *fh, int newdirfd, char *newname)
-{
-        int fd, ret;
-        fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = linkat(fd, "", newdirfd, newname, AT_EMPTY_PATH);
-        close(fd);
-        return ret;
-}
-
 #endif
 /** @} */
