@@ -94,7 +94,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_LOOKUP4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_LOOKUP4.status = nfs4_sanity_check_FH(data, 0LL);
+  res_LOOKUP4.status = nfs4_sanity_check_FH(data, DIRECTORY);
   if(res_LOOKUP4.status != NFS4_OK)
     return res_LOOKUP4.status;
 

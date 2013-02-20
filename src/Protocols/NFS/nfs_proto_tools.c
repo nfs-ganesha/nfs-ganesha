@@ -4615,7 +4615,13 @@ nfsstat4 nfs4_sanity_check_SavedFH(compound_data_t *data,
                    "Wrong file type");
 
           if(required_type == DIRECTORY)
-            return NFS4ERR_NOTDIR;
+            {
+              if(data->current_filetype == SYMBOLIC_LINK)
+                return NFS4ERR_SYMLINK;
+              else
+                return NFS4ERR_NOTDIR;
+            }
+
           if(required_type == SYMBOLIC_LINK)
             return NFS4ERR_INVAL;
 

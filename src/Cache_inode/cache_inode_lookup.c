@@ -298,7 +298,7 @@ cache_inode_lookup(cache_entry_t *parent,
      cache_entry_t *entry = NULL;
      fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_X_OK) |
-             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+             FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
      if (cache_inode_access(parent,
                             access_mask,
