@@ -113,31 +113,14 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		if(link_content == NULL)
 			goto spcerr;
 
-		retlink = readlinkat(dirfd, path, link_content, len);
+                retlink = vfs_readlink_by_handle(fh, dirfd, path,
+                                link_content, len);
 		if(retlink < 0 || retlink == len) {
 			goto spcerr;
 		}
 		link_content[retlink] = '\0';
 		hdl->u.symlink.link_content =  link_content;
 		hdl->u.symlink.link_size = len;
-
-                /* we need to save dir_fh so that it can be used later for "at"
-                 * calls (e.g. readlinkat) */
-                if(dir_fh == NULL) {
-                        int retval;
-                        vfs_alloc_handle(dir_fh);
-                        retval = vfs_fsal_fd_to_handle(exp_hdl, dirfd, dir_fh);
-                        if(retval < 0) {
-                                goto spcerr;
-                        }
-                }
-		hdl->u.symlink.dir = gsh_malloc(sizeof(vfs_file_handle_t));
-		if(hdl->u.symlink.dir == NULL)
-			goto spcerr;
-		memcpy(hdl->u.symlink.dir,
-		       dir_fh,
-                       sizeof(vfs_file_handle_t));
-                hdl->u.symlink.path = gsh_strdup(path);
 	} else if(vfs_unopenable_type(hdl->obj_handle.type)) {
                 /* AF_UNIX sockets, character special, and block
                    special files  require craziness */
@@ -646,12 +629,10 @@ vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
                   fsal_errors_t *fsal_error)
 {
         int retval = 0;
-        int fd, dir_fd;
+        int fd;
         ssize_t retlink;
 	struct stat st;
         int flags = O_PATH|O_NOACCESS|O_NOFOLLOW;
-        struct vfs_fsal_export *ve = NULL;
-        struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
 
         if(myself->u.symlink.link_content != NULL) {
                 gsh_free(myself->u.symlink.link_content);
@@ -674,18 +655,8 @@ vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
 		goto error;
 	}
 
-        /* FreeBSD doesn't support AT_EMPTY_PATH in at-calls so we need to
-         * conjure file descriptor of parent dir */
-        ve = container_of(obj_hdl->export, struct vfs_fsal_export, export);
-        dir_fd = ve->vex_ops.vex_open_by_handle(obj_hdl->export,
-                                            myself->u.symlink.dir,
-                                            O_PATH|O_NOACCESS,
-                                            fsal_error);
-        if(dir_fd < 0) {
-                return dir_fd;
-        }
-        retlink = readlinkat(dir_fd,
-                             myself->u.symlink.path,
+        retlink = vfs_readlink_by_handle(myself->handle,
+                             fd, "",
                              myself->u.symlink.link_content,
 			     myself->u.symlink.link_size);
         if(retlink < 0) {
@@ -693,7 +664,6 @@ vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
         }
 	myself->u.symlink.link_content[retlink] = '\0';
         close(fd);
-        close(dir_fd);
 
         return retval;
 
@@ -760,6 +730,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	struct vfs_fsal_obj_handle *myself, *destdir;
 	int srcfd, destdirfd;
 	int retval = 0;
+        int flags = O_PATH|O_NOACCESS|O_NOFOLLOW;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	if( !obj_hdl->export->ops->fs_supports(obj_hdl->export,
@@ -771,19 +742,22 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	if(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
 		srcfd = myself->u.file.fd;
 	} else {
-		srcfd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, &fsal_error);
+		srcfd = vfs_fsal_open(myself, flags, &fsal_error);
 		if(srcfd < 0) {
 			retval = -srcfd;
 			goto out;
 		}
 	}
 	destdir = container_of(destdir_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	destdirfd = vfs_fsal_open(destdir, O_PATH|O_NOACCESS, &fsal_error);
+	destdirfd = vfs_fsal_open(destdir, flags, &fsal_error);
 	if(destdirfd < 0) {
 		retval = destdirfd;
 		goto fileerr;
 	}
-	retval = linkat(srcfd, "", destdirfd, name, AT_EMPTY_PATH);
+	retval = vfs_link_by_handle(myself->handle,
+                                    srcfd, "",
+                                    destdirfd, name,
+                                    AT_EMPTY_PATH, &fsal_error);
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -1514,7 +1488,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	int retval = 0;
 	int fd;
         struct vfs_fsal_export *ve;
-        int flags = O_PATH|O_NOACCESS;
+        int flags = O_PATH|O_NOACCESS|O_NOFOLLOW;
 
         vfs_alloc_handle(fh);
 	*handle = NULL; /* poison it first */
