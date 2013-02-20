@@ -35,13 +35,24 @@
 #include "syscalls.h"
 
 #if __FreeBSD_cc_version  >= 800001
-/* getfhat() is not implemented in FreeBSD kernel yet */
+/* Fllowing syscalls are not yet implemented in vanilla FreeBSD kernels  */
 int getfhat(int fd, const char *path, fhandle_t *fhp)
 {
 	 /* currently this is only a stub untill we implement getfhat() */
 	 /* in FreeBSD kernel */
-	 return 0;
+	 return ENOTSUP;
 }
+
+int fhlink(struct fhandle *fhp, int tofd, const char *to, int flags)
+{
+	 return ENOTSUP;
+}
+
+int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
+{
+	 return ENOTSUP;
+}
+
 #endif
 
 #ifndef SYS_openat
@@ -65,6 +76,8 @@ int getfhat(int fd, const char *path, fhandle_t *fhp)
 #define SYS_symlinkat   523
 #define SYS_unlinkat    524
 #define SYS_getfhat     525
+#define SYS_fhlink      526
+#define SYS_fhreadlink  527
 
 
 int openat(int dir_fd, const char *file, int oflag, mode_t mode)
@@ -135,6 +148,16 @@ int faccessat(int dir_fd, char *filename, int mode, int flags)
 int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
 {
           return syscall(SYS_getfhat, dir_fd, fname, fhp, flag);
+}
+
+int fhlink(struct fhandle *fhp, int tofd, const char *to, int flag)
+{
+          return syscall(SYS_fhlink, fhp, tofd, to, flag);
+}
+
+int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
+{
+          return syscall(SYS_fhreadlink, fhp, buf, bufsize);
 }
 
 #endif /* SYS_openat */
