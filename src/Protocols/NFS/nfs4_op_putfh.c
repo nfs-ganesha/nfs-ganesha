@@ -194,6 +194,19 @@ nfs4_op_putfh(struct nfs_argop4 *op,
 
                         /* Extract the filetype */
                         data->current_filetype = data->current_entry->type;
+
+                        LogFullDebug(COMPONENT_FILEHANDLE,
+                                     "File handle is of type %s(%d)",
+                                     data->current_filetype == REGULAR_FILE ? "FILE" :
+                                     data->current_filetype == CHARACTER_FILE ? "CHARACTER" :
+                                     data->current_filetype == BLOCK_FILE ? "BLOCK" :
+                                     data->current_filetype == SYMBOLIC_LINK ? "SYMLINK" :
+                                     data->current_filetype == SOCKET_FILE ? "SOCKET" :
+                                     data->current_filetype == FIFO_FILE ? "FIFO" :
+                                     data->current_filetype == DIRECTORY ? "DIRECTORY" :
+                                     data->current_filetype == FS_JUNCTION ? "JUNCTION" :
+                                     data->current_filetype == NO_FILE_TYPE ? "NO_FILE_TYPE" :
+                                     "Unknown", data->current_filetype);
                 }
         }
 
