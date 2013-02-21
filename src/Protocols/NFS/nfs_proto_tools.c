@@ -58,6 +58,7 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal.h"
+#include "idmapper.h"
 
 /* Define mapping of NFS4 who name and type. */
 static struct {
@@ -720,8 +721,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
                    "Number of ACEs = %u",
 		   args->attrs->acl->naces);
 	if(args->attrs->acl) {
-		int rc = 0, i;
-		char buff[MAXNAMLEN];
+		int i;
 		char *name;
 
 		if( !xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
@@ -739,12 +739,10 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 			if( !xdr_u_int32_t(xdr, &pace->perm))
 				return FATTR_XDR_FAILED;
 			if(IS_FSAL_ACE_GROUP_ID(*pace)) { /* Encode group name. */
-				rc = gid2name(buff, &pace->who.gid);
-				if(rc == 0) { /* Failure. */
-					      /* Encode gid itself without @. */
-					sprintf(buff, "%u", pace->who.gid);
+				if (!xdr_encode_nfs4_group(xdr,
+							   pace->who.gid)) {
+					return FATTR_XDR_FAILED;
 				}
-				name = buff;
 			} else {
 				if(IS_FSAL_ACE_SPECIAL_ID(*pace)) {
 					for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
@@ -753,25 +751,16 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 							break;
 						}
 					}
+					if (!xdr_string(xdr, &name, MAXNAMLEN))
+						return FATTR_XDR_FAILED;
 				} else {
-					rc = uid2name(buff, &pace->who.uid);
-					if(rc == 0) { /* Failure. */
-						/* Encode uid itself without @. */
-						sprintf(buff, "%u", pace->who.uid);
+					if (!xdr_encode_nfs4_owner(xdr,
+								   pace->who.uid)) { 
+						return FATTR_XDR_FAILED;
 					}
-					name = buff;
 				}
 
 			}
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "special = %u, %s = %u, name = %s",
-				     IS_FSAL_ACE_SPECIAL_ID(*pace),
-				     IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
-				     IS_FSAL_ACE_GROUP_ID(*pace) ?
-				     pace->who.gid : pace->who.uid,
-				     name);
-			if( !xdr_string(xdr, &name, MAXNAMLEN))
-			    return FATTR_XDR_FAILED;
 		} /* for pace... */
 	} else {
 		uint32_t noacls = 0;
@@ -834,12 +823,32 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 			utf8buffer.utf8string_val = buffer;
 			utf8buffer.utf8string_len = strlen(buffer);
 			if(pace->flag == FSAL_ACE_FLAG_GROUP_ID) { /* Decode group. */
-				utf82gid(&utf8buffer, &(pace->who.gid));
+				struct gsh_buffdesc gname = {
+					.addr = utf8buffer.utf8string_val,
+					.len = utf8buffer.utf8string_len
+				};
+				if (!name2gid(&gname,
+					      &(pace->who.gid),
+					      (args->data ?
+					       args->data->pexport
+					       ->anonymous_gid : -1))) {
+					goto baderr;
+				}
 				LogFullDebug(COMPONENT_NFS_V4,
 					     "ACE who.gid = 0x%x",
 					     pace->who.gid);
 			} else {  /* Decode user. */
-				utf82uid(&utf8buffer, &(pace->who.uid));
+				struct gsh_buffdesc uname = {
+					.addr = utf8buffer.utf8string_val,
+					.len = utf8buffer.utf8string_len
+				};
+				if (!name2uid(&uname, &(pace->who.uid),
+					      (args->data ?
+					       args->data->pexport->
+					       anonymous_uid :
+					       -1))) {
+					goto baderr;
+				}
 				LogFullDebug(COMPONENT_NFS_V4,
 					     "ACE who.uid = 0x%x",
 					     pace->who.uid);
@@ -1491,31 +1500,43 @@ static fattr_xdr_result decode_numlinks(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_owner(XDR *xdr, struct xdr_attrs_args *args)
 {
-	int rc;
-	char buff[MAXNAMLEN];
-	char *owner = buff;
-
-	rc = uid2str(args->attrs->owner, owner);
-	if(rc < 0)
-		return FATTR_XDR_FAILED;
-	if( !xdr_string(xdr, &owner, strlen(owner)))
-		return FATTR_XDR_FAILED;
-	return FATTR_XDR_SUCCESS;
+	return (xdr_encode_nfs4_owner(xdr,
+				      args->attrs->owner) ?
+		FATTR_XDR_SUCCESS :
+		FATTR_XDR_FAILED);
 }
 
 static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 {
-	char buff[MAXNAMLEN];
-	char *owner = buff;
 	uid_t uid;
-	utf8string u8;
+	uint32_t len = 0;
+	struct gsh_buffdesc ownerdesc;
+	unsigned int pos, newpos;
 
-	if( !xdr_string(xdr, &owner, MAXNAMLEN))
+	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
-	u8.utf8string_len = strlen(owner);
-	u8.utf8string_val = owner;
-	if(utf82uid(&u8, &uid) < 0)
+
+	pos = xdr_getpos(xdr);
+	newpos = pos + len;
+	if (len % 4 != 0)
+		newpos += (4 - (len % 4));
+
+	ownerdesc.len = len;
+	ownerdesc.addr = xdr_inline(xdr, len);
+
+	if (!ownerdesc.addr) {
+		LogMajor(COMPONENT_NFSPROTO,
+			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
+	}
+
+	if (!name2uid(&ownerdesc, &uid,
+		      (args->data ? args->data->pexport->anonymous_uid
+		       : -1))) {
+		return FATTR_BADOWNER;
+	}
+
+	xdr_setpos(xdr, newpos);
 	args->attrs->owner = uid;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1526,31 +1547,42 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_group(XDR *xdr, struct xdr_attrs_args *args)
 {
-	int rc;
-	char buff[MAXNAMLEN];
-	char *group = buff;
-
-	rc = gid2str(args->attrs->group, group);
-	if(rc < 0)
-		return FATTR_XDR_FAILED;
-	if( !xdr_string(xdr, &group, strlen(group)))
-		return FATTR_XDR_FAILED;
-	return FATTR_XDR_SUCCESS;
+	return (xdr_encode_nfs4_group(xdr,
+				      args->attrs->group) ?
+		FATTR_XDR_SUCCESS :
+		FATTR_XDR_FAILED);
 }
 
 static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 {
-	char buff[MAXNAMLEN];
-	char *group = buff;
 	gid_t gid;
-	utf8string u8;
+	uint32_t len = 0;
+	struct gsh_buffdesc groupdesc;
+	unsigned int pos, newpos;
 
-	if( !xdr_string(xdr, &group, MAXNAMLEN))
+	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
-	u8.utf8string_len = strlen(group);
-	u8.utf8string_val = group;
-	if(utf82gid(&u8, &gid) < 0)
+
+	pos = xdr_getpos(xdr);
+	newpos = pos + len;
+	if (len % 4 != 0)
+		newpos += (4 - (len % 4));
+
+	groupdesc.len = len;
+	groupdesc.addr = xdr_inline(xdr, len);
+
+	if (!groupdesc.addr) {
+		LogMajor(COMPONENT_NFSPROTO,
+			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
+	}
+
+	if (!name2gid(&groupdesc, &gid,
+		      (args->data ?
+		       args->data->pexport->anonymous_gid : -1)))
+		return FATTR_BADOWNER;
+
+	xdr_setpos(xdr, newpos);
 	args->attrs->group = gid;
 	return FATTR_XDR_SUCCESS;
 }
@@ -3372,37 +3404,6 @@ nfs4_FhandleToExId(nfs_fh4 *fh4, unsigned short *ExId)
 
 /**
  *
- * nfs4_stringid_split: Splits a domain stamped name in two different parts.
- *
- * Splits a domain stamped name in two different parts.
- *
- * @param buff [IN] the input string
- * @param uidname [OUT] the extracted uid name
- * @param domainname [OUT] the extracted fomain name
- *
- * @return nothing (void function) 
- *
- */
-void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
-{
-  char *c = NULL;
-  unsigned int i = 0;
-
-  for(c = buff, i = 0; *c != '\0'; c++, i++)
-    if(*c == '@')
-      break;
-
-  strncpy(uidname, buff, i);
-  uidname[i] = '\0';
-  strcpy(domainname, c);
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "buff = #%s#    uid = #%s#   domain = #%s#",
-               buff, uidname, domainname);
-}                               /* nfs4_stringid_split */
-
-/**
- *
  * free_utf8: Free's a utf8str that was created by utf8dup
  *
  * @param utf8str [IN]  UTF8 string to be freed
@@ -4080,9 +4081,10 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
  */
 
 static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
-                               fattr4 *Fattr,
-                               nfs_fh4 *hdl4,
-                               fsal_dynamicfsinfo_t *dinfo)
+			       fattr4 *Fattr,
+			       nfs_fh4 *hdl4,
+			       fsal_dynamicfsinfo_t *dinfo,
+			       compound_data_t *data)
 {
 	int attribute_to_set = 0;
 	int nfs_status = NFS4_OK;
@@ -4111,6 +4113,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 	args.hdl4 = hdl4;
 	args.dynamicinfo = dinfo;
 	args.nfs_status = NFS4_OK;
+	args.data = data;
 
 	for(attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask, -1);
 	    attribute_to_set != -1;
@@ -4161,13 +4164,11 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 		nfs_status = NFS4ERR_BADXDR;  /* underrun on attribute */
 	xdr_destroy(&attr_body);
 	return nfs_status;
-}                               /* Fattr4_To_FSAL_attr */
+}
 
 /**
  *
- * nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
- *
- * Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ * @brief Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes.
@@ -4175,9 +4176,10 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,
+			    fattr4 *Fattr, compound_data_t *data)
 {
-  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL, NULL);
+  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL, NULL, data);
 }
 
 /**
@@ -4199,7 +4201,7 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
  */
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 *Fattr)
 {
-        return Fattr4_To_FSAL_attr(NULL, Fattr, NULL, dinfo);
+     return Fattr4_To_FSAL_attr(NULL, Fattr, NULL, dinfo, NULL);
 }
 
 /* Error conversion routines */

@@ -871,7 +871,8 @@ typedef enum {
 	FATTR_XDR_NOOP,
 	FATTR_XDR_SUCCESS,
 	FATTR_XDR_SUCCESS_EXP,
-	FATTR_XDR_FAILED
+	FATTR_XDR_FAILED,
+	FATTR_BADOWNER
 } fattr_xdr_result;
 
 struct xdr_attrs_args {
@@ -1062,50 +1063,9 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
 int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen);
 
-/**** Glue related functions ****/
-/*  nfs4_stringid_split - split a 'user@domain' string in two separated parts
- *  str2utf8 - convert a regular, zero terminated string to a UTF8 string,
- *  utf82str - convert a utf8 string to a regular zero-terminated string
- *  uid2utf8 - convert a uid to a utf8 string descriptor
- *  gid2utf8 - convert a gid to a utf8 string descriptor
- *  utf82uid - convert a utf8 string descriptor to a uid
- *  uft82gid - convert a utf8 string descriptor to a gid 
- *  gid2str  - convert a gid to a string 
- *  str2gid  - convert a string to a gid
- *  uid2str  - convert a uid to a string
- *  str2uid  - convert a string to a uid
- */
-
-int uid2name(char *name, uid_t * puid);
-int name2uid(char *name, uid_t * puid);
-#ifdef _HAVE_GSSAPI
-#ifdef _MSPAC_SUPPORT
-int principal2uid(char *principal, uid_t * puid, struct svc_rpc_gss_data *gd);
-#else
-int principal2uid(char *principal, uid_t * puid);
-#endif
-#endif
-
-int gid2name(char *name, gid_t * pgid);
-int name2gid(char *name, gid_t * pgid);
-
 void free_utf8(utf8string * utf8str);
 int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
-
-int uid2utf8(uid_t uid, utf8string * utf8str);
-int utf82uid(utf8string * utf8str, uid_t *Uid);
-
-int uid2str(uid_t uid, char *str);
-int str2uid(char *str, uid_t * Uid);
-
-int gid2str(gid_t gid, char *str);
-int str2gid(char *str, gid_t * Gid);
-
-int gid2utf8(gid_t gid, utf8string * utf8str);
-int utf82gid(utf8string * utf8str, gid_t *Gid);
-
-void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
 
 seqid4 nfs4_NextSeqId(seqid4 seqid);
 
@@ -1177,10 +1137,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,    /* Out: File attributes  */
-                            fattr4 * pFattr);   /* In: File attributes   */
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *,
+			    compound_data_t *);
 
-int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 * pFattr);
+int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 
 int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,

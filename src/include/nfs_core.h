@@ -150,13 +150,6 @@
 #define AUTH_STR_LEN 30
 #define PWENT_MAX_LEN 81 /* MUST be a multiple of 9 */
 
-/* Id Mapper cache error */
-#define ID_MAPPER_SUCCESS 0
-#define ID_MAPPER_INSERT_MALLOC_ERROR 1
-#define ID_MAPPER_NOT_FOUND 2
-#define ID_MAPPER_INVALID_ARGUMENT 3
-#define ID_MAPPER_FAIL 4
-
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL /*  4 GB */
 #define NFS_V4_MAX_QUOTA_HARD 17179869184LL /* 16 GB */
@@ -305,6 +298,7 @@ typedef struct nfs_version4_parameter__ {
 	char domainname[NFS4_MAX_DOMAIN_LEN];
 	char idmapconf[MAXPATHLEN];
 	bool use_getpwnam;
+	bool allow_numeric_owners;
 } nfs_version4_parameter_t;
 
 typedef struct nfs_param__ {
@@ -480,11 +474,6 @@ typedef struct gsh_addr {
 	uint32_t port;
 } gsh_addr_t;
 
-typedef enum idmap_type__ {
-	UIDMAP_TYPE = 1,
-	GIDMAP_TYPE = 2
-} idmap_type_t;
-
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool; /* XXX hide */
@@ -629,10 +618,6 @@ int nfs_read_client_id_conf(config_file_t in_config,
 #ifdef _HAVE_GSSAPI
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
 #endif
-int nfs_read_uidmap_conf(config_file_t in_config,
-			 nfs_idmap_cache_parameter_t *pparam);
-int nfs_read_gidmap_conf(config_file_t in_config,
-			 nfs_idmap_cache_parameter_t *pparam);
 int nfs_read_state_id_conf(config_file_t in_config,
 			   nfs_state_id_parameter_t *pparam);
 int nfs_read_session_id_conf(config_file_t in_config,
@@ -678,67 +663,7 @@ void nfs_reset_stats(void);
 
 void auth_stat2str(enum auth_stat, char *str);
 
-uint64_t idmapper_rbt_hash_func(hash_parameter_t *p_hparam,
-				struct gsh_buffdesc *buffclef);
-uint64_t namemapper_rbt_hash_func(hash_parameter_t *p_hparam,
-				  struct gsh_buffdesc *buffclef);
-
-uint32_t namemapper_value_hash_func(hash_parameter_t *p_hparam,
-				    struct gsh_buffdesc *buffclef);
-uint32_t idmapper_value_hash_func(hash_parameter_t *p_hparam,
-				  struct gsh_buffdesc *buffclef);
-
-int idmap_populate(char *path, idmap_type_t maptype);
-
-int idmap_gid_init(nfs_idmap_cache_parameter_t param);
-int idmap_gname_init(nfs_idmap_cache_parameter_t param);
-
-int idmap_uid_init(nfs_idmap_cache_parameter_t param);
-int idmap_uname_init(nfs_idmap_cache_parameter_t param);
-int uidgidmap_init(nfs_idmap_cache_parameter_t param);
-
-int display_idmapper_val(struct gsh_buffdesc *pbuff, char *str);
-int display_idmapper_key(struct gsh_buffdesc *pbuff, char *str);
-
-int compare_idmapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
-int compare_namemapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
-
-uint32_t idmap_compute_hash_value(char *name);
-int idmap_add(hash_table_t *ht, char *key, uint32_t val);
-int uidmap_add(char *key, uid_t val);
-int gidmap_add(char *key, gid_t val);
-
-int namemap_add(hash_table_t *ht, uint32_t key, char *val);
-int unamemap_add(uid_t key, char *val);
-int gnamemap_add(gid_t key, char *val);
-int uidgidmap_add(uid_t key, gid_t value);
-
-int idmap_get(hash_table_t *ht, char *key, uint32_t *pval);
-int uidmap_get(char *key, uid_t *pval);
-int gidmap_get(char *key, gid_t *pval);
-
-int namemap_get(hash_table_t *ht, uint32_t key, char *pval);
-int unamemap_get(uid_t key, char *val);
-int gnamemap_get(gid_t key, char *val);
-int uidgidmap_get(uid_t key, gid_t *pval);
-
-int idmap_remove(hash_table_t *ht, char *key);
-int uidmap_remove(char *key);
-int gidmap_remove(char *key);
-
-int namemap_remove(hash_table_t *ht, uint32_t key);
-int unamemap_remove(uid_t key);
-int gnamemap_remove(gid_t key);
-int uidgidmap_remove(uid_t key);
-
-int uidgidmap_clear(void);
-int idmap_clear(void);
-int namemap_clear(void);
-
-void idmap_get_stats(idmap_type_t maptype,
-		     hash_stat_t *phstat,
-		     hash_stat_t *phstat_reverse);
 
 /* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */
 int b64_ntop(u_char const *src, size_t srclength, char *target,

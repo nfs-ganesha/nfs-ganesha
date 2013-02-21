@@ -53,6 +53,7 @@
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
+#include "idmapper.h"
 
 const char *Rpc_gss_svc_name[] =
     { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
@@ -231,7 +232,7 @@ bool get_req_uid_gid(struct svc_req *req,
 	}
 
       if(uidgidmap_get(user_credentials->caller_uid,
-                       &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
+                       &user_credentials->caller_gid) != 0)
         {
           LogMajor(COMPONENT_DISPATCH,
                    "FAILURE: Could not resolve uidgid map for %u",

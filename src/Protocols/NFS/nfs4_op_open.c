@@ -536,7 +536,8 @@ open4_create(OPEN4args           * arg,
                                                           &(arg->openhow
                                                             .openflag4_u.how
                                                             .createhow4_u
-                                                            .createattrs));
+							    .createattrs),
+							  data);
                         if (res->status != NFS4_OK) {
                                 return res->status;
                         }
@@ -570,7 +571,8 @@ open4_create(OPEN4args           * arg,
                                                             .openflag4_u.how
                                                             .createhow4_u
                                                             .ch_createboth
-                                                            .cva_attrs));
+							    .cva_attrs),
+							  data);
                         if (res->status != NFS4_OK) {
                                 return res->status;
                         }

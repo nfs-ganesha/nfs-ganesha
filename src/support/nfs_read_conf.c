@@ -1063,6 +1063,10 @@ int nfs_read_version4_conf(config_file_t in_config,
             }
 #endif
         }
+      else if(!strcasecmp(key_name, "Allow_Numeric_Owners"))
+        {
+          pparam->allow_numeric_owners = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "FH_Expire"))
         {
           pparam->fh_expire = StrToBoolean(key_value);

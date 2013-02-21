@@ -23,6 +23,11 @@
  */
 
 /**
+ * @addtogroup idmapper
+ * @{
+ */
+
+/**
  * @file    idmapper_cache.c
  * @brief   Id mapping cache functions
  */
@@ -38,8 +43,9 @@
 #include <strings.h>
 #include <pwd.h>
 #include <grp.h>
-
+#include "idmapper.h"
 #include "common_utils.h"
+#include "city.h"
 
 
 /* Hashtable used to cache the hostname, accessed by their IP addess */
@@ -50,38 +56,24 @@ hash_table_t *ht_grgid;
 hash_table_t *ht_uidgid;
 
 /**
- * @brief Overload mapping of uid/gid to buffdata values
- *
- * To save allocating space, uids and gids are overlayed into the value pointer
- * (.addr) of the hashbuffer_t.  This union accomplishes that mapping.
- * When used, the length (.len) is expected to be zero: This is not a pointer.
- */
-
-union idmap_val {
-	caddr_t id_as_pointer;
-	uint32_t real_id;
-};
-
-/**
  * @brief Computes the hash value for the entry in id mapper stuff
  *
- * @param[in] hparam Hash table parameter
- * @param[in] key    Hash key buffer
+ * @param[in]  hparam  Hash table parameter
+ * @param[in]  key     Hash key buffer
+ * @param[out] index   Partition index
+ * @param[out] rbthash Key in the red-black tree
  *
- * @return the computed hash value.
+ * @return Constantly 1.
  */
-uint32_t idmapper_value_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key)
+int idmapper_hash_func(hash_parameter_t *hparam,
+		       struct gsh_buffdesc *key,
+		       uint32_t *index,
+		       uint64_t *rbthash)
 {
-  unsigned int sum = 0;
-  unsigned int i = 0;
-  unsigned char c;
+  *rbthash = CityHash64(key->addr, key->len);
+  *index = *rbthash % hparam->index_size;
 
-  /* Compute the sum of all the characters */
-  for(i = 0, c = ((char *)key->addr)[0]; ((char *)key->addr)[i] != '\0';
-      c = ((char *)key->addr)[++i], sum += c) ;
-
-  return (unsigned long)(sum % hparam->index_size);
+  return 1;
 }
 
 
@@ -89,20 +81,6 @@ uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
 				    struct gsh_buffdesc * buffclef)
 {
   return ((unsigned long)(buffclef->addr) % p_hparam->index_size);
-}
-
-/**
- * @brief Computes the RBT value for the entry in the id mapper stuff
- *
- * @param[in] hparam Hash table parameter
- * @param[in] key    Hash key buffer
- *
- * @return the computed rbt value.
- */
-uint64_t idmapper_rbt_hash_func(hash_parameter_t *hparam,
-				struct gsh_buffdesc *key)
-{
-  return idmap_compute_hash_value(key->addr);
 }
 
 uint64_t namemapper_rbt_hash_func(hash_parameter_t *hparam,
@@ -117,11 +95,11 @@ uint64_t namemapper_rbt_hash_func(hash_parameter_t *hparam,
  * @param[in] buff1 First key
  * @param[in] buff2 Second key
  *
- * @return 0 if keys are identifical, 1 if they are different.
+ * @return 0 if keys are identical, -1 or 1 if not.
  */
-int compare_idmapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
+int compare_idmapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
-  return strncmp(buff1->addr, buff2->addr, PWENT_MAX_LEN);
+  return memcmp(buff1->addr, buff2->addr, MAX(buff1->len, buff2->len));
 }
 
 int compare_namemapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
@@ -144,9 +122,11 @@ int compare_namemapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 int display_idmapper_key(struct gsh_buffdesc *pbuff, char *str)
 {
   if (pbuff->len == 0)
-    return sprintf(str, "%"PRIxPTR, (uintptr_t)(pbuff->addr));
+    return sprintf(str, "%"PRIdPTR, (uintptr_t)(pbuff->addr));
   else
-    return sprintf(str, "%s", (char *)(pbuff->addr));
+    return sprintf(str, "%.*s",
+		   (int)pbuff->len,
+		   (char *)(pbuff->addr));
 }
 
 /**
@@ -160,7 +140,7 @@ int display_idmapper_key(struct gsh_buffdesc *pbuff, char *str)
  */
 int display_idmapper_val(struct gsh_buffdesc *pbuff, char *str)
 {
-  return sprintf(str, "%lu", (unsigned long)(pbuff->addr));
+  return sprintf(str, "%"PRIuPTR, (uintptr_t)pbuff->addr);
 }
 
 /**
@@ -180,7 +160,7 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param)
       return -1;
     }
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 int uidgidmap_init(nfs_idmap_cache_parameter_t param)
@@ -192,7 +172,7 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param)
       return -1;
     }
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 int idmap_uname_init(nfs_idmap_cache_parameter_t param)
@@ -204,7 +184,7 @@ int idmap_uname_init(nfs_idmap_cache_parameter_t param)
       return -1;
     }
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 /**
@@ -224,7 +204,7 @@ int idmap_gid_init(nfs_idmap_cache_parameter_t param)
       return -1;
     }
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 int idmap_gname_init(nfs_idmap_cache_parameter_t param)
@@ -236,97 +216,94 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
       return -1;
     }
 
-  return ID_MAPPER_SUCCESS;
-}
-
-/**
- * @brief Computes the hash value, based on the string.
- *
- * @param[in] name String to hash
- *
- * @return The hash value
- */
-uint32_t idmap_compute_hash_value(char *name)
-{
-   uint32_t res ;
-
-   res = Lookup3_hash_buff(name, strlen(name));
-
-   return res;
+  return 0;
 }
 
 /**
  * @brief Adds a value by key
  *
- * @param[in,out] ht  The hash table to be used
- * @param[in]     key The ip address requested
- * @param[out]    val The value
+ * @param[in,out] ht   The hash table to be used
+ * @param[in]     name The name to add
+ * @param[out]    val  The value
  *
- * @return ID_MAPPER_SUCCESS, ID_MAPPER_INSERT_MALLOC_ERROR, ID_MAPPER_INVALID_ARGUMENT
+ * @return 0, or -1
  */
-int idmap_add(hash_table_t * ht, char *key, uint32_t val)
+int idmap_add(hash_table_t *ht, const struct gsh_buffdesc *name,
+	      uint32_t val)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffdata;
+  struct gsh_buffdesc key;
+  struct gsh_buffdesc data;
   int rc;
   union idmap_val local_val = {0};
 
-  if(ht == NULL || key == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
+  key.len = name->len;
+  key.addr = gsh_malloc(name->len);
 
-  if((buffkey.addr = gsh_malloc(PWENT_MAX_LEN)) == NULL)
-    return ID_MAPPER_INSERT_MALLOC_ERROR;
+  if (key.addr == NULL)
+    return -1;
 
   /* Build the key */
-  strncpy((buffkey.addr), key, PWENT_MAX_LEN);
-  buffkey.len = PWENT_MAX_LEN;
+  memcpy(key.addr, name->addr, name->len);
 
   /* Build the value */
   local_val.real_id = val;
-  buffdata.addr = local_val.id_as_pointer;
-  buffdata.len = sizeof(union idmap_val);
-  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following principal->uid mapping: %s->%lu",
-	       (char *)buffkey.addr, (unsigned long int)buffdata.addr);
-  rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
+  data.addr = local_val.id_as_pointer;
+  data.len = sizeof(union idmap_val);
+  rc = HashTable_Test_And_Set(ht, &key, &data,
                               HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
-    return ID_MAPPER_INSERT_MALLOC_ERROR;
+    {
+      gsh_free(key.addr);
+      return -1;
+    }
 
-  return ID_MAPPER_SUCCESS;
+  if (rc == HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
+    {
+      gsh_free(key.addr);
+    }
+
+  return 0;
 }
 
-int namemap_add(hash_table_t * ht, uint32_t key, char *val)
+int namemap_add(hash_table_t *ht, uint32_t id,
+		const struct gsh_buffdesc *val)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffdata;
+  struct gsh_buffdesc data;
   int rc = 0;
-  union idmap_val local_key = {0};
+  union idmap_val local_key =
+    {
+      .real_id = id
+    };
+  struct gsh_buffdesc key =
+    {
+      .addr = local_key.id_as_pointer,
+      .len = sizeof(union idmap_val)
+    };
 
-  if(ht == NULL || val == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
-
-  if((buffdata.addr = gsh_malloc(PWENT_MAX_LEN)) == NULL)
-    return ID_MAPPER_INSERT_MALLOC_ERROR;
+  data.addr = gsh_malloc(val->len);
+  if (data.addr == NULL)
+    return -1;
 
   /* Build the data */
-  strncpy((buffdata.addr), val, PWENT_MAX_LEN);
-  buffdata.len = PWENT_MAX_LEN;
+  memcpy(data.addr, val->addr, val->len);
+  data.len = val->len;
 
-  /* Build the key */
-  local_key.real_id = key;
-  buffkey.addr = local_key.id_as_pointer;
-  buffkey.len = sizeof(union idmap_val);
-
-  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following uid->principal mapping: %lu->%s",
-	       (unsigned long int)buffkey.addr, (char *)buffdata.addr);
-  rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
-                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+  rc = HashTable_Test_And_Set(ht, &key, &data,
+			      HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
-    return ID_MAPPER_INSERT_MALLOC_ERROR;
+    {
+      gsh_free(data.addr);
+      return -1;
+    }
 
-  return ID_MAPPER_SUCCESS;
+  if (rc == HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
+    {
+      gsh_free(data.addr);
+    }
+
+  return 0;
 }
 
 int uidgidmap_add(uid_t key, gid_t value)
@@ -350,16 +327,13 @@ int uidgidmap_add(uid_t key, gid_t value)
                               HASHTABLE_SET_HOW_SET_OVERWRITE);
 
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
-    return ID_MAPPER_INSERT_MALLOC_ERROR;
+    return -1;
 
-  return ID_MAPPER_SUCCESS;
-
+  return 0;
 }
 
 static int uidgidmap_free(struct gsh_buffdesc key, struct gsh_buffdesc val)
 {
-    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->gid mapping: %lu->%lu",
-		 (unsigned long)key.addr, (unsigned long)val.addr);
   return 1;
 }
 
@@ -368,17 +342,15 @@ int uidgidmap_clear()
   int rc;
   LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->gid map entries.");
   rc = HashTable_Delall(ht_uidgid, uidgidmap_free);
+
   if (rc != HASHTABLE_SUCCESS)
-    return ID_MAPPER_FAIL;
-  return ID_MAPPER_SUCCESS;
+    return -1;
+
+  return 0;
 }
 
 static int idmap_free(struct gsh_buffdesc key, struct gsh_buffdesc val)
 {
-  if (val.addr != NULL)
-    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->principal mapping: %p->%s",
-                 key.addr, (char *)val.addr);
-
   /* key is just an integer caste to charptr */
   if (val.addr != NULL)
     gsh_free(val.addr);
@@ -391,16 +363,13 @@ int idmap_clear()
   LogInfo(COMPONENT_IDMAPPER, "Clearing all principal->uid map entries.");
   rc = HashTable_Delall(ht_pwuid, idmap_free);
   if (rc != HASHTABLE_SUCCESS)
-    return ID_MAPPER_FAIL;
-  return ID_MAPPER_SUCCESS;
+    return -1;
+
+  return 0;
 }
 
 static int namemap_free(struct gsh_buffdesc key, struct gsh_buffdesc val)
 {
-  if (key.addr != NULL)
-    LogFullDebug(COMPONENT_IDMAPPER, "Freeing principal->uid mapping: %s->%p",
-                 (char *)key.addr, val.addr);
-
   /* val is just an integer caste to charptr */
   if (key.addr != NULL)
     gsh_free(key.addr);
@@ -413,28 +382,28 @@ int namemap_clear()
   LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->principal map entries.");
   rc = HashTable_Delall(ht_pwnam, namemap_free);
   if (rc != HASHTABLE_SUCCESS)
-    return ID_MAPPER_FAIL;
-  return ID_MAPPER_SUCCESS;
+    return -1;
+
+  return 0;
 }
 
-
-int uidmap_add(char *key, uid_t val)
+int uidmap_add(const struct gsh_buffdesc *name, uid_t val)
 {
   int rc1 = 0;
   int rc2 = 0;
 
-  rc1 = idmap_add(ht_pwnam, key, val);
-  rc2 = namemap_add(ht_pwuid, val, key);
+  rc1 = idmap_add(ht_pwnam, name, val);
+  rc2 = namemap_add(ht_pwuid, val, name);
 
-  if(rc1 != ID_MAPPER_SUCCESS)
+  if(rc1 != 0)
     return rc1;
-  else if(rc2 != ID_MAPPER_SUCCESS)
+  else if(rc2 != 0)
     return rc2;
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
-int unamemap_add(uid_t key, char *val)
+int unamemap_add(uid_t key, const struct gsh_buffdesc *val)
 {
   int rc1 = 0;
   int rc2 = 0;
@@ -442,15 +411,15 @@ int unamemap_add(uid_t key, char *val)
   rc1 = namemap_add(ht_pwuid, key, val);
   rc2 = idmap_add(ht_pwnam, val, key);
 
-  if(rc1 != ID_MAPPER_SUCCESS)
+  if(rc1 != 0)
     return rc1;
-  else if(rc2 != ID_MAPPER_SUCCESS)
+  else if(rc2 != 0)
     return rc2;
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
-int gidmap_add(char *key, gid_t val)
+int gidmap_add(const struct gsh_buffdesc *key, gid_t val)
 {
   int rc1 = 0;
   int rc2 = 0;
@@ -458,15 +427,15 @@ int gidmap_add(char *key, gid_t val)
   rc1 = idmap_add(ht_grnam, key, val);
   rc2 = namemap_add(ht_grgid, val, key);
 
-  if(rc1 != ID_MAPPER_SUCCESS)
+  if(rc1 != 0)
     return rc1;
-  else if(rc2 != ID_MAPPER_SUCCESS)
+  else if(rc2 != 0)
     return rc2;
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
-int gnamemap_add(gid_t key, char *val)
+int gnamemap_add(gid_t key, const struct gsh_buffdesc *val)
 {
   int rc1 = 0;
   int rc2 = 0;
@@ -474,12 +443,12 @@ int gnamemap_add(gid_t key, char *val)
   rc1 = namemap_add(ht_grgid, key, val);
   rc2 = idmap_add(ht_grnam, val, key);
 
-  if(rc1 != ID_MAPPER_SUCCESS)
+  if(rc1 != 0)
     return rc1;
-  else if(rc2 != ID_MAPPER_SUCCESS)
+  else if(rc2 != 0)
     return rc2;
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 /**
@@ -487,205 +456,125 @@ int gnamemap_add(gid_t key, char *val)
  *
  * @param[in]  ht   The hash table to be used
  * @param[in]  key  The IP address requested
- * @param[out] pval The uid/gid.  Always uint32_t
+ * @param[out] val The uid/gid.  Always uint32_t
  *
- * @return ID_MAPPER_SUCCESS or ID_MAPPER_NOT_FOUND
+ * @return 0 on success or -1 on failure.
  */
-int idmap_get(hash_table_t * ht, char *key, uint32_t *pval)
+
+int idmap_get(hash_table_t *ht, const struct gsh_buffdesc *key,
+	      uint32_t *val)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffval;
-  int status;
+  struct gsh_buffdesc data;
+  union idmap_val id;
 
-  if(ht == NULL || key == NULL || pval == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
-
-  buffkey.addr = (caddr_t) key;
-  buffkey.len = PWENT_MAX_LEN;
-
-  if(HashTable_Get(ht, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht, key, &data) != HASHTABLE_SUCCESS)
     {
-      union idmap_val id;
-
-      id.id_as_pointer = buffval.addr;
-      *pval = id.real_id;
-      status = ID_MAPPER_SUCCESS;
-    }
-  else
-    {
-      status = ID_MAPPER_NOT_FOUND;
+      return -1;
     }
 
-  return status;
+  id.id_as_pointer = data.addr;
+  *val = id.real_id;
+  return 0;
 }
 
-int namemap_get(hash_table_t * ht, uint32_t key, char *pval)
+int uidgidmap_get(uid_t uid, gid_t *gid)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffval;
-  int status;
+  struct gsh_buffdesc key;
+  struct gsh_buffdesc val;
   union idmap_val local_key = {0};
+  union idmap_val id;
 
-  if(ht == NULL || pval == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
+  local_key.real_id = uid;
+  key.addr = local_key.id_as_pointer;
+  key.len = sizeof(union idmap_val);
 
-  local_key.real_id = key;
-  buffkey.addr = local_key.id_as_pointer;
-  buffkey.len = sizeof(union idmap_val);
-
-  if(HashTable_Get(ht, &buffkey, &buffval) == HASHTABLE_SUCCESS)
-    {
-      strncpy(pval, (char *)buffval.addr, PWENT_MAX_LEN);
-
-      status = ID_MAPPER_SUCCESS;
-    }
-  else
-    {
-      status = ID_MAPPER_NOT_FOUND;
-    }
-
-  return status;
-}
-
-int uidgidmap_get(uid_t key, gid_t *pval)
-{
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffval;
-  int status;
-  union idmap_val local_key = {0};
-
-  if(pval == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
-
-  local_key.real_id = key;
-  buffkey.addr = local_key.id_as_pointer;
-  buffkey.len = sizeof(union idmap_val);
-
-  if(HashTable_Get(ht_uidgid, &buffkey, &buffval) == HASHTABLE_SUCCESS)
-    {
-      union idmap_val id;
-
-      id.id_as_pointer = buffval.addr;
-      *pval = id.real_id;
-      status = ID_MAPPER_SUCCESS;
-    }
-  else
+  if(HashTable_Get(ht_uidgid, &key, &val) != HASHTABLE_SUCCESS)
     {
       /* WIth RPCSEC_GSS, it may be possible that 0 is not mapped to root */
-      if(key == 0)
+      if(uid == 0)
         {
-          *pval = 0;
-          status = ID_MAPPER_SUCCESS;
+          *gid = 0;
+          return 0;
         }
       else
-        status = ID_MAPPER_NOT_FOUND;
+        return -1;
     }
 
-  return status;
+  id.id_as_pointer = val.addr;
+  *gid = id.real_id;
 
+  return 0;
 }
 
-int uidmap_get(char *key, uid_t *pval)
+int uidmap_get(const struct gsh_buffdesc *key, uid_t *val)
 {
-  return idmap_get(ht_pwnam, key, pval);
+  return idmap_get(ht_pwnam, key, val);
 }
 
-int unamemap_get(uid_t key, char *val)
+int gidmap_get(const struct gsh_buffdesc *key, gid_t *val)
 {
-  return namemap_get(ht_pwuid, key, val);
-}
-
-int gidmap_get(char *key, gid_t *pval)
-{
-  return idmap_get(ht_grnam, key, pval);
-}
-
-int gnamemap_get(gid_t key, char *val)
-{
-  return namemap_get(ht_grgid, key, val);
+  return idmap_get(ht_grnam, key, val);
 }
 
 /**
  * @brief Tries to remove an entry for ID_MAPPER
  *
- * @param[in,out] ht  The hash table to be used
- * @param[out]    key The key uncached
+ * @param[in,out] ht   The hash table to be used
+ * @param[out]    name The name uncached
  *
- * @return the delete status
+ * @return 0 on success, -1 on error
  */
-int idmap_remove(hash_table_t *ht, char *key)
+
+int idmap_remove(hash_table_t *ht,
+		 const struct gsh_buffdesc *key)
 {
-  struct gsh_buffdesc buffkey, old_key;
-  int status;
+  struct gsh_buffdesc old_key;
 
-  if(ht == NULL || key == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
+  if(HashTable_Del(ht, key, &old_key, NULL) != HASHTABLE_SUCCESS)
+    return -1;
 
-  buffkey.addr = key;
-  buffkey.len = PWENT_MAX_LEN;
-
-  if(HashTable_Del(ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
-    {
-      status = ID_MAPPER_SUCCESS;
-      gsh_free(old_key.addr);
-    }
-  else
-    {
-      status = ID_MAPPER_NOT_FOUND;
-    }
-
-  return status;
+  gsh_free(old_key.addr);
+  return 0;
 }
 
-int namemap_remove(hash_table_t * ht, uint32_t key)
+int namemap_remove(hash_table_t *ht, uint32_t id)
 {
-  struct gsh_buffdesc buffkey, old_data;
-  int status;
+  struct gsh_buffdesc key, old_data;
   union idmap_val local_key = {0};
 
-  if(ht == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
+  local_key.real_id = id;
+  key.addr = local_key.id_as_pointer;
+  key.len = sizeof(union idmap_val);
 
-  local_key.real_id = key;
-  buffkey.addr = local_key.id_as_pointer;
-  buffkey.len = sizeof(union idmap_val);
-
-  if(HashTable_Del(ht, &buffkey, NULL, &old_data) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht, &key, NULL, &old_data) != HASHTABLE_SUCCESS)
     {
-      status = ID_MAPPER_SUCCESS;
-      gsh_free(old_data.addr);
-    }
-  else
-    {
-      status = ID_MAPPER_NOT_FOUND;
+      return -1;
     }
 
-  return status;
+  gsh_free(old_data.addr);
+  return 0;
 }
 
-int uidgidmap_remove(uid_t key)
+int uidgidmap_remove(uid_t uid)
 {
-  struct gsh_buffdesc buffkey, old_data;
-  int status;
-  union idmap_val local_key = {0};
-
-  local_key.real_id = key;
-  buffkey.addr = local_key.id_as_pointer;
-  buffkey.len = sizeof(union idmap_val);
-
-  if(HashTable_Del(ht_uidgid, &buffkey, NULL, &old_data) == HASHTABLE_SUCCESS)
+  union idmap_val local_key =
     {
-      status = ID_MAPPER_SUCCESS;
-    }
-  else
+      .real_id = uid
+    };
+  struct gsh_buffdesc key =
     {
-      status = ID_MAPPER_NOT_FOUND;
-    }
+      .addr = local_key.id_as_pointer,
+      .len = sizeof(union idmap_val)
+    };
+  struct gsh_buffdesc old_data;
 
-  return status;
+  if(HashTable_Del(ht_uidgid, &key, NULL, &old_data) != HASHTABLE_SUCCESS)
+    return -1;
+
+  return 0;
 }
 
-int uidmap_remove(char *key)
+int uidmap_remove(const struct gsh_buffdesc *key)
 {
   return idmap_remove(ht_pwnam, key);
 }
@@ -695,7 +584,7 @@ int unamemap_remove(uid_t key)
   return namemap_remove(ht_pwuid, key);
 }
 
-int gidmap_remove(char *key)
+int gidmap_remove(const struct gsh_buffdesc *key)
 {
   return idmap_remove(ht_grnam, key);
 }
@@ -734,7 +623,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
       LogCrit(COMPONENT_IDMAPPER,
               "Can't open file %s", path);
 
-      return ID_MAPPER_INVALID_ARGUMENT;
+      return -1;
     }
 
   switch (maptype)
@@ -753,7 +642,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
 
     default:
       /* Using incoherent value */
-      return ID_MAPPER_INVALID_ARGUMENT;
+      return -1;
       break;
     }
 
@@ -762,14 +651,14 @@ int idmap_populate(char *path, idmap_type_t maptype)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "Can't get label %s in file %s", label, path);
-      return ID_MAPPER_INVALID_ARGUMENT;
+      return -1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       LogCrit(COMPONENT_IDMAPPER,
               "Label %s in file %s is expected to be a block", label, path);
-      return ID_MAPPER_INVALID_ARGUMENT;
+      return -1;
     }
 
   var_max = config_GetNbItems(block);
@@ -778,6 +667,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
     {
       config_item_t item;
       uint64_t value = 0;
+      struct gsh_buffdesc key_buff;
 
       item = config_GetItemByIndex(block, var_index);
 
@@ -787,17 +677,19 @@ int idmap_populate(char *path, idmap_type_t maptype)
           LogCrit(COMPONENT_IDMAPPER,
                   "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, label);
-          return ID_MAPPER_INVALID_ARGUMENT;
+          return -1;
         }
+      key_buff.addr = key_name;
+      key_buff.len = strlen(key_name);
       errno = 0;
       value = strtoul(key_value, NULL, 10);
       if(errno != 0 || value > UINT_MAX)
-          return ID_MAPPER_INVALID_ARGUMENT;
+          return -1;
 
-      if((rc = idmap_add(ht, key_name, (uint32_t)value)) != ID_MAPPER_SUCCESS)
+      if((rc = idmap_add(ht, &key_buff, (uint32_t)value)) != 0)
         return rc;
 
-      if((rc = namemap_add(ht_reverse, (uint32_t)value, key_name)) != ID_MAPPER_SUCCESS)
+      if((rc = namemap_add(ht_reverse, (uint32_t)value, &key_buff)) != 0)
         return rc;
 
     }
@@ -805,7 +697,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
   /* HashTable_Log( ht ) ; */
   /* HashTable_Log( ht_reverse ) ; */
 
-  return ID_MAPPER_SUCCESS;
+  return 0;
 }
 
 /**
@@ -815,7 +707,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
  * @param[out] phstat         Resulting stats for direct map.
  * @param[out] phstat_reverse Resulting stats for reverse map
  *
- * @return nothing (void function)
+ * @todo Delendum est
  */
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse)
@@ -845,3 +737,4 @@ void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
   HashTable_GetStats(ht_reverse, phstat_reverse);
 
 }
+/** @} */

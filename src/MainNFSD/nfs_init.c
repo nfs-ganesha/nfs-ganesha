@@ -67,6 +67,7 @@
 #include "nsm.h"
 #include "sal_functions.h"
 #include "fridgethr.h"
+#include "idmapper.h"
 #include "client_mgr.h"
 
 extern struct fridgethr *req_fridge;
@@ -134,6 +135,7 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
+  .nfsv4_param.allow_numeric_owners = true,
 #ifdef USE_NFSIDMAP
   .nfsv4_param.use_getpwnam = false,
 #else
@@ -154,8 +156,7 @@ nfs_parameter_t nfs_param =
   /*  Worker parameters : UID_MAPPER hash table */
   .uidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
   .uidmap_cache_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
-  .uidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func,
-  .uidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func,
+  .uidmap_cache_param.hash_param.hash_func_both = idmapper_hash_func,
   .uidmap_cache_param.hash_param.compare_key = compare_idmapper,
   .uidmap_cache_param.hash_param.key_to_str = display_idmapper_key,
   .uidmap_cache_param.hash_param.val_to_str = display_idmapper_val,
@@ -174,8 +175,7 @@ nfs_parameter_t nfs_param =
   /*  Worker parameters : GID_MAPPER hash table */
   .gidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
   .gidmap_cache_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
-  .gidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func,
-  .gidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func,
+  .gidmap_cache_param.hash_param.hash_func_both = idmapper_hash_func,
   .gidmap_cache_param.hash_param.compare_key = compare_idmapper,
   .gidmap_cache_param.hash_param.key_to_str = display_idmapper_key,
   .gidmap_cache_param.hash_param.val_to_str = display_idmapper_val,
@@ -1347,6 +1347,25 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   /* Set the stats to zero */
   nfs_reset_stats();
 
+  LogEvent(COMPONENT_INIT,
+	   "Initializing IdMapper.");
+  if (!idmapper_init())
+    LogFatal(COMPONENT_INIT,
+	     "Failed initializing IdMapper.");
+  else
+    LogEvent(COMPONENT_INIT,
+	     "IdMapper successfully initialized.");
+
+  /* Init the NFSv4 Clientid cache */
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
+  if(nfs_Init_client_id(&nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 clientid cache");
+    }
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 clientid cache successfully initialized");
+
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
   if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
@@ -1370,49 +1389,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "IP/name cache successfully initialized");
-
-  /* Init the UID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "Now building UID_MAPPER cache");
-  if((idmap_uid_init(nfs_param.uidmap_cache_param) != ID_MAPPER_SUCCESS) ||
-     (idmap_uname_init(nfs_param.unamemap_cache_param) != ID_MAPPER_SUCCESS))
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing UID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "UID_MAPPER cache successfully initialized");
-
-  /* Init the UIDGID MAPPER Cache */
-  LogDebug(COMPONENT_INIT,
-           "Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
-  if(uidgidmap_init(nfs_param.uidgidmap_cache_param) != ID_MAPPER_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-              "Error while initializing UIDGID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "UIDGID_MAPPER cache successfully initialized");
-
-  /* Init the GID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "Now building GID_MAPPER cache");
-  if((idmap_gid_init(nfs_param.gidmap_cache_param) != ID_MAPPER_SUCCESS) ||
-     (idmap_gname_init(nfs_param.gnamemap_cache_param) != ID_MAPPER_SUCCESS))
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing GID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "GID_MAPPER cache successfully initialized");
-
-  /* Init the NFSv4 Clientid cache */
-  LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-  if(nfs_Init_client_id(&nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing NFSv4 clientid cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "NFSv4 clientid cache successfully initialized");
 
   /* Init The NFSv4 State id cache */
   LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
@@ -1606,8 +1582,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
     {
       LogDebug(COMPONENT_INIT, "Populating UID_MAPPER with file %s",
                nfs_param.uidmap_cache_param.mapfile);
-      if(idmap_populate(nfs_param.uidmap_cache_param.mapfile, UIDMAP_TYPE) !=
-         ID_MAPPER_SUCCESS)
+      if(idmap_populate(nfs_param.uidmap_cache_param.mapfile,
+			UIDMAP_TYPE) != 0)
         LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
     }
 
@@ -1620,7 +1596,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
       LogDebug(COMPONENT_INIT, "Populating GID_MAPPER with file %s",
                nfs_param.uidmap_cache_param.mapfile);
       if(idmap_populate(nfs_param.gidmap_cache_param.mapfile, GIDMAP_TYPE) !=
-         ID_MAPPER_SUCCESS)
+         0)
         LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
     }
 

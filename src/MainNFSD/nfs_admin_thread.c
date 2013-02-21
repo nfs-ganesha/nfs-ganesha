@@ -40,6 +40,7 @@
 #include "sal_data.h"
 #include "fsal_up.h"
 #include "cache_inode_lru.h"
+#include "idmapper.h"
 #ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif

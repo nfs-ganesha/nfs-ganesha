@@ -100,7 +100,10 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         }
 
         /* Convert the fattr4 in the request to a fsal sattr structure */
-        res_SETATTR4.status = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
+	res_SETATTR4.status
+		= nfs4_Fattr_To_FSAL_attr(&sattr,
+					  &(arg_SETATTR4.obj_attributes),
+					  data);
         if (res_SETATTR4.status != NFS4_OK) {
                 return res_SETATTR4.status;
         }
