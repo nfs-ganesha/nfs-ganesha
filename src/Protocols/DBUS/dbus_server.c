@@ -355,7 +355,7 @@ static DBusHandlerResult dbus_message_entrypoint(
 	struct gsh_dbus_interface **interfaces = user_data;
 	DBusMessage *reply;
 	DBusMessageIter args, *argsp;
-	bool retval;
+	bool retval = false;
 	static uint32_t serial = 1;
 
 	if (interface == NULL)
