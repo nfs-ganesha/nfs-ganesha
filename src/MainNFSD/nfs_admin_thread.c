@@ -40,7 +40,9 @@
 #include "sal_data.h"
 #include "fsal_up.h"
 #include "cache_inode_lru.h"
+#ifdef USE_DBUS
 #include "ganesha_dbus.h"
+#endif
 
 extern struct fridgethr *req_fridge; /*< Decoder thread pool */
 
