@@ -668,7 +668,7 @@ create_err:
 	}
 
 	if (fe != NULL) {
-		gsh_free(free);
+		gsh_free(fe);
 	}
 
 	return rc;

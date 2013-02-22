@@ -78,7 +78,6 @@ cache_inode_kill_entry(cache_entry_t *entry)
      LogInfo(COMPONENT_CACHE_INODE,
              "Using cache_inode_kill_entry for entry %p", entry);
 
-     cache_inode_unpinnable(entry);
      cache_inode_lru_cleanup_push(entry);
 
      /* Use the handle to build the key */

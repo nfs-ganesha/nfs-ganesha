@@ -97,16 +97,25 @@ typedef enum cache_inode_stability__ {
  * Data for tracking a cache entry's position the LRU.
  */
 
+/*
+ * Valid LRU queues.
+ */
+enum lru_q_id {
+        LRU_ENTRY_NONE = 0 /* entry not queued */,
+	LRU_ENTRY_L1,
+	LRU_ENTRY_L2,
+	LRU_ENTRY_PINNED,
+	LRU_ENTRY_CLEANUP
+};
+
 typedef struct cache_inode_lru__ {
+	enum lru_q_id qid; /*< Queue identifier */
 	struct glist_head q; /*< Link in the physical deque
 			         impelmenting a portion of the logical
 			         LRU. */
-        struct glist_head cq; /*< Link in the cleanup queue */
-	pthread_mutex_t mtx; /*< Mutex protecting this entry with
-			         regard to LRU operations. */
-	int64_t refcount; /*< Reference count.  This is signed to make
-			      mistakes easy to see. */
-	uint32_t pin_refcnt; /*< Unpin it only if this goes down to zero */
+	int32_t refcnt; /*< Reference count.  This is signed to make
+                          mistakes easy to see. */
+	int32_t pin_refcnt; /*< Unpin it only if this goes down to zero */
 	uint32_t flags; /*< Flags for details of this entry's status, such
 			    as whether it is pinned and whetehr it's in L1
 			    or L2. */
@@ -378,6 +387,7 @@ struct cache_entry_t {
 	struct {
 		struct avltree_node node_k; /*< AVL node in tree */
 		cache_inode_key_t key; /*< Key of this entry */
+		bool inavl;
 	} fh_hk;
 	/** The type of the entry */
 	object_file_type_t type;
@@ -638,7 +648,6 @@ typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
-void cache_inode_clean_entry(cache_entry_t *entry);
 int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
@@ -751,9 +760,6 @@ cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
 					     const char *name,
 					     struct req_op_context *req_ctx,
 					     uint32_t flags);
-
-cache_inode_status_t cache_inode_clean_internal(
-	cache_entry_t *to_remove_entry);
 
 cache_inode_status_t cache_inode_operate_cached_dirent(
 	cache_entry_t *entry_parent,

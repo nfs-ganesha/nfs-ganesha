@@ -290,19 +290,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                    "cache_inode_new_entry: Trying to add an already existing "
                    "entry 1. Found entry %p type: %d, New type: %d",
                    oentry, oentry->type, new_obj->type);
-          if (cache_inode_lru_ref(oentry, LRU_FLAG_NONE) ==
-              CACHE_INODE_SUCCESS) {
-		  /* Release the subtree hash table lock */
-		  cih_latch_rele(&latch);
-		  *entry = oentry;
-		  goto out;
-          } else {
-		  /* Entry is being deconstructed, so just replace it. */
-		  cih_latch_rele(&latch);
-		  *entry = NULL;
-		  status = CACHE_INODE_SUCCESS;
-          }
+          cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+          /* Release the subtree hash table lock */
+          cih_latch_rele(&latch);
+          *entry = oentry;
+          goto out;
      }
+     /* !LATCHED */
 
      /* We did not find the object.  Pull an entry off the LRU. */
      status = cache_inode_lru_get(&nentry, 0);
@@ -314,9 +308,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      }
 
      locksinited = true;
-
-     /* XXX needed? */
-     assert(nentry->lru.refcount > 1);
 
      /* See if someone raced us. */
      oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK);
@@ -332,16 +323,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		      "lost race to add entry %p type: %d, New type: %d",
 		      oentry, oentry->obj_handle->type, new_obj->type);
 	     /* Ref it */
-	     if (cache_inode_lru_ref(oentry, LRU_FLAG_NONE) ==
-		 CACHE_INODE_SUCCESS) {
-		     /* Release the subtree hash table lock */
-		     cih_latch_rele(&latch);
-		     /* Release the new entry we acquired. */
-		     cache_inode_lru_kill(nentry);
-		     cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
-		     *entry = oentry;
-		     goto out;
-	     }
+	     cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+             /* Release the subtree hash table lock */
+             cih_latch_rele(&latch);
+             /* Release the new entry we acquired. */
+             cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
+             *entry = oentry;
+             goto out;
      }
 
      /* We won the race. */
@@ -483,20 +471,6 @@ out:
 
      return status;
 }                               /* cache_inode_new_entry */
-
-/**
- * @brief Final cleaning of an entry
- *
- * This function performs final cleanup of an entry before recycling or free.
- *
- * @param[in] entry The entry to be cleaned
- */
-void cache_inode_clean_entry(cache_entry_t *entry)
-{
-  pthread_rwlock_destroy(&entry->content_lock);
-  pthread_rwlock_destroy(&entry->state_lock);
-  pthread_rwlock_destroy(&entry->attr_lock);
-}
 
 /**
  * @brief Converts an FSAL error to the corresponding cache_inode error

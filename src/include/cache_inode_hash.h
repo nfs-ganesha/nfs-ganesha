@@ -48,6 +48,7 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "gsh_intrinsic.h"
+#include "cache_inode_lru.h"
 #include "city.h"
 
 /**
@@ -326,6 +327,34 @@ out:
 	return (entry);
 }
 
+/**
+ * @brief Latch the partition of entry.
+ *
+ * Latch the partition of entry.
+ *
+ * @param entry [in] The entry
+ * @param latch [inout] Latch
+ * @param flags [in] Flags
+ *
+ * @return void
+ */
+static inline bool
+cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch,
+                uint32_t flags)
+{
+	cih_partition_t *cp;
+
+	latch->cp = cp =
+		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+
+	if (flags & CIH_GET_WLOCK)
+		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
+	else
+		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+
+	return (true);
+}
+
 #define CIH_SET_NONE     0x0000
 #define CIH_SET_HASHED   0x0001 /* previously hashed entry */
 #define CIH_SET_UNLOCK   0x0002
@@ -353,6 +382,7 @@ cih_set_latched(cache_entry_t *entry, cih_latch_t *latch,
 		cih_hash_entry(entry, fh_desc, CIH_HASH_NONE);
 
         (void) avltree_insert(&entry->fh_hk.node_k, &cp->t);
+        entry->fh_hk.inavl = true;
 
         if (likely(flags & CIH_SET_UNLOCK))
             PTHREAD_RWLOCK_unlock(&cp->lock);
@@ -383,8 +413,46 @@ cih_remove_checked(cache_entry_t *entry)
 		avltree_remove(node, &cp->t);
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;
+                entry->fh_hk.inavl = false;
+                /* return sentinel ref */
+                cache_inode_lru_unref(entry, LRU_UNREF_SENTINEL);
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
+}
+
+/**
+ * @brief Remove cache entry protected by latch
+ *
+ * Remove cache entry.
+ *
+ * @param entry [in] Entry to be removed.0
+ *
+ * @return (void)
+ */
+#define CIH_REMOVE_NONE    0x0000
+#define CIH_REMOVE_UNLOCK  0x0001
+
+static inline bool
+cih_remove_latched(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
+{
+	cih_partition_t *cp =
+		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+
+	if (entry->fh_hk.inavl) {
+		avltree_remove(&entry->fh_hk.node_k, &cp->t);
+		cp->cache[cih_cache_offsetof(&cih_fhcache,
+					     entry->fh_hk.key.hk)] = NULL;
+                entry->fh_hk.inavl = false;
+                /* return sentinel ref */
+                cache_inode_lru_unref(entry, LRU_UNREF_SENTINEL);
+		if (flags & CIH_REMOVE_UNLOCK)
+			PTHREAD_RWLOCK_unlock(&cp->lock);
+		return (true);
+	}
+	if (flags & CIH_REMOVE_UNLOCK)
+		PTHREAD_RWLOCK_unlock(&cp->lock);
+
+	return (false);
 }
 
 /* stuff */

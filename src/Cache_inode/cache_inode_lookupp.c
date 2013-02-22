@@ -88,15 +88,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (entry->type == DIRECTORY && entry->object.dir.root) {
           /* Bump the refcount on the current entry (so the caller's
              releasing decrementing it doesn't take us below the
-             sentinel count */
-          if (cache_inode_lru_ref(entry, 0) !=
-              CACHE_INODE_SUCCESS) {
-               /* This cannot actually happen */
-               LogFatal(COMPONENT_CACHE_INODE,
-                        "There has been a grave failure in consistency: "
-                        "Unable to increment reference count on an entry that "
-                        "on which we should have a referenced.");
-          }
+             sentinel count) */
+          cache_inode_lru_ref(entry, LRU_FLAG_NONE);
           *parent = entry;
 	  return CACHE_INODE_SUCCESS;
      }

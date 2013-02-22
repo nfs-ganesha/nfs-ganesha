@@ -117,14 +117,8 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
      and current and both must be counted.  Guard this, in case we
      have a pseudofs handle. */
 
-  if (data->saved_entry) {
-       if (cache_inode_lru_ref(data->saved_entry,
-                               LRU_FLAG_NONE) != CACHE_INODE_SUCCESS) {
-            data->saved_entry = NULL;
-            resp->nfs_resop4_u.opsavefh.status = NFS4ERR_STALE;
-            return resp->nfs_resop4_u.opsavefh.status;
-       }
-  }
+  if (data->saved_entry)
+      cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
 
  out:
 

@@ -55,13 +55,8 @@ int up_get(const struct gsh_buffdesc *key, cache_entry_t **entry)
 		return CACHE_INODE_NOT_FOUND;
 	}
 
-	/* Found entry, try to ref it */
-	if (unlikely(cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
-		     CACHE_INODE_SUCCESS)) {
-		/* If ref fails, it's just another NOT_FOUND case */
-		cih_latch_rele(&latch);
-		return CACHE_INODE_NOT_FOUND;
-	}
+	/* Found entry, ref it */
+        cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 	cih_latch_rele(&latch);
 
 	return CACHE_INODE_SUCCESS;

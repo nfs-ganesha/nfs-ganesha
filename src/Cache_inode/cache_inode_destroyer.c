@@ -45,8 +45,6 @@
 #include "cache_inode_hash.h"
 #include "nsm.h"
 
-extern inline struct lru_q_base *lru_select_queue(uint32_t flags,
-						  uint32_t lane);
 extern void free_nsm_client(state_nsm_client_t *client);
 extern void free_client_record(nfs_client_record_t *record);
 void dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client);
@@ -846,8 +844,6 @@ static void destroy_entry(cache_entry_t *entry)
 		}
 	}
 	entry->obj_handle = NULL;
-	cache_inode_clean_entry(entry);
-	pthread_mutex_destroy(&entry->lru.mtx);
 }
 
 /**

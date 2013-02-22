@@ -89,6 +89,8 @@
 #define DRC_UDP_HIWAT 16384 /* 1/2(size) */
 #define DRC_UDP_CHECKSUM true
 
+#define TIRPC_DEBUG_FLAGS 0x0
+
 #define PRIME_CACHE_INODE 37    /* has to be a prime number */
 
 #define PRIME_IP_NAME 17
@@ -242,6 +244,9 @@ typedef struct nfs_core_param__ {
 			bool checksum;
 		} udp;
 	} drc;
+	struct {
+		uint32_t debug_flags;
+	} rpc;
 	unsigned int stats_update_delay;
 	unsigned int long_processing_threshold;
 	unsigned int dump_stats_per_client;
