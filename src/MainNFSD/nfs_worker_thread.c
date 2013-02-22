@@ -611,11 +611,12 @@ static void nfs_rpc_execute(request_data_t *preq,
                        "NFS DISPATCHER: FAILURE: Error while calling "
                        "svc_sendreply on a duplicate request. rpcxid=%u "
                        "socket=%d function:%s client:%s program:%d "
-                       "nfs version:%d proc:%d xid:%u",
+                       "nfs version:%d proc:%d xid:%u errno: %d",
                        req->rq_xid, xprt->xp_fd,
                        preqnfs->funcdesc->funcname,
                        addrbuf, (int)req->rq_prog,
-                       (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
+                       (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
+                       errno);
               svcerr_systemerr(xprt, req);
           }
 #if 0
@@ -1199,19 +1200,13 @@ static void nfs_rpc_execute(request_data_t *preq,
                   "NFS DISPATCHER: FAILURE: Error while calling "
                    "svc_sendreply on a new request. rpcxid=%u "
                    "socket=%d function:%s client:%s program:%d "
-                   "nfs version:%d proc:%d xid:%u",
+                   "nfs version:%d proc:%d xid:%u errno: %d",
                    req->rq_xid, xprt->xp_fd,
                    preqnfs->funcdesc->funcname,
                    addrbuf, (int)req->rq_prog,
-                   (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
-          svcerr_systemerr(xprt, req);
-          /* ibid */
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on line %d",
-                      __LINE__);
-            }
+                   (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
+                   errno);
+          svc_destroy(xprt);
           goto freeargs;
         }
 
