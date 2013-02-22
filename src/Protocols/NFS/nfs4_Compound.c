@@ -35,6 +35,7 @@
 #include "sal_functions.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "server_stats.h"
 
 typedef struct nfs4_op_desc__
 {
@@ -155,6 +156,9 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_len;
   nfs_argop4 *const argarray =
        arg->arg_compound4.argarray.argarray_val;
+  nsecs_elapsed_t op_start_time;
+  struct timespec ts;
+  int export_id;
 
   if(compound4_minor > 1)
     {
@@ -285,6 +289,8 @@ int nfs4_Compound(nfs_arg_t *arg,
       /* Use optab4index to reference the operation */
       data.oppos = i;           /* Useful to check if OP_SEQUENCE is used as the first operation */
 
+      now(&ts); /* time each op */
+      op_start_time = timespec_diff(&ServerBootTime, &ts);
       if(compound4_minor == 1)
         {
           if(data.psession != NULL)
@@ -339,6 +345,24 @@ int nfs4_Compound(nfs_arg_t *arg,
       res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess
         .status = status;
 
+#ifdef USE_DBUS_STATS
+      if(nfs4_Is_Fh_Invalid(&data.currentFH) == NFS4_OK &&
+	 !nfs4_Is_Fh_Pseudo(&data.currentFH)) {
+	      export_id = nfs4_FhandleToExportId(&data.currentFH);
+      } else if(nfs4_Is_Fh_Invalid(&data.savedFH) == NFS4_OK &&
+		!nfs4_Is_Fh_Pseudo(&data.savedFH)) {
+	      export_id = nfs4_FhandleToExportId(&data.savedFH);
+      } else {
+	      export_id = -1;
+      }
+      server_stats_nfsv4_op_done(data.req_ctx,
+				 argarray[i].argop,
+				 compound4_minor,
+				 export_id,
+				 op_start_time,
+				 status == NFS4_OK);
+#endif /* USE_DBUS_STATS */
+
       if(status != NFS4_OK)
         {
           /* An error occured, we do not manage the other requests in
@@ -375,6 +399,14 @@ int nfs4_Compound(nfs_arg_t *arg,
           break;    /* Exit the for loop */
         }
     }                           /* for */
+
+#ifdef USE_DBUS_STATS
+  server_stats_compound_done(req_ctx,
+			     export_id,
+			     compound4_minor,
+			     argarray_len,
+			     status == NFS4_OK);
+#endif
 
   /* Complete the reply, in particular, tell where you stopped if
      unsuccessfull COMPOUD */
