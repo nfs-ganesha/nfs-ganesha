@@ -375,6 +375,9 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
         if (node) {
             if (cih_fh_cmpf(&k_entry.fh_hk.node_k, node) == 0) {
                 /* got it in 1 */
+		LogDebug(COMPONENT_HASHTABLE_CACHE,
+                         "slot cache hit slot %d\n",
+                         cih_cache_offsetof(&cih_fhcache, key->hk));
                 goto found;
             }
         }
@@ -384,8 +387,14 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 	if (! node) {
             if (flags & CIH_GET_UNLOCK_ON_MISS)
                 PTHREAD_RWLOCK_unlock(&cp->lock);
+            LogDebug(COMPONENT_HASHTABLE_CACHE,
+                     "fdcache MISS\n");
             goto out;
         }
+
+        LogDebug(COMPONENT_HASHTABLE_CACHE,
+                 "AVL hit slot %d\n",
+                 cih_cache_offsetof(&cih_fhcache, key->hk));
 
 found:
         /* update cache */

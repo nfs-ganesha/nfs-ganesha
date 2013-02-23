@@ -89,9 +89,11 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      /* Do lookup */
      *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK);
      if (*entry) {
-          /* take an extra reference within the critical section */
-          cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
-          if (*entry == associated) {
+         if ((! associated) ||
+             (*entry == associated)) {
+              /* take an extra reference within the critical section */
+              cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+
                /* Take a quick exit so we don't invert lock
                 * ordering. */
                cih_latch_rele(&latch);
