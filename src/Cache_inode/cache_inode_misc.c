@@ -32,14 +32,13 @@
  * @brief Miscellaneous functions, especially new_entry
  */
 #include "config.h"
-#include "abstract_atomic.h"
 #include "log.h"
-#include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
+#include "HashTable.h"
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"

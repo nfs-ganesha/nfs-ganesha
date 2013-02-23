@@ -47,6 +47,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "abstract_atomic.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
 #include "nfs4_acls.h"

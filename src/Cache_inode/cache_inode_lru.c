@@ -51,8 +51,8 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_hash.h"
 #include "abstract_atomic.h"
+#include "cache_inode_hash.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 

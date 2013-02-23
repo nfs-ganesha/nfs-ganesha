@@ -42,6 +42,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_proto_tools.h"
+#include "abstract_atomic.h"
 #include "cache_inode_hash.h"
 #include "nsm.h"
 
