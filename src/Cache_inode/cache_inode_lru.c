@@ -1259,6 +1259,7 @@ cache_inode_lru_get(cache_entry_t **entry,
      /* Since the entry isn't in a queue, nobody can bump refcnt. */
      nentry->lru.refcnt = 2;
      nentry->lru.pin_refcnt = 0;
+     nentry->lru.cf = 0;
 
      /* Enqueue. */
      lane = lru_lane_of_entry(nentry);
@@ -1404,6 +1405,10 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		struct lru_q_lane *qlane = &LRU[lru->lane];
 		struct lru_q *q;
 
+		/* do it less */
+                if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
+			goto out;
+
 		pthread_mutex_lock(&qlane->mtx);
 
 		switch (lru->qid) {
@@ -1444,6 +1449,8 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		} /* switch qid */
 		pthread_mutex_unlock(&qlane->mtx);
 	} /* initial ref */
+out:
+	return;
 }
 
 /**
