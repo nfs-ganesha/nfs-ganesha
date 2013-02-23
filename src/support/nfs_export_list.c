@@ -119,6 +119,7 @@ bool get_req_uid_gid(struct svc_req *req,
   struct svc_rpc_gss_data *gd = NULL;
   char principal[MAXNAMLEN];
 #endif
+  const gid_t *maybe_gid = NULL;
 
   if (user_credentials == NULL)
     return false;
@@ -231,14 +232,20 @@ bool get_req_uid_gid(struct svc_req *req,
 	  return true;
 	}
 
-      if(uidgidmap_get(user_credentials->caller_uid,
-                       &user_credentials->caller_gid) != 0)
-        {
-          LogMajor(COMPONENT_DISPATCH,
-                   "FAILURE: Could not resolve uidgid map for %u",
-                   user_credentials->caller_uid);
-          user_credentials->caller_gid = -1;
-        }
+      pthread_rwlock_rdlock(&idmapper_user_lock);
+      idmapper_lookup_by_uid(user_credentials->caller_uid,
+			     NULL,
+			     &maybe_gid);
+      if (maybe_gid)
+	user_credentials->caller_gid = *maybe_gid;
+      else
+	{
+	  LogMajor(COMPONENT_DISPATCH,
+		   "FAILURE: Could not resolve uidgid map for %u",
+		   user_credentials->caller_uid);
+	  user_credentials->caller_gid = -1;
+	}
+      pthread_rwlock_unlock(&idmapper_user_lock);
       LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
                    (unsigned int)user_credentials->caller_uid,
                    (unsigned int)user_credentials->caller_gid);

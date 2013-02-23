@@ -41,97 +41,40 @@
 #define IDMAPPER_H
 #include <stdbool.h>
 #include <stdint.h>
-
-extern hash_table_t *ht_pwnam;
-extern hash_table_t *ht_grnam;
-extern hash_table_t *ht_pwuid;
-extern hash_table_t *ht_grgid;
-extern hash_table_t *ht_uidgid;
+#include <pthread.h>
+#include "ganesha_rpc.h"
+#include "ganesha_types.h"
 
 /**
- * @brief Used to select the cache to populate or on which to get
- * stats
- */
-
-typedef enum {
-	UIDMAP_TYPE = 1,
-	GIDMAP_TYPE = 2
-} idmap_type_t;
-
-/**
- * @brief Overload mapping of uid/gid to buffdata values
+ * @brief Shared between idmapper.c and idmapper_cache.c.  If you
+ * aren't in idmapper.c, leave these symbols alone.
  *
- * To save allocating space, uids and gids are overlayed into the value pointer
- * (.addr) of the hashbuffer_t.  This union accomplishes that mapping.
- * When used, the length (.len) is expected to be zero: This is not a pointer.
+ * @{
  */
 
-union idmap_val {
-	void *id_as_pointer;
-	uint32_t real_id;
-};
+extern pthread_rwlock_t idmapper_user_lock;
+extern pthread_rwlock_t idmapper_group_lock;
 
+void idmapper_cache_init(void);
+bool idmapper_add_user(const struct gsh_buffdesc *,
+		       uid_t,
+		       const gid_t *);
+bool idmapper_add_group(const struct gsh_buffdesc *,
+			gid_t);
+bool idmapper_lookup_by_uname(const struct gsh_buffdesc *,
+			      uid_t *,
+			      const gid_t **);
+bool idmapper_lookup_by_uid(const uid_t,
+			    const struct gsh_buffdesc **,
+			    const gid_t **);
+bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name,
+			      uid_t *gid);
+bool idmapper_lookup_by_gid(const gid_t gid,
+			    const struct gsh_buffdesc **name);
+/** @} */
 
 bool idmapper_init(void);
-uint64_t namemapper_rbt_hash_func(hash_parameter_t *,
-				  struct gsh_buffdesc *);
-
-uint32_t namemapper_value_hash_func(hash_parameter_t *,
-				    struct gsh_buffdesc *);
-int idmap_populate(char *path, idmap_type_t);
-
-int idmap_gid_init(nfs_idmap_cache_parameter_t);
-int idmap_gname_init(nfs_idmap_cache_parameter_t);
-
-int idmap_uid_init(nfs_idmap_cache_parameter_t);
-int idmap_uname_init(nfs_idmap_cache_parameter_t);
-int uidgidmap_init(nfs_idmap_cache_parameter_t);
-
-int idmapper_hash_func(hash_parameter_t *hparam,
-		       struct gsh_buffdesc *key,
-		       uint32_t *index,
-		       uint64_t *rbthash);
-int display_idmapper_val(struct gsh_buffdesc *, char *);
-int display_idmapper_key(struct gsh_buffdesc *, char *);
-
-int compare_idmapper(struct gsh_buffdesc *, struct gsh_buffdesc *);
-int compare_namemapper(struct gsh_buffdesc *, struct gsh_buffdesc *);
-
-int idmap_add(hash_table_t *, const struct gsh_buffdesc*, uint32_t);
-int uidmap_add(const struct gsh_buffdesc *, uid_t);
-int gidmap_add(const struct gsh_buffdesc *, gid_t);
-
-int namemap_add(hash_table_t *, uint32_t, const struct gsh_buffdesc *);
-int unamemap_add(uid_t, const struct gsh_buffdesc *);
-int gnamemap_add(gid_t, const struct gsh_buffdesc *);
-int uidgidmap_add(uid_t, gid_t);
-
-int idmap_get(hash_table_t *, const struct gsh_buffdesc *, uint32_t *);
-int uidmap_get(const struct gsh_buffdesc *, uid_t *);
-int gidmap_get(const struct gsh_buffdesc *, gid_t *);
-
-int uidgidmap_get(uid_t, gid_t *);
-
-int idmap_remove(hash_table_t *, const struct gsh_buffdesc *);
-int uidmap_remove(const struct gsh_buffdesc *);
-int gidmap_remove(const struct gsh_buffdesc *);
-
-int namemap_remove(hash_table_t *, uint32_t);
-int unamemap_remove(uid_t);
-int gnamemap_remove(gid_t);
-int uidgidmap_remove(uid_t);
-
-int uidgidmap_clear(void);
-int idmap_clear(void);
-int namemap_clear(void);
-
-void idmap_get_stats(idmap_type_t,
-		     hash_stat_t *,
-		     hash_stat_t *);
-int nfs_read_uidmap_conf(config_file_t,
-			 nfs_idmap_cache_parameter_t *);
-int nfs_read_gidmap_conf(config_file_t,
-			 nfs_idmap_cache_parameter_t *);
+void idmapper_clear_cache(void);
 
 bool xdr_encode_nfs4_owner(XDR *, uid_t);
 bool xdr_encode_nfs4_group(XDR *, gid_t);

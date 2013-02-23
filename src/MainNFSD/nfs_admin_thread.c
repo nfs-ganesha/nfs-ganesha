@@ -359,9 +359,7 @@ static void redo_exports(void)
    */
 #ifdef _HAVE_GSSAPI
 #ifdef USE_NFSIDMAP
-  uidgidmap_clear();
-  idmap_clear();
-  namemap_clear();
+  idmapper_clear_cache();
 #endif /* USE_NFSIDMAP */
 #endif /* _HAVE_GSSAPI */
 

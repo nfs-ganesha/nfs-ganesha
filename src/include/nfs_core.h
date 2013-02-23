@@ -73,7 +73,6 @@
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_REQUEST_BEFORE_GC 50
 #define PRIME_DUPREQ 17 /* has to be a prime number */
-#define PRIME_ID_MAPPER 17 /* has to be a prime number */
 
 #define DRC_TCP_NPART 1
 #define DRC_TCP_SIZE 1024
@@ -92,6 +91,8 @@
 #define TIRPC_DEBUG_FLAGS 0x0
 
 #define PRIME_CACHE_INODE 37    /* has to be a prime number */
+
+#define PRIME_ID_MAPPER 17
 
 #define PRIME_IP_NAME 17
 #define IP_NAME_EXPIRATION 36000
@@ -281,11 +282,6 @@ typedef struct nfs4_owner_parameter_t {
 	hash_parameter_t hash_param;
 } nfs4_owner_parameter_t;
 
-typedef struct nfs_idmap_cache_param__ {
-	hash_parameter_t hash_param;
-	char mapfile[MAXPATHLEN];
-} nfs_idmap_cache_parameter_t;
-
 typedef struct nfs_session_id_param__ {
 	hash_parameter_t hash_param;
 } nfs_session_id_parameter_t;
@@ -305,11 +301,6 @@ typedef struct nfs_param__ {
 	nfs_core_parameter_t core_param;
 	nfs_worker_parameter_t worker_param;
 	nfs_ip_name_parameter_t ip_name_param;
-	nfs_idmap_cache_parameter_t uidmap_cache_param;
-	nfs_idmap_cache_parameter_t gidmap_cache_param;
-	nfs_idmap_cache_parameter_t unamemap_cache_param;
-	nfs_idmap_cache_parameter_t gnamemap_cache_param;
-	nfs_idmap_cache_parameter_t uidgidmap_cache_param;
 	nfs_ip_stats_parameter_t ip_stats_param;
 #ifdef _USE_9P
 	_9p_parameter_t _9p_param ;

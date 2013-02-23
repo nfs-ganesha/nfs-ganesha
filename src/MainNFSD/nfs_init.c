@@ -153,55 +153,6 @@ nfs_parameter_t nfs_param =
   .ip_name_param.hash_param.flags = HT_FLAG_NONE,
   .ip_name_param.expiration_time = IP_NAME_EXPIRATION,
 
-  /*  Worker parameters : UID_MAPPER hash table */
-  .uidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .uidmap_cache_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
-  .uidmap_cache_param.hash_param.hash_func_both = idmapper_hash_func,
-  .uidmap_cache_param.hash_param.compare_key = compare_idmapper,
-  .uidmap_cache_param.hash_param.key_to_str = display_idmapper_key,
-  .uidmap_cache_param.hash_param.val_to_str = display_idmapper_val,
-  .uidmap_cache_param.hash_param.flags = HT_FLAG_NONE,
-
-  /*  Worker parameters : UNAME_MAPPER hash table */
-  .unamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .unamemap_cache_param.hash_param.alphabet_length = 10,    /* Not used for UID_MAPPER */
-  .unamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func,
-  .unamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func,
-  .unamemap_cache_param.hash_param.compare_key = compare_namemapper,
-  .unamemap_cache_param.hash_param.key_to_str = display_idmapper_val,
-  .unamemap_cache_param.hash_param.val_to_str = display_idmapper_key,
-  .unamemap_cache_param.hash_param.flags = HT_FLAG_NONE,
-
-  /*  Worker parameters : GID_MAPPER hash table */
-  .gidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .gidmap_cache_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
-  .gidmap_cache_param.hash_param.hash_func_both = idmapper_hash_func,
-  .gidmap_cache_param.hash_param.compare_key = compare_idmapper,
-  .gidmap_cache_param.hash_param.key_to_str = display_idmapper_key,
-  .gidmap_cache_param.hash_param.val_to_str = display_idmapper_val,
-  .gidmap_cache_param.hash_param.flags = HT_FLAG_NONE,
-
-  /*  Worker parameters : UID->GID  hash table (for RPCSEC_GSS) */
-  .uidgidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .uidgidmap_cache_param.hash_param.alphabet_length = 10,   /* Not used for UID_MAPPER */
-  .uidgidmap_cache_param.hash_param.hash_func_key =
-      namemapper_value_hash_func,
-  .uidgidmap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func,
-  .uidgidmap_cache_param.hash_param.compare_key = compare_namemapper,
-  .uidgidmap_cache_param.hash_param.key_to_str = display_idmapper_key,
-  .uidgidmap_cache_param.hash_param.val_to_str = display_idmapper_key,
-  .uidgidmap_cache_param.hash_param.flags = HT_FLAG_NONE,
-
-  /*  Worker parameters : GNAME_MAPPER hash table */
-  .gnamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .gnamemap_cache_param.hash_param.alphabet_length = 10,    /* Not used for UID_MAPPER */
-  .gnamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func,
-  .gnamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func,
-  .gnamemap_cache_param.hash_param.compare_key = compare_namemapper,
-  .gnamemap_cache_param.hash_param.key_to_str = display_idmapper_val,
-  .gnamemap_cache_param.hash_param.val_to_str = display_idmapper_key,
-  .gnamemap_cache_param.hash_param.flags = HT_FLAG_NONE,
-
   /*  Worker parameters : IP/stats hash table */
   .ip_stats_param.hash_param.index_size = PRIME_IP_STATS,
   .ip_stats_param.hash_param.alphabet_length = 10,  /* ipaddr is a numerical decimal value */
@@ -595,64 +546,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
                  "IP/name configuration read from config file");
     }
 
-  /* Worker paramters: uid_mapper hash table, same config for uid and uname resolution */
-  if(((rc = nfs_read_uidmap_conf(config_struct, &nfs_param.uidmap_cache_param)) < 0)
-     || ((rc = nfs_read_uidmap_conf(config_struct, &nfs_param.unamemap_cache_param)) <
-         0))
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing UID_MAPPER configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "No UID_MAPPER configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-                 "UID_MAPPER configuration read from config file");
-    }
-
-  /* Worker paramters: gid_mapper hash table, same config for gid and gname resolution */
-  if(((rc = nfs_read_gidmap_conf(config_struct, &nfs_param.gidmap_cache_param)) < 0)
-     || ((rc = nfs_read_gidmap_conf(config_struct, &nfs_param.gnamemap_cache_param)) <
-         0))
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing GID_MAPPER configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "No GID_MAPPER configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-		 "GID_MAPPER configuration read from config file");
-    }
-
-  /* Worker paramters: client_id hash table */
-  if((rc = nfs_read_client_id_conf(config_struct, &nfs_param.client_id_param)) < 0)
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing Client id configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "No Client id configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-		 "Client id configuration read from config file");
-    }
-
   /* Worker paramters: state_id hash table */
   if((rc = nfs_read_state_id_conf(config_struct, &nfs_param.state_id_param)) < 0)
     {
@@ -927,11 +820,6 @@ int nfs_check_param_consistency()
 
   // check for parameters which need to be primes
   if (!is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
-      !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
-      !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
-      !is_prime(nfs_param.gidmap_cache_param.hash_param.index_size) ||
-      !is_prime(nfs_param.uidgidmap_cache_param.hash_param.index_size) ||
-      !is_prime(nfs_param.gnamemap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.ip_stats_param.hash_param.index_size) ||
       !is_prime(nfs_param.client_id_param.cid_unconfirmed_hash_param.index_size) ||
       !is_prime(nfs_param.client_id_param.cid_confirmed_hash_param.index_size) ||
@@ -1571,33 +1459,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
     {
       /* NSM Unmonitor all */
       nsm_unmonitor_all();
-    }
-
-  /* Populate the ID_MAPPER file with mapping file if needed */
-  if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
-    {
-      LogDebug(COMPONENT_INIT, "No Uid Map file is used");
-    }
-  else
-    {
-      LogDebug(COMPONENT_INIT, "Populating UID_MAPPER with file %s",
-               nfs_param.uidmap_cache_param.mapfile);
-      if(idmap_populate(nfs_param.uidmap_cache_param.mapfile,
-			UIDMAP_TYPE) != 0)
-        LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
-    }
-
-  if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
-    {
-      LogDebug(COMPONENT_INIT, "No Gid Map file is used");
-    }
-  else
-    {
-      LogDebug(COMPONENT_INIT, "Populating GID_MAPPER with file %s",
-               nfs_param.uidmap_cache_param.mapfile);
-      if(idmap_populate(nfs_param.gidmap_cache_param.mapfile, GIDMAP_TYPE) !=
-         0)
-        LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
     }
 
   if(nfs_param.ip_name_param.mapfile[0] == '\0')

@@ -185,10 +185,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
         }
     }
 
-    /* Printing the UIDMAP_TYPE hash table stats */
-    idmap_get_stats(UIDMAP_TYPE, &ganesha_stats->uid_map, &ganesha_stats->uid_reverse);
-    /* Printing the GIDMAP_TYPE hash table stats */
-    idmap_get_stats(GIDMAP_TYPE, &ganesha_stats->gid_map, &ganesha_stats->gid_reverse);
     /* Stats for the IP/Name hashtable */
     nfs_ip_name_get_stats(&ganesha_stats->ip_name_map);
 }
