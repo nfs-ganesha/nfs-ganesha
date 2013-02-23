@@ -364,18 +364,18 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr, struct xdr_attrs_args *
 	int attr, offset;
 
 	memset(&bits, 0, sizeof(bits));
-	for(attr = FATTR4_SUPPORTED_ATTRS;
+	for (attr = FATTR4_SUPPORTED_ATTRS;
 	    attr <= FATTR4_FS_CHARSET_CAP;
 	    attr++) {
-		if(fattr4tab[attr].supported) {
+		if (fattr4tab[attr].supported) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
 			assert(res);
 		}
 	}
-	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
+	if (! inline_xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
-	for(offset = 0; offset < bits.bitmap4_len; offset++) {
-		if( !xdr_u_int32_t(xdr, &bits.map[offset]))
+	for (offset = 0; offset < bits.bitmap4_len; offset++) {
+		if (! inline_xdr_u_int32_t(xdr, &bits.map[offset]))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -661,7 +661,7 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr, struct xdr_attrs_args *ar
 	} else {
 		uniquehandles = TRUE;
 	}
-	if( !xdr_bool(xdr, &uniquehandles))
+	if(! inline_xdr_bool(xdr, &uniquehandles))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -677,7 +677,7 @@ static fattr_xdr_result decode_uniquehandles(XDR *xdr, struct xdr_attrs_args *ar
 
 static fattr_xdr_result encode_leaselife(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int32_t(xdr, &nfs_param.nfsv4_param.lease_lifetime))
+	if (! inline_xdr_u_int32_t(xdr, &nfs_param.nfsv4_param.lease_lifetime))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -697,14 +697,14 @@ static fattr_xdr_result decode_leaselife(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_rdattr_error(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int32_t(xdr, &args->rdattr_error))
+	if(! inline_xdr_u_int32_t(xdr, &args->rdattr_error))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_rdattr_error(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int32_t(xdr, &args->rdattr_error))
+	if(! inline_xdr_u_int32_t(xdr, &args->rdattr_error))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -717,29 +717,29 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
 	fsal_ace_t *pace;
 
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "Number of ACEs = %u",
-		   args->attrs->acl->naces);
-	if(args->attrs->acl) {
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "Number of ACEs = %u",
+		     args->attrs->acl->naces);
+	if (args->attrs->acl) {
 		int i;
 		char *name;
 
-		if( !xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
+		if (! inline_xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
 			return FATTR_XDR_FAILED;
-		for(pace = args->attrs->acl->aces;
-		    pace < args->attrs->acl->aces + args->attrs->acl->naces;
-		    pace++) {
+		for (pace = args->attrs->acl->aces;
+		     pace < args->attrs->acl->aces + args->attrs->acl->naces;
+		     pace++) {
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "type=0X%x, flag=0X%x, perm=0X%x",
 				     pace->type, pace->flag, pace->perm);
-			if( !xdr_u_int32_t(xdr, &pace->type))
+			if (! inline_xdr_u_int32_t(xdr, &pace->type))
 				return FATTR_XDR_FAILED;
-			if( !xdr_u_int32_t(xdr, &pace->flag))
+			if (! inline_xdr_u_int32_t(xdr, &pace->flag))
 				return FATTR_XDR_FAILED;
-			if( !xdr_u_int32_t(xdr, &pace->perm))
+			if (! inline_xdr_u_int32_t(xdr, &pace->perm))
 				return FATTR_XDR_FAILED;
-			if(IS_FSAL_ACE_GROUP_ID(*pace)) { /* Encode group name. */
-				if (!xdr_encode_nfs4_group(xdr,
+			if (IS_FSAL_ACE_GROUP_ID(*pace)) { /* Encode group name. */
+				if (! xdr_encode_nfs4_group(xdr,
 							   pace->who.gid)) {
 					return FATTR_XDR_FAILED;
 				}
@@ -764,7 +764,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		} /* for pace... */
 	} else {
 		uint32_t noacls = 0;
-		if( !xdr_u_int32_t(xdr, &noacls))
+		if(! inline_xdr_u_int32_t(xdr, &noacls))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -780,7 +780,9 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	utf8string utf8buffer;
 	int who = 0; /* not ASE_SPECIAL anything */
 
-	if( !xdr_u_int32_t(xdr, &acldata.naces))
+	acldata.naces = 0;
+
+	if(! inline_xdr_u_int32_t(xdr, &acldata.naces))
 		return FATTR_XDR_FAILED;
 	if(acldata.naces == 0)
 		return FATTR_XDR_SUCCESS; /* no acls is not a crime */
@@ -795,13 +797,13 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++) {
 		int i;
 
-		if( !xdr_uint32_t(xdr, &pace->type))
+		if(! inline_xdr_u_int32_t(xdr, &pace->type))
 			goto baderr;
-		if( !xdr_uint32_t(xdr, &pace->flag))
+		if(! inline_xdr_u_int32_t(xdr, &pace->flag))
 			goto baderr;
-		if( !xdr_uint32_t(xdr, &pace->perm))
+		if(! inline_xdr_u_int32_t(xdr, &pace->perm))
 			goto baderr;
-		if( !xdr_string(xdr, &buffp, MAXNAMLEN))
+		if(! inline_xdr_string(xdr, &buffp, MAXNAMLEN))
 			goto baderr;
 		for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
 			if(strncmp(buffer,
@@ -893,13 +895,13 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t aclsupport;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		aclsupport = export->ops->fs_acl_support(export);
 	} else {
 		aclsupport = FALSE;
 	}
-	if( !xdr_u_int32_t(xdr, &aclsupport))
+	if(! inline_xdr_u_int32_t(xdr, &aclsupport))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -920,7 +922,7 @@ static fattr_xdr_result encode_archive(XDR *xdr, struct xdr_attrs_args *args)
 	uint32_t archive;
 
 	archive = FALSE;
-	if( !xdr_bool(xdr, &archive))
+	if(! inline_xdr_bool(xdr, &archive))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -941,13 +943,13 @@ static fattr_xdr_result encode_cansettime(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t cansettime;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		cansettime = export->ops->fs_supports(export, fso_cansettime);
 	} else {
 		cansettime = TRUE;
 	}
-	if( !xdr_bool(xdr, &cansettime))
+	if (! inline_xdr_bool(xdr, &cansettime))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -967,14 +969,14 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr, struct xdr_attrs_args 
 	struct fsal_export *export;
 	uint32_t caseinsensitive;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		caseinsensitive = export->ops->fs_supports(export,
 							  fso_case_insensitive);
 	} else {
 		caseinsensitive = FALSE;
 	}
-	if( !xdr_bool(xdr, &caseinsensitive))
+	if (! inline_xdr_bool(xdr, &caseinsensitive))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -995,14 +997,14 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr, struct xdr_attrs_args *
 	uint32_t casepreserving;
 
 	
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		casepreserving = export->ops->fs_supports(export,
 							  fso_case_preserving);
 	} else {
 		casepreserving = TRUE;
 	}
-	if( !xdr_bool(xdr, &casepreserving))
+	if(! inline_xdr_bool(xdr, &casepreserving))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -1022,14 +1024,14 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr, struct xdr_attrs_args 
 	struct fsal_export *export;
 	uint32_t chownrestricted;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		chownrestricted = export->ops->fs_supports(export,
 							  fso_chown_restricted);
 	} else {
 		chownrestricted = TRUE;
 	}
-	if( !xdr_bool(xdr, &chownrestricted))
+	if(! inline_xdr_bool(xdr, &chownrestricted))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -1046,12 +1048,12 @@ static fattr_xdr_result decode_chown_restricted(XDR *xdr, struct xdr_attrs_args 
 
 static fattr_xdr_result encode_filehandle(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if(args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL)
+	if (args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL)
 		return FATTR_XDR_FAILED;
-	if( !xdr_bytes(xdr,
-		       &args->hdl4->nfs_fh4_val,
-		       &args->hdl4->nfs_fh4_len,
-		       NFS4_FHSIZE))
+	if (! inline_xdr_bytes(xdr,
+			      &args->hdl4->nfs_fh4_val,
+			      &args->hdl4->nfs_fh4_len,
+			      NFS4_FHSIZE))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1060,19 +1062,19 @@ static fattr_xdr_result encode_filehandle(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_filehandle(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t fhlen, pos;
+	uint32_t fhlen = 0, pos;
 
-	if(args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL) {
-		if( !xdr_u_int32_t(xdr, &fhlen))
+	if (args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL) {
+		if (! inline_xdr_u_int32_t(xdr, &fhlen))
 			return FATTR_XDR_FAILED;
 		pos = xdr_getpos(xdr);
-		if( !xdr_setpos(xdr, pos+fhlen))
+		if (! xdr_setpos(xdr, pos+fhlen))
 			return FATTR_XDR_FAILED;
 	} else {
-		if( !xdr_bytes(xdr,
-			       &args->hdl4->nfs_fh4_val,
-			       &args->hdl4->nfs_fh4_len,
-			       NFS4_FHSIZE))
+		if (! inline_xdr_bytes(xdr,
+				      &args->hdl4->nfs_fh4_val,
+				      &args->hdl4->nfs_fh4_len,
+				      NFS4_FHSIZE))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -1084,7 +1086,7 @@ static fattr_xdr_result decode_filehandle(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int64_t(xdr, &args->attrs->fileid))
+	if (! inline_xdr_u_int64_t(xdr, &args->attrs->fileid))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1095,7 +1097,7 @@ static fattr_xdr_result decode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 	 * RFC3530 says "a number uniquely identifying the file within the filesystem"
 	 * I use hpss_GetObjId to extract this information from the Name Server's handle
 	 */
-	if( !xdr_u_int64_t(xdr, &args->attrs->fileid))
+	if (! inline_xdr_u_int64_t(xdr, &args->attrs->fileid))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1108,7 +1110,7 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-	if(args->data != NULL && args->data->current_entry != NULL) {
+	if (args->data != NULL && args->data->current_entry != NULL) {
 		   cache_status = cache_inode_statfs(args->data->current_entry,
 						     args->dynamicinfo,
 						     args->data->req_ctx);
@@ -1120,7 +1122,7 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 		args->dynamicinfo->free_bytes = 512000;
 		args->dynamicinfo->avail_bytes = 512000;
 	}
-	if(cache_status == CACHE_INODE_SUCCESS) {
+	if (cache_status == CACHE_INODE_SUCCESS) {
                 args->statfscalled = 1;
 		return TRUE;
 	} else {
@@ -1134,17 +1136,17 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_files_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (! args->statfscalled)
+		if (! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files))
+	if (! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_files_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files) ? 
+	return inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files) ? 
 	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1154,17 +1156,17 @@ static fattr_xdr_result decode_files_avail(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result encode_files_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (! args->statfscalled)
+		if (! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->free_files))
+	if (! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_files_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return xdr_u_int64_t(xdr, &args->dynamicinfo->free_files) ? 
+	return inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_files) ? 
 	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1174,10 +1176,10 @@ static fattr_xdr_result decode_files_free(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_files_total(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (!args->statfscalled)
+		if (! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->total_files))
+	if (! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->total_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1228,7 +1230,7 @@ static fattr_xdr_result encode_hidden(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint32_t hidden = FALSE;
 
-	if( !xdr_bool(xdr, &hidden))
+	if (! inline_xdr_bool(xdr, &hidden))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1248,13 +1250,13 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr, struct xdr_attrs_args *args
 	struct fsal_export *export;
 	uint32_t homogeneous;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		homogeneous = export->ops->fs_supports(export, fso_homogenous);
 	} else {
 		homogeneous = TRUE;
 	}
-	if( !xdr_bool(xdr, &homogeneous))
+	if (! inline_xdr_bool(xdr, &homogeneous))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1273,13 +1275,13 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr, struct xdr_attrs_args *args
 	struct fsal_export *export;
 	uint64_t maxfilesize;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		maxfilesize = export->ops->fs_maxfilesize(export);
 	} else {
 		maxfilesize = FSINFO_MAX_FILESIZE;
 	}
-	if( !xdr_u_int64_t(xdr, &maxfilesize))
+	if (! inline_xdr_u_int64_t(xdr, &maxfilesize))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1298,13 +1300,13 @@ static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t maxlink;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		maxlink = export->ops->fs_maxlink(export);
 	} else {
 		maxlink = MAX_HARD_LINK_VALUE;
 	}
-	if( !xdr_u_int32_t(xdr, &maxlink))
+	if (! inline_xdr_u_int32_t(xdr, &maxlink))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1329,7 +1331,7 @@ static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 	} else {
 		maxname = MAXNAMLEN;
 	}
-	if( !xdr_u_int32_t(xdr, &maxname))
+	if (! inline_xdr_u_int32_t(xdr, &maxname))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1360,7 +1362,7 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint64_t maxread;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		if((args->data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD)
 			maxread = args->data->pexport->MaxRead;
@@ -1369,7 +1371,7 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 	} else {
 		maxread = NFS4_PSEUDOFS_MAX_READ_SIZE;
 	}
-	if( !xdr_u_int64_t(xdr, &maxread))
+	if (! inline_xdr_u_int64_t(xdr, &maxread))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1389,7 +1391,7 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint64_t maxwrite;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		if((args->data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)
 			maxwrite = args->data->pexport->MaxWrite;
@@ -1398,7 +1400,7 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 	} else {
 		maxwrite = NFS4_PSEUDOFS_MAX_WRITE_SIZE;
 	}
-	if( !xdr_u_int64_t(xdr, &maxwrite))
+	if (! inline_xdr_u_int64_t(xdr, &maxwrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1417,7 +1419,7 @@ static fattr_xdr_result encode_mimetype(XDR *xdr, struct xdr_attrs_args *args)
 {
 	int mimetype = FALSE;
 
-	if( !xdr_bool(xdr, &mimetype))
+	if (! inline_xdr_bool(xdr, &mimetype))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1435,16 +1437,16 @@ static fattr_xdr_result encode_mode(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint32_t file_mode = fsal2unix_mode(args->attrs->mode);
 
-	if( !xdr_u_int32_t(xdr, &file_mode))
+	if (! inline_xdr_u_int32_t(xdr, &file_mode))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_mode(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t file_mode;
+	uint32_t file_mode = 0;
 
-	if( !xdr_u_int32_t(xdr, &file_mode))
+	if (! inline_xdr_u_int32_t(xdr, &file_mode))
 		return FATTR_XDR_FAILED;
 	args->attrs->mode = unix2fsal_mode(file_mode);
 	return FATTR_XDR_SUCCESS;
@@ -1457,15 +1459,15 @@ static fattr_xdr_result decode_mode(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t no_trunc;
+	uint32_t no_trunc = 0;
 
-	if(args->data != NULL && args->data->pexport != NULL) {
+	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
 	} else {
 		no_trunc = TRUE;
 	}
-	if( !xdr_bool(xdr, &no_trunc))
+	if (! inline_xdr_bool(xdr, &no_trunc))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1482,14 +1484,14 @@ static fattr_xdr_result decode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_numlinks(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int32_t(xdr, &args->attrs->numlinks))
+	if (! inline_xdr_u_int32_t(xdr, &args->attrs->numlinks))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_numlinks(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !xdr_u_int32_t(xdr, &args->attrs->numlinks))
+	if (! inline_xdr_u_int32_t(xdr, &args->attrs->numlinks))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1513,7 +1515,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	struct gsh_buffdesc ownerdesc;
 	unsigned int pos, newpos;
 
-	if (!inline_xdr_u_int(xdr, &len))
+	if (! inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
 	pos = xdr_getpos(xdr);
@@ -1524,13 +1526,13 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	ownerdesc.len = len;
 	ownerdesc.addr = xdr_inline(xdr, len);
 
-	if (!ownerdesc.addr) {
+	if (! ownerdesc.addr) {
 		LogMajor(COMPONENT_NFSPROTO,
 			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2uid(&ownerdesc, &uid,
+	if (! name2uid(&ownerdesc, &uid,
 		      (args->data ? args->data->pexport->anonymous_uid
 		       : -1))) {
 		return FATTR_BADOWNER;
@@ -1560,7 +1562,7 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	struct gsh_buffdesc groupdesc;
 	unsigned int pos, newpos;
 
-	if (!inline_xdr_u_int(xdr, &len))
+	if ( ! inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
 	pos = xdr_getpos(xdr);
@@ -1571,13 +1573,13 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	groupdesc.len = len;
 	groupdesc.addr = xdr_inline(xdr, len);
 
-	if (!groupdesc.addr) {
+	if (! groupdesc.addr) {
 		LogMajor(COMPONENT_NFSPROTO,
 			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2gid(&groupdesc, &gid,
+	if (! name2gid(&groupdesc, &gid,
 		      (args->data ?
 		       args->data->pexport->anonymous_gid : -1)))
 		return FATTR_BADOWNER;
@@ -1596,7 +1598,7 @@ static fattr_xdr_result encode_quota_avail_hard(XDR *xdr, struct xdr_attrs_args 
 /** @todo: not the right answer, actual quotas should be implemented */
 	uint64_t quota = NFS_V4_MAX_QUOTA_HARD;
 
-	if( !xdr_u_int64_t(xdr, &quota))
+	if (! inline_xdr_u_int64_t(xdr, &quota))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1615,7 +1617,7 @@ static fattr_xdr_result encode_quota_avail_soft(XDR *xdr, struct xdr_attrs_args 
 {
 	uint64_t quota = NFS_V4_MAX_QUOTA_SOFT;
 
-	if( !xdr_u_int64_t(xdr, &quota))
+	if (! inline_xdr_u_int64_t(xdr, &quota))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1634,7 +1636,7 @@ static fattr_xdr_result encode_quota_used(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint64_t quota = args->attrs->filesize;
 
-	if( !xdr_u_int64_t(xdr, &quota))
+	if (! inline_xdr_u_int64_t(xdr, &quota))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1655,16 +1657,16 @@ static fattr_xdr_result encode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
 
 	specdata4.specdata1 = args->attrs->rawdev.major;
 	specdata4.specdata2 = args->attrs->rawdev.minor;
-	if( !xdr_u_int64_t(xdr, (uint64_t *)&specdata4))
+	if (! inline_xdr_u_int64_t(xdr, (uint64_t *)&specdata4))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
 {
-	struct specdata4 specdata4;
-	
-	if( !xdr_u_int64_t(xdr, (uint64_t *)&specdata4))
+	struct specdata4 specdata4 = { .specdata1 = 0, .specdata2 = 0 };
+
+	if (! inline_xdr_u_int64_t(xdr, (uint64_t *)&specdata4))
 		return FATTR_XDR_FAILED;
 	args->attrs->rawdev.major = specdata4.specdata1;
 	args->attrs->rawdev.minor = specdata4.specdata2;
@@ -1677,17 +1679,17 @@ static fattr_xdr_result decode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_space_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (!args->statfscalled)
+		if (! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes))
+	if(! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_space_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes) ? 
+	return inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes) ? 
 	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1697,17 +1699,17 @@ static fattr_xdr_result decode_space_avail(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result encode_space_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (! args->statfscalled)
+		if (! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes))
+	if (! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_space_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes) ? 
+	return inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes) ? 
 	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1717,17 +1719,17 @@ static fattr_xdr_result decode_space_free(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_space_total(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if( !args->statfscalled)
-		if( !encode_fetch_fsinfo(args))
+	if (!args->statfscalled)
+		if(! encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if( !xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes))
+	if (! inline_xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_space_total(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes) ? 
+	return inline_xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes) ? 
 	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1744,16 +1746,16 @@ static fattr_xdr_result encode_spaceused(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint64_t space = args->attrs->spaceused;
 
-	if( !xdr_u_int64_t(xdr, &space))
+	if(! inline_xdr_u_int64_t(xdr, &space))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_spaceused(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t space;
+	uint64_t space = 0;
 
-	if( !xdr_u_int64_t(xdr, &space))
+	if (! inline_xdr_u_int64_t(xdr, &space))
 		return FATTR_XDR_FAILED;
 	args->attrs->spaceused = space;
 	return TRUE;
@@ -1769,7 +1771,7 @@ static fattr_xdr_result encode_system(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint32_t system = FALSE;
 
-	if( !xdr_bool(xdr, &system))
+	if (! inline_xdr_bool(xdr, &system))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1788,9 +1790,9 @@ static inline fattr_xdr_result encode_time(XDR *xdr, struct timespec *ts)
 {
 	uint64_t seconds = ts->tv_sec;
 	uint32_t nseconds = ts->tv_nsec;
-	if( !xdr_u_int64_t(xdr, &seconds))
+	if (! inline_xdr_u_int64_t(xdr, &seconds))
 		return FATTR_XDR_FAILED;
-	if( !xdr_u_int32_t(xdr, &nseconds))
+	if (! inline_xdr_u_int32_t(xdr, &nseconds))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1799,12 +1801,12 @@ static inline fattr_xdr_result decode_time(XDR *xdr,
 					   struct xdr_attrs_args *args,
 					   struct timespec *ts)
 {
-	uint64_t seconds;
-	uint32_t nseconds;
+	uint64_t seconds = 0;
+	uint32_t nseconds = 0;
 
-	if( !xdr_u_int64_t(xdr, &seconds))
+	if (! inline_xdr_u_int64_t(xdr, &seconds))
 		return FATTR_XDR_FAILED;
-	if( !xdr_u_int32_t(xdr, &nseconds))
+	if (! inline_xdr_u_int32_t(xdr, &nseconds))
 		return FATTR_XDR_FAILED;
 	ts->tv_sec = (uint32_t)seconds;  /* !!! is this correct?? */
 	ts->tv_nsec = nseconds;
@@ -1819,7 +1821,7 @@ static inline fattr_xdr_result encode_timeset_server(XDR *xdr)
 {
 	uint32_t how = SET_TO_SERVER_TIME4;
 
-	return xdr_u_int32_t(xdr, &how);
+	return inline_xdr_u_int32_t(xdr, &how);
 }
 
 
@@ -1827,7 +1829,7 @@ static inline fattr_xdr_result encode_timeset(XDR *xdr, struct timespec *ts)
 {
 	uint32_t how = SET_TO_CLIENT_TIME4;
 
-	if( !xdr_u_int32_t(xdr, &how))
+	if (! inline_xdr_u_int32_t(xdr, &how))
 		return FATTR_XDR_FAILED;
 	return encode_time(xdr, ts);
 }
@@ -1836,11 +1838,11 @@ static inline fattr_xdr_result decode_timeset(XDR *xdr,
 					      struct xdr_attrs_args *args,
 					      struct timespec *ts)
 {
-	uint32_t how;
+	uint32_t how = 0;
 
-	if( !xdr_u_int32_t(xdr, &how))
+	if (! inline_xdr_u_int32_t(xdr, &how))
 		return FATTR_XDR_FAILED;
-	if(how == SET_TO_SERVER_TIME4) {
+	if (how == SET_TO_SERVER_TIME4) {
 		return FATTR_XDR_SUCCESS_EXP;
 	} else {
 		return decode_time(xdr, args, ts);
@@ -2002,7 +2004,7 @@ static fattr_xdr_result encode_mounted_on_fileid(XDR *xdr, struct xdr_attrs_args
 {
 	uint64_t file_id = args->attrs->fileid;
 
-	if( !xdr_u_int64_t(xdr, &file_id))
+	if (! inline_xdr_u_int64_t(xdr, &file_id))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -2114,11 +2116,11 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr, struct xdr_attrs_args *
 	export->ops->fs_layouttypes(export,
 				    &typecount,
 				    &layouttypes);
-	if( !xdr_u_int32_t(xdr, (uint32_t *)&typecount))
+	if(! inline_xdr_u_int32_t(xdr, (uint32_t *)&typecount))
 		return FATTR_XDR_FAILED;
 	for(index = 0; index < typecount; index++) {
 		layout_type = layouttypes[index];
-		if( !xdr_u_int32_t(xdr, &layout_type))
+		if (! inline_xdr_u_int32_t(xdr, &layout_type))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -2171,7 +2173,7 @@ static fattr_xdr_result encode_layout_blocksize(XDR *xdr,
                 struct fsal_export *export = args->data->pexport->export_hdl;
                 uint32_t blocksize = export->ops->fs_layout_blocksize(export);
 
-                if (!xdr_u_int32_t(xdr, &blocksize)) {
+                if ( ! inline_xdr_u_int32_t(xdr, &blocksize)) {
                         return FATTR_XDR_FAILED;
                 }
         }
@@ -2332,10 +2334,10 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr, struct xdr_att
 	assert(res);
 	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET);
 	assert(res);
-	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
+	if(! inline_xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
 	for(offset = 0; offset < bits.bitmap4_len; offset++) {
-		if( !xdr_u_int32_t(xdr, &bits.map[offset]))
+		if (! inline_xdr_u_int32_t(xdr, &bits.map[offset]))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
