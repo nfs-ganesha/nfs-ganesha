@@ -182,7 +182,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */
-		fh_desc->len = sizeof(wire->vi); /* vinodeno_t */
+		fh_desc->len = sizeof(struct wire_handle);
 		break;
 		/* Integer IDs */
 	case FSAL_DIGEST_FILEID2:
