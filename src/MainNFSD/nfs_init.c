@@ -51,9 +51,7 @@
 #include "external_tools.h"
 #include "nfs4_acls.h"
 #include "nfs_rpc_callback.h"
-#ifdef USE_DBUS
 #include "ganesha_dbus.h"
-#endif
 #ifdef _USE_CB_SIMULATOR
 #include "nfs_rpc_callback_simulator.h"
 #endif

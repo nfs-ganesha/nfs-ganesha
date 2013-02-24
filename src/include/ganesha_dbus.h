@@ -30,6 +30,9 @@
 #define _GANESHA_DBUS_H
 
 #include "config.h"
+
+#ifdef USE_DBUS
+
 #include <dbus/dbus.h>
 #include "log.h"
 
@@ -110,5 +113,7 @@ int32_t gsh_dbus_register_path(const char *name,
                                struct gsh_dbus_interface **interfaces);
 
 /* more to come */
+
+#endif /* USE_DBUS */
 
 #endif /* _GANESHA_DBUS_H */
