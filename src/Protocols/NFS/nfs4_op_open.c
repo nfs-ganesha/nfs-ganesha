@@ -1161,8 +1161,10 @@ int nfs4_op_open(struct nfs_argop4 *op,
         memset(&res_OPEN4->OPEN4res_u.resok4.attrset,
 	       0, sizeof(struct bitmap4));
 
-        /* If server use OPEN_CONFIRM4, set the correct flag */
-        if (owner->so_owner.so_nfs4_owner.so_confirmed == false) {
+	/* If server use OPEN_CONFIRM4, set the correct flag,
+	  * but not for 4.1 */
+        if (data->minorversion == 0 &&
+            owner->so_owner.so_nfs4_owner.so_confirmed == false) {
                 res_OPEN4->OPEN4res_u.resok4.rflags |=
                         OPEN4_RESULT_CONFIRM;
         }
