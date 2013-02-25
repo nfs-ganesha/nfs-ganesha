@@ -158,7 +158,7 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_val;
   nsecs_elapsed_t op_start_time;
   struct timespec ts;
-  int export_id;
+  int export_id = -1;
 
   if(compound4_minor > 1)
     {
