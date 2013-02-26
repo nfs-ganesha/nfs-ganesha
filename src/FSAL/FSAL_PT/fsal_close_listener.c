@@ -132,7 +132,7 @@ void ptfsal_close_timedout_handle_bkg(void)
                 g_fsi_handles_fsal->m_handle[index].m_hndl_in_use);
 
       if (CCL_CAN_CLOSE_HANDLE(index,
-			       CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC)) {
+			       polling_thread_handle_timeout_sec)) {
         /* We've found timed out handle and we are sending an explicit
          * close to close it out.
          *

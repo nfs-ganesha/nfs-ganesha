@@ -185,6 +185,7 @@ typedef struct
 {
   int  use_kernel_module_interface;
   char open_by_handle_dev_file[MAXPATHLEN];
+  int  internal_handle_timeout;
 } ptfs_specific_initinfo_t;
 
 /**< directory cookie */

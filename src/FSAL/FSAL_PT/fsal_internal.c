@@ -331,6 +331,18 @@ fsal_internal_init_global(fsal_init_info_t       * fsal_info,
   if(!fsal_info || !fs_common_info || !fs_specific_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+  /* Process the FSAL_PT specific configuration parameters */
+  ptfs_specific_initinfo_t * p_ptfs_info = (ptfs_specific_initinfo_t *)
+                                           fs_specific_info;
+  if (p_ptfs_info->internal_handle_timeout != 0) {
+    LogDebug(COMPONENT_FSAL, "Setting polling_thread_handle_timeout_sec to: %d",
+             p_ptfs_info->internal_handle_timeout);
+    polling_thread_handle_timeout_sec = p_ptfs_info->internal_handle_timeout;
+  } else {
+    LogDebug(COMPONENT_FSAL, "Leaving polling_thread_handle_timeout_sec at: %d",
+              polling_thread_handle_timeout_sec);
+  }
+
   /* inits FS call semaphore */
   if(fsal_info->max_fs_calls > 0) {
     int rc;

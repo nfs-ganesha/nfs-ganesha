@@ -68,6 +68,8 @@ pthread_mutex_t g_statistics_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 
+int  polling_thread_handle_timeout_sec = CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC;
+
 // FSAL analogs to CCL variables and structures
 char * g_shm_at_fsal;
 struct file_handles_struct_t * g_fsi_handles_fsal;

@@ -450,6 +450,8 @@ PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
   ptfs_specific_initinfo_t *initinfo
 	  = (ptfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
 
+  initinfo->internal_handle_timeout = 0;
+
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
   /* cannot read item */
@@ -504,6 +506,19 @@ PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
           initinfo->use_kernel_module_interface = val;
+        }
+      else if(!STRCMP(key_name, "internal_handle_timeout_sec"))
+        {
+          int val = s_read_int(key_value);
+          if (val < 0 )
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value "
+                      "for %s: positive expected.",
+                      key_name);
+              ReturnCode(ERR_FSAL_INVAL, 0);
+            }
+          initinfo->internal_handle_timeout = val;
         }
       else
         {
