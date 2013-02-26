@@ -157,7 +157,7 @@ static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
 {
        int retval;
        struct fhandle *handle = (struct fhandle *)fh->handle;
-       retval = fhlink(handle, destdirfd, dname, AT_SYMLINK_FOLLOW);
+       retval = fhlink(handle, destdirfd, dname);
        if(retval < 0) {
                retval = -errno;
                *fsal_error = posix2fsal_error(errno);
