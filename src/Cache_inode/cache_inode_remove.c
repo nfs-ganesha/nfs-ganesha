@@ -38,13 +38,22 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
+#include "cache_inode_avl.h"
+#include "cache_inode_lru.h"
+#include "HashTable.h"
+#include "nfs4_acls.h"
+#include "sal_functions.h"
+#include "nfs_core.h"
+#include "nfs_tools.h"
 
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 /**
  *

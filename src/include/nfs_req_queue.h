@@ -45,7 +45,7 @@
 #define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
 
 struct req_q {
-	wait_entry_t we;
+	pthread_spinlock_t sp;
 	struct glist_head q; /* LIFO */
 	uint32_t size;
 	uint32_t max;
@@ -78,8 +78,7 @@ struct nfs_req_st {
 		uint32_t ctr;
 		struct req_q_set nfs_request_q;
 		uint64_t size;
-		pthread_mutex_t mtx;
-		pthread_mutex_t slot_mtx;
+		pthread_spinlock_t sp;
 		struct glist_head wait_list;
 		uint32_t waiters;
 	} reqs;
@@ -98,20 +97,17 @@ void nfs_rpc_queue_init(void);
 
 static inline void nfs_rpc_q_init(struct req_q *q) {
 	init_glist(&q->q);
-	init_wait_entry(&q->we);
+	pthread_spin_init(&q->sp, PTHREAD_PROCESS_PRIVATE);
 	q->size = 0;
 	q->waiters = 0;
 }
 
-static inline uint32_t nfs_rpc_q_next_slot(void)
+static inline uint32_t
+nfs_rpc_q_next_slot(void)
 {
-	uint32_t ix;
-	pthread_mutex_lock(&nfs_req_st.reqs.slot_mtx);
-	ix = ++(nfs_req_st.reqs.ctr);
-	if (!ix) {
-		ix = ++(nfs_req_st.reqs.ctr);
-	}
-	pthread_mutex_unlock(&nfs_req_st.reqs.slot_mtx);
+	uint32_t ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
+        if (! ix)
+		ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
 	return (ix);
 }
 
@@ -121,14 +117,14 @@ static inline void nfs_rpc_queue_awaken(void *arg)
 	struct glist_head *g = NULL;
 	struct glist_head *n = NULL;
 
-	pthread_mutex_lock(&st->reqs.mtx);
+	pthread_spin_lock(&st->reqs.sp);
 	glist_for_each_safe(g, n, &st->reqs.wait_list) {
 		wait_q_entry_t *wqe
 			= glist_entry(g, wait_q_entry_t, waitq);
 		pthread_cond_signal(&wqe->lwe.cv);
 		pthread_cond_signal(&wqe->rwe.cv);
 	}
-	pthread_mutex_unlock(&st->reqs.mtx);
+	pthread_spin_unlock(&st->reqs.sp);
 }
 
 #endif /* NFS_REQ_QUEUE_H */

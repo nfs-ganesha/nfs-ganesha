@@ -51,8 +51,8 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_hash.h"
 #include "abstract_atomic.h"
+#include "cache_inode_hash.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 
@@ -81,47 +81,10 @@
  * under ordinary circumstances, so are kept on a separate lru_pinned
  * list to retain constant time.
  *
- * The locking discipline for this module is complex, because an entry
- * LRU can either be found through the cache entry in which it is
- * embedded (through a hash table or weakref lookup) or one can be
- * found on the queue.  Thus, we have some sections for which locking
- * the entry then the queue is natural, and others for which locking
- * the queue then the entry is natural.  Because it is the most common
- * case in request processing, we have made the lock the queue case
- * the defined lock order.
- *
- * This introduces some complication, particularly in the case of
- * cache_inode_lru_get and the repaer thread, which access entries
- * through their queue.  Therefore, we introduce the following rules
- * for accessing LRU entries:
- *
- *    - The LRU refcount may be increased by a thread holding either
- *      the entry lock or the lock for the queue holding the entry.
- *    - The entry flags may be set or inspected only by a thread
- *      holding the lock on that entry.
- *    - An entry may only be removed from or inserted into a queue by
- *      a thread holding a lock on both the entry and the queue.
- *    - A thread may only decrement the reference count while holding
- *      the entry lock.
- *    - A thread that wishes to decrement the reference count must
- *      check that the reference count is greater than
- *      LRU_SENTINEL_REFCOUNT and, if not, acquire the queue lock
- *      before decrementing it.  When the reference count falls to 0,
- *      the controlling thread will have already acquired the queue
- *      lock.  It must then set the LRU_ENTRY_CONDEMNED bit on the
- *      entry's flags, and remove it from the queue.  It must then
- *      drop both the entry and queue lock, call pthread_yield, and
- *      reacquire the entry lock before continuing with disposal.
- *    - A thread wishing to operate on an entry picked from a given
- *      queue partition must lock that queue partition, find the entry,
- *      and increase its reference count by one.  It must then store a
- *      pointer to the entry and release the queue lock before
- *      acquiring the entry lock.  If the LRU_ENTRY_CONDEMNED bit is
- *      set, it must relinquish its lock on the entry and attempt no
- *      further access to it.  Otherwise, it must examine the flags
- *      and lane stored in the entry to determine the current queue
- *      partition containing it, rather than assuming that the original
- *      location is still valid.
+ * As noted below, initial references to cache entries may only be granted
+ * under the cache inode hash table latch.  Likewise, entries must first be
+ * made unreachable to the cache inode hash table, then independently reach
+ * a refcnt of 0, before they may be disposed or recycled.
  */
 
 struct lru_state lru_state;
@@ -201,6 +164,9 @@ size_t open_fd_count = 0;
  * object with refcount > 1 has been referenced by some thread, which must
  * release its reference at some point.
  *
+ * More specifically, in the current implementation, reachability is
+ * serialized by the cache lookup table latch.
+ *
  * Currently, I propose to distinguish between objects with positive refcount
  * and objects with state.  The latter could be evicted, in the normal case,
  * only with loss of protocol correctness, but may have only the sentinel
@@ -225,7 +191,6 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
  * This function initializes a single queue partition (L1, L1 pinned, L2,
  * etc)
  */
-
 static inline void
 lru_init_queue(struct lru_q *q, enum lru_q_id qid)
 {
@@ -1259,6 +1224,7 @@ cache_inode_lru_get(cache_entry_t **entry,
      /* Since the entry isn't in a queue, nobody can bump refcnt. */
      nentry->lru.refcnt = 2;
      nentry->lru.pin_refcnt = 0;
+     nentry->lru.cf = 0;
 
      /* Enqueue. */
      lane = lru_lane_of_entry(nentry);
@@ -1404,6 +1370,10 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		struct lru_q_lane *qlane = &LRU[lru->lane];
 		struct lru_q *q;
 
+		/* do it less */
+                if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
+			goto out;
+
 		pthread_mutex_lock(&qlane->mtx);
 
 		switch (lru->qid) {
@@ -1444,6 +1414,8 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		} /* switch qid */
 		pthread_mutex_unlock(&qlane->mtx);
 	} /* initial ref */
+out:
+	return;
 }
 
 /**

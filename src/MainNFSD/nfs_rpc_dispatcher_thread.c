@@ -966,7 +966,7 @@ nfs_rpc_queue_init(void)
     }
 
     /* queues */
-    gsh_mutex_init(&nfs_req_st.reqs.mtx, NULL);
+    pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
     nfs_req_st.reqs.size = 0;
     for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
         qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
@@ -974,9 +974,6 @@ nfs_rpc_queue_init(void)
         nfs_rpc_q_init(&qpair->producer);
         nfs_rpc_q_init(&qpair->consumer);
     }
-
-    /* rollover safe counter */
-    gsh_mutex_init(&nfs_req_st.reqs.slot_mtx, NULL);
 
     /* waitq */
     init_glist(&nfs_req_st.reqs.wait_list);
@@ -1034,10 +1031,10 @@ nfs_rpc_enqueue_req(request_data_t *req)
     now(&req->time_queued);
     /* always append to producer queue */
     q = &qpair->producer;
-    pthread_mutex_lock(&q->we.mtx);
+    pthread_spin_lock(&q->sp);
     glist_add_tail(&q->q, &req->req_q);
     ++(q->size);
-    pthread_mutex_unlock(&q->we.mtx);
+    pthread_spin_unlock(&q->sp);
 
     LogFullDebug(COMPONENT_DISPATCH, "enqueued req, q %p (%s %p:%p) size is %d",
                  q, qpair->s, &qpair->producer, &qpair->consumer, q->size);
@@ -1047,7 +1044,7 @@ nfs_rpc_enqueue_req(request_data_t *req)
     /* global waitq */
     {
         wait_q_entry_t *wqe;
-        pthread_mutex_lock(&nfs_req_st.reqs.mtx); /* SPIN LOCKED */
+        pthread_spin_lock(&nfs_req_st.reqs.sp); /* SPIN LOCKED */
         if (nfs_req_st.reqs.waiters) {
             wqe = glist_first_entry(&nfs_req_st.reqs.wait_list, wait_q_entry_t,
                                     waitq);
@@ -1060,7 +1057,7 @@ nfs_rpc_enqueue_req(request_data_t *req)
             glist_del(&wqe->waitq);
             --(nfs_req_st.reqs.waiters);
             --(wqe->waiters);
-            pthread_mutex_unlock(&nfs_req_st.reqs.mtx); /* ! SPIN LOCKED */
+            pthread_spin_unlock(&nfs_req_st.reqs.sp); /* ! SPIN LOCKED */
             pthread_mutex_lock(&wqe->lwe.mtx);
             /* XXX reliable handoff */
             wqe->flags |= Wqe_LFlag_SyncDone;
@@ -1069,31 +1066,32 @@ nfs_rpc_enqueue_req(request_data_t *req)
             }
             pthread_mutex_unlock(&wqe->lwe.mtx);
         } else
-            pthread_mutex_unlock(&nfs_req_st.reqs.mtx); /* ! SPIN LOCKED */
+            pthread_spin_unlock(&nfs_req_st.reqs.sp); /* ! SPIN LOCKED */
     }
 
 out:
     return;
 }
 
-static inline request_data_t *
+/* static inline */
+request_data_t *
 nfs_rpc_consume_req(struct req_q_pair *qpair)
 {
     request_data_t * nfsreq = NULL;
 
-    pthread_mutex_lock(&qpair->consumer.we.mtx);
+    pthread_spin_lock(&qpair->consumer.sp);
     if (qpair->consumer.size > 0) {
         nfsreq = glist_first_entry(&qpair->consumer.q, request_data_t, req_q);
         glist_del(&nfsreq->req_q);
         --(qpair->consumer.size);
-        pthread_mutex_unlock(&qpair->consumer.we.mtx);
+        pthread_spin_unlock(&qpair->consumer.sp);
         goto out;
     } else {
         char *s = NULL;
         uint32_t csize = ~0U;
         uint32_t psize = ~0U;
 
-        pthread_mutex_lock(&qpair->producer.we.mtx);
+        pthread_spin_lock(&qpair->producer.sp);
         if (isFullDebug(COMPONENT_DISPATCH)) {
             s = (char*) qpair->s;
             csize = qpair->consumer.size;
@@ -1105,12 +1103,12 @@ nfs_rpc_consume_req(struct req_q_pair *qpair)
             qpair->consumer.size = qpair->producer.size;
             qpair->producer.size = 0;
             /* consumer.size > 0 */
-            pthread_mutex_unlock(&qpair->producer.we.mtx);
+            pthread_spin_unlock(&qpair->producer.sp);
             nfsreq = glist_first_entry(&qpair->consumer.q, request_data_t,
                                        req_q);
             glist_del(&nfsreq->req_q);
             --(qpair->consumer.size);
-            pthread_mutex_unlock(&qpair->consumer.we.mtx);
+            pthread_spin_unlock(&qpair->consumer.sp);
             if (s)
                 LogFullDebug(COMPONENT_DISPATCH,
                              "try splice, qpair %s consumer qsize=%u "
@@ -1119,8 +1117,8 @@ nfs_rpc_consume_req(struct req_q_pair *qpair)
             goto out;
         }
 
-        pthread_mutex_unlock(&qpair->producer.we.mtx);
-        pthread_mutex_unlock(&qpair->consumer.we.mtx);
+        pthread_spin_unlock(&qpair->producer.sp);
+        pthread_spin_unlock(&qpair->consumer.sp);
 
         if (s)
             LogFullDebug(COMPONENT_DISPATCH,
@@ -1191,17 +1189,17 @@ retry_deq:
         wqe->flags = Wqe_LFlag_WaitSync;
         wqe->waiters = 1;
         /* XXX functionalize */
-        pthread_mutex_lock(&nfs_req_st.reqs.mtx);
+        pthread_spin_lock(&nfs_req_st.reqs.sp);
         glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
         ++(nfs_req_st.reqs.waiters);
-        pthread_mutex_unlock(&nfs_req_st.reqs.mtx);
+        pthread_spin_unlock(&nfs_req_st.reqs.sp);
         while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
             timeout.tv_sec  = time(NULL) + 5;
             timeout.tv_nsec = 0;
             pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
             if (fridgethr_you_should_break(worker->ctx)) {
                 /* We are returning; so take us out of the waitq */
-                pthread_mutex_lock(&nfs_req_st.reqs.mtx);
+                pthread_spin_lock(&nfs_req_st.reqs.sp);
                 if (wqe->waitq.next != NULL || wqe->waitq.prev != NULL) {
                     /* Element is still in wqitq, remove it */
                     glist_del(&wqe->waitq);
@@ -1209,7 +1207,7 @@ retry_deq:
                     --(wqe->waiters);
                     wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
                 }
-                pthread_mutex_unlock(&nfs_req_st.reqs.mtx);
+                pthread_spin_unlock(&nfs_req_st.reqs.sp);
                 pthread_mutex_unlock(&wqe->lwe.mtx);
                 return NULL;
             }

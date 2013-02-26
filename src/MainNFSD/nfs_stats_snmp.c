@@ -190,24 +190,6 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
 //
 //      nfs_dupreq_get_stats(&hstat);
     }
-  else if((cs & 0xF0) == 0x20)
-    {
-      idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
-    }
-  else if((cs & 0xF0) == 0x30)
-    {
-      idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
-      memcpy(&hstat, &hstat_reverse, sizeof(hash_stat_t));
-    }
-  else if((cs & 0xF0) == 0x40)
-    {
-      idmap_get_stats(GIDMAP_TYPE, &hstat, &hstat_reverse);
-    }
-  else if((cs & 0xF0) == 0x50)
-    {
-      idmap_get_stats(GIDMAP_TYPE, &hstat, &hstat_reverse);
-      memcpy(&hstat, &hstat_reverse, sizeof(hash_stat_t));
-    }
   else if((cs & 0xF0) == 0x60)
     {
       nfs_ip_name_get_stats(&hstat);

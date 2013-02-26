@@ -986,7 +986,8 @@ pxy_make_object(struct fsal_export *export, fattr4 *obj_attributes,
         struct attrlist attributes;
         struct pxy_obj_handle *pxy_hdl;
 
-        if(nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes) != NFS4_OK)
+	if(nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes,
+				   NULL) != NFS4_OK)
                 return fsalstat(ERR_FSAL_INVAL, 0);
 
         pxy_hdl = pxy_alloc_handle(export, fh, &attributes);
@@ -1582,7 +1583,7 @@ pxy_do_readdir(const struct req_op_context *opctx,
                 memcpy(name, e4->name.utf8string_val, e4->name.utf8string_len);
                 name[e4->name.utf8string_len] = '\0';
 
-                if(nfs4_Fattr_To_FSAL_attr(&attr, &e4->attrs))
+		if(nfs4_Fattr_To_FSAL_attr(&attr, &e4->attrs, NULL))
                         return fsalstat(ERR_FSAL_FAULT, 0);
 
                 fc.size = sizeof(e4->cookie),
@@ -1688,7 +1689,7 @@ pxy_getattrs_impl(const struct user_cred *creds,
                 return nfsstat4_to_fsal(rc);
 
         if(nfs4_Fattr_To_FSAL_attr(obj_attr,
-                                   &atok->obj_attributes) != NFS4_OK)
+				   &atok->obj_attributes, NULL) != NFS4_OK)
                 return fsalstat(ERR_FSAL_INVAL, 0);
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1764,9 +1765,10 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         if(rc != NFS4_OK)
                 return nfsstat4_to_fsal(rc);
 
-        rc = nfs4_Fattr_To_FSAL_attr(&attrs_after, &atok->obj_attributes);
+	rc = nfs4_Fattr_To_FSAL_attr(&attrs_after,
+				     &atok->obj_attributes, NULL);
         if(rc != NFS4_OK) {
-                LogWarn(COMPONENT_FSAL, 
+                LogWarn(COMPONENT_FSAL,
                         "Attribute conversion fails with %d, "
                         "ignoring attibutes after making changes", rc);
         } else {
@@ -1814,7 +1816,8 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
         if(rc != NFS4_OK)
           return nfsstat4_to_fsal(rc);
 
-        if(nfs4_Fattr_To_FSAL_attr(&dirattr, &atok->obj_attributes) == NFS4_OK)
+	if(nfs4_Fattr_To_FSAL_attr(&dirattr, &atok->obj_attributes,
+				   NULL) == NFS4_OK)
                 dir_hdl->attributes = dirattr;
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);

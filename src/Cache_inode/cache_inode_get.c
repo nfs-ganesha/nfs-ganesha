@@ -61,14 +61,12 @@
  *
  * If a cache entry is returned, its refcount is incremented by one.
  *
- * It turns out we do need cache_inode_get_located functionality for
- * cases like lookupp on an entry returning itself when it isn't a
- * root.  Therefore, if the 'associated' parameter is equal to the got
- * cache entry, a reference count is incremented but the structure
- * pointed to by attr is NOT filled in.
- *
  * @param[in]  fsdata     File system data
- * @param[in]  associated Entry that may be equal to the got entry
+ * @param[in]  associated An entry to check against the entry looked
+ *                        up.  If they are identical, we take an early
+ *                        exit to avoid deadlocks.  This is currently
+ *                        used by LOOKUPP to avoid problems caused by
+ *                        export roots being their own parents.
  * @param[in]  req_ctx    Request context (user creds, client address etc)
  * @param[out] entry      The entry
  *
@@ -89,23 +87,50 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      /* Do lookup */
      *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK);
      if (*entry) {
-          /* take an extra reference within the critical section */
-          cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
-          if (*entry == associated) {
-               /* Take a quick exit so we don't invert lock
-                * ordering. */
-               cih_latch_rele(&latch);
-              return (CACHE_INODE_SUCCESS);
-          }
+	 /* take an extra reference within the critical section */
+	 cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+	 cih_latch_rele(&latch);
+	 if (*entry == associated) {
+	     /* Take a quick exit so we don't invert lock ordering. */
+	     return (CACHE_INODE_SUCCESS);
+       } else {
+	     status = CACHE_INODE_SUCCESS;
+	     /* This is the replacement for cache_inode_renew_entry.
+		Rather than calling that function at the start of
+		every cache_inode call with the inode locked, we call
+		cache_inode_check trust to perform 'heavyweight'
+		(timed expiration of cached attributes, getattr-based
+		directory trust) checks the first time after getting
+		an inode.  It does all of the checks read-locked and
+		only acquires a write lock if there's something
+		requiring a change.
+
+		There is a second light-weight check done before use
+		of cached data that checks whether the bits saying
+		that inode attributes or inode content are trustworthy
+		have been cleared by, for example, FSAL_CB.
+
+		To summarize, the current implementation is that
+		policy-based trust of validity is checked once per
+		logical series of operations at cache_inode_get, and
+		asynchronous trust is checked with use (when the
+		attributes are locked for reading, for example.) */
+
+	     if ((status = cache_inode_check_trust(*entry, req_ctx))
+		 != CACHE_INODE_SUCCESS) {
+		 cache_inode_put(*entry);
+		 *entry = NULL;
+		 return status;
+	     }
+	 }
      }
-     cih_latch_rele(&latch);
 
      /* Cache miss, allocate a new entry */
      exp_hdl = fsdata->export;
      fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
                                                &fsdata->fh_desc,
                                                &new_hdl);
-     if (FSAL_IS_ERROR( fsal_status )) {
+     if (FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
          LogDebug(COMPONENT_CACHE_INODE,
                   "could not get create_handle object");
@@ -118,38 +143,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
          return status;
      }
 
-     status = CACHE_INODE_SUCCESS;
-
-     /* This is the replacement for cache_inode_renew_entry.  Rather
-        than calling that function at the start of every cache_inode
-        call with the inode locked, we call cache_inode_check trust to
-        perform 'heavyweight' (timed expiration of cached attributes,
-        getattr-based directory trust) checks the first time after
-        getting an inode.  It does all of the checks read-locked and
-        only acquires a write lock if there's something requiring a
-        change.
-
-        There is a second light-weight check done before use of cached
-        data that checks whether the bits saying that inode attributes
-        or inode content are trustworthy have been cleared by, for
-        example, FSAL_CB.
-
-        To summarize, the current implementation is that policy-based
-        trust of validity is checked once per logical series of
-        operations at cache_inode_get, and asynchronous trust is
-        checked with use (when the attributes are locked for reading,
-        for example.) */
-
-     if ((status = cache_inode_check_trust(*entry, req_ctx))
-         != CACHE_INODE_SUCCESS) {
-       goto out_put;
-     }
-
-     return status;
-
- out_put:
-     cache_inode_put(*entry);
-     *entry = NULL;
      return status;
 } /* cache_inode_get */
 

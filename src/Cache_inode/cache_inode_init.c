@@ -41,6 +41,7 @@
 #include "cache_inode.h"
 #include "sal_data.h"
 #include "cache_inode_lru.h"
+#include "abstract_atomic.h"
 #include "cache_inode_hash.h"
 
 #include <unistd.h>
