@@ -43,7 +43,7 @@ int getfhat(int fd, const char *path, fhandle_t *fhp)
 	 return ENOTSUP;
 }
 
-int fhlink(struct fhandle *fhp, int tofd, const char *to, int flags)
+int fhlink(struct fhandle *fhp, int tofd, const char *to)
 {
 	 return ENOTSUP;
 }
@@ -150,9 +150,9 @@ int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
           return syscall(SYS_getfhat, dir_fd, fname, fhp, flag);
 }
 
-int fhlink(struct fhandle *fhp, int tofd, const char *to, int flag)
+int fhlink(struct fhandle *fhp, int tofd, const char *to)
 {
-          return syscall(SYS_fhlink, fhp, tofd, to, flag);
+          return syscall(SYS_fhlink, fhp, tofd, to);
 }
 
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)

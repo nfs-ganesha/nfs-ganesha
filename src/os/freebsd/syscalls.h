@@ -47,7 +47,7 @@
 #if __FreeBSD_cc_version  >= 800001
 /* getfhat() is not implemented in FreeBSD kernel yet */
 int getfhat(int fd, const char *path, fhandle_t *fhp);
-int fhlink(struct fhandle *fhp, int tofd, const char *to, int flags);
+int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
 #endif /* __FreeBSD_cc_version */
 
@@ -69,7 +69,7 @@ int readlinkat (int fd, const char *path, char *buf, size_t len);
 int symlinkat (const char *from, int tofd, const char *to);
 int renameat (int oldfd, const char *old, int newfd, const char *new);
 int utimensat (int dir_fd, char *path, struct timespec *times, int flags);
-int fhlink(struct fhandle *fhp, int tofd, const char *to, int flags);
+int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
 #endif /* SYS_openat */
 
