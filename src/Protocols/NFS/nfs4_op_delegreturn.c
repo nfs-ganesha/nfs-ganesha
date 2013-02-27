@@ -89,12 +89,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
     res_DELEGRETURN4.status = NFS4_OK;
     return res_DELEGRETURN4.status;
   }
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_DELEGRETURN4.status = NFS4ERR_NOFILEHANDLE;
-      return res_DELEGRETURN4.status;
-    }
 
   /* If the filehandle is invalid */
   if(nfs4_Is_Fh_Invalid(&(data->currentFH)))

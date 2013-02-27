@@ -4762,13 +4762,6 @@ nfs4_sanity_check_FH(compound_data_t *data,
                      object_file_type_t required_type,
                      bool ds_allowed)
 {
-        /* If there is no FH */
-        if (nfs4_Is_Fh_Empty(&(data->currentFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Empty failed");
-                return NFS4ERR_NOFILEHANDLE;
-        }
-
         /* If the filehandle is invalid */
         if (nfs4_Is_Fh_Invalid(&(data->currentFH))) {
                 LogDebug(COMPONENT_FILEHANDLE,
@@ -4868,13 +4861,6 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
                            object_file_type_t required_type,
                            bool ds_allowed)
 {
-        /* If there is no FH */
-        if (nfs4_Is_Fh_Empty(&(data->savedFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Empty failed");
-                return NFS4ERR_NOFILEHANDLE;
-        }
-
         /* If the filehandle is invalid */
         if (nfs4_Is_Fh_Invalid(&(data->savedFH))) {
                 LogDebug(COMPONENT_FILEHANDLE,
