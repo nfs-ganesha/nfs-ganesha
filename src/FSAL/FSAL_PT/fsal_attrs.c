@@ -325,7 +325,8 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
       rc = fsi_get_name_from_handle(p_context, 
                                     p_filehandle->data.handle.f_handle, 
-                                    fsi_name);
+                                    fsi_name,
+                                    NULL);
       if (rc < 0) {
         FSI_TRACE(FSI_ERR, 
                   "Failed to convert file handle back to filename" );
@@ -469,7 +470,8 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
     rc = fsi_get_name_from_handle(p_context, 
                                   p_filehandle->data.handle.f_handle, 
-                                  fsi_name);
+                                  fsi_name,
+                                  NULL);
     if (rc < 0) {
       FSI_TRACE(FSI_ERR, "Failed to convert file handle back to filename" );
       FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", 
@@ -564,7 +566,8 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
     rc = fsi_get_name_from_handle(p_context, 
                                   p_filehandle->data.handle.f_handle, 
-                                  fsi_name);
+                                  fsi_name,
+                                  NULL);
     if (rc < 0) {
       FSI_TRACE(FSI_ERR, 
                 "Failed to convert file handle back to filename "  

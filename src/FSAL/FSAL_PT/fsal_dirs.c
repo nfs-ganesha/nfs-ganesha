@@ -80,7 +80,7 @@ PTFSAL_opendir(fsal_handle_t      * p_dir_handle,    /* IN */
 
   // FSI will open the dir here (so we don't leave it open forever
   if (fsi_get_name_from_handle(
-    p_context, p_fsi_handle->data.handle.f_handle, fsi_name) < 0) {
+    p_context, p_fsi_handle->data.handle.f_handle, fsi_name, NULL) < 0) {
     FSI_TRACE(FSI_DEBUG, "FSI - cannot find name for handle %s\n", 
               p_fsi_handle->data.handle.f_handle);
     Return(ERR_FSAL_NOENT, errno, INDEX_FSAL_opendir);

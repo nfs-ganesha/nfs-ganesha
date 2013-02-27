@@ -8,6 +8,7 @@
 // Author:      FSI IPC Team
 // -----------------------------------------------------------------------------
 #include "pt_ganesha.h"
+#include "pt_util_cache.h"
 #include <unistd.h>
 #include "log.h"
 int g_closeHandle_req_msgq;
@@ -187,6 +188,11 @@ void *ptfsal_polling_closeHandler_thread(void *args)
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 {
   ccl_context_t context;
+  int close_rc;
+  CACHE_TABLE_ENTRY_T cacheEntry;
+  char fsi_name[PATH_MAX];
+  char key[FSI_PERSISTENT_HANDLE_N_BYTES];
+  int rc;
 
   if (CCL_CHECK_HANDLE_INDEX(handle_index_to_close) < 0) {
     FSI_TRACE(FSI_ERR, "Invalid handle index to close = %d",
@@ -199,8 +205,27 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
   context.uid       = geteuid();
   context.gid       = getegid();
   FSI_TRACE(FSI_NOTICE, "Closing handle [%d] close_style[%d]", handle_index_to_close, close_style);
-  return (CCL_CLOSE(&context, handle_index_to_close, close_style));
 
+  memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
+  memcpy (key,
+          &g_fsi_handles.m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
+          FSI_PERSISTENT_HANDLE_N_BYTES);
+  cacheEntry.key =  key;
+
+  close_rc = ccl_close(&context, handle_index_to_close, close_style);
+
+  if (close_rc != -1) {
+    pthread_mutex_lock(&g_fsi_name_handle_mutex);
+    rc = fsi_cache_deleteEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
+    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+    if (rc != FSI_IPC_EOK) {
+      FSI_TRACE(FSI_ERR, "Failed to delete cache entry to cache ID = %d",
+          g_fsi_name_handle_cache_opened_files.cacheMetaData.cacheTableID);
+      ptfsal_print_handle(cacheEntry.key);
+    }
+  }
+
+  return (close_rc);
 }
 
 

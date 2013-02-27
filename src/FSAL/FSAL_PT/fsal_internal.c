@@ -492,7 +492,8 @@ fsal_internal_handle2fd_at(fsal_op_context_t * p_context,
   } else {
     stat_rc =  fsi_get_name_from_handle(p_context, 
                                         p_fsi_handle->data.handle.f_handle, 
-                                        fsi_name);
+                                        fsi_name,
+                                        NULL);
     if(stat_rc < 0)
     {
       FSI_TRACE(FSI_DEBUG, "Handle to name failed handle %s", 

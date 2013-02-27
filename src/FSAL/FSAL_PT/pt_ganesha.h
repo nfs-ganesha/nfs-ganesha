@@ -328,7 +328,8 @@ int  fsi_cache_name_and_handle(fsal_op_context_t * p_context,
                                char              * name);
 int  fsi_get_name_from_handle(fsal_op_context_t * p_context,
                               char              * handle,
-                              char              * name);
+                              char              * name,
+                              int               * handle_index);
 int  fsi_update_cache_name(char * oldname,
                            char * newname);
 int  fsi_update_cache_stat(const char * p_filename,

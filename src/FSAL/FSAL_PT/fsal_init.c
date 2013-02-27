@@ -53,6 +53,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "pt_ganesha.h"
+#include "pt_util_cache.h"
 #include <dlfcn.h>
 #include <syslog.h>
 pthread_mutex_t g_dir_mutex; // dir handle mutex
@@ -67,6 +68,7 @@ pthread_mutex_t g_io_mutex;
 pthread_mutex_t g_statistics_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
+CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
 
 int  polling_thread_handle_timeout_sec = CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC;
 
@@ -123,6 +125,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
 {
   fsal_status_t status;
   int i;
+  CACHE_TABLE_INIT_PARAM cacheTableInitParam;
 
   /* sanity check.  */
   if(!init_info)
@@ -191,6 +194,21 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   if (ptfsal_polling_closeHandler_thread_init() == -1) {
     FSI_TRACE(FSI_ERR, "ptfsal_polling_closeHandler_thread_init "
               "returned rc = -1");
+    Return(ERR_FSAL_FAULT, 1, INDEX_FSAL_Init);
+  }
+
+  cacheTableInitParam.cacheKeyComprefn = &fsi_cache_handle2name_keyCompare;
+  cacheTableInitParam.cacheTableID     = CACHE_ID_192_FRONT_END_HANDLE_TO_NAME_CACHE;
+  cacheTableInitParam.dataSizeInBytes  = sizeof(CACHE_ENTRY_DATA_HANDLE_TO_NAME_T);
+  cacheTableInitParam.keyLengthInBytes = sizeof(g_fsi_name_handle_cache.m_entry[0].m_handle);
+  cacheTableInitParam.maxNumOfCacheEntries = FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
+
+  rc = fsi_cache_table_init(&g_fsi_name_handle_cache_opened_files,
+                            &cacheTableInitParam);
+
+  if (rc != FSI_IPC_EOK)
+  {
+    FSI_TRACE(FSI_ERR, "Failed to initialize cache table ID[%d]",cacheTableInitParam.cacheTableID);
     Return(ERR_FSAL_FAULT, 1, INDEX_FSAL_Init);
   }
 

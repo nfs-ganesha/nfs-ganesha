@@ -284,7 +284,7 @@ PTFSAL_mkdir(fsal_handle_t      * p_parent_directory_handle, /* IN */
     if(fsi_get_name_from_handle(
        p_context, 
        (char *)p_object_handle->data.handle.f_handle, 
-       (char *)newPath) < 0) {
+       (char *)newPath, NULL) < 0) {
        FSI_TRACE(FSI_DEBUG, "Failed to get name from handle %s", 
                  (char *)p_object_handle->data.handle.f_handle);
        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);

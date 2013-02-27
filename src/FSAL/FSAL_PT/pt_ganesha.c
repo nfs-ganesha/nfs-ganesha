@@ -8,7 +8,7 @@
 // Author:      FSI IPC Team
 // ----------------------------------------------------------------------------
 #include "pt_ganesha.h"
-
+#include "pt_util_cache.h"
 int                   g_ptfsal_context_flag=1;   // global context caching
                                                  // flag. Allows turning off
                                                  // caching for debugging
@@ -131,7 +131,8 @@ fsi_cache_name_and_handle(fsal_op_context_t * p_context,
 int
 fsi_get_name_from_handle(fsal_op_context_t * p_context,
                          char              * handle,
-                         char              * name)
+                         char              * name,
+                         int               * handle_index)
 {
   int index;
   int rc;
@@ -141,10 +142,15 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   struct fsi_handle_cache_entry_t handle_entry;
   uint64_t * handlePtr;
   ptfsal_threadcontext_t *p_cur_context;
-
+  CACHE_TABLE_ENTRY_T cacheLookupEntry;
+  CACHE_ENTRY_DATA_HANDLE_TO_NAME_T *handleToNameEntryPtr;
   FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
   handlePtr = (uint64_t *) handle;
   ptfsal_print_handle(handle);
+
+  if (handle_index != NULL) {
+    *handle_index = -1;
+  }
 
   // Get name from cache by index cached.
   if (g_ptfsal_context_flag) {
@@ -187,6 +193,38 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   }
   
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
+
+
+  // Look up our front end opened handle cache
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
+  cacheLookupEntry.key = &handle[0];
+
+  rc = fsi_cache_getEntry(&g_fsi_name_handle_cache_opened_files,
+                          &cacheLookupEntry);
+
+  if (rc == FSI_IPC_EOK) {
+    handleToNameEntryPtr = (CACHE_ENTRY_DATA_HANDLE_TO_NAME_T *) cacheLookupEntry.data;
+    strncpy(name, handleToNameEntryPtr->m_name,
+            sizeof(handle_entry.m_name));
+    name[sizeof(handle_entry.m_name)-1] = '\0';
+    FSI_TRACE(FSI_DEBUG,
+              "FSI - name = %s opened file cache HIT\n",name);
+    // Check whether the name from cache is empty
+    if (strnlen(name, 1) == 0) {
+      FSI_TRACE(FSI_NOTICE, "The name is empty string from opened file cache:"
+                "%p->0x%lx %lx %lx %lx.  Continue searching other caches", handle,
+                handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+    } else {
+      // Return.
+      if (handle_index != NULL) {
+        *handle_index = handleToNameEntryPtr->handle_index;
+        FSI_TRACE(FSI_DEBUG, "Handle index = %d found in open file cache", *handle_index);
+      }
+      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+      return 0;
+    }
+  }
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 
   // Get name from cache by iterate all cache entries.
   pthread_mutex_lock(&g_fsi_name_handle_mutex);
@@ -391,7 +429,8 @@ ptfsal_rename(fsal_op_context_t * p_context,
 
   rc = fsi_get_name_from_handle(p_context, 
                                 p_old_parent_dir_handle->data.handle.f_handle, 
-                                fsi_old_parent_dir_name);
+                                fsi_old_parent_dir_name,
+                                NULL);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -399,7 +438,8 @@ ptfsal_rename(fsal_op_context_t * p_context,
   }
   rc = fsi_get_name_from_handle(p_context, 
                                 p_new_parent_dir_handle->data.handle.f_handle, 
-                                fsi_new_parent_dir_name);
+                                fsi_new_parent_dir_name,
+                                NULL);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -442,7 +482,8 @@ ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
 
   stat_rc = fsi_get_name_from_handle(p_context, 
                                      p_parent_dir_handle->data.handle.f_handle, 
-                                     fsi_parent_dir_name);
+                                     fsi_parent_dir_name,
+                                     NULL);
   if( stat_rc < 0 )
   {
     FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -500,7 +541,8 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   memset(fsi_name, 0, sizeof(fsi_name));
   stat_rc =  fsi_get_name_from_handle(p_context, 
                                       p_fsi_handle->data.handle.f_handle, 
-                                      fsi_name);
+                                      fsi_name,
+                                      NULL);
   FSI_TRACE(FSI_DEBUG, "FSI - rc = %d\n", stat_rc);
   if (stat_rc) {
     FSI_TRACE(FSI_ERR, "Return rc %d from get name from handle %s", 
@@ -659,13 +701,15 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
 {
   int  open_rc, rc;
   char fsi_filename[PATH_MAX];
-
+  int  handle_index;
   ptfsal_handle_t         * p_fsi_handle       = 
     (ptfsal_handle_t *)p_object_handle;
   ptfsal_op_context_t     * fsi_op_context     = 
     (ptfsal_op_context_t *)p_context;
   ccl_context_t ccl_context;
   uint64_t * handlePtr = (uint64_t *) p_fsi_handle->data.handle.f_handle;
+  CACHE_TABLE_ENTRY_T cacheEntry;
+  CACHE_ENTRY_DATA_HANDLE_TO_NAME_T handle_to_name_cache_data;
 
   FSI_TRACE(FSI_DEBUG, "Open by Handle:");
   ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
@@ -675,13 +719,15 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   strcpy(fsi_filename,"");
   rc = fsi_get_name_from_handle(p_context, 
                                 (char *)&p_fsi_handle->data.handle.f_handle,
-                                fsi_filename);
+                                fsi_filename,
+                                &handle_index);
   if(rc < 0)
   {
     FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d", rc);
     return rc;
   }
   FSI_TRACE(FSI_DEBUG, "handle to name %s for handle:", fsi_filename);
+
   // The file name should not be empty "". In case it is empty, we
   // return error.
   if(strnlen(fsi_filename, 1) == 0)
@@ -690,6 +736,13 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
               "0x%lx %lx %lx %lx",
               handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
     return -1;
+  }
+
+  // If we found the handle index in the opened file handle cache, we
+  // can return right away.
+  if (handle_index != -1)
+  {
+    return handle_index;
   }
 
   // since we called fsi_get_name_from_handle, we know the pthread specific
@@ -717,6 +770,17 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   }
 
   open_rc = CCL_OPEN(&ccl_context, fsi_filename, oflags, mode);
+
+  if (open_rc != -1) {
+    memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
+    handle_to_name_cache_data.handle_index = open_rc;
+    strncpy (handle_to_name_cache_data.m_name, fsi_filename, sizeof(handle_to_name_cache_data.m_name));
+    cacheEntry.key =  p_fsi_handle->data.handle.f_handle;
+    cacheEntry.data = &handle_to_name_cache_data;
+    pthread_mutex_lock(&g_fsi_name_handle_mutex);
+    rc = fsi_cache_insertEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
+    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+  }
 
   if (g_ptfsal_context_flag) {
     if (p_cur_context != NULL) {
@@ -769,7 +833,8 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
 
   rc = fsi_get_name_from_handle(p_context, 
                                 p_fsi_parent_handle->data.handle.f_handle, 
-                                fsi_parent_dir_name);
+                                fsi_parent_dir_name,
+                                NULL);
   if(rc < 0)
   {
     FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d, "
@@ -864,7 +929,8 @@ ptfsal_unlink(fsal_op_context_t * p_context,
 
   rc = fsi_get_name_from_handle(p_context, 
                                 p_parent_dir_handle->data.handle.f_handle, 
-                                fsi_parent_dir_name);
+                                fsi_parent_dir_name,
+                                NULL);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -944,7 +1010,8 @@ ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
   /* build new entry path */
   rc = fsi_get_name_from_handle(p_context, 
                                 p_fsi_parent_handle->data.handle.f_handle, 
-                                fsi_parent_dir_name);
+                                fsi_parent_dir_name,
+                                NULL);
   if(rc < 0)
   {
     FSI_TRACE(FSI_ERR, "Handle to name failed for hanlde %s", 
@@ -997,7 +1064,8 @@ ptfsal_rmdir(fsal_op_context_t * p_context,
 
   rc = fsi_get_name_from_handle(p_context, 
                                 p_parent_dir_handle->data.handle.f_handle, 
-                                fsi_parent_dir_name);
+                                fsi_parent_dir_name,
+                                NULL);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
