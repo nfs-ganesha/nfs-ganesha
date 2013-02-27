@@ -221,15 +221,9 @@ cache_inode_create(cache_entry_t *parent,
      }
 
      PTHREAD_RWLOCK_wrlock(&parent->attr_lock);
-     /* Update the parent cached attributes */
-     cache_inode_set_time_current(&parent->obj_handle->attributes.mtime);
-     parent->obj_handle->attributes.ctime
-             = parent->obj_handle->attributes.mtime;
-     /* if the created object is a directory, it contains a link
-        to its parent : '..'. Thus the numlink attr must be increased. */
-     if (type == DIRECTORY) {
-          ++(parent->obj_handle->attributes.numlinks);
-     }
+
+     cache_inode_refresh_attrs(parent, req_ctx);
+
      PTHREAD_RWLOCK_unlock(&parent->attr_lock);
 
      status = CACHE_INODE_SUCCESS;
