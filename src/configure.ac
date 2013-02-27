@@ -702,7 +702,7 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PT/libfsalpt.la"
 		FS_NAME="pt"
 		AC_SUBST(RELEASE)
-		AC_SUBST(DIST_VER, ptv4.1_rev_2])
+		AC_SUBST(DIST_VER, ptv4.1_rev_3])
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
