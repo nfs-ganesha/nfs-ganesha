@@ -765,8 +765,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(
 cache_inode_status_t cache_inode_make_root(struct fsal_obj_handle *root_hdl,
 					   cache_entry_t **root_entry);
 
-cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
-					     const struct req_op_context *);
+cache_inode_status_t cache_inode_lock_trust_attrs(
+        cache_entry_t *entry,
+        const struct req_op_context *opctx,
+        bool need_wr_lock);
 
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
@@ -810,7 +812,7 @@ void cache_inode_destroyer(void);
 /**
  * @brief Update cache_entry metadata from its attributes
  *
- * This function, to be used after a FSAL_getattr, yodates the
+ * This function, to be used after a FSAL_getattr, updates the
  * attribute trust flag and time, and stores the type and change time
  * in the main cache_entry_t.
  *
@@ -820,7 +822,11 @@ void cache_inode_destroyer(void);
 static inline void cache_inode_fixup_md(cache_entry_t *entry)
 {
 	/* Set the refresh time for the cache entry */
-	entry->attr_time = time(NULL);
+        if (nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE) {
+                entry->attr_time = time(NULL);
+        } else {
+                entry->attr_time = 0;
+        }
 	/** @todo ACE: This should really be changed to use sub-second time
 	    resolution when it's available. */
 	entry->change_time = entry->obj_handle->attributes.chgtime.tv_sec;
@@ -828,6 +834,37 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
 	entry->type = entry->obj_handle->attributes.type;
 	/* We have just loaded the attributes from the FSAL. */
 	entry->flags |= CACHE_INODE_TRUST_ATTRS;
+}
+
+/**
+ * @brief Check if attributes are valid
+ * *
+ * @param[in] entry          The entry to check
+ * @param[in] current_time
+ */
+
+static inline bool cache_inode_is_attrs_valid(const cache_entry_t *entry)
+{
+        if (!(entry->flags & CACHE_INODE_TRUST_ATTRS))
+                return false;
+
+        if (FSAL_TEST_MASK(entry->obj_handle->attributes.mask, ATTR_RDATTR_ERR))
+                return false;
+
+        if (entry->type == DIRECTORY && nfs_param.cache_param.getattr_dir_invalidation)
+                return false;
+
+        if (nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_IMMEDIATE)
+                return false;
+
+        if (nfs_param.cache_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
+        {
+                time_t current_time = time(NULL);
+                if (current_time - entry->attr_time > nfs_param.cache_param.grace_period_attr)
+                        return false;
+        }
+
+        return true;
 }
 
 /**
@@ -893,72 +930,6 @@ out:
 static inline changeid4 cache_inode_get_changeid4(cache_entry_t *entry)
 {
 	return (changeid4) entry->change_time;
-}
-
-/**
- * @brief Lock attributes and check they are trustworthy
- *
- * This function acquires a read lock.  If the CACHE_INODE_TRUST_ATTRS
- * bit is not set, it drops the read lock, acquires a write lock, and,
- * if the bit is STILL not set, refreshes the attributes.  On success
- * this function will return with the attributes either read or write
- * locked.  It should only be used when read access is desired for
- * relatively short periods of time.
- *
- * @param[in,out] entry   The entry to lock and check
- * @param[in]     context The FSAL operation context
- *
- * @return CACHE_INODE_SUCCESS if the attributes are locked and
- *         trustworthy, various cache_inode error codes otherwise.
- */
-
-static inline cache_inode_status_t cache_inode_lock_trust_attrs(
-	cache_entry_t *entry,
-	const struct req_op_context *opctx,
-	bool need_wr_lock)
-{
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	time_t current_time = 0;
-
-	if (need_wr_lock)
-	{
-	    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	}
-	else
-	{
-	    PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-	}
-	/* Do we need to refresh? */
-	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-            ((current_time - entry->attr_time) >
-              nfs_param.cache_param.grace_period_attr) ||
-            ((nfs_param.cache_param.getattr_dir_invalidation) &&
-              (entry->type == DIRECTORY)) ||
-	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-			   ATTR_RDATTR_ERR)) {
-	    if (!need_wr_lock)
-	    {
-	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	    }
-	    /* Has someone else done it for us? */
-	    if (!need_wr_lock &&
-                (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-                 ((current_time - entry->attr_time) >
-                  nfs_param.cache_param.grace_period_attr) ||
-                 ((nfs_param.cache_param.getattr_dir_invalidation) &&
-                   (entry->type == DIRECTORY)) ||
-	         FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-			       ATTR_RDATTR_ERR))) {
-		    /* Release the lock on error */
-		    cache_status = cache_inode_refresh_attrs(entry, opctx);
-		    if (cache_status != CACHE_INODE_SUCCESS) {
-		 	    PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-			}
-		}
-	}
-
-	return cache_status;
 }
 
 #endif /* CACHE_INODE_H */

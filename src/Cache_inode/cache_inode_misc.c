@@ -669,95 +669,99 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 }
 
 /**
- * @brief Conditionally refresh attributes
+ * @brief Lock attributes and check they are trustworthy
  *
- * This function tests whether we should still trust the current
- * attributes and, if not, refresh them.
+ * This function acquires a read lock.  If the attributes need to be
+ * refreshed, it drops the read lock, acquires a write lock, and, if the
+ * attributes need to be refreshed, refreshes the attributes.  On success
+ * this function will return with the attributes either read or write
+ * locked.  It should only be used when read access is desired for
+ * relatively short periods of time.
  *
- * @param[in] entry   The entry to refresh
- * @param[in] req_ctx Request context
+ * @param[in,out] entry   The entry to lock and check
+ * @param[in]     context The FSAL operation context
  *
- * @return CACHE_INODE_SUCCESS or other status codes.
+ * @return CACHE_INODE_SUCCESS if the attributes are locked and
+ *         trustworthy, various cache_inode error codes otherwise.
  */
 
 cache_inode_status_t
-cache_inode_check_trust(cache_entry_t *entry,
-                        const struct req_op_context *req_ctx)
+cache_inode_lock_trust_attrs(cache_entry_t *entry,
+                             const struct req_op_context *opctx,
+                             bool need_wr_lock)
 {
-     time_t current_time = 0;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     time_t oldmtime = 0;
+        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        time_t oldmtime = 0;
 
-     if (entry->type == FS_JUNCTION) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_check_attrs called on file %p of bad type %d",
-                  entry, entry->type);
+        if (entry->type == FS_JUNCTION)
+        {
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_lock_trust_attrs called on file %p of bad type %d",
+                        entry, entry->type);
 
-          status = CACHE_INODE_BAD_TYPE;
-          goto out;
+                cache_status = CACHE_INODE_BAD_TYPE;
+                goto out;
         }
 
-     PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-     current_time = time(NULL);
+        if (need_wr_lock)
+        {
+                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+        }
+        else
+        {
+                PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+        }
 
-     oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
+        /* Do we need to refresh? */
+        if (cache_inode_is_attrs_valid(entry))
+        {
+                goto out;
+        }
 
-     /* Do we need a refresh? */
-     if (((nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
-          (current_time - entry->attr_time <
-           nfs_param.cache_param.grace_period_attr)) &&
-         (entry->flags & CACHE_INODE_TRUST_ATTRS) &&
-         !((nfs_param.cache_param.getattr_dir_invalidation)&&
-           (entry->type == DIRECTORY))) {
-          goto unlock;
-     }
+        if (!need_wr_lock)
+        {
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+                /* Has someone else done it for us?  */
+                if (cache_inode_is_attrs_valid(entry))
+                {
+                        goto out;
+                }
+        }
 
-     /* Update the atributes */
-     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-     current_time = time(NULL);
+        oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
-     /* Make sure no one else has first */
-     if (((nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
-          (current_time - entry->attr_time <
-           nfs_param.cache_param.grace_period_attr)) &&
-         (entry->flags & CACHE_INODE_TRUST_ATTRS) &&
-         !((nfs_param.cache_param.getattr_dir_invalidation) &&
-           (entry->type == DIRECTORY))) {
-          goto unlock;
-     }
+        cache_status = cache_inode_refresh_attrs(entry, opctx);
+        if (cache_status != CACHE_INODE_SUCCESS)
+        {
+                goto unlock;
+        }
 
-     if ((status = cache_inode_refresh_attrs(entry, req_ctx))
-         != CACHE_INODE_SUCCESS) {
-          goto unlock;
-     }
+        if ((entry->type == DIRECTORY) &&
+            (oldmtime < entry->obj_handle->attributes.mtime.tv_sec))
+        {
+                PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
-     if ((entry->type == DIRECTORY) &&
-                (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+                cache_status = cache_inode_invalidate_all_cached_dirent(entry);
 
-          atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
-                                     CACHE_INODE_DIR_POPULATED);
+                PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
-          status = cache_inode_invalidate_all_cached_dirent(entry);
-          if (status != CACHE_INODE_SUCCESS) {
-               LogCrit(COMPONENT_CACHE_INODE,
-                       "cache_inode_invalidate_all_cached_dirent "
-                       "returned %d (%s)", status,
-                       cache_inode_err_str(status));
-          }
-
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-          goto out;
-     }
-
-unlock:
-
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+                if (cache_status != CACHE_INODE_SUCCESS) {
+                        LogCrit(COMPONENT_CACHE_INODE,
+                                "cache_inode_invalidate_all_cached_dirent "
+                                "returned %d (%s)", cache_status,
+                                cache_inode_err_str(cache_status));
+                        goto unlock;
+                }
+        }
 
 out:
-     return status;
+        return cache_status;
+
+unlock:
+        /* Release the lock on error */
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+        return cache_status;
 }
 /** @} */
