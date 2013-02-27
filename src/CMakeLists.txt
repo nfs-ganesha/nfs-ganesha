@@ -28,6 +28,12 @@ set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
+include(${CMAKE_SOURCE_DIR}/cmake/rpmtools_config.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/modules/UseRPMTools.cmake)
+IF(RPMTools_FOUND)
+     RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME})
+ENDIF(RPMTools_FOUND)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
 git_describe(_GIT_DESCRIBE)
@@ -716,3 +722,9 @@ if(USE_FSAL_FUSE)
   install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
 endif(USE_FSAL_FUSE)
 
+########### add a "make dist"  ###############
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+########### add a "make srpm" and a "make rpm" ###############
+add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_rpm)
+add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
