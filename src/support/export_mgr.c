@@ -52,7 +52,9 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
+#ifdef USE_DBUS_STATS
 #include "ganesha_dbus.h"
+#endif
 #include "export_mgr.h"
 #include "client_mgr.h"
 #include "server_stats_private.h"
@@ -74,7 +76,7 @@ static struct export_by_id export_by_id;
  *
  */
 
-static inline int
+static int
 export_id_cmpf(const struct avltree_node *lhs,
 	       const struct avltree_node *rhs)
 {
@@ -195,6 +197,8 @@ int foreach_gsh_export(bool (*cb)(struct gsh_export *cl,
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return cnt;
 }
+
+#ifdef USE_DBUS_STATS
 
 /* DBUS interfaces
  */
@@ -362,14 +366,18 @@ get_nfsv3_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
+		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv3 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv3 activity";
+			goto out;
 		}
 	}
 	server_dbus_v3_iostats(export_st->st.nfsv3, &iter, success, errormsg);
+
+out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -404,14 +412,18 @@ get_nfsv40_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
+		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv40 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.0 activity";
+			goto out;
 		}
 	}
 	server_dbus_v40_iostats(export_st->st.nfsv40, &iter, success, errormsg);
+
+out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -446,14 +458,18 @@ get_nfsv41_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
+		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv41 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.0 activity";
+			goto out;
 		}
 	}
 	server_dbus_v41_iostats(export_st->st.nfsv41, &iter, success, errormsg);
+
+out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -490,6 +506,8 @@ static struct gsh_dbus_interface *export_interfaces[] = {
 	NULL
 };
 
+#endif /* USE_DBUS_STATS */
+
 /**
  * @brief Initialize export manager
  */
@@ -506,7 +524,9 @@ void gsh_export_init(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
+#ifdef USE_DBUS_STATS
 	gsh_dbus_register_path("ExportMgr", export_interfaces);
+#endif
 }
 
 

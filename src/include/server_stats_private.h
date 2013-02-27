@@ -46,6 +46,17 @@
  * These are the stats we keep
  */
 
+/* Forward references to build pointers to private defs.
+ */
+
+struct nfsv3_stats;
+struct mnt_stats;
+struct nlmv4_stats;
+struct rquota_stats;
+struct nfsv40_stats;
+struct nfsv41_stats;
+struct _9p_stats;
+
 struct gsh_stats {
 	struct nfsv3_stats *nfsv3;
 	struct mnt_stats *mnt;
@@ -86,6 +97,8 @@ struct export_stats {
 	struct gsh_stats st;
 	struct gsh_export export;
 };
+
+#ifdef USE_DBUS_STATS
 
 /* Bits for introspect arg structures
  */
@@ -149,6 +162,9 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p,
 			     DBusMessageIter *iter,
 			     bool success,
 			     char *errormsg);
+
+#endif /* USE_DBUS_STATS */
+
 void server_stats_free(struct gsh_stats *statsp);
 
 void server_stats_init(void);

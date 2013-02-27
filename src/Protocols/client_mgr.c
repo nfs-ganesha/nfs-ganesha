@@ -52,7 +52,9 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
+#ifdef USE_DBUS_STATS
 #include "ganesha_dbus.h"
+#endif
 #include "client_mgr.h"
 #include "export_mgr.h"
 #include "server_stats_private.h"
@@ -77,7 +79,7 @@ static struct client_by_ip client_by_ip;
  * first.
  */
 
-static inline int
+static int
 client_ip_cmpf(const struct avltree_node *lhs,
 	       const struct avltree_node *rhs)
 {
@@ -508,14 +510,18 @@ get_nfsv3_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
+		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv3 == NULL) {
 			success = false;
 			errormsg = "Client does not have any NFSv3 activity";
+			goto out;
 		}
 	}
 	server_dbus_v3_iostats(server_st->st.nfsv3, &iter, success, errormsg);
+
+out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -552,14 +558,18 @@ get_nfsv40_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
+		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv40 == NULL) {
 			success = false;
 			errormsg = "Client does not have any NFSv4.0 activity";
+			goto out;
 		}
 	}
 	server_dbus_v40_iostats(server_st->st.nfsv40, &iter, success, errormsg);
+
+out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -596,14 +606,18 @@ get_nfsv41_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
+		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv41 == NULL) {
 			success = false;
 			errormsg = "Client does not have any NFSv4.0 activity";
+			goto out;
 		}
 	}
 	server_dbus_v41_iostats(server_st->st.nfsv41, &iter, success, errormsg);
+
+out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -646,12 +660,12 @@ static struct gsh_dbus_interface *cltmgr_interfaces[] = {
  * @brief Initialize server statistics DBUS interface
  */
 
-void server_stats_init(void)
+void client_dbus_init(void)
 {
 	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
 }
 
-#endif
+#endif /* USE_DBUS_STATS */
 
 /**
  * @brief Initialize client manager
@@ -670,8 +684,7 @@ void gsh_client_init(void)
 	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 #ifdef USE_DBUS_STATS
-	server_stats_init();
-	gsh_export_init();  /* here for now since triggered by dbus stats */
+	client_dbus_init();
 #endif
 }
 

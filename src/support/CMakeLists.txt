@@ -98,6 +98,8 @@ SET(support_STAT_SRCS
    fridgethr.c
    misc.c
    bsd-base64.c
+   server_stats.c
+   export_mgr.c
 )
 
 if(ERROR_INJECTION)
@@ -113,14 +115,6 @@ if(APPLE)
     misc.c
     )
 endif(APPLE)
-
-if(USE_DBUS_STATS)
-  set(support_STAT_SRCS
-    ${support_STAT_SRCS}
-    server_stats.c
-    export_mgr.c
-    )
-endif(USE_DBUS_STATS)
 
 add_library(support STATIC ${support_STAT_SRCS})
 
