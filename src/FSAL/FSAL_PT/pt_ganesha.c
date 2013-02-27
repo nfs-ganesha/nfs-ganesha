@@ -1043,17 +1043,17 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
     // probably 1M rsize
     max_readahead_offset = offset + size;
   }
-  while (cur_size > IO_BUFFER_SIZE) {
+  while (cur_size > READ_IO_BUFFER_SIZE) {
     FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", 
               in_handle, split_count);
-    rc = CCL_PREAD(&ccl_context, &buf[buf_offset], IO_BUFFER_SIZE, cur_offset, 
+    rc = CCL_PREAD(&ccl_context, &buf[buf_offset], READ_IO_BUFFER_SIZE, cur_offset, 
                    max_readahead_offset);
     if (rc == -1) {
       return rc;
     }
-    cur_size   -= IO_BUFFER_SIZE;
-    cur_offset += IO_BUFFER_SIZE;
-    buf_offset += IO_BUFFER_SIZE;
+    cur_size   -= READ_IO_BUFFER_SIZE;
+    cur_offset += READ_IO_BUFFER_SIZE;
+    buf_offset += READ_IO_BUFFER_SIZE;
     split_count++;
   }
 
@@ -1095,17 +1095,17 @@ ptfsal_write(fsal_file_t * file_desc,
   // we will use 256K i/o with vtl but allow larger i/o from NFS
   FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_write off %ld size %ld\n", 
             in_handle, offset, size);
-  while (cur_size > IO_BUFFER_SIZE) {
+  while (cur_size > WRITE_IO_BUFFER_SIZE) {
     FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pwrite - split %d\n", 
               in_handle, split_count);
-    rc = CCL_PWRITE(&ccl_context, in_handle, &buf[buf_offset], IO_BUFFER_SIZE, 
+    rc = CCL_PWRITE(&ccl_context, in_handle, &buf[buf_offset], WRITE_IO_BUFFER_SIZE, 
                     cur_offset);
     if (rc == -1) {
       return rc;
     }
-    cur_size   -= IO_BUFFER_SIZE;
-    cur_offset += IO_BUFFER_SIZE;
-    buf_offset += IO_BUFFER_SIZE;
+    cur_size   -= WRITE_IO_BUFFER_SIZE;
+    cur_offset += WRITE_IO_BUFFER_SIZE;
+    buf_offset += WRITE_IO_BUFFER_SIZE;
     split_count++;
   }
 

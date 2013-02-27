@@ -306,7 +306,8 @@ extern struct acl_handles_struct_t  * g_fsi_acl_handles_fsal; // FSI client ACL
 
 #define fsi_dirent                 dirent
 #define FSI_MAX_HANDLE_CACHE_ENTRY 2500
-#define IO_BUFFER_SIZE             262144 //256k
+#define WRITE_IO_BUFFER_SIZE              262144 // 256k
+#define READ_IO_BUFFER_SIZE              1048576 // 1M
 #define PTFSAL_USE_READSIZE_THRESHOLD     524288 // 512K.
 #define PTFSAL_POLLING_THREAD_FREQUENCY_SEC 1    // how often polling thread
                                                  // is called

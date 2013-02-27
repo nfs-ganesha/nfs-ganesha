@@ -47,7 +47,7 @@ extern "C" {
 #define FSI_BLOCK_ALIGN(x, blocksize) \
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
 
-#define PT_FSI_CCL_VERSION "3.3.1.102"
+#define PT_FSI_CCL_VERSION "4.1.0.178"
 
 #define FSI_COMMAND_TIMEOUT_SEC      900 // When polling for results, number
                                          // of seconds to try before timingout
