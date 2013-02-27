@@ -12,9 +12,6 @@
 #include "log.h"
 int g_closeHandle_req_msgq;
 int g_closeHandle_rsp_msgq;
-
-pthread_mutex_t g_close_handle_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS]; // file handle processing mutex
-
 bool     g_poll_for_timeouts; // check for timed-out handles
 uint64_t g_poll_iterations;   // number of times poll thread has been called
 
@@ -66,10 +63,6 @@ void *ptfsal_closeHandle_listener_thread(void *args)
     exit (1);
   }
 
-  for (i=0; i<FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS; i++) {
-    pthread_mutex_init(&g_close_handle_mutex[i], NULL);
-  }
-
   while (1) {
     msg_bytes = RCV_MSG_WAIT_BLOCK(g_closeHandle_req_msgq,
                                    &msg,
@@ -87,10 +80,8 @@ void *ptfsal_closeHandle_listener_thread(void *args)
 
       handleIdxFound = CCL_FIND_OLDEST_HANDLE();
       if (handleIdxFound != -1) {
-        CCL_UP_MUTEX_LOCK(&g_close_handle_mutex[handleIdxFound]);
         close_rc = ptfsal_implicit_close_for_nfs(handleIdxFound,
                                                  CCL_CLOSE_STYLE_NORMAL);
-        CCL_UP_MUTEX_UNLOCK(&g_close_handle_mutex[handleIdxFound]);
       }
       /* Send the response back */
       msgHdr = (struct CommonMsgHdr *) &msg.mtext[0];
@@ -144,9 +135,7 @@ void ptfsal_close_timedout_handle_bkg(void)
          *       allow other close_on_open logic to come in
          */
         FSI_TRACE(FSI_NOTICE, "Found timed-out handle[%d]",index);
-        CCL_UP_MUTEX_LOCK(&g_close_handle_mutex[index]);
         close_rc = ptfsal_implicit_close_for_nfs(index, CCL_CLOSE_STYLE_NORMAL);
-        CCL_UP_MUTEX_UNLOCK(&g_close_handle_mutex[index]);
         if (close_rc == -1) {
           FSI_TRACE(FSI_ERR, "Failed to implicitly close handle[%d]",index);
         } 
@@ -186,21 +175,10 @@ void *ptfsal_polling_closeHandler_thread(void *args)
 
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 {
-  ccl_context_t context;
-
-  if (CCL_CHECK_HANDLE_INDEX(handle_index_to_close) < 0) {
-    FSI_TRACE(FSI_ERR, "Invalid handle index to close = %d",
-              handle_index_to_close);
-    return -1;
-  }
-
-  memset (&context, 0, sizeof(context));
-  context.export_id = g_fsi_handles_fsal->m_handle[handle_index_to_close].m_exportId;
-  context.uid       = geteuid();
-  context.gid       = getegid();
-  FSI_TRACE(FSI_NOTICE, "Closing handle [%d] close_style[%d]", handle_index_to_close, close_style);
-  return (CCL_CLOSE(&context, handle_index_to_close, close_style));
-
+  int rc;
+  rc = CCL_IMPLICIT_CLOSE_FOR_NFS(handle_index_to_close, close_style);
+  FSI_TRACE(FSI_DEBUG, "Returned rc=%d", rc);
+  return rc;
 }
 
 

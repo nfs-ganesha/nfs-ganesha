@@ -34,10 +34,10 @@
 #define FSI_IPC_SHMEM_KEY                0x7610
 
 // define the number of read buffers per shared memory buffer
-#define FSI_IPC_SHMEM_READBUF_PER_BUF    1
+#define FSI_IPC_SHMEM_READBUF_PER_BUF    4
 
 // define the number of write buffers per shared memory buffer
-#define FSI_IPC_SHMEM_WRITEBUF_PER_BUF   1
+#define FSI_IPC_SHMEM_WRITEBUF_PER_BUF   4
 
 // define the data size of the shared memory read buffer
 #define FSI_IPC_SHMEM_READBUF_SIZE       262144
@@ -48,7 +48,7 @@
 // define the maximum number of shared memory buffers per stream
 // some streams may get less than this
 // current design is min is 4, max is 4
-#define MAX_FSI_IPC_SHMEM_BUF_PER_STREAM 4
+#define MAX_FSI_IPC_SHMEM_BUF_PER_STREAM 1
 
 #define FSI_IPC_PAD_SIZE                            256 // define shm pad size
 #define MAX_FSI_IO_THREADS                          256

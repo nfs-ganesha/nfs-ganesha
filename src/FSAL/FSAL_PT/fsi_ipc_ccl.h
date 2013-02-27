@@ -40,14 +40,19 @@ extern "C" {
 
 // FSI IPC defines
 
+// CCL Version to ensure that Ganesha FSAL and CCL does not go out of sync
+// We use "PT-Version.Minor" the build number when this file changes. The
+// intent is not to change this for every minor. For instance, the current
+// minor may be 172, but the version may remain "4.1.0.164", indicating that
+// the last minor this file changed is in minor 164. 
+#define PT_FSI_CCL_VERSION "4.1.0.179"
+
 #define UNUSED_ARG(arg) do { (void)(arg); } while (0)
 
 #define FSI_CIFS_RESERVED_STREAMS   4   // CIFS does not allow handles 0-2
 
 #define FSI_BLOCK_ALIGN(x, blocksize) \
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
-
-#define PT_FSI_CCL_VERSION "3.3.1.102"
 
 #define FSI_COMMAND_TIMEOUT_SEC      900 // When polling for results, number
                                          // of seconds to try before timingout
@@ -61,7 +66,6 @@ extern "C" {
 #define CCL_ON_DEMAND_HANDLE_TIMEOUT_SEC       15   // Timeout for on-demand
                                                     // thread looking for
                                                     // handles to close
-
 // FSI IPC getlock constants
 #define FSI_IPC_GETLOCK_PTYPE                  2
 #define FSI_IPC_GETLOCK_PPID                   0
@@ -139,7 +143,7 @@ compile_time_check_func(const char * fmt, ...)
 
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
-  while (g_shm_at_fsal == 0) {                                             \
+  while (g_shm_at == 0) {                                                  \
     FSI_TRACE(FSI_INFO, "waiting for shmem attach");                       \
     sleep(1);                                                              \
   }                                                                        \
@@ -153,7 +157,6 @@ compile_time_check_func(const char * fmt, ...)
 
 extern int       g_shm_id;              // SHM ID
 extern char    * g_shm_at;              // SHM Base Address
-extern char    * g_shm_at_fsal;              // SHM Base Address
 extern int       g_io_req_msgq;
 extern int       g_io_rsp_msgq;
 extern int       g_non_io_req_msgq;
@@ -163,12 +166,12 @@ extern int       g_shmem_rsp_msgq;
 extern char      g_chdir_dirpath[PATH_MAX];
 extern uint64_t  g_client_pid;
 extern uint64_t  g_server_pid;
-extern struct file_handles_struct_t g_fsi_handles;  // FSI client
-                                                    // handles
-extern struct dir_handles_struct_t  g_fsi_dir_handles; // FSI client Dir
-                                                       // handles
-extern struct acl_handles_struct_t  g_fsi_acl_handles; // FSI client ACL
-                                                       // handles
+extern struct    file_handles_struct_t g_fsi_handles;     // FSI client
+                                                          // handles
+extern struct    dir_handles_struct_t  g_fsi_dir_handles; // FSI client Dir
+                                                          // handles
+extern struct    acl_handles_struct_t  g_fsi_acl_handles; // FSI client ACL
+                                                          // handles
 
 extern uint64_t  g_client_trans_id;  // FSI global transaction id
 extern int       g_close_trace;      // FSI global trace of io rates at close
@@ -324,8 +327,6 @@ struct file_handle_t {
                                               // if m_dir_not_file_flag is
                                               // set
   uint64_t               m_resourceHandle;    // handle for resource management
-//  pthread_mutex_t        m_io_mutex;          // used to manage multithread
-//                                              // NFS io operations
   struct timeval         m_perf_pwrite_start[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_pwrite_end[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_aio_start[MAX_FSI_PERF_COUNT];
@@ -610,6 +611,9 @@ int ccl_cache_name_and_handle(char *handle, char *name);
 int ccl_check_handle_index (int handle_index);
 int ccl_find_handle_by_name_and_export(const char * filename,
                                        ccl_context_t * handle);
+int ccl_update_cache_stat(const char * filename,
+                          uint64_t     newMode,
+                          uint64_t     export_id);
 int ccl_find_dir_handle_by_name_and_export(const char * filename,
                                           ccl_context_t * handle);
 int ccl_set_stat_buf(fsi_stat_struct              * dest,
@@ -874,6 +878,7 @@ int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,
 int ccl_find_oldest_handle();
 bool ccl_can_close_handle(int handle_index,
                           int timeout);
+int ccl_implicit_close_for_nfs(int handle_index_to_close, int close_style);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
@@ -890,16 +895,14 @@ extern pthread_mutex_t g_dir_mutex;
 // acl handle mutex
 extern pthread_mutex_t g_acl_mutex;
 // file handle processing mutex
-extern pthread_mutex_t g_handle_mutex;
+extern pthread_mutex_t g_file_mutex;
+extern pthread_mutex_t g_statistics_mutex; 
 // only one thread can parse an io at a time
 extern pthread_mutex_t g_parseio_mutex;
-// only one thread can change global transid at a time
-extern pthread_mutex_t g_transid_mutex;
-extern pthread_mutex_t g_non_io_mutex;
-extern pthread_mutex_t g_statistics_mutex;
-extern pthread_mutex_t g_close_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
-// Global I/O mutex
-extern pthread_mutex_t g_io_mutex;
+extern pthread_mutex_t g_io_handle_mutex[];
+extern pthread_mutex_t g_dir_handle_mutex[];
+extern pthread_mutex_t g_io_operation_mutex[];
+
 #endif // ifndef __FSI_IPC_CCL_H__
 
 #ifdef __cplusplus
