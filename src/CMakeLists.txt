@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 # Add maintainer mode for (mainly) strict builds
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
-project(GANESHA C)
+project(nfs-ganesha C)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 2)
 set(${PROJECT_NAME}_MINOR_VERSION 0)
