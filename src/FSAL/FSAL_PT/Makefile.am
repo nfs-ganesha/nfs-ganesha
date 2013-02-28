@@ -3,7 +3,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 noinst_LTLIBRARIES          = libfsalpt.la
 
 noinst_HEADERS = fsal_convert.h fsal_internal.h pt_ganesha.h            \
-                 fsi_ipc_ccl.h ../fsi_ipc_common.h
+                 fsi_ipc_ccl.h ../fsi_ipc_common.h pt_util_cache.h
 
 libfsalpt_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	fsal_dirs.c fsal_fsinfo.c fsal_rcp.c		                \
