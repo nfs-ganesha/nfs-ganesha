@@ -215,6 +215,14 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
 
+install -m 644 config_samples/logrotate_ganesha   $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
+install -m 755 ganesha.init                       $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
+install -m 755 ganesha.sysconfig                  $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
+
+install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/hosts.ganesha  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/snmp.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+
 cd ../build_tree
 make install
 
@@ -321,13 +329,13 @@ FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec ${RPM_CHANGELOG_FILE_CONTENT} )
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
-	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} --verbose -bs --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
+	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)
       
       ADD_CUSTOM_TARGET(${RPMNAME}_rpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
-	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} --verbose -bb --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
+	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bb --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)  
     ENDMACRO(RPMTools_ADD_RPM_TARGETS)
 
