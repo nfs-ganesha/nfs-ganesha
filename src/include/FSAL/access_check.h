@@ -39,4 +39,9 @@ static inline bool sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
 		retval = false;
 	return retval;
 }
-#endif 
+
+void fsal_set_credentials(const struct user_cred *creds);
+void fsal_save_ganesha_credentials();
+void fsal_restore_ganesha_credentials();
+
+#endif
