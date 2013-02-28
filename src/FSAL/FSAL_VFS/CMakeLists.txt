@@ -3,6 +3,8 @@ add_definitions(
   -D_GNU_SOURCE
 )
 
+set( LIB_PREFIX 64)
+
 add_subdirectory(pnfs_panfs)
 
 if(USE_FSAL_XFS)
@@ -30,7 +32,7 @@ target_link_libraries(fsalvfs
 )
 
 set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalvfs COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalvfs COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
 
 
 ########### install files ###############

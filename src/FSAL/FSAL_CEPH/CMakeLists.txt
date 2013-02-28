@@ -27,6 +27,6 @@ add_library(fsalceph SHARED ${fsalceph_LIB_SRCS})
 target_link_libraries(fsalceph cephfs ${SYSTEM_LIBRARIES})
 
 set_target_properties(fsalceph PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalceph COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalceph COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
 
 ########### install files ###############

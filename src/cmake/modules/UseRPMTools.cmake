@@ -213,7 +213,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
 
 cd ../build_tree
 make install
@@ -234,7 +234,7 @@ if(USE_FSAL_CEPH)
 "
 %files ceph
 %defattr(-,root,root,-)
-%{_libdir}/libfsalceph*
+%{_libdir}/ganesha/libfsalceph*
 
 " )
 endif(USE_FSAL_CEPH)
@@ -244,7 +244,7 @@ if(USE_FSAL_LUSTRE)
 "
 %files lustre
 %defattr(-,root,root,-)
-%{_libdir}/libfsallustre*
+%{_libdir}/ganesha/libfsallustre*
 
 " )
 endif(USE_FSAL_LUSTRE)
@@ -254,7 +254,7 @@ if(USE_FSAL_POSIX)
 "
 %files posix
 %defattr(-,root,root,-)
-%{_prefix}/lib/libfsalposix*
+%{_libdir}/ganesha/libfsalposix*
 
 " )
 endif(USE_FSAL_POSIX)
@@ -264,7 +264,7 @@ if(USE_FSAL_SHOOK)
 "
 %files shook
 %defattr(-,root,root,-)
-%{_libdir}/libfsalshook*
+%{_libdir}/ganesha/libfsalshook*
 
 " )
 endif(USE_FSAL_SHOOK)
@@ -275,7 +275,7 @@ if(USE_FSAL_VFS)
 "
 %files vfs
 %defattr(-,root,root,-)
-%{_prefix}/lib/libfsalvfs*
+%{_libdir}/ganesha/libfsalvfs*
 
 " )
 endif(USE_FSAL_VFS)
@@ -285,7 +285,7 @@ if(USE_FSAL_HPSS)
 "
 %files hpss
 %defattr(-,root,root,-)
-%{_prefix}/lib/libfsalhpss*
+%{_libdir}/ganesha/libfsalhpss*
 
 " )
 endif(USE_FSAL_HPSS)
@@ -295,7 +295,7 @@ if(USE_FSAL_PROXY)
 "
 %files proxy
 %defattr(-,root,root,-)
-%{_prefix}/lib/libfsalproxy*
+%{_libdir}/ganesha/libfsalproxy*
 
 " )
 endif(USE_FSAL_PROXY)
@@ -305,7 +305,7 @@ if(USE_FSAL_ZFS)
 "
 %files zfs
 %defattr(-,root,root,-)
-%{_prefix}/lib/libfsalzfs*
+%{_libdir}/ganesha/libfsalzfs*
 
 " )
 endif(USE_FSAL_ZFS)

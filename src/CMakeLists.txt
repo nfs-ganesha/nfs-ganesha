@@ -67,10 +67,16 @@ if (LINUX)
     find_library(LIBDL dl)  # module loader
 endif(LINUX)
 
+# Library destination, 32 bits / 64 bits switch is done here
 # FSAL selection
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "lib64/ganesha" )
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "lib/ganesha" )
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
 # FSALs which are enabled by default but could be disabled
 # during the build
-
 option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
 option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 option(USE_FSAL_POSIX "build POSIX FSAL shared library" ON)

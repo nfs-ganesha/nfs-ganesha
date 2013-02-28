@@ -22,7 +22,7 @@ target_link_libraries(fsalposix
 )
 
 set_target_properties(fsalposix PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalposix COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalposix COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
 
 
 ########### install files ###############
