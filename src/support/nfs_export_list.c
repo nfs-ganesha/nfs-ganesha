@@ -754,9 +754,6 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
   if(pcred1->flavor != pcred2->flavor)
     return FALSE;
 
-  if(pcred1->length != pcred2->length)
-    return FALSE;
-
   switch (pcred1->flavor)
     {
     case AUTH_UNIX:
@@ -765,9 +762,6 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
         return FALSE;
       if(pcred1->auth_union.auth_unix.aup_gid !=
          pcred2->auth_union.auth_unix.aup_gid)
-        return FALSE;
-      if(pcred1->auth_union.auth_unix.aup_time !=
-         pcred2->auth_union.auth_unix.aup_time)
         return FALSE;
       break;
 
