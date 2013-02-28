@@ -402,9 +402,6 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
   if(cred1->flavor != cred2->flavor)
     return false;
 
-  if(cred1->length != cred2->length)
-    return false;
-
   switch (cred1->flavor)
     {
     case AUTH_UNIX:
@@ -414,16 +411,6 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
       if(cred1->auth_union.auth_unix.aup_gid !=
          cred2->auth_union.auth_unix.aup_gid)
         return false;
-
-      /**
-       * @todo ACE: I have removed the comparison of the aup_time
-       * values.  The RFC is unclear as to their function, and this
-       * fixes a situation where the Linux client was sending
-       * SETCLIENTID once on connection and later on state-bearing
-       * operations that differed only in timestamp.  Someone familiar
-       * with ONC RPC and AUTH_UNIX in particular should review this
-       * change.
-       */
       break;
 
     default:
