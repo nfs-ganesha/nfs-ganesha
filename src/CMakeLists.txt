@@ -49,6 +49,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
+#set(tirpc_repo /opt/libtirpc/.git)
 set(tirpc_commit 865fbb054818e570f4233f55cd01cbbdd80bc84d)
 
 if (FREEBSD)
@@ -501,7 +502,6 @@ endif(ENABLE_SNMP_ADM)
 add_subdirectory(MainNFSD)
 add_subdirectory(Docs)
 add_subdirectory(tools)
-add_subdirectory(config_samples)
 add_subdirectory(check)
 add_subdirectory(debian)
 

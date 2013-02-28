@@ -75,13 +75,11 @@ Release:        ${RPM_RELEASE}
 License:        ${RPM_PACKAGE_LICENSE}
 Group:          ${RPM_PACKAGE_GROUP}
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	cmake
 Url:            ${RPM_URL}
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 
-%define prefix /opt/${RPMNAME}-%{version}
-%define rpmprefix $RPM_BUILD_ROOT%{prefix}
 %define srcdirname %{name}-%{version}-Source
 
 %description
@@ -91,20 +89,108 @@ ${RPMNAME} : ${RPM_DESCRIPTION}
 
 # if needed deal with FSAL modules
 if(USE_FSAL_CEPH)
-FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
-"%description ceph
-This is FSAL_VFS package. This package contains a FSAL shared object to 
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package ceph
+Summary: The NFS-GANESHA's CEPH FSAL
+Group: Applications/System
+
+%description ceph
+This package contains a FSAL shared object to 
 be used with NFS-Ganesha to suppport CEPH
 ")
 endif(USE_FSAL_CEPH)
 
+if(USE_FSAL_LUSTRE)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package lustre
+Summary: The NFS-GANESHA's LUSTRE FSAL
+Group: Applications/System
+BuildRequires: libattr-devel lustre-client
+
+%description lustre
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport LUSTRE
+")
+endif(USE_FSAL_LUSTRE)
+
+if(USE_FSAL_POSIX)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package posix
+Summary: The NFS-GANESHA's LUSTRE FSAL
+Group: Applications/System
+BuildRequires: libattr-devel
+
+%description posix
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport POSIX
+")
+endif(USE_FSAL_POSIX)
+
+if(USE_FSAL_SHOOK)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package shook
+Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
+Group: Applications/System
+BuildRequires: libattr-devel lustre-client shook-devel
+
+%description shook
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport LUSTRE
+")
+endif(USE_FSAL_SHOOK)
+
 if(USE_FSAL_VFS)
-FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
-"%description vfs
-This is FSAL_VFS package. This package contains a FSAL shared object to 
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package vfs
+Summary: The NFS-GANESHA's VFS FSAL
+Group: Applications/System
+BuildRequires: libattr-devel
+
+
+%description vfs
+This package contains a FSAL shared object to 
 be used with NFS-Ganesha to suppport VFS based filesystems
 ")
 endif(USE_FSAL_VFS)
+
+if(USE_FSAL_PROXY)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package proxy
+Summary: The NFS-GANESHA's VFS FSAL
+Group: Applications/System
+BuildRequires: libattr-devel
+
+
+%description proxy
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport PROXY based filesystems
+")
+endif(USE_FSAL_PROXY)
+
+if(USE_FSAL_HPSS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package hpss
+Summary: The NFS-GANESHA's HPSS FSAL
+Group: Applications/System
+
+%description hpss
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport HPSS 
+")
+endif(USE_FSAL_ZFS)
+
+if(USE_FSAL_ZFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package zfs
+Summary: The NFS-GANESHA's ZFS FSAL
+Group: Applications/System
+BuildRequires: libzfswrap-devel
+
+%description zfs
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to suppport ZFS 
+")
+endif(USE_FSAL_ZFS)
 
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
 "
@@ -116,10 +202,19 @@ cd ..
 rm -rf build_tree
 mkdir build_tree
 cd build_tree
-cmake -DCMAKE_INSTALL_PREFIX=%{rpmprefix} ../%{srcdirname}
+cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONFIG=rpmbuild -DUSE_FSAL_GPFS=OFF -DUSE_FSAL_XFS=OFF ../%{srcdirname}
 make
   
 %install 
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha/
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
+mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+
 cd ../build_tree
 make install
 
@@ -129,7 +224,7 @@ rm -rf build_tree
 
 %files
 %defattr(-,root,root,-)
-%{_bindir}/* 
+%{_bindir}/*
 %{_sysconfdir}/*
 "
 )
@@ -139,18 +234,81 @@ if(USE_FSAL_CEPH)
 "
 %files ceph
 %defattr(-,root,root,-)
+%{_libdir}/libfsalceph*
 
 " )
 endif(USE_FSAL_CEPH)
+
+if(USE_FSAL_LUSTRE)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files lustre
+%defattr(-,root,root,-)
+%{_libdir}/libfsallustre*
+
+" )
+endif(USE_FSAL_LUSTRE)
+
+if(USE_FSAL_POSIX)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files posix
+%defattr(-,root,root,-)
+%{_prefix}/lib/libfsalposix*
+
+" )
+endif(USE_FSAL_POSIX)
+
+if(USE_FSAL_SHOOK)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files shook
+%defattr(-,root,root,-)
+%{_libdir}/libfsalshook*
+
+" )
+endif(USE_FSAL_SHOOK)
+
 
 if(USE_FSAL_VFS)
         FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
 "
 %files vfs
 %defattr(-,root,root,-)
+%{_prefix}/lib/libfsalvfs*
 
 " )
 endif(USE_FSAL_VFS)
+
+if(USE_FSAL_HPSS)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files hpss
+%defattr(-,root,root,-)
+%{_prefix}/lib/libfsalhpss*
+
+" )
+endif(USE_FSAL_HPSS)
+
+if(USE_FSAL_PROXY)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files proxy
+%defattr(-,root,root,-)
+%{_prefix}/lib/libfsalproxy*
+
+" )
+endif(USE_FSAL_PROXY)
+
+if(USE_FSAL_ZFS)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files zfs
+%defattr(-,root,root,-)
+%{_prefix}/lib/libfsalzfs*
+
+" )
+endif(USE_FSAL_ZFS)
 
 # Append changelog
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
@@ -163,13 +321,13 @@ FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec ${RPM_CHANGELOG_FILE_CONTENT} )
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
-	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\" --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
+	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} --verbose -bs --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)
       
       ADD_CUSTOM_TARGET(${RPMNAME}_rpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
-	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bb --define=\"_topdir ${RPM_ROOTDIR}\" --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
+	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} --verbose -bb --define=\"_topdir ${RPM_ROOTDIR}\" ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)  
     ENDMACRO(RPMTools_ADD_RPM_TARGETS)
 
