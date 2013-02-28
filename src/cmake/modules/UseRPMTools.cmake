@@ -177,7 +177,7 @@ Group: Applications/System
 This package contains a FSAL shared object to 
 be used with NFS-Ganesha to suppport HPSS 
 ")
-endif(USE_FSAL_ZFS)
+endif(USE_FSAL_HPSS)
 
 if(USE_FSAL_ZFS)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
