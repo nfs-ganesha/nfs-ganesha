@@ -106,28 +106,6 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   if(res_PUTPUBFH4.status != NFS4_OK)
     return res_PUTPUBFH4.status;
 
-  /* If there is no currentFH, teh  return an error */
-  if(nfs4_Is_Fh_Empty(&(data->publicFH)))
-    {
-      /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
-      res_PUTPUBFH4.status = NFS4ERR_NOFILEHANDLE;
-      return res_PUTPUBFH4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->publicFH)))
-    {
-      res_PUTPUBFH4.status = NFS4ERR_BADHANDLE;
-      return res_PUTPUBFH4.status;
-    }
-
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->publicFH)))
-    {
-      res_PUTPUBFH4.status = NFS4ERR_FHEXPIRED;
-      return res_PUTPUBFH4.status;
-    }
-
   /* I copy the root FH to the currentFH and, if not already done, to
      the publicFH */
   /* For the moment, I choose to have rootFH = publicFH */
@@ -137,17 +115,17 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
     {
       res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->currentFH));
       if(res_PUTPUBFH4.status != NFS4_OK)
-        return res_PUTPUBFH4.status;
+	return res_PUTPUBFH4.status;
     }
 
   /* Copy the data from current FH to saved FH */
   memcpy(data->currentFH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
-         data->publicFH.nfs_fh4_len);
+	 data->publicFH.nfs_fh4_len);
 
   res_PUTPUBFH4.status = NFS4_OK ;
 
   return res_PUTPUBFH4.status;
-}                               /* nfs4_op_putpubfh */
+}
 
 /**
  * @brief Free memory allocated for PUTPUBFH result

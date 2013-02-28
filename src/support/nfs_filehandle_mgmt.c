@@ -522,34 +522,12 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
 
 /**
  *
- * nfs4_Is_Fh_Empty
- *
- * This routine is used to test if a fh is empty (contains no data).
- *
- * @param pfh [IN] file handle to test.
- * 
- * @return NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.  
- *
- */
-int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
-{
-  if(pfh == NULL)
-    return NFS4ERR_NOFILEHANDLE;
-
-  if(pfh->nfs_fh4_len == 0)
-    return NFS4ERR_NOFILEHANDLE;
-
-  return 0;
-}                               /* nfs4_Is_Fh_Empty */
-
-/**
- *  
  *  nfs4_Is_Fh_Xattr
  *
  *  This routine is used to test is a fh refers to a Xattr related stuff
  *
  * @param pfh [IN] file handle to test.
- * 
+ *
  * @return true if in pseudo fh, false otherwise 
  *
  */
@@ -642,37 +620,36 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
 }                               /* nfs4_Is_Fh_Expired */
 
 /**
+ * @brief Test if a filehandle is invalid
  *
- * nfs4_Is_Fh_Invalid
+ * @param[in] fh File handle to test.
  *
- * This routine is used to test if a fh is invalid.
- *
- * @param pfh [IN] file handle to test.
- * 
- * @return NFS4_OK if successfull. 
- *
+ * @return NFS4_OK if successfull.
  */
-int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
+
+int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 {
-  file_handle_v4_t *pfilehandle4;
+  file_handle_v4_t *filehandle4;
 
-  if(pfh == NULL || pfh->nfs_fh4_val == NULL)
-  {
-    LogMajor(COMPONENT_FILEHANDLE,
-	     "Invalid (NULL) File handle: pfh=0x%p",
-	     pfh);
-    return NFS4ERR_BADHANDLE;
-  }
+  if(fh->nfs_fh4_val == NULL)
+    {
+      /* if this assertion fails, our XDR decoder is broken or someone
+	 scribbled all over memory that didn't belong to them. */
+      assert(fh->nfs_fh4_len == 0);
+      LogFullDebug(COMPONENT_FILEHANDLE,
+		   "FH is empty.");
+      return NFS4ERR_NOFILEHANDLE;
+    }
 
-  pfilehandle4 = (file_handle_v4_t *) pfh->nfs_fh4_val;
-  if(pfh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
-     pfh->nfs_fh4_len < nfs4_sizeof_handle(pfilehandle4) ||
-     pfilehandle4->fhversion != GANESHA_FH_VERSION)
+  filehandle4 = (file_handle_v4_t *) fh->nfs_fh4_val;
+  if(fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
+     fh->nfs_fh4_len < nfs4_sizeof_handle(filehandle4) ||
+     filehandle4->fhversion != GANESHA_FH_VERSION)
   {
     LogMajor(COMPONENT_FILEHANDLE,
 	     "Invalid File handle: len=%d, version=%x",
-	     pfh->nfs_fh4_len,
-	     pfilehandle4->fhversion);
+	     fh->nfs_fh4_len,
+	     filehandle4->fhversion);
     return NFS4ERR_BADHANDLE;
   }
 
