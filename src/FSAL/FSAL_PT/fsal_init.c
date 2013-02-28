@@ -53,7 +53,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "pt_ganesha.h"
-#include "pt_util_cache.h"
+//#include "pt_util_cache.h"
 #include <dlfcn.h>
 #include <syslog.h>
 pthread_mutex_t g_dir_mutex; // dir handle mutex

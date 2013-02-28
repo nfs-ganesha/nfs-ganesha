@@ -8,7 +8,7 @@
 // Author:      FSI IPC Team
 // -----------------------------------------------------------------------------
 #include "pt_ganesha.h"
-#include "pt_util_cache.h"
+//#include "pt_util_cache.h"
 #include <unistd.h>
 #include "log.h"
 int g_closeHandle_req_msgq;
@@ -208,7 +208,7 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 
   memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
   memcpy (key,
-          &g_fsi_handles.m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
+          &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
           FSI_PERSISTENT_HANDLE_N_BYTES);
   cacheEntry.key =  key;
 
