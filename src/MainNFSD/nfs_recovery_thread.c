@@ -237,6 +237,7 @@ char workpath[PATH_MAX];
                         i = atoi(cp);
                         if ( ((ushort) i == id )) {
                                 icnt++;
+                                t_after = t_this_entry + 1;
                                 if (rel) {
                                         /* IP is the 4th entry */
                                         cp2++;
