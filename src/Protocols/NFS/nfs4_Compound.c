@@ -209,6 +209,7 @@ int nfs4_Compound(nfs_arg_t *arg,
   /* Initialisation of the compound request internal's data */
   memset(&data, 0, sizeof(data));
   data.req_ctx = req_ctx;
+  req_ctx->nfs_minorvers = arg->arg_compound4.minorversion;
 
   /* Minor version related stuff */
   data.minorversion = compound4_minor;
@@ -356,9 +357,9 @@ int nfs4_Compound(nfs_arg_t *arg,
 	      export_id = -1;
       }
       server_stats_nfsv4_op_done(data.req_ctx,
+				 export_id,
 				 argarray[i].argop,
 				 compound4_minor,
-				 export_id,
 				 op_start_time,
 				 status == NFS4_OK);
 /* #endif /\* USE_DBUS_STATS *\/ */
