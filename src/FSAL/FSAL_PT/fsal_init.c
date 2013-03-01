@@ -56,16 +56,7 @@
 //#include "pt_util_cache.h"
 #include <dlfcn.h>
 #include <syslog.h>
-pthread_mutex_t g_dir_mutex; // dir handle mutex
-pthread_mutex_t g_acl_mutex; // acl handle mutex
-pthread_mutex_t g_handle_mutex; // file handle processing mutex
-pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
-// only one thread can change global transid at a time
-pthread_mutex_t g_transid_mutex; 
-pthread_mutex_t g_non_io_mutex;
-pthread_mutex_t g_close_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
-pthread_mutex_t g_io_mutex;
-pthread_mutex_t g_statistics_mutex;
+
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
@@ -144,20 +135,18 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
-  /* init mutexes */
-  pthread_mutex_init(&g_dir_mutex,NULL);
-  pthread_mutex_init(&g_acl_mutex,NULL);
-  pthread_mutex_init(&g_handle_mutex,NULL);
-  pthread_mutex_init(&g_non_io_mutex,NULL);
-  pthread_mutex_init(&g_parseio_mutex,NULL);
-  pthread_mutex_init(&g_transid_mutex,NULL);
-  pthread_mutex_init(&g_fsi_name_handle_mutex, NULL);
-  pthread_mutex_init(&g_io_mutex, NULL);
-  pthread_mutex_init(&g_statistics_mutex, NULL);
-  g_fsi_name_handle_cache.m_count = 0;
-  for (i=0; i<FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS; i++) {
-    pthread_mutex_init(&g_close_mutex[i], NULL);
+  // Check the CCL version from the header we got with the version
+  // in the CCL library itself before CCL initialization.
+  rc = CCL_CHECK_VERSION(PT_FSI_CCL_VERSION);
+  if (rc != 0) {
+    LogCrit(COMPONENT_FSAL, "CCL version mismatch have <%s> got <%s>",
+            PT_FSI_CCL_VERSION, CCL_GET_VERSION());
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
+
+  /* init mutexes */
+  pthread_rwlock_init(&g_fsi_cache_handle_rw_lock, NULL);
+  g_fsi_name_handle_cache.m_count = 0;
  
   // fsi_ipc_trace_level allows using the level settings differently than
   // Ganesha proper.
@@ -360,7 +349,13 @@ pt_ganesha_fsal_ccl_init()
       DL_LOAD(&g_ccl_function_map.up_mutex_unlock_fn,
 	      "ccl_up_mutex_unlock")                                       &&
       DL_LOAD(&g_ccl_function_map.log_fn, "ccl_log")                       &&
-      DL_LOAD(&g_fsal_fsi_handles, "g_fsi_handles")                        
+      DL_LOAD(&g_fsal_fsi_handles, "g_fsi_handles")                        &&
+      DL_LOAD(&g_ccl_function_map.implicit_close_for_nfs_fn, 
+              "ccl_implicit_close_for_nfs")                                &&
+      DL_LOAD(&g_ccl_function_map.update_cache_stat_fn, 
+              "ccl_update_cache_stat")                                     &&
+      DL_LOAD(&g_ccl_function_map.get_version_fn, "ccl_get_version")       &&
+      DL_LOAD(&g_ccl_function_map.check_version_fn, "ccl_check_version")
       ) {
     FSI_TRACE(FSI_NOTICE, "Successfully loaded CCL function pointers");
   } else {
@@ -469,13 +464,6 @@ PTFSAL_terminate()
   CLOSE_THREAD_MAP parallelCloseThreadMap[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
  
   FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
-  rc = CCL_UP_MUTEX_LOCK(&g_handle_mutex);
-  if (rc != 0) {
-    FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
-    minor = 1;
-    major = posix2fsal_error(EIO);
-    ReturnCode(major, minor);
-  }
 
   pthread_attr_init(&attr_thr);  
   memset(&parallelCloseThreadMap[0], 0x00, sizeof (parallelCloseThreadMap));
@@ -511,7 +499,6 @@ PTFSAL_terminate()
     }
   }
 
-  CCL_UP_MUTEX_UNLOCK(&g_handle_mutex);
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
        index++) {

@@ -224,6 +224,13 @@ struct vfs_fn_pointers {
                  const char              * func,
                  const char              * format,
                  ...);
+  int (*implicit_close_for_nfs_fn)(int handle_index_to_close, 
+                                   int close_style);
+  int (*update_cache_stat_fn)(const char * filename,
+                              uint64_t     newMode,
+                              uint64_t     export_id); 
+  char* (*get_version_fn)();
+  int (*check_version_fn)(char *version);
 };
 
 #define CCL_INIT                           g_ccl_function_map.init_fn
@@ -290,8 +297,13 @@ struct vfs_fn_pointers {
 #define CCL_UP_MUTEX_UNLOCK                g_ccl_function_map.up_mutex_unlock_fn
 #define CCL_UP_SELF                        g_ccl_function_map.up_self_fn
 #define CCL_LOG                            g_ccl_function_map.log_fn
+#define CCL_IMPLICIT_CLOSE_FOR_NFS         g_ccl_function_map.implicit_close_for_nfs_fn  
+#define CCL_UPDATE_CACHE_STAT              g_ccl_function_map.update_cache_stat_fn	
+#define CCL_GET_VERSION                    g_ccl_function_map.get_version_fn
+#define CCL_CHECK_VERSION                  g_ccl_function_map.check_version_fn
 
 // function map to be used througout FSAL layer
+extern char   * g_shm_at_fsal;              // SHM Base Address
 extern struct vfs_fn_pointers g_ccl_function_map;
 extern void * g_ccl_lib_handle;
 extern struct file_handles_struct_t * g_fsal_fsi_handles;
@@ -317,7 +329,7 @@ extern struct acl_handles_struct_t  * g_fsi_acl_handles_fsal; // FSI client ACL
                                                // background
 extern int             debug_flag;
 extern struct          fsi_handle_cache_t  g_fsi_name_handle_cache;
-extern pthread_mutex_t g_fsi_name_handle_mutex;
+extern pthread_rwlock_t g_fsi_cache_handle_rw_lock;
 extern int             polling_thread_handle_timeout_sec;
 
 void fsi_get_whole_path(const char * parentPath,
