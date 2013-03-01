@@ -55,13 +55,11 @@ void server_stats_io_done(struct req_op_context *req_ctx,
 			  bool is_write);
 void server_stats_compound_done(struct req_op_context *req_ctx,
 				int export_id,
-				int minorversion,
 				int num_ops,
 				bool success);
 void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 				int export_id,
 				int proto_op,
-				int minorversion,
 				nsecs_elapsed_t start_time,
 				bool success);
 

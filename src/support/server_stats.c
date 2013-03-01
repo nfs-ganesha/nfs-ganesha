@@ -369,11 +369,20 @@ static void record_io_stats(struct gsh_stats *gsh_st,
 				return;
 			iop = is_write ? &sp->write : &sp->read;
 		} else if(req_ctx->nfs_vers == NFS_V4) {
-			struct nfsv40_stats *sp = get_v40(gsh_st, lock);
+			if(req_ctx->nfs_minorvers == 0) {
+				struct nfsv40_stats *sp = get_v40(gsh_st, lock);
 
-			if(sp == NULL)
-				return;
-			iop = is_write ? &sp->write : &sp->read;
+				if(sp == NULL)
+					return;
+				iop = is_write ? &sp->write : &sp->read;
+			} else if(req_ctx->nfs_minorvers == 1) {
+				struct nfsv41_stats *sp = get_v41(gsh_st, lock);
+
+				if(sp == NULL)
+					return;
+				iop = is_write ? &sp->write : &sp->read;
+			}
+			/* the frightening thought is someday minor == 2 */
 		} else {
 			return;
 		}
@@ -676,7 +685,6 @@ out:
 void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 				int export_id,
 				int proto_op,
-				int minorversion,
 				nsecs_elapsed_t start_time,
 				bool success)
 {
@@ -685,6 +693,8 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
+	if(client == NULL)
+		return; /* we can have cases where we cannot find the client... */
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime,
 				  &current_time);
@@ -692,7 +702,7 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 	record_nfsv4_op(&server_st->st,
 			&client->lock,
 			proto_op,
-			minorversion,
+			req_ctx->nfs_minorvers,
 			stop_time - start_time,
 			req_ctx->queue_wait,
 			success);
@@ -708,7 +718,7 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 		record_nfsv4_op(&exp_st->st,
 				&exp->lock,
 				proto_op,
-				minorversion,
+				req_ctx->nfs_minorvers,
 				stop_time - start_time,
 				req_ctx->queue_wait,
 				success);
@@ -727,7 +737,6 @@ out:
 
 void server_stats_compound_done(struct req_op_context *req_ctx,
 				int export_id,
-				int minorversion,
 				int num_ops,
 				bool success)
 {
@@ -742,7 +751,7 @@ void server_stats_compound_done(struct req_op_context *req_ctx,
 	server_st = container_of(client, struct server_stats, client);
 	record_compound(&server_st->st,
 			&client->lock,
-			minorversion,
+			req_ctx->nfs_minorvers,
 			num_ops,
 			stop_time - req_ctx->start_time,
 			req_ctx->queue_wait,
@@ -758,7 +767,7 @@ void server_stats_compound_done(struct req_op_context *req_ctx,
 		exp_st = container_of(exp, struct export_stats, export);
 		record_compound(&exp_st->st,
 				&exp->lock,
-				minorversion,
+				req_ctx->nfs_minorvers,
 				num_ops,
 				stop_time - req_ctx->start_time,
 				req_ctx->queue_wait,

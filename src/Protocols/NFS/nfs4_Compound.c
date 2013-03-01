@@ -359,7 +359,6 @@ int nfs4_Compound(nfs_arg_t *arg,
       server_stats_nfsv4_op_done(data.req_ctx,
 				 export_id,
 				 argarray[i].argop,
-				 compound4_minor,
 				 op_start_time,
 				 status == NFS4_OK);
 /* #endif /\* USE_DBUS_STATS *\/ */
@@ -404,7 +403,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 #ifdef USE_DBUS_STATS
   server_stats_compound_done(req_ctx,
 			     export_id,
-			     compound4_minor,
 			     argarray_len,
 			     status == NFS4_OK);
 #endif
