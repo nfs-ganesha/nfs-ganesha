@@ -120,8 +120,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		 != CACHE_INODE_SUCCESS) {
 		 cache_inode_put(*entry);
 		 *entry = NULL;
-		 return status;
 	     }
+	     return status;
 	 }
      }
 
