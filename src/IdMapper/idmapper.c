@@ -343,7 +343,6 @@ static bool atless2id(char *name,
  *
  * @return true on success, false not making the grade
  */
-
 static bool pwentname2id(char *name,
 			 size_t len,
 			 uint32_t *id,
@@ -353,13 +352,15 @@ static bool pwentname2id(char *name,
 			 bool *got_gid,
 			 char *at)
 {
-  if (strcmp(at + 1, owner_domain.addr) != 0)
-    {
-      /* We won't map what isn't even in the right domain */
-      return false;
-    }
-
-  *at = '\0';
+  if( at != NULL )
+   {
+     if (strcmp(at + 1, owner_domain.addr) != 0)
+      {
+        /* We won't map what isn't even in the right domain */
+        return false;
+      }
+      *at = '\0';
+   }
   if (group)
     {
       struct group g;
@@ -527,7 +528,10 @@ static bool name2id(const struct gsh_buffdesc *name,
 
       if (at == NULL)
 	{
-	  if (atless2id(namebuff, name->len, id, anon))
+          if( pwentname2id(namebuff, name->len, id, anon,
+				   group, &gid, &got_gid, NULL ) )
+	    looked_up = true;
+	  else if (atless2id(namebuff, name->len, id, anon))
 	    looked_up = true;
 	  else
 	    return false;
