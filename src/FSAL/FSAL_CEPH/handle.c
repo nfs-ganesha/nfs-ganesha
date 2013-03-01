@@ -264,11 +264,14 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 
 	rc = ceph_ll_create(export->cmount, dir->wire.vi, name,
 			    0600, 0, &fd, &st, 0, 0);
-	ceph_ll_close(export->cmount, fd);
-
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
+	rc = ceph_ll_close(export->cmount, fd);
+	if (rc < 0) {
+		return ceph2fsal_error(rc);
+	}
+
 
 	rc = construct_handle(&st, export, &obj);
 
