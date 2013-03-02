@@ -377,7 +377,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
 		       size,
 		       written_size,
 		       (res_WRITE4.status == NFS4_OK) ? true : false,
-		       false);
+		       true);
 #endif
 
   return res_WRITE4.status;

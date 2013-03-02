@@ -440,18 +440,13 @@ gsh_client_showclients(DBusMessageIter *args,
 static struct gsh_dbus_method cltmgr_show_clients = {
 	.name = "ShowClients",
 	.method = gsh_client_showclients,
-	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
+	.args = { TIMESTAMP_REPLY,
 		{
 			.name = "clients",
 			.type = "a(sbbbbbbb(tt))",
 			.direction = "out"
 		},
-		{NULL, NULL, NULL}
+		  END_ARG_LIST
 	}
 };
 
@@ -510,18 +505,17 @@ get_nfsv3_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
-		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv3 == NULL) {
 			success = false;
 			errormsg = "Client does not have any NFSv3 activity";
-			goto out;
 		}
 	}
-	server_dbus_v3_iostats(server_st->st.nfsv3, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v3_iostats(server_st->st.nfsv3, &iter);
 
-out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -532,6 +526,7 @@ static struct gsh_dbus_method cltmgr_show_v3_io = {
 	.method = get_nfsv3_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -558,18 +553,17 @@ get_nfsv40_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
-		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv40 == NULL) {
 			success = false;
 			errormsg = "Client does not have any NFSv4.0 activity";
-			goto out;
 		}
 	}
-	server_dbus_v40_iostats(server_st->st.nfsv40, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v40_iostats(server_st->st.nfsv40, &iter);
 
-out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -580,6 +574,7 @@ static struct gsh_dbus_method cltmgr_show_v40_io = {
 	.method = get_nfsv40_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -606,18 +601,17 @@ get_nfsv41_stats_io(DBusMessageIter *args,
 		success = false;
 		if(errormsg == NULL)
 			errormsg = "Client IP address not found";
-		goto out;
 	} else {
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv41 == NULL) {
 			success = false;
-			errormsg = "Client does not have any NFSv4.0 activity";
-			goto out;
+			errormsg = "Client does not have any NFSv4.1 activity";
 		}
 	}
-	server_dbus_v41_iostats(server_st->st.nfsv41, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_iostats(server_st->st.nfsv41, &iter);
 
-out:
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -628,6 +622,7 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
 	.method = get_nfsv41_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -656,15 +651,6 @@ static struct gsh_dbus_interface *cltmgr_interfaces[] = {
 	NULL
 };
 
-/**
- * @brief Initialize server statistics DBUS interface
- */
-
-void client_dbus_init(void)
-{
-	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
-}
-
 #endif /* USE_DBUS_STATS */
 
 /**
@@ -684,7 +670,7 @@ void gsh_client_init(void)
 	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 #ifdef USE_DBUS_STATS
-	client_dbus_init();
+	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
 #endif
 }
 

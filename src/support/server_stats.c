@@ -929,51 +929,36 @@ static void server_dbus_iostats(struct xfer_op *iop,
 }
 
 void server_dbus_v3_iostats (struct nfsv3_stats *v3p,
-			     DBusMessageIter *iter,
-			     bool success,
-			     char *errormsg)
+			     DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
-	dbus_status_reply(iter, success, errormsg);
-	if(success) {
-		now(&timestamp);
-		dbus_append_timestamp(iter, &timestamp);
-		server_dbus_iostats(&v3p->read, iter);
-		server_dbus_iostats(&v3p->write, iter);
-	}
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_iostats(&v3p->read, iter);
+	server_dbus_iostats(&v3p->write, iter);
 }
 
 void server_dbus_v40_iostats (struct nfsv40_stats *v40p,
-			      DBusMessageIter *iter,
-			      bool success,
-			      char *errormsg)
+			      DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
-	dbus_status_reply(iter, success, errormsg);
-	if(success) {
-		now(&timestamp);
-		dbus_append_timestamp(iter, &timestamp);
-		server_dbus_iostats(&v40p->read, iter);
-		server_dbus_iostats(&v40p->write, iter);
-	}
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_iostats(&v40p->read, iter);
+	server_dbus_iostats(&v40p->write, iter);
 }
 
 void server_dbus_v41_iostats (struct nfsv41_stats *v41p,
-			      DBusMessageIter *iter,
-			      bool success,
-			      char *errormsg)
+			      DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
-	dbus_status_reply(iter, success, errormsg);
-	if(success) {
-		now(&timestamp);
-		dbus_append_timestamp(iter, &timestamp);
-		server_dbus_iostats(&v41p->read, iter);
-		server_dbus_iostats(&v41p->write, iter);
-	}
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_iostats(&v41p->read, iter);
+	server_dbus_iostats(&v41p->write, iter);
 }
 
 #endif /* USE_DBUS_STATS */

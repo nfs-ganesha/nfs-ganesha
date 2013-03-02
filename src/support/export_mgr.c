@@ -272,18 +272,13 @@ gsh_export_showexports(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_exports = {
 	.name = "ShowExports",
 	.method = gsh_export_showexports,
-	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
+	.args = { TIMESTAMP_REPLY,
 		{
 			.name = "exports",
 			.type = "a(isbbbbbbb(tt))",
 			.direction = "out"
 		},
-		{NULL, NULL, NULL}
+		  END_ARG_LIST
 	}
 };
 
@@ -366,18 +361,17 @@ get_nfsv3_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
-		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv3 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv3 activity";
-			goto out;
 		}
 	}
-	server_dbus_v3_iostats(export_st->st.nfsv3, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v3_iostats(export_st->st.nfsv3, &iter);
 
-out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -388,6 +382,7 @@ static struct gsh_dbus_method export_show_v3_io = {
 	.method = get_nfsv3_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -412,18 +407,17 @@ get_nfsv40_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
-		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv40 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.0 activity";
-			goto out;
 		}
 	}
-	server_dbus_v40_iostats(export_st->st.nfsv40, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v40_iostats(export_st->st.nfsv40, &iter);
 
-out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -434,6 +428,7 @@ static struct gsh_dbus_method export_show_v40_io = {
 	.method = get_nfsv40_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -458,18 +453,17 @@ get_nfsv41_export_io(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if(export == NULL) {
 		success = false;
-		goto out;
 	} else {
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv41 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.0 activity";
-			goto out;
 		}
 	}
-	server_dbus_v41_iostats(export_st->st.nfsv41, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_iostats(export_st->st.nfsv41, &iter);
 
-out:
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -480,6 +474,7 @@ static struct gsh_dbus_method export_show_v41_io = {
 	.method = get_nfsv41_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}

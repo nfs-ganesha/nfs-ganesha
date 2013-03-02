@@ -129,12 +129,14 @@ struct export_stats {
 	.direction = "out"\
 }
 
-#define IOSTATS_REPLY      \
+#define TIMESTAMP_REPLY    \
 {                          \
 	.name = "time",    \
 	.type = "(tt)",    \
 	.direction = "out" \
-},                         \
+}
+
+#define IOSTATS_REPLY      \
 {                          \
 	.name = "read",    \
 	.type = "(tttttt)",\
@@ -151,17 +153,11 @@ struct export_stats {
 void server_stats_summary(DBusMessageIter *iter,
 			  struct gsh_stats *st);
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p,
-			    DBusMessageIter *iter,
-			    bool success,
-			    char *errormsg);
+			    DBusMessageIter *iter);
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p,
-			     DBusMessageIter *iter,
-			     bool success,
-			     char *errormsg);
+			     DBusMessageIter *iter);
 void server_dbus_v41_iostats(struct nfsv41_stats *v41p,
-			     DBusMessageIter *iter,
-			     bool success,
-			     char *errormsg);
+			     DBusMessageIter *iter);
 
 #endif /* USE_DBUS_STATS */
 
