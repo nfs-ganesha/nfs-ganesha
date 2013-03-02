@@ -48,6 +48,7 @@
 #include <pthread.h>
 #include "HashTable.h"
 #include "log.h"
+#include "abstract_atomic.h"
 #include "common_utils.h"
 #include <assert.h>
 
@@ -162,7 +163,9 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 	*node = NULL;
 
 	if (partition->cache) {
-		cursor = partition->cache[cache_offsetof(ht, rbthash)];
+		void **cache_slot = (void **)
+			&(partition->cache[cache_offsetof(ht, rbthash)]);
+		cursor = atomic_fetch_voidptr(cache_slot);
 		LogFullDebug(COMPONENT_HASHTABLE_CACHE,
 			     "hash %s index %"PRIu32" slot %d\n",
 			     (cursor) ? "hit" : "miss",
@@ -198,8 +201,10 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 			    (struct gsh_buffdesc *)key,
 			    &(data->key)) == 0) {
 			if (partition->cache) {
-				partition->cache[cache_offsetof(ht, rbthash)]
-					= cursor;
+				void **cache_slot = (void **)
+					&(partition->cache[
+						  cache_offsetof(ht, rbthash)]);
+				atomic_store_voidptr(cache_slot, cursor);
 			}
 			found = true;
 			break;
