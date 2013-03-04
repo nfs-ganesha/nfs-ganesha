@@ -81,7 +81,6 @@ cache_inode_create(cache_entry_t *parent,
      struct attrlist object_attributes;
      struct fsal_obj_handle *dir_handle;
      cache_inode_create_arg_t zero_create_arg;
-     fsal_accessflags_t access_mask = 0;
 
      memset(&zero_create_arg, 0, sizeof(zero_create_arg));
      memset(&object_attributes, 0, sizeof(object_attributes));
@@ -96,24 +95,13 @@ cache_inode_create(cache_entry_t *parent,
          (type != BLOCK_FILE)) {
           status = CACHE_INODE_BAD_TYPE;
 
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because of bad type");
           *entry = NULL;
           goto out;
         }
 
-    /*
-     * Check if caller is allowed to perform the operation
-     */
-    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
-                                     FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-    status = cache_inode_access(parent,
-                                access_mask,
-                                req_ctx);
-    if (status != CACHE_INODE_SUCCESS)
-        {
-          *entry = NULL;
-          goto out;
-        }
+    /* Permission checking will be done by the FSAL operation. */
 
     /* Try to create it first */
 
@@ -171,10 +159,13 @@ cache_inode_create(cache_entry_t *parent,
             /* we should never go there */
             status = CACHE_INODE_INCONSISTENT_ENTRY;
             *entry = NULL;
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "create failed because inconsistent entry");
             goto out;
             break;
     }
 
+     /* Refresh the parent's attributes */
      cache_inode_refresh_attrs_locked(parent, req_ctx);
 
      /* Check for the result */
@@ -191,6 +182,8 @@ cache_inode_create(cache_entry_t *parent,
                                            entry);
                if (*entry != NULL) {
                     status = CACHE_INODE_ENTRY_EXISTS;
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "create failed because it already exists");
                     if ((*entry)->type != type) {
                          /* Incompatible types, returns NULL */
                          cache_inode_put(*entry);
@@ -208,6 +201,8 @@ cache_inode_create(cache_entry_t *parent,
           }
 
           status = cache_inode_error_convert(fsal_status);
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because FSAL failed");
           *entry = NULL;
           goto out;
      }
@@ -215,6 +210,8 @@ cache_inode_create(cache_entry_t *parent,
 				    CACHE_INODE_FLAG_CREATE,
 				    entry);
      if (*entry == NULL) {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because insert new entry failed");
           goto out;
      }
 
@@ -228,10 +225,17 @@ cache_inode_create(cache_entry_t *parent,
      if (status != CACHE_INODE_SUCCESS) {
           cache_inode_put(*entry);
           *entry = NULL;
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because add dirent failed");
           goto out;
      }
 
 out:
+
+     LogFullDebug(COMPONENT_CACHE_INODE,
+                  "Returning entry=%p status=%s",
+                  entry, cache_inode_err_str(status));
+
      return status;
 }
 
