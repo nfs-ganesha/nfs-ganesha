@@ -51,6 +51,7 @@
 #include "gsh_intrinsic.h"
 #include "cache_inode_lru.h"
 #include "city.h"
+#include <libgen.h>
 
 /**
  * @brief The table partition
@@ -64,6 +65,10 @@ typedef struct cih_partition
 	pthread_rwlock_t lock;
 	struct avltree t;
 	struct avltree_node **cache;
+	struct {
+		char *func;
+		uint32_t line;
+	} locktrace;
 	CACHE_PAD(0);
 } cih_partition_t;
 
@@ -256,7 +261,7 @@ cih_latch_rele(cih_latch_t *latch)
  */
 static inline cache_entry_t *
 cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
-		      uint32_t flags)
+		      uint32_t flags, const char *func, int line)
 {
 	cache_entry_t k_entry, *entry = NULL;
 	struct avltree_node *node;
@@ -270,6 +275,9 @@ cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
 		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+
+	cp->locktrace.func = (char*) func;
+        cp->locktrace.line = line;
 
 	node = cih_fhcache_inline_lookup(&cp->t, &k_entry.fh_hk.node_k);
 	if (! node) {
@@ -352,7 +360,7 @@ atomic_store_voidptr(void **var, void *val)
  */
 static inline cache_entry_t *
 cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
-		      uint32_t flags)
+                       uint32_t flags, const char *func, int line)
 {
 	cache_entry_t k_entry, *entry = NULL;
 	struct avltree_node *node;
@@ -367,6 +375,9 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+
+	cp->locktrace.func = (char*) func;
+        cp->locktrace.line = line;
 
         /* check cache */
         cache_slot = (void **)
@@ -417,7 +428,7 @@ out:
  */
 static inline bool
 cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch,
-                uint32_t flags)
+                uint32_t flags, const char *func, int line)
 {
 	cih_partition_t *cp;
 
@@ -428,6 +439,9 @@ cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch,
 		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+
+        cp->locktrace.func = (char*) func;
+        cp->locktrace.line = line;
 
 	return (true);
 }

@@ -459,7 +459,8 @@ lru_reap_impl(uint32_t flags)
                     pthread_mutex_unlock(&qlane->mtx);
 		    entry = container_of(lru, cache_entry_t, lru);
 		    /* entry must be unreachable from CIH when recycled */
-		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK)) {
+		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
+                                        __func__, __LINE__)) {
 			    pthread_mutex_lock(&qlane->mtx);
 			    nrefcnt =
 				    atomic_dec_int32_t(&entry->lru.refcnt);
