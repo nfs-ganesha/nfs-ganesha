@@ -1060,6 +1060,30 @@ out:
 }
 
 /**
+ * @brief Reload attributes from the FSAL.
+ *
+ * Load the FSAL attributes as specified in the configuration into
+ * this entry, mark them as trustable and update the entry metadata.
+ *
+ * @param[in,out] entry   The entry to be refreshed
+ * @param[in]     context FSAL operation context
+ */
+static inline cache_inode_status_t cache_inode_refresh_attrs_locked(
+        cache_entry_t *entry,
+        fsal_op_context_t *context)
+{
+        cache_inode_status_t status;
+
+        PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
+
+        status = cache_inode_refresh_attrs(entry, context);
+
+        PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+
+        return status;
+}
+
+/**
  * @brief Lock attributes and check they are trustworthy
  *
  * This function acquires a read lock.  If the CACHE_INODE_TRUST_ATTRS

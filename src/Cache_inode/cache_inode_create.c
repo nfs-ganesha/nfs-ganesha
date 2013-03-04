@@ -109,6 +109,8 @@ cache_inode_create(cache_entry_t *parent,
          (type != BLOCK_FILE)) {
           *status = CACHE_INODE_BAD_TYPE;
 
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because of bad type");
           entry = NULL;
           goto out;
         }
@@ -125,11 +127,13 @@ cache_inode_create(cache_entry_t *parent,
                /* Incompatible types, returns NULL */
                cache_inode_lru_unref(entry, LRU_FLAG_NONE);
                entry = NULL;
-               goto out;
-          } else {
-               goto out;
           }
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because it already exists");
+          goto out;
      }
+
+     /* Permission checking will be done by the FSAL operation. */
 
      /* The entry doesn't exist, so we can create it. */
 
@@ -187,9 +191,14 @@ cache_inode_create(cache_entry_t *parent,
           /* we should never go there */
           *status = CACHE_INODE_INCONSISTENT_ENTRY;
           entry = NULL;
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because inconsistent entry");
           goto out;
           break;
         }
+
+     /* Refresh the parent's attributes */
+     (void) cache_inode_refresh_attrs_locked(parent, context);
 
      /* Check for the result */
      if (FSAL_IS_ERROR(fsal_status)) {
@@ -201,6 +210,8 @@ cache_inode_create(cache_entry_t *parent,
           }
           *status = cache_inode_error_convert(fsal_status);
           entry = NULL;
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because FSAL failed");
           goto out;
      }
      fsal_data.fh_desc.start = (caddr_t) &object_handle;
@@ -217,7 +228,9 @@ cache_inode_create(cache_entry_t *parent,
      if (entry == NULL) {
           *status = CACHE_INODE_INSERT_ERROR;
 
-          return NULL;
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because insert new entry failed");
+          goto out;
      }
 
      PTHREAD_RWLOCK_WRLOCK(&parent->content_lock);
@@ -230,19 +243,10 @@ cache_inode_create(cache_entry_t *parent,
      if (*status != CACHE_INODE_SUCCESS) {
           cache_inode_lru_unref(entry, LRU_FLAG_NONE);
           entry = NULL;
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "create failed because add dirent failed");
           goto out;
      }
-
-     PTHREAD_RWLOCK_WRLOCK(&parent->attr_lock);
-     /* Update the parent cached attributes */
-     cache_inode_set_time_current(&parent->attributes.mtime);
-     parent->attributes.ctime = parent->attributes.mtime;
-     /* if the created object is a directory, it contains a link
-        to its parent : '..'. Thus the numlink attr must be increased. */
-     if (type == DIRECTORY) {
-          ++(parent->attributes.numlinks);
-     }
-     PTHREAD_RWLOCK_UNLOCK(&parent->attr_lock);
 
      /* Copy up the child attributes */
      if(attr) {
@@ -252,6 +256,10 @@ cache_inode_create(cache_entry_t *parent,
      *status = CACHE_INODE_SUCCESS;
 
 out:
+
+     LogFullDebug(COMPONENT_CACHE_INODE,
+                  "Returning entry=%p status=%s",
+                  entry, cache_inode_err_str(*status));
 
      return entry;
 }
