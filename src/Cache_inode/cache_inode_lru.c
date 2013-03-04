@@ -829,7 +829,8 @@ lru_run(struct fridgethr_context *ctx)
 				 workpass, closed, totalclosed);
 
 		    pthread_mutex_lock(&qlane->mtx);
-		    while (workdone < lru_state.per_lane_work) {
+		    while ((workdone < lru_state.per_lane_work) &&
+			   (!glist_empty(&LRU[lane].L1.q))) {
 			 /* In hindsight, it's really important to avoid
 			  * restarts. */
 			    glist_for_each_safe(glist, glistn,
