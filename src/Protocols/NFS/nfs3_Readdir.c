@@ -226,7 +226,7 @@ nfs_Readdir(nfs_arg_t *arg,
      cb3.total_entries = estimated_num_entries;
      cb3.mem_left = count - sizeof(READDIR3resok);
      cb3.count = 0;
-     cb3.error = NFS_OK;
+     cb3.error = NFS3_OK;
      cbfunc = nfs3_readdir_callback;
      cbdata = &cb3;
 
