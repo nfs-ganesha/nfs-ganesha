@@ -145,7 +145,6 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
 
   /* init mutexes */
   pthread_rwlock_init(&g_fsi_cache_handle_rw_lock, NULL);
-  pthread_mutex_init(&g_fsi_name_handle_mutex, NULL);
   g_fsi_name_handle_cache.m_count = 0;
  
   // fsi_ipc_trace_level allows using the level settings differently than

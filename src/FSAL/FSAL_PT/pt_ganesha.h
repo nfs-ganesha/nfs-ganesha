@@ -562,6 +562,5 @@ void fsi_cache_handle2name_dumpTableKeys(fsi_ipc_trace_level logLevel,
                                          char *titleString);
 void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data, int index);
 extern CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
-extern pthread_mutex_t g_fsi_name_handle_mutex;
 #endif // ifndef __PT_GANESHA_H__
 

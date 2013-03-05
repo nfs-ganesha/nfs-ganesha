@@ -177,9 +177,32 @@ void *ptfsal_polling_closeHandler_thread(void *args)
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 {
   int rc;
-  rc = CCL_IMPLICIT_CLOSE_FOR_NFS(handle_index_to_close, close_style);
+  int close_rc;
+  CACHE_TABLE_ENTRY_T cacheEntry;
+  char key[FSI_PERSISTENT_HANDLE_N_BYTES];
+
+  FSI_TRACE(FSI_NOTICE, "Closing handle [%d] close_style[%d]", handle_index_to_close, close_style);
+
+  memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
+  memcpy (key,
+          &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
+          FSI_PERSISTENT_HANDLE_N_BYTES);
+  cacheEntry.key =  key;
+
+  close_rc = CCL_IMPLICIT_CLOSE_FOR_NFS(handle_index_to_close, close_style);
   FSI_TRACE(FSI_DEBUG, "Returned rc=%d", rc);
-  return rc;
+
+  if (close_rc != -1) {
+    pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
+    rc = fsi_cache_deleteEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
+    pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
+    if (rc != FSI_IPC_EOK) {
+      FSI_TRACE(FSI_ERR, "Failed to delete cache entry to cache ID = %d",
+          g_fsi_name_handle_cache_opened_files.cacheMetaData.cacheTableID);
+      ptfsal_print_handle(cacheEntry.key);
+    }
+  }
+  return close_rc;
 }
 
 

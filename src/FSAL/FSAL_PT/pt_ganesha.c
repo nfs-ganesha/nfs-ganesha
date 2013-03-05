@@ -195,7 +195,8 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
 
 
   // Look up our front end opened handle cache
-  pthread_mutex_lock(&g_fsi_name_handle_mutex);
+
+  pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
   cacheLookupEntry.key = &handle[0];
 
   rc = fsi_cache_getEntry(&g_fsi_name_handle_cache_opened_files,
@@ -219,11 +220,11 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
         *handle_index = handleToNameEntryPtr->handle_index;
         FSI_TRACE(FSI_DEBUG, "Handle index = %d found in open file cache", *handle_index);
       }
-      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+      pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
       return 0;
     }
   }
-  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+  pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
   // Get name from cache by iterate all cache entries.
   pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
@@ -776,9 +777,9 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
     strncpy (handle_to_name_cache_data.m_name, fsi_filename, sizeof(handle_to_name_cache_data.m_name));
     cacheEntry.key =  p_fsi_handle->data.handle.f_handle;
     cacheEntry.data = &handle_to_name_cache_data;
-    pthread_mutex_lock(&g_fsi_name_handle_mutex);
+    pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
     rc = fsi_cache_insertEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
-    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+    pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
   }
 
   if (g_ptfsal_context_flag) {
@@ -925,7 +926,10 @@ ptfsal_unlink(fsal_op_context_t * p_context,
   char fsi_fullpath[PATH_MAX];
   ptfsal_handle_t * p_parent_dir_handle = 
     (ptfsal_handle_t *)p_parent_directory_handle;
-
+  CACHE_TABLE_ENTRY_T cacheEntry;
+  char key[FSI_PERSISTENT_HANDLE_N_BYTES];
+  int cacheDeleteRC;
+  int handle_index_to_close;
   rc = fsi_get_name_from_handle(p_context, 
                                 p_parent_dir_handle->data.handle.f_handle, 
                                 fsi_parent_dir_name,
@@ -940,10 +944,29 @@ ptfsal_unlink(fsal_op_context_t * p_context,
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
+  handle_index_to_close = CCL_FIND_HANDLE_BY_NAME_AND_EXPORT(fsi_fullpath, &ccl_context);
+  if (handle_index_to_close != -1) {
+    memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
+    memcpy (key,
+            &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
+            FSI_PERSISTENT_HANDLE_N_BYTES);
+    cacheEntry.key =  key;
+  }
+
   rc = CCL_UNLINK(&ccl_context, fsi_fullpath);
   /* remove from cache even unlink is not succesful */
   fsi_remove_cache_by_fullpath(fsi_fullpath);
 
+  if (handle_index_to_close != -1) {
+    pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
+    cacheDeleteRC = fsi_cache_deleteEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
+    pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
+    if (cacheDeleteRC != FSI_IPC_EOK) {
+      FSI_TRACE(FSI_ERR, "Failed to delete cache entry to cache ID = %d",
+          g_fsi_name_handle_cache_opened_files.cacheMetaData.cacheTableID);
+      ptfsal_print_handle(cacheEntry.key);
+    }
+  }
   return rc;
 }
 // -----------------------------------------------------------------------------
@@ -1424,7 +1447,7 @@ void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context,
 }
 
 // If we want to be able to dump keys in cache table, define the following
-//#define PRINT_CACHE_KEY
+// #define PRINT_CACHE_KEY
 
 // ----------------------------------------------------------------------------
 // Initialize the cache table and setup memory
@@ -1595,11 +1618,11 @@ int fsi_cache_insertEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *whatTo
   rc = fsi_cache_getInsertionPoint(cacheTable, whatToInsert, &whereToInsert);
 
   if (rc == 0) {
-    FSI_TRACE (FSI_WARNING, "Duplicated entry");
+    FSI_TRACE (FSI_INFO, "** Duplicated entry **");
     // Log result of the insert
-    FSI_TRACE(FSI_WARNING, "Attempted to insert the following handle:");
-    ptfsal_print_handle(whatToInsert->key);
-    fsi_cache_handle2name_dumpTableKeys(FSI_WARNING,
+    FSI_TRACE(FSI_INFO, "Attempted to insert the following handle:");
+    fsi_cache_32Bytes_rawDump(FSI_INFO, whatToInsert->key, 0);
+    fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
                                         cacheTable,
                                         "Dumping cache table keys currently:");
     return -1;
