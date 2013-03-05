@@ -353,6 +353,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			  const count4 count,
 			  verifier4 *const writeverf)
 {
+#ifdef COMMIT_FIX
 	/* The private 'full' export */
 	struct export *export
 		= container_of(ds_pub->export, struct export, export);
@@ -365,8 +366,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	/* Find out what stripe we're writing to and where within the
            stripe. */
 
-	memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
-
 	rc = ceph_ll_commit_blocks(export->cmount,
 				   ds->wire.wire.vi,
 				   offset,
@@ -376,7 +375,9 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	if (rc < 0) {
 		return posix2nfs4_error(rc);
 	}
+#endif /* COMMIT_FIX */
 
+	memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
 	return NFS4_OK;
 }
 
