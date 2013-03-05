@@ -457,7 +457,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
                 if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
                    (gpfs_acl_t *)p_buffxstat->buffacl) != ERR_FSAL_NO_ERROR)
                   p_fsalattr_out->acl = NULL;
-              }
+              } else
+                  p_fsalattr_out->acl = NULL;
 #endif                          /* _USE_NFS4_ACL */
             LogFullDebug(COMPONENT_FSAL, "acl = %p", p_fsalattr_out->acl);
         }
