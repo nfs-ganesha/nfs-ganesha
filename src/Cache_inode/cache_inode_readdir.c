@@ -360,7 +360,7 @@ static bool
 populate(const struct req_op_context *opctx,
          const char *name,
          void *dir_state,
-         struct fsal_cookie *cookie)
+         fsal_cookie_t cookie)
 {
         struct cache_inode_populate_cb_state *state
                 = (struct cache_inode_populate_cb_state *)dir_state;
@@ -393,17 +393,7 @@ populate(const struct req_op_context *opctx,
                 goto error;
         }
         if(*state->status != CACHE_INODE_ENTRY_EXISTS) {
-                /* somehow make the cookie into a uint64_t this is a
-		 * hammer and fsal_cookie_t is a bit strange the VFS
-		 * fsal can just stuff the offset (64 bits) into it
-		 * and that works here.  If other FSALs have something
-		 * different, particularly larger than 64 bits, beware
-		 * and/or make sure the readdir method gets the most
-		 * important 64 bits where they belong. Short circuit
-		 * the FSAL_cookie_to_uint64() call.
-		 */
-
-                memcpy(&new_dir_entry->fsal_cookie, cookie, sizeof(uint64_t));
+                new_dir_entry->fsal_cookie = cookie;
         }
         return true;
 
