@@ -79,8 +79,6 @@ struct nfs3_readdirplus_cb_data
                        buffer */
      size_t total_entries; /*< The number of entires we allocated for
                                the array. */
-     exportlist_t *export; /*< Pointer to the entry for the supplied
-                               handle's export */
      nfsstat3 error; /*< Set to a value other than NFS_OK if the
                          callback function finds a fatal error. */
 };
@@ -124,7 +122,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
      struct nfs3_readdirplus_cb_data cb_opaque = {.entries = NULL,
                                                   .mem_left = 0,
                                                   .count = 0,
-                                                  .export = export,
                                                   .error = NFS3_OK};
 
      if (isDebug(COMPONENT_NFSPROTO) ||
