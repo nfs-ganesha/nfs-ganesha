@@ -58,7 +58,7 @@
 #include <assert.h>
 
 static bool nfs3_readdirplus_callback(void* opaque,
-                                      char *name,
+                                      const char *name,
                                       struct fsal_obj_handle *obj_hdl,
                                       uint64_t cookie);
 static void free_entryplus3s(entryplus3 *entryplus3s);
@@ -392,7 +392,7 @@ void nfs3_Readdirplus_Free(nfs_res_t *resp)
 
 static bool
 nfs3_readdirplus_callback(void* opaque,
-                          char *name,
+                          const char *name,
                           struct fsal_obj_handle *obj_hdl,
                           uint64_t cookie)
 {

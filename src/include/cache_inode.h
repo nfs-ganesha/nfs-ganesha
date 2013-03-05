@@ -535,7 +535,7 @@ typedef enum cache_inode_status_t {
 
 typedef bool(*cache_inode_readdir_cb_t)(
 	void *opaque,
-	char *name,
+	const char *name,
 	struct fsal_obj_handle *obj_handle,
 	uint64_t cookie);
 
