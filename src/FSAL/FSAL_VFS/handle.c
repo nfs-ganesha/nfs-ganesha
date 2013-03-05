@@ -777,7 +777,6 @@ out:
  * read the directory and call through the callback function for
  * each entry.
  * @param dir_hdl [IN] the directory to read
- * @param entry_cnt [IN] limit of entries. 0 implies no limit
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
  * @param cb [IN] callback function
@@ -786,7 +785,7 @@ out:
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   const struct req_op_context *opctx,
-                                  struct fsal_cookie *whence,
+                                  fsal_cookie_t *whence,
                                   void *dir_state,
                                   fsal_readdir_cb cb,
                                   bool *eof)
@@ -797,21 +796,14 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
         int retval = 0;
 	off_t seekloc = 0;
 	off_t baseloc = 0;
-	unsigned int bpos, cnt;
+	unsigned int bpos;
 	int nread;
         struct vfs_dirent dentry, *dentryp = &dentry;
-        struct fsal_cookie *entry_cookie;
         char buf[BUF_SIZE];
 
         if(whence != NULL) {
-                if(whence->size != sizeof(off_t)) {
-                        fsal_error = posix2fsal_error(EINVAL);
-                        retval = errno;
-                        goto out;
-                }
-                memcpy(&seekloc, whence->cookie, sizeof(off_t));
+                seekloc = (off_t)*whence;
         }
-	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	dirfd = vfs_fsal_open(myself, O_RDONLY|O_DIRECTORY, &fsal_error);
 	if(dirfd < 0) {
@@ -824,7 +816,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto done;
 	}
-	cnt = 0;
+
 	do {
 		baseloc = seekloc;
 		nread = vfs_readents(dirfd, buf, BUF_SIZE, &seekloc);
@@ -840,19 +832,16 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			    strcmp(dentryp->vd_name, ".") == 0 ||
 			    strcmp(dentryp->vd_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			entry_cookie->size = sizeof(off_t);
-			memcpy(&entry_cookie->cookie, &dentryp->vd_offset, sizeof(off_t));
 
                         /* callback to cache inode */
                         if (!cb(opctx,
                                 dentryp->vd_name,
                                 dir_state,
-                                entry_cookie)) {
+                                (fsal_cookie_t)dentryp->vd_offset)) {
                                 goto done;
                         }
 		skip:
 			bpos += dentryp->vd_reclen;
-			cnt++;
 		}
 	} while(nread > 0);
 
@@ -1339,6 +1328,7 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(myself);
 	return fsalstat(fsal_error, 0);
 }
+
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 {

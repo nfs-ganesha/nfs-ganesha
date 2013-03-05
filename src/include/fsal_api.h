@@ -1138,29 +1138,15 @@ struct fsal_obj_handle {
 
 /**
  * @brief Directory cookie
- *
- * This cookie gets allocated at cache_inode_dir_entry create time to
- * the size specified by size.  It is at the end of the dir entry so
- * the cookie[] allocation can expand as needed.  However, given how
- * GetFromPool works, these have to be fixed size as a result, we go
- * for a V4 handle size for things like proxy until we can fix
- * this. It is a crazy waste of space.  Make this go away with a
- * fixing of GetFromPool.  For now, make it big enough to hold a
- * SHA1...  Also note that the readdir code doesn't have to check this
- * (both are hard coded) so long as they obey the proper setting of
- * size.
  */
 
-#define FSAL_READDIR_COOKIE_MAX 40
-struct fsal_cookie {
-        int size;
-        unsigned char cookie[FSAL_READDIR_COOKIE_MAX];
-};
+typedef uint64_t fsal_cookie_t;
+
 
 typedef bool (*fsal_readdir_cb)(const struct req_op_context *opctx,
                                 const char *name,
                                 void *dir_state,
-                                struct fsal_cookie *cookie);
+                                fsal_cookie_t cookie);
 /**
  * @brief FSAL objectoperations vector
  */
@@ -1259,7 +1245,7 @@ struct fsal_obj_ops {
  */
         fsal_status_t (*readdir)(struct fsal_obj_handle *dir_hdl,
                                  const struct req_op_context *opctx,
-                                 struct fsal_cookie *whence,
+                                 fsal_cookie_t *whence,
                                  void *dir_state,
                                  fsal_readdir_cb cb,
                                  bool *eof);

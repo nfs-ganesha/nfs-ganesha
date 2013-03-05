@@ -1575,7 +1575,6 @@ pxy_do_readdir(const struct req_op_context *opctx,
         for(e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
                 struct attrlist attr;
                 char name[MAXNAMLEN+1];
-                struct fsal_cookie fc;
 
                 /* UTF8 name does not include trailing 0 */
                 if(e4->name.utf8string_len > sizeof(name) - 1)
@@ -1586,11 +1585,9 @@ pxy_do_readdir(const struct req_op_context *opctx,
 		if(nfs4_Fattr_To_FSAL_attr(&attr, &e4->attrs, NULL))
                         return fsalstat(ERR_FSAL_FAULT, 0);
 
-                fc.size = sizeof(e4->cookie),
-                memcpy(fc.cookie, &e4->cookie, sizeof(e4->cookie));
                 *cookie = e4->cookie;
 
-                if(!cb(opctx, name, cbarg, &fc)) {
+                if(!cb(opctx, name, cbarg, e4->cookie)) {
                         break;
                 }
         }
@@ -1602,7 +1599,7 @@ pxy_do_readdir(const struct req_op_context *opctx,
 static fsal_status_t
 pxy_readdir(struct fsal_obj_handle *dir_hdl,
             const struct req_op_context *opctx,
-            struct fsal_cookie *whence,
+            fsal_cookie_t *whence,
             void *cbarg,
             fsal_readdir_cb cb,
             bool *eof)
@@ -1613,9 +1610,7 @@ pxy_readdir(struct fsal_obj_handle *dir_hdl,
         if(!dir_hdl || !cb || !eof || !opctx)
                 return fsalstat(ERR_FSAL_INVAL, 0);
         if(whence) {
-               if(whence->size != sizeof(cookie))
-                       return fsalstat(ERR_FSAL_INVAL, 0);
-               memcpy(&cookie, whence->cookie, sizeof(cookie));
+               cookie = (nfs_cookie4)*whence;
         }
 
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);

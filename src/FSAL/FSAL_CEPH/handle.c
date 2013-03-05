@@ -140,13 +140,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
-				  bool (*cb)(
-					  const struct req_op_context *opctx,
-					  const char *name,
-					  void *dir_state,
-					  struct fsal_cookie *cookie),
+				  fsal_readdir_cb cb,
 				  bool *eof)
 {
 	/* Generic status return */
@@ -170,12 +166,8 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 		return ceph2fsal_error(rc);
 	}
 
-	if (whence == NULL) {
-		start = 0;
-	} else if (whence->size == sizeof(uint64_t)) {
-		memcpy(&start, whence->cookie, sizeof(uint64_t));
-	} else {
-		fsal_status.major = ERR_FSAL_INVAL;
+	if (whence != NULL) {
+		start = *whence;
 	}
 
 	ceph_seekdir(export->cmount, dir_desc, start);
@@ -183,7 +175,6 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	while (!(*eof)) {
 		struct stat st;
 		struct dirent de;
-		struct fsal_cookie cookie;
 		int stmask = 0;
 
 		rc = ceph_readdirplus_r(export->cmount, dir_desc, &de,
@@ -198,13 +189,10 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 				continue;
 			}
 
-			cookie.size = sizeof(uint64_t);
-			memcpy(cookie.cookie, &de.d_off,
-			       sizeof(uint64_t));
 			if (!cb(opctx,
 				de.d_name,
 				dir_state,
-				&cookie)) {
+				de.d_off)) {
 				goto closedir;
 			}
 		} else if (rc == 0) {
