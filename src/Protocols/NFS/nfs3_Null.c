@@ -64,7 +64,7 @@ int nfs_Null(nfs_arg_t *arg,
              nfs_res_t *res)
 {
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
-  return NFS_OK;
+  return NFS3_OK;
 } /* nfs_cb_Null */
 
 /**
