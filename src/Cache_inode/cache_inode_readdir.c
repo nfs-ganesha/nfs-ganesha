@@ -391,9 +391,6 @@ populate(const struct req_op_context *opctx,
             *state->status != CACHE_INODE_ENTRY_EXISTS) {
                 goto error;
         }
-        if(*state->status != CACHE_INODE_ENTRY_EXISTS) {
-                new_dir_entry->fsal_cookie = cookie;
-        }
         return true;
 
 error:
