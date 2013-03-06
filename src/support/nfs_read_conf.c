@@ -879,7 +879,11 @@ int nfs_read_version4_conf(config_file_t in_config,
           return -1;
         }
 
-      if(!strcasecmp(key_name, "Lease_Lifetime"))
+      if(!strcasecmp(key_name, "Graceless"))
+        {
+          pparam->graceless = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Lease_Lifetime"))
         {
           pparam->lease_lifetime = atoi(key_value);
         }

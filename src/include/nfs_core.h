@@ -287,6 +287,7 @@ typedef struct nfs_session_id_param__ {
 } nfs_session_id_parameter_t;
 
 typedef struct nfs_version4_parameter__ {
+	bool graceless;
 	unsigned int lease_lifetime;
 	unsigned int fh_expire;
 	unsigned int returns_err_fh_expired;

@@ -131,6 +131,7 @@ nfs_parameter_t nfs_param =
 #endif
 
   /* NFSv4 parameter */
+  .nfsv4_param.graceless = false,
   .nfsv4_param.lease_lifetime = NFS4_LEASE_LIFETIME,
   .nfsv4_param.returns_err_fh_expired = true,
   .nfsv4_param.return_bad_stateid = true,
