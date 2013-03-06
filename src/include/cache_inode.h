@@ -664,10 +664,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry_src,
 cache_inode_status_t cache_inode_remove(cache_entry_t *entry,
 					const char *node_name,
 					struct req_op_context *req_ctx);
-cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
-					     const char *name,
-					     struct req_op_context *req_ctx,
-					     uint32_t flags);
 
 cache_inode_status_t cache_inode_operate_cached_dirent(
 	cache_entry_t *entry_parent,
