@@ -335,16 +335,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                    "cache_inode_new_entry: Adding a DIRECTORY, entry=%p",
                    nentry);
 
+          atomic_set_uint32_t_bits(&nentry->flags, CACHE_INODE_TRUST_CONTENT);
+
           /* If the directory is newly created, it is empty.  Because
              we know its content, we consider it read. */
           if (flags & CACHE_INODE_FLAG_CREATE) {
-		  atomic_set_uint32_t_bits(&nentry->flags,
-					   CACHE_INODE_TRUST_CONTENT |
-					   CACHE_INODE_DIR_POPULATED);
+		  atomic_set_uint32_t_bits(&nentry->flags, CACHE_INODE_DIR_POPULATED);
           } else {
-		  atomic_clear_uint32_t_bits(&nentry->flags,
-					     CACHE_INODE_TRUST_CONTENT |
-					     CACHE_INODE_DIR_POPULATED);
+		  atomic_clear_uint32_t_bits(&nentry->flags, CACHE_INODE_DIR_POPULATED);
           }
 	  
           nentry->object.dir.avl.collisions = 0;
@@ -661,9 +659,7 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 
           if (tree == &entry->object.dir.avl.t) {
               entry->object.dir.nbactive = 0;
-              atomic_clear_uint32_t_bits(&entry->flags,
-                                         (CACHE_INODE_TRUST_CONTENT |
-                                          CACHE_INODE_DIR_POPULATED));
+              atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_DIR_POPULATED);
           }
     }
 }
