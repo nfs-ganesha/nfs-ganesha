@@ -444,11 +444,13 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 
   if(!isnew && owner != NULL && pisnew != NULL)
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-      DisplayOwner(owner, str);
-      LogDebug(COMPONENT_STATE,
-               "Previously known owner {%s} is being reused",
-               str);
+      if (isDebug(COMPONENT_STATE)) {
+        char str[HASHTABLE_DISPLAY_STRLEN];
+	DisplayOwner(owner, str);
+	LogDebug(COMPONENT_STATE,
+		 "Previously known owner {%s} is being reused",
+		 str);
+      }
     }
 
   if(pisnew != NULL)

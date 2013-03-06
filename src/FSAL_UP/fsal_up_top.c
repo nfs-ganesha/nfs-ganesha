@@ -517,7 +517,8 @@ static void unlink_queue(struct fridgethr_context *ctx)
 			cache_entry_t *entry =
 				cih_get_by_key_latched(&dirent->ckey,
 						       &latch,
-						       CIH_GET_UNLOCK_ON_MISS);
+						       CIH_GET_UNLOCK_ON_MISS,
+                                                       __func__, __LINE__);
 			if (entry)
 				cih_remove_latched(entry, &latch,
 						   CIH_REMOVE_UNLOCK);

@@ -683,12 +683,10 @@ cache_inode_readdir(cache_entry_t *directory,
      }
 
 unlock_dir:
-
      PTHREAD_RWLOCK_unlock(&directory->content_lock);
      return status;
 
 unlock_attrs:
-
      PTHREAD_RWLOCK_unlock(&directory->attr_lock);
      return status;
 } /* cache_inode_readdir */

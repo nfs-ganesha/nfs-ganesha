@@ -281,7 +281,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      /* Check if the entry already exists */
      oentry = cih_get_by_fh_latched(&fh_desc, &latch,
-				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
+                                    __func__, __LINE__);
      if (oentry) {
           /* Entry is already in the cache, do not add it */
           status = CACHE_INODE_ENTRY_EXISTS;
@@ -309,7 +310,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      locksinited = true;
 
      /* See if someone raced us. */
-     oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK);
+     oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK,
+                                    __func__, __LINE__);
      if (oentry) {
 	     /* Entry is already in the cache, do not add it.
 	      *
