@@ -386,8 +386,10 @@ static void record_io_stats(struct gsh_stats *gsh_st,
 		} else {
 			return;
 		}
+#ifdef _9P_REQUEST
 	} else if (req_ctx->req_type == _9P_REQUEST) {
 		/* do its counters sometime */ ;
+#endif
 	} else {
 		return;
 	}
