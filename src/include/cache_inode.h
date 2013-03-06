@@ -251,7 +251,6 @@ typedef struct cache_inode_dir_entry__ {
 		uint32_t p; /*< Number of probes, an efficiency metric */
 	} hk;
 	cache_inode_key_t ckey; /*< Key of cache entry */
-	fsal_cookie_t fsal_cookie; /*< The cookie returned by the FSAL. */
 	uint32_t flags; /*< Flags */
 	char name[]; /*< The NUL-terminated filename */
 } cache_inode_dir_entry_t;
