@@ -55,6 +55,10 @@
 #include <assert.h>
 #include <stdbool.h>
 
+static cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
+                                                    const char *name,
+                                                    struct req_op_context *req_ctx);
+
 /**
  *
  * @brief Public function to remove a name from a directory.
@@ -99,9 +103,9 @@ cache_inode_remove(cache_entry_t *entry,
 
      status = cache_inode_remove_impl(entry,
 				      name,
-				      req_ctx,
-				      CACHE_INODE_FLAG_ATTR_HAVE |
-				      CACHE_INODE_FLAG_CONTENT_HAVE);
+				      req_ctx);
+
+     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      return status;
 }
@@ -110,22 +114,20 @@ cache_inode_remove(cache_entry_t *entry,
  * @brief Implement actual work of removing file
  *
  * Actually remove an entry from the directory.  Assume that the
- * directory contents and attributes are locked for writes.  The
- * attribute lock is released unless keep_md_lock is true.
+ * directory contents and attributes are locked for writes.
+ * The caller should hold the attribute lock, which is released upon exit
  *
  * @param[in] entry   Entry for the parent directory to be managed.
  * @param[in] name    Name of the entry that we are looking for in the cache.
  * @param[in] req_ctx Request context
- * @param[in] flags   Flags to control lock retention
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
 
-cache_inode_status_t
+static cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
 			const char *name,
-			struct req_op_context *req_ctx,
-			uint32_t flags)
+			struct req_op_context *req_ctx)
 {
      cache_entry_t *to_remove_entry = NULL;
      fsal_status_t fsal_status = {0, 0};
@@ -134,17 +136,9 @@ cache_inode_remove_impl(cache_entry_t *entry,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      if(entry->type != DIRECTORY) {
-	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
-	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	  }
+	  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
           status = CACHE_INODE_BAD_TYPE;
           goto out;
-     }
-
-     if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-          flags |= CACHE_INODE_FLAG_CONTENT_HAVE;
      }
 
      /* Factor this somewhat.  In the case where the directory hasn't
@@ -158,10 +152,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
 				      &to_remove_entry);
 
      if (to_remove_entry == NULL) {
-	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
-	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	 }
+	 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	 goto out;
      }
 
@@ -169,10 +160,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
 			   to_remove_entry->obj_handle,
 			   req_ctx->creds)) {
          status = CACHE_INODE_FSAL_EPERM;
-	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
-	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	 }
+	 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
          goto out;
      }
      /* Lock the attributes (so we can decrement the link count) */
@@ -196,10 +184,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(entry);
           }
-	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
-	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	  }
+	  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
           goto unlock;
      } else {
           /* Decrement refcount on saved ACL */
@@ -212,10 +197,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
      cache_inode_fixup_md(entry);
 
-     if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
-         !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-     }
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
      /* Remove the entry from parent dir_entries avl */
      cache_inode_remove_cached_dirent(entry, name, req_ctx);
@@ -252,11 +234,6 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
 out:
-     if ((flags & CACHE_INODE_FLAG_CONTENT_HAVE) &&
-         !(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-     }
-
      /* This is for the reference taken by lookup */
      if (to_remove_entry) {
          cache_inode_put(to_remove_entry);
