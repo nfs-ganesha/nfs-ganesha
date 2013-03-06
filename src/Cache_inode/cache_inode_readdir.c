@@ -76,12 +76,12 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 	     return status;
      }
 
-     /* Get ride of entries cached in the DIRECTORY */
+     /* Get rid of entries cached in the DIRECTORY */
      cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
 
-     /* Mark directory as not populated */
-     atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
-						CACHE_INODE_TRUST_CONTENT));
+     /* Now we can trust the content */
+     atomic_set_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT);
+
      status = CACHE_INODE_SUCCESS;
 
      return status;
@@ -172,8 +172,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
                                                newname, 1);
          if (dirent2) {
              /* rename would cause a collision */
-             if (directory->flags &
-                 CACHE_INODE_TRUST_CONTENT) {
+             if (directory->flags & CACHE_INODE_TRUST_CONTENT) {
                  /* overwrite, replace entry and expire the old */
                  cache_entry_t *oldentry;
 		 avl_dirent_set_deleted(directory, dirent);
@@ -441,7 +440,6 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
 
   /* Invalidate all the dirents */
   status = cache_inode_invalidate_all_cached_dirent(directory);
-
   if (status != CACHE_INODE_SUCCESS)
     return status;
 
@@ -449,7 +447,6 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
   state.status = &status;
   state.offset_cookie = 0;
 
-  status = CACHE_INODE_SUCCESS;
   fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle,
                                                     req_ctx,
                                                     NULL, /* starting at the beginning */
@@ -458,22 +455,17 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
                                                     &eod);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
            cache_inode_kill_entry(directory);
       }
-      return status;
+
+      return cache_inode_error_convert(fsal_status);
     }
-  if (status != CACHE_INODE_SUCCESS) {
-    return status;
-  }
 
   assert(eod);  /* we were supposed to read to the end.... */
   /* End of work */
-  atomic_set_uint32_t_bits(&directory->flags,
-                           (CACHE_INODE_DIR_POPULATED |
-                            CACHE_INODE_TRUST_CONTENT));
-  status = CACHE_INODE_SUCCESS;
+  atomic_set_uint32_t_bits(&directory->flags, CACHE_INODE_DIR_POPULATED);
+
   return status;
 }                               /* cache_inode_readdir_populate */
 
