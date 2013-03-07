@@ -75,8 +75,8 @@ nfs_Rename(nfs_arg_t *arg,
            struct svc_req *req,
            nfs_res_t *res)
 {
-        char *entry_name = NULL;
-        char *new_entry_name = NULL;
+        const char *entry_name = arg->arg_rename3.from.name;
+        const char *new_entry_name = arg->arg_rename3.to.name;
         cache_entry_t *parent_entry = NULL;
         cache_entry_t *new_parent_entry = NULL;
         cache_inode_status_t cache_status;
@@ -90,9 +90,6 @@ nfs_Rename(nfs_arg_t *arg,
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
-
-                entry_name = arg->arg_rename3.from.name;
-                new_entry_name = arg->arg_rename3.to.name;
 
                 nfs_FhandleToStr(req->rq_vers,
                                  &arg->arg_rename3.from.dir,
@@ -119,17 +116,19 @@ nfs_Rename(nfs_arg_t *arg,
 		.attributes_follow = FALSE;
 	res->res_rename3.RENAME3res_u.resfail.todir_wcc.after
 		.attributes_follow = FALSE;
+
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
 					   req_ctx,
 					   export,
 					   &res->res_create3.status,
 					   &rc);
-	if(parent_entry != NULL)
-		nfs_SetPreOpAttr(parent_entry,
-				 req_ctx,
-				 &pre_parent);
-	else
-		goto out;
+	if(parent_entry == NULL) {
+                goto out;
+	}
+
+	nfs_SetPreOpAttr(parent_entry,
+                         req_ctx,
+                         &pre_parent);
 
         /* Convert todir file handle into a cache_entry */
 	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
@@ -144,9 +143,6 @@ nfs_Rename(nfs_arg_t *arg,
         nfs_SetPreOpAttr(new_parent_entry,
                          req_ctx,
                          &pre_new_parent);
-
-        entry_name = arg->arg_rename3.from.name;
-        new_entry_name = arg->arg_rename3.to.name;
 
         if(entry_name == NULL ||
            *entry_name == '\0' ||
@@ -176,21 +172,10 @@ nfs_Rename(nfs_arg_t *arg,
                        &res->res_rename3.RENAME3res_u.resok.todir_wcc);
 
         rc = NFS_REQ_OK;
-
-out:
-
-        if (parent_entry) 
-                cache_inode_put(parent_entry);
         
-
-        if (new_parent_entry) 
-                cache_inode_put(new_parent_entry);
-        
-
-        return rc;
+        goto out;
 
 out_fail:
-
         res->res_rename3.status = nfs3_Errno(cache_status);
         nfs_SetWccData(&pre_parent,
                        parent_entry,
@@ -206,6 +191,13 @@ out_fail:
         if (nfs_RetryableError(cache_status)) 
                 rc = NFS_REQ_DROP;
         
+out:
+        if (parent_entry)
+                cache_inode_put(parent_entry);
+
+
+        if (new_parent_entry)
+                cache_inode_put(new_parent_entry);
 
         return rc;
 }

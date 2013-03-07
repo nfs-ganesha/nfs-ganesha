@@ -81,13 +81,11 @@ nfs_Rmdir(nfs_arg_t *arg,
                 .attributes_follow = false
         };
         cache_inode_status_t cache_status;
-        char *name = NULL;
+        const char *name = arg->arg_rmdir3.object.name;
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
-
-                name = arg->arg_rmdir3.object.name;
 
                 nfs_FhandleToStr(req->rq_vers,
                                  &arg->arg_rmdir3.object.dir,
@@ -126,8 +124,6 @@ nfs_Rmdir(nfs_arg_t *arg,
                 goto out;
         }
 
-        name = arg->arg_rmdir3.object.name;
-
         if ((name == NULL) ||
             (*name == '\0' )) {
                 cache_status = CACHE_INODE_INVALID_ARGUMENT;
@@ -165,21 +161,9 @@ nfs_Rmdir(nfs_arg_t *arg,
 
         rc = NFS_REQ_OK;
 
-
-out:
-        /* return references */
-        if (child_entry) 
-                cache_inode_put(child_entry);
-        
-
-        if (parent_entry) 
-                cache_inode_put(parent_entry);
-        
-
-        return rc;
+        goto out;
 
 out_fail:
-
         res->res_rmdir3.status = nfs3_Errno(cache_status);
         nfs_SetWccData(&pre_parent,
                        parent_entry,
@@ -191,6 +175,7 @@ out_fail:
                 rc = NFS_REQ_DROP;
         }
 
+out:
         /* return references */
         if (child_entry) 
                 cache_inode_put(child_entry);
