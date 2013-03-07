@@ -774,10 +774,7 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
 static void
 nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
-    if (xprt->xp_u1) {
-        free_gsh_xprt_private(xprt->xp_u1);
-        xprt->xp_u1 = NULL;
-    }
+    free_gsh_xprt_private(xprt);
 }
 
 /**
