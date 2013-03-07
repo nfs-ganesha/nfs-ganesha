@@ -72,7 +72,7 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 
      /* Only DIRECTORY entries are concerned */
      if (entry->type != DIRECTORY) {
-	     status = CACHE_INODE_BAD_TYPE;
+	     status = CACHE_INODE_NOT_A_DIRECTORY;
 	     return status;
      }
 
@@ -126,7 +126,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 
      /* Sanity check */
      if(directory->type != DIRECTORY) {
-         status = CACHE_INODE_BAD_TYPE;
+         status = CACHE_INODE_NOT_A_DIRECTORY;
          goto out;
      }
 
@@ -254,7 +254,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
 
      /* Sanity check */
      if(parent->type != DIRECTORY) {
-          status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_NOT_A_DIRECTORY;
           return status;
      }
 
@@ -317,7 +317,7 @@ cache_inode_remove_cached_dirent(cache_entry_t *directory,
   /* Sanity check */
   if(directory->type != DIRECTORY)
     {
-      status = CACHE_INODE_BAD_TYPE;
+      status = CACHE_INODE_NOT_A_DIRECTORY;
       return status;
     }
 
@@ -424,7 +424,7 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
   /* Only DIRECTORY entries are concerned */
   if(directory->type != DIRECTORY)
     {
-      status = CACHE_INODE_BAD_TYPE;
+      status = CACHE_INODE_NOT_A_DIRECTORY;
       return status;
     }
 
@@ -513,7 +513,7 @@ cache_inode_readdir(cache_entry_t *directory,
 
      /* readdir can be done only with a directory */
      if (directory->type != DIRECTORY) {
-          status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_NOT_A_DIRECTORY;
           /* no lock acquired so far, just return status */
           return status;
      }
