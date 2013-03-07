@@ -88,12 +88,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      bool_t srcattrlock = FALSE;
      bool_t destattrlock = FALSE;
      bool_t destdirlock = FALSE;
-     fsal_accessflags_t access_mask = 0;
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
 #endif /* _USE_NFS4_ACL */
-
 
      /* Set the return default to CACHE_INODE_SUCCESS */
      *status = CACHE_INODE_SUCCESS;
@@ -104,29 +102,22 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           goto out;
      }
 
-
      /* Is the destination a directory? */
-     if ((dest_dir->type != DIRECTORY) &&
-         (dest_dir->type != FS_JUNCTION)) {
+     if (dest_dir->type != DIRECTORY) {
           *status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
-     /* Acquire the attribute lock */
-     PTHREAD_RWLOCK_WRLOCK(&dest_dir->attr_lock);
-     destattrlock = TRUE;
-
-     /* Check if caller is allowed to perform the operation */
-     access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
-
-     if ((*status = cache_inode_access_no_mutex(dest_dir,
-                                                access_mask,
-                                                context,
-                                                status))
-         != CACHE_INODE_SUCCESS) {
+     /* Fetch and lock the attributes (so we can increment the link count)
+        cache_inode_lock_trust_attrs can return an error, and no lock will be
+        acquired */
+     *status = cache_inode_lock_trust_attrs(dest_dir, context, TRUE);
+     if (*status != CACHE_INODE_SUCCESS) {
           goto out;
      }
+
+     PTHREAD_RWLOCK_WRLOCK(&dest_dir->attr_lock);
+     destattrlock = TRUE;
 
      /* Rather than performing a lookup first, just try to make the
         link and return the FSAL's error if it fails. */
@@ -153,6 +144,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      fsal_status =
           FSAL_link(&entry->handle, &dest_dir->handle,
                     name, context, &entry->attributes);
+
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -189,9 +181,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 #endif /* _USE_NFS4_ACL */
      }
 
-     cache_inode_fixup_md(entry);
-     *attr = entry->attributes;
-     set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
+     if(attr != NULL) {
+          *attr = entry->attributes;
+          set_mounted_on_fileid(entry,
+                                attr,
+                                context->export_context->fe_export);
+     }
+
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      srcattrlock = FALSE;
 
