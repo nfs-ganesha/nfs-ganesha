@@ -520,8 +520,10 @@ cache_inode_error_convert(fsal_status_t fsal_status)
                "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
       return CACHE_INODE_FSAL_ERROR;
 
-    case ERR_FSAL_SYMLINK:
     case ERR_FSAL_ISDIR:
+      return CACHE_INODE_IS_A_DIRECTORY;
+
+    case ERR_FSAL_SYMLINK:
     case ERR_FSAL_BADTYPE:
       return CACHE_INODE_BAD_TYPE;
 
