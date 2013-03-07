@@ -72,7 +72,6 @@ void create_svc_req(struct svc_req *req, rpcvers_t ver, rpcprog_t prog, rpcproc_
 void nfs_set_ip_name_param_default()
 {
     nfs_param.ip_name_param.hash_param.index_size = PRIME_IP_NAME;
-    nfs_param.ip_name_param.hash_param.alphabet_length = 10;   /* ipaddr is a numerical decimal value */
     nfs_param.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func;
     nfs_param.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func;
     nfs_param.ip_name_param.hash_param.compare_key = compare_ip_name;

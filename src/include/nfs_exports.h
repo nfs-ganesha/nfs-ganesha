@@ -134,7 +134,7 @@ typedef struct exportlist_client__ {
 	exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];
 } exportlist_client_t;
 
-typedef struct exportlist__ {
+typedef struct exportlist {
 	unsigned short id; /*< Entry identifier */
 	exportlist_status_t status; /*< Entry's status */
 	char dirname[MAXNAMLEN]; /*< Path relative to fs root */
@@ -189,7 +189,7 @@ typedef struct exportlist__ {
 	uint64_t MaxCacheSize;  /*< Maximum Cache Size allowed */
 	bool UseCookieVerifier; /*< Is Cookie verifier to be used? */
 	exportlist_client_t clients; /*< Allowed clients */
-	struct exportlist__ *next; /*< Next entry */
+	struct exportlist *next; /*< Next entry */
 	struct fsal_export *export_hdl; /*< Handle into our FSAL */
 
 	pthread_mutex_t exp_state_mutex; /*< Mutex to protect per-export

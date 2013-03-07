@@ -612,8 +612,7 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
   if((nfs_param.nfsv4_param.fh_expire)
      && (pfilehandle4->srvboot_time != (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL)))
     {
-      if(nfs_param.nfsv4_param.returns_err_fh_expired)
-        return NFS4ERR_FHEXPIRED;
+      return NFS4ERR_FHEXPIRED;
     }
 
   return NFS4_OK;

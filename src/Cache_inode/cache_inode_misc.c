@@ -53,44 +53,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-cache_inode_gc_policy_t cache_inode_gc_policy = {
-        /* Cache inode parameters: Garbage collection policy */
-        .entries_hwmark = 100000,
-        .entries_lwmark = 50000,
-        .use_fd_cache = true,
-        .lru_run_interval = 60,
-        .fd_limit_percent = 99,
-        .fd_hwmark_percent = 90,
-        .fd_lwmark_percent = 50,
-        .reaper_work = 1000,
-        .biggest_window = 40,
-        .required_progress = 5,
-        .futility_count = 8
-};
-
-cache_inode_parameter_t cache_inode_params = {
-        /* Cache inode parameters : hash table */
-        .hparam.index_size = PRIME_CACHE_INODE,
-        .hparam.alphabet_length = 10,
-        .hparam.ht_log_component = COMPONENT_CACHE_INODE,
-
-        /* Cache inode parameters : cookie hash table */
-        .cookie_param.index_size = PRIME_STATE_ID,
-        .cookie_param.alphabet_length = 10,
-        .cookie_param.hash_func_key = lock_cookie_value_hash_func,
-        .cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ,
-        .cookie_param.compare_key = compare_lock_cookie_key,
-        .cookie_param.key_to_str = display_lock_cookie_key,
-        .cookie_param.val_to_str = display_lock_cookie_val,
-        .cookie_param.ht_name = "Lock Cookie",
-        .cookie_param.flags = HT_FLAG_NONE,
-        .cookie_param.ht_log_component = COMPONENT_STATE,
-
-        .expire_type_attr    = CACHE_INODE_EXPIRE_NEVER,
-        .expire_type_link    = CACHE_INODE_EXPIRE_NEVER,
-        .expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER,
-        .use_fsal_hash = 1
-};
 
 pool_t *cache_inode_entry_pool;
 
@@ -741,11 +703,11 @@ cache_inode_check_trust(cache_entry_t *entry,
      oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
      /* Do we need a refresh? */
-     if (((cache_inode_params.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
+     if (((nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
           (current_time - entry->attr_time <
-           cache_inode_params.grace_period_attr)) &&
+           nfs_param.cache_param.grace_period_attr)) &&
          (entry->flags & CACHE_INODE_TRUST_ATTRS) &&
-         !((cache_inode_params.getattr_dir_invalidation)&&
+         !((nfs_param.cache_param.getattr_dir_invalidation)&&
            (entry->type == DIRECTORY))) {
           goto unlock;
      }
@@ -757,11 +719,11 @@ cache_inode_check_trust(cache_entry_t *entry,
      current_time = time(NULL);
 
      /* Make sure no one else has first */
-     if (((cache_inode_params.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
+     if (((nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
           (current_time - entry->attr_time <
-           cache_inode_params.grace_period_attr)) &&
+           nfs_param.cache_param.grace_period_attr)) &&
          (entry->flags & CACHE_INODE_TRUST_ATTRS) &&
-         !((cache_inode_params.getattr_dir_invalidation) &&
+         !((nfs_param.cache_param.getattr_dir_invalidation) &&
            (entry->type == DIRECTORY))) {
           goto unlock;
      }

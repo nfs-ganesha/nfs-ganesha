@@ -226,9 +226,10 @@ static void close_rpc_fd()
 
 void Create_udp(protos prot)
 {
-    udp_xprt[prot] = svc_dg_create(udp_socket[prot],
-                                   nfs_param.core_param.max_send_buffer_size,
-                                   nfs_param.core_param.max_recv_buffer_size);
+    udp_xprt[prot] = svc_dg_create(
+	    udp_socket[prot],
+	    nfs_param.core_param.rpc.max_send_buffer_size,
+	    nfs_param.core_param.rpc.max_recv_buffer_size);
     if(udp_xprt[prot] == NULL)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot allocate %s/UDP SVCXPRT", tags[prot]);
@@ -258,10 +259,11 @@ void Create_udp(protos prot)
 
 void Create_tcp(protos prot)
 {
-    tcp_xprt[prot] = svc_vc_create2(tcp_socket[prot],
-                                    nfs_param.core_param.max_send_buffer_size,
-                                    nfs_param.core_param.max_recv_buffer_size,
-                                    SVC_VC_CREATE_LISTEN);
+    tcp_xprt[prot] = svc_vc_create2(
+	    tcp_socket[prot],
+	    nfs_param.core_param.rpc.max_send_buffer_size,
+	    nfs_param.core_param.rpc.max_recv_buffer_size,
+	    SVC_VC_CREATE_LISTEN);
     if(tcp_xprt[prot] == NULL)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot allocate %s/TCP SVCXPRT", tags[prot]);
@@ -484,11 +486,11 @@ void nfs_Init_svc()
     /* New TI-RPC package init function */
     svc_params.flags = SVC_INIT_EPOLL; /* use EPOLL event mgmt */
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
-    svc_params.max_connections = nfs_param.core_param.nb_max_fd;
+    svc_params.max_connections = nfs_param.core_param.rpc.max_connections;
     svc_params.max_events = 1024; /* length of epoll event queue */
     svc_params.idle_timeout = 30;
     svc_params.warnx = NULL;
-    svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
+    svc_params.gss_ctx_hash_partitions = 17;
     svc_params.gss_max_idle_gen = 1024; /* GSS ctx cache expiration */
     svc_params.gss_max_gc = 200;
 

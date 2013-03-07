@@ -279,7 +279,7 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
                                   struct gsh_buffdesc *key);
 
-int nfs41_Init_session_id(nfs_session_id_parameter_t param);
+int nfs41_Init_session_id(hash_parameter_t *param);
 
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
                       nfs41_session_t *session_data);
@@ -326,7 +326,7 @@ nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry,
 				    const char *tag,
 				    int access);
 
-int nfs4_Init_state_id(nfs_state_id_parameter_t param);
+int nfs4_Init_state_id(hash_parameter_t *param);
 int nfs4_State_Set(char other[OTHERSIZE], state_t *state_data);
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data);
 int nfs4_State_Del(char other[OTHERSIZE]);
@@ -409,7 +409,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
                                  bool_t *pisnew,
                                  care_t care);
 
-int Init_nfs4_owner(nfs4_owner_parameter_t param);
+int Init_nfs4_owner(hash_parameter_t *param);
 
 void Process_nfs4_conflict(LOCK4denied *denied,    /* NFS v4 LOck4denied structure to fill in */
                            state_owner_t *holder,    /* owner that holds conflicting lock */

@@ -134,7 +134,7 @@ static fsal_status_t init_config (struct fsal_module *fsal_hdl, config_file_t co
 fsal_status_t posix_create_export(struct fsal_module * fsal_hdl,
                                   const char *export_path,
                                   const char *fs_options,
-                                  struct exportlist__ * exp_entry,
+                                  struct exportlist * exp_entry,
                                   struct fsal_module * next_fsal,
                                   const struct fsal_up_vector *up_ops,
                                   struct fsal_export ** export);

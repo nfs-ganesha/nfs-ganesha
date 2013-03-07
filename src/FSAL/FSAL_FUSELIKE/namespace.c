@@ -151,7 +151,6 @@ static int print_fsnode(struct gsh_buffdesc *val, char *outbuff);
 
 static hash_parameter_t lookup_hash_config = {
   .index_size = 877,
-  .alphabet_length = 26,
   .hash_func_key = hash_peer_idx,
   .hash_func_rbt = hash_peer_rbt,
   .compare_key = cmp_peers,
@@ -167,7 +166,6 @@ static hash_parameter_t lookup_hash_config = {
  */
 static hash_parameter_t nodes_hash_config = {
   .index_size = 877,
-  .alphabet_length = 10,
   .hash_func_key = hash_ino_idx,
   .hash_func_rbt = hash_ino_rbt,
   .compare_key = cmp_inodes,

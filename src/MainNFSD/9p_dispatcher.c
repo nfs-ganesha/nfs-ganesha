@@ -450,10 +450,6 @@ void _9p_dispatcher_svc_run( long int sock )
   if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
     LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's join state");
 
-  if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
-    LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's stack size");
-
-
   LogEvent( COMPONENT_9P_DISPATCH, "9P dispatcher started" ) ;
   while(true)
     {

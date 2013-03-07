@@ -82,10 +82,10 @@ void cih_pkginit(void)
 	&rwlock_attr,
         PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	npart = cache_inode_params.hparam.index_size;
+	npart = nfs_param.cache_param.nparts;
 	cih_fhcache.npart = npart;
 	cih_fhcache.partition = gsh_calloc(npart, sizeof(cih_partition_t));
-    	for (ix = 0; ix < npart; ++ix) {
+	for (ix = 0; ix < npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
                 cp->part_ix = ix;
 		pthread_rwlock_init(&cp->lock, &rwlock_attr);

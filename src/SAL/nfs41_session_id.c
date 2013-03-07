@@ -215,9 +215,9 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
  *
  */
 
-int nfs41_Init_session_id(nfs_session_id_parameter_t param)
+int nfs41_Init_session_id(hash_parameter_t *param)
 {
-	if ((ht_session_id = HashTable_Init(&param.hash_param)) == NULL) {
+	if ((ht_session_id = HashTable_Init(param)) == NULL) {
 		LogCrit(COMPONENT_SESSIONS,
 			"NFS SESSION_ID: Cannot init Session Id cache");
 		return -1;

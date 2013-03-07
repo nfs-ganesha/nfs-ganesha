@@ -24,7 +24,6 @@
 #include "log.h"
 #include "abstract_mem.h"
 
-#define CONF_SNMP_ADM_LABEL  "SNMP_ADM"
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 

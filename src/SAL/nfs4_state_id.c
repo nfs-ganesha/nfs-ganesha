@@ -222,13 +222,13 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
  * @retval 0 if successful.
  * @retval -1 on failure.
  */
-int nfs4_Init_state_id(nfs_state_id_parameter_t param)
+int nfs4_Init_state_id(hash_parameter_t *param)
 {
   /* Init  all_one */
   memset(all_zero, 0, OTHERSIZE);
   memset(all_ones, 0xFF, OTHERSIZE);
 
-  if((ht_state_id = HashTable_Init(&param.hash_param)) == NULL)
+  if((ht_state_id = HashTable_Init(param)) == NULL)
     {
       LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
       return -1;

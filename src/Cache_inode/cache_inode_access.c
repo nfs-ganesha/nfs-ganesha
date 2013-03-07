@@ -44,6 +44,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "HashTable.h"
+#include "gsh_config.h"
 #include "cache_inode.h"
 #include "abstract_mem.h"
 

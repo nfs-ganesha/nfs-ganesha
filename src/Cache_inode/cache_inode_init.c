@@ -62,7 +62,7 @@
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */
-cache_inode_status_t cache_inode_init(cache_inode_parameter_t param)
+cache_inode_status_t cache_inode_init(void)
 {
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 

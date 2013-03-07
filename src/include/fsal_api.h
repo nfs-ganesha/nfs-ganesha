@@ -98,7 +98,7 @@
  * taken.  The callee of the creating method must then either keep a
  * persistent reference to it or @c put it back.  For example, a @c
  * fsal_export gets created for each export in the configuration.  A
- * pointer to it gets saved in @c exportlist__ and it has a reference
+ * pointer to it gets saved in @c exportlist and it has a reference
  * to reflect this.  It is now safe to use it to do a @c lookup which
  * will return a @c fsal_obj_handle which can then be kept in a cache
  * inode entry.  If we had done a @c put on the export, it could be
@@ -297,9 +297,8 @@ struct fsal_export;
 struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
-struct exportlist__; /* We just need a pointer, not all of
-		        nfs_exports.h full def in
-		        include/nfs_exports.h */
+struct exportlist; /* We just need a pointer, not all of nfs_exports.h
+		      full def in include/nfs_exports.h */
 struct fsal_ds_handle;
 struct fsal_ds_ops;
 
@@ -470,7 +469,7 @@ struct fsal_ops {
         fsal_status_t (*create_export)(struct fsal_module *fsal_hdl,
                                        const char *export_path,
                                        const char *fs_options,
-                                       struct exportlist__ *exp_entry,
+                                       struct exportlist *exp_entry,
                                        struct fsal_module *next_fsal,
                                        const struct fsal_up_vector *up_ops,
                                        struct fsal_export **export);
@@ -557,7 +556,7 @@ struct fsal_export {
         struct glist_head ds_handles; /*< Head of lsit of DS handles */
         struct glist_head exports; /*< Link in list of exports from
                                        the same FSAL. */
-        struct exportlist__ *exp_entry; /*< Pointer to the export
+        struct exportlist *exp_entry; /*< Pointer to the export
                                             list. */
         struct export_ops *ops; /*< Vector of operations */
         struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */

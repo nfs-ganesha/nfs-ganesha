@@ -55,79 +55,6 @@
 #include "config_parsing.h"
 
 /**
- * @brief Read the configuration ite; for the worker threads.
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok, -1 if failed,1 is stanza is not there
- */
-int nfs_read_worker_conf(config_file_t in_config,
-			 nfs_worker_parameter_t *pparam)
-{
-  int var_max;
-  int var_index;
-  int err;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
-
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_WORKER)) == NULL)
-    {
-      LogDebug(COMPONENT_CONFIG,
-               "Cannot read item \"%s\" from configuration file",
-               CONF_LABEL_NFS_WORKER);
-      return 1;
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
-    {
-      /* Expected to be a block */
-      LogCrit(COMPONENT_CONFIG,
-              "Item \"%s\" is expected to be a block",
-              CONF_LABEL_NFS_WORKER);
-      return 1;
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      /* Get key's name */
-      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_NFS_WORKER);
-          return CACHE_INODE_INVALID_ARGUMENT;
-        }
-
-      else if(!strcasecmp(key_name, "Nb_Before_GC"))
-        {
-          pparam->nb_before_gc = atoi(key_value);
-        }
-      else
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_NFS_WORKER);
-          return -1;
-        }
-
-    }
-
-  return 0;
-}
-
-/**
  * @brief Read the core configuration
  *
  * @param[in]  in_config Configuration file handle
@@ -168,11 +95,6 @@ int nfs_read_core_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  /* Set the default */
-  pparam->enable_FSAL_upcalls = true;
-  pparam->enable_NLM = true;
-  pparam->enable_RQUOTA = true;
-
   for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
@@ -188,9 +110,80 @@ int nfs_read_core_conf(config_file_t in_config,
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if(!strcasecmp(key_name, "Nb_Worker"))
+      if(!strcasecmp(key_name, "NFS_Port"))
+        {
+          pparam->port[P_NFS] = (unsigned short)atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "MNT_Port"))
+        {
+          pparam->port[P_MNT] = (unsigned short)atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "NLM_Port"))
+        {
+          pparam->port[P_NLM] = (unsigned short)atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Rquota_Port"))
+        {
+#ifdef _USE_RQUOTA
+          pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Bind_Addr"))
+        {
+          int rc;
+          memset(&pparam->bind_addr.sin_addr, 0, sizeof(pparam->bind_addr.sin_addr));
+          rc = inet_pton(AF_INET, key_value, &pparam->bind_addr.sin_addr);
+          if(rc <= 0)
+            {
+              /* Revert to INADDR_ANY in case of any error */
+              pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;   /* All the interfaces on the machine are used */
+            }
+        }
+      else if(!strcasecmp(key_name, "NFS_Program"))
+        {
+          pparam->program[P_NFS] = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "MNT_Program"))
+        {
+          pparam->program[P_MNT] = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "NLM_Program"))
+        {
+          pparam->program[P_NLM] = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Rquota_Program"))
+        {
+#ifdef _USE_RQUOTA
+          pparam->program[P_RQUOTA] = atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Nb_Worker"))
         {
           pparam->nb_worker = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Core_Dump_Size"))
+        {
+          pparam->core_dump_size = atol(key_value);
+        }
+      else if(!strcasecmp(key_name, "Drop_IO_Errors"))
+        {
+          pparam->drop_io_errors = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Drop_Inval_Errors"))
+        {
+          pparam->drop_inval_errors = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Drop_Delay_Errors"))
+        {
+          pparam->drop_delay_errors = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs"))
+        {
+          pparam->dispatch_max_reqs = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs_Xprt"))
+        {
+          pparam->dispatch_max_reqs_xprt = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "DRC_Disabled"))
         {
@@ -244,65 +237,49 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->drc.udp.checksum = StrToBoolean(key_value);
         }
-      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs"))
-        {
-          pparam->dispatch_max_reqs = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs_Xprt"))
-        {
-          pparam->dispatch_max_reqs_xprt = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "RPC_Debug_Flags"))
         {
           pparam->rpc.debug_flags = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Drop_IO_Errors"))
+      else if(!strcasecmp(key_name, "RPC_Max_Connections"))
         {
-          pparam->drop_io_errors = StrToBoolean(key_value);
+          pparam->rpc.max_connections = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Drop_Inval_Errors"))
+      else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
         {
-          pparam->drop_inval_errors = StrToBoolean(key_value);
+          pparam->rpc.max_send_buffer_size = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Drop_Delay_Errors"))
+      else if(!strcasecmp( key_name, "MaxRPCRecvBufferSize" ) )
         {
-          pparam->drop_delay_errors = StrToBoolean(key_value);
+          pparam->rpc.max_recv_buffer_size = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NFS_Port"))
+      else if(!strcasecmp(key_name, "Stats_Update_Delay"))
         {
-          pparam->port[P_NFS] = (unsigned short)atoi(key_value);
+          pparam->stats_update_delay = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "MNT_Port"))
+      else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
         {
-          pparam->port[P_MNT] = (unsigned short)atoi(key_value);
+          pparam->long_processing_threshold = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NLM_Port"))
+      else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {
-          pparam->port[P_NLM] = (unsigned short)atoi(key_value);
+          pparam->dump_stats_per_client = StrToBoolean(key_value);
         }
-      else if(!strcasecmp(key_name, "Rquota_Port"))
+      else if(!strcasecmp(key_name, "Stats_File_Path"))
         {
-#ifdef _USE_RQUOTA
-          pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
-#endif
+          pparam->stats_file_path = gsh_strdup(key_value);
         }
-      else if(!strcasecmp(key_name, "NFS_Program"))
+      else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
         {
-          pparam->program[P_NFS] = atoi(key_value);
+          pparam->stats_per_client_directory = gsh_strdup(key_value);
         }
-      else if(!strcasecmp(key_name, "MNT_Program"))
+      else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
         {
-          pparam->program[P_MNT] = atoi(key_value);
+          pparam->decoder_fridge_expiration_delay = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NLM_Program"))
+      else if(!strcasecmp( key_name, "Decoder_Fridge_Block_Timeout" ) )
         {
-          pparam->program[P_NLM] = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Rquota_Program"))
-        {
-#ifdef _USE_RQUOTA
-          pparam->program[P_RQUOTA] = atoi(key_value);
-#endif
+          pparam->decoder_fridge_block_timeout = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "NFS_Protocols"))
         {
@@ -370,61 +347,6 @@ int nfs_read_core_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG, "Empty NFS_Protocols list");
               return -1;
             }
-        }
-      else if(!strcasecmp(key_name, "Bind_Addr"))
-        {
-          int rc;
-          memset(&pparam->bind_addr.sin_addr, 0, sizeof(pparam->bind_addr.sin_addr));
-          rc = inet_pton(AF_INET, key_value, &pparam->bind_addr.sin_addr);
-          if(rc <= 0)
-            {
-              /* Revert to INADDR_ANY in case of any error */
-              pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;   /* All the interfaces on the machine are used */
-            }
-        }
-      else if(!strcasecmp(key_name, "Core_Dump_Size"))
-        {
-          pparam->core_dump_size = atol(key_value);
-        }
-      else if(!strcasecmp(key_name, "Nb_Max_Fd"))
-        {
-          pparam->nb_max_fd = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Stats_File_Path"))
-        {
-          strncpy(pparam->stats_file_path, key_value, MAXPATHLEN);
-        }
-      else if(!strcasecmp(key_name, "Stats_Update_Delay"))
-        {
-          pparam->stats_update_delay = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
-        {
-          pparam->long_processing_threshold = atoi(key_value);
-        }
-      else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
-        {
-          pparam->decoder_fridge_expiration_delay = atoi(key_value);
-        }
-      else if(!strcasecmp( key_name, "Decoder_Fridge_Block_Timeout" ) )
-        {
-          pparam->decoder_fridge_block_timeout = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
-        {
-          pparam->dump_stats_per_client = StrToBoolean(key_value);
-        }
-      else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
-        {
-          strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
-        }
-      else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
-        {
-          pparam->max_send_buffer_size = atoi(key_value);
-        }
-      else if(!strcasecmp( key_name, "MaxRPCRecvBufferSize" ) )
-        {
-          pparam->max_recv_buffer_size = atoi(key_value);
         }
       else if(!strcasecmp( key_name, "NSM_Use_Caller_Name" ) )
         {
@@ -517,10 +439,6 @@ int nfs_read_ip_name_conf(config_file_t in_config,
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Alphabet_Length"))
-        {
-          pparam->hash_param.alphabet_length = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Expiration_Time"))
         {
           pparam->expiration_time = atoi(key_value);
@@ -534,204 +452,6 @@ int nfs_read_ip_name_conf(config_file_t in_config,
           LogCrit(COMPONENT_CONFIG,
                   "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_IP_NAME);
-          return -1;
-        }
-    }
-
-  return 0;
-}
-
-/**
- * @brief Reads the configuration for the Client/ID Cache
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- */
-int nfs_read_client_id_conf(config_file_t in_config,
-			    nfs_client_id_parameter_t *pparam)
-{
-  int var_max;
-  int var_index;
-  int err;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
-
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
-    {
-      LogDebug(COMPONENT_CONFIG,
-               "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID);
-      return 1;
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      /* Get key's name */
-      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_CLIENT_ID);
-          return -1;
-        }
-
-      if(!strcasecmp(key_name, "Index_Size"))
-        {
-          pparam->cid_unconfirmed_hash_param.index_size = atoi(key_value);
-          pparam->cid_confirmed_hash_param.index_size = atoi(key_value);
-          pparam->cr_hash_param.index_size = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Alphabet_Length"))
-        {
-          pparam->cid_unconfirmed_hash_param.alphabet_length = atoi(key_value);
-          pparam->cid_confirmed_hash_param.alphabet_length = atoi(key_value);
-          pparam->cr_hash_param.alphabet_length = atoi(key_value);
-        }
-      else
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_CLIENT_ID);
-          return -1;
-        }
-    }
-
-  return 0;
-}
-
-/**
- * @brief Reads the configuration for the stateid cache
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- *
- */
-int nfs_read_state_id_conf(config_file_t in_config,
-			   nfs_state_id_parameter_t *pparam)
-{
-  int var_max;
-  int var_index;
-  int err;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
-
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
-    {
-      LogDebug(COMPONENT_CONFIG,
-               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
-      return 1;
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      /* Get key's name */
-      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_STATE_ID);
-          return -1;
-        }
-
-      if(!strcasecmp(key_name, "Index_Size"))
-        {
-          pparam->hash_param.index_size = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Alphabet_Length"))
-        {
-          pparam->hash_param.alphabet_length = atoi(key_value);
-        }
-      else
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_STATE_ID);
-          return -1;
-        }
-    }
-
-  return 0;
-}
-
-int nfs_read_session_id_conf(config_file_t in_config,
-			     nfs_session_id_parameter_t *pparam)
-{
-  int var_max;
-  int var_index;
-  int err;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
-
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
-    {
-      LogDebug(COMPONENT_CONFIG,
-               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
-      return 1;
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      /* Get key's name */
-      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_SESSION_ID);
-          return -1;
-        }
-
-      if(!strcasecmp(key_name, "Index_Size"))
-        {
-          pparam->hash_param.index_size = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Alphabet_Length"))
-        {
-          pparam->hash_param.alphabet_length = atoi(key_value);
-        }
-      else
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_SESSION_ID);
           return -1;
         }
     }
@@ -887,6 +607,14 @@ int nfs_read_version4_conf(config_file_t in_config,
         {
           pparam->lease_lifetime = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "FH_Expire"))
+        {
+          pparam->fh_expire = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Return_Bad_Stateid"))
+        {
+          pparam->return_bad_stateid = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "DomainName"))
         {
           strncpy(pparam->domainname, key_value, MAXNAMLEN);
@@ -898,30 +626,10 @@ int nfs_read_version4_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "UseGetpwnam"))
         {
           pparam->use_getpwnam = StrToBoolean(key_value);
-#ifndef USE_NFSIDMAP
-          if (!pparam->use_getpwnam)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "NFSv4 :: UseGetpwnam must be TRUE if you compiled without libnfsidmap");
-              return -1;
-            }
-#endif
         }
       else if(!strcasecmp(key_name, "Allow_Numeric_Owners"))
         {
           pparam->allow_numeric_owners = StrToBoolean(key_value);
-        }
-      else if(!strcasecmp(key_name, "FH_Expire"))
-        {
-          pparam->fh_expire = StrToBoolean(key_value);
-        }
-      else if(!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
-        {
-          pparam->returns_err_fh_expired = StrToBoolean(key_value);
-        }
-      else if(!strcasecmp(key_name, "Return_Bad_Stateid"))
-        {
-          pparam->return_bad_stateid = StrToBoolean(key_value);
         }
       else
         {
@@ -935,106 +643,3 @@ int nfs_read_version4_conf(config_file_t in_config,
   return 0;
 }                               /* nfs_read_version4_conf */
 
-/**
- * @brief Prints the NFS worker parameter structure into the logfile
- *
- * @param[in] pparam NFS worker parameter
- */
-void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
-{
-  LogInfo(COMPONENT_INIT,
-          "NFS PARAM : worker_param.nb_before_gc = %d",
-          pparam->nb_before_gc);
-}
-
-/**
- * @brief Prints the NFS parameter structure into the logfile
- */
-void Print_param_in_log()
-{
-  LogInfo(COMPONENT_INIT,
-          "NFS PARAM : core_param.nb_worker = %d",
-          nfs_param.core_param.nb_worker);
-  Print_param_worker_in_log(&nfs_param.worker_param);
-}
-
-int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned int *plen)
-{
-  int var_max;
-  int var_index;
-  int err;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-  unsigned int found = false;
-  config_file_t config_struct;
-  unsigned int index = 0 ;
-
-  /* Is the config tree initialized ? */
-  if(configPath == NULL || PathLib == NULL)
-    LogFatal(COMPONENT_CONFIG,
-             "nfs_get_fsalpathlib_conf configPath=%p PathLib=%p",
-             configPath, PathLib);
-
-  config_struct = config_ParseFile(configPath);
-
-  if(!config_struct)
-    LogFatal(COMPONENT_CONFIG,
-             "Error while parsing %s: %s",
-             configPath, config_GetErrorMsg());
-
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
-    {
-      LogFatal(COMPONENT_CONFIG,
-               "Cannot read item \"%s\" from configuration file",
-               CONF_LABEL_NFS_CORE);
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
-    {
-      /* Expected to be a block */
-      LogFatal(COMPONENT_CONFIG,
-               "Item \"%s\" is expected to be a block",
-               CONF_LABEL_NFS_CORE);
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      /* Get key's name */
-      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-        {
-          LogFatal(COMPONENT_CONFIG,
-                   "Error reading key[%d] from section \"%s\" of configuration file.",
-                   var_index, CONF_LABEL_NFS_CORE);
-        }
-
-      if(!strcasecmp(key_name, "FSAL_Shared_Library"))
-        {
-          strncpy(PathLib[index], key_value, MAXPATHLEN);
-          index += 1 ;
-
-          found = true;
-
-          /* Do not exceed array size */
-          if( index == *plen )
-            break ;
-        }
-
-    }
-
-  if(!found)
-   {
-    LogFatal(COMPONENT_CONFIG,
-             "FSAL_Shared_Library not found");
-    return 1;
-   }
-
-  *plen = index ;
-  return 0;
-}

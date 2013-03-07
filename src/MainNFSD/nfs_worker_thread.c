@@ -1154,7 +1154,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   /* Update total counters */
   worker_data->stats.nb_total_req += 1;
 
-  if (req_timer.timer_diff.tv_sec >= 
+  if (req_timer.timer_diff.tv_sec >=
       nfs_param.core_param.long_processing_threshold)
     LogEvent(COMPONENT_DISPATCH,
              "Function %s xid=%u exited with status %d taking %llu.%.9llu "

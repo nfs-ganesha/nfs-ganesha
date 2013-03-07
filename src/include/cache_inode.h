@@ -47,6 +47,7 @@
 #include "avltree.h"
 #include "fsal.h"
 #include "log.h"
+#include "gsh_config.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -56,6 +57,7 @@
 
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
+struct cache_inode_parameter;
 
 /** Maximum size of NFSv2 handle */
 static const size_t FILEHANDLE_MAX_LEN_V2 = 32;
@@ -66,21 +68,6 @@ static const size_t FILEHANDLE_MAX_LEN_V4 = 128;
 
 /** Size for Ganesha unstable write buffers*/
 static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100*1024*1024;
-
-/**
- * Constants to determine whether inode data, such as attributes,
- * expire.
- */
-
-typedef enum cache_inode_expire_type__ {
-	CACHE_INODE_EXPIRE = 0, /*< Data expire when they have been
-				    refreshed less recently than grace
-				    period for their type allows. */
-	CACHE_INODE_EXPIRE_NEVER = 1, /*< Data never expire based on
-					  time. */
-	CACHE_INODE_EXPIRE_IMMEDIATE = 2 /*< Data are always treated
-					     as expired. */
-} cache_inode_expire_type_t;
 
 /**
  * Values to control write stability
@@ -124,41 +111,6 @@ typedef struct cache_inode_lru__ {
 			   counter when moving or deleting the entry. */
 	uint32_t cf; /*< Confounder */
 } cache_inode_lru_t;
-
-/**
- * Structure to hold cache_inode paramaters
- */
-
-typedef struct cache_inode_parameter__ {
-	hash_parameter_t hparam; /*< Parameter used for hashtable
-				     initialization */
-	hash_parameter_t cookie_param; /*< Parameters used for lock
-					   cookie hash table
-					   initialization */
-	cache_inode_expire_type_t expire_type_attr; /*< Cache inode
-                                                        expiration
-                                                        type for
-                                                        attributes */
-	cache_inode_expire_type_t expire_type_link; /*< Cache inode
-						        expiration
-						        type for
-						        symbolic
-						        links */
-	cache_inode_expire_type_t expire_type_dirent; /*< Cache inode
-							  expiration
-							  type for
-							  directory
-							  entries */
-	time_t grace_period_attr; /*< Cached attributes grace
-				      period */
-	time_t grace_period_link; /*< Cached link grace period */
-	time_t grace_period_dirent; /*< Cached dirent grace period */
-	bool getattr_dir_invalidation; /*< Use getattr as for directory
-					   invalidation */
-	bool use_fsal_hash; /*< Do we rely on FSAL to hash handle or not? */
-} cache_inode_parameter_t;
-
-extern cache_inode_parameter_t cache_inode_params;
 
 /**
  * Indicate whether this is a read or write operation, for
@@ -476,51 +428,6 @@ extern pool_t *cache_inode_entry_pool;
 extern pool_t *cache_inode_symlink_pool;
 
 /**
- * Configuration parameters for garbage collection/LRU policy
- */
-
-typedef struct cache_inode_gc_policy {
-	uint32_t entries_hwmark; /*< High water mark for cache entries */
-	uint32_t entries_lwmark; /*< Low water mark for cache_entries */
-	uint32_t lru_run_interval;  /*< Interval in seconds between
-				        runs of the LRU cleaner
-					thread */
-	bool use_fd_cache; /*< Do we cache fd or not? */
-	uint32_t fd_limit_percent; /*< The percentage of the
-				       system-imposed maximum of file
-				       descriptors at which Ganesha
-				       will deny requests. */
-	uint32_t fd_hwmark_percent; /*< The percentage of the
-				         system-imposed maximum of
-				         file descriptors above which
-				         Ganesha will make greater
-				         efforts at reaping. */
-	uint32_t fd_lwmark_percent; /*< The percentage of the
-				         system-imposed maximum of
-				         file descriptors below which
-				         Ganesha will not reap file
-				         descriptonot reap file
-				         descriptorsrs. */
-	uint32_t reaper_work; /*< Roughly, the amount of work to do on
-				  each pass through the thread under
-				  normal conditions.  (Ideally, a
-				  multipel of the number of lanes.) */
-	uint32_t biggest_window; /*< The largest window (as a
-				     percentage of the system-imposed
-				     limit on FDs) of work that we
-				     will do in extremis. */
-	uint32_t required_progress; /*< Percentage of progress toward
-				        the high water mark required
-				        in in a pass through the
-				        thread when in extremis. */
-	uint32_t futility_count; /*< Number of failures to approach the high
-				     watermark before we disable caching,
-				     when in extremis. */
-} cache_inode_gc_policy_t;
-
-extern cache_inode_gc_policy_t cache_inode_gc_policy;
-
-/**
  * Type-specific data passed to cache_inode_new_entry
  */
 
@@ -653,7 +560,7 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
 
-cache_inode_status_t cache_inode_init(cache_inode_parameter_t param);
+cache_inode_status_t cache_inode_init(void);
 
 #define CIG_KEYED_FLAG_NONE         0x0000
 #define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
@@ -879,26 +786,9 @@ cache_inode_status_t cache_inode_invalidate(
 	cache_entry_t *entry,
 	uint32_t flags);
 
-/* Parsing functions */
-cache_inode_status_t cache_inode_read_conf_hash_parameter(
-	config_file_t in_config,
-	cache_inode_parameter_t *param);
 cache_inode_status_t cache_inode_read_conf_parameter(
 	config_file_t in_config,
-	cache_inode_parameter_t *param);
-cache_inode_status_t cache_inode_read_conf_gc_policy(
-	config_file_t in_config,
-	cache_inode_gc_policy_t *policy);
-void cache_inode_print_conf_hash_parameter(FILE *output,
-					   cache_inode_parameter_t *param);
-void cache_inode_print_conf_parameter(
-	FILE *output,
-	cache_inode_parameter_t *param);
-void cache_inode_print_conf_gc_policy(FILE *output,
-				      cache_inode_gc_policy_t *gcpolicy);
-void cache_inode_expire_to_str(cache_inode_expire_type_t type,
-			       time_t value,
-			       char *out);
+struct cache_inode_parameter *param);
 
 inline int cache_inode_set_time_current(struct timespec *time);
 
@@ -1028,7 +918,7 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-        time_t current_time = 0;
+	time_t current_time = 0;
 
 	if (need_wr_lock)
 	{
@@ -1041,8 +931,8 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	/* Do we need to refresh? */
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
             ((current_time - entry->attr_time) >
-              cache_inode_params.grace_period_attr) ||
-            ((cache_inode_params.getattr_dir_invalidation) &&
+              nfs_param.cache_param.grace_period_attr) ||
+            ((nfs_param.cache_param.getattr_dir_invalidation) &&
               (entry->type == DIRECTORY)) ||
 	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			   ATTR_RDATTR_ERR)) {
@@ -1055,8 +945,8 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	    if (!need_wr_lock &&
                 (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
                  ((current_time - entry->attr_time) >
-                  cache_inode_params.grace_period_attr) ||
-                 ((cache_inode_params.getattr_dir_invalidation) &&
+                  nfs_param.cache_param.grace_period_attr) ||
+                 ((nfs_param.cache_param.getattr_dir_invalidation) &&
                    (entry->type == DIRECTORY)) ||
 	         FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			       ATTR_RDATTR_ERR))) {

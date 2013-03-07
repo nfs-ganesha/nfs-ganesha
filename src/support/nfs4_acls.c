@@ -26,7 +26,6 @@ static int display_fsal_acl_val(struct gsh_buffdesc * p_val, char *outbuff);
 
 static hash_parameter_t fsal_acl_hash_config = {
   .index_size = 67,
-  .alphabet_length = 10,
   .hash_func_key = NULL,
   .hash_func_rbt = NULL,
   .hash_func_both = fsal_acl_hash_both,

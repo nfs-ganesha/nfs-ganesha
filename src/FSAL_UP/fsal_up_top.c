@@ -1195,7 +1195,7 @@ static void recallany_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event_recallany *recallany =
 		&e->data.recallany;
 	struct fsal_up_file *file = &e->file;
-	struct exportlist__ *exp;
+	struct exportlist *exp;
 	struct glist_head *glist;
 	state_t *state;
 
@@ -1225,7 +1225,7 @@ static void notifydevice_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event_notifydevice *devicenotify
 		= &e->data.notifydevice;
 	struct fsal_up_file *file = &e->file;
-	struct exportlist__ *exp;
+	struct exportlist *exp;
 	struct glist_head *glist;
 	state_t *state;
 	exp = file->export->exp_entry;

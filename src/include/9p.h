@@ -50,10 +50,7 @@ typedef uint64_t u64;
 #define NB_PREALLOC_FID_9P  100
 #define PRIME_9P 17 
 
-#define _9P_TCP_PORT 564
-#define _9P_RDMA_PORT 5640 
 #define _9P_LOCK_CLIENT_LEN 64
-#define CONF_LABEL_9P "_9P"
 
 #define _9P_FID_PER_CONN        1024
 
@@ -290,12 +287,6 @@ typedef struct _9p_qid {
 	u32 version;
 	u64 path;
 } _9p_qid_t;
-
-typedef struct _9p_param__
-{
-  unsigned short _9p_tcp_port ;
-  unsigned short _9p_rdma_port ;
-} _9p_parameter_t ;
 
 typedef struct _9p_fid__
 {

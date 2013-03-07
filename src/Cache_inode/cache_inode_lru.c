@@ -725,7 +725,7 @@ lru_run(struct fridgethr_context *ctx)
 
      fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 
-     if (cache_inode_gc_policy.use_fd_cache) {
+     if (nfs_param.cache_param.use_fd_cache) {
 	  extremis = (open_fd_count > lru_state.fds_hiwat);
      }
 
@@ -769,13 +769,13 @@ lru_run(struct fridgethr_context *ctx)
 	API, for example.) */
 
      if ((atomic_fetch_size_t(&open_fd_count) < lru_state.fds_lowat) &&
-	 cache_inode_gc_policy.use_fd_cache) {
+	 nfs_param.cache_param.use_fd_cache) {
 	  LogDebug(COMPONENT_CACHE_INODE_LRU,
 		   "FD count is %zd and low water mark is "
 		   "%d: not reaping.",
 		   open_fd_count,
 		   lru_state.fds_lowat);
-	  if (cache_inode_gc_policy.use_fd_cache &&
+	  if (nfs_param.cache_param.use_fd_cache &&
 	      !lru_state.caching_fds) {
 	       lru_state.caching_fds = true;
 	       LogInfo(COMPONENT_CACHE_INODE_LRU,
@@ -940,10 +940,10 @@ lru_run(struct fridgethr_context *ctx)
 	      ((currentopen > formeropen) ||
 	       (formeropen - currentopen <
 		(((formeropen - lru_state.fds_hiwat) *
-		  cache_inode_gc_policy.required_progress) /
+		  nfs_param.cache_param.required_progress) /
 		 100)))) {
 	       if (++lru_state.futility >
-		   cache_inode_gc_policy.futility_count) {
+		   nfs_param.cache_param.futility_count) {
 		    LogCrit(COMPONENT_CACHE_INODE_LRU,
 			    "Futility count exceeded.  The LRU thread is "
 			    "unable to make progress in reclaiming FDs."
@@ -1017,7 +1017,7 @@ cache_inode_lru_pkginit(void)
      memset(&frp, 0, sizeof(struct fridgethr_params));
      frp.thr_max = 1;
      frp.thr_min = 1;
-     frp.thread_delay = cache_inode_gc_policy.lru_run_interval;
+     frp.thread_delay = nfs_param.cache_param.lru_run_interval;
      frp.flavor = fridgethr_flavor_looper;
 
      open_fd_count = 0;
@@ -1028,9 +1028,9 @@ cache_inode_lru_pkginit(void)
      /* Set high and low watermark for cache entries.  This seems a
         bit fishy, so come back and revisit this. */
      lru_state.entries_hiwat
-          = cache_inode_gc_policy.entries_hwmark;
+          = nfs_param.cache_param.entries_hwmark;
      lru_state.entries_lowat
-          = cache_inode_gc_policy.entries_lwmark;
+          = nfs_param.cache_param.entries_lwmark;
 
      /* Find out the system-imposed file descriptor limit */
      if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
@@ -1092,22 +1092,22 @@ cache_inode_lru_pkginit(void)
      }
 
 
-     lru_state.fds_hard_limit = (cache_inode_gc_policy.fd_limit_percent *
+     lru_state.fds_hard_limit = (nfs_param.cache_param.fd_limit_percent *
                                  lru_state.fds_system_imposed) / 100;
-     lru_state.fds_hiwat = (cache_inode_gc_policy.fd_hwmark_percent *
+     lru_state.fds_hiwat = (nfs_param.cache_param.fd_hwmark_percent *
                             lru_state.fds_system_imposed) / 100;
-     lru_state.fds_lowat = (cache_inode_gc_policy.fd_lwmark_percent *
+     lru_state.fds_lowat = (nfs_param.cache_param.fd_lwmark_percent *
                             lru_state.fds_system_imposed) / 100;
      lru_state.futility = 0;
 
      lru_state.per_lane_work
-          = (cache_inode_gc_policy.reaper_work / LRU_N_Q_LANES);
-     lru_state.biggest_window = (cache_inode_gc_policy.biggest_window *
+          = (nfs_param.cache_param.reaper_work / LRU_N_Q_LANES);
+     lru_state.biggest_window = (nfs_param.cache_param.biggest_window *
                                  lru_state.fds_system_imposed) / 100;
 
      lru_state.prev_fd_count = 0;
 
-     lru_state.caching_fds = cache_inode_gc_policy.use_fd_cache;
+     lru_state.caching_fds = nfs_param.cache_param.use_fd_cache;
 
      /* init queue complex */
      lru_init_queues();
