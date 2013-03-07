@@ -590,6 +590,10 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
                                 struct attrlist *attr,
                                 struct req_op_context *req_ctx);
 
+cache_inode_status_t cache_inode_check_sticky(cache_entry_t *parent,
+                                              cache_entry_t *entry,
+                                              struct req_op_context *req_ctx);
+
 bool is_open(cache_entry_t *entry);
 bool is_open_for_read(cache_entry_t *entry);
 bool is_open_for_write(cache_entry_t *entry);
