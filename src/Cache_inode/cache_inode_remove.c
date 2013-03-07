@@ -77,9 +77,9 @@ cache_inode_remove(cache_entry_t *entry,
      cache_entry_t *to_remove_entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status_ref_to_remove_entry = CACHE_INODE_SUCCESS;
      fsal_accessflags_t access_mask = 0;
-     bool to_remove_entry_locked = false;
-     bool sticky_status;
 
      if(entry->type != DIRECTORY) {
          status = CACHE_INODE_NOT_A_DIRECTORY;
@@ -113,19 +113,8 @@ cache_inode_remove(cache_entry_t *entry,
 	 goto out;
      }
 
-     PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-
-     PTHREAD_RWLOCK_wrlock(&to_remove_entry->attr_lock);
-     to_remove_entry_locked = true;
-
-     sticky_status = sticky_dir_allows(entry->obj_handle,
-			   to_remove_entry->obj_handle,
-			   req_ctx->creds);
-
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-     if (!sticky_status) {
-         status = CACHE_INODE_FSAL_EPERM;
+     status = cache_inode_check_sticky(entry, to_remove_entry, req_ctx);
+     if (status != CACHE_INODE_SUCCESS) {
          goto out;
      }
 
@@ -136,29 +125,21 @@ cache_inode_remove(cache_entry_t *entry,
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);
 
+     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+
      if(FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
-         if (fsal_status.major == ERR_FSAL_STALE) {
-             cache_inode_kill_entry(entry);
-         }
          goto out;
      }
 
      /* Update the attributes for the removed entry */
-     status = cache_inode_refresh_attrs(to_remove_entry, req_ctx);
-     if (status == CACHE_INODE_FSAL_ESTALE) {
-         status = CACHE_INODE_SUCCESS;
+     status_ref_to_remove_entry = cache_inode_refresh_attrs_locked(to_remove_entry, req_ctx);
+     if (status_ref_to_remove_entry == CACHE_INODE_FSAL_ESTALE) {
+             status_ref_to_remove_entry = CACHE_INODE_SUCCESS;
      }
 
-     if (status != CACHE_INODE_SUCCESS) {
-         goto out;
-     }
-
-     PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
-     to_remove_entry_locked = false;
-
-     status = cache_inode_refresh_attrs_locked(entry, req_ctx);
-     if (status != CACHE_INODE_SUCCESS) {
+     if (((status = status_ref_entry) != CACHE_INODE_SUCCESS) ||
+         ((status = status_ref_to_remove_entry) != CACHE_INODE_SUCCESS)) {
          goto out;
      }
 
@@ -172,10 +153,6 @@ cache_inode_remove(cache_entry_t *entry,
 out:
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_remove_cached_dirent: status=%d", status);
-
-     if (to_remove_entry_locked) {
-         PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
-     }
 
      /* This is for the reference taken by lookup */
      if (to_remove_entry) {
