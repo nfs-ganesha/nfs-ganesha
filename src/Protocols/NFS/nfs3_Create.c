@@ -196,8 +196,8 @@ nfs_Create(nfs_arg_t *arg,
 					  &file_entry);
 
         /* Complete failure */
-        if ((cache_status != CACHE_INODE_SUCCESS) &&
-            (cache_status != CACHE_INODE_ENTRY_EXISTS)) {
+        if (((cache_status != CACHE_INODE_SUCCESS) &&
+            (cache_status != CACHE_INODE_ENTRY_EXISTS)) || (file_entry == NULL)) {
                   goto out_fail;
         }
 
