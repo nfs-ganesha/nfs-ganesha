@@ -911,6 +911,31 @@ out:
 	return cache_status;
 }
 
+
+
+/**
+ * @brief Reload attributes from the FSAL.
+ *
+ * Load the FSAL attributes as specified in the configuration into
+ * this entry, mark them as trustable and update the entry metadata.
+ *
+ * @param[in,out] entry   The entry to be refreshed
+ * @param[in]     opctx   Request context (user creds, client address etc)
+ */
+static inline cache_inode_status_t cache_inode_refresh_attrs_locked(
+        cache_entry_t *entry,
+        const struct req_op_context *opctx)
+{
+        cache_inode_status_t status;
+
+        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+        status = cache_inode_refresh_attrs(entry, opctx);
+
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+        return status;
+}
 /**
  * @brief Return a changeid4 for this entry.
  *
