@@ -90,7 +90,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      /* Is the destination a directory? */
      if ((dest_dir->type != DIRECTORY) &&
          (dest_dir->type != FS_JUNCTION)) {
-          status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_NOT_A_DIRECTORY;
           goto out;
      }
 

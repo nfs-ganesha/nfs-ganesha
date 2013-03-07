@@ -74,7 +74,7 @@ cache_inode_rename_cached_dirent(cache_entry_t *parent,
   /* Sanity check */
   if(parent->type != DIRECTORY)
     {
-      status = CACHE_INODE_BAD_TYPE;
+      status = CACHE_INODE_NOT_A_DIRECTORY;
       return status;
     }
 
@@ -183,12 +183,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   struct fsal_obj_handle *handle_lookup = NULL;
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-  /* Are we working on directories ? */
   if ((dir_src->type != DIRECTORY) ||
       (dir_dest->type != DIRECTORY))
     {
-      /* Bad type .... */
-      status = CACHE_INODE_BAD_TYPE;
+      status = CACHE_INODE_NOT_A_DIRECTORY;
       goto out;
     }
 

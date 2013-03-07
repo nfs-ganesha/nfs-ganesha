@@ -82,7 +82,7 @@ cache_inode_remove(cache_entry_t *entry,
      bool sticky_status;
 
      if(entry->type != DIRECTORY) {
-         status = CACHE_INODE_BAD_TYPE;
+         status = CACHE_INODE_NOT_A_DIRECTORY;
          goto out;
      }
 
