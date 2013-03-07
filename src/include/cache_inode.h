@@ -911,8 +911,6 @@ static inline cache_inode_status_t cache_inode_refresh_attrs(
 
 	cache_inode_fixup_md(entry);
 
-	cache_status = CACHE_INODE_SUCCESS;
-
 out:
 	return cache_status;
 }
