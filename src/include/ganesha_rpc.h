@@ -139,9 +139,12 @@ static inline void
 free_gsh_xprt_private(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-    if (xu->drc)
-        nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
-    gsh_free(xu);
+    if(xu) {
+        if (xu->drc)
+            nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
+        gsh_free(xu);
+        xprt->xp_u1 = NULL;
+    }
 }
 
 static inline bool
