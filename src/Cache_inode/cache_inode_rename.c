@@ -178,10 +178,12 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 {
   fsal_status_t fsal_status = {0, 0};
   cache_entry_t *lookup_src = NULL;
-  struct fsal_obj_handle *handle_dirsrc = dir_src->obj_handle;
-  struct fsal_obj_handle *handle_dirdest = dir_dest->obj_handle;
-  struct fsal_obj_handle *handle_lookup = NULL;
+  cache_entry_t *lookup_dst = NULL;
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status_ref_dir_src = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status_ref_dir_dst = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status_ref_dst = CACHE_INODE_SUCCESS;
+  fsal_accessflags_t access_mask = 0;
 
   if ((dir_src->type != DIRECTORY) ||
       (dir_dest->type != DIRECTORY))
@@ -193,38 +195,34 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   /* we must be able to both scan and write to both directories before we can proceed
    * sticky bit also applies to both files after looking them up.
    */
-  fsal_status = handle_dirsrc->ops->test_access(handle_dirsrc,
-						req_ctx,
-						FSAL_W_OK | FSAL_X_OK);
-  if (!FSAL_IS_ERROR(fsal_status))
-    fsal_status = handle_dirdest->ops->test_access(handle_dirdest,
-						   req_ctx,
-						   FSAL_W_OK | FSAL_X_OK);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      status = cache_inode_error_convert(fsal_status);
-      goto out;
-    }
+  access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
 
-  /* Must take locks on directories now,
-   * because if another thread checks source and destination existence
-   * in the same time, it will try to do the same checks...
-   * and it will have the same conclusion !!!
-   */
+  status = cache_inode_access(dir_src,
+                              access_mask,
+                              req_ctx);
+  if (status != CACHE_INODE_SUCCESS) {
+       goto out;
+  }
 
-  src_dest_lock(dir_src, dir_dest);
+  status = cache_inode_access(dir_dest,
+                              access_mask,
+                              req_ctx);
+  if (status != CACHE_INODE_SUCCESS) {
+       goto out;
+  }
 
   /* Check for object existence in source directory */
+  PTHREAD_RWLOCK_rdlock(&dir_src->content_lock);
   status = cache_inode_lookup_impl(dir_src,
 				   oldname,
 				   req_ctx,
 				   &lookup_src);
+  PTHREAD_RWLOCK_unlock(&dir_src->content_lock);
   if (lookup_src == NULL) {
     /* If FSAL FH is stale, then this was managed in cache_inode_lookup */
     if(status != CACHE_INODE_FSAL_ESTALE)
       status = CACHE_INODE_NOT_FOUND;
-
-    src_dest_unlock(dir_src, dir_dest);
 
     LogDebug(COMPONENT_CACHE_INODE,
              "Rename (%p,%s)->(%p,%s) : source doesn't exist",
@@ -232,57 +230,78 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     goto out;
   }
 
-  handle_lookup = lookup_src->obj_handle;
+  /* Check for object existence in destination directory */
+  PTHREAD_RWLOCK_rdlock(&dir_dest->content_lock);
+  status = cache_inode_lookup_impl(dir_dest,
+                                   newname,
+                                   req_ctx,
+                                   &lookup_dst);
+  PTHREAD_RWLOCK_unlock(&dir_dest->content_lock);
+  if(status == CACHE_INODE_NOT_FOUND)
+    status = CACHE_INODE_SUCCESS;
+  if (status != CACHE_INODE_SUCCESS) {
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Rename (%p,%s)->(%p,%s) : dest error",
+               dir_src, oldname, dir_dest, newname);
+      goto out;
+  }
 
-  if (!sticky_dir_allows(handle_dirsrc,
-                         lookup_src->obj_handle,
-                         req_ctx->creds))
+  if (lookup_src == lookup_dst) {
+      /* Nothing to do according to POSIX and NFS3/4
+         If from and to both refer to the same file (they might be hard links
+         of each other), then RENAME should perform no action and return success */
+      goto out;
+  }
+
+  status = cache_inode_check_sticky(dir_src, lookup_src, req_ctx);
+  if (status != CACHE_INODE_SUCCESS)
     {
-      src_dest_unlock(dir_src, dir_dest);
-      status = CACHE_INODE_FSAL_EPERM;
       goto out;
     }
+
+  if (lookup_dst) {
+      status = cache_inode_check_sticky(dir_dest, lookup_dst, req_ctx);
+      if (status != CACHE_INODE_SUCCESS)
+        {
+          goto out;
+        }
+  }
 
   /* Perform the rename operation in FSAL,
    * before doing anything in the cache.
    * Indeed, if the FSAL_rename fails unexpectly,
    * the cache would be inconsistent!
    */
-  fsal_status = handle_dirsrc->ops->rename(handle_dirsrc, req_ctx,
-					   oldname,
-					   handle_dirdest,
-					   newname);
+  fsal_status = dir_src->obj_handle->ops->rename(dir_src->obj_handle, req_ctx,
+					         oldname,
+					         dir_dest->obj_handle,
+					         newname);
 
-  if (!FSAL_IS_ERROR(fsal_status))
-    fsal_status = handle_dirsrc->ops->getattrs(handle_dirsrc, req_ctx);
-  if (!FSAL_IS_ERROR(fsal_status))
-    fsal_status = handle_dirdest->ops->getattrs(handle_dirdest, req_ctx);
-  if (!FSAL_IS_ERROR(fsal_status))
-    {
-      /* Force a refresh of the link count in the case of renaming
-	 one hardlink to another */
-      PTHREAD_RWLOCK_wrlock(&lookup_src->attr_lock);
-      fsal_status = handle_lookup->ops->getattrs(handle_lookup, req_ctx);
-      PTHREAD_RWLOCK_unlock(&lookup_src->attr_lock);
-    }
-  
+  status_ref_dir_src = cache_inode_refresh_attrs_locked(dir_src, req_ctx);
+  status_ref_dir_dst = cache_inode_refresh_attrs_locked(dir_dest, req_ctx);
+
   if (FSAL_IS_ERROR(fsal_status))
     {
       status = cache_inode_error_convert(fsal_status);
-      if (fsal_status.major == ERR_FSAL_STALE) {
-           fsal_status = handle_dirsrc->ops->getattrs(handle_dirsrc, req_ctx);
-           if (fsal_status.major == ERR_FSAL_STALE) {
-                cache_inode_kill_entry(dir_src);
-           }
-           fsal_status = handle_dirdest->ops->getattrs(handle_dirdest,
-						       req_ctx);
-           if (fsal_status.major == ERR_FSAL_STALE) {
-                cache_inode_kill_entry(dir_dest);
-           }
-      }
-      src_dest_unlock(dir_src, dir_dest);
       goto out;
     }
+
+  if (lookup_dst) {
+      /* Force a refresh of the overwritten inode */
+      status_ref_dst = cache_inode_refresh_attrs_locked(lookup_dst, req_ctx);
+      if (status_ref_dst == CACHE_INODE_FSAL_ESTALE)
+      {
+          status_ref_dst = CACHE_INODE_SUCCESS;
+      }
+  }
+
+  if (((status = status_ref_dir_src) != CACHE_INODE_SUCCESS) ||
+      ((status = status_ref_dir_dst) != CACHE_INODE_SUCCESS) ||
+      ((status = status_ref_dst) != CACHE_INODE_SUCCESS)) {
+      goto out;
+  }
+
+  src_dest_lock(dir_src, dir_dest);
 
   if(dir_src == dir_dest)
     {
@@ -329,10 +348,14 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   src_dest_unlock(dir_src, dir_dest);
 
 out:
-
   if (lookup_src)
     {
       cache_inode_put(lookup_src);
+    }
+
+  if (lookup_dst)
+    {
+      cache_inode_put(lookup_dst);
     }
 
   return status;
