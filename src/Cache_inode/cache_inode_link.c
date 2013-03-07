@@ -71,7 +71,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 				      struct req_op_context *req_ctx)
 {
      fsal_status_t fsal_status = {0, 0};
-     fsal_accessflags_t access_mask = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
      cache_inode_status_t status_ref_dest_dir = CACHE_INODE_SUCCESS;
@@ -83,21 +82,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      /* Is the destination a directory? */
-     if ((dest_dir->type != DIRECTORY) &&
-         (dest_dir->type != FS_JUNCTION)) {
+     if (dest_dir->type != DIRECTORY) {
           status = CACHE_INODE_NOT_A_DIRECTORY;
-          goto out;
-     }
-
-     /* Check if caller is allowed to perform the operation */
-     access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
-
-     status = cache_inode_access(dest_dir,
-				 access_mask,
-				 req_ctx);
-
-     if (status != CACHE_INODE_SUCCESS) {
           goto out;
      }
 
