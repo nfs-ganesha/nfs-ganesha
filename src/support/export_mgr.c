@@ -457,7 +457,7 @@ get_nfsv41_export_io(DBusMessageIter *args,
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv41 == NULL) {
 			success = false;
-			errormsg = "Export does not have any NFSv4.0 activity";
+			errormsg = "Export does not have any NFSv4.1 activity";
 		}
 	}
 	dbus_status_reply(&iter, success, errormsg);
