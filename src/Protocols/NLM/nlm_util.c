@@ -279,7 +279,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 				 pexport,
 				 &nfsstat3,
 				 &rc);
-  if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
+  if(*ppentry == NULL)
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -411,7 +411,7 @@ int nlm_process_share_parms(struct svc_req        * preq,
 				 exp_hdl->exp_entry,
 				 &nfsstat3,
 				 &rc);
-  if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
+  if(*ppentry == NULL)
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
