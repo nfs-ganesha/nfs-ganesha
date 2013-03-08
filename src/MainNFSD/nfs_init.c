@@ -1092,6 +1092,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 pseudo file system successfully initialized");
 
+   /* Save Ganesha thread credentials with Frank's routine for later use */
+   fsal_save_ganesha_credentials() ;
+
   /* Create stable storage directory, this needs to be done before
    * starting the recovery thread.
    */

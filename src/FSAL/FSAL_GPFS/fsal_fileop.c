@@ -36,7 +36,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
-#include <sys/fsuid.h>
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_open_byname:
