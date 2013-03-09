@@ -152,7 +152,8 @@ struct req_op_context {
         const uint64_t*clientid; /*< Client ID of caller, NULL if
                                      unknown/not applicable. */
 	uint32_t nfs_vers;       /*< NFS protocol version of request */
-	uint32_t req_type;       /*< request_type */
+	uint32_t nfs_minorvers;  /*< NFSv4 minor version */
+	uint32_t req_type;       /*< request_type NFS | 9P */
 	struct gsh_client *client; /*< mostly stats but other bits too */
 	nsecs_elapsed_t start_time; /*< start time of this op/request */
 	nsecs_elapsed_t queue_wait; /*< time in wait queue */

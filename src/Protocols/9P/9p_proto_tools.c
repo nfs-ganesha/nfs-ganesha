@@ -42,6 +42,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "9p.h"
+#include "idmapper.h"
 
 int _9p_init(  _9p_parameter_t * pparam ) 
 {
@@ -77,19 +78,21 @@ int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid )
 
 int _9p_tools_get_req_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) 
 {
-  char name[1024] ;
+  struct gsh_buffdesc name =
+    {
+      .addr = uname_str,
+      .len = uname_len
+    };
   uid_t uid ;
 
-  strncpy( name, uname_str, uname_len) ;
-
-  if(name2uid(name, &uid) )
+  if(name2uid(&name, &uid, -1))
     {
-      LogFullDebug(COMPONENT_IDMAPPER, "uidmap_get mapped %s to uid= %d",
-                   name, uid);
+      LogFullDebug(COMPONENT_IDMAPPER, "uidmap_get mapped %.*s to uid= %d",
+		   uname_len, uname_str, uid);
     }
   else
     return -ENOENT ;
-  
+
   return _9p_tools_get_req_context_by_uid( uid, pfid ) ; 
 } /* _9p_tools_get_fsal_cred */
 

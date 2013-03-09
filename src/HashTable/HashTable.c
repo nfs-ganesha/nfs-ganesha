@@ -48,6 +48,7 @@
 #include <pthread.h>
 #include "HashTable.h"
 #include "log.h"
+#include "abstract_atomic.h"
 #include "common_utils.h"
 #include <assert.h>
 
@@ -138,7 +139,7 @@ const char *hash_table_err_to_str(hash_error_t err)
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
  */
 static hash_error_t Key_Locate(struct hash_table *ht,
-			       struct gsh_buffdesc *key,
+			       const struct gsh_buffdesc *key,
 			       uint32_t index,
 			       uint64_t rbthash,
 			       struct rbt_node **node)
@@ -162,15 +163,18 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 	*node = NULL;
 
 	if (partition->cache) {
-		cursor = partition->cache[cache_offsetof(ht, rbthash)];
+		void **cache_slot = (void **)
+			&(partition->cache[cache_offsetof(ht, rbthash)]);
+		cursor = atomic_fetch_voidptr(cache_slot);
 		LogFullDebug(COMPONENT_HASHTABLE_CACHE,
 			     "hash %s index %"PRIu32" slot %d\n",
 			     (cursor) ? "hit" : "miss",
 			     index, cache_offsetof(ht, rbthash));
 		if (cursor) {
 			data = RBT_OPAQ(cursor);
-			if (ht->parameter.compare_key(key,
-						      &(data->key)) == 0) {
+			if (ht->parameter.compare_key(
+				    (struct gsh_buffdesc *)key,
+				    &(data->key)) == 0) {
 				goto out;
 			}
 		}
@@ -193,11 +197,14 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 
 	while ((cursor != NULL) && (RBT_VALUE(cursor) == rbthash)) {
 		data = RBT_OPAQ(cursor);
-		if (ht->parameter.compare_key(key,
-					      &(data->key)) == 0) {
+		if (ht->parameter.compare_key(
+			    (struct gsh_buffdesc *)key,
+			    &(data->key)) == 0) {
 			if (partition->cache) {
-				partition->cache[cache_offsetof(ht, rbthash)]
-					= cursor;
+				void **cache_slot = (void **)
+					&(partition->cache[
+						  cache_offsetof(ht, rbthash)]);
+				atomic_store_voidptr(cache_slot, cursor);
 			}
 			found = true;
 			break;
@@ -237,21 +244,24 @@ out:
  */
 
 static inline hash_error_t compute(struct hash_table *ht,
-				   struct gsh_buffdesc *key,
+				   const struct gsh_buffdesc *key,
 				   uint32_t *index,
 				   uint64_t *rbt_hash)
 {
 	/* Compute the partition index and red-black tree hash */
 	if (ht->parameter.hash_func_both) {
-		if (!(*(ht->parameter.hash_func_both))(&ht->parameter,
-						       key, index,
-						       rbt_hash))
+		if (!(*(ht->parameter.hash_func_both))(
+			    &ht->parameter,
+			    (struct gsh_buffdesc *)key, index,
+			    rbt_hash))
 			return HASHTABLE_ERROR_INVALID_ARGUMENT;
 	} else {
-		*index = (*(ht->parameter.hash_func_key))(&ht->parameter,
-							  key);
-		*rbt_hash = (*(ht->parameter.hash_func_rbt))(&ht->parameter,
-							     key);
+		*index = (*(ht->parameter.hash_func_key))(
+			&ht->parameter,
+			(struct gsh_buffdesc *)key);
+		*rbt_hash = (*(ht->parameter.hash_func_rbt))(
+			&ht->parameter,
+			(struct gsh_buffdesc *)key);
 	}
 
 	/* At the suggestion of Jim Lieb, die if a hash function sends
@@ -441,7 +451,7 @@ out:
  * @retval Others, failure, the table is not latched.
  */
 hash_error_t HashTable_GetLatch(struct hash_table *ht,
-				struct gsh_buffdesc *key,
+				const struct gsh_buffdesc *key,
 				struct gsh_buffdesc *val,
 				bool may_write,
 				struct hash_latch *latch)
@@ -463,23 +473,6 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
 	if ((rc = compute(ht, key, &index, &rbt_hash))
 	    != HASHTABLE_SUCCESS) {
 		return rc;
-	}
-
-	if(isDebug(COMPONENT_HASHTABLE) &&
-	   isFullDebug(ht->parameter.ht_log_component)) {
-		char dispkey[HASHTABLE_DISPLAY_STRLEN];
-
-		if (ht->parameter.key_to_str != NULL)
-			ht->parameter.key_to_str(key, dispkey);
-		else
-			dispkey[0] = '\0';
-
-		LogFullDebug(ht->parameter.ht_log_component,
-			     "Get %s Key=%p {%s} index=%"PRIu32
-			     " rbt_hash=%"PRIu64" latch=%p",
-			     ht->parameter.ht_name,
-			     key->addr, dispkey,
-			     index, rbt_hash, latch);
 	}
 
 	/* Acquire mutex */
@@ -745,7 +738,7 @@ out:
  */
 
 hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
-				     struct gsh_buffdesc *key,
+				     const struct gsh_buffdesc *key,
 				     struct hash_latch *latch,
 				     struct gsh_buffdesc *stored_key,
 				     struct gsh_buffdesc *stored_val)

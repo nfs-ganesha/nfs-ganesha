@@ -50,7 +50,8 @@ int up_get(const struct gsh_buffdesc *key, cache_entry_t **entry)
 	cih_latch_t latch;
 
 	*entry = cih_get_by_fh_latched(key, &latch,
-				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
+                                       __func__, __LINE__);
 	if (*entry == NULL) {
 		return CACHE_INODE_NOT_FOUND;
 	}

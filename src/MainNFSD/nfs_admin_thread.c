@@ -40,6 +40,7 @@
 #include "sal_data.h"
 #include "fsal_up.h"
 #include "cache_inode_lru.h"
+#include "idmapper.h"
 #ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
@@ -358,9 +359,7 @@ static void redo_exports(void)
    */
 #ifdef _HAVE_GSSAPI
 #ifdef USE_NFSIDMAP
-  uidgidmap_clear();
-  idmap_clear();
-  namemap_clear();
+  idmapper_clear_cache();
 #endif /* USE_NFSIDMAP */
 #endif /* _HAVE_GSSAPI */
 

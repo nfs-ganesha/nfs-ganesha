@@ -35,6 +35,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#undef GCC_SYNC_FUNCTIONS
+#undef GCC_ATOMIC_FUNCTIONS
+
 #ifndef __GNUC__
 #error Please edit abstract_atomic.h and implement support for  \
        non-GNU compilers.
@@ -47,8 +50,6 @@
 #define GCC_ATOMIC_FUNCTIONS 1
 #elif defined(__APPLE__) && defined(__x86_64__)
 #include "atomic_x86_64.h"
-#undef GCC_SYNC_FUNCTIONS
-#undef GCC_ATOMIC_FUNCTIONS
 #elif ((ATOMIC_GCC_VERSION) >= 40100)
 #define GCC_SYNC_FUNCTIONS 1
 #else

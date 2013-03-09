@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -51,7 +52,9 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
+#ifdef USE_DBUS_STATS
 #include "ganesha_dbus.h"
+#endif
 #include "client_mgr.h"
 #include "export_mgr.h"
 #include "server_stats_private.h"
@@ -76,7 +79,7 @@ static struct client_by_ip client_by_ip;
  * first.
  */
 
-static inline int
+static int
 client_ip_cmpf(const struct avltree_node *lhs,
 	       const struct avltree_node *rhs)
 {
@@ -437,18 +440,13 @@ gsh_client_showclients(DBusMessageIter *args,
 static struct gsh_dbus_method cltmgr_show_clients = {
 	.name = "ShowClients",
 	.method = gsh_client_showclients,
-	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
+	.args = { TIMESTAMP_REPLY,
 		{
 			.name = "clients",
 			.type = "a(sbbbbbbb(tt))",
 			.direction = "out"
 		},
-		{NULL, NULL, NULL}
+		  END_ARG_LIST
 	}
 };
 
@@ -496,7 +494,7 @@ get_nfsv3_stats_io(DBusMessageIter *args,
 		   DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
-	struct server_stats *server_st;
+	struct server_stats *server_st = NULL;
 	bool success = true;
 	char *errormsg = NULL;
 	DBusMessageIter iter;
@@ -514,7 +512,10 @@ get_nfsv3_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv3 activity";
 		}
 	}
-	server_dbus_v3_iostats(server_st->st.nfsv3, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v3_iostats(server_st->st.nfsv3, &iter);
+
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -525,6 +526,7 @@ static struct gsh_dbus_method cltmgr_show_v3_io = {
 	.method = get_nfsv3_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -540,7 +542,7 @@ get_nfsv40_stats_io(DBusMessageIter *args,
 		    DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
-	struct server_stats *server_st;
+	struct server_stats *server_st = NULL;
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter;
@@ -558,7 +560,10 @@ get_nfsv40_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv4.0 activity";
 		}
 	}
-	server_dbus_v40_iostats(server_st->st.nfsv40, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v40_iostats(server_st->st.nfsv40, &iter);
+
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -569,6 +574,7 @@ static struct gsh_dbus_method cltmgr_show_v40_io = {
 	.method = get_nfsv40_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -584,7 +590,7 @@ get_nfsv41_stats_io(DBusMessageIter *args,
 		    DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
-	struct server_stats *server_st;
+	struct server_stats *server_st = NULL;
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter;
@@ -599,10 +605,13 @@ get_nfsv41_stats_io(DBusMessageIter *args,
 		server_st = container_of(client, struct server_stats, client);
 		if(server_st->st.nfsv41 == NULL) {
 			success = false;
-			errormsg = "Client does not have any NFSv4.0 activity";
+			errormsg = "Client does not have any NFSv4.1 activity";
 		}
 	}
-	server_dbus_v41_iostats(server_st->st.nfsv41, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_iostats(server_st->st.nfsv41, &iter);
+
 	if(client != NULL)
 		put_gsh_client(client);
 	return true;
@@ -613,6 +622,7 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
 	.method = get_nfsv41_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -641,16 +651,7 @@ static struct gsh_dbus_interface *cltmgr_interfaces[] = {
 	NULL
 };
 
-/**
- * @brief Initialize server statistics DBUS interface
- */
-
-void server_stats_init(void)
-{
-	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
-}
-
-#endif
+#endif /* USE_DBUS_STATS */
 
 /**
  * @brief Initialize client manager
@@ -669,8 +670,7 @@ void gsh_client_init(void)
 	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 #ifdef USE_DBUS_STATS
-	server_stats_init();
-	gsh_export_init();  /* here for now since triggered by dbus stats */
+	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
 #endif
 }
 

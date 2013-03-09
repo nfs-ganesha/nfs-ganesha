@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -51,7 +52,9 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
+#ifdef USE_DBUS_STATS
 #include "ganesha_dbus.h"
+#endif
 #include "export_mgr.h"
 #include "client_mgr.h"
 #include "server_stats_private.h"
@@ -73,7 +76,7 @@ static struct export_by_id export_by_id;
  *
  */
 
-static inline int
+static int
 export_id_cmpf(const struct avltree_node *lhs,
 	       const struct avltree_node *rhs)
 {
@@ -195,6 +198,8 @@ int foreach_gsh_export(bool (*cb)(struct gsh_export *cl,
 	return cnt;
 }
 
+#ifdef USE_DBUS_STATS
+
 /* DBUS interfaces
  */
 
@@ -267,18 +272,13 @@ gsh_export_showexports(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_exports = {
 	.name = "ShowExports",
 	.method = gsh_export_showexports,
-	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
+	.args = { TIMESTAMP_REPLY,
 		{
 			.name = "exports",
 			.type = "a(isbbbbbbb(tt))",
 			.direction = "out"
 		},
-		{NULL, NULL, NULL}
+		  END_ARG_LIST
 	}
 };
 
@@ -352,7 +352,7 @@ get_nfsv3_export_io(DBusMessageIter *args,
 		   DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
-	struct export_stats *export_st;
+	struct export_stats *export_st = NULL;
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter;
@@ -368,7 +368,10 @@ get_nfsv3_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv3 activity";
 		}
 	}
-	server_dbus_v3_iostats(export_st->st.nfsv3, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v3_iostats(export_st->st.nfsv3, &iter);
+
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -379,6 +382,7 @@ static struct gsh_dbus_method export_show_v3_io = {
 	.method = get_nfsv3_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -394,7 +398,7 @@ get_nfsv40_export_io(DBusMessageIter *args,
 		    DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
-	struct export_stats *export_st;
+	struct export_stats *export_st = NULL;
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter;
@@ -410,7 +414,10 @@ get_nfsv40_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv4.0 activity";
 		}
 	}
-	server_dbus_v40_iostats(export_st->st.nfsv40, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v40_iostats(export_st->st.nfsv40, &iter);
+
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -421,6 +428,7 @@ static struct gsh_dbus_method export_show_v40_io = {
 	.method = get_nfsv40_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -436,7 +444,7 @@ get_nfsv41_export_io(DBusMessageIter *args,
 		    DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
-	struct export_stats *export_st;
+	struct export_stats *export_st = NULL;
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter;
@@ -449,10 +457,13 @@ get_nfsv41_export_io(DBusMessageIter *args,
 		export_st = container_of(export, struct export_stats, export);
 		if(export_st->st.nfsv41 == NULL) {
 			success = false;
-			errormsg = "Export does not have any NFSv4.0 activity";
+			errormsg = "Export does not have any NFSv4.1 activity";
 		}
 	}
-	server_dbus_v41_iostats(export_st->st.nfsv41, &iter, success, errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_iostats(export_st->st.nfsv41, &iter);
+
 	if(export != NULL)
 		put_gsh_export(export);
 	return true;
@@ -463,6 +474,7 @@ static struct gsh_dbus_method export_show_v41_io = {
 	.method = get_nfsv41_export_io,
 	.args = { EXPORT_ID_ARG,
 		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
 		  IOSTATS_REPLY,
 		  END_ARG_LIST
 	}
@@ -489,6 +501,8 @@ static struct gsh_dbus_interface *export_interfaces[] = {
 	NULL
 };
 
+#endif /* USE_DBUS_STATS */
+
 /**
  * @brief Initialize export manager
  */
@@ -505,7 +519,9 @@ void gsh_export_init(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
+#ifdef USE_DBUS_STATS
 	gsh_dbus_register_path("ExportMgr", export_interfaces);
+#endif
 }
 
 

@@ -51,8 +51,8 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "cache_inode_hash.h"
 #include "abstract_atomic.h"
+#include "cache_inode_hash.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 
@@ -81,47 +81,10 @@
  * under ordinary circumstances, so are kept on a separate lru_pinned
  * list to retain constant time.
  *
- * The locking discipline for this module is complex, because an entry
- * LRU can either be found through the cache entry in which it is
- * embedded (through a hash table or weakref lookup) or one can be
- * found on the queue.  Thus, we have some sections for which locking
- * the entry then the queue is natural, and others for which locking
- * the queue then the entry is natural.  Because it is the most common
- * case in request processing, we have made the lock the queue case
- * the defined lock order.
- *
- * This introduces some complication, particularly in the case of
- * cache_inode_lru_get and the repaer thread, which access entries
- * through their queue.  Therefore, we introduce the following rules
- * for accessing LRU entries:
- *
- *    - The LRU refcount may be increased by a thread holding either
- *      the entry lock or the lock for the queue holding the entry.
- *    - The entry flags may be set or inspected only by a thread
- *      holding the lock on that entry.
- *    - An entry may only be removed from or inserted into a queue by
- *      a thread holding a lock on both the entry and the queue.
- *    - A thread may only decrement the reference count while holding
- *      the entry lock.
- *    - A thread that wishes to decrement the reference count must
- *      check that the reference count is greater than
- *      LRU_SENTINEL_REFCOUNT and, if not, acquire the queue lock
- *      before decrementing it.  When the reference count falls to 0,
- *      the controlling thread will have already acquired the queue
- *      lock.  It must then set the LRU_ENTRY_CONDEMNED bit on the
- *      entry's flags, and remove it from the queue.  It must then
- *      drop both the entry and queue lock, call pthread_yield, and
- *      reacquire the entry lock before continuing with disposal.
- *    - A thread wishing to operate on an entry picked from a given
- *      queue partition must lock that queue partition, find the entry,
- *      and increase its reference count by one.  It must then store a
- *      pointer to the entry and release the queue lock before
- *      acquiring the entry lock.  If the LRU_ENTRY_CONDEMNED bit is
- *      set, it must relinquish its lock on the entry and attempt no
- *      further access to it.  Otherwise, it must examine the flags
- *      and lane stored in the entry to determine the current queue
- *      partition containing it, rather than assuming that the original
- *      location is still valid.
+ * As noted below, initial references to cache entries may only be granted
+ * under the cache inode hash table latch.  Likewise, entries must first be
+ * made unreachable to the cache inode hash table, then independently reach
+ * a refcnt of 0, before they may be disposed or recycled.
  */
 
 struct lru_state lru_state;
@@ -159,11 +122,21 @@ struct lru_q_lane
 	struct lru_q cleanup; /* deferred cleanup */
 	pthread_mutex_t mtx;
 	struct {
-		char file[32];
+		char *func;
 		uint32_t line;
 	} locktrace;
      CACHE_PAD(0);
 };
+
+#define QLOCK(qlane) \
+	do { \
+	        pthread_mutex_lock(&(qlane)->mtx); \
+		(qlane)->locktrace.func = (char*) __func__; \
+		(qlane)->locktrace.line = __LINE__; \
+	} while(0)
+
+#define QUNLOCK(qlane) \
+	pthread_mutex_unlock(&(qlane)->mtx)
 
 /**
  * A multi-level LRU algorithm inspired by MQ [Zhou].  Transition from
@@ -201,6 +174,9 @@ size_t open_fd_count = 0;
  * object with refcount > 1 has been referenced by some thread, which must
  * release its reference at some point.
  *
+ * More specifically, in the current implementation, reachability is
+ * serialized by the cache lookup table latch.
+ *
  * Currently, I propose to distinguish between objects with positive refcount
  * and objects with state.  The latter could be evicted, in the normal case,
  * only with loss of protocol correctness, but may have only the sentinel
@@ -225,7 +201,6 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
  * This function initializes a single queue partition (L1, L1 pinned, L2,
  * etc)
  */
-
 static inline void
 lru_init_queue(struct lru_q *q, enum lru_q_id qid)
 {
@@ -334,7 +309,7 @@ lru_insert_entry(cache_entry_t *entry, struct lru_q *q, uint32_t lane,
      lru->lane = lane; /* permanently fix lane */
      lru->qid = q->id; /* initial */
 
-     pthread_mutex_lock(&qlane->mtx);
+     QLOCK(qlane);
 
      switch (edge) {
      case LRU_HEAD:
@@ -347,7 +322,7 @@ lru_insert_entry(cache_entry_t *entry, struct lru_q *q, uint32_t lane,
      }
      ++(q->size);
 
-     pthread_mutex_unlock(&qlane->mtx);
+     QUNLOCK(qlane);
 }
 
 /**
@@ -478,7 +453,7 @@ lru_reap_impl(uint32_t flags)
           qlane = &LRU[lane];
           lq = (flags & LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
           cnt = 0;
-          pthread_mutex_lock(&qlane->mtx);
+          QLOCK(qlane);
           glist_for_each_safe(glist, glistn, &lq->q) {
                lru = glist_entry(glist, cache_inode_lru_t, q);
                if (lru) {
@@ -491,11 +466,12 @@ lru_reap_impl(uint32_t flags)
                          goto next_entry;
                     }
                     /* potentially reclaimable */
-                    pthread_mutex_unlock(&qlane->mtx);
+                    QUNLOCK(qlane);
 		    entry = container_of(lru, cache_entry_t, lru);
 		    /* entry must be unreachable from CIH when recycled */
-		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK)) {
-			    pthread_mutex_lock(&qlane->mtx);
+		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
+                                        __func__, __LINE__)) {
+			    QLOCK(qlane);
 			    nrefcnt =
 				    atomic_dec_int32_t(&entry->lru.refcnt);
                             /* there are two cases which permit reclaim,
@@ -514,7 +490,7 @@ lru_reap_impl(uint32_t flags)
 				    glist_del(&lru->q);
 				    --(q->size);
 				    entry->lru.qid = LRU_ENTRY_NONE;
-				    pthread_mutex_unlock(&qlane->mtx);
+				    QUNLOCK(qlane);
 				    cih_latch_rele(&latch);
 				    goto out;
 			      }
@@ -525,7 +501,7 @@ lru_reap_impl(uint32_t flags)
                if (++cnt > LANE_NTRIES)
                     break;
           } /* foreach (initial) entry */
-          pthread_mutex_unlock(&qlane->mtx);
+          QUNLOCK(qlane);
      } /* foreach lane */
 
 out:
@@ -570,7 +546,7 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 	cache_inode_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 
-	pthread_mutex_lock(&qlane->mtx);
+	QLOCK(qlane);
 
 	/* if this happened, it would indicate misuse or damage */
 	assert(lru->qid != LRU_ENTRY_PINNED);
@@ -590,7 +566,7 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 		++(q->size);
 	}
 
-	pthread_mutex_unlock(&qlane->mtx);
+	QUNLOCK(qlane);
 }
 
 /**
@@ -622,16 +598,16 @@ cache_inode_lru_cleanup(void)
 	    cq = &qlane->cleanup;
 
         do {
-		pthread_mutex_lock(&qlane->mtx);
+		QLOCK(qlane);
 		lru = glist_first_entry(&cq->q, cache_inode_lru_t, q);
 		if (! lru) {
-			pthread_mutex_unlock(&qlane->mtx);
+			QUNLOCK(qlane);
 			break;
 		}
 		glist_del(&lru->q);
 		--(cq->size);
 		lru->qid = LRU_ENTRY_NONE;
-		pthread_mutex_unlock(&qlane->mtx);
+		QUNLOCK(qlane);
 
 		/* finalize */
 		entry = container_of(lru, cache_entry_t, lru);
@@ -863,8 +839,9 @@ lru_run(struct fridgethr_context *ctx)
 				 formeropen, totalwork,
 				 workpass, closed, totalclosed);
 
-		    pthread_mutex_lock(&qlane->mtx);
-		    while (workdone < lru_state.per_lane_work) {
+		    QLOCK(qlane);
+		    while ((workdone < lru_state.per_lane_work) &&
+			   (!glist_empty(&LRU[lane].L1.q))) {
 			 /* In hindsight, it's really important to avoid
 			  * restarts. */
 			    glist_for_each_safe(glist, glistn,
@@ -883,7 +860,7 @@ lru_run(struct fridgethr_context *ctx)
 				    /* Drop the lane lock while performing
 				     * (slow) operations on entry */
 				    atomic_inc_int32_t(&lru->refcnt);
-				    pthread_mutex_unlock(&qlane->mtx);
+				    QUNLOCK(qlane);
 
 				    /* Need the entry */
 				    entry = container_of(lru, cache_entry_t,
@@ -914,7 +891,7 @@ lru_run(struct fridgethr_context *ctx)
 				    /* We did the (slow) cache entry ops
 				     * unlocked, recheck lru before moving it
 				     * to L2. */
-				    pthread_mutex_lock(&qlane->mtx);
+				    QLOCK(qlane);
 
 				    /* This can be in any order wrt the lane
 				     * mutex, but this order seems most sane. */
@@ -944,7 +921,7 @@ lru_run(struct fridgethr_context *ctx)
 			    } /* for_each_safe lru */
 		    } /* while (workdone < per-lane work) */
 
-		    pthread_mutex_unlock(&qlane->mtx);
+		    QUNLOCK(qlane);
 		    LogDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Actually processed %zd entries on lane %zd "
 			     "closing %zd descriptors",
@@ -1259,6 +1236,7 @@ cache_inode_lru_get(cache_entry_t **entry,
      /* Since the entry isn't in a queue, nobody can bump refcnt. */
      nentry->lru.refcnt = 2;
      nentry->lru.pin_refcnt = 0;
+     nentry->lru.cf = 0;
 
      /* Enqueue. */
      lane = lru_lane_of_entry(nentry);
@@ -1289,9 +1267,9 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 
 	/* Pin ref is infrequent, and never concurrent because SAL invariantly
 	 * holds the state lock exclusive whenever it is called. */
-	pthread_mutex_lock(&qlane->mtx);
+	QLOCK(qlane);
 	if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
-		pthread_mutex_unlock(&qlane->mtx);
+		QUNLOCK(qlane);
 		return (CACHE_INODE_DEAD_ENTRY);
 	}
 
@@ -1302,7 +1280,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 	atomic_inc_int32_t(&entry->lru.refcnt);
 	entry->lru.pin_refcnt++;
 
-	pthread_mutex_unlock(&qlane->mtx); /* !LOCKED (lane) */
+	QUNLOCK(qlane); /* !LOCKED (lane) */
 
 	return (CACHE_INODE_SUCCESS);
 }
@@ -1327,7 +1305,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 
 	/* Pin ref is infrequent, and never concurrent because SAL invariantly
 	 * holds the state lock exclusive whenever it is called. */
-	pthread_mutex_lock(&qlane->mtx);
+	QLOCK(qlane);
 
 	entry->lru.pin_refcnt--;
 	if (unlikely(entry->lru.pin_refcnt == 0)) {
@@ -1342,7 +1320,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 		++(q->size);
 	}
 
-	pthread_mutex_unlock(&qlane->mtx);
+	QUNLOCK(qlane);
 
 	/* Also release an LRU reference */
 	atomic_dec_int32_t(&entry->lru.refcnt);
@@ -1365,9 +1343,9 @@ bool cache_inode_is_pinned(cache_entry_t *entry)
 	struct lru_q_lane *qlane = &LRU[lane];
         int rc;
 
-	pthread_mutex_lock(&qlane->mtx);
+	QLOCK(qlane);
 	rc = (entry->lru.pin_refcnt > 0);
-	pthread_mutex_unlock(&qlane->mtx);
+	QUNLOCK(qlane);
 
 	return (rc);
 }
@@ -1404,7 +1382,11 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		struct lru_q_lane *qlane = &LRU[lru->lane];
 		struct lru_q *q;
 
-		pthread_mutex_lock(&qlane->mtx);
+		/* do it less */
+                if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
+			goto out;
+
+		QLOCK(qlane);
 
 		switch (lru->qid) {
 		case LRU_ENTRY_PINNED:
@@ -1442,8 +1424,10 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 			abort();
 			break;               
 		} /* switch qid */
-		pthread_mutex_unlock(&qlane->mtx);
+		QUNLOCK(qlane);
 	} /* initial ref */
+out:
+	return;
 }
 
 /**
@@ -1475,11 +1459,11 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
-		pthread_mutex_lock(&qlane->mtx);
+		QLOCK(qlane);
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
 		if (unlikely(refcnt > 0)) {
-			pthread_mutex_unlock(&qlane->mtx);
+			QUNLOCK(qlane);
 			goto out;
 		}
 
@@ -1495,7 +1479,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		/* XXX now just cleans (ahem) */
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
-		pthread_mutex_unlock(&qlane->mtx);
+		QUNLOCK(qlane);
 	} /* refcnt == 0 */
 out:
         return;

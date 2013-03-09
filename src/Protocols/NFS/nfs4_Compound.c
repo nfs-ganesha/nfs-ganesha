@@ -158,7 +158,7 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_val;
   nsecs_elapsed_t op_start_time;
   struct timespec ts;
-  int export_id;
+  int export_id = -1;
 
   if(compound4_minor > 1)
     {
@@ -209,6 +209,7 @@ int nfs4_Compound(nfs_arg_t *arg,
   /* Initialisation of the compound request internal's data */
   memset(&data, 0, sizeof(data));
   data.req_ctx = req_ctx;
+  req_ctx->nfs_minorvers = arg->arg_compound4.minorversion;
 
   /* Minor version related stuff */
   data.minorversion = compound4_minor;
@@ -345,7 +346,7 @@ int nfs4_Compound(nfs_arg_t *arg,
       res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess
         .status = status;
 
-#ifdef USE_DBUS_STATS
+/* #ifdef USE_DBUS_STATS */
       if(nfs4_Is_Fh_Invalid(&data.currentFH) == NFS4_OK &&
 	 !nfs4_Is_Fh_Pseudo(&data.currentFH)) {
 	      export_id = nfs4_FhandleToExportId(&data.currentFH);
@@ -356,12 +357,11 @@ int nfs4_Compound(nfs_arg_t *arg,
 	      export_id = -1;
       }
       server_stats_nfsv4_op_done(data.req_ctx,
-				 argarray[i].argop,
-				 compound4_minor,
 				 export_id,
+				 argarray[i].argop,
 				 op_start_time,
 				 status == NFS4_OK);
-#endif /* USE_DBUS_STATS */
+/* #endif /\* USE_DBUS_STATS *\/ */
 
       if(status != NFS4_OK)
         {
@@ -403,7 +403,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 #ifdef USE_DBUS_STATS
   server_stats_compound_done(req_ctx,
 			     export_id,
-			     compound4_minor,
 			     argarray_len,
 			     status == NFS4_OK);
 #endif

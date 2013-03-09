@@ -32,14 +32,13 @@
  * @brief Miscellaneous functions, especially new_entry
  */
 #include "config.h"
-#include "abstract_atomic.h"
 #include "log.h"
-#include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
+#include "HashTable.h"
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
@@ -282,7 +281,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      /* Check if the entry already exists */
      oentry = cih_get_by_fh_latched(&fh_desc, &latch,
-				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS);
+				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
+                                    __func__, __LINE__);
      if (oentry) {
           /* Entry is already in the cache, do not add it */
           status = CACHE_INODE_ENTRY_EXISTS;
@@ -310,7 +310,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      locksinited = true;
 
      /* See if someone raced us. */
-     oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK);
+     oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK,
+                                    __func__, __LINE__);
      if (oentry) {
 	     /* Entry is already in the cache, do not add it.
 	      *

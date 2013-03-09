@@ -122,6 +122,7 @@ typedef struct cache_inode_lru__ {
 	uint32_t lane; /*< The lane in which an entry currently resides, so
 			   we can lock the deque and decrement the correct
 			   counter when moving or deleting the entry. */
+	uint32_t cf; /*< Confounder */
 } cache_inode_lru_t;
 
 /**

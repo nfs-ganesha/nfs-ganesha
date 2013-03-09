@@ -172,7 +172,9 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
     {
       /* Arguments were supplied, extract them */
-      convrc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_CREATE4.createattrs));
+	    convrc = nfs4_Fattr_To_FSAL_attr(&sattr,
+					     &(arg_CREATE4.createattrs),
+					     data);
 
       if(convrc != NFS4_OK)
         {
