@@ -80,7 +80,6 @@ nfs3_Commit(nfs_arg_t *arg,
 {
         cache_inode_status_t cache_status;
         cache_entry_t *entry = NULL;
-        pre_op_attr pre_attr;
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -106,10 +105,6 @@ nfs3_Commit(nfs_arg_t *arg,
                 goto out;
         }
 
-        nfs_SetPreOpAttr(entry,
-                         req_ctx,
-                         &pre_attr);
-
         cache_status = cache_inode_commit(entry,
 					  arg->arg_commit3.offset,
 					  arg->arg_commit3.count,
@@ -117,7 +112,7 @@ nfs3_Commit(nfs_arg_t *arg,
         if (cache_status != CACHE_INODE_SUCCESS) {
                 res->res_commit3.status = nfs3_Errno(cache_status);
 
-                nfs_SetWccData(&pre_attr,
+                nfs_SetWccData(NULL,
                                entry,
                                req_ctx,
                                &(res->res_commit3.COMMIT3res_u.resfail
@@ -127,7 +122,7 @@ nfs3_Commit(nfs_arg_t *arg,
                 goto out;
         }
 
-        nfs_SetWccData(&pre_attr,
+        nfs_SetWccData(NULL,
                        entry,
                        req_ctx,
                        &(res->res_commit3.COMMIT3res_u.resok

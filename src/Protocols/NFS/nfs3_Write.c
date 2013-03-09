@@ -207,7 +207,7 @@ int nfs_Write(nfs_arg_t *arg,
                 res->res_write3.status = NFS3ERR_INVAL;
 
                 res->res_write3.status = nfs3_Errno(cache_status);
-                nfs_SetWccData( &pre_attr,
+                nfs_SetWccData( NULL,
                                 entry,
                                 req_ctx,
                                 &res->res_write3.WRITE3res_u.resfail.file_wcc);
@@ -246,7 +246,7 @@ int nfs_Write(nfs_arg_t *arg,
 			&sync);
                 if (cache_status == CACHE_INODE_SUCCESS) {
                                 /* Build Weak Cache Coherency data */
-                                nfs_SetWccData(&pre_attr,
+                                nfs_SetWccData(NULL,
                                                entry,
                                                req_ctx,
                                                &res->res_write3.WRITE3res_u
@@ -287,7 +287,7 @@ int nfs_Write(nfs_arg_t *arg,
         }
 
         res->res_write3.status = nfs3_Errno(cache_status);
-        nfs_SetWccData(&pre_attr,
+        nfs_SetWccData(NULL,
                        entry,
                        req_ctx,
                        &res->res_write3.WRITE3res_u.resfail.file_wcc);
