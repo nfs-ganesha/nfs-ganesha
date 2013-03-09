@@ -89,7 +89,7 @@ int nfs3_Commit(nfs_arg_t *parg,
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr, *ppost_attr;
+  fsal_attrib_list_t *ppost_attr;
   fsal_attrib_list_t attr;
   uint64_t typeofcommit;
   int rc = NFS_REQ_OK;
@@ -105,7 +105,6 @@ int nfs3_Commit(nfs_arg_t *parg,
   /* to avoid setting it on each error case */
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
-  ppre_attr = NULL;
 
   /* Convert file handle into a fsal_handle */
   if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.fh_desc, pcontext) == 0)
@@ -151,15 +150,12 @@ int nfs3_Commit(nfs_arg_t *parg,
       pres->res_commit3.status = nfs3_Errno(cache_status);
 
       nfs_SetWccData(pexport,
-                     ppre_attr,
-                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
+                     NULL,
+                     NULL, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
 
       rc = NFS_REQ_OK;
       goto out;
     }
-
-  /* Set the Wcc data */
-  ppre_attr = &pre_attr;
 
   if(cache_inode_getattr(pentry, &attr, pcontext, 
                           &cache_status) != CACHE_INODE_SUCCESS) {
@@ -171,7 +167,7 @@ int nfs3_Commit(nfs_arg_t *parg,
   }
 
   nfs_SetWccData(pexport,
-                 ppre_attr, ppost_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
+                 NULL, ppost_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
 
   /* Set the write verifier */
   memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,

@@ -92,7 +92,6 @@ int nfs_Write(nfs_arg_t *parg,
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   size_t size = 0;
   size_t written_size;
@@ -146,7 +145,6 @@ int nfs_Write(nfs_arg_t *parg,
       /* to avoid setting it on each error case */
       pres->res_write3.WRITE3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
       pres->res_write3.WRITE3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
-      ppre_attr = NULL;
     }
 
   /* Convert file handle into a cache entry */
@@ -189,9 +187,6 @@ int nfs_Write(nfs_arg_t *parg,
       rc = NFS_REQ_OK;
       goto out;
     }
-
-  /* get directory attributes before action (for V3 reply) */
-  ppre_attr = &pre_attr;
 
   /* Extract the filetype */
   filetype = cache_inode_fsal_type_convert(pre_attr.type);
@@ -250,7 +245,7 @@ int nfs_Write(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case NFS_V2:
-      if(ppre_attr && ppre_attr->filesize > NFS2_MAX_FILESIZE)
+      if(pre_attr.filesize > NFS2_MAX_FILESIZE)
         {
           /*
            *  V2 clients don't understand filesizes >
@@ -326,7 +321,7 @@ int nfs_Write(nfs_arg_t *parg,
 
             case NFS_V3:
               pres->res_write3.status = NFS3ERR_INVAL;
-              nfs_SetWccData(pexport, ppre_attr, NULL, 
+              nfs_SetWccData(pexport, NULL, NULL,
                              &(pres->res_write3.WRITE3res_u.resfail.file_wcc));
               break;
             }
@@ -383,7 +378,7 @@ int nfs_Write(nfs_arg_t *parg,
             case NFS_V3:
 
               /* Build Weak Cache Coherency data */
-              nfs_SetWccData(pexport, ppre_attr,
+              nfs_SetWccData(pexport, NULL,
                              &attr, &(pres->res_write3.WRITE3res_u.resok.file_wcc));
 
               /* Set the written size */
@@ -418,7 +413,7 @@ int nfs_Write(nfs_arg_t *parg,
   /* If we are here, there was an error */
   rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
                            &pres->res_attr2.status, &pres->res_write3.status,
-                           NULL, ppre_attr,
+                           NULL, NULL,
                            &(pres->res_write3.WRITE3res_u.resfail.file_wcc),
                            NULL, NULL);
 out:
