@@ -856,8 +856,7 @@ static inline bool cache_inode_is_attrs_valid(const cache_entry_t *entry)
         if (nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE_IMMEDIATE)
                 return false;
 
-        if (nfs_param.cache_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
-        {
+        if (nfs_param.cache_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER) {
                 time_t current_time = time(NULL);
                 if (current_time - entry->attr_time > nfs_param.cache_param.grace_period_attr)
                         return false;

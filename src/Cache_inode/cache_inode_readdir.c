@@ -315,11 +315,10 @@ cache_inode_remove_cached_dirent(cache_entry_t *directory,
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if(directory->type != DIRECTORY)
-    {
+  if(directory->type != DIRECTORY) {
       status = CACHE_INODE_NOT_A_DIRECTORY;
       return status;
-    }
+  }
 
   status = cache_inode_operate_cached_dirent(directory,
 					     name,
@@ -422,18 +421,16 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
   struct cache_inode_populate_cb_state state;
 
   /* Only DIRECTORY entries are concerned */
-  if(directory->type != DIRECTORY)
-    {
+  if(directory->type != DIRECTORY) {
       status = CACHE_INODE_NOT_A_DIRECTORY;
       return status;
-    }
+  }
 
   if((directory->flags & CACHE_INODE_DIR_POPULATED) &&
-     (directory->flags & CACHE_INODE_TRUST_CONTENT))
-    {
+     (directory->flags & CACHE_INODE_TRUST_CONTENT)) {
       status = CACHE_INODE_SUCCESS;
       return status;
-    }
+  }
 
   /* Invalidate all the dirents */
   status = cache_inode_invalidate_all_cached_dirent(directory);
@@ -450,14 +447,13 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
                                                     (void *)&state,
                                                     populate,
                                                     &eod);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
+  if(FSAL_IS_ERROR(fsal_status)) {
       if (fsal_status.major == ERR_FSAL_STALE) {
            cache_inode_kill_entry(directory);
       }
 
       return cache_inode_error_convert(fsal_status);
-    }
+  }
 
   assert(eod);  /* we were supposed to read to the end.... */
   /* End of work */
@@ -634,11 +630,10 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent->hk.k, dirent->hk.p);
 
           status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
-          if (status != CACHE_INODE_SUCCESS)
-            {
+          if (status != CACHE_INODE_SUCCESS) {
               cache_inode_lru_unref(entry, 0);
               goto unlock_dir;
-            }
+          }
 
           in_result = cb(cb_opaque,
                          dirent->name,

@@ -187,11 +187,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   bool dir_src_access = false;
 
   if ((dir_src->type != DIRECTORY) ||
-      (dir_dest->type != DIRECTORY))
-    {
+      (dir_dest->type != DIRECTORY)) {
       status = CACHE_INODE_NOT_A_DIRECTORY;
       goto out;
-    }
+  }
 
   /* we must be able to both scan and write to both directories before we can proceed
    * sticky bit also applies to both files after looking them up.
@@ -272,17 +271,15 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   }
 
   status = cache_inode_check_sticky(dir_src, lookup_src, req_ctx);
-  if (status != CACHE_INODE_SUCCESS)
-    {
+  if (status != CACHE_INODE_SUCCESS) {
       goto out;
-    }
+  }
 
   if (lookup_dst) {
       status = cache_inode_check_sticky(dir_dest, lookup_dst, req_ctx);
-      if (status != CACHE_INODE_SUCCESS)
-        {
+      if (status != CACHE_INODE_SUCCESS) {
           goto out;
-        }
+      }
   }
 
   /* Perform the rename operation in FSAL,
@@ -298,17 +295,15 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   status_ref_dir_src = cache_inode_refresh_attrs_locked(dir_src, req_ctx);
   status_ref_dir_dst = cache_inode_refresh_attrs_locked(dir_dest, req_ctx);
 
-  if (FSAL_IS_ERROR(fsal_status))
-    {
+  if (FSAL_IS_ERROR(fsal_status)) {
       status = cache_inode_error_convert(fsal_status);
       goto out;
-    }
+  }
 
   if (lookup_dst) {
       /* Force a refresh of the overwritten inode */
       status_ref_dst = cache_inode_refresh_attrs_locked(lookup_dst, req_ctx);
-      if (status_ref_dst == CACHE_INODE_FSAL_ESTALE)
-      {
+      if (status_ref_dst == CACHE_INODE_FSAL_ESTALE) {
           status_ref_dst = CACHE_INODE_SUCCESS;
       }
   }
@@ -321,20 +316,16 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
   src_dest_lock(dir_src, dir_dest);
 
-  if(dir_src == dir_dest)
-    {
+  if(dir_src == dir_dest) {
       cache_inode_status_t tmp_status =
 	      cache_inode_rename_cached_dirent(dir_dest, oldname, newname,
 		      req_ctx);
-      if(tmp_status != CACHE_INODE_SUCCESS)
-        {
+      if(tmp_status != CACHE_INODE_SUCCESS) {
 	  /* We're obviously out of date.  Throw out the cached
 	     directory */
 	  cache_inode_invalidate_all_cached_dirent(dir_dest);
-	}
-    }
-  else
-    {
+      }
+  } else {
       cache_inode_status_t tmp_status = CACHE_INODE_SUCCESS;
 
       /* We may have a cache entry for the destination
@@ -347,34 +338,28 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 						 newname,
 						 lookup_src,
 						 NULL);
-      if(tmp_status != CACHE_INODE_SUCCESS)
-        {
+      if(tmp_status != CACHE_INODE_SUCCESS) {
 	  /* We're obviously out of date.  Throw out the cached
 	     directory */
 	  cache_inode_invalidate_all_cached_dirent(dir_dest);
-        }
+      }
 
       /* Remove the old entry */
       tmp_status = cache_inode_remove_cached_dirent(dir_src, oldname, req_ctx);
-      if(tmp_status != CACHE_INODE_SUCCESS)
-        {
+      if(tmp_status != CACHE_INODE_SUCCESS) {
 	  cache_inode_invalidate_all_cached_dirent(dir_src);
-        }
-    }
+      }
+  }
 
   /* unlock entries */
   src_dest_unlock(dir_src, dir_dest);
 
 out:
   if (lookup_src)
-    {
       cache_inode_put(lookup_src);
-    }
 
   if (lookup_dst)
-    {
       cache_inode_put(lookup_dst);
-    }
 
   return status;
 }
