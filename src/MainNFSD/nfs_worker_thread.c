@@ -445,64 +445,6 @@ nfs_rpc_get_funcdesc(struct fridgethr_context *thr_ctx,
 }
 
 /**
- * @brief Timer structure for long running thread detection
- *
- * @todo Delendum est.
- */
-
-struct nfs_req_timer
-{
-    struct timespec timer_start;
-    struct timespec timer_end;
-    struct timespec timer_diff;
-    struct timespec queue_timer_diff;
-    nfs_request_latency_stat_t latency_stat;
-};
-
-/**
- * @brief Record the end of an operation
- *
- * @todo Delendum est.
- */
-
-static inline void
-nfs_req_timer_stop(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
-                   struct svc_req *req, nfs_stat_type_t stat_type)
-{
-    nsecs_elapsed_t elapsed;
-
-    now(&t->timer_end);
-    elapsed = timespec_diff(&t->timer_start, &t->timer_end);
-    nsecs_to_timespec(elapsed, &t->timer_diff);
-
-    t->latency_stat.type = SVC_TIME;
-    t->latency_stat.latency = (unsigned int)(elapsed/1000); /* microseconds */
-    nfs_stat_update(stat_type, &(worker_data->stats.stat_req), req,
-                    &t->latency_stat);
-
-}
-
-/**
- * @brief Get actual time run.
- *
- * @todo Delendum est.
- */
-
-static inline void
-nfs_req_timer_qdiff(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
-                    struct svc_req *req, request_data_t *preq)
-{
-    nsecs_elapsed_t elapsed;
-
-    elapsed = timespec_diff(&preq->time_queued, &t->timer_start);
-    nsecs_to_timespec(elapsed, &t->queue_timer_diff);
-    t->latency_stat.type = AWAIT_TIME;
-    t->latency_stat.latency = (unsigned int)(elapsed/1000); /* microseconds */
-    nfs_stat_update(GANESHA_STAT_SUCCESS, &(worker_data->stats.stat_req), req,
-                    &t->latency_stat);
-}
-
-/**
  * @brief Main RPC dispatcher routine
  *
  * @param[in,out] preq        NFS request
@@ -524,9 +466,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
   dupreq_status_t dpq_status;
-  bool update_per_share_stats = false;
-  nfs_stat_type_t stat_type;
-  struct nfs_req_timer req_timer;
+  struct timespec timer_start;
   int port, rc = NFS_REQ_OK;
   bool slocked = false;
 
@@ -586,9 +526,9 @@ static void nfs_rpc_execute(request_data_t *preq,
    * we measure all time stats as intervals (elapsed nsecs) from
    * server boot time.  This gets high precision with simple 64 bit math.
    */
-  now(&(req_timer.timer_start));
+  now(&timer_start);
   req_ctx.start_time = timespec_diff(&ServerBootTime,
-				     &req_timer.timer_start);
+				     &timer_start);
   req_ctx.queue_wait = req_ctx.start_time - timespec_diff(&ServerBootTime,
 				     &preq->time_queued);
 
@@ -636,9 +576,6 @@ static void nfs_rpc_execute(request_data_t *preq,
 #ifdef USE_DBUS_STATS
 	server_stats_nfs_done(&req_ctx, exportid, preq, rc, true);
 #endif
-#if 0
-        nfs_req_timer_stop(&req_timer, worker_data, req, GANESHA_STAT_SUCCESS);
-#endif /* 0 */
         goto dupreq_finish;
       break;
 
@@ -1121,68 +1058,6 @@ static void nfs_rpc_execute(request_data_t *preq,
   if(req->rq_vers != NFS_V4)
 	  server_stats_nfs_done(&req_ctx, exportid, preq, rc, false);
 #endif
-  stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-  nfs_req_timer_stop(&req_timer, worker_data, req, stat_type);
-
-  if ((dpq_status != DUPREQ_EXISTS) &&
-      (! ((req->rq_prog == nfs_param.core_param.program[P_MNT]) ||
-         ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-          (req->rq_proc == 0 /*NULL RPC*/ ))))) {
-
-      update_per_share_stats = true;
-
-      /* Update per-share counter and process time */
-      nfs_stat_update(stat_type,
-                      &(pexport->worker_stats[worker_data->worker_index].
-                        stat_req),
-                      req, &req_timer.latency_stat);
-  }
-
-  nfs_req_timer_qdiff(&req_timer, worker_data, req, preq);
-
-  /* Update per-share process time + queue time */
-  if (update_per_share_stats) {
-      nfs_stat_update(GANESHA_STAT_SUCCESS,
-                      &(pexport->worker_stats[worker_data->worker_index].
-                        stat_req),
-                      req, &req_timer.latency_stat);
-
-      /* Update per-share total counters */
-      pexport->worker_stats[worker_data->worker_index].nb_total_req += 1;
-  }
-
-  /* Update total counters */
-  worker_data->stats.nb_total_req += 1;
-
-  if (req_timer.timer_diff.tv_sec >=
-      nfs_param.core_param.long_processing_threshold)
-    LogEvent(COMPONENT_DISPATCH,
-             "Function %s xid=%u exited with status %d taking %llu.%.9llu "
-             "seconds to process",
-             preqnfs->funcdesc->funcname, req->rq_xid, rc,
-             (unsigned long long) req_timer.timer_diff.tv_sec,
-             (unsigned long long) req_timer.timer_diff.tv_nsec);
-  else
-    LogDebug(COMPONENT_DISPATCH,
-             "Function %s xid=%u exited with status %d taking %llu.%.9llu "
-             "seconds to process",
-             preqnfs->funcdesc->funcname, req->rq_xid, rc,
-             (unsigned long long) req_timer.timer_diff.tv_sec,
-             (unsigned long long) req_timer.timer_diff.tv_nsec);
-
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Function %s xid=%u: process %llu.%.6llu await %llu.%.9llu",
-               preqnfs->funcdesc->funcname, req->rq_xid,
-               (unsigned long long int) req_timer.timer_diff.tv_sec,
-               (unsigned long long int) req_timer.timer_diff.tv_nsec,
-               (unsigned long long int) req_timer.queue_timer_diff.tv_sec,
-               (unsigned long long int) req_timer.queue_timer_diff.tv_nsec);
-
-  /* Perform NFSv4 operations statistics if required */
-  if(req->rq_vers == NFS_V4)
-      if(req->rq_proc == NFSPROC4_COMPOUND)
-          nfs4_op_stat_update(arg_nfs, res_nfs,
-                              &(worker_data->stats.stat_req));
 
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
