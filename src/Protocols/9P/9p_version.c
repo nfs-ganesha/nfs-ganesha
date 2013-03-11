@@ -49,9 +49,6 @@ int _9p_version( _9p_request_data_t * preq9p,
                  u32 * plenout, char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
-
   u16 * msgtag = NULL ;
   u32 * msize = NULL ;
   u16 * version_len = NULL ;
@@ -97,7 +94,6 @@ int _9p_version( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RVERSION: msize=%u version='%.*s'", *msize, (int)*version_len, version_str ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

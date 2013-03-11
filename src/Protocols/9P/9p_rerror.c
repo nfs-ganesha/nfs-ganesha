@@ -52,8 +52,6 @@ int _9p_rerror( _9p_request_data_t * preq9p,
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
-
   if ( !preq9p || !plenout || !preply )
    return -1 ;
 
@@ -70,7 +68,6 @@ int _9p_rerror( _9p_request_data_t * preq9p,
             _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname,
             *msgtag, err, strerror( err ) ) ;
 
-  _9p_stat_update( *pmsgtype, FALSE, &pwkrdata->stats._9p_stat_req ) ;
 
   return 1 ;
 }

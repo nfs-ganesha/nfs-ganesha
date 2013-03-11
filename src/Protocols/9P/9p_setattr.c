@@ -49,9 +49,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
-
   u16  * msgtag     = NULL ;
   u32  * fid        = NULL ;
   u32  * valid      = NULL ;
@@ -197,7 +194,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 
