@@ -564,6 +564,10 @@ static bool name2id(const struct gsh_buffdesc *name,
 	success = idmapper_add_user(name, *id,
 				    got_gid ? &gid : NULL);
 
+       pthread_rwlock_unlock(group ?
+			      &idmapper_group_lock :
+			      &idmapper_user_lock);
+
       if (!success)
 	LogMajor(COMPONENT_IDMAPPER,
 		 "%s(%s %u) failed",
