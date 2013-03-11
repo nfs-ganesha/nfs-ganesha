@@ -15,7 +15,7 @@ set(${PROJECT_NAME}_MAJOR_VERSION 2)
 set(${PROJECT_NAME}_MINOR_VERSION 0)
 set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
-  "GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
+  "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
 
 # Define CPACK component (to deal with sub packages)
@@ -111,7 +111,6 @@ option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
-option(ENABLE_SNMP_ADM "export GANESHA statistics with SNMP" OFF)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
 
 # Electric Fence (-lefence) link flag
@@ -474,10 +473,6 @@ endif(USE_FSAL_POSIX)
 add_subdirectory(FSAL)
 add_subdirectory(IdMapper)
 
-if(ENABLE_SNMP_ADM)
-  add_subdirectory(snmp_adm)
-endif(ENABLE_SNMP_ADM)
-
 add_subdirectory(MainNFSD)
 add_subdirectory(Docs)
 add_subdirectory(tools)
@@ -509,7 +504,6 @@ message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
-message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
@@ -604,11 +598,6 @@ set(USE_DBUS_STATS ${USE_DBUS_STATS}
 set(USE_NFSIDMAP ${USE_NFSIDMAP}
   CACHE BOOL
    "Use of libnfsidmap for name resolution"
-   FORCE)
-
-set(ENABLE_SNMP_ADM ${ENABLE_SNMP_ADM}
-  CACHE BOOL
-   "export GANESHA statistics with SNMP"
    FORCE)
 
 set(DEBUG_SAL ${DEBUG_SAL}

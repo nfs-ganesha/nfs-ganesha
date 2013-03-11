@@ -261,11 +261,6 @@ int ganefuse_main(int argc, char *argv[],
   ((fusefs_specific_initinfo_t *) &nfs_param.fsal_param.fs_specific_info)->fs_ops = &ops;
   ((fusefs_specific_initinfo_t *) &nfs_param.fsal_param.fs_specific_info)->user_data = user_data;
 
-#ifdef _SNMP_ADM_ACTIVE
-  if(!nfs_param.extern_param.snmp_adm.snmp_log_file[0])
-    strcpy(nfs_param.extern_param.snmp_adm.snmp_log_file, log_path);
-#endif
-
   /* add export by hand if no export was defined
    * in config file (always '/')
    */

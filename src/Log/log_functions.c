@@ -1470,7 +1470,11 @@ out:
  * w DMNOPQTUWX
  */
 
-#ifdef _SNMP_ADM_ACTIVE
+/**
+ * @TODO turn these into dbus admin methods
+ */
+
+#if 0 /* _SNMP_ADM_ACTIVE */
 
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
 {

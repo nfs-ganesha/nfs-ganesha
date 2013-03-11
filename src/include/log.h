@@ -13,10 +13,6 @@
 #include <pthread.h>
 #endif
 
-#ifdef _SNMP_ADM_ACTIVE
-#include "snmp_adm.h"
-#endif
-
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
 /* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as its first argument */
@@ -89,9 +85,6 @@ typedef enum log_levels
 
 /*
  * Log components used throughout the code.
- *
- * Note: changing the order of these may confuse SNMP users since SNMP OIDs
- * are numeric.
  */
 typedef enum log_components
 {
@@ -398,11 +391,6 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 int log_snprintf(char *out, size_t n, char *format, ...);
 int log_fprintf(FILE * file, char *format, ...);
-
-#ifdef _SNMP_ADM_ACTIVE
-int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
-int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
-#endif
 
 /* previously at log_macros.h */
 void RegisterCleanup(cleanup_list_element *clean);

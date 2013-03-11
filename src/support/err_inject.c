@@ -35,7 +35,6 @@
 #include "nfs_stat.h"
 #include "nfs_exports.h"
 #include "external_tools.h"
-#include "snmp_adm.h"
 
 #include "common_utils.h"
 #include "log.h"
@@ -43,6 +42,11 @@
 int worker_delay_time = 0;
 int next_worker_delay_time = 0;
 
+/**
+ * @TODO convert these to admin dbus methods
+ */
+
+#if 0
 int getErrInjectInteger(snmp_adm_type_union * param, void *opt)
 {
   long option = (long)opt;
@@ -92,3 +96,4 @@ int init_error_injector()
 
   return 0;
 }
+#endif

@@ -54,12 +54,6 @@ if(USE_CB_SIMULATOR)
     nfs_rpc_callback_simulator.c)
 endif(USE_CB_SIMULATOR)
 
-if(USE_SNMP_ADM)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    nfs_stats_snmp.c)
-endif(USE_SNMP_ADM)
-
 if(USE_UPCALL_SIMULATOR)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}

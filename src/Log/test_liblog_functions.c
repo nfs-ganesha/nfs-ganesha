@@ -245,47 +245,6 @@ void Test1(char *str, char *file)
   SetComponentLogBuffer(COMPONENT_MAIN, tempstr);
   SetComponentLogBuffer(COMPONENT_INIT, tempstr);
 
-#ifdef _SNMP_ADM_ACTIVE
-  {
-    snmp_adm_type_union param;
-    int rc;
-    strcpy(param.string, "FAILED");
-
-    LogTest("------------------------------------------------------");
-    LogTest("Test SNMP functions");
-    SetLevelDebug(NIV_DEBUG);
-
-    rc = getComponentLogLevel(&param, (void *)COMPONENT_ALL);
-    LogTest("getComponentLogLevel(&param, (void *)COMPONENT_ALL) rc=%d result=%s",
-            rc, param.string);
-    if (rc != 0)
-    {
-      LogTest("FAILURE");
-      exit(1);
-    }
-    strcpy(param.string, "NIV_EVENT");
-    rc = setComponentLogLevel(&param, (void *)COMPONENT_MAIN);
-    LogTest("setComponentLogLevel(&param, (void *)COMPONENT_MAIN) rc=%d", rc);
-    if (rc != 0)
-    {
-      LogTest("FAILURE");
-      exit(1);
-    }
-    TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-    TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-    TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-    TestEvent     (true,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-    TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-    TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
-    TestAlways    (true,  tempstr, COMPONENT_INIT, "LogAlways (should print)");
-    TestMajor     (true,  tempstr, COMPONENT_INIT, "LogMajor (should print)");
-    TestCrit      (true,  tempstr, COMPONENT_INIT, "LogCrit (should print)");
-    TestEvent     (true,  tempstr, COMPONENT_INIT, "LogEvent (should print)");
-    TestDebug     (true,  tempstr, COMPONENT_INIT, "LogDebug (should print)");
-    TestFullDebug (false, tempstr, COMPONENT_INIT, "LogFullDebug (shouldn't print)");
-  }
-#endif /* _SNMP_ADM_ACTIVE */
-
   LogTest("------------------------------------------------------");
   LogTest("Test all levels of log filtering");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_NULL);

@@ -287,12 +287,6 @@ nfs_parameter_t nfs_param =
   .cache_param.required_progress = 5,
   .cache_param.futility_count = 8,
 
-  /* SNMP ADM parameters */
-#ifdef _SNMP_ADM_ACTIVE
-  .extern_param.snmp_adm.product_id = 1,
-  .extern_param.snmp_adm.export_cache_stats = true,
-  .extern_param.snmp_adm.export_requests_stats = true,
-#endif
 };
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
@@ -589,20 +583,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   else
     LogDebug(COMPONENT_INIT,
              "Cache Inode Client configuration read from config file");
-
-#ifdef _SNMP_ADM_ACTIVE
-  if(get_snmpadm_conf(config_struct, &nfs_param.extern_param) != 0)
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error loading SNMP_ADM configuration");
-      return -1;
-    }
-  else
-    {
-      LogDebug(COMPONENT_INIT,
-               "snmp_adm configuration read from config file");
-    }
-#endif                          /* _SNMP_ADM_ACTIVE */
 
   /* Load export entries from parsed file
    * returns the number of export entries.
