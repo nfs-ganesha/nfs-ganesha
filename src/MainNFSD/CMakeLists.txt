@@ -19,7 +19,6 @@ endif(USE_DBUS)
 
 SET(MainServices_STAT_SRCS
    nfs_admin_thread.c
-   nfs_stats_thread.c
    nfs_rpc_callback.c
    nfs_worker_thread.c
    nfs_rpc_dispatcher_thread.c
