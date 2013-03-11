@@ -184,6 +184,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   cache_inode_status_t status_ref_dir_dst = CACHE_INODE_SUCCESS;
   cache_inode_status_t status_ref_dst = CACHE_INODE_SUCCESS;
   fsal_accessflags_t access_mask = 0;
+  bool dir_src_access = false;
 
   if ((dir_src->type != DIRECTORY) ||
       (dir_dest->type != DIRECTORY))
@@ -201,15 +202,11 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   status = cache_inode_access(dir_src,
                               access_mask,
                               req_ctx);
-  if (status != CACHE_INODE_SUCCESS) {
+  if (status != CACHE_INODE_SUCCESS && status != CACHE_INODE_FSAL_EACCESS) {
        goto out;
   }
-
-  status = cache_inode_access(dir_dest,
-                              access_mask,
-                              req_ctx);
-  if (status != CACHE_INODE_SUCCESS) {
-       goto out;
+  if (status == CACHE_INODE_SUCCESS) {
+       dir_src_access = true;
   }
 
   /* Check for object existence in source directory */
@@ -228,6 +225,27 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
              "Rename (%p,%s)->(%p,%s) : source doesn't exist",
              dir_src, oldname, dir_dest, newname);
     goto out;
+  }
+
+  if (!dir_src_access) {
+      access_mask = FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE);
+
+      status = cache_inode_access(lookup_src,
+                                  access_mask,
+                                  req_ctx);
+      if (status != CACHE_INODE_SUCCESS) {
+          goto out;
+      }
+  }
+
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                    FSAL_ACE4_MASK_SET(lookup_src->type == DIRECTORY ?
+                    FSAL_ACE_PERM_ADD_SUBDIRECTORY : FSAL_ACE_PERM_ADD_FILE);
+  status = cache_inode_access(dir_dest,
+                        access_mask,
+                        req_ctx);
+  if (status != CACHE_INODE_SUCCESS) {
+      goto out;
   }
 
   /* Check for object existence in destination directory */
