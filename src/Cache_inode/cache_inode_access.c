@@ -448,8 +448,7 @@ cache_inode_check_sticky(cache_entry_t *parent,
 
     if (!sticky_dir_allows(parent->obj_handle,
                            entry->obj_handle,
-                           req_ctx->creds))
-    {
+                           req_ctx->creds)) {
         status = CACHE_INODE_FSAL_EPERM;
     }
 

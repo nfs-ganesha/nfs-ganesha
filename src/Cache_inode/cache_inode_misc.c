@@ -691,8 +691,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         time_t oldmtime = 0;
 
-        if (entry->type == FS_JUNCTION)
-        {
+        if (entry->type == FS_JUNCTION) {
                 LogCrit(COMPONENT_CACHE_INODE,
                         "cache_inode_lock_trust_attrs called on file %p of bad type %d",
                         entry, entry->type);
@@ -701,29 +700,23 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
                 goto out;
         }
 
-        if (need_wr_lock)
-        {
+        if (need_wr_lock) {
                 PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-        }
-        else
-        {
+        } else {
                 PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
         }
 
         /* Do we need to refresh? */
-        if (cache_inode_is_attrs_valid(entry))
-        {
+        if (cache_inode_is_attrs_valid(entry)) {
                 goto out;
         }
 
-        if (!need_wr_lock)
-        {
+        if (!need_wr_lock) {
                 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
                 PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
                 /* Has someone else done it for us?  */
-                if (cache_inode_is_attrs_valid(entry))
-                {
+                if (cache_inode_is_attrs_valid(entry)) {
                         goto out;
                 }
         }
@@ -731,14 +724,12 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
         oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
         cache_status = cache_inode_refresh_attrs(entry, opctx);
-        if (cache_status != CACHE_INODE_SUCCESS)
-        {
+        if (cache_status != CACHE_INODE_SUCCESS) {
                 goto unlock;
         }
 
         if ((entry->type == DIRECTORY) &&
-            (oldmtime < entry->obj_handle->attributes.mtime.tv_sec))
-        {
+            (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
                 PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
                 cache_status = cache_inode_invalidate_all_cached_dirent(entry);
