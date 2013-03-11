@@ -35,12 +35,6 @@ if(USE_DBUS)
     ../Protocols/DBUS/dbus_server.c)
 endif(USE_DBUS)
 
-if(USE_STAT_EXPORTER)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    nfs_stat_exporter_thread.c)
-endif(USE_STAT_EXPORTER)
-
 if(USE_9P)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}
@@ -65,13 +59,6 @@ if(USE_SNMP_ADM)
     ${MainServices_STAT_SRCS}
     nfs_stats_snmp.c)
 endif(USE_SNMP_ADM)
-
-if(USE_STAT_EXPORTER)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    nfs_stat_exporter_thread.c
-    )
-endif(USE_STAT_EXPORTER)
 
 if(USE_UPCALL_SIMULATOR)
   SET(MainServices_STAT_SRCS

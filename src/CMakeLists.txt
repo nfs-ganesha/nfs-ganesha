@@ -113,8 +113,6 @@ option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_SNMP_ADM "export GANESHA statistics with SNMP" OFF)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
-option(USE_STAT_EXPORTER
-  "export GANESHA NFS request statistics with a dedicated thread and socket" OFF)
 
 # Electric Fence (-lefence) link flag
 option(USE_EFENCE "link with efence memory debug library" OFF)
@@ -379,9 +377,6 @@ if(USE_CB_SIMULATOR)
   set(_USE_CB_SIMULATOR ON)
 endif(USE_CB_SIMULATOR)
 
-if(USE_STAT_EXPORTER)
-  set(_USE_STAT_EXPORTER ON)
-endif(USE_STAT_EXPORTER)
 
 #callers add:
 #  target_link_libraries(your_library ${LIBTIRPC_LIBRARIES})
@@ -516,8 +511,6 @@ message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
-message(STATUS "USE_STAT_EXPORTER = ${USE_STAT_EXPORTER}")
-message(STATUS "_USE_STAT_EXPORTER = ${_USE_STAT_EXPORTER}")
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
 message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
@@ -626,16 +619,6 @@ set(DEBUG_SAL ${DEBUG_SAL}
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
   CACHE BOOL
    "enable error injection"
-   FORCE)
-
-set(USE_STAT_EXPORTER ${USE_STAT_EXPORTER}
-  CACHE BOOL
-   "export GANESHA NFS request statistics with a dedicated thread and socket"
-   FORCE)
-
-set(_USE_STAT_EXPORTER ${_USE_STAT_EXPORTER}
-  CACHE BOOL
-   "export GANESHA NFS request statistics with a dedicated thread and socket"
    FORCE)
 
 set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
