@@ -201,8 +201,6 @@ typedef struct exportlist {
 					     this list if NLM,
 					     otherwise state list is
 					     sufficient */
-	nfs_worker_stat_t *worker_stats; /*< List of worker stats to support
-					     per-share stat. */
 } exportlist_t;
 
 /* Constant for options masks */

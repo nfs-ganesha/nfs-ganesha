@@ -722,77 +722,6 @@ int nfs_check_param_consistency()
   return 0;
 }
 
-void nfs_reset_stats(void)
-{
-  unsigned int i = 0;
-  unsigned int j = 0;
-
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
-      workers_data[i].stats.nb_total_req = 0;
-      workers_data[i].stats.nb_udp_req = 0;
-      workers_data[i].stats.nb_tcp_req = 0;
-      workers_data[i].stats.stat_req.nb_mnt1_req = 0;
-      workers_data[i].stats.stat_req.nb_mnt3_req = 0;
-      workers_data[i].stats.stat_req.nb_nfs2_req = 0;
-      workers_data[i].stats.stat_req.nb_nfs3_req = 0;
-      workers_data[i].stats.stat_req.nb_nfs4_req = 0;
-
-      for(j = 0; j < MNT_V1_NB_COMMAND; j++)
-        {
-          workers_data[i].stats.stat_req.stat_req_mnt1[j].total = 0;
-          workers_data[i].stats.stat_req.stat_req_mnt1[j].success = 0;
-          workers_data[i].stats.stat_req.stat_req_mnt1[j].dropped = 0;
-
-        }
-
-      for(j = 0; j < MNT_V3_NB_COMMAND; j++)
-        {
-          workers_data[i].stats.stat_req.stat_req_mnt3[j].total = 0;
-          workers_data[i].stats.stat_req.stat_req_mnt3[j].success = 0;
-          workers_data[i].stats.stat_req.stat_req_mnt3[j].dropped = 0;
-        }
-
-      for(j = 0; j < NFS_V2_NB_COMMAND; j++)
-        {
-          workers_data[i].stats.stat_req.stat_req_nfs2[j].total = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs2[j].success = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs2[j].dropped = 0;
-        }
-
-      for(j = 0; j < NFS_V3_NB_COMMAND; j++)
-        {
-          workers_data[i].stats.stat_req.stat_req_nfs3[j].total = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs3[j].success = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs3[j].dropped = 0;
-        }
-
-      for(j = 0; j < NFS_V4_NB_COMMAND; j++)
-        {
-          workers_data[i].stats.stat_req.stat_req_nfs4[j].total = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs4[j].success = 0;
-          workers_data[i].stats.stat_req.stat_req_nfs4[j].dropped = 0;
-        }
-
-      for(j = 0; j < NFS_V40_NB_OPERATION; j++)
-        {
-          workers_data[i].stats.stat_req.stat_op_nfs40[j].total = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs40[j].success = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs40[j].failed = 0;
-        }
-
-      for(j = 0; j < NFS_V41_NB_OPERATION; j++)
-        {
-          workers_data[i].stats.stat_req.stat_op_nfs41[j].total = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs41[j].success = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs41[j].failed = 0;
-        }
-
-      workers_data[i].stats.last_stat_update = 0;
-    }                           /* for( i = 0 ; i < nfs_param.core_param.nb_worker ; i++ ) */
-
-}
-
 static void nfs_Start_threads(void)
 {
   int rc = 0;
@@ -1097,9 +1026,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Admin initialisation */
   nfs_Init_admin_thread();
-
-  /* Set the stats to zero */
-  nfs_reset_stats();
 
   LogEvent(COMPONENT_INIT,
 	   "Initializing IdMapper.");

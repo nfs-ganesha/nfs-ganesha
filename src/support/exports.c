@@ -547,9 +547,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->use_ganesha_write_buffer = false;
   p_entry->UseCookieVerifier = true;
 
-  p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
-                                     sizeof(nfs_worker_stat_t));
-
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
@@ -2893,9 +2890,6 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 	  return NULL;
 	}
     }
-  if (exportEntry->worker_stats != NULL)
-    gsh_free(exportEntry->worker_stats);
-
   gsh_free(exportEntry);
   return next;
 }
