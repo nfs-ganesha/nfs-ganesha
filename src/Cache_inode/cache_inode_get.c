@@ -85,7 +85,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      cih_latch_t latch;
 
      /* Do lookup */
-     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK,
+     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
+                                    CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
                                     __func__, __LINE__);
      if (*entry) {
 	 /* take an extra reference within the critical section */
