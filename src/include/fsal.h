@@ -161,24 +161,6 @@ uint32_t unix2fsal_mode(mode_t unix_mode);
  *                Structure used to define a fsal
  ******************************************************/
 
-/** @TODO interfaces that have to be added to new api
- */
-/*   /\* FSAL_UP functions *\/ */
-/* #ifdef _USE_FSAL_UP */
-/*   fsal_status_t(*fsal_up_init) (struct fsal_up_event_bus_parameter_t_ * pebparam,      /\* IN *\/ */
-/*                                 struct fsal_up_event_bus_context_t_ * pupebcontext     /\* OUT *\/ ); */
-/*   fsal_status_t(*fsal_up_addfilter)(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /\* IN *\/ */
-/*                                   struct fsal_up_event_bus_context_t_ * pupebcontext /\* INOUT *\/ ); */
-/*   fsal_status_t(*fsal_up_getevents)(struct fsal_up_event_t_ ** pevents,                /\* OUT *\/ */
-/*                                   fsal_count_t * event_nb,                   /\* IN *\/ */
-/*                                   fsal_time_t timeout,                       /\* IN *\/ */
-/*                                     fsal_count_t * peventfound,                 /\* OUT *\/ */
-/*                                   struct fsal_up_event_bus_context_t_ * pupebcontext /\* IN *\/ ); */
-/* #endif /\* _USE_FSAL_UP *\/ */
-
-/* new api to replace above
- */
-
 #include "fsal_api.h"
 #include "FSAL/access_check.h" /* rethink where this should go */
 

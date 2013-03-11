@@ -70,7 +70,7 @@ const char *Rpc_gss_svc_name[] =
  * disappear at some point, probably when exportlist_t is overhauled
  * to use nlm_list etc.
  *
- * @paran[in] exportroot The root for the export list
+ * @param[in] exportroot The root for the export list
  * @param[in] exportid   The id for the entry to be found.
  *
  * @return the pointer to the export list or NULL if failed.

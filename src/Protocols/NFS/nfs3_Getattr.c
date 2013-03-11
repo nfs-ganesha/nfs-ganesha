@@ -133,17 +133,15 @@ out:
 
         return rc;
 
-}                               /* nfs_Getattr */
+}
 
 /**
- * nfs_Getattr_Free: Frees the result structure allocated for nfs_Getattr.
- * 
- * Frees the result structure allocated for nfs_Getattr.
- * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @brief Free the result structure allocated for nfs_Getattr.
+ *
+ * @param[in,out] resp Result structure
  *
  */
-void nfs_Getattr_Free(nfs_res_t * resp)
+void nfs_Getattr_Free(nfs_res_t *resp)
 {
   /* Nothing to do here */
   return;

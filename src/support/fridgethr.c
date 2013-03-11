@@ -1507,8 +1507,8 @@ int frigethr_populate(struct fridgethr *fr,
 /**
  * @brief Set the wait time of a running fridge
  *
- * @param[in] ctx        Thread context
- * @param[in] time_delay New time delay
+ * @param[in] ctx          Thread context
+ * @param[in] thread_delay New time delay
  */
 
 void fridgethr_setwait(struct fridgethr_context *ctx,

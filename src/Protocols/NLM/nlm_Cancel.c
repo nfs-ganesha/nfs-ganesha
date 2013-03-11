@@ -38,7 +38,7 @@
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres
@@ -163,22 +163,22 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg,
 /* Asynchronous Message Entry Point */
 
 /**
- * nlm4_Cancel_Message: Cancel Lock Message
+ * @brief Cancel Lock Message
  *
  *  @param[in]  parg
  *  @param[in]  pexport
- *  @param[in]  pcontext
+ *  @param[in]  req_ctx
  *  @param[in]  pworker
  *  @param[in]  preq
  *  @param[out] pres
  *
  */
-int nlm4_Cancel_Message(nfs_arg_t            * parg,
-                        exportlist_t         * pexport,
+int nlm4_Cancel_Message(nfs_arg_t  *parg,
+                        exportlist_t *pexport,
 			struct req_op_context *req_ctx,
-                        nfs_worker_data_t    * pworker,
-                        struct svc_req       * preq,
-                        nfs_res_t            * pres)
+                        nfs_worker_data_t *pworker,
+                        struct svc_req *preq,
+                        nfs_res_t *pres)
 {
   state_nlm_client_t * nlm_client = NULL;
   state_nsm_client_t * nsm_client;

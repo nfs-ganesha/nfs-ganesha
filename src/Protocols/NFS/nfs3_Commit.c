@@ -148,7 +148,7 @@ out:
 }                               /* nfs3_Commit */
 
 /**
- * @brief Frees the result structure allocated for nfs3_Commit.
+ * @brief Free the result structure allocated for nfs3_Commit.
  *
  * This function frees the result structure allocated for nfs3_Commit.
  *
@@ -156,7 +156,7 @@ out:
  *
  */
 void
-nfs3_Commit_Free(nfs_res_t * pres)
+nfs3_Commit_Free(nfs_res_t *res)
 {
-        return;
-} /* nfs3_Commit_Free */
+	return;
+}

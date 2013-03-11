@@ -213,10 +213,10 @@ out:
  *
  * This function frees the result structure allocated for nfs_Link.
  *
- * @param[in,out] res Result structure
+ * @param[in,out] resp Result structure
  *
  */
-void nfs_Link_Free(nfs_res_t *rep)
+void nfs_Link_Free(nfs_res_t *resp)
 {
-        return;
+	return;
 } /* nfs_Link_Free */

@@ -224,16 +224,15 @@ int nfs_SetPostOpXAttrFile(exportlist_t *pexport,
 }                               /* nfs_SetPostOpXAttrFile */
 
 /**
- * nfs3_Access_Xattr: Implements NFSPROC3_ACCESS for xattr objects
+ * @brief Implements NFSPROC3_ACCESS for xattr objects
  *
  * Implements NFSPROC3_ACCESS.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param creds   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
  * @return always NFS_REQ_OK
  *
@@ -373,19 +372,16 @@ out:
       cache_inode_put(pentry);
 
   return (rc);
-}                               /* nfs3_Access_Xattr */
+}
 
 /**
- * nfs3_Lookup_Xattr: Implements NFSPROC3_LOOKUP for xattr ghost directory
+ * @brief NFSPROC3_LOOKUP for xattr ghost directory
  *
- * Implements NFSPROC3_LOOKUP.
- *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param creds   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
  * @return always NFS_REQ_OK
  *
@@ -490,24 +486,18 @@ out:
       cache_inode_put(pentry_dir);
 
   return (rc);
-}                               /* nfs3_Lookup_Xattr */
+}
 
 /**
- * nfs3_Readdir_Xattr: Implements NFSPROC3_READDIR for xattr ghost directory
+ * @brief NFSPROC3_READDIR for xattr ghost directory
  *
- * Implements NFSPROC3_READDIR.
- *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param creds   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the resulte
-nfs_xattr.c: In function 'nfs3_Write_Xattr':
- of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result
  *
  * @return always NFS_REQ_OK
- *
  */
 
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
@@ -832,12 +822,11 @@ out:
  *
  * Implements NFSPROC3_WRITE.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
  * @return always NFS_REQ_OK
  *
@@ -1061,16 +1050,13 @@ out:
 } /* nfs3_Write_Xattr */
 
 /**
- * nfs3_Read_Xattr: Implements NFSPROC3_READ for xattr ghost directory
+ * @brief NFSPROC3_READ for xattr ghost directory
  *
- * Implements NFSPROC3_READ.
- *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    The structure to contain the result of the call
  *
  * @return always NFS_REQ_OK
  *
@@ -1191,24 +1177,20 @@ out:
 
   return (rc);
 
-} /* nfs3_Read_Xattr */
+}
 
 /**
+ * @brief READDIRPLUS for xattr ghost objects
  *
- * nfs3_Readdirplus_Xattr: The NFS PROC3 READDIRPLUS for xattr ghost objects
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
- * Implements NFSPROC3_READDIRPLUS for ghost xattr objects
- *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
- *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable.
  *
  */
 
@@ -1608,19 +1590,16 @@ out:
 
   return (rc);
 
-}                               /* nfs3_Readdirplus_Xattr */
+}
 
 /**
- * nfs3_Getattr_Xattr: Implements NFSPROC3_GETATTR for xattr ghost objects
+ * @brief Implements NFSPROC3_GETATTR for xattr ghost objects
  *
- * Implements NFSPROC3_GETATTR
- *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg    NFS arguments union
+ * @param[in]  pexport NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  preq    SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
  * @return always NFS_REQ_OK
  *

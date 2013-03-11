@@ -372,9 +372,10 @@ state_status_t state_del_locked(state_t *state,
 }
 
 /**
- * @brief Deletes a state
+ * @brief Delete a state
  *
- * @param[in] state State to delete
+ * @param[in] state     State to delete
+ * @param[in] hold_lock If we already hold the lock
  *
  * @return Status of operation
  *
@@ -456,9 +457,9 @@ void release_lockstate(state_owner_t *lock_owner)
 }
 
 /**
- * @bief Remove all state belonging to the open owner.
+ * @brief Remove all state belonging to the open owner.
  *
- * @param[in,out] open_owner   Open owner
+ * @param[in,out] open_owner Open owner
  */
 void release_openstate(state_owner_t *open_owner)
 {

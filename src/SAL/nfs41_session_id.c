@@ -229,8 +229,8 @@ int nfs41_Init_session_id(hash_parameter_t *param)
 /**
  * @brief Build a sessionid from a clientid
  *
- * @param[in] clientid  Pointer to the related clientid
- * @param[out sessionid The sessionid
+ * @param[in]  clientid  Pointer to the related clientid
+ * @param[out] sessionid The sessionid
  */
 
 void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
@@ -249,7 +249,7 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 /**
  * @brief Set a session into the session hashtable.
  *
- * @param[in] session      Sessionid to add
+ * @param[in] sessionid    Sessionid to add
  * @param[in] session_data Session data to add
  *
  * @retval 1 if successful.

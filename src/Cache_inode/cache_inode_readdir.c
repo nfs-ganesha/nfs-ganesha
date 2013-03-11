@@ -301,6 +301,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
  *
  * @param[in,out] directory The cache entry representing the directory
  * @param[in]     name      The name indicating the entry to remove
+ * @param[in]     req_ctx   Request operation context
  *
  * @retval CACHE_INODE_SUCCESS on success.
  * @retval CACHE_INODE_BAD_TYPE if directory is not a directory.

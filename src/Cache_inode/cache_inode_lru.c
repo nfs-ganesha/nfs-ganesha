@@ -415,8 +415,6 @@ cache_inode_lru_clean(cache_entry_t *entry)
  * This function follows the locking discipline detailed above.  it
  * returns an lru entry removed from the queue system and which we are
  * permitted to dispose or recycle.
- *
- * @param[in] flags  One of LRU_ENTRY_L1 or LRU_ENTRY_L2.
  */
 #define LRU_NEXT(n) \
 	(atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)

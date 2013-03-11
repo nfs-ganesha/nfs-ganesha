@@ -110,13 +110,9 @@ char *rquota_functions_names[] = {
 };
 
 /**
- *
- * nfs_FhandleToStr: Converts a file handle to a string representation.
- *
- * Converts a file handle to a string representation.
+ * @brief Convert a file handle to a string representation
  *
  * @param rq_vers  [IN]    version of the NFS protocol to be used
- * @param pfh2     [IN]    NFSv2 file handle or NULL
  * @param pfh3     [IN]    NFSv3 file handle or NULL
  * @param pfh4     [IN]    NFSv4 file handle or NULL
  * @param str      [OUT]   string version of handle
@@ -3423,18 +3419,17 @@ void free_utf8(utf8string * utf8str)
 }
 
 /**
+ * @brief Makes a copy of a utf8str.
  *
- * utf8dup: Makes a copy of a utf8str.
- *
- * @param newstr  [OUT] copied UTF8 string
- * @param oldstr  [IN]  input UTF8 string
+ * @param[out] newstr  Copied UTF8 string
+ * @param[in]  oldstr  Input UTF8 string
+ * @param[in]  scan    Validation to perform
  *
  * @return -1 if failed, 0 if successful.
- *
  */
 nfsstat4 utf8dup(utf8string * newstr,
-	    utf8string * oldstr,
-	    utf8_scantype_t scan)
+		 utf8string * oldstr,
+		 utf8_scantype_t scan)
 {
   nfsstat4 status = NFS4_OK;
 
@@ -3457,18 +3452,20 @@ nfsstat4 utf8dup(utf8string * newstr,
 }
 
 /**
+ * @brief Copy a UTF-8 string buffer into a string
  *
- * utf82str: converts a UTF8 string buffer into a string descriptor.
+ * @deprecated This function does nothing useful and should be
+ * removed, probably after Frank Filz foreports his string handling
+ * work.
  *
- * Converts a UTF8 string buffer into a string descriptor.
- *
- * @param str     [OUT] computed output string
- * @param utf8str [IN]  input UTF8 string
+ * @param[out] str     Output string buffer
+ * @param[in]  size    Length of buffer
+ * @param[in]  utf8str input UTF8 string
  *
  * @return -1 if failed, 0 if successful.
  *
  */
-int utf82str(char *str, int size, utf8string * utf8str)
+int utf82str(char *str, int size, utf8string *utf8str)
 {
   int copy;
 
@@ -3493,7 +3490,7 @@ int utf82str(char *str, int size, utf8string * utf8str)
     return -1;
 
   return 0;
-}                               /* uft82str */
+}
 
 /**
  *
@@ -3547,16 +3544,15 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
  */
 
 /**
- *
- * nfs3_FSALattr_To_PartialFattr: Converts FSAL Attributes to NFSv3 attributes.
+ * @brief Converts FSAL Attributes to NFSv3 attributes.
  *
  * Fill in the fields in the fattr3 structure which have matching
  * attribute bits set. Caller must explictly specify which bits it expects
  * to avoid misunderstandings.
  *
- * @param[in] FSAL_attr FSAL attributes.
- * @param[in,out] want  Attributes which should be/have been copied
- * @param[out] Fattr    NFSv3 attributes.
+ * @param[in]     FSAL_attr FSAL attributes.
+ * @param[in,out] mask      Attributes which should be/have been copied
+ * @param[out]    Fattr     NFSv3 attributes.
  *
  */
 void
@@ -3757,19 +3753,17 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
 }
 
 /**
+ * @brief Checks if attributes have READ or WRITE access
  *
- * nfs4_Fattr_Check_Access_Bitmap: checks if attributes bitmaps have READ or WRITE access.
+ * @param[in] bitmap NFSv4 attribute bitmap
+ * @param[in] access Access to be checked, either FATTR4_ATTR_READ or
+ *                   FATTR4_ATTR_WRITE
  *
- * Checks if attributes have READ or WRITE access.
- *
- * @param pbitmap    [IN] pointer to NFSv4 attributes.
- * @param access     [IN] access to be checked, either FATTR4_ATTR_READ or FATTR4_ATTR_WRITE
- *
- * @return 1 if successful, 0 otherwise.
+ * @return true if successful, false otherwise.
  *
  */
 
-int nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
+bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 {
   int attribute;
 
@@ -3818,22 +3812,15 @@ int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
 }                               /* nfs4_Fattr_Check_Access */
 
 /**
+ * @brief Remove unsupported attributes from bitmap4
  *
- * nfs4_bitmap4_Remove_Unsupported: removes unsupported attributes from bitmap4
+ * @todo .supported is not nearly as good as actually checking with
+ * the export.
  *
- * Removes unsupported attributes from bitmap4
- *
- * @param pbitmap    [IN] pointer to NFSv4 attributes's bitmap.
- *
- * @return 1 if successful, 0 otherwise.
- *
+ * @param[in] bitmap NFSv4 attribute bitmap.
  */
 
-/** @TODO .supported is not nearly as good as actually checking with the
- *  export.
- */
-
-int nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
+void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
 {
 	int attribute;
 
@@ -3843,7 +3830,6 @@ int nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
 				break;
 		}
 	}
-	return 1;
 }
 
 
@@ -3869,18 +3855,15 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
 }                               /* nfs4_Fattr_Supported */
 
 /**
+ * @brief Check if an attribute is supported
  *
- * nfs4_Fattr_Supported: Checks if an attribute is supported.
+ * @param[in] bitmap NFSv4 attributes bitmap
  *
- * Checks if an attribute is supported.
- *
- * @param Fattr      [IN] pointer to NFSv4 attributes.
- *
- * @return 1 if successful, 0 otherwise.
+ * @return true if successful, false otherwise.
  *
  */
 
-int nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
+bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
 {
   int attribute;
 
@@ -4169,19 +4152,20 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 }
 
 /**
+ * @brief Convert NFSv4 attribute buffer to an FSAL attribute list
  *
- * @brief Converts NFSv4 attributes buffer to a FSAL attributes structure.
- *
- * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
- * @param Fattr      [IN] pointer to NFSv4 attributes.
+ * @param[out] FSAL_attr FSAL attributes
+ * @param[in]  Fattr     NFSv4 attributes
+ * @param[in]  data      Compound data
  *
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,
-			    fattr4 *Fattr, compound_data_t *data)
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *FSAL_attr,
+			    fattr4 *Fattr,
+			    compound_data_t *data)
 {
-  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL, NULL, data);
+  return Fattr4_To_FSAL_attr(FSAL_attr, Fattr, NULL, NULL, data);
 }
 
 /**
@@ -4207,13 +4191,12 @@ int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 *Fattr)
 }
 
 /* Error conversion routines */
+
 /**
+ * @brief Convert a cache_inode status to a nfsv4 status.
  *
- * nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
- *
- *  Converts a cache_inode status to a nfsv4 status.
- *
- * @param error  [IN] Input cache inode ewrror.
+ * @param[in] error The cache inode error
+ * @param[in] where String identifying the caller
  *
  * @return the converted NFSv4 status.
  *
@@ -4363,15 +4346,14 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
     }
 
   return nfserror;
-}                               /* nfs4_Errno */
+}
 
 /**
  *
- * nfs3_Errno: Converts a cache_inode status to a nfsv3 status.
+ * @brief Convert a cache_inode status to a nfsv3 status.
  *
- *  Converts a cache_inode status to a nfsv3 status.
- *
- * @param error  [IN] Input cache inode ewrror.
+ * @param[in] error Input cache inode error
+ * @param[in] where String identifying caller
  *
  * @return the converted NFSv3 status.
  *
@@ -4396,8 +4378,8 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error %u in %s converted to NFS3ERR_IO but was set non-retryable",
-              error, where);
+	      "Error %u in %s converted to NFS3ERR_IO but was set non-retryable",
+	      error, where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -4580,15 +4562,12 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
   memset((char *)fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 
   return NFS4_OK;
-}                               /* nfs4_AllocateFH */
+}
 
 /**
+ * @brief Fill in the reqeust contex of the compound data
  *
- * nfs4_MakeCred
- *
- * This routine fills in the pcontext field in the compound data.
- *
- * @param pfh [INOUT] pointer to compound data to be used. NOT YET IMPLEMENTED
+ * @param[in] data Compound data to be used
  *
  * @return NFS4_OK if successful, NFS4ERR_WRONGSEC otherwise.
  *
@@ -4621,7 +4600,7 @@ int nfs4_MakeCred(compound_data_t * data)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;
-} /* nfs4_MakeCred */
+}
 
 /**
  * @brief Access mask from operation and filetype

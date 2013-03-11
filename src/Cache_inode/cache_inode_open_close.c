@@ -131,7 +131,7 @@ is_open_for_read(cache_entry_t *entry)
  *
  * @param[in]  entry     Cache entry representing the file to open
  * @param[in]  openflags The type of access for which to open
- * @param[in]  context   FSAL operation context
+ * @param[in]  req_ctx   FSAL operation context
  * @param[in]  flags     Flags indicating lock status
  *
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise

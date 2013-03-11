@@ -7,31 +7,26 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    extended_types.h
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/16 16:26:30 $
- * \version $Revision: 1.3 $
- * \brief   Extended type, platform dependant.
- *
- * extended_types.h: defines some types, line longlong_t or u_longlong_t if not defined in the OS headers.
- *
+ * @file include/extended_types.h
+ * @brief Extended types, platform dependant.
  *
  */
 
@@ -61,7 +56,7 @@ typedef unsigned int uint_t;
  */
 
 #ifndef ENOATTR
-#define ENOATTR ENODATA        /* No such attribute */
+#define ENOATTR ENODATA /* No such attribute */
 #endif
 
-#endif                          /* _EXTENDED_TYPES_H */
+#endif /* _EXTENDED_TYPES_H */

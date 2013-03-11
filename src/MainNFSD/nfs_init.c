@@ -368,11 +368,14 @@ void *sigmgr_thread(void *UnusedArg)
  * @brief Initialize NFSd prerequisites
  *
  * @param[in] program_name Name of the program
- * @param[in] program_name Server host name
+ * @param[in] host_name    Server host name
  * @param[in] debug_level  Debug level
  * @param[in] log_path     Log path
  */
-void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path)
+void nfs_prereq_init(char *program_name,
+		     char *host_name,
+		     int debug_level,
+		     char *log_path)
 {
   /* Initialize logging */
   SetNamePgm(program_name);
@@ -463,8 +466,8 @@ void nfs_print_param_config()
 /**
  * @brief Load parameters from config file
  *
- * @param[in]  config_file_t  Parsed config file
- * @param[out] p_start_info_t Startup parameters
+ * @param[in]  config_struct Parsed config file
+ * @param[out] p_start_info  Startup parameters
  *
  * @return -1 on failure.
  */

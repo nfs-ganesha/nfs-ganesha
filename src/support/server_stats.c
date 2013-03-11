@@ -286,12 +286,11 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 /**
  * @brief Record latency stats
  *
- * @brief op           [IN] protocol op stats struct
- * @brief request_time [IN] time consumed by request
+ * @param op           [IN] protocol op stats struct
+ * @param request_time [IN] time consumed by request
  * @param qwait_time   [IN] time sitting on queue
  * @param dup          [IN] detected this was a dup request
  */
-
 void record_latency(struct proto_op *op,
 		    nsecs_elapsed_t request_time,
 		    nsecs_elapsed_t qwait_time,

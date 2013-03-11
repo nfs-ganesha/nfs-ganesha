@@ -241,10 +241,9 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 
 /**
  * @brief Init the hashtable for 9P Owner cache
- * 
- * @reval 0 if successful.
- * @retval -1 otherwise.
  *
+ * @retval 0 if successful.
+ * @retval -1 otherwise.
  */
 
 int Init_9p_hash(void)

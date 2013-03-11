@@ -160,21 +160,18 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 #endif
 
   return 1;
-}                               /* nfs_Add_MountList_Entry */
+}
 
 /**
  *
- * nfs_Remove_MountList_Entry: Removes a client to the mount list.
+ * @brief Remove a client from the mount list
  *
- * Removes a client to the mount list.
+ * @param[in] hostname The hostname for the client
+ * @param[in] dirpath  The mounted path
  *
- * @param hostname [IN] the hostname for the client
- * @param path [IN] the mounted path 
- *
- * @return 1 if successful, 0 otherwise
- *
+ * @return true if successful, false otherwise
  */
-int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
+bool nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 {
 #ifndef _NO_MOUNT_LIST
   mountlist piter_mnt_list_entry;
@@ -231,17 +228,11 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 }                               /* nfs_Remove_MountList_Entry */
 
 /**
+ * @brief Purges the whole mount list
  *
- * nfs_Purge_MountList: Purges the whole mount list.
- *
- * Purges the whole mount list.
- *
- * @param none (take no argument)
- *
- * @return 1 if successful, 0 otherwise
- *
+ * @return true if successful, false otherwise
  */
-int nfs_Purge_MountList(void)
+bool nfs_Purge_MountList(void)
 {
   mountlist piter_mnt_list_entry __attribute__((unused)),
     piter_mnt_list_entry_next __attribute__((unused));
@@ -272,12 +263,7 @@ int nfs_Purge_MountList(void)
 }                               /* nfs_Purge_MountList */
 
 /**
- *
- * nfs_Init_MountList: Initializes the mount list.
- *
- * Initializes the mount list.
- *
- * @param none (take no argument)
+ * @brief Initializes the mount list
  *
  * @return 1 if successful, 0 otherwise
  *
@@ -294,15 +280,9 @@ int nfs_Init_MountList(void)
 }                               /* nfs_Init_MountList */
 
 /**
+ * @brief Returns the mount list
  *
- * nfs_Get_MountList: Returns the mount list.
- *
- * Returns the mount list.
- *
- * @param none (take no argument)
- *
- * @return the mount list (NULL if mount list is empty)
- *
+ * @return The mount list
  */
 mountlist nfs_Get_MountList(void)
 {
@@ -310,19 +290,12 @@ mountlist nfs_Get_MountList(void)
     nfs_Print_MountList();
 
   return MNT_List_head;
-}                               /* nfs_Get_MountList */
+}
 
 /**
- *
- * nfs_Print_MountList: Prints the mount list (for debugging purpose).
- *
- * Prints the mount list (for debugging purpose).
- *
- * @param none (take no argument)
- *
- * @return nothing (void function)
- *
+ * @brief Print the mount list
  */
+
 void nfs_Print_MountList(void)
 {
   mountlist piter_mnt_list_entry = NULL;

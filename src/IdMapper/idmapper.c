@@ -573,7 +573,8 @@ static bool name2id(const struct gsh_buffdesc *name,
  * @brief Convert a name to a uid
  *
  * @param[in]  name The name of the user
- * @param[out] uid  The resulting uid
+ * @param[out] uid  The resulting UID
+ * @param[in]  anon The anonymous UID for this export
  *
  * @return true if successful, false otherwise
  *
@@ -588,7 +589,8 @@ bool name2uid(const struct gsh_buffdesc *name, uid_t *uid,
  * @brief Convert a name to a GID
  *
  * @param[in]  name The name of the user
- * @param[out] pgid The resulting GID
+ * @param[out] gid  The resulting GID
+ * @param[in]  anon The anonymous GID for this export
  *
  * @return true  if successful, false otherwise
  */

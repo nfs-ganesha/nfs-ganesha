@@ -1053,9 +1053,9 @@ int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
 int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, struct bitmap4 * Bitmap);
 int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
-int nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
+bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
 int nfs4_Fattr_Supported(fattr4 * Fattr);
-int nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
+bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
 int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen);
@@ -1147,7 +1147,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
 
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);
-int nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *pbitmap) ;
+void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *pbitmap) ;
 
 /* Error conversion routines */
 nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *);

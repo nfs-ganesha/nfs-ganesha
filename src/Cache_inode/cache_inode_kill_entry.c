@@ -31,9 +31,10 @@
 
 /**
  *
- * @File cache_inode_kill_entry.c
+ * @file cache_inode_kill_entry.c
  * @brief Destroy stale entries
  */
+
 #include "config.h"
 #include <unistd.h>
 #include <sys/types.h>
@@ -53,7 +54,6 @@
 #include "nfs4_acls.h"
 
 /**
- *
  * @brief Forcibly remove an entry from the cache (top half)
  *
  * This function is used to invalidate a cache entry when it

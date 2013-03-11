@@ -319,8 +319,6 @@ end:
  *
  * This function create the accept socket for the 9p dispatcher thread.
  *
- * @param (none)
- *
  * @return socket fd or -1 if failed.
  *
  */

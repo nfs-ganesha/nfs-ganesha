@@ -511,19 +511,19 @@ state_status_t state_share_check_prev(state_t *state,
  * @return State status.
  */
 state_status_t state_share_check_conflict(cache_entry_t *entry,
-                                          int share_acccess,
-                                          int share_deny)
+					  int share_access,
+					  int share_deny)
 {
   char *cause = "";
 
-  if((share_acccess & OPEN4_SHARE_ACCESS_READ) != 0 &&
+  if((share_access & OPEN4_SHARE_ACCESS_READ) != 0 &&
      entry->object.file.share_state.share_deny_read > 0)
     {
       cause = "access read denied by existing deny read";
       goto out_conflict;
     }
 
-  if((share_acccess & OPEN4_SHARE_ACCESS_WRITE) != 0 &&
+  if((share_access & OPEN4_SHARE_ACCESS_WRITE) != 0 &&
      entry->object.file.share_state.share_deny_write > 0)
     {
       cause = "access write denied by existing deny write";

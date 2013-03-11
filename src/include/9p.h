@@ -248,9 +248,7 @@ enum _9p_qid_t {
 #define _9P_ROOM_RREADDIR (_9P_STD_HDR_SIZE + 4 )
 
 /**
- * struct _9p_str - length prefixed string type
- * @len: length of the string
- * @str: the string
+ * @brief Length prefixed string type
  *
  * The protocol uses length prefixed strings for all
  * string data, so we replicate that for our internal
@@ -258,15 +256,12 @@ enum _9p_qid_t {
  */
 
 struct _9p_str {
-	u16  len   ;
-	char *str ;
+	u16  len; /*< Length of the string */
+	char *str; /*< The string */
 };
 
 /**
- * struct _9p_qid - file system entity information
- * @type: 8-bit type &_9p_qid_t
- * @version: 16-bit monotonically incrementing version number
- * @path: 64-bit per-server-unique ID for a file system element
+ * @brief file system entity information
  *
  * qids are /identifiers used by 9P servers to track file system
  * entities.  The type is used to differentiate semantics for operations
@@ -283,9 +278,9 @@ struct _9p_str {
  */
 
 typedef struct _9p_qid {
-	u8 type;
-	u32 version;
-	u64 path;
+	u8 type; /*< Type */
+	u32 version; /*< Monotonically incrementing version number */
+	u64 path; /*< Per-server-unique ID for a file system element */
 } _9p_qid_t;
 
 typedef struct _9p_fid__

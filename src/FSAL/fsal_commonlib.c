@@ -173,7 +173,7 @@ errout:
  *
  * Free the memory allocated by init_export_ops. Poison pointers.
  *
- * @param[0] exp_hdl
+ * @param[in] exp_hdl Export handle
  *
  */
 

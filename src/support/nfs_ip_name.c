@@ -49,45 +49,37 @@ hash_table_t *ht_ip_name;
 unsigned int expiration_time;
 
 /**
+ * @name Compute the hash value for the entry in IP/name cache
  *
- *  ip_name_rbt_hash_func: computes the hash value for the entry in IP/name cache.
- * 
- * Computes the hash value for the entry in IP/name cache.
- * This function is called internal in the HasTable_* function
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
+ * @param[in] hparam    Hash table parameter.
+ * @param[in] buffcleff The hash key buffer
  *
  * @return the computed hash value.
  *
  * @see HashTable_Init
  *
  */
-uint32_t ip_name_value_hash_func(hash_parameter_t * p_hparam,
-                                          struct gsh_buffdesc * buffclef)
+uint32_t ip_name_value_hash_func(hash_parameter_t *hparam,
+				 struct gsh_buffdesc *buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->addr, IGNORE_PORT) % p_hparam->index_size;
+  return hash_sockaddr(buffclef->addr, IGNORE_PORT) % hparam->index_size;
 }
 
 /**
+ * @brief Compute the rbt value for the entry in IP/name cache
  *
- *  ip_name_rbt_hash_func: computes the rbt value for the entry in IP/name cache.
- * 
- * Computes the rbt value for the entry in IP/name cache.
- * This function is called internal in the HasTable_* function
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
+ * @param[in] hparam   Hash table parameter
+ * @param[in] buffclef Hash key buffer
  *
  * @return the computed rbt value.
  *
  * @see HashTable_Init
  *
  */
-uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
-                                        struct gsh_buffdesc * buffclef)
+uint64_t ip_name_rbt_hash_func(hash_parameter_t *hparam,
+			       struct gsh_buffdesc *buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->addr, IGNORE_PORT);
+  return hash_sockaddr(buffclef->addr, IGNORE_PORT);
 }
 
 /**
@@ -105,20 +97,16 @@ uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_name(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return (cmp_sockaddr((sockaddr_t *)(buff1->addr), (sockaddr_t *)(buff2->addr), IGNORE_PORT) != 0) ? 0 : 1;
+  return (cmp_sockaddr(buff1->addr, buff2->addr, IGNORE_PORT) != 0) ? 0 : 1;
 }
 
 /**
+ * @brief Display the ip_name stored in the buffer
  *
- * display_ip_name_key: displays the ip_name stored in the buffer.
- *
- * displays the ip_name key stored in the buffer. This function is to be used as 'key_to_str' field. 
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
+ * @param[in]  pbuff Buffer to display
+ * @param[out] str   Output string
  *
  * @return number of character written.
- *
  */
 int display_ip_name_key(struct gsh_buffdesc * pbuff, char *str)
 {
@@ -129,16 +117,12 @@ int display_ip_name_key(struct gsh_buffdesc * pbuff, char *str)
 }
 
 /**
+ * @brief Display the ip_name stored in the buffer
  *
- * display_ip_name_vale: displays the ip_name stored in the buffer.
+ * @param[in]  pbuff Buffer to display
+ * @param[out] str   Output string
  *
- * displays the ip_name value stored in the buffer. This function is to be used as 'val_to_str' field. 
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
- *
- * @return number of character written.
- *
+ * @return number of character written
  */
 int display_ip_name_val(struct gsh_buffdesc * pbuff, char *str)
 {

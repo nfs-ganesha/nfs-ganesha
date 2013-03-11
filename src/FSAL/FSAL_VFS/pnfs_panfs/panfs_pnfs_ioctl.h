@@ -144,16 +144,15 @@ struct pan_layoutcommit_ioctl {
 /**
  * @brief Retrieve next layout Recall
  *
- * @param[out]    events      An array of recall events to recieve one
- *                            or more events to recall.
- * @param[in]     max_events  Max elements at @events array
- * @param[out]    num_events  Num of valid events returned
+ * @param[out] events      An array of recall events to recieve one
+ *                         or more events to recall.
+ * @param[in]  max_events  Max elements at events array
+ * @param[out] num_events  Num of valid events returned
  *
  */
 struct pan_cb_layoutrecall_ioctl {
 	struct pan_ioctl_hdr hdr;		/* IN/OUT */
 	struct pan_cb_layoutrecall_event {
-		
 		struct pnfs_segment seg;
 		void *recall_file_info;
 		void *cookie;

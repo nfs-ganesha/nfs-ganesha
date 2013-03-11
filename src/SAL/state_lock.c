@@ -252,7 +252,7 @@ const char *str_blocking(state_blocking_t blocking)
 /**
  * @brief Return string for blocking status
  *
- * @param[in] blocking Blocking status
+ * @param[in] blocked Blocking status
  *
  * @return String for blocking status.
  */
@@ -3115,9 +3115,9 @@ state_status_t state_cancel(cache_entry_t *entry,
  *
  * Also used to handle NLM_FREE_ALL
  *
- * @param[in] nsmclien NSM client data
- * @param[in] req_ctx  Request context
- * @param[in] state    Associated state
+ * @param[in] nsmclient NSM client data
+ * @param[in] req_ctx   Request context
+ * @param[in] state     Associated state
  *
  * @return State status.
  */
@@ -3453,7 +3453,7 @@ void find_blocked_lock_upcall(cache_entry_t *entry,
 }
 
 /**
- * @breief Handle upcall for granted lock
+ * @brief Handle upcall for granted lock
  *
  * @param[in] entry File on which lock is granted
  * @param[in] owner Lock owner

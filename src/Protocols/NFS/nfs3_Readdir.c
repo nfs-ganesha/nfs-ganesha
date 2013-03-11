@@ -335,26 +335,23 @@ out:
 outerr:
      assert(cbdata == &cb3);
      res->res_readdir3.status = cb3.error;
-     
 
      goto out;
 } /* nfs_Readdir */
 
 /**
- * nfs3_Readdir_Free: Frees the result structure allocated for nfs3_Readdir.
+ * @brief Free the result structure allocated for nfs3_Readdir
  *
- * Frees the result structure allocated for nfs3_Readdir.
- *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param[in,out] resp Result structure
  *
  */
-void nfs3_Readdir_Free(nfs_res_t * resp)
+void nfs3_Readdir_Free(nfs_res_t *resp)
 {
-     if ((resp->res_readdir3.status == NFS3_OK) &&
-         (resp->res_readdir3.READDIR3res_u.resok.reply.entries != NULL)) {
-          free_entry3s(resp->res_readdir3.READDIR3res_u.resok.reply.entries);
+	if ((resp->res_readdir3.status == NFS3_OK) &&
+	    (resp->res_readdir3.READDIR3res_u.resok.reply.entries != NULL)) {
+		free_entry3s(resp->res_readdir3.READDIR3res_u.resok.reply.entries);
      }
-} /* nfs3_Readdir_Free */
+}
 
 /**
  * @brief Populate entry3s when called from cache_inode_readdir

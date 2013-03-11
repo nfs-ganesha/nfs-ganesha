@@ -57,8 +57,6 @@
  * This function initializes the memory pools, lookup table, and weakref
  * table used for cache management.
  *
- * @param[in]  param  The parameters for this cache
- *
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */

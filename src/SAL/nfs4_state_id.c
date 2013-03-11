@@ -235,10 +235,10 @@ int nfs4_Init_state_id(hash_parameter_t *param)
     }
 
   return 0;
-}                               /* nfs_Init_client_id */
+}
 
 /**
- * @brilef Build the 12 byte "other" portion of a stateid
+ * @brief Build the 12 byte "other" portion of a stateid
  *
  * It is built from the ServerEpoch and a 64 bit global counter.
  *
@@ -300,8 +300,8 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
 /**
  * @brief Get the state from the stateid
  *
- * @param[in]  other stateid4.other
- * @param[out] state State found
+ * @param[in]  other      stateid4.other
+ * @param[out] state_data State found
  *
  * @retval 1 if ok.
  * @retval 0 if not ok.
@@ -364,11 +364,13 @@ int nfs4_State_Del(char other[OTHERSIZE])
  *
  * This function yields the state for the stateid if it is valid.
  *
- * @param[in]  stateid Stateid to look up
- * @param[in]  entry   Associated file
- * @param[out] state   Found state
- * @param[in]  data    Compound data
- * @param[in]  flags   Flags governing special stateids
+ * @param[in]  stateid     Stateid to look up
+ * @param[in]  entry       Associated file
+ * @param[out] state       Found state
+ * @param[in]  data        Compound data
+ * @param[in]  flags       Flags governing special stateids
+ * @param[in]  owner_seqid seqid on v4.0 owner
+ * @param[in]  check_seqid Whether to validate owner_seqid
  * @param[in]  tag     Arbitrary string for logging/debugging
  *
  * @return NFSv4 status codes

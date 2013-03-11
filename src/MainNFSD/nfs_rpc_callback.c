@@ -621,7 +621,7 @@ out:
  *
  * @param[in,out] session       The session on which to create the
  *                              back channel
- * @parma[in]     num_sec_parms Length of sec_parms list
+ * @param[in]     num_sec_parms Length of sec_parms list
  * @param[in]     sec_parms     Allowable security parameters
  *
  * @return 0 or POSIX error code.

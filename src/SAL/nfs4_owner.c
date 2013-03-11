@@ -369,11 +369,13 @@ void nfs4_owner_PrintAll(void)
 /**
  * @brief Create an NFSv4 state owner
  *
- * @param[in] name          Owner name
- * @param[in] clientid      Client record
- * @param[in] type          Owner type
- * @param[in] related_owner For lock owners, the related open owner
- * @param[in] init_seqid    The starting seqid (for NFSv4.0)
+ * @param[in]  name          Owner name
+ * @param[in]  clientid      Client record
+ * @param[in]  type          Owner type
+ * @param[in]  related_owner For lock owners, the related open owner
+ * @param[in]  init_seqid    The starting seqid (for NFSv4.0)
+ * @param[out] pisnew        Whether the owner actually is new
+ * @param[in]  care          Care flag (to unify v3/v4 owners?)
  *
  * @return A new state owner or NULL.
  */

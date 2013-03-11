@@ -491,9 +491,8 @@ int init_fsals(config_file_t config);
  * module
  */
 
-
 /**
- * @brief Register a FSAL.
+ * @brief Register a FSAL
  *
  * This function registers an FSAL with ganesha and initializes the
  * public portion of the FSAL data structure, including providing
@@ -1099,9 +1098,7 @@ struct export_ops {
  * This function is called by write and commit to match the commit verifier
  * with the one returned on  write.
  *
- * @param[in/out] verf_desc Address and length of verifier
- *
- * @return No errors
+ * @param[in,out] verf_desc Address and length of verifier
  */
         void (*get_write_verifier)(
                  struct gsh_buffdesc *verf_desc);
@@ -1389,7 +1386,7 @@ struct fsal_obj_ops {
  * link_content gsh_buffdesc.  The caller *must* free this buffer with
  * gsh_free.
  *
- * The symlink content passed back *must* be \NUL terminated and the
+ * The symlink content passed back *must* be null terminated and the
  * length indicated in the buffer description *must* include the
  * terminator.
  *
@@ -1586,7 +1583,7 @@ struct fsal_obj_ops {
  * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
- * @param[in/out] fsal_stable In, if on, the fsal is requested to write data
+ * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
  *                            to stable store. Out, the fsal reports what
  *                            it did.
  *

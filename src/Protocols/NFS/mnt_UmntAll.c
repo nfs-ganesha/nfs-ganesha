@@ -55,7 +55,7 @@
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres

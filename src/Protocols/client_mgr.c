@@ -27,7 +27,7 @@
  */
 
 /**
- * @defgroup Client management
+ * @defgroup clntmmt Client management
  * @{
  */
 
@@ -100,8 +100,8 @@ client_ip_cmpf(const struct avltree_node *lhs,
  * IPv4 and IPv6 addresses both handled.  Sets a reference on the
  * block.
  *
- * @param client [IN] the sockaddr struct with the v4/v6 address
- * @param lookup_only [IN] if true, only look up, don't create
+ * @param[in] client_ipaddr The sockaddr struct with the v4/v6 address
+ * @param[in] lookup_only   If true, only look up, don't create
  *
  * @return pointer to ref locked stats block
  */

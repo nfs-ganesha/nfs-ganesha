@@ -90,9 +90,9 @@ pool_t *client_id_pool;
 pool_t *client_record_pool;
 
 /**
- * @brief Return the nfs4 status for the client id error code
+ * @brief Return the NFSv4 status for the client id error code
  *
- * @param[in] client id error code
+ * @param[in] err Client id error code
  *
  * @return the corresponding nfs4 error code
  */
@@ -118,9 +118,9 @@ nfsstat4 clientid_error_to_nfsstat(clientid_status_t err)
 }
 
 /**
- * @brief Return the nfs4 status string for the client id error code
+ * @brief Return the NFSv4 status string for the client id error code
  *
- * @param[in] client id error code
+ * @param[in] err client id error code
  *
  * @return the error string corresponding nfs4 error code
  */
@@ -441,8 +441,8 @@ int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 /**
  * @brief Displays the client_id stored from the hash table
  *
- * @param[in] buff1 buffer to display
- * @param[in] buff2 output string
+ * @param[in]  buff Buffer to display
+ * @param[out] str  Output string
  *
  * @return Number of character written.
  *
@@ -459,8 +459,8 @@ int display_client_id_key(struct gsh_buffdesc *buff, char *str)
 /**
  * @brief Displays the client record from a hash table
  *
- * @param[in] buff1 buffer to display
- * @param[in] buff2 output string
+ * @param[in]  buff Buffer to display
+ * @param[out] str  Output string
  *
  * @return Number of character written.
  *
@@ -710,9 +710,10 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 }
 
 /**
- * @brief Confirms a client id record.
+ * @brief Confirm a client id record.
  *
- * @param[in] clientid the client id record
+ * @param[in] clientid  The client id record
+ * @param[in] component Component ID for logging
  *
  * @retval CLIENT_ID_SUCCESS if successfull.
  * @retval CLIENT_ID_INVALID_ARGUMENT if unable to find record in
@@ -1042,10 +1043,10 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht,
 }
 
 /**
- * @brief Tries to get a pointer to an unconfirmed entry for client_id cache.
+ * @brief Triy to get a pointer to an unconfirmed entry for client_id cache.
  *
- * @param[in] clientid     the client id
- * @param[out] p_clientid the found client id
+ * @param[in]  clientid   The client id
+ * @param[out] client_rec The found client id structure
  *
  * @return Same as nfs_client_id_get
  */
@@ -1430,8 +1431,8 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 /**
  * @brief Displays the client_record stored in the buffer.
  *
- * @param[in] buff Buffer to display
- * @param[out str  output string
+ * @param[in]  buff Buffer to display
+ * @param[out] str  output string
  *
  * @return The number of character written.
  */
@@ -1443,8 +1444,8 @@ int display_client_record_key(struct gsh_buffdesc *buff, char *str)
 /**
  * @brief Displays the client_record stored in the buffer.
  *
- * @param[in] buff Buffer to display
- * @param[out str  output string
+ * @param[in]  buff Buffer to display
+ * @param[out] str  output string
  *
  * @return The number of character written.
  */

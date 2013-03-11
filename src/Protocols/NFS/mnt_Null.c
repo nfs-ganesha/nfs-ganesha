@@ -58,8 +58,8 @@
  *
  * @param[in]  parg     ignored
  * @param[in]  pexport  ignored
- * @param[in]  pcontext ignored
- * @param[in]  pclient  ignored
+ * @param[in]  req_ctx  ignored
+ * @param[in]  pworker  ignored
  * @param[in]  preq     ignored
  * @param[out] pres     ignored
  *

@@ -44,14 +44,12 @@
 /**
  * @brief The RQUOTA proc null function, for all versions.
  *
- * The RQUOTA proc null function, for all versions.
- *
- * @param[in]  parg     Ignored
- * @param[in]  pexport  Ignored
- * @param[in]  pcontext Ignored
- * @param[in]  pworker  Ignored
- * @param[in]  preq     Ignored
- * @param[out] pres     Ignored
+ * @param[in]  parg    Ignored
+ * @param[in]  pexport Ignored
+ * @param[in]  req_ctx Ignored
+ * @param[in]  pworker Ignored
+ * @param[in]  preq    Ignored
+ * @param[out] pres    Ignored
  */
 
 int rquota_Null(nfs_arg_t *parg,

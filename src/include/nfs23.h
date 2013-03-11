@@ -159,8 +159,8 @@ struct specdata3
 };
 typedef struct specdata3 specdata3;
 
-/** @TODO
- * Danger Will Robinson!!
+/**
+ * @todo Danger Will Robinson!!
  * this struct is overlayed with fhandle3 in mount.h!!
  * This needs to be fixed.
  */

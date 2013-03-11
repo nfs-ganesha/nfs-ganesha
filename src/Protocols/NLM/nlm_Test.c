@@ -34,11 +34,11 @@
 #include "nlm_async.h"
 
 /**
- * nlm4_Test: Test lock
+ * @brief Test lock
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres
@@ -182,7 +182,7 @@ static void nlm4_test_message_resp(state_async_queue_t *arg,
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres

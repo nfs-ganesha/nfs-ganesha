@@ -68,7 +68,7 @@
  * around the real (non symlink resolved) path.
  *
  * @param[in]  entry   Entry whose parent is to be obtained
- * @param[in]  context FSAL operation context
+ * @param[in]  req_ctx FSAL operation context
  * @param[out] parent  Parent directory
  *
  * @return CACHE_INODE_SUCCESS or errors.
@@ -125,8 +125,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 	  status = cache_inode_get(&fsdata, entry, req_ctx, parent);
 	  if (*parent == NULL)
 		  return status;
-/** @TODO Danger Will Robinson!  cache_inode_get should consume the
- *  parent_handle but this may be a leak!
+/**
+ * @todo Danger Will Robinson!  cache_inode_get should consume the
+ * parent_handle but this may be a leak!
  */
 	  /* Dup keys */
 	  cache_inode_key_dup(
@@ -145,7 +146,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
  * If a cache entry is returned, its refcount is +1.
  *
  * @param[in]  entry   Entry whose parent is to be obtained.
- * @param[in]  context FSAL credentials
+ * @param[in]  req_ctx FSAL credentials
  * @param[out] parent  Parent directory
  *
  * @return CACHE_INODE_SUCCESS or errors.

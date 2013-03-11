@@ -121,7 +121,7 @@ typedef struct nfs_krb5_param
 	unsettable by user. */
       char principal[MAXPATHLEN];
     /** Expanded gss name from principal, equal to
-	principal/host@domain.  Unsettable by user. */
+	principal/host\@domain.  Unsettable by user. */
       gss_name_t gss_name;
   } svc;
   /** Whether to activate Kerberos 5.  Defaults to true (if Kerberos
@@ -317,6 +317,10 @@ extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern const char *xprt_type_to_str(xprt_type_t type);
+
+/**
+ * @deprecated This should be thrown out and a bool used instead.
+ */
 
 typedef enum _ignore_port
 {

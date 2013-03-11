@@ -33,15 +33,14 @@
 #include "nlm_util.h"
 
 /**
- * nlm4_Free_All: Free All Locks
+ * @brief Free All Locks
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param ht          [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
- *
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  req_ctx
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  */
 
 int nlm4_Free_All(nfs_arg_t *parg,

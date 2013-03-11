@@ -153,9 +153,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * Lookup a cache entry by key, given an associated entry sharing the
  * same export (e.g..
  *
- * @param key [in] Cache key to use for lookup
- * @param[in] context FSAL operation context
- * @param[in] flags flags
+ * @param[in] key     [in] Cache key to use for lookup
+ * @param[in] req_ctx FSAL operation context
+ * @param[in] flags   flags
  *
  * @return Pointer to a ref'd entry if found, else NULL.
  */

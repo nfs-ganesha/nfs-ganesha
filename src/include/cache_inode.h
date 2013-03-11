@@ -837,10 +837,10 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
  * this entry, mark them as trustable and update the entry metadata.
  * Note that the caller must hold the write lock on the attributes.
  *
+ * @todo Possibly not really necessary?
+ *
  * @param[in,out] entry   The entry to be refreshed
  * @param[in]     opctx   Request context (user creds, client address etc)
- */
-/** @TODO possibly not really necessary?
  */
 static inline cache_inode_status_t cache_inode_refresh_attrs(
 	cache_entry_t *entry,

@@ -384,20 +384,19 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
  * the specified range and iomode.  If all layouts have been returned,
  * it deletes the state.
  *
- * @param[in]     handle       Handle for the file whose layouts we return
+ * @param[in]     entry        Cache entry whose layouts we return
  * @param[in]     req_ctx      Request context
  * @param[in]     synthetic    True if this is a bulk or synthesized
  *                             (e.g. last close or lease expiry) return
  * @param[in]     reclaim      True if the client is returning a state
  *                             from a previous instance of the server
+ * @param[in]     return_type  Whether this is a file, fs, or server return
  * @param[in,out] layout_state State whose segments we return
- * @param[in]     iomode       I/O mode specifying which segments to
- *                             return
- * @param[in]     offset       Offset of range to return
- * @param[in]     length       Length of range to return
+ * @param[in]     spec_segment Segment specified in return
  * @param[in]     body_len     Length of type-specific layout return data
  * @param[in]     body_val     Type-specific layout return data
  * @param[out]    deleted      True if the layout state has been deleted
+ * @param[in]     hold_lock    Whether to retain the state lock
  *
  * @return NFSv4.1 status codes
  */

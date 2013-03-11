@@ -57,7 +57,7 @@
  * FSAL handle. It is designed to be called when an FSAL upcall is
  * triggered.
  *
- * @param[in] handle FSAL handle for the entry to be invalidated
+ * @param[in] entry  FSAL handle for the entry to be invalidated
  * @param[in] flags  Control flags
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success

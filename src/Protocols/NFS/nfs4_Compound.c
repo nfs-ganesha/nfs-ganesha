@@ -127,8 +127,8 @@ static const nfs4_op_desc_t optabv4[] = {
  *
  *
  *  @param[in]  arg        Generic nfs arguments
- *  @param[in]  exportlist The full export list
- *  @param[in]  contex     Context for the FSAL
+ *  @param[in]  export     The full export list
+ *  @param[in]  req_ctx    Context for the FSAL
  *  @param[in]  worker     Worker thread data
  *  @param[in]  req        NFSv4 request structure
  *  @param[out] res        NFSv4 reply structure
@@ -136,6 +136,8 @@ static const nfs4_op_desc_t optabv4[] = {
  *  @see nfs4_op_<*> functions
  *  @see nfs4_GetPseudoFs
  *
+ * @retval NFS_REQ_OKAY if a result is sent.
+ * @retval NFS_REQ_DROP if we pretend we never saw the request.
  */
 
 int nfs4_Compound(nfs_arg_t *arg,

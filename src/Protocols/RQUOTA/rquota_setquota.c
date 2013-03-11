@@ -47,12 +47,12 @@
  *
  * The RQUOTA setquota function, for all versions.
  *
- * @param[in]  parg     Ignored
- * @param[in]  pexport  Ignored
- * @param[in]  pcontext Ignored
- * @param[in]  pworker  Ignored
- * @param[in]  preq     Ignored
- * @param[out] pres     Ignored
+ * @param[in]  parg    Ignored
+ * @param[in]  pexport Ignored
+ * @param[in]  req_ctx Ignored
+ * @param[in]  pworker Ignored
+ * @param[in]  preq    Ignored
+ * @param[out] pres    Ignored
  *
  */
 int rquota_setquota(nfs_arg_t *parg,
@@ -95,8 +95,8 @@ int rquota_setquota(nfs_arg_t *parg,
         }
     }
 
-  memset((char *)&fsal_quota_in, 0, sizeof(fsal_quota_t));
-  memset((char *)&fsal_quota_out, 0, sizeof(fsal_quota_t));
+  memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));
+  memset(&fsal_quota_out, 0, sizeof(fsal_quota_t));
 
   fsal_quota_in.bhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bhardlimit;
   fsal_quota_in.bsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bsoftlimit;
