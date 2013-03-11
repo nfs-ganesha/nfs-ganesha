@@ -78,6 +78,7 @@
 extern nfs_worker_data_t *workers_data;
 #ifdef SONAS
 extern uint64_t rpc_out;
+extern uint64_t rpc_in;
 #endif
 
 pool_t *request_pool;
@@ -600,6 +601,10 @@ nfs_rpc_execute(request_data_t    * preq,
            pworker_data->hostaddr_str,
            (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
            req->rq_xid);
+
+#ifdef SONAS
+  rpc_in++;
+#endif
 
   /* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
    * nothing but allocate a result object and mark the request (ie, the
