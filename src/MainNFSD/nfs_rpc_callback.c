@@ -1215,7 +1215,7 @@ static bool find_cb_slot(nfs41_session_t *session,
 	pthread_mutex_lock(&session->cb_mutex);
 retry:
 	for (cur = 0;
-	     cur < MAX(session->back_channel_attrs.ca_maxrequests,
+	     cur < MIN(session->back_channel_attrs.ca_maxrequests,
 		       NFS41_NB_SLOTS);
 	     ++cur) {
 		if (!(session->cb_slots[cur].in_use) &&
@@ -1248,6 +1248,7 @@ retry:
 	if (found) {
 		session->cb_slots[*slot].in_use = true;
 		++session->cb_slots[*slot].sequence;
+		assert(*slot < session->back_channel_attrs.ca_maxrequests);
 	}
 	pthread_mutex_unlock(&session->cb_mutex);
 
