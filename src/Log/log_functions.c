@@ -1154,6 +1154,17 @@ static void DisplayLogPath_valist(ThreadLogContext_t * context,
  * Routines for managing error messages
  */
 
+/**
+ *
+ * @brief Add a family of errors
+ *
+ * @param[in]  num_family  The family index
+ * @param[in]  name_family The name of the family
+ * @param[in]  tab_err     The table of errors
+ *
+ * @return -1 for failure, or num_family
+ *
+ */
 int AddFamilyError(int num_family, char *name_family, family_error_t * tab_err)
 {
   int i = 0;
