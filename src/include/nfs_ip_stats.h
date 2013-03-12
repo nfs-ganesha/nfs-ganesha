@@ -30,6 +30,11 @@ typedef struct nfs_ip_name__
   char hostname[MAXHOSTNAMELEN];
 } nfs_ip_name_t;
 
+#define NFS_V2_NB_COMMAND 18
+#define NFS_V3_NB_COMMAND 22
+#define MNT_V1_NB_COMMAND 6
+#define MNT_V3_NB_COMMAND 6
+
 typedef struct nfs_ip_stats__
 {
   unsigned int nb_call;

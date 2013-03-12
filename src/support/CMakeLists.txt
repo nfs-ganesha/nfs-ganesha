@@ -91,7 +91,6 @@ SET(support_STAT_SRCS
    nfs_mnt_list.c
    nfs_read_conf.c
    nfs_convert.c
-   nfs_stat_mgmt.c
    nfs_ip_name.c
    nfs_ip_stats.c
    exports.c

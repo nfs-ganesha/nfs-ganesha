@@ -27,12 +27,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <time.h>
-
-/* function name resolution */
-#include "nfs_stat.h"
-
 #include "nfs_core.h"
-#include "nfs_stat.h"
 #include "nfs_exports.h"
 #include "external_tools.h"
 

@@ -59,7 +59,6 @@
 #include "nfs_req_queue.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
-#include "nfs_stat.h"
 #include "fridgethr.h"
 #include "client_mgr.h"
 #include "server_stats.h"

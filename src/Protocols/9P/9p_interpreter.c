@@ -43,7 +43,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
-#include "nfs_stat.h"
 
 /* This array maps a 9P Tmessage type to the
  * related position in _9pfuncdesc array

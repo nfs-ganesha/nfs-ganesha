@@ -41,7 +41,6 @@
 #include "ganesha_rpc.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "nfs_stat.h"
 
 #include "nfs23.h"
 #include "nfs4.h"
@@ -232,29 +231,6 @@ struct nfs_worker_data {
 	struct fridgethr_context *ctx; /*< Link back to thread context */
 };
 
-/**
- * @brief Group together all of NFS-Ganesha's statistics
- *
- * @todo Delendum est.
- */
-typedef struct ganesha_stats__ {
-	nfs_worker_stat_t global_worker_stat;
-	hash_stat_t cache_inode_hstat;
-	hash_stat_t uid_map;
-	hash_stat_t gid_map;
-	hash_stat_t ip_name_map;
-	hash_stat_t uid_reverse;
-	hash_stat_t gid_reverse;
-	hash_stat_t drc_udp;
-	hash_stat_t drc_tcp;
-	unsigned int min_pending_request;
-	unsigned int max_pending_request;
-	unsigned int total_pending_request;
-	unsigned int average_pending_request;
-	unsigned int len_pending_request;
-	unsigned int avg_latency;
-	unsigned long long total_fsal_calls;
-} ganesha_stats_t;
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 extern struct timespec ServerBootTime;
@@ -394,7 +370,6 @@ int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(hash_parameter_t *param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 

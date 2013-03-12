@@ -50,7 +50,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
-#include "nfs_stat.h"
 #include "cache_inode.h"
 #include "nfs_ip_stats.h"
 #include "nlm_list.h"
