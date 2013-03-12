@@ -32,6 +32,8 @@
 #include <string.h>
 #include <os/subr.h>
 #include <sys/dirent.h>
+#include <sys/syscall.h>
+#include <log.h>
 
 /**
  * @brief Read system directory entries into the buffer
@@ -119,4 +121,26 @@ int vfs_utimes(int fd, const struct timespec *ts)
         TIMESPEC_TO_TIMEVAL(&tv[0], &ts[0]);
         TIMESPEC_TO_TIMEVAL(&tv[1], &ts[1]);
         return futimes(fd, tv);
+}
+
+uid_t setuser(uid_t uid) {
+	uid_t orig_uid = syscall(SYS_seteuid, uid);
+	if (orig_uid != uid && syscall(SYS_seteuid, uid) != 0) {
+		LogFatal(COMPONENT_FSAL,
+			"Could not set user identity");
+	}
+	return orig_uid;
+}
+
+gid_t setgroup(gid_t gid) {
+	gid_t orig_gid = syscall(SYS_setegid, gid);
+	if (orig_gid != gid && syscall(SYS_setegid, gid) != 0) {
+		LogFatal(COMPONENT_FSAL,
+			"Could not set group identity");
+	}
+	return orig_gid;
+}
+
+int set_threadgroups(size_t size, const gid_t *list) {
+        return syscall(SYS_setgroups, size, list);
 }

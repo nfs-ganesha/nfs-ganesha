@@ -52,5 +52,8 @@ struct vfs_dirent {
 
 int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp);
 bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base);
+uid_t setuser(uid_t uid);
+gid_t setgroup(gid_t gid);
+int set_threadgroups(size_t size, const gid_t *list);
 
 #endif                          /* _SUBR_OS_H */

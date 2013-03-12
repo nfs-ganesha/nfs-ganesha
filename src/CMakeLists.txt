@@ -456,6 +456,7 @@ endif(USE_9P_RDMA)
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ${SYSTEM_LIBRARIES}
+  gos
   ${LIBDL}
   ${KRB5_LIBRARIES}
   crypto

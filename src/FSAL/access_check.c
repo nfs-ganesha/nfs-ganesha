@@ -16,10 +16,10 @@
 #include "FSAL/access_check.h"
 #include <stdbool.h>
 #include <unistd.h>
-#include <sys/fsuid.h>
 #include <sys/syscall.h>
 #include <grp.h>
 #include <sys/types.h>
+#include <os/subr.h>
 
 static bool fsal_check_ace_owner(uid_t uid, struct user_cred *creds)
 {
@@ -448,10 +448,9 @@ gid_t * ganesha_groups = NULL;
 
 void fsal_set_credentials(const struct user_cred *creds)
 {
-  setfsuid(creds->caller_uid);
-  setfsgid(creds->caller_gid);
-  if(syscall(__NR_setgroups,
-             creds->caller_glen,
+  setuser(creds->caller_uid);
+  setgroup(creds->caller_gid);
+  if(set_threadgroups(creds->caller_glen,
              creds->caller_garray) != 0)
     LogFatal(COMPONENT_FSAL, "Could not set Context credentials");
 }
@@ -460,10 +459,10 @@ void fsal_save_ganesha_credentials()
 {
   int  i;
   char buffer[1024], *p = buffer;
-  ganesha_uid = setfsuid(0);
-  setfsuid(ganesha_uid);
-  ganesha_gid = setfsgid(0);
-  setfsgid(ganesha_gid);
+  ganesha_uid = setuser(0);
+  setuser(ganesha_uid);
+  ganesha_gid = setgroup(0);
+  setgroup(ganesha_gid);
   ganehsa_ngroups = getgroups(0, NULL);
   if(ganehsa_ngroups != 0)
     {
@@ -502,9 +501,9 @@ void fsal_save_ganesha_credentials()
 
 void fsal_restore_ganesha_credentials()
 {
-  setfsuid(ganesha_uid);
-  setfsgid(ganesha_gid);
-  if(syscall(__NR_setgroups, ganehsa_ngroups, ganesha_groups) != 0)
+  setuser(ganesha_uid);
+  setgroup(ganesha_gid);
+  if(set_threadgroups(ganehsa_ngroups, ganesha_groups) != 0)
     LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 }
 
