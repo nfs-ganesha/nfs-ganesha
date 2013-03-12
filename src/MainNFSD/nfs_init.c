@@ -293,14 +293,12 @@ nfs_parameter_t nfs_param =
 struct timespec ServerBootTime;
 time_t ServerEpoch;
 
-nfs_worker_data_t *workers_data = NULL; /*< Delendum est */
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
 /* node ID used to identify an individual node in a cluster */
 ushort g_nodeid = 0;
 
-hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD]; /*< Delendum Est */
 nfs_start_info_t nfs_start_info;
 
 pthread_t admin_thrid;
@@ -899,18 +897,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
       Fatal();
     }
 
-  ip_stats_pool = pool_init("IP Stats Cache Pool",
-                            sizeof(nfs_ip_stats_t),
-                            pool_basic_substrate,
-                            NULL, NULL, NULL);
-  if(!(ip_stats_pool))
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while allocating IP stats cache pool");
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-      Fatal();
-    }
-
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */
   cache_inode_async_init(nfs_param.cache_layers_param.cache_inode_client_param);
@@ -976,21 +962,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   /* RPC Initialisation - exits on failure*/
   nfs_Init_svc();
   LogInfo(COMPONENT_INIT,  "RPC ressources successfully initialized");
-
-  /**
-   * This is a fake initialization to allow the stats code to compile
-   * cleanly by giving them their own array of workers data with
-   * nothing in it.
-   *
-   * @todo Delendum est.
-   */
-  if((workers_data =
-      gsh_calloc(nfs_param.core_param.nb_worker,
-                 sizeof(nfs_worker_data_t))) == NULL)
-    {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-      Fatal();
-    }
 
   /* Admin initialisation */
   nfs_Init_admin_thread();

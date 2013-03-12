@@ -33,28 +33,6 @@ target_link_libraries(test_mh_avl ${CMAKE_THREAD_LIBS_INIT})
 
 ########### next target ###############
 
-SET(test_anon_support_SRCS
-   test_anon_support.c
-)
-
-add_executable(test_anon_support EXCLUDE_FROM_ALL ${test_anon_support_SRCS})
-
-target_link_libraries(test_anon_support ${CMAKE_THREAD_LIBS_INIT})
-
-
-########### next target ###############
-
-SET(test_access_list_types_SRCS
-   test_access_list_types.c
-)
-
-add_executable(test_access_list_types EXCLUDE_FROM_ALL ${test_access_list_types_SRCS})
-
-target_link_libraries(test_access_list_types ${CMAKE_THREAD_LIBS_INIT})
-
-
-########### next target ###############
-
 SET(test_mesure_temps_SRCS
    test_mesure_temps.c
 )

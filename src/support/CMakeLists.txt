@@ -27,22 +27,6 @@ target_link_libraries(
 
 ########### next target ###############
 
-SET(test_nfs_ip_stats_SRCS
-   test_nfs_ip_stats.c
-)
-
-add_executable(test_nfs_ip_stats EXCLUDE_FROM_ALL ${test_nfs_ip_stats_SRCS})
-
-target_link_libraries(
-  test_nfs_ip_stats
-  support hashtable
-  log
-  
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
-########### next target ###############
-
 SET(test_nfs_ip_name_SRCS
    test_nfs_ip_name.c
 )
@@ -92,7 +76,6 @@ SET(support_STAT_SRCS
    nfs_read_conf.c
    nfs_convert.c
    nfs_ip_name.c
-   nfs_ip_stats.c
    exports.c
    fridgethr.c
    delayed_exec.c

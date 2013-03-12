@@ -2527,8 +2527,6 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
  * @param[in]     pexport          Related export entry (if found, NULL otherwise).
  * @param[in]     nfs_prog         Number for the NFS program.
  * @param[in]     mnt_prog         Number for the MOUNT program.
- * @param[in,out] ht_ip_stats      IP/stats hash table
- * @param[in,out] ip_stats_pool    IP/stats pool
  * @param[out]    pclient_found    Client entry found in export list, NULL if nothing was found.
  * @param[in]     user_credentials User credentials
  * @param[in]     proc_makes_write Whether this operation counts as a write
@@ -2543,14 +2541,10 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             exportlist_t * pexport,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
-                            hash_table_t *ht_ip_stats,
-                            pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
                             const struct user_cred *user_credentials,
                             bool proc_makes_write)
 {
-  int rc;
-
   if (pexport != NULL)
     {
       if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
@@ -2570,20 +2564,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                    "Granted NULL proc");
       return EXPORT_PERMISSION_GRANTED;
     }
-
-#ifdef _USE_TIPRC_IPV6
-  if(hostaddr->ss_family == AF_INET)
-#endif
-    /* Increment the stats per client address (for IPv4 Only) */
-    if((rc =
-        nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog, mnt_prog,
-                          ptr_req)) == IP_STATS_NOT_FOUND)
-      {
-        if(nfs_ip_stats_add(ht_ip_stats, hostaddr, ip_stats_pool) ==
-           IP_STATS_SUCCESS)
-          rc = nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog,
-                                 mnt_prog, ptr_req);
-      }
 
 #ifdef _USE_TIRPC_IPV6
   if(hostaddr->ss_family == AF_INET)

@@ -210,7 +210,6 @@ typedef struct gsh_addr {
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool; /* XXX hide */
-extern pool_t *ip_stats_pool; /*< Delendum est */
 
 /**
  * @brief Per-worker data.  Some of this will be destroyed.
@@ -218,8 +217,6 @@ extern pool_t *ip_stats_pool; /*< Delendum est */
 
 struct nfs_worker_data {
 	unsigned int worker_index; /*< Index for log messages */
-	hash_table_t *ht_ip_stats; /*< Delendum est */
-
 	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
 	pthread_mutex_t request_pool_mutex; /*< Delendum est */
 	exportlist_client_entry_t related_client; /*< Identity that
@@ -367,7 +364,6 @@ int b64_pton(char const *src, u_char *target, size_t targsize);
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
-hash_table_t *nfs_Init_ip_stats(hash_parameter_t *param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);

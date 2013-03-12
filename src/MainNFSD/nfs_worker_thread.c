@@ -63,13 +63,9 @@
 #include "client_mgr.h"
 #include "server_stats.h"
 
-extern struct nfs_worker_data *workers_data; /*< Delendum est */
-
 pool_t *request_pool;
 pool_t *request_data_pool;
 pool_t *dupreq_pool;
-pool_t *ip_stats_pool; /*< Delendum est */
-extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD]; /*< Delendum Est */
 
 static struct fridgethr *worker_fridge;
 
@@ -926,8 +922,6 @@ static void nfs_rpc_execute(request_data_t *preq,
          pexport,
          nfs_param.core_param.program[P_NFS],
          nfs_param.core_param.program[P_MNT],
-         worker_data->ht_ip_stats,
-         ip_stats_pool,
          related_client,
          &user_credentials,
          (preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE)
@@ -1205,11 +1199,6 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 
   wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%u", wd->worker_index);
-
-  /**
-   * @todo Delendum est.  Temporary until we get new stats.
-   */
-  wd->ht_ip_stats = ht_ip_stats[wd->worker_index];
 
   /* Initalize thr waitq */
   init_wait_q_entry(&wd->wqe);

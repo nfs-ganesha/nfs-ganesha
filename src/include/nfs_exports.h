@@ -392,8 +392,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 			    exportlist_t * pexport,
 			    unsigned int nfs_prog,
 			    unsigned int mnt_prog,
-			    hash_table_t * ht_ip_stats,
-			    pool_t *ip_stats_pool,
 			    exportlist_client_entry_t * pclient_found,
 			    const struct user_cred *user_credentials,
 			    bool proc_makes_write);
