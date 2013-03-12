@@ -239,14 +239,14 @@ fsal_status_t FUSEFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /* 
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   fh_size = sizeof( dummy_handle.data ); /* All LUSTRE handle have the same size */
-  if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+  if(fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
 	       "LUSTRE ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
 	       fh_size, fh_desc->len);
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
-  fh_desc->len = fh_size;  /* pass back the actual size */
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

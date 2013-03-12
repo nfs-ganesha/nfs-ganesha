@@ -376,11 +376,11 @@ static fsal_status_t extract_handle (struct fsal_export *exp_hdl, fsal_digesttyp
         return fsalstat (ERR_FSAL_FAULT, 0);
 
     fh_size = sizeof (struct handle_data);
-    if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+    if (fh_desc->len != fh_size) {
         LogMajor (COMPONENT_FSAL, "Size mismatch for handle.  should be %lu, got %lu", fh_size, fh_desc->len);
         return fsalstat (ERR_FSAL_SERVERFAULT, 0);
     }
-    fh_desc->len = fh_size;     /* pass back the actual size */
+
     return fsalstat (ERR_FSAL_NO_ERROR, 0);
 }
 

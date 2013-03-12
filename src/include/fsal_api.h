@@ -665,10 +665,7 @@ struct export_ops {
  * extract the unique bits used to index the inode cache.
  *
  * @param[in]     exp_hdl Export in which to look up handle
- * @param[in]     in_type Protocol through which buffer was received.  One
- *                        special case, FSAL_DIGEST_SIZEOF, simply
- *                        requests that fh_desc.len be set to the proper
- *                        size of a wire handle.
+ * @param[in]     in_type Protocol through which buffer was received.
  * @param[in,out] fh_desc Buffer descriptor.  The address of the
  *                        buffer is given in @c fh_desc->buf and must
  *                        not be changed.  @c fh_desc->len is the

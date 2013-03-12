@@ -295,7 +295,7 @@ fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN 
   hdl = (struct gpfs_file_handle *)fh_desc->start;
   fh_size = gpfs_sizeof_handle(hdl);
 
-  if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+  if(fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
                "GPFSFSAL_ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
@@ -303,7 +303,6 @@ fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN 
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
 
-  fh_desc->len = fh_size;  /* pass back the actual size */
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }
