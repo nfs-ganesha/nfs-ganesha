@@ -617,7 +617,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   /* Get the export entry */
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
-      /* The NFSv2 and NFSv3 functions' arguments always begin with the file
+      /* The NFSv3 functions' arguments always begin with the file
        * handle (but not the NULL function).  This hook is used to get the
        * fhandle with the arguments and so determine the export entry to be
        * used.  In NFSv4, junction traversal is managed by the protocol itself
@@ -625,58 +625,6 @@ static void nfs_rpc_execute(request_data_t *preq,
 
       switch (req->rq_vers)
         {
-        case NFS_V2:
-          if(req->rq_proc != NFSPROC_NULL)
-            {
-              exportid = nfs2_FhandleToExportId((fhandle2 *) arg_nfs);
-
-              if(exportid < 0 ||
-                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL ||
-                 (pexport->options & EXPORT_OPTION_NFSV2) == 0)
-                {
-                  /* Reject the request for authentication reason (incompatible
-                   * file handle) */
-                  if(isInfo(COMPONENT_DISPATCH))
-                    {
-                      char dumpfh[1024];
-                      char *reason;
-                      char addrbuf[SOCK_NAME_MAX];
-                      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else if(pexport == NULL)
-                        reason = "has invalid export";
-                      else
-                        reason = "V2 not allowed on this export";
-                      sprint_fhandle2(dumpfh, (fhandle2 *) arg_nfs);
-                      LogMajor(COMPONENT_DISPATCH,
-                               "NFS2 Request from host %s %s, proc=%d, FH=%s",
-                               addrbuf, reason,
-                               (int)req->rq_proc, dumpfh);
-                    }
-                  /* Bad argument */
-                  DISP_SLOCK(xprt);
-                  svcerr_auth(xprt, req, AUTH_FAILED);
-                  /* nb, a no-op when req is uncacheable */
-                  if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                    {
-                      LogCrit(COMPONENT_DISPATCH,
-                              "Attempt to delete duplicate request failed on "
-                              "line %d", __LINE__);
-                    }
-                  goto freeargs;
-                }
-
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
-            }
-          else
-            pexport = nfs_param.pexportlist;
-
-          break;
-
         case NFS_V3:
           if(req->rq_proc != NFSPROC_NULL)
             {
@@ -1121,8 +1069,7 @@ freeargs:
 
   /* Free the allocated resources once the work is done */
   /* Free the arguments */
-  if((preqnfs->req.rq_vers == 2) ||
-     (preqnfs->req.rq_vers == 3) ||
+  if((preqnfs->req.rq_vers == 3) ||
      (preqnfs->req.rq_vers == 4)) {
       if(! SVC_FREEARGS(xprt, preqnfs->funcdesc->xdr_decode_func,
                         (caddr_t) arg_nfs))

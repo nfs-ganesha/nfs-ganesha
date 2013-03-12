@@ -213,49 +213,6 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
   switch (output_type)
     {
 
-      /* NFSV2 handle digest */
-    case FSAL_DIGEST_NFSV2:
-
-        /* min size for nfs handle digest. */
-        memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
-
-      /* The hpss handle must be converted
-       * to a 25 bytes handle. To do so,
-       * We copy all the fields from the hpss handle,
-       *  except the Coreserver ID.
-       */
-
-#ifndef _NO_CHECKS
-
-      /* sanity check about output size */
-
-      if(memlen > FSAL_DIGEST_SIZE_HDLV2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-      /* sanity check about core server ID */
-
-      if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
-                &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
-        {
-          char buffer[128];
-          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
-                     sizeof(TYPE_UUIDT));
-          LogMajor(COMPONENT_FSAL,
-                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
-        }
-
-      /* building digest :
-       * - fill it with zeros
-       * - setting the first bytes to the fsal_handle value
-       *   (except CoreServerUUID)
-       */
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
-
-      break;
-
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
 
@@ -324,26 +281,6 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
       memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
-
-      break;
-
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
-
-      /* get object ID from handle */
-      objid = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
-
-#ifndef _NO_CHECKS
-
-      /* sanity check about output size */
-
-      if(sizeof(unsigned32) > FSAL_DIGEST_SIZE_FILEID2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, &objid, sizeof(unsigned32));
 
       break;
 
@@ -443,20 +380,6 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 
   switch (in_type)
     {
-
-    case FSAL_DIGEST_NFSV2:
-      /* core server UUID is always stripped for NFSv2 handles */
-      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
-
-      memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
-      memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
-
-      memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
-             &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
-
-      out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
-
-      break;
 
     case FSAL_DIGEST_NFSV3:
 

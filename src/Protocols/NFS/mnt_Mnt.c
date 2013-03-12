@@ -179,8 +179,6 @@ int mnt_Mnt(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case MOUNT_V1:
-      if((p_current_item->options & EXPORT_OPTION_NFSV2) != 0)
-        break;
       pres->res_mnt1.status = NFSERR_ACCES;
       return NFS_REQ_OK;
 
@@ -225,15 +223,7 @@ int mnt_Mnt(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case MOUNT_V1:
-      if(!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
-                             pfsal_handle))
-        {
-          pres->res_mnt1.status = NFSERR_IO;
-        }
-      else
-        {
-          pres->res_mnt1.status = NFS_OK;
-        }
+      pres->res_mnt1.status = NFSERR_ACCES;
       break;
 
     case MOUNT_V3:

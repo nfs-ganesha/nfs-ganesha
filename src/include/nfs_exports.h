@@ -242,7 +242,7 @@ typedef struct exportlist {
                                                      supported        */
 
 /* Protocol flags */
-#define EXPORT_OPTION_NFSV2 0x00200000 /*< NFSv2 operations are supported */
+#define EXPORT_OPTION_NFSV2 0x00200000 /*< NFSv2 deprecated */
 #define EXPORT_OPTION_NFSV3 0x00400000 /*< NFSv3 operations are supported */
 #define EXPORT_OPTION_NFSV4 0x00800000 /*< NFSv4 operations are supported */
 #define EXPORT_OPTION_UDP 0x01000000 /*< UDP protocol is supported */

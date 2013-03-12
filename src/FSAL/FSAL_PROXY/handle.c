@@ -1839,7 +1839,6 @@ pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	switch(output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 #ifdef _HANDLE_MAPPING
                 fhs = sizeof(ph->h23);
@@ -1849,11 +1848,6 @@ pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
 	case FSAL_DIGEST_NFSV4:
                 fhs = ph->blob.len;
                 data = &ph->blob;
-		break;
-	case FSAL_DIGEST_FILEID2:
-                fhs = FSAL_DIGEST_SIZE_FILEID2;
-                u32 = ph->obj.attributes.fileid;
-                data = &u32;
 		break;
 	case FSAL_DIGEST_FILEID3:
                 fhs = FSAL_DIGEST_SIZE_FILEID3;
@@ -2287,24 +2281,17 @@ pxy_extract_handle(struct fsal_export *exp_hdl,
         pxyblob = (struct pxy_handle_blob *)fh_desc->addr;
         fh_size = pxyblob->len;
 #ifdef _HANDLE_MAPPING
-        if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3))
+        if(in_type == FSAL_DIGEST_NFSV3)
                 fh_size = sizeof(nfs23_map_handle_t);
 #endif
-        if(in_type == FSAL_DIGEST_NFSV2) {
-                if(fh_desc->len < fh_size) {
-                        LogMajor(COMPONENT_FSAL,
-                                 "V2 size too small for handle.  should be %lu, got %lu",
-                                 fh_size, fh_desc->len);
-                        return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-                }
-        } else if(fh_desc->len != fh_size) {
+        if(fh_desc->len != fh_size) {
                 LogMajor(COMPONENT_FSAL,
                          "Size mismatch for handle.  should be %lu, got %lu",
                          fh_size, fh_desc->len);
                 return fsalstat(ERR_FSAL_SERVERFAULT, 0);
         }
 #ifdef _HANDLE_MAPPING
-        if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3)) {
+        if(in_type == FSAL_DIGEST_NFSV3) {
                 nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)fh_desc->addr;
 
                 if(h23->type != PXY_HANDLE_MAPPED) 

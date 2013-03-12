@@ -1230,19 +1230,12 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
 	fh = myself->handle;
 
 	switch(output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		fh_size = sizeof(vfs_file_handle_t);
                 if(fh_desc->len < fh_size)
                         goto errout;
                 memcpy(fh_desc->addr, fh, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID2:
-		fh_size = FSAL_DIGEST_SIZE_FILEID2;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(fh_desc->addr, fh->handle, fh_size);
 		break;
 	case FSAL_DIGEST_FILEID3:
 		fh_size = FSAL_DIGEST_SIZE_FILEID3;

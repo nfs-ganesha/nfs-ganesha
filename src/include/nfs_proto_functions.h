@@ -937,7 +937,6 @@ void rquota_setactivequota_Free(nfs_res_t * pres);
 void nfs_Null_Free(nfs_res_t * resp);
 void nfs_Getattr_Free(nfs_res_t * resp);
 void nfs_Setattr_Free(nfs_res_t * resp);
-void nfs2_Lookup_Free(nfs_res_t * resp);
 void nfs3_Lookup_Free(nfs_res_t * resp);
 void nfs3_Access_Free(nfs_res_t * pres);
 void nfs3_Readlink_Free(nfs_res_t * resp);

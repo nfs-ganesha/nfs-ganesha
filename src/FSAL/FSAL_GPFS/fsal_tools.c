@@ -220,11 +220,6 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_digesttype_t output_type,  /* IN */
     {
 
       /* NFS handle digest */
-    case FSAL_DIGEST_NFSV2:
-
-      /* GPFS FSAL can no longer support NFS v2 */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
-
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
       fh_size = gpfs_sizeof_handle((struct gpfs_file_handle *)in_fsal_handle);
@@ -238,12 +233,6 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_digesttype_t output_type,  /* IN */
       memcpy(fh_desc->start, (caddr_t)p_in_fsal_handle, fh_size);
       fh_desc->len = fh_size;
       break;
-
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
-
-      /* GPFS FSAL can no longer support NFS v2 */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
@@ -306,12 +295,7 @@ fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN 
   hdl = (struct gpfs_file_handle *)fh_desc->start;
   fh_size = gpfs_sizeof_handle(hdl);
 
-  if(in_type == FSAL_DIGEST_NFSV2)
-    {
-      /* GPFS FSAL can no longer support NFS v2 */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
-    }
-  else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+  if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
                "GPFSFSAL_ExpandHandle: size mismatch for handle.  should be %lu, got %lu",

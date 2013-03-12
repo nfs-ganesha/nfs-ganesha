@@ -883,7 +883,6 @@ static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
     fh = myself->handle;
 
     switch (output_type) {
-    case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
         fh_size = sizeof (struct handle_data);
@@ -891,8 +890,6 @@ static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
             goto errout;
         memcpy (fh_desc->addr, fh, fh_size);
         break;
-    case FSAL_DIGEST_FILEID2:
-        return fsalstat (ERR_FSAL_SERVERFAULT, 0);      /* NFSv2 no longer supported */
     case FSAL_DIGEST_FILEID3:
         fh_size = FSAL_DIGEST_SIZE_FILEID3;
         if (fh_desc->len < fh_size)
