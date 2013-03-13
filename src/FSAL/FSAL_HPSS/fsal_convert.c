@@ -21,6 +21,8 @@
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
 
+
+
 /**
  * hpss2fsal_error :
  * Convert HPSS error codes to FSAL error codes.
@@ -177,27 +179,10 @@ int hpss2fsal_error(int hpss_errorcode)
       return ERR_FSAL_DELAY;
 
     default:
-
-#if HPSS_MAJOR_VERSION == 5
-
-      /* hsec error code regarding security (-3000...) */
-      if((hpss_errorcode <= -3000) && (hpss_errorcode > -4000))
-        return ERR_FSAL_SEC;
-
-#elif HPSS_MAJOR_VERSION == 6
-
-      /* hsec error code regarding security (-11000...) */
-      if((hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED)
-         && (hpss_errorcode >= HPSS_SEC_LDAP_ERROR))
-        return ERR_FSAL_SEC;
-#elif HPSS_MAJOR_VERSION == 7
-
       /* hsec error code regarding security (-11000...) */
       if((hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED)
          && (hpss_errorcode >= HPSS_SEC_LDAP_RETRY))
         return ERR_FSAL_SEC;
-
-#endif
 
       /* other unexpected errors */
       return ERR_FSAL_SERVERFAULT;
@@ -234,76 +219,6 @@ int fsal2hpss_testperm(fsal_accessflags_t testperm)
 }
 
 /**
- * fsal2hpss_openflags:
- * Convert FSAL open flags to (HPSS) Posix open flags.
- *
- * \param fsal_flags (input):
- *        The FSAL open flags to be translated.
- * \param p_hpss_flags (output):
- *        Pointer to the HPSS open flags.
- *
- * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
- *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
- */
-int fsal2hpss_openflags(fsal_openflags_t fsal_flags, int *p_hpss_flags)
-{
-  int cpt;
-
-  if(!p_hpss_flags)
-    return ERR_FSAL_FAULT;
-
-  /* check that all used flags exist */
-
-  if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* Check for flags compatibility */
-
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
-
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
-
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
-
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
-
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
-
-  /* conversion */
-
-  *p_hpss_flags = 0;
-
-  if(fsal_flags & FSAL_O_RDONLY)
-    *p_hpss_flags |= O_RDONLY;
-  if(fsal_flags & FSAL_O_RDWR)
-    *p_hpss_flags |= O_RDWR;
-  if(fsal_flags & FSAL_O_WRONLY)
-    *p_hpss_flags |= O_WRONLY;
-  if(fsal_flags & FSAL_O_APPEND)
-    *p_hpss_flags |= O_APPEND;
-  if(fsal_flags & FSAL_O_TRUNC)
-    *p_hpss_flags |= O_TRUNC;
-
-  return ERR_FSAL_NO_ERROR;
-
-}
-
-/**
  * hpss2fsal_type:
  * Convert HPSS NS object type to FSAL node type.
  *
@@ -313,24 +228,24 @@ int fsal2hpss_openflags(fsal_openflags_t fsal_flags, int *p_hpss_flags)
  * \return - The FSAL node type associated to hpss_type_in.
  *         - -1 if the input type is unknown.
  */
-fsal_nodetype_t hpss2fsal_type(unsigned32 hpss_type_in)
+object_file_type_t  hpss2fsal_type(unsigned32 hpss_type_in)
 {
 
   switch (hpss_type_in)
     {
 
     case NS_OBJECT_TYPE_DIRECTORY:
-      return FSAL_TYPE_DIR;
+      return DIRECTORY;
 
     case NS_OBJECT_TYPE_HARD_LINK:
     case NS_OBJECT_TYPE_FILE:
-      return FSAL_TYPE_FILE;
+      return REGULAR_FILE;
 
     case NS_OBJECT_TYPE_SYM_LINK:
-      return FSAL_TYPE_LNK;
+      return SYMBOLIC_LINK;
 
     case NS_OBJECT_TYPE_JUNCTION:
-      return FSAL_TYPE_JUNCTION;
+      return FS_JUNCTION;
 
     default:
       LogEvent(COMPONENT_FSAL, "Unknown object type: %d", hpss_type_in);
@@ -361,12 +276,12 @@ struct timespec hpss2fsal_time(timestamp_sec_t tsec)
  *
  * \return - The FSAL 64 bits number.
  */
-fsal_u64_t hpss2fsal_64(u_signed64 hpss_size_in)
+uint64_t hpss2fsal_64(u_signed64 hpss_size_in)
 {
 
   long long output_buff;
   CONVERT_U64_TO_LONGLONG(hpss_size_in, output_buff);
-  return (fsal_u64_t) (output_buff);
+  return (uint64_t) (output_buff);
 
 }
 
@@ -379,7 +294,7 @@ fsal_u64_t hpss2fsal_64(u_signed64 hpss_size_in)
  *
  * \return - The HPSS 64 bits number.
  */
-u_signed64 fsal2hpss_64(fsal_u64_t fsal_size_in)
+u_signed64 fsal2hpss_64(uint64_t fsal_size_in)
 {
 
   u_signed64 output_buff;
@@ -429,46 +344,46 @@ fsal_fsid_t hpss2fsal_fsid(u_signed64 hpss_fsid_in)
  *
  * \return The FSAL mode associated to input parameters.
  */
-fsal_accessmode_t hpss2fsal_mode(unsigned32 uid_bit,
+uint32_t hpss2fsal_mode(unsigned32 uid_bit,
                                  unsigned32 gid_bit,
                                  unsigned32 sticky_bit,
                                  unsigned32 user_perms,
                                  unsigned32 group_perms, unsigned32 other_perms)
 {
 
-  fsal_accessmode_t out_mode = 0;
+  uint32_t out_mode = 0;
 
   /* special bits */
   if(uid_bit)
-    out_mode |= FSAL_MODE_SUID;
+    out_mode |= S_ISUID;
   if(gid_bit)
-    out_mode |= FSAL_MODE_SGID;
+    out_mode |= S_ISGID;
   if(sticky_bit)
-    out_mode |= FSAL_MODE_SVTX;
+    out_mode |= S_ISVTX;
 
   /* user perms */
   if(user_perms & NS_PERMS_RD)
-    out_mode |= FSAL_MODE_RUSR;
+    out_mode |= S_IRUSR;
   if(user_perms & NS_PERMS_WR)
-    out_mode |= FSAL_MODE_WUSR;
+    out_mode |= S_IWUSR;
   if(user_perms & NS_PERMS_XS)
-    out_mode |= FSAL_MODE_XUSR;
+    out_mode |= S_IXUSR;
 
   /* group perms */
   if(group_perms & NS_PERMS_RD)
-    out_mode |= FSAL_MODE_RGRP;
+    out_mode |= S_IRGRP;
   if(group_perms & NS_PERMS_WR)
-    out_mode |= FSAL_MODE_WGRP;
+    out_mode |= S_IWGRP;
   if(group_perms & NS_PERMS_XS)
-    out_mode |= FSAL_MODE_XGRP;
+    out_mode |= S_IXGRP;
 
   /* other perms */
   if(other_perms & NS_PERMS_RD)
-    out_mode |= FSAL_MODE_ROTH;
+    out_mode |= S_IROTH;
   if(other_perms & NS_PERMS_WR)
-    out_mode |= FSAL_MODE_WOTH;
+    out_mode |= S_IWOTH;
   if(other_perms & NS_PERMS_XS)
-    out_mode |= FSAL_MODE_XOTH;
+    out_mode |= S_IXOTH;
 
   return out_mode;
 
@@ -495,72 +410,53 @@ fsal_accessmode_t hpss2fsal_mode(unsigned32 uid_bit,
  *
  * \return Nothing.
  */
-void fsal2hpss_mode(fsal_accessmode_t fsal_mode,
-#if HPSS_MAJOR_VERSION < 7
-                    unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit,
-#else
+void fsal2hpss_mode(uint32_t fsal_mode,
                     unsigned32 * mode_perms,
-#endif
                     unsigned32 * user_perms,
                     unsigned32 * group_perms, unsigned32 * other_perms)
 {
 
   /* init outputs */
 
-#if HPSS_MAJOR_VERSION < 7
-  *uid_bit = 0;
-  *gid_bit = 0;
-  *sticky_bit = 0;
-#else
   *mode_perms = 0;
-#endif
   *user_perms = 0;
   *group_perms = 0;
   *other_perms = 0;
 
   /* special bits */
 
-#if HPSS_MAJOR_VERSION < 7
-  if(fsal_mode & FSAL_MODE_SUID)
-    *uid_bit = 1;
-  if(fsal_mode & FSAL_MODE_SGID)
-    *gid_bit = 1;
-  if(fsal_mode & FSAL_MODE_SVTX)
-    *sticky_bit = 1;
-#else
-  if(fsal_mode & FSAL_MODE_SUID)
+  if(fsal_mode & S_ISUID)
     (*mode_perms) |= NS_PERMS_RD;
-  if(fsal_mode & FSAL_MODE_SGID)
+  if(fsal_mode & S_ISGID)
     (*mode_perms) |= NS_PERMS_WR;
-  if(fsal_mode & FSAL_MODE_SVTX)
+  if(fsal_mode & S_ISVTX)
     (*mode_perms) |= NS_PERMS_XS;
-#endif
 
   /* user perms */
 
-  if(fsal_mode & FSAL_MODE_RUSR)
+  if(fsal_mode & S_IRUSR)
     *user_perms |= NS_PERMS_RD;
-  if(fsal_mode & FSAL_MODE_WUSR)
+  if(fsal_mode & S_IWUSR)
     *user_perms |= NS_PERMS_WR;
-  if(fsal_mode & FSAL_MODE_XUSR)
+  if(fsal_mode & S_IXUSR)
     *user_perms |= NS_PERMS_XS;
 
   /* group perms */
 
-  if(fsal_mode & FSAL_MODE_RGRP)
+  if(fsal_mode & S_IRGRP)
     *group_perms |= NS_PERMS_RD;
-  if(fsal_mode & FSAL_MODE_WGRP)
+  if(fsal_mode & S_IWGRP)
     *group_perms |= NS_PERMS_WR;
-  if(fsal_mode & FSAL_MODE_XGRP)
+  if(fsal_mode & S_IXGRP)
     *group_perms |= NS_PERMS_XS;
 
   /* other perms */
 
-  if(fsal_mode & FSAL_MODE_ROTH)
+  if(fsal_mode & S_IROTH)
     *other_perms |= NS_PERMS_RD;
-  if(fsal_mode & FSAL_MODE_WOTH)
+  if(fsal_mode & S_IWOTH)
     *other_perms |= NS_PERMS_WR;
-  if(fsal_mode & FSAL_MODE_XOTH)
+  if(fsal_mode & S_IXOTH)
     *other_perms |= NS_PERMS_XS;
 
   return;
@@ -594,39 +490,36 @@ void fsal2hpss_mode(fsal_accessmode_t fsal_mode,
  */
 fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
                                    hpss_Attrs_t * p_hpss_attr_in,
-                                   fsal_attrib_list_t * p_fsalattr_out)
+                                   struct attrlist * p_fsalattr_out)
 {
 
-  fsal_attrib_mask_t supp_attr, unsupp_attr;
+  attrmask_t supp_attr, unsupp_attr;
 
   /* sanity checks */
   if(!p_hpss_handle_in || !p_hpss_attr_in || !p_fsalattr_out)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
-  if(p_fsalattr_out->asked_attributes == 0)
+  if(p_fsalattr_out->mask == 0)
     {
-      p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
-
-      LogCrit(COMPONENT_FSAL,
-          "Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
-           __LINE__, __FILE__);
+      p_fsalattr_out->mask = HPSS_SUPPORTED_ATTRIBUTES;
     }
 
   /* check that asked attributes are supported */
-  supp_attr = global_fs_info.supported_attrs;
+  /** @todo: FIXME: add an argument for the export sowe get the actual supported attrs. same in fsal2hpss */
+  supp_attr = HPSS_SUPPORTED_ATTRIBUTES;
 
-  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
+  unsupp_attr = (p_fsalattr_out->mask) & (~supp_attr);
 
   if(unsupp_attr)
     {
       LogFullDebug(COMPONENT_FSAL,
-                        "Unsupported attributes: %#llX    removing it from asked attributes ",
+                        "Unsupported attributes: %"PRIx64"    removing it from asked attributes ",
                         unsupp_attr);
 
-      p_fsalattr_out->asked_attributes =
-          p_fsalattr_out->asked_attributes & (~unsupp_attr);
+      p_fsalattr_out->mask =
+          p_fsalattr_out->mask & (~unsupp_attr);
 
-      /* ReturnCode( ERR_FSAL_ATTRNOTSUPP, 0 ); */
+      /* return fsalstat( ERR_FSAL_ATTRNOTSUPP, 0 ); */
     }
 
   /* Initialize ACL regardless of whether ACL was asked or not.
@@ -634,23 +527,23 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   p_fsalattr_out->acl = NULL;
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SUPPATTR))
     {
       p_fsalattr_out->supported_attributes = supp_attr;
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
     {
       p_fsalattr_out->type = hpss2fsal_type(p_hpss_handle_in->Type);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SIZE))
     {
       p_fsalattr_out->filesize = hpss2fsal_64(p_hpss_attr_in->DataLength);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FSID))
     {
       p_fsalattr_out->fsid = hpss2fsal_fsid(p_hpss_attr_in->FilesetId);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ACL))
     {
 
       if(p_hpss_attr_in->ExtendedACLs == 0)
@@ -665,40 +558,34 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
         }
 
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID))
     {
-      p_fsalattr_out->fileid = (fsal_u64_t) hpss_GetObjId(p_hpss_handle_in);
+      p_fsalattr_out->fileid = (uint64_t) hpss_GetObjId(p_hpss_handle_in);
     }
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MODE))
     {
       p_fsalattr_out->mode = hpss2fsal_mode(
-#if HPSS_MAJOR_VERSION < 7
-                                             p_hpss_attr_in->SetUIDBit,
-                                             p_hpss_attr_in->SetGIDBit,
-                                             p_hpss_attr_in->SetStickyBit,
-#else
                                              p_hpss_attr_in->ModePerms & NS_PERMS_RD,
                                              p_hpss_attr_in->ModePerms & NS_PERMS_WR,
                                              p_hpss_attr_in->ModePerms & NS_PERMS_XS,
-#endif
                                              p_hpss_attr_in->UserPerms,
                                              p_hpss_attr_in->GroupPerms,
                                              p_hpss_attr_in->OtherPerms);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_NUMLINKS))
     {
       p_fsalattr_out->numlinks = p_hpss_attr_in->LinkCount;
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_OWNER))
     {
       p_fsalattr_out->owner = p_hpss_attr_in->UID;
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_GROUP))
     {
       p_fsalattr_out->group = p_hpss_attr_in->GID;
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME))
     {
 
       LogFullDebug(COMPONENT_FSAL, "Getting ATIME:");
@@ -713,16 +600,16 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
         p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
 
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CREATION))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CREATION))
     {
       p_fsalattr_out->creation = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
     }
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME))
     {
       p_fsalattr_out->ctime = hpss2fsal_time(p_hpss_attr_in->TimeModified);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME))
     {
 
       LogFullDebug(COMPONENT_FSAL, "Getting MTIME:");
@@ -738,8 +625,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
       switch (hpss2fsal_type(p_hpss_handle_in->Type))
         {
 
-        case FSAL_TYPE_FILE:
-        case FSAL_TYPE_LNK:
+        case REGULAR_FILE:
+        case SYMBOLIC_LINK:
 
           if(p_hpss_attr_in->TimeLastWritten != 0)
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeLastWritten);
@@ -747,8 +634,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
           break;
 
-        case FSAL_TYPE_DIR:
-        case FSAL_TYPE_JUNCTION:
+        case DIRECTORY:
+        case FS_JUNCTION:
 
           if(p_hpss_attr_in->TimeModified != 0)
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeModified);
@@ -757,33 +644,33 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
           break;
 
         default:
-          ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+          return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
         }
     }
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
           =
           hpss2fsal_time(MAX_3
                          (p_hpss_attr_in->TimeModified, p_hpss_attr_in->TimeCreated,
                           p_hpss_attr_in->TimeLastWritten));
-      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.tv_sec ;
     }
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SPACEUSED))
     {
       p_fsalattr_out->spaceused = hpss2fsal_64(p_hpss_attr_in->DataLength);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MOUNTFILEID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MOUNTFILEID))
     {
       p_fsalattr_out->mounted_on_fileid = hpss2fsal_64(p_hpss_attr_in->FilesetRootId);
     }
 
   /* everything has been copied ! */
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -808,43 +695,43 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
 fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
-                                        fsal_attrib_list_t * p_fsalattr_out)
+                                        struct attrlist * p_fsalattr_out)
 {
 
-  fsal_attrib_mask_t avail_attr, unavail_attr;
+  attrmask_t avail_attr, unavail_attr;
 
   /* sanity check */
   if(!p_hpsshandle_in || !p_fsalattr_out)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* check that asked attributes are available */
-  avail_attr = (FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE | FSAL_ATTR_FILEID);
+  avail_attr = (ATTR_SUPPATTR | ATTR_TYPE | ATTR_FILEID);
 
-  unavail_attr = (p_fsalattr_out->asked_attributes) & (~avail_attr);
+  unavail_attr = (p_fsalattr_out->mask) & (~avail_attr);
   if(unavail_attr)
     {
       LogFullDebug(COMPONENT_FSAL,
-                        "Attributes not available: %#llX", unavail_attr);
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
+                        "Attributes not available: %"PRIx64"", unavail_attr);
+      return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SUPPATTR))
     {
-      p_fsalattr_out->supported_attributes = global_fs_info.supported_attrs;
+      p_fsalattr_out->supported_attributes = HPSS_SUPPORTED_ATTRIBUTES;
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
     {
       p_fsalattr_out->type = hpss2fsal_type(p_hpsshandle_in->Type);
     }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID))
     {
-      p_fsalattr_out->fileid = (fsal_u64_t) hpss_GetObjId(p_hpsshandle_in);
+      p_fsalattr_out->fileid = (uint64_t) hpss_GetObjId(p_hpsshandle_in);
     }
 
   /* everything has been copied ! */
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -859,7 +746,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
  *        Pointer to the FSAL attributes to be set.
  * \param p_hpss_attrmask (output):
  *        Pointer to the HPSS attribute list associated to
- *        the FSAL asked_attributes.
+ *        the FSAL mask.
  * \param p_hpss_attrs (output):
  *        Pointer to the HPSS attribute values associated
  *        to input attributes.
@@ -873,18 +760,18 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
  *          Some of the asked attributes are read-only.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
-                                  fsal_attrib_list_t * p_attrib_set,
+fsal_status_t fsal2hpss_attribset(struct fsal_obj_handle * p_fsal_handle,
+                                  struct attrlist * p_attrib_set,
                                   hpss_fileattrbits_t * p_hpss_attrmask,
                                   hpss_Attrs_t * p_hpss_attrs)
 {
 
-  fsal_attrib_mask_t settable_attrs, supp_attrs, unavail_attrs, unsettable_attrs;
+  attrmask_t settable_attrs, supp_attrs, unavail_attrs, unsettable_attrs;
 
   /* sanity check */
 
   if(!p_attrib_set || !p_hpss_attrmask || !p_hpss_attrs)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* init output values */
 
@@ -895,46 +782,47 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
   /* Supported attributes */
 
-  supp_attrs = global_fs_info.supported_attrs;
+  supp_attrs = HPSS_SUPPORTED_ATTRIBUTES;
 
   /* Settable attrs. */
 
-  settable_attrs = (FSAL_ATTR_SIZE | FSAL_ATTR_ACL |
-                    FSAL_ATTR_MODE | FSAL_ATTR_OWNER |
-                    FSAL_ATTR_GROUP | FSAL_ATTR_ATIME |
-                    FSAL_ATTR_CTIME | FSAL_ATTR_MTIME);
+  settable_attrs = (ATTR_SIZE | ATTR_SPACEUSED | ATTR_ACL |
+                    ATTR_MODE | ATTR_OWNER |
+                    ATTR_GROUP | ATTR_ATIME |
+                    ATTR_CTIME | ATTR_MTIME |
+                    ATTR_ATIME_SERVER | ATTR_MTIME_SERVER );
 
   /* If there are unsupported attributes, return ERR_FSAL_ATTRNOTSUPP */
 
-  unavail_attrs = (p_attrib_set->asked_attributes) & (~supp_attrs);
+  unavail_attrs = (p_attrib_set->mask) & (~supp_attrs);
 
   if(unavail_attrs)
     {
       LogFullDebug(COMPONENT_FSAL,
-                        "Attributes not supported: %#llX", unavail_attrs);
+                        "Attributes not supported: %"PRIx64"", unavail_attrs);
 
       /* Error : unsupported attribute. */
 
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
+      return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
   /* If there are read-only attributes, return. */
 
-  unsettable_attrs = (p_attrib_set->asked_attributes) & (~settable_attrs);
+  unsettable_attrs = (p_attrib_set->mask) & (~settable_attrs);
 
   if(unsettable_attrs)
     {
       LogFullDebug(COMPONENT_FSAL,
-                        "Read-Only Attributes: %#llX", unsettable_attrs);
+                        "Read-Only Attributes: %"PRIx64"", unsettable_attrs);
 
       /* Error : unsettable attribute. */
 
-      ReturnCode(ERR_FSAL_INVAL, 0);
+      return fsalstat(ERR_FSAL_INVAL, 0);
     }
 
   /* convert settable attributes */
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_SIZE))
     {
 
       (*p_hpss_attrmask) =
@@ -946,46 +834,36 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
   /** @todo  ACL management */
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_MODE))
     {
 
       (*p_hpss_attrmask) =
           API_AddRegisterValues(*p_hpss_attrmask,
                                 CORE_ATTR_USER_PERMS,
                                 CORE_ATTR_GROUP_PERMS, CORE_ATTR_OTHER_PERMS,
-#if HPSS_MAJOR_VERSION < 7
-                                CORE_ATTR_SET_GID,
-                                CORE_ATTR_SET_UID, CORE_ATTR_SET_STICKY,
-#else
                                 CORE_ATTR_MODE_PERMS,
-#endif
                                 -1);
 
       /* convert mode and set output structure. */
       fsal2hpss_mode(p_attrib_set->mode,
-#if HPSS_MAJOR_VERSION < 7
-                     &(p_hpss_attrs->SetUIDBit),
-                     &(p_hpss_attrs->SetGIDBit), &(p_hpss_attrs->SetStickyBit),
-#else
                      &(p_hpss_attrs->ModePerms),
-#endif
                      &(p_hpss_attrs->UserPerms),
                      &(p_hpss_attrs->GroupPerms), &(p_hpss_attrs->OtherPerms));
 
     }
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_OWNER))
     {
 
       (*p_hpss_attrmask) = API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_UID, -1);
 
       p_hpss_attrs->UID = p_attrib_set->owner;
 
-      LogFullDebug(COMPONENT_FSAL, "Setting Owner = : %d ",
+      LogFullDebug(COMPONENT_FSAL, "Setting Owner = : %"PRIu64" ",
                         p_attrib_set->owner);
     }
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_GROUP))
     {
 
       (*p_hpss_attrmask) = API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_GID, -1);
@@ -994,7 +872,20 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
     }
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_ATIME))
+  /* if *TIME_SERVER, just fill the regular *TIME with the right value */
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_ATIME_SERVER))
+    {
+      p_attrib_set->mask |= ATTR_ATIME;
+      clock_gettime(CLOCK_REALTIME, &p_attrib_set->atime);
+    }
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_MTIME_SERVER))
+    {
+      p_attrib_set->mask |= ATTR_MTIME;
+      clock_gettime(CLOCK_REALTIME, &p_attrib_set->mtime);
+    }
+
+
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_ATIME))
     {
 
       (*p_hpss_attrmask) =
@@ -1008,15 +899,15 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
     }
 
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_MTIME))
     {
       LogFullDebug(COMPONENT_FSAL, "Setting MTIME:");
-      LogFullDebug(COMPONENT_FSAL, "\tType = %d", p_fsal_handle->data.obj_type);
+      LogFullDebug(COMPONENT_FSAL, "\tType = %d", p_fsal_handle->type);
 
-      switch (p_fsal_handle->data.obj_type)
+      switch (p_fsal_handle->type)
         {
-        case FSAL_TYPE_FILE:
-        case FSAL_TYPE_LNK:
+        case REGULAR_FILE:
+        case SYMBOLIC_LINK:
 
           (*p_hpss_attrmask) =
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_WRITTEN, -1);
@@ -1027,8 +918,8 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
           break;
 
-        case FSAL_TYPE_DIR:
-        case FSAL_TYPE_JUNCTION:
+        case DIRECTORY:
+        case FS_JUNCTION:
 
           (*p_hpss_attrmask) =
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
@@ -1040,13 +931,13 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
           break;
 
         default:
-          ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+          return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
         }                       /* end switch */
 
     }
-  /* end testmask FSAL_ATTR_MTIME */
-  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_CTIME))
+  /* end testmask ATTR_MTIME */
+  if(FSAL_TEST_MASK(p_attrib_set->mask, ATTR_CTIME))
     {
 
       (*p_hpss_attrmask) =
@@ -1056,6 +947,6 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
     }
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

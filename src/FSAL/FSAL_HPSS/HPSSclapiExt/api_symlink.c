@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <u_signed64.h>
-#include <hpssclapiext.h>
+#include "hpssclapiext.h"
 #include <api_internal.h>
 
 /*

@@ -103,6 +103,16 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
                                 u_signed64 * OffsetOut, /* OUT - resulting directory position */
                                 ns_DirEntry_t * DirentPtr);     /* OUT - directory entry information */
 
+int HPSSFSAL_ReaddirHandle(ns_ObjHandle_t  *ObjHandle,     /* IN - directory object handle */
+                           u_signed64      OffsetIn,       /* IN - directory position */
+                           sec_cred_t      *Ucred,         /* IN - user credentials */
+                           unsigned32      BufferSize,     /* IN - size of output buffer */
+                           unsigned32      IgnInconstitMd, /* IN - ignore in case of inconstitent MD */
+                           unsigned32      *End,           /* OUT - hit end of directory */
+                           u_signed64      *OffsetOut,     /* OUT - resulting directory position */
+                           hpss_dirent_t   *DirentPtr);    /* OUT - directory entry information */
+
+
 #if (HPSS_LEVEL < 622)
 int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,       /* IN - object handle */
                                       unsigned32 Flags, /* IN - flags for storage attrs */

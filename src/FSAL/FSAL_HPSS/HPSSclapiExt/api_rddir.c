@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <hpss_dirent.h>
 #include <u_signed64.h>
-#include <hpssclapiext.h>
+#include "hpssclapiext.h"
 #include <hpss_api.h>
 #include <api_internal.h>
 
@@ -301,7 +301,13 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
 #if HPSS_LEVEL >= 7322
                                OptionFlags,
 #endif
-                               OffsetIn, BufferSize, select_flags, End, &direntbuf);
+                               OffsetIn,
+#if HPSS_LEVEL < 732
+                               BufferSize,
+#else
+                               entry_cnt,
+#endif
+                               select_flags, End, &direntbuf);
     }
 
   if(error != 0)
@@ -416,4 +422,302 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
     }
 
   return (error);
+}
+
+
+
+/*============================================================================
+ *
+ * Function:    hpss_ReaddirHandle
+ *
+ * Synopsis:
+ *
+ * int
+ * hpss_ReaddirHandle(
+ * ns_ObjHandle_t       *ObjHandle,     ** IN - directory object handle
+ * u_signed64           OffsetIn,       ** IN - directory position
+ * hsec_UserCred_t      *Ucred,         ** IN - user credentials
+ * unsigned32           BufferSize,     ** IN - size of output buffer
+ * unsigned32           *End,           ** OUT - hit end of directory
+ * u_signed64           *OffsetOut,     ** OUT - resulting directory position
+ * hpss_dirent_t        *DirentPtr)     ** OUT - directory entry information
+ *
+ * Description:
+ *
+ *      The 'hpss_ReaddirHandle' function fills in the passed buffer with
+ *      directory entries beginning at the specified directory position.
+ *
+ * Other Inputs:
+ *      None.
+ *
+ * Outputs:
+ *      DirentPtr:      Directory entry.  If null string is returned in
+ *                      d_name and/or d_namelen == 0, we hit end of directory.
+ *      Return Value:
+ *              0               - No error. 'DirentPtr' contains directory
+ *                                information.
+ *
+ * Interfaces:
+ *      API_AddAllRegisterValues
+ *      API_ClientAPIInit
+ *      API_core_ReadDir
+ *      API_DEBUG_FPRINTF
+ *      API_ENTER
+ *      API_GetUniqueRequestID
+ *      API_RETURN
+ *      API_TraversePath
+ *      cast64
+ *      cast64m
+ *      free
+ *      memset
+ *      sizeof
+ *      strlen
+ *      strncpy
+ *
+ * Resources Used:
+ *
+ * Limitations:
+ *
+ * Assumptions:
+ *
+ * Notes:
+ *
+ *-------------------------------------------------------------------------*/
+
+int
+HPSSFSAL_ReaddirHandle(
+ns_ObjHandle_t  *ObjHandle,     /* IN - directory object handle */
+u_signed64      OffsetIn,       /* IN - directory position */
+sec_cred_t      *Ucred,         /* IN - user credentials */
+unsigned32      BufferSize,     /* IN - size of output buffer */
+unsigned32      IgnInconstitMd, /* IN - ignore in case of inconstitent MD */
+unsigned32      *End,           /* OUT - hit end of directory */
+u_signed64      *OffsetOut,     /* OUT - resulting directory position */
+hpss_dirent_t   *DirentPtr)     /* OUT - directory entry information */
+{
+   int                     cnt;
+   volatile long           error = 0;
+   hpss_reqid_t            rqstid;
+   ns_DirEntry_t           *direntptr;
+   ns_DirEntryConfArray_t  direntbuf;
+   hpss_dirent_t           *outptr;
+   sec_cred_t              *ucred_ptr;
+   apithrdstate_t          *threadcontext;
+   static char             function_name[] = "hpss_ReaddirHandle";
+   unsigned32              i, entry_cnt;
+
+
+
+   API_ENTER(function_name);
+
+   /*
+    *  Initialize the thread if not already initialized.
+    *  Get a pointer back to the thread specific context.
+    */
+
+   error = API_ClientAPIInit(&threadcontext);
+   if(error != 0)
+   {
+      API_RETURN(error);
+   }
+
+
+   /*
+    * Make sure that we got a positive buffer size and a
+    * valid object handle.
+    */
+
+   if (ObjHandle == NULL || BufferSize == 0)
+   {
+      API_RETURN(-EINVAL);
+   }
+
+
+   /*
+    *  Make sure we got a non-NULL dirent pointer.
+    */
+
+   if ((DirentPtr == NULL) || (End == NULL) || (OffsetOut == NULL))
+   {
+      API_RETURN(-EFAULT);
+   }
+
+   /*
+    *  If user credentials were not passed, use the ones in the
+    *  current thread context.
+    */
+
+   if (Ucred == (sec_cred_t *)NULL)
+      ucred_ptr = &threadcontext->UserCred;
+   else
+      ucred_ptr = Ucred;
+
+   /* figure out how many entries will fit in the clients buffer */
+   entry_cnt = BufferSize / sizeof(hpss_dirent_t);
+
+   /*
+    *  Get a valid request Id and then read the directory entries.
+    */
+
+   rqstid = API_GetUniqueRequestID();
+
+   error = API_core_ReadDir(threadcontext,
+                            rqstid,
+                            ucred_ptr,
+                            ObjHandle,
+#if HPSS_LEVEL >= 7322              
+                            NS_READDIR_FLAGS_NFS,
+#endif
+                            OffsetIn,
+                            entry_cnt,
+                            cast64m(0),
+                            End,
+                            &direntbuf);
+
+   /* If metadata is wrong, we'll get nothing even if there could be something... Try again */
+   if((error == HPSS_ENOENT) && IgnInconstitMd) {
+     rqstid = API_GetUniqueRequestID();
+
+     error = API_core_ReadDir(threadcontext,
+                              rqstid,
+                              ucred_ptr,
+                              ObjHandle,
+#if HPSS_LEVEL >= 7322              
+                              NS_READDIR_FLAGS_NFS,
+#endif
+                              OffsetIn,
+                              entry_cnt,
+                              cast64m(0),
+                              End,
+                              &direntbuf);
+   }
+
+   if(error != 0)
+   {
+      API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                        "%s: Could not read directory entries.\n",
+                        function_name);
+   }
+
+   if(error == 0)
+   {
+
+      /*
+       *  Now load in the results from the call.
+       */
+
+      (void)memset(DirentPtr,0,BufferSize);
+      cnt = 0;
+
+      /* march through each dir entry returned, being careful not to
+       * go beyond what the client asked for. We do this extra check
+       * because the dirent structure could be padded differently
+       * depending on the platform, so the server could actually
+       * give us more than we can safely stuff in the client's
+       * buffer.
+       */ 
+      for ( i = 0; i < direntbuf.DirEntry.DirEntry_len && i < entry_cnt; ++i )
+      {
+	 direntptr = &(direntbuf.DirEntry.DirEntry_val[i]);
+         outptr = &DirentPtr[cnt++];
+
+         /*
+          * If this entry is a junction return
+          * the attributes for the fileset/directory
+          * to which the junction points.
+          */
+
+         if ( direntptr->Attrs.Type == NS_OBJECT_TYPE_JUNCTION )
+         {
+            hpss_Attrs_t   attrs;
+            ns_ObjHandle_t obj_handle;
+            u_signed64     select_flags;
+
+            memset(&obj_handle,0,sizeof(obj_handle));
+            memset(&attrs,0,sizeof(attrs));
+            select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
+
+            error = API_TraversePath(threadcontext,
+                                     rqstid,
+				     ucred_ptr,
+                                     ObjHandle,
+                                     (char *)direntptr->Name,
+                                     API_NULL_CWD_STACK,
+                                     API_CHASE_JUNCTION,
+                                     0,
+                                     0,
+                                     select_flags,
+                                     cast64m(0),
+                                     API_NULL_CWD_STACK,
+                                     &obj_handle,
+                                     &attrs,
+				     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL);
+
+            if (error != 0)
+            {
+               /*
+                * If we can't find out what the junction points
+                * to, log a message and return the attributes
+                * of the junction itself.
+                */
+
+               API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                                 "hpss_Readdir: API_TraversePath"
+                                 "failed, error = %d\n",error);
+               error = 0;
+            }
+            else
+            {
+               /*
+                * We got the fileset attributes, copy
+                * them to the entry.
+                */
+
+               direntptr->ObjHandle = obj_handle;
+               direntptr->Attrs = attrs;
+            }
+         }
+
+         outptr->d_offset = direntptr->ObjOffset;
+         outptr->d_reclen = 0;
+         strncpy((char *)outptr->d_name,
+                 (char *)direntptr->Name,
+                 HPSS_MAX_FILE_NAME);
+         outptr->d_namelen = strlen((char *)outptr->d_name);
+         outptr->d_handle = direntptr->ObjHandle;
+
+      }
+
+
+      if (direntbuf.DirEntry.DirEntry_len > 0)
+         *OffsetOut = outptr->d_offset;
+      else
+         *OffsetOut = cast64(0);
+
+      /*
+       * If the result returned includes the last entry, but we
+       * will not be returning that entry to the client (because of
+       * dirent structure size different between client and server),
+       * clear the 'End' flag.
+       */
+
+      if(*End && entry_cnt < direntbuf.DirEntry.DirEntry_len) 
+         *End = 0;
+
+      free(direntbuf.DirEntry.DirEntry_val);
+      direntbuf.DirEntry.DirEntry_val = NULL;
+
+
+      /*
+       *  Return the number of entries returned from the
+       *  core server.
+       */
+
+      error = cnt;
+   }
+
+   API_RETURN(error);
 }
