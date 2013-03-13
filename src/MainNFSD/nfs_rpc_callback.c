@@ -870,14 +870,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (stat != RPC_SUCCESS) {
-		if (chan->clnt) {
-			if (chan->auth) {
-				AUTH_DESTROY(chan->auth);
-				chan->auth = NULL;
-			}
-			clnt_destroy(chan->clnt);
-			chan->clnt = NULL;
-		}
+		nfs_rpc_destroy_chan(chan);
 	}
 
 unlock:
@@ -1038,14 +1031,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (call->stat != RPC_SUCCESS) {
-		if (call->chan->clnt) {
-			if (call->chan->auth) {
-				AUTH_DESTROY(call->chan->auth);
-				call->chan->auth = NULL;
-			}
-			clnt_destroy(call->chan->clnt);
-			call->chan->clnt = NULL;
-		}
+		nfs_rpc_destroy_chan(call->chan);
 	}
 
 unlock:
