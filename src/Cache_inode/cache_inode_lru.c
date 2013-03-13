@@ -484,7 +484,7 @@ lru_reap_impl(uint32_t flags)
 				    /* it worked */
 				    struct lru_q *q = lru_queue_of(entry);
                                     cih_remove_latched(entry, &latch,
-                                                       CIH_REMOVE_NONE);
+                                                       CIH_REMOVE_QLOCKED);
 				    glist_del(&lru->q);
 				    --(q->size);
 				    entry->lru.qid = LRU_ENTRY_NONE;
@@ -1445,7 +1445,7 @@ out:
  */
 void
 cache_inode_lru_unref(cache_entry_t *entry,
-                      uint32_t __attribute__((unused)) flags)
+                      uint32_t flags)
 {
 	uint64_t refcnt;
 
@@ -1454,14 +1454,17 @@ cache_inode_lru_unref(cache_entry_t *entry,
 
 		uint32_t lane = entry->lru.lane;
 		struct lru_q_lane *qlane = &LRU[lane];
+                bool qlocked = flags & LRU_UNREF_QLOCKED;
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
-		QLOCK(qlane);
+		if (! qlocked)
+                    QLOCK(qlane);
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
 		if (unlikely(refcnt > 0)) {
-			QUNLOCK(qlane);
+			if(! qlocked)
+				QUNLOCK(qlane);
 			goto out;
 		}
 
@@ -1477,7 +1480,8 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		/* XXX now just cleans (ahem) */
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
-		QUNLOCK(qlane);
+		if (! qlocked)
+			QUNLOCK(qlane);
 	} /* refcnt == 0 */
 out:
         return;

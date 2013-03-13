@@ -522,12 +522,14 @@ cih_remove_checked(cache_entry_t *entry)
  */
 #define CIH_REMOVE_NONE    0x0000
 #define CIH_REMOVE_UNLOCK  0x0001
+#define CIH_REMOVE_QLOCKED 0x0002
 
 static inline bool
 cih_remove_latched(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 {
 	cih_partition_t *cp =
 		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+        uint32_t lflags;
 
 	if (entry->fh_hk.inavl) {
 		avltree_remove(&entry->fh_hk.node_k, &cp->t);
@@ -535,7 +537,10 @@ cih_remove_latched(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 					     entry->fh_hk.key.hk)] = NULL;
                 entry->fh_hk.inavl = false;
                 /* return sentinel ref */
-                cache_inode_lru_unref(entry, LRU_UNREF_SENTINEL);
+                lflags = LRU_UNREF_SENTINEL;
+                if (flags & CIH_REMOVE_QLOCKED)
+                    lflags |= LRU_UNREF_QLOCKED;
+                cache_inode_lru_unref(entry, lflags);
 		if (flags & CIH_REMOVE_UNLOCK)
 			PTHREAD_RWLOCK_unlock(&cp->lock);
 		return (true);
