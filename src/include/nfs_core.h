@@ -221,7 +221,6 @@ struct nfs_worker_data {
 						      export */
 
 	sockaddr_t hostaddr; /*< Client address */
-	unsigned int current_xid; /*< RPC Transaction ID */
 	struct fridgethr_context *ctx; /*< Link back to thread context */
 };
 
