@@ -4514,7 +4514,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
  *
  * @param fh [INOUT] the filehandle to manage.
  *
- * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, NFS3ERR_RESOURCE or NFS3ERR_STALE  otherwise.
+ * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, otherwise.
  *
  */
 int nfs3_AllocateFH(nfs_fh3 *fh)

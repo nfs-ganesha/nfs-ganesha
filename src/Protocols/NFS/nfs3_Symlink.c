@@ -204,7 +204,6 @@ nfs_Symlink(nfs_arg_t *arg,
 
         if ((res->res_symlink3.status =
              (nfs3_AllocateFH(&res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle))) != NFS3_OK) {
-                res->res_symlink3.status = NFS3ERR_IO;
                 rc = NFS_REQ_OK;
                 goto out;
         }
