@@ -114,7 +114,7 @@ fsalstat(fsal_errors_t major, uint32_t minor)
 #define XATTRS_READLIST_FROM_BEGINNING  (0)
 
 /** An extented attribute entry */
-typedef struct fsal_xattrent__
+typedef struct fsal_xattrent
 {
   uint64_t xattr_id; /*< xattr index */
   uint64_t xattr_cookie; /*< cookie for getting xattrs list from the next entry */

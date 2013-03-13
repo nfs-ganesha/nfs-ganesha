@@ -344,10 +344,6 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->clustered = StrToBoolean(key_value);
         }
-      else if(!strcasecmp(key_name, "Enable_FSAL_Upcalls"))
-        {
-          pparam->enable_FSAL_upcalls = StrToBoolean(key_value);
-        }
       else if(!strcasecmp(key_name, "Enable_NLM"))
         {
           pparam->enable_NLM = StrToBoolean(key_value);

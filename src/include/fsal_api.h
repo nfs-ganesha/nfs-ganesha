@@ -303,6 +303,7 @@ struct fsal_ds_handle;
 struct fsal_ds_ops;
 
 struct fsal_up_vector; /* From fsal_up.h */
+struct fsal_xattrent;
 
 /**
  * @brief FSAL object definition
@@ -1644,7 +1645,7 @@ struct fsal_obj_ops {
         fsal_status_t (*list_ext_attrs)(struct fsal_obj_handle *obj_hdl,
                                         const struct req_op_context *opctx,
                                         unsigned int cookie,
-                                        fsal_xattrent_t * xattrs_tab,
+                                        struct fsal_xattrent *xattrs_tab,
                                         unsigned int xattrs_tabsize,
                                         unsigned int *nb_returned,
                                         int *end_of_list);

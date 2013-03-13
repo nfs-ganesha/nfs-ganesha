@@ -316,8 +316,6 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
 			= glist_entry(recall_iter,
 				      struct state_layout_recall_file,
 				      entry_link);
-		/* If the recall thread hasn't run yet */
-		bool raced = false;
 		/* Iteration on states */
 		struct glist_head *state_iter = NULL;
 		/* Next entry in state list */
@@ -325,10 +323,10 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
 
 		glist_for_each_safe(state_iter,
 				    state_next,
-				    r->state_list) {
-			struct recall_work_queue *s
+				    &r->state_list) {
+			struct recall_state_list *s
 				= glist_entry(state_iter,
-					      struct recall_work_queue,
+					      struct recall_state_list,
 					      link);
 			/* Iteration on segments */
 			struct glist_head *seg_iter = NULL;
@@ -336,9 +334,6 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
 			   recall */
 			bool satisfaction = false;
 
-			if (!s->recalled) {
-				raced = true;
-			}
 			if (s->state != state) {
 				continue;
 			}
@@ -368,10 +363,7 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
 				gsh_free(s);
 			}
 		}
-		if (glist_empty(r->state_list)) {
-			if (!raced) {
-				gsh_free(r->state_list);
-			}
+		if (glist_empty(&r->state_list)) {
 			glist_del(&r->entry_link);
 			gsh_free(r);
 		}

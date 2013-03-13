@@ -271,29 +271,23 @@ initiate_recall(struct vfs_fsal_obj_handle *myself, struct pnfs_segment *seg,
 		void *r_cookie)
 {
 	struct fsal_export *export = myself->obj_handle.export;
-	struct fsal_up_event *event = fsal_up_alloc_event();
-
-	/*TODO: handle alloc errors */
+	struct pnfs_segment up_segment = *seg;
+	struct gsh_buffdesc handle = {
+		.addr = myself->handle,
+		.len = vfs_sizeof_handle(myself->handle)
+	};
+	up_segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */;
 
 	/* For layoutrecall up_ops are probably set to default recieved at
 	 * vfs_create_export
 	 */
-	event->functions = export->up_ops;
-	event->file.export = export;
-	event->file.key.len = vfs_sizeof_handle(myself->handle);
-	event->file.key.addr = gsh_malloc(event->file.key.len);
-	memcpy(event->file.key.addr, myself->handle, event->file.key.len);
+	export->up_ops->layoutrecall(export,
+				     &handle,
+				     LAYOUT4_OSD2_OBJECTS,
+				     false,
+				     &up_segment,
+				     r_cookie);
 
-	event->type = FSAL_UP_EVENT_LAYOUTRECALL;
-	event->data.layoutrecall.layout_type = LAYOUT4_OSD2_OBJECTS;
-	event->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
-	event->data.layoutrecall.changed = false;
-	event->data.layoutrecall.segment.offset = seg->offset;
-	event->data.layoutrecall.segment.length = seg->length;
-	event->data.layoutrecall.segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */;
-	event->data.layoutrecall.cookie = r_cookie;
-
-	fsal_up_submit(event);
 }
 
 struct _recall_thread {

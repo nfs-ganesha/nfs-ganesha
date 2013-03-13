@@ -41,7 +41,6 @@ struct glist_head gpfs_fsal_up_ctx_list;
  */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
-  struct fsal_up_event       * pevent;
   const struct fsal_up_vector * event_func;
   char                       thr_name[80];
   struct gpfs_fsal_up_ctx   * gpfs_fsal_up_ctx = (struct gpfs_fsal_up_ctx *) Arg;
@@ -50,12 +49,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   struct stat                 buf;
   struct glock                fl;
   struct callback_arg         callback;
-  struct gpfs_file_handle   * phandle;
+  struct gpfs_file_handle    handle;
   int                        reason = 0;
   int                        flags = 0;
   unsigned int              * fhP;
   int                        retry = 0;
   fsal_status_t              st;
+  struct gsh_buffdesc        key;
 
   snprintf(thr_name, sizeof(thr_name), "gpfs_fsal_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
@@ -92,45 +92,19 @@ void *GPFSFSAL_UP_Thread(void *Arg)
           return NULL;
         }
 
-      /* pevent is passed in as a single empty node, it's expected the
-       * FSAL will use the event_pool in the bus_context to populate
-       * this array by adding to the pevent_head. */
-
-      /* Get a new event structure */
-      pevent = fsal_up_alloc_event();
-      if(pevent == NULL)
-        {
-          if(retry < 100)   /* pool not be initialized */
-            {
-              sleep(1);
-              retry++;
-              continue;
-            }
-          LogFatal(COMPONENT_FSAL_UP,
-                   "Out of memory, can not continue.");
-        }
-
-      phandle = gsh_malloc(sizeof(struct gpfs_file_handle));
-
-      if(phandle == NULL)
-        {
-          LogFatal(COMPONENT_FSAL_UP,
-                   "Out of memory, can not continue.");
-        }
-
       LogFullDebug(COMPONENT_FSAL_UP,
                    "Requesting event from FSAL Callback interface for %d.",
                    gpfs_fsal_up_ctx->gf_fd);
 
-      phandle->handle_size = OPENHANDLE_HANDLE_LEN;
-      phandle->handle_key_size = OPENHANDLE_KEY_LEN;
-      phandle->handle_version = OPENHANDLE_VERSION;
+      handle.handle_size = OPENHANDLE_HANDLE_LEN;
+      handle.handle_key_size = OPENHANDLE_KEY_LEN;
+      handle.handle_version = OPENHANDLE_VERSION;
 
       callback.interface_version = GPFS_INTERFACE_VERSION +
                                    GPFS_INTERFACE_SUB_VER;
 
       callback.mountdirfd = gpfs_fsal_up_ctx->gf_fd;
-      callback.handle     = phandle;
+      callback.handle     = &handle;
       callback.reason     = &reason;
       callback.flags      = &flags;
       callback.buf        = &buf;
@@ -151,8 +125,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                   "OPENHANDLE_INODE_UPDATE failed for %d."
                   " rc %d, errno %d (%s) reason %d",
                   gpfs_fsal_up_ctx->gf_fd, rc, errno, strerror(errno), reason);
-
-          gsh_free(phandle);
 
           rc = -(rc);
           if(rc > GPFS_INTERFACE_VERSION)
@@ -187,10 +159,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                rc, reason, callback.buf->st_ino);
 
       LogFullDebug(COMPONENT_FSAL_UP,
-                   "inode update: phandle:%p flags:%x callback.handle:%p"
+                   "inode update: flags:%x callback.handle:%p"
                    " handle size = %u handle_type:%d handle_version:%d"
                    " key_size = %u handle_fsid=%d.%d f_handle:%p",
-                   phandle, *callback.flags, callback.handle,
+                   *callback.flags, callback.handle,
                    callback.handle->handle_size,
                    callback.handle->handle_type,
                    callback.handle->handle_version,
@@ -208,59 +180,66 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
       /* Here is where we decide what type of event this is
        * ... open,close,read,...,invalidate? */
-      pevent->file.export = gpfs_fsal_up_ctx->gf_export;
-      pevent->file.export->ops->get(pevent->file.export);
-      pevent->functions = event_func;
-      pevent->file.key.addr = phandle;
-      pevent->file.key.len = phandle->handle_key_size;
+      key.addr = &handle;
+      key.len = handle.handle_key_size;
+
+      LogDebug(COMPONENT_FSAL_UP,
+               "Received event to process for %d",
+               gpfs_fsal_up_ctx->gf_fd);
 
       switch(reason)
       {
           case INODE_LOCK_GRANTED: /* Lock Event */
-            LogMidDebug(COMPONENT_FSAL_UP,
-                        "inode lock granted: owner %p pid %d type %d start %lld len %lld",
-                        fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
-                        (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-            pevent->data.lock_grant.lock_owner = fl.lock_owner;
-            pevent->data.lock_grant.lock_param.lock_length = fl.flock.l_len;
-            pevent->data.lock_grant.lock_param.lock_start = fl.flock.l_start;
-            pevent->data.lock_grant.lock_param.lock_type = fl.flock.l_type;
-            pevent->type = FSAL_UP_EVENT_LOCK_GRANT;
-            break;
-
           case INODE_LOCK_AGAIN: /* Lock Event */
+	  {
             LogMidDebug(COMPONENT_FSAL_UP,
-                        "inode lock again: owner %p pid %d type %d start %lld len %lld",
+                        "%s: owner %p pid %d type %d start %lld len %lld",
+			reason == INODE_LOCK_GRANTED ?
+			"inode lock granted" :
+			"inode lock again",
                         fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                         (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-            pevent->data.lock_grant.lock_owner = fl.lock_owner;
-            pevent->data.lock_grant.lock_param.lock_length = fl.flock.l_len;
-            pevent->data.lock_grant.lock_param.lock_start = fl.flock.l_start;
-            pevent->data.lock_grant.lock_param.lock_type = fl.flock.l_type;
-            pevent->type = FSAL_UP_EVENT_LOCK_GRANT;
+
+	    fsal_lock_param_t lockdesc = {
+	      .lock_sle_type = FSAL_POSIX_LOCK,
+	      .lock_type = fl.flock.l_type,
+	      .lock_start = fl.flock.l_start,
+	      .lock_length = fl.flock.l_len
+	    };
+	    rc = event_func->lock_grant(gpfs_fsal_up_ctx->gf_export,
+					&key,
+					fl.lock_owner,
+					&lockdesc);
+	  }
             break;
 
           case BREAK_DELEGATION: /* Delegation Event */
             LogDebug(COMPONENT_FSAL_UP,
                      "delegation recall: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
-            pevent->data.delegrecall.flags = 0;
-            pevent->type = FSAL_UP_EVENT_DELEGATION_RECALL;
+	    rc = event_func->delegrecall(gpfs_fsal_up_ctx->gf_export,
+					 &key);
             break;
 
           case LAYOUT_FILE_RECALL: /* Layout file recall Event */
+	  {
+	    struct pnfs_segment segment =
+	      {
+		.offset = 0,
+		.length = UINT64_MAX,
+		.io_mode = LAYOUTIOMODE4_ANY
+	      };
             LogDebug(COMPONENT_FSAL_UP,
                      "layout file recall: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
 
-            pevent->type = FSAL_UP_EVENT_LAYOUTRECALL;
-            pevent->data.layoutrecall.layout_type = LAYOUT4_NFSV4_1_FILES;
-            pevent->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
-            pevent->data.layoutrecall.changed = false;
-            pevent->data.layoutrecall.segment.offset = 0;
-            pevent->data.layoutrecall.segment.length = UINT64_MAX;
-            pevent->data.layoutrecall.segment.io_mode = LAYOUTIOMODE4_ANY;
-            pevent->data.layoutrecall.cookie = NULL;
+	    rc = event_func->layoutrecall(gpfs_fsal_up_ctx->gf_export,
+					  &key,
+					  LAYOUT4_NFSV4_1_FILES,
+					  false,
+					  &segment,
+					  NULL);
+	  }
             break;
 
           case LAYOUT_RECALL_ANY: /* Recall all layouts Event */
@@ -268,11 +247,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                      "layout recall any: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
 
-            pevent->type = FSAL_UP_EVENT_RECALL_ANY;
-            pevent->data.recallany.objects_to_keep = 0;
-            pevent->data.recallany.type_mask.bitmap4_len = 1;
-            pevent->data.recallany.type_mask.map[0] = RCA4_TYPE_MASK_FILE_LAYOUT;
-            pevent->data.layoutrecall.cookie = NULL;
+	    /**
+	     * @todo This functionality needs to be implemented as a
+	     * bulk FSID CB_LAYOUTRECALL.  RECALL_ANY isn't suitable
+	     * since it can't be restricted to just one FSAL.  Also
+	     * an FSID LAYOUTRECALL lets you have multiplke
+	     * filesystems exported from one FSAL and not yank layouts
+	     * on all of them when you only need to recall them for one.
+	     */
             break;
 
           case LAYOUT_NOTIFY_DEVICEID: /* Device update Event */
@@ -281,76 +263,73 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                      "layout device update: flags:%x ino %ld devid %ld-%016lx",
                      flags, callback.buf->st_ino, dev_id.sbid, dev_id.devid);
 
-            pevent->type = FSAL_UP_EVENT_NOTIFY_DEVICE;
-            pevent->data.notifydevice.notify_type = NOTIFY_DEVICEID4_DELETE_MASK;
-            pevent->data.notifydevice.layout_type = LAYOUT4_NFSV4_1_FILES;
-            memcpy(&pevent->data.notifydevice.device_id, &dev_id, sizeof(deviceid4));
-            pevent->data.notifydevice.immediate = true;
-            pevent->data.notifydevice.cookie = NULL;
+	    rc = event_func->notify_device(gpfs_fsal_up_ctx->gf_export,
+					   NOTIFY_DEVICEID4_DELETE_MASK,
+					   LAYOUT4_NFSV4_1_FILES,
+					   dev_id.devid,
+					   true);
             break;
 
           case INODE_UPDATE: /* Update Event */
+	  {
+	    struct attrlist attr;
+	    st = posix2fsal_attributes(&buf, &attr);
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode update: flags:%x update ino %ld n_link:%d",
                         flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
 
-            pevent->data.update.flags = 0;
-            /* convert attributes */
-
-            pevent->data.update.attr.mask = 0;
-
             /* Check for accepted flags, any other changes or errors just invalidate. */
-            if (!(flags & ~(UP_NLINK | UP_MODE | UP_OWN | UP_TIMES | UP_ATIME)))
-            {
-              if (flags & UP_NLINK)
-                pevent->data.update.flags |= fsal_up_nlink;
-              if (flags & UP_MODE)
-                pevent->data.update.attr.mask |= ATTR_MODE;
-              if (flags & UP_OWN)
-                pevent->data.update.attr.mask |= ATTR_OWNER;
-              if (flags & UP_TIMES)
-                pevent->data.update.attr.mask |= ATTR_ATIME|ATTR_CTIME|ATTR_MTIME;
-              if (flags & UP_ATIME)
-                pevent->data.update.attr.mask |= ATTR_ATIME;
+            if ((!(flags & ~(UP_NLINK | UP_MODE | UP_OWN | UP_TIMES | UP_ATIME))) &&
+		!FSAL_IS_ERROR(st))
+	      {
+		uint32_t upflags = 0;
+		attr.mask = 0;
+		if (flags & UP_NLINK)
+		  upflags |= fsal_up_nlink;
+		if (flags & UP_MODE)
+		  attr.mask |= ATTR_MODE;
+		if (flags & UP_OWN)
+		  attr.mask |= ATTR_OWNER;
+		if (flags & UP_TIMES)
+		  attr.mask |= ATTR_ATIME|ATTR_CTIME|ATTR_MTIME;
+		if (flags & UP_ATIME)
+		  attr.mask |= ATTR_ATIME;
 
-              st = posix2fsal_attributes(&buf, &pevent->data.update.attr);
-              if(FSAL_IS_ERROR(st))
-                pevent->type = FSAL_UP_EVENT_INVALIDATE;
-              else
-                pevent->type = FSAL_UP_EVENT_UPDATE;
-            }
-            else
-              pevent->type = FSAL_UP_EVENT_INVALIDATE;
+		rc = event_func->update(gpfs_fsal_up_ctx->gf_export,
+					&key,
+					&attr,
+					upflags);
+	      }
+	    else
+	      {
+		rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
+					    &key,
+					    0);
+	      }
 
+	  }
             break;
 
           case THREAD_STOP: /* GPFS export no longer available */
             LogWarn(COMPONENT_FSAL_UP,
                     "GPFS file system %d is no longer available",
                     gpfs_fsal_up_ctx->gf_fd);
-            fsal_up_free_event(pevent);
             return NULL;
 
           case INODE_INVALIDATE:
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode invalidate: flags:%x update ino %ld",
                         flags, callback.buf->st_ino);
-            pevent->type = FSAL_UP_EVENT_INVALIDATE;
+	    rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
+					&key,
+					0);
             break;
 
           default:
             LogWarn(COMPONENT_FSAL_UP,
                         "Unknown event: %d", reason);
-            fsal_up_free_event(pevent);
             continue;
       }
-
-      LogDebug(COMPONENT_FSAL_UP,
-               "Received event to process for %d",
-               gpfs_fsal_up_ctx->gf_fd);
-
-      /* process the event */
-      rc = fsal_up_submit(pevent);
 
       if(rc)
         {

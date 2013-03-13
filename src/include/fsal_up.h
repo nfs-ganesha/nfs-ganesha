@@ -18,107 +18,40 @@
  */
 
 /**
- * @file    fsal_up.h
+ * @defgroup fsal_up Upcalls for the FSAL
+ * @{
+ *
+ * These functions allow a filesystem realization to modify the cache
+ * and trigger recalls without it having to gain personal, intimate
+ * knowledge of the rest of Ganesha.
+ *
+ * These calls are *synchronous*, meaning they immediately do whatever
+ * they're going to do and return to the caller.  They are intended to
+ * be called from a notification or other thread.  Specifically, this
+ * means that you *must not* call layoutrecall from within layoutget.
+ *
+ * If you need to call one of these methods from within an FSAL
+ * method, use the delayed executor interface in delayed_exec.h with a
+ * delay of 0.  If you don't want to share, you could have the FSAL
+ * spawn a thread fridge of its own.
+ *
+ * If people find themselves needing it, generally, I'll rebuild the
+ * asynchronous upcall interface on top of this synchronous one.
  */
 
-#ifndef _FSAL_UP_H
-#define _FSAL_UP_H
+/**
+ * @file fsal_up.h
+ * @brief Definitions for FSAL upcalls
+ */
+
+#ifndef FSAL_UP_H
+#define FSAL_UP_H
 
 #include "fsal_types.h"
+#include "fsal_api.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
-#include "fridgethr.h"
-
-struct fsal_up_vector;
-
-/**
- * @brief An enumeration of supported events
- *
- * @note This must not become discontiguous or terrible things will
- * happen.  If you add new events, update the check in @c
- * fsal_up_submit and the array bound in the @c fsal_up_vector
- * structure.
- */
-
-typedef enum {
-	FSAL_UP_EVENT_LOCK_GRANT,
-	FSAL_UP_EVENT_LOCK_AVAIL,
-	FSAL_UP_EVENT_INVALIDATE,
-	FSAL_UP_EVENT_UPDATE,
-	FSAL_UP_EVENT_LINK,
-	FSAL_UP_EVENT_UNLINK,
-	FSAL_UP_EVENT_MOVE_FROM,
-	FSAL_UP_EVENT_MOVE_TO,
-	FSAL_UP_EVENT_RENAME,
-	FSAL_UP_EVENT_LAYOUTRECALL,
-	FSAL_UP_EVENT_RECALL_ANY,
-	FSAL_UP_EVENT_NOTIFY_DEVICE,
-	FSAL_UP_EVENT_DELEGATION_RECALL
-} fsal_up_event_type_t;
-
-/**
- * @brief A structure letting the FSAL identify a file
- */
-
-struct fsal_up_file
-{
-	struct gsh_buffdesc key; /*< Hash key identifying the file.
-                                     This buffer must be allocated
-                                     with gsh_malloc and will be
-                                     freed after the event is
-                                     processed.  Maybe {NULL, 0}. */
-	struct fsal_export *export; /*< The FSAL export object.  A
-                                        reference will be taken on the
-                                        export when the event is
-                                        queued and released when it is
-                                        disposed. */
-};
-
-/**
- * @brief Structure identifying a lock grant
- */
-
-struct fsal_up_event_lock_grant
-{
-	void *lock_owner; /*< The lock owner */
-	fsal_lock_param_t lock_param; /*< A description of the lock */
-};
-
-/**
- * @brief Structure identifying a newly available lock
- */
-
-struct fsal_up_event_lock_avail
-{
-	void *lock_owner; /*< The lock owner */
-	fsal_lock_param_t lock_param; /*< A description of the lock */
-};
-
-/**
- * @brief A structure for cache invalidation
- */
-
-struct fsal_up_event_invalidate
-{
-	uint32_t flags; /*< Flags governing invalidate. */
-};
-
-/**
- * @brief A structure for updating the attributes of a file
- */
-
-struct fsal_up_event_update
-{
-	struct attrlist attr; /*< List of attributes to update.  Note
-                                  that the @c type, @c fsid, @c fileid,
-                                  @c rawdev, @c mounted_on_fileid, and @c
-                                  generation fields must not be
-                                  updated and the corresponding bits
-                                  in the mask must not be set, nor may
-                                  the ATTR_RDATA_ERR bit be set. */
-	uint32_t flags; /*< Flags indicating special handling for
-                            some attributes. */
-};
+#include "sal_data.h"
 
 /**
  * Empty flags.
@@ -172,206 +105,150 @@ static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
  */
 static const uint32_t fsal_up_nlink = 0x0080;
 
-/**
- * @brief A structure for representing the creation of a new name in a
- * directory.
- */
-
-struct fsal_up_event_link
-{
-	char *name; /*< The name of the newly created link.  This is
-                        allocated by the FSAL and freed by the FSAL
-                        upcall thread. */
-	struct fsal_up_file target; /*< The target of the link, may
-                                        be {{0, 0}, 0} if unknown. */
-};
 
 /**
- * @brief A structure for representing the deletion of a name from a
- * directory.
- */
-
-struct fsal_up_event_unlink
-{
-	char *name; /*< The name of the newly created link.  This is
-                        allocated by the FSAL and freed by the FSAL
-                        upcall thread. */
-};
-
-/**
- * @brief A structure for representing a move of a name out of a
- * directory. (This does not decrement the cached link count.)
- */
-
-struct fsal_up_event_move_from
-{
-	char *name; /*< The name of the newly created link.  This is
-                        allocated by the FSAL and freed by the FSAL
-                        upcall thread. */
-};
-
-/**
- * @brief A structure for representing the movement of a name into a
- * directory (this does not change the cached link count.)
- */
-
-struct fsal_up_event_move_to
-{
-	char *name; /*< The name of the newly created link.  This is
-                        allocated by the FSAL and freed by the FSAL
-                        upcall thread. */
-	struct fsal_up_file target; /*< The target of the link, may
-                                        be {{0, 0}, 0} if unknown. */
-};
-
-/**
- * @brief A structure for representing a rename of a file within a
- * directory
- */
-
-struct fsal_up_event_rename
-{
-	char *old; /*< The original name.  This is allocated by the
-                       FSAL and freed by the upcall thread. */
-	char *new; /*< The new name.  This is allocated by the FSAL
-                       and freed by the upcall thread. */
-};
-
-/**
- * A structure for recalling a layout
- */
-
-struct fsal_up_event_layoutrecall
-{
-	layouttype4 layout_type; /*< The type of layout to recall */
-	layoutrecall_type4 recall_type; /*< Type of recall.
-                                            LAYOUTRECALL4_ALL is
-                                            disallowed, if you wish to
-                                            recall all layouts, use
-                                            LAYOUTRECALL4_FSID from
-                                            each export. */
-	bool changed; /*< Whether the layout has changed and the
-                          client ought to finish writes through MDS. */
-	struct pnfs_segment segment; /*< Segment to recall */
-	void *cookie; /*< A cookie returned with the return that
-                          completely satisfies a recall. */
-};
-
-/**
- * A structure for recalling any layout
- */
-
-struct fsal_up_event_recallany
-{
-	uint32_t objects_to_keep;
-	struct bitmap4 type_mask;
-	void *cookie; /*< A cookie returned with the return that
-                          completely satisfies a recall. */
-};
-
-/**
- * A structure for notify device
- */
-
-struct fsal_up_event_notifydevice
-{
-	notify_deviceid_type4 notify_type;
-	layouttype4 layout_type;
-	deviceid4 device_id;
-	bool immediate;
-	void *cookie; /*< A cookie returned with the return that
-                          completely satisfies a recall. */
-};
-
-/**
- * A structure for delegation recall
- */
-
-struct fsal_up_event_delegrecall
-{
-	int flags; // recall all ???
-};
-
-/**
- * @brief A single up-call event.
- */
-
-struct fsal_up_event
-{
-	struct glist_head event_link; /*< Link in the event queue */
-	const struct fsal_up_vector *functions; /*< Vector of upcall
-                                                    functions.  Should
-                                                    be filled in by
-                                                    the FSAL with the
-                                                    vector
-                                                    supplied. */
-	fsal_up_event_type_t type; /*< The type of event reported */
-	union {
-		struct fsal_up_event_lock_grant lock_grant;
-		struct fsal_up_event_lock_avail lock_avail;
-		struct fsal_up_event_invalidate invalidate;
-		struct fsal_up_event_update update;
-		struct fsal_up_event_link link;
-		struct fsal_up_event_unlink unlink;
-		struct fsal_up_event_move_from move_from;
-		struct fsal_up_event_move_to move_to;
-		struct fsal_up_event_rename rename;
-		struct fsal_up_event_layoutrecall layoutrecall;
-		struct fsal_up_event_recallany recallany;
-		struct fsal_up_event_notifydevice notifydevice;
-		struct fsal_up_event_delegrecall delegrecall;
-	} data; /*< Type specific event data */
-	struct fsal_up_file file; /*< File upon which the event takes
-                                      place.  Interpetation varies by
-                                      type and might not be used at
-                                      all. */
-	void *private; /*< This is private event data shared between
-                           the immediate and queued function.  If you
-                           override one function, you should override
-                           the other, too, so this is neither left
-                           dangling nor expected.  If you pass on to
-                           one function, you should pass on to the
-                           other and ensure this pointer is not
-                           damaged.  If you want your own
-                           event-private data, store whatever pointer
-                           you find here in it so you can pass it
-                           on.  This is NOT private data for the
-                           producer of the event.  Producers of
-                           events should initialize it to NULL (but
-                           the immediate functions for events
-                           shouldn't really care if they don't.)  The
-                           queue function is responsible for freeing
-                           anything allocated by the immediate
-                           function. */
-};
-
-typedef int (*fsal_up_immfunc_t)(struct fsal_up_event *);
-typedef void (*fsal_up_queuefunc_t)(struct fridgethr_context *);
-
-/**
- * @brief The vector for up-call operations
+ * @brief Possible upcall functions
  *
- * This structure contains two arrays of function for each operation.
- * One is immediate (for validation or quick dispatch.  It has the
- * ability to signal failure to the FSAL when the event is queued) and
- * the second which is executed by the up-call thread when an event is
- * de-queued.  Either may be NULL.
+ * This structure holds pointers to upcall functions.  Each FSAL
+ * should call through the vector in its export.
  *
- * Stacked FSAL authors may override functions completely or cascade
- * into them.  An FSAL should save the vector passed to it and pass a
- * vector of its own functions down to FSALs it initializes.  To
- * cascade, the FSAL must call the function in the supplied vector
- * initially.  To disable a function completely (for example to do all
- * processing in the immediate function and have no queued function at
- * all) simply set it to NULL in your vector.
+ * For FSAL stacking, the 'higher' FSAL should copy its vector,
+ * over-ride whatever methods it wishes, and pass the new vector to
+ * the lower FSAL.  It may then pass through, surround, or override as
+ * it wishes.
  *
- * If the immediate function for an operation returns non-zero, the
- * event is not queued.
+ * Note that all these functions take keys, not fsal object handles.
+ * This is because the FSAL will always, by definition, be able to
+ * know the key by which it identifies an object, but cannot know the
+ * address of the handle stored in the cache.
  */
 
 struct fsal_up_vector {
-	fsal_up_immfunc_t imm[FSAL_UP_EVENT_DELEGATION_RECALL + 1];
-	fsal_up_queuefunc_t queue[FSAL_UP_EVENT_DELEGATION_RECALL + 1];
+	/** Invalidate some or all of a cache entry */
+	cache_inode_status_t (*invalidate)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *obj, /*< The file to invalidate */
+		uint32_t flags /*< Flags governing invalidation */
+		);
+
+	/** Update cached attributes */
+	cache_inode_status_t (*update)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *obj, /*< The file to update */
+		struct attrlist *attr, /*< List of attributes to
+					   update.  Note that the @c
+					   type, @c fsid, @c fileid,
+					   @c rawdev, @c
+					   mounted_on_fileid, and @c
+					   generation fields must not
+					   be updated and the
+					   corresponding bits in the
+					   mask must not be set, nor
+					   may the ATTR_RDATA_ERR bit
+					   be set. */
+		uint32_t flags /*< Flags requesting special update
+				   handling */
+		);
+
+	/** Grant a lock to a client */
+	state_status_t (*lock_grant)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *file, /*< The file in question */
+		void *owner, /*< The lock owner */
+		fsal_lock_param_t *lock_param /*< A description of the lock */
+		);
+
+	/** Signal lock availability */
+	state_status_t (*lock_avail)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *file, /*< The file in
+						   question */
+		void *owner, /*< The lock owner */
+		fsal_lock_param_t *lock_param /*< A description of the lock */
+		);
+
+	/** Add a new link to an existing file */
+	cache_inode_status_t (*link)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *dir, /*< The directory
+						    holding the new
+						    link */
+		const char *name, /*< The name of the newly created
+				      link*/
+		const struct gsh_buffdesc *target /*< The target of the
+						      link, may be NULL
+						      if unknown */
+		);
+
+	/** Remove a name from a directory*/
+	cache_inode_status_t (*unlink)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *dir, /*< Directory holding
+					            the link */
+		const char *name /*< The name to be removed */
+		);
+
+	/** Move of a name out of a directory. (This does not
+	    decrement the target link count.) */
+	cache_inode_status_t (*move_from) (
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *dir, /*< Directory holding
+					            the link */
+		const char *name /*< The name to be moved */
+		);
+
+	/** Move a link into a directory (this does not increment the
+	    target link count.) */
+	cache_inode_status_t (*move_to)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *dir, /*< Directory receiving
+					            the link */
+		const char *name, /*< The name of the link */
+		const struct gsh_buffdesc *target /*< The target of the
+						      link, may be NULL
+						      if unknown */
+		);
+
+	/** Rename a file within a directory */
+	cache_inode_status_t (*rename)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *dir, /*< Directory holding
+					            the name */
+		const char *old, /*< The original name */
+		const char *new /*< The new name */
+		);
+
+	/** Perform a layoutrecall on a single file */
+	state_status_t (*layoutrecall)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *handle, /*< Handle on which
+						       the layout is held */
+		layouttype4 layout_type, /*< The type of layout to recall */
+		bool changed, /*< Whether the layout has changed and the
+				  client ought to finish writes through MDS */
+		const struct pnfs_segment *segment, /*< Segment to recall */
+		void *cookie /*< A cookie returned with the return that
+			         completely satisfies a recall */
+		);
+
+	/** Remove or change a deviceid */
+	state_status_t (*notify_device)(
+		struct fsal_export *export, /*< Export responsible
+					        for the device ID */
+		notify_deviceid_type4 notify_type, /*< Change or remove */
+		layouttype4 layout_type, /*< The layout type affected */
+		uint64_t devid, /*< The lower quad of the device id,
+				    unique within this export. */
+		bool immediate /*< Whether the change is immediate
+				    (in the case of a change.) */
+		);
+
+	/** Recall a delegation */
+	state_status_t (*delegrecall)(
+		struct fsal_export *export, /*< FSAL export */
+		const struct gsh_buffdesc *handle /*< Handle on which the
+						      delegation is held */
+		);
 };
 
 extern struct fsal_up_vector fsal_up_top;
@@ -380,17 +257,8 @@ extern struct fsal_up_vector fsal_up_top;
  * FSAL UP utility functions
  ****************************/
 
-int fsal_up_init(void);
-int fsal_up_shutdown(void);
-int fsal_up_pause(void);
-int fsal_up_resume(void);
-int fsal_up_submit(struct fsal_up_event *event);
-
 int up_get(const struct gsh_buffdesc *key,
 	   cache_entry_t **entry);
 
-
-struct fsal_up_event *fsal_up_alloc_event(void);
-void fsal_up_free_event(struct fsal_up_event *event);
-
-#endif /* _FSAL_UP_H */
+#endif /* FSAL_UP_H */
+/** @} */

@@ -324,21 +324,6 @@ static void redo_exports(void)
       return;
     }
 
-  /* Do these first, since they can call down into the FSAL and
-     provoke callbacks themselves. */
-
-  if (nfs_param.core_param.enable_FSAL_upcalls)
-    {
-      rc = fsal_up_pause();
-      if (rc != 0)
-	{
-	  LogMajor(COMPONENT_THREAD,
-		   "Error pausing upcall system: %d",
-		   rc);
-	}
-      return;
-    }
-
   rc = state_async_pause();
   if (rc != STATE_SUCCESS)
     {
@@ -387,17 +372,6 @@ static void redo_exports(void)
 	       rc);
     }
 
-  if (nfs_param.core_param.enable_FSAL_upcalls)
-    {
-      rc = fsal_up_resume();
-      if (rc != 0)
-	{
-	  LogMajor(COMPONENT_THREAD,
-		   "Error resuming upcall system: %d",
-		   rc);
-	}
-    }
-
   LogEvent(COMPONENT_MAIN,
 	   "Exports reloaded and active");
 
@@ -414,24 +388,6 @@ static void do_shutdown(void)
   delayed_shutdown();
   LogEvent(COMPONENT_MAIN,
 	   "Delayed executor stopped.");
-
-  if (nfs_param.core_param.enable_FSAL_upcalls)
-    {
-      LogEvent(COMPONENT_MAIN,
-	       "Stopping FSAL UPcall thread");
-      rc = fsal_up_shutdown();
-      if (rc != 0)
-	{
-	  LogMajor(COMPONENT_THREAD,
-		   "Error shutting down upcall system: %d",
-		   rc);
-	}
-      else
-	{
-	  LogEvent(COMPONENT_THREAD,
-		   "Upcall system shut down.");
-	}
-    }
 
   LogEvent(COMPONENT_MAIN,
 	   "Stopping state asynchronous request thread");
