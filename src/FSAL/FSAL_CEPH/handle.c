@@ -979,18 +979,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
 		}
 		break;
 
-	/* Integer IDs */
-
-	case FSAL_DIGEST_FILEID2:
-		return fsalstat(ERR_FSAL_TOOSMALL, 0);
-		break;
-	case FSAL_DIGEST_FILEID3:
-	case FSAL_DIGEST_FILEID4:
-		memcpy(fh_desc->addr, &handle->wire.vi.ino.val,
-		       sizeof(uint64_t));
-		fh_desc->len = sizeof(uint64_t);
-		break;
-
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

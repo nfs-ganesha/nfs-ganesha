@@ -184,15 +184,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 		/* wire handles */
 		fh_desc->len = sizeof(wire->vi); /* vinodeno_t */
 		break;
-		/* Integer IDs */
-	case FSAL_DIGEST_FILEID2:
-		/* No supported */
-		return fsalstat(ERR_FSAL_TOOSMALL, 0);
-		break;
-	case FSAL_DIGEST_FILEID3:
-	case FSAL_DIGEST_FILEID4:
-		fh_desc->len = sizeof(uint64_t);
-		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
