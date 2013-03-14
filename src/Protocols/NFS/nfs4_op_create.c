@@ -220,17 +220,13 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       break;
     case NF4DIR:
+
       /* Create a new directory */
-
-      /* The create_arg structure contains the information "newly created directory"
-       * to be passed to cache_inode_new_entry from cache_inode_create */
-      create_arg.newly_created_dir = true;
-
       cache_status = cache_inode_create(entry_parent,
 					name,
 					DIRECTORY,
 					mode,
-					&create_arg,
+					NULL,
 					data->req_ctx,
 					&entry_new);
 
