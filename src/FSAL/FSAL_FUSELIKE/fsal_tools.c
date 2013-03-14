@@ -163,66 +163,6 @@ fsal_status_t FUSEFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* 
       fh_desc->len = fh_size;
       break;
 
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
-      {
-        int cast2 = (int)in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast2) > FSAL_DIGEST_SIZE_FILEID2)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID2);
-        memcpy(fh_desc->start, &cast2, sizeof( cast2 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID2; 
-      }
-      break;
-
-      /* FileId digest for NFSv3 */
-    case FSAL_DIGEST_FILEID3:
-      {
-        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast3) > FSAL_DIGEST_SIZE_FILEID3)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID3);
-        memcpy(fh_desc->start, &cast3, sizeof( cast3 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID3; 
-      }
-      break;
-
-      /* FileId digest for NFSv4 */
-
-    case FSAL_DIGEST_FILEID4:
-      {
-        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast4) > FSAL_DIGEST_SIZE_FILEID4)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID4);
-        memcpy(fh_desc->start, &cast4, sizeof( cast4 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID4; 
-      }
-      break;
-
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }

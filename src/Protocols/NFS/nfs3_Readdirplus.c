@@ -391,11 +391,7 @@ nfs3_readdirplus_callback(void* opaque,
           (struct nfs3_readdirplus_cb_data *) opaque;
      /* Length of the current filename */
      size_t namelen = strlen(name);
-     /* Fileid buffer descriptor */
      entryplus3 *ep3 = tracker->entries + tracker->count;
-     struct gsh_buffdesc id_descriptor
-          = {.len = sizeof(ep3->fileid),
-             .addr = &ep3->fileid};
 
      if (tracker->count == tracker->total_entries) {
           return false;
@@ -411,10 +407,7 @@ nfs3_readdirplus_callback(void* opaque,
           return false;
      }
 
-     obj_hdl->ops->handle_digest(obj_hdl,
-                                 FSAL_DIGEST_FILEID3,
-                                 &id_descriptor);
-
+     ep3->fileid = obj_hdl->attributes.fileid;
      ep3->name = gsh_strdup(name);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;
@@ -448,14 +441,12 @@ nfs3_readdirplus_callback(void* opaque,
      if (tracker->count > 0) {
           tracker->entries[tracker->count - 1].nextentry = ep3;
      }
-     ep3->name_attributes.attributes_follow = false;
 
      ep3->name_attributes.attributes_follow
           = nfs3_FSALattr_To_Fattr(
                obj_hdl->export->exp_entry,
                &obj_hdl->attributes,
-               &(ep3->name_attributes.post_op_attr_u
-                 .attributes));
+               &(ep3->name_attributes.post_op_attr_u.attributes));
      if (ep3->name_attributes.attributes_follow) {
           tracker->mem_left -= sizeof(ep3->name_attributes);
      } else {

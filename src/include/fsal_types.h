@@ -658,11 +658,6 @@ typedef enum fsal_digesttype_t {
      FSAL_DIGEST_NFSV2,
      FSAL_DIGEST_NFSV3,
      FSAL_DIGEST_NFSV4,
-
-     /* Unique file identifier (for digest only) */
-     FSAL_DIGEST_FILEID2,
-     FSAL_DIGEST_FILEID3,
-     FSAL_DIGEST_FILEID4
 } fsal_digesttype_t;
 
 /* output digest sizes */
@@ -670,9 +665,6 @@ typedef enum fsal_digesttype_t {
 static const size_t FSAL_DIGEST_SIZE_HDLV2 = 29;
 static const size_t FSAL_DIGEST_SIZE_HDLV3 = 61;
 static const size_t FSAL_DIGEST_SIZE_HDLV4 = 108;
-static const size_t FSAL_DIGEST_SIZE_FILEID2 = sizeof(uint32_t);
-static const size_t FSAL_DIGEST_SIZE_FILEID3 = sizeof(uint64_t);
-static const size_t FSAL_DIGEST_SIZE_FILEID4 = sizeof(uint64_t);
 
 typedef enum
 {
