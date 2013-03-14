@@ -1217,8 +1217,6 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
-	uint32_t ino32;
-	uint64_t ino64;
 	struct vfs_fsal_obj_handle *myself;
 	vfs_file_handle_t *fh;
 	size_t fh_size;
@@ -1236,22 +1234,6 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
                 if(fh_desc->len < fh_size)
                         goto errout;
                 memcpy(fh_desc->addr, fh, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID3:
-		fh_size = FSAL_DIGEST_SIZE_FILEID3;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(&ino32, fh->handle, sizeof(ino32));
-		ino64 = ino32;
-		memcpy(fh_desc->addr, &ino64, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID4:
-		fh_size = FSAL_DIGEST_SIZE_FILEID4;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(&ino32, fh->handle, sizeof(ino32));
-		ino64 = ino32;
-		memcpy(fh_desc->addr, &ino64, fh_size);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);

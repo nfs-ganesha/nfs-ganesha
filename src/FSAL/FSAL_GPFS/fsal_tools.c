@@ -234,28 +234,6 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_digesttype_t output_type,  /* IN */
       fh_desc->len = fh_size;
       break;
 
-      /* FileId digest for NFSv3 */
-    case FSAL_DIGEST_FILEID3:
-
-      /* sanity check about output size */
-      /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume it's a new style GPFS handle */
-      if (fh_desc->len == 8)
-	memset(fh_desc->start, 0, sizeof(uint64_t));
-      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t));
-      else
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
-      break;
-
-      /* FileId digest for NFSv4 */
-    case FSAL_DIGEST_FILEID4:
-
-      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t));
-      else
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
-      break;
-
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }

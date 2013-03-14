@@ -284,44 +284,6 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
 
       break;
 
-      /* FileId digest for NFSv3 */
-    case FSAL_DIGEST_FILEID3:
-
-      /* get object ID from handle */
-      objid64 = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
-
-#ifndef _NO_CHECKS
-
-      /* sanity check about output size */
-
-      if(sizeof(fsal_u64_t) > FSAL_DIGEST_SIZE_FILEID3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &objid64, sizeof(fsal_u64_t));
-      break;
-
-      /* FileId digest for NFSv4 */
-
-    case FSAL_DIGEST_FILEID4:
-      /* get object ID from handle */
-      objid64 = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
-
-#ifndef _NO_CHECKS
-
-      /* sanity check about output size */
-
-      if(sizeof(fsal_u64_t) > FSAL_DIGEST_SIZE_FILEID4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &objid64, sizeof(fsal_u64_t));
-      break;
-
       /* Nodetype digest. */
     case FSAL_DIGEST_NODETYPE:
 
