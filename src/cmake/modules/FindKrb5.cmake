@@ -71,6 +71,8 @@ IF(KRB5_FOUND)
   ENDIF("${KRB5_C_CONFIG_RESULT}" MATCHES "^0$")
 ENDIF(KRB5_FOUND)
 
+SET(KRB5_INCLUDE_DIRS "${KRB5_PREFIX}/include" ${KRB5_INCLUDE_DIRS})
+
 # Lookup the libraries needed for the components requested.
 IF(KRB5_FOUND)
   # Use the newer EXECUTE_PROCESS command if it is available.

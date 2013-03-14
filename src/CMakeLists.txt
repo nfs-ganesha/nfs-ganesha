@@ -366,6 +366,7 @@ include_directories(
   "${PROJECT_SOURCE_DIR}/libntirpc/tirpc/"
   "${PROJECT_SOURCE_DIR}/include"
   "${OS_INCLUDE_DIR}"
+  "${KRB5_INCLUDE_DIRS}"
 )
 
 # Fixup loose bits of autotools legacy
