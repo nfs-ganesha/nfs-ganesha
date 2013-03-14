@@ -433,11 +433,7 @@ extern pool_t *cache_inode_symlink_pool;
 
 typedef union cache_inode_create_arg {
 	fsal_dev_t  dev_spec; /*< Major/minor numbers for a device file */
-	bool newly_created_dir; /*< True if this directory has just
-				    been created, rather than
-				    pre-existing and loaded into the
-				    cache. */
-	char *link_content; /*< Just stash the pointer. */
+	const char *link_content; /*< Just stash the pointer. */
 } cache_inode_create_arg_t;
 
 /**
