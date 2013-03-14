@@ -1074,10 +1074,16 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 		        gettimeofday(&timebuf[1], NULL);
 		    }
 		}
+
 		if(obj_hdl->type == SOCKET_FILE)
                   {
                      snprintf( mysockpath, MAXPATHLEN, "%s/%s", mypath, myself->u.sock.sock_name ) ;
 		     retval = utimes( mysockpath, timebuf ) ;
+                  }
+                else if( obj_hdl->type == SYMBOLIC_LINK )
+                  {
+		     /* Setting utimes on a SYMLINK is illegal. Do nothing */
+		     retval = 0 ;
                   }
 		else
 			retval = utimes(mypath, ptimebuf);
