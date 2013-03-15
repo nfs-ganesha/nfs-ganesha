@@ -5,7 +5,8 @@ add_subdirectory(FSAL)
 
 ########### install files ###############
 
-install(FILES  ganesha_fuse_wrap.h COMPONENT headers DESTINATION include)
+# the following line should be done if FSAL_FUSE is compiled
+#install(FILES  ganesha_fuse_wrap.h COMPONENT headers DESTINATION include)
 
 
 

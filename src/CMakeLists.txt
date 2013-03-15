@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 # Add maintainer mode for (mainly) strict builds
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
-project(GANESHA C)
+project(nfs-ganesha C)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 2)
 set(${PROJECT_NAME}_MINOR_VERSION 0)
@@ -27,6 +27,12 @@ set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
 # Include custom config and cpack module
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
+
+include(${CMAKE_SOURCE_DIR}/cmake/rpmtools_config.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/modules/UseRPMTools.cmake)
+IF(RPMTools_FOUND)
+     RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME})
+ENDIF(RPMTools_FOUND)
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
@@ -60,10 +66,16 @@ if (LINUX)
     find_library(LIBDL dl)  # module loader
 endif(LINUX)
 
+# Library destination, 32 bits / 64 bits switch is done here
 # FSAL selection
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "lib64/ganesha" )
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "lib/ganesha" )
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
 # FSALs which are enabled by default but could be disabled
 # during the build
-
 option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
 option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 option(USE_FSAL_POSIX "build POSIX FSAL shared library" ON)
@@ -496,7 +508,6 @@ endif(ENABLE_SNMP_ADM)
 add_subdirectory(MainNFSD)
 add_subdirectory(Docs)
 add_subdirectory(tools)
-add_subdirectory(config_samples)
 add_subdirectory(check)
 add_subdirectory(debian)
 
@@ -717,3 +728,9 @@ if(USE_FSAL_FUSE)
   install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
 endif(USE_FSAL_FUSE)
 
+########### add a "make dist"  ###############
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+########### add a "make srpm" and a "make rpm" ###############
+add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_rpm)
+add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)

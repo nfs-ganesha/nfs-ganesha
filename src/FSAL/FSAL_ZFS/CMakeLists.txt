@@ -22,4 +22,4 @@ set_target_properties(fsalzfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
 ########### install files ###############
 
-install(TARGETS fsalzfs COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalzfs COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )

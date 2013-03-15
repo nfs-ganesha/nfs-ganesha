@@ -28,7 +28,7 @@ if(ENABLE_HANDLE_MAPPING)
 endif(ENABLE_HANDLE_MAPPING)
 
 set_target_properties(fsalproxy PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalproxy COMPONENT fsal DESTINATION lib)
+install(TARGETS fsalproxy COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
 
 
 ########### install files ###############
