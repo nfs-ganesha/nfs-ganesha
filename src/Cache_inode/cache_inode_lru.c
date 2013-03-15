@@ -563,6 +563,33 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
         }                                                               \
     } while (0)
 
+/**
+ * Return TRUE if there are FDs available to serve open requests,
+ * FALSE otherwise.  This function also wakes the LRU thread if the
+ * current FD count is above the high water mark.
+ */
+
+bool_t
+cache_inode_lru_fds_available(void)
+{
+     if ((open_fd_count >= lru_state.fds_hard_limit) && lru_state.caching_fds) {
+          LogCrit(COMPONENT_CACHE_INODE_LRU,
+                  "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
+                  " LRU thread.");
+          lru_state.caching_fds = FALSE;
+          lru_wake_thread(LRU_FLAG_NONE);
+          return FALSE;
+     }
+     if ((open_fd_count >= lru_state.fds_hiwat) &&
+         (lru_thread_state.flags & LRU_SLEEPING)) {
+          LogInfo(COMPONENT_CACHE_INODE_LRU,
+                   "FDs above high water mark, waking LRU thread.");
+          lru_wake_thread(LRU_FLAG_NONE);
+     }
+
+     return TRUE;
+}
+
 static bool_t
 lru_thread_delay_ms(unsigned long ms)
 {

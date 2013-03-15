@@ -180,32 +180,7 @@ extern cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 extern void cache_inode_unpinnable(cache_entry_t *entry);
 extern cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry, unsigned char closefile);
 extern bool_t cache_inode_is_pinned(cache_entry_t *entry);
-
-/**
- * Return TRUE if there are FDs available to serve open requests,
- * FALSE otherwise.  This function also wakes the LRU thread if the
- * current FD count is above the high water mark.
- */
-
-static inline bool_t
-cache_inode_lru_fds_available(void)
-{
-     if ((open_fd_count >= lru_state.fds_hard_limit) && lru_state.caching_fds) {
-          LogCrit(COMPONENT_CACHE_INODE_LRU,
-                  "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
-                  " LRU thread.");
-          lru_state.caching_fds = FALSE;
-          lru_wake_thread(LRU_FLAG_NONE);
-          return FALSE;
-     }
-     if (open_fd_count >= lru_state.fds_hiwat) {
-          LogEvent(COMPONENT_CACHE_INODE_LRU,
-                   "FDs above high water mark, waking LRU thread.");
-          lru_wake_thread(LRU_FLAG_NONE);
-     }
-
-     return TRUE;
-}
+extern bool_t cache_inode_lru_fds_available(void);
 
 /**
  * Return true if we are currently caching file descriptors.
