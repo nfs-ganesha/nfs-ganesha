@@ -1535,8 +1535,7 @@ thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
     enum xprt_stat stat;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
-    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "enter xprt=%p", xprt);
 
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
@@ -1600,7 +1599,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
 
-    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter, xprt);
+    LogFullDebug(COMPONENT_RPC, "enter xprt=%p", xprt);
 
     if(udp_socket[P_NFS] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request fd %d",
@@ -1661,21 +1660,18 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogFullDebug(COMPONENT_RPC, "%d before decoder guard %p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "before decoder guard %p", xprt);
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
     if (! gsh_xprt_decoder_guard(xprt, XPRT_PRIVATE_FLAG_NONE)) {
-        LogFullDebug(COMPONENT_RPC, "%d already decoding %p",
-                     __tirpc_dcounter, xprt);
+        LogFullDebug(COMPONENT_RPC, "already decoding %p", xprt);
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
         goto out;
     }
 
-    LogFullDebug(COMPONENT_RPC, "%d before cond stall %p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "before cond stall %p", xprt);
 
     /* Check per-xprt max outstanding quota */
     if (nfs_rpc_cond_stall_xprt(xprt)) {
