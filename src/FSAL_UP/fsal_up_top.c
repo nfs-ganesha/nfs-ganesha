@@ -708,6 +708,8 @@ out:
  * @param[in]     length  The length of the interval to recall
  * @param[in]     cookie  The recall cookie (to be returned to the FSAL
  *                        on the final return satisfying this recall.)
+ * @param[in]     spec    Lets us be fussy about what clients we send
+ *                        to. May be NULL.
  * @param[out]    recout  The recall object
  *
  * @retval STATE_SUCCESS if successfully queued.
@@ -722,6 +724,7 @@ static state_status_t create_file_recall(
 	layouttype4 type,
 	const struct pnfs_segment *segment,
 	void *cookie,
+	struct layoutrecall_spec *spec,
 	struct state_layout_recall_file **recout)
 {
 	/* True if no layouts matching the request have been found */
@@ -765,6 +768,26 @@ static state_status_t create_file_recall(
 					 state_list);
 		/* Does this state have a matching segment? */
 		bool match = false;
+
+		if (spec) {
+			switch (spec->how) {
+			case layoutrecall_howspec_exactly:
+				if (spec->u.client !=
+				    s->state_owner->so_owner.so_nfs4_owner
+				    .so_clientid) {
+					continue;
+				}
+				break;
+
+			case layoutrecall_howspec_complement:
+				if (spec->u.client ==
+				    s->state_owner->so_owner.so_nfs4_owner
+				    .so_clientid) {
+					continue;
+				}
+				break;
+			}
+		}
 
 		if ((s->state_type != STATE_TYPE_LAYOUT) ||
 		    (s->state_data.layout.state_layout_type !=
@@ -865,6 +888,8 @@ struct layoutrecall_cb_data {
  * @param[in] segment     Segment to recall
  * @param[in] cookie      A cookie returned with the return that
  *                        completely satisfies a recall
+ * @param[in] spec        Lets us be fussy about what clients we send
+ *                        to. May be NULL.
  *
  * @retval STATE_SUCCESS if scheduled.
  * @retval STATE_NOT_FOUND if no matching layouts exist.
@@ -873,14 +898,14 @@ struct layoutrecall_cb_data {
  * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
  *         recall state.
  */
-
 state_status_t layoutrecall(
 	struct fsal_export *export,
 	const struct gsh_buffdesc *handle,
 	layouttype4 layout_type,
 	bool changed,
 	const struct pnfs_segment *segment,
-	void *cookie)
+	void *cookie,
+	struct layoutrecall_spec *spec)
 {
 	/* Return code */
 	state_status_t rc = STATE_SUCCESS;
@@ -900,7 +925,7 @@ state_status_t layoutrecall(
 	/* We build up the list before consuming it so that we have
 	   every state on the list before we start executing returns. */
 	rc = create_file_recall(entry, layout_type, segment, cookie,
-				&recall);
+				spec, &recall);
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	if (rc != STATE_SUCCESS) {
 		goto out;

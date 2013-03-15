@@ -286,7 +286,8 @@ initiate_recall(struct vfs_fsal_obj_handle *myself, struct pnfs_segment *seg,
 				     LAYOUT4_OSD2_OBJECTS,
 				     false,
 				     &up_segment,
-				     r_cookie);
+				     r_cookie,
+				     NULL);
 
 }
 

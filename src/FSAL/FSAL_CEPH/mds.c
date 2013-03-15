@@ -70,6 +70,7 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 		LAYOUT4_NFSV4_1_FILES,
 		false,
 		&segment,
+		NULL,
 		NULL);
 
 	if (status != STATE_SUCCESS) {

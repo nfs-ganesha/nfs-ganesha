@@ -105,6 +105,24 @@ static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
  */
 static const uint32_t fsal_up_nlink = 0x0080;
 
+/**
+ * @brief Optional stuff for layoutreturn
+ * @{
+ */
+enum layoutrecall_howspec {
+	layoutrecall_howspec_exactly,
+	layoutrecall_howspec_complement
+};
+
+struct layoutrecall_spec {
+	enum layoutrecall_howspec how;
+	union {
+		clientid4 client;
+	} u;
+};
+
+/** @} */
+>>>>>>> bdbef05... Let FSAL be picky about clients in layoutrecall
 
 /**
  * @brief Possible upcall functions
@@ -227,8 +245,11 @@ struct fsal_up_vector {
 		bool changed, /*< Whether the layout has changed and the
 				  client ought to finish writes through MDS */
 		const struct pnfs_segment *segment, /*< Segment to recall */
-		void *cookie /*< A cookie returned with the return that
-			         completely satisfies a recall */
+		void *cookie, /*< A cookie returned with the return that
+			          completely satisfies a recall */
+		struct layoutrecall_spec *spec /*< Lets us be fussy about what
+						   clients we send to. May be
+						   NULL. */
 		);
 
 	/** Remove or change a deviceid */

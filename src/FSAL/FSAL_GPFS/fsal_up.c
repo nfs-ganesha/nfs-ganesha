@@ -238,6 +238,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					  LAYOUT4_NFSV4_1_FILES,
 					  false,
 					  &segment,
+					  NULL,
 					  NULL);
 	  }
             break;
