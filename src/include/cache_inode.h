@@ -57,7 +57,6 @@
 
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
-struct cache_inode_parameter;
 
 /** Maximum size of NFSv2 handle */
 static const size_t FILEHANDLE_MAX_LEN_V2 = 32;
@@ -788,7 +787,7 @@ cache_inode_status_t cache_inode_invalidate(
 
 cache_inode_status_t cache_inode_read_conf_parameter(
 	config_file_t in_config,
-struct cache_inode_parameter *param);
+        cache_inode_parameter_t *param);
 
 inline int cache_inode_set_time_current(struct timespec *time);
 
