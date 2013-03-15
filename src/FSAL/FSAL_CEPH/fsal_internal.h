@@ -219,10 +219,6 @@ fsal_status_t CEPHFSAL_Init(fsal_parameter_t * init_info);
 
 fsal_status_t CEPHFSAL_terminate();
 
-fsal_status_t CEPHFSAL_test_access(fsal_op_context_t * extcontext,
-                                   fsal_accessflags_t access_type,
-                                   fsal_attrib_list_t * object_attributes);
-
 fsal_status_t CEPHFSAL_lookup(fsal_handle_t * extparent,
                               fsal_name_t * filename,
                               fsal_op_context_t * extcontext,

@@ -203,10 +203,6 @@ fsal_status_t LUSTREFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,     /* IN 
 
 fsal_status_t LUSTREFSAL_Init(fsal_parameter_t * init_info /* IN */ );
 
-fsal_status_t LUSTREFSAL_test_access(fsal_op_context_t * p_context,       /* IN */
-                                     fsal_accessflags_t access_type,    /* IN */
-                                     fsal_attrib_list_t * p_object_attributes /* IN */ );
-
 fsal_status_t LUSTREFSAL_lookup(fsal_handle_t * p_parent_directory_handle,        /* IN */
                                 fsal_name_t * p_filename,       /* IN */
                                 fsal_op_context_t * p_context,    /* IN */

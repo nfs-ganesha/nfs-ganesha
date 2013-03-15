@@ -262,49 +262,6 @@ fsal_status_t WRAP_HPSSFSAL_terminate()
   return HPSSFSAL_terminate();
 }
 
-fsal_status_t WRAP_HPSSFSAL_test_access(fsal_op_context_t * p_context,  /* IN */
-                                        fsal_accessflags_t access_type, /* IN */
-                                        fsal_attrib_list_t *
-                                        p_object_attributes /* IN */ )
-{
-  return HPSSFSAL_test_access((hpssfsal_op_context_t *) p_context, access_type,
-                              p_object_attributes);
-}
-
-fsal_status_t WRAP_HPSSFSAL_setattr_access(fsal_op_context_t * p_context,       /* IN */
-                                           fsal_attrib_list_t * candidate_attributes,   /* IN */
-                                           fsal_attrib_list_t *
-                                           object_attributes /* IN */ )
-{
-  return HPSSFSAL_setattr_access((hpssfsal_op_context_t *) p_context,
-                                 candidate_attributes, object_attributes);
-}
-
-fsal_status_t WRAP_HPSSFSAL_rename_access(fsal_op_context_t * pcontext, /* IN */
-                                          fsal_attrib_list_t * pattrsrc,        /* IN */
-                                          fsal_attrib_list_t * pattrdest)       /* IN */
-{
-  return HPSSFSAL_rename_access((hpssfsal_op_context_t *) pcontext, pattrsrc, pattrdest);
-}
-
-fsal_status_t WRAP_HPSSFSAL_create_access(fsal_op_context_t * pcontext, /* IN */
-                                          fsal_attrib_list_t * pattr)   /* IN */
-{
-  return HPSSFSAL_create_access((hpssfsal_op_context_t *) pcontext, pattr);
-}
-
-fsal_status_t WRAP_HPSSFSAL_unlink_access(fsal_op_context_t * pcontext, /* IN */
-                                          fsal_attrib_list_t * pattr)   /* IN */
-{
-  return HPSSFSAL_unlink_access((hpssfsal_op_context_t *) pcontext, pattr);
-}
-
-fsal_status_t WRAP_HPSSFSAL_link_access(fsal_op_context_t * pcontext,   /* IN */
-                                        fsal_attrib_list_t * pattr)     /* IN */
-{
-  return HPSSFSAL_link_access((hpssfsal_op_context_t *) pcontext, pattr);
-}
-
 fsal_status_t WRAP_HPSSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                         fsal_attrib_list_t * pnew_attr,
                                         fsal_attrib_list_t * presult_attr)
@@ -673,12 +630,12 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_dynamic_fsinfo = WRAP_HPSSFSAL_dynamic_fsinfo,
   .fsal_init = WRAP_HPSSFSAL_Init,
   .fsal_terminate = WRAP_HPSSFSAL_terminate,
-  .fsal_test_access = WRAP_HPSSFSAL_test_access,
-  .fsal_setattr_access = WRAP_HPSSFSAL_setattr_access,
-  .fsal_rename_access = WRAP_HPSSFSAL_rename_access,
-  .fsal_create_access = WRAP_HPSSFSAL_create_access,
-  .fsal_unlink_access = WRAP_HPSSFSAL_unlink_access,
-  .fsal_link_access = WRAP_HPSSFSAL_link_access,
+  .fsal_test_access = COMMON_test_access,
+  .fsal_setattr_access = COMMON_setattr_access_notsupp,
+  .fsal_rename_access = COMMON_rename_access,
+  .fsal_create_access = COMMON_create_access,
+  .fsal_unlink_access = COMMON_unlink_access,
+  .fsal_link_access = COMMON_link_access,
   .fsal_merge_attrs = WRAP_HPSSFSAL_merge_attrs,
   .fsal_lookup = WRAP_HPSSFSAL_lookup,
   .fsal_lookuppath = WRAP_HPSSFSAL_lookupPath,
