@@ -77,7 +77,7 @@ nfs_Symlink(nfs_arg_t *arg,
             nfs_res_t *res)
 {
         const char *symlink_name = arg->arg_symlink3.where.name;
-        const char *target_path = arg->arg_symlink3.symlink.symlink_data;
+        char *target_path = arg->arg_symlink3.symlink.symlink_data;
         cache_inode_create_arg_t create_arg;
         uint32_t mode = 0777;
         cache_entry_t *symlink_entry = NULL;
