@@ -15,6 +15,10 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
                                       fsal_gid_t * alt_groups,    /* IN */
                                       fsal_count_t nb_alt_groups /* IN */ );
 
+fsal_status_t COMMON_test_access(fsal_op_context_t  * p_context,   /* IN */
+                                 fsal_accessflags_t   access_type,  /* IN */
+                                 fsal_attrib_list_t * p_object_attributes /* IN */ );
+
 fsal_status_t COMMON_setattr_access_notsupp(fsal_op_context_t * p_context,        /* IN */
                                             fsal_attrib_list_t * candidate_attributes,/* IN */
                                             fsal_attrib_list_t * object_attributes    /* IN */);

@@ -19,7 +19,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "FSAL/common_methods.h"
-
+#include "FSAL/access_check.h"
 
 /* Methods shared by most/all fsals.
  * These are either used in place of or can be called from the fsal specific
@@ -96,6 +96,48 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
 
 /* Access controls
  */
+
+/**
+ * FSAL_test_access :
+ * Tests whether the user or entity identified by its cred
+ * can access the object as indicated by the access_type parameter.
+ * This function tests access rights using cached attributes
+ * given as parameter.
+ * Thus, it cannot test FSAL_F_OK flag, and asking such a flag
+ * will result in a ERR_FSAL_INVAL error.
+ *
+ * \param cred (input):
+ *        Authentication context for the operation (user,...).
+ * \param access_type (input):
+ *        Indicates the permissions to test.
+ *        This is an inclusive OR of the permissions
+ *        to be checked for the user identified by cred.
+ *        Permissions constants are :
+ *        - FSAL_R_OK : test for read permission
+ *        - FSAL_W_OK : test for write permission
+ *        - FSAL_X_OK : test for exec permission
+ *        - FSAL_F_OK : test for file existence
+ * \param object_attributes (mandatory input):
+ *        The cached attributes for the object to test rights on.
+ *        The following attributes MUST be filled :
+ *        owner, group, mode, ACLs.
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t COMMON_test_access(fsal_op_context_t  * p_context,   /* IN */
+                                 fsal_accessflags_t   access_type,  /* IN */
+                                 fsal_attrib_list_t * p_object_attributes /* IN */
+    )
+{
+  fsal_status_t status;
+  status = fsal_check_access(p_context,
+                             access_type,
+                             NULL,
+                             p_object_attributes);
+  Return(status.major, status.minor, INDEX_FSAL_test_access);
+}
 
 /**
  * FSAL_test_setattr_access :
