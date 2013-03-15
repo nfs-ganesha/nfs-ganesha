@@ -621,7 +621,7 @@ out:
  *
  * @param[in,out] session       The session on which to create the
  *                              back channel
- * @parma[in]     num_sec_parms Length of sec_parms list
+ * @param[in]     num_sec_parms Length of sec_parms list
  * @param[in]     sec_parms     Allowable security parameters
  *
  * @return 0 or POSIX error code.
@@ -870,14 +870,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (stat != RPC_SUCCESS) {
-		if (chan->clnt) {
-			if (chan->auth) {
-				AUTH_DESTROY(chan->auth);
-				chan->auth = NULL;
-			}
-			clnt_destroy(chan->clnt);
-			chan->clnt = NULL;
-		}
+		nfs_rpc_destroy_chan(chan);
 	}
 
 unlock:
@@ -1038,14 +1031,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (call->stat != RPC_SUCCESS) {
-		if (call->chan->clnt) {
-			if (call->chan->auth) {
-				AUTH_DESTROY(call->chan->auth);
-				call->chan->auth = NULL;
-			}
-			clnt_destroy(call->chan->clnt);
-			call->chan->clnt = NULL;
-		}
+		nfs_rpc_destroy_chan(call->chan);
 	}
 
 unlock:
@@ -1215,7 +1201,7 @@ static bool find_cb_slot(nfs41_session_t *session,
 	pthread_mutex_lock(&session->cb_mutex);
 retry:
 	for (cur = 0;
-	     cur < MAX(session->back_channel_attrs.ca_maxrequests,
+	     cur < MIN(session->back_channel_attrs.ca_maxrequests,
 		       NFS41_NB_SLOTS);
 	     ++cur) {
 		if (!(session->cb_slots[cur].in_use) &&
@@ -1248,6 +1234,7 @@ retry:
 	if (found) {
 		session->cb_slots[*slot].in_use = true;
 		++session->cb_slots[*slot].sequence;
+		assert(*slot < session->back_channel_attrs.ca_maxrequests);
 	}
 	pthread_mutex_unlock(&session->cb_mutex);
 

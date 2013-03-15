@@ -98,7 +98,7 @@
  * taken.  The callee of the creating method must then either keep a
  * persistent reference to it or @c put it back.  For example, a @c
  * fsal_export gets created for each export in the configuration.  A
- * pointer to it gets saved in @c exportlist__ and it has a reference
+ * pointer to it gets saved in @c exportlist and it has a reference
  * to reflect this.  It is now safe to use it to do a @c lookup which
  * will return a @c fsal_obj_handle which can then be kept in a cache
  * inode entry.  If we had done a @c put on the export, it could be
@@ -297,9 +297,8 @@ struct fsal_export;
 struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
-struct exportlist__; /* We just need a pointer, not all of
-		        nfs_exports.h full def in
-		        include/nfs_exports.h */
+struct exportlist; /* We just need a pointer, not all of nfs_exports.h
+		      full def in include/nfs_exports.h */
 struct fsal_ds_handle;
 struct fsal_ds_ops;
 
@@ -470,7 +469,7 @@ struct fsal_ops {
         fsal_status_t (*create_export)(struct fsal_module *fsal_hdl,
                                        const char *export_path,
                                        const char *fs_options,
-                                       struct exportlist__ *exp_entry,
+                                       struct exportlist *exp_entry,
                                        struct fsal_module *next_fsal,
                                        const struct fsal_up_vector *up_ops,
                                        struct fsal_export **export);
@@ -492,9 +491,8 @@ int init_fsals(config_file_t config);
  * module
  */
 
-
 /**
- * @brief Register a FSAL.
+ * @brief Register a FSAL
  *
  * This function registers an FSAL with ganesha and initializes the
  * public portion of the FSAL data structure, including providing
@@ -557,7 +555,7 @@ struct fsal_export {
         struct glist_head ds_handles; /*< Head of lsit of DS handles */
         struct glist_head exports; /*< Link in list of exports from
                                        the same FSAL. */
-        struct exportlist__ *exp_entry; /*< Pointer to the export
+        struct exportlist *exp_entry; /*< Pointer to the export
                                             list. */
         struct export_ops *ops; /*< Vector of operations */
         struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
@@ -1100,9 +1098,7 @@ struct export_ops {
  * This function is called by write and commit to match the commit verifier
  * with the one returned on  write.
  *
- * @param[in/out] verf_desc Address and length of verifier
- *
- * @return No errors
+ * @param[in,out] verf_desc Address and length of verifier
  */
         void (*get_write_verifier)(
                  struct gsh_buffdesc *verf_desc);
@@ -1390,7 +1386,7 @@ struct fsal_obj_ops {
  * link_content gsh_buffdesc.  The caller *must* free this buffer with
  * gsh_free.
  *
- * The symlink content passed back *must* be \NUL terminated and the
+ * The symlink content passed back *must* be null terminated and the
  * length indicated in the buffer description *must* include the
  * terminator.
  *
@@ -1587,7 +1583,7 @@ struct fsal_obj_ops {
  * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
- * @param[in/out] fsal_stable In, if on, the fsal is requested to write data
+ * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
  *                            to stable store. Out, the fsal reports what
  *                            it did.
  *

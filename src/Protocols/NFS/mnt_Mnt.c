@@ -58,7 +58,7 @@
  *
  * @param[in]  parg     The export path to be mounted
  * @param[in]  pexport  The export list
- * @param[in]  pcontext ignored
+ * @param[in]  req_ctx  ignored
  * @param[in]  pworker  ignored
  * @param[in]  preq     ignored
  * @param[out] pres     Result structure.

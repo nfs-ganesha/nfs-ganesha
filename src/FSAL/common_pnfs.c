@@ -239,14 +239,15 @@ make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
  * @note This function encodes Ganesha data server handles in the
  * loc_body, it does not use the FSAL's DS handle unadorned.
  *
- * @param[in] deviceid  The deviceid for the layout
- * @param[in] util      Stripe width and flags for the layout
- * @param[in] first_idx First stripe index
- * @param[in] ptrn_ofst Pattern offset
- * @param[in] export_id Export ID (export on Data Server)
- * @param[in] num_fhs   Number of file handles in array
- * @param[in] fhs       Array if buffer descriptors holding opaque DS
- *                      handles
+ * @param[out] xdrs      XDR stream
+ * @param[in]  deviceid  The deviceid for the layout
+ * @param[in]  util      Stripe width and flags for the layout
+ * @param[in]  first_idx First stripe index
+ * @param[in]  ptrn_ofst Pattern offset
+ * @param[in]  export_id Export ID (export on Data Server)
+ * @param[in]  num_fhs   Number of file handles in array
+ * @param[in]  fhs       Array if buffer descriptors holding opaque DS
+ *                       handles
  * @return NFS status codes.
  */
 nfsstat4

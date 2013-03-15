@@ -34,11 +34,11 @@
 #include "nlm_async.h"
 
 /**
- * nlm4_Granted_Res: Lock Granted Result Handler
+ * @brief Lock Granted Result Handler
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  dummy_pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres

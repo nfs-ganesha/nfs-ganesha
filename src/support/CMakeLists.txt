@@ -96,6 +96,7 @@ SET(support_STAT_SRCS
    nfs_ip_stats.c
    exports.c
    fridgethr.c
+   delayed_exec.c
    misc.c
    bsd-base64.c
    server_stats.c

@@ -1299,15 +1299,6 @@ int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix)
   return fstatus;
 }
 
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix)
 {
   int fstatus = -1;

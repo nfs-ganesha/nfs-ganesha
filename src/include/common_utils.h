@@ -317,17 +317,17 @@ inline void timespec_sub_nsecs(nsecs_elapsed_t interval,
  */
 
 static inline int
-gsh_time_cmp(struct timespec t1,
-             struct timespec t2)
+gsh_time_cmp(const struct timespec *t1,
+             const struct timespec *t2)
 {
-        if (t1.tv_sec < t2.tv_sec) {
+        if (t1->tv_sec < t2->tv_sec) {
                 return -1;
-        } else if (t1.tv_sec > t2.tv_sec) {
+        } else if (t1->tv_sec > t2->tv_sec) {
                 return 1;
         } else {
-                if (t1.tv_nsec < t2.tv_nsec) {
+                if (t1->tv_nsec < t2->tv_nsec) {
                         return -1;
-                } else if (t1.tv_nsec > t2.tv_nsec) {
+                } else if (t1->tv_nsec > t2->tv_nsec) {
                         return 1;
                 }
         }

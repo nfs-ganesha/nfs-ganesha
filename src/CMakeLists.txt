@@ -47,10 +47,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   set(FREEBSD ON)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
-# Linkage to TIRPC repo and commit
-set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit e35fb273bd9c90fe393317a7a205128acf999ea6)
-
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
@@ -66,14 +62,25 @@ if (LINUX)
     find_library(LIBDL dl)  # module loader
 endif(LINUX)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(WINDOWS ON)
+  if(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    set(MSVC ON)
+  endif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+if (MSVC)
+   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif(MSVC)
+
 # Library destination, 32 bits / 64 bits switch is done here
-# FSAL selection
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     set( FSAL_DESTINATION "lib64/ganesha" )
 else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     set( FSAL_DESTINATION "lib/ganesha" )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
+# FSAL selection
 # FSALs which are enabled by default but could be disabled
 # during the build
 option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
@@ -92,6 +99,9 @@ option(USE_FSAL_FUSE "build FUSE FSAL" OFF)
 # SHOOK is a variant of Lustre FSAL
 option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
+# From TI-RPC
+option (USE_GSS "enable RPCSEC_GSS support" ON)
+option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
 # Build configure options
 option(USE_DBUS "enable DBUS protocol support" OFF)
@@ -100,11 +110,6 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 
-# TI-RPC former option now on?  Do we really need this anymore?
-# from Matt, NO.  deprecate
-set(_USE_TIRPC ON)
-
-option(USE_TIRPC_IPV6 "enable IPv6 support (via IPv6)" OFF)
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_SNMP_ADM "export GANESHA statistics with SNMP" OFF)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
@@ -361,6 +366,7 @@ endif(_MSPAC_SUPPORT)
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
+  "${PROJECT_SOURCE_DIR}/libntirpc/tirpc/"
   "${PROJECT_SOURCE_DIR}/include"
   "${OS_INCLUDE_DIR}"
 )
@@ -373,38 +379,9 @@ if(USE_CB_SIMULATOR)
   set(_USE_CB_SIMULATOR ON)
 endif(USE_CB_SIMULATOR)
 
-if(USE_TIRPC_IPV6)
-  set(_USE_TIRPC_IPV6 ON)
-endif(USE_TIRPC_IPV6)
-
 if(USE_STAT_EXPORTER)
   set(_USE_STAT_EXPORTER ON)
 endif(USE_STAT_EXPORTER)
-
-
-# Pull in TIRPC and build it
-
-include(ExternalProject)
-
-ExternalProject_Add(
-  ntirpc_external
-  SOURCE_DIR "${PROJECT_BINARY_DIR}/libtirpc"
-  GIT_REPOSITORY ${tirpc_repo}
-  GIT_TAG ${tirpc_commit}
-  UPDATE_COMMAND sh "${PROJECT_BINARY_DIR}/libtirpc/autogen.sh"
-  CONFIGURE_COMMAND env CFLAGS=${CMAKE_C_FLAGS} ${PROJECT_BINARY_DIR}/libtirpc/configure
-    --enable-gss
-    --prefix=${PROJECT_BINARY_DIR}/libtirpc
-  BUILD_IN_SOURCE 1
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-)
-# Tell cmake that this generates the tirpc library
-add_library(ntirpc UNKNOWN IMPORTED)
-set_property(
-  TARGET ntirpc
-  PROPERTY IMPORTED_LOCATION "${PROJECT_BINARY_DIR}/libtirpc/lib/libntirpc.a"
-)
 
 #callers add:
 #  target_link_libraries(your_library ${LIBTIRPC_LIBRARIES})
@@ -412,7 +389,7 @@ set(LIBTIRPC_INCLUDE_DIR
   "${PROJECT_BINARY_DIR}/libtirpc/tirpc"
   "${PROJECT_BINARY_DIR}/libtirpc/tirpc/rpc"
 )
-set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libtirpc/lib/libntirpc.a")
+set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 
 # Find misc system libs
 
@@ -488,6 +465,7 @@ add_subdirectory(HashTable)
 add_subdirectory(NodeList)
 add_subdirectory(Cache_inode)
 add_subdirectory(SAL)
+add_subdirectory(libntirpc)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(FSAL_UP)
@@ -535,7 +513,6 @@ message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
-message(STATUS "USE_TIRPC_IPV6 = ${USE_TIRPC_IPV6}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
@@ -550,6 +527,8 @@ message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
 message(STATUS "_HANDLE_MAPPING = ${_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "PROFILING = ${PROFILING}")
+message(STATUS "USE_GSS = ${USE_GSS}")
+message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
@@ -627,11 +606,6 @@ set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
 set(USE_DBUS_STATS ${USE_DBUS_STATS}
   CACHE BOOL
    "enable DBUS interface for server statistics"
-   FORCE)
-
-set(USE_TIRPC_IPV6 ${USE_TIRPC_IPV6}
-  CACHE BOOL
-   "enable IPv6 support (via IPv6)"
    FORCE)
 
 set(USE_NFSIDMAP ${USE_NFSIDMAP}

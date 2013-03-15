@@ -173,7 +173,7 @@ out:
         res_GETDEVICELIST4->gdlr_status = nfs_status;
 
         return res_GETDEVICELIST4->gdlr_status;
-} /* nfs41_op_getdevicelist */
+}
 
 /**
  * @brief Free memory allocated for GETDEVICELIST result
@@ -181,7 +181,7 @@ out:
  * This function frees the memory allocates for the result of the
  * NFS4_OP_GETDEVICELIST operation.
  *
- * @param[in.out] resp nfs4_op results
+ * @param[in,out] resp nfs4_op results
  *
  */
 void nfs4_op_getdevicelist_Free(GETDEVICELIST4res * resp)

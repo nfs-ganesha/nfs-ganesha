@@ -102,19 +102,6 @@ void _9p_stat_update( uint8_t type,
 #endif
 
 
-/**
- *
- * nfs_stat_update: Update a client's statistics.
- *
- * Update a client's statistics.
- *
- * @param type    [IN]    type of the stat to dump
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- *
- * @return nothing (void function)
- *
- */
 void nfs_stat_update(nfs_stat_type_t type,
                      nfs_request_stat_t * pstat_req, struct svc_req *preq,
                      nfs_request_latency_stat_t * lstat_req)

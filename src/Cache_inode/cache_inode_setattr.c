@@ -51,7 +51,7 @@
  *
  * @param[in]     entry   Entry whose attributes are to be set
  * @param[in,out] attr    Attributes to set/result of set
- * @param[in]     context FSAL credentials
+ * @param[in]     req_ctx FSAL credentials
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */

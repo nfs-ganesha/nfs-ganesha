@@ -730,11 +730,10 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 				     sizeof(void *) * (recalls - 1));
 
 			memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
-			arg->reclaim = false;
 			arg->lo_type = state->state_data.layout
 				.state_layout_type;
+			arg->circumstance = circumstance_shutdown;
 			arg->spec_segment = entire;
-			arg->synthetic = true;
 			arg->ncookies = 0;
 
 			glist_for_each_safe(seg_iter,

@@ -111,6 +111,7 @@ extern struct lru_state lru_state;
 
 #define LRU_UNREF_CLEANUP 0x0001 /* cleanup code path */
 #define LRU_UNREF_SENTINEL 0x0002 /* returning cache lookup ref */
+#define LRU_UNREF_QLOCKED 0x0004 /* qlane is locked */
 
 /**
  * The minimum reference count for a cache entry not being recycled.

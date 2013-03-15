@@ -947,7 +947,7 @@ void dec_state_owner_ref(state_owner_t * owner)
  * @param[in] care indicates how we care about the owner
  * @param[in] key the owner key we are searching for
  * @param[in] init_owner routine to initialize a new owner
- * @param[in/out] isnew optional pointer to flag indicating a new owner was created
+ * @param[in,out] isnew optional pointer to flag indicating a new owner was created
  *
  * @return the owner found or NULL if no owner was found or created
  */
@@ -1189,7 +1189,7 @@ void state_wipe_file(cache_entry_t *entry)
  *
  * @param[in]  value Bytes to display
  * @param[in]  len   Count of bytes to display
- * @parma[out] str   Output buffer
+ * @param[out] str   Output buffer
  *
  * @return Length of output string.
  */

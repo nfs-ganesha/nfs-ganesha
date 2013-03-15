@@ -41,7 +41,7 @@
 /**
  * @brief Dispose of lingering file handles
  *
- * @paramp[in] export Export to clean up
+ * @param[in] export Export to clean up
  */
 
 extern struct glist_head fsal_list;

@@ -39,7 +39,7 @@
  *
  * @param[in]  parg     Ignored
  * @param[in]  pexport  Ignored
- * @param[in]  pcontext Ignored
+ * @param[in]  req_ctx  Ignored
  * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Ignored

@@ -56,7 +56,7 @@
  * @param[in]  entry        The link to read
  * @param[out] link_content The location into which to write the
  *                          target
- * @param[in]  context      FSAL operation context
+ * @param[in]  req_ctx      FSAL operation context
  *
  * @return CACHE_INODE_SUCCESS on success, other things on failure.
  */

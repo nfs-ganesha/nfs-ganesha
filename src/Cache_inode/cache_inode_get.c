@@ -85,7 +85,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      cih_latch_t latch;
 
      /* Do lookup */
-     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch, CIH_GET_RLOCK,
+     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
+                                    CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
                                     __func__, __LINE__);
      if (*entry) {
 	 /* take an extra reference within the critical section */
@@ -153,9 +154,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * Lookup a cache entry by key, given an associated entry sharing the
  * same export (e.g..
  *
- * @param key [in] Cache key to use for lookup
- * @param[in] context FSAL operation context
- * @param[in] flags flags
+ * @param[in] key     [in] Cache key to use for lookup
+ * @param[in] req_ctx FSAL operation context
+ * @param[in] flags   flags
  *
  * @return Pointer to a ref'd entry if found, else NULL.
  */

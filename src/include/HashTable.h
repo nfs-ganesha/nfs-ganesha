@@ -96,10 +96,6 @@ struct hash_param {
 	uint32_t cache_entry_count; /*< 2^10 <= Power of 2 <= 2^15 */
 	uint32_t index_size; /*< Number of partition trees, this MUST
 			         be a prime number. */
-	uint32_t alphabet_length; /*< Size of the input alphabet for
-				      the template (and other
-				      polynomial style) hash
-				      functions. */
 	index_function_t hash_func_key; /*< Partition function,
 					    returns an integer from 0
 					    to (index_size - 1).  This

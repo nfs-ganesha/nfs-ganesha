@@ -37,7 +37,7 @@
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres
@@ -193,11 +193,11 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg,
 }
 
 /**
- * nlm4_Lock_Message: Lock Message
+ * @brief Lock Message
  *
  * @param[in]  parg
  * @param[in]  pexport
- * @param[in]  pcontext
+ * @param[in]  req_ctx
  * @param[in]  pworker
  * @param[in]  preq
  * @param[out] pres

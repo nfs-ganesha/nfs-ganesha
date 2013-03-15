@@ -2415,7 +2415,7 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
  * @brief Checks if request security flavor is suffcient for the requested export
  *
  * @param[in] req     Related RPC request.
- * @param[in] pexoprt Related export entry
+ * @param[in] pexport Related export entry
  *
  * @return true if the request flavor exists in the matching export
  * false otherwise
@@ -2532,8 +2532,9 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
  * @param[in]     mnt_prog         Number for the MOUNT program.
  * @param[in,out] ht_ip_stats      IP/stats hash table
  * @param[in,out] ip_stats_pool    IP/stats pool
- * @param[in]     user_credentials 
- * @param[out]    pclient_found Client entry found in export list, NULL if nothing was found.
+ * @param[out]    pclient_found    Client entry found in export list, NULL if nothing was found.
+ * @param[in]     user_credentials User credentials
+ * @param[in]     proc_makes_write Whether this operation counts as a write
  *
  * @retval EXPORT_PERMISSION_GRANTED on success
  * @retval EXPORT_PERMISSION_DENIED

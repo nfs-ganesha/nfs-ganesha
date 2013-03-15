@@ -71,7 +71,6 @@ void nfs_set_ip_stats_param_default()
 {
 
     nfs_param.ip_stats_param.hash_param.index_size = PRIME_IP_STATS;
-    nfs_param.ip_stats_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
     nfs_param.ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
     nfs_param.ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
     nfs_param.ip_stats_param.hash_param.compare_key = compare_ip_stats;

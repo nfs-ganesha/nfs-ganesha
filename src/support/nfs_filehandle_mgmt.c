@@ -364,7 +364,6 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
  *
  * @param[out] fh2        The extracted file handle
  * @param[in]  fsalhandle The FSAL handle to be converted
- * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
  *
  * @return true if successful, false otherwise
  */
@@ -612,8 +611,7 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
   if((nfs_param.nfsv4_param.fh_expire)
      && (pfilehandle4->srvboot_time != (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL)))
     {
-      if(nfs_param.nfsv4_param.returns_err_fh_expired)
-        return NFS4ERR_FHEXPIRED;
+      return NFS4ERR_FHEXPIRED;
     }
 
   return NFS4_OK;
@@ -657,14 +655,11 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 }                               /* nfs4_Is_Fh_Invalid */
 
 /**
+ * @brief Test if a filehandle is invalid.
  *
- * nfs3_Is_Fh_Invalid
+ * @param[in] pfh3 File handle to test.
  *
- * This routine is used to test if a fh is invalid.
- *
- * @param pfh [IN] file handle to test.
- * 
- * @return NFS4_OK if successfull. 
+ * @return NFS4_OK if successfull.
  *
  */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
@@ -724,15 +719,10 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
 }                               /* nfs4_Is_Fh_Referral */
 
 /**
+ * @brief Print an NFSv2 file handle (for debugging purpose)
  *
- * print_fhandle2
- *
- * This routine prints a NFSv2 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
+ * @param[in] component Subsystem component ID
+ * @param[in] fh        File handle to print
  */
 void print_fhandle2(log_components_t component, fhandle2 *fh)
 {
@@ -743,25 +733,20 @@ void print_fhandle2(log_components_t component, fhandle2 *fh)
       sprint_fhandle2(str, fh);
       LogFullDebug(component, "%s", str);
     }
-}                               /* print_fhandle2 */
+}
 
 void sprint_fhandle2(char *str, fhandle2 *fh)
 {
   char *tmp = str +  sprintf(str, "File Handle V2: ");
 
   sprint_mem(tmp, (char *) fh, 32);
-}                               /* sprint_fhandle2 */
+} /* sprint_fhandle2 */
 
 /**
+ * @brief Print an NFSv3 file handle
  *
- * print_fhandle3
- *
- * This routine prints a NFSv3 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
+ * @param[in] component Subsystem component ID
+ * @param[in] fh        File handle to prin
  */
 void print_fhandle3(log_components_t component, nfs_fh3 *fh)
 {
@@ -772,25 +757,20 @@ void print_fhandle3(log_components_t component, nfs_fh3 *fh)
       sprint_fhandle3(str, fh);
       LogFullDebug(component, "%s", str);
     }
-}                               /* print_fhandle3 */
+}
 
 void sprint_fhandle3(char *str, nfs_fh3 *fh)
 {
   char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->data.data_len);
 
   sprint_mem(tmp, fh->data.data_val, fh->data.data_len);
-}                               /* sprint_fhandle3 */
+}
 
 /**
+ * @brief Print an NFSv4 file handle
  *
- * print_fhandle4
- *
- * This routine prints a NFSv4 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
+ * @param[in] component Subsystem component ID
+ * @param[in] fh        File handle to print
  */
 void print_fhandle4(log_components_t component, nfs_fh4 *fh)
 {
@@ -801,25 +781,20 @@ void print_fhandle4(log_components_t component, nfs_fh4 *fh)
       sprint_fhandle4(str, fh);
       LogFullDebug(component, "%s", str);
     }
-}                               /* print_fhandle4 */
+}
 
 void sprint_fhandle4(char *str, nfs_fh4 *fh)
 {
   char *tmp = str + sprintf(str, "File Handle V4: Len=%u ", fh->nfs_fh4_len);
 
   sprint_mem(tmp, fh->nfs_fh4_val, fh->nfs_fh4_len);
-}                               /* sprint_fhandle4 */
+}
 
 /**
+ * @brief Print an NLM netobj
  *
- * print_fhandle_nlm
- *
- * This routine prints a NFSv3 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
+ * @param[in] component Subsystem component ID
+ * @param[in] fh        File handle to print
  */
 void print_fhandle_nlm(log_components_t component, netobj *fh)
 {
@@ -840,16 +815,11 @@ void sprint_fhandle_nlm(char *str, netobj *fh)
 }                               /* sprint_fhandle_nlm */
 
 /**
+ * @brief Print the content of a buffer.
  *
- * print_buff
- *
- * This routine prints the content of a buffer.
- *
- * @param buff [IN] buffer to print.
- * @param len  [IN] length of the buffer.
- * 
- * @return nothing (void function).
- *
+ * @param[in] component Logging subsystem ID
+ * @param[in] buff      Buffer to print.
+ * @param[in] len       Length of the buffer.
  */
 void print_buff(log_components_t component, char *buff, int len)
 {
@@ -886,9 +856,6 @@ void sprint_mem(char *str, char *buff, int len)
  * This routine prints all the file handle within a compoud request's data structure.
  * 
  * @param data [IN] compound's data to manage.
- *
- * @return nothing (void function).
- *
  */
 void LogCompoundFH(compound_data_t * data)
 {
@@ -908,18 +875,15 @@ void LogCompoundFH(compound_data_t * data)
       sprint_fhandle4(str, &data->rootFH);
       LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
     }
-}                               /* print_compoud_fh */
+}
 
 /**
- * nfs4_sprint_fhandle : converts a file handle v4 to a string.
+ * @brief Convert a v4 file handle to a string
  *
  * Converts a file handle v4 to a string. This will be used mostly for debugging purpose. 
- * 
- * @param fh4p [OUT]   pointer to the file handle to be converted to a string.
- * @param data [INOUT] pointer to the char * resulting from the operation.
- * 
- * @return nothing (void function).
  *
+ * @param[in]  fh4p   File handle to be converted to a string.
+ * @param[out] outstr The buffer filled by the operation.
  */
 
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr)

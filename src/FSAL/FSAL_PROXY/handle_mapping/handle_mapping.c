@@ -223,7 +223,6 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
 /* DEFAULT PARAMETERS for hash table */
 static hash_parameter_t handle_hash_config = {
   .index_size = 67,
-  .alphabet_length = 10,
   .hash_func_key = hash_digest_idx,
   .hash_func_rbt = hash_digest_rbt,
   .compare_key = cmp_digest,

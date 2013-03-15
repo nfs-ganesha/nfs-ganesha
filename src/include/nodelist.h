@@ -46,13 +46,14 @@ int nodelist_range_set(nodelist_range_t * r1, long int v1, long int v2);
  * \retval  0 if the range is not valid
 */
 int nodelist_range_check(nodelist_range_t * r1);
+
 /*!
- * \ingroup NODELIST_RANGE
- * \brief Indicate if the first range equals, is placed before
+ * @ingroup NODELIST_RANGE
+ * @brief Indicate if the first range equals, is placed before
  * or is placed after the second one
  *
- * \param a1 one of the two input ranges
- * \param a2 one of the two input ranges
+ * \param r1 one of the two input ranges
+ * \param r2 one of the two input ranges
  *
  * \retval  1 if the second one end before the start of the first one
  * \retval  0 if the two ranges are equals
@@ -110,18 +111,18 @@ int nodelist_range_contiguous(nodelist_range_t * r1, nodelist_range_t * r2);
  * \retval  2 if r1 is included in r2 (r2 is the bigger one)
 */
 int nodelist_range_includes(nodelist_range_t * r1, nodelist_range_t * r2);
-/*!
- * \ingroup NODELIST_RANGE
- * \brief Gives a nodelist_range that represent the union of the two nodelist_ranges
+/**
+ * *ingroup NODELIST_RANGE
+ * brief Gives a nodelist_range that represent the union of the two nodelist_ranges
  * given in input. The two ranges must intersect or be continuous otherwise
  * operation will failed
  *
- * \param r1 one of the two input ranges
- * \param r2 one of the two input ranges
- * \param r3 output range
+ * @param[in] r1 one of the two input ranges
+ * @param[in] r2 one of the two input ranges
+ * @param[out] rout output range
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
+ * @retval  0 operation successfully done
+ * @retval -1 operation failed
 */
 int
 nodelist_range_union(nodelist_range_t * r1, nodelist_range_t * r2,
@@ -152,25 +153,7 @@ typedef struct nodelist_rangelist
                                  */
 
 } nodelist_rangelist_t;
-/*!
- * \ingroup BATCH_MANAGER
- * \brief Initialize a bridge ranges array structure
- *
- * \param array pointer on a bridge ranges array structure to initialize
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_rangelist_init(nodelist_rangelist_t * array);
-/*!
- * \ingroup BATCH_MANAGER
- * \brief Initialize a bridge ranges array structure by duplicating an other one
- *
- * \param array pointer on a bridge ranges array structure to initialize
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_rangelist_init_by_copy(nodelist_rangelist_t * array,
                                     nodelist_rangelist_t * a2c);
 /*!
@@ -378,53 +361,10 @@ int nodelist_nodepattern_free_contents(nodelist_nodepattern_t * np);
  * \retval -1 operation failed
 */
 int nodelist_nodepattern_set_padding(nodelist_nodepattern_t * np, int padding);
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix);
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix);
-/*!
- * \brief Set bridge node pattern basic flag
- *
- * \param np pointer on a bridge node pattern structure
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_basic(nodelist_nodepattern_t * np);
-/*!
- * \brief Unset bridge node pattern basic flag
- *
- * \param np pointer on a bridge node pattern structure
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_unset_basic(nodelist_nodepattern_t * np);
-/*!
- * \brief Test if two bridge node patterns are identical
- *
- * \param np1 pointer on the first bridge node pattern structure
- * \param np2 pointer on the first bridge node pattern structure
- *
- * \retval  1 if the two pattern are identical
- * \retval  0 if they are not identical
-*/
 int
 nodelist_nodepattern_equals(nodelist_nodepattern_t * np1, nodelist_nodepattern_t * np2);
 /*!

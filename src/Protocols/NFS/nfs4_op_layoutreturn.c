@@ -144,10 +144,11 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                         nfs4_return_one_state(
                                 data->current_entry,
                                 data->req_ctx,
-                                false,
-                                arg_LAYOUTRETURN4->lora_reclaim,
                                 arg_LAYOUTRETURN4->lora_layoutreturn
                                 .lr_returntype,
+                                arg_LAYOUTRETURN4->lora_reclaim ?
+				circumstance_reclaim :
+				circumstance_client,
                                 layout_state,
                                 spec,
                                 (arg_LAYOUTRETURN4->lora_layoutreturn
@@ -250,10 +251,11 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 nfs4_return_one_state(
                                         layout_state->state_entry,
                                         data->req_ctx,
-                                        true,
-                                        arg_LAYOUTRETURN4->lora_reclaim,
                                         (arg_LAYOUTRETURN4->lora_layoutreturn
                                          .lr_returntype),
+					arg_LAYOUTRETURN4->lora_reclaim ?
+					circumstance_reclaim :
+					circumstance_client,
                                         layout_state,
                                         spec,
                                         0,
@@ -384,36 +386,34 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
  * the specified range and iomode.  If all layouts have been returned,
  * it deletes the state.
  *
- * @param[in]     handle       Handle for the file whose layouts we return
+ * @param[in]     entry        Cache entry whose layouts we return
  * @param[in]     req_ctx      Request context
  * @param[in]     synthetic    True if this is a bulk or synthesized
  *                             (e.g. last close or lease expiry) return
  * @param[in]     reclaim      True if the client is returning a state
  *                             from a previous instance of the server
+ * @param[in]     return_type  Whether this is a file, fs, or server return
  * @param[in,out] layout_state State whose segments we return
- * @param[in]     iomode       I/O mode specifying which segments to
- *                             return
- * @param[in]     offset       Offset of range to return
- * @param[in]     length       Length of range to return
+ * @param[in]     spec_segment Segment specified in return
  * @param[in]     body_len     Length of type-specific layout return data
  * @param[in]     body_val     Type-specific layout return data
  * @param[out]    deleted      True if the layout state has been deleted
+ * @param[in]     hold_lock    Whether to retain the state lock
  *
  * @return NFSv4.1 status codes
  */
 
-nfsstat4
-nfs4_return_one_state(cache_entry_t *entry,
-                      struct req_op_context *req_ctx,
-                      bool synthetic,
-                      bool reclaim,
-                      layoutreturn_type4 return_type,
-                      state_t *layout_state,
-                      struct pnfs_segment spec_segment,
-                      size_t body_len,
-                      const void *body_val,
-                      bool *deleted,
-                      bool hold_lock)
+nfsstat4 nfs4_return_one_state(
+	cache_entry_t *entry,
+	struct req_op_context *req_ctx,
+	layoutreturn_type4 return_type,
+	enum fsal_layoutreturn_circumstance circumstance,
+	state_t *layout_state,
+	struct pnfs_segment spec_segment,
+	size_t body_len,
+	const void *body_val,
+	bool *deleted,
+	bool hold_lock)
 {
         /* Return from SAL calls */
         state_status_t state_status = 0;
@@ -451,14 +451,13 @@ nfs4_return_one_state(cache_entry_t *entry,
 
         memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
 
-        arg->reclaim = reclaim;
+        arg->circumstance = circumstance;
         arg->lo_type = layout_state->state_data.layout.state_layout_type;
         arg->return_type = return_type;
         arg->spec_segment = spec_segment;
-        arg->synthetic = synthetic;
         arg->ncookies = 0;
 
-        if (!reclaim) {
+        if (circumstance != circumstance_reclaim) {
                 /* The _safe version of glist_for_each allows us to
                    delete segments while we iterate. */
                 glist_for_each_safe(seg_iter,
@@ -492,7 +491,6 @@ nfs4_return_one_state(cache_entry_t *entry,
 			handle_recalls(arg,
 				       layout_state,
 				       &g->sls_segment);
-			
 
                         nfs_status
 				= entry->obj_handle->ops

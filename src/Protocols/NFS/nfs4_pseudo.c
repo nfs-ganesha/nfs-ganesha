@@ -276,23 +276,28 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 }
 
 /**
- * nfs4_PseudoToFattr: Gets the attributes for an entry in the pseudofs
- * 
- * Gets the attributes for an entry in the pseudofs. Because pseudo fs structure is very simple (it is read-only and contains
- * only directory that belongs to root), a set of standardized values is returned
- * 
- * @param psfp       [IN]    pointer to the pseudo fs entry on which attributes are queried
- * @param Fattr      [OUT]   Pointer to the buffer that will contain the queried attributes
- * @param data       [INOUT] Pointer to the compound request's data
- * @param Bitmap     [IN]    Pointer to a bitmap that describes the attributes to be returned
- * 
- * @return 0 if successfull, -1 if something wrong occured. In this case, the reason is that too many attributes were asked.
- * 
+ * @brief Get the attributes for an entry in the pseudofs
+ *
+ * This function gets the attributes for an entry in the
+ * pseudofs. Because pseudo fs structure is very simple (it is
+ * read-only and contains only directory that belongs to root), a set
+ * of standardized values is returned
+ *
+ * @param[out] psfsp  Pseudo fs entry on which attributes are queried
+ * @param[in]  Fattr  Buffer that will contain the queried attributes
+ * @param[in]  data   Compound request data
+ * @param[in]  objFH  NFSv4 filehandle, in case they request it
+ * @param[in]  Bitmap Bitmap describing the attributes to be returned
+ *
+ * @retval 0 if successfull.
+ * @retval -1 on error, in this case, too many attributes were requested.
  */
 
-int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
-                       fattr4 * Fattr,
-                       compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap)
+int nfs4_PseudoToFattr(pseudofs_entry_t *psfsp,
+                       fattr4 *Fattr,
+                       compound_data_t *data,
+		       nfs_fh4 *objFH,
+		       struct bitmap4 *Bitmap)
 {
 	struct attrlist attrs;
 
@@ -319,21 +324,24 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 	attrs.spaceused = DEV_BSIZE;
 	attrs.mounted_on_fileid = psfsp->pseudo_id;
 	return nfs4_FSALattr_To_Fattr(&attrs, Fattr, data, objFH, Bitmap);
-}                               /* nfs4_PseudoToFattr */
+}
 
 /**
- * nfs4_FhandleToPseudo: converts  a NFSv4 file handle fs to an id in the pseudo
- * 
- * Converts  a NFSv4 file handle fs to an id in the pseudo, and check if the fh is related to a pseudo entry
+ * @brief Convert an NFSv4 file handle to a pseudofs ID
  *
- * @param fh4p      [IN] pointer to nfsv4 filehandle
- * @param psfsentry [OUT]  pointer to pseudofs entry
- * 
- * @return TRUE if successfull, FALSE if an error occured (this means the fh4 was not related to a pseudo entry)
- * 
+ * This function converts an NFSv4 file handle to a pseudofs id and
+ * checks if the fh is related to a pseudofs entry.
+ *
+ * @param[in]  fh4p      NFSv4 filehandle
+ * @param[in]  psfstree  Root of the pseudofs
+ * @param[out] psfsentry Pseudofs entry
+ *
+ * @retval True if successfull
+ * @retval FALSE if the fh4 was not related a pseudofs entry
  */
-int nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
-                         pseudofs_entry_t * psfsentry)
+
+bool nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
+			  pseudofs_entry_t * psfsentry)
 {
   file_handle_v4_t *pfhandle4;
 
@@ -668,12 +676,15 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
              sizeof(file_handle_v4_t));
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
-      /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-/** @TODO make_root calls new_entry which will free the object.
- * this may happen a lot as we traverse pseudos.  Might we have a lookahead
- * or think of a better way to handle this once the pseudo has been cached?
- * leave the handle_to_key here for a bit till we sort this out.
- * maybe the fsal lookup above should be a cache_inode_lookup??
+      /* Add the entry to the cache as a root (BUGAZOMEU: make it a
+	 junction entry when junction is available) */
+
+/**
+ * @todo make_root calls new_entry which will free the object.  this
+ * may happen a lot as we traverse pseudos.  Might we have a lookahead
+ * or think of a better way to handle this once the pseudo has been
+ * cached?  leave the handle_to_key here for a bit till we sort this
+ * out.  maybe the fsal lookup above should be a cache_inode_lookup??
  */
 /*       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc); */
 

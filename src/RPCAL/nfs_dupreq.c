@@ -773,7 +773,8 @@ out:
  * is queued for later recycling.
  *
  * @param[in] xprt  The SVCXPRT associated with DRC, if applicable
- * @param[in] drc  The DRC.
+ * @param[in] drc   The DRC
+ * @param[in] flags Control flags
  */
 void
 nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
@@ -1385,7 +1386,8 @@ out:
  * also dv->state == DUPREQ_DELETED, the request entry has been discarded
  * and should be destroyed here.
  *
- * @param[in] req The svc_req structure.
+ * @param[in] req  The svc_req structure.
+ * @param[in] func The function descriptor for this request type
  */
 void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 {

@@ -508,7 +508,7 @@ int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
  * @brief Compare NLM owners
  *
  * @param[in] owner1 A client
- * @param[in] owner1 Another client
+ * @param[in] owner2 Another client
  *
  * @retval 0 on equality.
  * @retval 1 on inequality.

@@ -137,15 +137,14 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 
 
 /**
- *
- * hash_sockaddr: create a hash value based on the sockaddr_t structure
+ * @brief Create a hash value based on the sockaddr_t structure
  *
  * This creates a native pointer size (unsigned long int) hash value
  * from the sockaddr_t structure. It supports both IPv4 and IPv6,
  * other types can be added in time.
  *
- * @param addr [IN] sockaddr_t address to hash
- * @param xprt [IN]  transport to get address from.
+ * @param[in] addr        sockaddr_t address to hash
+ * @param[in] ignore_port Whether to ignore the port
  *
  * @return hash value
  *
@@ -305,13 +304,11 @@ int cmp_sockaddr(sockaddr_t *addr_1,
 }
 
 /**
+ * @brief Canonically compare 2 sockaddrs
  *
- * sockaddr_cmpf: canonically compare 2 sockaddrs, including ports
- *
- * @param addr_1 [IN] first address
- * @param addr_2 [IN] second address
- * @param ignore_port [IN] 1 if you want to ignore port
- *       comparison, 0 if you need port comparisons
+ * @param[in] addr1       First address
+ * @param[in] addr2       Second address
+ * @param[in] ignore_port Whether to ignore the port
  *
  * @return -1 if addr1<addr2, 0 if addr1==addr2, 1 if addr1>addr2
  *

@@ -66,19 +66,70 @@ typedef struct sockaddr_storage sockaddr_t;
 extern struct netconfig *getnetconfigent(const char *netid);
 extern void freenetconfigent(struct netconfig *);
 
-typedef struct nfs_krb5_param__
+/**
+ * @addtogroup config
+ *
+ * @{
+ */
+
+/**
+ * @defgroup config_krb5 Structure and defaults for NFS_KRB5
+ * @brief Constants and csturctures for KRB5 configuration
+ *
+ * @{
+ */
+
+/**
+ * @brief Stanza label for krb5_param
+ */
+#define CONF_LABEL_NFS_KRB5 "NFS_KRB5"
+
+/**
+ * @brief Default value for krb5_param.gss.principal
+ */
+#define DEFAULT_NFS_PRINCIPAL "nfs"
+/**
+ * @brief default value for krb5_param.keytab
+ *
+ * The empty string lets GSSAPI use keytab specified in /etc/krb5.conf
+ */
+#define DEFAULT_NFS_KEYTAB ""
+
+/**
+ * @brief Default value for krb5_param.ccache_dir
+ */
+#define DEFAULT_NFS_CCACHE_DIR "/var/run/ganesha"
+
+/**
+ * @brief Kerberos 5 parameters
+ */
+typedef struct nfs_krb5_param
 {
+  /** Kerberos keytab.  Defaults to DEFAULT_NFS_KEYTAB, settable with
+      KeytabPath. */
   char keytab[MAXPATHLEN];
+  /** The ganesha credential cache.  Defautls to
+      DEFAULT_NFS_CCACHE_DIR, unsettable by user. */
   char ccache_dir[MAXPATHLEN];
-    /* XXX representation of GSSAPI service, independent of
-     * GSSRPC or TI-RPC global variables.  Initially, use it just
-     * for callbacks. */
+  /**
+   * @note representation of GSSAPI service, independent of GSSRPC or
+   * TI-RPC global variables.  Initially, use it just for
+   * callbacks.
+   */
   struct {
+    /** Principal used in callbacks, set to DEFAULT_NFS_PRINCIPAL and
+	unsettable by user. */
       char principal[MAXPATHLEN];
+    /** Expanded gss name from principal, equal to
+	principal/host\@domain.  Unsettable by user. */
       gss_name_t gss_name;
   } svc;
+  /** Whether to activate Kerberos 5.  Defaults to true (if Kerberos
+      support is compiled in) and settable with Active_krb5 */
   bool active_krb5;
 } nfs_krb5_parameter_t;
+/** @} */
+/** @} */
 
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 const char *str_gc_proc(rpc_gss_proc_t gc_proc);
@@ -126,9 +177,12 @@ static inline void
 free_gsh_xprt_private(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-    if (xu->drc)
-        nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
-    gsh_free(xu);
+    if(xu) {
+        if (xu->drc)
+            nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
+        gsh_free(xu);
+        xprt->xp_u1 = NULL;
+    }
 }
 
 static inline bool
@@ -266,6 +320,10 @@ extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern const char *xprt_type_to_str(xprt_type_t type);
+
+/**
+ * @deprecated This should be thrown out and a bool used instead.
+ */
 
 typedef enum _ignore_port
 {

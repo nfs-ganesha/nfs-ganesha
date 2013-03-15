@@ -21,10 +21,10 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
 /* fsal_export common methods
  */
 
-struct exportlist__;
+struct exportlist;
 
 int fsal_export_init(struct fsal_export *,
-		     struct exportlist__ *);
+		     struct exportlist *);
 
 void free_export_ops(struct fsal_export *exp_hdl);
 

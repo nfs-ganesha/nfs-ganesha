@@ -58,9 +58,9 @@ exportlist_t *BuildDefaultExport();
 
 /* Mount list management */
 int nfs_Add_MountList_Entry(char *hostname, char *path);
-int nfs_Remove_MountList_Entry(char *hostname, char *path);
+bool nfs_Remove_MountList_Entry(char *hostname, char *path);
 int nfs_Init_MountList(void);
-int nfs_Purge_MountList(void);
+bool nfs_Purge_MountList(void);
 mountlist nfs_Get_MountList(void);
 void nfs_Print_MountList(void);
 

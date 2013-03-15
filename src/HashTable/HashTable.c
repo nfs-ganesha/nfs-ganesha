@@ -92,7 +92,7 @@ static inline int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
  * This function returns an error string corresponding to the supplied
  * error code.
  *
- * @param[in] erro The error code to look up
+ * @param[in] err The error code to look up
  *
  * @return An error string or "UNKNOWN HASH TABLE ERROR"
  */

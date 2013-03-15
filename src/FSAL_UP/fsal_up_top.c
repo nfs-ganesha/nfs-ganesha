@@ -40,6 +40,7 @@
 #include "pnfs_utils.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_tools.h"
+#include "delayed_exec.h"
 
 /* Fake root credentials for caching lookup */
 static struct user_cred synthetic_creds = {
@@ -265,8 +266,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_ATIME) &&
 		    ((update->flags & ~fsal_up_update_atime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.atime,
-			     entry->obj_handle->attributes.atime) == 1))) {
+			     &update->attr.atime,
+			     &entry->obj_handle->attributes.atime) == 1))) {
 			entry->obj_handle->attributes.atime =
 				update->attr.atime;
 			mutatis_mutandis = true;
@@ -276,8 +277,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CREATION) &&
 		    ((update->flags & ~fsal_up_update_creation_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.creation,
-			     entry->obj_handle->attributes.creation) == 1))) {
+			     &update->attr.creation,
+			     &entry->obj_handle->attributes.creation) == 1))) {
 			entry->obj_handle->attributes.creation =
 				update->attr.creation;
 			mutatis_mutandis = true;
@@ -287,8 +288,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CTIME) &&
 		    ((update->flags & ~fsal_up_update_ctime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.ctime,
-			     entry->obj_handle->attributes.ctime) == 1))) {
+			     &update->attr.ctime,
+			     &entry->obj_handle->attributes.ctime) == 1))) {
 			entry->obj_handle->attributes.ctime =
 				update->attr.ctime;
 			mutatis_mutandis = true;
@@ -298,8 +299,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_MTIME) &&
 		    ((update->flags & ~fsal_up_update_mtime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.mtime,
-			     entry->obj_handle->attributes.mtime) == 1))) {
+			     &update->attr.mtime,
+			     &entry->obj_handle->attributes.mtime) == 1))) {
 			entry->obj_handle->attributes.mtime =
 				update->attr.mtime;
 			mutatis_mutandis = true;
@@ -319,8 +320,8 @@ static void update_queue(struct fridgethr_context *ctx)
 				   ATTR_CHGTIME) &&
 		    ((update->flags & ~fsal_up_update_chgtime_inc) ||
 		     (gsh_time_cmp(
-			     update->attr.chgtime,
-			     entry->obj_handle->attributes.chgtime) == 1))) {
+			     &update->attr.chgtime,
+			     &entry->obj_handle->attributes.chgtime) == 1))) {
 			entry->obj_handle->attributes.chgtime =
 				update->attr.chgtime;
 			mutatis_mutandis = true;
@@ -884,81 +885,175 @@ static void free_layoutrec(nfs_cb_argop4 *op)
 		 .layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
 }
 
-
-struct layoutrecall_completion {
+struct layoutrecall_cb_data {
 	char stateid_other[OTHERSIZE];  /*< "Other" part of state id */
 	struct pnfs_segment segment; /*< Segment to recall */
-	nfs_cb_argop4 arg;
+	nfs_cb_argop4 arg; /*< So we don't free */
+	nfs_client_id_t *client; /*< The client we're calling. */
+	struct timespec first_recall; /*< Time of first recall */
+	uint32_t attempts; /*< Number of times we've recalled */
 };
 
-static int32_t recallany_completion(rpc_call_t* call, rpc_call_hook hook,
-				    void* arg, uint32_t flags)
-{
-	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
-	gsh_free(arg);
-	return 0;
-}
+static void layoutrecall_one_call(void *arg);
 
-static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
-				    void* arg, uint32_t flags)
-{
-	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
-	gsh_free(arg);
-	return 0;
-}
+/**
+ * @brief Complete a CB_LAYOUTRECALL
+ *
+ * This function handles the client response to a layoutrecall.  In
+ * the event of success it does nothing.  In the case of most errors,
+ * it revokes the layout.
+ *
+ * For NOMATCHINGLAYOUT, under the agreed-upon interpretation of the
+ * forgetful model, it acts as if the client had returned a layout
+ * exactly matching the recall.
+ *
+ * For DELAY, it backs off in plateaus, then revokes the layout if the
+ * period of delay has surpassed the lease period.
+ *
+ * @param[in] call  The RPC call being completed
+ * @param[in] hook  The hook itself
+ * @param[in] arg   Supplied argument (the callback data)
+ * @param[in] flags There are no flags.
+ *
+ * @return 0, constantly.
+ */
 
 static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 				    void* arg, uint32_t flags)
 {
-	struct layoutrecall_completion *completion = arg;
+	struct layoutrecall_cb_data *cb_data = arg;
+	bool deleted = false;
+	state_t *state = NULL;
 
 	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
 		     call->cbt.v_u.v4.res.status, arg);
 
-	if (hook != RPC_CALL_COMPLETE ||
-	    (call->cbt.v_u.v4.res.status != NFS4_OK &&
-	     call->cbt.v_u.v4.res.status != NFS4ERR_DELAY)) {
-		struct user_cred synthetic_creds = {
-			.caller_uid = 0,
-			.caller_gid = 0,
-			.caller_glen = 0,
-			.caller_garray = NULL
-		};
-		struct req_op_context synthetic_context = {
-			.creds = &synthetic_creds,
-			.caller_addr = NULL,
-			.clientid = NULL
-		};
-		bool deleted = false;
-		state_t *state = NULL;
-		/**
-		 * @todo Better error handling later.  At least this
-		 * doesn't leak.
-		 */
-		/* If we don't find the state, there's nothing to
-		   return. */
-		if (nfs4_State_Get_Pointer(completion->stateid_other,
-					   &state)) {
-			nfs4_return_one_state(state->state_entry,
+	/* Get this out of the way up front */
+	if (hook != RPC_CALL_COMPLETE) {
+		goto revoke;
+	}
+
+	if (call->cbt.v_u.v4.res.status == NFS4_OK) {
+		gsh_free(cb_data);
+		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
+		nfs41_complete_single(call, hook, arg, flags);
+		return 0;
+	} else if (call->cbt.v_u.v4.res.status == NFS4ERR_DELAY) {
+		struct timespec current;
+		nsecs_elapsed_t delay;
+
+		now(&current);
+		if (timespec_diff(&cb_data->first_recall,
+				  &current) >
+		    (nfs_param.nfsv4_param.lease_lifetime *
+		     NS_PER_SEC)) {
+			goto revoke;
+		}
+		if (cb_data->attempts < 5) {
+			delay = 0;
+		} else if (cb_data->attempts < 10) {
+			delay = 1 * NS_PER_MSEC;
+		} else if (cb_data->attempts < 20) {
+			delay = 10 * NS_PER_MSEC;
+		} else if (cb_data->attempts < 30) {
+			delay = 100 * NS_PER_MSEC;
+		} else {
+			delay = 1 * NS_PER_SEC;
+		}
+		free_layoutrec(&call->cbt.v_u.v4.args.argarray.
+			       argarray_val[1]);
+		nfs41_complete_single(call, hook, arg, flags);
+		delayed_submit(layoutrecall_one_call,
+			       cb_data,
+			       delay);
+		return 0;
+	}
+
+	/**
+	 * @todo Better error handling later when we have more
+	 * session/revocation infrastructure.
+	 */
+
+revoke:
+	/* If we don't find the state, there's nothing to return. */
+	if (nfs4_State_Get_Pointer(cb_data->stateid_other,
+				   &state)) {
+		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
+		nfs4_return_one_state(state->state_entry,
+				      &synthetic_context,
+				      LAYOUTRETURN4_FILE,
+				      (call->cbt.v_u.v4.res.status ==
+				       NFS4ERR_NOMATCHING_LAYOUT) ?
+				      circumstance_client :
+				      circumstance_revoke,
+				      state,
+				      cb_data->segment,
+				      0,
+				      NULL,
+				      &deleted,
+				      false);
+		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
+	}
+	gsh_free(cb_data);
+	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
+	nfs41_complete_single(call, hook, arg, flags);
+	return 0;
+}
+
+static void layoutrecall_one_call(void *arg)
+{
+	struct layoutrecall_cb_data *cb_data = arg;
+	state_t *s;
+	int code;
+
+	if (nfs4_State_Get_Pointer(cb_data->stateid_other,
+				   &s)) {
+		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
+		now(&cb_data->first_recall);
+		code = nfs_rpc_v41_single(cb_data->client,
+					  &cb_data->arg,
+					  &s->state_refer,
+					  layoutrec_completion,
+					  cb_data,
+					  free_layoutrec);
+		if (code != 0) {
+			/**
+			 * @todo On failure to submit a callback, we
+			 * ought to give the client at least one lease
+			 * period to establish a back channel before
+			 * we start revoking state.  We don't have the
+			 * infrasturcture to properly handle layout
+			 * revocation, however.  Once we get the
+			 * capability to revoke layouts we should
+			 * queue requests on the clientid, obey the
+			 * retransmission rule, and provide a callback
+			 * to dispose of a call and revoke state after
+			 * some number of lease periods.
+			 *
+			 * At present we just assume the client has
+			 * gone completely out to lunch and fake a
+			 * return.
+			 */
+			bool deleted = false;
+
+			nfs4_return_one_state(s->state_entry,
 					      &synthetic_context,
-					      true,
-					      false,
 					      LAYOUTRETURN4_FILE,
-					      state,
-					      completion->segment,
+					      circumstance_revoke,
+					      s,
+					      cb_data->segment,
 					      0,
 					      NULL,
 					      &deleted,
 					      false);
+			gsh_free(cb_data);
+		} else {
+			++cb_data->attempts;
 		}
+		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+	} else {
+		gsh_free(cb_data);
 	}
-
-	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
-	nfs41_complete_single(call, hook, arg, flags);
-	gsh_free(completion);
-	return 0;
 }
 
 /**
@@ -978,22 +1073,10 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event *e = ctx->arg;
 	struct fsal_up_event_layoutrecall *layoutrecall
 		= &e->data.layoutrecall;
-	struct user_cred synthetic_creds = {
-		.caller_uid = 0,
-		.caller_gid = 0,
-		.caller_glen = 0,
-		.caller_garray = NULL
-	};
-	struct req_op_context synthetic_context = {
-		.creds = &synthetic_creds,
-		.caller_addr = NULL,
-		.clientid = NULL
-	};
 	struct glist_head *queue
 		= (struct glist_head *)e->private;
 	/* Entry in the queue we're disposing */
 	struct glist_head *queue_iter = NULL;
-	int code = 0;
 
 	if (glist_empty(queue)) {
 		/* One or more LAYOUTRETURNs raced us and emptied out
@@ -1010,14 +1093,14 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 				      struct recall_work_queue,
 				      link);
 		struct state_t *s = g->state;
-		struct layoutrecall_completion *completion;
+		struct layoutrecall_cb_data *cb_data;
 		cache_entry_t *entry = s->state_entry;
 		nfs_cb_argop4 *arg;
 		CB_LAYOUTRECALL4args *cb_layoutrec;
-		completion = gsh_malloc(
-			sizeof(struct layoutrecall_completion));
+		cb_data = gsh_malloc(
+			sizeof(struct layoutrecall_cb_data));
 
-		arg = &completion->arg;
+		arg = &cb_data ->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
 		cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -1049,51 +1132,25 @@ static void layoutrecall_queue(struct fridgethr_context *ctx)
 			       NULL,
 			       "LAYOUTRECALL");
 		g->recalled = true;
-		memcpy(completion->stateid_other,
+		memcpy(cb_data->stateid_other,
 		       s->stateid_other,
 		       OTHERSIZE);
-		completion->segment = layoutrecall->segment;
-		code = nfs_rpc_v41_single(s->state_owner->so_owner
-					  .so_nfs4_owner.so_clientrec,
-					  arg,
-					  &s->state_refer,
-					  layoutrec_completion,
-					  completion,
-					  free_layoutrec);
-		if (code != 0) {
-			/**
-			 * @todo On failure to submit a callback, we
-			 * ought to give the client at least one lease
-			 * period to establish a back channel before
-			 * we start revoking state.  We don't have the
-			 * infrasturcture to properly handle layout
-			 * revocation, however.  Once we get the
-			 * capability to revoke layouts we should
-			 * queue requests on the clientid, obey the
-			 * retransmission rule, and provide a callback
-			 * to dispose of a call and revoke state after
-			 * some number of lease periods.
-			 *
-			 * At present we just assume the client has
-			 * gone completely out to lunch and fake a
-			 * return.
-			 */
-			bool deleted = false;
-
-			nfs4_return_one_state(entry,
-					      &synthetic_context,
-					      true,
-					      false,
-					      LAYOUTRETURN4_FILE,
-					      s,
-					      layoutrecall->segment,
-					      0,
-					      NULL,
-					      &deleted,
-					      false);
-		}
+		cb_data->segment = layoutrecall->segment;
+		cb_data->client = s->state_owner->so_owner
+			.so_nfs4_owner.so_clientrec;
+		cb_data->attempts = 0;
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		layoutrecall_one_call(cb_data);
 	}
+}
+
+static int32_t recallany_completion(rpc_call_t* call, rpc_call_hook hook,
+				    void* arg, uint32_t flags)
+{
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+		     call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
+	return 0;
 }
 
 static void recallany_one(state_t *s,
@@ -1142,6 +1199,17 @@ struct cb_notify {
 	struct notify4 notify;
 	struct notify_deviceid_delete4 notify_del;
 };
+
+static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
+				    void* arg, uint32_t flags)
+{
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+		     call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
+	return 0;
+}
+
+
 
 static void notifydev_one(state_t *s,
 			  struct fsal_up_event_notifydevice *devicenotify)
@@ -1195,7 +1263,7 @@ static void recallany_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event_recallany *recallany =
 		&e->data.recallany;
 	struct fsal_up_file *file = &e->file;
-	struct exportlist__ *exp;
+	struct exportlist *exp;
 	struct glist_head *glist;
 	state_t *state;
 
@@ -1225,7 +1293,7 @@ static void notifydevice_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event_notifydevice *devicenotify
 		= &e->data.notifydevice;
 	struct fsal_up_file *file = &e->file;
-	struct exportlist__ *exp;
+	struct exportlist *exp;
 	struct glist_head *glist;
 	state_t *state;
 	exp = file->export->exp_entry;

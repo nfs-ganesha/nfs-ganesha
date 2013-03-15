@@ -48,14 +48,12 @@
 /**
  * @brief The NFS proc null function, for all versions.
  *
- * The NFS proc null function, for all versions.
- *
- * @param[in]  arg        ignored
- * @param[in]  exportlist ignored
- * @param[in]  creds      ignored
- * @param[in]  worker     ignored
- * @param[in]  req        ignored
- * @param[out] res        ignored
+ * @param[in]  arg     ignored
+ * @param[in]  export  ignored
+ * @param[in]  req_ctx ignored
+ * @param[in]  worker  ignored
+ * @param[in]  req     ignored
+ * @param[out] res     ignored
  */
 
 int nfs_Null(nfs_arg_t *arg,

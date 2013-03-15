@@ -56,42 +56,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-/**
- *
- *  ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.
- * 
- * Computes the hash value for the entry in IP stats cache. 
- * This function is called internal in the HasTable_* function
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
- *
- * @return the computed hash value.
- *
- * @see HashTable_Init
- *
- */
 uint32_t ip_stats_value_hash_func(hash_parameter_t * p_hparam,
                                            struct gsh_buffdesc * buffclef)
 {
   return hash_sockaddr((sockaddr_t *)buffclef->addr, IGNORE_PORT) % p_hparam->index_size;
 }
 
-/**
- *
- *  ip_stats_rbt_hash_func: computes the rbt value for the entry in IP stats cache.
- * 
- * Computes the rbt value for the entry in IP stats cache.
- * This function is called internal in the HasTable_* function
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
- *
- * @return the computed rbt value.
- *
- * @see HashTable_Init
- *
- */
 uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
                                          struct gsh_buffdesc * buffclef)
 {
@@ -113,21 +83,9 @@ uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_stats(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return (cmp_sockaddr((sockaddr_t *)(buff1->addr), (sockaddr_t *)(buff2->addr), IGNORE_PORT) != 0) ? 0 : 1;
+  return (cmp_sockaddr(buff1->addr, buff2->addr, IGNORE_PORT) != 0) ? 0 : 1;
 }
 
-/**
- *
- * display_ip_stats_key: displays the ip_stats stored in the buffer.
- *
- * displays the ip_stats key stored in the buffer. This function is to be used as 'key_to_str' field. 
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
- *
- * @return number of character written.
- *
- */
 int display_ip_stats_key(struct gsh_buffdesc * pbuff, char *str)
 {
   sockaddr_t *addr = (sockaddr_t *)(pbuff->addr);
@@ -136,18 +94,6 @@ int display_ip_stats_key(struct gsh_buffdesc * pbuff, char *str)
   return strlen(str);
 }
 
-/**
- *
- * display_ip_stats_val: displays the ip_stats stored in the buffer.
- *
- * displays the ip_stats stored in the buffer. This function is to be used as 'val_to_str' field. 
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
- *
- * @return number of character written.
- *
- */
 int display_ip_stats_val(struct gsh_buffdesc * pbuff, char *str)
 {
   nfs_ip_stats_t *ip_stats = (nfs_ip_stats_t *)(pbuff->addr);
@@ -161,21 +107,6 @@ int display_ip_stats_val(struct gsh_buffdesc * pbuff, char *str)
                   ip_stats->nb_req_mnt1,
                   ip_stats->nb_req_mnt3);
 }
-
-/**
- *
- * nfs_ip_stats_add: adds an entry in the duplicate requests cache.
- *
- * Adds an entry in the duplicate requests cache.
- *
- * @param ipaddr           [IN]    the ipaddr to be used as key
- * @param ip_stats_pool    [INOUT] values pool for hash table
- *
- * @return IP_STATS_SUCCESS if successfull\n.
- * @return IP_STATS_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
- * @return IP_STATS_NETDB_ERROR if an error occured during the netdb query (via gethostbyaddr).
- *
- */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
                      sockaddr_t * ipaddr, pool_t *ip_stats_pool)
@@ -231,17 +162,6 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
   return IP_STATS_SUCCESS;
 }                               /* nfs_ip_stats_add */
 
-/**
- *
- * nfs_ip_stats_incr: increments the stats value.
- *
- * increments the stats value.
- * 
- * @param ipaddr   [IN]  the ip address requested
- *
- * @return the computed number of call for this ipaddr. Negative value is a failure
- *
- */
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
                       sockaddr_t * ipaddr,
                       unsigned int nfs_prog,
@@ -309,17 +229,6 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
 }                               /* nfs_ip_stats_incr */
 
 
-/**
- *
- * nfs_ip_stats_get: gets the stats value.
- *
- * gets the stats value.
- * 
- * @param ipaddr   [IN]  the ip address requested
- *
- * @return the computed number of call for this ipaddr. Negative value is a failure
- *
- */
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
                      sockaddr_t * ipaddr, nfs_ip_stats_t ** g)
 {
@@ -347,18 +256,6 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
   return status;
 }                               /* nfs_ip_stats_get */
 
-/**
- *
- * nfs_ip_stats_remove: Tries to remove an entry for ip_stats cache
- *
- * Tries to remove an entry for ip_stats cache.
- * 
- * @param ipaddr           [IN]    the ip address to be uncached.
- * @param ip_stats_pool    [INOUT] values pool for hash table
- *
- * @return the result previously set if *pstatus == IP_STATS_SUCCESS
- *
- */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
                         sockaddr_t * ipaddr, pool_t *ip_stats_pool)
 {
@@ -398,11 +295,11 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
  * @return 0 if successful, -1 otherwise
  *
  */
-hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
+hash_table_t *nfs_Init_ip_stats(hash_parameter_t *param)
 {
   hash_table_t *ht_ip_stats;
 
-  if((ht_ip_stats = HashTable_Init(&param.hash_param)) == NULL)
+  if((ht_ip_stats = HashTable_Init(param)) == NULL)
     {
       LogCrit(COMPONENT_INIT, "NFS IP_STATS: Cannot init IP stats cache");
       return NULL;
@@ -411,16 +308,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
   return ht_ip_stats;
 }                               /* nfs_Init_ip_stats */
 
-/**
- *
- * nfs_ip_stats_dump: Dumps the IP Stats for each client to a file per client
- *
- * @param ht_ip_stats [IN] hash table to be dumped
- * @param path_stat   [IN] pattern used to build path used for dumping stats
- *
- * @return nothing (void function).
- *
- */
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
                        unsigned int nb_worker, char *path_stat)
 {

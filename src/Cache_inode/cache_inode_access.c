@@ -44,6 +44,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "HashTable.h"
+#include "gsh_config.h"
 #include "cache_inode.h"
 #include "abstract_mem.h"
 
@@ -206,9 +207,9 @@ bool not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
  * entry then checks if the supplied credentials are sufficient to
  * perform the required setattrs.
  *
- * @param[in] entry       The object to be checked
- * @param[in] attr        Attributes to set/result of set
- * @param[in] context     FSAL credentials
+ * @param[in] entry   The object to be checked
+ * @param[in] attr    Attributes to set/result of set
+ * @param[in] req_ctx FSAL credentials
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */

@@ -65,7 +65,7 @@
  * @param[in,out] buffer       Where in memory to read or write data
  * @param[out]    eof          Whether a READ encountered the end of file.  May
  *                             be NULL for writes.
- * @param[in]     context      FSAL credentials
+ * @param[in]     req_ctx      FSAL credentials
  * @param[in]     stable       The stability of the write to perform
  *
  * @return CACHE_INODE_SUCCESS or various errors

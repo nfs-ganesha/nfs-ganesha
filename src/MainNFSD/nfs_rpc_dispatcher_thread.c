@@ -226,9 +226,10 @@ static void close_rpc_fd()
 
 void Create_udp(protos prot)
 {
-    udp_xprt[prot] = svc_dg_create(udp_socket[prot],
-                                   nfs_param.core_param.max_send_buffer_size,
-                                   nfs_param.core_param.max_recv_buffer_size);
+    udp_xprt[prot] = svc_dg_create(
+	    udp_socket[prot],
+	    nfs_param.core_param.rpc.max_send_buffer_size,
+	    nfs_param.core_param.rpc.max_recv_buffer_size);
     if(udp_xprt[prot] == NULL)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot allocate %s/UDP SVCXPRT", tags[prot]);
@@ -258,10 +259,11 @@ void Create_udp(protos prot)
 
 void Create_tcp(protos prot)
 {
-    tcp_xprt[prot] = svc_vc_create2(tcp_socket[prot],
-                                    nfs_param.core_param.max_send_buffer_size,
-                                    nfs_param.core_param.max_recv_buffer_size,
-                                    SVC_VC_CREATE_LISTEN);
+    tcp_xprt[prot] = svc_vc_create2(
+	    tcp_socket[prot],
+	    nfs_param.core_param.rpc.max_send_buffer_size,
+	    nfs_param.core_param.rpc.max_recv_buffer_size,
+	    SVC_VC_CREATE_LISTEN);
     if(tcp_xprt[prot] == NULL)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot allocate %s/TCP SVCXPRT", tags[prot]);
@@ -484,11 +486,11 @@ void nfs_Init_svc()
     /* New TI-RPC package init function */
     svc_params.flags = SVC_INIT_EPOLL; /* use EPOLL event mgmt */
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
-    svc_params.max_connections = nfs_param.core_param.nb_max_fd;
+    svc_params.max_connections = nfs_param.core_param.rpc.max_connections;
     svc_params.max_events = 1024; /* length of epoll event queue */
     svc_params.idle_timeout = 30;
     svc_params.warnx = NULL;
-    svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
+    svc_params.gss_ctx_hash_partitions = 17;
     svc_params.gss_max_idle_gen = 1024; /* GSS ctx cache expiration */
     svc_params.gss_max_gc = 200;
 
@@ -772,10 +774,7 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
 static void
 nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
-    if (xprt->xp_u1) {
-        free_gsh_xprt_private(xprt->xp_u1);
-        xprt->xp_u1 = NULL;
-    }
+    free_gsh_xprt_private(xprt);
 }
 
 /**
@@ -986,13 +985,15 @@ nfs_rpc_queue_init(void)
     nfs_req_st.stallq.stalled = 0;
 }
 
+static uint32_t enqueued_reqs = 0;
+static uint32_t dequeued_reqs = 0;
+
 void
 nfs_rpc_enqueue_req(request_data_t *req)
 {
     struct req_q_set *nfs_request_q;
     struct req_q_pair *qpair;
     struct req_q *q;
-
 
     nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
 
@@ -1036,8 +1037,12 @@ nfs_rpc_enqueue_req(request_data_t *req)
     ++(q->size);
     pthread_spin_unlock(&q->sp);
 
-    LogFullDebug(COMPONENT_DISPATCH, "enqueued req, q %p (%s %p:%p) size is %d",
-                 q, qpair->s, &qpair->producer, &qpair->consumer, q->size);
+    atomic_inc_uint32_t(&enqueued_reqs);
+
+    LogDebug(COMPONENT_DISPATCH, "enqueued req, q %p (%s %p:%p) "
+             "size is %d (enq %u deq %u)",
+             q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
+             enqueued_reqs, dequeued_reqs);
 
     /* potentially wakeup some thread */
 
@@ -1174,8 +1179,10 @@ retry_deq:
 
         /* anything? */
         nfsreq = nfs_rpc_consume_req(qpair);
-        if (nfsreq)
+        if (nfsreq) {
+            atomic_inc_uint32_t(&dequeued_reqs);
             break;
+        }
 
         ++slot; slot = slot % 4;
 
@@ -1470,7 +1477,7 @@ thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
             goto finish;
         }
 
-        if (!nfs_rpc_get_args(thr_ctx, nfsreq->r_u.nfs))
+        if (! nfs_rpc_get_args(thr_ctx, nfsreq->r_u.nfs))
             goto finish;
 
         /* update accounting */
@@ -1528,8 +1535,7 @@ thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
     enum xprt_stat stat;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
-    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "enter xprt=%p", xprt);
 
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
@@ -1593,7 +1599,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
 
-    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter, xprt);
+    LogFullDebug(COMPONENT_RPC, "enter xprt=%p", xprt);
 
     if(udp_socket[P_NFS] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request fd %d",
@@ -1650,23 +1656,22 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
                  nreqs, nfs_param.core_param.dispatch_max_reqs);
         thread_delay_ms(5); /* don't busy-wait */
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+        SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
         goto out;
     }
 
-    LogFullDebug(COMPONENT_RPC, "%d before decoder guard %p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "before decoder guard %p", xprt);
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
     if (! gsh_xprt_decoder_guard(xprt, XPRT_PRIVATE_FLAG_NONE)) {
-        LogFullDebug(COMPONENT_RPC, "%d already decoding %p",
-                     __tirpc_dcounter, xprt);
+        LogFullDebug(COMPONENT_RPC, "already decoding %p", xprt);
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+        SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
         goto out;
     }
 
-    LogFullDebug(COMPONENT_RPC, "%d before cond stall %p", __tirpc_dcounter,
-                 xprt);
+    LogFullDebug(COMPONENT_RPC, "before cond stall %p", xprt);
 
     /* Check per-xprt max outstanding quota */
     if (nfs_rpc_cond_stall_xprt(xprt)) {
@@ -1674,6 +1679,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         LogDebug(COMPONENT_DISPATCH, "stalled, bail");
         /* update accounting, clear decoding flag */
         gsh_xprt_clear_flag(xprt, XPRT_PRIVATE_FLAG_DECODING);
+        SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
         goto out;
     }
 

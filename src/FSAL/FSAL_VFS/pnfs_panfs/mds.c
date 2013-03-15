@@ -234,9 +234,9 @@ nfsstat4 layoutreturn(
 	struct pan_ioctl_xdr pixdr;
 	nfsstat4 ret;
 
-	DBG_PRNT2("reclaim=%d return_type=%d fsal_seg_data=%p synthetic=%d dispose=%d last_segment=%d ncookies=%zu\n",
-		arg->reclaim, arg->return_type, arg->fsal_seg_data,
-		arg->synthetic, arg->dispose, arg->last_segment,
+	DBG_PRNT2("reclaim=%d return_type=%d fsal_seg_data=%p dispose=%d last_segment=%d ncookies=%zu\n",
+		arg->circumstance, arg->return_type, arg->fsal_seg_data,
+		arg->dispose, arg->last_segment,
 		arg->ncookies);
 
 	_XDR_2_ioctlxdr_write(lrf_body, &pixdr);

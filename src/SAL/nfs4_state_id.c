@@ -222,23 +222,23 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
  * @retval 0 if successful.
  * @retval -1 on failure.
  */
-int nfs4_Init_state_id(nfs_state_id_parameter_t param)
+int nfs4_Init_state_id(hash_parameter_t *param)
 {
   /* Init  all_one */
   memset(all_zero, 0, OTHERSIZE);
   memset(all_ones, 0xFF, OTHERSIZE);
 
-  if((ht_state_id = HashTable_Init(&param.hash_param)) == NULL)
+  if((ht_state_id = HashTable_Init(param)) == NULL)
     {
       LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
       return -1;
     }
 
   return 0;
-}                               /* nfs_Init_client_id */
+}
 
 /**
- * @brilef Build the 12 byte "other" portion of a stateid
+ * @brief Build the 12 byte "other" portion of a stateid
  *
  * It is built from the ServerEpoch and a 64 bit global counter.
  *
@@ -300,8 +300,8 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
 /**
  * @brief Get the state from the stateid
  *
- * @param[in]  other stateid4.other
- * @param[out] state State found
+ * @param[in]  other      stateid4.other
+ * @param[out] state_data State found
  *
  * @retval 1 if ok.
  * @retval 0 if not ok.
@@ -364,11 +364,13 @@ int nfs4_State_Del(char other[OTHERSIZE])
  *
  * This function yields the state for the stateid if it is valid.
  *
- * @param[in]  stateid Stateid to look up
- * @param[in]  entry   Associated file
- * @param[out] state   Found state
- * @param[in]  data    Compound data
- * @param[in]  flags   Flags governing special stateids
+ * @param[in]  stateid     Stateid to look up
+ * @param[in]  entry       Associated file
+ * @param[out] state       Found state
+ * @param[in]  data        Compound data
+ * @param[in]  flags       Flags governing special stateids
+ * @param[in]  owner_seqid seqid on v4.0 owner
+ * @param[in]  check_seqid Whether to validate owner_seqid
  * @param[in]  tag     Arbitrary string for logging/debugging
  *
  * @return NFSv4 status codes

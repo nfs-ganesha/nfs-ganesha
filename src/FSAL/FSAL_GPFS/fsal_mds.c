@@ -413,7 +413,8 @@ layoutreturn(struct fsal_obj_handle *obj_hdl,
 		larg.mountdirfd = myself->u.file.fd;
 		larg.handle = gpfs_handle;
 		larg.args.lr_return_type = arg->lo_type;
-		larg.args.lr_reclaim = arg->reclaim;
+		larg.args.lr_reclaim
+			= (arg->circumstance == circumstance_reclaim);
 		larg.args.lr_seg.clientid = 0;
 		larg.args.lr_seg.layout_type = arg->lo_type;
 		larg.args.lr_seg.iomode = arg->spec_segment.io_mode;

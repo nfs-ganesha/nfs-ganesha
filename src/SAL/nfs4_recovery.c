@@ -98,7 +98,8 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
         int duration;
 
         /* limit the grace period to a maximum of 45 seconds */
-        duration = MIN(60, nfs_param.nfsv4_param.lease_lifetime);
+	duration = (nfs_param.nfsv4_param.graceless ?
+		    0 : MIN(60, nfs_param.nfsv4_param.lease_lifetime));
 
         P(grace.g_mutex);
 
@@ -130,6 +131,9 @@ int last_grace = -1;
 int nfs_in_grace(void)
 {
         int in_grace;
+
+	if (nfs_param.nfsv4_param.graceless)
+	    return 0;
 
         P(grace.g_mutex);
 

@@ -63,7 +63,7 @@
  *
  * @param[in]  parg     Ignored
  * @param[in]  pexport  The export list to be return to the client.
- * @param[in]  pcontext Ignored
+ * @param[in]  req_ctx  Ignored
  * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Pointer to the export list

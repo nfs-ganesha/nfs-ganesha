@@ -44,11 +44,9 @@
 /**
  * @brief The Rquota getactivequota function, for all versions.
  *
- * The RQUOTA getactivequota function, for all versions.
- *
  * @param[in]  parg     Ignored
  * @param[in]  pexport  Ignored
- * @param[in]  pcontext Ignored
+ * @param[in]  req_ctx  Ignored
  * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Ignored

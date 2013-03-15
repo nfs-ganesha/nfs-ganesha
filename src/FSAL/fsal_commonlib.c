@@ -122,7 +122,7 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
 }
 
 int fsal_export_init(struct fsal_export *exp,
-		     struct exportlist__ *exp_entry)
+		     struct exportlist *exp_entry)
 {
 	extern struct export_ops def_export_ops;
 	extern struct fsal_obj_ops def_handle_ops;
@@ -173,7 +173,7 @@ errout:
  *
  * Free the memory allocated by init_export_ops. Poison pointers.
  *
- * @param[0] exp_hdl
+ * @param[in] exp_hdl Export handle
  *
  */
 

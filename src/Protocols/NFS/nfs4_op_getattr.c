@@ -108,11 +108,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
                 return res_GETATTR4.status;
         }
 
-        if (!nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4.attr_request)) {
-                res_GETATTR4.status = NFS4ERR_SERVERFAULT;
-                return res_GETATTR4.status;
-        }
-
+	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4.attr_request);
 
         if (cache_entry_To_Fattr(data->current_entry,
                                  &(res_GETATTR4.GETATTR4res_u.resok4
