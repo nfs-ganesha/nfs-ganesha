@@ -149,12 +149,6 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags);
 
 int fsal_internal_version();
 
-fsal_status_t fsal_internal_access(int mntfd,
-                                   const struct req_op_context *p_context,
-                                   struct gpfs_file_handle * p_handle,
-                                   fsal_accessflags_t access_type,
-                                   struct attrlist * p_object_attributes);
-
 fsal_status_t
 fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
                          struct gpfs_file_handle *p_handle);  /* OUT */
@@ -350,10 +344,6 @@ fsal_status_t GPFSFSAL_close(int * p_file_descriptor); /* IN */
 fsal_status_t GPFSFSAL_dynamic_fsinfo(struct gpfs_file_handle * p_handle,/* IN */
                                int dirfd,                               /* IN */
                                fsal_dynamicfsinfo_t *p_dynamicinfo);    /* OUT */
-
-fsal_status_t GPFSFSAL_test_access(int dirfd,     /* IN */
-                                  fsal_accessflags_t access_type,       /* IN */
-                                 struct attrlist * p_object_attributes); /* IN */
 
 fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context, /* IN */
                               struct fsal_obj_handle *parent,
