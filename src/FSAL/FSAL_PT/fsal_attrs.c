@@ -28,6 +28,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
@@ -121,7 +122,7 @@ PTFSAL_getattrs(fsal_handle_t      * p_filehandle,        /* IN */
                                        FSAL_ACE_PERM_READ_ACL);
 
     if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
-      st = fsal_internal_testAccess(p_context, access_mask, NULL, 
+      st = fsal_check_access(p_context, access_mask, NULL, p_object_attributes);
                                     p_object_attributes);
     } else {
       st = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -306,7 +307,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                         FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
           if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
-            status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+            status = fsal_check_access(p_context, access_mask, NULL, 
             &current_attrs);
           else
             status = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -386,7 +387,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                         FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
         if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
-          status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+          status = fsal_check_access(p_context, access_mask, NULL, 
                                             &current_attrs);
         else
           status = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -433,7 +434,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
       if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
-        status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+        status = fsal_check_access(p_context, access_mask, NULL, 
                       &current_attrs);
       else
         status = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -501,7 +502,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
   if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
-    status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+    status = fsal_check_access(p_context, access_mask, NULL, 
                                       &current_attrs);
   } else {
     status = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -521,7 +522,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
   if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
-    status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+    status = fsal_check_access(p_context, access_mask, NULL, 
                                       &current_attrs);
   } else {
     status = fsal_internal_access(p_context, p_filehandle, access_mask,
@@ -603,7 +604,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
 
     if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
-      status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+      status = fsal_check_access(p_context, access_mask, NULL, 
                                         &current_attrs);
     else
       status = fsal_internal_access(p_context, p_filehandle, access_mask,
