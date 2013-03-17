@@ -76,8 +76,8 @@ nfs_Symlink(nfs_arg_t *arg,
             struct svc_req *req,
             nfs_res_t *res)
 {
-        char *symlink_name = NULL;
-        char *target_path = NULL;
+        const char *symlink_name = arg->arg_symlink3.where.name;
+        const char *target_path = arg->arg_symlink3.symlink.symlink_data;
         cache_inode_create_arg_t create_arg;
         uint32_t mode = 0777;
         cache_entry_t *symlink_entry = NULL;
@@ -91,9 +91,6 @@ nfs_Symlink(nfs_arg_t *arg,
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
-
-                symlink_name = arg->arg_symlink3.where.name;
-                target_path = arg->arg_symlink3.symlink.symlink_data;
 
                 nfs_FhandleToStr(req->rq_vers,
                                  &arg->arg_symlink3.where.dir,
@@ -116,22 +113,19 @@ nfs_Symlink(nfs_arg_t *arg,
 					   &res->res_symlink3.status,
 					   &rc);
         if(parent_entry == NULL) {
-                goto out;;
+                goto out;
         }
 
         nfs_SetPreOpAttr(parent_entry,
                          req_ctx,
                          &pre_parent);
 
-        /* Sanity checks: new directory name must be non-null; parent
-           must be a directory. */
-        if (parent_entry->type != DIRECTORY)
-          {
+        if (parent_entry->type != DIRECTORY) {
                 res->res_symlink3.status = NFS3ERR_NOTDIR;
 
                 rc = NFS_REQ_OK;
                 goto out;
-          }
+        }
 
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
@@ -145,10 +139,6 @@ nfs_Symlink(nfs_arg_t *arg,
                 rc = NFS_REQ_OK;
                 goto out;
         }
-        symlink_name = arg->arg_symlink3.where.name;
-        target_path = arg->arg_symlink3.symlink.symlink_data;
-
-        create_arg.link_content = target_path;
 
         if (symlink_name == NULL ||
             *symlink_name == '\0'||
@@ -156,8 +146,9 @@ nfs_Symlink(nfs_arg_t *arg,
             *target_path == '\0') {
                 cache_status = CACHE_INODE_INVALID_ARGUMENT;
                 goto out_fail;
-
         }
+
+        create_arg.link_content = target_path;
 
         /* Make the symlink */
 	cache_status = cache_inode_create(parent_entry,
@@ -167,7 +158,7 @@ nfs_Symlink(nfs_arg_t *arg,
 					  &create_arg,
 					  req_ctx,
 					  &symlink_entry);
-	if (symlink_entry == NULL) {
+	if (cache_status != CACHE_INODE_SUCCESS) {
                 goto out_fail;
         }
 
@@ -204,7 +195,6 @@ nfs_Symlink(nfs_arg_t *arg,
 
         if ((res->res_symlink3.status =
              (nfs3_AllocateFH(&res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle))) != NFS3_OK) {
-                res->res_symlink3.status = NFS3ERR_IO;
                 rc = NFS_REQ_OK;
                 goto out;
         }
@@ -235,21 +225,9 @@ nfs_Symlink(nfs_arg_t *arg,
         res->res_symlink3.status = NFS3_OK;
         rc = NFS_REQ_OK;
 
-
-out:
-        /* return references */
-        if (parent_entry) 
-                cache_inode_put(parent_entry);
-        
-
-        if (symlink_entry) 
-                cache_inode_put(symlink_entry);
-        
-
-        return rc;
+        goto out;
 
 out_fail:
-
         res->res_symlink3.status = nfs3_Errno(cache_status);
         nfs_SetWccData(&pre_parent,
                        parent_entry,
@@ -259,8 +237,8 @@ out_fail:
 
         if (nfs_RetryableError(cache_status)) 
                 rc = NFS_REQ_DROP;
-        
 
+out:
         /* return references */
         if (parent_entry) 
                 cache_inode_put(parent_entry);

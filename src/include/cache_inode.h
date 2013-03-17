@@ -406,8 +406,6 @@ struct cache_entry_t {
 	} object;
 };
 
-typedef struct cache_inode_file cache_inode_file_t;
-typedef union cache_inode_fsobj cache_inode_fsobj_t;
 
 /**
  * Data to be used as the key into the cache_entry hash table.
@@ -424,8 +422,6 @@ typedef struct cache_inode_fsal_data {
 
 /** Cache entries pool */
 extern pool_t *cache_inode_entry_pool;
-/** Pool for SYMLINK data */
-extern pool_t *cache_inode_symlink_pool;
 
 /**
  * Type-specific data passed to cache_inode_new_entry
@@ -433,11 +429,7 @@ extern pool_t *cache_inode_symlink_pool;
 
 typedef union cache_inode_create_arg {
 	fsal_dev_t  dev_spec; /*< Major/minor numbers for a device file */
-	bool newly_created_dir; /*< True if this directory has just
-				    been created, rather than
-				    pre-existing and loaded into the
-				    cache. */
-	char *link_content; /*< Just stash the pointer. */
+	const char *link_content; /*< Just stash the pointer. */
 } cache_inode_create_arg_t;
 
 /**
@@ -558,7 +550,6 @@ const char *cache_inode_err_str(cache_inode_status_t err);
 
 int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
-void cache_inode_release_symlink(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_init(void);
 
