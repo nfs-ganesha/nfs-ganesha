@@ -837,9 +837,10 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
 
 /**
  * @brief Check if attributes are valid
- * *
- * @param[in] entry          The entry to check
- * @param[in] current_time
+ *
+ * The caller must hold the read lock on the attributes.
+ *
+ * @param[in] entry     The entry to check
  */
 
 static inline bool cache_inode_is_attrs_valid(const cache_entry_t *entry)

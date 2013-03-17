@@ -669,15 +669,16 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 /**
  * @brief Lock attributes and check they are trustworthy
  *
- * This function acquires a read lock.  If the attributes need to be
+ * This function acquires a read or write lock.  If the attributes need to be
  * refreshed, it drops the read lock, acquires a write lock, and, if the
- * attributes need to be refreshed, refreshes the attributes.  On success
- * this function will return with the attributes either read or write
- * locked.  It should only be used when read access is desired for
- * relatively short periods of time.
+ * attributes still need to be refreshed, refreshes the attributes.
+ * On success this function will return with the attributes either
+ * read or write locked.  It should only be used when read access is desired
+ * for relatively short periods of time.
  *
- * @param[in,out] entry   The entry to lock and check
- * @param[in]     context The FSAL operation context
+ * @param[in,out] entry         The entry to lock and check
+ * @param[in]     opctx         The FSAL operation context
+ * @param[in]     need_wr_lock  Need to take write lock?
  *
  * @return CACHE_INODE_SUCCESS if the attributes are locked and
  *         trustworthy, various cache_inode error codes otherwise.
