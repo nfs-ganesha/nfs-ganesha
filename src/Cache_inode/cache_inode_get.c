@@ -118,10 +118,12 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		asynchronous trust is checked with use (when the
 		attributes are locked for reading, for example.) */
 
-	     if ((status = cache_inode_check_trust(*entry, req_ctx))
+	     if ((status = cache_inode_lock_trust_attrs(*entry, req_ctx, false))
 		 != CACHE_INODE_SUCCESS) {
 		 cache_inode_put(*entry);
 		 *entry = NULL;
+	     } else {
+                 PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
 	     }
 	     return status;
 	 }
@@ -208,11 +210,14 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		if (unlikely(! entry))
 			goto out;
 
-		if (unlikely((status = cache_inode_check_trust(entry, req_ctx))
+		if (unlikely((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
 			     != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
 			entry = NULL;
+			goto out;
 		}
+
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
         } /* ! cached only */
 out:
 	return (entry);

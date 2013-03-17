@@ -71,14 +71,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 				      struct req_op_context *req_ctx)
 {
      fsal_status_t fsal_status = {0, 0};
-     bool srcattrlock = false;
-     bool destattrlock = false;
-     bool destdirlock = false;
      fsal_accessflags_t access_mask = 0;
-     fsal_acl_t *saved_acl = NULL;
-     fsal_acl_status_t acl_status = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
-
+     cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status_ref_dest_dir = CACHE_INODE_SUCCESS;
 
      /* The file to be hardlinked can't be a DIRECTORY */
      if (entry->type == DIRECTORY) {
@@ -86,26 +82,20 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           goto out;
      }
 
-
      /* Is the destination a directory? */
      if ((dest_dir->type != DIRECTORY) &&
          (dest_dir->type != FS_JUNCTION)) {
-          status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_NOT_A_DIRECTORY;
           goto out;
      }
-
-     /* Acquire the attribute lock */
-     PTHREAD_RWLOCK_wrlock(&dest_dir->attr_lock);
-     destattrlock = true;
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
-     status = cache_inode_access_sw(dest_dir,
-				    access_mask,
-				    req_ctx,
-				    false);
+     status = cache_inode_access(dest_dir,
+				 access_mask,
+				 req_ctx);
 
      if (status != CACHE_INODE_SUCCESS) {
           goto out;
@@ -113,86 +103,33 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      /* Rather than performing a lookup first, just try to make the
         link and return the FSAL's error if it fails. */
-
-     /* Acquire the directory entry lock */
-     PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);
-     destdirlock = true;
-
-     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-     srcattrlock = true;
-
-     /* Do the link at FSAL level */
-     saved_acl = entry->obj_handle->attributes.acl;
      fsal_status = entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
                                                 dest_dir->obj_handle, name);
-     if(!FSAL_IS_ERROR(fsal_status))
-             fsal_status =
-                     entry->obj_handle->ops->getattrs(entry->obj_handle,
-                                                      req_ctx);
-     if (FSAL_IS_ERROR(fsal_status)) {
-          status = cache_inode_error_convert(fsal_status);
-          if (fsal_status.major == ERR_FSAL_STALE) {
-               fsal_status
-                       = entry->obj_handle->ops->getattrs(entry->obj_handle,
-                                                          req_ctx);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry);
-               }
-               fsal_status
-                       = dest_dir->obj_handle->ops
-                       ->getattrs(dest_dir->obj_handle, req_ctx);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(dest_dir);
-               }
-          }
-          goto out;
-     } else {
-          /* Decrement refcount on saved ACL */
-         nfs4_acl_release_entry(saved_acl, &acl_status);
-         if (acl_status != NFS_V4_ACL_SUCCESS) {
-              LogCrit(COMPONENT_CACHE_INODE,
-                      "Failed to release old acl, status=%d",
-                      acl_status);
-         }
+
+     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+     status_ref_dest_dir = cache_inode_refresh_attrs_locked(dest_dir, req_ctx);
+
+     if(FSAL_IS_ERROR(fsal_status)) {
+         status = cache_inode_error_convert(fsal_status);
+         goto out;
      }
 
-     cache_inode_fixup_md(entry);
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-     srcattrlock = false;
-
-     /* Reload the destination directory's attributes so the caller
-        will have an updated changeid. */
-     cache_inode_refresh_attrs(dest_dir, req_ctx);
-     PTHREAD_RWLOCK_unlock(&dest_dir->attr_lock);
-     destattrlock = false;
+     if (((status = status_ref_entry) != CACHE_INODE_SUCCESS) ||
+         ((status = status_ref_dest_dir) != CACHE_INODE_SUCCESS)) {
+         goto out;
+     }
 
      /* Add the new entry in the destination directory */
+     PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);
+
      status = cache_inode_add_cached_dirent(dest_dir,
 					    name,
 					    entry,
 					    NULL);
 
-     if (status  != CACHE_INODE_SUCCESS) {
-          goto out;
-     }
-
      PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
-     destdirlock = false;
 
 out:
-
-     if (srcattrlock) {
-          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-     }
-
-     if (destattrlock) {
-          PTHREAD_RWLOCK_unlock(&dest_dir->attr_lock);
-     }
-
-     if (destdirlock) {
-          PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
-     }
-
      return status;
 }
 /** @} */

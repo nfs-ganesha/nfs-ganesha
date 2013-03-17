@@ -768,13 +768,9 @@ struct linux_dirent {
 
 static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
-				  bool (*cb)(
-					  const struct req_op_context *opctx,
-					  const char *name,
-					  void *dir_state,
-					  struct fsal_cookie *cookie),
+				  fsal_readdir_cb cb,
                                   bool *eof)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -784,18 +780,11 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 	off_t seekloc = 0;
 	int bpos, cnt, nread;
 	struct linux_dirent *dentry;
-	struct fsal_cookie *entry_cookie;
 	char buf[BUF_SIZE];
 
 	if(whence != NULL) {
-		if(whence->size != sizeof(off_t)) {
-			fsal_error = posix2fsal_error(EINVAL);
-			retval = errno;
-			goto out;
-		}
-		memcpy(&seekloc, whence->cookie, sizeof(off_t));
+		seekloc = (off_t)*whence;
 	}
-	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	dirfd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export),myself->handle, (O_RDONLY|O_DIRECTORY));
 	if(dirfd < 0) {
@@ -824,14 +813,12 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			entry_cookie->size = sizeof(off_t);
-			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
 			/* callback to cache inode */
 			if (!cb(opctx,
                                 dentry->d_name,
                                 dir_state,
-                                entry_cookie)) {
+                                (fsal_cookie_t)dentry->d_off)) {
 				goto done;
 			}
 		skip:

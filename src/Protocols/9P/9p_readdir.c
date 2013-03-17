@@ -52,12 +52,12 @@ char pathdotdot[] = ".." ;
 
 typedef struct _9p_cb_entry
 {
-   u64       qid_path ;
-   u8      * qid_type ;
-   char      d_type   ; /* Attention, this is a VFS d_type, not a 9P type */
-   char    * name_str ;
-   u16       name_len ;
-   uint64_t  cookie   ;
+   u64          qid_path ;
+   u8         * qid_type ;
+   char         d_type   ; /* Attention, this is a VFS d_type, not a 9P type */
+   const char * name_str ;
+   u16          name_len ;
+   uint64_t     cookie   ;
 } _9p_cb_entry_t ;
 
 typedef struct _9p_cb_data 
@@ -68,7 +68,7 @@ typedef struct _9p_cb_data
 } _9p_cb_data_t ;
 
 static bool _9p_readdir_callback( void                   * opaque,
-                                  char                   * name,
+                                  const char             * name,
                                   struct fsal_obj_handle * handle,
                                   uint64_t                 cookie)
 {
@@ -148,7 +148,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   u32  recsize     = 0 ;
   u16  name_len    = 0 ;
   
-  char * name_str = NULL ;
+  const char * name_str = NULL ;
 
   u8  * qid_type    = NULL ;
   u64 * qid_path    = NULL ;

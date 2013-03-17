@@ -684,7 +684,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
                                   bool *eof)

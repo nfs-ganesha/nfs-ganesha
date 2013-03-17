@@ -55,7 +55,7 @@
    are more a matter of data types than functionality. */
 
 static bool nfs3_readdir_callback(void* opaque,
-                                  char *name,
+                                  const char *name,
                                   struct fsal_obj_handle *obj_hdl,
                                   uint64_t cookie);
 static void free_entry3s(entry3 *entry3s);
@@ -226,7 +226,7 @@ nfs_Readdir(nfs_arg_t *arg,
      cb3.total_entries = estimated_num_entries;
      cb3.mem_left = count - sizeof(READDIR3resok);
      cb3.count = 0;
-     cb3.error = NFS_OK;
+     cb3.error = NFS3_OK;
      cbfunc = nfs3_readdir_callback;
      cbdata = &cb3;
 
@@ -371,7 +371,7 @@ void nfs3_Readdir_Free(nfs_res_t *resp)
 
 static bool
 nfs3_readdir_callback(void* opaque,
-                      char *name,
+                      const char *name,
                       struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
