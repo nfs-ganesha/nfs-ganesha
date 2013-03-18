@@ -101,25 +101,6 @@ fsal_status_t POSIXFSAL_unlink(fsal_handle_t * parent_directory_handle,  /* IN *
       Return(status.major, status.minor, INDEX_FSAL_unlink);
     }
 
-  /****************
-   * CHECK ACCESS *
-   ****************/
-  if((buffstat_parent.st_mode & S_ISVTX)        /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-     && buffstat_parent.st_uid != p_context->credential.user
-     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
-    {
-      fsal_posixdb_cancelHandleLock(p_context->p_conn);
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
-    }
-
-  if(FSAL_IS_ERROR
-     (status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL)))
-    {
-      fsal_posixdb_cancelHandleLock(p_context->p_conn);
-      Return(status.major, status.minor, INDEX_FSAL_unlink);
-    }
-
   /******************************
    * DELETE FROM THE FILESYSTEM *
    ******************************/

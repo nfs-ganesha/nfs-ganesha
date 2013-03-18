@@ -139,7 +139,7 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_open);
 
-  /* retrieve file attributes for checking access rights */
+  /* retrieve file attributes for returning */
 
   TakeTokenFSCall();
   rc = lstat(fsalpath.path, &buffstat);
@@ -153,15 +153,6 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
     }
-
-#if 0
-  status =
-      fsal_internal_testAccess(p_context,
-                               openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
-                               &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
-#endif
 
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);

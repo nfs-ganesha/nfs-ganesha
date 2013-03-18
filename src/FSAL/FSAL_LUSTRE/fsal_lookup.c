@@ -141,11 +141,6 @@ fsal_status_t LUSTREFSAL_lookup(fsal_handle_t * p_parent_directory_handle,      
   LogFullDebug(COMPONENT_FSAL, "lookup of %s/%s\n",
           pathfsal.path, p_filename->name);
 
-  /* check rights to enter into the directory */
-  status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
-
   status = fsal_internal_appendNameToPath(&pathfsal, p_filename);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);

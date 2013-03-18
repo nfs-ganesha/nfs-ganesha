@@ -98,14 +98,10 @@ fsal_status_t LUSTREFSAL_create(fsal_handle_t * p_parent_directory_handle,      
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
 
   /* build new entry path */
   status = fsal_internal_appendNameToPath(&fsalpath, p_filename);
@@ -251,14 +247,10 @@ fsal_status_t LUSTREFSAL_mkdir(fsal_handle_t * p_parent_directory_handle, /* IN 
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* build new entry path */
 
@@ -358,7 +350,6 @@ fsal_status_t LUSTREFSAL_link(fsal_handle_t * p_target_handle,    /* IN */
   int rc, errsv;
   fsal_status_t status;
   fsal_path_t fsalpath_old, fsalpath_new;
-  struct stat buffstat_dir;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -380,27 +371,6 @@ fsal_status_t LUSTREFSAL_link(fsal_handle_t * p_target_handle,    /* IN */
 
   /* build the destination path and check permissions on the directory */
   status = fsal_internal_Handle2FidPath(p_context, p_dir_handle, &fsalpath_new);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
-
-  /* retrieve target directory metadata */
-
-  TakeTokenFSCall();
-  rc = lstat(fsalpath_new.path, &buffstat_dir);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
-    }
-
-  /* check permission on target directory */
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
@@ -523,13 +493,9 @@ fsal_status_t LUSTREFSAL_mknode(fsal_handle_t * parentdir_handle, /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 
-  /* Check the user can write in the directory, and check weither the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
 
   status = fsal_internal_appendNameToPath(&fsalpath, p_node_name);
   if(FSAL_IS_ERROR(status))

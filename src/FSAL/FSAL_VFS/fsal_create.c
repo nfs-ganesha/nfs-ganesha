@@ -103,14 +103,10 @@ fsal_status_t VFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* 
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
 
   /* call to filesystem */
 
@@ -259,14 +255,10 @@ fsal_status_t VFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* 
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* build new entry path */
 
@@ -433,14 +425,6 @@ fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
     }
 
-  /* check permission on target directory */
-  status =
-      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(srcfd), close(dstfd);
-      ReturnStatus(status, INDEX_FSAL_link);
-    }
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
@@ -561,13 +545,9 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 
-  /* Check the user can write in the directory, and check weither the setgid bit on the directory */
+  /* Check the setgid bit on the directory */
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
   TakeTokenFSCall();

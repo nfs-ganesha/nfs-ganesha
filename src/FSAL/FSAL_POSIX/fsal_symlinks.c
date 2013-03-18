@@ -166,14 +166,10 @@ fsal_status_t POSIXFSAL_symlink(fsal_handle_t * parent_directory_handle, /* IN *
   if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
-  /* build the new path and check the permissions on the parent directory */
+  /* build the new path */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
                                       &buffstat);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_symlink);
-
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 

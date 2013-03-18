@@ -87,10 +87,9 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
 
   int rc, errsv;
   fsal_status_t status;
-  struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
+  struct stat buffstat;
   int old_parent_fd, new_parent_fd;
   int src_equal_tgt = FALSE;
-  uid_t userid = ((xfsfsal_op_context_t*)p_context)->credential.user;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
@@ -110,28 +109,11 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_rename);
 
-  /* retrieve directory metadata for checking access rights */
-
-  TakeTokenFSCall();
-  rc = fstat(old_parent_fd, &old_parent_buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      close(old_parent_fd);
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-    }
-
   /* optimisation : don't do the job twice if source dir = dest dir  */
   if(!XFSFSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
       new_parent_fd = old_parent_fd;
       src_equal_tgt = TRUE;
-      new_parent_buffstat = old_parent_buffstat;
     }
   else
     {
@@ -144,50 +126,6 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
       if(FSAL_IS_ERROR(status))
         {
           close(old_parent_fd);
-          ReturnStatus(status, INDEX_FSAL_rename);
-        }
-      /* retrieve destination attrs */
-      TakeTokenFSCall();
-      rc = fstat(new_parent_fd, &new_parent_buffstat);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      if(rc)
-        {
-          /* close old and new parent fd */
-          close(old_parent_fd);
-          close(new_parent_fd);
-
-          if(errsv == ENOENT)
-            Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-          else
-            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-        }
-
-    }
-
-  /* check access rights */
-
-  status =
-      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
-                               NULL);
-  if(FSAL_IS_ERROR(status))
-   {
-    close(old_parent_fd);
-    if (!src_equal_tgt)
-      close(new_parent_fd);
-    ReturnStatus(status, INDEX_FSAL_rename);
-   }
-
-  if(!src_equal_tgt)
-    {
-      status =
-          fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
-                                   NULL);
-      if(FSAL_IS_ERROR(status))
-        {
-          close(old_parent_fd);
-          close(new_parent_fd);
           ReturnStatus(status, INDEX_FSAL_rename);
         }
     }
@@ -204,51 +142,6 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
        close(new_parent_fd);
      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
    }
-  /* Check sticky bits */
-
-  /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
-  if((old_parent_buffstat.st_mode & S_ISVTX)
-     && old_parent_buffstat.st_uid != userid
-     && buffstat.st_uid != userid
-     && userid != 0)
-   {
-     close(old_parent_fd);
-    if (!src_equal_tgt)
-      close(new_parent_fd);
-     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-   }
-  /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
-  if(new_parent_buffstat.st_mode & S_ISVTX)
-    {
-      TakeTokenFSCall();
-      rc = fstatat(new_parent_fd, p_new_name->name, &buffstat, AT_SYMLINK_NOFOLLOW);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      if(rc < 0)
-        {
-          if(errsv != ENOENT)
-            {
-              close(old_parent_fd);
-              if(!src_equal_tgt)
-                close(new_parent_fd);
-              Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-            }
-        }
-      else
-        {
-
-          if(new_parent_buffstat.st_uid != userid
-	     && buffstat.st_uid != userid
-             && userid != 0)
-            {
-              close(old_parent_fd);
-              if( !src_equal_tgt )
-                close(new_parent_fd);
-              Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-            }
-        }
-    }
 
   /*************************************
    * Rename the file on the filesystem *

@@ -84,11 +84,6 @@ fsal_status_t VFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_opendir);
     }
 
-  /* Test access rights for this directory */
-  status = fsal_check_access(p_context, FSAL_R_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_opendir);
-
   /* if everything is OK, fills the dir_desc structure : */
 
   memcpy(&(p_dir_descriptor->context), p_context, sizeof(vfsfsal_op_context_t));

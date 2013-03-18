@@ -188,7 +188,7 @@ fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
-  /* retrieve directory metadata, for checking access */
+  /* retrieve directory metadata, for sgid */
   TakeTokenFSCall();
   rc = fstat(fd, &buffstat);
   errsv = errno;
@@ -206,10 +206,6 @@ fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* 
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = TRUE;
-
-  status = fsal_check_access(p_context, FSAL_W_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
 
   /* create the symlink on the filesystem. */
 

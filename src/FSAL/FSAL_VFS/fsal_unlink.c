@@ -76,7 +76,6 @@ fsal_status_t VFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN
   int rc, errsv;
   struct stat buffstat, buffstat_parent;
   int fd;
-  uid_t user = ((vfsfsal_op_context_t *)p_context)->credential.user;
 
   /* sanity checks. */
   if(!p_parent_directory_handle || !p_context || !p_object_name)
@@ -118,23 +117,6 @@ fsal_status_t VFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN
       close(fd);
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
     }
-
-  /* check access rights */
-
-  /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-  if((buffstat_parent.st_mode & S_ISVTX)
-     && buffstat_parent.st_uid != user
-     && buffstat.st_uid != user && user != 0)
-    {
-      close(fd);
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
-    }
-
-  /* client must be able to lookup the parent directory and modify it */
-  status =
-      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
 
   /******************************
    * DELETE FROM THE FILESYSTEM *

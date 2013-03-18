@@ -167,11 +167,6 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
 
   LogFullDebug(COMPONENT_FSAL, "lookup of inode=%"PRIu64"/%s", buffstat.st_ino,
           p_filename->name);
-
-  /* check rights to enter into the directory */
-  status = fsal_check_access(context, FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
   
   status = xfsfsal_stat_by_name(context, parentfd, p_filename->name,
 				object_handle, p_object_attributes);

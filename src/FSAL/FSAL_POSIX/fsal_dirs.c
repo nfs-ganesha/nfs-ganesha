@@ -68,12 +68,6 @@ fsal_status_t POSIXFSAL_opendir(fsal_handle_t * dir_handle,      /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_opendir);
 
-  /* Test access rights for this directory */
-
-  status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_opendir);
-
   /* if everything is OK, fills the dir_desc structure : */
 
   TakeTokenFSCall();

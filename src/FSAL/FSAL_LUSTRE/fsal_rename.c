@@ -65,9 +65,7 @@ fsal_status_t LUSTREFSAL_rename(fsal_handle_t * p_old_parentdir_handle,   /* IN 
 
   int rc, errsv;
   fsal_status_t status;
-  struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
   fsal_path_t old_fsalpath, new_fsalpath;
-  int src_equal_tgt = FALSE;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
@@ -82,68 +80,6 @@ fsal_status_t LUSTREFSAL_rename(fsal_handle_t * p_old_parentdir_handle,   /* IN 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_rename);
 
-  /* retrieve directory metadata for checking access rights */
-
-  TakeTokenFSCall();
-  rc = lstat(old_fsalpath.path, &old_parent_buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-    }
-
-  /* optimisation : don't do the job twice if source dir = dest dir  */
-  if(!LUSTREFSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
-    {
-      FSAL_pathcpy(&new_fsalpath, &old_fsalpath);
-      src_equal_tgt = TRUE;
-      new_parent_buffstat = old_parent_buffstat;
-    }
-  else
-    {
-      status =
-          fsal_internal_Handle2FidPath(p_context, p_new_parentdir_handle, &new_fsalpath);
-      if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_rename);
-
-      /* retrieve destination attrs */
-      TakeTokenFSCall();
-      rc = lstat(new_fsalpath.path, &new_parent_buffstat);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      if(rc)
-        {
-          if(errsv == ENOENT)
-            Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-          else
-            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-        }
-
-    }
-
-  /* check access rights */
-
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
-                               NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
-
-  if(!src_equal_tgt)
-    {
-      status =
-          fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
-                                   NULL);
-      if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_rename);
-    }
-
   /* build file paths */
 
   status = fsal_internal_appendNameToPath(&old_fsalpath, p_old_name);
@@ -152,39 +88,6 @@ fsal_status_t LUSTREFSAL_rename(fsal_handle_t * p_old_parentdir_handle,   /* IN 
   status = fsal_internal_appendNameToPath(&new_fsalpath, p_new_name);
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_rename);
-
-  TakeTokenFSCall();
-  rc = lstat(old_fsalpath.path, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-
-  /* Check sticky bits */
-
-  /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
-  if((old_parent_buffstat.st_mode & S_ISVTX)
-     && old_parent_buffstat.st_uid != p_context->credential.user
-     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
-    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-
-  /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
-  if(new_parent_buffstat.st_mode & S_ISVTX)
-    {
-      TakeTokenFSCall();
-      rc = lstat(new_fsalpath.path, &buffstat);
-      errsv = errno;
-      ReleaseTokenFSCall();
-      if(rc)
-        {
-          if(errsv != ENOENT)
-            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-        }
-      else if(new_parent_buffstat.st_uid != p_context->credential.user
-              && buffstat.st_uid != p_context->credential.user
-              && p_context->credential.user != 0)
-        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-    }
 
   /*************************************
    * Rename the file on the filesystem *

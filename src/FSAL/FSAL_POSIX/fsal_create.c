@@ -94,10 +94,6 @@ fsal_status_t POSIXFSAL_create(fsal_handle_t * parent_directory_handle,  /* IN *
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_create);
-
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_filename);
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_create);
@@ -248,10 +244,6 @@ fsal_status_t POSIXFSAL_mkdir(fsal_handle_t * parent_directory_handle,   /* IN *
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_mkdir);
-
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_dirname);
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
@@ -362,7 +354,7 @@ fsal_status_t POSIXFSAL_link(fsal_handle_t * target_handle,      /* IN */
   fsal_path_t fsalpath_old, fsalpath_new;
   fsal_posixdb_fileinfo_t info;
   posixfsal_handle_t newhandle;
-  struct stat buffstat, buffstat_dir;
+  struct stat buffstat;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -387,18 +379,7 @@ fsal_status_t POSIXFSAL_link(fsal_handle_t * target_handle,      /* IN */
       Return(status.major, status.minor, INDEX_FSAL_link);
     }
 
-  /* build the destination path and check permissions on the directory */
-  status =
-      fsal_internal_getPathFromHandle(p_context, p_dir_handle, 1, &fsalpath_new,
-                                      &buffstat_dir);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_link);
-
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_link);
-
+  /* build the destination path */
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath_new, p_link_name);
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_link);
@@ -536,10 +517,6 @@ fsal_status_t POSIXFSAL_mknode(fsal_handle_t * parentdir_hdl,   /* IN */
   /* Check the user can write in the directory, and check weither the setgid bit on the directory */
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_mknode);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_node_name);
   if(FSAL_IS_ERROR(status))

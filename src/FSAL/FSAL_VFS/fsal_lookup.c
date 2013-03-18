@@ -166,11 +166,6 @@ fsal_status_t VFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,      /* 
   LogFullDebug(COMPONENT_FSAL, "lookup of inode=%"PRIu64"/%s", buffstat.st_ino,
           p_filename->name);
 
-  /* check rights to enter into the directory */
-  status = fsal_check_access(p_context, FSAL_X_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
-
    /* get file handle, it it exists */
   TakeTokenFSCall();
 

@@ -60,14 +60,6 @@ fsal_status_t HPSSFSAL_opendir(hpssfsal_handle_t * dir_handle,  /* IN */
   if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
-  /* Test access rights for this directory
-   * and retrieve asked attributes */
-
-  st = HPSSFSAL_access(dir_handle, p_context, FSAL_R_OK, dir_attributes);
-
-  if(FSAL_IS_ERROR(st))
-    Return(st.major, st.minor, INDEX_FSAL_opendir);
-
   /* if everything is OK, fills the dir_desc structure */
   memcpy(&dir_descriptor->dir_handle, dir_handle, sizeof(hpssfsal_handle_t));
   memcpy(&dir_descriptor->context, p_context, sizeof(hpssfsal_op_context_t));

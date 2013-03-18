@@ -136,11 +136,6 @@ fsal_status_t POSIXFSAL_lookup(fsal_handle_t * parent_directory_handle,  /* IN *
       LogFullDebug(COMPONENT_FSAL, "lookup of %llu.%i/%s\n", p_parent_directory_handle->data.id,
                    p_parent_directory_handle->data.ts, p_filename->name);
 
-      /* check rights to enter into the directory */
-      status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
-      if(FSAL_IS_ERROR(status))
-        Return(status.major, status.minor, INDEX_FSAL_lookup);
-
       /* stat the file to see if it exists and get some information */
       status = fsal_internal_appendFSALNameToFSALPath(&pathfsal, p_filename);
       if(FSAL_IS_ERROR(status))

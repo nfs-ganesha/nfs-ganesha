@@ -144,13 +144,6 @@ fsal_status_t POSIXFSAL_open(fsal_handle_t * filehandle, /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_open);
 
-  status =
-      fsal_internal_testAccess(p_context,
-                               (openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) |
-                               FSAL_OWNER_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_open);
-
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);
 

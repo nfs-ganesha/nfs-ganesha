@@ -74,7 +74,7 @@ fsal_status_t XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* 
 
   fsal_status_t status;
   int rc, errsv;
-  struct stat buffstat, buffstat_parent;
+  struct stat buffstat;
   int fd;
 
   /* sanity checks. */
@@ -89,21 +89,6 @@ fsal_status_t XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 
-  /* get directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat_parent);
-  errsv = errno;
-  ReleaseTokenFSCall();
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
-    }
-
   /* build the child path */
 
   /* get file metadata */
@@ -116,24 +101,6 @@ fsal_status_t XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* 
       close(fd);
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
     }
-
-  /* check access rights */
-
-  /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-  if((buffstat_parent.st_mode & S_ISVTX)
-     && buffstat_parent.st_uid != ((xfsfsal_op_context_t *)p_context)->credential.user
-     && buffstat.st_uid != ((xfsfsal_op_context_t *)p_context)->credential.user
-     && ((xfsfsal_op_context_t *)p_context)->credential.user != 0)
-    {
-      close(fd);
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
-    }
-
-  /* client must be able to lookup the parent directory and modify it */
-  status =
-      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
 
   /******************************
    * DELETE FROM THE FILESYSTEM *

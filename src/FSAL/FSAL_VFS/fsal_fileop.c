@@ -167,7 +167,7 @@ fsal_status_t VFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_open);
 
-  /* retrieve file attributes for checking access rights */
+  /* retrieve file attributes for returning */
 
   TakeTokenFSCall();
   rc = fstat(fd, &buffstat);
@@ -182,16 +182,6 @@ fsal_status_t VFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
-    }
-
-  status =
-      fsal_check_access(p_context,
-                               (openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) |
-                               FSAL_OWNER_OK, &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_open);
     }
 
   TakeTokenFSCall();
