@@ -115,8 +115,6 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.mask
 		= exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	hdl->obj_handle.attributes.supported_attributes
-                = hdl->obj_handle.attributes.mask;
 
         st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if(FSAL_IS_ERROR(st))

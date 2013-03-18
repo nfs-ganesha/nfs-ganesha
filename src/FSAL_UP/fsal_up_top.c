@@ -138,7 +138,7 @@ static int update_imm(struct fsal_up_event *e)
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
 	if (FSAL_TEST_MASK(update->attr.mask,
-			   ATTR_SUPPATTR   | ATTR_TYPE	      |
+			   ATTR_TYPE	   |
 			   ATTR_FSID       | ATTR_FILEID      |
 			   ATTR_RAWDEV     | ATTR_MOUNTFILEID |
 			   ATTR_RDATTR_ERR | ATTR_GENERATION)) {
