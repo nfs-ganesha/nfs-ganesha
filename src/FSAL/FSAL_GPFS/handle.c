@@ -102,8 +102,6 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.mask
 		= exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	hdl->obj_handle.attributes.supported_attributes
-                = hdl->obj_handle.attributes.mask;
 	memcpy(&hdl->obj_handle.attributes, attributes, sizeof(struct attrlist));
 
 	if(!fsal_obj_handle_init(&hdl->obj_handle,
@@ -703,8 +701,6 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
-	uint32_t ino32;
-	uint64_t ino64;
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_file_handle *fh;
 	size_t fh_size;
@@ -716,34 +712,12 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
 	fh = myself->handle;
 
 	switch(output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		fh_size = gpfs_sizeof_handle(fh);
                 if(fh_desc->len < fh_size)
                         goto errout;
                 memcpy(fh_desc->addr, fh, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID2:
-		fh_size = FSAL_DIGEST_SIZE_FILEID2;
-		if(fh_desc->len < fh_size)
-			goto errout;
-                ino32 = obj_hdl->attributes.fileid;
-		memcpy(fh_desc->addr, &ino32, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID3:
-		fh_size = FSAL_DIGEST_SIZE_FILEID3;
-		if(fh_desc->len < fh_size)
-			goto errout;
-                ino64 = obj_hdl->attributes.fileid;
-		memcpy(fh_desc->addr, &ino64, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID4:
-		fh_size = FSAL_DIGEST_SIZE_FILEID4;
-		if(fh_desc->len < fh_size)
-			goto errout;
-                ino64 = obj_hdl->attributes.fileid;
-		memcpy(fh_desc->addr, &ino64, fh_size);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);

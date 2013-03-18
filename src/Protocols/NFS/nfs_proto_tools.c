@@ -3546,16 +3546,14 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
 /**
  * @brief Converts FSAL Attributes to NFSv3 attributes.
  *
- * Fill in the fields in the fattr3 structure which have matching
- * attribute bits set. Caller must explictly specify which bits it expects
- * to avoid misunderstandings.
+ * Fill in the fields in the fattr3 structure.
  *
- * @param[in]     FSAL_attr FSAL attributes.
- * @param[in,out] mask      Attributes which should be/have been copied
- * @param[out]    Fattr     NFSv3 attributes.
+ * @param[in]    FSAL_attr  FSAL attributes.
+ * @param[out]   mask       Attributes which have been copied
+ * @param[out]   Fattr      NFSv3 attributes.
  *
  */
-void
+static void
 nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
                               attrmask_t *mask,
                               fattr3 *Fattr)
@@ -3715,14 +3713,9 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
                        const struct attrlist *FSAL_attr,
                        fattr3 *Fattr)
 {
-        attrmask_t want, got;
-
-        want = got = (ATTR_TYPE      | ATTR_MODE   |
-                      ATTR_NUMLINKS  | ATTR_OWNER  |
-                      ATTR_GROUP     | ATTR_SIZE   |
-                      ATTR_SPACEUSED | ATTR_RAWDEV |
-                      ATTR_ATIME     | ATTR_MTIME  |
-                      ATTR_CTIME);
+        /* We want to override the FSAL fsid with the export's configured fsid */
+        attrmask_t want = (ATTR_TYPE | (ATTRS_POSIX & ~ATTR_FSID));
+        attrmask_t got  = 0;
 
         if(FSAL_attr == NULL || Fattr == NULL) {
                 LogFullDebug(COMPONENT_NFSPROTO,

@@ -84,7 +84,6 @@ static struct posix_fsal_obj_handle *alloc_handle_ (struct handle_data *d, const
     }
     hdl->obj_handle.export = exp_hdl;
     hdl->obj_handle.attributes.mask = exp_hdl->ops->fs_supported_attrs (exp_hdl);
-    hdl->obj_handle.attributes.supported_attributes = hdl->obj_handle.attributes.mask;
     st = posix2fsal_attributes (stat, &hdl->obj_handle.attributes);
     if (FSAL_IS_ERROR (st))
         goto spcerr;
@@ -870,8 +869,6 @@ static fsal_status_t file_unlink (struct fsal_obj_handle *dir_hdl,
 static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
                                     fsal_digesttype_t output_type, struct gsh_buffdesc *fh_desc)
 {
-    uint32_t ino32;
-    uint64_t ino64;
     struct posix_fsal_obj_handle *myself;
     struct handle_data *fh;
     size_t fh_size;
@@ -883,37 +880,12 @@ static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
     fh = myself->handle;
 
     switch (output_type) {
-    case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
         fh_size = sizeof (struct handle_data);
         if (fh_desc->len < fh_size)
             goto errout;
         memcpy (fh_desc->addr, fh, fh_size);
-        break;
-    case FSAL_DIGEST_FILEID2:
-        return fsalstat (ERR_FSAL_SERVERFAULT, 0);      /* NFSv2 no longer supported */
-    case FSAL_DIGEST_FILEID3:
-        fh_size = FSAL_DIGEST_SIZE_FILEID3;
-        if (fh_desc->len < fh_size)
-            goto errout;
-        ino64 = fh->inode;
-        ino32 = fh->inode;
-        if (fh_size == sizeof(ino64))
-            memcpy (fh_desc->addr, &ino64, sizeof(ino64));
-        else
-            memcpy (fh_desc->addr, &ino32, sizeof(ino32));
-        break;
-    case FSAL_DIGEST_FILEID4:
-        fh_size = FSAL_DIGEST_SIZE_FILEID4;
-        if (fh_desc->len < fh_size)
-            goto errout;
-        ino64 = fh->inode;
-        ino32 = fh->inode;
-        if (fh_size == sizeof(ino64))
-            memcpy (fh_desc->addr, &ino64, sizeof(ino64));
-        else
-            memcpy (fh_desc->addr, &ino32, sizeof(ino32));
         break;
     default:
         return fsalstat (ERR_FSAL_SERVERFAULT, 0);

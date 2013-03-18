@@ -937,7 +937,6 @@ void rquota_setactivequota_Free(nfs_res_t * pres);
 void nfs_Null_Free(nfs_res_t * resp);
 void nfs_Getattr_Free(nfs_res_t * resp);
 void nfs_Setattr_Free(nfs_res_t * resp);
-void nfs2_Lookup_Free(nfs_res_t * resp);
 void nfs3_Lookup_Free(nfs_res_t * resp);
 void nfs3_Access_Free(nfs_res_t * pres);
 void nfs3_Readlink_Free(nfs_res_t * resp);
@@ -1069,9 +1068,6 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
                                struct req_op_context *ctx,
                                fattr3 *Fattr);
 
-void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
-                                   attrmask_t *mask,
-                                   fattr3 *Fattr);
 bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                             sattr3 *Fattr);
 

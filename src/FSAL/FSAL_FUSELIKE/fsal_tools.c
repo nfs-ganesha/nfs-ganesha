@@ -148,7 +148,6 @@ fsal_status_t FUSEFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* 
   switch (output_type)
     {
     /* NFS handle digest */
-    case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
       fh_size = sizeof(p_in_fsal_handle->data) ;
@@ -161,66 +160,6 @@ fsal_status_t FUSEFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* 
 	    }
       memcpy(fh_desc->start, (caddr_t)p_in_fsal_handle, fh_size);
       fh_desc->len = fh_size;
-      break;
-
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
-      {
-        int cast2 = (int)in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast2) > FSAL_DIGEST_SIZE_FILEID2)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID2);
-        memcpy(fh_desc->start, &cast2, sizeof( cast2 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID2; 
-      }
-      break;
-
-      /* FileId digest for NFSv3 */
-    case FSAL_DIGEST_FILEID3:
-      {
-        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast3) > FSAL_DIGEST_SIZE_FILEID3)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID3);
-        memcpy(fh_desc->start, &cast3, sizeof( cast3 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID3; 
-      }
-      break;
-
-      /* FileId digest for NFSv4 */
-
-    case FSAL_DIGEST_FILEID4:
-      {
-        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->data.inode;
-
-#ifndef _NO_CHECKS
-
-        /* sanity check about output size */
-
-        if(sizeof(cast4) > FSAL_DIGEST_SIZE_FILEID4)
-          ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-#endif
-
-        memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID4);
-        memcpy(fh_desc->start, &cast4, sizeof( cast4 ));
-        fh_desc->len = FSAL_DIGEST_SIZE_FILEID4; 
-      }
       break;
 
     default:
@@ -259,24 +198,14 @@ fsal_status_t FUSEFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /* 
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   fh_size = sizeof( dummy_handle.data ); /* All LUSTRE handle have the same size */
-  if(in_type == FSAL_DIGEST_NFSV2)
-    {
-      if(fh_desc->len < fh_size)
-        {
-          LogMajor(COMPONENT_FSAL,
-		   "LUSTRE ExpandHandle: V2 size too small for handle.  should be %lu, got %lu",
-		   fh_size, fh_desc->len);
-	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
-	}
-    }
-  else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+  if(fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
 	       "LUSTRE ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
 	       fh_size, fh_desc->len);
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
-  fh_desc->len = fh_size;  /* pass back the actual size */
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

@@ -359,57 +359,6 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
   return true;
 }
 
-/**
- * @brief Convert an FSAL object to an NFSv2 file handle
- *
- * @param[out] fh2        The extracted file handle
- * @param[in]  fsalhandle The FSAL handle to be converted
- *
- * @return true if successful, false otherwise
- */
-bool nfs2_FSALToFhandle(fhandle2 *fh2,
-			struct fsal_obj_handle *fsalhandle)
-{
-  fsal_status_t fsal_status;
-  file_handle_v2_t *file_handle;
-  struct gsh_buffdesc fh_desc;
-
-  /* zero-ification of the buffer to be used as handle */
-  memset(fh2, 0, sizeof(struct alloc_file_handle_v2));
-  file_handle = (file_handle_v2_t *)fh2;
-
-  /* Fill in the fs opaque part */
-  fh_desc.addr = &file_handle->fsopaque;
-  fh_desc.len = sizeof(file_handle->fsopaque);
-  fsal_status = fsalhandle->ops->handle_digest(fsalhandle,
-					       FSAL_DIGEST_NFSV2,
-					       &fh_desc);
-  if (FSAL_IS_ERROR(fsal_status))
-    {
-      if (fsal_status.major == ERR_FSAL_TOOSMALL)
-	LogCrit(COMPONENT_FILEHANDLE,
-		"NFSv2 File handle is too small to manage this FSAL");
-      else
-	LogCrit(COMPONENT_FILEHANDLE,
-		"FSAL_DigestHandle return (%u,%u) when called from %s",
-		fsal_status.major, fsal_status.minor, __func__ );
-      return false;
-    }
-
-  file_handle->fhversion = GANESHA_FH_VERSION;
-  /* keep track of the export id */
-  file_handle->exportid = fsalhandle->export->exp_entry->id;
-
-  /* Set the last byte */
-  file_handle->xattr_pos = 0;
-
-  /*   /\* Set the data *\/ */
-  /*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
-
-  print_fhandle2(COMPONENT_FILEHANDLE, fh2);
-
-  return true;
-}
 
 /**
  *
@@ -473,28 +422,6 @@ short nlm4_FhandleToExportId(netobj * pfh3)
   return pfile_handle->exportid;
 }
 
-/**
- *
- * nfs2_FhandleToExportId
- *
- * This routine extracts the export id from the file handle NFSv2
- *
- * @param pfh2 [IN] file handle to manage.
- * 
- * @return the export id.
- *
- */
-short nfs2_FhandleToExportId(fhandle2 * pfh2)
-{
-  file_handle_v2_t *pfile_handle;
-
-  pfile_handle = (file_handle_v2_t *) (*pfh2);
-
-  if(pfile_handle == NULL)
-    return -1;                  /* Badly formed argument */
-
-  return pfile_handle->exportid;
-}                               /* nfs2_FhandleToExportId */
 
 /**
  *    
@@ -718,29 +645,6 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
   return false;
 }                               /* nfs4_Is_Fh_Referral */
 
-/**
- * @brief Print an NFSv2 file handle (for debugging purpose)
- *
- * @param[in] component Subsystem component ID
- * @param[in] fh        File handle to print
- */
-void print_fhandle2(log_components_t component, fhandle2 *fh)
-{
-  if(isFullDebug(component))
-    {
-      char str[LEN_FH_STR];
-
-      sprint_fhandle2(str, fh);
-      LogFullDebug(component, "%s", str);
-    }
-}
-
-void sprint_fhandle2(char *str, fhandle2 *fh)
-{
-  char *tmp = str +  sprintf(str, "File Handle V2: ");
-
-  sprint_mem(tmp, (char *) fh, 32);
-} /* sprint_fhandle2 */
 
 /**
  * @brief Print an NFSv3 file handle

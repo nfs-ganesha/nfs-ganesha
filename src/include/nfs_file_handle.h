@@ -51,28 +51,6 @@
 #define GANESHA_FH_VERSION ULTIMATE_ANSWER - 1
 
 /**
- * @brief An NFSv2 filehandle (only used for (un)mount?)
- * This must be exactly 32 bytes long, and aligned on 32 bits
- */
-typedef struct file_handle_v2
-{
-  uint8_t fhversion; /*< set to 0x41 to separate from Linux knfsd */
-  uint8_t xattr_pos; /*< Used for xattr management */
-  uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint8_t fsopaque[28]; /*< Persistent part of FSAL handle */
-} file_handle_v2_t;
-
-/**
- * @brief Used for allocations of v2 handles
- *
- * There is no padding because v2 handles must be fixed size.
- */
-
-struct alloc_file_handle_v2 {
-  struct file_handle_v2 handle; /* the real handle */
-};
-
-/**
  * @brief An NFSv3 handle
  *
  * This may be up to 64 bytes long, aligned on 32 bits
@@ -177,10 +155,8 @@ cache_entry_t * nfs3_FhandleToCache(nfs_fh3 *,
 bool nfs4_FSALToFhandle(nfs_fh4 *,
 			struct fsal_obj_handle *);
 bool nfs3_FSALToFhandle(nfs_fh3 *fh3, struct fsal_obj_handle *);
-bool nfs2_FSALToFhandle(fhandle2 *fh2, struct fsal_obj_handle *);
 
 /* Extraction of export id from a file handle */
-short nfs2_FhandleToExportId(fhandle2 *);
 short nfs4_FhandleToExportId(nfs_fh4 *);
 short nfs3_FhandleToExportId(nfs_fh3 *);
 
@@ -201,14 +177,12 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
 int nfs3_Is_Fh_Xattr(nfs_fh3 *);
 
 /* File handle print function (mostly used for debugging) */
-void print_fhandle2(log_components_t, fhandle2 *);
 void print_fhandle3(log_components_t, nfs_fh3 *);
 void print_fhandle4(log_components_t, nfs_fh4 *);
 void print_fhandle_nlm(log_components_t, netobj *);
 void print_buff(log_components_t, char *, int);
 void LogCompoundFH(compound_data_t *);
 
-void sprint_fhandle2(char *str, fhandle2 *fh);
 void sprint_fhandle3(char *str, nfs_fh3 *fh);
 void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_fhandle_nlm(char *str, netobj *fh);

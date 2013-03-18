@@ -838,8 +838,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* reset nfs proto flags (clean defaults) */
-          p_entry->options &= ~(EXPORT_OPTION_NFSV2
-                                | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4);
+          p_entry->options &= ~(EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4);
 
           /* allocate nfs vers strings */
           for(idx = 0; idx < MAX_NFSPROTO; idx++)
@@ -903,8 +902,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             gsh_free(nfsvers_list[idx]);
 
           /* check that at least one nfs protocol has been specified */
-          if((p_entry->options & (EXPORT_OPTION_NFSV2
-                                  | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
+          if((p_entry->options & (EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
