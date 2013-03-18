@@ -73,12 +73,9 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
 {
 
   int errsv;
-  int setgid_bit = 0;
   fsal_status_t status;
 
   mode_t unix_mode;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
   int open_rc;
   ptfsal_handle_t * p_fsi_handle = (ptfsal_handle_t *)p_object_handle;
 
@@ -100,38 +97,6 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
   LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
-
-  /* retrieve directory metadata */
-  parent_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, 
-                           &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status)) {
-    ReturnStatus(status, INDEX_FSAL_create);
-  }
-
-  /* Check the user can write in the directory, and check the setgid bit 
-   * on the directory 
-   */
-
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) {
-    setgid_bit = 1;
-  }
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
-    status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  } else {
-    status = fsal_internal_access(p_context, 
-                                  p_parent_directory_handle, 
-                                  access_mask,
-                                  &parent_dir_attrs);
-  }
-  if(FSAL_IS_ERROR(status)) {
-    ReturnStatus(status, INDEX_FSAL_create);
-  }
 
   // Create the file, return handle
   open_rc = ptfsal_open(p_parent_directory_handle, 
@@ -208,7 +173,6 @@ PTFSAL_mkdir(fsal_handle_t      * p_parent_directory_handle, /* IN */
   int setgid_bit = 0;
   mode_t unix_mode;
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
   char               newPath[PATH_MAX];
 
@@ -242,21 +206,6 @@ PTFSAL_mkdir(fsal_handle_t      * p_parent_directory_handle, /* IN */
 
   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) {
     setgid_bit = 1;
-  }
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
-    status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  } else {
-    status = fsal_internal_access(p_context, p_parent_directory_handle, 
-                                  access_mask,
-                                  &parent_dir_attrs);
-  }
-  if(FSAL_IS_ERROR(status)) {
-    ReturnStatus(status, INDEX_FSAL_mkdir);
   }
 
   rc = ptfsal_mkdir(p_parent_directory_handle, p_dirname, 

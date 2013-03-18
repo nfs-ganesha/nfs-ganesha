@@ -88,7 +88,6 @@ PTFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
               fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */)
 {
   fsal_status_t status;
-  fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
   ptfsal_handle_t *p_object_handle = (ptfsal_handle_t *)object_handle;
   fsi_stat_struct buffstat;
@@ -182,21 +181,6 @@ PTFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
     default:
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
-
-  /* check rights to enter into the directory */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-    status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, 
-                                  access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get file handle, it it exists */
   /* This might be a race, but it's the best we can currently do */

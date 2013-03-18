@@ -90,9 +90,6 @@ PTFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   int rc, errsv;
   fsal_status_t status;
   fsi_stat_struct old_bufstat, new_bufstat;
-  int src_equal_tgt = FALSE;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t src_dir_attrs, tgt_dir_attrs;
   int stat_rc;
 
   FSI_TRACE(FSI_DEBUG, "FSI Rename--------------\n");
@@ -104,99 +101,12 @@ PTFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
      || !p_old_name || !p_new_name || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
-  /* retrieve directory metadata for checking access rights */
-
-  src_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-  status = PTFSAL_getattrs(p_old_parentdir_handle, p_context, &src_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
-
-  /* optimisation : don't do the job twice if source dir = dest dir  */
-  if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status)) {
-    // new_parent_fd = old_parent_fd;
-    src_equal_tgt = TRUE;
-    tgt_dir_attrs = src_dir_attrs;
-  } else {
-    /* retrieve destination attrs */
-    tgt_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-    status = PTFSAL_getattrs(p_new_parentdir_handle, p_context,
-                             &tgt_dir_attrs);
-    if(FSAL_IS_ERROR(status))
-      ReturnStatus(status, INDEX_FSAL_rename);
-  }
-
-  /* check access rights */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-    status = fsal_check_access(p_context, access_mask, NULL, &src_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_old_parentdir_handle, 
-                                  access_mask,
-                                  &src_dir_attrs);
-  if(FSAL_IS_ERROR(status)) {
-    ReturnStatus(status, INDEX_FSAL_rename);
-  }
-
-  if(!src_equal_tgt) {
-    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
-                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
-                  FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-
-    if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-      status = fsal_check_access(p_context, access_mask, NULL, &tgt_dir_attrs);
-    else
-      status = fsal_internal_access(p_context, p_new_parentdir_handle, 
-                                      access_mask,
-	                              &tgt_dir_attrs);
-    if(FSAL_IS_ERROR(status)) {
-      ReturnStatus(status, INDEX_FSAL_rename);
-    }
-  }
-
   /* build file paths */
   stat_rc = ptfsal_stat_by_parent_name(p_context, p_old_parentdir_handle, 
                                        p_old_name->name, &old_bufstat); 
   errsv = errno;
   if(stat_rc) {
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-  }
-
-  /* Check sticky bits */
-
-  /* Sticky bit on the source directory => the user who wants to delete the 
-   * file must own it or its parent dir 
-   */
-  if((fsal2unix_mode(src_dir_attrs.mode) & S_ISVTX) &&
-    src_dir_attrs.owner != p_context->credential.user &&
-    old_bufstat.st_uid != p_context->credential.user && 
-    p_context->credential.user != 0) {
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-  }
-
-  /* Sticky bit on the target directory => the user who wants to create the 
-   * file must own it or its parent dir 
-   */
-  if(fsal2unix_mode(tgt_dir_attrs.mode) & S_ISVTX) {
-    stat_rc = ptfsal_stat_by_parent_name(p_context, p_new_parentdir_handle, 
-                                         p_new_name->name, &new_bufstat);
-    errsv = errno;
-
-    if(stat_rc < 0) {
-      if(errsv != ENOENT) {
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-      }
-    } else {
-
-      if(tgt_dir_attrs.owner != p_context->credential.user
-         && new_bufstat.st_uid != p_context->credential.user
-         && p_context->credential.user != 0) {
-         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-      }
-    }
   }
 
   /*************************************
