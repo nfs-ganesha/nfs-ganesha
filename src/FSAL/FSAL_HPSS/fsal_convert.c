@@ -634,10 +634,6 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   p_fsalattr_out->acl = NULL;
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = supp_attr;
-    }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsalattr_out->type = hpss2fsal_type(p_hpss_handle_in->Type);
@@ -829,10 +825,6 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
     }
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = global_fs_info.supported_attrs;
-    }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsalattr_out->type = hpss2fsal_type(p_hpsshandle_in->Type);

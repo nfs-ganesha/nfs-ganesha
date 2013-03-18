@@ -188,10 +188,6 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   p_fsalattr_out->acl = NULL;
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = supp_attr;
-    }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);

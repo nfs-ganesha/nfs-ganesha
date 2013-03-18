@@ -107,7 +107,7 @@ struct gpfs_ds
 
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES (                        \
-          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_TYPE     | ATTR_SIZE     |                  \
           ATTR_FSID     | ATTR_FILEID   |                  \
           ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
           ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \

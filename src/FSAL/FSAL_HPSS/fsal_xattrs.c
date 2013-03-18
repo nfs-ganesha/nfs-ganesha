@@ -405,9 +405,6 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
       p_xattr_attrs->asked_attributes &= (~unsupp);
     }
 
-  if(p_xattr_attrs->asked_attributes & FSAL_ATTR_SUPPATTR)
-    p_xattr_attrs->supported_attributes = supported;
-
   if(p_xattr_attrs->asked_attributes & FSAL_ATTR_MODE)
     {
       p_xattr_attrs->mode = file_attrs->mode & global_fs_info.xattr_access_rights;

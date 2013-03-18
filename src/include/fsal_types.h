@@ -363,8 +363,8 @@ typedef uint64_t attrmask_t;
  * Attribute masks.
  */
 
-/* supported attributes */
-#define ATTR_SUPPATTR 0x0000000000000001
+/* supported attributes (Obsolete)
+#define ATTR_SUPPATTR 0x0000000000000001 */
 /* file type */
 #define ATTR_TYPE 0x0000000000000002
 /* file size */
@@ -414,8 +414,7 @@ typedef uint64_t attrmask_t;
 
 /* NFSv4 Mandatory attributes */
 
-#define ATTRS_FSAL_MANDATORY (ATTR_SUPPATTR | \
-                              ATTR_TYPE     | \
+#define ATTRS_FSAL_MANDATORY (ATTR_TYPE     | \
                               ATTR_SIZE     | \
                               ATTR_FSID     | \
                               ATTR_CHGTIME)
@@ -437,8 +436,6 @@ typedef uint64_t attrmask_t;
 struct attrlist {
         attrmask_t mask; /*< Indicates the attributes to be set or
                              that have been filled in by the FSAL. */
-        attrmask_t supported_attributes; /*< Attributes this export
-                                             supports. */
         object_file_type_t type; /*< Type of this object */
         uint64_t filesize; /*< Logical size (amount of data that can be
                                read) */
