@@ -616,54 +616,6 @@ int main(int argc, char **argv)
                   DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
                 }
 
-              /* 1 - test R access */
-
-              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_R_OK, NULL);
-
-              st2 = FSAL_test_access(&op_ctx, FSAL_R_OK, &attribs);
-
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
-
-              if(st1.major != st2.major)
-                {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-                       st1.major, st2.major);
-                }
-
-              /* 2 - test W access */
-
-              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_W_OK, NULL);
-
-              st2 = FSAL_test_access(&op_ctx, FSAL_W_OK, &attribs);
-
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
-
-              if(st1.major != st2.major)
-                {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-                       st1.major, st2.major);
-                }
-
-              /* 3 - test X access */
-
-              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_X_OK, NULL);
-
-              st2 = FSAL_test_access(&op_ctx, FSAL_X_OK, &attribs);
-
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
-
-              if(st1.major != st2.major)
-                {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-                       st1.major, st2.major);
-                }
-
             }
 
           /* preparing next call */
