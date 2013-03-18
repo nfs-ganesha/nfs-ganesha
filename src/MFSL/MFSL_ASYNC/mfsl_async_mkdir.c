@@ -112,37 +112,6 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_mkdir_check_perms : Checks authorization to perform an asynchronous mkdir.
- *
- * Checks authorization to perform an asynchronous mkdir.
- *
- * @param target_handle     [IN]    mfsl object to be operated on.
- * @param p_dirname         [IN]    name of the object to be created
- * @param p_context         [IN]    associated fsal context
- * @param p_mfsl_context    [INOUT] associated mfsl context
- * @param object_attributes [IN]    object-attributes
- *
- * @return always FSAL_NO_ERROR (not yet implemented 
- */
-fsal_status_t MFSAL_mkdir_check_perms(mfsl_object_t * target_handle,
-                                      fsal_name_t * p_dirname,
-                                      fsal_op_context_t * p_context,
-                                      mfsl_context_t * p_mfsl_context,
-                                      fsal_attrib_list_t * object_attributes)
-{
-  fsal_status_t fsal_status;
-
-  fsal_status = FSAL_create_access(p_context, object_attributes);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  /** @todo : put some stuff in this function */
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_mkdir_check_perms */
-
-/**
- *
  * MFSL_mkdir : posts an asynchronous mkdir and sets the cached attributes in return.
  *
  * Posts an asynchronous setattr and sets the cached attributes in return.
@@ -172,13 +141,6 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
   mfsl_object_specific_data_t *newdir_pasyncdata = NULL;
   mfsl_object_t *pnewdir_handle = NULL;
   mfsl_precreated_object_t *pprecreated = NULL;
-
-  fsal_status = MFSAL_mkdir_check_perms(parent_directory_handle,
-                                        p_dirname,
-                                        p_context, p_mfsl_context, parent_attributes);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
 
   P(p_mfsl_context->lock);
 

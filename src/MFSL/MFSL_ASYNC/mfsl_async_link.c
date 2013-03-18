@@ -96,40 +96,6 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_link_check_perms : Checks authorization to perform an asynchronous link.
- *
- * Checks authorization to perform an asynchronous link.
- *
- * @param target_handle     [IN]    mfsl object to be operated on.
- * @param dir_handle        [IN]    mfsl object to be operated on.
- * @param tgt_pspecdata     [INOUT] mfsl object associated specific data
- * @param dir_pspecdata     [INOUT] mfsl object associated specific data
- * @param p_context         [IN]    associated fsal context
- * @param p_mfsl_context    [INOUT] associated mfsl context
- *
- * @return always FSAL_NO_ERROR (not yet implemented 
- */
-fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,     /* IN */
-                                     mfsl_object_t * dir_handle,        /* IN */
-                                     fsal_name_t * p_link_name, /* IN */
-                                     mfsl_object_specific_data_t * tgt_pspecdata,       /* IN */
-                                     mfsl_object_specific_data_t * dir_pspecdata,       /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
-                                     mfsl_context_t * p_mfsl_context /* IN */ )
-{
-  fsal_status_t fsal_status;
-
-  fsal_status = FSAL_link_access(p_context, &dir_pspecdata->async_attr);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  /** @todo : put some stuff in this function */
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_link_check_perms */
-
-/**
- *
  * MFSL_link : posts an asynchronous link and sets the cached attributes in return.
  *
  * Posts an asynchronous setattr and sets the cached attributes in return.
@@ -199,15 +165,6 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
       /* In this case use object_attributes parameter to initiate asynchronous object */
       dir_pasyncdata->async_attr = *dir_attributes;
     }
-
-  fsal_status = MFSAL_link_check_perms(target_handle,
-                                       dir_handle,
-                                       p_link_name,
-                                       tgt_pasyncdata,
-                                       dir_pasyncdata, p_context, p_mfsl_context);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
 
   LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);

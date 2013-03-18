@@ -95,44 +95,6 @@ fsal_status_t MFSL_rename_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_rename_check_perms : Checks authorization to perform an asynchronous rename.
- *
- * Checks authorization to perform an asynchronous rename.
-  *
- * @param old_parentdir_handle  [IN]    mfsl object to be operated on (source directory for the rename)
- * @param p_old_name            [IN]    name of the object to be renamed
- * @param new_parentdir_handle  [IN]    mfsl object to be operated on (destination directory for the rename)
- * @param p_new_name            [IN]    new name of the object 
- * @param p_context             [IN]    associated fsal context
- * @param p_mfsl_context        [INOUT] associated mfsl context
- * @param src_dir_attributes    [INOUT] resulting attributes for directory 
- * @param tgt_dir_attributes    [INOUT] resulting attributes for directory 
- *
- * @return always FSAL_NO_ERROR (not yet implemented 
- */
-fsal_status_t MFSAL_rename_check_perms(mfsl_object_t * old_parentdir_handle,    /* IN */
-                                       fsal_name_t * p_old_name,        /* IN */
-                                       fsal_attrib_list_t * src_dir_attributes, /* [ IN/OUT ] */
-                                       mfsl_object_t * new_parentdir_handle,    /* IN */
-                                       fsal_name_t * p_new_name,        /* IN */
-                                       fsal_attrib_list_t * tgt_dir_attributes, /* [ IN/OUT ] */
-                                       fsal_op_context_t * p_context,   /* IN */
-                                       mfsl_context_t * p_mfsl_context /* IN */ )
-{
-  fsal_status_t fsal_status;
-
-  /* Check for the attributes first */
-  fsal_status = FSAL_rename_access(p_context, src_dir_attributes, tgt_dir_attributes);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  /** @todo : put some stuff in this function */
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_rename_check_perms */
-
-/**
- *
  * MFSL_rename : posts an asynchronous rename and sets the cached attributes in return.
  *
  * Posts an asynchronous rename and sets the cached attributes in return.
@@ -206,16 +168,6 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
       /* In this case use object_attributes parameter to initiate asynchronous object */
       new_parentdir_pasyncdata->async_attr = *tgt_dir_attributes;
     }
-
-  fsal_status = MFSAL_rename_check_perms(old_parentdir_handle,
-                                         p_old_name,
-                                         src_dir_attributes,
-                                         new_parentdir_handle,
-                                         p_new_name,
-                                         tgt_dir_attributes, p_context, p_mfsl_context);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
 
   LogDebug(COMPONENT_MFSL, "Creating asyncop %p",
                     pasyncopdesc);

@@ -94,36 +94,6 @@ fsal_status_t MFSL_symlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_symlink_check_perms : Checks authorization to perform an asynchronous symlink.
- *
- * Checks authorization to perform an asynchronous setattr.
- *
- * @param target_handle     [IN]    mfsl object to be operated on.
- * @param p_dirname         [IN]    name of the object to be created
- * @param p_context         [IN]    associated fsal context
- * @param p_mfsl_context    [INOUT] associated mfsl context
- * @param object_attributes [INOUT] parent's attributes
- *
- */
-fsal_status_t MFSAL_symlink_check_perms(mfsl_object_t * target_handle,
-                                        fsal_name_t * p_dirname,
-                                        fsal_op_context_t * p_context,
-                                        mfsl_context_t * p_mfsl_context,
-                                        fsal_attrib_list_t * object_attributes)
-{
-  fsal_status_t fsal_status;
-
-  fsal_status = FSAL_create_access(p_context, object_attributes);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  /** @todo : put some stuff in this function */
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_symlink_check_perms */
-
-/**
- *
  * MFSL_symlink : posts an asynchronous symlink and sets the cached attributes in return.
  *
  * Posts an asynchronous symlink and sets the cached attributes in return.
@@ -162,13 +132,6 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
   counter += 1;
 
   if(FSAL_IS_ERROR(FSAL_str2name(tmp_name, MAXNAMLEN, &tmp_fsal_name)))
-    return fsal_status;
-
-  fsal_status = MFSAL_symlink_check_perms(parent_directory_handle,
-                                          p_linkname,
-                                          p_context, p_mfsl_context, link_attributes);
-
-  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   P(parent_directory_handle->lock);

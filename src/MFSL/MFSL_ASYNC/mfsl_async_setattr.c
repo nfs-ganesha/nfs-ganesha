@@ -75,43 +75,6 @@ fsal_status_t MFSL_setattr_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSL_setattrs_check_perms : Checks authorization to perform an asynchronous setattr.
- *
- * Checks authorization to perform an asynchronous setattr.
- *
- * @param filehandle        [IN]    mfsl object to be operated on.
- * @param pspecdata         [INOUT] mfsl object associated specific data
- * @param p_context         [IN]    associated fsal context
- * @param p_mfsl_context    [INOUT] associated mfsl context
- * @param attrib_set        [IN]    attributes to be set 
- *
- * @return always FSAL_NO_ERROR (not yet implemented 
- */
-fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,     /* IN */
-                                        mfsl_object_specific_data_t * pspecdata,        /* IN */
-                                        fsal_op_context_t * p_context,  /* IN */
-                                        mfsl_context_t * p_mfsl_context,        /* IN */
-                                        fsal_attrib_list_t * attrib_set /* IN */ )
-{
-  fsal_status_t fsal_status;
-
-  /* Root is the only one that can chown or chgrp */
-  if(attrib_set->asked_attributes & (FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
-    {
-      if(p_context->user_credential.user != 0)
-        MFSL_return(ERR_FSAL_ACCESS, 0);
-    }
-
-  fsal_status = FSAL_setattr_access(p_context, attrib_set, &pspecdata->async_attr);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_setattr_check_perms */
-
-/**
- *
  * MFSL_setattrs : posts an asynchronous setattr and sets the cached attributes in return.
  *
  * Posts an asynchronous setattr and sets the cached attributes in return.
@@ -165,13 +128,6 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
       /* In this case use object_attributes parameter to initiate asynchronous object */
       pasyncdata->async_attr = *object_attributes;
     }
-
-  fsal_status =
-      MFSL_setattrs_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context,
-                                attrib_set);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
 
   LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);

@@ -73,35 +73,6 @@ fsal_status_t MFSL_truncate_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_truncate_check_perms : Checks authorization to perform an asynchronous truncate.
- *
- * Checks authorization to perform an asynchronous truncate.
- *
- * @param filehandle        [IN]    mfsl object to be operated on.
- * @param pspecdata         [INOUT] mfsl object associated specific data
- * @param p_context         [IN]    associated fsal context
- * @param p_mfsl_context    [INOUT] associated mfsl context
- * @param attrib_set        [IN]    attributes to be set 
- *
- * @return always FSAL_NO_ERROR (not yet implemented 
- */
-fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
-                                         mfsl_object_specific_data_t * pspecdata,
-                                         fsal_op_context_t * p_context,
-                                         mfsl_context_t * p_mfsl_context)
-{
-  fsal_status_t fsal_status;
-
-  fsal_status = FSAL_test_access(p_context, FSAL_W_OK, &pspecdata->async_attr);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}                               /* MFSL_truncate_check_perms */
-
-/**
- *
  * MFSL_truncate : posts an asynchronous truncate and sets the cached attributes in return.
  *
  * Posts an asynchronous truncate and sets the cached attributes in return.
@@ -156,12 +127,6 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
       /* In this case use object_attributes parameter to initiate asynchronous object */
       pasyncdata->async_attr = *object_attributes;
     }
-
-  fsal_status =
-      MFSAL_truncate_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
 
   LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);
