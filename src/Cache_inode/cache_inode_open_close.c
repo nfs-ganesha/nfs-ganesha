@@ -180,7 +180,7 @@ cache_inode_open(cache_entry_t *entry,
       */
      obj_hdl = entry->obj_handle;
      fsal_status = obj_hdl->ops->test_access(obj_hdl,
-					     req_ctx, access_type);
+					     req_ctx, access_type, NULL, NULL);
      if(FSAL_IS_ERROR(fsal_status)) {
 	 status = cache_inode_error_convert(fsal_status);
 

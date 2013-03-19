@@ -542,6 +542,8 @@ void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
 					   fsal_accessflags_t access_type,
+					   fsal_accessflags_t * allowed,
+					   fsal_accessflags_t * denied,
 					   struct req_op_context *req_ctx,
 					   bool use_mutex);
 /**
@@ -564,7 +566,7 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_accessflags_t access_type,
 			    struct req_op_context *req_ctx)
 {
-    return cache_inode_access_sw(entry, access_type,
+    return cache_inode_access_sw(entry, access_type, NULL, NULL,
                                  req_ctx, false);
 }
 
@@ -587,7 +589,7 @@ cache_inode_access(cache_entry_t *entry,
                    fsal_accessflags_t access_type,
 		   struct req_op_context *req_ctx)
 {
-    return cache_inode_access_sw(entry, access_type,
+    return cache_inode_access_sw(entry, access_type, NULL, NULL,
                                  req_ctx, true);
 }
 

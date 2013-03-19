@@ -466,10 +466,11 @@ typedef enum {
         FSAL_X_OK = 0x01000000, /*< Test for execute permission */
         FSAL_ACCESS_OK = 0x00000000, /*< Allow */
         FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
-        FSAL_MODE_BIT_MASK = 0x7F000000,
-        FSAL_ACE4_BIT_MASK = 0x00FFFFFF,
+        FSAL_MODE_BIT_MASK = 0x07000000,
+        FSAL_ACE4_BIT_MASK = 0x40FFFFFF,
         FSAL_MODE_MASK_FLAG = 0x00000000,
-        FSAL_ACE4_MASK_FLAG = 0x80000000
+        FSAL_ACE4_MASK_FLAG = 0x80000000,
+        FSAL_ACE4_PERM_CONTINUE = 0x40000000 /*< Indicate ACL evaluation should continue */
 } fsal_accessflags_t;
 
 static inline fsal_accessflags_t

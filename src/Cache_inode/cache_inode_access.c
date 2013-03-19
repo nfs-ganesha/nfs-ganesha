@@ -66,6 +66,8 @@
 cache_inode_status_t
 cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
+                      fsal_accessflags_t * allowed,
+                      fsal_accessflags_t * denied,
                       struct req_op_context *req_ctx,
                       bool use_mutex)
 {
@@ -92,7 +94,9 @@ cache_inode_access_sw(cache_entry_t *entry,
      }
      fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
                                                   req_ctx,
-                                                  access_type);
+                                                  access_type,
+                                                  allowed,
+                                                  denied);
 
      if (use_mutex) {
              PTHREAD_RWLOCK_unlock(&entry->attr_lock);

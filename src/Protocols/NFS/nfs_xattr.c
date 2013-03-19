@@ -320,7 +320,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
           goto out;
         }
 
-      fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx, access_mode);
+      fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx, access_mode, NULL, NULL);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -330,10 +330,10 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
 
               /* we have to check read/write permissions */
               if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, req_ctx,
-                                                          FSAL_R_OK)))
+                                                          FSAL_R_OK, NULL, NULL)))
                 pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
               if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, req_ctx,
-                                                          FSAL_W_OK)))
+                                                          FSAL_W_OK, NULL, NULL)))
                 pres->res_access3.ACCESS3res_u.resok.access |=
                     ACCESS3_MODIFY | ACCESS3_EXTEND;
             }
