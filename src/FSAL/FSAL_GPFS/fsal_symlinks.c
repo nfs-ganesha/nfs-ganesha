@@ -180,10 +180,16 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
 
   /* build symlink path */
 
-  /* create the symlink on the filesystem. */
+  /* create the symlink on the filesystem using the credentials
+   * for proper ownership assignment.
+   */
+
+  fsal_set_credentials(p_context->creds);
 
   rc = symlinkat(p_linkcontent, fd, p_linkname);
   errsv = errno;
+
+  fsal_restore_ganesha_credentials();
 
   if(rc)
     {
