@@ -543,12 +543,6 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     );
 
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
-    );
-
 /**
  * FSAL_test_access :
  * test if a client identified by cred can access the object
@@ -1010,42 +1004,12 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid);
  */
 fsal_accessmode_t unix2fsal_mode(mode_t unix_mode);
 
-/* The following functions are used in Cache_Inode_Asynch mode */
-
-fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * candidate_attributes,    /* IN */
-                                  fsal_attrib_list_t * object_attributes        /* IN */
-    );
-
-fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr, /* IN */
-                               fsal_attrib_list_t * pnew_attr,  /* IN */
-                               fsal_attrib_list_t * presult_attr);      /* OUT */
-
-fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest);       /* IN */
-
-fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr);   /* IN */
-
-fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr);   /* IN */
-
-fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
-                               fsal_attrib_list_t * pattr);     /* IN */
-
 /******************************************************
  *                Structure used to define a fsal
  ******************************************************/
 
 typedef struct fsal_functions__
 {
-  /* FSAL_access */
-  fsal_status_t(*fsal_access) (fsal_handle_t * p_object_handle,
-                               fsal_op_context_t * p_context,
-                               fsal_accessflags_t access_type,
-                               fsal_attrib_list_t * p_object_attribute);
-
   /* FSAL_getattrs */
   fsal_status_t(*fsal_getattrs) (fsal_handle_t * p_filehandle,  /* IN */
                                  fsal_op_context_t * p_context, /* IN */
@@ -1205,28 +1169,6 @@ typedef struct fsal_functions__
   fsal_status_t(*fsal_test_access) (fsal_op_context_t * p_context,      /* IN */
                                     fsal_accessflags_t access_type,     /* IN */
                                     fsal_attrib_list_t * p_object_attributes /* IN */ );
-
-  /* FSAL_setattr_access */
-  fsal_status_t(*fsal_setattr_access) (fsal_op_context_t * p_context,   /* IN */
-                                       fsal_attrib_list_t * candidate_attributes,       /* IN */
-                                       fsal_attrib_list_t * object_attributes /* IN */ );
-
-  /* FSAL_rename_access */
-  fsal_status_t(*fsal_rename_access) (fsal_op_context_t * pcontext,     /* IN */
-                                      fsal_attrib_list_t * pattrsrc,    /* IN */
-                                      fsal_attrib_list_t * pattrdest) /* IN */ ;
-
-  /* FSAL_create_access */
-  fsal_status_t(*fsal_create_access) (fsal_op_context_t * pcontext,     /* IN */
-                                      fsal_attrib_list_t * pattr) /* IN */ ;
-
-  /* FSAL_unlink_access */
-  fsal_status_t(*fsal_unlink_access) (fsal_op_context_t * pcontext,     /* IN */
-                                      fsal_attrib_list_t * pattr) /* IN */ ;
-
-  /* FSAL_link_access */
-  fsal_status_t(*fsal_link_access) (fsal_op_context_t * pcontext,       /* IN */
-                                    fsal_attrib_list_t * pattr) /* IN */ ;
 
   /* FSAL_merge_attrs */
   fsal_status_t(*fsal_merge_attrs) (fsal_attrib_list_t * pinit_attr,

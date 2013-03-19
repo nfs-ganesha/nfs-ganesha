@@ -694,7 +694,7 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(fsal_handle_t * obj_handle,     /* IN */
     if(!p_vfs)
     {
       ZFSFSAL_VFS_Unlock();
-      Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_access);
+      Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
     }
 
     if((rc = xattr_name_to_id(p_vfs, p_context, p_objecthandle, xattr_name->name, &index)))

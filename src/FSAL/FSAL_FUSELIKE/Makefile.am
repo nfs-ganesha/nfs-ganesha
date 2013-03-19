@@ -12,7 +12,7 @@ used_libs  = $(FSAL_LIB) $(FSAL_LDFLAGS)             \
 noinst_LTLIBRARIES          = libfsalfuse.la
 
 
-libfsalfuse_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsinfo.c \
+libfsalfuse_la_SOURCES = fsal_context.c fsal_dirs.c     fsal_fsinfo.c \
 			 fsal_rcp.c     fsal_compat.c   fsal_truncate.c \
 			 fsal_attrs.c   fsal_convert.c  fsal_init.c      fsal_lookup.c \
 			 fsal_rename.c  fsal_symlinks.c  fsal_unlink.c fsal_local_op.c \

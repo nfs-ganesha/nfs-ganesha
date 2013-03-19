@@ -139,11 +139,6 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd);
 void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context);
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t PROXYFSAL_access(fsal_handle_t * p_object_handle,    /* IN */
-                               fsal_op_context_t * p_context,      /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t *
-                               p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t PROXYFSAL_getattrs(fsal_handle_t * p_filehandle,     /* IN */
                                  fsal_op_context_t * p_context,    /* IN */
@@ -265,10 +260,6 @@ fsal_status_t PROXYFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,       /* IN
 fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info /* IN */ );
 
 fsal_status_t PROXYFSAL_terminate();
-
-fsal_status_t PROXYFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN */
-                                       fsal_attrib_list_t * candidate_attributes,       /* IN */
-                                       fsal_attrib_list_t * object_attributes /* IN */ );
 
 fsal_status_t PROXYFSAL_lookup(fsal_handle_t * p_parent_directory_handle,  /* IN */
                                fsal_name_t * p_filename,        /* IN */

@@ -24,9 +24,6 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, char *p_posix_flags);
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags);
 #endif
 
-/** converts an FSAL permission test to a Posix permission test. */
-int fsal2posix_testperm(fsal_accessflags_t testperm);
-
 /*
  * Converts POSIX attributes (struct stat) to FSAL attributes (fsal_attrib_list_t)
  */

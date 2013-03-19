@@ -2,8 +2,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalzfs.la
 
-libfsalzfs_la_SOURCES = fsal_access.c   \
-                        fsal_attrs.c    \
+libfsalzfs_la_SOURCES = fsal_attrs.c    \
                         fsal_common.c   \
                         fsal_common.h   \
                         fsal_compat.c   \

@@ -3,7 +3,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsaltemplate.la
 
-libfsaltemplate_la_SOURCES = fsal_access.c \
+libfsaltemplate_la_SOURCES = \
                         fsal_context.c  \
                         fsal_dirs.c     \
                         fsal_fsinfo.c   \

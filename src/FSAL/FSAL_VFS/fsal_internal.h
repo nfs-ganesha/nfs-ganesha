@@ -121,10 +121,6 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
 
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t VFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
-                             fsal_op_context_t * p_context,  /* IN */
-                             fsal_accessflags_t access_type,    /* IN */
-                             fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t VFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
                                fsal_op_context_t * p_context,        /* IN */

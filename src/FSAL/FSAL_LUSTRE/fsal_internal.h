@@ -80,22 +80,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ );
 
-/**
- *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN, optional */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN, optional */ );
-
 /* All the call to FSAL to be wrapped */
-fsal_status_t LUSTREFSAL_access(fsal_handle_t * p_object_handle,  /* IN */
-                                fsal_op_context_t * p_context,    /* IN */
-                                fsal_accessflags_t access_type, /* IN */
-                                fsal_attrib_list_t *
-                                p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t LUSTREFSAL_getattrs(fsal_handle_t * p_filehandle,   /* IN */
                                   fsal_op_context_t * p_context,  /* IN */

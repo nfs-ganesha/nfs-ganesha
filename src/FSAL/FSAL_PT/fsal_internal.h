@@ -168,12 +168,6 @@ fsal_internal_fd2handle(fsal_op_context_t * p_context,
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
-fsal_status_t 
-fsal_internal_access(fsal_op_context_t  * p_context,    /* IN */
-                     fsal_handle_t      * p_handle,     /* IN */
-                     fsal_accessflags_t   access_type,  /* IN */
-                     fsal_attrib_list_t * p_object_attributes /* IN */ );
-
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t     * p_handle, 
                                   struct stat64     * buf);
@@ -188,17 +182,7 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
                                        int                 attr_changed, 
                                        ptfsal_xstat_t    * p_buffxstat);
 
-fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,  /*IN*/
-                                        fsal_accessflags_t  access_type,/*IN*/
-                                        struct stat64     * p_buffstat  /*IN*/);
-
-
 /* All the call to FSAL to be wrapped */
-fsal_status_t PTFSAL_access(fsal_handle_t       * p_object_handle, /* IN */
-                             fsal_op_context_t  * p_context,       /* IN */
-                             fsal_accessflags_t   access_type,     /* IN */
-                             fsal_attrib_list_t * 
-                             p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t PTFSAL_getattrs(fsal_handle_t      * p_filehandle, /* IN */
                               fsal_op_context_t  * p_context,    /* IN */

@@ -26,33 +26,6 @@
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
 
 /**
- * fsal2posix_testperm:
- * Convert FSAL permission flags to Posix permission flags.
- *
- * \param testperm (input):
- *        The FSAL permission flags to be tested.
- *
- * \return The POSIX permission flags to be tested.
- */
-int fsal2posix_testperm(fsal_accessflags_t testperm)
-{
-
-  int posix_testperm = 0;
-
-  if(testperm & FSAL_R_OK)
-    posix_testperm |= R_OK;
-  if(testperm & FSAL_W_OK)
-    posix_testperm |= W_OK;
-  if(testperm & FSAL_X_OK)
-    posix_testperm |= X_OK;
-  if(testperm & FSAL_F_OK)
-    posix_testperm |= F_OK;
-
-  return posix_testperm;
-
-}
-
-/**
  * fsal2unix_mode:
  * Convert FSAL mode to posix mode.
  *

@@ -4,7 +4,7 @@ if USE_FSAL_LUSTRE
 
 noinst_LTLIBRARIES          = libfsallustre.la
 
-libfsallustre_la_SOURCES = fsal_access.c      \
+libfsallustre_la_SOURCES = \
                           fsal_context.c     \
                           fsal_compat.c      \
                           fsal_dirs.c        \
@@ -48,8 +48,7 @@ if USE_FSAL_SHOOK
 
 noinst_LTLIBRARIES          = libfsalshook.la
 
-libfsalshook_la_SOURCES = fsal_access.c      \
-                          fsal_context.c     \
+libfsalshook_la_SOURCES = fsal_context.c     \
                           fsal_compat.c      \
                           fsal_dirs.c        \
                           fsal_fsinfo.c      \
@@ -68,7 +67,6 @@ libfsalshook_la_SOURCES = fsal_access.c      \
                           fsal_stats.c       \
                           fsal_tools.c       \
                           fsal_xattrs.c      \
-                          fsal_local_op.c    \
                           fsal_lock.c     \
 			  fsal_internal.h    \
                           fsal_convert.h     \

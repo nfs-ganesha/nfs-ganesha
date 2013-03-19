@@ -5,7 +5,7 @@ noinst_LTLIBRARIES          = libfsalpt.la
 noinst_HEADERS = fsal_convert.h fsal_internal.h pt_ganesha.h            \
                  fsi_ipc_ccl.h
 
-libfsalpt_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
+libfsalpt_la_SOURCES = fsal_compat.c fsal_context.c			\
 	fsal_dirs.c fsal_fsinfo.c fsal_rcp.c		                \
 	fsal_truncate.c fsal_attrs.c fsal_init.c		        \
 	fsal_lookup.c fsal_convert.c fsal_rename.c fsal_symlinks.c	\

@@ -83,7 +83,7 @@ typedef struct exportlist__        exportlist_t;
 /* FSAL function indexes, and names */
 
 #define INDEX_FSAL_lookup                0
-#define INDEX_FSAL_access                1
+#define INDEX_FSAL_unused_01             1
 #define INDEX_FSAL_create                2
 #define INDEX_FSAL_mkdir                 3
 #define INDEX_FSAL_truncate              4
@@ -125,12 +125,12 @@ typedef struct exportlist__        exportlist_t;
 #define INDEX_FSAL_SetXAttrValue        40
 #define INDEX_FSAL_GetXAttrAttrs        41
 #define INDEX_FSAL_close_by_fileid      42
-#define INDEX_FSAL_setattr_access       43
+#define INDEX_FSAL_unused_43            43
 #define INDEX_FSAL_merge_attrs          44
-#define INDEX_FSAL_rename_access        45
-#define INDEX_FSAL_unlink_access        46
-#define INDEX_FSAL_link_access          47
-#define INDEX_FSAL_create_access        48
+#define INDEX_FSAL_unused_45            45
+#define INDEX_FSAL_unused_46            46
+#define INDEX_FSAL_unused_47            47
+#define INDEX_FSAL_unused_48            48
 #define INDEX_FSAL_unused_49            49
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
@@ -902,9 +902,6 @@ struct fsal_staticfsinfo_t
   fsal_accessmode_t xattr_access_rights;  /**< This indicates who is allowed
                                            *   to read/modify xattrs value.
                                            */
-  fsal_boolean_t accesscheck_support;  /**< This indicates whether access check
-                                       *  will be done in FSAL.
-                                       */
   fsal_boolean_t share_support;        /**< FS supports share reservation? */
   fsal_boolean_t share_support_owner;  /**< FS supports share reservation with open owners ? */
 #ifdef _PNFS_MDS
@@ -977,7 +974,7 @@ typedef struct fs_common_initinfo__
         lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
-        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
+        auth_exportpath_xdev, xattr_access_rights,
         share_support, share_support_owner, pnfs_supported,
       fs_layout_types, layout_blksize;
 #else /* !_PNFS_MDS */
@@ -988,7 +985,7 @@ typedef struct fs_common_initinfo__
         lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
-        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
+        auth_exportpath_xdev, xattr_access_rights,
         share_support, share_support_owner;
 #endif /* !_PNFS_MDS */
   } behaviors;

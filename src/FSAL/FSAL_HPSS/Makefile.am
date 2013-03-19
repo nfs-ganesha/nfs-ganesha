@@ -5,7 +5,7 @@ AM_CFLAGS=$(FSAL_CFLAGS) $(SEC_CFLAGS)
 noinst_LTLIBRARIES          = libfsalhpss.la
 
 libfsalhpss_la_SOURCES = fsal_common.h  fsal_compat.c  fsal_convert.h  fsal_internal.h \
-			 fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsinfo.c \
+			 fsal_context.c fsal_dirs.c    fsal_fsinfo.c \
 			 fsal_lock.c    fsal_rcp.c      fsal_truncate.c \
 			 fsal_attrs.c   fsal_convert.c  fsal_errors.c  fsal_init.c \
 			 fsal_lookup.c  fsal_rename.c   fsal_symlinks.c fsal_unlink.c \

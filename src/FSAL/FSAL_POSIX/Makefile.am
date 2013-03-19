@@ -4,8 +4,7 @@ SUBDIRS	= DBExt
 
 noinst_LTLIBRARIES          = libfsalposix.la
 
-libfsalposix_la_SOURCES = fsal_access.c      \
-                          fsal_compat.c      \
+libfsalposix_la_SOURCES = fsal_compat.c      \
                           fsal_context.c     \
                           fsal_dirs.c        \
                           fsal_fsinfo.c      \

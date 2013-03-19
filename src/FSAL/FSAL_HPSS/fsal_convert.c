@@ -210,33 +210,6 @@ int hpss2fsal_error(int hpss_errorcode)
 }
 
 /**
- * fsal2hpss_testperm:
- * Convert FSAL permission flags to (HPSS) Posix permission flags.
- *
- * \param testperm (input):
- *        The FSAL permission flags to be tested.
- *
- * \return The HPSS permission flags to be tested.
- */
-int fsal2hpss_testperm(fsal_accessflags_t testperm)
-{
-
-  int hpss_testperm = 0;
-
-  if(testperm & FSAL_R_OK)
-    hpss_testperm |= R_OK;
-  if(testperm & FSAL_W_OK)
-    hpss_testperm |= W_OK;
-  if(testperm & FSAL_X_OK)
-    hpss_testperm |= X_OK;
-  if(testperm & FSAL_F_OK)
-    hpss_testperm |= F_OK;
-
-  return hpss_testperm;
-
-}
-
-/**
  * fsal2hpss_openflags:
  * Convert FSAL open flags to (HPSS) Posix open flags.
  *

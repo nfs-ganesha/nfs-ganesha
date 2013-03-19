@@ -36,27 +36,6 @@ fsal_mdsfunctions_t fsal_mdsfunctions;
 fsal_dsfunctions_t fsal_dsfunctions;
 #endif /* _USE_PNFS_DS */
 
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */ )
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_access(object_handle, p_context, access_type,
-                                  object_attributes);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
 fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes /* IN/OUT */ )
@@ -658,99 +637,6 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
   timer_start = timer_get();
 
   rc = fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
-fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * candidate_attributes,    /* IN */
-                                  fsal_attrib_list_t * object_attributes /* IN */ )
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_setattr_access(p_context, candidate_attributes,
-                                          object_attributes);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
-fsal_status_t FSAL_rename_access(fsal_op_context_t * p_context,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest)        /* IN */
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_rename_access(p_context, pattrsrc, pattrdest);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
-fsal_status_t FSAL_create_access(fsal_op_context_t * p_context,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_create_access(p_context, pattr);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
-fsal_status_t FSAL_unlink_access(fsal_op_context_t * p_context,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_unlink_access(p_context, pattr);
-
-  timer_end = timer_get();
-
-  p_context->latency += timer_end - timer_start;
-  p_context->count++;
-
-  return rc;
-}
-
-fsal_status_t FSAL_link_access(fsal_op_context_t * p_context,    /* IN */
-                               fsal_attrib_list_t * pattr)      /* IN */
-{
-  fsal_status_t  rc;
-  msectimer_t    timer_start, timer_end;
-
-  timer_start = timer_get();
-
-  rc = fsal_functions.fsal_link_access(p_context, pattr);
 
   timer_end = timer_get();
 

@@ -82,10 +82,6 @@ void ReleaseTokenFSCall();
 fsal_boolean_t fsal_do_log(fsal_status_t status);
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * p_object_handle,      /* IN */
-                              hpssfsal_op_context_t * p_context,        /* IN */
-                              fsal_accessflags_t access_type,   /* IN */
-                              fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t HPSSFSAL_getattrs(hpssfsal_handle_t * p_filehandle,       /* IN */
                                 hpssfsal_op_context_t * p_context,      /* IN */

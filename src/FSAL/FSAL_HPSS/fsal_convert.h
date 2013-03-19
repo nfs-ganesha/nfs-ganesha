@@ -18,9 +18,6 @@ int hpss2fsal_error(int hpss_errorcode);
 /** converts an fsal open flag to an hpss open flag. */
 int fsal2hpss_openflags(fsal_openflags_t fsal_flags, int *p_hpss_flags);
 
-/** converts an FSAL permission test to a (HPSS) Posix permission test. */
-int fsal2hpss_testperm(fsal_accessflags_t testperm);
-
 /* Fills an FSAL attributes struct
  * using hpss handle and hpss attributes.
  */

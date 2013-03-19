@@ -15,17 +15,6 @@
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 
-fsal_status_t WRAP_HPSSFSAL_access(fsal_handle_t * object_handle,       /* IN */
-                                   fsal_op_context_t * p_context,       /* IN */
-                                   fsal_accessflags_t access_type,      /* IN */
-                                   fsal_attrib_list_t *
-                                   object_attributes /* [ IN/OUT ] */ )
-{
-  return HPSSFSAL_access((hpssfsal_handle_t *) object_handle,
-                         (hpssfsal_op_context_t *) p_context, access_type,
-                         object_attributes);
-}
-
 fsal_status_t WRAP_HPSSFSAL_getattrs(fsal_handle_t * p_filehandle,      /* IN */
                                      fsal_op_context_t * p_context,     /* IN */
                                      fsal_attrib_list_t *
@@ -606,8 +595,6 @@ fsal_status_t WRAP_HPSSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
 
 
 fsal_functions_t fsal_hpss_functions = {
-  .fsal_access = WRAP_HPSSFSAL_access,
-  .fsal_getattrs = WRAP_HPSSFSAL_getattrs,
   .fsal_setattrs = WRAP_HPSSFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_HPSSFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = WRAP_HPSSFSAL_CleanUpExportContext,
@@ -631,11 +618,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_init = WRAP_HPSSFSAL_Init,
   .fsal_terminate = WRAP_HPSSFSAL_terminate,
   .fsal_test_access = COMMON_test_access,
-  .fsal_setattr_access = COMMON_setattr_access_notsupp,
-  .fsal_rename_access = COMMON_rename_access,
-  .fsal_create_access = COMMON_create_access,
-  .fsal_unlink_access = COMMON_unlink_access,
-  .fsal_link_access = COMMON_link_access,
   .fsal_merge_attrs = WRAP_HPSSFSAL_merge_attrs,
   .fsal_lookup = WRAP_HPSSFSAL_lookup,
   .fsal_lookuppath = WRAP_HPSSFSAL_lookupPath,

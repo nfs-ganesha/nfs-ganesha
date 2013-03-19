@@ -114,12 +114,6 @@ int fsal_internal_path2fsname(char *rpath, char *fs_spec);
 
 int fsal_internal_get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_bstat) ;
 
-
-fsal_status_t XFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
-                             fsal_op_context_t * p_context,  /* IN */
-                             fsal_accessflags_t access_type,    /* IN */
-                             fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
-
 fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
                                fsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
@@ -218,23 +212,6 @@ fsal_status_t XFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,   /* IN */
                                      fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t XFSFSAL_Init(fsal_parameter_t * init_info /* IN */ );
-
-fsal_status_t XFSFSAL_setattr_access(fsal_op_context_t * p_context,  /* IN */
-                                     fsal_attrib_list_t * candidate_attributes, /* IN */
-                                     fsal_attrib_list_t * object_attributes /* IN */ );
-
-fsal_status_t XFSFSAL_rename_access(fsal_op_context_t * pcontext,    /* IN */
-                                    fsal_attrib_list_t * pattrsrc,      /* IN */
-                                    fsal_attrib_list_t * pattrdest) /* IN */ ;
-
-fsal_status_t XFSFSAL_create_access(fsal_op_context_t * pcontext,    /* IN */
-                                    fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t XFSFSAL_unlink_access(fsal_op_context_t * pcontext,    /* IN */
-                                    fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t XFSFSAL_link_access(fsal_op_context_t * pcontext,      /* IN */
-                                  fsal_attrib_list_t * pattr) /* IN */ ;
 
 fsal_status_t XFSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                   fsal_attrib_list_t * pnew_attr,

@@ -103,7 +103,8 @@ static fsal_staticfsinfo_t default_ptfs_info = {
   0,                            /* cross junctions */
   0400,                         /* default access rights for xattrs: root=RW, 
                                  * owner=R */
-  0                             /* default access check support in FSAL */
+  0,                            /* default share reservation support in FSAL */
+  0                             /* default share reservation support with open owners in FSAL */
 };
 
 /* variables for limiting the calls to the filesystem */
@@ -113,23 +114,6 @@ semaphore_t sem_fs_calls;
 /* threads keys for stats */
 static pthread_key_t key_stats;
 static pthread_once_t once_key = PTHREAD_ONCE_INIT;
-
-#ifdef _USE_NFS4_ACL
-static fsal_status_t 
-fsal_check_access_by_handle(fsal_op_context_t  * p_context,          /* IN */
-                            fsal_handle_t      * p_handle            /* IN */,
-                            fsal_accessmode_t    mode,               /* IN */
-                            fsal_accessflags_t   v4mask,             /* IN */
-                            fsal_attrib_list_t * p_object_attributes /* IN */);
-
-extern fsal_status_t fsal_cred_2_ptfs_cred(struct user_credentials *p_fsalcred,
-                                           struct xstat_cred_t *p_ptfscred);
-
-extern fsal_status_t fsal_mode_2_ptfs_mode(fsal_accessmode_t  fsal_mode,
-                                           fsal_accessflags_t v4mask,
-                                           unsigned int     * p_ptfsmode,
-                                           fsal_boolean_t     is_dir);
-#endif  /* _USE_NFS4_ACL */
 
 static void free_pthread_specific_stats(void *buff)
 {
@@ -697,62 +681,6 @@ fsal_readlink_by_handle(fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* Check the access at the file system. It is called when Use_Test_Access 
- * = 0. 
- */
-fsal_status_t
-fsal_internal_access(fsal_op_context_t  * p_context,          /* IN */
-		     fsal_handle_t      * p_handle,           /* IN */
-		     fsal_accessflags_t   access_type,        /* IN */
-		     fsal_attrib_list_t * p_object_attributes /* IN */ )
-{
-  fsal_status_t status;
-  fsal_accessflags_t v4mask = 0;
-  fsal_accessmode_t mode = 0;
-
-  FSI_TRACE(FSI_DEBUG, "FSI - access\n");
-
-  /* sanity checks. */
-  if(!p_context || !p_handle)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  if(IS_FSAL_ACE4_MASK_VALID(access_type))
-    v4mask = FSAL_ACE4_MASK(access_type);
-
-  if(IS_FSAL_MODE_MASK_VALID(access_type))
-    mode = FSAL_MODE_MASK(access_type);
-
-  LogDebug(COMPONENT_FSAL, "requested v4mask=0x%x, mode=0x%x", v4mask, mode);
-
-#ifdef _USE_NFS4_ACL
-  status = fsal_check_access_by_handle(p_context, p_handle, mode, v4mask,
-                                       p_object_attributes);
-
-  if(isFullDebug(COMPONENT_FSAL))
-  {
-    fsal_status_t status2;
-	status2 = fsal_check_access(p_context, access_type, NULL,
-	                                   p_object_attributes);
-	if(status2.major != status.major)
-	{
-	  LogFullDebug(COMPONENT_FSAL,
-	               "access error: access result major %d, "  
-                       "test_access result major %d", status.major, 
-                       status2.major);
-	}
-	else
-	  LogFullDebug(COMPONENT_FSAL,
-	               "access ok: access and test_access produced " 
-                       "the same result");
-  }
-#else
-  status = fsal_check_access(p_context, access_type, NULL,
-                                    p_object_attributes);
-#endif
-
-  return status;
-}
-
 /**
  * fsal_stat_by_handle:
  * get the stat value
@@ -814,69 +742,6 @@ fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-
-/* Access check function that accepts stat64. */
-fsal_status_t
-fsal_check_access_by_mode(fsal_op_context_t  * p_context,   /* IN */
-			  fsal_accessflags_t   access_type, /* IN */
-			  struct stat64      * p_buffstat   /* IN */)
-{
-  struct stat buffstat;
-
-  FSI_TRACE(FSI_DEBUG, "FSI - check_access_by_mode\n");
-
-  if(!p_context || !p_buffstat)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* Convert to stat. We only need uid, gid, and mode. */
-  buffstat.st_uid = p_buffstat->st_uid;
-  buffstat.st_gid = p_buffstat->st_gid;
-  buffstat.st_mode = p_buffstat->st_mode;
-
-  return fsal_check_access(p_context, access_type, &buffstat, NULL);
-}
-
-#ifdef _USE_NFS4_ACL
-static fsal_status_t 
-fsal_check_access_by_handle(fsal_op_context_t  * p_context,          /* IN */
-                            fsal_handle_t      * p_handle            /* IN */,
-                            fsal_accessmode_t    mode,               /* IN */
-                            fsal_accessflags_t   v4mask,             /* IN */
-                            fsal_attrib_list_t * p_object_attributes /* IN */)
-
-{
-  int rc;
-  int dirfd = 0;
-  struct xstat_cred_t ptfscred;
-  fsal_status_t status;
-  struct xstat_access_arg accessarg;
-  unsigned int supported;
-  unsigned int ptfs_mode = 0;
-  fsal_boolean_t is_dir = FALSE;
-
-  FSI_TRACE(FSI_DEBUG, "FSI - check_access_by_handle\n");
-
-  if(!p_handle || !p_context || !p_context->export_context)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  dirfd = ((ptfsal_op_context_t *)p_context)->export_context->mount_root_fd;
-  is_dir = (p_object_attributes->type == FSAL_TYPE_DIR);
-
-  /* Convert fsal credential to ptfs credential. */
-  status = fsal_cred_2_ptfs_cred(&p_context->credential, &ptfscred);
-  if(FSAL_IS_ERROR(status))
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* Convert fsal mode to ptfs mode. */
-  status = fsal_mode_2_ptfs_mode(mode, v4mask, &ptfs_mode, is_dir);
-  if(FSAL_IS_ERROR(status))
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  LogDebug(COMPONENT_FSAL, "access granted");
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-#endif                          /* _USE_NFS4_ACL */
 
 /**
  *  fsal_error_is_info:

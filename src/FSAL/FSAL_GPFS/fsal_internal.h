@@ -207,16 +207,7 @@ fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
                                     fsal_name_t * p_old_name,
                                     fsal_name_t * p_new_name);
 
-/**
- *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
 int fsal_internal_version(); 
-
-fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
-                                   fsal_handle_t * p_handle,   /* IN */
-                                   fsal_accessflags_t access_type,  /* IN */
-                                   fsal_attrib_list_t *p_object_attributes /* IN */ );
 
 fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat);
@@ -225,19 +216,11 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, int attr_valid,
                                        int attr_changed, gpfsfsal_xstat_t *p_buffxstat);
 
-fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
-                                        fsal_accessflags_t access_type,  /* IN */
-                                        struct stat *p_buffstat /* IN */);
-
 fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
                                      fsal_handle_t * p_handle,
                                      u_int64_t size);
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
-                             fsal_op_context_t * p_context,  /* IN */
-                             fsal_accessflags_t access_type,    /* IN */
-                             fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
                                fsal_op_context_t * p_context,        /* IN */

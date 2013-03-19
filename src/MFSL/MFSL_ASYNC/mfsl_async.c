@@ -680,23 +680,6 @@ fsal_status_t MFSL_lookupJunction(mfsl_object_t * p_junction_handle,    /* IN */
                              p_context, &p_fsoot_handle->handle, p_fsroot_attributes);
 }                               /* MFSL_lookupJunction */
 
-fsal_status_t MFSL_access(mfsl_object_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          mfsl_context_t * p_mfsl_context,      /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
-    )
-{
-  fsal_status_t fsal_status;
-
-  P(object_handle->lock);
-  fsal_status = FSAL_access(&object_handle->handle,
-                            p_context, access_type, object_attributes);
-  V(object_handle->lock);
-
-  return fsal_status;
-}                               /* MFSL_access */
-
 fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
                            fsal_op_context_t * p_context,       /* IN */
                            mfsl_context_t * p_mfsl_context,     /* IN */

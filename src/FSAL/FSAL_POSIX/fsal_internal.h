@@ -122,24 +122,9 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_c
                                                     unsigned int children_count,        /* IN */
                                                     posixfsal_handle_t * p_object_handle);   /* OUT */
 
-/**
- *  test the access to a file knowing its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
-fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,   /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN */ );
-
 int fsal_internal_path2fsname(char *rpath, char *fs_spec);
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t POSIXFSAL_access(fsal_handle_t * object_handle,    /* IN */
-                               fsal_op_context_t * context,      /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t *
-                               p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t POSIXFSAL_getattrs(fsal_handle_t * filehandle,     /* IN */
                                  fsal_op_context_t * context,    /* IN */
@@ -247,23 +232,6 @@ fsal_status_t POSIXFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,       /* IN
                                        fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t POSIXFSAL_Init(fsal_parameter_t * init_info /* IN */ );
-
-fsal_status_t POSIXFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN */
-                                       fsal_attrib_list_t * candidate_attributes,       /* IN */
-                                       fsal_attrib_list_t * object_attributes /* IN */ );
-
-fsal_status_t POSIXFSAL_rename_access(fsal_op_context_t * pcontext,        /* IN */
-                                      fsal_attrib_list_t * pattrsrc,    /* IN */
-                                      fsal_attrib_list_t * pattrdest) /* IN */ ;
-
-fsal_status_t POSIXFSAL_create_access(fsal_op_context_t * pcontext,        /* IN */
-                                      fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t POSIXFSAL_unlink_access(fsal_op_context_t * pcontext,        /* IN */
-                                      fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t POSIXFSAL_link_access(fsal_op_context_t * pcontext,  /* IN */
-                                    fsal_attrib_list_t * pattr) /* IN */ ;
 
 fsal_status_t POSIXFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                     fsal_attrib_list_t * pnew_attr,

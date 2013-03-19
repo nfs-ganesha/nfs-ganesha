@@ -6,8 +6,7 @@ endif
 
 noinst_LTLIBRARIES          = libfsalproxy.la
 
-libfsalproxy_la_SOURCES = fsal_access.c         \
-                          fsal_context.c        \
+libfsalproxy_la_SOURCES = fsal_context.c        \
                           fsal_dirs.c           \
                           fsal_fsinfo.c         \
                           fsal_rcp.c            \
@@ -25,7 +24,6 @@ libfsalproxy_la_SOURCES = fsal_access.c         \
                           fsal_stats.c          \
                           fsal_tools.c          \
                           fsal_xattrs.c         \
-                          fsal_local_op.c       \
                           fsal_compat.c         \
                           fsal_proxy_internal.c \
                           fsal_proxy_clientid.c \

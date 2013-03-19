@@ -94,10 +94,6 @@ static inline unsigned long hash_peer(ino_t parent_inode, char *name)
 }
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t FUSEFSAL_access(fsal_handle_t * p_object_handle,      /* IN */
-                              fsal_op_context_t * p_context,        /* IN */
-                              fsal_accessflags_t access_type,   /* IN */
-                              fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t FUSEFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                                 fsal_op_context_t * p_context,      /* IN */

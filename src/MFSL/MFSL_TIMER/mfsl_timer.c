@@ -213,25 +213,6 @@ fsal_status_t MFSL_lookupJunction(mfsl_object_t * p_junction_handle,    /* IN */
   return fsal_status ;
 }                               /* MFSL_lookupJunction */
 
-fsal_status_t MFSL_access(mfsl_object_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          mfsl_context_t * p_mfsl_context,      /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
-              		  void * pextra
-    )
-{
-  struct timeval start, stop, delta ;
-  fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
-  
-  gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_access(&object_handle->handle, p_context, access_type, object_attributes);
-  gettimeofday( &stop, 0 ) ; 
-  delta = mfsl_timer_diff( &stop, &start ) ;
-  LogFullDebug( COMPONENT_MFSL, "%s: duration=%ld.%06ld", __FUNCTION__, delta.tv_sec, delta.tv_usec ) ;
-  return fsal_status ;
-}                               /* MFSL_access */
-
 fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
                           fsal_op_context_t * p_context,        /* IN */

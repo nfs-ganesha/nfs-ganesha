@@ -78,11 +78,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats);
 void TakeTokenFSCall();
 void ReleaseTokenFSCall();
 
-fsal_status_t CEPHFSAL_access(fsal_handle_t * exthandle,
-                              fsal_op_context_t * extcontext,
-                              fsal_accessflags_t access_type,
-                              fsal_attrib_list_t * object_attributes);
-
 fsal_status_t CEPHFSAL_getattrs(fsal_handle_t * exthandle,
                                 fsal_op_context_t * extcontext,
                                 fsal_attrib_list_t * object_attributes);
@@ -366,10 +361,6 @@ fsal_status_t CEPHFSAL_RemoveXAttrByName(fsal_handle_t * exthandle,
 
 char *CEPHFSAL_GetFSName();
 
-fsal_status_t fsal_internal_testAccess(cephfsal_op_context_t* context,
-                                       fsal_accessflags_t access_type,
-                                       struct stat * st,
-                                       fsal_attrib_list_t * object_attributes);
 #ifdef _PNFS_MDS
 nfsstat4 CEPHFSAL_layoutget(fsal_handle_t *exhandle,
                             fsal_op_context_t *excontext,

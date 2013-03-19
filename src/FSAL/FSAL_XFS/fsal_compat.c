@@ -17,7 +17,6 @@
 #include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_xfs_functions = {
-  .fsal_access = XFSFSAL_access,
   .fsal_getattrs = XFSFSAL_getattrs,
   .fsal_setattrs = XFSFSAL_setattrs,
   .fsal_buildexportcontext = XFSFSAL_BuildExportContext,
@@ -42,11 +41,6 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_init = XFSFSAL_Init,
   .fsal_terminate = COMMON_terminate_noerror,
   .fsal_test_access = COMMON_test_access,
-  .fsal_setattr_access = COMMON_setattr_access_notsupp,
-  .fsal_rename_access = COMMON_rename_access,
-  .fsal_create_access = COMMON_create_access,
-  .fsal_unlink_access = COMMON_unlink_access,
-  .fsal_link_access = COMMON_link_access,
   .fsal_merge_attrs = COMMON_merge_attrs,
   .fsal_lookup = XFSFSAL_lookup,
   .fsal_lookuppath = XFSFSAL_lookupPath,

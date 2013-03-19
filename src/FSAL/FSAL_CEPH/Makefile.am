@@ -7,7 +7,7 @@ if USE_PNFS
 noinst_LTLIBRARIES += libfsalpnfsceph.la
 endif
 
-libfsalceph_la_SOURCES = fsal_access.c  \
+libfsalceph_la_SOURCES = \
                         fsal_context.c  \
                         fsal_compat.c   \
                         fsal_dirs.c     \
