@@ -38,8 +38,6 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
     posix_testperm |= W_OK;
   if(testperm & FSAL_X_OK)
     posix_testperm |= X_OK;
-  if(testperm & FSAL_F_OK)
-    posix_testperm |= F_OK;
 
   return posix_testperm;
 

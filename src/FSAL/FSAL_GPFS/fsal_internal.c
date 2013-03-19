@@ -1594,11 +1594,6 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
   gid_t gid;
   mode_t mode;
 
-  /* If the FSAL_F_OK flag is set, returns ERR INVAL */
-
-  if(access_type & FSAL_F_OK)
-    return fsalstat(ERR_FSAL_INVAL, 0);
-
   /* unsatisfied flags */
   missing_access = access_type;
   if(!missing_access)

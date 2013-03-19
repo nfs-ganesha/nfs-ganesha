@@ -70,7 +70,6 @@ cache_inode_access_sw(cache_entry_t *entry,
                       bool use_mutex)
 {
      fsal_status_t fsal_status;
-     fsal_accessflags_t used_access_type;
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -81,43 +80,32 @@ cache_inode_access_sw(cache_entry_t *entry,
      /* Set the return default to CACHE_INODE_SUCCESS */
      status = CACHE_INODE_SUCCESS;
 
-     /*
-      * We do no explicit access test in FSAL for FSAL_F_OK: it is
-      * considered that if an entry resides in the cache_inode, then a
-      * FSAL_getattrs was successfully made to populate the cache entry,
-      * this means that the entry exists. For this reason, F_OK is
-      * managed internally
-      */
-     if(access_type != FSAL_F_OK) {
-          used_access_type = access_type & ~FSAL_F_OK;
+     /* We actually need the lock here since we're using
+        the attribute cache, so get it if the caller didn't
+        acquire it.  */
+     if(use_mutex) {
+         if ((status
+              = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+             != CACHE_INODE_SUCCESS) {
+                 goto out;
+         }
+     }
+     fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
+                                                  req_ctx,
+                                                  access_type);
 
-	  /* We actually need the lock here since we're using
-	     the attribute cache, so get it if the caller didn't
-	     acquire it.  */
-	  if(use_mutex) {
-	      if ((status
-		   = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-		  != CACHE_INODE_SUCCESS) {
-		      goto out;
-	      }
-	  }
-	  fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
-						       req_ctx,
-						       used_access_type);
-
-	  if (use_mutex) {
-		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	  }
-          if(FSAL_IS_ERROR(fsal_status)) {
-               status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                       "STALE returned by FSAL, calling kill_entry");
-                    cache_inode_kill_entry(entry);
-               }
-          } else {
-               status = CACHE_INODE_SUCCESS;
+     if (use_mutex) {
+             PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+     }
+     if(FSAL_IS_ERROR(fsal_status)) {
+          status = cache_inode_error_convert(fsal_status);
+          if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "STALE returned by FSAL, calling kill_entry");
+               cache_inode_kill_entry(entry);
           }
+     } else {
+          status = CACHE_INODE_SUCCESS;
      }
 
 out:

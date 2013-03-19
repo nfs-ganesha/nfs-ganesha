@@ -464,7 +464,6 @@ typedef enum {
         FSAL_R_OK = 0x04000000, /*< Test for Read permission */
         FSAL_W_OK = 0x02000000, /*< Test for Write permission */
         FSAL_X_OK = 0x01000000, /*< Test for execute permission */
-        FSAL_F_OK = 0x10000000, /*< Test for existence of File */
         FSAL_ACCESS_OK = 0x00000000, /*< Allow */
         FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
         FSAL_MODE_BIT_MASK = 0x7F000000,
