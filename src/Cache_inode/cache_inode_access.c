@@ -83,7 +83,7 @@ cache_inode_access_sw(cache_entry_t *entry,
      fsal_accessflags_t used_access_type;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_access_sw: access_type=0X%x",
+                  "access_type=0X%x",
                   access_type);
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -103,38 +103,30 @@ cache_inode_access_sw(cache_entry_t *entry,
           /*
            * Function FSAL_test_access is used instead of FSAL_access.
            * This allow to take benefit of the previously cached
-           * attributes. This behavior is configurable via the
-           * configuration file.
+           * attributes.
            */
 
-          if(cache_inode_params.use_test_access == 1) {
-               /* We actually need the lock here since we're using
-                  the attribute cache, so get it if the caller didn't
-                  acquire it.  */
-               if(use_mutex) {
-                    if ((*status
-                         = cache_inode_lock_trust_attrs(entry,
-                                                        context,
-                                                        FALSE))
-                        != CACHE_INODE_SUCCESS) {
-                         goto out;
-                    }
+          /* We actually need the lock here since we're using
+             the attribute cache, so get it if the caller didn't
+             acquire it.  */
+          if(use_mutex) {
+               if ((*status
+                    = cache_inode_lock_trust_attrs(entry,
+                                                   context,
+                                                   FALSE))
+                   != CACHE_INODE_SUCCESS) {
+                    goto out;
                }
-               fsal_status
-                    = FSAL_test_access(context,
-                                       used_access_type,
-                                       &entry->attributes);
-               if (!FSAL_IS_ERROR(fsal_status) && attrs) {
-                    *attrs = entry->attributes;
-               }
-               if (use_mutex) {
-                    PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
-               }
-          } else {
-               /* There is no reason to hold the mutex here, since we
-                  aren't doing anything with cached attributes. */
-                    fsal_status = FSAL_access(&entry->handle, context,
-                                              used_access_type, attrs);
+          }
+          fsal_status
+               = FSAL_test_access(context,
+                                  used_access_type,
+                                  &entry->attributes);
+          if (!FSAL_IS_ERROR(fsal_status) && attrs) {
+               *attrs = entry->attributes;
+          }
+          if (use_mutex) {
+               PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
           }
 
           if(FSAL_IS_ERROR(fsal_status)) {

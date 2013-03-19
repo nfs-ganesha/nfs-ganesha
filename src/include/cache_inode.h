@@ -145,7 +145,6 @@ typedef struct cache_inode_parameter__
   time_t grace_period_dirent; /*< Cached dirent grace period */
   bool_t getattr_dir_invalidation; /*< Use getattr as for directory
                                        invalidation */
-  bool_t use_test_access; /*< Is FSAL_test_access to be used? */
   bool_t use_fsal_hash; /*< Do we rely on FSAL to hash handle or not? */
 } cache_inode_parameter_t;
 

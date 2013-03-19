@@ -285,7 +285,10 @@ cache_inode_read_conf_parameter(config_file_t config,
         }
       else if(!strcasecmp(key_name, "Use_Test_Access"))
         {
-          param->use_test_access = atoi(key_value);
+          if(atoi(key_value) != 1)
+            LogWarn(COMPONENT_CACHE_INODE,
+                    "Use of %s=%s is deprecated",
+                    key_name, key_value);
         }
       else if(!strcasecmp( key_name, "Use_FSAL_Hash" ) )
         {
@@ -487,8 +490,6 @@ void cache_inode_print_conf_parameter(FILE *output,
           param->grace_period_link);
   fprintf(output, "CacheInode: Directory_Expiration_Time    = %jd\n",
           param->grace_period_dirent);
-  fprintf(output, "CacheInode: Use_Test_Access              = %s\n",
-          (param->use_test_access ? "TRUE" : "FALSE"));
 } /* cache_inode_print_conf_parameter */
 
 /**
