@@ -43,7 +43,7 @@
  * support for the Ceph FSAL.
  */
 
-static void initiate_recall(vinodeno_t vi, bool write, void *opaque)
+static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 {
 	/* The private 'full' object handle */
 	struct handle *handle = (struct handle *)opaque;
@@ -73,12 +73,10 @@ static void initiate_recall(vinodeno_t vi, bool write, void *opaque)
 		NULL);
 
 	if (status != STATE_SUCCESS) {
-		ceph_ll_return_rw(export->cmount,
-				  handle->wire.vi,
-				  write ?
-				  handle->rw_serial :
-				  handle->rd_serial);
+		return false;
 	}
+
+	return true;
 }
 
 /**
