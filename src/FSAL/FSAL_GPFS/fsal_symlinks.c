@@ -186,12 +186,18 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
 
   /* build symlink path */
 
-  /* create the symlink on the filesystem. */
+  /* create the symlink on the filesystem using the credentials
+   * for proper ownership assignment.
+   */
+
+  fsal_set_credentials(p_context);
 
   TakeTokenFSCall();
   rc = symlinkat(p_linkcontent->path, fd, p_linkname->name);
   errsv = errno;
   ReleaseTokenFSCall();
+
+  fsal_restore_ganesha_credentials();
 
   if(rc)
     {
