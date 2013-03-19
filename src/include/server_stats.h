@@ -56,12 +56,12 @@ void server_stats_io_done(struct req_op_context *req_ctx,
 void server_stats_compound_done(struct req_op_context *req_ctx,
 				int export_id,
 				int num_ops,
-				bool success);
+				int status);
 void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 				int export_id,
 				int proto_op,
 				nsecs_elapsed_t start_time,
-				bool success);
+				int status);
 
 #endif /* !SERVER_STATS_H */
 /** @} */

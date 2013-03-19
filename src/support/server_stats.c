@@ -94,6 +94,11 @@ static const uint32_t nfsv40_optype[NFS_V40_NB_OPERATION] = {
 static const uint32_t nfsv41_optype[NFS_V41_NB_OPERATION] = {
 	[NFS4_OP_READ] = READ_OP,
 	[NFS4_OP_WRITE] = WRITE_OP,
+	[NFS4_OP_GETDEVICEINFO] = LAYOUT_OP,
+	[NFS4_OP_GETDEVICELIST] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTCOMMIT] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTGET] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTRETURN] = LAYOUT_OP,
 };
 
 
@@ -129,10 +134,9 @@ struct xfer_op {
  */
 
 struct layout_op {
-	struct proto_op gets;
-	struct proto_op returns;
-	uint64_t recalls;
-	uint64_t no_match;
+	uint64_t total;			/* total ops */
+	uint64_t errors;		/* ! NFS4_OK && !NFS4ERR_DELAY */
+	uint64_t delays;		/* NFS4ERR_DELAY */
 };
 
 /* NFSv3 statistics counters
@@ -181,7 +185,11 @@ struct nfsv41_stats {
 	uint64_t ops_per_compound; /* for size averaging */
 	struct xfer_op read;
 	struct xfer_op write;
-	struct layout_op layouts;
+	struct layout_op getdevinfo;
+	struct layout_op layout_get;
+	struct layout_op layout_commit;
+	struct layout_op layout_return;
+	struct layout_op recall;
 };
 
 struct _9p_stats {
@@ -426,6 +434,39 @@ static void record_op(struct proto_op *op,
 }
 
 /**
+ * @brief record V4.1 layout op stats
+ *
+ * @param sp       [IN] stats block to update
+ * @param proto_op [IN] protocol op
+ * @param status   [IN] operation status
+ */
+
+static void record_layout(struct nfsv41_stats *sp,
+			  int proto_op,
+			  int status)
+{
+	struct layout_op *lp;
+
+	if(proto_op == NFS4_OP_GETDEVICEINFO)
+		lp = &sp->getdevinfo;
+	else if(proto_op == NFS4_OP_GETDEVICELIST)
+		lp = &sp->getdevinfo;
+	else if(proto_op == NFS4_OP_LAYOUTGET)
+		lp = &sp->layout_get;
+	else if(proto_op == NFS4_OP_LAYOUTCOMMIT)
+		lp = &sp->layout_commit;
+	else if(proto_op == NFS4_OP_LAYOUTRETURN)
+		lp = &sp->layout_return;
+	else
+		return;
+	(void)atomic_inc_uint64_t(&lp->total);
+	if(status == NFS4ERR_DELAY)
+		(void)atomic_inc_uint64_t(&lp->delays);
+	else if(status != NFS4_OK)
+		(void)atomic_inc_uint64_t(&lp->errors);
+}
+
+/**
  * @brief Record NFS V4 compound stats
  */
 
@@ -435,7 +476,7 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st,
 			    int minorversion,
 			    nsecs_elapsed_t request_time,
 			    nsecs_elapsed_t qwait_time,
-			    bool success)
+			    int status)
 {
 	if(minorversion == 0) {
 		struct nfsv40_stats *sp = get_v40(gsh_st, lock);
@@ -457,7 +498,7 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st,
 		default:
 			record_op(&sp->compounds, request_time,
 				  qwait_time,
-				  success, false);
+				  status == NFS4_OK, false);
 		}
 	} else { /* assume minor == 1 this low in stack */
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
@@ -476,11 +517,14 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st,
 				       qwait_time,
 				       false);
 			break;
+		case LAYOUT_OP:
+			record_layout(sp, proto_op, status);
+			break;
 		default:
 			record_op(&sp->compounds,
 				  request_time,
 				  qwait_time,
-				  success, false);
+				  status == NFS4_OK, false);
 		}
 	}
 
@@ -687,7 +731,7 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 				int export_id,
 				int proto_op,
 				nsecs_elapsed_t start_time,
-				bool success)
+				int status)
 {
 	struct gsh_client *client = req_ctx->client;
 	struct server_stats *server_st;
@@ -706,7 +750,7 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 			req_ctx->nfs_minorvers,
 			stop_time - start_time,
 			req_ctx->queue_wait,
-			success);
+			status);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	if(export_id >= 0) {
 		struct gsh_export *exp;
@@ -722,7 +766,7 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 				req_ctx->nfs_minorvers,
 				stop_time - start_time,
 				req_ctx->queue_wait,
-				success);
+				status);
 		(void)atomic_store_uint64_t(&exp->last_update, stop_time);
 		put_gsh_export(exp);
 	}
@@ -739,7 +783,7 @@ out:
 void server_stats_compound_done(struct req_op_context *req_ctx,
 				int export_id,
 				int num_ops,
-				bool success)
+				int status)
 {
 	struct gsh_client *client = req_ctx->client;
 	struct server_stats *server_st;
@@ -756,7 +800,7 @@ void server_stats_compound_done(struct req_op_context *req_ctx,
 			num_ops,
 			stop_time - req_ctx->start_time,
 			req_ctx->queue_wait,
-			success);
+			status == NFS4_OK);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	if(export_id >= 0) {
 		struct gsh_export *exp;
@@ -772,7 +816,7 @@ void server_stats_compound_done(struct req_op_context *req_ctx,
 				num_ops,
 				stop_time - req_ctx->start_time,
 				req_ctx->queue_wait,
-				success);
+				status == NFS4_OK);
 		(void)atomic_store_uint64_t(&exp->last_update, stop_time);
 		put_gsh_export(exp);
 	}

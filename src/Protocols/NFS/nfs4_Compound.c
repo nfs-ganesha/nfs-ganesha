@@ -362,7 +362,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 				 export_id,
 				 argarray[i].argop,
 				 op_start_time,
-				 status == NFS4_OK);
+				 status);
 /* #endif /\* USE_DBUS_STATS *\/ */
 
       if(status != NFS4_OK)
@@ -406,7 +406,7 @@ int nfs4_Compound(nfs_arg_t *arg,
   server_stats_compound_done(req_ctx,
 			     export_id,
 			     argarray_len,
-			     status == NFS4_OK);
+			     status);
 #endif
 
   /* Complete the reply, in particular, tell where you stopped if
