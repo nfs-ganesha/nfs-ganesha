@@ -557,6 +557,8 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  */
 fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
+                               fsal_accessflags_t * allowed,  /* OUT */
+                               fsal_accessflags_t * denied,  /* OUT */
                                fsal_attrib_list_t * object_attributes   /* IN */
     );
 
@@ -1168,6 +1170,8 @@ typedef struct fsal_functions__
   /* FSAL_test_access */
   fsal_status_t(*fsal_test_access) (fsal_op_context_t * p_context,      /* IN */
                                     fsal_accessflags_t access_type,     /* IN */
+                                    fsal_accessflags_t * allowed,  /* OUT */
+                                    fsal_accessflags_t * denied,  /* OUT */
                                     fsal_attrib_list_t * p_object_attributes /* IN */ );
 
   /* FSAL_merge_attrs */

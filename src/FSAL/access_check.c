@@ -291,8 +291,10 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   LogFullDebug(COMPONENT_FSAL, "%s", str);
 }
 
-fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
-                                    fsal_aceperm_t v4mask,  /* IN */
+fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
+                                    fsal_accessflags_t   v4mask,  /* IN */
+                                    fsal_accessflags_t * allowed,  /* OUT */
+                                    fsal_accessflags_t * denied,  /* OUT */
                                     fsal_attrib_list_t * p_object_attributes   /* IN */ )
 {
   fsal_aceperm_t missing_access;
@@ -306,8 +308,14 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
   fsal_boolean_t is_group = FALSE;
   fsal_boolean_t is_root = FALSE;
 
+  if(allowed != NULL)
+    *allowed = 0;
+
+  if(denied != NULL)
+    *denied = 0;
+
   /* unsatisfied flags */
-  missing_access = v4mask;
+  missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
   if(!missing_access)
     {
       LogFullDebug(COMPONENT_FSAL, "Nothing was requested");
@@ -325,6 +333,9 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
     {
       if(is_dir)
         {
+          if(allowed != NULL)
+            *allowed = v4mask;
+
           /* On a directory, allow root anything. */
           LogDebug(COMPONENT_FSAL, "Met root privileges on directory");
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -332,6 +343,9 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
 
       /* Otherwise, allow root anything but execute. */
       missing_access &= FSAL_ACE_PERM_EXECUTE;
+
+      if(allowed != NULL)
+        *allowed = v4mask & ~FSAL_ACE_PERM_EXECUTE;
 
       if(!missing_access)
         {
@@ -367,6 +381,12 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
    * owner. */
   if(is_owner)
     {
+      if(allowed != NULL)
+        *allowed = v4mask & (FSAL_ACE_PERM_WRITE_ACL |
+                             FSAL_ACE_PERM_READ_ACL |
+                             FSAL_ACE_PERM_WRITE_ATTR |
+                             FSAL_ACE_PERM_READ_ATTR);
+
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
       if(!missing_access)
@@ -401,6 +421,9 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
                                pace->perm,
                                missing_access);
 
+                  if(allowed != NULL)
+                    *allowed |= v4mask & pace->perm;
+
                   missing_access &= ~(pace->perm & missing_access);
 
                   if(!missing_access)
@@ -412,7 +435,7 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
                                                ERR_FSAL_NO_ERROR,
                                                is_dir,
                                                p_context);
-                      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+                      break;
                     }
                 }
              else if((pace->perm & missing_access) && !is_root)
@@ -424,13 +447,20 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
                                           ERR_FSAL_ACCESS,
                                           is_dir,
                                           p_context);
-                 ReturnCode(ERR_FSAL_ACCESS, 0);
+
+                 if(denied != NULL)
+                   *denied |= v4mask & pace->perm;
+                 if(denied == NULL ||
+                    (v4mask & FSAL_ACE4_PERM_CONTINUE) == 0)
+                   ReturnCode(ERR_FSAL_ACCESS, 0);
+
+                 missing_access &= ~(pace->perm & missing_access);
                }
             }
         }
     }
 
-  if(missing_access)
+  if(missing_access || (denied != NULL && denied != 0))
     {
       LogFullDebug(COMPONENT_FSAL, "access denied");
       ReturnCode(ERR_FSAL_ACCESS, 0);
@@ -440,13 +470,13 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
       LogFullDebug(COMPONENT_FSAL, "access granted");
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 #endif                          /* _USE_NFS4_ACL */
 
 fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
+                                       fsal_accessflags_t * allowed,  /* OUT */
+                                       fsal_accessflags_t * denied,  /* OUT */
                                        struct stat *p_buffstat, /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
@@ -455,6 +485,12 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
   fsal_uid_t uid;
   fsal_gid_t gid;
   fsal_accessmode_t mode;
+
+  if(allowed != NULL)
+    *allowed = 0;
+
+  if(denied != NULL)
+    *denied = 0;
 
   /* unsatisfied flags */
   missing_access = access_type;
@@ -484,8 +520,13 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
 #ifdef _USE_HPSS
   LogDebug(COMPONENT_FSAL,
                "user uid=%d, user gid= %d, access_type=0X%x",
+#if HPSS_MAJOR_VERSION == 5
+               p_context->credential.hpss_usercred.SecPWent.Uid,
+               p_context->credential.hpss_usercred.SecPWent.Gid,
+#else
                p_context->credential.hpss_usercred.Uid,
                p_context->credential.hpss_usercred.Gid,
+#endif
                access_type);
 #else
   LogDebug(COMPONENT_FSAL,
@@ -495,19 +536,37 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
                access_type);
 #endif
 
+#ifdef _USE_HPSS
+#if HPSS_MAJOR_VERSION == 5
+  if(p_context->credential.hpss_usercred.SecPWent.Uid == 0)
+#else
+  if(p_context->credential.hpss_usercred.Uid == 0)
+#endif
+#else
   if(p_context->credential.user == 0)
+#endif
     {
       /* Always grant read/write access to root */
       missing_access &= ~(FSAL_R_OK | FSAL_W_OK);
+      if(allowed != NULL)
+        *allowed |= (FSAL_R_OK | FSAL_W_OK) & access_type;
+
       /* Grant execute permission for root if ANYONE has execute permission */
-      if(mode & (FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH))
+      if(mode & (FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH)) {
         missing_access &= ~FSAL_X_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_X_OK & access_type;
+      }
     }
 
   /* If the uid of the file matches the uid of the user,
    * then the uid mode bits take precedence. */
 #ifdef _USE_HPSS
+#if HPSS_MAJOR_VERSION == 5
+  if(p_context->credential.hpss_usercred.SecPWent.Uid == uid)
+#else
   if(p_context->credential.hpss_usercred.Uid == uid)
+#endif
 #else
   if(p_context->credential.user == uid)
 #endif
@@ -516,19 +575,31 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
       LogDebug(COMPONENT_FSAL,
                    "File belongs to user %d", uid);
 
-      if(mode & FSAL_MODE_RUSR)
+      if(mode & FSAL_MODE_RUSR) {
         missing_access &= ~FSAL_R_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_R_OK & access_type;
+      }
 
-      if(mode & FSAL_MODE_WUSR)
+      if(mode & FSAL_MODE_WUSR) {
         missing_access &= ~FSAL_W_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_W_OK & access_type;
+      }
 
-      if(mode & FSAL_MODE_XUSR)
+      if(mode & FSAL_MODE_XUSR) {
         missing_access &= ~FSAL_X_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_X_OK & access_type;
+      }
 
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
+          if(denied != NULL)
+            *denied = missing_access;
+
           LogDebug(COMPONENT_FSAL,
                        "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
                        mode, access_type, missing_access);
@@ -539,11 +610,19 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
 
   /* Test if the file belongs to user's group. */
 #ifdef _USE_HPSS
+#if HPSS_MAJOR_VERSION == 5
+  is_grp = (p_context->credential.hpss_usercred.SecPWent.Gid == gid);
+#else
   is_grp = (p_context->credential.hpss_usercred.Gid == gid);
+#endif  
   if(is_grp)
     LogDebug(COMPONENT_FSAL,
                  "File belongs to user's group %d",
+#if HPSS_MAJOR_VERSION == 5
+                 p_context->credential.hpss_usercred.SecPWent.Gid);
+#else
                  p_context->credential.hpss_usercred.Gid);
+#endif                 
 
   /* Test if file belongs to alt user's groups */
   if(!is_grp)
@@ -583,37 +662,62 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
    * bits take precedence. */
   if(is_grp)
     {
-      if(mode & FSAL_MODE_RGRP)
+      if(mode & FSAL_MODE_RGRP) {
         missing_access &= ~FSAL_R_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_R_OK & access_type;
+      }
 
-      if(mode & FSAL_MODE_WGRP)
+      if(mode & FSAL_MODE_WGRP) {
         missing_access &= ~FSAL_W_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_W_OK & access_type;
+      }
 
-      if(mode & FSAL_MODE_XGRP)
+      if(mode & FSAL_MODE_XGRP) {
         missing_access &= ~FSAL_X_OK;
+        if(allowed != NULL)
+          *allowed |= FSAL_X_OK & access_type;
+      }
 
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
-      else
+      else {
+        if(denied != NULL)
+          *denied = missing_access;
+
         ReturnCode(ERR_FSAL_ACCESS, 0);
+      }
 
     }
 
   /* If the user uid is not 0, the uid does not match the file's, and
    * the user's gids do not match the file's gid, we apply the "other"
    * mode bits to the user. */
-  if(mode & FSAL_MODE_ROTH)
-    missing_access &= ~FSAL_R_OK;
+  if(mode & FSAL_MODE_ROTH) {
+      missing_access &= ~FSAL_R_OK;
+      if(allowed != NULL)
+        *allowed |= FSAL_R_OK & access_type;
+    }
 
-  if(mode & FSAL_MODE_WOTH)
-    missing_access &= ~FSAL_W_OK;
+  if(mode & FSAL_MODE_WOTH) {
+      missing_access &= ~FSAL_W_OK;
+      if(allowed != NULL)
+        *allowed |= FSAL_W_OK & access_type;
+    }
 
-  if(mode & FSAL_MODE_XOTH)
-    missing_access &= ~FSAL_X_OK;
+  if(mode & FSAL_MODE_XOTH) {
+      missing_access &= ~FSAL_X_OK;
+      if(allowed != NULL)
+        *allowed |= FSAL_X_OK & access_type;
+    }
 
   if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
   else {
+    if(denied != NULL)
+      *denied = missing_access;
+
     LogDebug(COMPONENT_FSAL,
                  "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
                  mode, access_type, missing_access);
@@ -628,6 +732,8 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
 
 fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
                                 fsal_accessflags_t access_type,  /* IN */
+                                fsal_accessflags_t * allowed,  /* OUT */
+                                fsal_accessflags_t * denied,  /* OUT */
                                 struct stat *p_buffstat, /* IN */
                                 fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
@@ -646,13 +752,15 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
      IS_FSAL_ACE4_MASK_VALID(access_type))
     {
       return fsal_check_access_acl(p_context, FSAL_ACE4_MASK(access_type),
+                                   allowed, denied,
                                    p_object_attributes);
     }
 #endif
 
   /* Use mode to check access. */
   return fsal_check_access_no_acl(p_context, FSAL_MODE_MASK(access_type),
-                                           p_buffstat, p_object_attributes);
+                                  allowed, denied,
+                                  p_buffstat, p_object_attributes);
 
   LogDebug(COMPONENT_FSAL, "fsal_check_access: invalid access_type = 0X%x",
            access_type);

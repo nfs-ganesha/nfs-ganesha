@@ -676,13 +676,14 @@ typedef fsal_uint_t fsal_accessflags_t;
 
 #define FSAL_ACCESS_FLAG_BIT_MASK  0x80000000
 #define FSAL_MODE_BIT_MASK         0x7F000000
-#define FSAL_ACE4_BIT_MASK         0x00FFFFFF
+#define FSAL_ACE4_BIT_MASK         0x40FFFFFF
 
 #define FSAL_MODE_MASK(access)     (access & FSAL_MODE_BIT_MASK)
 #define FSAL_ACE4_MASK(access)     (access & FSAL_ACE4_BIT_MASK)
 
 #define FSAL_MODE_MASK_FLAG        0x00000000
 #define FSAL_ACE4_MASK_FLAG        0x80000000
+#define FSAL_ACE4_PERM_CONTINUE    0x40000000 /* Indicate ACL evaluation should continue */
 
 #define FSAL_MODE_MASK_SET(access) (access | FSAL_MODE_MASK_FLAG)
 #define FSAL_ACE4_MASK_SET(access) (access | FSAL_ACE4_MASK_FLAG)

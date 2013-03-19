@@ -74,6 +74,8 @@
 cache_inode_status_t
 cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
+                      fsal_accessflags_t * allowed,
+                      fsal_accessflags_t * denied,
                       fsal_op_context_t *context,
                       cache_inode_status_t *status,
                       fsal_attrib_list_t *attrs,
@@ -103,8 +105,10 @@ cache_inode_access_sw(cache_entry_t *entry,
      fsal_status
           = FSAL_test_access(context,
                              access_type,
+                             allowed,
+                             denied,
                              &entry->attributes);
-     if (!FSAL_IS_ERROR(fsal_status) && attrs) {
+     if (use_mutex | !FSAL_IS_ERROR(fsal_status) && attrs) {
           *attrs = entry->attributes;
      }
      if (use_mutex) {

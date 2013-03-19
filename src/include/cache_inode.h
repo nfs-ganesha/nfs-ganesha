@@ -629,6 +629,8 @@ void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
                                            fsal_accessflags_t access_type,
+                                           fsal_accessflags_t * allowed,
+                                           fsal_accessflags_t * denied,
                                            fsal_op_context_t *context,
                                            cache_inode_status_t *status,
                                            fsal_attrib_list_t *attrs,
@@ -656,7 +658,7 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_op_context_t *context,
                             cache_inode_status_t *status)
 {
-    return cache_inode_access_sw(entry, access_type,
+    return cache_inode_access_sw(entry, access_type, NULL, NULL,
                                  context, status, NULL, FALSE);
 }
 
@@ -681,7 +683,7 @@ cache_inode_access(cache_entry_t *entry,
                    fsal_op_context_t *context,
                    cache_inode_status_t *status)
 {
-    return cache_inode_access_sw(entry, access_type,
+    return cache_inode_access_sw(entry, access_type, NULL, NULL,
                                  context, status, NULL, TRUE);
 }
 
@@ -707,7 +709,7 @@ cache_inode_access2(cache_entry_t * pentry,
                     fsal_attrib_list_t *attr,
                     cache_inode_status_t * pstatus)
 {
-  return cache_inode_access_sw(pentry, access_type,
+  return cache_inode_access_sw(pentry, access_type, NULL, NULL,
                                pcontext, pstatus, attr, TRUE);
 }
 

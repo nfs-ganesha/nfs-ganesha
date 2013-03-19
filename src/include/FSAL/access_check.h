@@ -11,17 +11,23 @@
  * file/object access checking
  */
 
-fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
-                                    fsal_aceperm_t v4mask,  /* IN */
+fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
+                                    fsal_accessflags_t   v4mask,  /* IN */
+                                    fsal_accessflags_t * allowed,  /* OUT */
+                                    fsal_accessflags_t * denied,  /* OUT */
                                     fsal_attrib_list_t * p_object_attributes   /* IN */ );
 
 fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
+                                       fsal_accessflags_t * allowed,  /* OUT */
+                                       fsal_accessflags_t * denied,  /* OUT */
                                        struct stat *p_buffstat, /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ );
 
 fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
 				fsal_accessflags_t access_type,  /* IN */
+                                fsal_accessflags_t * allowed,  /* OUT */
+                                fsal_accessflags_t * denied,  /* OUT */
 				struct stat *p_buffstat, /* IN */
 				fsal_attrib_list_t * p_object_attributes /* IN */ );
 

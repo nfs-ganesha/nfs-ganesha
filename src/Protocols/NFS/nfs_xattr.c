@@ -336,7 +336,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
           goto out;
         }
 
-      fsal_status = FSAL_test_access(pcontext, access_mode, &xattrs);
+      fsal_status = FSAL_test_access(pcontext, access_mode, NULL, NULL, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -345,9 +345,9 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
               pres->res_access3.ACCESS3res_u.resok.access = 0;
 
               /* we have to check read/write permissions */
-              if(!FSAL_IS_ERROR(FSAL_test_access(pcontext, FSAL_R_OK, &xattrs)))
+              if(!FSAL_IS_ERROR(FSAL_test_access(pcontext, FSAL_R_OK, NULL, NULL, &xattrs)))
                 pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
-              if(!FSAL_IS_ERROR(FSAL_test_access(pcontext, FSAL_W_OK, &xattrs)))
+              if(!FSAL_IS_ERROR(FSAL_test_access(pcontext, FSAL_W_OK, NULL, NULL, &xattrs)))
                 pres->res_access3.ACCESS3res_u.resok.access |=
                     ACCESS3_MODIFY | ACCESS3_EXTEND;
             }

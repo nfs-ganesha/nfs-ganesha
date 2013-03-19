@@ -629,6 +629,8 @@ fsal_status_t FSAL_terminate()
 
 fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
+                               fsal_accessflags_t * allowed,  /* OUT */
+                               fsal_accessflags_t * denied,  /* OUT */
                                fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
   fsal_status_t  rc;
@@ -636,7 +638,11 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   timer_start = timer_get();
 
-  rc = fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
+  rc = fsal_functions.fsal_test_access(p_context,
+                                       access_type,
+                                       allowed,
+                                       denied,
+                                       p_object_attributes);
 
   timer_end = timer_get();
 

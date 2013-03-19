@@ -974,7 +974,7 @@ int fn_fsal_cd(int argc,        /* IN : number of args in argv */
       return ENOTDIR;
     }
 
-  if(FSAL_IS_ERROR(st = FSAL_test_access(&context->context, FSAL_X_OK, &attrs)))
+  if(FSAL_IS_ERROR(st = FSAL_test_access(&context->context, FSAL_X_OK, NULL, NULL, &attrs)))
     {
       fprintf(output, "Error: %s: permission denied.\n", glob_path);
       return st.major;
@@ -3420,7 +3420,7 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
       if(flag_v)
         fprintf(output, "Testing access rights...\n");
 
-      st = FSAL_test_access(&context->context, test_perms, &attributes);
+      st = FSAL_test_access(&context->context, test_perms, NULL, NULL, &attributes);
 
       if(FSAL_IS_ERROR(st))
         {
