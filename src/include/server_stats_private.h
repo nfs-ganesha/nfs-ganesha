@@ -148,6 +148,33 @@ struct export_stats {
 	.direction = "out" \
 }
 
+#define LAYOUTS_REPLY		\
+{				\
+	.name = "getdevinfo",	\
+	.type = "(ttt)",	\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "layout_get",	\
+	.type = "(ttt)",	\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "layout_commit",\
+	.type = "(ttt)",	\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "layout_return",\
+	.type = "(ttt)",	\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "layout_recall",\
+	.type = "(ttt)",	\
+	.direction = "out"	\
+}				\
+
 #define END_ARG_LIST {NULL, NULL, NULL}
 
 void server_stats_summary(DBusMessageIter *iter,
@@ -157,6 +184,8 @@ void server_dbus_v3_iostats(struct nfsv3_stats *v3p,
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p,
 			     DBusMessageIter *iter);
 void server_dbus_v41_iostats(struct nfsv41_stats *v41p,
+			     DBusMessageIter *iter);
+void server_dbus_v41_layouts(struct nfsv41_stats *v41p,
 			     DBusMessageIter *iter);
 
 #endif /* USE_DBUS_STATS */

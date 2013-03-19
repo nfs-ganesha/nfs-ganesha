@@ -1006,6 +1006,55 @@ void server_dbus_v41_iostats (struct nfsv41_stats *v41p,
 	server_dbus_iostats(&v41p->write, iter);
 }
 
+/**
+ * @brief Report layout statistics as a struct
+ *
+ * struct layout {
+ *       uint64_t total_layouts;
+ *       uint64_t errors;
+ *       uint64_t delays;
+ * }
+ *
+ * @param iop   [IN] pointer to xfer op sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ */
+
+static void server_dbus_layouts(struct layout_op *lop,
+				DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+	
+		dbus_message_iter_open_container(iter,
+						 DBUS_TYPE_STRUCT,
+						 NULL,
+						 &struct_iter);
+		dbus_message_iter_append_basic(&struct_iter,
+					       DBUS_TYPE_UINT64,
+					       &lop->total);
+		dbus_message_iter_append_basic(&struct_iter,
+					       DBUS_TYPE_UINT64,
+					       &lop->errors);
+		dbus_message_iter_append_basic(&struct_iter,
+					       DBUS_TYPE_UINT64,
+					       &lop->delays);
+		dbus_message_iter_close_container(iter,
+						  &struct_iter);
+}
+
+void server_dbus_v41_layouts(struct nfsv41_stats *v41p,
+			      DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_layouts(&v41p->getdevinfo, iter);
+	server_dbus_layouts(&v41p->layout_get, iter);
+	server_dbus_layouts(&v41p->layout_commit, iter);
+	server_dbus_layouts(&v41p->layout_return, iter);
+	server_dbus_layouts(&v41p->recall, iter);
+}
+
 #endif /* USE_DBUS_STATS */
 
 /**

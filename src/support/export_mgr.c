@@ -577,10 +577,57 @@ static struct gsh_dbus_method export_show_v41_io = {
 	}
 };
 
+/**
+ * DBUS method to report NFSv41 layout statistics
+ *
+ */
+
+static bool
+get_nfsv41_export_layouts(DBusMessageIter *args,
+			  DBusMessage *reply)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if(export == NULL) {
+		success = false;
+	} else {
+		export_st = container_of(export, struct export_stats, export);
+		if(export_st->st.nfsv41 == NULL) {
+			success = false;
+			errormsg = "Export does not have any NFSv4.1 activity";
+		}
+	}
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_layouts(export_st->st.nfsv41, &iter);
+
+	if(export != NULL)
+		put_gsh_export(export);
+	return true;
+}
+
+static struct gsh_dbus_method export_show_v41_layouts = {
+	.name = "GetNFSv41Layouts",
+	.method = get_nfsv41_export_layouts,
+	.args = { EXPORT_ID_ARG,
+		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
+		  LAYOUTS_REPLY,
+		  END_ARG_LIST
+	}
+};
+
 static struct gsh_dbus_method *export_stats_methods[] ={
 	&export_show_v3_io,
 	&export_show_v40_io,
 	&export_show_v41_io,
+	&export_show_v41_layouts,
 	NULL
 };
 

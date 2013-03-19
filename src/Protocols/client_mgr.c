@@ -628,10 +628,59 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
 	}
 };
 
+/**
+ * DBUS method to report NFSv41 layout statistics
+ *
+ */
+
+static bool
+get_nfsv41_stats_layouts(DBusMessageIter *args,
+			 DBusMessage *reply)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	client = lookup_client(args, &errormsg);
+	if(client == NULL) {
+		success = false;
+		if(errormsg == NULL)
+			errormsg = "Client IP address not found";
+	} else {
+		server_st = container_of(client, struct server_stats, client);
+		if(server_st->st.nfsv41 == NULL) {
+			success = false;
+			errormsg = "Client does not have any NFSv4.1 activity";
+		}
+	}
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_v41_layouts(server_st->st.nfsv41, &iter);
+
+	if(client != NULL)
+		put_gsh_client(client);
+	return true;
+}
+
+static struct gsh_dbus_method cltmgr_show_v41_layouts = {
+	.name = "GetNFSv41Layouts",
+	.method = get_nfsv41_stats_layouts,
+	.args = { IPADDR_ARG,
+		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
+		  LAYOUTS_REPLY,
+		  END_ARG_LIST
+	}
+};
+
 static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v3_io,
 	&cltmgr_show_v40_io,
 	&cltmgr_show_v41_io,
+	&cltmgr_show_v41_layouts,
 	NULL
 };
 
