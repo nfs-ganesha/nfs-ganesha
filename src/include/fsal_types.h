@@ -669,7 +669,6 @@ typedef struct fsal_extattrib_list__
 
 typedef fsal_uint_t fsal_accessflags_t;
 
-#define FSAL_OWNER_OK   0x08000000       /* Allow owner override */
 #define FSAL_R_OK       0x04000000       /* Test for Read permission */
 #define FSAL_W_OK       0x02000000       /* Test for Write permission */
 #define FSAL_X_OK       0x01000000       /* Test for execute permission */
