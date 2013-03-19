@@ -461,7 +461,6 @@ struct attrlist {
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
 
 typedef enum {
-        FSAL_OWNER_OK = 0x08000000, /*< Allow owner override */
         FSAL_R_OK = 0x04000000, /*< Test for Read permission */
         FSAL_W_OK = 0x02000000, /*< Test for Write permission */
         FSAL_X_OK = 0x01000000, /*< Test for execute permission */
