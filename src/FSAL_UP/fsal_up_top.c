@@ -1211,24 +1211,29 @@ static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
 
 
 
-static void notifydev_one(state_t *s,
-			  struct fsal_up_event_notifydevice *devicenotify)
+static bool client_callback(nfs_client_id_t *pclientid, void *devnotify)
 {
 	int code = 0;
-	cache_entry_t *entry = s->state_entry;
 	CB_NOTIFY_DEVICEID4args *cb_notify_dev;
 	struct cb_notify *arg;
+	struct fsal_up_event_notifydevice *devicenotify = devnotify;
+	
+        if (pclientid)
+        {
+	  LogFullDebug(COMPONENT_NFS_CB,"CliP %p ClientID=%"PRIx64" ver %d",
+	     pclientid, pclientid->cid_clientid, pclientid->cid_minorversion);
+        }
+        else
+          return false;
 
-	arg = gsh_malloc(sizeof(struct cb_notify)); // free in notifydev_completion
+	arg = gsh_malloc(sizeof(struct cb_notify)); /* free in notifydev_completion */
 	if (arg == NULL) {
-		return;
+		return false;
 	}
 
 	cb_notify_dev = &arg->arg.nfs_cb_argop4_u.opcbnotify_deviceid;
 
 	arg->arg.argop = NFS4_OP_CB_NOTIFY_DEVICEID;
-
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	cb_notify_dev->cnda_changes.cnda_changes_len = 1;
 	cb_notify_dev->cnda_changes.cnda_changes_val = &arg->notify;
@@ -1242,19 +1247,16 @@ static void notifydev_one(state_t *s,
 	       &devicenotify->device_id,
 	       NFS4_DEVICEID4_SIZE);
 
-	code = nfs_rpc_v41_single(s->state_owner->so_owner
-				  .so_nfs4_owner.so_clientrec,
+	code = nfs_rpc_v41_single(pclientid,
 				  &arg->arg,
-				  &s->state_refer,
+				  NULL,
 				  notifydev_completion,
 				  &arg->arg,
 				  NULL);
-	if (code != 0) {
-		/* TODO: ? */
-	}
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	if (code != 0)
+		gsh_free(arg);
 
-	return;
+	return true;
 }
 
 static void recallany_queue(struct fridgethr_context *ctx)
@@ -1292,26 +1294,8 @@ static void notifydevice_queue(struct fridgethr_context *ctx)
 	struct fsal_up_event *e = ctx->arg;
 	struct fsal_up_event_notifydevice *devicenotify
 		= &e->data.notifydevice;
-	struct fsal_up_file *file = &e->file;
-	struct exportlist *exp;
-	struct glist_head *glist;
-	state_t *state;
-	exp = file->export->exp_entry;
 
-	pthread_mutex_lock(&exp->exp_state_mutex);
-
-	/* TODO: loop over list and mark clients that are called so we
-	   call them only once */
-	glist_for_each(glist, &exp->exp_state_list) {
-		state = glist_entry(glist, struct state_t, state_export_list);
-
-		if (state != NULL && state->state_type == STATE_TYPE_LAYOUT) {
-			LogDebug(COMPONENT_NFS_CB,"state %p type %d",
-				 state, state->state_type);
-			notifydev_one(state, devicenotify);
-		}
-	}
-	pthread_mutex_unlock(&exp->exp_state_mutex);
+	nfs41_foreach_client_callback(client_callback, (void *)devicenotify);
 
 	return;
 }

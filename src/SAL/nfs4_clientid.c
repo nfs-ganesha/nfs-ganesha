@@ -1597,4 +1597,49 @@ nfs_client_record_t *get_client_record(char *value, int len)
 	return NULL;
 }
 
+/**
+ * @ Walk the client tree and do the callback on each 4.1 nodes
+ *
+ * @param cb    [IN] Callback function
+ * @param state [IN] param block to pass
+ */
+
+void
+nfs41_foreach_client_callback(bool (*cb)(nfs_client_id_t *cl, void *state),
+				void *state)
+{
+	uint32_t i;
+	hash_table_t *ht = ht_confirmed_client_id;
+	struct rbt_head *head_rbt;
+	struct hash_data *pdata = NULL;
+	struct rbt_node *pn;
+	nfs_client_id_t *pclientid;
+
+	/* For each bucket of the hashtable */
+	for(i = 0; i < ht->parameter.index_size; i++) {
+		head_rbt = &(ht->partitions[i].rbt);
+
+		/* acquire mutex */
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
+
+		/* go through all entries in the red-black-tree*/
+		RBT_LOOP(head_rbt, pn) {
+			pdata = RBT_OPAQ(pn);
+			pclientid = pdata->val.addr;
+			RBT_INCREMENT(pn);
+        		
+			inc_client_id_ref(pclientid);
+			if (pclientid->cid_minorversion > 0)
+			{
+				PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
+				cb(pclientid, state);
+				PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
+			}
+			dec_client_id_ref(pclientid);
+		}
+		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
+	}
+	return;
+}
+
 /** @} */
