@@ -2902,12 +2902,6 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
     {
       switch (str_perms[i])
         {
-        case 'F':
-          if(flag_v)
-            fprintf(output, "F_OK flag\n");
-          test_perms |= FSAL_F_OK;
-          break;
-
         case 'R':
           if(flag_v)
             fprintf(output, "R_OK flag\n");

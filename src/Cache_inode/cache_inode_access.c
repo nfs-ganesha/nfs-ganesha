@@ -80,7 +80,6 @@ cache_inode_access_sw(cache_entry_t *entry,
                       int use_mutex)
 {
      fsal_status_t fsal_status;
-     fsal_accessflags_t used_access_type;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "access_type=0X%x",
@@ -89,56 +88,38 @@ cache_inode_access_sw(cache_entry_t *entry,
      /* Set the return default to CACHE_INODE_SUCCESS */
      *status = CACHE_INODE_SUCCESS;
 
-     /*
-      * We do no explicit access test in FSAL for FSAL_F_OK: it is
-      * considered that if an entry resides in the cache_inode, then a
-      * FSAL_getattrs was successfully made to populate the cache entry,
-      * this means that the entry exists. For this reason, F_OK is
-      * managed internally
-      */
-     if(access_type != FSAL_F_OK) {
-          /* We get ride of F_OK */
-          used_access_type = access_type & ~FSAL_F_OK;
+     /* We actually need the lock here since we're using
+        the attribute cache, so get it if the caller didn't
+        acquire it.  */
+     if(use_mutex) {
+          if ((*status
+               = cache_inode_lock_trust_attrs(entry,
+                                              context,
+                                              FALSE))
+              != CACHE_INODE_SUCCESS) {
+               goto out;
+          }
+     }
+     fsal_status
+          = FSAL_test_access(context,
+                             access_type,
+                             &entry->attributes);
+     if (!FSAL_IS_ERROR(fsal_status) && attrs) {
+          *attrs = entry->attributes;
+     }
+     if (use_mutex) {
+          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+     }
 
-          /*
-           * Function FSAL_test_access is used instead of FSAL_access.
-           * This allow to take benefit of the previously cached
-           * attributes.
-           */
-
-          /* We actually need the lock here since we're using
-             the attribute cache, so get it if the caller didn't
-             acquire it.  */
-          if(use_mutex) {
-               if ((*status
-                    = cache_inode_lock_trust_attrs(entry,
-                                                   context,
-                                                   FALSE))
-                   != CACHE_INODE_SUCCESS) {
-                    goto out;
-               }
+     if(FSAL_IS_ERROR(fsal_status)) {
+          *status = cache_inode_error_convert(fsal_status);
+          if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "STALE returned by FSAL, calling kill_entry");
+               cache_inode_kill_entry(entry);
           }
-          fsal_status
-               = FSAL_test_access(context,
-                                  used_access_type,
-                                  &entry->attributes);
-          if (!FSAL_IS_ERROR(fsal_status) && attrs) {
-               *attrs = entry->attributes;
-          }
-          if (use_mutex) {
-               PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
-          }
-
-          if(FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                       "STALE returned by FSAL, calling kill_entry");
-                    cache_inode_kill_entry(entry);
-               }
-          } else {
-               *status = CACHE_INODE_SUCCESS;
-          }
+     } else {
+          *status = CACHE_INODE_SUCCESS;
      }
 
 out:

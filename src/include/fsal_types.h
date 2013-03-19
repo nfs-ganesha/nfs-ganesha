@@ -672,7 +672,6 @@ typedef fsal_uint_t fsal_accessflags_t;
 #define FSAL_R_OK       0x04000000       /* Test for Read permission */
 #define FSAL_W_OK       0x02000000       /* Test for Write permission */
 #define FSAL_X_OK       0x01000000       /* Test for execute permission */
-#define FSAL_F_OK       0x10000000       /* Test for existence of File */
 #define FSAL_ACCESS_OK  0x00000000       /* Allow */
 
 #define FSAL_ACCESS_FLAG_BIT_MASK  0x80000000

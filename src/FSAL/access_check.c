@@ -452,11 +452,6 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
   fsal_gid_t gid;
   fsal_accessmode_t mode;
 
-  /* If the FSAL_F_OK flag is set, returns ERR INVAL */
-
-  if(access_type & FSAL_F_OK)
-    ReturnCode(ERR_FSAL_INVAL, 0);
-
   /* unsatisfied flags */
   missing_access = access_type;
   if(!missing_access)
