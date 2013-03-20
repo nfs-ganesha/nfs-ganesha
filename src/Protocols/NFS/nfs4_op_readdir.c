@@ -87,7 +87,7 @@ struct nfs4_readdir_cb_data
 static bool
 nfs4_readdir_callback(void* opaque,
                       const char *name,
-                      struct fsal_obj_handle *handle,
+                      const struct fsal_obj_handle *handle,
                       uint64_t cookie)
 {
      struct nfs4_readdir_cb_data *tracker =

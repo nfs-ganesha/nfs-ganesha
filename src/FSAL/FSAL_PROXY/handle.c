@@ -1821,15 +1821,15 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t 
-pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
+pxy_handle_digest(const struct fsal_obj_handle *obj_hdl,
                   fsal_digesttype_t output_type,
                   struct gsh_buffdesc *fh_desc)
 {
-        struct pxy_obj_handle *ph =
-                container_of(obj_hdl, struct pxy_obj_handle, obj);
-        size_t fhs;
-        void *data;
+        const struct pxy_obj_handle *ph =
+                container_of(obj_hdl, const struct pxy_obj_handle, obj);
         uint32_t u32;
+        size_t fhs;
+        const void *data;
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)

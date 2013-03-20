@@ -855,19 +855,19 @@ static fsal_status_t file_unlink (struct fsal_obj_handle *dir_hdl,
 }
 
 
-static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
+static fsal_status_t handle_digest (const struct fsal_obj_handle *obj_hdl,
                                     fsal_digesttype_t output_type, struct gsh_buffdesc *fh_desc)
 {
     uint32_t ino32;
     uint64_t ino64;
-    struct posix_fsal_obj_handle *myself;
-    struct handle_data *fh;
+    const struct posix_fsal_obj_handle *myself;
+    const struct handle_data *fh;
     size_t fh_size;
 
     /* sanity checks */
     if (!fh_desc)
         return fsalstat (ERR_FSAL_FAULT, 0);
-    myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
+    myself = container_of (obj_hdl, const struct posix_fsal_obj_handle, obj_handle);
     fh = myself->handle;
 
     switch (output_type) {

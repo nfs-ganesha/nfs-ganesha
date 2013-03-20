@@ -1032,7 +1032,7 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
  * default case server fault
  */
 
-static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {

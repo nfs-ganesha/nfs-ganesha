@@ -56,7 +56,7 @@
 
 static bool nfs3_readdir_callback(void* opaque,
                                   const char *name,
-                                  struct fsal_obj_handle *obj_hdl,
+                                  const struct fsal_obj_handle *obj_hdl,
                                   uint64_t cookie);
 static void free_entry3s(entry3 *entry3s);
 
@@ -372,7 +372,7 @@ void nfs3_Readdir_Free(nfs_res_t *resp)
 static bool
 nfs3_readdir_callback(void* opaque,
                       const char *name,
-                      struct fsal_obj_handle *obj_hdl,
+                      const struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/

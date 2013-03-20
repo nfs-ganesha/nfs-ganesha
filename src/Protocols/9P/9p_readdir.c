@@ -67,10 +67,10 @@ typedef struct _9p_cb_data
    unsigned int max ;
 } _9p_cb_data_t ;
 
-static bool _9p_readdir_callback( void                   * opaque,
-                                  const char             * name,
-                                  struct fsal_obj_handle * handle,
-                                  uint64_t                 cookie)
+static bool _9p_readdir_callback( void                         * opaque,
+                                  const char                   * name,
+                                  const struct fsal_obj_handle * handle,
+                                  uint64_t                       cookie)
 {
    _9p_cb_data_t * cb_data = opaque ;
 

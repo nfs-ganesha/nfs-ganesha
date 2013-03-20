@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ------------- 
  */
@@ -1160,20 +1161,20 @@ out:
  * the whole struct.
  */
 
-static fsal_status_t lustre_handle_digest(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_handle_digest(const struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
 	uint32_t ino32;
 	uint64_t ino64;
-	struct lustre_fsal_obj_handle *myself;
-	struct lustre_file_handle *fh;
+	const struct lustre_fsal_obj_handle *myself;
+	const struct lustre_file_handle *fh;
 	size_t fh_size;
 
 	/* sanity checks */
         if( !fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
+	myself = container_of(obj_hdl, const struct lustre_fsal_obj_handle, obj_handle);
 	fh = myself->handle;
 
 	switch(output_type) {

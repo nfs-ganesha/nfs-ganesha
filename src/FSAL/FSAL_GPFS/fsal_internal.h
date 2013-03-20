@@ -134,7 +134,7 @@ typedef struct fsal_xstat__
   char buffacl[GPFS_ACL_BUF_SIZE];
 } gpfsfsal_xstat_t;
 
-static inline size_t gpfs_sizeof_handle(struct gpfs_file_handle *hdl)
+static inline size_t gpfs_sizeof_handle(const struct gpfs_file_handle *hdl)
 {
   return sizeof(struct gpfs_file_handle);
 }

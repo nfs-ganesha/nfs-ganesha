@@ -1228,20 +1228,20 @@ out:
  * the whole struct.
  */
 
-static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
 	uint32_t ino32;
 	uint64_t ino64;
-	struct vfs_fsal_obj_handle *myself;
+	const struct vfs_fsal_obj_handle *myself;
 	vfs_file_handle_t *fh;
 	size_t fh_size;
 
 	/* sanity checks */
         if( !fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	myself = container_of(obj_hdl, const struct vfs_fsal_obj_handle, obj_handle);
 	fh = myself->handle;
 
 	switch(output_type) {
