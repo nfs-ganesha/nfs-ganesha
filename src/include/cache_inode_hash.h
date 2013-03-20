@@ -334,13 +334,13 @@ atomic_fetch_voidptr(void **var)
 static inline void
 atomic_store_voidptr(void **var, void *val)
 {
-     __atomic_store_n(var, val, __ATOMIC_SEQ_CST);
+     (void)__atomic_store_n(var, val, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline void
 atomic_store_voidptr(void **var, void *val)
 {
-     __sync_lock_test_and_set(var, 0);
+	(void)__sync_lock_test_and_set(var, 0);
 }
 #endif
 
