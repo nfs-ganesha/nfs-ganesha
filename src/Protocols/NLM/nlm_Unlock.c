@@ -67,6 +67,13 @@ int nlm4_Unlock(nfs_arg_t *parg,
   fsal_lock_param_t    lock;
   int                  rc;
 
+  if(pexport == NULL)
+    {
+      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unlock");
+      return NFS_REQ_OK;
+    }
+
   netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",

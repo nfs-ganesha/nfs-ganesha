@@ -402,7 +402,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
   if(isFullDebug(COMPONENT_FSAL))
     {
       char outstr[1024];
-      nfs4_sprint_fhandle(pnfs4_handle, outstr);
+      sprint_fhandle4(outstr, pnfs4_handle);
       LogFullDebug(COMPONENT_FSAL, "fsal_internal_proxy_create_fh: input nfsv4 server handle=%s", outstr);
     }
  
@@ -424,7 +424,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
 
           tmpfh.nfs_fh4_len = pfsal_handle->data.srv_handle_len;
           tmpfh.nfs_fh4_val = pfsal_handle->data.srv_handle_val;
-          nfs4_sprint_fhandle(&tmpfh, outstr);
+          sprint_fhandle4(outstr, &tmpfh);
           LogFullDebug(COMPONENT_FSAL,
                        "fsal_internal_proxy_create_fh: output nfsv4 server handle= %s fileid=%llu",
                        outstr, fileid);
@@ -464,7 +464,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
   if(isFullDebug(COMPONENT_FSAL))
     {
       char outstr[1024];
-      nfs4_sprint_fhandle(pnfs4_handle, outstr);
+      sprint_fhandle4(outstr, pnfs4_handle);
       LogFullDebug(COMPONENT_FSAL, "fsal_internal_proxy_extract_fh: input nfsv4 server handle=%s\n", outstr);
     }
 

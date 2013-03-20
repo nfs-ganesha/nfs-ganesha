@@ -190,6 +190,10 @@ void nfs_FhandleToStr(u_long     rq_vers,
  *
  * @return a pointer to the related pentry if successful, NULL is returned in case of a failure.
  *
+ * For NFS v4 assumes handle has passed nfs4_Is_Fh_Invalid and is not a PseudoFS handle.
+ * For NFS v3 assumes handle has passed nfs3_Is_Fh_Invalid
+ * For NFS v2 assumes handle has passed nfs2_Is_Fh_Invalid
+ *
  */
 cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   fhandle2 * pfh2,
@@ -205,8 +209,8 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   cache_inode_fsal_data_t fsal_data;
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
   exportlist_t *pexport = NULL;
+  file_handle_v4_t *pfile_handle;
   short exportid = 0;
 
   /* Default behaviour */
@@ -218,16 +222,23 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     case NFS_V4:
       if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.fh_desc, pcontext))
         {
+          LogDebug(COMPONENT_FILEHANDLE,
+                   "nfs4_FhandleToFSAL failed");
           *prc = NFS_REQ_DROP;
           *pstatus4 = NFS4ERR_BADHANDLE;
           return NULL;
         }
-      exportid = nfs4_FhandleToExportId(pfh4);
+
+      /* Get the exportid from the handle. */
+      pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
+      exportid = pfile_handle->exportid;
       break;
 
     case NFS_V3:
       if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.fh_desc, pcontext))
         {
+          LogDebug(COMPONENT_FILEHANDLE,
+                   "nfs3_FhandleToFSAL failed");
           *prc = NFS_REQ_DROP;
           *pstatus3 = NFS3ERR_BADHANDLE;
           return NULL;
@@ -246,9 +257,10 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
     }
 
-  print_buff(COMPONENT_FILEHANDLE,
-             fsal_data.fh_desc.start,
-             fsal_data.fh_desc.len);
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs_FhandleToCache",
+                     fsal_data.fh_desc.start,
+                     fsal_data.fh_desc.len);
 
   if((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
     {
@@ -269,12 +281,10 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
         }
       *prc = NFS_REQ_DROP;
 
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "Invalid file handle passed to nfsFhandleToCache ");
       return NULL;
     }
 
-  if((pentry = cache_inode_get(&fsal_data, &attr, pcontext,
+  if((pentry = cache_inode_get(&fsal_data, pattr, pcontext,
                                NULL, &cache_status)) == NULL)
     {
       switch (rq_vers)
@@ -294,9 +304,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       *prc = NFS_REQ_OK;
       return NULL;
     }
-
-  if(pattr != NULL)
-    *pattr = attr;
 
   return pentry;
 }                               /* nfs_FhandleToCache */
@@ -416,7 +423,6 @@ static int nfs_RetryableError(cache_inode_status_t cache_status,
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_LRU_ERROR:
@@ -1995,54 +2001,6 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
   return 1;
 }                               /*  nfs2_FSALattr_To_Fattr */
-
-/**
- * 
- * nfs4_SetCompoundExport
- * 
- * This routine fills in the pexport field in the compound data and then
- * calls nfs4_MakeCred to fill in and check the credential information.
- *
- * @param pfh [OUT] pointer to compound data to be used. 
- * 
- * @return NFS4_OK if successfull. Possible errors are NFS4ERR_BADHANDLE and NFS4ERR_WRONGSEC.
- *
- */
-
-int nfs4_SetCompoundExport(compound_data_t * data)
-{
-  short exportid;
-  exportlist_t * pexport;
-
-  /* This routine can not handle pseudo fs file handle. */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      LogCrit(COMPONENT_NFS_V4,
-              "Can not set export for pseudo fs");
-      return NFS4ERR_INVAL;
-    }
-
-  /* Get the export id */
-  if((exportid = nfs4_FhandleToExportId(&(data->currentFH))) == 0)
-    return NFS4ERR_BADHANDLE;
-
-  pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid);
-
-  if(pexport == NULL)
-    {
-      data->pexport = NULL;
-      return NFS4ERR_BADHANDLE;
-    }
-
-  if(pexport != data->pexport)
-    {
-      data->pexport = pexport;
-
-      return nfs4_MakeCred(data);
-    }
-
-  return NFS4_OK;
-}                               /* nfs4_SetCompoundExport */
 
 /**
  * 
@@ -3828,10 +3786,6 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
-      nfserror = NFS4ERR_BADHANDLE;
-      break;
-
     case CACHE_INODE_BAD_TYPE:
     case CACHE_INODE_INVALID_ARGUMENT:
       nfserror = NFS4ERR_INVAL;
@@ -3979,7 +3933,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_CACHE_CONTENT_EXISTS:
     case CACHE_INODE_CACHE_CONTENT_EMPTY:
@@ -4138,7 +4091,6 @@ nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_BAD_TYPE:
     case CACHE_INODE_CACHE_CONTENT_EXISTS:
@@ -4510,29 +4462,25 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               cache_inode_file_type_t required_type)
 {
+  int rc;
+
   /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      LogDebug(COMPONENT_FILEHANDLE,
-               "nfs4_Is_Fh_Empty failed");
-      return NFS4ERR_NOFILEHANDLE;
-    }
+  rc = nfs4_Is_Fh_Empty(&(data->currentFH));
+
+  if(rc != NFS4_OK)
+    return rc;
 
   /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      LogDebug(COMPONENT_FILEHANDLE,
-               "nfs4_Is_Fh_Invalid failed");
-      return NFS4ERR_BADHANDLE;
-    }
+  rc = nfs4_Is_Fh_Invalid(&(data->currentFH));
+
+  if(rc != NFS4_OK)
+    return rc;
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      LogDebug(COMPONENT_FILEHANDLE,
-               "nfs4_Is_Fh_Expired failed");
-      return NFS4ERR_FHEXPIRED;
-    }
+  rc = nfs4_Is_Fh_Expired(&(data->currentFH));
+
+  if(rc != NFS4_OK)
+    return rc;
 
   /* Check for the correct file type */
   if (required_type)
@@ -4548,6 +4496,70 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
             return NFS4ERR_INVAL;
 
           switch (data->current_filetype)
+            {
+            case DIRECTORY:
+              return NFS4ERR_ISDIR;
+            default:
+              return NFS4ERR_INVAL;
+            }
+        }
+    }
+
+  return NFS4_OK;
+}
+
+
+/**
+ *
+ * nfs4_sanity_check_SavedFH: Do basic checks on a filehandle
+ *
+ * This function performs basic checks to make sure the supplied
+ * filehandle is sane for a given operation.
+ *
+ * @param data          [IN] Compound_data_t for the operation to check
+ * @param required_type [IN] The file type this operation requires.
+ *                           Set to 0 to allow any type.
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4 nfs4_sanity_check_SavedFH(compound_data_t *data,
+                                   cache_inode_file_type_t required_type)
+{
+  int rc;
+
+  /* If there is no FH */
+  rc = nfs4_Is_Fh_Empty(&(data->savedFH));
+
+  if(rc != NFS4_OK)
+    return rc;
+
+  /* If the filehandle is invalid */
+  rc = nfs4_Is_Fh_Invalid(&(data->savedFH));
+
+  if(rc != NFS4_OK)
+    return rc;
+
+  /* Tests if the Filehandle is expired (for volatile filehandle) */
+  rc = nfs4_Is_Fh_Expired(&(data->savedFH));
+
+  if(rc != NFS4_OK)
+    return rc;
+
+  /* Check for the correct file type */
+  if (required_type)
+    {
+      if(data->saved_filetype != required_type)
+        {
+          LogDebug(COMPONENT_NFSPROTO,
+                   "Wrong file type");
+
+          if(required_type == DIRECTORY)
+            return NFS4ERR_NOTDIR;
+          if(required_type == SYMBOLIC_LINK)
+            return NFS4ERR_INVAL;
+
+          switch (data->saved_filetype)
             {
             case DIRECTORY:
               return NFS4ERR_ISDIR;

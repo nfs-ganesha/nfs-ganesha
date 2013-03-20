@@ -59,10 +59,6 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
   {
   ERR_CACHE_INODE_GET_NEW_LRU_ENTRY, "ERR_CACHE_INODE_GET_NEW_LRU_ENTRY",
         "Can't get a new LRU entry"},
-#define ERR_CACHE_INODE_UNAPPROPRIATED_KEY  CACHE_INODE_UNAPPROPRIATED_KEY
-  {
-  ERR_CACHE_INODE_UNAPPROPRIATED_KEY, "ERR_CACHE_INODE_UNAPPROPRIATED_KEY",
-        "Bad hash table key"},
 #define ERR_CACHE_INODE_FSAL_ERROR CACHE_INODE_FSAL_ERROR
   {
   ERR_CACHE_INODE_FSAL_ERROR, "ERR_CACHE_INODE_FSAL_ERROR", "FSAL error occured"},

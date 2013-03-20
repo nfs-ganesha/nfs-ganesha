@@ -618,22 +618,22 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
       /* Reject the request for authentication reason (incompatible file handle) */
       if(isInfo(COMPONENT_NLM))
         {
-          char dumpfh[1024];
-          char *reason;
           char addrbuf[SOCK_NAME_MAX];
           sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
                           addrbuf,
                           sizeof(addrbuf));
           if(exportid < 0)
-            reason = "has badly formed handle";
+            LogInfo(COMPONENT_NLM,
+                    "NLM4 granted lock from client %s has badly formed handle",
+                    addrbuf);
           else if(pexport == NULL)
-            reason = "has invalid export";
+            LogInfo(COMPONENT_NLM,
+                    "NLM4 granted lock from client %s has invalid export %d",
+                    addrbuf, exportid);
           else
-            reason = "V3 not allowed on this export";
-          sprint_fhandle_nlm(dumpfh, &nlm_block_data->sbd_nlm_fh);
-          LogMajor(COMPONENT_NLM,
-                   "NLM4 granted lock from host %s %s, FH=%s",
-                   addrbuf, reason, dumpfh);
+            LogInfo(COMPONENT_NLM,
+                    "NLM4 granted lock from client %s V3 is not allowed on export %d",
+                    addrbuf, exportid);
         }
 
       return FALSE;

@@ -157,7 +157,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
     {
       char outstr[1024];
 
-      nfs4_sprint_fhandle(&nfs4fh, outstr);
+      sprint_fhandle4(outstr, &nfs4fh);
       LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) parent handle=%s\n",
                    outstr);
     }
@@ -250,7 +250,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
     {
       char outstr[1024];
 
-      nfs4_sprint_fhandle(&nfs4fh, outstr);
+      sprint_fhandle4(outstr, &nfs4fh);
       LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) created file handle=%s\n",
            outstr);
     }

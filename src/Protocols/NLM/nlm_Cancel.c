@@ -69,6 +69,13 @@ int nlm4_Cancel(nfs_arg_t *parg,
   fsal_lock_param_t    lock;
   int                  rc;
 
+  if(pexport == NULL)
+    {
+      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Cancel");
+      return NFS_REQ_OK;
+    }
+
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx cookie=%s",

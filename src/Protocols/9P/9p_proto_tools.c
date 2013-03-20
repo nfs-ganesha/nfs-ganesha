@@ -141,7 +141,6 @@ int _9p_tools_errno( cache_inode_status_t cache_status )
 
      case CACHE_INODE_INVALID_ARGUMENT:
      case CACHE_INODE_NAME_TOO_LONG:
-     case CACHE_INODE_UNAPPROPRIATED_KEY:
      case CACHE_INODE_INCONSISTENT_ENTRY:
      case CACHE_INODE_FSAL_ERROR:
      case CACHE_INODE_BAD_TYPE: 

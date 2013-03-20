@@ -139,6 +139,11 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                bool_t* deleted);
 fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
 #endif /* _PNFS_MDS */
+
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               cache_inode_file_type_t required_type);
+
+nfsstat4 nfs4_sanity_check_SavedFH(compound_data_t *data,
+                                   cache_inode_file_type_t required_type);
+
 #endif                          /* _NFS_PROTO_TOOLS_H */

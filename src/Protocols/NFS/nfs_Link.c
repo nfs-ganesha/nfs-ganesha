@@ -92,7 +92,7 @@ int nfs_Link(nfs_arg_t *parg,
   char *str_link_name = NULL;
   fsal_name_t link_name;
   cache_entry_t *target_pentry = NULL;
-  cache_entry_t *parent_pentry;
+  cache_entry_t *parent_pentry = NULL;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t parent_attr;
@@ -144,6 +144,68 @@ int nfs_Link(nfs_arg_t *parg,
       ppre_attr = NULL;
     }
 
+  /* Get the exportids for the two handles. */
+  switch (preq->rq_vers)
+    {
+    case NFS_V2:
+      {
+        str_link_name = parg->arg_link2.to.name;
+        to_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.to.dir));
+        from_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.from));
+        break;
+      }
+    case NFS_V3:
+      {
+        str_link_name = parg->arg_link3.link.name;
+        to_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.link.dir));
+        from_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.file));
+        break;
+      }
+    }
+
+  /* Validate the to_exportid */
+  if(to_exportid < 0)
+    {
+      LogInfo(COMPONENT_DISPATCH,
+              "NFS%d LINK Request from client %s has badly formed handle for link dir",
+              preq->rq_vers, pworker->hostaddr_str);
+
+      /* Bad handle, report to client */
+      if(preq->rq_vers == NFS_V2)
+        pres->res_stat2 = NFSERR_STALE;
+      else
+        pres->res_link3.status = NFS3ERR_BADHANDLE;
+      goto out;
+    }
+
+  if(nfs_Get_export_by_id(nfs_param.pexportlist,
+                          to_exportid) == NULL)
+    {
+      LogInfo(COMPONENT_DISPATCH,
+              "NFS%d LINK Request from client %s has invalid export %d for link dir",
+              preq->rq_vers, pworker->hostaddr_str,
+              to_exportid);
+
+      /* Bad export, report to client */
+      if(preq->rq_vers == NFS_V2)
+        pres->res_stat2 = NFSERR_STALE;
+      else
+        pres->res_link3.status = NFS3ERR_STALE;
+      goto out;
+    }
+
+  /*
+   * Both objects have to be in the same filesystem 
+   */
+
+  if(to_exportid != from_exportid)
+    {
+      if(preq->rq_vers == NFS_V2)
+        pres->res_stat2 = NFSERR_PERM;
+      if(preq->rq_vers == NFS_V3)
+        pres->res_link3.status = NFS3ERR_XDEV;
+      goto out;
+    }
   /* Get entry for parent directory */
   if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
                                          &(parg->arg_link2.to.dir),
@@ -195,24 +257,6 @@ int nfs_Link(nfs_arg_t *parg,
       goto out;
     }
 
-  switch (preq->rq_vers)
-    {
-    case NFS_V2:
-      {
-        str_link_name = parg->arg_link2.to.name;
-        to_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.to.dir));
-        from_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.from));
-        break;
-      }
-    case NFS_V3:
-      {
-        str_link_name = parg->arg_link3.link.name;
-        to_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.link.dir));
-        from_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.file));
-        break;
-      }
-    }
-
   // if(str_link_name == NULL || strlen(str_link_name) == 0)
   if(str_link_name == NULL || *str_link_name == '\0' )
     {
@@ -220,22 +264,10 @@ int nfs_Link(nfs_arg_t *parg,
         pres->res_stat2 = NFSERR_IO;
       if(preq->rq_vers == NFS_V3)
         pres->res_link3.status = NFS3ERR_INVAL;
+      goto out;
     }
   else
     {
-      /*
-       * Both objects have to be in the same filesystem 
-       */
-
-      if(to_exportid != from_exportid)
-        {
-          if(preq->rq_vers == NFS_V2)
-            pres->res_stat2 = NFSERR_PERM;
-          if(preq->rq_vers == NFS_V3)
-            pres->res_link3.status = NFS3ERR_XDEV;
-        }
-      else
-        {
           /* Make the link */
           if((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
                                                                      0,
@@ -288,7 +320,6 @@ int nfs_Link(nfs_arg_t *parg,
                     }           /* if( cache_inode_link ... */
                 }               /* if( cache_inode_getattr ... */
             }                   /* else */
-        }
     }
 
   /* If we are here, there was an error */

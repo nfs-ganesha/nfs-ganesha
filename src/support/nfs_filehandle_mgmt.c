@@ -132,31 +132,48 @@ int nfs4_FhandleToFSAL(nfs_fh4 *pfh4,
   fsal_status_t fsal_status;
   file_handle_v4_t *pfile_handle;
 
-  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
-  print_fhandle4(COMPONENT_FILEHANDLE, pfh4);
+  if(nfs4_Is_Fh_Invalid(pfh4) != NFS4_OK)
+    return 0;
+
+  if(nfs4_Is_Fh_Pseudo(pfh4))
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: PseudoFS handle");
+      return 0;
+    }
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
 
-  /* validate the filehandle  */
-  if(pfh4->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
-     pfile_handle->fhversion != GANESHA_FH_VERSION ||
-     pfile_handle->pseudofs_id != 0 ||
-     pfile_handle->pseudofs_flag != FALSE)
-    return 0;                   /* Bad FH */
-
   /* Fill in the fs opaque part */
   fh_desc->start = (caddr_t)&pfile_handle->fsopaque;
+
   fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
 				  FSAL_DIGEST_SIZEOF,
 				  fh_desc);
+
   if(FSAL_IS_ERROR(fsal_status)) /* Currently can't happen */
-    return 0;                   /* Corrupted FH */
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_ExpandHandle FSAL_DIGEST_SIZEOF failed");
+      return 0;                   /* Corrupted FH */
+    }
+
   fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
 				  FSAL_DIGEST_NFSV4,
 				  fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;                   /* Corrupted (or stale) FH */
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_ExpandHandle FSAL_DIGEST_NFSV4 failed");
+      return 0;                   /* Corrupted (or stale) FH */
+    }
+
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs4_FhandleToFSAL",
+                     (char *)fh_desc->start,
+                     fh_desc->len);
+
   return 1;
 }                               /* nfs4_FhandleToFSAL */
 
@@ -179,28 +196,42 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle;
 
-  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
-  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
-
-  /* Cast the fh as a non opaque structure */
-  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
-
   /* validate the filehandle  */
   if(nfs3_Is_Fh_Invalid(pfh3) != NFS3_OK)
     return 0;                   /* Bad FH */
 
+  /* Cast the fh as a non opaque structure */
+  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+
   /* Fill in the fs opaque part */
   fh_desc->start = (caddr_t) &pfile_handle->fsopaque;
+
   fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
 				  FSAL_DIGEST_SIZEOF,
 				  fh_desc);
+
   if(FSAL_IS_ERROR(fsal_status)) /* Currently can't happen */
-    return 0;                   /* Corrupted FH */
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_ExpandHandle FSAL_DIGEST_SIZEOF failed");
+      return 0;                   /* Corrupted FH */
+    }
+
   fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
 				  FSAL_DIGEST_NFSV3,
 				  fh_desc);
+
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;                   /* Corrupted FH */
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_ExpandHandle FSAL_DIGEST_NFSV3 failed");
+      return 0;                   /* Corrupted (or stale) FH */
+    }
+
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs3_FhandleToFSAL",
+                     (char *)fh_desc->start,
+                     fh_desc->len);
 
   return 1;
 }                               /* nfs3_FhandleToFSAL */
@@ -246,7 +277,10 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)fh_desc->start, fh_desc->len);
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs2_FhandleToFSAL",
+                     (char *)fh_desc->start,
+                     fh_desc->len);
 
   return 1;
 }                               /* nfs2_FhandleToFSAL */
@@ -272,6 +306,11 @@ int nfs4_FSALToFhandle(nfs_fh4 *pfh4,
   file_handle_v4_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs4_FSALToFhandle",
+                     (char *)pfsalhandle,
+                     sizeof(fsal_handle_t));
+
   /* reset the buffer to be used as handle */
   pfh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
   memset(pfh4->nfs_fh4_val, 0, pfh4->nfs_fh4_len);
@@ -280,16 +319,23 @@ int nfs4_FSALToFhandle(nfs_fh4 *pfh4,
   /* Fill in the fs opaque part */
   fh_desc.start = (caddr_t) &file_handle->fsopaque;
   fh_desc.len = pfh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
+
   fsal_status =
       FSAL_DigestHandle(&data->pexport->FS_export_context,
                         FSAL_DIGEST_NFSV4,
                         pfsalhandle,
                         &fh_desc);
+
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_DigestHandle FSAL_DIGEST_NFSV4 failed");
+      return 0;                   /* Corrupted (or stale) FH */
+    }
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
+
   /* keep track of the export id */
   file_handle->exportid = data->pexport->id;
 
@@ -330,7 +376,10 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
   struct fsal_handle_desc fh_desc;
   int padding = 0;
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs3_FSALToFhandle",
+                     (char *)pfsalhandle,
+                     sizeof(fsal_handle_t));
 
   /* reset the buffer to be used as handle */
   pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
@@ -343,8 +392,13 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV3, pfsalhandle,
                         &fh_desc);
+
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "FSAL_DigestHandle FSAL_DIGEST_NFSV3 failed");
+      return 0;                   /* Corrupted (or stale) FH */
+    }
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
@@ -385,7 +439,10 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   file_handle_v2_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
+  print_fhandle_fsal(COMPONENT_FILEHANDLE,
+                     "nfs2_FSALToFhandle",
+                     (char *)pfsalhandle,
+                     sizeof(fsal_handle_t));
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
@@ -424,29 +481,6 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
 /**
  *
- * nfs4_FhandleToExportId
- *
- * This routine extracts the export id from the file handle NFSv4
- *
- * @param pfh4 [IN] file handle to manage.
- * 
- * @return the export id.
- *
- */
-short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
-{
-  file_handle_v4_t *pfile_handle = NULL;
-
-  pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
-
-  if(pfile_handle == NULL)
-    return -1;                  /* Badly formed arguments */
-
-  return pfile_handle->exportid;
-}                               /* nfs4_FhandleToExportId */
-
-/**
- *
  * nfs3_FhandleToExportId
  *
  * This routine extracts the export id from the file handle NFSv3
@@ -460,31 +494,13 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 {
   file_handle_v3_t *pfile_handle;
 
-  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
-
-  if(pfile_handle == NULL)
+  if(nfs3_Is_Fh_Invalid(pfh3) != NFS4_OK)
     return -1;                  /* Badly formed argument */
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfh3->data.data_val, pfh3->data.data_len);
+  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
   return pfile_handle->exportid;
 }                               /* nfs3_FhandleToExportId */
-
-#ifdef _USE_NLM
-short nlm4_FhandleToExportId(netobj * pfh3)
-{
-  file_handle_v3_t *pfile_handle;
-
-  if(pfh3->n_bytes == NULL || pfh3->n_len < sizeof(file_handle_v3_t))
-    return -1;                  /* Badly formed argument */
-
-  pfile_handle = (file_handle_v3_t *) (pfh3->n_bytes);
-
-  print_buff(COMPONENT_FILEHANDLE, pfh3->n_bytes, pfh3->n_len);
-
-  return pfile_handle->exportid;
-}
-#endif
 
 /**
  *
@@ -546,12 +562,20 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
 int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
 {
   if(pfh == NULL)
-    return NFS4ERR_NOFILEHANDLE;
+    {
+      LogMajor(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: pfh=NULL");
+      return NFS4ERR_NOFILEHANDLE;
+    }
 
   if(pfh->nfs_fh4_len == 0)
-    return NFS4ERR_NOFILEHANDLE;
+    {
+      LogInfo(COMPONENT_FILEHANDLE,
+              "INVALID HANDLE: empty");
+      return NFS4ERR_NOFILEHANDLE;
+    }
 
-  return 0;
+  return NFS4_OK;
 }                               /* nfs4_Is_Fh_Empty */
 
 /**
@@ -639,7 +663,11 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
   file_handle_v4_t *pfilehandle4;
 
   if(pfh == NULL)
-    return NFS4ERR_BADHANDLE;
+    {
+      LogMajor(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: pfh=NULL");
+      return NFS4ERR_BADHANDLE;
+    }
 
   pfilehandle4 = (file_handle_v4_t *) pfh;
 
@@ -647,7 +675,11 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
      && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
     {
       if(nfs_param.nfsv4_param.returns_err_fh_expired == TRUE)
-        return NFS4ERR_FHEXPIRED;
+        {
+          LogInfo(COMPONENT_FILEHANDLE,
+                  "INVALID HANDLE: EXPIRED");
+          return NFS4ERR_FHEXPIRED;
+        }
     }
 
   return NFS4_OK;
@@ -666,30 +698,85 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
  */
 int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
 {
-  file_handle_v4_t *pfilehandle4;
+  file_handle_v4_t *pfile_handle;
 
-  if(pfh == NULL || pfh->nfs_fh4_val == NULL)
-  {
-    LogMajor(COMPONENT_FILEHANDLE,
-	     "Invalid (NULL) File handle: pfh=0x%p",
-	     pfh);
-    return NFS4ERR_BADHANDLE;
-  }
+  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
 
-  pfilehandle4 = (file_handle_v4_t *) pfh->nfs_fh4_val;
-  if(pfh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
-     pfh->nfs_fh4_len < nfs4_sizeof_handle(pfilehandle4) ||
-     pfilehandle4->fhversion != GANESHA_FH_VERSION)
-  {
-    LogMajor(COMPONENT_FILEHANDLE,
-	     "Invalid File handle: len=%d, version=%x",
-	     pfh->nfs_fh4_len,
-	     pfilehandle4->fhversion);
-    return NFS4ERR_BADHANDLE;
-  }
+  if(pfh == NULL)
+    {
+      LogMajor(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: pfh==NULL");
+      return NFS4ERR_BADHANDLE;
+    }
+
+  print_fhandle4(COMPONENT_FILEHANDLE, pfh);
+
+  /* Cast the fh as a non opaque structure */
+  pfile_handle = (file_handle_v4_t *) (pfh->nfs_fh4_val);
+
+  /* validate the filehandle  */
+  if(pfile_handle == NULL ||
+     pfh->nfs_fh4_len == 0 ||
+     pfile_handle->fhversion != GANESHA_FH_VERSION ||
+     pfh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque) ||
+     pfh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
+     pfh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
+     (pfile_handle->pseudofs_id != 0 &&
+      pfile_handle->pseudofs_flag == FALSE))
+    {
+      if(isInfo(COMPONENT_FILEHANDLE))
+        {
+          if(pfile_handle == NULL)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: nfs_fh4_val=NULL");
+            }
+          else if(pfh->nfs_fh4_len == 0)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: zero length handle");
+            }
+          else if(pfile_handle->fhversion != GANESHA_FH_VERSION)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: not a Ganesha handle, fhversion=%d",
+                      pfile_handle->fhversion);
+            }
+          else if(pfh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_len=%d is less than %d",
+                      pfh->nfs_fh4_len,
+                      (int) offsetof(struct file_handle_v4, fsopaque));
+            }
+          else if(pfh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_len=%d is greater than %d",
+                      pfh->nfs_fh4_len,
+                      (int) sizeof(struct alloc_file_handle_v4));
+            }
+          else if(pfh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: nfs_fh4_len=%d, should be %d",
+                      pfh->nfs_fh4_len, (int)nfs4_sizeof_handle(pfile_handle));
+            }
+          else
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: pseudofs_id=%d pseudofs_flag=%d",
+                      pfile_handle->pseudofs_id,
+                      pfile_handle->pseudofs_flag);
+            }
+        }
+               
+      return NFS4ERR_BADHANDLE;  /* Bad FH */
+    }
 
   return NFS4_OK;
-}                               /* nfs4_Is_Fh_Invalid */
+}
+
 
 /**
  *
@@ -704,27 +791,72 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
  */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
 {
-  file_handle_v3_t *pfilehandle3;
+  file_handle_v3_t *pfile_handle;
 
-  if(pfh3 == NULL || pfh3->data.data_val == NULL)
-  {
-    LogMajor(COMPONENT_FILEHANDLE,
-	     "Invalid (NULL) File handle: pfh3=0x%p",
-	     pfh3);
-    return NFS3ERR_BADHANDLE;
-  }
+  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
 
-  pfilehandle3 = (file_handle_v3_t *) pfh3->data.data_val;
-  if(pfh3->data.data_len > sizeof(struct alloc_file_handle_v3) ||
-     pfh3->data.data_len < nfs3_sizeof_handle(pfilehandle3) ||
-     pfilehandle3->fhversion != GANESHA_FH_VERSION)
-  {
-    LogMajor(COMPONENT_FILEHANDLE,
-	     "Invalid File handle: len=%d, version=%x",
-	     pfh3->data.data_len,
-	     pfilehandle3->fhversion);
-    return NFS3ERR_BADHANDLE;
-  }
+  if(pfh3 == NULL)
+    {
+      LogMajor(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: pfh3==NULL");
+      return NFS3ERR_BADHANDLE;
+    }
+
+  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
+
+  /* Cast the fh as a non opaque structure */
+  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+
+  /* validate the filehandle  */
+  if(pfile_handle == NULL ||
+     pfh3->data.data_len == 0 ||
+     pfile_handle->fhversion != GANESHA_FH_VERSION ||
+     pfh3->data.data_len < sizeof(file_handle_v3_t) ||
+     pfh3->data.data_len > sizeof(struct alloc_file_handle_v3) ||
+     pfh3->data.data_len != nfs3_sizeof_handle(pfile_handle))
+    {
+      if(isInfo(COMPONENT_FILEHANDLE))
+        {
+          if(pfile_handle == NULL)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_val=NULL");
+            }
+          else if(pfh3->data.data_len == 0)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: zero length handle");
+            }
+          else if(pfile_handle->fhversion != GANESHA_FH_VERSION)
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: not a Ganesha handle, fhversion=%d",
+                      pfile_handle->fhversion);
+            }
+          else if(pfh3->data.data_len < sizeof(file_handle_v3_t))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_len=%d is less than %d",
+                      pfh3->data.data_len,
+                      (int) sizeof(file_handle_v3_t));
+            }
+          else if(pfh3->data.data_len > sizeof(struct alloc_file_handle_v3))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_len=%d is greater than %d",
+                      pfh3->data.data_len,
+                      (int) sizeof(struct alloc_file_handle_v3));
+            }
+          else if(pfh3->data.data_len != nfs3_sizeof_handle(pfile_handle))
+            {
+              LogInfo(COMPONENT_FILEHANDLE,
+                      "INVALID HANDLE: data.data_len=%d, should be %d",
+                      pfh3->data.data_len, (int)nfs3_sizeof_handle(pfile_handle));
+            }
+        }
+               
+      return NFS3ERR_BADHANDLE;  /* Bad FH */
+    }
 
   return NFS3_OK;
 }                               /* nfs4_Is_Fh_Invalid */
@@ -874,37 +1006,23 @@ void sprint_fhandle_nlm(char *str, netobj *fh)
   sprint_mem(tmp, fh->n_bytes, fh->n_len);
 }                               /* sprint_fhandle_nlm */
 
-/**
- *
- * print_buff
- *
- * This routine prints the content of a buffer.
- *
- * @param buff [IN] buffer to print.
- * @param len  [IN] length of the buffer.
- * 
- * @return nothing (void function).
- *
- */
-void print_buff(log_components_t component, char *buff, int len)
+void print_fhandle_fsal(log_components_t component,
+                        const char *str,
+                        const char *start,
+                        int len)
 {
-  if(isFullDebug(component))
+  if(isFullDebug(COMPONENT_FILEHANDLE))
     {
-      char str[1024];
+      char buff[1024];
 
-      sprint_buff(str, buff, len);
-      LogFullDebug(component, "%s", str);
+      sprint_mem(buff, start, len);
+
+      LogFullDebug(component, "%s Len=%d Buff=%p Val: %s", 
+                   str, len, start, buff);
     }
-}                               /* print_buff */
+}
 
-void sprint_buff(char *str, char *buff, int len)
-{
-  char *tmp = str + sprintf(str, "  Len=%u Buff=%p Val: ", len, buff);
-
-  sprint_mem(tmp, buff, len);
-}                               /* sprint_buff */
-
-void sprint_mem(char *str, char *buff, int len)
+void sprint_mem(char *str, const char *buff, int len)
 {
   int i;
 
@@ -944,22 +1062,3 @@ void LogCompoundFH(compound_data_t * data)
       LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
     }
 }                               /* print_compoud_fh */
-
-/**
- * nfs4_sprint_fhandle : converts a file handle v4 to a string.
- *
- * Converts a file handle v4 to a string. This will be used mostly for debugging purpose. 
- * 
- * @param fh4p [OUT]   pointer to the file handle to be converted to a string.
- * @param data [INOUT] pointer to the char * resulting from the operation.
- * 
- * @return nothing (void function).
- *
- */
-
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr)
-{
-  char *tmp = outstr + sprintf(outstr, "File Handle V4: Len=%u ", fh4p->nfs_fh4_len);
-
-  sprint_mem(tmp, (char *)fh4p->nfs_fh4_val, fh4p->nfs_fh4_len);
-}                               /* nfs4_sprint_fhandle */

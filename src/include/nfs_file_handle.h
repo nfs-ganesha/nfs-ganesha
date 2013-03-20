@@ -161,15 +161,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
 /* Extraction of export id from a file handle */
 short nfs2_FhandleToExportId(fhandle2 * pfh2);
-short nfs4_FhandleToExportId(nfs_fh4 * pfh4);
 short nfs3_FhandleToExportId(nfs_fh3 * pfh3);
-
-#ifdef _USE_NLM
-short nlm4_FhandleToExportId(netobj * pfh3);
-#endif
-
-/* nfs3 validation */
-int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3);
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Empty(nfs_fh4 * pfh);
@@ -180,25 +172,69 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh);
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh);
 
+/**
+ *
+ * nfs4_FhandleToExportId
+ *
+ * This routine extracts the export id from the file handle NFSv4
+ *
+ * @param pfh4 [IN] file handle to manage.
+ * 
+ * @return the export id.
+ *
+ */
+static inline short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
+{
+  file_handle_v4_t *pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
+
+  if(nfs4_Is_Fh_Invalid(pfh4) != NFS4_OK)
+    return -1;                  /* Badly formed arguments */
+
+  if(nfs4_Is_Fh_Pseudo(pfh4))
+    {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: PseudoFS handle");
+      return -1;
+    }
+
+  return pfile_handle->exportid;
+}                               /* nfs4_FhandleToExportId */
+
+
+#ifdef _USE_NLM
+static inline short nlm4_FhandleToExportId(netobj * pfh3)
+{
+  nfs_fh3 fh3;
+  if(pfh3 == NULL)
+    return nfs3_FhandleToExportId(NULL);
+  fh3.data.data_val = pfh3->n_bytes;
+  fh3.data.data_len = pfh3->n_len;
+  return nfs3_FhandleToExportId(&fh3);
+}
+#endif
+
+/* nfs3 validation */
+int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3);
+
 /* This one is used to detect Xattr related FH */
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
-/* File handle print function (;ostly use for debugging) */
+/* File handle print function (mostly use for debugging) */
 void print_fhandle2(log_components_t component, fhandle2 *fh);
 void print_fhandle3(log_components_t component, nfs_fh3 *fh);
 void print_fhandle4(log_components_t component, nfs_fh4 *fh);
 void print_fhandle_nlm(log_components_t component, netobj *fh);
-void print_buff(log_components_t component, char *buff, int len);
+void print_fhandle_fsal(log_components_t component,
+                        const char *str,
+                        const char *start,
+                        int len);
 void LogCompoundFH(compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 *fh);
 void sprint_fhandle3(char *str, nfs_fh3 *fh);
 void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_fhandle_nlm(char *str, netobj *fh);
-void sprint_buff(char *str, char *buff, int len);
-void sprint_mem(char *str, char *buff, int len);
-
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
+void sprint_mem(char *str, const char *buff, int len);
 
 #define LogHandleNFS4( label, fh4p )                        \
   do {                                                      \

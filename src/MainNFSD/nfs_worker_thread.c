@@ -758,31 +758,32 @@ nfs_rpc_execute(request_data_t    * preq,
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) parg_nfs);
 
-              if(exportid < 0 ||
-                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL)
+              if(exportid < 0)
                 {
-                  if(isInfo(COMPONENT_DISPATCH))
-                    {
-		      char dumpfh[1024];
-		      char *reason = NULL;
+                  LogInfo(COMPONENT_DISPATCH,
+                          "NFS3 Request from client %s has badly formed handle",
+                          pworker_data->hostaddr_str);
 
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else
-                        reason = "has invalid export";
+                  /* Bad handle, report to client */
+                  res_nfs->res_attr2.status = NFS3ERR_BADHANDLE;
+                  rc = NFS_REQ_OK;
+                  goto req_error;
+                }
 
-                      sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+              pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                             exportid);
 
-                      LogInfo(COMPONENT_DISPATCH,
-                              "NFS3 Request from client %s %s, proc=%d, FH=%s",
-                              pworker_data->hostaddr_str, reason,
-                              (int)req->rq_proc, dumpfh);
-                    }
+              if(pexport == NULL)
+                {
+                  LogInfo(COMPONENT_DISPATCH,
+                          "NFS3 Request from client %s has invalid export %d",
+                          pworker_data->hostaddr_str,
+                          exportid);
 
-                  /* Bad argument */
-                  auth_rc = AUTH_FAILED;
-                  goto auth_failure;
+                  /* Bad export, report to client */
+                  res_nfs->res_attr2.status = NFS3ERR_STALE;
+                  rc = NFS_REQ_OK;
+                  goto req_error;
                 }
 
               LogFullDebug(COMPONENT_DISPATCH,
@@ -871,33 +872,29 @@ nfs_rpc_execute(request_data_t    * preq,
             {
               /* Reject the request for authentication reason (incompatible 
                * file handle) */
-              if(isInfo(COMPONENT_DISPATCH))
-                {
-                  char dumpfh[1024];
-                  char *reason;
+              if(exportid < 0)
+                LogInfo(COMPONENT_DISPATCH,
+                        "NLM4 Request from client %s has badly formed handle",
+                        pworker_data->hostaddr_str);
+              else
+                LogInfo(COMPONENT_DISPATCH,
+                        "NLM4 Request from client %s has invalid export %d",
+                        pworker_data->hostaddr_str,
+                        exportid);
 
-                  if(exportid < 0)
-                    reason = "has badly formed handle";
-                  else
-                    reason = "has invalid export";
-
-                  sprint_fhandle_nlm(dumpfh, pfh3);
-
-                  LogCrit(COMPONENT_DISPATCH,
-                          "NLM4 Request from client %s %s, proc=%d, FH=%s",
-                          pworker_data->hostaddr_str, reason,
-                          (int)req->rq_proc, dumpfh);
-                }
-
-              /* Bad argument */
-              auth_rc = AUTH_FAILED;
-              goto auth_failure;
+              /* We need to send a NLM4_STALE_FH response (NLM doesn't have an
+               * error code for BADHANDLE), but we don't know how to do that
+               * here, we will send a NULL pexport to NLM routine to let it know
+               * what to do since it can respond to ASYNC calls.
+               */
             }
-
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Found export entry for Export_Id %d %s for client %s",
-                       pexport->id, pexport->fullpath,
-                       pworker_data->hostaddr_str);
+          else
+            {
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Found export entry for Export_Id %d %s for client %s",
+                           pexport->id, pexport->fullpath,
+                           pworker_data->hostaddr_str);
+            }
         }
       else
         pexport = NULL;
@@ -910,7 +907,7 @@ nfs_rpc_execute(request_data_t    * preq,
     }
 
   /* Only do access check if we have an export. */
-  if((pworker_data->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
+  if(pexport != NULL)
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
@@ -1051,7 +1048,8 @@ nfs_rpc_execute(request_data_t    * preq,
    * It is now time for checking if export list allows the machine to perform
    * the request
    */
-  if((pworker_data->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
+  if(pexport != NULL &&
+     (pworker_data->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
      (pexport_perms->options & EXPORT_OPTION_RW_ACCESS) == 0)
     {
       /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
@@ -1088,7 +1086,8 @@ nfs_rpc_execute(request_data_t    * preq,
           rc = NFS_REQ_DROP;
         }
     }
-  else if((pworker_data->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
+  else if(pexport != NULL &&
+          (pworker_data->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
           (pexport_perms->options & (EXPORT_OPTION_WRITE_ACCESS |
                                      EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
     {
@@ -1122,7 +1121,7 @@ nfs_rpc_execute(request_data_t    * preq,
           rc = NFS_REQ_DROP;
         }
     }
-  else if((pworker_data->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0 &&
+  else if(pexport != NULL &&
           (pexport_perms->options & (EXPORT_OPTION_READ_ACCESS |
                                      EXPORT_OPTION_MD_READ_ACCESS)) == 0)
     {
@@ -1143,8 +1142,9 @@ nfs_rpc_execute(request_data_t    * preq,
   else
     {
       /* Do the authentication stuff, if needed */
-      if((pworker_data->funcdesc->dispatch_behaviour &
-          (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
+      if(pexport != NULL &&
+         ((pworker_data->funcdesc->dispatch_behaviour &
+           (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT)))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
           nfs_check_anon(pexport_perms, pexport, &pworker_data->user_credentials);
@@ -1168,7 +1168,17 @@ nfs_rpc_execute(request_data_t    * preq,
             }
         }
 
-      /* processing */
+      /* processing
+       * At this point, pexport has one of the following conditions:
+       * non-NULL - valid handle for NFS v3 or NLM functions that take handles
+       * NULL - For NULL RPC calls
+       * NULL - for RQUOTAD calls
+       * NULL - for NFS v4 COMPOUND call
+       * NULL - for MOUNT calls
+       * NULL - for NLM calls where handle is bad, NLM must handle response in
+       *        the case of async "MSG" calls, so we just defer to NLM routines
+       *        to respond with NLM4_STALE_FH (NLM doesn't have a BADHANDLE code)
+       */
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1191,6 +1201,8 @@ nfs_rpc_execute(request_data_t    * preq,
       req_timer.fsal_latency = pfsal_op_ctx->latency;
       fsal_count = pfsal_op_ctx->count;
     }
+
+req_error:
 
 #ifdef _USE_STAT_EXPORTER
   /* this thread is done, reset the timer start to avoid long processing */

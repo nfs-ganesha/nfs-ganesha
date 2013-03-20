@@ -71,8 +71,6 @@ char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype2_to_str(ftype2 code);
 char *nfstype3_to_str(ftype3 code);
 
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
-
 /* Hash and LRU functions */
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef);

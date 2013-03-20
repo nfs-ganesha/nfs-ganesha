@@ -104,27 +104,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     return res_RENAME4.status;
 
   /* Do basic checks on saved filehandle */
-
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
-    {
-      res_RENAME4.status = NFS4ERR_NOFILEHANDLE;
-      return res_RENAME4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
-    {
-      res_RENAME4.status = NFS4ERR_BADHANDLE;
-      return res_RENAME4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
-    {
-      res_RENAME4.status = NFS4ERR_FHEXPIRED;
-      return res_RENAME4.status;
-    }
+  res_RENAME4.status = nfs4_sanity_check_SavedFH(data, 0LL);
+  if(res_RENAME4.status != NFS4_OK)
+    return res_RENAME4.status;
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->savedFH)))

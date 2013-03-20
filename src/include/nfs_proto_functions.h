@@ -866,7 +866,7 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
 int nfs4_op_access_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
 
-void set_compound_data_for_pseudo(compound_data_t * data);
+int set_compound_data_for_pseudo(compound_data_t * data);
 
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
@@ -1389,7 +1389,6 @@ void compound_data_Free(compound_data_t * data);
 int nfs4_ExportToPseudoFS(struct glist_head * pexportlist);
 pseudofs_t *nfs4_GetPseudoFs(void);
 
-int nfs4_SetCompoundExport(compound_data_t * data);
 int nfs4_MakeCred(compound_data_t * data);
 
 int nfs4_fsal_attr_To_Fattr(fsal_attrib_list_t * pattr, fattr4 * Fattr,

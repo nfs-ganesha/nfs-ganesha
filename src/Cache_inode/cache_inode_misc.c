@@ -76,8 +76,6 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_POOL_MUTEX_INIT_ERROR";
       case CACHE_INODE_GET_NEW_LRU_ENTRY:
         return "CACHE_INODE_GET_NEW_LRU_ENTRY";
-      case CACHE_INODE_UNAPPROPRIATED_KEY:
-        return "CACHE_INODE_UNAPPROPRIATED_KEY";
       case CACHE_INODE_INIT_ENTRY_FAILED:
         return "CACHE_INODE_INIT_ENTRY_FAILED";
       case CACHE_INODE_FSAL_ERROR:

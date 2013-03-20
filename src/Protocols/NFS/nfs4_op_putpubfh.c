@@ -138,9 +138,6 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
       cache_inode_put(data->current_entry);
   }
 
-  /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
-
   /* I copy the public FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
@@ -152,6 +149,12 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   /* Copy the data from public FH to current FH */
   memcpy(data->currentFH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
          data->publicFH.nfs_fh4_len);
+  data->currentFH.nfs_fh4_len = data->publicFH.nfs_fh4_len;
+
+  /* Fill in compound data */
+  res_PUTPUBFH4.status = set_compound_data_for_pseudo(data);
+  if(res_PUTPUBFH4.status != NFS4_OK)
+    return res_PUTPUBFH4.status;
 
   LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
   LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);

@@ -394,7 +394,7 @@ int nfs4_Compound(nfs_arg_t *parg,
 
       if(perm_flags != 0)
          {
-           if(nfs4_Is_Fh_Empty(&data.currentFH))
+           if(nfs4_Is_Fh_Empty(&data.currentFH) != NFS4_OK)
              {
                status = NFS4ERR_NOFILEHANDLE;
 

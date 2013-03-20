@@ -68,6 +68,13 @@ int nlm4_Share(nfs_arg_t            * parg,
   int                  rc;
   int                  grace = nfs_in_grace();
 
+  if(pexport == NULL)
+    {
+      pres->res_nlm4share.stat = NLM4_STALE_FH;
+      LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Share");
+      return NFS_REQ_OK;
+    }
+
   pres->res_nlm4share.sequence = 0;
 
   netobj_to_string(&arg->cookie, buffer, 1024);

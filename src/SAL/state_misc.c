@@ -60,7 +60,6 @@ const char *state_err_str(state_status_t err)
       case STATE_MALLOC_ERROR:          return "STATE_MALLOC_ERROR";
       case STATE_POOL_MUTEX_INIT_ERROR: return "STATE_POOL_MUTEX_INIT_ERROR";
       case STATE_GET_NEW_LRU_ENTRY:     return "STATE_GET_NEW_LRU_ENTRY";
-      case STATE_UNAPPROPRIATED_KEY:    return "STATE_UNAPPROPRIATED_KEY";
       case STATE_INIT_ENTRY_FAILED:     return "STATE_INIT_ENTRY_FAILED";
       case STATE_FSAL_ERROR:            return "STATE_FSAL_ERROR";
       case STATE_LRU_ERROR:             return "STATE_LRU_ERROR";
@@ -119,7 +118,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_MALLOC_ERROR:          return STATE_MALLOC_ERROR;
       case CACHE_INODE_POOL_MUTEX_INIT_ERROR: return STATE_POOL_MUTEX_INIT_ERROR;
       case CACHE_INODE_GET_NEW_LRU_ENTRY:     return STATE_GET_NEW_LRU_ENTRY;
-      case CACHE_INODE_UNAPPROPRIATED_KEY:    return STATE_UNAPPROPRIATED_KEY;
       case CACHE_INODE_INIT_ENTRY_FAILED:     return STATE_INIT_ENTRY_FAILED;
       case CACHE_INODE_FSAL_ERROR:            return STATE_FSAL_ERROR;
       case CACHE_INODE_LRU_ERROR:             return STATE_LRU_ERROR;
@@ -311,10 +309,6 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
-    case STATE_UNAPPROPRIATED_KEY:
-      nfserror = NFS4ERR_BADHANDLE;
-      break;
-
     case STATE_BAD_TYPE:
       nfserror = NFS4ERR_INVAL;
       break;
@@ -475,7 +469,6 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_MALLOC_ERROR:
     case STATE_POOL_MUTEX_INIT_ERROR:
     case STATE_GET_NEW_LRU_ENTRY:
-    case STATE_UNAPPROPRIATED_KEY:
     case STATE_INIT_ENTRY_FAILED:
     case STATE_CACHE_CONTENT_EXISTS:
     case STATE_CACHE_CONTENT_EMPTY:
@@ -638,7 +631,6 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
     case STATE_MALLOC_ERROR:
     case STATE_POOL_MUTEX_INIT_ERROR:
     case STATE_GET_NEW_LRU_ENTRY:
-    case STATE_UNAPPROPRIATED_KEY:
     case STATE_INIT_ENTRY_FAILED:
     case STATE_BAD_TYPE:
     case STATE_CACHE_CONTENT_EXISTS:

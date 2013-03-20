@@ -108,33 +108,60 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
          arg_PUTFH4.object.nfs_fh4_len);
 
-  LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4.object);
+  /* Verify if valid handle. */
+  res_PUTFH4.status = nfs4_Is_Fh_Invalid(&data->currentFH);
+  if(res_PUTFH4.status != NFS4_OK)
+    return res_PUTFH4.status;
+
+  /* As usual, protect existing refcounts */
+  if (data->current_entry) {
+      cache_inode_put(data->current_entry);
+      data->current_entry = NULL;
+      data->current_filetype = UNASSIGNED;
+  }
 
   /* If the filehandle is not pseudo fs file handle, get the entry
    * related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
-        if (data->current_entry) {
-            cache_inode_put(data->current_entry);
-        }
-
         /* Fill in compound data */
-        set_compound_data_for_pseudo(data);
+        res_PUTFH4.status = set_compound_data_for_pseudo(data);
+        if(res_PUTFH4.status != NFS4_OK)
+          return res_PUTFH4.status;
     }
   else
     {
-      /* Set up the export (and nfs4_MakeCred) for the new currentFH */
-      res_PUTFH4.status = nfs4_SetCompoundExport(data);
-      if(res_PUTFH4.status != NFS4_OK)
-        return res_PUTFH4.status;
+      exportlist_t * pexport;
+      file_handle_v4_t *pfile_handle;
+
+      /* Get the exportid from the handle. */
+      pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
+
+      pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                     pfile_handle->exportid);
+
+      if(pexport == NULL)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "NFS4 Request from client %s has invalid export %d",
+                  data->pworker->hostaddr_str,
+                  pfile_handle->exportid);
+          data->pexport = NULL;
+          res_PUTFH4.status = NFS4ERR_STALE;
+          return res_PUTFH4.status;
+        }
+
+      if(pexport != data->pexport)
+        {
+          data->pexport = pexport;
+
+          res_PUTFH4.status = nfs4_MakeCred(data);
+
+          if(res_PUTFH4.status != NFS4_OK)
+            return res_PUTFH4.status;
+        }
 
 #ifdef _PNFS_DS
-      /* As usual, protect existing refcounts */
-      if (data->current_entry) {
-          cache_inode_put(data->current_entry);
-          data->current_entry = NULL;
-          data->current_filetype = UNASSIGNED;
-      }
       /* The export and fsalid should be updated, but DS handles
          don't support metdata operations.  Thus, we can't call into
          Cache_inode to populate the metadata cache. */
@@ -146,8 +173,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       else
 #endif /* _PNFS_DS */
         {
-          if (data->current_entry)
-            cache_inode_put(data->current_entry);
           /* Build the pentry.  Refcount +1. */
           if((data->current_entry = nfs_FhandleToCache(NFS_V4,
                                                        NULL,

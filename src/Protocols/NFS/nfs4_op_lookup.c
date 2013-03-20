@@ -183,25 +183,19 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           return res_LOOKUP4.status;
         }
 
-#if 0
-      print_buff((char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-      print_buff((char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-#endif
       if(isFullDebug(COMPONENT_NFS_V4))
         {
           LogFullDebug(COMPONENT_NFS_V4,
                        "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p",
                        strname, dir_pentry, file_pentry);
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "----> FSAL handle parent and children in nfs4_op_lookup");
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&file_pentry->handle,
-                     sizeof(fsal_handle_t));
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&dir_pentry->handle,
-                     sizeof(fsal_handle_t));
+          print_fhandle_fsal(COMPONENT_NFS_V4,
+                             "----> FSAL handle parent",
+                             (char *)&dir_pentry->handle,
+                             sizeof(fsal_handle_t));
+          print_fhandle_fsal(COMPONENT_NFS_V4,
+                             "----> FSAL handle looked up",
+                             (char *)&file_pentry->handle,
+                             sizeof(fsal_handle_t));
         }
       LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
 

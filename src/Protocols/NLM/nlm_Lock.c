@@ -81,6 +81,13 @@ int nlm4_Lock(nfs_arg_t            * parg,
       care = CARE_NO_MONITOR;
     }
 
+  if(pexport == NULL)
+    {
+      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogInfo(COMPONENT_NLM, "INVALID HANDLE: %s", proc_name);
+      return NFS_REQ_OK;
+    }
+
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling %s svid=%d off=%llx len=%llx cookie=%s reclaim=%s",

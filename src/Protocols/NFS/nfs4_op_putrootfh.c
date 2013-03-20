@@ -137,9 +137,6 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
       cache_inode_put(data->current_entry);
   }
 
-  /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
-
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
@@ -152,6 +149,11 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
+
+  /* Fill in compound data */
+  res_PUTROOTFH4.status = set_compound_data_for_pseudo(data);
+  if(res_PUTROOTFH4.status != NFS4_OK)
+    return res_PUTROOTFH4.status;
 
   LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);

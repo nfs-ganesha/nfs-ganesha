@@ -98,29 +98,9 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     return res_LINK4.status;
 
   /* Do basic checks on saved filehandle */
-
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
-    {
-      LogDebug(COMPONENT_NFS_V4,
-               "No saved file handle");
-      res_LINK4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LINK4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
-    {
-      res_LINK4.status = NFS4ERR_BADHANDLE;
-      return res_LINK4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
-    {
-      res_LINK4.status = NFS4ERR_FHEXPIRED;
-      return res_LINK4.status;
-    }
+  res_LINK4.status = nfs4_sanity_check_SavedFH(data, 0LL);
+  if(res_LINK4.status != NFS4_OK)
+    return res_LINK4.status;
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->savedFH)))
