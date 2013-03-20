@@ -62,6 +62,13 @@ int nlm4_Test(nfs_arg_t *parg,
   fsal_lock_param_t    lock, conflict;
   int                  rc;
 
+  if(pexport == NULL)
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
+      LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Test");
+      return NFS_REQ_OK;
+    }
+
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling nlm4_Test svid=%d off=%llx len=%llx cookie=%s",

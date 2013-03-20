@@ -82,6 +82,8 @@ posix2fsal_time(time_t tsec, time_t nsec)
     return (ts);
 }
 
+const char *object_file_type_to_str(object_file_type_t type);
+
 #define my_high32m( a ) ( (unsigned int)( a >> 32 ) )
 #define my_low32m( a ) ( (unsigned int)a )
 

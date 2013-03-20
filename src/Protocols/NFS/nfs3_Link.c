@@ -47,6 +47,7 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
+#include "client_mgr.h"
 
 /**
  *
@@ -77,7 +78,7 @@ nfs_Link(nfs_arg_t *arg,
 {
         const char *link_name = arg->arg_link3.link.name;
         cache_entry_t *target_entry = NULL;
-        cache_entry_t *parent_entry;
+        cache_entry_t *parent_entry = NULL;
         pre_op_attr pre_parent = {
                 .attributes_follow = false
         };
@@ -111,6 +112,27 @@ nfs_Link(nfs_arg_t *arg,
         res->res_link3.LINK3res_u.resfail.linkdir_wcc.before.attributes_follow = FALSE;
         res->res_link3.LINK3res_u.resfail.linkdir_wcc.after.attributes_follow = FALSE;
 
+        /* Get the exportids for the two handles. */
+        to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
+        from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
+
+        /* Validate the to_exportid */
+        if(to_exportid < 0 || from_exportid < 0) {
+                LogInfo(COMPONENT_DISPATCH,
+                        "NFS%d LINK Request from client %s has badly formed handle for link dir",
+                        req->rq_vers, req_ctx->client->hostaddr_str);
+
+                /* Bad handle, report to client */
+                res->res_link3.status = NFS3ERR_BADHANDLE;
+                goto out;
+        }
+
+        /* Both objects have to be in the same filesystem */
+        if(to_exportid != from_exportid) {
+                res->res_link3.status = NFS3ERR_XDEV;
+                goto out;
+        }
+
         /* Get entry for parent directory */
         if ((parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
 						req_ctx,
@@ -139,9 +161,6 @@ nfs_Link(nfs_arg_t *arg,
             rc = NFS_REQ_OK;
             goto out;
          }
-
-        to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
-        from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
 
         if (link_name == NULL || *link_name == '\0' ) 
           res->res_link3.status = NFS3ERR_INVAL;

@@ -317,44 +317,57 @@ int nfs4_PseudoToFattr(pseudofs_entry_t *psfsp,
 }
 
 /**
- * @brief Convert an NFSv4 file handle to a pseudofs ID
+ * @brief Convert CurrentFH to an id in the pseudo
  *
  * This function converts an NFSv4 file handle to a pseudofs id and
  * checks if the fh is related to a pseudofs entry.
  *
- * @param[in]  fh4p      NFSv4 filehandle
- * @param[in]  psfstree  Root of the pseudofs
+ * @param[in]  data      pointer to compound data
  * @param[out] psfsentry Pseudofs entry
  *
- * @retval True if successfull
- * @retval FALSE if the fh4 was not related a pseudofs entry
+ * @retval NFS4_OK if successfull
+ * @retval Appropriate NFS4ERR on failure
  */
 
-static bool nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
-				 pseudofs_entry_t **psfsentry)
+static bool nfs4_CurrentFHToPseudo(compound_data_t   * data,
+				   pseudofs_entry_t **psfsentry)
 {
   file_handle_v4_t *pfhandle4;
 
   /* Map the filehandle to the correct structure */
-  pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
+  pfhandle4 = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
 
   /* The function must be called with a fh pointed to a pseudofs entry */
-  if(!(pfhandle4->pseudofs_flag))
-    return false;
+  if(pfhandle4 == NULL || pfhandle4->pseudofs_flag == FALSE ||
+     pfhandle4->fhversion != GANESHA_FH_VERSION)
+    {
+      LogDebug(COMPONENT_NFS_V4_PSEUDO,
+               "Pseudo fs handle=%p, pseudofs_flag=%d, fhversion=%d",
+               pfhandle4,
+               pfhandle4 != NULL ? pfhandle4->pseudofs_flag : 0,
+               pfhandle4 != NULL ? pfhandle4->fhversion : 0);
+      return NFS4ERR_BADHANDLE;
+    }
 
   if(pfhandle4->pseudofs_id > MAX_PSEUDO_ENTRY)
     {
       LogDebug(COMPONENT_NFS_V4_PSEUDO,
                "Pseudo fs handle pseudofs_id %u > %d",
                pfhandle4->pseudofs_id, MAX_PSEUDO_ENTRY);
-      return false;
+      return NFS4ERR_BADHANDLE;
     }
 
   /* Get the object pointer by using the reverse tab in the pseudofs structure */
-  *psfsentry = psfstree->reverse_tab[pfhandle4->pseudofs_id];
+  *psfsentry = data->pseudofs->reverse_tab[pfhandle4->pseudofs_id];
 
-  return true;
-}                               /* nfs4_FhandleToPseudo */
+  /* If an export was removed and we restarted or reloaded exports then the
+   * PseudoFS entry corresponding to a handle might not exist now.
+   */
+  if(*psfsentry == NULL)
+    return NFS4ERR_STALE;
+
+  return NFS4_OK;
+}                               /* nfs4_CurrentFHToPseudo */
 
 /**
  * nfs4_PseudoToFhandle: converts an id in the pseudo fs to a NFSv4 file handle
@@ -381,7 +394,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
                psfsentry->pseudo_id, fhandle4->pseudofs_id);
 
-  fh4p->nfs_fh4_len = sizeof(file_handle_v4_t); /* no handle in opaque */
+  fh4p->nfs_fh4_len = nfs4_sizeof_handle(fhandle4); /* no handle in opaque */
 
   return true;
 }                               /* nfs4_PseudoToFhandle */
@@ -409,9 +422,9 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_GETATTR;
 
   /* Get the pseudo entry related to this fhandle */
-  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  res_GETATTR4->status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  if(res_GETATTR4->status != NFS4_OK)
     {
-      res_GETATTR4->status = NFS4ERR_BADHANDLE;
       return res_GETATTR4->status;
     }
 
@@ -475,9 +488,13 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
  *
  * @param data  [INOUT] Pointer to the compound request's data
  * 
+ * @return NFS4_OK if successfull, other values show an error. 
+ * 
  */
-void set_compound_data_for_pseudo(compound_data_t * data)
+int set_compound_data_for_pseudo(compound_data_t * data)
 {
+  pseudofs_entry_t * dummy;
+
   if (data->current_entry) {
      cache_inode_put(data->current_entry);
   }
@@ -499,6 +516,9 @@ void set_compound_data_for_pseudo(compound_data_t * data)
                                EXPORT_OPTION_AUTH_TYPES |
                                EXPORT_OPTION_NFSV4 |
                                EXPORT_OPTION_TRANSPORTS;
+
+  /* Make sure the handle is good. */
+  return nfs4_CurrentFHToPseudo(data, &dummy);
 }
 
 /**
@@ -540,9 +560,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     }
 
   /* Get the pseudo fs entry related to the file handle */
-  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  res_LOOKUP4->status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  if(res_LOOKUP4->status != NFS4_OK)
     {
-      res_LOOKUP4->status = NFS4ERR_BADHANDLE;
       goto out;
     }
 
@@ -655,7 +675,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     cache_inode_lru_unref(entry, LRU_FLAG_NONE);
   if (name)
     gsh_free(name);
-  return NFS4_OK;
+  return  res_LOOKUP4->status;
 }
 
 /**
@@ -680,9 +700,9 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_LOOKUPP;
 
   /* Get the pseudo fs entry related to the file handle */
-  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  res_LOOKUPP4->status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  if(res_LOOKUPP4->status != NFS4_OK)
     {
-      res_LOOKUPP4->status = NFS4ERR_BADHANDLE;
       return res_LOOKUPP4->status;
     }
 
@@ -707,10 +727,9 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   data->current_entry = NULL;
 
   /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
+  res_LOOKUPP4->status = set_compound_data_for_pseudo(data);
 
-  res_LOOKUPP4->status = NFS4_OK;
-  return NFS4_OK;
+  return res_LOOKUPP4->status;
 }                               /* nfs4_op_lookupp_pseudo */
 
 /**
@@ -773,10 +792,9 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
     }
 
   /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
+  res_LOOKUPP4->status = set_compound_data_for_pseudo(data);
 
-  res_LOOKUPP4->status = NFS4_OK;
-  return NFS4_OK;
+  return res_LOOKUPP4->status;
 }
 
 /**
@@ -843,9 +861,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
 
   /* Now resolve the file handle to pseudo fs */
-  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  res_READDIR4->status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  if(res_READDIR4->status != NFS4_OK)
     {
-      res_READDIR4->status = NFS4ERR_BADHANDLE;
       return res_READDIR4->status;
     }
 
@@ -941,7 +959,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       memcpy(cookie_verifier, &ServerBootTime.tv_sec, sizeof(cookie_verifier));
       if(cookie != 0)
         {
-          if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
+          if(memcmp(cookie_verifier, arg_READDIR4->cookieverf, NFS4_VERIFIER_SIZE) != 0)
             {
               res_READDIR4->status = NFS4ERR_BAD_COOKIE;
               gsh_free(entry_nfs_array);
@@ -1074,7 +1092,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                        "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
                        data->pexport->id, data->pexport->fullpath);
 
-              if(check_for_wrongsec_ok_attr(&arg_READDIR4.attr_request))
+              if(check_for_wrongsec_ok_attr(&arg_READDIR4->attr_request))
                 {
                   /* Client is requesting attr that are allowed when
                    * NFS4ERR_WRONGSEC occurs.
@@ -1092,14 +1110,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                         &(entry_nfs_array[i].attrs),
                                         data,
                                         NULL, /* don't need the file handle */
-                                        &(arg_READDIR4.attr_request)) != 0)
+                                        &(arg_READDIR4->attr_request)) != 0)
                     {
                       LogFatal(COMPONENT_NFS_V4_PSEUDO,
                                "nfs4_PseudoToFattr failed to convert pseudo fs attr");
                     }
                   // next step
                 }
-              else if(check_for_rdattr_error(&arg_READDIR4.attr_request))
+              else if(check_for_rdattr_error(&arg_READDIR4->attr_request))
                 {
                   // report NFS4ERR_WRONGSEC
                   if(nfs4_Fattr_Fill_Error(&(entry_nfs_array[i].attrs),
@@ -1137,7 +1155,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                 }
               if(cache_entry_To_Fattr(entry,
                                       &(entry_nfs_array[i].attrs),
-                                      data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+                                      data, &entryFH, &(arg_READDIR4->attr_request)) != 0)
                 {
                   LogFatal(COMPONENT_NFS_V4_PSEUDO,
                            "nfs4_FSALattr_To_Fattr failed to convert attr");

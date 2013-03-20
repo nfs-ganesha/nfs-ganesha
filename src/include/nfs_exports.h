@@ -355,7 +355,6 @@ typedef struct compound_data {
 	nfs_fh4 currentFH; /*< Current filehandle */
 	nfs_fh4 rootFH; /*< Root filehandle */
 	nfs_fh4 savedFH; /*< Saved filehandle */
-	nfs_fh4 publicFH; /*< Public filehandle */
 	stateid4 current_stateid; /*< Current stateid */
 	bool current_stateid_valid; /*< Current stateid is valid */
 	unsigned int minorversion; /*< NFSv4 minor version */

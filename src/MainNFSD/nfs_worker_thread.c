@@ -891,10 +891,30 @@ static void nfs_rpc_execute(request_data_t *preq,
 	   protocol_options |= EXPORT_OPTION_NFSV3;
 	   exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
 	   if(exportid < 0)
-	      goto handle_err;
+	     {
+                LogInfo(COMPONENT_DISPATCH,
+                        "NFS3 Request from client %s has badly formed handle",
+                        req_ctx.client->hostaddr_str);
+
+                /* Bad handle, report to client */
+                res_nfs->res_getattr3.status = NFS3ERR_BADHANDLE;
+                rc = NFS_REQ_OK;
+                goto req_error;
+	     }
 	   req_ctx.export = get_gsh_export(exportid, true);
-	   if(req_ctx.export == NULL ||
-	      (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
+	   if(req_ctx.export == NULL)
+	     {
+                LogInfo(COMPONENT_DISPATCH,
+                        "NFS3 Request from client %s has invalid export %d",
+                        req_ctx.client->hostaddr_str,
+                        exportid);
+
+                /* Bad export, report to client */
+                res_nfs->res_getattr3.status = NFS3ERR_STALE;
+                rc = NFS_REQ_OK;
+                goto req_error;
+	     }
+	   if((req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
 	      goto handle_err;
 	   /* privileged port only makes sense for V3.  V4 can go thru
 	    * firewalls and so all bets are off
@@ -969,14 +989,42 @@ static void nfs_rpc_execute(request_data_t *preq,
         {
 	  exportid = nlm4_FhandleToExportId(pfh3);
           if(exportid < 0)
-	      goto handle_err;
-	  req_ctx.export = get_gsh_export(exportid, true);
-	  if(req_ctx.export == NULL ||
-	     (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
-	      goto handle_err;
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Found export entry for dirname=%s as exportid=%d",
-                       req_ctx.export->export.fullpath, req_ctx.export->export.id);
+	    {
+              LogInfo(COMPONENT_DISPATCH,
+                      "NLM4 Request from client %s has badly formed handle",
+                      req_ctx.client->hostaddr_str);
+	      req_ctx.export = NULL;
+
+              /* We need to send a NLM4_STALE_FH response (NLM doesn't have an
+               * error code for BADHANDLE), but we don't know how to do that
+               * here, we will send a NULL pexport to NLM routine to let it know
+               * what to do since it can respond to ASYNC calls.
+               */
+	    }
+	  else
+	    {
+	      req_ctx.export = get_gsh_export(exportid, true);
+	      if(req_ctx.export == NULL)
+	        {
+                  LogInfo(COMPONENT_DISPATCH,
+                          "NLM4 Request from client %s has invalid export %d",
+                          req_ctx.client->hostaddr_str,
+                          exportid);
+
+                  /* We need to send a NLM4_STALE_FH response (NLM doesn't have an
+                   * error code for BADHANDLE), but we don't know how to do that
+                   * here, we will send a NULL pexport to NLM routine to let it know
+                   * what to do since it can respond to ASYNC calls.
+                   */
+	        }
+	      else if((req_ctx.export->export.export_perms.options &
+	               EXPORT_OPTION_NFSV3) == 0)
+	        goto handle_err;
+
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Found export entry for dirname=%s as exportid=%d",
+                           req_ctx.export->export.fullpath, req_ctx.export->export.id);
+	    }
         }
     } else if(req->rq_prog == nfs_param.core_param.program[P_MNT]) {
       progname = "MNT";
@@ -984,7 +1032,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
 
   /* Only do access check if we have an export. */
-  if((preqnfs->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
+  if(req_ctx.export != NULL)
     {
       xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
@@ -1093,7 +1141,8 @@ static void nfs_rpc_execute(request_data_t *preq,
    * It is now time for checking if export list allows the machine to perform
    * the request
    */
-  if((preqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
+  if(req_ctx.export != NULL &&
+     (preqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
      (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0)
     {
       /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
@@ -1123,7 +1172,8 @@ static void nfs_rpc_execute(request_data_t *preq,
           rc = NFS_REQ_DROP;
         }
     }
-  else if((preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
+  else if(req_ctx.export != NULL &&
+          (preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
           (export_perms.options & (EXPORT_OPTION_WRITE_ACCESS |
                                      EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
     {
@@ -1150,7 +1200,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           rc = NFS_REQ_DROP;
         }
     }
-  else if((preqnfs->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0 &&
+  else if(req_ctx.export != NULL &&
           (export_perms.options & (EXPORT_OPTION_READ_ACCESS |
                                      EXPORT_OPTION_MD_READ_ACCESS)) == 0)
     {
@@ -1165,14 +1215,25 @@ static void nfs_rpc_execute(request_data_t *preq,
   else
     {
       /* Do the authentication stuff, if needed */
-      if((preqnfs->funcdesc->dispatch_behaviour &
+      if(req_ctx.export != NULL &&
+         (preqnfs->funcdesc->dispatch_behaviour &
           (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
           nfs_check_anon(&export_perms, &req_ctx.export->export, &user_credentials);
         }
 
-      /* processing */
+      /* processing
+       * At this point, req_ctx.export has one of the following conditions:
+       * non-NULL - valid handle for NFS v3 or NLM functions that take handles
+       * NULL - For NULL RPC calls
+       * NULL - for RQUOTAD calls
+       * NULL - for NFS v4 COMPOUND call
+       * NULL - for MOUNT calls
+       * NULL - for NLM calls where handle is bad, NLM must handle response in
+       *        the case of async "MSG" calls, so we just defer to NLM routines
+       *        to respond with NLM4_STALE_FH (NLM doesn't have a BADHANDLE code)
+       */
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1193,6 +1254,9 @@ static void nfs_rpc_execute(request_data_t *preq,
           req,
           res_nfs);
     }
+
+req_error:
+
 #ifdef USE_DBUS_STATS
 /* NFSv4 stats are handled in nfs4_compound()
  */
@@ -1265,18 +1329,11 @@ handle_err:
   if(isInfo(COMPONENT_DISPATCH))
     {
       char dumpfh[1024];
-      char *reason;
-      if(exportid < 0)
-	      reason = "has badly formed handle";
-      else if(req_ctx.export == NULL)
-	      reason = "has invalid export";
-      else
-	      reason = "V3 not allowed on this export";
       sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
       LogMajor(COMPONENT_DISPATCH,
-	       "%s Request from host %s %s, proc=%d, FH=%s",
+	       "%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
 	       progname,
-	       req_ctx.client->hostaddr_str, reason,
+	       req_ctx.client->hostaddr_str,
 	       (int)req->rq_proc, dumpfh);
     }
   auth_rc = AUTH_FAILED;

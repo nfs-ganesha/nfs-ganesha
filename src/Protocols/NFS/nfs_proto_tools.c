@@ -50,6 +50,7 @@
 #include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
+#include "fsal_convert.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
@@ -288,7 +289,6 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_LRU_ERROR:
@@ -706,6 +706,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "Number of ACEs = %u",
 		     args->attrs->acl->naces);
+
 	if (args->attrs->acl) {
 		int i;
 		char *name;
@@ -3370,81 +3371,6 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
         return true;
 }                               /* nfs3_Sattr_To_FSALattr */
 
-/**
- * @brief Fill out the export field in compound data
- *
- * This routine fills in the export field in the compound data.
- *
- * @param[in,out] data Compound dta
- *
- * @retval NFS4_OK if successfull.
- * @retval NFS4ERR_BADHANDLE on invalid handle.
- * @retval NFS4ERR_WRONGSEC on wrong security flavor.
- */
-
-int nfs4_SetCompoundExport(compound_data_t *data)
-{
-        short exportid;
-
-        /* This routine is not related to pseudo fs file handle, do
-           not handle them */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		LogCrit(COMPONENT_NFS_V4,
-			"Can not set export for pseudo fs");
-		return NFS4ERR_INVAL;
-        }
-
-        /* Get the export id */
-        exportid = nfs4_FhandleToExportId(&(data->currentFH));
-        if (exportid == 0) {
-                return NFS4ERR_BADHANDLE;
-        }
-
-	if(data->req_ctx->export != NULL) {
-		if(exportid == data->req_ctx->export->export.id)
-			return NFS4_OK; /* same export, same creds */
-		put_gsh_export(data->req_ctx->export);
-	}
-	data->req_ctx->export = get_gsh_export(exportid, true);
-	if(data->req_ctx->export == NULL) {
-		data->pexport = NULL;
-                return NFS4ERR_BADHANDLE;
-        }
-	data->pexport = &data->req_ctx->export->export;
-	return nfs4_MakeCred(data);
-}                               /* nfs4_SetCompoundExport */
-
-/**
- *
- * @brief Extract the export ID from a filehandle
- *
- * This routine extracts the export id from the filehandle.
- *
- * @param[in] fh4  File handle to be used
- * @param[in] ExId buffer to store found export ID will be stored
- *
- * @retval true if successful.
- * @retval false otherwise.
- *
- */
-
-bool
-nfs4_FhandleToExId(nfs_fh4 *fh4, unsigned short *ExId)
-{
-        file_handle_v4_t *fhandle4;
-
-        /* Map the filehandle to the correct structure */
-        fhandle4 = (file_handle_v4_t *) (fh4->nfs_fh4_val);
-
-        /* The function should not be used on a pseudo fhandle */
-        if(fhandle4->pseudofs_flag) {
-                return false;
-        }
-
-        *ExId = fhandle4->exportid;
-        return true;
-}                               /* nfs4_FhandleToExId */
-
 /**** Glue related functions ****/
 
 /*
@@ -4119,10 +4045,6 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
-      nfserror = NFS4ERR_BADHANDLE;
-      break;
-
     case CACHE_INODE_BAD_TYPE:
     case CACHE_INODE_INVALID_ARGUMENT:
       nfserror = NFS4ERR_INVAL;
@@ -4276,7 +4198,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
@@ -4659,7 +4580,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 }
 
 /**
- * @brief Do basic checks on a filehandle
+ * @brief Do basic checks on the CurrentFH
  *
  * This function performs basic checks to make sure the supplied
  * filehandle is sane for a given operation.
@@ -4679,22 +4600,33 @@ nfs4_sanity_check_FH(compound_data_t *data,
 {
 	int fh_status;
 
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&(data->currentFH));
+
+	if(fh_status != NFS4_OK) {
+		return fh_status;
+	}
+
         /* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
         if (fh_status != NFS4_OK) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Invalid failed");
                 return fh_status;
         }
 
         /* Check for the correct file type */
         if (required_type != NO_FILE_TYPE) {
                 if (data->current_filetype != required_type) {
-                        LogDebug(COMPONENT_NFSPROTO,
-                                 "Wrong file type");
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected %s actual %s",
+                                 object_file_type_to_str(required_type),
+                                 object_file_type_to_str(data->current_filetype));
 
                         if(required_type == DIRECTORY) {
-                                return NFS4ERR_NOTDIR;
+                                if(data->current_filetype == SYMBOLIC_LINK) {
+                                        return NFS4ERR_SYMLINK;
+                                } else {
+                                        return NFS4ERR_NOTDIR;
+                                }
                         }
                         else if(required_type == SYMBOLIC_LINK) {
                                 return NFS4ERR_INVAL;
@@ -4710,6 +4642,8 @@ nfs4_sanity_check_FH(compound_data_t *data,
         }
 
         if (nfs4_Is_Fh_DSHandle(&data->currentFH) && !ds_allowed) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "DS Handle");
                 return NFS4ERR_INVAL;
         }
 
@@ -4753,15 +4687,15 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 }
 
 /**
- *
- * @brief Do basic checks on saved filehandle
+ * @brief Do basic checks on the SavedFH
  *
  * This function performs basic checks to make sure the supplied
  * filehandle is sane for a given operation.
  *
  * @param data          [IN] Compound_data_t for the operation to check
  * @param required_type [IN] The file type this operation requires.
- *                           Set to 0 to allow any type.
+ *                           Set to 0 to allow any type. A negative value
+ *                           indicates any type BUT that type is allowed.
  * @param ds_allowed    [IN] true if DS handles are allowed.
  *
  * @return NFSv4.1 status codes
@@ -4769,27 +4703,49 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 
 nfsstat4
 nfs4_sanity_check_saved_FH(compound_data_t *data,
-                           object_file_type_t required_type,
+                           int required_type,
                            bool ds_allowed)
 {
 	int fh_status;
 
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&(data->savedFH));
+
+	if(fh_status != NFS4_OK) {
+		return fh_status;
+	}
+
         /* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
         if (fh_status != NFS4_OK) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Invalid failed");
                 return fh_status;
         }
 
         /* Check for the correct file type */
-        if (required_type != NO_FILE_TYPE) {
+        if (required_type < 0) {
+                if(-required_type == data->saved_filetype) {
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected not to be %s was %s",
+                                 object_file_type_to_str((object_file_type_t)-required_type),
+                                 object_file_type_to_str(data->current_filetype));
+                        if (-required_type == DIRECTORY) {
+                                return NFS4ERR_ISDIR;
+                        return NFS4ERR_INVAL;
+                        }
+                }
+        } else if (required_type != NO_FILE_TYPE) {
                 if (data->saved_filetype != required_type) {
-                        LogDebug(COMPONENT_NFSPROTO,
-                                 "Wrong file type");
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected %s was %s",
+                                 object_file_type_to_str((object_file_type_t)required_type),
+                                 object_file_type_to_str(data->current_filetype));
 
                         if (required_type == DIRECTORY) {
-                                return NFS4ERR_NOTDIR;
+                                if(data->current_filetype == SYMBOLIC_LINK) {
+                                        return NFS4ERR_SYMLINK;
+                                } else {
+                                        return NFS4ERR_NOTDIR;
+                                }
                         }
                         else if (required_type == SYMBOLIC_LINK) {
                                 return NFS4ERR_INVAL;
@@ -4805,6 +4761,8 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
         }
 
         if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "DS Handle");
                 return NFS4ERR_INVAL;
         }
 
