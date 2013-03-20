@@ -179,12 +179,10 @@ cache_inode_remove(cache_entry_t *entry,
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
 
      if((*status
-         = cache_inode_access_sw(entry,
-                                 access_mask,
-                                 context,
-                                 &cache_status,
-                                 NULL,
-                                 FALSE))
+         = cache_inode_access_no_mutex(entry,
+                                       access_mask,
+                                       context,
+                                       &cache_status))
         != CACHE_INODE_SUCCESS) {
           goto unlock_attr;
      }

@@ -120,12 +120,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
-     if ((*status = cache_inode_access_sw(dest_dir,
-                                          access_mask,
-                                          context,
-                                          status,
-                                          NULL,
-                                          FALSE))
+     if ((*status = cache_inode_access_no_mutex(dest_dir,
+                                                access_mask,
+                                                context,
+                                                status))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
