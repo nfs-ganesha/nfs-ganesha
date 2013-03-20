@@ -75,19 +75,11 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 			struct req_op_context *req_ctx,
 			cache_entry_t **entry)
 {
-     cache_inode_dir_entry_t dirent_key;
      cache_inode_dir_entry_t *dirent = NULL;
      fsal_status_t fsal_status = {0, 0};
-     struct fsal_obj_handle *object_handle;
+     struct fsal_obj_handle *object_handle = NULL;
      struct fsal_obj_handle *dir_handle;
-     struct attrlist object_attributes;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     cache_inode_fsal_data_t new_entry_fsdata;
-
-     memset(&dirent_key, 0, sizeof(dirent_key));
-     memset(&new_entry_fsdata, 0, sizeof(new_entry_fsdata));
-     memset(&object_handle, 0, sizeof(object_handle));
-     memset(&object_attributes, 0, sizeof(object_attributes));
 
      if(parent->type != DIRECTORY) {
 	  status = CACHE_INODE_NOT_A_DIRECTORY;
@@ -143,12 +135,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                } else if (write_locked) {
                     /* We have the write lock and the content is
                        still invalid.  Empty it out and mark it valid
-                       in preparation for caching the result of this
-                       lookup. */
-                    cache_inode_release_dirents(parent,
-                                                CACHE_INODE_AVL_BOTH);
-                    atomic_set_uint32_t_bits(&parent->flags,
-                                             CACHE_INODE_TRUST_CONTENT);
+                       in preparation for caching the result of this lookup. */
+                    cache_inode_invalidate_all_cached_dirent(parent);
                }
                if (!write_locked) {
                     /* Get a write lock and do it again. */
@@ -161,7 +149,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      }
 
      dir_handle = parent->obj_handle;
-     memset(&object_attributes, 0, sizeof(struct attrlist));
      fsal_status = dir_handle->ops->lookup(dir_handle, req_ctx, name,
                                            &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {

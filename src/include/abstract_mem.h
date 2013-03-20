@@ -514,7 +514,7 @@ pool_basic_alloc(pool_t *pool)
  */
 
 static inline void
-pool_basic_free(pool_t *pool,
+pool_basic_free(pool_t *pool __attribute__((unused)),
                 void* object)
 {
      gsh_free(object);

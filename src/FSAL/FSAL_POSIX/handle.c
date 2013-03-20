@@ -539,13 +539,10 @@ static struct dirlist *new_dirent (const char *dirpath, const char *name)
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   const struct req_op_context *opctx,
-                                  struct fsal_cookie *whence,
+                                  fsal_cookie_t *whence,
                                   void *dir_state,
-                                  bool (*cb)(const struct req_op_context *opctx,
-                                             const char *name,
-                                             void *dir_state,
-                                             struct fsal_cookie * cookie),
-                                   bool *eof)
+                                  fsal_readdir_cb cb,
+                                  bool *eof)
 {
     struct file_data *parent = NULL;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -555,13 +552,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
     DIR *dir = NULL;
     struct dirent *d = NULL, *dir_buf = NULL;
     struct dirlist *first = NULL, *last = NULL, *i, *next;
-    struct fsal_cookie *entry_cookie = NULL;
     long offset = 0;
 
     if (whence) {
-        if (whence->size != sizeof(offset))
-            return fsalstat (posix2fsal_error(EINVAL), EINVAL);
-        memcpy(&offset, whence->cookie, sizeof(offset));
+        offset = (long)*whence;
     }
 
     if (!(parent = get_dir_path (dir_hdl, &p, &retval, NULL, NULL))) {
@@ -603,12 +597,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
     offset = telldir(dir);
     xclosedir (dir);
 
-    entry_cookie = malloc (sizeof (struct fsal_cookie) + sizeof (offset));
-    entry_cookie->size = sizeof (offset);
-    memcpy(entry_cookie->cookie, &offset, sizeof(offset));
-
     for (i = first; i; i = i->next) {
-        if (!cb(opctx, i->name, dir_state, entry_cookie))
+        if (!cb(opctx, i->name, dir_state, (fsal_cookie_t)offset))
         if (FSAL_IS_ERROR (status)) {
             fsal_error = 0;
             retval = 0;
@@ -622,7 +612,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
     xfree (dir_buf);
     xfree (parent);
-    xfree (entry_cookie);
     xclosedir (dir);
 
     for (i = first; i; i = next) {

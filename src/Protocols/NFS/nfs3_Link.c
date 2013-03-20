@@ -75,7 +75,7 @@ nfs_Link(nfs_arg_t *arg,
          struct svc_req *req,
          nfs_res_t *res)
 {
-        char *link_name = NULL;
+        const char *link_name = arg->arg_link3.link.name;
         cache_entry_t *target_entry = NULL;
         cache_entry_t *parent_entry;
         pre_op_attr pre_parent = {
@@ -89,8 +89,6 @@ nfs_Link(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO))
          {
            char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
-
-           link_name = arg->arg_link3.link.name;
 
            nfs_FhandleToStr( req->rq_vers,
                              &(arg->arg_link3.file),
@@ -142,7 +140,6 @@ nfs_Link(nfs_arg_t *arg,
             goto out;
          }
 
-        link_name = arg->arg_link3.link.name;
         to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
         from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
 

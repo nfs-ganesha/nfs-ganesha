@@ -487,7 +487,7 @@ struct linux_dirent {
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
                                   bool *eof)
@@ -500,18 +500,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	off_t seekloc = 0;
 	int bpos, cnt, nread;
 	struct linux_dirent *dentry;
-	struct fsal_cookie *entry_cookie;
 	char buf[BUF_SIZE];
 
 	if(whence != NULL) {
-		if(whence->size != sizeof(off_t)) {
-			fsal_error = posix2fsal_error(EINVAL);
-			retval = errno;
-			goto out;
-		}
-		memcpy(&seekloc, whence->cookie, sizeof(off_t));
+		seekloc = (off_t)*whence;
 	}
-	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	mntfd = gpfs_get_root_fd(dir_hdl->export);
 	status = fsal_internal_handle2fd_at(mntfd, myself->handle, &dirfd,
@@ -540,14 +533,12 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			entry_cookie->size = sizeof(off_t);
-			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
 			/* callback to cache inode */
 			if (!cb(opctx,
 			        dentry->d_name,
 			        dir_state,
-			        entry_cookie)) {
+			        (fsal_cookie_t)dentry->d_off)) {
 				goto done;
 			}
 skip:
@@ -560,7 +551,6 @@ skip:
 done:
 	close(dirfd);
 	
-out:
 	return fsalstat(fsal_error, retval);	
 }
 

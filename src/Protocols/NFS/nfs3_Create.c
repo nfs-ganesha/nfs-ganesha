@@ -153,8 +153,7 @@ nfs_Create(nfs_arg_t *arg,
 
         if (file_name == NULL ||
             *file_name == '\0' ) {
-                res->res_create3.status = NFS3ERR_INVAL;
-                
+                cache_status = CACHE_INODE_INVALID_ARGUMENT;
                 goto out_fail;
         }
 
@@ -196,8 +195,8 @@ nfs_Create(nfs_arg_t *arg,
 					  &file_entry);
 
         /* Complete failure */
-        if ((cache_status != CACHE_INODE_SUCCESS) &&
-            (cache_status != CACHE_INODE_ENTRY_EXISTS)) {
+        if (((cache_status != CACHE_INODE_SUCCESS) &&
+            (cache_status != CACHE_INODE_ENTRY_EXISTS)) || (file_entry == NULL)) {
                   goto out_fail;
         }
 
@@ -241,24 +240,22 @@ nfs_Create(nfs_arg_t *arg,
         /* Build file handle */
         res->res_create3.status =
                         nfs3_AllocateFH(&res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle);
-        if (res->res_create3.status != NFS3_OK)
-          {
+        if (res->res_create3.status != NFS3_OK) {
              rc = NFS_REQ_OK;
              goto out;
-                }
+        }
 
         /* Set Post Op Fh3 structure */
 	if (!nfs3_FSALToFhandle(&(res->res_create3.CREATE3res_u.resok.obj
 				  .post_op_fh3_u.handle),
-				file_entry->obj_handle))
-           {
+				file_entry->obj_handle)) {
                gsh_free(res->res_create3.CREATE3res_u.resok.obj.
                         post_op_fh3_u.handle.data.data_val);
 
                res->res_create3.status = NFS3ERR_BADHANDLE;
                rc = NFS_REQ_OK;
                goto out;
-           }
+         }
 
         /* Set Post Op Fh3 structure */
         res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE ;

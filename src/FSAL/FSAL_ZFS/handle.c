@@ -672,7 +672,7 @@ out:
  */
 static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 			      	  const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
                                   fsal_readdir_cb cb,
                                   bool *eof)
@@ -681,21 +681,15 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	off_t seekloc = 0;
         creden_t cred ;
-	struct fsal_cookie *entry_cookie;
         libzfswrap_vfs_t   * p_vfs   = NULL ;
         libzfswrap_vnode_t * pvnode  = NULL ;
         libzfswrap_entry_t * dirents = NULL ;
         unsigned int index  = 0 ;
 
 	if(whence != NULL) {
-		if(whence->size != sizeof(off_t)) {
-			retval = errno;
-			goto out;
-		}
-		memcpy(&seekloc, whence->cookie, sizeof(off_t));
+		seekloc = (off_t)*whence;
 	}
 
-	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
         cred.uid = opctx->creds->caller_uid;
@@ -747,14 +741,11 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                   if(!strcmp(dirents[index].psz_filename, ".") || !strcmp(dirents[index].psz_filename, ".."))
                      continue;
    
-                  entry_cookie->size = sizeof(off_t);
-	          memcpy(&entry_cookie->cookie, &index, sizeof(off_t));
-
                   /* callback to cache inode */
                   if(!cb( opctx,
                           dirents[index].psz_filename,
                           dir_state,
-                          entry_cookie ) ) 
+                          (fsal_cookie_t)index ) )
                     goto done;  
              }
            

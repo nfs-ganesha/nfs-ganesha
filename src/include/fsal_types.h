@@ -177,9 +177,6 @@ typedef struct fsal_dev__
   uint64_t minor;
 } fsal_dev_t;
 
-/* The maximum ACLs that a file can support */
-/* #define FSAL_MAX_ACL  10 */
-#define FSAL_MAX_ACL  2
 
 /* constants for specifying which ACL types are supported  */
 
