@@ -633,21 +633,83 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
                                            cache_inode_status_t *status,
                                            fsal_attrib_list_t *attrs,
                                            bool_t use_mutex);
-cache_inode_status_t cache_inode_access_no_mutex(
-    cache_entry_t *entry,
-    fsal_accessflags_t access_type,
-    fsal_op_context_t *context,
-    cache_inode_status_t *status);
-cache_inode_status_t cache_inode_access(cache_entry_t *entry,
-                                        fsal_accessflags_t access_type,
-                                        fsal_op_context_t *context,
-                                        cache_inode_status_t *status);
 
-cache_inode_status_t cache_inode_access2(cache_entry_t *entry,
-                                         fsal_accessflags_t access_type,
-                                         fsal_op_context_t *context,
-                                         fsal_attrib_list_t *attrs,
-                                         cache_inode_status_t *status);
+/**
+ *
+ * @brief Checks entry permissions without taking a lock
+ *
+ * This function checks whether the specified permissions are
+ * available on the object.  This function may only be called if an
+ * attribute lock is held.
+ *
+ * @param[in]  entry       entry pointer for the fs object to be checked.
+ * @param[in]  access_type The kind of access to be checked
+ * @param[in]  context     FSAL credentials
+ * @param[out] status      Returned status
+ *
+ * @return CACHE_INODE_SUCCESS if operation is a success
+ *
+ */
+static inline cache_inode_status_t
+cache_inode_access_no_mutex(cache_entry_t *entry,
+                            fsal_accessflags_t access_type,
+                            fsal_op_context_t *context,
+                            cache_inode_status_t *status)
+{
+    return cache_inode_access_sw(entry, access_type,
+                                 context, status, NULL, FALSE);
+}
+
+/**
+ *
+ * @brief Checks permissions on an entry
+ *
+ * This function acquires the attribute lock on the supplied cach
+ * entry then checks if the supplied credentials are sufficient to
+ * gain the supplied access.
+ *
+ * @param[in] entry       The object to be checked
+ * @param[in] access_type The kind of access to be checked
+ * @param[in] context     FSAL credentials
+ * @param[in] status      Returned status
+ *
+ * @return CACHE_INODE_SUCCESS if operation is a success
+ */
+static inline cache_inode_status_t
+cache_inode_access(cache_entry_t *entry,
+                   fsal_accessflags_t access_type,
+                   fsal_op_context_t *context,
+                   cache_inode_status_t *status)
+{
+    return cache_inode_access_sw(entry, access_type,
+                                 context, status, NULL, TRUE);
+}
+
+/**
+ *
+ * @brief Checks permissions on an entry and return attributes
+ *
+ * Checks for an entry accessibility and return attributes if access is allowed
+ *
+ * @param[in]  pentry      the fs object to be checked.
+ * @param[in]  access_type the kind of access to be c
+ * @param[in]  pcontext    FSAL credentials
+ * @param[out] attr        pointer to return attributes
+ * @param[in]  pstatus     returned status.
+ *
+ * @return CACHE_INODE_SUCCESS if operation is a success
+ *
+ */
+static inline cache_inode_status_t
+cache_inode_access2(cache_entry_t * pentry,
+                    fsal_accessflags_t access_type,
+                    fsal_op_context_t * pcontext,
+                    fsal_attrib_list_t *attr,
+                    cache_inode_status_t * pstatus)
+{
+  return cache_inode_access_sw(pentry, access_type,
+                               pcontext, pstatus, attr, TRUE);
+}
 
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t        * pentry,
