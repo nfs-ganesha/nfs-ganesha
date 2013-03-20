@@ -108,15 +108,12 @@ nfs_parameter_t nfs_param =
   .core_param.drop_io_errors = true,
   .core_param.drop_delay_errors = true,
   .core_param.core_dump_size = -1,
-  .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
   .core_param.decoder_fridge_expiration_delay = -1,
   .core_param.decoder_fridge_block_timeout = -1,
   .core_param.dispatch_max_reqs = 5000,
   .core_param.dispatch_max_reqs_xprt =  512,
   .core_param.core_options = CORE_OPTION_ALL_VERS,
-  .core_param.stats_file_path = "/tmp/ganesha.stat",
-  .core_param.stats_per_client_directory = "/tmp",
   .core_param.rpc.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
   .core_param.rpc.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
   .core_param.enable_FSAL_upcalls = true,
@@ -418,22 +415,12 @@ void nfs_print_param_config()
   printf("\tDRC_UDP_Checksum = %u ; \n",
          nfs_param.core_param.drc.udp.checksum);
   printf("\tCore_Dump_Size = %ld ; \n", nfs_param.core_param.core_dump_size);
-  printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
-  printf("\tStats_Update_Delay = %d ; \n",
-         nfs_param.core_param.stats_update_delay);
   printf("\tLong_Processing_Threshold = %"PRIu64" ; \n",
          nfs_param.core_param.long_processing_threshold);
   printf("\tDecoder_Fridge_Expiration_Delay = %"PRIu64" ; \n",
          nfs_param.core_param.decoder_fridge_expiration_delay);
   printf("\tDecoder_Fridge_Block_Timeout = %"PRIu64" ; \n",
 	 nfs_param.core_param.decoder_fridge_block_timeout);
-  printf("\tStats_Per_Client_Directory = %s ; \n",
-         nfs_param.core_param.stats_per_client_directory);
-
-  if(nfs_param.core_param.dump_stats_per_client)
-    printf("\tDump_Stats_Per_Client = true ; \n");
-  else
-    printf("\tDump_Stats_Per_Client = false ;\n");
 
   if(nfs_param.core_param.drop_io_errors)
     printf("\tDrop_IO_Errors = true ; \n");

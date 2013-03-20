@@ -253,25 +253,9 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->rpc.max_recv_buffer_size = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Stats_Update_Delay"))
-        {
-          pparam->stats_update_delay = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
         {
           pparam->long_processing_threshold = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
-        {
-          pparam->dump_stats_per_client = StrToBoolean(key_value);
-        }
-      else if(!strcasecmp(key_name, "Stats_File_Path"))
-        {
-          pparam->stats_file_path = gsh_strdup(key_value);
-        }
-      else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
-        {
-          pparam->stats_per_client_directory = gsh_strdup(key_value);
         }
       else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
         {
