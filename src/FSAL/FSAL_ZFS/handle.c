@@ -1036,18 +1036,18 @@ static fsal_status_t tank_unlink( struct fsal_obj_handle *dir_hdl,
  * the whole struct.
  */
 
-static fsal_status_t tank_handle_digest( struct fsal_obj_handle *obj_hdl,
+static fsal_status_t tank_handle_digest(const struct fsal_obj_handle *obj_hdl,
                                         fsal_digesttype_t output_type,
                                         struct gsh_buffdesc *fh_desc)
 {
-	struct zfs_fsal_obj_handle *myself;
-	struct zfs_file_handle *fh;
+	const struct zfs_fsal_obj_handle *myself;
+	const struct zfs_file_handle *fh;
 	size_t fh_size;
 
 	/* sanity checks */
         if( !fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
+	myself = container_of(obj_hdl, const struct zfs_fsal_obj_handle, obj_handle);
 	fh = myself->handle;
 
 	switch(output_type) {

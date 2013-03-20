@@ -1426,7 +1426,7 @@ static fsal_status_t hpss_unlink( struct fsal_obj_handle *dir_hdl,
  *         Else, it is a non null value.
  */
 
-static fsal_status_t hpss_handle_digest( struct fsal_obj_handle *fsal_obj_hdl,
+static fsal_status_t hpss_handle_digest(const struct fsal_obj_handle *fsal_obj_hdl,
                                         fsal_digesttype_t output_type,
                                         struct gsh_buffdesc *fh_desc)
 
@@ -1434,14 +1434,14 @@ static fsal_status_t hpss_handle_digest( struct fsal_obj_handle *fsal_obj_hdl,
   int memlen;
   uint64_t objid64;           /* to cast the objID */
 
-  struct hpss_fsal_obj_handle *obj_hdl;
+  const struct hpss_fsal_obj_handle *obj_hdl;
   ns_ObjHandle_t *ns_handle;
 
   /* sanity checks */
   if( !fsal_obj_hdl || !fh_desc )
     return fsalstat(ERR_FSAL_FAULT, 0);
 
-  obj_hdl = container_of(fsal_obj_hdl, struct hpss_fsal_obj_handle, obj_handle);
+  obj_hdl = container_of(fsal_obj_hdl, const struct hpss_fsal_obj_handle, obj_handle);
   ns_handle = &obj_hdl->handle->ns_handle;
 
   switch (output_type)

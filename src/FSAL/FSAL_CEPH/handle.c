@@ -953,13 +953,13 @@ static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
  * @return FSAL status.
  */
 
-static fsal_status_t handle_digest(struct fsal_obj_handle *handle_pub,
+static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
 				   uint32_t output_type,
 				   struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
-	struct handle *handle
-		= container_of(handle_pub, struct handle, handle);
+	const struct handle *handle
+		= container_of(handle_pub, const struct handle, handle);
 
 	switch (output_type) {
 	/* Digested Handles */

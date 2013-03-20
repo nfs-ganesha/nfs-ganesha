@@ -142,7 +142,7 @@ badhdl:
  * @return true if successful, false otherwise
  */
 bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
-			struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *file_handle;
@@ -185,7 +185,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
  * compensate??
  */
 bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
-			struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *file_handle;
@@ -228,7 +228,7 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
  * @return true if successful, false otherwise
  */
 bool nfs2_FSALToFhandle(fhandle2 *fh2,
-			struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t *file_handle;
