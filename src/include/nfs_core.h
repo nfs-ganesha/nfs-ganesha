@@ -218,7 +218,6 @@ extern pool_t *dupreq_pool; /* XXX hide */
 struct nfs_worker_data {
 	unsigned int worker_index; /*< Index for log messages */
 	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
-	pthread_mutex_t request_pool_mutex; /*< Delendum est */
 	exportlist_client_entry_t related_client; /*< Identity that
 						      governs access to
 						      export */

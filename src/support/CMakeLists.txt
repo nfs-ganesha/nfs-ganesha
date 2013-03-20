@@ -9,36 +9,6 @@ if(USE_DBUS_STATS)
     )
 endif(USE_DBUS_STATS)
 
-########### next target ###############
-
-SET(test_timespec_SRCS
-   test_timespec.c
-)
-
-add_executable(test_timespec EXCLUDE_FROM_ALL ${test_timespec_SRCS})
-
-target_link_libraries(
-  test_timespec
-  log
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBRT}
-)
-
-
-########### next target ###############
-
-SET(test_nfs_ip_name_SRCS
-   test_nfs_ip_name.c
-)
-
-add_executable(test_nfs_ip_name EXCLUDE_FROM_ALL ${test_nfs_ip_name_SRCS})
-
-target_link_libraries(test_nfs_ip_name
-  log
-  support
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
 # string utilities.  This should eventually go into src/os
 # because BSD has them and Linux doesn't
 

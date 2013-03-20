@@ -62,23 +62,6 @@ typedef enum protos {
 } protos;
 
 /**
- * @brief Nominal maximum of worker threads
- *
- * @deprecated This value is only used to initialize static piles of
- * stats info.  When Lieb cleans up the old stats code, this constant
- * should go away.
- */
-#define NB_MAX_WORKER_THREAD 4096
-
-/**
- * @brief Divisions in IP Stats table
- *
- * @deprecated This value is going away when Lieb removes the old
- * stats code.
- */
-#define PRIME_IP_STATS 17
-
-/**
  * @brief Divisions in state and clientid tables.
  */
 #define PRIME_STATE 17
@@ -333,38 +316,10 @@ typedef struct nfs_core_param {
 		    MaxRPCRecvBufferSize. */
 		uint32_t max_recv_buffer_size;
 	} rpc;
-	/**
-	 * Delay between stats updates.  Defaults to 60, settable with
-	 * Stats_Update_Delay.
-	 *
-	 * @deprecated To be removed as part of the old stats code.
-	 */
-	unsigned int stats_update_delay;
 	/** Interval (in seconds) at which to report an unusually
 	    long.  Defaults to 10.  Settable by
 	    Long_Processing_Threshold. */
 	uint64_t long_processing_threshold;
-	/**
-	 * Whether to group stats per-client.  Settable by
-	 * Dump_Stats_Per_Client.
-	 *
-	 * @deprecated To be removed as part of the old stats code.
-	 */
-	bool dump_stats_per_client;
-	/**
-	 * Path to the stats-file.  Defaults to /tmp/ganesha.stat.
-	 * Settable by Stats_File_Path.
-	 *
-	 * @deprecated To be removed as part of the old stats code.
-	 */
-	char *stats_file_path;
-	/**
-	 * Path to the directory for per-client stats files.  Defaults
-	 * to /tmp/.  Settable by Stats_Per_File_Directory.
-	 *
-	 * @deprecated To be removed as part of the old stats code.
-	 */
-	char *stats_per_client_directory;
 	/** How long (in seconds) to let unused decoder threads wait before
 	    exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
 	time_t decoder_fridge_expiration_delay;
@@ -691,12 +646,6 @@ typedef struct nfs_param {
 	/** IP-Name map configuration, settable in the NFS_IP_Name
 	    stanza. */
 	nfs_ip_name_parameter_t ip_name_param;
-	/**
-	 * IP Stats hash parameters
-	 *
-	 * @deprecated This is going to be removed.l
-	 */
-	hash_parameter_t ip_stats_param;
 #ifdef _HAVE_GSSAPI
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
