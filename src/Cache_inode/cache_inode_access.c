@@ -115,54 +115,6 @@ out:
      return status;
 }
 
-/**
- *
- * @brief Checks entry permissions without taking a lock
- *
- * This function checks whether the specified permissions are
- * available on the object.  This function may only be called if an
- * attribute lock is held.
- *
- * @param[in] entry       entry pointer for the fs object to be checked.
- * @param[in] access_type The kind of access to be checked
- * @param[in] req_ctx     Request context
- *
- * @return CACHE_INODE_SUCCESS if operation is a success
- *
- */
-cache_inode_status_t
-cache_inode_access_no_mutex(cache_entry_t *entry,
-                            fsal_accessflags_t access_type,
-			    struct req_op_context *req_ctx)
-{
-    return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, false);
-}
-
-/**
- *
- * @brief Checks permissions on an entry
- *
- * This function acquires the attribute lock on the supplied cach
- * entry then checks if the supplied credentials are sufficient to
- * gain the supplied access.
- *
- * @param[in] entry       The object to be checked
- * @param[in] access_type The kind of access to be checked
- * @param[in] req_ctx     Request context
- *
- * @return CACHE_INODE_SUCCESS if operation is a success
- */
-cache_inode_status_t
-cache_inode_access(cache_entry_t *entry,
-                   fsal_accessflags_t access_type,
-		   struct req_op_context *req_ctx)
-{
-    return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, true);
-}
-
-
 bool not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
 {
     const struct user_cred *creds = req_ctx->creds;
