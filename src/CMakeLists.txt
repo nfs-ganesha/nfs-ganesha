@@ -468,6 +468,14 @@ set(SYSTEM_LIBRARIES
   ${LIBRT}
 )
 
+IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
+message( FATAL_ERROR 
+"No CMakeLists.txt found in libntirpc
+This probably means that the directory was not properly populated.
+Please run the following command to do that and use cmake again:
+    git submodule update --init" )
+ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
+
 add_subdirectory(include)
 add_subdirectory(Log)
 add_subdirectory(Common)
