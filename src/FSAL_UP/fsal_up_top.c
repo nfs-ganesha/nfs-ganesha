@@ -1086,9 +1086,16 @@ revoke:
 	/* If we don't find the state, there's nothing to return. */
 	if (nfs4_State_Get_Pointer(cb_data->stateid_other,
 				   &state)) {
+		struct req_op_context return_context = {
+			.creds = &synthetic_creds,
+			.caller_addr = NULL
+		};
+
 		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
+		return_context.clientid = (&state->state_owner->so_owner.
+					   so_nfs4_owner.so_clientid);
 		nfs4_return_one_state(state->state_entry,
-				      &synthetic_context,
+				      &return_context,
 				      LAYOUTRETURN4_FILE,
 				      (call->cbt.v_u.v4.res.status ==
 				       NFS4ERR_NOMATCHING_LAYOUT) ?
@@ -1109,6 +1116,49 @@ revoke:
 }
 
 /**
+ * @brief Return one layout on error
+ *
+ * This is only invoked in the case of a send error on the first
+ * attempt to issue a CB_LAYOUTRECALL, so that we don't call into the
+ * FSAL's layoutreturn function while its layoutrecall function may be
+ * holding locks.
+ *
+ * @param[in] arg Structure holding all arguments, so we can queue
+ *                this function in delayed_exec.
+ */
+
+static void return_one_async(void *arg)
+{
+	struct layoutrecall_cb_data *cb_data = arg;
+	state_t *s;
+	bool deleted = false;
+	struct req_op_context return_context = {
+		.creds = &synthetic_creds,
+		.caller_addr = NULL
+	};
+
+
+	if (nfs4_State_Get_Pointer(cb_data->stateid_other,
+				   &s)) {
+		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
+		return_context.clientid =
+			&s->state_owner->so_owner.so_nfs4_owner.so_clientid;
+
+		nfs4_return_one_state(s->state_entry,
+				      &return_context,
+				      LAYOUTRETURN4_FILE,
+				      circumstance_revoke,
+				      s,
+				      cb_data->segment,
+				      0,
+				      NULL,
+				      &deleted,
+				      false);
+	}
+	gsh_free(cb_data);
+}
+
+/**
  * @brief Send one layoutrecall to one client
  *
  * @param[in] arg Structure holding all arguments, so we can queue
@@ -1121,10 +1171,12 @@ static void layoutrecall_one_call(void *arg)
 	state_t *s;
 	int code;
 
+	if (cb_data->attempts == 0) {
+		now(&cb_data->first_recall);
+	}
 	if (nfs4_State_Get_Pointer(cb_data->stateid_other,
 				   &s)) {
 		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
-		now(&cb_data->first_recall);
 		code = nfs_rpc_v41_single(cb_data->client,
 					  &cb_data->arg,
 					  &s->state_refer,
@@ -1149,19 +1201,31 @@ static void layoutrecall_one_call(void *arg)
 			 * gone completely out to lunch and fake a
 			 * return.
 			 */
-			bool deleted = false;
+			if (cb_data->attempts == 0) {
+				delayed_submit(return_one_async,
+					       cb_data,
+					       0);
+			} else {
+				bool deleted = false;
 
-			nfs4_return_one_state(s->state_entry,
-					      &synthetic_context,
-					      LAYOUTRETURN4_FILE,
-					      circumstance_revoke,
-					      s,
-					      cb_data->segment,
-					      0,
-					      NULL,
-					      &deleted,
-					      false);
-			gsh_free(cb_data);
+				struct req_op_context return_context = {
+					.creds = &synthetic_creds,
+					.caller_addr = NULL,
+					.clientid = (&s->state_owner->so_owner.
+						     so_nfs4_owner.so_clientid)
+				};
+				nfs4_return_one_state(s->state_entry,
+						      &return_context,
+						      LAYOUTRETURN4_FILE,
+						      circumstance_revoke,
+						      s,
+						      cb_data->segment,
+						      0,
+						      NULL,
+						      &deleted,
+						      false);
+				gsh_free(cb_data);
+			}
 		} else {
 			++cb_data->attempts;
 		}
