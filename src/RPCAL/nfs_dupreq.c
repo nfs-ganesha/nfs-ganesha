@@ -228,102 +228,6 @@ drc_recycle_cmpf(const struct opr_rbtree_node *lhs,
 }
 
 /**
- * @brief Fill hash buffer from a received NFS request
- *
- * @param[in] nfs_req  The request
- * @param[in] hbuf     A buffer to fill
- * @param[in] size     Number of bytes to fill
- */
-static inline void
-drc_fill_hbuf(nfs_request_data_t *nfs_req, char *hbuf, size_t *size)
-{
-    struct nfs_request_lookahead dummy_lookahead = {
-        .flags = 0,
-        .read = 0,
-        .write = 0
-    };
-    XDR xdrs = {
-        .x_public = &dummy_lookahead
-    };
-    xdrmem_create(&xdrs, hbuf, *size, XDR_ENCODE);
-    nfs_req->funcdesc->xdr_decode_func(&xdrs, (caddr_t) &nfs_req->arg_nfs);
-    *size = XDR_GETPOS(&xdrs);
-    XDR_DESTROY(&xdrs);
-}
-
-/**
- * @brief Hash function for entries in a shared DRC
- *
- * @param[in] drc  DRC
- * @param[in] arg  The request arguments
- * @param[in] v    The duplicate request entry being hashed
- *
- * The checksum step is conditional on drc->flags.  Note that
- * Oracle DirectNFS and other clients are believed to produce
- * workloads that may fail without checksum support.
- *
- * @return the (definitive) 64-bit hash value as a uint64_t.
- */
-static inline uint64_t
-drc_shared_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
-{
-    char *hbuf = NULL;
-    size_t size = 256;
-
-    if (drc->flags & DRC_FLAG_CKSUM) {
-        hbuf = alloca(size);
-        drc_fill_hbuf(nfs_req, hbuf, &size);
-        v->hin.tcp.checksum = CityHash64WithSeed(hbuf, size, 911);
-        v->hk = CityHash64WithSeed((char *) &v->hin, sizeof(v->hin), 911);
-    } else
-        v->hk = CityHash64WithSeed((char *) &v->hin,
-                                   sizeof(v->hin)-sizeof(v->hin.tcp.checksum),
-                                   911);
-    return (v->hk);
-}
-
-/**
- * @brief Hash function for entries in a per-connection (TCP) DRC
- *
- * @param[in] drc  DRC
- * @param[in] arg  The request arguments
- * @param[in] v    The duplicate request entry being hashed
- *
- * The hash and checksum steps is conditional on drc->flags.  Note
- * that Oracle DirectNFS and other clients are believed to produce
- * workloads that may fail without checksum support.
- *
- * HOWEVER!  We might omit the address component of the hash here,
- * probably should for performance.
- *
- * @return the (not definitive) 64-bit hash value as a uint64_t.
- */
-static inline uint64_t
-drc_tcp_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
-{
-    char *hbuf = NULL;
-    size_t size = 256;
-
-    if (drc->flags & DRC_FLAG_HASH) {
-        if (drc->flags & DRC_FLAG_CKSUM) {
-            hbuf = alloca(size);
-            drc_fill_hbuf(nfs_req, hbuf, &size);
-            v->hk = CityHash64WithSeed(hbuf, size, 911);
-            LogFullDebug(COMPONENT_DUPREQ,
-                         "hash={%"PRIx64"} xid=%u req=%p",
-                         v->hk, v->hin.tcp.rq_xid,
-                         nfs_req);
-        } else
-            v->hk =
-                CityHash64WithSeed((char *) &v->hin,
-                                   sizeof(v->hin)-sizeof(v->hin.tcp.checksum),
-                                   911);
-    } else
-        v->hk = v->hin.tcp.rq_xid;
-    return (v->hk);
-}
-
-/**
  * @brief Initialize a shared duplicate request cache
  */
 static inline void
@@ -1121,20 +1025,8 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         break;
     }
 
-    switch (drc->type) {
-    case DRC_UDP_V234:
-        (void) drc_shared_hash(drc, nfs_req, dk);
-        break;
-    case DRC_TCP_V3:
-    case DRC_TCP_V4:
-        (void) drc_tcp_hash(drc, nfs_req, dk);
-        break;
-    default:
-        /* error */
-        status = DUPREQ_ERROR;
-        goto release_dk;
-        break;
-    }
+    /* TI-RPC computed checksum */
+    dk->hk = req->rq_cksum;
 
     dk->state = DUPREQ_START;
     dk->timestamp = time(NULL);
