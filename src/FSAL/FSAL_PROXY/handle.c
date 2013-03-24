@@ -1884,17 +1884,16 @@ pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 {
         struct pxy_obj_handle *ph =
                 container_of(obj_hdl, struct pxy_obj_handle, obj);
-        pthread_mutex_lock(&obj_hdl->lock);
-        if(obj_hdl->refs != 0) { 
+        int retval;
+
+        retval = fsal_obj_handle_uninit(obj_hdl);
+        if (retval != 0) {
                 LogCrit(COMPONENT_FSAL,
                         "Tried to release busy handle @ %p with %d refs",
                         obj_hdl, obj_hdl->refs);
-                pthread_mutex_unlock(&obj_hdl->lock);
                 return fsalstat(ERR_FSAL_DELAY, EBUSY);
         }
-        fsal_detach_handle(obj_hdl->export, &obj_hdl->handles);
-        pthread_mutex_unlock(&obj_hdl->lock);
-        pthread_mutex_destroy(&obj_hdl->lock);
+
         free(ph);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

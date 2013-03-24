@@ -927,35 +927,37 @@ static void handle_to_key (struct fsal_obj_handle *obj_hdl, struct gsh_buffdesc 
 
 static fsal_status_t release (struct fsal_obj_handle *obj_hdl)
 {
-    struct fsal_export *exp = obj_hdl->export;
     struct posix_fsal_obj_handle *myself;
-    fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
     int retval = 0;
+    object_file_type_t type = obj_hdl->type;
 
     myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
-    pthread_mutex_lock (&obj_hdl->lock);
-    obj_hdl->refs--;            /* subtract the reference when we were created */
-    if (obj_hdl->refs != 0 || (obj_hdl->type == REGULAR_FILE
-                               && (myself->u.file.fd >= 0 || myself->u.file.openflags != FSAL_O_CLOSED))) {
-        pthread_mutex_unlock (&obj_hdl->lock);
-        retval = obj_hdl->refs > 0 ? EBUSY : EINVAL;
-        LogCrit (COMPONENT_FSAL,
-                 "Tried to release busy handle, "
-                 "hdl = 0x%p->refs = %d, fd = %d, openflags = 0x%x",
-                 obj_hdl, obj_hdl->refs, myself->u.file.fd, myself->u.file.openflags);
-        return fsalstat (posix2fsal_error (retval), retval);
+
+    if(type == REGULAR_FILE &&
+       (myself->u.file.fd >=0 || myself->u.file.openflags != FSAL_O_CLOSED)) {
+            LogCrit(COMPONENT_FSAL,
+                    "Tried to release busy handle, "
+                    "hdl = 0x%p, fd = %d, openflags = 0x%x",
+                    obj_hdl,
+                    myself->u.file.fd, myself->u.file.openflags);
+            return fsalstat(posix2fsal_error(EINVAL), EINVAL);
     }
-    fsal_detach_handle (exp, &obj_hdl->handles);
-    pthread_mutex_unlock (&obj_hdl->lock);
-    pthread_mutex_destroy (&obj_hdl->lock);
-    myself->obj_handle.ops = NULL;      /*poison myself */
-    myself->obj_handle.export = NULL;
-    if (obj_hdl->type == SYMBOLIC_LINK) {
+
+    retval = fsal_obj_handle_uninit(obj_hdl);
+    if (retval != 0) {
+            LogCrit(COMPONENT_FSAL,
+                    "Tried to release busy handle, "
+                    "hdl = 0x%p->refs = %d",
+                    obj_hdl, obj_hdl->refs);
+            return fsalstat(posix2fsal_error(retval), retval);
+    }
+
+    if (type == SYMBOLIC_LINK) {
         xfree (myself->u.symlink.link_content);
         myself->u.symlink.link_size = 0;
     }
     free (myself);
-    return fsalstat (fsal_error, 0);
+    return fsalstat (ERR_FSAL_NO_ERROR, 0);
 }
 
 void posix_handle_ops_init (struct fsal_obj_ops *ops)

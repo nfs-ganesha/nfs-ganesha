@@ -55,21 +55,16 @@ static fsal_status_t release(struct fsal_obj_handle *obj_pub)
 	/* The private 'full' handle */
 	struct handle *obj
 		= container_of(obj_pub, struct handle, handle);
+	int retval;
 
-	pthread_mutex_lock(&obj_pub->lock);
-	obj_pub->refs--;  /* subtract the reference when we were created */
-	if (obj_pub->refs != 0) {
-		pthread_mutex_unlock(&obj_pub->lock);
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, hdl = 0x%p->refs = %d",
-			obj_pub, obj_pub->refs);
-		return ceph2fsal_error(-EBUSY);
-	}
-	fsal_detach_handle(obj_pub->export, &obj_pub->handles);
-	pthread_mutex_unlock(&obj_pub->lock);
-	pthread_mutex_destroy(&obj_pub->lock);
-	obj->handle.ops = NULL; /*poison myself */
-	obj->handle.export = NULL;
+        retval = fsal_obj_handle_uninit(obj_pub);
+        if (retval != 0) {
+                LogCrit(COMPONENT_FSAL,
+                          "Tried to release busy handle, hdl = 0x%p->refs = %d",
+                          obj_pub, obj_pub->refs);
+                return ceph2fsal_error(-retval));
+        }
+
 	gsh_free(obj);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

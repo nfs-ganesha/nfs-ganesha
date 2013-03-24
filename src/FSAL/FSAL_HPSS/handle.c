@@ -1563,36 +1563,36 @@ static void hpss_handle_to_key( struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 {
-	struct fsal_export *exp = obj_hdl->export;
 	struct hpss_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
+        object_file_type_t type = obj_hdl->type;
 
 	myself = container_of(obj_hdl, struct hpss_fsal_obj_handle, obj_handle);
-	pthread_mutex_lock(&obj_hdl->lock);
-	obj_hdl->refs--;  /* subtract the reference when we were created */
-	if(obj_hdl->refs != 0 || (obj_hdl->type == REGULAR_FILE
-				  && myself->u.file.openflags != FSAL_O_CLOSED)) {
-		pthread_mutex_unlock(&obj_hdl->lock);
-		retval = obj_hdl->refs > 0 ? ERR_FSAL_DELAY : ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, "
-			"hdl = 0x%p->refs = %d, openflags = 0x%x",
-			obj_hdl, obj_hdl->refs,
-			myself->u.file.openflags);
-		return fsalstat(retval, 0);
-	}
-	fsal_detach_handle(exp, &obj_hdl->handles);
-	pthread_mutex_unlock(&obj_hdl->lock);
-	pthread_mutex_destroy(&obj_hdl->lock);
-	myself->obj_handle.ops = NULL; /*poison myself */
-	myself->obj_handle.export = NULL;
-	if(obj_hdl->type == SYMBOLIC_LINK) {
+
+        if(type == REGULAR_FILE && myself->u.file.openflags != FSAL_O_CLOSED) {
+                LogCrit(COMPONENT_FSAL,
+                        "Tried to release busy handle, "
+                        "hdl = 0x%p, fd = %d, openflags = 0x%x",
+                        obj_hdl,
+                        myself->u.file.fd, myself->u.file.openflags);
+                return fsalstat(ERR_FSAL_INVAL, 0);
+        }
+
+        retval = fsal_obj_handle_uninit(obj_hdl);
+        if (retval != 0) {
+                LogCrit(COMPONENT_FSAL,
+                        "Tried to release busy handle, "
+                        "hdl = 0x%p->refs = %d",
+                        obj_hdl, obj_hdl->refs);
+                return fsalstat(ERR_FSAL_DELAY, 0);
+        }
+
+	if(type == SYMBOLIC_LINK) {
 		if(myself->u.symlink.link_content != NULL)
 			free(myself->u.symlink.link_content);
 	} 
 	free(myself);
-	return fsalstat(fsal_error, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 

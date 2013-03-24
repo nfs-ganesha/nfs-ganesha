@@ -1286,47 +1286,48 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 {
-	struct fsal_export *exp = obj_hdl->export;
 	struct vfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
+	object_file_type_t type = obj_hdl->type;
 
-	if(obj_hdl->type == REGULAR_FILE) {
+	if(type == REGULAR_FILE) {
 		fsal_status_t st = vfs_close(obj_hdl);
 		if(FSAL_IS_ERROR(st))
 			return st;
 	}
+
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	pthread_mutex_lock(&obj_hdl->lock);
-	obj_hdl->refs--;  /* subtract the reference when we were created */
-	if(obj_hdl->refs != 0 || (obj_hdl->type == REGULAR_FILE
-				  && (myself->u.file.fd >=0
-				      || myself->u.file.openflags != FSAL_O_CLOSED))) {
-		pthread_mutex_unlock(&obj_hdl->lock);
-		retval = obj_hdl->refs > 0 ? EBUSY : EINVAL;
+
+	if(type == REGULAR_FILE &&
+	   (myself->u.file.fd >=0 || myself->u.file.openflags != FSAL_O_CLOSED)) {
+                LogCrit(COMPONENT_FSAL,
+                        "Tried to release busy handle, "
+                        "hdl = 0x%p, fd = %d, openflags = 0x%x",
+                        obj_hdl,
+                        myself->u.file.fd, myself->u.file.openflags);
+                return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+	}
+
+	retval = fsal_obj_handle_uninit(obj_hdl);
+	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Tried to release busy handle, "
-			"hdl = 0x%p->refs = %d, fd = %d, openflags = 0x%x",
-			obj_hdl, obj_hdl->refs,
-			myself->u.file.fd, myself->u.file.openflags);
+			"hdl = 0x%p->refs = %d",
+			obj_hdl, obj_hdl->refs);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	fsal_detach_handle(exp, &obj_hdl->handles);
-	pthread_mutex_unlock(&obj_hdl->lock);
-	pthread_mutex_destroy(&obj_hdl->lock);
-	myself->obj_handle.ops = NULL; /*poison myself */
-	myself->obj_handle.export = NULL;
-	if(obj_hdl->type == SYMBOLIC_LINK) {
+
+	if(type == SYMBOLIC_LINK) {
 		if(myself->u.symlink.link_content != NULL)
 			gsh_free(myself->u.symlink.link_content);
-	} else if(vfs_unopenable_type(obj_hdl->type)) {
+	} else if(vfs_unopenable_type(type)) {
 		if(myself->u.unopenable.name != NULL)
 			gsh_free(myself->u.unopenable.name);
 		if(myself->u.unopenable.dir != NULL)
 			gsh_free(myself->u.unopenable.dir);
 	}
 	gsh_free(myself);
-	return fsalstat(fsal_error, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 
