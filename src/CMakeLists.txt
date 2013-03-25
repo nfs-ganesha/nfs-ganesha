@@ -504,7 +504,6 @@ add_subdirectory(IdMapper)
 add_subdirectory(MainNFSD)
 add_subdirectory(Docs)
 add_subdirectory(tools)
-add_subdirectory(debian)
 
 if(USE_FSAL_FUSE)
   add_subdirectory(example-fuse)
