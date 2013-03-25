@@ -130,7 +130,7 @@ int _9p_read( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid , (unsigned long long)*offset, *count ) ;
 
 /**
- * @TODO read statistics accounting goes here
+ * @todo read statistics accounting goes here
  * modeled on nfs I/O statistics
  */
   return 1 ;

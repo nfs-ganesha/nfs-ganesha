@@ -388,11 +388,8 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
  *
  * @param[in]     entry        Cache entry whose layouts we return
  * @param[in]     req_ctx      Request context
- * @param[in]     synthetic    True if this is a bulk or synthesized
- *                             (e.g. last close or lease expiry) return
- * @param[in]     reclaim      True if the client is returning a state
- *                             from a previous instance of the server
  * @param[in]     return_type  Whether this is a file, fs, or server return
+ * @param[in]     circumstance Why the layout is being returned
  * @param[in,out] layout_state State whose segments we return
  * @param[in]     spec_segment Segment specified in return
  * @param[in]     body_len     Length of type-specific layout return data

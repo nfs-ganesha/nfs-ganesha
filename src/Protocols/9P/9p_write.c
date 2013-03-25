@@ -148,7 +148,7 @@ int _9p_write( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid , (unsigned long long)*offset, *count, outcount ) ;
 
 /**
- * @TODO write statistics accounting goes here
+ * @todo write statistics accounting goes here
  * modeled on nfs I/O stats
  */
   return 1 ;

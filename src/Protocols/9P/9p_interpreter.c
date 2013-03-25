@@ -193,7 +193,7 @@ int _9p_process_buffer(  _9p_request_data_t * preq9p, nfs_worker_data_t * pworke
      LogDebug( COMPONENT_9P, "%s: Error", _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname ) ;
 
 /**
- * @TODO ops stats accounting goes here.
+ * @todo ops stats accounting goes here.
  * service function return codes need to be reworked to return error code properly
  * so that internal error code (currently -1) is distinguished from protocol op
  * error, currently partially handled in rerror, and success return here so we can

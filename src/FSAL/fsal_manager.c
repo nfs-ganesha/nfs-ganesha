@@ -415,7 +415,7 @@ struct fsal_module *lookup_fsal(const char *name)
  * Change load_state only for dynamically loaded modules.
  */
 
-/** @TODO implement api versioning and pass the major,minor here
+/** @todo implement api versioning and pass the major,minor here
  */
 
 int register_fsal(struct fsal_module *fsal_hdl,
