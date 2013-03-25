@@ -387,9 +387,6 @@ struct cache_entry_t {
 			bool root;
 			/** Number of known active children */
 			uint32_t nbactive;
-			/** NULL is not a referral.  If not, this a
-			    'referral string' */
-			char *referral;
 			/** The parent of this directory ('..') */
 			cache_inode_key_t parent;
 			struct {

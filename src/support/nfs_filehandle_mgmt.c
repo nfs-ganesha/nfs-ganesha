@@ -544,7 +544,8 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
   if((fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4)) ||
      (fh->nfs_fh4_len < nfs4_sizeof_handle(filehandle4)) ||
      (filehandle4->fhversion != GANESHA_FH_VERSION) ||
-     (filehandle4->reserved1 != 0))
+     (filehandle4->reserved1 != 0) ||
+     (filehandle4->reserved2 != 0))
   {
     LogMajor(COMPONENT_FILEHANDLE,
 	     "Invalid File handle: len=%d, version=%x",
@@ -590,35 +591,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
 
   return NFS3_OK;
 }                               /* nfs4_Is_Fh_Invalid */
-
-/**
- * 
- * nfs4_Is_Fh_Referral
- *
- * This routine is used to identify fh related to a pure referral
- *
- * @param pfh [IN] file handle to test.
- *
- * @return true is fh is a referral, false otherwise
- *
- */
-int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
-{
-  file_handle_v4_t *pfhandle4;
-
-  if(pfh == NULL)
-    return 0;
-
-  pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
-
-  /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
-  if(pfhandle4->refid > 0)
-    {
-      return true;
-    }
-
-  return false;
-}                               /* nfs4_Is_Fh_Referral */
 
 /**
  * @brief Print an NFSv2 file handle (for debugging purpose)

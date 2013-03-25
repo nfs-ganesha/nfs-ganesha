@@ -1053,8 +1053,6 @@ int nfs4_Fattr_Supported(fattr4 * Fattr);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
-int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen);
-
 void free_utf8(utf8string * utf8str);
 int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
@@ -1151,7 +1149,4 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *);
 #define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
-
-int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
-int nfs4_Set_Fh_Referral(nfs_fh4 * pfh);
 #endif /* _NFS_PROTO_FUNCTIONS_H */

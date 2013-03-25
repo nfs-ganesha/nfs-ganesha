@@ -123,11 +123,13 @@ typedef struct file_handle_v4
   uint16_t exportid; /*< Must be correlated to exportlist_t::id */
   uint32_t reserved1; /*< If you want 32 bits for something, use
 			  this.  Alternatively, it can be removed
-			  next time we change the filesystem format.
+			  next time we change the filehandle format.
 			  For now, we require it to be 0. */
   uint16_t pseudofs_id; /*< Id for the pseudo fs related to this fh */
-  uint16_t refid; /*< Used for referral.  Referral almost certainly
-		      does not work and will need to be redone for 2.1.  */
+  uint16_t reserved2; /*< If you want 16 bits for something, use
+			  this.  Alternatively, it can be removed
+			  next time we change the filehandle format.
+			  For now, we require it to be 0. */
   uint8_t ds_flag; /*< True if FH is a 'DS file handle'.  Consider
 		       rolling this into a flags byte. */
   uint8_t pseudofs_flag; /*< True if FH is within pseudofs.  Consider
@@ -193,7 +195,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *);
 int nfs4_Is_Fh_Xattr(nfs_fh4 *);
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
-int nfs4_Is_Fh_Referral(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
 
 /* This one is used to detect Xattr related FH */

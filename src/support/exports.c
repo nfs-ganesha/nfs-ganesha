@@ -90,10 +90,9 @@
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
-#define CONF_EXPORT_REFERRAL           "Referral"
 #define CONF_EXPORT_FSAL               "FSAL"
-#define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
+#define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
@@ -585,7 +584,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
-  strcpy(p_entry->referral, "");
 
   /* parse options for this export entry */
 
@@ -779,10 +777,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_PSEUDO;
           p_entry->options |= EXPORT_OPTION_PSEUDO;
 
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_REFERRAL))
-        {
-          strncpy(p_entry->referral, var_value, MAXPATHLEN);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
@@ -2033,7 +2027,6 @@ exportlist_t *BuildDefaultExport()
   strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
-  strcpy(p_entry->referral, "");
 
   p_entry->UseCookieVerifier = true;
 
@@ -2832,14 +2825,6 @@ bool nfs_export_create_root_entry(exportlist_t *pexportlist)
                     "Added root entry for path %s on export_id=%d",
                     pcurrent->fullpath, pcurrent->id);
 
-          /* Set the entry as a referral if needed */
-          if(strcmp(pcurrent->referral, ""))
-            {
-              /* Set the cache_entry object as a referral by setting the 'referral' field */
-              entry->object.dir.referral = pcurrent->referral;
-              LogInfo(COMPONENT_INIT, "A referral is set : %s",
-                      entry->object.dir.referral);
-            }
         }
 
   /* Since the entry isn't actually stored anywhere, there's no point

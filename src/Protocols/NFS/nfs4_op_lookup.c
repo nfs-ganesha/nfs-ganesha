@@ -158,19 +158,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         data->current_entry = file_entry;
         data->current_filetype = file_entry->type;
 
-        /**
-         * @todo ACE: Dubious.
-         */
-
-        if ((data->current_entry->type == DIRECTORY) &&
-            (data->current_entry->object.dir.referral != NULL)) {
-                if (!nfs4_Set_Fh_Referral(&(data->currentFH))) {
-                        res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
-                        cache_inode_put(file_entry);
-                        goto out;
-                }
-        }
-
         /* Return successfully */
         res_LOOKUP4->status = NFS4_OK;
 

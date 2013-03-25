@@ -605,19 +605,9 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	fsid4 fsid;
 
-	/* The file system id (taken from the configuration file)
-	 * If object is a directory attached to a referral,
-	 * then a different fsid is to be returned
-	 * to tell the client that a different fs is being crossed */
-
 	if(args->data != NULL && args->data->pexport != NULL) {
-		if(nfs4_Is_Fh_Referral(args->hdl4)) {
-			fsid.major = ~args->data->pexport->filesystem_id.major;
-			fsid.minor = ~args->data->pexport->filesystem_id.minor;
-		} else {
-			fsid.major = args->data->pexport->filesystem_id.major;
-			fsid.minor = args->data->pexport->filesystem_id.minor;
-		}
+		fsid.major = args->data->pexport->filesystem_id.major;
+		fsid.minor = args->data->pexport->filesystem_id.minor;
 	} else {
 		fsid.major = 152LL; /* 153,153 for junctions in pseudos */
 		fsid.minor = 152LL;

@@ -142,7 +142,6 @@ typedef struct exportlist {
 				    wanting of a better constant */
 	char pseudopath[MAXPATHLEN]; /*< NFSv4 pseudo-filesystem
 				      *  'virtual' path */
-	char referral[MAXPATHLEN]; /*< String describing NFSv4 referral */
 	char FS_specific[MAXPATHLEN]; /*< Filesystem specific option string */
 	char FS_tag[MAXPATHLEN];      /*< Filesystem "tag" string */
 
