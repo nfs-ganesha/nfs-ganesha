@@ -643,10 +643,10 @@ struct export_ops {
  * This function returns a handle for the directory behind a junction
  * object.
  *
- * @deprecated The purpose of this function is unclear and it is not
- * called by the upper layers.  Junction support may be integrated in
- * the future, but the function as currently specified is not likely
- * to remain.
+ * @deprecated This function is not implemented by any FSAL nor is it
+ * called.  It exists here as a placeholder for implementation in 2.1
+ * as part of the PseudoFSAL work.  Its argument structure will almost
+ * certainly change.
  *
  * @param[in]  exp_hdl  Export in which to look up
  * @param[in]  junction The junction object
@@ -812,9 +812,11 @@ struct export_ops {
 /**
  * @brief Get the expiration type of filehandles
  *
- * @deprecated Ganesha does not properly support filehandle expiry,
- * and few if any clients are able to use them.  It is likely better
- * to remove this feature than to implement it properly.
+ * @deprecated Ganesha does not properly support filehandle expiry.
+ * It can be configured to expire all filehandles on restart, which is
+ * of cubious value at best.  However, the FSAL has no control over
+ * this process, so having it communicate an expiry type that doesn't
+ * match expiry behavior to the client is bad.
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
@@ -1262,15 +1264,12 @@ struct fsal_obj_ops {
  *
  * This function creates a new regular file.
  *
- * @param[in]  dir_hdl Directory in which to create the file
- * @param[in]  opctx   Request context (user creds, client address etc)
- * @param[in]  name    Name of file to create
- * @param[out] attrib  Attributes of newly created file
- * @param[out] new_obj Newly created object
- *
- * @deprecated The @c attrib argument is deprecated and will be
- * removed.  Attributes are contained within the returned object and
- * there is no need for a stack copy.
+ * @param[in]     dir_hdl Directory in which to create the file
+ * @param[in]     opctx   Request context (user creds, client address etc)
+ * @param[in]     name    Name of file to create
+ * @param[in,out] attrib  Attributes to set on newly created
+ *                        object/attributes you actually got.
+ * @param[out]    new_obj Newly created object
  *
  * @return FSAL status.
  */
@@ -1286,15 +1285,12 @@ struct fsal_obj_ops {
  *
  * This function creates a new directory.
  *
- * @param[in]  dir_hdl Directory in which to create the directory
- * @param[in]  opctx   Request context (user creds, client address etc)
- * @param[in]  name    Name of directory to create
- * @param[out] attrib  Attributes of newly created directory
- * @param[out] new_obj Newly created object
- *
- * @deprecated The @c attrib argument is deprecated and will be
- * removed.  Attributes are contained within the returned object and
- * there is no need for a stack copy.
+ * @param[in]     dir_hdl Directory in which to create the directory
+ * @param[in]     opctx   Request context (user creds, client address etc)
+ * @param[in]     name    Name of directory to create
+ * @param[in,out] attrib  Attributes to set on newly created
+ *                        object/attributes you actually got.
+ * @param[out]    new_obj Newly created object
  *
  * @return FSAL status.
  */
@@ -1309,18 +1305,15 @@ struct fsal_obj_ops {
  *
  * This function creates a new special file.
  *
- * @param[in]  dir_hdl  Directory in which to create the object
- * @param[in]  opctx    Request context (user creds, client address etc)
- * @param[in]  name     Name of object to create
- * @param[in]  nodetype Type of special file to create
- * @param[in]  dev      Major and minor device numbers for block or
- *                      character special
- * @param[out] attrib   Attributes of newly created object
- * @param[out] new_obj  Newly created object
- *
- * @deprecated The @c attrib argument is deprecated and will be
- * removed.  Attributes are contained within the returned object and
- * there is no need for a stack copy.
+ * @param[in]     dir_hdl  Directory in which to create the object
+ * @param[in]     opctx    Request context (user creds, client address etc)
+ * @param[in]     name     Name of object to create
+ * @param[in]     nodetype Type of special file to create
+ * @param[in]     dev      Major and minor device numbers for block or
+ *                         character special
+ * @param[in,out] attrib   Attributes to set on newly created
+ *                         object/attributes you actually got.
+ * @param[out]    new_obj  Newly created object
  *
  * @return FSAL status.
  */
@@ -1337,16 +1330,13 @@ struct fsal_obj_ops {
  *
  * This function creates a new symbolic link.
  *
- * @param[in]  dir_hdl   Directory in which to create the object
- * @param[in]  opctx     Request context (user creds, client address etc)
- * @param[in]  name      Name of object to create
- * @param[in]  link_path Content of symbolic link
- * @param[out] attrib    Attributes of newly created object
- * @param[out] new_obj   Newly created object
- *
- * @deprecated The @c attrib argument is deprecated and will be
- * removed.  Attributes are contained within the returned object and
- * there is no need for a stack copy.
+ * @param[in]     dir_hdl   Directory in which to create the object
+ * @param[in]     opctx     Request context (user creds, client address etc)
+ * @param[in]     name      Name of object to create
+ * @param[in]     link_path Content of symbolic link
+ * @param[in,out] attrib    Attributes to set on newly created
+ *                          object/attributes you actually got.
+ * @param[out] new_obj      Newly created object
  *
  * @return FSAL status.
  */
