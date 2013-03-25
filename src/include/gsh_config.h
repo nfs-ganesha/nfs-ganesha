@@ -387,15 +387,6 @@ typedef struct nfs_version4_parameter {
 	    LEASE_LIFETIME_DEFAULT and is settable with
 	    Lease_Lifetime. */
 	uint32_t lease_lifetime;
-	/**
-	 * Whether to use expirable filehandles.  Defaults to false
-	 * and is settable with FH_Expire.
-	 *
-	 * @deprecated FH Expiry support in Ganesha is incoherent.
-	 * Current support should be removed and reimplemented in
-	 * terms of the FSAL if it is desired.
-	 */
-	bool fh_expire;
 	/** Whether to return bad stateid or not.  Disabling this
 	    returns false success if the stateid can't be found.
 	    Enable at your own risk.  Defaults to false, can be set

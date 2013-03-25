@@ -97,13 +97,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
       return res_DELEGRETURN4.status;
     }
 
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_DELEGRETURN4.status = NFS4ERR_FHEXPIRED;
-      return res_DELEGRETURN4.status;
-    }
-
   /* Delegation is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {

@@ -207,14 +207,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 	return fsal_maxpathlen(info);
 }
 
-static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = gpfs_staticinfo(exp_hdl->fsal);
-	return fsal_fh_expire_type(info);
-}
-
 static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
@@ -514,7 +506,6 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = fs_maxlink;
 	ops->fs_maxnamelen = fs_maxnamelen;
 	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_fh_expire_type = fs_fh_expire_type;
 	ops->fs_lease_time = fs_lease_time;
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;

@@ -72,7 +72,6 @@ static struct fsal_staticfsinfo_t proxy_info = {
 	.no_trunc = true,
 	.chown_restricted = true,
 	.case_preserving = true,
-	.fh_expire_type = FSAL_EXPTYPE_PERSISTENT,
 	.link_support = true,
 	.symlink_support = true,
 	.lock_support = true,

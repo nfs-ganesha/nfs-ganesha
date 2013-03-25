@@ -121,10 +121,10 @@ typedef struct file_handle_v4
   uint8_t fhversion; /*< Set to 0x41 to separate from Linux knfsd */
   uint8_t xattr_pos; /*< Index for named attribute handles */
   uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint32_t srvboot_time; /*< 0 if FH won't expire.  This should be
-			     reconsidered.  Server boot time is not
-			     the ideal way to do volatile filehandles,
-			     and it takes up four bytes. */
+  uint32_t reserved1; /*< If you want 32 bits for something, use
+			  this.  Alternatively, it can be removed
+			  next time we change the filesystem format.
+			  For now, we require it to be 0. */
   uint16_t pseudofs_id; /*< Id for the pseudo fs related to this fh */
   uint16_t refid; /*< Used for referral.  Referral almost certainly
 		      does not work and will need to be redone for 2.1.  */
@@ -192,7 +192,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *);
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Xattr(nfs_fh4 *);
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
-int nfs4_Is_Fh_Expired(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_Referral(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);

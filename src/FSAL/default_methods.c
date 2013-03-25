@@ -388,15 +388,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
         return 0;
 }
 
-/* fs_fh_expire_type
- * default case is no type (mask)
- */
-
-static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
-{
-	return 0;
-}
-
 /* fs_lease_time
  * default case is zero interval time
  */
@@ -602,7 +593,6 @@ struct export_ops def_export_ops = {
         .fs_maxlink = fs_maxlink,
         .fs_maxnamelen = fs_maxnamelen,
         .fs_maxpathlen = fs_maxpathlen,
-        .fs_fh_expire_type = fs_fh_expire_type,
         .fs_lease_time = fs_lease_time,
         .fs_acl_support = fs_acl_support,
         .fs_supported_attrs = fs_supported_attrs,

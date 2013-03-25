@@ -117,14 +117,6 @@ pxy_get_maxpathlen(struct fsal_export *exp_hdl)
 	return fsal_maxpathlen(&pm->fsinfo);
 }
 
-static fsal_fhexptype_t
-pxy_fh_expire_type(struct fsal_export *exp_hdl)
-{
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_fh_expire_type(&pm->fsinfo);
-}
-
 static struct timespec
 pxy_get_lease_time(struct fsal_export *exp_hdl)
 {
@@ -181,7 +173,6 @@ void pxy_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = pxy_get_maxlink;
 	ops->fs_maxnamelen = pxy_get_maxnamelen;
 	ops->fs_maxpathlen = pxy_get_maxpathlen;
-	ops->fs_fh_expire_type = pxy_fh_expire_type;
 	ops->fs_lease_time = pxy_get_lease_time;
 	ops->fs_acl_support = pxy_get_acl_support;
 	ops->fs_supported_attrs = pxy_get_supported_attrs;

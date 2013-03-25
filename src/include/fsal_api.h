@@ -810,21 +810,6 @@ struct export_ops {
         uint32_t (*fs_maxpathlen)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Get the expiration type of filehandles
- *
- * @deprecated Ganesha does not properly support filehandle expiry.
- * It can be configured to expire all filehandles on restart, which is
- * of cubious value at best.  However, the FSAL has no control over
- * this process, so having it communicate an expiry type that doesn't
- * match expiry behavior to the client is bad.
- *
- * @param[in] exp_hdl Filesystem to interrogate
- *
- * @return Expire type.
- */
-        fsal_fhexptype_t (*fs_fh_expire_type)(struct fsal_export *exp_hdl);
-
-/**
  * @brief Get the lease time for this filesystem
  *
  * @note Currently this value has no effect, with lease time being

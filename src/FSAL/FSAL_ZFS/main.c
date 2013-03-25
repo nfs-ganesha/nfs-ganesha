@@ -61,7 +61,6 @@ static struct fsal_staticfsinfo_t default_zfs_info = {
   true,                         /* chown restricted */
   false,                        /* case insensitivity */
   true,                         /* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
   true,                         /* hard link support */
   true,                         /* sym link support */
   false,                        /* lock support */

@@ -465,10 +465,7 @@ static fattr_xdr_result encode_expiretype(XDR *xdr, struct xdr_attrs_args *args)
 	uint32_t expire_type;
 
 	/* For the moment, we handle only the persistent filehandle */
-	if(nfs_param.nfsv4_param.fh_expire == TRUE)
-		expire_type = FH4_VOLATILE_ANY;
-	else
-		expire_type = FH4_PERSISTENT;
+	expire_type = FH4_PERSISTENT;
 	if( !xdr_u_int32_t(xdr, &expire_type))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
@@ -4746,13 +4743,6 @@ nfs4_sanity_check_FH(compound_data_t *data,
                 return NFS4ERR_BADHANDLE;
         }
 
-        /* Tests if the Filehandle is expired (for volatile filehandle) */
-        if (nfs4_Is_Fh_Expired(&(data->currentFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Expired failed");
-                return NFS4ERR_FHEXPIRED;
-        }
-
         /* Check for the correct file type */
         if (required_type != NO_FILE_TYPE) {
                 if (data->current_filetype != required_type) {
@@ -4843,13 +4833,6 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
                 LogDebug(COMPONENT_FILEHANDLE,
                          "nfs4_Is_Fh_Invalid failed");
                 return NFS4ERR_BADHANDLE;
-        }
-
-        /* Tests if the Filehandle is expired (for volatile filehandle) */
-        if (nfs4_Is_Fh_Expired(&(data->savedFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Expired failed");
-                return NFS4ERR_FHEXPIRED;
         }
 
         /* Check for the correct file type */
