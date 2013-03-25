@@ -31,7 +31,3 @@ add_library(sal STATIC ${sal_STAT_SRCS})
 
 
 ########### install files ###############
-
-##check_PROGRAMS                = test_cache_inode test_cache_inode_readlink \
-##                                test_cache_inode_readdir test_cache_inode_lookup 
-#

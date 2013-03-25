@@ -15,6 +15,4 @@ if(USE_DBUS)
   add_subdirectory(DBUS)
 endif(USE_DBUS)
 
-# Is PNFS used for anything????
-
 ########### install files ###############
