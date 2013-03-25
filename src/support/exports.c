@@ -95,7 +95,6 @@
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
-#define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 
 /** @todo : add encrypt handles option */
@@ -541,7 +540,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_uid = (uid_t) ANON_UID;
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = true;
-  p_entry->use_ganesha_write_buffer = false;
   p_entry->UseCookieVerifier = true;
 
   /* by default, we support auth_none and auth_sys */
@@ -1730,28 +1728,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
             case 0:
               p_entry->use_commit = false;
-              break;
-
-            default:           /* error */
-              {
-                LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): true or false expected.",
-                        var_name, var_value);
-                err_flag = true;
-                continue;
-              }
-            }
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_USE_GANESHA_WRITE_BUFFER))
-        {
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->use_ganesha_write_buffer = true;
-              break;
-
-            case 0:
-              p_entry->use_ganesha_write_buffer = false;
               break;
 
             default:           /* error */

@@ -62,10 +62,10 @@ int _9p_write( _9p_request_data_t * preq9p,
   size_t written_size = 0;
   bool eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  //uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
-  cache_inode_stability_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
+  //bool sync = true;
+  bool sync = false;
 
-  caddr_t databuffer = NULL ;
+  char *databuffer = NULL;
 
   fsal_status_t fsal_status ; 
   char xattrval[XATTR_BUFFERSIZE] ;
@@ -128,7 +128,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 				      databuffer,
 				      &eof_met,
 				      &pfid->op_context,
-				      &stable_flag);
+				      &sync);
      if(cache_status != CACHE_INODE_SUCCESS )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 

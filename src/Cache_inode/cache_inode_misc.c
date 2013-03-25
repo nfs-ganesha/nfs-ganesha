@@ -324,8 +324,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           init_glist(&nentry->object.file.lock_list);
           init_glist(&nentry->object.file.nlm_share_list); /* No associated NLM shares yet */
 
-          memset(&(nentry->object.file.unstable_data), 0,
-                 sizeof(cache_inode_unstable_data_t));
           memset(&nentry->object.file.share_state, 0,
 		 sizeof(cache_inode_share_t));
 	  break;

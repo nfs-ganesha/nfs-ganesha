@@ -83,10 +83,6 @@ cache_inode_commit(cache_entry_t *entry,
      PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      content_locked = true;
 
-     /* Just in case the variable holds something funny when we're
-        called. */
-     status = CACHE_INODE_SUCCESS;
-
      while (!is_open_for_write(entry)) {
 	     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	     PTHREAD_RWLOCK_wrlock(&entry->content_lock);

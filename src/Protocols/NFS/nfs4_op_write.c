@@ -70,7 +70,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   size_t                   written_size;
   uint64_t                 offset;
   bool                     eof_met;
-  cache_inode_stability_t  stability = CACHE_INODE_SAFE_WRITE_TO_FS;
+  bool                     sync = false;
   void                   * bufferdata;
   stable_how4              stable_how;
   state_t                * state_found = NULL;
@@ -312,11 +312,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
   if(arg_WRITE4.stable == UNSTABLE4)
     {
-      stability = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
+      sync = false;
     }
   else
     {
-      stability = CACHE_INODE_SAFE_WRITE_TO_FS;
+      sync = true;
     }
 
   if (!anonymous &&
@@ -334,7 +334,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
 				  bufferdata,
 				  &eof_met,
 				  data->req_ctx,
-				  &stability);
+				  &sync);
   if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogDebug(COMPONENT_NFS_V4,
@@ -354,7 +354,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   }
 
   /* Set the returned value */
-  if(stability == CACHE_INODE_SAFE_WRITE_TO_FS)
+  if(sync)
     res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
   else
     res_WRITE4.WRITE4res_u.resok4.committed = UNSTABLE4;
