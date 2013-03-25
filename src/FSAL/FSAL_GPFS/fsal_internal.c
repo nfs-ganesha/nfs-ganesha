@@ -493,6 +493,10 @@ fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
   if(!p_handle || !p_fsalpath)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+#endif
+
   harg.handle = p_handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -537,6 +541,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
 
   if(!p_handle)
     return fsalstat(ERR_FSAL_FAULT, 0);
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+#endif
 
   harg.handle = p_handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
@@ -586,6 +594,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
   if(!p_out_fh || !p_dir_fh || !p_fsalname)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
+#endif
+
   harg.mountdirfd = dirfd;
   harg.dir_fh = p_dir_fh;
   harg.out_fh = p_out_fh;
@@ -629,6 +641,10 @@ fsal_status_t fsal_internal_fd2handle(int fd, struct gpfs_file_handle * p_handle
 
   if(!p_handle)
     return fsalstat(ERR_FSAL_FAULT, 0);
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_handle, 0, sizeof(*p_handle));
+#endif
 
   harg.handle = p_handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
@@ -803,9 +819,16 @@ fsal_status_t fsal_internal_create(int dirfd,
 {
   int rc;
   struct create_name_arg crarg;
+#ifdef _VALGRIND_MEMCHECK
+  gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)p_new_handle;
+#endif
 
   if(!p_stat_name)
     return fsalstat(ERR_FSAL_FAULT, 0);
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_handle, 0, sizeof(*p_handle));
+#endif
 
   crarg.mountdirfd = dirfd;
   crarg.mode = mode;
