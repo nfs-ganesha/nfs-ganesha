@@ -315,6 +315,8 @@ typedef struct nfs_core_param {
 		    NFS_DEFAULT_RECV_BUFFER_SIZE and is settable by
 		    MaxRPCRecvBufferSize. */
 		uint32_t max_recv_buffer_size;
+		/** Idle timeout (seconds).  Defaults to 5m */
+		uint32_t idle_timeout_s;
 	} rpc;
 	/** Interval (in seconds) at which to report an unusually
 	    long.  Defaults to 10.  Settable by
