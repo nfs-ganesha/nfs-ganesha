@@ -744,7 +744,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 				  req_ctx, 0);
   if(cache_status != CACHE_INODE_SUCCESS)
     {
-      cache_inode_dec_pin_ref(entry);
+      cache_inode_dec_pin_ref(entry, TRUE);
 
       LogFullDebug(COMPONENT_STATE,
                    "Could not open file");
@@ -763,7 +763,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
     {
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-      cache_inode_dec_pin_ref(entry);
+      cache_inode_dec_pin_ref(entry, TRUE);
 
       LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
 
@@ -777,7 +777,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
     {
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-      cache_inode_dec_pin_ref(entry);
+      cache_inode_dec_pin_ref(entry, TRUE);
 
       LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
 
@@ -865,7 +865,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
           glist_del(&nlm_share->sns_share_per_file);
 
           if(glist_empty(&entry->object.file.nlm_share_list))
-            cache_inode_dec_pin_ref(entry);
+            cache_inode_dec_pin_ref(entry, TRUE);
 
           /* Remove the share from the NSM Client list */
           P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
@@ -890,7 +890,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 
           PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-          cache_inode_dec_pin_ref(entry);
+          cache_inode_dec_pin_ref(entry, TRUE);
 
           LogDebug(COMPONENT_STATE, "do_share_op failed");
 
@@ -904,7 +904,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 
   PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-  cache_inode_dec_pin_ref(entry);
+  cache_inode_dec_pin_ref(entry, TRUE);
 
   return status;
 }
@@ -1007,7 +1007,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 
               PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-              cache_inode_dec_pin_ref(entry);
+              cache_inode_dec_pin_ref(entry, TRUE);
 
               LogDebug(COMPONENT_STATE, "do_share_op failed");
 
@@ -1026,7 +1026,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
       glist_del(&nlm_share->sns_share_per_file);
 
       if(glist_empty(&entry->object.file.nlm_share_list))
-        cache_inode_dec_pin_ref(entry);
+        cache_inode_dec_pin_ref(entry, TRUE);
 
       /* Remove the share from the NSM Client list */
       P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
@@ -1052,7 +1052,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 
   PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-  cache_inode_dec_pin_ref(entry);
+  cache_inode_dec_pin_ref(entry, TRUE);
 
   return status;
 }
@@ -1081,7 +1081,7 @@ void state_share_wipe(cache_entry_t *entry)
       glist_del(&nlm_share->sns_share_per_file);
 
       if(glist_empty(&entry->object.file.nlm_share_list))
-        cache_inode_dec_pin_ref(entry);
+        cache_inode_dec_pin_ref(entry, FALSE);
 
       /* Remove the share from the NSM Client list */
       P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);

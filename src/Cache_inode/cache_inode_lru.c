@@ -1241,7 +1241,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
  * @retval CACHE_INODE_SUCCESS if the entry was moved.
  */
 cache_inode_status_t
-cache_inode_dec_pin_ref(cache_entry_t *entry)
+cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 {
 	uint32_t lane = entry->lru.lane;
         cache_inode_lru_t *lru = &entry->lru;
@@ -1262,6 +1262,13 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 		q = &qlane->L1;
 		glist_add_tail(&q->q, &lru->q);
 		++(q->size);
+
+		if (closefile == TRUE)
+		{
+			cache_inode_close(entry,
+			CACHE_INODE_FLAG_REALLYCLOSE|CACHE_INODE_FLAG_NOT_PINNED);
+		}
+
 	}
 
 	QUNLOCK(qlane);
