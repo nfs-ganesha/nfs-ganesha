@@ -160,10 +160,7 @@ dupreq_shared_cmpf(const struct opr_rbtree_node *lhs,
             return (-1);
             break;
         case 0:
-            if (lk->hin.drc->flags & DRC_FLAG_HASH) {
-                return (uint64_cmpf(lk->hk, rk->hk));
-            } else
-                return (0);
+            return (uint64_cmpf(lk->hk, rk->hk));
             break;
         default:
             break;
@@ -190,6 +187,8 @@ dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 {
     dupreq_entry_t *lk, *rk;
 
+    LogDebug(COMPONENT_DUPREQ, "%s", __func__);
+
     lk = opr_containerof(lhs, dupreq_entry_t, rbt_k);
     rk = opr_containerof(rhs, dupreq_entry_t, rbt_k);
 
@@ -197,10 +196,10 @@ dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
         return (-1);
 
     if (lk->hin.tcp.rq_xid == rk->hin.tcp.rq_xid) {
-        if (lk->hin.drc->flags & DRC_FLAG_HASH) {
-            return (uint64_cmpf(lk->hk, rk->hk));
-        } else
-            return (0);
+        LogDebug(COMPONENT_DUPREQ,
+                 "xids eq (%u), ck1 %"PRIu64" ck2 %"PRIu64,
+                 lk->hin.tcp.rq_xid, lk->hk, rk->hk);
+        return (uint64_cmpf(lk->hk, rk->hk));
     }
 
     return (1);
@@ -243,7 +242,7 @@ init_shared_drc()
     drc->maxsize =  nfs_param.core_param.drc.udp.size;
     drc->cachesz = nfs_param.core_param.drc.udp.cachesz;
     drc->npart = nfs_param.core_param.drc.udp.npart;
-    drc->flags = DRC_FLAG_HASH|DRC_FLAG_CKSUM; /* XXX parameterize? */
+    drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
 
     gsh_mutex_init(&drc->mtx, NULL);
 
@@ -406,7 +405,7 @@ alloc_tcp_drc(enum drc_type dtype)
     drc->maxsize =  nfs_param.core_param.drc.tcp.size;
     drc->cachesz = nfs_param.core_param.drc.tcp.cachesz;
     drc->npart = nfs_param.core_param.drc.tcp.npart;
-    drc->flags = DRC_FLAG_HASH|DRC_FLAG_CKSUM; /* XXX parameterize */
+    drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
 
     pthread_mutex_init(&drc->mtx, NULL);
 
@@ -909,7 +908,7 @@ drc_should_retire(drc_t *drc)
         return (false);
 
     /* finally, retire if drc->size is above intended high water mark */
-    if (unlikely((drc)->size > drc->hiwat))
+    if (unlikely(drc->size > drc->hiwat))
         return (true);
 
     return (false);
@@ -1031,11 +1030,6 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     dk->state = DUPREQ_START;
     dk->timestamp = time(NULL);
 
-    LogFullDebug(COMPONENT_DUPREQ,
-                 "alloc new dupreq entry dk=%p, dk xid=%u state=%s",
-                 dk, dk->hin.tcp.rq_xid,
-                 dupreq_state_table[dk->state]);
-
     {
         struct opr_rbtree_node *nv;
         struct rbtree_x_part *t =
@@ -1056,6 +1050,11 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
                 pthread_mutex_unlock(&drc->mtx);
                 status = DUPREQ_EXISTS;
             }
+            LogDebug(COMPONENT_DUPREQ,
+                     "dupreq hit dk=%p, dk xid=%u cksum %"PRIu64
+                     " state=%s",
+                     dk, dk->hin.tcp.rq_xid, dk->hk,
+                     dupreq_state_table[dk->state]);
             req->rq_u1 = dv;
             (dv->refcnt)++;
             pthread_mutex_unlock(&dv->mtx);
