@@ -245,6 +245,10 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->rpc.max_connections = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "RPC_Idle_Timeout_S"))
+        {
+          pparam->rpc.idle_timeout_s = atoi(key_value);
+        }
       else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
         {
           pparam->rpc.max_send_buffer_size = atoi(key_value);
