@@ -132,7 +132,7 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
 void nfs_dupreq_put_drc(SVCXPRT *xprt, struct drc *drc, uint32_t flags);
 
 #ifndef DRC_FLAG_RELEASE
-#define DRC_FLAG_RELEASE       0x0030
+#define DRC_FLAG_RELEASE       0x0040
 #endif
 
 static inline void

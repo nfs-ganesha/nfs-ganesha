@@ -67,7 +67,7 @@ enum drc_type
 #define DRC_FLAG_PORT          0x0008
 #define DRC_FLAG_LOCKED        0x0010
 #define DRC_FLAG_RECYCLE       0x0020
-#define DRC_FLAG_RELEASE       0x0030
+#define DRC_FLAG_RELEASE       0x0040
 
 typedef struct drc
 {
