@@ -181,8 +181,15 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 
 static void unregister_rpc(void)
 {
-  unregister(nfs_param.core_param.program[P_NFS], NFS_V2, NFS_V4);
-  unregister(nfs_param.core_param.program[P_MNT], MOUNT_V1, MOUNT_V3);
+  if (nfs_param.core_param.core_options & CORE_OPTION_NFSV3 != 0) 
+    {
+      unregister(nfs_param.core_param.program[P_NFS], NFS_V2, NFS_V4);
+      unregister(nfs_param.core_param.program[P_MNT], MOUNT_V1, MOUNT_V3);
+    }
+  else
+    {
+      unregister(nfs_param.core_param.program[P_NFS], NFS_V4, NFS_V4);
+    }
   if (nfs_param.core_param.enable_NLM)
     {
       unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
