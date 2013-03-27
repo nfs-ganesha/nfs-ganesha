@@ -43,7 +43,7 @@ struct gsh_export {
 	struct avltree_node node_k;
 	pthread_mutex_t lock;
 	int64_t refcnt;
-/* 	exportlist_t exportp; */
+	exportlist_t export;
 	nsecs_elapsed_t last_update;
 	int export_id;
 };
