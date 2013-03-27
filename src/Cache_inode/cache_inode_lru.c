@@ -493,7 +493,9 @@ lru_reap_impl(uint32_t flags)
 				    goto out;
 			      }
 			      cih_latch_rele(&latch);
-			 }
+                    } else {
+			    QLOCK(qlane);
+		    }
                } /* lru */
           next_entry:
                if (++cnt > LANE_NTRIES)
