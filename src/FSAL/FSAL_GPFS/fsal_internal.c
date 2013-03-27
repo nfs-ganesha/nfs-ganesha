@@ -501,6 +501,10 @@ fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
+
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath);
 
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
@@ -541,6 +545,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
   harg.name = p_fsalname;
   harg.dfd = dfd;
   harg.flag = 0;
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d", dfd);
 
@@ -587,6 +595,10 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
   harg.len = strlen(p_fsalname);
   harg.name = p_fsalname;
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(harg.out_fh, 0, harg.out_fh->handle_size);
+#endif
+
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle for %s",
                p_fsalname);
@@ -625,6 +637,10 @@ fsal_status_t fsal_internal_fd2handle(int fd, struct gpfs_file_handle * p_handle
   harg.name = NULL;
   harg.dfd = fd;
   harg.flag = 0;
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle by fd for %d",
@@ -699,6 +715,10 @@ fsal_status_t fsal_internal_stat_name(int dirfd,
 {
   int rc;
   struct stat_name_arg statarg;
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(buf, 0, sizeof(*buf));
+#endif
 
   if(!p_stat_name)
     return fsalstat(ERR_FSAL_FAULT, 0);
@@ -799,6 +819,10 @@ fsal_status_t fsal_internal_create(int dirfd,
   crarg.new_fh->handle_version = OPENHANDLE_VERSION;
   crarg.buf = buf;
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(crarg.new_fh->f_handle, 0, crarg.new_fh->handle_size);
+#endif
+
   rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
 
   if(rc < 0)
@@ -867,6 +891,10 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
 {
   int rc;
   struct readlink_fh_arg readlinkarg;
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(__buf, 0, maxlen);
+#endif
 
   readlinkarg.mountdirfd = dirfd;
   readlinkarg.handle = p_handle;
@@ -1008,6 +1036,10 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 
   if(!p_handle || !p_buffxstat)
       return fsalstat(ERR_FSAL_FAULT, 0);
+
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_buffxstat, 0, sizeof(*p_buffxstat));
+#endif
 
 #ifdef _USE_NFS4_ACL
   /* Initialize acl header so that GPFS knows what we want. */
