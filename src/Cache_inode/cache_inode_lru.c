@@ -441,7 +441,7 @@ lru_reap_impl(uint32_t flags)
      struct lru_q *lq;
      struct glist_head *glist;
      struct glist_head *glistn;
-     cache_inode_lru_t *lru = NULL;
+     cache_inode_lru_t *lru;
      cache_entry_t *entry;
      uint32_t refcnt;
      int ix, cnt;
@@ -503,6 +503,9 @@ lru_reap_impl(uint32_t flags)
           } /* foreach (initial) entry */
           QUNLOCK(qlane);
      } /* foreach lane */
+
+     /* ! reclaimable */
+     lru = NULL;
 
 out:
      return (lru);
