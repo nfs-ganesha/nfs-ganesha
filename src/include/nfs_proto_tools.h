@@ -220,8 +220,6 @@ typedef enum {
         UTF8_SCAN_ALL = 7      /* do the whole thing, name+valid utf8 */
 } utf8_scantype_t;
 
-nfsstat4 utf8dup(utf8string * newstr, utf8string * oldstr,
-                 utf8_scantype_t scan);
 nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
                                  utf8_scantype_t scan,
                                  char **obj_name);

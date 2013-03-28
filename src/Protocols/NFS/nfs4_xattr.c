@@ -45,6 +45,7 @@ t*
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
@@ -222,7 +223,7 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
 int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN + 1];
+  char *name = NULL;
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
@@ -234,14 +235,19 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   /* Get the FSAL Handle for the current object */
   obj_hdl = data->current_entry->obj_handle;
 
-  /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
+  res_LOOKUP4.status = nfs4_utf8string2dynamic(&arg_LOOKUP4.objname,
+					       UTF8_SCAN_ALL,
+					       &name);
+
+  if (res_LOOKUP4.status != NFS4_OK)
+    goto out;
 
   /* Try to get a FSAL_XAttr of that name */
   fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      return NFS4ERR_NOENT;
+      res_LOOKUP4.status = NFS4ERR_NOENT;
+      goto out;
     }
 
   /* Attribute was found */
@@ -253,8 +259,13 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   pfile_handle->xattr_pos = xattr_id + 2;
 
-  return NFS4_OK;
-}                               /* nfs4_op_lookup_xattr */
+ out:
+
+  if (name)
+    gsh_free(name);
+
+  return res_LOOKUP4.status;
+}
 
 /**
  * nfs4_op_lookupp_xattr: looks up into the pseudo fs for the parent directory
@@ -470,11 +481,11 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
         {
           entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
-          if(str2utf8(xattrs_tab[i].xattr_name, &entry_nfs_array[i].name) == -1)
-            {
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
-            }
+	  entry_nfs_array[i].name.utf8string_len
+	    = strlen(xattrs_tab[i].xattr_name);
+	  memcpy(entry_nfs_array[i].name.utf8string_val,
+		 xattrs_tab[i].xattr_name,
+		 entry_nfs_array[i].name.utf8string_len);
 
           /* Set the cookie value */
           entry_nfs_array[i].cookie = cookie + i + 3;   /* 0, 1 and 2 are reserved */
@@ -536,7 +547,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN + 1];
+  char *name = NULL;
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
@@ -548,8 +559,13 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
   /* Get the FSAL Handle fo the current object */
   obj_hdl = data->current_entry->obj_handle;
 
-  /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(name, sizeof(name), &arg_OPEN4.claim.open_claim4_u.file);
+  res_OPEN4.status
+	  = nfs4_utf8string2dynamic(&arg_OPEN4.claim.open_claim4_u.file,
+				    UTF8_SCAN_ALL,
+				    &name);
+
+  if (res_OPEN4.status != NFS4_OK)
+    goto out;
 
   /* we do not use the stateful logic for accessing xattrs */
   switch (arg_OPEN4.openhow.opentype)
@@ -567,7 +583,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = nfs4_Errno(cache_inode_error_convert(fsal_status));
-          return res_OPEN4.status;
+	  goto out;
         }
 
       /* Now, getr the id */
@@ -575,7 +591,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
-          return res_OPEN4.status;
+	  goto out;
         }
 
       /* Attribute was found */
@@ -588,7 +604,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       pfile_handle->xattr_pos = xattr_id + 2;
 
       res_OPEN4.status = NFS4_OK;
-      return NFS4_OK;
+      goto out;
 
       break;
 
@@ -599,7 +615,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
-          return res_OPEN4.status;
+	  goto out;
         }
 
       /* Attribute was found */
@@ -612,15 +628,20 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       pfile_handle->xattr_pos = xattr_id + 2;
 
       res_OPEN4.status = NFS4_OK;
-      return NFS4_OK;
+      goto out;
 
       break;
 
     }                           /* switch (arg_OPEN4.openhow.opentype) */
 
+ out:
   res_OPEN4.status = NFS4_OK;
-  return NFS4_OK;
-}                               /* nfs4_op_open_xattr */
+
+  if (name)
+    gsh_free(name);
+
+  return res_OPEN4.status;
+}
 
 /**
  * nfs4_op_read_xattr: Reads the content of a xattr attribute

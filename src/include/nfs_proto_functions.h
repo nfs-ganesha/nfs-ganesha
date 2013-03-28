@@ -1052,12 +1052,6 @@ int nfs4_Fattr_Supported(fattr4 * Fattr);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
-void free_utf8(utf8string * utf8str);
-int utf82str(char *str, int size, utf8string * utf8str);
-int str2utf8(char *str, utf8string * utf8str);
-
-seqid4 nfs4_NextSeqId(seqid4 seqid);
-
 bool nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
                             const struct attrlist *pFSAL_attr,
                             fattr3 * pFattr);

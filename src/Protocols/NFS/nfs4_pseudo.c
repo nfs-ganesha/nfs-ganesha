@@ -43,6 +43,7 @@
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
@@ -531,7 +532,7 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN + 1];
+  char *name = NULL;
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
   bool found = false;
@@ -546,17 +547,22 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
   resp->resop = NFS4_OP_LOOKUP;
 
-  /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
+  /* Validate and convert the UFT8 objname to a regular string */
+  res_LOOKUP4.status = nfs4_utf8string2dynamic(&arg_LOOKUP4.objname,
+					       UTF8_SCAN_ALL,
+					       &name);
+  if (res_LOOKUP4.status != NFS4_OK)
+    {
+      goto out;
+    }
 
   /* Get the pseudo fs entry related to the file handle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
       res_LOOKUP4.status = NFS4ERR_BADHANDLE;
-      return res_LOOKUP4.status;
+      goto out;
     }
 
- 
   /* If "/" is set as pseudopath, then gPseudoFS.root.junction_export is not NULL but 
    * gPseudoFS.root has no son */
   if( ( gPseudoFs.root.junction_export != NULL ) && ( gPseudoFs.root.sons == NULL )  )
@@ -574,14 +580,14 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
            {
              found = true;
              break;
-           } 
+           }
        } /* for */
     } /* else */
 
   if(!found)
     {
       res_LOOKUP4.status = NFS4ERR_NOENT;
-      return res_LOOKUP4.status;
+      goto out;
     }
 
   /* A matching entry was found */
@@ -591,7 +597,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       if(!nfs4_PseudoToFhandle(&(data->currentFH), iter))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
+	  goto out;
         }
     }
   else
@@ -610,7 +616,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           res_LOOKUP4.status = NFS4ERR_WRONGSEC;
-          return res_LOOKUP4.status;
+	  goto out;
         }
 
       /* Build fsal data for creation of the first entry */
@@ -637,7 +643,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
                    fsal_status.major, fsal_status.minor);
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
+	  goto out;
         }
 
       if(data->mounted_on_FH.nfs_fh4_len == 0)
@@ -647,7 +653,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the 'mounted on' file handle");
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-              return res_LOOKUP4.status;
+	      goto out;
             }
         }
 
@@ -658,7 +664,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-              return res_LOOKUP4.status;
+	      goto out;
             }
         }
 
@@ -668,7 +674,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
+	  goto out;
         }
 
       /* The new fh is to be the "mounted on Filehandle" */
@@ -696,7 +702,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
+	  goto out;
         }
 
       /* Keep the entry within the compound data */
@@ -710,8 +716,13 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
 
   res_LOOKUP4.status = NFS4_OK;
+
+ out:
+
+  if (name)
+    gsh_free(name);
   return NFS4_OK;
-}                               /* nfs4_op_lookup_pseudo */
+}
 
 /**
  * nfs4_op_lookupp_pseudo: looks up into the pseudo fs for the parent directory
