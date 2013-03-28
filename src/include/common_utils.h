@@ -10,7 +10,6 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
-#include <sys/types.h>          /* for caddr_t */
 #include <time.h>
 #include <assert.h>
 #include <string.h>
@@ -106,7 +105,7 @@ int StrToBoolean(const char *str);
  *
  * \return The number of bytes written in the target buffer.
  */
-int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size);
+int snprintmem(char *target, int tgt_size, void *source, int mem_size);
 
 /**
  * snscanmem:
@@ -123,7 +122,7 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size);
  * \return - The number of bytes read in the source string.
  *         - -1 on error.
  */
-int sscanmem(caddr_t target, int tgt_size, const char *str_source);
+int sscanmem(void *target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
 
