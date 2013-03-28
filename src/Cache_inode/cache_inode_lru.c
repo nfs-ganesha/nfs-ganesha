@@ -423,8 +423,10 @@ cache_inode_lru_clean(cache_entry_t *entry)
     (((e)->lru.qid == LRU_ENTRY_L2) || \
      ((e)->lru.qid == LRU_ENTRY_L1))
 
-#define LRU_ENTRY_REACHABLE_NOREFS(e, n) \
-    (((n) == LRU_SENTINEL_REFCOUNT) && ((e)->fh_hk.inavl))
+#define LRU_ENTRY_RECLAIMABLE(e, n) \
+	(LRU_ENTRY_L1_OR_L2(e) && \
+	((n) == LRU_SENTINEL_REFCOUNT+1) && \
+	 ((e)->fh_hk.inavl))
 
 #define LRU_ENTRY_REMOVED(e, n) \
     (((n) == 0) && (! (e)->fh_hk.inavl))
@@ -451,12 +453,12 @@ lru_reap_impl(uint32_t flags)
           qlane = &LRU[lane];
           lq = (flags & LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
           cnt = 0;
+
           QLOCK(qlane);
           glist_for_each_safe(glist, glistn, &lq->q) {
                lru = glist_entry(glist, cache_inode_lru_t, q);
                if (lru) {
 		    cih_latch_t latch;
-		    uint32_t nrefcnt;
                     refcnt = atomic_inc_int32_t(&lru->refcnt);
                     if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
                          /* cant use it. */
@@ -470,17 +472,15 @@ lru_reap_impl(uint32_t flags)
 		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
                                         __func__, __LINE__)) {
 			    QLOCK(qlane);
-			    nrefcnt =
-				    atomic_dec_int32_t(&entry->lru.refcnt);
+			    refcnt =
+				    atomic_fetch_int32_t(&entry->lru.refcnt);
                             /* there are two cases which permit reclaim,
                              * entry is:
-                             * 1. reachable but unref'd (nrefcnt==1)
-                             * 2. unreachable, being removed (plus nrefcnt==0)
-                             * in both cases, only if the entry is on L1 or L2
-                             * as expected.  for safety, take only the former
+                             * 1. reachable but unref'd (refcnt==2)
+                             * 2. unreachable, being removed (plus refcnt==0)
+			     *  for safety, take only the former
                              */
-                            if (LRU_ENTRY_L1_OR_L2(entry) &&
-                                LRU_ENTRY_REACHABLE_NOREFS(entry, nrefcnt)) {
+                            if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
 				    /* it worked */
 				    struct lru_q *q = lru_queue_of(entry);
                                     cih_remove_latched(entry, &latch,
@@ -1228,7 +1228,7 @@ cache_inode_lru_get(cache_entry_t **entry,
 	     LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			  "Recycling entry at %p.",
 			  nentry);
-          cache_inode_lru_clean(nentry);
+	     cache_inode_lru_clean(nentry);
      } else {
 	     /* alloc entry */
 	     status = alloc_cache_entry(&nentry);
@@ -1482,11 +1482,12 @@ cache_inode_lru_unref(cache_entry_t *entry,
 			--(q->size);
 		}
 
+		if (! qlocked)
+			QUNLOCK(qlane);
+
 		/* XXX now just cleans (ahem) */
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
-		if (! qlocked)
-			QUNLOCK(qlane);
 	} /* refcnt == 0 */
 out:
         return;
