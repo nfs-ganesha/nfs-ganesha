@@ -650,73 +650,37 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 /**
  * @brief Extract nfs function descriptor from nfs request.
  *
- * @todo This function calls is_rpc_call_valid, which one might not
- * expect to be sending RPC replies.  Fix this, and remove thr_ctx
- * argument.
+ * Choose the function descriptor, either a valid one or
+ * the default invalid handler.  We have already sanity checked
+ * everything so just grab and go.
  *
- * @param[in]     thr_ctx Thread context
  * @param[in,out] preqnfs Raw request data
  *
  * @return Function vector for program.
  */
 const nfs_function_desc_t *
-nfs_rpc_get_funcdesc(struct fridgethr_context *thr_ctx,
-		     nfs_request_data_t *preqnfs)
+nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 {
-  struct svc_req *req = &preqnfs->req;
-  bool slocked = FALSE;
+	struct svc_req *req = &preqnfs->req;
+	const nfs_function_desc_t *funcdesc = INVALID_FUNCDESC;
 
-  /* Validate rpc call, but don't report any errors here */
-  if(is_rpc_call_valid(thr_ctx, preqnfs->xprt, req) == false)
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "INVALID_FUNCDESC for Program %d, Version %d, "
-                   "Function %d after is_rpc_call_valid",
-                   (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc);
-      return INVALID_FUNCDESC;
-    }
-
-  if(req->rq_prog == nfs_param.core_param.program[P_NFS])
-    {
-      if(req->rq_vers == NFS_V2)
-        return INVALID_FUNCDESC;
-      else if(req->rq_vers == NFS_V3)
-        return &nfs3_func_desc[req->rq_proc];
-      else
-        return &nfs4_func_desc[req->rq_proc];
-    }
-
-  if(req->rq_prog == nfs_param.core_param.program[P_MNT])
-    {
-      preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
-      if(req->rq_vers == MOUNT_V1)
-        return &mnt1_func_desc[req->rq_proc];
-      else
-        return &mnt3_func_desc[req->rq_proc];
-    }
-
-  if(req->rq_prog == nfs_param.core_param.program[P_NLM])
-    {
-      return &nlm4_func_desc[req->rq_proc];
-    }
-
-  if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
-    {
-      if(req->rq_vers == RQUOTAVERS)
-        return &rquota1_func_desc[req->rq_proc];
-      else
-        return &rquota2_func_desc[req->rq_proc];
-    }
-
-  /* Oops, should never get here! */
-  DISP_SLOCK(preqnfs->xprt);
-  svcerr_noprog(preqnfs->xprt, req);
-  DISP_SUNLOCK(preqnfs->xprt);
-
-  LogFullDebug(COMPONENT_DISPATCH,
-               "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
-               (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc);
-  return INVALID_FUNCDESC;
+	if(req->rq_prog == nfs_param.core_param.program[P_NFS]) {
+		funcdesc = (req->rq_vers == NFS_V3) ?
+			&nfs3_func_desc[req->rq_proc] :
+			&nfs4_func_desc[req->rq_proc];
+	} else if(req->rq_prog == nfs_param.core_param.program[P_NLM]) {
+		funcdesc = &nlm4_func_desc[req->rq_proc];
+	} else if(req->rq_prog == nfs_param.core_param.program[P_MNT]) {
+		preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
+		funcdesc = (req->rq_vers == MOUNT_V1) ?
+			&mnt1_func_desc[req->rq_proc] :
+			&mnt3_func_desc[req->rq_proc];
+	} else if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
+		funcdesc = (req->rq_vers == RQUOTAVERS) ?
+			&rquota1_func_desc[req->rq_proc] :
+			&rquota2_func_desc[req->rq_proc];
+	}
+	return funcdesc;
 }
 
 /**
@@ -894,61 +858,26 @@ static void nfs_rpc_execute(request_data_t *preq,
     goto freeargs;
   }
 
+  /* Don't waste time for null or invalid ops
+   * null op code in all valid protos == 0
+   * and invalid protos all point to invalid_funcdesc
+   * NFS v2 is set to invalid_funcdesc in nfs_rpc_get_funcdesc()
+   */
+
+  if(preqnfs->funcdesc == &invalid_funcdesc ||
+     req->rq_proc == NFSPROC_NULL)
+	  goto null_op;
   /* Get the export entry */
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
-      /* The NFSv2 and NFSv3 functions' arguments always begin with the file
+      /* The NFSv3 functions' arguments always begin with the file
        * handle (but not the NULL function).  This hook is used to get the
        * fhandle with the arguments and so determine the export entry to be
        * used.  In NFSv4, junction traversal is managed by the protocol itself
        * so the whole export list is provided to NFSv4 request. */
 
-      switch (req->rq_vers)
+      if(req->rq_vers == NFS_V3)
         {
-        case NFS_V2:
-          if(req->rq_proc != NFSPROC_NULL)
-            {
-              exportid = nfs2_FhandleToExportId((fhandle2 *) arg_nfs);
-
-              if(exportid < 0 ||
-                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL ||
-                 (pexport->options & EXPORT_OPTION_NFSV2) == 0)
-                {
-                  /* Reject the request for authentication reason (incompatible
-                   * file handle) */
-                  if(isInfo(COMPONENT_DISPATCH))
-                    {
-                      char dumpfh[1024];
-                      char *reason;
-                      char addrbuf[SOCK_NAME_MAX + 1];
-                      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else if(pexport == NULL)
-                        reason = "has invalid export";
-                      else
-                        reason = "V2 not allowed on this export";
-                      sprint_fhandle2(dumpfh, (fhandle2 *) arg_nfs);
-                      LogMajor(COMPONENT_DISPATCH,
-                               "NFS2 Request from host %s %s, proc=%d, FH=%s",
-                               addrbuf, reason,
-                               (int)req->rq_proc, dumpfh);
-                    }
-                  /* Bad argument */
-		  auth_rc = AUTH_FAILED;
-		  goto auth_failure;
-                }
-
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Found export entry for dirname=%s as exportid=%d",
-                           pexport->fullpath, pexport->id);
-            }
-          break;
-
-        case NFS_V3:
-          if(req->rq_proc != NFSPROC_NULL)
-            {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
 
               if(exportid < 0 ||
@@ -979,17 +908,25 @@ static void nfs_rpc_execute(request_data_t *preq,
 		  auth_rc = AUTH_FAILED;
 		  goto auth_failure;
                 }
+	      /* privileged port only makes sense for V3.  V4 can go thru
+	       * firewalls and so all bets are off
+	       */
+	      if ((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
+		  (port >= IPPORT_RESERVED))
+	      {
+		 LogInfo(COMPONENT_DISPATCH,
+			 "Port %d is too high for this export entry, rejecting client",
+			 port);
+		 auth_rc = AUTH_TOOWEAK;
+		 goto auth_failure;
+	      }
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
-                           pexport->fullpath, pexport->id);
-            }
-          break;
-
-        case NFS_V4:
-        default:
-          break;
-        }                       /* switch( ptr_req->rq_vers ) */
+                           pexport->dirname, pexport->id);
+        }
+      /* NFS V4 gets its own export id from the ops in the compound
+       */
     }
   else if(req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
@@ -998,6 +935,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       switch(req->rq_proc)
         {
           case NLMPROC4_NULL:
+		  /* caught above and short circuited */
           case NLMPROC4_TEST_RES:
           case NLMPROC4_LOCK_RES:
           case NLMPROC4_CANCEL_RES:
@@ -1072,6 +1010,10 @@ static void nfs_rpc_execute(request_data_t *preq,
                        "Found export entry for dirname=%s as exportid=%d",
                        pexport->fullpath, pexport->id);
         }
+    } else if(req->rq_prog == nfs_param.core_param.program[P_MNT]) {
+	  /** @TODO Hack awaiting export perms patchset
+	   */
+	  pexport = nfs_param.pexportlist;
     }
 
 
@@ -1082,26 +1024,6 @@ static void nfs_rpc_execute(request_data_t *preq,
         {
 	    auth_rc = AUTH_TOOWEAK;
 	    goto auth_failure;
-        }
-    }
-
-  /*
-   * It is now time for checking if export list allows the machine to perform
-   * the request
-   */
-
-  /* Check if client is using a privileged port, but only for NFS protocol */
-  if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-      (req->rq_proc != 0))
-    {
-      if ((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-         (port >= IPPORT_RESERVED))
-        {
-          LogInfo(COMPONENT_DISPATCH,
-                  "Port %d is too high for this export entry, rejecting client",
-                  port);
-	  auth_rc = AUTH_TOOWEAK;
-	  goto auth_failure;
         }
     }
 
@@ -1124,8 +1046,12 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
 
   /* Be careful (Issue #66) : it makes no sense to check access for
-   * a MOUNT request */
-  if(req->rq_prog != nfs_param.core_param.program[P_MNT])
+   * a MOUNT request
+   * nfsv4 does its own inside compound
+   */
+  if( !(req->rq_prog == nfs_param.core_param.program[P_NFS] &&
+	  req->rq_vers == NFS_V4) &&
+      req->rq_prog != nfs_param.core_param.program[P_MNT])
    {
      LogFullDebug(COMPONENT_DISPATCH,
                   "nfs_rpc_execute about to call nfs_export_check_access");
@@ -1217,6 +1143,7 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
 #endif
 
+    null_op:
       /* XXX correct use of req_ctx? */
       rc = preqnfs->funcdesc->service_function(
           arg_nfs,
