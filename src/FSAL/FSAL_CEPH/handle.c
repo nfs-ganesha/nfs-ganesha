@@ -62,7 +62,7 @@ static fsal_status_t release(struct fsal_obj_handle *obj_pub)
                 LogCrit(COMPONENT_FSAL,
                           "Tried to release busy handle, hdl = 0x%p->refs = %d",
                           obj_pub, obj_pub->refs);
-                return ceph2fsal_error(-retval));
+                return ceph2fsal_error(-retval);
         }
 
 	gsh_free(obj);

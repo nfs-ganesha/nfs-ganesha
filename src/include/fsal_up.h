@@ -122,7 +122,6 @@ struct layoutrecall_spec {
 };
 
 /** @} */
->>>>>>> bdbef05... Let FSAL be picky about clients in layoutrecall
 
 /**
  * @brief Possible upcall functions
