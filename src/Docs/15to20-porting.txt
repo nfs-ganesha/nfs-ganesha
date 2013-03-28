@@ -97,7 +97,7 @@ pre-2.0-dev_19         e251f09f Jeremy Bongio Stop overwriting cache_inode_commi
 
 ----pass    2ec9bca1 Frank S. Filz Eliminate FSAL_NGROUPS_MAX, make alt_groups a pointer instead of fixed size array
 ----pass    9f8dcda2 Frank S. Filz Strip out unused fsal_cred_t and unused *FSAL_GetClientContext
-ffilz       e84d56d8 Frank S. Filz Replace setfsuid/setfsgid with fsal_set_credentials and fsal_restore_ganesha_credentials
+ported on dev26       e84d56d8 Frank S. Filz Replace setfsuid/setfsgid with fsal_set_credentials and fsal_restore_ganesha_credentials
 ffilz       c54c5709 Frank S. Filz Introduce routines to manage thread credentials
 d45d6240    ed7a51f3 Frank S. Filz Call squash_setattr for SETATTR calls
 d45d6240    acf3c1c6 Frank S. Filz Call squash_setattr for CREATE type calls
@@ -107,7 +107,7 @@ eb7fa39d    6f37cffc Frank S. Filz Move export_perms_t from nfs_rpc_execute into
 ----pass    72cea906 Frank S. Filz Check fattr4 that passed attr value has data for each attr
 9aba3d95    049b935e Frank S. Filz Stop calling FSAL_truncate from cache_inode_setattr
 ----pass    aa052624 Frank S. Filz Make use of FSAL_ATTR_MTIME_SERVER and FSAL_ATTR_ATIME_SERVER
-ffilz       9d9b40fb Frank S. Filz Remove setfsuid/setfsgid from GPFS setattrs path
+ported on dev26       9d9b40fb Frank S. Filz Remove setfsuid/setfsgid from GPFS setattrs path
 ffilz       ce97bfd3 Frank S. Filz Simplify test of needing to call fsal_set_xstat_by_handle for GPFS
 ffilz       4f6c07b5 Frank S. Filz Only get current attr in GPFSFSAL_setattrs when FSAL is at NIV_DEBUG
 ffilz       91684f1b Frank S. Filz Don't make local copy of passed attr in GPFSFSAL_setattrs
@@ -311,7 +311,7 @@ discuss05   bb8f8f77 Max Matveev NFS access check - don't convert IP to string u
             9149a77a Jeremy Bongio Fixed memleak due to missing closedir.
             fca11b07 Venkateswararao Jujjuri (JV) Some clients like Solaris and AIX tries to set gid=0 on root squashed creates. Ignore those requests.
 rong        9525ff9e rong zeng nfs4_encode_acl_ routines calculation for ACE's 'who' field length is incorrect. It included the fill byte length and this would cause issue with certain client display issue.
-            8dec4ad6 Jim Wahlig check for error from write before doing the commit
+ported on dev26            8dec4ad6 Jim Wahlig check for error from write before doing the commit
 rong        c1dfb9e5 rong zeng Use cache_inode_getattr to obtain attributes instead of assignment, otherwise there is a race condition for attributes.
             f31f75ff Bruce Lucas support for build processes
             bbb0ac36 Venkateswararao Jujjuri (JV) Bump up the duplex-7 commit to include a deadlock fix commit from Matt.
@@ -339,7 +339,7 @@ rong        cfff76cd rong zeng need to remove from the state_blocked_locks list
 ffilz       9bb8f912 Jim Wahlig fix "make rpm" problem with buffer overflow on strncpy
 Ported on pre-2.0-dev_19            c66cca71 Jeremy Bongio Convert French comments/messages to English in logging infrastructure.
 discuss05   6340d8a5 rong zeng fix a bug in check_convert_ipv6_to_ipv4.
-            18eaf9df Jim Wahlig logging changes.
+ported on dev26            18eaf9df Jim Wahlig logging changes.
 
 ffilz       43071e5d Frank S. Filz Scrub log messages for SAL and NLM
 ffilz       8ff375be Frank S. Filz Improve export error checking, don't allow dup path, export_id, or tag
@@ -380,7 +380,7 @@ pushed      24d98f40 Frank S. Filz Fix some IPv6 compile issues
 Ported on pre-2.0-dev_19            ba706c89 Venkateswararao Jujjuri (JV) Fix few missing places where the entry contents are being checked without the content lock. Also fix made wrt lock locking order where the attrlock is taken first before content lock if both needs to be held simultaneously.
 ----pass    4481a74a Jim Wahlig need to update the lease for 4.0 as well as 4.1
 pushed      9d415e75 Jim Wahlig No need to decrement client reference in this routine.
-ffilz    ?? 970b58d4 Jim Wahlig return the proper error when using an expired stateid.
+ported on dev26    ?? 970b58d4 Jim Wahlig return the proper error when using an expired stateid.
             cfce9773 Venkateswararao Jujjuri (JV) Second phase of log changes for fsal_up dumb functions.
 pushed      fee6fbff rong zeng fix in compare_nfs4_owner_key.
             cb398a17 suhrud Ganesha stop: Removed a possible race when one process stops Ganesha and another one starts it. Ganesha start: Does not give error if statd/rquotad/Ganesha is already running. Only starts the not running daemons.
@@ -442,10 +442,10 @@ Ported on pre-2.0-dev_19            bf2652aa Jeremy Bongio Added a new log funct
             0a575e90 Lance Russell Changed to call ths FSAL to determine the handle length rather than the embedded handle. This gave the length of the embedded GPFS handle not the Ganesha handle This causes follow on calls to expand handle to break with a size mismatch
 rong        ba2f8612 rong zeng Adding support for new winbind interface to get principal based on mspac obtained from window's kerberos ticket. This is needed for multiple ADS domains environment.
 pushed      e26012c8 rong zeng nfs4_op_secinfo need to handle lookup in pseudo fs.
-            66138a1f Jim Wahlig another set of logging updates
+ported on dev26            66138a1f Jim Wahlig another set of logging updates
             f42543f6 Lance Russell Changed setattr logic for modifying group ownwership. Now to modify group, user must be root, current owner, or in the target group.
 ????done ?? 8f63f968 rong zeng Fix V4 export access check. Don't apply check_access to V4 at proc level and fix the check in nfs4_MakeCred which is invoked in V4 operations.
-            36bf702d Jim Wahlig log message cleanup plus compile fix
+ported on dev26            36bf702d Jim Wahlig log message cleanup plus compile fix
             e7c50d6c Lance Russell Added fsid to the GPFS specific handle
             0296c7da Srikrishan Malik New tunable.
             4734f0e0 Srikrishan Malik Change some tunables
