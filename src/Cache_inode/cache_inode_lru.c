@@ -441,7 +441,7 @@ lru_reap_impl(uint32_t flags)
      struct lru_q *lq;
      struct glist_head *glist;
      struct glist_head *glistn;
-     cache_inode_lru_t *lru = NULL;
+     cache_inode_lru_t *lru;
      cache_entry_t *entry;
      uint32_t refcnt;
      int ix, cnt;
@@ -493,7 +493,9 @@ lru_reap_impl(uint32_t flags)
 				    goto out;
 			      }
 			      cih_latch_rele(&latch);
-			 }
+                    } else {
+			    QLOCK(qlane);
+		    }
                } /* lru */
           next_entry:
                if (++cnt > LANE_NTRIES)
@@ -501,6 +503,9 @@ lru_reap_impl(uint32_t flags)
           } /* foreach (initial) entry */
           QUNLOCK(qlane);
      } /* foreach lane */
+
+     /* ! reclaimable */
+     lru = NULL;
 
 out:
      return (lru);
@@ -1354,17 +1359,17 @@ bool cache_inode_is_pinned(cache_entry_t *entry)
  * This function acquires a reference on the given cache entry.
  *
  * @param[in] entry  The entry on which to get a reference
- * @param[in] flags  One of LRU_REQ_INITIAL, LRU_REQ_SCAN, else LRU_FLAG_NONE (0)
+ * @param[in] flags  One of LRU_REQ_INITIAL, LRU_REQ_SCAN, else LRU_FLAG_NONE
  *
- * A flags value of LRU_REQ_INITIAL or LRU_REQ_SCAN indicates an initial reference.
- * A non-initial reference is an "extra" reference in some call path, hence does
- * not influence LRU, and is lockless.
+ * A flags value of LRU_REQ_INITIAL or LRU_REQ_SCAN indicates an initial
+ * reference.  A non-initial reference is an "extra" reference in some call
+ * path, hence does not influence LRU, and is lockless.
  *
- * A flags value of LRU_REQ_INITIAL indicates an ordinary initial reference, and
- * strongly influences LRU.  LRU_REQ_SCAN indicates a scan reference (currently,
- * READDIR) and weakly influences LRU.  Ascan reference should not be taken by call
- * paths which may open a file descriptor.  In both cases, the L1->L2 boundary is
- * sticky (scan resistence).
+ * A flags value of LRU_REQ_INITIAL indicates an ordinary initial reference,
+ * and strongly influences LRU.  LRU_REQ_SCAN indicates a scan reference
+ * (currently, READDIR) and weakly influences LRU.  Ascan reference should not
+ * be taken by call paths which may open a file descriptor.  In both cases, the
+ * L1->L2 boundary is sticky (scan resistence).
  *
  * @retval CACHE_INODE_SUCCESS if the reference was acquired
  */
@@ -1485,6 +1490,45 @@ cache_inode_lru_unref(cache_entry_t *entry,
 	} /* refcnt == 0 */
 out:
         return;
+}
+
+/**
+ * @brief Put back a raced initial reference
+ *
+ * This function returns an entry previously returned from
+ * cache_inode_lru_get, in the uncommon circumstance that it will not
+ * be used.
+ *
+ * @param[in] entry  The entry on which to release a reference
+ * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
+ *                   (indicating that the caller holds the LRU mutex
+ *                   lock for this entry.)
+ */
+void
+cache_inode_lru_putback(cache_entry_t *entry,
+                        uint32_t flags)
+{
+    bool qlocked = flags & LRU_UNREF_QLOCKED;
+    uint32_t lane = entry->lru.lane;
+    struct lru_q_lane *qlane = &LRU[lane];
+    struct lru_q *q;
+
+    if (! qlocked)
+        QLOCK(qlane);
+
+    q = lru_queue_of(entry);
+    if (q) {
+        /* as of now, entries leaving the cleanup queue
+         * are LRU_ENTRY_NONE */
+        glist_del(&entry->lru.q);
+        --(q->size);
+    }
+
+    /* We do NOT call lru_clean_entry, since it was never initialized. */
+    pool_free(cache_inode_entry_pool, entry);
+
+    if (! qlocked)
+        QUNLOCK(qlane);
 }
 
 /**

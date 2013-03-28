@@ -63,7 +63,7 @@ int _9p_read( _9p_request_data_t * preq9p,
   bool eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   // uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
-  cache_inode_stability_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
+  bool sync = false;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
@@ -115,7 +115,7 @@ int _9p_read( _9p_request_data_t * preq9p,
 					databuffer,
 					&eof_met,
 					&pfid->op_context,
-					&stable_flag);
+					&sync);
        if(cache_status != CACHE_INODE_SUCCESS)
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
@@ -130,7 +130,7 @@ int _9p_read( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid , (unsigned long long)*offset, *count ) ;
 
 /**
- * @TODO read statistics accounting goes here
+ * @todo read statistics accounting goes here
  * modeled on nfs I/O statistics
  */
   return 1 ;

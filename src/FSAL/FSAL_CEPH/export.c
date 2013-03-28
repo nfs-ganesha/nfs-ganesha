@@ -555,21 +555,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *export_pub)
 }
 
 /**
- * @brief Return the FH expiry type
- *
- * This function returns the FH expiry type.
- *
- * @param[in] export_pub The public export
- *
- * @return FSAL_EXPTYPE_PERSISTENT
- */
-
-static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *export_pub)
-{
-	return FSAL_EXPTYPE_PERSISTENT;
-}
-
-/**
  * @brief Return the lease time
  *
  * This function returns the lease time.
@@ -671,7 +656,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = fs_maxlink;
 	ops->fs_maxnamelen = fs_maxnamelen;
 	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_fh_expire_type = fs_fh_expire_type;
 	ops->fs_lease_time = fs_lease_time;
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;

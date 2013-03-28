@@ -465,10 +465,7 @@ static fattr_xdr_result encode_expiretype(XDR *xdr, struct xdr_attrs_args *args)
 	uint32_t expire_type;
 
 	/* For the moment, we handle only the persistent filehandle */
-	if(nfs_param.nfsv4_param.fh_expire == TRUE)
-		expire_type = FH4_VOLATILE_ANY;
-	else
-		expire_type = FH4_PERSISTENT;
+	expire_type = FH4_PERSISTENT;
 	if( !xdr_u_int32_t(xdr, &expire_type))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
@@ -608,19 +605,9 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	fsid4 fsid;
 
-	/* The file system id (taken from the configuration file)
-	 * If object is a directory attached to a referral,
-	 * then a different fsid is to be returned
-	 * to tell the client that a different fs is being crossed */
-
 	if(args->data != NULL && args->data->pexport != NULL) {
-		if(nfs4_Is_Fh_Referral(args->hdl4)) {
-			fsid.major = ~args->data->pexport->filesystem_id.major;
-			fsid.minor = ~args->data->pexport->filesystem_id.minor;
-		} else {
-			fsid.major = args->data->pexport->filesystem_id.major;
-			fsid.minor = args->data->pexport->filesystem_id.minor;
-		}
+		fsid.major = args->data->pexport->filesystem_id.major;
+		fsid.minor = args->data->pexport->filesystem_id.minor;
 	} else {
 		fsid.major = 152LL; /* 153,153 for junctions in pseudos */
 		fsid.minor = 152LL;
@@ -4746,13 +4733,6 @@ nfs4_sanity_check_FH(compound_data_t *data,
                 return NFS4ERR_BADHANDLE;
         }
 
-        /* Tests if the Filehandle is expired (for volatile filehandle) */
-        if (nfs4_Is_Fh_Expired(&(data->currentFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Expired failed");
-                return NFS4ERR_FHEXPIRED;
-        }
-
         /* Check for the correct file type */
         if (required_type != NO_FILE_TYPE) {
                 if (data->current_filetype != required_type) {
@@ -4843,13 +4823,6 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
                 LogDebug(COMPONENT_FILEHANDLE,
                          "nfs4_Is_Fh_Invalid failed");
                 return NFS4ERR_BADHANDLE;
-        }
-
-        /* Tests if the Filehandle is expired (for volatile filehandle) */
-        if (nfs4_Is_Fh_Expired(&(data->savedFH))) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Expired failed");
-                return NFS4ERR_FHEXPIRED;
         }
 
         /* Check for the correct file type */

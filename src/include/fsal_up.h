@@ -110,9 +110,8 @@ struct fsal_up_event_invalidate
 struct fsal_up_event_update
 {
 	struct attrlist attr; /*< List of attributes to update.  Note
-                                  that the @c supported_attributes, @c
-                                  type, @c fsid, @c fileid, @c rawdev,
-                                  @c mounted_on_fileid, and @c
+                                  that the @c type, @c fsid, @c fileid,
+                                  @c rawdev, @c mounted_on_fileid, and @c
                                   generation fields must not be
                                   updated and the corresponding bits
                                   in the mask must not be set, nor may

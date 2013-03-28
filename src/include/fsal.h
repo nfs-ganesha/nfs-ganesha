@@ -50,14 +50,14 @@
 
 /** this macro tests if an attribute is set
  *  example :
- *  FSAL_TEST_MASK( attrib_list.supported_attributes, FSAL_ATTR_CREATION )
+ *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
 #define FSAL_TEST_MASK( _attrib_mask_ , _attr_const_ ) \
                       ( (_attrib_mask_) & (_attr_const_) )
 
 /** this macro sets an attribute
  *  example :
- *  FSAL_SET_MASK( attrib_list.asked_attributes, FSAL_ATTR_CREATION )
+ *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
 #define FSAL_SET_MASK( _attrib_mask_ , _attr_const_ ) \
                     ( (_attrib_mask_) |= (_attr_const_) )

@@ -65,7 +65,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
     .chown_restricted = true,
     .case_insensitive = false,
     .case_preserving = true,
-    .fh_expire_type = FSAL_EXPTYPE_PERSISTENT,
     .link_support = true,
     .symlink_support = true,
     .lock_support = true,

@@ -72,14 +72,6 @@ int nfs4_op_getfh(struct nfs_argop4 *op,
   if(res_GETFH.status != NFS4_OK)
     return res_GETFH.status;
 
-  /* Test if the filehandle is related to a referral */
-  if(nfs4_Is_Fh_Referral(&(data->currentFH)))
-    {
-      res_GETFH.status = NFS4ERR_MOVED;
-      return res_GETFH.status;
-    }
-
-
   /* Copy the filehandle to the reply structure */
   res_GETFH.status = nfs4_AllocateFH(&(res_GETFH.GETFH4res_u.resok4.object));
   if(res_GETFH.status != NFS4_OK)

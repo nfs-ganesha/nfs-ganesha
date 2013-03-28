@@ -360,8 +360,8 @@ typedef uint64_t attrmask_t;
  * Attribute masks.
  */
 
-/* supported attributes */
-#define ATTR_SUPPATTR 0x0000000000000001
+/* supported attributes (Obsolete)
+#define ATTR_SUPPATTR 0x0000000000000001 */
 /* file type */
 #define ATTR_TYPE 0x0000000000000002
 /* file size */
@@ -411,8 +411,7 @@ typedef uint64_t attrmask_t;
 
 /* NFSv4 Mandatory attributes */
 
-#define ATTRS_FSAL_MANDATORY (ATTR_SUPPATTR | \
-                              ATTR_TYPE     | \
+#define ATTRS_FSAL_MANDATORY (ATTR_TYPE     | \
                               ATTR_SIZE     | \
                               ATTR_FSID     | \
                               ATTR_CHGTIME)
@@ -434,8 +433,6 @@ typedef uint64_t attrmask_t;
 struct attrlist {
         attrmask_t mask; /*< Indicates the attributes to be set or
                              that have been filled in by the FSAL. */
-        attrmask_t supported_attributes; /*< Attributes this export
-                                             supports. */
         object_file_type_t type; /*< Type of this object */
         uint64_t filesize; /*< Logical size (amount of data that can be
                                read) */
@@ -530,31 +527,6 @@ typedef uint16_t fsal_openflags_t;
 #define FSAL_O_RDWR     (FSAL_O_READ|FSAL_O_WRITE)  /* read/write: both flags explicitly or'd together so that FSAL_O_RDWR can be used as a mask */
 #define FSAL_O_SYNC     0x0004  /* sync */
 
-/** FH expire type (mask). */
-
-typedef uint16_t fsal_fhexptype_t;
-
-/* filehandle never expires until
- * the object is deleted : */
-#define FSAL_EXPTYPE_PERSISTENT   0x0001
-
-/* filehandle may expire at any time
- * except as specified in
- * FSAL_EXPTYPE_NOEXP_OPEN flag if used : */
-#define FSAL_EXPTYPE_VOLATILE     0x0002
-
-/* if used toghether with FSAL_EXPTYPE_VOLATILE
- * an handle can't expired when it is opened : */
-#define FSAL_EXPTYPE_NOEXP_OPEN   0x0004
-
-/* An handle can expire on migration
- * (redundant if FSAL_EXPTYPE_VOLATILE is specified). */
-#define FSAL_EXPTYPE_MIGRATE      0x0008
-
-/* An handle can expire on renaming object
- * (redundant if FSAL_EXPTYPE_VOLATILE is specified). */
-#define FSAL_EXPTYPE_RENAME       0x0010
-
 /** File system static info. */
 
 /* enums for accessing
@@ -593,7 +565,6 @@ struct fsal_staticfsinfo_t
         bool chown_restricted; /*< is chown limited to super-user.*/
         bool case_insensitive;  /*< case insensitive FS? */
         bool case_preserving;  /*< FS preserves case? */
-        bool fh_expire_type; /*< handle persistency indicator */
         bool link_support; /*< FS supports hardlinks? */
         bool symlink_support;  /*< FS supports symlinks? */
         bool lock_support; /*< FS supports file locking? */

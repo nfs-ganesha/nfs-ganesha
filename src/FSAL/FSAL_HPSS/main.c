@@ -63,7 +63,6 @@ static struct fsal_staticfsinfo_t default_hpss_info = {
   true,                         /* chown restricted */
   false,                        /* case insensitivity */
   true,                         /* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
   true,                         /* hard link support */
   true,                         /* symlink support */
   false,                        /* lock management */

@@ -92,6 +92,7 @@ nfs_parameter_t nfs_param =
   .core_param.drc.udp.checksum = DRC_UDP_CHECKSUM,
   .core_param.rpc.debug_flags = TIRPC_DEBUG_FLAGS,
   .core_param.rpc.max_connections = 1024,
+  .core_param.rpc.idle_timeout_s = 300,
   .core_param.port[P_NFS] = NFS_PORT,
   .core_param.bind_addr.sin_family = AF_INET,       /* IPv4 only right now */
   .core_param.program[P_NFS] = NFS_PROGRAM,
@@ -134,7 +135,6 @@ nfs_parameter_t nfs_param =
   /* NFSv4 parameter */
   .nfsv4_param.graceless = false,
   .nfsv4_param.lease_lifetime = LEASE_LIFETIME_DEFAULT,
-  .nfsv4_param.fh_expire = false,
   .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DOMAINNAME_DEFAULT,
   .nfsv4_param.idmapconf = IDMAPCONF_DEFAULT,

@@ -41,6 +41,7 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pthread.h>
@@ -59,23 +60,98 @@
 #include "client_mgr.h"
 #include "server_stats_private.h"
 #include "server_stats.h"
+#include "abstract_atomic.h"
+#include "gsh_intrinsic.h"
 
 
-/* Exports are stored in an AVL tree
+/**
+ * @brief Exports are stored in an AVL tree with front-end cache.
+ *
  */
-
-struct export_by_id {
-	struct avltree t;
+struct export_by_id
+{
 	pthread_rwlock_t lock;
+        struct avltree t;
+        struct avltree_node **cache;
+	uint32_t cache_sz;
 };
 
+
 static struct export_by_id export_by_id;
+
+/**
+ * @brief Compute cache slot for an entry
+ *
+ * This function computes a hash slot, taking an address modulo the
+ * number of cache slotes (which should be prime).
+ *
+ * @param wt [in] The table
+ * @param ptr [in] Entry address
+ *
+ * @return The computed offset.
+ */
+static inline uint32_t
+eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
+{
+    return (k % eid->cache_sz);
+}
+
+/* XXX GCC header include issue (abstract_atomic.h IS included, but
+ * atomic_fetch_voidptr fails when used from cache_inode_remove.c. */
+
+/**
+ * @brief Atomically fetch a void *
+ *
+ * This function atomically fetches the value indicated by the
+ * supplied pointer.
+ *
+ * @param[in,out] var Pointer to the variable to fetch
+ *
+ * @return the value pointed to by var.
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline void *
+atomic_fetch_voidptr(void **var)
+{
+     return __atomic_load_n(var, __ATOMIC_SEQ_CST);
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline void *
+atomic_fetch_voidptr(void **var)
+{
+     return __sync_fetch_and_add(var, 0);
+}
+#endif
+
+/**
+ * @brief Atomically store a void *
+ *
+ * This function atomically fetches the value indicated by the
+ * supplied pointer.
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val The value to store
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline void
+atomic_store_voidptr(void **var, void *val)
+{
+     __atomic_store_n(var, val, __ATOMIC_SEQ_CST);
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline void
+atomic_store_voidptr(void **var, void *val)
+{
+     __sync_lock_test_and_set(var, 0);
+}
+#endif
 
 /**
  * @brief Export id comparator for AVL tree walk
  *
  */
-
 static int
 export_id_cmpf(const struct avltree_node *lhs,
 	       const struct avltree_node *rhs)
@@ -102,14 +178,14 @@ export_id_cmpf(const struct avltree_node *lhs,
  *
  * @return pointer to ref locked stats block
  */
-
-struct gsh_export *get_gsh_export(int export_id,
-				  bool lookup_only)
+struct gsh_export *
+get_gsh_export(int export_id, bool lookup_only)
 {
 	struct avltree_node *node = NULL;
 	struct gsh_export *exp;
 	struct export_stats *export_st;
 	struct gsh_export v;
+        void **cache_slot;
 
 /* NOTE: If we call this in the general case, not from within stats
  * code we have to do the following.  We currently get away with it 
@@ -125,9 +201,28 @@ struct gsh_export *get_gsh_export(int export_id,
 	v.export_id = export_id;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+
+        /* check cache */
+        cache_slot = (void **)
+            &(export_by_id.cache[eid_cache_offsetof(&export_by_id, export_id)]);
+        node = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
+        if (node) {
+            if (export_id_cmpf(&v.node_k, node) == 0) {
+                /* got it in 1 */
+		LogDebug(COMPONENT_HASHTABLE_CACHE,
+                         "export_mgr cache hit slot %d\n",
+                         eid_cache_offsetof(&export_by_id, export_id));
+		exp =  avltree_container_of(node, struct gsh_export, node_k);
+                goto out;
+            }
+        }
+
+	/* fall back to AVL */
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if(node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
+                /* update cache */
+		atomic_store_voidptr(cache_slot, node);
 		goto out;
 	} else if(lookup_only) {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
@@ -150,6 +245,8 @@ struct gsh_export *get_gsh_export(int export_id,
 		exp = avltree_container_of(node, struct gsh_export, node_k);
 	} else {
 		pthread_mutex_init(&exp->lock, NULL);
+                /* update cache */
+		atomic_store_voidptr(cache_slot, &exp->node_k);
 	}
 
 out:
@@ -519,6 +616,9 @@ void gsh_export_init(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
+	export_by_id.cache_sz = 32767;
+	export_by_id.cache = gsh_calloc(export_by_id.cache_sz,
+					sizeof(struct avltree_node *));
 #ifdef USE_DBUS_STATS
 	gsh_dbus_register_path("ExportMgr", export_interfaces);
 #endif

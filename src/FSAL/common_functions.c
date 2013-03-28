@@ -50,8 +50,6 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info) {
 		 info->case_insensitive);
 	LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
 		 info->case_preserving);
-	LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-		 info->fh_expire_type);
 	LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
 		 info->link_support);
 	LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",

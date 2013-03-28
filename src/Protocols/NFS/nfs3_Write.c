@@ -86,7 +86,7 @@ int nfs_Write(nfs_arg_t *arg,
         uint64_t offset = 0;
         void *data = NULL;
         bool eof_met = false;
-        cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
+        bool sync = false;
         int rc = NFS_REQ_OK;
         fsal_status_t fsal_status ;
 
@@ -212,15 +212,10 @@ int nfs_Write(nfs_arg_t *arg,
          }
 
          if ((export->use_commit) &&
-             !export->use_ganesha_write_buffer &&
              (arg->arg_write3.stable == UNSTABLE)) 
-                        stability = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
-         else if ((export->use_commit) &&
-                    (export->use_ganesha_write_buffer) &&
-                    (arg->arg_write3.stable == UNSTABLE)) 
-                 stability = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
+		 sync = false;
          else 
-                 stability = CACHE_INODE_SAFE_WRITE_TO_FS;
+                 sync = true;
                 
          data = arg->arg_write3.data.data_val;
 
@@ -280,7 +275,7 @@ int nfs_Write(nfs_arg_t *arg,
 			data,
 			&eof_met,
 			req_ctx,
-			&stability);
+			&sync);
                 if (cache_status == CACHE_INODE_SUCCESS) {
                                 /* Build Weak Cache Coherency data */
                                 nfs_SetWccData(&pre_attr,
@@ -294,7 +289,7 @@ int nfs_Write(nfs_arg_t *arg,
                                         = written_size;
 
                                 /* How do we commit data ? */
-                                if(stability == CACHE_INODE_SAFE_WRITE_TO_FS) {
+                                if(sync) {
                                         res->res_write3.WRITE3res_u.resok
                                                 .committed = FILE_SYNC;
                                 } else {

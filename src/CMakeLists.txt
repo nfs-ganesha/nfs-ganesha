@@ -504,8 +504,6 @@ add_subdirectory(IdMapper)
 add_subdirectory(MainNFSD)
 add_subdirectory(Docs)
 add_subdirectory(tools)
-add_subdirectory(check)
-add_subdirectory(debian)
 
 if(USE_FSAL_FUSE)
   add_subdirectory(example-fuse)
@@ -709,3 +707,15 @@ add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 ########### add a "make srpm" and a "make rpm" ###############
 add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_rpm)
 add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
+
+########### add a "make doc" target to call Doxygen
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  add_custom_target(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+endif(DOXYGEN_FOUND)
+

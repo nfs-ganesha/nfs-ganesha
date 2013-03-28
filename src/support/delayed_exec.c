@@ -305,17 +305,18 @@ void delayed_start(void)
 
 void delayed_shutdown(void)
 {
-	int rc = 0;
+	int rc = -1;
 	struct timespec then;
 	now(&then);
 	then.tv_sec += 120;
 
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_stopping;
-	do {
-		pthread_cond_timedwait(&cv, &mtx, &then);
-	} while ((rc != ETIMEDOUT) &&
-		 (thread_list.lh_first != NULL));
+	pthread_cond_broadcast(&cv);
+	while ((rc != ETIMEDOUT) &&
+	       (thread_list.lh_first != NULL)) {
+		rc = pthread_cond_timedwait(&cv, &mtx, &then);
+	}
 
 	if (thread_list.lh_first != NULL) {
 		struct delayed_thread *thr;

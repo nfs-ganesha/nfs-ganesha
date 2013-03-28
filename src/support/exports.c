@@ -90,13 +90,11 @@
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
-#define CONF_EXPORT_REFERRAL           "Referral"
 #define CONF_EXPORT_FSAL               "FSAL"
-#define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
+#define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
-#define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 
 /** @todo : add encrypt handles option */
@@ -127,7 +125,6 @@
 #define FLAG_EXPORT_MAX_OFF_WRITE   0x000400000
 #define FLAG_EXPORT_MAX_OFF_READ    0x000800000
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x001000000
-#define FLAG_EXPORT_USE_PNFS        0x002000000
 #define FLAG_EXPORT_ACCESS_LIST     0x004000000
 #define FLAG_EXPORT_ACCESSTYPE_LIST 0x008000000
 #define FLAG_EXPORT_ANON_GROUP      0x010000000
@@ -135,7 +132,6 @@
 #define FLAG_EXPORT_ANON_USER       0x040000000
 #define FLAG_EXPORT_CACHE_POLICY    0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
-#define FLAG_EXPORT_USE_DELEG       0x200000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -544,7 +540,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_uid = (uid_t) ANON_UID;
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = true;
-  p_entry->use_ganesha_write_buffer = false;
   p_entry->UseCookieVerifier = true;
 
   /* by default, we support auth_none and auth_sys */
@@ -585,7 +580,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
-  strcpy(p_entry->referral, "");
 
   /* parse options for this export entry */
 
@@ -779,10 +773,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_PSEUDO;
           p_entry->options |= EXPORT_OPTION_PSEUDO;
 
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_REFERRAL))
-        {
-          strncpy(p_entry->referral, var_value, MAXPATHLEN);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
@@ -1596,62 +1586,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
         }
-      else if(!STRCMP(var_name, CONF_EXPORT_PNFS))
-        {
-          /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_USE_PNFS) == FLAG_EXPORT_USE_PNFS)
-            {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_PNFS");
-              continue;
-            }
-
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->options |= EXPORT_OPTION_USE_PNFS;
-              break;
-
-            case 0:
-              /*default (false) */
-              break;
-
-            default:           /* error */
-              LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): true or false expected.",
-                      var_name, var_value);
-              err_flag = true;
-              continue;
-            }
-          set_options |= EXPORT_OPTION_USE_PNFS;
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_DELEG))
-        {
-          /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_USE_DELEG) == FLAG_EXPORT_USE_DELEG)
-            {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_DELEG");
-              continue;
-            }
-
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->options |= EXPORT_OPTION_USE_DELEG;
-              break;
-
-            case 0:
-              /*default (false) */
-              break;
-
-            default:           /* error */
-              LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): true or false expected.",
-                      var_name, var_value);
-              err_flag = true;
-              continue;
-            }
-          set_options |= EXPORT_OPTION_USE_DELEG;
-        }
       else if(!STRCMP(var_name, CONF_EXPORT_UQUOTA ) )
         {
           /* check if it has not already been set */
@@ -1794,28 +1728,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
             case 0:
               p_entry->use_commit = false;
-              break;
-
-            default:           /* error */
-              {
-                LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): true or false expected.",
-                        var_name, var_value);
-                err_flag = true;
-                continue;
-              }
-            }
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_USE_GANESHA_WRITE_BUFFER))
-        {
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->use_ganesha_write_buffer = true;
-              break;
-
-            case 0:
-              p_entry->use_ganesha_write_buffer = false;
               break;
 
             default:           /* error */
@@ -2033,7 +1945,6 @@ exportlist_t *BuildDefaultExport()
   strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
-  strcpy(p_entry->referral, "");
 
   p_entry->UseCookieVerifier = true;
 
@@ -2832,14 +2743,6 @@ bool nfs_export_create_root_entry(exportlist_t *pexportlist)
                     "Added root entry for path %s on export_id=%d",
                     pcurrent->fullpath, pcurrent->id);
 
-          /* Set the entry as a referral if needed */
-          if(strcmp(pcurrent->referral, ""))
-            {
-              /* Set the cache_entry object as a referral by setting the 'referral' field */
-              entry->object.dir.referral = pcurrent->referral;
-              LogInfo(COMPONENT_INIT, "A referral is set : %s",
-                      entry->object.dir.referral);
-            }
         }
 
   /* Since the entry isn't actually stored anywhere, there's no point

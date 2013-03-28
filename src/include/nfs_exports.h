@@ -142,7 +142,6 @@ typedef struct exportlist {
 				    wanting of a better constant */
 	char pseudopath[MAXPATHLEN]; /*< NFSv4 pseudo-filesystem
 				      *  'virtual' path */
-	char referral[MAXPATHLEN]; /*< String describing NFSv4 referral */
 	char FS_specific[MAXPATHLEN]; /*< Filesystem specific option string */
 	char FS_tag[MAXPATHLEN];      /*< Filesystem "tag" string */
 
@@ -176,7 +175,6 @@ typedef struct exportlist {
 			        will be given the anon uid/gid */
 	unsigned int options; /*< Available mount options */
 	unsigned char seckey[EXPORT_KEY_SIZE]; /*< Checksum for FH validity */
-	bool use_ganesha_write_buffer;
 	bool use_commit;
 	uint32_t MaxRead; /*< Max Read for this entry */
 	uint32_t MaxWrite; /*< Max Write for this entry */

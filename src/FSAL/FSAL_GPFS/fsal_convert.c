@@ -211,15 +211,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
    * This is needed to make sure ACL attribute is initialized. */
   p_fsalattr_out->acl = NULL;
 
-  /* Fills the output struct
-
-     supported_attributes is set by the caller.
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-    }
-  */
+  /* Fills the output struct */
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
     {
       p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
@@ -317,13 +309,6 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     p_buffstat = &p_buffxstat->buffstat;
 
     /* Fills the output struct */
-    if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SUPPATTR))
-        {
-          /* supported_attributes is set by the caller.
-              p_fsalattr_out->supported_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-            */
-            LogFullDebug(COMPONENT_FSAL, "supported_attributes = %lu", p_fsalattr_out->supported_attributes);
-        }
     if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
         {
             p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);

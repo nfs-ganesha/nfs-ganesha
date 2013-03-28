@@ -143,6 +143,8 @@ void cache_inode_lru_cleanup_push(cache_entry_t *entry);
 
 void cache_inode_lru_unref(cache_entry_t *entry,
 				  uint32_t flags);
+void cache_inode_lru_putback(cache_entry_t *entry,
+                             uint32_t flags);
 void lru_wake_thread(void);
 cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 void cache_inode_unpinnable(cache_entry_t *entry);

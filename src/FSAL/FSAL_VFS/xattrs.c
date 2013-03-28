@@ -153,7 +153,7 @@ static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
    * - rdev=0
    * - nlink=1
    */
-  attrmask_t supported = ATTR_SUPPATTR | ATTR_MODE | ATTR_FILEID
+  attrmask_t supported = ATTR_MODE | ATTR_FILEID
       | ATTR_TYPE | ATTR_OWNER | ATTR_GROUP
       | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME
       | ATTR_CREATION | ATTR_CHGTIME | ATTR_SIZE
@@ -179,9 +179,6 @@ static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
 
       xattr_attrs->mask &= (~unsupp);
     }
-
-  if(xattr_attrs->mask & ATTR_SUPPATTR)
-    xattr_attrs->supported_attributes = supported;
 
   if(xattr_attrs->mask & ATTR_MODE)
     {

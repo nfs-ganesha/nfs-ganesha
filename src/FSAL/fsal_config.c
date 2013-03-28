@@ -570,11 +570,6 @@ uint32_t fsal_maxpathlen(struct fsal_staticfsinfo_t *info)
 	return info->maxpathlen;
 }
 
-fsal_fhexptype_t fsal_fh_expire_type(struct fsal_staticfsinfo_t *info)
-{
-	return info->fh_expire_type;
-}
-
 struct timespec fsal_lease_time(struct fsal_staticfsinfo_t *info)
 {
 	return info->lease_time;

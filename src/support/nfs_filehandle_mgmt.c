@@ -6,100 +6,38 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_filehandle_mgmt.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:05 $
- * \version $Revision: 1.12 $
- * \brief   Some tools for managing the file handles. 
- *
- * nfs_filehandle_mgmt.c : Some tools for managing the file handles.
- *
- * $Header: /cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_filehandle_mgmt.c,v 1.12 2006/01/24 11:43:05 deniel Exp $
- *
- * $Log: nfs_filehandle_mgmt.c,v $
- * Revision 1.12  2006/01/24 11:43:05  deniel
- * Code cleaning in progress
- *
- * Revision 1.11  2006/01/11 08:12:18  deniel
- * Added bug track and warning for badly formed handles
- *
- * Revision 1.9  2005/09/07 08:58:30  deniel
- * NFSv2 FH was only 31 byte long instead of 32
- *
- * Revision 1.8  2005/09/07 08:16:07  deniel
- * The checksum is filled with zeros before being computed to avoid 'dead beef' values
- *
- * Revision 1.7  2005/08/11 12:37:28  deniel
- * Added statistics management
- *
- * Revision 1.6  2005/08/09 12:35:37  leibovic
- * setting file_handle to 0 in nfs3_FSALToFhandle, before writting into it.
- *
- * Revision 1.5  2005/08/08 14:09:25  leibovic
- * setting checksum to 0 before writting in it.
- *
- * Revision 1.4  2005/08/04 08:34:32  deniel
- * memset management was badly made
- *
- * Revision 1.3  2005/08/03 13:23:43  deniel
- * Possible incoherency in CVS or in Emacs
- *
- * Revision 1.2  2005/08/03 13:13:59  deniel
- * memset to zero before building the filehandles
- *
- * Revision 1.1  2005/08/03 06:57:54  deniel
- * Added a libsupport for miscellaneous service functions
- *        entry = nfs_FhandleToCache(req_ctx,
-                                   req->rq_vers, NULL,
-                                   &(arg->arg_access3.object),
-                                   NULL, NULL, &(res->res_access3.status),
-                                   NULL, export, &rc);
-
- * Revision 1.4  2005/07/28 12:26:57  deniel
- * NFSv3 PROTOCOL Ok
- *
- * Revision 1.3  2005/07/26 07:39:15  deniel
- * Integration of NFSv2/NFSv3 In progress
- *
- * Revision 1.2  2005/07/21 09:18:42  deniel
- * Structure of the file handles was redefined
- *
- * Revision 1.1  2005/07/20 12:56:54  deniel
- * Reorganisation of the source files
- *
+ * @file nfs_filehandle_mgmt.c
+ * @brief Some tools for managing the file handles
  *
  */
+
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include "log.h"
@@ -114,16 +52,15 @@
 
 
 /**
- *
- *  nfs4_FhandleToCache: gets the cache entry from the NFSv4 file handle.
+ * @brief Get the cache entry from the NFSv4 file handle
  *
  * Validates and Converts a nfs4 file handle and then gets the cache entry.
  *
- * @param fh4 [IN] pointer to the file handle to be converted
- * @param req_ctx [IN] request context
- * @param exp_list [IN] export fsal to use
- * @param status [OUT] protocol status
- * @param rc [OUT] operation status
+ * @param[in]  fh4      File handle to be converted
+ * @param[in]  req_ctx  Request context
+ * @param[in]  exp_list Export fsal to use
+ * @param[out] status   Protocol status
+ * @param[out] rc       Operation status
  *
  * @return cache entry or NULL on failure
  */
@@ -131,7 +68,7 @@
 cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
 				   const struct req_op_context *req_ctx,
 				   exportlist_t *exp_list,
-				   nfsstat4 * status,
+				   nfsstat4 *status,
 				   int *rc)
 {
 	fsal_status_t fsal_status;
@@ -299,13 +236,6 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
   /* keep track of the export id */
   file_handle->exportid = fsalhandle->export->exp_entry->id;
-
-  /* if FH expires, set it there */
-  if(nfs_param.nfsv4_param.fh_expire)
-    {
-      LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
-      file_handle->srvboot_time = (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL);
-    }
 
   /* Set the len */
   fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
@@ -586,36 +516,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
   return pfhandle4->ds_flag;
-}                               /* nfs4_Is_Fh_DSHandle */
-
-/**
- *
- * nfs4_Is_Fh_Expired
- *
- * This routine is used to test if a fh is expired
- *
- * @param pfh [IN] file handle to test.
- * 
- * @return NFS4_OK if successfull. All the FH are persistent for now. 
- *
- */
-int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
-{
-  file_handle_v4_t *pfilehandle4;
-
-  if(pfh == NULL)
-    return NFS4ERR_BADHANDLE;
-
-  pfilehandle4 = (file_handle_v4_t *) pfh;
-
-  if((nfs_param.nfsv4_param.fh_expire)
-     && (pfilehandle4->srvboot_time != (uint32_t)(ServerBootTime.tv_sec & 0xFFFFFFFFL)))
-    {
-      return NFS4ERR_FHEXPIRED;
-    }
-
-  return NFS4_OK;
-}                               /* nfs4_Is_Fh_Expired */
+}
 
 /**
  * @brief Test if a filehandle is invalid
@@ -640,9 +541,11 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
     }
 
   filehandle4 = (file_handle_v4_t *) fh->nfs_fh4_val;
-  if(fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
-     fh->nfs_fh4_len < nfs4_sizeof_handle(filehandle4) ||
-     filehandle4->fhversion != GANESHA_FH_VERSION)
+  if((fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4)) ||
+     (fh->nfs_fh4_len < nfs4_sizeof_handle(filehandle4)) ||
+     (filehandle4->fhversion != GANESHA_FH_VERSION) ||
+     (filehandle4->reserved1 != 0) ||
+     (filehandle4->reserved2 != 0))
   {
     LogMajor(COMPONENT_FILEHANDLE,
 	     "Invalid File handle: len=%d, version=%x",
@@ -652,7 +555,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
   }
 
   return NFS4_OK;
-}                               /* nfs4_Is_Fh_Invalid */
+}
 
 /**
  * @brief Test if a filehandle is invalid.
@@ -688,35 +591,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
 
   return NFS3_OK;
 }                               /* nfs4_Is_Fh_Invalid */
-
-/**
- * 
- * nfs4_Is_Fh_Referral
- *
- * This routine is used to identify fh related to a pure referral
- *
- * @param pfh [IN] file handle to test.
- *
- * @return true is fh is a referral, false otherwise
- *
- */
-int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
-{
-  file_handle_v4_t *pfhandle4;
-
-  if(pfh == NULL)
-    return 0;
-
-  pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
-
-  /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
-  if(pfhandle4->refid > 0)
-    {
-      return true;
-    }
-
-  return false;
-}                               /* nfs4_Is_Fh_Referral */
 
 /**
  * @brief Print an NFSv2 file handle (for debugging purpose)

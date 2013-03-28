@@ -69,17 +69,6 @@ static const size_t FILEHANDLE_MAX_LEN_V4 = 128;
 static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100*1024*1024;
 
 /**
- * Values to control write stability
- */
-
-typedef enum cache_inode_stability__ {
-	CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER = 0,
-	CACHE_INODE_SAFE_WRITE_TO_FS = 1,
-	CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER = 2
-} cache_inode_stability_t;
-
-
-/**
  * Data for tracking a cache entry's position the LRU.
  */
 
@@ -146,17 +135,6 @@ static const uint32_t CACHE_INODE_TRUST_ATTRS = 0x00000001;
 static const uint32_t CACHE_INODE_TRUST_CONTENT = 0x00000002;
 /** The directory has been populated (negative lookups are meaningful) */
 static const uint32_t CACHE_INODE_DIR_POPULATED = 0x00000004;
-
-/**
- * Bookkeeping information for unstably written data held in Ganesha's
- * write buffer.
- */
-
-typedef struct cache_inode_unstable_data__ {
-	caddr_t buffer; /*< Pointer in memory */
-	uint64_t offset; /*< Offset (relative to the start of the file) */
-	uint32_t length; /*< Length */
-} cache_inode_unstable_data_t;
 
 /**
  * @brief The ref counted share reservation state.
@@ -376,8 +354,6 @@ struct cache_entry_t {
 			struct glist_head lock_list;
 			/** Pointers for NLM share list */
 			struct glist_head nlm_share_list;
-			/** Unstable data, for use with WRITE/COMMIT */
-			cache_inode_unstable_data_t unstable_data;
 			/** Share reservation state for this file. */
 			cache_inode_share_t share_state;
 		} file; /*< REGULAR_FILE data */
@@ -387,9 +363,6 @@ struct cache_entry_t {
 			bool root;
 			/** Number of known active children */
 			uint32_t nbactive;
-			/** NULL is not a referral.  If not, this a
-			    'referral string' */
-			char *referral;
 			/** The parent of this directory ('..') */
 			cache_inode_key_t parent;
 			struct {
@@ -427,10 +400,6 @@ extern pool_t *cache_inode_entry_pool;
 
 typedef union cache_inode_create_arg {
 	fsal_dev_t  dev_spec; /*< Major/minor numbers for a device file */
-	bool newly_created_dir; /*< True if this directory has just
-				    been created, rather than
-				    pre-existing and loaded into the
-				    cache. */
 	char *link_content; /*< Just stash the pointer. */
 } cache_inode_create_arg_t;
 
@@ -705,37 +674,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      void *buffer,
 				      bool *eof,
 				      struct req_op_context *req_ctx,
-				      cache_inode_stability_t *stable);
-
-static inline cache_inode_status_t cache_inode_read(
-	cache_entry_t *entry,
-	uint64_t offset,
-	size_t io_size,
-	size_t *bytes_moved,
-	void *buffer,
-	bool *eof,
-	struct req_op_context *req_ctx,
-	cache_inode_stability_t *stable)
-{
-	return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
-				bytes_moved, buffer, eof, req_ctx,
-				stable);
-}
-
-static inline cache_inode_status_t cache_inode_write(
-	cache_entry_t *entry,
-	uint64_t offset,
-	size_t io_size,
-	size_t *bytes_moved,
-	void *buffer,
-	bool *eof,
-	struct req_op_context *req_ctx,
-	cache_inode_stability_t *stable)
-{
-	return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
-				bytes_moved, buffer, eof, req_ctx,
-				stable);
-}
+				      bool *sync);
 
 cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
 					uint64_t offset,

@@ -138,7 +138,7 @@ static int update_imm(struct fsal_up_event *e)
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
 	if (FSAL_TEST_MASK(update->attr.mask,
-			   ATTR_SUPPATTR   | ATTR_TYPE	      |
+			   ATTR_TYPE	   |
 			   ATTR_FSID       | ATTR_FILEID      |
 			   ATTR_RAWDEV     | ATTR_MOUNTFILEID |
 			   ATTR_RDATTR_ERR | ATTR_GENERATION)) {
@@ -1217,16 +1217,18 @@ static bool client_callback(nfs_client_id_t *pclientid, void *devnotify)
 	CB_NOTIFY_DEVICEID4args *cb_notify_dev;
 	struct cb_notify *arg;
 	struct fsal_up_event_notifydevice *devicenotify = devnotify;
-	
-        if (pclientid)
-        {
-	  LogFullDebug(COMPONENT_NFS_CB,"CliP %p ClientID=%"PRIx64" ver %d",
-	     pclientid, pclientid->cid_clientid, pclientid->cid_minorversion);
-        }
-        else
-          return false;
 
-	arg = gsh_malloc(sizeof(struct cb_notify)); /* free in notifydev_completion */
+	if (pclientid) {
+		LogFullDebug(COMPONENT_NFS_CB,
+			     "CliP %p ClientID=%"PRIx64" ver %d",
+			     pclientid, pclientid->cid_clientid,
+			     pclientid->cid_minorversion);
+	} else {
+		return false;
+	}
+
+	/* free in notifydev_completion */
+	arg = gsh_malloc(sizeof(struct cb_notify));
 	if (arg == NULL) {
 		return false;
 	}
@@ -1239,7 +1241,8 @@ static bool client_callback(nfs_client_id_t *pclientid, void *devnotify)
 	cb_notify_dev->cnda_changes.cnda_changes_val = &arg->notify;
 	arg->notify.notify_mask.bitmap4_len = 1;
 	arg->notify.notify_mask.map[0] = devicenotify->notify_type;
-	arg->notify.notify_vals.notifylist4_len = sizeof(struct notify_deviceid_delete4);
+	arg->notify.notify_vals.notifylist4_len
+		= sizeof(struct notify_deviceid_delete4);
 
 	arg->notify.notify_vals.notifylist4_val = (char *)&arg->notify_del;
 	arg->notify_del.ndd_layouttype = devicenotify->layout_type;

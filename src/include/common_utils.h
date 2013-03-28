@@ -151,7 +151,7 @@ extern size_t gsh_strnlen(const char *s, size_t max);   /* prefix with gsh_ to p
 extern int portable_clock_gettime(struct timespec *ts);
 #  define pthread_yield()         pthread_yield_np()
 #  undef SCANDIR_CONST
-#  define SCANDIR_CONST           
+#  define SCANDIR_CONST
 #  undef HAVE_MNTENT_H
 #endif
 
@@ -159,42 +159,125 @@ extern int portable_clock_gettime(struct timespec *ts);
 #define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
 #define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
+/**
+ * @brief Logging write-lock
+ *
+ * @param[in,out] _lock Read-write lock
+ */
 
-#define PTHREAD_RWLOCK_wrlock(state_lock)                           \
-  do {                                                              \
-       int rc;                                                      \
-                                                                    \
-       LogFullDebug(COMPONENT_RW_LOCK, "get wr lock %p", state_lock);   \
-       rc = pthread_rwlock_wrlock(state_lock);                      \
-       if (rc == 0)                                                 \
-         LogFullDebug(COMPONENT_RW_LOCK, "got wr lock %p", state_lock); \
-       else                                                         \
-         LogCrit(COMPONENT_RW_LOCK, "error %d wr lock %p", rc, state_lock); \
-     } while(0)                                                      \
+#define PTHREAD_RWLOCK_wrlock(_lock)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlock_wrlock(_lock);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Got write lock on %p (%s) "	\
+				     "at %s:%d", _lock, #_lock,		\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, write lockiing %p (%s) "	\
+				"at %s:%d", rc, _lock, #_lock,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while(0)							\
 
-#define PTHREAD_RWLOCK_rdlock(state_lock)                           \
-  do {                                                              \
-       int rc;                                                      \
-                                                                    \
-       LogFullDebug(COMPONENT_RW_LOCK, "get rd lock %p", state_lock);   \
-       rc = pthread_rwlock_rdlock(state_lock);                      \
-       if (rc == 0)                                                 \
-         LogFullDebug(COMPONENT_RW_LOCK, "got rd lock %p", state_lock); \
-       else                                                         \
-         LogCrit(COMPONENT_RW_LOCK, "error %d rd lock %p", rc, state_lock); \
-     } while(0)                                                      \
+/**
+ * @brief Logging read-lock
+ *
+ * @param[in,out] _lock Read-write lock
+ */
 
-#define PTHREAD_RWLOCK_unlock(state_lock)                           \
-  do {                                                              \
-       int rc;                                                      \
-                                                                    \
-       rc = pthread_rwlock_unlock(state_lock);                      \
-       if (rc == 0)                                                 \
-         LogFullDebug(COMPONENT_RW_LOCK, "unlock %p", state_lock);      \
-       else                                                         \
-         LogCrit(COMPONENT_RW_LOCK, "error %d unlock %p", rc, state_lock); \
-     } while(0)                                                      \
+#define PTHREAD_RWLOCK_rdlock(_lock)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlock_rdlock(_lock);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Got read lock on %p (%s) "	\
+				     "at %s:%d", _lock, #_lock,		\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, read locking %p (%s) "	\
+				"at %s:%d", rc, _lock, #_lock,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while(0)							\
 
+/**
+ * @brief Logging read-write lock unlock
+ *
+ * @param[in,out] _lock Read-write lock
+ */
+
+#define PTHREAD_RWLOCK_unlock(_lock)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlock_unlock(_lock);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Unlocked %p (%s) at %s:%d",       \
+				     _lock, #_lock,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, unlocking %p (%s) at %s:%d",	\
+				rc, _lock, #_lock,			\
+				__FILE__, __LINE__);			\
+		}							\
+	} while(0)							\
+
+/**
+ * @brief Logging mutex lock
+ *
+ * @param[in,out] _mtx The mutex to acquire
+ */
+
+#define PTHREAD_MUTEX_lock(_mtx)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutex_lock(_mtx);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Acquired mutex %p (%s) at %s:%d",	\
+				     _mtx, #_mtx,			\
+				     __FILE__, __LINE__);		\
+		} else{							\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, acquiring mutex %p (%s) "	\
+				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while(0)
+
+/**
+ * @brief Logging mutex unlock
+ *
+ * @param[in,out] _mtx The mutex to relinquish
+ */
+
+#define PTHREAD_MUTEX_unlock(_mtx)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutex_unlock(_mtx);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Released mutex %p (%s) at %s:%d",	\
+				     _mtx, #_mtx,			\
+				     __FILE__, __LINE__);		\
+		} else{							\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, releasing mutex %p (%s) "	\
+				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while(0)
 
 /**
  * @brief Inline functions for timespec math

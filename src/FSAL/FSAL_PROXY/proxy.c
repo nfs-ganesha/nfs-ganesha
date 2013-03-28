@@ -56,8 +56,8 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
 
 /* defined the set of attributes supported with POSIX */
 #define SUPPORTED_ATTRIBUTES (                                       \
-          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
-          ATTR_FSID     |  ATTR_FILEID  | \
+          ATTR_TYPE     | ATTR_SIZE     |                  \
+          ATTR_FSID     | ATTR_FILEID   |                  \
           ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
           ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
           ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
@@ -72,7 +72,6 @@ static struct fsal_staticfsinfo_t proxy_info = {
 	.no_trunc = true,
 	.chown_restricted = true,
 	.case_preserving = true,
-	.fh_expire_type = FSAL_EXPTYPE_PERSISTENT,
 	.link_support = true,
 	.symlink_support = true,
 	.lock_support = true,

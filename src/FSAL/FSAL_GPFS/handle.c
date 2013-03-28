@@ -102,8 +102,6 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.mask
 		= exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	hdl->obj_handle.attributes.supported_attributes
-                = hdl->obj_handle.attributes.mask;
 	memcpy(&hdl->obj_handle.attributes, attributes, sizeof(struct attrlist));
 
 	if(!fsal_obj_handle_init(&hdl->obj_handle,

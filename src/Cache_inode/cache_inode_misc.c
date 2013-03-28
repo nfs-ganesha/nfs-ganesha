@@ -241,7 +241,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      /* Get FSAL-specific key */
      new_obj->ops->handle_to_key(new_obj, &fh_desc);
 
-     /* Check if the entry already exists */
+     /* Check if the entry already exists.  We allow the following race
+      * because cache_inode_lru_get has a slow path, and the latch is a
+      * shared lock. */
      oentry = cih_get_by_fh_latched(&fh_desc, &latch,
 				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
                                     __func__, __LINE__);
@@ -275,12 +277,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK,
                                     __func__, __LINE__);
      if (oentry) {
-	     /* Entry is already in the cache, do not add it.
-	      *
-	      * XXX might be helpful collect freq. of *entry for branch
-	      * prediction or refactoring.  Perhaps we should not permit
-	      * a race.
-	      */
+	     /* Entry is already in the cache, do not add it. */
 	     status = CACHE_INODE_ENTRY_EXISTS;
 	     LogDebug(COMPONENT_CACHE_INODE,
 		      "lost race to add entry %p type: %d, New type: %d",
@@ -290,7 +287,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
              /* Release the subtree hash table lock */
              cih_latch_rele(&latch);
              /* Release the new entry we acquired. */
-             cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
+             cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
              *entry = oentry;
              goto out;
      }
@@ -324,8 +321,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           init_glist(&nentry->object.file.lock_list);
           init_glist(&nentry->object.file.nlm_share_list); /* No associated NLM shares yet */
 
-          memset(&(nentry->object.file.unstable_data), 0,
-                 sizeof(cache_inode_unstable_data_t));
           memset(&nentry->object.file.share_state, 0,
 		 sizeof(cache_inode_share_t));
 	  break;
@@ -347,7 +342,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	  
           nentry->object.dir.avl.collisions = 0;
           nentry->object.dir.nbactive = 0;
-          nentry->object.dir.referral = NULL;
           nentry->object.dir.root = false;
           /* init avl tree */
           cache_inode_avl_init(nentry);
