@@ -163,7 +163,7 @@ static fsal_status_t lookup (struct fsal_obj_handle *dir_hdl,
 
     if (S_ISLNK (stat.st_mode)) {
         ssize_t retlink;
-        link_content = malloc (PATH_MAX);
+        link_content = malloc (PATH_MAX + 1);
         retlink = readlink (path, link_content, PATH_MAX);
         if (retlink < 0 || retlink == PATH_MAX) {
             retval = errno;
@@ -1047,7 +1047,7 @@ fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl,
 
     if (S_ISLNK (stat.st_mode)) {
         ssize_t retlink;
-        link_content = malloc (PATH_MAX);
+        link_content = malloc (PATH_MAX + 1);
         retlink = readlink (path, link_content, PATH_MAX);
         if (retlink < 0 || retlink == PATH_MAX) {
             retval = errno;
@@ -1101,7 +1101,7 @@ fsal_status_t posix_create_handle (struct fsal_export * exp_hdl,
     int retval = 0;
     char *link_content = NULL, *p = NULL;
     ssize_t retlink;
-    char link_buff[PATH_MAX];
+    char link_buff[PATH_MAX + 1];
     unsigned long long fsid = 0LL;        /* initialize to 0 to prevent valgrind warning */
 
     *handle = NULL;             /* poison it first */

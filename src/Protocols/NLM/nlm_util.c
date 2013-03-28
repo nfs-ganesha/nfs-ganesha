@@ -569,7 +569,7 @@ bool nlm_block_data_to_export(state_block_data_t * block_data,
         {
           char dumpfh[1024];
           char *reason;
-          char addrbuf[SOCK_NAME_MAX];
+          char addrbuf[SOCK_NAME_MAX + 1];
           sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
                           addrbuf,
                           sizeof(addrbuf));

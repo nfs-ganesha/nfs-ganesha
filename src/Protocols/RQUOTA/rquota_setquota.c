@@ -66,7 +66,7 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_quota_t fsal_quota_in;
   fsal_quota_t fsal_quota_out;
   int quota_type = USRQUOTA;
-  char work[MAXPATHLEN];
+  char work[MAXPATHLEN + 1];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_setquota");

@@ -758,7 +758,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	fsal_acl_status_t status;
 	fsal_acl_data_t acldata;
 	fsal_ace_t *pace;
-	char buffer[MAXNAMLEN];
+	char buffer[MAXNAMLEN + 1];
 	char *buffp = buffer;
 	utf8string utf8buffer;
 	int who = 0; /* not ASE_SPECIAL anything */
@@ -3494,7 +3494,7 @@ int utf82str(char *str, int size, utf8string *utf8str)
 int str2utf8(char *str, utf8string * utf8str)
 {
   uint_t len;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN + 1];
 
   /* The uft8 will probably be sent over XDR, for this reason, its size MUST be a multiple of 32 bits = 4 bytes */
   strcpy(buff, str);

@@ -108,7 +108,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
   int i = 0;
   int j = 0;
   int found = 0;
-  char tmp_pseudopath[MAXPATHLEN];
+  char tmp_pseudopath[MAXPATHLEN + 1];
   char *PathTok[NB_TOK_PATH];
   int NbTokPath;
   pseudofs_t *PseudoFs = NULL;
@@ -531,7 +531,7 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
   bool found = false;
@@ -539,7 +539,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   int error = 0;
   fsal_status_t fsal_status;
 /*   cache_inode_fsal_data_t fsdata; */
-  char pathfsal[MAXPATHLEN] ;
+  char pathfsal[MAXPATHLEN + 1] ;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   cache_entry_t *entry = NULL;
@@ -601,7 +601,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "A junction in pseudo fs is traversed: name = %s, id = %d",
                    iter->name, iter->junction_export->id);
       data->pexport = iter->junction_export;
-      strncpy(data->MntPath, iter->fullname, NFS_MAXPATHLEN);
+      strncpy(data->MntPath, iter->fullname, MAXPATHLEN);
 
       /* Build credentials */
       if(nfs4_MakeCred(data) != 0)
@@ -869,7 +869,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Step up the compound data */
       data->pexport = psfsentry.junction_export;
-      strncpy(data->MntPath, psfsentry.fullname, NFS_MAXPATHLEN);
+      strncpy(data->MntPath, psfsentry.fullname, MAXPATHLEN);
 
       /* Build the credentials */
       if(nfs4_MakeCred(data) != 0)

@@ -145,8 +145,8 @@ typedef struct db_thread_info__
 
 } db_thread_info_t;
 
-static char dbmap_dir[MAXPATHLEN];
-static char db_tmpdir[MAXPATHLEN];
+static char dbmap_dir[MAXPATHLEN + 1];
+static char db_tmpdir[MAXPATHLEN + 1];
 static unsigned int nb_db_threads;
 static int synchronous;
 
@@ -212,7 +212,7 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info,
  */
 static int init_database_access(db_thread_info_t * p_thr_info)
 {
-  char db_file[MAXPATHLEN];
+  char db_file[MAXPATHLEN + 1];
   int rc;
   char **result = NULL;
   int rows, cols;
@@ -637,7 +637,7 @@ int handlemap_db_count(const char *dir)
   struct dirent direntry;
   struct dirent *cookie;
   int rc;
-  char db_pattern[MAXPATHLEN];
+  char db_pattern[MAXPATHLEN + 1];
 
   unsigned int count = 0;
   int end_of_dir = false;

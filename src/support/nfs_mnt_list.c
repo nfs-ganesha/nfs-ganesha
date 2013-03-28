@@ -119,14 +119,14 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
     return 0;
 
   if((pnew_mnt_list_entry->ml_hostname
-      = gsh_calloc(1, MAXHOSTNAMELEN)) == NULL)
+      = gsh_calloc(1, MAXHOSTNAMELEN + 1)) == NULL)
     {
       gsh_free(pnew_mnt_list_entry);
       return 0;
     }
 
   if((pnew_mnt_list_entry->ml_directory
-      = gsh_calloc(1, MAXPATHLEN)) == NULL)
+      = gsh_calloc(1, MAXPATHLEN + 1)) == NULL)
     {
       gsh_free(pnew_mnt_list_entry->ml_hostname);
       gsh_free(pnew_mnt_list_entry);

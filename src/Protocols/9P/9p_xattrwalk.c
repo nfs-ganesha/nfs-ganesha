@@ -60,7 +60,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   u64 attrsize = 0LL ;
 
   fsal_status_t fsal_status ; 
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   fsal_xattrent_t xattrs_tab[255];
   int eod_met = false;
   unsigned int nb_xattrs_read = 0;

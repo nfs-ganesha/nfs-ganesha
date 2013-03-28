@@ -21,7 +21,7 @@
 typedef struct nfs_ip_name__
 {
   time_t timestamp;
-  char hostname[MAXHOSTNAMELEN];
+  char hostname[MAXHOSTNAMELEN + 1];
 } nfs_ip_name_t;
 
 int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname);

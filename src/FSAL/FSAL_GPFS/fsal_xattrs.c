@@ -257,7 +257,7 @@ fsal_status_t GPFSFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* I
 {
 #if 0
   int rc;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN + 1];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 #endif

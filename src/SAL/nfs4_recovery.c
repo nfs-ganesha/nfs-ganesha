@@ -40,8 +40,8 @@
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 
-char v4_recov_dir[PATH_MAX];
-char v4_old_dir[PATH_MAX];
+char v4_recov_dir[PATH_MAX + 1];
+char v4_old_dir[PATH_MAX + 1];
 
 /**
  * @brief Grace period control structure
@@ -174,7 +174,7 @@ nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
 {
         int i;
         sockaddr_t sa;
-        char buf[SOCK_NAME_MAX];
+        char buf[SOCK_NAME_MAX + 1];
         longlong_t cl_val = 0;
 
         clientid->cid_recov_dir = gsh_malloc(256);
@@ -209,7 +209,7 @@ void
 nfs4_add_clid(nfs_client_id_t *clientid)
 {
         int err;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (clientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_CLIENTID,
@@ -241,7 +241,7 @@ void
 nfs4_rm_clid(char *recov_dir)
 {
         int err;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (recov_dir == NULL)
                 return;
@@ -331,7 +331,7 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
 {
         struct dirent *dentp;
         clid_entry_t *new_ent;
-        char src[PATH_MAX], dest[PATH_MAX];
+        char src[PATH_MAX + 1], dest[PATH_MAX + 1];
         int rc;
 
         dentp = readdir(dp);
@@ -382,7 +382,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
         struct glist_head *node;
         clid_entry_t *clid_entry;
         int rc;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (nodeid == 0) {
                 /* when not doing a takeover, start with an empty list */
@@ -487,7 +487,7 @@ nfs4_clean_old_recov_dir(void)
 {
         DIR *dp;
         struct dirent *dentp;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
         int rc;
 
         dp = opendir(v4_old_dir);

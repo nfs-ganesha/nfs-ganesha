@@ -53,9 +53,9 @@
 #include "gss_util.h"
 #include "krb5_util.h"
 
-char pipefs_dir[PATH_MAX] = GSSD_PIPEFS_DIR;
-char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
-char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
+char pipefs_dir[PATH_MAX + 1] = GSSD_PIPEFS_DIR;
+char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
+char ccachedir[PATH_MAX + 1] = GSSD_DEFAULT_CRED_DIR;
 char *ccachesearch[GSSD_MAX_CCACHE_SEARCH + 1];
 int  use_memcache = 0;
 int  root_uses_machine_creds = 1;

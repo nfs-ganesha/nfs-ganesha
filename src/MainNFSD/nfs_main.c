@@ -52,12 +52,12 @@ nfs_start_info_t my_nfs_start_info = {
 char *my_config_path = "/etc/ganesha/ganesha.conf";
 char my_pidfile[] = "/var/run/ganesha.pid";
 config_file_t config_struct;
-char log_path[MAXPATHLEN] = "";
-char exec_name[MAXPATHLEN] = "nfs-ganesha";
-char host_name[MAXHOSTNAMELEN] = "localhost";
+char log_path[MAXPATHLEN + 1] = "";
+char exec_name[MAXPATHLEN + 1] = "nfs-ganesha";
+char host_name[MAXHOSTNAMELEN + 1] = "localhost";
 int debug_level = -1;
 int detach_flag = false;
-char ganesha_exec_path[MAXPATHLEN];
+char ganesha_exec_path[MAXPATHLEN + 1];
 
 /* command line syntax */
 
@@ -96,7 +96,7 @@ char usage[] =
 int main(int argc, char *argv[])
 {
   char *tempo_exec_name = NULL;
-  char localmachine[MAXHOSTNAMELEN];
+  char localmachine[MAXHOSTNAMELEN + 1];
   int c;
   int pidfile;
 #ifndef HAVE_DAEMON

@@ -222,7 +222,7 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
 int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
@@ -536,7 +536,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;

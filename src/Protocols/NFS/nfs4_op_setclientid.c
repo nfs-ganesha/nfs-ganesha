@@ -56,7 +56,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
 {
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-	char str_client_addr[SOCK_NAME_MAX];
+	char str_client_addr[SOCK_NAME_MAX + 1];
 	nfs_client_record_t *client_record;
 	nfs_client_id_t *conf;
 	nfs_client_id_t *unconf;
@@ -150,7 +150,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
 			 * Confirmed record exists and not the same principal
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char confirmed_addr[SOCK_NAME_MAX];
+				char confirmed_addr[SOCK_NAME_MAX + 1];
 
 				sprint_sockip(&conf->cid_client_addr,
 					      confirmed_addr,

@@ -60,7 +60,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newdir ;
 
   cache_entry_t       * pentry_newdir = NULL ;
-  char                  dir_name[MAXNAMLEN] ; 
+  char                  dir_name[MAXNAMLEN + 1] ; 
   uint64_t              fileid;
   cache_inode_status_t  cache_status ;
 

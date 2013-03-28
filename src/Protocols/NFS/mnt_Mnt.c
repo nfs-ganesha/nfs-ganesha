@@ -82,9 +82,9 @@ int mnt_Mnt(nfs_arg_t *parg,
   int index_auth = 0;
   int i = 0;
 
-  char exported_path[MAXPATHLEN];
-  char tmplist_path[MAXPATHLEN];
-  char tmpexport_path[MAXPATHLEN];
+  char exported_path[MAXPATHLEN + 1];
+  char tmplist_path[MAXPATHLEN + 1];
+  char tmpexport_path[MAXPATHLEN + 1];
   char *hostname;
   bool bytag = false;
 

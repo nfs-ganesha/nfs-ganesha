@@ -59,8 +59,8 @@ enum {AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUTHTYPE_LIPKEY};
 
 
 
-extern char			pipefs_dir[PATH_MAX];
-extern char			keytabfile[PATH_MAX];
+extern char			pipefs_dir[PATH_MAX + 1];
+extern char			keytabfile[PATH_MAX + 1];
 extern char			*ccachesearch[];
 extern int			use_memcache;
 extern int			root_uses_machine_creds;

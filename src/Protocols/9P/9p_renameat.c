@@ -61,8 +61,8 @@ int _9p_renameat( _9p_request_data_t * preq9p,
 
   cache_inode_status_t  cache_status ;
 
-  char oldname[MAXNAMLEN] ;
-  char newname[MAXNAMLEN] ;
+  char oldname[MAXNAMLEN + 1] ;
+  char newname[MAXNAMLEN + 1] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;

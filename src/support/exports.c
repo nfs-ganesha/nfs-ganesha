@@ -2092,8 +2092,8 @@ bool export_client_match(sockaddr_t *hostaddr,
 {
   unsigned int i;
   int rc;
-  char hostname[MAXHOSTNAMELEN];
-  char ipstring[SOCK_NAME_MAX];
+  char hostname[MAXHOSTNAMELEN + 1];
+  char ipstring[SOCK_NAME_MAX + 1];
   int ipvalid = -1; /* -1 need to print, 0 - invalid, 1 - ok */
   in_addr_t addr = get_in_addr(hostaddr);
 
@@ -2783,8 +2783,8 @@ exportlist_t *GetExportEntry(char *exportPath)
 {
   exportlist_t *pexport = NULL;
   exportlist_t *p_current_item = NULL;
-  char tmplist_path[MAXPATHLEN];
-  char tmpexport_path[MAXPATHLEN];
+  char tmplist_path[MAXPATHLEN + 1];
+  char tmpexport_path[MAXPATHLEN + 1];
   int found = 0;
 
   pexport = nfs_param.pexportlist;

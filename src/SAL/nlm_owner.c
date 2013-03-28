@@ -811,7 +811,7 @@ state_nsm_client_t *get_nsm_client(care_t care,
 {
   state_nsm_client_t   key;
   state_nsm_client_t * pclient;
-  char                 sock_name[SOCK_NAME_MAX];
+  char                 sock_name[SOCK_NAME_MAX + 1];
   char                 str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch    latch;
   hash_error_t         rc;

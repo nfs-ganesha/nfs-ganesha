@@ -1433,7 +1433,7 @@ thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
 
         /* XXXX */
         sockaddr_t addr;
-        char addrbuf[SOCK_NAME_MAX];
+        char addrbuf[SOCK_NAME_MAX + 1];
 
         if(isDebug(COMPONENT_DISPATCH)) {
             if(copy_xprt_addr(&addr, xprt) == 1)

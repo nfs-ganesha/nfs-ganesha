@@ -49,7 +49,7 @@
 #include "gssd.h"
 #include "write_bytes.h"
 
-char pipefsdir[PATH_MAX] = GSSD_PIPEFS_DIR;
+char pipefsdir[PATH_MAX + 1] = GSSD_PIPEFS_DIR;
 
 static void
 usage(char *progname)

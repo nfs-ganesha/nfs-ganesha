@@ -122,7 +122,7 @@ topdirs_add_entry(struct dirent *dent)
 		printerr(0, "ERROR: Couldn't allocate struct topdirs_info\n");
 		return -1;
 	}
-	tdi->dirname = malloc(PATH_MAX);
+	tdi->dirname = malloc(PATH_MAX + 1);
 	if (tdi->dirname == NULL) {
 		printerr(0, "ERROR: Couldn't allocate directory name\n");
 		free(tdi);

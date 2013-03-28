@@ -64,7 +64,7 @@
  */
 static pool_t *rpc_call_pool;
 
-extern char host_name[MAXHOSTNAMELEN];
+extern char host_name[MAXHOSTNAMELEN + 1];
 
 /**
  * @brief Initialize the callback credential cache
@@ -195,7 +195,7 @@ nc_type nfs_netid_to_nc(const char *netid)
 static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
-	char addr_buf[SOCK_NAME_MAX];
+	char addr_buf[SOCK_NAME_MAX + 1];
 	uint32_t bytes[11];
 	int code;
 
@@ -424,7 +424,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 					  char *buf,
 					  size_t len)
 {
-	char addr_buf[SOCK_NAME_MAX];
+	char addr_buf[SOCK_NAME_MAX + 1];
 	const char *host = NULL;
 	char *princ = NULL;
 

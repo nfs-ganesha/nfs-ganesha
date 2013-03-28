@@ -901,7 +901,6 @@ extern const struct fattr4_dent fattr4tab[];
 #define NFS4_PSEUDOFS_MAX_READ_SIZE  1048576
 #define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1048576
 #define NFS4_ROOT_UID 0
-#define NFS_MAXPATHLEN MAXPATHLEN
 
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1

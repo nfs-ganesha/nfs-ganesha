@@ -41,10 +41,10 @@
 typedef struct handle_map_param__
 {
   /* path where database files are located */
-  char databases_directory[MAXPATHLEN];
+  char databases_directory[MAXPATHLEN + 1];
 
   /* temp dir for database work */
-  char temp_directory[MAXPATHLEN];
+  char temp_directory[MAXPATHLEN + 1];
 
   /* number of databases */
   unsigned int database_count;

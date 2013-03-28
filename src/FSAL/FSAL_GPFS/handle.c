@@ -392,7 +392,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if(refresh) { /* lazy load or LRU'd storage */
 		size_t retlink;
-		char link_buff[PATH_MAX];
+		char link_buff[PATH_MAX + 1];
 
 		retlink = PATH_MAX;
 
@@ -940,7 +940,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 
 	if(S_ISLNK(stat.st_mode)) {
-		link_content = malloc(PATH_MAX);
+		link_content = malloc(PATH_MAX + 1);
 		retlink = readlinkat(dir_fd, basepart,
 				     link_content, PATH_MAX);
 		if(retlink < 0 || retlink == PATH_MAX) {
@@ -1007,7 +1007,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	int mount_fd = gpfs_get_root_fd(exp_hdl);
 	char *link_content = NULL;
 	ssize_t retlink = PATH_MAX;
-	char link_buff[PATH_MAX];
+	char link_buff[PATH_MAX + 1];
 
 	*handle = NULL; /* poison it first */
 	if((hdl_desc->len > (sizeof(struct gpfs_file_handle))))

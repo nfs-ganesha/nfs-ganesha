@@ -15,9 +15,9 @@ typedef struct
   unsigned int srv_timeout;
   unsigned short srv_port;
   unsigned int use_privileged_client_port ;
-  char srv_proto[MAXNAMLEN];
-  char remote_principal[MAXNAMLEN];
-  char keytab[MAXPATHLEN];
+  char srv_proto[MAXNAMLEN + 1];
+  char remote_principal[MAXNAMLEN + 1];
+  char keytab[MAXPATHLEN + 1];
   unsigned int cred_lifetime;
   unsigned int sec_type;
   bool active_krb5;

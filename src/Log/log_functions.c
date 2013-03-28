@@ -1289,7 +1289,7 @@ int DisplayErrorComponentLogLine(log_components_t component,
 
 static int isValidLogPath(const char *pathname)
 {
-  char tempname[MAXPATHLEN];
+  char tempname[MAXPATHLEN + 1];
 
   char *directory_name;
   int rc;

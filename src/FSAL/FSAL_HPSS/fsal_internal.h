@@ -92,14 +92,14 @@ typedef struct
   api_config_t hpss_config;
 
   /* other configuration info */
-  char Principal[MAXNAMLEN];
-  char KeytabPath[MAXPATHLEN];
+  char Principal[MAXNAMLEN + 1];
+  char KeytabPath[MAXPATHLEN + 1];
 
   uint32_t CredentialLifetime;
   uint32_t ReturnInconsistentDirent;
 
   int default_cos;
-  char filesetname[MAXPATHLEN];
+  char filesetname[MAXPATHLEN + 1];
 } hpssfs_specific_initinfo_t;
 
 #define HPSS_DEFAULT_CREDENTIAL_LIFETIME 3600

@@ -154,7 +154,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
   sockaddr_t *pipaddr = NULL;
   struct timeval tv0, tv1, dur;
   int rc;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
 
@@ -242,7 +242,7 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffval;
   nfs_ip_name_t *nfs_ip_name;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
 
@@ -283,7 +283,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 {
   struct gsh_buffdesc buffkey, old_value;
   nfs_ip_name_t *nfs_ip_name = NULL;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
 
@@ -343,7 +343,7 @@ int nfs_ip_name_populate(char *path)
   int err;
   char *key_name;
   char *key_value;
-  char label[MAXNAMLEN];
+  char label[MAXNAMLEN + 1];
   sockaddr_t ipaddr;
   nfs_ip_name_t *nfs_ip_name;
   sockaddr_t *pipaddr;

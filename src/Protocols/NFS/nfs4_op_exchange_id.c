@@ -57,7 +57,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 {
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-	char str_client_addr[SOCK_NAME_MAX];
+	char str_client_addr[SOCK_NAME_MAX + 1];
 	nfs_client_record_t *client_record;
 	nfs_client_id_t *conf;
 	nfs_client_id_t *unconf;
@@ -182,7 +182,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 				/* CASE 3, client collisions, old
 				   clientid is not expired */
 				if (isDebug(component)) {
-					char confirmed_addr[SOCK_NAME_MAX];
+					char confirmed_addr[SOCK_NAME_MAX + 1];
 
 					sprint_sockip(&conf->cid_client_addr,
 						      confirmed_addr,
@@ -238,7 +238,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 					  &client_addr, IGNORE_PORT)) {
 				/* CASE 9, Update but wrong principal */
 				if (isDebug(component)) {
-					char confirmed_addr[SOCK_NAME_MAX];
+					char confirmed_addr[SOCK_NAME_MAX + 1];
 
 					sprint_sockip(&conf->cid_client_addr,
 						      confirmed_addr,

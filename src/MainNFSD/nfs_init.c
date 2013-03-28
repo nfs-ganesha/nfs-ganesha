@@ -309,9 +309,9 @@ pthread_t _9p_dispatcher_thrid;
 pthread_t _9p_rdma_dispatcher_thrid ;
 #endif
 
-char config_path[MAXPATHLEN];
+char config_path[MAXPATHLEN + 1];
 
-char pidfile_path[MAXPATHLEN] ;
+char pidfile_path[MAXPATHLEN + 1] ;
 
 /**
  * @brief This thread is in charge of signal management 
@@ -790,7 +790,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef _HAVE_GSSAPI
   gss_buffer_desc gss_service_buf;
   OM_uint32 maj_stat, min_stat;
-  char GssError[MAXNAMLEN];
+  char GssError[MAXNAMLEN + 1];
 #endif
 
 #ifdef USE_DBUS

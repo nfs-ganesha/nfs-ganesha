@@ -157,7 +157,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	struct lustre_file_handle *dir_hdl = NULL;
 	const char *sock_name = NULL;
 	ssize_t retlink;
-        char fidpath[MAXPATHLEN] ;
+        char fidpath[MAXPATHLEN + 1] ;
 	char link_buff[1024];
 	struct lustre_file_handle *fh
 		= alloca(sizeof(struct lustre_file_handle));
@@ -245,8 +245,8 @@ int make_file_safe( char * mntpath,
 		    struct stat *stat)
 {
 	int retval;
-        char lustre_path[MAXPATHLEN] ;
-        char filepath[MAXPATHLEN] ;
+        char lustre_path[MAXPATHLEN + 1] ;
+        char filepath[MAXPATHLEN + 1] ;
 
         retval = lustre_handle_to_path( mntpath, infh, lustre_path ) ;
 	if(retval < 0) {
@@ -295,8 +295,8 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
                             struct fsal_obj_handle **handle)
 {
 	struct lustre_fsal_obj_handle *myself, *hdl;
-        char newpath[MAXPATHLEN] ;
-        char dirpath[MAXPATHLEN] ;
+        char newpath[MAXPATHLEN + 1] ;
+        char dirpath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -373,8 +373,8 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 			     struct fsal_obj_handle **handle)
 {
 	struct lustre_fsal_obj_handle *myself, *hdl;
-        char dirpath[MAXPATHLEN] ;
-        char newpath[MAXPATHLEN] ;
+        char dirpath[MAXPATHLEN + 1] ;
+        char newpath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -450,8 +450,8 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
                               struct fsal_obj_handle **handle)
 {
 	struct lustre_fsal_obj_handle *myself, *hdl;
-        char dirpath[MAXPATHLEN] ;
-        char newpath[MAXPATHLEN] ;
+        char dirpath[MAXPATHLEN + 1] ;
+        char newpath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	mode_t unix_mode, create_mode = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -565,8 +565,8 @@ static fsal_status_t lustre_makesymlink(struct fsal_obj_handle *dir_hdl,
                                  struct fsal_obj_handle **handle)
 {
 	struct lustre_fsal_obj_handle *myself, *hdl;
-        char dirpath[MAXPATHLEN] ;
-        char newpath[MAXPATHLEN] ;
+        char dirpath[MAXPATHLEN + 1] ;
+        char newpath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -647,7 +647,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
                                  bool refresh)
 {
 	struct lustre_fsal_obj_handle *myself = NULL;
-        char mypath[MAXPATHLEN] ;
+        char mypath[MAXPATHLEN + 1] ;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -706,9 +706,9 @@ static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 			      const char *name)
 {
 	struct lustre_fsal_obj_handle *myself, *destdir;
-        char srcpath[MAXPATHLEN] ;
-        char destdirpath[MAXPATHLEN] ;
-        char destnamepath[MAXPATHLEN] ;
+        char srcpath[MAXPATHLEN + 1] ;
+        char destdirpath[MAXPATHLEN + 1] ;
+        char destnamepath[MAXPATHLEN + 1] ;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -841,10 +841,10 @@ static fsal_status_t lustre_renamefile(struct fsal_obj_handle *olddir_hdl,
 				const char *new_name)
 {
 	struct lustre_fsal_obj_handle *olddir, *newdir;
-        char olddirpath[MAXPATHLEN] ;
-        char oldnamepath[MAXPATHLEN] ;
-        char newdirpath[MAXPATHLEN] ;
-        char newnamepath[MAXPATHLEN] ;
+        char olddirpath[MAXPATHLEN + 1] ;
+        char oldnamepath[MAXPATHLEN + 1] ;
+        char newdirpath[MAXPATHLEN + 1] ;
+        char newnamepath[MAXPATHLEN + 1] ;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -875,7 +875,7 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl,
 				     const struct req_op_context *opctx)
 {
 	struct lustre_fsal_obj_handle *myself;
-        char mypath[MAXPATHLEN] ;
+        char mypath[MAXPATHLEN + 1] ;
 	int open_flags = O_RDONLY;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -939,8 +939,8 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 			             struct attrlist *attrs)
 {
 	struct lustre_fsal_obj_handle *myself;
-        char mypath[MAXPATHLEN] ;
-        char mysockpath[MAXPATHLEN] ;
+        char mypath[MAXPATHLEN + 1] ;
+        char mysockpath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -1108,8 +1108,8 @@ static fsal_status_t lustre_file_unlink(struct fsal_obj_handle *dir_hdl,
 {
 	struct lustre_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        char dirpath[MAXPATHLEN] ;
-        char filepath[MAXPATHLEN] ;
+        char dirpath[MAXPATHLEN + 1] ;
+        char filepath[MAXPATHLEN + 1] ;
 	struct stat stat;
 	int retval = 0;
 
@@ -1336,8 +1336,8 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	ssize_t retlink;
 	struct lustre_file_handle *dir_fh = NULL;
 	char *sock_name = NULL;
-        char dirpart[MAXPATHLEN] ;
-        char dirfullpath[MAXPATHLEN] ;
+        char dirpart[MAXPATHLEN + 1] ;
+        char dirfullpath[MAXPATHLEN + 1] ;
 	struct lustre_file_handle *fh
 		= alloca(sizeof(struct lustre_file_handle) );
 
@@ -1383,7 +1383,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	if(S_ISLNK(stat.st_mode)) {
-		link_content = malloc(PATH_MAX);
+		link_content = malloc(PATH_MAX + 1);
 		retlink = readlinkat(dir_fd, basepart,
 				     link_content, PATH_MAX);
 		if(retlink < 0 || retlink == PATH_MAX) {
@@ -1454,10 +1454,10 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 	struct lustre_file_handle  *fh;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-        char objpath[MAXPATHLEN] ;
+        char objpath[MAXPATHLEN + 1] ;
 	char *link_content = NULL;
 	ssize_t retlink;
-	char link_buff[PATH_MAX];
+	char link_buff[PATH_MAX + 1];
 
 	
 

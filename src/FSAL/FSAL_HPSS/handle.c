@@ -1687,7 +1687,7 @@ fsal_status_t hpss_create_handle( struct fsal_export *exp_hdl,
 				 struct fsal_obj_handle **handle)
 {
   fsal_status_t status;
-  char link_buff[PATH_MAX];
+  char link_buff[PATH_MAX + 1];
   char *link_content = NULL;
   struct attrlist fsal_attr;
   int rc, memlen;

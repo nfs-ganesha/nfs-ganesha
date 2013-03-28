@@ -433,7 +433,7 @@ typedef struct log_component_info
   int   comp_log_level;
 
   int   comp_log_type;
-  char  comp_log_file[MAXPATHLEN];
+  char  comp_log_file[MAXPATHLEN + 1];
   char *comp_buffer;
 } log_component_info;
 
