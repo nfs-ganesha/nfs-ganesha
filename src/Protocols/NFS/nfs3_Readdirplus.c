@@ -437,6 +437,7 @@ nfs3_readdirplus_callback(void* opaque,
      ep3->name_handle.post_op_fh3_u.handle.data.data_val
           = gsh_malloc(NFS3_FHSIZE);
      if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
+          LogEvent(COMPONENT_NFS_READDIR, "FAILED to allocate FH");
           tracker->error = NFS3ERR_SERVERFAULT;
           gsh_free(ep3->name);
           return false;

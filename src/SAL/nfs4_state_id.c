@@ -469,11 +469,17 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
   /* Try to get the related state */
   if(!nfs4_State_Get_Pointer(stateid->other, &state2))
     {
-      /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
+      /*
+       * We matched this server's epoch, but could not find the stateid.
+       * Chances are, the client was expired and the state has all been
+       * freed.
+       *
+       * We could use another check here for a BAD stateid
+       */
       LogDebug(COMPONENT_STATE,
                "Check %s stateid could not find state %s", tag, str);
       if(nfs_param.nfsv4_param.return_bad_stateid)      /* Dirty work-around for HPC environment */
-        return NFS4ERR_BAD_STATEID;
+        return NFS4ERR_EXPIRED;
       else
         return NFS4_OK;
     }

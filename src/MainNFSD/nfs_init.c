@@ -468,7 +468,7 @@ int nfs_set_param_from_conf(config_file_t config_struct,
     {
       /* No such stanza in configuration file */
       if(rc == 1)
-        LogCrit(COMPONENT_INIT,
+        LogEvent(COMPONENT_INIT,
              "No core configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
@@ -813,7 +813,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   if(state_status != STATE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
-               "Cache Inode Layer could not be initialized, status=%s",
+               "State Lock Layer could not be initialized, status=%s",
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
@@ -1080,6 +1080,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 pseudo file system successfully initialized");
 
+   /* Save Ganesha thread credentials with Frank's routine for later use */
+   fsal_save_ganesha_credentials() ;
+
   /* Create stable storage directory, this needs to be done before
    * starting the recovery thread.
    */
@@ -1091,9 +1094,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Start grace period */
   nfs4_start_grace(NULL);
-
-  LogInfo(COMPONENT_INIT,
-          "Cache Inode root entries successfully created");
 
 
      /* callback dispatch */
@@ -1125,7 +1125,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Set the Core dump size if set */
   if(nfs_param.core_param.core_dump_size != -1)
     {
-      LogDebug(COMPONENT_INIT, "I set the core size rlimit to %ld",
+      LogDebug(COMPONENT_INIT, "core size rlimit set to %ld",
                nfs_param.core_param.core_dump_size);
       ulimit_data.rlim_cur = nfs_param.core_param.core_dump_size;
       ulimit_data.rlim_max = nfs_param.core_param.core_dump_size;
@@ -1170,7 +1170,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
     }
   else
     {
-      LogDebug(COMPONENT_INIT, "Populating IP_NAME with file %s",
+      LogEvent(COMPONENT_INIT, "Populating IP_NAME with file %s",
                nfs_param.ip_name_param.mapfile);
       if(nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) != IP_NAME_SUCCESS)
         LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");

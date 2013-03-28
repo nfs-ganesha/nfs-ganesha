@@ -449,6 +449,8 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
                                                     &eod);
   if(FSAL_IS_ERROR(fsal_status)) {
       if (fsal_status.major == ERR_FSAL_STALE) {
+           LogEvent(COMPONENT_CACHE_INODE,
+                "FSAL returned STALE from readdir.");
            cache_inode_kill_entry(directory);
       }
 

@@ -82,7 +82,7 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 	code = gssd_refresh_krb5_machine_credential(
 		host_name, NULL, nfs_param.krb5_param.svc.principal);
 	if (code) {
-		LogDebug(COMPONENT_INIT,
+		LogWarn(COMPONENT_INIT,
 			 "gssd_refresh_krb5_machine_credential "
 			 "failed (%d:%d)", code, errno);
 		goto out;
@@ -223,7 +223,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			sin->sin_port = htons((bytes[5]<<8) | bytes[6]);
 			code = inet_pton(AF_INET, addr_buf, &sin->sin_addr);
 			if (code != 1) {
-				LogDebug(COMPONENT_NFS_CB,
+				LogWarn(COMPONENT_NFS_CB,
 					 "inet_pton failed (%d %s)",
 					 code, addr_buf);
 			} else {
@@ -255,7 +255,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			sin6->sin6_port = htons((bytes[9]<<8) | bytes[10]);
 			sin6->sin6_family = AF_INET6;
 			if (code != 1) {
-				LogDebug(COMPONENT_NFS_CB,
+				LogWarn(COMPONENT_NFS_CB,
 					 "inet_pton failed (%d %s)",
 					 code, addr_buf);
 			} else {
@@ -332,7 +332,7 @@ static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
 		code = connect(nfd, (struct sockaddr *) sin,
 			       sizeof(struct sockaddr_in));
 		if (code == -1) {
-			LogDebug(COMPONENT_NFS_CB,
+			LogWarn(COMPONENT_NFS_CB,
 				 "connect fail errno %d",
 				 errno);
 			goto out;
@@ -359,7 +359,7 @@ static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
 		code = connect(nfd, (struct sockaddr *) sin6,
 			       sizeof(struct sockaddr_in6));
 		if (code == -1) {
-			LogDebug(COMPONENT_NFS_CB,
+			LogWarn(COMPONENT_NFS_CB,
 				 "connect fail errno %d", errno);
 			goto out;
 		}
@@ -494,7 +494,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 	code = gssd_refresh_krb5_machine_credential(
 		host_name, NULL, nfs_param.krb5_param.svc.principal);
 	if (code) {
-		LogDebug(COMPONENT_NFS_CB,
+		LogWarn(COMPONENT_NFS_CB,
 			 "gssd_refresh_krb5_machine_credential failed (%d:%d)",
 			 code, errno);
 		goto out;
@@ -556,7 +556,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 
 	code = nfs_clid_connected_socket(clientid, &fd, &proto);
 	if (code) {
-		LogDebug(COMPONENT_NFS_CB,
+		LogWarn(COMPONENT_NFS_CB,
 			 "Failed creating socket");
 		goto out;
 	}

@@ -72,7 +72,7 @@ cache_inode_setattr(cache_entry_t *entry,
 
      if ((attr->mask & ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
-          LogMajor(COMPONENT_CACHE_INODE,
+          LogWarn(COMPONENT_CACHE_INODE,
                    "Attempt to truncate non-regular file: type=%d",
                    entry->type);
           status = CACHE_INODE_BAD_TYPE;
@@ -113,6 +113,8 @@ cache_inode_setattr(cache_entry_t *entry,
      if (FSAL_IS_ERROR(fsal_status)) {
           status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "FSAL returned STALE from truncate");
                cache_inode_kill_entry(entry);
           }
           goto unlock;
@@ -122,6 +124,8 @@ cache_inode_setattr(cache_entry_t *entry,
      if (FSAL_IS_ERROR(fsal_status)) {
           status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "FSAL returned STALE from setattrs");
                cache_inode_kill_entry(entry);
           }
           goto unlock;

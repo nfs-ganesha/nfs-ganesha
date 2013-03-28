@@ -18,8 +18,8 @@
 #include "gpfs_methods.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/fsuid.h>
 #include <fsal_api.h>
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_create:
@@ -56,8 +56,6 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
                           struct gpfs_file_handle * p_object_handle,  /* OUT */
                           struct attrlist * p_object_attributes)    /* IN/OUT */
 {
-
-  int fsuid, fsgid;
   fsal_status_t status;
   int mount_fd;
   mode_t unix_mode;
@@ -105,13 +103,11 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
     return(status);
   /* call to filesystem */
 
-  fsuid = setfsuid(p_context->creds->caller_uid);
-  fsgid = setfsgid(p_context->creds->caller_gid);
+  fsal_set_credentials(p_context->creds);
   status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
                                 p_filename, unix_mode | S_IFREG, 0,
                                 p_object_handle, NULL);
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
   if(FSAL_IS_ERROR(status))
     return(status);
 
@@ -178,7 +174,6 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN *
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
   struct attrlist parent_dir_attrs;
-  int fsuid, fsgid;
   int mount_fd;
   struct gpfs_fsal_obj_handle *gpfs_hdl;
 
@@ -225,13 +220,11 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN *
 
   /* creates the directory and get its handle */
 
-  fsuid = setfsuid(p_context->creds->caller_uid);
-  fsgid = setfsuid(p_context->creds->caller_gid);
+  fsal_set_credentials(p_context->creds);
   status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
                                 p_dirname, unix_mode | S_IFDIR, 0,
                                 p_object_handle, NULL);
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     return(status);
@@ -287,7 +280,6 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,   /* IN */
 {
   int mount_fd;
   fsal_status_t status;
-  int fsuid, fsgid;
   fsal_accessflags_t access_mask = 0;
   struct attrlist parent_dir_attrs;
   struct gpfs_fsal_obj_handle *dest_dir;
@@ -331,13 +323,11 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,   /* IN */
 
   /* Create the link on the filesystem */
 
-  fsuid = setfsuid(p_context->creds->caller_uid);
-  fsgid = setfsuid(p_context->creds->caller_gid);
+  fsal_set_credentials(p_context->creds);
   status = fsal_internal_link_fh(mount_fd, target_handle, dest_dir->handle,
                                  p_link_name);
 
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     goto out_status_fsal_err;
@@ -410,7 +400,6 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
 {
   fsal_status_t status;
 /*   int flags=(O_RDONLY|O_NOFOLLOW); */
-  int fsuid, fsgid;
   int mount_fd;
 
   mode_t unix_mode = 0;
@@ -485,13 +474,12 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
   if(FSAL_IS_ERROR(status))
     return(status);
 
-  fsuid = setfsuid(p_context->creds->caller_uid);
-  fsgid = setfsuid(p_context->creds->caller_gid);
+  fsal_set_credentials(p_context->creds);
   status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
                                 p_node_name, unix_mode, unix_dev,
                                 p_object_handle, NULL);
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     return(status);

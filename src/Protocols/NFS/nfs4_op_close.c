@@ -170,7 +170,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                      = state_del_locked(lock_state,
                                         data->current_entry))
                     != STATE_SUCCESS) {
-                        LogDebug(COMPONENT_STATE,
+                        LogEvent(COMPONENT_STATE,
                                  "CLOSE failed to release lock stateid "
                                  "error %s",
                                  state_err_str(state_status));
@@ -183,7 +183,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
 						  open_owner,
 						  state_found);
                 if (state_status != STATE_SUCCESS) {
-                        LogDebug(COMPONENT_STATE,
+                        LogEvent(COMPONENT_STATE,
                                  "CLOSE failed to release share state "
                                  "error: %s",
                                  state_err_str(state_status));
@@ -194,7 +194,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
         if ((state_status
              = state_del_locked(state_found,
                                 data->current_entry)) != STATE_SUCCESS) {
-                LogDebug(COMPONENT_STATE,
+                LogEvent(COMPONENT_STATE,
                          "CLOSE failed to release stateid error %s",
                          state_err_str(state_status));
         }
@@ -271,7 +271,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
 
         /* Close the file in FSAL through the cache inode */
 	cache_status = cache_inode_close(data->current_entry,
-					 0);
+					 CACHE_INODE_FLAG_REALLYCLOSE);
 	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_CLOSE4->status = nfs4_Errno(cache_status);
                 PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
