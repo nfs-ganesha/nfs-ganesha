@@ -400,12 +400,11 @@ nfs3_readdir_callback(void* opaque,
                                  FSAL_DIGEST_FILEID3,
                                  &id_descriptor);
 
-     e3->name = gsh_malloc(namelen + 1);
+     e3->name = gsh_strdup(name);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return false;
      }
-     strcpy(e3->name, name);
      e3->cookie = cookie;
 
      if (tracker->count > 0) {

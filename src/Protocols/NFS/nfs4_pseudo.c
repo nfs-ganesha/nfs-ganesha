@@ -1018,7 +1018,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             res_READDIR4.status = NFS4ERR_SERVERFAULT;
             return res_READDIR4.status;
         }
-      strncpy(entry_nfs_array[i].name.utf8string_val, iter->name, namelen);
+      memcpy(entry_nfs_array[i].name.utf8string_val, iter->name, namelen);
       entry_nfs_array[i].name.utf8string_val[namelen] = '\0';
 
       entry_nfs_array[i].cookie = iter->pseudo_id + 3;

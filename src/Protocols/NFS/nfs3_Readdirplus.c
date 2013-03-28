@@ -25,22 +25,15 @@
  */
 
 /**
- * \file    nfs3_Readdirplus.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:49 $
- * \version $Revision: 1.37 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * nfs3_Readdirplus.c : Routines used for managing the NFS4 COMPOUND functions.
- *
- *
+ * @file nfs3_Readdirplus.c
+ * @brief Everything you need for the NFSv3 readdirplus operation
  */
+
 #include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -422,12 +415,11 @@ nfs3_readdirplus_callback(void* opaque,
                                  FSAL_DIGEST_FILEID3,
                                  &id_descriptor);
 
-     ep3->name = gsh_malloc(namelen + 1);
+     ep3->name = gsh_strdup(name);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return false;
      }
-     strcpy(ep3->name, name);
      ep3->cookie = cookie;
 
      /* Account for file name + length + cookie */
