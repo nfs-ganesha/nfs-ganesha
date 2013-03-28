@@ -43,37 +43,42 @@
  * support for the Ceph FSAL.
  */
 
-static void initiate_recall(vinodeno_t vi, bool write, void *opaque)
+static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 {
 	/* The private 'full' object handle */
 	struct handle *handle = (struct handle *)opaque;
 	/* The private 'full' export */
 	struct export *export
 		= container_of(handle->handle.export, struct export, export);
-	/* Event to trigger */
-	struct fsal_up_event *event = fsal_up_alloc_event();
+	/* Return code from upcall operation */
+	state_status_t status = STATE_SUCCESS;
+	struct gsh_buffdesc key = {
+		.addr = &handle->wire.vi,
+		.len = sizeof(handle->wire.vi)
+	};
+	struct pnfs_segment segment = {
+		.offset = 0,
+		.length = UINT64_MAX,
+		.io_mode = (write ?
+			    LAYOUTIOMODE4_RW :
+			    LAYOUTIOMODE4_READ)
+	};
 
-	event->functions = export->export.up_ops;
-	event->type = FSAL_UP_EVENT_LAYOUTRECALL;
-	event->data.layoutrecall.layout_type = LAYOUT4_NFSV4_1_FILES;
-	event->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
-	event->data.layoutrecall.changed = false;
-	event->data.layoutrecall.segment.offset = 0;
-	event->data.layoutrecall.segment.length = UINT64_MAX;
-	event->data.layoutrecall.segment.io_mode
-		= (write ?
-		   LAYOUTIOMODE4_RW :
-		   LAYOUTIOMODE4_READ);
-	event->data.layoutrecall.cookie = NULL;
-	event->file.key.addr = gsh_malloc(sizeof(handle->wire.vi));
-	event->file.key.len = sizeof(handle->wire.vi);
-	memcpy(event->file.key.addr, &handle->wire.vi,
-	       sizeof(handle->wire.vi));
-	event->file.export = &export->export;
+	status = export->export.up_ops->layoutrecall(
+		&export->export,
+		&key,
+		LAYOUT4_NFSV4_1_FILES,
+		false,
+		&segment,
+		NULL,
+		NULL);
 
-	fsal_up_submit(event);
+	if (status != STATE_SUCCESS) {
+		return false;
+	}
+
+	return true;
 }
-
 
 /**
  * @brief Describe a Ceph striping pattern

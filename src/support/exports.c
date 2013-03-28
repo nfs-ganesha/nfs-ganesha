@@ -52,6 +52,8 @@
 #include <string.h>
 #include <ctype.h>
 
+extern struct fsal_up_vector fsal_up_top;
+
 #define LASTDEFAULT 1048576
 
 #define STRCMP strcasecmp

@@ -758,14 +758,16 @@ struct state_layout_segment {
 };
 
 /**
- * @brief A recall to be sent to one client
+ * @brief An entry in a list of states affected by a recall
+ *
+ * We make a non-intrusive list so that a state can be affected by any
+ * number of recalls.
  */
 
-struct recall_work_queue {
+struct recall_state_list {
 	struct glist_head link; /*< Link to the next layout state in the
                                     queue */
 	state_t *state; /*< State on which to recall */
-	bool recalled; /*< Whether the CB_LAYOUTRECALL has been sent */
 };
 
 /**
@@ -777,11 +779,8 @@ struct state_layout_recall_file {
 	cache_entry_t *entry; /*< Related cache entry */
 	layouttype4 type; /*< Type of layout being recalled */
 	struct pnfs_segment segment; /*< Segment to recall */
-	struct glist_head *state_list; /*< List of states affected by this
-					   layout, used both for the work
-					   queue of recalls to send and for
-					   finding when a recall has been
-					   satisfied by return. */
+	struct glist_head state_list; /*< List of states affected by this
+					layout */
 	void *recall_cookie; /*< Cookie returned to FSAL on return of last
 			       segment satisfying the layout */
 };

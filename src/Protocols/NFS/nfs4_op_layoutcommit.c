@@ -25,33 +25,19 @@
  */
 
 /**
- * @file    nfs4_op_layoutcommit.c
- * @brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
- *
+ * @file nfs4_op_layoutcommit.c
+ * @brief The NFSv4.1 LAYOUTCOMMIT operation.
  */
+
 #include "config.h"
-#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashTable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
-#include "fsal.h"
 #include "fsal_pnfs.h"
 #include "sal_data.h"
 #include "sal_functions.h"
@@ -166,8 +152,6 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
         arg.type = layout_state->state_data.layout.state_layout_type;
 
-        /* Check to see if the layout is valid */
-
         glist_for_each(glist,
                        &layout_state->state_data.layout.state_segments) {
                 segment = glist_entry(glist,
@@ -175,16 +159,16 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
                                       sls_state_segments);
 
                 pthread_mutex_lock(&segment->sls_mutex);
+		arg.segment = segment->sls_segment;
+		arg.fsal_seg_data = segment->sls_fsal_data;
+                pthread_mutex_unlock(&segment->sls_mutex);
 
-                nfs_status
-                        = data->current_entry->obj_handle->ops
+                nfs_status = data->current_entry->obj_handle->ops
                         ->layoutcommit(data->current_entry->obj_handle,
                                        data->req_ctx,
                                        &lou_body,
                                        &arg,
                                        &res);
-
-                pthread_mutex_unlock(&segment->sls_mutex);
 
                 if (nfs_status != NFS4_OK) {
                         goto out;

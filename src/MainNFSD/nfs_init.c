@@ -117,7 +117,6 @@ nfs_parameter_t nfs_param =
   .core_param.core_options = CORE_OPTION_ALL_VERS,
   .core_param.rpc.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
   .core_param.rpc.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
-  .core_param.enable_FSAL_upcalls = true,
   .core_param.enable_NLM = true,
   .core_param.enable_RQUOTA = true,
 
@@ -800,17 +799,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #endif
   gsh_client_init();
   gsh_export_init();  /* here for now since triggered by dbus stats */
-
-  if (nfs_param.core_param.enable_FSAL_upcalls)
-    {
-      rc = fsal_up_init();
-      if (rc != 0)
-	{
-	  LogFatal(COMPONENT_INIT,
-		   "FSAL upcall system could not be initialized: %d",
-		   rc);
-	}
-    }
 
   /* Cache Inode Initialisation */
   cache_status = cache_inode_init();

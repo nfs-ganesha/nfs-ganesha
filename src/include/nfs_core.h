@@ -50,7 +50,6 @@
 #include "err_HashTable.h"
 #include "gsh_config.h"
 #include "cache_inode.h"
-#include "fsal_up.h"
 #ifdef _USE_9P
 #include "9p.h"
 #endif
