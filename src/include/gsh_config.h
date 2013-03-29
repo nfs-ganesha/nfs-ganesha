@@ -365,7 +365,12 @@ typedef struct nfs_core_param {
 /**
  * @brief Default value for lease_lifetime
  */
-#define LEASE_LIFETIME_DEFAULT 120
+#define LEASE_LIFETIME_DEFAULT 60
+
+/**
+ * @brief Default value for grace period
+ */
+#define GRACE_PERIOD_DEFAULT 90
 
 /**
  * @brief Default value of domainname.
@@ -385,6 +390,9 @@ typedef struct nfs_version4_parameter {
 	    LEASE_LIFETIME_DEFAULT and is settable with
 	    Lease_Lifetime. */
 	uint32_t lease_lifetime;
+	/** The NFS grace period.  Defaults to
+	    GRACE_PERIOD_DEFAULT and is settable with Grace_Period. */
+	uint32_t grace_period;
 	/** Whether to return bad stateid or not.  Disabling this
 	    returns false success if the stateid can't be found.
 	    Enable at your own risk.  Defaults to false, can be set
