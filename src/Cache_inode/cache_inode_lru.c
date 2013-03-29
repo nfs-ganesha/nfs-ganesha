@@ -491,8 +491,11 @@ lru_reap_impl(uint32_t flags)
 				    QUNLOCK(qlane);
 				    cih_latch_rele(&latch);
 				    goto out;
-			      }
-			      cih_latch_rele(&latch);
+			    }
+			    cih_latch_rele(&latch);
+                            /* return the ref we took above--unref deals
+                             * correctly with reclaim case */
+                            cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
                     } else {
 			    QLOCK(qlane);
 		    }
