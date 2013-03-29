@@ -1167,7 +1167,7 @@ cache_inode_lru_pkgshutdown(void)
      return rc;
 }
 
-cache_inode_status_t
+static cache_inode_status_t
 alloc_cache_entry(cache_entry_t **entry)
 {
 	cache_inode_status_t status;
