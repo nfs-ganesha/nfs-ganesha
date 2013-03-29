@@ -241,9 +241,6 @@ hash_error_t HashTable_Delall(struct hash_table *ht,
 			      int (*free_func)(struct gsh_buffdesc,
 					       struct gsh_buffdesc));
 
-void HashTable_GetStats(struct hash_table *ht,
-			struct hash_stat *hstat);
-size_t HashTable_GetSize(struct hash_table *ht);
 void HashTable_Log(log_components_t component, struct hash_table *ht);
 
 /* These are very simple wrappers around the primitives */

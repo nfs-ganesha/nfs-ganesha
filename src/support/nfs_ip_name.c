@@ -434,21 +434,3 @@ int nfs_ip_name_populate(char *path)
 
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_populate */
-
-/**
- *
- * nfs_ip_name_get_stats: gets the hash table statistics for the IP_NAME Table.
- *
- * Gets the hash table statistics for the IP_NAME Table.
- *
- * @param phstat [OUT] pointer to the resulting stats.
- *
- * @return nothing (void function)
- *
- * @see HashTable_GetStats
- *
- */
-void nfs_ip_name_get_stats(hash_stat_t * phstat)
-{
-  HashTable_GetStats(ht_ip_name, phstat);
-}                               /* nfs_ip_name_get_stats */

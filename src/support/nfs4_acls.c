@@ -210,10 +210,6 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   /* Set the return default to NFS_V4_ACL_SUCCESS */
   *pstatus = NFS_V4_ACL_SUCCESS;
 
-  LogDebug(COMPONENT_NFS_V4_ACL,
-           "ACL hash table size=%zu",
-           HashTable_GetSize(fsal_acl_hash));
-
   /* Turn the input to a hash key */
   if(nfs4_acldata_2_key(&buffkey, pacldata))
     {
