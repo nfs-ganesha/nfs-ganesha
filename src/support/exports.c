@@ -696,10 +696,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
       /** @todo What variable must be set ? */
 
-          strncpy(p_entry->fullpath, var_value, MAXPATHLEN);
+          strmaxcpy(p_entry->fullpath, var_value, MAXPATHLEN);
 
       /** @todo : change to MAXPATHLEN in exports.h */
-          strncpy(p_entry->fsname, "", MAXNAMLEN);
+          strmaxcpy(p_entry->fsname, "", MAXNAMLEN);
 
           set_options |= FLAG_EXPORT_PATH;
 
@@ -802,7 +802,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
 
-          strncpy(p_entry->pseudopath, var_value, MAXPATHLEN);
+          strmaxcpy(p_entry->pseudopath, var_value, MAXPATHLEN);
 
           set_options |= FLAG_EXPORT_PSEUDO;
           p_entry->options |= EXPORT_OPTION_PSEUDO;
@@ -1636,7 +1636,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
 
-          strncpy(p_entry->FS_specific, var_value, MAXPATHLEN);
+          strmaxcpy(p_entry->FS_specific, var_value, MAXPATHLEN);
 
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
@@ -1650,7 +1650,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
 
-          strncpy(p_entry->FS_tag, var_value, MAXPATHLEN);
+          strmaxcpy(p_entry->FS_tag, var_value, MAXPATHLEN);
 
           set_options |= FLAG_EXPORT_FS_TAG;
 
@@ -2809,13 +2809,13 @@ exportlist_t *GetExportEntry(char *exportPath)
 
     /* Make sure the path in export entry ends with a '/', if not adds one */
     if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
-      strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
+      strmaxcpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
     else
       snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
 
     /* Make sure that the argument from MNT ends with a '/', if not adds one */
     if(exportPath[strlen(exportPath) - 1] == '/')
-      strncpy(tmpexport_path, exportPath, MAXPATHLEN);
+      strmaxcpy(tmpexport_path, exportPath, MAXPATHLEN);
     else
       snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
 

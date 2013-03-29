@@ -186,7 +186,7 @@ nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
         if (copy_xprt_addr(&sa, svc->rq_xprt))
                 sprint_sockip(&sa, buf, SOCK_NAME_MAX);
         else
-                strncpy(buf, "Unknown", SOCK_NAME_MAX);
+                strmaxcpy(buf, "Unknown", SOCK_NAME_MAX);
 
         for (i = 0; i < cl_rec->cr_client_val_len; i++)
                 cl_val += cl_rec->cr_client_val[i];
@@ -344,7 +344,7 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
                                          "Unable to allocate memory.");
                                 return -1;
                         }
-                        strncpy(new_ent->cl_name, dentp->d_name, 256);
+                        strmaxcpy(new_ent->cl_name, dentp->d_name, 256);
                         glist_add(&grace.g_clid_list, &new_ent->cl_list);
                         LogDebug(COMPONENT_CLIENTID, "added %s to clid list",
                             new_ent->cl_name);

@@ -127,17 +127,17 @@ main(int argc, char *argv[])
 				rpc_verbosity++;
 				break;
 			case 'p':
-				strncpy(pipefs_dir, optarg, sizeof(pipefs_dir));
+				strmaxcpy(pipefs_dir, optarg, sizeof(pipefs_dir));
 				if (pipefs_dir[sizeof(pipefs_dir)-1] != '\0')
 					errx(1, "pipefs path name too long");
 				break;
 			case 'k':
-				strncpy(keytabfile, optarg, sizeof(keytabfile));
+				strmaxcpy(keytabfile, optarg, sizeof(keytabfile));
 				if (keytabfile[sizeof(keytabfile)-1] != '\0')
 					errx(1, "keytab path name too long");
 				break;
 			case 'd':
-				strncpy(ccachedir, optarg, sizeof(ccachedir));
+				strmaxcpy(ccachedir, optarg, sizeof(ccachedir));
 				if (ccachedir[sizeof(ccachedir)-1] != '\0')
 					errx(1, "ccachedir path name too long");
 				break;

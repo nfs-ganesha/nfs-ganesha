@@ -602,11 +602,17 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   else
     {
       /* The entry is a junction */
-      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,      
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                    "A junction in pseudo fs is traversed: name = %s, id = %d",
                    iter->name, iter->junction_export->id);
       data->pexport = iter->junction_export;
-      strncpy(data->MntPath, iter->fullname, MAXPATHLEN);
+      if (strmaxcpy(data->MntPath, iter->fullname, MAXPATHLEN) == -1)
+	{
+	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+		   "String overflow");
+	  res_LOOKUP4.status = NFS4ERR_WRONGSEC;
+	  goto out;
+	}
 
       /* Build credentials */
       if(nfs4_MakeCred(data) != 0)
@@ -621,12 +627,26 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Build fsal data for creation of the first entry */
       if( !pseudo_is_slash )
         {
-          strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
+	  if (strmaxcpy(pathfsal, data->pexport->fullpath, MAXPATHLEN)
+	      == -1)
+	    {
+	      LogMajor(COMPONENT_NFS_V4_PSEUDO,
+		       "String overflow");
+	      res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+	      goto out;
+	    }
+	    
 	}
       else
        {
 	 pathfsal[0] = '/';
-         strncat(&pathfsal[1], name, MAXPATHLEN - 2);
+         if (strmaxcat(&pathfsal[1], name, MAXPATHLEN) == -1)
+	   {
+	      LogMajor(COMPONENT_NFS_V4_PSEUDO,
+		       "String overflow");
+	      res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+	      goto out;
+	   }
        }
 
       /* Lookup the FSAL to build the fsal handle */
@@ -879,7 +899,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Step up the compound data */
       data->pexport = psfsentry.junction_export;
-      strncpy(data->MntPath, psfsentry.fullname, MAXPATHLEN);
+      if (strmaxcpy(data->MntPath, psfsentry.fullname, MAXPATHLEN)
+	  == -1)
+	{
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                   "String overflow");
+          res_READDIR4.status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4.status;
+	}
 
       /* Build the credentials */
       if(nfs4_MakeCred(data) != 0)

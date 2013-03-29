@@ -133,8 +133,22 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
       return 0;
     }
   /* Copy the data */
-  strncpy(pnew_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN);
-  strncpy(pnew_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN);
+  if (strmaxcpy(pnew_mnt_list_entry->ml_hostname, hostname,
+		MAXHOSTNAMELEN) == -1)
+    {
+      gsh_free(pnew_mnt_list_entry->ml_directory);
+      gsh_free(pnew_mnt_list_entry->ml_hostname);
+      gsh_free(pnew_mnt_list_entry);
+      return 0;
+    }
+  if (strmaxcpy(pnew_mnt_list_entry->ml_directory, dirpath,
+		MAXPATHLEN) == -1)
+    {
+      gsh_free(pnew_mnt_list_entry->ml_directory);
+      gsh_free(pnew_mnt_list_entry->ml_hostname);
+      gsh_free(pnew_mnt_list_entry);
+      return 0;
+    }
 
   /* initialize next pointer */
   pnew_mnt_list_entry->ml_next = NULL;

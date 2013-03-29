@@ -512,7 +512,7 @@ new_ple(krb5_context context, krb5_principal princ)
 
 #ifdef HAVE_KRB5
 	ple->realm = (char *) malloc(princ->realm.length + 1);
-	strncpy(ple->realm, princ->realm.data, princ->realm.length);
+	strmaxcpy(ple->realm, princ->realm.data, princ->realm.length);
 	ple->realm[princ->realm.length] = '\0';
 #else
 	ple->realm = strdup(princ->realm);
@@ -602,7 +602,7 @@ get_full_hostname(const char *inhost, char *outhost, int outhostlen)
 			 gai_strerror(retval), inhost);
 		goto out;
 	}
-	strncpy(outhost, addrs->ai_canonname, outhostlen);
+	strmaxcpy(outhost, addrs->ai_canonname, outhostlen);
 	freeaddrinfo(addrs);
 	for (c = outhost; *c != '\0'; c++)
 	    *c = tolower(*c);

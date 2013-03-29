@@ -96,13 +96,18 @@ int mnt_Mnt(nfs_arg_t *parg,
 
   if(parg->arg_mnt == NULL)
     {
-      LogEvent(COMPONENT_NFSPROTO,
-              "MOUNT: NULL path passed as Mount argument !!!");
+      LogCrit(COMPONENT_NFSPROTO,
+              "NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
 
   /* Retrieving arguments */
-  strncpy(exportPath, parg->arg_mnt, MNTPATHLEN + 1);
+  if (strmaxcpy(exportPath, parg->arg_mnt, MNTPATHLEN) == -1)
+    {
+      LogCrit(COMPONENT_NFSPROTO,
+              "String overflow");
+      return NFS_REQ_DROP;
+    }
 
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
@@ -115,7 +120,13 @@ int mnt_Mnt(nfs_arg_t *parg,
           /* The input value may be a "Tag" */
           if(!strcmp(exportPath, p_current_item->FS_tag))
             {
-              strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
+	      if (strmaxcpy(exported_path, p_current_item->fullpath,
+			    MAXPATHLEN) == -1)
+		{
+		  LogCrit(COMPONENT_NFSPROTO,
+			   "String overflow");
+		  return NFS_REQ_DROP;
+		}
               bytag = true;
               break;
             }
@@ -124,20 +135,41 @@ int mnt_Mnt(nfs_arg_t *parg,
         {
           /* Make sure the path in export entry ends with a '/', if not adds one */
           if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
-            strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
+	    {
+	      if (strmaxcpy(tmplist_path, p_current_item->fullpath,
+			    MAXPATHLEN) == -1)
+		{
+		  LogCrit(COMPONENT_NFSPROTO,
+			   "String overflow");
+		  return NFS_REQ_DROP;
+		}
+	    }
           else
             snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
 
           /* Make sure that the argument from MNT ends with a '/', if not adds one */
           if(exportPath[strlen(exportPath) - 1] == '/')
-            strncpy(tmpexport_path, exportPath, MAXPATHLEN);
-          else
+	    {
+	      if (strmaxcpy(tmpexport_path, exportPath, MAXPATHLEN) == -1)
+		{
+		  LogCrit(COMPONENT_NFSPROTO,
+			  "String overflow");
+		  return NFS_REQ_DROP;
+		}
+	    }
+	  else
             snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
 
           /* Is tmplist_path a subdirectory of tmpexport_path ? */
           if(!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
             {
-              strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
+              if (strmaxcpy(exported_path, p_current_item->fullpath,
+			    MAXPATHLEN) == -1)
+		{
+		  LogCrit(COMPONENT_NFSPROTO,
+			  "String overflow");
+		  return NFS_REQ_DROP;
+		}
               break;
             }
         }
@@ -149,7 +181,7 @@ int mnt_Mnt(nfs_arg_t *parg,
 
   if(!p_current_item)
     {
-      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found",
+      LogCrit(COMPONENT_NFSPROTO, "Export entry %s not found",
               exportPath);
 
       /* entry not found. */

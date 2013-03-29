@@ -440,7 +440,12 @@ int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
     {
       if(!strncmp(tag, piter->FS_tag, taglen))
         {
-          strncpy(path, piter->fullpath, pathlen);
+	  if (strmaxcpy(path, piter->fullpath, pathlen) == -1)
+	    {
+	      LogMajor(COMPONENT_DISPATCH,
+		       "String overflow.");
+	      return -1;
+	    }
           return 0;
           break;
         }
