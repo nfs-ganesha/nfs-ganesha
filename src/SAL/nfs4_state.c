@@ -186,8 +186,9 @@ state_status_t state_add_impl(cache_entry_t *entry,
         }
     }
 
-  /* Add the stateid.other, this will increment state_id_counter */
-  nfs4_BuildStateId_Other(pnew_state->stateid_other);
+  /* Add the stateid.other, this will increment cid_stateid_counter */
+  nfs4_BuildStateId_Other(owner_input->so_owner.so_nfs4_owner.so_clientrec,
+                          pnew_state->stateid_other);
 
   /* Set the type and data for this state */
   memcpy(&(pnew_state->state_data), state_data, sizeof(state_data_t));

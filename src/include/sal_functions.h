@@ -309,7 +309,7 @@ int display_session_id(char *session_id, char *str);
  *
  ******************************************************************************/
 
-void nfs4_BuildStateId_Other(char *other);
+void nfs4_BuildStateId_Other(nfs_client_id_t * clientid, char * other);
 
 #define STATEID_NO_SPECIAL 0 /*< No special stateids */
 #define STATEID_SPECIAL_ALL_0 2 /*< Allow anonymous */

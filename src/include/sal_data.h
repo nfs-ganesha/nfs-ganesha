@@ -559,6 +559,7 @@ struct nfs_client_id_t {
 	int cid_lease_reservations; /*< Counted lease reservations, to spare
 				        this clientid from the reaper */
 	uint32_t cid_minorversion;
+	uint32_t cid_stateid_counter;
 };
 
 /**

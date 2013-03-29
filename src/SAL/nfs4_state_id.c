@@ -80,16 +80,6 @@ char all_ones[OTHERSIZE];
 #define seqid_all_one 0xFFFFFFFF
 
 /**
- * @brief Mutes to protect the stateid counter
- */
-pthread_mutex_t StateIdMutex = PTHREAD_MUTEX_INITIALIZER;
-
-/**
- * @brief Counter to create unique stateids from server epoch
- */
-uint64_t state_id_counter;
-
-/**
  * @brief Display a stateid other
  *
  * @param[in]  other The other
@@ -244,16 +234,17 @@ int nfs4_Init_state_id(hash_parameter_t *param)
  *
  * @param[in] other stateid.other object (a char[OTHERSIZE] string)
  */
-void nfs4_BuildStateId_Other(char *other)
+void nfs4_BuildStateId_Other(nfs_client_id_t * clientid, char * other)
 {
-  /* Use only 32 bits of server epoch */
-  uint32_t epoch = (uint32_t) ServerEpoch;
-  memcpy(other, &epoch, sizeof(uint32_t));
+  uint32_t my_stateid = atomic_inc_uint32_t(&clientid->cid_stateid_counter);
 
-  P(StateIdMutex);
-  memcpy(other + sizeof(uint32_t), &state_id_counter, sizeof(uint64_t));
-  state_id_counter++;
-  V(StateIdMutex);
+  /* The first part of the other is the 64 bit clientid, which
+   * consists of the epoch in the high order 32 bits followed by
+   * the clientid counter in the low order 32 bits.
+   */
+  memcpy(other, &clientid->cid_clientid, sizeof(clientid->cid_clientid));
+
+  memcpy(other + sizeof(clientid->cid_clientid), &my_stateid, sizeof(my_stateid));
 }
 
 /**
@@ -385,9 +376,13 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 			    const char *tag)
 {
   uint32_t          epoch = 0;
+  uint64_t          epoch_low = ServerEpoch & 0xFFFFFFFF;
   state_t         * state2;
   char              str[OTHERSIZE * 2 + 1 + 6];
   int32_t           diff;
+  clientid4         clientid;
+  nfs_client_id_t * pclientid;
+  int               rc;
 
   *state = NULL;
   data->current_stateid_valid = false;
@@ -456,10 +451,13 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
       return NFS4ERR_BAD_STATEID;
     }
 
-  /* Check if stateid was made from this server instance */
-  memcpy(&epoch, stateid->other, sizeof(uint32_t));
+  /* Extract the clientid from the stateid other field */
+  memcpy(&clientid, stateid->other, sizeof(clientid));
+  /* Extract the epoch from the clientid */
+  epoch = clientid >> (clientid4) 32;
 
-  if(epoch != ServerEpoch)
+  /* Check if stateid was made from this server instance */
+  if(epoch != epoch_low)
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stale stateid %s", tag, str);
@@ -478,7 +476,24 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
        */
       LogDebug(COMPONENT_STATE,
                "Check %s stateid could not find state %s", tag, str);
-      if(nfs_param.nfsv4_param.return_bad_stateid)      /* Dirty work-around for HPC environment */
+
+      /* Try and find the clientid */
+      rc = nfs_client_id_get_confirmed(clientid, &pclientid);
+
+      if(rc != CLIENT_ID_SUCCESS)
+        {
+          /* Unknown client id (or other problem), return that result. */
+          return clientid_error_to_nfsstat(rc);
+        }
+
+      /* Release the clientid reference we just acquired. */
+      dec_client_id_ref(pclientid);
+
+      /* Otherwise, we assume the stateid is BAD since the clientid portion was
+       * valid.
+       * Dirty work-around for HPC environment, return OK here.
+       */
+      if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)
         return NFS4ERR_EXPIRED;
       else
         return NFS4_OK;
