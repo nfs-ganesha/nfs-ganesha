@@ -460,10 +460,11 @@ lru_reap_impl(uint32_t flags)
                if (lru) {
 		    cih_latch_t latch;
                     refcnt = atomic_inc_int32_t(&lru->refcnt);
+		    entry = container_of(lru, cache_entry_t, lru);
                     if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
-                         /* cant use it. */
-                         atomic_dec_int32_t(&lru->refcnt);
-                         goto next_entry;
+			    /* cant use it. */
+                            cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+			    goto next_entry;
                     }
                     /* potentially reclaimable */
                     QUNLOCK(qlane);
@@ -491,8 +492,11 @@ lru_reap_impl(uint32_t flags)
 				    QUNLOCK(qlane);
 				    cih_latch_rele(&latch);
 				    goto out;
-			      }
-			      cih_latch_rele(&latch);
+			    }
+			    cih_latch_rele(&latch);
+                            /* return the ref we took above--unref deals
+                             * correctly with reclaim case */
+                            cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
                     } else {
 			    QLOCK(qlane);
 		    }
@@ -896,16 +900,16 @@ lru_run(struct fridgethr_context *ctx)
 				     * to L2. */
 				    QLOCK(qlane);
 
-				    /* This can be in any order wrt the lane
-				     * mutex, but this order seems most sane. */
-				    refcnt = atomic_dec_int32_t(&lru->refcnt);
+				    /* Yes, we must recheck this. */
+				    refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+
+				    /* Safely decrement refcnt. */
+				    cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
 
 				    /* Since we dropped the lane mutex, recheck
-				     * that the entry hasn't moved.  The two
-				     * checks below should be essentially
-				     * equivalent. */
+				     * that the entry hasn't moved or been recycled. */
 				    if (unlikely((lru->qid != LRU_ENTRY_L1) ||
-						 (! refcnt))) {
+						 (refcnt == 1))) {
 					    workdone++; /* but count it */
 					    /* qlane LOCKED */
 					    continue;
@@ -1163,7 +1167,7 @@ cache_inode_lru_pkgshutdown(void)
      return rc;
 }
 
-cache_inode_status_t
+static cache_inode_status_t
 alloc_cache_entry(cache_entry_t **entry)
 {
 	cache_inode_status_t status;
