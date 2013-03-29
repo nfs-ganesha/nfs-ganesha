@@ -156,38 +156,6 @@ int nfs_Write(nfs_arg_t *arg,
            goto out;
          }
 
-        /* For MDONLY export, reject write operation. This is done by
-           replying EDQUOT (this error is known for not disturbing the
-           client's requests cache */
-        if (export->access_type != ACCESSTYPE_RW)
-         {
-            switch (export->access_type)
-              {
-                case ACCESSTYPE_MDONLY:
-                case ACCESSTYPE_MDONLY_RO:
-                    res->res_write3.status = NFS3ERR_DQUOT;
-                    break;
-
-                case ACCESSTYPE_RO:
-                    res->res_write3.status = NFS3ERR_ROFS;
-                    break;
-
-                default:
-                   /* if we get here than the value is an
-                      invalid enum - corruption */
-                   abort();
-                   break;
-               }
-
-             nfs_SetWccData(&pre_attr,
-                            entry,
-                            req_ctx,
-                            &res->res_write3.WRITE3res_u.resfail.file_wcc);
-
-             rc = NFS_REQ_OK;
-             goto out;
-        }
-
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,

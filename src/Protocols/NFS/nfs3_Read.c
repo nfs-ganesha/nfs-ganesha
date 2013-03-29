@@ -181,21 +181,6 @@ nfs_Read(nfs_arg_t *arg,
             goto out;
           }
 
-        /* For MDONLY export, reject write operation This is done by
-           replying EDQUOT (this error is known for not disturbing the
-           client's requests cache */
-        if (export->access_type == ACCESSTYPE_MDONLY ||
-            export->access_type == ACCESSTYPE_MDONLY_RO)
-         {
-             res->res_read3.status = NFS3ERR_DQUOT;
-             nfs_SetPostOpAttr( entry,
-                                req_ctx,
-                                &res->res_read3.READ3res_u.resfail.file_attributes);
-
-             rc = NFS_REQ_OK;
-             goto out;
-         }
-
         /* Extract the argument from the request */
         offset = arg->arg_read3.offset;
         size = arg->arg_read3.count;
