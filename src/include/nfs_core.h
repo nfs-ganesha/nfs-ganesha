@@ -234,8 +234,8 @@ extern verifier4 NFS4_write_verifier;  /*< NFS V4 write verifier */
 extern writeverf3 NFS3_write_verifier; /*< NFS V3 write verifier */
 
 extern nfs_worker_data_t *workers_data;
-extern char config_path[MAXPATHLEN + 1];
-extern char pidfile_path[MAXPATHLEN + 1];
+extern char *config_path;
+extern char *pidfile_path;
 extern ushort g_nodeid;
 
 typedef enum process_status {

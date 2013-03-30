@@ -133,6 +133,13 @@ typedef struct exportlist_client__ {
 	exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];
 } exportlist_client_t;
 
+/**
+ * @todo Please, please, please get rid of all the static buffers in
+ * this structure.  I would do it myself but, to twist your metaphor,
+ * when you're remodelling a house, you don't rip out a bathroom while
+ * someone's in there.
+ */
+
 typedef struct exportlist {
 	unsigned short id; /*< Entry identifier */
 	exportlist_status_t status; /*< Entry's status */

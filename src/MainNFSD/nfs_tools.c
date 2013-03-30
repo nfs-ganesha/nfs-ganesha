@@ -7,33 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_tools.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/20 07:39:22 $
- * \version $Revision: 1.43 $
- * \brief   Some tools very usefull in the nfs protocol implementation.
- *
- * nfs_tools.c : Some tools very usefull in the nfs protocol implementation
- *
- *
+ * @file    nfs_tools.c
+ * @brief   Some tools very usefull in the nfs protocol implementation.
  */
+
 #include "config.h"
 #include <stdio.h>
 #include <sys/socket.h>

@@ -422,13 +422,11 @@ int nfs_read_ip_name_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "Map"))
         {
-          if(strmaxcpy(pparam->mapfile,
-                       key_value,
-                       sizeof(pparam->mapfile)) == -1)
+	  pparam->mapfile = gsh_strdup(key_value);
+	  if (!pparam->mapfile)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "%s=\"%s\" too long",
-                      key_name, key_value);
+              LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate memory for mapfile path.");
             }
         }
       else
@@ -611,24 +609,21 @@ int nfs_read_version4_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "DomainName"))
         {
-          if(strmaxcpy(pparam->domainname,
-                       key_value,
-                       sizeof(pparam->domainname)) == -1)
+	  pparam->domainname = gsh_strdup(pparam->domainname);
+	  if (!pparam->domainname)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "%s=\"%s\" too long",
-                      key_name, key_value);
+              LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate memory for domain name.");
             }
         }
       else if(!strcasecmp(key_name, "IdmapConf"))
         {
-          if(strmaxcpy(pparam->idmapconf,
-                       key_value,
-                       sizeof(pparam->idmapconf)) == -1)
+	  pparam->idmapconf = gsh_strdup(key_value);
+
+	  if (!pparam->idmapconf)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "%s=\"%s\" too long",
-                      key_name, key_value);
+	      LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate space for idmap conffile path.");
             }
         }
       else if(!strcasecmp(key_name, "UseGetpwnam"))

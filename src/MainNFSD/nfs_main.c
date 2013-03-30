@@ -49,15 +49,12 @@ nfs_start_info_t my_nfs_start_info = {
   .lw_mark_trigger = false
 };
 
-char *my_config_path = "/etc/ganesha/ganesha.conf";
-char my_pidfile[] = "/var/run/ganesha.pid";
 config_file_t config_struct;
-char log_path[MAXPATHLEN + 1] = "";
-char exec_name[MAXPATHLEN + 1] = "nfs-ganesha";
-char host_name[MAXHOSTNAMELEN + 1] = "localhost";
+char *log_path = NULL;
+char *exec_name = "nfs-ganesha";
+char *host_name = "localhost";
 int debug_level = -1;
 int detach_flag = false;
-char ganesha_exec_path[MAXPATHLEN + 1];
 
 /* command line syntax */
 
@@ -108,30 +105,19 @@ int main(int argc, char *argv[])
   now(&ServerBootTime);
   ServerEpoch    = (time_t)ServerBootTime.tv_sec;
 
-  /* retrieve executable file's name */
-  if(strmaxcpy(ganesha_exec_path, argv[0], sizeof(ganesha_exec_path)) == -1)
+  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     {
-      fprintf(stderr, "exec path %s too long, exiting...\n", argv[0]);
-      exit(1);
+      exec_name = gsh_strdup(tempo_exec_name + 1);
+      if (!exec_name)
+	{
+	  fprintf(stderr,
+		  "Unable to allocate memory for exec name, exiting...\n");
+	  exit(1);
+      }
     }
 
-  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
-    if(strmaxcpy(exec_name, tempo_exec_name + 1, sizeof(exec_name)) == -1)
-      {
-        fprintf(stderr,
-                "exec name %s too long, exiting...\n",
-                tempo_exec_name + 1);
-        exit(1);
-      }
-
   if(*exec_name == '\0')
-    if(strmaxcpy(exec_name, argv[0], sizeof(exec_name)) == -1)
-      {
-        fprintf(stderr,
-                "exec name %s too long, exiting...\n",
-                tempo_exec_name + 1);
-        exit(1);
-      }
+    exec_name = argv[0];
 
   /* get host name */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
@@ -140,28 +126,14 @@ int main(int argc, char *argv[])
       exit(1);
     }
   else
-    if(strmaxcpy(host_name, localmachine, sizeof(host_name)) == -1)
-      {
-        fprintf(stderr,
-                "host name %s too long, exiting...\n",
-                localmachine);
-        exit(1);
-      }
-
-  if(strmaxcpy(config_path, my_config_path, sizeof(config_path)) == -1)
     {
-      fprintf(stderr,
-              "default config path %s too long, exiting...\n",
-              my_config_path);
-      exit(1);
-    }
-
-  if(strmaxcpy(pidfile_path, my_pidfile, sizeof(pidfile_path)) == -1)
-    {
-      fprintf(stderr,
-              "default pidfile path %s too long, exiting...\n",
-              my_pidfile);
-      exit(1);
+      host_name = gsh_strdup(localmachine);
+      if (!host_name)
+	{
+	  fprintf(stderr,
+		  "Unable to allocate memory for hostname, exiting...\n");
+	  exit(1);
+	}
     }
 
   /* now parsing options with getopt */
@@ -181,11 +153,11 @@ int main(int argc, char *argv[])
 
         case 'L':
           /* Default Log */
-          if(strmaxcpy(log_path, optarg, sizeof(log_path)) == -1)
+	  log_path = gsh_strdup(optarg);
+	  if (!log_path)
             {
               fprintf(stderr,
-                      "Path %s too long for option 'L'.\n",
-                      optarg);
+		      "Unable to allocate memory for log path.\n");
               exit(1);
             }
           break;
@@ -203,18 +175,20 @@ int main(int argc, char *argv[])
 
         case 'f':
           /* config file */
-          if(strmaxcpy(config_path, optarg, sizeof(config_path)) == -1)
+	  
+	  config_path = gsh_strdup(optarg);
+	  if (!config_path)
             {
               fprintf(stderr,
-                      "Path %s too long for option 'f'.\n",
-                      optarg);
+                      "Unable to allocate memory for config path.\n");
               exit(1);
             }
           break;
 
         case 'p':
           /* PID file */
-          if(strmaxcpy(pidfile_path, optarg, sizeof(pidfile_path)) == -1)
+	  pidfile_path = gsh_strdup(optarg);
+	  if (!pidfile_path)
             {
               fprintf(stderr,
                       "Path %s too long for option 'f'.\n",
@@ -357,7 +331,7 @@ int main(int argc, char *argv[])
   if(!config_struct)
     {
       LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
-               config_path, config_GetErrorMsg());
+	       config_path, config_GetErrorMsg());
     }
 
   start_fsals(config_struct);

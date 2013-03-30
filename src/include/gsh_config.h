@@ -392,10 +392,10 @@ typedef struct nfs_version4_parameter {
 	bool return_bad_stateid;
 	/** Domain to use if we aren't using the nfsidmap.  Defaults
 	    to DOMAINNAME_DEFAULT and is set with DomainName. */
-	char domainname[NFS4_MAX_DOMAIN_LEN + 1];
+	char *domainname;
 	/** Path to the idmap configuration file.  Defaults to
 	    IDMAPCONF_DEFAULT, settable with IdMapConf */
-	char idmapconf[MAXPATHLEN + 1];
+	char *idmapconf;
 	/** Whether to use local password (PAM, on Linux) rather than
 	    nfsidmap.  Defaults to false if nfsidmap support is
 	    compiled in and true if it isn't.  Settable with
@@ -599,9 +599,9 @@ typedef struct nfs_ip_name_param {
 	/** Expiration time for ip-name mappings.  Defautls to
 	    IP_NAME_Expiration, and settable with Expiration_Time. */
 	uint32_t expiration_time;
-	/** File holding mappings to preload.  Defautls to none,
+	/** File holding mappings to preload.  Defautls to NULL,
 	    settable with Map. */
-	char mapfile[MAXPATHLEN + 1];
+	char *mapfile;
 } nfs_ip_name_parameter_t;
 
 /** @} */
