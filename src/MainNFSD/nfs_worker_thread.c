@@ -467,6 +467,11 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   memset(related_client, 0, sizeof(exportlist_client_entry_t));
   memset(&req_ctx, 0, sizeof(struct req_op_context));
+  req_ctx.creds = &user_credentials;
+  req_ctx.caller_addr = &worker_data->hostaddr;
+  req_ctx.clientid = NULL;
+  req_ctx.nfs_vers = req->rq_vers;
+  req_ctx.req_type = preq->rtype;
 
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
@@ -476,7 +481,7 @@ static void nfs_rpc_execute(request_data_t *preq,
    * capture hostaddr at SVC_RECV).  For TCP, if we intend to use
    * this, we should sprint a buffer once, in when we're setting up
    * xprt private data. */
-  if(copy_xprt_addr(&worker_data->hostaddr, xprt) == 0)
+  if(copy_xprt_addr(req_ctx.caller_addr, xprt) == 0)
 
 /* can I change this to be call by ref instead of copy?
  * the xprt is valid for the lifetime here
@@ -495,8 +500,8 @@ static void nfs_rpc_execute(request_data_t *preq,
       return;
     }
 
-  port = get_port(&worker_data->hostaddr);
-  req_ctx.client = get_gsh_client(&worker_data->hostaddr, false);
+  port = get_port(req_ctx.caller_addr);
+  req_ctx.client = get_gsh_client(req_ctx.caller_addr, false);
   if(req_ctx.client == NULL)
     {
       LogDebug(COMPONENT_DISPATCH,
@@ -507,12 +512,10 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
   if(isDebug(COMPONENT_DISPATCH))
     {
-      char addrbuf[SOCK_NAME_MAX + 1];
-      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
       LogDebug(COMPONENT_DISPATCH,
                "Request from %s for Program %d, Version %d, Function %d "
                "has xid=%u",
-               addrbuf,
+               req_ctx.client->hostaddr_str,
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
                req->rq_xid);
     }
@@ -554,8 +557,6 @@ static void nfs_rpc_execute(request_data_t *preq,
         if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
             (caddr_t) res_nfs) == false)
           {
-              char addrbuf[SOCK_NAME_MAX + 1];
-              sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
               LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling "
                        "svc_sendreply on a duplicate request. rpcxid=%u "
@@ -563,7 +564,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                        "nfs version:%d proc:%d xid:%u errno: %d",
                        req->rq_xid, xprt->xp_fd,
                        preqnfs->funcdesc->funcname,
-                       addrbuf, (int)req->rq_prog,
+                       req_ctx.client->hostaddr_str, (int)req->rq_prog,
                        (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
                        errno);
               svcerr_systemerr(xprt, req);
@@ -1007,13 +1008,7 @@ static void nfs_rpc_execute(request_data_t *preq,
             }
         }
 
-      /* set up the request context
-       */
-      req_ctx.creds = &user_credentials;
-      req_ctx.caller_addr = &worker_data->hostaddr;
-      req_ctx.clientid = NULL;
-      req_ctx.nfs_vers = req->rq_vers;
-      req_ctx.req_type = preq->rtype;
+      /* processing */
 
 #if 0
       LogDebug(COMPONENT_DISPATCH,
@@ -1084,8 +1079,6 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
                        (caddr_t) res_nfs) == false)
         {
-          char addrbuf[SOCK_NAME_MAX + 1];
-          sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
           LogDebug(COMPONENT_DISPATCH,
                   "NFS DISPATCHER: FAILURE: Error while calling "
                    "svc_sendreply on a new request. rpcxid=%u "
@@ -1093,7 +1086,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                    "nfs version:%d proc:%d xid:%u errno: %d",
                    req->rq_xid, xprt->xp_fd,
                    preqnfs->funcdesc->funcname,
-                   addrbuf, (int)req->rq_prog,
+                   req_ctx.client->hostaddr_str, (int)req->rq_prog,
                    (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
                    errno);
 	  if (xprt->xp_type != XPRT_UDP)

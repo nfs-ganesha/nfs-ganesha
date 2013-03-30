@@ -45,6 +45,7 @@ struct gsh_client {
 	struct gsh_buffdesc addr;
 	int64_t refcnt;
 	nsecs_elapsed_t last_update;
+	char hostaddr_str[SOCK_NAME_MAX];
 	unsigned char addrbuf[];
 };
 

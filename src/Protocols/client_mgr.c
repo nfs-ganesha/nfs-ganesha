@@ -151,6 +151,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
 	cl->addr.addr = cl->addrbuf;
 	cl->addr.len = addr_len;
 	cl->refcnt = 0;  /* we will hold a ref starting out... */
+	sprint_sockaddr(client_ipaddr, cl->hostaddr_str, sizeof(cl->hostaddr_str));
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
