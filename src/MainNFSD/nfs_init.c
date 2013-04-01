@@ -1137,16 +1137,31 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Set the Core dump size if set */
   if(nfs_param.core_param.core_dump_size != -1)
     {
-      LogDebug(COMPONENT_INIT, "core size rlimit set to %ld",
-               nfs_param.core_param.core_dump_size);
+      LogInfo(COMPONENT_INIT, "core size rlimit set to %ld",
+              nfs_param.core_param.core_dump_size);
       ulimit_data.rlim_cur = nfs_param.core_param.core_dump_size;
       ulimit_data.rlim_max = nfs_param.core_param.core_dump_size;
 
       if(setrlimit(RLIMIT_CORE, &ulimit_data) != 0)
         {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogCrit(COMPONENT_INIT, "Impossible to set RLIMIT_CORE to %ld",
-                  nfs_param.core_param.core_dump_size);
+          LogCrit(COMPONENT_INIT,
+                  "setrlimit() returned error on RLIMIT_CORE, core dump size: %ld, error %s(%d)",
+                  nfs_param.core_param.core_dump_size,
+                  strerror(errno), errno);
+        }
+    }
+  else
+    {
+      if(getrlimit(RLIMIT_CORE, &ulimit_data) != 0)
+        {
+          LogCrit(COMPONENT_INIT,
+                  "getrlimit() returned error on RLIMIT_CORE, error %s(%d)",
+                  strerror(errno), errno);
+        }
+      else
+        {
+          LogInfo(COMPONENT_INIT, "core size rlimit is %ld",
+                  ulimit_data.rlim_cur);
         }
     }
 
