@@ -808,6 +808,14 @@ static state_status_t create_file_recall(
 			pthread_mutex_unlock(&g->sls_mutex);
 		}
 		if (match) {
+			/**
+			 * @todo This is where you would record that a
+			 * recall was initiated.  The range recalled
+			 * is specified in @c segment.  The clientid
+			 * is in
+			 * s->state_owner->so_owner.so_nfs4_owner.so_clientid
+			 * But you may want to ignore this location entirely.
+			 */
 			list_entry = gsh_malloc(
 				sizeof(struct recall_state_list));
 			if (!list_entry) {
@@ -1042,6 +1050,19 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 	}
 
 	if (call->cbt.v_u.v4.res.status == NFS4_OK) {
+		/**
+		 * @todo This is where you would record that a
+		 * recall was acknowledged and that a layoutreturn
+		 * will be sent later.
+		 * The number of times we retried the call is
+		 * specified in cb_data->attempts and the time we
+		 * specified the first call is in
+		 * cb_data->first_recall.
+		 * We don't have the clientid here.  If you want it,
+		 * we could either move the stateid look up to be
+		 * above this point in the function, or we could stash
+		 * the clientid in cb_data.
+		 */
 		gsh_free(cb_data);
 		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 		nfs41_complete_single(call, hook, arg, flags);
@@ -1090,6 +1111,19 @@ revoke:
 			.creds = &synthetic_creds,
 			.caller_addr = NULL
 		};
+		/**
+		 * @todo This is where you would record that a
+		 * recall was completed, one way or the other.
+		 * The clientid is specified in
+		 * state->state_owner->so_owner.so_nfs4_owner.so_clientid
+		 * The number of times we retried the call is
+		 * specified in cb_data->attempts and the time we
+		 * specified the first call is in
+		 * cb_data->first_recall.  If
+		 * call->cbt.v_u.v4.res.status is
+		 * NFS4ERR_NOMATCHING_LAYOUT it was a successful
+		 * return, otherwise we count it as an error.
+		 */
 
 		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
 		return_context.clientid = (&state->state_owner->so_owner.
@@ -1200,6 +1234,17 @@ static void layoutrecall_one_call(void *arg)
 			 * At present we just assume the client has
 			 * gone completely out to lunch and fake a
 			 * return.
+			 */
+
+			/**
+			 * @todo This is where you would record that a
+			 * recall failed.  (It indicates a transport error.)
+			 * The clientid is specified in
+			 * s->state_owner->so_owner.so_nfs4_owner.so_clientid
+			 * The number of times we retried the call is
+			 * specified in cb_data->attempts and the time
+			 * we specified the first call is in
+			 * cb_data->first_recall.
 			 */
 			if (cb_data->attempts == 0) {
 				delayed_submit(return_one_async,
