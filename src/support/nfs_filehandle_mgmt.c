@@ -328,6 +328,7 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
   fsal_status_t fsal_status;
   file_handle_v3_t *file_handle;
   struct fsal_handle_desc fh_desc;
+  int padding = 0;
 
   print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
 
@@ -352,6 +353,12 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
 
   /* Set the len */
   pfh3->data.data_len = nfs3_sizeof_handle(file_handle); /* re-adjust to as built */
+
+  /* correct packet's fh length so it's divisible by 4 to trick dNFS into
+     working. This is essentially sending the padding. */
+  padding = (4 - (pfh3->data.data_len%4))%4;
+  if ((pfh3->data.data_len + padding) <= sizeof(struct alloc_file_handle_v3))
+    pfh3->data.data_len += padding;
 
   print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
 
