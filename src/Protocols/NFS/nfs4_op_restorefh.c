@@ -88,6 +88,15 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
 
   data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
+  /* Restore the export information */
+  data->pexport      = data->saved_pexport;
+  data->export_perms = data->saved_export_perms;
+
+  /* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
+   * because we are restoring saved information, and the
+   * credential checking may be skipped.
+   */
+
   /* If current and saved entry are identical, get no references and
      make no changes. */
 

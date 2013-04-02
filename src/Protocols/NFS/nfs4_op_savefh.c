@@ -95,6 +95,10 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
   data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
 
+  /* Save the export information */
+  data->saved_pexport      = data->pexport;
+  data->saved_export_perms = data->export_perms;
+
   /* If saved and current entry are equal, skip the following. */
 
   if (data->saved_entry == data->current_entry) {
