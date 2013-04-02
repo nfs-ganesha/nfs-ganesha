@@ -100,16 +100,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
 
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-        {
-          res_LOOKUPP4.status = error;
-          return res_LOOKUPP4.status;
-        }
-    }
-
   /* Preparying for cache_inode_lookup ".." */
   file_entry = NULL;
   dir_entry = data->current_entry;

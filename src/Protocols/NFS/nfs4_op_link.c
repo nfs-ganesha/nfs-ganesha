@@ -83,14 +83,6 @@ int nfs4_op_link(struct nfs_argop4 *op,
                 goto out;
         }
 
-        /* If data->exportp is null, a junction from pseudo fs was
-           traversed, credp and exportp have to be updated */
-        if (data->pexport == NULL) {
-                res_LINK4.status = nfs4_SetCompoundExport(data);
-                if(res_LINK4.status != NFS4_OK)
-                        goto out;
-        }
-
         /*
          * This operation creates a hard link, for the file
          * represented by the saved FH, in directory represented by

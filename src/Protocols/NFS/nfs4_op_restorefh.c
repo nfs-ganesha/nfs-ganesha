@@ -81,19 +81,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   if (res_RESTOREFH.status != NFS4_OK)
     return res_RESTOREFH.status;
 
-  /* If data->exportp is null, a junction from pseudo fs was
-     traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_RESTOREFH.status = nfs4_SetCompoundExport(data);
-      if(res_RESTOREFH.status != NFS4_OK)
-        {
-          LogCrit(COMPONENT_NFS_V4,
-                  "Error %d in nfs4_SetCompoundExport", res_RESTOREFH.status);
-          return res_RESTOREFH.status;
-        }
-    }
-
   /* Copy the data from current FH to saved FH */
   memcpy(data->currentFH.nfs_fh4_val,
          data->savedFH.nfs_fh4_val,

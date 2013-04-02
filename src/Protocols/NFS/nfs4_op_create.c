@@ -106,19 +106,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
       goto out;
     }
 
-  /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_CREATE4.status = NFS4ERR_ROFS;
-      goto out;
-    }
-
-  if (!(nfs_export_check_security(data->reqp, data->pexport)))
-    {
-      res_CREATE4.status = NFS4ERR_PERM;
-      goto out;
-    }
-
   /* Ask only for supported attributes */
   if(!nfs4_Fattr_Supported(&arg_CREATE4.createattrs))
     {

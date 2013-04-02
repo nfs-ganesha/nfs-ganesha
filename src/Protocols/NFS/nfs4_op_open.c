@@ -890,16 +890,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 return res_OPEN4->status;
         }
 
-        /* This can't be done on the pseudofs */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                /* Since the PseudoFS contains nothing but
-                   directories. */
-                res_OPEN4->status = NFS4ERR_ISDIR;
-                LogDebug(COMPONENT_STATE,
-                         "NFS4 OPEN returning NFS4ERR_ISDIR");
-                return res_OPEN4->status;
-        }
-
         /*
          * If Filehandle points to a xattr object, manage it via the
          * xattrs specific functions

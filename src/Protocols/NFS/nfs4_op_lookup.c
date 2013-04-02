@@ -111,12 +111,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if (!(nfs_export_check_security(data->reqp, data->pexport))) {
-                res_LOOKUP4->status = NFS4ERR_PERM;
-                goto out;
-        }
-
-
         /* Do the lookup in the FSAL */
         file_entry = NULL;
         dir_entry = data->current_entry;

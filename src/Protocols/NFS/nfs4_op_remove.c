@@ -77,13 +77,6 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   if(res_REMOVE4.status != NFS4_OK)
     goto out;
 
-  /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_REMOVE4.status = NFS4ERR_ROFS;
-      goto out;
-    }
-
   /* Validate and convert the UFT8 target to a regular string */
   res_REMOVE4.status = nfs4_utf8string2dynamic(&arg_REMOVE4.target,
 					       UTF8_SCAN_ALL,
