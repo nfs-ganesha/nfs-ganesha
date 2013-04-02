@@ -663,17 +663,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 	  goto out;
         }
 
-      if(data->mounted_on_FH.nfs_fh4_len == 0)
-        {
-          if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
-            {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the 'mounted on' file handle");
-              res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-	      goto out;
-            }
-        }
-
       if(data->currentFH.nfs_fh4_len == 0)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
@@ -759,12 +748,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
       return res_LOOKUPP4.status;
     }
 
-  /* Copy this to the mounted on FH (if no junction is traversed */
-  memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-         (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
-  data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
-  /* Keep the vnode pointer within the data compound */
+  /* Return the reference to the old current entry */
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
@@ -898,17 +882,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      if(data->mounted_on_FH.nfs_fh4_len == 0)
-        {
-          if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
-            {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the 'mounted on' file handle");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
-            }
-        }
-
       if(data->currentFH.nfs_fh4_len == 0)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
@@ -929,24 +902,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      /* The new fh is to be the "mounted on Filehandle" */
-      memcpy(data->mounted_on_FH.nfs_fh4_val, data->currentFH.nfs_fh4_val,
-             sizeof(file_handle_v4_t));
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
-      /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-      fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
-
-      cache_inode_make_root(fsal_handle,
-			    &entry);
-      if (entry == NULL)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
-        }
 
       /* Keep the entry within the compound data */
       if (data->current_entry) {

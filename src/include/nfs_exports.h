@@ -330,12 +330,11 @@ typedef struct COMPOUND4res_extended COMPOUND4res_extended;
  * This structure contains the necessary stuff for keeping the state
  * of a V4 compound request.
  */
-typedef struct compoud_data {
+typedef struct compound_data {
 	nfs_fh4 currentFH; /*< Current filehandle */
 	nfs_fh4 rootFH; /*< Root filehandle */
 	nfs_fh4 savedFH; /*< Saved filehandle */
 	nfs_fh4 publicFH; /*< Public filehandle */
-	nfs_fh4 mounted_on_FH; /*< File handle to "mounted on" File System */
 	stateid4 current_stateid; /*< Current stateid */
 	bool current_stateid_valid; /*< Current stateid is valid */
 	unsigned int minorversion; /*< NFSv4 minor version */

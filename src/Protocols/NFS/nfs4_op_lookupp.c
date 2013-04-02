@@ -73,7 +73,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   cache_entry_t        * dir_entry = NULL;
   cache_entry_t        * file_entry = NULL;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
-  int                    error = 0;
 
   resp->resop = NFS4_OP_LOOKUPP;
   res_LOOKUPP4.status = NFS4_OK;
@@ -127,12 +126,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
           cache_inode_put(file_entry);
           return res_LOOKUPP4.status;
         }
-
-      /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy(data->mounted_on_FH.nfs_fh4_val,
-             data->currentFH.nfs_fh4_val,
-             data->currentFH.nfs_fh4_len);
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Release dir_pentry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later
