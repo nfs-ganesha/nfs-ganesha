@@ -64,6 +64,10 @@ static int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
+  /* If rootFH already set, return success */
+  if(data->rootFH.nfs_fh4_len != 0)
+    return NFS4_OK;
+
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
 
@@ -121,27 +125,6 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
-
-  if(data->mounted_on_FH.nfs_fh4_len == 0)
-    {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
-    }
-  memcpy(data->mounted_on_FH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
-
-  if(data->publicFH.nfs_fh4_len == 0)
-    {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->publicFH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
-    }
-  /* Copy the data where they are supposed to be */
-  memcpy(data->publicFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);

@@ -62,7 +62,12 @@ static int CreatePUBFH4(nfs_fh4 *fh, compound_data_t *data)
   pseudofs_entry_t psfsentry;
   int status = 0;
 
+  /* For the moment, I choose to have rootFH = publicFH */
   psfsentry = *(data->pseudofs->reverse_tab[0]);
+
+  /* If publicFH already set, return success */
+  if(data->publicFH.nfs_fh4_len != 0)
+    return NFS4_OK;
 
   if((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
     return status;
@@ -98,13 +103,16 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
                      compound_data_t *data,
                      struct nfs_resop4 *resp)
 {
+  /* First of all, set the reply to zero to make sure
+   * it contains no parasite information */
+  memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTPUBFH;
   res_PUTPUBFH4.status = NFS4_OK;
 
-  /* For now, GANESHA makes no difference betzeen PUBLICFH and ROOTFH */
+  /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
   res_PUTPUBFH4.status = CreatePUBFH4(&(data->publicFH), data);
   if(res_PUTPUBFH4.status != NFS4_OK)
-    return res_PUTPUBFH4.status;
+    goto out;
 
   /* Fill in compound data */
   set_compound_data_for_pseudo(data);
@@ -114,7 +122,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
     {
       res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->currentFH));
       if(res_PUTPUBFH4.status != NFS4_OK)
-	return res_PUTPUBFH4.status;
+	goto out;
     }
 
   /* Copy the data from current FH to saved FH */
@@ -122,6 +130,14 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
 	 data->publicFH.nfs_fh4_len);
 
   res_PUTPUBFH4.status = NFS4_OK ;
+
+out:
+  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
+  LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
+
+  LogFullDebug(COMPONENT_NFS_V4,
+                    "NFS4 PUTPUBFH: Ending on status %d",
+                    res_PUTPUBFH4.status);
 
   return res_PUTPUBFH4.status;
 }

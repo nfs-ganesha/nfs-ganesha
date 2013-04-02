@@ -3327,12 +3327,14 @@ int nfs4_SetCompoundExport(compound_data_t *data)
         /* This routine is not related to pseudo fs file handle, do
            not handle them */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                return NFS4_OK;
+		LogCrit(COMPONENT_NFS_V4,
+			"Can not set export for pseudo fs");
+		return NFS4ERR_INVAL;
         }
 
         /* Get the export id */
-        if ((exportid = nfs4_FhandleToExportId(&(data->currentFH)))
-            == 0) {
+        exportid = nfs4_FhandleToExportId(&(data->currentFH));
+        if (exportid == 0) {
                 return NFS4ERR_BADHANDLE;
         }
 
@@ -3343,14 +3345,10 @@ int nfs4_SetCompoundExport(compound_data_t *data)
                 return NFS4ERR_BADHANDLE;
         }
 
-        if (!(data->pexport->options & EXPORT_OPTION_NFSV4)) {
-                return NFS4ERR_ACCESS;
-        }
-
-        if (nfs4_MakeCred(data) != NFS4_OK) {
-                return NFS4ERR_WRONGSEC;
-        }
-
+	if(pexport != data->pexport) {
+		data->pexport = pexport;
+		return nfs4_MakeCred(data);
+	}
         return NFS4_OK;
 }                               /* nfs4_SetCompoundExport */
 
@@ -4413,39 +4411,71 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 }
 
 /**
- * @brief Fill in the reqeust contex of the compound data
+ * @brief Validate export permissions and update compound
  *
  * @param[in] data Compound data to be used
  *
- * @return NFS4_OK if successful, NFS4ERR_WRONGSEC otherwise.
+ * @return NFS4_OK if successful, NFS4ERR_ACCESS or NFS4ERR_WRONGSEC otherwise.
  *
  */
 int nfs4_MakeCred(compound_data_t * data)
 {
-  exportlist_client_entry_t related_client;
+	xprt_type_t xprt_type = svc_get_xprt_type(data->reqp->rq_xprt);
+	int port = get_port(data->req_ctx->caller_addr);
 
-  if (!(get_req_uid_gid(data->reqp,
-                        data->pexport,
-                        data->req_ctx->creds)))
-    return NFS4ERR_WRONGSEC;
+	if( !get_req_uid_gid(data->reqp,
+			     data->req_ctx->creds))
+		return NFS4ERR_ACCESS;
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "nfs4_MakeCred about to call nfs_export_check_access");
-  if(!(nfs_export_check_access(&data->pworker->hostaddr,
-                               data->reqp,
-                               data->pexport,
-                               nfs_param.core_param.program[P_NFS],
-                               nfs_param.core_param.program[P_MNT],
-                               &related_client,
-                               data->req_ctx->creds,
-                               false) /* So check_access() doesn't deny based on whether this is a RO export. */
-             ))
-    return NFS4ERR_WRONGSEC;
-  if(!(nfs_check_anon(&related_client, data->pexport,
-                      data->req_ctx->creds)))
-    return NFS4ERR_WRONGSEC;
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "nfs4_MakeCred about to call nfs_export_check_access");
+	nfs_export_check_access(data->req_ctx->caller_addr,
+				data->pexport,
+				&data->export_perms);
 
-  return NFS4_OK;
+	/* Check protocol version */
+	if((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
+		LogInfo(COMPONENT_NFS_V4,
+			"NFS4 not allowed on Export_Id %d %s for client %s",
+			data->pexport->id, data->pexport->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_ACCESS;
+	}
+	/* Check transport type */
+	if(((xprt_type == XPRT_UDP) &&
+	    ((data->export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+	   ((xprt_type == XPRT_TCP) &&
+	    ((data->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
+		LogInfo(COMPONENT_NFS_V4,
+			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
+			xprt_type_to_str(xprt_type),
+			data->pexport->id, data->pexport->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_ACCESS;
+	}
+	/* Check if client is using a privileged port. */
+	if(((data->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&
+	   (port >= IPPORT_RESERVED)) {
+		LogInfo(COMPONENT_NFS_V4,
+			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
+			port, data->pexport->id, data->pexport->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_ACCESS;
+	}
+	/* Test if export allows the authentication provided */
+	if (nfs_export_check_security(data->reqp,
+				      &data->export_perms,
+				      data->pexport) == FALSE) {
+		LogInfo(COMPONENT_NFS_V4,
+			"NFS4 auth not allowed on Export_Id %d %s for client %s",
+			data->pexport->id, data->pexport->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_WRONGSEC;
+	}
+	nfs_check_anon(&data->export_perms,
+		       data->pexport,
+		       data->req_ctx->creds);
+	return NFS4_OK;
 }
 
 /**
