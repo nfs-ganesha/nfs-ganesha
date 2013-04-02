@@ -1096,7 +1096,8 @@ static void nfs_rpc_execute(request_data_t *preq,
                    addrbuf, (int)req->rq_prog,
                    (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
                    errno);
-          svc_destroy(xprt);
+	  if (xprt->xp_type != XPRT_UDP)
+	    svc_destroy(xprt);
           goto freeargs;
         }
 
