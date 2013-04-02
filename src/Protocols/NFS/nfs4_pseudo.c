@@ -511,6 +511,39 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
 }                               /* nfs4_op_access_pseudo */
 
 /**
+ * @brief set_compound_data_for_pseudo: fills in compound data for pseudo fs
+ * 
+ * Fills in:
+ *
+ * data->current_entry
+ * data->current_filetype
+ * data->pexport
+ * data->export_perms.options
+ *
+ * @param data  [INOUT] Pointer to the compound request's data
+ * 
+ */
+void set_compound_data_for_pseudo(compound_data_t * data)
+{
+  if (data->current_entry) {
+     cache_inode_put(data->current_entry);
+  }
+  if (data->current_ds) {
+      data->current_ds->ops->put(data->current_ds);
+  }
+  /* No cache inode entry for the directory within pseudo fs */
+  data->current_ds           = NULL;
+  data->current_entry        = NULL; /* No cache inode entry */
+  data->current_filetype     = DIRECTORY; /* Always a directory */
+  data->pexport              = NULL; /* No exportlist is related to pseudo fs */
+  data->export_perms.options = EXPORT_OPTION_ROOT |
+                               EXPORT_OPTION_MD_READ_ACCESS |
+                               EXPORT_OPTION_AUTH_TYPES |
+                               EXPORT_OPTION_NFSV4 |
+                               EXPORT_OPTION_TRANSPORTS;
+}
+
+/**
  * @brief Looks up into the pseudo fs.
  *
  * Looks up into the pseudo fs. If a junction traversal is detected,
@@ -790,10 +823,10 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
       cache_inode_put(data->current_entry);
   }
   data->current_entry = NULL;
-/* pseudo file system is always a directory and we need to keep
- * nfs4_sanity_check_FH  happy.
- */
-  data->current_filetype = DIRECTORY;
+
+  /* Fill in compound data */
+  set_compound_data_for_pseudo(data);
+
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_pseudo */

@@ -105,13 +105,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
         /* If the filehandle is not pseudo fs file handle, get the
            entry related to it, otherwise use fake values */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                if (data->current_entry) {
-                        cache_inode_put(data->current_entry);
-                }
-                data->current_entry = NULL;
-                data->current_filetype = DIRECTORY;
-                data->pexport = NULL; /* No exportlist is related to
-                                         pseudo fs */
+		set_compound_data_for_pseudo(data);
         } else {
                 /* If data->exportp is null, a junction from pseudo fs
                    was traversed, credp and exportp have to be

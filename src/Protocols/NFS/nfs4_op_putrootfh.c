@@ -108,22 +108,10 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   if(res_PUTROOTFH4.status != NFS4_OK)
     return res_PUTROOTFH4.status;
 
-  if (data->current_entry) {
-      cache_inode_put(data->current_entry);
-  }
-  if (data->current_ds) {
-      data->current_ds->ops->put(data->current_ds);
-  }
-  /* No cache inode entry for the directory within pseudo fs */
-  data->current_ds = NULL;
-  data->current_entry = NULL;
-  data->current_filetype = DIRECTORY;
+  /* Fill in compound data */
+  set_compound_data_for_pseudo(data);
 
-  /* I copy the root FH to the currentFH and, if not already done, to
-     the publicFH */
-  /* For the moment, I choose to have rootFH = publicFH */
-  /* For initial mounted_on_FH, I'll use the rootFH, this will change
-     at junction traversal */
+  /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
       res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->currentFH));
