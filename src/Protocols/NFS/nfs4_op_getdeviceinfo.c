@@ -119,7 +119,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
         /* Check that we have space */
 
-        export = nfs_Get_export_by_id(data->pfullexportlist,
+        export = nfs_Get_export_by_id(nfs_param.pexportlist,
                                       deviceid.export_id);
 
         if (export == NULL) {
