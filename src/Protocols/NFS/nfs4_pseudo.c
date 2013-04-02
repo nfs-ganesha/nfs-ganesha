@@ -140,33 +140,15 @@ int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
       entry = glist_entry(glist, exportlist_t, exp_list);
 
       /* skip exports that aren't for NFS v4 */
-      if((entry->options & EXPORT_OPTION_NFSV4) == 0)
+      if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
         {
           continue;
         }
-
-      if(entry->options & EXPORT_OPTION_PSEUDO)
+      if(entry->export_perms.options & EXPORT_OPTION_PSEUDO)
         {
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: Id          = %d",
-                       entry->id);
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: ANON        = %d",
-                       entry->anonymous_uid);
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: Path        = %s",
-                       entry->fullpath);
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: Options     = 0x%x",
-                       entry->options);
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: Num Clients = %d",
-                       entry->clients.num_clients);
-
-          /* A pseudo path is to ne managed */
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                       "BUILDING PSEUDOFS: Now managing %s seen as %s",
-                       entry->fullpath, entry->pseudopath);
+          LogDebug(COMPONENT_NFS_V4_PSEUDO,
+                   "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
+                   entry->id, entry->fullpath, entry->pseudopath);
 
 	 /* there must be a leading '/' in the pseudo path */
           if(entry->pseudopath[0] != '/')

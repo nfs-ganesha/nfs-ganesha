@@ -1847,40 +1847,40 @@ static char *client_root_access[] = { "*" };
 /**
  * @brief builds an export entry for '/' with default parameters
  *
+ * @note This is only referenced by MainNFSD/fuse_binding.c which is
+ * not operational at this point.  When that happens, this will have
+ * to be reworked into export manager.
+ *
  * @return Root export.
  */
 
 exportlist_t *BuildDefaultExport()
 {
   exportlist_t *p_entry;
+  int rc;
 
   /* allocates new export entry */
-  p_entry = gsh_malloc(sizeof(exportlist_t));
+  p_entry = gsh_calloc(1, sizeof(exportlist_t));
 
   if(p_entry == NULL)
     return NULL;
 
   /** @todo set default values here */
 
-  p_entry->next = NULL;
-  p_entry->options = 0;
-  p_entry->status = EXPORTLIST_OK;
-  p_entry->clients.num_clients = 0;
-  p_entry->access_type = ACCESSTYPE_RW;
-  p_entry->anonymous_uid = ANON_UID;
-  p_entry->MaxOffsetWrite = 0;
-  p_entry->MaxOffsetRead = 0;
-  p_entry->MaxCacheSize = 0;
+  p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
+
+  /* By default, export is RW */
+  p_entry->export_perms.options |= EXPORT_OPTION_RW_ACCESS;
 
   /* by default, we support auth_none and auth_sys */
-  p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
+  p_entry->export_perms.options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
   /* by default, we support all NFS versions supported by the core and both transport protocols */
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
-    p_entry->options |= EXPORT_OPTION_NFSV3;
+    p_entry->export_perms.options |= EXPORT_OPTION_NFSV3;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
-    p_entry->options |= EXPORT_OPTION_NFSV4;
-  p_entry->options |= EXPORT_OPTION_UDP | EXPORT_OPTION_TCP;
+    p_entry->export_perms.options |= EXPORT_OPTION_NFSV4;
+  p_entry->export_perms.options |= EXPORT_OPTION_TRANSPORTS;
 
   p_entry->filesystem_id.major = 101;
   p_entry->filesystem_id.minor = 101;
@@ -2282,12 +2282,14 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
  * @return true if the request flavor exists in the matching export
  * false otherwise
  */
-bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
+bool nfs_export_check_security(struct svc_req *req,
+			       export_perms_t * p_export_perms,
+			       exportlist_t *pexport)
 {
   switch (req->rq_cred.oa_flavor)
     {
       case AUTH_NONE:
-        if((pexport->options & EXPORT_OPTION_AUTH_NONE) == 0)
+        if((p_export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_NONE",
@@ -2297,7 +2299,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
         break;
 
       case AUTH_UNIX:
-        if((pexport->options & EXPORT_OPTION_AUTH_UNIX) == 0)
+        if((p_export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_UNIX",
@@ -2308,7 +2310,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
 
 #ifdef _HAVE_GSSAPI
       case RPCSEC_GSS:
-        if((pexport->options &
+        if((p_export_perms->options &
            (EXPORT_OPTION_RPCSEC_GSS_NONE |
             EXPORT_OPTION_RPCSEC_GSS_INTG |
             EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
@@ -2329,7 +2331,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
             switch(svc)
               {
                 case RPCSEC_GSS_SVC_NONE:
-                  if((pexport->options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_NONE) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,
@@ -2341,7 +2343,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                   break;
 
                 case RPCSEC_GSS_SVC_INTEGRITY:
-                  if((pexport->options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_INTG) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,
@@ -2353,7 +2355,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                   break;
 
                 case RPCSEC_GSS_SVC_PRIVACY:
-                  if((pexport->options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,

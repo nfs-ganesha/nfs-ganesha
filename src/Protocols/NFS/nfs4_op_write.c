@@ -247,7 +247,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
                "  stable = %d",
                offset, size, stable_how);
 
-  if((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
+  if((data->pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETWRITE) ==
      EXPORT_OPTION_MAXOFFSETWRITE)
     if((offset + size) > data->pexport->MaxOffsetWrite)
       {
@@ -266,7 +266,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   /* We should check against the value we returned in getattr. This was not
    * the case before the following check_size code was added.
    */
-  if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
+  if( ((data->pexport->export_perms.options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
     check_size = data->pexport->MaxWrite;
   else
     check_size = entry->obj_handle->export->ops->fs_maxwrite(entry->obj_handle->export);

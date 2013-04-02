@@ -119,10 +119,20 @@ typedef union exportlist_client_union__ {
 	exportlist_client_gss_t gssprinc;
 } exportlist_client_union_t;
 
+typedef struct export_perms__ {
+	uid_t anonymous_uid; /* root uid when no root access is available
+			      * uid when access is available but all users
+			      * are being squashed. */
+	gid_t anonymous_gid; /* root gid when no root access is available
+			      * gid when access is available but all users
+			      * are being squashed. */
+	unsigned int options;/* avail. mnt options */
+} export_perms_t;
+
 typedef struct exportlist_client_entry__ {
 	exportlist_client_type_t type;
 	exportlist_client_union_t client;
-	unsigned int options; /*< Available mount options */
+	export_perms_t client_perms; /*< Available mount options */
 } exportlist_client_entry_t;
 
 #define EXPORTS_NB_MAX_CLIENTS 128
@@ -171,15 +181,7 @@ typedef struct exportlist {
 	struct fsal_obj_handle *proot_handle; /*< FSAL handle for the root of
 						  the file system */
 
-	uid_t anonymous_uid; /*< Root UID when no root access is available/
-			         UID when access is available but all users
-				 are being squashed. */
-	gid_t anonymous_gid; /*< Root GID when no root access is available/
-			         GID when access is available but all users
-				 are being squashed. */
-	bool all_anonymous; /*< When set to true, all users including root
-			        will be given the anon uid/gid */
-	unsigned int options; /*< Available mount options */
+	export_perms_t export_perms;  /*< available mount options */
 	unsigned char seckey[EXPORT_KEY_SIZE]; /*< Checksum for FH validity */
 	bool use_commit;
 	uint32_t MaxRead; /*< Max Read for this entry */

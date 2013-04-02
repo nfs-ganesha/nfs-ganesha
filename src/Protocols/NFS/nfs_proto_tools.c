@@ -816,7 +816,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 					      &(pace->who.gid),
 					      (args->data ?
 					       args->data->pexport
-					       ->anonymous_gid : -1))) {
+					       ->export_perms.anonymous_gid : -1))) {
 					goto baderr;
 				}
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -830,7 +830,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2uid(&uname, &(pace->who.uid),
 					      (args->data ?
 					       args->data->pexport->
-					       anonymous_uid :
+					       export_perms.anonymous_uid :
 					       -1))) {
 					goto baderr;
 				}
@@ -1347,7 +1347,7 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		if((args->data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD)
+		if((args->data->pexport->export_perms.options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD)
 			maxread = args->data->pexport->MaxRead;
 		else
 			maxread = export->ops->fs_maxread(export);
@@ -1376,7 +1376,7 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		if((args->data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)
+		if((args->data->pexport->export_perms.options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)
 			maxwrite = args->data->pexport->MaxWrite;
 		else
 			maxwrite = export->ops->fs_maxwrite(export);
@@ -1516,7 +1516,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	}
 
 	if (! name2uid(&ownerdesc, &uid,
-		      (args->data ? args->data->pexport->anonymous_uid
+		      (args->data ? args->data->pexport->export_perms.anonymous_uid
 		       : -1))) {
 		return FATTR_BADOWNER;
 	}
@@ -1564,7 +1564,7 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (! name2gid(&groupdesc, &gid,
 		      (args->data ?
-		       args->data->pexport->anonymous_gid : -1)))
+		       args->data->pexport->export_perms.anonymous_gid : -1)))
 		return FATTR_BADOWNER;
 
 	xdr_setpos(xdr, newpos);

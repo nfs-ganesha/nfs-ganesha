@@ -188,7 +188,7 @@ int nfs_Write(nfs_arg_t *arg,
          data = arg->arg_write3.data.data_val;
 
         /* Do not exceed maxium WRITE offset if set */
-        if ((export->options & EXPORT_OPTION_MAXOFFSETWRITE)) {
+        if ((export->export_perms.options & EXPORT_OPTION_MAXOFFSETWRITE)) {
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "-----> Write offset=%"PRIu64
                              " count=%"PRIu64
@@ -219,7 +219,7 @@ int nfs_Write(nfs_arg_t *arg,
 
         /* We should take care not to exceed FSINFO wtmax field for
            the size */
-        if ((export->options & EXPORT_OPTION_MAXWRITE) &&
+        if ((export->export_perms.options & EXPORT_OPTION_MAXWRITE) &&
             size > export->MaxWrite) {
                 /* The client asked for too much data, we must
                    restrict him */

@@ -186,7 +186,7 @@ nfs_Read(nfs_arg_t *arg,
         size = arg->arg_read3.count;
 
         /* do not exceed maxium READ offset if set */
-        if (export->options & EXPORT_OPTION_MAXOFFSETREAD)
+        if (export->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD)
          {
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "-----> Read offset=%"PRIu64" count=%zd "
@@ -215,7 +215,7 @@ nfs_Read(nfs_arg_t *arg,
         }
 
         /* We should not exceed the FSINFO rtmax field for the size */
-        if (((export->options & EXPORT_OPTION_MAXREAD)) &&
+        if (((export->export_perms.options & EXPORT_OPTION_MAXREAD)) &&
             size > export->MaxRead) {
                 /* The client asked for too much, normally this should
                    not happen because the client is calling nfs_Fsinfo
