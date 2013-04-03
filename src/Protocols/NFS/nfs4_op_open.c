@@ -100,6 +100,7 @@ open4_do_open(struct nfs_argop4  * op,
         state_t              * file_state = NULL;
 	/* Tracking data for the open state */
 	struct state_refer     refer;
+        fsal_accessflags_t access_mask = 0;
 
         *state = NULL;
         *new_state = true;
@@ -114,21 +115,49 @@ open4_do_open(struct nfs_argop4  * op,
 	}
 
         if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-                cache_status = cache_inode_access(data->current_entry,
-						  FSAL_WRITE_ACCESS,
-						  data->req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        return nfs4_Errno(cache_status);
-                }
+                access_mask |= FSAL_READ_ACCESS;
         }
 
         if (args->share_access & OPEN4_SHARE_ACCESS_READ) {
-                cache_status = cache_inode_access(data->current_entry,
-						  FSAL_READ_ACCESS,
-						  data->req_ctx);
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			return nfs4_Errno(cache_status);
-		}
+                access_mask |= FSAL_READ_ACCESS;
+        }
+
+        cache_status = cache_inode_access(data->current_entry,
+                                          access_mask,
+                                          data->req_ctx);
+
+        if(cache_status != CACHE_INODE_SUCCESS) {
+                /* If non-permission error, return it.*/
+                if(cache_status != CACHE_INODE_FSAL_EACCESS) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s",
+                                 cache_inode_err_str(cache_status));
+                        return nfs4_Errno(cache_status);
+                }
+
+                /* If WRITE access is requested, return permission error */
+                if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s with ACCESS_WRITE",
+                                 cache_inode_err_str(cache_status));
+                        return nfs4_Errno(cache_status);
+                }
+
+                /* If just a permission error and file was opend read only,
+                 * try execute permission.
+                 */
+                cache_status = cache_inode_access(
+                                      data->current_entry,
+                                      FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                                      FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+                                      data->req_ctx);
+
+                if(cache_status != CACHE_INODE_SUCCESS) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s after checking for executer permission",
+                                 cache_inode_err_str(cache_status));
+                        return nfs4_Errno(cache_status);
+                }
         }
 
         candidate_data.share.share_access

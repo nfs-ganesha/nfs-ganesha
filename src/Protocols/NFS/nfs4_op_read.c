@@ -243,9 +243,20 @@ nfs4_op_read(struct nfs_argop4 *op,
 
         if (state_open == NULL &&
             entry->obj_handle->attributes.owner != data->req_ctx->creds->caller_uid) {
+		/* Need to permission check the read. */
 		cache_status = cache_inode_access(entry,
 						  FSAL_READ_ACCESS,
 						  data->req_ctx);
+
+		if(cache_status == CACHE_INODE_FSAL_EACCESS) {
+			/* Test for execute permission */
+			cache_status = cache_inode_access(
+						entry,
+						FSAL_MODE_MASK_SET(FSAL_X_OK) |
+						FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+						data->req_ctx);
+		}
+
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         res_READ4->status = nfs4_Errno(cache_status);
                         goto done;

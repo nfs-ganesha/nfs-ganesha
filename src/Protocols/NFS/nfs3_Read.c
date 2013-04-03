@@ -164,6 +164,17 @@ nfs_Read(nfs_arg_t *arg,
             cache_status = cache_inode_access(entry,
                                               FSAL_READ_ACCESS,
                                               req_ctx);
+
+            if(cache_status == CACHE_INODE_FSAL_EACCESS)
+              {
+                /* Test for execute permission */
+                cache_status = cache_inode_access(
+                                        entry,
+                                        FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+                                        req_ctx);
+              }
+
             if (cache_status != CACHE_INODE_SUCCESS)
               {
                 res->res_read3.status = nfs3_Errno(cache_status);
