@@ -2449,10 +2449,7 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
     }
 
   if(!nfs3_FSALattr_To_PartialFattr(FSAL_attr, 
-                                    FSAL_ATTR_TYPE| FSAL_ATTR_MODE | FSAL_ATTR_NUMLINKS |
-                                    FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_SIZE |
-                                    FSAL_ATTR_SPACEUSED | FSAL_ATTR_RAWDEV |
-                                    FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME,
+                                    FSAL_ATTRS_V3 & ~FSAL_ATTR_FSID,
                                     Fattr))
     return 0;
 

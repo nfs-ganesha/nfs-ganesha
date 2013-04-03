@@ -619,6 +619,8 @@ typedef fsal_u64_t fsal_attrib_mask_t;
                             FSAL_ATTR_ATIME | FSAL_ATTR_MTIME |   \
                             FSAL_ATTR_CTIME | FSAL_ATTR_SPACEUSED )
 
+#define FSAL_ATTRS_V3 (FSAL_ATTR_TYPE | FSAL_ATTRS_POSIX)
+
 
 /** A list of FS object's attributes. */
 
