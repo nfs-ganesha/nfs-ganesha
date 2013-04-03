@@ -3531,7 +3531,7 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
                        fattr3 *Fattr)
 {
         /* We want to override the FSAL fsid with the export's configured fsid */
-        attrmask_t want = (ATTR_TYPE | (ATTRS_POSIX & ~ATTR_FSID));
+        attrmask_t want = ATTRS_NFS3;
         attrmask_t got  = 0;
 
         nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);

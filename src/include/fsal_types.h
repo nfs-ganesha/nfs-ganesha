@@ -404,19 +404,10 @@ typedef uint64_t attrmask_t;
 /* Set mtime to server time */
 #define ATTR_MTIME_SERVER  0x0000000000400000
 
-/* "classic" attributes sets : */
+/* attributes that used for NFS v3 */
 
-/* NFSv4 Mandatory attributes */
-
-#define ATTRS_FSAL_MANDATORY (ATTR_TYPE     | \
-                              ATTR_SIZE     | \
-                              ATTR_FSID     | \
-                              ATTR_CHGTIME)
-
-/* attributes that are returned by the POSIX stat function */
-
-#define ATTRS_POSIX  (ATTR_MODE     | ATTR_FILEID   | \
-                      ATTR_FSID     | ATTR_RAWDEV   | \
+#define ATTRS_NFS3   (ATTR_MODE     | ATTR_FILEID   | \
+                      ATTR_TYPE     | ATTR_RAWDEV   | \
                       ATTR_NUMLINKS | ATTR_OWNER    | \
                       ATTR_GROUP    | ATTR_SIZE     | \
                       ATTR_ATIME    | ATTR_MTIME    | \
