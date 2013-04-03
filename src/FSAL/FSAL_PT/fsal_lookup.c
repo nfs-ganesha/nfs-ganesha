@@ -210,8 +210,8 @@ PTFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   }
   memcpy(&p_object_handle->data.handle.f_handle, 
          &buffstat.st_persistentHandle.handle, 
-         FSI_PERSISTENT_HANDLE_N_BYTES); 
-  p_object_handle->data.handle.handle_size = FSI_PERSISTENT_HANDLE_N_BYTES;
+         FSI_CCL_PERSISTENT_HANDLE_N_BYTES); 
+  p_object_handle->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
   p_object_handle->data.handle.handle_type = posix2fsal_type(buffstat.st_mode);
   p_object_handle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
   p_object_handle->data.handle.handle_version  = OPENHANDLE_VERSION;

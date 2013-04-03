@@ -21,10 +21,10 @@ int ptfsal_closeHandle_attach_to_queues(void)
   int rc;
 
   /* Get IO and non-IO request, response message queue IDs */
-  g_closeHandle_req_msgq = msgget(FSI_IPC_CLOSE_HANDLE_REQ_Q_KEY, 0);
+  g_closeHandle_req_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, 0);
   if (g_closeHandle_req_msgq < 0) {
     FSI_TRACE(FSI_FATAL, "error getting close handle Req Msg Q "
-              "id %d (errno = %d)", FSI_IPC_CLOSE_HANDLE_REQ_Q_KEY, errno);
+              "id %d (errno = %d)", FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, errno);
     /* cleanup the attach made earlier, nothing to clean up for the queues */
     if ((rc = shmdt(g_shm_at_fsal)) == -1) {
       FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
@@ -32,10 +32,10 @@ int ptfsal_closeHandle_attach_to_queues(void)
     return -1;
   }
 
-  g_closeHandle_rsp_msgq = msgget(FSI_IPC_CLOSE_HANDLE_RSP_Q_KEY, 0);
+  g_closeHandle_rsp_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, 0);
   if (g_closeHandle_rsp_msgq < 0) {
     FSI_TRACE(FSI_FATAL, "error getting close handle Rsp Msg Q "
-              "id %d (errno = %d)", FSI_IPC_CLOSE_HANDLE_RSP_Q_KEY, errno);
+              "id %d (errno = %d)", FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, errno);
     /* cleanup the attach made earlier, nothing to clean up for the queues */
     if ((rc = shmdt(g_shm_at_fsal)) == -1) {
       FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
@@ -49,48 +49,16 @@ int ptfsal_closeHandle_attach_to_queues(void)
 
 void *ptfsal_closeHandle_listener_thread(void *args)
 {
-  int rc;
-  struct msg_t msg;
-  int msg_bytes;
-  int close_rc;
-  int i;
-  struct CommonMsgHdr *msgHdr;
-  int handleIdxFound;
-
   SetNameFunction("PT FSAL CloseOnOpen Handler");
 
-  rc = ptfsal_closeHandle_attach_to_queues();
+  int rc = ptfsal_closeHandle_attach_to_queues();
   if (rc == -1) {
     exit (1);
   }
 
   while (1) {
-    msg_bytes = RCV_MSG_WAIT_BLOCK(g_closeHandle_req_msgq,
-                                   &msg,
-                                   sizeof(struct CommonMsgHdr),
-                                   0);
-    if (msg_bytes != -1) {
-      close_rc = -1;
-      FSI_TRACE(FSI_NOTICE, "Finding oldest handles");
-      /* TBD: we need to address a design if we have more than one
-              close thread or NFS4 support (that can issue close itself)
-              in order to ensure proper locking to the handle table.
-              Currently, one close thread model will work since we don't
-              shuffle handle around and there is only one place to
-              actually close the handle (which is here) in the code */
-
-      handleIdxFound = CCL_FIND_OLDEST_HANDLE();
-      if (handleIdxFound != -1) {
-        close_rc = ptfsal_implicit_close_for_nfs(handleIdxFound,
-                                                 CCL_CLOSE_STYLE_NORMAL);
-      }
-      /* Send the response back */
-      msgHdr = (struct CommonMsgHdr *) &msg.mtext[0];
-      msgHdr->transactionRc = close_rc;
-      msg_bytes = SEND_MSG(g_closeHandle_rsp_msgq,
-                           &msg,
-                           sizeof(struct CommonMsgHdr));
-    }
+    CCL_CLOSE_LISTENER(g_closeHandle_req_msgq,
+		       g_closeHandle_rsp_msgq);
   }
 }
 
@@ -110,8 +78,8 @@ void ptfsal_close_timedout_handle_bkg(void)
        index < g_fsi_handles_fsal->m_count;
        index++) {
     FSI_TRACE(FSI_DEBUG, "Flushing any pending IO for handle %d", index);
-    struct msg_t msg;
-    int          rc;
+    struct ccl_msg_t msg;
+    int              rc;
     GET_ANY_IO_RESPONSES(index, &rc, &msg);
 
     // only poll for timed out handles every PTFSAL_POLLING_HANDLE_TIMEOUT_SEC
@@ -179,14 +147,14 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
   int rc;
   int close_rc;
   CACHE_TABLE_ENTRY_T cacheEntry;
-  char key[FSI_PERSISTENT_HANDLE_N_BYTES];
+  char key[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
 
   FSI_TRACE(FSI_NOTICE, "Closing handle [%d] close_style[%d]", handle_index_to_close, close_style);
 
   memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
   memcpy (key,
           &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
-          FSI_PERSISTENT_HANDLE_N_BYTES);
+          FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
   cacheEntry.key =  key;
 
   close_rc = CCL_IMPLICIT_CLOSE_FOR_NFS(handle_index_to_close, close_style);
@@ -196,7 +164,7 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
     pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
     rc = fsi_cache_deleteEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
     pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
-    if (rc != FSI_IPC_EOK) {
+    if (rc != FSI_CCL_IPC_EOK) {
       FSI_TRACE(FSI_ERR, "Failed to delete cache entry to cache ID = %d",
           g_fsi_name_handle_cache_opened_files.cacheMetaData.cacheTableID);
       ptfsal_print_handle(cacheEntry.key);

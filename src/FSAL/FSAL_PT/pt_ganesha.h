@@ -105,7 +105,7 @@ struct vfs_fn_pointers {
   int (*opendir_fn)(ccl_context_t * handle,
                     const char        * filename,
                     const char        * mask,
-                    uint32              attr);
+                    uint32_t            attr);
   int (*closedir_fn)(ccl_context_t * handle,
                      struct fsi_struct_dir_t * dirp);
   int (*readdir_fn)(ccl_context_t * handle,
@@ -142,7 +142,7 @@ struct vfs_fn_pointers {
                   int             close_style);
   int (*get_any_io_responses_fn)(int     handle_index,
                                  int   * p_combined_rc,
-                                 struct msg_t* p_msg);
+                                 struct ccl_msg_t* p_msg);
   void (*ipc_stats_logger_fn)(ccl_context_t * handle);
   uint64_t (*update_stats_fn)(struct ipc_client_stats_t * stat, uint64_t value_fn);
   int (*sys_acl_get_entry_fn)(ccl_context_t * handle,
@@ -231,6 +231,8 @@ struct vfs_fn_pointers {
                               uint64_t     export_id); 
   char* (*get_version_fn)();
   int (*check_version_fn)(char *version);
+  void (*close_listener_fn)(int closeHandle_req_msgq,
+			    int closeHandle_rsp_msgq);
 };
 
 #define CCL_INIT                           g_ccl_function_map.init_fn
@@ -301,6 +303,7 @@ struct vfs_fn_pointers {
 #define CCL_UPDATE_CACHE_STAT              g_ccl_function_map.update_cache_stat_fn	
 #define CCL_GET_VERSION                    g_ccl_function_map.get_version_fn
 #define CCL_CHECK_VERSION                  g_ccl_function_map.check_version_fn
+#define CCL_CLOSE_LISTENER                 g_ccl_function_map.close_listener_fn
 
 // function map to be used througout FSAL layer
 extern char   * g_shm_at_fsal;              // SHM Base Address
@@ -352,7 +355,7 @@ void fsi_remove_cache_by_fullpath(char * path);
 void fsi_remove_cache_by_handle(char * handle);
 
 struct fsi_handle_cache_entry_t {
-  char m_handle[FSI_PERSISTENT_HANDLE_N_BYTES];
+  char m_handle[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
   char m_name[PATH_MAX];
 };
 
@@ -378,7 +381,7 @@ int ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
 int ptfsal_opendir(fsal_op_context_t * p_context,
                    const char        * filename,
                    const char        * mask,
-                   uint32              attr);
+                   uint32_t            attr);
 
 int ptfsal_readdir(fsal_dir_t      * dir_desc,
                    fsi_stat_struct * sbuf,

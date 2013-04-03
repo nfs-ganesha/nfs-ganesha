@@ -53,7 +53,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "pt_ganesha.h"
-//#include "pt_util_cache.h"
 #include <dlfcn.h>
 #include <syslog.h>
 
@@ -125,6 +124,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
                                      &(init_info->fs_specific_info));
+
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
@@ -165,7 +165,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
 		ipc_ccl_to_component_trc_level_map);
 
   if (rc == -1) {
-    FSI_TRACE(FSI_ERR, "ccl_init returned rc = -1, errno = %d", errno);
+    LogCrit(COMPONENT_FSAL, "ccl_init returned rc = -1, errno = %d", errno);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
@@ -189,14 +189,14 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   cacheTableInitParam.cacheTableID     = CACHE_ID_192_FRONT_END_HANDLE_TO_NAME_CACHE;
   cacheTableInitParam.dataSizeInBytes  = sizeof(CACHE_ENTRY_DATA_HANDLE_TO_NAME_T);
   cacheTableInitParam.keyLengthInBytes = sizeof(g_fsi_name_handle_cache.m_entry[0].m_handle);
-  cacheTableInitParam.maxNumOfCacheEntries = FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
+  cacheTableInitParam.maxNumOfCacheEntries = FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
 
   rc = fsi_cache_table_init(&g_fsi_name_handle_cache_opened_files,
                             &cacheTableInitParam);
 
-  if (rc != FSI_IPC_EOK)
+  if (rc != FSI_CCL_IPC_EOK)
   {
-    FSI_TRACE(FSI_ERR, "Failed to initialize cache table ID[%d]",cacheTableInitParam.cacheTableID);
+    LogCrit(FSI_ERR, "Failed to initialize cache table ID[%d]",cacheTableInitParam.cacheTableID);
     Return(ERR_FSAL_FAULT, 1, INDEX_FSAL_Init);
   }
 
@@ -214,8 +214,8 @@ check_dl_error(const char * func_name)
       func_name = "UNKNOWN";
     }
 
-    FSI_TRACE(FSI_FATAL, "Failed to dynamically load function: %s, error: %s",
-              func_name, error);
+    LogCrit(COMPONENT_FSAL, "Failed to dynamically load function: %s, error: %s",
+	    func_name, error);
     return error;
   } else {
     return NULL;
@@ -228,7 +228,7 @@ load_dynamic_function(void       * fn_map_ptr,
 {
   /* sanity checks */
   if (!func_name) {
-    FSI_TRACE(FSI_FATAL, "NULL func_name");
+    LogCrit(COMPONENT_FSAL, "NULL func_name");
   }
   
   /* load function pointers */
@@ -245,7 +245,7 @@ pt_ganesha_fsal_ccl_init()
 {
   g_ccl_lib_handle = dlopen(CCL_SO_PATH, RTLD_LAZY);
   if (!g_ccl_lib_handle) {
-    FSI_TRACE(FSI_FATAL, "Failed to load library: %s", CCL_SO_PATH);
+    LogCrit(COMPONENT_FSAL, "Failed to load library: %s", CCL_SO_PATH);
     return -1;
   }
 
@@ -354,11 +354,11 @@ pt_ganesha_fsal_ccl_init()
       DL_LOAD(&g_ccl_function_map.update_cache_stat_fn, 
               "ccl_update_cache_stat")                                     &&
       DL_LOAD(&g_ccl_function_map.get_version_fn, "ccl_get_version")       &&
-      DL_LOAD(&g_ccl_function_map.check_version_fn, "ccl_check_version")
+      DL_LOAD(&g_ccl_function_map.check_version_fn, "ccl_check_version")   &&
+      DL_LOAD(&g_ccl_function_map.close_listener_fn, "ccl_close_listener")
       ) {
-    FSI_TRACE(FSI_NOTICE, "Successfully loaded CCL function pointers");
   } else {
-    FSI_TRACE(FSI_FATAL, "Failed to load function: %s", load_return);
+    LogCrit(COMPONENT_FSAL, "Failed to load function: %s", load_return);
     return -1;
   }
     
@@ -367,28 +367,28 @@ pt_ganesha_fsal_ccl_init()
   /* load and map variables that reside in the CCL shared library */
   void * g_shm_at_obj = dlsym(g_ccl_lib_handle, "g_shm_at");
   if (!g_shm_at_obj) {
-    FSI_TRACE(FSI_FATAL, "Failed to load symbol g_shm_at");
+    LogCrit(COMPONENT_FSAL, "Failed to load symbol g_shm_at");
     return -1;
   }
   g_shm_at_fsal = (char *)g_shm_at_obj;
 
   void * g_fsi_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_handles");
   if (!g_fsi_handles_obj) {
-    FSI_TRACE(FSI_FATAL, "Failed to load symbol g_fsi_handles");
+    LogCrit(COMPONENT_FSAL, "Failed to load symbol g_fsi_handles");
     return -1;
   }
   g_fsi_handles_fsal = (struct file_handles_struct_t *)g_fsi_handles_obj;
 
   void * g_fsi_dir_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_dir_handles");
   if (!g_fsi_dir_handles_obj) {
-    FSI_TRACE(FSI_FATAL, "Failed to load symbol g_fsi_dir_handles");
+    LogCrit(COMPONENT_FSAL, "Failed to load symbol g_fsi_dir_handles");
     return -1;
   }
   g_fsi_dir_handles_fsal = (struct file_handles_struct_t *)g_fsi_dir_handles_obj;
 
   void * g_fsi_acl_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_acl_handles");
   if (!g_fsi_acl_handles_obj) {
-    FSI_TRACE(FSI_FATAL, "Failed to load g_fsi_acl_handles");
+    LogCrit(COMPONENT_FSAL, "Failed to load g_fsi_acl_handles");
     return -1;
   }
   g_fsi_acl_handles_fsal = (struct file_handles_struct_t *)g_fsi_handles_obj;
@@ -460,7 +460,7 @@ PTFSAL_terminate()
     pthread_t threadContext;
   } CLOSE_THREAD_MAP;
  
-  CLOSE_THREAD_MAP parallelCloseThreadMap[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
+  CLOSE_THREAD_MAP parallelCloseThreadMap[FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
  
   FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
 
@@ -468,7 +468,7 @@ PTFSAL_terminate()
   memset(&parallelCloseThreadMap[0], 0x00, sizeof (parallelCloseThreadMap));
 
   for (index = FSI_CIFS_RESERVED_STREAMS;
-       index < FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
+       index < FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
        index++) {
     parallelCloseThreadMap[index].handleIdx = index;
   }
@@ -499,7 +499,7 @@ PTFSAL_terminate()
   }
 
   for (index = FSI_CIFS_RESERVED_STREAMS;
-       index < FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
+       index < FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
        index++) {
     if (parallelCloseThreadMap[index].isThreadCreated == 1) {
       pthread_join(parallelCloseThreadMap[index].threadContext, NULL);

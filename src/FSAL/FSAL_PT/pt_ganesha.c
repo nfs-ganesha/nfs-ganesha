@@ -34,7 +34,7 @@ struct file_handles_struct_t * g_fsal_fsi_handles;
 int handle_index_is_valid(int handle_index)
 {
   if (handle_index < 0) return 0;
-  if (handle_index >= (FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS)) return 0;
+  if (handle_index >= (FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS)) return 0;
   return 1;
 }
 
@@ -135,9 +135,9 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
 {
   int index;
   int rc;
-  ccl_context_t           ccl_context;
-  struct PersistentHandle pt_handler;
-  char                  * client_ip;
+  ccl_context_t              ccl_context;
+  struct CCLPersistentHandle pt_handler;
+  char                     * client_ip;
   struct fsi_handle_cache_entry_t handle_entry;
   uint64_t * handlePtr;
   ptfsal_threadcontext_t *p_cur_context;
@@ -163,7 +163,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
       pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
       if (memcmp(&handle[0],
           &g_fsi_name_handle_cache.m_entry[index].m_handle,
-          FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
+          FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
         strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name,
                 sizeof(handle_entry.m_name));
         name[sizeof(handle_entry.m_name)-1] = '\0';
@@ -177,7 +177,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
                     handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
           // Need get name from PT side, so will not return and clear cache.
           memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
-                 0, FSI_PERSISTENT_HANDLE_N_BYTES);
+                 0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
           g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
         } else {
           // Return.
@@ -202,7 +202,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   rc = fsi_cache_getEntry(&g_fsi_name_handle_cache_opened_files,
                           &cacheLookupEntry);
 
-  if (rc == FSI_IPC_EOK) {
+  if (rc == FSI_CCL_IPC_EOK) {
     handleToNameEntryPtr = (CACHE_ENTRY_DATA_HANDLE_TO_NAME_T *) cacheLookupEntry.data;
     strncpy(name, handleToNameEntryPtr->m_name,
             sizeof(handle_entry.m_name));
@@ -230,7 +230,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
     if (memcmp(&handle[0], &g_fsi_name_handle_cache.m_entry[index].m_handle, 
-        FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
+        FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
       strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name, 
               sizeof(handle_entry.m_name));
       name[sizeof(handle_entry.m_name)-1] = '\0';
@@ -251,7 +251,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
                   handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
         // Need get name from PT side, so will not return, 
         memset(g_fsi_name_handle_cache.m_entry[index].m_handle, 
-               0, FSI_PERSISTENT_HANDLE_N_BYTES);
+               0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
         g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
         break;
       } else {
@@ -264,8 +264,8 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
   // Not in cache, so send request to PT. 
-  memset(&pt_handler.handle, 0, FSI_PERSISTENT_HANDLE_N_BYTES);
-  memcpy(&pt_handler.handle, handle, FSI_PERSISTENT_HANDLE_N_BYTES);
+  memset(&pt_handler.handle, 0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
+  memcpy(&pt_handler.handle, handle, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
   FSI_TRACE(FSI_DEBUG, "Handle: \n");
   ptfsal_print_handle(handle);
   rc = CCL_HANDLE_TO_NAME(&ccl_context, &pt_handler, name); 
@@ -285,7 +285,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
       memcpy(
         &g_fsi_name_handle_cache
         .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-        &handle[0], FSI_PERSISTENT_HANDLE_N_BYTES);
+        &handle[0], FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
       strncpy(
         g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
         name, sizeof(handle_entry.m_name));
@@ -350,12 +350,12 @@ fsi_remove_cache_by_handle(char * handle)
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
 
     if (memcmp(handle, &g_fsi_name_handle_cache.m_entry[index].m_handle, 
-      FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
+      FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
       FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache:")
       ptfsal_print_handle(handle);
       /* Mark the both handle and name to 0 */
       memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
-             0, FSI_PERSISTENT_HANDLE_N_BYTES); 
+             0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES); 
       g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
       break;
     }
@@ -383,7 +383,7 @@ fsi_remove_cache_by_fullpath(char * path)
                 path);
       /* Mark the both handle and name to 0 */
       memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
-             0, FSI_PERSISTENT_HANDLE_N_BYTES);
+             0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
       g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
       break;
     }
@@ -397,7 +397,7 @@ fsi_check_handle_index(int handle_index)
 {
     // check handle
     if ((handle_index >=                 0) &&
-        (handle_index <  (FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS))) {
+        (handle_index <  (FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS))) {
       return 0;
     } else {
       return -1;
@@ -600,7 +600,7 @@ int
 ptfsal_opendir(fsal_op_context_t * p_context,
                const char        * filename,
                const char        * mask,
-               uint32              attr)
+               uint32_t            attr)
 {
   int dir_handle;
 
@@ -927,7 +927,7 @@ ptfsal_unlink(fsal_op_context_t * p_context,
   ptfsal_handle_t * p_parent_dir_handle = 
     (ptfsal_handle_t *)p_parent_directory_handle;
   CACHE_TABLE_ENTRY_T cacheEntry;
-  char key[FSI_PERSISTENT_HANDLE_N_BYTES];
+  char key[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
   int cacheDeleteRC;
   int handle_index_to_close;
   rc = fsi_get_name_from_handle(p_context, 
@@ -949,7 +949,7 @@ ptfsal_unlink(fsal_op_context_t * p_context,
     memset (&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
     memcpy (key,
             &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.st_persistentHandle.handle[0],
-            FSI_PERSISTENT_HANDLE_N_BYTES);
+            FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
     cacheEntry.key =  key;
   }
 
@@ -961,7 +961,7 @@ ptfsal_unlink(fsal_op_context_t * p_context,
     pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
     cacheDeleteRC = fsi_cache_deleteEntry(&g_fsi_name_handle_cache_opened_files, &cacheEntry);
     pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
-    if (cacheDeleteRC != FSI_IPC_EOK) {
+    if (cacheDeleteRC != FSI_CCL_IPC_EOK) {
       FSI_TRACE(FSI_ERR, "Failed to delete cache entry to cache ID = %d",
           g_fsi_name_handle_cache_opened_files.cacheMetaData.cacheTableID);
       ptfsal_print_handle(cacheEntry.key);
@@ -1221,8 +1221,8 @@ ptfsal_dynamic_fsinfo(fsal_handle_t        * p_filehandle,
   int  rc;
   char fsi_name[PATH_MAX];
 
-  ccl_context_t ccl_context;
-  struct ClientOpDynamicFsInfoRspMsg fs_info;
+  ccl_context_t                         ccl_context;
+  struct CCLClientOpDynamicFsInfoRspMsg fs_info;
 
   rc = ptfsal_handle_to_name(p_filehandle, p_context, fsi_name);
   if (rc) {
@@ -1259,9 +1259,9 @@ ptfsal_readlink(fsal_handle_t     * p_linkhandle,
   int  rc;
   char fsi_name[PATH_MAX];
 
-  ccl_context_t             ccl_context;
-  struct PersistentHandle   pt_handler;
-  ptfsal_handle_t         * p_fsi_handle = (ptfsal_handle_t *)p_linkhandle;
+  ccl_context_t               ccl_context;
+  struct CCLPersistentHandle  pt_handler;
+  ptfsal_handle_t           * p_fsi_handle = (ptfsal_handle_t *)p_linkhandle;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
@@ -1315,13 +1315,13 @@ ptfsal_name_to_handle(fsal_op_context_t * p_context,
 {
   int rc;
 
-  ccl_context_t ccl_context;
-  struct PersistentHandle   pt_handler;
-  ptfsal_handle_t         * p_fsi_handle       = (ptfsal_handle_t *)p_handle;
+  ccl_context_t               ccl_context;
+  struct CCLPersistentHandle  pt_handler;
+  ptfsal_handle_t           * p_fsi_handle = (ptfsal_handle_t *)p_handle;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  memset(&pt_handler, 0, sizeof(struct PersistentHandle));
+  memset(&pt_handler, 0, sizeof(struct CCLPersistentHandle));
   rc = CCL_NAME_TO_HANDLE(&ccl_context, p_fsalpath->path, &pt_handler);
   if (rc) {
     FSI_TRACE(FSI_DEBUG, "CCL name to handle failed %d!", rc);
@@ -1331,7 +1331,7 @@ ptfsal_name_to_handle(fsal_op_context_t * p_context,
   memcpy(&p_fsi_handle->data.handle.f_handle, &pt_handler.handle, 
          sizeof(p_fsi_handle->data.handle.f_handle));
 
-  p_fsi_handle->data.handle.handle_size     = FSI_PERSISTENT_HANDLE_N_BYTES;
+  p_fsi_handle->data.handle.handle_size     = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
   p_fsi_handle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
   p_fsi_handle->data.handle.handle_version  = OPENHANDLE_VERSION;
 
@@ -1346,11 +1346,10 @@ ptfsal_handle_to_name(fsal_handle_t     * p_filehandle,
                       fsal_op_context_t * p_context,
                       char              * path)
 {
-  int rc;
-
-  ccl_context_t ccl_context;
-  struct PersistentHandle pt_handler;
-  ptfsal_handle_t * p_fsi_handle = (ptfsal_handle_t *)p_filehandle;
+  int                        rc;
+  ccl_context_t              ccl_context;
+  struct CCLPersistentHandle pt_handler;
+  ptfsal_handle_t          * p_fsi_handle = (ptfsal_handle_t *)p_filehandle;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
@@ -1492,7 +1491,7 @@ int fsi_cache_table_init(CACHE_TABLE_T *cacheTableToInit,
   cacheTableToInit->cacheMetaData.cacheTableID =
       cacheTableInitParam->cacheTableID;
 
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -1660,7 +1659,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *whatTo
   fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
                                       cacheTable,
                                       "Dumping cache table keys after insertion:");
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -1734,7 +1733,7 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *whatTo
   fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
                                       cacheTable,
                                       "Dumping cache table keys after deletion:");
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -1783,7 +1782,7 @@ int fsi_cache_getEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *buffer)
   }
 
   buffer->data = entryMatched->data;
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------

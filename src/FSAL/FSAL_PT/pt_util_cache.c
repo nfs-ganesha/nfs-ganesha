@@ -62,7 +62,7 @@ int fsi_cache_table_init(CACHE_TABLE_T *cacheTableToInit,
   cacheTableToInit->cacheMetaData.cacheTableID =
       cacheTableInitParam->cacheTableID;
 
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -230,7 +230,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *whatTo
   fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
                                       cacheTable,
                                       "Dumping cache table keys after insertion:");
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -304,7 +304,7 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *whatTo
   fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
                                       cacheTable,
                                       "Dumping cache table keys after deletion:");
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
@@ -353,7 +353,7 @@ int fsi_cache_getEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *buffer)
   }
 
   buffer->data = entryMatched->data;
-  return FSI_IPC_EOK;
+  return FSI_CCL_IPC_EOK;
 }
 
 // ----------------------------------------------------------------------------
