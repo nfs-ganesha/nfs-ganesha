@@ -157,7 +157,7 @@ extern struct fsal_up_vector fsal_up_top;
  * @param[in] line      Input line
  * @param[in] separator Character used to identify a separator
  *
- * @return the number of fields found
+ * @return the number of fields found or -1 if ran off the end.
  */
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
@@ -464,9 +464,6 @@ int parseAccessParam(char *var_name,
   count = EXPORT_MAX_CLIENTS;
 #endif /* USE_NODELIST */
 
-  /* fill client list with NULL pointers */
-  memset(client_list, 0, sizeof(client_list));
-
   /*
    * Search for coma-separated list of hosts, networks and netgroups
    */
@@ -479,7 +476,6 @@ int parseAccessParam(char *var_name,
     {
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
-
       return rc;
     }
 
@@ -823,9 +819,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options &= ~(EXPORT_OPTION_NFSV2
                                 | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4);
 
-          /* fill nfs vers list with NULL pointers */
-          memset(nfsvers_list, 0, sizeof(nfsvers_list));
-
           /*
            * Search for coma-separated list of nfsprotos
            */
@@ -906,9 +899,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* reset TRANS proto flags (clean defaults) */
           p_entry->options &= ~(EXPORT_OPTION_UDP | EXPORT_OPTION_TCP);
 
-          /* fill TRANS vers list with NULL pointers */
-          memset(transproto_list, 0, sizeof(transproto_list));
-
           /*
            * Search for coma-separated list of TRANSprotos
            */
@@ -923,7 +913,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
                       MAX_TRANSPROTO);
-
               continue;
             }
 
@@ -1102,9 +1091,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                                 | EXPORT_OPTION_RPCSEC_GSS_INTG
                                 | EXPORT_OPTION_RPCSEC_GSS_PRIV);
 
-          /* fill sec list with NULL pointers */
-          memset(sec_list, 0, sizeof(sec_list));
-
           /*
            * Search for coma-separated list of sectypes
            */
@@ -1119,7 +1105,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
                       MAX_SECTYPE);
-
               continue;
             }
 

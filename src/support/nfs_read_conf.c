@@ -276,9 +276,6 @@ int nfs_read_core_conf(config_file_t in_config,
           /* reset nfs versions flags (clean defaults) */
           pparam->core_options &= ~(CORE_OPTION_ALL_VERS);
 
-          /* fill nfs vers list with NULL pointers */
-          memset(nfsvers_list, 0, sizeof(nfsvers_list));
-
           /*
            * Search for coma-separated list of nfsprotos
            */
