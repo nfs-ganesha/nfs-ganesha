@@ -286,7 +286,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if(!Check_nfs4_seqid(powner, arg_OPEN4.seqid, op, data, resp, tag))
             {
               /* Response is setup for us and LogDebug told what was wrong */
-              goto out4;
+              goto out1;
             }
         }
     }
@@ -452,9 +452,14 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                              &cache_status);
           if(cache_status != CACHE_INODE_NOT_FOUND)
             {
+              if(cache_status != CACHE_INODE_SUCCESS)
+                {
+                  res_OPEN4.status = nfs4_Errno(cache_status);
+                  cause2 = "lookup failed";
+                  goto out;
+                }
               /* if open is UNCHECKED, return NFS4_OK (RFC3530 page 172) */
-              if(arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4
-                 && (cache_status == CACHE_INODE_SUCCESS))
+              if(arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
                 {
 
                   /*
@@ -627,11 +632,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 }
 
               /* Managing GUARDED4 mode */
-              if(cache_status != CACHE_INODE_SUCCESS)
-                res_OPEN4.status = nfs4_Errno(cache_status);
-              else
-                res_OPEN4.status = NFS4ERR_EXIST; /* File already exists */
-
+              res_OPEN4.status = NFS4ERR_EXIST; /* File already exists */
               cause2 = "GUARDED4";
               cache_inode_put(pentry_lookup);
               goto out;
@@ -987,7 +988,7 @@ out_prev:
   /* Save the response in the lock or open owner */
   Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, data, resp, tag);
 
- out4:
+ out1:
 
   /* Release the owner reference from create_nfs4_owner */
   dec_state_owner_ref(powner);
