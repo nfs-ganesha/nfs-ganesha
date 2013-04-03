@@ -56,10 +56,6 @@
 #include "nfs_proto_tools.h"
 #include "cache_inode_lru.h"
 
-static nfsstat4 nfs4_chk_shrdny(struct nfs_argop4 *, compound_data_t *,
-    cache_entry_t *, fsal_accessflags_t, fsal_accessflags_t, fsal_openflags_t *,
-    bool_t , fsal_attrib_list_t *, struct nfs_resop4 *);
-
 static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                              compound_data_t    * data,
                              cache_entry_t      * pentry_newfile,
@@ -136,9 +132,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                arg_OPEN4.openhow.opentype,
                arg_OPEN4.share_deny,
                arg_OPEN4.share_access);
-
-  fsal_accessflags_t write_access = FSAL_WRITE_ACCESS;
-  fsal_accessflags_t read_access = FSAL_READ_ACCESS;
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
@@ -477,7 +470,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     }
                   PTHREAD_RWLOCK_WRLOCK(&pentry_lookup->state_lock);
                   status4 = nfs4_chk_shrdny(op, data, pentry_lookup,
-                      read_access, write_access, &openflags, AttrProvided,
+                      openflags, AttrProvided,
                       &sattr, resp);
                   if (status4 != NFS4_OK)
                     {
@@ -655,6 +648,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    data->pcontext,
                                    &cache_status)) == NULL)
             {
+              LogFullDebug(COMPONENT_STATE,
+                           "create failed with %s",
+                           cache_inode_err_str(cache_status));
+
               /* If the file already exists, this is not an error if
                  open mode is UNCHECKED */
               if(cache_status != CACHE_INODE_ENTRY_EXISTS)
@@ -674,6 +671,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   goto out;
                 }
             }
+
+          LogFullDebug(COMPONENT_STATE,
+                       "create succeeded");
+
           cache_status = CACHE_INODE_SUCCESS;
 
           if(AttrProvided == TRUE)      /* Set the attribute if provided */
@@ -693,6 +694,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                         &cache_status)) !=
                  CACHE_INODE_SUCCESS)
                 {
+                  LogFullDebug(COMPONENT_STATE,
+                               "setattr failed with %s",
+                               cache_inode_err_str(cache_status));
+
                   res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " cache_inode_setattr";
                   cache_inode_put(pentry_newfile);
@@ -706,6 +711,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
           if (status4 != NFS4_OK)
             {
+              LogFullDebug(COMPONENT_STATE,
+                           "nfs4_do_open failed");
               cause2 = text;
               res_OPEN4.status = status4;
               cache_inode_put(pentry_newfile);
@@ -747,8 +754,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 }
             }
 
-          status4 = nfs4_chk_shrdny(op, data, pentry_newfile, read_access,
-              write_access, &openflags, FALSE, NULL, resp);
+          status4 = nfs4_chk_shrdny(op, data, pentry_newfile,
+              openflags, FALSE, NULL, resp);
           if (status4 != NFS4_OK)
             {
               cause2 = " cache_inode_access";
@@ -1064,21 +1071,56 @@ int copy_bitmap4(bitmap4 *src, bitmap4 *dst)
         dst->bitmap4_len = src->bitmap4_len;
         return(0);
 }
-static nfsstat4
+
+nfsstat4
 nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
     cache_entry_t *pentry, fsal_accessflags_t rd_acc,
-    fsal_accessflags_t wr_acc, fsal_openflags_t *openflags,
     bool_t AttrProvided, fsal_attrib_list_t *sattr, struct nfs_resop4 *resop)
 {
         int rc = 0;
         OPEN4args *args = &op->nfs_argop4_u.opopen;
         OPEN4res *resp = &resop->nfs_resop4_u.opopen;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        fsal_accessflags_t access_mask = 0;
 
-        /* If access includes read, check for read permission on file */
         if(args->share_access & OPEN4_SHARE_ACCESS_READ) {
-                if(cache_inode_access(pentry, rd_acc,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
+                access_mask |= FSAL_READ_ACCESS;
+        }
+        if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
+                access_mask |= FSAL_WRITE_ACCESS;
+        }
+
+        if(cache_inode_access(pentry,
+                              access_mask,
+                              data->pcontext,
+                              &cache_status) != CACHE_INODE_SUCCESS) {
+                /* If non-permission error, return it.*/
+                if(cache_status != CACHE_INODE_FSAL_EACCESS) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s",
+                                 cache_inode_err_str(cache_status));
+                        return nfs4_Errno(cache_status);
+                }
+
+                /* If WRITE access is requested, return permission error */
+                if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s with ACCESS_WRITE",
+                                 cache_inode_err_str(cache_status));
+                        return nfs4_Errno(cache_status);
+                }
+
+                /* If just a permission error and file was opend read only,
+                 * try execute permission.
+                 */
+                if(cache_inode_access(pentry,
+                                      FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                                      FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+                                      data->pcontext,
+                                      &cache_status) != CACHE_INODE_SUCCESS) {
+                        LogDebug(COMPONENT_STATE,
+                                 "cache_inode_access returned %s after checking for executer permission",
+                                 cache_inode_err_str(cache_status));
                         return nfs4_Errno(cache_status);
                 }
         }
@@ -1107,14 +1149,6 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         }
         else
                 resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-
-        /* If access includes write, check for write permission on file */
-        if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-                if(cache_inode_access(pentry, wr_acc,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                        return nfs4_Errno(cache_status);
-                }
-        }
 
         return NFS4_OK;
 }
@@ -1274,6 +1308,8 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
 
         /* Building a new fh */
         if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data)) {
+                LogFullDebug(COMPONENT_FILEHANDLE,
+                             "failed");
                 *cause2 = " (nfs4_FSALToFhandle failed)";
                 cache_inode_put(pentry);
                 return NFS4ERR_SERVERFAULT;
@@ -1283,6 +1319,12 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
         memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
             newfh4.nfs_fh4_len);
+
+        LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                           "Create NFS4 Handle %s",
+                           LEN_FH_STR,
+                           data->currentFH.nfs_fh4_val,
+                           data->currentFH.nfs_fh4_len);
 
         /* Decrement the current entry here, because nfs4_create_fh
            replaces the current fh. */

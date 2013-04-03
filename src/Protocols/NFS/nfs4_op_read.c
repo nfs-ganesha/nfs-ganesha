@@ -249,22 +249,35 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
     }
 
-  if (pstate_open == NULL)
+  if(pstate_open == NULL)
     {
-      if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( data->pcontext )) 
-         && cache_inode_access(pentry,
-                            FSAL_READ_ACCESS,
-                            data->pcontext,
-                            &cache_status) != CACHE_INODE_SUCCESS)
+      /* Need to permission check the read. */
+      if(pentry->attributes.owner != FSAL_OP_CONTEXT_TO_UID(data->pcontext))
         {
-          if (anonymous)
-             {
-               PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
-             }
-          res_READ4.status = nfs4_Errno(cache_status);
-          return res_READ4.status;
+          if(cache_inode_access(pentry,
+                                FSAL_READ_ACCESS,
+                                data->pcontext,
+                                &cache_status) == CACHE_INODE_FSAL_EACCESS)
+            {
+              (void) cache_inode_access(pentry,
+                                        FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+                                        data->pcontext,
+                                        &cache_status);
+            }
+
+          if(cache_status != CACHE_INODE_SUCCESS)
+            {
+              if(anonymous)
+                 {
+                   PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
+                 }
+              res_READ4.status = nfs4_Errno(cache_status);
+              return res_READ4.status;
+            }
         }
     }
+
   /* Get the size and offset of the read operation */
   offset = arg_READ4.offset;
   size = arg_READ4.count;

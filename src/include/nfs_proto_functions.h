@@ -675,6 +675,12 @@ int nfs4_op_nverify(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
                     compound_data_t * data,     /* [IN] current data for the compound request */
                     struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
 
+
+nfsstat4
+nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
+    cache_entry_t *pentry, fsal_accessflags_t rd_acc,
+    bool_t AttrProvided, fsal_attrib_list_t *sattr, struct nfs_resop4 *resop);
+
 int nfs4_op_open(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
                  compound_data_t * data,        /* [IN] current data for the compound request */
                  struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */

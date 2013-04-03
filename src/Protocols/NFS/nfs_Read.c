@@ -199,24 +199,36 @@ int nfs_Read(nfs_arg_t *parg,
     goto out;
   }
 
-  if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( pcontext )) 
-       && cache_inode_access(pentry, 
-               FSAL_READ_ACCESS, 
-               pcontext, 
-               &cache_status) != CACHE_INODE_SUCCESS)
+  /* Permission check the read if not by owner. */
+  if(pentry->attributes.owner != FSAL_OP_CONTEXT_TO_UID(pcontext))
     {
-      switch (preq->rq_vers)
+      if(cache_inode_access(pentry,
+                            FSAL_READ_ACCESS, 
+                            pcontext,
+                            &cache_status) == CACHE_INODE_FSAL_EACCESS)
         {
-        case NFS_V2:
-          pres->res_attr2.status = nfs2_Errno(cache_status);
-          break;
-
-        case NFS_V3:
-          pres->res_read3.status = nfs3_Errno(cache_status);
-          break;
+          (void) cache_inode_access(pentry,
+                                    FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+                                    pcontext,
+                                    &cache_status);
         }
-      rc = NFS_REQ_OK;
-      goto out;
+
+      if(cache_status != CACHE_INODE_SUCCESS)
+        {
+          switch (preq->rq_vers)
+            {
+            case NFS_V2:
+              pres->res_attr2.status = nfs2_Errno(cache_status);
+              break;
+
+            case NFS_V3:
+              pres->res_read3.status = nfs3_Errno(cache_status);
+              break;
+            }
+          rc = NFS_REQ_OK;
+          goto out;
+        }
     }
 
   /* Extract the filetype */
@@ -325,6 +337,8 @@ int nfs_Read(nfs_arg_t *parg,
           rc = NFS_REQ_DROP;
           goto out;
         }
+
+      attr.asked_attributes = FSAL_ATTRS_V3;
 
       if((cache_inode_rdwr(pentry,
                            CACHE_INODE_READ,

@@ -99,6 +99,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   const char              * cause = "OOPS";
   const char              * cause2 = "";
   struct glist_head       * glist;
+  nfsstat4                  status4;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
 #endif
@@ -108,9 +109,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   newfh4.nfs_fh4_val = (caddr_t) &new_handle;
   newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
-
-  fsal_accessflags_t write_access = FSAL_WRITE_ACCESS;
-  fsal_accessflags_t read_access = FSAL_READ_ACCESS;
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
@@ -365,75 +363,17 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               if(arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4
                  && (cache_status == CACHE_INODE_SUCCESS))
                 {
-                  /* If the file is opened for write, OPEN4 while deny share write access,
-                   * in this case, check caller has write access to the file */
-                  if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
+                  /* Check permissions on file and set attrs */
+                  status4 = nfs4_chk_shrdny(op, data, pentry_lookup,
+                      openflags, AttrProvided,
+                      &sattr, resp);
+                  if (status4 != NFS4_OK)
                     {
-                      if(cache_inode_access(pentry_lookup,
-                                            write_access,
-                                            data->pcontext,
-                                            &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          res_OPEN4.status = nfs4_Errno(cache_status);
-                          goto out;
-                        }
-                      openflags = FSAL_O_WRONLY;
-                    }
-
-                  /* Same check on read: check for readability of a file before opening it for read */
-                  if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
-                    {
-                      if(cache_inode_access(pentry_lookup,
-                                            read_access,
-                                            data->pcontext,
-                                            &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          res_OPEN4.status = nfs4_Errno(cache_status);
-                          goto out;
-                        }
-                      openflags = FSAL_O_RDONLY;
-                    }
-
-                  if(AttrProvided == TRUE)      /* Set the attribute if provided */
-                    {
-                      /* If owner or owner_group are set, and the credential was
-                       * squashed, then we must squash the set owner and owner_group.
-                       */
-                      squash_setattr(&data->export_perms,
-                                     &data->pworker->user_credentials,
-                                     &sattr);
-
-                      if(cache_inode_setattr(pentry_lookup,
-                                             &sattr,
-                                             data->pcontext,
-                                             (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
-                                             &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          res_OPEN4.status = nfs4_Errno(cache_status);
-                          cause2 = " cache_inode_setattr";
-                          goto out;
-                        }
-
-                      res_OPEN4.OPEN4res_u.resok4.attrset =
-                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
-                          attrmask;
-                    }
-                  else
-                    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-
-                  /* Same check on write */
-                  if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-                    {
-                      if(cache_inode_access(pentry_lookup,
-                                            write_access,
-                                            data->pcontext,
-                                            &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          res_OPEN4.status = nfs4_Errno(cache_status);
-                          cause2 = " cache_inode_access";
-                          goto out;
-                        }
-                      openflags = FSAL_O_RDWR;
+                      PTHREAD_RWLOCK_UNLOCK(&pentry_lookup->state_lock);
+                      cause2 = " cache_inode_access";
+                      res_OPEN4.status = status4;
+                      cache_inode_put(pentry_lookup);
+                      goto out;
                     }
 
                   /* Set the state for the related file */
@@ -793,47 +733,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 }
             }
 
-          /* If the file is opened for write, OPEN4 while deny share write access,
-           * in this case, check caller has write access to the file */
-          if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
+          status4 = nfs4_chk_shrdny(op, data, pentry_newfile,
+              openflags, FALSE, NULL, resp);
+          if (status4 != NFS4_OK)
             {
-              if(cache_inode_access(pentry_newfile,
-                                    write_access,
-                                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-                {
-                  res_OPEN4.status = nfs4_Errno(cache_status);
-                  cause2 = " OPEN4_SHARE_DENY_WRITE cache_inode_access";
-                  goto out;
-                }
-              openflags = FSAL_O_WRONLY;
-            }
-
-          /* Same check on read: check for readability of a file before opening it for read */
-          if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
-            {
-              if(cache_inode_access(pentry_newfile,
-                                    read_access,
-                                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-                {
-                  res_OPEN4.status = nfs4_Errno(cache_status);
-                  cause2 = " OPEN4_SHARE_ACCESS_READ cache_inode_access";
-                  goto out;
-                }
-              openflags = FSAL_O_RDONLY;
-            }
-
-          /* Same check on write */
-          if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-            {
-              if(cache_inode_access(pentry_newfile,
-                                    write_access,
-                                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-                {
-                  res_OPEN4.status = nfs4_Errno(cache_status);
-                  cause2 = " OPEN4_SHARE_ACCESS_WRITE cache_inode_access";
-                  goto out;
-                }
-              openflags = FSAL_O_RDWR;
+              cause2 = " cache_inode_access";
+              res_OPEN4.status = status4;
+              cache_inode_put(pentry_newfile);
+              goto out;
             }
 
           /* Try to find if the same open_owner already has acquired a
