@@ -96,7 +96,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,      /* IN */
   else if(lock_op == FSAL_OP_LOCKB)
     glock_args.cmd = F_SETLKW;
   else if(lock_op == FSAL_OP_CANCEL)
-    glock_args.cmd = 1029; // TODO FSF: hack - replace with GPFS_F_CANCELLK;
+    glock_args.cmd = GPFS_F_CANCELLK;
   else
     {
       LogDebug(COMPONENT_FSAL,

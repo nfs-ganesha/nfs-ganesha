@@ -332,7 +332,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             continue;
       }
 
-      if(rc)
+      if(rc && rc != CACHE_INODE_NOT_FOUND)
         {
           LogWarn(COMPONENT_FSAL_UP,
                   "Event %d could not be processed for fd %d rc %d",
