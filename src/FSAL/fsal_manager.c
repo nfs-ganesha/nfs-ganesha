@@ -250,7 +250,7 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 		char *sym_error;
 
 		module_init = dlsym(dl, "fsal_init");
-		sym_error = dlerror();
+		sym_error = (char *)dlerror();
 		if(sym_error != NULL) {
 			dl_error = strdup(sym_error);
 			so_error = ENOENT;

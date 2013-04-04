@@ -351,7 +351,7 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	}
 
 	*pnfs_data = _rt;
-	DBG_PRNT("_rt->thread=0x%lx\n", _rt->thread);
+	DBG_PRNT("_rt->thread=0x%ld\n", (long)_rt->thread);
 	return 0;
 
 error:

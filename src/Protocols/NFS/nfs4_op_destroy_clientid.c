@@ -55,7 +55,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op,
                              struct nfs_resop4 *resp)
 {
 	nfs_client_record_t *client_record = NULL;
-	nfs_client_id_t *conf = NULL, *unconf = NULL, *found;
+	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
         clientid4 clientid;
 	int rc;
 
