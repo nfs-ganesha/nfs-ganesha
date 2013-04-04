@@ -1083,6 +1083,11 @@ int nfs4_op_open(struct nfs_argop4 *op,
 						&entry_lookup);
               if(cache_status != CACHE_INODE_NOT_FOUND)
               {
+                 if(cache_status != CACHE_INODE_SUCCESS)
+                 {
+                   res_OPEN4->status = nfs4_Errno(cache_status);
+                   return res_OPEN4->status;
+                 }
                  PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
 
                  glist_for_each(glist, &entry_lookup->object.file.lock_list)
