@@ -359,8 +359,6 @@ struct cache_entry_t {
 		} file; /*< REGULAR_FILE data */
 
 		struct {
-			/** Marks this as the root directory of an export */
-			bool root;
 			/** Number of known active children */
 			uint32_t nbactive;
 			/** The parent of this directory ('..') */
