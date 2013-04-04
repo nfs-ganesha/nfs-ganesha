@@ -205,7 +205,7 @@ Done 884bab2 Frank S. Filz Add space for null char in MAXNAMELEN/FSAL_MAX_NAME_L
 Done dc4ce50 Frank S. Filz Add strmaxcpy and strmaxcat inline functions
 
 ffilz       2778696 Frank S. Filz FSAL_GPFS no longer uses FSAL_UP parms in config, ignore them
-ffilz       637db44 Frank S. Filz Get rid of some dead code
+Pass        637db44 Frank S. Filz Get rid of some dead code
 
 marc     ?? 8b8c717 rong zeng Using handle_size bytes gpfs_fsal_handle in GPFSFSAL_handlecmp and FSAL_Handle_to_RBTIndex/FSAL_Handle_to_HashIndex
 rong        8eaf450 rong zeng GRANTED_RES does not have file handle, so no check for export or credential.
@@ -258,15 +258,15 @@ f9911bc5    f9b55b8c Frank S. Filz Check permissions in cache_inode_setattr
 discuss08   00253a3c Frank S. Filz Add is_open_write parm to cache_inode_setattr
 8fd875c4    466f6124 Frank S. Filz Add cache_inode_check_setattr_perms and need_wr_lock to cache_inode_lock_trust_attrs
 d8a35586    0a32136c Frank S. Filz Add FSAL_ATTR_ATIME_SERVER and FSAL_ATTR_MTIME_SERVER
-ffilz       8982d8e1 Frank S. Filz Properly copy NFS v4 conflicting lock owner
-ffilz       10aa6c83 Frank S. Filz Initialize handle in GPFSFSAL_UP_Thread for valgrind
+Done        8982d8e1 Frank S. Filz Properly copy NFS v4 conflicting lock owner
+Done        10aa6c83 Frank S. Filz Initialize handle in GPFSFSAL_UP_Thread for valgrind
 ----pass    ecb9a18e Frank S. Filz Save cache entry pointer before calling state_del
-ffilz       c28a9311 Frank S. Filz Initialize some GPFS data for valgrind memcheck
+Done        c28a9311 Frank S. Filz Initialize some GPFS data for valgrind memcheck
 ffilz       cb9bd7d9 Frank S. Filz Add configure.ac conditional for valgrind memcheck
-ffilz       19ac9746 Frank S. Filz Make sure HashTable doesn't get a bad index
-ffilz       e87e2406 Frank S. Filz Be verbose about what is happening to core limit
+Pass        19ac9746 Frank S. Filz Make sure HashTable doesn't get a bad index
+Done        e87e2406 Frank S. Filz Be verbose about what is happening to core limit
 ??       ?? 2ccaf4d7 Frank S. Filz Cleanup fsal_export_context_t before freeing exportlist_t
-ffilz       c627bbea Frank S. Filz Simple fix for NFS v4 CLOSE replay
+Done        c627bbea Frank S. Filz Simple fix for NFS v4 CLOSE replay
 
             7e232a5b Matt Benjamin Use correct exit on retires, nfs_dupreq_finish.
             e25f4f1f Matt Benjamin Free req->rq_msg in all cases.
@@ -306,7 +306,7 @@ Ported on pre-2.0-dev_19            67598ecc Venkateswararao Jujjuri (JV) No nee
             190ef41e Matt Benjamin Millisecond timeout fixes.
 Ported on pre-2.0-dev_19            2623379f Venkateswararao Jujjuri (JV) Add proper return code for commit failures.
 
-ffilz       e042bbe6 Frank S. Filz Reorganize stateid.other so clientid4 is part of it
+Done        e042bbe6 Frank S. Filz Reorganize stateid.other so clientid4 is part of it
 ffilz       5f67b486 Frank S. Filz Use atomic inc for new_clientid and new_clientid_verifier
 ffilz       ef86d80a Frank S. Filz Differentiate between NFS4ERR_STALE_CLIENTID and NFS4ERR_EXPIRED
 ffilz       note     also pick up 970b58d4
@@ -457,7 +457,7 @@ ffilz       b97f0569 rong zeng Fix for lockowner_release, exp_perm_flags should 
 
 Ported on pre-2.0-dev_19            5213b922 Venkateswararao Jujjuri (JV) Avoid deadlocks and lru_thread hang my making sure that it won't process the entry until it is ready.  Also move lock initialization to cache_inode_lru_get.
 
-ffilz       57b943d0 rong zeng In cache_inode_dec_pin_ref, close file when refcount goes to 0. A parameter is added to only allow nlm_Unshare to utilize this logic.
+Done        57b943d0 rong zeng In cache_inode_dec_pin_ref, close file when refcount goes to 0. A parameter is added to only allow nlm_Unshare to utilize this logic.
 rong        5ada096b rong zeng 1. Fix in atomic_store_xxx_t: pass value to __sync_lock_test_and_set. This was causing    nsm_client not able to turn on monitor flag. 2. Change nsm timeout from 5 to 25 seconds.
 discuss05   c3f0c179 rong zeng Check security flavor only SUPPORTS_GSS is specified
 
@@ -476,7 +476,7 @@ Ported on pre-2.0-dev_19            c66cca71 Jeremy Bongio Convert French commen
 discuss05   6340d8a5 rong zeng fix a bug in check_convert_ipv6_to_ipv4.
 ported on dev26            18eaf9df Jim Wahlig logging changes.
 
-ffilz       43071e5d Frank S. Filz Scrub log messages for SAL and NLM
+Done        43071e5d Frank S. Filz Scrub log messages for SAL and NLM
 ffilz       8ff375be Frank S. Filz Improve export error checking, don't allow dup path, export_id, or tag
 ffilz       bea5980c Frank S. Filz Check READ, WRITE, MD_WRITE, and MD_READ in nfs4_Compound
 ffilz       25564ea6 Frank S. Filz Clean up nfs4_SetCompoundExport and make nfs4_MakeCred check export perms
