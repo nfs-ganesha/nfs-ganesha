@@ -143,6 +143,8 @@ extern struct fsal_up_vector fsal_up_top;
 #define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
+struct glist_head exportlist;
+
 /**
  * @brief Parse a line with a settable separator and end of line
  *

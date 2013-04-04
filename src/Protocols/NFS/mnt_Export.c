@@ -78,7 +78,8 @@ int mnt_Export(nfs_arg_t *parg,
                nfs_res_t * pres)
 {
 
-  exportlist_t *p_current_item = pexport;       /* the current export item. */
+  exportlist_t *p_current_item;       /* the current export item. */
+  struct glist_head * glist;
 
   exports p_exp_out = NULL;     /* Pointer to the first export entry. */
   exports p_exp_current = NULL; /* Pointer to the last  export entry. */
@@ -91,11 +92,12 @@ int mnt_Export(nfs_arg_t *parg,
   memset(pres, 0, sizeof(nfs_res_t));
 
   /* for each existing export entry */
-  while(p_current_item)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
 
       exports new_expnode;      /* the export node to be added to the list */
 
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
       new_expnode = gsh_calloc(1,sizeof(exportnode));
 
       /* ---- ex_dir ------ */
@@ -103,9 +105,8 @@ int mnt_Export(nfs_arg_t *parg,
       /* we set the export path */
 
       LogFullDebug(COMPONENT_NFSPROTO,
-                   "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
-                   p_current_item->fullpath, p_current_item->clients.num_clients,
-                   p_current_item->clients.clientarray);
+                   "Export entry: %s, Numclients: %d",
+                   p_current_item->fullpath, p_current_item->clients.num_clients);
 
       new_expnode->ex_dir = gsh_strdup(p_current_item->fullpath);
 
@@ -115,31 +116,48 @@ int mnt_Export(nfs_arg_t *parg,
 
       if(p_current_item->clients.num_clients > 0)
         {
+          struct glist_head * glist_cl;
+
           /* Alias, to make the code slim... */
           exportlist_client_t *p_clients = &(p_current_item->clients);
-	  struct groupnode *grp;
 
           /* allocates the memory for all the groups, once for all */
-          new_expnode->ex_groups = grp =
-               gsh_calloc(p_clients->num_clients, sizeof(groupnode));
+          new_expnode->ex_groups = gsh_calloc(p_clients->num_clients,
+					      sizeof(groupnode));
 
-          for(i = 0; i < p_clients->num_clients; i++)
+          i = 0;
+
+          glist_for_each(glist_cl, &p_current_item->clients.client_list)
             {
-              exportlist_client_entry_t * excl = p_clients->clientarray + i;
-              char *grnam;
+              exportlist_client_entry_t * p_client_entry;
+              p_client_entry = glist_entry(glist_cl, exportlist_client_entry_t, cle_list);
 
-              switch (p_clients->clientarray[i].type)
+              LogClientListEntry(COMPONENT_NFSPROTO, p_client_entry);
+
+              /* ---- gr_next ----- */
+
+              if((i + 1) == p_clients->num_clients)     /* this is the last item */
+                new_expnode->ex_groups[i].gr_next = NULL;
+              else              /* other items point to the next memory slot */
+                new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
+
+              /* ---- gr_name ----- */
+
+              switch (p_client_entry->type)
                 {
                 case HOSTIF_CLIENT:
 
                   /* allocates target buffer (+1 for security ) */
-                  grnam = gsh_malloc(INET_ADDRSTRLEN + 1);
-                  if(grnam == NULL)
-                    break;
-                  if(inet_ntop(AF_INET, &excl->client.hostif.clientaddr,
-                               grnam, INET_ADDRSTRLEN) == NULL)
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
+
+                  if(new_expnode->ex_groups[i].gr_name != NULL &&
+		     inet_ntop(AF_INET,
+			       &(p_client_entry->client.hostif.clientaddr),
+			       new_expnode->ex_groups[i].gr_name,
+			       INET_ADDRSTRLEN) == NULL)
                     {
-                      if(strmaxcpy(grnam,
+                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
                                    "Invalid Host address",
                                    INET_ADDRSTRLEN + 1) == -1)
                         {
@@ -148,24 +166,25 @@ int mnt_Export(nfs_arg_t *parg,
                         }
                     }
 
+                  LogFullDebug(COMPONENT_NFSPROTO,
+                               "%p HOSTIF_CLIENT=%s",
+                               p_client_entry, new_expnode->ex_groups[i].gr_name);
+
                   break;
 
                 case NETWORK_CLIENT:
 
-                  grnam = gsh_malloc(2*INET_ADDRSTRLEN + 2);
-                  if(grnam == NULL)
-                    break;
+                  /* allocates target buffer (+1 for security ) */
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
 
-                  if(inet_ntop(AF_INET, &excl->client.network.netaddr,
-                               grnam, INET_ADDRSTRLEN) == NULL)
+                  if(new_expnode->ex_groups[i].gr_name != NULL &&
+		     inet_ntop(AF_INET,
+			       &(p_client_entry->client.network.netaddr),
+			       new_expnode->ex_groups[i].gr_name,
+			       INET_ADDRSTRLEN) == NULL)
                     {
-                      strcpy(grnam, "???");
-                    }
-                  strcat(grnam, "/");
-                  if(inet_ntop(AF_INET, &excl->client.network.netmask,
-                               grnam + strlen(grnam), INET_ADDRSTRLEN) == NULL)
-                    {
-                      if(strmaxcpy(grnam,
+                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
                                    "Invalid Network address",
                                    INET_ADDRSTRLEN + 1) == -1)
                         {
@@ -173,49 +192,49 @@ int mnt_Export(nfs_arg_t *parg,
                                   "Could not copy response");
                         }
                     }
-
                   break;
 
                 case NETGROUP_CLIENT:
-                  grnam = gsh_strdup(excl->client.netgroup.netgroupname);
-                  break;
 
-                case WILDCARDHOST_CLIENT:
-                  grnam = gsh_strdup(excl->client.wildcard.wildcard);
+                  /* allocates target buffer */
+
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_strdup(p_client_entry->client.netgroup.netgroupname);
+
                   break;
 
                 case GSSPRINCIPAL_CLIENT:
-                  grnam = gsh_strdup(excl->client.gssprinc.princname);
+
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_strdup(p_client_entry->client.gssprinc.princname);
+
+
+                  break;
+
+                case MATCH_ANY_CLIENT:
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_strdup("*");
+
                   break;
 
                 default:
+
                   /* @todo : free allocated resources */
+
                   LogCrit(COMPONENT_NFSPROTO,
                           "MNT_EXPORT: Unknown export entry type: %d",
-                          excl->type);
-                  grnam = gsh_strdup("<unknown>");
+                          p_client_entry->type);
+
+                  new_expnode->ex_groups[i].gr_name = gsh_strdup("<unknown>");
+
+
                   break;
                 }
-
-              if(grnam == NULL)
-                {
-                  LogWarn(COMPONENT_NFSPROTO,
-                          "Could not allocate memory for group name of %s, "
-			  "skipping", new_expnode->ex_dir);
-                }
-              else
-                {
-                  grp->gr_name = grnam;
-                  grp->gr_next = grp + 1;
-		  grp++;
-                }
+	      if(new_expnode->ex_groups[i].gr_name == NULL)
+                LogCrit(COMPONENT_NFSPROTO,
+			"Could not allocate memory for response");
+              i++;
             }
-          if(grp != new_expnode->ex_groups) {
-              grp[-1].gr_next = NULL; /* -1 is correct - we need the last one */
-	  } else {
-	      gsh_free(grp);
-	      new_expnode->ex_groups = NULL;
-	  }
         }
       else
         {
@@ -241,8 +260,6 @@ int mnt_Export(nfs_arg_t *parg,
           p_exp_out = new_expnode;
         }
       p_exp_current = new_expnode;
-      p_current_item = (exportlist_t *) (p_current_item->next);
-
     }
 
   /* return the pointer to the export list */

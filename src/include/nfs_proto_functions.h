@@ -1036,7 +1036,7 @@ void nfs4_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 void compound_data_Free(compound_data_t * data);
 
 /* Pseudo FS functions */
-int nfs4_ExportToPseudoFS(exportlist_t * pexportlist);
+int nfs4_ExportToPseudoFS(struct glist_head  *pexportlist);
 pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_SetCompoundExport(compound_data_t * data);

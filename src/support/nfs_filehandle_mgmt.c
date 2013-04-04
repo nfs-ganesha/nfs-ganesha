@@ -93,7 +93,7 @@ cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
 	if(*status != NFS4_OK) {
 		goto badhdl;
 	}
-	exp_list_ent = nfs_Get_export_by_id(exp_list,
+	exp_list_ent = nfs_Get_export_by_id(nfs_param.pexportlist,
 				      nfs4_FhandleToExportId(fh4));
 	if(exp_list_ent == NULL) {
 		*status = NFS4ERR_STALE;
@@ -168,7 +168,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 		*status = NFS3ERR_BADHANDLE;
 		goto badhdl;
 	}
-	exp_list_ent = nfs_Get_export_by_id(exp_list,
+	exp_list_ent = nfs_Get_export_by_id(nfs_param.pexportlist,
 				      nfs3_FhandleToExportId(fh3));
 	if(exp_list_ent == NULL) {
 		*status = NFS3ERR_STALE;

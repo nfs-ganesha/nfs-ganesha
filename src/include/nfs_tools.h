@@ -52,7 +52,7 @@ int nfs_ParseConfLine(char *Argv[],
                       char *line,
                       char separator);
 
-int ReadExports(config_file_t in_config, exportlist_t ** pEx);
+int ReadExports(config_file_t in_config, struct glist_head * pexportlist);
 
 exportlist_t *BuildDefaultExport();
 

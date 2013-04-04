@@ -65,7 +65,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   exportlist_t * pexport = NULL;
-  unsigned int found = FALSE;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
   char fkey_data[NFS4_FHSIZE];
@@ -87,30 +86,13 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /*
    * Find the export for the aname (using as well Path or Tag ) 
    */
-  for( pexport = nfs_param.pexportlist; pexport != NULL;
-       pexport = pexport->next)
-    {
-      if(aname_str[0] != '/')
-        {
-          /* The input value may be a "Tag" */
-          if(!strncmp(aname_str, pexport->FS_tag, strlen( pexport->FS_tag ) ) )
-            {
-	      found = TRUE ;
-              break;
-            }
-        }
-      else
-        {
-          if(!strncmp(aname_str, pexport->fullpath, strlen( pexport->fullpath ) ) )
-           {
-	      found = TRUE ;
-              break;
-           }
-        }
-    } /* for */
+  if(aname_str[0] == '/')
+     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, aname_str);
+  else
+     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, aname_str);
 
   /* Did we find something ? */
-  if( found == FALSE )
+  if( pexport == NULL )
     return _9p_rerror( preq9p, pworker_data, msgtag, ENOENT, plenout, preply ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -141,7 +123,9 @@ int _9p_attach( _9p_request_data_t * preq9p,
   fsdata.fh_desc.len = sizeof( fkey_data ) ;
   fsdata.export = pexport->export_hdl ;
 
-  pexport->proot_handle->ops->handle_to_key( pexport->proot_handle, &fsdata.fh_desc ) ;
+  pexport->export_hdl->ops->extract_handle( pexport->export_hdl,
+					    FSAL_DIGEST_SIZEOF,
+					    &fsdata.fh_desc ) ;
 
   /* refcount +1 */
   cache_status = cache_inode_get( &fsdata,

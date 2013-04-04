@@ -76,26 +76,136 @@ const char *Rpc_gss_svc_name[] =
  * @return the pointer to the export list or NULL if failed.
  */
 
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
+exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short exportid)
 {
   exportlist_t *piter;
-  int found = 0;
+  struct glist_head * glist;
 
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  glist_for_each(glist, exportroot)
     {
+      piter = glist_entry(glist, exportlist_t, exp_list);
+
       if(piter->id == exportid)
         {
-          found = 1;
-          break;
+          return piter;
+        }
+    }                           /* for */
+  return NULL;
+}
+
+/** @todo we can avl tag but path has to be ordered
+ */
+
+/**
+ *
+ * nfs_Get_export_by_path: Gets an export entry from its path. 
+ *
+ * Gets an export entry from its path. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
+                                     char * path)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, exportlist)
+    {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->fullpath is equal to path ? */
+      if(!strcmp(p_current_item->fullpath, path))
+        {
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
         }
     }
 
-  if(found == 0)
-    return NULL;
-  else
-    return piter;
-}
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
 
+/**
+ *
+ * nfs_Get_export_by_pseudo: Gets an export entry from its pseudo path. 
+ *
+ * Gets an export entry from its pseudo path. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
+                                       char * path)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, exportlist)
+    {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->pseudopath is equal to path ? */
+      if(!strcmp(p_current_item->pseudopath, path))
+        {
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
+        }
+    }
+
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
+
+/**
+ *
+ * nfs_Get_export_by_tag: Gets an export entry from its tag. 
+ *
+ * Gets an export entry from its tag. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param tag        [IN] the tag for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
+                                    char * tag)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, exportlist)
+    {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->FS_tag is equal to tag ? */
+      if(!strcmp(p_current_item->FS_tag, tag))
+        {
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
+        }
+    }
+
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
 
 /**
  * @brief Get numeric credentials from request
@@ -428,28 +538,26 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   return 1;
 }
 
-int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
+int nfs_export_tag2path(struct glist_head * exportlist, char *tag, int taglen,
                         char *path, int pathlen)
 {
+  exportlist_t *piter;
+  struct glist_head * glist;
+
   if(!tag || !path)
     return -1;
 
-  exportlist_t *piter;
-
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  glist_for_each(glist, exportlist)
     {
+      piter = glist_entry(glist, exportlist_t, exp_list);
+
       if(!strncmp(tag, piter->FS_tag, taglen))
         {
-	  if (strmaxcpy(path, piter->fullpath, pathlen) == -1)
-	    {
-	      LogMajor(COMPONENT_DISPATCH,
-		       "String overflow.");
-	      return -1;
-	    }
+          strncpy(path, piter->fullpath, pathlen);
           return 0;
           break;
         }
-    }
+    }                           /* for */
 
   return -1;
 }

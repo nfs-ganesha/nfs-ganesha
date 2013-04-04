@@ -105,10 +105,10 @@ pseudofs_t *nfs4_GetPseudoFs(void)
  * @return the pseudo fs root.
  */
 
-int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
+int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
 {
   exportlist_t *entry;
-  exportlist_t *next;
+  struct glist_head * glist;
   int j = 0;
   int found = 0;
   char tmp_pseudopath[MAXPATHLEN + 1];
@@ -119,8 +119,6 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
   pseudofs_entry_t *PseudoFsCurrent = NULL;
   pseudofs_entry_t *newPseudoFsEntry = NULL;
   pseudofs_entry_t *iterPseudoFs = NULL;
-
-  entry = pexportlist;
 
   PseudoFs = &gPseudoFs;
 
@@ -134,17 +132,16 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
   PseudoFs->root.sons = NULL;
   PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
 
-  while(entry)
+  /* To not forget to init "/" entry */
+  PseudoFs->reverse_tab[0] = &(PseudoFs->root);
+
+  glist_for_each(glist, pexportlist)
     {
-      /* To not forget to init "/" entry */
-      PseudoFsCurrent = &(PseudoFs->root);
-      PseudoFs->reverse_tab[0] = &(PseudoFs->root);
+      entry = glist_entry(glist, exportlist_t, exp_list);
 
       /* skip exports that aren't for NFS v4 */
       if((entry->options & EXPORT_OPTION_NFSV4) == 0)
         {
-          next = entry->next;
-          entry = next;
           continue;
         }
 
@@ -178,8 +175,6 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
               LogCrit(COMPONENT_NFS_V4_PSEUDO,
                       "Pseudo Path '%s' is badly formed",
                       entry->pseudopath);
-              next = entry->next;
-              entry = next;
               continue;
             }
 
@@ -201,8 +196,6 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
               LogCrit(COMPONENT_NFS_V4_PSEUDO,
                       "Pseudo Path '%s' is badly formed",
                       entry->pseudopath);
-              next = entry->next;
-              entry = next;
               continue;
             }
 
@@ -266,10 +259,8 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
 
         }
       /* if( entry->options & EXPORT_OPTION_PSEUDO ) */
-      next = entry->next;
 
-      entry = next;
-    }                           /* while( entry ) */
+    }
 
   return (0);
 }

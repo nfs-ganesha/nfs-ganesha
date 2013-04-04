@@ -192,7 +192,6 @@ typedef struct exportlist {
 	uint64_t MaxCacheSize;  /*< Maximum Cache Size allowed */
 	bool UseCookieVerifier; /*< Is Cookie verifier to be used? */
 	exportlist_client_t clients; /*< Allowed clients */
-	struct exportlist *next; /*< Next entry */
 	struct fsal_export *export_hdl; /*< Handle into our FSAL */
 
 	pthread_mutex_t exp_state_mutex; /*< Mutex to protect per-export
@@ -371,11 +370,19 @@ typedef struct compoud_data {
 } compound_data_t;
 
 /* Export list related functions */
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
+sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4);
+
+exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot,
 				   unsigned short exportid);
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 		   exportlist_t * pexport,
 		   struct user_cred *user_credentials);
+exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
+                                     char * path);
+exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
+                                       char * path);
+exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
+                                    char * tag);
 bool get_req_uid_gid(struct svc_req *ptr_req,
 		     exportlist_t * pexport,
 		     struct user_cred *user_credentials);
@@ -394,14 +401,13 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 			    exportlist_client_entry_t * pclient_found,
 			    const struct user_cred *user_credentials,
 			    bool proc_makes_write);
+int nfs_export_tag2path(struct glist_head * pexportlist,
+                        char *tag, int taglen,
+                        char *path, int pathlen);
 
 bool nfs_export_check_security(struct svc_req *ptr_req, exportlist_t *pexport);
 
-int nfs_export_tag2path(exportlist_t *exportroot, char *tag,
-			int taglen, char *path, int pathlen);
-
-void squash_setattr(exportlist_client_entry_t * pexport_client,
-		    exportlist_t * pexport,
-		    struct user_cred   * user_credentials,
+void squash_setattr(export_perms_t     * pexport_perms,
+                    struct user_cred   * user_credentials,
 		    struct attrlist * attr);
 #endif/* !NFS_EXPORTS_H */
