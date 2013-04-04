@@ -895,7 +895,6 @@ fsal_status_t VFSFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,  /* IN */
   else
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
-mkcs
 
 fsal_status_t VFSFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,      /* IN */
                                         unsigned int xattr_id,  /* IN */
