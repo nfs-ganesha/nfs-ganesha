@@ -144,7 +144,7 @@ atomic_store_voidptr(void **var, void *val)
 static inline void
 atomic_store_voidptr(void **var, void *val)
 {
-     __sync_lock_test_and_set(var, 0);
+     (void)__sync_lock_test_and_set(var, 0);
 }
 #endif
 
