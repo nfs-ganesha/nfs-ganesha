@@ -28,11 +28,14 @@
  * @brief Platform dependant subroutines for FreeBSD
  */
 
+#include <unistd.h>
 #include <string.h>
 #include <os/subr.h>
-#include <sys/dirent.h>
+#include <dirent.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <log.h>
+#include "syscalls.h"
 
 /**
  * @brief Read system directory entries into the buffer
@@ -97,11 +100,11 @@ int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
         } else if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
                 /* set to the current timestamp. achieve this by passing NULL
                  * timeval to kernel */
-                return futimesat(fd, path, NULL);
+                return futimesat(fd, (char *)path, NULL);
         }
         TIMESPEC_TO_TIMEVAL(&tv[0], &ts[0]);
         TIMESPEC_TO_TIMEVAL(&tv[1], &ts[1]);
-        return futimesat(fd, path, tv);
+        return futimesat(fd, (char *)path, tv);
 }
 
 int vfs_utimes(int fd, const struct timespec *ts)
