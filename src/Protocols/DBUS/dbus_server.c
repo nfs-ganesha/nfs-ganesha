@@ -39,6 +39,7 @@
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "ganesha_dbus.h"
+#include <os/memstream.h>
 
 /**
  *
