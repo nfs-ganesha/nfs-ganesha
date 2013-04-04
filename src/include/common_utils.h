@@ -155,6 +155,11 @@ extern int portable_clock_gettime(struct timespec *ts);
 #  undef HAVE_MNTENT_H
 #endif
 
+#if defined(__FreeBSD__)
+#  undef SCANDIR_CONST
+#  define SCANDIR_CONST
+#endif
+
 /* My habit with mutex */
 #define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
 #define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
