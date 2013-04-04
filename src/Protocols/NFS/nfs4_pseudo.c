@@ -605,13 +605,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "A junction in pseudo fs is traversed: name = %s, id = %d",
                    iter->name, iter->junction_export->id);
       data->pexport = iter->junction_export;
-      if (strmaxcpy(data->MntPath, iter->fullname, MAXPATHLEN) == -1)
-	{
-	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
-		   "String overflow");
-	  res_LOOKUP4.status = NFS4ERR_WRONGSEC;
-	  goto out;
-	}
 
       /* Build credentials */
       if(nfs4_MakeCred(data) != 0)
@@ -898,14 +891,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Step up the compound data */
       data->pexport = psfsentry.junction_export;
-      if (strmaxcpy(data->MntPath, psfsentry.fullname, MAXPATHLEN)
-	  == -1)
-	{
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "String overflow");
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
-	}
 
       /* Build the credentials */
       if(nfs4_MakeCred(data) != 0)

@@ -351,8 +351,6 @@ typedef struct compoud_data {
 	exportlist_t *pexport; /*< Export entry related to the request */
 	exportlist_t *pfullexportlist; /*< The whole exportlist */
 	pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
-	char MntPath[MAXPATHLEN + 1]; /*< Path (in pseudofs) of the
-					  current entry */
 	struct svc_req *reqp; /*< RPC Request related to the compound */
 	struct nfs_worker_data *pworker; /*< Worker thread data */
 	nfs_client_cred_t credential; /*< Raw RPC credentials */
