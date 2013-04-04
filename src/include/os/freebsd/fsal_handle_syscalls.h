@@ -28,6 +28,7 @@
 #ifndef HANDLE_FREEBSD_H
 #define HANDLE_FREEBSD_H
 
+#include <fsal_convert.h>
 #include "../os/freebsd/syscalls.h"
 
 #ifndef O_PATH
@@ -96,7 +97,7 @@ static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 	memset((fh), 0, sizeof(vfs_file_handle_t)); \
 	(fh)->handle_bytes = offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
 
-static int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
+static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
 	int error;
 	struct v_fhandle handle;
@@ -108,7 +109,7 @@ static int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 }
 
 static inline int vfs_name_to_handle_at(int atfd, const char *name,
-					vfs_file_handle_t *fh, int flag)
+					vfs_file_handle_t *fh)
 {
 	int error;
 	struct v_fhandle handle;
