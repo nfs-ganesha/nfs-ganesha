@@ -288,7 +288,6 @@ int nfs_read_core_conf(config_file_t in_config,
            */
           count = nfs_ParseConfLine(nfsvers_list,
                                     MAX_NFSPROTO,
-                                    0,
                                     key_value,
                                     ',');
 

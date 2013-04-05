@@ -52,6 +52,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 
 extern struct fsal_up_vector fsal_up_top;
@@ -148,12 +149,11 @@ extern struct fsal_up_vector fsal_up_top;
  * @note Line is modified, returned tokens are returned as pointers to
  * the null terminated string within the original copy of line.
  *
- * @note Size includes the null terminator, if size is 0, caller
- * doesn't care about size (can't be larger than input string anyway).
+ * @note if return == -1, the first nbArgv tokens have been found
+ *       the last token (Argv[nbArgv - 1] is the remainder of the string.
  *
  * @param[out] Argv     Result array
  * @param[in] nbArgv    Allocated number of entries in the Argv
- * @param[in] size      Maximum buffer size of tokens
  * @param[in] line      Input line
  * @param[in] separator Character used to identify a separator
  *
@@ -161,66 +161,26 @@ extern struct fsal_up_vector fsal_up_top;
  */
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
-                      size_t size,
                       char *line,
 		      char separator)
 {
-  int output_value = 0;
-  int endLine = false;
+	int tok_index;
+	char *p1 = line;
+	char *p2;
 
-  char *p1 = line;              /* Pointeur sur le debut du token */
-  char *p2 = NULL;              /* Pointeur sur la fin du token   */
-
-  /* iteration and checking for array bounds */
-  for(; output_value < nbArgv;)
-    {
-      if(*p1 == '\0')
-        return output_value;
-
-      /* Je recherche le premier caractere valide */
-      for(; *p1 == ' ' || *p1 == '\t'; p1++) ;
-
-      /* p1 pointe sur un debut de token, je cherche la fin */
-      /* La fin est un blanc, une fin de chaine ou un CR    */
-      for(p2 = p1; (*p2 != separator) && (*p2 != '\0'); p2++) ;
-
-      /* Test for end of line */
-      if(*p2 == '\0')
-        endLine = true;
-
-      /* terminate the token */
-      *p2 = '\0';
-
-      /* if the token is too large for buffer, return failure */
-      if((size != 0) && ((p2 - p1) >= size))
-        return -3;
-
-      /* Put token pointer into list.
-       * NOTE: we do NOT copy the string, the token points to the bytes in then
-       *       input string that have just been null terminated.
-       */
-      Argv[output_value] = p1;
-
-      output_value++;
-
-      /* Je me prepare pour la suite */
-      if(!endLine)
-        {
-          p2 += 1;
-          p1 = p2;
-        }
-      else
-        return output_value;
-
-    }
-
-  /* out of bounds */
-  if(output_value >= nbArgv)
-    return -1;
-
-  /* no end of line detected */
-  return -2;
-
+	for(tok_index = 0; tok_index < nbArgv; tok_index++) {
+		while(isspace(*p1))
+			p1++;
+		if(*p1 == '\0')
+			break;
+		p2 = index(p1, separator);
+		Argv[tok_index] = p1;
+		if(p2 == NULL)
+			break;
+		*p2++ = '\0';
+		p1 = p2;
+	}
+	return (p2 == NULL) ? (tok_index + 1) : -1;
 }
 
 inline static int string_contains_slash( char* host )
@@ -512,7 +472,6 @@ int parseAccessParam(char *var_name,
    */
   rc = nfs_ParseConfLine(client_list,
                          count,
-                         0,
 			 expanded_node_list,
 			 ',');
 
@@ -872,7 +831,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
            */
           count = nfs_ParseConfLine(nfsvers_list,
                                     MAX_NFSPROTO,
-                                    0,
                                     var_value,
                                     ',');
 
@@ -956,7 +914,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
            */
           count = nfs_ParseConfLine(transproto_list,
                                     MAX_TRANSPROTO,
-                                    0,
                                     var_value,
                                     ',');
 
@@ -1153,7 +1110,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
            */
           count = nfs_ParseConfLine(sec_list,
                                     MAX_SECTYPE,
-                                    0,
                                     var_value,
                                     ',');
 

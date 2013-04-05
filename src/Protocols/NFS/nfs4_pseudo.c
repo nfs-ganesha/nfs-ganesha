@@ -193,7 +193,6 @@ int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
 
           NbTokPath = nfs_ParseConfLine(PathTok,
                                         NB_TOK_PATH,
-                                        sizeof(PseudoFs->root.name),
                                         tmp_pseudopath,
                                         '/');
           if(NbTokPath < 0)

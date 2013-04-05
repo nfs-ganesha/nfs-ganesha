@@ -49,7 +49,6 @@
 
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
-                      size_t size,
                       char *line,
                       char separator);
 
