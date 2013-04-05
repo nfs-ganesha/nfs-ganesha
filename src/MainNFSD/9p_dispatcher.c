@@ -124,10 +124,10 @@ void * _9p_socket_thread( void * Arg )
   int rc = -1 ;
   struct pollfd fds[1] ;
   int fdcount = 1 ;
-  static char my_name[MAXNAMLEN];
+  static char my_name[MAXNAMLEN + 1];
   struct sockaddr_in addrpeer ;
   socklen_t addrpeerlen = sizeof( addrpeer ) ;
-  char strcaller[MAXNAMLEN] ;
+  char strcaller[MAXNAMLEN + 1] ;
   request_data_t *preq = NULL;
   int tag;
   unsigned long sequence = 0;

@@ -412,7 +412,7 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 {
   struct addrinfo *info, hints, *p;
   int rc;
-  char ipname[SOCK_NAME_MAX];
+  char ipname[SOCK_NAME_MAX + 1];
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;

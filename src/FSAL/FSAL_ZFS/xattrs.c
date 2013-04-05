@@ -64,7 +64,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *,   /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[MAXNAMLEN];
+  char xattr_name[MAXNAMLEN + 1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;
@@ -277,7 +277,7 @@ static int xattr_id_to_name( libzfswrap_vfs_t *p_vfs,
 {
   unsigned int index;
   unsigned int curr_idx;
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
   size_t len = 0;
   int retval = 0 ;
@@ -320,7 +320,7 @@ static int xattr_name_to_id( libzfswrap_vfs_t *p_vfs,
                              char *name)
 {
   unsigned int i;
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
   int retval = 0 ;
 
@@ -446,7 +446,7 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   unsigned int cookie = argcookie ;
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
 
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
   int xattr_idx;
   int retval ;
@@ -643,7 +643,7 @@ fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
     }
   else if(xattr_id >= XATTR_COUNT)
     {
-      char attr_name[MAXPATHLEN];
+      char attr_name[MAXPATHLEN + 1];
  
       /* get the name for this attr */
       retval = xattr_id_to_name( ZFSFSAL_GetVFS( obj_handle->handle ),
@@ -777,7 +777,7 @@ fsal_status_t tank_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					  caddr_t buffer_addr,
 					  size_t buffer_size)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int retval = -1 ;
   creden_t cred ;
@@ -840,7 +840,7 @@ fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
                                         const struct req_op_context *opctx,
 				        unsigned int xattr_id)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int retval = 0 ;
   creden_t cred ;

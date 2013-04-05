@@ -330,7 +330,7 @@ vfs_xfs_name_to_handle(int fd, const char *name, vfs_file_handle_t *fh)
 static int
 vfs_xfs_readlink(struct vfs_fsal_obj_handle *hdl, fsal_errors_t *ferr)
 {
-        char ldata[MAXPATHLEN];
+        char ldata[MAXPATHLEN + 1];
         int retval = readlink_by_handle(hdl->handle->handle,
                                         hdl->handle->handle_bytes,
                                         ldata, sizeof(ldata));

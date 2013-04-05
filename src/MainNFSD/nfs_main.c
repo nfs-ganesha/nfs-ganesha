@@ -49,15 +49,12 @@ nfs_start_info_t my_nfs_start_info = {
   .lw_mark_trigger = false
 };
 
-char *my_config_path = "/etc/ganesha/ganesha.conf";
-char my_pidfile[] = "/var/run/ganesha.pid";
 config_file_t config_struct;
-char log_path[MAXPATHLEN] = "";
-char exec_name[MAXPATHLEN] = "nfs-ganesha";
-char host_name[MAXHOSTNAMELEN] = "localhost";
+char *log_path = NULL;
+char *exec_name = "nfs-ganesha";
+char *host_name = "localhost";
 int debug_level = -1;
 int detach_flag = false;
-char ganesha_exec_path[MAXPATHLEN];
 
 /* command line syntax */
 
@@ -96,7 +93,7 @@ char usage[] =
 int main(int argc, char *argv[])
 {
   char *tempo_exec_name = NULL;
-  char localmachine[MAXHOSTNAMELEN];
+  char localmachine[MAXHOSTNAMELEN + 1];
   int c;
   int pidfile;
 #ifndef HAVE_DAEMON
@@ -108,27 +105,36 @@ int main(int argc, char *argv[])
   now(&ServerBootTime);
   ServerEpoch    = (time_t)ServerBootTime.tv_sec;
 
-  /* retrieve executable file's name */
-  strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
-
   if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
-    strcpy((char *)exec_name, tempo_exec_name + 1);
+    {
+      exec_name = gsh_strdup(tempo_exec_name + 1);
+      if (!exec_name)
+	{
+	  fprintf(stderr,
+		  "Unable to allocate memory for exec name, exiting...\n");
+	  exit(1);
+      }
+    }
 
   if(*exec_name == '\0')
-    strcpy((char *)exec_name, argv[0]);
+    exec_name = argv[0];
 
   /* get host name */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      fprintf(stderr, "Could not get local host name, exiting...");
+      fprintf(stderr, "Could not get local host name, exiting...\n");
       exit(1);
     }
   else
-    strncpy(host_name, localmachine, MAXHOSTNAMELEN);
-
-  strcpy(config_path, my_config_path);
-
-  strcpy( pidfile_path, my_pidfile ) ;
+    {
+      host_name = gsh_strdup(localmachine);
+      if (!host_name)
+	{
+	  fprintf(stderr,
+		  "Unable to allocate memory for hostname, exiting...\n");
+	  exit(1);
+	}
+    }
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -147,7 +153,13 @@ int main(int argc, char *argv[])
 
         case 'L':
           /* Default Log */
-          strncpy(log_path, optarg, MAXPATHLEN);
+	  log_path = gsh_strdup(optarg);
+	  if (!log_path)
+            {
+              fprintf(stderr,
+		      "Unable to allocate memory for log path.\n");
+              exit(1);
+            }
           break;
 
         case 'N':
@@ -163,12 +175,26 @@ int main(int argc, char *argv[])
 
         case 'f':
           /* config file */
-          strncpy(config_path, optarg, MAXPATHLEN);
+	  
+	  config_path = gsh_strdup(optarg);
+	  if (!config_path)
+            {
+              fprintf(stderr,
+                      "Unable to allocate memory for config path.\n");
+              exit(1);
+            }
           break;
 
         case 'p':
           /* PID file */
-          strncpy( pidfile_path, optarg, MAXPATHLEN ) ;
+	  pidfile_path = gsh_strdup(optarg);
+	  if (!pidfile_path)
+            {
+              fprintf(stderr,
+                      "Path %s too long for option 'f'.\n",
+                      optarg);
+              exit(1);
+            }
           break ;
 
         case 'd':
@@ -305,7 +331,7 @@ int main(int argc, char *argv[])
   if(!config_struct)
     {
       LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
-               config_path, config_GetErrorMsg());
+	       config_path, config_GetErrorMsg());
     }
 
   start_fsals(config_struct);

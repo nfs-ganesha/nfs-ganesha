@@ -433,9 +433,9 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
     FILE *fp;
     struct mntent *p_mnt;
     size_t pathlen, outlen = 0;
-    char mntdir[MAXPATHLEN];    /* there has got to be a better way... */
-    char fs_spec[MAXPATHLEN];
-    char type[MAXNAMLEN];
+    char mntdir[MAXPATHLEN + 1];    /* there has got to be a better way... */
+    char fs_spec[MAXPATHLEN + 1];
+    char type[MAXNAMLEN + 1];
 #endif
     int retval = 0;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;

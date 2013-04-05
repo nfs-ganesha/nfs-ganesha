@@ -62,7 +62,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newobj ;
 
   cache_entry_t            * pentry_newobj = NULL ;
-  char                       obj_name[MAXNAMLEN] ;
+  char                       obj_name[MAXNAMLEN + 1] ;
   uint64_t                   fileid = 0LL;
   cache_inode_status_t       cache_status ;
   object_file_type_t         nodetype;

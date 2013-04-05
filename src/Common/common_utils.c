@@ -119,35 +119,6 @@ int s_read_int64(char *str, unsigned long long *out64)
   return 0;
 }
 
-int s_read_size(char *str, size_t * p_size)
-{
-  int i;
-  size_t out = 0;
-
-  if(!p_size)
-    return -1;
-
-  for(i = 0; str[i]; i++)
-    {
-
-      if((str[i] < '0') || (str[i] > '9'))
-        return -1;              /* error */
-      else
-        {
-          out *= 10;
-          out += (size_t) (str[i] - '0');
-        }
-    }
-
-  if(i == 0)
-    return -1;
-
-  *p_size = out;
-
-  return 0;
-
-}
-
 /**
  * string to boolean convertion.
  * \return 1 for TRUE, 0 for FALSE, -1 on error
@@ -182,7 +153,7 @@ int StrToBoolean(const char *str)
  *
  * \return The number of bytes written in the target buffer.
  */
-int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
+int snprintmem(char *target, int tgt_size, void *source, int mem_size)
 {
 
   unsigned char *c = '\0';      /* the current char to be printed */
@@ -232,7 +203,7 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
  * \return - The number of bytes read in the source string.
  *         - -1 on error.
  */
-int sscanmem(caddr_t target, int tgt_size, const char *str_source)
+int sscanmem(void *target, int tgt_size, const char *str_source)
 {
 
   unsigned char *p_mem;         /* the current byte to be set */
@@ -276,83 +247,3 @@ int sscanmem(caddr_t target, int tgt_size, const char *str_source)
   return nb_read;
 
 }
-
-/**
- * 
- * find_space : return TRUE is argument is a space character.
- *
- * return TRUE is argument is a space character.
- *
- * @param c character to test.
- * 
- * @return TRUE is argument is a space character.
- *
- */
-int find_space(char c)
-{
-  return isspace(c);
-}                               /* find_space */
-
-/**
- * 
- * find_comma : return TRUE is argument is ','. 
- *
- * return TRUE is argument is ','
- *
- * @param c character to test.
- * 
- * @return TRUE is argument is ','. 
- *
- */
-int find_comma(char c)
-{
-  return (c == ',') ? 1 : 0;
-}                               /* find_comma */
-
-/**
- * 
- * find_colon : return TRUE is argument is ':'. 
- *
- * return TRUE is argument is ':'
- *
- * @param c character to test.
- * 
- * @return TRUE is argument is ':'. 
- *
- */
-int find_colon(char c)
-{
-  return (c == ':') ? 1 : 0;
-}                               /* find_colon */
-
-/**
- * 
- * find_endLine : return TRUE if character is a end of line.
- *
- * return TRUE if character is a end of line.
- *
- * @param c character to test.
- * 
- * @return TRUE if character is a end of line.
- *
- */
-int find_endLine(char c)
-{
-  return (c == '\0' || c == '\n') ? 1 : 0;
-}                               /* find_endLine */
-
-/**
- * 
- * find_slash : return TRUE is argument is '/'. 
- *
- * return TRUE is argument is '/'
- *
- * @param c character to test.
- * 
- * @return TRUE is argument is '/'. 
- *
- */
-int find_slash(char c)
-{
-  return (c == '/') ? 1 : 0;
-}                               /* find_slash */

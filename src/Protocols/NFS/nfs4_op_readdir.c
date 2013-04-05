@@ -125,12 +125,12 @@ nfs4_readdir_callback(void* opaque,
           }
           return false;
      }
-     tracker->mem_left -= (namelen + 1);
+     tracker->mem_left -= (namelen);
      tracker->entries[tracker->count].name.utf8string_len = namelen;
      tracker->entries[tracker->count].name.utf8string_val
-          = gsh_malloc(namelen + 1);
-     strcpy(tracker->entries[tracker->count].name.utf8string_val,
-            name);
+          = gsh_malloc(namelen);
+     memcpy(tracker->entries[tracker->count].name.utf8string_val,
+	    name, namelen);
 
      if(attribute_is_set(&tracker->req_attr, FATTR4_FILEHANDLE)) {
           if (!nfs4_FSALToFhandle(&entryFH, handle)) {

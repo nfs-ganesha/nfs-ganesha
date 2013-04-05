@@ -43,7 +43,7 @@
 
 static clientid4 pxy_clientid;
 static pthread_mutex_t pxy_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
-static char pxy_hostname[MAXNAMLEN];
+static char pxy_hostname[MAXNAMLEN + 1];
 static pthread_t pxy_recv_thread;
 static pthread_t pxy_renewer_thread;
 static struct glist_head rpc_calls;
@@ -87,8 +87,8 @@ struct pxy_fattr_storage {
         fattr4_time_metadata time_metadata;
         fattr4_time_modify time_modify;
         fattr4_rawdev rawdev;
-        char padowner[MAXNAMLEN];
-        char padgroup[MAXNAMLEN];
+        char padowner[MAXNAMLEN + 1];
+        char padgroup[MAXNAMLEN + 1];
         char padfh[NFS4_FHSIZE];
 };
 
@@ -797,7 +797,7 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         nfs_resop4 res[FSAL_CLIENTID_NB_OP_ALLOC]; 
         nfs_client_id4 nfsclientid;
         cb_client4 cbproxy;
-        char clientid_name[MAXNAMLEN];
+        char clientid_name[MAXNAMLEN + 1];
         SETCLIENTID4resok *sok;
         extern struct timespec ServerBootTime;
         struct sockaddr_in sin;

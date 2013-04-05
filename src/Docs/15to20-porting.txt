@@ -27,48 +27,50 @@ rong        fb8a853 rong zeng Integrate tirpc changes for mspac support.
             d67b23e Srikrishan Malik  Added epoch to Ganesha command line
 
 ffilz       bda173b Frank S. Filz In cache_inode_avl only MurmurHash3_x64_128 the length of names
-discuss04   47ad7e1 Frank S. Filz Use utf8_to_name and utf8_to_path
-discuss04   07e16c7 Frank S. Filz Fixup checking for CLAIM_DELEGATE_PREV and CLAIM_DELEGATE_CUR
-discuss04   5b5bbe2 Frank S. Filz Add utf8_to_name and utf8_to_path wrapper functions
-discuss04   8ab332a Frank S. Filz Fixup string length issues in snmp_adm/instance_handler.c
-discuss04   6675e88 Frank S. Filz Replace buffer size constant with sizeof
-discuss04   8461b04 Frank S. Filz Test return code of utf82str
-discuss04   74f2f4c Frank S. Filz Replace strcpy with strmaxcpy in MainNFSD/nfs_recovery_thread.c
-discuss04   e0397b5 Frank S. Filz Remove nfs4_stringid_split
-discuss04   bac5fd6 Frank S. Filz Fixup string handling of .xattr.d. xattr names
-discuss04   fd282f1 Frank S. Filz Remove strlcpy and strlcat
-discuss04   ef2d775 Frank S. Filz Replace strlcpy with strmaxcpy or strcpy
-discuss04   bbab3d4 Frank S. Filz Remove cname and oidstr from saved GSS credentials
-discuss04   b6b6009 Frank S. Filz Parse referral in place instead of lots of strncpy
-discuss04   38def24 Frank S. Filz Use strmaxcpy in mnt_Mnt.c
-discuss04   37306fd Frank S. Filz Replace strncpy/strcpy with strmaxcpy in stat exporter
-discuss04   b0c2e68 Frank S. Filz Replace strncpy with strmaxcpy in nfs_main.c
-discuss04   bb41a97 Frank S. Filz Replace strncpy(dest, "", SOME_CONST) with dest[0] = '\0'
-discuss04   66c684a Frank S. Filz Make NodeList optional, default compiled out
-discuss04   307d6ae Frank S. Filz Convert auth_stat2str to return const char * instead of copy into buffer
-discuss04   0c665b2 Frank Filz Fixup id mapper functions to take buffer size parms and use strmaxcpy
-discuss04   9f16238 Frank S. Filz Fixup nfs_ip_name funcs to account for null terminating char
-discuss04   88fa262 Frank S. Filz Replace constant with sizeof for snprintf
-discuss04   419e531 Frank S. Filz Strip pseudo="/" handling from nfs4_op_lookup_pseudo
-discuss04   929d281 Frank S. Filz Rework exports.c to not overflow string buffers
-discuss04   3ba7503 Frank S. Filz Remove dirname from exportlist_t
-discuss04   24e73a5 Frank S. Filz Clean out some unused functions in common_utils
-discuss04   f78da37 Frank S. Filz Simplify nfs_ParseConfLine and have it's users handle buffer sizes
-discuss04   5de68f9 Frank S. Filz Have stat exporter use parseAccessParam instead of having it's own version.
-discuss04   e031215 Frank S. Filz Fixup nfs_ParseConfLine to take the size of the buffers
-discuss04   ffe721d Frank S. Filz Use free_utf8 instead of gsh_free
-discuss04   d89e113 Frank S. Filz Use strcpy(x, y) instead of memcpy(x, y, strlen(y) + 1)
-discuss04   f5674c9 Frank S. Filz Use memcpy instead of strncpy when we know string length
-discuss04   27fcc2c Frank S. Filz Replace gsh_malloc + strcpy with gsh_strdup
-discuss04   ced8db8 Frank S. Filz Reuse p_pdirent[*p_nb_entries].name to get handle for dirent
-discuss04   358f583 Frank S. Filz Replace strncpy and strlcpy with strmaxcpy, check overflow and null terminate strings
-discuss04   776911e Frank S. Filz Pass in_str_maxlen=0 to FSAL_str2name/FSAL_str2path if str is null term
-discuss04   e2912cc Frank S. Filz Make sure all strings properly handled in fsal_strings.c
-discuss04   3b9ccf4 Frank S. Filz Cleanup string length issues in log_functions.c
-discuss04   c39aa43 Frank S. Filz Replace strncpy with memcpy for copying NFS4 open verifier
-discuss03 ? 961d81e Frank S. Filz Explicitly use NFS4_VERIFIER_SIZE instead of "8"
-discuss04   884bab2 Frank S. Filz Add space for null char in MAXNAMELEN/FSAL_MAX_NAME_LEN buffers
-ffilz       dc4ce50 Frank S. Filz Add strmaxcpy and strmaxcat inline functions
+
+Handled by Adam Emerson:
+Pass 47ad7e1 Frank S. Filz Use utf8_to_name and utf8_to_path
+Pass 07e16c7 Frank S. Filz Fixup checking for CLAIM_DELEGATE_PREV and CLAIM_DELEGATE_CUR
+Pass 5b5bbe2 Frank S. Filz Add utf8_to_name and utf8_to_path wrapper functions
+Pass 8ab332a Frank S. Filz Fixup string length issues in snmp_adm/instance_handler.c
+Done 6675e88 Frank S. Filz Replace buffer size constant with sizeof
+Pass 8461b04 Frank S. Filz Test return code of utf82str
+Pass 74f2f4c Frank S. Filz Replace strcpy with strmaxcpy in MainNFSD/nfs_recovery_thread.c
+Pass e0397b5 Frank S. Filz Remove nfs4_stringid_split
+Pass bac5fd6 Frank S. Filz Fixup string handling of .xattr.d. xattr names
+Pass fd282f1 Frank S. Filz Remove strlcpy and strlcat
+Pass ef2d775 Frank S. Filz Replace strlcpy with strmaxcpy or strcpy
+Done bbab3d4 Frank S. Filz Remove cname and oidstr from saved GSS credentials
+Pass b6b6009 Frank S. Filz Parse referral in place instead of lots of strncpy
+Pass 38def24 Frank S. Filz Use strmaxcpy in mnt_Mnt.c
+Pass 37306fd Frank S. Filz Replace strncpy/strcpy with strmaxcpy in stat exporter
+Done b0c2e68 Frank S. Filz Replace strncpy with strmaxcpy in nfs_main.c
+Pass bb41a97 Frank S. Filz Replace strncpy(dest, "", SOME_CONST) with dest[0] = '\0'
+Done 66c684a Frank S. Filz Make NodeList optional, default compiled out
+Done 307d6ae Frank S. Filz Convert auth_stat2str to return const char * instead of copy into buffer
+Pass 0c665b2 Frank Filz Fixup id mapper functions to take buffer size parms and use strmaxcpy
+Done 9f16238 Frank S. Filz Fixup nfs_ip_name funcs to account for null terminating char
+Done 88fa262 Frank S. Filz Replace constant with sizeof for snprintf
+AfterExportWork 419e531 Frank S. Filz Strip pseudo="/" handling from nfs4_op_lookup_pseudo
+AfterExportWork 929d281 Frank S. Filz Rework exports.c to not overflow string buffers
+Done 3ba7503 Frank S. Filz Remove dirname from exportlist_t
+Done 24e73a5 Frank S. Filz Clean out some unused functions in common_utils
+Done f78da37 Frank S. Filz Simplify nfs_ParseConfLine and have it's users handle buffer sizes
+Pass 5de68f9 Frank S. Filz Have stat exporter use parseAccessParam instead of having it's own version.
+Done e031215 Frank S. Filz Fixup nfs_ParseConfLine to take the size of the buffers
+Pass ffe721d Frank S. Filz Use free_utf8 instead of gsh_free
+Pass d89e113 Frank S. Filz Use strcpy(x, y) instead of memcpy(x, y, strlen(y) + 1)
+Pass f5674c9 Frank S. Filz Use memcpy instead of strncpy when we know string length
+Done 27fcc2c Frank S. Filz Replace gsh_malloc + strcpy with gsh_strdup
+Pass ced8db8 Frank S. Filz Reuse p_pdirent[*p_nb_entries].name to get handle for dirent
+Done 358f583 Frank S. Filz Replace strncpy and strlcpy with strmaxcpy, check overflow and null terminate strings
+Pass 776911e Frank S. Filz Pass in_str_maxlen=0 to FSAL_str2name/FSAL_str2path if str is null term
+Pass e2912cc Frank S. Filz Make sure all strings properly handled in fsal_strings.c
+Done 3b9ccf4 Frank S. Filz Cleanup string length issues in log_functions.c
+Pass c39aa43 Frank S. Filz Replace strncpy with memcpy for copying NFS4 open verifier
+Done 884bab2 Frank S. Filz Add space for null char in MAXNAMELEN/FSAL_MAX_NAME_LEN buffers
+Done dc4ce50 Frank S. Filz Add strmaxcpy and strmaxcat inline functions
+
 ffilz       2778696 Frank S. Filz FSAL_GPFS no longer uses FSAL_UP parms in config, ignore them
 ffilz       637db44 Frank S. Filz Get rid of some dead code
 
@@ -395,7 +397,7 @@ rong        7a347a1e rong zeng Log changes for IdMapper/RPCAL/support
             7326b543 Venkateswararao Jujjuri (JV) Avoid deadlock between entry(lru) mutex and content lock of the entry.
             a1a87409 Srikrishan Malik Allow read/write for the owner of the file
 
-redo        0ee1edb6 Frank S. Filz Document Cache Inode and NFS Core parameters
+1a8ba579    0ee1edb6 Frank S. Filz Document Cache Inode and NFS Core parameters
 pushed      c9b4b4fd Frank S. Filz Strip out unused NFS_Core_Param
 redo        e7dad8e7 Frank S. Filz Document FSAL options in GPFS sample config and remove obsolete GPFS options
 pushed      d132b61e Frank S. Filz With --enable-debug-memleaks, keep list of all state owners and stateids

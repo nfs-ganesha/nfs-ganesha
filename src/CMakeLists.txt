@@ -121,6 +121,7 @@ option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" ON)
 option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
+option(USE_NODELIST "enable NodeList support" OFF)
 option(_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag 
@@ -342,7 +343,7 @@ elseif(${ALLOCATOR} STREQUAL "tcmalloc")
   else(TCMALLOC_FOUND)
     message(WARNING "tcmalloc not found, falling back to libc")
     set(ALLOCATOR "libc")
-  endif(NOT TCMALLOC_FOUND)
+  endif(TCMALLOC_FOUND)
 else()
   if(NOT ${ALLOCATOR} STREQUAL "libc")
     message(SEND_ERROR "${ALLOCATOR}  is not a valid allocator option.")
@@ -443,7 +444,6 @@ set(GANESHA_CORE
   fsalup
   nfs4callbacks
   cidr
-  NodeList
   string_utils
   hash
   )
@@ -451,6 +451,10 @@ set(GANESHA_CORE
 if(USE_DBUS)
   set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
+
+if(USE_NODELIST)
+  set(GANESHA_CORE ${GANESHA_CORE} NodeList)
+endif(USE_NODELIST)
 
 if(USE_9P_RDMA)
   set(GANESHA_CORE ${GANESHA_CORE} mooshika rdmacm ibverbs)
@@ -484,7 +488,9 @@ add_subdirectory(cidr)
 add_subdirectory(test)
 add_subdirectory(avl)
 add_subdirectory(HashTable)
-add_subdirectory(NodeList)
+if(USE_NODELIST)
+  add_subdirectory(NodeList)
+endif(USE_NODELIST)
 add_subdirectory(Cache_inode)
 add_subdirectory(SAL)
 add_subdirectory(libntirpc)
@@ -502,7 +508,6 @@ add_subdirectory(FSAL)
 add_subdirectory(IdMapper)
 
 add_subdirectory(MainNFSD)
-add_subdirectory(Docs)
 add_subdirectory(tools)
 
 if(USE_FSAL_FUSE)
@@ -537,6 +542,7 @@ message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
 message(STATUS "_NO_PORTMAPPER = ${_NO_PORTMAPPER}")
 message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
 message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
+message(STATUS "USE_NODELIST = ${USE_NODELIST}")
 message(STATUS "_HANDLE_MAPPING = ${_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "PROFILING = ${PROFILING}")
@@ -630,6 +636,11 @@ set(USE_NFSIDMAP ${USE_NFSIDMAP}
 set(DEBUG_SAL ${DEBUG_SAL}
   CACHE BOOL
    "enable debug SAL"
+   FORCE)
+
+set(USE_NODELIST ${USE_NODELIST}
+  CACHE BOOL
+   "enable NodeList"
    FORCE)
 
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}

@@ -344,9 +344,9 @@ out:
 static int
 process_clnt_dir_files(struct clnt_info * clp)
 {
-	char	name[PATH_MAX];
-	char	gname[PATH_MAX];
-	char	info_file_name[PATH_MAX];
+	char	name[PATH_MAX + 1];
+	char	gname[PATH_MAX + 1];
+	char	info_file_name[PATH_MAX + 1];
 
 	if (clp->gssd_fd == -1) {
 		snprintf(gname, sizeof(gname), "%s/gssd", clp->dirname);
@@ -506,7 +506,7 @@ update_old_clients(struct dirent **namelist, int size, char *pdir)
 	struct clnt_info *clp;
 	void *saveprev;
 	int i, stillhere;
-	char fname[PATH_MAX];
+	char fname[PATH_MAX + 1];
 
 	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
 		/* only compare entries in the global list that are from the
@@ -542,7 +542,7 @@ static int
 find_client(char *dirname, char *pdir)
 {
 	struct clnt_info	*clp;
-	char fname[PATH_MAX];
+	char fname[PATH_MAX + 1];
 
 	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
 		snprintf(fname, sizeof(fname), "%s/%s", pdir, dirname);

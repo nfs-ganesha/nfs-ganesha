@@ -75,16 +75,16 @@ typedef struct exportlist_client_net__ {
 } exportlist_client_net_t;
 
 typedef struct exportlist_client_netgrp__ {
-	char netgroupname[MAXHOSTNAMELEN];
+	char netgroupname[MAXHOSTNAMELEN + 1];
 } exportlist_client_netgrp_t;
 
 typedef struct exportlist_client_wildcard_host__ {
-	char wildcard[MAXHOSTNAMELEN];
+	char wildcard[MAXHOSTNAMELEN + 1];
 } exportlist_client_wildcard_host_t;
 
 #define GSS_DEFINE_LEN_TEMP 255
 typedef struct exportlist_client_gss__ {
-	char princname[GSS_DEFINE_LEN_TEMP];
+	char princname[GSS_DEFINE_LEN_TEMP + 1];
 } exportlist_client_gss_t;
 
 typedef enum exportlist_access_type__ {
@@ -133,17 +133,23 @@ typedef struct exportlist_client__ {
 	exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];
 } exportlist_client_t;
 
+/**
+ * @todo Please, please, please get rid of all the static buffers in
+ * this structure.  I would do it myself but, to twist your metaphor,
+ * when you're remodelling a house, you don't rip out a bathroom while
+ * someone's in there.
+ */
+
 typedef struct exportlist {
 	unsigned short id; /*< Entry identifier */
 	exportlist_status_t status; /*< Entry's status */
-	char dirname[MAXNAMLEN]; /*< Path relative to fs root */
-	char fullpath[MAXPATHLEN]; /*< The path from the root */
-	char fsname[MAXNAMLEN]; /*< File system name, MAXNAMLEN is used for
-				    wanting of a better constant */
-	char pseudopath[MAXPATHLEN]; /*< NFSv4 pseudo-filesystem
-				      *  'virtual' path */
-	char FS_specific[MAXPATHLEN]; /*< Filesystem specific option string */
-	char FS_tag[MAXPATHLEN];      /*< Filesystem "tag" string */
+	char fullpath[MAXPATHLEN + 1]; /*< The path from the root */
+	char fsname[MAXNAMLEN + 1]; /*< File system name, MAXNAMLEN is used for
+				        wanting of a better constant */
+	char pseudopath[MAXPATHLEN + 1]; /*< NFSv4 pseudo-filesystem
+					  *  'virtual' path */
+	char FS_specific[MAXPATHLEN + 1]; /*< Filesystem specific option string */
+	char FS_tag[MAXPATHLEN + 1];      /*< Filesystem "tag" string */
 
 	exportlist_access_type_t access_type; /*< Allowed operations
 						  for this
@@ -271,8 +277,8 @@ typedef struct exportlist {
  * PseudoFs Tree
  */
 typedef struct pseudofs_entry {
-	char name[MAXNAMLEN]; /*< The entry name */
-	char fullname[MAXPATHLEN]; /*< The full path in the pseudo fs */
+	char name[MAXNAMLEN + 1]; /*< The entry name */
+	char fullname[MAXPATHLEN + 1]; /*< The full path in the pseudo fs */
 	unsigned int pseudo_id; /*< ID within the pseudoFS  */
 	exportlist_t *junction_export; /*< Export list related to the junction,
 					   NULL if entry is no junction */
@@ -289,12 +295,9 @@ typedef struct pseudofs {
 	pseudofs_entry_t *reverse_tab[MAX_PSEUDO_ENTRY];
 } pseudofs_t;
 
-#define NFS_CLIENT_NAME_LEN 256
-typedef struct nfs_client_cred_gss__ {
+typedef struct nfs_client_cred_gss {
 	unsigned int svc;
 	unsigned int qop;
-	unsigned char cname[NFS_CLIENT_NAME_LEN];
-	unsigned char stroid[NFS_CLIENT_NAME_LEN];
 #ifdef _HAVE_GSSAPI
 	gss_ctx_id_t gss_context_id;
 #endif
@@ -348,8 +351,8 @@ typedef struct compoud_data {
 	exportlist_t *pexport; /*< Export entry related to the request */
 	exportlist_t *pfullexportlist; /*< The whole exportlist */
 	pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
-	char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the
-				      current entry */
+	char MntPath[MAXPATHLEN + 1]; /*< Path (in pseudofs) of the
+					  current entry */
 	struct svc_req *reqp; /*< RPC Request related to the compound */
 	struct nfs_worker_data *pworker; /*< Worker thread data */
 	nfs_client_cred_t credential; /*< Raw RPC credentials */

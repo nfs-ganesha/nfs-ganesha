@@ -901,7 +901,6 @@ extern const struct fattr4_dent fattr4tab[];
 #define NFS4_PSEUDOFS_MAX_READ_SIZE  1048576
 #define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1048576
 #define NFS4_ROOT_UID 0
-#define NFS_MAXPATHLEN MAXPATHLEN
 
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1
@@ -1052,12 +1051,6 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
 int nfs4_Fattr_Supported(fattr4 * Fattr);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
-
-void free_utf8(utf8string * utf8str);
-int utf82str(char *str, int size, utf8string * utf8str);
-int str2utf8(char *str, utf8string * utf8str);
-
-seqid4 nfs4_NextSeqId(seqid4 seqid);
 
 bool nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
                             const struct attrlist *pFSAL_attr,

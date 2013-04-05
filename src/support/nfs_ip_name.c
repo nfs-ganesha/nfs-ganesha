@@ -146,7 +146,7 @@ int display_ip_name_val(struct gsh_buffdesc * pbuff, char *str)
  *
  */
 
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffdata;
@@ -154,7 +154,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
   sockaddr_t *pipaddr = NULL;
   struct timeval tv0, tv1, dur;
   int rc;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
 
@@ -220,7 +220,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
     return IP_NAME_INSERT_MALLOC_ERROR;
 
   /* Copy the value for the caller */
-  strncpy(hostname, nfs_ip_name->hostname, MAXHOSTNAMELEN);
+  strmaxcpy(hostname, nfs_ip_name->hostname, size);
 
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_add */
@@ -237,12 +237,12 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffval;
   nfs_ip_name_t *nfs_ip_name;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
 
@@ -251,8 +251,8 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
 
   if(HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      nfs_ip_name = (nfs_ip_name_t *) buffval.addr;
-      strncpy(hostname, nfs_ip_name->hostname, MAXHOSTNAMELEN);
+      nfs_ip_name = buffval.addr;
+      strmaxcpy(hostname, nfs_ip_name->hostname, size);
 
       LogFullDebug(COMPONENT_DISPATCH,
                    "Cache get hit for %s->%s",
@@ -283,7 +283,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 {
   struct gsh_buffdesc buffkey, old_value;
   nfs_ip_name_t *nfs_ip_name = NULL;
-  char ipstring[SOCK_NAME_MAX];
+  char ipstring[SOCK_NAME_MAX + 1];
 
   sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
 
@@ -343,7 +343,7 @@ int nfs_ip_name_populate(char *path)
   int err;
   char *key_name;
   char *key_value;
-  char label[MAXNAMLEN];
+  char label[MAXNAMLEN + 1];
   sockaddr_t ipaddr;
   nfs_ip_name_t *nfs_ip_name;
   sockaddr_t *pipaddr;
@@ -411,7 +411,7 @@ int nfs_ip_name_populate(char *path)
           return IP_NAME_INSERT_MALLOC_ERROR;
         }
 
-      strncpy(nfs_ip_name->hostname, key_name, MAXHOSTNAMELEN);
+      strmaxcpy(nfs_ip_name->hostname, key_name, sizeof(nfs_ip_name->hostname));
       nfs_ip_name->timestamp = time(NULL);
       memcpy(pipaddr, &ipaddr, sizeof(sockaddr_t));
 
@@ -434,21 +434,3 @@ int nfs_ip_name_populate(char *path)
 
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_populate */
-
-/**
- *
- * nfs_ip_name_get_stats: gets the hash table statistics for the IP_NAME Table.
- *
- * Gets the hash table statistics for the IP_NAME Table.
- *
- * @param phstat [OUT] pointer to the resulting stats.
- *
- * @return nothing (void function)
- *
- * @see HashTable_GetStats
- *
- */
-void nfs_ip_name_get_stats(hash_stat_t * phstat)
-{
-  HashTable_GetStats(ht_ip_name, phstat);
-}                               /* nfs_ip_name_get_stats */

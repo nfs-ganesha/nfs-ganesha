@@ -298,7 +298,7 @@ one_segment(cache_entry_t *entry,
 
         state_status = state_add_segment(layout_state,
 					 &res->segment,
-				 res->fsal_seg_data,
+					 res->fsal_seg_data,
 					 res->return_on_close);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
@@ -307,6 +307,13 @@ one_segment(cache_entry_t *entry,
                 nfs_status = nfs4_Errno_state(state_status);
                 goto out;
         }
+
+	/**
+	 * @todo This is where you would want to record layoutget
+	 * operation.  You can get the details of every segment added
+	 * here, including the segment description in
+	 * res->fsal_seg_data and clientid in *req_ctx->clientid.
+	 */
 
 out:
 

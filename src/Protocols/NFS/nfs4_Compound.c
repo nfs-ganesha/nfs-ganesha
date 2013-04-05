@@ -151,8 +151,6 @@ int nfs4_Compound(nfs_arg_t *arg,
   int status = NFS4_OK;
   compound_data_t data;
   int opindex;
-  #define TAGLEN 64
-  char tagstr[TAGLEN + 1 + 5];
   const uint32_t compound4_minor = arg->arg_compound4.minorversion;
   const uint32_t argarray_len =
        arg->arg_compound4.argarray.argarray_len;
@@ -234,15 +232,23 @@ int nfs4_Compound(nfs_arg_t *arg,
     return NFS_REQ_DROP;        /* Malformed credential */
 
   /* Keeping the same tag as in the arguments */
-  status = utf8dup(&res->res_compound4.tag,
-		   &arg->arg_compound4.tag,
-		   UTF8_SCAN_CKUTF8);
-  if(status != NFS4_OK) {
-      if(status == NFS4ERR_SERVERFAULT) {
-         LogEvent(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
-      }
-      res->res_compound4.status = status;
-      return NFS_REQ_OK;
+  res->res_compound4.tag.utf8string_len
+	  = arg->arg_compound4.tag.utf8string_len;
+  if (res->res_compound4.tag.utf8string_len > 0)
+    {
+      res->res_compound4.tag.utf8string_val
+	= gsh_malloc(res->res_compound4.tag.utf8string_len);
+      if (!res->res_compound4.tag.utf8string_val)
+	{
+	  return NFS_REQ_DROP;
+	}
+      memcpy(res->res_compound4.tag.utf8string_val,
+	     arg->arg_compound4.tag.utf8string_val,
+	     res->res_compound4.tag.utf8string_len);
+    }
+  else
+    {
+      res->res_compound4.tag.utf8string_val = NULL;
     }
 
   /* Allocating the reply nfs_resop4 */
@@ -253,20 +259,10 @@ int nfs4_Compound(nfs_arg_t *arg,
       return NFS_REQ_DROP;
     }
 
-  if(isDebug(COMPONENT_NFS_V4) && res->res_compound4.tag.utf8string_len > 0)
-    {
-      sprintf(tagstr, " TAG=");
-      utf82str(tagstr+5, TAGLEN, &(res->res_compound4.tag));
-    }
-  else
-    {
-      tagstr[0] = '\0';
-    }
-
   /* Managing the operation list */
   LogDebug(COMPONENT_NFS_V4,
-           "COMPOUND: There are %d operations%s",
-           argarray_len, tagstr);
+           "COMPOUND: There are %d operations",
+           argarray_len);
 
   /* Manage error NFS4ERR_NOT_ONLY_OP */
   if(argarray_len > 1)
@@ -328,12 +324,11 @@ int nfs4_Compound(nfs_arg_t *arg,
        }
 
       LogDebug(COMPONENT_NFS_V4,
-               "Request %d is %d = %s, entry %d in the op array%s",
+               "Request %d is %d = %s, entry %d in the op array",
                i,
                optabv4[opindex].val,
                optabv4[opindex].name,
-               opindex,
-               tagstr);
+               opindex);
 
       status
         = (optabv4[opindex].funct)(
@@ -370,11 +365,10 @@ int nfs4_Compound(nfs_arg_t *arg,
           /* An error occured, we do not manage the other requests in
              the COMPOUND, this may be a regular behaviour */
           LogDebug(COMPONENT_NFS_V4,
-                   "Status of %s in position %d = %s%s",
+                   "Status of %s in position %d = %s",
                    optabv4[opindex].name,
                    i,
-                   nfsstat4_to_str(status),
-                   tagstr);
+                   nfsstat4_to_str(status));
 
           res->res_compound4.resarray.resarray_len = i + 1;
 
@@ -453,8 +447,8 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   if(status != NFS4_OK)
     LogDebug(COMPONENT_NFS_V4,
-             "End status = %s lastindex = %d%s",
-             nfsstat4_to_str(status), i, tagstr);
+             "End status = %s lastindex = %d",
+             nfsstat4_to_str(status), i);
 
   compound_data_Free(&data);
 
@@ -714,10 +708,13 @@ void nfs4_Compound_Free(nfs_res_t *res)
   }
 
   gsh_free(res->res_compound4.resarray.resarray_val);
-  free_utf8(&res->res_compound4.tag);
+  if (res->res_compound4.tag.utf8string_val)
+    {
+      gsh_free(res->res_compound4.tag.utf8string_val);
+    }
 
   return;
-}                               /* nfs4_Compound_Free */
+}
 
 /**
  * @brief Free a compound data structure

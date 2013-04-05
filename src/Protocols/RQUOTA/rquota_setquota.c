@@ -66,7 +66,7 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_quota_t fsal_quota_in;
   fsal_quota_t fsal_quota_out;
   int quota_type = USRQUOTA;
-  char work[MAXPATHLEN];
+  char work[MAXPATHLEN + 1];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_setquota");
@@ -81,7 +81,15 @@ int rquota_setquota(nfs_arg_t *parg,
     }
 
   if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
-    strncpy(work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN);
+    {
+      if (strmaxcpy(work, parg->arg_rquota_getquota.gqa_pathp,
+		    MAXPATHLEN) == -1)
+	{
+	  LogMajor(COMPONENT_NFSPROTO,
+		   "String overflow.");
+	  return NFS_REQ_DROP;
+	}
+    }
   else
     {
       if(nfs_export_tag2path(nfs_param.pexportlist,

@@ -103,7 +103,7 @@ static inline int lustre_path_to_handle( const char * path, struct lustre_file_h
 static inline int lustre_name_to_handle_at( char * mntpath, struct lustre_file_handle * at_handle, const char *name,
                                             struct lustre_file_handle * out_handle, int flags)
 {
-  char path[MAXPATHLEN] ;
+  char path[MAXPATHLEN + 1] ;
   
   if( !mntpath || !at_handle || !name || !out_handle )
    return -1 ;
@@ -122,7 +122,7 @@ static inline int lustre_name_to_handle_at( char * mntpath, struct lustre_file_h
 static inline int lustre_open_by_handle( char * mntpath, struct lustre_file_handle * handle,
                                          int flags)
 {
-  char path[MAXPATHLEN] ;
+  char path[MAXPATHLEN + 1] ;
 
   lustre_handle_to_path( mntpath, handle, path ) ;
 

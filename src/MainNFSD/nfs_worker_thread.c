@@ -507,7 +507,7 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
   if(isDebug(COMPONENT_DISPATCH))
     {
-      char addrbuf[SOCK_NAME_MAX];
+      char addrbuf[SOCK_NAME_MAX + 1];
       sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
       LogDebug(COMPONENT_DISPATCH,
                "Request from %s for Program %d, Version %d, Function %d "
@@ -554,7 +554,7 @@ static void nfs_rpc_execute(request_data_t *preq,
         if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
             (caddr_t) res_nfs) == false)
           {
-              char addrbuf[SOCK_NAME_MAX];
+              char addrbuf[SOCK_NAME_MAX + 1];
               sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
               LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling "
@@ -641,7 +641,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                     {
                       char dumpfh[1024];
                       char *reason;
-                      char addrbuf[SOCK_NAME_MAX];
+                      char addrbuf[SOCK_NAME_MAX + 1];
                       sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
@@ -670,7 +670,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           pexport->fullpath, pexport->id);
             }
           else
             pexport = nfs_param.pexportlist;
@@ -693,7 +693,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                     {
                       char dumpfh[1024];
                       char *reason;
-                      char addrbuf[SOCK_NAME_MAX];
+                      char addrbuf[SOCK_NAME_MAX + 1];
                       sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
@@ -722,7 +722,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           pexport->fullpath, pexport->id);
             }
           else
             pexport = nfs_param.pexportlist;
@@ -799,7 +799,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                 {
                   char dumpfh[1024];
                   char *reason;
-                  char addrbuf[SOCK_NAME_MAX];
+                  char addrbuf[SOCK_NAME_MAX + 1];
                   sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
                   if(exportid < 0)
                     reason = "has badly formed handle";
@@ -828,7 +828,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
           LogFullDebug(COMPONENT_DISPATCH,
                        "Found export entry for dirname=%s as exportid=%d",
-                       pexport->dirname, pexport->id);
+                       pexport->fullpath, pexport->id);
         }
       else
         pexport = nfs_param.pexportlist;
@@ -937,7 +937,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
-      char addrbuf[SOCK_NAME_MAX];
+      char addrbuf[SOCK_NAME_MAX + 1];
       sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
       LogInfo(COMPONENT_DISPATCH,
               "Host %s is not allowed to access this export entry, vers=%d, "
@@ -1084,7 +1084,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
                        (caddr_t) res_nfs) == false)
         {
-          char addrbuf[SOCK_NAME_MAX];
+          char addrbuf[SOCK_NAME_MAX + 1];
           sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
           LogDebug(COMPONENT_DISPATCH,
                   "NFS DISPATCHER: FAILURE: Error while calling "
@@ -1096,7 +1096,8 @@ static void nfs_rpc_execute(request_data_t *preq,
                    addrbuf, (int)req->rq_prog,
                    (int)req->rq_vers, (int)req->rq_proc, req->rq_xid,
                    errno);
-          svc_destroy(xprt);
+	  if (xprt->xp_type != XPRT_UDP)
+	    svc_destroy(xprt);
           goto freeargs;
         }
 

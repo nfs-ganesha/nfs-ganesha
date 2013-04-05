@@ -64,7 +64,7 @@
  */
 static pool_t *rpc_call_pool;
 
-extern char host_name[MAXHOSTNAMELEN];
+extern char host_name[MAXHOSTNAMELEN + 1];
 
 /**
  * @brief Initialize the callback credential cache
@@ -195,7 +195,7 @@ nc_type nfs_netid_to_nc(const char *netid)
 static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
-	char addr_buf[SOCK_NAME_MAX];
+	char addr_buf[SOCK_NAME_MAX + 1];
 	uint32_t bytes[11];
 	int code;
 
@@ -216,7 +216,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			struct sockaddr_in *sin =
 				((struct sockaddr_in *)
 				 &clientid->cid_cb.v40.cb_addr.ss);
-			snprintf(addr_buf, SOCK_NAME_MAX, "%u.%u.%u.%u",
+			snprintf(addr_buf, sizeof(addr_buf), "%u.%u.%u.%u",
 				 bytes[1], bytes[2],
 				 bytes[3], bytes[4]);
 			sin->sin_family = AF_INET;
@@ -246,7 +246,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			struct sockaddr_in6 *sin6 =
 				((struct sockaddr_in6 *)
 				 &clientid->cid_cb.v40.cb_addr.ss);
-			snprintf(addr_buf, SOCK_NAME_MAX,
+			snprintf(addr_buf, sizeof(addr_buf),
 				 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
 				 bytes[1], bytes[2], bytes[3],
 				 bytes[4], bytes[5], bytes[6],
@@ -424,7 +424,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 					  char *buf,
 					  size_t len)
 {
-	char addr_buf[SOCK_NAME_MAX];
+	char addr_buf[SOCK_NAME_MAX + 1];
 	const char *host = NULL;
 	char *princ = NULL;
 
@@ -480,7 +480,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
 {
 	AUTH *auth;
-	char hprinc[MAXPATHLEN];
+	char hprinc[MAXPATHLEN + 1];
 	int32_t code = 0;
 
 	assert(cred->flavor == RPCSEC_GSS);
@@ -500,7 +500,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		goto out;
 	}
 
-	if (!format_host_principal(chan, hprinc, MAXPATHLEN)) {
+	if (!format_host_principal(chan, hprinc, sizeof(hprinc))) {
 		LogCrit(COMPONENT_NFS_CB, "format_host_principal failed");
 		goto out;
 	}

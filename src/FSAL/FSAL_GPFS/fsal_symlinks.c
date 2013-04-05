@@ -89,7 +89,8 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,        /* IN */
   /* Read the link on the filesystem */
   status =
       fsal_readlink_by_handle(mount_fd, gpfs_hdl->handle, p_link_content,
-                              link_len);
+			      link_len);
+
   if(FSAL_IS_ERROR(status))
     return(status);
 

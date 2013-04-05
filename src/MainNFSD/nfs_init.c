@@ -310,12 +310,12 @@ pthread_t _9p_dispatcher_thrid;
 pthread_t _9p_rdma_dispatcher_thrid ;
 #endif
 
-char config_path[MAXPATHLEN];
+char *config_path = "/etc/ganesha/ganesha.conf";
 
-char pidfile_path[MAXPATHLEN] ;
+char *pidfile_path = "/var/run/ganesha.pid";
 
 /**
- * @brief This thread is in charge of signal management 
+ * @brief This thread is in charge of signal management
  *
  * @param[in] UnusedArg Unused
  *
@@ -372,7 +372,7 @@ void nfs_prereq_init(char *program_name,
   SetNameFunction("main");
   SetNameHost(host_name);
   InitLogging();
-  if (log_path[0] != '\0')
+  if (log_path)
     SetDefaultLogging(log_path);
 
   if (debug_level >= 0)
@@ -791,7 +791,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef _HAVE_GSSAPI
   gss_buffer_desc gss_service_buf;
   OM_uint32 maj_stat, min_stat;
-  char GssError[MAXNAMLEN];
+  char GssError[MAXNAMLEN + 1];
 #endif
 
 #ifdef USE_DBUS
@@ -1165,7 +1165,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
       nsm_unmonitor_all();
     }
 
-  if(nfs_param.ip_name_param.mapfile[0] == '\0')
+  if(nfs_param.ip_name_param.mapfile == NULL)
     {
       LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
     }

@@ -62,7 +62,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   uint64_t               fileid;
   cache_inode_status_t   cache_status ;
   cache_entry_t        * pentry = NULL ;
-  char name[MAXNAMLEN] ;
+  char name[MAXNAMLEN + 1] ;
 
   u16 * nwqid ;
 

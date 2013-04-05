@@ -40,8 +40,8 @@
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 
-char v4_recov_dir[PATH_MAX];
-char v4_old_dir[PATH_MAX];
+char v4_recov_dir[PATH_MAX + 1];
+char v4_old_dir[PATH_MAX + 1];
 
 /**
  * @brief Grace period control structure
@@ -175,7 +175,7 @@ nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
 {
         int i;
         sockaddr_t sa;
-        char buf[SOCK_NAME_MAX];
+        char buf[SOCK_NAME_MAX + 1];
         longlong_t cl_val = 0;
 
         clientid->cid_recov_dir = gsh_malloc(256);
@@ -187,7 +187,7 @@ nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
         if (copy_xprt_addr(&sa, svc->rq_xprt))
                 sprint_sockip(&sa, buf, SOCK_NAME_MAX);
         else
-                strncpy(buf, "Unknown", SOCK_NAME_MAX);
+                strmaxcpy(buf, "Unknown", SOCK_NAME_MAX);
 
         for (i = 0; i < cl_rec->cr_client_val_len; i++)
                 cl_val += cl_rec->cr_client_val[i];
@@ -210,7 +210,7 @@ void
 nfs4_add_clid(nfs_client_id_t *clientid)
 {
         int err;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (clientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_CLIENTID,
@@ -218,8 +218,8 @@ nfs4_add_clid(nfs_client_id_t *clientid)
                 return;
         }
 
-        snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir,
-            clientid->cid_recov_dir);
+	snprintf(path, sizeof(path), "%s/%s", v4_recov_dir,
+		 clientid->cid_recov_dir);
 
         err = mkdir(path, 0700);
         if (err == -1 && errno != EEXIST) {
@@ -242,12 +242,12 @@ void
 nfs4_rm_clid(char *recov_dir)
 {
         int err;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (recov_dir == NULL)
                 return;
 
-        snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir, recov_dir);
+	snprintf(path, sizeof(path), "%s/%s", v4_recov_dir, recov_dir);
 
         err = rmdir(path);
         if (err == -1) {
@@ -332,7 +332,7 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
 {
         struct dirent *dentp;
         clid_entry_t *new_ent;
-        char src[PATH_MAX], dest[PATH_MAX];
+        char src[PATH_MAX + 1], dest[PATH_MAX + 1];
         int rc;
 
         dentp = readdir(dp);
@@ -345,15 +345,15 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
                                          "Unable to allocate memory.");
                                 return -1;
                         }
-                        strncpy(new_ent->cl_name, dentp->d_name, 256);
+                        strmaxcpy(new_ent->cl_name, dentp->d_name, 256);
                         glist_add(&grace.g_clid_list, &new_ent->cl_list);
                         LogDebug(COMPONENT_CLIENTID, "added %s to clid list",
                             new_ent->cl_name);
                         if (srcdir != NULL) {
-                                (void) snprintf(src, PATH_MAX, "%s/%s",
-                                    srcdir, dentp->d_name);
-                                (void) snprintf(dest, PATH_MAX, "%s/%s",
-                                    v4_old_dir, dentp->d_name);
+                                snprintf(src, sizeof(src), "%s/%s",
+					 srcdir, dentp->d_name);
+                                snprintf(dest, sizeof(dest), "%s/%s",
+					 v4_old_dir, dentp->d_name);
                                 if (takeover)
                                         rc = mkdir(dest, 0700);
                                 else
@@ -383,7 +383,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
         struct glist_head *node;
         clid_entry_t *clid_entry;
         int rc;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
 
         if (nodeid == 0) {
                 /* when not doing a takeover, start with an empty list */
@@ -436,8 +436,8 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                 }
 
         } else {
-                snprintf(path, PATH_MAX, "%s/%s/node%d",
-                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
+                snprintf(path, sizeof(path), "%s/%s/node%d",
+			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
 
                 dp = opendir(path);
                 if (dp == NULL) {
@@ -488,7 +488,7 @@ nfs4_clean_old_recov_dir(void)
 {
         DIR *dp;
         struct dirent *dentp;
-        char path[PATH_MAX];
+        char path[PATH_MAX + 1];
         int rc;
 
         dp = opendir(v4_old_dir);
@@ -504,8 +504,8 @@ nfs4_clean_old_recov_dir(void)
                 if (dentp->d_name[0] == '.')
                         continue;
 
-                (void) snprintf(path, PATH_MAX, "%s/%s",
-                    v4_old_dir, dentp->d_name);
+                snprintf(path, sizeof(path), "%s/%s",
+			 v4_old_dir, dentp->d_name);
 
                 rc = rmdir(path);
                 if (rc == -1) {
@@ -536,8 +536,8 @@ nfs4_create_recov_dir(void)
                     NFS_V4_RECOV_ROOT, errno);
         }
 
-        snprintf(v4_recov_dir, PATH_MAX, "%s/%s",
-            NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
+        snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s",
+		 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
         err = mkdir(v4_recov_dir, 0755);
         if (err == -1 && errno != EEXIST) {
                 LogEvent(COMPONENT_CLIENTID,
@@ -545,8 +545,8 @@ nfs4_create_recov_dir(void)
                     v4_recov_dir, errno);
         }
 
-        snprintf(v4_old_dir, PATH_MAX, "%s/%s",
-            NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR);
+        snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s",
+		 NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR);
         err = mkdir(v4_old_dir, 0755);
         if (err == -1 && errno != EEXIST) {
                 LogEvent(COMPONENT_CLIENTID,
@@ -554,8 +554,8 @@ nfs4_create_recov_dir(void)
                     v4_old_dir, errno);
         }
         if (nfs_param.core_param.clustered) {
-                snprintf(v4_recov_dir, PATH_MAX, "%s/%s/node%d",
-                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
+                snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s/node%d",
+			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
 
                 err = mkdir(v4_recov_dir, 0755);
                 if (err == -1 && errno != EEXIST) {
@@ -564,8 +564,8 @@ nfs4_create_recov_dir(void)
                             v4_recov_dir, errno);
                 }
 
-                snprintf(v4_old_dir, PATH_MAX, "%s/%s/node%d",
-                    NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR, g_nodeid);
+                snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s/node%d",
+			 NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR, g_nodeid);
 
                 err = mkdir(v4_old_dir, 0755);
                 if (err == -1 && errno != EEXIST) {

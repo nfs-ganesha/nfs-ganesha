@@ -267,57 +267,47 @@ uint64_t nfs_ntohl64(uint64_t arg64)
 /**
  * @brief Converts an auth_stat enum to a string
  *
- * @param[in]  why The stat to convert
- * @param[out] str Output string
+ * @param[in] why The stat to convert
+ *
+ * @return String describing the status
  */
-void auth_stat2str(enum auth_stat why, char *str)
+
+const char *auth_stat2str(enum auth_stat why)
 {
   switch (why)
     {
     case AUTH_OK:
-      strncpy(str, "AUTH_OK", AUTH_STR_LEN);
-      break;
+      return "AUTH_OK";
 
     case AUTH_BADCRED:
-      strncpy(str, "AUTH_BADCRED", AUTH_STR_LEN);
-      break;
+      return "AUTH_BADCRED";
 
     case AUTH_REJECTEDCRED:
-      strncpy(str, "AUTH_REJECTEDCRED", AUTH_STR_LEN);
-      break;
+      return "AUTH_REJECTEDCRED";
 
     case AUTH_BADVERF:
-      strncpy(str, "AUTH_BADVERF", AUTH_STR_LEN);
-      break;
+      return "AUTH_BADVERF";
 
     case AUTH_REJECTEDVERF:
-      strncpy(str, "AUTH_REJECTEDVERF", AUTH_STR_LEN);
-      break;
+      return "AUTH_REJECTEDVERF";
 
     case AUTH_TOOWEAK:
-      strncpy(str, "AUTH_TOOWEAK", AUTH_STR_LEN);
-      break;
+      return "AUTH_TOOWEAK";
 
     case AUTH_INVALIDRESP:
-      strncpy(str, "AUTH_INVALIDRESP", AUTH_STR_LEN);
-      break;
+      return "AUTH_INVALIDRESP";
 
     case AUTH_FAILED:
-      strncpy(str, "AUTH_FAILED", AUTH_STR_LEN);
-      break;
+      return "AUTH_FAILED";
 
 #ifdef _HAVE_GSSAPI
     case RPCSEC_GSS_CREDPROBLEM:
-      strncpy(str, "RPCSEC_GSS_CREDPROBLEM", AUTH_STR_LEN);
-      break;
+      return "RPCSEC_GSS_CREDPROBLEM";
 
     case RPCSEC_GSS_CTXPROBLEM:
-      strncpy(str, "RPCSEC_GSS_CTXPROBLEM", AUTH_STR_LEN);
-      break;
+      return "RPCSEC_GSS_CTXPROBLEM";
 #endif
-
-    default:
-      strncpy(str, "UNKNOWN AUTH", AUTH_STR_LEN);
-      break;
     }
+
+  return "UNKNOWN AUTH";
 }

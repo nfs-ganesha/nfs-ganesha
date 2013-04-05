@@ -225,7 +225,7 @@ int rebuild_export_list(void)
 
   /* If no configuration file is given, then the caller must want to reparse the
    * configuration file from startup. */
-  if(config_path[0] == '\0')
+  if(config_path == NULL)
     {
       LogCrit(COMPONENT_CONFIG,
               "Error: No configuration file was specified for reloading exports.");

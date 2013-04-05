@@ -1218,7 +1218,7 @@ fsal_status_t tank_create_handle( struct fsal_export *exp_hdl,
 	struct zfs_fsal_obj_handle *hdl;
 	struct zfs_file_handle fh;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        char link_buff[PATH_MAX];
+        char link_buff[PATH_MAX + 1];
         char *link_content = NULL;
         struct stat stat ;
         creden_t cred ;

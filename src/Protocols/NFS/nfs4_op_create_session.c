@@ -74,7 +74,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	/* The client's network address */
 	sockaddr_t client_addr;
 	/* The client address as a string, for gratuitous logging */
-	char str_client_addr[SOCK_NAME_MAX];
+	char str_client_addr[SOCK_NAME_MAX + 1];
 	/* The client name, for gratuitous logging */
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 	/* Return code from clientid calls */
@@ -221,7 +221,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		    !cmp_sockaddr(&unconf->cid_client_addr,
 				  &client_addr, IGNORE_PORT)) {
 			if (isDebug(component)) {
-				char unconfirmed_addr[SOCK_NAME_MAX];
+				char unconfirmed_addr[SOCK_NAME_MAX + 1];
 
 				sprint_sockip(&unconf->cid_client_addr,
 					      unconfirmed_addr,
@@ -252,7 +252,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		    !cmp_sockaddr(&conf->cid_client_addr,
 				  &client_addr, IGNORE_PORT)) {
 			if (isDebug(component)) {
-				char confirmed_addr[SOCK_NAME_MAX];
+				char confirmed_addr[SOCK_NAME_MAX + 1];
 
 				sprint_sockip(&conf->cid_client_addr,
 					      confirmed_addr,

@@ -58,7 +58,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *,   /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[MAXNAMLEN];
+  char xattr_name[MAXNAMLEN + 1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;
@@ -267,7 +267,7 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
 {
   unsigned int index;
   unsigned int curr_idx;
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
   size_t len = 0;
 
@@ -304,7 +304,7 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
 static int xattr_name_to_id(int fd, const char *name)
 {
   unsigned int i;
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
 
   /* get xattrs */
@@ -430,7 +430,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   int fd = -1 ;
   fsal_errors_t fe;
 
-  char names[MAXPATHLEN], *ptr;
+  char names[MAXPATHLEN + 1], *ptr;
   size_t namesize;
   int xattr_idx;
 
@@ -624,7 +624,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
     }
   else if(xattr_id >= XATTR_COUNT)
     {
-      char attr_name[MAXPATHLEN];
+      char attr_name[MAXPATHLEN + 1];
       fsal_errors_t fe;
  
       fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
@@ -771,7 +771,7 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 caddr_t buffer_addr,
 					 size_t buffer_size)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
   fsal_errors_t fe;
@@ -837,7 +837,7 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 				       unsigned int xattr_id)
 {
   int rc;
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN + 1];
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
   fsal_errors_t fe;

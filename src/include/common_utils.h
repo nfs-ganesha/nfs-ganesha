@@ -3,17 +3,16 @@
  */
 
 /**
- * Common tools for printing, parsing, ....
- *
- *
+ * @file common_utils.h
+ * @brief Common tools for printing, parsing, ....
  */
 
-#ifndef _COMMON_UTILS_H
-#define _COMMON_UTILS_H
+#ifndef COMMON_UTILS_H
+#define COMMON_UTILS_H
 
-#include <sys/types.h>          /* for caddr_t */
 #include <time.h>
 #include <assert.h>
+#include <string.h>
 #include "ganesha_types.h"
 #include "log.h"
 
@@ -82,8 +81,6 @@ int s_read_octal(char *str);
  */
 int s_read_int64(char *str, unsigned long long *out64);
 
-int s_read_size(char *str, size_t * p_size);
-
 /**
  * string to boolean convertion.
  * \return 1 for TRUE, 0 for FALSE, -1 on error
@@ -106,7 +103,7 @@ int StrToBoolean(const char *str);
  *
  * \return The number of bytes written in the target buffer.
  */
-int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size);
+int snprintmem(char *target, int tgt_size, void *source, int mem_size);
 
 /**
  * snscanmem:
@@ -123,15 +120,9 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size);
  * \return - The number of bytes read in the source string.
  *         - -1 on error.
  */
-int sscanmem(caddr_t target, int tgt_size, const char *str_source);
+int sscanmem(void *target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
-
-int find_space(char c);
-int find_comma(char c);
-int find_colon(char c);
-int find_endLine(char c);
-int find_slash(char c);
 
 #ifndef HAVE_STRLCAT
 extern size_t strlcat(char *dst, const char *src, size_t siz);
@@ -436,4 +427,55 @@ static inline void now(struct timespec *ts)
 }
 
 
-#endif   /* !_COMMON_UTILS_H */
+
+/**
+ * @brief Copy a string into a buffer safely
+ *
+ * This function doesn't overflow and and and makes sure the buffer is
+ * null terminated.
+ *
+ * @param[out] dest      Destination buffer
+ * @param[in]  src       Source string
+ * @param[in]  dest_size Total size of dest
+ *
+ * @retval 0 on success.
+ * @retval -1 if the buffer would overflow (the buffer is not modified)
+ */
+
+static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
+{
+	int len = strlen(src);
+	if (len >= dest_size) {
+		return -1;
+	}
+	memcpy(dest, src, len + 1);
+	return 0;
+}
+
+/**
+ * @brief Append a string to buffer safely
+ *
+ * This function doesn't overflow the buffer, and makes sure the
+ * buffer is null terminated.
+ *
+ * @param[in,out] dest      Destination buffer
+ * @param[in]     src       Source string
+ * @param[in]     dest_size Total size of dest
+ *
+ * @retval 0 on success.
+ * @retval -1 if the buffer would overflow (the buffer is not modified).
+ */
+
+static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
+{
+	int destlen = strlen(dest);
+	int remain  = dest_size - destlen;
+	int srclen  = strlen(src);
+	if (remain <= srclen) {
+		return -1;
+	}
+	memcpy(dest + destlen, src, srclen + 1);
+	return 0;
+}
+
+#endif /* !COMMON_UTILS_H */

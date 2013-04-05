@@ -53,9 +53,9 @@
 #include "gss_util.h"
 #include "krb5_util.h"
 
-char pipefs_dir[PATH_MAX] = GSSD_PIPEFS_DIR;
-char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
-char ccachedir[PATH_MAX] = GSSD_DEFAULT_CRED_DIR;
+char pipefs_dir[PATH_MAX + 1] = GSSD_PIPEFS_DIR;
+char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
+char ccachedir[PATH_MAX + 1] = GSSD_DEFAULT_CRED_DIR;
 char *ccachesearch[GSSD_MAX_CCACHE_SEARCH + 1];
 int  use_memcache = 0;
 int  root_uses_machine_creds = 1;
@@ -127,17 +127,17 @@ main(int argc, char *argv[])
 				rpc_verbosity++;
 				break;
 			case 'p':
-				strncpy(pipefs_dir, optarg, sizeof(pipefs_dir));
+				strmaxcpy(pipefs_dir, optarg, sizeof(pipefs_dir));
 				if (pipefs_dir[sizeof(pipefs_dir)-1] != '\0')
 					errx(1, "pipefs path name too long");
 				break;
 			case 'k':
-				strncpy(keytabfile, optarg, sizeof(keytabfile));
+				strmaxcpy(keytabfile, optarg, sizeof(keytabfile));
 				if (keytabfile[sizeof(keytabfile)-1] != '\0')
 					errx(1, "keytab path name too long");
 				break;
 			case 'd':
-				strncpy(ccachedir, optarg, sizeof(ccachedir));
+				strmaxcpy(ccachedir, optarg, sizeof(ccachedir));
 				if (ccachedir[sizeof(ccachedir)-1] != '\0')
 					errx(1, "ccachedir path name too long");
 				break;

@@ -273,7 +273,6 @@ int nfs_read_core_conf(config_file_t in_config,
         {
 
 #     define MAX_NFSPROTO      10       /* large enough !!! */
-#     define MAX_NFSPROTO_LEN  256      /* so is it !!! */
 
           char *nfsvers_list[MAX_NFSPROTO];
           int idx, count;
@@ -281,25 +280,23 @@ int nfs_read_core_conf(config_file_t in_config,
           /* reset nfs versions flags (clean defaults) */
           pparam->core_options &= ~(CORE_OPTION_ALL_VERS);
 
-          /* allocate nfs vers strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            nfsvers_list[idx] = gsh_malloc(MAX_NFSPROTO_LEN);
+          /* fill nfs vers list with NULL pointers */
+          memset(nfsvers_list, 0, sizeof(nfsvers_list));
 
           /*
            * Search for coma-separated list of nfsprotos
            */
-          count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
-                                    key_value, find_comma, find_endLine);
+          count = nfs_ParseConfLine(nfsvers_list,
+                                    MAX_NFSPROTO,
+                                    0,
+                                    key_value,
+                                    ',');
 
           if(count < 0)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS_Protocols list too long (>%d)",
                       MAX_NFSPROTO);
-
-              /* free sec strings */
-              for(idx = 0; idx < MAX_NFSPROTO; idx++)
-                gsh_free(nfsvers_list[idx]);
 
               return -1;
             }
@@ -325,10 +322,6 @@ int nfs_read_core_conf(config_file_t in_config,
                 }
             }
 
-          /* free sec strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            gsh_free(nfsvers_list[idx]);
-
           /* check that at least one nfs protocol has been specified */
           if((pparam->core_options & (CORE_OPTION_ALL_VERS)) == 0)
             {
@@ -339,7 +332,7 @@ int nfs_read_core_conf(config_file_t in_config,
       else if(!strcasecmp( key_name, "NSM_Use_Caller_Name" ) )
         {
           pparam->nsm_use_caller_name = StrToBoolean(key_value);
-        }
+	}
       else if(!strcasecmp(key_name, "Clustered"))
         {
           pparam->clustered = StrToBoolean(key_value);
@@ -429,7 +422,12 @@ int nfs_read_ip_name_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "Map"))
         {
-          strncpy(pparam->mapfile, key_value, MAXPATHLEN);
+	  pparam->mapfile = gsh_strdup(key_value);
+	  if (!pparam->mapfile)
+            {
+              LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate memory for mapfile path.");
+            }
         }
       else
         {
@@ -442,6 +440,7 @@ int nfs_read_ip_name_conf(config_file_t in_config,
 
   return 0;
 }
+
 
 #ifdef _HAVE_GSSAPI
 /**
@@ -503,12 +502,25 @@ int nfs_read_krb5_conf(config_file_t in_config,
 
       if(!strcasecmp(key_name, "PrincipalName"))
         {
-          strlcpy(pparam->svc.principal, key_value,
-                  sizeof(pparam->svc.principal));
+          if(strmaxcpy(pparam->svc.principal,
+                       key_value,
+                       sizeof(pparam->svc.principal)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "%s=\"%s\" too long",
+                      key_name, key_value);
+            }
         }
       else if(!strcasecmp(key_name, "KeytabPath"))
         {
-          strlcpy(pparam->keytab, key_value, sizeof(pparam->keytab));
+          if(strmaxcpy(pparam->keytab,
+                       key_value,
+                       sizeof(pparam->keytab)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "%s=\"%s\" too long",
+                      key_name, key_value);
+            }
         }
       else if(!strcasecmp(key_name, "Active_krb5"))
         {
@@ -524,7 +536,7 @@ int nfs_read_krb5_conf(config_file_t in_config,
     }
 
   return 0;
-}                               /* nfs_read_krb5_conf */
+}
 #endif
 
 /**
@@ -601,11 +613,22 @@ int nfs_read_version4_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "DomainName"))
         {
-          strncpy(pparam->domainname, key_value, MAXNAMLEN);
+	  pparam->domainname = gsh_strdup(pparam->domainname);
+	  if (!pparam->domainname)
+            {
+              LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate memory for domain name.");
+            }
         }
       else if(!strcasecmp(key_name, "IdmapConf"))
         {
-          strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
+	  pparam->idmapconf = gsh_strdup(key_value);
+
+	  if (!pparam->idmapconf)
+            {
+	      LogFatal(COMPONENT_CONFIG,
+		       "Unable to allocate space for idmap conffile path.");
+            }
         }
       else if(!strcasecmp(key_name, "UseGetpwnam"))
         {
@@ -626,4 +649,3 @@ int nfs_read_version4_conf(config_file_t in_config,
 
   return 0;
 }                               /* nfs_read_version4_conf */
-

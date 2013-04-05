@@ -57,7 +57,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   _9p_fid_t * pdfid = NULL ;
 
   cache_inode_status_t  cache_status ;
-  char name[MAXNAMLEN] ;
+  char name[MAXNAMLEN + 1] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;

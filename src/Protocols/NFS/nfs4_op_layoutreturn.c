@@ -446,6 +446,19 @@ nfsstat4 nfs4_return_one_state(
         arg->spec_segment = spec_segment;
         arg->ncookies = 0;
 
+	/**
+	 * @todo This is where you would want to record
+	 * layoutreturns.  There are lots of things that are
+	 * effectively layoutreturns that don't go through the
+	 * nfs4_op_layoutreturn function, but they do all go through
+	 * here.  For circumstance values of circumstance_client,
+	 * circumstance_roc, and circumstance_forgotten, it should
+	 * count as a legitimate client operation.
+	 * circumstance_revoke means that we attempted a recall and
+	 * the client misbehaved.  circumstance_shutdown and
+	 * circumstance_reclaim are probably not worth dealing with.
+	 */
+
         if (circumstance != circumstance_reclaim) {
                 /* The _safe version of glist_for_each allows us to
                    delete segments while we iterate. */

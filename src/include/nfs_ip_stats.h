@@ -21,14 +21,13 @@
 typedef struct nfs_ip_name__
 {
   time_t timestamp;
-  char hostname[MAXHOSTNAMELEN];
+  char hostname[MAXHOSTNAMELEN + 1];
 } nfs_ip_name_t;
 
-int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname);
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname);
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size);
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size);
 int nfs_ip_name_remove(sockaddr_t *ipaddr);
 
-void nfs_ip_name_get_stats(hash_stat_t * phstat);
 int nfs_ip_name_populate(char *path);
 
 int display_ip_name_key(struct gsh_buffdesc * pbuff, char *str);

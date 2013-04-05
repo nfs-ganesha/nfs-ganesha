@@ -42,9 +42,9 @@
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
 
-char log_path[MAXPATHLEN] = "";
-char exec_name[MAXPATHLEN] = "ganesha-nfsd";
-char host_name[MAXHOSTNAMELEN] = "localhost";
+char log_path[MAXPATHLEN + 1] = "";
+char exec_name[MAXPATHLEN + 1] = "ganesha-nfsd";
+char host_name[MAXHOSTNAMELEN + 1] = "localhost";
 int debug_level = -1;
 int detach_flag = false;
 int single_threaded = false;
@@ -88,7 +88,7 @@ int ganefuse_main(int argc, char *argv[],
                   const struct ganefuse_operations *op, void *user_data)
 {
   char *tempo_exec_name = NULL;
-  char localmachine[MAXHOSTNAMELEN];
+  char localmachine[MAXHOSTNAMELEN + 1];
   int c;
   pid_t son_pid;
 

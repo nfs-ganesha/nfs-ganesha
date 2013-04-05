@@ -62,7 +62,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	clientid4 clientid = 0;
 	sockaddr_t client_addr;
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
-	char str_client_addr[SOCK_NAME_MAX];
+	char str_client_addr[SOCK_NAME_MAX + 1];
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 	int rc;
 
@@ -160,7 +160,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		    !cmp_sockaddr(&unconf->cid_client_addr,
 				  &client_addr, IGNORE_PORT)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char unconfirmed_addr[SOCK_NAME_MAX];
+				char unconfirmed_addr[SOCK_NAME_MAX + 1];
 
 				sprint_sockip(&unconf->cid_client_addr,
 					      unconfirmed_addr,
@@ -232,7 +232,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					    &client_addr,
 				  IGNORE_PORT)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char confirmed_addr[SOCK_NAME_MAX];
+				char confirmed_addr[SOCK_NAME_MAX + 1];
 
 				sprint_sockip(&conf->cid_client_addr,
 					      confirmed_addr,

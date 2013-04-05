@@ -60,7 +60,6 @@
 #define RQCRED_SIZE 400 /* this size is excessive */
 
 /* Arbitrary string buffer lengths */
-#define AUTH_STR_LEN 30
 #define PWENT_MAX_LEN 81
 
 /* Hard and soft limit for nfsv4 quotas */
@@ -235,8 +234,8 @@ extern verifier4 NFS4_write_verifier;  /*< NFS V4 write verifier */
 extern writeverf3 NFS3_write_verifier; /*< NFS V3 write verifier */
 
 extern nfs_worker_data_t *workers_data;
-extern char config_path[MAXPATHLEN];
-extern char pidfile_path[MAXPATHLEN];
+extern char *config_path;
+extern char *pidfile_path;
 extern ushort g_nodeid;
 
 typedef enum process_status {
@@ -350,8 +349,7 @@ unsigned int get_rpc_xid(struct svc_req *reqp);
 
 void nfs_reset_stats(void);
 
-void auth_stat2str(enum auth_stat, char *str);
-
+const char * auth_stat2str(enum auth_stat);
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 
 /* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */
