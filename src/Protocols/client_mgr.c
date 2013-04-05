@@ -113,8 +113,8 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
 	struct gsh_client *cl;
 	struct server_stats *server_st;
 	struct gsh_client v;
-	uint8_t *addr;
-	int addr_len;
+	uint8_t *addr = NULL;
+	int addr_len = 0;
 
 	switch(client_ipaddr->ss_family) {
 	case AF_INET:
@@ -190,11 +190,11 @@ void put_gsh_client(struct gsh_client *client)
 bool remove_gsh_client(sockaddr_t *client_ipaddr)
 {
 	struct avltree_node *node = NULL;
-	struct gsh_client *cl;
+	struct gsh_client *cl = NULL;
 	struct server_stats *server_st;
 	struct gsh_client v;
-	uint8_t *addr;
-	int addr_len;
+	uint8_t *addr = NULL;
+	int addr_len = 0;
 	bool removed = true;
 
 	switch(client_ipaddr->ss_family) {

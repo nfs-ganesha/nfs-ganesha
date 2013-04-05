@@ -550,7 +550,9 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	size_t pathlen, outlen = 0;
 	char mntdir[MAXPATHLEN + 1];  /* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN + 1];
+#ifdef LINUX
         char hdllib[MAXPATHLEN + 1];
+#endif
         struct vfs_exp_handle_ops *hops = &defops;
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
