@@ -1866,10 +1866,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
                                   "LOG MESSAGE DEBUGINFO",
     NIV_NULL,
   },
-  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY",
-                                  "LOG MESSAGE VERBOSITY",
-    NIV_NULL,
-  },
 };
 
 void DisplayLogComponentLevel(log_components_t   component,
