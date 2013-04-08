@@ -1900,9 +1900,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
                                   "LOG MESSAGE DEBUGINFO",
     NIV_NULL,
   },
-  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG VERB",
-    NIV_NULL,
-  },
 };
 
 void DisplayLogComponentLevel(log_components_t   component,
@@ -2294,7 +2291,6 @@ HANDLE_PROP(COMPONENT_FSAL_UP);
 HANDLE_PROP(COMPONENT_DBUS);
 HANDLE_PROP(COMPONENT_FAKE);
 HANDLE_PROP(LOG_MESSAGE_DEBUGINFO);
-HANDLE_PROP(LOG_MESSAGE_VERBOSITY);
 
 
 static struct gsh_dbus_prop *log_props[] = {
@@ -2344,7 +2340,6 @@ static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(COMPONENT_DBUS),
 	LOG_PROPERTY_ITEM(COMPONENT_FAKE),
 	LOG_PROPERTY_ITEM(LOG_MESSAGE_DEBUGINFO),
-	LOG_PROPERTY_ITEM(LOG_MESSAGE_VERBOSITY),
 	NULL
 };
 

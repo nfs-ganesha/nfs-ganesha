@@ -146,7 +146,6 @@ typedef enum log_components
    */
   COMPONENT_FAKE,
   LOG_MESSAGE_DEBUGINFO,
-  LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
 
