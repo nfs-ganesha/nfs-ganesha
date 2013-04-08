@@ -59,7 +59,7 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_fid_t * ptargetfid = NULL ;
 
   cache_inode_status_t  cache_status ;
-  char                  link_name[MAXNAMLEN + 1] ; ;
+  char                  link_name[MAXNAMLEN] ; ;
 
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
