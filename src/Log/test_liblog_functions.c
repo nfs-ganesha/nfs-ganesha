@@ -243,6 +243,9 @@ void Test1(char *str, char *file)
    * Set up for tests that will verify what was actually produced by log messages.
    * This is used to test log levels and to test the log_vnsprintf function.
    */
+  /* TODO FSF: this can be done by setting the right header flags and peeking at
+   * the context buffer.
+   */
   SetComponentLogBuffer(COMPONENT_MAIN, &buffer);
   SetComponentLogBuffer(COMPONENT_INIT, &buffer);
 
