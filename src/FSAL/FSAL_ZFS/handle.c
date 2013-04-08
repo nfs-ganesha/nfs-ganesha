@@ -681,12 +681,12 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         creden_t cred ;
         libzfswrap_vfs_t   * p_vfs   = NULL ;
         libzfswrap_vnode_t * pvnode  = NULL ;
-        libzfswrap_entry_t * dirents = NULL ;
+        libzfswrap_entry_t dirents[MAX_ENTRIES];
         unsigned int index  = 0 ;
 
-	if(whence != NULL) {
-		seekloc = (off_t)*whence;
-	}
+       if(whence != NULL) {
+               seekloc = (off_t)*whence;
+        }
 
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
@@ -707,13 +707,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                                            &cred,
                                            myself->handle->zfs_handle,
                                            &pvnode ) ) )
-
              goto out;
-
-      
-        if( ( dirents = gsh_malloc( MAX_ENTRIES * sizeof(libzfswrap_entry_t) ) ) == NULL )
-          return fsalstat( ERR_FSAL_NOMEM, 0 ) ;
-
 
         *eof = FALSE ;
         do
@@ -1059,19 +1053,12 @@ static fsal_status_t tank_handle_digest( struct fsal_obj_handle *obj_hdl,
 	fh = myself->handle;
 
 	switch(output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		fh_size = zfs_sizeof_handle(fh);
                 if(fh_desc->len < fh_size)
                         goto errout;
                 memcpy(fh_desc->addr, fh, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID2:
-		fh_size = FSAL_DIGEST_SIZE_FILEID2;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(fh_desc->addr, &fh->zfs_handle.inode, fh_size);
 		break;
 	case FSAL_DIGEST_FILEID3:
 		fh_size = FSAL_DIGEST_SIZE_FILEID3;
@@ -1218,7 +1205,7 @@ fsal_status_t tank_create_handle( struct fsal_export *exp_hdl,
 	struct zfs_fsal_obj_handle *hdl;
 	struct zfs_file_handle fh;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        char link_buff[PATH_MAX + 1];
+        char link_buff[PATH_MAX];
         char *link_content = NULL;
         struct stat stat ;
         creden_t cred ;

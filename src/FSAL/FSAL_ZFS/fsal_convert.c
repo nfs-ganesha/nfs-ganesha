@@ -32,11 +32,11 @@ fsal_accessmode_t fs2fsal_mode( <your fs object permission (input)> );
 
 void fsal2fs_mode( fsal_accessmode_t fsal_mode, <your fs mode type (output)> );
 
-fsal_nodetype_t  hpss2fsal_type( <your fs object type (input)> );
+fsal_nodetype_t  fs2fsal_type( <your fs object type (input)> );
 
 fsal_u64_t fs2fsal_64( <your fs 64bits type> );
 
-<your fs 64bits type> fsal2hpss_64( fsal_u64_t fsal_size_in );
+<your fs 64bits type> fsal2fs_64( fsal_u64_t fsal_size_in );
 
 fsal_fsid_t fs2fsal_fsid( <you fs fsid type> );
 
