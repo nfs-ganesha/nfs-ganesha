@@ -20,6 +20,7 @@
 #endif
 
 #include "display.h"
+#include "nlm_list.h"
 
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
@@ -425,8 +426,6 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);
 void Fatal(void);
-int SetComponentLogFile(log_components_t component, char *name);
-void SetComponentLogBuffer(log_components_t component, struct display_buffer *buffer);
 
 /* This function is primarily for setting log level from config, it will
  * not override log level set from environment.
@@ -447,16 +446,51 @@ void DisplayErrorComponentLogLine(log_components_t   component,
                                   int                line);
 
 int read_log_config(config_file_t in_config);
+void reread_log_config();
 
-enum log_type
+typedef enum log_type
 {
   SYSLOG = 0,
   FILELOG,
   STDERRLOG,
   STDOUTLOG,
-  TESTLOG,
-  BUFFLOG
+  TESTLOG
+} log_type_t;
+
+typedef enum log_header_t
+{
+  LH_NONE,
+  LH_COMPONENT,
+  LH_ALL
+} log_header_t;
+
+struct log_facility;
+
+typedef int (lf_function_t) (struct log_facility   * facility,
+                             log_levels_t            level,
+                             struct display_buffer * buffer,
+                             char                  * compstr,
+                             char                  * message);
+
+/**
+ * @brief Define the structure for a log facility.
+ *
+ */
+struct log_facility
+{
+  struct glist_head   lf_list;        /*< List of log facilities */
+  struct glist_head   lf_active;      /*< This is an active facility */
+  char              * lf_name;        /*< Name of log facility */
+  log_levels_t        lf_max_level;   /*< Max log level for this facility    */
+  log_header_t        lf_headers;     /*< If time stamp etc. are part of msg */
+  lf_function_t     * lf_func;        /*< Function that describes facility   */
+  void              * lf_private;     /*< Private info for facility          */
 };
+
+void deactivate_log_facility(struct log_facility * facility);
+void activate_log_facility(struct log_facility * facility);
+int register_log_facility(struct log_facility * facility);
+int unregister_log_facility(struct log_facility * facility);
 
 typedef struct log_component_info
 {
@@ -464,9 +498,6 @@ typedef struct log_component_info
   char                  * comp_name;
   char                  * comp_str;
   int                     comp_log_level;
-  int                     comp_log_type;
-  char                    comp_log_file[MAXPATHLEN];
-  struct display_buffer * comp_buffer;
   int                     comp_env_set;
 } log_component_info;
 
@@ -476,8 +507,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
-    if (likely(LogComponents[component].comp_log_type != TESTLOG || \
-               LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
+    if (likely(LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_NULL, \
                                format, ## args ); \
   } while (0)
