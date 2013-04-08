@@ -467,8 +467,21 @@ set(LIBTIRPC_INCLUDE_DIR
 set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 
 # Find misc system libs
-
 find_library(LIBRT rt)  # extended Pthreads functions
+
+# We need to have libcap installed
+#find_library(LIBCAP cap)  # Management of Capablilities
+check_library_exists(
+	cap
+	capset
+	""
+	HAVE_LIBCAP 
+	)
+if( HAVE_LIBCAP )
+  message( STATUS "Found libcap" ) 
+else( HAVE_LIBCAP )
+  message( FATAL_ERROR "You need to install libcap to compile Ganesha" )
+endif( HAVE_LIBCAP )
 
 # Roll up required libraries
 

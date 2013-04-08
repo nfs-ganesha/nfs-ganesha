@@ -62,6 +62,7 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
+#include <sys/capability.h> /* For capget/capset */
 #include "nlm_util.h"
 #include "nsm.h"
 #include "sal_functions.h"
@@ -1143,6 +1144,9 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;
 
+  struct __user_cap_data_struct capdata ;
+  struct __user_cap_header_struct caphdr ;
+
   if(p_start_info->dump_default_config == true)
     {
       nfs_print_param_config();
@@ -1194,6 +1198,37 @@ void nfs_start(nfs_start_info_t * p_start_info)
     memcpy(NFS3_write_verifier, build_verifier.NFS3_write_verifier, sizeof(NFS3_write_verifier));
     memcpy(NFS4_write_verifier, build_verifier.NFS4_write_verifier, sizeof(NFS4_write_verifier));
   }
+
+#ifdef LINUX
+  /* Deal with capabilities in order to remove CAP_SYS_RESOURCE (needed
+   * for proper management of data quotas) */ 
+  caphdr.version = _LINUX_CAPABILITY_VERSION_2 ; // kernel is newer than 2.6.25
+  caphdr.pid = getpid() ;
+
+  if( capget( &caphdr, &capdata ) != 0 )
+      LogFatal(COMPONENT_INIT,
+               "Failed to query capabilities for process, errno=%u", errno ) ;
+
+  /* Set the capability bitmask to remove CAP_SYS_RESOURCE */
+  if( capdata.effective & CAP_TO_MASK( CAP_SYS_RESOURCE ) ) 
+     capdata.effective   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+
+  if( capdata.permitted & CAP_TO_MASK( CAP_SYS_RESOURCE ) )
+     capdata.permitted   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+
+  if( capdata.inheritable & CAP_TO_MASK( CAP_SYS_RESOURCE ) )
+     capdata.inheritable &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+
+  if( capset( &caphdr, &capdata ) != 0 )
+      LogFatal(COMPONENT_INIT,
+                 "Failed to set capabilities for process, errno=%u", errno ) ;
+  else
+      LogEvent( COMPONENT_INIT, "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL" ) ;
+  
+#endif
+
+
+
   /* Initialize all layers and service threads */
   nfs_Init(p_start_info);
 
