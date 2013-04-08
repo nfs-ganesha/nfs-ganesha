@@ -43,31 +43,27 @@
 #include "log.h"
 #include "9p.h"
 #include "idmapper.h"
+#include "uid2grp.h"
 
 int _9p_init(  _9p_parameter_t * pparam ) 
 {
+  uid2grp_cache_init() ;
   return 0 ;
 } /* _9p_init */
 
 int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid ) 
 {
-  char buff[1024];
-  struct passwd p;
-  struct passwd *pp;
-  gid_t gid ;
+  struct group_data group_data;
+  struct group_data * pgrpdata = &group_data;
 
-  if((getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
-    {
-      LogFullDebug(COMPONENT_IDMAPPER, "getpwuid_r %d failed", uid ) ;
-      return -ENOENT;
-    }
-  else
-   gid = p.pw_gid ;
- 
-  pfid->ucred.caller_uid = uid;
-  pfid->ucred.caller_gid = gid;
-  pfid->ucred.caller_glen = 0;
-  pfid->ucred.caller_garray = NULL;
+
+  if( !uid2grp( uid, &pgrpdata ) ) 
+   return -ENOENT ;
+
+  pfid->ucred.caller_uid = pgrpdata->uid;
+  pfid->ucred.caller_gid = pgrpdata->gid ;
+  pfid->ucred.caller_glen = pgrpdata->nbgroups ;
+  pfid->ucred.caller_garray = pgrpdata->pgroups ;
 
   pfid->op_context.creds = &pfid->ucred;
   pfid->op_context.caller_addr = NULL ; /* Useless for 9P, we'll see if daemon crashes... */
@@ -83,17 +79,22 @@ int _9p_tools_get_req_context_by_name( int uname_len, char * uname_str, _9p_fid_
       .addr = uname_str,
       .len = uname_len
     };
-  uid_t uid ;
+  struct group_data group_data;
+  struct group_data * pgrpdata = &group_data;
 
-  if(name2uid(&name, &uid, -1))
-    {
-      LogFullDebug(COMPONENT_IDMAPPER, "uidmap_get mapped %.*s to uid= %d",
-		   uname_len, uname_str, uid);
-    }
-  else
+  if( !name2grp(&name, &pgrpdata) )
     return -ENOENT ;
+ 
+  pfid->ucred.caller_uid = pgrpdata->uid ;
+  pfid->ucred.caller_gid = pgrpdata->gid ;
+  pfid->ucred.caller_glen = pgrpdata->nbgroups ;
+  pfid->ucred.caller_garray = pgrpdata->pgroups ;
 
-  return _9p_tools_get_req_context_by_uid( uid, pfid ) ; 
+  pfid->op_context.creds = &pfid->ucred;
+  pfid->op_context.caller_addr = NULL ; /* Useless for 9P, we'll see if daemon crashes... */
+  pfid->op_context.req_type = _9P_REQUEST;
+
+  return 0 ;
 } /* _9p_tools_get_fsal_cred */
 
 
