@@ -18,6 +18,31 @@ set(VERSION_COMMENT
   "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
 
+# If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
+IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+  message( STATUS "Compilation from within a git repository. Using GetGitRevisionDescription" )
+  include(GetGitRevisionDescription)
+  get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
+  git_describe(_GIT_DESCRIBE)
+
+ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+  message( STATUS "Outside a git repository, use saved data" )
+  EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/githead_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE  _GIT_HEAD_COMMIT)
+
+   
+  EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/gitdesc_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE  _GIT_DESCRIBE)
+
+ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+
+# Using git related information, build PACKNAME
+IF(DISTNAME_HAS_GIT_DATA)
+	set( PACKNAME "_git${_GIT_HEAD_COMMIT}_desc_${_GIT_DESCRIBE}" )
+ELSE(DISTNAME_HAS_GIT_DATA)
+	set( PACKNAME "" ) 
+ENDIF(DISTNAME_HAS_GIT_DATA)
+
 # Define CPACK component (to deal with sub packages)
 set(CPACK_COMPONENTS_ALL daemon fsal headers )
 set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
@@ -33,10 +58,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/modules/UseRPMTools.cmake)
 IF(RPMTools_FOUND)
      RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME})
 ENDIF(RPMTools_FOUND)
-
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
-git_describe(_GIT_DESCRIBE)
 
 # find out which platform we are building on
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -139,6 +160,12 @@ option(USE_CUNIT "Use Cunit test framework" OFF)
 # Enable 9P Support
 option(USE_9P "enable 9P support" ON)
 option(USE_9P_RDMA "enable 9P_RDMA support" OFF)
+
+# This option will stop cmake compilation if a requested FSAL could not be built
+option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
+
+# This option will trigger "long distro name" aka name that contains git information
+option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF )
 
 # Compile with "NO_MOUNT_LIST" [Don't use MOUNT PROTOCOL's  client list]
 set(_NO_MOUNT_LIST ON)
@@ -257,9 +284,13 @@ if(USE_FSAL_CEPH)
     CEPH_FS
     )
   if(NOT CEPH_FS)
-    message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
-    set(USE_FSAL_CEPH OFF)
-  endif(NOT CEPH_FS)
+if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE : Cannot find CEPH runtime.  Disabling CEPH fsal build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
+      set(USE_FSAL_CEPH OFF)
+    endif(STRICT_PACKAGE)
+ endif(NOT CEPH_FS)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_HPSS)
@@ -280,8 +311,12 @@ if(USE_FSAL_LUSTRE)
     )
   check_include_files("unistd.h;lustre/lustre_user.h" HAVE_LUSTRE_USER_H)
   if((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
-    message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
-    set(USE_FSAL_LUSTRE OFF)
+   if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
+      set(USE_FSAL_LUSTRE OFF)
+    endif(STRICT_PACKAGE)
   endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
 endif(USE_FSAL_LUSTRE)
 
@@ -294,8 +329,12 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
     )
   check_include_files("unistd.h;attr/xattr.h" HAVE_SHOOK_XATTRS)
   if((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
-    message(WARNING "Cannot find SHOOK runtime. Disabling SHOOK build")
-    set(USE_FSAL_SHOOK OFF)
+   if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find SHOOK runtime. Disabling SHOOK build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find SHOOK runtime. Disabling SHOOK build")
+      set(USE_FSAL_SHOOK OFF)
+    endif(STRICT_PACKAGE)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
@@ -308,8 +347,12 @@ if(USE_FSAL_XFS)
     )
   check_include_files("xfs/xfs.h" HAVE_XFS_H)
   if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
-    message(WARNING "Cannot find XFS runtime. Disabling XFS build")
-    set(USE_FSAL_XFS OFF)
+   if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find XFS runtime. Disabling XFS build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find XFS runtime. Disabling XFS build")
+      set(USE_FSAL_XFS OFF)
+    endif(STRICT_PACKAGE)
   endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
 
@@ -322,8 +365,12 @@ if(USE_FSAL_ZFS)
     )
   check_include_files("unistd.h;libzfswrap.h" HAVE_LIBZFSWRAP_H)
   if((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
-    message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
-    set(USE_FSAL_ZFS OFF)
+   if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find ZFS runtime. Disabling ZFS build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
+      set(USE_FSAL_ZFS OFF)
+    endif(STRICT_PACKAGE)
   endif((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
 endif(USE_FSAL_ZFS)
 
@@ -536,6 +583,8 @@ message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
+message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
+message(STATUS "DISTNAME_HAS_GIT_DATA = ${DISTNAME_HAS_GIT_DATA}" )
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
 message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
@@ -555,6 +604,8 @@ message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
+message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
+message(STATUS "_GIT_DESCRIBE = ${_GIT_DESCRIBE}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 
 #force command line options to be stored in cache
@@ -653,6 +704,17 @@ set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
    "enable mspac winbind support"
    FORCE)
 
+set(STRICT_PACKAGE ${STRICT_PACKAGE}
+  CACHE BOOL
+   "enable strict packaging behavior"
+   FORCE)
+
+set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA} 
+  CACHE BOOL
+  "Distribution package's name carries git data" 
+  FORCE)
+
+
 set(USE_9P ${USE_9P}
   CACHE BOOL
    "enable 9P support"
@@ -716,8 +778,19 @@ endif(USE_FSAL_FUSE)
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 ########### add a "make srpm" and a "make rpm" ###############
-add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_rpm)
-add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
+IF( DISTNAME_HAS_GIT_DATA )
+  add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm )
+  add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
+ELSE( DISTNAME_HAS_GIT_DATA )
+  # I need DISTNAME_HAS_GIT_DATA set to ON to carry git data, so I set it, build rpm and set the option back to OFF
+  add_custom_target(rpm COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
+			COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm 
+			COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF  ${CMAKE_SOURCE_DIR} )
+
+  add_custom_target(srpm  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
+                          COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm
+			  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF ${CMAKE_SOURCE_DIR}  )
+ENDIF( DISTNAME_HAS_GIT_DATA )
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
