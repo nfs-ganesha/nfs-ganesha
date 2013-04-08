@@ -52,7 +52,7 @@ if ! echo  $SERVERID | egrep -q $HOSTNAME_PATTERN ; then
     IPADDR=$SERVERID 
   fi
 else
-  if ! IPADDR=`resolveip -s $SERVERID 2>&1` ; then
+  if ! IPADDR=`getent ahostsv4 $SERVERID  2>&1  | grep STREAM | cut -f1 -d " "` ; then
     echo "Hostname could not be resolved" 
     exit 1
   fi
