@@ -291,6 +291,8 @@ typedef struct _9p_fid__
   exportlist_t          * pexport ;
   cache_entry_t         * pentry ;
   _9p_qid_t               qid ;
+  cache_entry_t         * ppentry ;
+  char                    name[MAXNAMLEN] ;
   union 
     { 
        u32      iounit ;
@@ -299,6 +301,7 @@ typedef struct _9p_fid__
           unsigned int xattr_id ;
           caddr_t      xattr_content ;
         } xattr ;
+
     } specdata ;
 } _9p_fid_t ;
 
