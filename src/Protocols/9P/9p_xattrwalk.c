@@ -42,6 +42,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -60,7 +61,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   u64 attrsize = 0LL ;
 
   fsal_status_t fsal_status ; 
-  char name[MAXNAMLEN + 1];
+  char name[MAXNAMLEN];
   fsal_xattrent_t xattrs_tab[255];
   int eod_met = false;
   unsigned int nb_xattrs_read = 0;
@@ -83,8 +84,13 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *attrfid ) ;
 
   _9p_getstr( cursor, name_len, name_str ) ;
-  LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
-            (u32)*msgtag, *fid, *attrfid, *name_len, name_str ) ;
+ 
+  if( *name_len == 0 )
+    LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=(LIST XATTR)",
+              (u32)*msgtag, *fid, *attrfid ) ;
+  else
+    LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
+              (u32)*msgtag, *fid, *attrfid, *name_len, name_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
@@ -128,12 +134,18 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                                                                         &eod_met);
 
       if(FSAL_IS_ERROR(fsal_status))
+       {
+        memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+       }
 
       /* if all xattrent are not read, returns ERANGE as listxattr does */
       if( eod_met != TRUE )
+       {
+        memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
         return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
-     
+       }    
+
       xattr_cursor = pxattrfid->specdata.xattr.xattr_content ; 
       attrsize = 0LL ; 
       for( i = 0 ; i < nb_xattrs_read ; i++ )
@@ -145,7 +157,10 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
          /* Make sure not to go beyond the buffer */
          if( attrsize > XATTR_BUFFERSIZE ) 
+          {
+           memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
            return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+          }
        }
    }
   else
@@ -158,6 +173,8 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
       if(FSAL_IS_ERROR(fsal_status))
        {
+         memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+
          if( fsal_status.major == ERR_FSAL_NOENT ) /* ENOENT for xattr is ENOATTR (set setxattr's manpage) */
            return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOATTR, plenout, preply ) ;
          else 
@@ -173,12 +190,17 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
 
       if(FSAL_IS_ERROR(fsal_status))
-        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
-
+       {
+         memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+       }
       _9p_chomp_attr_value( pxattrfid->specdata.xattr.xattr_content, strlen(  pxattrfid->specdata.xattr.xattr_content) ) ;
 
       attrsize = strlen( pxattrfid->specdata.xattr.xattr_content ) ;
    }
+
+  /* Increments refcount so it won't fall below 0 when we clunk later */
+  cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
