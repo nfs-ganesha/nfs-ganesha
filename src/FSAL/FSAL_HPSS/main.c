@@ -39,7 +39,6 @@
 #include "FSAL/fsal_init.h"
 #include "nfs_exports.h"
 
-#include "HPSSclapiExt/hpssclapiext.h"
 #include <hpss_Getenv.h>
 
 /* HPSS FSAL module private storage
