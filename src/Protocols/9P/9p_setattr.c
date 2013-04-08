@@ -85,8 +85,8 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, mtime_sec,  u64 ) ;
   _9p_getptr( cursor, mtime_nsec, u64 ) ;
 
-  LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u mode=0%o uid=%u gid=%u size=%"PRIu64" atime=(%llu|%llu) mtime=(%llu|%llu)",
-            (u32)*msgtag, *fid, *mode, *uid, *gid, *size,  (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec, 
+  LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"PRIu64" atime=(%llu|%llu) mtime=(%llu|%llu)",
+            (u32)*msgtag, *fid, *valid, *mode, *uid, *gid, *size,  (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec, 
             (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -194,6 +194,11 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
+  LogDebug( COMPONENT_9P, "RSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"PRIu64" atime=(%llu|%llu) mtime=(%llu|%llu)",
+            (u32)*msgtag, *fid,  *valid, *mode, *uid, *gid, *size,  (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec, 
+            (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
+
+  //_9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 
