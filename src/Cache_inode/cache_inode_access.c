@@ -60,7 +60,8 @@
         unlikely(LogComponents[comp2].comp_log_level >= NIV_DEBUG)) { \
       log_components_t component = \
         LogComponents[comp1].comp_log_level >= NIV_DEBUG ? comp1 : comp2; \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
+      DisplayLogComponentLevel(component,  (char *)__FILE__, __LINE__, \
+                               (char *)__FUNCTION__, NIV_DEBUG, \
                                "%s: DEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
     } \

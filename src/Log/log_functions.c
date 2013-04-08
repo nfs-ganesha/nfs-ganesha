@@ -73,6 +73,8 @@ enum log_flag_index_t
   LF_PROGNAME, /*< Ganesha program name field. */
   LF_PID, /*< Ganesha process identifier. */
   LF_THREAD_NAME, /*< Name of active thread logging message. */
+  LF_FILE_NAME, /*< Source file name message occured in. */
+  LF_LINE_NUM, /*< Source line number message occurred in. */
   LF_FUNCTION_NAME, /*< Function name message occurred in. */
   LF_COMPONENT, /*< Log component. */
   LF_LEVEL, /*< Log level. */
@@ -133,6 +135,8 @@ struct log_flag tab_log_flag[] =
   {LF_PROGNAME,      TRUE,  0,          "PROGNAME"},
   {LF_PID,           TRUE,  0,          "PID"},
   {LF_THREAD_NAME,   TRUE,  0,          "THREAD_NAME"},
+  {LF_FILE_NAME,     FALSE, 0,          "FILE_NAME"},
+  {LF_LINE_NUM,      FALSE, 0,          "LINE_NUM"},
   {LF_FUNCTION_NAME, TRUE,  0,          "FUNCTION_NAME"},
   {LF_COMPONENT,     TRUE,  0,          "COMPONENT"},
   {LF_LEVEL,         TRUE,  0,          "LEVEL"},
@@ -675,7 +679,8 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 #define LogChanges(format, args...) \
   do { \
     if (LogComponents[COMPONENT_LOG].comp_log_level == NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(COMPONENT_LOG, (char *)__FUNCTION__, \
+      DisplayLogComponentLevel(COMPONENT_LOG, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, \
                                NIV_NULL, "LOG: " format, ## args ); \
   } while (0)
 
@@ -1551,6 +1556,8 @@ static int display_log_header(ThreadLogContext_t * context)
 
 static int display_log_component(ThreadLogContext_t * context,
                                  log_components_t     component,
+                                 char               * file,
+                                 int                  line,
                                  const char         * function,
                                  int                  level)
 {
@@ -1561,6 +1568,17 @@ static int display_log_component(ThreadLogContext_t * context,
 
   if(b_left > 0 && tab_log_flag[LF_THREAD_NAME].lf_val)
     b_left = display_printf(&context->dspbuf, "[%s] ", context->thread_name);
+
+  if(b_left > 0 && tab_log_flag[LF_FILE_NAME].lf_val)
+    {
+      if(tab_log_flag[LF_LINE_NUM].lf_val)
+        b_left = display_printf(&context->dspbuf, "%s:", file);
+      else
+        b_left = display_printf(&context->dspbuf, "%s :", file);
+    }
+
+  if(b_left > 0 && tab_log_flag[LF_LINE_NUM].lf_val)
+    b_left = display_printf(&context->dspbuf, "%d :", line);
 
   if(b_left > 0 && tab_log_flag[LF_FUNCTION_NAME].lf_val)
     b_left = display_printf(&context->dspbuf, "%s :", function);
@@ -1584,6 +1602,8 @@ static int display_log_component(ThreadLogContext_t * context,
 }
 
 void display_log_component_level(log_components_t   component,
+                                 char             * file,
+                                 int                line,
                                  char             * function,
                                  log_levels_t       level,
                                  char             * format,
@@ -1621,7 +1641,12 @@ void display_log_component_level(log_components_t   component,
     compstr = context->dspbuf.b_start;
 
   if(b_left > 0)
-    b_left = display_log_component(context, component, function, level);
+    b_left = display_log_component(context,
+                                   component,
+                                   file,
+                                   line,
+                                   function,
+                                   level);
 
   if(b_left > 0)
     message = context->dspbuf.b_current;
@@ -1654,8 +1679,7 @@ void display_log_component_level(log_components_t   component,
 int display_LogError(struct display_buffer * dspbuf,
                      int                     num_family,
                      int                     num_error,
-                     int                     status,
-                     int                     line)
+                     int                     status)
 {
   family_error_t *tab_err = NULL;
   family_error_t the_error;
@@ -1670,11 +1694,10 @@ int display_LogError(struct display_buffer * dspbuf,
   if(status == 0)
     {
       return display_printf(dspbuf,
-                            "Error %s : %s : status %d : Line %d",
+                            "Error %s : %s : status %d",
                             the_error.label,
                             the_error.msg,
-                            status,
-                            line);
+                            status);
     }
   else
     {
@@ -1683,12 +1706,11 @@ int display_LogError(struct display_buffer * dspbuf,
       errstr = strerror_r(status, tempstr, sizeof(tempstr));
 
       return display_printf(dspbuf,
-                            "Error %s : %s : status %d : %s : Line %d",
+                            "Error %s : %s : status %d : %s",
                             the_error.label,
                             the_error.msg,
                             status,
-                            errstr,
-                            line);
+                            errstr);
     }
 }                               /* display_LogError */
 
@@ -1851,6 +1873,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 };
 
 void DisplayLogComponentLevel(log_components_t   component,
+                              char             * file,
+                              int                line,
                               char             * function,
                               log_levels_t       level,
                               char             * format, ...)
@@ -1859,24 +1883,31 @@ void DisplayLogComponentLevel(log_components_t   component,
 
   va_start(arguments, format);
 
-  display_log_component_level(component, function, level, format, arguments);
+  display_log_component_level(component,
+                              file,
+                              line,
+                              function,
+                              level,
+                              format,
+                              arguments);
 
   va_end(arguments);
 }
 
 void DisplayErrorComponentLogLine(log_components_t   component,
+                                  char             * file,
+                                  int                line,
                                   char             * function,
                                   int                num_family,
                                   int                num_error,
-                                  int                status,
-                                  int                line)
+                                  int                status)
 {
   char                  buffer[LOG_BUFF_LEN];
   struct display_buffer dspbuf = {sizeof(buffer), buffer, buffer};
 
-  (void) display_LogError(&dspbuf, num_family, num_error, status, line);
+  (void) display_LogError(&dspbuf, num_family, num_error, status);
 
-  DisplayLogComponentLevel(component, function, NIV_CRIT, "%s: %s",
+  DisplayLogComponentLevel(component, file, line, function, NIV_CRIT, "%s: %s",
                            LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
@@ -2056,7 +2087,8 @@ void rpc_warnx(/* const */ char *fmt, ...)
 
     va_start(ap, fmt);
 
-    display_log_component_level(COMPONENT_RPC, "rpc", NIV_DEBUG, fmt, ap);
+    display_log_component_level(COMPONENT_RPC,
+                                "<no-file>", 0, "rpc", NIV_DEBUG, fmt, ap);
 
     va_end(ap);
 
