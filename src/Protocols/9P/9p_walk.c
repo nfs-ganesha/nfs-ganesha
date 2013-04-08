@@ -62,7 +62,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   uint64_t               fileid;
   cache_inode_status_t   cache_status ;
   cache_entry_t        * pentry = NULL ;
-  char name[MAXNAMLEN + 1] ;
+  char name[MAXNAMLEN] ;
 
   u16 * nwqid ;
 
@@ -117,11 +117,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
   else 
    {
-      
-      pnewfid->fid = *newfid ;
-      pnewfid->op_context = pfid->op_context ;
-      pnewfid->pexport = pfid->pexport ;
-
       /* the walk is in fact a lookup */
       pentry = pfid->pentry ;
 
@@ -146,6 +141,12 @@ int _9p_walk( _9p_request_data_t * preq9p,
               return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
            pentry =  pnewfid->pentry ;
         }
+      
+      pnewfid->fid = *newfid ;
+      pnewfid->op_context = pfid->op_context ;
+      pnewfid->pexport = pfid->pexport ;
+      pnewfid->ppentry = pfid->pentry ;
+      strncpy( pnewfid->name, name, MAXNAMLEN ) ;
 
       cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
       if(cache_status != CACHE_INODE_SUCCESS)
