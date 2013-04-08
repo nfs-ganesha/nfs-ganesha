@@ -42,7 +42,10 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/syscall.h>
 #include <mntent.h>
+#include <unistd.h> /* glibc uses <sys/fsuid.h> */
+
 #include "abstract_mem.h"
 
 
@@ -57,3 +60,4 @@ uint32_t CredentialLifetime = 3600;
  * it is read-only, except during initialization.
  */
 struct fsal_staticfsinfo_t global_fs_info;
+

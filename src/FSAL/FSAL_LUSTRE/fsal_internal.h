@@ -56,7 +56,7 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
  */
-extern char open_by_handle_path[MAXPATHLEN + 1];
+extern char open_by_handle_path[MAXPATHLEN];
 extern int open_by_handle_fd;
 
 #endif
@@ -65,6 +65,10 @@ extern int open_by_handle_fd;
  *  Increments the number of calls for a function.
  */
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
+
+void set_credentials( struct user_cred * creds ) ;
+void set_creds_to_root() ;
+
 
 
 #if 0
