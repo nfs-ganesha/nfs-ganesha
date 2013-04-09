@@ -189,6 +189,14 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %description
 ${RPMNAME} : ${RPM_DESCRIPTION}
 
+%package mount-9P
+Summary: a 9p mount helper
+Group: Applications/System
+
+%description mount-9P
+This package contains the mount.9P script
+This is a 9p mount help
+
  ")
 
 # if needed deal with FSAL modules
@@ -318,12 +326,14 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_sbindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
 
 install -m 644 config_samples/logrotate_ganesha          $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
 install -m 755 ganesha.init                              $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf  $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
+install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/hosts.ganesha  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -340,6 +350,11 @@ rm -rf build_tree
 %defattr(-,root,root,-)
 %{_bindir}/*
 %{_sysconfdir}/*
+
+%files mount-9P
+%defattr(-,root,root,-)
+%{_sbindir}/mount.9P
+
 "
 )
 # if needed deal with FSALs
