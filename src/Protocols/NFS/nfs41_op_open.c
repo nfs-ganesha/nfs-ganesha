@@ -139,6 +139,19 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_OPEN4.status;
     }
 
+  /* Check export permissions if OPEN4_SHARE_ACCESS_WRITE */
+  if(((arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) &&
+     ((data->export_perms.options & EXPORT_OPTION_WRITE_ACCESS) == 0))
+    {
+      res_OPEN4.status = NFS4ERR_ROFS;
+
+      LogDebug(COMPONENT_NFS_V4,
+               "Status of OP_OPEN due to export permissions = %s",
+               nfsstat4_to_str(res_OPEN4.status));
+
+      return res_OPEN4.status;
+    }
+
   /*
    * Do basic checks on a filehandle
    */
