@@ -210,7 +210,7 @@ fsal_status_t XFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
     {
       /* clean & return */
       close(local_fd);
-      XFSFSAL_close(&fs_fd);
+      XFSFSAL_close(&fs_fd, p_context);
       Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_rcp);
     }
 
@@ -242,7 +242,7 @@ fsal_status_t XFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
       else                      /* from FSAL filesystem */
         {
           fs_size = 0;
-          st = XFSFSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          st = XFSFSAL_read(&fs_fd, p_context, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
@@ -294,7 +294,7 @@ fsal_status_t XFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
 
   gsh_free(IObuffer);
   close(local_fd);
-  XFSFSAL_close(&fs_fd);
+  XFSFSAL_close(&fs_fd, p_context);
 
   /* return status. */
 
