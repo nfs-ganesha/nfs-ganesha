@@ -615,6 +615,21 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
       /* Build credentials */
       res_LOOKUP4->status = nfs4_MakeCred(data);
+
+      /* Test for access error (export should not be visible). */
+      if(res_LOOKUP4->status == NFS4ERR_ACCESS)
+        {
+          /* If return is NFS4ERR_ACCESS then this client doesn't have
+           * access to this export, return NFS4ERR_NOENT to hide it.
+           * It was not visible in READDIR response.
+           */
+          LogDebug(COMPONENT_NFS_V4_PSEUDO,
+                   "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+                   data->pexport->id, data->pexport->fullpath);
+          res_LOOKUP4->status = NFS4ERR_NOENT;
+          return res_LOOKUP4->status;
+        }
+
       if(res_LOOKUP4->status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
