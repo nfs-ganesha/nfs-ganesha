@@ -124,9 +124,7 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "Rquota_Port"))
         {
-#ifdef _USE_RQUOTA
           pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
-#endif
         }
       else if(!strcasecmp(key_name, "Bind_Addr"))
         {
@@ -153,9 +151,7 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "Rquota_Program"))
         {
-#ifdef _USE_RQUOTA
           pparam->program[P_RQUOTA] = atoi(key_value);
-#endif
         }
       else if(!strcasecmp(key_name, "Nb_Worker"))
         {
