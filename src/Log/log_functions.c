@@ -306,10 +306,11 @@ void print_debug_info_fd(int fd)
 {
   int    size;
   char * str = get_debug_info(&size);
+  int    rc = 0;    // dumb variable to catch write return
 
   if (str != NULL)
     {
-      write(fd, str, size);
+      rc = write(fd, str, size);
       gsh_free(str);
     }
 }
