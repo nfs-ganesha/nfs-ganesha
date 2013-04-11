@@ -40,6 +40,7 @@
 #include "fsal.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "fsal_up.h"
 #include "internal.h"
 #include "pnfs_utils.h"
 
@@ -47,6 +48,26 @@
 	({ typeof (a) _a = (a);			\
 	     typeof (b) _b = (b);		\
 	     _a < _b ? _a : _b; })
+
+/**
+ * @brief Local invalidate
+ *
+ * A shortcut method for invalidating inode attributes.  It is
+ * not sufficient to invalidate locally, but is immediate and
+ * correct when the MDS and DS are colocated.
+ */
+static inline void
+local_invalidate(struct ds *ds, struct fsal_export *export)
+{
+    state_status_t status __attribute__((unused)) = STATE_SUCCESS;
+    struct gsh_buffdesc key = {
+        .addr = &ds->wire.wire.vi,
+        .len = sizeof(ds->wire.wire.vi)
+    };
+    status = export->up_ops->invalidate(export, &key,
+                                        CACHE_INODE_INVALIDATE_ATTRS);
+    return;
+}
 
 /**
  * @brief Release an object
@@ -303,6 +324,10 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			printf("close failed with: %d\n", ceph_status);
 			return posix2nfs4_error(-ceph_status);
 		}
+
+                /* invalidate client caches */
+                local_invalidate(ds, &export->export);
+
 		*written_length = amount_written;
 		*stability_got = FILE_SYNC4;
 	} else {
