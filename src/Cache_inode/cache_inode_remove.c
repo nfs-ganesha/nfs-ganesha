@@ -122,6 +122,20 @@ cache_inode_remove(cache_entry_t *entry,
               "---> Cache_inode_remove : %s", name);
 
 
+     if (is_open(to_remove_entry)) {
+	 /* entry is not locked and seems to be open for fd caching purpose.
+	  * candidate for closing since unlink of an open file results in 'silly
+	  * rename' on certain platforms */
+	 status = cache_inode_close(to_remove_entry,
+                                    CACHE_INODE_FLAG_REALLYCLOSE);
+	 if (status != CACHE_INODE_SUCCESS) {
+	     /* non-fatal error. log the warning and move on */
+	     LogCrit(COMPONENT_CACHE_INODE,
+                   "Error closing file before unlink: %d.",
+                   status);
+	 }
+     }
+
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);
      status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
