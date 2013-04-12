@@ -117,18 +117,6 @@ struct export_stats {
 	.direction = "in"\
 }
 
-#define STATUS_REPLY      \
-{                         \
-	.name = "status", \
-	.type = "b",      \
-	.direction = "out"\
-},                        \
-{                         \
-	.name = "error",  \
-	.type = "s",      \
-	.direction = "out"\
-}
-
 #define TIMESTAMP_REPLY    \
 {                          \
 	.name = "time",    \
@@ -174,8 +162,6 @@ struct export_stats {
 	.type = "(ttt)",	\
 	.direction = "out"	\
 }				\
-
-#define END_ARG_LIST {NULL, NULL, NULL}
 
 void server_stats_summary(DBusMessageIter *iter,
 			  struct gsh_stats *st);
