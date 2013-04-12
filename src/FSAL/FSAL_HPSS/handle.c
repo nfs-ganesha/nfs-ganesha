@@ -89,7 +89,6 @@ static struct hpss_fsal_obj_handle *hpss_alloc_handle(struct hpss_file_handle *f
     }
   hdl->obj_handle.export = exp_hdl;
   hdl->obj_handle.attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
-  hdl->obj_handle.attributes.supported_attributes = hdl->obj_handle.attributes.mask;
 
   memcpy(&hdl->obj_handle.attributes, attr, sizeof(struct attrlist));
   
@@ -904,7 +903,7 @@ static fsal_status_t hpss_linkfile(struct fsal_obj_handle *obj_hdl,
 #define MAX_ENTRIES 256
 static fsal_status_t hpss_readdir(struct fsal_obj_handle *dir_hdl,
 			      	  const struct req_op_context *opctx,
-				  struct fsal_cookie *whence,
+				  fsal_cookie_t *whence,
 				  void *dir_state,
                                   fsal_readdir_cb cb,
                                   bool *eod)
@@ -915,7 +914,6 @@ static fsal_status_t hpss_readdir(struct fsal_obj_handle *dir_hdl,
 
   u_signed64 cookie;
   unsigned32 end_of_dir;
-  struct fsal_cookie fsal_cookie;
 
   struct hpss_fsal_obj_handle *dir_obj_hdl;
   sec_cred_t ucreds;
@@ -934,15 +932,14 @@ static fsal_status_t hpss_readdir(struct fsal_obj_handle *dir_hdl,
   dir_obj_hdl = container_of(dir_hdl, struct hpss_fsal_obj_handle, obj_handle);
   HPSSFSAL_ucreds_from_opctx(opctx, &ucreds);
 
+  /** @todo: FIXME, make this a compiler check in cmake somehow */
+  assert(sizeof(fsal_cookie_t) == sizeof(u_signed64));
+
   if(whence != NULL) {
-    if(whence->size != sizeof(u_signed64)) {
-      return fsalstat(ERR_FSAL_FAULT, 0);
-    }
-    memcpy(&cookie, whence->cookie, sizeof(u_signed64));
+    memcpy(&cookie, whence, sizeof(fsal_cookie_t));
   } else {
     memset(&cookie, 0, sizeof(u_signed64));
   }
-  fsal_cookie.size = sizeof(u_signed64);
 
   end_of_dir = 0;
 
@@ -981,13 +978,11 @@ static fsal_status_t hpss_readdir(struct fsal_obj_handle *dir_hdl,
           if(!strcmp(dirent[i].d_name, ".") || !strcmp(dirent[i].d_name, ".."))
             continue;
 
-          memcpy(&fsal_cookie.cookie, &cookie, sizeof(u_signed64));
-   
           /* callback to cache inode - stop if it returns 0 */
           if(!cb( opctx,
                   dirent[i].d_name,
                   dir_state,
-                  &fsal_cookie) )
+                  (fsal_cookie_t)cookie) )
             goto done;         
 
         }
@@ -1687,7 +1682,7 @@ fsal_status_t hpss_create_handle( struct fsal_export *exp_hdl,
 				 struct fsal_obj_handle **handle)
 {
   fsal_status_t status;
-  char link_buff[PATH_MAX + 1];
+  char link_buff[PATH_MAX];
   char *link_content = NULL;
   struct attrlist fsal_attr;
   int rc, memlen;

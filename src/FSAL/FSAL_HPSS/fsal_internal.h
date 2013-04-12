@@ -22,7 +22,7 @@
 #include <hpss_mech.h>
 #include <hpss_String.h>
 
-#include "hpssclapiext.h"
+#include "HPSSclapiExt/hpssclapiext.h"
 
 /* -------------------------------------------
  *      HPSS dependant definitions
@@ -92,14 +92,14 @@ typedef struct
   api_config_t hpss_config;
 
   /* other configuration info */
-  char Principal[MAXNAMLEN + 1];
-  char KeytabPath[MAXPATHLEN + 1];
+  char Principal[MAXNAMLEN];
+  char KeytabPath[MAXPATHLEN];
 
   uint32_t CredentialLifetime;
   uint32_t ReturnInconsistentDirent;
 
   int default_cos;
-  char filesetname[MAXPATHLEN + 1];
+  char filesetname[MAXPATHLEN];
 } hpssfs_specific_initinfo_t;
 
 #define HPSS_DEFAULT_CREDENTIAL_LIFETIME 3600
@@ -109,9 +109,9 @@ typedef struct
 #endif
 
 /* defined the set of attributes supported with HPSS */
-#define HPSS_SUPPORTED_ATTRIBUTES (                                       \
-          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
-          ATTR_FSID     | ATTR_FILEID    | \
+#define HPSS_SUPPORTED_ATTRIBUTES (                        \
+          ATTR_TYPE     | ATTR_SIZE      |                 \
+          ATTR_FSID     | ATTR_FILEID    |                 \
           ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
           ATTR_GROUP    | ATTR_ATIME    | ATTR_CREATION  | \
           ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \

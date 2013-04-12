@@ -61,12 +61,37 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
-	fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, (O_RDWR));
-	if(fd < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto out;
-	}
+	fd = CRED_WRAP( opctx->creds, int, lustre_open_by_handle, lustre_get_root_path( obj_hdl->export),
+                                                                   myself->handle, 
+                                                                   (O_RDWR) );
+        if( fd < 0 )
+        { 
+          if( ( errno == EACCES )                                        &&
+              (  ( ( obj_hdl->attributes.mode & 0700 ) == 0400 )    ||
+                 ( ( obj_hdl->attributes.mode & 0200 ) == 0000 ) )       &&  
+              (  obj_hdl->attributes.owner == opctx->creds->caller_uid ) ) 
+             {
+               /* If the file is r-xYYYYYY or --xYYYYYY (a binary copied from another FS
+                * it is not writable (because no W flag) but it should be opened because 
+                * POSIX says you can do that on a O_CREAT (nfs looses the O_CREAT flag quite easily */
+
+               /* File has been created with 04XY, POSIX said it is writable so
+                * we default on root superpower to open it */
+               fd = lustre_open_by_handle(  lustre_get_root_path( obj_hdl->export),  myself->handle, O_RDWR ) ;
+               if( fd < 0 )
+                {
+	           fsal_error = posix2fsal_error(errno);
+	           retval = errno;
+	           goto out;
+                }
+             }
+	  else
+            {
+	       fsal_error = posix2fsal_error(errno);
+	       retval = errno;
+	       goto out;
+	    }
+        }
 	myself->u.file.fd = fd;
 	myself->u.file.openflags = openflags;
 
@@ -107,10 +132,10 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
 
-        nb_read = pread(myself->u.file.fd,
-                        buffer,
-                        buffer_size,
-                        offset);
+        nb_read = pread( myself->u.file.fd,
+                         buffer,
+                         buffer_size,
+                         offset );
 
         if(offset == -1 || nb_read == -1) {
                 retval = errno;
@@ -144,10 +169,10 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
 
-        nb_written = pwrite(myself->u.file.fd,
-                            buffer,
-                            buffer_size,
-                            offset);
+        nb_written = CRED_WRAP( opctx->creds, int, pwrite, myself->u.file.fd,
+                                                           buffer,
+                                                           buffer_size,
+                                                           offset );
 
 	if(offset == -1 || nb_written == -1) {
 		retval = errno;
@@ -178,7 +203,7 @@ fsal_status_t lustre_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 
 	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	retval = fsync(myself->u.file.fd);
+	retval = fsync( myself->u.file.fd );
 	if(retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -259,14 +284,16 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 	lock_args.l_whence = SEEK_SET;
 
 	errno = 0;
-	retval = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
+	retval = fcntl( myself->u.file.fd, 
+                        fcntl_comm, 
+                        &lock_args );
 	if(retval && lock_op == FSAL_OP_LOCK) {
 		retval = errno;
 		if(conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			retval = fcntl(myself->u.file.fd,
-				       fcntl_comm,
-				       &lock_args);
+			retval = fcntl( myself->u.file.fd,
+				        fcntl_comm,
+				        &lock_args );
 			if(retval) {
 				retval = errno; /* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,

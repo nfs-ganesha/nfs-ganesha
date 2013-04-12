@@ -62,7 +62,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
   u32 iounit = _9P_IOUNIT ; ;
 
   cache_entry_t       * pentry_newfile = NULL ;
-  char                  file_name[MAXNAMLEN + 1] ;
+  char                  file_name[MAXNAMLEN] ;
   int64_t              fileid;
   cache_inode_status_t  cache_status ;
   fsal_openflags_t      openflags = 0 ;

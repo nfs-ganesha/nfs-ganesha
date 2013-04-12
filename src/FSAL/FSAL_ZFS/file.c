@@ -80,7 +80,6 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
  
         /* >> fill output struct << */
         myself->u.file.openflags = openflags;
-        myself->u.file.current_offset = 0;
         myself->u.file.p_vnode = p_vnode;
 
         /* save the stat */
@@ -190,7 +189,7 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
                                    behind, 
                                    offset);
 
-	if(offset == -1 ) {
+	if(retval == -1 ) {
 		return fsalstat( posix2fsal_error(retval), retval ) ;
 	}
 	*write_amount = buffer_size;

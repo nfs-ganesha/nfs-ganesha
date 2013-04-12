@@ -34,7 +34,7 @@ ENDIF (RPMTools_RPMBUILD_EXECUTABLE)
 IF (NOT DEFINED "CPACK_PACKAGE_NAME") 
     MESSAGE(FATAL_ERROR "CPack was not included, you should include CPack before Using RPMTools")
 ENDIF (NOT DEFINED "CPACK_PACKAGE_NAME")
-  
+
 IF (RPMTools_RPMBUILD_FOUND)
     SET(RPMTools_FOUND TRUE)    
     #
@@ -61,8 +61,111 @@ IF (RPMTools_RPMBUILD_FOUND)
       FILE(MAKE_DIRECTORY ${RPM_ROOTDIR}/SPECS)
       FILE(MAKE_DIRECTORY ${RPM_ROOTDIR}/SRPMS)
 
+   # rpmbuid.cmake, which defines rpmbuidl cmake's build type is defined on the fly to reflect the state of cmake's cache
+   # if not, this cache is lost at the time the *-Source/tar/gz is generated. 
+   SET(RPMBULILD_CMAKE ${RPM_ROOTDIR}/BUILD/${RPM_NAME}-${PACKAGE_VERSION}-Source/cmake/build_configurations/rpmbuild.cmake )
+   FILE( WRITE ${RPMBULILD_CMAKE}  "set(_HANDLE_MAPPING ON)
+" )
+   FILE( APPEND ${RPMBULILD_CMAKE} "set(_NO_XATTRD  OFF)
+" )
+   FILE( APPEND ${RPMBULILD_CMAKE} "set(USE_DBUS ON)
+" )
+   FILE( APPEND ${RPMBULILD_CMAKE} "set(USE_DBUS_STATS ON)
+" )
+
+IF( USE_FSAL_VFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_VFS ON)
+	" ) 
+ELSE(  USE_FSAL_VFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_VFS OFF)
+" ) 
+ENDIF( USE_FSAL_VFS )
+
+IF( USE_FSAL_CEPH )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_CEPH ON)
+" ) 
+ELSE(  USE_FSAL_CEPH )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_CEPH OFF)
+" ) 
+ENDIF( USE_FSAL_CEPH )
+
+IF( USE_FSAL_FUSE )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_FUSE ON)
+" ) 
+ELSE(  USE_FSAL_FUSE )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_FUSE OFF)
+" ) 
+ENDIF( USE_FSAL_FUSE )
+
+IF( USE_FSAL_GPFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_GPFS ON)
+	" ) 
+ELSE(  USE_FSAL_GPFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_GPFS OFF)
+" ) 
+ENDIF( USE_FSAL_GPFS )
+
+IF( USE_FSAL_HPSS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_HPSS ON)
+" ) 
+ELSE(  USE_FSAL_HPSS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_HPSS OFF)
+" ) 
+ENDIF( USE_FSAL_HPSS )
+
+IF( USE_FSAL_LUSTRE )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_LUSTRE ON)
+" ) 
+ELSE(  USE_FSAL_LUSTRE )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_LUSTRE OFF)
+" ) 
+ENDIF( USE_FSAL_LUSTRE )
+
+IF( USE_FSAL_POSIX )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_POSIX ON)
+" ) 
+ELSE(  USE_FSAL_POSIX )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_POSIX OFF)
+" ) 
+ENDIF( USE_FSAL_POSIX )
+
+IF( USE_FSAL_PROXY )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_PROXY ON)
+" ) 
+ELSE(  USE_FSAL_PROXY )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_PROXY OFF)
+" ) 
+ENDIF( USE_FSAL_PROXY )
+
+IF( USE_FSAL_SHOOK )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_SHOOK ON)
+" ) 
+ELSE(  USE_FSAL_SHOOK )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_SHOOK OFF)
+" ) 
+ENDIF( USE_FSAL_SHOOK )
+
+IF( USE_FSAL_XFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_XFS ON)
+" ) 
+ELSE(  USE_FSAL_XFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_XFS OFF)
+" ) 
+ENDIF( USE_FSAL_XFS )
+
+IF( USE_FSAL_ZFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_ZFS ON)
+" ) 
+ELSE( USE_FSAL_ZFS )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_ZFS OFF)
+" ) 
+ENDIF( USE_FSAL_ZFS )
+FILE(APPEND ${RPMBULILD_CMAKE} "set(DISTNAME_HAS_GIT_DATA ON)
+")
+
+
       # Read RPM changelog and store the result into a variable
-      EXEC_PROGRAM(cat ARGS ${RPM_CHANGELOG_FILE} OUTPUT_VARIABLE RPM_CHANGELOG_FILE_CONTENT)
+      FILE( READ "${RPM_CHANGELOG_FILE}" RPM_CHANGELOG_FILE_CONTENT )
 
       SET(SPECFILE_PATH "${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec")
       SET(SPECFILE_NAME "${RPMNAME}.spec")
@@ -80,10 +183,19 @@ Url:            ${RPM_URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 
-%define srcdirname %{name}-%{version}-Source
+#%define srcdirname %{name}-%{version}-Source
+%define srcdirname %{name}${PACKNAME}-%{version}-Source
 
 %description
 ${RPMNAME} : ${RPM_DESCRIPTION}
+
+%package mount-9P
+Summary: a 9p mount helper
+Group: Applications/System
+
+%description mount-9P
+This package contains the mount.9P script
+This is a 9p mount help
 
  ")
 
@@ -202,7 +314,7 @@ cd ..
 rm -rf build_tree
 mkdir build_tree
 cd build_tree
-cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONFIG=rpmbuild -DUSE_FSAL_GPFS=OFF -DUSE_FSAL_XFS=OFF ../%{srcdirname}
+cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONFIG=rpmbuild -DDISTNAME_HAS_GIT_DATA=ON ../%{srcdirname}
 make
   
 %install 
@@ -210,14 +322,18 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_sbindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
 
-install -m 644 config_samples/logrotate_ganesha   $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
-install -m 755 ganesha.init                       $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
-install -m 755 ganesha.sysconfig                  $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
+install -m 644 config_samples/logrotate_ganesha          $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
+install -m 755 ganesha.init                              $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
+install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf  $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
+install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
+install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/hosts.ganesha  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -234,6 +350,11 @@ rm -rf build_tree
 %defattr(-,root,root,-)
 %{_bindir}/*
 %{_sysconfdir}/*
+
+%files mount-9P
+%defattr(-,root,root,-)
+%{_sbindir}/mount.9P
+
 "
 )
 # if needed deal with FSALs

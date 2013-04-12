@@ -49,9 +49,14 @@ int _9p_remove( _9p_request_data_t * preq9p,
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
+  _9p_fid_t * pfid = NULL ;
+  cache_inode_status_t  cache_status ;
+
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -65,7 +70,36 @@ int _9p_remove( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  /* Not supported use TUNLINKAT instead */
-  return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOTSUP, plenout, preply ) ;
+  pfid = &preq9p->pconn->fids[*fid] ;
+
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
+  cache_status = cache_inode_remove(pfid->ppentry,
+				    pfid->name,
+				    &pfid->op_context);
+  if(cache_status != CACHE_INODE_SUCCESS)
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
+  /* Clean the fid */
+  memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
+
+  /* Build the reply */
+  _9p_setinitptr( cursor, preply, _9P_RREMOVE ) ;
+  _9p_setptr( cursor, msgtag, u16 ) ;
+
+  _9p_setendptr( cursor, preply ) ;
+  _9p_checkbound( cursor, preply, plenout ) ;
+
+  LogDebug( COMPONENT_9P, "TREMOVE: tag=%u fid=%u",
+            (u32)*msgtag, *fid ) ;
+
+  // _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  return 1 ;
+
 }
 

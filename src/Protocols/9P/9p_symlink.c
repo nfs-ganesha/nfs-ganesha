@@ -62,7 +62,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   _9p_qid_t qid_symlink ;
 
   cache_entry_t            * pentry_symlink = NULL ;
-  char                       symlink_name[MAXNAMLEN + 1] ;
+  char                       symlink_name[MAXNAMLEN] ;
   uint64_t                   fileid;
   cache_inode_status_t       cache_status ;
   uint32_t                   mode = 0777;

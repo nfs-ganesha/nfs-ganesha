@@ -701,7 +701,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
     return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* check that asked attributes are available */
-  avail_attr = (ATTR_SUPPATTR | ATTR_TYPE | ATTR_FILEID);
+  avail_attr = (ATTR_TYPE | ATTR_FILEID);
 
   unavail_attr = (p_fsalattr_out->mask) & (~avail_attr);
   if(unavail_attr)
@@ -777,7 +777,6 @@ fsal_status_t fsal2hpss_attribset(struct fsal_obj_handle * p_fsal_handle,
   supp_attrs = HPSS_SUPPORTED_ATTRIBUTES;
 
   /* Settable attrs. */
-
   settable_attrs = (ATTR_SIZE | ATTR_SPACEUSED | ATTR_ACL |
                     ATTR_MODE | ATTR_OWNER |
                     ATTR_GROUP | ATTR_ATIME |

@@ -64,7 +64,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   fsal_status_t fsal_status ; 
-  char name[MAXNAMLEN + 1];
+  char name[MAXNAMLEN];
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -119,12 +119,23 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      else
         create = FALSE ;
 
+     /* Proceed in two steps for the information provided in *flag does not seem to be reliable */
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
                                                                     &pfid->op_context,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
                                                                     *size,
-                                                                    create )  ;
+                                                                    TRUE )  ;
+     if( FSAL_IS_ERROR( fsal_status ) && fsal_status.major == ERR_FSAL_EXIST )
+      {
+        fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
+                                                                       &pfid->op_context,
+                                                                       name,
+                                                                       pfid->specdata.xattr.xattr_content, 
+                                                                       *size,
+                                                                       FALSE )  ;
+      }
+
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;

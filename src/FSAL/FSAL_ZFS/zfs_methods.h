@@ -33,7 +33,6 @@ struct zfs_fsal_obj_handle {
 	struct zfs_file_handle *handle;
 	union {
 		struct {
-                         off_t current_offset;
                          libzfswrap_vnode_t *p_vnode;
 			 fsal_openflags_t openflags;
  			 struct stat saved_stat ;

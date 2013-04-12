@@ -69,7 +69,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *,   /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[MAXNAMLEN + 1];
+  char xattr_name[MAXNAMLEN];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;
@@ -277,7 +277,7 @@ static int xattr_id_to_name(char *lustre_path, unsigned int xattr_id, char *name
 {
   unsigned int index;
   unsigned int curr_idx;
-  char names[MAXPATHLEN + 1], *ptr;
+  char names[MAXPATHLEN], *ptr;
   size_t namesize;
   size_t len = 0;
 
@@ -319,7 +319,7 @@ static int xattr_id_to_name(char *lustre_path, unsigned int xattr_id, char *name
 static int xattr_name_to_id(char *lustre_path, const char *name)
 {
   unsigned int i;
-  char names[MAXPATHLEN + 1], *ptr;
+  char names[MAXPATHLEN], *ptr;
   size_t namesize;
 
   /* get xattrs */
@@ -442,9 +442,9 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   unsigned int out_index;
   unsigned int cookie = argcookie ;
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
 
-  char names[MAXPATHLEN + 1], *ptr;
+  char names[MAXPATHLEN], *ptr;
   size_t namesize;
   int xattr_idx;
 
@@ -465,7 +465,7 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
         {
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
-          strncpy(xattr_list[index].xattr_name,
+          strncpy(xattr_list[index].xattr_name, 
                   xattrs_tab[out_index].xattr_name, MAXNAMLEN);
           xattrs_tab[out_index].xattr_cookie = index + 1;
 
@@ -556,7 +556,7 @@ fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
   unsigned int index;
   int rc;
   int found = FALSE;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
 
   /* sanity checks */
@@ -610,7 +610,7 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 {
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
 
   obj_handle = container_of( obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 
@@ -626,7 +626,7 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
     }
   else if(xattr_id >= XATTR_COUNT)
     {
-      char attr_name[MAXPATHLEN + 1];
+      char attr_name[MAXPATHLEN];
  
       /* get the name for this attr */
       lustre_handle_to_path( lustre_get_root_path( obj_hdl->export ), obj_handle->handle, mypath ) ;
@@ -673,7 +673,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 {
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
   unsigned int index;
 
   obj_handle = container_of( obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -716,7 +716,7 @@ fsal_status_t lustre_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				      int create)
 {
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
   int rc = 0 ;
   size_t len;
 
@@ -748,8 +748,8 @@ fsal_status_t lustre_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
 {
-  char name[MAXNAMLEN + 1];
-  char mypath[MAXPATHLEN + 1];
+  char name[MAXNAMLEN];
+  char mypath[MAXPATHLEN] ;
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
 
@@ -808,8 +808,8 @@ fsal_status_t lustre_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 				          unsigned int xattr_id)
 {
   int rc;
-  char name[MAXNAMLEN + 1];
-  char mypath[MAXPATHLEN + 1];
+  char name[MAXNAMLEN];
+  char mypath[MAXPATHLEN];
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
 
   obj_handle = container_of( obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -834,7 +834,7 @@ fsal_status_t lustre_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 {
   struct lustre_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
-  char mypath[MAXPATHLEN + 1] ;
+  char mypath[MAXPATHLEN] ;
 
   obj_handle = container_of( obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 
