@@ -83,8 +83,6 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     {
       V(session->clientid_record->cid_mutex);
 
-      dec_client_id_ref(session->clientid_record);
-
       if(isDebug(COMPONENT_SESSIONS))
         LogDebug(COMPONENT_SESSIONS,
                  "SEQUENCE returning NFS4ERR_EXPIRED");

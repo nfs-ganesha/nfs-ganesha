@@ -71,7 +71,7 @@ static struct req_op_context synthetic_context = {
  *
  * @param[in] export FSAL export
  * @param[in] key    Key to specify object
- * @param[in] flags  Flags to pass to @c cache_inode_validate
+ * @param[in] flags  Flags to pass to cache_inode_invalidate
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
