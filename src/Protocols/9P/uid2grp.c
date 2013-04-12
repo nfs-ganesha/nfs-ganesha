@@ -152,7 +152,6 @@ bool name2grp( const struct gsh_buffdesc * name, struct group_data ** pgdata )
     {
       /* Something we can mutate and count on as terminated */
       char *namebuff = alloca(name->len + 1);
-      bool looked_up = false;
 
       memcpy(namebuff, name->addr, name->len);
       *(namebuff + name->len) = '\0';

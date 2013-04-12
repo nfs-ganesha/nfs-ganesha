@@ -52,7 +52,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
                      char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  int create = FALSE ;
+/*   int create = FALSE ; */
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -114,10 +114,10 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
        return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
 
-     if( ( *flag == 0 ) ||  (*flag & XATTR_CREATE ) ) 
-        create = TRUE ;
-     else
-        create = FALSE ;
+/*      if( ( *flag == 0 ) ||  (*flag & XATTR_CREATE ) )  */
+/*         create = TRUE ; */
+/*      else */
+/*         create = FALSE ; */
 
      /* Proceed in two steps for the information provided in *flag does not seem to be reliable */
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,

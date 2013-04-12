@@ -281,8 +281,8 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
         int fd ;
-	uid_t user;
-	gid_t group;
+/* 	uid_t user; */
+/* 	gid_t group; */
 	struct lustre_file_handle *fh
 		= alloca(sizeof(struct lustre_file_handle) );
 
@@ -295,8 +295,8 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 	}
 	memset(fh, 0, sizeof(struct lustre_file_handle) );
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
+/* 	user = attrib->owner; */
+/* 	group = attrib->group; */
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
         lustre_handle_to_path( lustre_get_root_path( dir_hdl->export ), 
@@ -309,8 +309,8 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
+/* 	if(stat.st_mode & S_ISGID) */
+/* 		group = -1; /\*setgid bit on dir propagates dir group owner *\/ */
 
 	/* create it with no access because we are root when we do this
 	 * we use openat because there is no creatat...
@@ -363,8 +363,8 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	uid_t user;
-	gid_t group;
+/* 	uid_t user; */
+/* 	gid_t group; */
 	struct lustre_file_handle *fh
 		= alloca(sizeof(struct lustre_file_handle) );
 
@@ -377,8 +377,8 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	}
 	memset(fh, 0, sizeof(struct lustre_file_handle) );
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
+/* 	user = attrib->owner; */
+/* 	group = attrib->group; */
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
         lustre_handle_to_path( lustre_get_root_path( dir_hdl->export ), myself->handle, dirpath ) ;
@@ -387,8 +387,8 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
                 retval = errno ;
 		goto direrr;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
+/* 	if(stat.st_mode & S_ISGID) */
+/* 		group = -1; /\*setgid bit on dir propagates dir group owner *\/ */
 
 	/* create it with no access because we are root when we do this */
         snprintf( newpath, MAXPATHLEN, "%s/%s", dirpath, name ) ;
@@ -441,11 +441,11 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
         char dirpath[MAXPATHLEN] ;
         char newpath[MAXPATHLEN] ;
 	struct stat stat;
-	mode_t unix_mode, create_mode = 0;
+	mode_t unix_mode/* , create_mode = 0 */;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	uid_t user;
-	gid_t group;
+/* 	uid_t user; */
+/* 	gid_t group; */
 	dev_t unix_dev = 0;
 	struct lustre_file_handle *dir_fh = NULL;
 	const char *sock_name = NULL;
@@ -463,8 +463,8 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 	}
 	memset(fh, 0, sizeof(struct lustre_file_handle) );
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
+/* 	user = attrib->owner; */
+/* 	group = attrib->group; */
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	switch (nodetype) {
@@ -473,7 +473,7 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 			fsal_error = ERR_FSAL_FAULT;
 			goto errout;
 		}
-		create_mode = S_IFBLK;
+/* 		create_mode = S_IFBLK; */
 		unix_dev = CRED_WRAP( opctx->creds, dev_t, makedev, dev->major, dev->minor);
 		break;
 	case CHARACTER_FILE:
@@ -483,14 +483,14 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 
 
 		}
-		create_mode = S_IFCHR;
+/* 		create_mode = S_IFCHR; */
 		unix_dev = CRED_WRAP( opctx->creds, dev_t, makedev, dev->major, dev->minor);
 		break;
 	case FIFO_FILE:
-		create_mode = S_IFIFO;
+/* 		create_mode = S_IFIFO; */
 		break;
 	case SOCKET_FILE:
-		create_mode = S_IFSOCK;
+/* 		create_mode = S_IFSOCK; */
 		dir_fh = myself->handle;
                 sock_name = name;
 		break;
@@ -509,8 +509,8 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
                 retval = errno ;
 		goto direrr;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
+/* 	if(stat.st_mode & S_ISGID) */
+/* 		group = -1; /\*setgid bit on dir propagates dir group owner *\/ */
 
 	/* create it with no access because we are root when we do this */
         snprintf( newpath, MAXPATHLEN, "%s/%s", dirpath, name ) ;
