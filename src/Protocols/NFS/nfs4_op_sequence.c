@@ -74,7 +74,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
       return res_SEQUENCE4.sr_status;
     }
 
-  /** @todo FSF: there is a tiny window here... should have a ref count on session */
+  /* session->refcount +1 */
 
   /* Check if lease is expired and reserve it */
   P(session->clientid_record->cid_mutex);
@@ -90,6 +90,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
         LogDebug(COMPONENT_CLIENTID,
                  "SEQUENCE returning NFS4ERR_EXPIRED");
 
+      dec_session_ref(session);
       res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
       return res_SEQUENCE4.sr_status;
     }
@@ -101,6 +102,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
   /* Check is slot is compliant with ca_maxrequests */
   if(arg_SEQUENCE4.sa_slotid >= session->fore_channel_attrs.ca_maxrequests)
     {
+      dec_session_ref(session);
       res_SEQUENCE4.sr_status = NFS4ERR_BADSLOT;
       return res_SEQUENCE4.sr_status;
     }
@@ -123,17 +125,20 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
                            "Use sesson slot %"PRIu32"=%p for DRC",
                            arg_SEQUENCE4.sa_slotid, data->pcached_res);
 
+              dec_session_ref(session);
               res_SEQUENCE4.sr_status = NFS4_OK;
               return res_SEQUENCE4.sr_status;
             }
           else
             {
               /* Illegal replay */
+              dec_session_ref(session);
               res_SEQUENCE4.sr_status = NFS4ERR_RETRY_UNCACHED_REP;
               return res_SEQUENCE4.sr_status;
             }
         }
       V(session->slots[arg_SEQUENCE4.sa_slotid].lock);
+      dec_session_ref(session);
       res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED;
       return res_SEQUENCE4.sr_status;
     }

@@ -246,6 +246,41 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 	memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
 }
 
+int32_t inc_session_ref(nfs41_session_t *session)
+{
+	int32_t refcnt =
+		atomic_inc_int32_t(&session->refcount);
+	return (refcnt);
+}
+
+int32_t dec_session_ref(nfs41_session_t *session)
+{
+	int32_t refcnt =
+		atomic_dec_int32_t(&session->refcount);
+	if (refcnt == 0) {
+
+		/* XXXX
+		 * Is it correct to unlink client session when refcnt has
+		 * already reached 0 (or should we have done it earlier)?
+		 * Do we need cid_mutex? */
+
+		/* Decrement our reference to the clientid record */
+		dec_client_id_ref(session->clientid_record);
+		/* Unlink the session from the client's list of
+		   sessions */
+		glist_del(&session->session_link);
+		/* Destroy the session's back channel (if any) */
+		if (session->flags & session_bc_up) {
+			nfs_rpc_destroy_chan(&session->cb_chan);
+		}
+		/* Free the memory for the session */
+		pool_free(nfs41_session_pool, session);
+	}
+
+	return (refcnt);
+}
+
+
 /**
  * @brief Set a session into the session hashtable.
  *
@@ -262,7 +297,10 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 {
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
+	struct hash_latch latch;
 	char str[HASHTABLE_DISPLAY_STRLEN];
+	hash_error_t code;
+	int rc = 0;
 
 	if (isFullDebug(COMPONENT_SESSIONS)) {
 		display_session_id(sessionid, str);
@@ -271,7 +309,7 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 	}
 
 	if ((key.addr = gsh_malloc(NFS4_SESSIONID_SIZE)) == NULL) {
-		return 0;
+		goto out;
 	}
 	memcpy(key.addr, sessionid, NFS4_SESSIONID_SIZE);
 	key.len = NFS4_SESSIONID_SIZE;
@@ -279,14 +317,25 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 	val.addr = session_data;
 	val.len = sizeof(nfs41_session_t);
 
-	if (HashTable_Test_And_Set(
-		    ht_session_id, &key, &val,
-		    HASHTABLE_SET_HOW_SET_NO_OVERWRITE) !=
-	    HASHTABLE_SUCCESS) {
-		return 0;
+	/* The latch idiom isn't strictly necessary here */
+	code = HashTable_GetLatch(ht_session_id, &key, &val, true, &latch);
+	if (code == HASHTABLE_SUCCESS) {
+		HashTable_ReleaseLatched(ht_session_id, &latch);
+		goto out;
+	}
+	if (code == HASHTABLE_ERROR_NO_SUCH_KEY) {
+		/* nfs4_op_create_session ensures refcount == 2 for new
+		 * session records */
+		code = HashTable_SetLatched(ht_session_id, &key, &val,
+					    &latch, FALSE, NULL, NULL);
+		if (code == HASHTABLE_SUCCESS) {
+			rc = 1;
+		}
+		HashTable_ReleaseLatched(ht_session_id, &latch);
 	}
 
-	return 1;
+out:
+	return (rc);
 }
 
 /**
@@ -304,7 +353,9 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 {
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
+	struct hash_latch latch;
 	char str[HASHTABLE_DISPLAY_STRLEN];
+	hash_error_t code;
 
 	if (isFullDebug(COMPONENT_SESSIONS)) {
 		display_session_id(sessionid, str);
@@ -315,14 +366,18 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	key.addr = sessionid;
 	key.len = NFS4_SESSIONID_SIZE;
 
-	if (HashTable_Get(ht_session_id, &key, &val)
-	    != HASHTABLE_SUCCESS) {
+	code = HashTable_GetLatch(ht_session_id, &key, &val, false, &latch);
+	if (code != HASHTABLE_SUCCESS) {
+		HashTable_ReleaseLatched(ht_session_id, &latch);
 		LogFullDebug(COMPONENT_SESSIONS,
 			     "Session %s Not Found", str);
 		return 0;
 	}
 
 	*session_data = val.addr;
+	inc_session_ref(*session_data); /* XXX more locks? */
+
+	HashTable_ReleaseLatched(ht_session_id, &latch);
 
 	LogFullDebug(COMPONENT_SESSIONS,
 		     "Session %s Found", str);
@@ -361,17 +416,10 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 
 		/* free the key that was stored in hash table */
 		gsh_free(old_key.addr);
-		/* Decrement our reference to the clientid record */
-		dec_client_id_ref(session->clientid_record);
-		/* Unlink the session from the client's list of
-		   sessions */
-		glist_del(&session->session_link);
-		/* Destroy the session's back channel (if any) */
-		if (session->flags & session_bc_up) {
-			nfs_rpc_destroy_chan(&session->cb_chan);
-		}
-		/* Free the memory for the session */
-		pool_free(nfs41_session_pool, session);
+
+		/* unref session */
+		dec_session_ref(session);
+
 		return 1;
 	} else {
 		return 0;

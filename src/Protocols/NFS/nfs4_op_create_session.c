@@ -316,6 +316,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	nfs41_session->clientid = clientid;
 	nfs41_session->clientid_record = found;
+        nfs41_session->refcount = 2; /* sentinel ref + call path ref */
 	nfs41_session->fore_channel_attrs
 		= arg_CREATE_SESSION4->csa_fore_chan_attrs;
 	nfs41_session->back_channel_attrs
@@ -478,6 +479,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	/* Release our reference to the confirmed record */
 	dec_client_id_ref(conf);
 
+        /* And to the session */
+        dec_session_ref(nfs41_session);
+
 	if (isFullDebug(component)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -491,7 +495,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	}
 
 	/* Handle the creation of the back channel, if the client
-	   request one. */
+	   requested one. */
 	if (arg_CREATE_SESSION4->csa_flags &
 	    CREATE_SESSION4_FLAG_CONN_BACK_CHAN) {
 		nfs41_session->cb_program

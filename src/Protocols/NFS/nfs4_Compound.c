@@ -743,6 +743,11 @@ void compound_data_Free(compound_data_t *data)
       data->saved_ds = NULL;
   }
 
+  if (data->psession) {
+      dec_session_ref(data->psession);
+      data->psession = NULL;
+  }
+
   if (data->currentFH.nfs_fh4_val != NULL)
     gsh_free(data->currentFH.nfs_fh4_val);
 

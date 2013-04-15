@@ -246,6 +246,9 @@ bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid);
 int32_t inc_client_id_ref(nfs_client_id_t *clientid);
 int32_t dec_client_id_ref(nfs_client_id_t *clientid);
 
+int32_t inc_session_ref(nfs41_session_t *session);
+int32_t dec_session_ref(nfs41_session_t *session);
+
 int display_client_record(nfs_client_record_t *record, char *str);
 
 int32_t inc_client_record_ref(nfs_client_record_t *record);
