@@ -166,7 +166,7 @@ int nfs_ParseConfLine(char *Argv[],
 {
 	int tok_index;
 	char *p1 = line;
-	char *p2;
+	char *p2 = NULL;
 
 	for(tok_index = 0; tok_index < nbArgv; tok_index++) {
 		while(isspace(*p1))
