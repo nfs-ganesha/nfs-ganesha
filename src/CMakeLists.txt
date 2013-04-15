@@ -6,9 +6,6 @@ cmake_minimum_required(VERSION 2.6.3)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
-# Add maintainer mode for (mainly) strict builds
-include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
-
 project(nfs-ganesha C)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 2)
@@ -17,6 +14,26 @@ set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
   "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
+
+# find out which platform we are building on
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(LINUX ON)
+  set(UNIX ON)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(FREEBSD ON)
+  set(UNIX ON)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(WINDOWS ON)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+find_package(Toolchain REQUIRED)
+
+# Add maintainer mode for (mainly) strict builds
+include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
@@ -82,13 +99,6 @@ if (LINUX)
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/linux")
     find_library(LIBDL dl)  # module loader
 endif(LINUX)
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  set(WINDOWS ON)
-  if(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-    set(MSVC ON)
-  endif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if (MSVC)
    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -607,6 +617,7 @@ message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
 message(STATUS "_GIT_DESCRIBE = ${_GIT_DESCRIBE}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
+message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
