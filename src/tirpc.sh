@@ -3,7 +3,7 @@
 OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/linuxbox2/ntirpc.git'
-TIRPC_COMMIT='7aec2269a15aa7d68991fd083077c78a77ffc6e7'
+TIRPC_COMMIT='9d926718d27fdbdff0f6a8b2739f4515cd290975'
 
 if [ -d libtirpc/.git ]; then
     cd libtirpc
