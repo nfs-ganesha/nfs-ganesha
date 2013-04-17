@@ -424,6 +424,7 @@ static int nfs_RetryableError(cache_inode_status_t cache_status,
     case CACHE_INODE_MLINK:
     case CACHE_INODE_SERVERFAULT:
     case CACHE_INODE_XDEV:
+    case CACHE_INODE_BADNAME:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -3858,6 +3859,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_XDEV;
       break;
 
+    case CACHE_INODE_BADNAME:
+      nfserror = NFS4ERR_BADNAME;
+      break;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_CACHE_CONTENT_ERROR:
@@ -4013,6 +4018,10 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS3ERR_XDEV;
       break;
 
+    case CACHE_INODE_BADNAME:
+      nfserror = NFS3ERR_INVAL;
+      break;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_STATE_CONFLICT:
@@ -4131,6 +4140,10 @@ nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
 
     case CACHE_INODE_NAME_TOO_LONG:
       nfserror = NFSERR_NAMETOOLONG;
+      break;
+
+    case CACHE_INODE_BADNAME:
+      nfserror = NFSERR_IO;
       break;
 
     case CACHE_INODE_XDEV:
@@ -4454,7 +4467,13 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                    "Wrong file type");
 
           if(required_type == DIRECTORY)
-            return NFS4ERR_NOTDIR;
+            {
+              if(data->current_filetype == SYMBOLIC_LINK)
+                return NFS4ERR_SYMLINK;
+              else
+                return NFS4ERR_NOTDIR;
+            }
+
           if(required_type == SYMBOLIC_LINK)
             return NFS4ERR_INVAL;
 

@@ -129,6 +129,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_ENTRY_EXISTS:          return STATE_ENTRY_EXISTS;
       case CACHE_INODE_DIR_NOT_EMPTY:         return STATE_DIR_NOT_EMPTY;
       case CACHE_INODE_NOT_FOUND:             return STATE_NOT_FOUND;
+      case CACHE_INODE_BADNAME:
       case CACHE_INODE_INVALID_ARGUMENT:      return STATE_INVALID_ARGUMENT;
       case CACHE_INODE_INSERT_ERROR:          return STATE_INSERT_ERROR;
       case CACHE_INODE_HASH_TABLE_ERROR:      return STATE_HASH_TABLE_ERROR;
@@ -160,6 +161,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_SERVERFAULT:           return STATE_SERVERFAULT;
       case CACHE_INODE_TOOSMALL:              return STATE_TOOSMALL;
       case CACHE_INODE_XDEV:                  return STATE_XDEV;
+      break;
+
     }
   return STATE_CACHE_INODE_ERR;
 }
@@ -236,9 +239,11 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
       return STATE_FSAL_ERROR;
 
     case ERR_FSAL_SYMLINK:
-    case ERR_FSAL_ISDIR:
     case ERR_FSAL_BADTYPE:
       return STATE_BAD_TYPE;
+
+    case ERR_FSAL_ISDIR:
+      return STATE_IS_A_DIRECTORY;
 
     case ERR_FSAL_FBIG:
       return STATE_FILE_BIG;

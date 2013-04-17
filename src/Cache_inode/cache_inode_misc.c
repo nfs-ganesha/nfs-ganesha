@@ -158,6 +158,8 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_XDEV";
       case CACHE_INODE_FSAL_SHARE_DENIED:
         return "CACHE_INODE_FSAL_SHARE_DENIED";  
+      case CACHE_INODE_BADNAME:
+        return "CACHE_INODE_BADNAME";
     }
   return "unknown";
 }
@@ -647,9 +649,11 @@ cache_inode_error_convert(fsal_status_t fsal_status)
       return CACHE_INODE_FSAL_ERROR;
 
     case ERR_FSAL_SYMLINK:
-    case ERR_FSAL_ISDIR:
     case ERR_FSAL_BADTYPE:
       return CACHE_INODE_BAD_TYPE;
+
+    case ERR_FSAL_ISDIR:
+      return CACHE_INODE_IS_A_DIRECTORY;
 
     case ERR_FSAL_FBIG:
       return CACHE_INODE_FILE_BIG;
