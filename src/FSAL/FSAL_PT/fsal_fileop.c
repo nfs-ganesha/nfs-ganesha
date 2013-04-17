@@ -512,7 +512,7 @@ fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor,   /* IN */
   /* call to close */
   // don't check return code since using IGNORE_STATE
   int state_rc = 
-    CCL_UPDATE_HANDLE_NFS_STATE(p_file_descriptor->fd, NFS_CLOSE, NFS_OPEN);
+    CCL_UPDATE_HANDLE_NFS_STATE(p_file_descriptor->fd, NFS_CLOSE, IGNORE_STATE);
 
   if (state_rc) {
     FSI_TRACE(FSI_WARNING, "Unexpected state, not updating nfs state");
