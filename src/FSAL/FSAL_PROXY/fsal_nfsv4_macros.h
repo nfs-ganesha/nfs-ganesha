@@ -14,15 +14,7 @@
 #ifndef _FSAL_NFSV4_MACROS_H
 #define _FSAL_NFSV4_MACROS_H
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/clnt.h>
-#include <gssrpc/xdr.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/clnt.h>
-#include <rpc/xdr.h>
-#endif
+#include "ganesha_rpc.h"
 #include "nfs4.h"
 
 #include "fsal.h"
