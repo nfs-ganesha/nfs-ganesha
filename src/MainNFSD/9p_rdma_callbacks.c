@@ -127,7 +127,7 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
        
        if (rc != 1)  {
              /* Unlock the buffer right away since no message is being sent */
-             pthread_mutex_lock(&outdatamr->lock);
+             pthread_mutex_unlock(&outdatamr->lock);
        }
 
 
