@@ -1309,6 +1309,7 @@ AuthenticateRequest(struct fridgethr_context *thr_ctx,
   struct rpc_msg *msg = req->rq_msg;
   SVCXPRT *xprt = nfsreq->xprt;
   enum auth_stat why;
+  bool rlocked = TRUE;
   bool slocked = FALSE;
 
   /* A few words of explanation are required here:
@@ -1339,7 +1340,7 @@ AuthenticateRequest(struct fridgethr_context *thr_ctx,
       LogInfo(COMPONENT_DISPATCH,
               "Could not authenticate request... rejecting with AUTH_STAT=%s",
               auth_stat2str(why));
-      DISP_SLOCK(xprt);
+      DISP_SLOCK2(xprt);
       svcerr_auth(xprt, req, why);
       DISP_SUNLOCK(xprt);
       *no_dispatch = true;
@@ -1752,6 +1753,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
                   struct svc_req *req)
 {
   int lo_vers, hi_vers;
+  bool rlocked = TRUE;
   bool slocked = FALSE;
 
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
@@ -1776,7 +1778,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
               if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
                 hi_vers = NFS_V4;
               /* XXX move this, removing need for thr_ctx */
-              DISP_SLOCK(xprt);
+              DISP_SLOCK2(xprt);
               svcerr_progvers(xprt, req, lo_vers, hi_vers);  /* Bad NFS version */
               DISP_SUNLOCK(xprt);
             }
@@ -1788,7 +1790,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
           /* xprt == NULL??? */
           if(xprt != NULL) {
               /* XXX move this, removing need for thr_ctx */
-              DISP_SLOCK(xprt);
+              DISP_SLOCK2(xprt);
               svcerr_noproc(xprt, req);
               DISP_SUNLOCK(xprt);
           }
@@ -1817,7 +1819,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
             {
                 /* xprt == NULL??? */
                 if(xprt != NULL) {
-                    DISP_SLOCK(xprt);
+                    DISP_SLOCK2(xprt);
                     svcerr_noproc(xprt, req);
                     DISP_SUNLOCK(xprt);
                 }
@@ -1833,7 +1835,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
             {
                 /* xprt == NULL??? */
                 if(xprt != NULL) {
-                    DISP_SLOCK(xprt);
+                    DISP_SLOCK2(xprt);
                     svcerr_noproc(xprt, req);
                     DISP_SUNLOCK(xprt);
                 }
@@ -1852,7 +1854,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
           LogFullDebug(COMPONENT_DISPATCH,
                        "Invalid Mount Version #%d",
                        (int)req->rq_vers);
-          DISP_SLOCK(xprt);
+          DISP_SLOCK2(xprt);
           svcerr_progvers(xprt, req, lo_vers, hi_vers);
           DISP_SUNLOCK(xprt);
         }
@@ -1871,7 +1873,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
                        (int)req->rq_vers);
           /* xprt == NULL??? */
           if(xprt != NULL) {
-              DISP_SLOCK(xprt);
+              DISP_SLOCK2(xprt);
               svcerr_progvers(xprt, req, NLM4_VERS, NLM4_VERS);
               DISP_SUNLOCK(xprt);
           }
@@ -1881,7 +1883,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
         {
             /* xprt == NULL??? */
             if(xprt != NULL) {
-                DISP_SLOCK(xprt);
+                DISP_SLOCK2(xprt);
                 svcerr_noproc(xprt, req);
                 DISP_SUNLOCK(xprt);
             }
@@ -1903,7 +1905,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
                LogFullDebug(COMPONENT_DISPATCH,
                             "Invalid RQUOTA Version #%d",
                             (int)req->rq_vers);
-               DISP_SLOCK(xprt);
+               DISP_SLOCK2(xprt);
                svcerr_progvers(xprt, req, RQUOTAVERS, EXT_RQUOTAVERS);
                DISP_SUNLOCK(xprt);
              }
@@ -1916,7 +1918,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
         {
             /* xprt == NULL??? */
             if(xprt != NULL) {
-                DISP_SLOCK(xprt);
+                DISP_SLOCK2(xprt);
                 svcerr_noproc(xprt, req);
                 DISP_SUNLOCK(xprt);
             }
@@ -1932,7 +1934,7 @@ is_rpc_call_valid(struct fridgethr_context *thr_ctx, SVCXPRT *xprt,
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalid Program number #%d",
                    (int)req->rq_prog);
-      DISP_SLOCK(xprt);
+      DISP_SLOCK2(xprt);
       svcerr_noprog(xprt, req);  /* This is no NFS, MOUNT program, exit... */
       DISP_SUNLOCK(xprt);
     }
@@ -1949,6 +1951,7 @@ nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
   struct svc_req *req = &preqnfs->req;
+  bool rlocked = TRUE;
   bool slocked = FALSE;
 
   memset(arg_nfs, 0, sizeof(nfs_arg_t));
@@ -1966,7 +1969,7 @@ nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
               (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
               req->rq_xid);
       /* XXX move this, removing need for thr_ctx */
-      DISP_SLOCK(xprt);
+      DISP_SLOCK2(xprt);
       svcerr_decode(xprt, req);
       DISP_SUNLOCK(xprt);
       return false;
