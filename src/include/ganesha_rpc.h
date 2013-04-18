@@ -19,6 +19,7 @@
 #include <rpc/svc_auth.h>
 #include <rpc/svc_rqst.h>
 #include <rpc/rpc_dplx.h>
+#include <rpc/rpc_msg.h>
 #include <rpc/gss_internal.h> /* XXX */
 #include "abstract_mem.h"
 #include "nlm_list.h"
