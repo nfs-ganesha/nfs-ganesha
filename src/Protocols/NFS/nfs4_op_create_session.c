@@ -477,7 +477,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	conf->cid_create_session_sequence++;
 
 	/* Bump the lease timer */
-	update_lease(conf);
+	conf->cid_last_renew = time(NULL);
 
 	/* Release our reference to the confirmed record */
 	dec_client_id_ref(conf);
