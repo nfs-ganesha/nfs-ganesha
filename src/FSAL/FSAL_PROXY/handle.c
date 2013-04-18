@@ -19,7 +19,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
 
 /* Proxy handle methods */
@@ -584,6 +585,7 @@ pxy_process_reply(struct pxy_rpc_io_context * ctx, COMPOUND4res *res)
 		memset(&x, 0, sizeof(x));
                 xdrmem_create(&x, ctx->recvbuf, ctx->ioresult, XDR_DECODE);
 
+                /* macro is defined, GCC 4.7.2 ignoring */
                 if(xdr_replymsg(&x, &reply)) {
                         if(reply.rm_reply.rp_stat == MSG_ACCEPTED) {
                                 switch(reply.rm_reply.rp_acpt.ar_stat) {
