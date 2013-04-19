@@ -1059,7 +1059,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         cache_inode_lru_ref(entry_change, LRU_FLAG_NONE);
 
         res_OPEN4->OPEN4res_u.resok4.cinfo.before
-                = cache_inode_get_changeid4(entry_change);
+                = cache_inode_get_changeid4(entry_change, data->req_ctx);
 
         /*
          * Check if share_access does not have any access set, or has
@@ -1290,7 +1290,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* Update change_info4 */
         res_OPEN4->OPEN4res_u.resok4.cinfo.after
-                = cache_inode_get_changeid4(entry_change);
+                = cache_inode_get_changeid4(entry_change, data->req_ctx);
         cache_inode_put(entry_change);
         entry_change = NULL;
         res_OPEN4->OPEN4res_u.resok4.cinfo.atomic = FALSE;

@@ -938,14 +938,26 @@ static inline cache_inode_status_t cache_inode_refresh_attrs_locked(
  * This function returns a changeid4 for the supplied entry.  It
  * should ONLY be used for populating change_info4 structures.
  *
- * @param[in] entry The entry to query.
+ * @param[in] entry   The entry to query.
+ * @param[in] context The FSAL operation context
  *
  * @return A changeid4 indicating the last modification of the entry.
  */
 
-static inline changeid4 cache_inode_get_changeid4(cache_entry_t *entry)
+static inline changeid4
+cache_inode_get_changeid4(cache_entry_t *entry,
+                          const struct req_op_context *opctx)
 {
-	return (changeid4) entry->change_time;
+     cache_inode_status_t status;
+     changeid4 changeid;
+     status = cache_inode_lock_trust_attrs(entry, opctx, false);
+
+     changeid = (changeid4) entry->change_time;
+
+     if(status == CACHE_INODE_SUCCESS)
+       PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+     return changeid;
 }
 
 

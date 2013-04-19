@@ -109,9 +109,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   src_entry = data->saved_entry;
 
   res_RENAME4->RENAME4res_u.resok4.source_cinfo.before
-       = cache_inode_get_changeid4(src_entry);
+       = cache_inode_get_changeid4(src_entry, data->req_ctx);
   res_RENAME4->RENAME4res_u.resok4.target_cinfo.before
-       = cache_inode_get_changeid4(dst_entry);
+       = cache_inode_get_changeid4(dst_entry, data->req_ctx);
 
   cache_status = cache_inode_rename(src_entry,
 				    oldname,
@@ -128,9 +128,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* For the change_info4, get the 'change' attributes for both directories */
 
   res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
-       cache_inode_get_changeid4(src_entry);
+       cache_inode_get_changeid4(src_entry, data->req_ctx);
   res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
-       cache_inode_get_changeid4(dst_entry);
+       cache_inode_get_changeid4(dst_entry, data->req_ctx);
   res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
   res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
   res_RENAME4->status = nfs4_Errno(cache_status);

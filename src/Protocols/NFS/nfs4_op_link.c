@@ -107,7 +107,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
         dir_entry = data->current_entry;
 
         res_LINK4->LINK4res_u.resok4.cinfo.before
-                = cache_inode_get_changeid4(dir_entry);
+                = cache_inode_get_changeid4(dir_entry, data->req_ctx);
 
         file_entry = data->saved_entry;
 
@@ -122,7 +122,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
         }
 
         res_LINK4->LINK4res_u.resok4.cinfo.after
-                = cache_inode_get_changeid4(dir_entry);
+                = cache_inode_get_changeid4(dir_entry, data->req_ctx);
         res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
         res_LINK4->status = NFS4_OK;

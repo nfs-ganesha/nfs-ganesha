@@ -153,7 +153,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
     }
 
   res_CREATE4->CREATE4res_u.resok4.cinfo.before
-       = cache_inode_get_changeid4(entry_parent);
+       = cache_inode_get_changeid4(entry_parent, data->req_ctx);
 
   /* Convert the incoming fattr4 to a vattr structure, if such arguments are supplied */
   if(arg_CREATE4->createattrs.attrmask.bitmap4_len != 0)
@@ -402,7 +402,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
   memset(&(res_CREATE4->CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
   res_CREATE4->CREATE4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(entry_parent);
+       = cache_inode_get_changeid4(entry_parent, data->req_ctx);
 
   /* Operation is supposed to be atomic .... */
   res_CREATE4->CREATE4res_u.resok4.cinfo.atomic = FALSE;
