@@ -86,7 +86,6 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_entry_t        * dir_pentry = NULL;
   cache_entry_t        * file_pentry = NULL;
   cache_inode_status_t   cache_status;
-  fsal_attrib_list_t     attr;
   fsal_name_t            newname;
 
   resp->resop = NFS4_OP_LINK;
@@ -162,17 +161,9 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LINK4.status;
     }
 
-  /* We have to keep track of the 'change' file attribute for reply structure */
-  if((cache_status = cache_inode_getattr(dir_pentry,
-                                         &attr,
-                                         data->pcontext,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
-    {
-      res_LINK4.status = nfs4_Errno(cache_status);
-      return res_LINK4.status;
-    }
+  /* Generate change info for before */
   res_LINK4.LINK4res_u.resok4.cinfo.before
-       = cache_inode_get_changeid4(dir_pentry);
+       = cache_inode_get_changeid4(dir_pentry, data->pcontext);
 
   /* Convert savedFH into a vnode */
   file_pentry = data->saved_entry;
@@ -181,15 +172,16 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(cache_inode_link(file_pentry,
                       dir_pentry,
                       &newname,
-                      &attr,
+                      NULL,
                       data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
     }
 
+  /* Generate change info for after */
   res_LINK4.LINK4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(dir_pentry);
+       = cache_inode_get_changeid4(dir_pentry, data->pcontext);
   res_LINK4.LINK4res_u.resok4.cinfo.atomic = FALSE;
 
   res_LINK4.status = NFS4_OK;

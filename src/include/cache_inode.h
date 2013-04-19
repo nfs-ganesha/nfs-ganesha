@@ -1085,22 +1085,6 @@ out:
 }
 
 /**
- * @brief Return a changeid4 for this entry.
- *
- * This function returns a changeid4 for the supplied entry.  It
- * should ONLY be used for populating change_info4 structures.
- *
- * @param[in] entry The entry to query.
- * @return A changeid4 indicating the last modification of the entry.
- */
-
-static inline changeid4
-cache_inode_get_changeid4(cache_entry_t *entry)
-{
-     return (changeid4) entry->change_time;
-}
-
-/**
  * @brief Lock attributes and check they are trustworthy
  *
  * This function acquires a read lock.  If the CACHE_INODE_TRUST_ATTRS
@@ -1161,6 +1145,32 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
      }
 
      return cache_status;
+}
+
+/**
+ * @brief Return a changeid4 for this entry.
+ *
+ * This function returns a changeid4 for the supplied entry.  It
+ * should ONLY be used for populating change_info4 structures.
+ *
+ * @param[in,out] entry   The entry to query.
+ * @param[in]     context The FSAL operation context
+ * @return A changeid4 indicating the last modification of the entry.
+ */
+
+static inline changeid4
+cache_inode_get_changeid4(cache_entry_t *entry, fsal_op_context_t *context)
+{
+     cache_inode_status_t status;
+     changeid4 changeid;
+     status = cache_inode_lock_trust_attrs(entry, context, FALSE);
+
+     changeid = (changeid4) entry->change_time;
+
+     if(status == CACHE_INODE_SUCCESS)
+       PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+
+     return changeid;
 }
 
 #endif /*  _CACHE_INODE_H */

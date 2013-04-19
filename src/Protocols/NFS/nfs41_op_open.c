@@ -78,7 +78,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   cache_entry_t           * pentry_lookup = NULL;
   cache_entry_t           * pentry_newfile = NULL;
   fsal_handle_t           * pnewfsal_handle = NULL;
-  fsal_attrib_list_t        attr_parent;
   fsal_attrib_list_t        sattr;
   fsal_openflags_t          openflags = 0;
   cache_inode_status_t      cache_status = CACHE_INODE_SUCCESS;
@@ -302,19 +301,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           goto out;
         }
 
-      /* Status of parent directory before the operation */
-      if(cache_inode_getattr(pentry_parent,
-                             &attr_parent,
-                             data->pcontext,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          res_OPEN4.status = nfs4_Errno(cache_status);
-          cause2 = " cache_inode_getattr";
-          goto out;
-        }
-
+      /* Generate change info for before */
       res_OPEN4.OPEN4res_u.resok4.cinfo.before
-           = cache_inode_get_changeid4(pentry_parent);
+           = cache_inode_get_changeid4(pentry_parent, data->pcontext);
 
       /* CLient may have provided fattr4 to set attributes at creation time */
       if(arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
@@ -504,8 +493,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       goto out;
                     }
 
+                  /* Generate change info for after */
                   res_OPEN4.OPEN4res_u.resok4.cinfo.after
-                       = cache_inode_get_changeid4(pentry_parent);
+                       = cache_inode_get_changeid4(pentry_parent, data->pcontext);
                   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
                   /* No delegation */
@@ -574,10 +564,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             {
 
                               /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
-                              memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
-                                     sizeof(changeid4));
+                              /* Generate change info for after */
                               res_OPEN4.OPEN4res_u.resok4.cinfo.after =
-                                   cache_inode_get_changeid4(pentry_parent);
+                                   cache_inode_get_changeid4(pentry_parent, data->pcontext);
                               res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
                               /* No delegation */
@@ -1025,17 +1014,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   data->current_filetype = REGULAR_FILE;
 
-  /* Status of parent directory after the operation */
-  if((cache_status = cache_inode_getattr(pentry_parent,
-                                         &attr_parent,
-                                         data->pcontext,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
-    {
-      res_OPEN4.status = nfs4_Errno(cache_status);
-      cause2 = " cache_inode_getattr";
-      goto out;
-    }
-
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
       gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len,
@@ -1054,8 +1032,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), 2, tmp_attr);
     }
 
+  /* Generate change info for after */
   res_OPEN4.OPEN4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(pentry_parent);
+       = cache_inode_get_changeid4(pentry_parent, data->pcontext);
   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
   /* No delegation */

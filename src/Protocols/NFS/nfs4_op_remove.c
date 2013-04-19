@@ -113,7 +113,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* We have to keep track of the 'change' file attribute for reply structure */
   memset(&(res_REMOVE4.REMOVE4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
-       cache_inode_get_changeid4(parent_entry);
+       cache_inode_get_changeid4(parent_entry, data->pcontext);
 
   /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
    * because of this, we have to know if object is a directory or not */
@@ -144,7 +144,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(parent_entry);
+       = cache_inode_get_changeid4(parent_entry, data->pcontext);
 
   /* Operation was not atomic .... */
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.atomic = FALSE;
