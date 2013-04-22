@@ -202,6 +202,7 @@ typedef struct exportlist {
 					     this list if NLM,
 					     otherwise state list is
 					     sufficient */
+	uint64_t exp_mounted_on_file_id; /*< Node id this is mounted on */
 	cache_entry_t *exp_root_cache_inode; /*< entry for root of this export  */
 } exportlist_t;
 

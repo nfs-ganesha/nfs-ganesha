@@ -44,6 +44,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 /**
  * @brief Gets the attributes for a cached entry
@@ -69,6 +71,7 @@ cache_inode_getattr(cache_entry_t *entry,
 		    cache_inode_getattr_cb_t cb)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	uint64_t saved_fileid;
 
 	if (entry == NULL) {
 		status = CACHE_INODE_INVALID_ARGUMENT;
@@ -89,9 +92,12 @@ cache_inode_getattr(cache_entry_t *entry,
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
-
+	saved_fileid = entry->obj_handle->attributes.fileid;
+	if(entry == req_ctx->export->export.exp_root_cache_inode)
+		entry->obj_handle->attributes.fileid
+			= req_ctx->export->export.exp_mounted_on_file_id;
         status = cb(opaque, &entry->obj_handle->attributes);
-
+	entry->obj_handle->attributes.fileid = saved_fileid;
         PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
@@ -136,7 +142,9 @@ cache_inode_fileid(cache_entry_t *entry,
                 goto out;
         }
 
-        *fileid = entry->obj_handle->attributes.fileid;
+        *fileid = (entry == req_ctx->export->export.exp_root_cache_inode) ?
+		req_ctx->export->export.exp_mounted_on_file_id
+		: entry->obj_handle->attributes.fileid;
 
         PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 

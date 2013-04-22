@@ -241,6 +241,9 @@ int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
           /* Now that all entries are added to pseudofs tree, add the junction to the pseudofs */
           PseudoFsCurrent->junction_export = entry;
 
+          /* And fill in our part of the export root data */
+          entry->exp_mounted_on_file_id = PseudoFsCurrent->pseudo_id;
+
         }
       /* if( entry->options & EXPORT_OPTION_PSEUDO ) */
 
