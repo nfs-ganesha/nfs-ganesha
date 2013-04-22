@@ -694,33 +694,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 	  goto out;
         }
 
-      /* The new fh is to be the "mounted on Filehandle" */
-      memcpy(data->mounted_on_FH.nfs_fh4_val, data->currentFH.nfs_fh4_val,
-             sizeof(file_handle_v4_t));
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
-      /* Add the entry to the cache as a root (BUGAZOMEU: make it a
-	 junction entry when junction is available) */
-
-/**
- * @todo make_root calls new_entry which will free the object.  this
- * may happen a lot as we traverse pseudos.  Might we have a lookahead
- * or think of a better way to handle this once the pseudo has been
- * cached?  leave the handle_to_key here for a bit till we sort this
- * out.  maybe the fsal lookup above should be a cache_inode_lookup??
- */
-/*       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc); */
-
-      cache_inode_make_root(fsal_handle,
-					   &entry);
-      if (entry == NULL)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-	  goto out;
-        }
 
       /* Keep the entry within the compound data */
       if (data->current_entry) {
@@ -1126,19 +1099,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
-            }
-          /* Add the entry to the cache as a root. There has to be a better way. */
-          fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
-          cache_inode_make_root(fsal_handle,
-				&entry);
-	  
-          if (entry == NULL)
-            {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }

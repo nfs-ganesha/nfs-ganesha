@@ -49,6 +49,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  * @brief NFS4_OP_LOOKUPP
@@ -100,7 +101,17 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
 
-  /* Preparying for cache_inode_lookup ".." */
+  /* If Filehandle points to the root of the current export, then backup
+   * through junction into the pseudo file system.
+   *
+   * @todo FSF: eventually we need to support junctions between exports
+   *            and that will require different code here.
+   */
+  if(data->current_entry->type == DIRECTORY &&
+     data->current_entry == data->req_ctx->export->export.exp_root_cache_inode)
+    return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
+
+  /* Preparing for cache_inode_lookup ".." */
   file_entry = NULL;
   dir_entry = data->current_entry;
 

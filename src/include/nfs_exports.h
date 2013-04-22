@@ -178,9 +178,6 @@ typedef struct exportlist {
 					  Access and Access_Type. */
 
 	fsal_fsid_t filesystem_id; /*< Filesystem ID */
-	struct fsal_obj_handle *proot_handle; /*< FSAL handle for the root of
-						  the file system */
-
 	export_perms_t export_perms;  /*< available mount options */
 	unsigned char seckey[EXPORT_KEY_SIZE]; /*< Checksum for FH validity */
 	bool use_commit;
@@ -205,6 +202,7 @@ typedef struct exportlist {
 					     this list if NLM,
 					     otherwise state list is
 					     sufficient */
+	cache_entry_t *exp_root_cache_inode; /*< entry for root of this export  */
 } exportlist_t;
 
 /* Constant for options masks */

@@ -121,7 +121,9 @@ int _9p_auth( _9p_request_data_t * preq9p,
   fsdata.fh_desc.len = sizeof( fkey_data ) ;
   fsdata.export = pexport->export_hdl ;
 
-  pexport->proot_handle->ops->handle_to_key( pexport->proot_handle, &fsdata.fh_desc ) ;
+  pexport->export_hdl->ops->extract_handle( pexport->export_hdl,
+					    FSAL_DIGEST_SIZEOF,
+					    &fsdata.fh_desc ) ;
 
   cache_status = cache_inode_get( &fsdata,
 				  NULL,

@@ -251,7 +251,7 @@ int mnt_Mnt(nfs_arg_t *parg,
     }
   else
     {
-      pfsal_handle = p_current_item->proot_handle;
+      pfsal_handle = p_current_item->exp_root_cache_inode->obj_handle;
     }
   /* convert the fsal_handle to a file handle */
   switch (preq->rq_vers)
