@@ -343,7 +343,7 @@ int nfs4_Compound(nfs_arg_t *arg,
       res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess
         .status = status;
 
-/* #ifdef USE_DBUS_STATS */
+#ifdef USE_DBUS_STATS
       if(nfs4_Is_Fh_Invalid(&data.currentFH) == NFS4_OK &&
 	 !nfs4_Is_Fh_Pseudo(&data.currentFH)) {
 	      export_id = nfs4_FhandleToExportId(&data.currentFH);
@@ -357,8 +357,8 @@ int nfs4_Compound(nfs_arg_t *arg,
 				 export_id,
 				 argarray[i].argop,
 				 op_start_time,
-				 status);
-/* #endif /\* USE_DBUS_STATS *\/ */
+				 status == NFS4_OK);
+#endif /* USE_DBUS_STATS */
 
       if(status != NFS4_OK)
         {
