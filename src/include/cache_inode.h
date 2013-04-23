@@ -688,32 +688,6 @@ cache_inode_access(cache_entry_t *entry,
                                  context, status, NULL, TRUE);
 }
 
-/**
- *
- * @brief Checks permissions on an entry and return attributes
- *
- * Checks for an entry accessibility and return attributes if access is allowed
- *
- * @param[in]  pentry      the fs object to be checked.
- * @param[in]  access_type the kind of access to be c
- * @param[in]  pcontext    FSAL credentials
- * @param[out] attr        pointer to return attributes
- * @param[in]  pstatus     returned status.
- *
- * @return CACHE_INODE_SUCCESS if operation is a success
- *
- */
-static inline cache_inode_status_t
-cache_inode_access2(cache_entry_t * pentry,
-                    fsal_accessflags_t access_type,
-                    fsal_op_context_t * pcontext,
-                    fsal_attrib_list_t *attr,
-                    cache_inode_status_t * pstatus)
-{
-  return cache_inode_access_sw(pentry, access_type, NULL, NULL,
-                               pcontext, pstatus, attr, TRUE);
-}
-
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t        * pentry,
                                 fsal_attrib_list_t   * sattr,

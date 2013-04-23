@@ -118,13 +118,16 @@ int nfs_SetFailedStatus_verbose(const char *where,
 #define nfs_SetFailedStatus(a, b, c, d, e, f, g, h, i, j) \
         nfs_SetFailedStatus_verbose(__func__, a, b, c, d, e, f, g, h, i, j)
 
-fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr);
-
-void nfs3_access_debug(char *label, uint32_t access);
-
-void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 void nfs4_Fattr_Free(fattr4 *fattr);
 
+
+void nfs_access_op(cache_entry_t *entry,
+                   uint32_t requested_access,
+                   uint32_t *granted_access,
+                   uint32_t *supported_access,
+                   fsal_op_context_t *context,
+                   fsal_attrib_list_t *attrs,
+                   cache_inode_status_t *status);
 
 #ifdef _PNFS_MDS
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
