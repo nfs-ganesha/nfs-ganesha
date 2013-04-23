@@ -569,8 +569,6 @@ struct nfs_client_id_t {
  */
 
 struct nfs_client_record_t {
-	char cr_client_val[NFS4_OPAQUE_LIMIT]; /*< Suplied co_owner */
-	int cr_client_val_len; /*< Length of owner */
 	int32_t cr_refcount; /*< Reference count for lifecycle */
 	pthread_mutex_t cr_mutex; /*< Mutex protecting this structure */
 	nfs_client_id_t *cr_confirmed_rec; /*< The confirmed record associated
@@ -580,6 +578,8 @@ struct nfs_client_record_t {
 					         associated with this
 					         client name, if there is
 						 one. */
+	int cr_client_val_len; /*< Length of owner */
+	char cr_client_val[]; /*< Suplied co_owner */
 };
 
 extern hash_table_t *ht_confirmed_client_id;

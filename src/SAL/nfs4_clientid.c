@@ -85,11 +85,6 @@ uint64_t clientid_verifier;
 pool_t *client_id_pool;
 
 /**
- * @brief Pool for client owner records
- */
-pool_t *client_record_pool;
-
-/**
  * @brief Return the NFSv4 status for the client id error code
  *
  * @param[in] err Client id error code
@@ -1118,19 +1113,6 @@ int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 		return -1;
 	}
 
-	client_record_pool = pool_init("NFS4 Client Record Pool",
-				       sizeof(nfs_client_record_t),
-				       pool_basic_substrate,
-				       NULL,
-				       NULL,
-				       NULL);
-
-	if (client_record_pool == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Record Pool");
-		return -1;
-	}
-
 	return CLIENT_ID_SUCCESS;
 }
 
@@ -1233,7 +1215,7 @@ void free_client_record(nfs_client_record_t *record)
 		LogDebug(COMPONENT_CLIENTID,
 			 "pthread_mutex_destroy returned errno %d(%s)",
 			 errno, strerror(errno));
-	pool_free(client_record_pool, record);
+	gsh_free(record);
 }
 
 /**
@@ -1462,7 +1444,8 @@ int display_client_record_val(struct gsh_buffdesc *buff, char *str)
  *
  * @return The client record or NULL.
  */
-nfs_client_record_t *get_client_record(char *value, int len)
+nfs_client_record_t *get_client_record(const char *const value,
+				       const size_t len)
 {
 	nfs_client_record_t *record;
 	struct gsh_buffdesc buffkey;
@@ -1470,25 +1453,19 @@ nfs_client_record_t *get_client_record(char *value, int len)
 	struct hash_latch latch;
 	hash_error_t rc;
 
-	record = pool_alloc(client_record_pool, NULL);
+	record = gsh_malloc(sizeof(nfs_client_record_t) + len);
 
-	if (record == NULL)
+	if (record == NULL) {
 		return NULL;
+	}
 
-	record->cr_refcount       = 1;
+	record->cr_refcount = 1;
 	record->cr_client_val_len = len;
+	record->cr_confirmed_rec = NULL;
+	record->cr_unconfirmed_rec = NULL;
 	memcpy(record->cr_client_val, value, len);
 	buffkey.addr = record;
 	buffkey.len = sizeof(*record);
-
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Find Client Record KEY {%s}", str);
-	}
 
 	/* If we found it, return it, if we don't care, return NULL */
 	rc = HashTable_GetLatch(ht_client_record,
@@ -1497,24 +1474,15 @@ nfs_client_record_t *get_client_record(char *value, int len)
 				true,
 				&latch);
 
-	if( rc == HASHTABLE_SUCCESS) {
+	if (rc == HASHTABLE_SUCCESS) {
 		/* Discard the key we created and return the found
 		 * Client Record.  Directly free since we didn't
 		 * complete initialization.
 		 */
-		pool_free(client_record_pool, record);
+		gsh_free(record);
 		record = buffval.addr;
 		inc_client_record_ref(record);
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Found {%s}",
-				     str);
-		}
-
 		return record;
 	}
 
@@ -1524,18 +1492,9 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		 * free since we didn't complete initialization.
 		 */
 
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-
-			LogDebug(COMPONENT_CLIENTID,
-				 "Error %s, failed to find {%s}",
-				 hash_table_err_to_str(rc), str);
-		}
-
-		pool_free(client_record_pool, record);
-
+		LogFatal(COMPONENT_CLIENTID,
+			 "Client record hash table corrupt.");
+		gsh_free(record);
 		return NULL;
 	}
 
@@ -1545,21 +1504,15 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		 * release hash latch since we failed to add record.
 		 */
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		pool_free(client_record_pool, record);
+		LogFatal(COMPONENT_CLIENTID,
+			 "Unable to initialize mutex in client record.");
+		gsh_free(record);
 		return NULL;
 	}
 
 	/* Use same record for record and key */
 	buffval.addr = record;
-	buffval.len = sizeof(*record);
-
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "New {%s}", str);
-	}
+	buffval.len = sizeof(sizeof(nfs_client_record_t) + len);
 
 	rc = HashTable_SetLatched(ht_client_record,
 				  &buffkey,
@@ -1569,36 +1522,18 @@ nfs_client_record_t *get_client_record(char *value, int len)
 				  NULL,
 				  NULL);
 
-	if (rc == HASHTABLE_SUCCESS) {
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Set Client Record {%s}",
-				     str);
-		}
-
-		return record;
+	if (rc != HASHTABLE_SUCCESS) {
+		LogFatal(COMPONENT_CLIENTID,
+			 "Client record hash table corrupt.");
+		free_client_record(record);
+		return NULL;
 	}
 
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-
-		LogDebug(COMPONENT_CLIENTID,
-			 "Error %s Failed to add {%s}",
-			 hash_table_err_to_str(rc), str);
-	}
-
-	free_client_record(record);
-
-	return NULL;
+	return record;
 }
 
 /**
- * @ Walk the client tree and do the callback on each 4.1 nodes
+ * @brief Walk the client tree and do the callback on each 4.1 nodes
  *
  * @param cb    [IN] Callback function
  * @param state [IN] param block to pass
