@@ -26,7 +26,6 @@ SET(cache_inode_STAT_SRCS
    cache_inode_invalidate.c
    cache_inode_misc.c
    cache_inode_create.c
-   cache_inode_make_root.c
    cache_inode_statfs.c
    cache_inode_init.c
    cache_inode_read_conf.c
