@@ -3346,6 +3346,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
       PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
       lock_entry_dec_ref(found_entry);
+      cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -3378,7 +3379,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
         }
 
       /* Release the lru ref to the cache inode we held while calling unlock */
-      cache_inode_lru_unref(entry, 0);
+      cache_inode_lru_unref(entry, LRU_FLAG_NONE);
     }
   return status;
 }
@@ -3407,6 +3408,10 @@ void find_blocked_lock_upcall(cache_entry_t *entry,
       pblock = glist_entry(glist, state_block_data_t, sbd_list);
 
       found_entry = pblock->sbd_lock_entry;
+
+      /* Check if got an entry */
+      if(found_entry == NULL)
+        continue;
 
       /* Check if for same file */
       if(found_entry->sle_entry != entry)

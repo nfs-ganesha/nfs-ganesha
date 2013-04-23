@@ -73,6 +73,26 @@
 
 #define END_ARG_LIST {NULL, NULL, NULL}
 
+#define STATUS_REPLY      \
+{                         \
+	.name = "status", \
+	.type = "b",      \
+	.direction = "out"\
+},                        \
+{                         \
+	.name = "error",  \
+	.type = "s",      \
+	.direction = "out"\
+}
+#define IPADDR_ARG       \
+{                        \
+	.name = "ipaddr",\
+	.type = "s",     \
+	.direction = "in"\
+}
+
+#define END_ARG_LIST {NULL, NULL, NULL}
+
 struct gsh_dbus_prop {
 	const char *name;
 	const char *access;

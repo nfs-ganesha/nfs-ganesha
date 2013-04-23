@@ -691,7 +691,7 @@ void nfs4_create_clid_name(nfs_client_record_t *, nfs_client_id_t *,
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(char *);
 void nfs4_chk_clid(nfs_client_id_t *);
-void nfs4_load_recov_clids(ushort nodeid);
+void nfs4_load_recov_clids(nfs_grace_start_t *gsp);
 void nfs4_clean_old_recov_dir(void);
 void nfs4_create_recov_dir(void);
 

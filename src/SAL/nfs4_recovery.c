@@ -72,7 +72,7 @@ typedef struct clid_entry
         char cl_name[256]; /*< Client name */
 } clid_entry_t;
 
-static void nfs4_load_recov_clids_nolock(ushort);
+static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 extern hash_table_t *ht_nsm_client;
 static void nfs_release_nlm_state();
 
@@ -111,9 +111,18 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
          */
-        if (gsp && gsp->nodeid != 0)
-                nfs4_load_recov_clids_nolock(gsp->nodeid);
-
+        if (gsp) {
+		LogEvent(COMPONENT_STATE,
+			"NFS Server recovery event %d nodeid %d ip %s",
+			gsp->event, gsp->nodeid, gsp->ipaddr);
+		if (gsp->event == EVENT_TAKE_IP || gsp->event == EVENT_TAKE_NODEID)
+		{
+			nfs_release_nlm_state();
+			nfs4_load_recov_clids_nolock(gsp);
+		}	
+		if (gsp->event == EVENT_RELEASE_IP)
+			nfs_release_nlm_state();
+        }
         LogEvent(COMPONENT_STATE,
                  "NFS Server Now IN GRACE, duration %d",
                  duration);
@@ -380,13 +389,18 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
  * @param[in] nodeid Node, on takeover
  */
 static void
-nfs4_load_recov_clids_nolock(ushort nodeid)
+nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
 {
         DIR *dp;
         struct glist_head *node;
         clid_entry_t *clid_entry;
         int rc;
         char path[PATH_MAX + 1];
+        int nodeid = 0;
+
+        if (gsp != NULL)
+          nodeid = gsp->nodeid;
+
 
         if (nodeid == 0) {
                 /* when not doing a takeover, start with an empty list */
@@ -439,8 +453,17 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                 }
 
         } else {
-                snprintf(path, sizeof(path), "%s/%s/node%d",
-			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
+                if (nodeid == -1)
+                  snprintf(path, sizeof(path), "%s/%s/%s",
+	  		   NFS_V4_RECOV_ROOT, gsp->ipaddr, NFS_V4_RECOV_DIR);
+                else
+                  snprintf(path, sizeof(path), "%s/%s/node%d",
+			   NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
+
+
+                LogEvent(COMPONENT_CLIENTID,
+                         "Recovery for nodeid %d dir (%s)",
+                          nodeid, path);
 
                 dp = opendir(path);
                 if (dp == NULL) {
@@ -474,11 +497,11 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
  * @param[in] nodeid Node, on takeover
  */
 void
-nfs4_load_recov_clids(ushort nodeid)
+nfs4_load_recov_clids(nfs_grace_start_t *gsp)
 {
         P(grace.g_mutex);
 
-        nfs4_load_recov_clids_nolock(nodeid);
+        nfs4_load_recov_clids_nolock(gsp);
 
         V(grace.g_mutex);
 }
@@ -592,6 +615,8 @@ nfs_release_nlm_state()
         struct hash_data *pdata;
         state_status_t err;
         int i;
+
+        LogDebug(COMPONENT_STATE, "Release all NLM locks");
 
         /* walk the client list and call state_nlm_notify */
         for(i = 0; i < ht->parameter.index_size; i++) {

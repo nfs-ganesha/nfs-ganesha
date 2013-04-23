@@ -128,18 +128,49 @@ static struct gsh_dbus_method method_reload = {
 static bool admin_dbus_grace(DBusMessageIter *args,
 			      DBusMessage *reply)
 {
+#define IP_INPUT 120
 	char *errormsg = "OK";
 	bool success = true;
 	DBusMessageIter iter;
+        nfs_grace_start_t gsp;
+        char buf[IP_INPUT];
+        char *input = NULL;
+        char *ip;
 
 	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
+	if (args == NULL) {
+		errormsg = "Grace period take 1 arguments: event:IP-address.";
 		LogWarn(COMPONENT_DBUS,
-			"Grace period take no arguments.");
+			"Grace period take 1 arguments: event:IP-address.");
 		success = false;
 		goto out;
 	}
-	nfs4_start_grace(NULL);
+	if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+		success = false;
+		LogWarn(COMPONENT_DBUS,
+			"Grace period arg 1 not a string.");
+		goto out;
+	}
+	dbus_message_iter_get_basic(args, &input);
+
+	gsp.nodeid = -1;
+	gsp.event = EVENT_TAKE_IP;
+
+	ip = strstr(input, ":");
+	if (ip == NULL)
+		gsp.ipaddr = input; /* no event specified */
+	else {
+		gsp.ipaddr = ip+1;  /* point at the ip passed the : */
+		strncpy(buf, input, IP_INPUT);
+		ip = strstr(buf, ":");
+		if (ip != NULL) {
+	                *ip = 0x0;  /* replace ":" with null */
+			gsp.event = atoi(buf);
+		}
+		if (gsp.event == EVENT_TAKE_NODEID)
+			gsp.nodeid = atoi(gsp.ipaddr);
+	}
+	nfs4_start_grace(&gsp);
 out:
 	dbus_status_reply(&iter, success, errormsg);
 	return success;
@@ -148,7 +179,8 @@ out:
 static struct gsh_dbus_method method_grace_period = {
 	.name = "grace",
 	.method = admin_dbus_grace,
-	.args = { STATUS_REPLY,
+	.args = { IPADDR_ARG,
+	          STATUS_REPLY,
 		  END_ARG_LIST
 	}
 };

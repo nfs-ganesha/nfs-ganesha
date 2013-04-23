@@ -3,6 +3,11 @@
 # You must initialize the gobject/dbus support for threading
 # before doing anything.
 import gobject
+import sys
+
+ipaddr=sys.argv[1]
+print 'event:ip_addr=', ipaddr
+
 gobject.threads_init()
 
 from dbus import glib
@@ -22,4 +27,4 @@ ganesha_grace = admin.get_dbus_method('grace',
 
 print "Start grace period."
 
-print ganesha_grace()
+print ganesha_grace(ipaddr)

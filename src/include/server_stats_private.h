@@ -110,13 +110,6 @@ struct export_stats {
 	.direction = "in"\
 }
 
-#define IPADDR_ARG       \
-{                        \
-	.name = "ipaddr",\
-	.type = "s",     \
-	.direction = "in"\
-}
-
 #define TIMESTAMP_REPLY    \
 {                          \
 	.name = "time",    \

@@ -1091,7 +1091,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* initialize grace and read in the client IDs */
   nfs4_init_grace();
-  nfs4_load_recov_clids(0);
+  nfs4_load_recov_clids(NULL);
 
   /* Start grace period */
   nfs4_start_grace(NULL);
