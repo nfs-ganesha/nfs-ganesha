@@ -74,9 +74,7 @@ nfs3_Access(nfs_arg_t *arg,
             struct svc_req *req,
             nfs_res_t *res)
 {
-        uint32_t access_mode;
         cache_inode_status_t cache_status;
-        object_file_type_t filetype;
         cache_entry_t *entry = NULL;
         int rc = NFS_REQ_OK;
 
@@ -108,152 +106,21 @@ nfs3_Access(nfs_arg_t *arg,
                 goto out;
         }
 
-        /* Get file type */
-        filetype = entry->type;
-
-        access_mode = 0;
-
-        if (arg->arg_access3.access & ACCESS3_READ) {
-                access_mode |= nfs_get_access_mask(ACCESS3_READ,
-                                                   filetype);
-        }
-
-        if (arg->arg_access3.access & ACCESS3_MODIFY) {
-                access_mode |= nfs_get_access_mask(ACCESS3_MODIFY,
-                                                   filetype);
-        }
-
-        if (arg->arg_access3.access & ACCESS3_EXTEND) {
-                access_mode |= nfs_get_access_mask(ACCESS3_EXTEND,
-                                                   filetype);
-        }
-
-        if (filetype == REGULAR_FILE) {
-                if (arg->arg_access3.access & ACCESS3_EXECUTE) {
-                        access_mode |=
-                                nfs_get_access_mask(ACCESS3_EXECUTE,
-                                                    filetype);
-                }
-        } else if (arg->arg_access3.access & ACCESS3_LOOKUP) {
-                access_mode |= nfs_get_access_mask(ACCESS3_LOOKUP,
-                                                   filetype);
-        }
-
-        if (filetype == DIRECTORY) {
-                if (arg->arg_access3.access & ACCESS3_DELETE) {
-                        access_mode |=
-                                nfs_get_access_mask(ACCESS3_DELETE,
-                                                    filetype);
-                }
-        }
-
-        nfs3_access_debug("requested access",
-                          arg->arg_access3.access);
-
         /* Perform the 'access' call */
-        cache_status = cache_inode_access(entry,
-					  access_mode,
-					  req_ctx);
-        if (cache_status == CACHE_INODE_SUCCESS) {
-                nfs3_access_debug("granted access", arg->arg_access3.access);
+        cache_status = nfs_access_op(
+                entry,
+                arg->arg_access3.access,
+                &res->res_access3.ACCESS3res_u.resok.access,
+                NULL,
+                req_ctx);
 
-                /* In Unix, delete permission only applies to
-                   directories */
-
-                if (filetype == DIRECTORY) {
-                        res->res_access3.ACCESS3res_u.resok.access
-                                = arg->arg_access3.access;
-                } else {
-                        res->res_access3.ACCESS3res_u.resok.access =
-                                (arg->arg_access3.access &
-                        ~ACCESS3_DELETE);
-                }
-
+        if(cache_status == CACHE_INODE_SUCCESS ||
+           cache_status == CACHE_INODE_FSAL_EACCESS) {
                 /* Build Post Op Attributes */
                 nfs_SetPostOpAttr(entry,
                                   req_ctx,
                                   &(res->res_access3.ACCESS3res_u
                                     .resok.obj_attributes));
-
-                res->res_access3.status = NFS3_OK;
-                rc = NFS_REQ_OK;
-                goto out;
-        }
-
-        if (cache_status == CACHE_INODE_FSAL_EACCESS) {
-                /* We have to determine which access bits are good one
-                   by one */
-                res->res_access3.ACCESS3res_u.resok.access = 0;
-
-                access_mode = nfs_get_access_mask(ACCESS3_READ,
-                                                  filetype);
-                cache_status = cache_inode_access(entry,
-						  access_mode,
-						  req_ctx);
-                if (cache_status == CACHE_INODE_SUCCESS) {
-                        res->res_access3.ACCESS3res_u.resok.access
-                                |= ACCESS3_READ;
-                }
-
-                access_mode = nfs_get_access_mask(ACCESS3_MODIFY,
-                                                  filetype);
-                cache_status = cache_inode_access(entry,
-						  access_mode,
-						  req_ctx);
-                if (cache_status == CACHE_INODE_SUCCESS) {
-                        res->res_access3.ACCESS3res_u.resok.access
-                                |= ACCESS3_MODIFY;
-                }
-
-                access_mode = nfs_get_access_mask(ACCESS3_EXTEND,
-                                                  filetype);
-                cache_status = cache_inode_access(entry,
-						  access_mode,
-						  req_ctx);
-                if (cache_status == CACHE_INODE_SUCCESS) {
-                        res->res_access3.ACCESS3res_u.resok.access
-                                |= ACCESS3_EXTEND;
-                }
-
-                if (filetype == REGULAR_FILE) {
-                        access_mode =
-                                nfs_get_access_mask(ACCESS3_EXECUTE,
-                                                    filetype);
-                        cache_status = cache_inode_access(entry,
-							  access_mode,
-							  req_ctx);
-                        if (cache_status == CACHE_INODE_SUCCESS) {
-                                res->res_access3.ACCESS3res_u.resok.access
-                                        |= ACCESS3_EXECUTE;
-                        }
-                } else {
-                        access_mode =
-                                nfs_get_access_mask(ACCESS3_LOOKUP,
-                                                    filetype);
-                        cache_status = cache_inode_access(entry,
-							  access_mode,
-							  req_ctx);
-                        if (cache_status == CACHE_INODE_SUCCESS) {
-                                res->res_access3.ACCESS3res_u.resok.access
-                                        |= ACCESS3_LOOKUP;
-                        }
-                }
-
-                if (filetype == DIRECTORY) {
-                        access_mode =
-                                nfs_get_access_mask(ACCESS3_DELETE,
-                                                    filetype);
-                        cache_status = cache_inode_access(entry,
-							  access_mode,
-							  req_ctx);
-                        if (cache_status == CACHE_INODE_SUCCESS) {
-                                res->res_access3.ACCESS3res_u.resok.access
-                                        |= ACCESS3_DELETE;
-                        }
-                }
-
-                nfs3_access_debug("reduced access",
-                                  res->res_access3.ACCESS3res_u.resok.access);
 
                 res->res_access3.status = NFS3_OK;
                 rc = NFS_REQ_OK;

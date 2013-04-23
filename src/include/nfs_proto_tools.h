@@ -186,14 +186,13 @@ int nfs_RetryableError(cache_inode_status_t cache_status);
 int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr,
                             sattr3 *psattr);
 
-uint32_t nfs_get_access_mask(uint32_t op,
-                             const object_file_type_t type);
-
-void nfs3_access_debug(char *label, uint32_t access);
-
-void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 void nfs4_Fattr_Free(fattr4 *fattr);
 
+cache_inode_status_t nfs_access_op(cache_entry_t *entry,
+                                   uint32_t requested_access,
+                                   uint32_t *granted_access,
+                                   uint32_t *supported_access,
+                                   struct req_op_context *req_ctx);
 
 nfsstat4 nfs4_return_one_state(
 	cache_entry_t *entry,
