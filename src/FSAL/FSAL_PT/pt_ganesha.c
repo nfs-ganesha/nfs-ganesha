@@ -1005,7 +1005,8 @@ ptfsal_ntimes(fsal_op_context_t * p_context,
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  return CCL_NTIMES(&ccl_context, filename, atime, mtime);
+  // not changing create time in NFS
+  return CCL_NTIMES(&ccl_context, filename, atime, mtime, 0);
 }
 // -----------------------------------------------------------------------------
 int

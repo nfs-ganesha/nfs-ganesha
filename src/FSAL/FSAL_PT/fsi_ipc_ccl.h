@@ -44,7 +44,7 @@ extern "C" {
 #define MAX_FSI_CCL_IPC_SHMEM_BUF_PER_STREAM       1
 #define FSI_CCL_IPC_SHMEM_WRITEBUF_PER_BUF         4
 #define FSI_CCL_IPC_SHMEM_READBUF_PER_BUF          4
-#define FSI_CCL_MAX_STREAMS                      300
+#define FSI_CCL_MAX_STREAMS                      800
 #define FSI_CCL_IPC_EOK                            0
 #define FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY    0x7656
 #define FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY    0x7657
@@ -270,7 +270,7 @@ typedef struct fsi_stat_struct__ {
   uint64_t                st_atime_sec;    // Time of last access  sec only
   uint64_t                st_mtime_sec;    // Time of last modification  sec
   uint64_t                st_ctime_sec;    // Time of last change  sec
-  //struct timespec         st_btime;      // Birthtime  not used
+  uint64_t                st_btime_sec;    // Birthtime
   uint64_t                st_blksize;      // Optimal block size for I/O
   uint64_t                st_blocks;       // Number of 512-byte blocks
                                            // allocated
@@ -731,7 +731,8 @@ int ccl_chown(ccl_context_t * handle,
 int ccl_ntimes(ccl_context_t * handle,
                const char        * filename,
                uint64_t            atime,
-               uint64_t            mtime);
+               uint64_t            mtime,
+               uint64_t            btime);
 int ccl_mkdir(ccl_context_t  * handle,
                const char        * path,
                mode_t              mode);
@@ -756,6 +757,10 @@ int ccl_opendir(ccl_context_t * handle,
                  const char        * filename,
                  const char        * mask,
                  uint32_t            attr);
+int ccl_fdopendir(ccl_context_t * handle,
+                  int             handle_index,
+                  const char    * mask,
+                  uint32_t        attributes);
 int ccl_closedir(ccl_context_t * handle,
                   struct fsi_struct_dir_t * dirp);
 int ccl_readdir(ccl_context_t * handle,

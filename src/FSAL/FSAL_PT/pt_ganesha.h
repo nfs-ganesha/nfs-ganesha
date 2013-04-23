@@ -81,7 +81,8 @@ struct vfs_fn_pointers {
   int (*ntimes_fn)(ccl_context_t * handle,
                    const char        * filename,
                    uint64_t            atime,
-                   uint64_t            mtime);
+                   uint64_t            mtime,
+		   uint64_t            btime);
   int (*mkdir_fn)(ccl_context_t  * handle,
                   const char        * path,
                   mode_t              mode);
