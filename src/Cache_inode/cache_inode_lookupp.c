@@ -79,8 +79,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                          struct req_op_context *req_ctx,
                          cache_entry_t **parent)
 {
-     fsal_status_t fsal_status;
-     cache_inode_fsal_data_t fsdata;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Never even think of calling FSAL_lookup on root/.. */
@@ -100,40 +98,35 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (!(*parent)) {
           /* If we didn't find it, drop the read lock, get a write
              lock, and got to FSAL. */
-         struct fsal_obj_handle *parent_handle;
+          struct fsal_obj_handle *parent_handle;
+          fsal_status_t fsal_status;
 
           PTHREAD_RWLOCK_unlock(&entry->content_lock);
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
-	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
+          fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
                                                        req_ctx, "..",
-						       &parent_handle);
+                                                       &parent_handle);
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
                     LogEvent(COMPONENT_CACHE_INODE,
-                       "FSAL returned STALE from lookup.");
+                             "FSAL returned STALE from lookup.");
                     cache_inode_kill_entry(entry);
                }
                status = cache_inode_error_convert(fsal_status);
-	       *parent = NULL;
+               *parent = NULL;
                return status;
           }
 
-          /* Call cache_inode_get to populate the cache with the
-             parent entry.  This increments the refcount. */
-          parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
-          fsdata.export = parent_handle->export;
+          /* Allocation of a new entry in the cache */
+          status = cache_inode_new_entry(parent_handle,
+                                         CACHE_INODE_FLAG_NONE,
+                                         parent);
+          if (*parent == NULL)
+               return status;
 
-	  status = cache_inode_get(&fsdata, entry, req_ctx, parent);
-	  if (*parent == NULL)
-		  return status;
-/**
- * @todo Danger Will Robinson!  cache_inode_get should consume the
- * parent_handle but this may be a leak!
- */
-	  /* Dup keys */
-	  cache_inode_key_dup(
-		  &entry->object.dir.parent, &((*parent)->fh_hk.key));
+          /* Dup keys */
+          cache_inode_key_dup(&entry->object.dir.parent, &((*parent)->fh_hk.key));
      }
 
      return status;
