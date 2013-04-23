@@ -336,8 +336,6 @@ install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysco
 install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/hosts.ganesha  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/snmp.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 
 cd ../build_tree
 make install
@@ -349,7 +347,12 @@ rm -rf build_tree
 %files
 %defattr(-,root,root,-)
 %{_bindir}/*
-%{_sysconfdir}/*
+%config   %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf 
+%config   %{_sysconfdir}/sysconfig/ganesha
+%config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
+%config %{_sysconfdir}/init.d/ganesha
+%dir %{_sysconfdir}/ganesha/
+%config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 
 %files mount-9P
 %defattr(-,root,root,-)
