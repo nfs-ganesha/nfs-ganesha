@@ -3178,7 +3178,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
       /* Remove from the client lock list */
       glist_del(&found_entry->sle_client_locks);
 
-      if(found_entry->sle_state == state)
+      if(found_entry->sle_state == state && req_ctx != NULL)
         {
           /* This is a new lock acquired since the client rebooted, retain it. */
           LogEntry("Don't release new lock", found_entry);
@@ -3202,6 +3202,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
       PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
       lock_entry_dec_ref(found_entry);
+      cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -3230,7 +3231,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
         }
 
       /* Release the lru ref to the cache inode we held while calling unlock */
-      cache_inode_lru_unref(entry, 0);
+      cache_inode_lru_unref(entry, LRU_FLAG_NONE);
     }
 
   /* Now remove NLM_SHARE reservations.

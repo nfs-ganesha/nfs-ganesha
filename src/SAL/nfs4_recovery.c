@@ -73,6 +73,8 @@ typedef struct clid_entry
 } clid_entry_t;
 
 static void nfs4_load_recov_clids_nolock(ushort);
+extern hash_table_t *ht_nsm_client;
+static void nfs_release_nlm_state();
 
 /**
  * @brief Initialize grace/recovery
@@ -104,6 +106,7 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 
         P(grace.g_mutex);
 
+        nfs_release_nlm_state();
         /*
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
@@ -575,4 +578,44 @@ nfs4_create_recov_dir(void)
                 }
         }
 }
+
+/**
+ * @brief Release all NLM state
+ */
+static void
+nfs_release_nlm_state()
+{
+        hash_table_t *ht = ht_nsm_client;
+        state_nsm_client_t *nsm_cp;
+        struct rbt_head *head_rbt;
+        struct rbt_node *pn;
+        struct hash_data *pdata;
+        state_status_t err;
+        int i;
+
+        /* walk the client list and call state_nlm_notify */
+        for(i = 0; i < ht->parameter.index_size; i++) {
+                PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+                head_rbt = &ht->partitions[i].rbt;
+                /* go through all entries in the red-black-tree*/
+                RBT_LOOP(head_rbt, pn) {
+                        pdata = RBT_OPAQ(pn);
+
+                        nsm_cp = (state_nsm_client_t *)pdata->val.addr;
+                        inc_nsm_client_ref(nsm_cp);
+                        PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+                        err = state_nlm_notify(nsm_cp, NULL, NULL);
+                        if (err != STATE_SUCCESS)
+                                LogDebug(COMPONENT_STATE,
+                                         "state_nlm_notify failed with %d",
+                                         err);
+                        dec_nsm_client_ref(nsm_cp);
+                        PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+                        RBT_INCREMENT(pn);
+                }
+                PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+        }
+        return;
+}
+
 /** @} */
