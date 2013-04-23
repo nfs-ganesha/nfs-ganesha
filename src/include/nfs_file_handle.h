@@ -107,7 +107,18 @@ struct alloc_file_handle_v3 {
 
 static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 {
-  return offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
+  int padding = 0;
+  int hsize = 0;
+
+  hsize = offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
+
+  /* correct packet's fh length so it's divisible by 4 to trick dNFS into
+     working. This is essentially sending the padding. */
+  padding = (4 - (hsize%4))%4;
+  if ((hsize + padding) <= sizeof(struct alloc_file_handle_v3))
+    hsize += padding;
+  
+  return hsize;
 }
 
 /**
