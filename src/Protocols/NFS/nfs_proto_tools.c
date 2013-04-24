@@ -3129,7 +3129,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 	fattr_xdr_result xdr_res;
 
 	/* basic init */
-	memset(&Fattr->attrmask, 0, sizeof(&Fattr->attrmask));
+	memset(&Fattr->attrmask, 0, sizeof(Fattr->attrmask));
 	if(Bitmap->bitmap4_len == 0) {
 		return 0;  /* they ask for nothing, they get nothing */
 	}
