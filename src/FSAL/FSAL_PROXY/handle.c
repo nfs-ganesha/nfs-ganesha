@@ -1137,7 +1137,16 @@ pxy_open_confirm(const struct user_cred *cred,
         op->nfs_argop4_u.opopen_confirm.open_stateid.seqid = stateid->seqid;
         memcpy(op->nfs_argop4_u.opopen_confirm.open_stateid.other,
                stateid->other, 12);
-        op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid + 1;
+        /*
+         *  According to RFC3530 14.2.18:
+         *      "The sequence id passed to the OPEN_CONFIRM must be 1 (one)
+         *      greater than the seqid passed to the OPEN operation from which
+         *      the open_confirm value was obtained."
+         *
+         *  As seqid is hardcoded as 0 in COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE, we
+         *  use 1 here.
+         */
+        op->nfs_argop4_u.opopen_confirm.seqid = 1;
 
         rc = pxy_nfsv4_call(export, cred, opcnt, argoparray, resoparray);
         if (rc != NFS4_OK)
@@ -1215,8 +1224,11 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         if(opok->rflags & OPEN4_RESULT_CONFIRM) {
                 st = pxy_open_confirm(opctx->creds, &fhok->object,
                                       &opok->stateid, dir_hdl->export);
-                if(FSAL_IS_ERROR(st))
+                if(FSAL_IS_ERROR(st)) {
+                        LogDebug(COMPONENT_FSAL,
+                                 "pxy_open_confirm failed: status %d", st);
                         return st;
+                }
         }
 
         /* The created file is still opened, to preserve the correct 
