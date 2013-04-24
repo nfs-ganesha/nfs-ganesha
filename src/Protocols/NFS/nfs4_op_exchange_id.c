@@ -118,11 +118,9 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		   after being assigned a new address. */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)) {
-			/** @todo FSF: should also check if there is
-			    no state */
 			pthread_mutex_lock(&conf->cid_mutex);
-
-			if (valid_lease(conf)) {
+			if (!valid_lease(conf) ||
+			    !client_id_has_state(conf)) {
 				pthread_mutex_unlock(&conf->cid_mutex);
 
 				/* CASE 3, client collisions, old

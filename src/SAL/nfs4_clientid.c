@@ -268,7 +268,11 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
  * @brief nfsv41 has-sessions prediccate (returns true if sessions found)
  *
  * @param[in] clientid Client record
+ *
+ * @return true if there are sessions associated with the client,
+ * false otherwise.
  */
+
 bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
 {
     if (clientid->cid_minorversion > 0) {
@@ -278,6 +282,27 @@ bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
     }
 
     return (false);
+}
+
+/**
+ * @brief Tests whether state exists on a client id
+ *
+ * We assume that open owners are predictive of open or lock state,
+ * since they're collected when the last state is removed.
+ *
+ * @note The clientid mutex must be held when calling this function.
+ *
+ * @param[in] clientid Client record
+ *
+ * @retval true if there is state.
+ * @retval false if there isn't.
+ */
+
+bool client_id_has_state(nfs_client_id_t *clientid)
+{
+	return !(glist_empty(&clientid->cid_openowners) ||
+		 glist_empty(&clientid->cid_owner.so_owner
+			     .so_nfs4_owner.so_state_list));
 }
 
 /**
