@@ -100,9 +100,11 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short
  *
  * nfs_Get_export_by_path: Gets an export entry from its path. 
  *
- * Gets an export entry from its path. 
+ * Gets an export entry from its path using a substring match and
+ * linear search of the export list. 
+ * If path has a trailing '/', ignor it.
  *
- * @paran exportroot [IN] the root for the export list
+ * @param exportroot [IN] the root for the export list
  * @param path       [IN] the path for the entry to be found.
  *
  * @return the pointer to the pointer to the export list or NULL if failed.
@@ -111,27 +113,35 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short
 exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
                                      char * path)
 {
-  exportlist_t *p_current_item = NULL;
-  struct glist_head * glist;
+	exportlist_t *p_current_item = NULL;
+	struct glist_head * glist;
+	int len_path = strlen(path);
+	int len_export;
 
-  /*
-   * Find the export for the path
-   */
-  glist_for_each(glist, exportlist)
-    {
-      p_current_item = glist_entry(glist, exportlist_t, exp_list);
-
-      /* Is p_current_item->fullpath is equal to path ? */
-      if(!strcmp(p_current_item->fullpath, path))
-        {
-          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
-          return p_current_item;
-        }
-    }
-
-  LogDebug(COMPONENT_CONFIG, "returning export NULL");
-  return NULL;
-}                               /* nfs_Get_export_by_id */
+	if(path[len_path - 1] == '/')
+		len_path--;
+	glist_for_each(glist, exportlist)
+	{
+		p_current_item = glist_entry(glist, exportlist_t, exp_list);
+		len_export = strlen(p_current_item->fullpath);
+		/* a path shorter than the full path cannot match
+		 */
+		if(len_path < len_export)
+			continue;
+		/* if the char in fullpath just after the end of path is not '/'
+		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
+		 */
+		if(p_current_item->fullpath[len_path] != '/')
+			continue;
+		/* we agree on size, now compare the leadingt substring
+		 */
+		if( !strncmp(p_current_item->fullpath,
+			     path,
+			     len_path))
+			return p_current_item;
+	}
+	return NULL;
+}
 
 /**
  *
