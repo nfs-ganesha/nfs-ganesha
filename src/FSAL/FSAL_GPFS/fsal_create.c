@@ -249,10 +249,14 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* Create the link on the filesystem */
 
+  fsal_set_credentials(p_context);
+
   TakeTokenFSCall();
   status = fsal_internal_link_fh(p_context, p_target_handle, p_dir_handle,
                                  p_link_name);
   ReleaseTokenFSCall();
+
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
       goto out_status_fsal_err;

@@ -77,61 +77,22 @@ fsal_status_t GPFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* I
 
   fsal_status_t status;
   gpfsfsal_xstat_t buffxstat;
-  fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks. */
   if(!p_parent_directory_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
-  /* get directory metadata */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
-
-  /* build the child path */
-
-  /* get file metadata */
-  TakeTokenFSCall();
-  status = fsal_internal_stat_name(p_context, p_parent_directory_handle,
-                                   p_object_name, &buffxstat.buffstat);
-  ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
-
-  /* check access rights */
-
-  /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-  if((fsal2unix_mode(parent_dir_attrs.mode) & S_ISVTX)
-     && parent_dir_attrs.owner != p_context->credential.user
-     && buffxstat.buffstat.st_uid != p_context->credential.user
-     && p_context->credential.user != 0)
-    {
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
-    }
-
-  /* client must be able to lookup the parent directory and modify it */
-
-  /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK  | FSAL_X_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
-
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_check_access(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
-                                  &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
-
   /******************************
    * DELETE FROM THE FILESYSTEM *
    ******************************/
+  fsal_set_credentials(p_context);
+
   TakeTokenFSCall();
   status = fsal_internal_unlink(p_context, p_parent_directory_handle,
                                 p_object_name, &buffxstat.buffstat);
   ReleaseTokenFSCall();
+
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
