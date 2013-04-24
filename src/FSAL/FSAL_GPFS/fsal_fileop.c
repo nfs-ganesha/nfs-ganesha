@@ -272,7 +272,8 @@ fsal_status_t GPFSFSAL_write(int fd,             /* IN */
                         size_t buffer_size,      /* IN */
                         caddr_t buffer,          /* IN */
                         size_t *p_write_amount,  /* OUT */
-                        bool *fsal_stable)       /* IN/OUT */
+                             bool *fsal_stable,       /* IN/OUT */
+                             const struct req_op_context *p_context)
 {
   struct write_arg warg;
   ssize_t nb_write;
@@ -292,8 +293,12 @@ fsal_status_t GPFSFSAL_write(int fd,             /* IN */
   warg.stability_got = (uint32_t *)fsal_stable;
   /* read operation */
 
+  fsal_set_credentials(p_context->creds);
+
   nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
   errsv = errno;
+
+  fsal_restore_ganesha_credentials();
 
   if(nb_write == -1)
     return fsalstat(posix2fsal_error(errsv), errsv);

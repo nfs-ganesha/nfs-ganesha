@@ -95,8 +95,12 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle * dir_hdl,    /* IN */
   /******************************
    * DELETE FROM THE FILESYSTEM *
    ******************************/
+  fsal_set_credentials(p_context->creds);
+
   status = fsal_internal_unlink(mount_fd, gpfs_hdl->handle,
                                 p_object_name, &buffxstat.buffstat);
+
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     return(status);

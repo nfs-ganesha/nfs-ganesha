@@ -88,9 +88,13 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,    /* IN */
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
+  fsal_set_credentials(p_context->creds);
+
   status = fsal_internal_rename_fh(mount_fd, old_gpfs_hdl->handle,
                                    new_gpfs_hdl->handle, p_old_name,
                                    p_new_name);
+
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     return(status);

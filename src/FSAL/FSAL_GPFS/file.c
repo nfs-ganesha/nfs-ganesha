@@ -133,7 +133,7 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 	       myself->u.file.openflags != FSAL_O_CLOSED);
 
         status =  GPFSFSAL_write(myself->u.file.fd, offset, buffer_size, buffer,
-                                 write_amount, fsal_stable);
+                                 write_amount, fsal_stable, opctx);
         return(status);
 }
 
