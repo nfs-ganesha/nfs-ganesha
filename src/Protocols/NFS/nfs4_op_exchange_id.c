@@ -143,14 +143,17 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 				dec_client_id_ref(conf);
 				goto out;
 			}
-		} else if(memcmp(arg_EXCHANGE_ID4->eia_clientowner.co_verifier,
-				 conf->cid_incoming_verifier,
-				 NFS4_VERIFIER_SIZE) == 0) {
+		} else if (memcmp(arg_EXCHANGE_ID4->eia_clientowner
+				  .co_verifier,
+				  conf->cid_incoming_verifier,
+				  NFS4_VERIFIER_SIZE) == 0) {
 			/* CASE 2, Non-Update on Existing Client ID */
 			/* Return what was last returned without
 			   changing any refcounts */
 
 			unconf = conf;
+			res_EXCHANGE_ID4_ok->eir_flags
+				|= EXCHGID4_FLAG_CONFIRMED_R;
 			goto return_ok;
 		} else {
 			/* CASE 5, client restart */
@@ -259,9 +262,9 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	 * @todo ACE: Revisit this, if no exports support pNFS, don't
 	 * advertise pNFS.
 	 */
-	res_EXCHANGE_ID4_ok->eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
-		EXCHGID4_FLAG_USE_PNFS_DS |
-		EXCHGID4_FLAG_SUPP_MOVED_REFER;
+
+	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_USE_PNFS_MDS |
+		EXCHGID4_FLAG_USE_PNFS_DS;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 
