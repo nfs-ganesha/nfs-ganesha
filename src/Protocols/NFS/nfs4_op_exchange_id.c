@@ -85,7 +85,9 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	client_record = get_client_record(arg_EXCHANGE_ID4->eia_clientowner
 					  .co_ownerid.co_ownerid_val,
 					  arg_EXCHANGE_ID4->eia_clientowner
-					  .co_ownerid.co_ownerid_len);
+					  .co_ownerid.co_ownerid_len,
+					  arg_EXCHANGE_ID4->eia_flags &
+					  EXCHGID4_FLAG_MASK_PNFS);
 	if (client_record == NULL) {
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID,
@@ -263,8 +265,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	 * advertise pNFS.
 	 */
 
-	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_USE_PNFS_MDS |
-		EXCHGID4_FLAG_USE_PNFS_DS;
+	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 

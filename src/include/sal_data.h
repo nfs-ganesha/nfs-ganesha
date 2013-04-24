@@ -578,6 +578,11 @@ struct nfs_client_record_t {
 					         associated with this
 					         client name, if there is
 						 one. */
+	uint32_t cr_pnfs_flags; /*< pNFS flags.  RFC 5661 allows us
+				    to treat identical co_owners with
+				    different pNFS flags as
+				    disjoint. Linux client stupidity
+				    forces us to do so. */
 	int cr_client_val_len; /*< Length of owner */
 	char cr_client_val[]; /*< Suplied co_owner */
 };

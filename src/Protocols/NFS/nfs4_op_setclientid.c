@@ -101,7 +101,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
 
 	/* Do we already have one or more records for client id (x)? */
 	client_record = get_client_record(arg_SETCLIENTID4.client.id.id_val,
-					  arg_SETCLIENTID4.client.id.id_len);
+					  arg_SETCLIENTID4.client.id.id_len,
+					  0);
 	if (client_record == NULL) {
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID,

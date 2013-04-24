@@ -263,13 +263,14 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 			  struct gsh_buffdesc *buff2);
 
 uint64_t client_record_rbt_hash_func(hash_parameter_t *hparam,
-                                     struct gsh_buffdesc *key);
+				     struct gsh_buffdesc *key);
 
 uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
-                                       struct gsh_buffdesc *key);
+				       struct gsh_buffdesc *key);
 
 nfs_client_record_t *get_client_record(const char *const value,
-				       const size_t len);
+				       const size_t len,
+				       const uint32_t pnfs_flags);
 
 /******************************************************************************
  *
