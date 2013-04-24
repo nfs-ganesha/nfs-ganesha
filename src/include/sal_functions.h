@@ -358,7 +358,7 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
 
 int reserve_lease(nfs_client_id_t *clientid);
 void update_lease(nfs_client_id_t *clientid);
-int valid_lease(nfs_client_id_t *clientid);
+bool valid_lease(nfs_client_id_t *clientid);
 
 /******************************************************************************
  *

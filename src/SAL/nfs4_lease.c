@@ -74,7 +74,7 @@ static unsigned int _valid_lease(nfs_client_id_t *clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int valid_lease(nfs_client_id_t *clientid)
+bool valid_lease(nfs_client_id_t *clientid)
 {
   unsigned int valid;
 
