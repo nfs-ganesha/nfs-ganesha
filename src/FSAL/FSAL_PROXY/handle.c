@@ -300,11 +300,11 @@ pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 
         for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
                 if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask)) {
-                        if (fsal_mask2bit[i].mask > 31) {
-                                bmap.map[1] = 1U << (fsal_mask2bit[i].mask - 32);
+                        if (fsal_mask2bit[i].fattr_bit > 31) {
+                                bmap.map[1] |= 1U << (fsal_mask2bit[i].fattr_bit - 32);
                                 bmap.bitmap4_len = 2;
                         } else {
-                                bmap.map[0] = 1U << fsal_mask2bit[i].mask;
+                                bmap.map[0] |= 1U << fsal_mask2bit[i].fattr_bit;
                         }
                 }
         }
