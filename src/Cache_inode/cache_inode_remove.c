@@ -168,24 +168,8 @@ cache_inode_remove(cache_entry_t *entry,
                    fsal_op_context_t *context,
                    cache_inode_status_t *status)
 {
-     cache_inode_status_t cache_status;
-     fsal_accessflags_t access_mask = 0;
-
      /* Get the attribute lock and check access */
      PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
-
-     /* Check if caller is allowed to perform the operation */
-     access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
-
-     if((*status
-         = cache_inode_access_no_mutex(entry,
-                                       access_mask,
-                                       context,
-                                       &cache_status))
-        != CACHE_INODE_SUCCESS) {
-          goto unlock_attr;
-     }
 
      /* Acquire the directory lock and remove the entry */
 
@@ -204,8 +188,6 @@ cache_inode_remove(cache_entry_t *entry,
 
      *attr = entry->attributes;
      set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
-
-unlock_attr:
 
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 

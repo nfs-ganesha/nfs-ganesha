@@ -296,23 +296,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                    dir_src, oldname->name, dir_dest, newname->name);
           goto out;
         }
-
-      /* get rid of this entry by trying removing it */
-
-      cache_inode_remove_impl(dir_dest,
-                              newname,
-                              context,
-                              status,
-                              CACHE_INODE_FLAG_CONTENT_HAVE |
-                              CACHE_INODE_FLAG_CONTENT_HOLD);
-      if (*status != CACHE_INODE_SUCCESS)
-        {
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Rename : unable to remove destination");
-
-          src_dest_unlock(dir_src, dir_dest);
-          goto out;
-        }
     }
   else
     {
@@ -425,6 +408,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                     status);
       if(*status != CACHE_INODE_SUCCESS)
         {
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "Add dirent returned %s",
+                  cache_inode_err_str(*status));
           src_dest_unlock(dir_src, dir_dest);
           goto out;
         }
