@@ -79,22 +79,10 @@ cache_inode_remove(cache_entry_t *entry,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
      cache_inode_status_t status_ref_to_remove_entry = CACHE_INODE_SUCCESS;
-     fsal_accessflags_t access_mask = 0;
 
      if(entry->type != DIRECTORY) {
          status = CACHE_INODE_NOT_A_DIRECTORY;
          goto out;
-     }
-
-     /* Check if caller is allowed to perform the operation */
-     access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
-		    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
-
-     status = cache_inode_access(entry,
-                                 access_mask,
-                                 req_ctx);
-     if (status != CACHE_INODE_SUCCESS) {
-          goto out;
      }
 
      /* Factor this somewhat.  In the case where the directory hasn't
@@ -111,11 +99,6 @@ cache_inode_remove(cache_entry_t *entry,
 
      if (to_remove_entry == NULL) {
 	 goto out;
-     }
-
-     status = cache_inode_check_sticky(entry, to_remove_entry, req_ctx);
-     if (status != CACHE_INODE_SUCCESS) {
-         goto out;
      }
 
      LogDebug(COMPONENT_CACHE_INODE,
