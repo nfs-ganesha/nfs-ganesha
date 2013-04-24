@@ -182,7 +182,7 @@ nfs_Symlink(nfs_arg_t *arg,
             /* If owner or owner_group are set, and the credential was
              * squashed, then we must squash the set owner and owner_group.
              */
-            squash_setattr(&worker->related_client, export, req_ctx->creds, &sattr);
+            squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
 
             /* A call to cache_inode_setattr is required */
             cache_status = cache_inode_setattr(symlink_entry,

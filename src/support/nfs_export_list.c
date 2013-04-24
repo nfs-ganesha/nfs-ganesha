@@ -411,20 +411,18 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
   return true;
 }
 
-
-void squash_setattr(exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport,
+void squash_setattr(export_perms_t     * pexport_perms,
                     struct user_cred   * user_credentials,
                     struct attrlist * attr)
 {
   if(attr->mask & ATTR_OWNER)
     {
-      if(pexport->all_anonymous == true) {
-        attr->owner = pexport->anonymous_uid;
-      } else if(!(pexport_client->options & EXPORT_OPTION_ROOT)&&
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->owner = pexport_perms->anonymous_uid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
               (attr->owner == 0) &&
-              (user_credentials->caller_uid == pexport->anonymous_uid))
-        attr->owner = pexport->anonymous_uid;
+              (user_credentials->caller_uid == pexport_perms->anonymous_uid))
+        attr->owner = pexport_perms->anonymous_uid;
     }
 
   if(attr->mask & ATTR_GROUP)
@@ -435,12 +433,15 @@ void squash_setattr(exportlist_client_entry_t * pexport_client,
        * caller_gid has been squashed or one of the caller's
        * alternate groups has been squashed.
        */
-      if(pexport->all_anonymous == true)
-        attr->group = pexport->anonymous_gid;
-      else if(!(pexport_client->options & EXPORT_OPTION_ROOT) &&
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->group = pexport_perms->anonymous_gid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
               (attr->group == 0) &&
-              (user_credentials->caller_gid == pexport->anonymous_gid))
-        attr->group = pexport->anonymous_gid;
+              ((user_credentials->caller_gid == pexport_perms->anonymous_gid) ||
+               (((user_credentials->caller_flags & USER_CRED_SAVED) &&
+               (user_credentials->caller_gpos_root <
+                user_credentials->caller_glen_saved)))))
+        attr->group = pexport_perms->anonymous_gid;
     }
 }
 
