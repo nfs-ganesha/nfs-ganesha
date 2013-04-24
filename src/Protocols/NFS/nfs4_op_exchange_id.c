@@ -112,11 +112,12 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 
 	if (conf != NULL && !update) {
 		/* EXCHGID4_FLAG_UPD_CONFIRMED_REC_A not set */
+		/* Compare the client credentials, but don't compare
+		   the client address.  Doing so interferes with
+		   trunking and the ability of a client to reconnect
+		   after being assigned a new address. */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
-					    &data->credential) ||
-		    !cmp_sockaddr(&conf->cid_client_addr,
-				  &client_addr,
-				  IGNORE_PORT)) {
+					    &data->credential)) {
 			/** @todo FSF: should also check if there is
 			    no state */
 			pthread_mutex_lock(&conf->cid_mutex);
