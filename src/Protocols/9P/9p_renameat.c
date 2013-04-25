@@ -67,9 +67,6 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   _9p_fid_t * poldfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
 
-  fsal_attrib_list_t    oldfsalattr ;
-  fsal_attrib_list_t    newfsalattr ;
-
   cache_inode_status_t  cache_status ;
 
   fsal_name_t           oldname ;
@@ -109,8 +106,6 @@ int _9p_renameat( _9p_request_data_t * preq9p,
                           &oldname,
                           pnewfid->pentry,
                           &newname,
-                          &oldfsalattr,
-                          &newfsalattr,
                           &poldfid->fsal_op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS )
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

@@ -67,10 +67,7 @@
  *
  * This function looks up a filename in the given directory.  It
  * implements the functionality of cache_inode_lookup and expects the
- * directory to be read-locked when it is called.  If a lookup from
- * cache fails, it will drop the read lock and acquire a write lock
- * before proceeding.  The caller is responsible for freeing the lock
- * on the directory in any case.
+ * directory content lock not to be held when it is called.
  *
  * If a cache entry is returned, its refcount is incremented by 1.
  *
@@ -116,6 +113,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           /* stats */
           return NULL;
      }
+
+     PTHREAD_RWLOCK_RDLOCK(&parent->content_lock);
 
      /* if name is ".", use the input value */
      if (!FSAL_namecmp(name, (fsal_name_t *) &FSAL_DOT)) {
@@ -212,7 +211,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                cache_inode_kill_entry(parent);
           }
           *status = cache_inode_error_convert(fsal_status);
-          return NULL;
+          entry = NULL;
+          goto out;
      }
 
      type = cache_inode_fsal_type_convert(object_attributes.type);
@@ -227,7 +227,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
           if(FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
-               return NULL;
+               entry = NULL;
+               goto out;
           }
      }
 
@@ -243,7 +244,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                        type,
                                        &create_arg,
                                        status)) == NULL) {
-          return NULL;
+          entry = NULL;
+          goto out;
      }
 
      if (broken_dirent) {
@@ -261,11 +263,13 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                                        status);
           if(cache_status != CACHE_INODE_SUCCESS &&
              cache_status != CACHE_INODE_ENTRY_EXISTS) {
-               return NULL;
+               entry = NULL;
           }
      }
 
 out:
+
+     PTHREAD_RWLOCK_UNLOCK(&parent->content_lock);
 
      return entry;
 } /* cache_inode_lookup_impl */
@@ -308,12 +312,10 @@ cache_inode_lookup(cache_entry_t *parent,
           return NULL;
      }
 
-     PTHREAD_RWLOCK_RDLOCK(&parent->content_lock);
      entry = cache_inode_lookup_impl(parent,
                                      name,
                                      context,
                                      status);
-     PTHREAD_RWLOCK_UNLOCK(&parent->content_lock);
 
      if (entry && attr) {
           *status = cache_inode_lock_trust_attrs(entry,

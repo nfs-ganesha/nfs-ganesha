@@ -755,45 +755,6 @@ cache_inode_fsal_type_convert(fsal_nodetype_t type)
 }                               /* cache_inode_fsal_type_convert */
 
 /**
- * @brief Test if an entry can be overwritten during a rename
- *
- * This function checks if an existing entry can be overwritten by a
- * rename operation.
- *
- * @param[in] src  The source file
- * @param[in] dest The destination file
- *
- * @return TRUE if the rename is allowed, FALSE if not.
- */
-bool_t
-cache_inode_types_are_rename_compatible(cache_entry_t *src,
-                                        cache_entry_t *dest)
-{
-  /* TRUE is both entries are non directories or if both are
-     directories and the second is empty */
-  if(src->type == DIRECTORY)
-    {
-      if(dest->type == DIRECTORY)
-        {
-          if(cache_inode_is_dir_empty(dest) == CACHE_INODE_SUCCESS)
-            return TRUE;
-          else
-            return FALSE;
-        }
-      else
-        return FALSE;
-    }
-  else
-    {
-      /* pentry_src is not a directory */
-      if(dest->type == DIRECTORY)
-        return FALSE;
-      else
-        return TRUE;
-    }
-} /* cache_inode_types_are_rename_compatible */
-
-/**
  *
  * @brief Prints the content of a directory
  *

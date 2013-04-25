@@ -145,7 +145,11 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              (directory->flags & CACHE_INODE_DIR_POPULATED))) {
          /* We cannot serve negative lookups. */
            /* status == CACHE_INODE_SUCCESS; */
+           LogFullDebug(COMPONENT_CACHE_INODE,
+                        "We cannot serve negative lookups (1).");
        } else {
+           LogFullDebug(COMPONENT_CACHE_INODE,
+                        "Negative lookup (1).");
            status = CACHE_INODE_NOT_FOUND;
        }
        goto out;
@@ -159,7 +163,11 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
             (dirent_op == CACHE_INODE_DIRENT_OP_REMOVE)) {
          /* We cannot serve negative lookups. */
          /* status == CACHE_INODE_SUCCESS; */
+         LogFullDebug(COMPONENT_CACHE_INODE,
+                      "We cannot serve negative lookups (2).");
        } else {
+         LogFullDebug(COMPONENT_CACHE_INODE,
+                      "Negative lookup (2).");
          status = CACHE_INODE_NOT_FOUND;
        }
        goto out;

@@ -785,18 +785,10 @@ cache_inode_status_t cache_inode_remove_cached_dirent(
      fsal_name_t *name,
      cache_inode_status_t *status);
 
-cache_inode_status_t cache_inode_rename_cached_dirent(
-     cache_entry_t *entry_parent,
-     fsal_name_t *oldname,
-     fsal_name_t *newname,
-     cache_inode_status_t *status);
-
 cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
                                         fsal_name_t *oldname,
                                         cache_entry_t *entry_dirdest,
                                         fsal_name_t *newname,
-                                        fsal_attrib_list_t *attr_src,
-                                        fsal_attrib_list_t *attr_dst,
                                         fsal_op_context_t *context,
                                         cache_inode_status_t *status);
 
@@ -905,18 +897,12 @@ cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
 
 cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 
-int cache_inode_types_are_rename_compatible(cache_entry_t *src,
-                                            cache_entry_t *dest);
-
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
                                         fsal_dynamicfsinfo_t *dynamicinfo,
                                         fsal_op_context_t *context,
                                         cache_inode_status_t *status);
-
-cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *entry);
-cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate_all_cached_dirent(
      cache_entry_t *entry,

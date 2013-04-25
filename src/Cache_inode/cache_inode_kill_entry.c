@@ -88,8 +88,8 @@ cache_inode_kill_entry(cache_entry_t *entry)
 
      memset(&fsaldata, 0, sizeof(fsaldata));
 
-     LogInfo(COMPONENT_CACHE_INODE,
-             "Using cache_inode_kill_entry for entry %p", entry);
+     LogDebug(COMPONENT_CACHE_INODE,
+              "Using cache_inode_kill_entry for entry %p", entry);
 
      cache_inode_unpinnable(entry);
      state_wipe_file(entry);

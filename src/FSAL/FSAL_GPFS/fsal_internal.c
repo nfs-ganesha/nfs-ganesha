@@ -1123,7 +1123,6 @@ fsal_boolean_t fsal_error_is_event(fsal_status_t status)
     {
 
     case ERR_FSAL_IO:
-    case ERR_FSAL_STALE:
       return TRUE;
 
     default:
