@@ -911,7 +911,7 @@ ptfsal_ntimes(fsal_op_context_t * p_context,
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  return ccl_ntimes(&ccl_context, filename, atime, mtime);
+  return ccl_ntimes(&ccl_context, filename, atime, mtime, 0);
 }
 // -----------------------------------------------------------------------------
 int

@@ -252,7 +252,7 @@ typedef struct fsi_stat_struct__ {
   uint64_t                st_atime_sec;    // Time of last access  sec only
   uint64_t                st_mtime_sec;    // Time of last modification  sec
   uint64_t                st_ctime_sec;    // Time of last change  sec
-  //struct timespec         st_btime;      // Birthtime  not used
+  uint64_t                st_btime_sec;    // Birthtime
   uint64_t                st_blksize;      // Optimal block size for I/O
   uint64_t                st_blocks;       // Number of 512-byte blocks
                                            // allocated
@@ -683,7 +683,8 @@ int ccl_chown(ccl_context_t * handle,
 int ccl_ntimes(ccl_context_t * handle,
                const char        * filename,
                uint64_t            atime,
-               uint64_t            mtime);
+               uint64_t            mtime,
+               uint64_t            btime);
 int ccl_mkdir(ccl_context_t  * handle,
                const char        * path,
                mode_t              mode);
