@@ -90,12 +90,10 @@ cache_inode_remove(cache_entry_t *entry,
         be bringing it in just to dispose of it. */
 
      /* Looks up for the entry to remove */
-     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      status = cache_inode_lookup_impl(entry,
 				      name,
 				      req_ctx,
 				      &to_remove_entry);
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      if (to_remove_entry == NULL) {
 	 goto out;

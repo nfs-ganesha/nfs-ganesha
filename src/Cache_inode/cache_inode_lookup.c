@@ -55,10 +55,7 @@
  *
  * This function looks up a filename in the given directory.  It
  * implements the functionality of cache_inode_lookup and expects the
- * directory to be read-locked when it is called.  If a lookup from
- * cache fails, it will drop the read lock and acquire a write lock
- * before proceeding.  The caller is responsible for freeing the lock
- * on the directory in any case.
+ * directory content lock not to be held when it is called.
  *
  * If a cache entry is returned, its refcount is incremented by 1.
  *
@@ -86,6 +83,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	  *entry = NULL;
 	  return status;
      }
+
+     PTHREAD_RWLOCK_rdlock(&parent->content_lock);
 
      /* if name is ".", use the input value */
      if (strcmp(name, ".") == 0) {
@@ -177,6 +176,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	     status = CACHE_INODE_SUCCESS;
 
 out:
+
+     PTHREAD_RWLOCK_unlock(&parent->content_lock);
+
      return status;
 }
 
@@ -216,12 +218,10 @@ cache_inode_lookup(cache_entry_t *parent,
           return status;
      }
 
-     PTHREAD_RWLOCK_rdlock(&parent->content_lock);
      status = cache_inode_lookup_impl(parent,
                                      name,
                                      req_ctx,
                                      entry);
-     PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
      return status;
 }

@@ -70,8 +70,8 @@
 void
 cache_inode_kill_entry(cache_entry_t *entry)
 {
-     LogInfo(COMPONENT_CACHE_INODE,
-             "Using cache_inode_kill_entry for entry %p", entry);
+     LogDebug(COMPONENT_CACHE_INODE,
+              "Using cache_inode_kill_entry for entry %p", entry);
 
      cih_remove_checked(entry); /* !reachable, drop sentinel ref */
 
