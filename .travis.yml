@@ -1,0 +1,46 @@
+language: c
+
+compiler:
+  - gcc
+
+env:
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=Release
+
+branches:
+ only:
+  - travis
+  - next
+
+before_install:
+ - git submodule update --init --recursive
+ - sudo apt-get install libnfsidmap2
+ - sudo apt-get install libnfsidmap-dev
+ - sudo apt-get install libkrb5-3
+ - sudo apt-get install libkrb5-dev
+ - sudo apt-get install libk5crypto3
+ - sudo apt-get install libgssapi-krb5-2
+ - sudo apt-get install libgssglue1
+ - sudo apt-get install libdbus-1-3
+ - sudo apt-get install dbus
+ - sudo apt-get install libdbus-1-dev
+
+script: mkdir ../build && cd ../build && cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_CONFIG=everything ../nfs-ganesha/src/ && make
+
+notifications:
+  email:
+    recepients:
+      - sbhamare@panasas.com
+
+    on_success: always
+    on_failure: always
+
+  irc:
+    channels:
+      - "irc.panasas.com#pnfs"
+    template:
+      - "%{repository}#%{build_number}  (%{branch} - %{commit}) : %{message}"
+      - "Build details: %{build_url}"
+    use_notice: true
+    skip_join: true
+
