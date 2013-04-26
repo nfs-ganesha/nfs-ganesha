@@ -197,11 +197,10 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
                           nlm_arg->nlm_async_key);
 
   dec_nlm_client_ref(nlm_arg->nlm_async_host);
-  free_grant_arg(arg);
 
   /* If success, we are done. */
   if(retval == RPC_SUCCESS)
-    return;
+    goto out;
 
   /*
    * We are not able call granted callback. Some client may retry
@@ -220,7 +219,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
       LogFullDebug(COMPONENT_NLM,
                    "Could not find cookie=%s status=%s",
                    buffer, state_err_str(state_status));
-      return;
+      goto out;
     }
 
   PTHREAD_RWLOCK_WRLOCK(&cookie_entry->sce_pentry->state_lock);
@@ -234,7 +233,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
       LogFullDebug(COMPONENT_NLM,
                    "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
-      return;
+      goto out;
     }
 
   PTHREAD_RWLOCK_UNLOCK(&cookie_entry->sce_pentry->state_lock);
@@ -248,6 +247,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
                    "Could not release cookie=%s status=%s",
                    buffer, state_err_str(state_status));
     }
+out:    
+  free_grant_arg(arg);
 }
 
 int nlm_process_parameters(struct svc_req        * preq,
