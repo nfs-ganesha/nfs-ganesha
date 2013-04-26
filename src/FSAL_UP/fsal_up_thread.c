@@ -80,8 +80,14 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
       /* Step2 where we perform close; which could be expensive operation
          so defer it to the separate thread. */
       arg->event_process_func = dumb_fsal_up_invalidate_step2;
-    } else
-            return ret;
+    }
+    else
+    {
+      /* event processed and no need for step2 action , free memory here */
+      gsh_free(arg->event_data.event_context.fsal_data.fh_desc.start);
+      pool_free(fsal_up_event_pool, arg);
+      return ret;
+    }
   }
 
   /* Now queue them for further process. */
