@@ -239,9 +239,11 @@ int display_clientid_name(nfs_client_id_t *clientid, char *str);
 void free_client_id(nfs_client_id_t *clientid);
 
 void nfs41_foreach_client_callback(bool (*cb)(nfs_client_id_t *cl, void *state),
-					void *state);
+				   void *state);
 
 bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid);
+
+bool client_id_has_state(nfs_client_id_t *clientid);
 
 int32_t inc_client_id_ref(nfs_client_id_t *clientid);
 int32_t dec_client_id_ref(nfs_client_id_t *clientid);
@@ -261,12 +263,14 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 			  struct gsh_buffdesc *buff2);
 
 uint64_t client_record_rbt_hash_func(hash_parameter_t *hparam,
-                                     struct gsh_buffdesc *key);
+				     struct gsh_buffdesc *key);
 
 uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
-                                       struct gsh_buffdesc *key);
+				       struct gsh_buffdesc *key);
 
-nfs_client_record_t *get_client_record(char *value, int len);
+nfs_client_record_t *get_client_record(const char *const value,
+				       const size_t len,
+				       const uint32_t pnfs_flags);
 
 /******************************************************************************
  *
@@ -355,7 +359,7 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
 
 int reserve_lease(nfs_client_id_t *clientid);
 void update_lease(nfs_client_id_t *clientid);
-int valid_lease(nfs_client_id_t *clientid);
+bool valid_lease(nfs_client_id_t *clientid);
 
 /******************************************************************************
  *

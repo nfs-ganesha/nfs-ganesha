@@ -48,6 +48,7 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 #include "abstract_atomic.h"
+#include "city.h"
 
 /**
  * @brief Hashtable used to cache NFSv4 clientids
@@ -85,11 +86,6 @@ uint64_t clientid_verifier;
 pool_t *client_id_pool;
 
 /**
- * @brief Pool for client owner records
- */
-pool_t *client_record_pool;
-
-/**
  * @brief Return the NFSv4 status for the client id error code
  *
  * @param[in] err Client id error code
@@ -124,7 +120,7 @@ nfsstat4 clientid_error_to_nfsstat(clientid_status_t err)
  *
  * @return the error string corresponding nfs4 error code
  */
-const char * clientid_error_to_str(clientid_status_t err)
+const char *clientid_error_to_str(clientid_status_t err)
 {
 	switch(err) {
 	case CLIENT_ID_SUCCESS:
@@ -153,6 +149,7 @@ const char * clientid_error_to_str(clientid_status_t err)
  *
  * @return Corresponding string.
  */
+
 const char *clientid_confirm_state_to_str(
 	nfs_clientid_confirm_state_t confirmed)
 {
@@ -245,7 +242,7 @@ static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
 {
 	nfs_client_id_t *clientid = val->addr;
 
-	(void) inc_client_id_ref(clientid);
+	inc_client_id_ref(clientid);
 }
 
 /**
@@ -266,14 +263,18 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 			     str, cid_refcount);
 	}
 
-        return (cid_refcount);
+	return (cid_refcount);
 }
 
 /**
  * @brief nfsv41 has-sessions prediccate (returns true if sessions found)
  *
  * @param[in] clientid Client record
+ *
+ * @return true if there are sessions associated with the client,
+ * false otherwise.
  */
+
 bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
 {
     if (clientid->cid_minorversion > 0) {
@@ -286,16 +287,38 @@ bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
 }
 
 /**
+ * @brief Tests whether state exists on a client id
+ *
+ * We assume that open owners are predictive of open or lock state,
+ * since they're collected when the last state is removed.
+ *
+ * @note The clientid mutex must be held when calling this function.
+ *
+ * @param[in] clientid Client record
+ *
+ * @retval true if there is state.
+ * @retval false if there isn't.
+ */
+
+bool client_id_has_state(nfs_client_id_t *clientid)
+{
+	return !(glist_empty(&clientid->cid_openowners) ||
+		 glist_empty(&clientid->cid_owner.so_owner
+			     .so_nfs4_owner.so_state_list));
+}
+
+/**
  * @brief Deconstruct and free a client record
  *
  * @param[in] clientid The client record to free
  */
+
 void free_client_id(nfs_client_id_t *clientid)
 {
 	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
 
 	if (clientid->cid_client_record != NULL)
-		(void) dec_client_record_ref(clientid->cid_client_record);
+		dec_client_record_ref(clientid->cid_client_record);
 
 	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0)
 		LogDebug(COMPONENT_CLIENTID,
@@ -671,6 +694,7 @@ int remove_confirmed_client_id(nfs_client_id_t *clientid)
  *
  * @return hash table error code
  */
+
 int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 {
 	int rc;
@@ -695,7 +719,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 		return rc;
 	}
 
-        /* XXX prevents calling remove_confirmed before removed_confirmed,
+	/* XXX prevents calling remove_confirmed before removed_confirmed,
          * if we failed to maintain the invariant that the cases are
          * disjoint */
 	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
@@ -1118,19 +1142,6 @@ int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 		return -1;
 	}
 
-	client_record_pool = pool_init("NFS4 Client Record Pool",
-				       sizeof(nfs_client_record_t),
-				       pool_basic_substrate,
-				       NULL,
-				       NULL,
-				       NULL);
-
-	if (client_record_pool == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Record Pool");
-		return -1;
-	}
-
 	return CLIENT_ID_SUCCESS;
 }
 
@@ -1206,6 +1217,7 @@ int display_client_record(nfs_client_record_t *record, char *str)
  *
  * @param[in] record Record on which to take a reference
  */
+
 int32_t inc_client_record_ref(nfs_client_record_t *record)
 {
 	int32_t rec_refcnt = atomic_inc_int32_t(&record->cr_refcount);
@@ -1233,7 +1245,7 @@ void free_client_record(nfs_client_record_t *record)
 		LogDebug(COMPONENT_CLIENTID,
 			 "pthread_mutex_destroy returned errno %d(%s)",
 			 errno, strerror(errno));
-	pool_free(client_record_pool, record);
+	gsh_free(record);
 }
 
 /**
@@ -1241,6 +1253,7 @@ void free_client_record(nfs_client_record_t *record)
  *
  * @param[in] record Record on which to release a reference
  */
+
 int32_t dec_client_record_ref(nfs_client_record_t *record)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
@@ -1258,8 +1271,8 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 
 	if (refcount > 0) {
 		LogFullDebug(COMPONENT_CLIENTID,
-                             "Decrement refcount refcount now=%"PRId32" {%s}",
-                             refcount, str);
+			     "Decrement refcount refcount now=%"PRId32" {%s}",
+			     refcount, str);
 
 		return (refcount);
 	}
@@ -1282,13 +1295,13 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 		if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			HashTable_ReleaseLatched(ht_client_record, &latch);
 
-                display_client_record(record, str);
+		display_client_record(record, str);
 
-                LogCrit(COMPONENT_CLIENTID,
-                        "Error %s, could not find {%s}",
-                        hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_CLIENTID,
+			"Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
 
-                return (refcount);
+		return (refcount);
 	}
 
 	refcount = atomic_fetch_int32_t(&record->cr_refcount);
@@ -1313,13 +1326,13 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 		if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			HashTable_ReleaseLatched(ht_client_record, &latch);
 
-                display_client_record(record, str);
+		display_client_record(record, str);
 
-                LogCrit(COMPONENT_CLIENTID,
-                        "Error %s, could not remove {%s}",
-                        hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_CLIENTID,
+			"Error %s, could not remove {%s}",
+			hash_table_err_to_str(rc), str);
 
-                return (refcount);
+		return (refcount);
 	}
 
 	LogFullDebug(COMPONENT_CLIENTID,
@@ -1334,23 +1347,16 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 /**
  * @brief Hash a client owner record key
  *
- * @todo ACE: Destroy this function and use a real hash.
- *
  * @param[in] key The client owner record
  *
  * @return The hash.
  */
+
 uint64_t client_record_value_hash(nfs_client_record_t *key)
 {
-	unsigned int i;
-	uint64_t res = 0;
-	unsigned char *sum = (unsigned char *) &res;
-
-	/* Compute the sum of all the characters across the uint64_t */
-	for (i = 0; i < key->cr_client_val_len; i++)
-		sum[i % sizeof(res)] += (unsigned char)key->cr_client_val[i];
-
-	return res;
+	return CityHash64WithSeed(key->cr_client_val,
+				  key->cr_client_val_len,
+				  key->cr_pnfs_flags);
 }
 
 /**
@@ -1422,6 +1428,8 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 
 	if (pkey1->cr_client_val_len != pkey2->cr_client_val_len)
 		return 1;
+	if (pkey1->cr_pnfs_flags != pkey2->cr_pnfs_flags)
+		return 1;
 
 	return memcmp(pkey1->cr_client_val,
 		      pkey2->cr_client_val,
@@ -1462,7 +1470,9 @@ int display_client_record_val(struct gsh_buffdesc *buff, char *str)
  *
  * @return The client record or NULL.
  */
-nfs_client_record_t *get_client_record(char *value, int len)
+nfs_client_record_t *get_client_record(const char *const value,
+				       const size_t len,
+				       const uint32_t pnfs_flags)
 {
 	nfs_client_record_t *record;
 	struct gsh_buffdesc buffkey;
@@ -1470,25 +1480,20 @@ nfs_client_record_t *get_client_record(char *value, int len)
 	struct hash_latch latch;
 	hash_error_t rc;
 
-	record = pool_alloc(client_record_pool, NULL);
+	record = gsh_malloc(sizeof(nfs_client_record_t) + len);
 
-	if (record == NULL)
+	if (record == NULL) {
 		return NULL;
+	}
 
-	record->cr_refcount       = 1;
+	record->cr_refcount = 1;
 	record->cr_client_val_len = len;
+	record->cr_confirmed_rec = NULL;
+	record->cr_unconfirmed_rec = NULL;
 	memcpy(record->cr_client_val, value, len);
+	record->cr_pnfs_flags = pnfs_flags;
 	buffkey.addr = record;
 	buffkey.len = sizeof(*record);
-
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Find Client Record KEY {%s}", str);
-	}
 
 	/* If we found it, return it, if we don't care, return NULL */
 	rc = HashTable_GetLatch(ht_client_record,
@@ -1497,24 +1502,15 @@ nfs_client_record_t *get_client_record(char *value, int len)
 				true,
 				&latch);
 
-	if( rc == HASHTABLE_SUCCESS) {
+	if (rc == HASHTABLE_SUCCESS) {
 		/* Discard the key we created and return the found
 		 * Client Record.  Directly free since we didn't
 		 * complete initialization.
 		 */
-		pool_free(client_record_pool, record);
+		gsh_free(record);
 		record = buffval.addr;
 		inc_client_record_ref(record);
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Found {%s}",
-				     str);
-		}
-
 		return record;
 	}
 
@@ -1524,18 +1520,9 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		 * free since we didn't complete initialization.
 		 */
 
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-
-			LogDebug(COMPONENT_CLIENTID,
-				 "Error %s, failed to find {%s}",
-				 hash_table_err_to_str(rc), str);
-		}
-
-		pool_free(client_record_pool, record);
-
+		LogFatal(COMPONENT_CLIENTID,
+			 "Client record hash table corrupt.");
+		gsh_free(record);
 		return NULL;
 	}
 
@@ -1545,21 +1532,15 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		 * release hash latch since we failed to add record.
 		 */
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		pool_free(client_record_pool, record);
+		LogFatal(COMPONENT_CLIENTID,
+			 "Unable to initialize mutex in client record.");
+		gsh_free(record);
 		return NULL;
 	}
 
 	/* Use same record for record and key */
 	buffval.addr = record;
-	buffval.len = sizeof(*record);
-
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "New {%s}", str);
-	}
+	buffval.len = sizeof(sizeof(nfs_client_record_t) + len);
 
 	rc = HashTable_SetLatched(ht_client_record,
 				  &buffkey,
@@ -1569,36 +1550,18 @@ nfs_client_record_t *get_client_record(char *value, int len)
 				  NULL,
 				  NULL);
 
-	if (rc == HASHTABLE_SUCCESS) {
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-
-			display_client_record(record, str);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Set Client Record {%s}",
-				     str);
-		}
-
-		return record;
+	if (rc != HASHTABLE_SUCCESS) {
+		LogFatal(COMPONENT_CLIENTID,
+			 "Client record hash table corrupt.");
+		free_client_record(record);
+		return NULL;
 	}
 
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_client_record(record, str);
-
-		LogDebug(COMPONENT_CLIENTID,
-			 "Error %s Failed to add {%s}",
-			 hash_table_err_to_str(rc), str);
-	}
-
-	free_client_record(record);
-
-	return NULL;
+	return record;
 }
 
 /**
- * @ Walk the client tree and do the callback on each 4.1 nodes
+ * @brief Walk the client tree and do the callback on each 4.1 nodes
  *
  * @param cb    [IN] Callback function
  * @param state [IN] param block to pass
@@ -1606,7 +1569,7 @@ nfs_client_record_t *get_client_record(char *value, int len)
 
 void
 nfs41_foreach_client_callback(bool (*cb)(nfs_client_id_t *cl, void *state),
-				void *state)
+			      void *state)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
@@ -1627,7 +1590,7 @@ nfs41_foreach_client_callback(bool (*cb)(nfs_client_id_t *cl, void *state),
 			pdata = RBT_OPAQ(pn);
 			pclientid = pdata->val.addr;
 			RBT_INCREMENT(pn);
-        		
+
 			inc_client_id_ref(pclientid);
 			if (pclientid->cid_minorversion > 0)
 			{
