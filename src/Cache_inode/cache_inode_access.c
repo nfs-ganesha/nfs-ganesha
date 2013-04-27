@@ -325,9 +325,11 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
      if(FSAL_TEST_MASK(attr->mask, ATTR_MODE) ||
         FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
           /* Changing mode or ACL requires ACE4_WRITE_ACL */
-         access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
-         LogDebug(COMPONENT_CACHE_INODE,
-                 "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
+	 if(not_owner) {
+	    access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
+	    LogDebug(COMPONENT_CACHE_INODE,
+		     "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
+	 }
      }
 
      if(FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
