@@ -94,7 +94,7 @@ struct CCLClientOpDynamicFsInfoRspMsg {
 // intent is not to change this for every minor. For instance, the current
 // minor may be 172, but the version may remain "4.1.0.164", indicating that
 // the last minor this file changed is in minor 164. 
-#define PT_FSI_CCL_VERSION "4.1.0.191" 
+#define PT_FSI_CCL_VERSION "4.1.0.199" 
 
 #define UNUSED_ARG(arg) do { (void)(arg); } while (0)
 
@@ -921,6 +921,9 @@ void ccl_update_handle_last_io_timestamp(int handle_index);
 int ccl_update_handle_nfs_state(int              handle_index,
                                 enum e_nfs_state state,
                                 int              expected_state);
+int ccl_safe_update_handle_nfs_state(int              handle_index,
+                                     enum e_nfs_state state,
+                                     int              expected_state);
 int ccl_fsal_try_stat_by_index(ccl_context_t           * handle,
                                int                       handle_index,
                                char                    * fsal_name,

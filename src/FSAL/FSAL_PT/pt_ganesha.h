@@ -209,6 +209,9 @@ struct vfs_fn_pointers {
   int (*update_handle_nfs_state_fn)(int              handle_index,
                                     enum e_nfs_state state,
                                     int              expected_state);
+  int (*safe_update_handle_nfs_state_fn)(int              handle_index,
+                                         enum e_nfs_state state,
+                                         int              expected_state);
   int (*fsal_try_stat_by_index_fn)(ccl_context_t           * handle,
                                    int                       handle_index,
                                    char                    * fsal_name,
@@ -292,6 +295,7 @@ struct vfs_fn_pointers {
 #define CCL_READLINK                       g_ccl_function_map.readlink_fn
 #define CCL_SYMLINK                        g_ccl_function_map.symlink_fn
 #define CCL_UPDATE_HANDLE_NFS_STATE        g_ccl_function_map.update_handle_nfs_state_fn
+#define CCL_SAFE_UPDATE_HANDLE_NFS_STATE   g_ccl_function_map.safe_update_handle_nfs_state_fn
 #define CCL_FSAL_TRY_STAT_BY_INDEX         g_ccl_function_map.fsal_try_stat_by_index_fn
 #define CCL_FSAL_TRY_FASTOPEN_BY_INDEX     g_ccl_function_map.fsal_try_fastopen_by_index_fn
 #define CCL_FIND_OLDEST_HANDLE             g_ccl_function_map.find_oldest_handle_fn

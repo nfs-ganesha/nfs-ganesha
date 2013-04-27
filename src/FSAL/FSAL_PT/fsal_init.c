@@ -336,6 +336,8 @@ pt_ganesha_fsal_ccl_init()
       DL_LOAD(&g_ccl_function_map.symlink_fn, "ccl_symlink")               &&
       DL_LOAD(&g_ccl_function_map.update_handle_nfs_state_fn,
 	      "ccl_update_handle_nfs_state")                               &&
+      DL_LOAD(&g_ccl_function_map.safe_update_handle_nfs_state_fn,
+              "ccl_safe_update_handle_nfs_state")                          &&
       DL_LOAD(&g_ccl_function_map.fsal_try_stat_by_index_fn,
 	      "ccl_fsal_try_stat_by_index")                                &&
       DL_LOAD(&g_ccl_function_map.fsal_try_fastopen_by_index_fn,
