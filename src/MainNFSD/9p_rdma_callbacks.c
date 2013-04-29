@@ -57,7 +57,7 @@
 
 void DispatchWork9P( request_data_t *preq );
 
-void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) {
+void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *pdata, void *arg) {
       _9p_datamr_t * outdatamr =  (_9p_datamr_t*) arg;
       pthread_mutex_unlock(&outdatamr->lock);
 }
@@ -93,7 +93,7 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
   if( pdata->size < _9P_HDR_SIZE )
    {
       LogMajor( COMPONENT_9P, "Malformed 9P/RDMA packet, bad header size" ) ;
-      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, datamr);
+      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, NULL, datamr);
    }
   else
    {
@@ -115,13 +115,13 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
        }
 
       /* Mark the buffer ready for later receive and post the reply */
-      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, datamr);
+      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, NULL, datamr);
 
       /* If earlier processing succeeded, post it */
       if (rc == 1)
        {
          poutdata->size = outdatalen ;
-         if (0 != msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, (void*) outdatamr ))
+         if (0 != msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, NULL, (void*) outdatamr ))
                  rc = -1;
        } 
        
@@ -135,7 +135,7 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
    }
 }
 
-void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) 
+void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *pdata, void *arg)
 {
   struct _9p_datamr *_9p_datamr = arg;
   request_data_t *preq = NULL;
@@ -156,7 +156,7 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
   preq->r_u._9p.datamr = _9p_datamr ;
 
   /* Add this request to the request list, should it be flushed later. */
-  _9pmsg = _9p_datamr->data->data ;
+  _9pmsg = pdata->data ;
   tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
   _9p_AddFlushHook(&preq->r_u._9p, tag, preq->r_u._9p.pconn->sequence++);
 

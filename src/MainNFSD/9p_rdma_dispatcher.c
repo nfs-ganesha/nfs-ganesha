@@ -149,7 +149,7 @@ void * _9p_rdma_thread( void * Arg )
   p_9p_conn->trans_data.rdma_trans = trans ;
 
   /* Init the fids pointers array */
-  memset( &_9p_conn.fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;
+  memset( &p_9p_conn->fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;
 
   /* Set initial msize. Client may request a lower value during TVERSION */
   p_9p_conn->msize = nfs_param._9p_param._9p_rdma_msize ;
@@ -217,6 +217,7 @@ void * _9p_rdma_thread( void * Arg )
                                 rdata[i],
                                 mr,
                                 _9p_rdma_callback_recv,
+				NULL,
                                &(datamr[i]) ) ) != 0 )
        {
           LogEvent( COMPONENT_9P,  "9P/RDMA: trans handler could recv first byte of datamr[%u], rc=%u", i, rc ) ;

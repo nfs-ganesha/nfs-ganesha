@@ -590,10 +590,9 @@ void _9p_chomp_attr_value(char *str, size_t size) ;
 #ifdef _USE_9P_RDMA
 /* 9P/RDMA callbacks */
 void* _9p_rdma_handle_trans(void *arg) ;
-void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) ;
+void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
-void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
-void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
+void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
 
 #endif
 void _9p_AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence);
