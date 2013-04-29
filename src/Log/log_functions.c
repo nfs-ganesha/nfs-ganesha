@@ -493,6 +493,14 @@ void SetNameFunction(const char *nom)
   if(context->nom_fonction != NULL)
     gsh_free(context->nom_fonction);
   context->nom_fonction = gsh_strdup(nom);
+
+#ifdef __GLIBC__
+#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 12)
+  char thread_name[16];
+  snprintf(thread_name, sizeof(thread_name), "gsh-%s", nom);
+  pthread_setname_np(pthread_self(), thread_name);
+#endif
+#endif
 }                               /* SetNameFunction */
 
 /* Installs a signal handler */
