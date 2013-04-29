@@ -431,12 +431,12 @@ enum log_type
 
 typedef struct log_component_info
 {
-  int   comp_value;
-  char *comp_name;
-  char *comp_str;
-  int   comp_log_level;
+  log_components_t comp_value;
+  const char  *comp_name;
+  const char  *comp_str;
+  log_levels_t comp_log_level;
 
-  int   comp_log_type;
+  enum log_type comp_log_type;
   char  comp_log_file[MAXPATHLEN + 1];
   char *comp_buffer;
   int   comp_env_set;
