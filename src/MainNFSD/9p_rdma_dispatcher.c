@@ -152,7 +152,7 @@ void * _9p_rdma_thread( void * Arg )
   memset( &_9p_conn.fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;
 
   /* Set initial msize. Client may request a lower value during TVERSION */
-  p_9p_conn->msize = _9P_RDMA_CHUNK_SIZE;
+  p_9p_conn->msize = nfs_param._9p_param._9p_rdma_msize ;
 
   if( gettimeofday( &p_9p_conn->birth, NULL ) == -1 )
    LogMajor( COMPONENT_9P, "Cannot get connection's time of birth" ) ;

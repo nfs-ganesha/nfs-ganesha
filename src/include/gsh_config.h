@@ -441,6 +441,16 @@ typedef struct nfs_version4_parameter {
 #define _9P_RDMA_PORT 5640
 
 /**
+ * @brief Default value for _9p_tcp_msize
+ */
+#define _9P_TCP_MSIZE 65536 
+
+/**
+ * @brief Default value for _9p_rdma_msize
+ */
+#define _9P_RDMA_MSIZE 1048576 
+
+/**
  * @brief 9p configuration
  */
 
@@ -452,6 +462,12 @@ typedef struct _9p_param
 	/** RDMA port for 9p operations.  Defaults to _9P_RDMA_PORT,
 	    settable by _9P_RDMA_Port */
 	uint16_t _9p_rdma_port;
+	/** Msize for 9P operation on tcp.  Defaults to _9P_TCP_MSIZE,
+	    settable by _9P_TCP_Msize */
+	uint32_t _9p_tcp_msize;
+	/** Msize for 9P operation on rdma.  Defaults to _9P_RDMA_MSIZE,
+	    settable by _9P_RDMA_Msize */
+	uint32_t _9p_rdma_msize;
 } _9p_parameter_t;
 #endif /* _USE_9P */
 

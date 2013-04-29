@@ -87,6 +87,14 @@ int _9p_read_conf( config_file_t   in_config,
         {
           pparam->_9p_rdma_port = atoi( key_value ) ;
         }
+      else if(!strcasecmp(key_name, "_9P_TCP_Msize" ))
+        {
+          pparam->_9p_tcp_msize = atoi( key_value ) ;
+        }
+      else if(!strcasecmp(key_name, "_9P_RDMA_Msize" ))
+        {
+          pparam->_9p_rdma_msize = atoi( key_value ) ;
+        }
       else if(!strcasecmp(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);

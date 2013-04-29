@@ -156,7 +156,7 @@ void * _9p_socket_thread( void * Arg )
   memset( &_9p_conn.fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;
 
   /* Set initial msize. Client may request a lower value during TVERSION */
-  _9p_conn.msize = _9P_MSG_SIZE;
+  _9p_conn.msize = nfs_param._9p_param._9p_tcp_msize ;
 
 
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )

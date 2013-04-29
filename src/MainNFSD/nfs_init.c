@@ -100,9 +100,11 @@ nfs_parameter_t nfs_param =
   .core_param.program[P_NLM] = NLMPROG,
 #ifdef _USE_9P
   ._9p_param._9p_tcp_port = _9P_TCP_PORT ,
+  ._9p_param._9p_tcp_msize = _9P_TCP_MSIZE,
 #endif
 #ifdef _USE_9P_RDMA
   ._9p_param._9p_rdma_port = _9P_RDMA_PORT,
+  ._9p_param._9p_rdma_msize = _9P_RDMA_MSIZE,
 #endif
   .core_param.program[P_RQUOTA] = RQUOTAPROG,
   .core_param.port[P_RQUOTA] = RQUOTA_PORT,
