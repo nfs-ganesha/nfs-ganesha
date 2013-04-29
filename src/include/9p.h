@@ -593,6 +593,8 @@ void* _9p_rdma_handle_trans(void *arg) ;
 void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
 void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
+void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
+void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *pdata, void *arg) ;
 
 #endif
 void _9p_AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence);

@@ -58,8 +58,22 @@
 void DispatchWork9P( request_data_t *preq );
 
 void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *pdata, void *arg) {
-      _9p_datamr_t * outdatamr =  (_9p_datamr_t*) arg;
-      pthread_mutex_unlock(&outdatamr->lock);
+  _9p_datamr_t * outdatamr =  (_9p_datamr_t*) arg;
+  pthread_mutex_unlock(&outdatamr->lock);
+}
+
+void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *pdata, void *arg) {
+  _9p_datamr_t * outdatamr =  (_9p_datamr_t*) arg;
+
+  /** @todo: This should probably try to send again a few times before unlocking */
+
+  pthread_mutex_unlock(&outdatamr->lock);
+}
+
+void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *pdata, void *arg) {
+  _9p_datamr_t * datamr = (_9p_datamr_t*) arg;
+
+  msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, _9p_rdma_callback_recv_err, datamr);
 }
 
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
@@ -93,7 +107,7 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
   if( pdata->size < _9P_HDR_SIZE )
    {
       LogMajor( COMPONENT_9P, "Malformed 9P/RDMA packet, bad header size" ) ;
-      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, NULL, datamr);
+      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, _9p_rdma_callback_recv_err, datamr);
    }
   else
    {
@@ -115,13 +129,13 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
        }
 
       /* Mark the buffer ready for later receive and post the reply */
-      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, NULL, datamr);
+      msk_post_recv(trans, pdata, datamr->mr, _9p_rdma_callback_recv, _9p_rdma_callback_recv_err, datamr);
 
       /* If earlier processing succeeded, post it */
       if (rc == 1)
        {
          poutdata->size = outdatalen ;
-         if (0 != msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, NULL, (void*) outdatamr ))
+         if (0 != msk_post_send( trans, poutdata, outdatamr->mr, _9p_rdma_callback_send, _9p_rdma_callback_send_err, (void*) outdatamr ))
                  rc = -1;
        } 
        
