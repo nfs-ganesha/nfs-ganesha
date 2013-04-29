@@ -97,7 +97,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
  
   /* Set pexport and fid id in fid */
-  pfid= &preq9p->pconn->fids[*afid] ;
+  pfid= preq9p->pconn->fids[*afid] ;
   pfid->pexport = pexport ;
   pfid->fid = *afid ;
 

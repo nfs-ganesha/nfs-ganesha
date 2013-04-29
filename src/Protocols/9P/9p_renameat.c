@@ -81,10 +81,10 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   if( *oldfid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  poldfid = &preq9p->pconn->fids[*oldfid] ;
+  poldfid = preq9p->pconn->fids[*oldfid] ;
 
   /* Check that it is a valid fid */
-  if (poldfid->pentry == NULL) 
+  if (poldfid == NULL || poldfid->pentry == NULL) 
   {
     LogDebug( COMPONENT_9P, "request on invalid fid=%u", *oldfid ) ;
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
@@ -93,10 +93,10 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   if( *newfid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  pnewfid = &preq9p->pconn->fids[*newfid] ;
+  pnewfid = preq9p->pconn->fids[*newfid] ;
 
   /* Check that it is a valid fid */
-  if (pnewfid->pentry == NULL) 
+  if (pnewfid == NULL || pnewfid->pentry == NULL) 
   {
     LogDebug( COMPONENT_9P, "request on invalid fid=%u", *newfid ) ;
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;

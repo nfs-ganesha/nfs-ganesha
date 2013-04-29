@@ -67,10 +67,10 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  pfid =  &preq9p->pconn->fids[*fid] ;
+  pfid =  preq9p->pconn->fids[*fid] ;
 
   /* Check that it is a valid fid */
-  if (pfid->pentry == NULL) 
+  if (pfid == NULL || pfid->pentry == NULL) 
   {
     LogDebug( COMPONENT_9P, "clunk request on invalid fid=%u", *fid ) ;
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
@@ -93,8 +93,8 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   /* Tell the cache the fid that used this entry is not used by this set of messages */
   cache_inode_put( pfid->pentry ) ;
  
-  /* Clean the fid */
-  memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
+  /* Free the fid */
+  gsh_free( pfid ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;

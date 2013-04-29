@@ -99,9 +99,11 @@ int _9p_attach( _9p_request_data_t * preq9p,
     return _9p_rerror( preq9p, pworker_data, msgtag, ERANGE, plenout, preply ) ;
  
   /* Set pexport and fid id in fid */
-  pfid= &preq9p->pconn->fids[*fid] ;
+  if( ( pfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
+    return _9p_rerror( preq9p, pworker_data, msgtag, ENOMEM, plenout, preply ) ;
   pfid->pexport = pexport ;
   pfid->fid = *fid ;
+  preq9p->pconn->fids[*fid] = pfid ;
 
   /* Is user name provided as a string or as an uid ? */
   if( *uname_len != 0 )

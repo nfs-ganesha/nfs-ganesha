@@ -78,9 +78,9 @@ int _9p_link( _9p_request_data_t * preq9p,
   if( *dfid >= _9P_FID_PER_CONN )
    return   _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-   pdfid = &preq9p->pconn->fids[*dfid] ;
+   pdfid = preq9p->pconn->fids[*dfid] ;
    /* Check that it is a valid fid */
-   if (pdfid->pentry == NULL) 
+   if( pdfid == NULL || pdfid->pentry == NULL) 
    {
      LogDebug( COMPONENT_9P, "request on invalid dfid=%u", *dfid ) ;
      return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
@@ -89,9 +89,9 @@ int _9p_link( _9p_request_data_t * preq9p,
   if( *targetfid >= _9P_FID_PER_CONN )
    return   _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-   ptargetfid = &preq9p->pconn->fids[*targetfid] ;
+   ptargetfid = preq9p->pconn->fids[*targetfid] ;
    /* Check that it is a valid fid */
-   if (ptargetfid->pentry == NULL) 
+   if( ptargetfid == NULL || ptargetfid->pentry == NULL) 
    {
      LogDebug( COMPONENT_9P, "request on invalid targetfid=%u", *targetfid ) ;
      return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;

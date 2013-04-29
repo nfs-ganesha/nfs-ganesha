@@ -148,6 +148,9 @@ void * _9p_rdma_thread( void * Arg )
   p_9p_conn->trans_type = _9P_RDMA ;
   p_9p_conn->trans_data.rdma_trans = trans ;
 
+  /* Init the fids pointers array */
+  memset( &_9p_conn.fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;
+
   /* Set initial msize. Client may request a lower value during TVERSION */
   p_9p_conn->msize = _9P_RDMA_CHUNK_SIZE;
 

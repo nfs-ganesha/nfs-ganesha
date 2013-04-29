@@ -75,10 +75,10 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   if( *dfid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  pdfid = &preq9p->pconn->fids[*dfid] ;
+  pdfid = preq9p->pconn->fids[*dfid] ;
 
   /* Check that it is a valid fid */
-  if (pdfid->pentry == NULL) 
+  if (pdfid == NULL || pdfid->pentry == NULL) 
   {
     LogDebug( COMPONENT_9P, "request on invalid fid=%u", *dfid ) ;
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;

@@ -82,7 +82,10 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  pfid = &preq9p->pconn->fids[*fid] ;
+  pfid = preq9p->pconn->fids[*fid] ;
+  if( pfid == NULL )
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
+
 
   /* Get the FS's stats */
   if( ( cache_status = cache_inode_statfs( pfid->pentry,
