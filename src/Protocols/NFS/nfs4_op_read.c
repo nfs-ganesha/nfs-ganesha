@@ -326,6 +326,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_READ4.status;
     }
 
+  res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
+
   if((cache_inode_rdwr(pentry,
                       CACHE_INODE_READ,
                       offset,
@@ -345,6 +347,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
         }
+      gsh_free(bufferdata);
+      res_READ4.READ4res_u.resok4.data.data_val = NULL;
       return res_READ4.status;
     }
 
@@ -385,7 +389,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 void nfs4_op_read_Free(READ4res * resp)
 {
   if(resp->status == NFS4_OK)
-    if(resp->READ4res_u.resok4.data.data_len != 0)
+    if(resp->READ4res_u.resok4.data.data_val != NULL)
       gsh_free(resp->READ4res_u.resok4.data.data_val);
   return;
 }                               /* nfs4_op_read_Free */
