@@ -245,6 +245,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		 "%s_NFS-Ganesha",
 		 unconf->cid_server_owner);
 
+	LogDebug(COMPONENT_CLIENTID, "Serving IP %s", unconf->cid_server_scope);
+
 	rc = nfs_client_id_insert(unconf);
 
 	if (rc != CLIENT_ID_SUCCESS) {

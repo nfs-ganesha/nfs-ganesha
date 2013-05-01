@@ -889,9 +889,11 @@ struct state_async_queue_t {
  *       of thing.)
  */
 
-#define EVENT_TAKE_IP     0
-#define EVENT_TAKE_NODEID 1
-#define EVENT_RELEASE_IP  2
+#define EVENT_JUST_GRACE     0
+#define EVENT_TAKE_NODEID    1
+#define EVENT_UPDATE_CLIENTS 2
+#define EVENT_RELEASE_IP     3
+#define EVENT_TAKE_IP        4
 
 typedef struct nfs_grace_start {
 	int event;    /*< Reason for grace period, see EVENT_nnn */

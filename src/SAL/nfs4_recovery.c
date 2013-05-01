@@ -75,6 +75,7 @@ typedef struct clid_entry
 static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 extern hash_table_t *ht_nsm_client;
 static void nfs_release_nlm_state();
+static void nfs_release_v4_client(char *ip);
 
 /**
  * @brief Initialize grace/recovery
@@ -106,30 +107,28 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 
         P(grace.g_mutex);
 
-        nfs_release_nlm_state();
+        grace.g_start = time(NULL);
+        grace.g_duration = duration;
+
+        LogEvent(COMPONENT_STATE,
+                 "NFS Server Now IN GRACE, duration %d",
+                 duration);
         /*
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
          */
-        if (gsp) {
+        if (gsp && gsp->event != EVENT_JUST_GRACE) {
 		LogEvent(COMPONENT_STATE,
 			"NFS Server recovery event %d nodeid %d ip %s",
 			gsp->event, gsp->nodeid, gsp->ipaddr);
-		if (gsp->event == EVENT_TAKE_IP || gsp->event == EVENT_TAKE_NODEID)
-		{
-			nfs_release_nlm_state();
-			nfs4_load_recov_clids_nolock(gsp);
-		}	
+
+		nfs_release_nlm_state();
+		
 		if (gsp->event == EVENT_RELEASE_IP)
-			nfs_release_nlm_state();
+			nfs_release_v4_client(gsp->ipaddr);
+		else
+			nfs4_load_recov_clids_nolock(gsp);
         }
-        LogEvent(COMPONENT_STATE,
-                 "NFS Server Now IN GRACE, duration %d",
-                 duration);
-
-        grace.g_start = time(NULL);
-        grace.g_duration = duration;
-
         V(grace.g_mutex);
 }
 
@@ -396,13 +395,8 @@ nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
         clid_entry_t *clid_entry;
         int rc;
         char path[PATH_MAX + 1];
-        int nodeid = 0;
 
-        if (gsp != NULL)
-          nodeid = gsp->nodeid;
-
-
-        if (nodeid == 0) {
+        if (gsp == NULL) {
                 /* when not doing a takeover, start with an empty list */
                 if (!glist_empty(&grace.g_clid_list)) {
                         glist_for_each(node, &grace.g_clid_list) {
@@ -453,17 +447,23 @@ nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
                 }
 
         } else {
-                if (nodeid == -1)
+                if (gsp->event == EVENT_UPDATE_CLIENTS)
+                  snprintf(path, sizeof(path), "%s", v4_recov_dir);
+
+                else if (gsp->event == EVENT_TAKE_IP)
                   snprintf(path, sizeof(path), "%s/%s/%s",
 	  		   NFS_V4_RECOV_ROOT, gsp->ipaddr, NFS_V4_RECOV_DIR);
-                else
+	  		
+                else if (gsp->event == EVENT_TAKE_NODEID)
                   snprintf(path, sizeof(path), "%s/%s/node%d",
-			   NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
-
+			   NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, gsp->nodeid);
+			
+                else
+                        return;
 
                 LogEvent(COMPONENT_CLIENTID,
                          "Recovery for nodeid %d dir (%s)",
-                          nodeid, path);
+                          gsp->nodeid, path);
 
                 dp = opendir(path);
                 if (dp == NULL) {
@@ -488,7 +488,6 @@ nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
                             path, errno);
                 }
         }
-
 }
 
 /**
@@ -642,5 +641,88 @@ nfs_release_nlm_state()
         }
         return;
 }
+
+static int
+ip_match(char *ip, nfs_client_id_t *cid)
+{
+	LogDebug(COMPONENT_STATE,
+		"NFS Server V4 match ip %s with (%s) or (%s)",
+		 ip, cid->cid_server_owner, cid->cid_client_record->cr_client_val);
+
+        if (strlen(ip) == 0)  /* No IP all are matching */
+                return 1;
+
+        if ((strlen(cid->cid_server_owner) > 0) &&  /* Set only for v4.1 */
+                  (strncmp(ip, cid->cid_server_owner,
+                           strlen(cid->cid_server_owner)) == 0))
+                return 1;
+
+        if (strstr(cid->cid_client_record->cr_client_val, ip) != NULL)
+                return 1;
+
+        return 0; /* no match */
+}
+
+/*
+ * try to find a V4 client that matches the IP we are releasing.
+ * only search the confirmed clients, unconfirmed clients won't
+ * have any state to release.
+ */
+static void
+nfs_release_v4_client(char *ip)
+{
+        hash_table_t *ht = ht_confirmed_client_id;
+        struct rbt_head *head_rbt;
+        struct rbt_node *pn;
+        struct hash_data *pdata;
+        nfs_client_id_t *cp;
+        nfs_client_record_t *recp;
+        int i;
+
+	LogEvent(COMPONENT_STATE,
+		"NFS Server V4 recovery release ip %s", ip);
+
+        /* go through the confirmed clients looking for a match */
+        for(i = 0; i < ht->parameter.index_size; i++) {
+
+                PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+                head_rbt = &ht->partitions[i].rbt;
+
+                /* go through all entries in the red-black-tree*/
+                RBT_LOOP(head_rbt, pn) {
+                    pdata = RBT_OPAQ(pn);
+
+                    cp = (nfs_client_id_t *)pdata->val.addr;
+                    P(cp->cid_mutex);
+                    if (ip_match(ip, cp)) {
+                        inc_client_id_ref(cp);
+
+                        /* Take a reference to the client record */
+                        recp = cp->cid_client_record;
+                        inc_client_record_ref(recp);
+
+                        V(cp->cid_mutex);
+
+                        PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+
+                        P(recp->cr_mutex);
+
+                        (void) nfs_client_id_expire(cp, NULL);
+
+                        V(recp->cr_mutex);
+
+                        dec_client_id_ref(cp);
+                        dec_client_record_ref(recp);
+                        return;
+
+                    } else {
+                        V(cp->cid_mutex);
+                    }
+                    RBT_INCREMENT(pn);
+                }
+                PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+        }
+}
+
 
 /** @} */

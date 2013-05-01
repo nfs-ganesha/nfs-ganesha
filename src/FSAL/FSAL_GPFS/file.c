@@ -195,7 +195,8 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if(myself->u.file.fd < 0 || myself->u.file.openflags == FSAL_O_CLOSED) {
 		LogDebug(COMPONENT_FSAL,
-			 "Attempting to lock with no file descriptor open");
+			 "Attempting to lock with no file descriptor open, fd %d",
+			  myself->u.file.fd);
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
