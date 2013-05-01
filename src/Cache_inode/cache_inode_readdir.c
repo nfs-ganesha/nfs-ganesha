@@ -184,7 +184,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 		     status = cache_inode_invalidate(oldentry,
 						     (CACHE_INODE_INVALIDATE_ATTRS
 						      |CACHE_INODE_INVALIDATE_CONTENT));
-		     cache_inode_lru_unref(oldentry, 0);
+		     cache_inode_lru_unref(oldentry, LRU_FLAG_NONE);
 		 }
              } else {
                  status = CACHE_INODE_ENTRY_EXISTS;
@@ -633,7 +633,7 @@ cache_inode_readdir(cache_entry_t *directory,
 
           status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
           if (status != CACHE_INODE_SUCCESS) {
-              cache_inode_lru_unref(entry, 0);
+              cache_inode_lru_unref(entry, LRU_FLAG_NONE);
               goto unlock_dir;
           }
 
@@ -643,7 +643,7 @@ cache_inode_readdir(cache_entry_t *directory,
                          dirent->hk.k);
           (*nbfound)++;
           PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-          cache_inode_lru_unref(entry, 0);
+          cache_inode_lru_unref(entry, LRU_FLAG_NONE);
           if (!in_result) {
                break;
           }

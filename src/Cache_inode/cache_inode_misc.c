@@ -263,7 +263,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      /* !LATCHED */
 
      /* We did not find the object.  Pull an entry off the LRU. */
-     status = cache_inode_lru_get(&nentry, 0);
+     status = cache_inode_lru_get(&nentry);
      if (! nentry) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_lru_get failed");

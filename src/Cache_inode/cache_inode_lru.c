@@ -428,9 +428,6 @@ cache_inode_lru_clean(cache_entry_t *entry)
 	((n) == LRU_SENTINEL_REFCOUNT+1) && \
 	 ((e)->fh_hk.inavl))
 
-#define LRU_ENTRY_REMOVED(e, n) \
-    (((n) == 0) && (! (e)->fh_hk.inavl))
-
 #define LANE_NTRIES 3
 
 static uint32_t reap_lane = 0; /* by definition */
@@ -530,9 +527,6 @@ lru_try_reap_entry(void)
      return (lru);
 }
 
-static const uint32_t S_NSECS = 1000000000UL; /* nsecs in 1s */
-static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
-
 /**
  * @brief Push a cache_inode_killed entry to the cleanup queue
  * for out-of-line cleanup
@@ -615,7 +609,7 @@ cache_inode_lru_cleanup(void)
 		entry = container_of(lru, cache_entry_t, lru);
 		state_wipe_file(entry);
 		/* return (transferred) call path ref */
-		cache_inode_lru_unref(entry, LRU_UNREF_CLEANUP);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 		n_finalized++;
         } while (lru);
     }
@@ -1157,13 +1151,11 @@ out:
  * references (one for the sentinel, one to allow the caller's use.)
  *
  * @param[out] entry Returned status
- * @param[in]  flags Flags governing call
  *
  * @return CACHE_INODE_SUCCESS or error.
  */
 cache_inode_status_t
-cache_inode_lru_get(cache_entry_t **entry,
-                    uint32_t flags)
+cache_inode_lru_get(cache_entry_t **entry)
 {
      cache_inode_lru_t *lru;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
