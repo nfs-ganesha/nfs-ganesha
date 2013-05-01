@@ -925,7 +925,11 @@ lru_run(struct fridgethr_context *ctx)
      fdmulti = fdmulti ? fdmulti : 1;
      fdwait_ratio = lru_state.fds_hiwat /
 	  ((lru_state.fds_hiwat + fdmulti * fddelta) * fdnorm);
-     fridgethr_setwait(ctx, threadwait * fdwait_ratio);
+     time_t new_thread_wait = threadwait * fdwait_ratio;
+     if (new_thread_wait < nfs_param.cache_param.lru_run_interval / 10)
+         new_thread_wait = nfs_param.cache_param.lru_run_interval / 10;
+
+     fridgethr_setwait(ctx, new_thread_wait);
 
      LogDebug(COMPONENT_CACHE_INODE_LRU,
 	      "After work, open_fd_count:%zd  count:%"PRIu64" fdrate:%u "
