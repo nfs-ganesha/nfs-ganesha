@@ -176,10 +176,6 @@ cache_inode_read_conf_parameter(config_file_t config,
         {
           param->entries_hwmark = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Entries_LWMark"))
-        {
-          param->entries_lwmark = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "LRU_Run_Interval"))
         {
           param->lru_run_interval = atoi(key_value);
