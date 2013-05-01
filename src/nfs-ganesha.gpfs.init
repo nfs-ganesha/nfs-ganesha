@@ -234,6 +234,7 @@ start() {
 			OPTIONS="$OPTIONS -E $ganesha_epoch"
 		fi
 		echo  -n $"Starting $prog: "
+		ulimit -n 1048576          
 		daemon numactl -i all $PATHPROG $OPTIONS
 		RETVAL=$?
 		if [ $HAVE_SMNOTIFY -eq 0 ]; then
