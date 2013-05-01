@@ -452,7 +452,7 @@ void release_lockstate(state_owner_t *lock_owner)
 	}
 
       /* Release the lru ref to the cache inode we held while calling state_del */
-      cache_inode_lru_unref(entry, 0);
+      cache_inode_lru_unref(entry, LRU_FLAG_NONE);
     }
 }
 
@@ -508,8 +508,7 @@ void release_openstate(state_owner_t *open_owner)
       PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
       /* Release the lru ref to the cache inode we held while calling state_del */
-      cache_inode_lru_unref(entry,
-                            0);
+      cache_inode_lru_unref(entry, LRU_FLAG_NONE);
     }
 }
 

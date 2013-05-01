@@ -273,7 +273,6 @@ nfs_parameter_t nfs_param =
 
   /* Cache inode parameters : Garbage collection policy */
   .cache_param.entries_hwmark = 100000,
-  .cache_param.entries_lwmark = 50000,
   .cache_param.use_fd_cache = true,
   .cache_param.lru_run_interval = 600,
   .cache_param.fd_limit_percent = 99,
