@@ -76,10 +76,8 @@
 #include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
-#ifdef SONAS
-extern uint64_t rpc_out;
-extern uint64_t rpc_in;
-#endif
+uint64_t rpc_out;
+uint64_t rpc_in;
 
 pool_t *request_pool;
 pool_t *request_data_pool;
@@ -602,15 +600,13 @@ nfs_rpc_execute(request_data_t    * preq,
            (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
            req->rq_xid);
 
-#ifdef SONAS
-  rpc_in++;
-#endif
 
   /* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
    * nothing but allocate a result object and mark the request (ie, the
    * path is short, lockless, and does no hash/search). */
   dpq_status = nfs_dupreq_start(preqnfs, req);
   res_nfs = preqnfs->res_nfs;
+  atomic_inc_uint64_t(&rpc_in);
 
   switch(dpq_status)
     {
@@ -649,9 +645,7 @@ nfs_rpc_execute(request_data_t    * preq,
           LogFullDebug(COMPONENT_DISPATCH,
                        "After svc_sendreply on socket %d (dup req)",
                        xprt->xp_fd);
-#ifdef SONAS
-          rpc_out++;
-#endif
+          atomic_inc_uint64_t(&rpc_out);
 	  goto dupreq_finish;
           break;
 
@@ -1214,9 +1208,7 @@ req_error:
 
   /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-#ifdef SONAS
-  rpc_out++;
-#endif
+  atomic_inc_uint64_t(&rpc_out);
 
   /* Update the stats for the worker */
   nfs_stat_update(stat_type,
@@ -1350,9 +1342,7 @@ auth_failure:
       nfs_dupreq_rele(req, pworker_data->funcdesc);
   
 /* XXX */
-#ifdef SONAS
-  rpc_out++;
-#endif
+  atomic_inc_uint64_t(&rpc_out);
   return;
 
 }                               /* nfs_rpc_execute */

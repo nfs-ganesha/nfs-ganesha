@@ -46,8 +46,8 @@
 time_t t_after; /* Careful here. */
 
 extern hash_table_t *ht_nsm_client;
-uint64_t rpc_in;
-uint64_t rpc_out;
+extern uint64_t rpc_in;
+extern uint64_t rpc_out;
 uint64_t rpc_in_old;
 uint64_t rpc_out_old;
 
@@ -320,11 +320,11 @@ struct dirent **state_namelist = NULL;
          * two reds in that period then CTDB restarts us
          * No new state record in 2 minutes then CTDB restarts us
          */
-                if ( (rpc_in > rpc_in_old ) &&  (rpc_out > rpc_out_old) ) {
+                if ( ((atomic_fetch_uint64_t(&rpc_in)) > rpc_in_old ) &&  ((atomic_fetch_uint64_t(&rpc_out)) > rpc_out_old) ) {
                         status = "green";
                         break;
                 }
-                if ( (rpc_in > rpc_in_old ) &&  (rpc_out <= rpc_out_old) ) {
+                if ( (atomic_fetch_uint64_t(&rpc_in) > rpc_in_old ) &&  (atomic_fetch_uint64_t(&rpc_out) <= rpc_out_old) ) {
                         status = "red";
                         break;
                 }
@@ -342,8 +342,8 @@ struct dirent **state_namelist = NULL;
                     workpath, errno);
         } else
                 close(ientry);
-        rpc_in_old = rpc_in;
-        rpc_out_old = rpc_out;
+        rpc_in_old = atomic_fetch_uint64_t(&rpc_in);
+        rpc_out_old = atomic_fetch_uint64_t(&rpc_out);
         if(state_namelist)
           free_dirent(n, state_namelist);
         return;
