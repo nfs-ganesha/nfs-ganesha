@@ -199,9 +199,9 @@ nfs_Readdir(nfs_arg_t *arg,
      /* Parse out request arguments and decide how many entries we
         want.  For NFSv3, deal with the cookie verifier. */
 
-     count = (arg->arg_readdir3.count * 9 / 10);
+     count = arg->arg_readdir3.count;
      cookie = arg->arg_readdir3.cookie;
-     estimated_num_entries = MIN(count / sizeof(entry3), 50);
+     estimated_num_entries = MIN(count / (sizeof(entry3)-sizeof(char *)), 120);
      LogFullDebug(COMPONENT_NFS_READDIR,
                   "---> nfs3_Readdir: count=%lu  cookie=%"PRIu64"  "
                   "estimated_num_entries=%lu",
@@ -419,7 +419,8 @@ nfs3_readdir_callback(void *opaque,
      /* Length of the current filename */
      size_t namelen = strlen(cb_parms->name);
      entry3 *e3 = tracker->entries + tracker->count;
-     size_t need = sizeof(entry3) + ((namelen + 3) & ~3) + 4;
+     size_t need = sizeof(entry3) + ((namelen + 3) & ~3) + 4
+       - sizeof(char *) - sizeof(entry3 *);
 
      if (tracker->count == tracker->total_entries) {
           cb_parms->in_result = false;
