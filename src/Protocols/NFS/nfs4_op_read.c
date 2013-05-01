@@ -321,6 +321,8 @@ nfs4_op_read(struct nfs_argop4 *op,
 					&sync);
 	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_READ4.status = nfs4_Errno(cache_status);
+                gsh_free(bufferdata);
+                res_READ4.READ4res_u.resok4.data.data_val = NULL;
                 goto done;
         }
 
@@ -328,6 +330,8 @@ nfs4_op_read(struct nfs_argop4 *op,
                              data->req_ctx,
                              &file_size) != CACHE_INODE_SUCCESS) {
                 res_READ4.status = nfs4_Errno(cache_status);
+                gsh_free(bufferdata);
+                res_READ4.READ4res_u.resok4.data.data_val = NULL;
                 goto done;
         }
 
@@ -380,7 +384,7 @@ void
 nfs4_op_read_Free(READ4res *resp)
 {
         if (resp->status == NFS4_OK) {
-                if (resp->READ4res_u.resok4.data.data_len != 0) {
+                if (resp->READ4res_u.resok4.data.data_val != NULL) {
                         gsh_free(resp->READ4res_u.resok4.data.data_val);
                 }
         }
@@ -446,7 +450,7 @@ static int op_dsread(struct nfs_argop4 *op,
                                            .resok4.data.data_len,
                                            &eof)) != NFS4_OK) {
                 gsh_free(buffer);
-                buffer = NULL;
+                res_READ4.READ4res_u.resok4.data.data_val = NULL;
         }
 
         if (eof) {
