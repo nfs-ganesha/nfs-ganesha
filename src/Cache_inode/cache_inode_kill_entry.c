@@ -73,16 +73,10 @@
 void
 cache_inode_kill_entry(cache_entry_t *entry)
 {
-     struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
-     struct gsh_buffdesc fh_desc;
-
      LogInfo(COMPONENT_CACHE_INODE,
              "Using cache_inode_kill_entry for entry %p", entry);
 
      cache_inode_lru_cleanup_push(entry);
-
-     /* Use the handle to build the key */
-     pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
 
      /* And zap it */
      cih_remove_checked(entry);
