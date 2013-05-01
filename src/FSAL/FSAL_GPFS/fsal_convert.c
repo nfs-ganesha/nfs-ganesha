@@ -169,8 +169,6 @@ int posix2fsal_error(int posix_errorcode)
     case ENOTEMPTY:
     case -ENOTEMPTY:
 #endif
-      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOTEMPTY",
-              posix_errorcode);
       return ERR_FSAL_NOTEMPTY;
 
     case ESTALE:
