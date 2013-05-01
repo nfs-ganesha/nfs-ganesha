@@ -436,7 +436,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
 static uint32_t reap_lane = 0; /* by definition */
 
 static inline cache_inode_lru_t *
-lru_reap_impl(uint32_t flags)
+lru_reap_impl(enum lru_q_id qid)
 {
      uint32_t lane;
      struct lru_q_lane *qlane;
@@ -451,7 +451,7 @@ lru_reap_impl(uint32_t flags)
      lane = LRU_NEXT(reap_lane);
      for (ix = 0; ix < LRU_N_Q_LANES; ++ix, lane = LRU_NEXT(reap_lane)) {
           qlane = &LRU[lane];
-          lq = (flags & LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
+          lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
           cnt = 0;
 
           QLOCK(qlane);
@@ -518,14 +518,9 @@ out:
 static inline cache_inode_lru_t *
 lru_try_reap_entry(void)
 {
-     uint32_t tflags;
      cache_inode_lru_t *lru;
 
-     pthread_mutex_lock(&lru_mtx);
-     tflags = lru_state.flags;
-     pthread_mutex_unlock(&lru_mtx);
-
-     if (! (tflags & LRU_STATE_RECLAIMING))
+     if (lru_state.entries_used < lru_state.entries_hiwat)
 	     return (NULL);
 
      lru = lru_reap_impl(LRU_ENTRY_L2);
@@ -629,36 +624,6 @@ cache_inode_lru_cleanup(void)
 }
 
 /**
- * @param Sum the per-lane counts of pinned and un-pinned items.
- *
- * An approximate count is ok.
- *
- * @param[out] t_count  Appx. count of entries in L1+L2
- * @param[out] pinned_t_count Appx. count of entries in pinned
- */
-static void
-lru_counts(uint64_t *t_count,
-	   uint64_t *pinned_t_count)
-{
-	size_t lane;
-	struct lru_q_lane *qlane;
-	uint64_t aging = 0;
-	uint64_t pinned = 0;
-
-	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-		qlane =  &LRU[lane];
-		/* we're relying on atomic fetch merely for a stable
-		 * value (just in case we're not guaranteed one) */
-		aging += atomic_fetch_uint64_t(&qlane->L1.size);
-		aging += atomic_fetch_uint64_t(&qlane->L2.size);
-	        pinned += atomic_fetch_uint64_t(&qlane->pinned.size);
-	}
-
-        *t_count = aging;
-	*pinned_t_count = pinned;
-}
-
-/**
  * @brief Function that executes in the lru thread
  *
  * This function performs long-term reorganization, compaction, and
@@ -718,8 +683,7 @@ lru_run(struct fridgethr_context *ctx)
      uint32_t n_finalized;
      uint32_t fdratepersec=1, fds_avg, fddelta;
      float fdnorm, fdwait_ratio, fdmulti;
-     uint64_t count, pinned_count;
-     time_t threadwait = threadwait = fridgethr_getwait(ctx);
+     time_t threadwait = fridgethr_getwait(ctx);
      /* True if we are taking extreme measures to reclaim FDs */
      bool extremis = false;
      /* Total work done in all passes so far.  If this exceeds the
@@ -746,29 +710,9 @@ lru_run(struct fridgethr_context *ctx)
 	     lru_state.futility = 0;
      }
 
-
-     /* First, sum the queue counts.  This lets us know where we are
-	relative to our watermarks. */
-     lru_counts(&count, &pinned_count);
-
-     LogDebug(COMPONENT_CACHE_INODE_LRU,
-	      "%zu non-pinned entries. %zu pinned entries. %zu open fds.",
-	      count, pinned_count, open_fd_count);
-
-     count += pinned_count;
-
      LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		  "lru entries: %zu",
-		  count);
-
-     pthread_mutex_lock(&lru_mtx);
-     if (count >= lru_state.entries_hiwat) {
-	     lru_state.flags |= LRU_STATE_RECLAIMING;
-     }
-     if (count <= lru_state.entries_lowat) {
-	     lru_state.flags &= ~LRU_STATE_RECLAIMING;
-     }
-     pthread_mutex_unlock(&lru_mtx);
+		  lru_state.entries_used);
 
      /* Reap file descriptors.  This is a preliminary example of the
 	L2 functionality rather than something we expect to be
@@ -986,7 +930,7 @@ lru_run(struct fridgethr_context *ctx)
      LogDebug(COMPONENT_CACHE_INODE_LRU,
 	      "After work, open_fd_count:%zd  count:%"PRIu64" fdrate:%u "
 	      "threadwait=%"PRIu64"\n",
-	      open_fd_count, count - totalwork, fdratepersec,
+	      open_fd_count, lru_state.entries_used, fdratepersec,
 	      threadwait);
      LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		  "currentopen=%zd futility=%d totalwork=%zd "
@@ -1029,15 +973,11 @@ cache_inode_lru_pkginit(void)
 
      open_fd_count = 0;
 
-     /* Repurpose some GC policy */
-     lru_state.flags = LRU_STATE_NONE;
-
      /* Set high and low watermark for cache entries.  This seems a
         bit fishy, so come back and revisit this. */
      lru_state.entries_hiwat
           = nfs_param.cache_param.entries_hwmark;
-     lru_state.entries_lowat
-          = nfs_param.cache_param.entries_lwmark;
+     lru_state.entries_used = 0;
 
      /* Find out the system-imposed file descriptor limit */
      if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
@@ -1197,6 +1137,7 @@ alloc_cache_entry(cache_entry_t **entry)
 	}
 
 	status = CACHE_INODE_SUCCESS;
+	atomic_inc_int64_t(&lru_state.entries_used);
 
 out:
 	*entry = nentry;
@@ -1492,6 +1433,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		/* XXX now just cleans (ahem) */
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
+		atomic_dec_int64_t(&lru_state.entries_used);
 	} /* refcnt == 0 */
 out:
         return;
@@ -1531,6 +1473,7 @@ cache_inode_lru_putback(cache_entry_t *entry,
 
     /* We do NOT call lru_clean_entry, since it was never initialized. */
     pool_free(cache_inode_entry_pool, entry);
+	atomic_dec_int64_t(&lru_state.entries_used);
 
     if (! qlocked)
         QUNLOCK(qlane);
