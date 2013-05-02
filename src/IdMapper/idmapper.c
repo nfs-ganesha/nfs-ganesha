@@ -250,19 +250,6 @@ int name2uid(char *name, uid_t * puid)
   int rc;
 #endif
 
-  /* NFSv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
-   * choice is made to map them to root */
-  if(!strncmp(name, "nfs/", 4))
-    {
-      /* This is a "root" request made from the hostbased nfs principal, use root */
-      LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2uid: mapping %s to root (uid = 0)",
-                   name);
-      *puid = 0;
-
-      return 1;
-    }
-
   if(uidmap_get(name, &uid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -408,6 +395,18 @@ int principal2uid(char *principal, uid_t * puid)
   gid_t gss_gid;
   uid_t gss_uid;
   int rc;
+
+  /* NFSv4 specific features: RPCSEC_GSS will provide principal like nfs/<host>
+   * choice is made to map them to root */
+  if(!strncmp(principal, "nfs/", 4))
+    {
+      /* This is a "root" request made from the hostbased nfs principal, use root */
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "principal2uid: mapping %s to root (uid = 0)", principal);
+      *puid = 0;
+
+      return 1;
+    }
 
   if(uidmap_get(principal, &gss_uid) != ID_MAPPER_SUCCESS)
     {
