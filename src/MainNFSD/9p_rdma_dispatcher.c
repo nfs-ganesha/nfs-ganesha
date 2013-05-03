@@ -270,6 +270,8 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
   trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
   trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
   inet_pton(AF_INET, "0.0.0.0", &trans_attr.addr.sa_in.sin_addr);
+  trans_attr.worker_count = 1;
+  trans_attr.worker_queue_size = 20;
 
   SetNameFunction("_9p_rdma_dispatch_thr" ) ;
 
