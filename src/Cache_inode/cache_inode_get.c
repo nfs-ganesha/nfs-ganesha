@@ -63,11 +63,6 @@
  * If a cache entry is returned, its refcount is incremented by one.
  *
  * @param[in]  fsdata     File system data
- * @param[in]  associated An entry to check against the entry looked
- *                        up.  If they are identical, we take an early
- *                        exit to avoid deadlocks.  This is currently
- *                        used by LOOKUPP to avoid problems caused by
- *                        export roots being their own parents.
  * @param[in]  req_ctx    Request context (user creds, client address etc)
  * @param[out] entry      The entry
  *
@@ -75,7 +70,6 @@
  */
 cache_inode_status_t
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
-		cache_entry_t *associated,
 		const struct req_op_context *req_ctx,
 		cache_entry_t **entry)
 {
@@ -93,11 +87,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	 /* take an extra reference within the critical section */
 	 cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 	 cih_latch_rele(&latch);
-	 if (*entry == associated) {
-	     /* Take a quick exit so we don't invert lock ordering. */
-	     return (CACHE_INODE_SUCCESS);
-       } else {
-	     status = CACHE_INODE_SUCCESS;
+
 	     /* This is the replacement for cache_inode_renew_entry.
 		Rather than calling that function at the start of
 		every cache_inode call with the inode locked, we call
@@ -127,7 +117,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                  PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
 	     }
 	     return status;
-	 }
      }
 
      /* Cache miss, allocate a new entry */

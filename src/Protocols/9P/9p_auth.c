@@ -126,7 +126,6 @@ int _9p_auth( _9p_request_data_t * preq9p,
 					    &fsdata.fh_desc ) ;
 
   cache_status = cache_inode_get( &fsdata,
-				  NULL,
 				  &pfid->op_context,
 				  &pfid->pentry ) ;
 

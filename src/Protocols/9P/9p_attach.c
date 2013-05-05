@@ -129,7 +129,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   /* refcount +1 */
   cache_status = cache_inode_get( &fsdata,
-				  NULL,
 				  &pfid->op_context,
 				  &pfid->pentry) ;
 

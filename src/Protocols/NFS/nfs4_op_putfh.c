@@ -156,7 +156,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                                 return res_PUTFH4->status;
 			}
                         /* Build the pentry.  Refcount +1. */
-			cache_inode_get(&fsal_data, NULL,
+			cache_inode_get(&fsal_data,
 					data->req_ctx,
 					&data->current_entry);
                         if(data->current_entry == NULL) {
