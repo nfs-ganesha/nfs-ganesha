@@ -122,7 +122,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 		goto badhdl;
 	}
 	cache_inode_get(&fsal_data,
-			NULL,
 			req_ctx,
 			&entry);
 	if(entry == NULL){
