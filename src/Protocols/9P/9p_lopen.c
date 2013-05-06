@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -40,9 +41,9 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
-
 
 int _9p_lopen( _9p_request_data_t * preq9p, 
                void  * pworker_data,
@@ -86,12 +87,21 @@ int _9p_lopen( _9p_request_data_t * preq9p,
 
   if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, SOCKET,...) may require to be opened too */
    {
+     if(! pfid->opens)
+      {
+        cache_status = cache_inode_inc_pin_ref(pfid->pentry);
+        if(cache_status != CACHE_INODE_SUCCESS)
+            return  _9p_rerror( preq9p, pworker_data, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      }
+      ++pfid->opens;
+
       cache_status = cache_inode_open(pfid->pentry,
 				      openflags,
 				      &pfid->op_context,
 				      0);
       if(cache_status != CACHE_INODE_SUCCESS)
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      
    }
 
    /* iounit = 0 by default */

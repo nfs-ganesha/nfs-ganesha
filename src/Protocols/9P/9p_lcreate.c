@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -40,6 +41,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -111,14 +113,14 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
    if(cache_status != CACHE_INODE_SUCCESS)
      return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
       
-   _9p_openflags2FSAL( flags, &openflags ) ; 
+   _9p_openflags2FSAL( flags, &openflags ) ;
 
    cache_status = cache_inode_open(pentry_newfile,
 				   openflags,
 				   &pfid->op_context,
 				   0);
    if(cache_status != CACHE_INODE_SUCCESS)
-     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+     return  _9p_rerror( preq9p, pworker_data, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
@@ -133,6 +135,12 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
    pfid->specdata.xattr.xattr_id = 0 ;
    pfid->specdata.xattr.xattr_content = NULL ;
 
+   /* By definition, first open */
+   cache_status = cache_inode_inc_pin_ref(pentry_newfile);
+   if(cache_status != CACHE_INODE_SUCCESS)
+       return  _9p_rerror( preq9p, pworker_data, msgtag,
+                           _9p_tools_errno( cache_status ), plenout, preply ) ;
+   pfid->opens = 1;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RLCREATE ) ;

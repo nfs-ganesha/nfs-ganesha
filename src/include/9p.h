@@ -293,6 +293,7 @@ typedef struct _9p_fid__
   _9p_qid_t               qid ;
   cache_entry_t         * ppentry ;
   char                    name[MAXNAMLEN] ;
+  u32                     opens ;
   union 
     { 
        u32      iounit ;

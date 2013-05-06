@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -39,6 +40,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -82,8 +84,15 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   /* If object is an opened file, close it */
   if( ( pfid->pentry->type == REGULAR_FILE ) && 
-      is_open( pfid->pentry )  )
+      is_open( pfid->pentry ) )
    {
+     if( pfid->opens )
+      {
+        cache_inode_dec_pin_ref(pfid->pentry, TRUE);
+        pfid->opens = 0; /* dead */
+      }
+
+     /* Under this flag, pin ref is still checked */
      cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
      if(cache_status != CACHE_INODE_SUCCESS)
