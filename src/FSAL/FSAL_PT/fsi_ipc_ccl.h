@@ -94,7 +94,7 @@ struct CCLClientOpDynamicFsInfoRspMsg {
 // intent is not to change this for every minor. For instance, the current
 // minor may be 172, but the version may remain "4.1.0.164", indicating that
 // the last minor this file changed is in minor 164. 
-#define PT_FSI_CCL_VERSION "4.1.0.199" 
+#define PT_FSI_CCL_VERSION "4.1.0.201" 
 
 #define UNUSED_ARG(arg) do { (void)(arg); } while (0)
 
@@ -940,6 +940,14 @@ int ccl_up_mutex_unlock(pthread_mutex_t *mutex);
 unsigned long ccl_up_self();
 void ccl_close_listener(int closeHandle_req_msgq,
                         int closeHandle_rsp_msgq);
+
+// Added the following functions for lock mutex from FSAL PT side
+int ccl_lock_io_operation_mutex(int handle_index);
+int ccl_unlock_io_operation_mutex(int handle_index);
+int ccl_lock_io_handle_mutex(int handle_index);
+int ccl_unlock_io_handle_mutex(int handle_index);
+int ccl_lock_file_mutex();
+int ccl_unlock_file_mutex();
 
 // dir handle mutex
 extern pthread_mutex_t g_dir_mutex;

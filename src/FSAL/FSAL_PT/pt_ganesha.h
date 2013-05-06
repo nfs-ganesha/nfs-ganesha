@@ -237,6 +237,13 @@ struct vfs_fn_pointers {
   int (*check_version_fn)(char *version);
   void (*close_listener_fn)(int closeHandle_req_msgq,
 			    int closeHandle_rsp_msgq);
+  
+  int (*ccl_lock_io_operation_mutex_fn)(int handle_index);
+  int (*ccl_unlock_io_operation_mutex_fn)(int handle_index);
+  int (*ccl_lock_io_handle_mutex_fn)(int handle_index);
+  int (*ccl_unlock_io_handle_mutex_fn)(int handle_index);
+  int (*ccl_lock_file_mutex_fn)();
+  int (*ccl_unlock_file_mutex_fn)();
 };
 
 #define CCL_INIT                           g_ccl_function_map.init_fn
@@ -309,6 +316,12 @@ struct vfs_fn_pointers {
 #define CCL_GET_VERSION                    g_ccl_function_map.get_version_fn
 #define CCL_CHECK_VERSION                  g_ccl_function_map.check_version_fn
 #define CCL_CLOSE_LISTENER                 g_ccl_function_map.close_listener_fn
+#define CCL_LOCK_IO_OPERATION_MUTEX        g_ccl_function_map.ccl_lock_io_operation_mutex_fn
+#define CCL_UNLOCK_IO_OPERATION_MUTEX      g_ccl_function_map.ccl_unlock_io_operation_mutex_fn
+#define CCL_LOCK_IO_HANDLE_MUTEX           g_ccl_function_map.ccl_lock_io_handle_mutex_fn
+#define CCL_UNLOCK_IO_HANDLE_MUTEX         g_ccl_function_map.ccl_unlock_io_handle_mutex_fn
+#define CCL_LOCK_FILE_MUTEX                g_ccl_function_map.ccl_lock_file_mutex_fn
+#define CCL_UNLOCK_FILE_MUTEX              g_ccl_function_map.ccl_unlock_file_mutex_fn
 
 // function map to be used througout FSAL layer
 extern char   * g_shm_at_fsal;              // SHM Base Address
@@ -322,7 +335,7 @@ extern struct file_handles_struct_t * g_fsi_handles_fsal;  // FSI client
 extern struct dir_handles_struct_t  * g_fsi_dir_handles_fsal; // FSI client Dir
                                                               // handles
 extern struct acl_handles_struct_t  * g_fsi_acl_handles_fsal; // FSI client ACL
-                                                              // handles
+
 
 #define fsi_dirent                 dirent
 #define FSI_MAX_HANDLE_CACHE_ENTRY 2500

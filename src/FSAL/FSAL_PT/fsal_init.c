@@ -357,7 +357,19 @@ pt_ganesha_fsal_ccl_init()
               "ccl_update_cache_stat")                                     &&
       DL_LOAD(&g_ccl_function_map.get_version_fn, "ccl_get_version")       &&
       DL_LOAD(&g_ccl_function_map.check_version_fn, "ccl_check_version")   &&
-      DL_LOAD(&g_ccl_function_map.close_listener_fn, "ccl_close_listener")
+      DL_LOAD(&g_ccl_function_map.close_listener_fn, "ccl_close_listener") &&
+      DL_LOAD(&g_ccl_function_map.ccl_lock_io_operation_mutex_fn, 
+              "ccl_lock_io_operation_mutex")                               &&
+      DL_LOAD(&g_ccl_function_map.ccl_unlock_io_operation_mutex_fn, 
+              "ccl_unlock_io_operation_mutex")                             && 
+      DL_LOAD(&g_ccl_function_map.ccl_lock_io_handle_mutex_fn,
+              "ccl_lock_io_handle_mutex")                                  &&
+      DL_LOAD(&g_ccl_function_map.ccl_unlock_io_handle_mutex_fn,
+              "ccl_unlock_io_handle_mutex")                                &&
+      DL_LOAD(&g_ccl_function_map.ccl_lock_file_mutex_fn,  
+              "ccl_lock_file_mutex")                                       &&
+      DL_LOAD(&g_ccl_function_map.ccl_unlock_file_mutex_fn,
+              "ccl_unlock_file_mutex")  
       ) {
   } else {
     LogCrit(COMPONENT_FSAL, "Failed to load function: %s", load_return);
