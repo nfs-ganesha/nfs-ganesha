@@ -8,5 +8,5 @@
 BASE=`pwd`
 mkdir -p build 
 cd build 
-cmake CCMAKE_BUILD_TYPE=Debug $BASE/src && make && make cppcheck-xml
+cmake CCMAKE_BUILD_TYPE=Debug $BASE/src && make 
 
