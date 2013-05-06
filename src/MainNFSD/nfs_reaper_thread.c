@@ -168,7 +168,7 @@ static void reaper_run(struct fridgethr_context *ctx)
       rst->logged = (rst->count == 0);
 
 #ifdef DEBUG_SAL
-      if(count == 0)
+      if(rst->count == 0)
 	{
 	  dump_all_states();
 	  dump_all_owners();
