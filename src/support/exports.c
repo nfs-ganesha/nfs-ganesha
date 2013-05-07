@@ -1842,6 +1842,39 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
 }
 
+/**
+ * @brief Free resources attached to an export
+ *
+ * @param export [IN] pointer to export
+ *
+ * @return true if all went well
+ */
+
+void free_export_resources(exportlist_t *export)
+{
+	fsal_status_t fsal_status;
+
+	FreeClientList(&export->clients);
+	if(export->exp_root_cache_inode)
+		cache_inode_put(export->exp_root_cache_inode);
+	export->exp_root_cache_inode = NULL;
+	if(export->export_hdl != NULL) {
+		if(export->export_hdl->ops->put(export->export_hdl) == 0) {
+			fsal_status =
+				export->export_hdl->ops->release(export->export_hdl);
+			if(FSAL_IS_ERROR(fsal_status)) {
+				LogCrit(COMPONENT_CONFIG,
+					"Cannot release export object, quitting");
+			}
+		} else {
+			LogCrit(COMPONENT_CONFIG,
+				"Cannot put export object, quitting");
+		}
+	}
+	export->export_hdl = NULL;
+	/* free strings here */
+}
+
 static char *client_root_access[] = { "*" };
 
 /**
@@ -2004,27 +2037,29 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
     return nb_entries;
 }
 
-static const char *
-cidr_net(unsigned int addr, unsigned int netmask, char *buf, socklen_t len)
+/**
+ * @brief pkginit callback to initialize exports from nfs_init
+ */
+
+static bool init_export(struct gsh_export *cl, void *state)
 {
-        unsigned int rb = ntohl(netmask);
-        int bitcnt = 33;
+	cache_inode_status_t status;
+	cache_entry_t *entry;
 
-        if (inet_ntop(AF_INET, &addr, buf, len) == NULL)
-                return "???";
+	status = nfs_export_get_root_entry(&cl->export, &entry);
+	if(status != CACHE_INODE_SUCCESS || entry == NULL)
+		return false;
+	else
+		return true;
+}
 
-        /* Get the rightmost non-zero bit */
-        rb &= - rb;
-        if(!rb) {
-                bitcnt = 0;
-        } else while (rb) {
-                rb >>= 1;
-                bitcnt--;
-        }
+/**
+ * @brief Initialize exports over a live cache inode and fsal layer
+ */
 
-        rb = strlen(buf);
-        snprintf(buf+rb, len - rb, "/%d", bitcnt);
-        return buf;
+void exports_pkginit(void)
+{
+	foreach_gsh_export(init_export, NULL);
 }
 
 /**
