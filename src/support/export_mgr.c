@@ -62,6 +62,7 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
+#include "nfs_tools.h"
 
 
 /**
@@ -265,6 +266,55 @@ void put_gsh_export(struct gsh_export *export)
 {
 	assert(export->refcnt > 0);
 	atomic_dec_int64_t(&export->refcnt);
+}
+
+/**
+ * @brief Remove the export management struct
+ *
+ * Remove it from the AVL tree.
+ */
+
+bool remove_gsh_export(int export_id)
+{
+	struct avltree_node *node = NULL;
+	struct avltree_node *cnode = NULL;
+	struct gsh_export *exp = NULL;
+	exportlist_t *export;
+	struct export_stats *export_st;
+	struct gsh_export v;
+        void **cache_slot;
+	bool removed = true;
+
+	v.export_id = export_id;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	node = avltree_lookup(&v.node_k, &export_by_id.t);
+	if(node) {
+		exp = avltree_container_of(node, struct gsh_export, node_k);
+		if(exp->refcnt > 0) {
+			removed = false;
+			goto out;
+		}
+		cache_slot = (void **)
+			&(export_by_id.cache[eid_cache_offsetof(&export_by_id, export_id)]);
+		cnode = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
+		if(node == cnode)
+			atomic_store_voidptr(cache_slot, NULL);
+		avltree_remove(node, &export_by_id.t);
+		export = &exp->export;
+		glist_del(&export->exp_list);
+	}
+out:
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	if(removed && node) {
+		free_export_resources(export);
+		export_st = container_of(exp, struct export_stats, export);
+		server_stats_free(&export_st->st);
+		export_st = container_of(exp, struct export_stats, export);
+ 
+		gsh_free(exp);
+	}
+	return removed;
 }
 
 /**
