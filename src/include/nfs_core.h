@@ -340,8 +340,6 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 void nfs_Init_admin_thread(void);
 void admin_replace_exports(void);
 void admin_halt(void);
-exportlist_t *RemoveExportEntry(exportlist_t *exportEntry);
-exportlist_t *GetExportEntry(char *exportPath);
 
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);
