@@ -7,6 +7,7 @@ include_directories(
 SET(fsalup_STAT_SRCS
    fsal_up_top.c
    fsal_up_utils.c
+   fsal_up_async.c
 )
 
 add_library(fsalup STATIC ${fsalup_STAT_SRCS})
