@@ -661,6 +661,7 @@ bool Check_nfs4_seqid(state_owner_t *owner,
       LogFullDebug(COMPONENT_STATE,
                    "%s: New {%s} doesn't have saved seqid, req seqid %u",
                    tag, str, seqid);
+      return true;
     }
 
   /* Check for valid next seqid */
