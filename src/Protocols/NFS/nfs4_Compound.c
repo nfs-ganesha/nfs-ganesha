@@ -414,18 +414,6 @@ int nfs4_Compound(nfs_arg_t *arg,
       return NFS_REQ_OK;
     }
 
-  /* Check if this export supports NFSv4 */
-  if ((export->options & EXPORT_OPTION_NFSV4) == 0)
-   {
-      LogMajor(COMPONENT_NFS_V4,
-               "The export(id=%u) does not support NFSv4... rejecting it",
-               export->id);
-      res->res_compound4.status = NFS4ERR_PERM ;
-      /* Don't alloc and fill res->res_compound4.resarray.resarray_val[0]
-         as it would not be freed later */
-      return NFS_REQ_OK ;
-   }
-
   /* Check for too long request */
   if(argarray_len > 30)
     {
@@ -447,14 +435,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   /* Minor version related stuff */
   data.minorversion = compound4_minor;
-  /**
-   * @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be
-   * set here
-   */
-
-  data.pfullexportlist = export; /* Full export list is provided in
-                                    input */
-  data.pexport = export;
   data.pworker = worker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = req;
@@ -713,7 +693,7 @@ int nfs4_Compound(nfs_arg_t *arg,
                    (int) sizeof(nfs_res_t));
 
       /* Indicate to nfs4_Compound_Free that this reply is cached. */
-      res->res_compound4_extended.res_cached = TRUE;
+      res->res_compound4_extended.res_cached = true;
 
       /* If the cache is already in use, free it. */
       if(data.pcached_res->res_cached)
