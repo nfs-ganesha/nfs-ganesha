@@ -54,6 +54,7 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "idmapper.h"
+#include "export_mgr.h"
 
 const char *Rpc_gss_svc_name[] =
     { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
@@ -63,12 +64,10 @@ const char *Rpc_gss_svc_name[] =
 /**
  * @brief Gets an export entry from its export id.
  *
- * @todo Exports should really be managed as an object...  exportroot
- * should be a static in this module and the only thing that leaks out
- * to the rest of the code is entries that are created here and
- * searched for here.  this means that the exportroot arg here will
- * disappear at some point, probably when exportlist_t is overhauled
- * to use nlm_list etc.
+ * @todo Danger Will Robinson!!!
+ * We put back the gsh_export but pass back a pointer to the export
+ * inside it.  Phase out calls to this.  the req_ctx has what we
+ * (may) need and it is properly ref counted.
  *
  * @param[in] exportroot The root for the export list
  * @param[in] exportid   The id for the entry to be found.
@@ -79,18 +78,14 @@ const char *Rpc_gss_svc_name[] =
 exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short exportid)
 {
   exportlist_t *piter;
-  struct glist_head * glist;
+  struct gsh_export *exp;
 
-  glist_for_each(glist, exportroot)
-    {
-      piter = glist_entry(glist, exportlist_t, exp_list);
-
-      if(piter->id == exportid)
-        {
-          return piter;
-        }
-    }                           /* for */
-  return NULL;
+  exp = get_gsh_export(exportid, true);
+  if(exp == NULL)
+	  return NULL;
+  piter = &exp->export;
+  put_gsh_export(exp);
+  return piter;
 }
 
 /** @todo we can avl tag but path has to be ordered
@@ -131,7 +126,8 @@ exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if(p_current_item->fullpath[len_path] != '/')
+		if(p_current_item->fullpath[len_path] != '/' &&
+		   p_current_item->fullpath[len_path] != '\0')
 			continue;
 		/* we agree on size, now compare the leadingt substring
 		 */
