@@ -1086,16 +1086,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
           "9P resources successfully initialized");
 #endif /* _USE_9P */
 
-  /* Create the root entries for each exported FS */
-  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != true)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error initializing Cache Inode root entries");
-    }
-
-  LogInfo(COMPONENT_INIT,
-          "Cache Inode root entries successfully created");
-
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
   if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)

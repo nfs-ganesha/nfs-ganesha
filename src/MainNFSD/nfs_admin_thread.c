@@ -331,15 +331,6 @@ int rebuild_export_list(void)
       return 0;
     }
 
-  /* At least one worker thread should exist. Each worker thread has a pointer to
-   * the same hash table. */
-  if(!nfs_export_create_root_entry(&temp_exportlist))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "replace_exports: Error initializing Cache Inode root entries");
-      return 0;
-    }
-
   return 1;
 #else
   return 0;
@@ -352,9 +343,9 @@ static int ChangeoverExports()
 #if 0
   exportlist_t *pcurrent = NULL;
 
-  /* Now we know that the configuration was parsed successfully.
-   * And that worker threads are no longer accessing the export list.
-   * Remove all but the first export entry in the exports list.
+  /**
+   * @@TODO@@ This is all totally bogus code now that exports are under the
+   * control of the export manager. Left as unfinished business.
    */
   if (nfs_param.pexportlist)
     pcurrent = nfs_param.pexportlist->next;
