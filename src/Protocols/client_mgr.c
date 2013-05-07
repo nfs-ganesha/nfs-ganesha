@@ -812,13 +812,18 @@ static struct gsh_dbus_interface *cltmgr_interfaces[] = {
 	NULL
 };
 
+void dbus_client_init(void)
+{
+	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
+}
+
 #endif /* USE_DBUS_STATS */
 
 /**
  * @brief Initialize client manager
  */
 
-void gsh_client_init(void)
+void client_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
@@ -830,9 +835,6 @@ void gsh_client_init(void)
 #endif
 	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
-#ifdef USE_DBUS_STATS
-	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
-#endif
 	client_by_ip.cache_sz = 32767;
 	client_by_ip.cache = gsh_calloc(client_by_ip.cache_sz,
 					sizeof(struct avltree_node *));

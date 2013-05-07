@@ -67,9 +67,9 @@
 #include "sal_functions.h"
 #include "fridgethr.h"
 #include "idmapper.h"
+#include "delayed_exec.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
-#include "delayed_exec.h"
 
 extern struct fridgethr *req_fridge;
 
@@ -457,6 +457,13 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   cache_inode_status_t cache_inode_status;
 
 
+  /*
+   * Initialize exports and clients so config parsing can use them
+   * early.
+   */
+  client_pkginit();
+  export_pkginit();
+
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0)
     {
@@ -808,9 +815,11 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef USE_DBUS
   /* DBUS init */
   gsh_dbus_pkginit();
+#ifdef USE_DBUS_STATS
+  dbus_export_init();
+  dbus_client_init();
 #endif
-  gsh_client_init();
-  gsh_export_init();  /* here for now since triggered by dbus stats */
+#endif
 
   /* Cache Inode Initialisation */
   cache_status = cache_inode_init();
@@ -838,6 +847,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		   "Unable to initialize LRU subsystem: %d.",
 		   rc);
   }
+
+  /* finish the job with exports by caching the root entries
+   */
+  exports_pkginit();
 
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
                                  sizeof(nfs41_session_t),

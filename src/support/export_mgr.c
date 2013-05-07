@@ -695,13 +695,17 @@ static struct gsh_dbus_interface *export_interfaces[] = {
 	NULL
 };
 
+void dbus_export_init(void)
+{
+	gsh_dbus_register_path("ExportMgr", export_interfaces);
+}
 #endif /* USE_DBUS_STATS */
 
 /**
  * @brief Initialize export manager
  */
 
-void gsh_export_init(void)
+void export_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
@@ -713,13 +717,9 @@ void gsh_export_init(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
-	export_by_id.cache_sz = 32767;
+	export_by_id.cache_sz = 255;
 	export_by_id.cache = gsh_calloc(export_by_id.cache_sz,
 					sizeof(struct avltree_node *));
-#ifdef USE_DBUS_STATS
-	gsh_dbus_register_path("ExportMgr", export_interfaces);
-#endif
 }
-
 
 /** @} */
