@@ -58,6 +58,8 @@
 #include "client_mgr.h"
 #include "export_mgr.h"
 #include "server_stats_private.h"
+#include "abstract_atomic.h"
+#include "gsh_intrinsic.h"
 #include "server_stats.h"
 
 
@@ -67,9 +69,77 @@
 struct client_by_ip {
 	struct avltree t;
 	pthread_rwlock_t lock;
+        struct avltree_node **cache;
+	uint32_t cache_sz;
 };
 
 static struct client_by_ip client_by_ip;
+
+/**
+ * @brief Compute cache slot for an entry
+ *
+ * This function computes a hash slot, taking an address modulo the
+ * number of cache slotes (which should be prime).
+ *
+ * @param wt [in] The table
+ * @param ptr [in] Entry address
+ *
+ * @return The computed offset.
+ */
+static inline uint32_t
+eip_cache_offsetof(struct client_by_ip *eid, uint32_t k)
+{
+	return (k % eid->cache_sz);
+}
+
+/**
+ * @brief Atomically fetch a void *
+ *
+ * This function atomically fetches the value indicated by the
+ * supplied pointer.
+ *
+ * @param[in,out] var Pointer to the variable to fetch
+ *
+ * @return the value pointed to by var.
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline void *
+atomic_fetch_voidptr(void **var)
+{
+     return __atomic_load_n(var, __ATOMIC_SEQ_CST);
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline void *
+atomic_fetch_voidptr(void **var)
+{
+     return __sync_fetch_and_add(var, 0);
+}
+#endif
+
+/**
+ * @brief Atomically store a void *
+ *
+ * This function atomically fetches the value indicated by the
+ * supplied pointer.
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val The value to store
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline void
+atomic_store_voidptr(void **var, void *val)
+{
+     __atomic_store_n(var, val, __ATOMIC_SEQ_CST);
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline void
+atomic_store_voidptr(void **var, void *val)
+{
+     (void)__sync_lock_test_and_set(var, 0);
+}
+#endif
 
 /**
  * @brief IP address comparator for AVL tree walk
@@ -114,16 +184,24 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
 	struct server_stats *server_st;
 	struct gsh_client v;
 	uint8_t *addr = NULL;
+	uint32_t ipaddr;
 	int addr_len = 0;
+        void **cache_slot;
 
 	switch(client_ipaddr->ss_family) {
 	case AF_INET:
 		addr = (uint8_t *)&((struct sockaddr_in *)client_ipaddr)->sin_addr;
 		addr_len = 4;
+		memcpy(&ipaddr,
+		       (uint8_t *)&((struct sockaddr_in *)client_ipaddr)->sin_addr,
+		       sizeof(ipaddr));
 		break;
 	case AF_INET6:
 		addr = (uint8_t *)&((struct sockaddr_in6 *)client_ipaddr)->sin6_addr;
 		addr_len = 16;
+		memcpy(&ipaddr,
+		       (uint8_t *)&((struct sockaddr_in6 *)client_ipaddr)->sin6_addr,
+		       sizeof(ipaddr));
 		break;
 	default:
 		assert(0);
@@ -132,9 +210,28 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
 	v.addr.len = addr_len;
 
 	PTHREAD_RWLOCK_rdlock(&client_by_ip.lock);
+
+        /* check cache */
+        cache_slot = (void **)
+            &(client_by_ip.cache[eip_cache_offsetof(&client_by_ip, ipaddr)]);
+        node = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
+        if (node) {
+            if (client_ip_cmpf(&v.node_k, node) == 0) {
+                /* got it in 1 */
+		LogDebug(COMPONENT_HASHTABLE_CACHE,
+                         "client_mgr cache hit slot %d\n",
+                         eip_cache_offsetof(&client_by_ip, ipaddr));
+		cl =  avltree_container_of(node, struct gsh_client, node_k);
+                goto out;
+            }
+        }
+
+	/* fall back to AVL */
 	node = avltree_lookup(&v.node_k, &client_by_ip.t);
 	if(node) {
 		cl = avltree_container_of(node, struct gsh_client, node_k);
+                /* update cache */
+		atomic_store_voidptr(cache_slot, node);
 		goto out;
 	} else if(lookup_only) {
 		PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
@@ -191,21 +288,30 @@ void put_gsh_client(struct gsh_client *client)
 bool remove_gsh_client(sockaddr_t *client_ipaddr)
 {
 	struct avltree_node *node = NULL;
+	struct avltree_node *cnode = NULL;
 	struct gsh_client *cl = NULL;
 	struct server_stats *server_st;
 	struct gsh_client v;
 	uint8_t *addr = NULL;
+	uint32_t ipaddr;
 	int addr_len = 0;
 	bool removed = true;
+        void **cache_slot;
 
 	switch(client_ipaddr->ss_family) {
 	case AF_INET:
 		addr = (uint8_t *)&((struct sockaddr_in *)client_ipaddr)->sin_addr;
 		addr_len = 4;
+		memcpy(&ipaddr,
+		       (uint8_t *)&((struct sockaddr_in *)client_ipaddr)->sin_addr,
+		       sizeof(ipaddr));
 		break;
 	case AF_INET6:
 		addr = (uint8_t *)&((struct sockaddr_in6 *)client_ipaddr)->sin6_addr;
 		addr_len = 16;
+		memcpy(&ipaddr,
+		       (uint8_t *)&((struct sockaddr_in6 *)client_ipaddr)->sin6_addr,
+		       sizeof(ipaddr));
 		break;
 	default:
 		assert(0);
@@ -221,11 +327,16 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 			removed = false;
 			goto out;
 		}
+		cache_slot = (void **)
+			&(client_by_ip.cache[eip_cache_offsetof(&client_by_ip, ipaddr)]);
+		cnode = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
+		if(node == cnode)
+			atomic_store_voidptr(cache_slot, NULL);
 		avltree_remove(node, &client_by_ip.t);
 	}
 out:
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
-	if(node) {
+	if(removed && node) {
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
 		gsh_free(cl);
@@ -722,6 +833,9 @@ void gsh_client_init(void)
 #ifdef USE_DBUS_STATS
 	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
 #endif
+	client_by_ip.cache_sz = 32767;
+	client_by_ip.cache = gsh_calloc(client_by_ip.cache_sz,
+					sizeof(struct avltree_node *));
 }
 
 
