@@ -208,19 +208,21 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
   fsalattr->group = buffstat->st_gid;
   FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
 
-  fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+  /* Use full timer resolution */
+  fsalattr->atime = buffstat->st_atim;
   FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
 
-  fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
+  fsalattr->ctime = buffstat->st_ctim;
   FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
 
-  fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
+  fsalattr->mtime = buffstat->st_mtim;
   FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
-  fsalattr->chgtime
-    = posix2fsal_time(MAX_2(buffstat->st_mtime,
-                            buffstat->st_ctime), 0);
-  fsalattr->change = fsalattr->chgtime.tv_sec;
+  fsalattr->chgtime =
+      (gsh_time_cmp(&buffstat->st_mtim, &buffstat->st_ctim) > 0) ?
+      fsalattr->mtime : fsalattr->ctime;
+
+  fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
   FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
   fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
