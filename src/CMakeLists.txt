@@ -551,13 +551,13 @@ set(GANESHA_CORE
   hashtable
   rpcal
   gssd
-  log
   common_utils
   support
   nfs4callbacks
   cidr
   string_utils
   hash
+  log
   )
 
 if(USE_DBUS)

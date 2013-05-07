@@ -61,6 +61,8 @@
  *
  */
 
+/* The maximum size of a log buffer */
+#define LOG_BUFF_LEN 2048
 #define STR_LEN 256
 
 /*

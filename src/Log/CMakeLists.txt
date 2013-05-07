@@ -11,6 +11,7 @@ endif(USE_DBUS)
 ########### next target ###############
 
 SET(log_STAT_SRCS
+   display.c
    log_functions.c
 )
 
@@ -20,6 +21,7 @@ add_library(log STATIC ${log_STAT_SRCS})
 ########### next target ###############
 
 SET(test_liblog_SRCS
+   test_display.c
    test_liblog_functions.c
 )
 
