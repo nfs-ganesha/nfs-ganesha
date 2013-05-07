@@ -4,6 +4,139 @@ git log --pretty=format:"            %h %an %s"  15-20-port-current-top.. > more
 
             ??????? Frank S. Filz Add document for 1.5 to 2.0 port
 
+            5f97d89 Rong Zeng setting ulimit for open files to 1048576 in nfs-ganesha.gpfs.init.
+            79f4a03 Lance Russell Rebase and repush of S1045874_lwr
+            4c33561 Lance Russell Removed the offending LogInfo. Others in this file are suspect but left them alone.
+            33ed4f1 Rong Zeng Need to free memory in nfs4_op_read when read_size is 0, or cache_inode_rdwr fails.
+            c835724 Allison Henderson Commit for ptv4.1_rev_6
+            830e268 huangz@us.ibm.com This branch has a new fsi_ipc_ccl.h which is needed by both syren fix 81024977 and 81024730. It replaces CCL_UPDATE_HANDLE_NFS_STATE with CCL_SAFE_UPDATE_HANDLE_NFS_STATE in PT FSAL. This branch must go with syren fix 81024977. Changed version back to rev_6, fixed comments of code.
+            67c6ca9 Srikrishan Malik Add rpc_in counter, was removed by e397c4d8
+            9025b05 Rong Zeng Free data in schedule_fsal_up_event_process for UPDATE events.
+            690d68e Srikrishan Malik Fix Use After Free.
+            e918c03 Venkateswararao Jujjuri (JV) Commit for ptv4.1_rev_6
+            2b831f0 Matt Cleveland The expected state in NFS close should be ignored.
+            d0d97e2 Matt Benjamin Avoid attempting to lock "both channels" when the transport is UDP.
+            05ccabb rong zeng Bring in tirpc SVC_LOCK macros changes.
+            5a1970f Matt Benjamin Use SVC_LOCK macros in ganesha_rpc.h.
+            55e8daa Frank S. Filz Handle EROFS in GPFS by converting to ERR_FSAL_ROFS
+            0efbded Matt Cleveland Git fix for syren fix 81024730 (update btime/ctime support).  Ensure ccl_ntimes call stack is updated accordingly.
+            31750a8 Venkateswararao Jujjuri (JV) Commit for ptv4.1_rev_5
+            8ed13ea Thomas Favre-Bulle Fix XFS compilation issues
+            e56bbde rong zeng Fix a return value bug which would cause unused-return warning. This is exposed with -D_FORTIFY_SOURCE=2.
+            99041bd Frank S. Filz Remove LRU_List.h from SAL/Makefile.am
+            ecbf14f Frank S. Filz Handle rounding up nfsv3 handle size to multiple of 4 bytes in nfs3_sizeof_handle
+            cee1437 Frank S. Filz Return NFS4ERR_NOENT instead of NFS4ERR_ACCESS on export client has no access to
+            3c179ff Frank S. Filz Return NFS4ERR_ROFS for NFS v4 open for write on read-only export
+            2b68d77 Frank S. Filz For valgrind, init readdir results
+            ec6ab0e Frank S. Filz Only cache_inode_put(pentry_lookup) if pentry_lookup not NULL
+            d1ba40b Frank S. Filz Add cache_inode_lookup_weakref to readdir
+            a0aee73 Frank S. Filz Fixes in cache_inode_readdir
+            a1b5600 Frank S. Filz Add some cache inode debug
+            bdb8739 Frank S. Filz Use display buffer for NLM netobj display
+            e9b1ca9 Frank S. Filz Use display buffer for FSAL ACL checks
+            83d3afe Frank S. Filz Use display buffer in stat exporter thread
+            dd23a3f Frank S. Filz Use display buffer to display export perms
+            98bd592 Frank S. Filz Use display buffer in fsal_save_ganesha_credentials
+            ab1a70e Frank S. Filz Use display buffer in NFS file handle management
+            b0a16ec Frank S. Filz Use display buffer for NFS v2/v3 handle logging
+            93129f8 Frank S. Filz Use display buffer via LogFullDebugOpaque for NFS v4 handles
+            54fa78f Frank S. Filz Add display handle routines for v2, v3, and NLM
+            25f39e6 Frank S. Filz Use display buffer in FSAL_PROXY
+            5af2250 Frank S. Filz Use display buffer in MFSL
+            4080793 Frank S. Filz Use display_FSAL_handle in cache inode
+            8868c61 Frank S. Filz Add display_FSAL_handle to be used in place of snprintHandle
+            a16b190 Frank S. Filz Use display buffer in nfs4 acls
+            4f516b3 Frank S. Filz Add display_cache_inode_key
+            d1547bc Frank Filz Use display buffer for rest of SAL
+            8e46891 Frank S. Filz Use display buffer for nfs41_session_id.c
+            65849f8 Frank S. Filz Use display buffer in nfs4_state_id.c
+            a80d873 Frank S. Filz Use display buffer in nfs4 clientid
+            6e4047c Frank S. Filz Use display buffer for idmapper
+            542a31a Frank S. Filz Use display buffer for ip stats
+            f273366 Frank S. Filz Use display buffer for ip name
+            0152e01 Frank S. Filz Use display buffer in hash table for display functions
+            25406e7 Frank S. Filz Remove unused cache inode hash display functions
+            20b67b0 Frank S. Filz Disable hash table display functions
+            2102610 Frank S. Filz Add display_sockaddr to use display buffer for sockaddr/sockip
+            314ffb7 Frank S. Filz Use display buffer in log_functions
+            e243f94 Frank S. Filz Add simple log macro to log opaque values
+            21956e8 Frank S. Filz Add display.h and safe display buffers
+            447d5b7 Srikrishan Malik Generate a core dump if a hang is detected.
+            a15038d suhrud Changed Nb_Worker from 128 to 512
+            6ed3eb4 Frank S. Filz Strip ifdefed out code from FSAL_VFS
+            d213b1d Frank S. Filz Remove dead nfs_tools code
+            3db8256 Frank S. Filz Get rid of _USE_GHOSTFS
+            15001e6 Frank S. Filz Remove use of log_snprintf and log_fprintf from shell and Log/test_liblog_functions.c
+            1de0538 Frank S. Filz Fixup cache inode hash functions in shell
+            faf921b Frank S. Filz Make generic ACL code and GPFS ACL code same so GPFS can use generic
+            6524e6d Frank S. Filz Strip deprecated LRU, RPCAL, DRC, File_Content code
+            95bb50e Frank S. Filz Clean up use of NFS4ERR_BADHANDLE vs NFS4ERR_STALE
+            d68d18f Jeremy Bongio removed typo
+            d8a10af rong zeng Bring in two fixes in tirpc for UDP recvmsg handling.
+            a110201 Adam C. Emerson Don't destroy UDP transports on reply error
+            a6dd5d9 Venkateswararao Jujjuri (JV) If lookup fails and error is not CACHE_INODE_NOT_FOUND, return immediately.
+            00d9e38 Matt Cleveland Fix negative reviews.
+            9200e98 Srikrishan Malik Remove --enable-snmp-adm from config options
+            f3b5582 Adam C. Emerson Fix value of DRC_FLAG_RELEASE
+            2c309a7 Frank S. Filz Don't check timestamp or length in creds when comparing v4 clientid verifiier
+            5b5a107 Jeremy Bongio Added padding to 4 bytes to network filehandles. This will allow dNFS to function because it does not do the padding itself.
+            e6d7ec5 rong zeng Pull in fixes in tirpc for: 1) memory leak 2) lock issues causing memory currption
+            6813725 Matt Benjamin Free only allocated xprt private data.
+            548172c Venkateswararao Jujjuri (JV) Wakeup LRU thread only if it is sleeping Also downgrade the message from Event to Info
+            cc3af75 Venkateswararao Jujjuri (JV) Remove wcc pre-attrs form Write and Commit Replies
+            ec1dbc2 Allison Henderson Release change for 4.1 rev 4 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
+            588fb23 Hin C Lam Remove cache entry in unlink path Changed logging level
+            0c0ec4e Lance Russell Correct passing a null when file has no ACLs
+            d4b3e30 Srikrishan Malik update t_after to avoid processing a file multiple times.
+            18a5f3e Hin C Lam Fixed some compilation issues
+            1dad2c6 Jeremy Bongio Merge remote-tracking branch 'remotes/huangz-github/PT_MutexFix_81024127' into ibm_next_pt
+            7a6fd24 huangz This branch requires the syren fix 81024127. This fix improved mutex implementation, using handle mutex for serializing each stream, instead of using gobal mutex for serializing all streams: renamed the g_fsi_name_handle_mutex to g_fsi_cache_handle_mutex, renamed g_handle_mutex to g_file_mutex, deleted g_transid_mutex replaced g_io_mutex with g_io_handle_mutex[] or g_io_operation_mutex[], added g_dir_handle_mutex[], moved all mutex related to CCL to CCL, replaced g_close_mutex[] with g_io_handle_mutex[], added g_io_operation_mutex[] for serializing multiple readers on same handle.
+            daa8c44 Hin C Lam Fixed undefined symbol bug merged pt_util_cache.[ch] into pt_ganesha.[ch]
+            0373aca Allison Henderson Release change for 4.1 rev 3 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
+            48875bf Matthew Cleveland Added header file statement to Makefile.am
+            249c073 Matthew Cleveland Added front end cache table to handle name_from_handle() translation.
+            20f5bf4 Hin C Lam FSAL changes for fix 81024083 This is to increase NFS read to 1MB Signed-off-by: Hin C Lam <hincheuk@us.ibm.com>
+            978b440 Doug Dewey This is version 2 of branch fix "PTFSAL_Close_Handle_Config_parm" which added New PTFSAL paramter for Poller handle close to the ganehsa.conf file under existing "PTFS" clause (block).  Parameter is: "Internal_Handle_Timeout_Sec"
+            b0ccc10 rong zeng Adding back svc_destroy when svc_sendreply fails, also picking up the xprt refcount fix in tirpc.
+            de92d19 Frank S. Filz Fix return code from cache_inode_commit
+            add8058 Frank S. Filz Fix up valgrind memcheck after GPFS handle key was changed
+            49e0269 Matt Cleveland Partner fix for syren fix 81023781. Signed-off-by: Matt Cleveland <mgclevel@us.ibm.com>
+            f66f78c Matt Cleveland Address reviews from revision 3. Signed-off-by: Matt Cleveland <mgclevel@us.ibm.com>
+            b7be356 Matt Cleveland Addressed review of dynamic ccl open branch. Signed-off-by: Matt Cleveland <mgclevel@us.ibm.com>
+            f01fc4b Matthew Cleveland Revised revision 1 of dynamic load branch and added dynamic loading of ccl_up_mutex function calls. Signed-off-by: Matthew Cleveland <mgclevel@us.ibm.com>
+            cc51fdd Jeremy Bongio IP address was reversed in log message.
+            9f2a6d7 Allison Henderson Fix set attr size
+            b873228 Jeremy Bongio Move PT version number to proper place in configure.ac
+            8dc4ff6 Allison Henderson Release change for 4.1
+            327ab89 Hin Lam Header file sync for Fix 81023782
+            7eb980a Allison Henderson Remove default ganesha log rotate from PT rpms. QC: 20804
+            7747e8f Allison Henderson Fixed the defect in PTFSAL_Log function so that user can create file named %s. So Ganesha will not try to format the message again due to FSAL PT already does format. Signed-off-by: Jeff Huang <huangz@us.ibm.com>
+            21a49a4 Allison Henderson PT drop 23
+            5128f3d Allison Henderson Update API PTFSAL_close in PTFSAL_truncate for 4.1 rebase
+            b724002 root QC 20775 Fix On AIX TSM seems to issue a truncate at the end of it's IO (write). We get that PTFSAL_truncate call in two modes - sometimes with valid FD and sometimes without FD valid (file not open). Problem is in the case of getting called without valid FD, in PTFSAL_truncate we internally open it but never close the file.
+            ce49cdc Allison Henderson Relese change for ibm_next_pt_22 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
+            487696b Hin Lam Convert close mutex in close_listener.c to handle based mutexes
+            5ab2ada Allison Henderson Relese change for ibm_next_pt_21 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
+            0f8a56c Venkateswararao Jujjuri (JV) Reduce the lru_thread sleep timeout from 10mins to 90sec
+            a2ca7f7 Venkateswararao Jujjuri (JV) set Entries_HWMark to 1000 and Entries_LWMark 500. We may have to adjust this depending on the need.
+            bcf2032 Allison Henderson Branch for ibm_next_pt_20
+            6552023 Matthew Cleveland Add #define for Ron's fix 81023485.
+            bcb460f Jeff Huang This fix will reset errno to zero if the ptfsal_write return great zero in function: PTFSAL_write. Signed-off-by: Jeff Huang <huangz@us.ibm.com>
+            22997cd Allison Henderson Add truncate to setattrs
+            fa787ec Allison Henderson Update export list to use new glist structures required by rebase
+            a8a51e3 Allison Henderson Update function signaures required for rebase
+            43846a5 Allison Henderson Initial ganesha modifications for support of Protectier FSAL.
+            531efd4 Allison Henderson Initial new source code drop for support of Protectier FSAL.
+            8f8d89d rong zeng Remove svc_destroy in recent svc_sendreply fix, which would cause assertion in rearm code.
+            33fe9d0 Srikrishan Malik Fix deadlock due to lock ordering. Release content lock before calling cache_inode_rdwr.
+            6bc0588 rong zeng Fix hardcoded NFS4ERR_ACCESS return code in nfs4_op_open/nfs41_op_open.
+            11a1419 lancerus Test for AIX sendreply error
+            6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
+            75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
+            0db829f Venkateswararao Jujjuri (JV) Disable additional logging for the Production code.
+            1721dc2 rong zeng Fix delimeter issue in ip_match, and a counter issue in check_for_id. Also adding server (local) IP to client id structure, so that nfs_release_v4_client could properly match.
+            3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
+
 rong        fb8a853 rong zeng Integrate tirpc changes for mspac support.
             44105aa Jeremy Bongio Add new file from libtirpc os_epoll.h to spec file.
             e5989aa Jeremy Bongio Bump TI-RPC Version.
