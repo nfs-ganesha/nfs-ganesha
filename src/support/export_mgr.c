@@ -197,8 +197,6 @@ get_gsh_export(int export_id, bool lookup_only)
  *  Don't muddy the waters right now.
  */
 
-/* 	pexport = nfs_Get_export_by_id(nfs_param.pexportlist, */
-/* 					exportid)) == NULL) */
 	v.export_id = export_id;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
@@ -360,22 +358,12 @@ static bool export_to_dbus(struct gsh_export *exp_node,
 	struct showexports_state *iter_state
 		= (struct showexports_state *)state;
 	struct export_stats *exp;
-	exportlist_t *pexport;
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = ServerBootTime;
 	const char *path;
 
 	exp = container_of(exp_node, struct export_stats, export);
-
-/* NOTE: See note above about linkage between avl tree and exports list
- * we assume here that they are 1 - 1 and dont' check errors because of
- * this assumption.
- */
-	pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-				       exp_node->export_id);
-	if(pexport == NULL)
-		return false;
-	path = pexport->pseudopath; /* is this the "right" one? */
+	path = exp_node->export.pseudopath; /* is this the "right" one? */
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT,
@@ -383,7 +371,7 @@ static bool export_to_dbus(struct gsh_export *exp_node,
 					 &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter,
 				       DBUS_TYPE_INT32,
-				       &pexport->id);
+				       &exp_node->export.id);
 	dbus_message_iter_append_basic(&struct_iter,
 				       DBUS_TYPE_STRING,
 				       &path);
