@@ -52,6 +52,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -96,7 +97,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
         /* The FSAL's requested size for the da_addr_body opaque */
         size_t da_addr_size = 0;
         /* Pointer to the export appropriate to this deviceid */
-        exportlist_t *export = NULL;
+	struct gsh_export *exp = NULL;
+        exportlist_t *export;
 
         resp->resop = NFS4_OP_GETDEVICEINFO;
 
@@ -119,13 +121,12 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
         /* Check that we have space */
 
-        export = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                      deviceid.export_id);
-
-        if (export == NULL) {
+	exp = get_gsh_export(deviceid.export_id, true);
+	if(exp == NULL) {
                 nfs_status = NFS4ERR_NOENT;
                 goto out;
         }
+	export = &exp->export;
 
         mincount = sizeof(uint32_t) +/* Count for the empty bitmap */
                 sizeof(layouttype4) +/* Type in the device_addr4 */
@@ -186,7 +187,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
         nfs_status = NFS4_OK;
 
 out:
-
+	if(exp != NULL)
+		put_gsh_export(exp);
         if ((nfs_status != NFS4_OK) &&
             da_buffer) {
                 gsh_free(da_buffer);

@@ -61,6 +61,7 @@
 #include "nfs_file_handle.h"
 #include "fridgethr.h"
 #include "client_mgr.h"
+#include "export_mgr.h"
 #include "server_stats.h"
 
 pool_t *request_pool;
@@ -878,41 +879,23 @@ static void nfs_rpc_execute(request_data_t *preq,
 
       if(req->rq_vers == NFS_V3)
         {
-              exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
+	   int export_id;
 
-              if(exportid < 0 ||
-                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL ||
-                 (pexport->options & EXPORT_OPTION_NFSV3) == 0)
-                {
-                  /* Reject the request for authentication reason (incompatible
-                   * file handle) */
-                  if(isInfo(COMPONENT_DISPATCH))
-                    {
-                      char dumpfh[1024];
-                      char *reason;
-                      char addrbuf[SOCK_NAME_MAX + 1];
-                      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else if(pexport == NULL)
-                        reason = "has invalid export";
-                      else
-                        reason = "V3 not allowed on this export";
-                      sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
-                      LogMajor(COMPONENT_DISPATCH,
-                               "NFS3 Request from host %s %s, proc=%d, FH=%s",
-                               addrbuf, reason,
-                               (int)req->rq_proc, dumpfh);
-                    }
-		  auth_rc = AUTH_FAILED;
-		  goto auth_failure;
-                }
-	      /* privileged port only makes sense for V3.  V4 can go thru
-	       * firewalls and so all bets are off
-	       */
-	      if ((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-		  (port >= IPPORT_RESERVED))
+	   protocol_options |= EXPORT_OPTION_NFSV3;
+	   export_id = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
+
+	   if(export_id < 0)
+	      goto handle_err;
+	   req_ctx.export = get_gsh_export(export_id, true);
+	   if(req_ctx.export == NULL ||
+	      (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
+	      goto handle_err;
+	   pexport = &req_ctx.export->export;
+	   /* privileged port only makes sense for V3.  V4 can go thru
+	    * firewalls and so all bets are off
+	    */
+	   if((pexport->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) &&
+	       (port >= IPPORT_RESERVED))
 	      {
 		 LogInfo(COMPONENT_DISPATCH,
 			 "Port %d is too high for this export entry, rejecting client",
@@ -925,8 +908,10 @@ static void nfs_rpc_execute(request_data_t *preq,
                            "Found export entry for dirname=%s as exportid=%d",
                            pexport->dirname, pexport->id);
         }
-      /* NFS V4 gets its own export id from the ops in the compound
-       */
+      else
+        { /* NFS V4 gets its own export id from the ops in the compound */
+           protocol_options |= EXPORT_OPTION_NFSV4;
+	}
     }
   else if(req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
@@ -975,37 +960,17 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
       if(pfh3 != NULL)
         {
-          exportid = nlm4_FhandleToExportId(pfh3);
+	  int export_id;
 
-          if(exportid < 0 ||
-             (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                             exportid)) == NULL ||
-             (pexport->options & EXPORT_OPTION_NFSV3) == 0)
-            {
-              /* Reject the request for authentication reason (incompatible
-               * file handle) */
-              if(isInfo(COMPONENT_DISPATCH))
-                {
-                  char dumpfh[1024];
-                  char *reason;
-                  char addrbuf[SOCK_NAME_MAX + 1];
-                  sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
-                  if(exportid < 0)
-                    reason = "has badly formed handle";
-                  else if(pexport == NULL)
-                    reason = "has invalid export";
-                  else
-                    reason = "V3 not allowed on this export";
-                  sprint_fhandle_nlm(dumpfh, pfh3);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "NLM4 Request from host %s %s, proc=%d, FH=%s",
-                           addrbuf, reason,
-                           (int)req->rq_proc, dumpfh);
-                }
-	      auth_rc = AUTH_FAILED;
-	      goto auth_failure;
-            }
+	  export_id = nlm4_FhandleToExportId(pfh3);
 
+          if(export_id < 0)
+	      goto handle_err;
+	  req_ctx.export = get_gsh_export(export_id, true);
+	  if(req_ctx.export == NULL ||
+	     (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
+	      goto handle_err;
+	  pexport = &req_ctx.export->export;
           LogFullDebug(COMPONENT_DISPATCH,
                        "Found export entry for dirname=%s as exportid=%d",
                        pexport->fullpath, pexport->id);
@@ -1144,7 +1109,6 @@ static void nfs_rpc_execute(request_data_t *preq,
 #endif
 
     null_op:
-      /* XXX correct use of req_ctx? */
       rc = preqnfs->funcdesc->service_function(
           arg_nfs,
           pexport,
@@ -1221,6 +1185,28 @@ static void nfs_rpc_execute(request_data_t *preq,
       dpq_status = nfs_dupreq_finish(req, res_nfs);
   goto freeargs;
 
+handle_err:
+  /* Reject the request for authentication reason (incompatible
+   * file handle) */
+  if(isInfo(COMPONENT_DISPATCH))
+    {
+      char dumpfh[1024];
+      char *reason;
+      if(exportid < 0)
+	      reason = "has badly formed handle";
+      else if(pexport == NULL)
+	      reason = "has invalid export";
+      else
+	      reason = "V3 not allowed on this export";
+      sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
+      LogMajor(COMPONENT_DISPATCH,
+	       "%s Request from host %s %s, proc=%d, FH=%s",
+	       progname,
+	       req_ctx.client->hostaddr_str, reason,
+	       (int)req->rq_proc, dumpfh);
+    }
+  auth_rc = AUTH_FAILED;
+
 auth_failure:
   DISP_SLOCK(xprt);
   svcerr_auth(xprt, req, auth_rc);
@@ -1256,6 +1242,8 @@ freeargs:
 
   if(req_ctx.client != NULL)
 	  put_gsh_client(req_ctx.client);
+  if(req_ctx.export != NULL)
+	  put_gsh_export(req_ctx.export);
   return;
 }
 

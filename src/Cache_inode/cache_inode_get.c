@@ -52,6 +52,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
+#include "export_mgr.h"
 
 /**
  *
@@ -186,17 +187,16 @@ cache_inode_get_keyed(cache_inode_key_t *key,
         if (! (flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
 		struct fsal_obj_handle *new_hdl;
 		struct fsal_export *exp_hdl;
-		exportlist_t *exp_list_ent; /* XXX fixing */
+		struct gsh_export *exp;
 		fsal_status_t fsal_status;
 
-		exp_list_ent = nfs_Get_export_by_id(nfs_param.pexportlist,
-						    key->exportid);
-		if (!exp_list_ent)
+		exp = get_gsh_export(key->exportid, true);
+		if(exp == NULL)
 			goto out;
-		
-		exp_hdl = exp_list_ent->export_hdl;
+		exp_hdl = exp->export.export_hdl;
 		fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
 							  &key->kv, &new_hdl);
+		put_gsh_export(exp);
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,

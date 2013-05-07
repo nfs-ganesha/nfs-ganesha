@@ -59,6 +59,8 @@
 #include "sal_functions.h"
 #include "fsal.h"
 #include "idmapper.h"
+#include "client_mgr.h"
+#include "export_mgr.h"
 
 /* Define mapping of NFS4 who name and type. */
 static struct {
@@ -3338,18 +3340,18 @@ int nfs4_SetCompoundExport(compound_data_t *data)
                 return NFS4ERR_BADHANDLE;
         }
 
-        data->pexport = nfs_Get_export_by_id(data->pfullexportlist,
-                                             exportid);
-
-        if (data->pexport == NULL) {
+	if(data->req_ctx->export != NULL) {
+		if(exportid == data->req_ctx->export->export_id)
+			return NFS4_OK; /* same export, same creds */
+		put_gsh_export(data->req_ctx->export);
+	}
+	data->req_ctx->export = get_gsh_export(exportid, true);
+	if(data->req_ctx->export == NULL) {
+		data->pexport = NULL;
                 return NFS4ERR_BADHANDLE;
         }
-
-	if(pexport != data->pexport) {
-		data->pexport = pexport;
-		return nfs4_MakeCred(data);
-	}
-        return NFS4_OK;
+	data->pexport = &data->req_ctx->export->export;
+	return nfs4_MakeCred(data);
 }                               /* nfs4_SetCompoundExport */
 
 /**
