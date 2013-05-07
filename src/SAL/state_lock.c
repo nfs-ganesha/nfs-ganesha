@@ -677,10 +677,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
-        {
-          memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
-          gsh_free(lock_entry->sle_block_data);
-        }
+        gsh_free(lock_entry->sle_block_data);
 
 #ifdef DEBUG_SAL
       P(all_locks_mutex);
@@ -688,7 +685,6 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
       V(all_locks_mutex);
 #endif
 
-      memset(lock_entry, 0, sizeof(*lock_entry));
       gsh_free(lock_entry);
     }
 }
@@ -1365,9 +1361,6 @@ void free_cookie(state_cookie_entry_t *cookie_entry,
     }
 
   /* Free the memory for the cookie and the cookie entry */
-  memset(cookie, 0, cookie_entry->sce_cookie_size);
-  memset(cookie_entry, 0, sizeof(*cookie_entry));
-
   gsh_free(cookie);
   gsh_free(cookie_entry);
 }
@@ -3509,5 +3502,71 @@ void state_lock_wipe(cache_entry_t *entry)
   free_list(&entry->object.file.lock_list);
 
   cache_inode_dec_pin_ref(entry);
+}
+
+void cancel_all_nlm_blocked()
+{
+  struct glist_head *glist, *glistn;
+  state_owner_t *nlm_owner;
+  state_lock_entry_t *found_entry;
+  exportlist_t *pexport;
+  cache_entry_t *pentry;
+  state_block_data_t *pblock;
+  state_status_t state_status = STATE_SUCCESS;
+
+  LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
+
+  P(blocked_locks_mutex);
+
+  if(glist_empty(&state_blocked_locks))
+    {
+      LogFullDebug(COMPONENT_STATE, "No blocked locks");
+      V(blocked_locks_mutex);
+      return;
+    }
+
+  glist_for_each_safe(glist, glistn, &state_blocked_locks)
+    {
+      pblock = glist_entry(glist, state_block_data_t, sbd_list);
+
+      found_entry = pblock->sbd_lock_entry;
+
+      /* Check if got an entry */
+      if(found_entry == NULL)
+      {
+        LogWarn(COMPONENT_STATE, "Blocked lock without an state_lock_entry_t");
+        continue;
+      }
+
+      /* Remove lock from blocked list */
+      glist_del(&pblock->sbd_list);
+
+      lock_entry_inc_ref(found_entry);
+
+      V(blocked_locks_mutex);
+
+      LogEntry("Blocked Lock found", found_entry);
+
+      pentry = found_entry->sle_entry;
+      nlm_owner = found_entry->sle_owner;
+      pexport = found_entry->sle_export;
+
+      state_status = cancel_blocked_lock(pentry, NULL, found_entry);
+
+      if(pblock->sbd_blocked_cookie != NULL)
+        gsh_free(pblock->sbd_blocked_cookie);
+
+      gsh_free(found_entry->sle_block_data);
+      found_entry->sle_block_data = NULL;
+
+      LogEntry("Canceled Lock", found_entry);
+
+      lock_entry_dec_ref(found_entry);
+
+      P(blocked_locks_mutex);
+    } /* glist_for_each_safe */
+
+    V(blocked_locks_mutex);
+    return;
 }
 /** @} */
