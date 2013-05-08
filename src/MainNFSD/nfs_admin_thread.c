@@ -510,6 +510,19 @@ static void do_shutdown(void)
     LogEvent(COMPONENT_THREAD,
 	     "Worker threads successfully shut down.");
 
+  rc = general_fridge_shutdown();
+  if (rc != 0)
+    {
+      LogMajor(COMPONENT_THREAD,
+	       "Error shutting down general fridge: %d",
+	       rc);
+    }
+  else
+    {
+      LogEvent(COMPONENT_THREAD,
+	       "General fridge shut down.");
+    }
+
   rc = reaper_shutdown();
   if (rc != 0)
     {

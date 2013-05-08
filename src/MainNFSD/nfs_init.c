@@ -774,6 +774,18 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD,
            "reaper thread was started successfully");
+
+  /* Starting the general fridge */
+  rc = general_fridge_init();
+  if(rc != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create general fridge, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD,
+           "General fridge was started successfully");
+
 }
 
 /**
