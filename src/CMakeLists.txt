@@ -501,7 +501,6 @@ set(GANESHA_CORE
   log
   common_utils
   support
-  fsalup
   nfs4callbacks
   cidr
   string_utils
