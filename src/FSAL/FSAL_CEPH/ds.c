@@ -59,25 +59,25 @@
 static inline void
 local_invalidate(struct ds *ds, struct fsal_export *export)
 {
-    state_status_t status __attribute__((unused)) = STATE_SUCCESS;
-    struct gsh_buffdesc key = {
-        .addr = &ds->wire.wire.vi,
-        .len = sizeof(ds->wire.wire.vi)
-    };
-    status = export->up_ops->invalidate(export, &key,
-                                        CACHE_INODE_INVALIDATE_ATTRS);
-    return;
+	struct gsh_buffdesc key = {
+		.addr = &ds->wire.wire.vi,
+		.len = sizeof(ds->wire.wire.vi)
+	};
+	up_async_invalidate(general_fridge,
+			    export, &key,
+			    CACHE_INODE_INVALIDATE_ATTRS,
+			    NULL, NULL);
+	return;
 }
 
 /**
- * @brief Release an object
- *
- * This function looks up an object by name in a directory.
+ * @brief Release a DS object
  *
  * @param[in] obj_pub The object to release
  *
- * @return FSAL status codes.
+ * @return NFS Status codes.
  */
+
 static nfsstat4 release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
