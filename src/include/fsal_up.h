@@ -365,12 +365,8 @@ int up_async_delegrecall(struct fridgethr *,
 
 /** @} */
 
-/****************************
- * FSAL UP utility functions
- ****************************/
-
-int up_get(const struct gsh_buffdesc *key,
-	   cache_entry_t **entry);
+cache_inode_status_t up_get(const struct gsh_buffdesc *key,
+			    cache_entry_t **entry);
 
 #endif /* FSAL_UP_H */
 /** @} */
