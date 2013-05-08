@@ -62,6 +62,10 @@ nfs_release_nlm_state()
         state_status_t err, status;
         int i;
 
+        LogDebug(COMPONENT_STATE, "Release all NLM locks");
+
+        cancel_all_nlm_blocked();
+
         /* walk the client list and call state_nlm_notify */
         for(i = 0; i < ht->parameter.index_size; i++) {
                 PTHREAD_RWLOCK_WRLOCK(&ht->partitions[i].lock);
@@ -72,12 +76,14 @@ nfs_release_nlm_state()
 
                         nsm_cp = (state_nsm_client_t *)pdata->buffval.pdata;
                         inc_nsm_client_ref(nsm_cp);
+                        PTHREAD_RWLOCK_UNLOCK(&ht->partitions[i].lock);
                         err = state_nlm_notify(nsm_cp, NULL, &status);
                         if (err != STATE_SUCCESS)
                                 LogDebug(COMPONENT_THREAD,
                                     "state_nlm_notify failed with %d",
                                     status);
                         dec_nsm_client_ref(nsm_cp);
+                        PTHREAD_RWLOCK_WRLOCK(&ht->partitions[i].lock);
                         RBT_INCREMENT(pn);
                 }
                 PTHREAD_RWLOCK_UNLOCK(&ht->partitions[i].lock);
