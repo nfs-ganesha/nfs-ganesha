@@ -2667,155 +2667,67 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 }
 
 /**
- * @brief Create the root entries for the cached entries.
+ * @brief Lookup and associate a cache inode entry with the root of the export
  *
- * @param[in] pexportlist Export list to be parsed
+ * Fetch the cache entry of the export's root.  If not there yet, look it up
+ * which takes references.  This is fine for attaching it to an export but
+ * other uses (psesudofs) should take their own references while holding it.
  *
- * @return true is successfull, false if something wrong occured.
+ * @param export [IN] the aforementioned export
+ * @param entryp [IN/OUT] call by ref pointer to store cache entry
  *
+ * @return status cache inode status code
  */
-bool nfs_export_create_root_entry(exportlist_t *pexportlist)
+
+cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
+					       cache_entry_t **entryp)
 {
-      exportlist_t *pcurrent = NULL;
-      cache_inode_status_t cache_status;
       fsal_status_t fsal_status;
+      cache_inode_status_t cache_status;
+      struct fsal_obj_handle *root_handle;
       cache_entry_t *entry = NULL;
 
-      /* loop the export list */
-
-      for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
-        {
-          /* Lookup for the FSAL Path */
-          fsal_status = pcurrent->export_hdl->ops->lookup_path(pcurrent->export_hdl,
-                                                               NULL,
-							       pcurrent->fullpath,
-							       &pcurrent->proot_handle);
-          if(FSAL_IS_ERROR(fsal_status))
-            {
+      if(export->exp_root_cache_inode != NULL) {
+	      *entryp = export->exp_root_cache_inode;
+	      return CACHE_INODE_SUCCESS;
+      }
+      /* Lookup for the FSAL Path */
+      fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
+							 NULL,
+							 export->fullpath,
+							 &root_handle);
+      if(FSAL_IS_ERROR(fsal_status)) {
               LogCrit(COMPONENT_INIT,
-                      "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
-                      pcurrent->id, pcurrent->fullpath, fsal_status.major,
+                      "Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
+                      export->id, export->fullpath, msg_fsal_err(fsal_status.major),
                       fsal_status.minor);
-              return false;
-            }
-          if( ((pcurrent->options & EXPORT_OPTION_MAXREAD) != EXPORT_OPTION_MAXREAD )) 
-             {
-	       if ( pcurrent->export_hdl->ops->fs_maxread(pcurrent->export_hdl) > 0)
-                  pcurrent->MaxRead = pcurrent->export_hdl->ops->fs_maxread(pcurrent->export_hdl);
-               else
-                  pcurrent->MaxRead = LASTDEFAULT;
-             }
-          if( ((pcurrent->options & EXPORT_OPTION_MAXWRITE) != EXPORT_OPTION_MAXWRITE )) 
-             {
-               if ( pcurrent->export_hdl->ops->fs_maxwrite(pcurrent->export_hdl) > 0)
-                  pcurrent->MaxWrite = pcurrent->export_hdl->ops->fs_maxwrite(pcurrent->export_hdl);
-               else
-                  pcurrent->MaxWrite = LASTDEFAULT;
-             }
-          LogFullDebug(COMPONENT_INIT,
-                      "Set MaxRead MaxWrite for Path=%s Options = 0x%x MaxRead = 0x%llX MaxWrite = 0x%llX",
-                      pcurrent->fullpath, pcurrent->options,
-                      (long long) pcurrent->MaxRead,
-                      (long long) pcurrent->MaxWrite);
-             
-          /* Add this entry to the Cache Inode as a "root" entry */
+              return cache_inode_error_convert(fsal_status);
+      }
+      /* Add this entry to the Cache Inode as a "root" entry */
 
-          cache_status = cache_inode_make_root(pcurrent->proot_handle,
-					       &entry);
-          if (entry == NULL)
-            {
+      cache_status = cache_inode_new_entry(root_handle,
+					   CACHE_INODE_FLAG_NONE,
+					   &entry);
+      if (entry != NULL) {
+	      /* cache_inode_get returns a cache_entry with
+	       * reference count of 2, where 1 is the sentinel value of
+	       * a cache entry in the hash table.  The export list in
+	       * this case owns the extra reference.  In the future
+	       * if functionality is added to dynamically add and remove
+	       * export entries, then the function to remove an export
+	       * entry MUST put the extra reference.
+	       */
+              export->exp_root_cache_inode = entry;
+              LogInfo(COMPONENT_INIT,
+		      "Added root entry for path %s on export_id=%d",
+		      export->fullpath, export->id);
+	      *entryp = export->exp_root_cache_inode;
+      } else {
               LogCrit(COMPONENT_INIT,
                       "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
-                      pcurrent->fullpath, pcurrent->id, cache_status);
-              return false;
-            }
-          else
-            LogInfo(COMPONENT_INIT,
-                    "Added root entry for path %s on export_id=%d",
-                    pcurrent->fullpath, pcurrent->id);
-
-        }
-
-  /* Since the entry isn't actually stored anywhere, there's no point
-     in hanging on to an extra reference. */
-  cache_inode_put(entry);
-
-  return true;
-
-}
-
-/* Frees current export entry and returns next export entry. */
-exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
-{
-  exportlist_t *next;
-  fsal_status_t fsal_status;
-
-  if (exportEntry == NULL)
-    return NULL;
-
-  next = exportEntry->next;
-  if(exportEntry->export_hdl != NULL)
-    {
-      fsal_status = exportEntry->export_hdl->ops->release(exportEntry->export_hdl);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-	  LogCrit(COMPONENT_CONFIG,
-		  "Cannot release export object, quitting");
-	  return NULL;
-	}
-    }
-  gsh_free(exportEntry);
-  return next;
-}
-
-exportlist_t *GetExportEntry(char *exportPath)
-{
-  exportlist_t *pexport = NULL;
-  exportlist_t *p_current_item = NULL;
-  char tmplist_path[MAXPATHLEN + 1];
-  char tmpexport_path[MAXPATHLEN + 1];
-  int found = 0;
-
-  pexport = nfs_param.pexportlist;
-
-  /*
-   * Find the export for the path (using as well Path or Tag )
-   */
-  for(p_current_item = pexport; p_current_item != NULL;
-      p_current_item = p_current_item->next)
-  {
-    LogDebug(COMPONENT_CONFIG, "full path %s, export path %s",
-             p_current_item->fullpath, exportPath);
-
-    /* Make sure the path in export entry ends with a '/', if not adds one */
-    if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
-      strmaxcpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
-    else
-      snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
-
-    /* Make sure that the argument from MNT ends with a '/', if not adds one */
-    if(exportPath[strlen(exportPath) - 1] == '/')
-      strmaxcpy(tmpexport_path, exportPath, MAXPATHLEN);
-    else
-      snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
-
-    /* Is tmplist_path a subdirectory of tmpexport_path ? */
-    if(!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
-    {
-      found = 1;
-      break;
-    }
-  }
-
-  if(found)
-    {
-      LogDebug(COMPONENT_CONFIG, "returning export %s", p_current_item->fullpath);
-      return p_current_item;
-    }
-  else
-    {
-      LogDebug(COMPONENT_CONFIG, "returning export NULL");
-      return NULL;
-    }
+                      export->fullpath, export->id, cache_status);
+	      *entryp = NULL;
+      }
+      return cache_status;
 }
 

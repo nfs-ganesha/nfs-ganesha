@@ -312,8 +312,6 @@ int nfs_read_version4_conf(config_file_t in_config,
 #ifdef _HAVE_GSSAPI
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
 #endif
-bool nfs_export_create_root_entry(exportlist_t *pexportlist);
-
 /* Add a list of clients to the client array of either an exports
  * entry or another service that has a client array (like snmp or
  * statistics exporter) */
@@ -334,6 +332,8 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
 			   exportlist_client_t *clients,
 			   exportlist_client_entry_t *pclient_found,
 			   unsigned int export_option);
+cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
+					       cache_entry_t **entryp);
 
 /* Admin thread control */
 
