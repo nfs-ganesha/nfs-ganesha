@@ -694,7 +694,6 @@ nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 static void nfs_rpc_execute(request_data_t *preq,
                             nfs_worker_data_t *worker_data)
 {
-  unsigned int export_check_result;
   exportlist_t *pexport = NULL;
   nfs_request_data_t *preqnfs = preq->r_u.nfs;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
@@ -702,7 +701,8 @@ static void nfs_rpc_execute(request_data_t *preq,
   int exportid = -1;
   struct svc_req *req = &preqnfs->req;
   SVCXPRT *xprt = preqnfs->xprt;
-  exportlist_client_entry_t * related_client = &worker_data->related_client;
+  export_perms_t export_perms;
+  int protocol_options = 0;
   struct user_cred user_credentials;
   struct req_op_context req_ctx;
   dupreq_status_t dpq_status;
@@ -710,8 +710,18 @@ static void nfs_rpc_execute(request_data_t *preq,
   int port, rc = NFS_REQ_OK;
   enum auth_stat auth_rc;
   bool slocked = false;
+  const char *progname = "unknown";
 
-  memset(related_client, 0, sizeof(exportlist_client_entry_t));
+  /* Initialize permissions to allow nothing */
+  export_perms.options       = 0;
+  export_perms.anonymous_uid = (uid_t) ANON_UID;
+  export_perms.anonymous_gid = (gid_t) ANON_GID;
+
+  /* Initialized user_credentials */
+  init_credentials(&user_credentials);
+
+      /* set up the request context
+       */
   memset(&req_ctx, 0, sizeof(struct req_op_context));
   req_ctx.creds = &user_credentials;
   req_ctx.caller_addr = &worker_data->hostaddr;
@@ -877,6 +887,7 @@ static void nfs_rpc_execute(request_data_t *preq,
        * used.  In NFSv4, junction traversal is managed by the protocol itself
        * so the whole export list is provided to NFSv4 request. */
 
+      progname = "NFS";
       if(req->rq_vers == NFS_V3)
         {
 	   int export_id;
@@ -917,6 +928,8 @@ static void nfs_rpc_execute(request_data_t *preq,
     {
       netobj *pfh3 = NULL;
 
+      protocol_options |= EXPORT_OPTION_NFSV3;
+      progname = "NLM";
       switch(req->rq_proc)
         {
           case NLMPROC4_NULL:
@@ -976,124 +989,197 @@ static void nfs_rpc_execute(request_data_t *preq,
                        pexport->fullpath, pexport->id);
         }
     } else if(req->rq_prog == nfs_param.core_param.program[P_MNT]) {
-	  /** @TODO Hack awaiting export perms patchset
-	   */
-	  pexport = nfs_param.pexportlist;
+      progname = "MNT";
     }
 
 
-  if(preqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS)
+  /* Only do access check if we have an export. */
+  if((preqnfs->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
     {
-      /* Test if export allows the authentication provided */
-      if (nfs_export_check_security(req, pexport) == false)
-        {
-	    auth_rc = AUTH_TOOWEAK;
-	    goto auth_failure;
-        }
-    }
+      xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
-  /* should these values be export config set?
-   */
-  user_credentials.caller_uid = -2;
-  user_credentials.caller_gid = -2;
-  user_credentials.caller_glen = 0;
-  user_credentials.caller_garray = NULL;
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "nfs_rpc_execute about to call nfs_export_check_access for client %s",
+                   req_ctx.client->hostaddr_str);
 
-  if (preqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED)
-    {
-      if (get_req_uid_gid(req, pexport, &user_credentials) == false)
+      nfs_export_check_access(req_ctx.caller_addr,
+                              pexport,
+                              &export_perms);
+
+      if(export_perms.options == 0)
         {
           LogInfo(COMPONENT_DISPATCH,
-                  "could not get uid and gid, rejecting client");
-	  auth_rc = AUTH_TOOWEAK;
-	  goto auth_failure;
+                  "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+                  req_ctx.client->hostaddr_str,
+                  pexport->id, pexport->fullpath,
+                  (int)req->rq_vers, (int)req->rq_proc);
+
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
+        }
+
+      /* Check protocol version */
+      if((protocol_options & EXPORT_OPTION_PROTOCOLS)== 0)
+        {
+          LogCrit(COMPONENT_DISPATCH,
+                  "Problem, request requires export but does not have a protocol version");
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      if((protocol_options & export_perms.options) == 0)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers,
+                  pexport->id, pexport->fullpath,
+                  req_ctx.client->hostaddr_str);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      /* Check transport type */
+      if(((xprt_type == XPRT_UDP) &&
+          ((export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+         ((xprt_type == XPRT_TCP) &&
+          ((export_perms.options & EXPORT_OPTION_TCP) == 0)))
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d over %s not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers, xprt_type_to_str(xprt_type),
+                  pexport->id, pexport->fullpath,
+                  req_ctx.client->hostaddr_str);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      /* Test if export allows the authentication provided */
+      if(((preqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) != 0) &&
+         (nfs_export_check_security(req, &export_perms, pexport) == FALSE))
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d auth not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers,
+                  pexport->id, pexport->fullpath,
+                  req_ctx.client->hostaddr_str);
+
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
+        }
+
+      /* Check if client is using a privileged port, but only for NFS protocol */
+      if((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
+         ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&
+         (port >= IPPORT_RESERVED))
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
+                  port, pexport->id, pexport->fullpath,
+                  req_ctx.client->hostaddr_str);
+
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
         }
     }
 
-  /* Be careful (Issue #66) : it makes no sense to check access for
-   * a MOUNT request
-   * nfsv4 does its own inside compound
-   */
-  if( !(req->rq_prog == nfs_param.core_param.program[P_NFS] &&
-	  req->rq_vers == NFS_V4) &&
-      req->rq_prog != nfs_param.core_param.program[P_MNT])
-   {
-     LogFullDebug(COMPONENT_DISPATCH,
-                  "nfs_rpc_execute about to call nfs_export_check_access");
-     export_check_result = nfs_export_check_access(
-         &worker_data->hostaddr,
-         req,
-         pexport,
-         nfs_param.core_param.program[P_NFS],
-         nfs_param.core_param.program[P_MNT],
-         related_client,
-         &user_credentials,
-         (preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE)
-         == MAKES_WRITE);
-   }
-  else
-   {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Call to a function from the MOUNT protocol, no call to "
-                   "nfs_export_check_access() required" ) ;
-      export_check_result = EXPORT_PERMISSION_GRANTED ;
-   }
-
-  if (export_check_result == EXPORT_PERMISSION_DENIED)
+  /* Get user credentials */
+  if (preqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED)
     {
-      char addrbuf[SOCK_NAME_MAX + 1];
-      sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
+      if (get_req_uid_gid(req, &user_credentials) == FALSE)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "could not get uid and gid, rejecting client %s",
+                  req_ctx.client->hostaddr_str);
+
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
+        }
+    }
+
+  /*
+   * It is now time for checking if export list allows the machine to perform
+   * the request
+   */
+  if((preqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
+     (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0)
+    {
+      /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
+       * This is done by replying EDQUOT (this error is known for not disturbing
+       * the client's requests cache
+       */
+      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
+        switch(req->rq_vers)
+          {
+          case NFS_V3:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFS3ERR_DQUOT because request is on an MD Only export");
+            res_nfs->res_getattr3.status = NFS3ERR_DQUOT;
+            rc = NFS_REQ_OK;
+            break;
+
+          default:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Dropping IO request on an MD Only export");
+            rc = NFS_REQ_DROP;
+            break;
+          }
+      else
+        {
+          LogDebug(COMPONENT_DISPATCH,
+                   "Dropping IO request on an MD Only export");
+          rc = NFS_REQ_DROP;
+        }
+    }
+  else if((preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
+          (export_perms.options & (EXPORT_OPTION_WRITE_ACCESS |
+                                     EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
+    {
+      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
+        switch(req->rq_vers)
+          {
+          case NFS_V3:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFS3ERR_ROFS because request is on a Read Only export");
+            res_nfs->res_getattr3.status = NFS3ERR_ROFS;
+            rc = NFS_REQ_OK;
+            break;
+
+          default:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Dropping request on a Read Only export");
+            rc = NFS_REQ_DROP;
+            break;
+          }
+      else
+        {
+          LogDebug(COMPONENT_DISPATCH,
+                   "Dropping request on a Read Only export");
+          rc = NFS_REQ_DROP;
+        }
+    }
+  else if((preqnfs->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0 &&
+          (export_perms.options & (EXPORT_OPTION_READ_ACCESS |
+                                     EXPORT_OPTION_MD_READ_ACCESS)) == 0)
+    {
       LogInfo(COMPONENT_DISPATCH,
-              "Host %s is not allowed to access this export entry, vers=%d, "
-              "proc=%d",
-              addrbuf,
+              "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+	      req_ctx.client->hostaddr_str,
+              pexport->id, pexport->fullpath,
               (int)req->rq_vers, (int)req->rq_proc);
       auth_rc = AUTH_TOOWEAK;
       goto auth_failure;
     }
-  else if ((export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_RO) ||
-           (export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO))
+  else
     {
-      LogDebug(COMPONENT_DISPATCH,
-               "Dropping request because nfs_export_check_access() reported "
-               "this is a RO filesystem.");
-      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
-        {
-              /* V3 request */
-              /* All the nfs_res structure in V2 have the status at the same
-               * place, and so does V3 ones */
-              res_nfs->res_getattr3.status = NFS3ERR_ROFS;
-              /* Processing of the request is done */
-        }
-      else                 /* unexpected protocol (mount doesn't make write) */
-        rc = NFS_REQ_DROP;
-    }
-  else if ((export_check_result != EXPORT_PERMISSION_GRANTED) &&
-           (export_check_result != EXPORT_MDONLY_GRANTED))
-    {
-      /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
-      LogMajor(COMPONENT_DISPATCH,
-               "nfs_export_check_access() returned none of the expected "
-               "flags. This is an unexpected state!");
-      rc = NFS_REQ_DROP;
-    }
-  else  /* export_check_result == EXPORT_PERMISSION_GRANTED is true */
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "nfs_export_check_access() reported PERMISSION GRANTED.");
-
       /* Do the authentication stuff, if needed */
-      if(preqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED)
+      if((preqnfs->funcdesc->dispatch_behaviour &
+          (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
-            /* Swap the anonymous uid/gid if the user should be anonymous */
-          if(nfs_check_anon(related_client, pexport, &user_credentials)
-             == false)
-            {
-              LogInfo(COMPONENT_DISPATCH,
-                      "authentication failed, rejecting client");
-	      auth_rc = AUTH_TOOWEAK;
-	      goto auth_failure;
-            }
+          /* Swap the anonymous uid/gid if the user should be anonymous */
+          nfs_check_anon(&export_perms, pexport, &user_credentials);
         }
 
       /* processing */
