@@ -284,9 +284,6 @@ endif(KRB5_FOUND)
 find_package(Curses)
 find_package(Readline)
 
-find_package(OpenSSL REQUIRED) # md5 needed by  ${CMAKE_THREAD_LIBS_INIT} nfs4 acls (why??)
-set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${OPENSSL_LIBRARIES})
-
 # Validate fsal dependencies
 if(USE_FSAL_CEPH)
   find_library(CEPH_FS cephfs)

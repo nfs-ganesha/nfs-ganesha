@@ -13,10 +13,6 @@ Group: Applications/System
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel
 %endif
-%if %{?_with_nfs4acl:1}%{!?_with_nfs4acl:0}
-Requires: openssl
-BuildRequires: openssl-devel
-%endif
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module

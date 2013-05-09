@@ -36,8 +36,6 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-#include <openssl/md5.h>
-
 /*
  * labels in the config file
  */
@@ -273,15 +271,6 @@ typedef struct fsal_acl_data__
   uint32_t naces;
   fsal_ace_t *aces;
 } fsal_acl_data_t;
-
-#ifndef MD5_DIGEST_LENGTH
-#define MD5_DIGEST_LENGTH  16
-#endif
-
-typedef struct fsal_acl_key__
-{
-  char digest[MD5_DIGEST_LENGTH];
-} fsal_acl_key_t;
 
 /* Macros for NFS4 ACE flags, masks, and special who values. */
 
