@@ -312,17 +312,6 @@ int nfs_read_version4_conf(config_file_t in_config,
 #ifdef _HAVE_GSSAPI
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
 #endif
-/* Add a list of clients to the client array of either an exports
- * entry or another service that has a client array (like snmp or
- * statistics exporter) */
-int nfs_AddClientsToClientArray(exportlist_client_t *clients,
-				int new_clients_number,
-				char **new_clients_name,
-				int option);
-
-int parseAccessParam(char *var_name, char *var_value,
-		     exportlist_t *p_entry, int access_option);
-
 /* Checks an access list for a specific client */
 bool export_client_match(sockaddr_t *hostaddr,
 			 exportlist_client_t *clients,
