@@ -99,7 +99,7 @@ ENDIF( USE_FSAL_FUSE )
 
 IF( USE_FSAL_GPFS )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_GPFS ON)
-	" ) 
+" ) 
 ELSE(  USE_FSAL_GPFS )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_GPFS OFF)
 " ) 
@@ -208,7 +208,7 @@ Group: Applications/System
 
 %description ceph
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport CEPH
+be used with NFS-Ganesha to support CEPH
 ")
 endif(USE_FSAL_CEPH)
 
@@ -221,7 +221,7 @@ BuildRequires: libattr-devel lustre-client
 
 %description lustre
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport LUSTRE
+be used with NFS-Ganesha to support LUSTRE
 ")
 endif(USE_FSAL_LUSTRE)
 
@@ -234,7 +234,7 @@ BuildRequires: libattr-devel
 
 %description posix
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport POSIX
+be used with NFS-Ganesha to support POSIX
 ")
 endif(USE_FSAL_POSIX)
 
@@ -247,7 +247,7 @@ BuildRequires: libattr-devel lustre-client shook-devel
 
 %description shook
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport LUSTRE
+be used with NFS-Ganesha to support LUSTRE
 ")
 endif(USE_FSAL_SHOOK)
 
@@ -261,7 +261,7 @@ BuildRequires: libattr-devel
 
 %description vfs
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport VFS based filesystems
+be used with NFS-Ganesha to support VFS based filesystems
 ")
 endif(USE_FSAL_VFS)
 
@@ -275,7 +275,7 @@ BuildRequires: libattr-devel
 
 %description proxy
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport PROXY based filesystems
+be used with NFS-Ganesha to support PROXY based filesystems
 ")
 endif(USE_FSAL_PROXY)
 
@@ -287,7 +287,7 @@ Group: Applications/System
 
 %description hpss
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport HPSS 
+be used with NFS-Ganesha to support HPSS 
 ")
 endif(USE_FSAL_HPSS)
 
@@ -300,9 +300,21 @@ BuildRequires: libzfswrap-devel
 
 %description zfs
 This package contains a FSAL shared object to 
-be used with NFS-Ganesha to suppport ZFS 
+be used with NFS-Ganesha to support ZFS 
 ")
 endif(USE_FSAL_ZFS)
+
+if(USE_FSAL_GPFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package gpfs
+Summary: The NFS-GANESHA's GPFS FSAL
+Group: Applications/System
+
+%description gpfs
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to support GPFS
+")
+endif(USE_FSAL_GPFS)
 
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
 "
@@ -441,6 +453,16 @@ if(USE_FSAL_ZFS)
 
 " )
 endif(USE_FSAL_ZFS)
+
+if(USE_FSAL_GPFS)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files gpfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalgpfs*
+
+" )
+endif(USE_FSAL_GPFS)
 
 # Append changelog
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
