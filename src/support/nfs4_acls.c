@@ -9,10 +9,7 @@
 #include "lookup3.h"
 
 pool_t *fsal_acl_pool;
-static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 pool_t *fsal_acl_key_pool;
-static pthread_mutex_t fsal_acl_key_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
                               struct gsh_buffdesc * buffclef,
@@ -132,9 +129,7 @@ static void nfs4_acl_free(fsal_acl_t *pacl)
   if(pacl->aces)
     nfs4_ace_free(pacl->aces);
 
-  P(fsal_acl_pool_mutex);
   pool_free(fsal_acl_pool, pacl);
-  V(fsal_acl_pool_mutex);
  }
 
 static int nfs4_acldata_2_key(struct gsh_buffdesc * pkey, fsal_acl_data_t *pacldata)
@@ -173,9 +168,7 @@ static void nfs4_release_acldata_key(struct gsh_buffdesc *pkey)
   if(!pacl_key)
     return;
 
-  P(fsal_acl_key_pool_mutex);
   pool_free(fsal_acl_key_pool, pacl_key);
-  V(fsal_acl_key_pool_mutex);
  }
 
 void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl)
