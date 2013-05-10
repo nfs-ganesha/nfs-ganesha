@@ -4587,11 +4587,14 @@ nfs4_sanity_check_FH(compound_data_t *data,
                      object_file_type_t required_type,
                      bool ds_allowed)
 {
+	int fh_status;
+
         /* If the filehandle is invalid */
-        if (nfs4_Is_Fh_Invalid(&(data->currentFH))) {
+	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
+        if (fh_status != NFS4_OK) {
                 LogDebug(COMPONENT_FILEHANDLE,
                          "nfs4_Is_Fh_Invalid failed");
-                return NFS4ERR_BADHANDLE;
+                return fh_status;
         }
 
         /* Check for the correct file type */
@@ -4679,11 +4682,14 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
                            object_file_type_t required_type,
                            bool ds_allowed)
 {
+	int fh_status;
+
         /* If the filehandle is invalid */
-        if (nfs4_Is_Fh_Invalid(&(data->savedFH))) {
+	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
+        if (fh_status != NFS4_OK) {
                 LogDebug(COMPONENT_FILEHANDLE,
                          "nfs4_Is_Fh_Invalid failed");
-                return NFS4ERR_BADHANDLE;
+                return fh_status;
         }
 
         /* Check for the correct file type */

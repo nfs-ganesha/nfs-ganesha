@@ -89,8 +89,8 @@ cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
 	v4_handle = (file_handle_v4_t *) (fh4->nfs_fh4_val);
 
 	/* validate the filehandle  */
-	if(nfs4_Is_Fh_Invalid(fh4) != NFS4_OK) {
-		*status = NFS4ERR_BADHANDLE;
+	*status = nfs4_Is_Fh_Invalid(fh4);
+	if(*status != NFS4_OK) {
 		goto badhdl;
 	}
 	exp_list_ent = nfs_Get_export_by_id(exp_list,

@@ -91,11 +91,9 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
   }
 
   /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_DELEGRETURN4.status = NFS4ERR_BADHANDLE;
+  res_DELEGRETURN4.status = nfs4_Is_Fh_Invalid(&data->currentFH);
+  if(res_DELEGRETURN4.status != NFS4_OK)
       return res_DELEGRETURN4.status;
-    }
 
   /* Delegation is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
