@@ -580,6 +580,17 @@ check_seqid:
                        data,
                        lock_tag);
 
+        if(arg_LOCK4->locker.new_lock_owner) {
+                /* Also save the response in the lock owner */
+                Copy_nfs4_state_req(lock_owner,
+                          arg_LOCK4->locker.locker4_u.open_owner.lock_seqid,
+                          op,
+                          data,
+                          resp,
+                          lock_tag);
+
+        }
+
         LogFullDebug(COMPONENT_NFS_V4_LOCK,
                      "LOCK state_seqid = %u, lock_state = %p",
                      lock_state->state_seqid,

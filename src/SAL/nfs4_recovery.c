@@ -617,6 +617,8 @@ nfs_release_nlm_state()
 
         LogDebug(COMPONENT_STATE, "Release all NLM locks");
 
+        cancel_all_nlm_blocked();
+
         /* walk the client list and call state_nlm_notify */
         for(i = 0; i < ht->parameter.index_size; i++) {
                 PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);

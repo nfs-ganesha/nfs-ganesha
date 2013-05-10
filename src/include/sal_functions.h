@@ -532,6 +532,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 
 void state_lock_wipe(cache_entry_t *entry);
 
+void cancel_all_nlm_blocked();
+
 /******************************************************************************
  *
  * NFSv4 State Management functions
