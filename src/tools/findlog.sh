@@ -39,6 +39,7 @@ TODO="find_func_in_file"
 CSCOPE=0
 FINAL="final_massage"
 LINESONLY=0
+DIR="."
 
 find_funcs()
 {
@@ -129,7 +130,7 @@ find_files()
 	done
 }
 
-while getopts ":f:l:cp\?k:dxsn" OPT; do
+while getopts ":f:l:cp\?k:dxsnD:" OPT; do
 	case $OPT in
 		f)	FUNC="$OPTARG"
 			;;
@@ -140,6 +141,8 @@ while getopts ":f:l:cp\?k:dxsn" OPT; do
 		p)	FUNC="$PRINTF"
 			;;
 		d)	TODO="debug_mode"
+			;;
+		D)	DIR="$OPTARG"
 			;;
 		s)	CSCOPE=1
 			;;
@@ -155,6 +158,7 @@ while getopts ":f:l:cp\?k:dxsn" OPT; do
 			echo
 			echo "  -f function   grep pattern defining function, default is \"$FUNC\""
 			echo "  -l file       file containing list of files to search"
+			echo "  -D dir        search in directory"
 			echo "  -c            equivalent of -l cscope.files"
 			echo "  -p            search for printf, equivalent of -f \"$PRINTF\""
 			echo "  -d            debug mode, don't massage the output"
@@ -192,7 +196,7 @@ fi
 
 if [ -z "$1" ]
 then
-	find . -name '*.[ch]' | find_files
+	find $DIR -name '*.[ch]' | find_files
 fi
 
 while [ -n "$1" ]

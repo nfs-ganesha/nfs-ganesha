@@ -158,7 +158,9 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_val;
   nsecs_elapsed_t op_start_time;
   struct timespec ts;
+#ifdef USE_DBUS_STATS
   int export_id = -1;
+#endif
 
   if(compound4_minor > 1)
     {
