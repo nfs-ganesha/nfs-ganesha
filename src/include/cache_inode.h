@@ -759,9 +759,14 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
         } else {
                 entry->attr_time = 0;
         }
-	/** @todo ACE: This should really be changed to use sub-second time
-	    resolution when it's available. */
-	entry->change_time = entry->obj_handle->attributes.chgtime.tv_sec;
+        /* I don't like using nsecs as a counter, it will be annoying in
+         * 500 years.  I'll fix to match MS nano-intervals later.
+         *
+         * Also, fsal attrs has a changetime.
+         * (Matt). */
+	entry->change_time =
+            timespec_to_nsecs(&entry->obj_handle->attributes.chgtime);
+
 	/* Almost certainly not necessary */
 	entry->type = entry->obj_handle->attributes.type;
 	/* We have just loaded the attributes from the FSAL. */

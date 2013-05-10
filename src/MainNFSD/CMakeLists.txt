@@ -88,6 +88,9 @@ set(fsal_CORE_SRCS
    ../FSAL/common_pnfs.c
    ../FSAL/fsal_manager.c
    ../FSAL/fsal_destroyer.c
+   ../FSAL_UP/fsal_up_top.c
+   ../FSAL_UP/fsal_up_async.c
+   ../FSAL_UP/fsal_up_utils.c
 )
 
 ########### next target ###############

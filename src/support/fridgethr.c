@@ -1584,4 +1584,49 @@ void fridgethr_cancel(struct fridgethr *fr)
 		 fr->s);
 }
 
+struct fridgethr *general_fridge;
+
+int general_fridge_init(void)
+{
+	struct fridgethr_params frp;
+	int rc = 0;
+
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = 4;
+	frp.thr_min = 0;
+	frp.flavor = fridgethr_flavor_worker;
+	frp.deferment = fridgethr_defer_queue;
+
+	rc = fridgethr_init(&general_fridge,
+			    "General Use Fridge",
+			    &frp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_THREAD,
+			 "Unable to initialize general fridge, error code %d.",
+			 rc);
+		return rc;
+	}
+
+	return 0;
+}
+
+int general_fridge_shutdown(void)
+{
+	int rc = fridgethr_sync_command(general_fridge,
+					fridgethr_comm_stop,
+					120);
+
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_THREAD,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(general_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_THREAD,
+			 "Failed shutting down general fridge: %d",
+			 rc);
+	}
+
+	return rc;
+}
+
 /** @} */

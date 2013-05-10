@@ -70,6 +70,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	EXCHANGE_ID4resok *const res_EXCHANGE_ID4_ok
 		= (&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u
 		   .eir_resok4);
+	uint32_t pnfs_flags;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 	if (data->minorversion == 0) {
@@ -77,6 +78,17 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	}
 
 	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
+
+	/**
+	 * @todo Look into this again later, if no exports support
+         * pNFS, then we shouldn't claim to support it.
+         */
+
+	pnfs_flags = arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_MASK_PNFS;
+	if (pnfs_flags == 0) {
+		pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS |
+			EXCHGID4_FLAG_USE_PNFS_DS;
+	}
 
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
@@ -86,8 +98,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 					  .co_ownerid.co_ownerid_val,
 					  arg_EXCHANGE_ID4->eia_clientowner
 					  .co_ownerid.co_ownerid_len,
-					  arg_EXCHANGE_ID4->eia_flags &
-					  EXCHGID4_FLAG_MASK_PNFS);
+					  pnfs_flags);
 	if (client_record == NULL) {
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID,
@@ -262,11 +273,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	res_EXCHANGE_ID4_ok->eir_clientid = unconf->cid_clientid;
 	res_EXCHANGE_ID4_ok->eir_sequenceid
 		= unconf->cid_create_session_sequence;
-	/**
-	 * @todo ACE: Revisit this, if no exports support pNFS, don't
-	 * advertise pNFS.
-	 */
-
 	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;

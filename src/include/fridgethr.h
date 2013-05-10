@@ -262,6 +262,11 @@ time_t fridgethr_getwait(struct fridgethr_context *ctx);
 
 void fridgethr_cancel(struct fridgethr *fr);
 
+extern struct fridgethr *general_fridge;
+int general_fridge_init(void);
+int general_fridge_shutdown(void);
+
+
 #endif /* FRIDGETHR_H */
 
 /** @} */

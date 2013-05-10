@@ -786,6 +786,9 @@ static state_status_t create_file_recall(
 					continue;
 				}
 				break;
+
+			case layoutrecall_not_specced:
+				break;
 			}
 		}
 

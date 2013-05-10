@@ -111,7 +111,8 @@ static const uint32_t fsal_up_nlink = 0x0080;
  */
 enum layoutrecall_howspec {
 	layoutrecall_howspec_exactly,
-	layoutrecall_howspec_complement
+	layoutrecall_howspec_complement,
+	layoutrecall_not_specced
 };
 
 struct layoutrecall_spec {
@@ -273,12 +274,99 @@ struct fsal_up_vector {
 
 extern struct fsal_up_vector fsal_up_top;
 
-/****************************
- * FSAL UP utility functions
- ****************************/
+/**
+ * @{
+ * @brief Asynchronous upcall wrappers
+ */
 
-int up_get(const struct gsh_buffdesc *key,
-	   cache_entry_t **entry);
+int up_async_invalidate(struct fridgethr *,
+			struct fsal_export *,
+			const struct gsh_buffdesc *,
+			uint32_t,
+			void (*)(void *, cache_inode_status_t),
+			void *);
+int up_async_update(struct fridgethr *,
+		    struct fsal_export *,
+		    const struct gsh_buffdesc *,
+		    struct attrlist *,
+		    uint32_t,
+		    void (*)(void *, cache_inode_status_t),
+		    void *);
+int up_async_lock_grant(struct fridgethr *,
+			struct fsal_export *,
+			const struct gsh_buffdesc *,
+			void *,
+			fsal_lock_param_t *,
+			void (*)(void *, state_status_t),
+			void *);
+int up_async_lock_avail(struct fridgethr *,
+			struct fsal_export *,
+			const struct gsh_buffdesc *,
+			void *,
+			fsal_lock_param_t *,
+			void (*)(void *, state_status_t),
+			void *);
+int up_async_link(struct fridgethr *,
+		  struct fsal_export *,
+		  const struct gsh_buffdesc *,
+		  const char *,
+		  const struct gsh_buffdesc *,
+		  void (*)(void *, cache_inode_status_t),
+		  void *);
+int up_async_unlink(struct fridgethr *,
+		    struct fsal_export *,
+		    const struct gsh_buffdesc *,
+		    const char *,
+		    void (*)(void *, cache_inode_status_t),
+		    void *);
+int up_async_move_from(struct fridgethr *,
+		       struct fsal_export *,
+		       const struct gsh_buffdesc *,
+		       const char *,
+		       void (*)(void *, cache_inode_status_t),
+		       void *);
+int up_async_move_to(struct fridgethr *,
+		     struct fsal_export *,
+		     const struct gsh_buffdesc *,
+		     const char *,
+		     const struct gsh_buffdesc *,
+		     void (*)(void *, cache_inode_status_t),
+		     void *);
+int up_async_rename(struct fridgethr *,
+		    struct fsal_export *,
+		    const struct gsh_buffdesc *,
+		    const char *,
+		    const char *,
+		    void (*)(void *, cache_inode_status_t),
+		    void *);
+int up_async_layoutrecall(struct fridgethr *,
+			  struct fsal_export *,
+			  const struct gsh_buffdesc *,
+			  layouttype4,
+			  bool,
+			  const struct pnfs_segment *,
+			  void *,
+			  struct layoutrecall_spec *,
+			  void (*)(void *, state_status_t),
+			  void *);
+int up_async_notify_device(struct fridgethr *,
+			   struct fsal_export *,
+			   notify_deviceid_type4,
+			   layouttype4,
+			   uint64_t,
+			   bool,
+			   void (*)(void *, state_status_t),
+			   void *);
+int up_async_delegrecall(struct fridgethr *,
+			 struct fsal_export *,
+			 const struct gsh_buffdesc *,
+			 void (*)(void *, state_status_t),
+			 void *);
+
+/** @} */
+
+cache_inode_status_t up_get(const struct gsh_buffdesc *key,
+			    cache_entry_t **entry);
 
 #endif /* FSAL_UP_H */
 /** @} */

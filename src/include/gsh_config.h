@@ -523,9 +523,6 @@ typedef struct cache_inode_parameter {
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
-	/** Low water mark for cache_entries.  Defaults to 50000,
-	    settable by Entries_LWMark. */
-	uint32_t entries_lwmark;
 	/** Base interval in seconds between runs of the LRU cleaner
 	    thread. Defaults to 60, settable with LRU_Run_Interval. */
 	time_t lru_run_interval;

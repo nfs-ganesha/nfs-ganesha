@@ -4,23 +4,17 @@
 #include "HashTable.h"
 #include "log.h"
 #include "nfs4_acls.h"
-#include <openssl/md5.h>
 #include <pthread.h>
 #include "lookup3.h"
+#include "city.h"
 
 pool_t *fsal_acl_pool;
-static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-pool_t *fsal_acl_key_pool;
-static pthread_mutex_t fsal_acl_key_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
-                              struct gsh_buffdesc * buffclef,
-                              uint32_t * phashval,
-                              uint64_t * prbtval);
-static int compare_fsal_acl(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2);
-static int display_fsal_acl_key(struct gsh_buffdesc * p_val, char *outbuff);
-static int display_fsal_acl_val(struct gsh_buffdesc * p_val, char *outbuff);
+static int fsal_acl_hash_both(hash_parameter_t *,
+                              struct gsh_buffdesc *,
+                              uint32_t *,
+                              uint64_t *);
+static int compare_fsal_acl(struct gsh_buffdesc *, struct gsh_buffdesc *);
 
 /* DEFAULT PARAMETERS for hash table */
 
@@ -30,8 +24,6 @@ static hash_parameter_t fsal_acl_hash_config = {
   .hash_func_rbt = NULL,
   .hash_func_both = fsal_acl_hash_both,
   .compare_key = compare_fsal_acl,
-  .key_to_str = display_fsal_acl_key,
-  .val_to_str = display_fsal_acl_val,
   .ht_name = "ACL Table",
   .flags = HT_FLAG_CACHE,
   .ht_log_component = COMPONENT_NFS_V4_ACL
@@ -41,252 +33,161 @@ static hash_table_t *fsal_acl_hash = NULL;
 
 /* hash table functions */
 
-static int fsal_acl_hash_both(hash_parameter_t *p_hparam,
-                              struct gsh_buffdesc *buffclef,
-                              uint32_t *phashval,
-                              uint64_t *prbtval)
+static int fsal_acl_hash_both(hash_parameter_t *hparam,
+                              struct gsh_buffdesc *key,
+                              uint32_t *index,
+                              uint64_t *rbthash)
 {
-  char printbuf[2 * MD5_DIGEST_LENGTH];
-  uint32_t h1 = 0 ;
-  uint32_t h2 = 0 ;
+  *rbthash = CityHash64(key->addr, key->len);
+  *index = *rbthash % hparam->index_size;
 
-  char *p_aclkey = (buffclef->addr);
-
-  Lookup3_hash_buff_dual(p_aclkey, MD5_DIGEST_LENGTH, &h1, &h2);
-
-  h1 = h1 % p_hparam->index_size;
-
-  *phashval = h1 ;
-  *prbtval = h2 ;
-
-  if(isDebug(COMPONENT_NFS_V4_ACL))
-    {
-      snprintmem(printbuf, 2 * MD5_DIGEST_LENGTH, p_aclkey, MD5_DIGEST_LENGTH);
-      LogDebug(COMPONENT_NFS_V4_ACL, "p_aclkey=%s, hashvalue=%u, rbtvalue=%u", printbuf, h1, h2);
-    }
-
-  /* Success */
-  return 1 ;
-} /*  fsal_acl_hash_both */
-
-static int compare_fsal_acl(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2)
-{
-  return memcmp((char *)p_key1->addr, (char *)p_key2->addr, MD5_DIGEST_LENGTH);
+  return 1;
 }
 
-static int display_fsal_acl_key(struct gsh_buffdesc * p_val, char *outbuff)
+static int compare_fsal_acl(struct gsh_buffdesc *key1,
+			    struct gsh_buffdesc *keya)
 {
-  char printbuf[2 * MD5_DIGEST_LENGTH];
-  char *p_aclkey = (char *) p_val->addr;
+  if (key1->len != keya->len)
+    return -1;
 
-  snprintmem(printbuf, 2 * MD5_DIGEST_LENGTH, p_aclkey, MD5_DIGEST_LENGTH);
-
-  return sprintf(outbuff, "%s", printbuf);
-}
-
-static int display_fsal_acl_val(struct gsh_buffdesc * p_val, char *outbuff)
-{
-  return sprintf(outbuff, "not implemented");
+  return memcmp(key1->addr, keya->addr, key1->len);
 }
 
 fsal_ace_t *nfs4_ace_alloc(int nace)
 {
-  fsal_ace_t *pace = NULL;
+  fsal_ace_t *ace = NULL;
 
-  pace = gsh_calloc(nace, sizeof(fsal_ace_t));
-  return pace;
+  ace = gsh_calloc(nace, sizeof(fsal_ace_t));
+  return ace;
 }
 
 static fsal_acl_t *nfs4_acl_alloc()
 {
-  fsal_acl_t *pacl = NULL;
+  fsal_acl_t *acl = NULL;
 
-  pacl = pool_alloc(fsal_acl_pool, NULL);
+  acl = pool_alloc(fsal_acl_pool, NULL);
 
-  if(pacl == NULL)
-  {
-    LogCrit(COMPONENT_NFS_V4_ACL,
-            "Can't allocate a new entry from fsal ACL pool");
-    return NULL;
-  }
+  if(acl == NULL)
+    {
+      LogCrit(COMPONENT_NFS_V4_ACL,
+	      "Can't allocate a new entry from fsal ACL pool");
+      return NULL;
+    }
 
-  return pacl;
+  return acl;
 }
 
-void nfs4_ace_free(fsal_ace_t *pace)
+void nfs4_ace_free(fsal_ace_t *ace)
 {
-  if(!pace)
+  if(!ace)
     return;
 
   LogDebug(COMPONENT_NFS_V4_ACL,
-           "free ace %p", pace);
+           "free ace %p", ace);
 
-  gsh_free(pace);
+  gsh_free(ace);
 }
 
-static void nfs4_acl_free(fsal_acl_t *pacl)
+static void nfs4_acl_free(fsal_acl_t *acl)
 {
-  if(!pacl)
+  if(!acl)
     return;
 
-  if(pacl->aces)
-    nfs4_ace_free(pacl->aces);
+  if(acl->aces)
+    nfs4_ace_free(acl->aces);
 
-  P(fsal_acl_pool_mutex);
-  pool_free(fsal_acl_pool, pacl);
-  V(fsal_acl_pool_mutex);
+  pool_free(fsal_acl_pool, acl);
  }
 
-static int nfs4_acldata_2_key(struct gsh_buffdesc * pkey, fsal_acl_data_t *pacldata)
-{
-  MD5_CTX c;
-  fsal_acl_key_t *pacl_key = NULL;
-
-  pacl_key = pool_alloc(fsal_acl_key_pool, NULL);
-
-  if(pacl_key == NULL)
-  {
-    LogCrit(COMPONENT_NFS_V4_ACL,
-            "Can't allocate a new entry from fsal ACL key pool");
-    return NFS_V4_ACL_INTERNAL_ERROR;
-  }
-
-  MD5_Init(&c);
-  MD5_Update(&c, (char *)pacldata->aces, pacldata->naces * sizeof(fsal_ace_t));
-  MD5_Final(pacl_key->digest, &c);
-
-  pkey->addr = (caddr_t) pacl_key;
-  pkey->len = sizeof(fsal_acl_key_t);
-
-  return NFS_V4_ACL_SUCCESS;
-}
-
-static void nfs4_release_acldata_key(struct gsh_buffdesc *pkey)
-{
-  fsal_acl_key_t *pacl_key = NULL;
-
-  if(!pkey)
-    return;
-
-  pacl_key = (fsal_acl_key_t *)pkey->addr;
-
-  if(!pacl_key)
-    return;
-
-  P(fsal_acl_key_pool_mutex);
-  pool_free(fsal_acl_key_pool, pacl_key);
-  V(fsal_acl_key_pool_mutex);
- }
-
-void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl)
+void nfs4_acl_entry_inc_ref(fsal_acl_t *acl)
 {
   /* Increase ref counter */
-  PTHREAD_RWLOCK_wrlock(&pacl->lock);
-  pacl->ref++;
+  PTHREAD_RWLOCK_wrlock(&acl->lock);
+  acl->ref++;
   LogDebug(COMPONENT_NFS_V4_ACL,
            "(acl, ref) = (%p, %u)",
-           pacl, pacl->ref);
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+           acl, acl->ref);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 }
 
 /* Should be called with lock held. */
-static void nfs4_acl_entry_dec_ref(fsal_acl_t *pacl)
+static void nfs4_acl_entry_dec_ref(fsal_acl_t *acl)
 {
   /* Decrease ref counter */
-  pacl->ref--;
+  acl->ref--;
   LogDebug(COMPONENT_NFS_V4_ACL,
            "(acl, ref) = (%p, %u)",
-           pacl, pacl->ref);
+           acl, acl->ref);
 }
 
-fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pstatus)
+fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata, fsal_acl_status_t *status)
 {
-  fsal_acl_t        * pacl = NULL;
-  struct gsh_buffdesc       buffkey;
-  struct gsh_buffdesc       buffvalue;
+  fsal_acl_t        * acl = NULL;
+  struct gsh_buffdesc key;
+  struct gsh_buffdesc value;
   int                 rc;
   struct hash_latch   latch;
 
   /* Set the return default to NFS_V4_ACL_SUCCESS */
-  *pstatus = NFS_V4_ACL_SUCCESS;
+  *status = NFS_V4_ACL_SUCCESS;
 
-  /* Turn the input to a hash key */
-  if(nfs4_acldata_2_key(&buffkey, pacldata))
-    {
-      *pstatus = NFS_V4_ACL_UNAPPROPRIATED_KEY;
-
-      nfs4_release_acldata_key(&buffkey);
-
-      nfs4_ace_free(pacldata->aces);
-
-      return NULL;
-    }
+  key.addr = acldata->aces;
+  key.len = acldata->naces * sizeof(fsal_ace_t);
 
   /* Check if the entry already exists */
   rc =  HashTable_GetLatch(fsal_acl_hash,
-                           &buffkey,
-                           &buffvalue,
+                           &key,
+                           &value,
                            true,
                            &latch);
   if(rc == HASHTABLE_SUCCESS)
     {
       /* Entry is already in the cache, do not add it */
-      pacl = (fsal_acl_t *) buffvalue.addr;
-      *pstatus = NFS_V4_ACL_EXISTS;
+      acl = value.addr;
+      *status = NFS_V4_ACL_EXISTS;
 
-      nfs4_release_acldata_key(&buffkey);
-
-      nfs4_ace_free(pacldata->aces);
-
-      nfs4_acl_entry_inc_ref(pacl);
-
+      nfs4_ace_free(acldata->aces);
+      nfs4_acl_entry_inc_ref(acl);
       HashTable_ReleaseLatched(fsal_acl_hash, &latch);
 
-      return pacl;
+      return acl;
     }
 
   /* Any other result other than no such key is an error */
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      *pstatus = NFS_V4_ACL_INIT_ENTRY_FAILED;
-
-      nfs4_release_acldata_key(&buffkey);
-
-      nfs4_ace_free(pacldata->aces);
-
+      *status = NFS_V4_ACL_INIT_ENTRY_FAILED;
+      nfs4_ace_free(acldata->aces);
       return NULL;
     }
 
   /* Adding the entry in the cache */
-  pacl = nfs4_acl_alloc();
-  if(pthread_rwlock_init(&(pacl->lock), NULL) != 0)
+  acl = nfs4_acl_alloc();
+  if(pthread_rwlock_init(&(acl->lock), NULL) != 0)
     {
-      nfs4_acl_free(pacl);
+      nfs4_acl_free(acl);
       LogCrit(COMPONENT_NFS_V4_ACL,
-              "New ACL rw_lock_init returned %d (%s)",
+              "New ACL RW lock init returned %d (%s)",
               errno, strerror(errno));
-      *pstatus = NFS_V4_ACL_INIT_ENTRY_FAILED;
+      *status = NFS_V4_ACL_INIT_ENTRY_FAILED;
 
-      nfs4_release_acldata_key(&buffkey);
-
-      nfs4_ace_free(pacldata->aces);
-
+      nfs4_ace_free(acldata->aces);
       HashTable_ReleaseLatched(fsal_acl_hash, &latch);
 
       return NULL;
     }
 
-  pacl->naces = pacldata->naces;
-  pacl->aces  = pacldata->aces;
-  pacl->ref   = 1;               /* We give out one reference */
+  acl->naces = acldata->naces;
+  acl->aces  = acldata->aces;
+  acl->ref   = 1;               /* We give out one reference */
 
   /* Build the value */
-  buffvalue.addr = (caddr_t) pacl;
-  buffvalue.len = sizeof(fsal_acl_t);
+  value.addr = acl;
+  value.len = sizeof(fsal_acl_t);
 
   rc = HashTable_SetLatched(fsal_acl_hash,
-                            &buffkey,
-                            &buffvalue,
+                            &key,
+                            &value,
                             &latch,
                             HASHTABLE_SET_HOW_SET_NO_OVERWRITE,
                             NULL,
@@ -295,61 +196,45 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   if(rc != HASHTABLE_SUCCESS)
     {
       /* Put the entry back in its pool */
-      nfs4_acl_free(pacl);
+      nfs4_acl_free(acl);
       LogWarn(COMPONENT_NFS_V4_ACL,
               "New ACL entry could not be added to hash, rc=%s",
               hash_table_err_to_str(rc));
 
-      *pstatus = NFS_V4_ACL_HASH_SET_ERROR;
-
-      nfs4_release_acldata_key(&buffkey);
-
+      *status = NFS_V4_ACL_HASH_SET_ERROR;
       return NULL;
     }
 
-  return pacl;
+  return acl;
 }
 
-void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
+void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 {
-  fsal_acl_data_t   acldata;
-  struct gsh_buffdesc     key, old_key;
-  struct gsh_buffdesc     old_value;
-  int               rc;
-  struct hash_latch latch;
+  struct gsh_buffdesc key, old_key;
+  struct gsh_buffdesc old_value;
+  int                 rc;
+  struct hash_latch   latch;
 
   /* Set the return default to NFS_V4_ACL_SUCCESS */
-  *pstatus = NFS_V4_ACL_SUCCESS;
+  *status = NFS_V4_ACL_SUCCESS;
 
-  if (pacl == NULL)
+  if (!acl)
     return;
 
-  PTHREAD_RWLOCK_wrlock(&pacl->lock);
-  if(pacl->ref > 1)
+  PTHREAD_RWLOCK_wrlock(&acl->lock);
+  if(acl->ref > 1)
     {
-      nfs4_acl_entry_dec_ref(pacl);
-      PTHREAD_RWLOCK_unlock(&pacl->lock);
+      nfs4_acl_entry_dec_ref(acl);
+      PTHREAD_RWLOCK_unlock(&acl->lock);
       return;
     }
   else
-      LogDebug(COMPONENT_NFS_V4_ACL, "Free ACL %p", pacl);
+      LogDebug(COMPONENT_NFS_V4_ACL, "Free ACL %p", acl);
 
-  /* Turn the input to a hash key */
-  acldata.naces = pacl->naces;
-  acldata.aces = pacl->aces;
+  key.addr = acl->aces;
+  key.len = acl->naces * sizeof(fsal_ace_t);
 
-  if(nfs4_acldata_2_key(&key, &acldata))
-  {
-    *pstatus = NFS_V4_ACL_UNAPPROPRIATED_KEY;
-
-    nfs4_release_acldata_key(&key);
-
-    PTHREAD_RWLOCK_unlock(&pacl->lock);
-
-    return;
-  }
-
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 
   /* Get the hash table entry and hold latch */
   rc = HashTable_GetLatch(fsal_acl_hash,
@@ -365,13 +250,13 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
         return;
 
       case HASHTABLE_SUCCESS:
-        PTHREAD_RWLOCK_wrlock(&pacl->lock);
-        nfs4_acl_entry_dec_ref(pacl);
-        if(pacl->ref != 0)
+        PTHREAD_RWLOCK_wrlock(&acl->lock);
+        nfs4_acl_entry_dec_ref(acl);
+        if(acl->ref != 0)
           {
             /* Did not actually release last reference */
             HashTable_ReleaseLatched(fsal_acl_hash, &latch);
-            PTHREAD_RWLOCK_unlock(&pacl->lock);
+            PTHREAD_RWLOCK_unlock(&acl->lock);
             return;
           }
 
@@ -393,82 +278,71 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
           return;
     }
 
-  /* Release the hash key data */
-  nfs4_release_acldata_key(&old_key);
-
-  /* Sanity check: old_value.addr is expected to be equal to pacl,
+  /* Sanity check: old_value.addr is expected to be equal to acl,
    * and is released later in this function */
-  if((fsal_acl_t *) old_value.addr != pacl)
-    {
-      LogCrit(COMPONENT_NFS_V4_ACL,
-              "Unexpected ACL %p from hash table (pacl=%p)",
-              old_value.addr, pacl);
-    }
+  assert(old_value.addr == acl);
 
-  /* Release the current key */
-  nfs4_release_acldata_key(&key);
-
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 
   /* Release acl */
-  nfs4_acl_free(pacl);
+  nfs4_acl_free(acl);
 }
 
 static void nfs4_acls_test()
 {
   int i = 0;
   fsal_acl_data_t acldata, acldata2;
-  fsal_ace_t *pace = NULL;
-  fsal_acl_t *pacl = NULL;
+  fsal_ace_t *ace = NULL;
+  fsal_acl_t *acl = NULL;
   fsal_acl_status_t status;
 
   acldata.naces = 3;
   acldata.aces = nfs4_ace_alloc(3);
   LogDebug(COMPONENT_NFS_V4_ACL, "acldata.aces = %p", acldata.aces);
 
-  pace = acldata.aces;
+  ace = acldata.aces;
 
   for(i = 0; i < 3; i++)
     {
-      pace->type = i;
-      pace->perm = i;
-      pace->flag = i;
-      pace->who.uid = i;
-      pace++;
+      ace->type = i;
+      ace->perm = i;
+      ace->flag = i;
+      ace->who.uid = i;
+      ace++;
     }
 
-  pacl = nfs4_acl_new_entry(&acldata, &status);
-  PTHREAD_RWLOCK_rdlock(&pacl->lock);
-  LogDebug(COMPONENT_NFS_V4_ACL, "pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+  acl = nfs4_acl_new_entry(&acldata, &status);
+  PTHREAD_RWLOCK_rdlock(&acl->lock);
+  LogDebug(COMPONENT_NFS_V4_ACL, "acl = %p, ref = %u, status = %u", acl, acl->ref, status);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 
   acldata2.naces = 3;
   acldata2.aces = nfs4_ace_alloc(3);
 
   LogDebug(COMPONENT_NFS_V4_ACL, "acldata2.aces = %p", acldata2.aces);
 
-  pace = acldata2.aces;
+  ace = acldata2.aces;
 
   for(i = 0; i < 3; i++)
     {
-      pace->type = i;
-      pace->perm = i;
-      pace->flag = i;
-      pace->who.uid = i;
-      pace++;
+      ace->type = i;
+      ace->perm = i;
+      ace->flag = i;
+      ace->who.uid = i;
+      ace++;
     }
 
-  pacl = nfs4_acl_new_entry(&acldata2, &status);
-  PTHREAD_RWLOCK_rdlock(&pacl->lock);
-  LogDebug(COMPONENT_NFS_V4_ACL, "re-access: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+  acl = nfs4_acl_new_entry(&acldata2, &status);
+  PTHREAD_RWLOCK_rdlock(&acl->lock);
+  LogDebug(COMPONENT_NFS_V4_ACL, "re-access: acl = %p, ref = %u, status = %u", acl, acl->ref, status);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 
-  nfs4_acl_release_entry(pacl, &status);
-  PTHREAD_RWLOCK_rdlock(&pacl->lock);
-  LogDebug(COMPONENT_NFS_V4_ACL, "release: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  PTHREAD_RWLOCK_unlock(&pacl->lock);
+  nfs4_acl_release_entry(acl, &status);
+  PTHREAD_RWLOCK_rdlock(&acl->lock);
+  LogDebug(COMPONENT_NFS_V4_ACL, "release: acl = %p, ref = %u, status = %u", acl, acl->ref, status);
+  PTHREAD_RWLOCK_unlock(&acl->lock);
 
-  nfs4_acl_release_entry(pacl, &status);
+  nfs4_acl_release_entry(acl, &status);
 }
 
 int nfs4_acls_init()
@@ -482,11 +356,6 @@ int nfs4_acls_init()
   fsal_acl_pool = pool_init(NULL, sizeof(fsal_acl_t),
                             pool_basic_substrate,
                             NULL, NULL, NULL);
-
-  /* Initialize memory pool of ACL keys. */
-  fsal_acl_key_pool = pool_init(NULL, sizeof(fsal_acl_key_t),
-                                pool_basic_substrate,
-                                NULL, NULL, NULL);
 
   /* Create hash table. */
   fsal_acl_hash = HashTable_Init(&fsal_acl_hash_config);

@@ -138,8 +138,17 @@ cache_inode_remove(cache_entry_t *entry,
 
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);
-     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+     if (FSAL_IS_ERROR(fsal_status)) {
+         status = cache_inode_error_convert(fsal_status);
+         goto out;
+     }
 
+     /* Remove the entry from parent dir_entries avl */
+     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+     cache_inode_remove_cached_dirent(entry, name, req_ctx);
+     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+
+     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
      if(FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
          goto out;
@@ -155,13 +164,6 @@ cache_inode_remove(cache_entry_t *entry,
          ((status = status_ref_to_remove_entry) != CACHE_INODE_SUCCESS)) {
          goto out;
      }
-
-     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-
-     /* Remove the entry from parent dir_entries avl */
-     cache_inode_remove_cached_dirent(entry, name, req_ctx);
-
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
 out:
      LogFullDebug(COMPONENT_CACHE_INODE,

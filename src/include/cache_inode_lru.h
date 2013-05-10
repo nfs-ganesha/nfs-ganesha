@@ -66,7 +66,7 @@
 
 struct lru_state {
 	uint64_t entries_hiwat;
-	uint64_t entries_lowat;
+	uint64_t entries_used;
 	uint32_t fds_system_imposed;
 	uint32_t fds_hard_limit;
 	uint32_t fds_hiwat;
@@ -77,7 +77,6 @@ struct lru_state {
 	uint32_t futility;
 	uint32_t per_lane_work;
 	uint32_t biggest_window;
-	uint32_t flags;
 	uint64_t prev_fd_count; /* previous # of open fds */
 	time_t prev_time; /* previous time the gc thread was run. */
 	bool caching_fds;
@@ -109,9 +108,10 @@ extern struct lru_state lru_state;
  */
 #define LRU_REQ_SCAN  0x0004
 
-#define LRU_UNREF_CLEANUP 0x0001 /* cleanup code path */
-#define LRU_UNREF_SENTINEL 0x0002 /* returning cache lookup ref */
-#define LRU_UNREF_QLOCKED 0x0004 /* qlane is locked */
+/**
+ * qlane is locked
+ */
+#define LRU_UNREF_QLOCKED 0x0008
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -119,8 +119,6 @@ extern struct lru_state lru_state;
 
 #define LRU_SENTINEL_REFCOUNT  1
 
-#define LRU_STATE_NONE  0x00
-#define LRU_STATE_RECLAIMING  0x01
 
 /**
  * The number of lanes comprising a logical queue.  This must be
@@ -133,8 +131,7 @@ extern int cache_inode_lru_pkgshutdown(void);
 
 extern size_t open_fd_count;
 
-cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry,
-					 uint32_t flags);
+cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry);
 void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 
 /* XXX */
