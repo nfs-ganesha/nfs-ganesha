@@ -3507,12 +3507,10 @@ void state_lock_wipe(cache_entry_t *entry)
 void cancel_all_nlm_blocked()
 {
   struct glist_head *glist, *glistn;
-  state_owner_t *nlm_owner;
   state_lock_entry_t *found_entry;
-  exportlist_t *pexport;
   cache_entry_t *pentry;
   state_block_data_t *pblock;
-  state_status_t state_status = STATE_SUCCESS;
+/*   state_status_t state_status = STATE_SUCCESS; */
 
   LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
 
@@ -3548,10 +3546,8 @@ void cancel_all_nlm_blocked()
       LogEntry("Blocked Lock found", found_entry);
 
       pentry = found_entry->sle_entry;
-      nlm_owner = found_entry->sle_owner;
-      pexport = found_entry->sle_export;
 
-      state_status = cancel_blocked_lock(pentry, NULL, found_entry);
+      /* state_status = */ (void)cancel_blocked_lock(pentry, NULL, found_entry);
 
       if(pblock->sbd_blocked_cookie != NULL)
         gsh_free(pblock->sbd_blocked_cookie);
