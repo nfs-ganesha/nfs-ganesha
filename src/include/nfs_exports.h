@@ -152,12 +152,10 @@ typedef struct exportlist_client__ {
 typedef struct exportlist {
 	struct glist_head exp_list;
 	uint32_t id; /*< Entry identifier */
-	char dirname[MAXNAMLEN+2]; /*< Path relative to fs root */
-	char fullpath[MAXPATHLEN+2]; /*< The path from the root */
-	char pseudopath[MAXPATHLEN+2]; /*< NFSv4 pseudo-filesystem
-				      *  'virtual' path */
-	char FS_specific[MAXPATHLEN]; /*< Filesystem specific option string */
-	char FS_tag[MAXPATHLEN];      /*< Filesystem "tag" string */
+	char *fullpath;    /*< The path from the root */
+	char *pseudopath;  /*< NFSv4 pseudo-filesystem 'virtual' path */
+	char *FS_specific; /*< Filesystem specific option string */
+	char *FS_tag;      /*< Filesystem "tag" string */
 
 	exportlist_access_type_t access_type; /*< Allowed operations
 						  for this

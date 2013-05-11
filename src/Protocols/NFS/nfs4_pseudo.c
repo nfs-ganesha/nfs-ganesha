@@ -113,7 +113,6 @@ int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
   struct glist_head * glist;
   int j = 0;
   int found = 0;
-  char tmp_pseudopath[MAXPATHLEN+2];
   char *PathTok[NB_TOK_PATH];
   int NbTokPath;
   pseudofs_t *PseudoFs = NULL;
@@ -141,16 +140,19 @@ int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
       entry = glist_entry(glist, exportlist_t, exp_list);
 
       /* skip exports that aren't for NFS v4 */
-      if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
+      if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0 ||
+	 entry->pseudopath == NULL)
         {
           continue;
         }
       if(entry->export_perms.options & EXPORT_OPTION_PSEUDO)
         {
+	  char *tmp_pseudopath;
+
+	  tmp_pseudopath = alloca(strlen(entry->pseudopath) + 2);
           LogDebug(COMPONENT_NFS_V4_PSEUDO,
                    "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
                    entry->id, entry->fullpath, entry->pseudopath);
-
           /* there must be a leading '/' in the pseudo path */
           if(entry->pseudopath[0] != '/')
             {

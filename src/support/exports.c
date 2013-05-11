@@ -1359,10 +1359,6 @@ static int BuildExportEntry(config_item_t block,
       init_glist(&p_entry->exp_state_list);
       init_glist(&p_entry->exp_lock_list);
       init_glist(&p_entry->clients.client_list);
-      strcpy(p_entry->FS_specific, "");  /** @todo, make these strdups */
-      strcpy(p_entry->FS_tag, "");
-      strcpy(p_entry->fullpath, "/");
-      strcpy(p_entry->pseudopath, "/");
     }
 	  
   /* the mandatory options */
@@ -1476,7 +1472,7 @@ static int BuildExportEntry(config_item_t block,
 
           pathlen = strlen(var_value);
 
-          if(pathlen >= MAXPATHLEN)
+          if(pathlen > MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: %s \"%s\" too long",
@@ -1507,16 +1503,7 @@ static int BuildExportEntry(config_item_t block,
 	       continue;
 	    }
 
-	  if(strmaxcpy(p_entry->fullpath,
-		       ppath,
-		       sizeof(p_entry->fullpath)) == -1)
-	    {
-	       LogCrit(COMPONENT_CONFIG,
-		       "NFS READ %s: %s \"%s\" too long",
-		       label, var_name, var_value);
-	       err_flag = true;
-	       continue;
-	    }
+	  p_entry->fullpath = gsh_strdup(var_value);
 
 	  /* Remember the entry we found so we can verify Tag and/or Pseudo
 	   * is set by the time the EXPORT stanza is complete.
@@ -1646,9 +1633,7 @@ static int BuildExportEntry(config_item_t block,
               continue;
             }
 
-          if(strmaxcpy(p_entry->pseudopath,
-                       var_value,
-                       sizeof(p_entry->pseudopath)) == -1)
+          if(strlen(var_value) > MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: %s: \"%s\" too long",
@@ -1656,6 +1641,7 @@ static int BuildExportEntry(config_item_t block,
               err_flag = true;
               continue;
             }
+	  p_entry->pseudopath = gsh_strdup(var_value);
 
           p_perms->options |= EXPORT_OPTION_PSEUDO;
         }
@@ -2102,9 +2088,7 @@ static int BuildExportEntry(config_item_t block,
 
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
-          if(strmaxcpy(p_entry->FS_specific,
-                       var_value,
-                       sizeof(p_entry->FS_specific)) == -1)
+          if(strlen(var_value) > MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: %s: \"%s\" too long",
@@ -2112,6 +2096,7 @@ static int BuildExportEntry(config_item_t block,
               err_flag = true;
               continue;
             }
+	  p_entry->FS_specific = gsh_strdup(var_value);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
@@ -2137,9 +2122,7 @@ static int BuildExportEntry(config_item_t block,
               continue;
             }
 
-          if(strmaxcpy(p_entry->FS_tag,
-                       var_value,
-                       sizeof(p_entry->FS_tag)) == -1)
+          if(strlen(var_value) > MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: %s: \"%s\" too long",
@@ -2147,6 +2130,7 @@ static int BuildExportEntry(config_item_t block,
               err_flag = true;
               continue;
             }
+	  p_entry->FS_tag = gsh_strdup(var_value);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
@@ -2488,6 +2472,14 @@ void free_export_resources(exportlist_t *export)
 	}
 	export->export_hdl = NULL;
 	/* free strings here */
+	if(export->fullpath != NULL)
+		gsh_free(export->fullpath);
+	if(export->pseudopath != NULL)
+		gsh_free(export->pseudopath);
+	if(export->FS_specific != NULL)
+		gsh_free(export->FS_specific);
+	if(export->FS_tag != NULL)
+		gsh_free(export->FS_tag);
 }
 
 /**
@@ -2538,13 +2530,12 @@ exportlist_t *BuildDefaultExport()
   p_entry->PrefRead = 0x100000;
   p_entry->PrefReaddir = 0x100000;
 
-  strcpy(p_entry->FS_specific, "");
-  strcpy(p_entry->FS_tag, "ganesha");
+  p_entry->FS_tag = gsh_strdup("ganesha");
 
   p_entry->id = 1;
 
-  strcpy(p_entry->fullpath, "/");
-  strcpy(p_entry->pseudopath, "/");
+  p_entry->fullpath = gsh_strdup("/");
+  p_entry->pseudopath = gsh_strdup("/");
 
   p_entry->UseCookieVerifier = true;
 

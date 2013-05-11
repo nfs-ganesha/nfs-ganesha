@@ -363,7 +363,9 @@ static bool export_to_dbus(struct gsh_export *exp_node,
 	const char *path;
 
 	exp = container_of(exp_node, struct export_stats, export);
-	path = exp_node->export.pseudopath; /* is this the "right" one? */
+	path = (exp_node->export.pseudopath != NULL) ?
+		exp_node->export.pseudopath :
+		exp_node->export.fullpath;
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT,

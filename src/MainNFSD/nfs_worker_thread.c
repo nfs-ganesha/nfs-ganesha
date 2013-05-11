@@ -916,8 +916,8 @@ static void nfs_rpc_execute(request_data_t *preq,
 	      }
 
               LogFullDebug(COMPONENT_DISPATCH,
-                           "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           "Found export entry for path=%s as exportid=%d",
+                           pexport->fullpath, pexport->id);
         }
       else
         { /* NFS V4 gets its own export id from the ops in the compound */

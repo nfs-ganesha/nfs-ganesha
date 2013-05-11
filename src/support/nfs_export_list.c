@@ -165,7 +165,8 @@ exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
       /* Is p_current_item->pseudopath is equal to path ? */
-      if(!strcmp(p_current_item->pseudopath, path))
+      if(p_current_item->pseudopath != NULL &&
+	 !strcmp(p_current_item->pseudopath, path))
         {
           LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
           return p_current_item;
@@ -202,7 +203,8 @@ exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
       /* Is p_current_item->FS_tag is equal to tag ? */
-      if(!strcmp(p_current_item->FS_tag, tag))
+      if(p_current_item->FS_tag != NULL &&
+	 !strcmp(p_current_item->FS_tag, tag))
         {
           LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
           return p_current_item;
@@ -667,7 +669,8 @@ int nfs_export_tag2path(struct glist_head * exportlist, char *tag, int taglen,
     {
       piter = glist_entry(glist, exportlist_t, exp_list);
 
-      if(!strncmp(tag, piter->FS_tag, taglen))
+      if(piter->FS_tag != NULL &&
+	 !strncmp(tag, piter->FS_tag, taglen))
         {
           strncpy(path, piter->fullpath, pathlen);
           return 0;
