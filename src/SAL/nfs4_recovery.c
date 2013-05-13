@@ -122,12 +122,15 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 			"NFS Server recovery event %d nodeid %d ip %s",
 			gsp->event, gsp->nodeid, gsp->ipaddr);
 
-		nfs_release_nlm_state();
-		
-		if (gsp->event == EVENT_RELEASE_IP)
-			nfs_release_v4_client(gsp->ipaddr);
-		else
-			nfs4_load_recov_clids_nolock(gsp);
+		if (gsp->event == EVENT_CLEAR_BLOCKED)
+			cancel_all_nlm_blocked();
+		else {
+			nfs_release_nlm_state();
+			if (gsp->event == EVENT_RELEASE_IP)
+				nfs_release_v4_client(gsp->ipaddr);
+			else
+				nfs4_load_recov_clids_nolock(gsp);
+		}
         }
         V(grace.g_mutex);
 }

@@ -889,11 +889,16 @@ struct state_async_queue_t {
  *       of thing.)
  */
 
-#define EVENT_JUST_GRACE     0
-#define EVENT_TAKE_NODEID    1
-#define EVENT_UPDATE_CLIENTS 2
-#define EVENT_RELEASE_IP     3
-#define EVENT_TAKE_IP        4
+#define EVENT_JUST_GRACE     0  /* Just start grace period */
+#define EVENT_CLEAR_BLOCKED  1  /* Start grace period, and clear blocked locks */
+#define EVENT_RELEASE_IP     2  /* Start grace period, clear blocked locks,
+                                       and release all locks */
+#define EVENT_UPDATE_CLIENTS 3  /* Start grace period, clear blocked locks,
+                                       release all locks, and update clients list. */
+#define EVENT_TAKE_NODEID    4  /* Start grace period, clear blocked locks,
+                                       release all locks, and update clients using node id. */
+#define EVENT_TAKE_IP        5  /* Start grace period, clear blocked locks,
+                                       release all locks, and update clients using IP address. */
 
 typedef struct nfs_grace_start {
 	int event;    /*< Reason for grace period, see EVENT_nnn */
