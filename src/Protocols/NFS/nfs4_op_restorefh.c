@@ -42,6 +42,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -88,8 +89,13 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
 
   data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
+  if(data->req_ctx->export != NULL) {
+      put_gsh_export(data->req_ctx->export);
+  }
   /* Restore the export information */
-  data->pexport      = data->saved_pexport;
+  data->req_ctx->export = data->saved_export;
+  data->saved_export = NULL;
+  data->pexport      = &data->req_ctx->export->export;
   data->export_perms = data->saved_export_perms;
 
   /* No need to call nfs4_SetCompoundExport or nfs4_MakeCred

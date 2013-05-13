@@ -561,10 +561,15 @@ void set_compound_data_for_pseudo(compound_data_t * data)
   if (data->current_ds) {
       data->current_ds->ops->put(data->current_ds);
   }
+  if(data->req_ctx->export != NULL) {
+      put_gsh_export(data->req_ctx->export);
+      data->req_ctx->export = NULL;
+  }
   /* No cache inode entry for the directory within pseudo fs */
   data->current_ds           = NULL;
   data->current_entry        = NULL; /* No cache inode entry */
   data->current_filetype     = DIRECTORY; /* Always a directory */
+  data->req_ctx->export      = NULL;
   data->pexport              = NULL; /* No exportlist is related to pseudo fs */
   data->export_perms.options = EXPORT_OPTION_ROOT |
                                EXPORT_OPTION_MD_READ_ACCESS |
@@ -645,7 +650,25 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                    "A junction in pseudo fs is traversed: name = %s, id = %d",
                    iter->name, iter->junction_export->id);
-      data->pexport = iter->junction_export;
+      /**
+       * @todo Danger Will Robinson!!
+       * We do a get_gsh_export here to take a reference on the export
+       * The whole pseudo fs tree is build directly from the exportlist
+       * without gsh_export reference even though the export list itself
+       * was created via get_gsh_export().
+       * We need a reference here because we are transitioning the junction
+       * and need to reference the export on the other side.  What really
+       * needs to happen is that junction_export is of type struct gsh_export *
+       * and we fill it with get_gsh_export.  A junction crossing would put
+       * this (the pseudo's export) and get the one on the other side.  But
+       * then, that would require the pseudo fs to be a FSAL...  Hence, we
+       * hack it here until the next dev cycle.
+       */
+
+      data->req_ctx->export = get_gsh_export(iter->junction_export->id,
+					     true);
+      assert(data->req_ctx->export != NULL);
+      data->pexport = &data->req_ctx->export->export;
 
       /* Build credentials */
       res_LOOKUP4.status = nfs4_MakeCred(data);
@@ -923,7 +946,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                    psfsentry->name, psfsentry->junction_export->id);
 
       /* Step up the compound data */
-      data->pexport = psfsentry->junction_export;
+      /**
+       * @todo Danger Will Robinson!!
+       * This is the same hack as above in pseudo lookup
+       */
+      data->req_ctx->export = get_gsh_export(psfsentry->junction_export->id,
+					     true);
+      data->pexport = &data->req_ctx->export->export;
 
       /* Build the credentials */
       res_READDIR4.status = nfs4_MakeCred(data);
@@ -1091,20 +1120,25 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
            * when the target directory is a junction.
            */ 
           res_READDIR4.status = nfs4_MakeCred(data);
+	  data->pexport = save_pexport;
 
           if(res_READDIR4.status == NFS4ERR_ACCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
+		       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ |"
+		       " Failed to get FSAL credentials for %s, id=%d",
+		       iter->junction_export->fullpath,
+		       iter->junction_export->id);
               return res_READDIR4.status;
             }
-	  cache_status = nfs_export_get_root_entry(data->pexport, &entry);
+	  cache_status = nfs_export_get_root_entry(iter->junction_export, &entry);
 	  if(cache_status != CACHE_INODE_SUCCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s , id=%d, status = %d",
-                   data->pexport->fullpath, data->pexport->id, cache_status);
+		       "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s ,"
+		       " id=%d, status = %d",
+		       iter->junction_export->fullpath,
+		       iter->junction_export->id, cache_status);
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
@@ -1124,7 +1158,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
-           data->pexport = save_pexport;
       }
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;

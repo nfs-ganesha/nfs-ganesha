@@ -36,6 +36,7 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 typedef struct nfs4_op_desc__
 {
@@ -1018,6 +1019,12 @@ void compound_data_Free(compound_data_t *data)
   if (data->psession) {
       dec_session_ref(data->psession);
       data->psession = NULL;
+  }
+
+  if(data->req_ctx->export) {
+      put_gsh_export(data->req_ctx->export);
+      data->req_ctx->export = NULL;
+      data->pexport = NULL;
   }
 
   if (data->currentFH.nfs_fh4_val != NULL)
