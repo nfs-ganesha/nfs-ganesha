@@ -86,8 +86,12 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
         int i, iend;
         nfs_grace_start_t *gsp;
 
-        /* limit the grace period to a maximum of 60 seconds */
-        duration = MIN(60, nfs_param.nfsv4_param.lease_lifetime);
+        /* grace should always be greater than or equal to lease time,
+         * some clients are known to have problems with grace greater than 60 seconds
+         * Lease_Lifetime should be set to a smaller value for those setups. 
+         */
+
+        duration = nfs_param.nfsv4_param.lease_lifetime;
 
         P(grace.g_mutex);
 
