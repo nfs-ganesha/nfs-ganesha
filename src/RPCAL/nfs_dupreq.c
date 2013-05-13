@@ -1168,9 +1168,9 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
                 drc_inc_retwnd(drc);
                 pthread_mutex_unlock(&drc->mtx);
                 status = DUPREQ_EXISTS;
+                (dv->refcnt)++;
             }
             req->rq_u1 = dv;
-            (dv->refcnt)++;
             pthread_mutex_unlock(&dv->mtx);
         } else {
             /* new request */
