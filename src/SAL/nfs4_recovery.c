@@ -98,21 +98,18 @@ nfs4_init_grace()
  */
 void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
-        int duration;
-
-        /* limit the grace period to a maximum of grace period or lease time */
-	duration = (nfs_param.nfsv4_param.graceless ?
-		    0 : MAX(nfs_param.nfsv4_param.lease_lifetime,
-			    nfs_param.nfsv4_param.grace_period));
-
         P(grace.g_mutex);
 
+        /* grace should always be greater than or equal to lease time,
+         * some clients are known to have problems with grace greater than 60 seconds
+         * Lease_Lifetime should be set to a smaller value for those setups. 
+         */
         grace.g_start = time(NULL);
-        grace.g_duration = duration;
+        grace.g_duration = nfs_param.nfsv4_param.lease_lifetime;
 
         LogEvent(COMPONENT_STATE,
                  "NFS Server Now IN GRACE, duration %d",
-                 duration);
+                 (int) grace.g_duration);
         /*
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
