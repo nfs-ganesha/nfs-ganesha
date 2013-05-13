@@ -206,10 +206,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	      .lock_start = fl.flock.l_start,
 	      .lock_length = fl.flock.l_len
 	    };
-	    rc = event_func->lock_grant(gpfs_fsal_up_ctx->gf_export,
-					&key,
-					fl.lock_owner,
-					&lockdesc);
+	    rc = up_async_lock_grant(general_fridge,
+				     gpfs_fsal_up_ctx->gf_export,
+				     &key,
+				     fl.lock_owner,
+				     &lockdesc,
+				     NULL, NULL);
 	  }
             break;
 
@@ -217,8 +219,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             LogDebug(COMPONENT_FSAL_UP,
                      "delegation recall: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
-	    rc = event_func->delegrecall(gpfs_fsal_up_ctx->gf_export,
-					 &key);
+	    rc = up_async_delegrecall(general_fridge,
+				      gpfs_fsal_up_ctx->gf_export,
+				      &key,
+				      NULL, NULL);
             break;
 
           case LAYOUT_FILE_RECALL: /* Layout file recall Event */
@@ -233,13 +237,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                      "layout file recall: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
 
-	    rc = event_func->layoutrecall(gpfs_fsal_up_ctx->gf_export,
-					  &key,
-					  LAYOUT4_NFSV4_1_FILES,
-					  false,
-					  &segment,
-					  NULL,
-					  NULL);
+	    rc = up_async_layoutrecall(general_fridge,
+				       gpfs_fsal_up_ctx->gf_export,
+				       &key,
+				       LAYOUT4_NFSV4_1_FILES,
+				       false,
+				       &segment,
+				       NULL, NULL, NULL, NULL);
 	  }
             break;
 
@@ -264,11 +268,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                      "layout device update: flags:%x ino %ld devid %ld-%016lx",
                      flags, callback.buf->st_ino, dev_id.sbid, dev_id.devid);
 
-	    rc = event_func->notify_device(gpfs_fsal_up_ctx->gf_export,
-					   NOTIFY_DEVICEID4_DELETE_MASK,
-					   LAYOUT4_NFSV4_1_FILES,
-					   dev_id.devid,
-					   true);
+	    rc = up_async_notify_device(general_fridge,
+					gpfs_fsal_up_ctx->gf_export,
+					NOTIFY_DEVICEID4_DELETE_MASK,
+					LAYOUT4_NFSV4_1_FILES,
+					dev_id.devid,
+					true,
+				 	NULL, NULL);
             break;
 
           case INODE_UPDATE: /* Update Event */
