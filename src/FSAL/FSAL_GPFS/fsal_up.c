@@ -150,10 +150,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
       retry = 0;
 
-      /* Fill in fsid portion of handle */
-      callback.handle->handle_fsid[0] = gpfs_fsal_up_ctx->gf_fsid[0];
-      callback.handle->handle_fsid[1] = gpfs_fsal_up_ctx->gf_fsid[1];
-
       LogDebug(COMPONENT_FSAL_UP,
                "inode update: rc %d reason %d update ino %ld",
                rc, reason, callback.buf->st_ino);
