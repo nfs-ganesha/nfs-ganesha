@@ -864,7 +864,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       break;
     }
 #ifdef USE_DBUS_STATS
-    server_stats_nfs_done(&req_ctx, exportid, preq, rc, true);
+    server_stats_nfs_done(&req_ctx, preq, rc, true);
 #endif
     goto freeargs;
   }
@@ -1204,12 +1204,10 @@ static void nfs_rpc_execute(request_data_t *preq,
           res_nfs);
     }
 #ifdef USE_DBUS_STATS
-/* NOTE: at this level, any v4 stats are toast because we don't know
- * anything about exports so we don't even know who to credit the
- * compound too at this point. Do V4 stats in nfs4_compound()
+/* NFSv4 stats are handled in nfs4_compound()
  */
   if(req->rq_vers != NFS_V4)
-	  server_stats_nfs_done(&req_ctx, exportid, preq, rc, false);
+	  server_stats_nfs_done(&req_ctx, preq, rc, false);
 #endif
 
   /* If request is dropped, no return to the client */

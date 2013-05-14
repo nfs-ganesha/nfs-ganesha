@@ -373,7 +373,6 @@ int nfs4_op_write(struct nfs_argop4 *op,
     }
 #ifdef USE_DBUS_STATS
   server_stats_io_done(data->req_ctx,
-		       data->pexport->id,
 		       size,
 		       written_size,
 		       (res_WRITE4.status == NFS4_OK) ? true : false,

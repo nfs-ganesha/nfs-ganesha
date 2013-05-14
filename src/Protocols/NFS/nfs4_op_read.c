@@ -361,7 +361,6 @@ done:
         }
 #ifdef USE_DBUS_STATS
 	server_stats_io_done(data->req_ctx,
-			     data->pexport->id,
 			     size,
 			     read_size,
 			     (res_READ4.status == NFS4_OK) ? true : false,

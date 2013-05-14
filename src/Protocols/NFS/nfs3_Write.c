@@ -301,7 +301,6 @@ out:
         
 #ifdef USE_DBUS_STATS
 	server_stats_io_done(req_ctx,
-			     export->id,
 			     size,
 			     written_size,
 			     (rc == NFS_REQ_OK) ? true : false,

@@ -677,7 +677,6 @@ static void record_stats(struct gsh_stats *gsh_st,
  */
 
 void server_stats_nfs_done(struct req_op_context *req_ctx,
-			   int export_id,
 			   request_data_t *reqdata,
 			   int rc,
 			   bool dup)
@@ -699,25 +698,21 @@ void server_stats_nfs_done(struct req_op_context *req_ctx,
 		     rc == NFS_REQ_OK,
 		     dup);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
-	if( !dup && export_id >= 0) {
-		struct gsh_export *exp;
+	if( !dup && req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
-		exp = get_gsh_export(export_id, false);
-		if(exp == NULL)
-			goto out;
-		exp_st = container_of(exp, struct export_stats, export);
+		exp_st = container_of(req_ctx->export,
+				      struct export_stats, export);
 		record_stats(&exp_st->st,
-			     &exp->lock,
+			     &req_ctx->export->lock,
 			     reqdata,
 			     stop_time - req_ctx->start_time,
 			     req_ctx->queue_wait,
 			     rc == NFS_REQ_OK,
 			     dup);
-		(void)atomic_store_uint64_t(&exp->last_update, stop_time);
-		put_gsh_export(exp);
+		(void)atomic_store_uint64_t(&req_ctx->export->last_update,
+					    stop_time);
 	}
-out:
 	return;
 }
 
@@ -728,7 +723,6 @@ out:
  */
 
 void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
-				int export_id,
 				int proto_op,
 				nsecs_elapsed_t start_time,
 				int status)
@@ -752,25 +746,21 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx,
 			req_ctx->queue_wait,
 			status);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
-	if(export_id >= 0) {
-		struct gsh_export *exp;
+	if(req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
-		exp = get_gsh_export(export_id, false);
-		if(exp == NULL)
-			goto out;
-		exp_st = container_of(exp, struct export_stats, export);
+		exp_st = container_of(req_ctx->export,
+				      struct export_stats, export);
 		record_nfsv4_op(&exp_st->st,
-				&exp->lock,
+				&req_ctx->export->lock,
 				proto_op,
 				req_ctx->nfs_minorvers,
 				stop_time - start_time,
 				req_ctx->queue_wait,
 				status);
-		(void)atomic_store_uint64_t(&exp->last_update, stop_time);
-		put_gsh_export(exp);
+		(void)atomic_store_uint64_t(&req_ctx->export->last_update,
+					    stop_time);
 	}
-out:
 	return;
 }
 
@@ -781,7 +771,6 @@ out:
  */
 
 void server_stats_compound_done(struct req_op_context *req_ctx,
-				int export_id,
 				int num_ops,
 				int status)
 {
@@ -802,25 +791,21 @@ void server_stats_compound_done(struct req_op_context *req_ctx,
 			req_ctx->queue_wait,
 			status == NFS4_OK);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
-	if(export_id >= 0) {
-		struct gsh_export *exp;
+	if(req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
-		exp = get_gsh_export(export_id, false);
-		if(exp == NULL)
-			goto out;
-		exp_st = container_of(exp, struct export_stats, export);
+		exp_st = container_of(req_ctx->export,
+				      struct export_stats, export);
 		record_compound(&exp_st->st,
-				&exp->lock,
+				&req_ctx->export->lock,
 				req_ctx->nfs_minorvers,
 				num_ops,
 				stop_time - req_ctx->start_time,
 				req_ctx->queue_wait,
 				status == NFS4_OK);
-		(void)atomic_store_uint64_t(&exp->last_update, stop_time);
-		put_gsh_export(exp);
+		(void)atomic_store_uint64_t(&req_ctx->export->last_update,
+					    stop_time);
 	}
-out:
 	return;
 }
 
@@ -832,7 +817,6 @@ out:
  */
 
 void server_stats_io_done(struct req_op_context *req_ctx,
-			  int export_id,
 			  size_t requested,
 			  size_t transferred,
 			  bool success,
@@ -846,22 +830,17 @@ void server_stats_io_done(struct req_op_context *req_ctx,
 			req_ctx,
 			requested, transferred,
 			success, is_write);
-	if(export_id >= 0) {
-		struct gsh_export *exp;
+	if(req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
-		exp = get_gsh_export(export_id, false);
-		if(exp == NULL)
-			goto out;
-		exp_st = container_of(exp, struct export_stats, export);
+		exp_st = container_of(req_ctx->export,
+				      struct export_stats, export);
 		record_io_stats(&exp_st->st,
-				&exp->lock,
+				&req_ctx->export->lock,
 				req_ctx,
 				requested, transferred,
 				success, is_write);
-		put_gsh_export(exp);
 	}
-out:
 	return;
 }
 

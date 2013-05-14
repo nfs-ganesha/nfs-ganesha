@@ -388,9 +388,6 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_val;
   nsecs_elapsed_t op_start_time;
   struct timespec ts;
-#ifdef USE_DBUS_STATS
-  int export_id = -1;
-#endif
   int perm_flags;
 
   if(compound4_minor > 1)
@@ -617,17 +614,7 @@ int nfs4_Compound(nfs_arg_t *arg,
         .status = status;
 
 #ifdef USE_DBUS_STATS
-      if(nfs4_Is_Fh_Invalid(&data.currentFH) == NFS4_OK &&
-	 !nfs4_Is_Fh_Pseudo(&data.currentFH)) {
-	      export_id = nfs4_FhandleToExportId(&data.currentFH);
-      } else if(nfs4_Is_Fh_Invalid(&data.savedFH) == NFS4_OK &&
-		!nfs4_Is_Fh_Pseudo(&data.savedFH)) {
-	      export_id = nfs4_FhandleToExportId(&data.savedFH);
-      } else {
-	      export_id = -1;
-      }
       server_stats_nfsv4_op_done(data.req_ctx,
-				 export_id,
 				 argarray[i].argop,
 				 op_start_time,
 				 status == NFS4_OK);
@@ -671,7 +658,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 #ifdef USE_DBUS_STATS
   server_stats_compound_done(req_ctx,
-			     export_id,
 			     argarray_len,
 			     status);
 #endif
