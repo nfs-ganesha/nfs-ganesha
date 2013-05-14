@@ -694,7 +694,6 @@ nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 static void nfs_rpc_execute(request_data_t *preq,
                             nfs_worker_data_t *worker_data)
 {
-  exportlist_t *pexport = NULL;
   nfs_request_data_t *preqnfs = preq->r_u.nfs;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
   nfs_res_t *res_nfs;
@@ -725,7 +724,6 @@ static void nfs_rpc_execute(request_data_t *preq,
   memset(&req_ctx, 0, sizeof(struct req_op_context));
   req_ctx.creds = &user_credentials;
   req_ctx.caller_addr = &worker_data->hostaddr;
-  req_ctx.clientid = NULL;
   req_ctx.nfs_vers = req->rq_vers;
   req_ctx.req_type = preq->rtype;
 
@@ -884,28 +882,24 @@ static void nfs_rpc_execute(request_data_t *preq,
       /* The NFSv3 functions' arguments always begin with the file
        * handle (but not the NULL function).  This hook is used to get the
        * fhandle with the arguments and so determine the export entry to be
-       * used.  In NFSv4, junction traversal is managed by the protocol itself
-       * so the whole export list is provided to NFSv4 request. */
+       * used.  In NFSv4, junction traversal is managed by the protocol.
+       */
 
       progname = "NFS";
       if(req->rq_vers == NFS_V3)
         {
-	   int export_id;
-
 	   protocol_options |= EXPORT_OPTION_NFSV3;
-	   export_id = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
-
-	   if(export_id < 0)
+	   exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
+	   if(exportid < 0)
 	      goto handle_err;
-	   req_ctx.export = get_gsh_export(export_id, true);
+	   req_ctx.export = get_gsh_export(exportid, true);
 	   if(req_ctx.export == NULL ||
 	      (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
 	      goto handle_err;
-	   pexport = &req_ctx.export->export;
 	   /* privileged port only makes sense for V3.  V4 can go thru
 	    * firewalls and so all bets are off
 	    */
-	   if((pexport->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) &&
+	   if((req_ctx.export->export.export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) &&
 	       (port >= IPPORT_RESERVED))
 	      {
 		 LogInfo(COMPONENT_DISPATCH,
@@ -917,7 +911,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for path=%s as exportid=%d",
-                           pexport->fullpath, pexport->id);
+                           req_ctx.export->export.fullpath, req_ctx.export->export.id);
         }
       else
         { /* NFS V4 gets its own export id from the ops in the compound */
@@ -973,20 +967,16 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
       if(pfh3 != NULL)
         {
-	  int export_id;
-
-	  export_id = nlm4_FhandleToExportId(pfh3);
-
-          if(export_id < 0)
+	  exportid = nlm4_FhandleToExportId(pfh3);
+          if(exportid < 0)
 	      goto handle_err;
-	  req_ctx.export = get_gsh_export(export_id, true);
+	  req_ctx.export = get_gsh_export(exportid, true);
 	  if(req_ctx.export == NULL ||
 	     (req_ctx.export->export.export_perms.options & EXPORT_OPTION_NFSV3) == 0)
 	      goto handle_err;
-	  pexport = &req_ctx.export->export;
           LogFullDebug(COMPONENT_DISPATCH,
                        "Found export entry for dirname=%s as exportid=%d",
-                       pexport->fullpath, pexport->id);
+                       req_ctx.export->export.fullpath, req_ctx.export->export.id);
         }
     } else if(req->rq_prog == nfs_param.core_param.program[P_MNT]) {
       progname = "MNT";
@@ -1003,7 +993,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                    req_ctx.client->hostaddr_str);
 
       nfs_export_check_access(req_ctx.caller_addr,
-                              pexport,
+                              &req_ctx.export->export,
                               &export_perms);
 
       if(export_perms.options == 0)
@@ -1011,7 +1001,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           LogInfo(COMPONENT_DISPATCH,
                   "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
                   req_ctx.client->hostaddr_str,
-                  pexport->id, pexport->fullpath,
+                  req_ctx.export->export.id, req_ctx.export->export.fullpath,
                   (int)req->rq_vers, (int)req->rq_proc);
 
           auth_rc = AUTH_TOOWEAK;
@@ -1033,7 +1023,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers,
-                  pexport->id, pexport->fullpath,
+                  req_ctx.export->export.id, req_ctx.export->export.fullpath,
                   req_ctx.client->hostaddr_str);
 
           auth_rc = AUTH_FAILED;
@@ -1049,7 +1039,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d over %s not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers, xprt_type_to_str(xprt_type),
-                  pexport->id, pexport->fullpath,
+                  req_ctx.export->export.id, req_ctx.export->export.fullpath,
                   req_ctx.client->hostaddr_str);
 
           auth_rc = AUTH_FAILED;
@@ -1058,12 +1048,12 @@ static void nfs_rpc_execute(request_data_t *preq,
 
       /* Test if export allows the authentication provided */
       if(((preqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) != 0) &&
-         (nfs_export_check_security(req, &export_perms, pexport) == FALSE))
+         (nfs_export_check_security(req, &export_perms, &req_ctx.export->export) == FALSE))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d auth not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers,
-                  pexport->id, pexport->fullpath,
+                  req_ctx.export->export.id, req_ctx.export->export.fullpath,
                   req_ctx.client->hostaddr_str);
 
           auth_rc = AUTH_TOOWEAK;
@@ -1077,7 +1067,7 @@ static void nfs_rpc_execute(request_data_t *preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-                  port, pexport->id, pexport->fullpath,
+                  port, req_ctx.export->export.id, req_ctx.export->export.fullpath,
                   req_ctx.client->hostaddr_str);
 
           auth_rc = AUTH_TOOWEAK;
@@ -1167,7 +1157,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       LogInfo(COMPONENT_DISPATCH,
               "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 	      req_ctx.client->hostaddr_str,
-              pexport->id, pexport->fullpath,
+              req_ctx.export->export.id, req_ctx.export->export.fullpath,
               (int)req->rq_vers, (int)req->rq_proc);
       auth_rc = AUTH_TOOWEAK;
       goto auth_failure;
@@ -1179,7 +1169,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
-          nfs_check_anon(&export_perms, pexport, &user_credentials);
+          nfs_check_anon(&export_perms, &req_ctx.export->export, &user_credentials);
         }
 
       /* processing */
@@ -1197,7 +1187,7 @@ static void nfs_rpc_execute(request_data_t *preq,
     null_op:
       rc = preqnfs->funcdesc->service_function(
           arg_nfs,
-          pexport,
+          &req_ctx.export->export,
           &req_ctx,
           worker_data,
           req,
@@ -1278,7 +1268,7 @@ handle_err:
       char *reason;
       if(exportid < 0)
 	      reason = "has badly formed handle";
-      else if(pexport == NULL)
+      else if(req_ctx.export == NULL)
 	      reason = "has invalid export";
       else
 	      reason = "V3 not allowed on this export";
