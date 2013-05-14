@@ -552,7 +552,6 @@ add_subdirectory(SAL)
 add_subdirectory(libntirpc)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
-add_subdirectory(FSAL_UP)
 add_subdirectory(support)
 add_subdirectory(os)
 
