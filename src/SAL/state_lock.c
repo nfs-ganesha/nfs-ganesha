@@ -677,7 +677,11 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
-        gsh_free(lock_entry->sle_block_data);
+        {
+          /* need to remove from the state_blocked_locks list */
+          glist_del(&lock_entry->sle_block_data->sbd_list);
+          gsh_free(lock_entry->sle_block_data);
+        }
 
 #ifdef DEBUG_SAL
       P(all_locks_mutex);
