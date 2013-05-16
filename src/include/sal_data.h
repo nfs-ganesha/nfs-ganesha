@@ -648,6 +648,7 @@ typedef enum state_status_t {
         STATE_SERVERFAULT           = 48,
         STATE_TOOSMALL              = 49,
         STATE_XDEV                  = 50,
+        STATE_FSAL_SHARE_DENIED = 51,
 } state_status_t;
 
 /******************************************************************************
