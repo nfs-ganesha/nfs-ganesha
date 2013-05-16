@@ -671,7 +671,7 @@ bool principal2uid(char *principal, uid_t * puid)
   pthread_rwlock_rdlock(&idmapper_user_lock);
   success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL, false);
   pthread_rwlock_unlock(&idmapper_user_lock);
-  if (likely(success))
+  if (unlikely(!success))
     {
 	  if ((princbuff.len >= 4) &&
 	       (memcmp(princbuff.addr, "nfs/", 4) == 0))
@@ -738,14 +738,17 @@ bool principal2uid(char *principal, uid_t * puid)
           }
 #endif /* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
+#if 0
           if ((found_uid == true) && (found_gid == true))
           {
             goto principal_found;
           }
+#endif          
 #endif
       
           return false;
         }
+#if 0        
 #ifdef _MSPAC_SUPPORT
 principal_found:
 #endif
@@ -760,6 +763,7 @@ principal_found:
 		   "idmapper_add_user(%s, %d, %d) failed",
 		   principal, gss_uid, gss_gid);
 	}
+#endif    
     }
 
   /* This looks suspicious. */
