@@ -255,7 +255,7 @@ nfs4_op_read(struct nfs_argop4 *op,
         offset = arg_READ4.offset;
         size = arg_READ4.count;
 
-        if (((data->pexport->options & EXPORT_OPTION_MAXOFFSETREAD) ==
+        if (((data->pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD) ==
              EXPORT_OPTION_MAXOFFSETREAD) &&
             ((offset + size) > data->pexport->MaxOffsetRead)) {
                 res_READ4.status = NFS4ERR_DQUOT;
@@ -265,7 +265,7 @@ nfs4_op_read(struct nfs_argop4 *op,
         /* Do not read more than FATTR4_MAXREAD.  We should check
            against the value we returned in getattr. This was not the
            case before the following check_size code was added. */
-        if (((data->pexport->options & EXPORT_OPTION_MAXREAD)
+        if (((data->pexport->export_perms.options & EXPORT_OPTION_MAXREAD)
              == EXPORT_OPTION_MAXREAD)) {
                 check_size = data->pexport->MaxRead;
         } else {
@@ -361,7 +361,6 @@ done:
         }
 #ifdef USE_DBUS_STATS
 	server_stats_io_done(data->req_ctx,
-			     data->pexport->id,
 			     size,
 			     read_size,
 			     (res_READ4.status == NFS4_OK) ? true : false,

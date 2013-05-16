@@ -111,12 +111,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if (!(nfs_export_check_security(data->reqp, data->pexport))) {
-                res_LOOKUP4->status = NFS4ERR_PERM;
-                goto out;
-        }
-
-
         /* Do the lookup in the FSAL */
         file_entry = NULL;
         dir_entry = data->current_entry;
@@ -139,12 +133,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 cache_inode_put(file_entry);
                 goto out;
         }
-
-        /* Copy this to the mounted on FH (if no junction is traversed */
-        memcpy(data->mounted_on_FH.nfs_fh4_val,
-               data->currentFH.nfs_fh4_val,
-               data->currentFH.nfs_fh4_len);
-        data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
         /* Release dir_entry, as it is not reachable from anywhere in
            compound after this function returns.  Count on later

@@ -49,6 +49,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  * @brief NFS4_OP_LOOKUPP
@@ -72,7 +73,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   cache_entry_t        * dir_entry = NULL;
   cache_entry_t        * file_entry = NULL;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
-  int                    error = 0;
 
   resp->resop = NFS4_OP_LOOKUPP;
   res_LOOKUPP4.status = NFS4_OK;
@@ -100,17 +100,17 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
 
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-        {
-          res_LOOKUPP4.status = error;
-          return res_LOOKUPP4.status;
-        }
-    }
+  /* If Filehandle points to the root of the current export, then backup
+   * through junction into the pseudo file system.
+   *
+   * @todo FSF: eventually we need to support junctions between exports
+   *            and that will require different code here.
+   */
+  if(data->current_entry->type == DIRECTORY &&
+     data->current_entry == data->req_ctx->export->export.exp_root_cache_inode)
+    return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
 
-  /* Preparying for cache_inode_lookup ".." */
+  /* Preparing for cache_inode_lookup ".." */
   file_entry = NULL;
   dir_entry = data->current_entry;
 
@@ -126,12 +126,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
           cache_inode_put(file_entry);
           return res_LOOKUPP4.status;
         }
-
-      /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy(data->mounted_on_FH.nfs_fh4_val,
-             data->currentFH.nfs_fh4_val,
-             data->currentFH.nfs_fh4_len);
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Release dir_pentry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later

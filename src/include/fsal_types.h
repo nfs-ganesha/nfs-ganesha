@@ -103,10 +103,19 @@ typedef struct fsal_init_info__
 
 /** object name.  */
 
+#define USER_CRED_ANONYMOUS     0x0001
+#define USER_CRED_GSS_PROCESSED 0x0002
+#define USER_CRED_SAVED         0x0004
+
 /* Used to record the uid and gid of the client that made a request. */
 struct user_cred {
   uid_t caller_uid;
   gid_t caller_gid;
+  uid_t caller_uid_saved;
+  gid_t caller_gid_saved;
+  int   caller_flags;
+  unsigned int caller_glen_saved;
+  unsigned int caller_gpos_root;
   unsigned int caller_glen;
   gid_t *caller_garray;
 };
@@ -152,7 +161,8 @@ struct req_op_context {
 	uint32_t nfs_vers;       /*< NFS protocol version of request */
 	uint32_t nfs_minorvers;  /*< NFSv4 minor version */
 	uint32_t req_type;       /*< request_type NFS | 9P */
-	struct gsh_client *client; /*< mostly stats but other bits too */
+	struct gsh_client *client; /*< client host info including stats */
+	struct gsh_export *export; /*< current export info including stats */
 	nsecs_elapsed_t start_time; /*< start time of this op/request */
 	nsecs_elapsed_t queue_wait; /*< time in wait queue */
         /* add new context members here */

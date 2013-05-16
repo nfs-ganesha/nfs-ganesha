@@ -171,6 +171,8 @@ typedef union nfs_res__
 #define NEEDS_CRED      0x0002  /* A credential is needed for this operation                      */
 #define CAN_BE_DUP      0x0004  /* Handling of dup request can be done for this request           */
 #define SUPPORTS_GSS    0x0008  /* Request may be authenticated by RPCSEC_GSS                     */
+#define MAKES_IO        0x0010  /* Request may do I/O (not allowed on MD ONLY exports             */
+#define NEEDS_EXPORT    0x0020  /* Request needs an export                                        */
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
                                         exportlist_t *,
@@ -797,11 +799,17 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
 int nfs4_op_access_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
 
+void set_compound_data_for_pseudo(compound_data_t * data);
+
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
 
 int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp);
+
+int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
+                                  compound_data_t    * data,
+                                  struct nfs_resop4  * resp);
 
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp);
@@ -1032,7 +1040,7 @@ void nfs4_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 void compound_data_Free(compound_data_t * data);
 
 /* Pseudo FS functions */
-int nfs4_ExportToPseudoFS(exportlist_t * pexportlist);
+int nfs4_ExportToPseudoFS(struct glist_head  *pexportlist);
 pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_SetCompoundExport(compound_data_t * data);

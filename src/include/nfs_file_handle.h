@@ -176,11 +176,6 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 
 
 /* File handle translation utility */
-cache_entry_t *nfs4_FhandleToCache(nfs_fh4 *,
-				   const struct req_op_context *,
-				   exportlist_t *,
-				   nfsstat4 *,
-				   int *);
 cache_entry_t * nfs3_FhandleToCache(nfs_fh3 *,
 				   const struct req_op_context *,
 				   exportlist_t *,

@@ -48,10 +48,14 @@ struct gsh_export {
 	int export_id;
 };
 
-void gsh_export_init(void);
+void export_pkginit(void);
+#ifdef USE_DBUS_STATS
+void dbus_export_init(void);
+#endif
 struct gsh_export *get_gsh_export(int export_id,
 				  bool lookup_only);
 void put_gsh_export(struct gsh_export *export);
+bool remove_gsh_export(int export_id);
 int foreach_gsh_export(bool (*cb)(struct gsh_export *cl,
 				   void *state),
 		       void *state);

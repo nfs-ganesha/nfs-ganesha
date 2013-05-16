@@ -181,27 +181,12 @@ nfs_Read(nfs_arg_t *arg,
             goto out;
           }
 
-        /* For MDONLY export, reject write operation This is done by
-           replying EDQUOT (this error is known for not disturbing the
-           client's requests cache */
-        if (export->access_type == ACCESSTYPE_MDONLY ||
-            export->access_type == ACCESSTYPE_MDONLY_RO)
-         {
-             res->res_read3.status = NFS3ERR_DQUOT;
-             nfs_SetPostOpAttr( entry,
-                                req_ctx,
-                                &res->res_read3.READ3res_u.resfail.file_attributes);
-
-             rc = NFS_REQ_OK;
-             goto out;
-         }
-
         /* Extract the argument from the request */
         offset = arg->arg_read3.offset;
         size = arg->arg_read3.count;
 
         /* do not exceed maxium READ offset if set */
-        if (export->options & EXPORT_OPTION_MAXOFFSETREAD)
+        if (export->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD)
          {
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "-----> Read offset=%"PRIu64" count=%zd "
@@ -230,7 +215,7 @@ nfs_Read(nfs_arg_t *arg,
         }
 
         /* We should not exceed the FSINFO rtmax field for the size */
-        if (((export->options & EXPORT_OPTION_MAXREAD)) &&
+        if (((export->export_perms.options & EXPORT_OPTION_MAXREAD)) &&
             size > export->MaxRead) {
                 /* The client asked for too much, normally this should
                    not happen because the client is calling nfs_Fsinfo
@@ -291,7 +276,6 @@ out:
           cache_inode_put(entry);
 #ifdef USE_DBUS_STATS
 	server_stats_io_done(req_ctx,
-			     export->id,
 			     size,
 			     read_size,
 			     (rc == NFS_REQ_OK) ? true : false,

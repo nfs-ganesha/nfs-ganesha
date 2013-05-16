@@ -2248,7 +2248,7 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
         if(!exp_hdl || !infop || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
-        obj = exp_hdl->exp_entry->proot_handle;
+        obj = exp_hdl->exp_entry->exp_root_cache_inode->obj_handle;
         ph = container_of(obj, struct pxy_obj_handle, obj);
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);

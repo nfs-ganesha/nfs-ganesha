@@ -48,7 +48,7 @@
 
 extern struct fridgethr *req_fridge; /*< Decoder thread pool */
 
-static exportlist_t *temp_pexportlist;
+struct glist_head temp_exportlist;
 
 /**
  * @brief Mutex protecting command and status
@@ -285,9 +285,15 @@ void admin_halt(void)
   admin_issue_command(admin_shutdown);
 }
 
+/**
+ * @TODO commented out because it doesn't work.
+ * return to this when export manager and pseudo fs fsal is in place
+ */
+
 /* Skips deleting first entry of export list. */
 int rebuild_export_list(void)
 {
+#if 0
   int status = 0;
   config_file_t config_struct;
 
@@ -311,7 +317,7 @@ int rebuild_export_list(void)
     }
 
   /* Create the new exports list */
-  status = ReadExports(config_struct, &temp_pexportlist);
+  status = ReadExports(config_struct, &temp_exportlist);
   if(status < 0)
     {
       LogCrit(COMPONENT_CONFIG,
@@ -325,26 +331,21 @@ int rebuild_export_list(void)
       return 0;
     }
 
-  /* At least one worker thread should exist. Each worker thread has a pointer to
-   * the same hash table. */
-  if(!nfs_export_create_root_entry(temp_pexportlist))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "replace_exports: Error initializing Cache Inode root entries");
-      return 0;
-    }
-
   return 1;
+#else
+  return 0;
+#endif
 }
 
 static int ChangeoverExports()
 {
 
+#if 0
   exportlist_t *pcurrent = NULL;
 
-  /* Now we know that the configuration was parsed successfully.
-   * And that worker threads are no longer accessing the export list.
-   * Remove all but the first export entry in the exports list.
+  /**
+   * @@TODO@@ This is all totally bogus code now that exports are under the
+   * control of the export manager. Left as unfinished business.
    */
   if (nfs_param.pexportlist)
     pcurrent = nfs_param.pexportlist->next;
@@ -377,6 +378,9 @@ static int ChangeoverExports()
   gsh_free(temp_pexportlist);
   temp_pexportlist = NULL;
   return 0;
+#else
+  return ENOTSUP;
+#endif
 }
 
 static void redo_exports(void)

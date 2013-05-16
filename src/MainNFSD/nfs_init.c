@@ -67,9 +67,9 @@
 #include "sal_functions.h"
 #include "fridgethr.h"
 #include "idmapper.h"
+#include "delayed_exec.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
-#include "delayed_exec.h"
 
 extern struct fridgethr *req_fridge;
 
@@ -457,6 +457,13 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   cache_inode_status_t cache_inode_status;
 
 
+  /*
+   * Initialize exports and clients so config parsing can use them
+   * early.
+   */
+  client_pkginit();
+  export_pkginit();
+
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0)
     {
@@ -571,7 +578,7 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
-  rc = ReadExports(config_struct, &nfs_param.pexportlist);
+  rc = ReadExports(config_struct, nfs_param.pexportlist);
   if(rc < 0)
     {
       LogCrit(COMPONENT_INIT,
@@ -808,9 +815,11 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef USE_DBUS
   /* DBUS init */
   gsh_dbus_pkginit();
+#ifdef USE_DBUS_STATS
+  dbus_export_init();
+  dbus_client_init();
 #endif
-  gsh_client_init();
-  gsh_export_init();  /* here for now since triggered by dbus stats */
+#endif
 
   /* Cache Inode Initialisation */
   cache_status = cache_inode_init();
@@ -838,6 +847,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		   "Unable to initialize LRU subsystem: %d.",
 		   rc);
   }
+
+  /* finish the job with exports by caching the root entries
+   */
+  exports_pkginit();
 
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
                                  sizeof(nfs41_session_t),
@@ -1072,16 +1085,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   LogInfo(COMPONENT_INIT,
           "9P resources successfully initialized");
 #endif /* _USE_9P */
-
-  /* Create the root entries for each exported FS */
-  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != true)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error initializing Cache Inode root entries");
-    }
-
-  LogInfo(COMPONENT_INIT,
-          "Cache Inode root entries successfully created");
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");

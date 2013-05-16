@@ -102,14 +102,17 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
         }
 
 	if(nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK) ||
-		    (data->pexport == NULL)) {
-			/* reuse lookup routine, need to set the correct OP */
+		/* Cheat and pretend we are a LOOKUP, this will
+		 * set up the currentFH and related fields in the
+		 * compound data. This includes calling nfs4_MakeCred.
+		 */
+		if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK) &&
+		    (res_SECINFO4.status != NFS4ERR_WRONGSEC)) {
+			/* reuse lookup result, need to set the correct OP */
 			resp->resop = NFS4_OP_SECINFO;
-			res_SECINFO4.status = NFS4ERR_INVAL;
 			return res_SECINFO4.status;
 		}
-		/* reuse lookup routine, need to set the correct OP */
+		/* reuse lookup result, need to set the correct OP */
 		resp->resop = NFS4_OP_SECINFO;
 	} else {
 		cache_status = cache_inode_lookup(data->current_entry,
@@ -123,19 +126,19 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
 	}
 
         /* Get the number of entries */
-        if (data->pexport->options & EXPORT_OPTION_AUTH_NONE) {
+        if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE) {
                 num_entry++;
         }
-        if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX) {
+        if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX) {
                 num_entry++;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
                 num_entry++;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
                 num_entry++;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
                 num_entry++;
         }
 
@@ -153,15 +156,15 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
          * all implemented.
          */
         int idx = 0;
-        if (data->pexport->options & EXPORT_OPTION_AUTH_NONE) {
+        if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE) {
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .flavor = AUTH_NONE;
         }
-        if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX) {
+        if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX) {
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .flavor = AUTH_UNIX;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
                         = RPCSEC_GSS;
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -171,7 +174,7 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .secinfo4_u.flavor_info.oid = v5oid;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
                         = RPCSEC_GSS;
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -182,7 +185,7 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .secinfo4_u.flavor_info.oid = v5oid;
         }
-        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+        if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .flavor = RPCSEC_GSS;
                 res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]

@@ -62,6 +62,7 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
+#include "nfs_tools.h"
 
 
 /**
@@ -196,8 +197,6 @@ get_gsh_export(int export_id, bool lookup_only)
  *  Don't muddy the waters right now.
  */
 
-/* 	pexport = nfs_Get_export_by_id(nfs_param.pexportlist, */
-/* 					exportid)) == NULL) */
 	v.export_id = export_id;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
@@ -268,6 +267,55 @@ void put_gsh_export(struct gsh_export *export)
 }
 
 /**
+ * @brief Remove the export management struct
+ *
+ * Remove it from the AVL tree.
+ */
+
+bool remove_gsh_export(int export_id)
+{
+	struct avltree_node *node = NULL;
+	struct avltree_node *cnode = NULL;
+	struct gsh_export *exp = NULL;
+	exportlist_t *export;
+	struct export_stats *export_st;
+	struct gsh_export v;
+        void **cache_slot;
+	bool removed = true;
+
+	v.export_id = export_id;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	node = avltree_lookup(&v.node_k, &export_by_id.t);
+	if(node) {
+		exp = avltree_container_of(node, struct gsh_export, node_k);
+		if(exp->refcnt > 0) {
+			removed = false;
+			goto out;
+		}
+		cache_slot = (void **)
+			&(export_by_id.cache[eid_cache_offsetof(&export_by_id, export_id)]);
+		cnode = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
+		if(node == cnode)
+			atomic_store_voidptr(cache_slot, NULL);
+		avltree_remove(node, &export_by_id.t);
+		export = &exp->export;
+		glist_del(&export->exp_list);
+	}
+out:
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	if(removed && node) {
+		free_export_resources(export);
+		export_st = container_of(exp, struct export_stats, export);
+		server_stats_free(&export_st->st);
+		export_st = container_of(exp, struct export_stats, export);
+ 
+		gsh_free(exp);
+	}
+	return removed;
+}
+
+/**
  * @ Walk the tree and do the callback on each node
  *
  * @param cb    [IN] Callback function
@@ -310,22 +358,14 @@ static bool export_to_dbus(struct gsh_export *exp_node,
 	struct showexports_state *iter_state
 		= (struct showexports_state *)state;
 	struct export_stats *exp;
-	exportlist_t *pexport;
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = ServerBootTime;
 	const char *path;
 
 	exp = container_of(exp_node, struct export_stats, export);
-
-/* NOTE: See note above about linkage between avl tree and exports list
- * we assume here that they are 1 - 1 and dont' check errors because of
- * this assumption.
- */
-	pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-				       exp_node->export_id);
-	if(pexport == NULL)
-		return false;
-	path = pexport->pseudopath; /* is this the "right" one? */
+	path = (exp_node->export.pseudopath != NULL) ?
+		exp_node->export.pseudopath :
+		exp_node->export.fullpath;
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT,
@@ -333,7 +373,7 @@ static bool export_to_dbus(struct gsh_export *exp_node,
 					 &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter,
 				       DBUS_TYPE_INT32,
-				       &pexport->id);
+				       &exp_node->export.id);
 	dbus_message_iter_append_basic(&struct_iter,
 				       DBUS_TYPE_STRING,
 				       &path);
@@ -645,13 +685,17 @@ static struct gsh_dbus_interface *export_interfaces[] = {
 	NULL
 };
 
+void dbus_export_init(void)
+{
+	gsh_dbus_register_path("ExportMgr", export_interfaces);
+}
 #endif /* USE_DBUS_STATS */
 
 /**
  * @brief Initialize export manager
  */
 
-void gsh_export_init(void)
+void export_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
@@ -663,13 +707,9 @@ void gsh_export_init(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
-	export_by_id.cache_sz = 32767;
+	export_by_id.cache_sz = 255;
 	export_by_id.cache = gsh_calloc(export_by_id.cache_sz,
 					sizeof(struct avltree_node *));
-#ifdef USE_DBUS_STATS
-	gsh_dbus_register_path("ExportMgr", export_interfaces);
-#endif
 }
-
 
 /** @} */

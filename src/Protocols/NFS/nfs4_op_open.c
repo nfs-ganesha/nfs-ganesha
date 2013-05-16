@@ -665,7 +665,7 @@ open4_create(OPEN4args           * arg,
             /* If owner or owner_group are set, and the credential was
              * squashed, then we must squash the set owner and owner_group.
              */
-            squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
+            squash_setattr(&data->export_perms, data->req_ctx->creds, &sattr);
 
             cache_status = cache_inode_setattr(entry_newfile,
                     &sattr,
@@ -883,20 +883,21 @@ int nfs4_op_open(struct nfs_argop4 *op,
         res_OPEN4->status = NFS4_OK;
         res_OPEN4->OPEN4res_u.resok4.rflags = 0 ;
 
+	/* Check export permissions if OPEN4_CREATE */
+	if((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
+	   ((data->export_perms.options & EXPORT_OPTION_MD_WRITE_ACCESS) == 0)) {
+		res_OPEN4->status = NFS4ERR_ROFS;
+
+		LogDebug(COMPONENT_NFS_V4,
+			 "Status of OP_OPEN due to export permissions = %s",
+			 nfsstat4_to_str(res_OPEN4->status));
+		return res_OPEN4->status;
+	}
+
         /* Do basic checks on a filehandle */
         res_OPEN4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
                                                  false);
         if (res_OPEN4->status != NFS4_OK) {
-                return res_OPEN4->status;
-        }
-
-        /* This can't be done on the pseudofs */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                /* Since the PseudoFS contains nothing but
-                   directories. */
-                res_OPEN4->status = NFS4ERR_ISDIR;
-                LogDebug(COMPONENT_STATE,
-                         "NFS4 OPEN returning NFS4ERR_ISDIR");
                 return res_OPEN4->status;
         }
 
@@ -1204,7 +1205,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         if(data->pexport->export_hdl->ops->fs_supports(
            data->pexport->export_hdl, fso_delegations) &&
-           (data->pexport->options & EXPORT_OPTION_USE_DELEG) &&
+           (data->pexport->export_perms.options & EXPORT_OPTION_USE_DELEG) &&
            owner->so_owner.so_nfs4_owner.so_confirmed == TRUE &&
            claim != CLAIM_DELEGATE_CUR)
 

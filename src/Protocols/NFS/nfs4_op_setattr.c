@@ -80,12 +80,6 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 return res_SETATTR4.status;
         }
 
-        /* Pseudo Fs is explictely a Read-Only File system */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                res_SETATTR4.status = NFS4ERR_ROFS;
-                return res_SETATTR4.status;
-        }
-
         /* Get only attributes that are allowed to be read */
         if (!nfs4_Fattr_Check_Access(&arg_SETATTR4.obj_attributes,
                                      FATTR4_ATTR_WRITE)) {
@@ -201,9 +195,9 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 /* Check for root access when using chmod */
                 if(FSAL_TEST_MASK(sattr.mask, ATTR_MODE)) {
                         if ((sattr.mode & S_ISUID) &&
-                            ((data->pexport->options & EXPORT_OPTION_NOSUID) ||
+                            ((data->pexport->export_perms.options & EXPORT_OPTION_NOSUID) ||
                              ((sattr.mode & S_ISGID) &&
-                              ((data->pexport->options &
+                              ((data->pexport->export_perms.options &
                                 EXPORT_OPTION_NOSGID))))) {
                                 LogInfo(COMPONENT_NFS_V4,
                                         "Setattr denied because setuid "
@@ -233,7 +227,7 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         /* If owner or owner_group are set, and the credential was
          * squashed, then we must squash the set owner and owner_group.
          */
-        squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
+        squash_setattr(&data->export_perms, data->req_ctx->creds, &sattr);
 
         cache_status = cache_inode_setattr(data->current_entry,
 					   &sattr,

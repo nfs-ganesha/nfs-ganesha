@@ -49,81 +49,8 @@
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
-
-/**
- * @brief Get the cache entry from the NFSv4 file handle
- *
- * Validates and Converts a nfs4 file handle and then gets the cache entry.
- *
- * @param[in]  fh4      File handle to be converted
- * @param[in]  req_ctx  Request context
- * @param[in]  exp_list Export fsal to use
- * @param[out] status   Protocol status
- * @param[out] rc       Operation status
- *
- * @return cache entry or NULL on failure
- */
-
-cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
-				   const struct req_op_context *req_ctx,
-				   exportlist_t *exp_list,
-				   nfsstat4 *status,
-				   int *rc)
-{
-	fsal_status_t fsal_status;
-	file_handle_v4_t *v4_handle;
-	exportlist_t *exp_list_ent;
-	struct fsal_export *export;
-	cache_entry_t *entry = NULL;
-	cache_inode_fsal_data_t fsal_data;
-
-	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
-
-	/* Default behaviour */
-	*rc = NFS_REQ_OK;
-
-	print_fhandle4(COMPONENT_FILEHANDLE, fh4);
-
-	/* Cast the fh as a non opaque structure */
-	v4_handle = (file_handle_v4_t *) (fh4->nfs_fh4_val);
-
-	/* validate the filehandle  */
-	*status = nfs4_Is_Fh_Invalid(fh4);
-	if(*status != NFS4_OK) {
-		goto badhdl;
-	}
-	exp_list_ent = nfs_Get_export_by_id(exp_list,
-				      nfs4_FhandleToExportId(fh4));
-	if(exp_list_ent == NULL) {
-		*status = NFS4ERR_STALE;
-		*rc = NFS_REQ_DROP;
-		goto badhdl;
-	}
-	/* Give the export a crack at it */
-	export = exp_list_ent->export_hdl;
-	fsal_data.export = export;
-	fsal_data.fh_desc.len = v4_handle->fs_len;
-	fsal_data.fh_desc.addr = &v4_handle->fsopaque;
-
-	/* adjust the handle opaque into a cache key */
-	fsal_status = export->ops->extract_handle(export,
-						  FSAL_DIGEST_NFSV4,
-						  &fsal_data.fh_desc);
-	if(FSAL_IS_ERROR(fsal_status)) {
-		*status = NFS4ERR_BADHANDLE;
-		goto badhdl;
-	}
-	cache_inode_get(&fsal_data, NULL,
-			req_ctx, &entry);
-	if(entry == NULL){
-		/* is there a more appropriate error based on cache_status? */
-		*status = NFS4ERR_STALE;
-	}
-
-badhdl:
-	return entry;
-}                               /* nfs4_FhandleToCache */
 
 /**
  *
@@ -148,7 +75,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *v3_handle;
-	exportlist_t *exp_list_ent;
+	struct gsh_export *exp = NULL;
 	struct fsal_export *export;
 	cache_entry_t *entry = NULL;
 	cache_inode_fsal_data_t fsal_data;
@@ -168,16 +95,18 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 		*status = NFS3ERR_BADHANDLE;
 		goto badhdl;
 	}
-	exp_list_ent = nfs_Get_export_by_id(exp_list,
-				      nfs3_FhandleToExportId(fh3));
-	if(exp_list_ent == NULL) {
-		*status = NFS3ERR_STALE;
-		*rc = NFS_REQ_DROP;
-		goto badhdl;
+	if(nfs3_FhandleToExportId(fh3) == req_ctx->export->export.id) {
+		export = req_ctx->export->export.export_hdl;
+	} else {
+		exp = get_gsh_export(nfs3_FhandleToExportId(fh3), true);
+		if(exp == NULL) {
+			*status = NFS3ERR_STALE;
+			*rc = NFS_REQ_DROP;
+			goto badhdl;
+		}
+		export = exp->export.export_hdl;
 	}
-
 	/* Give the export a crack at it */
-	export = exp_list_ent->export_hdl;
 	fsal_data.export = export;
 	fsal_data.fh_desc.len = v3_handle->fs_len;
 	fsal_data.fh_desc.addr = &v3_handle->fsopaque;
@@ -186,6 +115,8 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 	fsal_status = export->ops->extract_handle(export,
 						  FSAL_DIGEST_NFSV3,
 						  &fsal_data.fh_desc);
+	if(exp != NULL)
+		put_gsh_export(exp);
 	if(FSAL_IS_ERROR(fsal_status)) {
 		*status = NFS3ERR_BADHANDLE;
 		goto badhdl;

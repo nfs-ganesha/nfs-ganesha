@@ -206,6 +206,9 @@ Done dc4ce50 Frank S. Filz Add strmaxcpy and strmaxcat inline functions
 
 ffilz       2778696 Frank S. Filz FSAL_GPFS no longer uses FSAL_UP parms in config, ignore them
 Pass        637db44 Frank S. Filz Get rid of some dead code
+=======
+pass       2778696 Frank S. Filz FSAL_GPFS no longer uses FSAL_UP parms in config, ignore them
+pass       637db44 Frank S. Filz Get rid of some dead code
 
 marc     ?? 8b8c717 rong zeng Using handle_size bytes gpfs_fsal_handle in GPFSFSAL_handlecmp and FSAL_Handle_to_RBTIndex/FSAL_Handle_to_HashIndex
 rong        8eaf450 rong zeng GRANTED_RES does not have file handle, so no check for export or credential.
@@ -435,7 +438,7 @@ rong        053606ed rong zeng 1. in lru_thread, instead of repeating processing
             2b6aa8f6 Max Matveev Don't cache idempotent requests
 discuss05   bb8f8f77 Max Matveev NFS access check - don't convert IP to string unless necessary
             3db1eab4 Max Matveev libcidr - avoid buffer underflow
-            e9255690 Max Matveev Don't waste time printing socket address
+see client manager changes            e9255690 Max Matveev Don't waste time printing socket address
             db716c12 Max Matveev XFS FSAL - deal with O_SYNC
             d38d2658 Max Matveev NFSv3 - make nfs_SetPostOpAttr sane
             4a3af6df Max Matveev NFSv3 - don't return garbage after setattr
@@ -476,36 +479,36 @@ Ported on pre-2.0-dev_19            c66cca71 Jeremy Bongio Convert French commen
 discuss05   6340d8a5 rong zeng fix a bug in check_convert_ipv6_to_ipv4.
 ported on dev26            18eaf9df Jim Wahlig logging changes.
 
-Done        43071e5d Frank S. Filz Scrub log messages for SAL and NLM
-ffilz       8ff375be Frank S. Filz Improve export error checking, don't allow dup path, export_id, or tag
-ffilz       bea5980c Frank S. Filz Check READ, WRITE, MD_WRITE, and MD_READ in nfs4_Compound
-ffilz       25564ea6 Frank S. Filz Clean up nfs4_SetCompoundExport and make nfs4_MakeCred check export perms
-ffilz       30fbc660 Frank S. Filz Add routine to set_compound_data_for_pseudo
-ffilz       12541d01 Frank S. Filz Add saved_pexport and saved_export_perms
-ffilz       595c8280 Frank S. Filz Remove security checks from NFS4 ops
-ffilz       8648490d Frank S. Filz Make putrootfh and putpubfh mostly the same for sanity
-ffilz       a9c43eda Frank S. Filz Add flags to export_perms to indicate all access
-ffilz       071c12e7 Frank S. Filz Make Mount use per client export permissions
-ffilz       8158a75e Frank S. Filz Used hostaddr from worker data and add hostaddr_str
-ffilz       ac0d9124 Frank S. Filz Check all export permissions for NFS v2 and v3
-ffilz       2530409e Frank Filz Add EXPORT_CLIENT stanza
-ffilz       90eb725a Frank S. Filz Fix up conflicts between various anonymous options
+done       43071e5d Frank S. Filz Scrub log messages for SAL and NLM
+done       8ff375be Frank S. Filz Improve export error checking, don't allow dup path, export_id, or tag
+done       bea5980c Frank S. Filz Check READ, WRITE, MD_WRITE, and MD_READ in nfs4_Compound
+done       25564ea6 Frank S. Filz Clean up nfs4_SetCompoundExport and make nfs4_MakeCred check export perms
+done       30fbc660 Frank S. Filz Add routine to set_compound_data_for_pseudo
+done       12541d01 Frank S. Filz Add saved_pexport and saved_export_perms
+done       595c8280 Frank S. Filz Remove security checks from NFS4 ops
+done       8648490d Frank S. Filz Make putrootfh and putpubfh mostly the same for sanity
+done       a9c43eda Frank S. Filz Add flags to export_perms to indicate all access
+done       071c12e7 Frank S. Filz Make Mount use per client export permissions
+pass       8158a75e Frank S. Filz Used hostaddr from worker data and add hostaddr_str
+done       ac0d9124 Frank S. Filz Check all export permissions for NFS v2 and v3
+pass implemented as export sub-block "client"       2530409e Frank Filz Add EXPORT_CLIENT stanza
+done       90eb725a Frank S. Filz Fix up conflicts between various anonymous options
 ffilz       701057dd Frank S. Filz Consolidate duplicate auth failure return
-ffilz       88f1d4a6 Frank S. Filz Move nfs_export_check_access earlier in nfs_rpc_execute
-ffilz       6f9b3318 Frank S. Filz Change nfs_export_check_security to also take export_perms_t
-ffilz       1b683142 Frank S. Filz Use export_perms_t inside exportlist_t
-ffilz       67d1de8e Jeremy Bongio An error in parsing a single export was causing an exit.
-ffilz       9641e4b4 Frank S. Filz Fix config parsing so long var_name and var_value strings are reported
-ffilz       bfd88dd3 Frank S. Filz Use MNTNAMLEN in nfs_ParseConfLine
-ffilz       e5d4f003 Frank S. Filz Add Squash= export option
-ffilz       d2581511 Frank S. Filz Deprecate unused Cache_Data and MaxCacheSize options
-ffilz       022bf0fb Frank S. Filz Convert export client list to use glist
-ffilz       9755d44a Frank S. Filz Convert export list to use glist
-ffilz       86c09403 Frank S. Filz Disable broken export reload
-ffilz       d15e277b Frank S. Filz first export may not be v4, but that shouldn't bother nfs4_Compound
-ffilz       1748cf12 Frank S. Filz Remove obsolete access_type field from exportlist_t
-ffilz       9f78f330 Frank S. Filz Update test directory to compile considering current state of code.
-ffilz       0ec84704 Frank S. Filz Fix up export permission checking
+done       88f1d4a6 Frank S. Filz Move nfs_export_check_access earlier in nfs_rpc_execute
+done       6f9b3318 Frank S. Filz Change nfs_export_check_security to also take export_perms_t
+done       1b683142 Frank S. Filz Use export_perms_t inside exportlist_t
+pass       67d1de8e Jeremy Bongio An error in parsing a single export was causing an exit.
+done       9641e4b4 Frank S. Filz Fix config parsing so long var_name and var_value strings are reported
+pass replaced       bfd88dd3 Frank S. Filz Use MNTNAMLEN in nfs_ParseConfLine
+pass       e5d4f003 Frank S. Filz Add Squash= export option
+done       d2581511 Frank S. Filz Deprecate unused Cache_Data and MaxCacheSize options
+done       022bf0fb Frank S. Filz Convert export client list to use glist
+done reimplemented in export manager       9755d44a Frank S. Filz Convert export list to use glist
+pass       86c09403 Frank S. Filz Disable broken export reload
+done       d15e277b Frank S. Filz first export may not be v4, but that shouldn't bother nfs4_Compound
+done       1748cf12 Frank S. Filz Remove obsolete access_type field from exportlist_t
+pass       9f78f330 Frank S. Filz Update test directory to compile considering current state of code.
+done       0ec84704 Frank S. Filz Fix up export permission checking
 pushed      24d98f40 Frank S. Filz Fix some IPv6 compile issues
 ????done    39b355c6 Frank S. Filz Strip out some unused cruft from exports
 ????done    969f09b3 Frank S. Filz Add additional export debug and prevent duplicate Export_Ids
@@ -522,7 +525,7 @@ pushed      fee6fbff rong zeng fix in compare_nfs4_owner_key.
 Ported on pre-2.0-dev_19            358ea07e Venkateswararao Jujjuri (JV) Calculation of fd usage and proper thread wait time in lru.
 Ported on pre-2.0-dev_19            13ec5fa1 Venkateswararao Jujjuri (JV) Keep proper account of hash count.
             c6c81b41 Jim Wahlig add support for IP release on the server.
-            f29e479b Jim Wahlig update configure.ac to match the new gpfs header files.
+pass            f29e479b Jim Wahlig update configure.ac to match the new gpfs header files.
             6eb1ae39 Lance Russell Log certain errors as events wherever they are generated in FSAL
 pushed      04557189 rong zeng Fix Pynfs RPLY5 RPLY7 RPLY12. Allow seqid based replay cache check if stateid's seqid is one less than curent.
 rong        7a347a1e rong zeng Log changes for IdMapper/RPCAL/support
@@ -550,7 +553,7 @@ pushed      2a943afc Frank S. Filz Add multilock tool to Ganesha tree
 ----pass    c569cba0 rong zeng Rremove the following dead code from Ganesha.
 ????done    8c6e757b rong zeng 1. wbclient interface change. 2. adding support to get group list for RPCSEC_GSS flavor
             8b49215e Jim Wahlig Clustered should be TRUE for SoNAS
-            59871834 Srikrishan Malik Fix make rpm
+pass 2.0 rpm supercede            59871834 Srikrishan Malik Fix make rpm
 ????done    c7c6f8b5 rong zeng nfs3_Readdirplus should consider client sending cookie value '2' which is '..'.
             d79e8bfc Lance Russell Corrected handling of the case where node needs to enter grace but has no IPs reallocated to ti.
             2d3e50d5 Lance Russell nfs unobtrusive recovery

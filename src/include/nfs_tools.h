@@ -52,8 +52,9 @@ int nfs_ParseConfLine(char *Argv[],
                       char *line,
                       char separator);
 
-int ReadExports(config_file_t in_config, exportlist_t ** pEx);
-
+int ReadExports(config_file_t in_config, struct glist_head * pexportlist);
+void free_export_resources(exportlist_t *export);
+void exports_pkginit(void);
 exportlist_t *BuildDefaultExport();
 
 /* Mount list management */

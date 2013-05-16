@@ -95,7 +95,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     goto out;
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->savedFH)))
     {
       res_RENAME4.status = NFS4ERR_ROFS;
       goto out;
@@ -105,14 +105,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       res_RENAME4.status = NFS4ERR_GRACE;
       goto out;
-    }
-
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_RENAME4.status = nfs4_SetCompoundExport(data);
-      if (res_RENAME4.status != NFS4_OK)
-        goto out;
     }
 
   dst_entry = data->current_entry;

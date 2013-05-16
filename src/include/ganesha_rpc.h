@@ -360,8 +360,6 @@ extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 /* Serialized clnt_create and clnt_destroy */
 CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
 void gsh_clnt_destroy(CLIENT *);
-bool is_rpc_call_valid(struct fridgethr_context *, SVCXPRT *,
-		       struct svc_req *);
 
 
 #endif /* GANESHA_RPC_H */

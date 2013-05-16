@@ -45,10 +45,14 @@ struct gsh_client {
 	struct gsh_buffdesc addr;
 	int64_t refcnt;
 	nsecs_elapsed_t last_update;
+	char hostaddr_str[SOCK_NAME_MAX];
 	unsigned char addrbuf[];
 };
 
-void gsh_client_init(void);
+void client_pkginit(void);
+#ifdef USE_DBUS_STATS
+void dbus_client_init(void);
+#endif
 struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
 				  bool lookup_only);
 void put_gsh_client(struct gsh_client *client);

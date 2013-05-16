@@ -54,6 +54,7 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "idmapper.h"
+#include "export_mgr.h"
 
 const char *Rpc_gss_svc_name[] =
     { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
@@ -63,12 +64,10 @@ const char *Rpc_gss_svc_name[] =
 /**
  * @brief Gets an export entry from its export id.
  *
- * @todo Exports should really be managed as an object...  exportroot
- * should be a static in this module and the only thing that leaks out
- * to the rest of the code is entries that are created here and
- * searched for here.  this means that the exportroot arg here will
- * disappear at some point, probably when exportlist_t is overhauled
- * to use nlm_list etc.
+ * @todo Danger Will Robinson!!!
+ * We put back the gsh_export but pass back a pointer to the export
+ * inside it.  Phase out calls to this.  the req_ctx has what we
+ * (may) need and it is properly ref counted.
  *
  * @param[in] exportroot The root for the export list
  * @param[in] exportid   The id for the entry to be found.
@@ -76,26 +75,145 @@ const char *Rpc_gss_svc_name[] =
  * @return the pointer to the export list or NULL if failed.
  */
 
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
+exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short exportid)
 {
   exportlist_t *piter;
-  int found = 0;
+  struct gsh_export *exp;
 
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  exp = get_gsh_export(exportid, true);
+  if(exp == NULL)
+	  return NULL;
+  piter = &exp->export;
+  put_gsh_export(exp);
+  return piter;
+}
+
+/** @todo we can avl tag but path has to be ordered
+ */
+
+/**
+ *
+ * nfs_Get_export_by_path: Gets an export entry from its path. 
+ *
+ * Gets an export entry from its path using a substring match and
+ * linear search of the export list. 
+ * If path has a trailing '/', ignor it.
+ *
+ * @param exportroot [IN] the root for the export list
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
+                                     char * path)
+{
+	exportlist_t *p_current_item = NULL;
+	struct glist_head * glist;
+	int len_path = strlen(path);
+	int len_export;
+
+	if(path[len_path - 1] == '/')
+		len_path--;
+	glist_for_each(glist, exportlist)
+	{
+		p_current_item = glist_entry(glist, exportlist_t, exp_list);
+		len_export = strlen(p_current_item->fullpath);
+		/* a path shorter than the full path cannot match
+		 */
+		if(len_path < len_export)
+			continue;
+		/* if the char in fullpath just after the end of path is not '/'
+		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
+		 */
+		if(p_current_item->fullpath[len_path] != '/' &&
+		   p_current_item->fullpath[len_path] != '\0')
+			continue;
+		/* we agree on size, now compare the leadingt substring
+		 */
+		if( !strncmp(p_current_item->fullpath,
+			     path,
+			     len_path))
+			return p_current_item;
+	}
+	return NULL;
+}
+
+/**
+ *
+ * nfs_Get_export_by_pseudo: Gets an export entry from its pseudo path. 
+ *
+ * Gets an export entry from its pseudo path. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
+                                       char * path)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, exportlist)
     {
-      if(piter->id == exportid)
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->pseudopath is equal to path ? */
+      if(p_current_item->pseudopath != NULL &&
+	 !strcmp(p_current_item->pseudopath, path))
         {
-          found = 1;
-          break;
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
         }
     }
 
-  if(found == 0)
-    return NULL;
-  else
-    return piter;
-}
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
 
+/**
+ *
+ * nfs_Get_export_by_tag: Gets an export entry from its tag. 
+ *
+ * Gets an export entry from its tag. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param tag        [IN] the tag for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
+                                    char * tag)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, exportlist)
+    {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->FS_tag is equal to tag ? */
+      if(p_current_item->FS_tag != NULL &&
+	 !strcmp(p_current_item->FS_tag, tag))
+        {
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
+        }
+    }
+
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
 
 /**
  * @brief Get numeric credentials from request
@@ -104,20 +222,18 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  * Instead, export appropriate functions from lib(n)tirpc.
  * 
  * @param[in]  req              Incoming request.
- * @param[in]  pexport          Related export entry
  * @param[out] user_credentials Filled in structure with UID and GIDs
  * 
  * @return true if successful, false otherwise 
  *
  */
 bool get_req_uid_gid(struct svc_req *req,
-		     exportlist_t * pexport,
 		     struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  char principal[MAXNAMLEN + 1];
+  char principal[MAXNAMLEN+1];
 #endif
   const gid_t *maybe_gid = NULL;
 
@@ -131,18 +247,18 @@ bool get_req_uid_gid(struct svc_req *req,
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication AUTH_NONE",
                    req->rq_xid);
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = pexport->anonymous_gid;
-      user_credentials->caller_glen = 0;
-      user_credentials->caller_garray = NULL;
+      user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
       break;
 
     case AUTH_UNIX:
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Request xid=%u has authentication AUTH_UNIX",
-                   req->rq_xid);
       /* We map the rq_cred to Authunix_parms */
       punix_creds = (struct authunix_parms *) req->rq_clntcred;
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Request xid=%u has authentication AUTH_UNIX, uid=%d, gid=%d",
+                   req->rq_xid,
+                   (int)punix_creds->aup_uid,
+                   (int)punix_creds->aup_gid);
 
       /* Get the uid/gid couple */
       user_credentials->caller_uid = punix_creds->aup_uid;
@@ -158,6 +274,18 @@ bool get_req_uid_gid(struct svc_req *req,
 
 #ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
+      if(user_credentials->caller_flags & USER_CRED_GSS_PROCESSED)
+        {
+          /* Only process credentials once. */
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Request xid=%u has authentication RPCSEC_GSS, uid=%d, gid=%d",
+                       req->rq_xid,
+                       user_credentials->caller_uid,
+                       user_credentials->caller_gid);
+          break;
+        }
+
+      user_credentials->caller_flags |= USER_CRED_GSS_PROCESSED;
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication RPCSEC_GSS",
                    req->rq_xid);
@@ -190,7 +318,8 @@ bool get_req_uid_gid(struct svc_req *req,
           if((maj_stat = gss_oid_to_str(
                   &min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
+              LogFullDebug(COMPONENT_DISPATCH,
+			   "Error in gss_oid_to_str: %u|%u",
                            maj_stat, min_stat);
             }
           else
@@ -222,12 +351,7 @@ bool get_req_uid_gid(struct svc_req *req,
 
 	  /* For compatibility with Linux knfsd, we set the uid/gid
 	   * to anonymous when a name->uid mapping can't be found. */
-	  user_credentials->caller_uid = pexport->anonymous_uid;
-	  user_credentials->caller_gid = pexport->anonymous_gid;
-	  
-	  /* No alternate groups for "nobody" */
-	  user_credentials->caller_glen = 0 ;
-	  user_credentials->caller_garray = NULL ;
+	  user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
 
 	  return true;
 	}
@@ -267,44 +391,125 @@ bool get_req_uid_gid(struct svc_req *req,
   return true;
 }
 
-int nfs_check_anon(exportlist_client_entry_t * pexport_client,
-                   exportlist_t * pexport,
-                   struct user_cred *user_credentials)
+void nfs_check_anon(export_perms_t * pexport_perms,
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials)
 {
-  if (user_credentials == NULL)
-    return false;
+  /* Do we need to revert? */
+  if(user_credentials->caller_flags & USER_CRED_SAVED)
+    {
+      user_credentials->caller_uid  = user_credentials->caller_uid_saved;
+      user_credentials->caller_gid  = user_credentials->caller_gid_saved;
+      user_credentials->caller_glen = user_credentials->caller_glen_saved;
+      if(user_credentials->caller_gpos_root < user_credentials->caller_glen_saved)
+        user_credentials->caller_garray[user_credentials->caller_gpos_root] = 0;
+    }
 
   /* Do we have root access ? */
   /* Are we squashing _all_ users to the anonymous uid/gid ? */
   if( ((user_credentials->caller_uid == 0)
-       && !(pexport_client->options & EXPORT_OPTION_ROOT))
-      || pexport->all_anonymous == true)
+       && !(pexport_perms->options & EXPORT_OPTION_ROOT))
+      || pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
+      || ((user_credentials->caller_flags & USER_CRED_ANONYMOUS) != 0))
     {
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = pexport->anonymous_gid;
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid,
+                   pexport_perms->anonymous_uid,
+                   pexport_perms->anonymous_gid);
 
+      /* Save old credentials */
+      user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+      user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+      user_credentials->caller_glen_saved = user_credentials->caller_glen;
+      user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+      user_credentials->caller_flags |= USER_CRED_SAVED;
+
+      /* Map uid and gid to "nobody" */
+      user_credentials->caller_uid = pexport_perms->anonymous_uid;
+      user_credentials->caller_gid = pexport_perms->anonymous_gid;
+      
       /* No alternate groups for "nobody" */
       user_credentials->caller_glen = 0 ;
       user_credentials->caller_garray = NULL ;
     }
+  else if ((user_credentials->caller_gid == 0)
+       && !(pexport_perms->options & EXPORT_OPTION_ROOT))
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid,
+                   user_credentials->caller_uid,
+                   pexport_perms->anonymous_gid);
 
-  return true;
+      /* Save old credentials */
+      user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+      user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+      user_credentials->caller_glen_saved = user_credentials->caller_glen;
+      user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+      user_credentials->caller_flags |= USER_CRED_SAVED;
+
+      /* Map gid to "nobody" */
+      user_credentials->caller_gid = pexport_perms->anonymous_gid;
+      
+      /* Keep alternate groups, we may squash them below */
+    }
+  else
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Accepting credentials for export %d caller uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid);
+    }
+
+  /* Check the garray for gid 0 to squash */
+  if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
+     user_credentials->caller_glen > 0)
+    {
+      unsigned int i;
+      for(i = 0; i < user_credentials->caller_glen; i++)
+        {
+          if(user_credentials->caller_garray[i] == 0)
+            {
+              if((user_credentials->caller_flags & USER_CRED_SAVED) == 0)
+                {
+                  /* Save old credentials */
+                  user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+                  user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+                  user_credentials->caller_glen_saved = user_credentials->caller_glen;
+                  user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+                  user_credentials->caller_flags |= USER_CRED_SAVED;
+                }
+
+              /* Save the position of the first instance of root in the garray */
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Squashing alternate group #%d to %d",
+                           i, pexport_perms->anonymous_gid);
+              if(user_credentials->caller_gpos_root >= user_credentials->caller_glen_saved)
+                user_credentials->caller_gpos_root = i;
+              user_credentials->caller_garray[i] = pexport_perms->anonymous_gid;
+            }
+        }
+    }
 }
 
-
-void squash_setattr(exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport,
+void squash_setattr(export_perms_t     * pexport_perms,
                     struct user_cred   * user_credentials,
                     struct attrlist * attr)
 {
   if(attr->mask & ATTR_OWNER)
     {
-      if(pexport->all_anonymous == true) {
-        attr->owner = pexport->anonymous_uid;
-      } else if(!(pexport_client->options & EXPORT_OPTION_ROOT)&&
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->owner = pexport_perms->anonymous_uid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
               (attr->owner == 0) &&
-              (user_credentials->caller_uid == pexport->anonymous_uid))
-        attr->owner = pexport->anonymous_uid;
+              (user_credentials->caller_uid == pexport_perms->anonymous_uid))
+        attr->owner = pexport_perms->anonymous_uid;
     }
 
   if(attr->mask & ATTR_GROUP)
@@ -315,13 +520,36 @@ void squash_setattr(exportlist_client_entry_t * pexport_client,
        * caller_gid has been squashed or one of the caller's
        * alternate groups has been squashed.
        */
-      if(pexport->all_anonymous == true)
-        attr->group = pexport->anonymous_gid;
-      else if(!(pexport_client->options & EXPORT_OPTION_ROOT) &&
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->group = pexport_perms->anonymous_gid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
               (attr->group == 0) &&
-              (user_credentials->caller_gid == pexport->anonymous_gid))
-        attr->group = pexport->anonymous_gid;
+              ((user_credentials->caller_gid == pexport_perms->anonymous_gid) ||
+               (((user_credentials->caller_flags & USER_CRED_SAVED) &&
+               (user_credentials->caller_gpos_root <
+                user_credentials->caller_glen_saved)))))
+        attr->group = pexport_perms->anonymous_gid;
     }
+}
+
+void init_credentials(struct user_cred *user_credentials)
+{
+  memset(user_credentials, 0, sizeof(*user_credentials));
+  user_credentials->caller_uid = (uid_t) ANON_UID;
+  user_credentials->caller_gid = (gid_t) ANON_GID;
+}
+
+void clean_credentials(struct user_cred *user_credentials)
+{
+#ifdef _HAVE_GSSAPI
+  if(((user_credentials->caller_flags & USER_CRED_GSS_PROCESSED) != 0) &&
+     (user_credentials->caller_garray != NULL))
+    {
+      gsh_free(user_credentials->caller_garray);
+    }
+#endif
+
+  init_credentials(user_credentials);
 }
 
 /**
@@ -428,28 +656,27 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   return 1;
 }
 
-int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
+int nfs_export_tag2path(struct glist_head * exportlist, char *tag, int taglen,
                         char *path, int pathlen)
 {
+  exportlist_t *piter;
+  struct glist_head * glist;
+
   if(!tag || !path)
     return -1;
 
-  exportlist_t *piter;
-
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  glist_for_each(glist, exportlist)
     {
-      if(!strncmp(tag, piter->FS_tag, taglen))
+      piter = glist_entry(glist, exportlist_t, exp_list);
+
+      if(piter->FS_tag != NULL &&
+	 !strncmp(tag, piter->FS_tag, taglen))
         {
-	  if (strmaxcpy(path, piter->fullpath, pathlen) == -1)
-	    {
-	      LogMajor(COMPONENT_DISPATCH,
-		       "String overflow.");
-	      return -1;
-	    }
+          strncpy(path, piter->fullpath, pathlen);
           return 0;
           break;
         }
-    }
+    }                           /* for */
 
   return -1;
 }

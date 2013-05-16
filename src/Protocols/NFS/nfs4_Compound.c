@@ -36,12 +36,14 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 typedef struct nfs4_op_desc__
 {
   char *name;
-  unsigned int val;
+  unsigned int op_code;
   int (*funct) (struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
+  int exp_perm_flags;
 } nfs4_op_desc_t;
 
 /* This array maps the operation number to the related position in
@@ -57,63 +59,291 @@ static const uint32_t POS_ILLEGAL_V40 = 40;
 static const uint32_t POS_ILLEGAL_V41 = 59;
 
 static const nfs4_op_desc_t optabv4[] = {
-  {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
-  {"OP_CLOSE", NFS4_OP_CLOSE, nfs4_op_close},
-  {"OP_COMMIT", NFS4_OP_COMMIT, nfs4_op_commit},
-  {"OP_CREATE", NFS4_OP_CREATE, nfs4_op_create},
-  {"OP_DELEGPURGE", NFS4_OP_DELEGPURGE, nfs4_op_delegpurge},
-  {"OP_DELEGRETURN", NFS4_OP_DELEGRETURN, nfs4_op_delegreturn},
-  {"OP_GETATTR", NFS4_OP_GETATTR, nfs4_op_getattr},
-  {"OP_GETFH", NFS4_OP_GETFH, nfs4_op_getfh},
-  {"OP_LINK", NFS4_OP_LINK, nfs4_op_link},
-  {"OP_LOCK", NFS4_OP_LOCK, nfs4_op_lock},
-  {"OP_LOCKT", NFS4_OP_LOCKT, nfs4_op_lockt},
-  {"OP_LOCKU", NFS4_OP_LOCKU, nfs4_op_locku},
-  {"OP_LOOKUP", NFS4_OP_LOOKUP, nfs4_op_lookup},
-  {"OP_LOOKUPP", NFS4_OP_LOOKUPP, nfs4_op_lookupp},
-  {"OP_NVERIFY", NFS4_OP_NVERIFY, nfs4_op_nverify},
-  {"OP_OPEN", NFS4_OP_OPEN, nfs4_op_open},
-  {"OP_OPENATTR", NFS4_OP_OPENATTR, nfs4_op_openattr},
-  {"OP_OPEN_CONFIRM", NFS4_OP_OPEN_CONFIRM, nfs4_op_open_confirm},
-  {"OP_OPEN_DOWNGRADE", NFS4_OP_OPEN_DOWNGRADE, nfs4_op_open_downgrade},
-  {"OP_PUTFH", NFS4_OP_PUTFH, nfs4_op_putfh},
-  {"OP_PUTPUBFH", NFS4_OP_PUTPUBFH, nfs4_op_putpubfh},
-  {"OP_PUTROOTFH", NFS4_OP_PUTROOTFH, nfs4_op_putrootfh},
-  {"OP_READ", NFS4_OP_READ, nfs4_op_read},
-  {"OP_READDIR", NFS4_OP_READDIR, nfs4_op_readdir},
-  {"OP_READLINK", NFS4_OP_READLINK, nfs4_op_readlink},
-  {"OP_REMOVE", NFS4_OP_REMOVE, nfs4_op_remove},
-  {"OP_RENAME", NFS4_OP_RENAME, nfs4_op_rename},
-  {"OP_RENEW", NFS4_OP_RENEW, nfs4_op_renew},
-  {"OP_RESTOREFH", NFS4_OP_RESTOREFH, nfs4_op_restorefh},
-  {"OP_SAVEFH", NFS4_OP_SAVEFH, nfs4_op_savefh},
-  {"OP_SECINFO", NFS4_OP_SECINFO, nfs4_op_secinfo},
-  {"OP_SETATTR", NFS4_OP_SETATTR, nfs4_op_setattr},
-  {"OP_SETCLIENTID", NFS4_OP_SETCLIENTID, nfs4_op_setclientid},
-  {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM,nfs4_op_setclientid_confirm},
-  {"OP_VERIFY", NFS4_OP_VERIFY, nfs4_op_verify},
-  {"OP_WRITE", NFS4_OP_WRITE, nfs4_op_write},
-  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner},
-  {"OP_BACKCHANNEL_CTL", NFS4_OP_BACKCHANNEL_CTL, nfs4_op_illegal},     /* tbd */
-  {"OP_BIND_CONN_TO_SESSION", NFS4_OP_BIND_CONN_TO_SESSION, nfs4_op_illegal},   /* tbd */
-  {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs4_op_exchange_id},
-  {"OP_CREATE_SESSION", NFS4_OP_CREATE_SESSION, nfs4_op_create_session},
-  {"OP_DESTROY_SESSION", NFS4_OP_DESTROY_SESSION, nfs4_op_destroy_session},
-  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs4_op_free_stateid},
-  {"OP_GET_DIR_DELEGATION", NFS4_OP_GET_DIR_DELEGATION, nfs4_op_illegal},       /* tbd */
-  {"OP_GETDEVICEINFO", NFS4_OP_GETDEVICEINFO, nfs4_op_getdeviceinfo},
-  {"OP_GETDEVICELIST", NFS4_OP_GETDEVICELIST, nfs4_op_getdevicelist},
-  {"OP_LAYOUTCOMMIT", NFS4_OP_LAYOUTCOMMIT, nfs4_op_layoutcommit},
-  {"OP_LAYOUTGET", NFS4_OP_LAYOUTGET, nfs4_op_layoutget},
-  {"OP_LAYOUTRETURN", NFS4_OP_LAYOUTRETURN, nfs4_op_layoutreturn},
-  {"OP_SECINFO_NO_NAME", NFS4_OP_SECINFO_NO_NAME, nfs4_op_illegal},     /* tbd */
-  {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs4_op_sequence},
-  {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs4_op_set_ssv},
-  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_test_stateid},
-  {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal}, /* tbd */
-  {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_destroy_clientid},
-  {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs4_op_reclaim_complete},
-  {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
+	{.name = "OP_ACCESS",
+	 .op_code = NFS4_OP_ACCESS,
+	 .funct = nfs4_op_access,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_CLOSE",
+	 .op_code = NFS4_OP_CLOSE,
+	 .funct = nfs4_op_close,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_COMMIT",
+	 .op_code = NFS4_OP_COMMIT,
+	 .funct = nfs4_op_commit,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_CREATE",
+	 .op_code = NFS4_OP_CREATE,
+	 .funct = nfs4_op_create,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_DELEGPURGE",
+	 .op_code = NFS4_OP_DELEGPURGE,
+	 .funct = nfs4_op_delegpurge,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_DELEGRETURN",
+	 .op_code = NFS4_OP_DELEGRETURN,
+	 .funct = nfs4_op_delegreturn,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_GETATTR",
+	 .op_code = NFS4_OP_GETATTR,
+	 .funct = nfs4_op_getattr,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_GETFH",
+	 .op_code = NFS4_OP_GETFH,
+	 .funct = nfs4_op_getfh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_LINK",
+	 .op_code = NFS4_OP_LINK,
+	 .funct = nfs4_op_link,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_LOCK",
+	 .op_code = NFS4_OP_LOCK,
+	 .funct = nfs4_op_lock,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LOCKT",
+	 .op_code = NFS4_OP_LOCKT,
+	 .funct = nfs4_op_lockt,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LOCKU",
+	 .op_code = NFS4_OP_LOCKU,
+	 .funct = nfs4_op_locku,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LOOKUP",
+	 .op_code = NFS4_OP_LOOKUP,
+	 .funct = nfs4_op_lookup,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LOOKUPP",
+	 .op_code = NFS4_OP_LOOKUPP,
+	 .funct = nfs4_op_lookupp,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_NVERIFY",
+	 .op_code = NFS4_OP_NVERIFY,
+	 .funct = nfs4_op_nverify,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_OPEN",
+	 .op_code = NFS4_OP_OPEN,
+	 .funct = nfs4_op_open,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_OPENATTR",
+	 .op_code = NFS4_OP_OPENATTR,
+	 .funct = nfs4_op_openattr,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_OPEN_CONFIRM",
+	 .op_code = NFS4_OP_OPEN_CONFIRM,
+	 .funct = nfs4_op_open_confirm,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_OPEN_DOWNGRADE",
+	 .op_code = NFS4_OP_OPEN_DOWNGRADE,
+	 .funct = nfs4_op_open_downgrade,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_PUTFH",
+	 .op_code = NFS4_OP_PUTFH,
+	 .funct = nfs4_op_putfh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_PUTPUBFH",
+	 .op_code = NFS4_OP_PUTPUBFH,
+	 .funct = nfs4_op_putpubfh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_PUTROOTFH",
+	 .op_code = NFS4_OP_PUTROOTFH,
+	 .funct = nfs4_op_putrootfh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_READ",
+	 .op_code = NFS4_OP_READ,
+	 .funct = nfs4_op_read,
+	 .exp_perm_flags = EXPORT_OPTION_READ_ACCESS
+	},
+	{.name = "OP_READDIR",
+	 .op_code = NFS4_OP_READDIR,
+	 .funct = nfs4_op_readdir,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_READLINK",
+	 .op_code = NFS4_OP_READLINK,
+	 .funct = nfs4_op_readlink,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_REMOVE",
+	 .op_code = NFS4_OP_REMOVE,
+	 .funct = nfs4_op_remove,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_RENAME",
+	 .op_code = NFS4_OP_RENAME,
+	 .funct = nfs4_op_rename,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_RENEW",
+	 .op_code = NFS4_OP_RENEW,
+	 .funct = nfs4_op_renew,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_RESTOREFH",
+	 .op_code = NFS4_OP_RESTOREFH,
+	 .funct = nfs4_op_restorefh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_SAVEFH",
+	 .op_code = NFS4_OP_SAVEFH,
+	 .funct = nfs4_op_savefh,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_SECINFO",
+	 .op_code = NFS4_OP_SECINFO,
+	 .funct = nfs4_op_secinfo,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_SETATTR",
+	 .op_code = NFS4_OP_SETATTR,
+	 .funct = nfs4_op_setattr,
+	 .exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS
+	},
+	{.name = "OP_SETCLIENTID",
+	 .op_code = NFS4_OP_SETCLIENTID,
+	 .funct = nfs4_op_setclientid,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_SETCLIENTID_CONFIRM",
+	 .op_code = NFS4_OP_SETCLIENTID_CONFIRM,
+	 .funct = nfs4_op_setclientid_confirm,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_VERIFY",
+	 .op_code = NFS4_OP_VERIFY,
+	 .funct = nfs4_op_verify,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_WRITE",
+	 .op_code = NFS4_OP_WRITE,
+	 .funct = nfs4_op_write,
+	 .exp_perm_flags = EXPORT_OPTION_WRITE_ACCESS
+	},
+	{.name = "OP_RELEASE_LOCKOWNER",
+	 .op_code = NFS4_OP_RELEASE_LOCKOWNER,
+	 .funct = nfs4_op_release_lockowner,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_BACKCHANNEL_CTL",
+	 .op_code = NFS4_OP_BACKCHANNEL_CTL,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = 0	/* tbd */
+	},
+	{.name = "OP_BIND_CONN_TO_SESSION",
+	 .op_code = NFS4_OP_BIND_CONN_TO_SESSION,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = 0	/* tbd */
+	},
+	{.name = "OP_EXCHANGE_ID",
+	 .op_code = NFS4_OP_EXCHANGE_ID,
+	 .funct = nfs4_op_exchange_id,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_CREATE_SESSION",
+	 .op_code = NFS4_OP_CREATE_SESSION,
+	 .funct = nfs4_op_create_session,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_DESTROY_SESSION",
+	 .op_code = NFS4_OP_DESTROY_SESSION,
+	 .funct = nfs4_op_destroy_session,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_FREE_STATEID",
+	 .op_code = NFS4_OP_FREE_STATEID,
+	 .funct = nfs4_op_free_stateid,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_GET_DIR_DELEGATION",
+	 .op_code = NFS4_OP_GET_DIR_DELEGATION,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = 0	/* tbd */
+	},
+	{.name = "OP_GETDEVICEINFO",
+	 .op_code = NFS4_OP_GETDEVICEINFO,
+	 .funct = nfs4_op_getdeviceinfo,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_GETDEVICELIST",
+	 .op_code = NFS4_OP_GETDEVICELIST,
+	 .funct = nfs4_op_getdevicelist,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LAYOUTCOMMIT",
+	 .op_code = NFS4_OP_LAYOUTCOMMIT,
+	 .funct = nfs4_op_layoutcommit,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_LAYOUTGET",
+	 .op_code = NFS4_OP_LAYOUTGET,
+	 .funct = nfs4_op_layoutget,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_LAYOUTRETURN",
+	 .op_code = NFS4_OP_LAYOUTRETURN,
+	 .funct = nfs4_op_layoutreturn,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_SECINFO_NO_NAME",
+	 .op_code = NFS4_OP_SECINFO_NO_NAME,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS	/* tbd */
+	},
+	{.name = "OP_SEQUENCE",
+	 .op_code = NFS4_OP_SEQUENCE,
+	 .funct = nfs4_op_sequence,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_SET_SSV",
+	 .op_code = NFS4_OP_SET_SSV,
+	 .funct = nfs4_op_set_ssv,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_TEST_STATEID",
+	 .op_code = NFS4_OP_TEST_STATEID,
+	 .funct = nfs4_op_test_stateid,
+	 .exp_perm_flags = 0
+	},
+	{.name = "OP_WANT_DELEGATION",
+	 .op_code = NFS4_OP_WANT_DELEGATION,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS	/* tbd */
+	},
+	{.name = "OP_DESTROY_CLIENTID",
+	 .op_code = NFS4_OP_DESTROY_CLIENTID,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = 0	/* tbd */
+	},
+	{.name = "OP_RECLAIM_COMPLETE",
+	 .op_code = NFS4_OP_RECLAIM_COMPLETE,
+	 .funct = nfs4_op_reclaim_complete,
+	 .exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+	},
+	{.name = "OP_ILLEGAL",
+	 .op_code = NFS4_OP_ILLEGAL,
+	 .funct = nfs4_op_illegal,
+	 .exp_perm_flags = 0
+	}
 };
 
 /**
@@ -123,7 +353,7 @@ static const nfs4_op_desc_t optabv4[] = {
  * content of the nfsv4 operation list and composes the result.  On
  * this aspect it is a little similar to a dispatch routine.
  * Operation and functions necessary to process them are defined in
- * the optab4 array.
+ * the optabv4 array.
  *
  *
  *  @param[in]  arg        Generic nfs arguments
@@ -158,9 +388,7 @@ int nfs4_Compound(nfs_arg_t *arg,
        arg->arg_compound4.argarray.argarray_val;
   nsecs_elapsed_t op_start_time;
   struct timespec ts;
-#ifdef USE_DBUS_STATS
-  int export_id = -1;
-#endif
+  int perm_flags;
 
   if(compound4_minor > 1)
     {
@@ -184,18 +412,6 @@ int nfs4_Compound(nfs_arg_t *arg,
       return NFS_REQ_OK;
     }
 
-  /* Check if this export supports NFSv4 */
-  if ((export->options & EXPORT_OPTION_NFSV4) == 0)
-   {
-      LogMajor(COMPONENT_NFS_V4,
-               "The export(id=%u) does not support NFSv4... rejecting it",
-               export->id);
-      res->res_compound4.status = NFS4ERR_PERM ;
-      /* Don't alloc and fill res->res_compound4.resarray.resarray_val[0]
-         as it would not be freed later */
-      return NFS_REQ_OK ;
-   }
-
   /* Check for too long request */
   if(argarray_len > 30)
     {
@@ -211,23 +427,15 @@ int nfs4_Compound(nfs_arg_t *arg,
   /* Initialisation of the compound request internal's data */
   memset(&data, 0, sizeof(data));
   data.req_ctx = req_ctx;
-  req_ctx->nfs_minorvers = arg->arg_compound4.minorversion;
+  data.export_perms.anonymous_uid = (uid_t) ANON_UID;
+  data.export_perms.anonymous_gid = (gid_t) ANON_GID;
+  req_ctx->nfs_minorvers = compound4_minor;
 
   /* Minor version related stuff */
   data.minorversion = compound4_minor;
-  /**
-   * @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be
-   * set here
-   */
-
-  data.pfullexportlist = export; /* Full export list is provided in
-                                    input */
-  data.pexport = export;
   data.pworker = worker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = req;
-
-  strcpy(data.MntPath, "/");
 
   /* Building the client credential field */
   if(nfs_rpc_req2client_cred(req, &(data.credential)) == -1)
@@ -272,7 +480,7 @@ int nfs4_Compound(nfs_arg_t *arg,
       /* If not prepended ny OP4_SEQUENCE, OP4_EXCHANGE_ID should be
        * the only request in the compound see 18.35.3. and test EID8
        * for details */
-      if(optabv4[optab4index[argarray[0].argop]].val
+      if(optabv4[optab4index[argarray[0].argop]].op_code
          == NFS4_OP_EXCHANGE_ID)
         {
           status = NFS4ERR_NOT_ONLY_OP;
@@ -328,15 +536,75 @@ int nfs4_Compound(nfs_arg_t *arg,
       LogDebug(COMPONENT_NFS_V4,
                "Request %d is %d = %s, entry %d in the op array",
                i,
-               optabv4[opindex].val,
+               optabv4[opindex].op_code,
                optabv4[opindex].name,
                opindex);
+      perm_flags = optabv4[opindex].exp_perm_flags & EXPORT_OPTION_ACCESS_TYPE;
 
-      status
-        = (optabv4[opindex].funct)(
-             &(argarray[i]),
-             &data,
-             &(res->res_compound4.resarray.resarray_val[i]));
+      if(perm_flags != 0)
+         {
+	   status = nfs4_Is_Fh_Invalid(&data.currentFH);
+           if(status != NFS4_OK)
+             {
+               LogDebug(COMPONENT_NFS_V4,
+                        "Status of %s due to empty CurrentFH in position %d = %s",
+                        optabv4[opindex].name,
+                        i,
+                        nfsstat4_to_str(status));
+
+               /* All the operation, like NFS4_OP_ACESS, have a first replied
+                * field called .status
+                */
+               res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.
+                   status = status;
+               res->res_compound4.resarray.resarray_val[i].resop =
+                   argarray[i].argop;
+
+               /* Do not manage the other requests in the COMPOUND. */
+               res->res_compound4.resarray.resarray_len = i + 1;
+
+               break;
+             }
+
+           /* Operation uses a CurrentFH, so we can check export perms.
+            * Perms should even be set reasonably for pseudo file system.
+            */
+           LogFullDebug(COMPONENT_NFS_V4,
+                        "Check export perms export = %08x req = %08x",
+                        data.export_perms.options & EXPORT_OPTION_ACCESS_TYPE,
+                        perm_flags);
+           if((data.export_perms.options & perm_flags) != perm_flags)
+             {
+               /* Export doesn't allow requested access for this client. */
+               if((perm_flags & EXPORT_OPTION_MODIFY_ACCESS) != 0)
+                 status = NFS4ERR_ROFS;
+               else
+                 status = NFS4ERR_ACCESS;
+
+               LogDebug(COMPONENT_NFS_V4,
+                        "Status of %s due to export permissions in position %d = %s",
+                        optabv4[opindex].name,
+                        i,
+                        nfsstat4_to_str(status));
+
+               /* All the operation, like NFS4_OP_ACESS, have a first replied
+                * field called .status
+                */
+               res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.
+                   status = status;
+               res->res_compound4.resarray.resarray_val[i].resop =
+                   argarray[i].argop;
+
+               /* Do not manage the other requests in the COMPOUND. */
+               res->res_compound4.resarray.resarray_len = i + 1;
+
+               break;
+             }
+         }
+
+      status = (optabv4[opindex].funct)(&(argarray[i]),
+					&data,
+					&(res->res_compound4.resarray.resarray_val[i]));
 
       LogCompoundFH(&data);
 
@@ -346,17 +614,7 @@ int nfs4_Compound(nfs_arg_t *arg,
         .status = status;
 
 #ifdef USE_DBUS_STATS
-      if(nfs4_Is_Fh_Invalid(&data.currentFH) == NFS4_OK &&
-	 !nfs4_Is_Fh_Pseudo(&data.currentFH)) {
-	      export_id = nfs4_FhandleToExportId(&data.currentFH);
-      } else if(nfs4_Is_Fh_Invalid(&data.savedFH) == NFS4_OK &&
-		!nfs4_Is_Fh_Pseudo(&data.savedFH)) {
-	      export_id = nfs4_FhandleToExportId(&data.savedFH);
-      } else {
-	      export_id = -1;
-      }
       server_stats_nfsv4_op_done(data.req_ctx,
-				 export_id,
 				 argarray[i].argop,
 				 op_start_time,
 				 status == NFS4_OK);
@@ -400,7 +658,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 #ifdef USE_DBUS_STATS
   server_stats_compound_done(req_ctx,
-			     export_id,
 			     argarray_len,
 			     status);
 #endif
@@ -423,7 +680,7 @@ int nfs4_Compound(nfs_arg_t *arg,
                    (int) sizeof(nfs_res_t));
 
       /* Indicate to nfs4_Compound_Free that this reply is cached. */
-      res->res_compound4_extended.res_cached = TRUE;
+      res->res_compound4_extended.res_cached = true;
 
       /* If the cache is already in use, free it. */
       if(data.pcached_res->res_cached)
@@ -750,6 +1007,12 @@ void compound_data_Free(compound_data_t *data)
       data->psession = NULL;
   }
 
+  if(data->req_ctx->export) {
+      put_gsh_export(data->req_ctx->export);
+      data->req_ctx->export = NULL;
+      data->pexport = NULL;
+  }
+
   if (data->currentFH.nfs_fh4_val != NULL)
     gsh_free(data->currentFH.nfs_fh4_val);
 
@@ -761,9 +1024,6 @@ void compound_data_Free(compound_data_t *data)
 
   if (data->savedFH.nfs_fh4_val != NULL)
     gsh_free(data->savedFH.nfs_fh4_val);
-
-  if (data->mounted_on_FH.nfs_fh4_val != NULL)
-    gsh_free(data->mounted_on_FH.nfs_fh4_val);
 
 }                               /* compound_data_Free */
 

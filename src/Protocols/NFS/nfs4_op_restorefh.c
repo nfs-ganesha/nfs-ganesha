@@ -42,6 +42,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -81,25 +82,26 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   if (res_RESTOREFH.status != NFS4_OK)
     return res_RESTOREFH.status;
 
-  /* If data->exportp is null, a junction from pseudo fs was
-     traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_RESTOREFH.status = nfs4_SetCompoundExport(data);
-      if(res_RESTOREFH.status != NFS4_OK)
-        {
-          LogCrit(COMPONENT_NFS_V4,
-                  "Error %d in nfs4_SetCompoundExport", res_RESTOREFH.status);
-          return res_RESTOREFH.status;
-        }
-    }
-
   /* Copy the data from current FH to saved FH */
   memcpy(data->currentFH.nfs_fh4_val,
          data->savedFH.nfs_fh4_val,
          data->savedFH.nfs_fh4_len);
 
   data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
+
+  if(data->req_ctx->export != NULL) {
+      put_gsh_export(data->req_ctx->export);
+  }
+  /* Restore the export information */
+  data->req_ctx->export = data->saved_export;
+  data->saved_export = NULL;
+  data->pexport      = &data->req_ctx->export->export;
+  data->export_perms = data->saved_export_perms;
+
+  /* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
+   * because we are restoring saved information, and the
+   * credential checking may be skipped.
+   */
 
   /* If current and saved entry are identical, get no references and
      make no changes. */

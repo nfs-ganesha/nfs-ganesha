@@ -40,6 +40,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -47,6 +48,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
+#include "export_mgr.h"
 
 /**
  *
@@ -83,7 +85,12 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
      /* Never even think of calling FSAL_lookup on root/.. */
 
-     if (entry->type == DIRECTORY && entry->object.dir.root) {
+     if(entry->type == DIRECTORY &&
+	entry == req_ctx->export->export.exp_root_cache_inode) {
+          /* This entry is the root of the current export, so if we get
+           * this far, return itself. Note that NFS v4 LOOKUPP will not
+           * come here, it catches the root entry earlier.
+           */
           /* Bump the refcount on the current entry (so the caller's
              releasing decrementing it doesn't take us below the
              sentinel count) */

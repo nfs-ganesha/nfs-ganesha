@@ -359,8 +359,6 @@ struct cache_entry_t {
 		} file; /*< REGULAR_FILE data */
 
 		struct {
-			/** Marks this as the root directory of an export */
-			bool root;
 			/** Number of known active children */
 			uint32_t nbactive;
 			/** The parent of this directory ('..') */
@@ -694,8 +692,6 @@ cache_inode_status_t cache_inode_add_cached_dirent(
 	const char *name,
 	cache_entry_t *entry,
 	cache_inode_dir_entry_t **dir_entry);
-cache_inode_status_t cache_inode_make_root(struct fsal_obj_handle *root_hdl,
-					   cache_entry_t **root_entry);
 
 cache_inode_status_t cache_inode_lock_trust_attrs(
         cache_entry_t *entry,
