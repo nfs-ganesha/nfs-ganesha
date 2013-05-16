@@ -156,6 +156,8 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_TOOSMALL";
       case CACHE_INODE_XDEV:
         return "CACHE_INODE_XDEV";
+      case CACHE_INODE_FSAL_SHARE_DENIED:
+        return "CACHE_INODE_FSAL_SHARE_DENIED";  
     }
   return "unknown";
 }
@@ -665,6 +667,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
     case ERR_FSAL_XDEV:
       return CACHE_INODE_XDEV;
+
+    case ERR_FSAL_SHARE_DENIED:
+      return CACHE_INODE_FSAL_SHARE_DENIED;
 
     case ERR_FSAL_BLOCKED:
     case ERR_FSAL_INTERRUPT:

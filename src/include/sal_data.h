@@ -487,6 +487,7 @@ typedef enum state_status_t
   STATE_SERVERFAULT,
   STATE_TOOSMALL,
   STATE_XDEV,
+  STATE_FSAL_SHARE_DENIED,
 } state_status_t;
 
 /******************************************************************************

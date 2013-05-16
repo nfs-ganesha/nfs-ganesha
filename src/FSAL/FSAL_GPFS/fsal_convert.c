@@ -143,7 +143,7 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_ROFS;
 
     case ETXTBSY:
-      return ERR_FSAL_FILE_OPEN;
+      return ERR_FSAL_SHARE_DENIED;
 
     case ENOSPC:
       return ERR_FSAL_NOSPC;

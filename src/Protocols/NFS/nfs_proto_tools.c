@@ -419,6 +419,7 @@ static int nfs_RetryableError(cache_inode_status_t cache_status,
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
     case CACHE_INODE_FILE_OPEN:
+    case CACHE_INODE_FSAL_SHARE_DENIED:
     case CACHE_INODE_TOOSMALL:
     case CACHE_INODE_MLINK:
     case CACHE_INODE_SERVERFAULT:
@@ -3832,6 +3833,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_FILE_OPEN;
       break;
 
+    case CACHE_INODE_FSAL_SHARE_DENIED:
+      nfserror = NFS4ERR_SHARE_DENIED;
+      break;
+
     case CACHE_INODE_STATE_ERROR:
       nfserror = NFS4ERR_BAD_STATEID;
       break;
@@ -3972,6 +3977,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS3ERR_NOTSUPP;
       break;
 
+    case CACHE_INODE_FSAL_SHARE_DENIED:
     case CACHE_INODE_DELAY:
       nfserror = NFS3ERR_JUKEBOX;
       break;
@@ -4088,6 +4094,7 @@ nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFSERR_NOENT;
       break;
 
+    case CACHE_INODE_FSAL_SHARE_DENIED:
     case CACHE_INODE_FSAL_EACCESS:
       nfserror = NFSERR_ACCES;
       break;

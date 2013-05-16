@@ -586,6 +586,7 @@ typedef enum cache_inode_status_t
   CACHE_INODE_SERVERFAULT           = 41,
   CACHE_INODE_TOOSMALL              = 42,
   CACHE_INODE_XDEV                  = 43,
+  CACHE_INODE_FSAL_SHARE_DENIED     = 44,
 } cache_inode_status_t;
 
 /**
