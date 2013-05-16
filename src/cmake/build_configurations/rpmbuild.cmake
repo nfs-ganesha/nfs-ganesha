@@ -10,6 +10,5 @@ set( USE_FSAL_CEPH OFF)
 set( USE_FSAL_FUSE OFF)
 set( USE_FSAL_POSIX OFF)
 set( USE_FSAL_LUSTRE OFF)
-set( USE_FSAL_GPFS OFF)
 
 message(STATUS "Building RPM")
