@@ -98,9 +98,12 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
   if(data->saved_export != NULL) {
       put_gsh_export(data->saved_export);
   }
-  /* Save the export information */
-  data->saved_export = data->req_ctx->export;
-  data->req_ctx->export = NULL;
+  /* Save the export information by taking a reference since
+   * currentFH is still active.  Assert this just to be sure...
+   */
+  data->saved_export = get_gsh_export(data->req_ctx->export->export.id,
+				      true);
+  assert(data->saved_export != NULL);
   data->saved_export_perms = data->export_perms;
 
   /* If saved and current entry are equal, skip the following. */
