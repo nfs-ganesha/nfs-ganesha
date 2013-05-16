@@ -738,11 +738,21 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
     return -1;
   }
 
-  // If we found the handle index in the opened file handle cache, we
-  // can return right away.
+  // If we found the handle index in the opened file handle cache, we 
+  // call fastopen right away.
   if (handle_index != -1)
   {
-    return handle_index;
+    int handle_index_return = -1;
+    FSI_TRACE(FSI_DEBUG,
+              "cur handle index %d",
+              handle_index);
+    handle_index_return = 
+      CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context,
+                                     handle_index,
+                                     fsi_filename);
+    if (handle_index_return >= 0) {
+      return handle_index_return;
+    }
   }
 
   // since we called fsi_get_name_from_handle, we know the pthread specific
