@@ -91,8 +91,7 @@ static int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
 
-  if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
-    return NFS4ERR_BADHANDLE;
+  nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
 
   return NFS4_OK;
 }                               /* CreateROOTFH4 */

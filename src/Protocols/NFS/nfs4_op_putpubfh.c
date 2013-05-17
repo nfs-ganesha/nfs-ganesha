@@ -92,8 +92,7 @@ static int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
   if((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
     return status;
 
-  if(!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
-    return NFS4ERR_BADHANDLE;
+  nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry);
 
   return NFS4_OK;
 }                               /* CreatePUBFH4 */

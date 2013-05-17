@@ -1265,11 +1265,9 @@ int nfs4_CurrentFHToPseudo(compound_data_t   * data,
  * @param fh4p      [OUT] pointer to nfsv4 filehandle
  * @param psfsentry [IN]  pointer to pseudofs entry
  * 
- * @return NFS4_OK if successfull, other values show an error. 
- * 
  */
 
-int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
+void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 {
   file_handle_v4_t *fhandle4;
 
@@ -1284,7 +1282,6 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 
   fh4p->nfs_fh4_len = nfs4_sizeof_handle(fhandle4); /* no handle in opaque */
 
-  return TRUE;
 }                               /* nfs4_PseudoToFhandle */
 
 /**
@@ -1321,7 +1318,7 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
   if(nfs4_PseudoToFattr(psfsentry,
                         &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
                         data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
-    res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+    res_GETATTR4.status = NFS4ERR_RESOURCE;
   else
     res_GETATTR4.status = NFS4_OK;
 
@@ -1429,11 +1426,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   if(iter->junction_export == NULL)
     {
       /* The entry is not a junction, we stay within the pseudo fs */
-      if(!nfs4_PseudoToFhandle(&(data->currentFH), iter))
-        {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
-        }
+      nfs4_PseudoToFhandle(&(data->currentFH), iter);
 
       /* No need to fill in compound data because it doesn't change. */
     }
@@ -1477,7 +1470,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
       if(FSAL_IS_ERROR(fsal_status))
         {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          cache_status = cache_inode_error_convert(fsal_status);
+          res_LOOKUP4.status = nfs4_Errno(cache_status);
           return res_LOOKUP4.status;
         }
 
@@ -1485,13 +1479,15 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                      data->pcontext, &fsal_handle, NULL)))
         {
+          cache_status = cache_inode_error_convert(fsal_status);
+          res_LOOKUP4.status = nfs4_Errno(cache_status);
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to lookup for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
-                   fsal_status.major, fsal_status.minor);
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+                   "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d ) = %s",
+                   fsal_status.major, fsal_status.minor,
+                   cache_inode_err_str(cache_status));
           return res_LOOKUP4.status;
         }
 
@@ -1501,7 +1497,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: Failed to allocate the first file handle");
-              res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+              res_LOOKUP4.status = error;
               return res_LOOKUP4.status;
             }
         }
@@ -1529,8 +1525,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                                    &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry, status = %s",
+                   cache_inode_err_str(cache_status));
+          res_LOOKUP4.status = nfs4_Errno(cache_status);
           return res_LOOKUP4.status;
         }
 
@@ -1621,11 +1618,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
     }
 
   /* A matching entry was found */
-  if(!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent))
-    {
-      res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-      return res_LOOKUPP4.status;
-    }
+  nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
 
   /* Return the reference to the old current entry */
   if (data->current_entry) {
@@ -1679,16 +1672,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
     }
 
   /* A matching entry was found */
-  if(!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent))
-    {
-      LogEvent(COMPONENT_NFS_V4_PSEUDO,
-               "LOOKUPP Traversing junction from Export_Id %d Pseudo %s back to pseudo fs id %"PRIu64" returning NFS4ERR_SERVERFAULT",
-               data->pcontext->export_context->fe_export->id,
-               data->pcontext->export_context->fe_export->pseudopath,
-               (uint64_t) data->pcontext->export_context->fe_export->exp_mounted_on_file_id);
-      res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-      return res_LOOKUPP4.status;
-    }
+  nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
 
   /* Return the reference to the old current entry */
   if (data->current_entry)
@@ -1815,13 +1799,15 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                      data->pcontext, &fsal_handle, NULL)))
         {
+          cache_status = cache_inode_error_convert(fsal_status);
+          res_READDIR4.status = nfs4_Errno(cache_status);
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to lookup for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
-                   fsal_status.major, fsal_status.minor);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
+                   "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d ) = %s",
+                   fsal_status.major, fsal_status.minor,
+                   cache_inode_err_str(cache_status));
           return res_READDIR4.status;
         }
 
@@ -1831,7 +1817,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: Failed to allocate the first file handle");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
+              res_READDIR4.status = error;
               return res_READDIR4.status;
             }
         }
@@ -1859,8 +1845,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                    &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry, status = %s",
+                   cache_inode_err_str(cache_status));
+          res_LOOKUP4.status = nfs4_Errno(cache_status);
           return res_LOOKUP4.status;
         }
 
@@ -1881,8 +1868,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   if((entry_nfs_array =
       gsh_calloc(estimated_num_entries, sizeof(entry4))) == NULL)
     {
-      LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
+      LogMajor(COMPONENT_NFS_V4_PSEUDO,
+               "Failed to allocate memory for entries");
+      res_READDIR4.status = NFS4ERR_RESOURCE;
       return res_READDIR4.status;
     }
 
@@ -1934,8 +1922,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       if(entry_nfs_array[i].name.utf8string_val == NULL)
         {
-            LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-            res_READDIR4.status = NFS4ERR_SERVERFAULT;
+            LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                     "Failed to allocate memory for entry's name");
+            res_READDIR4.status = NFS4ERR_RESOURCE;
             return res_READDIR4.status;
         }
 
@@ -1957,12 +1946,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Do the case where we stay within the pseudo file system. */
       if(iter->junction_export == NULL)
         {
-          if(!nfs4_PseudoToFhandle(&entryFH, iter))
-            {
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              gsh_free(entry_nfs_array);
-              return res_READDIR4.status;
-            }
+          nfs4_PseudoToFhandle(&entryFH, iter);
 
           if(nfs4_PseudoToFattr(iter,
                             &(entry_nfs_array[i].attrs),
@@ -2071,8 +2055,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
               if(FSAL_IS_ERROR(fsal_status))
                 {
-                  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to convert %s to string, id=%d",
+                       data->pexport->fullpath, data->pexport->id);
+
+                  /* We just skip this entry, something bad has happened. */
+                  data->pexport      = save_pexport;
+                  data->export_perms = save_export_perms;
+                  continue;
                 }
 
               fsal_status = FSAL_lookupPath(&exportpath_fsal,
@@ -2082,23 +2072,42 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
               if(FSAL_IS_ERROR(fsal_status))
                 {
+                  cache_status = cache_inode_error_convert(fsal_status);
                   LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to lookup for %s , id=%d",
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to lookup for %s, id=%d",
                        data->pexport->fullpath, data->pexport->id);
                   LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
-                       fsal_status.major, fsal_status.minor);
-                  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                       "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d ) = %s",
+                       fsal_status.major, fsal_status.minor,
+                       cache_inode_err_str(cache_status));
+
+                  if(nfs4_Fattr_Fill_Error(&(entry_nfs_array[i].attrs),
+                                           nfs4_Errno(cache_status)) != 0)
+                    {
+                      LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                               "nfs4_Fattr_Fill_Error failed to fill in RDATTR_ERROR");
+                    }
+
+                  /* We just skip this entry, something bad has happened.
+                   * One possibility is that the exported directory has been
+                   * removed.
+                   */
+                  data->pexport      = save_pexport;
+                  data->export_perms = save_export_perms;
+                  continue;
                 }
 
               /* Build the nfs4 handle. Again, we do this unconditionally. */
               if(!nfs4_FSALToFhandle(&entryFH, &fsal_handle, data))
                 {
                   LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
-                  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle for %s, id=%d",
+                       data->pexport->fullpath, data->pexport->id);
+
+                  /* We just skip this entry, something bad has happened. */
+                  data->pexport      = save_pexport;
+                  data->export_perms = save_export_perms;
+                  continue;
                 }
 
               /* Get the cache inode entry on the other side of the junction
@@ -2118,9 +2127,24 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                            &cache_status)) == NULL)
                 {
                   LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                           "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
-                  res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-                  return res_LOOKUP4.status;
+                           "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry for %s, id=%d, status = %s",
+                           data->pexport->fullpath, data->pexport->id,
+                           cache_inode_err_str(cache_status));
+
+                  if(nfs4_Fattr_Fill_Error(&(entry_nfs_array[i].attrs),
+                                           nfs4_Errno(cache_status)) != 0)
+                    {
+                      LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                               "nfs4_Fattr_Fill_Error failed to fill in RDATTR_ERROR");
+                    }
+
+                  /* We just skip this entry, something bad has happened.
+                   * One possibity is that we weren't able to get the attributes,
+                   * but we set up to always allow READ_ATTR, though not READ_ACL.
+                   */
+                  data->pexport      = save_pexport;
+                  data->export_perms = save_export_perms;
+                  continue;
                 }
 
               /* Release the reference we just got. */
@@ -2133,8 +2157,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                         &entryFH,
                                         &(arg_READDIR4.attr_request)) != 0)
                 {
-                  LogFatal(COMPONENT_NFS_V4_PSEUDO,
-                           "nfs4_FSALattr_To_Fattr failed to convert attr");
+                  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                           "nfs4_FSALattr_To_Fattr failed to convert attr for %s, id=%d",
+                           data->pexport->fullpath, data->pexport->id);
+
+                  /* We just skip this entry, something bad has happened. */
+                  data->pexport      = save_pexport;
+                  data->export_perms = save_export_perms;
+                  continue;
                 }
               }
 
@@ -2154,19 +2184,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         break;
     }
 
-  /* Resize entry_nfs_array */
-  /* @todo : Is this reallocation actually needed ? */
-#ifdef BUGAZOMEU
-  if(i < estimated_num_entries)
-    if((entry_nfs_array = gsh_realloc(entry_nfs_array, i *
-                                      sizeof(entry4))) == NULL)
-      {
-        LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-        res_READDIR4.status = NFS4ERR_SERVERFAULT;
-        gsh_free(entry_nfs_array);
-        return res_READDIR4.status;
-      }
-#endif
   /* Build the reply */
   memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);

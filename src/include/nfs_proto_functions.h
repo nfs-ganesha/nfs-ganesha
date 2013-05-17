@@ -1530,7 +1530,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
                        compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
-int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
+void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
 int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
                         fattr4 * Fattr,   /* In: File attributes   */
