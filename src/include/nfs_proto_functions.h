@@ -1075,9 +1075,10 @@ pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_MakeCred(compound_data_t * data);
 
-int cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
-                         compound_data_t *data, nfs_fh4 *objFH,
-                         struct bitmap4 *Bitmap);
+nfsstat4
+cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
+                     compound_data_t *data, nfs_fh4 *objFH,
+                     struct bitmap4 *Bitmap);
 
 int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, struct bitmap4 * Bitmap);
@@ -1152,7 +1153,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
                        compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
 
-int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
+void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *,
 			    compound_data_t *);

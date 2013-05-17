@@ -3067,18 +3067,16 @@ Fattr_filler(void *opaque,
  *                     attributes are requested
  * @param[in]  Bitmap  Bitmap of attributes being requested
  *
- * @retval 0 on success.
- * @retval -1 on failure.
+ * @retval cache status
  */
 
-int
+nfsstat4
 cache_entry_To_Fattr(cache_entry_t *entry,
                      fattr4 *Fattr,
                      compound_data_t *data,
                      nfs_fh4 *objFH,
                      struct bitmap4 *Bitmap)
 {
-        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         struct Fattr_filler_opaque f = {
                 .Fattr = Fattr,
                 .data = data,
@@ -3086,16 +3084,10 @@ cache_entry_To_Fattr(cache_entry_t *entry,
                 .Bitmap = Bitmap
         };
 
-	cache_status = cache_inode_getattr(entry,
-					   data->req_ctx,
-					   &f,
-					   Fattr_filler);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		return -1;
-	}
-
-	return 0;
+	return nfs4_Errno(cache_inode_getattr(entry,
+					      data->req_ctx,
+					      &f,
+					      Fattr_filler));
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
