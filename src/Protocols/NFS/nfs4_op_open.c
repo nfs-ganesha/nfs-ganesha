@@ -901,6 +901,16 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 return res_OPEN4->status;
         }
 
+        if(nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+                res_OPEN4->status = NFS4ERR_PERM;
+
+                LogDebug(COMPONENT_NFS_V4,
+                         "Status of OP_OPEN due to PseudoFS handle = %s",
+                         nfsstat4_to_str(res_OPEN4->status));
+
+                return res_OPEN4->status;
+        }
+
         /*
          * If Filehandle points to a xattr object, manage it via the
          * xattrs specific functions
