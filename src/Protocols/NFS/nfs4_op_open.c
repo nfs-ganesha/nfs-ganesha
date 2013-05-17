@@ -168,6 +168,17 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   if(res_OPEN4.status != NFS4_OK)
     return res_OPEN4.status;
 
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    {
+      res_OPEN4.status = NFS4ERR_PERM;
+
+      LogDebug(COMPONENT_NFS_V4,
+               "Status of OP_OPEN due to PseudoFS handle = %s",
+               nfsstat4_to_str(res_OPEN4.status));
+
+      return res_OPEN4.status;
+    }
+
   /*
    * If Filehandle points to a xattr object, manage it via the xattrs
    * specific functions
@@ -190,10 +201,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                    data->pcontext,
                                                    &retval)) == NULL)
         {
-          res_OPEN4.status = NFS4ERR_RESOURCE;
-          LogEvent(COMPONENT_STATE,
-                   "NFS4 OPEN returning NFS4ERR_RESOURCE after "
-                   "trying to repopulate cache");
+          LogCrit(COMPONENT_STATE,
+                   "NFS4 OPEN returning %s after "
+                   "trying to repopulate cache",
+                   nfsstat4_to_str(res_OPEN4.status));
           return res_OPEN4.status;
         }
     }
