@@ -140,6 +140,14 @@ cache_inode_remove(cache_entry_t *entry,
                                                   name);
      if (FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
+	 if(to_remove_entry->type == DIRECTORY &&
+	    status == CACHE_INODE_DIR_NOT_EMPTY) {
+	     /* its dirent tree is probably stale, flush it
+	      * to try and make things right again */
+	     PTHREAD_RWLOCK_wrlock(&to_remove_entry->content_lock);
+	     (void)cache_inode_invalidate_all_cached_dirent(to_remove_entry);
+	     PTHREAD_RWLOCK_unlock(&to_remove_entry->content_lock);
+	 }
          goto out;
      }
 
