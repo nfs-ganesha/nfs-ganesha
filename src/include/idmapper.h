@@ -58,7 +58,8 @@ extern pthread_rwlock_t idmapper_group_lock;
 void idmapper_cache_init(void);
 bool idmapper_add_user(const struct gsh_buffdesc *,
 		       uid_t,
-		       const gid_t *);
+		       const gid_t *,
+		       bool gss_princ);
 bool idmapper_add_group(const struct gsh_buffdesc *,
 			gid_t);
 bool idmapper_lookup_by_uname(const struct gsh_buffdesc *,
@@ -86,9 +87,9 @@ bool name2gid(const struct gsh_buffdesc *, gid_t *, const gid_t);
 
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
-bool principal2uid(char *, uid_t *, struct svc_rpc_gss_data *);
+bool principal2uid(char *, uid_t *, gid_t *, struct svc_rpc_gss_data *);
 #else
-bool principal2uid(char *, uid_t *);
+bool principal2uid(char *, uid_t *, gid_t *);
 #endif
 #endif
 

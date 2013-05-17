@@ -239,7 +239,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
 		if (group) {
 			success = idmapper_add_group(&new_name, id);
 		} else {
-			success = idmapper_add_user(&new_name, id, NULL);
+			success = idmapper_add_user(&new_name, id, NULL, false);
 		}
 		pthread_rwlock_unlock(group ?
 				      &idmapper_group_lock :
@@ -580,7 +580,8 @@ static bool name2id(const struct gsh_buffdesc *name,
 	success = idmapper_add_group(name, *id);
       else
 	success = idmapper_add_user(name, *id,
-				    got_gid ? &gid : NULL);
+				    got_gid ? &gid : NULL,
+				    false);
 
        pthread_rwlock_unlock(group ?
 			      &idmapper_group_lock :
@@ -639,7 +640,7 @@ bool name2gid(const struct gsh_buffdesc *name,
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t *puid, struct svc_rpc_gss_data *gd)
+bool principal2uid(char *principal, uid_t *puid, gid_t *pgid, struct svc_rpc_gss_data *gd)
 #else
 /**
  * @brief Convert a principal (as returned by @c gss_display_name) to a UID
@@ -649,12 +650,13 @@ bool principal2uid(char *principal, uid_t *puid, struct svc_rpc_gss_data *gd)
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t * puid)
+bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
 #endif
 {
 #ifdef USE_NFSIDMAP
   uid_t gss_uid = ANON_UID;
   gid_t gss_gid = ANON_GID;
+  const gid_t *pgss_gid = NULL;
   int rc;
   bool success;
   struct gsh_buffdesc princbuff =
@@ -669,7 +671,9 @@ bool principal2uid(char *principal, uid_t * puid)
 
 #ifdef USE_NFSIDMAP
   pthread_rwlock_rdlock(&idmapper_user_lock);
-  success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL, false);
+  success = idmapper_lookup_by_uname(&princbuff, &gss_uid, &pgss_gid, true);
+  if (success && pgss_gid)
+  	gss_gid = *pgss_gid;
   pthread_rwlock_unlock(&idmapper_user_lock);
   if (unlikely(!success))
     {
@@ -687,8 +691,8 @@ bool principal2uid(char *principal, uid_t * puid)
       if(rc)
         {
 #ifdef _MSPAC_SUPPORT
-/*           short found_uid = false; */
-/*           short found_gid = false; */
+	  bool found_uid = false;
+	  bool found_gid = false;
           if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
           {
             struct wbcAuthUserParams params;
@@ -733,41 +737,37 @@ bool principal2uid(char *principal, uid_t * puid)
               return false;
             }
             wbcFreeMemory(info);
-/*             found_uid = true; */
-/*             found_gid = true; */
+	    found_uid = true;
+	    found_gid = true;
           }
 #endif /* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
-/* #if 0 */
-/*           if ((found_uid == true) && (found_gid == true)) */
-/*           { */
-/*             goto principal_found; */
-/*           } */
-/* #endif           */
+          if ((found_uid == true) && (found_gid == true))
+          {
+            goto principal_found;
+          }
 #endif
       
           return false;
         }
-#if 0        
 #ifdef _MSPAC_SUPPORT
 principal_found:
 #endif
 
       pthread_rwlock_wrlock(&idmapper_user_lock);
-      success = idmapper_add_user(&princbuff, gss_uid, &gss_gid);
+      success = idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
       pthread_rwlock_unlock(&idmapper_user_lock);
 
       if (!success)
-	{
-	  LogMajor(COMPONENT_IDMAPPER,
-		   "idmapper_add_user(%s, %d, %d) failed",
-		   principal, gss_uid, gss_gid);
-	}
-#endif    
+      {
+	    LogMajor(COMPONENT_IDMAPPER,
+		     "idmapper_add_user(%s, %d, %d) failed",
+		     principal, gss_uid, gss_gid);
+	  }
     }
 
-  /* This looks suspicious. */
   *puid = gss_uid;
+  *pgid = gss_gid;
 
   return true;
 #else           /* !USE_NFSIDMAP */

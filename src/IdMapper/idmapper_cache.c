@@ -293,6 +293,8 @@ void idmapper_cache_init(void)
  * @param[in] name The user name
  * @param[in] uid  The user ID
  * @param[in] gid  Optional.  Set to NULL if no gid is known.
+ * @param[in] gss_princ true when name is gss principal.
+ *                      The uid to name map is not added for gss principals.
  *
  * @retval true on success.
  * @retval false if our reach exceeds our grasp.
@@ -300,7 +302,8 @@ void idmapper_cache_init(void)
 
 bool idmapper_add_user(const struct gsh_buffdesc *name,
 		       uid_t uid,
-		       const gid_t *gid)
+		       const gid_t *gid,
+		       bool gss_princ)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
@@ -326,7 +329,9 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
 	}
 
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
-	found_id = avltree_insert(&new->uid_node, &uid_tree);
+	if(!gss_princ) {
+   	  found_id = avltree_insert(&new->uid_node, &uid_tree);
+	}
 
 	if (unlikely(found_name || found_id)) {
 		/* Obnoxious complexity.  And we can't even reuse the
@@ -351,11 +356,13 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
 
 		if (coll_name) {
 			avltree_remove(found_name, &uname_tree);
-			if (coll_name != coll_id) {
-				uid_cache[coll_name->uid % id_cache_size]
-					= NULL;
-				avltree_remove(&coll_name->uid_node,
-					       &uid_tree);
+			if (!gss_princ) {
+				if (coll_name != coll_id) {
+					uid_cache[coll_name->uid % id_cache_size]
+						= NULL;
+					avltree_remove(&coll_name->uid_node,
+						       &uid_tree);
+				}
 			}
 		}
 		if (coll_id) {
@@ -376,9 +383,13 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
 			gsh_free(coll_name);
 		}
 		avltree_insert(&new->uname_node, &uname_tree);
-		avltree_insert(&new->uid_node, &uid_tree);
+		if (!gss_princ) {
+			avltree_insert(&new->uid_node, &uid_tree);
+		}
 	}
-	uid_cache[uid % id_cache_size] = &new->uid_node;
+	if (!gss_princ) {
+		uid_cache[uid % id_cache_size] = &new->uid_node;
+	}
 
 	return true;
 }
@@ -509,14 +520,16 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name,
 	found_user = avltree_container_of(found_node,
 					  struct cache_user,
 					  uname_node);
+	if (!gss_princ) {
+		/* I assume that if someone likes this user enough to look it
+		   up by name, they'll like it enough to look it up by ID
+		   later. 
+		   If the name is gss principal it does not have entry in uid tree*/
 
-	/* I assume that if someone likes this user enough to look it
-	   up by name, they'll like it enough to look it up by ID
-	   later. */
-
-	cache_entry = uid_cache + (found_user->uid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *)cache_entry,
-			       (uint64_t) &found_user->uid_node);
+		cache_entry = uid_cache + (found_user->uid % id_cache_size);
+		atomic_store_uint64_t((uint64_t *)cache_entry,
+				       (uint64_t) &found_user->uid_node);
+	}
 
 	if (likely(uid)) {
 		*uid = found_user->uid;
