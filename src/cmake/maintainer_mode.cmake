@@ -28,7 +28,17 @@ MARK_AS_ADVANCED(
     CMAKE_C_FLAGS_MAINTAINER
     CMAKE_EXE_LINKER_FLAGS_MAINTAINER
     CMAKE_SHARED_LINKER_FLAGS_MAINTAINER )
+
+SET(ALLOWED_BUILD_TYPES None Debug Release RelWithDebInfo MinSizeRel Maintainer)
+STRING(REGEX REPLACE ";" " " ALLOWED_BUILD_TYPES_PRETTY "${ALLOWED_BUILD_TYPES}")
+
 # Update the documentation string of CMAKE_BUILD_TYPE for GUIs
 SET( CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
-    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel Maintainer."
+    "Choose the type of build, options are: ${ALLOWED_BUILD_TYPES_PRETTY}."
     FORCE )
+
+list(FIND ALLOWED_BUILD_TYPES ${CMAKE_BUILD_TYPE} BUILD_TYPE_INDEX)
+
+if (BUILD_TYPE_INDEX EQUAL -1)
+	message(SEND_ERROR "${CMAKE_BUILD_TYPE} is not a valid build type.")
+endif()
