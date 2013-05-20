@@ -284,6 +284,7 @@ typedef struct cache_inode_dir_entry__
   fsal_name_t name; /*< The filename */
   uint64_t fsal_cookie; /*< The cookie returned by the FSAL. */
   uint32_t flags; /*< Flags */
+  bool_t itr_present; /*True if present in the current readdir iteration .*/
 } cache_inode_dir_entry_t;
 
 /**

@@ -118,6 +118,10 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
                                        uint32_t flags)
 {
     pthread_rwlock_t *lock = NULL;
+
+    if (!ref)
+      return NULL;
+
     cache_entry_t *entry =
         (cache_entry_t *) gweakref_lookupex(cache_inode_wt, ref, &lock);
 
