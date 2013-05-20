@@ -783,8 +783,8 @@ void cache_inode_print_dir(cache_entry_t *entry)
       LogFullDebug(COMPONENT_CACHE_INODE,
                    "Name = %s, DIRECTORY entry = (%p, %"PRIu64") i=%d",
                    dirent->name.name,
-                   dirent->entry.ptr,
-                   dirent->entry.gen,
+                   dirent->entry_wkref.ptr,
+                   dirent->entry_wkref.gen,
                    i);
       i++;
   } while ((dirent_node = avltree_next(dirent_node)));

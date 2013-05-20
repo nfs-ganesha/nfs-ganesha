@@ -154,7 +154,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                                          &dirent_key, 1);
                     if (dirent) {
                          /* Getting a weakref itself increases the refcount. */
-                         entry = cache_inode_weakref_get(&dirent->entry,
+                         entry = cache_inode_weakref_get(&dirent->entry_wkref,
                                                          LRU_REQ_SCAN);
 
                          if (entry == NULL) {
@@ -251,7 +251,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      if (broken_dirent) {
           /* Directory entry existed, but the weak reference
              was broken.  Just update with the new one. */
-          broken_dirent->entry = entry->weakref;
+          broken_dirent->entry_wkref = entry->weakref;
           cache_status = CACHE_INODE_SUCCESS;
      } else {
           /* Entry was found in the FSAL, add this entry to the

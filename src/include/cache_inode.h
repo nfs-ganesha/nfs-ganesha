@@ -280,7 +280,7 @@ typedef struct cache_inode_dir_entry__
     uint64_t k; /*< Integer cookie */
     uint32_t p; /*< Number of probes, an efficiency metric */
   } hk;
-  gweakref_t entry; /*< Weak reference pointing to the cache entry */
+  gweakref_t entry_wkref; /*< Weak reference pointing to the cache entry */
   fsal_name_t name; /*< The filename */
   uint64_t fsal_cookie; /*< The cookie returned by the FSAL. */
   uint32_t flags; /*< Flags */

@@ -92,8 +92,8 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
     v->name.len = 0;
-    v->entry.ptr = (void*)0xdeaddeaddeaddead;
-    v->entry.gen = 0;
+    v->entry_wkref.ptr = (void*)0xdeaddeaddeaddead;
+    v->entry_wkref.gen = 0;
 
     avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
 }
@@ -141,7 +141,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         v_exist = avltree_container_of(node, cache_inode_dir_entry_t,
                                        node_hk);
         FSAL_namecpy(&v_exist->name, &v->name);
-        v_exist->entry = v->entry;
+        v_exist->entry_wkref = v->entry_wkref;
         avl_dirent_clear_deleted(entry, v_exist);
         v = v_exist;
         code = 1; /* tell client to dispose v */

@@ -205,7 +205,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              dirent3 = pool_alloc(cache_inode_dir_entry_pool, NULL);
              FSAL_namecpy(&dirent3->name, newname);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
-             dirent3->entry = dirent->entry;
+             dirent3->entry_wkref = dirent->entry_wkref;
              code = cache_inode_avl_qp_insert(directory, dirent3);
              switch (code) {
              case 0:
@@ -294,7 +294,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
      FSAL_namecpy(&new_dir_entry->name, name);
-     new_dir_entry->entry = entry->weakref;
+     new_dir_entry->entry_wkref = entry->weakref;
 
      /* add to avl */
      code = cache_inode_avl_qp_insert(parent, new_dir_entry);
@@ -767,7 +767,7 @@ cache_inode_readdir(cache_entry_t *directory,
                                         cache_inode_dir_entry_t,
                                         node_hk);
 
-          entry = cache_inode_weakref_get(&dirent->entry,
+          entry = cache_inode_weakref_get(&dirent->entry_wkref,
                                           LRU_REQ_SCAN);
 
           if(entry == NULL) {
