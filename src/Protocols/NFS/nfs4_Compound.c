@@ -360,12 +360,14 @@ int nfs4_Compound(nfs_arg_t *parg,
         }
 
       /* if( COMPOUND4_MINOR == 1 ) */
-      if((COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
-          && COMPOUND4_MINOR == 0)
-         || (COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE
-             && COMPOUND4_MINOR == 1))
+      if(COMPOUND4_ARRAY.argarray_val[i].argop >= NFS4_OP_ACCESS
+         && ((COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
+               && COMPOUND4_MINOR == 0)
+             || (COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE
+                 && COMPOUND4_MINOR == 1)))
 #else
-      if(COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER)
+      if(COMPOUND4_ARRAY.argarray_val[i].argop >= NFS4_OP_ACCESS &&
+         COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER)
 #endif
         opindex = optab4index[COMPOUND4_ARRAY.argarray_val[i].argop];
       else
