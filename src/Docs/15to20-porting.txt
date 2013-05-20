@@ -136,28 +136,29 @@ Pass        8f8d89d rong zeng Remove svc_destroy in recent svc_sendreply fix, wh
 Pass        33fe9d0 Srikrishan Malik Fix deadlock due to lock ordering. Release content lock before calling cache_inode_rdwr.
             6bc0588 rong zeng Fix hardcoded NFS4ERR_ACCESS return code in nfs4_op_open/nfs41_op_open.
 Pass        11a1419 lancerus Test for AIX sendreply error
+matt pulled e2a0661 11a1419 lancerus Test for AIX sendreply error
 Done Dev_35 6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
 Done Dev_35 75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
             0db829f Venkateswararao Jujjuri (JV) Disable additional logging for the Production code.
             1721dc2 rong zeng Fix delimeter issue in ip_match, and a counter issue in check_for_id. Also adding server (local) IP to client id structure, so that nfs_release_v4_client could properly match.
-            3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
+Done dev_35 3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
 
-            fb8a853 rong zeng Integrate tirpc changes for mspac support.
-            44105aa Jeremy Bongio Add new file from libtirpc os_epoll.h to spec file.
-            e5989aa Jeremy Bongio Bump TI-RPC Version.
-Pass        4efa266 Matt Benjamin Always assign req_cnt in gsh_xprt_unref.
-Pass        cbe145b Matt Benjamin Fix misordered arguments in debug print.
-Pass        229baa9 Matt Benjamin Cleanup nfs_rpc_outstanding_reqs_est.
-Pass        eb687ee Matt Benjamin Remove superceded XPRT_PRIVATE_FLAG_DESTROYED and support.
-Pass        c089d0b Matt Benjamin Pass CMAKE_C_FLAGS to TI-RPC submake.  Bump TI-RPC Version.
-Pass        14d3093 Matt Benjamin Fix refcnt underrun.
-Pass        a764678 Matt Benjamin Release xprt->xp_lock before re-arming.
-Pass        43a463e Matt Benjamin Restore missing clear DECODING flag in gsh_xprt_unref.
-Pass        09ff6bc Matt Benjamin Track duplex-9 SVCXPRT refcounting change.
-Pass        4d6d5f8 Matt Benjamin Stallq claims xprt ref.
-Pass        00169f0 Matt Benjamin Bounded decode.
-Pass        3607b5b Matt Benjamin Return guard ref on stall.
-Pass        082bc92 Matt Benjamin Cond stall, unstall fixes.
+rong  matt   fb8a853 rong zeng Integrate tirpc changes for mspac support.
+matt pulled c8a146c 44105aa Jeremy Bongio Add new file from libtirpc os_epoll.h to spec file.
+matt        e5989aa Jeremy Bongio Bump TI-RPC Version.
+matt        4efa266 Matt Benjamin Always assign req_cnt in gsh_xprt_unref.
+matt        cbe145b Matt Benjamin Fix misordered arguments in debug print.
+matt        229baa9 Matt Benjamin Cleanup nfs_rpc_outstanding_reqs_est.
+matt        eb687ee Matt Benjamin Remove superceded XPRT_PRIVATE_FLAG_DESTROYED and support.
+matt        c089d0b Matt Benjamin Pass CMAKE_C_FLAGS to TI-RPC submake.  Bump TI-RPC Version.
+matt        14d3093 Matt Benjamin Fix refcnt underrun.
+matt        a764678 Matt Benjamin Release xprt->xp_lock before re-arming.
+matt        43a463e Matt Benjamin Restore missing clear DECODING flag in gsh_xprt_unref.
+matt        09ff6bc Matt Benjamin Track duplex-9 SVCXPRT refcounting change.
+matt        4d6d5f8 Matt Benjamin Stallq claims xprt ref.
+matt        00169f0 Matt Benjamin Bounded decode.
+matt        3607b5b Matt Benjamin Return guard ref on stall.
+matt        082bc92 Matt Benjamin Cond stall, unstall fixes.
             b8d00d0 Max Matveev PROXY FSAL - deal with new libtirpc
             87e667f Max Matveev PROXY FSAL - fix close_by_fileid argument mismatch
             eff438c Max Matveev NFS - fix scope problems when NFS4_ACL is off
