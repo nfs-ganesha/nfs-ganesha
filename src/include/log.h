@@ -13,6 +13,8 @@
 #include <pthread.h>
 #endif
 
+#include "config_parsing.h"
+
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
 /* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as its first argument */
@@ -397,6 +399,10 @@ void Cleanup(void);
 void Fatal(void);
 int SetComponentLogFile(log_components_t component, const char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
+
+/* This function is primarily for setting log level from config, it will
+ * not override log level set from environment.
+ */
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
 int DisplayLogComponentLevel(log_components_t component,
@@ -410,6 +416,8 @@ int DisplayErrorComponentLogLine(log_components_t component,
                                  int num_error,
                                  int status,
                                  int ma_ligne);
+
+int read_log_config(config_file_t in_config);
 
 enum log_type
 {
@@ -431,6 +439,7 @@ typedef struct log_component_info
   int   comp_log_type;
   char  comp_log_file[MAXPATHLEN + 1];
   char *comp_buffer;
+  int   comp_env_set;
 } log_component_info;
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level

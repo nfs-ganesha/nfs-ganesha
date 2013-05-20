@@ -467,6 +467,13 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   client_pkginit();
   export_pkginit();
 
+  if((rc = read_log_config(config_struct)) < 0)
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing log configuration");
+      return -1;
+    }
+
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0)
     {
