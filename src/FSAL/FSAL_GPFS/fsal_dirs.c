@@ -244,30 +244,6 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
                             &(p_pdirent[*p_nb_entries].name))))
             ReturnStatus(st, INDEX_FSAL_readdir);
 
-          // TODO: there is a race here, because between handle fetch
-          // and open at things might change.  we need to figure out if there
-          // is another way to open without the pcontext
-          st = fsal_internal_get_handle_at(p_dir_descriptor->fd,
-                                           &(p_pdirent[*p_nb_entries].name),
-                                           &(p_pdirent[*p_nb_entries].handle),
-                                           &dir_desc->context);
-          if(FSAL_IS_ERROR(st))
-            ReturnStatus(st, INDEX_FSAL_readdir);
-
-    /************************
-     * Fills the attributes *
-     ************************/
-          p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
-
-          st = GPFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
-				     (fsal_op_context_t *)&p_dir_descriptor->context,
-                                 &p_pdirent[*p_nb_entries].attributes);
-          if(FSAL_IS_ERROR(st))
-          {
-                  FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
-                  FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
-                                FSAL_ATTR_RDATTR_ERR);
-          }
           ((gpfsfsal_cookie_t *)(&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
           if(*p_nb_entries)
