@@ -54,7 +54,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   int                        flags = 0;
   unsigned int              * fhP;
   int                        retry = 0;
-  fsal_status_t              st;
   struct gsh_buffdesc        key;
 
   snprintf(thr_name, sizeof(thr_name), "gpfs_fsal_up_%d.%d",
@@ -280,19 +279,20 @@ void *GPFSFSAL_UP_Thread(void *Arg)
           case INODE_UPDATE: /* Update Event */
 	  {
 	    struct attrlist attr;
-	    st = posix2fsal_attributes(&buf, &attr);
+
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode update: flags:%x update ino %ld n_link:%d",
                         flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
 
-            /* Check for accepted flags, any other changes or errors just invalidate. */
-            if ((!(flags & ~(UP_NLINK | UP_MODE | UP_OWN | UP_TIMES | UP_ATIME))) &&
-		!FSAL_IS_ERROR(st))
+            /* Check for accepted flags, any other changes just invalidate. */
+            if (flags & (UP_SIZE|UP_NLINK|UP_MODE|UP_OWN|UP_TIMES|UP_ATIME))
 	      {
 		uint32_t upflags = 0;
 		attr.mask = 0;
 		if (flags & UP_NLINK)
 		  upflags |= fsal_up_nlink;
+		if (flags & UP_SIZE)
+		  attr.mask |= ATTR_SIZE|ATTR_SPACEUSED;
 		if (flags & UP_MODE)
 		  attr.mask |= ATTR_MODE;
 		if (flags & UP_OWN)
@@ -302,6 +302,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		if (flags & UP_ATIME)
 		  attr.mask |= ATTR_ATIME;
 
+	        posix2fsal_attributes(&buf, &attr);
 		rc = event_func->update(gpfs_fsal_up_ctx->gf_export,
 					&key,
 					&attr,

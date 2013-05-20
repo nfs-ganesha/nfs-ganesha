@@ -433,6 +433,7 @@ static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100;
 static const uint32_t CACHE_INODE_INVALIDATE_ATTRS = 0x01;
 static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
+static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
 
 /**
  * Possible errors
