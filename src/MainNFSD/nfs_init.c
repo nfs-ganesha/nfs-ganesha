@@ -370,12 +370,15 @@ void nfs_prereq_init(char *program_name,
   SetNamePgm(program_name);
   SetNameFunction("main");
   SetNameHost(host_name);
+
   InitLogging();
   if (log_path)
     SetDefaultLogging(log_path);
 
   if (debug_level >= 0)
-    SetLogLevel(debug_level);
+    SetLevelDebug(debug_level);
+
+  ReadLogEnvironment();
 
   /* Register error families */
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
