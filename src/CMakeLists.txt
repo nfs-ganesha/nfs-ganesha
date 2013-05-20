@@ -522,8 +522,6 @@ set(SYSTEM_LIBRARIES
   gos
   ${LIBDL}
   ${KRB5_LIBRARIES}
-  crypto
-  ssl
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
 )
