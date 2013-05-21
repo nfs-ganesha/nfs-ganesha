@@ -86,9 +86,6 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
           return *status;
      }
 
-     /* Get ride of entries cached in the DIRECTORY */
-     cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
-
      /* Mark directory as not populated */
      atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
                                                 CACHE_INODE_TRUST_CONTENT));
@@ -394,6 +391,8 @@ void cache_inode_validate_all_cached_dirent(cache_entry_t *directory,
       if(dirent->itr_present == FALSE)
         {
           /* quick removal of dirent to dir.avl.c */
+           LogFullDebug(COMPONENT_CACHE_INODE,
+                        "deleting: %s", dirent->name.name);
           avl_dirent_set_deleted(directory, dirent);
           directory->object.dir.nbactive--;
         }
@@ -780,6 +779,9 @@ cache_inode_readdir(cache_entry_t *directory,
                          *status = lookup_status;
                          goto unlock_dir;
                     }
+               } else {
+                    /* Add the ref to dirent */
+                    dirent->entry_wkref = entry->weakref;
                }
           }
 
