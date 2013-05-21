@@ -531,16 +531,6 @@ static bool name2id(const struct gsh_buffdesc *name,
 
   if (success)
     return true;
-  else if (!group &&
-	   (name->len >= 4) &&
-	   (memcmp(name->addr, "nfs/", 4) == 0))
-    {
-      /* NFSv4 specific features: RPCSEC_GSS will provide user like
-       * nfs/<host> choice is made to map them to root */
-      /* This is a "root" request made from the hostbased nfs principal, use root */
-      *id = 0;
-      return true;
-    }
   else
     {
       gid_t gid;
@@ -685,6 +675,15 @@ bool principal2uid(char *principal, uid_t * puid)
   pthread_rwlock_unlock(&idmapper_user_lock);
   if (likely(success))
     {
+	  if ((princbuff.len >= 4) &&
+	       (memcmp(princbuff.addr, "nfs/", 4) == 0))
+    	{
+          /* NFSv4 specific features: RPCSEC_GSS will provide user like
+		   * nfs/<host> choice is made to map them to root */
+		  /* This is a "root" request made from the hostbased nfs principal, use root */
+		  *puid = 0;
+          return true;
+    	}
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
       rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
       if(rc)
