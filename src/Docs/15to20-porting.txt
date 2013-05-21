@@ -85,10 +85,10 @@ Pass        9200e98 Srikrishan Malik Remove --enable-snmp-adm from config option
 Pass        f3b5582 Adam C. Emerson Fix value of DRC_FLAG_RELEASE
             2c309a7 Frank S. Filz Don't check timestamp or length in creds when comparing v4 clientid verifiier
 Done        5b5a107 Jeremy Bongio Added padding to 4 bytes to network filehandles. This will allow dNFS to function because it does not do the padding itself.
-            e6d7ec5 rong zeng Pull in fixes in tirpc for: 1) memory leak 2) lock issues causing memory currption
+Pass        e6d7ec5 rong zeng Pull in fixes in tirpc for: 1) memory leak 2) lock issues causing memory currption
 Pass        6813725 Matt Benjamin Free only allocated xprt private data.
             548172c Venkateswararao Jujjuri (JV) Wakeup LRU thread only if it is sleeping Also downgrade the message from Event to Info
-            cc3af75 Venkateswararao Jujjuri (JV) Remove wcc pre-attrs form Write and Commit Replies
+Done Dev_35 cc3af75 Venkateswararao Jujjuri (JV) Remove wcc pre-attrs form Write and Commit Replies
             ec1dbc2 Allison Henderson Release change for 4.1 rev 4 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
             588fb23 Hin C Lam Remove cache entry in unlink path Changed logging level
             0c0ec4e Lance Russell Correct passing a null when file has no ACLs
@@ -133,11 +133,11 @@ Done Dev_34 add8058 Frank S. Filz Fix up valgrind memcheck after GPFS handle key
             43846a5 Allison Henderson Initial ganesha modifications for support of Protectier FSAL.
             531efd4 Allison Henderson Initial new source code drop for support of Protectier FSAL.
 Pass        8f8d89d rong zeng Remove svc_destroy in recent svc_sendreply fix, which would cause assertion in rearm code.
-            33fe9d0 Srikrishan Malik Fix deadlock due to lock ordering. Release content lock before calling cache_inode_rdwr.
+Pass        33fe9d0 Srikrishan Malik Fix deadlock due to lock ordering. Release content lock before calling cache_inode_rdwr.
             6bc0588 rong zeng Fix hardcoded NFS4ERR_ACCESS return code in nfs4_op_open/nfs41_op_open.
-            11a1419 lancerus Test for AIX sendreply error
-            6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
-            75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
+Pass        11a1419 lancerus Test for AIX sendreply error
+Done Dev_35 6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
+Done Dev_35 75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
             0db829f Venkateswararao Jujjuri (JV) Disable additional logging for the Production code.
             1721dc2 rong zeng Fix delimeter issue in ip_match, and a counter issue in check_for_id. Also adding server (local) IP to client id structure, so that nfs_release_v4_client could properly match.
             3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
@@ -229,7 +229,7 @@ Pass        50da66cb rong zeng Include gpfs.h from /usr/include instead of local
             cb940ac1 Venkateswararao Jujjuri (JV) Update tirpc commit.
 Pass        b831fd80 rong zeng Include gpfs_nfs.h from /usr/include instead of local copy.
 Pass        b909913a rong zeng strict compile error for unused variable.
-            fbccb45c Lance Russell Marc Eshel's changes to reorganize the GPFS file handle
+Pass        fbccb45c Lance Russell Marc Eshel's changes to reorganize the GPFS file handle
 Pass        7892db00 Venkateswararao Jujjuri (JV) Merge branch 'ibm_next-20121107-duplex-9-v4drc-jv' into drc_merge_effort
 pre-2.0-dev_19         e251f09f Jeremy Bongio Stop overwriting cache_inode_commit status accidentally.
             62ae1f53 Srikrishan Malik Check before freeing
@@ -332,7 +332,7 @@ Ported on pre-2.0-dev_19            ec344630 Jeremy Bongio Fix memory leak in de
 
             014efaee Venkateswararao Jujjuri (JV) Avoid confusion with NIV_EVENT and NIV_INFO. Use it directly with -N option instad of going through a variable.
 Ported on pre-2.0-dev_19            f0c81ba5 Venkateswararao Jujjuri (JV) Make svc_getargs mesage as INFO and make GPFS log level INFO by default.
-            48f9a624 rong zeng Serialze call to nfs4_init_name_mapping.
+Pass        48f9a624 rong zeng Serialze call to nfs4_init_name_mapping.
             9e63a350 rong zeng cache_inode_lookup_impl needs to grab exclusive content_lock when CACHE_INODE_TRUST_CONTENT flag is set.
             ee05623c Jeremy Bongio Add SONAS ifdef around SONAS only code so VFS can compile.
 Ported on pre-2.0-dev_19            534dfde2 Venkateswararao Jujjuri (JV) Don't hold the content lock in WR mode across high latency operations.
@@ -352,8 +352,8 @@ Pass        ecfc5387 Frank S. Filz Add fsal_op_context_t to FSAL_read
 Pass        10cea5e3 Frank S. Filz Fix up min/max stats calc and move avg to script
 Pass        2f61b26a Frank S. Filz Compile out stats only used by stat exporter thread if not configured
             1929a24f Frank S. Filz Convert latency stats to msec and use clock_gettime
-            6b1ede17 Frank S. Filz Add config block for log
-            2bbed166 Frank S. Filz Minor log clean up
+Done Dev_35 6b1ede17 Frank S. Filz Add config block for log
+Done Dev_35 2bbed166 Frank S. Filz Minor log clean up
 836119a0    90890183 Frank S. Filz Remove two pool constructors that just zero memory
 
 Pass        b0ae29ee Venkateswararao Jujjuri (JV) Compilation fixes.
@@ -430,7 +430,7 @@ Pass        b1ffa3a8 Jim Lieb More name2gid/uid fixes for strict compile errors
 f0c8a449    3aa28c9c Max Matveev IdMapper - fix stack overrun
             9563819d Max Matveev IdMapper - process numeric UID/GID in NFS4
 Ported on pre-2.0-dev_19            c273d55a Venkateswararao Jujjuri (JV) Make sure cache_inode_lru_get tries out lanes in different order while reaping.
-            15d38318 rong zeng Fix in nfs4_op_open to properly handle parent entry's refcount. Incorrect refcount handling here caused another thread reap parent entries before cache_inode_getattr was invoked.
+Pass        15d38318 rong zeng Fix in nfs4_op_open to properly handle parent entry's refcount. Incorrect refcount handling here caused another thread reap parent entries before cache_inode_getattr was invoked.
             2d447828 rong zeng Debug around pthread_rwlock.*
             7acda454 Lance Russell Added logic for Ganesha to post forward progress. This requires some genral rpc counters. Logic can be extended
             053606ed rong zeng 1. in lru_thread, instead of repeating processing the same entry, go to next lane. 2. Fixed order of unlocking of mutex and content_lock.
