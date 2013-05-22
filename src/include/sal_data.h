@@ -682,8 +682,7 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t *entry,
  * @brief Get export from blocking lock data
  */
 
-typedef bool (*block_data_to_fsal_context_t)(state_block_data_t *block_data,
-					     exportlist_t **export);
+typedef bool (*block_data_to_fsal_context_t)(state_block_data_t *block_data);
 /**
  * @brief NLM specific Blocking lock data
  */
