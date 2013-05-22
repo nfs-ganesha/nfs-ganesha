@@ -524,7 +524,7 @@ static bool name2id(const struct gsh_buffdesc *name,
   if (group)
     success = idmapper_lookup_by_gname(name, id);
   else
-    success = idmapper_lookup_by_uname(name, id, NULL);
+    success = idmapper_lookup_by_uname(name, id, NULL, false);
   pthread_rwlock_unlock(group ?
 			&idmapper_group_lock :
 			&idmapper_user_lock);
@@ -653,10 +653,8 @@ bool principal2uid(char *principal, uid_t * puid)
 #endif
 {
 #ifdef USE_NFSIDMAP
-  gid_t gss_gid;
-  /* Given that we just pass this value back if the lookup fails,
-     perhaps we should initialzie it to something. */
-  uid_t gss_uid = -1;
+  uid_t gss_uid = ANON_UID;
+  gid_t gss_gid = ANON_GID;
   int rc;
   bool success;
   struct gsh_buffdesc princbuff =
@@ -671,7 +669,7 @@ bool principal2uid(char *principal, uid_t * puid)
 
 #ifdef USE_NFSIDMAP
   pthread_rwlock_rdlock(&idmapper_user_lock);
-  success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL);
+  success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL, false);
   pthread_rwlock_unlock(&idmapper_user_lock);
   if (likely(success))
     {

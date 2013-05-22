@@ -63,7 +63,8 @@ bool idmapper_add_group(const struct gsh_buffdesc *,
 			gid_t);
 bool idmapper_lookup_by_uname(const struct gsh_buffdesc *,
 			      uid_t *,
-			      const gid_t **);
+			      const gid_t **,
+		       	      bool gss_princ);
 bool idmapper_lookup_by_uid(const uid_t,
 			    const struct gsh_buffdesc **,
 			    const gid_t **);
