@@ -367,19 +367,32 @@ static bool pwentname2id(char *name,
       struct group *pg;
       char *gbuf = alloca(PWENT_MAX_LEN);
 
-      if ((getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) == 0) &&
-	  (pg != NULL))
-	{
-	  *id = pg->gr_gid;
-	  return true;
-	}
-      else
-	{
-	  LogMajor(COMPONENT_IDMAPPER,
+      if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) != 0) 
+	   {
+	     LogMajor(COMPONENT_IDMAPPER,
 		   "getpwnam_r %s failed",
 		   name);
-	  return false;
-	}
+	     return false;
+	   }
+	  else if (pg != NULL)
+   	   {
+	     *id = pg->gr_gid;
+	     return true;
+	   }
+#ifndef USE_NFSIDMAP	   
+      else
+	   {
+         char *end = NULL;
+         gid_t gid;
+
+         gid = strtol(name, &end, 10);
+         if (end && *end != '\0')
+           return 0;
+         
+		 *id = gid;
+         return true;
+	   }
+#endif	   
     }
   else
     {
@@ -387,22 +400,37 @@ static bool pwentname2id(char *name,
       struct passwd *pp;
       char *pbuf = alloca(PWENT_MAX_LEN);
 
-      if ((getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) == 0) &&
-	  (pp != NULL))
-	{
-	  *id = pp->pw_uid;
-	  *gid = pp->pw_gid;
-	  *got_gid = true;
-	  return true;
-	}
-      else
-	{
-	  LogInfo(COMPONENT_IDMAPPER,
+      if (getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) != 0) 
+       {
+         LogInfo(COMPONENT_IDMAPPER,
 		  "getpwnam_r %s failed",
 		  name);
-	  return false;
-	}
+	     return false;
+	   } 
+	  else if (pp != NULL)
+	   {
+	     *id = pp->pw_uid;
+         *gid = pp->pw_gid;
+	     *got_gid = true;
+	     return true;
+	   }
+#ifndef USE_NFSIDMAP	   
+      else
+	   {
+         char *end = NULL;
+         uid_t uid;
+
+         uid = strtol(name, &end, 10);
+         if (end && *end != '\0')
+           return 0;
+         
+		 *id = uid;
+         *got_gid = false;
+         return true;
+	   }
+#endif	   
     }
+  return false;
 }
 
 /**
