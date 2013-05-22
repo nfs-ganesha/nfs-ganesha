@@ -302,8 +302,8 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
   old_share_deny = pstate->state_data.share.share_deny;
 
   /* New share state. */
-  new_share_access = pstate_data->share.share_access;
-  new_share_deny = pstate_data->share.share_deny;
+  new_share_access = pstate_data->share.share_access | old_share_access;
+  new_share_deny = pstate_data->share.share_deny | old_share_deny;
 
   /* Update the ref counted share state of this file. */
   state_share_update_counter(pentry,
