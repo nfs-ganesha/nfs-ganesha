@@ -360,7 +360,6 @@ int nlm_process_parameters(struct svc_req        * preq,
               goto out_put;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
-          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_export;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_len = alock->fh.n_len;

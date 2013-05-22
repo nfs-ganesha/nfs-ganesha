@@ -679,11 +679,6 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t *entry,
 					     state_lock_entry_t *lock_entry);
 
 /**
- * @brief Get export from blocking lock data
- */
-
-typedef bool (*block_data_to_fsal_context_t)(state_block_data_t *block_data);
-/**
  * @brief NLM specific Blocking lock data
  */
 
@@ -715,8 +710,6 @@ struct state_block_data_t {
 	granted_callback_t sbd_granted_callback; /*< Callback for grant */
 	state_cookie_entry_t *sbd_blocked_cookie; /*< Blocking lock cookie */
 	state_lock_entry_t *sbd_lock_entry; /*< Details of lock */
-	/** Callback to get FSAL data */
-	block_data_to_fsal_context_t sbd_block_data_to_fsal_context;
 	union {
 		state_nlm_block_data_t sbd_nlm_block_data; /*< NLM block
 							       data */
