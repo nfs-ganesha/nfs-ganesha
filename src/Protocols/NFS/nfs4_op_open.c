@@ -158,6 +158,19 @@ open4_do_open(struct nfs_argop4  * op,
                 if (state_iterate->state_type != STATE_TYPE_SHARE)
                         continue;
 
+                if(isFullDebug(COMPONENT_STATE))
+                  {
+                    char str1[HASHTABLE_DISPLAY_STRLEN];
+                    char str2[HASHTABLE_DISPLAY_STRLEN];
+
+                    DisplayOwner(state_iterate->state_owner, str1);
+                    DisplayOwner(owner, str2);
+
+                    LogFullDebug(COMPONENT_STATE,
+                                 "Comparing state %p owner %s to open owner %s",
+                                 state_iterate, str1, str2);
+                  }
+
                 /* Check if open_owner is the same.  Since owners are
                    created/looked up we should be able to just
                    compare pointers.  */
@@ -1256,7 +1269,7 @@ out3:
                 /* Need to destroy open owner and state */
                 state_status = state_del(file_state, false);
                 if (state_status != STATE_SUCCESS)
-                        LogDebug(COMPONENT_NFS_V4_LOCK,
+                        LogDebug(COMPONENT_STATE,
                                  "state_del failed with status %s",
                                  state_err_str(state_status));
         }
