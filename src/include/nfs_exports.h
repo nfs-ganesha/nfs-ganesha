@@ -410,8 +410,6 @@ typedef struct compound_data {
 /* Export list related functions */
 sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4);
 
-exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot,
-				   unsigned short exportid);
 exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
                                      char * path);
 exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
