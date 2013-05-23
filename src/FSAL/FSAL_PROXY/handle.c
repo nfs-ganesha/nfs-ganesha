@@ -300,11 +300,11 @@ pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 
         for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
                 if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask)) {
-                        if (fsal_mask2bit[i].mask > 31) {
-                                bmap.map[1] = 1U << (fsal_mask2bit[i].mask - 32);
+                        if (fsal_mask2bit[i].fattr_bit > 31) {
+                                bmap.map[1] |= 1U << (fsal_mask2bit[i].fattr_bit - 32);
                                 bmap.bitmap4_len = 2;
                         } else {
-                                bmap.map[0] = 1U << fsal_mask2bit[i].mask;
+                                bmap.map[0] |= 1U << fsal_mask2bit[i].fattr_bit;
                         }
                 }
         }
@@ -985,7 +985,7 @@ static fsal_status_t
 pxy_make_object(struct fsal_export *export, fattr4 *obj_attributes,
                 const nfs_fh4 *fh, struct fsal_obj_handle **handle)
 {
-        struct attrlist attributes;
+        struct attrlist attributes = {0};
         struct pxy_obj_handle *pxy_hdl;
 
 	if(nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes,
@@ -1137,7 +1137,16 @@ pxy_open_confirm(const struct user_cred *cred,
         op->nfs_argop4_u.opopen_confirm.open_stateid.seqid = stateid->seqid;
         memcpy(op->nfs_argop4_u.opopen_confirm.open_stateid.other,
                stateid->other, 12);
-        op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid + 1;
+        /*
+         *  According to RFC3530 14.2.18:
+         *      "The sequence id passed to the OPEN_CONFIRM must be 1 (one)
+         *      greater than the seqid passed to the OPEN operation from which
+         *      the open_confirm value was obtained."
+         *
+         *  As seqid is hardcoded as 0 in COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE, we
+         *  use 1 here.
+         */
+        op->nfs_argop4_u.opopen_confirm.seqid = 1;
 
         rc = pxy_nfsv4_call(export, cred, opcnt, argoparray, resoparray);
         if (rc != NFS4_OK)
@@ -1215,8 +1224,11 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         if(opok->rflags & OPEN4_RESULT_CONFIRM) {
                 st = pxy_open_confirm(opctx->creds, &fhok->object,
                                       &opok->stateid, dir_hdl->export);
-                if(FSAL_IS_ERROR(st))
+                if(FSAL_IS_ERROR(st)) {
+                        LogDebug(COMPONENT_FSAL,
+                                 "pxy_open_confirm failed: status %d", st);
                         return st;
+                }
         }
 
         /* The created file is still opened, to preserve the correct 
@@ -1575,7 +1587,7 @@ pxy_do_readdir(const struct req_op_context *opctx,
         *eof = rdok->reply.eof;
 
         for(e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
-                struct attrlist attr;
+                struct attrlist attr = {0};
                 char name[MAXNAMLEN+1];
 
                 /* UTF8 name does not include trailing 0 */
@@ -1698,7 +1710,7 @@ pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 {
         struct pxy_obj_handle *ph;
         fsal_status_t st;
-        struct attrlist obj_attr;
+        struct attrlist obj_attr = {0};
 
         if(!obj_hdl || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
@@ -1730,7 +1742,7 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         struct pxy_obj_handle *ph;
         char fattr_blob[FATTR_BLOB_SZ];
         GETATTR4resok *atok;
-        struct attrlist attrs_after;
+        struct attrlist attrs_after = {0};
 
 #define FSAL_SETATTR_NB_OP_ALLOC 3
         nfs_argop4 argoparray[FSAL_SETATTR_NB_OP_ALLOC];
@@ -1795,7 +1807,7 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
         nfs_resop4 resoparray[FSAL_UNLINK_NB_OP_ALLOC];
         GETATTR4resok *atok;
         char fattr_blob[FATTR_BLOB_SZ];
-        struct attrlist dirattr;
+        struct attrlist dirattr = {0};
 
         if(!dir_hdl|| !name || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
@@ -1922,6 +1934,18 @@ pxy_open(struct fsal_obj_handle *obj_hdl,
                 return fsalstat(ERR_FSAL_FILE_OPEN, EBADF);
         ph->openflags = openflags;
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_openflags_t
+pxy_status(struct fsal_obj_handle *obj_hdl)
+{
+        struct pxy_obj_handle *ph;
+
+        if (!obj_hdl)
+                return FSAL_O_CLOSED;
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+        return ph->openflags;
 }
 
 static fsal_status_t
@@ -2073,6 +2097,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_is = pxy_handle_is;
 	ops->handle_digest = pxy_handle_digest;
 	ops->handle_to_key = pxy_handle_to_key;
+	ops->status = pxy_status;
 }
 
 #ifdef _HANDLE_MAPPING
@@ -2202,7 +2227,7 @@ pxy_create_handle(struct fsal_export *exp_hdl,
 {
         fsal_status_t st;
         nfs_fh4 fh4;
-        struct attrlist attr;
+        struct attrlist attr = {0};
         struct pxy_obj_handle *ph;
         struct pxy_handle_blob *blob;
 
