@@ -405,10 +405,11 @@ open4_validate_claim(compound_data_t   * data,
  * @param[in]     clientid Clientid record for this request
  * @param[out]    owner    The found/created owner owner
  *
- * @return NFS4_OK on success, errors otherwise.
+ * @return false if error or replay (res_OPEN4->status is already set),
+ *         true otherwise.
  */
 
-static nfsstat4
+bool
 open4_open_owner(struct nfs_argop4 * op,
                  compound_data_t   * data,
                  struct nfs_resop4 * res,
@@ -443,7 +444,7 @@ open4_open_owner(struct nfs_argop4 * op,
              LogEvent(COMPONENT_STATE,
                       "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL"
                       " (could not create NFS4 Owner");
-             return res_OPEN4->status;
+             return false;
         }
 
         if(!isnew) {
@@ -460,18 +461,20 @@ open4_open_owner(struct nfs_argop4 * op,
                                 /* Check for replay */
                                 if (!Check_nfs4_seqid(*owner,
                                                       arg_OPEN4->seqid,
-                                                      op, data, res,
+                                                      op,
+                                                      data->current_entry,
+                                                      res,
                                                       open_tag)) {
                                         /* Response is setup for us
                                            and LogDebug told what was
                                            wrong */
-                                        return res_OPEN4->status;
+                                        return false;
                                 }
                         }
                 }
         }
 
-        return res_OPEN4->status;
+        return true;
 }
 
 /**
@@ -874,7 +877,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         bool new_state = false;
         cache_inode_status_t cache_status;
         char  *filename;
-        cache_entry_t *entry_parent = NULL;
+        cache_entry_t *entry_parent = data->current_entry;;
         cache_entry_t *entry_lookup = NULL;
         struct glist_head *glist;
         state_lock_entry_t *found_entry = NULL;
@@ -970,12 +973,11 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* Get the open owner */
 
-        if ((res_OPEN4->status = open4_open_owner(op,
-                                                  data,
-                                                  resp,
-                                                  clientid,
-                                                  &owner))
-            != NFS4_OK) {
+        if (!open4_open_owner(op,
+                              data,
+                              resp,
+                              clientid,
+                              &owner)) {
                 goto out2;
         }
 
@@ -1097,8 +1099,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 if (res_OPEN4->status != NFS4_OK) {
                   goto out;
               }
-
-              entry_parent = data->current_entry;
 
               /* Does a file with this name already exist ? */
               cache_status = cache_inode_lookup(entry_parent,
@@ -1241,9 +1241,14 @@ out:
            LogDebug(COMPONENT_STATE,
                     "failed with status %d", res_OPEN4->status);
         }
-        /* Save the response in the lock or open owner */
+        /* Save the response in the open owner.
+         * entry_parent is either the parent directory or for a CLAIM_PREV is
+         * the entry itself. In either case, it's the right entry to use in saving
+         * the request results.
+         */
         if (data->minorversion == 0) {
-                Copy_nfs4_state_req(owner, arg_OPEN4->seqid, op, data,
+                Copy_nfs4_state_req(owner, arg_OPEN4->seqid, op,
+                                    entry_parent,
                                     resp, open_tag);
         }
 

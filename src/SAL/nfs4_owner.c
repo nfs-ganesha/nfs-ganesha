@@ -575,7 +575,7 @@ void Copy_nfs4_denied(LOCK4denied *denied_dst,
 void Copy_nfs4_state_req(state_owner_t *owner,
                          seqid4 seqid,
                          nfs_argop4 *args,
-                         compound_data_t *data,
+                         cache_entry_t *entry,
                          nfs_resop4 *resp,
                          const char *tag)
 {
@@ -605,8 +605,10 @@ void Copy_nfs4_state_req(state_owner_t *owner,
          args,
          sizeof(owner->so_owner.so_nfs4_owner.so_args));
 
-  /* Copy new file */
-  owner->so_owner.so_nfs4_owner.so_last_entry = data->current_entry;
+  /* Copy new file, note we don't take any reference, so this entry
+   * might not remain valid, but the pointer value suffices here.
+   */
+  owner->so_owner.so_nfs4_owner.so_last_entry = entry;
 
   /* Deep copy OPEN args? */
   if(args->argop == NFS4_OP_OPEN)
@@ -640,7 +642,7 @@ void Copy_nfs4_state_req(state_owner_t *owner,
 bool Check_nfs4_seqid(state_owner_t *owner,
                       seqid4 seqid,
                       nfs_argop4 *args,
-                      compound_data_t *data,
+                      cache_entry_t *entry,
                       nfs_resop4 *resp,
                       const char *tag)
 {
@@ -698,7 +700,7 @@ bool Check_nfs4_seqid(state_owner_t *owner,
       return false;
     }
 
-  if(owner->so_owner.so_nfs4_owner.so_last_entry != data->current_entry)
+  if(owner->so_owner.so_nfs4_owner.so_last_entry != entry)
     {
       LogDebug(COMPONENT_STATE,
                "%s: Invalid seqid %u in request (not replay - wrong file), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",

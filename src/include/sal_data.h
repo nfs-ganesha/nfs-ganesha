@@ -428,8 +428,13 @@ struct state_nfs4_owner_t {
 	seqid4 so_seqid; /*< Seqid for serialization of operations on
 			   owner (NFSv4.0 only) */
 	nfs_argop4_state so_args; /*< Saved args */
-	cache_entry_t *so_last_entry; /*< Last file operated on by
-					  this state owner */
+	void *so_last_entry; /*< Last file operated on by this state owner
+                              *  we don't keep a reference so this is a void *
+                              *  to prevent it's dereferencing because the
+                              *  pointer might become invalid if cache inode
+                              *  flushes the entry out. But it sufices for
+                              *  the purposes of detecting replayed operations.
+                              */
 	nfs_resop4 so_resp; /*< Saved response */
 	state_owner_t *so_related_owner; /*< For lock-owners, the
 					     open-owner under which

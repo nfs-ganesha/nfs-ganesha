@@ -134,7 +134,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
         /* Check seqid */
         if (data->minorversion == 0) {
                 if (!Check_nfs4_seqid(open_owner, arg_CLOSE4->seqid,
-                                      op, data, resp, close_tag)) {
+                                      op, data->current_entry, resp,
+                                      close_tag)) {
                         /* Response is all setup for us and LogDebug
                            told what was wrong */
                         pthread_mutex_unlock(&open_owner->so_mutex);
@@ -315,7 +316,7 @@ out:
         /* Save the response in the open owner */
         if (data->minorversion == 0) {
                 Copy_nfs4_state_req(open_owner, arg_CLOSE4->seqid,
-                                    op, data, resp, close_tag);
+                                    op, data->current_entry, resp, close_tag);
         }
 
         dec_state_owner_ref(open_owner);

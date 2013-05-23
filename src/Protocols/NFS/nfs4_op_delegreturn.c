@@ -159,7 +159,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
   if(!Check_nfs4_seqid(plock_owner,
                        arg_DELEGRETURN4.deleg_stateid.seqid,
                        op,
-                       data,
+                       data->current_entry,
                        resp,
                        tag))
     {
@@ -190,7 +190,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
       res_DELEGRETURN4.status = nfs4_Errno_state(state_status);
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_DELEGRETURN4.deleg_stateid.seqid, op, data, resp, tag);
+      Copy_nfs4_state_req(plock_owner, arg_DELEGRETURN4.deleg_stateid.seqid,
+                          op, data->current_entry, resp, tag);
 
       return res_DELEGRETURN4.status;
     }
@@ -201,7 +202,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
   LogDebug(COMPONENT_NFS_V4_LOCK,"Successful exit");
 
   /* Save the response in the lock owner */
-  Copy_nfs4_state_req(plock_owner, arg_DELEGRETURN4.deleg_stateid.seqid, op, data, resp, tag);
+  Copy_nfs4_state_req(plock_owner, arg_DELEGRETURN4.deleg_stateid.seqid,
+                      op, data->current_entry, resp, tag);
 
   return res_DELEGRETURN4.status;
 }                               /* nfs4_op_delegreturn */
