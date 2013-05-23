@@ -1837,7 +1837,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-        fsal_status_t (*handle_digest)(struct fsal_obj_handle *obj_hdl,
+        fsal_status_t (*handle_digest)(const struct fsal_obj_handle *obj_hdl,
                                        fsal_digesttype_t output_type,
                                        struct gsh_buffdesc *fh_desc);
 /**

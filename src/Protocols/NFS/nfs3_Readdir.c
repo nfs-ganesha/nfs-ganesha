@@ -56,7 +56,7 @@
 
 static bool nfs3_readdir_callback(void* opaque,
                                   const char *name,
-                                  struct fsal_obj_handle *obj_hdl,
+                                  const struct fsal_obj_handle *obj_hdl,
                                   uint64_t cookie);
 static void free_entry3s(entry3 *entry3s);
 
@@ -372,7 +372,7 @@ void nfs3_Readdir_Free(nfs_res_t *resp)
 static bool
 nfs3_readdir_callback(void* opaque,
                       const char *name,
-                      struct fsal_obj_handle *obj_hdl,
+                      const struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -381,10 +381,6 @@ nfs3_readdir_callback(void* opaque,
      /* Length of the current filename */
      size_t namelen = strlen(name);
      entry3 *e3 = tracker->entries + tracker->count;
-     /* Fileid descriptor */
-     struct gsh_buffdesc id_descriptor
-             = {.len = sizeof(e3->fileid),
-                .addr = &e3->fileid};
      size_t need = sizeof(entry3) + ((namelen + 3) & ~3) + 4;
 
      if (tracker->count == tracker->total_entries) {
@@ -396,10 +392,8 @@ nfs3_readdir_callback(void* opaque,
           }
           return false;
      }
-     obj_hdl->ops->handle_digest(obj_hdl,
-                                 FSAL_DIGEST_FILEID3,
-                                 &id_descriptor);
 
+     e3->fileid = obj_hdl->attributes.fileid;
      e3->name = gsh_strdup(name);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;

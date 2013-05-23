@@ -1160,20 +1160,18 @@ out:
  * the whole struct.
  */
 
-static fsal_status_t lustre_handle_digest(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_handle_digest(const struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
-	uint32_t ino32;
-	uint64_t ino64;
-	struct lustre_fsal_obj_handle *myself;
-	struct lustre_file_handle *fh;
+	const struct lustre_fsal_obj_handle *myself;
+	const struct lustre_file_handle *fh;
 	size_t fh_size;
 
 	/* sanity checks */
         if( !fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
+	myself = container_of(obj_hdl, const struct lustre_fsal_obj_handle, obj_handle);
 	fh = myself->handle;
 
 	switch(output_type) {
@@ -1183,22 +1181,6 @@ static fsal_status_t lustre_handle_digest(struct fsal_obj_handle *obj_hdl,
                 if(fh_desc->len < fh_size)
                         goto errout;
                 memcpy(fh_desc->addr, fh, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID3:
-		fh_size = FSAL_DIGEST_SIZE_FILEID3;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(&ino32, fh, sizeof(ino32));
-		ino64 = ino32;
-		memcpy(fh_desc->addr, &ino64, fh_size);
-		break;
-	case FSAL_DIGEST_FILEID4:
-		fh_size = FSAL_DIGEST_SIZE_FILEID4;
-		if(fh_desc->len < fh_size)
-			goto errout;
-		memcpy(&ino32, fh, sizeof(ino32));
-		ino64 = ino32;
-		memcpy(fh_desc->addr, &ino64, fh_size);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);

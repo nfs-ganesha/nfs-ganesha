@@ -1821,15 +1821,14 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t 
-pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
+pxy_handle_digest(const struct fsal_obj_handle *obj_hdl,
                   fsal_digesttype_t output_type,
                   struct gsh_buffdesc *fh_desc)
 {
-        struct pxy_obj_handle *ph =
-                container_of(obj_hdl, struct pxy_obj_handle, obj);
+        const struct pxy_obj_handle *ph =
+                container_of(obj_hdl, const struct pxy_obj_handle, obj);
         size_t fhs;
-        void *data;
-        uint32_t u32;
+        const void *data;
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)
@@ -1846,19 +1845,6 @@ pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
 	case FSAL_DIGEST_NFSV4:
                 fhs = ph->blob.len;
                 data = &ph->blob;
-		break;
-	case FSAL_DIGEST_FILEID2:
-                fhs = FSAL_DIGEST_SIZE_FILEID2;
-                u32 = ph->obj.attributes.fileid;
-                data = &u32;
-		break;
-	case FSAL_DIGEST_FILEID3:
-                fhs = FSAL_DIGEST_SIZE_FILEID3;
-                data = &ph->obj.attributes.fileid;
-		break;
-	case FSAL_DIGEST_FILEID4:
-                fhs = FSAL_DIGEST_SIZE_FILEID4;
-                data = &ph->obj.attributes.fileid;
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
