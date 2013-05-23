@@ -300,7 +300,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       else
         {
           /* Check for replay */
-          if(!Check_nfs4_seqid(powner, arg_OPEN4.seqid, op, data, resp, tag))
+          if(!Check_nfs4_seqid(powner,
+                               arg_OPEN4.seqid,
+                               op,
+                               data->current_entry,
+                               resp,
+                               tag))
             {
               /* Response is setup for us and LogDebug told what was wrong */
               goto out1;
@@ -918,8 +923,12 @@ out_prev:
 
  out:
 
-  /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, data, resp, tag);
+  /* Save the response in the lock or open owner.
+   * pentry_parent is either the parent directory or for a CLAIM_PREV is
+   * the entry itself. In either case, it's the right entry to use in saving
+   * the request results.
+   */
+  Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, pentry_parent, resp, tag);
 
  out1:
 

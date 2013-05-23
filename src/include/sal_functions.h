@@ -446,14 +446,14 @@ void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
 void Copy_nfs4_state_req(state_owner_t   * powner,
                          seqid4            seqid,
                          nfs_argop4      * args,
-                         compound_data_t * data,
+                         cache_entry_t   * entry,
                          nfs_resop4      * resp,
                          const char      * tag);
 
 bool_t Check_nfs4_seqid(state_owner_t   * powner,
                         seqid4            seqid,
                         nfs_argop4      * args,
-                        compound_data_t * data,
+                        cache_entry_t   * entry,
                         nfs_resop4      * resp,
                         const char      * tag);
 

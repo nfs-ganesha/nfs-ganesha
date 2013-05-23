@@ -318,7 +318,13 @@ struct state_nfs4_owner_t
   unsigned int        so_confirmed;
   seqid4              so_seqid;
   nfs_argop4_state    so_args;          /** < Saved args                                */
-  cache_entry_t     * so_last_pentry;   /** < Last file operated on by this state owner */
+  void              * so_last_pentry;   /** < Last file operated on by this state owner
+                                         *    we don't keep a reference so this is a void *
+                                         *    to prevent it's dereferencing because the
+                                         *    pointer might become invalid if cache inode
+                                         *    flushes the entry out. But it sufices for
+                                         *    the purposes of detecting replayed operations.
+                                         */
   nfs_resop4          so_resp;          /** < Saved response                            */
   state_owner_t     * so_related_owner;
   struct glist_head   so_state_list;    /** < States owned by this owner */

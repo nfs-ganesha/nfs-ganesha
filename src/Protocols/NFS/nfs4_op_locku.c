@@ -151,7 +151,7 @@ check_seqid:
   if(!Check_nfs4_seqid(plock_owner,
                        arg_LOCKU4.seqid,
                        op,
-                       data,
+                       data->current_entry,
                        resp,
                        tag))
     {
@@ -212,7 +212,12 @@ check_seqid:
  out:
 
   /* Save the response in the lock owner */
-  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
+  Copy_nfs4_state_req(plock_owner,
+                      arg_LOCKU4.seqid,
+                      op,
+                      data->current_entry,
+                      resp,
+                      tag);
 
   dec_state_owner_ref(plock_owner);
 

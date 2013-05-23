@@ -123,7 +123,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   P(popen_owner->so_mutex);
 
   /* Check seqid */
-  if(!Check_nfs4_seqid(popen_owner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag))
+  if(!Check_nfs4_seqid(popen_owner,
+                       arg_OPEN_DOWNGRADE4.seqid,
+                       op,
+                       data->current_entry,
+                       resp,
+                       tag))
     {
       /* Response is all setup for us and LogDebug told what was wrong */
       V(popen_owner->so_mutex);
@@ -184,7 +189,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                  tag);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag);
+  Copy_nfs4_state_req(pstate_found->state_powner,
+                      arg_OPEN_DOWNGRADE4.seqid,
+                      op,
+                      data->current_entry,
+                      resp,
+                      tag);
                 
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */

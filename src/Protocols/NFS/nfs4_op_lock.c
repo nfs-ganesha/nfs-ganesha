@@ -345,7 +345,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
 check_seqid:
   /* Check seqid (lock_seqid or open_seqid) */
-  if(!Check_nfs4_seqid(presp_owner, seqid, op, data, resp, tag))
+  if(!Check_nfs4_seqid(presp_owner,
+                       seqid,
+                       op,
+                       data->current_entry,
+                       resp,
+                       tag))
     {
       /* Response is all setup for us and LogDebug told what was wrong */
       goto out2;
@@ -475,7 +480,7 @@ check_seqid:
              !Check_nfs4_seqid(plock_owner,
                                arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
                                op,
-                               data,
+                               data->current_entry,
                                resp,
                                "LOCK (new owner but owner exists)"))
             {
@@ -566,7 +571,12 @@ check_seqid:
       /* Save the response in the lock or open owner */
       if(res_LOCK4.status != NFS4ERR_RESOURCE &&
          res_LOCK4.status != NFS4ERR_BAD_STATEID)
-        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
+        Copy_nfs4_state_req(presp_owner,
+                            seqid,
+                            op,
+                            data->current_entry,
+                            resp,
+                            tag);
 
       if(arg_LOCK4.locker.new_lock_owner)
         {
@@ -600,7 +610,7 @@ check_seqid:
       Copy_nfs4_state_req(plock_owner,
                           arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
                           op,
-                          data,
+                          data->current_entry,
                           resp,
                           tag);
 
@@ -617,7 +627,12 @@ check_seqid:
 out:
 
   /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
+  Copy_nfs4_state_req(presp_owner,
+                      seqid,
+                      op,
+                      data->current_entry,
+                      resp,
+                      tag);
 
 out2:
 
