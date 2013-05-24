@@ -278,7 +278,8 @@ static cache_inode_status_t update(
 		cache_inode_fixup_md(entry);
 	} else {
 		cache_inode_invalidate(entry,
-				       CACHE_INODE_INVALIDATE_ATTRS);
+				       CACHE_INODE_INVALIDATE_ATTRS |
+				       CACHE_INODE_INVALIDATE_GOT_LOCK);
 		rc = CACHE_INODE_INCONSISTENT_ENTRY;
 	}
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
