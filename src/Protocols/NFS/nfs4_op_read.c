@@ -380,8 +380,10 @@ done:
  *
  */
 void
-nfs4_op_read_Free(READ4res *resp)
+nfs4_op_read_Free(nfs_resop4 * res)
 {
+	READ4res *resp = &res->nfs_resop4_u.opread;
+
         if (resp->status == NFS4_OK) {
                 if (resp->READ4res_u.resok4.data.data_val != NULL) {
                         gsh_free(resp->READ4res_u.resok4.data.data_val);

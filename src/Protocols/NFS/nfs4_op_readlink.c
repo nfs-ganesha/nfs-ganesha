@@ -106,8 +106,10 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
 */
-void nfs4_op_readlink_Free(READLINK4res * resp)
+void nfs4_op_readlink_Free(nfs_resop4 * res)
 {
+  READLINK4res * resp = &res->nfs_resop4_u.opreadlink;
+
   if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link
      .utf8string_len > 0)
     gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);

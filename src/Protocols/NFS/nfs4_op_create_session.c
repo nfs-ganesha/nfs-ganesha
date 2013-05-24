@@ -533,7 +533,7 @@ out:
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_create_session_Free(CREATE_SESSION4res * resp)
+void nfs4_op_create_session_Free(nfs_resop4 * resp)
 {
 	return;
 }

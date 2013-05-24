@@ -126,7 +126,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
  *
  * @param[in] resp nfs4_op results
  */
-void nfs4_op_nverify_Free(NVERIFY4res *resp)
+void nfs4_op_nverify_Free(nfs_resop4 *resp)
 {
         return;
 } /* nfs4_op_nverify_Free */

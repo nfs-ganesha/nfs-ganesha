@@ -91,7 +91,7 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op,
  * This function frees anty memory allocated for the result of the
  * NFS4_OP_RECLAIM_COMPLETE operation.
  */
-void nfs4_op_reclaim_complete_Free(RECLAIM_COMPLETE4res *resp)
+void nfs4_op_reclaim_complete_Free(nfs_resop4 *resp)
 {
   return;
 } /* nfs41_op_reclaim_complete_Free */

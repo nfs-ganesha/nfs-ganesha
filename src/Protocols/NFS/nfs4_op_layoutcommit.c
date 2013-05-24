@@ -223,7 +223,7 @@ out:
  * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs4_op_layoutcommit_Free(LAYOUTCOMMIT4res *resp)
+void nfs4_op_layoutcommit_Free(nfs_resop4 *resp)
 {
         return;
 } /* nfs41_op_layoutcommit_Free */

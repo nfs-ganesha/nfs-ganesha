@@ -158,7 +158,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_rename_Free(RENAME4res *resp)
+void nfs4_op_rename_Free(nfs_resop4 *resp)
 {
   /* Nothing to be done */
   return;

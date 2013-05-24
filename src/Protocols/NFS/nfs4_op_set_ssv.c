@@ -90,7 +90,7 @@ int nfs4_op_set_ssv(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_set_ssv_Free(SET_SSV4res * resp)
+void nfs4_op_set_ssv_Free(nfs_resop4 * resp)
 {
   /* Nothing to be done */
   return;

@@ -449,7 +449,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_create_Free(CREATE4res *resp)
+void nfs4_op_create_Free(nfs_resop4 *resp)
 {
   return;
 } /* nfs4_op_create_Free */

@@ -246,7 +246,7 @@ int nfs4_op_access(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_access_Free(ACCESS4res *resp)
+void nfs4_op_access_Free(nfs_resop4 *resp)
 {
         return;
 } /* nfs4_op_access_Free */

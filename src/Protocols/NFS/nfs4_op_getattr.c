@@ -126,8 +126,10 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_getattr_Free(GETATTR4res *resp)
+void nfs4_op_getattr_Free(nfs_resop4 *res)
 {
+	GETATTR4res *resp = &res->nfs_resop4_u.opgetattr;
+
         if (resp->status == NFS4_OK) {
                 nfs4_Fattr_Free(&resp->GETATTR4res_u.resok4.obj_attributes);
         }

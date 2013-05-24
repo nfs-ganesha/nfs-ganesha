@@ -112,7 +112,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_renew_Free(RENEW4res *resp)
+void nfs4_op_renew_Free(nfs_resop4 *resp)
 {
   /* Nothing to be done */
   return;

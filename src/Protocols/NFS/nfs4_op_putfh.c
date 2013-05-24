@@ -180,7 +180,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
  * @param[in,out] resp nfs4_op results
  */
 void
-nfs4_op_putfh_Free(PUTFH4res * resp)
+nfs4_op_putfh_Free(nfs_resop4 * resp)
 {
         /* Nothing to be freed */
         return;
