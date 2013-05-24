@@ -632,8 +632,10 @@ out2:
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_lock_Free(LOCK4res *resp)
+void nfs4_op_lock_Free(nfs_resop4 *res)
 {
+	LOCK4res *resp = &res->nfs_resop4_u.oplock;
+
         if (resp->status == NFS4ERR_DENIED)
                 Release_nfs4_denied(&resp->LOCK4res_u.denied);
 } /* nfs4_op_lock_Free */

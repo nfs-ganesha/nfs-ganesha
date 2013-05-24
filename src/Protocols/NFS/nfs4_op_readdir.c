@@ -397,7 +397,9 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_readdir_Free(READDIR4res *resp)
+void nfs4_op_readdir_Free(nfs_resop4 * res)
 {
+     READDIR4res *resp = &res->nfs_resop4_u.opreaddir;
+
      free_entries(resp->READDIR4res_u.resok4.reply.entries);
 } /* nfs4_op_readdir_Free */

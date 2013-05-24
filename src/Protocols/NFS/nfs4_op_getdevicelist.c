@@ -184,8 +184,10 @@ out:
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_getdevicelist_Free(GETDEVICELIST4res * resp)
+void nfs4_op_getdevicelist_Free(nfs_resop4 * res)
 {
+	GETDEVICELIST4res * resp = &res->nfs_resop4_u.opgetdevicelist;
+
         if (resp->gdlr_status == NFS4_OK) {
                 gsh_free(resp->GETDEVICELIST4res_u.gdlr_resok4
                          .gdlr_deviceid_list.gdlr_deviceid_list_val);

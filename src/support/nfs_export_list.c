@@ -61,33 +61,6 @@ const char *Rpc_gss_svc_name[] =
   "RPCSEC_GSS_SVC_PRIVACY"
 };
 
-/**
- * @brief Gets an export entry from its export id.
- *
- * @todo Danger Will Robinson!!!
- * We put back the gsh_export but pass back a pointer to the export
- * inside it.  Phase out calls to this.  the req_ctx has what we
- * (may) need and it is properly ref counted.
- *
- * @param[in] exportroot The root for the export list
- * @param[in] exportid   The id for the entry to be found.
- *
- * @return the pointer to the export list or NULL if failed.
- */
-
-exportlist_t *nfs_Get_export_by_id(struct glist_head *exportroot, unsigned short exportid)
-{
-  exportlist_t *piter;
-  struct gsh_export *exp;
-
-  exp = get_gsh_export(exportid, true);
-  if(exp == NULL)
-	  return NULL;
-  piter = &exp->export;
-  put_gsh_export(exp);
-  return piter;
-}
-
 /** @todo we can avl tag but path has to be ordered
  */
 

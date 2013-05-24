@@ -77,8 +77,7 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
 
   if(cookie_entry->sce_lock_entry == NULL ||
      cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data,
-                                     &pexport))
+     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data))
     {
       /* This must be an old NLM_GRANTED_RES */
       PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);

@@ -157,7 +157,7 @@ check_seqid:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_open_confirm_Free(OPEN_CONFIRM4res *resp)
+void nfs4_op_open_confirm_Free(nfs_resop4 *resp)
 {
   /* Nothing to be done */
   return;

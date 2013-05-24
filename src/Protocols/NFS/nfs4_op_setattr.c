@@ -254,7 +254,7 @@ nfs4_op_setattr(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_setattr_Free(SETATTR4res *resp)
+void nfs4_op_setattr_Free(nfs_resop4 *resp)
 {
         return;
 } /* nfs4_op_setattr_Free */

@@ -208,8 +208,10 @@ out:
  * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs4_op_getdeviceinfo_Free(GETDEVICEINFO4res *resp)
+void nfs4_op_getdeviceinfo_Free(nfs_resop4 * res)
 {
+	GETDEVICEINFO4res *resp = &res->nfs_resop4_u.opgetdeviceinfo;
+
         if (resp->gdir_status == NFS4_OK) {
                 if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr
                     .da_addr_body.da_addr_body_val != NULL) {

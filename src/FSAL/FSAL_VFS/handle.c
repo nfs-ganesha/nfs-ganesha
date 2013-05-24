@@ -994,9 +994,23 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			fsal_error = st.major;  retval = st.minor;
 		}
 	} else {
+		if(obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS on linux) a symlink and it
+			 * throws an EPERM error for it.  open_by_handle_at
+			 * does not throw that error for symlinks so we play a
+			 * game here.  Since there is not much we can do with
+			 * symlinks anyway, say that we did it but don't actually
+			 * do anything.  In this case, return the stat we got
+			 * at lookup time.  If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			fsal_error = ERR_FSAL_NO_ERROR;
+			goto out;
+		}
 		retval = -fd;
 	}
 
+out:
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -1038,6 +1052,18 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	fd = vfs_fsal_open_and_stat(myself, &stat, open_flags, &fsal_error);
 	if(fd < 0) {
+		if(obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS) a symlink and it
+			 * throws an EPERM error for it.  open_by_handle_at
+			 * does not throw that error for symlinks so we play a
+			 * game here.  Since there is not much we can do with
+			 * symlinks anyway, say that we did it but don't actually
+			 * do anything.  If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			fsal_error = ERR_FSAL_NO_ERROR;
+			goto out;
+		}
 		return fsalstat(fsal_error, -fd);
 	}
 	/** TRUNCATE **/
@@ -1100,6 +1126,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME | ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)) {
 		struct timespec timebuf[2];
 
+                if( obj_hdl->type == SYMBOLIC_LINK )
+                        goto out; /* Setting time on a symbolic link is illegal */
 		/* Atime */
 		if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
 		{
@@ -1124,8 +1152,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			timebuf[1].tv_sec = 0;
 			timebuf[1].tv_nsec = UTIME_OMIT;
 		}
-                if( obj_hdl->type == SYMBOLIC_LINK )
-                        retval = 0 ; /* Setting time on a symbolic link is illegal */
 		if(vfs_unopenable_type(obj_hdl->type))
                         retval = vfs_utimesat(fd,
 					myself->u.unopenable.name,

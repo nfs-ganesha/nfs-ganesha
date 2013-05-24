@@ -219,8 +219,10 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_secinfo_Free(SECINFO4res *resp)
+void nfs4_op_secinfo_Free(nfs_resop4 * res)
 {
+	SECINFO4res *resp = &res->nfs_resop4_u.opsecinfo;
+
         if ((resp->status = NFS4_OK) &&
             (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
                 gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);

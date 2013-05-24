@@ -34,6 +34,7 @@
 #include "nsm.h"
 #include "nlm_async.h"
 #include "nfs_core.h"
+#include "export_mgr.h"
 
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
@@ -178,7 +179,6 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg,
   char                     buffer[1024];
   state_status_t           state_status = STATE_SUCCESS;
   state_cookie_entry_t   * cookie_entry;
-  exportlist_t  *pexport;
   state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 
   if(isDebug(COMPONENT_NLM))
@@ -228,8 +228,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg,
   PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
 
   if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data,
-			       &pexport))
+     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data))
     {
       /* Wow, we're not doing well... */
       PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
@@ -362,7 +361,6 @@ int nlm_process_parameters(struct svc_req        * preq,
               goto out_put;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
-          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_export;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_len = alock->fh.n_len;
@@ -550,49 +548,53 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
     }
 }
 
-bool nlm_block_data_to_export(state_block_data_t * block_data,
-                              exportlist_t  **ppexport)
+bool nlm_block_data_to_export(state_block_data_t * block_data)
 {
-  exportlist_t           * pexport = NULL;
   short                    exportid;
+  struct gsh_export *exp = NULL;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
+  char *reason;
+  bool retval = false;
 
   /* Get export ID from handle */
   exportid = nlm4_FhandleToExportId(&nlm_block_data->sbd_nlm_fh);
 
   /* Get export matching export ID */
-  if(exportid < 0 ||
-     (pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL ||
-     (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
-    {
-      /* Reject the request for authentication reason (incompatible file handle) */
-      if(isInfo(COMPONENT_NLM))
-        {
-          char dumpfh[1024];
-          char *reason;
-          char addrbuf[SOCK_NAME_MAX + 1];
-          sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
-                          addrbuf,
-                          sizeof(addrbuf));
-          if(exportid < 0)
-            reason = "has badly formed handle";
-          else if(pexport == NULL)
-            reason = "has invalid export";
-          else
-            reason = "V3 not allowed on this export";
-          sprint_fhandle_nlm(dumpfh, &nlm_block_data->sbd_nlm_fh);
-          LogMajor(COMPONENT_NLM,
-                   "NLM4 granted lock from host %s %s, FH=%s",
-                   addrbuf, reason, dumpfh);
-        }
+  if(exportid < 0) {
+	  reason = "has badly formed handle";
+	  goto err;
+  }
+  exp = get_gsh_export(exportid, true);
+  if(exp == NULL) {
+	  reason = "has invalid export";
+	  goto err;
+  }
+  if((exp->export.export_perms.options & EXPORT_OPTION_NFSV3) != 0) {
+	  reason = "V3 not allowed on this export";
 
-      return false;
-    }
-  *ppexport = pexport;
-  LogFullDebug(COMPONENT_NLM,
-               "Found export entry for dirname=%s as exportid=%d",
-               pexport->fullpath, pexport->id);
-  return true;
+err:
+	  /* Reject the request for authentication reason (incompatible file handle) */
+	  if(isInfo(COMPONENT_NLM)) {
+		  char dumpfh[1024];
+		  char addrbuf[SOCK_NAME_MAX + 1];
+
+		  sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
+				  addrbuf,
+				  sizeof(addrbuf));
+		  sprint_fhandle_nlm(dumpfh, &nlm_block_data->sbd_nlm_fh);
+		  LogMajor(COMPONENT_NLM,
+			   "NLM4 granted lock from host %s %s, FH=%s",
+			   addrbuf, reason, dumpfh);
+	  }
+  } else {
+	  retval =  true;
+	  LogFullDebug(COMPONENT_NLM,
+		       "Found export entry for dirname=%s as exportid=%d",
+		       exp->export.fullpath, exp->export.id);
+  }
+  if(exp != NULL)
+	  put_gsh_export(exp);
+  return retval;
 }
 
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
@@ -600,7 +602,6 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
                                     state_lock_entry_t *lock_entry)
 {
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
-  exportlist_t           * pexport;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
   state_cookie_entry_t   * cookie_entry = NULL;
   state_async_queue_t    * arg;
@@ -611,7 +612,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
   state_status_t           state_status;
   state_status_t           state_status_int;
 
-  if(nlm_block_data_to_export(block_data, &pexport) != true)
+  if(nlm_block_data_to_export(block_data) != true)
     {
       state_status = STATE_INCONSISTENT_ENTRY;
       return state_status;

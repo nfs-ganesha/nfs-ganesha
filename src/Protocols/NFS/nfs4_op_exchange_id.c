@@ -326,8 +326,10 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
  *
  * @param[in,out] resp Pointer to nfs4_op results
  */
-void nfs4_op_exchange_id_Free(EXCHANGE_ID4res *resp)
+void nfs4_op_exchange_id_Free(nfs_resop4 * res)
 {
+	EXCHANGE_ID4res *resp = &res->nfs_resop4_u.opexchange_id;
+
 	if (resp->eir_status == NFS4_OK) {
 		if (resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope
 		    .eir_server_scope_val != NULL)

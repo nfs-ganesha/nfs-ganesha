@@ -1270,7 +1270,8 @@ out3:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_open_Free(OPEN4res *resp)
+void nfs4_op_open_Free(nfs_resop4 *resp)
 {
+	return;
 } /* nfs4_op_open_Free */
 

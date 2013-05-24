@@ -455,7 +455,7 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_setclientid_confirm_Free(SETCLIENTID_CONFIRM4res *resp)
+void nfs4_op_setclientid_confirm_Free(nfs_resop4 *resp)
 {
 	return;
 }

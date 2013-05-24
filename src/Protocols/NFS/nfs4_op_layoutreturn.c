@@ -293,7 +293,7 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
  */
 
 void
-nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
+nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 {
         return;
 } /* nfs41_op_layoutreturn_Free */

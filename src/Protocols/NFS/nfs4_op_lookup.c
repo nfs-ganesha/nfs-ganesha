@@ -165,7 +165,7 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookup_Free(LOOKUP4res *resp)
+void nfs4_op_lookup_Free(nfs_resop4 *resp)
 {
   /* Nothing to be done */
         return;

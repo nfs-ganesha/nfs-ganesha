@@ -214,7 +214,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  */
-void nfs4_op_delegreturn_Free(DELEGRETURN4res *resp)
+void nfs4_op_delegreturn_Free(nfs_resop4 *resp)
 {
   /* Nothing to be done */
   return;

@@ -515,8 +515,10 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_layoutget_Free(LAYOUTGET4res *resp)
+void nfs4_op_layoutget_Free(nfs_resop4 * res)
 {
+	LAYOUTGET4res *resp = &res->nfs_resop4_u.oplayoutget;
+
         size_t i = 0;
         if (resp->logr_status == NFS4_OK) {
                 for (i = 0;

@@ -93,7 +93,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op,
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_free_stateid_Free(FREE_STATEID4res * resp)
+void nfs4_op_free_stateid_Free(nfs_resop4 * resp)
 {
   return;
 } /* nfs41_op_free_stateid_Free */
