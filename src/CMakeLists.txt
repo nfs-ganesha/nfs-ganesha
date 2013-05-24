@@ -24,6 +24,8 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   set(FREEBSD ON)
   set(UNIX ON)
+# On FreeBSD libc doesn't directly provide libexecinfo, so we have to find it
+  set(USE_EXECINFO ON)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -78,21 +80,12 @@ IF(RPMTools_FOUND)
      RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME})
 ENDIF(RPMTools_FOUND)
 
-# find out which platform we are building on
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LINUX ON)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  set(FREEBSD ON)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -ggdb")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -lexecinfo -rdynamic")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
     find_library(LIBDL c)  # libc suffices on freebsd 
 endif(FREEBSD)
@@ -422,6 +415,11 @@ if(USE_NFSIDMAP)
   find_package(NfsIdmap REQUIRED)
   set(SYSTEM_LIBRARIES ${NFSIDMAP_LIBRARY} ${SYSTEM_LIBRARIES})
 endif(USE_NFSIDMAP)
+
+if(USE_EXECINFO)
+  find_package(ExecInfo REQUIRED)
+  set(SYSTEM_LIBRARIES ${EXECINFO_LIBRARY} ${SYSTEM_LIBRARIES})
+endif(USE_EXECINFO)
 
 if(USE_CUNIT)
   find_package(cunit REQUIRED)
