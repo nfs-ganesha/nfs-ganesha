@@ -858,7 +858,7 @@ static fsal_status_t file_unlink (struct fsal_obj_handle *dir_hdl,
 static fsal_status_t handle_digest (const struct fsal_obj_handle *obj_hdl,
                                     fsal_digesttype_t output_type, struct gsh_buffdesc *fh_desc)
 {
-    struct posix_fsal_obj_handle *myself;
+    const struct posix_fsal_obj_handle *myself;
     struct handle_data *fh;
     size_t fh_size;
 

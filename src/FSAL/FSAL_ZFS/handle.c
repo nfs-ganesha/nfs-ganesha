@@ -1041,7 +1041,7 @@ static fsal_status_t tank_handle_digest(const struct fsal_obj_handle *obj_hdl,
                                         fsal_digesttype_t output_type,
                                         struct gsh_buffdesc *fh_desc)
 {
-	struct zfs_fsal_obj_handle *myself;
+	const struct zfs_fsal_obj_handle *myself;
 	struct zfs_file_handle *fh;
 	size_t fh_size;
 
