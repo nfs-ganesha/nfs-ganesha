@@ -535,22 +535,6 @@ void SetNameFunction(char *nom)
   context->thread_name = gsh_strdup(nom);
 }                               /* SetNameFunction */
 
-/* Installs a signal handler */
-static void ArmSignal(int signal, void (*action) ())
-{
-  struct sigaction act;
-
-  /* Placing fields of struct sigaction */
-  act.sa_flags = 0;
-  act.sa_handler = action;
-  sigemptyset(&act.sa_mask);
-
-  if(sigaction(signal, &act, NULL) == -1)
-    LogCrit(COMPONENT_LOG,
-            "Failed to arm signal %d, error %d (%s)",
-            signal, errno, strerror(errno));
-}                               /* ArmSignal */
-
 /*
  * Five functions to manage debug level throug signal
  * handlers.
@@ -624,22 +608,6 @@ void SetLevelDebug(int level_to_set)
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }
 
-static void IncrementLevelDebug()
-{
-  _SetLevelDebug(ReturnLevelDebug() + 1);
-
-  LogChanges("SIGUSR1 Increasing log level for all components to %s",
-             ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
-}                               /* IncrementLevelDebug */
-
-static void DecrementLevelDebug()
-{
-  _SetLevelDebug(ReturnLevelDebug() - 1);
-
-  LogChanges("SIGUSR2 Decreasing log level for all components to %s",
-             ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
-}                               /* DecrementLevelDebug */
-
 void InitLogging()
 {
   int i;
@@ -655,9 +623,7 @@ void InitLogging()
 
   for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
-
-  ArmSignal(SIGUSR1, IncrementLevelDebug);
-  ArmSignal(SIGUSR2, DecrementLevelDebug);
+  
 }
 
 void ReadLogEnvironment()

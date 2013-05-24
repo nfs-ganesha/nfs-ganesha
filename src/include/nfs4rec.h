@@ -5,7 +5,7 @@
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 #define NFS_RECOV_EVENTS "/var/lib/nfs/ganesha/recevents" /* Not just v4 */
-#define NFS_RECOV_CYCLE 10
+#define NFS_RECOV_CYCLE 1
 #define NFS_RECOV_GC ( 6 * NFS_RECOV_CYCLE )
 #define ALL_NODES 0xFFFF
 #define IPADDR_STRSZ	32

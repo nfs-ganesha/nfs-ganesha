@@ -156,11 +156,18 @@ void *sigmgr_thread( void * UnusedArg )
       sigemptyset(&signals_to_catch);
       sigaddset(&signals_to_catch, SIGTERM);
       sigaddset(&signals_to_catch, SIGHUP);
+      sigaddset(&signals_to_catch, SIGUSR1);
       if(sigwait(&signals_to_catch, &signal_caught) != 0)
         {
           LogFullDebug(COMPONENT_THREAD,
                        "sigwait exited with error");
           continue;
+        }
+      if(signal_caught == SIGUSR1)
+        {
+          LogEvent(COMPONENT_MAIN,
+                   "SIGUSR1_HANDLER: Received SIGUSR1... starting Grace on node - %d", g_nodeid);
+          nfs4_start_grace(NULL);
         }
       if(signal_caught == SIGHUP)
         {
