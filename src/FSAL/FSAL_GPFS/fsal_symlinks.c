@@ -209,9 +209,9 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
      also a race lower down  */
   status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle, p_context);
 
+  close(fd);
   if(FSAL_IS_ERROR(status))
     {
-      close(fd);
       ReturnStatus(status, INDEX_FSAL_symlink);
     }
 
