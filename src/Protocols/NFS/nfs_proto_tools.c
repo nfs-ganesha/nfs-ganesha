@@ -4490,12 +4490,12 @@ void nfs_access_op(cache_entry_t *entry,
                FSAL_TEST_MASK(granted_mask, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 
       LogDebug(COMPONENT_NFSPROTO, "Granted ACCESS=%s,%s,%s,%s,%s,%s",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_READ) ? "READ" : "-",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_MODIFY) ? "MODIFY" : "-",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_EXTEND) ? "EXTEND" : "-",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_DELETE) ? "DELETE" : "-",
-               FSAL_TEST_MASK(*supported_access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+               FSAL_TEST_MASK(*granted_access, ACCESS3_READ) ? "READ" : "-",
+               FSAL_TEST_MASK(*granted_access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
+               FSAL_TEST_MASK(*granted_access, ACCESS3_MODIFY) ? "MODIFY" : "-",
+               FSAL_TEST_MASK(*granted_access, ACCESS3_EXTEND) ? "EXTEND" : "-",
+               FSAL_TEST_MASK(*granted_access, ACCESS3_DELETE) ? "DELETE" : "-",
+               FSAL_TEST_MASK(*granted_access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
     }
 }
 
