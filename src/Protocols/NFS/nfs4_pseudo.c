@@ -895,6 +895,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   pseudofs_entry_t *iter = NULL;
   entry4 *entry_nfs_array = NULL;
   exportlist_t *save_pexport;
+  struct gsh_export *saved_gsh_export;
   nfs_fh4 entryFH;
   cache_inode_status_t cache_status;
   int error = 0;
@@ -1113,6 +1114,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Save the compound data context */
           save_pexport = data->pexport;
           data->pexport = iter->junction_export;
+	  saved_gsh_export = data->req_ctx->export;
+	  data->req_ctx->export = get_gsh_export(iter->junction_export->id,
+						 true);
           /* Build the credentials */
           /* XXX Is this really necessary for doing a lookup and 
            * getting attributes?
@@ -1120,7 +1124,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
            * when the target directory is a junction.
            */ 
           res_READDIR4.status = nfs4_MakeCred(data);
-	  data->pexport = save_pexport;
 
           if(res_READDIR4.status == NFS4ERR_ACCESS)
             {
@@ -1158,6 +1161,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
+	  put_gsh_export(data->req_ctx->export);
+	  data->req_ctx->export = saved_gsh_export;
+	  data->pexport = save_pexport;
       }
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;

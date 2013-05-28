@@ -142,13 +142,6 @@ typedef struct exportlist_client__ {
 	struct glist_head client_list; /*< Allowed clients */
 } exportlist_client_t;
 
-/**
- * @todo Please, please, please get rid of all the static buffers in
- * this structure.  I would do it myself but, to twist your metaphor,
- * when you're remodelling a house, you don't rip out a bathroom while
- * someone's in there.
- */
-
 typedef struct exportlist {
 	struct glist_head exp_list;
 	uint32_t id; /*< Entry identifier */
