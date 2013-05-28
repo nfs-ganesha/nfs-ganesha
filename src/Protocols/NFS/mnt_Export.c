@@ -94,6 +94,7 @@ int mnt_Export(nfs_arg_t *parg,
   exports p_exp_current = NULL; /* Pointer to the last  export entry. */
 
   unsigned int i = 0;
+  int pathlen=0;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
 
@@ -118,6 +119,11 @@ int mnt_Export(nfs_arg_t *parg,
                    p_current_item->fullpath, p_current_item->clients.num_clients);
 
       new_expnode->ex_dir = gsh_strdup(p_current_item->fullpath);
+
+      /* remove the trailing slash in export response, window does not seem to like this */
+      pathlen = strlen(new_expnode->ex_dir);
+      if ((new_expnode->ex_dir)[pathlen-1] == '/')
+          (new_expnode->ex_dir)[pathlen-1] = '\0';
 
       /* ---- ex_groups ---- */
 
