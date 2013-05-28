@@ -839,12 +839,17 @@ cache_inode_readdir(cache_entry_t *directory,
                     in_result = cb(cb_opaque,
                                    dirent->name.name,
                                    entry,
+                                   TRUE,
                                    context,
                                    dirent->hk.k);
           } else {
+                    /* Even though permission is denied, we pass the
+                     * cache_entry_t so v3 READDIR can return the fileid
+                     */
                     in_result = cb(cb_opaque,
                                    dirent->name.name,
-                                   NULL,
+                                   entry,
+                                   FALSE,
                                    context,
                                    dirent->hk.k);
           }

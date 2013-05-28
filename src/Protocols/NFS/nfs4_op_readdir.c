@@ -53,6 +53,7 @@
 static bool_t nfs4_readdir_callback(void* opaque,
                                     char *name,
                                     cache_entry_t *entry,
+                                    bool_t attr_allowed,
                                     fsal_op_context_t *context,
                                     uint64_t cookie);
 static void free_entries(entry4 *entries);
@@ -302,6 +303,7 @@ static bool_t
 nfs4_readdir_callback(void* opaque,
                       char *name,
                       cache_entry_t *entry,
+                      bool_t attr_allowed,
                       fsal_op_context_t *context,
                       uint64_t cookie)
 {
@@ -347,7 +349,7 @@ nfs4_readdir_callback(void* opaque,
           return FALSE;
      }
 
-     if(entry != NULL) {
+     if(attr_allowed) {
           if ((tracker->req_attr.bitmap4_val != NULL) &&
               (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
                if (!nfs4_FSALToFhandle(&entryFH, &entry->handle, tracker->data)) {
@@ -359,7 +361,7 @@ nfs4_readdir_callback(void* opaque,
           }
      }
 
-     if(entry == NULL) {
+     if(!attr_allowed) {
           /* cache_inode_readdir is signaling us that client didn't have
            * search permission in this directory, so we can't return any
            * attributes, but must indicate NFS4ERR_ACCESS.

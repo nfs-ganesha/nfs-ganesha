@@ -69,6 +69,7 @@
 static bool_t nfs3_readdirplus_callback(void* opaque,
                                         char *name,
                                         cache_entry_t *entry,
+                                        bool_t attr_allowed,
                                         fsal_op_context_t *context,
                                         uint64_t cookie);
 static void free_entryplus3s(entryplus3 *entryplus3s);
@@ -263,6 +264,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           ".",
                                           dir_entry,
+                                          TRUE,
                                           context,
                                           1))) {
                res->res_readdirplus3.status = cb_opaque.error;
@@ -299,6 +301,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           "..",
                                           parent_dir_entry,
+                                          TRUE,
                                           context,
                                           2))) {
                res->res_readdirplus3.status = cb_opaque.error;
@@ -416,6 +419,7 @@ static bool_t
 nfs3_readdirplus_callback(void* opaque,
                           char *name,
                           cache_entry_t *entry,
+                          bool_t attr_allowed,
                           fsal_op_context_t *context,
                           uint64_t cookie)
 {
@@ -443,6 +447,7 @@ nfs3_readdirplus_callback(void* opaque,
           return FALSE;
      }
 
+     /* We must always return fileid even if attr are not allowed. */
      if(entry != NULL) {
           FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
                             FSAL_DIGEST_FILEID3,
@@ -463,7 +468,7 @@ nfs3_readdirplus_callback(void* opaque,
      /* Account for file name + length + cookie */
      tracker->mem_left -= sizeof(ep3->cookie) + ((namelen + 3) & ~3) + 4;
 
-     if(entry != NULL) {
+     if(attr_allowed) {
           ep3->name_handle.handle_follows = TRUE;
           ep3->name_handle.post_op_fh3_u.handle.data.data_val
                = gsh_malloc(NFS3_FHSIZE);
@@ -486,17 +491,13 @@ nfs3_readdirplus_callback(void* opaque,
 
           /* Account for filehande + length + follows + nextentry */
           tracker->mem_left -= ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
-          if (tracker->count > 0) {
-               tracker->entries[tracker->count - 1].nextentry = ep3;
-          }
      } else {
           ep3->name_handle.handle_follows = FALSE;
 	  tracker->mem_left -= sizeof(ep3->name_handle.handle_follows);
      }
      ep3->name_attributes.attributes_follow = FALSE;
 
-     if(entry != NULL) {
-          /* NOTE: We intentionally do not check ACE4_READ_ATTR. */
+     if(attr_allowed) {
           nfs_SetPostOpAttr(tracker->export,
                             &entry->attributes,
                             &ep3->name_attributes);
@@ -505,6 +506,9 @@ nfs3_readdirplus_callback(void* opaque,
 	  tracker->mem_left -= sizeof(ep3->name_attributes);
      } else {
 	  tracker->mem_left -= sizeof(ep3->name_attributes.attributes_follow);
+     }
+     if (tracker->count > 0) {
+          tracker->entries[tracker->count - 1].nextentry = ep3;
      }
      ++(tracker->count);
      return TRUE;

@@ -605,6 +605,7 @@ typedef bool_t(*cache_inode_readdir_cb_t)(
      void *opaque,
      char *name,
      cache_entry_t *entry,
+     bool_t attr_allowed,
      fsal_op_context_t *context,
      uint64_t cookie);
 
