@@ -68,6 +68,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
   char fkey_data[NFS4_FHSIZE];
+  char exppath[MAXPATHLEN] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -86,10 +87,12 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /*
    * Find the export for the aname (using as well Path or Tag ) 
    */
-  if(aname_str[0] == '/')
-     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, aname_str);
+  snprintf( exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str ) ;
+
+  if(exppath[0] == '/')
+     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, exppath);
   else
-     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, aname_str);
+     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, exppath);
 
   /* Did we find something ? */
   if( pexport == NULL )
