@@ -135,6 +135,8 @@ int nfs_Fsstat(nfs_arg_t *parg,
                                         pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
     {
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
+      attr.asked_attributes = FSAL_ATTRS_V3;
+
       if((cache_status = cache_inode_getattr(pentry,
                                              &attr,
                                              pcontext,

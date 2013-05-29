@@ -134,6 +134,8 @@ int nfs_Getattr(nfs_arg_t *parg,
    * Get attributes.  Use NULL for the file name since we have the
    * vnode to define the file.
    */
+  attr.asked_attributes = FSAL_ATTRS_V3;
+
   if(cache_inode_getattr(pentry,
                          &attr,
                          pcontext, &cache_status) == CACHE_INODE_SUCCESS)

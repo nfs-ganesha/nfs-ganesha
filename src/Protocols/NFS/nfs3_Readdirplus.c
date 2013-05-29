@@ -287,6 +287,8 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                goto out;
           }
 
+          parent_dir_attr.asked_attributes = FSAL_ATTRS_V3;
+
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
                                    context,

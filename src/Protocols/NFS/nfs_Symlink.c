@@ -320,6 +320,8 @@ int nfs_Symlink(nfs_arg_t *parg,
                 }
 
               /* The the parent pentry attributes for building Wcc Data */
+              attr_parent_after.asked_attributes = FSAL_ATTRS_V3;
+
               if(cache_inode_getattr(parent_pentry,
                                      &attr_parent_after,
                                      pcontext,

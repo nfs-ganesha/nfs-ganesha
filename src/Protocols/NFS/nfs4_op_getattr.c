@@ -123,6 +123,15 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
       return res_GETATTR4.status;
     }
 
+  attr.asked_attributes = 0;
+
+  nfs4_attrmap_to_FSAL_attrmask(&arg_GETATTR4.attr_request, &attr.asked_attributes);
+
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
+               "GETATTR requesting %08"PRIx32" %08"PRIx32" asked_attributes = %016"PRIx64,
+               arg_GETATTR4.attr_request.bitmap4_len >= 1 ? arg_GETATTR4.attr_request.bitmap4_val[0] : 0,
+               arg_GETATTR4.attr_request.bitmap4_len >= 2 ? arg_GETATTR4.attr_request.bitmap4_val[1] : 0,
+               (uint64_t) attr.asked_attributes);
 
   /*
    * Get attributes.

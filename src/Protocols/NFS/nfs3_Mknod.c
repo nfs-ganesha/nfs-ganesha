@@ -300,6 +300,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
               nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
 
               /* Get the attributes of the parent after the operation */
+              attr_parent_after.asked_attributes = FSAL_ATTRS_V3;
               if(cache_inode_getattr(parent_pentry,
                          &attr_parent_after,
                          pcontext, &cache_status) != CACHE_INODE_SUCCESS)

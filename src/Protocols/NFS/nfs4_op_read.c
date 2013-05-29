@@ -341,6 +341,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
+  attr.asked_attributes = FSAL_ATTR_SIZE;
+
   if((cache_inode_rdwr(pentry,
                       CACHE_INODE_READ,
                       offset,

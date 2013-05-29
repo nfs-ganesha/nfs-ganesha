@@ -357,6 +357,7 @@ int nfs_Create(nfs_arg_t *parg,
                         goto out_failed;
 
                       /* Get the resulting attributes from the Cache Inode */
+                      attr_newfile.asked_attributes = FSAL_ATTRS_V3;
                       if(cache_inode_getattr(file_pentry,
                                              &attr_newfile,
                                              pcontext,
@@ -420,6 +421,8 @@ int nfs_Create(nfs_arg_t *parg,
                        * but don't fail the call - we already created
                        * the damn thing and it's too much to undo the
                        * act of creation */
+                      attr_parent_after.asked_attributes = FSAL_ATTRS_V3;
+
                       if(cache_inode_getattr(parent_pentry,
                                              &attr_parent_after,
                                              pcontext, &cache_status) == CACHE_INODE_SUCCESS)

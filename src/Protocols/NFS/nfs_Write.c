@@ -351,6 +351,8 @@ int nfs_Write(nfs_arg_t *parg,
   else
     {
       /* An actual write is to be made, prepare it */
+      attr.asked_attributes = FSAL_ATTRS_V3;
+
       if((cache_inode_rdwr(pentry,
                            CACHE_INODE_WRITE,
                            offset,

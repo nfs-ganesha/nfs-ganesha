@@ -119,6 +119,18 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
       return res_NVERIFY4.status;
     }
 
+  file_attr.asked_attributes = 0;
+
+  nfs4_attrmap_to_FSAL_attrmask(&arg_NVERIFY4.obj_attributes.attrmask, &file_attr.asked_attributes);
+
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
+               "NVERIFY requesting %08"PRIx32" %08"PRIx32" asked_attributes = %016"PRIx64,
+               arg_NVERIFY4.obj_attributes.attrmask.bitmap4_len >= 1 ?
+                  arg_NVERIFY4.obj_attributes.attrmask.bitmap4_val[0] : 0,
+               arg_NVERIFY4.obj_attributes.attrmask.bitmap4_len >= 2 ?
+                  arg_NVERIFY4.obj_attributes.attrmask.bitmap4_val[1] : 0,
+               (uint64_t) file_attr.asked_attributes);
+
   /* Get the cache inode attribute */
   if((cache_status = cache_inode_getattr(data->current_entry,
                                          &file_attr,

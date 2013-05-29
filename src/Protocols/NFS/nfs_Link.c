@@ -275,6 +275,8 @@ int nfs_Link(nfs_arg_t *parg,
                                   &attr,
                                   pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                 {
+                  attr_parent_after.asked_attributes = FSAL_ATTRS_V3;
+
                   if(cache_inode_getattr(parent_pentry,
                                          &attr_parent_after,
                                          pcontext, &cache_status) == CACHE_INODE_SUCCESS)

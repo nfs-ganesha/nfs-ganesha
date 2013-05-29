@@ -160,6 +160,8 @@ int nfs3_Commit(nfs_arg_t *parg,
       goto out;
     }
 
+  attr.asked_attributes = FSAL_ATTRS_V3;
+
   if(cache_inode_getattr(pentry, &attr, pcontext, 
                           &cache_status) != CACHE_INODE_SUCCESS) {
     LogEvent(COMPONENT_NFSPROTO, "nfs3_Commit: Failed to get attributes %d", cache_status);
