@@ -586,6 +586,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
                                    NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
                                    LogComponents[component].comp_str,        \
                                    buf, ## args );                           \
+      }                                                                      \
   } while (0)
 
 #define LogAtLevel(component, level, format, args...) \
@@ -616,6 +617,46 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define isFullDebug(component) \
     (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG))
+
+/* Use either the first component, or if it is not at least at level,
+ * use the second component.
+ */
+#define LogDebugAlt(comp1, comp2, format, args...) \
+  do { \
+    if (unlikely(LogComponents[comp1].comp_log_level >= NIV_DEBUG) || \
+        unlikely(LogComponents[comp2].comp_log_level >= NIV_DEBUG)) { \
+      log_components_t component = \
+        LogComponents[comp1].comp_log_level >= NIV_DEBUG ? comp1 : comp2; \
+      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
+                               "%s: DEBUG: " format, \
+                               LogComponents[component].comp_str, ## args ); \
+    } \
+  } while (0)
+
+#define LogMidDebugAlt(comp1, comp2, format, args...) \
+  do { \
+    if (unlikely(LogComponents[comp1].comp_log_level >= NIV_MID_DEBUG) || \
+        unlikely(LogComponents[comp2].comp_log_level >= NIV_MID_DEBUG)) { \
+      log_components_t component = \
+        LogComponents[comp1].comp_log_level >= NIV_MID_DEBUG ? comp1 : comp2; \
+      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MID_DEBUG, \
+                               "%s: MID DEBUG: " format, \
+                               LogComponents[component].comp_str, ## args ); \
+    } \
+  } while (0)
+
+#define LogFullDebugAlt(comp1, comp2, format, args...) \
+  do { \
+    if (unlikely(LogComponents[comp1].comp_log_level >= NIV_FULL_DEBUG) || \
+        unlikely(LogComponents[comp2].comp_log_level >= NIV_FULL_DEBUG)) { \
+      log_components_t component = \
+        LogComponents[comp1].comp_log_level >= NIV_FULL_DEBUG ? comp1 : comp2; \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
+                               "%s: FULLDEBUG: " format, \
+                               LogComponents[component].comp_str, ## args ); \
+    } \
+  } while (0)
+
 
 /*
  *  Re-export component logging to TI-RPC internal logging

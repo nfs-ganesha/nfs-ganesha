@@ -86,9 +86,9 @@ fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
         }
     }
 
-  LogDebug(COMPONENT_FSAL,
-           "result: %d, cause: %s, flag: 0x%X, who: %d",
-           result, cause, pace->flag, GET_FSAL_ACE_WHO(*pace));
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
+               "result: %d, cause: %s, flag: 0x%X, who: %d",
+               result, cause, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
   return result;
 }
@@ -106,8 +106,8 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
   /* To be applicable, the entry should not be INHERIT_ONLY. */
   if (IS_FSAL_ACE_INHERIT_ONLY(*pace))
     {
-      LogDebug(COMPONENT_FSAL, "Not applicable, "
-               "inherit only");
+      LogFullDebug(COMPONENT_NFS_V4_ACL,
+                   "Not applicable, inherit only");
       return FALSE;
     }
 
@@ -117,7 +117,8 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
     {
       if(!IS_FSAL_FILE_APPLICABLE(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "Not applicable to file");
+          LogFullDebug(COMPONENT_NFS_V4_ACL,
+                       "Not applicable to file");
           return FALSE;
         }
     }
@@ -125,7 +126,8 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
     {
       if(!IS_FSAL_DIR_APPLICABLE(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "Not applicable to dir");
+          LogFullDebug(COMPONENT_NFS_V4_ACL,
+                       "Not applicable to dir");
           return FALSE;
         }
     }
@@ -136,10 +138,12 @@ fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
                                                     is_owner,
                                                     is_group);
   if(is_applicable)
-    LogDebug(COMPONENT_FSAL, "Applicable, flag=0X%x",
-             pace->flag);
+    LogFullDebug(COMPONENT_NFS_V4_ACL,
+                 "Applicable, flag=0X%x",
+                 pace->flag);
   else
-    LogDebug(COMPONENT_FSAL, "Not applicable to given user");
+    LogFullDebug(COMPONENT_NFS_V4_ACL,
+                 "Not applicable to given user");
 
   return is_applicable;
 }
@@ -269,7 +273,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   struct display_buffer dspbuf = {sizeof(str), str, str};
   int                   b_left;
 
-  if(!isFullDebug(COMPONENT_FSAL))
+  if(!isDebug(COMPONENT_NFS_V4_ACL))
     return;
 
   if((access_result == ERR_FSAL_NO_ERROR))
@@ -288,7 +292,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   if(b_left > 0 && (naces != ace_number))
     b_left = display_fsal_ace(&dspbuf, ace_number, pace, is_dir);
 
-  LogFullDebug(COMPONENT_FSAL, "%s", str);
+  LogDebug(COMPONENT_NFS_V4_ACL, "%s", str);
 }
 
 fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
@@ -318,7 +322,8 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
   missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
   if(!missing_access)
     {
-      LogFullDebug(COMPONENT_FSAL, "Nothing was requested");
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "Nothing was requested");
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
 
@@ -337,7 +342,8 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
             *allowed = v4mask;
 
           /* On a directory, allow root anything. */
-          LogDebug(COMPONENT_FSAL, "Met root privileges on directory");
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Met root privileges on directory");
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
         }
 
@@ -349,16 +355,17 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
 
       if(!missing_access)
         {
-          LogDebug(COMPONENT_FSAL, "Met root privileges");
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Met root privileges");
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
         }
     }
 
-  LogFullDebug(COMPONENT_FSAL,
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
                "file acl=%p, file uid=%d, file gid= %d",
                pacl,uid, gid);
 
-  if(isFullDebug(COMPONENT_FSAL))
+  if(isDebug(COMPONENT_NFS_V4_ACL))
     {
       char                  str[LOG_BUFF_LEN];
       struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -367,11 +374,11 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
                                  v4mask,
                                  p_object_attributes->type == FSAL_TYPE_DIR);
 
-      LogFullDebug(COMPONENT_FSAL,
-                   "user uid=%d, user gid= %d, v4mask=%s",
-                   p_context->credential.user,
-                   p_context->credential.group,
-                   str);
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "user uid=%d, user gid= %d, v4mask=%s",
+               p_context->credential.user,
+               p_context->credential.group,
+               str);
     }
 
   is_owner = fsal_check_ace_owner(uid, p_context);
@@ -391,7 +398,8 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
       if(!missing_access)
         {
-          LogFullDebug(COMPONENT_FSAL, "Met owner privileges");
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Met owner privileges");
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
         }
     }
@@ -402,21 +410,19 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
     {
       ace_number += 1;
 
-      LogFullDebug(COMPONENT_FSAL,
+      LogFullDebug(COMPONENT_NFS_V4_ACL,
                    "ace type 0x%X perm 0x%X flag 0x%X who %d",
                    pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
       /* Process Allow and Deny entries. */
       if(IS_FSAL_ACE_ALLOW(*pace) || IS_FSAL_ACE_DENY(*pace))
         {
-          LogFullDebug(COMPONENT_FSAL, "allow or deny");
-
           /* Check if this ACE is applicable. */
           if(fsal_check_ace_applicable(pace, p_context, is_dir, is_owner, is_group, is_root))
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
-                  LogFullDebug(COMPONENT_FSAL,
+                  LogFullDebug(COMPONENT_NFS_V4_ACL,
                                "allow perm 0x%X remainingPerms 0x%X",
                                pace->perm,
                                missing_access);
@@ -462,12 +468,14 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
 
   if(missing_access || (denied != NULL && denied != 0))
     {
-      LogFullDebug(COMPONENT_FSAL, "access denied");
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "access denied");
       ReturnCode(ERR_FSAL_ACCESS, 0);
     }
   else
     {
-      LogFullDebug(COMPONENT_FSAL, "access granted");
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "access granted");
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
 }
@@ -496,7 +504,8 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
   missing_access = access_type;
   if(!missing_access)
     {
-      LogDebug(COMPONENT_FSAL, "Nothing was requested");
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "Nothing was requested");
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
 
@@ -514,26 +523,26 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
       mode = unix2fsal_mode(p_buffstat->st_mode);
     }
 
-  LogDebug(COMPONENT_FSAL,
-               "file Mode=%#o, file uid=%d, file gid= %d",
-               mode,uid, gid);
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "file Mode=%#o, file uid=%d, file gid= %d",
+           mode,uid, gid);
 #ifdef _USE_HPSS
-  LogDebug(COMPONENT_FSAL,
-               "user uid=%d, user gid= %d, access_type=0X%x",
+  LogDebug(COMPONENT_FSAL, COMPONENT_NFS_V4_ACL,
+           "user uid=%d, user gid= %d, access_type=0X%x",
 #if HPSS_MAJOR_VERSION == 5
-               p_context->credential.hpss_usercred.SecPWent.Uid,
-               p_context->credential.hpss_usercred.SecPWent.Gid,
+           p_context->credential.hpss_usercred.SecPWent.Uid,
+           p_context->credential.hpss_usercred.SecPWent.Gid,
 #else
-               p_context->credential.hpss_usercred.Uid,
-               p_context->credential.hpss_usercred.Gid,
+           p_context->credential.hpss_usercred.Uid,
+           p_context->credential.hpss_usercred.Gid,
 #endif
-               access_type);
+           access_type);
 #else
-  LogDebug(COMPONENT_FSAL,
-               "user uid=%d, user gid= %d, access_type=0X%x",
-               p_context->credential.user,
-               p_context->credential.group,
-               access_type);
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "user uid=%d, user gid= %d, access_type=0X%x",
+           p_context->credential.user,
+           p_context->credential.group,
+           access_type);
 #endif
 
 #ifdef _USE_HPSS
@@ -572,8 +581,8 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
 #endif
     {
 
-      LogDebug(COMPONENT_FSAL,
-                   "File belongs to user %d", uid);
+      LogDebug(COMPONENT_NFS_V4_ACL,
+               "File belongs to user %d", uid);
 
       if(mode & FSAL_MODE_RUSR) {
         missing_access &= ~FSAL_R_OK;
@@ -600,9 +609,9 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
           if(denied != NULL)
             *denied = missing_access;
 
-          LogDebug(COMPONENT_FSAL,
-                       "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-                       mode, access_type, missing_access);
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
+                   mode, access_type, missing_access);
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
@@ -616,12 +625,12 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
   is_grp = (p_context->credential.hpss_usercred.Gid == gid);
 #endif  
   if(is_grp)
-    LogDebug(COMPONENT_FSAL,
-                 "File belongs to user's group %d",
+    LogDebug(COMPONENT_NFS_V4_ACL,
+             "File belongs to user's group %d",
 #if HPSS_MAJOR_VERSION == 5
-                 p_context->credential.hpss_usercred.SecPWent.Gid);
+             p_context->credential.hpss_usercred.SecPWent.Gid);
 #else
-                 p_context->credential.hpss_usercred.Gid);
+             p_context->credential.hpss_usercred.Gid);
 #endif                 
 
   /* Test if file belongs to alt user's groups */
@@ -630,18 +639,18 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
       {
         is_grp = (p_context->credential.hpss_usercred.AltGroups[i] == gid);
         if(is_grp)
-          LogDebug(COMPONENT_FSAL,
-                       "File belongs to user's alt group %d",
-                       p_context->credential.hpss_usercred.AltGroups[i]);
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "File belongs to user's alt group %d",
+                   p_context->credential.hpss_usercred.AltGroups[i]);
         if(is_grp)
           break;
       }
 #else
   is_grp = (p_context->credential.group == gid);
   if(is_grp)
-    LogDebug(COMPONENT_FSAL,
-                 "File belongs to user's group %d",
-                 p_context->credential.group);
+    LogDebug(COMPONENT_NFS_V4_ACL,
+             "File belongs to user's group %d",
+             p_context->credential.group);
 
   /* Test if file belongs to alt user's groups */
   if(!is_grp)
@@ -649,9 +658,9 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
       {
         is_grp = (p_context->credential.alt_groups[i] == gid);
         if(is_grp)
-          LogDebug(COMPONENT_FSAL,
-                       "File belongs to user's alt group %d",
-                       p_context->credential.alt_groups[i]);
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "File belongs to user's alt group %d",
+                   p_context->credential.alt_groups[i]);
         if(is_grp)
           break;
       }
@@ -718,9 +727,9 @@ fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /* IN */
     if(denied != NULL)
       *denied = missing_access;
 
-    LogDebug(COMPONENT_FSAL,
-                 "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-                 mode, access_type, missing_access);
+    LogDebug(COMPONENT_NFS_V4_ACL,
+             "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
+             mode, access_type, missing_access);
     ReturnCode(ERR_FSAL_ACCESS, 0);
   }
 
@@ -743,7 +752,8 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
 
 #ifdef _USE_NFS4_ACL
   /* If ACL exists and given access type is ace4 mask, use ACL to check access. */
-  LogDebug(COMPONENT_FSAL, "pattr=%p, pacl=%p, is_ace4_mask=%d, access_type=%x",
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "pattr=%p, pacl=%p, is_ace4_mask=%d, access_type=%x",
            p_object_attributes, p_object_attributes ? p_object_attributes->acl : 0,
            IS_FSAL_ACE4_MASK_VALID(access_type),
            access_type);
@@ -762,7 +772,8 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
                                   allowed, denied,
                                   p_buffstat, p_object_attributes);
 
-  LogDebug(COMPONENT_FSAL, "fsal_check_access: invalid access_type = 0X%x",
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "fsal_check_access: invalid access_type = 0X%x",
            access_type);
 
   ReturnCode(ERR_FSAL_ACCESS, 0);

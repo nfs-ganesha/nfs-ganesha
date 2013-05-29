@@ -99,7 +99,12 @@ cache_inode_getattr(cache_entry_t *entry,
       * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
       */
      if((attr->asked_attributes & FSAL_ATTR_ACL) != 0) {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Permission check for ACL for entry %p", entry);
           access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+     } else {
+          LogFullDebug(COMPONENT_NFS_V4_ACL,
+                       "No permission check for ACL for entry %p", entry);
      }
 
 /* Lock (and refresh if necessary) the attributes, copy them out, and
@@ -121,6 +126,10 @@ cache_inode_getattr(cache_entry_t *entry,
 
           *attr = entry->attributes;
           set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
+     } else {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "Permission check for ACL for entry %p failed with %s",
+                   entry, cache_inode_err_str(*status));
      }
 
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
