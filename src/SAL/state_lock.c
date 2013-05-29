@@ -881,7 +881,6 @@ static void merge_lock_entry(cache_entry_t *entry,
               check_entry_right->sle_lock.lock_start  = lock_entry_end + 1;
               check_entry_right->sle_lock.lock_length = check_entry_end - lock_entry_end;
               LogEntry("Merge shrunk right", check_entry_right);
-              continue;
             }
           if(check_entry->sle_lock.lock_start < lock_entry->sle_lock.lock_start)
             {
@@ -889,7 +888,6 @@ static void merge_lock_entry(cache_entry_t *entry,
               LogEntry("Merge shrinking left", check_entry);
               check_entry->sle_lock.lock_length = lock_entry->sle_lock.lock_start - check_entry->sle_lock.lock_start;
               LogEntry("Merge shrunk left", check_entry);
-              continue;
             }
           /* Done splitting/shrinking old lock */
           continue;
