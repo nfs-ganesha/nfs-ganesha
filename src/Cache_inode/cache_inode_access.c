@@ -48,6 +48,18 @@
 #include "cache_inode.h"
 #include "abstract_mem.h"
 
+#define LogDebugCIA(comp1, comp2, format, args...) \
+  do { \
+    if (unlikely(LogComponents[comp1].comp_log_level >= NIV_FULL_DEBUG) || \
+        unlikely(LogComponents[comp2].comp_log_level >= NIV_DEBUG)) { \
+      log_components_t component = \
+        LogComponents[comp1].comp_log_level >= NIV_DEBUG ? comp1 : comp2; \
+      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
+                               "%s: DEBUG: " format, \
+                               LogComponents[component].comp_str, ## args ); \
+    } \
+  } while (0)
+
 /**
  *
  * @brief Checks the permissions on an object
@@ -75,9 +87,9 @@ cache_inode_access_sw(cache_entry_t *entry,
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     LogFullDebug(COMPONENT_CACHE_INODE,
-                  "access_type=0X%x",
-                  access_type);
+     LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                 "access_type=0X%x",
+                 access_type);
 
      /* Set the return default to CACHE_INODE_SUCCESS */
      status = CACHE_INODE_SUCCESS;
@@ -103,9 +115,9 @@ cache_inode_access_sw(cache_entry_t *entry,
      }
      if(FSAL_IS_ERROR(fsal_status)) {
           status = cache_inode_error_convert(fsal_status);
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "status=%s",
-                       cache_inode_err_str(status));
+          LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                      "status=%s",
+                      cache_inode_err_str(status));
           if (fsal_status.major == ERR_FSAL_STALE) {
                LogEvent(COMPONENT_CACHE_INODE,
                   "STALE returned by FSAL, calling kill_entry");
@@ -125,26 +137,26 @@ bool not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
     int i;
     if(creds->caller_gid == gid) {
 
-        LogDebug(COMPONENT_CACHE_INODE,
-                "User %d is member of group %d",
-                (int) creds->caller_uid,
-                (int) gid);
+        LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                    "User %u is has active group %u",
+                    creds->caller_uid,
+                    gid);
         return false;
     }
     for(i = 0; i < creds->caller_glen; i++) {
         if(creds->caller_garray[i] == gid) {
-            LogDebug(COMPONENT_CACHE_INODE,
-                    "User %d is member of group %d",
-                    (int) creds->caller_uid,
-                    (int) gid);
+            LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                        "User %u is member of group %u",
+                        creds->caller_uid,
+                        gid);
             return false;
         }
     }
 
-    LogDebug(COMPONENT_CACHE_INODE,
-            "User %d is NOT member of group %d",
-            (int) creds->caller_uid,
-            (int) gid);
+    LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                "User %u IS NOT member of group %u",
+                creds->caller_uid,
+                gid);
     return true;
 }
 
@@ -174,7 +186,7 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
      char *             note = "";
      const struct user_cred *creds = req_ctx->creds;
 
-     if(isDebug(COMPONENT_CACHE_INODE)) {
+     if(isDebug(COMPONENT_CACHE_INODE) || isDebug(COMPONENT_NFS_V4_ACL)) {
           char * setattr_size        = "";
           char * setattr_owner       = "";
           char * setattr_owner_group = "";
@@ -208,15 +220,15 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
           else if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER))
                          setattr_mtime = " MTIME_SERVER";
 
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "SETATTR %s%s%s%s%s%s%s",
-                   setattr_size,
-                   setattr_owner,
-                   setattr_owner_group,
-                   setattr_mode,
-                   setattr_acl,
-                   setattr_mtime,
-                   setattr_atime);
+          LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                      "SETATTR %s%s%s%s%s%s%s",
+                      setattr_size,
+                      setattr_owner,
+                      setattr_owner_group,
+                      setattr_mode,
+                      setattr_acl,
+                      setattr_mtime,
+                      setattr_atime);
      }
 
      /* Shortcut, if current user is root, then we can just bail out with success. */
@@ -239,8 +251,8 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
           /* Owner of file will always be able to "change" the owner to himself. */
           if(not_owner) {
               access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-              LogDebug(COMPONENT_CACHE_INODE,
-                      "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
+              LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                          "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
           }
      }
      if(FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
@@ -260,8 +272,8 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
          */
          if(not_owner) {
              access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-             LogDebug(COMPONENT_CACHE_INODE,
-                     "Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
+             LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                         "Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
          }
      }
 
@@ -281,16 +293,16 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
         FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
         /* Changing mode or ACL requires ACE4_WRITE_ACL */
 	  access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
-	  LogDebug(COMPONENT_CACHE_INODE,
-		   "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
+	  LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+		       "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
      }
 
      if(FSAL_TEST_MASK(attr->mask, ATTR_SIZE) && !is_open_write) {
           /* Changing size requires owner or write permission */
           /** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
          access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
-         LogDebug(COMPONENT_CACHE_INODE,
-                 "Change SIZE requires FSAL_ACE_PERM_WRITE_DATA");
+         LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                     "Change SIZE requires FSAL_ACE_PERM_WRITE_DATA");
      }
 
      /* Check if just setting atime and mtime to "now" */
@@ -305,8 +317,8 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
           * really do, we'll let them to make the perm check a bit simpler.
           */
          access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
-         LogDebug(COMPONENT_CACHE_INODE,
-                 "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
+         LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                     "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
      } else if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER) ||
                FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER) ||
                FSAL_TEST_MASK(attr->mask, ATTR_MTIME) ||
@@ -319,11 +331,11 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
            * clients should not do atime updates.
            */
          access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
-         LogDebug(COMPONENT_CACHE_INODE,
-                 "Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
+         LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                     "Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
      }
 
-     if(isDebug(COMPONENT_CACHE_INODE)) {
+     if(isDebug(COMPONENT_CACHE_INODE) || isDebug(COMPONENT_NFS_V4_ACL)) {
           char * need_write_owner = "";
           char * need_write_acl   = "";
           char * need_write_data  = "";
@@ -341,12 +353,12 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
           if(access_check & FSAL_ACE_PERM_WRITE_ATTR)
             need_write_attr = " WRITE_ATTR";
 
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Requires %s%s%s%s",
-                   need_write_owner,
-                   need_write_acl,
-                   need_write_data,
-                   need_write_attr);
+          LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                       "Requires %s%s%s%s",
+                       need_write_owner,
+                       need_write_acl,
+                       need_write_data,
+                       need_write_attr);
      }
 
 
@@ -374,10 +386,10 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
 
 out:
 
-     LogDebug(COMPONENT_CACHE_INODE,
-              "Access check returned %s%s",
-              cache_inode_err_str(status),
-              note);
+     LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
+                  "Access check returned %s%s",
+                  cache_inode_err_str(status),
+                  note);
 
      return status;
 }

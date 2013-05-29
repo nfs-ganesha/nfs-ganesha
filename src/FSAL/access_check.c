@@ -94,9 +94,9 @@ static bool fsal_check_ace_matches(fsal_ace_t *pace,
         }
     }
 
-  LogDebug(COMPONENT_FSAL,
-           "result: %d, cause: %s, flag: 0x%X, who: %d",
-           result, cause, pace->flag, GET_FSAL_ACE_WHO(*pace));
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
+               "result: %d, cause: %s, flag: 0x%X, who: %d",
+               result, cause, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
   return result;
 }
@@ -114,8 +114,8 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
   /* To be applicable, the entry should not be INHERIT_ONLY. */
   if (IS_FSAL_ACE_INHERIT_ONLY(*pace))
     {
-      LogDebug(COMPONENT_FSAL, "Not applicable, "
-               "inherit only");
+      LogFullDebug(COMPONENT_NFS_V4_ACL, "Not applicable, "
+                   "inherit only");
       return false;
     }
 
@@ -125,7 +125,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
     {
       if(!IS_FSAL_FILE_APPLICABLE(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "Not applicable to file");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "Not applicable to file");
           return false;
         }
     }
@@ -133,7 +133,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
     {
       if(!IS_FSAL_DIR_APPLICABLE(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "Not applicable to dir");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "Not applicable to dir");
           return false;
         }
     }
@@ -142,10 +142,10 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
   is_applicable = is_root ||
                   fsal_check_ace_matches(pace, creds, is_owner, is_group);
   if(is_applicable)
-    LogDebug(COMPONENT_FSAL, "Applicable, flag=0X%x",
-             pace->flag);
+    LogFullDebug(COMPONENT_NFS_V4_ACL, "Applicable, flag=0X%x",
+                 pace->flag);
   else
-    LogDebug(COMPONENT_FSAL, "Not applicable to given user");
+    LogFullDebug(COMPONENT_NFS_V4_ACL, "Not applicable to given user");
 
   return is_applicable;
 }
@@ -279,7 +279,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   struct display_buffer dspbuf = {sizeof(str), str, str};
   int                   b_left;
 
-  if(!isFullDebug(COMPONENT_FSAL))
+  if(!isFullDebug(COMPONENT_NFS_V4_ACL))
     return;
 
   if((access_result == ERR_FSAL_NO_ERROR))
@@ -298,7 +298,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   if(b_left > 0 && (naces != ace_number))
     b_left = display_fsal_ace(&dspbuf, ace_number, pace, is_dir);
 
-  LogFullDebug(COMPONENT_FSAL, "%s", str);
+  LogFullDebug(COMPONENT_NFS_V4_ACL, "%s", str);
 }
 
 static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
@@ -329,7 +329,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
   if(!missing_access)
     {
-      LogFullDebug(COMPONENT_FSAL, "Nothing was requested");
+      LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
       return true;
     }
 
@@ -348,7 +348,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
             *allowed = v4mask;
 
           /* On a directory, allow root anything. */
-          LogDebug(COMPONENT_FSAL, "Met root privileges on directory");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "Met root privileges on directory");
           return true;
         }
 
@@ -360,16 +360,16 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
       if(!missing_access)
         {
-          LogDebug(COMPONENT_FSAL, "Met root privileges");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "Met root privileges");
           return true;
         }
     }
 
-  LogFullDebug(COMPONENT_FSAL,
+  LogFullDebug(COMPONENT_NFS_V4_ACL,
                "file acl=%p, file uid=%u, file gid=%u, ",
                pacl, uid, gid);
 
-  if(isFullDebug(COMPONENT_FSAL))
+  if(isFullDebug(COMPONENT_NFS_V4_ACL))
     {
       char                  str[LOG_BUFF_LEN];
       struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -378,7 +378,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                                  v4mask,
                                  p_object_attributes->type == DIRECTORY);
 
-      LogFullDebug(COMPONENT_FSAL,
+      LogFullDebug(COMPONENT_NFS_V4_ACL,
                    "user uid=%u, user gid= %u, v4mask=%s",
                    creds->caller_uid,
                    creds->caller_gid,
@@ -402,7 +402,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
       if(!missing_access)
         {
-          LogFullDebug(COMPONENT_FSAL, "Met owner privileges");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "Met owner privileges");
           return true;
         }
     }
@@ -413,14 +413,14 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
     {
       ace_number += 1;
 
-      LogFullDebug(COMPONENT_FSAL,
+      LogFullDebug(COMPONENT_NFS_V4_ACL,
                    "ace numnber: %d ace type 0x%X perm 0x%X flag 0x%X who %u",
                    ace_number, pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
       /* Process Allow and Deny entries. */
       if(IS_FSAL_ACE_ALLOW(*pace) || IS_FSAL_ACE_DENY(*pace))
         {
-          LogFullDebug(COMPONENT_FSAL, "allow or deny");
+          LogFullDebug(COMPONENT_NFS_V4_ACL, "allow or deny");
 
           /* Check if this ACE is applicable. */
           if(fsal_check_ace_applicable(pace, creds, is_dir, is_owner, is_group, is_root))
@@ -433,7 +433,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                   else
                     tperm = pace->perm;
 
-                  LogFullDebug(COMPONENT_FSAL,
+                  LogFullDebug(COMPONENT_NFS_V4_ACL,
                                "allow perm 0x%X remainingPerms 0x%X",
                                tperm,
                                missing_access);
@@ -486,12 +486,12 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
   if(missing_access || (denied != NULL && *denied != 0))
     {
-      LogFullDebug(COMPONENT_FSAL, "access denied");
+      LogFullDebug(COMPONENT_NFS_V4_ACL, "access denied");
       return false;
     }
   else
     {
-      LogFullDebug(COMPONENT_FSAL, "access granted");
+      LogFullDebug(COMPONENT_NFS_V4_ACL, "access granted");
       return true;
     }
 }
@@ -517,7 +517,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 	}
 
 	if( !access_type) {
-		LogDebug(COMPONENT_FSAL, "Nothing was requested");
+		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
 		return true;
 	}
 
@@ -525,13 +525,13 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 	gid = p_object_attributes->group;
 	mode = p_object_attributes->mode;
 
-	LogDebug(COMPONENT_FSAL,
-		 "file Mode=%#o, file uid=%u, file gid= %u, "
-		 "user uid=%u, user gid= %u, access_type=0X%x",
-		 mode,uid, gid,
-		 creds->caller_uid,
-		 creds->caller_gid,
-		 access_type);
+	LogFullDebug(COMPONENT_NFS_V4_ACL,
+		     "file Mode=%#o, file uid=%u, file gid= %u, "
+		     "user uid=%u, user gid= %u, access_type=0X%x",
+		     mode,uid, gid,
+		     creds->caller_uid,
+		     creds->caller_gid,
+		     access_type);
 
 	if(creds->caller_uid == 0) {
 		rc = ((access_type & FSAL_X_OK) == 0) ||
@@ -543,14 +543,14 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 			if(denied != NULL) {
 				*denied = access_type & FSAL_X_OK;
 			}
-			LogDebug(COMPONENT_FSAL,
-			         "Root is not allowed execute access unless at least one user is allowed execute access.");
+			LogFullDebug(COMPONENT_NFS_V4_ACL,
+			             "Root is not allowed execute access unless at least one user is allowed execute access.");
 		} else {
 			if(allowed != NULL) {
 				*allowed = access_type;
 			}
-			LogDebug(COMPONENT_FSAL,
-			         "Root is granted access.");
+			LogFullDebug(COMPONENT_NFS_V4_ACL,
+			             "Root is granted access.");
 		}
 		return rc;
 	}
