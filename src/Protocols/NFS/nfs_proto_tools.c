@@ -3556,8 +3556,10 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
                         "attribute: missing %lx", want & ~ got);
         }
 
-        /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
-        Fattr->fsid = (nfs3_uint64) export->filesystem_id.major;
+        /* xor filesystem_id major and rotated minor to create unique on-wire fsid.*/ 
+        Fattr->fsid = (nfs3_uint64) (export->filesystem_id.major ^
+                                     (export->filesystem_id.minor << 32 |
+                                      export->filesystem_id.minor >> 32));
         LogFullDebug(COMPONENT_NFSPROTO,
                      "fsid major %#"PRIX64" (%"PRIu64
                      "), minor %#"PRIX64" (%"PRIu64
