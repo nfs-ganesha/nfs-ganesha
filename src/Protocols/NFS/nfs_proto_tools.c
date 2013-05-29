@@ -2454,14 +2454,15 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                                     Fattr))
     return 0;
 
-  /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
-  Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
+  /* xor filesystem_id major and rotated minor to create unique on-wire fsid.*/ 
+  Fattr->fsid = (nfs3_uint64) (pexport->filesystem_id.major ^
+                               (pexport->filesystem_id.minor << 32 |
+                                pexport->filesystem_id.minor >> 32));
   LogFullDebug(COMPONENT_NFSPROTO,
-               "%s: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs3_fsid = %#llX (%llu)",
-               __func__,
+               "fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs3_fsid = %#llX (%llu)",
                pexport->filesystem_id.major, pexport->filesystem_id.major,
-               pexport->filesystem_id.minor, pexport->filesystem_id.minor, Fattr->fsid,
-               Fattr->fsid);
+               pexport->filesystem_id.minor, pexport->filesystem_id.minor,
+               Fattr->fsid, Fattr->fsid);
   return 1;
 }
 

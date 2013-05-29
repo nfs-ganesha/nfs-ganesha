@@ -1883,8 +1883,6 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          /* set filesystem_id */
-
           p_entry->MaxRead = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_MAXREAD;
         }
@@ -1931,8 +1929,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          /* set filesystem_id */
 
           p_entry->MaxWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_MAXWRITE;
@@ -1981,8 +1977,6 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          /* set filesystem_id */
-
           p_entry->PrefRead = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFREAD;
         }
@@ -2029,8 +2023,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          /* set filesystem_id */
 
           p_entry->PrefWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFWRITE;
@@ -2079,8 +2071,6 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          /* set filesystem_id */
-
           p_entry->PrefReaddir = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFRDDIR;
         }
@@ -2127,8 +2117,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          /* set filesystem_id */
 
           p_entry->PrefWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFWRITE;
@@ -2469,8 +2457,6 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          /* set filesystem_id */
-
           p_entry->MaxOffsetWrite = (fsal_size_t) offset;
           p_perms->options |= EXPORT_OPTION_MAXOFFSETWRITE;
 
@@ -2508,8 +2494,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          /* set filesystem_id */
 
           p_entry->MaxOffsetRead = (fsal_size_t) offset;
           p_perms->options |= EXPORT_OPTION_MAXOFFSETREAD;
