@@ -37,6 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
+#include "export_mgr.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
@@ -66,8 +67,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   exportlist_t * pexport = NULL;
   cache_inode_status_t cache_status ;
-  cache_inode_fsal_data_t fsdata ;
-  char fkey_data[NFS4_FHSIZE];
   char exppath[MAXPATHLEN] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -122,23 +121,15 @@ int _9p_attach( _9p_request_data_t * preq9p,
       return _9p_rerror( preq9p, pworker_data, msgtag, -err, plenout, preply ) ;
    }
 
-  /* Get the related pentry */
-  memset(&fsdata, 0, sizeof(fsdata));
-  fsdata.fh_desc.addr = fkey_data ; 
-  fsdata.fh_desc.len = sizeof( fkey_data ) ;
-  fsdata.export = pexport->export_hdl ;
-
-  pexport->export_hdl->ops->extract_handle( pexport->export_hdl,
-					    FSAL_DIGEST_SIZEOF,
-					    &fsdata.fh_desc ) ;
-
-  /* refcount +1 */
-  cache_status = cache_inode_get( &fsdata,
-				  &pfid->op_context,
-				  &pfid->pentry) ;
-
-  if( pfid->pentry == NULL )
+  /* Check if root cache entry is correctly set */
+  if( pexport->exp_root_cache_inode == NULL )
      return _9p_rerror( preq9p, pworker_data,msgtag, err, plenout, preply ) ;
+
+  /* get the export information for this fid */ 
+  pfid->pentry = pexport->exp_root_cache_inode ;
+
+  /* Keep track of the pexport in the req_ctx */
+  pfid->op_context.export = get_gsh_export( pexport->id, true ) ;
 
   if(cache_inode_fileid(pfid->pentry,
 			 &pfid->op_context, &fileid) != CACHE_INODE_SUCCESS)

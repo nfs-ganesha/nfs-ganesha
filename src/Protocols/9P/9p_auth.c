@@ -37,6 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
+#include "export_mgr.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
@@ -65,8 +66,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
 
   exportlist_t * pexport = NULL;
   cache_inode_status_t cache_status ;
-  cache_inode_fsal_data_t fsdata ;
-  char fkey_data[NFS4_FHSIZE];
+  char exppath[MAXPATHLEN] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -84,10 +84,12 @@ int _9p_auth( _9p_request_data_t * preq9p,
   /*
    * Find the export for the aname (using as well Path or Tag ) 
    */
-  if(aname_str[0] == '/')
-     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, aname_str);
+  snprintf( exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str ) ;
+
+  if(exppath[0] == '/')
+     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, exppath);
   else
-     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, aname_str);
+     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, exppath);
 
   /* Did we find something ? */
   if( pexport == NULL )
@@ -115,23 +117,15 @@ int _9p_auth( _9p_request_data_t * preq9p,
        return  _9p_rerror( preq9p, pworker_data,  msgtag, -err, plenout, preply ) ;
    }
 
-  /* Get the related pentry */
-  memset(&fsdata, 0, sizeof(fsdata));
-  fsdata.fh_desc.addr = fkey_data ; 
-  fsdata.fh_desc.len = sizeof( fkey_data ) ;
-  fsdata.export = pexport->export_hdl ;
+  /* Check if root cache entry is correctly set */
+  if( pexport->exp_root_cache_inode == NULL )
+     return _9p_rerror( preq9p, pworker_data,msgtag, err, plenout, preply ) ;
 
-  pexport->export_hdl->ops->extract_handle( pexport->export_hdl,
-					    FSAL_DIGEST_SIZEOF,
-					    &fsdata.fh_desc ) ;
+  /* get the export information for this fid */ 
+  pfid->pentry = pexport->exp_root_cache_inode ;
 
-  cache_status = cache_inode_get( &fsdata,
-				  &pfid->op_context,
-				  &pfid->pentry ) ;
-
-
-  if( pfid->pentry == NULL )
-    return  _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;
+  /* Keep track of the pexport in the req_ctx */
+  pfid->op_context.export = get_gsh_export( pexport->id, true ) ;
 
   if(cache_inode_fileid(pfid->pentry,
 			 &pfid->op_context, &fileid) != CACHE_INODE_SUCCESS)
