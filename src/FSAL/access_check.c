@@ -633,7 +633,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 
 uid_t   ganesha_uid;
 gid_t   ganesha_gid;
-int     ganehsa_ngroups;
+int     ganesha_ngroups;
 gid_t * ganesha_groups = NULL;
 
 void fsal_set_credentials(const struct user_cred *creds)
@@ -653,16 +653,16 @@ void fsal_save_ganesha_credentials()
   setuser(ganesha_uid);
   ganesha_gid = setgroup(0);
   setgroup(ganesha_gid);
-  ganehsa_ngroups = getgroups(0, NULL);
-  if(ganehsa_ngroups != 0)
+  ganesha_ngroups = getgroups(0, NULL);
+  if(ganesha_ngroups != 0)
     {
-      ganesha_groups = gsh_malloc(ganehsa_ngroups * sizeof(gid_t));
+      ganesha_groups = gsh_malloc(ganesha_ngroups * sizeof(gid_t));
       if(ganesha_groups == NULL)
         {
           LogFatal(COMPONENT_FSAL,
                    "Could not allocate memory for Ganesha group list");
         }
-      if(getgroups(ganehsa_ngroups, ganesha_groups) != ganehsa_ngroups)
+      if(getgroups(ganesha_ngroups, ganesha_groups) != ganesha_ngroups)
         {
           LogFatal(COMPONENT_FSAL,
                    "Could not get list of ganesha groups");
@@ -670,10 +670,10 @@ void fsal_save_ganesha_credentials()
     }
 
   p += sprintf(p, "Ganesha uid=%d gid=%d ngroups=%d",
-               (int) ganesha_uid, (int) ganesha_gid, ganehsa_ngroups);
-  if(ganehsa_ngroups != 0)
+               (int) ganesha_uid, (int) ganesha_gid, ganesha_ngroups);
+  if(ganesha_ngroups != 0)
     p += sprintf(p, " (");
-  for(i = 0; i < ganehsa_ngroups; i++)
+  for(i = 0; i < ganesha_ngroups; i++)
     {
       if((p - buffer) < (sizeof(buffer) - 10))
         {
@@ -683,7 +683,7 @@ void fsal_save_ganesha_credentials()
             p += sprintf(p, " %d", (int) ganesha_groups[i]);
         }
     }
-  if(ganehsa_ngroups != 0)
+  if(ganesha_ngroups != 0)
     p += sprintf(p, ")");
   LogInfo(COMPONENT_FSAL,
           "%s", buffer);
@@ -693,7 +693,7 @@ void fsal_restore_ganesha_credentials()
 {
   setuser(ganesha_uid);
   setgroup(ganesha_gid);
-  if(set_threadgroups(ganehsa_ngroups, ganesha_groups) != 0)
+  if(set_threadgroups(ganesha_ngroups, ganesha_groups) != 0)
     LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 }
 
