@@ -404,7 +404,7 @@ static const nfs4_op_desc_t optabv4[] = {
 		.name = "OP_RECLAIM_COMPLETE",
 		.funct = nfs4_op_reclaim_complete,
 		.free_res = nfs4_op_reclaim_complete_Free,
-		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
+		.exp_perm_flags = 0
 	}
 };
 
