@@ -781,7 +781,7 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
 
 uid_t   ganesha_uid;
 gid_t   ganesha_gid;
-int     ganehsa_ngroups;
+int     ganesha_ngroups;
 gid_t * ganesha_groups = NULL;
 
 void fsal_set_credentials(fsal_op_context_t * context)
@@ -805,16 +805,16 @@ void fsal_save_ganesha_credentials()
   setfsuid(ganesha_uid);
   ganesha_gid = setfsgid(0);
   setfsgid(ganesha_gid);
-  ganehsa_ngroups = getgroups(0, NULL);
-  if(ganehsa_ngroups != 0)
+  ganesha_ngroups = getgroups(0, NULL);
+  if(ganesha_ngroups != 0)
     {
-      ganesha_groups = gsh_malloc(ganehsa_ngroups * sizeof(gid_t));
+      ganesha_groups = gsh_malloc(ganesha_ngroups * sizeof(gid_t));
       if(ganesha_groups == NULL)
         {
           LogFatal(COMPONENT_FSAL,
                    "Could not allocate memory for Ganesha group list");
         }
-      if(getgroups(ganehsa_ngroups, ganesha_groups) != ganehsa_ngroups)
+      if(getgroups(ganesha_ngroups, ganesha_groups) != ganesha_ngroups)
         {
           LogFatal(COMPONENT_FSAL,
                    "Could not get list of ganesha groups");
@@ -825,12 +825,12 @@ void fsal_save_ganesha_credentials()
                           "Ganesha uid=%d gid=%d ngroups=%d",
                           (int) ganesha_uid,
                           (int) ganesha_gid,
-                          ganehsa_ngroups);
+                          ganesha_ngroups);
 
-  if(ganehsa_ngroups != 0 && b_left > 0)
+  if(ganesha_ngroups != 0 && b_left > 0)
     b_left = display_cat(&dspbuf, " (");
 
-  for(i = 0; i < ganehsa_ngroups && b_left > 0; i++)
+  for(i = 0; i < ganesha_ngroups && b_left > 0; i++)
     {
       if(i == 0)
         b_left = display_printf(&dspbuf, "%d", (int) ganesha_groups[i]);
@@ -838,7 +838,7 @@ void fsal_save_ganesha_credentials()
         b_left = display_printf(&dspbuf, " %d", (int) ganesha_groups[i]);
     }
 
-  if(ganehsa_ngroups != 0 && b_left > 0)
+  if(ganesha_ngroups != 0 && b_left > 0)
     b_left = display_cat(&dspbuf, ")");
 
   LogInfo(COMPONENT_FSAL,
@@ -849,6 +849,6 @@ void fsal_restore_ganesha_credentials()
 {
   setfsuid(ganesha_uid);
   setfsgid(ganesha_gid);
-  if(syscall(__NR_setgroups, ganehsa_ngroups, ganesha_groups) != 0)
+  if(syscall(__NR_setgroups, ganesha_ngroups, ganesha_groups) != 0)
     LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 }
