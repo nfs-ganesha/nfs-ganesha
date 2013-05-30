@@ -15,6 +15,8 @@ int g_closeHandle_req_msgq;
 int g_closeHandle_rsp_msgq;
 bool     g_poll_for_timeouts; // check for timed-out handles
 uint64_t g_poll_iterations;   // number of times poll thread has been called
+// this flag will control whether threads created for PTFSAL continue or stop.
+bool     g_terminate_ptfsal_threads = false;
 
 int ptfsal_closeHandle_attach_to_queues(void)
 {
@@ -56,10 +58,14 @@ void *ptfsal_closeHandle_listener_thread(void *args)
     exit (1);
   }
 
-  while (1) {
+  g_terminate_ptfsal_threads = false;
+  while (!g_terminate_ptfsal_threads) {
+    FSI_TRACE(FSI_DEBUG, "Periodic calling close listener.");
     CCL_CLOSE_LISTENER(g_closeHandle_req_msgq,
 		       g_closeHandle_rsp_msgq);
   }
+  
+  FSI_TRACE(FSI_NOTICE, "The close handler listener thread exit. ");
 }
 
 void ptfsal_close_timedout_handle_bkg(void)
@@ -124,8 +130,9 @@ void *ptfsal_polling_closeHandler_thread(void *args)
   
   g_poll_iterations   = 1;
   g_poll_for_timeouts = false;
+  g_terminate_ptfsal_threads = false;
 
-  while (1) {
+  while (!g_terminate_ptfsal_threads) {
     FSI_TRACE(FSI_DEBUG, "Periodic check for opened handle to close");
     ptfsal_close_timedout_handle_bkg();
     sleep (PTFSAL_POLLING_THREAD_FREQUENCY_SEC);
@@ -138,6 +145,8 @@ void *ptfsal_polling_closeHandler_thread(void *args)
       ++g_poll_iterations;
     }
   }
+
+  FSI_TRACE(FSI_NOTICE, "The polling close handler thread exit.");
 }
 
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
@@ -172,4 +181,8 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
   return close_rc;
 }
 
+void ptfsal_terminate_ptfsal_threads()
+{
+  g_terminate_ptfsal_threads = true;
+}
 

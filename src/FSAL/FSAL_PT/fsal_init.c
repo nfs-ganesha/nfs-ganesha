@@ -478,6 +478,9 @@ PTFSAL_terminate()
  
   FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
 
+  // Set terminate flag to seop ptfsal threads.
+  ptfsal_terminate_ptfsal_threads();
+
   pthread_attr_init(&attr_thr);  
   memset(&parallelCloseThreadMap[0], 0x00, sizeof (parallelCloseThreadMap));
 
@@ -521,11 +524,14 @@ PTFSAL_terminate()
   }
 
   FSI_TRACE(FSI_NOTICE, "All parallel close threads have exited");
-  
-  if (closureFailure) {
-    FSI_TRACE(FSI_NOTICE, "Terminating with failure to close file(s)");
+
+  /* Join the Polling Close Handle thread */
+  int terminate_rc = pthread_join(g_pthread_polling_closehandler, NULL);
+  if (terminate_rc == 0) {
+    FSI_TRACE(FSI_NOTICE, "Join Polling close handle thread successfully");
   } else {
-    FSI_TRACE(FSI_NOTICE, "Successful termination of FSAL_PT");
+    FSI_TRACE(FSI_ERR, "Join Polling close handle thread failed = %d",
+              terminate_rc);
   }
 
   /* Terminate Close Handle Listener thread if it's not already dead */
@@ -540,21 +546,10 @@ PTFSAL_terminate()
     major = posix2fsal_error(signal_send_rc);
   }
 
-  /* Terminate Polling Close Handle thread */
-  signal_send_rc = pthread_kill( g_pthread_polling_closehandler, SIGTERM);
-  if (signal_send_rc == 0) {
-    FSI_TRACE(FSI_NOTICE, "Polling close handle thread killed successfully");
-  } else if (signal_send_rc == ESRCH) {
-    FSI_TRACE(FSI_ERR, "Polling close handle thread already terminated");
-  } else if (signal_send_rc) {
-    FSI_TRACE(FSI_ERR, "Error from pthread_kill = %d", signal_send_rc);
-    minor = 4;
-    major = posix2fsal_error(signal_send_rc);
-  }
+  FSI_TRACE(FSI_NOTICE, "End termination of FSAL_PT");
 
   /* close dynamically loaded module */
   dlclose(g_ccl_lib_handle);
-
   ReturnCode(major, minor);
 }
 

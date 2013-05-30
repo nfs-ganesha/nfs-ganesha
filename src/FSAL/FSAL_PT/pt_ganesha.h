@@ -511,6 +511,8 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style);
 
 void *ptfsal_polling_closeHandler_thread(void *args);
 
+void ptfsal_terminate_ptfsal_threads();
+
 #define CACHE_MAX_NUM_CACHE_ENTRY(_CACHE_TABLE) (sizeof(_CACHE_TABLE)/sizeof(CACHE_DATA_TYPE_T))
 
 // An enum representing what the purpose of this cache table is
