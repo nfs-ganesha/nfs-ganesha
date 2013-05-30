@@ -192,7 +192,7 @@ out:
  * @param[in,out] resp nfs4_op results
  */
 
-void nfs4_op_destroyclientid_Free(nfs_resop4 *resp)
+void nfs4_op_destroy_clientid_Free(nfs_resop4 *resp)
 {
 	return;
 }

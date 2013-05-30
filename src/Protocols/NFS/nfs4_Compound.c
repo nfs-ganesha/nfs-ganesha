@@ -396,8 +396,8 @@ static const nfs4_op_desc_t optabv4[] = {
 	},
 	[NFS4_OP_DESTROY_CLIENTID] = {
 		.name = "OP_DESTROY_CLIENTID",
-		.funct = nfs4_op_illegal,
-		.free_res = nfs4_op_illegal_Free,
+		.funct = nfs4_op_destroy_clientid,
+		.free_res = nfs4_op_destroy_clientid_Free,
 		.exp_perm_flags = 0	/* tbd */
 	},
 	[NFS4_OP_RECLAIM_COMPLETE] = {
