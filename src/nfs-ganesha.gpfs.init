@@ -296,18 +296,25 @@ stop() {
 		else
 			kill -ABRT $PID >/dev/null 2>&1
 		fi
-                usleep 100000
-                # Unconditionally delete this file; if the process is still
-                # there it means, it is hung
-                rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+        usleep 100000
+        # Unconditionally delete this file; if the process is still
+        # there it means, it is hung
+        rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
 
-                if checkpid $pid && sleep 1 &&
-                   checkpid $pid && sleep 30 &&
-                   checkpid $pid ; then
-                   # Still there? Send a Kill.
-                   kill -KILL $pid >/dev/null 2>&1
-                   usleep 100000
-                fi
+        #Sleep for 1 second before checking the status, If the process exists
+        #even after 30 iterations, send Kill
+        waitcnt=0 
+        while true; do
+            if checkpid $pid && sleep 1; then
+                waitcnt=$(( waitcnt + 1 ))
+                if [ $waitcnt -eq 30 ]; then
+                    kill -KILL $pid >/dev/null 2>&1
+                    break
+                fi  
+            else
+                break
+            fi  
+        done
 
 		# Give Ganesha time to quit
 		result=`pidof "$PATHPROG"`
@@ -319,9 +326,9 @@ stop() {
 				 break
 			 fi
 		done
-        fi 
-        echo
-        return $RETVAL
+    fi 
+    echo
+    return $RETVAL
 }
 
 restart(){
