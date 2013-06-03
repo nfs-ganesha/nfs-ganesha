@@ -687,8 +687,8 @@ bool principal2uid(char *principal, uid_t * puid)
       if(rc)
         {
 #ifdef _MSPAC_SUPPORT
-          short found_uid = false;
-          short found_gid = false;
+/*           short found_uid = false; */
+/*           short found_gid = false; */
           if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
           {
             struct wbcAuthUserParams params;
@@ -733,17 +733,17 @@ bool principal2uid(char *principal, uid_t * puid)
               return false;
             }
             wbcFreeMemory(info);
-            found_uid = true;
-            found_gid = true;
+/*             found_uid = true; */
+/*             found_gid = true; */
           }
 #endif /* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
-#if 0
-          if ((found_uid == true) && (found_gid == true))
-          {
-            goto principal_found;
-          }
-#endif          
+/* #if 0 */
+/*           if ((found_uid == true) && (found_gid == true)) */
+/*           { */
+/*             goto principal_found; */
+/*           } */
+/* #endif           */
 #endif
       
           return false;
