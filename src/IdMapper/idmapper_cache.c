@@ -491,7 +491,8 @@ bool idmapper_add_group(const struct gsh_buffdesc *name,
 
 bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name,
 			      uid_t *uid,
-			      const gid_t **gid)
+			      const gid_t **gid,
+			      bool gss_princ)
 {
 	struct cache_user prototype = {
 		.uname = *name

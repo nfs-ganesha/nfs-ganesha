@@ -367,19 +367,32 @@ static bool pwentname2id(char *name,
       struct group *pg;
       char *gbuf = alloca(PWENT_MAX_LEN);
 
-      if ((getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) == 0) &&
-	  (pg != NULL))
-	{
-	  *id = pg->gr_gid;
-	  return true;
-	}
-      else
-	{
-	  LogMajor(COMPONENT_IDMAPPER,
+      if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) != 0) 
+	   {
+	     LogMajor(COMPONENT_IDMAPPER,
 		   "getpwnam_r %s failed",
 		   name);
-	  return false;
-	}
+	     return false;
+	   }
+	  else if (pg != NULL)
+   	   {
+	     *id = pg->gr_gid;
+	     return true;
+	   }
+#ifndef USE_NFSIDMAP	   
+      else
+	   {
+         char *end = NULL;
+         gid_t gid;
+
+         gid = strtol(name, &end, 10);
+         if (end && *end != '\0')
+           return 0;
+         
+		 *id = gid;
+         return true;
+	   }
+#endif	   
     }
   else
     {
@@ -387,22 +400,37 @@ static bool pwentname2id(char *name,
       struct passwd *pp;
       char *pbuf = alloca(PWENT_MAX_LEN);
 
-      if ((getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) == 0) &&
-	  (pp != NULL))
-	{
-	  *id = pp->pw_uid;
-	  *gid = pp->pw_gid;
-	  *got_gid = true;
-	  return true;
-	}
-      else
-	{
-	  LogInfo(COMPONENT_IDMAPPER,
+      if (getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) != 0) 
+       {
+         LogInfo(COMPONENT_IDMAPPER,
 		  "getpwnam_r %s failed",
 		  name);
-	  return false;
-	}
+	     return false;
+	   } 
+	  else if (pp != NULL)
+	   {
+	     *id = pp->pw_uid;
+         *gid = pp->pw_gid;
+	     *got_gid = true;
+	     return true;
+	   }
+#ifndef USE_NFSIDMAP	   
+      else
+	   {
+         char *end = NULL;
+         uid_t uid;
+
+         uid = strtol(name, &end, 10);
+         if (end && *end != '\0')
+           return 0;
+         
+		 *id = uid;
+         *got_gid = false;
+         return true;
+	   }
+#endif	   
     }
+  return false;
 }
 
 /**
@@ -496,23 +524,13 @@ static bool name2id(const struct gsh_buffdesc *name,
   if (group)
     success = idmapper_lookup_by_gname(name, id);
   else
-    success = idmapper_lookup_by_uname(name, id, NULL);
+    success = idmapper_lookup_by_uname(name, id, NULL, false);
   pthread_rwlock_unlock(group ?
 			&idmapper_group_lock :
 			&idmapper_user_lock);
 
   if (success)
     return true;
-  else if (!group &&
-	   (name->len >= 4) &&
-	   (memcmp(name->addr, "nfs/", 4) == 0))
-    {
-      /* NFSv4 specific features: RPCSEC_GSS will provide user like
-       * nfs/<host> choice is made to map them to root */
-      /* This is a "root" request made from the hostbased nfs principal, use root */
-      *id = 0;
-      return true;
-    }
   else
     {
       gid_t gid;
@@ -635,10 +653,8 @@ bool principal2uid(char *principal, uid_t * puid)
 #endif
 {
 #ifdef USE_NFSIDMAP
-  gid_t gss_gid;
-  /* Given that we just pass this value back if the lookup fails,
-     perhaps we should initialzie it to something. */
-  uid_t gss_uid = -1;
+  uid_t gss_uid = ANON_UID;
+  gid_t gss_gid = ANON_GID;
   int rc;
   bool success;
   struct gsh_buffdesc princbuff =
@@ -653,10 +669,19 @@ bool principal2uid(char *principal, uid_t * puid)
 
 #ifdef USE_NFSIDMAP
   pthread_rwlock_rdlock(&idmapper_user_lock);
-  success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL);
+  success = idmapper_lookup_by_uname(&princbuff, &gss_gid, NULL, false);
   pthread_rwlock_unlock(&idmapper_user_lock);
-  if (likely(success))
+  if (unlikely(!success))
     {
+	  if ((princbuff.len >= 4) &&
+	       (memcmp(princbuff.addr, "nfs/", 4) == 0))
+    	{
+          /* NFSv4 specific features: RPCSEC_GSS will provide user like
+		   * nfs/<host> choice is made to map them to root */
+		  /* This is a "root" request made from the hostbased nfs principal, use root */
+		  *puid = 0;
+          return true;
+    	}
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
       rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
       if(rc)
@@ -713,14 +738,17 @@ bool principal2uid(char *principal, uid_t * puid)
           }
 #endif /* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
+#if 0
           if ((found_uid == true) && (found_gid == true))
           {
             goto principal_found;
           }
+#endif          
 #endif
       
           return false;
         }
+#if 0        
 #ifdef _MSPAC_SUPPORT
 principal_found:
 #endif
@@ -735,6 +763,7 @@ principal_found:
 		   "idmapper_add_user(%s, %d, %d) failed",
 		   principal, gss_uid, gss_gid);
 	}
+#endif    
     }
 
   /* This looks suspicious. */

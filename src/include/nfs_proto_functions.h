@@ -1035,6 +1035,7 @@ void nfs4_op_sequence_Free(nfs_resop4 * resp);
 void nfs4_op_set_ssv_Free(nfs_resop4 * resp);
 void nfs4_op_test_stateid_Free(nfs_resop4 * resp);
 void nfs4_op_write_Free(nfs_resop4 * resp);
+void nfs4_op_destroy_clientid_Free(nfs_resop4 * resp);
 void nfs4_op_reclaim_complete_Free(nfs_resop4 * resp);
 
 void compound_data_Free(compound_data_t * data);

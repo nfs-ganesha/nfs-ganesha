@@ -1482,8 +1482,11 @@ static int BuildExportEntry(config_item_t block,
             }
 
           /* Some admins stuff a '/' at  the end for some reason.
-	   * chomp it so we have a /dir/path/basename to work with */
-          if(var_value[pathlen-1] == '/')
+	   * chomp it so we have a /dir/path/basename to work with.
+	   * But only if it's a non-root path starting with /. */
+	  if ((var_value[pathlen-1] == '/') &&
+	      (pathlen > 1) &&
+	      (var_value[0] == '/'))
             {
 	      var_value[pathlen - 1] = '\0';
             }
