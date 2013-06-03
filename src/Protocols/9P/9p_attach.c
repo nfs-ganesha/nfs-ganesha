@@ -131,8 +131,9 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /* Keep track of the pexport in the req_ctx */
   pfid->op_context.export = get_gsh_export( pexport->id, true ) ;
 
-  if(cache_inode_fileid(pfid->pentry,
-			 &pfid->op_context, &fileid) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_fileid(pfid->pentry,
+				    &pfid->op_context, &fileid);
+  if(cache_status != CACHE_INODE_SUCCESS)
       return _9p_rerror( preq9p, pworker_data, msgtag,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
 
