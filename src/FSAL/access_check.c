@@ -266,12 +266,15 @@ int display_fsal_v4mask(struct display_buffer * dspbuf,
   if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_SYNCHRONIZE))
     b_left = display_cat(dspbuf, " SYNCHRONIZE");
 
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE4_PERM_CONTINUE))
+    b_left = display_cat(dspbuf, " CONTINUE");
+  
   return b_left;
 }
 
 static void fsal_print_access_by_acl(int naces, int ace_number,
 	                             fsal_ace_t *pace, fsal_aceperm_t perm,
-                                     unsigned int access_result,
+                                     enum fsal_errors_t access_result,
                                      bool is_dir,
                                      struct user_cred *creds)
 {
@@ -284,8 +287,10 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
 
   if((access_result == ERR_FSAL_NO_ERROR))
     b_left = display_cat(&dspbuf, "access granted");
+  else if((access_result == ERR_FSAL_PERM))
+    b_left = display_cat(&dspbuf, "access denied (EPERM)");
   else
-    b_left = display_cat(&dspbuf, "access denied");
+    b_left = display_cat(&dspbuf, "access denied (EACCESS)");
 
   if(b_left > 0)
     b_left = display_printf(&dspbuf, " uid %u gid %u Access req:",
@@ -301,11 +306,12 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   LogFullDebug(COMPONENT_NFS_V4_ACL, "%s", str);
 }
 
-static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
-				 fsal_aceperm_t v4mask,  /* IN */
-				 fsal_accessflags_t * allowed,
-				 fsal_accessflags_t * denied,
-				 struct attrlist * p_object_attributes   /* IN */ )
+static fsal_status_t
+fsal_check_access_acl(struct user_cred *creds,   /* IN */
+		      fsal_aceperm_t v4mask,  /* IN */
+		      fsal_accessflags_t * allowed,
+		      fsal_accessflags_t * denied,
+		      struct attrlist * p_object_attributes   /* IN */ )
 {
   fsal_aceperm_t missing_access;
   fsal_aceperm_t tperm;
@@ -330,7 +336,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   if(!missing_access)
     {
       LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
-      return true;
+      fsalstat(ERR_FSAL_NO_ERROR, 0);
     }
 
   /* Get file ownership information. */
@@ -349,7 +355,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
           /* On a directory, allow root anything. */
           LogFullDebug(COMPONENT_NFS_V4_ACL, "Met root privileges on directory");
-          return true;
+          fsalstat(ERR_FSAL_NO_ERROR, 0);
         }
 
       /* Otherwise, allow root anything but execute. */
@@ -361,7 +367,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
       if(!missing_access)
         {
           LogFullDebug(COMPONENT_NFS_V4_ACL, "Met root privileges");
-          return true;
+          fsalstat(ERR_FSAL_NO_ERROR, 0);
         }
     }
 
@@ -403,7 +409,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
       if(!missing_access)
         {
           LogFullDebug(COMPONENT_NFS_V4_ACL, "Met owner privileges");
-          return true;
+          fsalstat(ERR_FSAL_NO_ERROR, 0);
         }
     }
 
@@ -461,7 +467,11 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                                           ace_number,
                                           pace,
                                           v4mask,
-                                          ERR_FSAL_ACCESS,
+                                          (pace->perm & missing_access & 
+                                           (FSAL_ACE_PERM_WRITE_ATTR |
+                                            FSAL_ACE_PERM_WRITE_ACL |
+                                            FSAL_ACE_PERM_WRITE_OWNER)) != 0 ?
+                                          ERR_FSAL_PERM : ERR_FSAL_ACCESS,
                                           is_dir,
                                           creds);
 
@@ -469,7 +479,23 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                    *denied |= v4mask & pace->perm;
                  if(denied == NULL ||
                     (v4mask & FSAL_ACE4_PERM_CONTINUE) == 0)
-                   return false;
+                   {
+                     if((pace->perm & missing_access &
+                         (FSAL_ACE_PERM_WRITE_ATTR |
+                          FSAL_ACE_PERM_WRITE_ACL |
+                          FSAL_ACE_PERM_WRITE_OWNER)) != 0)
+                       {
+                         LogDebug(COMPONENT_NFS_V4_ACL,
+                                  "access denied (EPERM)");
+                         return fsalstat(ERR_FSAL_PERM, 0);
+                       }
+                     else
+                       {
+                         LogDebug(COMPONENT_NFS_V4_ACL,
+                                  "access denied (EACCESS)");
+                         return fsalstat(ERR_FSAL_ACCESS, 0);
+                       }
+                   }
 
                  missing_access &= ~(pace->perm & missing_access);
 
@@ -486,22 +512,35 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
   if(missing_access || (denied != NULL && *denied != 0))
     {
-      LogFullDebug(COMPONENT_NFS_V4_ACL, "access denied");
-      return false;
+      if((missing_access & (FSAL_ACE_PERM_WRITE_ATTR |
+                            FSAL_ACE_PERM_WRITE_ACL |
+                            FSAL_ACE_PERM_WRITE_OWNER)) != 0)
+        {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "access denied (EPERM)");
+          return fsalstat(ERR_FSAL_PERM, 0);
+        }
+      else
+        {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "access denied (EACCESS)");
+          return fsalstat(ERR_FSAL_ACCESS, 0);
+        }
     }
   else
     {
       LogFullDebug(COMPONENT_NFS_V4_ACL, "access granted");
-      return true;
+      return fsalstat(ERR_FSAL_NO_ERROR, 0);
     }
 }
 
-static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
-				    struct req_op_context *req_ctx,
-				    fsal_accessflags_t access_type,  /* IN */
-				    fsal_accessflags_t * allowed,
-				    fsal_accessflags_t * denied,
-				    struct attrlist * p_object_attributes /* IN */ )
+static fsal_status_t
+fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
+			 struct req_op_context *req_ctx,
+			 fsal_accessflags_t access_type,  /* IN */
+			 fsal_accessflags_t * allowed,
+			 fsal_accessflags_t * denied,
+			 struct attrlist * p_object_attributes /* IN */ )
 {
 	uid_t uid;
 	gid_t gid;
@@ -518,7 +557,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 
 	if( !access_type) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
-		return true;
+		fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
 	uid = p_object_attributes->owner;
@@ -552,7 +591,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 			             "Root is granted access.");
 		}
-		return rc;
+		return rc ? fsalstat(ERR_FSAL_NO_ERROR, 0) : fsalstat(ERR_FSAL_ACCESS, 0);
 	}
 
 	/* If the uid of the file matches the uid of the user,
@@ -591,7 +630,8 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 	}
 
 	/* Success if mask covers all the requested bits */
-	return (mask & access_type) == access_type;
+	return (mask & access_type) == access_type ? fsalstat(ERR_FSAL_NO_ERROR, 0) :
+	                                             fsalstat(ERR_FSAL_ACCESS, 0);
 }
 
 /* test_access
@@ -609,26 +649,21 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t * denied)
 {
 	struct attrlist *attribs = &obj_hdl->attributes;
-	int retval;
 
 	if(attribs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
-		retval = fsal_check_access_acl(req_ctx->creds,
-					       FSAL_ACE4_MASK(access_type),
-					       allowed,
-					       denied,
-					       attribs);
+		return fsal_check_access_acl(req_ctx->creds,
+					     FSAL_ACE4_MASK(access_type),
+					     allowed,
+					     denied,
+					     attribs);
 	} else { /* fall back to use mode to check access. */
-		retval = fsal_check_access_no_acl(req_ctx->creds,
-						  req_ctx,
-						  FSAL_MODE_MASK(access_type),
-						  allowed,
-						  denied,
-						  attribs);
+		return fsal_check_access_no_acl(req_ctx->creds,
+						req_ctx,
+						FSAL_MODE_MASK(access_type),
+						allowed,
+						denied,
+						attribs);
 	}
-	if(retval)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	else
-		return fsalstat(ERR_FSAL_ACCESS, 0);
 }
 
 uid_t   ganesha_uid;
