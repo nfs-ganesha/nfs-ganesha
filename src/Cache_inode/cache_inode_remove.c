@@ -162,6 +162,14 @@ cache_inode_remove(cache_entry_t *entry,
 
      if (((*status = status_ref_entry) != CACHE_INODE_SUCCESS) ||
          ((*status = status_ref_to_remove_entry) != CACHE_INODE_SUCCESS)) {
+         LogDebug(COMPONENT_CACHE_INODE,
+                  "cache_inode_refresh_attrs_locked(to_remove_entry %p) returned %s",
+                  to_remove_entry,
+                  cache_inode_err_str(status_ref_to_remove_entry));
+         LogDebug(COMPONENT_CACHE_INODE,
+                  "cache_inode_refresh_attrs_locked(entry %p) returned %s",
+                  entry,
+                  cache_inode_err_str(status_ref_entry));
          goto out;
      }
 
