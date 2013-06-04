@@ -677,7 +677,7 @@ typedef fsal_uint_t fsal_accessflags_t;
 #define FSAL_ACCESS_OK  0x00000000       /* Allow */
 
 #define FSAL_ACCESS_FLAG_BIT_MASK  0x80000000
-#define FSAL_MODE_BIT_MASK         0x7F000000
+#define FSAL_MODE_BIT_MASK         0x07000000
 #define FSAL_ACE4_BIT_MASK         0x40FFFFFF
 
 #define FSAL_MODE_MASK(access)     (access & FSAL_MODE_BIT_MASK)
