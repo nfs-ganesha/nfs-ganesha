@@ -927,7 +927,10 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                       fsal_parameter_t * out_parameter)
 {
-  return fsal_functions.fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
+  fsal_status_t rc;
+  rc = fsal_functions.fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
+  umask(out_parameter->fs_common_info.values.umask);
+  return rc;
 }
 
 fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
