@@ -153,6 +153,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   cache_inode_status_t status_ref_dir_src = CACHE_INODE_SUCCESS;
   cache_inode_status_t status_ref_dir_dst = CACHE_INODE_SUCCESS;
   cache_inode_status_t status_ref_dst = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status1;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *status = CACHE_INODE_SUCCESS;
@@ -315,7 +316,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
           /* Unlock the pentry and exits */
           cache_inode_invalidate_all_cached_dirent(dir_src,
                                                    &status_ref_dir_src);
-          goto out_unlock;
         }
     }
   else
@@ -328,14 +328,17 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       /* We may have a cache entry for the destination filename.
        * If we do, we must delete it, it is stale.
        */
-      if(cache_inode_remove_cached_dirent(dir_dest,
-                                          newname,
-                                          &status_ref_dir_dst)
-         != CACHE_INODE_SUCCESS)
+      (void) cache_inode_remove_cached_dirent(dir_dest,
+                                              newname,
+                                              &status1);
+
+      if(status1 != CACHE_INODE_SUCCESS && status1 != CACHE_INODE_NOT_FOUND)
         {
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Remove stale dirent returned %s",
+                   cache_inode_err_str(status1));
           cache_inode_invalidate_all_cached_dirent(dir_dest,
-                                                   &status_ref_dir_dst);
-          goto out_unlock;
+                                                   &status1);
         }
 
       /* Add the new entry */
@@ -343,7 +346,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                     newname,
                                     lookup_src,
                                     NULL,
-                                    &status_ref_dir_dst);
+                                    status);
       if(status_ref_dir_dst != CACHE_INODE_SUCCESS)
         {
           LogCrit(COMPONENT_CACHE_INODE,
@@ -353,14 +356,17 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
         }
 
       /* Remove the old entry */
-      if(cache_inode_remove_cached_dirent(dir_src,
-                                          oldname,
-                                          &status_ref_dir_src)
-         != CACHE_INODE_SUCCESS)
+      (void) cache_inode_remove_cached_dirent(dir_src,
+                                              oldname,
+                                              &status1);
+
+      if(status1 != CACHE_INODE_SUCCESS && status1 != CACHE_INODE_NOT_FOUND)
         {
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Remove old dirent returned %s",
+                   cache_inode_err_str(status1));
           cache_inode_invalidate_all_cached_dirent(dir_src,
-                                                   &status_ref_dir_src);
-          goto out_unlock;
+                                                   &status1);
         }
     }
 
