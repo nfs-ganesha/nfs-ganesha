@@ -260,6 +260,9 @@ int display_fsal_v4mask(struct display_buffer * dspbuf,
   if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_SYNCHRONIZE))
     b_left = display_cat(dspbuf, " SYNCHRONIZE");
 
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE4_PERM_CONTINUE))
+    b_left = display_cat(dspbuf, " CONTINUE");
+  
   return b_left;
 }
 
@@ -450,7 +453,11 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
                                           ace_number,
                                           pace,
                                           v4mask,
-                                          ERR_FSAL_ACCESS,
+                                          (pace->perm & missing_access & 
+                                           (FSAL_ACE_PERM_WRITE_ATTR |
+                                            FSAL_ACE_PERM_WRITE_ACL |
+                                            FSAL_ACE_PERM_WRITE_OWNER)) != 0 ?
+                                          ERR_FSAL_PERM : ERR_FSAL_ACCESS,
                                           is_dir,
                                           p_context);
 
@@ -458,7 +465,23 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
                    *denied |= v4mask & pace->perm;
                  if(denied == NULL ||
                     (v4mask & FSAL_ACE4_PERM_CONTINUE) == 0)
-                   ReturnCode(ERR_FSAL_ACCESS, 0);
+                   {
+                     if((pace->perm & missing_access &
+                         (FSAL_ACE_PERM_WRITE_ATTR |
+                          FSAL_ACE_PERM_WRITE_ACL |
+                          FSAL_ACE_PERM_WRITE_OWNER)) != 0)
+                       {
+                         LogDebug(COMPONENT_NFS_V4_ACL,
+                                  "access denied (EPERM)");
+                         ReturnCode(ERR_FSAL_PERM, 0);
+                       }
+                     else
+                       {
+                         LogDebug(COMPONENT_NFS_V4_ACL,
+                                  "access denied (EACCESS)");
+                         ReturnCode(ERR_FSAL_ACCESS, 0);
+                       }
+                   }
 
                  missing_access &= ~(pace->perm & missing_access);
                }
@@ -468,9 +491,20 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
 
   if(missing_access || (denied != NULL && denied != 0))
     {
-      LogDebug(COMPONENT_NFS_V4_ACL,
-               "access denied");
-      ReturnCode(ERR_FSAL_ACCESS, 0);
+      if((missing_access & (FSAL_ACE_PERM_WRITE_ATTR |
+                            FSAL_ACE_PERM_WRITE_ACL |
+                            FSAL_ACE_PERM_WRITE_OWNER)) != 0)
+        {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "access denied (EPERM)");
+          ReturnCode(ERR_FSAL_PERM, 0);
+        }
+      else
+        {
+          LogDebug(COMPONENT_NFS_V4_ACL,
+                   "access denied (EACCESS)");
+          ReturnCode(ERR_FSAL_ACCESS, 0);
+        }
     }
   else
     {
