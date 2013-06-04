@@ -2,6 +2,9 @@ include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
 )
 
+# Add the directory for stackable FSALs
+add_subdirectory(Stackable_FSALs)
+
 # All we need to do here is control the
 # build of chosen fsals
 
