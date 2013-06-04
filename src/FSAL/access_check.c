@@ -484,6 +484,13 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
                    }
 
                  missing_access &= ~(pace->perm & missing_access);
+
+                 /* If this DENY ACE blocked the last remaining requested access
+                  * bits, break out of the loop because we're done and don't
+                  * want to evaluate any more ACEs.
+                  */
+                 if(!missing_access)
+                   break;
                }
             }
         }
