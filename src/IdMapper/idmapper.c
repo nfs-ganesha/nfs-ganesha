@@ -353,7 +353,7 @@ int name2uid(char *name, uid_t * puid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
                        name, -rc, strerror(-rc));
-          return 0;
+          return 1;
         }
 
       if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
