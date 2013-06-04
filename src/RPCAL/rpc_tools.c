@@ -219,12 +219,14 @@ extern int display_sockaddr(struct display_buffer * dspbuf,
                             bool_t                  showport)
 {
   const char * name = NULL;
+  char         ipname[SOCK_NAME_MAX];
   int          port;
   int          b_left = display_start(dspbuf);
 
   if(b_left <= 0)
     return b_left;
 
+  name = &ipname[0];
 #ifdef _USE_TIRPC
   switch(addr->ss_family)
     {
@@ -233,8 +235,8 @@ extern int display_sockaddr(struct display_buffer * dspbuf,
           return display_force_overflow(dspbuf);
         name = inet_ntop(addr->ss_family,
                          &(((struct sockaddr_in *)addr)->sin_addr),
-                         dspbuf->b_current,
-                         b_left);
+                         (char *)name,
+                         SOCK_NAME_MAX);
         port = ntohs(((struct sockaddr_in *)addr)->sin_port);
         break;
       case AF_INET6:
@@ -242,8 +244,8 @@ extern int display_sockaddr(struct display_buffer * dspbuf,
           return display_force_overflow(dspbuf);
         name = inet_ntop(addr->ss_family,
                          &(((struct sockaddr_in6 *)addr)->sin6_addr),
-                         dspbuf->b_current,
-                         b_left);
+                         (char *)name,
+                         SOCK_NAME_MAX);
         port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
         break;
       case AF_LOCAL:
@@ -259,8 +261,8 @@ extern int display_sockaddr(struct display_buffer * dspbuf,
     return display_force_overflow(dspbuf);
   name = inet_ntop(addr->sin_family,
                    &addr->sin_addr,
-                   dspbuf->b_current,
-                   b_left);
+                   (char *)name,
+                   SOCK_NAME_MAX);
   port = ntohs(addr->sin_port);
 #endif
 
@@ -268,6 +270,7 @@ extern int display_sockaddr(struct display_buffer * dspbuf,
     {
       return display_cat(dspbuf, "<unknown>");
     }
+  b_left = display_printf(dspbuf, "%s", name);
 
   if(showport && port >= 0 && b_left > 0)
     b_left = display_printf(dspbuf, ":%d", port);

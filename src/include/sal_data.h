@@ -275,6 +275,7 @@ struct state_nlm_client_t
   state_nsm_client_t    * slc_nsm_client;
   xprt_type_t             slc_client_type;
   int32_t                 slc_refcount;
+  struct sockaddr_storage slc_server_addr;
   int32_t                 slc_nlm_caller_name_len;
   char                  * slc_nlm_caller_name;
   CLIENT                * slc_callback_clnt;

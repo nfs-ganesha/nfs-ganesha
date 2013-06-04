@@ -226,7 +226,22 @@ int display_nlm_client(struct display_buffer * dspbuf,
   if(b_left <= 0)
     return b_left;
 
-  b_left = display_cat(dspbuf, "} caller_name=");
+  b_left = display_cat(dspbuf, "} ");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_cat(dspbuf, "local addr=");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_sockaddr(dspbuf, &(pkey->slc_server_addr), FALSE);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_cat(dspbuf, " caller_name=");
 
   if(b_left <= 0)
     return b_left;
@@ -278,6 +293,9 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
     return 0;
 
   if(compare_nsm_client(pclient1->slc_nsm_client, pclient2->slc_nsm_client) != 0)
+    return 1;
+
+  if(cmp_sockaddr(&pclient1->slc_server_addr, &pclient2->slc_server_addr, IGNORE_PORT) == 0)
     return 1;
 
   if(pclient1->slc_client_type != pclient2->slc_client_type)
@@ -1033,6 +1051,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   hash_error_t            rc;
   hash_buffer_t           buffkey;
   hash_buffer_t           buffval;
+  struct sockaddr         *local_addr_ptr;
+  sockaddr_t              local_addr;
+  socklen_t               addr_len;
 
   if(caller_name == NULL)
     return NULL;
@@ -1042,6 +1063,18 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   key.slc_nsm_client          = pnsm_client;
   key.slc_nlm_caller_name_len = strlen(caller_name);
   key.slc_client_type         = svc_get_xprt_type(xprt);
+
+
+  local_addr_ptr = (struct sockaddr *)&local_addr;
+  addr_len = sizeof(struct sockaddr);
+  if (getsockname(xprt->xp_fd, local_addr_ptr, &addr_len) == -1) {
+    LogEvent(COMPONENT_STATE, "Failed to get local addr.");
+    return NULL;
+  }
+  else
+  {  
+    memcpy(&(key.slc_server_addr), local_addr_ptr, sizeof(struct sockaddr_storage));
+  }
 
   if(key.slc_nlm_caller_name_len > LM_MAXSTRLEN)
     return NULL;

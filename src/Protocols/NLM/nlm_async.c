@@ -32,6 +32,8 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include <rpc/types.h>
+#include <rpc/nettype.h>
 
 #include "sal_functions.h"
 #include "nlm4.h"
@@ -174,10 +176,48 @@ int nlm_send_async(int                  proc,
                        "Clnt_create %s",
                        host->slc_nsm_client->ssc_nlm_caller_name);
 
-          host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
+          if (host->slc_client_type == XPRT_TCP)
+          {
+            int fd;
+            struct sockaddr_in server_addr;
+            struct netbuf *buf;
+
+            fd = socket(AF_INET, SOCK_STREAM, 0);
+            if (fd < 0)
+            {
+              return -1;
+            }
+
+            memcpy(&server_addr, &(host->slc_server_addr), sizeof(struct sockaddr_in));
+            server_addr.sin_port        = 0;
+
+            if(bind(fd,
+                    (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+            {
+              close(fd);
+              return -1;
+            }
+
+            /* construct the remote end point for NLM */
+            buf = rpcb_find_mapped_addr((char *)xprt_type_to_str(host->slc_client_type),
+                                        NLMPROG,
+                                        NLM4_VERS,
+                                        host->slc_nsm_client->ssc_nlm_caller_name);
+
+            host->slc_callback_clnt = clnt_vc_ncreate(fd, buf,
+                                                      NLMPROG,
+                                                      NLM4_VERS,
+                                                      0,0);
+            gsh_free(buf->buf);
+            gsh_free(buf);
+          }
+          else
+          {
+            host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
                                                 NLMPROG,
                                                 NLM4_VERS,
                                                 (char *)xprt_type_to_str(host->slc_client_type));
+          }
 
           if(host->slc_callback_clnt == NULL)
             {
