@@ -1181,6 +1181,9 @@ void nfs_start(nfs_start_info_t * p_start_info)
         }
     }
 
+  /* Make sure Ganesha runs with a 0000 umask. */
+  umask(0000);
+
   {
     /* Set the write verifiers */
     union
