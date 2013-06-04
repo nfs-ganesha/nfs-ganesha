@@ -4331,6 +4331,7 @@ void nfs_access_op(cache_entry_t *entry,
 {
   fsal_accessflags_t access_mask;
   fsal_accessflags_t access_allowed;
+  fsal_accessflags_t access_denied;
   uint32_t           granted_mask = requested_access;
   
   access_mask = 0;
@@ -4424,7 +4425,7 @@ void nfs_access_op(cache_entry_t *entry,
   (void) cache_inode_access_sw(entry,
                                access_mask,
                                &access_allowed,
-                               NULL,
+                               &access_denied,
                                context,
                                status,
                                attrs,
