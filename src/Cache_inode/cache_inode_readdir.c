@@ -134,6 +134,14 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
          goto out;
      }
 
+     LogFullDebug(COMPONENT_CACHE_INODE,
+                  "%s %p name=%s newname=%s",
+                  dirent_op == CACHE_INODE_DIRENT_OP_REMOVE ?
+                  "REMOVE" : "RENAME",
+                  directory,
+                  name,
+                  newname);
+
      /* If no active entry, do nothing */
      if (directory->object.dir.nbactive == 0) {
        if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
