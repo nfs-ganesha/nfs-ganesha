@@ -317,10 +317,8 @@ void dbus_status_reply(DBusMessageIter *iter,
 	dbus_message_iter_append_basic(iter,
 				       DBUS_TYPE_BOOLEAN,
 				       &retcode);
-	if(success) {
-		error = "OK";
-	} else if(errormsg == NULL) {
-		error = "BUSY";
+	if(errormsg == NULL) {
+		error = success ? "OK" :"BUSY";
 	} else {
 		error = errormsg;
 	}
