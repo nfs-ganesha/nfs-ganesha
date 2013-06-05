@@ -112,7 +112,6 @@ cache_inode_remove(cache_entry_t *entry,
      cache_entry_t *to_remove_entry = NULL;
      cache_inode_status_t tmp_status;
      cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
-     cache_inode_status_t status_ref_to_remove_entry = CACHE_INODE_SUCCESS;
      fsal_status_t fsal_status = {0, 0};
 
      if(entry->type != DIRECTORY) {
@@ -155,17 +154,9 @@ cache_inode_remove(cache_entry_t *entry,
      }
 
      /* Update the attributes for the removed entry */
-     status_ref_to_remove_entry = cache_inode_refresh_attrs_locked(to_remove_entry, context);
-     if (status_ref_to_remove_entry == CACHE_INODE_FSAL_ESTALE) {
-             status_ref_to_remove_entry = CACHE_INODE_SUCCESS;
-     }
+     (void)cache_inode_refresh_attrs_locked(to_remove_entry, context);
 
-     if (((*status = status_ref_entry) != CACHE_INODE_SUCCESS) ||
-         ((*status = status_ref_to_remove_entry) != CACHE_INODE_SUCCESS)) {
-         LogDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_refresh_attrs_locked(to_remove_entry %p) returned %s",
-                  to_remove_entry,
-                  cache_inode_err_str(status_ref_to_remove_entry));
+     if ((*status = status_ref_entry) != CACHE_INODE_SUCCESS) { 
          LogDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_refresh_attrs_locked(entry %p) returned %s",
                   entry,
