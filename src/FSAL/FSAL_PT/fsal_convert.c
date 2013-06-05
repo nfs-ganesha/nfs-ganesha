@@ -134,6 +134,9 @@ posix2fsal_error(int posix_errorcode)
     case EINVAL:
       return ERR_FSAL_INVAL;
 
+    case EROFS:
+       return ERR_FSAL_ROFS;
+
     case EFBIG:
       return ERR_FSAL_FBIG;
 
