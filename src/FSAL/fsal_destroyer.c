@@ -198,18 +198,21 @@ void destroy_fsals(void)
 		}
 		if (m->dl_handle) {
 			int rc = 0;
+			char *fsal_name = gsh_strdup(m->name);
+
 			LogEvent(COMPONENT_FSAL,
 				 "Unloading FSAL %s",
-				 m->name);
+				 fsal_name);
 			rc = m->ops->unload(m);
 			if (rc != 0) {
 				LogMajor(COMPONENT_FSAL,
 					 "Unload of %s failed with error %d",
-					 m->name, rc);
+					 fsal_name, rc);
 			}
 			LogEvent(COMPONENT_FSAL,
 				 "FSAL %s unloaded",
-				 m->name);
+				 fsal_name);
+			gsh_free(fsal_name);
 		}
 	}
 }
