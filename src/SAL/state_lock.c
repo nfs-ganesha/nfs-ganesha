@@ -3141,6 +3141,7 @@ void state_lock_wipe(cache_entry_t        * pentry)
   cache_inode_dec_pin_ref(pentry, FALSE);
 }
 
+#ifdef _USENLM
 void cancel_all_nlm_blocked()
 {
   struct glist_head *glist, *glistn;
@@ -3216,3 +3217,4 @@ void cancel_all_nlm_blocked()
     V(blocked_locks_mutex);
     return;
 }
+#endif
