@@ -1,30 +1,41 @@
 #!/usr/bin/python
 
-# You must initialize the gobject/dbus support for threading
-# before doing anything.
-import gobject
 import sys
+from PyQt4 import QtCore, QtDBus
+from PyQt4.QtGui import QApplication
+from dbus.mainloop.qt import DBusQtMainLoop
+from admin import AdminInterface
 
-ipaddr=sys.argv[1]
-print 'event:ip_addr=', ipaddr
+SERVICE = 'org.ganesha.nfsd'
 
-gobject.threads_init()
+class GracePeriod(QtCore.QObject):
 
-from dbus import glib
-glib.init_threads()
+    show_status = QtCore.pyqtSignal(bool, str)
+    
+    def __init__(self, sysbus, parent=None):
+        super(GracePeriod, self).__init__()
+        self.admin = AdminInterface(SERVICE,
+                                    '/org/ganesha/nfsd/admin',
+                                    sysbus,
+                                    self.show_status)
+        self.show_status.connect(self.status_message)
 
-# Create a session bus.
-import dbus
-bus = dbus.SystemBus()
+    def grace(self, ipaddr):
+        self.admin.grace(ipaddr)
+        print "Start grace period."
 
-# Create an object that will proxy for a particular remote object.
-admin = bus.get_object("org.ganesha.nfsd",
-                       "/org/ganesha/nfsd/admin")
+    def status_message(self, status, errormsg):
+        print "Returns: status = %s, %s" % (str(status), errormsg)
+        sys.exit()
 
-# call method
-ganesha_grace = admin.get_dbus_method('grace',
-                               'org.ganesha.nfsd.admin')
-
-print "Start grace period."
-
-print ganesha_grace(ipaddr)
+# Main
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    loop = DBusQtMainLoop(set_as_default=True)
+    sysbus = QtDBus.QDBusConnection.systemBus()
+    grace = GracePeriod(sysbus)
+    ipaddr=sys.argv[1]
+    print 'event:ip_addr=', ipaddr
+    grace.grace(ipaddr)
+    app.exec_()
+    
