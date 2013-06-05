@@ -813,6 +813,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 	   record */
 	clientid->cid_client_record->cr_confirmed_rec = clientid;
 
+	nfs4_add_clid(clientid);
+
 	return CLIENT_ID_SUCCESS;
 }
 

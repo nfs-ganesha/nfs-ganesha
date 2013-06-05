@@ -70,7 +70,28 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
 
   if(!nfs41_Session_Get_Pointer(arg_SEQUENCE4.sa_sessionid, &session))
     {
-      res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION;
+      if (nfs_in_grace())
+      {
+        memcpy(res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sessionid,
+               arg_SEQUENCE4.sa_sessionid, NFS4_SESSIONID_SIZE);
+        res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sequenceid =
+                                               arg_SEQUENCE4.sa_sequenceid;
+        res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_slotid =
+                                               arg_SEQUENCE4.sa_slotid;
+        res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_highest_slotid =
+                                               NFS41_NB_SLOTS - 1;
+        res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid =
+                                               arg_SEQUENCE4.sa_slotid;
+        res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags =
+                                             SEQ4_STATUS_RESTART_RECLAIM_NEEDED;
+        LogDebug(COMPONENT_SESSIONS,
+                 "SEQUENCE returning status %d flags 0x%X",
+                  res_SEQUENCE4.sr_status,
+                  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags);
+      }
+      else
+        res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION;
+
       return res_SEQUENCE4.sr_status;
     }
 
