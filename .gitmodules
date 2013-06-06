@@ -1,3 +1,4 @@
 [submodule "src/libntirpc"]
 	path = src/libntirpc
-	url = http://github.com/linuxbox2/ntirpc.git
+	url = http://github.com/nfs-ganesha/ntirpc.git 
+
