@@ -3760,6 +3760,15 @@ bool xdr_nfs_opnum4(XDR * xdrs, nfs_opnum4 * objp)
 
 bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
 {
+  static struct nfs_request_lookahead slhd = {
+    .flags = 0,
+    .read = 0,
+    .write = 0
+  };
+  struct nfs_request_lookahead *lkhd =
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &slhd;
+
   if(!xdr_nfs_opnum4(xdrs, &objp->argop))
     return FALSE;
   switch (objp->argop)
@@ -3975,9 +3984,8 @@ bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
         return FALSE;
       break;
     case NFS4_OP_ILLEGAL:
-      break;
     default:
-      return FALSE;
+      break;
     }
   return TRUE;
 }
@@ -4213,11 +4221,10 @@ bool xdr_nfs_resop4(XDR * xdrs, nfs_resop4 * objp)
         return FALSE;
       break;
     case NFS4_OP_ILLEGAL:
+    default:
       if(!xdr_ILLEGAL4res(xdrs, &objp->nfs_resop4_u.opillegal))
         return FALSE;
       break;
-    default:
-      return FALSE;
     }
   return TRUE;
 }

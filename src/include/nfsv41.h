@@ -7510,9 +7510,8 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
         return FALSE;
       break;
     case NFS4_OP_ILLEGAL:
-      break;
     default:
-      return FALSE;
+      break;
     }
   return TRUE;
 }
@@ -7748,11 +7747,10 @@ static inline bool xdr_nfs_resop4(XDR * xdrs, nfs_resop4 * objp)
         return FALSE;
       break;
     case NFS4_OP_ILLEGAL:
+    default:
       if(!xdr_ILLEGAL4res(xdrs, &objp->nfs_resop4_u.opillegal))
         return FALSE;
       break;
-    default:
-      return FALSE;
     }
   return TRUE;
 }
