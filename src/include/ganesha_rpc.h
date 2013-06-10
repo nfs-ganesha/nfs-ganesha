@@ -160,7 +160,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags, const char *tag, const int line)
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
         req_cnt = ++(xu->req_cnt);
 
-    refd = SVC_REF(xprt, SVC_REF_FLAG_LOCKED, tag, line);
+    refd = SVC_REF2(xprt, SVC_REF_FLAG_LOCKED, tag, line);
     /* !LOCKED */
 
     LogFullDebug(COMPONENT_DISPATCH,
@@ -194,7 +194,7 @@ gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags, const char *tag, const int line)
 
 
     /* release xprt refcnt */
-    SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED, tag, line);
+    SVC_RELEASE2(xprt, SVC_RELEASE_FLAG_LOCKED, tag, line);
     /* !LOCKED */
 
     LogFullDebug(COMPONENT_RPC,
