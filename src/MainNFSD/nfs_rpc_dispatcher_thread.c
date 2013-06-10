@@ -868,7 +868,8 @@ thr_stallq(struct fridgethr_context *thr_ctx)
                 pthread_mutex_unlock(&xprt->xp_lock);
                 (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
                 /* drop stallq ref */
-                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE);
+                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE, __func__,
+                    __LINE__);
                 goto restart;
             }
         }
@@ -1621,7 +1622,8 @@ thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
             goto finish;
 
         /* update accounting */
-        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ)) {
+        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__,
+                           __LINE__)) {
             stat = XPRT_DIED;
             goto finish;
         }
@@ -1690,7 +1692,7 @@ thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
         SVC_DESTROY(xprt);
 
     /* update accounting, clear decoding flag */
-    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING, __func__, __LINE__);
 }
 
 static bool
@@ -1833,7 +1835,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 		     xprt);
 
 	svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
-	gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+	gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING, __func__, __LINE__);
     } else if (code != 0) {
 	LogMajor(COMPONENT_DISPATCH,
 		 "Unable to get decode thread: %d", code);
