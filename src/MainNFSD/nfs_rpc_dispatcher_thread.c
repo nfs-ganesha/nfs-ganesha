@@ -877,7 +877,8 @@ thr_stallq(void *arg)
                 pthread_mutex_unlock(&xprt->xp_lock);
                 (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
                 /* drop stallq ref */
-                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE);
+                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE, __func__,
+                    __LINE__);
                 goto restart;
             }
         }
@@ -1469,7 +1470,8 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
             goto finish;
 
         /* update accounting */
-        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ)) {
+        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__,
+                           __LINE__)) {
             stat = XPRT_DIED;
             goto finish;
         }
@@ -1540,7 +1542,7 @@ thr_decode_rpc_requests(void *arg)
         SVC_DESTROY(xprt);
 
     /* update accounting, clear decoding flag */
-    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING, __func__, __LINE__);
 
   return (NULL);
 }

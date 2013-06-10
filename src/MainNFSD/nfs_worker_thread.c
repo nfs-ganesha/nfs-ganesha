@@ -1560,7 +1560,8 @@ void *worker_thread(void *IndexArg)
       switch(nfsreq->rtype) {
       case NFS_REQUEST:
 	/* adjust req_cnt and return xprt ref */
-	gsh_xprt_unref(nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_DECREQ);
+        gsh_xprt_unref(nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_DECREQ,
+                       __func__, __LINE__);
 	break;
       case NFS_CALL:
 	break;

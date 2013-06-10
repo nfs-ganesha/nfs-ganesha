@@ -148,7 +148,7 @@ free_gsh_xprt_private(SVCXPRT *xprt)
 }
 
 static inline bool
-gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
+gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags, const char *tag, const int line)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
     uint32_t req_cnt;
@@ -160,21 +160,21 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
         req_cnt = ++(xu->req_cnt);
 
-    refd = SVC_REF(xprt,  SVC_REF_FLAG_LOCKED);
+    refd = SVC_REF(xprt, SVC_REF_FLAG_LOCKED, tag, line);
     /* !LOCKED */
 
     LogFullDebug(COMPONENT_DISPATCH,
-                 "xprt %p req_cnt=%u",
-                 xprt, req_cnt);
+                 "xprt %p req_cnt=%u tag=%s line=%d",
+                 xprt, req_cnt, tag, line);
 
     return (refd);
 }
 
 static inline void
-gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags)
+gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags, const char *tag, const int line)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-    uint32_t refcnt, req_cnt;
+    uint32_t req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
         pthread_mutex_lock(&xprt->xp_lock);
@@ -188,16 +188,19 @@ gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags)
         if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
             xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
 
-    /* idempotent:  note expected value after release */
-    refcnt = xprt->xp_refcnt - 1;
+    LogFullDebug(COMPONENT_RPC,
+                 "xprt %p prerelease req_cnt=%u xp_refcnt=%u tag=%s line=%d",
+                 xprt, req_cnt, xprt->xp_refcnt, tag, line);
+
 
     /* release xprt refcnt */
-    SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED);
+    SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED, tag, line);
     /* !LOCKED */
 
     LogFullDebug(COMPONENT_RPC,
-                 "xprt %p req_cnt=%u refcnt=%u",
-                 xprt, req_cnt, refcnt);
+                 "xprt %p postrelease req_cnt=%u xp_refcnt=%u tag=%s line=%d",
+                 xprt, req_cnt, xprt->xp_refcnt, tag, line);
+
     return;
 }
 
