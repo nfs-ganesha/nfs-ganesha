@@ -913,10 +913,10 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
         return (FALSE);
     }
 
-    /* XXX can't happen */
     if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
-        pthread_mutex_unlock(&xprt->xp_lock);
-        LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
+        /* release xprt refcnt */
+        SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED);
+        LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled",
                  xprt);
         return (TRUE);
     }
@@ -1672,6 +1672,8 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
                      __tirpc_dcounter, xprt);
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+        /* release xprt refcnt */
+        SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
         goto out;
     }
 
