@@ -748,7 +748,7 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
 	     const u_int flags, void *u_data)
 {
     static uint32_t next_chan = TCP_EVCHAN_0;
-    pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+    static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
     uint32_t tchan;
 
     pthread_mutex_lock(&mtx);
