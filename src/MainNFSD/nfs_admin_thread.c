@@ -100,21 +100,29 @@ static admin_status_t admin_status;
 static bool admin_dbus_reload(DBusMessageIter *args,
 			      DBusMessage *reply)
 {
+	char *errormsg = "Exports reloaded";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
 	if (args != NULL) {
-		LogWarn(COMPONENT_DBUS,
-			"Replace exports take no arguments.");
-		return false;
+		errormsg = "Replace exports take no arguments.";
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
 	}
 
 	admin_replace_exports();
 
-	return true;
+out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
 }
 
 static struct gsh_dbus_method method_reload = {
 	.name = "reload",
 	.method = admin_dbus_reload,
-	.args = {{NULL, NULL, NULL}
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST
 	}
 };
 
@@ -129,7 +137,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 			      DBusMessage *reply)
 {
 #define IP_INPUT 120
-	char *errormsg = "OK";
+	char *errormsg = "Started grace period";
 	bool success = true;
 	DBusMessageIter iter;
         nfs_grace_start_t gsp;
@@ -140,15 +148,14 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	if (args == NULL) {
 		errormsg = "Grace period take 1 arguments: event:IP-address.";
-		LogWarn(COMPONENT_DBUS,
-			"Grace period take 1 arguments: event:IP-address.");
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
 		success = false;
 		goto out;
 	}
 	if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+		errormsg = "Grace period arg 1 not a string.";
 		success = false;
-		LogWarn(COMPONENT_DBUS,
-			"Grace period arg 1 not a string.");
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
 		goto out;
 	}
 	dbus_message_iter_get_basic(args, &input);
@@ -195,21 +202,30 @@ static struct gsh_dbus_method method_grace_period = {
 static bool admin_dbus_shutdown(DBusMessageIter *args,
 				DBusMessage *reply)
 {
+	char *errormsg = "Server shut down";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
 	if (args != NULL) {
-		LogWarn(COMPONENT_DBUS,
-			"Shutdown takes no arguments.");
-		return false;
+		errormsg = "Shutdown takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
 	}
 
 	admin_halt();
 
-	return true;
+out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
 }
 
 static struct gsh_dbus_method method_shutdown = {
 	.name = "shutdown",
 	.method = admin_dbus_shutdown,
-	.args = {{NULL, NULL, NULL}
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST
 	}
 };
 

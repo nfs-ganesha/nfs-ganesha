@@ -1,25 +1,39 @@
 #!/usr/bin/python
 
-# You must initialize the gobject/dbus support for threading
-# before doing anything.
-import gobject
-gobject.threads_init()
+import sys
+from PyQt4 import QtCore, QtDBus
+from PyQt4.QtGui import QApplication
+from dbus.mainloop.qt import DBusQtMainLoop
+from admin import AdminInterface
 
-from dbus import glib
-glib.init_threads()
+SERVICE = 'org.ganesha.nfsd'
 
-# Create a session bus.
-import dbus
-bus = dbus.SystemBus()
+class ShutDown(QtCore.QObject):
 
-# Create an object that will proxy for a particular remote object.
-admin = bus.get_object("org.ganesha.nfsd",
-                       "/org/ganesha/nfsd/admin")
+    show_status = QtCore.pyqtSignal(bool, str)
+    
+    def __init__(self, sysbus, parent=None):
+        super(ShutDown, self).__init__()
+        self.admin = AdminInterface(SERVICE,
+                                    '/org/ganesha/nfsd/admin',
+                                    sysbus,
+                                    self.show_status)
+        self.show_status.connect(self.status_message)
 
-# call method
-shutdown = admin.get_dbus_method('shutdown',
-                                 'org.ganesha.nfsd.admin')
+    def shutdown(self):
+        self.admin.shutdown()
+        print "Shutting down server."
 
-print "Shutting down."
+    def status_message(self, status, errormsg):
+        print "Returns: status = %s, %s" % (str(status), errormsg)
+        sys.exit()
 
-shutdown()
+# Main
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    loop = DBusQtMainLoop(set_as_default=True)
+    sysbus = QtDBus.QDBusConnection.systemBus()
+    shutdown = ShutDown(sysbus)
+    shutdown.shutdown()
+    app.exec_()
+
