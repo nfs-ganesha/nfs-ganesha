@@ -3139,7 +3139,7 @@ void state_lock_wipe(cache_entry_t        * pentry)
   cache_inode_dec_pin_ref(pentry, FALSE);
 }
 
-#ifdef _USENLM
+#ifdef _USE_NLM
 void cancel_all_nlm_blocked()
 {
   struct glist_head *glist, *glistn;
