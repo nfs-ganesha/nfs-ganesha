@@ -334,6 +334,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
@@ -343,6 +344,7 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
 
 install -m 644 config_samples/logrotate_ganesha          $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
 install -m 755 ganesha.init                              $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
+install -m 644 scripts/systemd/nfs-ganesha.service       $RPM_BUILD_ROOT%{_unitdir}/nfs-ganesha.service
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf  $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
 install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
@@ -361,6 +363,7 @@ rm -rf build_tree
 %{_bindir}/*
 %config   %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf 
 %config   %{_sysconfdir}/sysconfig/ganesha
+%config   %{_unitdir}/nfs-ganesha.service
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %config %{_sysconfdir}/init.d/ganesha
 %dir %{_sysconfdir}/ganesha/
