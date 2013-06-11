@@ -157,7 +157,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
      pnewfid->specdata.xattr.xattr_id = 0 ;
      pnewfid->specdata.xattr.xattr_content = NULL ;
 
-     switch( pfid->pentry->type )
+     switch( pnewfid->pentry->type )
       {
         case REGULAR_FILE:
         case CHARACTER_FILE:
@@ -191,10 +191,11 @@ int _9p_walk( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RWALK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  
+
   _9p_setptr( cursor, nwqid, u16 ) ;
   for( i = 0 ; i < *nwqid ; i++ )
     { 
+      /** @todo: should be different qids for each directory walked through */
       _9p_setqid( cursor, pnewfid->qid ) ;
     }
 
