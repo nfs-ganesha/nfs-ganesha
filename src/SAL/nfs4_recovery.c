@@ -213,6 +213,40 @@ nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
 }
 
 /**
+ * @brief generate a name that identifies this 4.1 client
+ *
+ * This name will be used to know that a client was talking to the
+ * server before a restart so that it will be allowed to do reclaims
+ * during grace period.
+ *
+ * @param[in] cl_rec   Client name record
+ * @param[in] clientid Client record
+ */
+void
+nfs4_create_clid_name41(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid)
+{
+        int i;
+        char buf[SOCK_NAME_MAX + 1];
+        longlong_t cl_val = 0;
+
+        clientid->cid_recov_dir = gsh_malloc(256);
+        if (clientid->cid_recov_dir == NULL) {
+                LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
+                return;
+        }
+        /* get the caller's IP addr */
+	sprint_sockip(&clientid->cid_client_addr, buf, sizeof(buf));
+
+        for (i = 0; i < cl_rec->cr_client_val_len; i++)
+                cl_val += cl_rec->cr_client_val[i];
+
+        snprintf(clientid->cid_recov_dir, 256, "%s-%llx", buf, cl_val);
+
+        LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
+		 clientid->cid_recov_dir);
+}
+
+/**
  * @brief Create an entry in the recovery directory
  *
  * This entry alows the client to reclaim state after a server
@@ -225,6 +259,9 @@ nfs4_add_clid(nfs_client_id_t *clientid)
 {
         int err;
         char path[PATH_MAX + 1];
+
+        if (clientid->cid_minorversion > 0)
+		nfs4_create_clid_name41(clientid->cid_client_record, clientid);
 
         if (clientid->cid_recov_dir == NULL) {
                 LogEvent(COMPONENT_CLIENTID,
@@ -283,6 +320,10 @@ nfs4_chk_clid(nfs_client_id_t *clientid)
 {
         struct glist_head *node;
         clid_entry_t *clid_ent;
+
+        LogDebug(COMPONENT_CLIENTID, "chk for %s", clientid->cid_recov_dir);
+        if (clientid->cid_recov_dir == NULL)
+                return;
 
         /* If we aren't in grace period, then reclaim is not possible */
         if (!nfs_in_grace())
@@ -398,6 +439,9 @@ nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
         clid_entry_t *clid_entry;
         int rc;
         char path[PATH_MAX + 1];
+
+	LogDebug(COMPONENT_STATE,
+		"Load recovery cli %p", gsp);
 
         if (gsp == NULL) {
                 /* when not doing a takeover, start with an empty list */

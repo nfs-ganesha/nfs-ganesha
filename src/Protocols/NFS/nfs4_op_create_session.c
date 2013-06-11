@@ -461,6 +461,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			dec_client_id_ref(unconf);
 			goto out;
 		}
+                nfs4_chk_clid(unconf);
 
 		conf   = unconf;
 		unconf = NULL;
