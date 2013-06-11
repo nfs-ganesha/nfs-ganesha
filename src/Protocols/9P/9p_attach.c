@@ -57,7 +57,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   char * uname_str = NULL ;
   u16 * aname_len = NULL ;
   char * aname_str = NULL ;
-  u32 * n_aname = NULL ;
+  u32 * n_uname = NULL ;
 
   uint64_t fileid;
 
@@ -78,10 +78,10 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, afid,   u32 ) ; 
   _9p_getstr( cursor, uname_len, uname_str ) ;
   _9p_getstr( cursor, aname_len, aname_str ) ;
-  _9p_getptr( cursor, n_aname, u32 ) ; 
+  _9p_getptr( cursor, n_uname, u32 ) ; 
 
   LogDebug( COMPONENT_9P, "TATTACH: tag=%u fid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
-            (u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
+            (u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_uname ) ;
 
   /*
    * Find the export for the aname (using as well Path or Tag ) 
@@ -108,7 +108,13 @@ int _9p_attach( _9p_request_data_t * preq9p,
   preq9p->pconn->fids[*fid] = pfid ;
 
   /* Is user name provided as a string or as an uid ? */
-  if( *uname_len != 0 )
+  if( *n_uname != _9P_NONUNAME )
+   {
+    /* Build the fid creds */
+    if( ( err = _9p_tools_get_req_context_by_uid( *n_uname, pfid ) ) !=  0 )
+      return _9p_rerror( preq9p, pworker_data, msgtag, -err, plenout, preply ) ;
+   }
+  else if( *uname_len != 0 )
    {
      /* Build the fid creds */
     if( ( err = _9p_tools_get_req_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
@@ -116,9 +122,8 @@ int _9p_attach( _9p_request_data_t * preq9p,
    }
   else
    {
-    /* Build the fid creds */
-    if( ( err = _9p_tools_get_req_context_by_uid( *n_aname, pfid ) ) !=  0 )
-      return _9p_rerror( preq9p, pworker_data, msgtag, -err, plenout, preply ) ;
+    /* No n_uname nor uname */
+    return _9p_rerror( preq9p, pworker_data, msgtag, EINVAL, plenout, preply ) ;
    }
 
   /* Check if root cache entry is correctly set */
