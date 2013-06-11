@@ -217,6 +217,14 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
         }
     }
 
+  if(lookup_src == lookup_dest)
+    {
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Rename (%p,%s)->(%p,%s) : same file so skipping out",
+               dir_src, oldname->name, dir_dest, newname->name);
+      goto out;
+    }
+
   LogFullDebug(COMPONENT_CACHE_INODE,
                "about to call FSAL_rename");
 
