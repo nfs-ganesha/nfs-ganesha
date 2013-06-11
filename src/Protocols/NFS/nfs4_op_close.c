@@ -104,12 +104,20 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                           data->current_entry,
                           &pstate_found,
                           data,
-                          STATEID_SPECIAL_FOR_LOCK,
+                          STATEID_SPECIAL_FOR_CLOSE_40,
                           0,
                           FALSE,                  /* do not check owner seqid */
                           tag);
 
-  if(rc == NFS4ERR_BAD_STATEID)
+  if(rc != NFS4_OK)
+    {
+      res_CLOSE4.status = rc;
+      LogDebug(COMPONENT_STATE,
+               "CLOSE failed nfs4_Check_Stateid");
+      return res_CLOSE4.status;
+    }
+
+  if(pstate_found == NULL)
     {
       /* Assume this is a replayed close */
       res_CLOSE4.status = NFS4_OK;
@@ -120,15 +128,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(res_CLOSE4.CLOSE4res_u.open_stateid.seqid == 0)
         res_CLOSE4.CLOSE4res_u.open_stateid.seqid = 1;
       LogDebug(COMPONENT_STATE,
-               "CLOSE failed nfs4_Check_Stateid with NFS4ERR_BAD_STATEID");
-      return res_CLOSE4.status;
-    }
-
-  if(rc != NFS4_OK)
-    {
-      res_CLOSE4.status = rc;
-      LogDebug(COMPONENT_STATE,
-               "CLOSE failed nfs4_Check_Stateid");
+               "CLOSE failed nfs4_Check_Stateid must have already been closed");
       return res_CLOSE4.status;
     }
 

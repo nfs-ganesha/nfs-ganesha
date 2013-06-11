@@ -103,7 +103,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                               data->current_entry,
                               &pstate_found,
                               data,
-                              STATEID_SPECIAL_FOR_LOCK,
+                              STATEID_SPECIAL_FOR_CLOSE_41,
                               0,FALSE,                  /* do not check seqid */
                               tag)) != NFS4_OK)
     {

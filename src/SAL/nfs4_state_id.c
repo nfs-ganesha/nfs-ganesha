@@ -435,17 +435,61 @@ int nfs4_Check_Stateid(stateid4        * pstate,
           return clientid_error_to_nfsstat(rc);
         }
 
+      if((flags & (STATEID_SPECIAL_CLOSE_40 | STATEID_SPECIAL_CLOSE_41)) != 0)
+        {
+          /* This is a close with a valid clientid, but invalid stateid
+           * counter. We will assume this is a replayed close.
+           */
+          if(data->preserved_clientid != NULL)
+            {
+              /* We don't ever expect this to happen, but, just in case...
+               * Update and release already reserved lease.
+               */
+             P(data->preserved_clientid->cid_mutex);
+             update_lease(data->preserved_clientid);
+             V(data->preserved_clientid->cid_mutex);
+             data->preserved_clientid = NULL;
+            }
+
+          /* Check if lease is expired and reserve it */
+          P(pclientid->cid_mutex);
+
+          if(!reserve_lease(pclientid))
+            {
+              LogDebug(COMPONENT_STATE,
+                       "Returning NFS4ERR_EXPIRED");
+              V(pclientid->cid_mutex);
+              return NFS4ERR_EXPIRED;
+            }
+
+          if((flags & STATEID_SPECIAL_CLOSE_40) != 0)
+            {
+              /* Just update the lease and leave the reserved clientid NULL. */
+              update_lease(pclientid);
+            }
+          else
+            {
+              /* Remember the reserved clientid for the rest of the compound. */
+              data->preserved_clientid = pclientid;
+            }
+          V(pclientid->cid_mutex);
+        }
+
       /* Release the clientid reference we just acquired. */
       dec_client_id_ref(pclientid);
 
-      /* Otherwise, we assume the stateid is BAD since the clientid portion was
-       * valid.
-       * Dirty work-around for HPC environment, return OK here.
-       */
-      if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)
-        return NFS4ERR_BAD_STATEID;
+      if((nfs_param.nfsv4_param.return_bad_stateid == FALSE) ||
+         ((flags & (STATEID_SPECIAL_CLOSE_40 | STATEID_SPECIAL_CLOSE_41)) != 0))
+        {
+          /* We are explicitly directed to return success (dirty workaround for HPC),
+           * or this is a replayed close.
+           */
+          return NFS4_OK;
+        }
       else
-        return NFS4_OK;
+        {
+          return NFS4ERR_BAD_STATEID;
+        }
     }
 
   /* Now, if this lease is not already reserved, reserve it */
