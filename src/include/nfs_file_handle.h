@@ -114,28 +114,24 @@ static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 	return len;
 }
 
-/* This is up to 128 bytes, aligned on 32 bits
- */
+/* This is up to 128 bytes, aligned on 32 bits */
+#define FILE_HANDLE_V4_FLAG_DS 0x0001
 typedef struct file_handle_v4
 {
-  uint8_t fhversion;	  /* set to 0x41 to separate from Linux knfsd len = 1 byte */
-  uint8_t xattr_pos;      /*                                          len = 1 byte    */
-  uint16_t exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
-  uint32_t srvboot_time;  /* 0 if FH won't expire                     len = 4 bytes   */
-  uint16_t pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
-  uint16_t refid;         /* used for referral                        len = 2 bytes   */
-  uint8_t ds_flag;        /* TRUE if FH is a 'DS file handle'         len = 1 byte    */
-  uint8_t pseudofs_flag;  /* TRUE if FH is within pseudofs            len = 1 byte    */
-  uint8_t fs_len;         /* actual length of opaque handle           len = 1  byte */
-  uint8_t fsopaque[];     /* persistent part of FSAL handle           len <= 113 bytes */
+  uint8_t fhversion;   /* set to 0x42 to separate from Linux knfsd */
+  uint16_t exportid;      /* Must be correlated to exportlist_t::id */
+  uint16_t flags;         /* To replace things like ds_flag */
+  uint8_t fs_len;         /* actual length of opaque handle */
+  uint8_t fsopaque[];     /* persistent part of FSAL handle, may be up
+                             to 122 bytes. */
 } file_handle_v4_t;
 
 /* An NFSv4 handle of maximum size.  use for allocations, sizeof, and memset only
  * the pad space is where the opaque handle expands into. pad is struct aligned
  */
 struct alloc_file_handle_v4 {
-	struct file_handle_v4 handle;	/* the real handle */
-	uint8_t pad[112];			/* pad to mandatory max 128 bytes */
+	struct file_handle_v4 handle;	/* the real handle, 6 bytes fixed */
+	uint8_t pad[120];		/* pad to mandatory max 128 bytes */
 };
 
 /* nfs4_sizeof_handle
