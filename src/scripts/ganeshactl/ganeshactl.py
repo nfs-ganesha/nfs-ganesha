@@ -10,6 +10,10 @@ import sys
 from PyQt4 import QtCore, QtGui, QtDBus 
 from ui_main_window import Ui_MainWindow
 from admin import AdminInterface
+from export_mgr import ExportMgr
+from exports_table import ExportTableModel
+from client_mgr import ClientMgr
+from clients_table import ClientTableModel
 
 SERVICE = 'org.ganesha.nfsd'
 
@@ -28,6 +32,14 @@ class MainWindow(QtGui.QMainWindow):
                                     '/org/ganesha/nfsd/admin',
                                     sysbus,
                                     self.show_status)
+        self.exportmgr = ExportMgr(SERVICE,
+                                   '/org/ganesha/nfsd/ExportMgr',
+                                   sysbus,
+                                   self.show_status)
+        self.clientmgr = ClientMgr(SERVICE,
+                                   '/org/ganesha/nfsd/ClientMgr',
+                                   sysbus,
+                                   self.show_status)
         self.show_status.connect(self.status_message)
 
         # Connect up the ui menubar
@@ -35,9 +47,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.actionDBus_connect.triggered.connect(self.connect_gsh)
         self.ui.actionQuit.triggered.connect(self.quit)
         #Manage
-        self.ui.actionClients.triggered.connect(self.client_mgr)
+        #Manage->Clients
+        self.ui.actionAdd_Client.triggered.connect(self.add_client)
+        self.ui.actionRemove_Client.triggered.connect(self.remove_client)
+        #Manage->Exports
         self.ui.actionExports.triggered.connect(self.export_mgr)
+        #Manage->Log Levels
         self.ui.actionLog_Levels.triggered.connect(self.loglevels)
+        #Manage->Admin
         self.ui.actionReset_Grace.triggered.connect(self.reset_grace)
         self.ui.actionShutdown.triggered.connect(self.shutdown)
         self.ui.actionReload.triggered.connect(self.reload)
@@ -47,7 +64,20 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.actionViewClients.triggered.connect(self.view_clients)
         #Help
         self.ui.actionAbout.triggered.connect(self.help)
+
+        # Dbus data models
+        self.exports_show_model = ExportTableModel(self.exportmgr)
+        self.clients_show_model = ClientTableModel(self.clientmgr)
         
+        # Tabs, tables, and views
+        self.ui.exports.setModel(self.exports_show_model)
+        self.ui.exports.resizeColumnsToContents()
+        self.ui.exports.verticalHeader().setVisible(False)
+        self.ui.clients.setModel(self.clients_show_model)
+        self.ui.clients.resizeColumnsToContents()
+        self.ui.clients.verticalHeader().setVisible(False)
+
+
     # actions to real work...
     def quit(self):
         self.statusBar().showMessage("Bye bye kiddies, quitting")
@@ -56,9 +86,20 @@ class MainWindow(QtGui.QMainWindow):
     def connect_gsh(self):
         self.statusBar().showMessage("Connecting to nfs-ganesha...")
         
-    def client_mgr(self):
-        self.statusBar().showMessage("Client manager")
-        
+    def add_client(self):
+        ipaddr, ok = QtGui.QInputDialog.getText(self,
+                                                'Add a Client',
+                                                'IP Address (N.N.N.N) of client: ')
+        if ok:
+            self.clientmgr.AddClient(ipaddr)
+
+    def remove_client(self):
+        ipaddr, ok = QtGui.QInputDialog.getText(self,
+                                                'Remove a Client',
+                                                'IP Address (N.N.N.N) of client: ')
+        if ok:
+            self.clientmgr.RemoveClient(ipaddr)
+
     def export_mgr(self):
         self.statusBar().showMessage("Export manager")
         
@@ -96,10 +137,10 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage("stats go here")
         
     def view_exports(self):
-        self.statusBar().showMessage("show exports")
+        self.exports_show_model.FetchExports()
         
     def view_clients(self):
-        self.statusBar().showMessage("show clients")
+        self.clients_show_model.FetchClients()
         
     def help(self):
         self.statusBar().showMessage("Help! Help!!")
