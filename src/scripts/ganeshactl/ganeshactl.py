@@ -9,11 +9,11 @@ import sys
 
 from PyQt4 import QtCore, QtGui, QtDBus 
 from ui_main_window import Ui_MainWindow
-from admin import AdminInterface
-from export_mgr import ExportMgr
-from exports_table import ExportTableModel
-from client_mgr import ClientMgr
-from clients_table import ClientTableModel
+from Ganesha.admin import AdminInterface
+from Ganesha.export_mgr import ExportMgr
+from Ganesha.exports_table import ExportTableModel
+from Ganesha.client_mgr import ClientMgr
+from Ganesha.clients_table import ClientTableModel
 
 SERVICE = 'org.ganesha.nfsd'
 

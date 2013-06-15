@@ -5,7 +5,7 @@ import time
 from PyQt4 import QtCore, QtDBus
 from PyQt4.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
-from export_mgr import ExportMgr
+from Ganesha.export_mgr import ExportMgr
 
 SERVICE = 'org.ganesha.nfsd'
 
