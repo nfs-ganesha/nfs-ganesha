@@ -751,13 +751,14 @@ cache_inode_readdir(cache_entry_t *directory,
          in_result && dirent_node;
          dirent_node = avltree_next(dirent_node)) {
 
+          bool_t retry=TRUE;
           cache_entry_t *entry = NULL;
           cache_inode_status_t lookup_status = 0;
 
           dirent = avltree_container_of(dirent_node,
                                         cache_inode_dir_entry_t,
                                         node_hk);
-
+estale_retry:
           entry = cache_inode_weakref_get(&dirent->entry_wkref,
                                           LRU_REQ_SCAN);
 
@@ -771,6 +772,10 @@ cache_inode_readdir(cache_entry_t *directory,
                                                   &lookup_status);
 
                if(entry == NULL) {
+                    if(lookup_status == CACHE_INODE_FSAL_ESTALE) {
+                         retry = FALSE; /* only one retry per dirent */
+                         goto estale_retry;
+                    }
                     LogFullDebug(COMPONENT_NFS_READDIR,
                                  "Lookup returned %s",
                                  cache_inode_err_str(lookup_status));
@@ -803,6 +808,13 @@ cache_inode_readdir(cache_entry_t *directory,
           if (*status != CACHE_INODE_SUCCESS)
             {
               cache_inode_lru_unref(entry, 0);
+
+              if (*status == CACHE_INODE_FSAL_ESTALE)
+                {
+                  retry = FALSE; /* only one retry per dirent */
+                  goto estale_retry;
+                }
+
               if(*status == CACHE_INODE_FSAL_ESTALE)
                 {
                   LogDebug(COMPONENT_NFS_READDIR,
