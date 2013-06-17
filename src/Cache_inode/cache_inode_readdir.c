@@ -526,6 +526,7 @@ cache_inode_readdir(cache_entry_t *directory,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      cache_inode_status_t attr_status;
      struct cache_inode_readdir_cb_parms cb_parms = {opaque, NULL, NULL, true, 0, true};
+     bool retry_stale = true;
 
      /* readdir can be done only with a directory */
      if (directory->type != DIRECTORY) {
@@ -654,12 +655,20 @@ cache_inode_readdir(cache_entry_t *directory,
                                         cache_inode_dir_entry_t,
                                         node_hk);
 
+estale_retry:
+
           entry = cache_inode_get_keyed(&dirent->ckey, req_ctx,
                                         CIG_KEYED_FLAG_NONE);
           if (! entry) {
               LogFullDebug(COMPONENT_NFS_READDIR,
                            "Lookup returned %s",
                            cache_inode_err_str(lookup_status));
+
+          if(retry_stale && lookup_status == CACHE_INODE_FSAL_ESTALE) {
+               retry_stale = false; /* only one retry per dirent */
+               goto estale_retry;
+          }
+
               if (lookup_status == CACHE_INODE_NOT_FOUND) {
                   /* Directory changed out from under us.
                      Invalidate it, skip the name, and keep
@@ -696,6 +705,10 @@ cache_inode_readdir(cache_entry_t *directory,
                            "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
                            cache_inode_err_str(status),
                            dirent->name);
+                  if(retry_stale) {
+                       retry_stale = false; /* only one retry per dirent */
+                       goto estale_retry;
+                  }
 
                   /* Directory changed out from under us.
                      Indicate we should invalidate it,
