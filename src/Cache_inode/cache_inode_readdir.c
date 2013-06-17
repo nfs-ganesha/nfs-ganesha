@@ -205,12 +205,14 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              }
          } else {
              /* try to rename--no longer in-place */
+             cache_inode_dir_entry_t *dirent3_save;
              avl_dirent_set_deleted(directory, dirent);
              dirent3 = pool_alloc(cache_inode_dir_entry_pool, NULL);
+             dirent3_save = dirent3; /* Save to free if we reuse dirent*/
              FSAL_namecpy(&dirent3->name, newname);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
              dirent3->entry_wkref = dirent->entry_wkref;
-             code = cache_inode_avl_qp_insert(directory, dirent3);
+             code = cache_inode_avl_qp_insert(directory, &dirent3);
              switch (code) {
              case 0:
                  /* CACHE_INODE_SUCCESS */
@@ -218,7 +220,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              case 1:
                  /* we reused an existing dirent, dirent has been deep
                   * copied, dispose it */
-                  pool_free(cache_inode_dir_entry_pool, dirent3);
+                  pool_free(cache_inode_dir_entry_pool, dirent3_save);
                  /* CACHE_INODE_SUCCESS */
                  break;
              case -1:
@@ -278,6 +280,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
                               cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t *new_dir_entry = NULL;
+     cache_inode_dir_entry_t *new_dir_entry_save = NULL;
      int code = 0;
 
      *status = CACHE_INODE_SUCCESS;
@@ -294,6 +297,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
           *status = CACHE_INODE_MALLOC_ERROR;
           return *status;
      }
+     new_dir_entry_save = new_dir_entry;
 
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
@@ -304,7 +308,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      new_dir_entry->itr_present = FALSE;
 
      /* add to avl */
-     code = cache_inode_avl_qp_insert(parent, new_dir_entry);
+     code = cache_inode_avl_qp_insert(parent, &new_dir_entry);
      switch (code) {
      case 0:
          /* CACHE_INODE_SUCCESS */
@@ -312,7 +316,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      case 1:
          /* we reused an existing dirent, dirent has been deep
           * copied, dispose it */
-         pool_free(cache_inode_dir_entry_pool, new_dir_entry);
+         pool_free(cache_inode_dir_entry_pool, new_dir_entry_save);
          /* CACHE_INODE_SUCCESS */
          break;
      default:

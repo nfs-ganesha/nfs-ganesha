@@ -79,7 +79,7 @@ void avl_dirent_clear_deleted(cache_entry_t *entry,
                               cache_inode_dir_entry_t *v);
 void cache_inode_avl_init(cache_entry_t *entry);
 int cache_inode_avl_qp_insert(cache_entry_t *entry,
-                              cache_inode_dir_entry_t *v);
+                              cache_inode_dir_entry_t **v);
 
 #define CACHE_INODE_FLAG_NEXT_ACTIVE     0x0001
 

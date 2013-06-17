@@ -117,7 +117,7 @@ avl_dirent_clear_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 }
 
 static inline int
-cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
+cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t **v,
                             int j, int j2)
 {
     int code = -1;
@@ -127,7 +127,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
     struct avltree *c = &entry->object.dir.avl.c;
 
     /* first check for a previously-deleted entry */
-    node = avltree_inline_lookup(&v->node_hk, c);
+    node = avltree_inline_lookup(&(*v)->node_hk, c);
 
     /* XXX we must not allow persist-cookies to overrun resource
      * management processes (ie, more coming in CIR/LRU) */
@@ -140,14 +140,14 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         /* reuse the slot */
         v_exist = avltree_container_of(node, cache_inode_dir_entry_t,
                                        node_hk);
-        FSAL_namecpy(&v_exist->name, &v->name);
-        v_exist->entry_wkref = v->entry_wkref;
+        FSAL_namecpy(&v_exist->name, &(*v)->name);
+        v_exist->entry_wkref = (*v)->entry_wkref;
         avl_dirent_clear_deleted(entry, v_exist);
-        v = v_exist;
+        *v = v_exist;
         code = 1; /* tell client to dispose v */
     } else {
         /* try to insert active */
-        node = avltree_insert(&v->node_hk, t);
+        node = avltree_insert(&(*v)->node_hk, t);
         if (! node)
             code = 0;
     }
@@ -155,14 +155,14 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
     switch (code) {
     case 0:
         /* success, note iterations */
-        v->hk.p = j + j2;
-        if (entry->object.dir.avl.collisions < v->hk.p)
-            entry->object.dir.avl.collisions = v->hk.p;
+        (*v)->hk.p = j + j2;
+        if (entry->object.dir.avl.collisions < (*v)->hk.p)
+            entry->object.dir.avl.collisions = (*v)->hk.p;
 
         LogDebug(COMPONENT_CACHE_INODE,
                  "inserted new dirent on entry=%p cookie=%"PRIu64
                  " collisions %d",
-                 entry, v->hk.k, entry->object.dir.avl.collisions);
+                 entry, (*v)->hk.k, entry->object.dir.avl.collisions);
         break;
     default:
         /* already inserted, or, keep trying at current j, j2 */
@@ -185,23 +185,23 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
  * count in v->hk.p.
  **/
 int cache_inode_avl_qp_insert(
-    cache_entry_t *entry, cache_inode_dir_entry_t *v)
+    cache_entry_t *entry, cache_inode_dir_entry_t **v)
 {
     uint32_t hk[4];
     int j, j2, code = -1;
 
     /* don't permit illegal cookies */
-    MurmurHash3_x64_128(v->name.name,  v->name.len, 67, hk);
-    memcpy(&v->hk.k, hk, 8);
+    MurmurHash3_x64_128((*v)->name.name,  (*v)->name.len, 67, hk);
+    memcpy(&(*v)->hk.k, hk, 8);
 
     /* XXX would we really wait for UINT64_MAX?  if not, how many
      * probes should we attempt? */
 
     for (j = 0; j < UINT64_MAX; j++) {
-        v->hk.k = (v->hk.k + (j * 2));
+        (*v)->hk.k = ((*v)->hk.k + (j * 2));
 
         /* reject values 0, 1 and 2 */
-        if (v->hk.k < MIN_COOKIE_VAL)
+        if ((*v)->hk.k < MIN_COOKIE_VAL)
             continue;
 
         code = cache_inode_avl_insert_impl(entry, v, j, 0);
@@ -211,11 +211,11 @@ int cache_inode_avl_qp_insert(
 
     LogCrit(COMPONENT_CACHE_INODE,
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
-            j, v->name.name);
+            j, (*v)->name.name);
 
-    memcpy(&v->hk.k, hk, 8);
+    memcpy(&(*v)->hk.k, hk, 8);
     for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
-        v->hk.k = v->hk.k + j2;
+        (*v)->hk.k = (*v)->hk.k + j2;
         code = cache_inode_avl_insert_impl(entry, v, j, j2);
         if (code >= 0)
             return (code);
@@ -224,7 +224,7 @@ int cache_inode_avl_qp_insert(
 
     LogCrit(COMPONENT_CACHE_INODE,
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
-            j, v->name.name);
+            j, (*v)->name.name);
 
     return (-1);
 }
