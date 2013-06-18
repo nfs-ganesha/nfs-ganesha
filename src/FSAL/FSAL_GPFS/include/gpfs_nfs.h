@@ -101,6 +101,15 @@ struct flock
 #define OPENHANDLE_CREATE_BY_NAME 134
 #define OPENHANDLE_READ_BY_FD     135
 #define OPENHANDLE_WRITE_BY_FD    136
+#define OPENHANDLE_CREATE_BY_NAME_ATTR 137
+#define OPENHANDLE_TRACE_ME       150
+
+struct trace_arg
+{
+  uint32_t level;
+  uint32_t len;
+  char     *str;
+};
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -497,14 +506,17 @@ struct stat_arg
 
 struct create_name_arg
 {
-    int mountdirfd;
-    struct gpfs_file_handle *dir_fh;
-    uint32_t dev;
-    int mode;
-    int len;
-    const char *name;
-    struct gpfs_file_handle *new_fh;
-    struct stat *buf;
+    int mountdirfd;                 /* in     */
+    struct gpfs_file_handle *dir_fh;/* in     */
+    uint32_t dev;                   /* in     */
+    int mode;                       /* in     */
+    int len;                        /* in     */
+    const char *name;               /* in     */
+    struct gpfs_file_handle *new_fh;/* out    */
+    struct stat *buf;               /* in/out */
+    int attr_valid;                 /* in     */
+    int attr_changed;               /* in     */
+    struct gpfs_acl *acl;           /* in/out  */
 };
 
 struct stat_name_arg
