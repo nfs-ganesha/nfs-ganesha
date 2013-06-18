@@ -40,6 +40,7 @@
 #include "export_mgr.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -141,6 +142,9 @@ int _9p_attach( _9p_request_data_t * preq9p,
   if(cache_status != CACHE_INODE_SUCCESS)
       return _9p_rerror( preq9p, pworker_data, msgtag,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
+
+  /* Do not forget to count the refs */
+  cache_inode_lru_ref(pfid->pentry, LRU_REQ_INITIAL);
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;
