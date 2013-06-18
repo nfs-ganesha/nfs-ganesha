@@ -83,10 +83,10 @@ void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
              gsh_free( priv->rdata ) ;
        }
 
-      if( priv->datamr )
+      if( priv->datalock )
        {
-          if( priv->datamr->mr ) msk_dereg_mr( priv->datamr->mr ) ;
-          gsh_free( priv->datamr ) ;
+          if( priv->datalock->data && priv->datalock->data->mr ) msk_dereg_mr( priv->datalock->data->mr ) ;
+          gsh_free( priv->datalock ) ;
        }
 
       if( priv->rdmabuf ) gsh_free( priv->rdmabuf ) ;
@@ -118,7 +118,7 @@ void * _9p_rdma_thread( void * Arg )
   uint8_t       * rdmabuf = NULL ;
   struct ibv_mr * mr      = NULL ;
   msk_data_t   ** rdata   = NULL ;
-  _9p_datamr_t  * datamr  = NULL ;
+  _9p_datalock_t  * datalock  = NULL ;
   unsigned int i = 0 ;
   int rc = 0 ;
 
@@ -186,13 +186,13 @@ void * _9p_rdma_thread( void * Arg )
   memset( rdata, 0, (_9P_RDMA_BUFF_NUM * sizeof(*rdata)) ) ;
   priv->rdata = rdata;
 
-  if( (datamr = gsh_malloc(_9P_RDMA_BUFF_NUM*sizeof(*datamr))) == NULL )
+  if( (datalock = gsh_malloc(_9P_RDMA_BUFF_NUM*sizeof(*datalock))) == NULL )
    {
-      LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc datamr" ) ;
+      LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc datalock" ) ;
       goto error ;
    }
-  memset( datamr, 0, (_9P_RDMA_BUFF_NUM * sizeof(*datamr)) ) ;
-  priv->datamr = datamr;
+  memset( datalock, 0, (_9P_RDMA_BUFF_NUM * sizeof(*datalock)) ) ;
+  priv->datalock = datalock;
 
   for( i=0; i < _9P_RDMA_BUFF_NUM; i++)
    {
@@ -201,26 +201,25 @@ void * _9p_rdma_thread( void * Arg )
 
       rdata[i]->data=rdmabuf+i*_9P_RDMA_CHUNK_SIZE ;
       rdata[i]->max_size=_9P_RDMA_CHUNK_SIZE ;
-      datamr[i].data = rdata[i];
-      datamr[i].mr = mr;
-      pthread_mutex_init(&datamr[i].lock, NULL);
+      rdata[i]->mr = mr;
+      datalock[i].data = rdata[i];
+      pthread_mutex_init(&datalock[i].lock, NULL);
 
       if( i < _9P_RDMA_OUT )
-        datamr[i].sender = &datamr[i+_9P_RDMA_OUT] ;
+        datalock[i].sender = &datalock[i+_9P_RDMA_OUT] ;
       else
-        datamr[i].sender = NULL ;
+        datalock[i].sender = NULL ;
    } /*  for (unsigned int i=0; i < _9P_RDMA_BUFF_NUM; i++)  */
 
   for( i=0; i < _9P_RDMA_OUT; i++)
    {
       if( ( rc = msk_post_recv( trans,
                                 rdata[i],
-                                mr,
                                 _9p_rdma_callback_recv,
 				_9p_rdma_callback_recv_err,
-                               &(datamr[i]) ) ) != 0 )
+                               &(datalock[i]) ) ) != 0 )
        {
-          LogEvent( COMPONENT_9P,  "9P/RDMA: trans handler could recv first byte of datamr[%u], rc=%u", i, rc ) ;
+          LogEvent( COMPONENT_9P,  "9P/RDMA: trans handler could recv first byte of datalock[%u], rc=%u", i, rc ) ;
           goto error ;
        }
    }
@@ -270,7 +269,7 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
   trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
   trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
   inet_pton(AF_INET, "0.0.0.0", &trans_attr.addr.sa_in.sin_addr);
-  trans_attr.worker_count = 1;
+  trans_attr.worker_count = -1;
   trans_attr.worker_queue_size = 20;
 
   SetNameFunction("_9p_rdma_dispatch_thr" ) ;

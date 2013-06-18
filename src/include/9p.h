@@ -361,20 +361,19 @@ typedef struct _9p_conn__
 } _9p_conn_t ;
 
 #ifdef _USE_9P_RDMA
-typedef struct _9p_datamr
+typedef struct _9p_datalock
 {
   msk_data_t *data;
-  struct ibv_mr *mr;
-  struct _9p_datamr * sender ;
+  struct _9p_datalock * sender ;
   pthread_mutex_t lock;
-} _9p_datamr_t ;
+} _9p_datalock_t ;
 
 typedef struct _9p_rdma_priv
 {
   _9p_conn_t    * pconn ;
   uint8_t       * rdmabuf ;
   msk_data_t   ** rdata ;
-  _9p_datamr_t  * datamr ;
+  _9p_datalock_t  * datalock ;
 } _9p_rdma_priv ;
 #define _9p_rdma_priv_of(x) ((_9p_rdma_priv*)x->private_data)
 #endif
@@ -384,7 +383,7 @@ typedef struct _9p_request_data__
   char        * _9pmsg ;
   _9p_conn_t  *  pconn ;
 #ifdef _USE_9P_RDMA
-  _9p_datamr_t * datamr ;
+  _9p_datalock_t * datalock ;
 #endif
   _9p_flush_hook_t flush_hook;
 } _9p_request_data_t ;
