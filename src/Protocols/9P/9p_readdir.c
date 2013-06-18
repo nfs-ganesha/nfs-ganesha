@@ -44,9 +44,6 @@
 #include "9p.h"
 #include "abstract_mem.h"
 
-u8 qid_type_file = _9P_QTFILE ;
-u8 qid_type_symlink = _9P_QTSYMLINK ;
-u8 qid_type_dir = _9P_QTDIR ;
 char pathdot[] = "." ;
 char pathdotdot[] = ".." ;
 
@@ -62,10 +59,28 @@ typedef struct _9p_cb_entry
 
 typedef struct _9p_cb_data 
 {
-   _9p_cb_entry_t * entries ;
+   u8         * cursor ;
    unsigned int count ;
    unsigned int max ;
 } _9p_cb_data_t ;
+
+static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie, u8 d_type, u16 name_len, const char *name_str) {
+  /* qid in 3 parts */
+  _9p_setvalue( cursor, qid_type, u8 ) ; /* 9P entry type */
+  _9p_setvalue( cursor, 0, u32 ) ; /* qid_version set to 0 to prevent the client from caching */
+  _9p_setvalue( cursor, qid_path, u64 ) ;
+
+  /* offset */
+  _9p_setvalue( cursor, cookie, u64 ) ;
+
+  /* Type (this time outside the qid)) */
+  _9p_setvalue( cursor, d_type, u8 ) ; /* VFS d_type (like in getdents) */
+
+  /* name */
+  _9p_setstr( cursor, name_len, name_str ) ;
+
+  return cursor;
+}
 
 static bool _9p_readdir_callback( void                         * opaque,
                                   const char                   * name,
@@ -73,61 +88,63 @@ static bool _9p_readdir_callback( void                         * opaque,
                                   uint64_t                       cookie)
 {
    _9p_cb_data_t * cb_data = opaque ;
+   int name_len = strlen(name);
+   u8 qid_type, d_type;
 
   if( cb_data == NULL )
    return false ;
 
-  if( cb_data->count >= cb_data->max )
+  if( cb_data->count + 24 + name_len > cb_data->max )
    return false ;
 
-  cb_data->entries[cb_data->count].qid_path = handle->attributes.fileid ;
-  cb_data->entries[cb_data->count].name_str = name ;
-  cb_data->entries[cb_data->count].name_len = strlen( name ) ;
-  cb_data->entries[cb_data->count].cookie = cookie ;
- 
+
   switch( handle->attributes.type ) 
    {
       case FIFO_FILE:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
-        cb_data->entries[cb_data->count].d_type = DT_FIFO ;
+        qid_type = _9P_QTFILE ;
+        d_type = DT_FIFO ;
         break ;
 
       case CHARACTER_FILE:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
-        cb_data->entries[cb_data->count].d_type = DT_CHR ;
+        qid_type = _9P_QTFILE ;
+        d_type = DT_CHR ;
         break ;
 
       case BLOCK_FILE:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
-        cb_data->entries[cb_data->count].d_type = DT_BLK ;
+        qid_type = _9P_QTFILE ;
+        d_type = DT_BLK ;
         break ;
 
       case REGULAR_FILE:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
-        cb_data->entries[cb_data->count].d_type = DT_REG ;
+        qid_type = _9P_QTFILE ;
+        d_type = DT_REG ;
         break ;
 
       case SOCKET_FILE:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
-        cb_data->entries[cb_data->count].d_type = DT_SOCK ;
+        qid_type = _9P_QTFILE ;
+        d_type = DT_SOCK ;
         break ;
 
       case FS_JUNCTION:
       case DIRECTORY:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_dir ;
-        cb_data->entries[cb_data->count].d_type = DT_DIR ;
+        qid_type = _9P_QTDIR ;
+        d_type = DT_DIR ;
         break ;
 
       case SYMBOLIC_LINK:
-        cb_data->entries[cb_data->count].qid_type = &qid_type_symlink ;
-        cb_data->entries[cb_data->count].d_type = DT_LNK ;
+        qid_type = _9P_QTSYMLINK ;
+        d_type = DT_LNK ;
         break ;
     
       default:
         return false;  
    }
+
+  /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
+  cb_data->count += 24 + name_len ;
  
-  cb_data->count += 1 ; 
+  cb_data->cursor = fill_entry(cb_data->cursor, qid_type, handle->attributes.fileid, cookie, d_type, name_len, name);
+
   return true ;
 }
 
@@ -150,8 +167,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   
   const char * name_str = NULL ;
 
-  u8  * qid_type    = NULL ;
-  u64 * qid_path    = NULL ;
+  u8   qid_type     = 0 ;
+  u64  qid_path     = 0 ;
   char d_type       = 0 ;
 
   char * dcount_pos = NULL ;
@@ -161,9 +178,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   cache_entry_t * pentry_dot_dot = NULL ;
 
   uint64_t cookie = 0LL ;
-  unsigned int estimated_num_entries = 0 ;
   unsigned int num_entries = 0 ;
-  unsigned int delta = 0 ;
   u64 i = 0LL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -204,12 +219,16 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    * namestr = ~16 bytes (average size)
    * -------------------
    * total   = ~40 bytes (average size) per dentry */
-  estimated_num_entries = (unsigned int)( *count / 40 ) ;
 
-  if((estimated_num_entries < 2) || /* require room for . and .. */
-    ((cb_data.entries = gsh_calloc(estimated_num_entries,
-                                   sizeof(_9p_cb_entry_t))) == NULL))
+  if( *count < 52 ) /* require room for . and .. */
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+
+  /* Build the reply - it'll just be overwritten if error */
+  _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
+  _9p_setptr( cursor, msgtag, u16 ) ;
+
+  /* Remember dcount position for later use */
+  _9p_savepos( cursor, dcount_pos, u32 ) ;
 
    /* Is this the first request ? */
   if( *offset == 0LL )
@@ -221,22 +240,14 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       if(pentry_dot_dot == NULL )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+
       /* Deal with "." and ".." */
-      cb_data.entries[0].qid_path =  pfid->pentry->obj_handle->attributes.fileid ;
-      cb_data.entries[0].qid_type =  &qid_type_dir ;
-      cb_data.entries[0].d_type   =  DT_DIR ;
-      cb_data.entries[0].name_str =  pathdot ;
-      cb_data.entries[0].name_len =  strlen( pathdot ) ;
-      cb_data.entries[0].cookie   =  1LL ;
+      cursor = fill_entry(cursor, _9P_QTDIR, pfid->pentry->obj_handle->attributes.fileid, 1LL, DT_DIR, strlen( pathdot ), pathdot);
+      dcount += 24 + strlen( pathdot ) ;
 
-      cb_data.entries[1].qid_path =  pentry_dot_dot->obj_handle->attributes.fileid ;
-      cb_data.entries[1].qid_type =  &qid_type_dir ;
-      cb_data.entries[1].d_type   =  DT_DIR ;
-      cb_data.entries[1].name_str =  pathdotdot ;
-      cb_data.entries[1].name_len =  strlen( pathdotdot ) ;
-      cb_data.entries[1].cookie   =  2LL ;
+      cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->obj_handle->attributes.fileid, 2LL, DT_DIR, strlen( pathdotdot ), pathdotdot);
+      dcount += 24 + strlen( pathdotdot ) ;
 
-      delta = 2 ;
       cookie = 0LL ;
    }
   else if( *offset == 1LL )
@@ -248,30 +259,24 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       if (pentry_dot_dot == NULL)
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
-      cb_data.entries[0].qid_path =  pentry_dot_dot->obj_handle->attributes.fileid ;
-      cb_data.entries[0].qid_type =  &qid_type_dir ;
-      cb_data.entries[0].d_type   =  DT_DIR ;
-      cb_data.entries[0].name_str =  pathdotdot ;
-      cb_data.entries[0].name_len =  strlen( pathdotdot ) ;
-      cb_data.entries[0].cookie   =  1LL ;
+      cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->obj_handle->attributes.fileid, 2LL, DT_DIR, strlen( pathdotdot ), pathdotdot);
+      dcount += 24 + strlen( pathdotdot ) ;
 
-      delta = 1 ;
       cookie = 0LL ;
    }
   else if( *offset == 2LL )
    {
-      delta = 0 ;
       cookie = 0LL ;
    }
   else
    {
-     delta = 0 ;
      cookie = (uint64_t)(*offset) ;
    }
 
-   
-  cb_data.count = delta ;
-  cb_data.max = estimated_num_entries ;
+
+  cb_data.cursor = cursor ;
+  cb_data.count = dcount ;
+  cb_data.max = *count ;
 
   cache_status = cache_inode_readdir(pfid->pentry,
 				     cookie,
@@ -288,58 +293,11 @@ int _9p_readdir( _9p_request_data_t * preq9p,
        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
 
-  /* Remember dcount position for later use */
-  _9p_savepos( cursor, dcount_pos, u32 ) ;
+  cursor = cb_data.cursor;
 
-  /* fills in the dentry in 9P marshalling */
-  for( i = 0 ; i < cb_data.count ; i++ )
-   {
-     recsize = 0 ;
-
-     /* Build qid */
-     qid_path = &cb_data.entries[i].qid_path ;
-     qid_type = cb_data.entries[i].qid_type ;
-     d_type =  cb_data.entries[i].d_type ;
-
-     /* Get dirent name information */
-     name_str = cb_data.entries[i].name_str ;
-     name_len = cb_data.entries[i].name_len ;
-
-     /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
-     recsize = 24 + name_len  ;
-
-     /* Check if there is room left for another dentry */
-     if( dcount + recsize > *count )
-       break ; /* exit for loop */
-     else
-       dcount += recsize ;
-
-     /* qid in 3 parts */
-     _9p_setptr( cursor, qid_type, u8 ) ; /* 9P entry type */
-     _9p_setvalue( cursor, 0, u32 ) ; /* qid_version set to 0 to prevent the client from caching */
-     _9p_setptr( cursor, qid_path, u64 ) ;
-     
-     /* offset */
-     _9p_setvalue( cursor, cb_data.entries[i].cookie, u64 ) ;   
-
-     /* Type (this time outside the qid)) */
-     _9p_setvalue( cursor, d_type, u8 ) ; /* VFS d_type (like in getdents) */
-
-     /* name */
-     _9p_setstr( cursor, name_len, name_str ) ;
-  
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={fsal_cookie=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-               recsize, (unsigned long long)cb_data.entries[i].cookie , *qid_type, 0, (unsigned long long)*qid_path, 
-               d_type, name_str ) ;
-   } /* for( i = 0 , ... ) */
-
-  gsh_free( cb_data.entries ) ;
   /* Set buffsize in previously saved position */
-  _9p_setvalue( dcount_pos, dcount, u32 ) ;
+  _9p_setvalue( dcount_pos, cb_data.count, u32 ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
