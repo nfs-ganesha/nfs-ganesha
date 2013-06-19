@@ -82,7 +82,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 CLOSE handler ----------------------------");
 
-        memset(res_CLOSE4, 0, sizeof(res_CLOSE4));
+        memset(res_CLOSE4, 0, sizeof(CLOSE4res));
         resp->resop = NFS4_OP_CLOSE;
         res_CLOSE4->status = NFS4_OK;
 
