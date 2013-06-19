@@ -350,6 +350,17 @@ install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysco
 install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+")
+
+if(USE_FSAL_GPFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+install -m 755 ganesha.gpfs.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha.gpfs
+install -m 644 config_samples/ganesha.conf               $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.nfsd.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.exports.conf  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.main.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+")
+endif(USE_FSAL_GPFS)
 
 cd ../build_tree
 make install
@@ -369,6 +380,19 @@ rm -rf build_tree
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 
+"
+)
+
+if(USE_FSAL_GPFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%config %{_sysconfdir}/init.d/ganesha.gpfs
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
+")
+endif(USE_FSAL_GPFS)
+
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %files mount-9P
 %defattr(-,root,root,-)
 %{_sbindir}/mount.9P
