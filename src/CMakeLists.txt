@@ -137,6 +137,7 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 
+option(USE_TIRPC_IPV6 "enable IPv6 support (via IPv6)" OFF)
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
 
@@ -224,6 +225,10 @@ if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
+
+if(USE_TIRPC_IPV6)
+  set(_USE_TIRPC_IPV6 ON)
+endif(USE_TIRPC_IPV6)
 
 if(USE_DBUS_STATS AND NOT USE_DBUS)
   message(WARNING "The DBUS server statistics needs DBUS.  Enabling DBUS")
