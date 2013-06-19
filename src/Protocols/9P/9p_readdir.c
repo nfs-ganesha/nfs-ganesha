@@ -162,15 +162,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   u32 * count  = NULL ;
 
   u32  dcount      = 0 ;
-  u32  recsize     = 0 ;
-  u16  name_len    = 0 ;
   
-  const char * name_str = NULL ;
-
-  u8   qid_type     = 0 ;
-  u64  qid_path     = 0 ;
-  char d_type       = 0 ;
-
   char * dcount_pos = NULL ;
 
   cache_inode_status_t cache_status;
@@ -179,7 +171,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
   uint64_t cookie = 0LL ;
   unsigned int num_entries = 0 ;
-  u64 i = 0LL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
