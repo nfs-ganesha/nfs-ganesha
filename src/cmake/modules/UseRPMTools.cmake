@@ -14,6 +14,18 @@
 # https://savannah.nongnu.org/projects/tsp
 #
 
+# Here we check whether we're building a package for fedora
+# or for RHEL. Fedora uses systemd, RHEL uses sysvinit.
+# This should probably be replaced with a check for systemd
+# or sysvinit.
+if(EXISTS /etc/fedora-release)
+   SET(DISTRO fedora)
+endif(EXISTS /etc/fedora-release)
+
+if(EXISTS /etc/redhat-release)
+   SET(DISTRO redhat)
+endif(EXISTS /etc/redhat-release)
+
 # Look for RPM builder executable
 FIND_PROGRAM(RPMTools_RPMBUILD_EXECUTABLE 
     NAMES rpmbuild
@@ -68,10 +80,16 @@ IF (RPMTools_RPMBUILD_FOUND)
 " )
    FILE( APPEND ${RPMBULILD_CMAKE} "set(_NO_XATTRD  OFF)
 " )
+
+  if(USE_DBUS EQUAL ON)
    FILE( APPEND ${RPMBULILD_CMAKE} "set(USE_DBUS ON)
 " )
+  endif(USE_DBUS EQUAL ON)
+
+  if(USE_DEBUS_STATS EQUAL ON)
    FILE( APPEND ${RPMBULILD_CMAKE} "set(USE_DBUS_STATS ON)
 " )
+  endif(USE_DEBUS_STATS EQUAL ON)
 
 IF( USE_FSAL_VFS )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_VFS ON)
@@ -160,6 +178,11 @@ ELSE( USE_FSAL_ZFS )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_ZFS OFF)
 " ) 
 ENDIF( USE_FSAL_ZFS )
+
+if("${DISTRO}" STREQUAL "fedora")
+   SET(ADDITIONAL_REQ systemd-units)
+endif("${DISTRO}" STREQUAL "fedora")
+
 FILE(APPEND ${RPMBULILD_CMAKE} "set(DISTNAME_HAS_GIT_DATA ON)
 ")
 
@@ -178,7 +201,7 @@ Release:        ${RPM_RELEASE}
 License:        ${RPM_PACKAGE_LICENSE}
 Group:          ${RPM_PACKAGE_GROUP}
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-BuildRequires:	cmake
+BuildRequires:	cmake ${ADDITIONAL_REQ}
 Url:            ${RPM_URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -334,23 +357,56 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
-mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/ganesha
+")
 
+if("${DISTRO}" STREQUAL "fedora")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "mkdir -p $RPM_BUILD_ROOT%{_unitdir}" )
+endif("${DISTRO}" STREQUAL "fedora")
+
+if("${DISTRO}" STREQUAL "redhat")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d")
+endif("${DISTRO}" STREQUAL "redhat")
+
+# Files to install for ALL distros and FSALs
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 install -m 644 config_samples/logrotate_ganesha          $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
-install -m 755 ganesha.init                              $RPM_BUILD_ROOT%{_sysconfdir}/init.d/ganesha
-install -m 644 scripts/systemd/nfs-ganesha.service       $RPM_BUILD_ROOT%{_unitdir}/nfs-ganesha.service
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf  $RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig                         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
 install -m 755 tools/mount.9P				 $RPM_BUILD_ROOT%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf   $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+")
 
+# GPFS specific files to install
+if(USE_FSAL_GPFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+install -m 755 ganesha.gpfs.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-gpfs
+install -m 644 config_samples/ganesha.conf               $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.nfsd.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.exports.conf  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.main.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+")
+endif(USE_FSAL_GPFS)
+
+# Fedora specific files to install. note, Fedora uses systemd, so _unitdir _is_ defined.
+if("${DISTRO}" STREQUAL "fedora")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+install -m 644 scripts/systemd/nfs-ganesha.service       $RPM_BUILD_ROOT%{_unitdir}/nfs-ganesha.service")
+endif("${DISTRO}" STREQUAL "fedora")
+
+# RHEL specific files to install. note, RHEL uses sysvinit so _unitdir is undefined.
+if("${DISTRO}" STREQUAL "redhat")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+install -m 755 ganesha.init                              $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha")
+endif("${DISTRO}" STREQUAL "redhat")
+
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 cd ../build_tree
 make install
 
@@ -363,12 +419,36 @@ rm -rf build_tree
 %{_bindir}/*
 %config   %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf 
 %config   %{_sysconfdir}/sysconfig/ganesha
-%config   %{_unitdir}/nfs-ganesha.service
+")
+
+if("${DISTRO}" STREQUAL "fedora")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%config   %{_unitdir}/nfs-ganesha.service")
+endif("${DISTRO}" STREQUAL "fedora")
+
+if("${DISTRO}" STREQUAL "redhat")
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%config   %{_sysconfdir}/init.d/nfs-ganesha")
+endif("${DISTRO}" STREQUAL "redhat")
+
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
-%config %{_sysconfdir}/init.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 
+"
+)
+
+if(USE_FSAL_GPFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%config %{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
+")
+endif(USE_FSAL_GPFS)
+
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %files mount-9P
 %defattr(-,root,root,-)
 %{_sbindir}/mount.9P
