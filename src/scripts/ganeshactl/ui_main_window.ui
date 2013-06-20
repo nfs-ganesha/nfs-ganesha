@@ -13,7 +13,75 @@
   <property name="windowTitle">
    <string>NFS Ganesha</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="exports_tab">
+       <attribute name="title">
+        <string>Exports</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>770</width>
+             <height>507</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_5">
+            <item row="0" column="0">
+             <widget class="QTableView" name="exports"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="clients_tab">
+       <attribute name="title">
+        <string>Clients</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QScrollArea" name="scrollArea_2">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>770</width>
+             <height>507</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QTableView" name="clients"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -42,7 +110,14 @@
      <addaction name="actionShutdown"/>
      <addaction name="actionReload"/>
     </widget>
-    <addaction name="actionClients"/>
+    <widget class="QMenu" name="menuClients">
+     <property name="title">
+      <string>Clients</string>
+     </property>
+     <addaction name="actionAdd_Client"/>
+     <addaction name="actionRemove_Client"/>
+    </widget>
+    <addaction name="menuClients"/>
     <addaction name="actionExports"/>
     <addaction name="menuAdmin"/>
    </widget>
@@ -74,11 +149,6 @@
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
-   </property>
-  </action>
-  <action name="actionClients">
-   <property name="text">
-    <string>Clients</string>
    </property>
   </action>
   <action name="actionExports">
@@ -124,6 +194,16 @@
   <action name="actionViewClients">
    <property name="text">
     <string>Clients</string>
+   </property>
+  </action>
+  <action name="actionAdd_Client">
+   <property name="text">
+    <string>Add Client</string>
+   </property>
+  </action>
+  <action name="actionRemove_Client">
+   <property name="text">
+    <string>Remove Client</string>
    </property>
   </action>
  </widget>

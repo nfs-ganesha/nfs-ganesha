@@ -1,4 +1,6 @@
-from PyQt4 import QtCore, QtDBus
+import sys, time
+from PyQt4.QtCore import *
+from PyQt4 import QtDBus, QtGui
 from collections import namedtuple
 
 Export = namedtuple('Export',
@@ -17,7 +19,7 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
     '''
     org.ganesha.nfsd.exportmgr
     '''
-    show_exports = QtCore.pyqtSignal(tuple, list)
+    show_exports = pyqtSignal(tuple, list)
     
     def __init__(self, service, path, connection, show_status, parent=None):
         super(ExportMgr, self).__init__(service,

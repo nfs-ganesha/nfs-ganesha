@@ -5,7 +5,7 @@ import time
 from PyQt4 import QtCore, QtDBus
 from PyQt4.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
-from client_mgr import ClientMgr
+from Ganesha.client_mgr import ClientMgr
 
 SERVICE = 'org.ganesha.nfsd'
 
