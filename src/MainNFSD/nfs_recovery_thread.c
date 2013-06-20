@@ -547,11 +547,16 @@ nfs_grace_start_array_t *nfs_grace_start_array;
         uerr = 0;
 
         while(1) {
-                do_state();
-                if ( ucnt == 0 ) { /* We are just coming up. Should be in grace for us. */
-                        sleep(NFS_RECOV_GC); /* let things clear out */
-                        ucnt++;
+                if ((ucnt % NFS_RECOV_STATE_CNT) == 0) {
+                        do_state();
                 }
+          
+                if ( ucnt == 0 ) { /* We are just coming up. Should be in grace for us. */
+                        sleep(NFS_RECOV_STATE_CNT * NFS_RECOV_GC); /* let things clear out */
+                        ucnt += NFS_RECOV_STATE_CNT;
+                } else    
+                        ucnt++;
+
                 nfs_grace_start_array = NULL;
                 n = scandir(NFS_RECOV_EVENTS, &namelist, 0, alphasort);
                 if (n < 0) {
