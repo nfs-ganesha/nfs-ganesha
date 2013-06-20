@@ -396,9 +396,14 @@ int principal2uid(char *principal, uid_t * puid)
   uid_t gss_uid;
   int rc;
 
-  /* NFSv4 specific features: RPCSEC_GSS will provide principal like nfs/<host>
+  /* NFSv4 specific features: RPCSEC_GSS will provide principal like:
+   *  nfs/<host> 
+   *  root/<host>
+   *  host/<host>
    * choice is made to map them to root */
-  if(!strncmp(principal, "nfs/", 4))
+  if(!strncmp(principal, "nfs/", 4) || 
+     !strncmp(principal, "root/", 5) ||
+     !strncmp(principal, "host/", 5) )
     {
       /* This is a "root" request made from the hostbased nfs principal, use root */
       LogFullDebug(COMPONENT_IDMAPPER,
