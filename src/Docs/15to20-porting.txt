@@ -2,9 +2,97 @@ Generated using:
 
 git log --pretty=format:"            %h %an %s"  15-20-port-current-top.. > more.txt
 
+            7d27d85 Srikrishan Malik Clean the progress status  dir bfore starting ganesha.
+Done        c6ec9c5 Frank S. Filz Properly fix CLOSE4
+Pass        72f4365 Frank S. Filz Fix a problem uncovered by RNM20
+Pass        dabc5f5 Frank S. Filz Fix COMP5 for NFS v4.1
+Done        9d8a485 Frank S. Filz Fix OPEN30
+Done        8a3634c Frank S. Filz Fix OPNDG10
+Pass        df3e716 Venkateswararao Jujjuri (JV) cache_inode_add_cached_dirent should return reused dirent inaddition to just copying it.
+            fad1fe5 Venkateswararao Jujjuri (JV) If we get a ESTALE on readdir retry the dirent as we might have hit with a old dirent which we kept for performance reasons
+            ab5606d Allison Henderson Fix NLM compiler flag typo Signed-off-by: Allison Henderson <achender@vnet.linux.ibm.com>
+Pass        efce686 Matt Benjamin Re-target tirpc.sh to official repo.
+Pass        ca16f10 Matt Benjamin Update tirpc commit.
+Pass        d239eeb Matt Benjamin Fix ref leaks in nfs_rpc_dispatcher.c.
+Pass        26d4861 Matt Benjamin Add location tracing to SVC_REF, SVC_RELEASE, gsh_xprt_(un)ref.
+Pass        e84c9d5 Matt Benjamin Declare nfs_rpc_rdvs mtx static.
+Done        44aab46 Manfred Haubrich Fixed byte range lock merging when up- or downgrading sub-ranges
+            1722d5d Allison Henderson Do not check/fail on getattr error for a file that is unlinked in cache_inode_remove
+            24ddda6 Allison Henderson Add EROFS to posix2fsal_error
+            5639f53 Allison Henderson Add NLM compiler flags around cancel_all_nlm_blocked
+
+            2b75600 Frank S. Filz Break out of FSAL_ACE4_PERM_CONTINUE if deny blocks all remaining mask bits
+            ef55ba8 Frank S. Filz Set process umask from config
+            8db5cc2 Frank S. Filz Make sure nfs_access_op asks for denies bits
+            a3842e7 Frank S. Filz Fix directory cache in cache_inode_rename
+            411d8fc Frank S. Filz Return EPERM instead of EACCESS for ACL when appropriate
+            f78f18f Frank S. Filz Fix a problem with idmapper with AUTH_SYS
+            ac4c348 Frank S. Filz Fix FSAL_MODE_BIT_MASK to ONLY include FSAL_R_OK, FSAL_W_OK, FSAL_X_OK
+            6c99fdb Frank S. Filz Add some debug for cache_inode_rename and cache_inode_remove
+            165fefa Frank S. Filz Fix typos in FSAL/access_check.c
+            74361fd Frank S. Filz Make sure asked_attributes is set when calling cache_inode_getattr
+            5a50831 Frank S. Filz Make debugging permission checking easier.
+            4919fa0 Srikrishan Malik Reduce wait time in stop. 30 seconds sleep is not necessary in most of the cases.
+            2bfe0af Allison Henderson Commit for pt v4.1 rev_10
+            0b01702 Jeff Huang This branch will fix RTC defect 16867. The fix will use condition flag inside while loop in both...
+            a7fceba suhrud Increase the Ganesha inode cache limit to match the GPFS cache limit. Done for READDIR performance improvement.
+            b78bb90 Venkateswararao Jujjuri (JV) Make NFSv3 FSID unique/less collision prone By performing xor on...
+            97ccbfe Poornima Gupte Added a new SIGUSR1 handler. On receiving USR1, Ganesha starts Grace. Removed the old SIGUSR1 and SIGUSR2 handlers
+            b08b4e9 Venkateswararao Jujjuri (JV) Add the weakref to dirent in readdir path.
+            af284df Jeremy Bongio Use a more reasonable readdir entry count estimate for v3.
+            cc3d845 Venkateswararao Jujjuri (JV) Rearrange readdir codepath to avoid unnecessary duplicate operations...
+            7936889 Venkateswararao Jujjuri (JV) Avoid getting handle and attr as part of readdir in GPFS FSAL
+            7f5af73 Venkateswararao Jujjuri (JV) Change entry to entry_wkref in  cache_inode_dir_entry_t
+            1e5797b Venkateswararao Jujjuri (JV) Fix directory fd leak.
+            431f3b4 Venkateswararao Jujjuri (JV) Crash in nfs_access_op
+            858a2ac Rong Zeng Remove the trailing slash in mount export response. Window client does not seem to like it.
+            98e2b26 Frank S. Filz Allow v3 to return fileid on READDIR in 444 directory
+
+Pass        5a6372c Frank S. Filz Fix COMP5 pynfs test
+Done        9075bee Frank S. Filz Don't allow OPEN of a PseudoFS file
+            dd054f1 Frank S. Filz Handle errors in PseudoFS READDIR and LOOKUP gracefully
+            bbd4e09 Frank S. Filz Simplify use of cache_inode_rename
+            856797a Frank S. Filz Strip permission checking from cache_inode_remove
+            9f63050 Frank S. Filz Properly permission check cache_inode_rdwr
+            8079744 Frank S. Filz Strip permission check cache_inode_link
+            d25a347 Frank S. Filz Fixup cache_inode_create in light of permissions work
+            18652a5 Frank S. Filz Properly permission check cache_inode_lookup
+            8723374 Frank S. Filz Properly permission check cache_inode_getattr
+            aa4aeb5 Frank S. Filz Properly permission check cache_inode_readdir
+            9d65778 Frank S. Filz Use allowed/denied return from cache_inode_access_sw to simplify v3/4 ACCESS
+            1219cc9 Frank S. Filz Have cache_inode_get_changeid4 check trust of attrs
+            5cc398a Frank S. Filz Fixup some error translations
+            3954450 Frank S. Filz Add FSAL_ATTRS_V3 to cover all attrs in fattr3 structure
+            989c2a8 Frank S. Filz Don't get attr via nfs_FhandleToCache if we don't need them
+            4ae20c6 Frank S. Filz Make getattr optional with cache_inode_lookup and cache_inode_create
+            c322e1b Frank S. Filz Add allowed and denied parms to access check routines
+            17fd7b6 Frank S. Filz Make cache_inode_access_sw wrappers static inline
+            3bfe549 Frank S. Filz Use cache_inode_access_no_mutex wrapper instead of calling cache_inode_access_sw
+            8b51c08 Frank S. Filz Allow root execute permission if someone is allowed execute
+            902b5c1 Frank S. Filz Add fsal_set_credentials to fsal_symlink for FSAL_GPFS
+            68b85a3 Frank S. Filz Add some debug to cache_inode_access
+            0ea39d0 Frank S. Filz Remove unused FSAL_F_OK flag
+            2db00a0 Frank S. Filz Remove unused FSAL_OWNER_OK flag
+            142e8d1 Frank S. Filz Strip unused FSAL access check routines
+            6c8c8f2 Frank S. Filz Strip testing of FSAL_access and FSAL_test_access
+            a03578e Frank S. Filz Strip local op routines from FSAL_TEMPLATE
+            7434842 Frank S. Filz Strip explicit permission checking from MFSL
+            2f9e328 Frank S. Filz Strip explicit permission checking from FSALs: HPSS, LUSTRE, POSIX, VFS, XFS
+            a557202 Frank S. Filz Strip explicit permission checking from FSAL_PT
+            93ed495 Frank S. Filz Use fsal_set_credentials in GPFSFSAL_unlink, GPFSFSAL_rename, and GPFSFSAL_link
+            794fc49 Frank S. Filz Strip explicit permission checking from FSAL_GPFS
+            04a525a Frank S. Filz Strip lots of code and Use COMMON_test_access instead
+            1ac4694 Frank S. Filz Remove Use_Test_Access option
+            4dacdfd Frank S. Filz Introduce COMMON_test_access
+            9fa70a4 Frank S. Filz Use generic ACL code for FSAL_PT
+3043bdc     228a612 Frank S. Filz Add -D directory option to tools/findlog.sh
+            dee42e3 Allison Henderson Commit for pt v4.1 rev_9
+            48e18f8 huangz Fixed the defect that closing call come in and change the NFS state just before open call return handle index to client. The fix will call fast open which is protected by mutex before return handle index to client.
+Done        35b1a70 Srikrishan Malik Convert ETXTBSY to ERR_FSAL_SHARE_DENIED instead of FSAL_FILE_OPEN. For v4 it will be converted to NFS4ERR_SHARE_DENIED. For v3 it will be converted to NFS3ER_JUKEBOX, which will allow a client to wait for the share reservation to be released.
+
 Done Dev_34 60c5e15 Rong Zeng Don't refcnt dupreq entry with status DUPREQ_BEING_PROCESSED. Otherwise refcnt will stay positive and plug the DRC retiring all entries behind.
             0a6591b suhrud The nfs clients use nfs/hostname princiapl for root. Map all nfs/* kerberos principals to root.
-            7124936 Srikrishan Malik Grace period should be >= Lease_lifetime. For environments which have issues with grace period more than 60 seonds, Lease_Lifetime in main.conf can be changed to a smaller value.
+Done        7124936 Srikrishan Malik Grace period should be >= Lease_lifetime. For environments which have issues with grace period more than 60 seonds, Lease_Lifetime in main.conf can be changed to a smaller value.
             47f2ff2 Rong Zeng Add cancel_all_nlm_blocked function to call before real locks are released
             cae1983 Venkateswararao Jujjuri (JV) Commit for pt v4.1 rev_8
             e8b25b3 huangz This branch requires syren fix 81025059. This branch fixed transaction id mismatch between inside message and share memory buffer that cause errno set as bad file descriptor. This branch added operation mutex to close gap between can close testing and close file in nfs. Also this changed code to delete handle/name entry from cache without checking whether file is closed successfully or not, so this fix cache is full error.
@@ -12,12 +100,12 @@ Done Dev_34 60c5e15 Rong Zeng Don't refcnt dupreq entry with status DUPREQ_BEING
             5f97d89 Rong Zeng setting ulimit for open files to 1048576 in nfs-ganesha.gpfs.init.
             79f4a03 Lance Russell Rebase and repush of S1045874_lwr
             4c33561 Lance Russell Removed the offending LogInfo. Others in this file are suspect but left them alone.
-            33ed4f1 Rong Zeng Need to free memory in nfs4_op_read when read_size is 0, or cache_inode_rdwr fails.
+Pass        33ed4f1 Rong Zeng Need to free memory in nfs4_op_read when read_size is 0, or cache_inode_rdwr fails.
             c835724 Allison Henderson Commit for ptv4.1_rev_6
             830e268 huangz@us.ibm.com This branch has a new fsi_ipc_ccl.h which is needed by both syren fix 81024977 and 81024730. It replaces CCL_UPDATE_HANDLE_NFS_STATE with CCL_SAFE_UPDATE_HANDLE_NFS_STATE in PT FSAL. This branch must go with syren fix 81024977. Changed version back to rev_6, fixed comments of code.
             67c6ca9 Srikrishan Malik Add rpc_in counter, was removed by e397c4d8
 Pass        9025b05 Rong Zeng Free data in schedule_fsal_up_event_process for UPDATE events.
-            690d68e Srikrishan Malik Fix Use After Free.
+Done Dev_35 690d68e Srikrishan Malik Fix Use After Free.
             e918c03 Venkateswararao Jujjuri (JV) Commit for ptv4.1_rev_6
             2b831f0 Matt Cleveland The expected state in NFS close should be ignored.
 Pass        d0d97e2 Matt Benjamin Avoid atempting to lock "both channels" when the transport is UDP.
@@ -27,13 +115,13 @@ Pass        5a1970f Matt Benjamin Use SVC_LOCK macros in ganesha_rpc.h.
             0efbded Matt Cleveland Git fix for syren fix 81024730 (update btime/ctime support).  Ensure ccl_ntimes call stack is updated accordingly.
             31750a8 Venkateswararao Jujjuri (JV) Commit for ptv4.1_rev_5
             8ed13ea Thomas Favre-Bulle Fix XFS compilation issues
-            e56bbde rong zeng Fix a return value bug which would cause unused-return warning. This is exposed with -D_FORTIFY_SOURCE=2.
+Pass        e56bbde rong zeng Fix a return value bug which would cause unused-return warning. This is exposed with -D_FORTIFY_SOURCE=2.
 Pass        99041bd Frank S. Filz Remove LRU_List.h from SAL/Makefile.am
             ecbf14f Frank S. Filz Handle rounding up nfsv3 handle size to multiple of 4 bytes in nfs3_sizeof_handle
             cee1437 Frank S. Filz Return NFS4ERR_NOENT instead of NFS4ERR_ACCESS on export client has no access to
             3c179ff Frank S. Filz Return NFS4ERR_ROFS for NFS v4 open for write on read-only export
-            2b68d77 Frank S. Filz For valgrind, init readdir results
-            ec6ab0e Frank S. Filz Only cache_inode_put(pentry_lookup) if pentry_lookup not NULL
+Pass        2b68d77 Frank S. Filz For valgrind, init readdir results
+Pass        ec6ab0e Frank S. Filz Only cache_inode_put(pentry_lookup) if pentry_lookup not NULL
 Pass        d1ba40b Frank S. Filz Add cache_inode_lookup_weakref to readdir
             a0aee73 Frank S. Filz Fixes in cache_inode_readdir
             a1b5600 Frank S. Filz Add some cache inode debug
@@ -67,16 +155,16 @@ Pass        d1ba40b Frank S. Filz Add cache_inode_lookup_weakref to readdir
             e243f94 Frank S. Filz Add simple log macro to log opaque values
             21956e8 Frank S. Filz Add display.h and safe display buffers
             447d5b7 Srikrishan Malik Generate a core dump if a hang is detected.
-            a15038d suhrud Changed Nb_Worker from 128 to 512
+Done Dev_35 a15038d suhrud Changed Nb_Worker from 128 to 512
             6ed3eb4 Frank S. Filz Strip ifdefed out code from FSAL_VFS
-            d213b1d Frank S. Filz Remove dead nfs_tools code
+Done        d213b1d Frank S. Filz Remove dead nfs_tools code
 Pass        3db8256 Frank S. Filz Get rid of _USE_GHOSTFS
             15001e6 Frank S. Filz Remove use of log_snprintf and log_fprintf from shell and Log/test_liblog_functions.c
             1de0538 Frank S. Filz Fixup cache inode hash functions in shell
             faf921b Frank S. Filz Make generic ACL code and GPFS ACL code same so GPFS can use generic
 Pass        6524e6d Frank S. Filz Strip deprecated LRU, RPCAL, DRC, File_Content code
             95bb50e Frank S. Filz Clean up use of NFS4ERR_BADHANDLE vs NFS4ERR_STALE
-            d68d18f Jeremy Bongio removed typo
+Pass        d68d18f Jeremy Bongio removed typo
 Pass        d8a10af rong zeng Bring in two fixes in tirpc for UDP recvmsg handling.
 Pass        a110201 Adam C. Emerson Don't destroy UDP transports on reply error
 Done Dev_34 a6dd5d9 Venkateswararao Jujjuri (JV) If lookup fails and error is not CACHE_INODE_NOT_FOUND, return immediately.
@@ -87,8 +175,8 @@ Pass        f3b5582 Adam C. Emerson Fix value of DRC_FLAG_RELEASE
 Done        5b5a107 Jeremy Bongio Added padding to 4 bytes to network filehandles. This will allow dNFS to function because it does not do the padding itself.
 Pass        e6d7ec5 rong zeng Pull in fixes in tirpc for: 1) memory leak 2) lock issues causing memory currption
 Pass        6813725 Matt Benjamin Free only allocated xprt private data.
-            548172c Venkateswararao Jujjuri (JV) Wakeup LRU thread only if it is sleeping Also downgrade the message from Event to Info
-Done Dev_35 cc3af75 Venkateswararao Jujjuri (JV) Remove wcc pre-attrs form Write and Commit Replies
+Pass        548172c Venkateswararao Jujjuri (JV) Wakeup LRU thread only if it is sleeping Also downgrade the message from Event to Info
+1956700     cc3af75 Venkateswararao Jujjuri (JV) Remove wcc pre-attrs form Write and Commit Replies
             ec1dbc2 Allison Henderson Release change for 4.1 rev 4 Signed-off-by: Allison Henderson <achender@linux.vnet.ibm.com>
             588fb23 Hin C Lam Remove cache entry in unlink path Changed logging level
             0c0ec4e Lance Russell Correct passing a null when file has no ACLs
@@ -135,13 +223,12 @@ Done Dev_34 add8058 Frank S. Filz Fix up valgrind memcheck after GPFS handle key
 Pass        8f8d89d rong zeng Remove svc_destroy in recent svc_sendreply fix, which would cause assertion in rearm code.
 Pass        33fe9d0 Srikrishan Malik Fix deadlock due to lock ordering. Release content lock before calling cache_inode_rdwr.
             6bc0588 rong zeng Fix hardcoded NFS4ERR_ACCESS return code in nfs4_op_open/nfs41_op_open.
-Pass        11a1419 lancerus Test for AIX sendreply error
 matt pulled e2a0661 11a1419 lancerus Test for AIX sendreply error
-Done Dev_35 6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
-Done Dev_35 75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
+96db5e6     6a850a0 Venkateswararao Jujjuri (JV) Need content lock in write mode for open/close
+fd2aad8     75eae98 Srikrishan Malik Populate post_op_attr with updated attributes after commit.
             0db829f Venkateswararao Jujjuri (JV) Disable additional logging for the Production code.
             1721dc2 rong zeng Fix delimeter issue in ip_match, and a counter issue in check_for_id. Also adding server (local) IP to client id structure, so that nfs_release_v4_client could properly match.
-Done dev_35 3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
+Done Dev_35 3efa361 suhrud changed Use_Getattr_Directory_Invalidation to 0
 
 rong  matt   fb8a853 rong zeng Integrate tirpc changes for mspac support.
 matt pulled c8a146c 44105aa Jeremy Bongio Add new file from libtirpc os_epoll.h to spec file.
@@ -161,11 +248,11 @@ matt        3607b5b Matt Benjamin Return guard ref on stall.
 matt        082bc92 Matt Benjamin Cond stall, unstall fixes.
             b8d00d0 Max Matveev PROXY FSAL - deal with new libtirpc
             87e667f Max Matveev PROXY FSAL - fix close_by_fileid argument mismatch
-            eff438c Max Matveev NFS - fix scope problems when NFS4_ACL is off
+Pass        eff438c Max Matveev NFS - fix scope problems when NFS4_ACL is off
             3aa336b Lance Russell  Invalidate entries on a FSAL_UPDATE event. Don't wait to schedule.
             d67b23e Srikrishan Malik  Added epoch to Ganesha command line
 
-            bda173b Frank S. Filz In cache_inode_avl only MurmurHash3_x64_128 the length of names
+Pass        bda173b Frank S. Filz In cache_inode_avl only MurmurHash3_x64_128 the length of names
 
 Handled by Adam Emerson:
 Pass 47ad7e1 Frank S. Filz Use utf8_to_name and utf8_to_path
@@ -215,11 +302,11 @@ Done Dev_34 637db44 Frank S. Filz Get rid of some dead code
 
             8b8c717 rong zeng Using handle_size bytes gpfs_fsal_handle in GPFSFSAL_handlecmp and FSAL_Handle_to_RBTIndex/FSAL_Handle_to_HashIndex
 Done Dev_34 8eaf450 rong zeng GRANTED_RES does not have file handle, so no check for export or credential.
-            66be9db Allison Henderson Replace DupReq_Expiration parameter
+Pass        66be9db Allison Henderson Replace DupReq_Expiration parameter
             093273a Lance Russell Temporary change to get around invalidate problem until complete changes coded and tested.
 Ported on pre-2.0-dev_19            0c19bee Venkateswararao Jujjuri (JV) Set extremis flag in lru_thread only if fd cache is enabled.
 Ported on pre-2.0-dev_19           2dadf46 Venkateswararao Jujjuri (JV) Make sure that we process LRU1 and LRU2 cache even if fd cache is disabled.
-            46a1d7a Venkateswararao Jujjuri (JV) Revert "Create separate lru gc thread when fd caching is disabled."
+Pass        46a1d7a Venkateswararao Jujjuri (JV) Revert "Create separate lru gc thread when fd caching is disabled."
 Ported on pre-2.0-dev_19            bde4770 Venkateswararao Jujjuri (JV) Flags needs to be collected under lock before checking; Otherwise a race with other close+open could change the fd mode and may result in an write failure with EACCESS.
 
             70deb14 Frank S. Filz Fix access check for root execute perm
@@ -227,14 +314,14 @@ Ported on pre-2.0-dev_19            bde4770 Venkateswararao Jujjuri (JV) Flags n
 Pass        ce1c44ee Matt Benjamin s/bool_t/bool/ for v40.
 Pass        5c22de83 Matt Benjamin Pull lookahead into xdr_nfsv4.h.
 Pass        50da66cb rong zeng Include gpfs.h from /usr/include instead of local copy.
-            cb940ac1 Venkateswararao Jujjuri (JV) Update tirpc commit.
+Pass        cb940ac1 Venkateswararao Jujjuri (JV) Update tirpc commit.
 Pass        b831fd80 rong zeng Include gpfs_nfs.h from /usr/include instead of local copy.
 Pass        b909913a rong zeng strict compile error for unused variable.
 Pass        fbccb45c Lance Russell Marc Eshel's changes to reorganize the GPFS file handle
 Pass        7892db00 Venkateswararao Jujjuri (JV) Merge branch 'ibm_next-20121107-duplex-9-v4drc-jv' into drc_merge_effort
 pre-2.0-dev_19         e251f09f Jeremy Bongio Stop overwriting cache_inode_commit status accidentally.
             62ae1f53 Srikrishan Malik Check before freeing
-            54c41092 Jeremy Bongio Create separate lru gc thread when fd caching is disabled.
+Pass        54c41092 Jeremy Bongio Create separate lru gc thread when fd caching is disabled.
 
 Pass        2ec9bca1 Frank S. Filz Eliminate FSAL_NGROUPS_MAX, make alt_groups a pointer instead of fixed size array
 Pass        9f8dcda2 Frank S. Filz Strip out unused fsal_cred_t and unused *FSAL_GetClientContext
@@ -268,7 +355,7 @@ Done Dev_34 8982d8e1 Frank S. Filz Properly copy NFS v4 conflicting lock owner
 Done Dev_34 10aa6c83 Frank S. Filz Initialize handle in GPFSFSAL_UP_Thread for valgrind
 Pass        ecb9a18e Frank S. Filz Save cache entry pointer before calling state_del
 Done Dev_34 c28a9311 Frank S. Filz Initialize some GPFS data for valgrind memcheck
-            cb9bd7d9 Frank S. Filz Add configure.ac conditional for valgrind memcheck
+Pass        cb9bd7d9 Frank S. Filz Add configure.ac conditional for valgrind memcheck
 Done Dev_34 19ac9746 Frank S. Filz Make sure HashTable doesn't get a bad index
 Done Dev_34 e87e2406 Frank S. Filz Be verbose about what is happening to core limit
             2ccaf4d7 Frank S. Filz Cleanup fsal_export_context_t before freeing exportlist_t
@@ -286,10 +373,10 @@ Pass        2332eb91 Matt Benjamin Initialize svc_params.gss_ctx_max_idle_gen.
 Pass        c0a1eb16 Matt Benjamin Define a standard cmpf, replaces cmp_sockaddr in DRC.
 Pass        bc9210d0 Matt Benjamin DRC lifecycle fixes.
 Pass        45394ff1 Matt Benjamin Lookahead fixes.
-            7b60bbb6 Venkateswararao Jujjuri (JV) Few more bug fixes.
-            1a98db22 Venkateswararao Jujjuri (JV) Compilation/buind and few minor fixes.
-            7cdacf15 Adam C. Emerson Fix trivial warning in fridgethr_freeze
-            20d9f2e2 Adam C. Emerson Remove reference to LRU/Makefile from configure.ac
+Pass        7b60bbb6 Venkateswararao Jujjuri (JV) Few more bug fixes.
+Pass        1a98db22 Venkateswararao Jujjuri (JV) Compilation/buind and few minor fixes.
+Pass        7cdacf15 Adam C. Emerson Fix trivial warning in fridgethr_freeze
+Pass        20d9f2e2 Adam C. Emerson Remove reference to LRU/Makefile from configure.ac
 Pass        68419753 Matt Benjamin Remove unused gc_thrid.
 Pass        9bbad4b2 Matt Benjamin Parse DRC config parameters.
 Pass        147aabc6 Matt Benjamin Update config_samples (DRC).
@@ -313,9 +400,9 @@ Pass        190ef41e Matt Benjamin Millisecond timeout fixes.
 Ported on pre-2.0-dev_19            2623379f Venkateswararao Jujjuri (JV) Add proper return code for commit failures.
 
 Done Dev_34 e042bbe6 Frank S. Filz Reorganize stateid.other so clientid4 is part of it
-            5f67b486 Frank S. Filz Use atomic inc for new_clientid and new_clientid_verifier
-            ef86d80a Frank S. Filz Differentiate between NFS4ERR_STALE_CLIENTID and NFS4ERR_EXPIRED
-            note     also pick up 970b58d4
+Done        5f67b486 Frank S. Filz Use atomic inc for new_clientid and new_clientid_verifier
+Pass        ef86d80a Frank S. Filz Differentiate between NFS4ERR_STALE_CLIENTID and NFS4ERR_EXPIRED
+Done        ef7e31d8 rong zeng Temp change to return NFS4ERR_BAD_STATEID before clientid is included in stateid for better judgement
 
 Ported on pre-2.0-dev_19            631d3df3 Venkateswararao Jujjuri (JV) Fix cache_inode_lock_trust_attrs to take the configured grace_period_attr into account. Also fix a small Log message typo.
 Pass        cb6fbc01 Matt Benjamin Set dispatch parameters in the correct place.
@@ -324,8 +411,7 @@ Pass        2697fff5 Matt Benjamin Millisecond timeout fixes.
 Ported on pre-2.0-dev_19            354c0ac4 Venkateswararao Jujjuri (JV) Part of FTDC enhancements: - Main error logging is done by Return() macro. - In addition, posix2fsal_error logs when there is 1-to-many mapping. - All additional messages are at the LogInfo level. - Additional logging is added for debug purposes; added TODO to   remove these additional logs before making it a production level code.
 pre-2.0-dev_19            49506e6f Jeremy Bongio Fix some error codes so they aren't ignored/retried.
 Ported on pre-2.0-dev_19            ec344630 Jeremy Bongio Fix memory leak in debug_info functions.
-            01c65829 Venkateswararao Jujjuri (JV) Moving to duplex-7 new git repo + fix for thie crash in xdr_CREATE3args
-         ?? ef7e31d8 rong zeng Temp change to return NFS4ERR_BAD_STATEID before clientid is included in stateid for better judgement
+Pass        01c65829 Venkateswararao Jujjuri (JV) Moving to duplex-7 new git repo + fix for thie crash in xdr_CREATE3args
 
             bd70de5b Frank S. Filz Test if currentFH is present before testing export permissions
             8ad71c21 Frank S. Filz Initialzie pseudo root even if no exports.
@@ -337,9 +423,9 @@ Pass        48f9a624 rong zeng Serialze call to nfs4_init_name_mapping.
             9e63a350 rong zeng cache_inode_lookup_impl needs to grab exclusive content_lock when CACHE_INODE_TRUST_CONTENT flag is set.
             ee05623c Jeremy Bongio Add SONAS ifdef around SONAS only code so VFS can compile.
 Ported on pre-2.0-dev_19            534dfde2 Venkateswararao Jujjuri (JV) Don't hold the content lock in WR mode across high latency operations.
-            ea0936cd Lance Russell Store response in separately allocated bitmap4_val. This prevents a double free conflict with a xdr_array free and nfs4_op_open_Free.
-            683a0261 Jeremy Bongio Add header files to Makefile.am to fix rpm building.
-            9937bf10 Jeremy Bongio configure.ac wasn't including -lrt for the new use of clock_gettime().
+Pass        ea0936cd Lance Russell Store response in separately allocated bitmap4_val. This prevents a double free conflict with a xdr_array free and nfs4_op_open_Free.
+Pass        683a0261 Jeremy Bongio Add header files to Makefile.am to fix rpm building.
+Pass        9937bf10 Jeremy Bongio configure.ac wasn't including -lrt for the new use of clock_gettime().
             6b0179de Venkateswararao Jujjuri (JV) Modify the init script to take dump if the 'stop' detects a hang.
 
             9c41e8ff Frank S. Filz Only call LogClientListEntry if isFullDebug
@@ -353,8 +439,8 @@ Pass        ecfc5387 Frank S. Filz Add fsal_op_context_t to FSAL_read
 Pass        10cea5e3 Frank S. Filz Fix up min/max stats calc and move avg to script
 Pass        2f61b26a Frank S. Filz Compile out stats only used by stat exporter thread if not configured
             1929a24f Frank S. Filz Convert latency stats to msec and use clock_gettime
-Done Dev_35 6b1ede17 Frank S. Filz Add config block for log
-Done Dev_35 2bbed166 Frank S. Filz Minor log clean up
+70bc0b7     6b1ede17 Frank S. Filz Add config block for log
+1eed78d     2bbed166 Frank S. Filz Minor log clean up
 836119a0    90890183 Frank S. Filz Remove two pool constructors that just zero memory
 
 Pass        b0ae29ee Venkateswararao Jujjuri (JV) Compilation fixes.
@@ -392,7 +478,7 @@ Pass        da05a223 Matt Benjamin Add glist_splice_tail.
 Pass        7d5e828c Matt Benjamin Restore updated thread fridge.
 Pass        17780694 Matt Benjamin Remove the fridge 1.5.
 Pass        2f852bf2 Matt Benjamin Look for Linux xattrs in sys.
-            f5ad530b Venkateswararao Jujjuri (JV) We don't need to send GARBAGE_ARGS on failure; let the client retry. Per Matt we need to revisit this.
+Pass        f5ad530b Venkateswararao Jujjuri (JV) We don't need to send GARBAGE_ARGS on failure; let the client retry. Per Matt we need to revisit this.
             5c5abbfb rong zeng adding traces to capture unexpected error in GPFS posix2fsal_error.
 
             94d05820 Frank S. Filz Add more export permission debugging
@@ -432,9 +518,9 @@ f0c8a449    3aa28c9c Max Matveev IdMapper - fix stack overrun
             9563819d Max Matveev IdMapper - process numeric UID/GID in NFS4
 Ported on pre-2.0-dev_19            c273d55a Venkateswararao Jujjuri (JV) Make sure cache_inode_lru_get tries out lanes in different order while reaping.
 Pass        15d38318 rong zeng Fix in nfs4_op_open to properly handle parent entry's refcount. Incorrect refcount handling here caused another thread reap parent entries before cache_inode_getattr was invoked.
-            2d447828 rong zeng Debug around pthread_rwlock.*
+Pass        2d447828 rong zeng Debug around pthread_rwlock.*
             7acda454 Lance Russell Added logic for Ganesha to post forward progress. This requires some genral rpc counters. Logic can be extended
-            053606ed rong zeng 1. in lru_thread, instead of repeating processing the same entry, go to next lane. 2. Fixed order of unlocking of mutex and content_lock.
+Pass        053606ed rong zeng 1. in lru_thread, instead of repeating processing the same entry, go to next lane. 2. Fixed order of unlocking of mutex and content_lock.
 Pass        fbb7c4b6 Venkateswararao Jujjuri (JV) Move DRC management to nfs_rpc_execute
 Pass        ff72b737 Max Matveev NFS - better handling of 'success as failure' errors
             77bffbb7 Max Matveev NFS - return fresh attributes from ACCESS3
@@ -533,12 +619,12 @@ Pass        f29e479b Jim Wahlig update configure.ac to match the new gpfs header
 pushed      04557189 rong zeng Fix Pynfs RPLY5 RPLY7 RPLY12. Allow seqid based replay cache check if stateid's seqid is one less than curent.
             7a347a1e rong zeng Log changes for IdMapper/RPCAL/support
 Done        6fcd09ad Venkateswararao Jujjuri (JV) If GPFS is shutting down it can return whatever rc we want but if it is killed you will get rc EINTR in either case we need to terminate Ganesha, the problem with strace and gdb also will return EINTR so by retrying we will find out if GPFS still there and it was some debugging producing the EINTR or GPFS is really gone. (Fix proposed by Marc)
-            7326b543 Venkateswararao Jujjuri (JV) Avoid deadlock between entry(lru) mutex and content lock of the entry.
+Pass        7326b543 Venkateswararao Jujjuri (JV) Avoid deadlock between entry(lru) mutex and content lock of the entry.
             a1a87409 Srikrishan Malik Allow read/write for the owner of the file
 
 1a8ba579    0ee1edb6 Frank S. Filz Document Cache Inode and NFS Core parameters
 pushed      c9b4b4fd Frank S. Filz Strip out unused NFS_Core_Param
-            e7dad8e7 Frank S. Filz Document FSAL options in GPFS sample config and remove obsolete GPFS options
+Pass        e7dad8e7 Frank S. Filz Document FSAL options in GPFS sample config and remove obsolete GPFS options
 pushed      d132b61e Frank S. Filz With --enable-debug-memleaks, keep list of all state owners and stateids
 pushed      a689549b Frank S. Filz Convert state owners to use new HashTable_GetLatch
 62164b23    ba560a75 Frank S. Filz Convert NSM and NLM Client to new HashTable_GetLatch
@@ -566,7 +652,7 @@ Done        b2c001f8 Bruce Lucas Change default config file setting for Nb_Max_F
 Done        f307ab02 Rong zeng An error message was being freed twice, ending in a seg fault.
 Done        72f76dde Adam C. Emerson Free dirents on evicting a directory from the LRU.
 Pass        b42be644 Jim Wahlig add node ID, read all nodes' client ids at startup and add recovery thread.
-            1874ecc0 Venkateswararao Jujjuri (JV) Strict compile issues, and French to English comment conversions.
+Pass        1874ecc0 Venkateswararao Jujjuri (JV) Strict compile issues, and French to English comment conversions.
             75752621 Jeremy Bongio Added a new log function to print debug info during specific log levels.
 Pass        45e09078 Jim Wahlig log message cleanup plus compile fix
 Pass        027cb091 Lance Russell Added fsid to the GPFS specific handle
@@ -576,7 +662,7 @@ Pass        a903186a Venkateswararao Jujjuri (JV) Changing fsal_up_process_queue
 Ported on pre-2.0-dev_19            e774de9f Venkateswararao Jujjuri (JV) Valgrind fixes.
 Pass        32f60082 Jim Wahlig fix a crash caused when gpfs terminates
 Ported on pre-2.0-dev_19            8792f706 Venkateswararao Jujjuri (JV) Strict compile issues, and French to English comment conversions.
-            efb0407d Venkateswararao Jujjuri (JV) Including asserts to track SIGSEGV.
+Pass        efb0407d Venkateswararao Jujjuri (JV) Including asserts to track SIGSEGV.
 Pass        e4c625cb Venkateswararao Jujjuri (JV) FSAL_UP log adjustments.
 Ported on pre-2.0-dev_19            d8c2c504 Jeremy Bongio Added perl script to change or list log level through snmp.
 Ported on pre-2.0-dev_19            bf2652aa Jeremy Bongio Added a new log function to print debug info during specific log levels.
@@ -587,7 +673,7 @@ ported on dev26            66138a1f Jim Wahlig another set of logging updates
 Pass        f42543f6 Lance Russell Changed setattr logic for modifying group ownwership. Now to modify group, user must be root, current owner, or in the target group.
             8f63f968 rong zeng Fix V4 export access check. Don't apply check_access to V4 at proc level and fix the check in nfs4_MakeCred which is invoked in V4 operations.
 ported on dev26            36bf702d Jim Wahlig log message cleanup plus compile fix
-            e7c50d6c Lance Russell Added fsid to the GPFS specific handle
+Pass        e7c50d6c Lance Russell Added fsid to the GPFS specific handle
 Done        0296c7da Srikrishan Malik New tunable.
 Done        4734f0e0 Srikrishan Malik Change some tunables
 
