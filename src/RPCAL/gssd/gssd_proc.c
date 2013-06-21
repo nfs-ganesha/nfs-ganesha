@@ -73,6 +73,8 @@
 #include "nfsrpc.h"
 #include "nfslib.h"
 
+#define IPV6_SUPPORTED 1
+
 /*
  * pollarray:
  *      array of struct pollfd suitable to pass to poll. initialized to

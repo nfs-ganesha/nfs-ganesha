@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -28,8 +29,8 @@
  * \date    $Date: 2006/02/23 12:33:05 $
  * \brief   The file that contain the '_9p_dispatcher_thread' routine for ganesha.
  *
- * 9p_dispatcher.c : The file that contain the '_9p_dispatcher_thread' routine for ganesha (and all
- * the related stuff).
+ * 9p_dispatcher.c : The file that contain the '_9p_dispatcher_thread' routine
+ * for ganesha (and all the related stuff).
  *
  */
 #include "config.h"
@@ -60,12 +61,6 @@
 #include "9p.h"
 
 #include <mooshika.h>
-
-#ifndef _USE_TIRPC_IPV6
-  #define P_FAMILY AF_INET
-#else
-  #define P_FAMILY AF_INET6
-#endif
 
 void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
   _9p_rdma_priv *priv = _9p_rdma_priv_of(trans) ;

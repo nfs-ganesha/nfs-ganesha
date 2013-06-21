@@ -59,11 +59,7 @@
 #include "9p.h"
 #include <stdbool.h>
 
-#ifndef _USE_TIRPC_IPV6
-  #define P_FAMILY AF_INET
-#else
-  #define P_FAMILY AF_INET6
-#endif
+#define P_FAMILY AF_INET6
 
 void DispatchWork9P( request_data_t *preq )
 {
@@ -330,14 +326,10 @@ int _9p_create_socket( void )
   int one = 1 ;
   int centvingt = 120 ;
   int neuf = 9 ;
-#ifndef _USE_TIRPC_IPV6
-  struct sockaddr_in sinaddr;
-#else
   struct sockaddr_in6 sinaddr_tcp6;
   struct netbuf netbuf_tcp6;
   struct t_bind bindaddr_tcp6;
   struct __rpc_sockinfo si_tcp6;
-#endif
   int bad = 1 ;
   
   if( ( sock= socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP) ) != -1 )
@@ -355,29 +347,6 @@ int _9p_create_socket( void )
         return -1 ;
     }
   socket_setoptions( sock ) ;
-
-#ifndef _USE_TIRPC_IPV6
-  memset( &sinaddr, 0, sizeof(sinaddr));
-  sinaddr.sin_family      = AF_INET;
-  sinaddr.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
-  sinaddr.sin_port        = htons(nfs_param._9p_param._9p_tcp_port);
-
-  if(bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
-   {
-     LogFatal(COMPONENT_9P_DISPATCH,
-              "Cannot bind 9p tcp socket, error %d (%s)",
-              errno, strerror(errno));
-     return -1 ;
-   }
-
-  if( listen( sock, 20 ) == -1 )
-   {
-       LogFatal(COMPONENT_DISPATCH,
-                "Cannot bind 9p socket, error %d (%s)",
-                errno, strerror(errno));
-       return -1 ;
-   }
-#else
   memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
   sinaddr_tcp6.sin6_family = AF_INET6;
   sinaddr_tcp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
@@ -415,8 +384,6 @@ int _9p_create_socket( void )
                 errno, strerror(errno));
        return -1 ;
    }
-
-#endif
 
   return sock ;
 } /* _9p_create_socket */

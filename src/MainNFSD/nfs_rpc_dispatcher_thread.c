@@ -57,12 +57,6 @@
 #include "nfs_file_handle.h"
 #include "fridgethr.h"
 
-#ifndef _USE_TIRPC_IPV6
-  #define P_FAMILY AF_INET
-#else
-  #define P_FAMILY AF_INET6
-#endif
-
 /**
  * TI-RPC event channels.  Each channel is a thread servicing an event
  * demultiplexer.
@@ -130,7 +124,6 @@ const char *tags[] = {
 typedef struct proto_data
 {
   struct sockaddr_in sinaddr;
-#ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 sinaddr_udp6;
   struct sockaddr_in6 sinaddr_tcp6;
   struct netbuf netbuf_udp6;
@@ -139,17 +132,14 @@ typedef struct proto_data
   struct t_bind bindaddr_tcp6;
   struct __rpc_sockinfo si_udp6;
   struct __rpc_sockinfo si_tcp6;
-#endif
 } proto_data;
 
 proto_data pdata[P_COUNT];
 
 struct netconfig *netconfig_udpv4;
 struct netconfig *netconfig_tcpv4;
-#ifdef _USE_TIRPC_IPV6
 struct netconfig *netconfig_udpv6;
 struct netconfig *netconfig_tcpv6;
-#endif
 
 /* RPC Service Sockets and Transports */
 int udp_socket[P_COUNT];
@@ -172,10 +162,8 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
    {
      rpcb_unset(prog, vers, netconfig_udpv4);
      rpcb_unset(prog, vers, netconfig_tcpv4);
-#ifdef _USE_TIRPC_IPV6
      rpcb_unset(prog, vers, netconfig_udpv6);
      rpcb_unset(prog, vers, netconfig_tcpv6);
-#endif
    }
 }
 
@@ -255,12 +243,6 @@ void Create_udp(protos prot)
     (void) svc_rqst_evchan_reg(rpc_evchan[UDP_EVENT_CHAN].chan_id,
                                udp_xprt[prot],
                                SVC_RQST_FLAG_XPRT_UREG);
-
-    /* XXXX why are we doing this?  Is it also stale (see below)? */
-#ifdef _USE_TIRPC_IPV6
-    udp_xprt[prot]->xp_netid = gsh_strdup(netconfig_udpv6->nc_netid);
-    udp_xprt[prot]->xp_tp    = gsh_strdup(netconfig_udpv6->nc_device);
-#endif
 }
 
 void Create_tcp(protos prot)
@@ -291,18 +273,6 @@ void Create_tcp(protos prot)
     /* Setup private data */
     (tcp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(tcp_xprt[prot],
                                                      XPRT_PRIVATE_FLAG_NONE);
-
-/* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
- * (Matt) */
-#ifdef _USE_TIRPC_IPV6
-    if(listen(tcp_socket[prot], pdata[prot].bindaddr_udp6.qlen) != 0)
-        LogFatal(COMPONENT_DISPATCH,
-                 "Cannot listen on  %s/TCPv6 SVCXPRT, errno=%u (%s)",
-                 tags[prot], errno, strerror(errno));
-    /* XXX what if we errored above? */
-    tcp_xprt[prot]->xp_netid = gsh_strdup(netconfig_tcpv6->nc_netid);
-    tcp_xprt[prot]->xp_tp    = gsh_strdup(netconfig_tcpv6->nc_device);
-#endif
 }
 
 /**
@@ -332,72 +302,53 @@ void Bind_sockets(void)
     if(test_for_additional_nfs_protocols(p))
       {
         proto_data *pdatap = &pdata[p];
-#ifndef _USE_TIRPC_IPV6
-        memset(&pdatap->sinaddr, 0, sizeof(pdatap->sinaddr));
-        pdatap->sinaddr.sin_family      = AF_INET;
-        pdatap->sinaddr.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
-        pdatap->sinaddr.sin_port        = htons(nfs_param.core_param.port[p]);
-
-        if(bind(udp_socket[p],
-                (struct sockaddr *)&pdatap->sinaddr, sizeof(pdatap->sinaddr)) == -1)
-          LogFatal(COMPONENT_DISPATCH,
-                   "Cannot bind %s udp socket, error %d (%s)",
-                   tags[p], errno, strerror(errno));
-
-        if(bind(tcp_socket[p],
-                (struct sockaddr *)&pdatap->sinaddr, sizeof(pdatap->sinaddr)) == -1)
-          LogFatal(COMPONENT_DISPATCH,
-                   "Cannot bind %s tcp socket, error %d (%s)",
-                   tags[p], errno, strerror(errno));
-#else
         memset(&pdatap->sinaddr_udp6, 0, sizeof(pdatap->sinaddr_udp6));
         pdatap->sinaddr_udp6.sin6_family = AF_INET6;
-        pdatap->sinaddr_udp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
-        pdatap->sinaddr_udp6.sin6_port   = htons(nfs_param.core_param.port[p]);
+        pdatap->sinaddr_udp6.sin6_addr = in6addr_any; /* all interfaces */
+        pdatap->sinaddr_udp6.sin6_port = htons(nfs_param.core_param.port[p]);
 
         pdatap->netbuf_udp6.maxlen = sizeof(pdatap->sinaddr_udp6);
-        pdatap->netbuf_udp6.len    = sizeof(pdatap->sinaddr_udp6);
-        pdatap->netbuf_udp6.buf    = &pdatap->sinaddr_udp6;
+        pdatap->netbuf_udp6.len = sizeof(pdatap->sinaddr_udp6);
+        pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp6;
 
         pdatap->bindaddr_udp6.qlen = SOMAXCONN;
         pdatap->bindaddr_udp6.addr = pdatap->netbuf_udp6;
 
         if(!__rpc_fd2sockinfo(udp_socket[p], &pdatap->si_udp6))
-          LogFatal(COMPONENT_DISPATCH,
-                   "Cannot get %s socket info for udp6 socket errno=%d (%s)",
-                   tags[p], errno, strerror(errno));
+            LogFatal(COMPONENT_DISPATCH,
+                     "Cannot get %s socket info for udp6 socket errno=%d (%s)",
+                     tags[p], errno, strerror(errno));
 
         if(bind(udp_socket[p],
                 (struct sockaddr *)pdatap->bindaddr_udp6.addr.buf,
                 (socklen_t) pdatap->si_udp6.si_alen) == -1)
-          LogFatal(COMPONENT_DISPATCH,
-                   "Cannot bind %s udp6 socket, error %d (%s)",
-                   tags[p], errno, strerror(errno));
+            LogFatal(COMPONENT_DISPATCH,
+                     "Cannot bind %s udp6 socket, error %d (%s)",
+                     tags[p], errno, strerror(errno));
 
         memset(&pdatap->sinaddr_tcp6, 0, sizeof(pdatap->sinaddr_tcp6));
         pdatap->sinaddr_tcp6.sin6_family = AF_INET6;
-        pdatap->sinaddr_tcp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
-        pdatap->sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param.port[p]);
+        pdatap->sinaddr_tcp6.sin6_addr = in6addr_any; /* all interfaces */
+        pdatap->sinaddr_tcp6.sin6_port = htons(nfs_param.core_param.port[p]);
 
         pdatap->netbuf_tcp6.maxlen = sizeof(pdatap->sinaddr_tcp6);
-        pdatap->netbuf_tcp6.len    = sizeof(pdatap->sinaddr_tcp6);
-        pdatap->netbuf_tcp6.buf    = &pdatap->sinaddr_tcp6;
+        pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp6);
+        pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp6;
 
         pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
         pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
 
         if(!__rpc_fd2sockinfo(tcp_socket[p], &pdatap->si_tcp6))
-          LogFatal(COMPONENT_DISPATCH,
+            LogFatal(COMPONENT_DISPATCH,
                    "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
-                   tags[p], errno, strerror(errno));
+                     tags[p], errno, strerror(errno));
 
         if(bind(tcp_socket[p],
                 (struct sockaddr *)pdatap->bindaddr_tcp6.addr.buf,
                 (socklen_t) pdatap->si_tcp6.si_alen) == -1)
-          LogFatal(COMPONENT_DISPATCH,
-                   "Cannot bind %s tcp6 socket, error %d (%s)",
-                   tags[p], errno, strerror(errno));
-#endif
+            LogFatal(COMPONENT_DISPATCH,
+                     "Cannot bind %s tcp6 socket, error %d (%s)",
+                     tags[p], errno, strerror(errno));
       }
 }
 
@@ -435,7 +386,6 @@ void Register_program(protos prot, int flag, int vers)
                  "Cannot register %s V%d on UDP",
                  tags[prot], (int)vers);
 
-#ifdef _USE_TIRPC_IPV6
       LogInfo(COMPONENT_DISPATCH,
               "Registering %s V%d/UDPv6",
               tags[prot], (int)vers);
@@ -443,7 +393,6 @@ void Register_program(protos prot, int flag, int vers)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot register %s V%d on UDPv6",
                  tags[prot], (int)vers);
-#endif
 
 #ifndef _NO_TCP_REGISTER
       LogInfo(COMPONENT_DISPATCH,
@@ -455,7 +404,6 @@ void Register_program(protos prot, int flag, int vers)
                  "Cannot register %s V%d on TCP",
                  tags[prot], (int)vers);
 
-#ifdef _USE_TIRPC_IPV6
       LogInfo(COMPONENT_DISPATCH,
               "Registering %s V%d/TCPv6",
               tags[prot], (int)vers);
@@ -463,7 +411,6 @@ void Register_program(protos prot, int flag, int vers)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot register %s V%d on TCPv6",
                  tags[prot], (int)vers);
-#endif /* _USE_TIRPC_IPV6 */
 #endif /* _NO_TCP_REGISTER */
     }
 }
@@ -545,7 +492,6 @@ void nfs_Init_svc()
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
 
-#ifdef _USE_TIRPC_IPV6
     LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
 
     /* Get the netconfig entries from /etc/netconfig */
@@ -560,7 +506,6 @@ void nfs_Init_svc()
 
     /* A short message to show that /etc/netconfig parsing was a success */
     LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
-#endif
 
   /* Allocate the UDP and TCP sockets for the RPC */
   LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");

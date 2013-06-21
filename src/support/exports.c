@@ -3006,7 +3006,6 @@ int export_client_match_any(sockaddr_t                * hostaddr,
                             exportlist_client_entry_t * pclient_found,
                             unsigned int                export_option)
 {
-#ifdef _USE_TIRPC_IPV6
   if(hostaddr->ss_family == AF_INET6)
     {
       struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *) hostaddr;
@@ -3016,7 +3015,6 @@ int export_client_match_any(sockaddr_t                * hostaddr,
                                    export_option);
     }
   else
-#endif
     {
       return export_client_match(hostaddr,
                                  clients,
@@ -3138,13 +3136,10 @@ bool nfs_export_check_security(struct svc_req *req,
   return true;
 }
 
-#ifdef _USE_TIRPC_IPV6
 static char ten_bytes_all_0[10];
-#endif
 
 sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4)
 {
-#ifdef _USE_TIRPC_IPV6
   struct sockaddr_in  * paddr = (struct sockaddr_in *)ipv4;
   struct sockaddr_in6 * psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
 
@@ -3184,10 +3179,6 @@ sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4)
     {
       return ipv6;
     }
-#else
-  /* ipv6 is indeed ipv4 in this case */
-  return ipv6;
-#endif
 }
 
 /**

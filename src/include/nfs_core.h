@@ -69,6 +69,10 @@
 
 #define XATTR_BUFFERSIZE 4096
 
+/*
+ * Bind protocol family, pending a richer interface model.
+ */
+#define P_FAMILY AF_INET6
 
 typedef struct nfs_request_data {
 	SVCXPRT *xprt;

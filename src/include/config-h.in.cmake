@@ -20,7 +20,6 @@
 #cmakedefine _USE_CB_SIMULATOR 1
 #cmakedefine USE_DBUS_STATS 1
 #cmakedefine _HANDLE_MAPPING 1
-#cmakedefine _USE_TIRPC_IPV6 1
 #cmakedefine _USE_9P 1
 #cmakedefine _USE_9P_RDMA 1
 #cmakedefine DEBUG_SAL 1
