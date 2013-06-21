@@ -53,32 +53,6 @@
 static pseudofs_t gPseudoFs;
 
 /**
- * @brief Convert a file handle to the id of an object in the pseudofs
- *
- * This routine merely extracts a field from the file handle which is
- * not seen as opaque in this case. Because file handle are opaque
- * structure, it is prefered to have a dedicated function for this and
- * so hiding the file handle internal structure.
- *
- * @param[in] fh4p file handle to process
- *
- * @return The pseudo ID.
- *
- * @see nfs_GetPseudoFs
- */
-
-uint64_t nfs4_PseudoToId(nfs_fh4 * fh4p)
-{
-  file_handle_v4_t *pfhandle4;
-  uint64_t out = 0LL;
-
-  pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
-
-  out = (uint64_t) (pfhandle4->pseudofs_id);
-  return out;
-}
-
-/**
  * @brief Get the root of the pseudo file system
  *
  * Gets the root of the pseudo file system. This is only a wrapper to
@@ -151,8 +125,10 @@ static bool pseudo_node(char *token, void *arg)
 	new_node->pseudo_id = gPseudoFs.last_pseudo_id;
 	gPseudoFs.reverse_tab[gPseudoFs.last_pseudo_id] = new_node;
 	new_node->last = new_node;
-	snprintf(new_node->fullname, MAXPATHLEN, "%s/%s",
-		 state->this_node->fullname, token);
+
+        LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+                    "Creating pseudo fs entry for %s, pseudo_id %d",
+                    token, gPseudoFs.last_pseudo_id);
 
 	/* Step into the new entry and attach it to the tree */
 	if(state->this_node->sons == NULL) {
@@ -411,50 +387,6 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 }                               /* nfs4_PseudoToFhandle */
 
 /**
- * nfs4_CreateROOTFH: Creates the file handle for the "/" of the pseudo file system
- *
- *  Creates the file handle for the "/" of the pseudo file syste.
- * 
- * @param fh4p [OUT]   pointer to the file handle to be allocated
- * @param data [INOUT] pointer to the compound request's data
- * 
- * @return NFS4_OK if successfull, NFS4ERR_BADHANDLE if an error occured when creating the file handle.
- *
- */
-
-int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
-{
-  pseudofs_entry_t psfsentry;
-  int status = 0;
-
-  psfsentry = *(data->pseudofs->reverse_tab[0]);
-
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-               "CREATE ROOTFH (pseudo): root to pseudofs = #%s#",
-               psfsentry.name);
-
-  if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
-    return status;
-
-  if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
-    {
-      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                   "CREATE ROOTFH (pseudo): Creation of root fh is impossible");
-      return NFS4ERR_BADHANDLE;
-    }
-
-  /* Test */
-  if(isFullDebug(COMPONENT_NFS_V4))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle4(str, &data->rootFH);
-      LogFullDebug(COMPONENT_NFS_V4, "CREATE ROOT FH: %s", str);
-    }
-
-  return NFS4_OK;
-}                               /* nfs4_CreateROOTFH4 */
-
-/**
  * nfs4_op_getattr_pseudo: Gets attributes for directory in pseudo fs
  * 
  * Gets attributes for directory in pseudo fs. These are hardcoded constants. 
@@ -491,8 +423,8 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
   else
     res_GETATTR4->status = NFS4_OK;
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "Apres nfs4_PseudoToFattr: attrmask(bitmap4_len)=%d attrlist4_len=%d",
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+               "attrmask(bitmap4_len)=%d attrlist4_len=%d",
                res_GETATTR4->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len,
                res_GETATTR4->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len);
 
@@ -638,9 +570,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   else
     {
       /* The entry is a junction */
-      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                   "A junction in pseudo fs is traversed: name = %s, id = %d",
-                   iter->name, iter->junction_export->id);
+      LogMidDebug(COMPONENT_NFS_V4_PSEUDO,      
+                  "A junction in pseudo fs is traversed: name = %s, id = %d",
+                  iter->name, iter->junction_export->id);
       /**
        * @todo Danger Will Robinson!!
        * We do a get_gsh_export here to take a reference on the export
@@ -688,8 +620,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
-              res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to allocate the first file handle");
+             res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	      goto out;
             }
         }
@@ -698,8 +630,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       if(!nfs4_FSALToFhandle(&data->currentFH, entry->obj_handle))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
-          res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
+         res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	  goto out;
         }
 
@@ -895,7 +827,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   entryFH.nfs_fh4_len = 0;
 
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "Entering NFS4_OP_READDIR_PSEUDO");
+  LogDebug(COMPONENT_NFS_V4_PSEUDO, "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
   dircount = arg_READDIR4->dircount;
@@ -906,9 +838,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
   estimated_num_entries = maxcount / sizeof(entry4);
 
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-               "PSEUDOFS READDIR: dircount=%lu, maxcount=%lu, cookie=%"PRIu64", sizeof(entry4)=%lu num_entries=%lu",
-               dircount, maxcount, (uint64_t)cookie, space_used, estimated_num_entries);
+  LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+              "dircount=%lu, maxcount=%lu, cookie=%"PRIu64", sizeof(entry4)=%lu num_entries=%lu",
+              dircount, maxcount, (uint64_t)cookie, space_used, estimated_num_entries);
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
@@ -923,16 +855,17 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       res_READDIR4->status = NFS4ERR_BADHANDLE;
       return res_READDIR4->status;
     }
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-               "PSEUDOFS READDIR in #%s#", psfsentry->name);
+
+  LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+              "PSEUDOFS READDIR in %s", psfsentry->name);
 
   /* If this a junction filehandle ? */
   if(psfsentry->junction_export != NULL)
     {
       /* This is a junction */
-      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDOFS READDIR : DIR #%s# id=%u is a junction",
-                   psfsentry->name, psfsentry->junction_export->id);
+      LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+                  "DIR %s id=%u is a junction",
+                  psfsentry->name, psfsentry->junction_export->id);
 
       /* Step up the compound data */
       /**
@@ -948,7 +881,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       if(res_READDIR4->status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           return res_READDIR4->status;
         }
@@ -968,7 +901,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to allocate the first file handle");
               res_READDIR4->status = NFS4ERR_SERVERFAULT;
               return res_READDIR4->status;
             }
@@ -978,7 +911,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       if(!nfs4_FSALToFhandle(&data->currentFH, entry->obj_handle))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
           res_READDIR4->status = NFS4ERR_SERVERFAULT;
           return res_READDIR4->status;
         }
@@ -1017,9 +950,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         {
           if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
             {
-              res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+              res_READDIR4->status = NFS4ERR_BAD_COOKIE;
               gsh_free(entry_nfs_array);
-              return res_READDIR4.status;
+              return res_READDIR4->status;
             }
         }
     }
@@ -1045,8 +978,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   i = 0;
   for(; iter != NULL; iter = iter->next)
     {
-      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS: Found entry %s", iter->name);
+      LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+                  "PSEUDO FS: Found entry %s pseudo_id %d",
+                  iter->name, iter->pseudo_id);
 
       namelen = strlen(iter->name);
       entry_nfs_array[i].name.utf8string_len = namelen;
@@ -1096,9 +1030,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
        * to clients from a lookup. AIX refused to list the directory because of
        * this. Now we go to the junction to get the attributes.
        */
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                 "PSEUDOFS READDIR : Offspring DIR #%s# id=%u is a junction full path %s ", 
-                  iter->name, iter->junction_export->id, iter->junction_export->fullpath); 
+          LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+                 "Offspring DIR %s pseudo_id %d is a junction Export_id %d Path %s", 
+                  iter->name,
+                  iter->pseudo_id,
+                  iter->junction_export->id,
+                  iter->junction_export->fullpath); 
           /* Save the compound data context */
           save_pexport = data->pexport;
           data->pexport = iter->junction_export;
@@ -1116,7 +1053,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           if(res_READDIR4->status == NFS4ERR_ACCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-		       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ |"
+		       "PSEUDO FS JUNCTION TRAVERSAL:"
 		       " Failed to get FSAL credentials for %s, id=%d",
 		       iter->junction_export->fullpath,
 		       iter->junction_export->id);
@@ -1137,7 +1074,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           if(!nfs4_FSALToFhandle(&entryFH, entry->obj_handle))
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
+                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
               res_READDIR4->status = NFS4ERR_SERVERFAULT;
               return res_READDIR4->status;
             }
@@ -1174,9 +1111,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                       sizeof(entry4))) == NULL)
       {
         LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-        res_READDIR4.status = NFS4ERR_SERVERFAULT;
+        res_READDIR4->status = NFS4ERR_SERVERFAULT;
         gsh_free(entry_nfs_array);
-        return res_READDIR4.status;
+        return res_READDIR4->status;
       }
 #endif
   /* Build the reply */

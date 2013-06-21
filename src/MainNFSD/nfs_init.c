@@ -1001,15 +1001,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 clientid cache successfully initialized");
 
-  /* Creates the pseudo fs */
-  LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS()) != 0)
-    LogFatal(COMPONENT_INIT,
-             "Error %d while initializing NFSv4 pseudo file system", rc);
-
-  LogInfo(COMPONENT_INIT,
-          "NFSv4 pseudo file system successfully initialized");
-
   /* Init duplicate request cache */
   dupreq2_pkginit();
   LogInfo(COMPONENT_INIT,
