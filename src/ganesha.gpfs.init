@@ -31,6 +31,7 @@
 [ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
 
 PATHPROG=/usr/bin/ganesha.nfsd
+PROGONLY=ganesha.nfsd
 #LOGFILE=/var/log/ganesha.gpfs.log
 LOGFILE=SYSLOG
 #LOGFILE=STDERR
@@ -86,7 +87,7 @@ start() {
 	# Start statd, rquotad and Ganesha daemon.
 	# If any of the three daemons are already running, then doesn't restart it.
 	start_statd=1
-	start_rquotad=1
+	start_rquotad=0
 	start_ganesha=1
 
 	# Check if the user is root
@@ -129,6 +130,9 @@ start() {
 
 	# Check if Ganesha is already running
 	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+           result=`pidof "$PROGONLY"`
+        fi
 	if [ $result ]; then
 	        echo "Ganesha is already running."
 		start_ganesha=0
@@ -171,11 +175,12 @@ start() {
 			echo -n $"Starting rquotad: "
 			[ -n "$RQUOTAD_PORT" ] \
 				&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
-	#		daemon rpc.rquotad $RPCRQUOTADOPTS
+			daemon rpc.rquotad $RPCRQUOTADOPTS
 			RETVAL=$?
 			echo
 			if [ $RETVAL -ne 0 ]; then
 				failure
+				echo " "
 				return $RETVAL
 			fi
 		fi
@@ -210,6 +215,9 @@ start() {
 
 		# Check if Ganesha is still running
 		result=`pidof "$PATHPROG"`
+		if [ ! $result ]; then
+                    result=`pidof "$PROGONLY"`
+                fi
 		if [ ! $result ]; then
 		    failure
 		    echo
@@ -246,18 +254,28 @@ stop() {
 	fi
 	echo
 	# Kill the Ganesha process
+        # pidof on some systems use only the process's name
+        # pidof on other systems use the full pathname of the process binary
 	echo -n $"Stopping $prog: "
 	pid=`pidof "$PATHPROG"`
+	if [ ! $pid ]; then
+           PROCNAME=$PROGONLY
+           pid=`pidof "$PROGONLY"`
+        else
+           PROCNAME=$PATHPROG
+        fi
 	if [ $pid ]; then
 		# Ganesha is running. Stop it.
 		kill -TERM $pid >/dev/null 2>&1
                 usleep 100000
+
                 # Unconditionally delete this file.
                 rm -f  /var/lock/subsys/ganesha.nfsd
 
         	#Sleep for 1 second before checking the status, If the process exists
 	        #even after 30 iterations, send Kill
         	waitcnt=0
+
 	        while true; do
         	    if checkpid $pid && sleep 1; then
                 	waitcnt=$(( waitcnt + 1 ))
@@ -271,11 +289,12 @@ stop() {
         	done
 
 		# Give Ganesha time to quit
-		result=`pidof "$PATHPROG"`
+		result=`pidof "$PROCNAME"`
 		while true; do
 			 if [ $result ] && [ $result -eq $pid ]; then
+                                 echo "Waiting for ganesha to stop ..."
 				 sleep .1
-				 result=`pidof "$PATHPROG"`
+				 result=`pidof "$PROCNAME"`
 			 else
 				 break
 			 fi
