@@ -180,8 +180,12 @@ ELSE( USE_FSAL_ZFS )
 ENDIF( USE_FSAL_ZFS )
 
 if("${DISTRO}" STREQUAL "fedora")
-   SET(ADDITIONAL_REQ systemd-units)
+   SET(ADDITIONAL_REQ "cmake systemd-units" )
 endif("${DISTRO}" STREQUAL "fedora")
+
+if("${DISTRO}" STREQUAL "redhat")
+   SET(ADDITIONAL_REQ "initscripts" )
+endif("${DISTRO}" STREQUAL "redhat")
 
 FILE(APPEND ${RPMBULILD_CMAKE} "set(DISTNAME_HAS_GIT_DATA ON)
 ")
@@ -201,7 +205,7 @@ Release:        ${RPM_RELEASE}
 License:        ${RPM_PACKAGE_LICENSE}
 Group:          ${RPM_PACKAGE_GROUP}
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-BuildRequires:	cmake ${ADDITIONAL_REQ}
+BuildRequires:	${ADDITIONAL_REQ}
 Url:            ${RPM_URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
