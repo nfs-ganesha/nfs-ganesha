@@ -155,7 +155,7 @@ start() {
 	fi
 
 	# Check if Ganesha is already running
-	result=`pidof "$PATHPROG"`
+	result=`pidof "$PROG"`
 	if [ $result ]; then
 	        echo "GPFS Ganesha is already running."
 		start_ganesha=0
@@ -251,7 +251,7 @@ start() {
 		sleep 2
 
 		# Check if Ganesha is still running
-		result=`pidof "$PATHPROG"`
+		result=`pidof "$PROG"`
 		if [ ! $result ]; then
 		    failure
 		    echo
@@ -289,7 +289,7 @@ stop() {
 	echo
 	# Kill the Ganesha process
 	echo -n $"Stopping $prog: "
-	pid=`pidof "$PATHPROG"`
+	pid=`pidof "$PROG"`
 	if [ $pid ]; then
 		# Ganesha is running. Stop it.
 		#check for deadlock and take a dump if required.
@@ -320,11 +320,11 @@ stop() {
         done
 
 		# Give Ganesha time to quit
-		result=`pidof "$PATHPROG"`
+		result=`pidof "$PROG"`
 		while true; do
 			 if [ $result ] && [ $result -eq $pid ]; then
 				 sleep .1
-				 result=`pidof "$PATHPROG"`
+				 result=`pidof "$PROG"`
 			 else
 				 break
 			 fi
@@ -346,7 +346,7 @@ condrestart(){
 }
 
 reload() {
-    result=`pidof "$PATHPROG"`
+    result=`pidof "$PROG"`
     if [ $result ]; then
 	    echo "Reloading Ganesha Exports"
 	    kill -HUP $result;
@@ -354,7 +354,7 @@ reload() {
 }
 
 ganesha_status() {
-    result=`pidof "$PATHPROG"`
+    result=`pidof "$PROG"`
     if [ $result ]; then
 	    echo "GPFS Ganesha is running."
 	    RETVAL=0
