@@ -848,6 +848,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
   if (data->current_entry)
     {
       cache_inode_put(data->current_entry);
+      data->current_entry = NULL;
     }
 
   /* Fill in compound data */
