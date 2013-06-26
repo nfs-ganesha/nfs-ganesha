@@ -370,6 +370,7 @@ struct state_nlm_client_t {
 	xprt_type_t slc_client_type; /*< The transport type to this
 				         client */
 	int32_t slc_refcount; /*< Reference count for disposal */
+	struct sockaddr_storage slc_server_addr; /*< local addr when request is made */
 	int32_t slc_nlm_caller_name_len; /*< Length of client name */
 	char *slc_nlm_caller_name; /*< Client name */
 	CLIENT *slc_callback_clnt; /*< Callback for blocking locks */
