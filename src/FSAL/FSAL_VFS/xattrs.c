@@ -739,7 +739,7 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
   /* remove final '\n', if any */
-  chomp_attr_value((char *)buffer_addr, buffer_size);
+  //chomp_attr_value((char *)buffer_addr, buffer_size);
 
   fd = (obj_hdl->type == DIRECTORY ) ? vfs_fsal_open( obj_handle, O_DIRECTORY, &fe ) : vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
@@ -747,7 +747,7 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
       return fsalstat( fe, -fd);
     }
 
-  len = strnlen((char *)buffer_addr, buffer_size);
+  len = buffer_size ;
 
   if(len == 0)
     rc = fsetxattr(fd, xattr_name, "", 1, create ? XATTR_CREATE : XATTR_REPLACE);
