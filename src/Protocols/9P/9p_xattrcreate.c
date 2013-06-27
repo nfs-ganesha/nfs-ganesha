@@ -52,7 +52,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
                      char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-/*   int create = FALSE ; */
+  int create ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -122,26 +122,27 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
        return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
 
-/*      if( ( *flag == 0 ) ||  (*flag & XATTR_CREATE ) )  */
-/*         create = TRUE ; */
-/*      else */
-/*         create = FALSE ; */
+     /* try to create if flag doesn't have REPLACE bit */
+     if( ( *flag & XATTR_REPLACE ) == 0 )
+       create = TRUE ;
+     else
+       create = FALSE ;
 
-
-     /* Proceed in two steps for the information provided in *flag does not seem to be reliable */
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
                                                                     &pfid->op_context,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
-                                                                    0, //*size,
-                                                                    TRUE )  ;
-     if( FSAL_IS_ERROR( fsal_status ) && fsal_status.major == ERR_FSAL_EXIST )
+                                                                    *size,
+                                                                    create ) ;
+
+     /* Try again with create = false if flag was set to 0 and create failed because attribute already exists */
+     if( FSAL_IS_ERROR( fsal_status ) && fsal_status.major == ERR_FSAL_EXIST && ( *flag == 0 ) )
       {
         fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
                                                                        &pfid->op_context,
                                                                        name,
-                                                                       pfid->specdata.xattr.xattr_content, 
-                                                                       0, //*size,
+                                                                       pfid->specdata.xattr.xattr_content,
+                                                                       *size,
                                                                        FALSE )  ;
       }
 
