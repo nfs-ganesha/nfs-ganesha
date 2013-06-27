@@ -44,6 +44,15 @@
 #include "fsal.h"
 #include "9p.h"
 
+#define FREE_FID(pfid, fid, preq9p) do {        \
+/* Tell the cache the fid that used this        \
+ * entry is not used by this set of messages */ \
+  cache_inode_put( pfid->pentry ) ;             \
+                                                \
+  /* Free the fid */                            \
+  gsh_free( pfid ) ;                            \
+  preq9p->pconn->fids[*fid] = NULL ;            \
+} while( 0 )
 
 int _9p_clunk( _9p_request_data_t * preq9p,
                void  * pworker_data,
@@ -87,7 +96,10 @@ int _9p_clunk( _9p_request_data_t * preq9p,
     {
       /* Check size give at TXATTRCREATE against the one resulting from the writes */
       if( pfid->specdata.xattr.xattr_size != pfid->specdata.xattr.xattr_offset )
+      {
+         FREE_FID(pfid, fid, preq9p);
          return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
+      }
 
       /* Write the xattr content */
       fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
@@ -96,7 +108,10 @@ int _9p_clunk( _9p_request_data_t * preq9p,
                                                                            pfid->specdata.xattr.xattr_content,
                                                                            pfid->specdata.xattr.xattr_size ) ;
       if(FSAL_IS_ERROR(fsal_status))
+      {
+         FREE_FID(pfid, fid, preq9p);
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+      }
      }
 
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
@@ -116,14 +131,13 @@ int _9p_clunk( _9p_request_data_t * preq9p,
      cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
      if(cache_status != CACHE_INODE_SUCCESS)
+     {
+        FREE_FID(pfid, fid, preq9p);
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+     }
    }
 
-  /* Tell the cache the fid that used this entry is not used by this set of messages */
-  cache_inode_put( pfid->pentry ) ;
- 
-  /* Free the fid */
-  gsh_free( pfid ) ;
+  FREE_FID(pfid, fid, preq9p);
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;

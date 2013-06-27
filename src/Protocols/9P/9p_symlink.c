@@ -113,9 +113,10 @@ snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 				     &create_arg,
 				     &pfid->op_context,
 				     &pentry_symlink);
+
+   if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
    if (pentry_symlink == NULL)
     {
-      if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
