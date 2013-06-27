@@ -102,6 +102,7 @@ int _9p_read( _9p_request_data_t * preq9p,
     {
       /* Copy the value cached during xattrwalk */
       memcpy( databuffer, pfid->specdata.xattr.xattr_content+ *offset, *count ) ;
+      pfid->specdata.xattr.xattr_write = FALSE ;
 
       outcount = (u32)*count ;
     }

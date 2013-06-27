@@ -68,7 +68,6 @@ int _9p_write( _9p_request_data_t * preq9p,
   char *databuffer = NULL;
 
   fsal_status_t fsal_status ; 
-  char xattrval[XATTR_BUFFERSIZE] ;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
@@ -102,8 +101,15 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   if( pfid->specdata.xattr.xattr_content != NULL )
    { 
-     snprintf( xattrval, XATTR_BUFFERSIZE, "%.*s", *count, databuffer ) ;
+     memcpy( pfid->specdata.xattr.xattr_content + (*offset),
+             databuffer,
+             size ) ;
+     pfid->specdata.xattr.xattr_offset += size ;
+     pfid->specdata.xattr.xattr_write = TRUE ;
+      
 
+     // ADD CODE TO DETECT GAP 
+#if 0 
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
                                                                           &pfid->op_context,
                                                                           pfid->specdata.xattr.xattr_id,
@@ -112,9 +118,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 
      if(FSAL_IS_ERROR(fsal_status))
        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
-
-      /* Cache the value */
-      memcpy( pfid->specdata.xattr.xattr_content, xattrval, size ) ;
+#endif
 
       outcount = *count ;
    }

@@ -301,6 +301,9 @@ typedef struct _9p_fid__
         {  
           unsigned int xattr_id ;
           caddr_t      xattr_content ;
+          u64          xattr_size ;
+          u64          xattr_offset ;
+          bool         xattr_write ;
         } xattr ;
 
     } specdata ;

@@ -106,6 +106,14 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
    }
+  else if( !strncmp( name, "system.posix_acl_access" , MAXNAMLEN ) )
+   {
+     /* /!\  POSIX_ACL RELATED HOOK
+      * Setting a POSIX ACL (using setfacl for example) means settings a xattr named system.posix_acl_access
+      * BUT this attributes is to be used and should not be created (it exists already since acl feature is on) */  
+     fsal_status.major = ERR_FSAL_NO_ERROR ;
+     fsal_status.minor = 0 ;
+   }
   else
    {
      /* Size != 0 , this is a creation/replacement of xattr */
@@ -119,12 +127,13 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
 /*      else */
 /*         create = FALSE ; */
 
+
      /* Proceed in two steps for the information provided in *flag does not seem to be reliable */
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
                                                                     &pfid->op_context,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
-                                                                    *size,
+                                                                    0, //*size,
                                                                     TRUE )  ;
      if( FSAL_IS_ERROR( fsal_status ) && fsal_status.major == ERR_FSAL_EXIST )
       {
@@ -132,7 +141,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
                                                                        &pfid->op_context,
                                                                        name,
                                                                        pfid->specdata.xattr.xattr_content, 
-                                                                       *size,
+                                                                       0, //*size,
                                                                        FALSE )  ;
       }
 
@@ -148,6 +157,10 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
    }
+
+  /* Remember the size of the xattr to be written, in order to check at TCLUNK */
+  pfid->specdata.xattr.xattr_size = *size ;
+  pfid->specdata.xattr.xattr_offset = 0LL ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRCREATE ) ;

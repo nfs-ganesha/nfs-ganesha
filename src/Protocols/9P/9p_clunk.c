@@ -56,6 +56,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
   cache_inode_status_t cache_status ;
+  fsal_status_t fsal_status ; 
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -80,7 +81,26 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   /* If the fid is related to a xattr, free the related memory */
   if( pfid->specdata.xattr.xattr_content != NULL )
+  {
+
+    if(  pfid->specdata.xattr.xattr_write == TRUE )
+    {
+      /* Check size give at TXATTRCREATE against the one resulting from the writes */
+      if( pfid->specdata.xattr.xattr_size != pfid->specdata.xattr.xattr_offset )
+         return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
+
+      /* Write the xattr content */
+      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
+                                                                           &pfid->op_context,
+                                                                           pfid->specdata.xattr.xattr_id,
+                                                                           pfid->specdata.xattr.xattr_content,
+                                                                           pfid->specdata.xattr.xattr_size ) ;
+      if(FSAL_IS_ERROR(fsal_status))
+         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+     }
+
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
+  }
 
   /* If object is an opened file, close it */
   if( ( pfid->pentry->type == REGULAR_FILE ) && 
