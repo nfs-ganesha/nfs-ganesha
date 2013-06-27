@@ -202,7 +202,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setvalue( cursor, attrsize, u64 ) ; /* No xattr for now */
+  _9p_setvalue( cursor, attrsize, u64 ) ; 
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;

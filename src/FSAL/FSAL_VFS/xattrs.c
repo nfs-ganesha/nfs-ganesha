@@ -88,6 +88,7 @@ static fsal_xattr_def_t xattr_list[] = {
 };
 
 #define XATTR_COUNT 1
+#define XATTR_SYSTEM INT_MAX-1
 
 /* we assume that this number is < 254 */
 #if ( XATTR_COUNT > 254 )
@@ -285,6 +286,12 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
 
   errno = 0;
 
+  if( xattr_id == XATTR_SYSTEM )
+  {
+       strcpy( name, "system.posix_acl_access" ) ;
+       return ERR_FSAL_NO_ERROR;
+  } 
+
   for(ptr = names, curr_idx = 0; ptr < names + namesize; curr_idx++, ptr += len + 1)
     {
       len = strlen(ptr);
@@ -313,6 +320,9 @@ static int xattr_name_to_id(int fd, const char *name)
 
   if(namesize < 0)
     return -ERR_FSAL_NOENT;
+
+  if( !strncmp( name, "system.posix_acl_access", MAXNAMLEN ) )
+    return XATTR_SYSTEM ;
 
   for(ptr = names, i = 0; ptr < names + namesize; i++, ptr += strlen(ptr) + 1)
     {

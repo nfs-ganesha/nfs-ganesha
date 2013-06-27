@@ -113,6 +113,19 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
       * BUT this attributes is to be used and should not be created (it exists already since acl feature is on) */  
      fsal_status.major = ERR_FSAL_NO_ERROR ;
      fsal_status.minor = 0 ;
+
+     /* Create the xattr at the FSAL level and cache result */
+     if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
+
+     fsal_status = pfid->pentry->obj_handle->ops->getextattr_id_by_name( pfid->pentry->obj_handle,
+                                                                         &pfid->op_context,
+                                                                         name, 
+                                                                         &pfid->specdata.xattr.xattr_id);
+
+     if(FSAL_IS_ERROR(fsal_status))
+       return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+
    }
   else
    {

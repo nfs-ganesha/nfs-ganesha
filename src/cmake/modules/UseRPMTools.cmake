@@ -419,6 +419,7 @@ rm -rf build_tree
 %{_bindir}/*
 %config   %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf 
 %config   %{_sysconfdir}/sysconfig/ganesha
+%doc ChangeLog
 ")
 
 if("${DISTRO}" STREQUAL "fedora")
