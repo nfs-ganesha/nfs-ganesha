@@ -112,10 +112,11 @@ const char *state_err_str(state_status_t err)
       case STATE_SIGNAL_ERROR:          return "STATE_SIGNAL_ERROR";
       case STATE_KILLED:                return "STATE_KILLED";
       case STATE_FILE_OPEN:             return "STATE_FILE_OPEN";
+      case STATE_FSAL_SHARE_DENIED:     return "STATE_FSAL_SHARE_DENIED";
       case STATE_MLINK:                 return "STATE_MLINK";
       case STATE_SERVERFAULT:           return "STATE_SERVERFAULT";
       case STATE_TOOSMALL:              return "STATE_TOOSMALL";
-      case STATE_XDEV:                 return "STATE_XDEV";
+      case STATE_XDEV:                  return "STATE_XDEV";
     }
   return "unknown";
 }
@@ -169,6 +170,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
       case CACHE_INODE_KILLED:                return STATE_KILLED;
       case CACHE_INODE_FILE_OPEN:             return STATE_FILE_OPEN;
+      case CACHE_INODE_FSAL_SHARE_DENIED:     return STATE_FSAL_SHARE_DENIED;
       case CACHE_INODE_FSAL_MLINK:            return STATE_MLINK;
       case CACHE_INODE_SERVERFAULT:           return STATE_SERVERFAULT;
       case CACHE_INODE_TOOSMALL:              return STATE_TOOSMALL;
@@ -256,7 +258,10 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_FILE_OPEN:
       return STATE_FILE_OPEN;
 
-    case ERR_FSAL_BLOCKED:
+    case ERR_FSAL_SHARE_DENIED:
+      return STATE_FSAL_SHARE_DENIED;
+
+     case ERR_FSAL_BLOCKED:
       return STATE_LOCK_BLOCKED;
 
     case ERR_FSAL_DQUOT:
@@ -388,6 +393,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       break;
 
     case STATE_STATE_CONFLICT:
+    case STATE_FSAL_SHARE_DENIED:
       nfserror = NFS4ERR_SHARE_DENIED;
       break;
 
@@ -557,6 +563,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       break;
 
     case STATE_FSAL_DELAY:
+    case STATE_FSAL_SHARE_DENIED:
       nfserror = NFS3ERR_JUKEBOX;
       break;
 

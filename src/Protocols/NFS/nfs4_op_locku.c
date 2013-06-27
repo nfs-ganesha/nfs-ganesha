@@ -149,7 +149,7 @@ check_seqid:
                 if (!Check_nfs4_seqid(lock_owner,
                                       arg_LOCKU4->seqid,
                                       op,
-                                      data,
+                                      data->current_entry,
                                       resp,
                                       locku_tag)) {
                         /* Response is all setup for us and LogDebug
@@ -216,7 +216,7 @@ out:
         if (data->minorversion == 0) {
                 /* Save the response in the lock owner */
                 Copy_nfs4_state_req(lock_owner, arg_LOCKU4->seqid, op,
-                                    data, resp, locku_tag);
+                                    data->current_entry, resp, locku_tag);
         }
 
         dec_state_owner_ref(lock_owner);

@@ -370,6 +370,7 @@ struct state_nlm_client_t {
 	xprt_type_t slc_client_type; /*< The transport type to this
 				         client */
 	int32_t slc_refcount; /*< Reference count for disposal */
+	struct sockaddr_storage slc_server_addr; /*< local addr when request is made */
 	int32_t slc_nlm_caller_name_len; /*< Length of client name */
 	char *slc_nlm_caller_name; /*< Client name */
 	CLIENT *slc_callback_clnt; /*< Callback for blocking locks */
@@ -428,8 +429,13 @@ struct state_nfs4_owner_t {
 	seqid4 so_seqid; /*< Seqid for serialization of operations on
 			   owner (NFSv4.0 only) */
 	nfs_argop4_state so_args; /*< Saved args */
-	cache_entry_t *so_last_entry; /*< Last file operated on by
-					  this state owner */
+	void *so_last_entry; /*< Last file operated on by this state owner
+                              *  we don't keep a reference so this is a void *
+                              *  to prevent it's dereferencing because the
+                              *  pointer might become invalid if cache inode
+                              *  flushes the entry out. But it sufices for
+                              *  the purposes of detecting replayed operations.
+                              */
 	nfs_resop4 so_resp; /*< Saved response */
 	state_owner_t *so_related_owner; /*< For lock-owners, the
 					     open-owner under which
@@ -648,6 +654,7 @@ typedef enum state_status_t {
         STATE_SERVERFAULT           = 48,
         STATE_TOOSMALL              = 49,
         STATE_XDEV                  = 50,
+        STATE_FSAL_SHARE_DENIED = 51,
 } state_status_t;
 
 /******************************************************************************

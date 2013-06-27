@@ -326,6 +326,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_FSAL_XDEV:
     case CACHE_INODE_FSAL_MLINK:
     case CACHE_INODE_TOOSMALL:
+    case CACHE_INODE_FSAL_SHARE_DENIED:
     case CACHE_INODE_SERVERFAULT:
       /* Non retryable error, return error to client */
       return false;
@@ -4174,6 +4175,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS4ERR_MLINK ;
       break ;
 
+    case CACHE_INODE_FSAL_SHARE_DENIED:
+      nfserror = NFS4ERR_SHARE_DENIED;
+      break;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
@@ -4292,6 +4297,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
       break;
 
     case CACHE_INODE_DELAY:
+    case CACHE_INODE_FSAL_SHARE_DENIED:
       nfserror = NFS3ERR_JUKEBOX;
       break;
 

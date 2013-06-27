@@ -313,8 +313,8 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
   old_share_deny = state->state_data.share.share_deny;
 
   /* New share state. */
-  new_share_access = state_data->share.share_access;
-  new_share_deny = state_data->share.share_deny;
+  new_share_access = state_data->share.share_access | old_share_access;
+  new_share_deny = state_data->share.share_deny | old_share_deny;
 
   /* Update the ref counted share state of this file. */
   state_share_update_counter(entry,
