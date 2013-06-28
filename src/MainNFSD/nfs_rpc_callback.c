@@ -602,6 +602,9 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 		code = 0;
 		break;
 	case AUTH_NONE:
+		if (!(chan->auth = authnone_ncreate())) {
+			code = EINVAL;
+		}
 		break;
 	default:
 		code = EINVAL;
@@ -664,6 +667,9 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 
 	for (i = 0; i < num_sec_parms; ++i) {
 		if (sec_parms[i].cb_secflavor == AUTH_NONE) {
+			if (!(chan->auth = authnone_ncreate())) {
+				continue;
+			}
 			authed = true;
 			break;
 		} else if (sec_parms[i].cb_secflavor == AUTH_SYS) {
