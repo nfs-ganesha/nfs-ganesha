@@ -124,6 +124,7 @@ static int attr_is_read_only(unsigned int attr_index)
   return FALSE;
 }
 
+#if 0
 static void chomp_attr_value(char *str, size_t size)
 {
   int len;
@@ -138,6 +139,7 @@ static void chomp_attr_value(char *str, size_t size)
   if((len > 0) && (str[len - 1] == '\n'))
     str[len - 1] = '\0';
 }
+#endif
 
 static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
                                            struct attrlist * xattr_attrs,

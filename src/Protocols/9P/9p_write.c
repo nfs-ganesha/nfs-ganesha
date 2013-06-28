@@ -67,7 +67,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   char *databuffer = NULL;
 
-  fsal_status_t fsal_status ; 
+  // fsal_status_t fsal_status ;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
