@@ -1199,9 +1199,18 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
             if(state_share_add(pentry_newfile, data->pcontext, powner, *statep,
                                &state_status) != STATE_SUCCESS)
               {
+                state_status_t del_state_status;
+
+                del_state_status = state_del_locked(*statep, pentry_newfile);
+                if(del_state_status != STATE_SUCCESS)
+                  LogDebug(COMPONENT_STATE,
+                           "state_dell_locked failed with status %s",
+                           state_err_str(del_state_status));
+                *statep = NULL;
+
                 if(cache_inode_close(pentry_newfile,
                                      data->pcontext,
-                                     0, &cache_status) != CACHE_INODE_SUCCESS)
+                                     CACHE_INODE_FLAG_REALLYCLOSE, &cache_status) != CACHE_INODE_SUCCESS)
                   {
                     /* Log bad close and continue. */
                     LogEvent(COMPONENT_STATE, "Failed to close cache inode: status=%d",
