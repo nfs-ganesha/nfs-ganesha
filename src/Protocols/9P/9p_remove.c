@@ -43,6 +43,17 @@
 #include "9p.h"
 
 
+#define FREE_FID(pfid, fid, preq9p) do {        \
+/* Tell the cache the fid that used this        \
+ * entry is not used by this set of messages */ \
+  cache_inode_put( pfid->pentry ) ;             \
+                                                \
+  /* Free the fid */                            \
+  gsh_free( pfid ) ;                            \
+  preq9p->pconn->fids[*fid] = NULL ;            \
+} while( 0 )
+
+
 int _9p_remove( _9p_request_data_t * preq9p, 
                 void  * pworker_data,
                 u32 * plenout, 
@@ -83,8 +94,28 @@ int _9p_remove( _9p_request_data_t * preq9p,
   if(cache_status != CACHE_INODE_SUCCESS)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+  /* If object is an opened file, close it */
+  if( ( pfid->pentry->type == REGULAR_FILE ) &&
+      is_open( pfid->pentry ) )
+   {
+     if( pfid->opens )
+      {
+        cache_inode_dec_pin_ref(pfid->pentry, FALSE);
+        pfid->opens = 0; /* dead */
+
+        /* Under this flag, pin ref is still checked */
+        cache_status = cache_inode_close(pfid->pentry,
+				      CACHE_INODE_FLAG_REALLYCLOSE);
+        if(cache_status != CACHE_INODE_SUCCESS)
+        {
+           FREE_FID(pfid, fid, preq9p);
+           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        }
+      }
+   }
+
   /* Clean the fid */
-  memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
+  FREE_FID(pfid, fid, preq9p);
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREMOVE ) ;

@@ -123,18 +123,18 @@ int _9p_clunk( _9p_request_data_t * preq9p,
    {
      if( pfid->opens )
       {
-        cache_inode_dec_pin_ref(pfid->pentry, TRUE);
+        cache_inode_dec_pin_ref(pfid->pentry, FALSE);
         pfid->opens = 0; /* dead */
-      }
 
-     /* Under this flag, pin ref is still checked */
-     cache_status = cache_inode_close(pfid->pentry,
+        /* Under this flag, pin ref is still checked */
+        cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
-     if(cache_status != CACHE_INODE_SUCCESS)
-     {
-        FREE_FID(pfid, fid, preq9p);
-        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-     }
+        if(cache_status != CACHE_INODE_SUCCESS)
+        {
+           FREE_FID(pfid, fid, preq9p);
+           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        }
+      }
    }
 
   FREE_FID(pfid, fid, preq9p);
