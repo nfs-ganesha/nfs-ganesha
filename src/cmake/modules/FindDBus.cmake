@@ -20,15 +20,6 @@ if (DBUS_INCLUDE_DIR AND DBUS_ARCH_INCLUDE_DIR AND DBUS_LIBRARIES)
 
 else (DBUS_INCLUDE_DIR AND DBUS_ARCH_INCLUDE_DIR AND DBUS_LIBRARIES)
 
-  IF (NOT WIN32)
-    FIND_PACKAGE(PkgConfig)
-    IF (PKG_CONFIG_FOUND)
-      # use pkg-config to get the directories and then use these values
-      # in the FIND_PATH() and FIND_LIBRARY() calls
-      pkg_check_modules(_DBUS_PC QUIET dbus-1)
-    ENDIF (PKG_CONFIG_FOUND)
-  ENDIF (NOT WIN32)
-
   FIND_PATH(DBUS_INCLUDE_DIR dbus/dbus.h
     ${_DBUS_PC_INCLUDE_DIRS}
     /usr/include

@@ -343,7 +343,7 @@ cd ..
 rm -rf build_tree
 mkdir build_tree
 cd build_tree
-cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONFIG=rpmbuild -DDISTNAME_HAS_GIT_DATA=ON ../%{srcdirname}
+cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONFIG=rpmbuild -DUSE_FSAL_POSIX=OFF -DDISTNAME_HAS_GIT_DATA=ON ../%{srcdirname}
 make
   
 %install 
