@@ -72,17 +72,15 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *pdata, void *arg
 
 void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *pdata, void *arg) {
 
-  msk_post_recv(trans, pdata, _9p_rdma_callback_recv, _9p_rdma_callback_recv_err, arg);
+  if( trans->state == MSK_CONNECTED )
+    msk_post_recv(trans, pdata, _9p_rdma_callback_recv, _9p_rdma_callback_recv_err, arg);
 }
 
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
-  /* This probably means this is the parent trans.
-     Ideally, cleanup anyway and the cleanup function should handle it */
-  if (!trans->private_data)
+  if( !trans || !trans->private_data )
     return;
 
   _9p_rdma_cleanup_conn(trans);
-
 }
 
 void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) 

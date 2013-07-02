@@ -62,12 +62,22 @@
 
 #include <mooshika.h>
 
-void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
-  _9p_rdma_priv *priv = _9p_rdma_priv_of(trans) ;
-  int i;
+static void *_9p_rdma_cleanup_conn_thread(void *arg) {
+  msk_trans_t   * trans = arg;
+  _9p_rdma_priv * priv = _9p_rdma_priv_of(trans) ;
+  int i ;
 
-  if (priv)
+  if( priv )
    {
+      if( priv->pconn )
+       {
+          LogDebug(COMPONENT_9P,
+                   "9P/RDMA: waiting till we're done with all requests on trans [%p]", trans) ;
+
+          while( atomic_fetch_uint32_t( &priv->pconn->refcount ) != 0 ) {
+             sleep( 1 );
+          }
+       }
       LogDebug(COMPONENT_9P,
                "9P/RDMA: Freeing data associated with trans [%p]", trans) ;
 
@@ -75,7 +85,8 @@ void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
        {
           for( i = 0 ; i < _9P_RDMA_BUFF_NUM ; i++ )
             if( priv->rdata[i] ) gsh_free( priv->rdata[i] ) ;
-             gsh_free( priv->rdata ) ;
+
+          gsh_free( priv->rdata ) ;
        }
 
       if( priv->datalock )
@@ -85,13 +96,28 @@ void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
        }
 
       if( priv->rdmabuf ) gsh_free( priv->rdmabuf ) ;
+
       if( priv->pconn ) gsh_free( priv->pconn ) ;
 
       gsh_free( priv ) ;
    }
 
-  /** @todo: Check if mooshika frees its internal data,
-      can't msk_destroy_trans here, should be automatic */
+  msk_destroy_trans( &trans ) ;
+  pthread_exit( NULL ) ;
+}
+
+void _9p_rdma_cleanup_conn( msk_trans_t *trans) {
+  pthread_attr_t  attr_thr ;
+  pthread_t       thr_id ;
+
+
+  /* Set the pthread attributes */
+  memset( (char *)&attr_thr, 0 , sizeof( attr_thr ) ) ;
+  if( pthread_attr_init( &attr_thr ) || pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM)
+      || pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE ) )
+    return;
+
+  pthread_create( &thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread, trans ) ;
 }
 
 
@@ -230,10 +256,7 @@ void * _9p_rdma_thread( void * Arg )
 
 error:
 
-  _9p_rdma_cleanup_conn( trans ) ;
-
-  /** @todo: Check if this is actually needed */
-  msk_destroy_trans( &trans ) ;
+  _9p_rdma_cleanup_conn_thread( trans ) ;
 
   pthread_exit( NULL ) ;
 } /* _9p_rdma_handle_trans */
