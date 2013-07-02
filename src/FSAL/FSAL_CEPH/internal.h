@@ -49,17 +49,7 @@ struct export {
                                             access all Ceph methods on
                                             this export. */
 	struct fsal_export export; /*< The public export object */
-};
-
-/**
- * The portion of a Ceph filehandle that is actually sent over the
- * wire.
- */
-
-struct __attribute__((packed)) wire_handle {
-	vinodeno_t vi;
-	uint64_t parent_ino;
-	uint32_t parent_hash;
+	struct handle* root; /*< The root handle */
 };
 
 /**
@@ -67,16 +57,21 @@ struct __attribute__((packed)) wire_handle {
  */
 
 struct handle {
-	struct wire_handle wire; /*< The Ceph wire handle */
+	vinodeno_t vi; /*< The object identifier */
 	struct fsal_obj_handle handle; /*< The public handle */
 	Fh *fd;
+	struct Inode *i; /*< The Ceph inode */
 	fsal_openflags_t openflags;
+#ifdef CEPH_PNFS
 	uint64_t rd_issued;
 	uint64_t rd_serial;
 	uint64_t rw_issued;
 	uint64_t rw_serial;
 	uint64_t rw_max_len;
+#endif /* CEPH_PNFS */
 };
+
+#ifdef CEPH_PNFS
 
 /**
  * The wire content of a DS (data server) handle
@@ -100,6 +95,8 @@ struct ds {
                             (in Ceph) */
 };
 
+#endif /* CEPH_PNFS */
+
 #ifndef CEPH_INTERNAL_C
 /* Keep internal.c from clashing with itself */
 extern attrmask_t supported_attributes;
@@ -117,15 +114,19 @@ static const size_t BIGGEST_PATTERN = 1024;
 /* Prototypes */
 
 int construct_handle(const struct stat *st,
+		     struct Inode *i,
 		     struct export *export,
 		     struct handle **obj);
+int deconstruct_handle(struct handle *obj);
 fsal_status_t ceph2fsal_error(const int ceph_errorcode);
 void ceph2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr);
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
+#ifdef CEPH_PNFS
 void ds_ops_init(struct fsal_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
+#endif /* CEPH_PNFS */
 
 #endif /* !FSAL_CEPH_INTERNAL_INTERNAL__ */

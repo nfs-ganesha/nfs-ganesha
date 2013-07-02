@@ -33,6 +33,8 @@
  * of the export object's interface.
  */
 
+#ifdef CEPH_PNFS
+
 #include "config.h"
 
 #include <cephfs/libcephfs.h>
@@ -413,3 +415,5 @@ void ds_ops_init(struct fsal_ds_ops *ops)
 	ops->write = ds_write;
 	ops->commit = ds_commit;
 };
+
+#endif /* CEPH_PNFS */

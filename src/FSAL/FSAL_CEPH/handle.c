@@ -55,18 +55,14 @@ static fsal_status_t release(struct fsal_obj_handle *obj_pub)
 	/* The private 'full' handle */
 	struct handle *obj
 		= container_of(obj_pub, struct handle, handle);
-	int retval;
+	struct export *export
+		= container_of(obj_pub->export, struct export, export);
 
-        retval = fsal_obj_handle_uninit(obj_pub);
-        if (retval != 0) {
-                LogCrit(COMPONENT_FSAL,
-                          "Tried to release busy handle, hdl = 0x%p->refs = %d",
-                          obj_pub, obj_pub->refs);
-                return ceph2fsal_error(-retval);
-        }
-
-	gsh_free(obj);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (obj == export->root) {
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else {
+		return ceph2fsal_error(deconstruct_handle(obj));
+	}
 }
 
 /**
@@ -96,17 +92,18 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	struct handle *dir
 		= container_of(dir_pub, struct handle, handle);
 	struct handle *obj = NULL;
+	struct Inode *i = NULL;
 
-	rc = ceph_ll_lookup(export->cmount, dir->wire.vi,
-			    path, &st, 0, 0);
+	rc = ceph_ll_lookup(export->cmount, dir->i, path, &st, &i, 0, 0);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
 
-	rc = construct_handle(&st, export, &obj);
+	rc = construct_handle(&st, i, export, &obj);
 
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		return ceph2fsal_error(rc);
 	}
 
@@ -155,7 +152,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	/* Return status */
 	fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
 
-	rc = ceph_ll_opendir(export->cmount, dir->wire.vi,
+	rc = ceph_ll_opendir(export->cmount, dir->i,
 			     &dir_desc, 0, 0);
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -239,26 +236,25 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	struct handle *dir
 		= container_of(dir_pub, struct handle, handle);
 	/* Newly opened file descriptor */
-	Fh *fd = NULL;
+	struct Inode *i = NULL;
 	/* Status after create */
 	struct stat st;
 	/* Newly created object */
 	struct handle *obj;
 
-	rc = ceph_ll_create(export->cmount, dir->wire.vi, name,
-			    0600, O_CREAT, &fd, &st, 0, 0);
+	rc = ceph_ll_create(export->cmount, dir->i, name, 0600, O_CREAT,
+			    &st, &i, NULL,
+			    opctx->creds->caller_uid,
+			    opctx->creds->caller_gid);
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
-	rc = ceph_ll_close(export->cmount, fd);
-	if (rc < 0) {
-		return ceph2fsal_error(rc);
-	}
 
 
-	rc = construct_handle(&st, export, &obj);
+	rc = construct_handle(&st, i, export, &obj);
 
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		return ceph2fsal_error(rc);
 	}
 
@@ -300,17 +296,20 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	struct stat st;
 	/* Newly created object */
 	struct handle *obj = NULL;
+	struct Inode *i = NULL;
 
-	rc = ceph_ll_mkdir(export->cmount, dir->wire.vi, name,
-			   0700, &st, 0, 0);
+	rc = ceph_ll_mkdir(export->cmount, dir->i, name,
+			   0700, &st, &i, opctx->creds->caller_uid,
+			   opctx->creds->caller_gid);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
 
-	rc = construct_handle(&st, export, &obj);
+	rc = construct_handle(&st, i, export, &obj);
 
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		return ceph2fsal_error(rc);
 	}
 
@@ -352,17 +351,21 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 		= container_of(dir_pub, struct handle, handle);
 	/* Stat result */
 	struct stat st;
+	struct Inode *i = NULL;
 	/* Newly created object */
 	struct handle *obj = NULL;
 
 	rc = ceph_ll_symlink(export->cmount,
-			     dir->wire.vi, name, link_path, &st, 0, 0);
+			     dir->i, name, link_path, &st, &i,
+			     opctx->creds->caller_uid,
+			     opctx->creds->caller_gid);
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
 
-	rc = construct_handle(&st, export, &obj);
+	rc = construct_handle(&st, i, export, &obj);
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		return ceph2fsal_error(rc);
 	}
 
@@ -407,7 +410,7 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	   cache, so we don't have to free it. */
 
 	rc = ceph_ll_readlink(export->cmount,
-			      link->wire.vi, &content, 0, 0);
+			      link->i, &content, 0, 0);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -448,7 +451,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 	/* Stat buffer */
 	struct stat st;
 
-	rc = ceph_ll_getattr(export->cmount, handle->wire.vi,
+	rc = ceph_ll_getattr(export->cmount, handle->i,
 			     &st, 0, 0);
 
 	if (rc < 0) {
@@ -496,7 +499,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-		rc = ceph_ll_truncate(export->cmount, handle->wire.vi,
+		rc = ceph_ll_truncate(export->cmount, handle->i,
 				      attrs->filesize, 0, 0);
 
 		if (rc < 0) {
@@ -554,7 +557,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 		st.st_ctim = attrs->ctime;
 	}
 
-	rc = ceph_ll_setattr(export->cmount, handle->wire.vi,
+	rc = ceph_ll_setattr(export->cmount, handle->i,
 			     &st, mask, 0, 0);
 
 	if (rc < 0) {
@@ -597,8 +600,9 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
 		= container_of(destdir_pub, struct handle, handle);
 	struct stat st;
 
-	rc = ceph_ll_link(export->cmount, handle->wire.vi, destdir->wire.vi,
-			  name, &st, 0, 0);
+	rc = ceph_ll_link(export->cmount, handle->i, destdir->i, name, &st,
+			  opctx->creds->caller_uid,
+			  opctx->creds->caller_gid);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -641,9 +645,10 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
 		= container_of(newdir_pub, struct handle, handle);
 
 	rc = ceph_ll_rename(export->cmount,
-			    olddir->wire.vi, old_name,
-			    newdir->wire.vi, new_name,
-			    0, 0);
+			    olddir->i, old_name,
+			    newdir->i, new_name,
+			    opctx->creds->caller_uid,
+			    opctx->creds->caller_gid);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -679,10 +684,13 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
 	struct handle *dir
 		= container_of(dir_pub, struct handle, handle);
 
-	rc = ceph_ll_unlink(export->cmount, dir->wire.vi, name, 0, 0);
+	rc = ceph_ll_unlink(export->cmount, dir->i, name,
+			    opctx->creds->caller_uid,
+			    opctx->creds->caller_gid);
 	if (rc == -EISDIR) {
-		rc = ceph_ll_rmdir(export->cmount,
-				   dir->wire.vi, name, 0, 0);
+		rc = ceph_ll_rmdir(export->cmount, dir->i, name,
+				   opctx->creds->caller_uid,
+				   opctx->creds->caller_gid);
 	}
 
 	if (rc < 0) {
@@ -736,7 +744,7 @@ static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	rc = ceph_ll_open(export->cmount, handle->wire.vi,
+	rc = ceph_ll_open(export->cmount, handle->i,
 			  posix_flags, &(handle->fd), 0, 0);
 	if (rc < 0) {
 		handle->fd = NULL;
@@ -966,16 +974,16 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-		if (fh_desc->len < sizeof(handle->wire)) {
+		if (fh_desc->len < sizeof(handle->vi)) {
 			LogMajor(COMPONENT_FSAL,
 				 "digest_handle: space too small for "
 				 "handle.  Need %zu, have %zu",
-				 sizeof(handle->wire), fh_desc->len);
+				 sizeof(vinodeno_t), fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		} else {
-			memcpy(fh_desc->addr, &handle->wire,
-			       sizeof(handle->wire));
-			fh_desc->len = sizeof(handle->wire);
+			memcpy(fh_desc->addr, &handle->vi,
+			       sizeof(vinodeno_t));
+			fh_desc->len = sizeof(handle->vi);
 		}
 		break;
 
@@ -1002,8 +1010,8 @@ static void handle_to_key(struct fsal_obj_handle *handle_pub,
 	struct handle *handle
 		= container_of(handle_pub, struct handle, handle);
 
-	fh_desc->addr = &handle->wire.vi;
-	fh_desc->len = sizeof(handle->wire.vi);
+	fh_desc->addr = &handle->vi;
+	fh_desc->len = sizeof(vinodeno_t);
 }
 
 /**
@@ -1037,5 +1045,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close = fsal_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+#ifdef CEPH_PNFS
 	handle_ops_pnfs(ops);
+#endif /* CEPH_PNFS */
 }

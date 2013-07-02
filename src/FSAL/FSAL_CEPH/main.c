@@ -91,6 +91,16 @@ static fsal_status_t create_export(struct fsal_module *module,
 	const char *argv[] = {"FSAL_CEPH", path};
 	/* Return code from Ceph calls */
 	int ceph_status = 0;
+	/* Root inode */
+	struct Inode *i = NULL;
+	/* Root vindoe */
+	vinodeno_t root;
+	/* Stat for root */
+	struct stat st;
+	/* Return code */
+	int rc = 0;
+	/* The 'private' root handle */
+	struct handle *handle = NULL;
 
 	if ((path == NULL) ||
 	    (strlen(path) == 0)) {
@@ -127,7 +137,9 @@ static fsal_status_t create_export(struct fsal_module *module,
 	}
 	export_ops_init(export->export.ops);
 	handle_ops_init(export->export.obj_ops);
+#ifdef CEPH_PNFS
 	ds_ops_init(export->export.ds_ops);
+#endif /* CEPH_PNFS */
 	export->export.up_ops = up_ops;
 
 	initialized = true;
@@ -173,10 +185,37 @@ static fsal_status_t create_export(struct fsal_module *module,
 	export->export.fsal = module;
 	export->export.fsal = module;
 
+	root.ino.val = CEPH_INO_ROOT;
+	root.snapid.val = CEPH_NOSNAP;
+	i = ceph_ll_get_inode(export->cmount, root);
+	if (!i) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		goto error;
+	}
+
+	rc = ceph_ll_getattr(export->cmount, i,
+			     &st, 0, 0);
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+		goto error;
+	}
+
+	rc = construct_handle(&st, i, export, &handle);
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+		goto error;
+	}
+
+	export->root = handle;
 	*pub_export = &export->export;
 	return status;
 
 error:
+
+	if (i) {
+		ceph_ll_put(export->cmount, i);
+		i = NULL;
+	}
 
 	if (export->cmount != NULL) {
 		ceph_shutdown(export->cmount);

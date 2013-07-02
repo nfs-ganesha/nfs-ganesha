@@ -62,6 +62,9 @@ static fsal_status_t release(struct fsal_export *export_pub)
 	/* Return code */
 	fsal_status_t status = {ERR_FSAL_INVAL, 0};
 
+	deconstruct_handle(export->root);
+	export->root = 0;
+
 	pthread_mutex_lock(&export->export.lock);
 	if((export->export.refs > 0) ||
 	   (!glist_empty(&export->export.handles))) {
@@ -118,6 +121,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	int rc = 0;
 	/* Find the actual path in the supplied path */
 	const char *realpath;
+	struct Inode *i = NULL;
 
 	if (*path != '/') {
 		realpath = strchr(path, ':');
@@ -136,20 +140,20 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	*pub_handle = NULL;
 
 	if (strcmp(realpath, "/") == 0) {
-		vinodeno_t root;
-		root.ino.val = CEPH_INO_ROOT;
-		root.snapid.val = CEPH_NOSNAP;
-		rc = ceph_ll_getattr(export->cmount, root, &st, 0, 0);
-	} else {
-		rc = ceph_ll_walk(export->cmount, realpath, &st);
+		assert(export->root);
+		*pub_handle = &export->root->handle;
+		goto out;
 	}
+
+	rc = ceph_ll_walk(export->cmount, realpath, &i, &st);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 		goto out;
 	}
 
-	rc = construct_handle(&st, export, &handle);
+	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		status = ceph2fsal_error(rc);
 		goto out;
 	}
@@ -173,16 +177,13 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	struct wire_handle *wire
-		= (struct wire_handle *) fh_desc->addr;
-
 	switch (in_type) {
 		/* Digested Handles */
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */
-		fh_desc->len = sizeof(wire->vi); /* vinodeno_t */
+		fh_desc->len = sizeof(vinodeno_t);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
@@ -190,6 +191,8 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+#ifdef CEPH_PNFS
 
 /**
  * @brief Create a FSAL data server handle from a wire handle
@@ -253,6 +256,8 @@ nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
 	return NFS4_OK;
 }
 
+#endif /* CEPH_PNFS */
+
 /**
  * @brief Create a handle object from a wire handle
  *
@@ -278,37 +283,38 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	/* The FSAL specific portion of the handle received by the
            client */
-	struct wire_handle *wire = desc->addr;
+	vinodeno_t *vi = desc->addr;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */
 	struct stat st;
 	/* Handle to be created */
 	struct handle *handle = NULL;
+	/* Inode pointer */
+	struct Inode *i = NULL;
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(struct wire_handle)) {
+	if (desc->len != sizeof(vinodeno_t)) {
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
 
-	rc = ceph_ll_connectable_m(export->cmount, &wire->vi,
-				   wire->parent_ino,
-				   wire->parent_hash);
-	if (rc < 0) {
-		return ceph2fsal_error(rc);
+	i = ceph_ll_get_inode(export->cmount, *vi);
+	if (!i) {
+		return ceph2fsal_error(-ESTALE);
 	}
 
 	/* The ceph_ll_connectable_m should have populated libceph's
            cache with all this anyway */
-	rc = ceph_ll_getattr(export->cmount, wire->vi, &st, 0, 0);
+	rc = ceph_ll_getattr(export->cmount, i, &st, 0, 0);
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
 	}
 
-	rc = construct_handle(&st, export, &handle);
+	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
+		ceph_ll_put(export->cmount, i);
 		status = ceph2fsal_error(rc);
 		goto out;
 	}
@@ -342,13 +348,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 	int rc = 0;
 	/* Filesystem stat */
 	struct statvfs vfs_st;
-	/* The root of whatever filesystem this is */
-	vinodeno_t root;
 
-	root.ino.val = CEPH_INO_ROOT;
-	root.snapid.val = CEPH_NOSNAP;
-
-	rc = ceph_ll_statfs(export->cmount, root, &vfs_st);
+	rc = ceph_ll_statfs(export->cmount, export->root->i, &vfs_st);
 
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -638,7 +639,9 @@ void export_ops_init(struct export_ops *ops)
 	ops->lookup_path = lookup_path;
 	ops->extract_handle = extract_handle;
 	ops->create_handle = create_handle;
+#ifdef CEPH_PNFS
 	ops->create_ds_handle = create_ds_handle;
+#endif /* CEPH_PNFS */
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;
@@ -652,6 +655,8 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
+#ifdef CEPH_PNFS
 	export_ops_pnfs(ops);
+#endif /* CEPH_PNFS */
 }
 

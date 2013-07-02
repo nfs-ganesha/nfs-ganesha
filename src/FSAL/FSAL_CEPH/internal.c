@@ -271,6 +271,7 @@ void ceph2fsal_attributes(const struct stat *buffstat,
  */
 
 int construct_handle(const struct stat *st,
+		     struct Inode *i,
 		     struct export *export,
 		     struct handle **obj)
 {
@@ -279,6 +280,7 @@ int construct_handle(const struct stat *st,
 	/* Return code */
 	int rc = 0;
 
+	assert(i);
 	*obj = NULL;
 
 	constructing = gsh_calloc(1, sizeof(struct handle));
@@ -286,13 +288,9 @@ int construct_handle(const struct stat *st,
 		return -ENOMEM;
 	}
 
-	constructing->wire.vi.ino.val = st->st_ino;
-	constructing->wire.vi.snapid.val = st->st_dev;
-
-	rc = ceph_ll_connectable_x(export->cmount,
-				   constructing->wire.vi,
-				   &constructing->wire.parent_ino,
-				   &constructing->wire.parent_hash);
+	constructing->vi.ino.val = st->st_ino;
+	constructing->vi.snapid.val = st->st_dev;
+	constructing->i = i;
 
 	if (rc < 0) {
 		gsh_free(constructing);
@@ -316,3 +314,26 @@ int construct_handle(const struct stat *st,
 	return 0;
 }
 
+/**
+ * @brief Release all resrouces for a handle
+ *
+ * @param[in] obj Handle to release
+ *
+ * @retval 0 on success.
+ * @retval Not quite zero on not quite success.
+ */
+
+int deconstruct_handle(struct handle *obj)
+{
+	struct export *export
+		= container_of(obj->handle.export, struct export, export);
+	int retval;
+
+	ceph_ll_put(export->cmount, obj->i);
+	retval = fsal_obj_handle_uninit(&obj->handle);
+	if (retval != 0) {
+		return -retval;
+	}
+	gsh_free(obj);
+	return 0;
+}

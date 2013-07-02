@@ -31,6 +31,8 @@
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
 
+#ifdef CEPH_PNFS
+
 /**
  * @file   FSAL_CEPH/mds.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
@@ -53,8 +55,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 	/* Return code from upcall operation */
 	state_status_t status = STATE_SUCCESS;
 	struct gsh_buffdesc key = {
-		.addr = &handle->wire.vi,
-		.len = sizeof(handle->wire.vi)
+		.addr = &handle->vi,
+		.len = sizeof(vinodeno_t)
 	};
 	struct pnfs_segment segment = {
 		.offset = 0,
@@ -721,3 +723,5 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops)
 	ops->layoutreturn = layoutreturn;
 	ops->layoutcommit = layoutcommit;
 }
+
+#endif /* CEPH_PNFS */
