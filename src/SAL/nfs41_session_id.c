@@ -57,14 +57,6 @@ hash_table_t *ht_session_id;
 uint64_t global_sequence = 0;
 
 /**
- * @brief Mutex protecting sequence.
- *
- * @note ACE: Could we ditch remove this and use atomics?
- */
-
-pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;
-
-/**
  * @brief Display a session ID
  *
  * @param[in]  session_id The session ID
@@ -237,9 +229,7 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 {
 	uint64_t seq;
 
-	P(mutex_sequence);
-	seq = ++global_sequence;
-	V(mutex_sequence);
+	seq = atomic_inc_uint64_t(&global_sequence);
 
 	memset(sessionid, 0, NFS4_SESSIONID_SIZE);
 	memcpy(sessionid, clientid, sizeof(clientid4));
