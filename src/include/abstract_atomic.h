@@ -76,13 +76,13 @@
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int64_t
-atomic_add_int64_t(int64_t *augend, uint64_t addend)
+atomic_add_int64_t(int64_t *augend, int64_t addend)
 {
      return __atomic_add_fetch(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int64_t
-atomic_add_int64_t(int64_t *augend, uint64_t addend)
+atomic_add_int64_t(int64_t *augend, int64_t addend)
 {
      return __sync_add_and_fetch(augend, addend);
 }
@@ -117,13 +117,13 @@ atomic_inc_int64_t(int64_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int64_t
-atomic_sub_int64_t(int64_t *minuend, uint64_t subtrahend)
+atomic_sub_int64_t(int64_t *minuend, int64_t subtrahend)
 {
      return __atomic_sub_fetch(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int64_t
-atomic_sub_int64_t(int64_t *minuend, uint64_t subtrahend)
+atomic_sub_int64_t(int64_t *minuend, int64_t subtrahend)
 {
      return __sync_sub_and_fetch(minuend, subtrahend);
 }
@@ -131,7 +131,7 @@ atomic_sub_int64_t(int64_t *minuend, uint64_t subtrahend)
 
 /**
  * @brief Atomically decrement an int64_t
- *
+*
  * This function atomically subtracts 1 from the supplied value.
  *
  * @param[in,out] var Pointer to the variable to modify
@@ -238,13 +238,13 @@ atomic_dec_uint64_t(uint64_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int32_t
-atomic_add_int32_t(int32_t *augend, uint32_t addend)
+atomic_add_int32_t(int32_t *augend, int32_t addend)
 {
      return __atomic_add_fetch(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int32_t
-atomic_add_int32_t(int32_t *augend, uint32_t addend)
+atomic_add_int32_t(int32_t *augend, int32_t addend)
 {
      return __sync_add_and_fetch(augend, addend);
 }
@@ -279,13 +279,13 @@ atomic_inc_int32_t(int32_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int32_t
-atomic_sub_int32_t(int32_t *minuend, uint32_t subtrahend)
+atomic_sub_int32_t(int32_t *minuend, int32_t subtrahend)
 {
      return __atomic_sub_fetch(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int32_t
-atomic_sub_int32_t(int32_t *minuend, uint32_t subtrahend)
+atomic_sub_int32_t(int32_t *minuend, int32_t subtrahend)
 {
      return __sync_sub_and_fetch(minuend, subtrahend);
 }
@@ -401,13 +401,13 @@ atomic_dec_uint32_t(uint32_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int16_t
-atomic_add_int16_t(int16_t *augend, uint16_t addend)
+atomic_add_int16_t(int16_t *augend, int16_t addend)
 {
      return __atomic_add_fetch(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int16_t
-atomic_add_int16_t(int16_t *augend, uint16_t addend)
+atomic_add_int16_t(int16_t *augend, int16_t addend)
 {
      return __sync_add_and_fetch(augend, addend);
 }
@@ -442,13 +442,13 @@ atomic_inc_int16_t(int16_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int16_t
-atomic_sub_int16_t(int16_t *minuend, uint16_t subtrahend)
+atomic_sub_int16_t(int16_t *minuend, int16_t subtrahend)
 {
      return __atomic_sub_fetch(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int16_t
-atomic_sub_int16_t(int16_t *minuend, uint16_t subtrahend)
+atomic_sub_int16_t(int16_t *minuend, int16_t subtrahend)
 {
      return __sync_sub_and_fetch(minuend, subtrahend);
 }
@@ -565,13 +565,13 @@ atomic_dec_uint16_t(uint16_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int8_t
-atomic_add_int8_t(int8_t *augend, uint8_t addend)
+atomic_add_int8_t(int8_t *augend, int8_t addend)
 {
      return __atomic_add_fetch(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int8_t
-atomic_add_int8_t(int8_t *augend, uint8_t addend)
+atomic_add_int8_t(int8_t *augend, int8_t addend)
 {
      return __sync_add_and_fetch(augend, addend);
 }
@@ -606,13 +606,13 @@ atomic_inc_int8_t(int8_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int8_t
-atomic_sub_int8_t(int8_t *minuend, uint8_t subtrahend)
+atomic_sub_int8_t(int8_t *minuend, int8_t subtrahend)
 {
      return __atomic_sub_fetch(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int8_t
-atomic_sub_int8_t(int8_t *minuend, uint8_t subtrahend)
+atomic_sub_int8_t(int8_t *minuend, int8_t subtrahend)
 {
      return __sync_sub_and_fetch(minuend, subtrahend);
 }
@@ -647,13 +647,13 @@ atomic_dec_int8_t(int8_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline uint8_t
-atomic_add_uint8_t(uint8_t *augend, uint8_t addend)
+atomic_add_uint8_t(uint8_t *augend, int8_t addend)
 {
      return __atomic_add_fetch(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline uint8_t
-atomic_add_uint8_t(uint8_t *augend, uint8_t addend)
+atomic_add_uint8_t(uint8_t *augend, int8_t addend)
 {
      return __sync_add_and_fetch(augend, addend);
 }
@@ -823,7 +823,7 @@ atomic_postadd_int64_t(int64_t *augend, uint64_t addend)
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int64_t
-atomic_postadd_int64_t(int64_t *augend, uint64_t addend)
+atomic_postadd_int64_t(int64_t *augend, int64_t addend)
 {
      return __sync_fetch_and_add(augend, addend);
 }
@@ -858,13 +858,13 @@ atomic_postinc_int64_t(int64_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int64_t
-atomic_postsub_int64_t(int64_t *minuend, uint64_t subtrahend)
+atomic_postsub_int64_t(int64_t *minuend, int64_t subtrahend)
 {
      return __atomic_fetch_sub(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int64_t
-atomic_postsub_int64_t(int64_t *minuend, uint64_t subtrahend)
+atomic_postsub_int64_t(int64_t *minuend, int64_t subtrahend)
 {
      return __sync_fetch_and_sub(minuend, subtrahend);
 }
@@ -979,13 +979,13 @@ atomic_postdec_uint64_t(uint64_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int32_t
-atomic_postadd_int32_t(int32_t *augend, uint32_t addend)
+atomic_postadd_int32_t(int32_t *augend, int32_t addend)
 {
      return __atomic_fetch_add(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int32_t
-atomic_postadd_int32_t(int32_t *augend, uint32_t addend)
+atomic_postadd_int32_t(int32_t *augend, int32_t addend)
 {
      return __sync_fetch_and_add(augend, addend);
 }
@@ -1020,13 +1020,13 @@ atomic_postinc_int32_t(int32_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int32_t
-atomic_postsub_int32_t(int32_t *minuend, uint32_t subtrahend)
+atomic_postsub_int32_t(int32_t *minuend, int32_t subtrahend)
 {
      return __atomic_fetch_sub(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int32_t
-atomic_postsub_int32_t(int32_t *minuend, uint32_t subtrahend)
+atomic_postsub_int32_t(int32_t *minuend, int32_t subtrahend)
 {
      return __sync_fetch_and_sub(minuend, subtrahend);
 }
@@ -1142,13 +1142,13 @@ atomic_postdec_uint32_t(uint32_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int16_t
-atomic_postadd_int16_t(int16_t *augend, uint16_t addend)
+atomic_postadd_int16_t(int16_t *augend, int16_t addend)
 {
      return __atomic_fetch_add(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int16_t
-atomic_postadd_int16_t(int16_t *augend, uint16_t addend)
+atomic_postadd_int16_t(int16_t *augend, int16_t addend)
 {
      return __sync_fetch_and_add(augend, addend);
 }
@@ -1183,13 +1183,13 @@ atomic_postinc_int16_t(int16_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int16_t
-atomic_postsub_int16_t(int16_t *minuend, uint16_t subtrahend)
+atomic_postsub_int16_t(int16_t *minuend, int16_t subtrahend)
 {
      return __atomic_fetch_sub(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int16_t
-atomic_postsub_int16_t(int16_t *minuend, uint16_t subtrahend)
+atomic_postsub_int16_t(int16_t *minuend, int16_t subtrahend)
 {
      return __sync_fetch_and_sub(minuend, subtrahend);
 }
@@ -1306,13 +1306,13 @@ atomic_postdec_uint16_t(uint16_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int8_t
-atomic_postadd_int8_t(int8_t *augend, uint8_t addend)
+atomic_postadd_int8_t(int8_t *augend, int8_t addend)
 {
      return __atomic_fetch_add(augend, addend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int8_t
-atomic_postadd_int8_t(int8_t *augend, uint8_t addend)
+atomic_postadd_int8_t(int8_t *augend, int8_t addend)
 {
      return __sync_fetch_and_add(augend, addend);
 }
@@ -1347,13 +1347,13 @@ atomic_postinc_int8_t(int8_t *var)
 
 #ifdef GCC_ATOMIC_FUNCTIONS
 static inline int8_t
-atomic_postsub_int8_t(int8_t *minuend, uint8_t subtrahend)
+atomic_postsub_int8_t(int8_t *minuend, int8_t subtrahend)
 {
      return __atomic_fetch_sub(minuend, subtrahend, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline int8_t
-atomic_postsub_int8_t(int8_t *minuend, uint8_t subtrahend)
+atomic_postsub_int8_t(int8_t *minuend, int8_t subtrahend)
 {
      return __sync_fetch_and_sub(minuend, subtrahend);
 }
