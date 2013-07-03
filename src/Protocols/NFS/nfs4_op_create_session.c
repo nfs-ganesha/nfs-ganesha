@@ -217,9 +217,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	if (unconf != NULL) {
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&unconf->cid_credential,
-					    &data->credential) ||
-		    !cmp_sockaddr(&unconf->cid_client_addr,
-				  &client_addr, IGNORE_PORT)) {
+					    &data->credential)) {
 			if (isDebug(component)) {
 				char unconfirmed_addr[SOCK_NAME_MAX + 1];
 
@@ -248,9 +246,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
-					    &data->credential) ||
-		    !cmp_sockaddr(&conf->cid_client_addr,
-				  &client_addr, IGNORE_PORT)) {
+					    &data->credential)) {
 			if (isDebug(component)) {
 				char confirmed_addr[SOCK_NAME_MAX + 1];
 
@@ -288,8 +284,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	 * records.
 	 */
 
-	/** @todo: BUGAZOMEU Gerer les parametres de secu */
-
 	/* Check flags value (test CSESS15) */
 	if (arg_CREATE_SESSION4->csa_flags &
 	    ~(CREATE_SESSION4_FLAG_PERSIST |
@@ -307,8 +301,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	nfs41_session = pool_alloc(nfs41_session_pool, NULL);
 
 	if (nfs41_session == NULL) {
-		LogDebug(component,
-			 "Could not allocate memory for a session");
+		LogCrit(component,
+			"Could not allocate memory for a session");
 		dec_client_id_ref(found);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
 		goto out;
