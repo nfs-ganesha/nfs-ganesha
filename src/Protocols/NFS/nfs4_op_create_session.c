@@ -310,7 +310,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	nfs41_session->clientid = clientid;
 	nfs41_session->clientid_record = found;
-        nfs41_session->refcount = 2; /* sentinel ref + call path ref */
+	nfs41_session->refcount = 2; /* sentinel ref + call path ref */
 	nfs41_session->fore_channel_attrs
 		= arg_CREATE_SESSION4->csa_fore_chan_attrs;
 	nfs41_session->back_channel_attrs
@@ -354,7 +354,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);
 
-	if(!nfs41_Session_Set(nfs41_session->session_id, nfs41_session)) {
+	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component,
 			 "Could not insert session into table");
 

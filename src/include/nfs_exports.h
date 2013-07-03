@@ -347,7 +347,7 @@ typedef struct nfs_worker_data nfs_worker_data_t;
  * of a V4 compound request.
  */
 /* Forward references to SAL types */
-typedef struct nfs41_session__ nfs41_session_t;
+typedef struct nfs41_session nfs41_session_t;
 typedef struct nfs_client_id_t nfs_client_id_t;
 typedef struct COMPOUND4res_extended COMPOUND4res_extended;
 

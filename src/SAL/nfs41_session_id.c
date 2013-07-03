@@ -148,23 +148,11 @@ int compare_session_id(struct gsh_buffdesc *buff1,
 uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 				    struct gsh_buffdesc *key)
 {
-	/* Only need to hash the global counter portion since it is unique */
-	uint64_t sum;
+	/* Only need to take the mod of the global counter portion
+	   since it is unique */
+	uint64_t *counter = key->addr + sizeof(clientid4);
 
-	memcpy(&sum, key->addr + sizeof(clientid4),
-	       sizeof(sum));
-
-	if (isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_session_id_key(key , str);
-		LogFullDebug(COMPONENT_SESSIONS,
-			     "value hash: %s=%"PRIu32,
-			     str,
-			     (uint32_t)(sum % hparam->index_size));
-	}
-
-	return (sum % hparam->index_size);
+	return (*counter % hparam->index_size);
 }
 
 /**
@@ -179,22 +167,10 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
 				  struct gsh_buffdesc *key)
 {
-	/* Only need to hash the global counter portion since it is unique */
-	uint64_t i1 = 0;
+	/* Only need to return the global counter portion since it is unique */
+	uint64_t *counter = key->addr + sizeof(clientid4);
 
-	memcpy(&i1, key->addr + sizeof(clientid4), sizeof(i1));
-
-	if (isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
-
-		display_session_id_key(key, str);
-		LogFullDebug(COMPONENT_SESSIONS,
-			     "rbt hash: %s=%"PRIu64,
-			     str,
-			     i1);
-	}
-
-	return i1;
+	return *counter;
 }
 
 /**
@@ -282,26 +258,15 @@ int32_t dec_session_ref(nfs41_session_t *session)
  *
  */
 
-int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
-		      nfs41_session_t *session_data)
+int nfs41_Session_Set(nfs41_session_t *session_data)
 {
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
 	struct hash_latch latch;
-	char str[HASHTABLE_DISPLAY_STRLEN];
 	hash_error_t code;
 	int rc = 0;
 
-	if (isFullDebug(COMPONENT_SESSIONS)) {
-		display_session_id(sessionid, str);
-		LogFullDebug(COMPONENT_SESSIONS,
-			     "Set SSession %s", str);
-	}
-
-	if ((key.addr = gsh_malloc(NFS4_SESSIONID_SIZE)) == NULL) {
-		goto out;
-	}
-	memcpy(key.addr, sessionid, NFS4_SESSIONID_SIZE);
+	key.addr = session_data->session_id;
 	key.len = NFS4_SESSIONID_SIZE;
 
 	val.addr = session_data;
@@ -325,7 +290,7 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 	}
 
 out:
-	return (rc);
+	return rc;
 }
 
 /**
@@ -389,13 +354,6 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 {
 	struct gsh_buffdesc key, old_key, old_value;
-	char str[HASHTABLE_DISPLAY_STRLEN];
-
-	if (isFullDebug(COMPONENT_SESSIONS)) {
-		display_session_id(sessionid, str);
-		LogFullDebug(COMPONENT_SESSIONS,
-			     "Delete Session %s", str);
-	}
 
 	key.addr = sessionid;
 	key.len = NFS4_SESSIONID_SIZE;
@@ -403,9 +361,6 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 	if (HashTable_Del(ht_session_id, &key, &old_key,
 			  &old_value) == HASHTABLE_SUCCESS) {
 		nfs41_session_t *session = old_value.addr;
-
-		/* free the key that was stored in hash table */
-		gsh_free(old_key.addr);
 
 		/* unref session */
 		dec_session_ref(session);

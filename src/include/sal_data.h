@@ -131,7 +131,7 @@ static const uint32_t session_bc_fault = 0x02;
  * @brief Structure representing an NFSv4.1 session
  */
 
-struct nfs41_session__ {
+struct nfs41_session {
 	char session_id[NFS4_SESSIONID_SIZE]; /*< Session ID */
 	int32_t refcount;
 	clientid4 clientid; /*< Clientid owning this session */

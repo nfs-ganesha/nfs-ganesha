@@ -287,12 +287,11 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
                                     struct gsh_buffdesc *key);
 
 uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
-                                  struct gsh_buffdesc *key);
+				  struct gsh_buffdesc *key);
 
 int nfs41_Init_session_id(hash_parameter_t *param);
 
-int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
-                      nfs41_session_t *session_data);
+int nfs41_Session_Set(nfs41_session_t *session_data);
 
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
                               nfs41_session_t **session_data);
