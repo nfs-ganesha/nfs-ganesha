@@ -292,6 +292,17 @@ be used with NFS-Ganesha to support VFS based filesystems
 ")
 endif(USE_FSAL_VFS)
 
+# Stackable NULLFS is always generated */
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package nullfs
+Summary: The NFS-GANESHA's NULLFS Stackable FSAL
+Group: Applications/System
+
+%description nullfs
+This package contains a Stackble FSAL shared object to 
+be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
+")
+
 if(USE_FSAL_PROXY)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %package proxy
@@ -521,6 +532,15 @@ if(USE_FSAL_HPSS)
 
 " )
 endif(USE_FSAL_HPSS)
+
+# FSAL_NULLFS is always generated
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files nullfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalnull*
+
+")
 
 if(USE_FSAL_PROXY)
         FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
