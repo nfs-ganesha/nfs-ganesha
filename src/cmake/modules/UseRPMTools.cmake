@@ -190,9 +190,17 @@ License:        ${RPM_PACKAGE_LICENSE}
 Group:          ${RPM_PACKAGE_GROUP}
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 BuildRequires:	${ADDITIONAL_REQ}
+BuildRequires:	cmake dbus-devel  libcap-devel krb5-devel libgssglue-devel bison flex
+Requires: dbus-libs libcap krb5 libgssglue
+%if 0%{?rhel}  
+BuildRequires:  nfs-utils-lib-devel
+Requires:  nfs-utils-lib
+%else
+BuildRequires:  libnfsidmap-devel
+Requires:  libnfsidmap
+%endif
 Url:            ${RPM_URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
 
 #%define srcdirname %{name}-%{version}-Source
 %define srcdirname %{name}${PACKNAME}-%{version}-Source
@@ -228,7 +236,7 @@ FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %package lustre
 Summary: The NFS-GANESHA's LUSTRE FSAL
 Group: Applications/System
-BuildRequires: libattr-devel lustre-client
+BuildRequires: libattr-devel lustre
 
 %description lustre
 This package contains a FSAL shared object to 

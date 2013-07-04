@@ -19,6 +19,22 @@ set(VERSION_COMMENT
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(LINUX ON)
   set(UNIX ON)
+  # Now detects the Linux's distro
+  set(DISTRO "NOT_RH")
+ EXECUTE_PROCESS(
+      COMMAND cat /etc/system-release
+      OUTPUT_VARIABLE SYS_RELEASE
+   )
+  if( ${SYS_RELEASE} MATCHES "Red Hat" )
+     message( STATUS "Detected a Linux Red Hat machine" )
+     set(DISTRO "RED_HAT")
+  elseif( ${SYS_RELEASE} MATCHES "Fedora" )
+     message( STATUS "Detected a Linux Fedora machine" )
+     set(DISTRO "FEDORA")
+  else( ${SYS_RELEASE} MATCHES "Red Hat" )
+     message( STATUS "Detected a non Red hat based" )
+     set(DISTRO "NOT_RH")
+  endif( ${SYS_RELEASE} MATCHES "Red Hat" )
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
@@ -438,6 +454,13 @@ if(_MSPAC_SUPPORT)
     set(_MSPAC_SUPPORT OFF)
   endif(WBCLIENT_FOUND AND WBCLIENT4_H)
 endif(_MSPAC_SUPPORT)
+
+# Cmake 2.6 has issue in managing BISON and FLEX
+if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
+   message( status "CMake 2.6 detected, using portability hooks" )
+   set(CMAKE_CURRENT_LIST_DIR /usr/share/cmake/Modules )
+   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/portability_cmake_2.8  /usr/share/cmake/Modules ${CMAKE_MODULE_PATH})
+endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
