@@ -191,7 +191,7 @@ Group:          ${RPM_PACKAGE_GROUP}
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 BuildRequires:	${ADDITIONAL_REQ}
 BuildRequires:	cmake dbus-devel  libcap-devel krb5-devel libgssglue-devel bison flex
-Requires: dbus-libs libcap krb5-libs libgssglue
+Requires: dbus-libs libcap krb5-libs libgssglue 
 %if 0%{?rhel}  
 BuildRequires:  nfs-utils-lib-devel
 Requires:  nfs-utils-lib
