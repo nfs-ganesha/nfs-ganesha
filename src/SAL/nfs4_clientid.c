@@ -1343,9 +1343,13 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 
 uint64_t client_record_value_hash(nfs_client_record_t *key)
 {
+	uint64_t other;
+	
+	other = key->cr_pnfs_flags;
+	other = (other << 32) | key->cr_server_addr;
 	return CityHash64WithSeed(key->cr_client_val,
 				  key->cr_client_val_len,
-				  key->cr_pnfs_flags);
+				  other);
 }
 
 /**
@@ -1461,7 +1465,8 @@ int display_client_record_val(struct gsh_buffdesc *buff, char *str)
  */
 nfs_client_record_t *get_client_record(const char *const value,
 				       const size_t len,
-				       const uint32_t pnfs_flags)
+				       const uint32_t pnfs_flags,
+				       const uint32_t server_addr)
 {
 	nfs_client_record_t *record;
 	struct gsh_buffdesc buffkey;
@@ -1481,6 +1486,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 	record->cr_unconfirmed_rec = NULL;
 	memcpy(record->cr_client_val, value, len);
 	record->cr_pnfs_flags = pnfs_flags;
+	record->cr_server_addr = server_addr;
 	buffkey.addr = record;
 	buffkey.len = sizeof(*record);
 
