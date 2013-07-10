@@ -149,6 +149,13 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
          else
             return  _9p_rerror( preq9p, pworker_data, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
+
+   /* Pin as well. We probably want to close the file if this fails, but it won't happen - right?! */
+   cache_status = cache_inode_inc_pin_ref(pentry_newfile);
+   if(cache_status != CACHE_INODE_SUCCESS)
+       return  _9p_rerror( preq9p, pworker_data, msgtag,
+                           _9p_tools_errno( cache_status ), plenout, preply ) ;
+
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
    qid_newfile.version = 0 ;
@@ -156,17 +163,11 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
    iounit = 0 ; /* default value */
 
-   /* The fid will represent the new file now */
+   /* The fid will represent the new file now - we can't fail anymore*/
    pfid->pentry = pentry_newfile ;
    pfid->qid = qid_newfile ;
    pfid->specdata.xattr.xattr_id = 0 ;
    pfid->specdata.xattr.xattr_content = NULL ;
-
-   /* By definition, first open */
-   cache_status = cache_inode_inc_pin_ref(pentry_newfile);
-   if(cache_status != CACHE_INODE_SUCCESS)
-       return  _9p_rerror( preq9p, pworker_data, msgtag,
-                           _9p_tools_errno( cache_status ), plenout, preply ) ;
    pfid->opens = 1;
 
    /* Build the reply */
