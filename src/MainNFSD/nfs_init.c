@@ -1000,7 +1000,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
+  if((rc = nfs4_ExportToPseudoFS()) != 0)
     LogFatal(COMPONENT_INIT,
              "Error %d while initializing NFSv4 pseudo file system", rc);
 
@@ -1101,7 +1101,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
+  if((rc = nfs4_ExportToPseudoFS()) != 0)
     LogFatal(COMPONENT_INIT,
              "Error %d while initializing NFSv4 pseudo file system", rc);
 

@@ -95,208 +95,204 @@ pseudofs_t *nfs4_GetPseudoFs(void)
 {
   return &gPseudoFs;
 }
+/**
+ * @brief Find the node for this path component
+ *
+ * If not found, create it.  Called from token_to_proc() interator
+ *
+ * @param token [IN] path name component
+ * @param arg   [IN] callback state
+ *
+ * @return status as bool. false terminates foreach
+ */
+
+struct node_state {
+	pseudofs_entry_t *this_node;
+	exportlist_t *entry;
+	int retval;
+};
+
+static bool pseudo_node(char *token, void *arg)
+{
+	struct node_state *state = (struct node_state *)arg;
+	pseudofs_entry_t *node = NULL;
+	pseudofs_entry_t *new_node = NULL;
+
+	state->retval = 0; /* start off with no errors */
+
+	LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "token %s", token);
+	for(node = state->this_node->sons;
+	    node != NULL;
+	    node = node->next) {
+                  /* Looking for a matching entry */
+                  if( !strcmp(node->name, token)) {
+			  /* matched entry is new parent node */
+			  state->this_node = new_node;
+			  return true;
+		  }
+	}
+
+	/* not found so create a new entry */
+	if(gPseudoFs.last_pseudo_id == (MAX_PSEUDO_ENTRY - 1)) {
+		LogMajor(COMPONENT_NFS_V4_PSEUDO,
+			 "Too many nodes in Export_Id %d Path=\"%s\" Pseudo=\"%s\"",
+			 state->entry->id,
+			 state->entry->fullpath,
+			 state->entry->pseudopath);
+		state->retval = ENOMEM;
+		return false;
+	}
+	new_node = gsh_calloc(1, sizeof(pseudofs_entry_t));
+	if(new_node == NULL) {
+		LogMajor(COMPONENT_NFS_V4_PSEUDO,
+			 "Insufficient memory to create pseudo fs node");
+		state->retval = ENOMEM;
+		return false;
+	}
+
+	strcpy(new_node->name, token);
+	gPseudoFs.last_pseudo_id++;
+	new_node->pseudo_id = gPseudoFs.last_pseudo_id;
+	gPseudoFs.reverse_tab[gPseudoFs.last_pseudo_id] = new_node;
+	new_node->last = new_node;
+	snprintf(new_node->fullname, MAXPATHLEN, "%s/%s",
+		 state->this_node->fullname, token);
+
+	/* Step into the new entry and attach it to the tree */
+	if(state->this_node->sons == NULL) {
+		state->this_node->sons = new_node;
+	} else {
+		state->this_node->sons->last->next = new_node;
+		state->this_node->sons->last = new_node;
+	}
+	new_node->parent = state->this_node;
+	state->this_node = new_node;
+	return true;
+}
+
+/**
+ * @brief  Create a pseudofs entry for this export
+ *
+ * Iterate through the path finding and/or creating path nodes
+ * in the pseudofs directory structure for this export pseudo.
+ * Called from foreach_gsh_export() iterator
+ *
+ * @param exp   [IN] export in question
+ * @param arg   [IN] callback state
+ *
+ * @return status as bool.  false terminates the foreach
+ */
+
+struct pseudo_state {
+	int retval;
+};
+
+static bool export_to_pseudo(struct gsh_export *exp, void *arg)
+{
+	struct pseudo_state *state = (struct pseudo_state *)arg;
+	exportlist_t *entry = &exp->export;
+	struct node_state node_state;
+	char *tmp_pseudopath;
+	int rc;
+
+	state->retval = 0; /* start off with no errors */
+
+	/* skip exports that aren't for NFS v4 */
+	if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0 ||
+	   entry->pseudopath == NULL ||
+	   (entry->export_perms.options & EXPORT_OPTION_PSEUDO) == 0)
+		return true;
+
+	LogDebug(COMPONENT_NFS_V4_PSEUDO,
+		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
+		 entry->id, entry->fullpath, entry->pseudopath);
+	/* there must be a leading '/' in the pseudo path */
+	if(entry->pseudopath[0] != '/') {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Pseudo Path '%s' is badly formed",
+			entry->pseudopath);
+		state->retval = EINVAL;
+		return false;
+	}
+	if(strlen(entry->pseudopath) > MAXPATHLEN) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Bad Pseudo=\"%s\", path too long",
+			entry->pseudopath);
+		state->retval = EINVAL;
+		return false;
+	}
+	/* Parsing the path
+	 * Make a copy of the pseudopath since it will be modified,
+	 * also, skip the leading '/'.
+	 */
+	tmp_pseudopath = alloca(strlen(entry->pseudopath) + 2);
+	strcpy(tmp_pseudopath, entry->pseudopath + 1);
+	node_state.this_node = &(gPseudoFs.root);
+	node_state.entry = entry;
+	rc = token_to_proc(tmp_pseudopath,
+			   '/',
+			   pseudo_node,
+			   &node_state);
+	if(rc == -1) {
+		state->retval = node_state.retval;
+		return false;
+	}
+
+	/* Now that all entries are added to pseudofs tree,
+	 * add the junction to the pseudofs */
+	node_state.this_node->junction_export = entry;
+	entry->exp_mounted_on_file_id = node_state.this_node->pseudo_id;
+	return true;
+}
 
 /**
  * @brief Build a pseudo fs from an exportlist
  *
- * This export list itself is obtained by reading the configuration
- * file.
+ * foreach through the exports to create pseudofs entries.
  *
- * @parma[in] pexportlist The export list
- *
- * @return the pseudo fs root.
+ * @return status as errno (0 == SUCCESS).
  */
 
-int nfs4_ExportToPseudoFS(struct glist_head *pexportlist)
+int nfs4_ExportToPseudoFS(void)
 {
-  exportlist_t *entry;
-  struct glist_head * glist;
-  int j = 0;
-  int found = 0;
-  char *PathTok[NB_TOK_PATH];
-  int NbTokPath;
-  pseudofs_t *PseudoFs = NULL;
-  pseudofs_entry_t *PseudoFsRoot = NULL;
-  pseudofs_entry_t *PseudoFsCurrent = NULL;
-  pseudofs_entry_t *newPseudoFsEntry = NULL;
-  pseudofs_entry_t *iterPseudoFs = NULL;
+	struct pseudo_state build_state;
 
-  PseudoFs = &gPseudoFs;
+	/* Init Root of the Pseudo FS tree */
+	strcpy(gPseudoFs.root.name, "/");
+	gPseudoFs.root.pseudo_id = 0;
+	gPseudoFs.root.junction_export = NULL;
+	gPseudoFs.root.next = NULL;
+	gPseudoFs.root.last = NULL;
+	gPseudoFs.root.sons = NULL;
+	gPseudoFs.root.parent = &(gPseudoFs.root);    /* root is its own parent */
+	gPseudoFs.reverse_tab[0] = &(gPseudoFs.root);
 
-  /* Init Root of the Pseudo FS tree */
-  strcpy(PseudoFs->root.name, "/");
-  PseudoFs->root.pseudo_id = 0;
-  PseudoFs->root.junction_export = NULL;
-  PseudoFs->root.next = NULL;
-  PseudoFs->root.last = PseudoFsRoot;
-  PseudoFs->root.sons = NULL;
-  PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
+	(void)foreach_gsh_export(export_to_pseudo,
+				 &build_state);
 
-  /* To not forget to init "/" entry */
-  PseudoFs->reverse_tab[0] = &(PseudoFs->root);
+	if(isMidDebug(COMPONENT_NFS_V4_PSEUDO)) {
+		int i;
 
-  glist_for_each(glist, pexportlist)
-    {
-      entry = glist_entry(glist, exportlist_t, exp_list);
-
-      /* skip exports that aren't for NFS v4 */
-      if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0 ||
-	 entry->pseudopath == NULL)
-        {
-          continue;
-        }
-      if(entry->export_perms.options & EXPORT_OPTION_PSEUDO)
-        {
-	  char *tmp_pseudopath;
-
-	  tmp_pseudopath = alloca(strlen(entry->pseudopath) + 2);
-          LogDebug(COMPONENT_NFS_V4_PSEUDO,
-                   "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
-                   entry->id, entry->fullpath, entry->pseudopath);
-          /* there must be a leading '/' in the pseudo path */
-          if(entry->pseudopath[0] != '/')
-            {
-              /* Path is badly formed */
-              LogCrit(COMPONENT_NFS_V4_PSEUDO,
-                      "Pseudo Path '%s' is badly formed",
-                      entry->pseudopath);
-              continue;
-            }
-
-	  if(strlen(entry->pseudopath) > MAXPATHLEN)
-            {
-              /* Path is badly formed */
-              LogCrit(COMPONENT_NFS_V4_PSEUDO,
-                      "Bad Pseudo=\"%s\", path too long",
-                      entry->pseudopath);
-              continue;
-            }
-          /* Parsing the path
-	   * Make a copy of the pseudopath since it will be modified,
-           * also, skip the leading '/'.
-           */
-          strcpy(tmp_pseudopath, entry->pseudopath + 1);
-
-          NbTokPath = nfs_ParseConfLine(PathTok,
-                                        NB_TOK_PATH,
-                                        tmp_pseudopath,
-                                        '/');
-          if(NbTokPath < 0)
-            {
-              /* Path is badly formed */
-              LogCrit(COMPONENT_NFS_V4_PSEUDO,
-                      "Bad Pseudo=\"%s\", path has too many components",
-                      entry->pseudopath);
-              continue;
-            }
-
-          /* Start at the pseudo root. */
-          PseudoFsCurrent = &(PseudoFs->root);
-
-          /* Loop on each token. */
-          for(j = 0; j < NbTokPath; j++)
-            {
-              found = 0;
-	      LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "token %s", PathTok[j]);
-              for(iterPseudoFs = PseudoFsCurrent->sons; iterPseudoFs != NULL;
-                  iterPseudoFs = iterPseudoFs->next)
-                {
-                  /* Looking for a matching entry */
-                  if(!strcmp(iterPseudoFs->name, PathTok[j]))
-                    {
-                      found = 1;
-                      break;
-                    }
-                }               /* for iterPseudoFs */
-
-              if(found)
-                {
-                  /* a matching entry was found in the tree */
-                  PseudoFsCurrent = iterPseudoFs;
-                }
-              else
-                {
-                  /* a new entry is to be created */
-                  if(PseudoFs->last_pseudo_id == (MAX_PSEUDO_ENTRY - 1))
-                    {
-                      LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                               "Too many nodes in Export_Id %d Path=\"%s\" Pseudo=\"%s\"",
-                               entry->id, entry->fullpath, entry->pseudopath);
-                      return ENOMEM;
-                    }
-                  newPseudoFsEntry = gsh_malloc(sizeof(pseudofs_entry_t));
-                  if(newPseudoFsEntry == NULL)
-                    {
-                      LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                               "Insufficient memory to create pseudo fs node");
-                      return ENOMEM;
-                    }
-
-                  /* Copy component name, no need to check buffer because size
-		   * was checked by nfs_ParseConfLine.
-		   */ 
-                  strcpy(newPseudoFsEntry->name, PathTok[j]);
-                  newPseudoFsEntry->pseudo_id = PseudoFs->last_pseudo_id + 1;
-                  PseudoFs->last_pseudo_id = newPseudoFsEntry->pseudo_id;
-                  PseudoFs->reverse_tab[PseudoFs->last_pseudo_id] = newPseudoFsEntry;
-                  newPseudoFsEntry->junction_export = NULL;
-                  newPseudoFsEntry->last = newPseudoFsEntry;
-                  newPseudoFsEntry->next = NULL;
-                  newPseudoFsEntry->sons = NULL;
-                  snprintf(newPseudoFsEntry->fullname, MAXPATHLEN, "%s/%s",
-                           PseudoFsCurrent->fullname, PathTok[j]);
-
-                  /* Step into the new entry and attach it to the tree */
-                  if(PseudoFsCurrent->sons == NULL)
-                    PseudoFsCurrent->sons = newPseudoFsEntry;
-                  else
-                    {
-                      PseudoFsCurrent->sons->last->next = newPseudoFsEntry;
-                      PseudoFsCurrent->sons->last = newPseudoFsEntry;
-                    }
-                  newPseudoFsEntry->parent = PseudoFsCurrent;
-                  PseudoFsCurrent = newPseudoFsEntry;
-                }
-
-            }                   /* for j */
-
-          /* Now that all entries are added to pseudofs tree,
-	   * add the junction to the pseudofs */
-          PseudoFsCurrent->junction_export = entry;
-
-          /* And fill in our part of the export root data */
-          entry->exp_mounted_on_file_id = PseudoFsCurrent->pseudo_id;
-
-        }
-      /* if( entry->options & EXPORT_OPTION_PSEUDO ) */
-    }                           /* glist_for_each */
-
-  if(isMidDebug(COMPONENT_NFS_V4_PSEUDO))
-    {
-      int i;
-
-      for(i = 0; i <= PseudoFs->last_pseudo_id; i++)
-        {
-          if(PseudoFs->reverse_tab[i]->junction_export != NULL)
-            LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
-                        "pseudo_id %d is %s junction_export %p"
-			"Export_id %d Path %s mounted_on_fileid %"PRIu64,
-                        i, PseudoFs->reverse_tab[i]->name,
-                        PseudoFs->reverse_tab[i]->junction_export,
-                        PseudoFs->reverse_tab[i]->junction_export->id,
-                        PseudoFs->reverse_tab[i]->junction_export->fullpath,
-                        (uint64_t) PseudoFs->reverse_tab[i]->
-			           junction_export->exp_mounted_on_file_id);
-          else
-            LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
-                        "pseudo_id %d is %s (not a junction)",
-                        i, PseudoFs->reverse_tab[i]->name);
-        }
-    }
-
-  return (0);
+		for(i = 0; i <= gPseudoFs.last_pseudo_id; i++) {
+			if(gPseudoFs.reverse_tab[i]->junction_export != NULL) {
+				LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+					    "pseudo_id %d is %s junction_export %p"
+					    "Export_id %d Path %s mounted_on_fileid %"PRIu64,
+					    i, gPseudoFs.reverse_tab[i]->name,
+					    gPseudoFs.reverse_tab[i]->junction_export,
+					    gPseudoFs.reverse_tab[i]->junction_export->id,
+					    gPseudoFs.reverse_tab[i]->junction_export->fullpath,
+					    (uint64_t) gPseudoFs.reverse_tab[i]->
+					    junction_export->exp_mounted_on_file_id);
+			} else {
+				LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+					    "pseudo_id %d is %s (not a junction)",
+					    i, gPseudoFs.reverse_tab[i]->name);
+			}
+		}
+	}
+	return build_state.retval;
 }
-
 /**
  * @brief Get the attributes for an entry in the pseudofs
  *
