@@ -177,7 +177,7 @@ export_id_cmpf(const struct avltree_node *lhs,
  * @param export_id   [IN] the export id extracted from the handle
  * @param lookup_only [IN] if true, don't create a new entry
  *
- * @return pointer to ref locked stats block
+ * @return pointer to ref locked export
  */
 struct gsh_export *
 get_gsh_export(int export_id, bool lookup_only)
@@ -308,9 +308,7 @@ out:
 		free_export_resources(export);
 		export_st = container_of(exp, struct export_stats, export);
 		server_stats_free(&export_st->st);
-		export_st = container_of(exp, struct export_stats, export);
- 
-		gsh_free(exp);
+		gsh_free(export_st);
 	}
 	return removed;
 }
