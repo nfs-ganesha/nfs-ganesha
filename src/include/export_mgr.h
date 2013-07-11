@@ -39,13 +39,20 @@
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
+typedef enum export_state {
+	EXPORT_INIT = 0,	/*< still being initialized */
+	EXPORT_READY,		/*< searchable, usable */
+	EXPORT_BLOCKED,		/*< not available for search */
+	EXPORT_RELEASE		/*< No references, ready for reaping */
+} export_state_t;
+
 struct gsh_export {
 	struct avltree_node node_k;
 	pthread_mutex_t lock;
 	int64_t refcnt;
 	exportlist_t export;
 	nsecs_elapsed_t last_update;
-	int export_id;
+	export_state_t state;
 };
 
 void export_pkginit(void);
@@ -54,10 +61,15 @@ void dbus_export_init(void);
 #endif
 struct gsh_export *get_gsh_export(int export_id,
 				  bool lookup_only);
+struct gsh_export *get_gsh_export_by_path(char *path);
+struct gsh_export *get_gsh_export_by_pseudo(char *path);
+struct gsh_export *get_gsh_export_by_tag(char *tag);
+void set_gsh_export_state(struct gsh_export *export,
+			  export_state_t state);
 void put_gsh_export(struct gsh_export *export);
 bool remove_gsh_export(int export_id);
-int foreach_gsh_export(bool (*cb)(struct gsh_export *cl,
-				   void *state),
+int foreach_gsh_export(bool (*cb)(struct gsh_export *exp,
+				  void *state),
 		       void *state);
 
 #endif /* !EXPORT_MGR_H */

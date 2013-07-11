@@ -80,6 +80,8 @@ struct export_by_id
 
 static struct export_by_id export_by_id;
 
+static struct glist_head exportlist;
+
 /**
  * @brief Compute cache slot for an entry
  *
@@ -161,8 +163,8 @@ export_id_cmpf(const struct avltree_node *lhs,
 
 	lk = avltree_container_of(lhs, struct gsh_export, node_k);
 	rk = avltree_container_of(rhs, struct gsh_export, node_k);
-	if(lk->export_id != rk->export_id)
-		return (lk->export_id < rk->export_id) ? -1 : 1;
+	if(lk->export.id != rk->export.id)
+		return (lk->export.id < rk->export.id) ? -1 : 1;
 	else
 		return 0;
 }
@@ -188,16 +190,7 @@ get_gsh_export(int export_id, bool lookup_only)
 	struct gsh_export v;
         void **cache_slot;
 
-/* NOTE: If we call this in the general case, not from within stats
- * code we have to do the following.  We currently get away with it 
- * because the stats code has already done this and passed the export id
- * it found to the stats harvesting functions.  This table has a 1 - 1
- * relationship to an exportlist entry but no linkage because exportlist
- * is a candidate for rework when the pseudo fs "fsal" is done.
- *  Don't muddy the waters right now.
- */
-
-	v.export_id = export_id;
+	v.export.id = export_id;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 
@@ -212,7 +205,8 @@ get_gsh_export(int export_id, bool lookup_only)
                          "export_mgr cache hit slot %d\n",
                          eid_cache_offsetof(&export_by_id, export_id));
 		exp =  avltree_container_of(node, struct gsh_export, node_k);
-                goto out;
+		if(exp->state == EXPORT_READY)
+			goto out;
             }
         }
 
@@ -220,6 +214,10 @@ get_gsh_export(int export_id, bool lookup_only)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if(node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
+		if(exp->state != EXPORT_READY) {
+			PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+			return NULL;
+		}
                 /* update cache */
 		atomic_store_voidptr(cache_slot, node);
 		goto out;
@@ -234,7 +232,7 @@ get_gsh_export(int export_id, bool lookup_only)
 		return NULL;
 	}
 	exp = &export_st->export;
-	exp->export_id = export_id;
+	exp->export.id = export_id;
 	exp->refcnt = 0;  /* we will hold a ref starting out... */
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
@@ -246,9 +244,167 @@ get_gsh_export(int export_id, bool lookup_only)
 		pthread_mutex_init(&exp->lock, NULL);
                 /* update cache */
 		atomic_store_voidptr(cache_slot, &exp->node_k);
+		glist_add_tail(&exportlist, &exp->export.exp_list);
 	}
 
 out:
+	atomic_inc_int64_t(&exp->refcnt);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return exp;
+}
+
+/**
+ * @brief Set export entry's state
+ *
+ * Set the state under the global write lock to keep it safe
+ * from scan/lookup races.
+ * We assert state transitions because errors here are BAD.
+ *
+ * @param export [IN] The export to change state
+ * @param state  [IN} the state to set
+ */
+
+void set_gsh_export_state(struct gsh_export *export,
+			  export_state_t state)
+{
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	if(state == EXPORT_READY) {
+		assert(export->state == EXPORT_INIT ||
+		       export->state == EXPORT_BLOCKED);
+	} else if(state == EXPORT_BLOCKED) {
+		assert(export->state == EXPORT_READY);
+	} else if(state == EXPORT_RELEASE) {
+		assert(export->state == EXPORT_BLOCKED &&
+		       export->refcnt == 0);
+	} else {
+		assert(0);
+	}
+	export->state = state;
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+}
+
+/**
+ * @brief Lookup the export manager struct by export path
+ *
+ * Gets an export entry from its path using a substring match and
+ * linear search of the export list. 
+ * If path has a trailing '/', ignor it.
+ *
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return pointer to ref locked stats block
+ */
+
+struct gsh_export *
+get_gsh_export_by_path(char *path)
+{
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	struct glist_head * glist;
+	int len_path = strlen(path);
+	int len_export;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	if(path[len_path - 1] == '/')
+		len_path--;
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
+		if(exp->state != EXPORT_READY)
+			continue;
+		len_export = strlen(export->fullpath);
+		/* a path shorter than the full path cannot match
+		 */
+		if(len_path < len_export)
+			continue;
+		/* if the char in fullpath just after the end of path is not '/'
+		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
+		 */
+		if(export->fullpath[len_path] != '/' &&
+		   export->fullpath[len_path] != '\0')
+			continue;
+		/* we agree on size, now compare the leading substring
+		 */
+		if( !strncmp(export->fullpath, path, len_path))
+			goto out;
+	}
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return NULL;
+
+out:
+	atomic_inc_int64_t(&exp->refcnt);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export pseudo path
+ *
+ * Gets an export entry from its pseudo (if it exists)
+ *
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return pointer to ref locked export
+ */
+
+struct gsh_export *
+get_gsh_export_by_pseudo(char *path)
+{
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	struct glist_head * glist;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
+		if(exp->state != EXPORT_READY)
+			continue;
+		if(export->pseudopath != NULL &&
+		   !strcmp(export->pseudopath, path))
+			goto out;
+	}
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return NULL;
+
+out:
+	atomic_inc_int64_t(&exp->refcnt);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export tag
+ *
+ * Gets an export entry from its pseudo (if it exists)
+ *
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return pointer to ref locked export
+ */
+
+struct gsh_export *
+get_gsh_export_by_tag(char *tag)
+{
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	struct glist_head * glist;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
+		if(exp->state != EXPORT_READY)
+			continue;
+		if(export->FS_tag != NULL &&
+		   !strcmp(export->FS_tag, tag))
+			goto out;
+	}
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return NULL;
+
+out:
+	exp = container_of(export, struct gsh_export, export);
 	atomic_inc_int64_t(&exp->refcnt);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
@@ -283,13 +439,13 @@ bool remove_gsh_export(int export_id)
         void **cache_slot;
 	bool removed = true;
 
-	v.export_id = export_id;
+	v.export.id = export_id;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if(node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if(exp->refcnt > 0) {
+		if(exp->state != EXPORT_RELEASE || exp->refcnt > 0) {
 			removed = false;
 			goto out;
 		}
@@ -320,19 +476,19 @@ out:
  * @param state [IN] param block to pass
  */
 
-int foreach_gsh_export(bool (*cb)(struct gsh_export *cl,
+int foreach_gsh_export(bool (*cb)(struct gsh_export *exp,
 				  void *state),
 		       void *state)
 {
-	struct avltree_node *export_node;
+	struct glist_head * glist;
 	struct gsh_export *exp;
+	exportlist_t *export;
 	int cnt = 0;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	for(export_node = avltree_first(&export_by_id.t);
-	    export_node != NULL;
-	    export_node = avltree_next(export_node)) {
-		exp = avltree_container_of(export_node, struct gsh_export, node_k);
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
 		if( !cb(exp, state))
 			break;
 		cnt++;
@@ -708,6 +864,7 @@ void export_pkginit(void)
 	export_by_id.cache_sz = 255;
 	export_by_id.cache = gsh_calloc(export_by_id.cache_sz,
 					sizeof(struct avltree_node *));
+	init_glist(&exportlist);
 }
 
 /** @} */
