@@ -145,8 +145,6 @@ extern struct fsal_up_vector fsal_up_top;
 /* Used in BuildExportEntry() */
 #define EXPORT_MAX_CLIENTS   128        /* number of clients */
 
-struct glist_head exportlist;
-
 /**
  * @brief Parse a line with a settable separator and end of line
  *
@@ -1265,18 +1263,14 @@ static int BuildExportClient(config_item_t block,
  * continue parsing the file, for listing other errors.
  *
  * @param[in]  block     Export configuration block
- * @param[out] pp_export Export entry being built
  *
  * @return 0 on success.
  */
 
-static int BuildExportEntry(config_item_t block,
-			    exportlist_t ** pp_export,
-                            struct glist_head  * pexportlist)
+static int BuildExportEntry(config_item_t block)
 {
   exportlist_t *p_entry = NULL;
-  exportlist_t * p_found_entry = NULL;
-  char perms[1024];
+  bool path_matches = false;
   int i, rc;
   config_item_t item;
   int num_items;
@@ -1324,7 +1318,7 @@ static int BuildExportEntry(config_item_t block,
 	      label, CONF_EXPORT_ID);
       return -1;
     }
-  else if(exp->export.id == exp->export_id)
+  else if(exp->state != EXPORT_INIT)
     {
       LogCrit(COMPONENT_CONFIG,
 	      "NFS READ %s: This export is a duplicate of %s",
@@ -1335,7 +1329,6 @@ static int BuildExportEntry(config_item_t block,
   else
     {  /* initialize the exportlist part with the id */
       p_entry = &exp->export;
-      p_entry->id = export_id;
       set_options &= ~FLAG_EXPORT_ID; /* to warn defined twice nicely */
       if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
         {
@@ -1449,7 +1442,7 @@ static int BuildExportEntry(config_item_t block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PATH))
         {
-          exportlist_t * p_fe;
+          struct gsh_export *exp;
           int            pathlen;
 
           /* check if it has not already been set */
@@ -1492,17 +1485,18 @@ static int BuildExportEntry(config_item_t block,
             }
 	  ppath = var_value;
 
-          p_fe = nfs_Get_export_by_path(pexportlist, ppath);
+          exp = get_gsh_export_by_path(ppath);
 	  /* Pseudo, Tag, and Export_Id must be unique, Path may be
 	   * duplicated if at least Tag or Pseudo is specified (and
 	   * unique).
 	   */
-	  if(p_fe != NULL && p_found_entry != NULL)
+	  if(exp != NULL && path_matches)
 	    {
                LogCrit(COMPONENT_CONFIG,
 		       "NFS READ %s: Duplicate Path: \"%s\"",
 		       label, ppath);
 	       err_flag = true;
+	       put_gsh_export(exp);
 	       continue;
 	    }
 
@@ -1511,7 +1505,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Remember the entry we found so we can verify Tag and/or Pseudo
 	   * is set by the time the EXPORT stanza is complete.
 	   */
-	  p_found_entry = p_fe;
+	  path_matches = true;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
@@ -1606,7 +1600,7 @@ static int BuildExportEntry(config_item_t block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
-          exportlist_t * p_fe;
+          struct gsh_export *exp;
 
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PSEUDO) == FLAG_EXPORT_PSEUDO)
@@ -1626,13 +1620,14 @@ static int BuildExportEntry(config_item_t block,
               continue;
             }
 
-          p_fe = nfs_Get_export_by_pseudo(pexportlist, var_value);
-          if(p_fe != NULL)
+          exp = get_gsh_export_by_pseudo(var_value);
+          if(exp != NULL)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: Duplicate Pseudo: \"%s\"",
                       label, var_value);
               err_flag = true;
+	      put_gsh_export(exp);
               continue;
             }
 
@@ -2103,7 +2098,7 @@ static int BuildExportEntry(config_item_t block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
-          exportlist_t * p_fe;
+          struct gsh_export *exp;
 
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_FS_TAG) == FLAG_EXPORT_FS_TAG)
@@ -2114,14 +2109,15 @@ static int BuildExportEntry(config_item_t block,
 
           set_options |= FLAG_EXPORT_FS_TAG;
 
-          p_fe = nfs_Get_export_by_tag(pexportlist, var_value);
+          exp = get_gsh_export_by_tag(var_value);
 
-          if(p_fe != NULL)
+          if(exp != NULL)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ %s: Duplicate Tag: \"%s\"",
                       label, var_value);
               err_flag = true;
+	      put_gsh_export(exp);
               continue;
             }
 
@@ -2342,7 +2338,7 @@ static int BuildExportEntry(config_item_t block,
       err_flag = true;
     }
 
-  if((p_found_entry != NULL) &&
+  if(path_matches &&
      ((set_options & FLAG_EXPORT_PSEUDO) == 0) &&
      ((set_options & FLAG_EXPORT_FS_TAG) == 0))
     {
@@ -2428,18 +2424,20 @@ static int BuildExportEntry(config_item_t block,
       remove_gsh_export(export_id);
       return -1;
     }
-
-  *pp_export = p_entry;
+  set_gsh_export_state(exp, EXPORT_READY);
 
   LogEvent(COMPONENT_CONFIG,
            "NFS READ %s: Export %d (%s) successfully parsed",
            label, p_entry->id, p_entry->fullpath);
 
-  StrExportOptions(p_perms, perms);
-  LogFullDebug(COMPONENT_CONFIG,
-               "  Export Perms: %s", perms);
+  if(isFullDebug(COMPONENT_CONFIG)) {
+	  char perms[1024];
 
-
+	  StrExportOptions(p_perms, perms);
+	  LogFullDebug(COMPONENT_CONFIG,
+		       "  Export Perms: %s", perms);
+  }
+  put_gsh_export(exp); /* all done, let go */
   return 0;
 
 }
@@ -2573,28 +2571,17 @@ exportlist_t *BuildDefaultExport()
  * @brief Read the export entries from the parsed configuration file.
  *
  * @param[in]  in_config    The file that contains the export list
- * @param[out] pexportlist The export list
  *
  * @return A negative value on error,
  *         the number of export entries else.
  */
-int ReadExports(config_file_t in_config,        /* The file that contains the export list */
-                struct glist_head *pexportlist)   /* Pointer to the export list */
+int ReadExports(config_file_t in_config)
 {
 
   int nb_blk, rc, i;
   char *blk_name;
   int err_flag = false;
-
-  exportlist_t *p_export_item = NULL;
-
   int nb_entries = 0;
-
-  if(!pexportlist) {
-	  init_glist(&exportlist);
-	  nfs_param.pexportlist = &exportlist;
-	  pexportlist = &exportlist;
-  }
 
   /* get the number of blocks in the configuration file */
   nb_blk = config_GetNbBlocks(in_config);
@@ -2621,9 +2608,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
       if(!STRCMP(blk_name, CONF_LABEL_EXPORT))
         {
 
-          rc = BuildExportEntry(block,
-                                &p_export_item,
-                                pexportlist);
+          rc = BuildExportEntry(block);
 
           /* If the entry is errorneous, ignore it
            * and continue checking syntax of other entries.
@@ -2633,9 +2618,6 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
               err_flag = true;
               continue;
             }
-
-          glist_add_tail(pexportlist, &p_export_item->exp_list);
-
           nb_entries++;
 
         }
