@@ -47,12 +47,16 @@
 
 #define  ATTRVALS_BUFFLEN  1024
 
+int token_to_proc(char *line,
+		  char separator,
+		  bool (*proc)(char * token, void *arg),
+		  void *arg);
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
                       char *line,
                       char separator);
 
-int ReadExports(config_file_t in_config, struct glist_head * pexportlist);
+int ReadExports(config_file_t in_config);
 void free_export_resources(exportlist_t *export);
 void exports_pkginit(void);
 exportlist_t *BuildDefaultExport();
