@@ -51,6 +51,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "client_mgr.h"
+#include "export_mgr.h"
 
 /**
  * @brief The Mount proc mount function, for all versions.
@@ -75,6 +76,7 @@ int mnt_Mnt(nfs_arg_t *parg,
 {
 
   exportlist_t *p_current_item = NULL;
+  struct gsh_export *exp = NULL;
   struct fsal_obj_handle *pfsal_handle;
   struct fsal_export *exp_hdl;
   int auth_flavor[NB_AUTH_FLAVOR];
@@ -83,6 +85,7 @@ int mnt_Mnt(nfs_arg_t *parg,
   char *hostname;
   char dumpfh[1024];
   export_perms_t export_perms;
+  int retval = NFS_REQ_OK;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Mnt path=%s",
            parg->arg_mnt);
@@ -94,7 +97,8 @@ int mnt_Mnt(nfs_arg_t *parg,
     {
       LogCrit(COMPONENT_NFSPROTO,
               "NULL path passed as Mount argument !!!");
-      return NFS_REQ_DROP;
+      retval = NFS_REQ_DROP;
+      goto out;
     }
 
   /* If the path ends with a '/', get rid if it should it be a while()?? */
@@ -105,13 +109,11 @@ int mnt_Mnt(nfs_arg_t *parg,
    * Find the export for the dirname (using as well Path or Tag ) 
    */
   if(parg->arg_mnt[0] == '/')
-    p_current_item = nfs_Get_export_by_path(nfs_param.pexportlist,
-					    parg->arg_mnt);
+    exp = get_gsh_export_by_path(parg->arg_mnt);
   else
-    p_current_item = nfs_Get_export_by_tag(nfs_param.pexportlist,
-					   parg->arg_mnt);
+    exp = get_gsh_export_by_tag(parg->arg_mnt);
 
-  if(p_current_item == NULL)
+  if(exp == NULL)
     {
       /* No export found, return ACCESS error. */
       LogEvent(COMPONENT_NFSPROTO,
@@ -130,9 +132,9 @@ int mnt_Mnt(nfs_arg_t *parg,
           pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
           break;
         }
-      return NFS_REQ_OK;
+      goto out;
     }
-
+  p_current_item = &exp->export;
   /* Check access based on client. Don't bother checking TCP/UDP as some
    * clients use UDP for MOUNT even when they will use TCP for NFS.
    */
@@ -150,7 +152,7 @@ int mnt_Mnt(nfs_arg_t *parg,
               p_current_item->fullpath,
 	      req_ctx->client->hostaddr_str);
       pres->res_mnt1.status = NFSERR_ACCES;
-      return NFS_REQ_OK;
+      goto out;
 
     case MOUNT_V3:
       if((export_perms.options & EXPORT_OPTION_NFSV3) != 0)
@@ -159,7 +161,7 @@ int mnt_Mnt(nfs_arg_t *parg,
               "MOUNT: Export entry %s does not support NFS v3 for client %s",
               p_current_item->fullpath, req_ctx->client->hostaddr_str);
       pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
-      return NFS_REQ_OK;
+      goto out;
     }
 
   /*
@@ -188,7 +190,7 @@ int mnt_Mnt(nfs_arg_t *parg,
               pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
               break;
             }
-          return NFS_REQ_OK;
+          goto out;
         }
     }
   /* convert the fsal_handle to a file handle */
@@ -284,8 +286,10 @@ int mnt_Mnt(nfs_arg_t *parg,
 	      " Mount command will be successfull anyway",
               hostname, parg->arg_mnt);
     }
-
-  return NFS_REQ_OK;
+out:
+  if(exp != NULL)
+    put_gsh_export(exp);
+  return retval;
 
 }                               /* mnt_Mnt */
 
