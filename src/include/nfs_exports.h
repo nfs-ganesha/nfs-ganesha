@@ -107,11 +107,6 @@ typedef enum exportlist_client_type__ {
 	BAD_CLIENT = 8
 } exportlist_client_type_t;
 
-typedef enum exportlist_status__ {
-	EXPORTLIST_OK = 1,
-	EXPORTLIST_UNAVAILABLE = 2
-} exportlist_status_t;
-
 typedef union exportlist_client_union__ {
 	exportlist_client_hostif_t hostif;
 	exportlist_client_net_t network;
@@ -403,12 +398,6 @@ typedef struct compound_data {
 /* Export list related functions */
 sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4);
 
-exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
-                                     char * path);
-exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
-                                       char * path);
-exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
-                                    char * tag);
 void nfs_check_anon(export_perms_t * pexport_perms,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
@@ -436,10 +425,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 bool nfs_export_check_security(struct svc_req *ptr_req,
 			       export_perms_t * p_export_perms,
 			       exportlist_t *pexport);
-
-int nfs_export_tag2path(struct glist_head * pexportlist,
-                        char *tag, int taglen,
-                        char *path, int pathlen);
 
 void LogClientListEntry(log_components_t            component,
                         exportlist_client_entry_t * entry);
