@@ -985,6 +985,17 @@ void server_dbus_v41_iostats (struct nfsv41_stats *v41p,
 	server_dbus_iostats(&v41p->write, iter);
 }
 
+void server_dbus_9p_iostats (struct _9p_stats * _9pp,
+			     DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_iostats(&_9pp->read, iter);
+	server_dbus_iostats(&_9pp->write, iter);
+}
+
 /**
  * @brief Report layout statistics as a struct
  *

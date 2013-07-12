@@ -740,6 +740,56 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
 	}
 };
 
+
+/**
+ * DBUS method to report 9p I/O statistics
+ *
+ */
+
+static bool
+get_9p_stats_io(DBusMessageIter *args,
+	        DBusMessage *reply)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	client = lookup_client(args, &errormsg);
+	if(client == NULL) {
+		success = false;
+		if(errormsg == NULL)
+			errormsg = "Client IP address not found";
+	} else {
+		server_st = container_of(client, struct server_stats, client);
+		if(server_st->st._9p == NULL) {
+			success = false;
+			errormsg = "Client does not have any 9p activity";
+		}
+	}
+	dbus_status_reply(&iter, success, errormsg);
+	if(success)
+		server_dbus_9p_iostats(server_st->st._9p, &iter);
+
+	if(client != NULL)
+		put_gsh_client(client);
+	return true;
+}
+
+static struct gsh_dbus_method cltmgr_show_9p_io = {
+	.name = "GetNFSv9pIO",
+	.method = get_9p_stats_io,
+	.args = { IPADDR_ARG,
+		  STATUS_REPLY,
+		  TIMESTAMP_REPLY,
+		  IOSTATS_REPLY,
+		  END_ARG_LIST
+	}
+};
+
+
 /**
  * DBUS method to report NFSv41 layout statistics
  *
@@ -793,6 +843,7 @@ static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v40_io,
 	&cltmgr_show_v41_io,
 	&cltmgr_show_v41_layouts,
+        &cltmgr_show_9p_io,
 	NULL
 };
 
