@@ -85,7 +85,6 @@ set(fsal_CORE_SRCS
    ../FSAL/fsal_config.c
    ../FSAL/default_methods.c
    ../FSAL/common_pnfs.c
-   ../FSAL/fsal_manager.c
    ../FSAL/fsal_destroyer.c
    ../FSAL_UP/fsal_up_top.c
    ../FSAL_UP/fsal_up_async.c
