@@ -270,7 +270,8 @@ uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
 
 nfs_client_record_t *get_client_record(const char *const value,
 				       const size_t len,
-				       const uint32_t pnfs_flags);
+				       const uint32_t pnfs_flags,
+				       const uint32_t server_addr);
 
 /******************************************************************************
  *

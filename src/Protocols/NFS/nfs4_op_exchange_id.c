@@ -38,6 +38,32 @@
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
 
+
+int get_raddr(SVCXPRT *xprt)
+{
+    struct sockaddr_storage *ss = (struct sockaddr_storage *)(xprt->xp_ltaddr.buf);
+    int addr = 0;
+
+    if (ss == NULL)
+      return addr;
+
+    switch(ss->ss_family) {
+    case AF_INET6:
+        addr = ntohl(((struct sockaddr_in6 *) ss)->sin6_addr.s6_addr32[3]);
+
+        break;
+    case AF_INET:
+        addr = ntohl(((struct sockaddr_in *) ss)->sin_addr.s_addr);
+
+        break;
+    default:
+        break;
+    }
+
+    return addr;
+}
+
+
 /**
  * @brief The NFS4_OP_EXCHANGE_ID operation
  *
@@ -71,6 +97,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		= (&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u
 		   .eir_resok4);
 	uint32_t pnfs_flags;
+	in_addr_t server_addr = 0;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 	if (data->minorversion == 0) {
@@ -93,12 +120,15 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
 
+
+	server_addr = get_raddr(data->reqp->rq_xprt);
+
 	/* Do we already have one or more records for client id (x)? */
 	client_record = get_client_record(arg_EXCHANGE_ID4->eia_clientowner
 					  .co_ownerid.co_ownerid_val,
 					  arg_EXCHANGE_ID4->eia_clientowner
 					  .co_ownerid.co_ownerid_len,
-					  pnfs_flags);
+					  pnfs_flags, server_addr);
 	if (client_record == NULL) {
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID,
