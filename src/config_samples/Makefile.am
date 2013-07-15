@@ -11,6 +11,7 @@ EXTRA_DIST = hosts.ganesha             \
 	     xfs.ganesha.nfsd.conf     \
 	     gpfs.ganesha.nfsd.conf    \
 	     gpfs.ganesha.main.conf    \
+             gpfs.ganesha.log.conf     \
 	     gpfs.ganesha.exports.conf \
 	     pt.ganesha.nfsd.conf      \
 	     vfs.ganesha.nfsd.conf     \
@@ -29,6 +30,7 @@ endif
 
 if USE_FSAL_GPFS
 sysconf_DATA += gpfs.ganesha.main.conf \
+                gpfs.ganesha.log.conf  \
 	     gpfs.ganesha.exports.conf
 endif
 
