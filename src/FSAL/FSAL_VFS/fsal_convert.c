@@ -209,18 +209,24 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
   FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
 
   /* Use full timer resolution */
+#ifdef LINUX
   fsalattr->atime = buffstat->st_atim;
-  FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
-
   fsalattr->ctime = buffstat->st_ctim;
-  FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
-
   fsalattr->mtime = buffstat->st_mtim;
-  FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
-
   fsalattr->chgtime =
       (gsh_time_cmp(&buffstat->st_mtim, &buffstat->st_ctim) > 0) ?
       fsalattr->mtime : fsalattr->ctime;
+#elif FREEBSD
+  fsalattr->atime = buffstat->st_atimespec;
+  fsalattr->ctime = buffstat->st_ctimespec;
+  fsalattr->mtime = buffstat->st_mtimespec;
+  fsalattr->chgtime =
+      (gsh_time_cmp(&buffstat->st_mtimespec, &buffstat->st_ctimespec) > 0) ?
+      fsalattr->mtime : fsalattr->ctime;
+#endif
+  FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
   fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
   FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
