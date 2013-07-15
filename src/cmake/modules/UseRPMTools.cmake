@@ -394,6 +394,7 @@ if(USE_FSAL_GPFS)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 install -m 755 ganesha.gpfs.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-gpfs
 install -m 644 config_samples/ganesha.conf               $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.log.conf	 $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.nfsd.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.exports.conf  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.main.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -449,6 +450,7 @@ FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 if(USE_FSAL_GPFS)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %config %{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf

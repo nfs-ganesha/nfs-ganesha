@@ -28,6 +28,7 @@ SET(test_liblog_SRCS
 
 add_executable(test_liblog EXCLUDE_FROM_ALL ${test_liblog_SRCS})
 
+target_link_libraries(log ${ZLIB_LIBRARY})
 target_link_libraries(test_liblog log ${CMAKE_THREAD_LIBS_INIT})
 
 

@@ -307,6 +307,8 @@ if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
   find_package(Threads REQUIRED)
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
+find_package(ZLIB REQUIRED)
+
 find_package(Krb5 REQUIRED gssapi)
 
 if(KRB5_FOUND)
@@ -508,6 +510,9 @@ set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
+
+# Find zlib library
+find_library(LIBZ z)  # Compression
 
 # We need to have libcap installed
 find_library(LIBCAP cap)  # Management of Capablilities

@@ -43,6 +43,7 @@
 #include <libgen.h>
 #include <execinfo.h>
 #include <sys/resource.h>
+#include <zlib.h>
 
 #include "log.h"
 #include "rpc/rpc.h"
@@ -59,6 +60,12 @@ pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 /* Variables to control log fields */
 
+pthread_rwlock_t logrot_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+/* Current size/index for logfile rotation*/
+static int cur_logfile_size = 0;
+static int cur_logfile_indx  = 0;
+static char cur_logfile_name[PATH_MAX];
+
 /**
  * @brief Define an index each of the log fields that are configurable.
  *
@@ -72,7 +79,7 @@ enum log_flag_index_t
   LF_DATE, /*< Date field. */
   LF_TIME, /*< Time field. */
   LF_EPOCH, /*< Server Epoch field (distinguishes server instance. */
-  LF_HOSTAME, /*< Server host name field. */
+  LF_HOSTNAME, /*< Server host name field. */
   LF_PROGNAME, /*< Ganesha program name field. */
   LF_PID, /*< Ganesha process identifier. */
   LF_THREAD_NAME, /*< Name of active thread logging message. */
@@ -81,6 +88,9 @@ enum log_flag_index_t
   LF_FUNCTION_NAME, /*< Function name message occurred in. */
   LF_COMPONENT, /*< Log component. */
   LF_LEVEL, /*< Log level. */
+  LF_LOGFILE_MAX_FILES, /*< Max Files for rotation. */
+  LF_LOGFILE_MAX_SIZE, /*< Max Size per file. */
+  LF_LOGFILE_COMPRESS, /*< Log File Compression. */
 };
 
 /**
@@ -131,18 +141,21 @@ struct log_flag tab_log_flag[] =
 /*                          Extended
  * Index             Flag   Value       Name
  */
-  {LF_DATE,          TRUE,  TD_GANESHA, "DATE"},
-  {LF_TIME,          TRUE,  TD_GANESHA, "TIME"},
-  {LF_EPOCH,         TRUE,  0,          "EPOCH"},
-  {LF_HOSTAME,       TRUE,  0,          "HOSTAME"},
-  {LF_PROGNAME,      TRUE,  0,          "PROGNAME"},
-  {LF_PID,           TRUE,  0,          "PID"},
-  {LF_THREAD_NAME,   TRUE,  0,          "THREAD_NAME"},
-  {LF_FILE_NAME,     FALSE, 0,          "FILE_NAME"},
-  {LF_LINE_NUM,      FALSE, 0,          "LINE_NUM"},
-  {LF_FUNCTION_NAME, TRUE,  0,          "FUNCTION_NAME"},
-  {LF_COMPONENT,     TRUE,  0,          "COMPONENT"},
-  {LF_LEVEL,         TRUE,  0,          "LEVEL"},
+  {LF_DATE,              TRUE,  TD_GANESHA, "DATE"},
+  {LF_TIME,              TRUE,  TD_GANESHA, "TIME"},
+  {LF_EPOCH,             TRUE,  0,          "EPOCH"},
+  {LF_HOSTNAME,          TRUE,  0,          "HOSTNAME"},
+  {LF_PROGNAME,          TRUE,  0,          "PROGNAME"},
+  {LF_PID,               TRUE,  0,          "PID"},
+  {LF_THREAD_NAME,       TRUE,  0,          "THREAD_NAME"},
+  {LF_FILE_NAME,         FALSE, 0,          "FILE_NAME"},
+  {LF_LINE_NUM,          FALSE, 0,          "LINE_NUM"},
+  {LF_FUNCTION_NAME,     TRUE,  0,          "FUNCTION_NAME"},
+  {LF_COMPONENT,         TRUE,  0,          "COMPONENT"},
+  {LF_LEVEL,             TRUE,  0,          "LEVEL"},
+  {LF_LOGFILE_MAX_FILES, FALSE, 10,         "LogFile_Max_Files"},
+  {LF_LOGFILE_MAX_SIZE,  FALSE, 33554432,   "LogFile_Max_Size"},
+  {LF_LOGFILE_COMPRESS,  FALSE, 0,          "LogFile_Compress"},
 };
 
 static int log_to_syslog(struct log_facility   * facility,
@@ -428,7 +441,7 @@ int unregister_log_facility(struct log_facility * facility)
   pthread_rwlock_wrlock(&log_rwlock);
 
   existing = find_log_facility(facility->lf_name);
-  
+
   if(existing != facility)
     {
       pthread_rwlock_unlock(&log_rwlock);
@@ -802,6 +815,20 @@ void print_debug_info_fd(int fd)
     }
 }
 
+void print_debug_info_fd_compressed(gzFile *gfile)
+{
+  int    size;
+  char * str = get_debug_info(&size);
+  int    rc = 0;    // dumb variable to catch write return
+
+  if (str != NULL)
+    {
+      rc = gzwrite(gfile, str, size);
+      gsh_free(str);
+    }
+}
+
+
 void print_debug_info_file(FILE *flux)
 {
   char *str = get_debug_info(NULL);
@@ -1155,7 +1182,7 @@ void set_const_log_str()
   if(b_left > 0 && tab_log_flag[LF_EPOCH].lf_val)
     b_left = display_printf(&dspbuf, ": epoch %08x ", ServerEpoch);
 
-  if(b_left > 0 && tab_log_flag[LF_HOSTAME].lf_val)
+  if(b_left > 0 && tab_log_flag[LF_HOSTNAME].lf_val)
     b_left = display_printf(&dspbuf, ": %s ", hostname);
 
   if(b_left > 0 && tab_log_flag[LF_PROGNAME].lf_val)
@@ -1232,7 +1259,7 @@ void set_const_log_str()
           default:
             break;
         }
-      
+
     }
 }
 
@@ -1424,14 +1451,155 @@ static int log_to_syslog(struct log_facility   * facility,
   return 0;
 }
 
+static int write_to_file_compressed(char                  * path,
+                                    log_levels_t            level,
+                                    struct display_buffer * buffer,
+                                    int                     length)
+{
+
+  gzFile    gFile;
+  int       rc = -1;
+  int       status = 0;
+
+  if (!path)
+    return rc;
+
+  gFile = gzopen(path, "a");
+  if(!gFile)
+    {
+      fprintf(stderr, "Error: Couldn't open log file %s", path);
+      return rc;
+    }
+  rc = gzwrite(gFile, buffer->b_start, length);
+  if(rc < (length)) {
+    if(rc >= 0)
+      status = ENOSPC;
+    else
+      status = errno;
+  }
+
+  if(level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level &&
+     level != NIV_NULL)
+    print_debug_info_fd_compressed(gFile);
+
+  if (status)
+    fprintf(stderr, "Error: couldn't complete write to the log file %s"
+            "status=%d (%s) message was:\n%s",
+            path, status, strerror(status), buffer->b_start);
+
+  rc = gzclose(gFile);
+
+  return status;
+}
+
+static int write_to_file(char                  * path,
+                         log_levels_t            level,
+                         struct display_buffer * buffer,
+                         int                     len)
+{
+  int fd;
+  int rc = -1;
+  int status = 0;
+
+  fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, log_mask);
+
+  if(fd < 0)
+    {
+      fprintf(stderr, "Error: Couldn't open log file %s", path);
+      return rc;
+    }
+
+    rc = write(fd, buffer->b_start, len);
+    if(rc < (len)) {
+      if(rc >= 0)
+        status = ENOSPC;
+      else
+        status = errno;
+    }
+
+    if(level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level &&
+       level != NIV_NULL)
+      print_debug_info_fd(fd);
+
+  if (status)
+    fprintf(stderr, "Error: couldn't complete write to the log file %s"
+            "status=%d (%s) message was:\n%s",
+            path, status, strerror(status), buffer->b_start);
+
+    rc = close(fd);
+    return status;
+}
+
+static int rotate_log_files(char    * cur_filename,
+                            bool_t    compression)
+{
+  int             i , rc = 0;
+  int             max_index;
+  char            o_filename[PATH_MAX];
+  char            n_filename[PATH_MAX];
+  char          * tmp = NULL;
+  int             len = 0;
+
+  if (!cur_filename)
+    {
+      fprintf(stderr, "rotate_log_files: No current file specified!\n");
+      return -1;
+    }
+  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1;
+  if (!max_index)
+    return rc;
+  len = strlen(cur_logfile_name);
+  tmp = &cur_logfile_name[len-3];
+
+  for (i=cur_logfile_indx; i>= 0; i--)
+    {
+      if (i == max_index)
+        continue;
+
+      snprintf(o_filename, PATH_MAX, "%s.%02d.log", cur_filename, i);
+      snprintf(n_filename, PATH_MAX, "%s.%02d.log", cur_filename, i+1);
+      if (compression)
+        {
+          strcat(o_filename, ".gz");
+          strcat(n_filename, ".gz");
+        }
+      rename(o_filename, n_filename);
+    }
+
+  snprintf(n_filename, PATH_MAX, "%s.00.log", cur_filename);
+  strncpy(o_filename, cur_filename, PATH_MAX);
+  if (compression)
+    {
+      strcat(n_filename, ".gz");
+      strcat(o_filename, ".gz");
+    }
+  rename(o_filename, n_filename);
+
+  if (compression)
+    {
+       if (strcmp(tmp, ".gz") != 0)
+         strcat(cur_logfile_name, ".gz");
+    }
+
+  if (cur_logfile_indx < (tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1)) {
+    cur_logfile_indx++;
+  }
+  cur_logfile_size = 0;
+
+  return rc;
+}
+
+
 static int log_to_file(struct log_facility   * facility,
                        log_levels_t            level,
                        struct display_buffer * buffer,
                        char                  * compstr,
                        char                  * message)
 {
-  int    fd, my_status, len, rc = 0;
+  int    len, rc = 0;
   char * path = facility->lf_private;
+  bool_t compression = FALSE;
+  int    max_size;
 
   len = display_buffer_len(buffer);
 
@@ -1439,47 +1607,38 @@ static int log_to_file(struct log_facility   * facility,
   buffer->b_start[len]   = '\n';
   buffer->b_start[len+1] = '\0';
 
-  fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, log_mask);
+  if(tab_log_flag[LF_LOGFILE_COMPRESS].lf_val)
+    compression = TRUE;
+  max_size = tab_log_flag[LF_LOGFILE_MAX_SIZE].lf_ext;
 
-  if(fd != -1)
-    {
-      rc = write(fd, buffer->b_start, len + 1);
+  /*
+   * If Max Files is not specified, then use the filename without extension
+   */
+  pthread_rwlock_wrlock(&logrot_rwlock);
+  if(tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext > 0) {
 
-      if(rc < (len + 1))
-        {
-          if(rc >= 0)
-            my_status = ENOSPC;
-          else
-            my_status = errno;
+    /*
+     * We've reached the limit for this logfile, rotate it.
+     */
+    if (max_size && (cur_logfile_size+len > max_size))
+        rotate_log_files(path, compression);
+  }
 
-          goto error;
-        }
-
-      if(level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level &&
-         level != NIV_NULL)
-        print_debug_info_fd(fd);
-
-      rc = close(fd);
-
-      if(rc == 0)
-        goto out;
-    }
-
-  my_status = errno;
-
-error:
-
-  fprintf(stderr, "Error: couldn't complete write to the log file %s"
-          "status=%d (%s) message was:\n%s",
-          path, my_status, strerror(my_status), buffer->b_start);
-
-out:
+  if(!compression)
+    rc = write_to_file(cur_logfile_name, level, buffer, len + 1);
+  else
+    rc = write_to_file_compressed(cur_logfile_name, level, buffer, len + 1);
+  if (rc == 0) {
+    cur_logfile_size += (len+1);
+  }
+  pthread_rwlock_unlock(&logrot_rwlock);
 
   /* Remove newline from buffer */
   buffer->b_start[len] = '\0';
 
   return rc;
 }
+
 
 static int log_to_stream(struct log_facility   * facility,
                          log_levels_t            level,
@@ -1998,7 +2157,7 @@ static int isValidLogPath(const char *pathname)
       break;
 
     default:
-	break ;
+       break ;
     }
 
   return 1;
@@ -2039,10 +2198,10 @@ void SetLogFile(char * name)
     gsh_free(facility->lf_private);
 
   facility->lf_private = tmp;
-
+  strcpy(cur_logfile_name, tmp);
   pthread_rwlock_unlock(&log_rwlock);
 
-  LogEvent(COMPONENT_LOG, "Changing log file to %s", name);
+  LogFullDebug(COMPONENT_LOG, "Changing log file to %s, size: %d, indx: %d", name, cur_logfile_size, cur_logfile_indx);
 }
 
 /*
@@ -2353,13 +2512,143 @@ struct gsh_dbus_interface log_interface = {
 
 #endif /* USE_DBUS */
 
+static int StrToSize(const char * str_sz)
+{
+  int         nsize;
+  int         len;
+  char        tstr[PATH_MAX];
+  int         ft = 1;
+  char        c;
+  char        d;
+
+  len = strlen(str_sz);
+  if ((len < 1) || ((len + 1) > PATH_MAX))
+    {
+      LogWarn(COMPONENT_CONFIG, "Invalid LogFile Size (%d)\n", len+1);
+      return -1;
+    }
+
+  strcpy(tstr, str_sz);
+  c = str_sz[len-1];
+  d = str_sz[len-2];
+
+  if (isalpha(d)) {
+    if (c == 'B' || c == 'b') {
+      c = d;
+      len--;
+    } else {
+      LogWarn(COMPONENT_CONFIG, "StrToSize failed: len = %d, str_sz: %s\n", len, str_sz);
+      return -1;
+    }
+  }
+
+  if (isalpha(c))
+    {
+      switch (c)
+        {
+        case 'B':
+        case 'b':
+          ft = 1;
+          break;
+        case 'K':
+        case 'k':
+          ft = 1024;
+          break;
+        case 'M':
+        case 'm':
+          ft = 1024*1024;
+          break;
+        case 'G':
+        case 'g':
+          ft = 1024*1024*1024;
+          break;
+        default:
+          return -1;
+        }
+      tstr[len-1] = '\0';
+    }
+  nsize = atoi(tstr);
+  nsize *= ft;
+
+  return nsize;
+}
+
+int get_logfiles_info()
+{
+
+  int          i;
+  int          rc;
+  int          max_index;
+  char         n_filename[PATH_MAX];
+  bool_t       compression;
+  struct stat  statbuf;
+  int          len;
+  char       * tmp = NULL;
+  char       * path = NULL;
+  struct log_facility * facility;
+
+  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1;
+  compression = tab_log_flag[LF_LOGFILE_COMPRESS].lf_val;
+
+  pthread_rwlock_wrlock(&log_rwlock);
+  facility = &facilities[FILELOG];
+  if (!is_facility_active(facility))
+    {
+      LogFullDebug(COMPONENT_CONFIG,
+                   "get_logfiles_info: FILE facility is not active\n");
+      pthread_rwlock_unlock(&log_rwlock);
+      return 0;
+    }
+
+  path = gsh_strdup(facility->lf_private);
+  pthread_rwlock_unlock(&log_rwlock);
+
+  pthread_rwlock_wrlock(&logrot_rwlock);
+
+  len = strlen(path);
+  tmp = &path[len-3];
+
+  if (strcmp(tmp, ".gz") == 0)
+      path[len-3] = '\0';
+
+  for (i=0; i<max_index; i++)
+    {
+      snprintf(n_filename, PATH_MAX, "%s.%02d.log", path, i);
+      if (!compression)
+        {
+          if(access(n_filename, F_OK) == 0) {
+            cur_logfile_indx++;
+          }
+        } else
+        {
+          strcat(n_filename, ".gz");
+          if(access(n_filename, F_OK) == 0) {
+            cur_logfile_indx++;
+          }
+        }
+    }
+
+  strcpy(cur_logfile_name, path);
+  if (compression)
+      strcat(cur_logfile_name, ".gz");
+
+  rc = stat(cur_logfile_name, &statbuf);
+  if (rc == -1)
+      cur_logfile_size = 0;
+  else
+    cur_logfile_size = statbuf.st_size;
+
+  pthread_rwlock_unlock(&logrot_rwlock);
+  return 0;
+}
+
 #define CONF_LABEL_LOG "LOG"
 
 /**
  *
- * read_log_config: Read the configuration ite; for the logging component.
+ * read_log_config: Read the configuration file for the logging component.
  *
- * Read the configuration ite; for the logging component.
+ * Read the configuration file for the logging component.
  *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
@@ -2381,6 +2670,7 @@ int read_log_config(config_file_t in_config)
   int date_spec = FALSE;
   int time_spec = FALSE;
   struct log_facility * facility;
+  char *logfile_name = NULL;
 
   /* Is the config tree initialized ? */
   if(in_config == NULL)
@@ -2419,6 +2709,10 @@ int read_log_config(config_file_t in_config)
                   var_index, CONF_LABEL_LOG);
           return -1;
         }
+      flag = StrToFlag(key_name);
+
+      LogFullDebug(COMPONENT_CONFIG,
+              "read_log_config: Reading %s: Value: %s\n", key_name, key_value);
 
       if(!strcasecmp(key_name, "Facility"))
         {
@@ -2431,11 +2725,47 @@ int read_log_config(config_file_t in_config)
 
       if(!strcasecmp(key_name, "LogFile"))
         {
+          LogFullDebug(COMPONENT_CONFIG, "Reading %s: key_value = %s\n", key_name, key_value);
           SetLogFile(key_value);
+          logfile_name = gsh_strdup(key_value);
           continue;
         }
 
-      flag = StrToFlag(key_name);
+      if(!strcasecmp(key_name, "LogFile_Max_Files"))
+        {
+          LogFullDebug(COMPONENT_CONFIG, "Reading %s: key_value = %s\n", key_name, key_value);
+          flag->lf_ext = atoi(key_value);
+          continue;
+        }
+
+      if(!strcasecmp(key_name, "LogFile_Max_Size"))
+        {
+          LogFullDebug(COMPONENT_CONFIG, "Reading %s: key_value = %s\n", key_name, key_value);
+          flag->lf_ext = StrToSize(key_value);
+          if (flag->lf_ext == -1)
+            {
+              LogWarn(COMPONENT_CONFIG,
+                      "Error Specifying %s: %s not a valid value\n",
+                      key_name, key_value);
+              continue;
+            }
+
+          continue;
+        }
+
+      if(!strcasecmp(key_name, "LogFile_Compress"))
+        {
+          LogFullDebug(COMPONENT_CONFIG, "Reading %s: key_value = %s\n", key_name, key_value);
+          bool_t old_val = flag->lf_val;
+          flag->lf_val = StrToBoolean(key_value);
+          if (old_val != flag->lf_val)
+            {
+              pthread_rwlock_wrlock(&logrot_rwlock);
+              rotate_log_files(logfile_name, flag->lf_val);
+              pthread_rwlock_unlock(&logrot_rwlock);
+            }
+          continue;
+        }
 
       if(!strcasecmp(key_name, "time") ||
          !strcasecmp(key_name, "date"))
@@ -2585,13 +2915,18 @@ int read_log_config(config_file_t in_config)
              "Error parsing section \"LOG\" of configuration file, \"%s\""
              " is not a valid LOG configuration variable",
              key_name);
-   }
+    }
+
+  LogFullDebug(COMPONENT_CONFIG,
+             "Completed parsing section \"LOG\" of configuration file!");
 
   if(date_spec && !time_spec && tab_log_flag[LF_DATE].lf_ext != TD_NONE)
     tab_log_flag[LF_TIME].lf_ext = tab_log_flag[LF_DATE].lf_ext;
 
   if(time_spec && !date_spec && tab_log_flag[LF_TIME].lf_ext != TD_NONE)
     tab_log_flag[LF_DATE].lf_ext = tab_log_flag[LF_TIME].lf_ext;
+
+  get_logfiles_info();
 
   /* Now that the LOG config has been processed, rebuild const_log_str. */
   set_const_log_str();
