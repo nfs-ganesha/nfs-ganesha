@@ -28,12 +28,6 @@ SET(MainServices_STAT_SRCS
    ../Protocols/client_mgr.c
 )
 
-if(USE_DBUS)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    ../Protocols/DBUS/dbus_server.c)
-endif(USE_DBUS)
-
 if(USE_9P)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}

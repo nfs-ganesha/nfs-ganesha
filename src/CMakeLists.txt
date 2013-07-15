@@ -595,6 +595,10 @@ add_subdirectory(IdMapper)
 add_subdirectory(MainNFSD)
 add_subdirectory(tools)
 
+if(USE_DBUS)
+  add_subdirectory(dbus)
+endif(USE_DBUS)
+
 # display configuration vars
 
 message(STATUS)
