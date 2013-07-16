@@ -40,6 +40,7 @@
 #include "nfs_rpc_callback.h"
 #include "ganesha_dbus.h"
 #include <os/memstream.h>
+#include "dbus_priv.h"
 
 /**
  *
@@ -152,7 +153,7 @@ out:
 #define INTROSPECT_TAIL \
 "</node>\n"
 
-#define PROPERTIES_INTERFACE \
+#define PROPERTIES_INTERFACE_HEAD \
 "  <interface name=\"org.freedesktop.DBus.Properties\">\n" \
 "    <method name=\"Get\">\n" \
 "      <arg name=\"interface\" direction=\"in\" type=\"s\"/>\n" \
@@ -167,7 +168,16 @@ out:
 "    <method name=\"GetAll\">\n" \
 "      <arg name=\"interface\" direction=\"in\" type=\"s\"/>\n" \
 "      <arg name=\"props\" direction=\"out\" type=\"a{sv}\"/>\n" \
-"    </method>\n" \
+"    </method>\n"
+
+#define PROPERTIES_INTERFACE_SIGNAL \
+"    <signal name=\"PropertiesChanged\">\n" \
+"      <arg name=\"interface\" type=\"s\"/>\n" \
+"      <arg name=\"changed_properties\" type=\"a{sv}\"/>\n" \
+"      <arg name=\"invalidated_properties\" type=\"as\"/>\n" \
+"    </signal>\n"
+
+#define PROPERTIES_INTERFACE_TAIL \
 "  </interface>\n"
 
 #define INTROSPECT_INTERFACE_HEAD \
@@ -197,8 +207,13 @@ out:
 #define INTROSPECT_SIGNAL_ARG \
 "      <arg name=\"%s\" type=\"%s\"/>\n"
 
+static const char *prop_access[] = {
+	[DBUS_PROP_READ] = "read",
+	[DBUS_PROP_WRITE] = "write",
+	[DBUS_PROP_READWRITE] = "readwrite"
+};
+
 static bool dbus_reply_introspection(
-	DBusConnection *conn,
 	DBusMessage *reply,
 	struct gsh_dbus_interface **interfaces)
 {
@@ -208,6 +223,7 @@ static bool dbus_reply_introspection(
 	size_t xml_size = 0;
 	struct gsh_dbus_interface **iface;
 	bool have_props = false;
+	bool props_signal = false;
 	bool retval = true;
 
 	fp = open_memstream(&introspection_xml, &xml_size);
@@ -228,7 +244,7 @@ static bool dbus_reply_introspection(
 				fprintf(fp, INTROSPECT_PROPERTY,
 					(*prop)->name,
 					(*prop)->type,
-					(*prop)->access);
+					prop_access[(*prop)->access]);
 			}
 			have_props = true;
 		}
@@ -249,7 +265,8 @@ static bool dbus_reply_introspection(
 				fputs(INTROSPECT_METHOD_TAIL, fp);
 				
 			}
-			if((*iface)->signals != NULL) {
+		}
+		if((*iface)->signals != NULL) {
 			struct gsh_dbus_signal **signal;
 			struct gsh_dbus_arg *arg;
 
@@ -265,11 +282,14 @@ static bool dbus_reply_introspection(
 				
 			}
 		}
-		}
 		fputs(INTROSPECT_INTERFACE_TAIL, fp);
 	}
-	if(have_props)
-		fputs(PROPERTIES_INTERFACE, fp);
+	if(have_props) {
+		fputs(PROPERTIES_INTERFACE_HEAD, fp);
+		if(props_signal)
+			fputs(PROPERTIES_INTERFACE_SIGNAL, fp);
+		fputs(PROPERTIES_INTERFACE_TAIL, fp);
+	}
 	fputs(INTROSPECT_TAIL, fp);
 	if(ferror(fp)) {
 		LogCrit(COMPONENT_DBUS,
@@ -352,26 +372,32 @@ static DBusHandlerResult dbus_message_entrypoint(
 	const char *interface = dbus_message_get_interface(msg);
 	const char *method = dbus_message_get_member(msg);
 	struct gsh_dbus_interface **interfaces = user_data;
-	DBusMessage *reply;
+	DBusMessage *reply = NULL;
+	DBusError error;
 	DBusMessageIter args, *argsp;
 	bool retval = false;
 	static uint32_t serial = 1;
 
+	dbus_error_init(&error);
 	if (interface == NULL)
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	if(dbus_message_iter_init(msg, &args))
-		argsp = &args;
-	else
-		argsp = NULL;
 	reply = dbus_message_new_method_return(msg);
 	if((!strcmp(interface, DBUS_INTERFACE_INTROSPECTABLE)) ||
 	   (method && (!strcmp(method, "Introspect")))) {
-		retval = dbus_reply_introspection(conn, reply, interfaces);
+		retval = dbus_reply_introspection(reply, interfaces);
 	} else if(!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
-		retval = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		retval = dbus_proc_property(method,
+					    msg,
+					    reply,
+					    &error,
+					    interfaces);
 	} else {
 		struct gsh_dbus_interface **iface;
 
+		if(dbus_message_iter_init(msg, &args))
+			argsp = &args;
+		else
+			argsp = NULL;
 		for(iface = interfaces; *iface; iface++) {
 			if(strcmp(interface, (*iface)->name) == 0) {
 				struct gsh_dbus_method **m;
@@ -395,16 +421,37 @@ static DBusHandlerResult dbus_message_entrypoint(
 	}
 done:
 	if( !retval) {
+		const char *err_name, *err_text;
+
 		LogMajor(COMPONENT_DBUS,
 			 "Method (%s) on interface (%s) failed",
 			 method,
 			 interface);
+		if(dbus_error_is_set(&error)) {
+			err_name = error.name;
+			err_text = error.message;
+		} else {
+			err_name = interface;
+			err_text = method;
+		}
+		dbus_message_unref(reply);
+		reply = dbus_message_new_error(msg, err_name, err_text);
+		retval = dbus_connection_send(conn, reply, NULL);
+		dbus_message_unref(reply);
+		dbus_error_free(&error);
+		if(retval) {
+			return DBUS_HANDLER_RESULT_HANDLED;
+		} else {
+			return DBUS_HANDLER_RESULT_NEED_MEMORY;
+		}
 	}
 	if (!dbus_connection_send(conn, reply, &serial)) {
 		LogCrit(COMPONENT_DBUS, "reply failed");
 	}
 	dbus_connection_flush(conn);
-	dbus_message_unref(reply);
+	if(reply)
+		dbus_message_unref(reply);
+	dbus_error_free(&error);
 	serial++;
 	return (retval ? DBUS_HANDLER_RESULT_HANDLED
 		: DBUS_HANDLER_RESULT_NOT_YET_HANDLED);

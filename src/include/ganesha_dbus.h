@@ -91,16 +91,35 @@
 	.direction = "in"\
 }
 
+/* Properties list helper macros
+ */
+
+#define PROPERTY_ITEM (prop_name, prop_access, prop_type)	\
+{								\
+	.name = "prop_name",					\
+	.access = prop_access,					\
+	.type = prop_type,					\
+	.get = dbus_prop_get_##prop_name,			\
+	.set = dbus_prop_set_##prop_name			\
+},
+
+
 #define END_ARG_LIST {NULL, NULL, NULL}
+
+#define END_PROPS_LIST {NULL, DBUS_PROP_READ, "", NULL, NULL}
+
+typedef enum {
+	DBUS_PROP_READ = 0,
+	DBUS_PROP_WRITE,
+	DBUS_PROP_READWRITE
+} dbus_prop_access_t;
 
 struct gsh_dbus_prop {
 	const char *name;
-	const char *access;
+	dbus_prop_access_t access;
 	const char *type;
-	bool (*get)(DBusMessageIter *args,
-		    DBusMessage *reply);
-	bool (*set)(DBusMessageIter *args,
-		    DBusMessage *reply);
+	bool (*get)(DBusMessageIter *reply);
+	bool (*set)(DBusMessageIter *args);
 };
 
 struct gsh_dbus_arg {
@@ -125,6 +144,7 @@ struct gsh_dbus_signal {
 
 struct gsh_dbus_interface {
 	const char *name;
+	bool signal_props;
 	struct gsh_dbus_prop **props;
 	struct gsh_dbus_method **methods;
 	struct gsh_dbus_signal **signals;
