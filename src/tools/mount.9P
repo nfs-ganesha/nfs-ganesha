@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash 
 #
 # Usage:
 # /sbin/mount.9P spec dir [-sfnv] [-o options]
@@ -72,28 +72,39 @@ trans="tcp"
 IN_OPTIONS=`echo $4 | tr "," "\n"`
 
 for OPT in $IN_OPTIONS; do
+  opt_ok=0 
   for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" ; do
     if echo $OPT | grep -q $OPT_TYPE ; then
       eval $OPT
+      opt_ok=1
     fi
   done
 
   if echo $OPT | egrep -q "^ro$" ; then
     misc="ro" 
+    opt_ok=1
   fi
 
   if echo $OPT  | egrep -q "^rw$" ; then
     misc="rw" 
+    opt_ok=1
   fi
 
   if echo $OPT | egrep -q "^remount$" ; then
     misc="remount,$misc"
+    opt_ok=1
   fi
 
   if echo $OPT | egrep -q "^posixacl$" ; then
     misc="$misc,posixacl"
+    opt_ok=1
   fi
-
+  
+  if [ $opt_ok -eq 0 ] ; then 
+      echo "Invalid option $OPT"
+      exit 1 
+  fi
+      
 done
 
 # the "-i" is mandatory to avoid looping on this helper
