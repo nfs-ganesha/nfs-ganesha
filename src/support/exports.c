@@ -2691,7 +2691,7 @@ bool export_client_match(sockaddr_t *hostaddr,
 {
   struct glist_head * glist;
   in_addr_t addr = get_in_addr(hostaddr);
-  unsigned int i;
+  unsigned int i = 0;
   int rc;
   int ipvalid = -1; /* -1 need to print, 0 - invalid, 1 - ok */
   char hostname[MAXHOSTNAMELEN + 1];
