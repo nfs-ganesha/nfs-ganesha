@@ -62,7 +62,6 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
-#include <sys/capability.h> /* For capget/capset */
 #include "nlm_util.h"
 #include "nsm.h"
 #include "sal_functions.h"
@@ -71,6 +70,9 @@
 #include "delayed_exec.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
+#ifdef LINUX
+#include <sys/capability.h> /* For capget/capset */
+#endif
 
 extern struct fridgethr *req_fridge;
 
@@ -1144,8 +1146,10 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;
 
+#ifdef LINUX
   struct __user_cap_data_struct capdata ;
   struct __user_cap_header_struct caphdr ;
+#endif
 
   if(p_start_info->dump_default_config == true)
     {

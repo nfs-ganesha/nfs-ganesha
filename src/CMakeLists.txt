@@ -471,17 +471,19 @@ find_library(LIBRT rt)  # extended Pthreads functions
 
 # We need to have libcap installed
 #find_library(LIBCAP cap)  # Management of Capablilities
-check_library_exists(
-	cap
-	capset
-	""
-	HAVE_LIBCAP 
-	)
-if( HAVE_LIBCAP )
-  message( STATUS "Found libcap" ) 
-else( HAVE_LIBCAP )
-  message( FATAL_ERROR "You need to install libcap to compile Ganesha" )
-endif( HAVE_LIBCAP )
+if (LINUX)
+    check_library_exists(
+	    cap
+	    capset
+	    ""
+	    HAVE_LIBCAP
+	    )
+    if( HAVE_LIBCAP )
+        message( STATUS "Found libcap" )
+    else( HAVE_LIBCAP )
+        message( FATAL_ERROR "You need to install libcap to compile Ganesha" )
+    endif( HAVE_LIBCAP )
+endif (LINUX)
 
 # Roll up required libraries
 
