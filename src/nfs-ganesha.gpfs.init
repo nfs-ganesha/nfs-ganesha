@@ -26,7 +26,7 @@
 
 # Source networking configuration.
 [ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
-
+/etc/init.d/nfs-ganesha-gpfs
 # Check for and source configuration file otherwise set defaults
 [ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
 
