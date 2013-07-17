@@ -449,7 +449,9 @@ int nfs4_Compound(nfs_arg_t *arg,
   nfs_argop4 *const argarray =
        arg->arg_compound4.argarray.argarray_val;
   nfs_resop4 *resarray;
+#ifdef USE_DBUS_STATS
   nsecs_elapsed_t op_start_time;
+#endif
   struct timespec ts;
   int perm_flags;
 
@@ -560,7 +562,9 @@ int nfs4_Compound(nfs_arg_t *arg,
       data.oppos = i;  /* Useful to check if OP_SEQUENCE is used as the first operation */
 
       now(&ts); /* time each op */
+#ifdef USE_DBUS_STATS
       op_start_time = timespec_diff(&ServerBootTime, &ts);
+#endif
       opcode = argarray[i].argop;
       if(compound4_minor == 0) {
 	      if(opcode > NFS4_OP_RELEASE_LOCKOWNER) {
