@@ -946,6 +946,19 @@ nfs_rpc_execute(request_data_t    * preq,
         }
 
       /* Check transport type */
+      /* Don't allow NFS v4 over UDP. The rq_prog check is required here as NFS_V4 maps to NLM v4 too. */
+      if(xprt_type == XPRT_UDP && req->rq_vers == NFS_V4 &&
+          req->rq_prog == nfs_param.core_param.program[P_NFS])
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "NFS Version 4 over udp not allowed on Export_Id %d %s for client %s",
+                  pexport->id, pexport->fullpath,
+                  pworker_data->hostaddr_str);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
       if(((xprt_type == XPRT_UDP) &&
           ((pexport_perms->options & EXPORT_OPTION_UDP) == 0)) ||
          ((xprt_type == XPRT_TCP) &&

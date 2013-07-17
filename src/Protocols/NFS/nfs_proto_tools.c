@@ -4269,8 +4269,7 @@ int nfs4_MakeCred(compound_data_t * data)
     }
 
   /* Check transport type */
-  if(((xprt_type == XPRT_UDP) &&
-      ((data->export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+  if((xprt_type == XPRT_UDP) ||
      ((xprt_type == XPRT_TCP) &&
       ((data->export_perms.options & EXPORT_OPTION_TCP) == 0)))
     {

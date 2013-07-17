@@ -85,6 +85,7 @@
 int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
+  xprt_type_t xprt_type = svc_get_xprt_type(data->reqp->rq_xprt);
 
   int                rc;
 
@@ -122,6 +123,14 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
    * related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
+      /* Check transport type */
+      if(xprt_type == XPRT_UDP)
+        {
+          LogInfo(COMPONENT_NFS_V4,
+                  "NFS4 over udp is not allowed");
+          return NFS4ERR_ACCESS;
+        }
+
         /* Fill in compound data */
         res_PUTFH4.status = set_compound_data_for_pseudo(data);
         if(res_PUTFH4.status != NFS4_OK)
