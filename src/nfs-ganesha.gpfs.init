@@ -244,6 +244,13 @@ start() {
 			sm-notify -f
 		fi
 
+                # Call CTDB's smnotify
+                [ -n "${STATD_HOSTNAME}" ] \
+                        && STATD_CALLOUT="`echo $STATD_HOSTNAME | xargs -n 3 -d " "| awk '{print $3}'`"
+                if [ -n "$STATD_CALLOUT" ]; then
+                        $STATD_CALLOUT notify
+                fi
+
 		# Sleeping here gives Ganesha an adequate amount of time to
 		# initialize the server and fail if anything goes wrong.
 		# Without this sleep and the server will be in the midst of
