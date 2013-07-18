@@ -277,7 +277,7 @@ bool remove_gsh_export(int export_id)
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
 	struct gsh_export *exp = NULL;
-	exportlist_t *export;
+	exportlist_t *export = NULL;
 	struct export_stats *export_st;
 	struct gsh_export v;
         void **cache_slot;

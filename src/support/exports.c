@@ -2691,7 +2691,7 @@ bool export_client_match(sockaddr_t *hostaddr,
 {
   struct glist_head * glist;
   in_addr_t addr = get_in_addr(hostaddr);
-  unsigned int i;
+  unsigned int i = 0;
   int rc;
   int ipvalid = -1; /* -1 need to print, 0 - invalid, 1 - ok */
   char hostname[MAXHOSTNAMELEN + 1];
@@ -3153,12 +3153,13 @@ sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4)
    * |---------------------------------------------------------------|   */
   if((ipv6->ss_family == AF_INET6) &&
      !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
-     (psockaddr_in6->sin6_addr.s6_addr16[5] == 0xFFFF))
+     (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF) &&
+     (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF))
     {
       memset(ipv4, 0, sizeof(*ipv4));
 
       paddr->sin_port        = psockaddr_in6->sin6_port;
-      paddr->sin_addr.s_addr = psockaddr_in6->sin6_addr.s6_addr32[3];
+      paddr->sin_addr.s_addr = *(in_addr_t *)&psockaddr_in6->sin6_addr.s6_addr[12];
       ipv4->ss_family        = AF_INET;
 
       if(isFullDebug(COMPONENT_DISPATCH))

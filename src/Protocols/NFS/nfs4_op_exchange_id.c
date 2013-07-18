@@ -49,7 +49,7 @@ int get_raddr(SVCXPRT *xprt)
 
     switch(ss->ss_family) {
     case AF_INET6:
-        addr = ntohl(((struct sockaddr_in6 *) ss)->sin6_addr.s6_addr32[3]);
+        addr = ntohl(*(uint32_t *)&(((struct sockaddr_in6 *) ss)->sin6_addr.s6_addr[12]));
 
         break;
     case AF_INET:
