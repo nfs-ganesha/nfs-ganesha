@@ -630,6 +630,10 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				 "lustre_name_to_handle_at: root_path: %s, root_fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
+
+                        if( errno == ENOTTY )
+                          LogFatal(COMPONENT_FSAL, "Critical error in FSAL, exiting... Check if %s is mounted", mntdir ) ;
+
 			retval = errno;
 			goto errout;
 		}
