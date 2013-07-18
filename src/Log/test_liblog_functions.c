@@ -118,7 +118,7 @@ void TestEvent(int expect, char *buff, log_components_t component, char *string)
 void TestDebug(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: DEBUG: %s", LogComponents[component].comp_str, string);
+  sprintf(compare, "%s: DBG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogDebug(component, "%s", string);
   
@@ -137,7 +137,7 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
 void TestFullDebug(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: FULLDEBUG: %s", LogComponents[component].comp_str, string);
+  sprintf(compare, "%s: F_DBG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogFullDebug(component, "%s", string);
   if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))

@@ -56,7 +56,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   int                        retry = 0;
   struct gsh_buffdesc        key;
 
-  snprintf(thr_name, sizeof(thr_name), "gpfs_fsal_up_%d.%d",
+  snprintf(thr_name, sizeof(thr_name), "gpfs_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
   SetNameFunction(thr_name);
 

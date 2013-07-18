@@ -288,7 +288,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
 		.free_function = nfs4_Compound_Free,
 		.xdr_decode_func = (xdrproc_t) xdr_COMPOUND4args,
 		.xdr_encode_func = (xdrproc_t) xdr_COMPOUND4res,
-		.funcname = "nfs4_Compound",
+		.funcname = "nfs4_Comp",
 		.dispatch_behaviour = CAN_BE_DUP
 	}
 };
@@ -1377,7 +1377,7 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
   char thr_name[32];
 
   wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
-  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%u", wd->worker_index);
+  snprintf(thr_name, sizeof(thr_name), "Worker #%u", wd->worker_index);
 
   /* Initalize thr waitq */
   init_wait_q_entry(&wd->wqe);
@@ -1514,7 +1514,7 @@ int worker_init(void)
   frp.wake_threads_arg = &nfs_req_st;
 
   rc = fridgethr_init(&worker_fridge,
-		      "Workers",
+		      "Wrk",
 		      &frp);
   if (rc != 0)
     {
