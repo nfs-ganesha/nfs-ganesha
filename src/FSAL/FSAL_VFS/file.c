@@ -61,7 +61,9 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
 	fsal2posix_openflags(openflags, &posix_flags);
-	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x", openflags, posix_flags);
+	LogFullDebug(COMPONENT_FSAL,
+		     "open_by_handle_at flags from %x to %x",
+		     openflags, posix_flags);
 	fd = vfs_fsal_open(myself, posix_flags, &fsal_error);
 	if(fd < 0) {
 		retval =  -fd;
@@ -143,6 +145,7 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd >= 0 &&
 	       myself->u.file.openflags != FSAL_O_CLOSED);
 
+	fsal_set_credentials(opctx->creds);
         nb_written = pwrite(myself->u.file.fd,
                             buffer,
                             buffer_size,
@@ -157,6 +160,7 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
         *fsal_stable = false;
 
 out:
+	fsal_restore_ganesha_credentials();
 	return fsalstat(fsal_error, retval);	
 }
 

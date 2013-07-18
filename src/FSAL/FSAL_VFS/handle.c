@@ -308,8 +308,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	uid_t user;
-	gid_t group;
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
@@ -322,44 +320,56 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
-	if(dir_fd < 0) 
+	if(dir_fd < 0) {
 		return fsalstat(fsal_error, -dir_fd);
-
+	}
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
 	if(retval < 0) {
 		retval = errno;
 		goto direrr;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
-
-	/* create it with no access because we are root when we do this
-	 * we use openat because there is no creatat...
+	/* Become the user because we are creating an object in this dir.
 	 */
-	fd = openat(dir_fd, name, O_CREAT|O_WRONLY|O_TRUNC|O_EXCL, 0000);
+	fsal_set_credentials(opctx->creds);
+	fd = openat(dir_fd, name, O_CREAT|O_WRONLY|O_TRUNC|O_EXCL, unix_mode);
 	if(fd < 0) {
 		retval = errno;
+		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
-
-	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
-	if(!retval) {
-                close(dir_fd); /* done with parent */
-                close(fd);  /* don't need it anymore. */
-                *handle = &hdl->obj_handle;
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        }
-
-	unlinkat(dir_fd, name, 0);  /* remove the evidence on errors */
-
-direrr:
-	fsal_error = posix2fsal_error(retval);
+	fsal_restore_ganesha_credentials();
+	retval = vfs_fsal_name_to_handle(myself->obj_handle.export,
+                                         dir_fd, name, fh);
+	if(retval < 0) {
+		retval = errno;
+		goto fileerr;
+	}
+	retval = fstat(fd, &stat);
+	if(retval < 0) {
+		retval = errno;
+		goto fileerr;
+	}
+	close(fd);
+	/* allocate an obj_handle and fill it up */
+	hdl = alloc_handle(dir_fd, fh, &stat, myself->handle,
+                            name, myself->obj_handle.export);
+	if(hdl == NULL) {
+	        retval = ENOMEM;
+		goto fileerr;
+	}
+	*handle = &hdl->obj_handle;
 	close(dir_fd);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+fileerr:
+	close(fd);
+	unlinkat(dir_fd, name, 0);
+direrr:
+	close(dir_fd);
+	fsal_error = posix2fsal_error(retval);
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -375,8 +385,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	uid_t user;
-	gid_t group;
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
@@ -389,8 +397,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
@@ -402,27 +408,42 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
-
-	/* create it with no access because we are root when we do this */
-	retval = mkdirat(dir_fd, name, 0000);
+	/* Become the user because we are creating an object in this dir.
+	 */
+	fsal_set_credentials(opctx->creds);
+	retval = mkdirat(dir_fd, name, unix_mode);
 	if(retval < 0) {
 		retval = errno;
+		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
-	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
-	if(!retval) {
-                close(dir_fd);
-                *handle = &hdl->obj_handle;
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        }
-	
-	unlinkat(dir_fd, name, AT_REMOVEDIR);  /* remove the evidence on errors */
+	fsal_restore_ganesha_credentials();
+	retval = vfs_fsal_name_to_handle(myself->obj_handle.export,
+                                         dir_fd, name, fh);
+	if(retval < 0) {
+		retval = errno;
+		goto fileerr;
+	}
+	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
+	if(retval < 0) {
+		retval = errno;
+		goto fileerr;
+	}
 
+	/* allocate an obj_handle and fill it up */
+	hdl = alloc_handle(dir_fd, fh, &stat, myself->handle,
+                            name, myself->obj_handle.export);
+	if(hdl == NULL) {
+	        retval = ENOMEM;
+		goto fileerr;
+	}
+	*handle = &hdl->obj_handle;
+
+fileerr:
+	unlinkat(dir_fd, name, 0);
 direrr:
-	fsal_error = posix2fsal_error(retval);
 	close(dir_fd);
+	fsal_error = posix2fsal_error(retval);
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -544,8 +565,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	uid_t user;
-	gid_t group;
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
@@ -558,8 +577,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	user = attrib->owner;
-	group = attrib->group;
 	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
 	if(dir_fd < 0) {
 		return fsalstat(fsal_error, -dir_fd);
@@ -570,51 +587,43 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	if(stat.st_mode & S_ISGID)
-		group = -1; /*setgid bit on dir propagates dir group owner */
-	
-	/* create it with no access because we are root when we do this */
+	/* Become the user because we are creating an object in this dir.
+	 */
+	fsal_set_credentials(opctx->creds);
 	retval = symlinkat(link_path, dir_fd, name);
 	if(retval < 0) {
+		retval = errno;
+		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
-	/* do this all by hand because we can't use fchmodat on symlinks...
-	 */
-	retval = fchownat(dir_fd, name, user, group, AT_SYMLINK_NOFOLLOW);
-	if(retval < 0) {
-		goto linkerr;
-	}
-
+	fsal_restore_ganesha_credentials();
 	retval = vfs_fsal_name_to_handle(dir_hdl->export, dir_fd, name, fh);
 	if(retval < 0) {
+		retval = errno;
 		goto linkerr;
 	}
 	/* now get attributes info, being careful to get the link, not the target */
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
+		retval = errno;
 		goto linkerr;
 	}
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(dir_fd, fh, &stat, NULL, name, dir_hdl->export);
-	close(dir_fd);
 	if(hdl == NULL) {
 		retval = ENOMEM;
-		goto errout;
+		goto linkerr;
 	}
+	fsal_restore_ganesha_credentials();
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 linkerr:
-	retval = errno;
 	unlinkat(dir_fd, name, 0);
-	close(dir_fd);
-	goto errout;
 
 direrr:
-	retval = errno;
 	close(dir_fd);
-errout:
 	if(retval == ENOENT)
 		fsal_error = ERR_FSAL_STALE;
 	else
@@ -876,11 +885,15 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 		close(oldfd);
 		goto out;
 	}
+	/* Become the user because we are creating/removing objects in these dirs.
+	 */
+	fsal_set_credentials(opctx->creds);
 	retval = renameat(oldfd, old_name, newfd, new_name);
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
+	fsal_restore_ganesha_credentials();
 	close(oldfd);
 	close(newfd);
 out:
@@ -963,13 +976,6 @@ vfos_open:
         }
 	return fd;
 }
-
-/* FIXME: attributes are now merged into fsal_obj_handle.  This
- * spreads everywhere these methods are used.  eventually deprecate
- * everywhere except where we explicitly want to to refresh them.
- * NOTE: this is done under protection of the attributes rwlock in the
- * cache entry.
- */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
                               const struct req_op_context *opctx)
