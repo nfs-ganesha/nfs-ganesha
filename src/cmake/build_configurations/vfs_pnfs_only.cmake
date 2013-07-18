@@ -1,7 +1,6 @@
 # Only build VFS fsal and other pnfs useful options
 
 set(USE_FSAL_PROXY  OFF)
-set(USE_FSAL_POSIX  OFF)
 set(USE_FSAL_CEPH OFF)
 set(USE_FSAL_GPFS OFF)
 set(USE_FSAL_ZFS OFF)

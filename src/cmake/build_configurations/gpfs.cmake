@@ -11,7 +11,6 @@ set(USE_DBUS ON)
 set(USE_DBUS_STATS ON)
 
 # Disable FSAL's we don't use
-set(USE_FSAL_POSIX  OFF)
 set(USE_FSAL_CEPH OFF)
 set(USE_FSAL_ZFS OFF)
 set(USE_FSAL_LUSTRE OFF)

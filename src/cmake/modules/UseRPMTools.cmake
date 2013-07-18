@@ -139,14 +139,6 @@ ELSE(  USE_FSAL_LUSTRE )
 " ) 
 ENDIF( USE_FSAL_LUSTRE )
 
-IF( USE_FSAL_POSIX )
-   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_POSIX ON)
-" ) 
-ELSE(  USE_FSAL_POSIX )
-   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_POSIX OFF)
-" ) 
-ENDIF( USE_FSAL_POSIX )
-
 IF( USE_FSAL_PROXY )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_PROXY ON)
 " ) 
@@ -251,19 +243,6 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support LUSTRE
 ")
 endif(USE_FSAL_LUSTRE)
-
-if(USE_FSAL_POSIX)
-FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
-%package posix
-Summary: The NFS-GANESHA's LUSTRE FSAL
-Group: Applications/System
-BuildRequires: libattr-devel
-
-%description posix
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support POSIX
-")
-endif(USE_FSAL_POSIX)
 
 if(USE_FSAL_SHOOK)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
@@ -491,16 +470,6 @@ if(USE_FSAL_LUSTRE)
 
 " )
 endif(USE_FSAL_LUSTRE)
-
-if(USE_FSAL_POSIX)
-        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
-"
-%files posix
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalposix*
-
-" )
-endif(USE_FSAL_POSIX)
 
 if(USE_FSAL_SHOOK)
         FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  

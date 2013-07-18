@@ -112,7 +112,6 @@ endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 # during the build
 option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
 option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
-option(USE_FSAL_POSIX "build POSIX FSAL shared library" ON)
 option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
@@ -569,10 +568,6 @@ add_subdirectory(Protocols)
 add_subdirectory(support)
 add_subdirectory(os)
 
-if(USE_FSAL_POSIX)
-  add_subdirectory(NodeDB)
-endif(USE_FSAL_POSIX)
-
 add_subdirectory(FSAL)
 add_subdirectory(IdMapper)
 
@@ -591,7 +586,6 @@ message(STATUS "PLATFORM = ${PLATFORM}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
-message(STATUS "USE_FSAL_POSIX = ${USE_FSAL_POSIX}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_FUSE = ${USE_FSAL_FUSE}")
@@ -641,11 +635,6 @@ set(USE_FSAL_VFS ${USE_FSAL_VFS}
 set(USE_FSAL_PROXY ${USE_FSAL_PROXY}
   CACHE BOOL
    "build PROXY FSAL shared library"
-   FORCE)
-
-set(USE_FSAL_POSIX ${USE_FSAL_POSIX}
-  CACHE BOOL
-   "build POSIX FSAL shared library"
    FORCE)
 
 set(USE_FSAL_CEPH ${USE_FSAL_CEPH}

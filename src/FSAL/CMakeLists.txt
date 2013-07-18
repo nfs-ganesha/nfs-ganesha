@@ -9,10 +9,6 @@ if(USE_FSAL_HPSS)
   add_subdirectory(FSAL_HPSS)
 endif(USE_FSAL_HPSS)
 
-if(USE_FSAL_POSIX)
-  add_subdirectory(FSAL_POSIX)
-endif(USE_FSAL_POSIX)
-
 if(USE_FSAL_PROXY)
   add_subdirectory(FSAL_PROXY)
 endif(USE_FSAL_PROXY)
