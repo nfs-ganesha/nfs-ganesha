@@ -52,6 +52,13 @@ static int reap_hash_table(hash_table_t * ht_reap)
   nfs_client_record_t * precord;
   int                   count = 0;
   struct req_op_context req_ctx;
+  struct user_cred creds;
+
+  /* We need a real context.  Make all reaping done
+   * by root,root
+   */
+  memset(&creds, 0, sizeof(creds));
+  req_ctx.creds = &creds;
 
   /* For each bucket of the requested hashtable */
   for(i = 0; i < ht_reap->parameter.index_size; i++)
