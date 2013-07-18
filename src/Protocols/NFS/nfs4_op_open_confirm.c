@@ -133,6 +133,7 @@ check_seqid:
   if(popen_owner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
     {
       V(popen_owner->so_mutex);
+      dec_state_owner_ref(popen_owner);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
       return res_OPEN_CONFIRM4.status;
     }
