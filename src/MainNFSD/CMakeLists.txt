@@ -94,25 +94,6 @@ set(fsal_CORE_SRCS
 
 ########### next target ###############
 
-if(USE_FSAL_FUSE)
-  SET(ganeshaNFS_LIB_SRCS
-    fuse_binding.c
-    ${MainServices_STAT_SRCS}
-    )
-
-  add_library(ganeshaNFS SHARED
-    ${ganeshaNFS_LIB_SRCS}
-    ${fsal_CORE_SRCS}
-    )
-
-  target_link_libraries(ganeshaNFS ${CMAKE_THREAD_LIBS_INIT})
-
-  set_target_properties(ganeshaNFS PROPERTIES VERSION 4.2.0 SOVERSION 4)
-  install(TARGETS ganeshaNFS COMPONENT daemon DESTINATION lib)
-endif(USE_FSAL_FUSE)
-
-########### next target ###############
-
 SET(ganesha.nfsd_SRCS
    nfs_main.c
 )

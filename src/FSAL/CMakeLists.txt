@@ -17,10 +17,6 @@ if(USE_FSAL_CEPH)
   add_subdirectory(FSAL_CEPH)
 endif(USE_FSAL_CEPH)
 
-if(USE_FSAL_FUSE)
-  add_subdirectory(FSAL_FUSE)
-endif(USE_FSAL_FUSE)
-
 if(USE_FSAL_LUSTRE)
   add_subdirectory(FSAL_LUSTRE)
 endif(USE_FSAL_LUSTRE)

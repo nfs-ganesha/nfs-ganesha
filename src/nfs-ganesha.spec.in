@@ -201,29 +201,6 @@ This requires the use of FSAL compiled as shared objects. FSALs are loaded
 dynamically at runtime using the dlopen() function.
 %endif
 
-%if %{?_with_fuse:1}%{!?_with_fuse:0}
-%package fuselike
-Summary: The ganeshaNFS library for FUSE-like bindings
-Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
-
-%description fuselike
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems and
-name-spaces. This package contains the components for FUSE-like bindings.
-
-%package fuselike-devel
-Summary: The NFS-GANESHA development files for FUSE-like bindings
-Group: Applications/System
-Requires: pkgconfig
-Requires: %{name}-fuselike = %{version}-%{release}
-
-%description fuselike-devel
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems and
-name-spaces. This package contains the development headers for FUSE-like
-%endif
-
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %package hpss
 Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS

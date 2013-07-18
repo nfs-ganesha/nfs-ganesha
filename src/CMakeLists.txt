@@ -12,7 +12,7 @@ set(${PROJECT_NAME}_MAJOR_VERSION 2)
 set(${PROJECT_NAME}_MINOR_VERSION 0)
 set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
-  "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
+  "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial)"
 )
 
 # find out which platform we are building on
@@ -120,7 +120,6 @@ option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
-option(USE_FSAL_FUSE "build FUSE FSAL" OFF)
 
 # SHOOK is a variant of Lustre FSAL
 option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
@@ -549,7 +548,6 @@ Please run the following command to do that and use cmake again:
     git submodule update --init" )
 ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
-add_subdirectory(include)
 add_subdirectory(Log)
 add_subdirectory(Common)
 add_subdirectory(ConfigParsing)
@@ -574,10 +572,6 @@ add_subdirectory(IdMapper)
 add_subdirectory(MainNFSD)
 add_subdirectory(tools)
 
-if(USE_FSAL_FUSE)
-  add_subdirectory(example-fuse)
-endif(USE_FSAL_FUSE)
-
 # display configuration vars
 
 message(STATUS)
@@ -588,7 +582,6 @@ message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
-message(STATUS "USE_FSAL_FUSE = ${USE_FSAL_FUSE}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
@@ -645,11 +638,6 @@ set(USE_FSAL_CEPH ${USE_FSAL_CEPH}
 set(USE_HPSS_FSAL ${USE_HPSS_FSAL}
   CACHE BOOL
    "build HPSS FSAL"
-   FORCE)
-
-set(USE_FSAL_FUSE ${USE_FSAL_FUSE}
-  CACHE BOOL
-   "build FUSE FSAL"
    FORCE)
 
 set(USE_FSAL_XFS ${USE_FSAL_XFS}
@@ -749,43 +737,6 @@ configure_file(
   "${PROJECT_BINARY_DIR}/include/config.h"
 )
 
-# The fuse library needs a .pc file
-if(USE_FSAL_FUSE)
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(LIB_SUFFIX
-      "64"
-      CACHE STRING "Architecture specific library"
-      )
-  else(LINUX AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
-    set(LIB_SUFFIX
-      ""
-      CACHE STRING "Architecture specific library"
-      )
-  endif(LINUX AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
-
-  set(LIB_DESTINATION
-    "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/"
-    CACHE
-    STRING "Library directory"
-    )
-
-  set(INCLUDE_INSTALL_DIR
-    "${CMAKE_INSTALL_PREFIX}/include"
-    CACHE PATH "The subdirectory to the header prefix"
-    )
-
-  configure_file(
-    "${PROJECT_SOURCE_DIR}/libganeshaNFS.pc.cmake"
-    "${PROJECT_BINARY_DIR}/libganeshaNFS.pc"
-    @ONLY
-    )
-endif(USE_FSAL_FUSE)
-
-
-########### install files ###############
-if(USE_FSAL_FUSE)
-  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
-endif(USE_FSAL_FUSE)
 
 ########### add a "make dist"  ###############
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
