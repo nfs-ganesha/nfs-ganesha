@@ -199,7 +199,7 @@ void *delayed_thread(void *arg)
 	int old_state = 0;
 	sigset_t old_sigmask;
 
-	SetNameFunction("Delayed Executor");
+	SetNameFunction("Async");
 
 	/* Excplicitly and definitely enable cancellation */
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);

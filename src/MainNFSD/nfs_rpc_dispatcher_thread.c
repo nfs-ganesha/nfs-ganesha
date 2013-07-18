@@ -1804,7 +1804,7 @@ void *rpc_dispatcher_thread(void *arg)
 {
     int32_t chan_id = *((int32_t *) arg);
     
-    SetNameFunction("dispatch_thr");
+    SetNameFunction("disp");
 
     /* Calling dispatcher main loop */
     LogInfo(COMPONENT_DISPATCH,

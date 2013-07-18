@@ -66,9 +66,9 @@ log_level_t tabLogLevel[] =
   {NIV_WARN,       "NIV_WARN",       "WARN",       LOG_WARNING},
   {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
   {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
-  {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
-  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MID_DEBUG",  LOG_DEBUG},
-  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
+  {NIV_DEBUG,      "NIV_DEBUG",      "DBG",        LOG_DEBUG},
+  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "M_DBG",      LOG_DEBUG},
+  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "F_DBG",      LOG_DEBUG}
 };
 
 #ifndef ARRAY_SIZE
@@ -688,18 +688,16 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   if(LogComponents[component].comp_log_level
      < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
     snprintf(buff_dest, STR_LEN_TXT,
-             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld %s :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, hostname,
-             program_name, getpid(), threadname,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, threadname,
              texte);
   else
     snprintf(buff_dest, STR_LEN_TXT,
-             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s :%s\n",
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld :%s :%s :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, hostname,
-             program_name, getpid(), threadname, function,
-             texte);
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, threadname,
+             function, texte);
 }                               /* DisplayLogString_valist */
 
 static int DisplayLogSyslog_valist(log_components_t component, char * function,
@@ -1033,12 +1031,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "MEM ALLOC",
+  { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "ALLOC",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
+  { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "LEAKS",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1048,22 +1046,22 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO", "NFS PROTO",
+  { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO", "NFS3",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4", "NFS V4",
+  { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4", "NFS4",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO", "NFS V4 PSEUDO",
+  { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO", "NFS4 PSEUDO",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE", "FILE HANDLE",
+  { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE", "FH",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1077,32 +1075,32 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH", "DISPATCH",
+  { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH", "DISP",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE", "CACHE INODE",
+  { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE", "INODE",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC", "CACHE INODE GC",
+  { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC", "INODE GC",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_CACHE_INODE_LRU,    "COMPONENT_CACHE_INODE_LRU", "CACHE INODE LRU",
+  { COMPONENT_CACHE_INODE_LRU,    "COMPONENT_CACHE_INODE_LRU", "INODE LRU",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HASH TABLE",
+  { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HT",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_HASHTABLE_CACHE,   "COMPONENT_HASHTABLE_CACHE", "HASH TABLE CACHE",
+  { COMPONENT_HASHTABLE_CACHE,   "COMPONENT_HASHTABLE_CACHE", "HT CACHE",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1143,17 +1141,17 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
 
-  { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK", "NFS V4 LOCK",
+  { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK", "NFS4 LOCK",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR", "NFS V4 XATTR",
+  { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR", "NFS4 XATTR",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL", "NFS V4 REFERRAL",
+  { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL", "NFS4 REFERRAL",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1218,7 +1216,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_NFS_V4_ACL,        "COMPONENT_NFS_V4_ACL", "NFS V4 ACL",
+  { COMPONENT_NFS_V4_ACL,        "COMPONENT_NFS_V4_ACL", "NFS4 ACL",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1233,7 +1231,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_9P_DISPATCH,       "COMPONENT_9P_DISPATCH", "9P DISPATCH",
+  { COMPONENT_9P_DISPATCH,       "COMPONENT_9P_DISPATCH", "9P DISP",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1259,8 +1257,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY",
-                                  "LOG MESSAGE VERBOSITY",
+  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG VERB",
     NIV_NULL,
     SYSLOG,
     "SYSLOG"

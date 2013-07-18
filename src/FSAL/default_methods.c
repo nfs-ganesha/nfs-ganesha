@@ -569,7 +569,7 @@ static void
 global_verifier(struct gsh_buffdesc *verf_desc)
 {
         memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
-}
+};
 
 /* Default fsal export method vector.
  * copied to allocated vector at register time

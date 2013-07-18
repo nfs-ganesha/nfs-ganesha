@@ -511,7 +511,7 @@ void gsh_dbus_pkgshutdown(void)
 void *gsh_dbus_thread(void *arg)
 {
 
-    SetNameFunction("gsh_dbus_thread");
+    SetNameFunction("dbus");
 
     if (! thread_state.dbus_conn) {
         LogCrit(COMPONENT_DBUS, "DBUS not initialized, service thread "

@@ -75,7 +75,7 @@ cache_inode_access_sw(cache_entry_t *entry,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_access_sw: access_type=0X%x",
+                  "access_type=0X%x",
                   access_type);
 
      /* Set the return default to CACHE_INODE_SUCCESS */
