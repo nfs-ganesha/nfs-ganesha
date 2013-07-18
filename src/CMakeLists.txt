@@ -472,7 +472,7 @@ find_library(LIBRT rt)  # extended Pthreads functions
 #find_library(LIBCAP cap)  # Management of Capablilities
 check_library_exists(
 	cap
-	capset
+	cap_set_proc
 	""
 	HAVE_LIBCAP 
 	)
