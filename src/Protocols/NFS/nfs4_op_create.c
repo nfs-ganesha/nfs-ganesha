@@ -89,7 +89,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   nfs_fh4                newfh4;
   cache_inode_status_t   cache_status;
   int                    convrc = 0;
-  fsal_accessmode_t      mode = 0777;
+  fsal_accessmode_t      mode = 0;
   fsal_name_t            name;
 #ifdef _USE_QUOTA
   fsal_status_t          fsal_status ;
@@ -204,6 +204,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           return res_CREATE4.status;
       	}
     }
+
+  if(sattr.asked_attributes & FSAL_ATTR_MODE)
+    mode = sattr.mode;
 
   /* Create either a symbolic link or a directory */
   switch (arg_CREATE4.objtype.type)
@@ -419,6 +422,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
     {
+      fsal_attrib_mask_t nfs4_times = FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CHANGE | FSAL_ATTR_CHGTIME | FSAL_ATTR_CTIME | FSAL_ATTR_CREATION;
       /* If owner or owner_group are set, and the credential was
        * squashed, then we must squash the set owner and owner_group.
        */
@@ -426,17 +430,25 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                      &data->pworker->user_credentials,
                      &sattr);
 
-      if((cache_status = cache_inode_setattr(pentry_new,
-                                             &sattr,
-                                             data->pcontext,
-                                             FALSE,
-                                             &cache_status)) != CACHE_INODE_SUCCESS)
+       /* Skip setting attributes if all asked attributes are handled by create */
+       if((sattr.asked_attributes & (FSAL_ATTR_ACL | nfs4_times)) ||
+          ((sattr.asked_attributes & FSAL_ATTR_OWNER) && (data->pworker->user_credentials.caller_uid != sattr.owner)) ||
+          ((sattr.asked_attributes & FSAL_ATTR_GROUP) && (data->pworker->user_credentials.caller_gid != sattr.group))
+         )
+         {
+           if((cache_status = cache_inode_setattr(pentry_new,
+                                                  &sattr,
+                                                  data->pcontext,
+                                                  FALSE,
+                                                  &cache_status)) != CACHE_INODE_SUCCESS)
 
-        {
-          res_CREATE4.status = nfs4_Errno(cache_status);
-          cache_inode_put(pentry_new);
-          return res_CREATE4.status;
-        }
+             {
+               res_CREATE4.status = nfs4_Errno(cache_status);
+               cache_inode_put(pentry_new);
+               return res_CREATE4.status;
+             }
+         }
+
 
       /* Allocate a new bitmap */
       res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val =

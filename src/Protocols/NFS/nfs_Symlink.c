@@ -263,19 +263,6 @@ int nfs_Symlink(nfs_arg_t *parg,
                   goto out;
                 }
 
-              /* Mode is managed above (in cache_inode_create), there is no need 
-               * to manage it */
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_MODE)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_MODE;
-
-              /* Some clients (like Solaris 10) try to set the size of the file to 0
-               * at creation time. The FSAL create empty file, so we ignore this */
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_SIZE)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_SIZE;
-
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_SPACEUSED)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-
               /* If owner or owner_group are set, and the credential was
                * squashed, then we must squash the set owner and owner_group.
                */
@@ -284,18 +271,19 @@ int nfs_Symlink(nfs_arg_t *parg,
                              &attributes_symlink);
 
               /* Are there attributes to be set (additional to the mode) ? */
-              if(attributes_symlink.asked_attributes != 0ULL &&
-                 attributes_symlink.asked_attributes != FSAL_ATTR_MODE)
+                
+              if((attributes_symlink.asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME)) ||
+                 ((attributes_symlink.asked_attributes & FSAL_ATTR_OWNER) && (pworker->user_credentials.caller_uid != attributes_symlink.owner)) ||
+                 ((attributes_symlink.asked_attributes & FSAL_ATTR_GROUP) && (pworker->user_credentials.caller_gid != attributes_symlink.group))
+                )
                 {
-                  /* A call to cache_inode_setattr is required */
+              /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
                                          pcontext,
                                          FALSE,
                                          &cache_status) != CACHE_INODE_SUCCESS)
-                    {
                       goto out_error;
-                    }
                 }
 
               if ((pres->res_symlink3.status =

@@ -469,6 +469,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       switch (arg_OPEN4.openhow.opentype)
         {
         case OPEN4_CREATE:
+          if(sattr.asked_attributes & FSAL_ATTR_MODE)
+            mode = sattr.mode;
           /* a new file is to be created */
 #ifdef _USE_QUOTA
           /* if quota support is active, then we should check is the FSAL allows inode creation or not */
@@ -723,32 +725,39 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                        "create succeeded");
 
           cache_status = CACHE_INODE_SUCCESS;
-
-          if(AttrProvided == TRUE)      /* Set the attribute if provided */
+          /* Set the attribute if provided */
+          if(AttrProvided == TRUE)
             {
+              fsal_attrib_mask_t nfs4_times = FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CHANGE | FSAL_ATTR_CHGTIME | FSAL_ATTR_CTIME | FSAL_ATTR_CREATION;
               /* If owner or owner_group are set, and the credential was
                * squashed, then we must squash the set owner and owner_group.
                */
               squash_setattr(&data->export_perms,
                              &data->pworker->user_credentials,
                              &sattr);
-
-              if((cache_status
-                  = cache_inode_setattr(pentry_newfile,
-                                        &sattr,
-                                        data->pcontext,
-                                        (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
-                                        &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
+              if((sattr.asked_attributes & (FSAL_ATTR_ACL | nfs4_times)) ||
+                 ((sattr.asked_attributes & FSAL_ATTR_SIZE) && sattr.filesize != 0) ||
+                 ((sattr.asked_attributes & FSAL_ATTR_OWNER) && (data->pworker->user_credentials.caller_uid != sattr.owner)) ||
+                 ((sattr.asked_attributes & FSAL_ATTR_GROUP) && (data->pworker->user_credentials.caller_gid != sattr.group))
+                )
                 {
-                  LogFullDebug(COMPONENT_STATE,
-                               "setattr failed with %s",
-                               cache_inode_err_str(cache_status));
 
-                  res_OPEN4.status = nfs4_Errno(cache_status);
-                  cause2 = " cache_inode_setattr";
-                  cache_inode_put(pentry_newfile);
-                  goto out;
+                  if((cache_status = cache_inode_setattr(pentry_newfile,
+                                                         &sattr,
+                                                         data->pcontext,
+                                                         (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
+                                                         &cache_status)) !=
+                                                         CACHE_INODE_SUCCESS)
+                    {
+                      LogFullDebug(COMPONENT_STATE,
+                                   "setattr failed with %s",
+                                   cache_inode_err_str(cache_status));
+
+                      res_OPEN4.status = nfs4_Errno(cache_status);
+                      cause2 = " cache_inode_setattr";
+                      cache_inode_put(pentry_newfile);
+                      goto out;
+                    }
                 }
             }
 

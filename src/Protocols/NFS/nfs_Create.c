@@ -324,47 +324,25 @@ int nfs_Create(nfs_arg_t *parg,
                       break;
                     }
 
-                  /* Mode is managed above (in cache_inode_create), there is no need 
-                   * to manage it */
-                  if(attributes_create.asked_attributes & FSAL_ATTR_MODE)
-                    attributes_create.asked_attributes &= ~FSAL_ATTR_MODE;
-
-                  /* Some clients (like Solaris 10) try to set the size of the file to 0
-                   * at creation time. The FSAL create empty file, so we ignore this */
-                  if(attributes_create.asked_attributes & FSAL_ATTR_SIZE)
-                    attributes_create.asked_attributes &= ~FSAL_ATTR_SIZE;
-
-                  if(attributes_create.asked_attributes & FSAL_ATTR_SPACEUSED)
-                    attributes_create.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-
-                  /* If owner or owner_group are set, and the credential was
-                   * squashed, then we must squash the set owner and owner_group.
-                   */
                   squash_setattr(&pworker->export_perms,
                                  &pworker->user_credentials,
                                  &attributes_create);
 
                   /* Are there attributes to be set (additional to the mode) ? */
-                  if(attributes_create.asked_attributes != 0ULL &&
-                     attributes_create.asked_attributes != FSAL_ATTR_MODE)
-                    {
+                  if((attributes_create.asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME)) ||
+                     ((attributes_create.asked_attributes & FSAL_ATTR_SIZE) && attributes_create.filesize != 0) ||
+                     ((attributes_create.asked_attributes & FSAL_ATTR_OWNER) && (pworker->user_credentials.caller_uid != attributes_create.owner)) ||
+                     ((attributes_create.asked_attributes & FSAL_ATTR_GROUP) && (pworker->user_credentials.caller_gid != attributes_create.group))
+                    )
+                      {
                       /* A call to cache_inode_setattr is required */
-                      if(cache_inode_setattr(file_pentry,
-                                             &attributes_create,
-                                             pcontext,
-                                             FALSE,
-                                             &cache_status) != CACHE_INODE_SUCCESS)
-                        goto out_failed;
-
-                      /* Get the resulting attributes from the Cache Inode */
-                      attr_newfile.asked_attributes = FSAL_ATTRS_V3;
-                      if(cache_inode_getattr(file_pentry,
-                                             &attr_newfile,
-                                             pcontext,
-                                             &cache_status) != CACHE_INODE_SUCCESS)
-                        goto out_failed;
-
-                    }
+                        if(cache_inode_setattr(file_pentry,
+                                               &attributes_create,
+                                               pcontext,
+                                               FALSE,
+                                               &cache_status) != CACHE_INODE_SUCCESS)
+                          goto out_failed;
+                      }
 
                   switch (preq->rq_vers)
                     {
@@ -378,7 +356,7 @@ int nfs_Create(nfs_arg_t *parg,
                       else
                         {
                           if(!nfs2_FSALattr_To_Fattr(
-                                  pexport, &attr_newfile,
+                                  pexport, &attributes_create,
                                   &(pres->res_dirop2.DIROP2res_u.
                                     diropok.attributes)))
                             pres->res_dirop2.status = NFSERR_IO;
@@ -434,7 +412,7 @@ int nfs_Create(nfs_arg_t *parg,
 
                       /* Build entry attributes */
                       nfs_SetPostOpAttr(pexport,
-                                        &attr_newfile,
+                                        &attributes_create,
                                         &(pres->res_create3.CREATE3res_u.resok.
                                           obj_attributes));
 

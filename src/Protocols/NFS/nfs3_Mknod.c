@@ -89,6 +89,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
   fsal_attrib_list_t parent_attr;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t attr_parent_after;
+  fsal_attrib_list_t sattr;
   cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t nodetype;
   char *str_file_name = NULL;
@@ -107,6 +108,8 @@ int nfs3_Mknod(nfs_arg_t *parg,
 #endif
 
   memset(&create_arg, 0, sizeof(create_arg));
+  memset(&sattr, 0, sizeof(sattr));
+
   if(isDebug(COMPONENT_NFSPROTO))
     {
       char                  str[LEN_FH_STR];
@@ -177,6 +180,15 @@ int nfs3_Mknod(nfs_arg_t *parg,
       create_arg.dev_spec.minor =
           parg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
 
+      if(nfs3_Sattr_To_FSALattr(&sattr,
+                                &parg->arg_mknod3.what.mknoddata3_u.device.
+                                dev_attributes) == 0)
+        {
+          pres->res_mknod3.status = NFS3ERR_INVAL;
+          rc = NFS_REQ_OK;
+          goto out;
+        }
+
       break;
 
     case NF3FIFO:
@@ -192,6 +204,14 @@ int nfs3_Mknod(nfs_arg_t *parg,
       create_arg.dev_spec.major = 0;
       create_arg.dev_spec.minor = 0;
 
+      if(nfs3_Sattr_To_FSALattr(&sattr,
+                                &parg->arg_mknod3.what.mknoddata3_u.
+                                pipe_attributes) == 0)
+        {
+          pres->res_mknod3.status = NFS3ERR_INVAL;
+          rc = NFS_REQ_OK;
+          goto out;
+        }
       break;
 
     default:
@@ -296,6 +316,24 @@ int nfs3_Mknod(nfs_arg_t *parg,
               /* Set Post Op Fh3 structure */
               rok->obj.handle_follows = TRUE;
 
+              /*Set attributes if required */
+              squash_setattr(&pworker->export_perms,
+                     &pworker->user_credentials,
+                     &sattr);
+
+              if((sattr.asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME)) || 
+                 ((sattr.asked_attributes & FSAL_ATTR_OWNER) && (pworker->user_credentials.caller_uid != sattr.owner)) ||
+                 ((sattr.asked_attributes & FSAL_ATTR_GROUP) && (pworker->user_credentials.caller_gid != sattr.group))
+                )
+                {
+                  if(cache_inode_setattr(node_pentry,
+                                         &sattr,
+                                         pcontext,
+                                         FALSE,
+                                         &cache_status) != CACHE_INODE_SUCCESS)
+                    goto out_failed;
+                }
+
               /* Build entry attributes */
               nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
 
@@ -343,6 +381,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
         }
     }
 
+out_failed:
   /* If we are here, there was an error */
   rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status, NULL,
                            &pres->res_mknod3.status, NULL, ppre_attr,

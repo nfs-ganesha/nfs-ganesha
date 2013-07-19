@@ -94,6 +94,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
   cache_entry_t *parent_pentry = NULL;
   fsal_attrib_list_t parent_attr;
   fsal_attrib_list_t attr;
+  fsal_attrib_list_t sattr;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
@@ -271,6 +272,51 @@ int nfs_Mkdir(nfs_arg_t *parg,
                                                   &attr,
                                                   pcontext, &cache_status)) != NULL)
                 {
+                  switch (preq->rq_vers)
+                    {
+                    case NFS_V2:
+
+                      if(nfs2_Sattr_To_FSALattr(&sattr,
+                                                &parg->arg_create2.attributes) == 0)
+                        {
+                          pres->res_dirop2.status = NFSERR_IO;
+                          rc = NFS_REQ_OK;
+                          goto out;
+                          break;
+                        }
+                      break;
+
+                    case NFS_V3:
+                      if(nfs3_Sattr_To_FSALattr(&sattr,
+                                                &parg->arg_create3.how.createhow3_u.
+                                                obj_attributes) == 0)
+                        {
+                          pres->res_create3.status = NFS3ERR_INVAL;
+                          rc = NFS_REQ_OK;
+                          goto out;
+                        }
+                      break;
+                    }
+
+
+                  squash_setattr(&pworker->export_perms,
+                                 &pworker->user_credentials,
+                                 &sattr);
+                  if((sattr.asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME)) || 
+                     ((sattr.asked_attributes & FSAL_ATTR_OWNER) && (pworker->user_credentials.caller_uid != sattr.owner)) ||
+                     ((sattr.asked_attributes & FSAL_ATTR_GROUP) && (pworker->user_credentials.caller_gid != sattr.group))
+                    )
+                    {
+                      if(cache_inode_setattr(dir_pentry,
+                                             &sattr,
+                                             pcontext,
+                                             FALSE,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
+                        goto out_failed;
+                     }
+
+
+
                   /*
                    * Get the FSAL handle for this entry
                    */
@@ -378,6 +424,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
+out_failed:
   rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
                            &pres->res_dirop2.status, &pres->res_mkdir3.status,
                            NULL, ppre_attr,
