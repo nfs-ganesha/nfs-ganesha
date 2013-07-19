@@ -41,18 +41,19 @@
 #include "mount.h"
 #include "rquota.h"
 #include "nfs_proto_functions.h"
+#include "export_mgr.h"
 
 /**
  * @brief The Rquota setquota function, for all versions.
  *
  * The RQUOTA setquota function, for all versions.
  *
- * @param[in]  parg    Ignored
+ * @param[in]  parg    quota args
  * @param[in]  pexport Ignored
  * @param[in]  req_ctx Ignored
  * @param[in]  pworker Ignored
  * @param[in]  preq    Ignored
- * @param[out] pres    Ignored
+ * @param[out] pres    returned quota (modified)
  *
  */
 int rquota_setquota(nfs_arg_t *parg,
@@ -62,95 +63,78 @@ int rquota_setquota(nfs_arg_t *parg,
                     struct svc_req *preq,
                     nfs_res_t * pres)
 {
-  fsal_status_t fsal_status;
-  fsal_quota_t fsal_quota_in;
-  fsal_quota_t fsal_quota_out;
-  int quota_type = USRQUOTA;
-  char work[MAXPATHLEN + 1];
+	fsal_status_t fsal_status;
+	fsal_quota_t fsal_quota_in;
+	fsal_quota_t fsal_quota_out;
+	int quota_type = USRQUOTA;
+	struct gsh_export *exp;
+	char *quota_path;
+	setquota_args *qarg = &parg->arg_rquota_setquota;
+	setquota_rslt *qres = &pres->res_rquota_setquota;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling rquota_setquota");
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "REQUEST PROCESSING: Calling rquota_setquota");
+	
+	if(preq->rq_vers == EXT_RQUOTAVERS)
+		quota_type = parg->arg_ext_rquota_setquota.sqa_type;
 
-  if(preq->rq_vers == EXT_RQUOTAVERS)
-    {
-      quota_type = parg->arg_ext_rquota_getquota.gqa_type;
-    }
-  else
-    {
-      quota_type = USRQUOTA;
-    }
-
-  if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
-    {
-      if (strmaxcpy(work, parg->arg_rquota_getquota.gqa_pathp,
-		    MAXPATHLEN) == -1)
-	{
-	  LogMajor(COMPONENT_NFSPROTO,
-		   "String overflow.");
-	  return NFS_REQ_DROP;
+	qres->status = Q_EPERM;
+	if(qarg->sqa_pathp[0] == '/') {
+		exp = get_gsh_export_by_path(qarg->sqa_pathp);
+		if(exp == NULL)
+			goto out;
+		quota_path = qarg->sqa_pathp;
+	} else {
+		exp = get_gsh_export_by_tag(qarg->sqa_pathp);
+		if(exp == NULL)
+			goto out;
+		quota_path = exp->export.fullpath;
 	}
-    }
-  else
-    {
-      if(nfs_export_tag2path(nfs_param.pexportlist,
-                             parg->arg_rquota_getquota.gqa_pathp,
-                             strnlen(parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN),
-                             work, MAXPATHLEN) == -1)
 
-        {
-          pres->res_rquota_getquota.status = Q_EPERM;
-          return NFS_REQ_OK;
-        }
-    }
+	memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));
+	memset(&fsal_quota_out, 0, sizeof(fsal_quota_t));
 
-  memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));
-  memset(&fsal_quota_out, 0, sizeof(fsal_quota_t));
+	fsal_quota_in.bhardlimit = qarg->sqa_dqblk.rq_bhardlimit;
+	fsal_quota_in.bsoftlimit = qarg->sqa_dqblk.rq_bsoftlimit;
+	fsal_quota_in.curblocks = qarg->sqa_dqblk.rq_curblocks;
+	fsal_quota_in.fhardlimit = qarg->sqa_dqblk.rq_fhardlimit;
+	fsal_quota_in.fsoftlimit = qarg->sqa_dqblk.rq_fsoftlimit;
+	fsal_quota_in.btimeleft = qarg->sqa_dqblk.rq_btimeleft;
+	fsal_quota_in.ftimeleft = qarg->sqa_dqblk.rq_ftimeleft;
 
-  fsal_quota_in.bhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bhardlimit;
-  fsal_quota_in.bsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bsoftlimit;
-  fsal_quota_in.curblocks = parg->arg_rquota_setquota.sqa_dqblk.rq_curblocks;
-  fsal_quota_in.fhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fhardlimit;
-  fsal_quota_in.fsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fsoftlimit;
-  fsal_quota_in.btimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_btimeleft;
-  fsal_quota_in.ftimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft;
+	fsal_status = exp->export.export_hdl->ops->set_quota(exp->export.export_hdl,
+							     quota_path,
+							     quota_type,
+							     req_ctx,
+							     &fsal_quota_in,
+							     &fsal_quota_out);
+	if(FSAL_IS_ERROR(fsal_status)) {
+		if(fsal_status.major == ERR_FSAL_NO_QUOTA)
+			qres->status = Q_NOQUOTA;
+		goto out;
+	}
 
-  fsal_status = pexport->export_hdl->ops->set_quota(pexport->export_hdl,
-						    work,
-						    quota_type,
-						    req_ctx,
-						    &fsal_quota_in,
-						    &fsal_quota_out);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      if(fsal_status.major == ERR_FSAL_NO_QUOTA)
-        pres->res_rquota_setquota.status = Q_NOQUOTA;
-      else
-        pres->res_rquota_setquota.status = Q_EPERM;
-      return NFS_REQ_OK;
-    }
+	/* is success */
 
-  /* is success */
-  pres->res_rquota_getquota.status = Q_OK;
+	qres->setquota_rslt_u.sqr_rquota.rq_active = TRUE;
+	qres->setquota_rslt_u.sqr_rquota.rq_bhardlimit =
+		fsal_quota_out.bhardlimit;
+	qres->setquota_rslt_u.sqr_rquota.rq_bsoftlimit =
+		fsal_quota_out.bsoftlimit;
+	qres->setquota_rslt_u.sqr_rquota.rq_curblocks =
+		fsal_quota_out.curblocks;
+	qres->setquota_rslt_u.sqr_rquota.rq_fhardlimit =
+		fsal_quota_out.fhardlimit;
+	qres->setquota_rslt_u.sqr_rquota.rq_fsoftlimit =
+		fsal_quota_out.fsoftlimit;
+	qres->setquota_rslt_u.sqr_rquota.rq_btimeleft =
+		fsal_quota_out.btimeleft;
+	qres->setquota_rslt_u.sqr_rquota.rq_ftimeleft =
+		fsal_quota_out.ftimeleft;
+	qres->status = Q_OK;
 
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_active = TRUE;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bhardlimit =
-      fsal_quota_out.bhardlimit;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bsoftlimit =
-      fsal_quota_out.bsoftlimit;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_curblocks =
-      fsal_quota_out.curblocks;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fhardlimit =
-      fsal_quota_out.fhardlimit;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fsoftlimit =
-      fsal_quota_out.fsoftlimit;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_btimeleft =
-      fsal_quota_out.btimeleft;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_ftimeleft =
-      fsal_quota_out.ftimeleft;
-
-  return NFS_REQ_OK;
-
-  return 0;
+out:
+	return NFS_REQ_OK;
 }                               /* rquota_setquota */
 
 /**
@@ -163,5 +147,5 @@ int rquota_setquota(nfs_arg_t *parg,
  */
 void rquota_setquota_Free(nfs_res_t * pres)
 {
-  return;
+	return;
 }

@@ -678,8 +678,6 @@ typedef struct nfs_param {
 	/** 9P owner cache parameters  */
 	hash_parameter_t _9p_owner_hash_param;
 #endif /* _USE_9P */
-	/** list of exports declared in config file */
-	struct glist_head *pexportlist;
 } nfs_parameter_t;
 
 extern nfs_parameter_t nfs_param;

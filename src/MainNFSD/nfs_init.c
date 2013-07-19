@@ -593,7 +593,7 @@ int nfs_set_param_from_conf(config_file_t config_struct,
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
-  rc = ReadExports(config_struct, nfs_param.pexportlist);
+  rc = ReadExports(config_struct);
   if(rc < 0)
     {
       LogCrit(COMPONENT_INIT,
@@ -1002,7 +1002,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
+  if((rc = nfs4_ExportToPseudoFS()) != 0)
     LogFatal(COMPONENT_INIT,
              "Error %d while initializing NFSv4 pseudo file system", rc);
 
@@ -1103,7 +1103,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
+  if((rc = nfs4_ExportToPseudoFS()) != 0)
     LogFatal(COMPONENT_INIT,
              "Error %d while initializing NFSv4 pseudo file system", rc);
 

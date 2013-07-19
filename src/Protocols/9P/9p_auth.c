@@ -64,6 +64,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
  
   _9p_fid_t * pfid = NULL ;
 
+  struct gsh_export *exp;
   exportlist_t * pexport = NULL;
   cache_inode_status_t cache_status ;
   char exppath[MAXPATHLEN] ;
@@ -81,25 +82,31 @@ int _9p_auth( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
             (u32)*msgtag, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
 
+  if( *afid >= _9P_FID_PER_CONN )
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+ 
   /*
    * Find the export for the aname (using as well Path or Tag ) 
    */
   snprintf( exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str ) ;
 
   if(exppath[0] == '/')
-     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, exppath);
+     exp = get_gsh_export_by_path(exppath);
   else
-     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, exppath);
+     exp = get_gsh_export_by_tag(exppath);
 
   /* Did we find something ? */
-  if( pexport == NULL )
+  if( exp == NULL )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOENT, plenout, preply ) ;
 
-  if( *afid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
- 
   /* Set pexport and fid id in fid */
-  pfid= preq9p->pconn->fids[*afid] ;
+  pexport = &exp->export;
+  pfid = preq9p->pconn->fids[*afid] ;
+  if(pfid->pexport != NULL && pfid->pexport != pexport)
+    {
+      struct gsh_export *oldexp = container_of(pexport, struct gsh_export, export);
+      put_gsh_export(oldexp);
+    }
   pfid->pexport = pexport ;
   pfid->fid = *afid ;
 
@@ -125,7 +132,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   pfid->pentry = pexport->exp_root_cache_inode ;
 
   /* Keep track of the pexport in the req_ctx */
-  pfid->op_context.export = get_gsh_export( pexport->id, true ) ;
+  pfid->op_context.export = exp;
 
   cache_status = cache_inode_fileid(pfid->pentry,
 				    &pfid->op_context, &fileid);

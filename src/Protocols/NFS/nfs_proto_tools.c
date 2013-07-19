@@ -3342,7 +3342,7 @@ int nfs4_SetCompoundExport(compound_data_t *data)
         }
 
 	if(data->req_ctx->export != NULL) {
-		if(exportid == data->req_ctx->export->export_id)
+		if(exportid == data->req_ctx->export->export.id)
 			return NFS4_OK; /* same export, same creds */
 		put_gsh_export(data->req_ctx->export);
 	}

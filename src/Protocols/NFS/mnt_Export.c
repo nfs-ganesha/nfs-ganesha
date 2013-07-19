@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include "HashTable.h"
 #include "log.h"
@@ -55,11 +56,95 @@
 #include "nfs_tools.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
+#include "export_mgr.h"
+
+struct proc_state {
+	exports head;
+	exports tail;
+	int retval;
+};
+
+static bool proc_export(struct gsh_export *exp,
+			void *arg)
+{
+	struct proc_state *state = (struct proc_state *)arg;
+	exportlist_t *export = &exp->export;
+	struct exportnode *new_expnode;
+	struct glist_head *glist_item;
+	exportlist_client_entry_t *client;
+	struct groupnode *group, *grp_tail;
+	const char *grp_name;
+	char addr_buf[INET6_ADDRSTRLEN + 1];
+
+	state->retval = 0;
+	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
+	if(new_expnode == NULL)
+		goto nomem;
+	new_expnode->ex_dir = gsh_strdup(export->fullpath);
+	if(new_expnode->ex_dir == NULL)
+		goto nomem;
+	glist_for_each(glist_item, &export->clients.client_list) {
+		client = glist_entry(glist_item, exportlist_client_entry_t, cle_list);
+		group = gsh_calloc(1, sizeof(struct groupnode));
+		if(group == NULL)
+			goto nomem;
+		if(new_expnode->ex_groups == NULL) {
+			new_expnode->ex_groups = group;
+		} else {
+			grp_tail->gr_next = group;
+		}
+		grp_tail = group;
+		switch(client->type) {
+		case HOSTIF_CLIENT:
+			grp_name = inet_ntop(AF_INET,
+					     &client->client.hostif.clientaddr,
+					     addr_buf,
+					     INET6_ADDRSTRLEN);
+			if(grp_name == NULL) {
+				state->retval = errno;
+				grp_name = "Invalid Host Address";
+			}
+			break;
+                case NETWORK_CLIENT:
+			grp_name = inet_ntop(AF_INET,
+					     &client->client.network.netaddr,
+					     addr_buf,
+					     INET6_ADDRSTRLEN);
+			if(grp_name == NULL) {
+				state->retval = errno;
+				grp_name = "Invalid Network Address";
+			}
+			break;
+                case NETGROUP_CLIENT:
+			grp_name = client->client.netgroup.netgroupname;
+                case GSSPRINCIPAL_CLIENT:
+			grp_name = client->client.gssprinc.princname;
+                case MATCH_ANY_CLIENT:
+			grp_name = "*";
+                default:
+			grp_name = "<unknown>";
+		}
+		group->gr_name = gsh_strdup(grp_name);
+		if(group->gr_name == NULL)
+			goto nomem;
+	}
+	if(state->head == NULL) {
+		state->head = new_expnode;
+	} else {
+		state->tail->ex_next = new_expnode;
+	}
+	state->tail = new_expnode;
+	return true;
+
+nomem:
+	state->retval = errno;
+	return false;
+}
 
 /**
- * @brief The Mount proc export function, for all versions.
+ * @brief The Mount proc EXPORT function, for all versions.
  *
- * The MOUNT proc null function, for all versions.
+ * Return a list of all exports and their allowed clients/groups/networks.
  *
  * @param[in]  parg     Ignored
  * @param[in]  pexport  The export list to be return to the client.
@@ -77,197 +162,21 @@ int mnt_Export(nfs_arg_t *parg,
                struct svc_req *preq,
                nfs_res_t * pres)
 {
+	struct proc_state proc_state;
 
-  exportlist_t *p_current_item;       /* the current export item. */
-  struct glist_head * glist;
+	/* init everything of interest to good state. */
+	memset(pres, 0, sizeof(nfs_res_t));
+	memset(&proc_state, 0, sizeof(proc_state));
 
-  exports p_exp_out = NULL;     /* Pointer to the first export entry. */
-  exports p_exp_current = NULL; /* Pointer to the last  export entry. */
-
-  unsigned int i;
-
-  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
-
-  /* paranoid command, to avoid parasites in the result structure. */
-  memset(pres, 0, sizeof(nfs_res_t));
-
-  /* for each existing export entry */
-  glist_for_each(glist, nfs_param.pexportlist)
-    {
-
-      exports new_expnode;      /* the export node to be added to the list */
-
-      p_current_item = glist_entry(glist, exportlist_t, exp_list);
-      new_expnode = gsh_calloc(1,sizeof(exportnode));
-
-      /* ---- ex_dir ------ */
-
-      /* we set the export path */
-
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "Export entry: %s, Numclients: %d",
-                   p_current_item->fullpath, p_current_item->clients.num_clients);
-
-      new_expnode->ex_dir = gsh_strdup(p_current_item->fullpath);
-
-      /* ---- ex_groups ---- */
-
-      /* we convert the group list */
-
-      if(p_current_item->clients.num_clients > 0)
-        {
-          struct glist_head * glist_cl;
-
-          /* Alias, to make the code slim... */
-          exportlist_client_t *p_clients = &(p_current_item->clients);
-
-          /* allocates the memory for all the groups, once for all */
-          new_expnode->ex_groups = gsh_calloc(p_clients->num_clients,
-					      sizeof(groupnode));
-
-          i = 0;
-
-          glist_for_each(glist_cl, &p_current_item->clients.client_list)
-            {
-              exportlist_client_entry_t * p_client_entry;
-              p_client_entry = glist_entry(glist_cl, exportlist_client_entry_t, cle_list);
-
-              LogClientListEntry(COMPONENT_NFSPROTO, p_client_entry);
-
-              /* ---- gr_next ----- */
-
-              if((i + 1) == p_clients->num_clients)     /* this is the last item */
-                new_expnode->ex_groups[i].gr_next = NULL;
-              else              /* other items point to the next memory slot */
-                new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
-
-              /* ---- gr_name ----- */
-
-              switch (p_client_entry->type)
-                {
-                case HOSTIF_CLIENT:
-
-                  /* allocates target buffer (+1 for security ) */
-                  new_expnode->ex_groups[i].gr_name
-                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
-
-                  if(new_expnode->ex_groups[i].gr_name != NULL &&
-		     inet_ntop(AF_INET,
-			       &(p_client_entry->client.hostif.clientaddr),
-			       new_expnode->ex_groups[i].gr_name,
-			       INET_ADDRSTRLEN) == NULL)
-                    {
-                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
-                                   "Invalid Host address",
-                                   INET_ADDRSTRLEN + 1) == -1)
-                        {
-                          LogCrit(COMPONENT_NFSPROTO,
-                                  "Could not copy response");
-                        }
-                    }
-
-                  LogFullDebug(COMPONENT_NFSPROTO,
-                               "%p HOSTIF_CLIENT=%s",
-                               p_client_entry, new_expnode->ex_groups[i].gr_name);
-
-                  break;
-
-                case NETWORK_CLIENT:
-
-                  /* allocates target buffer (+1 for security ) */
-                  new_expnode->ex_groups[i].gr_name
-                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
-
-                  if(new_expnode->ex_groups[i].gr_name != NULL &&
-		     inet_ntop(AF_INET,
-			       &(p_client_entry->client.network.netaddr),
-			       new_expnode->ex_groups[i].gr_name,
-			       INET_ADDRSTRLEN) == NULL)
-                    {
-                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
-                                   "Invalid Network address",
-                                   INET_ADDRSTRLEN + 1) == -1)
-                        {
-                          LogCrit(COMPONENT_NFSPROTO,
-                                  "Could not copy response");
-                        }
-                    }
-                  break;
-
-                case NETGROUP_CLIENT:
-
-                  /* allocates target buffer */
-
-                  new_expnode->ex_groups[i].gr_name
-                       = gsh_strdup(p_client_entry->client.netgroup.netgroupname);
-
-                  break;
-
-                case GSSPRINCIPAL_CLIENT:
-
-                  new_expnode->ex_groups[i].gr_name
-                       = gsh_strdup(p_client_entry->client.gssprinc.princname);
-
-
-                  break;
-
-                case MATCH_ANY_CLIENT:
-                  new_expnode->ex_groups[i].gr_name
-                       = gsh_strdup("*");
-
-                  break;
-
-                default:
-
-                  /* @todo : free allocated resources */
-
-                  LogCrit(COMPONENT_NFSPROTO,
-                          "MNT_EXPORT: Unknown export entry type: %d",
-                          p_client_entry->type);
-
-                  new_expnode->ex_groups[i].gr_name = gsh_strdup("<unknown>");
-
-
-                  break;
-                }
-	      if(new_expnode->ex_groups[i].gr_name == NULL)
-                LogCrit(COMPONENT_NFSPROTO,
-			"Could not allocate memory for response");
-              i++;
-            }
-        }
-      else
-        {
-          /* There are no groups for this export entry. */
-          new_expnode->ex_groups = NULL;
-        }
-
-      /* ---- ex_next ----- */
-
-      /* this is the last item in the list */
-
-      new_expnode->ex_next = NULL;
-
-      /* we insert the export node to the export list */
-
-      if(p_exp_out)
-        {
-          p_exp_current->ex_next = new_expnode;
-        }
-      else
-        {
-          /* This is the first item in the list */
-          p_exp_out = new_expnode;
-        }
-      p_exp_current = new_expnode;
-    }
-
-  /* return the pointer to the export list */
-
-  pres->res_mntexport = p_exp_out;
-
-  return NFS_REQ_OK;
-
+	(void)foreach_gsh_export(proc_export, &proc_state);
+	if(proc_state.retval != 0) {
+		LogCrit(COMPONENT_NFSPROTO,
+			"Processing exports failed. error = \"%s\" (%d)",
+			strerror(proc_state.retval),
+			proc_state.retval);
+	}
+	pres->res_mntexport = proc_state.head;
+	return NFS_REQ_OK;
 }                               /* mnt_Export */
 
 /**
@@ -280,23 +189,21 @@ int mnt_Export(nfs_arg_t *parg,
  */
 void mnt_Export_Free(nfs_res_t * pres)
 {
+	struct exportnode *exp, *next_exp;
+	struct groupnode *grp, *next_grp;
 
-  exports e = pres->res_mntexport;
-
-  while (e)
-    {
-      struct groupnode *g = e->ex_groups;
-      exports n = e->ex_next;
-
-      while (g)
-        {
-          gsh_free(g->gr_name);
-          g = g->gr_next;
-        }
-      gsh_free(e->ex_groups);
-      gsh_free(e->ex_dir);
-      gsh_free(e);
-
-      e = n;
-  }
+	exp = pres->res_mntexport;
+	while(exp != NULL) {
+		next_exp = exp->ex_next;
+		grp = exp->ex_groups;
+		while(grp != NULL) {
+			next_grp = grp->gr_next;
+			if(grp->gr_name != NULL)
+				gsh_free(grp->gr_name);
+			gsh_free(grp);
+			grp = next_grp;
+		}
+		gsh_free(exp);
+		exp = next_exp;
+	}
 }                               /* mnt_Export_Free */

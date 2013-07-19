@@ -66,6 +66,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
  
   _9p_fid_t * pfid = NULL ;
 
+  struct gsh_export *exp;
   exportlist_t * pexport = NULL;
   cache_inode_status_t cache_status ;
   char exppath[MAXPATHLEN] ;
@@ -90,12 +91,12 @@ int _9p_attach( _9p_request_data_t * preq9p,
   snprintf( exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str ) ;
 
   if(exppath[0] == '/')
-     pexport = nfs_Get_export_by_path(nfs_param.pexportlist, exppath);
+     exp = get_gsh_export_by_path(exppath);
   else
-     pexport = nfs_Get_export_by_tag(nfs_param.pexportlist, exppath);
+     exp = get_gsh_export_by_tag(exppath);
 
   /* Did we find something ? */
-  if( pexport == NULL )
+  if( exp == NULL )
     return _9p_rerror( preq9p, pworker_data, msgtag, ENOENT, plenout, preply ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -104,6 +105,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /* Set pexport and fid id in fid */
   if( ( pfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
     return _9p_rerror( preq9p, pworker_data, msgtag, ENOMEM, plenout, preply ) ;
+  pexport = &exp->export;
   pfid->pexport = pexport ;
   pfid->fid = *fid ;
   preq9p->pconn->fids[*fid] = pfid ;
@@ -135,7 +137,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   pfid->pentry = pexport->exp_root_cache_inode ;
 
   /* Keep track of the pexport in the req_ctx */
-  pfid->op_context.export = get_gsh_export( pexport->id, true ) ;
+  pfid->op_context.export = exp;
 
   cache_status = cache_inode_fileid(pfid->pentry,
 				    &pfid->op_context, &fileid);

@@ -43,6 +43,7 @@
 #include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
+#include "export_mgr.h"
 
 #define FREE_FID(pfid, fid, preq9p) do {        \
 /* Tell the cache the fid that used this        \
@@ -65,7 +66,8 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
   cache_inode_status_t cache_status ;
-  fsal_status_t fsal_status ; 
+  fsal_status_t fsal_status ;
+  struct gsh_export *exp;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -138,6 +140,17 @@ int _9p_clunk( _9p_request_data_t * preq9p,
    }
 
   FREE_FID(pfid, fid, preq9p);
+/* ======= */
+/*   /\* Tell the cache the fid that used this entry is not used by this set of messages *\/ */
+/*   cache_inode_put( pfid->pentry ) ; */
+ 
+/*   /\* Put back the export *\/ */
+/*   exp = container_of(pfid->pexport, struct gsh_export, export); */
+/*   put_gsh_export(exp); */
+
+/*   /\* Free the fid *\/ */
+/*   gsh_free( pfid ) ; */
+/* >>>>>>> for_dev41 */
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;
