@@ -127,7 +127,7 @@ static bool pseudo_node(char *token, void *arg)
                   /* Looking for a matching entry */
                   if( !strcmp(node->name, token)) {
 			  /* matched entry is new parent node */
-			  state->this_node = new_node;
+			  state->this_node = node;
 			  return true;
 		  }
 	}
