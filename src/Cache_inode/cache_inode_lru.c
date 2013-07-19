@@ -428,8 +428,6 @@ cache_inode_lru_clean(cache_entry_t *entry)
 	((n) == LRU_SENTINEL_REFCOUNT+1) && \
 	 ((e)->fh_hk.inavl))
 
-#define LANE_NTRIES 3
-
 static uint32_t reap_lane = 0; /* by definition */
 
 static inline cache_inode_lru_t *
@@ -438,76 +436,66 @@ lru_reap_impl(enum lru_q_id qid)
      uint32_t lane;
      struct lru_q_lane *qlane;
      struct lru_q *lq;
-     struct glist_head *glist;
-     struct glist_head *glistn;
      cache_inode_lru_t *lru;
      cache_entry_t *entry;
      uint32_t refcnt;
-     int ix, cnt;
+     cih_latch_t latch;
+     int ix;
 
      lane = LRU_NEXT(reap_lane);
      for (ix = 0; ix < LRU_N_Q_LANES; ++ix, lane = LRU_NEXT(reap_lane)) {
           qlane = &LRU[lane];
           lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
-          cnt = 0;
 
           QLOCK(qlane);
-          glist_for_each_safe(glist, glistn, &lq->q) {
-               lru = glist_entry(glist, cache_inode_lru_t, q);
-               if (lru) {
-		    cih_latch_t latch;
-                    refcnt = atomic_inc_int32_t(&lru->refcnt);
-		    entry = container_of(lru, cache_entry_t, lru);
-                    if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
-			    /* cant use it. */
-                            cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
-			    goto next_entry;
-                    }
-                    /* potentially reclaimable */
-                    QUNLOCK(qlane);
-		    entry = container_of(lru, cache_entry_t, lru);
-		    /* entry must be unreachable from CIH when recycled */
-		    if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
-                                        __func__, __LINE__)) {
-			    QLOCK(qlane);
-			    refcnt =
-				    atomic_fetch_int32_t(&entry->lru.refcnt);
-                            /* there are two cases which permit reclaim,
-                             * entry is:
-                             * 1. reachable but unref'd (refcnt==2)
-                             * 2. unreachable, being removed (plus refcnt==0)
-			     *  for safety, take only the former
-                             */
-                            if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
-				    /* it worked */
-				    struct lru_q *q = lru_queue_of(entry);
-                                    cih_remove_latched(entry, &latch,
-                                                       CIH_REMOVE_QLOCKED);
-				    glist_del(&lru->q);
-				    --(q->size);
-				    entry->lru.qid = LRU_ENTRY_NONE;
-				    QUNLOCK(qlane);
-				    cih_latch_rele(&latch);
-				    goto out;
-			    }
-			    cih_latch_rele(&latch);
-                            /* return the ref we took above--unref deals
-                             * correctly with reclaim case */
-                            cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
-                    } else {
-			    QLOCK(qlane);
-		    }
-               } /* lru */
-          next_entry:
-               if (++cnt > LANE_NTRIES)
-                    break;
-          } /* foreach (initial) entry */
+          lru = glist_first_entry(&lq->q, cache_inode_lru_t, q);
+          if (! lru)
+              goto next_lane;
+          refcnt = atomic_inc_int32_t(&lru->refcnt);
+          entry = container_of(lru, cache_entry_t, lru);
+          if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
+              /* cant use it. */
+              cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+              goto next_lane;
+          }
+          /* potentially reclaimable */
+          QUNLOCK(qlane);
+          /* entry must be unreachable from CIH when recycled */
+          if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK, __func__,
+                              __LINE__)) {
+              QLOCK(qlane);
+              refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+              /* there are two cases which permit reclaim,
+               * entry is:
+               * 1. reachable but unref'd (refcnt==2)
+               * 2. unreachable, being removed (plus refcnt==0)
+               *  for safety, take only the former
+               */
+              if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
+                  /* it worked */
+                  struct lru_q *q = lru_queue_of(entry);
+                  cih_remove_latched(entry, &latch, CIH_REMOVE_QLOCKED);
+                  glist_del(&lru->q);
+                  --(q->size);
+                  entry->lru.qid = LRU_ENTRY_NONE;
+                  QUNLOCK(qlane);
+                  cih_latch_rele(&latch);
+                  goto out;
+              }
+              cih_latch_rele(&latch);
+              /* return the ref we took above--unref deals
+               * correctly with reclaim case */
+              cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+          } else {
+              /* ! QLOCKED */
+              continue;
+          }
+     next_lane:
           QUNLOCK(qlane);
      } /* foreach lane */
 
      /* ! reclaimable */
      lru = NULL;
-
 out:
      return (lru);
 }
