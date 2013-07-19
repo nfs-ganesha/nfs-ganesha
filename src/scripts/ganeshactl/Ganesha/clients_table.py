@@ -112,6 +112,8 @@ class ClientTableModel(QAbstractTableModel):
                 return QVariant(QColor(Qt.gray))
             else:
                 return QVariant(QColor(Qt.lightGray))
+        elif role == Qt.ForegroundRole:
+            return QVariant(QColor(Qt.black))
 
         return QVariant()
 
