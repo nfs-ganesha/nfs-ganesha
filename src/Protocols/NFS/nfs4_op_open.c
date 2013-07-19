@@ -568,6 +568,7 @@ open4_create(OPEN4args           * arg,
         struct attrlist      sattr;
         /* Whether the client supplied any attributes */
         bool                 sattr_provided = false;
+        uint32_t             mode = 0600;
         /* Return from Cache Inode calls */
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         /* True if a verifier has been specified and we are
@@ -619,6 +620,9 @@ open4_create(OPEN4args           * arg,
                                 return res->status;
                         }
                         sattr_provided = true;
+                        if(sattr.mask & ATTR_MODE) {
+                                mode = sattr.mode;
+                        }
                 }
         } else if (arg->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
                 /**
@@ -654,6 +658,9 @@ open4_create(OPEN4args           * arg,
                                 return res->status;
                         }
                         sattr_provided = true;
+                        if(sattr.mask & ATTR_MODE) {
+                                mode = sattr.mode;
+                        }
                 }
                 if (sattr_provided &&
                     ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
@@ -682,6 +689,7 @@ open4_create(OPEN4args           * arg,
 
                 if (!sattr_provided) {
                         memset(&sattr, 0, sizeof(struct attrlist));
+                        sattr.mode = mode;
                         sattr_provided = true;
                 }
 
@@ -691,11 +699,7 @@ open4_create(OPEN4args           * arg,
         cache_status = cache_inode_create(parent,
 					  filename,
 					  REGULAR_FILE,
-					  /* Any mode supplied by
-					     the client will be set
-					     by setattr after the
-					     create step. */
-					  0600,
+					  mode,
 					  NULL,
 					  data->req_ctx,
 					  &entry_newfile);
@@ -744,12 +748,19 @@ open4_create(OPEN4args           * arg,
              */
             squash_setattr(&data->export_perms, data->req_ctx->creds, &sattr);
 
-            cache_status = cache_inode_setattr(entry_newfile,
-                    &sattr,
-                    (arg->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
-                    data->req_ctx);
-            if (cache_status != CACHE_INODE_SUCCESS) {
-                return nfs4_Errno(cache_status);
+            /* Skip setting attributes if all asked attributes are handled by create */
+            if((sattr.mask & (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME | ATTR_SIZE)) ||
+               ((sattr.mask & ATTR_OWNER) &&
+                (data->req_ctx->creds->caller_uid != sattr.owner)) ||
+               ((sattr.mask & ATTR_GROUP) &&
+                (data->req_ctx->creds->caller_gid != sattr.group))) {
+                    cache_status = cache_inode_setattr(entry_newfile,
+                            &sattr,
+                            (arg->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
+                            data->req_ctx);
+                    if (cache_status != CACHE_INODE_SUCCESS) {
+                        return nfs4_Errno(cache_status);
+                    }
             }
         }
 

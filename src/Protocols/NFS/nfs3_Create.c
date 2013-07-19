@@ -213,12 +213,6 @@ nfs_Create(nfs_arg_t *arg,
 
                  /* Clear error code */
                  cache_status = CACHE_INODE_SUCCESS;
-        } else {
-                /* Some clients (like Solaris 10) try to set the size
-                   of the file to 0 at creation time. The FSAL create
-                   empty file, so we ignore this */
-                FSAL_UNSET_MASK(sattr.mask, ATTR_SIZE);
-                FSAL_UNSET_MASK(sattr.mask, ATTR_SPACEUSED);
         }
 
         /* Are there any attributes left to set? */
@@ -228,13 +222,20 @@ nfs_Create(nfs_arg_t *arg,
                  */
                 squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
 
-                /* A call to cache_inode_setattr is required */
-                cache_status = cache_inode_setattr(file_entry,
-                        &sattr,
-                        false,
-                        req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                    goto out_fail;
+                if((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)) ||
+                   ((sattr.mask & ATTR_SIZE) && sattr.filesize != 0) ||
+                   ((sattr.mask & ATTR_OWNER) &&
+                    (req_ctx->creds->caller_uid != sattr.owner)) ||
+                   ((sattr.mask & ATTR_GROUP) &&
+                    (req_ctx->creds->caller_gid != sattr.group))) {
+                        /* A call to cache_inode_setattr is required */
+                        cache_status = cache_inode_setattr(file_entry,
+                                &sattr,
+                                false,
+                                req_ctx);
+                        if (cache_status != CACHE_INODE_SUCCESS) {
+                            goto out_fail;
+                        }
                 }
         }
 

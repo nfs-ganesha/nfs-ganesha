@@ -85,8 +85,10 @@ nfs3_Mknod(nfs_arg_t *arg,
         cache_inode_create_arg_t create_arg;
         int rc = NFS_REQ_OK;
         fsal_status_t fsal_status;
+        struct attrlist sattr;
 
         memset(&create_arg, 0, sizeof(create_arg));
+        memset(&sattr, 0, sizeof(sattr));
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
@@ -149,6 +151,15 @@ nfs3_Mknod(nfs_arg_t *arg,
                 create_arg.dev_spec.minor =
                         arg->arg_mknod3.what.mknoddata3_u.device.spec
                         .specdata2;
+
+                if(nfs3_Sattr_To_FSALattr(&sattr,
+                                          &arg->arg_mknod3.what.mknoddata3_u.device.
+                                          dev_attributes) == 0) {
+                        res->res_mknod3.status = NFS3ERR_INVAL;
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+
                 break;
 
         case NF3FIFO:
@@ -163,6 +174,15 @@ nfs3_Mknod(nfs_arg_t *arg,
 
                 create_arg.dev_spec.major = 0;
                 create_arg.dev_spec.minor = 0;
+
+                if(nfs3_Sattr_To_FSALattr(&sattr,
+                                          &arg->arg_mknod3.what.mknoddata3_u.
+                                          pipe_attributes) == 0) {
+                        res->res_mknod3.status = NFS3ERR_INVAL;
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+
                 break;
 
         default:
@@ -233,6 +253,23 @@ nfs3_Mknod(nfs_arg_t *arg,
 
         /* Set Post Op Fh3 structure */
         rok->obj.handle_follows = TRUE;
+
+        /*Set attributes if required */
+        squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
+
+        if((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)) || 
+           ((sattr.mask & ATTR_OWNER) &&
+            (req_ctx->creds->caller_uid != sattr.owner)) ||
+           ((sattr.mask & ATTR_GROUP) &&
+            (req_ctx->creds->caller_gid != sattr.group))) {
+                cache_status = cache_inode_setattr(node_entry,
+                                                   &sattr,
+                                                   req_ctx,
+                                                   false);
+                if(cache_status != CACHE_INODE_SUCCESS) {
+                        goto out_fail;
+                }
+        }
 
         /* Build entry attributes */
         nfs_SetPostOpAttr(node_entry,

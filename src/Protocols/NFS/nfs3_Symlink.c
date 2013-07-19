@@ -150,6 +150,9 @@ nfs_Symlink(nfs_arg_t *arg,
 
         create_arg.link_content = target_path;
 
+        if (arg->arg_mkdir3.attributes.mode.set_it)
+            mode = arg->arg_symlink3.symlink.symlink_attributes.mode.set_mode3_u.mode;
+
         /* Make the symlink */
 	cache_status = cache_inode_create(parent_entry,
 					  symlink_name,
@@ -173,17 +176,16 @@ nfs_Symlink(nfs_arg_t *arg,
                 goto out;
          }
 
-        FSAL_UNSET_MASK(sattr.mask,
-                        (ATTR_MODE | ATTR_SIZE |
-                         ATTR_SPACEUSED));
+        /* If owner or owner_group are set, and the credential was
+         * squashed, then we must squash the set owner and owner_group.
+         */
+        squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
 
-        /* Are there any attributes left to set? */
-        if (sattr.mask) {
-            /* If owner or owner_group are set, and the credential was
-             * squashed, then we must squash the set owner and owner_group.
-             */
-            squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
-
+          if((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)) ||
+             ((sattr.mask & ATTR_OWNER) &&
+              (req_ctx->creds->caller_uid != sattr.owner)) ||
+             ((sattr.mask & ATTR_GROUP) &&
+              (req_ctx->creds->caller_gid != sattr.group))) {
             /* A call to cache_inode_setattr is required */
             cache_status = cache_inode_setattr(symlink_entry,
                     &sattr,

@@ -86,6 +86,7 @@ nfs_Mkdir(nfs_arg_t *arg,
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         int rc = NFS_REQ_OK;
         fsal_status_t fsal_status;
+        struct attrlist sattr;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
            char str[LEN_FH_STR];
@@ -156,6 +157,31 @@ nfs_Mkdir(nfs_arg_t *arg,
 
         if (cache_status != CACHE_INODE_SUCCESS) {
             goto out_fail;
+        }
+
+        memset(&sattr, 0, sizeof(sattr));
+
+        if(nfs3_Sattr_To_FSALattr(&sattr,
+                                  &arg->arg_mkdir3.attributes) == 0) {
+                cache_status = CACHE_INODE_INVALID_ARGUMENT;
+                goto out_fail;
+        }
+
+        /*Set attributes if required */
+        squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
+
+        if((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)) || 
+           ((sattr.mask & ATTR_OWNER) &&
+            (req_ctx->creds->caller_uid != sattr.owner)) ||
+           ((sattr.mask & ATTR_GROUP) &&
+            (req_ctx->creds->caller_gid != sattr.group))) {
+                cache_status = cache_inode_setattr(dir_entry,
+                                                   &sattr,
+                                                   req_ctx,
+                                                   false);
+                if(cache_status != CACHE_INODE_SUCCESS) {
+                        goto out_fail;
+                }
         }
 
         MKDIR3resok *d3ok = &res->res_mkdir3.MKDIR3res_u.resok;

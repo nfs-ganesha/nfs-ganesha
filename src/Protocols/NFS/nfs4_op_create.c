@@ -76,7 +76,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   nfs_fh4                newfh4;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   int                    convrc = 0;
-  uint32_t               mode = 0777;
+  uint32_t               mode = 0;
   char                   *name = NULL;
   char                   *link_content = NULL;
   struct fsal_export    *exp_hdl;
@@ -169,6 +169,9 @@ int nfs4_op_create(struct nfs_argop4 *op,
           goto out;
         }
     }
+
+  if(sattr.mask & ATTR_MODE)
+    mode = sattr.mode;
 
   /* Create either a symbolic link or a directory */
   switch (arg_CREATE4->objtype.type)
@@ -383,17 +386,25 @@ int nfs4_op_create(struct nfs_argop4 *op,
        */
       squash_setattr(&data->export_perms, data->req_ctx->creds, &sattr);
 
-      cache_status = cache_inode_setattr(entry_new,
-					 &sattr,
-					 false,
-					 data->req_ctx);
+       /* Skip setting attributes if all asked attributes are handled by create */
+       if((sattr.mask & (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)) ||
+          ((sattr.mask & ATTR_OWNER) &&
+           (data->req_ctx->creds->caller_uid != sattr.owner)) ||
+          ((sattr.mask & ATTR_GROUP) &&
+           (data->req_ctx->creds->caller_gid != sattr.group)))
+         {
+           cache_status = cache_inode_setattr(entry_new,
+                                              &sattr,
+                                              false,
+                                              data->req_ctx);
 
-      if (cache_status != CACHE_INODE_SUCCESS)
-        {
-          res_CREATE4->status = nfs4_Errno(cache_status);
-          cache_inode_put(entry_new);
-          goto out;
-        }
+           if (cache_status != CACHE_INODE_SUCCESS)
+             {
+               res_CREATE4->status = nfs4_Errno(cache_status);
+               cache_inode_put(entry_new);
+               goto out;
+             }
+         }
 
       /* copy over bitmap */
       res_CREATE4->CREATE4res_u.resok4.attrset
