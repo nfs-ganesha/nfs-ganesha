@@ -45,15 +45,26 @@
 #include "9p.h"
 #include "export_mgr.h"
 
-#define FREE_FID(pfid, fid, preq9p) do {        \
-/* Tell the cache the fid that used this        \
- * entry is not used by this set of messages */ \
-  cache_inode_put( pfid->pentry ) ;             \
-                                                \
-  /* Free the fid */                            \
-  gsh_free( pfid ) ;                            \
-  preq9p->pconn->fids[*fid] = NULL ;            \
-} while( 0 )
+/**
+ * @brief Free this fid after releasing its resources.
+ *
+ * @param pfid   [IN] pointer to fid entry
+ * @param fid    [IN] pointer to fid acquired from message
+ * @param preq9p [IN] pointer to request data
+ */
+
+static void free_fid(_9p_fid_t * pfid,
+		     u32 *fid,
+		     _9p_request_data_t * preq9p)
+{
+	struct gsh_export *exp;
+
+	cache_inode_put(pfid->pentry);
+	exp = container_of(pfid->pexport, struct gsh_export, export);
+	put_gsh_export(exp);
+	gsh_free(pfid);
+	preq9p->pconn->fids[*fid] = NULL; /* poison the entry */
+}
 
 int _9p_clunk( _9p_request_data_t * preq9p,
                void  * pworker_data,
@@ -67,7 +78,6 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
   cache_inode_status_t cache_status ;
   fsal_status_t fsal_status ;
-  struct gsh_export *exp;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -99,7 +109,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
       /* Check size give at TXATTRCREATE against the one resulting from the writes */
       if( pfid->specdata.xattr.xattr_size != pfid->specdata.xattr.xattr_offset )
       {
-         FREE_FID(pfid, fid, preq9p);
+         free_fid(pfid, fid, preq9p);
          return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
       }
 
@@ -111,7 +121,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
                                                                            pfid->specdata.xattr.xattr_size ) ;
       if(FSAL_IS_ERROR(fsal_status))
       {
-         FREE_FID(pfid, fid, preq9p);
+         free_fid(pfid, fid, preq9p);
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
       }
      }
@@ -133,24 +143,13 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
         if(cache_status != CACHE_INODE_SUCCESS)
         {
-           FREE_FID(pfid, fid, preq9p);
+           free_fid(pfid, fid, preq9p);
            return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
         }
       }
    }
 
-  FREE_FID(pfid, fid, preq9p);
-/* ======= */
-/*   /\* Tell the cache the fid that used this entry is not used by this set of messages *\/ */
-/*   cache_inode_put( pfid->pentry ) ; */
- 
-/*   /\* Put back the export *\/ */
-/*   exp = container_of(pfid->pexport, struct gsh_export, export); */
-/*   put_gsh_export(exp); */
-
-/*   /\* Free the fid *\/ */
-/*   gsh_free( pfid ) ; */
-/* >>>>>>> for_dev41 */
+  free_fid(pfid, fid, preq9p);
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;
