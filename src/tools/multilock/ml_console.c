@@ -998,7 +998,7 @@ void sighandler(int sig)
 
 int main(int argc, char **argv)
 {
-  char               c;
+  int               opt;
   response_t       * resp;
   struct sigaction   sigact;
   int                syntax_only = FALSE;
@@ -1038,9 +1038,9 @@ int main(int argc, char **argv)
   sigprocmask(SIG_SETMASK, &full_signal_set, &original_signal_set);
 
   /* now parsing options with getopt */
-  while((c = getopt(argc, argv, options)) != EOF)
+  while((opt = getopt(argc, argv, options)) != EOF)
     {
-      switch (c)
+      switch (opt)
         {
         case 'e':
           duperrors = TRUE;

@@ -233,7 +233,7 @@ struct response_t
   char            r_original[MAXSTR * 3];
 };
 
-command_def_t commands[NUM_COMMANDS+1];
+extern command_def_t commands[NUM_COMMANDS+1];
 
 /* Command forms
  *

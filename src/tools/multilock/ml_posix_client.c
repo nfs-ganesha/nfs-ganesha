@@ -731,7 +731,7 @@ void do_list(response_t * resp)
 
 int main(int argc, char **argv)
 {
-  char               c;
+  int                opt;
   int                len, rc;
   struct sigaction   sigact;
   char             * rest;
@@ -750,9 +750,9 @@ int main(int argc, char **argv)
   input  = stdin;
   output = stdout;
   /* now parsing options with getopt */
-  while((c = getopt(argc, argv, options)) != EOF)
+  while((opt = getopt(argc, argv, options)) != EOF)
     {
-      switch (c)
+      switch (opt)
         {
         case 'c':
           rc = chdir(optarg);
