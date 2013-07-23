@@ -243,8 +243,11 @@ static struct gsh_dbus_interface admin_interface = {
 	.signals = NULL
 };
 
+extern struct gsh_dbus_interface log_interface;
+
 static struct gsh_dbus_interface *admin_interfaces[] = {
 	&admin_interface,
+	&log_interface,
 	NULL
 };
 

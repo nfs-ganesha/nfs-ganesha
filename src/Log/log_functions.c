@@ -49,6 +49,7 @@
 #include "rpc/rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
+#include "ganesha_dbus.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -1026,7 +1027,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_LOG_EMERG,         "COMPONENT_LOG_EMERG", "LOG",
+  { COMPONENT_LOG_EMERG,         "COMPONENT_LOG_EMERG", "LOG_EMERG",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1558,6 +1559,191 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
 }
 
 #endif /* _SNMP_ADM_ACTIVE */
+
+#ifdef USE_DBUS
+
+static bool dbus_prop_get(log_components_t component,
+			  DBusMessageIter *reply)
+{
+	char *level_code;
+
+	level_code = ReturnLevelInt(LogComponents[component].comp_log_level);
+	if(level_code == NULL)
+		return false;
+	if( !dbus_message_iter_append_basic(reply,
+					    DBUS_TYPE_STRING,
+					    &level_code))
+		return false;
+	return true;
+}
+
+static bool dbus_prop_set(log_components_t component,
+			  DBusMessageIter *arg)
+{
+	char *level_code;
+	long log_level;
+
+	if(dbus_message_iter_get_arg_type(arg) != DBUS_TYPE_STRING)
+		return false;
+	dbus_message_iter_get_basic(arg, &level_code);
+	log_level = ReturnLevelAscii(level_code);
+	if(component == COMPONENT_ALL) {
+		_SetLevelDebug(log_level);
+		LogChanges("Dbus set log level for all components to %s",
+			   level_code);
+	} else {
+		LogChanges("Dbus set log level for %s from %s to %s.",
+			   LogComponents[component].comp_name,
+			   ReturnLevelInt(LogComponents[component].comp_log_level),
+			   ReturnLevelInt(log_level));
+		LogComponents[component].comp_log_level = log_level;
+	}
+	return true;
+}
+
+/* Macros to make mapping properties table to components enum etc. easier
+ * expands to table entries and shim functions.
+ */
+
+#define HANDLE_PROP(component) \
+static bool dbus_prop_get_##component(DBusMessageIter *reply) \
+{ \
+	return dbus_prop_get(component, reply);\
+} \
+\
+static bool dbus_prop_set_##component(DBusMessageIter *args) \
+{ \
+	return dbus_prop_set(component, args);\
+} \
+\
+static struct gsh_dbus_prop component##_prop = { \
+	.name = #component,			 \
+	.access = DBUS_PROP_READWRITE,		 \
+	.type =  "s",				  \
+	.get = dbus_prop_get_##component,		\
+	.set = dbus_prop_set_##component		\
+}
+
+#define LOG_PROPERTY_ITEM(component) &component##_prop
+
+/**
+ * @brief Log property handlers.
+ *
+ * Expands to get/set functions that match dbus_prop_get/set protos
+ * and call common handler with component enum as arg.
+ * There is one line per log_components_t enum.
+ * These must also match LOG_PROPERTY_ITEM
+ */
+
+HANDLE_PROP(COMPONENT_ALL);
+HANDLE_PROP(COMPONENT_LOG);
+HANDLE_PROP(COMPONENT_LOG_EMERG);
+HANDLE_PROP(COMPONENT_MEMALLOC);
+HANDLE_PROP(COMPONENT_MEMLEAKS);
+HANDLE_PROP(COMPONENT_FSAL);
+HANDLE_PROP(COMPONENT_NFSPROTO);
+HANDLE_PROP(COMPONENT_NFS_V4);
+HANDLE_PROP(COMPONENT_NFS_V4_PSEUDO);
+HANDLE_PROP(COMPONENT_FILEHANDLE);
+HANDLE_PROP(COMPONENT_DISPATCH);
+HANDLE_PROP(COMPONENT_CACHE_INODE);
+HANDLE_PROP(COMPONENT_CACHE_INODE_GC);
+HANDLE_PROP(COMPONENT_CACHE_INODE_LRU);
+HANDLE_PROP(COMPONENT_HASHTABLE);
+HANDLE_PROP(COMPONENT_HASHTABLE_CACHE);
+HANDLE_PROP(COMPONENT_LRU);
+HANDLE_PROP(COMPONENT_DUPREQ);
+HANDLE_PROP(COMPONENT_RPCSEC_GSS);
+HANDLE_PROP(COMPONENT_INIT);
+HANDLE_PROP(COMPONENT_MAIN);
+HANDLE_PROP(COMPONENT_IDMAPPER);
+HANDLE_PROP(COMPONENT_NFS_READDIR);
+HANDLE_PROP(COMPONENT_NFS_V4_LOCK);
+HANDLE_PROP(COMPONENT_NFS_V4_XATTR);
+HANDLE_PROP(COMPONENT_NFS_V4_REFERRAL);
+HANDLE_PROP(COMPONENT_MEMCORRUPT);
+HANDLE_PROP(COMPONENT_CONFIG);
+HANDLE_PROP(COMPONENT_CLIENTID);
+HANDLE_PROP(COMPONENT_STDOUT);
+HANDLE_PROP(COMPONENT_SESSIONS);
+HANDLE_PROP(COMPONENT_PNFS);
+HANDLE_PROP(COMPONENT_RPC_CACHE);
+HANDLE_PROP(COMPONENT_RW_LOCK);
+HANDLE_PROP(COMPONENT_NLM);
+HANDLE_PROP(COMPONENT_RPC);
+HANDLE_PROP(COMPONENT_NFS_CB);
+HANDLE_PROP(COMPONENT_THREAD);
+HANDLE_PROP(COMPONENT_NFS_V4_ACL);
+HANDLE_PROP(COMPONENT_STATE);
+HANDLE_PROP(COMPONENT_9P);
+HANDLE_PROP(COMPONENT_9P_DISPATCH);
+HANDLE_PROP(COMPONENT_FSAL_UP);
+HANDLE_PROP(COMPONENT_DBUS);
+HANDLE_PROP(COMPONENT_FAKE);
+HANDLE_PROP(LOG_MESSAGE_DEBUGINFO);
+HANDLE_PROP(LOG_MESSAGE_VERBOSITY);
+
+
+static struct gsh_dbus_prop *log_props[] = {
+	LOG_PROPERTY_ITEM(COMPONENT_ALL),
+	LOG_PROPERTY_ITEM(COMPONENT_LOG),
+	LOG_PROPERTY_ITEM(COMPONENT_LOG_EMERG),
+	LOG_PROPERTY_ITEM(COMPONENT_MEMALLOC),
+	LOG_PROPERTY_ITEM(COMPONENT_MEMLEAKS),
+	LOG_PROPERTY_ITEM(COMPONENT_FSAL),
+	LOG_PROPERTY_ITEM(COMPONENT_NFSPROTO),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_PSEUDO),
+	LOG_PROPERTY_ITEM(COMPONENT_FILEHANDLE),
+	LOG_PROPERTY_ITEM(COMPONENT_DISPATCH),
+	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE),
+	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE_GC),
+	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE_LRU),
+	LOG_PROPERTY_ITEM(COMPONENT_HASHTABLE),
+	LOG_PROPERTY_ITEM(COMPONENT_HASHTABLE_CACHE),
+	LOG_PROPERTY_ITEM(COMPONENT_LRU),
+	LOG_PROPERTY_ITEM(COMPONENT_DUPREQ),
+	LOG_PROPERTY_ITEM(COMPONENT_RPCSEC_GSS),
+	LOG_PROPERTY_ITEM(COMPONENT_INIT),
+	LOG_PROPERTY_ITEM(COMPONENT_MAIN),
+	LOG_PROPERTY_ITEM(COMPONENT_IDMAPPER),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_READDIR),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_LOCK),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_XATTR),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_REFERRAL),
+	LOG_PROPERTY_ITEM(COMPONENT_MEMCORRUPT),
+	LOG_PROPERTY_ITEM(COMPONENT_CONFIG),
+	LOG_PROPERTY_ITEM(COMPONENT_CLIENTID),
+	LOG_PROPERTY_ITEM(COMPONENT_STDOUT),
+	LOG_PROPERTY_ITEM(COMPONENT_SESSIONS),
+	LOG_PROPERTY_ITEM(COMPONENT_PNFS),
+	LOG_PROPERTY_ITEM(COMPONENT_RPC_CACHE),
+	LOG_PROPERTY_ITEM(COMPONENT_RW_LOCK),
+	LOG_PROPERTY_ITEM(COMPONENT_NLM),
+	LOG_PROPERTY_ITEM(COMPONENT_RPC),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_CB),
+	LOG_PROPERTY_ITEM(COMPONENT_THREAD),
+	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_ACL),
+	LOG_PROPERTY_ITEM(COMPONENT_STATE),
+	LOG_PROPERTY_ITEM(COMPONENT_9P),
+	LOG_PROPERTY_ITEM(COMPONENT_9P_DISPATCH),
+	LOG_PROPERTY_ITEM(COMPONENT_FSAL_UP),
+	LOG_PROPERTY_ITEM(COMPONENT_DBUS),
+	LOG_PROPERTY_ITEM(COMPONENT_FAKE),
+	LOG_PROPERTY_ITEM(LOG_MESSAGE_DEBUGINFO),
+	LOG_PROPERTY_ITEM(LOG_MESSAGE_VERBOSITY),
+	NULL
+};
+
+struct gsh_dbus_interface log_interface = {
+	.name = "org.ganesha.nfsd.log",
+	.signal_props = false,
+	.props = log_props,
+	.methods = NULL,
+	.signals = NULL
+};
+
+#endif /* USE_DBUS */
 
 #define CONF_LABEL_LOG "LOG"
 
