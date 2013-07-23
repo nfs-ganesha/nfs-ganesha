@@ -779,7 +779,7 @@ get_9p_stats_io(DBusMessageIter *args,
 }
 
 static struct gsh_dbus_method cltmgr_show_9p_io = {
-	.name = "GetNFSv9pIO",
+	.name = "Get9pIO",
 	.method = get_9p_stats_io,
 	.args = { IPADDR_ARG,
 		  STATUS_REPLY,

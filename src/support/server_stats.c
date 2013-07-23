@@ -288,6 +288,18 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 	return stats->nfsv41;
 }
 
+static struct _9p_stats *get_9p(struct gsh_stats *stats,
+				  pthread_mutex_t *lock)
+{
+	if( unlikely(stats->_9p == NULL)) {
+		pthread_mutex_lock(lock);
+		if(stats->_9p == NULL)
+			stats->_9p = gsh_calloc(sizeof(struct _9p_stats), 1);
+		pthread_mutex_unlock(lock);
+	}
+	return stats->_9p;
+}
+
 /* Functions for recording statistics
  */
 
@@ -393,9 +405,13 @@ static void record_io_stats(struct gsh_stats *gsh_st,
 		} else {
 			return;
 		}
-#ifdef _9P_REQUEST
+#ifdef _USE_9P
 	} else if (req_ctx->req_type == _9P_REQUEST) {
-		/* do its counters sometime */ ;
+			struct _9p_stats *sp = get_9p(gsh_st, lock);
+
+			if(sp == NULL)
+				return;
+			iop = is_write ? &sp->write : &sp->read;
 #endif
 	} else {
 		return;

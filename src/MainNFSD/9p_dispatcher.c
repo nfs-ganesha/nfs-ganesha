@@ -45,6 +45,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
+#include <arpa/inet.h>      /* For inet_ntop() */
 #include "HashTable.h"
 #include "log.h"
 #include "abstract_mem.h"
@@ -121,9 +122,8 @@ void * _9p_socket_thread( void * Arg )
   struct pollfd fds[1] ;
   int fdcount = 1 ;
   static char my_name[MAXNAMLEN + 1];
-  struct sockaddr_in addrpeer ;
-  socklen_t addrpeerlen = sizeof( addrpeer ) ;
-  char strcaller[MAXNAMLEN + 1] ;
+  socklen_t addrpeerlen = 0 ;
+  char strcaller[INET6_ADDRSTRLEN] ;
   request_data_t *preq = NULL;
   int tag;
   unsigned long sequence = 0;
@@ -158,7 +158,8 @@ void * _9p_socket_thread( void * Arg )
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
    LogFatal( COMPONENT_9P, "Cannot get connection's time of birth" ) ;
 
-  if( ( rc =  getpeername( tcp_sock, (struct sockaddr *)&addrpeer, &addrpeerlen) ) == -1 )
+  addrpeerlen = sizeof( _9p_conn.addrpeer ) ;
+  if( ( rc =  getpeername( tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer, &addrpeerlen) ) == -1 )
    {
       LogMajor(COMPONENT_9P,
                "Cannot get peername to tcp socket for 9p, error %d (%s)", errno, strerror(errno));
@@ -166,14 +167,23 @@ void * _9p_socket_thread( void * Arg )
    }
   else
    {
-     snprintf(strcaller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-              ntohl(addrpeer.sin_addr.s_addr),
-             (ntohl(addrpeer.sin_addr.s_addr) & 0xFF000000) >> 24,
-             (ntohl(addrpeer.sin_addr.s_addr) & 0x00FF0000) >> 16,
-             (ntohl(addrpeer.sin_addr.s_addr) & 0x0000FF00) >> 8,
-             (ntohl(addrpeer.sin_addr.s_addr) & 0x000000FF));
-
+     switch( _9p_conn.addrpeer.ss_family)
+      {
+	case AF_INET:
+		inet_ntop(_9p_conn.addrpeer.ss_family,
+			   &((struct sockaddr_in *)&_9p_conn.addrpeer)->sin_addr, strcaller, INET6_ADDRSTRLEN);
+		break;
+	case AF_INET6:
+		inet_ntop(_9p_conn.addrpeer.ss_family,
+			   &((struct sockaddr_in6 *)&_9p_conn.addrpeer)->sin6_addr, strcaller, INET6_ADDRSTRLEN);
+                break ;
+        default:
+                snprintf( strcaller, INET6_ADDRSTRLEN, "BAD ADDRESS" ) ;
+                break ;
+       }
+                                
      LogEvent( COMPONENT_9P, "9p socket #%ld is connected to %s", tcp_sock, strcaller ) ; 
+     printf( "9p socket #%ld is connected to %s\n", tcp_sock, strcaller ) ; 
    }
 
   /* Set up the structure used by poll */

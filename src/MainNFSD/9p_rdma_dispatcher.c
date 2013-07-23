@@ -168,6 +168,7 @@ void * _9p_rdma_thread( void * Arg )
   atomic_store_uint32_t(&p_9p_conn->refcount, 0) ;
   p_9p_conn->trans_type = _9P_RDMA ;
   p_9p_conn->trans_data.rdma_trans = trans ;
+  memcpy(&p_9p_conn->addrpeer, msk_get_dst_addr(trans), sizeof(p_9p_conn->addrpeer));
 
   /* Init the fids pointers array */
   memset( &p_9p_conn->fids, 0, _9P_FID_PER_CONN* sizeof( _9p_fid_t * ) ) ;

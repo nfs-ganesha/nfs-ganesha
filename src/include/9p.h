@@ -356,6 +356,7 @@ typedef struct _9p_conn__
    } trans_data ;
   _9p_trans_type_t trans_type ;
   uint32_t        refcount;
+  struct sockaddr_storage addrpeer ;
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
   _9p_fid_t       * fids[_9P_FID_PER_CONN] ;
   _9p_flush_bucket_t flush_buckets[FLUSH_BUCKETS];

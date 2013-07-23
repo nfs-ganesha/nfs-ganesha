@@ -1328,9 +1328,11 @@ freeargs:
  * @param[in,out] req9p       9p request
  * @param[in,out] worker_data Worker's specific data
  */
-static void _9p_execute( _9p_request_data_t *req9p, 
-                          nfs_worker_data_t *worker_data)
+static void _9p_execute( request_data_t *preq, 
+                         nfs_worker_data_t *worker_data)
 {
+  _9p_request_data_t * req9p = &preq->r_u._9p ;  
+
   if( req9p->pconn->trans_type == _9P_TCP )
     _9p_tcp_process_request( req9p, worker_data ) ;
 #ifdef _USE_9P_RDMA
@@ -1457,7 +1459,7 @@ static void worker_run(struct fridgethr_context *ctx)
 
 #ifdef _USE_9P
        case _9P_REQUEST:
-           _9p_execute(&nfsreq->r_u._9p, worker_data);
+           _9p_execute(nfsreq, worker_data);
            break;
 #endif
        }

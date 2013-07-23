@@ -42,6 +42,8 @@
 #include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
+#include "server_stats.h"
+#include "client_mgr.h"
 
 int _9p_write( _9p_request_data_t * preq9p, 
               void  * pworker_data,
@@ -133,10 +135,33 @@ int _9p_write( _9p_request_data_t * preq9p,
 				      &eof_met,
 				      &pfid->op_context,
 				      &sync);
+
+#ifdef USE_DBUS_STATS
+     /* Get the handle, for stats */
+     sockaddr_t * paddr = (sockaddr_t *)&preq9p->pconn->addrpeer;
+     struct gsh_client * client = get_gsh_client( paddr, false);
+
+     if(client == NULL)
+        LogDebug(COMPONENT_9P,
+	         "Cannot get client block for 9P request" ) ;
+     pfid->op_context.client = client ;
+
+     server_stats_io_done(&pfid->op_context,
+  		          size,
+		          written_size,
+		          (cache_status == CACHE_INODE_SUCCESS) ? true : false,
+		          true);
+
+     if(client != NULL)
+        put_gsh_client(client);
+#endif
+
      if(cache_status != CACHE_INODE_SUCCESS )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
       outcount = (u32)written_size ;
+
+
     }
 
   /* Build the reply */
