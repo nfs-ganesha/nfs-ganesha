@@ -104,6 +104,9 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    if (pentry_newdir == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+   /* This is not a TATTACH fid */
+   pfid->from_attach = FALSE ;
+
    cache_status = cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
    if(cache_status != CACHE_INODE_SUCCESS)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

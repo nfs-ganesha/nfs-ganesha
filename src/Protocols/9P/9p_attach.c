@@ -139,6 +139,10 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /* Keep track of the pexport in the req_ctx */
   pfid->op_context.export = exp;
 
+  /* This fid is a special one : it comes from TATTACH and so generate a record
+   * int the export manager */
+  pfid->from_attach = TRUE ;
+
   cache_status = cache_inode_fileid(pfid->pentry,
 				    &pfid->op_context, &fileid);
   if(cache_status != CACHE_INODE_SUCCESS)

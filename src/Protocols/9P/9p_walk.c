@@ -109,6 +109,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
       /* Set the new fid id */
       pnewfid->fid = *newfid ;
 
+      /* This is not a TATTACH fid */
+      pnewfid->from_attach = FALSE ;
+
       /* Increments refcount so it won't fall below 0 when we clunk later */
       cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL);
    }
@@ -148,6 +151,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
       pnewfid->pexport = pfid->pexport ;
       pnewfid->ppentry = pfid->pentry ;
       strncpy( pnewfid->name, name, MAXNAMLEN ) ;
+
+      /* This is not a TATTACH fid */
+      pnewfid->from_attach = FALSE ;
 
       cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
       if(cache_status != CACHE_INODE_SUCCESS)

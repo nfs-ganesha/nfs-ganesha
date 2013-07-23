@@ -96,7 +96,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
      return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
    }
  
-snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+   snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    if( ( create_arg.link_content = gsh_malloc( MAXPATHLEN ) ) == NULL )
     return _9p_rerror( preq9p, pworker_data, msgtag, EFAULT, plenout, preply ) ;
@@ -119,6 +119,9 @@ snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
     {
       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
+
+   /* This is not a TATTACH fid */
+   pfid->from_attach = FALSE ;
 
    cache_status = cache_inode_fileid(pentry_symlink, &pfid->op_context, &fileid);
    if(cache_status != CACHE_INODE_SUCCESS) {

@@ -150,6 +150,9 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
             return  _9p_rerror( preq9p, pworker_data, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
+   /* This is not a TATTACH fid */
+   pfid->from_attach = FALSE ;
+
    /* Pin as well. We probably want to close the file if this fails, but it won't happen - right?! */
    cache_status = cache_inode_inc_pin_ref(pentry_newfile);
    if(cache_status != CACHE_INODE_SUCCESS)

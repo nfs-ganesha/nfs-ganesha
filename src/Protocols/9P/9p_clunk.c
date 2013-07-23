@@ -59,9 +59,12 @@ static void free_fid(_9p_fid_t * pfid,
 {
 	struct gsh_export *exp;
 
-	cache_inode_put(pfid->pentry);
-	exp = container_of(pfid->pexport, struct gsh_export, export);
-	put_gsh_export(exp);
+        if( pfid->from_attach )
+         {
+	   cache_inode_put(pfid->pentry);
+	   exp = container_of(pfid->pexport, struct gsh_export, export);
+	   put_gsh_export(exp);
+         }
 	gsh_free(pfid);
 	preq9p->pconn->fids[*fid] = NULL; /* poison the entry */
 }

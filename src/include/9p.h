@@ -294,6 +294,7 @@ typedef struct _9p_fid__
   cache_entry_t         * ppentry ;
   char                    name[MAXNAMLEN] ;
   u32                     opens ;
+  bool                    from_attach ;
   union 
     { 
        u32      iounit ;
