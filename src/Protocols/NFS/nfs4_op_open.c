@@ -308,6 +308,38 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                tag))
             {
               /* Response is setup for us and LogDebug told what was wrong */
+              /* Or if this is a seqid replay, find the file entry */
+              /* and update currentFH */
+              if(res_OPEN4.status == NFS4_OK)
+                {
+                  /* Check if filename is correct */
+                  cache_status = utf8_to_name(&arg_OPEN4.claim.open_claim4_u.file,
+                                  &filename);
+
+                  if(cache_status != CACHE_INODE_SUCCESS)
+                    {
+                      res_OPEN4.status = nfs4_Errno(cache_status);
+                      cause2 = " FSAL_buffdesc2name";
+                      goto out1;
+                    }
+                  pentry_lookup = cache_inode_lookup(pentry_parent,
+                                             &filename,
+                                             NULL,
+                                             data->pcontext,
+                                             &cache_status);
+                  if(pentry_lookup == NULL)
+                    {
+                      res_OPEN4.status = nfs4_Errno(cache_status);
+                      cause2 = "lookup failed";
+                      goto out1;
+                    }
+                  status4 = nfs4_create_fh(data, pentry_lookup, &text);
+                  if(status4 != NFS4_OK)
+                    {
+                      cause2 = text;
+                      res_OPEN4.status = status4;
+                    }
+                }
               goto out1;
             }
         }
