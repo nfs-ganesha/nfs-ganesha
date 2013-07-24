@@ -210,6 +210,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      cb_data.error = NFS4_OK;
      cb_data.req_attr = arg_READDIR4.attr_request;
      cb_data.data = data;
+     cb_data.attrmask = 0;
 
      nfs4_attrmap_to_FSAL_attrmask(&cb_data.req_attr, &cb_data.attrmask);
 
