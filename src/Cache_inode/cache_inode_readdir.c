@@ -755,7 +755,7 @@ cache_inode_readdir(cache_entry_t *directory,
          in_result && dirent_node;
          dirent_node = avltree_next(dirent_node)) {
 
-          bool_t retry=TRUE;
+          bool_t retry = TRUE;
           cache_entry_t *entry = NULL;
           cache_inode_status_t lookup_status = 0;
 
@@ -776,7 +776,7 @@ estale_retry:
                                                   &lookup_status);
 
                if(entry == NULL) {
-                    if(lookup_status == CACHE_INODE_FSAL_ESTALE) {
+                    if(retry && lookup_status == CACHE_INODE_FSAL_ESTALE) {
                          retry = FALSE; /* only one retry per dirent */
                          goto estale_retry;
                     }
