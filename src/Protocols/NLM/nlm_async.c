@@ -203,6 +203,15 @@ int nlm_send_async(int                  proc,
                                         NLMPROG,
                                         NLM4_VERS,
                                         host->slc_nsm_client->ssc_nlm_caller_name);
+            /* handle error here, for example, client side blocking rpc call */
+            if (buf==NULL)
+            {
+              LogMajor(COMPONENT_NLM,
+                       "Cannot create NLM async %s connection to client %s",
+                       xprt_type_to_str(host->slc_client_type),
+                       host->slc_nsm_client->ssc_nlm_caller_name);
+              return -1;
+            }
 
             host->slc_callback_clnt = clnt_vc_ncreate(fd, buf,
                                                       NLMPROG,
