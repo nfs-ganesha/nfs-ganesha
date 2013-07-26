@@ -190,9 +190,6 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
          memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
        }
-      _9p_chomp_attr_value( pxattrfid->specdata.xattr.xattr_content, strlen(  pxattrfid->specdata.xattr.xattr_content) ) ;
-
-      attrsize = strlen( pxattrfid->specdata.xattr.xattr_content ) ;
    }
 
   /* Increments refcount so it won't fall below 0 when we clunk later */

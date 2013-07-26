@@ -664,7 +664,6 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
        * trying to determine its type...
        */
       *p_output_size = rc;
-      xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
       close(fd);
       return fsalstat(ERR_FSAL_NO_ERROR, 0 ) ;
@@ -729,7 +728,6 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
    * trying to determine its type...
    */
   *p_output_size = rc;
-  xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
   close(fd);
   return fsalstat(ERR_FSAL_NO_ERROR, 0 ) ;
