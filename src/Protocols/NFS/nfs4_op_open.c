@@ -424,6 +424,11 @@ open4_open_owner(struct nfs_argop4 * op,
         state_nfs4_owner_name_t owner_name;
         /* Indicates if the owner is new */
         bool_t isnew;
+        /* Return value of Cache inode operations */
+        cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+        /* The filename to create */
+        char            * filename = NULL;
+        cache_entry_t   * entry_lookup = NULL;
 
         /* Is this open_owner known? If so, get it so we can use
            replay cache */
@@ -468,6 +473,33 @@ open4_open_owner(struct nfs_argop4 * op,
                                         /* Response is setup for us
                                            and LogDebug told what was
                                            wrong */
+                                       /* Or if this is a seqid replay, 
+                                          find the file entry
+                                          and update currentFH */
+                                       if (res_OPEN4->status == NFS4_OK) {
+                                               /* Check if filename is correct */
+                                              cache_status = nfs4_utf8string2dynamic(&arg_OPEN4->claim.open_claim4_u.file,
+                                                                                   UTF8_SCAN_ALL,
+                                                                                   &filename);
+
+                                               if (cache_status != CACHE_INODE_SUCCESS) {
+                                                       res_OPEN4->status = nfs4_Errno(cache_status);
+                                                       return false;
+                                               }
+                                               cache_status = cache_inode_lookup(data->current_entry,
+                                                                       filename,
+                                                                       data->req_ctx,
+                                                                       &entry_lookup);
+                                               if (filename) {
+                                                       gsh_free(filename);
+                                                       filename = NULL;
+                                               }
+                                               if (entry_lookup == NULL) {
+                                                       res_OPEN4->status = nfs4_Errno(cache_status);
+                                                       return false;
+                                               }
+                                               res_OPEN4->status = open4_create_fh(data, entry_lookup);
+                                        }
                                         return false;
                                 }
                         }
