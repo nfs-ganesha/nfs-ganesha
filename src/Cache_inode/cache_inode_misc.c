@@ -253,7 +253,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           /* Entry is already in the cache, do not add it */
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Trying to add an already existing "
+                   "Trying to add an already existing "
                    "entry 1. Found entry %p type: %d, New type: %d",
                    oentry, oentry->type, new_obj->type);
           cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
@@ -316,7 +316,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      switch (nentry->type) {
      case REGULAR_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Adding a REGULAR_FILE, entry=%p",
+                   "Adding a REGULAR_FILE, entry=%p",
                    nentry);
 
           /* No locks, yet. */
@@ -329,7 +329,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      
      case DIRECTORY:
           LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Adding a DIRECTORY, entry=%p",
+                   "Adding a DIRECTORY, entry=%p",
                    nentry);
 
           atomic_set_uint32_t_bits(&nentry->flags, CACHE_INODE_TRUST_CONTENT);
@@ -354,7 +354,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      case BLOCK_FILE:
      case CHARACTER_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Adding a special file of type %d "
+                   "Adding a special file of type %d "
                    "entry=%p", nentry->type, nentry);
           break;
 
@@ -367,7 +367,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           /* Should never happen */
           status = CACHE_INODE_INCONSISTENT_ENTRY;
           LogMajor(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: unknown type %u provided",
+                   "unknown type %u provided",
                    nentry->type);
 	  cih_latch_rele(&latch);
 	  *entry = NULL;
@@ -387,8 +387,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK);
      if (unlikely(rc)) {
           LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_new_entry: entry could not be added to hash, "
-                  "rc=%d", rc);
+                  "entry could not be added to hash, rc=%d", rc);
           new_obj = nentry->obj_handle;
           nentry->obj_handle = NULL;  /* give it back and poison the entry */
           status = CACHE_INODE_HASH_SET_ERROR;
@@ -397,7 +396,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      }
 
      LogDebug(COMPONENT_CACHE_INODE,
-              "cache_inode_new_entry: New entry %p added", nentry);
+              "New entry %p added", nentry);
      status = CACHE_INODE_SUCCESS;
 
 out:

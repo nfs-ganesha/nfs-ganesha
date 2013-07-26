@@ -465,7 +465,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_FATAL)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FATAL, \
-                               "%s: FATAL ERROR: " format, \
+                               "%s FATAL ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -473,7 +473,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_MAJOR)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MAJ, \
-                               "%s: MAJOR ERROR: " format, \
+                               "%s MAJOR ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -481,7 +481,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_CRIT, \
-                               "%s: CRITICAL ERROR: " format, \
+                               "%s CRITICAL ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
    } while (0)
 
@@ -489,7 +489,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_WARN)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_WARN, \
-                               "%s: WARN: " format, \
+                               "%s WARN: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -497,7 +497,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_EVENT, \
-                               "%s: EVENT: " format, \
+                               "%s EVENT: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -505,7 +505,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_INFO)) \
       DisplayLogComponentLevel(component, (char *) __FUNCTION__, NIV_INFO, \
-                               "%s: INFO: " format, \
+                               "%s INFO: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -513,7 +513,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_DEBUG)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
-                               "%s: DBG: " format, \
+                               "%s DBG: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -521,7 +521,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_MID_DEBUG)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MID_DEBUG, \
-                               "%s: M_DBG: " format, \
+                               "%s M_DBG: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -529,7 +529,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
-                               "%s: F_DBG: " format, \
+                               "%s F_DBG: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
@@ -537,7 +537,7 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= level)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
-                               "%s: %s: " format, \
+                               "%s %s: " format, \
                                LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
   } while (0)
 

@@ -694,7 +694,7 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
              texte);
   else
     snprintf(buff_dest, STR_LEN_TXT,
-             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld :%s :%s :%s\n",
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld %s %s :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
              the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, threadname,
              function, texte);
