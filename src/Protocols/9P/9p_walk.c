@@ -137,8 +137,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
 						&pfid->op_context,
 						&pnewfid->pentry);
 
-	   if(pnewfid->pentry == NULL )
+	   if(pnewfid->pentry == NULL ) {
+              gsh_free(pnewfid);
               return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+           }
 
 	   if(pentry != pfid->pentry)
               cache_inode_put( pentry ) ;
@@ -156,9 +158,11 @@ int _9p_walk( _9p_request_data_t * preq9p,
       pnewfid->from_attach = FALSE ;
 
       cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
-      if(cache_status != CACHE_INODE_SUCCESS)
+      if(cache_status != CACHE_INODE_SUCCESS) {
+          gsh_free(pnewfid);
           return _9p_rerror( preq9p, pworker_data, msgtag,
 			     _9p_tools_errno( cache_status ), plenout, preply ) ;
+      }
 
      /* Build the qid */
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
@@ -188,6 +192,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
         default:
           LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
+          gsh_free(pnewfid);
           return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
           break ;
       }
