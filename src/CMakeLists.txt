@@ -217,6 +217,11 @@ IF(USE_FSAL_HPSS)
   IF(HPSS_PREFIX)
     set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
     LIST(APPEND CMAKE_LIBRARY_PATH "${HPSS_PREFIX}/lib")
+
+    # Already set the rpath after build, don't wait for make install
+    SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    SET(CMAKE_INSTALL_RPATH "${HPSS_PREFIX}/lib")
+
     include_directories("${HPSS_PREFIX}/include")
   ELSE()
     set(HPSS_PREFIX "/usr" CACHE PATH "Path to HPSS installation")
@@ -321,6 +326,8 @@ if(USE_FSAL_HPSS)
   if(NOT HPSS_LIBRARY)
     message(WARNING "Cannot find HPSS libraries. Disabling HPSS fsal build")
     set(USE_FSAL_HPSS OFF)
+  else(NOT HPSS_LIBRARY)
+    set(SYSTEM_LIBRARIES ${HPSS_LIBRARY} ${SYSTEM_LIBRARIES})
   endif(NOT HPSS_LIBRARY)
 endif(USE_FSAL_HPSS)
 
