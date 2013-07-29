@@ -219,6 +219,7 @@ char workpath[PATH_MAX];
                              sizeof(workpath)) == -1)
                         break;
                 cp = workpath;
+                LogDebug(COMPONENT_THREAD, "recovery event file: [%s], t_after = [%ld]", workpath, t_after);
                 i = 1; /* time is the second entry */
                 while(i--) {
                         while(*cp != DELIMIT)
