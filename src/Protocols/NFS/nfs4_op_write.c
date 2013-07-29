@@ -280,9 +280,9 @@ int nfs4_op_write(struct nfs_argop4 *op,
       LogFullDebug(COMPONENT_NFS_V4,
                    "NFS4_OP_WRITE: write requested size = %"PRIu32
                    " write allowed size = %"PRIu32,
-                   size, data->pexport->MaxWrite);
+                   size, check_size);
 
-      size = data->pexport->MaxWrite;
+      size = check_size;
     }
 
   /* Where are the data ? */
