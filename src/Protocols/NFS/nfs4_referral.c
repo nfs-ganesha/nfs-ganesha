@@ -67,7 +67,8 @@ int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
-  pfhandle4->refid = 1;
+  /* TODO: referrals need some work */
+  //  pfhandle4->refid = 1;
 
   return 1;
 }
