@@ -1967,8 +1967,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   nfs_cookie4 cookie;
   verifier4 cookie_verifier;
   unsigned long space_used = 0;
-  pseudofs_entry_t *psfsentry;
-  pseudofs_entry_t *iter = NULL;
+  pseudofs_entry_t *psfsentry, *curr_psfsentry;
   entry4 *entry_nfs_array = NULL;
   exportlist_t *save_pexport;
   export_perms_t save_export_perms;
@@ -1982,6 +1981,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   int error = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t *pentry = NULL;
+  pseudofs_entry_t tempentry;
+  struct avltree_node *keynode, *currnode;
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
@@ -2154,61 +2155,66 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
    * For these reason, there will be an offset of 3 between NFS4 cookie and HPSS cookie */
 
   /* make sure to start at the right position given by the cookie */
-  iter = psfsentry->sons;
-  if(cookie != 0)
-    {
-      for(; iter != NULL; iter = iter->next)
-        if((iter->pseudo_id + 3) == cookie)
-          break;
-    }
+  if (cookie == 0)
+    currnode = avltree_first(&psfsentry->child_tree_byid);
+  else {
+    /* Find entry with cookie (which was set to pseudo_id) */
+    memset(&tempentry.idavlnode, 0, sizeof(tempentry.idavlnode));
+    keynode = &tempentry.idavlnode;
+    tempentry.pseudo_id = cookie;
+    currnode = avltree_lookup(keynode, &psfsentry->child_tree_byid);
+    if(currnode == NULL)
+      {
+        res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+        return res_READDIR4.status;
+      }
+  }
+  for( ;
+       currnode != NULL;
+       currnode = avltree_next(currnode)) {
+    curr_psfsentry = avltree_container_of(currnode, pseudofs_entry_t, idavlnode);
+    LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+                "PSEUDO FS: Found entry %s pseudo_id %"PRIu64,
+                curr_psfsentry->name, curr_psfsentry->pseudo_id);
 
-  /* Here, where are sure that iter is set to the position indicated eventually by the cookie */
-  i = 0;
-  for(; iter != NULL; iter = iter->next)
-    {
-      LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
-                  "PSEUDO FS: Found entry %s pseudo_id %d",
-                  iter->name, iter->pseudo_id);
+    entry_nfs_array[i].name.utf8string_len = strlen(curr_psfsentry->name);
+    entry_nfs_array[i].name.utf8string_val = gsh_strdup(curr_psfsentry->name);
 
-      entry_nfs_array[i].name.utf8string_len = strlen(iter->name);
-      entry_nfs_array[i].name.utf8string_val = gsh_strdup(iter->name);
+    if(entry_nfs_array[i].name.utf8string_val == NULL)
+      {
+        LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                 "Failed to allocate memory for entry's name");
+        res_READDIR4.status = NFS4ERR_RESOURCE;
+        return res_READDIR4.status;
+      }
 
-      if(entry_nfs_array[i].name.utf8string_val == NULL)
-        {
-            LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                     "Failed to allocate memory for entry's name");
-            res_READDIR4.status = NFS4ERR_RESOURCE;
+    entry_nfs_array[i].cookie = curr_psfsentry->pseudo_id;
+
+    /* This used to be in an if with a bogus check for FATTR4_FILEHANDLE. Such
+     * a common case, elected to set up FH for call to xxxx_ToFattr
+     * unconditionally.
+     */
+    if(entryFH.nfs_fh4_len == 0)
+      {
+        res_READDIR4.status = nfs4_AllocateFH(&entryFH);
+        if(res_READDIR4.status != NFS4_OK)
+          {
             return res_READDIR4.status;
-        }
+          }
+      }
+    /* Do the case where we stay within the pseudo file system. */
+    if(curr_psfsentry->junction_export == NULL)
+      {
+        nfs4_PseudoToFhandle(&entryFH, curr_psfsentry);
 
-      entry_nfs_array[i].cookie = iter->pseudo_id + 3;
-
-      /* This used to be in an if with a bogus check for FATTR4_FILEHANDLE. Such
-       * a common case, elected to set up FH for call to xxxx_ToFattr
-       * unconditionally.
-       */ 
-      if(entryFH.nfs_fh4_len == 0)
-        {
-          res_READDIR4.status = nfs4_AllocateFH(&entryFH);
-          if(res_READDIR4.status != NFS4_OK)
-            {
-              return res_READDIR4.status;
-            }
-        }
-
-      /* Do the case where we stay within the pseudo file system. */
-      if(iter->junction_export == NULL)
-        {
-          nfs4_PseudoToFhandle(&entryFH, iter);
-
-          if(nfs4_PseudoToFattr(iter,
-                            &(entry_nfs_array[i].attrs),
-                            data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
-            {
-              LogFatal(COMPONENT_NFS_V4_PSEUDO,
-                       "nfs4_PseudoToFattr failed to convert pseudo fs attr");
-            }
-        }
+        if(nfs4_PseudoToFattr(curr_psfsentry,
+                              &(entry_nfs_array[i].attrs),
+                              data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+          {
+            LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                     "nfs4_PseudoToFattr failed to convert pseudo fs attr");
+          }
+      }
       else
         {
           /* This is a junction. Code used to not recognize this which resulted
@@ -2217,15 +2223,16 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
            * this. Now we go to the junction to get the attributes.
            */
           LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
-                 "Offspring DIR %s pseudo_id %d is a junction Export_id %d Path %s", 
-                  iter->name,
-                  iter->pseudo_id,
-                  iter->junction_export->id,
-                  iter->junction_export->fullpath); 
+                      "Offspring DIR %s pseudo_id %"PRIu64 " is a junction Export_id %d Path %s",
+                      curr_psfsentry->name,
+                      curr_psfsentry->pseudo_id,
+                      curr_psfsentry->junction_export->id,
+                      curr_psfsentry->junction_export->fullpath);
+
           /* Save the compound data context */
           save_pexport      = data->pexport;
           save_export_perms = data->export_perms;
-          data->pexport     = iter->junction_export;
+          data->pexport     = curr_psfsentry->junction_export;
           /* Build the credentials */
           /* XXX Is this really necessary for doing a lookup and 
            * getting attributes?
@@ -2275,7 +2282,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                    * MOUNTED_ON_FILEID are always the same. FILEID
                    * of pseudo fs node is what we actually want here...
                    */
-                  if(nfs4_PseudoToFattr(iter,
+                  if(nfs4_PseudoToFattr(curr_psfsentry,
                                         &(entry_nfs_array[i].attrs),
                                         data,
                                         NULL, /* don't need the file handle */
@@ -2302,8 +2309,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               /* Traverse junction to get attrs */
 
               /* Do the look up. */
-              fsal_status = FSAL_str2path(iter->junction_export->fullpath,
-                                          (strlen(iter->junction_export->fullpath) +1 ),
+              fsal_status = FSAL_str2path(curr_psfsentry->junction_export->fullpath,
+                                          (strlen(curr_psfsentry->junction_export->fullpath) +1 ),
                                           &exportpath_fsal);
 
               if(FSAL_IS_ERROR(fsal_status))
@@ -2423,7 +2430,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
            data->pexport      = save_pexport;
            data->export_perms = save_export_perms;
-        }        
+        }
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;
       if(i != 0)
@@ -2435,7 +2442,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Did we reach the maximum number of entries */
       if(i == estimated_num_entries)
         break;
-    }
+  } /* avltree for loop */
+
 
   /* Build the reply */
   memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
@@ -2446,16 +2454,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
   /* did we reach the end ? */
-  if(iter == NULL)
-    {
-      /* Yes, we did */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-    }
-  else
-    {
-      /* No, there are some more entries */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
-    }
+  if(currnode == NULL) /* Yes, we did */
+    res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
+  else /* No, there are some more entries */
+    res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
+
+  if (entryFH.nfs_fh4_val != NULL)
+    gsh_free(entryFH.nfs_fh4_val);
 
   /* Exit properly */
   res_READDIR4.status = NFS4_OK;
