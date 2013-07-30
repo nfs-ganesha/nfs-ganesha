@@ -83,7 +83,7 @@ static int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
   int              status = 0;
 
   /* For the moment, I choose to have rootFH = publicFH */
-  psfsentry = *(data->pseudofs->reverse_tab[0]);
+  psfsentry = data->pseudofs->root;
 
   /* If publicFH already set, return success */
   if(data->publicFH.nfs_fh4_len != 0)

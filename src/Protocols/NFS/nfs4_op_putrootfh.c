@@ -82,7 +82,7 @@ static int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
   pseudofs_entry_t psfsentry;
   int              status = 0;
 
-  psfsentry = *(data->pseudofs->reverse_tab[0]);
+  psfsentry = data->pseudofs->root;
 
   /* If rootFH already set, return success */
   if(data->rootFH.nfs_fh4_len != 0)
