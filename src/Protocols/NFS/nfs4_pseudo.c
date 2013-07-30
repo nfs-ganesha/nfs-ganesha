@@ -57,10 +57,16 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
+#include "city.h"
+#include "cache_inode_avl.h"
+#include "avltree.h"
+#include "common_utils.h"
 
 #define NB_TOK_PATH 128
 
 static pseudofs_t gPseudoFs;
+hash_table_t *ht_nfs4_pseudo;
+#define V4_FH_OPAQUE_SIZE (sizeof(struct alloc_file_handle_v4 ) - sizeof(struct file_handle_v4))
 
 /**
  * nfs4_GetPseudoFs: Gets the root of the pseudo file system.
@@ -68,13 +74,204 @@ static pseudofs_t gPseudoFs;
  * Gets the root of the pseudo file system. This is only a wrapper to static variable gPseudoFs. 
  *
  * @return the pseudo fs root 
- * 
  */
-
 pseudofs_t *nfs4_GetPseudoFs(void)
 {
   return &gPseudoFs;
 }                               /*  nfs4_GetExportList */
+
+/**                                                                    
+ * @brief Free the opaque nfsv4 handle used as a key in the pseudofs   
+ *                                                                     
+ * This will free the opaque nfsv4 handle used as a key in the pseudofs
+ * hashtable. It is passed to the hashtable during initialization.     
+ *                                                                     
+ * @param[in] key the key used in pseudofs hashtable                   
+ *                                                                     
+ * @return void                                                        
+ */
+void free_pseudo_handle_key(hash_buffer_t key)
+{
+  gsh_free(key.pdata);
+}
+
+/**                                                                      
+ * @brief Construct the fs opaque part of a pseudofs nfsv4 handle        
+ *                                                                       
+ * Given the components of a pseudofs nfsv4 handle, the nfsv4 handle is  
+ * created by concatenating the components. This is the fs opaque piece  
+ * of struct file_handle_v4 and what is sent over the wire.              
+ *                                                                       
+ * @param[in] pseudopath Full patch of the pseudofs node                 
+ * @param[in] len length of the pseudopath parameter                     
+ * @param[in] hashkey a 64 bit hash of the pseudopath parameter          
+ *                                                                       
+ * @return The nfsv4 pseudofs file handle as a char *                    
+ */
+char *package_pseudo_handle(char *pseudopath, ushort len, uint64 hashkey)
+{
+  char *buff = NULL;
+  int opaque_bytes_used=0,pathlen=0;
+
+  /* This is the size of the v4 file handle opaque area used for pseudofs or
+   * FSAL file handles. */
+  buff = gsh_malloc(V4_FH_OPAQUE_SIZE); 
+  if (buff == NULL)
+    {
+      LogCrit(COMPONENT_NFS_V4_PSEUDO,
+              "Failed to malloc space for pseudofs handle.");
+      return NULL;
+    }
+
+  memcpy(buff, &hashkey, sizeof(hashkey));
+  opaque_bytes_used += sizeof(hashkey);
+
+  /* include length of the path in the handle */
+  /* MAXPATHLEN=4096 ... max path length can be contained in a short int. */
+  memcpy(buff + opaque_bytes_used, &len, sizeof(ushort));
+  opaque_bytes_used += sizeof(ushort);
+
+  /* Either the nfsv4 fh opaque size or the length of the pseudopath. Ideally
+   * we can include entire pseudofs pathname for guaranteed uniqueness of
+   * pseudofs handles. */
+  pathlen = min(V4_FH_OPAQUE_SIZE - opaque_bytes_used, len);
+  memcpy(buff + opaque_bytes_used, pseudopath, pathlen);
+  opaque_bytes_used += pathlen;
+
+  /* If there is more space in the opaque handle due to a short pseudofs path
+   * ... zero it. */
+  if (opaque_bytes_used < V4_FH_OPAQUE_SIZE)
+    {
+      memset(buff + opaque_bytes_used, 0,
+             V4_FH_OPAQUE_SIZE - opaque_bytes_used);
+    }
+
+  return buff;
+}
+
+/**                                                                      
+ * @brief Creates a hashtable key for a pseudofs node given the fullpath.
+ *                                                                       
+ * Creates a hashtable key for a pseudofs node given the fullpath.       
+ *                                                                       
+ * @param[in] pseudopath Full path of the pseudofs node                  
+ * @param[in] len Length of the full path                                
+ *                                                                       
+ * @return the key                                                       
+ */
+hash_buffer_t create_pseudo_handle_key(char *pseudopath, int len)
+{
+  hash_buffer_t key;
+  uint64 hashkey;
+
+  hashkey = CityHash64(pseudopath, len);
+  key.pdata = package_pseudo_handle(pseudopath, (ushort)len, hashkey);
+  key.len = V4_FH_OPAQUE_SIZE;
+
+  /* key.pdata == NULL upon error */
+  return key;
+}
+
+/**                                                                         
+ * @brief Compares the name attribute contained in pseudofs avltree keys    
+ *                                                                          
+ * Compares the name attribute contained in pseudofs avltree keys. The      
+ * key will be of type pseudofs_entry_t. avltree nodes are compared by name 
+ * and name length.                                                         
+ *                                                                          
+ * @param[in] lhs left hande side psuedofs entry key                        
+ * @param[in] rhs right hande side psuedofs entry key                       
+ *                                                                          
+ * @return -1 if rhs is bigger, 1 if lhs is bigger, 0 if they are the same. 
+ */
+static inline int avl_pseudo_name_cmp(const struct avltree_node *lhs,
+                                      const struct avltree_node *rhs)
+{
+  pseudofs_entry_t *lk, *rk;
+  int llen,rlen,res;
+  lk = avltree_container_of(lhs, pseudofs_entry_t, nameavlnode);
+  rk = avltree_container_of(rhs, pseudofs_entry_t, nameavlnode);
+
+  llen = strlen(lk->name);
+  rlen = strlen(rk->name);
+
+  if (llen < rlen)
+    return (-1);
+  if (llen > rlen)
+    return (1);
+
+  /* Compare strings*/
+  res = strncmp(lk->name, rk->name, llen);
+  if (res < 0) /* lk->name is bigger */
+    return 1;
+  if (res > 0) /* rk->name is bigger */
+    return -1;
+
+  /* Exact same name */
+  return 0;
+}
+
+/**                                                                          
+ * @brief Compares the pseudo_id attribute contained in pseudofs avltree keys
+ *                                                                           
+ * Compares the pseudo_id attribute contained in pseudofs avltree keys. The  
+ * key will be of type pseudofs_entry_t.                                     
+ * NOTE: There is a chance of a collision. We will not have the node name to 
+ * avoid the collision.                                                      
+ *                                                                           
+ * @param[in] lhs left hande side psuedofs entry key                         
+ * @param[in] rhs right hande side psuedofs entry key                        
+ *                                                                           
+ * @return -1 if rhs is bigger, 1 if lhs is bigger, 0 if they are the same.  
+ */
+static inline int avl_pseudo_id_cmp(const struct avltree_node *lhs,
+                                    const struct avltree_node *rhs)
+{
+  pseudofs_entry_t *lk, *rk;
+  lk = avltree_container_of(lhs, pseudofs_entry_t, idavlnode);
+  rk = avltree_container_of(rhs, pseudofs_entry_t, idavlnode);
+
+  if (lk->pseudo_id < rk->pseudo_id)
+    return (-1);
+  if (lk->pseudo_id > rk->pseudo_id)
+    return (1);
+  return 0;
+}
+
+/**                                                                          
+ * @brief Concatenate a number of pseudofs tokens into a string              
+ *                                                                           
+ * When reading pseudofs paths from export entries, we divide the            
+ * path into tokens. This function will recombine a specific number          
+ * of those tokens into a string.                                            
+ *                                                                           
+ * @param[in/out] fullpseudopath Must be not NULL. Tokens are copied to here.
+ * @param[in] PathTok List of token strings                                  
+ * @param[in] tok Number of tokens to use for full pseudopath                
+ * @param[in] maxlen maximum number of chars to copy to fullpseudopath       
+ *                                                                           
+ * @return void                                                              
+ */
+void fullpath(char *fullpseudopath, char **PathTok, int tok, int maxlen)
+{
+  int currtok, currlen=0;
+
+  fullpseudopath[currlen++] = '/';
+  for(currtok=0; currtok<=tok&&currlen<maxlen; currtok++)
+    {
+      if (currlen + strlen(PathTok[currtok]) > maxlen)
+        {
+          LogWarn(COMPONENT_NFS_V4_PSEUDO,"Pseudopath length is too long, can't "
+                  "create pseudofs node.");
+          break;
+        }
+      strncpy(fullpseudopath+currlen, PathTok[currtok], strlen(PathTok[currtok]));
+      currlen += strlen(PathTok[currtok]);
+      if (currtok<tok)
+        fullpseudopath[currlen++] = '/';
+    }
+  fullpseudopath[currlen] = '\0';
+}
 
 /**
  * nfs4_ExportToPseudoFS: Build a pseudo fs from an exportlist
@@ -84,7 +281,6 @@ pseudofs_t *nfs4_GetPseudoFs(void)
  * @return the pseudo fs root 
  * 
  */
-
 int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
 {
   exportlist_t *entry;
@@ -1175,7 +1371,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 #endif
 
         default:
-	  LogWarn(COMPONENT_NFS_V4_PSEUDO, "Bad file attributes %d queried",
+          LogWarn(COMPONENT_NFS_V4_PSEUDO, "Bad file attributes %d queried",
                   attribute_to_set);
           /* BUGAZOMEU : un traitement special ici */
           break;
@@ -1481,7 +1677,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         {
           cache_status = cache_inode_error_convert(fsal_status);
           res_LOOKUP4.status = nfs4_Errno(cache_status);
-	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to lookup for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1532,9 +1728,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Return the reference to the old current entry */
-      if (data->current_entry) {
-          cache_inode_put(data->current_entry);
-      }
+      if (data->current_entry)
+        cache_inode_put(data->current_entry);
 
       /* Make the cache inode entry the current entry */
       data->current_entry = pentry;
@@ -1621,9 +1816,8 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
 
   /* Return the reference to the old current entry */
-  if (data->current_entry) {
-      cache_inode_put(data->current_entry);
-  }
+  if (data->current_entry)
+    cache_inode_put(data->current_entry);
 
   /* Fill in compound data */
   res_LOOKUPP4.status = set_compound_data_for_pseudo(data);
@@ -1852,9 +2046,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Return the reference to the old current entry */
-      if (data->current_entry) {
-          cache_inode_put(data->current_entry);
-      }
+      if (data->current_entry)
+        cache_inode_put(data->current_entry);
 
       /* Make the cache inode entry the current entry */
       data->current_entry = pentry;
@@ -2209,3 +2402,134 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   return NFS4_OK;
 }                               /* nfs4_op_readdir_pseudo */
+
+/**
+ *
+ * @brief Compares two pseudofs ids used in pseudofs hashtable
+ *
+ * Compare two keys used in pseudofs cache. These keys are made from
+ * the pseudofs pathname and a hash of that pathname.
+ *
+ * @param[in] buff1 First key
+ * @param[in] buff2 Second key
+ * @return 0 if keys are the same, 1 otherwise
+ *
+ *
+ */
+int compare_nfs4_pseudo_key(hash_buffer_t *buff1,
+                            hash_buffer_t *buff2)
+{
+  /* This compares cityhash64, path length, and fullpath */
+  if (buff1->len != buff2->len ||
+      (memcmp(buff1->pdata, buff2->pdata, buff1->len != 0)) )
+      return 1;
+  return 0;
+}
+
+/**                                          
+ * @brief Hash function for pseudofs hashtable
+ *                                           
+ * Hash function for pseudofs hashtable.     
+ *                                           
+ * @param[in] param hash parameter           
+ * @param[in] buffclef hashtable buffer      
+ *                                           
+ * @return 32 bit hash                       
+ */
+uint32_t nfs4_pseudo_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t    * buffclef)
+{
+  uint32_t res = 0;
+
+  res = *((uint64_t *)buffclef->pdata) % (uint32_t) p_hparam->index_size;
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(p_hparam->ht_log_component, "%s: value = %"PRIu32,
+                 p_hparam->ht_name, res);
+  return res;
+}                               /* nfs4_owner_value_hash_func */
+
+/**                                                
+ * @brief nfsv4 pseudofs hash function for avltree
+ *
+ * nfsv4 pseudofs hash function for avltree
+ *
+ * @param[in] param
+ * @param[in] buffclef
+ *
+ * @return 64 bit hash
+ */
+uint64_t nfs4_pseudo_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef)
+{
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(p_hparam->ht_log_component, "rbt = %"PRIu64, *(uint64_t *)buffclef->pdata);
+  return *(uint64_t *)buffclef->pdata;
+}                               /* state_id_rbt_hash_func */
+
+/**                                                                    
+ * @brief Display a value from the pseudofs handle hashtable           
+ *                                                                     
+ * Display a value from the pseudofs handle hashtable. This function is
+ * passed to the pseudofs hashtable.                                   
+ *                                                                     
+ * @param[in] pbuff                                                    
+ * @param[out] str                                                     
+ *                                                                     
+ * @return 1 if success, 0 if fail                                     
+ */
+int display_pseudo_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
+{
+  pseudofs_entry_t *psfsentry = (pseudofs_entry_t *)pbuff->pdata;
+
+  return display_printf(dspbuf, "nodename=%s nodeid=%"PRIu64, psfsentry->name,
+                        psfsentry->pseudo_id);
+}
+
+/**                                                                  
+ * @brief Display a key from the pseudofs handle hashtable           
+ *                                                                   
+ * Display a key from the pseudofs handle hashtable. This function is
+ * passed to the pseudofs hashtable.                                 
+ *                                                                   
+ * @param[in] pbuff                                                  
+ * @param[out] str                                                   
+ *                                                                   
+ * @return 1 if success, 0 if fail                                   
+ */
+int display_pseudo_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
+{
+  uint64_t ch64_hash = 0;
+  int len;
+  char pseudopath[MAXPATHLEN+2];
+  char str[17]; // 64 bits will be 16 chars printed in hexadecimal
+
+  ch64_hash = *(uint64_t *)pbuff->pdata;
+  sprint_mem(str, (char *)&ch64_hash, sizeof(ch64_hash));
+
+  len = *(ushort *)(pbuff->pdata+sizeof(ch64_hash));
+  strncpy(pseudopath, pbuff->pdata + sizeof(ch64_hash) + sizeof(ushort),
+         len);
+  return display_printf(dspbuf, "cityhash64=%s len=%d path=%s", str, len, pseudopath);
+}
+
+/**
+ *
+ * Init_nfs4_pseudo: Init the hashtable for NFS Pseudofs nodeid cache.
+ *
+ * Perform all the required initialization for hashtable Pseudofs nodeid cache
+ *
+ * @param param [IN] parameter used to init the pseudofs nodeid cache
+ *
+ * @return 0 if successful, -1 otherwise
+ */
+int Init_nfs4_pseudo(nfs4_pseudo_parameter_t param)
+{
+  if((ht_nfs4_pseudo = HashTable_Init(&param.hash_param)) == NULL)
+    {
+      LogCrit(param.hash_param.ht_log_component,
+              "Cannot init %s cache", param.hash_param.ht_name);
+      return -1;
+    }
+
+  return 0;
+}                               /* Init_nfs4_pseudo */
