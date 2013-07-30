@@ -1439,32 +1439,56 @@ int nfs4_CurrentFHToPseudo(compound_data_t   * data,
                            pseudofs_entry_t ** psfsentry)
 {
   file_handle_v4_t *pfhandle4;
+  hash_buffer_t key, value;
+  hash_error_t hrc = 0;
+  struct hash_latch latch;
 
   /* Map the filehandle to the correct structure */
   pfhandle4 = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
 
   /* The function must be called with a fh pointed to a pseudofs entry */
-  if(pfhandle4 == NULL || pfhandle4->pseudofs_flag == FALSE ||
+  if(pfhandle4 == NULL || pfhandle4->exportid != 0 || /* exportid 0 indicates pseudofs node*/
      pfhandle4->fhversion != GANESHA_FH_VERSION)
     {
       LogDebug(COMPONENT_NFS_V4_PSEUDO,
                "Pseudo fs handle=%p, pseudofs_flag=%d, fhversion=%d",
                pfhandle4,
-               pfhandle4 != NULL ? pfhandle4->pseudofs_flag : 0,
+               pfhandle4 != NULL ? pfhandle4->exportid == 0 : 0,
                pfhandle4 != NULL ? pfhandle4->fhversion : 0);
       return NFS4ERR_BADHANDLE;
     }
 
-  if(pfhandle4->pseudofs_id > MAX_PSEUDO_ENTRY)
+  /* Find pseudofs in hashtable */
+  /* key generated from pathname and cityhash64 of pathname */
+  key.pdata = pfhandle4->fsopaque;
+  key.len = pfhandle4->fs_len;
+
+  if(isFullDebug(COMPONENT_NFS_V4_PSEUDO))
     {
-      LogDebug(COMPONENT_NFS_V4_PSEUDO,
-               "Pseudo fs handle pseudofs_id %u > %d",
-               pfhandle4->pseudofs_id, MAX_PSEUDO_ENTRY);
-      return NFS4ERR_BADHANDLE;
+      char str[256];
+      memset(str, 0, sizeof(str));
+      sprint_mem(str, key.pdata, key.len);
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,"looking up pseudofs node for handle:%s",
+                   str);
     }
 
-  /* Get the object pointer by using the reverse tab in the pseudofs structure */
-  *psfsentry = data->pseudofs->reverse_tab[pfhandle4->pseudofs_id];
+  hrc = HashTable_GetLatch(ht_nfs4_pseudo, &key, &value, FALSE, &latch);
+  if ((hrc != HASHTABLE_SUCCESS))
+    {
+      /* This should not happen */
+      LogDebug(COMPONENT_NFS_V4_PSEUDO, "Can't get key for FHToPseudo conversion"
+               ", hashtable error %s", hash_table_err_to_str(hrc));
+      *psfsentry = NULL;
+    } else
+    {
+      *psfsentry = value.pdata;
+      
+      /* Release the lock ... This is a read-only hashtable and entry.
+       * It's possible we reload exports ... but in that case we
+       * catch the worker threads at a safe location where we aren't
+       * using any export entries. */
+      HashTable_ReleaseLatched(ht_nfs4_pseudo, &latch);
+    }
 
   /* If an export was removed and we restarted or reloaded exports then the
    * PseudoFS entry corresponding to a handle might not exist now.
