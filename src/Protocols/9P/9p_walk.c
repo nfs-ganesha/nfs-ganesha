@@ -98,8 +98,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
   if( (pnewfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-  preq9p->pconn->fids[*newfid] = pnewfid ;
-
   /* Is this a lookup or a fid cloning operation ? */
   if( *nwname == 0 )
    {
@@ -198,6 +196,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
       }
 
    }
+
+  /* keep info on new fid */
+  preq9p->pconn->fids[*newfid] = pnewfid ;
 
   /* As much qid as requested fid */
   nwqid = nwname ;

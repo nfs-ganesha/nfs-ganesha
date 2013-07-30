@@ -319,6 +319,8 @@ end:
            sleep(1);
   }
 
+  _9p_cleanup_fids( &_9p_conn );
+
   return NULL ;
 } /* _9p_socket_thread */
 

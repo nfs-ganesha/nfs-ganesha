@@ -81,18 +81,20 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg) {
       LogDebug(COMPONENT_9P,
                "9P/RDMA: Freeing data associated with trans [%p]", trans) ;
 
-      if( priv->rdata )
+      if( priv->pconn )
        {
-          for( i = 0 ; i < _9P_RDMA_BUFF_NUM ; i++ )
-            if( priv->rdata[i] ) gsh_free( priv->rdata[i] ) ;
-
-          gsh_free( priv->rdata ) ;
+         _9p_cleanup_fids( priv->pconn );
        }
 
       if( priv->datalock )
        {
           if( priv->datalock->data && priv->datalock->data->mr ) msk_dereg_mr( priv->datalock->data->mr ) ;
           gsh_free( priv->datalock ) ;
+       }
+
+      if( priv->rdata )
+       {
+          gsh_free( priv->rdata ) ;
        }
 
       if( priv->rdmabuf ) gsh_free( priv->rdmabuf ) ;
@@ -138,7 +140,7 @@ void * _9p_rdma_thread( void * Arg )
   _9p_conn_t    * p_9p_conn = NULL ;
   uint8_t       * rdmabuf = NULL ;
   struct ibv_mr * mr      = NULL ;
-  msk_data_t   ** rdata   = NULL ;
+  msk_data_t    * rdata   = NULL ;
   _9p_datalock_t  * datalock  = NULL ;
   unsigned int i = 0 ;
   int rc = 0 ;
@@ -218,13 +220,10 @@ void * _9p_rdma_thread( void * Arg )
 
   for( i=0; i < _9P_RDMA_BUFF_NUM; i++)
    {
-      if( ( rdata[i] = gsh_malloc( sizeof( msk_data_t ) ) ) == NULL )
-         LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdata[%u]", i ) ;
-
-      rdata[i]->data=rdmabuf+i*_9P_RDMA_CHUNK_SIZE ;
-      rdata[i]->max_size=_9P_RDMA_CHUNK_SIZE ;
-      rdata[i]->mr = mr;
-      datalock[i].data = rdata[i];
+      rdata[i].data=rdmabuf+i*_9P_RDMA_CHUNK_SIZE ;
+      rdata[i].max_size=_9P_RDMA_CHUNK_SIZE ;
+      rdata[i].mr = mr;
+      datalock[i].data = &rdata[i];
       pthread_mutex_init(&datalock[i].lock, NULL);
 
       if( i < _9P_RDMA_OUT )
@@ -236,7 +235,7 @@ void * _9p_rdma_thread( void * Arg )
   for( i=0; i < _9P_RDMA_OUT; i++)
    {
       if( ( rc = msk_post_recv( trans,
-                                rdata[i],
+                                &rdata[i],
                                 _9p_rdma_callback_recv,
 				_9p_rdma_callback_recv_err,
                                &(datalock[i]) ) ) != 0 )
@@ -289,7 +288,8 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
   trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
   inet_pton(AF_INET, "0.0.0.0", &trans_attr.addr.sa_in.sin_addr);
   trans_attr.worker_count = -1;
-  trans_attr.worker_queue_size = 20;
+  trans_attr.debug = MSK_DEBUG_EVENT;
+  trans_attr.worker_queue_size = 256;
 
   SetNameFunction("_9p_rdma_dispatch_thr" ) ;
 
