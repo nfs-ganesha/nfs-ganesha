@@ -1630,8 +1630,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
   char name[MAXNAMLEN+1];
-  pseudofs_entry_t *psfsentry;
-  pseudofs_entry_t *iter = NULL;
+  struct pseudofs_entry *parent_fsentry=NULL, *thefsentry;
   int error = 0;
   cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
@@ -1640,6 +1639,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   fsal_attrib_list_t attr;
   fsal_handle_t fsal_handle;
   cache_entry_t *pentry = NULL;
+
+  /* Used for child avltree lookup*/
+  pseudofs_entry_t tempentry;
+  struct avltree_node *keynode, *foundnode;
 
   resp->resop = NFS4_OP_LOOKUP;
 
@@ -1651,28 +1654,34 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     }
 
   /* Get the pseudo fs entry related to the file handle */
-  res_LOOKUP4.status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  res_LOOKUP4.status = nfs4_CurrentFHToPseudo(data, &parent_fsentry);
   if(res_LOOKUP4.status != NFS4_OK)
-    {
-      return res_LOOKUP4.status;
-    }
+    return res_LOOKUP4.status;
 
-  /* Search for name in pseudo fs directory */
-  for(iter = psfsentry->sons; iter != NULL; iter = iter->next)
-      if(!strcmp(iter->name, name))
-          break;
+  /* Search for name in pseudo fs directory. We use a temporary
+   * avlnode and pseudofs_entry_t to perform a name lookup in
+   * the child tree. If it's not here, it doesn't exist.*/
+  keynode = &tempentry.nameavlnode;
+  strcpy(tempentry.name, name);
+  avltree_container_of(keynode, pseudofs_entry_t,
+                       nameavlnode);
 
-  if(iter == NULL)
+  foundnode = avltree_lookup(keynode, &parent_fsentry->child_tree_byname);
+  if(foundnode == NULL)
     {
       res_LOOKUP4.status = NFS4ERR_NOENT;
       return res_LOOKUP4.status;
     }
 
+  /* we found the requested pseudofs node. */
+  thefsentry = avltree_container_of(foundnode, pseudofs_entry_t,
+                                    nameavlnode);
+
   /* A matching entry was found */
-  if(iter->junction_export == NULL)
+  if(thefsentry->junction_export == NULL)
     {
       /* The entry is not a junction, we stay within the pseudo fs */
-      nfs4_PseudoToFhandle(&(data->currentFH), iter);
+      nfs4_PseudoToFhandle(&(data->currentFH), thefsentry);
 
       /* No need to fill in compound data because it doesn't change. */
     }
@@ -1681,8 +1690,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* The entry is a junction */
       LogMidDebug(COMPONENT_NFS_V4_PSEUDO,      
                   "A junction in pseudo fs is traversed: name = %s, id = %d",
-                  iter->name, iter->junction_export->id);
-      data->pexport = iter->junction_export;
+                  thefsentry->name, thefsentry->junction_export->id);
+      data->pexport = thefsentry->junction_export;
 
       /* Build credentials */
       res_LOOKUP4.status = nfs4_MakeCred(data);
