@@ -437,6 +437,7 @@ int32_t gsh_dbus_register_path(const char *name,
     if (!thread_state.dbus_conn) {
         LogCrit(COMPONENT_DBUS, "dbus_connection_register_object_path "
                 "called with no DBUS connection");
+        gsh_free(handler);
         goto out;
     }
 
