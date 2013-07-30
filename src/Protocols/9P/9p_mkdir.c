@@ -108,6 +108,10 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    pfid->from_attach = FALSE ;
 
    cache_status = cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
+
+   /* put the entry: we don't want to remember it even if cache_inode_fileid fails. */
+   cache_inode_put(pentry_newdir);
+
    if(cache_status != CACHE_INODE_SUCCESS)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

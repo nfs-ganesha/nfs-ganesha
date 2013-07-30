@@ -59,9 +59,9 @@ static void free_fid(_9p_fid_t * pfid,
 {
 	struct gsh_export *exp;
 
+        cache_inode_put(pfid->pentry);
         if( pfid->from_attach )
          {
-	   cache_inode_put(pfid->pentry);
 	   exp = container_of(pfid->pexport, struct gsh_export, export);
 	   put_gsh_export(exp);
          }
@@ -145,6 +145,12 @@ int _9p_clunk( _9p_request_data_t * preq9p,
         cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
         if(cache_status != CACHE_INODE_SUCCESS)
+        {
+           free_fid(pfid, fid, preq9p);
+           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        }
+	cache_status = cache_inode_refresh_attrs_locked(pfid->pentry, &pfid->op_context);
+	if (cache_status != CACHE_INODE_SUCCESS && cache_status != CACHE_INODE_FSAL_ESTALE)
         {
            free_fid(pfid, fid, preq9p);
            return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
