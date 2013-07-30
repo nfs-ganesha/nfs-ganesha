@@ -233,7 +233,7 @@ make_file_handle_v4(fsal_handle_t *fsal_handle,
      v4_handle->fhversion = GANESHA_FH_VERSION;
      v4_handle->fs_len = fh_desc.len;
      v4_handle->exportid = export_id;
-     v4_handle->ds_flag = 1;
+     v4_handle->flags = FILE_HANDLE_V4_FLAG_DS;
 
      return NFS4_OK;
 }

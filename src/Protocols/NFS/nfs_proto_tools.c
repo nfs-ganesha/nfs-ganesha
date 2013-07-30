@@ -1983,7 +1983,7 @@ int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
   pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
 
   /* The function should not be used on a pseudo fhandle */
-  if(pfhandle4->pseudofs_flag == TRUE)
+  if(pfhandle4->exportid == 0)
     return FALSE;
 
   *ExIdp = pfhandle4->exportid;
