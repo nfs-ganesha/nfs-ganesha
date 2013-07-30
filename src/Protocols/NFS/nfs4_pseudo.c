@@ -1905,9 +1905,10 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
 
   resp->resop = NFS4_OP_LOOKUPP;
 
-  /* Get the pseudo fs entry related to the export */
-  psfsentry = data->pseudofs->reverse_tab[data->pcontext->export_context->
-                                          fe_export->exp_mounted_on_file_id];
+  /* Get the parent pseudo fs entry related to the export */
+  res_LOOKUP4.status = nfs4_CurrentFHToPseudo(data, &psfsentry);
+  if(res_LOOKUP4.status != NFS4_OK)
+    return res_LOOKUP4.status;
 
   LogDebug(COMPONENT_NFS_V4_PSEUDO,
            "LOOKUPP Traversing junction from Export_Id %d Pseudo %s back to pseudo fs id %"PRIu64,
