@@ -939,3 +939,26 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
 
   return FALSE;
 }                               /* nfs4_Is_Fh_Referral */
+
+/**
+ * 
+ * sprint_mem
+ *
+ * This routine prints a char buffer to a string buffer
+ * for purposes of displaying.
+ *
+ * @param str [IN/OUT] char buffer big enough to contain "len" bytes
+ * @param buff [IN] bytes to print
+ * @param len [IN] number of bytes to print to str
+ *
+ * @return void
+ */
+void sprint_mem(char *str, char *buff, int len)
+{
+  int i;
+
+  if(buff == NULL)
+    sprintf(str, "<null>");
+  else for(i = 0; i < len; i++)
+         sprintf(str + i * 2, "%02x", (unsigned char)buff[i]);
+}

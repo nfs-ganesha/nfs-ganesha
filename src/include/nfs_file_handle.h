@@ -249,4 +249,6 @@ static inline int display_fhandle_nlm(struct display_buffer * dspbuf,
   return display_opaque_value(dspbuf, fh->n_bytes, fh->n_len);
 }
 
+void sprint_mem(char *str, char *buff, int len);
+
 #endif                          /* _NFS_FILE_HANDLE_H */

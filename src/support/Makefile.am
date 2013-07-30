@@ -27,6 +27,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          lookup3.c                          \
                          murmur3.c                          \
                          generic_weakref.c                  \
+                         city.c                             \
                          ../include/nfs_file_handle.h       \
                          ../include/nfs_core.h              \
                          ../include/nfs_tools.h             \

@@ -412,8 +412,8 @@ typedef struct fsal_dsfunctions__ {
       * \brief Read from a data-server filehandle.
       *
       * NFSv4.1 data server filehandles are disjount from normal
-      * filehandles (in Ganesha, there is a ds_flag in the
-      * filehandle_v4_t structure) and do not get loaded into
+      * filehandles (in Ganesha, there is a FILE_HANDLE_V4_FLAG_DS bit in the
+      * filehandle_v4_t flag bitmask) and do not get loaded into
       * cache_inode or processed the normal way.
       *
       * \return An NFSv4.1 status code.
@@ -444,8 +444,8 @@ typedef struct fsal_dsfunctions__ {
       * \brief Write to a data-server filehandle.
       *
       * NFSv4.1 data server filehandles are disjount from normal
-      * filehandles (in Ganesha, there is a ds_flag in the
-      * filehandle_v4_t structure) and do not get loaded into
+      * filehandles (in Ganesha, there is a FILE_HANDLE_V4_FLAG_DS bit in the
+      * filehandle_v4_t flag bitmask) and do not get loaded into
       * cache_inode or processed the normal way.
       *
       * \return An NFSv4.1 status code.
@@ -480,8 +480,8 @@ typedef struct fsal_dsfunctions__ {
       * \brief Commit a byte range
       *
       * NFSv4.1 data server filehandles are disjount from normal
-      * filehandles (in Ganesha, there is a ds_flag in the
-      * filehandle_v4_t structure) and do not get loaded into
+      * filehandles (in Ganesha, there is a FILE_HANDLE_V4_FLAG_DS bit in the
+      * filehandle_v4_t flag bitmask) and do not get loaded into
       * cache_inode or processed the normal way.
       *
       * \return An NFSv4.1 status code.

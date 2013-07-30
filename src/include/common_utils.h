@@ -14,6 +14,11 @@
 #include <sys/types.h>          /* for caddr_t */
 #include <string.h>
 
+#define min(a,b)                        \
+  ({ typeof (a) _a = (a);               \
+  typeof (b) _b = (b);                  \
+  _a < _b ? _a : _b; })
+
 /**
  * This function converts a string to an integer.
  *
