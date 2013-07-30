@@ -1466,7 +1466,6 @@ int nfs4_CurrentFHToPseudo(compound_data_t   * data,
   if(isFullDebug(COMPONENT_NFS_V4_PSEUDO))
     {
       char str[256];
-      memset(str, 0, sizeof(str));
       sprint_mem(str, key.pdata, key.len);
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,"looking up pseudofs node for handle:%s",
                    str);
@@ -1516,14 +1515,19 @@ void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
   memset(fh4p->nfs_fh4_val, 0, sizeof(struct alloc_file_handle_v4)); /* clean whole thing */
   fhandle4 = (file_handle_v4_t *)fh4p->nfs_fh4_val;
   fhandle4->fhversion = GANESHA_FH_VERSION;
-  fhandle4->pseudofs_flag = TRUE;
-  fhandle4->pseudofs_id = psfsentry->pseudo_id;
+  fhandle4->exportid = 0;
+  memcpy(fhandle4->fsopaque, psfsentry->fsopaque, V4_FH_OPAQUE_SIZE);
+  fhandle4->fs_len = V4_FH_OPAQUE_SIZE;
 
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
-               psfsentry->pseudo_id, fhandle4->pseudofs_id);
+  if(isFullDebug(COMPONENT_NFS_V4_PSEUDO))
+    {
+      char str[256];
+      sprint_mem(str, psfsentry->fsopaque, V4_FH_OPAQUE_SIZE);
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,"pseudoToFhandle for name:%s handle:%s",
+                   psfsentry->name,str);
+    }
 
   fh4p->nfs_fh4_len = nfs4_sizeof_handle(fhandle4); /* no handle in opaque */
-
 }                               /* nfs4_PseudoToFhandle */
 
 /**
