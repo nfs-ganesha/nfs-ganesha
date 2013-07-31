@@ -653,6 +653,8 @@ void cache_inode_release_dirents(cache_entry_t *entry,
                                            cache_inode_dir_entry_t,
                                            node_hk);
              avltree_remove(dirent_node, tree);
+             if (dirent->ckey.kv.len)
+               cache_inode_key_delete(&dirent->ckey);
              gsh_free(dirent);
              dirent_node = next_dirent_node;
            }
