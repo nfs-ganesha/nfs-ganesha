@@ -36,7 +36,7 @@ if(USE_FSAL_SHOOK)
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})
 
-  target_link_libraries(fsalshook ${SYSTEM_LIBRARIES})
+  target_link_libraries(fsalshook lustreapi ${SYSTEM_LIBRARIES})
 
   set_target_properties(fsalshook PROPERTIES VERSION 4.2.0 SOVERSION 4)
   install(TARGETS fsalshook COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
