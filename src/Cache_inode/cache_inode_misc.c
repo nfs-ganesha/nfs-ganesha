@@ -384,7 +384,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      nentry->flags = LRU_FLAG_NONE;
 
      /* Hash and insert entry */
-     rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK);
+     rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK | CIH_SET_HASHED);
      if (unlikely(rc)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
