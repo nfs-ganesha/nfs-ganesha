@@ -453,7 +453,9 @@ static void __attribute__((constructor)) umem_malloc_init_hook(void)
 	}
 }
 
-void (*__malloc_initialize_hook)(void) = umem_malloc_init_hook;
+//void (*__malloc_initialize_hook)(void) = umem_malloc_init_hook;
+void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void) = umem_malloc_init_hook;
+
 
 #else
 void __attribute__((constructor))
