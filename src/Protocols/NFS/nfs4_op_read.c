@@ -279,7 +279,7 @@ nfs4_op_read(struct nfs_argop4 *op,
 
                 LogFullDebug(COMPONENT_NFS_V4,
                              "NFS4_OP_READ: read requested size = %zu "
-                             " read allowed size = %"PRIu32,
+                             " read allowed size = %"PRIu64,
                              size, check_size);
                 size = check_size;
         }
