@@ -281,7 +281,7 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
 
   memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
 
-  trans_attr.server = _9P_RDMA_BACKLOG;
+  trans_attr.server = nfs_param._9p_param._9p_rdma_backlog ;
   trans_attr.rq_depth = _9P_RDMA_OUT+1;
   trans_attr.addr.sa_in.sin_family = AF_INET;
   trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
