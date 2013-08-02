@@ -69,13 +69,14 @@ misc="rw"
 trans="tcp"
 rq=32
 sq=32
+port=564
 
 # Now manage options
 IN_OPTIONS=`echo $4 | tr "," "\n"`
 
 for OPT in $IN_OPTIONS; do
   opt_ok=0 
-  for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" "rq=" "sq="; do
+  for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" "rq=" "sq=" "port="; do
     if echo $OPT | grep -q $OPT_TYPE ; then
       eval $OPT
       opt_ok=1
@@ -110,5 +111,5 @@ for OPT in $IN_OPTIONS; do
 done
 
 # the "-i" is mandatory to avoid looping on this helper
-#echo " /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,sq=$sq,rq=$rq"
-exec /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,rq=$rq,sq=$sq
+#echo " /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,sq=$sq,rq=$rq",port=$port
+exec /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,rq=$rq,sq=$sq,port=$port
