@@ -83,21 +83,25 @@ state_add_segment(state_t *state,
      }
 
      if (pthread_mutexattr_init(&mattr) != 0) {
+          gsh_free(new_segment);
           return STATE_INIT_ENTRY_FAILED;
      }
 
 #if defined(__linux__)
      if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
+          gsh_free(new_segment);
           return STATE_INIT_ENTRY_FAILED;
      }
 #else
      if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+          gsh_free(new_segment);
           return STATE_INIT_ENTRY_FAILED;
      }
 #endif
 
      if (pthread_mutex_init(&new_segment->sls_mutex,
 			    &mattr) != 0) {
+          gsh_free(new_segment);
 	  return STATE_INIT_ENTRY_FAILED;
      }
 

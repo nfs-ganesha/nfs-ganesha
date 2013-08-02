@@ -83,14 +83,16 @@ int fridgethr_init(struct fridgethr **frout,
 		LogMajor(COMPONENT_THREAD,
 			 "Minimum of %d is greater than maximum of %d in "
 			 "fridge %s", p->thr_min, p->thr_max, s);
-		return EINVAL;
+                rc = EINVAL;
+                goto out;
 	}
 
 	if ((p->wake_threads != NULL) &&
 	    (p->flavor != fridgethr_flavor_looper)) {
 		LogMajor(COMPONENT_THREAD,
 			 "Wake function only allowed on loopers: %s", s);
-		return EINVAL;
+                rc = EINVAL;
+                goto out;
 	}
 
 	*frout  = NULL;
