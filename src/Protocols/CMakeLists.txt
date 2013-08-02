@@ -11,8 +11,5 @@ if(USE_9P)
   add_subdirectory(9P)
 endif(USE_9P)
 
-if(USE_DBUS)
-  add_subdirectory(DBUS)
-endif(USE_DBUS)
 
 ########### install files ###############

@@ -2,6 +2,13 @@ add_definitions(
   -D__USE_GNU
 )
 
+if(USE_DBUS)
+  include_directories(
+    ${DBUS_INCLUDE_DIR}
+    ${DBUS_ARCH_INCLUDE_DIR}
+    )
+endif(USE_DBUS)
+
 ########### next target ###############
 
 SET(log_STAT_SRCS

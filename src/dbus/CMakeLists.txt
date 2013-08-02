@@ -11,6 +11,8 @@ endif(FREEBSD)
 
 SET(gshdbus_STAT_SRCS
    dbus_server.c
+   properties_handler.c
+   signal_handler.c
    ${FBSD_SUBR}
 )
 
