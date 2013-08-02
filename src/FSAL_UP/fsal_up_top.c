@@ -1491,15 +1491,18 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
 			"No clid record  code %d", code);
+        gsh_free(maxfh);
 		return;
 	}
 	chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+        gsh_free(maxfh);
 		return;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
+        gsh_free(maxfh);
 		return;
 	}
 	/* allocate a new call--freed in completion hook */
