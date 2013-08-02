@@ -4,8 +4,7 @@ include_directories(
 
 if(USE_DBUS_STATS)
   include_directories(
-    ${DBUS_INCLUDE_DIR}
-    ${DBUS_ARCH_INCLUDE_DIR}
+    ${DBUS_INCLUDE_DIRS}
     )
 endif(USE_DBUS_STATS)
 

@@ -1,6 +1,5 @@
 include_directories(
-  ${DBUS_INCLUDE_DIR}
-  ${DBUS_ARCH_INCLUDE_DIR}
+  ${DBUS_INCLUDE_DIRS}
 )
 
 ########### next target ###############

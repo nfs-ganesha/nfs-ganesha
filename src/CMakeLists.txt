@@ -396,9 +396,9 @@ if(USE_FSAL_ZFS)
   if((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
    if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT_PACKAGE: Cannot find ZFS runtime. Disabling ZFS build")
-    else(STRICT_PACKAGE)
+
       message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
-      set(USE_FSAL_ZFS OFF)
+
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
 endif(USE_FSAL_ZFS)
@@ -433,8 +433,10 @@ if(USE_EFENCE)
 endif(USE_EFENCE)
 
 if(USE_DBUS)
-  find_package(DBus REQUIRED)
+  find_package(PkgConfig)
+  pkg_check_modules(DBUS REQUIRED dbus-1)
   set(SYSTEM_LIBRARIES ${DBUS_LIBRARIES} ${SYSTEM_LIBRARIES})
+  LIST(APPEND CMAKE_LIBRARY_PATH ${DBUS_LIBARY_DIRS})
 endif(USE_DBUS)
 
 if(USE_NFSIDMAP)

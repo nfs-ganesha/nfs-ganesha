@@ -384,7 +384,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      nentry->flags = LRU_FLAG_NONE;
 
      /* Hash and insert entry */
-     rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK);
+     rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK | CIH_SET_HASHED);
      if (unlikely(rc)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "entry could not be added to hash, rc=%d", rc);
@@ -652,6 +652,8 @@ void cache_inode_release_dirents(cache_entry_t *entry,
                                            cache_inode_dir_entry_t,
                                            node_hk);
              avltree_remove(dirent_node, tree);
+             if (dirent->ckey.kv.len)
+               cache_inode_key_delete(&dirent->ckey);
              gsh_free(dirent);
              dirent_node = next_dirent_node;
            }
