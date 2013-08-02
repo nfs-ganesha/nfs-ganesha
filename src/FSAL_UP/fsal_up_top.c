@@ -1529,6 +1529,7 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
 				entry->obj_handle)) {
+        gsh_free(call);
 		return;
 	}
 
