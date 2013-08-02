@@ -239,6 +239,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->obj_handle->attributes.fileid, 2LL, DT_DIR, strlen( pathdotdot ), pathdotdot);
       dcount += 24 + strlen( pathdotdot ) ;
 
+      /* put the parent */
+      cache_inode_put(pentry_dot_dot);
+
       cookie = 0LL ;
    }
   else if( *offset == 1LL )
@@ -252,6 +255,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
       cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->obj_handle->attributes.fileid, 2LL, DT_DIR, strlen( pathdotdot ), pathdotdot);
       dcount += 24 + strlen( pathdotdot ) ;
+
+      /* put the parent */
+      cache_inode_put(pentry_dot_dot);
 
       cookie = 0LL ;
    }

@@ -159,6 +159,11 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
        return  _9p_rerror( preq9p, pworker_data, msgtag,
                            _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+
+   /* put parent directory entry */
+   cache_inode_put(pfid->pentry);
+
+
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
    qid_newfile.version = 0 ;

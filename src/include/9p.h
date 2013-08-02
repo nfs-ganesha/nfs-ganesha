@@ -68,7 +68,7 @@ typedef uint64_t u64;
 
 /* _9P_RDMA_CHUNK_SIZE : buffer size, and maximum message size for 9P/RDMA */
 #define _9P_RDMA_CHUNK_SIZE (1024*1024)
-#define _9P_RDMA_BUFF_NUM 100 
+#define _9P_RDMA_BUFF_NUM 64
 /* Half the buffers are for recv, half for send */
 #define _9P_RDMA_OUT (_9P_RDMA_BUFF_NUM/2)
 #define _9P_RDMA_BACKLOG 10 
@@ -377,7 +377,7 @@ typedef struct _9p_rdma_priv
 {
   _9p_conn_t    * pconn ;
   uint8_t       * rdmabuf ;
-  msk_data_t   ** rdata ;
+  msk_data_t    * rdata ;
   _9p_datalock_t  * datalock ;
 } _9p_rdma_priv ;
 #define _9p_rdma_priv_of(x) ((_9p_rdma_priv*)x->private_data)
@@ -591,6 +591,7 @@ void _9p_tools_fsal_attr2stat( struct attrlist * pfsalattr, struct stat * pstat 
 void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
 void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags ) ;
 void _9p_chomp_attr_value(char *str, size_t size) ;
+void _9p_cleanup_fids(_9p_conn_t *conn ) ;
 
 #ifdef _USE_9P_RDMA
 /* 9P/RDMA callbacks */

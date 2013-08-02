@@ -468,6 +468,9 @@ typedef struct _9p_param
 	/** Msize for 9P operation on rdma.  Defaults to _9P_RDMA_MSIZE,
 	    settable by _9P_RDMA_Msize */
 	uint32_t _9p_rdma_msize;
+	/** Backlog for 9P operation on rdma.  Defaults to _9P_RDMA_BACKLOG,
+	    settable by _9P_RDMA_Backlog */
+	uint32_t _9p_rdma_backlog;
 } _9p_parameter_t;
 #endif /* _USE_9P */
 

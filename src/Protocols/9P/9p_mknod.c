@@ -123,6 +123,9 @@ int _9p_mknod( _9p_request_data_t * preq9p,
    if(pentry_newobj == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+  /* we don't keep a reference to the entry */
+  cache_inode_put(pentry_newobj);
+
   /* Build the qid */
   qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
   qid_newobj.version = 0 ;

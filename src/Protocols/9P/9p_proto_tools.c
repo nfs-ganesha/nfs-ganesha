@@ -267,3 +267,15 @@ void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags )
   return ;
 } /* _9p_openflags2FSAL */
 
+void _9p_cleanup_fids(_9p_conn_t *conn )
+{
+  int i;
+  for (i = 0; i < _9P_FID_PER_CONN; i++)
+  {
+    if(conn->fids[i])
+    {
+      LogDebug( COMPONENT_9P, "cleanup: freeing fid %u", i ) ;
+      cache_inode_put(conn->fids[i]->pentry);
+    }
+  }
+}

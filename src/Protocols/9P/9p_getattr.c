@@ -121,7 +121,8 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   uid        = (*request_mask & _9P_GETATTR_UID)    ? (u32 *)&pfid->pentry->obj_handle->attributes.owner:&zero32 ;
   gid        = (*request_mask & _9P_GETATTR_GID)    ? (u32 *)&pfid->pentry->obj_handle->attributes.group:&zero32 ;
   nlink      = (*request_mask & _9P_GETATTR_NLINK)  ? (u64 *)&pfid->pentry->obj_handle->attributes.numlinks:&zero64 ;  
-  rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major:&zero64 ; 
+  //rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major:&zero64 ; 
+  rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pexport->filesystem_id.major:&zero64 ; 
   size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->obj_handle->attributes.filesize:&zero64 ; 
   blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9P_BLK_SIZE:0LL ; 
   blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->obj_handle->attributes.filesize/DEV_BSIZE):0LL ; 
