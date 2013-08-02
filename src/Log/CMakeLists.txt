@@ -4,8 +4,7 @@ add_definitions(
 
 if(USE_DBUS)
   include_directories(
-    ${DBUS_INCLUDE_DIR}
-    ${DBUS_ARCH_INCLUDE_DIR}
+    ${DBUS_INCLUDE_DIRS}
     )
 endif(USE_DBUS)
 
