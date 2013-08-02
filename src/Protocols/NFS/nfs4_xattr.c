@@ -693,6 +693,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   if(FSAL_IS_ERROR(fsal_status))
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
+      gsh_free(buffer);
       return res_READ4.status;
     }
 
