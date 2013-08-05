@@ -49,7 +49,9 @@
 #include "rpc/rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
+#ifdef USE_DBUS
 #include "ganesha_dbus.h"
+#endif
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
