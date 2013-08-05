@@ -173,7 +173,11 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
 # MSPAC support -lwbclient link flag
-option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
+if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
+else( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  option(_MSPAC_SUPPORT "enable mspac Winbind support" OFF)
+endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
@@ -259,8 +263,14 @@ if(USE_9P_RDMA AND NOT USE_9P)
   set(USE_9P ON)
 endif(USE_9P_RDMA AND NOT USE_9P)
 
-set(ALLOCATOR "jemalloc" CACHE STRING
-  "specify the memory allocator to use: jemalloc|tcmalloc|libc")
+if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  set(ALLOCATOR "jemalloc" CACHE STRING
+    "specify the memory allocator to use: jemalloc|tcmalloc|libc")
+else("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  set(ALLOCATOR "libc" CACHE STRING
+    "specify the memory allocator to use: jemalloc|tcmalloc|libc")
+endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
@@ -288,7 +298,10 @@ else()
   set(LITTLEEND ON)
 endif(${BIGENDIAN})
 
-find_package(Threads REQUIRED)
+if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  find_package(Threads REQUIRED)
+endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+
 find_package(Krb5 REQUIRED gssapi)
 
 if(KRB5_FOUND)
@@ -298,7 +311,9 @@ if(KRB5_FOUND)
 endif(KRB5_FOUND)
 
 # needed by RPCAL/gssd for some reason
-find_package(Curses)
+if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+  find_package(Curses)
+endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 find_package(Readline)
 
 # Validate fsal dependencies
