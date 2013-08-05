@@ -1229,7 +1229,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
                  "Failed to set capabilities for process, errno=%u", errno ) ;
   else
       LogEvent( COMPONENT_INIT, "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL" ) ;
-  
 #endif
 
 
