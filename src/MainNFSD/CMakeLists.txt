@@ -108,6 +108,9 @@ if(USE_9P AND USE_9P_RDMA)
   target_link_libraries(ganesha.nfsd  mooshika ibverbs rdmacm )
 endif(USE_9P AND USE_9P_RDMA)
 
+if( HAVE_LIBCAP ) 
+  target_link_libraries(ganesha.nfsd  cap )
+endif( HAVE_LIBCAP ) 
 
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
