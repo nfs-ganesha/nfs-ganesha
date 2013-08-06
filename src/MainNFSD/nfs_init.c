@@ -1150,6 +1150,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
 #ifdef LINUX
   struct __user_cap_data_struct capdata ;
   struct __user_cap_header_struct caphdr ;
+  ssize_t capstrlen = 0 ;
 #endif
 
   if(p_start_info->dump_default_config == true)
@@ -1229,6 +1230,10 @@ void nfs_start(nfs_start_info_t * p_start_info)
                  "Failed to set capabilities for process, errno=%u", errno ) ;
   else
       LogEvent( COMPONENT_INIT, "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL" ) ;
+
+  /* Print newly set capabilities (same display as what CLI "getpcaps" does */
+  cap_t my_cap = cap_get_proc() ;
+  LogEvent( COMPONENT_INIT, "currenty set capabilities are: %s",  cap_to_text( my_cap, &capstrlen ) ) ;
 #endif
 
 
