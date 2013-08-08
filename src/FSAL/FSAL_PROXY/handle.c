@@ -988,6 +988,8 @@ pxy_make_object(struct fsal_export *export, fattr4 *obj_attributes,
         struct attrlist attributes;
         struct pxy_obj_handle *pxy_hdl;
 
+        memset( &attributes, 0, sizeof( struct attrlist ) ) ;
+
 	if(nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes,
 				   NULL) != NFS4_OK)
                 return fsalstat(ERR_FSAL_INVAL, 0);
