@@ -288,6 +288,7 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 	return stats->nfsv41;
 }
 
+#ifdef _USE_9P
 static struct _9p_stats *get_9p(struct gsh_stats *stats,
 				  pthread_mutex_t *lock)
 {
@@ -299,6 +300,7 @@ static struct _9p_stats *get_9p(struct gsh_stats *stats,
 	}
 	return stats->_9p;
 }
+#endif
 
 /* Functions for recording statistics
  */
