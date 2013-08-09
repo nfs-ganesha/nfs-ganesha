@@ -40,7 +40,7 @@ class LogManager(QtDBus.QDBusAbstractInterface):
             prop_dict = {}
             d = reply.value().toPyObject()
             for key in d.keys():
-                prop_dict[key.toString()] = d[key].toPyObject().toString()
+                prop_dict[str(key.toString())] = str(d[key].toPyObject().toString())
             self.show_components.emit(prop_dict)
 
     def Get(self, property):
@@ -54,7 +54,7 @@ class LogManager(QtDBus.QDBusAbstractInterface):
             self.show_status.emit(FALSE,
                                   "DBUS error:" + str(reply.error().message()))
         else:
-            level = reply.value().toPyObject().toString()
+            level = str(reply.value().toPyObject().toString())
             self.show_level.emit(level)
 
     def Set(self, property, setval):
