@@ -42,6 +42,18 @@
 #include <os/memstream.h>
 #include "dbus_priv.h"
 
+#ifndef DBUS_ERROR_UNKNOWN_INTERFACE
+#define DBUS_ERROR_UNKNOWN_INTERFACE          "org.freedesktop.DBus.Error.UnknownInterface"
+#endif
+
+#ifndef DBUS_ERROR_UNKNOWN_PROPERTY
+#define DBUS_ERROR_UNKNOWN_PROPERTY           "org.freedesktop.DBus.Error.UnknownProperty"
+#endif
+
+#ifndef DBUS_ERROR_PROPERTY_READ_ONLY
+#define DBUS_ERROR_PROPERTY_READ_ONLY         "org.freedesktop.DBus.Error.PropertyReadOnly"
+#endif
+
 /**
  * @brief The properties interface for properties interfaces
  *
