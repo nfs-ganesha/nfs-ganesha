@@ -376,9 +376,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
      pfile_handle->fhversion != GANESHA_FH_VERSION ||
      fh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque) ||
      fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
-     fh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
-     (pfile_handle->pseudofs_id != 0 &&
-      pfile_handle->pseudofs_flag == FALSE))
+     fh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle))
     {
       if(isInfo(COMPONENT_FILEHANDLE))
         {
@@ -421,9 +419,8 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
           else
             {
               LogInfo(COMPONENT_FILEHANDLE,
-                      "INVALID HANDLE: pseudofs_id=%d pseudofs_flag=%d",
-                      pfile_handle->pseudofs_id,
-                      pfile_handle->pseudofs_flag);
+                      "INVALID HANDLE: is_pseudofs=%d",
+                      pfile_handle->exportid == 0);
             }
         }
                

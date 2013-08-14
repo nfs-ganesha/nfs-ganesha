@@ -299,7 +299,11 @@ typedef struct exportlist {
  */
 typedef struct pseudofs_entry {
 	char name[MAXNAMLEN + 1]; /*< The entry name */
-	unsigned int pseudo_id; /*< ID within the pseudoFS  */
+	int8_t *fsopaque; /** do not garbage collect this, it points
+	                      to an already gc'd file_handle_v4_t.
+	                      this is used for convenience when
+	                      converting from entry to handle. */
+	uint64_t pseudo_id; /*< ID within the pseudoFS  */
 	exportlist_t *junction_export; /*< Export list related to the junction,
 					   NULL if entry is no junction */
 	struct pseudofs_entry *sons; /*< Pointer to a linked list of sons */
@@ -308,7 +312,7 @@ typedef struct pseudofs_entry {
 	struct pseudofs_entry *last; /*< Last entry in a list of sons */
 } pseudofs_entry_t;
 
-#define MAX_PSEUDO_ENTRY 2048
+#define MAX_PSEUDO_ENTRY  2048
 typedef struct pseudofs {
 	pseudofs_entry_t root;
 	unsigned int last_pseudo_id;
