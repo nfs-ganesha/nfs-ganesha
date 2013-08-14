@@ -314,7 +314,7 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
-  return pfhandle4->pseudofs_flag;
+  return pfhandle4->exportid == 0;
 }                               /* nfs4_Is_Fh_Pseudo */
 
 /**
@@ -337,7 +337,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
-  return pfhandle4->ds_flag;
+  return (pfhandle4->flags & FILE_HANDLE_V4_FLAG_DS) != 0;
 }
 
 /**

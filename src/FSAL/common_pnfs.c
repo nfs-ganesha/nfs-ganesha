@@ -222,7 +222,7 @@ make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
         v4_handle->fs_len = fh_desc->len;
         memcpy(v4_handle->fsopaque, fh_desc->addr, fh_desc->len);
         v4_handle->exportid = export_id;
-        v4_handle->ds_flag = 1;
+        v4_handle->flags = FILE_HANDLE_V4_FLAG_DS;
 
         return NFS4_OK;
 }

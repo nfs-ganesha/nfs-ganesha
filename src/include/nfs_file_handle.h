@@ -121,30 +121,19 @@ static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
   return hsize;
 }
 
+#define FILE_HANDLE_V4_FLAG_DS 0x0001
+
 /**
  * @brief An NFSv4 filehandle
  *
  * This may be up to 128 bytes, aligned on 32 bits.
  */
 
-typedef struct file_handle_v4
+typedef struct __attribute__((__packed__)) file_handle_v4
 {
   uint8_t fhversion; /*< Set to 0x41 to separate from Linux knfsd */
-  uint8_t xattr_pos; /*< Index for named attribute handles */
   uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint32_t reserved1; /*< If you want 32 bits for something, use
-			  this.  Alternatively, it can be removed
-			  next time we change the filehandle format.
-			  For now, we require it to be 0. */
-  uint16_t pseudofs_id; /*< Id for the pseudo fs related to this fh */
-  uint16_t reserved2; /*< If you want 16 bits for something, use
-			  this.  Alternatively, it can be removed
-			  next time we change the filehandle format.
-			  For now, we require it to be 0. */
-  uint8_t ds_flag; /*< True if FH is a 'DS file handle'.  Consider
-		       rolling this into a flags byte. */
-  uint8_t pseudofs_flag; /*< True if FH is within pseudofs.  Consider
-			     rolling this into a flags byte. */
+  uint16_t flags; /*< To replace things like ds_flag */
   uint8_t fs_len; /*< Length of opaque handle */
   uint8_t fsopaque[]; /*< FSAL handle */
 } file_handle_v4_t;
@@ -156,9 +145,9 @@ typedef struct file_handle_v4
  * where the opaque handle expands into.  Pad is struct aligned.
  */
 
-struct alloc_file_handle_v4 {
+struct __attribute__((__packed__)) alloc_file_handle_v4 {
 	struct file_handle_v4 handle; /*< The real handle */
-	uint8_t pad[112]; /*< Pad to mandatory max 128 bytes */
+	uint8_t pad[122]; /*< Pad to mandatory max 128 bytes */
 };
 
 /**
