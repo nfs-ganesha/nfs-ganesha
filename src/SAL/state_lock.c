@@ -3217,4 +3217,93 @@ void cancel_all_nlm_blocked()
     V(blocked_locks_mutex);
     return;
 }
+
+void
+resub_all_nlm_blocked()
+{
+        struct glist_head       *glist;
+        struct glist_head       *glistn;
+        state_owner_t           *nlm_owner;
+        state_lock_entry_t      *found_entry;
+        exportlist_t            *pexport;
+        cache_entry_t           *pentry;
+        fsal_op_context_t        fsal_context;
+        fsal_op_context_t       *pcontext;
+        fsal_lock_param_t       *plock;
+        fsal_status_t            fsal_status;
+        state_block_data_t      *pblock;
+        state_status_t           state_status = STATE_SUCCESS;
+
+        LogDebug(COMPONENT_STATE, "Resubmit all blocked locks");
+
+        P(blocked_locks_mutex);
+
+        if (glist_empty(&state_blocked_locks)) {
+                LogFullDebug(COMPONENT_STATE, "No blocked locks to resubmit");
+                V(blocked_locks_mutex);
+                return;
+        }
+
+        glist_for_each_safe(glist, glistn, &state_blocked_locks) {
+                pblock = glist_entry(glist, state_block_data_t, sbd_list);
+
+                /* Check if got an entry */
+                if ((found_entry = pblock->sbd_lock_entry) == NULL) {
+                        LogWarn(COMPONENT_STATE,
+                            "Blocked lock w/o a state_lock_entry_t");
+                        continue;
+                }
+                lock_entry_inc_ref(found_entry);
+                V(blocked_locks_mutex);
+
+                LogEntry("Blocked Lock found", found_entry);
+
+                pentry = found_entry->sle_pentry;
+                nlm_owner = found_entry->sle_owner;
+                pexport = found_entry->sle_pexport;
+                plock = &found_entry->sle_lock;
+                pcontext = &fsal_context;
+
+                /*
+                 * Reconstruct the FSAL context based
+                 * on the export and root credential
+                 */
+                fsal_status = FSAL_GetClientContext(
+                                         pcontext,
+                                         &pexport->FS_export_context,
+                                         0,
+                                         0,
+                                         NULL,
+                                         0);
+
+                state_status = do_lock_op(pentry,
+                                          pcontext,
+                                          pexport,
+                                          FSAL_OP_LOCKB,
+                                          nlm_owner,
+                                          plock,
+                                          NULL,
+                                          NULL,
+                                          FALSE);
+
+                if (state_status != STATE_LOCK_BLOCKED) {
+                        /*
+                         * Still needed for 2nd phase of fix:
+                         *
+                         * - check for success of getting the lock
+                         *   . if we got the lock, notify NLM client
+                         */
+                        LogMajor(COMPONENT_STATE,
+                                "Lock %s got %s status",
+                                str_blocked(found_entry->sle_blocked),
+                                state_err_str(state_status));
+                } else {
+                        LogEntry("Lock successfully resubmitted", found_entry);
+                }
+                lock_entry_dec_ref(found_entry);
+                P(blocked_locks_mutex);
+        }
+        V(blocked_locks_mutex);
+        return;
+}
 #endif
