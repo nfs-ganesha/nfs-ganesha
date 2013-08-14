@@ -352,7 +352,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto fileerr;
 	}
-	close(fd);
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(dir_fd, fh, &stat, myself->handle,
                             name, myself->obj_handle.export);
@@ -362,6 +361,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	}
 	*handle = &hdl->obj_handle;
 	close(dir_fd);
+        close(fd);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 fileerr:
