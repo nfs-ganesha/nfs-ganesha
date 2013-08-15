@@ -121,6 +121,12 @@ struct lru_q_lane
 	struct lru_q pinned;  /* uncollectable, due to state */
 	struct lru_q cleanup; /* deferred cleanup */
 	pthread_mutex_t mtx;
+	/* LRU thread scan position */
+	struct {
+		bool active;
+		struct glist_head *glist;
+		struct glist_head *glistn;
+	} iter;
 	struct {
 		char *func;
 		uint32_t line;
@@ -195,6 +201,36 @@ enum lru_edge
 
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
+/* Some helper macros */
+#define LRU_NEXT(n) \
+	(atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)
+
+/* Delete lru, use iif the current thread is not the LRU
+ * thread.  The node being removed is lru, glist a pointer to L1's q,
+ * qlane its lane. */
+#define LRU_DQ_SAFE(lru, q) \
+	do { \
+		if ((lru)->qid == LRU_ENTRY_L1) { \
+			struct lru_q_lane *qlane = &LRU[(lru)->lane]; \
+			if (unlikely((qlane->iter.active) && \
+				     ((&(lru)->q) == qlane->iter.glist))) { \
+				qlane->iter.glist = (lru)->q.prev; \
+				qlane->iter.glistn = (lru)->q.next; \
+			} \
+		} \
+		glist_del(&(lru)->q); \
+		--((q)->size); \
+	} while (0)
+
+#define LRU_ENTRY_L1_OR_L2(e) \
+    (((e)->lru.qid == LRU_ENTRY_L2) || \
+     ((e)->lru.qid == LRU_ENTRY_L1))
+
+#define LRU_ENTRY_RECLAIMABLE(e, n) \
+	(LRU_ENTRY_L1_OR_L2(e) && \
+	((n) == LRU_SENTINEL_REFCOUNT+1) && \
+	 ((e)->fh_hk.inavl))
+
 /**
  * @brief Initialize a single base queue.
  *
@@ -221,6 +257,9 @@ lru_init_queues(void)
 
         /* one mutex per lane */
         pthread_mutex_init(&qlane->mtx, NULL);
+
+	/* init iterator */
+	qlane->iter.active = false;
 
         /* init lane queues */
         lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
@@ -345,8 +384,7 @@ cond_pin_entry(cache_entry_t *entry, uint32_t flags)
 
 		/* out with the old queue */
 		q = lru_queue_of(entry);
-		glist_del(&lru->q);
-		--(q->size);
+		LRU_DQ_SAFE(lru, q);
 
 		/* in with the new */
 		lru->qid = LRU_ENTRY_PINNED;
@@ -416,17 +454,6 @@ cache_inode_lru_clean(cache_entry_t *entry)
  * returns an lru entry removed from the queue system and which we are
  * permitted to dispose or recycle.
  */
-#define LRU_NEXT(n) \
-	(atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)
-
-#define LRU_ENTRY_L1_OR_L2(e) \
-    (((e)->lru.qid == LRU_ENTRY_L2) || \
-     ((e)->lru.qid == LRU_ENTRY_L1))
-
-#define LRU_ENTRY_RECLAIMABLE(e, n) \
-	(LRU_ENTRY_L1_OR_L2(e) && \
-	((n) == LRU_SENTINEL_REFCOUNT+1) && \
-	 ((e)->fh_hk.inavl))
 
 static uint32_t reap_lane = 0; /* by definition */
 
@@ -475,8 +502,7 @@ lru_reap_impl(enum lru_q_id qid)
                   /* it worked */
                   struct lru_q *q = lru_queue_of(entry);
                   cih_remove_latched(entry, &latch, CIH_REMOVE_QLOCKED);
-                  glist_del(&lru->q);
-                  --(q->size);
+		  LRU_DQ_SAFE(lru, q);
                   entry->lru.qid = LRU_ENTRY_NONE;
                   QUNLOCK(qlane);
                   cih_latch_rele(&latch);
@@ -540,8 +566,7 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 
 		/* out with the old queue */
 		q = lru_queue_of(entry);
-		glist_del(&lru->q);
-		--(q->size);
+		LRU_DQ_SAFE(lru, q);
 
 		/* in with the new */
 		lru->qid = LRU_ENTRY_CLEANUP;
@@ -588,6 +613,7 @@ cache_inode_lru_cleanup(void)
 			QUNLOCK(qlane);
 			break;
 		}
+		/* XXX skip L1 iteration fixups */
 		glist_del(&lru->q);
 		--(cq->size);
 		lru->qid = LRU_ENTRY_NONE;
@@ -675,6 +701,7 @@ lru_run(struct fridgethr_context *ctx)
      uint64_t totalclosed = 0;
      /* The current count (after reaping) of open FDs */
      size_t currentopen = 0;
+     struct lru_q *q;
 
      fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 
@@ -746,7 +773,7 @@ lru_run(struct fridgethr_context *ctx)
 		    /* The amount of work done on this lane on
 		       this pass. */
 		    size_t workdone = 0;
-		    /* The current entry being examined. */
+		    /* The entry being examined */
 		    cache_inode_lru_t *lru = NULL;
 		    /* Number of entries closed in this run. */
 		    size_t closed = 0;
@@ -757,9 +784,9 @@ lru_run(struct fridgethr_context *ctx)
 		    cache_entry_t *entry;
 		    /* Current queue lane */
 		    struct lru_q_lane *qlane = &LRU[lane];
-		    /* safe lane traversal */
-		    struct glist_head  *glist;
-		    struct glist_head  *glistn;
+		    q = &qlane->L1;
+		    /* entry refcnt */
+		    uint32_t refcnt;
 
 		    LogDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Reaping up to %d entries from lane %zd",
@@ -773,87 +800,74 @@ lru_run(struct fridgethr_context *ctx)
 				 workpass, closed, totalclosed);
 
 		    QLOCK(qlane);
-		    while ((workdone < lru_state.per_lane_work) &&
-			   (!glist_empty(&LRU[lane].L1.q))) {
-			 /* In hindsight, it's really important to avoid
-			  * restarts. */
-			    glist_for_each_safe(glist, glistn,
-						&LRU[lane].L1.q) {
-				    uint32_t refcnt;
-				    struct lru_q *q;
+		    qlane->iter.active = true; /* ACTIVE */
+		    /* While for_each_safe per se is NOT MT-safe, the iteration
+		     * can be made so by the convention that any competing
+		     * thread which would invalidate the iteration also adjusts
+		     * glist and (in particular) glistn */
+		    glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn,
+					&q->q) {
+			    struct lru_q *q;
 
-				    /* recheck per-lane work */
-				    if (workdone >= lru_state.per_lane_work) {
-					    break;
+			    /* check per-lane work */
+			    if (workdone >= lru_state.per_lane_work) 
+				    goto next_lane;
+
+			    lru = glist_entry(qlane->iter.glist, cache_inode_lru_t, q);
+			    refcnt = atomic_inc_int32_t(&lru->refcnt);
+
+			    /* check refcnt in range */
+			    if (unlikely(refcnt > 2)) {
+				    cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED); /* return lru */
+				    workdone++; /* but count it */
+				    /* qlane LOCKED, lru refcnt is restored */
+				    continue;
+			    }
+
+			    /* Move entry to MRU of L2 */
+			    q = &qlane->L1;
+			    LRU_DQ_SAFE(lru, q);
+			    lru->qid = LRU_ENTRY_L2;
+			    q = &qlane->L2;
+			    glist_add(&q->q, &lru->q);
+			    ++(q->size);
+
+			    /* Need the entry now */
+			    entry = container_of(lru, cache_entry_t, lru);
+
+			    /* Drop the lane lock while performing
+			     * (slow) operations on entry */
+			    QUNLOCK(qlane);
+
+			    /* Acquire the content lock first; we may
+			     * need to look at fds and close it. */
+			    pthread_rwlock_wrlock(&entry->content_lock);
+			    if (is_open(entry)) {
+				    cache_status =
+					    cache_inode_close(
+						    entry,
+						    CACHE_INODE_FLAG_REALLYCLOSE |
+						    CACHE_INODE_FLAG_NOT_PINNED |
+						    CACHE_INODE_FLAG_CONTENT_HAVE |
+						    CACHE_INODE_FLAG_CONTENT_HOLD);
+				    if (cache_status != CACHE_INODE_SUCCESS) {
+					    LogCrit(COMPONENT_CACHE_INODE_LRU,
+						    "Error closing file in "
+						    "LRU thread.");
+				    } else {
+					    ++totalclosed;
+					    ++closed;
 				    }
+			    }
+			    pthread_rwlock_unlock(&entry->content_lock);
 
-				    lru = glist_entry(glist,
-						      cache_inode_lru_t, q);
+			    QLOCK(qlane); /* QLOCKED */
+			    cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED); /* return lru */
+			    ++workdone;
+		    } /* for_each_safe lru */
 
-				    /* Drop the lane lock while performing
-				     * (slow) operations on entry */
-				    atomic_inc_int32_t(&lru->refcnt);
-				    QUNLOCK(qlane);
-
-				    /* Need the entry */
-				    entry = container_of(lru, cache_entry_t,
-							 lru);
-
-				    /* Acquire the content lock first; we may
-				     * need to look at fds and close it. */
-				    pthread_rwlock_wrlock(&entry->content_lock);
-				    if (is_open(entry)) {
-					    cache_status =
-						    cache_inode_close(
-							    entry,
-							    CACHE_INODE_FLAG_REALLYCLOSE |
-							    CACHE_INODE_FLAG_NOT_PINNED |
-							    CACHE_INODE_FLAG_CONTENT_HAVE |
-							    CACHE_INODE_FLAG_CONTENT_HOLD);
-					    if (cache_status != CACHE_INODE_SUCCESS) {
-						    LogCrit(COMPONENT_CACHE_INODE_LRU,
-							    "Error closing file in "
-							    "LRU thread.");
-					    } else {
-						    ++totalclosed;
-						    ++closed;
-					    }
-				    }
-				    pthread_rwlock_unlock(&entry->content_lock);
-
-				    /* We did the (slow) cache entry ops
-				     * unlocked, recheck lru before moving it
-				     * to L2. */
-				    QLOCK(qlane);
-
-				    /* Yes, we must recheck this. */
-				    refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-
-				    /* Safely decrement refcnt. */
-				    cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
-
-				    /* Since we dropped the lane mutex, recheck
-				     * that the entry hasn't moved or been recycled. */
-				    if (unlikely((lru->qid != LRU_ENTRY_L1) ||
-						 (refcnt == 1))) {
-					    workdone++; /* but count it */
-					    /* qlane LOCKED */
-					    continue;
-				    }
-
-				    /* Move entry to MRU of L2 */
-				    q = &qlane->L1;
-				    glist_del(&lru->q);
-				    --(q->size);
-				    lru->qid = LRU_ENTRY_L2;
-				    q = &qlane->L2;
-				    glist_add(&q->q, &lru->q);
-				    ++(q->size);
-
-				    ++workdone;
-			    } /* for_each_safe lru */
-		    } /* while (workdone < per-lane work) */
-
+	       next_lane:
+		    qlane->iter.active = false; /* !ACTIVE */
 		    QUNLOCK(qlane);
 		    LogDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Actually processed %zd entries on lane %zd "
@@ -1243,6 +1257,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 	if (unlikely(entry->lru.pin_refcnt == 0)) {
 		/* remove from pinned */
 		struct lru_q *q =  &qlane->pinned;
+		/* XXX skip L1 iteration fixups */
 		glist_del(&lru->q);
 		--(q->size);
 		/* add to MRU of L1 */
@@ -1335,8 +1350,9 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 			q = lru_queue_of(entry);
 			if (flags & LRU_REQ_INITIAL) {
 				/* advance entry to MRU (of L1) */
-				glist_del(&lru->q);
+				LRU_DQ_SAFE(lru, q);
 				glist_add_tail(&q->q, &lru->q);
+				--(q->size);
 			} else {
 				/* do not advance entry in L1 on LRU_REQ_SCAN
 				 * (scan resistence) */                    
@@ -1346,7 +1362,7 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 			q = lru_queue_of(entry);
 			if (flags & LRU_REQ_INITIAL) {
 				/* move entry to LRU of L1 */
-				glist_del(&lru->q);
+				glist_del(&lru->q); /* skip L1 fixups */
 				--(q->size);
 				lru->qid = LRU_ENTRY_L1;
 				q = &qlane->L1;
@@ -1354,7 +1370,7 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 				++(q->size);
 			} else {
 				/* advance entry to MRU of L2 */
-				glist_del(&lru->q);
+				glist_del(&lru->q); /* skip L1 fixups */
 				glist_add_tail(&q->q, &lru->q);
 			}
 			break;
@@ -1414,8 +1430,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		if (q) {
 			/* as of now, entries leaving the cleanup queue
 			 * are LRU_ENTRY_NONE */
-			glist_del(&entry->lru.q);
-			--(q->size);
+			LRU_DQ_SAFE(&entry->lru, q);
 		}
 
 		if (! qlocked)
@@ -1456,15 +1471,14 @@ cache_inode_lru_putback(cache_entry_t *entry,
 
     q = lru_queue_of(entry);
     if (q) {
-        /* as of now, entries leaving the cleanup queue
-         * are LRU_ENTRY_NONE */
-        glist_del(&entry->lru.q);
-        --(q->size);
+	    /* as of now, entries leaving the cleanup queue
+	     * are LRU_ENTRY_NONE */
+	    LRU_DQ_SAFE(&entry->lru, q);
     }
 
     /* We do NOT call lru_clean_entry, since it was never initialized. */
     pool_free(cache_inode_entry_pool, entry);
-	atomic_dec_int64_t(&lru_state.entries_used);
+    atomic_dec_int64_t(&lru_state.entries_used);
 
     if (! qlocked)
         QUNLOCK(qlane);
