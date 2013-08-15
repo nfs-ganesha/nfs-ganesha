@@ -292,15 +292,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		if (flags & UP_NLINK)
 		  upflags |= fsal_up_nlink;
 		if (flags & UP_SIZE)
-		  attr.mask |= ATTR_SIZE|ATTR_SPACEUSED;
+		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_SIZE|ATTR_SPACEUSED;
 		if (flags & UP_MODE)
-		  attr.mask |= ATTR_MODE;
+		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_MODE;
 		if (flags & UP_OWN)
-		  attr.mask |= ATTR_OWNER;
+		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_OWNER;
 		if (flags & UP_TIMES)
-		  attr.mask |= ATTR_ATIME|ATTR_CTIME|ATTR_MTIME;
+		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_ATIME|ATTR_CTIME|ATTR_MTIME;
 		if (flags & UP_ATIME)
-		  attr.mask |= ATTR_ATIME;
+		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_ATIME;
 
 	        posix2fsal_attributes(&buf, &attr);
 		rc = event_func->update(gpfs_fsal_up_ctx->gf_export,
@@ -312,7 +312,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	      {
 		rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
 					    &key,
-					    0);
+					    CACHE_INODE_INVALIDATE_ATTRS |
+					    CACHE_INODE_INVALIDATE_CONTENT);
 	      }
 
 	  }
@@ -330,7 +331,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                         flags, callback.buf->st_ino);
 	    rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
 					&key,
-					0);
+					CACHE_INODE_INVALIDATE_ATTRS |
+					CACHE_INODE_INVALIDATE_CONTENT);
             break;
 
           default:

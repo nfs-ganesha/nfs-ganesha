@@ -276,6 +276,11 @@ static cache_inode_status_t update(
 
 	if (mutatis_mutandis) {
 		cache_inode_fixup_md(entry);
+		/* If directory can not trust content anymore. */
+		if (entry->type == DIRECTORY)
+			cache_inode_invalidate(entry,
+				       CACHE_INODE_INVALIDATE_CONTENT |
+				       CACHE_INODE_INVALIDATE_GOT_LOCK);
 	} else {
 		cache_inode_invalidate(entry,
 				       CACHE_INODE_INVALIDATE_ATTRS |
