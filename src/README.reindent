@@ -1,0 +1,34 @@
+On the Great Reindenture
+
+To reindent a tree (or some series of trees) use the command
+
+./src/scripts/reindenture dir1 [dir2 ... dirn]
+
+GNU Indent generates backup files whether you like it or not and
+there's no way to turn it off.  I have told it to generate Emacs ~
+style backup files, however, which are ignored in our .gitignore.
+They won't get in the way while you generate a patch, and git clean
+will get rid of them.
+
+GNU Indent's support for wrapping long lines is stupid.  You will
+almost certainly want to look through the files to make sure you don't
+still have excessively long lines or lines that were wrapped in an
+egregiously awful manner.  You may find the develock Emacs minor mode
+useful.  (I like it.)
+
+We would also like to make sure we pass the Linux checkpatch script.
+It is in the Linux kernel source.  if you have uncommitted changes,
+you can run checkpatch over them (assuming your Linux kernel source is
+in /usr/src/linux) with:
+
+git diff | /usr/src/linux-source-3.10/scripts/checkpatch.pl -
+
+You should run this after reindenting but before committing.  You will
+receive a very large number of warnings and errors that you should
+fix.  There's a lot of stuff indent doesn't fix that checkpatch.pl
+checks for, like relative spacing of operators, or the asterisk in
+pointer declarations and so forth.  So if we want to follow Linux
+kernel format rigorously, we have to clean the Augean stables first.
+
+You can (and should) run checkpatch similarly before every commit.  If
+we clean up the mess now it'll be a good way to keep it clean later.
