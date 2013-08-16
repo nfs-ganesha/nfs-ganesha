@@ -213,8 +213,7 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 		if ((lru)->qid == LRU_ENTRY_L1) { \
 			struct lru_q_lane *qlane = &LRU[(lru)->lane]; \
 			if (unlikely((qlane->iter.active) && \
-				     ((&(lru)->q) == qlane->iter.glist))) { \
-				qlane->iter.glist = (lru)->q.prev; \
+				     ((&(lru)->q) == qlane->iter.glistn))) { \
 				qlane->iter.glistn = (lru)->q.next; \
 			} \
 		} \
