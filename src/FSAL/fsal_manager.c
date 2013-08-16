@@ -322,6 +322,7 @@ errout:
 	LogMajor(COMPONENT_INIT,
 		 "Failed to load module (%s) because: %s",
 		 path, strerror(retval));
+        free(dl_path);
 	return retval;
 }
 
