@@ -14,6 +14,8 @@ from Ganesha.export_mgr import ExportMgr
 from Ganesha.exports_table import ExportTableModel
 from Ganesha.client_mgr import ClientMgr
 from Ganesha.clients_table import ClientTableModel
+from Ganesha.log_mgr import LogManager
+from Ganesha.log_settings import LogSetDialog
 
 SERVICE = 'org.ganesha.nfsd'
 
@@ -40,6 +42,10 @@ class MainWindow(QtGui.QMainWindow):
                                    '/org/ganesha/nfsd/ClientMgr',
                                    sysbus,
                                    self.show_status)
+        self.logmanager = LogManager(SERVICE,
+                                     sysbus,
+                                     self.show_status)
+        self.logdialog = LogSetDialog(self.logmanager)
         self.show_status.connect(self.status_message)
 
         # Connect up the ui menubar
@@ -53,7 +59,7 @@ class MainWindow(QtGui.QMainWindow):
         #Manage->Exports
         self.ui.actionExports.triggered.connect(self.export_mgr)
         #Manage->Log Levels
-        self.ui.actionLog_Levels.triggered.connect(self.loglevels)
+        self.ui.actionLog_Settings.triggered.connect(self.logsettings)
         #Manage->Admin
         self.ui.actionReset_Grace.triggered.connect(self.reset_grace)
         self.ui.actionShutdown.triggered.connect(self.shutdown)
@@ -76,7 +82,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.clients.setModel(self.clients_show_model)
         self.ui.clients.resizeColumnsToContents()
         self.ui.clients.verticalHeader().setVisible(False)
-
 
     # actions to real work...
     def quit(self):
@@ -103,8 +108,8 @@ class MainWindow(QtGui.QMainWindow):
     def export_mgr(self):
         self.statusBar().showMessage("Export manager")
         
-    def loglevels(self):
-        self.statusBar().showMessage("tweak log levels")
+    def logsettings(self):
+        self.logdialog.show_logsetting_dialog()
 
     def reset_grace(self):
         ipaddr, ok = QtGui.QInputDialog.getText(self,

@@ -4,7 +4,7 @@ import sys
 from PyQt4 import QtCore, QtDBus
 from PyQt4.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
-from admin import AdminInterface
+from Ganesha.admin import AdminInterface
 
 SERVICE = 'org.ganesha.nfsd'
 

@@ -102,6 +102,13 @@
     <property name="title">
      <string>Manage</string>
     </property>
+    <widget class="QMenu" name="menuClients">
+     <property name="title">
+      <string>Clients</string>
+     </property>
+     <addaction name="actionAdd_Client"/>
+     <addaction name="actionRemove_Client"/>
+    </widget>
     <widget class="QMenu" name="menuAdmin">
      <property name="title">
       <string>Admin</string>
@@ -110,13 +117,7 @@
      <addaction name="actionShutdown"/>
      <addaction name="actionReload"/>
     </widget>
-    <widget class="QMenu" name="menuClients">
-     <property name="title">
-      <string>Clients</string>
-     </property>
-     <addaction name="actionAdd_Client"/>
-     <addaction name="actionRemove_Client"/>
-    </widget>
+    <addaction name="actionLog_Settings"/>
     <addaction name="menuClients"/>
     <addaction name="actionExports"/>
     <addaction name="menuAdmin"/>
@@ -204,6 +205,11 @@
   <action name="actionRemove_Client">
    <property name="text">
     <string>Remove Client</string>
+   </property>
+  </action>
+  <action name="actionLog_Settings">
+   <property name="text">
+    <string>Log Settings</string>
    </property>
   </action>
  </widget>
