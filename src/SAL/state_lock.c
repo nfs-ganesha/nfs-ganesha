@@ -2034,12 +2034,6 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
       /* Mark lock as canceled */
       lock_entry->sle_blocked = STATE_CANCELED;
 
-      /* Remove the lock from the lock list.
-       * Will not free yet because of cookie reference to lock entry.
-       */
-      LogEntry("Release Grant Removing", lock_entry);
-      remove_from_locklist(lock_entry);
-
       /* We had acquired an FSAL lock, need to release it. */
       status = do_lock_op(entry,
 			  lock_entry->sle_export,
@@ -2056,6 +2050,14 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
         LogMajor(COMPONENT_STATE,
                  "Unable to unlock FSAL for released GRANTED lock, error=%s",
                  state_err_str(status));
+      else {
+        /*
+         * Remove the lock from the lock list.
+         * Will not free yet because of cookie reference to lock entry.
+         */
+        LogEntry("Release Grant Removing", lock_entry);
+        remove_from_locklist(lock_entry);
+      }
     }
 
   /* Free the cookie and unblock the lock.
