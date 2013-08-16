@@ -32,3 +32,10 @@ kernel format rigorously, we have to clean the Augean stables first.
 
 You can (and should) run checkpatch similarly before every commit.  If
 we clean up the mess now it'll be a good way to keep it clean later.
+
+There is a configuration file (checkpatch.conf) that you almost
+certainly want to use.  To do so, copy it to ~/.checkpatch.conf .  I
+ran through and set it to ignore all the kernel specific checksw, but if
+we find ourselves getting lots of false positives, we can turn off mroe
+warnings.  If we wanted to add or modify tests (to work with gsh_malloc
+rather than kmalloc, say) we would have to fork the script itself.
