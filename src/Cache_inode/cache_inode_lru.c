@@ -812,12 +812,17 @@ lru_run(struct fridgethr_context *ctx)
 			    if (workdone >= lru_state.per_lane_work) 
 				    goto next_lane;
 
-			    lru = glist_entry(qlane->iter.glist, cache_inode_lru_t, q);
+			    lru = glist_entry(qlane->iter.glist,
+                                              cache_inode_lru_t, q);
 			    refcnt = atomic_inc_int32_t(&lru->refcnt);
+
+                            /* get entry early */
+			    entry = container_of(lru, cache_entry_t, lru);
 
 			    /* check refcnt in range */
 			    if (unlikely(refcnt > 2)) {
-				    cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED); /* return lru */
+				    cache_inode_lru_unref(entry,
+                                                          LRU_UNREF_QLOCKED);
 				    workdone++; /* but count it */
 				    /* qlane LOCKED, lru refcnt is restored */
 				    continue;
@@ -830,9 +835,6 @@ lru_run(struct fridgethr_context *ctx)
 			    q = &qlane->L2;
 			    glist_add(&q->q, &lru->q);
 			    ++(q->size);
-
-			    /* Need the entry now */
-			    entry = container_of(lru, cache_entry_t, lru);
 
 			    /* Drop the lane lock while performing
 			     * (slow) operations on entry */
