@@ -220,17 +220,22 @@ ENDIF()
 IF(USE_FSAL_HPSS)
   IF(HPSS_PREFIX)
     set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${HPSS_PREFIX}/lib")
-
-    # Already set the rpath after build, don't wait for make install
-    SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-    SET(CMAKE_INSTALL_RPATH "${HPSS_PREFIX}/lib")
-
-    include_directories("${HPSS_PREFIX}/include")
   ELSE()
     set(HPSS_PREFIX "/usr" CACHE PATH "Path to HPSS installation")
   ENDIF()
-ENDIF()
+
+  # If you are not using hpss with krb5, remove the hpsskrb5auth here.
+  # It shouldn't be needed, but dlopen() of a dlopen() seems not to work as well as one properly linked...
+  find_library(HPSS_LIBRARIES
+    NAMES hpss PATHS "${HPSS_PREFIX}/lib")
+  find_library(HPSSKRB5_LIBRARY
+    NAMES hpsskrb5auth PATHS "${HPSS_PREFIX}/lib")
+  LIST(APPEND HPSS_LIBRARIES "${HPSSKRB5_LIBRARY}")
+  if(NOT HPSS_LIBRARIES)
+    message(WARNING "Cannot find HPSS libraries. Disabling HPSS fsal build")
+    set(USE_FSAL_HPSS OFF)
+  endif(NOT HPSS_LIBRARIES)
+endif(USE_FSAL_HPSS)
 
 IF(KRB5_PREFIX)
   set(KRB5_PREFIX ${KRB5_PREFIX} CACHE PATH "Path to Krb5 installation")
@@ -334,17 +339,6 @@ if(STRICT_PACKAGE)
     endif(STRICT_PACKAGE)
  endif(NOT CEPH_FS)
 endif(USE_FSAL_CEPH)
-
-if(USE_FSAL_HPSS)
-  find_library(HPSS_LIBRARY
-    NAMES hpss)
-  if(NOT HPSS_LIBRARY)
-    message(WARNING "Cannot find HPSS libraries. Disabling HPSS fsal build")
-    set(USE_FSAL_HPSS OFF)
-  else(NOT HPSS_LIBRARY)
-    set(SYSTEM_LIBRARIES ${HPSS_LIBRARY} ${SYSTEM_LIBRARIES})
-  endif(NOT HPSS_LIBRARY)
-endif(USE_FSAL_HPSS)
 
 if(USE_FSAL_LUSTRE)
   check_library_exists(
