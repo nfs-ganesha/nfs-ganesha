@@ -585,8 +585,6 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
       return fsalstat(rc, 0 ) ;
     }
 
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 
