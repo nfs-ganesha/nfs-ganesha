@@ -127,7 +127,7 @@ uid_t setuser(uid_t uid) {
 	uid_t orig_uid = setfsuid(uid);
 	if (uid != setfsuid(uid)) {
 		setfsuid(orig_uid);
-		LogFatal(COMPONENT_FSAL,
+		LogCrit(COMPONENT_FSAL,
 			"Could not set user identity");
 	}
 	return orig_uid;
@@ -137,7 +137,7 @@ gid_t setgroup(gid_t gid) {
 	gid_t orig_gid = setfsgid(gid);
 	if (gid != setfsgid(gid)) {
 		setfsgid(orig_gid);
-		LogFatal(COMPONENT_FSAL,
+		LogCrit(COMPONENT_FSAL,
 			"Could not set group identity");
 	}
 	return orig_gid;
