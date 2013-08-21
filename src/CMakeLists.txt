@@ -787,19 +787,23 @@ configure_file(
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 ########### add a "make srpm" and a "make rpm" ###############
-IF( DISTNAME_HAS_GIT_DATA )
-  add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm )
-  add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
-ELSE( DISTNAME_HAS_GIT_DATA )
-  # I need DISTNAME_HAS_GIT_DATA set to ON to carry git data, so I set it, build rpm and set the option back to OFF
-  add_custom_target(rpm COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
-			COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm 
-			COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF  ${CMAKE_SOURCE_DIR} )
+IF( RPMTools_RPMBUILD_FOUND ) 
+  IF( DISTNAME_HAS_GIT_DATA )
+    add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm )
+    add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
+  ELSE( DISTNAME_HAS_GIT_DATA )
+    # I need DISTNAME_HAS_GIT_DATA set to ON to carry git data, so I set it, build rpm and set the option back to OFF
+    add_custom_target(rpm COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
+  			  COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm 
+			  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF  ${CMAKE_SOURCE_DIR} )
 
-  add_custom_target(srpm  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
-                          COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm
-			  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF ${CMAKE_SOURCE_DIR}  )
-ENDIF( DISTNAME_HAS_GIT_DATA )
+    add_custom_target(srpm  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
+                            COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm
+			    COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF ${CMAKE_SOURCE_DIR}  )
+  ENDIF( DISTNAME_HAS_GIT_DATA )
+ELSE( RPMTools_RPMBUILD_FOUND ) 
+	message( WARNING "no rpmbuild executable found. Makefiles will not have the rpm and srpm targets" )
+ENDIF( RPMTools_RPMBUILD_FOUND ) 
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
@@ -808,7 +812,7 @@ if(DOXYGEN_FOUND)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
+E
     )
 endif(DOXYGEN_FOUND)
 
