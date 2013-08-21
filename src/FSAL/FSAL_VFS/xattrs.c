@@ -506,9 +506,8 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
           index = rc;
           found = TRUE;
         }
+        close(fd);
     }
-
-  close(fd);
 
   if(found)
     {
