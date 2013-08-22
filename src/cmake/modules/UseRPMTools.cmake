@@ -264,12 +264,24 @@ Summary: The NFS-GANESHA's VFS FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 
-
 %description vfs
 This package contains a FSAL shared object to 
 be used with NFS-Ganesha to support VFS based filesystems
 ")
 endif(USE_FSAL_VFS)
+
+if(USE_FSAL_XFS)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package xfs
+Summary: The NFS-GANESHA's XFS FSAL
+Group: Applications/System
+Requires: xfsprogs
+BuildRequires: libattr-devel xfsprogs-devel
+
+%description xfs
+This package contains a shared object to be used with FSAL_VFS to support XFS correctly
+")
+endif(USE_FSAL_XFS)
 
 # Stackable NULLFS is always generated */
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
@@ -285,7 +297,7 @@ be used with NFS-Ganesha. This is mostly a template for future (more sophisticat
 if(USE_FSAL_PROXY)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %package proxy
-Summary: The NFS-GANESHA's VFS FSAL
+Summary: The NFS-GANESHA's PROXY FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 
@@ -491,6 +503,18 @@ if(USE_FSAL_VFS)
 
 " )
 endif(USE_FSAL_VFS)
+
+if(USE_FSAL_XFS)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files xfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libxfsfdhdl*
+
+" )
+endif(USE_FSAL_XFS)
+
+
 
 if(USE_FSAL_HPSS)
         FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  

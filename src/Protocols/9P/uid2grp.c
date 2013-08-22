@@ -111,7 +111,7 @@ bool pwentuid2grp( uid_t uid, struct gsh_buffdesc * name, struct group_data * pg
    }
 
   /* Resize pgroups to what it should be */
-  gsh_realloc(  pgdata->pgroups, pgdata->nbgroups*sizeof( gid_t ) ) ;
+  pgdata->pgroups = gsh_realloc(  pgdata->pgroups, pgdata->nbgroups*sizeof( gid_t ) ) ;
 
   /* Set puid */
   name->addr = p.pw_name ;
