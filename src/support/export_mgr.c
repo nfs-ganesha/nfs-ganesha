@@ -911,7 +911,7 @@ void export_pkginit(void)
 	export_by_id.cache_sz = 255;
 	export_by_id.cache = gsh_calloc(export_by_id.cache_sz,
 					sizeof(struct avltree_node *));
-	init_glist(&exportlist);
+	glist_init(&exportlist);
 }
 
 /** @} */

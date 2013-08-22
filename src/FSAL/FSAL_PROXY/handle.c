@@ -932,8 +932,8 @@ pxy_init_rpc(const struct pxy_fsal_module *pm)
                 return ENOTSUP;
         }
 
-        init_glist(&rpc_calls);
-        init_glist(&free_contexts);
+        glist_init(&rpc_calls);
+        glist_init(&free_contexts);
 
         rpc_xid = getpid() ^ time(NULL);
 

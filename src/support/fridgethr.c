@@ -157,10 +157,10 @@ int fridgethr_init(struct fridgethr **frout,
 	frobj->transitioning = false;
 
 	/* Thread list */
-	init_glist(&frobj->thread_list);
+	glist_init(&frobj->thread_list);
 
 	/* Idle threads queue */
-	init_glist(&frobj->idle_q);
+	glist_init(&frobj->idle_q);
 
 	/* Flavor */
 
@@ -168,7 +168,7 @@ int fridgethr_init(struct fridgethr **frout,
 		/* Deferment */
 		switch (frobj->p.deferment) {
 		case fridgethr_defer_queue:
-			init_glist(&frobj->deferment.work_q);
+			glist_init(&frobj->deferment.work_q);
 			break;
 
 		case fridgethr_defer_block:
@@ -707,7 +707,7 @@ static int fridgethr_queue(struct fridgethr *fr,
 			 "work queue item in fridge %s", fr->s);
 		return ENOMEM;
 	}
-	init_glist(&q->link);
+	glist_init(&q->link);
 	q->func = func;
 	q->arg = arg;
 	glist_add_tail(&fr->deferment.work_q, &q->link);

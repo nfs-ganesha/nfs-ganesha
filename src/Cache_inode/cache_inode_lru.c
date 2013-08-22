@@ -239,7 +239,7 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 static inline void
 lru_init_queue(struct lru_q *q, enum lru_q_id qid)
 {
-     init_glist(&q->q);
+     glist_init(&q->q);
      q->id = qid;
      q->size = 0;
 }

@@ -325,7 +325,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	inc_client_id_ref(found);
 
 	/* add to head of session list (encapsulate?) */
-	init_glist(&nfs41_session->session_link);
+	glist_init(&nfs41_session->session_link);
 	glist_add(&found->cid_cb.v41.cb_session_list,
 		  &nfs41_session->session_link);
 

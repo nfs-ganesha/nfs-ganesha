@@ -41,9 +41,7 @@ struct glist_head
 #define GLIST_HEAD(name) \
         struct glist_head name = GLIST_HEAD_INIT(name)
 
-/*FIXME!!! grand hack due to mysql conflict name glist*/
-
-static inline void init_glist(struct glist_head *head) /* XXX glist_init? */
+static inline void glist_init(struct glist_head *head) /* XXX glist_init? */
 {
   head->next = head;
   head->prev = head;
@@ -123,7 +121,7 @@ static inline void glist_splice_tail(struct glist_head *tgt,
     src->prev->next = tgt;
     tgt->prev = src->prev;
 
-    init_glist(src);
+    glist_init(src);
 }
 
 #define glist_for_each(node, head) \

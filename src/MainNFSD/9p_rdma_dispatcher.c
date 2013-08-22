@@ -164,7 +164,7 @@ void * _9p_rdma_thread( void * Arg )
   for (i = 0; i < FLUSH_BUCKETS; i++)
    {
      pthread_mutex_init(&p_9p_conn->flush_buckets[i].lock, NULL);
-     init_glist(&p_9p_conn->flush_buckets[i].list);
+     glist_init(&p_9p_conn->flush_buckets[i].list);
    }
   p_9p_conn->sequence = 0 ;
   atomic_store_uint32_t(&p_9p_conn->refcount, 0) ;

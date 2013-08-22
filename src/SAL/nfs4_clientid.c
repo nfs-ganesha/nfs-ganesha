@@ -557,8 +557,8 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_minorversion = minorversion;
 
 	/* need to init the list_head */
-	init_glist(&client_rec->cid_openowners);
-	init_glist(&client_rec->cid_lockowners);
+	glist_init(&client_rec->cid_openowners);
+	glist_init(&client_rec->cid_lockowners);
 
 	/* set up the content of the clientid_owner */
 	owner->so_type = STATE_CLIENTID_OWNER_NFSV4;
@@ -569,8 +569,8 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	owner->so_refcount = 1;
 
 	/* Init the lists for the clientid_owner */
-	init_glist(&owner->so_lock_list);
-	init_glist(&owner->so_owner.so_nfs4_owner.so_state_list);
+	glist_init(&owner->so_lock_list);
+	glist_init(&owner->so_owner.so_nfs4_owner.so_state_list);
 
 	/* Get a reference to the client record */
 	(void) inc_client_record_ref(client_rec->cid_client_record);

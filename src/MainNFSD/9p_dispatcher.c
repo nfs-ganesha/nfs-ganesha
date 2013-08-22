@@ -144,7 +144,7 @@ void * _9p_socket_thread( void * Arg )
   _9p_conn.trans_data.sockfd = tcp_sock ;
   for (i = 0; i < FLUSH_BUCKETS; i++) {
           pthread_mutex_init(&_9p_conn.flush_buckets[i].lock, NULL);
-          init_glist(&_9p_conn.flush_buckets[i].list);
+          glist_init(&_9p_conn.flush_buckets[i].list);
   }
   atomic_store_uint32_t(&_9p_conn.refcount, 0);
   

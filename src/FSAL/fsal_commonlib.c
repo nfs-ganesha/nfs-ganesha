@@ -147,9 +147,9 @@ int fsal_export_init(struct fsal_export *exp,
         }
         memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
-	init_glist(&exp->handles);
-	init_glist(&exp->ds_handles);
-	init_glist(&exp->exports);
+	glist_init(&exp->handles);
+	glist_init(&exp->ds_handles);
+	glist_init(&exp->exports);
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -204,7 +204,7 @@ int fsal_obj_handle_init(struct fsal_obj_handle *obj,
 	obj->ops = exp->obj_ops;
 	obj->export = exp;
         obj->type = type;
-	init_glist(&obj->handles);
+	glist_init(&obj->handles);
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -276,7 +276,7 @@ fsal_ds_handle_init(struct fsal_ds_handle *ds,
         ds->refs = 1;  /* we start out with a reference */
         ds->ops = ops;
         ds->export = exp;
-        init_glist(&ds->ds_handles);
+        glist_init(&ds->ds_handles);
         pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
         pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);

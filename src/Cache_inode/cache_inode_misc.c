@@ -310,8 +310,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      /* Initialize common fields */
      nentry->type = new_obj->type;
      nentry->flags = 0;
-     init_glist(&nentry->state_list);
-     init_glist(&nentry->layoutrecall_list);
+     glist_init(&nentry->state_list);
+     glist_init(&nentry->layoutrecall_list);
 
      switch (nentry->type) {
      case REGULAR_FILE:
@@ -320,8 +320,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                    nentry);
 
           /* No locks, yet. */
-          init_glist(&nentry->object.file.lock_list);
-          init_glist(&nentry->object.file.nlm_share_list); /* No associated NLM shares yet */
+          glist_init(&nentry->object.file.lock_list);
+          glist_init(&nentry->object.file.nlm_share_list); /* No associated NLM shares yet */
 
           memset(&nentry->object.file.share_state, 0,
 		 sizeof(cache_inode_share_t));

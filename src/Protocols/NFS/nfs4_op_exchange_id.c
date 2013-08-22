@@ -267,7 +267,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	init_glist(&unconf->cid_cb.v41.cb_session_list);
+	glist_init(&unconf->cid_cb.v41.cb_session_list);
 
 	memcpy(unconf->cid_incoming_verifier,
 	       arg_EXCHANGE_ID4->eia_clientowner.co_verifier,

@@ -204,8 +204,8 @@ state_status_t state_add_impl(cache_entry_t *entry,
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
 
-  init_glist(&pnew_state->state_list);
-  init_glist(&pnew_state->state_owner_list);
+  glist_init(&pnew_state->state_list);
+  glist_init(&pnew_state->state_owner_list);
 
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))

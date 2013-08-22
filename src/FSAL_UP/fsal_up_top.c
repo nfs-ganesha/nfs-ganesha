@@ -748,8 +748,8 @@ static state_status_t create_file_recall(
         goto out;
     }
 
-	init_glist(&recall->entry_link);
-	init_glist(&recall->state_list);
+	glist_init(&recall->entry_link);
+	glist_init(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
 	recall->segment = *segment;
@@ -831,7 +831,7 @@ static state_status_t create_file_recall(
 				rc = STATE_MALLOC_ERROR;
 				goto out;
 			}
-			init_glist(&list_entry->link);
+			glist_init(&list_entry->link);
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			none = false;

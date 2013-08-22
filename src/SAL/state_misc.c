@@ -1111,7 +1111,7 @@ state_owner_t *get_state_owner(care_t               care,
 
   memcpy(owner->so_owner_val, key->so_owner_val, key->so_owner_len);
 
-  init_glist(&owner->so_lock_list);
+  glist_init(&owner->so_lock_list);
 
   owner->so_refcount = 1;
 

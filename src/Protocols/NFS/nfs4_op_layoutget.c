@@ -188,7 +188,7 @@ acquire_layout_state(compound_data_t *data,
                         goto out;
                 }
 
-                init_glist(&(*layout_state)->state_data.layout.state_segments);
+                glist_init(&(*layout_state)->state_data.layout.state_segments);
 
                 /* Attach this open to an export */
                 (*layout_state)->state_export = data->pexport;

@@ -138,7 +138,7 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
   unknown_owner.so_refcount  = 1;
   unknown_owner.so_owner_len = strlen(unknown_owner.so_owner_val);
 
-  init_glist(&unknown_owner.so_lock_list);
+  glist_init(&unknown_owner.so_lock_list);
 
   if(pthread_mutex_init(&unknown_owner.so_mutex, NULL) == -1)
     {
@@ -156,12 +156,12 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
     }
 
 #ifdef DEBUG_SAL
-  init_glist(&state_all_locks);
-  init_glist(&state_owners_all);
-  init_glist(&state_v4_all);
+  glist_init(&state_all_locks);
+  glist_init(&state_owners_all);
+  glist_init(&state_v4_all);
 #endif
 
-  init_glist(&state_blocked_locks);
+  glist_init(&state_blocked_locks);
 
   status = state_async_init();
 
@@ -1054,8 +1054,8 @@ static state_status_t subtract_lock_from_list(cache_entry_t *entry,
 
   *removed = false;
 
-  init_glist(&split_lock_list);
-  init_glist(&remove_list);
+  glist_init(&split_lock_list);
+  glist_init(&remove_list);
 
   glist_for_each_safe(glist, glistn, list)
     {
@@ -2154,7 +2154,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
   if(unlock_entry == NULL)
     return STATE_MALLOC_ERROR;
 
-  init_glist(&fsal_unlock_list);
+  glist_init(&fsal_unlock_list);
 
   glist_add_tail(&fsal_unlock_list, &unlock_entry->sle_list);
 
@@ -3146,7 +3146,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
                    "state_nlm_notify for %s", client);
     }
 
-  init_glist(&newlocks);
+  glist_init(&newlocks);
 
   /* First remove byte range locks.
    * Only accept so many errors before giving up.

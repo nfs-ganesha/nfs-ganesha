@@ -664,7 +664,7 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 	   after disposing of any lock states that may depend on them. */
 	struct glist_head opens;
 
-	init_glist(&opens);
+	glist_init(&opens);
 
 	if (glist_empty(&entry->state_list)) {
 		return false;

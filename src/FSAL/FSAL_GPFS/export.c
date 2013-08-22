@@ -698,7 +698,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
        /* Make sure the FSAL UP context list is initialized */
        if(glist_null(&gpfs_fsal_up_ctx_list))
-         init_glist(&gpfs_fsal_up_ctx_list);
+         glist_init(&gpfs_fsal_up_ctx_list);
 
        up_ctx.gf_fsid[0] = myself->root_handle->handle_fsid[0];
        up_ctx.gf_fsid[1] = myself->root_handle->handle_fsid[1];
@@ -715,7 +715,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
              }
 
            /* Initialize the gpfs_fsal_up_ctx */
-           init_glist(&gpfs_fsal_up_ctx->gf_exports);
+           glist_init(&gpfs_fsal_up_ctx->gf_exports);
            gpfs_fsal_up_ctx->gf_export = &myself->export;
            gpfs_fsal_up_ctx->gf_fd = myself->root_fd;
            gpfs_fsal_up_ctx->gf_fsid[0] = myself->root_handle->handle_fsid[0];
