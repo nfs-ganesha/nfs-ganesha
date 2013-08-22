@@ -351,7 +351,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   fsal_errors_t fe;
 
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
   int xattr_idx;
 
   /* sanity checks */
