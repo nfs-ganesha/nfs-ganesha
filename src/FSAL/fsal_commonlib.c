@@ -297,6 +297,7 @@ int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
 {
         pthread_mutex_lock(&ds->lock);
         if (ds->refs) {
+                pthread_mutex_unlock(&ds->lock);
                 return EINVAL;
         }
         fsal_detach_ds(ds->export, &ds->ds_handles);
