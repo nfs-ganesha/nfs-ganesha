@@ -150,11 +150,6 @@ cache_inode_open(cache_entry_t *entry,
      struct fsal_obj_handle *obj_hdl;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     if ((entry == NULL) || (req_ctx == NULL)) {
-          status = CACHE_INODE_INVALID_ARGUMENT;
-          goto out;
-     }
-
      assert(entry->obj_handle != NULL);
 
      if (entry->type != REGULAR_FILE) {
@@ -281,11 +276,6 @@ cache_inode_close(cache_entry_t *entry,
      /* Error return from the FSAL */
      fsal_status_t fsal_status;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
-
-     if ((entry == NULL)) {
-          status = CACHE_INODE_INVALID_ARGUMENT;
-          goto out;
-     }
 
      if (entry->type != REGULAR_FILE) {
           LogFullDebug(COMPONENT_CACHE_INODE,

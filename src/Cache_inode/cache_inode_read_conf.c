@@ -101,10 +101,6 @@ cache_inode_read_conf_parameter(config_file_t config,
   int DebugLevel = -1;
   char *LogFile = NULL;
 
-  /* Is the config tree initialized ? */
-  if(config == NULL || param == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
-
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config,
                                     CONF_LABEL_CACHE_INODE)) == NULL)

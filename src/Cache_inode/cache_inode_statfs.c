@@ -61,13 +61,6 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
   struct fsal_export *export;
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-  /* Sanity check */
-  if(!pentry || !dynamicinfo)
-    {
-      status = CACHE_INODE_INVALID_ARGUMENT;
-      return status;
-    }
-
   export = pentry->obj_handle->export;
   /* Get FSAL to get dynamic info */
   fsal_status = export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);

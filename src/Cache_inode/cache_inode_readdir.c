@@ -124,6 +124,10 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      int code = 0;
 
+     assert((dirent_op == CACHE_INODE_DIRENT_OP_LOOKUP) ||
+	    (dirent_op == CACHE_INODE_DIRENT_OP_REMOVE) ||
+	    (dirent_op == CACHE_INODE_DIRENT_OP_RENAME));
+
      /* Sanity check */
      if(directory->type != DIRECTORY) {
          status = CACHE_INODE_NOT_A_DIRECTORY;
@@ -211,13 +215,10 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
          } /* !found */
          break;
 
-     default:
-         /* Should never occur, in any case, it costs nothing to handle
-          * this situation */
-         status = CACHE_INODE_INVALID_ARGUMENT;
-         break;
-
-     }                       /* switch */
+     case CACHE_INODE_DIRENT_OP_LOOKUP:
+	 /* Lookup was performed before switch statement */
+	 break;
+     }
 
 out:
      return (status);
