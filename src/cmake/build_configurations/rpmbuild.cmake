@@ -14,4 +14,7 @@ set( USE_FSAL_GPFS ON)
 set( USE_FSAL_LUSTRE ON)
 set( USE_FSAL_SHOOK ON)
 
+# FSAL HPSS is still a special case for the moment
+set(USE_FSAL_HPSS OFF)
+
 message(STATUS "Building RPM")

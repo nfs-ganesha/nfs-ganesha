@@ -135,7 +135,7 @@ option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 
 # FSALs which are disabled by default
-option(USE_FSAL_HPSS "build HPSS FSAL" ON)
+option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
 
 # SHOOK is a variant of Lustre FSAL
 option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
