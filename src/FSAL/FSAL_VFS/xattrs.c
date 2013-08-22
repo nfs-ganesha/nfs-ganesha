@@ -314,7 +314,7 @@ static int xattr_name_to_id(int fd, const char *name)
 {
   unsigned int i;
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
 
   /* get xattrs */
 
