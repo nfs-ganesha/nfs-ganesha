@@ -271,7 +271,7 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
   unsigned int index;
   unsigned int curr_idx;
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
   size_t len = 0;
 
   if(xattr_id < XATTR_COUNT)
