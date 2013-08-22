@@ -743,17 +743,17 @@ static state_status_t create_file_recall(
 	struct state_layout_recall_file *recall
 		= gsh_malloc(sizeof(struct state_layout_recall_file));
 
-	init_glist(&recall->entry_link);
-	init_glist(&recall->state_list);
+    if (!recall) {
+        rc = STATE_MALLOC_ERROR;
+        goto out;
+    }
+
+	glist_init(&recall->entry_link);
+	glist_init(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
 	recall->segment = *segment;
 	recall->recall_cookie = cookie;
-
-	if (!recall) {
-		rc = STATE_MALLOC_ERROR;
-		goto out;
-	}
 
 	if ((segment->length == 0) ||
 	    ((segment->length != UINT64_MAX) &&
@@ -831,7 +831,7 @@ static state_status_t create_file_recall(
 				rc = STATE_MALLOC_ERROR;
 				goto out;
 			}
-			init_glist(&list_entry->link);
+			glist_init(&list_entry->link);
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			none = false;
@@ -840,10 +840,6 @@ static state_status_t create_file_recall(
 
 	if (none) {
 		rc = STATE_NOT_FOUND;
-	}
-
-	if (!recall) {
-		rc = STATE_MALLOC_ERROR;
 	}
 
 out:

@@ -96,7 +96,7 @@ extern struct nfs_req_st nfs_req_st;
 void nfs_rpc_queue_init(void);
 
 static inline void nfs_rpc_q_init(struct req_q *q) {
-	init_glist(&q->q);
+	glist_init(&q->q);
 	pthread_spin_init(&q->sp, PTHREAD_PROCESS_PRIVATE);
 	q->size = 0;
 	q->waiters = 0;

@@ -197,7 +197,7 @@ open4_do_open(struct nfs_argop4  * op,
                         return nfs4_Errno_state(state_status);
                 }
 
-                init_glist(&(file_state->state_data.share.share_lockstates));
+                glist_init(&(file_state->state_data.share.share_lockstates));
 
                 /* Attach this open to an export */
                 file_state->state_export = data->pexport;

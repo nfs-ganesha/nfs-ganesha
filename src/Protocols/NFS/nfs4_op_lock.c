@@ -502,7 +502,7 @@ check_seqid:
                         goto out2;
                 }
 
-                init_glist(&lock_state->state_data.lock.state_locklist);
+                glist_init(&lock_state->state_data.lock.state_locklist);
 
                 /* Attach this lock to an export */
                 lock_state->state_export = data->pexport;

@@ -87,7 +87,7 @@ init_wait_entry(wait_entry_t *we)
 static inline void
 init_wait_q_entry(wait_q_entry_t *wqe)
 {
-    init_glist(&wqe->waitq);
+    glist_init(&wqe->waitq);
     init_wait_entry(&wqe->lwe);
     init_wait_entry(&wqe->rwe);
 }

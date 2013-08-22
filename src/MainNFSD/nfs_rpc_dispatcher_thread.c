@@ -927,12 +927,12 @@ nfs_rpc_queue_init(void)
     }
 
     /* waitq */
-    init_glist(&nfs_req_st.reqs.wait_list);
+    glist_init(&nfs_req_st.reqs.wait_list);
     nfs_req_st.reqs.waiters = 0;
 
     /* stallq */
     gsh_mutex_init(&nfs_req_st.stallq.mtx, NULL);
-    init_glist(&nfs_req_st.stallq.q);
+    glist_init(&nfs_req_st.stallq.q);
     nfs_req_st.stallq.active = FALSE;
     nfs_req_st.stallq.stalled = 0;
 }

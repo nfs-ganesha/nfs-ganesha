@@ -998,8 +998,8 @@ state_nsm_client_t *get_nsm_client(care_t care,
       return NULL;
     }
 
-  init_glist(&pclient->ssc_lock_list);
-  init_glist(&pclient->ssc_share_list);
+  glist_init(&pclient->ssc_lock_list);
+  glist_init(&pclient->ssc_share_list);
   pclient->ssc_refcount = 1;
 
   if(isFullDebug(COMPONENT_STATE))
@@ -1404,7 +1404,7 @@ static void init_nlm_owner(state_owner_t * owner)
 {
   inc_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
 
-  init_glist(&owner->so_owner.so_nlm_owner.so_nlm_shares);
+  glist_init(&owner->so_owner.so_nlm_owner.so_nlm_shares);
 }
 
 /**

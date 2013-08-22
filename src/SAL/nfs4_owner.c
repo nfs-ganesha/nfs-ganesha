@@ -331,7 +331,7 @@ int Init_nfs4_owner(hash_parameter_t *param)
  */
 static void init_nfs4_owner(state_owner_t * owner)
 {
-  init_glist(&owner->so_owner.so_nfs4_owner.so_state_list);
+  glist_init(&owner->so_owner.so_nfs4_owner.so_state_list);
 
   /* Increment refcount on related owner */
   if(owner->so_owner.so_nfs4_owner.so_related_owner != NULL)

@@ -271,7 +271,7 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
   unsigned int index;
   unsigned int curr_idx;
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
   size_t len = 0;
 
   if(xattr_id < XATTR_COUNT)
@@ -314,7 +314,7 @@ static int xattr_name_to_id(int fd, const char *name)
 {
   unsigned int i;
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
 
   /* get xattrs */
 
@@ -351,7 +351,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   fsal_errors_t fe;
 
   char names[MAXPATHLEN], *ptr;
-  size_t namesize;
+  ssize_t namesize;
   int xattr_idx;
 
   /* sanity checks */
@@ -506,9 +506,8 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
           index = rc;
           found = TRUE;
         }
+        close(fd);
     }
-
-  close(fd);
 
   if(found)
     {
@@ -585,8 +584,6 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
       return fsalstat(rc, 0 ) ;
     }
 
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 

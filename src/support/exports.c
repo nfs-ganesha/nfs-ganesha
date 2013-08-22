@@ -890,7 +890,7 @@ static int BuildExportClient(config_item_t block,
 	/* Init the perms and access list */
 	perms = &client_perms;
 	p_access_list = &access_list;
-	init_glist(&p_access_list->client_list);
+	glist_init(&p_access_list->client_list);
 	p_access_list->num_clients = 0;
 
 	/* by default, we support auth_none and auth_sys */
@@ -1349,9 +1349,9 @@ static int BuildExportEntry(config_item_t block)
       p_entry->PrefWrite = 16384;
       p_entry->PrefRead = 16384;
       p_entry->PrefReaddir = 16384;
-      init_glist(&p_entry->exp_state_list);
-      init_glist(&p_entry->exp_lock_list);
-      init_glist(&p_entry->clients.client_list);
+      glist_init(&p_entry->exp_state_list);
+      glist_init(&p_entry->exp_lock_list);
+      glist_init(&p_entry->clients.client_list);
     }
 	  
   /* the mandatory options */
@@ -1360,7 +1360,7 @@ static int BuildExportEntry(config_item_t block)
 
   /* Init the access list */
   p_access_list = &access_list;
-  init_glist(&p_access_list->client_list);
+  glist_init(&p_access_list->client_list);
   p_access_list->num_clients = 0;
 
   /* by default, we support auth_none and auth_sys */
@@ -2540,9 +2540,9 @@ exportlist_t *BuildDefaultExport()
 
   p_entry->UseCookieVerifier = true;
 
-  init_glist(&p_entry->clients.client_list);
-  init_glist(&p_entry->exp_state_list);
-  init_glist(&p_entry->exp_lock_list);
+  glist_init(&p_entry->clients.client_list);
+  glist_init(&p_entry->exp_state_list);
+  glist_init(&p_entry->exp_lock_list);
 
   /**
    * Grant root access to all clients

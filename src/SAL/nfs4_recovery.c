@@ -83,7 +83,7 @@ static void nfs_release_v4_client(char *ip);
 void
 nfs4_init_grace()
 {
-        init_glist(&grace.g_clid_list);
+        glist_init(&grace.g_clid_list);
         pthread_mutex_init(&grace.g_mutex, NULL);
 }
 

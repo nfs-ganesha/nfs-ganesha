@@ -163,6 +163,7 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	fsal_hdl->refs = 0;
 
 	retval = dlclose(fsal_hdl->dl_handle);
+        pthread_mutex_unlock(&fsal_lock);
 	return retval;
 
 err:

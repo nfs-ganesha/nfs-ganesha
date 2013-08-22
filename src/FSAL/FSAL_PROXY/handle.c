@@ -932,8 +932,8 @@ pxy_init_rpc(const struct pxy_fsal_module *pm)
                 return ENOTSUP;
         }
 
-        init_glist(&rpc_calls);
-        init_glist(&free_contexts);
+        glist_init(&rpc_calls);
+        glist_init(&free_contexts);
 
         rpc_xid = getpid() ^ time(NULL);
 
@@ -941,7 +941,7 @@ pxy_init_rpc(const struct pxy_fsal_module *pm)
                 strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
                         sizeof(pxy_hostname));
 
-        for(i = i?:16; i > 0; i--) {
+        for(i = 16; i > 0; i--) {
                 struct pxy_rpc_io_context *c = malloc(sizeof(*c) +
                                                       pm->special.srv_sendsize +
                                                       pm->special.srv_recvsize);
