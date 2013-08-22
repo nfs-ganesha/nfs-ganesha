@@ -356,6 +356,7 @@ void dec_state_owner_ref_for_shutdown(state_owner_t *owner)
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
 		remove_9p_owner_for_shutdown(owner);
+		break;
 #endif
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
@@ -675,6 +676,7 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 		state_t *state = glist_entry(si, state_t, state_list);
 		switch (state->state_type) {
 		case STATE_TYPE_NONE:
+			break;
 		case STATE_TYPE_DELEG:
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Impossible state found.");
@@ -684,6 +686,7 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 			/* Queue to deal with later */
 			glist_del(&state->state_list);
 			glist_add_tail(&opens, &state->state_list);
+			break;
 
 		case STATE_TYPE_LOCK:
 			if (!glist_empty(&state->state_data.lock
@@ -692,6 +695,7 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 					 "Locks should have been freed by "
 					 "this point.");
 			}
+			break;
 
 		case STATE_TYPE_LAYOUT: {
 			struct user_cred synthetic_creds = {
@@ -761,6 +765,7 @@ static bool destroy_nfs4_state(cache_entry_t *entry)
 				glist_del(&g->sls_state_segments);
 				gsh_free(g);
 			}
+			break;
 		}
 		}
 		state_del_for_shutdown(state, entry);
