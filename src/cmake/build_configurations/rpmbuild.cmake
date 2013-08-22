@@ -5,9 +5,13 @@ set(_NO_XATTRD OFF)
 set(USE_DBUS OFF)
 set(USE_DBUS_STATS OFF)
 
-set( USE_FSAL_XFS OFF)
-set( USE_FSAL_ZFS OFF)
-set( USE_FSAL_CEPH OFF)
+# Turn all FSALs ON, if one can't be
+# built, cmake will turn it OFF
+set( USE_FSAL_XFS ON)
+set( USE_FSAL_ZFS ON)
+set( USE_FSAL_CEPH ON)
+set( USE_FSAL_GPFS ON)
 set( USE_FSAL_LUSTRE ON)
+set( USE_FSAL_SHOOK ON)
 
 message(STATUS "Building RPM")
