@@ -842,10 +842,6 @@ static state_status_t create_file_recall(
 		rc = STATE_NOT_FOUND;
 	}
 
-	if (!recall) {
-		rc = STATE_MALLOC_ERROR;
-	}
-
 out:
 
 	if ((rc != STATE_SUCCESS) &&
