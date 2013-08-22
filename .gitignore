@@ -45,4 +45,4 @@ core.*
 libfsal*.so*
 Doxyfile
 *~
-.swp
+*.swp
