@@ -530,8 +530,9 @@ struct callback_arg
 /* define flags for attr_valid */
 #define XATTR_STAT      (1 << 0)
 #define XATTR_ACL       (1 << 1)
+#define XATTR_NO_CACHE  (1 << 2)
 
-/* define flags for attr_chaged */
+/* define flags for attr_changed */
 #define XATTR_MODE      (1 << 0) //  01
 #define XATTR_UID       (1 << 1) //  02
 #define XATTR_GID       (1 << 2) //  04

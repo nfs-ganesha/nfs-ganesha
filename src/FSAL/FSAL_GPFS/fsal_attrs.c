@@ -99,9 +99,15 @@ fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
       FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
       ReturnStatus(st, INDEX_FSAL_getattrs);
     }
+  if(buffxstat.attr_valid & XATTR_NO_CACHE)
+  {
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
-
+      LogDebug(COMPONENT_FSAL,
+                   "fsal_get_xstat_by_handle returned XATTR_NO_CACHE");
+      Return(ERR_FSAL_NO_ERROR, ERR_FSAL_STALE, INDEX_FSAL_getattrs);
+  } else {
+      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
+  }
 }
 
 /**

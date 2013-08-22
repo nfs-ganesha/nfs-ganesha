@@ -1040,6 +1040,13 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
      }
 
      cache_inode_fixup_md(entry);
+     if(fsal_status.minor == ERR_FSAL_STALE) {
+     /* FSAL is telling us not to cache this */
+          LogDebug(COMPONENT_CACHE_INODE,
+                       "Invalidating cache entry, status=%d",
+                       fsal_status.minor);
+          entry->flags &= ~CACHE_INODE_TRUST_ATTRS;
+     }
 
      cache_status = CACHE_INODE_SUCCESS;
 
