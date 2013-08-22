@@ -135,10 +135,10 @@ option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 
 # FSALs which are disabled by default
-option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
+option(USE_FSAL_HPSS "build HPSS FSAL" ON)
 
 # SHOOK is a variant of Lustre FSAL
-option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
+option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
 
 # From TI-RPC
 option (USE_GSS "enable RPCSEC_GSS support" ON)
@@ -354,6 +354,7 @@ if(USE_FSAL_LUSTRE)
     else(STRICT_PACKAGE)
       message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
       set(USE_FSAL_LUSTRE OFF)
+      set(USE_FSAL_SHOOK OFF)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
 endif(USE_FSAL_LUSTRE)
