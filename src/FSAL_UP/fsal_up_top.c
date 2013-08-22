@@ -743,17 +743,17 @@ static state_status_t create_file_recall(
 	struct state_layout_recall_file *recall
 		= gsh_malloc(sizeof(struct state_layout_recall_file));
 
+    if (!recall) {
+        rc = STATE_MALLOC_ERROR;
+        goto out;
+    }
+
 	init_glist(&recall->entry_link);
 	init_glist(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
 	recall->segment = *segment;
 	recall->recall_cookie = cookie;
-
-	if (!recall) {
-		rc = STATE_MALLOC_ERROR;
-		goto out;
-	}
 
 	if ((segment->length == 0) ||
 	    ((segment->length != UINT64_MAX) &&
