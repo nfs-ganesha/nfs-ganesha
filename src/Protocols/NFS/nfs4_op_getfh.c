@@ -55,35 +55,34 @@
  * @see nfs4_Compound
  */
 
-#define arg_GETFG op->nfs_argop4_u.opgetfh
-#define res_GETFH resp->nfs_resop4_u.opgetfh
-
 int nfs4_op_getfh(struct nfs_argop4 *op,
                   compound_data_t *data,
                   struct nfs_resop4 *resp)
 {
+  GETFH4res *const res_GETFH = &resp->nfs_resop4_u.opgetfh;
+
   resp->resop = NFS4_OP_GETFH;
-  res_GETFH.status = NFS4_OK;
+  res_GETFH->status = NFS4_OK;
 
   LogHandleNFS4("NFS4 GETFH BEFORE: %s", &data->currentFH);
 
   /* Do basic checks on a filehandle */
-  res_GETFH.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
-  if(res_GETFH.status != NFS4_OK)
-    return res_GETFH.status;
+  res_GETFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
+  if(res_GETFH->status != NFS4_OK)
+    return res_GETFH->status;
 
   /* Copy the filehandle to the reply structure */
-  res_GETFH.status = nfs4_AllocateFH(&(res_GETFH.GETFH4res_u.resok4.object));
-  if(res_GETFH.status != NFS4_OK)
-    return res_GETFH.status;
+  res_GETFH->status = nfs4_AllocateFH(&res_GETFH->GETFH4res_u.resok4.object);
+  if(res_GETFH->status != NFS4_OK)
+    return res_GETFH->status;
 
   /* Put the data in place */
-  res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_len
+  res_GETFH->GETFH4res_u.resok4.object.nfs_fh4_len
        = data->currentFH.nfs_fh4_len;
-  memcpy(res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_val,
+  memcpy(res_GETFH->GETFH4res_u.resok4.object.nfs_fh4_val,
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
-  LogHandleNFS4("NFS4 GETFH AFTER: %s", &res_GETFH.GETFH4res_u.resok4.object);
+  LogHandleNFS4("NFS4 GETFH AFTER: %s", &res_GETFH->GETFH4res_u.resok4.object);
 
   return NFS4_OK;
 }                               /* nfs4_op_getfh */

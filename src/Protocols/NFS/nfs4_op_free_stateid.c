@@ -62,26 +62,28 @@
  * @see nfs4_Compound
  */
 
-#define arg_FREE_STATEID4 op->nfs_argop4_u.opfree_stateid
-#define res_FREE_STATEID4 resp->nfs_resop4_u.opfree_stateid
-
 int nfs4_op_free_stateid(struct nfs_argop4 *op,
                          compound_data_t *data,
                          struct nfs_resop4 *resp)
 {
+  FREE_STATEID4args *const arg_FREE_STATEID4 __attribute__((unused))
+    = &op->nfs_argop4_u.opfree_stateid;
+  FREE_STATEID4res *const res_FREE_STATEID4
+    = &resp->nfs_resop4_u.opfree_stateid;
+
   resp->resop = NFS4_OP_FREE_STATEID;
-  res_FREE_STATEID4.fsr_status = NFS4_OK;
+  res_FREE_STATEID4->fsr_status = NFS4_OK;
 
   if (data->minorversion == 0)
     {
-      return (res_FREE_STATEID4.fsr_status = NFS4ERR_INVAL);
+      return (res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL);
     }
 
   /**
    * @todo ACE: This function needs to be implemented.
    */
 
-  return res_FREE_STATEID4.fsr_status;
+  return res_FREE_STATEID4->fsr_status;
 } /* nfs41_op_free_stateid */
 
 /**

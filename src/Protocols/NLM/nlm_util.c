@@ -38,12 +38,12 @@
 
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
-#define NLM4_GRACE_PERIOD 10
+static const int NLM4_GRACE_PERIOD = 10;
 /*
  * Time after which we should retry the granted
  * message request again
  */
-#define NLM4_CLIENT_GRACE_PERIOD 3
+static const int NLM4_CLIENT_GRACE_PERIOD = 3;
 
 /* We manage our own cookie for GRANTED call backs
  * Cookie 

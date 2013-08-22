@@ -55,14 +55,13 @@
  * @return per RFC5661, p. 373-4
  */
 
-#define arg_SETATTR4 op->nfs_argop4_u.opsetattr
-#define res_SETATTR4 resp->nfs_resop4_u.opsetattr
-
 int
 nfs4_op_setattr(struct nfs_argop4 *op,
                 compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
+	SETATTR4args *const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
+	SETATTR4res *const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
         struct attrlist        sattr;
         cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
         const char           * tag = "SETATTR";
@@ -72,34 +71,34 @@ nfs4_op_setattr(struct nfs_argop4 *op,
 
         memset(&sattr, 0, sizeof(sattr));
         resp->resop = NFS4_OP_SETATTR;
-        res_SETATTR4.status = NFS4_OK;
+        res_SETATTR4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle */
-        res_SETATTR4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-        if (res_SETATTR4.status != NFS4_OK) {
-                return res_SETATTR4.status;
+        res_SETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+        if (res_SETATTR4->status != NFS4_OK) {
+                return res_SETATTR4->status;
         }
 
         /* Get only attributes that are allowed to be read */
-        if (!nfs4_Fattr_Check_Access(&arg_SETATTR4.obj_attributes,
+        if (!nfs4_Fattr_Check_Access(&arg_SETATTR4->obj_attributes,
                                      FATTR4_ATTR_WRITE)) {
-                res_SETATTR4.status = NFS4ERR_INVAL;
-                return res_SETATTR4.status;
+                res_SETATTR4->status = NFS4ERR_INVAL;
+                return res_SETATTR4->status;
         }
 
         /* Ask only for supported attributes */
-        if (!nfs4_Fattr_Supported(&arg_SETATTR4.obj_attributes)) {
-                res_SETATTR4.status = NFS4ERR_ATTRNOTSUPP;
-                return res_SETATTR4.status;
+        if (!nfs4_Fattr_Supported(&arg_SETATTR4->obj_attributes)) {
+                res_SETATTR4->status = NFS4ERR_ATTRNOTSUPP;
+                return res_SETATTR4->status;
         }
 
         /* Convert the fattr4 in the request to a fsal sattr structure */
-	res_SETATTR4.status
+	res_SETATTR4->status
 		= nfs4_Fattr_To_FSAL_attr(&sattr,
-					  &(arg_SETATTR4.obj_attributes),
+					  &(arg_SETATTR4->obj_attributes),
 					  data);
-        if (res_SETATTR4.status != NFS4_OK) {
-                return res_SETATTR4.status;
+        if (res_SETATTR4->status != NFS4_OK) {
+                return res_SETATTR4->status;
         }
 
         /* Trunc may change Xtime so we have to start with trunc and
@@ -107,20 +106,20 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         if (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)) {
                 /* Setting the size of a directory is prohibited */
                 if (data->current_filetype == DIRECTORY) {
-                        res_SETATTR4.status = NFS4ERR_ISDIR;
-                        return res_SETATTR4.status;
+                        res_SETATTR4->status = NFS4ERR_ISDIR;
+                        return res_SETATTR4->status;
                 }
                 /* Object should be a file */
                 if (data->current_entry->type != REGULAR_FILE) {
-                        res_SETATTR4.status = NFS4ERR_INVAL;
-                        return res_SETATTR4.status;
+                        res_SETATTR4->status = NFS4ERR_INVAL;
+                        return res_SETATTR4->status;
                 }
 
                 entry = data->current_entry;
 
                 /* Check stateid correctness and get pointer to state */
-                res_SETATTR4.status
-                        = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
+                res_SETATTR4->status
+                        = nfs4_Check_Stateid(&arg_SETATTR4->stateid,
                                              data->current_entry,
                                              &state_found,
                                              data,
@@ -128,8 +127,8 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                              0,
                                              FALSE,
                                              tag);
-                if (res_SETATTR4.status != NFS4_OK) {
-                        return res_SETATTR4.status;
+                if (res_SETATTR4->status != NFS4_OK) {
+                        return res_SETATTR4->status;
                 }
 
                 /* NB: After this point, if state_found == NULL, then
@@ -150,8 +149,8 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                 break;
 
                         default:
-                                res_SETATTR4.status = NFS4ERR_BAD_STATEID;
-                                return res_SETATTR4.status;
+                                res_SETATTR4->status = NFS4ERR_BAD_STATEID;
+                                return res_SETATTR4->status;
                         }
 
                         /* This is a size operation, this means that
@@ -161,8 +160,8 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                             (state_open->state_data.share.share_access &
                              OPEN4_SHARE_ACCESS_WRITE) == 0) {
                                 /* Bad open mode, return NFS4ERR_OPENMODE */
-                                res_SETATTR4.status = NFS4ERR_OPENMODE;
-                                return res_SETATTR4.status;
+                                res_SETATTR4->status = NFS4ERR_OPENMODE;
+                                return res_SETATTR4->status;
                         }
                 } else {
                         /* Special stateid, no open state, check to
@@ -172,13 +171,13 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                         /* Special stateid, no open state, check to
                            see if any share conflicts The stateid is
                            all-0 or all-1 */
-                        res_SETATTR4.status
+                        res_SETATTR4->status
                                 = nfs4_check_special_stateid(
                                         entry,
                                         "SETATTR(size)",
                                         FATTR4_ATTR_WRITE);
-                        if (res_SETATTR4.status != NFS4_OK) {
-                                return res_SETATTR4.status;
+                        if (res_SETATTR4->status != NFS4_OK) {
+                                return res_SETATTR4->status;
                         }
                 }
         }
@@ -206,23 +205,23 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                         "setgid=%d",
                                         sattr.mode & S_ISUID ? 1 : 0,
                                         sattr.mode & S_ISGID ? 1 : 0);
-                                res_SETATTR4.status = NFS4ERR_PERM;
-                                return res_SETATTR4.status;
+                                res_SETATTR4->status = NFS4ERR_PERM;
+                                return res_SETATTR4->status;
                         }
                 }
         }
 
-#define S_NSECS 1000000000UL  /* nsecs in 1s */
+	const time_t S_NSECS=1000000000UL;
         /* Set the atime and mtime (ctime is not setable) */
 
         /* A carry into seconds considered invalid */
         if (sattr.atime.tv_nsec >= S_NSECS) {
-                res_SETATTR4.status = NFS4ERR_INVAL;
-                return res_SETATTR4.status;
+                res_SETATTR4->status = NFS4ERR_INVAL;
+                return res_SETATTR4->status;
         }
         if (sattr.mtime.tv_nsec >= S_NSECS) {
-                res_SETATTR4.status = NFS4ERR_INVAL;
-                return res_SETATTR4.status;
+                res_SETATTR4->status = NFS4ERR_INVAL;
+                return res_SETATTR4->status;
         }
         /* If owner or owner_group are set, and the credential was
          * squashed, then we must squash the set owner and owner_group.
@@ -233,17 +232,17 @@ nfs4_op_setattr(struct nfs_argop4 *op,
 					   &sattr,
 					   data->req_ctx);
 	if (cache_status != CACHE_INODE_SUCCESS) {
-                res_SETATTR4.status = nfs4_Errno(cache_status);
-                return res_SETATTR4.status;
+                res_SETATTR4->status = nfs4_Errno(cache_status);
+                return res_SETATTR4->status;
         }
 
         /* Set the replyed structure */
-        res_SETATTR4.attrsset = arg_SETATTR4.obj_attributes.attrmask;
+        res_SETATTR4->attrsset = arg_SETATTR4->obj_attributes.attrmask;
 
         /* Exit with no error */
-        res_SETATTR4.status = NFS4_OK;
+        res_SETATTR4->status = NFS4_OK;
 
-        return res_SETATTR4.status;
+        return res_SETATTR4->status;
 } /* nfs4_op_setattr */
 
 /**

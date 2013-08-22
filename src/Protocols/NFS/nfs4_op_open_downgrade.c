@@ -51,9 +51,6 @@
  * @return per RFC5661, p. 370
  *
  */
-#define arg_OPEN_DOWNGRADE4 op->nfs_argop4_u.opopen_downgrade
-#define res_OPEN_DOWNGRADE4 resp->nfs_resop4_u.opopen_downgrade
-
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
                                        compound_data_t    * data,
                                        cache_entry_t      * entry_file,
@@ -65,33 +62,37 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                            compound_data_t *data,
                            struct nfs_resop4 *resp)
 {
+  OPEN_DOWNGRADE4args *const arg_OPEN_DOWNGRADE4
+    = &op->nfs_argop4_u.opopen_downgrade;
+  OPEN_DOWNGRADE4res *const res_OPEN_DOWNGRADE4
+    = &resp->nfs_resop4_u.opopen_downgrade;
   state_t        * state_found = NULL;
   state_owner_t  * open_owner;
   int              rc;
   const char     * tag = "OPEN_DOWNGRADE";
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
-  res_OPEN_DOWNGRADE4.status = NFS4_OK;
+  res_OPEN_DOWNGRADE4->status = NFS4_OK;
 
   /*
    * Do basic checks on a filehandle
    * Commit is done only on a file
    */
-  res_OPEN_DOWNGRADE4.status = nfs4_sanity_check_FH(data,
-                                                    NO_FILE_TYPE,
-                                                    false);
-  if(res_OPEN_DOWNGRADE4.status != NFS4_OK)
-    return res_OPEN_DOWNGRADE4.status;
+  res_OPEN_DOWNGRADE4->status = nfs4_sanity_check_FH(data,
+						     NO_FILE_TYPE,
+						     false);
+  if(res_OPEN_DOWNGRADE4->status != NFS4_OK)
+    return res_OPEN_DOWNGRADE4->status;
 
   /* Commit is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
-      return res_OPEN_DOWNGRADE4.status;
+      res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4->status;
     }
 
   /* Check stateid correctness and get pointer to state */
-  if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,
+  if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4->open_stateid,
                               data->current_entry,
                               &state_found,
                               data,
@@ -100,10 +101,10 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                               FALSE,
                               tag)) != NFS4_OK)
     {
-      res_OPEN_DOWNGRADE4.status = rc;
+      res_OPEN_DOWNGRADE4->status = rc;
       LogDebug(COMPONENT_STATE,
                "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
-      return res_OPEN_DOWNGRADE4.status;
+      return res_OPEN_DOWNGRADE4->status;
     }
 
   open_owner = state_found->state_owner;
@@ -111,12 +112,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   P(open_owner->so_mutex);
 
   /* Check seqid */
-  if(!Check_nfs4_seqid(open_owner, arg_OPEN_DOWNGRADE4.seqid, op,
-                       data->current_entry, resp, tag))
+  if(!Check_nfs4_seqid(open_owner, arg_OPEN_DOWNGRADE4->seqid, op,
+		       data->current_entry, resp, tag))
     {
       /* Response is all setup for us and LogDebug told what was wrong */
       V(open_owner->so_mutex);
-      return res_OPEN_DOWNGRADE4.status;
+      return res_OPEN_DOWNGRADE4->status;
     }
   V(open_owner->so_mutex);
 
@@ -124,29 +125,30 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   /* What kind of open is it ? */
   LogFullDebug(COMPONENT_STATE,
                "OPEN_DOWNGRADE: Share Deny = %d   Share Access = %d ",
-               arg_OPEN_DOWNGRADE4.share_deny,
-               arg_OPEN_DOWNGRADE4.share_access);
+               arg_OPEN_DOWNGRADE4->share_deny,
+               arg_OPEN_DOWNGRADE4->share_access);
 
   if(data->minorversion == 1)  /* NFSv4.1 */
     {
-  if((state_found->state_data.share.share_access & arg_OPEN_DOWNGRADE4.share_access) !=
-     (arg_OPEN_DOWNGRADE4.share_access))
+  if((state_found->state_data.share.share_access &
+      arg_OPEN_DOWNGRADE4->share_access) !=
+     (arg_OPEN_DOWNGRADE4->share_access))
     {
       /* Open share access is not a superset of downgrade share access */
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
-      return res_OPEN_DOWNGRADE4.status;
+      res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4->status;
     }
 
-  if((state_found->state_data.share.share_deny & arg_OPEN_DOWNGRADE4.share_deny) !=
-     (arg_OPEN_DOWNGRADE4.share_deny))
+  if((state_found->state_data.share.share_deny & arg_OPEN_DOWNGRADE4->share_deny) !=
+     (arg_OPEN_DOWNGRADE4->share_deny))
     {
       /* Open share deny is not a superset of downgrade share deny */
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
-      return res_OPEN_DOWNGRADE4.status;
+      res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4->status;
     }
 
-  state_found->state_data.share.share_access = arg_OPEN_DOWNGRADE4.share_access;
-  state_found->state_data.share.share_deny   = arg_OPEN_DOWNGRADE4.share_deny;
+  state_found->state_data.share.share_access = arg_OPEN_DOWNGRADE4->share_access;
+  state_found->state_data.share.share_deny   = arg_OPEN_DOWNGRADE4->share_deny;
     }
   else  /* NFSv4.0 */
     {
@@ -158,26 +160,27 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       if(status4 != NFS4_OK)
         {
           LogEvent(COMPONENT_STATE, "Failed to open downgrade: %s", cause);
-          res_OPEN_DOWNGRADE4.status = status4;
-          return res_OPEN_DOWNGRADE4.status;
+          res_OPEN_DOWNGRADE4->status = status4;
+          return res_OPEN_DOWNGRADE4->status;
         }
     }
 
   /* Successful exit */
-  res_OPEN_DOWNGRADE4.status = NFS4_OK;
+  res_OPEN_DOWNGRADE4->status = NFS4_OK;
 
   /* Handle stateid/seqid for success */
   update_stateid(state_found,
-                 &res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid,
+                 &res_OPEN_DOWNGRADE4->OPEN_DOWNGRADE4res_u
+		 .resok4.open_stateid,
                  data,
                  tag);
 
   /* Save the response in the open owner */
   Copy_nfs4_state_req(state_found->state_owner,
-                      arg_OPEN_DOWNGRADE4.seqid,
+                      arg_OPEN_DOWNGRADE4->seqid,
                       op, data->current_entry, resp, tag);
 
-  return res_OPEN_DOWNGRADE4.status;
+  return res_OPEN_DOWNGRADE4->status;
 } /* nfs4_op_opendowngrade */
 
 /**

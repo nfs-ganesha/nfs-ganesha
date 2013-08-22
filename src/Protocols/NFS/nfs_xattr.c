@@ -619,7 +619,8 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
     }
 
   /* A definition that will be very useful to avoid very long names for variables */
-#define RES_READDIR_REPLY pres->res_readdir3.READDIR3res_u.resok.reply
+  dirlist3 *const RES_READDIR_REPLY
+	  = &pres->res_readdir3.READDIR3res_u.resok.reply;
 
   /* Used FSAL extended attributes functions */
   fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl,
@@ -692,12 +693,12 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                   uint64_t fileid = 0;
                   cache_inode_fileid(dir_pentry, req_ctx, &fileid);
                   /* xattr_pos = 1 => Parent Xattrd */
-                  RES_READDIR_REPLY.entries[0].fileid
+                  RES_READDIR_REPLY->entries[0].fileid
                     = (0xFFFFFFFF & ~fileid) - 1;
 
-                  RES_READDIR_REPLY.entries[0].name = entry_name_array[0];
-                  strcpy(RES_READDIR_REPLY.entries[0].name, ".");
-                  RES_READDIR_REPLY.entries[0].cookie = 1;
+                  RES_READDIR_REPLY->entries[0].name = entry_name_array[0];
+                  strcpy(RES_READDIR_REPLY->entries[0].name, ".");
+                  RES_READDIR_REPLY->entries[0].cookie = 1;
 
                   delta += 1;
                 }
@@ -712,22 +713,22 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                   uint64_t fileid = 0;
                   cache_inode_fileid(dir_pentry, req_ctx, &fileid);
                   /* xattr_pos > 1 => attribute */
-                  RES_READDIR_REPLY.entries[delta].fileid
+                  RES_READDIR_REPLY->entries[delta].fileid
                     = (0xFFFFFFFF & ~fileid) - delta;
 
-                  RES_READDIR_REPLY.entries[delta].name
+                  RES_READDIR_REPLY->entries[delta].name
                     = entry_name_array[delta];
-                  strcpy(RES_READDIR_REPLY.entries[delta].name, "..");
-                  RES_READDIR_REPLY.entries[delta].cookie = 2;
+                  strcpy(RES_READDIR_REPLY->entries[delta].name, "..");
+                  RES_READDIR_REPLY->entries[delta].cookie = 2;
 
-                  RES_READDIR_REPLY.entries[0].nextentry =
-                      &(RES_READDIR_REPLY.entries[delta]);
+                  RES_READDIR_REPLY->entries[0].nextentry =
+                      &(RES_READDIR_REPLY->entries[delta]);
 
                   if(num_entries > delta + 1)   /* not 0 ??? */
-                    RES_READDIR_REPLY.entries[delta].nextentry =
-                        &(RES_READDIR_REPLY.entries[delta + 1]);
+                    RES_READDIR_REPLY->entries[delta].nextentry =
+                        &(RES_READDIR_REPLY->entries[delta + 1]);
                   else
-                    RES_READDIR_REPLY.entries[delta].nextentry = NULL;
+                    RES_READDIR_REPLY->entries[delta].nextentry = NULL;
 
                   delta += 1;
                 }
@@ -763,25 +764,25 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                     }
                   break;        /* Make post traitement */
                 }
-              RES_READDIR_REPLY.entries[i].fileid =
+              RES_READDIR_REPLY->entries[i].fileid =
                   0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid;
-              RES_READDIR_REPLY.entries[i].name = entry_name_array[i];
+              RES_READDIR_REPLY->entries[i].name = entry_name_array[i];
 
-              RES_READDIR_REPLY.entries[i].cookie =
+              RES_READDIR_REPLY->entries[i].cookie =
                   xattrs_tab[i - delta].xattr_cookie + 2;
 
-              RES_READDIR_REPLY.entries[i].nextentry = NULL;
+              RES_READDIR_REPLY->entries[i].nextentry = NULL;
               if(i != 0)
-                RES_READDIR_REPLY.entries[i - 1].nextentry =
-                    &(RES_READDIR_REPLY.entries[i]);
+                RES_READDIR_REPLY->entries[i - 1].nextentry =
+                    &(RES_READDIR_REPLY->entries[i]);
 
             }                   /* for */
         }                       /* else */
 
       if(eod_met)
-        RES_READDIR_REPLY.eof = TRUE;
+        RES_READDIR_REPLY->eof = TRUE;
       else
-        RES_READDIR_REPLY.eof = FALSE;
+        RES_READDIR_REPLY->eof = FALSE;
 
       nfs_SetPostOpXAttrDir(dir_pentry,
                             req_ctx,
@@ -1317,7 +1318,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
     }
 
   /* A definition that will be very useful to avoid very long names for variables */
-#define RES_READDIRPLUS_REPLY pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply
+  dirlistplus3 *const RES_READDIRPLUS_REPLY
+	  = &pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply;
 
   /* Used FSAL extended attributes functions */
   fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl,
@@ -1392,32 +1394,32 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   uint64_t fileid = 0;
                   cache_inode_fileid(dir_pentry, req_ctx, &fileid);
                   /* parent xattrd =>xattr_pos == 1 */
-                  RES_READDIRPLUS_REPLY.entries[0].fileid
+                  RES_READDIRPLUS_REPLY->entries[0].fileid
                     = (0xFFFFFFFF & ~fileid) - 1;
-                  RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
-                  strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
-                  RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
+                  RES_READDIRPLUS_REPLY->entries[0].name = entry_name_array[0];
+                  strcpy(RES_READDIRPLUS_REPLY->entries[0].name, ".");
+                  RES_READDIRPLUS_REPLY->entries[0].cookie = 1;
 
-                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
+                  RES_READDIRPLUS_REPLY->entries[0].name_handle.post_op_fh3_u.handle.data.
                       data_val = (char *)fh3_array[0];
 
-                  memcpy((char *)RES_READDIRPLUS_REPLY.entries[0].name_handle.
+                  memcpy((char *)RES_READDIRPLUS_REPLY->entries[0].name_handle.
                          post_op_fh3_u.handle.data.data_val,
                          (char *)parg->arg_readdirplus3.dir.data.data_val,
                          parg->arg_readdirplus3.dir.data.data_len);
 
-                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
+                  RES_READDIRPLUS_REPLY->entries[0].name_handle.post_op_fh3_u.handle.data.
                       data_len = parg->arg_readdirplus3.dir.data.data_len;
                   pfile_handle =
-                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[0].name_handle.
+                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY->entries[0].name_handle.
                                             post_op_fh3_u.handle.data.data_val);
                   pfile_handle->xattr_pos = 1;
-                  RES_READDIRPLUS_REPLY.entries[0].name_handle.handle_follows = TRUE;
+                  RES_READDIRPLUS_REPLY->entries[0].name_handle.handle_follows = TRUE;
 
                   /* Set PostPoFh3 structure */
                   nfs_SetPostOpXAttrDir(dir_pentry,
                                         req_ctx,
-                                        &(RES_READDIRPLUS_REPLY.entries[0].
+                                        &(RES_READDIRPLUS_REPLY->entries[0].
                                           name_attributes));
                   delta += 1;
                 }
@@ -1432,40 +1434,40 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   uint64_t fileid = 0;
                   cache_inode_fileid(dir_pentry, req_ctx, &fileid);
                   /* different fileids for each xattr */
-                  RES_READDIRPLUS_REPLY.entries[delta].fileid
+                  RES_READDIRPLUS_REPLY->entries[delta].fileid
                     = (0xFFFFFFFF & ~fileid) - delta;
-                  RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
-                  strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
-                  RES_READDIRPLUS_REPLY.entries[delta].cookie = 2;
+                  RES_READDIRPLUS_REPLY->entries[delta].name = entry_name_array[delta];
+                  strcpy(RES_READDIRPLUS_REPLY->entries[delta].name, "..");
+                  RES_READDIRPLUS_REPLY->entries[delta].cookie = 2;
 
-                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.
+                  RES_READDIRPLUS_REPLY->entries[delta].name_handle.post_op_fh3_u.handle.
                       data.data_val = (char *)fh3_array[delta];
 
-                  memcpy(RES_READDIRPLUS_REPLY.entries[delta].name_handle.
+                  memcpy(RES_READDIRPLUS_REPLY->entries[delta].name_handle.
                          post_op_fh3_u.handle.data.data_val,
                          parg->arg_readdirplus3.dir.data.data_val,
                          parg->arg_readdirplus3.dir.data.data_len);
 
-                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.
+                  RES_READDIRPLUS_REPLY->entries[delta].name_handle.post_op_fh3_u.handle.
                       data.data_len = parg->arg_readdirplus3.dir.data.data_len;
                   pfile_handle =
-                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[delta].
+                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY->entries[delta].
                                             name_handle.post_op_fh3_u.handle.data.
                                             data_val);
                   pfile_handle->xattr_pos = 0;
-                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.handle_follows = TRUE;
+                  RES_READDIRPLUS_REPLY->entries[delta].name_handle.handle_follows = TRUE;
 
-                  RES_READDIRPLUS_REPLY.entries[delta].name_attributes.attributes_follow =
+                  RES_READDIRPLUS_REPLY->entries[delta].name_attributes.attributes_follow =
                       FALSE;
 
-                  RES_READDIRPLUS_REPLY.entries[0].nextentry =
-                      &(RES_READDIRPLUS_REPLY.entries[delta]);
+                  RES_READDIRPLUS_REPLY->entries[0].nextentry =
+                      &(RES_READDIRPLUS_REPLY->entries[delta]);
 
                   if(num_entries > delta + 1)   /* not 0 ??? */
-                    RES_READDIRPLUS_REPLY.entries[delta].nextentry =
-                        &(RES_READDIRPLUS_REPLY.entries[delta + 1]);
+                    RES_READDIRPLUS_REPLY->entries[delta].nextentry =
+                        &(RES_READDIRPLUS_REPLY->entries[delta + 1]);
                   else
-                    RES_READDIRPLUS_REPLY.entries[delta].nextentry = NULL;
+                    RES_READDIRPLUS_REPLY->entries[delta].nextentry = NULL;
 
                   delta += 1;
                 }
@@ -1517,46 +1519,46 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   goto out;
                 }
 
-              RES_READDIRPLUS_REPLY.entries[i].fileid =
+              RES_READDIRPLUS_REPLY->entries[i].fileid =
                 (0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid) - xattr_id;
-              RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
+              RES_READDIRPLUS_REPLY->entries[i].name = entry_name_array[i];
 
-              RES_READDIRPLUS_REPLY.entries[i].cookie =
+              RES_READDIRPLUS_REPLY->entries[i].cookie =
                   xattrs_tab[i - delta].xattr_cookie + 2;
 
-              RES_READDIRPLUS_REPLY.entries[i].name_attributes.attributes_follow = FALSE;
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = FALSE;
+              RES_READDIRPLUS_REPLY->entries[i].name_attributes.attributes_follow = FALSE;
+              RES_READDIRPLUS_REPLY->entries[i].name_handle.handle_follows = FALSE;
 
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.
+              RES_READDIRPLUS_REPLY->entries[i].name_handle.post_op_fh3_u.handle.data.
                   data_val = (char *)fh3_array[i];
 
               /* Set PostPoFh3 structure */
 
-              memcpy((char *)RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.
+              memcpy((char *)RES_READDIRPLUS_REPLY->entries[i].name_handle.post_op_fh3_u.
                      handle.data.data_val,
                      (char *)parg->arg_readdirplus3.dir.data.data_val,
                      parg->arg_readdirplus3.dir.data.data_len);
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.
+              RES_READDIRPLUS_REPLY->entries[i].name_handle.post_op_fh3_u.handle.data.
                   data_len = parg->arg_readdirplus3.dir.data.data_len;
               pfile_handle =
-                  (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[i].name_handle.
+                  (file_handle_v3_t *) (RES_READDIRPLUS_REPLY->entries[i].name_handle.
                                         post_op_fh3_u.handle.data.data_val);
               pfile_handle->xattr_pos = xattr_id + 2;
 
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = TRUE;
+              RES_READDIRPLUS_REPLY->entries[i].name_handle.handle_follows = TRUE;
 
-              RES_READDIRPLUS_REPLY.entries[i].nextentry = NULL;
+              RES_READDIRPLUS_REPLY->entries[i].nextentry = NULL;
               if(i != 0)
-                RES_READDIRPLUS_REPLY.entries[i - 1].nextentry =
-                    &(RES_READDIRPLUS_REPLY.entries[i]);
+                RES_READDIRPLUS_REPLY->entries[i - 1].nextentry =
+                    &(RES_READDIRPLUS_REPLY->entries[i]);
 
             }                   /* for */
         }                       /* else */
 
       if(eod_met)
-        RES_READDIRPLUS_REPLY.eof = TRUE;
+        RES_READDIRPLUS_REPLY->eof = TRUE;
       else
-        RES_READDIRPLUS_REPLY.eof = FALSE;
+        RES_READDIRPLUS_REPLY->eof = FALSE;
 
       nfs_SetPostOpXAttrDir(dir_pentry,
                             req_ctx,

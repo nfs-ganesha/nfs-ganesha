@@ -34,9 +34,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 
-#define arg_READDIR4 op->nfs_argop4_u.opreaddir
-#define res_READDIR4 resp->nfs_resop4_u.opreaddir
-
 static const struct bitmap4 RdAttrErrorBitmap = {
 	.bitmap4_len = 1,
 	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
@@ -225,6 +222,8 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                 compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
+     READDIR4args *const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
+     READDIR4res *const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
      cache_entry_t *dir_entry = NULL;
      bool eod_met = false;
      unsigned long dircount = 0;
@@ -238,31 +237,31 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
      resp->resop = NFS4_OP_READDIR;
-     res_READDIR4.status = NFS4_OK;
+     res_READDIR4->status = NFS4_OK;
 
-     if ((res_READDIR4.status
+     if ((res_READDIR4->status
           = nfs4_sanity_check_FH(data, DIRECTORY, false)) != NFS4_OK) {
           goto out;
      }
 
      /* Pseudo Fs management */
      if(nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-          res_READDIR4.status = nfs4_op_readdir_pseudo(op, data, resp);
+          res_READDIR4->status = nfs4_op_readdir_pseudo(op, data, resp);
           goto out;
      }
 
      /* Xattrs management */
      if(nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-          res_READDIR4.status = nfs4_op_readdir_xattr(op, data, resp);
+          res_READDIR4->status = nfs4_op_readdir_xattr(op, data, resp);
           goto out;
      }
 
      dir_entry = data->current_entry;
 
      /* get the characteristic value for readdir operation */
-     dircount = arg_READDIR4.dircount;
-     maxcount = (arg_READDIR4.maxcount * 9) / 10;
-     cookie = arg_READDIR4.cookie;
+     dircount = arg_READDIR4->dircount;
+     maxcount = (arg_READDIR4->maxcount * 9) / 10;
+     cookie = arg_READDIR4->cookie;
 
      /* Dircount is considered meaningless by many nfsv4 client (like the CITI
         one).  we use maxcount instead. */
@@ -281,21 +280,21 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      /* Since we never send a cookie of 1 or 2, we shouldn't ever get
         them back. */
      if (cookie == 1 || cookie == 2) {
-          res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+          res_READDIR4->status = NFS4ERR_BAD_COOKIE;
           goto out;
      }
 
      /* Get only attributes that are allowed to be read */
-     if (!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request,
+     if (!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4->attr_request,
                                         FATTR4_ATTR_READ)) {
-          res_READDIR4.status = NFS4ERR_INVAL;
+          res_READDIR4->status = NFS4ERR_INVAL;
           goto out;
      }
 
      /* If maxcount is too short (14 should be enough for an empty directory)
           return NFS4ERR_TOOSMALL */
      if (maxcount < 14 || estimated_num_entries == 0) {
-          res_READDIR4.status = NFS4ERR_TOOSMALL;
+          res_READDIR4->status = NFS4ERR_TOOSMALL;
           goto out;
      }
 
@@ -317,9 +316,9 @@ nfs4_op_readdir(struct nfs_argop4 *op,
         by 2 */
 
      if ((cookie != 0) && (data->pexport->UseCookieVerifier == 1)) {
-          if(memcmp(cookie_verifier, arg_READDIR4.cookieverf,
+          if(memcmp(cookie_verifier, arg_READDIR4->cookieverf,
                     NFS4_VERIFIER_SIZE) != 0) {
-               res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+               res_READDIR4->status = NFS4ERR_BAD_COOKIE;
                goto out;
           }
      }
@@ -332,7 +331,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      cb_data.mem_left = maxcount - sizeof(READDIR4resok);
      cb_data.count = 0;
      cb_data.error = NFS4_OK;
-     cb_data.req_attr = arg_READDIR4.attr_request;
+     cb_data.req_attr = arg_READDIR4->attr_request;
      cb_data.data = data;
 
      /* Perform the readdir operation */
@@ -344,20 +343,20 @@ nfs4_op_readdir(struct nfs_argop4 *op,
 					nfs4_readdir_callback,
 					&cb_data);
      if (cache_status != CACHE_INODE_SUCCESS) {
-          res_READDIR4.status = nfs4_Errno(cache_status);
+          res_READDIR4->status = nfs4_Errno(cache_status);
           goto out;
      }
 
-     if ((res_READDIR4.status = cb_data.error) != NFS4_OK) {
+     if ((res_READDIR4->status = cb_data.error) != NFS4_OK) {
           goto out;
      }
 
      if (cb_data.count != 0) {
           /* Put the entry's list in the READDIR reply if there were any. */
-          res_READDIR4.READDIR4res_u.resok4.reply.entries = entries;
+          res_READDIR4->READDIR4res_u.resok4.reply.entries = entries;
      } else {
           gsh_free(entries);
-          res_READDIR4.READDIR4res_u.resok4.reply.entries
+          res_READDIR4->READDIR4res_u.resok4.reply.entries
                = entries = NULL;
      }
 
@@ -367,26 +366,26 @@ nfs4_op_readdir(struct nfs_argop4 *op,
         type i(taking the values TRUE and FALSE) */
 
      if (eod_met) {
-             res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
+             res_READDIR4->READDIR4res_u.resok4.reply.eof = TRUE;
      } else {
-             res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
+             res_READDIR4->READDIR4res_u.resok4.reply.eof = FALSE;
      }
 
      /* Do not forget to set the verifier */
-     memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf,
+     memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf,
             cookie_verifier, NFS4_VERIFIER_SIZE);
 
 
-     res_READDIR4.status = NFS4_OK;
+     res_READDIR4->status = NFS4_OK;
 
 out:
-     if (res_READDIR4.status != NFS4_OK) {
+     if (res_READDIR4->status != NFS4_OK) {
           if (entries) {
                free_entries(entries);
           }
      }
 
-  return res_READDIR4.status;
+  return res_READDIR4->status;
 }                               /* nfs4_op_readdir */
 
 /**

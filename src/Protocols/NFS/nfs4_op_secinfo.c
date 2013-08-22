@@ -54,9 +54,6 @@
  * @return per RFC5661, pp. 373-4
  */
 
-#define arg_SECINFO4 op->nfs_argop4_u.opsecinfo
-#define res_SECINFO4 resp->nfs_resop4_u.opsecinfo
-
 extern gss_OID_desc krb5oid;
 
 /**
@@ -76,6 +73,8 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
+	SECINFO4args *const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
+	SECINFO4res *const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
         char *secinfo_fh_name = NULL;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         cache_entry_t *entry_src = NULL;
@@ -83,21 +82,21 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
         int num_entry = 0;
 
         resp->resop = NFS4_OP_SECINFO;
-        res_SECINFO4.status = NFS4_OK;
+        res_SECINFO4->status = NFS4_OK;
 
         /* Read name from uft8 strings, if one is empty then returns
            NFS4ERR_INVAL */
-        res_SECINFO4.status = nfs4_utf8string2dynamic(&arg_SECINFO4.name,
-                                                      UTF8_SCAN_ALL,
-                                                      &secinfo_fh_name);
-        if (res_SECINFO4.status != NFS4_OK) {
+        res_SECINFO4->status = nfs4_utf8string2dynamic(&arg_SECINFO4->name,
+						       UTF8_SCAN_ALL,
+						       &secinfo_fh_name);
+        if (res_SECINFO4->status != NFS4_OK) {
                 goto out;
         }
 
         /* Do basic checks on a filehandle SecInfo is done only on a
            directory */
-        res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-        if (res_SECINFO4.status != NFS4_OK) {
+        res_SECINFO4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+        if (res_SECINFO4->status != NFS4_OK) {
                 goto out;
         }
 
@@ -107,10 +106,10 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
 		 * compound data. This includes calling nfs4_MakeCred.
 		 */
 		if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK) &&
-		    (res_SECINFO4.status != NFS4ERR_WRONGSEC)) {
+		    (res_SECINFO4->status != NFS4ERR_WRONGSEC)) {
 			/* reuse lookup result, need to set the correct OP */
 			resp->resop = NFS4_OP_SECINFO;
-			return res_SECINFO4.status;
+			return res_SECINFO4->status;
 		}
 		/* reuse lookup result, need to set the correct OP */
 		resp->resop = NFS4_OP_SECINFO;
@@ -120,7 +119,7 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
 						  data->req_ctx,
 						  &entry_src);
 		if (entry_src == NULL) {
-			res_SECINFO4.status = nfs4_Errno(cache_status);
+			res_SECINFO4->status = nfs4_Errno(cache_status);
 			goto out;
 	       }
 	}
@@ -142,9 +141,9 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 num_entry++;
         }
 
-        if ((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
+        if ((res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
              gsh_calloc(num_entry, sizeof(secinfo4))) == NULL) {
-                res_SECINFO4.status = NFS4ERR_SERVERFAULT;
+                res_SECINFO4->status = NFS4ERR_SERVERFAULT;
                 if(entry_src != NULL)
                 	cache_inode_put(entry_src);
                 goto out;
@@ -157,46 +156,46 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
          */
         int idx = 0;
         if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE) {
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .flavor = AUTH_NONE;
         }
         if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX) {
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .flavor = AUTH_UNIX;
         }
         if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
                         = RPCSEC_GSS;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .secinfo4_u.flavor_info.oid = v5oid;
         }
         if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
                         = RPCSEC_GSS;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.service
                         = RPCSEC_GSS_SVC_INTEGRITY;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .secinfo4_u.flavor_info.oid = v5oid;
         }
         if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .flavor = RPCSEC_GSS;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.service
                         = RPCSEC_GSS_SVC_PRIVACY;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
                         .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
                         .secinfo4_u.flavor_info.oid = v5oid;
         }
-        res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
         if(entry_src != NULL)
 	        cache_inode_put(entry_src);
@@ -208,7 +207,7 @@ out:
                 secinfo_fh_name = NULL;
         }
 
-        return res_SECINFO4.status;
+        return res_SECINFO4->status;
 } /* nfs4_op_secinfo */
 
 /**

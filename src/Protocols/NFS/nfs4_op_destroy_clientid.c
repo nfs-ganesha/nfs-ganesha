@@ -54,26 +54,27 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op,
                              compound_data_t   *data,
                              struct nfs_resop4 *resp)
 {
+	DESTROY_CLIENTID4args *const arg_DESTROY_CLIENTID4
+		= &op->nfs_argop4_u.opdestroy_clientid;
+	DESTROY_CLIENTID4res *const res_DESTROY_CLIENTID4
+		= &resp->nfs_resop4_u.opdestroy_clientid;
 	nfs_client_record_t *client_record = NULL;
 	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
         clientid4 clientid;
 	int rc;
 
-#define arg_DESTROY_CLIENTID4 op->nfs_argop4_u.opdestroy_clientid
-#define res_DESTROY_CLIENTID4 resp->nfs_resop4_u.opdestroy_clientid
-
 	resp->resop = NFS4_OP_DESTROY_CLIENTID;
 	if (data->minorversion < 1) {
-		res_DESTROY_CLIENTID4.dcr_status = NFS4ERR_NOTSUPP;
-		return res_DESTROY_CLIENTID4.dcr_status;
+		res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_NOTSUPP;
+		return res_DESTROY_CLIENTID4->dcr_status;
 	}
 
-        clientid = arg_DESTROY_CLIENTID4.dca_clientid;
+        clientid = arg_DESTROY_CLIENTID4->dca_clientid;
 
         LogDebug(COMPONENT_CLIENTID,
                  "DESTROY_CLIENTID clientid=%"PRIx64, clientid);
 
-        res_DESTROY_CLIENTID4.dcr_status = NFS4_OK;
+        res_DESTROY_CLIENTID4->dcr_status = NFS4_OK;
 
 	/* First try to look up confirmed record */
 	rc = nfs_client_id_get_confirmed(clientid, &conf);
@@ -132,7 +133,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op,
          * Since the minorversion is 4.1 or higher, this is equivalent to a
          * session check. */
         if (client_id_has_nfs41_sessions(found)) {
-                res_DESTROY_CLIENTID4.dcr_status = NFS4ERR_CLID_INUSE;
+                res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_CLID_INUSE;
                 goto cleanup;
         }
 
@@ -183,7 +184,7 @@ cleanup:
         }
 
 out:
-	return (res_DESTROY_CLIENTID4.dcr_status);
+	return res_DESTROY_CLIENTID4->dcr_status;
 }
 
 /**

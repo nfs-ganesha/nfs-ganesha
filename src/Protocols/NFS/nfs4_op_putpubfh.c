@@ -96,22 +96,21 @@ static int CreatePUBFH4(nfs_fh4 *fh, compound_data_t *data)
  *
  */
 
-#define arg_PUTPUBFH4 op->nfs_argop4_u.opputpubfh
-#define res_PUTPUBFH4 resp->nfs_resop4_u.opputpubfh
-
 int nfs4_op_putpubfh(struct nfs_argop4 *op,
                      compound_data_t *data,
                      struct nfs_resop4 *resp)
 {
+  PUTPUBFH4res *const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
+
   /* First of all, set the reply to zero to make sure
    * it contains no parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTPUBFH;
-  res_PUTPUBFH4.status = NFS4_OK;
+  res_PUTPUBFH4->status = NFS4_OK;
 
   /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-  res_PUTPUBFH4.status = CreatePUBFH4(&(data->publicFH), data);
-  if(res_PUTPUBFH4.status != NFS4_OK)
+  res_PUTPUBFH4->status = CreatePUBFH4(&(data->publicFH), data);
+  if(res_PUTPUBFH4->status != NFS4_OK)
     goto out;
 
   /* Fill in compound data */
@@ -120,8 +119,8 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
-      res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->currentFH));
-      if(res_PUTPUBFH4.status != NFS4_OK)
+      res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
+      if(res_PUTPUBFH4->status != NFS4_OK)
 	goto out;
     }
 
@@ -129,7 +128,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   memcpy(data->currentFH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
 	 data->publicFH.nfs_fh4_len);
 
-  res_PUTPUBFH4.status = NFS4_OK ;
+  res_PUTPUBFH4->status = NFS4_OK ;
 
 out:
   LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
@@ -137,9 +136,9 @@ out:
 
   LogFullDebug(COMPONENT_NFS_V4,
                     "NFS4 PUTPUBFH: Ending on status %d",
-                    res_PUTPUBFH4.status);
+                    res_PUTPUBFH4->status);
 
-  return res_PUTPUBFH4.status;
+  return res_PUTPUBFH4->status;
 }
 
 /**

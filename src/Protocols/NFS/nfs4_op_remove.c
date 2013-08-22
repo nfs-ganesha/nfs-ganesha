@@ -54,47 +54,46 @@
  * @return per RFC5661, pp. 372-3
  */
 
-#define arg_REMOVE4 op->nfs_argop4_u.opremove
-#define res_REMOVE4 resp->nfs_resop4_u.opremove
-
 int nfs4_op_remove(struct nfs_argop4 *op,
                    compound_data_t *data,
                    struct nfs_resop4 *resp)
 {
+  REMOVE4args *const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
+  REMOVE4res *const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
   cache_entry_t        * parent_entry = NULL;
   char                 * name = NULL;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
 
   resp->resop = NFS4_OP_REMOVE;
-  res_REMOVE4.status = NFS4_OK;
+  res_REMOVE4->status = NFS4_OK;
 
   /*
    * Do basic checks on a filehandle
    * Delete arg_REMOVE4.target in directory pointed by currentFH
    * Make sure the currentFH is pointed a directory
    */
-  res_REMOVE4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-  if(res_REMOVE4.status != NFS4_OK)
+  res_REMOVE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+  if(res_REMOVE4->status != NFS4_OK)
     goto out;
 
   /* Validate and convert the UFT8 target to a regular string */
-  res_REMOVE4.status = nfs4_utf8string2dynamic(&arg_REMOVE4.target,
-					       UTF8_SCAN_ALL,
-					       &name);
-  if (res_REMOVE4.status != NFS4_OK) {
+  res_REMOVE4->status = nfs4_utf8string2dynamic(&arg_REMOVE4->target,
+						UTF8_SCAN_ALL,
+						&name);
+  if (res_REMOVE4->status != NFS4_OK) {
       goto out;
   }
 
   if (nfs_in_grace())
     {
-      res_REMOVE4.status = NFS4ERR_GRACE;
+      res_REMOVE4->status = NFS4ERR_GRACE;
       goto out;
     }
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     {
-      res_REMOVE4.status = nfs4_op_remove_xattr(op, data, resp);
+      res_REMOVE4->status = nfs4_op_remove_xattr(op, data, resp);
       goto out;
     }
 
@@ -102,8 +101,9 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   parent_entry = data->current_entry;
 
   /* We have to keep track of the 'change' file attribute for reply structure */
-  memset(&(res_REMOVE4.REMOVE4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
-  res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
+  memset(&(res_REMOVE4->REMOVE4res_u.resok4.cinfo.before),
+	 0, sizeof(changeid4));
+  res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
        cache_inode_get_changeid4(parent_entry);
 
 
@@ -112,19 +112,19 @@ int nfs4_op_remove(struct nfs_argop4 *op,
 				    data->req_ctx);
   if (cache_status != CACHE_INODE_SUCCESS)
     {
-      res_REMOVE4.status = nfs4_Errno(cache_status);
+      res_REMOVE4->status = nfs4_Errno(cache_status);
       goto out;
     }
 
-  res_REMOVE4.REMOVE4res_u.resok4.cinfo.after
+  res_REMOVE4->REMOVE4res_u.resok4.cinfo.after
        = cache_inode_get_changeid4(parent_entry);
 
   /* Operation was not atomic .... */
-  res_REMOVE4.REMOVE4res_u.resok4.cinfo.atomic = FALSE;
+  res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;
 
   /* If you reach this point, everything was ok */
 
-  res_REMOVE4.status = NFS4_OK;
+  res_REMOVE4->status = NFS4_OK;
 
  out:
 
@@ -133,7 +133,7 @@ int nfs4_op_remove(struct nfs_argop4 *op,
     name = NULL;
   }
 
-  return res_REMOVE4.status;
+  return res_REMOVE4->status;
 }                               /* nfs4_op_remove */
 
 /**

@@ -55,20 +55,21 @@
  * @return per RFC5661, pp. 370-1
  *
  */
-#define arg_OPENATTR4 op->nfs_argop4_u.opopenattr
-#define res_OPENATTR4 resp->nfs_resop4_u.opopenattr
-
 int nfs4_op_openattr(struct nfs_argop4 *op,
                      compound_data_t *data,
                      struct nfs_resop4 *resp)
 {
-  resp->resop = NFS4_OP_OPENATTR;
-  res_OPENATTR4.status = NFS4_OK;
+  OPENATTR4args *const arg_OPENATTR4 __attribute__((unused))
+    = &op->nfs_argop4_u.opopenattr;
+  OPENATTR4res *const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
 
-  res_OPENATTR4.status = nfs4_fh_to_xattrfh(&(data->currentFH),
+  resp->resop = NFS4_OP_OPENATTR;
+  res_OPENATTR4->status = NFS4_OK;
+
+  res_OPENATTR4->status = nfs4_fh_to_xattrfh(&(data->currentFH),
                                             &(data->currentFH));
 
-  return res_OPENATTR4.status;
+  return res_OPENATTR4->status;
 }                               /* nfs4_op_openattr */
 
 /**

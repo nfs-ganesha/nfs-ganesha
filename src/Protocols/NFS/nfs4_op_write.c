@@ -59,13 +59,12 @@ static int op_dswrite(struct nfs_argop4 *op,
  * @return per RFC5661, p. 376
  */
 
-#define arg_WRITE4 op->nfs_argop4_u.opwrite
-#define res_WRITE4 resp->nfs_resop4_u.opwrite
-
 int nfs4_op_write(struct nfs_argop4 *op,
                   compound_data_t *data,
                   struct nfs_resop4 *resp)
 {
+  WRITE4args *const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+  WRITE4res *const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
   uint32_t                 size, check_size;
   size_t                   written_size;
   uint64_t                 offset;
@@ -87,15 +86,15 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_WRITE;
-  res_WRITE4.status = NFS4_OK;
+  res_WRITE4->status = NFS4_OK;
 
   /*
    * Do basic checks on a filehandle
    * Only files can be written
    */
-  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
-  if(res_WRITE4.status != NFS4_OK)
-    return res_WRITE4.status;
+  res_WRITE4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
+  if(res_WRITE4->status != NFS4_OK)
+    return res_WRITE4->status;
 
     /* if quota support is active, then we should check is the FSAL
        allows inode creation or not */
@@ -106,8 +105,8 @@ int nfs4_op_write(struct nfs_argop4 *op,
           data->req_ctx);
   if (FSAL_IS_ERROR( fsal_status))
     {
-      res_WRITE4.status = NFS4ERR_DQUOT ;
-      return res_WRITE4.status;
+      res_WRITE4->status = NFS4ERR_DQUOT ;
+      return res_WRITE4->status;
     }
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
@@ -125,13 +124,13 @@ int nfs4_op_write(struct nfs_argop4 *op,
    {
      case ACCESSTYPE_MDONLY:
      case ACCESSTYPE_MDONLY_RO:
-        res_WRITE4.status = NFS4ERR_DQUOT;
-        return res_WRITE4.status;
+        res_WRITE4->status = NFS4ERR_DQUOT;
+        return res_WRITE4->status;
         break ;
 
      case ACCESSTYPE_RO:
-        res_WRITE4.status = NFS4ERR_ROFS ;
-        return res_WRITE4.status;
+        res_WRITE4->status = NFS4ERR_ROFS ;
+        return res_WRITE4->status;
         break ;
 
      default:
@@ -144,16 +143,16 @@ int nfs4_op_write(struct nfs_argop4 *op,
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
-  res_WRITE4.status = nfs4_Check_Stateid(&arg_WRITE4.stateid,
-                                         entry,
-                                         &state_found,
-                                         data,
-                                         STATEID_SPECIAL_ANY,
-                                         0,
-                                         FALSE,
-                                         "WRITE");
-  if(res_WRITE4.status != NFS4_OK)
-    return res_WRITE4.status;
+  res_WRITE4->status = nfs4_Check_Stateid(&arg_WRITE4->stateid,
+					  entry,
+					  &state_found,
+					  data,
+					  STATEID_SPECIAL_ANY,
+					  0,
+					  FALSE,
+					  "WRITE");
+  if(res_WRITE4->status != NFS4_OK)
+    return res_WRITE4->status;
 
   /* NB: After this points, if state_found == NULL, then the stateid is all-0 or all-1 */
 
@@ -182,11 +181,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
             break;
 
           default:
-            res_WRITE4.status = NFS4ERR_BAD_STATEID;
+            res_WRITE4->status = NFS4ERR_BAD_STATEID;
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "WRITE with invalid stateid of type %d",
                      (int) state_found->state_type);
-            return res_WRITE4.status;
+            return res_WRITE4->status;
         }
 
       /* This is a write operation, this means that the file MUST have
@@ -196,11 +195,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
           OPEN4_SHARE_ACCESS_WRITE) == 0)
         {
           /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_WRITE4.status = NFS4ERR_OPENMODE;
+          res_WRITE4->status = NFS4ERR_OPENMODE;
           LogDebug(COMPONENT_NFS_V4_LOCK,
                    "WRITE state %p doesn't have OPEN4_SHARE_ACCESS_WRITE",
                    state_found);
-          return res_WRITE4.status;
+          return res_WRITE4->status;
         }
     }
   else
@@ -215,12 +214,12 @@ int nfs4_op_write(struct nfs_argop4 *op,
        * Special stateid, no open state, check to see if any share conflicts
        * The stateid is all-0 or all-1
        */
-      res_WRITE4.status = nfs4_check_special_stateid(entry,"WRITE",
-                                                     FATTR4_ATTR_WRITE);
-      if(res_WRITE4.status != NFS4_OK)
+      res_WRITE4->status = nfs4_check_special_stateid(entry,"WRITE",
+						      FATTR4_ATTR_WRITE);
+      if(res_WRITE4->status != NFS4_OK)
         {
           PTHREAD_RWLOCK_unlock(&entry->state_lock);
-          return res_WRITE4.status;
+          return res_WRITE4->status;
         }
     }
 
@@ -231,17 +230,17 @@ int nfs4_op_write(struct nfs_argop4 *op,
 					data->req_ctx);
       if (cache_status != CACHE_INODE_SUCCESS)
         {
-          res_WRITE4.status = nfs4_Errno(cache_status);
+          res_WRITE4->status = nfs4_Errno(cache_status);
           if (anonymous)
             PTHREAD_RWLOCK_unlock(&entry->state_lock);
-          return res_WRITE4.status;
+          return res_WRITE4->status;
         }
     }
 
   /* Get the characteristics of the I/O to be made */
-  offset = arg_WRITE4.offset;
-  size = arg_WRITE4.data.data_len;
-  stable_how = arg_WRITE4.stable;
+  offset = arg_WRITE4->offset;
+  size = arg_WRITE4->data.data_len;
+  stable_how = arg_WRITE4->stable;
   LogFullDebug(COMPONENT_NFS_V4,
                "NFS4_OP_WRITE: offset = %"PRIu64"  length = %"PRIu32
                "  stable = %d",
@@ -251,12 +250,12 @@ int nfs4_op_write(struct nfs_argop4 *op,
      EXPORT_OPTION_MAXOFFSETWRITE)
     if((offset + size) > data->pexport->MaxOffsetWrite)
       {
-        res_WRITE4.status = NFS4ERR_DQUOT;
+        res_WRITE4->status = NFS4ERR_DQUOT;
         if (anonymous)
           {
             PTHREAD_RWLOCK_unlock(&entry->state_lock);
           }
-        return res_WRITE4.status;
+        return res_WRITE4->status;
       }
 
   /* The size to be written should not be greater than
@@ -286,7 +285,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
     }
 
   /* Where are the data ? */
-  bufferdata = arg_WRITE4.data.data_val;
+  bufferdata = arg_WRITE4->data.data_val;
 
   LogFullDebug(COMPONENT_NFS_V4,
                "NFS4_OP_WRITE: offset = %"PRIu64" length = %"PRIu32,
@@ -295,22 +294,22 @@ int nfs4_op_write(struct nfs_argop4 *op,
   /* if size == 0 , no I/O) are actually made and everything is alright */
   if(size == 0)
     {
-      res_WRITE4.WRITE4res_u.resok4.count = 0;
-      res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
+      res_WRITE4->WRITE4res_u.resok4.count = 0;
+      res_WRITE4->WRITE4res_u.resok4.committed = FILE_SYNC4;
 
-      verf_desc.addr = res_WRITE4.WRITE4res_u.resok4.writeverf;
+      verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
       verf_desc.len = sizeof(verifier4);
       data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
 
-      res_WRITE4.status = NFS4_OK;
+      res_WRITE4->status = NFS4_OK;
       if (anonymous)
         {
           PTHREAD_RWLOCK_unlock(&entry->state_lock);
         }
-      return res_WRITE4.status;
+      return res_WRITE4->status;
     }
 
-  if(arg_WRITE4.stable == UNSTABLE4)
+  if(arg_WRITE4->stable == UNSTABLE4)
     {
       sync = false;
     }
@@ -340,12 +339,12 @@ int nfs4_op_write(struct nfs_argop4 *op,
       LogDebug(COMPONENT_NFS_V4,
                "cache_inode_rdwr returned %s",
                cache_inode_err_str(cache_status));
-      res_WRITE4.status = nfs4_Errno(cache_status);
+      res_WRITE4->status = nfs4_Errno(cache_status);
       if (anonymous)
         {
           PTHREAD_RWLOCK_unlock(&entry->state_lock);
         }
-      return res_WRITE4.status;
+      return res_WRITE4->status;
     }
 
   if (!anonymous &&
@@ -355,17 +354,17 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
   /* Set the returned value */
   if(sync)
-    res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
+    res_WRITE4->WRITE4res_u.resok4.committed = FILE_SYNC4;
   else
-    res_WRITE4.WRITE4res_u.resok4.committed = UNSTABLE4;
+    res_WRITE4->WRITE4res_u.resok4.committed = UNSTABLE4;
 
-  res_WRITE4.WRITE4res_u.resok4.count = written_size;
+  res_WRITE4->WRITE4res_u.resok4.count = written_size;
 
-  verf_desc.addr = res_WRITE4.WRITE4res_u.resok4.writeverf;
+  verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
   verf_desc.len = sizeof(verifier4);
   data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
 
-  res_WRITE4.status = NFS4_OK;
+  res_WRITE4->status = NFS4_OK;
 
   if (anonymous)
     {
@@ -375,11 +374,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
   server_stats_io_done(data->req_ctx,
 		       size,
 		       written_size,
-		       (res_WRITE4.status == NFS4_OK) ? true : false,
+		       (res_WRITE4->status == NFS4_OK) ? true : false,
 		       true);
 #endif
 
-  return res_WRITE4.status;
+  return res_WRITE4->status;
 }                               /* nfs4_op_write */
 
 /**
@@ -416,22 +415,24 @@ op_dswrite(struct nfs_argop4 *op,
            compound_data_t *data,
            struct nfs_resop4 *resp)
 {
+	WRITE4args *const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+	WRITE4res *const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
         /* NFSv4 return code */
         nfsstat4 nfs_status = 0;
 
         nfs_status = data->current_ds->ops->write(
                 data->current_ds,
                 data->req_ctx,
-                &arg_WRITE4.stateid,
-                arg_WRITE4.offset,
-                arg_WRITE4.data.data_len,
-                arg_WRITE4.data.data_val,
-                arg_WRITE4.stable,
-                &res_WRITE4.WRITE4res_u.resok4.count,
-                &res_WRITE4.WRITE4res_u.resok4.writeverf,
-                &res_WRITE4.WRITE4res_u.resok4.committed);
+                &arg_WRITE4->stateid,
+                arg_WRITE4->offset,
+                arg_WRITE4->data.data_len,
+                arg_WRITE4->data.data_val,
+                arg_WRITE4->stable,
+                &res_WRITE4->WRITE4res_u.resok4.count,
+                &res_WRITE4->WRITE4res_u.resok4.writeverf,
+                &res_WRITE4->WRITE4res_u.resok4.committed);
 
-        res_WRITE4.status = nfs_status;
-        return res_WRITE4.status;
+        res_WRITE4->status = nfs_status;
+        return res_WRITE4->status;
 }
 

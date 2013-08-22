@@ -259,14 +259,14 @@ int mnt_Mnt(nfs_arg_t *parg,
                "MOUNT: Entry supports %d different flavours handle=%s for client %s",
                index_auth, dumpfh, req_ctx->client->hostaddr_str);
 
-#define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
-      if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
+      mountres3_ok *const RES_MOUNTINFO = &pres->res_mnt3.mountres3_u.mountinfo;
+      if((RES_MOUNTINFO->auth_flavors.auth_flavors_val =
           gsh_calloc(index_auth, sizeof(int))) == NULL)
         return NFS_REQ_DROP;
 
-      RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth;
+      RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
       for(i = 0; i < index_auth; i++)
-        RES_MOUNTINFO.auth_flavors.auth_flavors_val[i] = auth_flavor[i];
+        RES_MOUNTINFO->auth_flavors.auth_flavors_val[i] = auth_flavor[i];
     }
 
   /* Add the client to the mount list */

@@ -62,24 +62,25 @@
  * @return per RFC5661, p. 367
  */
 
-#define arg_LINK4 op->nfs_argop4_u.oplink
-#define res_LINK4 resp->nfs_resop4_u.oplink
-
 int nfs4_op_link(struct nfs_argop4 *op,
                  compound_data_t *data,
                  struct nfs_resop4 *resp)
 {
+	LINK4args *const arg_LINK4
+		= &op->nfs_argop4_u.oplink;
+	LINK4res *const res_LINK4
+		= &resp->nfs_resop4_u.oplink;
         cache_entry_t        * dir_entry = NULL;
         cache_entry_t        * file_entry = NULL;
         cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
         char                 * newname = NULL;
 
         resp->resop = NFS4_OP_LINK;
-        res_LINK4.status = NFS4_OK;
+        res_LINK4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle */
-        res_LINK4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-        if (res_LINK4.status != NFS4_OK) {
+        res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+        if (res_LINK4->status != NFS4_OK) {
                 goto out;
         }
 
@@ -90,16 +91,16 @@ int nfs4_op_link(struct nfs_argop4 *op,
          */
 
         /* Validate and convert the UFT8 objname to a regular string */
-        res_LINK4.status = nfs4_utf8string2dynamic(&arg_LINK4.newname,
-                                                   UTF8_SCAN_ALL,
-                                                   &newname);
-        if (res_LINK4.status != NFS4_OK) {
+        res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
+						    UTF8_SCAN_ALL,
+						    &newname);
+        if (res_LINK4->status != NFS4_OK) {
                 goto out;
         }
 
         /* Destination FH (the currentFH) must be a directory */
         if (data->current_filetype != DIRECTORY) {
-                res_LINK4.status = NFS4ERR_NOTDIR;
+                res_LINK4->status = NFS4ERR_NOTDIR;
                 goto out;
         }
 
@@ -107,20 +108,20 @@ int nfs4_op_link(struct nfs_argop4 *op,
          * case if a SAVEFH was not done before here */
         if (data->saved_filetype == NO_FILE_TYPE ||
             data->saved_entry == NULL) {
-                res_LINK4.status = NFS4ERR_NOFILEHANDLE;
+                res_LINK4->status = NFS4ERR_NOFILEHANDLE;
                 goto out;
         }
 
         /* Target object (the savedFH) must not be a directory */
         if (data->saved_filetype == DIRECTORY) {
-                res_LINK4.status = NFS4ERR_ISDIR;
+                res_LINK4->status = NFS4ERR_ISDIR;
                 goto out;
         }
 
         /* get info from compound data */
         dir_entry = data->current_entry;
 
-        res_LINK4.LINK4res_u.resok4.cinfo.before
+        res_LINK4->LINK4res_u.resok4.cinfo.before
                 = cache_inode_get_changeid4(dir_entry);
 
         file_entry = data->saved_entry;
@@ -131,22 +132,22 @@ int nfs4_op_link(struct nfs_argop4 *op,
 					newname,
 					data->req_ctx);
         if (cache_status != CACHE_INODE_SUCCESS) {
-                res_LINK4.status = nfs4_Errno(cache_status);
+                res_LINK4->status = nfs4_Errno(cache_status);
                 goto out;
         }
 
-        res_LINK4.LINK4res_u.resok4.cinfo.after
+        res_LINK4->LINK4res_u.resok4.cinfo.after
                 = cache_inode_get_changeid4(dir_entry);
-        res_LINK4.LINK4res_u.resok4.cinfo.atomic = FALSE;
+        res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
-        res_LINK4.status = NFS4_OK;
+        res_LINK4->status = NFS4_OK;
 
  out:
 
         if (newname) {
                 gsh_free(newname);
         }
-        return res_LINK4.status;
+        return res_LINK4->status;
 }                               /* nfs4_op_link */
 
 /**

@@ -63,30 +63,29 @@
  *
  */
 
-#define arg_SAVEFH op->nfs_argop4_u.opsavefh
-#define res_SAVEFH resp->nfs_resop4_u.opsavefh
-
 int nfs4_op_savefh(struct nfs_argop4 *op,
                    compound_data_t *data,
                    struct nfs_resop4 *resp)
 {
+  SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
+
   /* First of all, set the reply to zero to make sure it contains no
      parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_SAVEFH;
-  res_SAVEFH.status = NFS4_OK;
+  res_SAVEFH->status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_SAVEFH.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
-  if(res_SAVEFH.status != NFS4_OK)
-    return res_SAVEFH.status;
+  res_SAVEFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
+  if(res_SAVEFH->status != NFS4_OK)
+    return res_SAVEFH->status;
 
   /* If the savefh is not allocated, do it now */
   if(data->savedFH.nfs_fh4_len == 0)
     {
-      res_SAVEFH.status = nfs4_AllocateFH(&(data->savedFH));
-      if(res_SAVEFH.status != NFS4_OK)
-        return res_SAVEFH.status;
+      res_SAVEFH->status = nfs4_AllocateFH(&(data->savedFH));
+      if(res_SAVEFH->status != NFS4_OK)
+        return res_SAVEFH->status;
     }
 
   /* Copy the data from current FH to saved FH */

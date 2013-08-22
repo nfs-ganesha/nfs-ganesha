@@ -64,23 +64,21 @@
  * @return per RFC5661, p. 369
  *
  */
-#define arg_LOOKUPP4 op->nfs_argop4_u.oplookupp
-#define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
-
 int nfs4_op_lookupp(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
+  LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
   cache_entry_t        * dir_entry = NULL;
   cache_entry_t        * file_entry = NULL;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
 
   resp->resop = NFS4_OP_LOOKUPP;
-  res_LOOKUPP4.status = NFS4_OK;
+  res_LOOKUPP4->status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_LOOKUPP4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-  if(res_LOOKUPP4.status != NFS4_OK)
-    return res_LOOKUPP4.status;
+  res_LOOKUPP4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+  if(res_LOOKUPP4->status != NFS4_OK)
+    return res_LOOKUPP4->status;
 
   /* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
   if(data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
@@ -88,8 +86,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
                data->currentFH.nfs_fh4_len) == 0)
     {
       /* Nothing to do, just reply with success */
-      res_LOOKUPP4.status = NFS4ERR_NOENT;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_NOENT;
+      return res_LOOKUPP4->status;
     }
 
   /* If in pseudoFS, proceed with pseudoFS specific functions */
@@ -122,9 +120,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
       /* Convert it to a file handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle))
         {
-          res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
+          res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
           cache_inode_put(file_entry);
-          return res_LOOKUPP4.status;
+          return res_LOOKUPP4->status;
         }
 
       /* Release dir_pentry, as it is not reachable from anywhere in
@@ -139,7 +137,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
       data->current_filetype = file_entry->type;
 
       /* Return successfully */
-      res_LOOKUPP4.status = NFS4_OK;
+      res_LOOKUPP4->status = NFS4_OK;
       return NFS4_OK;
 
     }
@@ -149,9 +147,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
    * the error */
 
   /* For any wrong file type LOOKUPP should return NFS4ERR_NOTDIR */
-  res_LOOKUPP4.status = nfs4_Errno(cache_status);
+  res_LOOKUPP4->status = nfs4_Errno(cache_status);
 
-  return res_LOOKUPP4.status;
+  return res_LOOKUPP4->status;
 }                               /* nfs4_op_lookupp */
 
 /**

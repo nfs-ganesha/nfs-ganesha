@@ -58,18 +58,21 @@
  * @return per RFC 5661, pp. 363-4
  *
  */
-#define arg_DELEGPURGE4 op->nfs_argop4_u.opdelegpurge
-#define res_DELEGPURGE4 resp->nfs_resop4_u.opdelegpurge
-
 int nfs4_op_delegpurge(struct nfs_argop4 *op,
                        compound_data_t *data,
                        struct nfs_resop4 *resp)
 {
+  /* Unused for now, but when we actually implement this function it
+     won't be, so remove the attribute. */
+  DELEGPURGE4args *const arg_DELEGPURGE4 __attribute__((unused))
+    = &op->nfs_argop4_u.opdelegpurge;
+  DELEGPURGE4res *const res_DELEGPURGE4 = &resp->nfs_resop4_u.opdelegpurge;
+
   /* Lock are not supported */
   resp->resop = NFS4_OP_DELEGPURGE;
-  res_DELEGPURGE4.status = NFS4_OK;
+  res_DELEGPURGE4->status = NFS4_OK;
 
-  return res_DELEGPURGE4.status;
+  return res_DELEGPURGE4->status;
 } /* nfs4_op_delegpurge */
 
 /**

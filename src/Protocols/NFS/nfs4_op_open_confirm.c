@@ -52,43 +52,44 @@
  * @retval NFS4ERR_NOTSUPP for NFSv4.1
  *
  */
-#define arg_OPEN_CONFIRM4 op->nfs_argop4_u.opopen_confirm
-#define res_OPEN_CONFIRM4 resp->nfs_resop4_u.opopen_confirm
-
 int nfs4_op_open_confirm(struct nfs_argop4 *op,
                          compound_data_t *data,
                          struct nfs_resop4 *resp)
 {
+  OPEN_CONFIRM4args *const arg_OPEN_CONFIRM4
+    = &op->nfs_argop4_u.opopen_confirm;
+  OPEN_CONFIRM4res *const res_OPEN_CONFIRM4
+    = &resp->nfs_resop4_u.opopen_confirm;
   int              rc = 0;
   state_t        * state_found = NULL;
   state_owner_t  * open_owner;
   const char     * tag = "OPEN_CONFIRM";
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
-  res_OPEN_CONFIRM4.status = NFS4_OK;
+  res_OPEN_CONFIRM4->status = NFS4_OK;
 
   if (data->minorversion > 0)
     {
-      res_OPEN_CONFIRM4.status = NFS4ERR_NOTSUPP;
-      return res_OPEN_CONFIRM4.status;
+      res_OPEN_CONFIRM4->status = NFS4ERR_NOTSUPP;
+      return res_OPEN_CONFIRM4->status;
     }
 
   /*
    * Do basic checks on a filehandle
    * Should not operate on non-file objects
    */
-  res_OPEN_CONFIRM4.status = nfs4_sanity_check_FH(data, REGULAR_FILE,
-                                                  false);
-  if(res_OPEN_CONFIRM4.status != NFS4_OK)
-    return res_OPEN_CONFIRM4.status;
+  res_OPEN_CONFIRM4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+						   false);
+  if(res_OPEN_CONFIRM4->status != NFS4_OK)
+    return res_OPEN_CONFIRM4->status;
 
   /* Check stateid correctness and get pointer to state */
-  if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,
+  if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
                               data->current_entry,
                               &state_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
-                              arg_OPEN_CONFIRM4.seqid,
+                              arg_OPEN_CONFIRM4->seqid,
                               data->minorversion == 0,
                               tag)) != NFS4_OK)
     {
@@ -100,8 +101,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
         inc_state_owner_ref(open_owner);
         goto check_seqid;
       }
-      res_OPEN_CONFIRM4.status = rc;
-      return res_OPEN_CONFIRM4.status;
+      res_OPEN_CONFIRM4->status = rc;
+      return res_OPEN_CONFIRM4->status;
     }
 
   open_owner = state_found->state_owner;
@@ -112,14 +113,14 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 check_seqid:
 
   /* Check seqid */
-  if(!Check_nfs4_seqid(open_owner, arg_OPEN_CONFIRM4.seqid, op,
+  if(!Check_nfs4_seqid(open_owner, arg_OPEN_CONFIRM4->seqid, op,
                        data->current_entry,
                        resp, tag))
     {
       /* Response is all setup for us and LogDebug told what was wrong */
       V(open_owner->so_mutex);
       dec_state_owner_ref(open_owner);
-      return res_OPEN_CONFIRM4.status;
+      return res_OPEN_CONFIRM4->status;
     }
 
   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
@@ -127,8 +128,8 @@ check_seqid:
     {
       V(open_owner->so_mutex);
       dec_state_owner_ref(open_owner);
-      res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
-      return res_OPEN_CONFIRM4.status;
+      res_OPEN_CONFIRM4->status = NFS4ERR_BAD_STATEID;
+      return res_OPEN_CONFIRM4->status;
     }
 
   /* Set the state as confirmed */
@@ -137,18 +138,18 @@ check_seqid:
 
   /* Handle stateid/seqid for success */
   update_stateid(state_found,
-                 &res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid,
+                 &res_OPEN_CONFIRM4->OPEN_CONFIRM4res_u.resok4.open_stateid,
                  data,
                  tag);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4.seqid, op,
+  Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4->seqid, op,
                       data->current_entry,
                       resp, tag);
 
   dec_state_owner_ref(open_owner);
 
-  return res_OPEN_CONFIRM4.status;
+  return res_OPEN_CONFIRM4->status;
 } /* nfs4_op_open_confirm */
 
 /**

@@ -47,9 +47,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 
-#define arg_GETATTR4 op->nfs_argop4_u.opgetattr
-#define res_GETATTR4 resp->nfs_resop4_u.opgetattr
-
 /**
  * @brief Gets attributes for an entry in the FSAL.
  *
@@ -67,14 +64,17 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
                     compound_data_t *data,
                     struct nfs_resop4 *resp)
 {
+	GETATTR4args *const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
+	GETATTR4res *const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
+
         /* This is a NFS4_OP_GETTAR */
         resp->resop = NFS4_OP_GETATTR;
-        res_GETATTR4.status = NFS4_OK;
+        res_GETATTR4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle */
-        res_GETATTR4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-        if (res_GETATTR4.status != NFS4_OK) {
-                return res_GETATTR4.status;
+        res_GETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+        if (res_GETATTR4->status != NFS4_OK) {
+                return res_GETATTR4->status;
         }
 
         /* Pseudo Fs management */
@@ -90,32 +90,31 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
 
         /* Sanity check: if no attributes are wanted, nothing is to be
          * done.  In this case NFS4_OK is to be returned */
-        if (arg_GETATTR4.attr_request.bitmap4_len == 0) {
-                res_GETATTR4.status = NFS4_OK;
-                return res_GETATTR4.status;
+        if (arg_GETATTR4->attr_request.bitmap4_len == 0) {
+                res_GETATTR4->status = NFS4_OK;
+                return res_GETATTR4->status;
         }
 
         /* Get only attributes that are allowed to be read */
-        if (!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4.attr_request,
+        if (!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4->attr_request,
                                             FATTR4_ATTR_READ)) {
-                res_GETATTR4.status = NFS4ERR_INVAL;
-                return res_GETATTR4.status;
+                res_GETATTR4->status = NFS4ERR_INVAL;
+                return res_GETATTR4->status;
         }
 
-	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4.attr_request);
+	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4->attr_request);
 
-        if (cache_entry_To_Fattr(data->current_entry,
-                                 &(res_GETATTR4.GETATTR4res_u.resok4
-                                   .obj_attributes),
-                                 data,
-                                 &(data->currentFH),
-                                 &(arg_GETATTR4.attr_request)) != 0) {
-                res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+        if (cache_entry_To_Fattr(
+		    data->current_entry,
+		    &res_GETATTR4->GETATTR4res_u.resok4.obj_attributes,
+		    data, &data->currentFH,
+		    &arg_GETATTR4->attr_request) != 0) {
+                res_GETATTR4->status = NFS4ERR_SERVERFAULT;
         } else {
-                res_GETATTR4.status = NFS4_OK;
+                res_GETATTR4->status = NFS4_OK;
         }
 
-        return res_GETATTR4.status;
+        return res_GETATTR4->status;
 } /* nfs4_op_getattr */
 
 /**

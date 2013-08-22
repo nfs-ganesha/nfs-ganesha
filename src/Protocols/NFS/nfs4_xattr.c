@@ -151,23 +151,22 @@ nfsstat4 nfs4_xattrfh_to_fh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
  * 
  */
 
-#define arg_GETATTR4 op->nfs_argop4_u.opgetattr
-#define res_GETATTR4 resp->nfs_resop4_u.opgetattr
-
 int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
+  GETATTR4args *const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
+  GETATTR4res *const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
   resp->resop = NFS4_OP_GETATTR;
 
-  res_GETATTR4.status = NFS4_OK;
+  res_GETATTR4->status = NFS4_OK;
 
-  if(nfs4_XattrToFattr(&(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-                       data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
-    res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+  if(nfs4_XattrToFattr(&(res_GETATTR4->GETATTR4res_u.resok4.obj_attributes),
+                       data, &(data->currentFH), &(arg_GETATTR4->attr_request)) != 0)
+    res_GETATTR4->status = NFS4ERR_SERVERFAULT;
   else
-    res_GETATTR4.status = NFS4_OK;
+    res_GETATTR4->status = NFS4_OK;
 
-  return res_GETATTR4.status;
+  return res_GETATTR4->status;
 }                               /* nfs4_op_getattr_xattr */
 
 /**
@@ -184,21 +183,21 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
  */
 
 /* Shorter notation to avoid typos */
-#define res_ACCESS4 resp->nfs_resop4_u.opaccess
-#define arg_ACCESS4 op->nfs_argop4_u.opaccess
 
 int nfs4_op_access_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
+  ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
+  ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
   resp->resop = NFS4_OP_ACCESS;
 
   /* All access types are supported */
   /** @todo think about making this RW, it is RO for now */
-  res_ACCESS4.ACCESS4res_u.resok4.supported = ACCESS4_READ | ACCESS4_LOOKUP;
+  res_ACCESS4->ACCESS4res_u.resok4.supported = ACCESS4_READ | ACCESS4_LOOKUP;
 
   /* DELETE/MODIFY/EXTEND are not supported in the pseudo fs */
-  res_ACCESS4.ACCESS4res_u.resok4.access =
-      arg_ACCESS4.access & ~(ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE);
+  res_ACCESS4->ACCESS4res_u.resok4.access =
+      arg_ACCESS4->access & ~(ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE);
 
   return NFS4_OK;
 }                               /* nfs4_op_access_xattr */
@@ -216,13 +215,11 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
  * 
  */
 
-/* Shorter notation to avoid typos */
-#define arg_LOOKUP4 op->nfs_argop4_u.oplookup
-#define res_LOOKUP4 resp->nfs_resop4_u.oplookup
-
 int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
+  LOOKUP4args *const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+  LOOKUP4res *const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
   char *name = NULL;
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
@@ -230,23 +227,23 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   file_handle_v4_t *pfile_handle = NULL;
 
   /* The xattr directory contains no subdirectory, lookup always returns ENOENT */
-  res_LOOKUP4.status = NFS4_OK;
+  res_LOOKUP4->status = NFS4_OK;
 
   /* Get the FSAL Handle for the current object */
   obj_hdl = data->current_entry->obj_handle;
 
-  res_LOOKUP4.status = nfs4_utf8string2dynamic(&arg_LOOKUP4.objname,
-					       UTF8_SCAN_ALL,
-					       &name);
+  res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						UTF8_SCAN_ALL,
+						&name);
 
-  if (res_LOOKUP4.status != NFS4_OK)
+  if (res_LOOKUP4->status != NFS4_OK)
     goto out;
 
   /* Try to get a FSAL_XAttr of that name */
   fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      res_LOOKUP4.status = NFS4ERR_NOENT;
+      res_LOOKUP4->status = NFS4ERR_NOENT;
       goto out;
     }
 
@@ -264,7 +261,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   if (name)
     gsh_free(name);
 
-  return res_LOOKUP4.status;
+  return res_LOOKUP4->status;
 }
 
 /**
@@ -280,18 +277,15 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
  * 
  */
 
-/* Shorter notation to avoid typos */
-#define arg_LOOKUPP4 op->nfs_argop4_u.oplookupp
-#define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
-
 int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
+  LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
   resp->resop = NFS4_OP_LOOKUPP;
 
-  res_LOOKUPP4.status = nfs4_xattrfh_to_fh(&(data->currentFH), &(data->currentFH));
+  res_LOOKUPP4->status = nfs4_xattrfh_to_fh(&(data->currentFH), &(data->currentFH));
 
-  res_LOOKUPP4.status = NFS4_OK;
+  res_LOOKUPP4->status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_xattr */
 
@@ -308,10 +302,6 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
  * 
  */
 
-/* shorter notation to avoid typo */
-#define arg_READDIR4 op->nfs_argop4_u.opreaddir
-#define res_READDIR4 resp->nfs_resop4_u.opreaddir
-
 static const struct bitmap4 RdAttrErrorBitmap = {
 	.bitmap4_len = 1,
 	.map[0] = (1<<FATTR4_RDATTR_ERROR),
@@ -323,6 +313,8 @@ static const  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be see
 int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
+  READDIR4args *const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
+  READDIR4res *const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
   unsigned long dircount = 0;
   unsigned long maxcount = 0;
   unsigned long estimated_num_entries = 0;
@@ -342,9 +334,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   struct alloc_file_handle_v4 temp_handle;
 
   resp->resop = NFS4_OP_READDIR;
-  res_READDIR4.status = NFS4_OK;
+  res_READDIR4->status = NFS4_OK;
 
-  nfsfh.nfs_fh4_val = (caddr_t) &temp_handle;
+  nfsfh.nfs_fh4_val = (char *)&temp_handle;
   nfsfh.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);  
   memset(nfsfh.nfs_fh4_val, 0, nfsfh.nfs_fh4_len);
 
@@ -356,9 +348,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   LogFullDebug(COMPONENT_NFS_V4_XATTR, "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
-  dircount = arg_READDIR4.dircount;
-  maxcount = arg_READDIR4.maxcount;
-  cookie = arg_READDIR4.cookie;
+  dircount = arg_READDIR4->dircount;
+  maxcount = arg_READDIR4->maxcount;
+  cookie = arg_READDIR4->cookie;
   space_used = sizeof(entry4);
 
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
@@ -371,8 +363,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
-      res_READDIR4.status = NFS4ERR_TOOSMALL;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_TOOSMALL;
+      return res_READDIR4->status;
     }
 
   /* Cookie delivered by the server and used by the client SHOULD not ne 0, 1 or 2 (cf RFC3530, page192)
@@ -386,25 +378,25 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   /* Do not use a cookie of 1 or 2 (reserved values) */
   if(cookie == 1 || cookie == 2)
     {
-      res_READDIR4.status = NFS4ERR_BAD_COOKIE;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_BAD_COOKIE;
+      return res_READDIR4->status;
     }
 
   if(cookie != 0)
     cookie = cookie - 3;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
 
   /* Get only attributes that are allowed to be read */
-  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
+  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4->attr_request, FATTR4_ATTR_READ))
     {
-      res_READDIR4.status = NFS4ERR_INVAL;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_INVAL;
+      return res_READDIR4->status;
     }
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
-      res_READDIR4.status = NFS4ERR_TOOSMALL;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_TOOSMALL;
+      return res_READDIR4->status;
     }
 
   /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
@@ -428,7 +420,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   /* The default behaviour is to consider that eof is not reached, the returned values by cache_inode_readdir 
    * will let us know if eod was reached or not */
-  res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
+  res_READDIR4->READDIR4res_u.resok4.reply.eof = FALSE;
 
   /* Get the fsal_handle */
   obj_hdl = data->current_entry->obj_handle;
@@ -438,24 +430,24 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 					     estimated_num_entries, &nb_xattrs_read, (int *)&eod_met);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_SERVERFAULT;
+      return res_READDIR4->status;
     }
 
   if(eod_met)
     {
       /* This is the end of the directory */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-      memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
+      res_READDIR4->READDIR4res_u.resok4.reply.eof = TRUE;
+      memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf, cookie_verifier,
              NFS4_VERIFIER_SIZE);
     }
 
   if(nb_xattrs_read == 0)
     {
       /* only . and .. */
-      res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-      memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
+      res_READDIR4->READDIR4res_u.resok4.reply.entries = NULL;
+      res_READDIR4->READDIR4res_u.resok4.reply.eof = TRUE;
+      memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf, cookie_verifier,
              NFS4_VERIFIER_SIZE);
     }
   else
@@ -465,16 +457,16 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           gsh_calloc(estimated_num_entries, (1024 + 1))) == NULL)
         {
           LogError(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
+          res_READDIR4->status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4->status;
         }
 
       if((entry_nfs_array =
           gsh_calloc(estimated_num_entries, sizeof(entry4))) == NULL)
         {
           LogError(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
+          res_READDIR4->status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4->status;
         }
 
       for(i = 0; i < nb_xattrs_read; i++)
@@ -492,7 +484,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
           file_handle->xattr_pos = xattrs_tab[i].xattr_id + 2;
           if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
-                               data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
+                               data, &nfsfh, &(arg_READDIR4->attr_request)) != 0)
             {
               /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
@@ -516,14 +508,14 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     }                           /* else */
 
   /* Build the reply */
-  memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
+  memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);
   if(i == 0)
-    res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
+    res_READDIR4->READDIR4res_u.resok4.reply.entries = NULL;
   else
-    res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
+    res_READDIR4->READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
-  res_READDIR4.status = NFS4_OK;
+  res_READDIR4->status = NFS4_OK;
 
   return NFS4_OK;
 
@@ -539,14 +531,11 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
  * @return NFS4_OK if successfull, other values show an error. 
  * 
  */
-#define arg_READ4 op->nfs_argop4_u.opread
-#define res_READ4 resp->nfs_resop4_u.opread
-
-#define arg_OPEN4 op->nfs_argop4_u.opopen
-#define res_OPEN4 resp->nfs_resop4_u.opopen
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
+  OPEN4args *const arg_OPEN4 = &op->nfs_argop4_u.opopen;
+  OPEN4res *const res_OPEN4 = &resp->nfs_resop4_u.opopen;
   char *name = NULL;
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
@@ -554,21 +543,21 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
   file_handle_v4_t *pfile_handle = NULL;
   char empty_buff[16] = "";
 
-  res_OPEN4.status = NFS4_OK;
+  res_OPEN4->status = NFS4_OK;
 
   /* Get the FSAL Handle fo the current object */
   obj_hdl = data->current_entry->obj_handle;
 
-  res_OPEN4.status
-	  = nfs4_utf8string2dynamic(&arg_OPEN4.claim.open_claim4_u.file,
+  res_OPEN4->status
+	  = nfs4_utf8string2dynamic(&arg_OPEN4->claim.open_claim4_u.file,
 				    UTF8_SCAN_ALL,
 				    &name);
 
-  if (res_OPEN4.status != NFS4_OK)
+  if (res_OPEN4->status != NFS4_OK)
     goto out;
 
   /* we do not use the stateful logic for accessing xattrs */
-  switch (arg_OPEN4.openhow.opentype)
+  switch (arg_OPEN4->openhow.opentype)
     {
     case OPEN4_CREATE:
       /* To be done later */
@@ -582,7 +571,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
 
       if(FSAL_IS_ERROR(fsal_status))
         {
-          res_OPEN4.status = nfs4_Errno(cache_inode_error_convert(fsal_status));
+          res_OPEN4->status = nfs4_Errno(cache_inode_error_convert(fsal_status));
 	  goto out;
         }
 
@@ -590,7 +579,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
-          res_OPEN4.status = NFS4ERR_NOENT;
+          res_OPEN4->status = NFS4ERR_NOENT;
 	  goto out;
         }
 
@@ -603,7 +592,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
        * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
       pfile_handle->xattr_pos = xattr_id + 2;
 
-      res_OPEN4.status = NFS4_OK;
+      res_OPEN4->status = NFS4_OK;
       goto out;
 
       break;
@@ -614,7 +603,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
-          res_OPEN4.status = NFS4ERR_NOENT;
+          res_OPEN4->status = NFS4ERR_NOENT;
 	  goto out;
         }
 
@@ -627,7 +616,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
        * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
       pfile_handle->xattr_pos = xattr_id + 2;
 
-      res_OPEN4.status = NFS4_OK;
+      res_OPEN4->status = NFS4_OK;
       goto out;
 
       break;
@@ -635,12 +624,12 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
     }                           /* switch (arg_OPEN4.openhow.opentype) */
 
  out:
-  res_OPEN4.status = NFS4_OK;
+  res_OPEN4->status = NFS4_OK;
 
   if (name)
     gsh_free(name);
 
-  return res_OPEN4.status;
+  return res_OPEN4->status;
 }
 
 /**
@@ -653,12 +642,11 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
  * @return NFS4_OK if successfull, other values show an error. 
  * 
  */
-#define arg_READ4 op->nfs_argop4_u.opread
-#define res_READ4 resp->nfs_resop4_u.opread
 
 int nfs4_op_read_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
+  READ4res *const res_READ4 = &resp->nfs_resop4_u.opread;
   struct fsal_obj_handle *obj_hdl = NULL;
   file_handle_v4_t *pfile_handle = NULL;
   unsigned int xattr_id = 0;
@@ -683,8 +671,8 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
     {
       LogEvent(COMPONENT_NFS_V4_XATTR,
                "FAILED to allocate xattr buffer");
-      res_READ4.status = NFS4ERR_SERVERFAULT;
-      return res_READ4.status;
+      res_READ4->status = NFS4ERR_SERVERFAULT;
+      return res_READ4->status;
     }
 
   fsal_status = obj_hdl->ops->getextattr_value_by_id(obj_hdl, data->req_ctx, xattr_id,
@@ -692,19 +680,19 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      res_READ4.status = NFS4ERR_SERVERFAULT;
+      res_READ4->status = NFS4ERR_SERVERFAULT;
       gsh_free(buffer);
-      return res_READ4.status;
+      return res_READ4->status;
     }
 
-  res_READ4.READ4res_u.resok4.data.data_len = size_returned;
-  res_READ4.READ4res_u.resok4.data.data_val = buffer;
+  res_READ4->READ4res_u.resok4.data.data_len = size_returned;
+  res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
-  res_READ4.READ4res_u.resok4.eof = TRUE;
+  res_READ4->READ4res_u.resok4.eof = TRUE;
 
-  res_READ4.status = NFS4_OK;
+  res_READ4->status = NFS4_OK;
 
-  return res_READ4.status;
+  return res_READ4->status;
 }                               /* nfs4_op_read_xattr */
 
 /**
@@ -717,12 +705,11 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
  * @return NFS4_OK if successfull, other values show an error. 
  * 
  */
-#define arg_WRITE4 op->nfs_argop4_u.opwrite
-#define res_WRITE4 resp->nfs_resop4_u.opwrite
-
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
                         compound_data_t * data, struct nfs_resop4 *resp)
 {
+  WRITE4args *const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+  WRITE4res *const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
   struct fsal_obj_handle *obj_hdl = NULL;
   file_handle_v4_t *pfile_handle = NULL;
   unsigned int xattr_id = 0;
@@ -743,47 +730,47 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
   fsal_status = obj_hdl->ops->setextattr_value_by_id(obj_hdl,
                                                      data->req_ctx,
                                                      xattr_id,
-						     arg_WRITE4.data.data_val,
-						     arg_WRITE4.data.data_len);
+						     arg_WRITE4->data.data_val,
+						     arg_WRITE4->data.data_len);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      res_WRITE4.status = NFS4ERR_SERVERFAULT;
-      return res_WRITE4.status;
+      res_WRITE4->status = NFS4ERR_SERVERFAULT;
+      return res_WRITE4->status;
     }
 
-  res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
+  res_WRITE4->WRITE4res_u.resok4.committed = FILE_SYNC4;
 
-  res_WRITE4.WRITE4res_u.resok4.count = arg_WRITE4.data.data_len;
-  memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier, sizeof(verifier4));
+  res_WRITE4->WRITE4res_u.resok4.count = arg_WRITE4->data.data_len;
+  memcpy(res_WRITE4->WRITE4res_u.resok4.writeverf, NFS4_write_verifier, sizeof(verifier4));
 
-  res_WRITE4.status = NFS4_OK;
+  res_WRITE4->status = NFS4_OK;
 
   return NFS4_OK;
 }                               /* nfs4_op_write_xattr */
 
-#define arg_REMOVE4 op->nfs_argop4_u.opremove
-#define res_REMOVE4 resp->nfs_resop4_u.opremove
 int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
                          struct nfs_resop4 *resp)
 {
+  REMOVE4args *const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
+  REMOVE4res *const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   char *name;
 
   /* get the filename from the argument, it should not be empty */
-  if(arg_REMOVE4.target.utf8string_len == 0)
+  if(arg_REMOVE4->target.utf8string_len == 0)
     {
-      res_REMOVE4.status = NFS4ERR_INVAL;
-      return res_REMOVE4.status;
+      res_REMOVE4->status = NFS4ERR_INVAL;
+      return res_REMOVE4->status;
     }
 
   /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
    * because of this, we have to know if object is a directory or not */
-  name = alloca(arg_REMOVE4.target.utf8string_len + 1);
-  name[arg_REMOVE4.target.utf8string_len] = '\0';
-  memcpy(name, arg_REMOVE4.target.utf8string_val,
-         arg_REMOVE4.target.utf8string_len);
+  name = alloca(arg_REMOVE4->target.utf8string_len + 1);
+  name[arg_REMOVE4->target.utf8string_len] = '\0';
+  memcpy(name, arg_REMOVE4->target.utf8string_val,
+         arg_REMOVE4->target.utf8string_len);
 
   /* Get the FSAL Handle fo the current object */
   obj_hdl = data->current_entry->obj_handle;
@@ -792,17 +779,17 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
   if ((strcmp(name, ".") == 0) ||
       (strcmp(name, "..") == 0))
     {
-      res_REMOVE4.status = NFS4ERR_BADNAME;
-      return res_REMOVE4.status;
+      res_REMOVE4->status = NFS4ERR_BADNAME;
+      return res_REMOVE4->status;
     }
 
   fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, data->req_ctx, name);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      res_REMOVE4.status = NFS4ERR_SERVERFAULT;
-      return res_REMOVE4.status;
+      res_REMOVE4->status = NFS4ERR_SERVERFAULT;
+      return res_REMOVE4->status;
     }
 
-  res_REMOVE4.status = NFS4_OK;
-  return res_REMOVE4.status;
+  res_REMOVE4->status = NFS4_OK;
+  return res_REMOVE4->status;
 }

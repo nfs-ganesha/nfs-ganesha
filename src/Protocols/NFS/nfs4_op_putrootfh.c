@@ -96,21 +96,20 @@ static int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
  *
  */
 
-#define arg_PUTROOTFH4 op->nfs_argop4_u.opputrootfh
-#define res_PUTROOTFH4 resp->nfs_resop4_u.opputrootfh
-
 int nfs4_op_putrootfh(struct nfs_argop4 *op,
                       compound_data_t *data,
                       struct nfs_resop4 *resp)
 {
+  PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+
   /* First of all, set the reply to zero to make sure it contains no
      parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTROOTFH;
 
-  res_PUTROOTFH4.status = CreateROOTFH4(&(data->rootFH), data);
-  if(res_PUTROOTFH4.status != NFS4_OK)
-    return res_PUTROOTFH4.status;
+  res_PUTROOTFH4->status = CreateROOTFH4(&(data->rootFH), data);
+  if(res_PUTROOTFH4->status != NFS4_OK)
+    return res_PUTROOTFH4->status;
 
   /* Fill in compound data */
   set_compound_data_for_pseudo(data);
@@ -118,9 +117,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->currentFH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
+      res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->currentFH));
+      if(res_PUTROOTFH4->status != NFS4_OK)
+        return res_PUTROOTFH4->status;
     }
   memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
@@ -128,9 +127,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
 
   if(data->publicFH.nfs_fh4_len == 0)
     {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->publicFH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
+      res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->publicFH));
+      if(res_PUTROOTFH4->status != NFS4_OK)
+        return res_PUTROOTFH4->status;
     }
   /* Copy the data where they are supposed to be */
   memcpy(data->publicFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
@@ -142,9 +141,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
 
   LogFullDebug(COMPONENT_NFS_V4,
                     "NFS4 PUTROOTFH: Ending on status %d",
-                    res_PUTROOTFH4.status);
+                    res_PUTROOTFH4->status);
 
-  return res_PUTROOTFH4.status;
+  return res_PUTROOTFH4->status;
 }                               /* nfs4_op_putrootfh */
 
 /**

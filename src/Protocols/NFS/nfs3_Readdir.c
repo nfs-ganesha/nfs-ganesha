@@ -266,9 +266,8 @@ nfs_Readdir(nfs_arg_t *arg,
 
 /* Some definitions that will be very useful to avoid very long names
    for variables */
-#define RES_READDIR2_OK   res->res_readdir2.READDIR2res_u.readdirok
-#define RES_READDIR3_OK   res->res_readdir3.READDIR3res_u.resok
-#define RES_READDIR3_FAIL res->res_readdir3.READDIR3res_u.resfail
+     READDIR3resok *const RES_READDIR3_OK
+	     = &res->res_readdir3.READDIR3res_u.resok;
 
      /* Call readdir */
      cache_status = cache_inode_readdir(dir_entry,
@@ -298,12 +297,12 @@ nfs_Readdir(nfs_arg_t *arg,
                   cache_inode_cookie,
                   num_entries);
 
-     RES_READDIR3_OK.reply.entries = cb3.entries;
-     RES_READDIR3_OK.reply.eof = eod_met;
+     RES_READDIR3_OK->reply.entries = cb3.entries;
+     RES_READDIR3_OK->reply.eof = eod_met;
      nfs_SetPostOpAttr(dir_entry,
                        req_ctx,
-                       &RES_READDIR3_OK.dir_attributes);
-     memcpy(RES_READDIR3_OK.cookieverf,
+                       &RES_READDIR3_OK->dir_attributes);
+     memcpy(RES_READDIR3_OK->cookieverf,
             cookie_verifier,
             sizeof(cookieverf3));
      res->res_readdir3.status = NFS3_OK;
@@ -326,7 +325,7 @@ out:
           (cb3.entries != NULL))
          {
                free_entry3s(cb3.entries);
-               RES_READDIR3_OK.reply.entries = NULL;
+               RES_READDIR3_OK->reply.entries = NULL;
           }
      
 

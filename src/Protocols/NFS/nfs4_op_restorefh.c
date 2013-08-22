@@ -62,25 +62,23 @@
  *
  */
 
-#define arg_RESTOREFH op->nfs_argop4_u.oprestorefh
-#define res_RESTOREFH resp->nfs_resop4_u.oprestorefh
-
 int nfs4_op_restorefh(struct nfs_argop4 *op,
                       compound_data_t * data, struct nfs_resop4 *resp)
 {
+  RESTOREFH4res *const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
   /* First of all, set the reply to zero to make sure it contains no
      parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
 
   resp->resop = NFS4_OP_RESTOREFH;
-  res_RESTOREFH.status = NFS4_OK;
+  res_RESTOREFH->status = NFS4_OK;
 
   /* If there is no currentFH, then return an error */
-  res_RESTOREFH.status = nfs4_sanity_check_saved_FH(data,
-                                                    NO_FILE_TYPE,
-                                                    true);
-  if (res_RESTOREFH.status != NFS4_OK)
-    return res_RESTOREFH.status;
+  res_RESTOREFH->status = nfs4_sanity_check_saved_FH(data,
+						     NO_FILE_TYPE,
+						     true);
+  if (res_RESTOREFH->status != NFS4_OK)
+    return res_RESTOREFH->status;
 
   /* Copy the data from current FH to saved FH */
   memcpy(data->currentFH.nfs_fh4_val,

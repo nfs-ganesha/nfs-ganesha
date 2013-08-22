@@ -50,10 +50,6 @@
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
 
-#define NB_TOK_ARG 10
-#define NB_OPT_TOK 10
-#define NB_TOK_PATH 20
-
 static pseudofs_t gPseudoFs;
 
 /**
@@ -471,36 +467,36 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
  * 
  */
 
-#define arg_GETATTR4 op->nfs_argop4_u.opgetattr
-#define res_GETATTR4 resp->nfs_resop4_u.opgetattr
 
 int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
+  GETATTR4args *const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
+  GETATTR4res *const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
   pseudofs_entry_t *psfsentry;
   resp->resop = NFS4_OP_GETATTR;
 
   /* Get the pseudo entry related to this fhandle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
-      res_GETATTR4.status = NFS4ERR_BADHANDLE;
-      return res_GETATTR4.status;
+      res_GETATTR4->status = NFS4ERR_BADHANDLE;
+      return res_GETATTR4->status;
     }
 
   /* All directories in pseudo fs have the same Fattr */
   if(nfs4_PseudoToFattr(psfsentry,
-                        &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-                        data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
-    res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+                        &(res_GETATTR4->GETATTR4res_u.resok4.obj_attributes),
+                        data, &(data->currentFH), &(arg_GETATTR4->attr_request)) != 0)
+    res_GETATTR4->status = NFS4ERR_SERVERFAULT;
   else
-    res_GETATTR4.status = NFS4_OK;
+    res_GETATTR4->status = NFS4_OK;
 
   LogFullDebug(COMPONENT_NFS_V4,
                "Apres nfs4_PseudoToFattr: attrmask(bitmap4_len)=%d attrlist4_len=%d",
-               res_GETATTR4.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len,
-               res_GETATTR4.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len);
+               res_GETATTR4->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len,
+               res_GETATTR4->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len);
 
-  return res_GETATTR4.status;
+  return res_GETATTR4->status;
 }                               /* nfs4_op_getattr */
 
 /**
@@ -518,20 +514,19 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
  */
 
 /* Shorter notation to avoid typos */
-#define res_ACCESS4 resp->nfs_resop4_u.opaccess
-#define arg_ACCESS4 op->nfs_argop4_u.opaccess
-
 int nfs4_op_access_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
+  ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
+  ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
   resp->resop = NFS4_OP_ACCESS;
 
   /* All access types are supported */
-  res_ACCESS4.ACCESS4res_u.resok4.supported = ACCESS4_READ | ACCESS4_LOOKUP;
+  res_ACCESS4->ACCESS4res_u.resok4.supported = ACCESS4_READ | ACCESS4_LOOKUP;
 
   /* DELETE/MODIFY/EXTEND are not supported in the pseudo fs */
-  res_ACCESS4.ACCESS4res_u.resok4.access =
-      arg_ACCESS4.access & ~(ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE);
+  res_ACCESS4->ACCESS4res_u.resok4.access =
+      arg_ACCESS4->access & ~(ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE);
 
   return NFS4_OK;
 }                               /* nfs4_op_access_pseudo */
@@ -588,12 +583,12 @@ void set_compound_data_for_pseudo(compound_data_t * data)
  */
 
 /* Shorter notation to avoid typos */
-#define arg_LOOKUP4 op->nfs_argop4_u.oplookup
-#define res_LOOKUP4 resp->nfs_resop4_u.oplookup
 
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
+  LOOKUP4args *const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+  LOOKUP4res *const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
   char *name;
   pseudofs_entry_t *psfsentry;
   pseudofs_entry_t *iter = NULL;
@@ -604,10 +599,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_LOOKUP;
 
   /* Validate and convert the UFT8 objname to a regular string */
-  res_LOOKUP4.status = nfs4_utf8string2dynamic(&arg_LOOKUP4.objname,
-					       UTF8_SCAN_ALL,
-					       &name);
-  if (res_LOOKUP4.status != NFS4_OK)
+  res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						UTF8_SCAN_ALL,
+						&name);
+  if (res_LOOKUP4->status != NFS4_OK)
     {
       goto out;
     }
@@ -615,7 +610,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   /* Get the pseudo fs entry related to the file handle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
-      res_LOOKUP4.status = NFS4ERR_BADHANDLE;
+      res_LOOKUP4->status = NFS4ERR_BADHANDLE;
       goto out;
     }
 
@@ -626,7 +621,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
   if(iter == NULL)
     {
-      res_LOOKUP4.status = NFS4ERR_NOENT;
+      res_LOOKUP4->status = NFS4ERR_NOENT;
       goto out;
     }
 
@@ -636,7 +631,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* The entry is not a junction, we stay within the pseudo fs */
       if(!nfs4_PseudoToFhandle(&(data->currentFH), iter))
         {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	  goto out;
         }
     }
@@ -667,13 +662,13 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->pexport = &data->req_ctx->export->export;
 
       /* Build credentials */
-      res_LOOKUP4.status = nfs4_MakeCred(data);
-      if(res_LOOKUP4.status != NFS4_OK)
+      res_LOOKUP4->status = nfs4_MakeCred(data);
+      if(res_LOOKUP4->status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-          res_LOOKUP4.status = NFS4ERR_WRONGSEC;
+          res_LOOKUP4->status = NFS4ERR_WRONGSEC;
 	  goto out;
         }
 
@@ -683,7 +678,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %d",
                    data->pexport->fullpath, data->pexport->id, cache_status);
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	  goto out;
         }
 
@@ -694,7 +689,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
-              res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+              res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	      goto out;
             }
         }
@@ -704,7 +699,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 	  goto out;
         }
 
@@ -720,7 +715,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     }                           /* else */
 
 
-  res_LOOKUP4.status = NFS4_OK;
+  res_LOOKUP4->status = NFS4_OK;
 
  out:
 
@@ -744,13 +739,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
  * 
  */
 
-/* Shorter notation to avoid typos */
-#define arg_LOOKUPP4 op->nfs_argop4_u.oplookupp
-#define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
-
 int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
+  LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
   pseudofs_entry_t *psfsentry;
 
   resp->resop = NFS4_OP_LOOKUPP;
@@ -758,22 +750,22 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   /* Get the pseudo fs entry related to the file handle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
-      res_LOOKUPP4.status = NFS4ERR_BADHANDLE;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_BADHANDLE;
+      return res_LOOKUPP4->status;
     }
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
   if(psfsentry->pseudo_id == 0)
     {
-      res_LOOKUPP4.status = NFS4ERR_NOENT;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_NOENT;
+      return res_LOOKUPP4->status;
     }
 
   /* A matching entry was found */
   if(!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent))
     {
-      res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
+      return res_LOOKUPP4->status;
     }
 
   /* Return the reference to the old current entry */
@@ -785,7 +777,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   /* Fill in compound data */
   set_compound_data_for_pseudo(data);
 
-  res_LOOKUPP4.status = NFS4_OK;
+  res_LOOKUPP4->status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_pseudo */
 
@@ -806,6 +798,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
                                   compound_data_t    * data,
                                   struct nfs_resop4  * resp)
 {
+  LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
   pseudofs_entry_t * psfsentry;
 
   resp->resop = NFS4_OP_LOOKUPP;
@@ -824,8 +817,8 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
     {
       LogDebug(COMPONENT_NFS_V4_PSEUDO,
                "Returning NFS4ERR_NOENT because pseudo_id == 0");
-      res_LOOKUPP4.status = NFS4ERR_NOENT;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_NOENT;
+      return res_LOOKUPP4->status;
     }
 
   /* A matching entry was found */
@@ -836,8 +829,8 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
                data->req_ctx->export->export.id,
                data->req_ctx->export->export.pseudopath,
                (uint64_t) data->req_ctx->export->export.exp_mounted_on_file_id);
-      res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-      return res_LOOKUPP4.status;
+      res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
+      return res_LOOKUPP4->status;
     }
 
   /* Return the reference to the old current entry */
@@ -850,7 +843,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
   /* Fill in compound data */
   set_compound_data_for_pseudo(data);
 
-  res_LOOKUPP4.status = NFS4_OK;
+  res_LOOKUPP4->status = NFS4_OK;
   return NFS4_OK;
 }
 
@@ -866,10 +859,6 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-/* shorter notation to avoid typo */
-#define arg_READDIR4 op->nfs_argop4_u.opreaddir
-#define res_READDIR4 resp->nfs_resop4_u.opreaddir
-
 static const struct bitmap4 RdAttrErrorBitmap = {
 	.bitmap4_len = 1,
 	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
@@ -881,6 +870,8 @@ static attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here 
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
+  READDIR4args *const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
+  READDIR4res *const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
   unsigned long dircount = 0;
   unsigned long maxcount = 0;
   unsigned long estimated_num_entries = 0;
@@ -900,16 +891,16 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   cache_entry_t *entry = NULL;
 
   resp->resop = NFS4_OP_READDIR;
-  res_READDIR4.status = NFS4_OK;
+  res_READDIR4->status = NFS4_OK;
 
   entryFH.nfs_fh4_len = 0;
 
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
-  dircount = arg_READDIR4.dircount;
-  maxcount = arg_READDIR4.maxcount;
-  cookie = arg_READDIR4.cookie;
+  dircount = arg_READDIR4->dircount;
+  maxcount = arg_READDIR4->maxcount;
+  cookie = arg_READDIR4->cookie;
   space_used = sizeof(entry4);
 
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
@@ -922,15 +913,15 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
-      res_READDIR4.status = NFS4ERR_TOOSMALL;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_TOOSMALL;
+      return res_READDIR4->status;
     }
 
   /* Now resolve the file handle to pseudo fs */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
-      res_READDIR4.status = NFS4ERR_BADHANDLE;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_BADHANDLE;
+      return res_READDIR4->status;
     }
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                "PSEUDOFS READDIR in #%s#", psfsentry->name);
@@ -953,13 +944,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       data->pexport = &data->req_ctx->export->export;
 
       /* Build the credentials */
-      res_READDIR4.status = nfs4_MakeCred(data);
-      if(res_READDIR4.status != NFS4_OK)
+      res_READDIR4->status = nfs4_MakeCred(data);
+      if(res_READDIR4->status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-          return res_READDIR4.status;
+          return res_READDIR4->status;
         }
 
       cache_status = nfs_export_get_root_entry(data->pexport, &entry);
@@ -968,8 +959,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %d",
                    data->pexport->fullpath, data->pexport->id, cache_status);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
+          res_READDIR4->status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4->status;
         }
 
       if(data->currentFH.nfs_fh4_len == 0)
@@ -978,8 +969,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                        "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
+              res_READDIR4->status = NFS4ERR_SERVERFAULT;
+              return res_READDIR4->status;
             }
         }
 
@@ -988,8 +979,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
+          res_READDIR4->status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4->status;
         }
 
 
@@ -1011,8 +1002,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       gsh_calloc(estimated_num_entries, sizeof(entry4))) == NULL)
     {
       LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
+      res_READDIR4->status = NFS4ERR_SERVERFAULT;
+      return res_READDIR4->status;
     }
 
   /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
@@ -1062,8 +1053,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       if ((entry_nfs_array[i].name.utf8string_val = gsh_malloc(namelen + 1)) == NULL) 
         {
             LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-            res_READDIR4.status = NFS4ERR_SERVERFAULT;
-            return res_READDIR4.status;
+            res_READDIR4->status = NFS4ERR_SERVERFAULT;
+            return res_READDIR4->status;
         }
       memcpy(entry_nfs_array[i].name.utf8string_val, iter->name, namelen);
       entry_nfs_array[i].name.utf8string_val[namelen] = '\0';
@@ -1078,7 +1069,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         {
           if(nfs4_AllocateFH(&entryFH) != NFS4_OK)
             {
-              return res_READDIR4.status;
+              return res_READDIR4->status;
             }
         }
       /* Do the case where we stay within the pseudo file system. */
@@ -1086,14 +1077,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
           if(!nfs4_PseudoToFhandle(&entryFH, iter))
             {
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
+              res_READDIR4->status = NFS4ERR_SERVERFAULT;
               gsh_free(entry_nfs_array);
-              return res_READDIR4.status;
+              return res_READDIR4->status;
             }
 
           if(nfs4_PseudoToFattr(iter,
                             &(entry_nfs_array[i].attrs),
-                            data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+                            data, &entryFH, &(arg_READDIR4->attr_request)) != 0)
             {
               /* Should never occured, but the is no reason for leaving the section without any information */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
@@ -1120,16 +1111,16 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
            * The logic is borrowed from the process invoked above in this code
            * when the target directory is a junction.
            */ 
-          res_READDIR4.status = nfs4_MakeCred(data);
+          res_READDIR4->status = nfs4_MakeCred(data);
 
-          if(res_READDIR4.status == NFS4ERR_ACCESS)
+          if(res_READDIR4->status == NFS4ERR_ACCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
 		       "PSEUDO FS JUNCTION TRAVERSAL: /!\\ |"
 		       " Failed to get FSAL credentials for %s, id=%d",
 		       iter->junction_export->fullpath,
 		       iter->junction_export->id);
-              return res_READDIR4.status;
+              return res_READDIR4->status;
             }
 	  cache_status = nfs_export_get_root_entry(iter->junction_export, &entry);
 	  if(cache_status != CACHE_INODE_SUCCESS)
@@ -1139,20 +1130,20 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 		       " id=%d, status = %d",
 		       iter->junction_export->fullpath,
 		       iter->junction_export->id, cache_status);
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
+              res_READDIR4->status = NFS4ERR_SERVERFAULT;
+              return res_READDIR4->status;
             }
           /* Build the nfs4 handle. Again, we do this unconditionally. */
           if(!nfs4_FSALToFhandle(&entryFH, entry->obj_handle))
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
+              res_READDIR4->status = NFS4ERR_SERVERFAULT;
+              return res_READDIR4->status;
             }
           if(cache_entry_To_Fattr(entry,
                                   &(entry_nfs_array[i].attrs),
-                                  data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+                                  data, &entryFH, &(arg_READDIR4->attr_request)) != 0)
             {
               /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
@@ -1189,27 +1180,27 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       }
 #endif
   /* Build the reply */
-  memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
+  memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);
   if(i == 0)
-    res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
+    res_READDIR4->READDIR4res_u.resok4.reply.entries = NULL;
   else
-    res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
+    res_READDIR4->READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
   /* did we reach the end ? */
   if(iter == NULL)
     {
       /* Yes, we did */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
+      res_READDIR4->READDIR4res_u.resok4.reply.eof = TRUE;
     }
   else
     {
       /* No, there are some more entries */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
+      res_READDIR4->READDIR4res_u.resok4.reply.eof = FALSE;
     }
 
   /* Exit properly */
-  res_READDIR4.status = NFS4_OK;
+  res_READDIR4->status = NFS4_OK;
 
   return NFS4_OK;
 }                               /* nfs4_op_readdir_pseudo */

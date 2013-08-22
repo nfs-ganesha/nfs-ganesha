@@ -56,6 +56,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 				compound_data_t   *data,
 				struct nfs_resop4 *resp)
 {
+	SETCLIENTID_CONFIRM4args *const arg_SETCLIENTID_CONFIRM4
+		= &op->nfs_argop4_u.opsetclientid_confirm;
+	SETCLIENTID_CONFIRM4res *const res_SETCLIENTID_CONFIRM4
+		= &resp->nfs_resop4_u.opsetclientid_confirm;
 	nfs_client_id_t *conf   = NULL;
 	nfs_client_id_t *unconf = NULL;
 	nfs_client_record_t *client_record;
@@ -66,16 +70,14 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 	int rc;
 
-#define arg_SETCLIENTID_CONFIRM4 op->nfs_argop4_u.opsetclientid_confirm
-#define res_SETCLIENTID_CONFIRM4 resp->nfs_resop4_u.opsetclientid_confirm
 
 	resp->resop = NFS4_OP_SETCLIENTID_CONFIRM;
-	res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
-	clientid = arg_SETCLIENTID_CONFIRM4.clientid;
+	res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
+	clientid = arg_SETCLIENTID_CONFIRM4->clientid;
 
 	if (data->minorversion > 0) {
-		res_SETCLIENTID_CONFIRM4.status = NFS4ERR_NOTSUPP;
-		return res_SETCLIENTID_CONFIRM4.status;
+		res_SETCLIENTID_CONFIRM4->status = NFS4ERR_NOTSUPP;
+		return res_SETCLIENTID_CONFIRM4->status;
 	}
 
 	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
@@ -85,7 +87,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			      sizeof(str_client_addr));
 
 		sprint_mem(str_verifier,
-			   arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+			   arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
 			   NFS4_VERIFIER_SIZE);
 	}
 
@@ -118,9 +120,9 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_CLIENTID,
 				 "%s clientid = %"PRIx64,
 				 clientid_error_to_str(rc), clientid);
-			res_SETCLIENTID_CONFIRM4.status = clientid_error_to_nfsstat(rc);
+			res_SETCLIENTID_CONFIRM4->status = clientid_error_to_nfsstat(rc);
 
-			return res_SETCLIENTID_CONFIRM4.status;
+			return res_SETCLIENTID_CONFIRM4->status;
 		}
 
 		client_record = conf->cid_client_record;
@@ -174,12 +176,12 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 str_client_addr, unconfirmed_addr);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
+			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
 			dec_client_id_ref(unconf);
 			goto out;
 		} else if(unconf->cid_confirmed == CONFIRMED_CLIENT_ID &&
 			  memcmp(unconf->cid_verifier,
-				 arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+				 arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
 				 NFS4_VERIFIER_SIZE) == 0) {
 			/* We must have raced with another
 			   SETCLIENTID_CONFIRM */
@@ -192,7 +194,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 str);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
+			res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
 			dec_client_id_ref(unconf);
 
 			goto out;
@@ -212,7 +214,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 str);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status
+			res_SETCLIENTID_CONFIRM4->status
 				= NFS4ERR_STALE_CLIENTID;
 
 			dec_client_id_ref(unconf);
@@ -248,9 +250,9 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 confirmed_addr);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
+			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
 		} else if(memcmp(conf->cid_verifier,
-				 arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+				 arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
 				 NFS4_VERIFIER_SIZE) == 0) {
 			/* In this case, the record was confirmed and
 			   we have received a retry */
@@ -263,7 +265,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 str);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
+			res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
 		} else {
 			/* This is a case not covered... Return
 			   NFS4ERR_CLID_INUSE */
@@ -284,7 +286,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 					 str_conf_verifier, str_verifier, str);
 			}
 
-			res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
+			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
 		}
 
 		/* Release our reference to the confirmed clientid. */
@@ -392,7 +394,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		rc = nfs_client_id_confirm(unconf, COMPONENT_CLIENTID);
 
 		if (rc != CLIENT_ID_SUCCESS) {
-			res_SETCLIENTID_CONFIRM4.status
+			res_SETCLIENTID_CONFIRM4->status
 				= clientid_error_to_nfsstat(rc);
 
 			LogEvent(COMPONENT_CLIENTID,
@@ -440,14 +442,14 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	}
 
 	/* Successful exit */
-	res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
+	res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
 
 out:
 
 	V(client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
-	return res_SETCLIENTID_CONFIRM4.status;
+	return res_SETCLIENTID_CONFIRM4->status;
 }
 
 /**

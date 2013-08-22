@@ -68,21 +68,23 @@
  *
  */
 
-#define arg_RECLAIM_COMPLETE4 op->nfs_argop4_u.opreclaim_complete
-#define res_RECLAIM_COMPLETE4 resp->nfs_resop4_u.opreclaim_complete
-
 int nfs4_op_reclaim_complete(struct nfs_argop4 *op,
                              compound_data_t *data,
                              struct nfs_resop4 *resp)
 {
+  RECLAIM_COMPLETE4args *const arg_RECLAIM_COMPLETE4 __attribute__((unused))
+    = &op->nfs_argop4_u.opreclaim_complete;
+  RECLAIM_COMPLETE4res *const res_RECLAIM_COMPLETE4
+    = &resp->nfs_resop4_u.opreclaim_complete;
+
   resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
-  res_RECLAIM_COMPLETE4.rcr_status = NFS4_OK;
+  res_RECLAIM_COMPLETE4->rcr_status = NFS4_OK;
   if (data->minorversion == 0)
     {
-      return (res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_INVAL);
+      return (res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_INVAL);
     }
-  return res_RECLAIM_COMPLETE4.rcr_status;
+  return res_RECLAIM_COMPLETE4->rcr_status;
 } /* nfs41_op_reclaim_complete */
 
 /**

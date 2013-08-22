@@ -219,11 +219,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           cache_inode_cookie = 0;
      }
 
-     /* A definition that will be very useful to avoid very long names
-        for variables */
-#define RES_READDIRPLUS_REPLY pres->res_readdirplus3.READDIRPLUS3res_u  \
-          .resok.reply
-
      /* Allocate space for entries */
      cb_opaque.entries = gsh_calloc(estimated_num_entries, sizeof(entryplus3));
      if (cb_opaque.entries == NULL) {

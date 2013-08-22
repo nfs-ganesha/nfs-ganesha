@@ -54,12 +54,11 @@
  *
  */
 
-#define arg_RENEW4 op->nfs_argop4_u.oprenew
-#define res_RENEW4 resp->nfs_resop4_u.oprenew
-
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
                   struct nfs_resop4 *resp)
 {
+  RENEW4args *const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
+  RENEW4res *const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
   nfs_client_id_t *clientid;
   int              rc;
 
@@ -69,39 +68,40 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 
   if (data->minorversion > 0)
     {
-      res_RENEW4.status = NFS4ERR_NOTSUPP;
-      return res_RENEW4.status;
+      res_RENEW4->status = NFS4ERR_NOTSUPP;
+      return res_RENEW4->status;
     }
 
   /* Tell the admin what I am doing... */
-  LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
+  LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64,
+	       arg_RENEW4->clientid);
 
   /* Is this an existing client id ? */
-  rc = nfs_client_id_get_confirmed(arg_RENEW4.clientid, &clientid);
+  rc = nfs_client_id_get_confirmed(arg_RENEW4->clientid, &clientid);
   if(rc != CLIENT_ID_SUCCESS)
     {
       /* Unknown client id */
-      res_RENEW4.status = clientid_error_to_nfsstat(rc);
-      return res_RENEW4.status;
+      res_RENEW4->status = clientid_error_to_nfsstat(rc);
+      return res_RENEW4->status;
     }
 
   P(clientid->cid_mutex);
 
   if(!reserve_lease(clientid))
     {
-      res_RENEW4.status = NFS4ERR_EXPIRED;
+      res_RENEW4->status = NFS4ERR_EXPIRED;
     }
   else
     {
       update_lease(clientid);
-      res_RENEW4.status = NFS4_OK;      /* Regular exit */
+      res_RENEW4->status = NFS4_OK;      /* Regular exit */
     }
 
   V(clientid->cid_mutex);
 
   dec_client_id_ref(clientid);
 
-  return res_RENEW4.status;
+  return res_RENEW4->status;
 } /* nfs4_op_renew */
 
 /**

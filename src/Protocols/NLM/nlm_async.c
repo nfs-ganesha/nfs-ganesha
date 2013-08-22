@@ -145,7 +145,7 @@ xdrproc_t nlm_reply_proc[] =
 
 static void *resp_key;
 
-#define MAX_ASYNC_RETRY 2
+static const int MAX_ASYNC_RETRY = 2;
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
 int nlm_send_async(int                  proc,

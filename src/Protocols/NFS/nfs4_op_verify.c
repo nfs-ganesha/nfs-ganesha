@@ -56,68 +56,67 @@
  * @return per RFC5661, p. 375
  */
 
-#define arg_VERIFY4 op->nfs_argop4_u.opverify
-#define res_VERIFY4 resp->nfs_resop4_u.opverify
-
 int
 nfs4_op_verify(struct nfs_argop4 *op,
                compound_data_t *data,
                struct nfs_resop4 *resp)
 {
-        fattr4               file_attr4;
-        int                  rc = 0;
+	VERIFY4args *const arg_VERIFY4 = &op->nfs_argop4_u.opverify;
+	VERIFY4res *const res_VERIFY4 = &resp->nfs_resop4_u.opverify;
+        fattr4 file_attr4;
+        int rc = 0;
 
         resp->resop = NFS4_OP_VERIFY;
-        res_VERIFY4.status = NFS4_OK;
+        res_VERIFY4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle */
-        res_VERIFY4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-        if (res_VERIFY4.status != NFS4_OK) {
-                return res_VERIFY4.status;
+        res_VERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+        if (res_VERIFY4->status != NFS4_OK) {
+                return res_VERIFY4->status;
         }
 
         /* operation is always permitted on pseudofs */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                res_VERIFY4.status = NFS4_OK;
-                return res_VERIFY4.status;
+                res_VERIFY4->status = NFS4_OK;
+                return res_VERIFY4->status;
         }
 
         /* Get only attributes that are allowed to be read */
-        if (!nfs4_Fattr_Check_Access(&arg_VERIFY4.obj_attributes,
+        if (!nfs4_Fattr_Check_Access(&arg_VERIFY4->obj_attributes,
                                      FATTR4_ATTR_READ)) {
-                res_VERIFY4.status = NFS4ERR_INVAL;
-                return res_VERIFY4.status;
+                res_VERIFY4->status = NFS4ERR_INVAL;
+                return res_VERIFY4->status;
         }
 
         /* Ask only for supported attributes */
-        if (!nfs4_Fattr_Supported(&arg_VERIFY4.obj_attributes)) {
-                res_VERIFY4.status = NFS4ERR_ATTRNOTSUPP;
-                return res_VERIFY4.status;
+        if (!nfs4_Fattr_Supported(&arg_VERIFY4->obj_attributes)) {
+                res_VERIFY4->status = NFS4ERR_ATTRNOTSUPP;
+                return res_VERIFY4->status;
         }
 
         if (cache_entry_To_Fattr(data->current_entry,
                                  &file_attr4,
                                  data,
                                  &(data->currentFH),
-                                 &(arg_VERIFY4.obj_attributes.attrmask))
+                                 &(arg_VERIFY4->obj_attributes.attrmask))
             != 0) {
-                res_VERIFY4.status = NFS4ERR_SERVERFAULT;
-                return res_VERIFY4.status;
+                res_VERIFY4->status = NFS4ERR_SERVERFAULT;
+                return res_VERIFY4->status;
         }
 
-        if ((rc = nfs4_Fattr_cmp(&(arg_VERIFY4.obj_attributes), &file_attr4))
+        if ((rc = nfs4_Fattr_cmp(&(arg_VERIFY4->obj_attributes), &file_attr4))
             == true) {
-                res_VERIFY4.status = NFS4_OK;
+                res_VERIFY4->status = NFS4_OK;
         } else {
                 if (rc == -1) {
-                        res_VERIFY4.status = NFS4ERR_INVAL;
+                        res_VERIFY4->status = NFS4ERR_INVAL;
                 } else {
-                        res_VERIFY4.status = NFS4ERR_NOT_SAME;
+                        res_VERIFY4->status = NFS4ERR_NOT_SAME;
                 }
         }
 
         nfs4_Fattr_Free(&file_attr4);
-        return res_VERIFY4.status;
+        return res_VERIFY4->status;
 } /* nfs4_op_verify */
 
 /**
