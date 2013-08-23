@@ -1260,6 +1260,7 @@ alloc_nfs_request(SVCXPRT *xprt)
     /* Set up xprt */
     nfsreq->r_u.nfs->xprt = xprt;
     req->rq_xprt = xprt;
+    req->rq_rtaddr.len = 0;
 
     return (nfsreq);
 }
@@ -1272,6 +1273,8 @@ free_nfs_request(request_data_t *nfsreq)
         /* dispose RPC header */
         if (nfsreq->r_u.nfs->req.rq_msg)
             (void) free_rpc_msg(nfsreq->r_u.nfs->req.rq_msg);
+        if (nfsreq->r_u.nfs->req.rq_rtaddr.len)
+            mem_free(nfsreq->r_u.nfs->req.rq_rtaddr.buf, nfsreq->r_u.nfs->req.rq_rtaddr.len);
         pool_free(request_data_pool, nfsreq->r_u.nfs);
         break;
     default:
