@@ -309,6 +309,7 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
   fsal_gid_t gid;
   fsal_acl_t *pacl = NULL;
   fsal_ace_t *pace = NULL;
+  fsal_aceperm_t tperm;
   int ace_number = 0;
   fsal_boolean_t is_dir = FALSE;
   fsal_boolean_t is_owner = FALSE;
@@ -425,15 +426,21 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
+                  tperm = pace->perm;
+
+                  /* Do not set bits which are already denied */
+                  if(denied)
+                    tperm &= ~*denied;
+
                   LogFullDebug(COMPONENT_NFS_V4_ACL,
                                "allow perm 0x%X remainingPerms 0x%X",
-                               pace->perm,
+                               tperm,
                                missing_access);
 
                   if(allowed != NULL)
-                    *allowed |= v4mask & pace->perm;
+                    *allowed |= v4mask & tperm;
 
-                  missing_access &= ~(pace->perm & missing_access);
+                  missing_access &= ~(tperm & missing_access);
 
                   if(!missing_access)
                     {
