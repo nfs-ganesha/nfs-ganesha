@@ -387,14 +387,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
   *state = NULL;
   data->current_stateid_valid = false;
 
-  if(stateid == NULL)
-    return NFS4ERR_SERVERFAULT;
-
-  if(entry == NULL)
-    return NFS4ERR_SERVERFAULT;
-
-  if(entry->type != REGULAR_FILE)
-    return NFS4ERR_SERVERFAULT;
+  /* Since this represents a programming error, we're better off
+     asserting. */
+  assert(entry->type == REGULAR_FILE);
 
   if(isDebug(COMPONENT_STATE))
     {
@@ -727,12 +722,6 @@ nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry,
   struct glist_head * glist;
   state_t           * state_iterate;
   int                 rc = NFS4_OK;
-
-  if(entry == NULL)
-    {
-      rc = NFS4ERR_SERVERFAULT;
-      return rc;
-    }
 
   /* Acquire lock to enter critical section on this entry */
   PTHREAD_RWLOCK_rdlock(&entry->state_lock);
