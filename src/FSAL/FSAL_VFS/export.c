@@ -433,10 +433,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 {
 	size_t fh_size;
 
-	/* sanity checks */
-	if( !fh_desc || !fh_desc->addr)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	fh_size = sizeof(vfs_file_handle_t);
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {

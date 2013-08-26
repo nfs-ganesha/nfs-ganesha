@@ -190,8 +190,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
         vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it first */
-	if( !path)
-		return fsalstat(ERR_FSAL_FAULT, 0);
 	parent_hdl = container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
 	if( !parent->ops->handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
@@ -484,18 +482,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	switch (nodetype) {
         case BLOCK_FILE:
-                if( !dev) {
-                        fsal_error = ERR_FSAL_FAULT;
-                        goto errout;
-                }
                 create_mode = S_IFBLK;
                 unix_dev = makedev(dev->major, dev->minor);
                 break;
         case CHARACTER_FILE:
-                if( !dev) {
-                        fsal_error = ERR_FSAL_FAULT;
-                        goto errout;
-                }
                 create_mode = S_IFCHR;
                 unix_dev = makedev(dev->major, dev->minor);
                 break;
@@ -696,7 +686,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	if(obj_hdl->type != SYMBOLIC_LINK) {
-		fsal_error = ERR_FSAL_FAULT;
+		fsal_error = ERR_FSAL_INVAL;
 		goto out;
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
@@ -1242,9 +1232,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 	vfs_file_handle_t *fh;
 	size_t fh_size;
 
-	/* sanity checks */
-        if( !fh_desc)
-		return fsalstat(ERR_FSAL_FAULT, 0);
 	myself = container_of(obj_hdl, const struct vfs_fsal_obj_handle, obj_handle);
 	fh = myself->handle;
 
@@ -1493,7 +1480,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	*handle = NULL; /* poison it first */
 	if((hdl_desc->len > sizeof(vfs_file_handle_t) ||
 	   (((vfs_file_handle_t *)(hdl_desc->addr))->handle_bytes >  fh->handle_bytes)))
-		return fsalstat(ERR_FSAL_FAULT, 0);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
 	memcpy(fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
         ve = container_of(exp_hdl, struct vfs_fsal_export, export);

@@ -354,10 +354,6 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   ssize_t namesize;
   int xattr_idx;
 
-  /* sanity checks */
-  if(!obj_hdl || !xattrs_tab || !p_nb_returned || !end_of_list)
-    return fsalstat( ERR_FSAL_FAULT, 0 ) ;
-
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
   /* Deal with special cookie */
@@ -470,10 +466,6 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
 
-  /* sanity checks */
-  if(!obj_hdl || !xattr_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
-
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
   for(index = 0; index < XATTR_COUNT; index++)
     {
@@ -530,10 +522,6 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   int rc = 0 ;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-  /* sanity checks */
-  if(!obj_hdl || !p_output_size || !buffer_addr)
-    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* check that this index match the type of entry */
   if((xattr_id < XATTR_COUNT)
@@ -601,10 +589,6 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
   fsal_errors_t fe;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-  /* sanity checks */
-  if(!obj_hdl || !p_output_size || !buffer_addr || !xattr_name)
-    return fsalstat(ERR_FSAL_FAULT, 0 ) ;
 
   /* look for this name */
   for(index = 0; index < XATTR_COUNT; index++)
@@ -720,11 +704,6 @@ fsal_status_t vfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
                                    struct attrlist *p_attrs)
 {
   int rc;
-
-  /* sanity checks */
-  if(!obj_hdl || !p_attrs)
-    return fsalstat(ERR_FSAL_FAULT, 0 ) ;
-
 
   /* check that this index match the type of entry */
   if(xattr_id < XATTR_COUNT
