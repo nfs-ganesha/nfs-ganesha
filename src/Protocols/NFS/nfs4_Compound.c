@@ -454,6 +454,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 #endif
   struct timespec ts;
   int perm_flags;
+  char* tagname = NULL;
 
   if(compound4_minor > 1)
     {
@@ -464,6 +465,39 @@ int nfs4_Compound(nfs_arg_t *arg,
       res->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
       res->res_compound4.resarray.resarray_len = 0;
       return NFS_REQ_OK;
+    }
+
+  /* Keeping the same tag as in the arguments */
+  res->res_compound4.tag.utf8string_len
+          = arg->arg_compound4.tag.utf8string_len;
+  if (res->res_compound4.tag.utf8string_len > 0)
+    { 
+
+      res->res_compound4.tag.utf8string_val
+        = gsh_malloc(res->res_compound4.tag.utf8string_len + 1);
+      if (!res->res_compound4.tag.utf8string_val)
+        { 
+          return NFS_REQ_DROP;
+        }
+      memcpy(res->res_compound4.tag.utf8string_val,
+             arg->arg_compound4.tag.utf8string_val,
+             res->res_compound4.tag.utf8string_len);
+
+      res->res_compound4.tag.utf8string_val[res->res_compound4.tag.utf8string_len] = '\0';
+
+      /* Check if the tag is a valid utf8 string */
+      status = nfs4_utf8string2dynamic(&(res->res_compound4.tag), UTF8_SCAN_ALL, &tagname);
+      if(status != 0) {
+        status = NFS4ERR_INVAL;
+        res->res_compound4.status = status;
+        res->res_compound4.resarray.resarray_len = 0;
+        return NFS_REQ_OK;
+       }
+
+    }
+  else
+    {
+      res->res_compound4.tag.utf8string_val = NULL;
     }
 
   /* Check for empty COMPOUND request */
@@ -509,22 +543,6 @@ int nfs4_Compound(nfs_arg_t *arg,
   /* Keeping the same tag as in the arguments */
   res->res_compound4.tag.utf8string_len
 	  = arg->arg_compound4.tag.utf8string_len;
-  if (res->res_compound4.tag.utf8string_len > 0)
-    {
-      res->res_compound4.tag.utf8string_val
-	= gsh_malloc(res->res_compound4.tag.utf8string_len);
-      if (!res->res_compound4.tag.utf8string_val)
-	{
-	  return NFS_REQ_DROP;
-	}
-      memcpy(res->res_compound4.tag.utf8string_val,
-	     arg->arg_compound4.tag.utf8string_val,
-	     res->res_compound4.tag.utf8string_len);
-    }
-  else
-    {
-      res->res_compound4.tag.utf8string_val = NULL;
-    }
 
   /* Allocating the reply nfs_resop4 */
   if((res->res_compound4.resarray.resarray_val =
