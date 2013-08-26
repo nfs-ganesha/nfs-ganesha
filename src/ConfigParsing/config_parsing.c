@@ -23,6 +23,7 @@
 #include "analyse.h"
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #if HAVE_STRING_H
 #include <string.h>
@@ -75,14 +76,6 @@ config_file_t config_ParseFile(char *file_path)
   /* Inits error message */
 
   extern_errormsg[0] = '\0';
-
-  /* Sanity check */
-
-  if(!file_path || !file_path[0])
-    {
-      strcpy(extern_errormsg, "Invalid arguments");
-      return NULL;
-    }
 
   /* First, opens the file. */
 
@@ -147,13 +140,7 @@ char *config_GetErrorMsg()
  */
 void config_Print(FILE * output, config_file_t config)
 {
-
-  /* sanity check */
-  if(!config)
-    return;
-
   config_print_list(output, ((config_struct_t *) config)->syntax_tree);
-
 }
 
 /** 
@@ -163,11 +150,7 @@ void config_Print(FILE * output, config_file_t config)
 
 void config_Free(config_file_t config)
 {
-
   config_struct_t *config_struct = (config_struct_t *) config;
-
-  if(!config_struct)
-    return;
 
   config_free_list(config_struct->syntax_tree);
 
@@ -183,11 +166,7 @@ void config_Free(config_file_t config)
  */
 int config_GetNbBlocks(config_file_t config)
 {
-
   config_struct_t *config_struct = (config_struct_t *) config;
-
-  if(!config_struct)
-    return -EFAULT;
 
   /* on regarde si la liste est vide */
   if(!(*config_struct->syntax_tree))
@@ -236,8 +215,7 @@ char *config_GetBlockName(config_item_t block)
 {
   generic_item *curr_block = (generic_item *) block;
 
-  if(!curr_block || (curr_block->type != TYPE_BLOCK))
-    return NULL;
+  assert(curr_block->type == TYPE_BLOCK);
 
   return curr_block->item.block.block_name;
 }
@@ -247,8 +225,7 @@ int config_GetNbItems(config_item_t block)
 {
   generic_item *the_block = (generic_item *) block;
 
-  if(!the_block || (the_block->type != TYPE_BLOCK))
-    return -1;
+  assert(the_block->type == TYPE_BLOCK);
 
   /* on regarde si la liste est vide */
   if(!(the_block->item.block.block_content))
@@ -279,8 +256,7 @@ config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no)
   generic_item *curr_item;
   unsigned int i;
 
-  if(!the_block || (the_block->type != TYPE_BLOCK))
-    return NULL;
+  assert(the_block->type == TYPE_BLOCK);
 
   for(i = 0, curr_item = the_block->item.block.block_content;
       curr_item != NULL; curr_item = curr_item->next, i++)
@@ -311,8 +287,7 @@ int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 {
   generic_item *var = (generic_item *) item;
 
-  if(!var || (var->type != TYPE_AFFECT))
-    return -1;
+  assert(var->type == TYPE_AFFECT);
 
   *var_name = var->item.affect.varname;
   *var_value = var->item.affect.varvalue;
@@ -324,9 +299,6 @@ int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 static generic_item *GetItemFromList(generic_item * list, const char *name)
 {
   generic_item *curr;
-
-  if(!list)
-    return NULL;
 
   for(curr = list; curr != NULL; curr = curr->next)
     {
@@ -350,9 +322,6 @@ static int CheckDuplicateEntry(generic_item * list, const char *name)
 {
     generic_item *curr;
     unsigned int found=0;
-
-    if(!list)
-        return 0;
 
     for(curr = list; curr != NULL; curr = curr->next)
     {
@@ -448,9 +417,7 @@ char *config_FindKeyValueByName(config_file_t config, const char *key_name)
 
   var = (generic_item *) config_FindItemByName(config, key_name);
 
-  if(!var || (var->type != TYPE_AFFECT))
-    return NULL;
-  else
+  assert(var->type == TYPE_AFFECT);
     return var->item.affect.varvalue;
 
 }
@@ -464,9 +431,7 @@ config_item_t config_GetItemByName(config_item_t block, const char *name)
   char *current;
   char tmp_name[MAXSTRLEN];
 
-  /* cannot be found if empty or non block */
-  if(!curr_block || (curr_block->type != TYPE_BLOCK))
-    return NULL;
+  assert(curr_block->type == TYPE_BLOCK);
 
   list = curr_block->item.block.block_content;
 
@@ -519,9 +484,6 @@ char *config_GetKeyValueByName(config_item_t block, const char *key_name)
 
   var = (generic_item *) config_GetItemByName(block, key_name);
 
-  if(!var || (var->type != TYPE_AFFECT))
-    return NULL;
-  else
-    return var->item.affect.varvalue;
-
+  assert(var->type == TYPE_AFFECT);
+  return var->item.affect.varvalue;
 }

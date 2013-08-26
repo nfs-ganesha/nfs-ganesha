@@ -125,9 +125,6 @@ int s_read_int64(char *str, unsigned long long *out64)
  */
 int StrToBoolean(const char *str)
 {
-  if(str == NULL)
-    return -1;
-
   if(!strcasecmp(str, "1") || !strcasecmp(str, "TRUE") || !strcasecmp(str, "YES"))
     return 1;
 

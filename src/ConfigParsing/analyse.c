@@ -109,10 +109,6 @@ static void print_list_ident(FILE * output, list_items * list, unsigned int inde
 
   generic_item *curr_item;
 
-  /* sanity check */
-  if(!list)
-    return;
-
   curr_item = (*list);
 
   while(curr_item)
@@ -152,10 +148,6 @@ static void free_list_items_recurse(list_items * list)
 {
   generic_item *curr_item;
   generic_item *next_item;
-
-  /* sanity check */
-  if(!list)
-    return;
 
   curr_item = (*list);
 
