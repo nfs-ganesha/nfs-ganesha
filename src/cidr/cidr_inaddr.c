@@ -16,12 +16,6 @@ cidr_to_inaddr(const CIDR *addr, struct in_addr *uptr)
 {
 	struct in_addr *toret;
 
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-
 	/* Better be a v4 address... */
 	if(addr->proto != CIDR_IPV4)
 	{
@@ -70,12 +64,6 @@ cidr_from_inaddr(const struct in_addr *uaddr)
 	CIDR *toret;
 	in_addr_t taddr;
 
-	if(uaddr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-
 	toret = cidr_alloc();
 	if(toret==NULL)
 		return(NULL); /* Preserve errno */
@@ -116,12 +104,6 @@ cidr_to_in6addr(const CIDR *addr, struct in6_addr *uptr)
 {
 	struct in6_addr *toret;
 	int i;
-
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
 
 	/*
 	 * Note: We're allowing BOTH IPv4 and IPv6 addresses to go through
@@ -172,12 +154,6 @@ cidr_from_in6addr(const struct in6_addr *uaddr)
 {
 	int i;
 	CIDR *toret;
-
-	if(uaddr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
 
 	toret = cidr_alloc();
 	if(toret==NULL)

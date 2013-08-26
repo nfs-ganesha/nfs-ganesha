@@ -16,13 +16,6 @@ cidr_contains(const CIDR *big, const CIDR *little)
 	int i, oct, bit;
 	int pflen;
 
-	/* Sanity */
-	if(big==NULL || little==NULL)
-	{
-		errno = EFAULT;
-		return(-1);
-	}
-
 	/* First off, they better be the same type */
 	if(big->proto != little->proto)
 	{
