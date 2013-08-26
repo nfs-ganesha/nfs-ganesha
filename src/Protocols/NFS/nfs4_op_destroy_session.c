@@ -61,12 +61,38 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op,
   DESTROY_SESSION4res *const res_DESTROY_SESSION4
     = &resp->nfs_resop4_u.opdestroy_session;
 
+  sockaddr_t nw_addr;
+  sockaddr_t client_addr;
+  nfs41_session_t *session;
+
   resp->resop = NFS4_OP_DESTROY_SESSION;
   res_DESTROY_SESSION4->dsr_status = NFS4_OK;
 
   if (data->minorversion == 0)
     {
       return (res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL);
+    }
+
+  if(!nfs41_Session_Get_Pointer(arg_DESTROY_SESSION4->dsa_sessionid, &session))
+    {
+      res_DESTROY_SESSION4->dsr_status = NFS4ERR_BADSESSION;
+      return res_DESTROY_SESSION4->dsr_status;
+    }
+
+  /* DESTROY_SESSION MUST be invoked on a connection that is associated
+   * with the session being destroyed */
+
+  // Copy the address coming over the wire.
+  copy_xprt_addr(&nw_addr, data->reqp->rq_xprt);
+
+  // Copy the address recorded in the session.
+  copy_xprt_addr(&client_addr, session->xprt);
+
+  // Compare these fields.
+  if(!cmp_sockaddr(&nw_addr, &client_addr, CHECK_PORT))
+    {
+      res_DESTROY_SESSION4->dsr_status = NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
+      return res_DESTROY_SESSION4->dsr_status;
     }
 
   if(!nfs41_Session_Del(arg_DESTROY_SESSION4->dsa_sessionid))

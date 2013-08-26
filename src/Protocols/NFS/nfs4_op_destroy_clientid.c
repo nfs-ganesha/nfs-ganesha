@@ -100,6 +100,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op,
         /* ref +1 */
 	if (client_record == NULL) {
             /* Fine.  We're done. */
+	    res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_STALE_CLIENTID;
             goto out;
 	}
 
