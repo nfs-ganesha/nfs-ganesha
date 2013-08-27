@@ -464,7 +464,6 @@ out:
 		free_export_resources(export);
 		export_st = container_of(exp, struct export_stats, export);
 		server_stats_free(&export_st->st);
-		gsh_free(export_st);
 	}
 	return removed;
 }
