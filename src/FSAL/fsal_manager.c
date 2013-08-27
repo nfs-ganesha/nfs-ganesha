@@ -386,7 +386,7 @@ struct fsal_module *lookup_fsal(const char *name)
 	glist_for_each(entry, &fsal_list) {
 		fsal = glist_entry(entry, struct fsal_module, fsals);
 		pthread_mutex_lock(&fsal->lock);
-		if(strcmp(name, fsal->name) == 0) {
+		if(strcasecmp(name, fsal->name) == 0) {
 			fsal->refs++;
 			pthread_mutex_unlock(&fsal->lock);
 			pthread_mutex_unlock(&fsal_lock);
