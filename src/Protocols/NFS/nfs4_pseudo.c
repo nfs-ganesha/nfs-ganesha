@@ -635,7 +635,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-          res_LOOKUP4->status = NFS4ERR_WRONGSEC;
 	  goto out;
         }
 
