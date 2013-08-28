@@ -392,11 +392,11 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
    * owner. */
   if(is_owner)
     {
-      if(allowed != NULL)
-        *allowed = v4mask & (FSAL_ACE_PERM_WRITE_ACL |
+      if(allowed != NULL) 
+        *allowed |= (v4mask & (FSAL_ACE_PERM_WRITE_ACL |
                              FSAL_ACE_PERM_READ_ACL |
                              FSAL_ACE_PERM_WRITE_ATTR |
-                             FSAL_ACE_PERM_READ_ATTR);
+                             FSAL_ACE_PERM_READ_ATTR));
 
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
@@ -503,7 +503,7 @@ fsal_status_t fsal_check_access_acl(fsal_op_context_t  * p_context,   /* IN */
         }
     }
 
-  if(missing_access || (denied != NULL && denied != 0))
+  if(missing_access || (denied != NULL && *denied != 0))
     {
       if((missing_access & (FSAL_ACE_PERM_WRITE_ATTR |
                             FSAL_ACE_PERM_WRITE_ACL |
