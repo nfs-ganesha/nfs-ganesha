@@ -701,15 +701,14 @@ static fattr_xdr_result decode_rdattr_error(XDR *xdr, struct xdr_attrs_args *arg
 
 static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
-	fsal_ace_t *pace;
-
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "Number of ACEs = %u",
-		     args->attrs->acl->naces);
-
 	if (args->attrs->acl) {
+		fsal_ace_t *pace;
 		int i;
 		char *name;
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Number of ACEs = %u",
+			     args->attrs->acl->naces);
 
 		if (! inline_xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
 			return FATTR_XDR_FAILED;
@@ -4164,7 +4163,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
       /* Should not occur */
-      LogDebug(COMPONENT_NFSPROTO,
+      LogDebug(COMPONENT_NFS_V4,
 	       "Line %u should never be reached in nfs4_Errno"
 	       " from %s for cache_status=%u",
 	       __LINE__, where, error);
@@ -4552,7 +4551,7 @@ void nfs3_access_debug(char *label, uint32_t access)
 
 void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 {
-  LogDebug(COMPONENT_NFSPROTO, "%s=%s,%s,%s,%s,%s,%s",
+  LogDebug(COMPONENT_NFS_V4, "%s=%s,%s,%s,%s,%s,%s",
            label,
            FSAL_TEST_MASK(access, ACCESS3_READ) ? "READ" : "-",
            FSAL_TEST_MASK(access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
@@ -4562,7 +4561,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
            FSAL_TEST_MASK(access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 
   if(v4mask)
-    LogDebug(COMPONENT_NFSPROTO, "v4mask=%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+    LogDebug(COMPONENT_NFS_V4, "v4mask=%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_DATA)		 ? 'r':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_DATA)		 ? 'w':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_EXECUTE)		 ? 'x':'-',
