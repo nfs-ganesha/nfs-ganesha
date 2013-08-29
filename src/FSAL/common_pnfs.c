@@ -136,6 +136,7 @@ FSAL_encode_ipv4_netaddr(XDR *xdrs,
 
         case 123:
                 mark = "sctp";
+                break;
 
         default:
                 LogCrit(COMPONENT_FSAL,
