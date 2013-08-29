@@ -197,6 +197,7 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 = nfs4_Errno(cache_status);
                         return res_LAYOUTRETURN4->lorr_status;
                 }
+                break;
         case LAYOUTRETURN4_ALL:
                 spec.io_mode = arg_LAYOUTRETURN4->lora_iomode;
                 spec.offset = 0;
