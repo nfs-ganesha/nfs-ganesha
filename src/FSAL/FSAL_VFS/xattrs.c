@@ -509,13 +509,9 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
         close(fd);
     }
 
-  if(found)
-    {
-      *pxattr_id = index;
-      return fsalstat(ERR_FSAL_NO_ERROR, 0 ) ;
-    }
-  else
-    return fsalstat(ERR_FSAL_NOENT, ENOENT ) ;
+    *pxattr_id = index;
+
+    return fsalstat(ERR_FSAL_NO_ERROR, 0 ) ;
 }
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
