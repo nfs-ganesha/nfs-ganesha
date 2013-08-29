@@ -1067,6 +1067,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
          * have any invalid bits set.
          */
         if (!(arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ||
+            (data->minorversion == 0 &&
+             arg_OPEN4->share_access & ~OPEN4_SHARE_ACCESS_BOTH) ||
             (arg_OPEN4->share_access & (~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK &
                                         ~OPEN4_SHARE_ACCESS_BOTH)) ||
             (arg_OPEN4->share_deny & ~OPEN4_SHARE_DENY_BOTH)) {
@@ -1077,11 +1079,14 @@ int nfs4_op_open(struct nfs_argop4 *op,
         }
 
         /* Set openflags. */
-        if (arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_BOTH) {
+        if ((arg_OPEN4->share_access &
+             OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_BOTH) {
                 openflags = FSAL_O_RDWR;
-        } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_READ) {
+        } else if((arg_OPEN4->share_access &
+                   OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_READ) {
                 openflags = FSAL_O_READ;
-        } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_WRITE) {
+        } else if((arg_OPEN4->share_access &
+                   OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_WRITE) {
                 openflags = FSAL_O_WRITE;
         }
 

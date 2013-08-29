@@ -58,7 +58,8 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd == -1
-	       && myself->u.file.openflags == FSAL_O_CLOSED);
+	       && myself->u.file.openflags == FSAL_O_CLOSED
+	       && openflags != 0);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 	LogFullDebug(COMPONENT_FSAL,
