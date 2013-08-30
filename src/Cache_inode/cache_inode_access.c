@@ -258,7 +258,7 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
           if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME))
                setattr_mtime = " MTIME";
           else if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER))
-                         setattr_atime = " MTIME_SERVER";
+                         setattr_mtime = " MTIME_SERVER";
 
           LogDebug(COMPONENT_CACHE_INODE,
                    "SETATTR %s%s%s%s%s%s%s",

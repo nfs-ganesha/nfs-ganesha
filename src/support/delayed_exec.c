@@ -348,23 +348,27 @@ int delayed_submit(void (*func)(void *),
 		   void *arg,
 		   nsecs_elapsed_t delay)
 {
-	struct delayed_multi *mul =
-		gsh_malloc(sizeof(struct delayed_multi));
-	struct delayed_task *task =
-		gsh_malloc(sizeof(struct delayed_task));
+	struct delayed_multi *mul = NULL;
+	struct delayed_task *task = NULL;
 	struct avltree_node *collision = NULL;
 	struct avltree_node *first = NULL;
 
-	if (mul == NULL) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory for delayed task.");
-		return ENOMEM;
-	} else if (task == NULL) {
-		gsh_free(mul);
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory for delayed task.");
-		return ENOMEM;
-	}
+    mul = gsh_malloc(sizeof(struct delayed_multi));
+
+    if (mul == NULL) {
+        LogMajor(COMPONENT_THREAD,
+                 "Unable to allocate memory for delayed task.");
+        return ENOMEM;
+    }
+
+    task = gsh_malloc(sizeof(struct delayed_task));
+
+    if (task == NULL) {
+        gsh_free(mul);
+        LogMajor(COMPONENT_THREAD,
+                 "Unable to allocate memory for delayed task.");
+        return ENOMEM;
+    }
 
 	now(&mul->realtime);
 	timespec_add_nsecs(delay,
