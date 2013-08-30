@@ -1218,6 +1218,7 @@ alloc_nfs_request(SVCXPRT *xprt)
     /* set up xprt */
     nfsreq->r_u.nfs->xprt = xprt;
     req->rq_xprt = xprt;
+    req->rq_rtaddr.len = 0;
 
     return (nfsreq);
 }
@@ -1230,6 +1231,8 @@ free_nfs_request(request_data_t *nfsreq)
         /* dispose RPC header */
         if (nfsreq->r_u.nfs->req.rq_msg)
             (void) free_rpc_msg(nfsreq->r_u.nfs->req.rq_msg);
+        if (nfsreq->r_u.nfs->req.rq_rtaddr.len)
+            mem_free(nfsreq->r_u.nfs->req.rq_rtaddr.buf, nfsreq->r_u.nfs->req.rq_rtaddr.len);
         pool_free(request_data_pool, nfsreq->r_u.nfs);
         break;
     default:
@@ -1357,6 +1360,10 @@ is_rpc_call_valid(nfs_request_data_t *preqnfs)
 {
 	struct svc_req *req = &preqnfs->req;
 	bool slocked = FALSE;
+	/* This function is only ever called from one point, and the
+	   read-lock is always held at that call.  If this changes,
+	   we'll have to pass in the value of rlocked. */
+	bool rlocked = TRUE;
 	int lo_vers, hi_vers;
 
 	if(req->rq_prog == nfs_param.core_param.program[P_NFS]) {
@@ -1445,9 +1452,9 @@ is_rpc_call_valid(nfs_request_data_t *preqnfs)
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Invalid Program number #%d",
 				     (int)req->rq_prog);
-			DISP_SLOCK(preqnfs->xprt);
+			DISP_SLOCK2(preqnfs->xprt);
 			svcerr_noprog(preqnfs->xprt, req);
-			DISP_SUNLOCK(preqnfs->xprt);
+			DISP_SUNLOCK2(preqnfs->xprt);
 		}
 		return false;
 	}

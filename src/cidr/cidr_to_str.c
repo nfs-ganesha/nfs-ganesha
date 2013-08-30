@@ -28,7 +28,7 @@ cidr_to_str(const CIDR *block, int flags)
 	uint16_t v6sect;
 
 	/* Just in case */
-	if( (block==NULL) || (block->proto==CIDR_NOPROTO) )
+	if(block->proto==CIDR_NOPROTO)
 	{
 		errno = EINVAL;
 		return(NULL);

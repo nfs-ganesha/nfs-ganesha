@@ -19,13 +19,6 @@ cidr_net_supernet(const CIDR *addr)
 	int pflen;
 	CIDR *toret;
 
-	/* Quick check */
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-	
 	/* If it's already a /0 in its protocol, return nothing */
 	pflen = cidr_get_pflen(addr);
 	if(pflen==0)
@@ -74,12 +67,6 @@ cidr_net_subnets(const CIDR *addr)
 	int pflen;
 	CIDR **toret;
 
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-	
 	/* You can't split a host address! */
 	pflen = cidr_get_pflen(addr);
 	if(  (addr->proto==CIDR_IPV4 && pflen==32)

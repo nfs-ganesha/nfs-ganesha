@@ -3269,11 +3269,6 @@ bool
 nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                        sattr3 *sattr)
 {
-
-        if (FSAL_attr == NULL || sattr == NULL) {
-                return false;
-        }
-
         FSAL_attr->mask = 0;
 
         if (sattr->mode.set_it) {
@@ -3542,13 +3537,6 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
         attrmask_t want = (ATTR_TYPE | (ATTRS_POSIX & ~ATTR_FSID));
         attrmask_t got  = 0;
 
-        if(FSAL_attr == NULL || Fattr == NULL) {
-                LogFullDebug(COMPONENT_NFSPROTO,
-                             "nfs3_FSALattr_To_Fattr: FSAL_attr=%p, Fattr=%p",
-                             FSAL_attr, Fattr);
-                return false;
-        }
-
         nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
         if (want & ~got) {
                 LogCrit(COMPONENT_NFSPROTO,
@@ -3586,13 +3574,8 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 {
   int attribute;
-
-  /* Parameter sanity check */
-  if(bitmap == NULL)
-    return 0;
-
-  if(access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
-    return 0;
+  assert((access == FATTR4_ATTR_READ) ||
+	 (access == FATTR4_ATTR_WRITE));
 
   for(attribute = next_attr_from_bitmap(bitmap, -1);
       attribute != -1;
@@ -3624,10 +3607,6 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 
 int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
 {
-  /* Parameter sanity check */
-  if(Fattr == NULL)
-    return 0;
-
   return nfs4_Fattr_Check_Access_Bitmap(&Fattr->attrmask, access);
 }                               /* nfs4_Fattr_Check_Access */
 
@@ -3667,10 +3646,6 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
 
 int nfs4_Fattr_Supported(fattr4 * Fattr)
 {
-  /* Parameter sanity check */
-  if(Fattr == NULL)
-    return 0;
-
   return nfs4_Fattr_Supported_Bitmap(&Fattr->attrmask);
 }                               /* nfs4_Fattr_Supported */
 
@@ -3686,10 +3661,6 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
 {
   int attribute;
-
-  /* Parameter sanity check */
-  if(bitmap == NULL)
-    return 0;
 
   for(attribute = next_attr_from_bitmap(bitmap, -1);
       attribute != -1;
@@ -3726,12 +3697,6 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   unsigned int cmp = 0;
   u_int len = 0;
   int attribute_to_set = 0;
-
-  if(Fattr1 == NULL)
-    return false;
-
-  if(Fattr2 == NULL)
-    return false;
 
   if(Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)      /* different mask */
     return false;
@@ -3896,9 +3861,6 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 	XDR attr_body;
 	struct xdr_attrs_args args;
 	fattr_xdr_result xdr_res;
-
-	if(Fattr == NULL)
-		return NFS4ERR_BADXDR;
 
 	/* Check attributes data */
 	if((Fattr->attr_vals.attrlist4_val == NULL) ||
@@ -4339,9 +4301,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
  */
 int nfs3_AllocateFH(nfs_fh3 *fh)
 {
-  if(fh == NULL)
-    return NFS3ERR_SERVERFAULT;
-
   /* Allocating the filehandle in memory */
   fh->data.data_len = sizeof(struct alloc_file_handle_v3);
   if((fh->data.data_val = gsh_malloc(fh->data.data_len)) == NULL)
@@ -4368,9 +4327,6 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
  */
 int nfs4_AllocateFH(nfs_fh4 * fh)
 {
-  if(fh == NULL)
-    return NFS4ERR_SERVERFAULT;
-
   /* Allocating the filehandle in memory */
   fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
   if((fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len)) == NULL)
@@ -4379,7 +4335,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
       return NFS4ERR_RESOURCE;
     }
 
-  memset((char *)fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
+  memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 
   return NFS4_OK;
 }

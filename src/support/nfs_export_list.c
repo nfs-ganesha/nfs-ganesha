@@ -433,9 +433,6 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   struct svc_rpc_gss_data *gd = NULL;
 #endif
 
-  if(reqp == NULL || pcred == NULL)
-    return -1;
-
   pcred->flavor = reqp->rq_cred.oa_flavor;
   pcred->length = reqp->rq_cred.oa_length;
 

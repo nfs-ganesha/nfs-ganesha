@@ -72,10 +72,6 @@ int nfs_read_core_conf(config_file_t in_config,
   char *key_value;
   config_item_t block;
 
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
-
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL)
     {
@@ -368,10 +364,6 @@ int nfs_read_ip_name_conf(config_file_t in_config,
   char *key_value;
   config_item_t block;
 
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
-
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
     {
@@ -453,10 +445,6 @@ int nfs_read_krb5_conf(config_file_t in_config,
   char *key_name;
   char *key_value;
   config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL)
@@ -548,10 +536,6 @@ int nfs_read_version4_conf(config_file_t in_config,
   char *key_name;
   char *key_value;
   config_item_t block;
-
-  /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
-    return -1;
 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4)) == NULL)

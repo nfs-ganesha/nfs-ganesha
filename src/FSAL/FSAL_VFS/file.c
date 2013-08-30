@@ -221,13 +221,6 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
 	}
-	if(conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
-		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't"
-			 " be NULL with lock_op  = LOCKT");
-		fsal_error = ERR_FSAL_FAULT;
-		goto out;
-	}
 	LogFullDebug(COMPONENT_FSAL,
 		     "Locking: op:%d type:%d start:%"PRIu64" length:%lu ",
 		     lock_op,
