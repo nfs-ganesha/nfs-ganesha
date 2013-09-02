@@ -200,6 +200,8 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
         if(entry_src != NULL)
 	        cache_inode_put(entry_src);
 
+	res_SECINFO4->status = NFS4_OK;
+
 out:
 
         if (secinfo_fh_name) {

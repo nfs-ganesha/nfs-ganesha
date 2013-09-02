@@ -94,13 +94,13 @@ nfs4_op_verify(struct nfs_argop4 *op,
                 return res_VERIFY4->status;
         }
 
-        if (cache_entry_To_Fattr(data->current_entry,
+        res_VERIFY4->status = cache_entry_To_Fattr(
+                                 data->current_entry,
                                  &file_attr4,
                                  data,
                                  &(data->currentFH),
-                                 &(arg_VERIFY4->obj_attributes.attrmask))
-            != 0) {
-                res_VERIFY4->status = NFS4ERR_SERVERFAULT;
+                                 &(arg_VERIFY4->obj_attributes.attrmask));
+        if (res_VERIFY4->status != NFS4_OK) {
                 return res_VERIFY4->status;
         }
 

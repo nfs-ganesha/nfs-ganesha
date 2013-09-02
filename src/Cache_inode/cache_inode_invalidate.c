@@ -73,10 +73,6 @@ cache_inode_invalidate(cache_entry_t *entry,
 {
         cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-        if (entry == NULL) {
-                status = CACHE_INODE_INVALID_ARGUMENT;
-                goto out;
-        }
         if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
 	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
@@ -108,8 +104,6 @@ cache_inode_invalidate(cache_entry_t *entry,
 
         if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
 	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-out:
 
         /* Memory copying attributes with every call is expensive.
            Let's not do it.  */

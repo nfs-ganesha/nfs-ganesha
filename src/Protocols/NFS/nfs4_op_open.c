@@ -39,6 +39,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "cache_inode_lru.h"
+#include "fsal_convert.h"
 
 static const char *open_tag = "OPEN";
 
@@ -321,7 +322,7 @@ open4_create_fh(compound_data_t *data, cache_entry_t *entry)
                newfh4.nfs_fh4_len);
 
         data->current_entry = entry;
-        data->current_filetype = REGULAR_FILE;
+        data->current_filetype = entry->type;
 
         return NFS4_OK;
 }
@@ -757,8 +758,6 @@ open4_claim_null(OPEN4args        * arg,
         /* The filename to create */
         char                * filename = NULL;
 
-        parent = data->current_entry;
-
         /**
          * Validate and convert the utf8 filename
          */
@@ -942,6 +941,19 @@ int nfs4_op_open(struct nfs_argop4 *op,
 		return res_OPEN4->status;
 	}
 
+        /* Check export permissions if OPEN4_SHARE_ACCESS_WRITE */
+        if(((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) &&
+           ((data->export_perms.options & EXPORT_OPTION_WRITE_ACCESS) == 0))
+          {
+                  res_OPEN4->status = NFS4ERR_ROFS;
+
+                  LogDebug(COMPONENT_NFS_V4,
+                           "Status of OP_OPEN due to export permissions = %s",
+                           nfsstat4_to_str(res_OPEN4->status));
+
+                  return res_OPEN4->status;
+          }
+        
         /* Do basic checks on a filehandle */
         res_OPEN4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
                                                  false);
@@ -989,6 +1001,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
 					     &clientid);
 	if(retval != CLIENT_ID_SUCCESS) {
                 res_OPEN4->status = clientid_error_to_nfsstat(retval);
+                LogDebug(COMPONENT_NFS_V4,
+                         "nfs_client_id_get_confirmed failed");
                 goto out3;
         }
 
@@ -998,6 +1012,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
         if (!reserve_lease(clientid)) {
                 V(clientid->cid_mutex);
                 res_OPEN4->status = NFS4ERR_EXPIRED;
+                LogDebug(COMPONENT_NFS_V4,
+                         "Lease expired");
                 goto out3;
         }
 
@@ -1010,6 +1026,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
                               resp,
                               clientid,
                               &owner)) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "open4_open_owner failed");
                 goto out2;
         }
 
@@ -1018,6 +1036,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         if ((res_OPEN4->status
              = open4_validate_claim(data, claim, clientid)) != NFS4_OK) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "open4_validate_claim failed");
                 goto out;
         }
 
@@ -1028,6 +1048,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
         if ((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
             (claim != CLAIM_NULL)) {
                 res_OPEN4->status = NFS4ERR_INVAL;
+                LogDebug(COMPONENT_NFS_V4,
+                         "OPEN4_CREATE but not CLAIM_NULL");
                 goto out2;
         }
 
@@ -1045,19 +1067,26 @@ int nfs4_op_open(struct nfs_argop4 *op,
          * have any invalid bits set.
          */
         if (!(arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ||
+            (data->minorversion == 0 &&
+             arg_OPEN4->share_access & ~OPEN4_SHARE_ACCESS_BOTH) ||
             (arg_OPEN4->share_access & (~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK &
                                         ~OPEN4_SHARE_ACCESS_BOTH)) ||
             (arg_OPEN4->share_deny & ~OPEN4_SHARE_DENY_BOTH)) {
                 res_OPEN4->status = NFS4ERR_INVAL;
+                LogDebug(COMPONENT_NFS_V4,
+                         "Invalid SHARE_ACCESS or SHARE_DENY");
                 goto out;
         }
 
         /* Set openflags. */
-        if (arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_BOTH) {
+        if ((arg_OPEN4->share_access &
+             OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_BOTH) {
                 openflags = FSAL_O_RDWR;
-        } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_READ) {
+        } else if((arg_OPEN4->share_access &
+                   OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_READ) {
                 openflags = FSAL_O_READ;
-        } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_WRITE) {
+        } else if((arg_OPEN4->share_access &
+                   OPEN4_SHARE_ACCESS_BOTH) == OPEN4_SHARE_ACCESS_WRITE) {
                 openflags = FSAL_O_WRITE;
         }
 
@@ -1118,6 +1147,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
               if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
               {
                 res_OPEN4->status = NFS4ERR_INVAL;
+                LogDebug(COMPONENT_NFS_V4,
+                         "Invalid filename");
                 goto out;
               }
               LogDebug(COMPONENT_NFS_CB,"name len %d %s\n",
@@ -1129,6 +1160,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
 					   UTF8_SCAN_ALL,
 					   &filename);
                 if (res_OPEN4->status != NFS4_OK) {
+                  LogDebug(COMPONENT_NFS_V4,
+                            "Invalid filename");
                   goto out;
               }
 
@@ -1171,9 +1204,14 @@ int nfs4_op_open(struct nfs_argop4 *op,
                        file_state->stateid_other, OTHERSIZE);
 
                 res_OPEN4->status = open4_create_fh(data, entry_lookup);
-                if(res_OPEN4->status != NFS4_OK)
+                if(res_OPEN4->status != NFS4_OK) {
+                  LogDebug(COMPONENT_NFS_V4,
+                           "open4_create_fh failed");
                   goto out;
+                }
 
+                LogDebug(COMPONENT_NFS_V4,
+                         "done with CLAIM_DELEGATE_CUR");
                 goto out;
               }
               else
@@ -1188,17 +1226,24 @@ int nfs4_op_open(struct nfs_argop4 *op,
         }
 
         if (res_OPEN4->status != NFS4_OK) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "general failure");
                 goto out;
         }
 
         /* OPEN4 is to be done on a file */
-        if (data->current_entry->type != REGULAR_FILE) {
-                if (data->current_entry->type == DIRECTORY) {
+        if (data->current_filetype != REGULAR_FILE) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "Wrong file type expected REGULAR_FILE actual %s",
+                         object_file_type_to_str(data->current_filetype));
+                if (data->current_filetype == DIRECTORY) {
                         res_OPEN4->status = NFS4ERR_ISDIR;
-                } else if (data->current_entry->type == SYMBOLIC_LINK){
-                        res_OPEN4->status = NFS4ERR_SYMLINK;
                 } else {
-                        res_OPEN4->status = NFS4ERR_INVAL;
+                        /* All special nodes must return NFS4ERR_SYMLINK for
+                         * proper client behavior per this linux-nfs post:
+                         * http://marc.info/?l=linux-nfs&m=131342421825436&w=2
+                         */
+                        res_OPEN4->status = NFS4ERR_SYMLINK;
                 }
 		goto out;
         }
@@ -1218,6 +1263,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
                                           &new_state, openflags);
         PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
         if (res_OPEN4->status != NFS4_OK) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "open4_do_open failed");
                 goto out;
         }
 
@@ -1271,7 +1318,7 @@ out:
 
         if (res_OPEN4->status != NFS4_OK) {
            LogDebug(COMPONENT_STATE,
-                    "failed with status %d", res_OPEN4->status);
+                    "failed with status %s", nfsstat4_to_str(res_OPEN4->status));
         }
         /* Save the response in the open owner.
          * entry_parent is either the parent directory or for a CLAIM_PREV is

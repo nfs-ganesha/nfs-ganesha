@@ -29,12 +29,6 @@ cidr_numaddr(const CIDR *addr)
 {
 	int pflen;
 
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-
 	pflen = cidr_get_pflen(addr);
 	if(addr->proto==CIDR_IPV4)
 		pflen += 96;
@@ -62,12 +56,6 @@ const char *
 cidr_numhost(const CIDR *addr)
 {
 	int pflen;
-
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
 
 	pflen = cidr_get_pflen(addr);
 	if(addr->proto==CIDR_IPV4)

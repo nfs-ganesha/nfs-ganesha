@@ -50,6 +50,7 @@
 #include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
+#include "fsal_convert.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
@@ -288,7 +289,6 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_LRU_ERROR:
@@ -701,14 +701,14 @@ static fattr_xdr_result decode_rdattr_error(XDR *xdr, struct xdr_attrs_args *arg
 
 static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
-	fsal_ace_t *pace;
-
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "Number of ACEs = %u",
-		     args->attrs->acl->naces);
 	if (args->attrs->acl) {
+		fsal_ace_t *pace;
 		int i;
 		char *name;
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Number of ACEs = %u",
+			     args->attrs->acl->naces);
 
 		if (! inline_xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
 			return FATTR_XDR_FAILED;
@@ -3067,18 +3067,16 @@ Fattr_filler(void *opaque,
  *                     attributes are requested
  * @param[in]  Bitmap  Bitmap of attributes being requested
  *
- * @retval 0 on success.
- * @retval -1 on failure.
+ * @retval cache status
  */
 
-int
+nfsstat4
 cache_entry_To_Fattr(cache_entry_t *entry,
                      fattr4 *Fattr,
                      compound_data_t *data,
                      nfs_fh4 *objFH,
                      struct bitmap4 *Bitmap)
 {
-        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         struct Fattr_filler_opaque f = {
                 .Fattr = Fattr,
                 .data = data,
@@ -3086,18 +3084,70 @@ cache_entry_To_Fattr(cache_entry_t *entry,
                 .Bitmap = Bitmap
         };
 
-	cache_status = cache_inode_getattr(entry,
-					   data->req_ctx,
-					   &f,
-					   Fattr_filler);
+	return nfs4_Errno(cache_inode_getattr(entry,
+					      data->req_ctx,
+					      &f,
+					      Fattr_filler));
+}
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
+int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
+{
+	u_int LastOffset;
+	XDR attr_body;
+	struct xdr_attrs_args args;
+	fattr_xdr_result xdr_res;
+
+	/* basic init */
+	memset(&Fattr->attrmask, 0, sizeof(Fattr->attrmask));
+	Fattr->attr_vals.attrlist4_val =
+			gsh_malloc(fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4);
+	if(Fattr->attr_vals.attrlist4_val == NULL) {
 		return -1;
 	}
 
-	return 0;
-}
+	LastOffset = 0;
+	memset(&attr_body, 0, sizeof(attr_body));
+	xdrmem_create(&attr_body,
+		      Fattr->attr_vals.attrlist4_val,
+		      fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4,
+		      XDR_ENCODE);
+	memset(&args, 0, sizeof(args));
+	args.rdattr_error = rdattr_error;
 
+	xdr_res = fattr4tab[FATTR4_RDATTR_ERROR].encode(&attr_body, &args);
+	if(xdr_res == FATTR_XDR_SUCCESS) {
+		bool res = set_attribute_in_bitmap(&Fattr->attrmask,
+					           FATTR4_RDATTR_ERROR);
+		assert(res);
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Encoded attribute %d, name = %s",
+			     FATTR4_RDATTR_ERROR,
+			     fattr4tab[FATTR4_RDATTR_ERROR].name);
+
+		/* mark the attribute in the bitmap should be new bitmap btw */
+
+		LastOffset = xdr_getpos(&attr_body);  /* dumb but for now */
+		xdr_destroy(&attr_body);
+
+		if(LastOffset == 0) {  /* no supported attrs so we can free */
+			assert(Fattr->attrmask.bitmap4_len == 0);
+			gsh_free(Fattr->attr_vals.attrlist4_val);
+			Fattr->attr_vals.attrlist4_val = NULL;
+		}
+		Fattr->attr_vals.attrlist4_len = LastOffset;
+		return 0;
+	} else {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Encode FAILED for attribute %d, name = %s",
+			     FATTR4_RDATTR_ERROR,
+			     fattr4tab[FATTR4_RDATTR_ERROR].name);
+		/* signal fail so if(LastOffset > 0) works right */
+
+		gsh_free(Fattr->attr_vals.attrlist4_val);
+		Fattr->attr_vals.attrlist4_val = NULL;
+		return -1;
+	}
+}
 
 /**
  * @brief Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -3160,6 +3210,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 		if(attribute_to_set > FATTR4_FS_CHARSET_CAP) {
 			break;  /* skip out of bounds */
 		}
+
 		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, &args);
 		if(xdr_res == FATTR_XDR_SUCCESS) {
 			bool res = set_attribute_in_bitmap(&Fattr->attrmask,
@@ -3218,11 +3269,6 @@ bool
 nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                        sattr3 *sattr)
 {
-
-        if (FSAL_attr == NULL || sattr == NULL) {
-                return false;
-        }
-
         FSAL_attr->mask = 0;
 
         if (sattr->mode.set_it) {
@@ -3310,81 +3356,6 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
 
         return true;
 }                               /* nfs3_Sattr_To_FSALattr */
-
-/**
- * @brief Fill out the export field in compound data
- *
- * This routine fills in the export field in the compound data.
- *
- * @param[in,out] data Compound dta
- *
- * @retval NFS4_OK if successfull.
- * @retval NFS4ERR_BADHANDLE on invalid handle.
- * @retval NFS4ERR_WRONGSEC on wrong security flavor.
- */
-
-int nfs4_SetCompoundExport(compound_data_t *data)
-{
-        short exportid;
-
-        /* This routine is not related to pseudo fs file handle, do
-           not handle them */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		LogCrit(COMPONENT_NFS_V4,
-			"Can not set export for pseudo fs");
-		return NFS4ERR_INVAL;
-        }
-
-        /* Get the export id */
-        exportid = nfs4_FhandleToExportId(&(data->currentFH));
-        if (exportid == 0) {
-                return NFS4ERR_BADHANDLE;
-        }
-
-	if(data->req_ctx->export != NULL) {
-		if(exportid == data->req_ctx->export->export.id)
-			return NFS4_OK; /* same export, same creds */
-		put_gsh_export(data->req_ctx->export);
-	}
-	data->req_ctx->export = get_gsh_export(exportid, true);
-	if(data->req_ctx->export == NULL) {
-		data->pexport = NULL;
-                return NFS4ERR_BADHANDLE;
-        }
-	data->pexport = &data->req_ctx->export->export;
-	return nfs4_MakeCred(data);
-}                               /* nfs4_SetCompoundExport */
-
-/**
- *
- * @brief Extract the export ID from a filehandle
- *
- * This routine extracts the export id from the filehandle.
- *
- * @param[in] fh4  File handle to be used
- * @param[in] ExId buffer to store found export ID will be stored
- *
- * @retval true if successful.
- * @retval false otherwise.
- *
- */
-
-bool
-nfs4_FhandleToExId(nfs_fh4 *fh4, unsigned short *ExId)
-{
-        file_handle_v4_t *fhandle4;
-
-        /* Map the filehandle to the correct structure */
-        fhandle4 = (file_handle_v4_t *) (fh4->nfs_fh4_val);
-
-        /* The function should not be used on a pseudo fhandle */
-        if(fhandle4->pseudofs_flag) {
-                return false;
-        }
-
-        *ExId = fhandle4->exportid;
-        return true;
-}                               /* nfs4_FhandleToExId */
 
 /**** Glue related functions ****/
 
@@ -3566,13 +3537,6 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
         attrmask_t want = (ATTR_TYPE | (ATTRS_POSIX & ~ATTR_FSID));
         attrmask_t got  = 0;
 
-        if(FSAL_attr == NULL || Fattr == NULL) {
-                LogFullDebug(COMPONENT_NFSPROTO,
-                             "nfs3_FSALattr_To_Fattr: FSAL_attr=%p, Fattr=%p",
-                             FSAL_attr, Fattr);
-                return false;
-        }
-
         nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
         if (want & ~got) {
                 LogCrit(COMPONENT_NFSPROTO,
@@ -3580,8 +3544,10 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
                         "attribute: missing %lx", want & ~ got);
         }
 
-        /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
-        Fattr->fsid = (nfs3_uint64) export->filesystem_id.major;
+        /* xor filesystem_id major and rotated minor to create unique on-wire fsid.*/ 
+        Fattr->fsid = (nfs3_uint64) (export->filesystem_id.major ^
+                                     (export->filesystem_id.minor << 32 |
+                                      export->filesystem_id.minor >> 32));
         LogFullDebug(COMPONENT_NFSPROTO,
                      "fsid major %#"PRIX64" (%"PRIu64
                      "), minor %#"PRIX64" (%"PRIu64
@@ -3608,13 +3574,8 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 {
   int attribute;
-
-  /* Parameter sanity check */
-  if(bitmap == NULL)
-    return 0;
-
-  if(access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
-    return 0;
+  assert((access == FATTR4_ATTR_READ) ||
+	 (access == FATTR4_ATTR_WRITE));
 
   for(attribute = next_attr_from_bitmap(bitmap, -1);
       attribute != -1;
@@ -3646,10 +3607,6 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 
 int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
 {
-  /* Parameter sanity check */
-  if(Fattr == NULL)
-    return 0;
-
   return nfs4_Fattr_Check_Access_Bitmap(&Fattr->attrmask, access);
 }                               /* nfs4_Fattr_Check_Access */
 
@@ -3689,10 +3646,6 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
 
 int nfs4_Fattr_Supported(fattr4 * Fattr)
 {
-  /* Parameter sanity check */
-  if(Fattr == NULL)
-    return 0;
-
   return nfs4_Fattr_Supported_Bitmap(&Fattr->attrmask);
 }                               /* nfs4_Fattr_Supported */
 
@@ -3708,10 +3661,6 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
 {
   int attribute;
-
-  /* Parameter sanity check */
-  if(bitmap == NULL)
-    return 0;
 
   for(attribute = next_attr_from_bitmap(bitmap, -1);
       attribute != -1;
@@ -3748,12 +3697,6 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   unsigned int cmp = 0;
   u_int len = 0;
   int attribute_to_set = 0;
-
-  if(Fattr1 == NULL)
-    return false;
-
-  if(Fattr2 == NULL)
-    return false;
 
   if(Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)      /* different mask */
     return false;
@@ -3919,9 +3862,6 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 	struct xdr_attrs_args args;
 	fattr_xdr_result xdr_res;
 
-	if(Fattr == NULL)
-		return NFS4ERR_BADXDR;
-
 	/* Check attributes data */
 	if((Fattr->attr_vals.attrlist4_val == NULL) ||
 	   (Fattr->attr_vals.attrlist4_len == 0))
@@ -4060,10 +4000,6 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
-      nfserror = NFS4ERR_BADHANDLE;
-      break;
-
     case CACHE_INODE_BAD_TYPE:
     case CACHE_INODE_INVALID_ARGUMENT:
       nfserror = NFS4ERR_INVAL;
@@ -4183,7 +4119,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
       /* Should not occur */
-      LogDebug(COMPONENT_NFSPROTO,
+      LogDebug(COMPONENT_NFS_V4,
 	       "Line %u should never be reached in nfs4_Errno"
 	       " from %s for cache_status=%u",
 	       __LINE__, where, error);
@@ -4217,7 +4153,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_MALLOC_ERROR:
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
-    case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
@@ -4366,9 +4301,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
  */
 int nfs3_AllocateFH(nfs_fh3 *fh)
 {
-  if(fh == NULL)
-    return NFS3ERR_SERVERFAULT;
-
   /* Allocating the filehandle in memory */
   fh->data.data_len = sizeof(struct alloc_file_handle_v3);
   if((fh->data.data_val = gsh_malloc(fh->data.data_len)) == NULL)
@@ -4395,9 +4327,6 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
  */
 int nfs4_AllocateFH(nfs_fh4 * fh)
 {
-  if(fh == NULL)
-    return NFS4ERR_SERVERFAULT;
-
   /* Allocating the filehandle in memory */
   fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
   if((fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len)) == NULL)
@@ -4406,7 +4335,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
       return NFS4ERR_RESOURCE;
     }
 
-  memset((char *)fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
+  memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 
   return NFS4_OK;
 }
@@ -4572,7 +4501,7 @@ void nfs3_access_debug(char *label, uint32_t access)
 
 void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 {
-  LogDebug(COMPONENT_NFSPROTO, "%s=%s,%s,%s,%s,%s,%s",
+  LogDebug(COMPONENT_NFS_V4, "%s=%s,%s,%s,%s,%s,%s",
            label,
            FSAL_TEST_MASK(access, ACCESS3_READ) ? "READ" : "-",
            FSAL_TEST_MASK(access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
@@ -4582,7 +4511,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
            FSAL_TEST_MASK(access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 
   if(v4mask)
-    LogDebug(COMPONENT_NFSPROTO, "v4mask=%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+    LogDebug(COMPONENT_NFS_V4, "v4mask=%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_DATA)		 ? 'r':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_DATA)		 ? 'w':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_EXECUTE)		 ? 'x':'-',
@@ -4600,7 +4529,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 }
 
 /**
- * @brief Do basic checks on a filehandle
+ * @brief Do basic checks on the CurrentFH
  *
  * This function performs basic checks to make sure the supplied
  * filehandle is sane for a given operation.
@@ -4620,22 +4549,33 @@ nfs4_sanity_check_FH(compound_data_t *data,
 {
 	int fh_status;
 
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&(data->currentFH));
+
+	if(fh_status != NFS4_OK) {
+		return fh_status;
+	}
+
         /* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
         if (fh_status != NFS4_OK) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Invalid failed");
                 return fh_status;
         }
 
         /* Check for the correct file type */
         if (required_type != NO_FILE_TYPE) {
                 if (data->current_filetype != required_type) {
-                        LogDebug(COMPONENT_NFSPROTO,
-                                 "Wrong file type");
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected %s actual %s",
+                                 object_file_type_to_str(required_type),
+                                 object_file_type_to_str(data->current_filetype));
 
                         if(required_type == DIRECTORY) {
-                                return NFS4ERR_NOTDIR;
+                                if(data->current_filetype == SYMBOLIC_LINK) {
+                                        return NFS4ERR_SYMLINK;
+                                } else {
+                                        return NFS4ERR_NOTDIR;
+                                }
                         }
                         else if(required_type == SYMBOLIC_LINK) {
                                 return NFS4ERR_INVAL;
@@ -4651,6 +4591,8 @@ nfs4_sanity_check_FH(compound_data_t *data,
         }
 
         if (nfs4_Is_Fh_DSHandle(&data->currentFH) && !ds_allowed) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "DS Handle");
                 return NFS4ERR_INVAL;
         }
 
@@ -4694,15 +4636,15 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 }
 
 /**
- *
- * @brief Do basic checks on saved filehandle
+ * @brief Do basic checks on the SavedFH
  *
  * This function performs basic checks to make sure the supplied
  * filehandle is sane for a given operation.
  *
  * @param data          [IN] Compound_data_t for the operation to check
  * @param required_type [IN] The file type this operation requires.
- *                           Set to 0 to allow any type.
+ *                           Set to 0 to allow any type. A negative value
+ *                           indicates any type BUT that type is allowed.
  * @param ds_allowed    [IN] true if DS handles are allowed.
  *
  * @return NFSv4.1 status codes
@@ -4710,27 +4652,49 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 
 nfsstat4
 nfs4_sanity_check_saved_FH(compound_data_t *data,
-                           object_file_type_t required_type,
+                           int required_type,
                            bool ds_allowed)
 {
 	int fh_status;
 
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&(data->savedFH));
+
+	if(fh_status != NFS4_OK) {
+		return fh_status;
+	}
+
         /* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
         if (fh_status != NFS4_OK) {
-                LogDebug(COMPONENT_FILEHANDLE,
-                         "nfs4_Is_Fh_Invalid failed");
                 return fh_status;
         }
 
         /* Check for the correct file type */
-        if (required_type != NO_FILE_TYPE) {
+        if (required_type < 0) {
+                if(-required_type == data->saved_filetype) {
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected not to be %s was %s",
+                                 object_file_type_to_str((object_file_type_t)-required_type),
+                                 object_file_type_to_str(data->current_filetype));
+                        if (-required_type == DIRECTORY) {
+                                return NFS4ERR_ISDIR;
+                        return NFS4ERR_INVAL;
+                        }
+                }
+        } else if (required_type != NO_FILE_TYPE) {
                 if (data->saved_filetype != required_type) {
-                        LogDebug(COMPONENT_NFSPROTO,
-                                 "Wrong file type");
+                        LogDebug(COMPONENT_NFS_V4,
+                                 "Wrong file type expected %s was %s",
+                                 object_file_type_to_str((object_file_type_t)required_type),
+                                 object_file_type_to_str(data->current_filetype));
 
                         if (required_type == DIRECTORY) {
-                                return NFS4ERR_NOTDIR;
+                                if(data->current_filetype == SYMBOLIC_LINK) {
+                                        return NFS4ERR_SYMLINK;
+                                } else {
+                                        return NFS4ERR_NOTDIR;
+                                }
                         }
                         else if (required_type == SYMBOLIC_LINK) {
                                 return NFS4ERR_INVAL;
@@ -4746,6 +4710,8 @@ nfs4_sanity_check_saved_FH(compound_data_t *data,
         }
 
         if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+                LogDebug(COMPONENT_NFS_V4,
+                         "DS Handle");
                 return NFS4ERR_INVAL;
         }
 

@@ -307,15 +307,25 @@ gsh_xprt_clear_flag(SVCXPRT * xprt, uint32_t flags)
       }\
     } while (0);
 
+
 /* For the special case of SLOCK taken from a dispatcher thread */
 #define DISP_SLOCK2(x) do { \
     if (! slocked) { \
         if (! (rlocked && ((x)->xp_type == XPRT_UDP))) { \
             SVC_LOCK((x), XP_LOCK_SEND, __func__, __LINE__); \
-            slocked = TRUE; \
         } \
+	slocked = TRUE;				\
     } \
 } while (0);
+
+#define DISP_SUNLOCK2(x) do {				   \
+    if (slocked) {					   \
+      if (!(((x)->xp_type == XPRT_UDP) && !rlocked)) {	   \
+        SVC_UNLOCK((x), XP_LOCK_SEND, __func__, __LINE__); \
+      }							   \
+      slocked = FALSE;					   \
+    }\
+  } while (0);
 
 #define DISP_RLOCK(x) do { \
     if (! rlocked) { \

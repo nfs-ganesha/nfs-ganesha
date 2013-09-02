@@ -73,10 +73,25 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_RESTOREFH;
   res_RESTOREFH->status = NFS4_OK;
 
-  /* If there is no currentFH, then return an error */
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "Saved FH %s",
+                     LEN_FH_STR,
+                     data->savedFH.nfs_fh4_val,
+                     data->savedFH.nfs_fh4_len);
+
+  /* If there is no savedFH, then return an error */
+  if(nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE)
+    {
+      /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
+         page 202) */
+      res_RESTOREFH->status = NFS4ERR_RESTOREFH;
+      return res_RESTOREFH->status;
+    }
+
+  /* Do basic checks on saved filehandle */
   res_RESTOREFH->status = nfs4_sanity_check_saved_FH(data,
-						     NO_FILE_TYPE,
-						     true);
+                                                    NO_FILE_TYPE,
+                                                    true);
   if (res_RESTOREFH->status != NFS4_OK)
     return res_RESTOREFH->status;
 

@@ -25,11 +25,12 @@ cidr_from_str(const char *addr)
 	unsigned long octet;
 	int nocts, eocts;
 	short foundpf, foundmask, nsect;
+	alen = strlen(addr);
 
 	/* There has to be *SOMETHING* to work with */
-	if(addr==NULL || (alen=strlen(addr))<1)
+	if(alen==0)
 	{
-		errno = EFAULT;
+		errno = EINVAL;
 		return(NULL);
 	}
 

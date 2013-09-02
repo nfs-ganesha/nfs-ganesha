@@ -553,7 +553,6 @@ bool nlm_block_data_to_export(state_block_data_t * block_data)
   short                    exportid;
   struct gsh_export *exp = NULL;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
-  char *reason;
   bool retval = false;
 
   /* Get export ID from handle */
@@ -561,39 +560,47 @@ bool nlm_block_data_to_export(state_block_data_t * block_data)
 
   /* Get export matching export ID */
   if(exportid < 0) {
-	  reason = "has badly formed handle";
 	  goto err;
   }
+
   exp = get_gsh_export(exportid, true);
   if(exp == NULL) {
-	  reason = "has invalid export";
 	  goto err;
   }
+
   if((exp->export.export_perms.options & EXPORT_OPTION_NFSV3) != 0) {
-	  reason = "V3 not allowed on this export";
-
-err:
-	  /* Reject the request for authentication reason (incompatible file handle) */
-	  if(isInfo(COMPONENT_NLM)) {
-		  char dumpfh[1024];
-		  char addrbuf[SOCK_NAME_MAX + 1];
-
-		  sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
-				  addrbuf,
-				  sizeof(addrbuf));
-		  sprint_fhandle_nlm(dumpfh, &nlm_block_data->sbd_nlm_fh);
-		  LogMajor(COMPONENT_NLM,
-			   "NLM4 granted lock from host %s %s, FH=%s",
-			   addrbuf, reason, dumpfh);
-	  }
-  } else {
 	  retval =  true;
 	  LogFullDebug(COMPONENT_NLM,
 		       "Found export entry for dirname=%s as exportid=%d",
 		       exp->export.fullpath, exp->export.id);
   }
+
+err:
+  if(!retval && isInfo(COMPONENT_NLM)) {
+	  char addrbuf[SOCK_NAME_MAX + 1];
+
+	  sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
+		          addrbuf,
+		          sizeof(addrbuf));
+
+	  if(exportid < 0) {
+		LogInfo(COMPONENT_NLM,
+		        "NLM4 granted lock from client %s has badly formed handle",
+		        addrbuf);
+ 	  } else if(exp == NULL) {
+		LogInfo(COMPONENT_NLM,
+		        "NLM4 granted lock from client %s has invalid export %d",
+		        addrbuf, exportid);
+	  } else {
+		LogInfo(COMPONENT_NLM,
+		        "NLM4 granted lock from client %s V3 is not allowed on export %d",
+		        addrbuf, exportid);
+	  }
+  }
+
   if(exp != NULL)
 	  put_gsh_export(exp);
+
   return retval;
 }
 

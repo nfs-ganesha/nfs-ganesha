@@ -58,7 +58,8 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd == -1
-	       && myself->u.file.openflags == FSAL_O_CLOSED);
+	       && myself->u.file.openflags == FSAL_O_CLOSED
+	       && openflags != 0);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 	LogFullDebug(COMPONENT_FSAL,
@@ -218,13 +219,6 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	}
 	if(p_owner != NULL) {
 		fsal_error = ERR_FSAL_NOTSUPP;
-		goto out;
-	}
-	if(conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
-		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't"
-			 " be NULL with lock_op  = LOCKT");
-		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
 	LogFullDebug(COMPONENT_FSAL,

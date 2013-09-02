@@ -47,6 +47,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "client_mgr.h"
 
 /**
  *
@@ -80,13 +81,16 @@ nfs_Rename(nfs_arg_t *arg,
         cache_entry_t *parent_entry = NULL;
         cache_entry_t *new_parent_entry = NULL;
         cache_inode_status_t cache_status;
+        short to_exportid = 0;
+        short from_exportid = 0;
+        int rc = NFS_REQ_OK;
+
         pre_op_attr pre_parent = {
                 .attributes_follow = false
         };
         pre_op_attr pre_new_parent = {
                 .attributes_follow = false
         };
-        int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
@@ -106,7 +110,6 @@ nfs_Rename(nfs_arg_t *arg,
                          strfrom, entry_name, strto, new_entry_name);
         }
 
-        /* Convert fromdir file handle into a cache_entry */
 	/* to avoid setting it on each error case */
 	res->res_rename3.RENAME3res_u.resfail.fromdir_wcc.before
 		.attributes_follow = FALSE;
@@ -117,6 +120,28 @@ nfs_Rename(nfs_arg_t *arg,
 	res->res_rename3.RENAME3res_u.resfail.todir_wcc.after
 		.attributes_follow = FALSE;
 
+        /* Get the exportids for the two handles. */
+        to_exportid = nfs3_FhandleToExportId(&(arg->arg_rename3.to.dir));
+        from_exportid = nfs3_FhandleToExportId(&(arg->arg_rename3.from.dir));
+
+        /* Validate the to_exportid */
+        if(to_exportid < 0 || from_exportid < 0) {
+                LogInfo(COMPONENT_DISPATCH,
+                        "NFS%d RENAME Request from client %s has badly formed handle for to dir",
+                        req->rq_vers, req_ctx->client->hostaddr_str);
+
+                /* Bad handle, report to client */
+                res->res_rename3.status = NFS3ERR_BADHANDLE;
+                goto out;
+        }
+
+        /* Both objects have to be in the same filesystem */
+        if(to_exportid != from_exportid) {
+                res->res_rename3.status = NFS3ERR_XDEV;
+                goto out;
+        }
+
+        /* Convert fromdir file handle into a cache_entry */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
 					   req_ctx,
 					   export,

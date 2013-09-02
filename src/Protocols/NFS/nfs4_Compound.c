@@ -590,11 +590,11 @@ int nfs4_Compound(nfs_arg_t *arg,
 
       if(perm_flags != 0)
          {
-	   status = nfs4_Is_Fh_Invalid(&data.currentFH);
+	   status = nfs4_Is_Fh_Empty(&data.currentFH);
            if(status != NFS4_OK)
              {
                LogDebug(COMPONENT_NFS_V4,
-                        "Status of %s due to empty CurrentFH in position %d = %s",
+                        "Status of %s for CurrentFH in position %d = %s",
                         optabv4[opcode].name,
                         i,
                         nfsstat4_to_str(status));
@@ -856,9 +856,6 @@ void compound_data_Free(compound_data_t *data)
 
   if (data->rootFH.nfs_fh4_val != NULL)
     gsh_free(data->rootFH.nfs_fh4_val);
-
-  if (data->publicFH.nfs_fh4_val != NULL)
-    gsh_free(data->publicFH.nfs_fh4_val);
 
   if (data->savedFH.nfs_fh4_val != NULL)
     gsh_free(data->savedFH.nfs_fh4_val);

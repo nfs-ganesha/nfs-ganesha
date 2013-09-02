@@ -73,14 +73,6 @@ cache_inode_getattr(cache_entry_t *entry,
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	uint64_t saved_fileid;
 
-	if (entry == NULL) {
-		status = CACHE_INODE_INVALID_ARGUMENT;
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning "
-                         "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-                goto out;
-        }
-
         /* Set the return default to CACHE_INODE_SUCCESS */
 	status = CACHE_INODE_SUCCESS;
 
@@ -123,13 +115,6 @@ cache_inode_fileid(cache_entry_t *entry,
                    uint64_t *fileid)
 {
         cache_inode_status_t status = 0;
-        if (entry == NULL) {
-                status = CACHE_INODE_INVALID_ARGUMENT;
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning "
-                         "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-                goto out;
-        }
 
         /* Set the return default to CACHE_INODE_SUCCESS */
         status = CACHE_INODE_SUCCESS;
@@ -171,13 +156,6 @@ cache_inode_fsid(cache_entry_t *entry,
                  fsal_fsid_t *fsid)
 {
         cache_inode_status_t status = 0;
-        if (entry == NULL) {
-                status = CACHE_INODE_INVALID_ARGUMENT;
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning "
-                         "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-                goto out;
-        }
 
         /* Set the return default to CACHE_INODE_SUCCESS */
         status = CACHE_INODE_SUCCESS;
@@ -217,13 +195,6 @@ cache_inode_size(cache_entry_t *entry,
                  uint64_t *size)
 {
         cache_inode_status_t status = 0;
-        if (entry == NULL) {
-                status = CACHE_INODE_INVALID_ARGUMENT;
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning "
-                         "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-                goto out;
-        }
 
         /* Set the return default to CACHE_INODE_SUCCESS */
         status = CACHE_INODE_SUCCESS;

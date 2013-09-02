@@ -44,6 +44,7 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include "export_mgr.h"
+#include "client_mgr.h"
 
 /**
  * @brief The NFS4_OP_PUTFH operation
@@ -86,35 +87,59 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                 }
         }
 
-        /* Copy the filehandle from the reply structure */
+        /* Copy the filehandle from the arg structure */
         data->currentFH.nfs_fh4_len = arg_PUTFH4->object.nfs_fh4_len;
 
         /* Put the data in place */
         memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4->object.nfs_fh4_val,
                arg_PUTFH4->object.nfs_fh4_len);
 
-        LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4->object);
+        /* As usual, protect existing refcounts */
+        if (data->current_entry) {
+                cache_inode_put(data->current_entry);
+                data->current_entry = NULL;
+                data->current_filetype = NO_FILE_TYPE;
+        }
 
         /* If the filehandle is not pseudo fs file handle, get the
            entry related to it, otherwise use fake values */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		set_compound_data_for_pseudo(data);
+		res_PUTFH4->status = set_compound_data_for_pseudo(data);
+		if(res_PUTFH4->status != NFS4_OK) {
+			return res_PUTFH4->status;
+		}
         } else {
 		struct fsal_export *export;
 		struct file_handle_v4 *v4_handle
 			= ((struct file_handle_v4 *)data->currentFH.nfs_fh4_val);
 
-		/* Set up the export (and nfs4_MakeCred) for the new currentFH */
-		res_PUTFH4->status = nfs4_SetCompoundExport(data);
-		if(res_PUTFH4->status != NFS4_OK)
-			return res_PUTFH4->status;
+		/* Get the exportid from the handle. */
+		data->req_ctx->export = get_gsh_export(v4_handle->exportid,
+		                                       true);
 
-                /* As usual, protect existing refcounts */
-                if (data->current_entry) {
-                        cache_inode_put(data->current_entry);
-                        data->current_entry = NULL;
-                }
-                if (data->current_ds) {
+		if(data->req_ctx->export == NULL) {
+			data->pexport = NULL;
+
+			LogInfo(COMPONENT_DISPATCH,
+			        "NFS4 Request from client %s has invalid export %d",
+			        data->req_ctx->client->hostaddr_str,
+			        v4_handle->exportid);
+
+			res_PUTFH4->status = NFS4ERR_STALE;
+
+			return res_PUTFH4->status;
+		}
+
+		if(&data->req_ctx->export->export != data->pexport) {
+			data->pexport =  &data->req_ctx->export->export;
+
+			res_PUTFH4->status = nfs4_MakeCred(data);
+
+			if(res_PUTFH4->status != NFS4_OK)
+				return res_PUTFH4->status;
+		}
+
+               if (data->current_ds) {
                         data->current_ds->ops->put(data->current_ds);
                 }
                 data->current_ds = NULL;
@@ -142,6 +167,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                 } else {
 			cache_inode_fsal_data_t fsal_data;
 			fsal_status_t fsal_status;
+			cache_inode_status_t cache_status;
 
 			fsal_data.export = export;
 			fsal_data.fh_desc.len = v4_handle->fs_len;
@@ -151,18 +177,21 @@ nfs4_op_putfh(struct nfs_argop4 *op,
 			fsal_status = export->ops->extract_handle(export,
 								  FSAL_DIGEST_NFSV4,
 								  &fsal_data.fh_desc);
+
 			if(FSAL_IS_ERROR(fsal_status)) {
-				res_PUTFH4->status = NFS4ERR_BADHANDLE;
-                                return res_PUTFH4->status;
+				cache_status = cache_inode_error_convert(fsal_status);
+			} else {
+				/* Build the pentry.  Refcount +1. */
+				cache_status = cache_inode_get(&fsal_data,
+							       data->req_ctx,
+							       &data->current_entry);
 			}
-                        /* Build the pentry.  Refcount +1. */
-			cache_inode_get(&fsal_data,
-					data->req_ctx,
-					&data->current_entry);
-                        if(data->current_entry == NULL) {
-				res_PUTFH4->status = NFS4ERR_STALE;
-                                return res_PUTFH4->status;
+
+                        if(cache_status != CACHE_INODE_SUCCESS){
+                        	res_PUTFH4->status = nfs4_Errno(cache_status);
+                        	return res_PUTFH4->status;
                         }
+
                         /* Extract the filetype */
                         data->current_filetype = data->current_entry->type;
                 }

@@ -799,7 +799,7 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
 int nfs4_op_access_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
 
-void set_compound_data_for_pseudo(compound_data_t * data);
+int set_compound_data_for_pseudo(compound_data_t * data);
 
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
@@ -902,6 +902,35 @@ typedef struct fattr4_dent {
 } fattr4_dent_t;
 
 extern const struct fattr4_dent fattr4tab[];
+
+#define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
+#define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
+
+static inline int check_for_wrongsec_ok_attr(struct bitmap4 * attr_request)
+{
+  if(attr_request->bitmap4_len < 1)
+    return true;
+  if((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
+    return false;
+  if(attr_request->bitmap4_len < 2)
+    return true;
+  if((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
+    return false;
+  if(attr_request->bitmap4_len < 3)
+    return true;
+  if(attr_request->map[2] != 0)
+    return false;
+  return true;
+}
+
+static inline int check_for_rdattr_error(struct bitmap4 * attr_request)
+{
+  if(attr_request->bitmap4_len < 1)
+    return false;
+  if((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
+    return true;
+  return false;
+}
 
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
@@ -1044,12 +1073,12 @@ void compound_data_Free(compound_data_t * data);
 int nfs4_ExportToPseudoFS(void);
 pseudofs_t *nfs4_GetPseudoFs(void);
 
-int nfs4_SetCompoundExport(compound_data_t * data);
 int nfs4_MakeCred(compound_data_t * data);
 
-int cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
-                         compound_data_t *data, nfs_fh4 *objFH,
-                         struct bitmap4 *Bitmap);
+nfsstat4
+cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
+                     compound_data_t *data, nfs_fh4 *objFH,
+                     struct bitmap4 *Bitmap);
 
 int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, struct bitmap4 * Bitmap);
@@ -1124,12 +1153,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
                        compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
 
-int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
+void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *,
 			    compound_data_t *);
 
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
+
+int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 error);
 
 int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,

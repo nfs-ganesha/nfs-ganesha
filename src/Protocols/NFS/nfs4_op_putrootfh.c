@@ -32,7 +32,6 @@
  */
 #include "config.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -41,6 +40,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 /**
  * @brief Create the pseudo FS root filehandle
@@ -57,7 +57,7 @@
  *
  */
 
-static int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
+int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
 {
   pseudofs_entry_t psfsentry;
   int              status = 0;
@@ -71,8 +71,7 @@ static int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
 
-  if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
-    return NFS4ERR_BADHANDLE;
+  nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
 
   LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
 
@@ -102,17 +101,16 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
 {
   PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
-  /* First of all, set the reply to zero to make sure it contains no
-     parasite information */
+  /* First of all, set the reply to zero to make sure
+   * it contains no parasite information
+   */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTROOTFH;
 
+  /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
   res_PUTROOTFH4->status = CreateROOTFH4(&(data->rootFH), data);
   if(res_PUTROOTFH4->status != NFS4_OK)
     return res_PUTROOTFH4->status;
-
-  /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
 
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
@@ -121,20 +119,16 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
       if(res_PUTROOTFH4->status != NFS4_OK)
         return res_PUTROOTFH4->status;
     }
+
+  /* Copy the data where they are supposed to be */
   memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  if(data->publicFH.nfs_fh4_len == 0)
-    {
-      res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->publicFH));
-      if(res_PUTROOTFH4->status != NFS4_OK)
-        return res_PUTROOTFH4->status;
-    }
-  /* Copy the data where they are supposed to be */
-  memcpy(data->publicFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
+  /* Fill in compound data */
+  res_PUTROOTFH4->status = set_compound_data_for_pseudo(data);
+  if(res_PUTROOTFH4->status != NFS4_OK)
+    return res_PUTROOTFH4->status;
 
   LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);

@@ -186,21 +186,78 @@ bool nfs4_FSALToFhandle(nfs_fh4 *, const struct fsal_obj_handle *);
 bool nfs3_FSALToFhandle(nfs_fh3 *, const struct fsal_obj_handle *);
 bool nfs2_FSALToFhandle(fhandle2 *, const struct fsal_obj_handle *);
 
-/* Extraction of export id from a file handle */
-short nfs2_FhandleToExportId(fhandle2 *);
-short nfs4_FhandleToExportId(nfs_fh4 *);
-short nfs3_FhandleToExportId(nfs_fh3 *);
-
-short nlm4_FhandleToExportId(netobj *);
-
 /* nfs3 validation */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *);
+
+/**
+ *
+ * nfs3_FhandleToExportId
+ *
+ * This routine extracts the export id from the file handle NFSv3
+ *
+ * @param pfh3 [IN] file handle to manage.
+ * 
+ * @return the export id.
+ *
+ */
+static inline short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
+{
+  file_handle_v3_t *pfile_handle;
+
+  if(nfs3_Is_Fh_Invalid(pfh3) != NFS4_OK)
+    return -1;                  /* Badly formed argument */
+
+  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+
+  return pfile_handle->exportid;
+}                               /* nfs3_FhandleToExportId */
+
+static inline short nlm4_FhandleToExportId(netobj * pfh3)
+{
+  nfs_fh3 fh3;
+  if(pfh3 == NULL)
+    return nfs3_FhandleToExportId(NULL);
+  fh3.data.data_val = pfh3->n_bytes;
+  fh3.data.data_len = pfh3->n_len;
+  return nfs3_FhandleToExportId(&fh3);
+}
+
+/**
+ *
+ * @brief Test if an NFS v4 file handle is empty.
+ *
+ * This routine is used to test if a fh is empty (contains no data).
+ *
+ * @param pfh [IN] file handle to test.
+ * 
+ * @return NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.  
+ *
+ */
+static inline int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
+{
+  if(pfh == NULL)
+    {
+      LogMajor(COMPONENT_FILEHANDLE,
+               "INVALID HANDLE: pfh=NULL");
+      return NFS4ERR_NOFILEHANDLE;
+    }
+
+  if(pfh->nfs_fh4_len == 0)
+    {
+      LogInfo(COMPONENT_FILEHANDLE,
+              "INVALID HANDLE: empty");
+      return NFS4ERR_NOFILEHANDLE;
+    }
+
+  return NFS4_OK;
+}                               /* nfs4_Is_Fh_Empty */
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Xattr(nfs_fh4 *);
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
+int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data);
 
 /* This one is used to detect Xattr related FH */
 int nfs3_Is_Fh_Xattr(nfs_fh3 *);
@@ -219,8 +276,6 @@ void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_fhandle_nlm(char *str, netobj *fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
-
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
 
 #define LogHandleNFS4(label, fh4)			    \
   do {							    \

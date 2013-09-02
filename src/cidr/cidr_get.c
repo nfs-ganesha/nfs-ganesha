@@ -20,12 +20,6 @@ cidr_get_pflen(const CIDR *block)
 	int foundnmh;
 	int pflen;
 
-	if(block==NULL)
-	{
-		errno = EFAULT;
-		return(-1);
-	}
-
 	/* Where do we start? */
 	if(block->proto==CIDR_IPV4)
 		i=12;
@@ -77,12 +71,6 @@ cidr_get_addr(const CIDR *addr)
 {
 	uint8_t *toret;
 
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-
 	toret = gsh_calloc(16, sizeof(uint8_t));
 	if(toret==NULL)
 	{
@@ -103,12 +91,6 @@ cidr_get_mask(const CIDR *addr)
 {
 	uint8_t *toret;
 
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-
 	toret = gsh_calloc(16, sizeof(uint8_t));
 	if(toret==NULL)
 	{
@@ -127,12 +109,5 @@ cidr_get_mask(const CIDR *addr)
 int
 cidr_get_proto(const CIDR *addr)
 {
-
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(-1);
-	}
-
 	return(addr->proto);
 }

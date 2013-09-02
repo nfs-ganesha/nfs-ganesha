@@ -299,7 +299,6 @@ typedef struct exportlist {
  */
 typedef struct pseudofs_entry {
 	char name[MAXNAMLEN + 1]; /*< The entry name */
-	char fullname[MAXPATHLEN + 1]; /*< The full path in the pseudo fs */
 	unsigned int pseudo_id; /*< ID within the pseudoFS  */
 	exportlist_t *junction_export; /*< Export list related to the junction,
 					   NULL if entry is no junction */
@@ -309,7 +308,7 @@ typedef struct pseudofs_entry {
 	struct pseudofs_entry *last; /*< Last entry in a list of sons */
 } pseudofs_entry_t;
 
-#define MAX_PSEUDO_ENTRY 100
+#define MAX_PSEUDO_ENTRY 2048
 typedef struct pseudofs {
 	pseudofs_entry_t root;
 	unsigned int last_pseudo_id;
@@ -356,7 +355,6 @@ typedef struct compound_data {
 	nfs_fh4 currentFH; /*< Current filehandle */
 	nfs_fh4 rootFH; /*< Root filehandle */
 	nfs_fh4 savedFH; /*< Saved filehandle */
-	nfs_fh4 publicFH; /*< Public filehandle */
 	stateid4 current_stateid; /*< Current stateid */
 	bool current_stateid_valid; /*< Current stateid is valid */
 	unsigned int minorversion; /*< NFSv4 minor version */

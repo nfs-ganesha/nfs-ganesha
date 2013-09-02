@@ -1008,9 +1008,6 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht,
 	uint64_t      epoch_low = ServerEpoch & 0xFFFFFFFF;
 	uint64_t      cid_epoch = (uint64_t) (clientid >>  (clientid4) 32);
 
-	if (client_rec == NULL)
-		return CLIENT_ID_INVALID_ARGUMENT;
-
 	/* Don't even bother to look up clientid if epochs don't match */
 	if(cid_epoch != epoch_low) {
 		if(isDebug(COMPONENT_HASHTABLE))

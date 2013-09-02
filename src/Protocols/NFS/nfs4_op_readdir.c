@@ -34,14 +34,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 
-static const struct bitmap4 RdAttrErrorBitmap = {
-	.bitmap4_len = 1,
-	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
-		[1] = 0,
-		[2] = 0}
-};
-static const attrlist4 RdAttrErrorVals = {0, NULL};
-
 /**
  * @brief Opaque bookkeeping structure for NFSv4 readdir
  *
@@ -142,12 +134,8 @@ nfs4_readdir_callback(void* opaque,
                                 tracker->data,
                                 &entryFH,
                                 &tracker->req_attr) != 0) {
-          /* Return the fattr4_rdattr_error, see RFC 3530, p. 192/RFC
-             5661 p. 112. */
-          tracker->entries[tracker->count]
-               .attrs.attrmask = RdAttrErrorBitmap;
-          tracker->entries[tracker->count]
-               .attrs.attr_vals = RdAttrErrorVals;
+          LogFatal(COMPONENT_NFS_V4,
+                   "nfs4_FSALattr_To_Fattr failed to convert attr");
      }
 
      if (tracker->mem_left <

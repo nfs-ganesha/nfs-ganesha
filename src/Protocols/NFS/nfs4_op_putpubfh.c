@@ -39,46 +39,9 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
-
-/**
- * @brief Create the pseudo FS public filehandle
- *
- * This function creates the pseudo FS public filehandle.
- *
- * @param[out]    fh   The file handle to be built.
- * @param[in,out] data request compound data
- *
- * @retval NFS4_OK if successful.
- * @retval NFS4ERR_BADHANDLE otherwise.
- *
- * @see nfs4_op_putrootfh
- *
- */
-
-static int CreatePUBFH4(nfs_fh4 *fh, compound_data_t *data)
-{
-  pseudofs_entry_t psfsentry;
-  int status = 0;
-
-  /* For the moment, I choose to have rootFH = publicFH */
-  psfsentry = *(data->pseudofs->reverse_tab[0]);
-
-  /* If publicFH already set, return success */
-  if(data->publicFH.nfs_fh4_len != 0)
-    return NFS4_OK;
-
-  if((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
-    return status;
-
-  if(!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
-    return NFS4ERR_BADHANDLE;
-
-  LogHandleNFS4("CREATE PUB FH: ", &data->publicFH);
-
-  return NFS4_OK;
-} /* CreatePUBFH4 */
 
 /**
  * @brief The NFS4_OP_PUTFH operation
@@ -106,32 +69,31 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
    * it contains no parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTPUBFH;
-  res_PUTPUBFH4->status = NFS4_OK;
 
   /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-  res_PUTPUBFH4->status = CreatePUBFH4(&(data->publicFH), data);
-  if(res_PUTPUBFH4->status != NFS4_OK)
-    goto out;
-
-  /* Fill in compound data */
-  set_compound_data_for_pseudo(data);
+   res_PUTPUBFH4->status = CreateROOTFH4(&(data->rootFH), data);
+  if( res_PUTPUBFH4->status != NFS4_OK)
+    return  res_PUTPUBFH4->status;
 
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
-      res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
-      if(res_PUTPUBFH4->status != NFS4_OK)
-	goto out;
+       res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
+      if( res_PUTPUBFH4->status != NFS4_OK)
+        return  res_PUTPUBFH4->status;
     }
 
-  /* Copy the data from current FH to saved FH */
-  memcpy(data->currentFH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
-	 data->publicFH.nfs_fh4_len);
+  /* Copy the data where they are supposed to be */
+  memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
+         data->rootFH.nfs_fh4_len);
+  data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  res_PUTPUBFH4->status = NFS4_OK ;
+  /* Fill in compound data */
+   res_PUTPUBFH4->status = set_compound_data_for_pseudo(data);
+  if( res_PUTPUBFH4->status != NFS4_OK)
+    return  res_PUTPUBFH4->status;
 
-out:
-  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
+  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
 
   LogFullDebug(COMPONENT_NFS_V4,

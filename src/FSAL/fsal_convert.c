@@ -182,4 +182,22 @@ int fsal2posix_openflags (fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 	return ERR_FSAL_NO_ERROR;
 }
+
+const char *object_file_type_to_str(object_file_type_t type)
+{
+	switch(type) {
+		case NO_FILE_TYPE:   return "NO_FILE_TYPE";
+		case REGULAR_FILE:   return "REGULAR_FILE";
+		case CHARACTER_FILE: return "CHARACTER_FILE";
+		case BLOCK_FILE:     return "BLOCK_FILE";
+		case SYMBOLIC_LINK:  return "SYMBOLIC_LINK";
+		case SOCKET_FILE:    return "SOCKET_FILE";
+		case FIFO_FILE:      return "FIFO_FILE";
+		case DIRECTORY:      return "DIRECTORY";
+		case FS_JUNCTION:    return "FS_JUNCTION";
+		case EXTENDED_ATTR:  return "EXTENDED_ATTR";
+	}
+	return "unexpected type";
+}
+
 /** @} */

@@ -15,13 +15,6 @@ cidr_addr_network(const CIDR *addr)
 	int i, j;
 	CIDR *toret;
 
-	/* Quick check */
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-	
 	toret = cidr_alloc();
 	if(toret==NULL)
 		return(NULL); /* Preserve errno */
@@ -60,13 +53,6 @@ cidr_addr_broadcast(const CIDR *addr)
 	int i, j;
 	CIDR *toret;
 
-	/* Quick check */
-	if(addr==NULL)
-	{
-		errno = EFAULT;
-		return(NULL);
-	}
-	
 	toret = cidr_alloc();
 	if(toret==NULL)
 		return(NULL); /* Preserve errno */
