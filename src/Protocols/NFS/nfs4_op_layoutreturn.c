@@ -477,6 +477,7 @@ nfsstat4 nfs4_return_one_state(
 
                         arg->cur_segment = g->sls_segment;
                         arg->fsal_seg_data = g->sls_fsal_data;
+			/* TODO: why this check does not work */
                         arg->last_segment = (seg_next->next ==
 					     seg_next);
 
