@@ -578,59 +578,6 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 }
 
 /**
- * @brief Cache entry deferred cleanup helper routine.
- *
- * This function consumes the LRU_CQ queue, disposing state and
- * returning sentinel refs.  Final destruction of the entries
- * of course happens when their refcounts reach 0.
- *
- * @param[in] ms The time to sleep, in milliseconds.
- *
- * @retval false if the thread wakes by timeout.
- * @retval true if the thread wakes by signal.
- */
-static inline uint32_t
-cache_inode_lru_cleanup(void)
-{
-    uint32_t n_finalized = 0;
-    uint32_t lane = 0;
-
-    struct lru_q_lane *qlane;
-    struct lru_q *cq;
-
-    cache_inode_lru_t *lru;
-    cache_entry_t *entry;
-
-    for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-	    qlane = &LRU[lane];
-	    cq = &qlane->cleanup;
-
-        do {
-		QLOCK(qlane);
-		lru = glist_first_entry(&cq->q, cache_inode_lru_t, q);
-		if (! lru) {
-			QUNLOCK(qlane);
-			break;
-		}
-		/* XXX skip L1 iteration fixups */
-		glist_del(&lru->q);
-		--(cq->size);
-		lru->qid = LRU_ENTRY_NONE;
-		QUNLOCK(qlane);
-
-		/* finalize */
-		entry = container_of(lru, cache_entry_t, lru);
-		state_wipe_file(entry);
-		/* return (transferred) call path ref */
-		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-		n_finalized++;
-        } while (lru);
-    }
-
-    return (n_finalized);
-}
-
-/**
  * @brief Function that executes in the lru thread
  *
  * This function performs long-term reorganization, compaction, and
@@ -687,7 +634,6 @@ lru_run(struct fridgethr_context *ctx)
      /* True if we were explicitly awakened. */
      bool woke = ctx->woke;
      /* Finalized */
-     uint32_t n_finalized;
      uint32_t fdratepersec=1, fds_avg, fddelta;
      float fdnorm, fdwait_ratio, fdmulti;
      time_t threadwait = fridgethr_getwait(ctx);
@@ -940,13 +886,6 @@ lru_run(struct fridgethr_context *ctx)
 		  currentopen, lru_state.futility,
 		  totalwork, lru_state.biggest_window, extremis,
 		  LRU_N_Q_LANES, lru_state.fds_lowat);
-
-     /* Process LRU cleanup queue */
-     n_finalized = cache_inode_lru_cleanup();
-
-     LogDebug(COMPONENT_CACHE_INODE_LRU,
-	      "LRU cleanup, reclaimed %d entries",
-	      n_finalized);
 }
 
 /* Public functions */
@@ -1406,6 +1345,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
                       uint32_t flags)
 {
 	uint64_t refcnt;
+	enum lru_q_id qid;
 
 	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 	if (unlikely(refcnt == 0)) {
@@ -1426,6 +1366,9 @@ cache_inode_lru_unref(cache_entry_t *entry,
 			goto out;
 		}
 
+		/* save qid */
+		qid = entry->lru.qid;
+
 		/* Really zero.  Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
 		if (q) {
@@ -1437,9 +1380,14 @@ cache_inode_lru_unref(cache_entry_t *entry,
 		if (! qlocked)
 			QUNLOCK(qlane);
 
-		/* XXX now just cleans (ahem) */
+                /* inline cleanup */
+                if (qid == LRU_ENTRY_CLEANUP) {
+			state_wipe_file(entry);
+                }
+
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
+
 		atomic_dec_int64_t(&lru_state.entries_used);
 	} /* refcnt == 0 */
 out:

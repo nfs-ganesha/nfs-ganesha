@@ -61,11 +61,8 @@
  * stale).
  *
  * To simplify interaction with the SAL, this function no longer
- * calls finalizes the entry, but schedules the entry for out-of-line
+ * finalizes the entry, but schedules the entry for out-of-line
  * cleanup, after first making it unreachable.
- *
- * The entry refcount is not decremented, logically the sentinel
- * ref is owned by the cleanup queue.
  *
  * @param[in] entry The entry to be killed
  */
@@ -76,10 +73,10 @@ cache_inode_kill_entry(cache_entry_t *entry)
      LogInfo(COMPONENT_CACHE_INODE,
              "Using cache_inode_kill_entry for entry %p", entry);
 
-     cache_inode_lru_cleanup_push(entry);
+     cih_remove_checked(entry); /* !reachable, drop sentinel ref */
 
-     /* And zap it */
-     cih_remove_checked(entry);
+     /* queue for cleanup */
+     cache_inode_lru_cleanup_push(entry);
 
 } /* cache_inode_kill_entry */
 /** @} */
