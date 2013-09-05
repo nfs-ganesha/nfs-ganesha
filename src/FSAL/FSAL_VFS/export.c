@@ -581,6 +581,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
         if(retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_fsal_create: out of memory for object");
+                gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 	vfs_export_ops_init(myself->export.ops);
