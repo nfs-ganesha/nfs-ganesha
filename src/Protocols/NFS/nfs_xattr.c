@@ -1138,6 +1138,8 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
     {
       pres->res_read3.status = NFS3ERR_IO;
       rc = NFS_REQ_OK;
+      if(data)
+          gsh_free(data);
       goto out;
     }
 
