@@ -1088,9 +1088,9 @@ int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, struct bitmap4 * Bitmap);
 int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, struct bitmap4 * Bitmap);
-int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
+bool nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
-int nfs4_Fattr_Supported(fattr4 * Fattr);
+bool nfs4_Fattr_Supported(fattr4 * Fattr);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 

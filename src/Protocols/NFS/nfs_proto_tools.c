@@ -237,7 +237,7 @@ nfs_SetWccData(const struct pre_op_attr *before_attr,
  * @todo: Not implemented for NOW BUGAZEOMEU
  *
  */
-int nfs_RetryableError(cache_inode_status_t cache_status)
+bool nfs_RetryableError(cache_inode_status_t cache_status)
 {
   switch (cache_status)
     {
@@ -3599,10 +3599,10 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 	      continue;
       }
       if(((int)fattr4tab[attribute].access & access) != access)
-        return 0;
+        return false;
     }
 
-  return 1;
+  return true;
 }                               /* nfs4_Fattr_Check_Access */
 
 /**
@@ -3614,11 +3614,11 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
  * @param Fattr      [IN] pointer to NFSv4 attributes.
  * @param access     [IN] access to be checked, either FATTR4_ATTR_READ or FATTR4_ATTR_WRITE
  *
- * @return 1 if successful, 0 otherwise.
+ * @return true if successful, false otherwise.
  *
  */
 
-int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
+bool nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
 {
   return nfs4_Fattr_Check_Access_Bitmap(&Fattr->attrmask, access);
 }                               /* nfs4_Fattr_Check_Access */
@@ -3653,11 +3653,11 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
  *
  * @param Fattr      [IN] pointer to NFSv4 attributes.
  *
- * @return 1 if successful, 0 otherwise.
+ * @return true if successful, false otherwise.
  *
  */
 
-int nfs4_Fattr_Supported(fattr4 * Fattr)
+bool nfs4_Fattr_Supported(fattr4 * Fattr)
 {
   return nfs4_Fattr_Supported_Bitmap(&Fattr->attrmask);
 }                               /* nfs4_Fattr_Supported */
@@ -3684,10 +3684,10 @@ bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
                    fattr4tab[attribute].name, fattr4tab[attribute].supported);
 
       if( !fattr4tab[attribute].supported)
-        return 0;
+        return false;
     }
 
-  return 1;
+  return true;
 }                               /* nfs4_Fattr_Supported */
 
 /**
@@ -3699,7 +3699,7 @@ bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
  * @param Fattr1      [IN] pointer to NFSv4 attributes.
  * @param Fattr2      [IN] pointer to NFSv4 attributes.
  *
- * @return true if attributes are the same, false otherwise, but -1 if RDATTR_ERROR is set
+ * @return 1 if attributes are the same, 0 otherwise, but -1 if RDATTR_ERROR is set
  *
  */
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
@@ -3707,12 +3707,11 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   u_int LastOffset;
   uint32_t i;
   uint32_t k;
-  unsigned int cmp = 0;
   u_int len = 0;
   int attribute_to_set = 0;
 
   if(Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)      /* different mask */
-    return false;
+    return 0;
 
   for(i = 0; i < Fattr1->attrmask.bitmap4_len; i++)
 	  if(Fattr1->attrmask.map[i] != Fattr2->attrmask.map[i])
@@ -3720,7 +3719,6 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   if(attribute_is_set(&Fattr1->attrmask, FATTR4_RDATTR_ERROR))
 	  return -1;
 
-  cmp = 0;
   LastOffset = 0;
   len = 0;
 
@@ -3744,19 +3742,20 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
         case FATTR4_SUPPORTED_ATTRS:
           memcpy(&len, (char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
                  sizeof(u_int));
-          cmp +=
-              memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
-                     (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
-                     sizeof(u_int));
+          if(memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
+                    (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
+                    sizeof(u_int)) != 0)
+            return 0;
 
           len = htonl(len);
           LastOffset += sizeof(u_int);
 
           for(k = 0; k < len; k++)
             {
-              cmp += memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
-                            (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
-                            sizeof(uint32_t));
+              if(memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
+                        (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
+                        sizeof(uint32_t)) != 0)
+                return 0;
               LastOffset += sizeof(uint32_t);
             }
 
@@ -3768,12 +3767,15 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
           memcpy(&len, (char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
                  sizeof(u_int));
           len = ntohl(len);     /* xdr marshalling on fattr4 */
-          cmp += memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
-                        (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
-                        sizeof(u_int));
+          if(memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
+                    (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
+                    sizeof(u_int)) != 0)
+            return 0;
           LastOffset += sizeof(u_int);
-          cmp += memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
-                        (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset), len);
+          if(memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
+                    (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
+                    len) != 0)
+            return 0;
           break;
 
         case FATTR4_TYPE:
@@ -3828,9 +3830,10 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
         case FATTR4_TIME_MODIFY:
         case FATTR4_TIME_MODIFY_SET:
         case FATTR4_MOUNTED_ON_FILEID:
-          cmp += memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
-                        (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
-                        fattr4tab[attribute_to_set].size_fattr4);
+          if(memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
+                    (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
+                    fattr4tab[attribute_to_set].size_fattr4) != 0)
+            return 0;
           break;
 
         default:
@@ -3838,10 +3841,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
           break;
         }
     }
-  if(cmp == 0)
-    return true;
-  else
-    return false;
+  return 1;
 }
 
 /**

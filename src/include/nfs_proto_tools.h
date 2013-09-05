@@ -181,7 +181,7 @@ void nfs_SetPreOpAttr(cache_entry_t *entry,
                       struct req_op_context *ctx,
                       pre_op_attr *attr);
 
-int nfs_RetryableError(cache_inode_status_t cache_status);
+bool nfs_RetryableError(cache_inode_status_t cache_status);
 
 int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr,
                             sattr3 *psattr);
