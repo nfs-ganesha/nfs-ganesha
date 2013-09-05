@@ -109,6 +109,8 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
 		    (res_SECINFO4->status != NFS4ERR_WRONGSEC)) {
 			/* reuse lookup result, need to set the correct OP */
 			resp->resop = NFS4_OP_SECINFO;
+                        if(secinfo_fh_name)
+                            gsh_free(secinfo_fh_name);
 			return res_SECINFO4->status;
 		}
 		/* reuse lookup result, need to set the correct OP */
