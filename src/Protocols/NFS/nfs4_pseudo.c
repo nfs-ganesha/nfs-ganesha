@@ -620,6 +620,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                    "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
                    data->pexport->id, data->pexport->fullpath);
           res_LOOKUP4->status = NFS4ERR_NOENT;
+          if(name)
+              gsh_free(name);
           return res_LOOKUP4->status;
         }
 
