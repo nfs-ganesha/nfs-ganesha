@@ -1049,7 +1049,8 @@ fsal_status_t fsal_internal_access(int mntfd,                            /* IN *
  * support is enabled. */
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
                                        struct gpfs_file_handle *p_handle,
-                                       gpfsfsal_xstat_t *p_buffxstat)
+                                       gpfsfsal_xstat_t *p_buffxstat,
+                                       uint32_t *grace_period_attr)
 {
   int rc;
   struct xstat_arg xstatarg;
@@ -1076,7 +1077,7 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 #ifdef _USE_NFS4_ACL
   xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 #else
-xstatarg.attr_valid = XATTR_STAT;
+  xstatarg.attr_valid = XATTR_STAT;
 #endif
   xstatarg.mountdirfd = dirfd;
   xstatarg.handle = p_handle;
@@ -1087,6 +1088,7 @@ xstatarg.attr_valid = XATTR_STAT;
 #endif
   xstatarg.attr_changed = 0;
   xstatarg.buf = &p_buffxstat->buffstat;
+  xstatarg.expire_attr = grace_period_attr;
 
   rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d",

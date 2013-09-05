@@ -460,6 +460,8 @@ struct attrlist {
                                         the directory on which the
                                         filesystem is mounted. */
         uint64_t generation; /*< Generation number for this file */
+	uint32_t grace_period_attr; /*< Expiration time interval in seconds
+					for attributes. Settable by FSAL. */
 };
 
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
