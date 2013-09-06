@@ -356,10 +356,10 @@ struct cache_inode_populate_cb_state {
  */
 
 static bool
-populate(const struct req_op_context *opctx,
-         const char *name,
-         void *dir_state,
-         fsal_cookie_t cookie)
+populate_dirent(const struct req_op_context *opctx,
+		const char *name,
+		void *dir_state,
+		fsal_cookie_t cookie)
 {
         struct cache_inode_populate_cb_state *state
                 = (struct cache_inode_populate_cb_state *)dir_state;
@@ -372,7 +372,7 @@ populate(const struct req_op_context *opctx,
         fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
         if(FSAL_IS_ERROR(fsal_status)) {
                 *state->status = cache_inode_error_convert(fsal_status);
-                goto error;
+		return (false);
         }
         *state->status = cache_inode_new_entry(entry_hdl,
 					       CACHE_INODE_FLAG_NONE,
@@ -381,20 +381,21 @@ populate(const struct req_op_context *opctx,
                 *state->status = CACHE_INODE_NOT_FOUND;
                 /* we do not free entry_hdl because it is consumed by
                    cache_inode_new_entry */
-                return false;
+                return (false);
         }
         *state->status = cache_inode_add_cached_dirent(state->directory,
                                                        name,
                                                        cache_entry,
                                                        &new_dir_entry);
+        /* return initial ref */
+        cache_inode_put(cache_entry);
+
         if (*state->status != CACHE_INODE_SUCCESS &&
             *state->status != CACHE_INODE_ENTRY_EXISTS) {
-                goto error;
+		return (false);
         }
-        return true;
 
-error:
-        return false;
+        return (true);
 }
 
 /**
@@ -446,7 +447,7 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
                                                     req_ctx,
                                                     NULL, /* starting at the beginning */
                                                     (void *)&state,
-                                                    populate,
+                                                    populate_dirent,
                                                     &eod);
   if(FSAL_IS_ERROR(fsal_status)) {
       if (fsal_status.major == ERR_FSAL_STALE) {
