@@ -70,6 +70,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
 #ifdef _USE_NFS4_ACL
   fsal_accessflags_t access_mask = 0;
 #endif
+  uint32_t grace_period_attr = 0; /*< Expiration time for attributes. */
 
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
@@ -79,11 +80,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,              /* IN *
 
   mntfd = gpfs_get_root_fd(export);
 
-  st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat);
+  st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat,
+                                &grace_period_attr);
   if(FSAL_IS_ERROR(st))
     return(st);
 
   /* convert attributes */
+  p_object_attributes->grace_period_attr = grace_period_attr;
   st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, p_object_attributes);
   if(FSAL_IS_ERROR(st))
     {

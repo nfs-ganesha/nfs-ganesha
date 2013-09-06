@@ -538,6 +538,7 @@ struct callback_arg
     int *flags;
     struct stat *buf;
     struct nfsd4_pnfs_deviceid *dev_id;
+    uint32_t *expire_attr;
 };
 #define GPFS_INTERFACE_VERSION 10000
 #define GPFS_INTERFACE_SUB_VER     1
@@ -570,6 +571,8 @@ struct callback_arg
 /* define flags for attr_valid */
 #define XATTR_STAT      (1 << 0)
 #define XATTR_ACL       (1 << 1)
+#define XATTR_NO_CACHE  (1 << 2)
+#define XATTR_EXPIRE    (1 << 3)
 
 /* define flags for attr_chaged */
 #define XATTR_MODE      (1 << 0) //  01
@@ -592,6 +595,7 @@ struct xstat_arg
     struct gpfs_acl *acl;
     int attr_changed;
     struct stat *buf;
+    uint32_t *expire_attr;
 };
 
 struct xstat_access_arg

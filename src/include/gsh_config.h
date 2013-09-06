@@ -521,7 +521,7 @@ typedef struct cache_inode_parameter {
 	/** Expiration type for attributes.  Defaults to never,
 	    settable with Attr_Expiration_Time. */
 	cache_inode_expire_type_t expire_type_attr;
-	/** Expiration time for attributes.  Settable with
+	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
 	time_t grace_period_attr;
 	/** Expiration type for symbolic links, defaults to never.

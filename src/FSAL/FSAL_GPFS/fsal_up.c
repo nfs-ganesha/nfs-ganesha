@@ -55,6 +55,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   unsigned int              * fhP;
   int                        retry = 0;
   struct gsh_buffdesc        key;
+  uint32_t                   grace_period_attr = 0;
 
   snprintf(thr_name, sizeof(thr_name), "gpfs_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
@@ -109,6 +110,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       callback.buf        = &buf;
       callback.fl         = &fl;
       callback.dev_id     = &dev_id;
+      callback.expire_attr= &grace_period_attr;
 
 #ifdef _VALGRIND_MEMCHECK
       memset(callback.handle->f_handle, 0, callback.handle->handle_size);
@@ -160,7 +162,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       LogFullDebug(COMPONENT_FSAL_UP,
                    "inode update: flags:%x callback.handle:%p"
                    " handle size = %u handle_type:%d handle_version:%d"
-                   " key_size = %u handle_fsid=%d.%d f_handle:%p",
+                   " key_size = %u handle_fsid=%d.%d f_handle:%p expire: %d",
                    *callback.flags, callback.handle,
                    callback.handle->handle_size,
                    callback.handle->handle_type,
@@ -168,7 +170,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                    callback.handle->handle_key_size,
                    callback.handle->handle_fsid[0],
                    callback.handle->handle_fsid[1],
-                   callback.handle->f_handle);
+                   callback.handle->f_handle,
+                   grace_period_attr);
 
       callback.handle->handle_version = OPENHANDLE_VERSION;
 
@@ -303,6 +306,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_ATIME;
 
 	        posix2fsal_attributes(&buf, &attr);
+	        attr.grace_period_attr = grace_period_attr;
 		rc = event_func->update(gpfs_fsal_up_ctx->gf_export,
 					&key,
 					&attr,
