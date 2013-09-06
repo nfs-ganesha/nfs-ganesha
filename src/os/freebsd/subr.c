@@ -125,18 +125,20 @@ int vfs_utimes(int fd, const struct timespec *ts)
 }
 
 uid_t setuser(uid_t uid) {
-	uid_t orig_uid = syscall(SYS_seteuid, uid);
-	if (orig_uid != uid && syscall(SYS_seteuid, uid) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Could not set user identity");
-	}
+        int rc = 0;
+        uid_t orig_uid = syscall(SYS_getuid);
+        if ((rc = syscall(SYS_seteuid, uid)) != 0) {
+            LogCrit(COMPONENT_FSAL,
+                    "Could not set user identity");
+        }
 	return orig_uid;
 }
 
 gid_t setgroup(gid_t gid) {
-	gid_t orig_gid = syscall(SYS_setegid, gid);
-	if (orig_gid != gid && syscall(SYS_setegid, gid) != 0) {
-		LogCrit(COMPONENT_FSAL,
+        int rc = 0;
+        gid_t orig_gid = syscall(SYS_getgid);
+        if ((rc = syscall(SYS_setegid, gid)) != 0) {
+                LogCrit(COMPONENT_FSAL,
 			"Could not set group identity");
 	}
 	return orig_gid;
