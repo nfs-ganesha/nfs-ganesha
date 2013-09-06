@@ -3138,10 +3138,12 @@ sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4)
      (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF) &&
      (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF))
     {
+      void *ab;
       memset(ipv4, 0, sizeof(*ipv4));
+      ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
 
       paddr->sin_port        = psockaddr_in6->sin6_port;
-      paddr->sin_addr.s_addr = *(in_addr_t *)&psockaddr_in6->sin6_addr.s6_addr[12];
+      paddr->sin_addr.s_addr = *(in_addr_t *) ab;
       ipv4->ss_family        = AF_INET;
 
       if(isFullDebug(COMPONENT_DISPATCH))
