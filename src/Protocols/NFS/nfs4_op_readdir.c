@@ -52,7 +52,7 @@ struct nfs4_readdir_cb_data
                                in the array*/
      nfsstat4 error; /*< Set to a value other than NFS4_OK if the
                          callback function finds a fatal error. */
-     struct bitmap4 req_attr; /*< The requested attributes */
+     struct bitmap4 *req_attr; /*< The requested attributes */
      compound_data_t *data; /*< The compound data, so we can produce
                                 nfs_fh4s. */
 };
@@ -73,14 +73,12 @@ struct nfs4_readdir_cb_data
  * @param[in]     cookie The readdir cookie for the current entry
  */
 
-static bool
-nfs4_readdir_callback(void* opaque,
-                      const char *name,
-                      const struct fsal_obj_handle *handle,
-                      uint64_t cookie)
+cache_inode_status_t
+nfs4_readdir_callback(void *opaque,
+                      const struct attrlist *attr)
 {
-     struct nfs4_readdir_cb_data *tracker =
-          (struct nfs4_readdir_cb_data *) opaque;
+     struct cache_inode_readdir_cb_parms *cb_parms = opaque;
+     struct nfs4_readdir_cb_data *tracker = cb_parms->opaque;
      size_t namelen = 0;
      char val_fh[NFS4_FHSIZE];
      nfs_fh4 entryFH = {
@@ -89,7 +87,8 @@ nfs4_readdir_callback(void* opaque,
      };
 
      if (tracker->total_entries == tracker->count) {
-          return false;
+          cb_parms->in_result = false;
+          return CACHE_INODE_SUCCESS;
      }
      memset(val_fh, 0, NFS4_FHSIZE);
      /* Bits that don't require allocation */
@@ -97,43 +96,46 @@ nfs4_readdir_callback(void* opaque,
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return false;
+          cb_parms->in_result = false;
+          return CACHE_INODE_SUCCESS;
      }
      tracker->mem_left -= sizeof(entry4);
-     tracker->entries[tracker->count].cookie = cookie;
+     tracker->entries[tracker->count].cookie = cb_parms->cookie;
      tracker->entries[tracker->count].nextentry = NULL;
 
      /* The filename.  We don't use str2utf8 because that has an
         additional copy into a buffer before copying into the
         destination. */
 
-     namelen = strlen(name);
+     namelen = strlen(cb_parms->name);
      if (tracker->mem_left < (namelen + 1)) {
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return false;
+          cb_parms->in_result = false;
+          return CACHE_INODE_SUCCESS;
      }
      tracker->mem_left -= (namelen);
      tracker->entries[tracker->count].name.utf8string_len = namelen;
      tracker->entries[tracker->count].name.utf8string_val
           = gsh_malloc(namelen);
      memcpy(tracker->entries[tracker->count].name.utf8string_val,
-	    name, namelen);
+	    cb_parms->name, namelen);
 
-     if(attribute_is_set(&tracker->req_attr, FATTR4_FILEHANDLE)) {
-          if (!nfs4_FSALToFhandle(&entryFH, handle)) {
+     if(attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
+          if (!nfs4_FSALToFhandle(&entryFH, cb_parms->entry->obj_handle)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-               return false;
+               cb_parms->in_result = false;
+               return CACHE_INODE_SUCCESS;
           }
      }
 
-     if (nfs4_FSALattr_To_Fattr(&handle->attributes,
+     if (nfs4_FSALattr_To_Fattr(attr,
                                 &tracker->entries[tracker->count].attrs,
                                 tracker->data,
                                 &entryFH,
-                                &tracker->req_attr) != 0) {
+                                tracker->req_attr) != 0) {
           LogFatal(COMPONENT_NFS_V4,
                    "nfs4_FSALattr_To_Fattr failed to convert attr");
      }
@@ -145,11 +147,14 @@ nfs4_readdir_callback(void* opaque,
            .attrs.attr_vals.attrlist4_len))) {
           gsh_free(tracker->entries[tracker->count]
                    .attrs.attr_vals.attrlist4_val);
+          tracker->entries[tracker->count].attrs.attr_vals.attrlist4_val = NULL;
           gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+          tracker->entries[tracker->count].name.utf8string_val = NULL;
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return false;
+          cb_parms->in_result = false;
+          return CACHE_INODE_SUCCESS;
      }
      tracker->mem_left -=
           (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
@@ -163,7 +168,8 @@ nfs4_readdir_callback(void* opaque,
      }
 
      ++(tracker->count);
-     return true;
+     cb_parms->in_result = true;
+     return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -185,7 +191,9 @@ free_entries(entry4 *entries)
           if (entry->attrs.attr_vals.attrlist4_val != NULL) {
                gsh_free(entry->attrs.attr_vals.attrlist4_val);
           }
-          gsh_free(entry->name.utf8string_val);
+          if(entry->name.utf8string_val != NULL) {
+               gsh_free(entry->name.utf8string_val);
+          }
      }
      gsh_free(entries);
 
@@ -319,7 +327,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      tracker.mem_left = maxcount - sizeof(READDIR4resok);
      tracker.count = 0;
      tracker.error = NFS4_OK;
-     tracker.req_attr = arg_READDIR4->attr_request;
+     tracker.req_attr = &arg_READDIR4->attr_request;
      tracker.data = data;
 
      /* Perform the readdir operation */

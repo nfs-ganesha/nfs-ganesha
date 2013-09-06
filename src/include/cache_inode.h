@@ -495,11 +495,16 @@ typedef enum cache_inode_status_t {
  * structure has not been added.
  */
 
-typedef bool(*cache_inode_readdir_cb_t)(
-	void *opaque,
-	const char *name,
-	const struct fsal_obj_handle *obj_handle,
-	uint64_t cookie);
+struct cache_inode_readdir_cb_parms
+{
+	void *opaque; /*< Protocol specific parms */
+	const char *name; /*< Dir entry name */
+	cache_entry_t *entry; /*< Cache entry */
+	uint64_t cookie; /*< Directory cookie for this entry */
+	bool in_result; /*< true if the entry has been added to the caller's
+	                 * responde, or false if the structure is filled and
+	                 * the entry has not been added. */
+};
 
 /**
  * @brief Type of callback for cache_inode_getattr
@@ -684,8 +689,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
 					 unsigned int *nbfound,
 					 bool *eod_met,
 					 struct req_op_context *req_ctx,
-					 cache_inode_readdir_cb_t cb,
-					 void *cb_opaque);
+					 cache_inode_getattr_cb_t cb,
+					 void *opaque);
 
 cache_inode_status_t cache_inode_add_cached_dirent(
 	cache_entry_t *parent,

@@ -481,7 +481,7 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
  * @param[out] eod_met   Whether the end of directory was met
  * @param[in]  req_ctx   Request context
  * @param[in]  cb        The callback function to receive entries
- * @param[in]  cb_opaque A pointer passed as the first argument to cb
+ * @param[in]  opaque    A pointer passed to be passed in cache_inode_readdir_cb_parms
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE if entry is not related to a directory
@@ -493,8 +493,8 @@ cache_inode_readdir(cache_entry_t *directory,
                     unsigned int *nbfound,
                     bool *eod_met,
                     struct req_op_context *req_ctx,
-                    cache_inode_readdir_cb_t cb,
-                    void *cb_opaque)
+                    cache_inode_getattr_cb_t cb,
+                    void *opaque)
 {
      /* The entry being examined */
      cache_inode_dir_entry_t *dirent = NULL;
@@ -507,8 +507,8 @@ cache_inode_readdir(cache_entry_t *directory,
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
      /* True if the most recently traversed directory entry has been
         added to the caller's result. */
-     bool in_result = true;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     struct cache_inode_readdir_cb_parms cb_parms = {opaque, NULL, NULL, 0, true};
 
      /* readdir can be done only with a directory */
      if (directory->type != DIRECTORY) {
@@ -600,7 +600,7 @@ cache_inode_readdir(cache_entry_t *directory,
      *nbfound = 0;
      *eod_met = false;
 
-     while (in_result && dirent_node) {
+     while (cb_parms.in_result && dirent_node) {
           cache_entry_t *entry = NULL;
           cache_inode_status_t lookup_status = 0;
 
@@ -632,20 +632,22 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent, dirent->name,
                        dirent->hk.k, dirent->hk.p);
 
-          status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+          cb_parms.name = dirent->name;
+          cb_parms.entry = entry;
+          cb_parms.cookie = dirent->hk.k;
+
+          status = cache_inode_getattr(entry, req_ctx, &cb_parms, cb);
+
           if (status != CACHE_INODE_SUCCESS) {
               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
               goto unlock_dir;
           }
 
-          in_result = cb(cb_opaque,
-                         dirent->name,
-                         entry->obj_handle,
-                         dirent->hk.k);
           (*nbfound)++;
-          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
           cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-          if (!in_result) {
+
+          if (!cb_parms.in_result) {
                break;
           }
           dirent_node = avltree_next(dirent_node);
@@ -654,7 +656,7 @@ cache_inode_readdir(cache_entry_t *directory,
      /* We have reached the last node and every node traversed was
         added to the result */;
 
-     if (!dirent_node && in_result) {
+     if (!dirent_node && cb_parms.in_result) {
           *eod_met = true;
      } else {
           *eod_met = false;

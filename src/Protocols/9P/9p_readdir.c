@@ -82,23 +82,28 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie, 
   return cursor;
 }
 
-static bool _9p_readdir_callback( void                         * opaque,
-                                  const char                   * name,
-                                  const struct fsal_obj_handle * handle,
-                                  uint64_t                       cookie)
+static cache_inode_status_t
+_9p_readdir_callback( void *opaque,
+                      const struct attrlist *attr)
 {
-   _9p_cb_data_t * tracker = opaque ;
-   int name_len = strlen(name);
+   struct cache_inode_readdir_cb_parms *cb_parms = opaque;
+   _9p_cb_data_t * tracker = cb_parms->opaque ;
+   int name_len = strlen(cb_parms->name);
    u8 qid_type, d_type;
 
   if( tracker == NULL )
-   return false ;
+    {
+      cb_parms->in_result = false;
+      return CACHE_INODE_SUCCESS;
+    }
 
   if( tracker->count + 24 + name_len > tracker->max )
-   return false ;
+    {
+      cb_parms->in_result = false;
+      return CACHE_INODE_SUCCESS;
+    }
 
-
-  switch( handle->attributes.type ) 
+  switch( attr->type ) 
    {
       case FIFO_FILE:
         qid_type = _9P_QTFILE ;
@@ -137,15 +142,18 @@ static bool _9p_readdir_callback( void                         * opaque,
         break ;
     
       default:
-        return false;  
+        cb_parms->in_result = false;
+        return CACHE_INODE_SUCCESS;
    }
 
   /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
   tracker->count += 24 + name_len ;
  
-  tracker->cursor = fill_entry(tracker->cursor, qid_type, handle->attributes.fileid, cookie, d_type, name_len, name);
+  tracker->cursor = fill_entry(tracker->cursor, qid_type, attr->fileid,
+                               cb_parms->cookie, d_type, name_len, cb_parms->name);
 
-  return true ;
+  cb_parms->in_result = true;
+  return CACHE_INODE_SUCCESS;
 }
 
 int _9p_readdir( _9p_request_data_t * preq9p,
