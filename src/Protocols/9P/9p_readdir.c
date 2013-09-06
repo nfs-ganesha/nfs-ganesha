@@ -87,14 +87,14 @@ static bool _9p_readdir_callback( void                         * opaque,
                                   const struct fsal_obj_handle * handle,
                                   uint64_t                       cookie)
 {
-   _9p_cb_data_t * cb_data = opaque ;
+   _9p_cb_data_t * tracker = opaque ;
    int name_len = strlen(name);
    u8 qid_type, d_type;
 
-  if( cb_data == NULL )
+  if( tracker == NULL )
    return false ;
 
-  if( cb_data->count + 24 + name_len > cb_data->max )
+  if( tracker->count + 24 + name_len > tracker->max )
    return false ;
 
 
@@ -141,9 +141,9 @@ static bool _9p_readdir_callback( void                         * opaque,
    }
 
   /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
-  cb_data->count += 24 + name_len ;
+  tracker->count += 24 + name_len ;
  
-  cb_data->cursor = fill_entry(cb_data->cursor, qid_type, handle->attributes.fileid, cookie, d_type, name_len, name);
+  tracker->cursor = fill_entry(tracker->cursor, qid_type, handle->attributes.fileid, cookie, d_type, name_len, name);
 
   return true ;
 }
@@ -154,7 +154,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                  char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  _9p_cb_data_t cb_data ;
+  _9p_cb_data_t tracker ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -271,9 +271,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    }
 
 
-  cb_data.cursor = cursor ;
-  cb_data.count = dcount ;
-  cb_data.max = *count ;
+  tracker.cursor = cursor ;
+  tracker.count = dcount ;
+  tracker.max = *count ;
 
   cache_status = cache_inode_readdir(pfid->pentry,
 				     cookie,
@@ -281,7 +281,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 				     &eod_met,
 				     &pfid->op_context,
 				     _9p_readdir_callback,
-				     &cb_data);
+				     &tracker);
   if(cache_status != CACHE_INODE_SUCCESS)
    {
      /* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
@@ -291,10 +291,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    }
 
 
-  cursor = cb_data.cursor;
+  cursor = tracker.cursor;
 
   /* Set buffsize in previously saved position */
-  _9p_setvalue( dcount_pos, cb_data.count, u32 ) ;
+  _9p_setvalue( dcount_pos, tracker.count, u32 ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;

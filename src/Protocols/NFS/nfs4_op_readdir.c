@@ -221,7 +221,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      uint64_t cookie = 0;
      unsigned int estimated_num_entries = 0;
      unsigned int num_entries = 0;
-     struct nfs4_readdir_cb_data cb_data;
+     struct nfs4_readdir_cb_data tracker;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
      resp->resop = NFS4_OP_READDIR;
@@ -258,7 +258,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
         with 500 max entries */
 
      estimated_num_entries = 50;
-     cb_data.total_entries = estimated_num_entries;
+     tracker.total_entries = estimated_num_entries;
 
      LogFullDebug(COMPONENT_NFS_V4,
                   "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu "
@@ -315,12 +315,12 @@ nfs4_op_readdir(struct nfs_argop4 *op,
 
      entries = gsh_calloc(estimated_num_entries,
                           sizeof(entry4));
-     cb_data.entries = entries;
-     cb_data.mem_left = maxcount - sizeof(READDIR4resok);
-     cb_data.count = 0;
-     cb_data.error = NFS4_OK;
-     cb_data.req_attr = arg_READDIR4->attr_request;
-     cb_data.data = data;
+     tracker.entries = entries;
+     tracker.mem_left = maxcount - sizeof(READDIR4resok);
+     tracker.count = 0;
+     tracker.error = NFS4_OK;
+     tracker.req_attr = arg_READDIR4->attr_request;
+     tracker.data = data;
 
      /* Perform the readdir operation */
      cache_status = cache_inode_readdir(dir_entry,
@@ -329,17 +329,17 @@ nfs4_op_readdir(struct nfs_argop4 *op,
 					&eod_met,
 					data->req_ctx,
 					nfs4_readdir_callback,
-					&cb_data);
+					&tracker);
      if (cache_status != CACHE_INODE_SUCCESS) {
           res_READDIR4->status = nfs4_Errno(cache_status);
           goto out;
      }
 
-     if ((res_READDIR4->status = cb_data.error) != NFS4_OK) {
+     if ((res_READDIR4->status = tracker.error) != NFS4_OK) {
           goto out;
      }
 
-     if (cb_data.count != 0) {
+     if (tracker.count != 0) {
           /* Put the entry's list in the READDIR reply if there were any. */
           res_READDIR4->READDIR4res_u.resok4.reply.entries = entries;
      } else {
