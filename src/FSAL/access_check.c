@@ -448,11 +448,11 @@ gid_t * ganesha_groups = NULL;
 
 void fsal_set_credentials(const struct user_cred *creds)
 {
-  setuser(creds->caller_uid);
-  setgroup(creds->caller_gid);
   if(set_threadgroups(creds->caller_glen,
              creds->caller_garray) != 0)
     LogFatal(COMPONENT_FSAL, "Could not set Context credentials");
+  setgroup(creds->caller_gid);
+  setuser(creds->caller_uid);
 }
 
 void fsal_save_ganesha_credentials()
