@@ -382,37 +382,4 @@ out:
      return status;
 }
 
-
-/**
- *
- * @brief Sticky bit access check
- *
- * @param[in] parent      The directory to be checked
- * @param[in] entry       The object to be checked
- * @param[in] req_ctx     Request context
- *
- * @return CACHE_INODE_SUCCESS if operation is a success
- */
-cache_inode_status_t
-cache_inode_check_sticky(cache_entry_t *parent,
-                         cache_entry_t *entry,
-                         struct req_op_context *req_ctx)
-{
-    cache_inode_status_t status = CACHE_INODE_SUCCESS;
-
-    PTHREAD_RWLOCK_rdlock(&parent->attr_lock);
-    PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-
-    if (!sticky_dir_allows(parent->obj_handle,
-                           entry->obj_handle,
-                           req_ctx->creds)) {
-        status = CACHE_INODE_FSAL_EPERM;
-    }
-
-    PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-    PTHREAD_RWLOCK_unlock(&parent->attr_lock);
-
-    return status;
-}
-
 /** @} */

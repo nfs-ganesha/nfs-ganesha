@@ -83,7 +83,6 @@ static struct fsal_staticfsinfo_t proxy_info = {
 	.homogenous = true,
 	.supported_attrs = SUPPORTED_ATTRIBUTES,
 	.xattr_access_rights = 0400,
-	.dirs_have_sticky_bit = true
 };
 
 static int

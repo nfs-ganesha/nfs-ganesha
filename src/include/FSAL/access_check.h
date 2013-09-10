@@ -17,31 +17,6 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t * allowed,
 			       fsal_accessflags_t * denied);
 
-
-/* sticky bit access check for delete and rename actions
- * obj_hdl == NULL, just do directory check
- */
-
-static inline bool sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
-                                     struct fsal_obj_handle *obj_hdl,
-                                     const struct user_cred *creds)
-{
-	struct fsal_export *exp_hdl = dir_hdl->export;
-	struct attrlist *dir_attr = &dir_hdl->attributes;
-	struct attrlist *obj_attr = NULL;
-	bool retval = true;
-
-	if(obj_hdl)
-		obj_attr = &obj_hdl->attributes;
-	if(exp_hdl->ops->fs_supports(exp_hdl, fso_dirs_have_sticky_bit) &&
-	   dir_attr->mode & S_ISVTX &&
-	   dir_attr->owner != creds->caller_uid &&
-	   (obj_attr && (obj_attr->owner != creds->caller_uid)) &&
-	   creds->caller_uid != 0)
-		retval = false;
-	return retval;
-}
-
 int display_fsal_v4mask(struct display_buffer * dspbuf,
                         fsal_aceperm_t          v4mask,
                         bool                    is_dir);

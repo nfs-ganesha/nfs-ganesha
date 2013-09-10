@@ -531,8 +531,6 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->homogenous;
 	case fso_auth_exportpath_xdev:
 		return !!info->auth_exportpath_xdev;
-	case fso_dirs_have_sticky_bit:
-		return !!info->dirs_have_sticky_bit;
 	case fso_delegations:
 		return !!info->delegations;
         case fso_pnfs_ds_supported:

@@ -427,9 +427,6 @@ static bool fs_supports(struct fsal_export *export_pub,
 	case fso_auth_exportpath_xdev:
 		return false;
 
-	case fso_dirs_have_sticky_bit:
-		return true;
-
 	case fso_accesscheck_support:
 		return false;
 

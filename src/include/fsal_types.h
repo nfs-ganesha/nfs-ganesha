@@ -532,7 +532,6 @@ typedef enum enum_fsal_fsinfo_options {
         fso_cansettime,
         fso_homogenous,
         fso_auth_exportpath_xdev,
-        fso_dirs_have_sticky_bit,
         fso_delegations,
         fso_accesscheck_support,
         fso_share_support,
@@ -581,7 +580,6 @@ struct fsal_staticfsinfo_t
         bool share_support; /*< FS supports share reservation? */
         bool share_support_owner;  /*< FS supports share reservation
                                        with open owners ? */
-        bool dirs_have_sticky_bit; /*< fsal does bsd/posix "sticky bit" */
         bool delegations; /*< fsal supports delegations */
         bool pnfs_file;   /*< fsal supports file pnfs */
 };

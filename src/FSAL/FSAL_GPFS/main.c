@@ -82,7 +82,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
         .accesscheck_support = true,
         .share_support = true,
         .share_support_owner = false,
-	.dirs_have_sticky_bit = true,
 	.delegations = false, /* not working with pNFS */
 	.pnfs_file = true,
 };
