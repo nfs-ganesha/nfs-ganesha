@@ -158,7 +158,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           }
           status = cache_inode_error_convert(fsal_status);
           *entry = NULL;
-          return status;
+          goto out;
      }
 
      /* Allocation of a new entry in the cache */
@@ -167,7 +167,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 				    entry);
 
      if (unlikely(! *entry))
-	     return status;
+	     goto out;
 
      /* Entry was found in the FSAL, add this entry to the
 	parent directory */
