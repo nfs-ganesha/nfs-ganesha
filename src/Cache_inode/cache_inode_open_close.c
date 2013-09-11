@@ -145,7 +145,6 @@ cache_inode_open(cache_entry_t *entry,
 {
      /* Error return from FSAL */
      fsal_status_t fsal_status = {0, 0};
-     fsal_accessflags_t access_type = FSAL_O_CLOSED;
      fsal_openflags_t current_flags;
      struct fsal_obj_handle *obj_hdl;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
@@ -164,31 +163,11 @@ cache_inode_open(cache_entry_t *entry,
           goto out;
      }
 
-     if (openflags & FSAL_O_READ)
-	     access_type |= FSAL_R_OK;
-     if (openflags & FSAL_O_WRITE)
-	     access_type |= FSAL_W_OK;
-
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
      }
 
-     /* access check but based on fsal_open_flags_t, not fsal_access_flags_t
-      * this may be checked above but here is a last stop check.
-      * Execute access not considered here.  Could fail execute opens.
-      * FIXME: sort out access checks in callers.
-      */
      obj_hdl = entry->obj_handle;
-     fsal_status = obj_hdl->ops->test_access(obj_hdl,
-					     req_ctx, access_type, NULL, NULL);
-     if(FSAL_IS_ERROR(fsal_status)) {
-	 status = cache_inode_error_convert(fsal_status);
-
-	 LogDebug(COMPONENT_CACHE_INODE,
-		  "returning %d(%s) from access check",
-		  status, cache_inode_err_str(status));
-	 goto unlock;
-     }
      current_flags = obj_hdl->ops->status(obj_hdl);
      /* Open file need to be closed, unless it is already open as read/write */
      if ((current_flags != FSAL_O_RDWR) &&

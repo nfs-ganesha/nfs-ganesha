@@ -282,7 +282,8 @@ int nfs_Write(nfs_arg_t *arg,
         }
 
         LogFullDebug(COMPONENT_NFSPROTO,
-                     "---> failed write: cache_status=%d", cache_status);
+                     "---> failed write: cache_status=%s",
+                     cache_inode_err_str(cache_status));
 
         /* If we are here, there was an error */
         if (nfs_RetryableError(cache_status)) {
