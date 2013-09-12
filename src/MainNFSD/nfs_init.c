@@ -349,6 +349,7 @@ void *sigmgr_thread(void *UnusedArg)
           LogEvent(COMPONENT_MAIN,
                    "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
           admin_replace_exports();
+          reread_log_config();
         }
     }
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");

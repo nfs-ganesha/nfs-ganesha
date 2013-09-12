@@ -1,0 +1,6 @@
+= FSAL_PT =
+
+The following is an FSAL for use with IBM's Protectier appliance.
+It requires the PT server to complete its fsal operations
+and is not intended for use outside a Protectier environment
+

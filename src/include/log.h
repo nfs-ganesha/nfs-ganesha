@@ -16,6 +16,9 @@
 #include "config_parsing.h"
 #include "display.h"
 
+#include "display.h"
+#include "nlm_list.h"
+
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
 /* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as its first argument */
@@ -143,7 +146,6 @@ typedef enum log_components
    */
   COMPONENT_FAKE,
   LOG_MESSAGE_DEBUGINFO,
-  LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
 
@@ -354,7 +356,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
 #define ERR_FSAL          13
-#define ERR_GHOSTFS       15
 #define ERR_CACHE_INODE   16
 
 /* previously at log_macros.h */
@@ -390,56 +391,102 @@ void SetLevelDebug(int level_to_set);
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
-int MakeLogError(char *buffer, int num_family, int num_error, int status,
-                  int ma_ligne);
+int display_LogError(struct display_buffer * dspbuf,
+                     int                     num_family,
+                     int                     num_error,
+                     int                     status);
+
+static inline void MakeLogError(char   * buffer,
+                                size_t   size,
+                                int      num_family,
+                                int      num_error,
+                                int      status,
+                                int      line)
+{
+  struct display_buffer dspbuf = {size, buffer, buffer};
+  (void) display_LogError(&dspbuf, num_family, num_error, status);
+}
 
 /* previously at log_macros.h */
 void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);
 void Fatal(void);
-int SetComponentLogFile(log_components_t component, const char *name);
-void SetComponentLogBuffer(log_components_t component, char *buffer);
 
 /* This function is primarily for setting log level from config, it will
  * not override log level set from environment.
  */
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
-int DisplayLogComponentLevel(log_components_t component,
-                             char * function,
-                             log_levels_t level,
-                             char *format, ...)
-__attribute__((format(printf, 4, 5))); /* 4=format 5=params */ ;
-int DisplayErrorComponentLogLine(log_components_t component,
-                                 char * function,
-                                 int num_family,
-                                 int num_error,
-                                 int status,
-                                 int ma_ligne);
+void DisplayLogComponentLevel(log_components_t   component,
+                              char             * file,
+                              int                line,
+                              char             * function,
+                              log_levels_t       level,
+                              char             * format, ...)
+__attribute__((format(printf, 6, 7))); /* 6=format 7=params */ ;
+
+void DisplayErrorComponentLogLine(log_components_t   component,
+                                  char             * file,
+                                  int                line,
+                                  char             * function,
+                                  int                num_family,
+                                  int                num_error,
+                                  int                status);
 
 int read_log_config(config_file_t in_config);
+void reread_log_config();
 
-enum log_type
+typedef enum log_type
 {
   SYSLOG = 0,
   FILELOG,
   STDERRLOG,
   STDOUTLOG,
-  TESTLOG,
-  BUFFLOG
+  TESTLOG
+} log_type_t;
+
+typedef enum log_header_t
+{
+  LH_NONE,
+  LH_COMPONENT,
+  LH_ALL
+} log_header_t;
+
+struct log_facility;
+
+typedef int (lf_function_t) (struct log_facility   * facility,
+                             log_levels_t            level,
+                             struct display_buffer * buffer,
+                             char                  * compstr,
+                             char                  * message);
+
+/**
+ * @brief Define the structure for a log facility.
+ *
+ */
+struct log_facility
+{
+  struct glist_head   lf_list;        /*< List of log facilities */
+  struct glist_head   lf_active;      /*< This is an active facility */
+  char              * lf_name;        /*< Name of log facility */
+  log_levels_t        lf_max_level;   /*< Max log level for this facility    */
+  log_header_t        lf_headers;     /*< If time stamp etc. are part of msg */
+  lf_function_t     * lf_func;        /*< Function that describes facility   */
+  void              * lf_private;     /*< Private info for facility          */
 };
+
+void deactivate_log_facility(struct log_facility * facility);
+void activate_log_facility(struct log_facility * facility);
+int register_log_facility(struct log_facility * facility);
+int unregister_log_facility(struct log_facility * facility);
 
 typedef struct log_component_info
 {
-  log_components_t comp_value;
-  const char  *comp_name;
-  const char  *comp_str;
-  log_levels_t comp_log_level;
-
-  enum log_type comp_log_type;
-  char  comp_log_file[MAXPATHLEN + 1];
-  char *comp_buffer;
-  int   comp_env_set;
+  log_components_t        comp_value;
+  const char            * comp_name;
+  const char            * comp_str;
+  log_levels_t            comp_log_level;
+  int                     comp_env_set;
 } log_component_info;
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level
@@ -448,89 +495,89 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
 
 #define LogAlways(component, format, args...) \
   do { \
-    if (likely(LogComponents[component].comp_log_type != TESTLOG || \
-               LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_NULL, \
-                               "%s: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+    if (likely(LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__,  NIV_NULL, \
+                               format, ## args ); \
   } while (0)
 
 #define LogTest(format, args...) \
   do { \
-    DisplayLogComponentLevel(COMPONENT_ALL,  (char *)__FUNCTION__, NIV_NULL, \
+    DisplayLogComponentLevel(COMPONENT_ALL, (char *) __FILE__, __LINE__, \
+                             (char *) __FUNCTION__, NIV_NULL, \
                              format, ## args ); \
   } while (0)
 
 #define LogFatal(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_FATAL)) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FATAL, \
-                               "%s FATAL ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_FATAL, \
+                               format, ## args ); \
   } while (0)
 
 #define LogMajor(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_MAJOR)) \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MAJ, \
-                               "%s MAJOR ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_MAJ, \
+                               format, ## args ); \
   } while (0)
 
 #define LogCrit(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_CRIT, \
-                               "%s CRITICAL ERROR: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_CRIT, \
+                               format, ## args ); \
    } while (0)
 
 #define LogWarn(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_WARN)) \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_WARN, \
-                               "%s WARN: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_WARN, \
+                               format, ## args ); \
   } while (0)
 
 #define LogEvent(component, format, args...) \
   do { \
     if (likely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_EVENT, \
-                               "%s EVENT: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_EVENT, \
+                               format, ## args ); \
   } while (0)
 
 #define LogInfo(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_INFO)) \
-      DisplayLogComponentLevel(component, (char *) __FUNCTION__, NIV_INFO, \
-                               "%s INFO: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_INFO, \
+                               format, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_DEBUG)) \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
-                               "%s DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_DEBUG, \
+                               format, ## args ); \
   } while (0)
 
 #define LogMidDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_MID_DEBUG)) \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MID_DEBUG, \
-                               "%s M_DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_MID_DEBUG, \
+                               format, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
-                               "%s F_DBG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, NIV_FULL_DEBUG, \
+                               format, ## args ); \
   } while (0)
 
 #define LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
@@ -540,10 +587,9 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         char                  buf[buf_size];                                 \
         struct display_buffer dspbuf = {buf_size, buf, buf};                 \
         (void) display_opaque_value(&dspbuf, value, length);                 \
-          DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
-                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
-                                   LogComponents[component].comp_str,        \
-                                   buf, ## args );                           \
+          DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__,   \
+                                   (char *) __FUNCTION__,                    \
+                                   NIV_FULL_DEBUG, format, buf, ## args );   \
       }                                                                      \
   } while (0)
 
@@ -554,24 +600,25 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         char                  buf[buf_size];                                 \
         struct display_buffer dspbuf = {buf_size, buf, buf};                 \
         (void) display_opaque_bytes(&dspbuf, value, length);                 \
-          DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
-                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
-                                   LogComponents[component].comp_str,        \
-                                   buf, ## args );                           \
+          DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__,   \
+                                   (char *) __FUNCTION__,                    \
+                                   NIV_FULL_DEBUG, format, buf, ## args );   \
+      }                                                                      \
   } while (0)
 
 #define LogAtLevel(component, level, format, args...) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= level)) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
-                               "%s %s: " format, \
-                               LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *) __FUNCTION__, level, \
+                               format, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \
   do { \
     if (unlikely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
-      DisplayErrorComponentLogLine( component,(char *)__FUNCTION__, a, b, c, __LINE__ ); \
+      DisplayErrorComponentLogLine( component, (char *) __FILE__, __LINE__, \
+                                    (char *)__FUNCTION__, a, b, c ); \
   } while (0)
 
 #define isLevel(component, level) \

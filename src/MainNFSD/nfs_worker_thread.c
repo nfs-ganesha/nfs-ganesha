@@ -1436,7 +1436,8 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
   char thr_name[32];
 
   wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
-  snprintf(thr_name, sizeof(thr_name), "Worker #%u", wd->worker_index);
+  snprintf(thr_name, sizeof(thr_name), "work-%u", wd->worker_index);
+  SetNameFunction(thr_name);
 
   /* Initalize thr waitq */
   init_wait_q_entry(&wd->wqe);

@@ -115,6 +115,14 @@ ELSE(  USE_FSAL_GPFS )
 " ) 
 ENDIF( USE_FSAL_GPFS )
 
+IF( USE_FSAL_PT )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_PT ON)
+" ) 
+ELSE(  USE_FSAL_PT )
+   FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_PT OFF)
+" ) 
+ENDIF( USE_FSAL_PT )
+
 IF( USE_FSAL_HPSS )
    FILE(APPEND ${RPMBULILD_CMAKE} "set(USE_FSAL_HPSS ON)
 " ) 
@@ -345,6 +353,18 @@ be used with NFS-Ganesha to support GPFS
 ")
 endif(USE_FSAL_GPFS)
 
+if(USE_FSAL_PT)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%package pt 
+Summary: The NFS-GANESHA's PT FSAL
+Group: Applications/System
+
+%description pt
+This package contains a FSAL shared object to 
+be used with NFS-Ganesha to support PT
+")
+endif(USE_FSAL_PT)
+
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
 "
 %prep
@@ -394,11 +414,22 @@ if(USE_FSAL_GPFS)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 install -m 755 ganesha.gpfs.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-gpfs
 install -m 644 config_samples/ganesha.conf               $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.log.conf	 $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.nfsd.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.exports.conf  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.main.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 ")
 endif(USE_FSAL_GPFS)
+
+# PT specific files to install
+if(USE_FSAL_PT)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+install -m 755 ganesha.pt.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-pt
+install -m 644 config_samples/ganesha.conf               $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/pt.ganesha.nfsd.conf     $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+")
+endif(USE_FSAL_PT)
+
 
 # Fedora specific files to install. note, Fedora uses systemd, so _unitdir _is_ defined.
 if("${DISTRO}" STREQUAL "fedora")
@@ -449,11 +480,20 @@ FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 if(USE_FSAL_GPFS)
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %config %{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
 ")
 endif(USE_FSAL_GPFS)
+
+if(USE_FSAL_PT)
+FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
+%config %{_sysconfdir}/init.d/nfs-ganesha-pt
+%config(noreplace) %{_sysconfdir}/ganesha/pt.ganesha.nfsd.conf
+")
+endif(USE_FSAL_PT)
+
 
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  "
 %files mount-9P
@@ -564,6 +604,17 @@ if(USE_FSAL_GPFS)
 
 " )
 endif(USE_FSAL_GPFS)
+
+if(USE_FSAL_PT)
+        FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  
+"
+%files pt
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalpt*
+
+" )
+endif(USE_FSAL_PT)
+
 
 # Append changelog
 FILE(APPEND ${RPM_ROOTDIR}/SPECS/${RPMNAME}.spec  

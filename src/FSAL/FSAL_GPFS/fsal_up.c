@@ -57,7 +57,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   struct gsh_buffdesc        key;
   uint32_t                   grace_period_attr = 0;
 
-  snprintf(thr_name, sizeof(thr_name), "gpfs_up_%d.%d",
+  snprintf(thr_name, sizeof(thr_name), "fsal_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
   SetNameFunction(thr_name);
 

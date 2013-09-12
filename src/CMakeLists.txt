@@ -133,6 +133,8 @@ option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
+option(USE_FSAL_PT "build PT FSAL" OFF)
+
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
@@ -306,6 +308,8 @@ endif(${BIGENDIAN})
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
   find_package(Threads REQUIRED)
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+
+find_package(ZLIB REQUIRED)
 
 find_package(Krb5 REQUIRED gssapi)
 
@@ -509,6 +513,9 @@ set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
 
+# Find zlib library
+find_library(LIBZ z)  # Compression
+
 # We need to have libcap installed
 find_library(LIBCAP cap)  # Management of Capablilities
 check_library_exists(
@@ -630,6 +637,7 @@ message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
+message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
@@ -694,6 +702,11 @@ set(USE_FSAL_XFS ${USE_FSAL_XFS}
 set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
   CACHE BOOL
    "build GPFS FSAL"
+   FORCE)
+
+set(USE_FSAL_PT ${USE_FSAL_PT}
+  CACHE BOOL
+   "build PT FSAL"
    FORCE)
 
 set(USE_FSAL_ZFS ${USE_FSAL_ZFS}
