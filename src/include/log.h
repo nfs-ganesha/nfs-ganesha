@@ -645,7 +645,8 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         unlikely(LogComponents[comp2].comp_log_level >= NIV_DEBUG)) { \
       log_components_t component = \
         LogComponents[comp1].comp_log_level >= NIV_DEBUG ? comp1 : comp2; \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
+      DisplayLogComponentLevel(component,  (char *) __FILE__, __LINE__, \
+                               (char *)__FUNCTION__, NIV_DEBUG, \
                                "%s: DEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
     } \
@@ -657,7 +658,8 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         unlikely(LogComponents[comp2].comp_log_level >= NIV_MID_DEBUG)) { \
       log_components_t component = \
         LogComponents[comp1].comp_log_level >= NIV_MID_DEBUG ? comp1 : comp2; \
-      DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MID_DEBUG, \
+      DisplayLogComponentLevel(component,  (char *) __FILE__, __LINE__, \
+                               (char *)__FUNCTION__, NIV_MID_DEBUG, \
                                "%s: MID DEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
     } \
@@ -669,7 +671,8 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
         unlikely(LogComponents[comp2].comp_log_level >= NIV_FULL_DEBUG)) { \
       log_components_t component = \
         LogComponents[comp1].comp_log_level >= NIV_FULL_DEBUG ? comp1 : comp2; \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
+      DisplayLogComponentLevel(component, (char *) __FILE__, __LINE__, \
+                               (char *)__FUNCTION__, NIV_FULL_DEBUG, \
                                "%s: FULLDEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
     } \

@@ -815,15 +815,15 @@ void print_debug_info_fd(int fd)
     }
 }
 
-void print_debug_info_fd_compressed(gzFile *gfile)
+void print_debug_info_fd_compressed(gzFile gfile)
 {
   int    size;
   char * str = get_debug_info(&size);
-  int    rc = 0;    // dumb variable to catch write return
+/*   int    rc = 0;    // dumb variable to catch write return */
 
   if (str != NULL)
     {
-      rc = gzwrite(gfile, str, size);
+	    /* rc =  */ (void) gzwrite(gfile, str, size);
       gsh_free(str);
     }
 }
