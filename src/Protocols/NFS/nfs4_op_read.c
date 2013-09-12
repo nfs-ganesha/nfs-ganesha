@@ -99,12 +99,6 @@ nfs4_op_read(struct nfs_argop4 *op,
                 return res_READ4->status;
         }
 
-        /* If Filehandle points to a xattr object, manage it via the
-           xattrs specific functions */
-        if (nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-                return nfs4_op_read_xattr(op, data, resp);
-        }
-
         if (nfs4_Is_Fh_DSHandle(&data->currentFH)) {
                 return op_dsread(op, data, resp);
         }

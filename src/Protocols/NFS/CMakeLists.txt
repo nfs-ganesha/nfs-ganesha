@@ -84,9 +84,7 @@ SET(nfsproto_STAT_SRCS
    nfs4_op_verify.c
    nfs4_op_write.c
    nfs4_pseudo.c
-   nfs4_xattr.c
    nfs_proto_tools.c
-   nfs_xattr.c
 )
 
 add_library(nfsproto STATIC ${nfsproto_STAT_SRCS})

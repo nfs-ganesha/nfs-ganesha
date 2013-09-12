@@ -103,11 +103,6 @@ nfs_Create(nfs_arg_t *arg,
 
         memset(&sattr, 0, sizeof(struct attrlist));
 
-        if(nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir))) {
-                rc = nfs3_Create_Xattr(arg, export, req_ctx, req, res);
-                goto out;
-        }
-
         /* to avoid setting it on each error case */
         res->res_create3.CREATE3res_u.resfail.dir_wcc
                         .before.attributes_follow = FALSE;

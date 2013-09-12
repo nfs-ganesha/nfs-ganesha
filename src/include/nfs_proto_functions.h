@@ -814,40 +814,6 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp);
 
-/* Available operations on xattrs */
-int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
-                          compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_access_xattr(struct nfs_argop4 *op,
-                         compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
-                         compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
-                          compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
-                          compound_data_t * data, struct nfs_resop4 *resp);
-
-nfsstat4 nfs4_fh_to_xattrfh(nfs_fh4 * pfhin, nfs_fh4 * pfhout);
-nfsstat4 nfs4_xattrfh_to_fh(nfs_fh4 * pfhin, nfs_fh4 * pfhout);
-
-int nfs4_op_open_xattr(struct nfs_argop4 *op,
-                       compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_read_xattr(struct nfs_argop4 *op,
-                       compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_write_xattr(struct nfs_argop4 *op,
-                        compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_op_remove_xattr(struct nfs_argop4 *op,
-                         compound_data_t * data, struct nfs_resop4 *resp);
-
-int nfs4_XattrToFattr(fattr4 * Fattr,
-                      compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
-
 /* NFSv4 CB calls */
 int nfs4_cb_getattr(struct nfs_cb_argop4 *op,
                     compound_data_t * data, struct nfs_cb_resop4 *resp);
@@ -1104,54 +1070,6 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 
 bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                             sattr3 *Fattr);
-
-nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout);
-
-int nfs3_Access_Xattr(nfs_arg_t * parg,
-                      exportlist_t * pexport,
-                      struct req_op_context *req_ctx,
-                      struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Getattr_Xattr(nfs_arg_t * parg,
-                       exportlist_t * pexport,
-                       struct req_op_context *req_ctx,
-                       struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Lookup_Xattr(nfs_arg_t * parg,
-                      exportlist_t * pexport,
-                      struct req_op_context *req_ctx,
-                      struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Read_Xattr(nfs_arg_t * parg,
-                    exportlist_t * pexport,
-                    struct req_op_context *req_ctx,
-                    struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Create_Xattr(nfs_arg_t * parg,
-                      exportlist_t * pexport,
-                      struct req_op_context *req_ctx,
-                      struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Write_Xattr(nfs_arg_t * parg,
-                     exportlist_t * pexport,
-                     struct req_op_context *req_ctx,
-                     struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Readdir_Xattr(nfs_arg_t * parg,
-                       exportlist_t * pexport,
-                       struct req_op_context *req_ctx,
-                       struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
-                           exportlist_t * pexport,
-                           struct req_op_context *req_ctx,
-                           struct svc_req *preq, nfs_res_t * pres);
-
-int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
-                      exportlist_t * pexport /* IN  */ ,
-                      struct req_op_context *req_ctx /* IN  */ ,
-                      struct svc_req *preq /* IN  */ ,
-                      nfs_res_t * pres /* OUT */ );
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,

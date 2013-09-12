@@ -124,12 +124,6 @@ nfs_Remove(nfs_arg_t *arg,
                          req_ctx,
                          &pre_parent);
 
-        if(nfs3_Is_Fh_Xattr(&arg->arg_remove3.object.dir)) 
-          {
-                rc = nfs3_Remove_Xattr(arg, export, req_ctx, req, res);
-                goto out;
-          }
-
         /*
          * Sanity checks: file name must be non-null; parent must be a
          * directory.

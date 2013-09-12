@@ -109,10 +109,6 @@ int nfs4_op_write(struct nfs_argop4 *op,
       return res_WRITE4->status;
     }
 
-  /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
-    return nfs4_op_write_xattr(op, data, resp);
-
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {

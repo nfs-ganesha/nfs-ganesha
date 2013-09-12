@@ -111,12 +111,6 @@ nfs_Lookup(nfs_arg_t *arg,
 
         name = arg->arg_lookup3.what.name;
 
-        if(nfs3_Is_Fh_Xattr(&(arg->arg_lookup3.what.dir))) 
-         {
-                rc = nfs3_Lookup_Xattr(arg, export, req_ctx, req, res);
-                goto out;
-         }
-
 	cache_status = cache_inode_lookup(entry_dir,
 					  name,
 					  req_ctx,

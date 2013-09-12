@@ -301,12 +301,6 @@ nfs4_op_readdir(struct nfs_argop4 *op,
           goto out;
      }
 
-     /* Xattrs management */
-     if(nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-          res_READDIR4->status = nfs4_op_readdir_xattr(op, data, resp);
-          goto out;
-     }
-
      dir_entry = data->current_entry;
 
      /* get the characteristic value for readdir operation */

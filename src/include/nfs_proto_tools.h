@@ -170,13 +170,6 @@ void nfs_SetPostOpAttr(cache_entry_t *entry,
                        struct req_op_context *ctx,
                        post_op_attr *attr);
 
-int nfs_SetPostOpXAttrDir(cache_entry_t *entry,
-                          const struct req_op_context *ctx,
-                          post_op_attr *result);
-
-int nfs_SetPostOpXAttrFile(exportlist_t * pexport,
-                           const struct attrlist *pfsal_attr, post_op_attr * presult);
-
 void nfs_SetPreOpAttr(cache_entry_t *entry,
                       struct req_op_context *ctx,
                       pre_op_attr *attr);

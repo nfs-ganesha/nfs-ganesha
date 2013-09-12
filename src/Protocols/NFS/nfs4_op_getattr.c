@@ -82,12 +82,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
                 return nfs4_op_getattr_pseudo(op, data, resp);
         }
 
-        /* If Filehandle points to a xattr object, manage it via the
-           xattrs specific functions */
-        if(nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-                return nfs4_op_getattr_xattr(op, data, resp);
-        }
-
         /* Sanity check: if no attributes are wanted, nothing is to be
          * done.  In this case NFS4_OK is to be returned */
         if (arg_GETATTR4->attr_request.bitmap4_len == 0) {

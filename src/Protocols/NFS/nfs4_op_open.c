@@ -1011,14 +1011,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 return res_OPEN4->status;
         }
 
-        /*
-         * If Filehandle points to a xattr object, manage it via the
-         * xattrs specific functions
-         */
-        if (nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-                return nfs4_op_open_xattr(op, data, resp);
-        }
-
         if (data->current_entry == NULL) {
                 /* This should be impossible, as PUTFH fills in the
                    current entry and previous checks weed out handles

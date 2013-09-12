@@ -99,15 +99,6 @@ nfs_Getattr(nfs_arg_t *arg,
                 goto out;
         }
 
-        if(nfs3_Is_Fh_Xattr(&(arg->arg_getattr3.object))) 
-        {
-                rc = nfs3_Getattr_Xattr(arg, export, req_ctx, req, res);
-                LogFullDebug(COMPONENT_NFSPROTO,
-                             "nfs_Getattr returning %d from "
-                             "nfs3_Getattr_Xattr", rc);
-                goto out;
-        }
-
         if (!(cache_entry_to_nfs3_Fattr(entry,
                                         req_ctx,
                                         &(res->res_getattr3.GETATTR3res_u.resok.obj_attributes))))

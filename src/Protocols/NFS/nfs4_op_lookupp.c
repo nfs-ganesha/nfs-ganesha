@@ -94,10 +94,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_lookupp_pseudo(op, data, resp);
 
-  /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
-    return nfs4_op_lookupp_xattr(op, data, resp);
-
   /* If Filehandle points to the root of the current export, then backup
    * through junction into the pseudo file system.
    *

@@ -153,12 +153,6 @@ nfs_Read(nfs_arg_t *arg,
                          req_ctx,
                          &pre_attr);
 
-        if(nfs3_Is_Fh_Xattr(&arg->arg_read3.file)) 
-         {
-           rc = nfs3_Read_Xattr(arg, export, req_ctx, req, res);
-           goto out;
-         }
-
         if(entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid)
           {
             cache_status = cache_inode_access(entry,

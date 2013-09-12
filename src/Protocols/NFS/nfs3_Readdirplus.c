@@ -184,13 +184,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                   begin_cookie,
                   estimated_num_entries, tracker.mem_left);
 
-     /* Is this a xattr FH ? */
-     if (nfs3_Is_Fh_Xattr(&(arg->arg_readdirplus3.dir))) {
-	  rc = nfs3_Readdirplus_Xattr(arg, export, req_ctx,
-                                      req, res);
-          goto out;
-     }
-
      /* Convert file handle into a vnode */
      dir_entry = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
 				     req_ctx,

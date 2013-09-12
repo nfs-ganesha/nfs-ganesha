@@ -64,10 +64,7 @@ int nfs4_op_openattr(struct nfs_argop4 *op,
   OPENATTR4res *const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
 
   resp->resop = NFS4_OP_OPENATTR;
-  res_OPENATTR4->status = NFS4_OK;
-
-  res_OPENATTR4->status = nfs4_fh_to_xattrfh(&(data->currentFH),
-                                            &(data->currentFH));
+  res_OPENATTR4->status = NFS4ERR_NOTSUPP;
 
   return res_OPENATTR4->status;
 }                               /* nfs4_op_openattr */

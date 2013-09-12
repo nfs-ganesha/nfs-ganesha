@@ -91,12 +91,6 @@ int nfs4_op_access(struct nfs_argop4 *op,
                 return nfs4_op_access_pseudo(op, data, resp);
         }
 
-        /* If Filehandle points to a xattr object, manage it via the
-           xattrs specific functions */
-        if (nfs4_Is_Fh_Xattr(&(data->currentFH))) {
-                return nfs4_op_access_xattr(op, data, resp);
-        }
-
         /* Check for input parameter's sanity */
         if (arg_ACCESS4->access > max_access) {
                 res_ACCESS4->status = NFS4ERR_INVAL;

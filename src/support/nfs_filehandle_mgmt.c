@@ -282,9 +282,6 @@ bool nfs2_FSALToFhandle(fhandle2 *fh2,
   /* keep track of the export id */
   file_handle->exportid = fsalhandle->export->exp_entry->id;
 
-  /* Set the last byte */
-  file_handle->xattr_pos = 0;
-
   /*   /\* Set the data *\/ */
   /*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
 
@@ -296,52 +293,6 @@ bool nfs2_FSALToFhandle(fhandle2 *fh2,
 
   return true;
 }
-
-/**
- *    
- * nfs4_Is_Fh_Xattr
- * 
- * This routine is used to test is a fh refers to a Xattr related stuff
- *
- * @param pfh [IN] file handle to test.
- * 
- * @return true if in pseudo fh, false otherwise 
- *
- */
-int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
-{
-  file_handle_v3_t *pfhandle3;
-
-  if(pfh == NULL)
-    return 0;
-
-  pfhandle3 = (file_handle_v3_t *) (pfh->data.data_val);
-
-  return (pfhandle3->xattr_pos != 0) ? 1 : 0;
-}                               /* nfs4_Is_Fh_Xattr */
-
-/**
- *
- *  nfs4_Is_Fh_Xattr
- *
- *  This routine is used to test is a fh refers to a Xattr related stuff
- *
- * @param pfh [IN] file handle to test.
- *
- * @return true if in pseudo fh, false otherwise 
- *
- */
-int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh)
-{
-  file_handle_v4_t *pfhandle4;
-
-  if(pfh == NULL)
-    return 0;
-
-  pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
-
-  return (pfhandle4->xattr_pos != 0) ? 1 : 0;
-}                               /* nfs4_Is_Fh_Xattr */
 
 /**
  *

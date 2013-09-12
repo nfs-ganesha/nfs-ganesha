@@ -111,19 +111,6 @@ nfs_Setattr(nfs_arg_t *arg,
                          req_ctx,
                          &pre_attr);
 
-        if(nfs3_Is_Fh_Xattr(&arg->arg_setattr3.object)) 
-         {
-                /* do nothing */
-                nfs_SetWccData(&pre_attr,
-                               entry,
-                               req_ctx,
-                               &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
-                res->res_setattr3.status = NFS3_OK;
-                rc = NFS_REQ_OK;
-                goto out;
-         }
-
-
         if (arg->arg_setattr3.guard.check)
           {
                 /* This pack of lines implements the "guard

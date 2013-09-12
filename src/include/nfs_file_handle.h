@@ -253,14 +253,10 @@ static inline int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
 }                               /* nfs4_Is_Fh_Empty */
 
 /* NFSv4 specific FH related functions */
-int nfs4_Is_Fh_Xattr(nfs_fh4 *);
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
 int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data);
-
-/* This one is used to detect Xattr related FH */
-int nfs3_Is_Fh_Xattr(nfs_fh3 *);
 
 /* File handle print function (mostly used for debugging) */
 void print_fhandle2(log_components_t, fhandle2 *);

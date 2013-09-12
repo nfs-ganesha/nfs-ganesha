@@ -180,12 +180,6 @@ nfs_Readdir(nfs_arg_t *arg,
           goto out;
      }
 
-     if(nfs3_Is_Fh_Xattr(&(arg->arg_readdir3.dir)))
-     {
-          rc = nfs3_Readdir_Xattr(arg, export, req_ctx, req, res);
-          goto out;
-     }
-
      /* Extract the filetype */
      dir_filetype = dir_entry->type;
      /* Sanity checks -- must be a directory */

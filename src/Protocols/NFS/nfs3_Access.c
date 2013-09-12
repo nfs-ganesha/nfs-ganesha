@@ -86,12 +86,6 @@ nfs3_Access(nfs_arg_t *arg,
                          str);
         }
 
-        /* Is this a xattr FH ? */
-        if (nfs3_Is_Fh_Xattr(&(arg->arg_access3.object))) {
-                rc = nfs3_Access_Xattr(arg, export, req_ctx, req, res);
-                goto out;
-        }
-
         /* to avoid setting it on each error case */
         res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow
                 = FALSE;
