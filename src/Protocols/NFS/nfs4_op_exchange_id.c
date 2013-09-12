@@ -41,7 +41,8 @@
 
 int get_raddr(SVCXPRT *xprt)
 {
-    struct sockaddr_storage *ss = (struct sockaddr_storage *)(xprt->xp_ltaddr.buf);
+    struct sockaddr_storage *ss = (struct sockaddr_storage *)
+        (xprt->xp_ltaddr.buf);
     int addr = 0;
 
     if (ss == NULL)
@@ -49,8 +50,11 @@ int get_raddr(SVCXPRT *xprt)
 
     switch(ss->ss_family) {
     case AF_INET6:
-        addr = ntohl(*(uint32_t *)&(((struct sockaddr_in6 *) ss)->sin6_addr.s6_addr[12]));
-
+    {
+        void *ab;
+        ab = &(((struct sockaddr_in6 *) ss)->sin6_addr.s6_addr[12]);
+        addr = ntohl(*(uint32_t *) ab);
+    }
         break;
     case AF_INET:
         addr = ntohl(((struct sockaddr_in *) ss)->sin_addr.s_addr);

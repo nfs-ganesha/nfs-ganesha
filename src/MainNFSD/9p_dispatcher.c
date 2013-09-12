@@ -163,7 +163,9 @@ void * _9p_socket_thread( void * Arg )
    {
       LogMajor(COMPONENT_9P,
                "Cannot get peername to tcp socket for 9p, error %d (%s)", errno, strerror(errno));
-      strncpy( strcaller, "(unresolved)", MAXNAMLEN ) ;
+      /* XXX */
+      strncpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
+      strcaller[12] = '\0';
    }
   else
    {

@@ -131,7 +131,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 			    }
 			    /* XXX keep going? */
                     }
-               } else if (write_locked) {
+               } else if (write_locked &&
+                          !(parent->flags & CACHE_INODE_TRUST_CONTENT)) {
                     /* We have the write lock and the content is
                        still invalid.  Empty it out and mark it valid
                        in preparation for caching the result of this lookup. */

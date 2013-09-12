@@ -165,6 +165,9 @@ nfs_Readdir(nfs_arg_t *arg,
                    "REQUEST PROCESSING: Calling nfs_Readdir handle: %s", str);
      }
 
+     READDIR3resok *const RES_READDIR3_OK
+         = &res->res_readdir3.READDIR3res_u.resok;
+
      /* to avoid setting it on each error case */
      res->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow = FALSE;
      
@@ -293,11 +296,6 @@ nfs_Readdir(nfs_arg_t *arg,
           cache_inode_put(parent_dir_entry);
           parent_dir_entry = NULL;
      }
-
-/* Some definitions that will be very useful to avoid very long names
-   for variables */
-     READDIR3resok *const RES_READDIR3_OK
-	     = &res->res_readdir3.READDIR3res_u.resok;
 
      /* Call readdir */
      cache_status = cache_inode_readdir(dir_entry,
