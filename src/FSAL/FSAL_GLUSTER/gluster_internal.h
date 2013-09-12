@@ -27,7 +27,7 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
-#include "glfs.h"
+#include <glusterfs/api/glfs.h>
 
 #define GLUSTER_GFID_SIZE 16
 #define GLUSTER_VOLNAME_KEY "volume"

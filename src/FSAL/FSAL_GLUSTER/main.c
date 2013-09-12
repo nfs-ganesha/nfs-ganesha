@@ -74,7 +74,6 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = false,
 	.xattr_access_rights = 0400, /* root=RW, owner=R */
-	.dirs_have_sticky_bit = true
 };
 
 static struct glusterfs_fsal_module *glfsal_module = NULL;
