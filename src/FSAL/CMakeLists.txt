@@ -40,4 +40,7 @@ if(USE_FSAL_VFS)
   add_subdirectory(FSAL_VFS)
 endif(USE_FSAL_VFS)
 
+if(USE_FSAL_GLUSTER)
+  add_subdirectory(FSAL_GLUSTER)
+endif(USE_FSAL_GLUSTER)
 

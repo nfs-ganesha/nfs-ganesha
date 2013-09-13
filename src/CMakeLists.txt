@@ -133,10 +133,10 @@ option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
-option(USE_FSAL_PT "build PT FSAL" OFF)
-
+option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 
 # FSALs which are disabled by default
+option(USE_FSAL_PT "build PT FSAL" OFF)
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
 
 # SHOOK is a variant of Lustre FSAL
@@ -216,6 +216,18 @@ IF(USE_FSAL_CEPH)
     LIST(APPEND CMAKE_LIBRARY_PATH "${CEPH_PREFIX}/lib")
   ELSE()
     set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+  ENDIF()
+ENDIF()
+
+IF(USE_FSAL_GLUSTER)
+  IF(GLUSTER_PREFIX)
+    set(GLUSTER_PREFIX ${GLUSTER_PREFIX} CACHE PATH "Path to Gluster installation")
+    LIST(APPEND CMAKE_PREFIX_PATH "${GLUSTER_PREFIX}")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${GLUSTER_PREFIX}/lib")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${GLUSTER_PREFIX}/local/lib")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${GLUSTER_PREFIX}/local/lib64")
+  ELSE()
+    set(GLUSTER_PREFIX "/usr" CACHE PATH "Path to Gluster installation")
   ENDIF()
 ENDIF()
 
@@ -326,6 +338,26 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 find_package(Readline)
 
 # Validate fsal dependencies
+
+if(USE_FSAL_GLUSTER)
+  find_library(HAVE_GFAPI gfapi)
+  check_library_exists(
+    gfapi
+    glfs_h_lookupat
+    ""
+    HAVE_GFAPI
+    )
+  check_include_files("glusterfs/api/glfs.h" HAVE_GLUSTER_H)
+  if((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
+    if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT PACKAGE: Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
+      set(USE_FSAL_GLUSTER OFF)
+    endif(STRICT_PACKAGE)
+  endif((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
+endif(USE_FSAL_GLUSTER)
+ 
 if(USE_FSAL_CEPH)
   find_library(CEPH_FS cephfs)
   check_library_exists(
@@ -641,6 +673,7 @@ message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
+message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
@@ -666,6 +699,7 @@ message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
+message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
 message(STATUS "_GIT_HEAD_COMMIT_ABBREV = ${_GIT_HEAD_COMMIT_ABBREV}")
@@ -722,6 +756,11 @@ set(USE_FSAL_LUSTRE ${USE_FSAL_LUSTRE}
 set(USE_FSAL_SHOOK ${USE_FSAL_SHOOK}
   CACHE BOOL
    "build SHOOK FSAL"
+   FORCE)
+
+set(USE_FSAL_GLUSTER ${USE_FSAL_GLUSTER}
+  CACHE BOOL
+   "build GLUSTER FSAL"
    FORCE)
 
 set(USE_DBUS ${USE_DBUS}
