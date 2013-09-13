@@ -94,15 +94,20 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
          data->currentFH.nfs_fh4_len);
   data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
+  /* If old SavedFH had a related export, release reference. */
   if(data->saved_export != NULL) {
       put_gsh_export(data->saved_export);
   }
   /* Save the export information by taking a reference since
    * currentFH is still active.  Assert this just to be sure...
    */
-  data->saved_export = get_gsh_export(data->req_ctx->export->export.id,
-				      true);
-  assert(data->saved_export != NULL);
+  if (data->req_ctx->export != NULL) {
+      data->saved_export = get_gsh_export(data->req_ctx->export->export.id, true);
+  } else {
+      data->saved_export = NULL;
+  }
+  
+  assert((data->saved_export != NULL) || nfs4_Is_Fh_Pseudo(&data->currentFH) );
   data->saved_export_perms = data->export_perms;
 
   /* If saved and current entry are equal, skip the following. */

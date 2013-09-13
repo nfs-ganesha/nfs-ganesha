@@ -107,8 +107,14 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   }
   /* Restore the export information */
   data->req_ctx->export = data->saved_export;
-  data->saved_export = NULL;
-  data->pexport      = &data->req_ctx->export->export;
+  if(data->req_ctx->export != NULL) {
+      data->pexport = &data->req_ctx->export->export;
+
+      /* Get a reference to the export for the new CurrentFH
+       * independent of SavedFH if appropriate.
+       */
+      (void) get_gsh_export(data->req_ctx->export->export.id, true);
+  }
   data->export_perms = data->saved_export_perms;
 
   /* No need to call nfs4_SetCompoundExport or nfs4_MakeCred

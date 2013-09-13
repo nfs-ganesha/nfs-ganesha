@@ -905,10 +905,17 @@ void compound_data_Free(compound_data_t *data)
       data->psession = NULL;
   }
 
+  /* Release CurrentFH reference to export. */
   if(data->req_ctx->export) {
       put_gsh_export(data->req_ctx->export);
       data->req_ctx->export = NULL;
       data->pexport = NULL;
+  }
+
+  /* Release SavedFH reference to export. */
+  if(data->saved_export) {
+      put_gsh_export(data->saved_export);
+      data->saved_export = NULL;
   }
 
   if (data->currentFH.nfs_fh4_val != NULL)

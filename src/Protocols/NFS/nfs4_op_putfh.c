@@ -94,6 +94,11 @@ nfs4_op_putfh(struct nfs_argop4 *op,
         memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4->object.nfs_fh4_val,
                arg_PUTFH4->object.nfs_fh4_len);
 
+        /* If old CurrentFH had a related export, release reference. */
+        if(data->req_ctx->export != NULL) {
+                put_gsh_export(data->req_ctx->export);
+        }
+
         /* As usual, protect existing refcounts */
         if (data->current_entry) {
                 cache_inode_put(data->current_entry);
