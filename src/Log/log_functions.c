@@ -134,7 +134,7 @@ struct log_flag tab_log_flag[] =
   {LF_DATE,          TRUE,  TD_GANESHA, "DATE"},
   {LF_TIME,          TRUE,  TD_GANESHA, "TIME"},
   {LF_EPOCH,         TRUE,  0,          "EPOCH"},
-  {LF_HOSTAME,       TRUE,  0,          "HOSTAME"},
+  {LF_HOSTAME,       TRUE,  0,          "HOSTNAME"},
   {LF_PROGNAME,      TRUE,  0,          "PROGNAME"},
   {LF_PID,           TRUE,  0,          "PID"},
   {LF_THREAD_NAME,   TRUE,  0,          "THREAD_NAME"},
