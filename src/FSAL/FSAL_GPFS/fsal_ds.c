@@ -181,6 +181,7 @@ ds_write(struct fsal_ds_handle *const ds_pub,
   /* The private 'full' DS handle */
   struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
   gpfs_handle = &ds->wire;
+  struct gsh_buffdesc key;
 
   fh = (int *)&(gpfs_handle->f_handle);
 
@@ -208,6 +209,11 @@ ds_write(struct fsal_ds_handle *const ds_pub,
     }
   LogDebug(COMPONENT_PNFS,
           "write verifier %d-%d\n", warg.verifier4[0], warg.verifier4[1]);
+
+  key.addr = gpfs_handle;
+  key.len = gpfs_handle->handle_key_size;
+  fsal_invalidate(&key, CACHE_INODE_INVALIDATE_ATTRS |
+                   CACHE_INODE_INVALIDATE_CONTENT);
 
   set_gpfs_verifier(writeverf);
 

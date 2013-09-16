@@ -94,6 +94,23 @@ static cache_inode_status_t invalidate(
 	return rc;
 }
 
+cache_inode_status_t fsal_invalidate(
+	const struct gsh_buffdesc *key,
+	uint32_t flags)
+{
+	cache_entry_t *entry = NULL;
+	cache_inode_status_t rc = 0;
+
+	rc = up_get(key, &entry);
+	if (rc == 0) {
+		rc = cache_inode_invalidate(entry,
+					    flags);
+		cache_inode_put(entry);
+	}
+
+	return rc;
+}
+
 /**
  * @brief Update cached attributes
  *
