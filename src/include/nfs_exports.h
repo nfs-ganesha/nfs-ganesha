@@ -188,6 +188,7 @@ typedef struct exportlist {
 					     sufficient */
 	uint64_t exp_mounted_on_file_id; /*< Node id this is mounted on */
 	cache_entry_t *exp_root_cache_inode; /*< entry for root of this export  */
+	cache_inode_expire_type_t expire_type_attr;
 } exportlist_t;
 
 /* Constant for options masks */
