@@ -493,6 +493,7 @@ int nfs4_Compound(nfs_arg_t *arg,
         res->res_compound4.resarray.resarray_len = 0;
         return NFS_REQ_OK;
        }
+      gsh_free(tagname);
 
     }
   else
