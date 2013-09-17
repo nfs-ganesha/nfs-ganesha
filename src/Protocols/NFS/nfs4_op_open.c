@@ -1202,6 +1202,9 @@ int nfs4_op_open(struct nfs_argop4 *op,
 						filename,
 						data->req_ctx,
 						&entry_lookup);
+
+              gsh_free(filename);
+
               if(cache_status != CACHE_INODE_NOT_FOUND)
               {
                  if(cache_status != CACHE_INODE_SUCCESS)
