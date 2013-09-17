@@ -1452,6 +1452,8 @@ static int log_to_file(struct log_facility   * facility,
           else
             my_status = errno;
 
+          (void) close(fd);
+
           goto error;
         }
 
