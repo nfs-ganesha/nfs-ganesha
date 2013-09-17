@@ -25,6 +25,8 @@
 #include "config.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <rpc/types.h>
+#include <rpc/nettype.h>
 
 #include "sal_functions.h"
 #include "nlm4.h"
@@ -166,11 +168,82 @@ int nlm_send_async(int                  proc,
                        "gsh_clnt_create %s",
                        host->slc_nsm_client->ssc_nlm_caller_name);
 
+         if (host->slc_client_type == XPRT_TCP)
+         {
+           int fd;
+           struct sockaddr_in6 server_addr;
+           struct netbuf *buf, local_buf;
+           struct addrinfo *result;
+           struct addrinfo hints ;
+           char port_str[20];
+
+           fd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
+           if (fd < 0)
+             return -1;
+
+           memcpy(&server_addr, &(host->slc_server_addr), sizeof(struct sockaddr_in6));
+           server_addr.sin6_port = 0;
+
+           if(bind(fd,
+                (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+           {
+             LogMajor(COMPONENT_NLM, "Cannot bind");
+             close(fd);
+             return -1;
+           }
+
+           buf = rpcb_find_mapped_addr((char *)xprt_type_to_str(host->slc_client_type),
+                                       NLMPROG,
+                                       NLM4_VERS,
+                                       host->slc_nsm_client->ssc_nlm_caller_name);
+           /* handle error here, for example, client side blocking rpc call */
+           if (buf==NULL)
+           {
+             LogMajor(COMPONENT_NLM,
+                       "Cannot create NLM async %s connection to client %s",
+                       xprt_type_to_str(host->slc_client_type),
+                       host->slc_nsm_client->ssc_nlm_caller_name);
+             close(fd);
+             return -1;
+           }
+
+           memset(&hints, 0, sizeof(struct addrinfo));
+           hints.ai_family = AF_INET6;         /* only INET6 */
+           hints.ai_socktype = SOCK_STREAM;    /* TCP */
+           hints.ai_protocol = 0;              /* Any protocol */
+           hints.ai_canonname = NULL;
+           hints.ai_addr = NULL;
+           hints.ai_next = NULL;
+
+           /* convert port to string format */
+           sprintf(port_str, "%d", htons(((struct sockaddr_in *)buf->buf)->sin_port));
+
+           /* buf with inet is only needed for the port */
+           gsh_free(buf->buf);
+           gsh_free(buf);
+
+           /* get the IPv4 mapped IPv6 address */
+           getaddrinfo(host->slc_nsm_client->ssc_nlm_caller_name, port_str , &hints, &result);
+
+           /* setup the netbuf with in6 address */ 
+           local_buf.buf = result->ai_addr;
+           local_buf.len = local_buf.maxlen = result->ai_addrlen;
+	   
+           host->slc_callback_clnt = clnt_vc_ncreate(fd, &local_buf,
+                                                NLMPROG,
+                                                NLM4_VERS,
+                                                0,0);
+           freeaddrinfo(result);
+         }
+        else
+         {
+
           host->slc_callback_clnt =
               gsh_clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
                               NLMPROG,
                               NLM4_VERS,
                               (char *)xprt_type_to_str(host->slc_client_type));
+        }
 
           if(host->slc_callback_clnt == NULL)
             {
