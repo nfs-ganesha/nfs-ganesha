@@ -108,6 +108,18 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		return (res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL);
 	}
 
+	if((arg_EXCHANGE_ID4->eia_flags &
+	    ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
+	      EXCHGID4_FLAG_SUPP_MOVED_MIGR |
+	      EXCHGID4_FLAG_BIND_PRINC_STATEID |
+	      EXCHGID4_FLAG_USE_NON_PNFS |
+	      EXCHGID4_FLAG_USE_PNFS_MDS |
+	      EXCHGID4_FLAG_USE_PNFS_DS |
+	      EXCHGID4_FLAG_UPD_CONFIRMED_REC_A |
+	      EXCHGID4_FLAG_CONFIRMED_R)) != 0) {
+		return (res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL);
+	}
+
 	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
 
 	/**
