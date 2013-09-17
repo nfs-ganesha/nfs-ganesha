@@ -689,7 +689,7 @@ void fsal_save_ganesha_credentials()
   ganesha_gid = setgroup(0);
   setgroup(ganesha_gid);
   ganesha_ngroups = getgroups(0, NULL);
-  if(ganesha_ngroups != 0)
+  if(ganesha_ngroups > 0)
     {
       ganesha_groups = gsh_malloc(ganesha_ngroups * sizeof(gid_t));
       if(ganesha_groups == NULL)
