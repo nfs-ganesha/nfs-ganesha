@@ -435,7 +435,7 @@ int unregister_log_facility(struct log_facility * facility)
 
       LogMajor(COMPONENT_LOG,
                "Invalid attempt to un-register log facility %s",
-               existing->lf_name);
+               facility->lf_name);
 
       return -1;
     }
