@@ -974,6 +974,12 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
         }
     }
 
+  if(psfsentry == NULL)
+    {
+      LogFatal(COMPONENT_NFS_V4_PSEUDO,
+               "Failed to find PseudoFS node associated with export");
+    }
+
   LogDebug(COMPONENT_NFS_V4_PSEUDO,
            "LOOKUPP Traversing junction from Export_Id %d Pseudo %s back to pseudo fs id %"PRIu64,
            data->req_ctx->export->export.id,
