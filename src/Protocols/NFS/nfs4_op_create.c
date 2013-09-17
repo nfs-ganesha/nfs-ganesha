@@ -168,10 +168,10 @@ int nfs4_op_create(struct nfs_argop4 *op,
           res_CREATE4->status = convrc;
           goto out;
         }
-    }
 
-  if(sattr.mask & ATTR_MODE)
-    mode = sattr.mode;
+      if(sattr.mask & ATTR_MODE)
+        mode = sattr.mode;
+    }
 
   /* Create either a symbolic link or a directory */
   switch (arg_CREATE4->objtype.type)
