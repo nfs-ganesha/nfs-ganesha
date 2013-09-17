@@ -2637,4 +2637,6 @@ void reread_log_config()
       LogCrit(COMPONENT_CONFIG,
               "Error while parsing LOG entries");
     }
+
+  config_Free(config_struct);
 }
