@@ -229,7 +229,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* initialize memory and logging */
 
-  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+  nfs_prereq_init(exec_name, host_name);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -294,6 +294,9 @@ int ganefuse_main(int argc, char *argv[],
           exit(1);
         }
     }
+
+  ReadLogEnvironment();
+  ProcessLogCmdArgs(log_path, debug_level);
 
   /* set filesystem relative info */
 

@@ -387,6 +387,9 @@ void SetNameHost(char *nom);
 void SetDefaultLogging(char *name);
 void SetNameFunction(char *nom); /* thread safe */
 
+int setup_logfile_rotation(char *path);
+void ProcessLogCmdArgs(char *log_path, int debug_level);
+
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
 

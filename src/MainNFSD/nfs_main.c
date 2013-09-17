@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+  nfs_prereq_init(exec_name, host_name);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -394,6 +394,9 @@ int main(int argc, char *argv[])
     {
       LogFatal(COMPONENT_INIT, "Error parsing configuration file.");
     }
+
+  ReadLogEnvironment();
+  ProcessLogCmdArgs(log_path, debug_level);
 
   /* check parameters consitency */
 

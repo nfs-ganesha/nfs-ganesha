@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
   /* initialize memory and logging */
 
-  nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty");
+  nfs_prereq_init("convert_fh", "localhost");
 
   /* Load the FSAL library (if needed) */
   if(!FSAL_LoadLibrary((char *)fsal_path_lib))  /** @todo: this part of the code and this utility has to be checked */
@@ -247,6 +247,10 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Error parsing configuration file '%s'", config_path);
       exit(1);
     }
+
+  ReadLogEnvironment();
+  ProcessLogCmdArgs("/dev/tty", NIV_MAJ);
+
 
   /* check parameters consitency */
 

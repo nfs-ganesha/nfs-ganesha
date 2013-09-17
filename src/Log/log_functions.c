@@ -61,7 +61,7 @@ pthread_rwlock_t logrot_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 /* Current size/index for logfile rotation*/
 static int cur_logfile_size = 0;
 static int cur_logfile_indx  = 0;
-static char cur_logfile_name[PATH_MAX];
+static char cur_logfile_name[MAXPATHLEN];
 
 /**
  * @brief Define an index each of the log fields that are configurable.
@@ -1295,7 +1295,16 @@ void ReadLogEnvironment()
                  ReturnLevelInt(newlevel));
     }
 
-}                               /* InitLogging */
+}                               /* ReadLogEnvironment */
+
+void ProcessLogCmdArgs(char *log_path, int debug_level)
+{
+  if (log_path[0] != '\0')
+    SetDefaultLogging(log_path);
+
+  if (debug_level >= 0)
+    SetLevelDebug(debug_level);
+}
 
 /*
  * Routines for managing error messages
@@ -1493,34 +1502,30 @@ static int write_to_file(char                  * path,
     return status;
 }
 
-static int rotate_log_files(char    * cur_filename,
+static int rotate_log_files(char    * logpath,
                             bool_t    compression)
 {
   int             i , rc = 0;
-  int             max_index;
-  char            o_filename[PATH_MAX];
-  char            n_filename[PATH_MAX];
-  char          * tmp = NULL;
-  int             len = 0;
+  uint32_t        max_index;
+  char            o_filename[MAXPATHLEN];
+  char            n_filename[MAXPATHLEN];
 
-  if (!cur_filename)
+  if (!logpath)
     {
       fprintf(stderr, "rotate_log_files: No current file specified!\n");
       return -1;
     }
-  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1;
+  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext;
   if (!max_index)
     return rc;
-  len = strlen(cur_logfile_name);
-  tmp = &cur_logfile_name[len-3];
 
   for (i=cur_logfile_indx; i>= 0; i--)
     {
-      if (i == max_index)
+      if (i == max_index-1)
         continue;
 
-      snprintf(o_filename, PATH_MAX, "%s.%02d.log", cur_filename, i);
-      snprintf(n_filename, PATH_MAX, "%s.%02d.log", cur_filename, i+1);
+      snprintf(o_filename, PATH_MAX, "%s.%02d.log", logpath, i);
+      snprintf(n_filename, PATH_MAX, "%s.%02d.log", logpath, i+1);
       if (compression)
         {
           strcat(o_filename, ".gz");
@@ -1529,8 +1534,8 @@ static int rotate_log_files(char    * cur_filename,
       rename(o_filename, n_filename);
     }
 
-  snprintf(n_filename, PATH_MAX, "%s.00.log", cur_filename);
-  strncpy(o_filename, cur_filename, PATH_MAX);
+  snprintf(n_filename, PATH_MAX, "%s.00.log", logpath);
+  strncpy(o_filename, logpath, PATH_MAX);
   if (compression)
     {
       strcat(n_filename, ".gz");
@@ -1538,20 +1543,13 @@ static int rotate_log_files(char    * cur_filename,
     }
   rename(o_filename, n_filename);
 
-  if (compression)
-    {
-       if (strcmp(tmp, ".gz") != 0)
-         strcat(cur_logfile_name, ".gz");
-    }
-
-  if (cur_logfile_indx < (tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1)) {
+  if (cur_logfile_indx < max_index-1) {
     cur_logfile_indx++;
   }
   cur_logfile_size = 0;
 
   return rc;
 }
-
 
 static int log_to_file(struct log_facility   * facility,
                        log_levels_t            level,
@@ -2212,12 +2210,15 @@ void SetDefaultLogging(char *name)
           return;
         }
 
-      if(facility->lf_private != NULL)
-        gsh_free(facility->lf_private);
+      if (strcmp(facility->lf_private, name) != 0)
+        {
+          if(facility->lf_private != NULL)
+            gsh_free(facility->lf_private);
 
-      facility->lf_private = tmp;
+          facility->lf_private = tmp;
+          setup_logfile_rotation(facility->lf_private);
+        }
     }
-
   if(default_facility != facility)
     _deactivate_log_facility(default_facility);
 
@@ -2225,8 +2226,8 @@ void SetDefaultLogging(char *name)
 
   _activate_log_facility(facility);
 
+  facility->lf_max_level = NIV_FULL_DEBUG;
   pthread_rwlock_unlock(&log_rwlock);
-
   LogEvent(COMPONENT_LOG, "Setting default log destination to name %s", name);
 }                               /* SetDefaultLogging */
 
@@ -2379,35 +2380,25 @@ static int StrToSize(const char * str_sz)
   return nsize;
 }
 
-int get_logfiles_info()
+int setup_logfile_rotation(char *path)
 {
 
   int          i;
   int          rc;
-  int          max_index;
+  uint32_t     max_index;
   char         n_filename[PATH_MAX];
   bool_t       compression;
   struct stat  statbuf;
   int          len;
   char       * tmp = NULL;
-  char       * path = NULL;
-  struct log_facility * facility;
 
-  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext - 1;
+  max_index = tab_log_flag[LF_LOGFILE_MAX_FILES].lf_ext;
   compression = tab_log_flag[LF_LOGFILE_COMPRESS].lf_val;
 
-  pthread_rwlock_wrlock(&log_rwlock);
-  facility = &facilities[FILELOG];
-  if (!is_facility_active(facility))
-    {
-      LogFullDebug(COMPONENT_CONFIG,
-                   "get_logfiles_info: FILE facility is not active\n");
-      pthread_rwlock_unlock(&log_rwlock);
-      return 0;
-    }
+  cur_logfile_indx = 0;
 
-  path = gsh_strdup(facility->lf_private);
-  pthread_rwlock_unlock(&log_rwlock);
+  if (!max_index && !compression)
+      return 0;
 
   pthread_rwlock_wrlock(&logrot_rwlock);
 
@@ -2417,21 +2408,15 @@ int get_logfiles_info()
   if (strcmp(tmp, ".gz") == 0)
       path[len-3] = '\0';
 
-  for (i=0; i<max_index; i++)
+  for (i=0; i<max_index-1; i++)
     {
       snprintf(n_filename, PATH_MAX, "%s.%02d.log", path, i);
-      if (!compression)
-        {
-          if(access(n_filename, F_OK) == 0) {
-            cur_logfile_indx++;
-          }
-        } else
-        {
-          strcat(n_filename, ".gz");
-          if(access(n_filename, F_OK) == 0) {
-            cur_logfile_indx++;
-          }
-        }
+      if (compression)
+        strcat(n_filename, ".gz");
+      if(access(n_filename, F_OK) == 0)
+        cur_logfile_indx++;
+      else
+        break;
     }
 
   strcpy(cur_logfile_name, path);
@@ -2732,10 +2717,11 @@ int read_log_config(config_file_t in_config)
   if(time_spec && !date_spec && tab_log_flag[LF_TIME].lf_ext != TD_NONE)
     tab_log_flag[LF_DATE].lf_ext = tab_log_flag[LF_TIME].lf_ext;
 
-  get_logfiles_info();
+  setup_logfile_rotation(logfile_name);
 
   /* Now that the LOG config has been processed, rebuild const_log_str. */
   set_const_log_str();
+  gsh_free(logfile_name);
 
   return 0;
 }                               /* read_log_config */
