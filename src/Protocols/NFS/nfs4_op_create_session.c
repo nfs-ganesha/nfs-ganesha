@@ -128,6 +128,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			LogDebug(component,
 				 "%s clientid = %"PRIx64,
 				 clientid_error_to_str(rc), clientid);
+			if(rc == CLIENT_ID_EXPIRED) {
+				rc = CLIENT_ID_STALE;
+			}
 			res_CREATE_SESSION4->csr_status = clientid_error_to_nfsstat(rc);
 
 			return res_CREATE_SESSION4->csr_status;
