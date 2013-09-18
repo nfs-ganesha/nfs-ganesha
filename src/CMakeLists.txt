@@ -603,7 +603,9 @@ if(USE_NODELIST)
 endif(USE_NODELIST)
 
 if(USE_9P_RDMA)
-  set(GANESHA_CORE ${GANESHA_CORE} mooshika rdmacm ibverbs)
+  find_package(PkgConfig)
+  pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.4)
+  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
 endif(USE_9P_RDMA)
 
 # All the plumbing in the basement

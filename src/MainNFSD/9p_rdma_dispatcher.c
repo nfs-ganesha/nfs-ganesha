@@ -279,17 +279,21 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
   pthread_attr_t attr_thr ;
   pthread_t thrid_handle_trans ;
 
+#define PORT_MAX_LEN 6
+  char port[PORT_MAX_LEN];
+
   memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
 
   trans_attr.server = nfs_param._9p_param._9p_rdma_backlog ;
   trans_attr.rq_depth = _9P_RDMA_OUT+1;
-  trans_attr.addr.sa_in.sin_family = AF_INET;
-  trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
+  snprintf(port, PORT_MAX_LEN, "%d", nfs_param._9p_param._9p_rdma_port);
+  trans_attr.port = port;
+  trans_attr.node = "::";
   trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
-  inet_pton(AF_INET, "0.0.0.0", &trans_attr.addr.sa_in.sin_addr);
   trans_attr.worker_count = -1;
+  /* if worker_count isn't -1: trans_attr.worker_queue_size = 256; */
   trans_attr.debug = MSK_DEBUG_EVENT;
-  trans_attr.worker_queue_size = 256;
+  /* stats: trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
 
   SetNameFunction("_9p_rdma_dispatch_thr" ) ;
 
