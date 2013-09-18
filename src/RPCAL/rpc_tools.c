@@ -449,6 +449,7 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
             LogFullDebug(COMPONENT_RPC,
                          "getaddrinfo %s returned %d(%s)",
                          str, errno, strerror(errno));
+            break;
           default:
             LogFullDebug(COMPONENT_RPC,
                          "getaddrinfo %s returned %d(%s)",
