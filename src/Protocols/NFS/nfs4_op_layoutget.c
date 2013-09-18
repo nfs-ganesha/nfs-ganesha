@@ -482,7 +482,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
 
 out:
 
-        if (res_LAYOUTGET4->logr_status != NFS4_OK) {
+        if (res_LAYOUTGET4->logr_status != NFS4_OK ||
+            nfs_status != NFS4_OK) {
                 if (layouts) {
                         size_t i;
                         for (i = 0; i < numlayouts; i++) {
