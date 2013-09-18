@@ -224,9 +224,8 @@ const char *str_lockt(fsal_lock_t ltype)
       case FSAL_LOCK_R:  return "READ ";
       case FSAL_LOCK_W:  return "WRITE";
       case FSAL_NO_LOCK: return "NO LOCK";
-      default:           return "?????";
     }
-  return "????";
+  return "?????";
 }
 
 /**
