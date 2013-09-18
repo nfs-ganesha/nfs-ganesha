@@ -73,7 +73,7 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   FSAL_MAX_NAME_LEN,            /* max filename */
   FSAL_MAX_PATH_LEN,            /* max pathlen */
   TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
+  FALSE,                         /* chown restricted */
   FALSE,                        /* case insensitivity */
   TRUE,                         /* case preserving */
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
