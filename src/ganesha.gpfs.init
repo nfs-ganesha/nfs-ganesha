@@ -83,6 +83,33 @@ CMD_LOGGER="/usr/bin/logger -i -t ganesha.gpfs-init "
 which sm-notify &> /dev/null
 HAVE_SMNOTIFY=`echo $?`
 
+check_hang() {
+       PID=$1
+       MAXREDS=2
+       MAXSTALL=120
+       FORCECORE=0;
+       GANRECDIR="/var/lib/nfs/ganesha_local"
+
+       NUMREDS=$(ls $GANRECDIR | grep "red" | wc -l)
+       LASTONE=$(ls -t $GANRECDIR | sed 's/_/ /' | awk 'NR > 1 {next} {printf $1} ')
+       # Beware of startup
+       if [ -z $LASTONE ] ; then
+               LASTONE=$(date +"%s")
+       fi
+       TNOW=$(date +"%s")
+       TSTALL=$(($TNOW - $LASTONE))
+       if [ $NUMREDS -ge $MAXREDS ] ; then
+               $CMD_LOGGER "Deadlock detected: No replies to RPC requests"
+               FORCECORE=1;
+       fi
+       if [ $TSTALL -ge $MAXSTALL ] ; then
+               $CMD_LOGGER "Deadlock detected: stalled for $TSTALL"
+               FORCECORE=1;
+       fi
+       return $FORCECORE
+}
+
+
 start() {
 	# Start statd, rquotad and Ganesha daemon.
 	# If any of the three daemons are already running, then doesn't restart it.
@@ -265,8 +292,14 @@ stop() {
            PROCNAME=$PATHPROG
         fi
 	if [ $pid ]; then
-		# Ganesha is running. Stop it.
-		kill -TERM $pid >/dev/null 2>&1
+                # Ganesha is running. Stop it.
+                #check for deadlock and take a dump if required
+                check_hang $pid
+                if [ $? -eq 0 ]; then
+                        kill -TERM $pid >/dev/null 2>&1
+                else
+                        kill -ABRT $PID >/dev/null 2>&1
+                fi
                 usleep 100000
 
                 # Unconditionally delete this file.
