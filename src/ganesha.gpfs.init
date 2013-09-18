@@ -79,6 +79,7 @@ OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
 RETVAL=0
 prog="ganesha.nfsd"
 CMD_LOGGER="/usr/bin/logger -i -t ganesha.gpfs-init "
+GANRECDIR="/var/lib/nfs/ganesha_local"
 
 which sm-notify &> /dev/null
 HAVE_SMNOTIFY=`echo $?`
@@ -88,7 +89,6 @@ check_hang() {
        MAXREDS=2
        MAXSTALL=120
        FORCECORE=0;
-       GANRECDIR="/var/lib/nfs/ganesha_local"
 
        NUMREDS=$(ls $GANRECDIR | grep "red" | wc -l)
        LASTONE=$(ls -t $GANRECDIR | sed 's/_/ /' | awk 'NR > 1 {next} {printf $1} ')
@@ -228,6 +228,9 @@ start() {
 		fi
 		echo  -n $"Starting $prog: "
 		ulimit -n 1048576          
+		#Remove the status tracking files
+		rm -rf /var/lib/nfs/ganesha_local/*
+ 
 		daemon numactl -i all $PATHPROG $OPTIONS
 		RETVAL=$?
 		if [ $HAVE_SMNOTIFY -eq 0 ]; then
