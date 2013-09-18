@@ -237,9 +237,7 @@ int uid2name(char *name, uid_t * puid, size_t namesize)
  */
 int name2uid(char *name, uid_t * puid)
 {
-  struct passwd passwd;
-  struct passwd *res;
-  char buff[NFS4_MAX_DOMAIN_LEN];
+  char *end = NULL, *at = NULL;
   uid_t uid;
 #ifdef _USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
@@ -248,7 +246,11 @@ int name2uid(char *name, uid_t * puid)
 #endif
   char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
-#endif
+#else  /* !_USE_NFSIDMAP */
+  struct passwd passwd;
+  struct passwd *res;
+  char buff[NFS4_MAX_DOMAIN_LEN];
+#endif /* _USE_NFSIDMAP */
 
   if(uidmap_get(name, &uid) == ID_MAPPER_SUCCESS)
     {
@@ -256,9 +258,11 @@ int name2uid(char *name, uid_t * puid)
                    "name2uid: uidmap_get mapped %s to uid=%u",
                    name, uid);
       *puid = uid;
+      goto success;
     }
   else
     {
+#ifndef _USE_NFSIDMAP
 #ifdef _SOLARIS
       if((res = getpwnam_r(name, &passwd, buff, sizeof(buff))) == NULL)
 #else
@@ -268,7 +272,7 @@ int name2uid(char *name, uid_t * puid)
           LogCrit(COMPONENT_IDMAPPER,
                        "name2uid: getpwnam_r %s failed",
                        name);
-          return 0;
+          goto v3compat;
         }
       else if (res != NULL)
         {
@@ -288,33 +292,14 @@ int name2uid(char *name, uid_t * puid)
                        name, res->pw_uid);
             }
 
-           return 1 ; /* Job is done */
-        }
-#ifndef _USE_NFSIDMAP
-      else
-        {
-          char *end = NULL;
-
-          uid = strtol(name, &end, 10);
-          if (end && *end != '\0')
-            return 0;
-           
-          if(uidmap_add(name, uid, 1) != ID_MAPPER_SUCCESS)
-            {
-              /* Failure to update the in-core table is not fatal */
-              LogMajor(COMPONENT_IDMAPPER,
-                      "name2uid: uidmap_add %s %u failed",
-                      name, uid);
-            }
-          *puid = uid;
-          return 1;
+          goto success; /* Job is done */
         }
 #else /* _USE_NFSIDMAP */
       if(!nfsidmap_set_conf())
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "name2uid: nfsidmap_set_conf failed");
-          return 0;
+          goto v3compat;
         }
 
       /* obtain fully qualified name */
@@ -329,7 +314,7 @@ int name2uid(char *name, uid_t * puid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_name_to_uid %s failed %d (%s)",
                        fqname, -rc, strerror(-rc));
-          return 0;
+          goto v3compat;
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -341,7 +326,6 @@ int name2uid(char *name, uid_t * puid)
           LogCrit(COMPONENT_IDMAPPER,
                   "name2uid: uidmap_add %s %u failed",
                   fqname, *puid);
-          return 0;
         }
 
 #ifdef _HAVE_GSSAPI
@@ -353,7 +337,6 @@ int name2uid(char *name, uid_t * puid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
                        name, -rc, strerror(-rc));
-          return 1;
         }
 
       if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
@@ -361,14 +344,35 @@ int name2uid(char *name, uid_t * puid)
           LogCrit(COMPONENT_IDMAPPER,
                   "name2uid: uidgidmap_add gss_uid %u gss_gid %u failed",
                   gss_uid, gss_gid);
-          return 0;
         }
 #endif                          /* _HAVE_GSSAPI */
+        goto success;
 
 #endif                           /* _USE_NFSIDMAP */
 
+v3compat:
+      /* If the name is numeric with no leading zeros and with no '@', 
+       * return the int value if numeric user/group names are allowed by the configuration */
+      at = strchr(name, '@');
+      if(!at && name[0] != '0')
+        {
+          uid = strtol(name, &end, 10);
+          if(end && *end != '\0')
+            return 0;
+       
+          if(uidmap_add(name, uid, 0) != ID_MAPPER_SUCCESS)
+            {
+              /* Failure to update the in-core table is not fatal */
+              LogMajor(COMPONENT_IDMAPPER,
+                      "name2uid: uidmap_add %s %u failed",
+                      name, uid);
+            }
+          *puid = uid;
+          goto success;
+        }
+      return 0;
     }
-
+success:
   return 1;
 }                               /* name2uid */
 
@@ -581,7 +585,7 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
                    "gid2name: nfs4_gid_to_name gid %u returned %s",
                    *pgid, name);
 
-      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "gid2name: gidmap_add %s %u failed",
@@ -621,7 +625,7 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
                    "gid2name: getgrgid_r gid %u returned %s",
                    *pgid, name);
 
-      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "gid2name: gidmap_add %s %u failed",
@@ -649,6 +653,7 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
 int name2gid(char *name, gid_t * pgid)
 {
   gid_t gid;
+  char *at = NULL, *end = NULL;
 
   if(gidmap_get(name, &gid) == ID_MAPPER_SUCCESS)
     {
@@ -656,6 +661,7 @@ int name2gid(char *name, gid_t * pgid)
                    "name2gid: gidmap_get mapped %s to gid= %u",
                    name, gid);
       *pgid = gid;
+      goto success;
     }
   else
     {
@@ -665,7 +671,7 @@ int name2gid(char *name, gid_t * pgid)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "name2gid: nfsidmap_set_conf failed");
-          return 0;
+          goto v3compat;
         }
 
       rc = nfs4_name_to_gid(name, pgid);
@@ -674,20 +680,20 @@ int name2gid(char *name, gid_t * pgid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2gid: nfs4_name_to_gid %s failed %d (%s)",
                        name, -rc, strerror(-rc));
-          return 0;
+          goto v3compat;
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
                    "name2gid: nfs4_name_to_gid %s returned %u",
                    name, *pgid);
 
-      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "name2gid: gidmap_add %s %u failed",
                   name, *pgid);
-          return 0;
         }
+      goto success;
 
 #else
       struct group g;
@@ -703,43 +709,45 @@ int name2gid(char *name, gid_t * pgid)
           LogCrit(COMPONENT_IDMAPPER,
                        "name2gid: getgrnam_r %s failed",
                        name);
-          return 0;
+          goto v3compat;
         }
       else if (pg != NULL)
         {
           *pgid = pg->gr_gid;
 
-          if(gidmap_add(name, pg->gr_gid) != ID_MAPPER_SUCCESS)
+          if(gidmap_add(name, pg->gr_gid, 1) != ID_MAPPER_SUCCESS)
             {
               LogMajor(COMPONENT_IDMAPPER,
                        "name2gid: gidmap_add %s %u failed",
                        name, pg->gr_gid);
             }
+          goto success;
         }
-      else
+#endif                          /* _USE_NFSIDMAP */
+v3compat:
+      /* If the name is numeric with no leading zeros and with no '@', 
+       * return the int value if numeric user/group names are allowed by the configuration */
+      at = strchr(name, '@');
+      if(!at && name[0] != '0')
         {
-          char *end = NULL;
-
           gid = strtol(name, &end, 10);
           if(end && *end != '\0')
-            {
-              LogCrit(COMPONENT_IDMAPPER, "name2gid: %s is unknown", name);
-              *pgid = -1;
-              return 0;
-            }
-           
-          if(gidmap_add(name, gid) != ID_MAPPER_SUCCESS)
+            return 0;
+       
+          if(gidmap_add(name, gid, 0) != ID_MAPPER_SUCCESS)
             {
               /* Failure to update the in-core table is not fatal */
               LogMajor(COMPONENT_IDMAPPER,
                       "name2gid: gidmap_add %s %u failed",
                       name, gid);
             }
-
           *pgid = gid;
+          goto success;
         }
-#endif                          /* _USE_NFSIDMAP */
+      return 0;
     }
+
+success:
   return 1;
 }                               /* name2gid */
 
