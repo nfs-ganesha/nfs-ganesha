@@ -66,6 +66,8 @@ static pool_t *rpc_call_pool;
 
 extern char host_name[MAXHOSTNAMELEN + 1];
 
+void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+
 /**
  * @brief Initialize the callback credential cache
  *
@@ -724,7 +726,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 out:
 	if ((code != 0) &&
 	    chan->clnt) {
-		nfs_rpc_destroy_chan(chan);
+		_nfs_rpc_destroy_chan(chan);
 	}
 
 	pthread_mutex_unlock(&chan->mtx);
@@ -822,11 +824,9 @@ void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
  *
  * @param[in] chan The channel to dispose of
  */
-void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
+void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
-
-	pthread_mutex_lock(&chan->mtx);
 
 	switch (chan->type) {
 	case RPC_CHAN_V40:
@@ -839,6 +839,20 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 
 	chan->clnt = NULL;
 	chan->last_called = 0;
+}
+
+/**
+ * @brief Dispose of a channel
+ *
+ * @param[in] chan The channel to dispose of
+ */
+void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
+{
+	assert(chan);
+
+	pthread_mutex_lock(&chan->mtx);
+
+	_nfs_rpc_destroy_chan(chan);
 
 	pthread_mutex_unlock(&chan->mtx);
 }
@@ -876,7 +890,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (stat != RPC_SUCCESS) {
-		nfs_rpc_destroy_chan(chan);
+		_nfs_rpc_destroy_chan(chan);
 	}
 
 unlock:
@@ -1037,7 +1051,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (call->stat != RPC_SUCCESS) {
-		nfs_rpc_destroy_chan(call->chan);
+		_nfs_rpc_destroy_chan(call->chan);
 	}
 
 unlock:
