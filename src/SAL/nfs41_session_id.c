@@ -286,7 +286,6 @@ int nfs41_Session_Set(nfs41_session_t *session_data)
 		if (code == HASHTABLE_SUCCESS) {
 			rc = 1;
 		}
-		HashTable_ReleaseLatched(ht_session_id, &latch);
 	}
 
 out:
