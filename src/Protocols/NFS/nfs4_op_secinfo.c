@@ -41,6 +41,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "sal_functions.h"
+#include "export_mgr.h"
 
 /**
  * @brief The NFS4_OP_SECINFO
@@ -201,6 +202,24 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
 
         if(entry_src != NULL)
 	        cache_inode_put(entry_src);
+
+	if(data->minorversion != 0) {
+		/* Need to clear out CurrentFH */
+		if(data->current_entry) {
+			cache_inode_put(data->current_entry);
+			data->current_entry = NULL;
+		}
+
+		data->currentFH.nfs_fh4_len = 0;
+		data->current_filetype = NO_FILE_TYPE;
+
+		/* Release CurrentFH reference to export. */
+		if(data->req_ctx->export) {
+			put_gsh_export(data->req_ctx->export);
+			data->req_ctx->export = NULL;
+			data->pexport = NULL;
+		}
+	}
 
 	res_SECINFO4->status = NFS4_OK;
 
