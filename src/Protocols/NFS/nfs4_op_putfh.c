@@ -80,7 +80,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
 		return res_PUTFH4->status;
 	
         /* If no currentFH were set, allocate one */
-        if(data->currentFH.nfs_fh4_len == 0) {
+        if(data->currentFH.nfs_fh4_val == NULL) {
                 res_PUTFH4->status = nfs4_AllocateFH(&(data->currentFH));
                 if (res_PUTFH4->status != NFS4_OK) {
                         return res_PUTFH4->status;

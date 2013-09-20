@@ -833,7 +833,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       cache_inode_lru_ref(entry, LRU_REQ_INITIAL);
-      if(data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_val == NULL)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
@@ -1121,7 +1121,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4->status;
         }
 
-      if(data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_val == NULL)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
@@ -1227,7 +1227,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
        * a common case, elected to set up FH for call to xxxx_ToFattr
        * unconditionally.
        */ 
-      if(entryFH.nfs_fh4_len == 0)
+      if(entryFH.nfs_fh4_val == NULL)
         {
           if(nfs4_AllocateFH(&entryFH) != NFS4_OK)
             {

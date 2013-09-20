@@ -76,7 +76,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
     return  res_PUTPUBFH4->status;
 
   /* I copy the root FH to the currentFH */
-  if(data->currentFH.nfs_fh4_len == 0)
+  if(data->currentFH.nfs_fh4_val == NULL)
     {
        res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
       if( res_PUTPUBFH4->status != NFS4_OK)

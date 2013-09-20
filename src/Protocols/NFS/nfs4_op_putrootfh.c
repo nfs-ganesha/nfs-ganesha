@@ -65,7 +65,7 @@ int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
   /* If rootFH already set, return success */
-  if(data->rootFH.nfs_fh4_len != 0)
+  if(data->rootFH.nfs_fh4_val != NULL)
     return NFS4_OK;
 
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
@@ -113,7 +113,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
     return res_PUTROOTFH4->status;
 
   /* I copy the root FH to the currentFH */
-  if(data->currentFH.nfs_fh4_len == 0)
+  if(data->currentFH.nfs_fh4_val == NULL)
     {
       res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->currentFH));
       if(res_PUTROOTFH4->status != NFS4_OK)
