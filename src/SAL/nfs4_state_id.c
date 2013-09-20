@@ -397,6 +397,16 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
       sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) stateid->seqid);
     }
 
+  LogFullDebug(COMPONENT_STATE,
+               "Check %s stateid flags%s%s%s%s%s%s",
+               tag,
+               flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
+               flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
+               flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
+               flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
+               flags & STATEID_SPECIAL_CLOSE_41 ? " CLOSE_41" : "",
+               flags == 0 ? " NONE" : "");
+
   /* Test for OTHER is all zeros */
   if(memcmp(stateid->other, all_zero, OTHERSIZE) == 0)
     {
@@ -417,6 +427,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
                    "Check %s stateid found special 'current' stateid", tag);
           /* Copy current stateid in and proceed to checks */
           *stateid = data->current_stateid;
+          goto check_it;
         }
 
       LogDebug(COMPONENT_STATE,
@@ -445,6 +456,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
                tag, (unsigned int) stateid->seqid);
       return NFS4ERR_BAD_STATEID;
     }
+
+check_it:
 
   /* Extract the clientid from the stateid other field */
   memcpy(&clientid, stateid->other, sizeof(clientid));
