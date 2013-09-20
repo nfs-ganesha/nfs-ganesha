@@ -905,7 +905,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
     }
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
-  if(psfsentry->pseudo_id == 0)
+  if(psfsentry->parent == psfsentry)
     {
       res_LOOKUPP4->status = NFS4ERR_NOENT;
       return res_LOOKUPP4->status;
@@ -987,7 +987,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
            (uint64_t) data->req_ctx->export->export.exp_mounted_on_file_id);
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
-  if(psfsentry->pseudo_id == 0)
+  if(psfsentry->parent == psfsentry)
     {
       LogDebug(COMPONENT_NFS_V4_PSEUDO,
                "Returning NFS4ERR_NOENT because pseudo_id == 0");
