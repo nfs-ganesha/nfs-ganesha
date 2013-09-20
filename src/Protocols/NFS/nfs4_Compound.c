@@ -592,6 +592,7 @@ int nfs4_Compound(nfs_arg_t *arg,
            * NFS4ERR_NOT_ONLY_OP. See 18.37.3 and test DSESS9005 for details*/
           if(argarray[0].argop == NFS4_OP_EXCHANGE_ID ||
              argarray[0].argop == NFS4_OP_CREATE_SESSION ||
+             argarray[0].argop == NFS4_OP_DESTROY_CLIENTID ||
              argarray[0].argop == NFS4_OP_DESTROY_SESSION)
             {
               status = NFS4ERR_NOT_ONLY_OP;
