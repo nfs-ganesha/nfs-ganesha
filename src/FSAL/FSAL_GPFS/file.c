@@ -107,8 +107,6 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
         if(FSAL_IS_ERROR(status))
           return(status);
 
-        *end_of_file = *read_amount == 0 ? true : false;
-
 	return fsalstat(fsal_error, retval);
 }
 

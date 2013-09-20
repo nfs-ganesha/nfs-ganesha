@@ -133,7 +133,9 @@ ds_read(struct fsal_ds_handle *const ds_pub,
   }
 
   *supplied_length = amount_read;
-  *end_of_file = FALSE;
+
+  if(amount_read == 0 || amount_read < requested_length)
+    *end_of_file = TRUE;
 
   return NFS4_OK;
 }

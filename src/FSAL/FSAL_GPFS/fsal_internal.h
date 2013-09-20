@@ -136,7 +136,7 @@ typedef struct fsal_xstat__
 
 static inline size_t gpfs_sizeof_handle(const struct gpfs_file_handle *hdl)
 {
-  return sizeof(struct gpfs_file_handle);
+  return offsetof(struct gpfs_file_handle, f_handle) + hdl->handle_size;
 }
 
 void export_ops_init(struct export_ops *ops);

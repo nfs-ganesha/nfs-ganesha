@@ -241,8 +241,8 @@ fsal_status_t GPFSFSAL_read(int fd,               /* IN */
 
   if(nb_read == -1)
     return fsalstat(posix2fsal_error(errsv), errsv);
-  else if(nb_read == 0)
-    *p_end_of_file = 1;
+  else if(nb_read == 0 || nb_read < buffer_size)
+    *p_end_of_file = TRUE;
 
   *p_read_amount = nb_read;
 
