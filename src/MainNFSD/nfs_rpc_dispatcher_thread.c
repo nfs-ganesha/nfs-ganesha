@@ -365,12 +365,12 @@ void Clean_RPC(void)
 cleanup_list_element clean_rpc = {NULL, Clean_RPC};
 
 #define UDP_REGISTER(prot, vers, netconfig) \
-    svc_register(udp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
-                 nfs_rpc_dispatch_dummy, IPPROTO_UDP)
+    svc_reg(udp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
+                 nfs_rpc_dispatch_dummy, netconfig)
 
 #define TCP_REGISTER(prot, vers, netconfig) \
-    svc_register(tcp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
-                 nfs_rpc_dispatch_dummy, IPPROTO_TCP)
+    svc_reg(tcp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
+                 nfs_rpc_dispatch_dummy, netconfig)
 
 void Register_program(protos prot, int flag, int vers)
 {
