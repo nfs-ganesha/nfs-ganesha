@@ -364,6 +364,9 @@ int up_async_delegrecall(struct fridgethr *,
 
 /** @} */
 
+cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
+				     uint32_t flags);
+				
 cache_inode_status_t up_get(const struct gsh_buffdesc *key,
 			    cache_entry_t **entry);
 

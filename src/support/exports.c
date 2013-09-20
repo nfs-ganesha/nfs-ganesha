@@ -1349,6 +1349,7 @@ static int BuildExportEntry(config_item_t block)
       p_entry->PrefWrite = 16384;
       p_entry->PrefRead = 16384;
       p_entry->PrefReaddir = 16384;
+      p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
       glist_init(&p_entry->exp_state_list);
       glist_init(&p_entry->exp_lock_list);
       glist_init(&p_entry->clients.client_list);

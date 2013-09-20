@@ -153,11 +153,6 @@ fsal_status_t
 fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
                          struct gpfs_file_handle *p_handle);  /* OUT */
 
-fsal_status_t fsal_get_xstat_by_handle(int dirfd,
-                                       struct gpfs_file_handle *p_filehandle,
-                                       gpfsfsal_xstat_t *p_buffxstat,
-                                       uint32_t *grace_period_attr);
-
 fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN */
                                      struct gpfs_file_handle *p_handle);/* OUT */
 
@@ -237,7 +232,8 @@ fsal_status_t fsal_stat_by_handle(int dirfd,
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
                                        struct gpfs_file_handle * p_handle,
                                        gpfsfsal_xstat_t *p_buffxstat,
-                                       uint32_t *grace_period_attr);
+                                       uint32_t *grace_period_attr,
+                                       bool expire);
 
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,
                                        const struct req_op_context *p_context,
