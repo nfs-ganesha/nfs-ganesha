@@ -406,6 +406,14 @@ if(USE_FSAL_LUSTRE)
       set(USE_FSAL_SHOOK OFF)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
+
+  check_include_files("lustre/lustreapi.h" HAVE_INCLUDE_LUSTREAPI_H)
+  check_include_files("lustre/liblustreapi.h" HAVE_INCLUDE_LIBLUSTREAPI_H)
+
+  if( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
+    message( ERROR "Cannot find lustre header files, aborting" )
+  endif( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
+
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
@@ -870,7 +878,6 @@ if(DOXYGEN_FOUND)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-E
     )
 endif(DOXYGEN_FOUND)
 
