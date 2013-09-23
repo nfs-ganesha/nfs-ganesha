@@ -328,9 +328,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	inc_client_id_ref(found);
 
 	/* add to head of session list (encapsulate?) */
-	glist_init(&nfs41_session->session_link);
+	pthread_mutex_lock(&found->cid_mutex);
 	glist_add(&found->cid_cb.v41.cb_session_list,
 		  &nfs41_session->session_link);
+	pthread_mutex_unlock(&found->cid_mutex);
 
 	/* Set ca_maxrequests */
 	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
@@ -361,12 +362,15 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		LogDebug(component,
 			 "Could not insert session into table");
 
+		pthread_mutex_lock(&found->cid_mutex);
+		glist_del(&nfs41_session->session_link);
+		pthread_mutex_unlock(&found->cid_mutex);
+
 		/* Decrement our reference to the clientid record and
 		   the one for the session */
 		dec_client_id_ref(found);
 		dec_client_id_ref(found);
 
-		glist_del(&nfs41_session->session_link);
 		/* Free the memory for the session */
 		pool_free(nfs41_session_pool, nfs41_session);
 

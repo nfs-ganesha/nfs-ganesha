@@ -46,7 +46,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
   struct rbt_head     * head_rbt;
   struct hash_data    * addr = NULL;
   uint32_t              i;
-  int                   v4, rc;
+  int                   rc;
   struct rbt_node     * pn;
   nfs_client_id_t     * pclientid;
   nfs_client_record_t * precord;
@@ -77,15 +77,9 @@ static int reap_hash_table(hash_table_t * ht_reap)
           pclientid = addr->val.addr;
           count++;
 
-          /*
-           * little hack: only want to reap v4 clients
-           * 4.1 initializess this field to '1'
-           */
-          v4 = (pclientid->cid_create_session_sequence == 0);
-
           P(pclientid->cid_mutex);
 
-          if(!valid_lease(pclientid) && v4)
+          if(!valid_lease(pclientid))
             {
               inc_client_id_ref(pclientid);
 

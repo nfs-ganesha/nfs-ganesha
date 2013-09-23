@@ -762,6 +762,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 		struct glist_head *glist = NULL;
 
 		/* Get the first working back channel we have */
+		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
 		glist_for_each(glist,
 			       &clientid->cid_cb.v41.cb_session_list) {
 			nfs41_session_t *session =
@@ -771,6 +772,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 			if (session->flags & session_bc_up) {
 				chan = &session->cb_chan;
 			}
+		/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 		}
 	}
 
@@ -1328,6 +1330,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 	}
 
 	for (scan = 0; scan < 2; ++scan) {
+		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
 		glist_for_each(glist,
 			       &clientid->cid_cb.v41.cb_session_list) {
 			nfs41_session_t *session =
@@ -1378,6 +1381,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 				goto out;
 			}
 		}
+		/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 	}
 
 out:

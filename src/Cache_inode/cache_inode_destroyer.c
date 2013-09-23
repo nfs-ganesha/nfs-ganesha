@@ -165,14 +165,12 @@ void free_client_id_for_shutdown(nfs_client_id_t *clientid)
 			ht_unsafe_zap_by_key(ht_session_id,
 					     &key);
 
-			/* free the key that was stored in hash table */
-			gsh_free(session->session_id);
-			/* Decrement our reference to the clientid record */
-			dec_client_id_ref_for_shutdown(session->
-						       clientid_record);
 			/* Unlink the session from the client's list of
 			   sessions */
 			glist_del(&session->session_link);
+			/* Decrement our reference to the clientid record */
+			dec_client_id_ref_for_shutdown(session->
+						       clientid_record);
 			/* Destroy the session's back channel (if any) */
 			if (session->flags & session_bc_up) {
 				nfs_rpc_destroy_chan(&session->cb_chan);

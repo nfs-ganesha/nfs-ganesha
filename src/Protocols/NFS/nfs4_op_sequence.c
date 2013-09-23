@@ -32,6 +32,7 @@
 #include "config.h"
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
+#include "nfs_tools.h"
 
 /**
  * @brief the NFS4_OP_SEQUENCE operation
@@ -85,18 +86,26 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
                                                arg_SEQUENCE4->sa_slotid;
         res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_status_flags =
                                              SEQ4_STATUS_RESTART_RECLAIM_NEEDED;
-        LogDebug(COMPONENT_SESSIONS,
-                 "SEQUENCE returning status %d flags 0x%X",
-                  res_SEQUENCE4->sr_status,
+        LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                 "SEQUENCE returning status %s flags 0x%X",
+                  nfsstat4_to_str(res_SEQUENCE4->sr_status),
                   res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_status_flags);
       }
       else
+      {
         res_SEQUENCE4->sr_status = NFS4ERR_BADSESSION;
+        LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                 "SEQUENCE returning status %s",
+                  nfsstat4_to_str(res_SEQUENCE4->sr_status));
+      }
 
       return res_SEQUENCE4->sr_status;
     }
 
   /* session->refcount +1 */
+
+  LogDebug(COMPONENT_SESSIONS,
+           "SEQUENCE session=%p", session);
 
   /* Check if lease is expired and reserve it */
   P(session->clientid_record->cid_mutex);
@@ -105,15 +114,11 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     {
       V(session->clientid_record->cid_mutex);
 
-      if(isDebug(COMPONENT_SESSIONS))
-        LogDebug(COMPONENT_SESSIONS,
-                 "SEQUENCE returning NFS4ERR_EXPIRED");
-      else
-        LogDebug(COMPONENT_CLIENTID,
-                 "SEQUENCE returning NFS4ERR_EXPIRED");
-
       dec_session_ref(session);
       res_SEQUENCE4->sr_status = NFS4ERR_EXPIRED;
+      LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                  "SEQUENCE returning status %s",
+                   nfsstat4_to_str(res_SEQUENCE4->sr_status));
       return res_SEQUENCE4->sr_status;
     }
 
@@ -126,6 +131,9 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     {
       dec_session_ref(session);
       res_SEQUENCE4->sr_status = NFS4ERR_BADSLOT;
+      LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                  "SEQUENCE returning status %s",
+                   nfsstat4_to_str(res_SEQUENCE4->sr_status));
       return res_SEQUENCE4->sr_status;
     }
 
@@ -143,7 +151,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
               data->use_drc = true;
               data->pcached_res = &session->slots[arg_SEQUENCE4->sa_slotid].cached_result;
 
-              LogFullDebug(COMPONENT_SESSIONS,
+              LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
                            "Use sesson slot %"PRIu32"=%p for DRC",
                            arg_SEQUENCE4->sa_slotid, data->pcached_res);
 
@@ -158,12 +166,18 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
 	      V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
               dec_session_ref(session);
               res_SEQUENCE4->sr_status = NFS4ERR_RETRY_UNCACHED_REP;
+              LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                          "SEQUENCE returning status %s",
+                           nfsstat4_to_str(res_SEQUENCE4->sr_status));
               return res_SEQUENCE4->sr_status;
             }
         }
       V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
       dec_session_ref(session);
       res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
+      LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+                  "SEQUENCE returning status %s",
+                   nfsstat4_to_str(res_SEQUENCE4->sr_status));
       return res_SEQUENCE4->sr_status;
     }
 
@@ -201,7 +215,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
       data->pcached_res = &session->slots[arg_SEQUENCE4->sa_slotid].cached_result;
       session->slots[arg_SEQUENCE4->sa_slotid].cache_used = true;
 
-      LogFullDebug(COMPONENT_SESSIONS,
+      LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
                    "Use sesson slot %"PRIu32"=%p for DRC",
                    arg_SEQUENCE4->sa_slotid, data->pcached_res);
     }
@@ -210,7 +224,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
       data->pcached_res = NULL;
       session->slots[arg_SEQUENCE4->sa_slotid].cache_used = false;
 
-      LogFullDebug(COMPONENT_SESSIONS,
+      LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
                    "Don't use sesson slot %"PRIu32"=NULL for DRC",
                    arg_SEQUENCE4->sa_slotid);
     }
