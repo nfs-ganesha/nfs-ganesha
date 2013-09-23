@@ -441,6 +441,7 @@ void nfs_Init_svc()
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
     svc_params.max_connections = nfs_param.core_param.rpc.max_connections;
     svc_params.max_events = 1024; /* length of epoll event queue */
+    svc_params.svc_ioq_maxbuf = nfs_param.core_param.rpc.max_send_buffer_size;
     svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
     svc_params.warnx = NULL;
     svc_params.gss_ctx_hash_partitions = 17;
