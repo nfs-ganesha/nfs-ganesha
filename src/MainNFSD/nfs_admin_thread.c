@@ -533,6 +533,9 @@ static void do_shutdown(void)
     LogEvent(COMPONENT_THREAD,
 	     "Worker threads successfully shut down.");
 
+  /* finalize RPC package */
+  (void) svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
+
   rc = general_fridge_shutdown();
   if (rc != 0)
     {
