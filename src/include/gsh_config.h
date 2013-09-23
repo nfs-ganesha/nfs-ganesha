@@ -160,12 +160,12 @@ typedef enum protos {
 /**
  * Default value for core_param.rpc.max_send_buffer_size
  */
-#define NFS_DEFAULT_SEND_BUFFER_SIZE 32768
+#define NFS_DEFAULT_SEND_BUFFER_SIZE 1048576
 
 /**
  * Default value for core_param.rpc.max_recv_buffer_size
  */
-#define NFS_DEFAULT_RECV_BUFFER_SIZE 32768
+#define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
 
 /**
  * @brief Support NFSv3
