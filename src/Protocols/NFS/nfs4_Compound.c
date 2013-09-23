@@ -736,9 +736,6 @@ int nfs4_Compound(nfs_arg_t *arg,
           /* Replay cache, only true for SEQUENCE or CREATE_SESSION w/o SEQUENCE.
            * Since will only be set in those cases, no need to check operation or anything.
            */
-          LogFullDebug(COMPONENT_SESSIONS,
-                       "Use session replay cache %p",
-                       data.pcached_res);
 
           /* Free the reply allocated above */
           gsh_free(res->res_compound4.resarray.resarray_val);
@@ -746,6 +743,10 @@ int nfs4_Compound(nfs_arg_t *arg,
           /* Copy the reply from the cache */
           res->res_compound4_extended = *data.pcached_res;
           status = ((COMPOUND4res *) data.pcached_res)->status;
+          LogFullDebug(COMPONENT_SESSIONS,
+                       "Use session replay cache %p result %s",
+                       data.pcached_res,
+                       nfsstat4_to_str(status));
           break;    /* Exit the for loop */
         }
     }                           /* for */
