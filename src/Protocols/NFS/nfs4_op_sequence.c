@@ -145,8 +145,11 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     {
       if(session->slots[arg_SEQUENCE4->sa_slotid].sequence == arg_SEQUENCE4->sa_sequenceid)
         {
+#if IMPLEMENT_CACHETHIS
+/* Ganesha always caches result anyway so ignore cachethis */
           if(session->slots[arg_SEQUENCE4->sa_slotid].cache_used)
             {
+#endif
               /* Replay operation through the DRC */
               data->use_drc = true;
               data->pcached_res = &session->slots[arg_SEQUENCE4->sa_slotid].cached_result;
@@ -159,6 +162,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
               dec_session_ref(session);
               res_SEQUENCE4->sr_status = NFS4_OK;
               return res_SEQUENCE4->sr_status;
+#if IMPLEMENT_CACHETHIS
             }
           else
             {
@@ -171,6 +175,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
                            nfsstat4_to_str(res_SEQUENCE4->sr_status));
               return res_SEQUENCE4->sr_status;
             }
+#endif
         }
       V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
       dec_session_ref(session);
@@ -210,14 +215,18 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
 	|= SEQ4_STATUS_CB_PATH_DOWN;
     }
 
+#if IMPLEMENT_CACHETHIS
+/* Ganesha always caches result anyway so ignore cachethis */
   if(arg_SEQUENCE4->sa_cachethis)
     {
+#endif
       data->pcached_res = &session->slots[arg_SEQUENCE4->sa_slotid].cached_result;
       session->slots[arg_SEQUENCE4->sa_slotid].cache_used = true;
 
       LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
                    "Use sesson slot %"PRIu32"=%p for DRC",
                    arg_SEQUENCE4->sa_slotid, data->pcached_res);
+#if IMPLEMENT_CACHETHIS
     }
   else
     {
@@ -228,6 +237,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
                    "Don't use sesson slot %"PRIu32"=NULL for DRC",
                    arg_SEQUENCE4->sa_slotid);
     }
+#endif
   V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
 
   /* If we were successful, stash the clientid in the request
