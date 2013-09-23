@@ -551,11 +551,6 @@ check_library_exists(
 	""
 	HAVE_LIBCAP 
 	)
-if( HAVE_LIBCAP )
-  message( STATUS "Found libcap" ) 
-else( HAVE_LIBCAP )
-  message( FATAL_ERROR "You need to install libcap to compile Ganesha" )
-endif( HAVE_LIBCAP )
 
 # Roll up required libraries
 

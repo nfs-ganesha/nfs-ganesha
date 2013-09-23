@@ -295,9 +295,11 @@ gsh_xprt_clear_flag(SVCXPRT * xprt, uint32_t flags)
 
 #define DISP_SLOCK(x) do { \
     if (! slocked) { \
-        SVC_LOCK((x), XP_LOCK_SEND, __func__, __LINE__); \
-        slocked = TRUE; \
-      }\
+        if ((x)->xp_type == XPRT_UDP) { \
+            SVC_LOCK((x), XP_LOCK_SEND, __func__, __LINE__); \
+            slocked = TRUE; \
+        } \
+      } \
     } while (0);
 
 #define DISP_SUNLOCK(x) do { \
