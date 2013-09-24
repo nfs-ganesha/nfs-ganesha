@@ -3878,7 +3878,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 			       fsal_dynamicfsinfo_t *dinfo,
 			       compound_data_t *data)
 {
-	int attribute_to_set = 0;
+	int attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask, -1);
 	int nfs_status = NFS4_OK;
 	XDR attr_body;
 	struct xdr_attrs_args args;
@@ -3887,7 +3887,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 	/* Check attributes data */
 	if((Fattr->attr_vals.attrlist4_val == NULL) ||
 	   (Fattr->attr_vals.attrlist4_len == 0))
-		return NFS4_OK;
+		return attribute_to_set == -1 ? NFS4_OK : NFS4ERR_BADXDR;
 
 	/* Init */
 	memset(&attr_body, 0, sizeof(attr_body));
