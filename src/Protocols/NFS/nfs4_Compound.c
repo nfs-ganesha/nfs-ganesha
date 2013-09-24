@@ -366,9 +366,9 @@ static const nfs4_op_desc_t optabv4[] = {
 	},
 	[NFS4_OP_SECINFO_NO_NAME] = {
 		.name = "OP_SECINFO_NO_NAME",
-		.funct = nfs4_op_illegal,
-		.free_res = nfs4_op_illegal_Free,
-		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS	/* tbd */
+		.funct = nfs4_op_secinfo_no_name,
+		.free_res = nfs4_op_secinfo_no_name_Free,
+		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
 	},
 	[NFS4_OP_SEQUENCE] = {
 		.name = "OP_SEQUENCE",

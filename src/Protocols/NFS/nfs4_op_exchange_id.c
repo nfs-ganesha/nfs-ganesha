@@ -283,6 +283,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 		goto out;
 	}
 
+	unconf->cid_create_session_sequence = 1;
+
 	glist_init(&unconf->cid_cb.v41.cb_session_list);
 
 	memcpy(unconf->cid_incoming_verifier,
