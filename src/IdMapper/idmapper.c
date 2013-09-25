@@ -311,7 +311,7 @@ static bool atless2id(char *name,
 		      const uint32_t anon)
 {
   if ((len == 6) &&
-      (memcmp(name, "nobody", 6)))
+      (!memcmp(name, "nobody", 6)))
     {
       *id = anon;
       return true;
