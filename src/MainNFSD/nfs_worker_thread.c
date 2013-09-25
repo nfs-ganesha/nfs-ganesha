@@ -1350,6 +1350,7 @@ auth_failure:
   }
 
 freeargs:
+  clean_credentials(&user_credentials);
   /* XXX no need for xprt slock across SVC_FREEARGS */
   DISP_SUNLOCK(xprt);
 
