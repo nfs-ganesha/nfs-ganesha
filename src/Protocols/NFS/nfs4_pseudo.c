@@ -768,6 +768,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     {
       /* The entry is not a junction, we stay within the pseudo fs */
       nfs4_PseudoToFhandle(&(data->currentFH), iter);
+
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
     }
   else
     {
@@ -853,6 +856,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 	  goto out;
         }
 
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
 
       /* Deref the old one, ref and keep the entry within the compound data */
       if (data->current_entry) {
@@ -913,6 +918,9 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
 
   /* A matching entry was found */
   nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
+
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
 
   /* Return the reference to the old current entry */
   if (data->current_entry) {
@@ -997,6 +1005,9 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
 
   /* A matching entry was found */
   nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
+
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
 
   /* Return the reference to the old current entry */
   if (data->current_entry)
@@ -1141,6 +1152,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4->status;
         }
 
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
 
       /* Keep the entry within the compound data */
 

@@ -102,6 +102,10 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
 
   data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
+  /* Restore the saved stateid */
+  data->current_stateid = data->saved_stateid;
+  data->current_stateid_valid = data->saved_stateid_valid;
+
   if(data->req_ctx->export != NULL) {
       put_gsh_export(data->req_ctx->export);
   }

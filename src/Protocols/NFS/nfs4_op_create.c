@@ -370,6 +370,9 @@ int nfs4_op_create(struct nfs_argop4 *op,
   data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
   memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val, newfh4.nfs_fh4_len);
 
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
+
   /* No do not need newfh any more */
   gsh_free(newfh4.nfs_fh4_val);
 

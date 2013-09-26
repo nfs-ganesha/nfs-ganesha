@@ -94,6 +94,10 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
          data->currentFH.nfs_fh4_len);
   data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
+  /* Save the current stateid */
+  data->saved_stateid = data->current_stateid;
+  data->saved_stateid_valid = data->current_stateid_valid;
+
   /* If old SavedFH had a related export, release reference. */
   if(data->saved_export != NULL) {
       put_gsh_export(data->saved_export);

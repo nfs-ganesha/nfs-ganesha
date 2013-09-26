@@ -500,6 +500,9 @@ out:
                         state_del(layout_state, false);
                         layout_state = NULL;
                 }
+
+                /* Poison the current stateid */
+                data->current_stateid_valid = false;
         }
 
         res_LAYOUTGET4->logr_status = nfs_status;

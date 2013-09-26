@@ -133,6 +133,8 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 cache_inode_put(file_entry);
                 goto out;
         }
+        /* Mark current_stateid as invalid */
+        data->current_stateid_valid = false;
 
         /* Release dir_entry, as it is not reachable from anywhere in
            compound after this function returns.  Count on later

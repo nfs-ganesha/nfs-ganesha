@@ -94,6 +94,9 @@ nfs4_op_putfh(struct nfs_argop4 *op,
         memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4->object.nfs_fh4_val,
                arg_PUTFH4->object.nfs_fh4_len);
 
+        /* Mark current_stateid as invalid */
+        data->current_stateid_valid = false;
+
         /* If old CurrentFH had a related export, release reference. */
         if(data->req_ctx->export != NULL) {
                 put_gsh_export(data->req_ctx->export);

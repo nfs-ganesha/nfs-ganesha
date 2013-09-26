@@ -377,15 +377,13 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 {
   uint32_t          epoch = 0;
   uint64_t          epoch_low = ServerEpoch & 0xFFFFFFFF;
-  state_t         * state2;
+  state_t         * state2 = NULL;
   char              str[OTHERSIZE * 2 + 1 + 6];
   int32_t           diff;
   clientid4         clientid;
   nfs_client_id_t * pclientid;
   int               rc;
-
-  *state = NULL;
-  data->current_stateid_valid = false;
+  nfsstat4          status;
 
   /* Since this represents a programming error, we're better off
      asserting. */
@@ -418,13 +416,23 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
           /* TODO FSF: eventually this may want to return an actual state for
            * use in temporary locks for I/O.
            */
-          return NFS4_OK;
+          data->current_stateid_valid = false;
+          goto success;
         }
       if(stateid->seqid == 1 && (flags & STATEID_SPECIAL_CURRENT) != 0)
         {
           /* Special current stateid */
           LogDebug(COMPONENT_STATE,
                    "Check %s stateid found special 'current' stateid", tag);
+          if(!data->current_stateid_valid)
+            {
+              LogDebug(COMPONENT_STATE,
+                       "Check %s stateid STATEID_SPECIAL_CURRENT - current stateid is bad",
+                       tag);
+              status = NFS4ERR_BAD_STATEID;
+              goto failure;
+            }
+
           /* Copy current stateid in and proceed to checks */
           *stateid = data->current_stateid;
           goto check_it;
@@ -433,7 +441,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
       LogDebug(COMPONENT_STATE,
                "Check %s stateid with OTHER all zeros, seqid %u unexpected",
                tag, (unsigned int) stateid->seqid);
-      return NFS4ERR_BAD_STATEID;
+      status = NFS4ERR_BAD_STATEID;
+      goto failure;
     }
 
   /* Test for OTHER is all ones */
@@ -448,13 +457,15 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
           /* TODO FSF: eventually this may want to return an actual state for
            * use in temporary locks for I/O.
            */
-          return NFS4_OK;
+          data->current_stateid_valid = false;
+          goto success;
         }
 
       LogDebug(COMPONENT_STATE,
                "Check %s stateid with OTHER all ones, seqid %u unexpected",
                tag, (unsigned int) stateid->seqid);
-      return NFS4ERR_BAD_STATEID;
+      status = NFS4ERR_BAD_STATEID;
+      goto failure;
     }
 
 check_it:
@@ -469,7 +480,8 @@ check_it:
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stale stateid %s", tag, str);
-      return NFS4ERR_STALE_STATEID;
+      status = NFS4ERR_STALE_STATEID;
+      goto failure;
     }
 
   /* Try to get the related state */
@@ -491,7 +503,8 @@ check_it:
       if(rc != CLIENT_ID_SUCCESS)
         {
           /* Unknown client id (or other problem), return that result. */
-          return clientid_error_to_nfsstat(rc);
+          status = clientid_error_to_nfsstat(rc);
+          goto failure;
         }
 
       if((flags & (STATEID_SPECIAL_CLOSE_40 | STATEID_SPECIAL_CLOSE_41)) != 0)
@@ -518,7 +531,8 @@ check_it:
               LogDebug(COMPONENT_STATE,
                        "Returning NFS4ERR_EXPIRED");
               V(pclientid->cid_mutex);
-              return NFS4ERR_EXPIRED;
+              status = NFS4ERR_EXPIRED;
+              goto failure;
             }
 
           if((flags & STATEID_SPECIAL_CLOSE_40) != 0)
@@ -533,14 +547,18 @@ check_it:
             }
           V(pclientid->cid_mutex);
 
-          /* This is a valid replayed close */
-          return NFS4_OK;
+          /* Replayed close, it's ok, but stateid doesn't exist */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid is a replayed close", tag);
+          data->current_stateid_valid = false;
+          goto success;
         }
 
       /* Release the clientid reference we just acquired. */
       dec_client_id_ref(pclientid);
 
-      return NFS4ERR_BAD_STATEID;
+      status = NFS4ERR_BAD_STATEID;
+      goto failure;
     }
 
   /* Now, if this lease is not already reserved, reserve it */
@@ -570,7 +588,8 @@ check_it:
 
           V(state2->state_owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
-          return NFS4ERR_EXPIRED;
+          status = NFS4ERR_EXPIRED;
+          goto failure;
         }
 
       data->preserved_clientid = state2->state_owner->so_owner.so_nfs4_owner.so_clientrec;
@@ -583,7 +602,8 @@ check_it:
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stateid %s has wrong file", tag, str);
-      return NFS4ERR_BAD_STATEID;
+      status = NFS4ERR_BAD_STATEID;
+      goto failure;
     }
 
   /* Whether stateid.seqid may be zero depends on the state type
@@ -612,13 +632,15 @@ check_it:
              LogDebug(COMPONENT_STATE,
                    "possible replay?");
              *state = state2;
-             return NFS4ERR_REPLAY;
+             status = NFS4ERR_REPLAY;
+             goto failure;
           }
           /* OLD_STATEID */
           LogDebug(COMPONENT_STATE,
                    "Check %s stateid found OLD stateid %s, expected seqid %u",
                    tag, str, (unsigned int) state2->state_seqid);
-          return NFS4ERR_OLD_STATEID;
+          status = NFS4ERR_OLD_STATEID;
+          goto failure;
         }
       /* stateid seqid is current and owner seqid is previous, replay (should be
          an error condition that did not change the stateid, no real need to check
@@ -631,7 +653,8 @@ check_it:
           LogDebug(COMPONENT_STATE,
                    "possible replay?");
           *state = state2;
-          return NFS4ERR_REPLAY;
+          status = NFS4ERR_REPLAY;
+          goto failure;
         }
       else if(diff > 0)
         {
@@ -639,9 +662,12 @@ check_it:
           LogDebug(COMPONENT_STATE,
                    "Check %s stateid found BAD stateid %s, expected seqid %u",
                    tag, str, (unsigned int) state2->state_seqid);
-          return NFS4ERR_BAD_STATEID;
+          status = NFS4ERR_BAD_STATEID;
+          goto failure;
         }
     }
+
+  data->current_stateid_valid = true;
 
   LogFullDebug(COMPONENT_STATE,
                "Check %s stateid found valid stateid %s - %p",
@@ -650,10 +676,17 @@ check_it:
   /* Copy stateid into current for later use */
   data->current_stateid = *stateid;
   data->current_stateid.seqid = state2->state_seqid;
-  data->current_stateid_valid = true;
+
+success:
 
   *state = state2;
   return NFS4_OK;
+
+failure:
+
+  *state = NULL;
+  data->current_stateid_valid = false;
+  return status;
 }
 
 /**

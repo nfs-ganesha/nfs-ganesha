@@ -219,6 +219,9 @@ int nfs4_op_close(struct nfs_argop4 *op,
                          state_err_str(state_status));
         }
 
+        /* Poison the current stateid */
+        data->current_stateid_valid = false;
+
         if (data->minorversion > 0) {
                 /* We can't simply grab a pointer to a layout state
                    and free it later, since a client could have

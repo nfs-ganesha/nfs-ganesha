@@ -349,6 +349,9 @@ open4_create_fh(compound_data_t *data, cache_entry_t *entry)
         memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
                newfh4.nfs_fh4_len);
 
+        /* Mark current_stateid as invalid */
+        data->current_stateid_valid = false;
+
         data->current_entry = entry;
         data->current_filetype = entry->type;
 

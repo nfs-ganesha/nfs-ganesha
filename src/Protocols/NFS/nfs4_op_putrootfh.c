@@ -125,6 +125,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
+
   /* Fill in compound data */
   res_PUTROOTFH4->status = set_compound_data_for_pseudo(data);
   if(res_PUTROOTFH4->status != NFS4_OK)
