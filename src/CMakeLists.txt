@@ -8,11 +8,21 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 project(nfs-ganesha C)
 
-set(${PROJECT_NAME}_MAJOR_VERSION 2)
-set(${PROJECT_NAME}_MINOR_VERSION 0)
-set(${PROJECT_NAME}_PATCH_LEVEL 0)
+# Project versioning
+set(GANESHA_MAJOR_VERSION 2)
+set(GANESHA_MINOR_VERSION 0)
+# Patch level is empty (blank) for mainline (master)
+# when starting a stable maintenance branch, this becomes ".N"
+# where N is monotonically increasing starting at 0. Remember to include the "." !!
+set(GANESHA_PATCH_LEVEL )
+# Extra version is for naming development/RC.  It is blank in master/stable branches
+# It is also available to end-users to name local variants/versions
+set(GANESHA_EXTRA_VERSION -dev_50)
+
+set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
+
 set(VERSION_COMMENT
-  "GANESHA 64 bits compliant. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial)"
+  "GANESHA file server is 64 bits compliant and supports NFS v3,4.0,4.1 (pNFS) and 9P"
 )
 
 # find out which platform we are building on
@@ -659,6 +669,7 @@ endif(USE_DBUS)
 message(STATUS)
 message(STATUS "-------------------------------------------------------")
 message(STATUS "PLATFORM = ${PLATFORM}")
+message(STATUS "VERSION = ${GANESHA_VERSION}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
