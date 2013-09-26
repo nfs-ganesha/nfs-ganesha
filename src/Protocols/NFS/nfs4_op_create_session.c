@@ -434,9 +434,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 				 "Updated %s",
 				 str);
 		}
-
-		/* Release our reference to the confirmed clientid. */
-		dec_client_id_ref(conf);
 	} else {
 		/* This is a new clientid */
 		if (isFullDebug(component)) {
@@ -517,7 +514,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	}
 
 	LogDebug(component,
-		 "CREATE_SESSION success");
+		 "CREATE_SESSION success session=%p", nfs41_session);
 
 	/* Successful exit */
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
