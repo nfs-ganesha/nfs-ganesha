@@ -145,22 +145,6 @@ cache_inode_read_conf_parameter(config_file_t config,
           if(err != CACHE_INODE_SUCCESS)
             return err;
         }
-      else if(!strcasecmp(key_name, "Symlink_Expiration_Time"))
-        {
-          err = parse_cache_expire(&param->expire_type_link,
-                                   &param->grace_period_link,
-                                   key_value);
-          if(err != CACHE_INODE_SUCCESS)
-            return err;
-        }
-      else if(!strcasecmp(key_name, "Directory_Expiration_Time"))
-        {
-          err = parse_cache_expire(&param->expire_type_dirent,
-                                   &param->grace_period_dirent,
-                                   key_value);
-          if(err != CACHE_INODE_SUCCESS)
-            return err;
-        }
      else if(!strcasecmp(key_name, "Use_Getattr_Directory_Invalidation"))
         {
           param->getattr_dir_invalidation = StrToBoolean(key_value);

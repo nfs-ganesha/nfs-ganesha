@@ -524,18 +524,6 @@ typedef struct cache_inode_parameter {
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
 	time_t grace_period_attr;
-	/** Expiration type for symbolic links, defaults to never.
-	    Settable with Symlink_Expiration_Time. */
-	cache_inode_expire_type_t expire_type_link;
-	/** Expiration time for symlinks.  Settable with
-	    Symlink_Expiration_Time. */
-	time_t grace_period_link;
-	/** Expiration type for directory entries, defaults to
-	    never.  Settable with Directory_Expiration_Time. */
-	cache_inode_expire_type_t expire_type_dirent;
-	/** Expiration time for directory entries.  Settable with
-	    Directory_Expiration_Time. */
-	time_t grace_period_dirent;
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;

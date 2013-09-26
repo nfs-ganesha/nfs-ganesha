@@ -273,8 +273,6 @@ nfs_parameter_t nfs_param =
 
   .cache_param.nparts = 7,
   .cache_param.expire_type_attr = CACHE_INODE_EXPIRE_NEVER,
-  .cache_param.expire_type_link = CACHE_INODE_EXPIRE_NEVER,
-  .cache_param.expire_type_dirent = CACHE_INODE_EXPIRE_NEVER,
   .cache_param.getattr_dir_invalidation = false,
 
   /* Cache inode parameters : Garbage collection policy */
