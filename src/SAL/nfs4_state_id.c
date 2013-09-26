@@ -532,23 +532,15 @@ check_it:
               data->preserved_clientid = pclientid;
             }
           V(pclientid->cid_mutex);
+
+          /* This is a valid replayed close */
+          return NFS4_OK;
         }
 
       /* Release the clientid reference we just acquired. */
       dec_client_id_ref(pclientid);
 
-      if((nfs_param.nfsv4_param.return_bad_stateid == FALSE) ||
-         ((flags & (STATEID_SPECIAL_CLOSE_40 | STATEID_SPECIAL_CLOSE_41)) != 0))
-        {
-          /* We are explicitly directed to return success (dirty workaround for HPC),
-           * or this is a replayed close.
-           */
-          return NFS4_OK;
-        }
-      else
-        {
-          return NFS4ERR_BAD_STATEID;
-        }
+      return NFS4ERR_BAD_STATEID;
     }
 
   /* Now, if this lease is not already reserved, reserve it */

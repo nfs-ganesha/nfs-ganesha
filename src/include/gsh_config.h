@@ -393,11 +393,6 @@ typedef struct nfs_version4_parameter {
 	/** The NFS grace period.  Defaults to
 	    GRACE_PERIOD_DEFAULT and is settable with Grace_Period. */
 	uint32_t grace_period;
-	/** Whether to return bad stateid or not.  Disabling this
-	    returns false success if the stateid can't be found.
-	    Enable at your own risk.  Defaults to false, can be set
-	    with Return_Bad_Stateid */
-	bool return_bad_stateid;
 	/** Domain to use if we aren't using the nfsidmap.  Defaults
 	    to DOMAINNAME_DEFAULT and is set with DomainName. */
 	char *domainname;
