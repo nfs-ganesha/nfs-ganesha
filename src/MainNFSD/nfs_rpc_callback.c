@@ -78,7 +78,11 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
 	int code = 0;
 
-	mkdir(ccache, 700); /* XXX */
+	if(mkdir(ccache, 700) < 0) {
+        LogWarn(COMPONENT_INIT,
+             "mkdir failed creating credential "
+             "cache directory: %s (%d)", ccache, errno);
+    }
 	ccachesearch[0] = nfs_param.krb5_param.ccache_dir;
 
 	code = gssd_refresh_krb5_machine_credential(
