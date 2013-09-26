@@ -315,6 +315,9 @@ void nfs4_BuildStateId_Other(nfs_client_id_t * clientid, char * other);
 #define STATEID_SPECIAL_ALL_0 2 /*< Allow anonymous */
 #define STATEID_SPECIAL_ALL_1 4 /*< Allow read-bypass */
 #define STATEID_SPECIAL_CURRENT 8 /*< Allow current */
+#define STATEID_SPECIAL_FREE 0x100 /*< Check for FREE_STATEID */
+#define STATEID_SPECIAL_FOR_FREE (STATEID_SPECIAL_CURRENT | \
+                                  STATEID_SPECIAL_FREE)
 /* The following flag tells nfs4_Check_Stateid this is a close call
  * and to ignore stateid that have valid clientid portion, but the
  * counter portion doesn't reference a currently open file.
@@ -331,7 +334,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 			    cache_entry_t *entry,
 			    state_t **state,
 			    compound_data_t *data,
-			    char flags,
+			    int flags,
 			    seqid4 owner_seqid,
 			    bool check_seqid,
 			    const char *tag);

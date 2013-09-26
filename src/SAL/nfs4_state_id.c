@@ -356,7 +356,7 @@ int nfs4_State_Del(char other[OTHERSIZE])
  * This function yields the state for the stateid if it is valid.
  *
  * @param[in]  stateid     Stateid to look up
- * @param[in]  entry       Associated file
+ * @param[in]  entry       Associated file (if any)
  * @param[out] state       Found state
  * @param[in]  data        Compound data
  * @param[in]  flags       Flags governing special stateids
@@ -370,7 +370,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 			    cache_entry_t *entry,
 			    state_t **state,
 			    compound_data_t *data,
-			    char flags,
+			    int flags,
 			    seqid4 owner_seqid,
 			    bool check_seqid,
 			    const char *tag)
@@ -385,10 +385,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
   int               rc;
   nfsstat4          status;
 
-  /* Since this represents a programming error, we're better off
-     asserting. */
-  assert(entry->type == REGULAR_FILE);
-
   if(isDebug(COMPONENT_STATE))
     {
       sprint_mem(str, (char *)stateid->other, OTHERSIZE);
@@ -396,13 +392,14 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
     }
 
   LogFullDebug(COMPONENT_STATE,
-               "Check %s stateid flags%s%s%s%s%s%s",
+               "Check %s stateid flags%s%s%s%s%s%s%s",
                tag,
                flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
                flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
                flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
                flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
                flags & STATEID_SPECIAL_CLOSE_41 ? " CLOSE_41" : "",
+               flags & STATEID_SPECIAL_FREE ? " FREE" : "",
                flags == 0 ? " NONE" : "");
 
   /* Test for OTHER is all zeros */
@@ -598,7 +595,7 @@ check_it:
     }
 
   /* Sanity check : Is this the right file ? */
-  if(state2->state_entry != entry)
+  if((entry != NULL) && (state2->state_entry != entry))
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stateid %s has wrong file", tag, str);
@@ -664,6 +661,38 @@ check_it:
                    tag, str, (unsigned int) state2->state_seqid);
           status = NFS4ERR_BAD_STATEID;
           goto failure;
+        }
+    }
+
+  if((flags & STATEID_SPECIAL_FREE) != 0)
+    {
+      switch(state2->state_type)
+        {
+            break;
+
+          case STATE_TYPE_LOCK:
+            PTHREAD_RWLOCK_rdlock(&state2->state_entry->state_lock);
+            if(glist_empty(&state2->state_data.lock.state_locklist))
+              {
+                LogFullDebug(COMPONENT_STATE,
+                             "Check %s stateid %s has no locks, ok to free",
+                             tag, str);
+                PTHREAD_RWLOCK_unlock(&state2->state_entry->state_lock);
+                break;
+              }
+            PTHREAD_RWLOCK_unlock(&state2->state_entry->state_lock);
+            /* Fall through for failure */
+ 
+          case STATE_TYPE_NONE:
+          case STATE_TYPE_SHARE:
+          case STATE_TYPE_DELEG:
+          case STATE_TYPE_LAYOUT:
+            LogDebug(COMPONENT_STATE,
+                     "Check %s stateid found stateid %s with locks held",
+                     tag, str);
+
+            status = NFS4ERR_LOCKS_HELD;
+            goto failure;
         }
     }
 

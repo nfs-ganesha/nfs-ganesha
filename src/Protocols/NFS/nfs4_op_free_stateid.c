@@ -70,6 +70,8 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op,
     = &op->nfs_argop4_u.opfree_stateid;
   FREE_STATEID4res *const res_FREE_STATEID4
     = &resp->nfs_resop4_u.opfree_stateid;
+  state_t * state;
+  state_status_t state_status;
 
   resp->resop = NFS4_OP_FREE_STATEID;
   res_FREE_STATEID4->fsr_status = NFS4_OK;
@@ -79,11 +81,33 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op,
       return (res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL);
     }
 
-  /**
-   * @todo ACE: This function needs to be implemented.
-   */
+  res_FREE_STATEID4->fsr_status = nfs4_Check_Stateid(&arg_FREE_STATEID4->fsa_stateid,
+                                                     NULL,
+                                                     &state,
+                                                     data,
+                                                     STATEID_SPECIAL_FOR_FREE,
+                                                     0,
+                                                     false,
+                                                     "FREE_STATEID");
+
+  if(res_FREE_STATEID4->fsr_status != NFS4_OK)
+    {
+      return res_FREE_STATEID4->fsr_status;
+    }
+
+  state_status = state_del(state, false);
+
+  if(state_status != STATE_SUCCESS)
+    {
+      LogEvent(COMPONENT_STATE,
+               "state_del failed with status %s",
+               state_err_str(state_status));
+    }
+
+  res_FREE_STATEID4->fsr_status = nfs4_Errno_state(state_status);
 
   return res_FREE_STATEID4->fsr_status;
+
 } /* nfs41_op_free_stateid */
 
 /**
