@@ -108,7 +108,6 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
   if( ( pxattrfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
-  preq9p->pconn->fids[*attrfid] = pxattrfid ;
 
   /* Initiate xattr's fid by copying file's fid in it */
   memcpy( (char *)pxattrfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
@@ -191,6 +190,8 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
        }
    }
+
+  preq9p->pconn->fids[*attrfid] = pxattrfid ;
 
   /* Increments refcount so it won't fall below 0 when we clunk later */
   cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);
