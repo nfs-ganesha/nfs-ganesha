@@ -571,7 +571,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 		chan->clnt = clnt_vc_create(fd,
 					    &raddr,
 					    clientid->cid_cb.v40.cb_program,
-					    1 /* Errata ID: 2291 */,
+					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
 		break;
 	case IPPROTO_UDP:
@@ -579,7 +579,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 		chan->clnt = clnt_dg_create(fd,
 					    &raddr,
 					    clientid->cid_cb.v40.cb_program,
-					    1 /* Errata ID: 2291 */,
+					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
 		break;
 	default:
@@ -656,10 +656,13 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 
 	assert(session->xprt);
 
-	/* connect an RPC client */
+	/* connect an RPC client
+	 * Use version 1 per errata ID 2291 for RFC 5661
+	 */
 	chan->clnt = clnt_vc_create_svc(session->xprt,
 					session->cb_program,
-					4, SVC_VC_CREATE_BOTHWAYS);
+					NFS_CB /* Errata ID: 2291 */,
+					SVC_VC_CREATE_BOTHWAYS);
 
 	if (!chan->clnt) {
 		code = EINVAL;
