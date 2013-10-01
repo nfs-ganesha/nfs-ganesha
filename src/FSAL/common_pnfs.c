@@ -209,14 +209,14 @@ make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
         file_handle_v4_t *v4_handle
                 = (file_handle_v4_t *)wirehandle->nfs_fh4_val;
 
-        if ((sizeof(file_handle_v4_t) + fh_desc->len) >
+        if ((offsetof(struct file_handle_v4, fsopaque) + fh_desc->len) >
             wirehandle->nfs_fh4_len) {
                 LogMajor(COMPONENT_PNFS,
                          "DS handle too big to encode!");
                 return NFS4ERR_SERVERFAULT;
         }
         wirehandle->nfs_fh4_len
-                = sizeof(file_handle_v4_t) + fh_desc->len;
+                = offsetof(struct file_handle_v4, fsopaque) + fh_desc->len;
 
         v4_handle->fhversion = GANESHA_FH_VERSION;
         v4_handle->fs_len = fh_desc->len;
