@@ -116,7 +116,7 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
                 }
         }
 
-        (void) sprintf(tmp_buffer, "%s %s %d", GPFS_CMD1, GPFS_CMD2, duration);
+        (void) sprintf(tmp_buffer, "%s %s %d", GPFS_CMD1, GPFS_CMD2, 1);
         rc = system(tmp_buffer);        /* Will use FSAL_GRACE API in round 2 */
 
         LogEvent(COMPONENT_STATE,
