@@ -226,5 +226,6 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
     }
 
   /* OK */
+  close(fd);
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

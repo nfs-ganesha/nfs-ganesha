@@ -543,7 +543,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
   memset(harg.handle->f_handle, 0, harg.handle->handle_size);
 #endif
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d", dfd);
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d %s", dfd, p_fsalname);
 
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
