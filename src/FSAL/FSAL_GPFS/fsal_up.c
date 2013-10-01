@@ -292,8 +292,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	      {
 		uint32_t upflags = 0;
 		attr.mask = 0;
-		if (flags & UP_NLINK)
-		  upflags |= fsal_up_nlink;
 		if (flags & UP_SIZE)
 		  attr.mask |= ATTR_CHGTIME|ATTR_CHANGE|ATTR_SIZE|ATTR_SPACEUSED;
 		if (flags & UP_MODE)
@@ -307,10 +305,23 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 	        posix2fsal_attributes(&buf, &attr);
 	        attr.grace_period_attr = grace_period_attr;
+
 		rc = event_func->update(gpfs_fsal_up_ctx->gf_export,
 					&key,
 					&attr,
 					upflags);
+
+		if ((flags & UP_NLINK) && (attr.numlinks == 0))
+		{
+		  upflags = fsal_up_nlink;
+		  attr.mask = 0;
+		  rc = up_async_update(general_fridge,
+					gpfs_fsal_up_ctx->gf_export,
+					&key,
+					&attr,
+					upflags,
+			 		NULL, NULL);
+		}
 	      }
 	    else
 	      {

@@ -170,7 +170,7 @@ static cache_inode_status_t update(
 	}
 
 
-	if (rc != 0) {
+	if (rc != 0 || attr->mask == 0) {
 		goto out;
 	}
 
