@@ -579,6 +579,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
         if(retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "gpfs_fsal_create: out of memory for object");
+		free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 	gpfs_export_ops_init(myself->export.ops);
@@ -712,6 +713,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
              {
                LogFatal(COMPONENT_FSAL,
                         "Out of memory can not continue.");
+	       goto errout;
              }
 
            /* Initialize the gpfs_fsal_up_ctx */
