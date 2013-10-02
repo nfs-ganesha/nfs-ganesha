@@ -1233,7 +1233,11 @@ free_nfs_request(request_data_t *nfsreq)
         if (nfsreq->r_u.nfs->req.rq_msg)
             (void) free_rpc_msg(nfsreq->r_u.nfs->req.rq_msg);
         if (nfsreq->r_u.nfs->req.rq_rtaddr.len)
-            mem_free(nfsreq->r_u.nfs->req.rq_rtaddr.buf, nfsreq->r_u.nfs->req.rq_rtaddr.len);
+            mem_free(nfsreq->r_u.nfs->req.rq_rtaddr.buf,
+                     nfsreq->r_u.nfs->req.rq_rtaddr.len);
+        if (nfsreq->r_u.nfs->req.rq_auth)
+            SVCAUTH_RELEASE(nfsreq->r_u.nfs->req.rq_auth,
+                            &(nfsreq->r_u.nfs->req));
         pool_free(request_data_pool, nfsreq->r_u.nfs);
         break;
     default:
