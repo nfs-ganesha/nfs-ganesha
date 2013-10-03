@@ -768,6 +768,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     {
       /* The entry is not a junction, we stay within the pseudo fs */
       nfs4_PseudoToFhandle(&(data->currentFH), iter);
+
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
     }
   else
     {
@@ -833,7 +836,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       cache_inode_lru_ref(entry, LRU_REQ_INITIAL);
-      if(data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_val == NULL)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
@@ -853,6 +856,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 	  goto out;
         }
 
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
 
       /* Deref the old one, ref and keep the entry within the compound data */
       if (data->current_entry) {
@@ -905,7 +910,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
     }
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
-  if(psfsentry->pseudo_id == 0)
+  if(psfsentry->parent == psfsentry)
     {
       res_LOOKUPP4->status = NFS4ERR_NOENT;
       return res_LOOKUPP4->status;
@@ -913,6 +918,9 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
 
   /* A matching entry was found */
   nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
+
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
 
   /* Return the reference to the old current entry */
   if (data->current_entry) {
@@ -987,7 +995,7 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
            (uint64_t) data->req_ctx->export->export.exp_mounted_on_file_id);
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
-  if(psfsentry->pseudo_id == 0)
+  if(psfsentry->parent == psfsentry)
     {
       LogDebug(COMPONENT_NFS_V4_PSEUDO,
                "Returning NFS4ERR_NOENT because pseudo_id == 0");
@@ -997,6 +1005,9 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
 
   /* A matching entry was found */
   nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent);
+
+  /* Mark current_stateid as invalid */
+  data->current_stateid_valid = false;
 
   /* Return the reference to the old current entry */
   if (data->current_entry)
@@ -1041,7 +1052,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   exportlist_t *save_pexport;
   export_perms_t save_export_perms;
   struct gsh_export *saved_gsh_export;
-  nfs_fh4 entryFH;
+  nfs_fh4 entryFH = {0, NULL};
   cache_inode_status_t cache_status;
   int error = 0;
   size_t namelen = 0;
@@ -1049,8 +1060,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4->status = NFS4_OK;
-
-  entryFH.nfs_fh4_len = 0;
 
   LogDebug(COMPONENT_NFS_V4_PSEUDO, "Entering NFS4_OP_READDIR_PSEUDO");
 
@@ -1121,7 +1130,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4->status;
         }
 
-      if(data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_val == NULL)
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
@@ -1141,6 +1150,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4->status;
         }
 
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
 
       /* Keep the entry within the compound data */
 
@@ -1227,7 +1238,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
        * a common case, elected to set up FH for call to xxxx_ToFattr
        * unconditionally.
        */ 
-      if(entryFH.nfs_fh4_len == 0)
+      if(entryFH.nfs_fh4_val == NULL)
         {
           if(nfs4_AllocateFH(&entryFH) != NFS4_OK)
             {

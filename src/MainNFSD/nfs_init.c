@@ -141,7 +141,6 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.graceless = false,
   .nfsv4_param.lease_lifetime = LEASE_LIFETIME_DEFAULT,
   .nfsv4_param.grace_period = GRACE_PERIOD_DEFAULT,
-  .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DOMAINNAME_DEFAULT,
   .nfsv4_param.idmapconf = IDMAPCONF_DEFAULT,
   .nfsv4_param.allow_numeric_owners = true,

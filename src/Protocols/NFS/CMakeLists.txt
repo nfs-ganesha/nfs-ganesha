@@ -74,6 +74,7 @@ SET(nfsproto_STAT_SRCS
    nfs4_op_restorefh.c
    nfs4_op_savefh.c
    nfs4_op_secinfo.c
+   nfs4_op_secinfo_no_name.c
    nfs4_op_sequence.c
    nfs4_op_set_ssv.c
    nfs4_op_setattr.c

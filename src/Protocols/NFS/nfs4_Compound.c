@@ -366,9 +366,9 @@ static const nfs4_op_desc_t optabv4[] = {
 	},
 	[NFS4_OP_SECINFO_NO_NAME] = {
 		.name = "OP_SECINFO_NO_NAME",
-		.funct = nfs4_op_illegal,
-		.free_res = nfs4_op_illegal_Free,
-		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS	/* tbd */
+		.funct = nfs4_op_secinfo_no_name,
+		.free_res = nfs4_op_secinfo_no_name_Free,
+		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS
 	},
 	[NFS4_OP_SEQUENCE] = {
 		.name = "OP_SEQUENCE",
@@ -592,6 +592,7 @@ int nfs4_Compound(nfs_arg_t *arg,
            * NFS4ERR_NOT_ONLY_OP. See 18.37.3 and test DSESS9005 for details*/
           if(argarray[0].argop == NFS4_OP_EXCHANGE_ID ||
              argarray[0].argop == NFS4_OP_CREATE_SESSION ||
+             argarray[0].argop == NFS4_OP_DESTROY_CLIENTID ||
              argarray[0].argop == NFS4_OP_DESTROY_SESSION)
             {
               status = NFS4ERR_NOT_ONLY_OP;
@@ -735,9 +736,6 @@ int nfs4_Compound(nfs_arg_t *arg,
           /* Replay cache, only true for SEQUENCE or CREATE_SESSION w/o SEQUENCE.
            * Since will only be set in those cases, no need to check operation or anything.
            */
-          LogFullDebug(COMPONENT_SESSIONS,
-                       "Use session replay cache %p",
-                       data.pcached_res);
 
           /* Free the reply allocated above */
           gsh_free(res->res_compound4.resarray.resarray_val);
@@ -745,6 +743,10 @@ int nfs4_Compound(nfs_arg_t *arg,
           /* Copy the reply from the cache */
           res->res_compound4_extended = *data.pcached_res;
           status = ((COMPOUND4res *) data.pcached_res)->status;
+          LogFullDebug(COMPONENT_SESSIONS,
+                       "Use session replay cache %p result %s",
+                       data.pcached_res,
+                       nfsstat4_to_str(status));
           break;    /* Exit the for loop */
         }
     }                           /* for */

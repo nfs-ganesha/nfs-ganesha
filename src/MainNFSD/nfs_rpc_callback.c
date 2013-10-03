@@ -571,7 +571,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 		chan->clnt = clnt_vc_create(fd,
 					    &raddr,
 					    clientid->cid_cb.v40.cb_program,
-					    1 /* Errata ID: 2291 */,
+					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
 		break;
 	case IPPROTO_UDP:
@@ -579,7 +579,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 		chan->clnt = clnt_dg_create(fd,
 					    &raddr,
 					    clientid->cid_cb.v40.cb_program,
-					    1 /* Errata ID: 2291 */,
+					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
 		break;
 	default:
@@ -656,10 +656,13 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 
 	assert(session->xprt);
 
-	/* connect an RPC client */
+	/* connect an RPC client
+	 * Use version 1 per errata ID 2291 for RFC 5661
+	 */
 	chan->clnt = clnt_vc_create_svc(session->xprt,
 					session->cb_program,
-					4, SVC_VC_CREATE_BOTHWAYS);
+					NFS_CB /* Errata ID: 2291 */,
+					SVC_VC_CREATE_BOTHWAYS);
 
 	if (!chan->clnt) {
 		code = EINVAL;
@@ -762,6 +765,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 		struct glist_head *glist = NULL;
 
 		/* Get the first working back channel we have */
+		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
 		glist_for_each(glist,
 			       &clientid->cid_cb.v41.cb_session_list) {
 			nfs41_session_t *session =
@@ -771,6 +775,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 			if (session->flags & session_bc_up) {
 				chan = &session->cb_chan;
 			}
+		/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 		}
 	}
 
@@ -1328,6 +1333,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 	}
 
 	for (scan = 0; scan < 2; ++scan) {
+		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
 		glist_for_each(glist,
 			       &clientid->cid_cb.v41.cb_session_list) {
 			nfs41_session_t *session =
@@ -1378,6 +1384,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 				goto out;
 			}
 		}
+		/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 	}
 
 out:

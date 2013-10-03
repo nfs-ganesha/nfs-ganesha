@@ -583,10 +583,6 @@ int nfs_read_version4_conf(config_file_t in_config,
         {
           pparam->grace_period = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Return_Bad_Stateid"))
-        {
-          pparam->return_bad_stateid = StrToBoolean(key_value);
-        }
       else if(!strcasecmp(key_name, "DomainName"))
         {
 	  pparam->domainname = gsh_strdup(pparam->domainname);
@@ -616,10 +612,9 @@ int nfs_read_version4_conf(config_file_t in_config,
         }
       else
         {
-          LogCrit(COMPONENT_CONFIG,
+          LogWarn(COMPONENT_CONFIG,
                   "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_VERSION4);
-          return -1;
         }
     }
 

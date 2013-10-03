@@ -51,6 +51,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "sal_data.h"
 
 /**
  *
@@ -82,7 +83,22 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op,
   res_RECLAIM_COMPLETE4->rcr_status = NFS4_OK;
   if (data->minorversion == 0)
     {
-      return (res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_INVAL);
+      res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_INVAL;
+      return res_RECLAIM_COMPLETE4->rcr_status;
+    }
+  if(data->psession == NULL)
+    {
+      res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_OP_NOT_IN_SESSION;
+      return res_RECLAIM_COMPLETE4->rcr_status;
+    }
+  if(data->psession->clientid_record->cid_cb.v41.cid_reclaim_complete)
+    {
+      res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_COMPLETE_ALREADY;
+      return res_RECLAIM_COMPLETE4->rcr_status;
+    }
+  if(!arg_RECLAIM_COMPLETE4->rca_one_fs)
+    {
+      data->psession->clientid_record->cid_cb.v41.cid_reclaim_complete = true;
     }
   return res_RECLAIM_COMPLETE4->rcr_status;
 } /* nfs41_op_reclaim_complete */

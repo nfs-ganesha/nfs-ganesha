@@ -66,6 +66,7 @@ cache_inode_setattr(cache_entry_t *entry,
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     uint64_t before;
 
      /* True if we have taken the content lock on 'entry' */
      bool content_locked = false;
@@ -111,6 +112,7 @@ cache_inode_setattr(cache_entry_t *entry,
      }
 
      saved_acl = obj_handle->attributes.acl;
+     before = obj_handle->attributes.change;
      fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
      if (FSAL_IS_ERROR(fsal_status)) {
           status = cache_inode_error_convert(fsal_status);
@@ -131,6 +133,9 @@ cache_inode_setattr(cache_entry_t *entry,
                cache_inode_kill_entry(entry);
           }
           goto unlock;
+     }
+     if(before == obj_handle->attributes.change) {
+          obj_handle->attributes.change++;
      }
      /* Decrement refcount on saved ACL */
      nfs4_acl_release_entry(saved_acl, &acl_status);

@@ -81,7 +81,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
     return res_SAVEFH->status;
 
   /* If the savefh is not allocated, do it now */
-  if(data->savedFH.nfs_fh4_len == 0)
+  if(data->savedFH.nfs_fh4_val == NULL)
     {
       res_SAVEFH->status = nfs4_AllocateFH(&(data->savedFH));
       if(res_SAVEFH->status != NFS4_OK)
@@ -93,6 +93,10 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
          data->currentFH.nfs_fh4_val,
          data->currentFH.nfs_fh4_len);
   data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
+
+  /* Save the current stateid */
+  data->saved_stateid = data->current_stateid;
+  data->saved_stateid_valid = data->current_stateid_valid;
 
   /* If old SavedFH had a related export, release reference. */
   if(data->saved_export != NULL) {

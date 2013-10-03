@@ -121,6 +121,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
           return res_LOOKUPP4->status;
         }
 
+      /* Mark current_stateid as invalid */
+      data->current_stateid_valid = false;
+
       /* Release dir_pentry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later
          operations or nfs4_Compound to clean up current_entry. */

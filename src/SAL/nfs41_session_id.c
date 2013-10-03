@@ -225,16 +225,15 @@ int32_t dec_session_ref(nfs41_session_t *session)
 		atomic_dec_int32_t(&session->refcount);
 	if (refcnt == 0) {
 
-		/* XXXX
-		 * Is it correct to unlink client session when refcnt has
-		 * already reached 0 (or should we have done it earlier)?
-		 * Do we need cid_mutex? */
+		/* Unlink the session from the client's list of
+		   sessions */
+		pthread_mutex_lock(&session->clientid_record->cid_mutex);
+		glist_del(&session->session_link);
+		pthread_mutex_unlock(&session->clientid_record->cid_mutex);
 
 		/* Decrement our reference to the clientid record */
 		dec_client_id_ref(session->clientid_record);
-		/* Unlink the session from the client's list of
-		   sessions */
-		glist_del(&session->session_link);
+
 		/* Destroy the session's back channel (if any) */
 		if (session->flags & session_bc_up) {
 			nfs_rpc_destroy_chan(&session->cb_chan);

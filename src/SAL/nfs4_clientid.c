@@ -81,6 +81,12 @@ uint64_t clientid_verifier;
 pool_t *client_id_pool;
 
 /**
+ * @param Session ID hash
+ */
+
+extern hash_table_t *ht_session_id;
+
+/**
  * @brief Return the NFSv4 status for the client id error code
  *
  * @param[in] err Client id error code
@@ -962,6 +968,57 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
                              LogFullDebug(COMPONENT_CLIENTID,
                                           "Expired State for {%s}",
                                           str);
+		}
+	}
+
+	/* For NFSv4.1 clientids, destroy all associated sessions */
+	if (clientid->cid_minorversion > 0) {
+		struct glist_head *glist = NULL;
+		struct glist_head *glistn = NULL;
+
+		glist_for_each_safe(glist,
+				    glistn,
+				    &clientid->cid_cb.v41.cb_session_list) {
+			nfs41_session_t *session
+				= glist_entry(glist,
+					      nfs41_session_t,
+					      session_link);
+			struct gsh_buffdesc key = {
+				.addr = session->session_id,
+				.len = NFS4_SESSIONID_SIZE
+			};
+			struct gsh_buffdesc old_key, old_value;
+
+			if (HashTable_Del(ht_session_id, &key, &old_key,
+					  &old_value) == HASHTABLE_SUCCESS) {
+				nfs41_session_t *session = old_value.addr;
+
+				/* unref session */
+				int32_t refcnt =
+					atomic_dec_int32_t(&session->refcount);
+				if (refcnt == 0) {
+					/* Unlink the session from the client's list of
+					   sessions */
+					LogFullDebug(COMPONENT_SESSIONS,
+					             "Destroying session %p", session);
+					glist_del(&session->session_link);
+
+					/* Decrement our reference to the clientid record */
+					dec_client_id_ref(session->clientid_record);
+
+					/* Destroy the session's back channel (if any) */
+					if (session->flags & session_bc_up) {
+						nfs_rpc_destroy_chan(&session->cb_chan);
+					}
+
+					/* Free the memory for the session */
+					pool_free(nfs41_session_pool, session);
+				}
+
+			} else {
+				LogCrit(COMPONENT_SESSIONS,
+				        "Expire session failed");
+			}
 		}
 	}
 

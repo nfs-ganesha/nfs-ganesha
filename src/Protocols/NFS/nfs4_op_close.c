@@ -99,8 +99,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
                           &state_found,
                           data,
                           data->minorversion == 0 ?
-                            STATEID_SPECIAL_CLOSE_40 :
-                            STATEID_SPECIAL_CLOSE_41,
+                            STATEID_SPECIAL_FOR_CLOSE_40 :
+                            STATEID_SPECIAL_FOR_CLOSE_41,
                           0,
                           FALSE,                  /* do not check owner seqid */
                           close_tag);
@@ -218,6 +218,9 @@ int nfs4_op_close(struct nfs_argop4 *op,
                          "CLOSE failed to release stateid error %s",
                          state_err_str(state_status));
         }
+
+        /* Poison the current stateid */
+        data->current_stateid_valid = false;
 
         if (data->minorversion > 0) {
                 /* We can't simply grab a pointer to a layout state

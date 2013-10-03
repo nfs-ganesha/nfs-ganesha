@@ -547,6 +547,7 @@ struct nfs_client_id_t {
 			uint32_t cb_program;
 		} v40; /*< v4.0 callback information */
 		struct {
+			bool cid_reclaim_complete; /*< reclaim complete indication */
 			/** All sessions */
 			struct glist_head cb_session_list;
 		} v41; /*< v4.1 callback information */

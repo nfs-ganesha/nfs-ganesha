@@ -679,6 +679,10 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
                     compound_data_t * data,     /* [IN] current data for the compound request */
                     struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
 
+int nfs4_op_secinfo_no_name(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
+                            compound_data_t * data,     /* [IN] current data for the compound request */
+                            struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+
 int nfs4_op_setattr(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
                     compound_data_t * data,     /* [IN] current data for the compound request */
                     struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
@@ -1005,6 +1009,7 @@ void nfs4_op_renew_Free(nfs_resop4 * resp);
 void nfs4_op_restorefh_Free(nfs_resop4 * resp);
 void nfs4_op_savefh_Free(nfs_resop4 * resp);
 void nfs4_op_secinfo_Free(nfs_resop4 * resp);
+void nfs4_op_secinfo_no_name_Free(nfs_resop4 * resp);
 void nfs4_op_setattr_Free(nfs_resop4 * resp);
 void nfs4_op_setclientid_Free(nfs_resop4 * resp);
 void nfs4_op_setclientid_confirm_Free(nfs_resop4 * resp);
