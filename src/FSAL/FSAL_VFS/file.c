@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ------------- 
  */
@@ -163,8 +164,18 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
+
 	*write_amount = nb_written;
-        *fsal_stable = false;
+
+        /* attempt stability */
+        if (*fsal_stable) {
+            retval = fsync(myself->u.file.fd);
+            if(retval == -1) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+            }
+            *fsal_stable = true;
+        }
 
 out:
 	fsal_restore_ganesha_credentials();
