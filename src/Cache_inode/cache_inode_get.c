@@ -137,7 +137,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
          return status;
      }
 
-     return status;
+     /* If we have an entry, we succeeded.  Don't propagate any
+	ENTRY_EXISTS errors upward. */
+     return CACHE_INODE_SUCCESS;
 } /* cache_inode_get */
 
 /**
