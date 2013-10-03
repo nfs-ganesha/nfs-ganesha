@@ -118,8 +118,14 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
                 fsal_error = posix2fsal_error(retval);
                 goto out;
         }
-        *end_of_file = nb_read == 0 ? true : false;
+
         *read_amount = nb_read;
+
+        /* dual eof condition, cf. GPFS */
+        *end_of_file = ((nb_read == 0) /* most clients */ || /* ESXi */
+                        (((offset + nb_read) >= obj_hdl->attributes.filesize)))
+            ? true : false;
+
 out:
 	return fsalstat(fsal_error, retval);
 }
