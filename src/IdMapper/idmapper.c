@@ -311,7 +311,7 @@ static bool atless2id(char *name,
 		      const uint32_t anon)
 {
   if ((len == 6) &&
-      (memcmp(name, "nobody", 6)))
+      (!memcmp(name, "nobody", 6)))
     {
       *id = anon;
       return true;
@@ -677,11 +677,16 @@ bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
   pthread_rwlock_unlock(&idmapper_user_lock);
   if (unlikely(!success))
     {
-	  if ((princbuff.len >= 4) &&
-	       (memcmp(princbuff.addr, "nfs/", 4) == 0))
+	  if ((princbuff.len >= 4) && 
+	      (!memcmp(princbuff.addr, "nfs/", 4) ||
+               !memcmp(princbuff.addr, "root/", 5) ||
+               !memcmp(princbuff.addr, "host/", 5)))
     	{
           /* NFSv4 specific features: RPCSEC_GSS will provide user like
-		   * nfs/<host> choice is made to map them to root */
+		   * nfs/<host> 
+		   * root/<host>
+		   * host/<host>
+		   * choice is made to map them to root */
 		  /* This is a "root" request made from the hostbased nfs principal, use root */
 		  *puid = 0;
           return true;
