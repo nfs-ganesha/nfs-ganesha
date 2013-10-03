@@ -1052,7 +1052,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   exportlist_t *save_pexport;
   export_perms_t save_export_perms;
   struct gsh_export *saved_gsh_export;
-  nfs_fh4 entryFH;
+  nfs_fh4 entryFH = {0, NULL};
   cache_inode_status_t cache_status;
   int error = 0;
   size_t namelen = 0;
@@ -1060,8 +1060,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4->status = NFS4_OK;
-
-  entryFH.nfs_fh4_len = 0;
 
   LogDebug(COMPONENT_NFS_V4_PSEUDO, "Entering NFS4_OP_READDIR_PSEUDO");
 

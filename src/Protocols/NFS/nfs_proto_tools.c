@@ -4367,6 +4367,12 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 
   memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS4 Handle %s",
+                     LEN_FH_STR,
+                     fh->nfs_fh4_val,
+                     fh->nfs_fh4_len);
+
   return NFS4_OK;
 }
 
