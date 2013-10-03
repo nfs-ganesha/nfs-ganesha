@@ -367,10 +367,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:
-	if(retval == ENOENT)
-		fsal_error = ERR_FSAL_STALE;
-	else
-		fsal_error = posix2fsal_error(retval);
+	fsal_error = posix2fsal_error(retval);
 
 	return fsalstat(fsal_error, retval);	
 }
@@ -862,7 +859,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	char *basepart;
 	char *link_content = NULL;
 	ssize_t retlink;
-	struct gpfs_file_handle *dir_fh = NULL;
         struct attrlist attributes;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
@@ -935,8 +931,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	hdl = alloc_handle(fh, &attributes, NULL, NULL, NULL, exp_hdl);
 	if(link_content != NULL)
 		free(link_content);
-	if(dir_fh != NULL)
-		free(dir_fh);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL; /* poison it */
@@ -950,8 +944,6 @@ fileerr:
 linkerr:
 	if(link_content != NULL)
 		free(link_content);
-	if(dir_fh != NULL)
-		free(dir_fh);
 	close(dir_fd);
 	fsal_error = posix2fsal_error(retval);
 

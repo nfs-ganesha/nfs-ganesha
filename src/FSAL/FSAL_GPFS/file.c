@@ -107,6 +107,10 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
         if(FSAL_IS_ERROR(status))
           return(status);
 
+        if ((*end_of_file == false) &&
+            ((offset + *read_amount) >= obj_hdl->attributes.filesize))
+            *end_of_file = true;
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -229,7 +233,7 @@ out:
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	fsal_status_t status;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
@@ -252,7 +256,7 @@ fsal_status_t gpfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	fsal_status_t status;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
