@@ -212,36 +212,26 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
    *  CHOWN  *
    ***********/
 
-  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER | ATTR_GROUP))
+  /* Fill wanted owner. */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER))
     {
-      /*      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(p_object_attributes->mask,
-                                                      FSAL_ATTR_OWNER) ? (int)p_object_attributes->owner
-                        : -1, FSAL_TEST_MASK(p_object_attributes->mask,
-			FSAL_ATTR_GROUP) ? (int)p_object_attributes->group : -1);*/
-
-      attr_changed |= FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER) ?
-                      XATTR_UID : XATTR_GID;
-
-      /* Fill wanted owner. */
-      if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER))
-        {
-          buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
-          LogDebug(COMPONENT_FSAL,
-                   "current uid = %ld, new uid = %d",
-                   dir_hdl->attributes.owner, buffxstat.buffstat.st_uid);
-        }
-
-      /* Fill wanted group. */
-      if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_GROUP))
-        {
-          buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
-          LogDebug(COMPONENT_FSAL,
-                   "current gid = %ld, new gid = %d",
-                   dir_hdl->attributes.group, buffxstat.buffstat.st_gid);
-        }
-
+      attr_changed |= XATTR_UID;
+      buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
+      LogDebug(COMPONENT_FSAL,
+               "current uid = %ld, new uid = %d",
+               dir_hdl->attributes.owner, buffxstat.buffstat.st_uid);
     }
+
+  /* Fill wanted group. */
+  if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_GROUP))
+    {
+      attr_changed |= XATTR_GID;
+      buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
+      LogDebug(COMPONENT_FSAL,
+               "current gid = %ld, new gid = %d",
+               dir_hdl->attributes.group, buffxstat.buffstat.st_gid);
+    }
+
 
   /***********
    *  UTIME  *
