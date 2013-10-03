@@ -1911,6 +1911,14 @@ static int BuildExportEntry(config_item_t block)
 			      &size))
 		  continue;
           p_entry->MaxRead = (uint32_t) size;
+	  if (p_entry->MaxRead >
+	      nfs_param.core_param.rpc.max_send_buffer_size)
+	    {
+	      LogMajor(COMPONENT_CONFIG,
+		       "The MaxRead for an export is larger than the RPC "
+		       "send buffer.  Your system will not work properly "
+		       "with krb5i or krb5p.");
+	    }
           p_perms->options |= EXPORT_OPTION_MAXREAD;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
@@ -1925,6 +1933,14 @@ static int BuildExportEntry(config_item_t block)
 			      &size))
 		  continue;
           p_entry->MaxWrite = (uint32_t) size;
+	  if (p_entry->MaxWrite >
+	      nfs_param.core_param.rpc.max_recv_buffer_size)
+	    {
+	      LogMajor(COMPONENT_CONFIG,
+		       "The MaxWrite for an export is larger than the RPC "
+		       "receive buffer.  Your system will not work properly "
+		       "with krb5i or krb5p.");
+	    }
           p_perms->options |= EXPORT_OPTION_MAXWRITE;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PREF_READ))

@@ -425,29 +425,36 @@ err:
  * Return an updated fh_desc into whatever was passed.  The most
  * common behavior, done here is to just reset the length.  There
  * is the option to also adjust the start pointer.
+ *
+ * So, adjust the start pointer, check.  But setting the length
+ * to sizeof(vfs_file_handle_t) coerces all handles to a value
+ * too large for some applications (e.g., ESXi), and much larger
+ * than necessary.  (On my Linux system, I'm seeing 12 byte file
+ * handles (EXT4).  Since this routine has no idea what the
+ * internal length was, it should not set the value (the length
+ * comes from us anyway, it's up to us to get it right elsewhere).
  */
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	size_t fh_size;
+	size_t fh_min;
 
-	fh_size = sizeof(vfs_file_handle_t);
+	fh_min = VFS_FILE_HANDLE_MIN;
 	if(in_type == FSAL_DIGEST_NFSV2) {
-		if(fh_desc->len < fh_size) {
+		if(fh_desc->len < fh_min) {
 			LogMajor(COMPONENT_FSAL,
-				 "V2 size too small for handle.  should be %lu, got %lu",
-				 fh_size, fh_desc->len);
+				 "V2 size too small for handle.  should be >= %lu, got %lu",
+				 fh_min, fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
-	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %lu",
-			 fh_size, fh_desc->len);
+			 "Size mismatch for handle.  should be >= %lu, got %lu",
+			 fh_min, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = fh_size;  /* pass back the actual size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

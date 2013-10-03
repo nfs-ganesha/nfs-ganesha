@@ -50,6 +50,9 @@
 /* This is large enough for PanFS file handles embedded in a BSD fhandle */
 #define VFS_HANDLE_LEN 48
 
+/* A file system with handles smaller than this would be surprising */
+#define VFS_HANDLE_MIN_INTERNAL 4
+
 /*
  * The vfs_file_handle_t is similar to the Linux struct file_handle,
  * except the handle[] array is fixed size in this definition.
@@ -64,6 +67,12 @@ typedef struct vfs_file_handle {
         int handle_type;
         unsigned char handle[VFS_HANDLE_LEN];
 } vfs_file_handle_t ;
+
+#define VFS_FILE_HANDLE_MIN \
+	offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL
+
+#define vfs_file_handle_size(fh) \
+	offsetof(vfs_file_handle_t, handle) + fh->handle_bytes
 
 #ifdef LINUX
 #include "os/linux/fsal_handle_syscalls.h"
