@@ -100,6 +100,10 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op,
   else
     res_DESTROY_SESSION4->dsr_status = NFS4_OK;
 
+  /* Release ref taken in get_pointer */
+
+  dec_session_ref(session);
+
   return res_DESTROY_SESSION4->dsr_status;
 } /* nfs41_op_destroy_session */
 
