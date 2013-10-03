@@ -1,3 +1,9 @@
+This README is addressed to developers who plan to either improve this
+reference implementation of DBus control for Ganesha or to use it as
+a reference for their own implementation.  Those who are looking for
+information about setting up DBus and Ganesha in a running system should
+consult the installation and administration pages of the project wiki.
+
 This directory contains a reference implementation of tools for managing
 NFS Ganesha through DBus.  Everything here is in Python 2.7+ and PyQt 4.2+.
 
