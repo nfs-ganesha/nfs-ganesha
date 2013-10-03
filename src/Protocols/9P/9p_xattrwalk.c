@@ -108,15 +108,17 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
   if( ( pxattrfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
-  preq9p->pconn->fids[*attrfid] = pxattrfid ;
 
   /* Initiate xattr's fid by copying file's fid in it */
   memcpy( (char *)pxattrfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
 
   snprintf( name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
-  if( ( pxattrfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+  if( ( pxattrfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL )
+   {
+    gsh_free(pxattrfid);
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
+   }
 
   if( *name_len == 0 ) 
    {
@@ -131,14 +133,16 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
       if(FSAL_IS_ERROR(fsal_status))
        {
-        memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+        gsh_free(pxattrfid->specdata.xattr.xattr_content);
+        gsh_free(pxattrfid);
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
        }
 
       /* if all xattrent are not read, returns ERANGE as listxattr does */
       if( eod_met != TRUE )
        {
-        memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+        gsh_free(pxattrfid->specdata.xattr.xattr_content);
+        gsh_free(pxattrfid);
         return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
        }    
 
@@ -154,7 +158,8 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
          /* Make sure not to go beyond the buffer */
          if( attrsize > XATTR_BUFFERSIZE ) 
           {
-           memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+           gsh_free(pxattrfid->specdata.xattr.xattr_content);
+           gsh_free(pxattrfid);
            return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
           }
        }
@@ -169,7 +174,8 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
       if(FSAL_IS_ERROR(fsal_status))
        {
-         memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+         gsh_free(pxattrfid->specdata.xattr.xattr_content);
+         gsh_free(pxattrfid);
 
          if( fsal_status.major == ERR_FSAL_NOENT ) /* ENOENT for xattr is ENOATTR (set setxattr's manpage) */
            return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOATTR, plenout, preply ) ;
@@ -187,10 +193,13 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
       if(FSAL_IS_ERROR(fsal_status))
        {
-         memset( (char *)pxattrfid, 0, sizeof( _9p_fid_t ) ) ;
+         gsh_free(pxattrfid->specdata.xattr.xattr_content);
+         gsh_free(pxattrfid);
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
        }
    }
+
+  preq9p->pconn->fids[*attrfid] = pxattrfid ;
 
   /* Increments refcount so it won't fall below 0 when we clunk later */
   cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);

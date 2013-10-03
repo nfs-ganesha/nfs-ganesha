@@ -40,7 +40,6 @@
 #include "log.h"
 #include "9p.h"
 
-extern int _9ptabindex [] ;
 extern  _9p_function_desc_t _9pfuncdesc[] ;
 
 int _9p_rerror( _9p_request_data_t * preq9p,
@@ -51,7 +50,7 @@ int _9p_rerror( _9p_request_data_t * preq9p,
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
+  u8     msgtype =  *(preq9p->_9pmsg + _9P_HDR_SIZE) ;
   if ( !preq9p || !plenout || !preply )
    return -1 ;
 
@@ -64,8 +63,13 @@ int _9p_rerror( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
+  /* Check boundaries. 0 is no_function fallback */
+  if( msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
+      || _9pfuncdesc[msgtype].service_function == NULL)
+    msgtype = 0 ;
+
   LogDebug( COMPONENT_9P, "RERROR(%s) tag=%u err=(%u|%s)", 
-            _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname,
+            _9pfuncdesc[msgtype].funcname,
             *msgtag, err, strerror( err ) ) ;
 
 
