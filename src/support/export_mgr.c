@@ -320,12 +320,12 @@ get_gsh_export_by_path(char *path)
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if(export->fullpath[len_path] != '/' &&
-		   export->fullpath[len_path] != '\0')
-			continue;
+                if(path[len_export] != '/' &&
+                   path[len_export] != '\0')
+                        continue;
 		/* we agree on size, now compare the leading substring
 		 */
-		if( !strncmp(export->fullpath, path, len_path))
+		if( !strncmp(export->fullpath, path, len_export))
 			goto out;
 	}
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
