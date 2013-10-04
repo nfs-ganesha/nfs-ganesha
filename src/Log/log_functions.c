@@ -544,6 +544,73 @@ struct log_facility * create_null_facility(const char * name)
   return facility;
 }
 
+/**
+ *
+ * @brief Registers a custom facility.
+ *
+ * This function is called by the FSAL when it wants to regsiter a callback
+ * function for the custom facility. We had a dummy facility created earlier
+ * when the config file was parsed. Now activate the custom facility
+ *
+ * @param[in]  name The name of the facility to create.
+ *
+ * @retval NULL failure
+ * @retval non-NULL the facility created (or the real facility if it already exists)
+ *
+ */
+int activate_custom_log_facility(struct log_facility * facility)
+{
+  struct log_facility * existing;
+
+  pthread_rwlock_wrlock(&log_rwlock);
+
+  existing = find_log_facility(facility->lf_name);
+
+  /* Only allow activation of custom log facility created with FACILITY config
+   * key.
+   */
+  if(existing == NULL)
+    {
+      pthread_rwlock_unlock(&log_rwlock);
+
+      LogMajor(COMPONENT_LOG,
+               "Attempt to activate non-existing custom log facility %s",
+               facility->lf_name);
+
+      return -1;
+    }
+
+  /* Copy the max logging level threshold from the existing facility into
+   * the registered facility.
+   */
+  facility->lf_max_level = existing->lf_max_level;
+
+  /* If existing facility was active, deactivate it and activate registered
+   * facility.
+   */
+  if(is_facility_active(existing))
+    {
+      _deactivate_log_facility(existing);
+      _activate_log_facility(facility);
+    }
+
+  /* Finally, remove existing facility from list and free memory. */
+  glist_del(&existing->lf_list);
+  gsh_free(existing->lf_name);
+  gsh_free(existing);
+  existing = NULL;
+
+  glist_add_tail(&facility_list, &facility->lf_list);
+
+  pthread_rwlock_unlock(&log_rwlock);
+
+  LogInfo(COMPONENT_LOG,
+          "Activated custom log facility %s",
+          facility->lf_name);
+
+  return 0;
+}
+
 char const_log_str[LOG_BUFF_LEN];
 char date_time_fmt[MAX_TD_FMT_LEN];
 char user_date_fmt[MAX_TD_USER_LEN];
