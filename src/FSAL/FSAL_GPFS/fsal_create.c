@@ -322,14 +322,14 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       if(!dev)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
       unix_mode |= S_IFBLK;
-      unix_dev = (dev->major << 8) | (dev->minor & 0xFF);
+      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
       break;
 
     case FSAL_TYPE_CHR:
       if(!dev)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
       unix_mode |= S_IFCHR;
-      unix_dev = (dev->major << 8) | (dev->minor & 0xFF);
+      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
       break;
 
     case FSAL_TYPE_SOCK:
