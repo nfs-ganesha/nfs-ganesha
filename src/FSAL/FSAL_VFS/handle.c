@@ -1070,7 +1070,20 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		retval = ftruncate(fd, attrs->filesize);
 		if(retval != 0) {
-			goto fileerr;
+			/* XXX ESXi volume creation pattern reliably
+			 * reaches this point and reliably can successfully
+			 * ftruncate on reopen.  I don't know yet if fd if
+			 * we failed to handle a previous error, or what.
+			 * I don't see a prior failed op in wireshark. */
+			if (retval == -1 /* bad fd */) {
+				vfs_close(obj_hdl);
+				fd = vfs_fsal_open_and_stat(
+					myself, &stat, open_flags, &fsal_error);
+				retval = ftruncate(fd, attrs->filesize);
+				if (retval != 0)
+					goto fileerr;
+			} else
+				goto fileerr;
 		}
 	}
 
