@@ -16,8 +16,8 @@ set(GANESHA_MINOR_VERSION 0)
 # where N is monotonically increasing starting at 0. Remember to include the "." !!
 set(GANESHA_PATCH_LEVEL )
 # Extra version is for naming development/RC.  It is blank in master/stable branches
-# It is also available to end-users to name local variants/versions
-set(GANESHA_EXTRA_VERSION -dev_50)
+# so it can be available to end-users to name local variants/versions
+set(GANESHA_EXTRA_VERSION -dev_51)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
 
