@@ -184,6 +184,22 @@ check_seqid:
           plock_owner,
           &lock_desc);
 
+  /*
+   * do grace period checking
+   */
+  if (nfs_in_grace())
+    {
+      LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              "UNLOCK failed,unlock request while in grace",
+              data->current_entry,
+              data->pcontext,
+              plock_owner,
+              &lock_desc);
+      res_LOCKU4.status = NFS4ERR_GRACE;
+      goto out;
+    }
+
+
   /* Now we have a lock owner and a stateid.
    * Go ahead and push unlock into SAL (and FSAL).
    */
