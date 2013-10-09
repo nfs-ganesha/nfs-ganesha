@@ -714,9 +714,10 @@ estale_retry:
                   }
 
                   /* Directory changed out from under us.
-                     Indicate we should invalidate it,
-                     skip the name, and keep going. */
-                  //invalid = TRUE;
+                     Invalidate it, skip the name, and keep
+                     going. */
+                  atomic_clear_uint32_t_bits(&directory->flags,
+                                             CACHE_INODE_TRUST_CONTENT);
                   continue;
                 }
 
