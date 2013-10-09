@@ -207,6 +207,8 @@ MODULE_INIT void gpfs_init(void) {
 MODULE_FINI void gpfs_unload(void) {
 	int retval;
 
+	unregister_log_facility(&facility);
+
 	retval = unregister_fsal(&GPFS.fsal);
 	if(retval != 0) {
 		fprintf(stderr, "GPFS module failed to unregister");
