@@ -73,10 +73,14 @@ vfs_fsal_open_exp(struct fsal_export *exp,
 	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
 	if(fd < 0) {
 		fd = -errno;
-		if(fd == -ENOENT)
+		if(fd == -ENOENT) {
 			*fsal_error = ERR_FSAL_STALE;
-		else
+			fd = -ESTALE;
+		} else {
 			*fsal_error = posix2fsal_error(-fd);
+		}
+		LogDebug(COMPONENT_FSAL,
+		         "Failed with %s", strerror(-fd));
 	}
 	return fd;
 }
