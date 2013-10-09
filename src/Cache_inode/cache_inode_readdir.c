@@ -651,7 +651,7 @@ cache_inode_readdir(cache_entry_t *directory,
          dirent_node = avltree_next(dirent_node)) {
 
           cache_entry_t *entry = NULL;
-          cache_inode_status_t lookup_status = 0;
+          cache_inode_status_t tmp_status = 0;
 
           dirent = avltree_container_of(dirent_node,
                                         cache_inode_dir_entry_t,
@@ -660,19 +660,19 @@ cache_inode_readdir(cache_entry_t *directory,
 estale_retry:
 
           entry = cache_inode_get_keyed(&dirent->ckey, req_ctx,
-                                        CIG_KEYED_FLAG_NONE, &lookup_status);
+                                        CIG_KEYED_FLAG_NONE, &tmp_status);
           if (! entry) {
               LogFullDebug(COMPONENT_NFS_READDIR,
                            "Lookup returned %s",
-                           cache_inode_err_str(lookup_status));
+                           cache_inode_err_str(tmp_status));
 
-          if(retry_stale && lookup_status == CACHE_INODE_FSAL_ESTALE) {
-               retry_stale = false; /* only one retry per dirent */
-               goto estale_retry;
-          }
+              if(retry_stale && tmp_status == CACHE_INODE_FSAL_ESTALE) {
+                   retry_stale = false; /* only one retry per dirent */
+                   goto estale_retry;
+              }
 
-              if (lookup_status == CACHE_INODE_NOT_FOUND ||
-                  lookup_status == CACHE_INODE_FSAL_ESTALE) {
+              if (tmp_status == CACHE_INODE_NOT_FOUND ||
+                  tmp_status == CACHE_INODE_FSAL_ESTALE) {
                   /* Directory changed out from under us.
                      Invalidate it, skip the name, and keep
                      going. */
@@ -682,7 +682,7 @@ estale_retry:
               } else {
                   /* Something is more seriously wrong,
                      probably an inconsistency. */
-                  status = lookup_status;
+                  status = tmp_status;
                   goto unlock_dir;
               }
           }
