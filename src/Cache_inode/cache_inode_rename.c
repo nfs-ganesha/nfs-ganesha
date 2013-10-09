@@ -375,7 +375,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                   "Add dirent returned %s",
                   cache_inode_err_str(tmp_status));
 	  cache_inode_invalidate_all_cached_dirent(dir_dest);
-	  goto out_unlock;
       }
 
       /* Remove the old entry */
@@ -388,8 +387,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 	  cache_inode_invalidate_all_cached_dirent(dir_src);
       }
   }
-
-out_unlock:
 
   /* unlock entries */
   src_dest_unlock(dir_src, dir_dest);
