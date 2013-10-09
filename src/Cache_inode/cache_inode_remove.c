@@ -95,6 +95,9 @@ cache_inode_remove(cache_entry_t *entry,
 				      &to_remove_entry);
 
      if (to_remove_entry == NULL) {
+         LogFullDebug(COMPONENT_CACHE_INODE,
+                      "lookup %s failure %s",
+                      name, cache_inode_err_str(status));
 	 goto out;
      }
 
@@ -111,8 +114,8 @@ cache_inode_remove(cache_entry_t *entry,
 	 if (status != CACHE_INODE_SUCCESS) {
 	     /* non-fatal error. log the warning and move on */
 	     LogCrit(COMPONENT_CACHE_INODE,
-                   "Error closing file before unlink: %d.",
-                   status);
+                   "Error closing %s before unlink: %s.",
+                   name, cache_inode_err_str(status));
 	 }
      }
 
@@ -120,6 +123,9 @@ cache_inode_remove(cache_entry_t *entry,
                                                   name);
      if (FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
+         LogFullDebug(COMPONENT_CACHE_INODE,
+                      "unlink %s failure %s",
+                      name, cache_inode_err_str(status));
 	 if(to_remove_entry->type == DIRECTORY &&
 	    status == CACHE_INODE_DIR_NOT_EMPTY) {
 	     /* its dirent tree is probably stale, flush it
@@ -133,13 +139,19 @@ cache_inode_remove(cache_entry_t *entry,
 
      /* Remove the entry from parent dir_entries avl */
      PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-     cache_inode_remove_cached_dirent(entry, name, req_ctx);
+     status_ref_entry = cache_inode_remove_cached_dirent(entry, name, req_ctx);
+     LogDebug(COMPONENT_CACHE_INODE,
+              "cache_inode_remove_cached_dirent %s status %s",
+              name, cache_inode_err_str(status_ref_entry));
      PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
 
      if(FSAL_IS_ERROR(fsal_status)) {
          status = cache_inode_error_convert(fsal_status);
+         LogFullDebug(COMPONENT_CACHE_INODE,
+                      "not sure this code makes sense %s failure %s",
+                      name, cache_inode_err_str(status));
          goto out;
      }
 
@@ -148,14 +160,15 @@ cache_inode_remove(cache_entry_t *entry,
 
      if ((status = status_ref_entry) != CACHE_INODE_SUCCESS) {
          LogDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_refresh_attrs_locked(entry %p) returned %s",
-                  entry,
+                  "cache_inode_refresh_attrs_locked(entry %p %s) returned %s",
+                  entry, name,
                   cache_inode_err_str(status_ref_entry));
      }
 
 out:
      LogFullDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_remove_cached_dirent: status=%d", status);
+                  "remove %s: status=%s",
+                  name, cache_inode_err_str(status));
 
      /* This is for the reference taken by lookup */
      if (to_remove_entry) {

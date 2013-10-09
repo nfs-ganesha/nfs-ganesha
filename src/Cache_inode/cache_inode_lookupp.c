@@ -125,6 +125,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                return status;
           }
 
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Creating entry");
+
           /* Allocation of a new entry in the cache */
           status = cache_inode_new_entry(parent_handle,
                                          CACHE_INODE_FLAG_NONE,

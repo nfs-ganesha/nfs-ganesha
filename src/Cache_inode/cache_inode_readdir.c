@@ -164,6 +164,17 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
        } else {
          status = CACHE_INODE_NOT_FOUND;
        }
+       LogFullDebug(COMPONENT_CACHE_INODE,
+                    "dirent=%p%s directory flags%s%s",
+                    dirent,
+                    dirent
+                     ? ((dirent->flags & DIR_ENTRY_FLAG_DELETED)
+                         ? " DELETED" : "")
+                     : "",
+                    (directory->flags & CACHE_INODE_TRUST_CONTENT)
+                      ? " TRUST" : "",
+                    (directory->flags & CACHE_INODE_DIR_POPULATED)
+                      ? " POPULATED" : "");
        goto out;
      }
 
@@ -383,6 +394,9 @@ populate_dirent(const struct req_op_context *opctx,
                 *state->status = cache_inode_error_convert(fsal_status);
 		return (false);
         }
+
+        LogFullDebug(COMPONENT_CACHE_INODE,
+                     "Creating entry for %s", name);
 
         *state->status = cache_inode_new_entry(entry_hdl,
 					       CACHE_INODE_FLAG_NONE,
@@ -667,6 +681,10 @@ estale_retry:
                            cache_inode_err_str(tmp_status));
 
               if(retry_stale && tmp_status == CACHE_INODE_FSAL_ESTALE) {
+                   LogDebug(COMPONENT_NFS_READDIR,
+                            "cache_inode_get_keyed returned %s for %s - retrying entry",
+                            cache_inode_err_str(tmp_status),
+                            dirent->name);
                    retry_stale = false; /* only one retry per dirent */
                    goto estale_retry;
               }
@@ -678,11 +696,19 @@ estale_retry:
                      going. */
                   atomic_clear_uint32_t_bits(&directory->flags,
                                              CACHE_INODE_TRUST_CONTENT);
+                  LogDebug(COMPONENT_NFS_READDIR,
+                           "cache_inode_get_keyed returned %s for %s - skipping entry",
+                           cache_inode_err_str(tmp_status),
+                           dirent->name);
                   continue;
               } else {
                   /* Something is more seriously wrong,
                      probably an inconsistency. */
                   status = tmp_status;
+                  LogCrit(COMPONENT_NFS_READDIR,
+                          "cache_inode_get_keyed returned %s for %s - bailing out",
+                          cache_inode_err_str(status),
+                          dirent->name);
                   goto unlock_dir;
               }
           }
@@ -704,11 +730,11 @@ estale_retry:
               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
               if(tmp_status == CACHE_INODE_FSAL_ESTALE)
                 {
-                  LogDebug(COMPONENT_NFS_READDIR,
-                           "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
-                           cache_inode_err_str(tmp_status),
-                           dirent->name);
                   if(retry_stale) {
+                       LogDebug(COMPONENT_NFS_READDIR,
+                                "cache_inode_getattr returned %s for %s - retrying entry",
+                                cache_inode_err_str(tmp_status),
+                                dirent->name);
                        retry_stale = false; /* only one retry per dirent */
                        goto estale_retry;
                   }
@@ -718,6 +744,11 @@ estale_retry:
                      going. */
                   atomic_clear_uint32_t_bits(&directory->flags,
                                              CACHE_INODE_TRUST_CONTENT);
+ 
+                  LogDebug(COMPONENT_NFS_READDIR,
+                           "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
+                           cache_inode_err_str(tmp_status),
+                           dirent->name);
                   continue;
                 }
 
@@ -736,6 +767,8 @@ estale_retry:
           cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
           if (!cb_parms.in_result) {
+               LogDebug(COMPONENT_NFS_READDIR,
+                        "bailing out due to entry not in result");
                break;
           }
      }
@@ -743,6 +776,9 @@ estale_retry:
      /* We have reached the last node and every node traversed was
         added to the result */;
 
+     LogDebug(COMPONENT_NFS_READDIR,
+              "dirent_node = %p, nbfound = %u, in_result = %s",
+              dirent_node, *nbfound, cb_parms.in_result ? "TRUE" : "FALSE");
      if (!dirent_node && cb_parms.in_result) {
           *eod_met = true;
      } else {

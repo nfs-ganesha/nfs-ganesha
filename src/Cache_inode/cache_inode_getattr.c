@@ -81,6 +81,8 @@ cache_inode_getattr(cache_entry_t *entry,
         if ((status
              = cache_inode_lock_trust_attrs(entry, req_ctx, false))
             != CACHE_INODE_SUCCESS) {
+                LogDebug(COMPONENT_CACHE_INODE,
+                         "Failed %s", cache_inode_err_str(status));
                 goto out;
         }
 

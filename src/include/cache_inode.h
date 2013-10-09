@@ -884,6 +884,10 @@ static inline cache_inode_status_t cache_inode_refresh_attrs(
 		cache_inode_kill_entry(entry);
 		cache_status
 			= cache_inode_error_convert(fsal_status);
+                LogDebug(COMPONENT_CACHE_INODE,
+                         "Failed on entry %p %s",
+                         entry,
+                         cache_inode_err_str(cache_status));
 		goto out;
 	}
 
