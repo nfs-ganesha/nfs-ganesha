@@ -101,7 +101,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
      /* Try to lookup by key (fh) */
      *parent = cache_inode_get_keyed(&entry->object.dir.parent, req_ctx,
-				     CIG_KEYED_FLAG_NONE);
+				     CIG_KEYED_FLAG_NONE, &status);
      if (!(*parent)) {
           /* If we didn't find it, drop the read lock, get a write
              lock, and got to FSAL. */

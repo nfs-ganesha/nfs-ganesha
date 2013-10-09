@@ -113,7 +113,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                     dirent = cache_inode_avl_qp_lookup_s(parent, name, 1);
                     if (dirent) {
                         *entry = cache_inode_get_keyed(
-                            &dirent->ckey, req_ctx, CIG_KEYED_FLAG_NONE);
+                            &dirent->ckey, req_ctx, CIG_KEYED_FLAG_NONE, &status);
 			if (*entry) {
                               /* We have our entry and a valid reference.
                                  Declare victory. */

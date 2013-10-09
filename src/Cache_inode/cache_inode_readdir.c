@@ -192,7 +192,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
                  cache_inode_key_dup(&dirent2->ckey, &dirent->ckey);
                  oldentry =
                      cache_inode_get_keyed(&dirent2->ckey, req_ctx,
-                                           CIG_KEYED_FLAG_CACHED_ONLY);
+                                           CIG_KEYED_FLAG_CACHED_ONLY, &status);
 		 if(oldentry) { /* if it is still around, mark it gone/stale */
 		     status = cache_inode_invalidate(oldentry,
 						     (CACHE_INODE_INVALIDATE_ATTRS
@@ -383,6 +383,7 @@ populate_dirent(const struct req_op_context *opctx,
                 *state->status = cache_inode_error_convert(fsal_status);
 		return (false);
         }
+
         *state->status = cache_inode_new_entry(entry_hdl,
 					       CACHE_INODE_FLAG_NONE,
 					       &cache_entry);
@@ -659,7 +660,7 @@ cache_inode_readdir(cache_entry_t *directory,
 estale_retry:
 
           entry = cache_inode_get_keyed(&dirent->ckey, req_ctx,
-                                        CIG_KEYED_FLAG_NONE);
+                                        CIG_KEYED_FLAG_NONE, &lookup_status);
           if (! entry) {
               LogFullDebug(COMPONENT_NFS_READDIR,
                            "Lookup returned %s",
@@ -670,7 +671,8 @@ estale_retry:
                goto estale_retry;
           }
 
-              if (lookup_status == CACHE_INODE_NOT_FOUND) {
+              if (lookup_status == CACHE_INODE_NOT_FOUND ||
+                  lookup_status == CACHE_INODE_FSAL_ESTALE) {
                   /* Directory changed out from under us.
                      Invalidate it, skip the name, and keep
                      going. */

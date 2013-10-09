@@ -157,9 +157,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 cache_entry_t *
 cache_inode_get_keyed(cache_inode_key_t *key,
 		      const struct req_op_context *req_ctx,
-		      uint32_t flags)
+		      uint32_t flags,
+		      cache_inode_status_t * status)
 {
-	cache_inode_status_t status;
 	cache_entry_t *entry = NULL;
 	cih_latch_t latch;
 
@@ -189,19 +189,20 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 							  &key->kv, &new_hdl);
 		put_gsh_export(exp);
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
-			status = cache_inode_error_convert(fsal_status);
+			*status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
-				 "could not get create_handle object");
+				 "could not get create_handle object %s",
+				 cache_inode_err_str(*status));
 			goto out;
 		}
 
 		/* if all else fails, create a new entry */
-		status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					       &entry);
+		*status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
+					        &entry);
 		if (unlikely(! entry))
 			goto out;
 
-		if (unlikely((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+		if (unlikely((*status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
 			     != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
 			entry = NULL;
