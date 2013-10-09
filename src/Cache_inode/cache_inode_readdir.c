@@ -698,15 +698,15 @@ estale_retry:
           cb_parms.attr_allowed = attr_status == CACHE_INODE_SUCCESS;
           cb_parms.cookie = dirent->hk.k;
 
-          status = cache_inode_getattr(entry, req_ctx, &cb_parms, cb);
+          tmp_status = cache_inode_getattr(entry, req_ctx, &cb_parms, cb);
 
-          if (status != CACHE_INODE_SUCCESS) {
+          if (tmp_status != CACHE_INODE_SUCCESS) {
               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-              if(status == CACHE_INODE_FSAL_ESTALE)
+              if(tmp_status == CACHE_INODE_FSAL_ESTALE)
                 {
                   LogDebug(COMPONENT_NFS_READDIR,
                            "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
-                           cache_inode_err_str(status),
+                           cache_inode_err_str(tmp_status),
                            dirent->name);
                   if(retry_stale) {
                        retry_stale = false; /* only one retry per dirent */
@@ -720,6 +720,8 @@ estale_retry:
                                              CACHE_INODE_TRUST_CONTENT);
                   continue;
                 }
+
+              status = tmp_status;
 
               LogCrit(COMPONENT_NFS_READDIR,
                       "cache_inode_lock_trust_attrs returned %s for %s - bailing out",
