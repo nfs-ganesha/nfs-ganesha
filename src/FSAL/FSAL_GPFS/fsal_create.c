@@ -354,14 +354,14 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
       if(!dev)
         return fsalstat(ERR_FSAL_FAULT, 0);
       unix_mode |= S_IFBLK;
-      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFF);
+      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
       break;
 
     case CHARACTER_FILE:
       if(!dev)
         return fsalstat(ERR_FSAL_FAULT, 0);
       unix_mode |= S_IFCHR;
-      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFF);
+      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
       break;
 
     case SOCKET_FILE:

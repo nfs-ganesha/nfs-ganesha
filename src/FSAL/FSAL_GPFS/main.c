@@ -101,6 +101,31 @@ struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
  * must be called with a reference taken (via lookup_fsal)
  */
 
+static int log_to_gpfs(struct log_facility   * facility,
+                      log_levels_t            level,
+                      struct display_buffer * buffer,
+                      char                  * compstr,
+                      char                  * message)
+{
+  struct trace_arg targ;
+
+  if (level > 0)
+  {
+    targ.level = level;
+    targ.len = strlen(compstr);
+    targ.str = compstr;
+    gpfs_ganesha(OPENHANDLE_TRACE_ME, &targ);
+  }
+  return 0;
+}
+
+struct log_facility facility =
+{
+  {NULL, NULL}, {NULL, NULL},
+   "GPFS", NIV_FULL_DEBUG,
+   LH_COMPONENT, log_to_gpfs, NULL
+};
+
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
@@ -133,6 +158,9 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%"PRIx64,
 		 gpfs_me->fs_info.supported_attrs);
+
+	activate_custom_log_facility(&facility);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -178,6 +206,8 @@ MODULE_INIT void gpfs_init(void) {
 
 MODULE_FINI void gpfs_unload(void) {
 	int retval;
+
+	unregister_log_facility(&facility);
 
 	retval = unregister_fsal(&GPFS.fsal);
 	if(retval != 0) {

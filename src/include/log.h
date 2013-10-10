@@ -479,6 +479,7 @@ void deactivate_log_facility(struct log_facility * facility);
 void activate_log_facility(struct log_facility * facility);
 int register_log_facility(struct log_facility * facility);
 int unregister_log_facility(struct log_facility * facility);
+int activate_custom_log_facility(struct log_facility * facility);
 
 typedef struct log_component_info
 {
