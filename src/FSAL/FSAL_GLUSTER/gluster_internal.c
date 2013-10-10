@@ -25,7 +25,6 @@
  * Module core functions
  */
 
-#include <sys/fsuid.h>
 #include "gluster_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -34,7 +33,7 @@
  * @brief FSAL status mapping from GlusterFS errors
  *
  * This function returns a fsal_status_t with the FSAL error as the
- * major, and the posix error as minor.	
+ * major, and the posix error as minor.
  *
  * @param[in] gluster_errorcode Gluster error
  *
@@ -296,7 +295,7 @@ void gluster_cleanup_vars(struct glfs_object *glhandle)
  *	FS_specific = "foo=baz,enable_A";
  */
 bool fs_specific_has(const char *fs_specific, const char* key,
-			    char *val, int max_val_bytes)
+		     char *val, int max_val_bytes)
 {
 	char *next_comma, *option;
 	bool ret;
@@ -334,7 +333,7 @@ cleanup:
 #ifdef GLTIMING
 void latency_update(struct timespec *s_time, struct timespec *e_time, int opnum)
 {
-	atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time, 
+	atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time,
 			      timespec_diff(s_time, e_time));
 	atomic_add_uint64_t(&glfsal_latencies[opnum].count, 1);
 }
@@ -344,9 +343,9 @@ void latency_dump(void)
 	int i = 0;
 	
 	for (; i < LATENCY_SLOTS; i++) {
-		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%llu:nsecs:%llu", i, 
-			(long long unsigned int)glfsal_latencies[i].count, 
-			(long long unsigned int)glfsal_latencies[i].overall_time);
+		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%llu:nsecs:%llu", i,
+		    (long long unsigned int)glfsal_latencies[i].count,
+		    (long long unsigned int)glfsal_latencies[i].overall_time);
 	}
 }
 #endif

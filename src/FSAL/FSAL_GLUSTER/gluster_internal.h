@@ -18,12 +18,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef GLUSTER_INTERNAL
+#define GLUSTER_INTERNAL
+
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
@@ -83,7 +83,7 @@ struct latency_data {
 };
 #endif
 
-struct glusterfs_fsal_module {	
+struct glusterfs_fsal_module {
 	struct fsal_staticfsinfo_t fs_info;
 	struct fsal_module fsal;
 };
@@ -133,7 +133,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 
-bool fs_specific_has(const char *fs_specific, const char* key,char *val, 
+bool fs_specific_has(const char *fs_specific, const char* key,char *val,
 		     int max_val_bytes);
 
-int setids(uid_t nuid, uid_t ngid, uid_t *suid, uid_t *sgid);
+#endif /* GLUSTER_INTERNAL */

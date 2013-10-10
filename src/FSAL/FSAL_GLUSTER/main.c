@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -31,14 +31,7 @@
  * 
  */
 
-#include "config.h"
 #include "fsal.h"
-#include <libgen.h>             /* used for 'dirname' */
-#include <pthread.h>
-#include <string.h>
-#include <limits.h>
-#include <sys/types.h>
-#include "nlm_list.h"
 #include "FSAL/fsal_init.h"
 #include "gluster_internal.h"
 
@@ -85,15 +78,15 @@ MODULE_INIT void glusterfs_init(void) {
 	/* register_fsal seems to expect zeroed memory. */
 	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
 	if (glfsal_module == NULL) {
-		LogCrit(COMPONENT_FSAL, 
+		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate memory for Gluster FSAL module.");
 		return;
 	}
 
-	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION, 
+	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
 		FSAL_MINOR_VERSION) != 0) {
 		gsh_free(glfsal_module);
-		LogCrit(COMPONENT_FSAL, 
+		LogCrit(COMPONENT_FSAL,
 			"Gluster FSAL module failed to register.");
 	}
 
