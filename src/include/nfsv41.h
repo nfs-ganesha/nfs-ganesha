@@ -7779,6 +7779,9 @@ static inline bool xdr_COMPOUND4args(XDR * xdrs, COMPOUND4args * objp)
     return false;
   if(!inline_xdr_u_int32_t(xdrs, &objp->minorversion))
     return false;
+  /* decoder hint */
+  if (objp->minorversion > 0)
+      xdrs->x_flags &= ~XDR_FLAG_CKSUM;
   if(!xdr_array
      (xdrs, (char **)&objp->argarray.argarray_val,
       (u_int *) & objp->argarray.argarray_len, ~0, sizeof(nfs_argop4),
