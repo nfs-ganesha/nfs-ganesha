@@ -295,7 +295,7 @@ void gluster_cleanup_vars(struct glfs_object *glhandle)
  *	FS_specific = "foo=baz,enable_A";
  */
 bool fs_specific_has(const char *fs_specific, const char* key,
-		     char *val, int max_val_bytes)
+		     char *val, int *max_val_bytes)
 {
 	char *next_comma, *option;
 	bool ret;
@@ -318,7 +318,9 @@ bool fs_specific_has(const char *fs_specific, const char* key,
 		strsep(&v, "=");
 		if (0 == strcmp(k, key)) {
 			if(val)
-				strncpy(val, v, max_val_bytes);
+				strncpy(val, v, *max_val_bytes);
+			if (max_val_bytes)
+				*max_val_bytes = strlen(v) + 1;
 			ret = true;
 			goto cleanup;
 		}

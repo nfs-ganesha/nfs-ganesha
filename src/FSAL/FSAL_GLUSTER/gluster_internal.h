@@ -30,8 +30,9 @@
 #include <glusterfs/api/glfs.h>
 #include <glusterfs/api/glfs-handles.h>
 
-#define GLUSTER_VOLNAME_KEY "volume"
+#define GLUSTER_VOLNAME_KEY  "volume"
 #define GLUSTER_HOSTNAME_KEY "hostname"
+#define GLUSTER_VOLPATH_KEY  "volpath"
 #define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
 
 /* defined the set of attributes supported with POSIX */
@@ -140,7 +141,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 
 bool fs_specific_has(const char *fs_specific, const char* key,char *val,
-		     int max_val_bytes);
+		     int *max_val_bytes);
 
 int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		    gid_t *gid, unsigned int ngrps, gid_t *groups);
