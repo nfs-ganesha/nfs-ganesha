@@ -246,10 +246,26 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+		      &opctx->creds->caller_gid, opctx->creds->caller_glen,
+	              opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	/* FIXME: what else from attrib should we use? */
 	glhandle = glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle,
 				name, O_CREAT, fsal2unix_mode(attrib->mode),
 				&sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
 
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
@@ -311,9 +327,26 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	/* FIXME: what else from attrib should we use? */
 	glhandle = glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle,
 				name, fsal2unix_mode(attrib->mode), &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -398,9 +431,26 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			return fsalstat (ERR_FSAL_INVAL, 0);
 	}
 
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	/* FIXME: what else from attrib should we use? */
 	glhandle = glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle,
 				name, fsal2unix_mode(attrib->mode), ndev, &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -445,10 +495,74 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
 {
+	int                      rc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct stat              sb;
+	struct glfs_object      *glhandle = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	struct glusterfs_handle *objhandle = NULL;
+	struct glusterfs_export *glfs_export =
+		container_of(dir_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *parenthandle =
+		container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	latency_dump();
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
 #endif
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	/* FIXME: what else from attrib should we use? */
+	glhandle = glfs_h_symlink(glfs_export->gl_fs, parenthandle->glhandle,
+				name, link_path, &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (glhandle == NULL) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
+	*handle = &objhandle->handle;
+	*attrib = objhandle->handle.attributes;
+
+out:
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
+
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_makesymlink);
+#endif
+
+	return status;
 }
 
 /**
@@ -460,7 +574,48 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(obj_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *objhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	link_content->len = 1024; // bad bad!!! need to determine size
+	link_content->addr = gsh_malloc(link_content->len);
+	if (link_content->addr == NULL) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
+	rc = glfs_h_readlink(glfs_export->gl_fs, objhandle->glhandle,
+			     link_content->addr, link_content->len);
+	if (rc < 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	/* Check if return buffer overflowed, it is still '\0' terminated */
+	link_content->len = (strlen(link_content->addr) + 1);
+
+out:
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gsh_free(link_content->addr);
+		link_content->addr = NULL;
+		link_content->len = 0;
+	}
+
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_readsymlink);
+#endif
+
+	return status;
 }
 
 /**
@@ -525,7 +680,12 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	memset(&sb, 0, sizeof(struct stat));
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-		/* TODO: we need a glfs_h_truncate */
+		rc = glfs_h_truncate (glfs_export->gl_fs, objhandle->glhandle,
+				      attrs->filesize);
+		if (rc != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
@@ -600,7 +760,51 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0, credrc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(obj_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *objhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+	struct glusterfs_handle *dstparenthandle =
+		container_of(destdir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	rc = glfs_h_link(glfs_export->gl_fs, objhandle->glhandle,
+			 dstparenthandle->glhandle, name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_linkfile);
+#endif
+
+	return status;
 }
 
 /**
@@ -613,7 +817,51 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0, credrc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(olddir_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *srcparenthandle =
+		container_of(olddir_hdl, struct glusterfs_handle, handle);
+	struct glusterfs_handle *dstparenthandle =
+		container_of(newdir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	rc = glfs_h_rename(glfs_export->gl_fs, srcparenthandle->glhandle,
+			   old_name, dstparenthandle->glhandle, new_name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_renamefile);
+#endif
+
+	return status;
 }
 
 /**
@@ -624,7 +872,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const struct req_op_context *opctx,
 				 const char *name)
 {
-	int                      rc = 0;
+	int                      rc = 0, credrc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
@@ -636,11 +884,29 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+				 &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			  opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	rc =  glfs_h_unlink (glfs_export->gl_fs, parenthandle->glhandle, name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 	}
 
+out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_unlink);

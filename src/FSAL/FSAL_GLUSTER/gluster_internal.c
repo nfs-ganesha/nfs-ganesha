@@ -330,6 +330,42 @@ cleanup:
 	return ret;
 }
 
+int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
+		    gid_t *gid, unsigned int ngrps, gid_t *groups)
+{
+	int             rc = 0;
+
+	if (uid) {
+		if (*uid != glfs_export->saveduid)
+			rc = glfs_setfsuid(*uid);
+	}
+	else {
+		rc = glfs_setfsuid(glfs_export->saveduid);
+	}
+	if (rc)
+		goto out;
+
+	if (gid) {
+		if (*gid != glfs_export->savedgid)
+			rc = glfs_setfsgid (*gid);
+	}
+	else {
+		rc = glfs_setfsgid (glfs_export->savedgid);
+	}
+	if (rc)
+		goto out;
+
+	if (ngrps != 0 && groups) {
+		rc = glfs_setfsgroups (ngrps, groups);
+	}
+	else {
+		rc = glfs_setfsgroups (0, NULL);
+	}
+
+out:
+	return rc;
+}
+
 #ifdef GLTIMING
 void latency_update(struct timespec *s_time, struct timespec *e_time, int opnum)
 {

@@ -30,6 +30,7 @@
  */
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
 #include "fsal.h"
@@ -613,6 +614,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	glfsexport->gl_fs = fs;
+
+	glfsexport->saveduid = geteuid();
+	glfsexport->savedgid = getegid();
 
 	glfsexport->export.fsal = fsal_hdl;
 

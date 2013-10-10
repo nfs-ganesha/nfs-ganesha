@@ -73,9 +73,13 @@ typedef enum {
 	lat_commit,
 	lat_file_close,
 	lat_lru_cleanup,
+	lat_makesymlink,
+	lat_readsymlink,
+	lat_linkfile,
+	lat_renamefile,
 	lat_end_slots
 } latency_slots_t;
-#define LATENCY_SLOTS 19
+#define LATENCY_SLOTS 23
 
 struct latency_data {
 	uint64_t        count;
@@ -91,6 +95,8 @@ struct glusterfs_fsal_module {
 struct glusterfs_export {
 	glfs_t             *gl_fs;
 	char               *export_path;
+	uid_t               saveduid;
+	gid_t               savedgid;
 	struct fsal_export  export;
 };
 
@@ -135,5 +141,8 @@ void gluster_cleanup_vars(struct glfs_object *glhandle);
 
 bool fs_specific_has(const char *fs_specific, const char* key,char *val,
 		     int max_val_bytes);
+
+int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
+		    gid_t *gid, unsigned int ngrps, gid_t *groups);
 
 #endif /* GLUSTER_INTERNAL */
