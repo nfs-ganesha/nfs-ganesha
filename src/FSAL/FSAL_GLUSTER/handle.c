@@ -640,7 +640,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 	rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &sb);
 	if (rc != 0) {
-		status = gluster2fsal_error(errno);
+		if (errno == ENOENT)
+			status = gluster2fsal_error(ESTALE);
+		else
+			status = gluster2fsal_error(errno);
+
 		goto out;
 	}
 
