@@ -310,6 +310,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
 
+	LogDebug(COMPONENT_FSAL,
+	         "create %s", name);
+
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
@@ -386,6 +389,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
+
+	LogDebug(COMPONENT_FSAL,
+	         "create %s", name);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -465,6 +471,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
+
+	LogDebug(COMPONENT_FSAL,
+	         "create %s", name);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -558,6 +567,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
         int flags = O_PATH|O_NOACCESS;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
+
+	LogDebug(COMPONENT_FSAL,
+	         "create %s", name);
 
 	*handle = NULL; /* poison it first */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -850,7 +862,6 @@ out:
 	return fsalstat(fsal_error, retval);	
 }
 
-
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
                                 const struct req_op_context *opctx,
 				const char *old_name,
@@ -902,6 +913,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
         struct vfs_fsal_export *ve = NULL;
         vfs_file_handle_t *fh = NULL;
         vfs_alloc_handle(fh);
+        const char *func = "unknown";
 
         switch (obj_hdl->type) {
         case SOCKET_FILE:
@@ -913,6 +925,8 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
                                                 O_PATH|O_NOACCESS,
                                                 fsal_error);
                 if(fd < 0) {
+			LogDebug(COMPONENT_FSAL,
+			         "Failed with %s", strerror(-fd));
                         return fd;
                 }
                 retval = fstatat(fd,
@@ -920,25 +934,32 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
                                 stat,
                                 AT_SYMLINK_NOFOLLOW);
 
+                func = "fstatat";
                 break;
         case REGULAR_FILE:
                 if(myself->u.file.openflags == FSAL_O_CLOSED) {
                         /* no file open at the moment */
                         fd = vfs_fsal_open(myself, open_flags, fsal_error);
                         if(fd < 0) {
+				LogDebug(COMPONENT_FSAL,
+				         "Failed with %s", strerror(-fd));
                                 return fd;
                         }
                 } else {
                         fd = myself->u.file.fd;
                 }
                 retval = fstat(fd, stat);
+                func = "fstat";
                 break;
         case DIRECTORY:
                 fd = vfs_fsal_open(myself, open_flags, fsal_error);
                 if(fd < 0) {
+			LogDebug(COMPONENT_FSAL,
+			         "Failed with %s", strerror(-fd));
                         return fd;
                 }
                 retval = vfs_stat_by_handle(fd, myself->handle, stat, open_flags);
+                func = "vfs_stat_by_handle (1)";
                 break;
         case SYMBOLIC_LINK:
                 open_flags |= (O_PATH | O_RDWR | O_NOFOLLOW);
@@ -950,18 +971,26 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 vfos_open:
                 fd = vfs_fsal_open(myself, open_flags, fsal_error);
                 if(fd < 0) {
+			LogDebug(COMPONENT_FSAL,
+			         "Failed with %s", strerror(-fd));
                         return fd;
                 }
                 retval = vfs_stat_by_handle(fd, myself->handle, stat, open_flags);
+                func = "vfs_stat_by_handle (2)";
                 break;
         }
 
         if(retval < 0) {
                 retval = errno;
+                if(retval == ENOENT) {
+                	retval = ESTALE;
+                }
                 *fsal_error = posix2fsal_error(retval);
                 if(obj_hdl->type != REGULAR_FILE
                         || myself->u.file.openflags == FSAL_O_CLOSED)
                         close(fd);
+		LogDebug(COMPONENT_FSAL,
+		         "%s failed with %s", func, strerror(retval));
                 return -retval;
         }
 	return fd;
@@ -990,6 +1019,9 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			fsal_error = st.major;  retval = st.minor;
 		}
 	} else {
+		LogDebug(COMPONENT_FSAL,
+		         "Failed with %s, fsal_error %s",
+		         strerror(-fd), fsal_error == ERR_FSAL_STALE ? "ERR_FSAL_STALE" : "other");
 		if(obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
 			/* You cannot open_by_handle (XFS on linux) a symlink and it
 			 * throws an EPERM error for it.  open_by_handle_at
@@ -1207,6 +1239,9 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	retval = fstatat(fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
 		retval = errno;
+		LogDebug(COMPONENT_FSAL,
+		         "fstatat %s failed %s",
+		         name, strerror(retval));
 		if(retval == ENOENT)
 			fsal_error = ERR_FSAL_STALE;
 		else
