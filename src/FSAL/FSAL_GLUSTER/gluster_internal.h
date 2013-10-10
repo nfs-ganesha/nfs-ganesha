@@ -28,8 +28,8 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include <glusterfs/api/glfs.h>
+#include <glusterfs/api/glfs-handles.h>
 
-#define GLUSTER_GFID_SIZE 16
 #define GLUSTER_VOLNAME_KEY "volume"
 #define GLUSTER_HOSTNAME_KEY "hostname"
 #define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
@@ -52,6 +52,7 @@ ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
 ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
 
+#ifdef GLTIMING
 typedef enum {
 	lat_handle_release = 0,
 	lat_lookup,
@@ -61,14 +62,26 @@ typedef enum {
 	lat_handle_to_key,
 	lat_extract_handle,
 	lat_create_handle,
+	lat_read_dirents,
+	lat_makedir,
+	lat_makenode,
+	lat_setattrs,
+	lat_file_unlink,
+	lat_file_open,
+	lat_file_read,
+	lat_file_write,
+	lat_commit,
+	lat_file_close,
+	lat_lru_cleanup,
 	lat_end_slots
 } latency_slots_t;
-#define LATENCY_SLOTS 8
+#define LATENCY_SLOTS 19
 
 struct latency_data {
 	uint64_t        count;
 	nsecs_elapsed_t overall_time;
 };
+#endif
 
 struct glusterfs_fsal_module {	
 	struct fsal_staticfsinfo_t fs_info;
@@ -83,13 +96,21 @@ struct glusterfs_export {
 
 struct glusterfs_handle{
 	struct glfs_object    *glhandle;
-	struct glfs_gfid      *gfid; /* handle descriptor, for wire handle */
+	unsigned char          globjhdl[GLAPI_HANDLE_LENGTH]; /* handle 
+						descriptor, for wire handle */
 	struct glfs_fd        *glfd;
 	fsal_openflags_t       openflags;
 	struct fsal_obj_handle handle; /* public FSAL handle */
 };
 
+#ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];
+
+void latency_update(struct timespec *s_time, struct timespec *e_time, 
+		    int opnum);
+
+void latency_dump(void);
+#endif
 
 fsal_status_t gluster2fsal_error(const int gluster_errorcode);
 
@@ -98,9 +119,9 @@ void stat2fsal_attributes(const struct stat *buffstat,
 
 struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl);
 
-int construct_handle(struct glusterfs_export *glexport, const struct stat *st, 
-		     struct glfs_object *glhandle, struct glfs_gfid *gfid, 
-		     struct glusterfs_handle **obj);
+int construct_handle(struct glusterfs_export *glexport, const struct stat *st,
+		     struct glfs_object *glhandle, unsigned char *globjhdl,
+		     int len, struct glusterfs_handle **obj);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      const char *export_path,
@@ -110,31 +131,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      const struct fsal_up_vector *up_ops,
 				      struct fsal_export **export);
 
-void gluster_cleanup_vars(struct glfs_object *glhandle, struct glfs_gfid *gfid);
+void gluster_cleanup_vars(struct glfs_object *glhandle);
 
 bool fs_specific_has(const char *fs_specific, const char* key,char *val, 
 		     int max_val_bytes);
 
 int setids(uid_t nuid, uid_t ngid, uid_t *suid, uid_t *sgid);
-
-void latency_update(struct timespec *s_time, struct timespec *e_time, 
-		    int opnum);
-
-void latency_dump(void);
-
-
-pthread_key_t *uid_key;
-pthread_key_t *gid_key;
-
-/**
- * @brief pthread specific helper functions for uid/gid mapping
- *        to be used by gluster apis
- */
-int glfs_uid_keyinit( void );
-int glfs_gid_keyinit( void );
-void *glfs_uid_get( void );
-int glfs_uidgid_set( pthread_key_t *key, const void *val );
-void *glfs_gid_get( void );
-
-
-

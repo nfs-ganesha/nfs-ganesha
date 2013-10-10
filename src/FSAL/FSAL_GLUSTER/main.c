@@ -82,9 +82,6 @@ static struct glusterfs_fsal_module *glfsal_module = NULL;
  */
 
 MODULE_INIT void glusterfs_init(void) {
-
-	int rc = 0;
-
 	/* register_fsal seems to expect zeroed memory. */
 	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
 	if (glfsal_module == NULL) {
@@ -106,35 +103,7 @@ MODULE_INIT void glusterfs_init(void) {
 	/* setup global handle internals */
 	glfsal_module->fs_info = default_gluster_info;
 
-	rc = glfs_uid_keyinit();
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL, "Could not init glfs uid key mapping" );
-		goto error_out;
-	}
-
-	rc = glfs_gid_keyinit();
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL, "Could not init glfs gid key mapping" );
-		goto error_out;
-	}
-
-	rc = glfs_caller_specific_init( uid_key, gid_key, NULL );
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL,
-			 "Failed in caller specific init for uid/gid" );
-		goto error_out;
-	}
-
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
-
-out:
-	return;
-
-error_out:
-	LogCrit( COMPONENT_FSAL, "Gluster FSAL Initialization FAILED!!!" );
-
-	goto out;
-
 }
 
 MODULE_FINI void glusterfs_unload(void) {

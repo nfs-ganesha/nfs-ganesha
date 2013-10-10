@@ -89,7 +89,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	const char              *realpath;
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export = 
 		container_of(export_pub, struct glusterfs_export, export);
@@ -105,13 +105,14 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	gfid = glfs_h_extract_gfid(glhandle);
-	if (gfid == NULL) {
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -121,7 +122,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	gluster_cleanup_vars(glhandle);
 
 	return status;
 }
@@ -130,7 +131,9 @@ static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
 				     struct fsal_obj_handle *junction,
 				     struct fsal_obj_handle **handle)
 {
+#ifdef GLTIMING
 	latency_dump();
+#endif
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }
 
@@ -143,15 +146,17 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    struct gsh_buffdesc *fh_desc)
 {
 	size_t fh_size;
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
+#endif
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	fh_size = GLUSTER_GFID_SIZE;
+	fh_size = GLAPI_HANDLE_LENGTH;
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
@@ -168,8 +173,10 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	fh_desc->len = fh_size;  /* pass back the actual size */
 
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_extract_handle);
+#endif
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -187,60 +194,51 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export = 
 		container_of(export_pub, struct glusterfs_export, export);
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
+#endif
 
 	//LogCrit(COMPONENT_FSAL, "called");
 
 	*pub_handle = NULL;
 
-	if (fh_desc->len != GLUSTER_GFID_SIZE) {
+	if (fh_desc->len != GLAPI_HANDLE_LENGTH) {
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
 
-	gfid = calloc(1, sizeof (struct glfs_gfid));
-	if (gfid == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		goto out;
-	}
+	memcpy(globjhdl, fh_desc->addr, 16);
 
-	gfid->len = GLUSTER_GFID_SIZE;
-	gfid->id = calloc(gfid->len, sizeof(unsigned char));
-	if (gfid->id == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		goto out;
-	}
-
-	memcpy(gfid->id, fh_desc->addr, 16);
-
-	glhandle = glfs_h_create_from_gfid(glfs_export->gl_fs, gfid, &sb);
+	glhandle = glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
+					     GLAPI_HANDLE_LENGTH, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
 	}
 
 	*pub_handle = &objhandle->handle;
-
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_create_handle);
-	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
 
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create_handle);
+#endif
 	return status;
 }
 
