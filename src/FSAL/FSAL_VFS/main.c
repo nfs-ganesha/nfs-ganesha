@@ -32,7 +32,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>             /* used for 'dirname' */
+#include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
@@ -52,18 +52,18 @@
           ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
           ATTR_CHGTIME  )
 
-struct vfs_fsal_module {	
+struct vfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
 	fsal_init_info_t fsal_info;
-	 /* vfsfs_specific_initinfo_t specific_info;  placeholder */
+	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
 const char myname[] = "VFS";
 
 /* filesystem info for VFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
+	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -87,7 +87,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.maxwrite = 0,
 	.umask = 0,
 	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400, /* root=RW, owner=R */
+	.xattr_access_rights = 0400,	/* root=RW, owner=R */
 };
 
 /* private helper for export object
@@ -111,19 +111,17 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
-	struct vfs_fsal_module *vfs_me
-		= container_of(fsal_hdl, struct vfs_fsal_module, fsal);
+	struct vfs_fsal_module *vfs_me =
+	    container_of(fsal_hdl, struct vfs_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
-	vfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
+	vfs_me->fs_info = default_posix_info;	/* get a copy of the defaults */
 
-        fsal_status = fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl),
-                                       config_struct,
-                                       &vfs_me->fsal_info,
-                                       &vfs_me->fs_info,
-                                       NULL);
+	fsal_status =
+	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
+			     &vfs_me->fsal_info, &vfs_me->fs_info, NULL);
 
-	if(FSAL_IS_ERROR(fsal_status))
+	if (FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
 	/* if we have fsal specific params, do them here
 	 * fsal_hdl->name is used to find the block containing the
@@ -132,13 +130,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 
 	display_fsinfo(&vfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes constant = 0x%"PRIx64,
-                     (uint64_t) VFS_SUPPORTED_ATTRIBUTES);
+		     "Supported attributes constant = 0x%" PRIx64,
+		     (uint64_t) VFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%"PRIx64,
+		     "Supported attributes default = 0x%" PRIx64,
 		     default_posix_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
-		 "FSAL INIT: Supported attributes mask = 0x%"PRIx64,
+		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 vfs_me->fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -146,13 +144,12 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal VFS method linkage to export object
  */
 
-fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path,
-				const char *fs_options,
-				struct exportlist *exp_entry,
-				struct fsal_module *next_fsal,
-                                const struct fsal_up_vector *up_ops,
-				struct fsal_export **export);
+fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
+				const char *export_path, const char *fs_options,
+				struct exportlist * exp_entry,
+				struct fsal_module * next_fsal,
+				const struct fsal_up_vector * up_ops,
+				struct fsal_export ** export);
 
 /* Module initialization.
  * Called by dlopen() to register the module
@@ -167,27 +164,29 @@ static struct vfs_fsal_module VFS;
 /* linkage to the exports and handle ops initializers
  */
 
-MODULE_INIT void vfs_init(void) {
+MODULE_INIT void vfs_init(void)
+{
 	int retval;
 	struct fsal_module *myself = &VFS.fsal;
 
-	retval = register_fsal(myself, myname,
-			       FSAL_MAJOR_VERSION,
-			       FSAL_MINOR_VERSION);
-	if(retval != 0) {
+	retval =
+	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION);
+	if (retval != 0) {
 		fprintf(stderr, "VFS module failed to register");
 		return;
 	}
 	myself->ops->create_export = vfs_create_export;
 	myself->ops->init_config = init_config;
-        init_fsal_parameters(&VFS.fsal_info);
+	init_fsal_parameters(&VFS.fsal_info);
 }
 
-MODULE_FINI void vfs_unload(void) {
+MODULE_FINI void vfs_unload(void)
+{
 	int retval;
 
 	retval = unregister_fsal(&VFS.fsal);
-	if(retval != 0) {
+	if (retval != 0) {
 		fprintf(stderr, "VFS module failed to unregister");
 		return;
 	}

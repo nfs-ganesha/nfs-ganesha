@@ -62,24 +62,24 @@
 	do { if (0) printf(fmt, ##a); } while (0)
 
 /* FIXME: We assume xdrmem. How to do this generic I don't know */
-static void _XDR_2_ioctlxdr_read_begin(XDR *xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_read_begin(XDR * xdr, struct pan_ioctl_xdr *pixdr)
 {
 	pixdr->xdr_buff = xdr->x_private;
 	pixdr->xdr_alloc_len = xdr->x_handy;
 	pixdr->xdr_len = 0;
-	DBG_PRNT2("alloc_len=%d x_private=%p\n",
-		pixdr->xdr_alloc_len, xdr->x_private);
+	DBG_PRNT2("alloc_len=%d x_private=%p\n", pixdr->xdr_alloc_len,
+		  xdr->x_private);
 }
 
 /* We need to update the XDR with the encoded bytes */
-static void _XDR_2_ioctlxdr_read_end(XDR *xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_read_end(XDR * xdr, struct pan_ioctl_xdr *pixdr)
 {
 	xdr->x_handy -= pixdr->xdr_len;
 	xdr->x_private = (char *)xdr->x_private + pixdr->xdr_len;
 	DBG_PRNT2("xdr_len=%d x_private=%p\n", pixdr->xdr_len, xdr->x_private);
 }
 
-static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_write(XDR * xdr, struct pan_ioctl_xdr *pixdr)
 {
 	pixdr->xdr_len = xdr ? xdr_getpos(xdr) : 0;
 	if (pixdr->xdr_len && xdr->x_base) {
@@ -95,8 +95,7 @@ static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 /*
  * Given a PanFS fsal_export. Return the export's root directory file-descriptor
  */
-static inline
-int _get_root_fd(struct fsal_export *exp_hdl)
+static inline int _get_root_fd(struct fsal_export *exp_hdl)
 {
 	return vfs_get_root_fd(exp_hdl);
 }
@@ -106,13 +105,12 @@ int _get_root_fd(struct fsal_export *exp_hdl)
  * The passed obj_hdl must be of a regular file that was pre-opened for
  * read/write.
  */
-static inline
-int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
+static inline int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 {
 	struct vfs_fsal_obj_handle *myself;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED)
+	if (myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED)
 		return myself->u.file.fd;
 	else
 		return -1;
@@ -130,11 +128,9 @@ size_t fs_da_addr_size(struct fsal_export *exp_hdl)
 }
 
 static
-nfsstat4 getdeviceinfo(
-		struct fsal_export *exp_hdl,
-		XDR *da_addr_body,
-		const layouttype4 type,
-		const struct pnfs_deviceid *deviceid)
+nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR * da_addr_body,
+		       const layouttype4 type,
+		       const struct pnfs_deviceid *deviceid)
 {
 	struct pan_ioctl_xdr pixdr;
 	int fd = _get_root_fd(exp_hdl);
@@ -144,18 +140,16 @@ nfsstat4 getdeviceinfo(
 	ret = panfs_um_getdeviceinfo(fd, &pixdr, type, deviceid);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(da_addr_body, &pixdr);
-	DBG_PRNT("deviceid(%lx,%lx) ret => %d\n",
-		 deviceid->export_id, deviceid->devid, ret);
+	DBG_PRNT("deviceid(%lx,%lx) ret => %d\n", deviceid->export_id,
+		 deviceid->devid, ret);
 	return ret;
 }
 
 static
-nfsstat4 getdevicelist(
-		struct fsal_export *exp_hdl,
-		layouttype4 type,
-		void *opaque,
-		bool (*cb)(void *opaque, const uint64_t id),
-		struct fsal_getdevicelist_res *res)
+nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
+		       void *opaque, bool(*cb) (void *opaque,
+						const uint64_t id),
+		       struct fsal_getdevicelist_res *res)
 {
 	res->eof = true;
 	DBG_PRNT("ret => %d\n", NFS4_OK);
@@ -163,19 +157,19 @@ nfsstat4 getdevicelist(
 }
 
 static
-void fs_layouttypes(struct fsal_export *exp_hdl,
-                    size_t *count, const layouttype4 **types)
+void fs_layouttypes(struct fsal_export *exp_hdl, size_t * count,
+		    const layouttype4 ** types)
 {
-        static const layouttype4 supported_layout_type = LAYOUT4_OSD2_OBJECTS;
+	static const layouttype4 supported_layout_type = LAYOUT4_OSD2_OBJECTS;
 
-        *types = &supported_layout_type;
-        *count = 1;
+	*types = &supported_layout_type;
+	*count = 1;
 	DBG_PRNT2("\n");
 }
 
 uint32_t fs_layout_blocksize(struct fsal_export *exp_hdl)
 {
-	DBG_PRNT2("\n"); /* Should not be called */
+	DBG_PRNT2("\n");	/* Should not be called */
 	return 9 * 64 * 1024;
 }
 
@@ -198,77 +192,70 @@ size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 
 /*================================= handle ops ===============================*/
 static
-nfsstat4 layoutget(
-	struct fsal_obj_handle *obj_hdl,
-	struct req_op_context *req_ctx,
-	XDR *loc_body,
-	const struct fsal_layoutget_arg *arg,
-	struct fsal_layoutget_res *res)
+nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
+		   struct req_op_context *req_ctx, XDR * loc_body,
+		   const struct fsal_layoutget_arg *arg,
+		   struct fsal_layoutget_res *res)
 {
 	struct vfs_fsal_obj_handle *myself = container_of(obj_hdl,
-							typeof(*myself),
-							obj_handle);
+							  typeof(*myself),
+							  obj_handle);
 	struct pan_ioctl_xdr pixdr;
 	uint64_t clientid = req_ctx->clientid ? *req_ctx->clientid : 0;
 	nfsstat4 ret;
 
 	res->last_segment = true;
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
-	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
-				 myself, arg, res);
+	ret =
+	    panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid, myself,
+			       arg, res);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(loc_body, &pixdr);
-	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] ret => %d\n", 
-		 res->segment.offset, res->segment.length, res->segment.io_mode,
-		 ret);
+	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] ret => %d\n", res->segment.offset,
+		 res->segment.length, res->segment.io_mode, ret);
 	return ret;
 }
 
 static
-nfsstat4 layoutreturn(
-	struct fsal_obj_handle *obj_hdl,
-	struct req_op_context *req_ctx,
-	XDR *lrf_body,
-	const struct fsal_layoutreturn_arg *arg)
+nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
+		      struct req_op_context *req_ctx, XDR * lrf_body,
+		      const struct fsal_layoutreturn_arg *arg)
 {
 	struct pan_ioctl_xdr pixdr;
 	nfsstat4 ret;
 
-	DBG_PRNT2("reclaim=%d return_type=%d fsal_seg_data=%p dispose=%d last_segment=%d ncookies=%zu\n",
-		arg->circumstance, arg->return_type, arg->fsal_seg_data,
-		arg->dispose, arg->last_segment,
-		arg->ncookies);
+	DBG_PRNT2
+	    ("reclaim=%d return_type=%d fsal_seg_data=%p dispose=%d last_segment=%d ncookies=%zu\n",
+	     arg->circumstance, arg->return_type, arg->fsal_seg_data,
+	     arg->dispose, arg->last_segment, arg->ncookies);
 
 	_XDR_2_ioctlxdr_write(lrf_body, &pixdr);
 	ret = panfs_um_layoutreturn(_get_obj_fd(obj_hdl), &pixdr, arg);
-	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] ret => %d\n", 
+	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] ret => %d\n",
 		 arg->cur_segment.offset, arg->cur_segment.length,
 		 arg->cur_segment.io_mode, ret);
 	return ret;
 }
 
 static
-nfsstat4 layoutcommit(
-		struct fsal_obj_handle *obj_hdl,
-		struct req_op_context *req_ctx,
-		XDR *lou_body,
-		const struct fsal_layoutcommit_arg *arg,
-		struct fsal_layoutcommit_res *res)
+nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
+		      struct req_op_context *req_ctx, XDR * lou_body,
+		      const struct fsal_layoutcommit_arg *arg,
+		      struct fsal_layoutcommit_res *res)
 {
 	struct pan_ioctl_xdr pixdr;
 	nfsstat4 ret;
 
 	_XDR_2_ioctlxdr_write(lou_body, &pixdr);
-	ret = panfs_um_layoutcommit(_get_obj_fd(obj_hdl),  &pixdr, arg, res);
-	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] last_write=0x%lx ret => %d\n", 
+	ret = panfs_um_layoutcommit(_get_obj_fd(obj_hdl), &pixdr, arg, res);
+	DBG_PRNT("layout[0x%lx,0x%lx,0x%x] last_write=0x%lx ret => %d\n",
 		 arg->segment.offset, arg->segment.length, arg->segment.io_mode,
 		 arg->last_write, ret);
 	return ret;
 }
 
-static void
-initiate_recall(struct vfs_fsal_obj_handle *myself, struct pnfs_segment *seg,
-		void *r_cookie)
+static void initiate_recall(struct vfs_fsal_obj_handle *myself,
+			    struct pnfs_segment *seg, void *r_cookie)
 {
 	struct fsal_export *export = myself->obj_handle.export;
 	struct pnfs_segment up_segment = *seg;
@@ -276,18 +263,13 @@ initiate_recall(struct vfs_fsal_obj_handle *myself, struct pnfs_segment *seg,
 		.addr = myself->handle,
 		.len = vfs_sizeof_handle(myself->handle)
 	};
-	up_segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */;
+	up_segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */ ;
 
 	/* For layoutrecall up_ops are probably set to default recieved at
 	 * vfs_create_export
 	 */
-	export->up_ops->layoutrecall(export,
-				     &handle,
-				     LAYOUT4_OSD2_OBJECTS,
-				     false,
-				     &up_segment,
-				     r_cookie,
-				     NULL);
+	export->up_ops->layoutrecall(export, &handle, LAYOUT4_OSD2_OBJECTS,
+				     false, &up_segment, r_cookie, NULL);
 
 }
 
@@ -304,28 +286,30 @@ static void *callback_thread(void *callback_info)
 	struct pan_cb_layoutrecall_event events[E_MAX_EVENTS];
 	int err = 0;
 
-	while(!_rt->stop) {
+	while (!_rt->stop) {
 		int num_events = 0;
 		int e;
 
-		err = panfs_um_recieve_layoutrecall(_rt->fd, events,
-						    E_MAX_EVENTS, &num_events);
+		err =
+		    panfs_um_recieve_layoutrecall(_rt->fd, events, E_MAX_EVENTS,
+						  &num_events);
 
 		if (err) {
-			DBG_PRNT("callback_thread: => %d (%s)\n",
-				 err, strerror(err));
+			DBG_PRNT("callback_thread: => %d (%s)\n", err,
+				 strerror(err));
 			break;
 		}
 
-		for(e = 0; e < num_events; ++e) {
+		for (e = 0; e < num_events; ++e) {
 			struct vfs_fsal_obj_handle *myself =
-						events[e].recall_file_info;
+			    events[e].recall_file_info;
 			struct pnfs_segment seg = events[e].seg;
 			void *r_cookie = events[e].cookie;
 
-			DBG_PRNT("%d] layout[0x%lx,0x%lx,0x%x] myself=%p r_cookie=%p\n",
-				e, seg.offset, seg.length, seg.io_mode,
-				myself, r_cookie);
+			DBG_PRNT
+			    ("%d] layout[0x%lx,0x%lx,0x%x] myself=%p r_cookie=%p\n",
+			     e, seg.offset, seg.length, seg.io_mode, myself,
+			     r_cookie);
 
 			initiate_recall(myself, &seg, r_cookie);
 		}
@@ -340,12 +324,13 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	int err;
 
 	_rt = calloc(1, sizeof(*_rt));
-	if (!_rt) return ENOMEM;
+	if (!_rt)
+		return ENOMEM;
 
 	_rt->fd = root_fd;
 
 	err = pthread_create(&_rt->thread, NULL, &callback_thread, _rt);
-	if (err)  {
+	if (err) {
 		ERROR("pthread_create => %d: %s\n", err, strerror(err));
 		goto error;
 	}
@@ -354,7 +339,7 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	DBG_PRNT("_rt->thread=0x%ld\n", (long)_rt->thread);
 	return 0;
 
-error:
+ error:
 	free(_rt);
 	return err;
 }
@@ -372,8 +357,7 @@ static void _stop_callback_thread(void *td)
 }
 
 /*============================== initialization ==============================*/
-void
-export_ops_pnfs(struct export_ops *ops)
+void export_ops_pnfs(struct export_ops *ops)
 {
 	ops->getdeviceinfo = getdeviceinfo;
 	ops->getdevicelist = getdevicelist;
@@ -385,8 +369,7 @@ export_ops_pnfs(struct export_ops *ops)
 	DBG_PRNT2("\n");
 }
 
-void
-handle_ops_pnfs(struct fsal_obj_ops *ops)
+void handle_ops_pnfs(struct fsal_obj_ops *ops)
 {
 	ops->layoutget = layoutget;
 	ops->layoutreturn = layoutreturn;
@@ -394,7 +377,7 @@ handle_ops_pnfs(struct fsal_obj_ops *ops)
 	DBG_PRNT2("\n");
 }
 
-int  pnfs_panfs_init(int root_fd, void **pnfs_data/*OUT*/)
+int pnfs_panfs_init(int root_fd, void **pnfs_data /*OUT*/)
 {
 	int err = _start_callback_thread(root_fd, pnfs_data);
 	return err;

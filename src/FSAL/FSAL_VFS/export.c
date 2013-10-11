@@ -33,7 +33,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>             /* used for 'dirname' */
+#include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -50,53 +50,48 @@
 
 #include "pnfs_panfs/mds.h"
 
-
 /* helpers to/from other VFS objects
  */
 
 struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl);
 
-int vfs_get_root_fd(struct fsal_export *exp_hdl) {
+int vfs_get_root_fd(struct fsal_export *exp_hdl)
+{
 	struct vfs_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 	return myself->root_fd;
 }
 
-static int
-vfs_fsal_open_exp(struct fsal_export *exp,
-		  vfs_file_handle_t *fh,
-		  int openflags,
-		  fsal_errors_t *fsal_error)
+static int vfs_fsal_open_exp(struct fsal_export *exp, vfs_file_handle_t * fh,
+			     int openflags, fsal_errors_t * fsal_error)
 {
 	int mount_fd = vfs_get_root_fd(exp);
 	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
-	if(fd < 0) {
+	if (fd < 0) {
 		fd = -errno;
-		if(fd == -ENOENT) {
+		if (fd == -ENOENT) {
 			*fsal_error = ERR_FSAL_STALE;
 			fd = -ESTALE;
 		} else {
 			*fsal_error = posix2fsal_error(-fd);
 		}
-		LogDebug(COMPONENT_FSAL,
-		         "Failed with %s", strerror(-fd));
+		LogDebug(COMPONENT_FSAL, "Failed with %s", strerror(-fd));
 	}
 	return fd;
 }
 
-static int
-vfs_exp_fd_to_handle(int fd, vfs_file_handle_t *fh)
+static int vfs_exp_fd_to_handle(int fd, vfs_file_handle_t * fh)
 {
-        int mntid;
-        return vfs_fd_to_handle(fd, fh, &mntid);
+	int mntid;
+	return vfs_fd_to_handle(fd, fh, &mntid);
 }
 
 static struct vfs_exp_handle_ops defops = {
-        .vex_open_by_handle = vfs_fsal_open_exp,
-        .vex_name_to_handle = vfs_name_to_handle_at,
-        .vex_fd_to_handle = vfs_exp_fd_to_handle,
-        .vex_readlink = vfs_fsal_readlink
+	.vex_open_by_handle = vfs_fsal_open_exp,
+	.vex_name_to_handle = vfs_name_to_handle_at,
+	.vex_fd_to_handle = vfs_exp_fd_to_handle,
+	.vex_readlink = vfs_fsal_readlink
 };
 
 /* export object methods
@@ -112,9 +107,8 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pnfs_panfs_fini(myself->pnfs_data);
 	pthread_mutex_lock(&exp_hdl->lock);
-	if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS release: export (0x%p)busy",
+	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
 			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);
 		retval = EBUSY;
@@ -122,43 +116,43 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	if(myself->root_fd >= 0)
+	if (myself->root_fd >= 0)
 		close(myself->root_fd);
-	if(myself->root_handle != NULL)
+	if (myself->root_handle != NULL)
 		gsh_free(myself->root_handle);
-	if(myself->fstype != NULL)
+	if (myself->fstype != NULL)
 		gsh_free(myself->fstype);
-	if(myself->mntdir != NULL)
+	if (myself->mntdir != NULL)
 		gsh_free(myself->mntdir);
-	if(myself->fs_spec != NULL)
+	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	gsh_free(myself);  /* elvis has left the building */
+	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
-errout:
+ errout:
 	pthread_mutex_unlock(&exp_hdl->lock);
 	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
-                                      const struct req_op_context *opctx,
-			              fsal_dynamicfsinfo_t *infop)
+				      const struct req_op_context *opctx,
+				      fsal_dynamicfsinfo_t * infop)
 {
 	struct vfs_fsal_export *myself;
 	struct statvfs buffstatvfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
-	if( !infop) {
+	if (!infop) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 	retval = fstatvfs(myself->root_fd, &buffstatvfs);
-	if(retval < 0) {
+	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
@@ -172,12 +166,12 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->time_delta.tv_sec = 1;
 	infop->time_delta.tv_nsec = 0;
 
-out:
+ out:
 	return fsalstat(fsal_error, retval);
 }
 
 static bool fs_supports(struct fsal_export *exp_hdl,
-                          fsal_fsinfo_options_t option)
+			fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -283,10 +277,9 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char * filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota)
+			       fsal_quota_t * pquota)
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -297,29 +290,31 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
-	if(retval < 0) {
+	if (retval < 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno, strerror(errno));
+			 myself->mntdir, myself->root_fd, errno,
+			 strerror(errno));
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
-	if(path_stat.st_dev != myself->root_dev) {
+	if (path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
+		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
 		retval = 0;
 		goto out;
 	}
-	id = (quota_type == USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->caller_gid;
+	id = (quota_type ==
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type),
-			  myself->fs_spec,
-			  id,
-			  (caddr_t) &fs_quota);
-	if(retval < 0) {
+	retval =
+	    QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
+		     (caddr_t) & fs_quota);
+	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
@@ -332,9 +327,9 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	pquota->btimeleft = fs_quota.dqb_btime;
 	pquota->ftimeleft = fs_quota.dqb_itime;
 	pquota->bsize = DEV_BSIZE;
-	
-out:
-	return fsalstat(fsal_error, retval);	
+
+ out:
+	return fsalstat(fsal_error, retval);
 }
 
 /* set_quota
@@ -342,11 +337,9 @@ out:
  */
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota,
-			       fsal_quota_t * presquota)
+			       fsal_quota_t * pquota, fsal_quota_t * presquota)
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -357,71 +350,73 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
-	if(retval < 0) {
+	if (retval < 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno, strerror(errno));
+			 myself->mntdir, myself->root_fd, errno,
+			 strerror(errno));
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto err;
 	}
-	if(path_stat.st_dev != myself->root_dev) {
+	if (path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
+		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
 		retval = 0;
 		goto err;
 	}
-	id = (quota_type == USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->caller_gid;
+	id = (quota_type ==
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	if(pquota->bhardlimit != 0) {
+	if (pquota->bhardlimit != 0) {
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
 	}
-	if(pquota->bsoftlimit != 0) {
+	if (pquota->bsoftlimit != 0) {
 		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
 	}
-	if(pquota->fhardlimit != 0) {
+	if (pquota->fhardlimit != 0) {
 		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
 	}
-	if(pquota->btimeleft != 0) {
+	if (pquota->btimeleft != 0) {
 		fs_quota.dqb_btime = pquota->btimeleft;
 	}
-	if(pquota->ftimeleft != 0) {
+	if (pquota->ftimeleft != 0) {
 		fs_quota.dqb_itime = pquota->ftimeleft;
 	}
 #ifdef LINUX
-	if(pquota->bhardlimit != 0) {
+	if (pquota->bhardlimit != 0) {
 		fs_quota.dqb_valid |= QIF_BLIMITS;
 	}
-	if(pquota->bsoftlimit != 0) {
+	if (pquota->bsoftlimit != 0) {
 		fs_quota.dqb_valid |= QIF_BLIMITS;
 	}
-	if(pquota->fhardlimit != 0) {
+	if (pquota->fhardlimit != 0) {
 		fs_quota.dqb_valid |= QIF_ILIMITS;
 	}
-	if(pquota->btimeleft != 0) {
+	if (pquota->btimeleft != 0) {
 		fs_quota.dqb_valid |= QIF_BTIME;
 	}
-	if(pquota->ftimeleft != 0) {
+	if (pquota->ftimeleft != 0) {
 		fs_quota.dqb_valid |= QIF_ITIME;
 	}
 #endif
-	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type),
-			  myself->fs_spec,
-			  id,
-			  (caddr_t) &fs_quota);
-	if(retval < 0) {
+	retval =
+	    QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
+		     (caddr_t) & fs_quota);
+	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto err;
 	}
-	if(presquota != NULL) {
-		return get_quota(exp_hdl, filepath, quota_type,
-				 req_ctx, presquota);
+	if (presquota != NULL) {
+		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
+				 presquota);
 	}
-err:
-	return fsalstat(fsal_error, retval);	
+ err:
+	return fsalstat(fsal_error, retval);
 }
 
 /* extract a file handle from a buffer.
@@ -446,14 +441,14 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	size_t fh_min;
 
 	fh_min = VFS_FILE_HANDLE_MIN;
-	if(in_type == FSAL_DIGEST_NFSV2) {
-		if(fh_desc->len < fh_min) {
+	if (in_type == FSAL_DIGEST_NFSV2) {
+		if (fh_desc->len < fh_min) {
 			LogMajor(COMPONENT_FSAL,
 				 "V2 size too small for handle.  should be >= %lu, got %lu",
 				 fh_min, fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
-	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
+	} else if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be >= %lu, got %lu",
 			 fh_min, fh_desc->len);
@@ -499,8 +494,8 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
  * can be of the form key=value or just key. Example:
  *	FS_specific = "foo=baz,enable_A";
  */
-static bool fs_specific_has(const char *fs_specific, const char* key,
-			    char *val, int max_val_bytes)
+static bool fs_specific_has(const char *fs_specific, const char *key, char *val,
+			    int max_val_bytes)
 {
 	char *next_comma, *option;
 	bool ret;
@@ -511,19 +506,18 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 
 	fso_dup = strdup(fs_specific);
 	if (!fso_dup) {
-		LogCrit(COMPONENT_FSAL,"strdup(%s) failed", fs_specific);
+		LogCrit(COMPONENT_FSAL, "strdup(%s) failed", fs_specific);
 		return false;
 	}
 
-	for (option = strtok_r(fso_dup, ",", &next_comma);
-	     option; 
-	     option=strtok_r(NULL, ",", &next_comma)) {
+	for (option = strtok_r(fso_dup, ",", &next_comma); option;
+	     option = strtok_r(NULL, ",", &next_comma)) {
 		char *k = option;
 		char *v = k;
 
 		strsep(&v, "=");
 		if (0 == strcmp(k, key)) {
-			if(val)
+			if (val)
 				strncpy(val, v, max_val_bytes);
 			ret = true;
 			goto cleanup;
@@ -531,7 +525,7 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 	}
 
 	ret = false;
-cleanup:
+ cleanup:
 	free(fso_dup);
 	return ret;
 }
@@ -543,64 +537,61 @@ cleanup:
  * returns the export with one reference taken.
  */
 
-fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
+fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
 				const char *export_path,
 				const char *fs_specific,
-				struct exportlist *exp_entry,
-				struct fsal_module *next_fsal,
-                                const struct fsal_up_vector *up_ops,
-				struct fsal_export **export)
+				struct exportlist * exp_entry,
+				struct fsal_module * next_fsal,
+				const struct fsal_up_vector * up_ops,
+				struct fsal_export ** export)
 {
 	struct vfs_fsal_export *myself;
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1];  /* there has got to be a better way... */
+	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN + 1];
 #ifdef LINUX
-        char hdllib[MAXPATHLEN + 1];
+	char hdllib[MAXPATHLEN + 1];
 #endif
-        struct vfs_exp_handle_ops *hops = &defops;
+	struct vfs_exp_handle_ops *hops = &defops;
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	*export = NULL; /* poison it first */
-	if(export_path == NULL
-	   || strlen(export_path) == 0
-	   || strlen(export_path) > MAXPATHLEN) {
+	*export = NULL;		/* poison it first */
+	if (export_path == NULL || strlen(export_path) == 0
+	    || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_create_export: export path empty or too big");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-	if(next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"This module is not stackable");
+	if (next_fsal != NULL) {
+		LogCrit(COMPONENT_FSAL, "This module is not stackable");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
-	if(myself == NULL) {
+	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	myself->root_fd = -1;
 
-        retval = fsal_export_init(&myself->export,
-				  exp_entry);
-        if(retval != 0) {
+	retval = fsal_export_init(&myself->export, exp_entry);
+	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_fsal_create: out of memory for object");
-                gsh_free(myself);
+		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 	vfs_export_ops_init(myself->export.ops);
 	vfs_handle_ops_init(myself->export.obj_ops);
-        myself->export.up_ops = up_ops;
+	myself->export.up_ops = up_ops;
 
-	myself->pnfs_panfs_enabled = fs_specific_has(fs_specific, "pnfs_panfs",
-						     NULL, 0);
+	myself->pnfs_panfs_enabled =
+	    fs_specific_has(fs_specific, "pnfs_panfs", NULL, 0);
 	if (myself->pnfs_panfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"vfs_fsal_create: pnfs_panfs was enabled for [%s]",
@@ -615,172 +606,168 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	pthread_mutex_lock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if(retval != 0)
-		goto errout; /* seriously bad */
+	if (retval != 0)
+		goto errout;	/* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
 	/* start looking for the mount point */
 	fp = setmntent(MOUNTED, "r");
-	if(fp == NULL) {
+	if (fp == NULL) {
 		retval = errno;
-		LogCrit(COMPONENT_FSAL,
-			"Error %d in setmntent(%s): %s", retval, MOUNTED,
-			strerror(retval));
+		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
+			MOUNTED, strerror(retval));
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	while((p_mnt = getmntent(fp)) != NULL) {
-		if(p_mnt->mnt_dir != NULL) {
+	while ((p_mnt = getmntent(fp)) != NULL) {
+		if (p_mnt->mnt_dir != NULL) {
 			pathlen = strlen(p_mnt->mnt_dir);
-			if(pathlen > outlen) {
-				if(strcmp(p_mnt->mnt_dir, "/") == 0) {
+			if (pathlen > outlen) {
+				if (strcmp(p_mnt->mnt_dir, "/") == 0) {
 					outlen = pathlen;
-					strncpy(mntdir,
-						p_mnt->mnt_dir, MAXPATHLEN);
-					strncpy(type,
-						p_mnt->mnt_type, MAXNAMLEN);
-					strncpy(fs_spec,
-						p_mnt->mnt_fsname, MAXPATHLEN);
-				} else if((strncmp(export_path,
-						  p_mnt->mnt_dir,
-						  pathlen) == 0) &&
-					  ((export_path[pathlen] == '/') ||
-					   (export_path[pathlen] == '\0'))) {
+					strncpy(mntdir, p_mnt->mnt_dir,
+						MAXPATHLEN);
+					strncpy(type, p_mnt->mnt_type,
+						MAXNAMLEN);
+					strncpy(fs_spec, p_mnt->mnt_fsname,
+						MAXPATHLEN);
+				} else
+				    if ((strncmp
+					 (export_path, p_mnt->mnt_dir,
+					  pathlen) == 0)
+					&& ((export_path[pathlen] == '/')
+					    || (export_path[pathlen] ==
+						'\0'))) {
 					outlen = pathlen;
-					strncpy(mntdir,
-						p_mnt->mnt_dir, MAXPATHLEN);
-					strncpy(type,
-						p_mnt->mnt_type, MAXNAMLEN);
-					strncpy(fs_spec,
-						p_mnt->mnt_fsname, MAXPATHLEN);
+					strncpy(mntdir, p_mnt->mnt_dir,
+						MAXPATHLEN);
+					strncpy(type, p_mnt->mnt_type,
+						MAXNAMLEN);
+					strncpy(fs_spec, p_mnt->mnt_fsname,
+						MAXPATHLEN);
 				}
 			}
 		}
 	}
 	endmntent(fp);
-	if(outlen <= 0) {
-		LogCrit(COMPONENT_FSAL,
-			"No mount entry matches '%s' in %s",
+	if (outlen <= 0) {
+		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
 			export_path, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
-        }
-
+	}
 #ifdef LINUX
-	if(fs_specific_has(fs_specific, "handle_lib", hdllib, sizeof(hdllib))) {
-                void *dl;
-                void *sym;
+	if (fs_specific_has(fs_specific, "handle_lib", hdllib, sizeof(hdllib))) {
+		void *dl;
+		void *sym;
 
-                dl = dlopen(hdllib, RTLD_NOW|RTLD_LOCAL);
-                if(dl == NULL) {
-                        LogCrit(COMPONENT_FSAL,
-                                "Could not load handle module '%s' for "
-                                "export '%s' - %s",
-                                hdllib, export_path, dlerror());
-                        fsal_error = ERR_FSAL_NOENT;
-                        goto errout;
-                }
+		dl = dlopen(hdllib, RTLD_NOW | RTLD_LOCAL);
+		if (dl == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not load handle module '%s' for "
+				"export '%s' - %s", hdllib, export_path,
+				dlerror());
+			fsal_error = ERR_FSAL_NOENT;
+			goto errout;
+		}
 
-                sym = dlsym(dl, "get_handle_ops");
-                if (sym == NULL) {
-                        LogCrit(COMPONENT_FSAL,
-                                "No bootstrap entry in handle module '%s'",
-                                hdllib);
-                        dlclose(dl);
-                        fsal_error = ERR_FSAL_NOENT;
-                        goto errout;
-                }
-                hops = ((struct vfs_exp_handle_ops *(*)(char *))sym)(mntdir);
-                if (hops == NULL) {
-                        LogCrit(COMPONENT_FSAL,
-                                "%s - cannot bootstrap handle module '%s' "
-                                "with %s",
-                                export_path, hdllib, mntdir);
-                        dlclose(dl);
-                        fsal_error = ERR_FSAL_NOENT;
-                        goto errout;
-                }
-        }
+		sym = dlsym(dl, "get_handle_ops");
+		if (sym == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"No bootstrap entry in handle module '%s'",
+				hdllib);
+			dlclose(dl);
+			fsal_error = ERR_FSAL_NOENT;
+			goto errout;
+		}
+		hops = ((struct vfs_exp_handle_ops * (*)(char *))sym) (mntdir);
+		if (hops == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"%s - cannot bootstrap handle module '%s' "
+				"with %s", export_path, hdllib, mntdir);
+			dlclose(dl);
+			fsal_error = ERR_FSAL_NOENT;
+			goto errout;
+		}
+	}
 #endif
 
-	myself->root_fd = open(mntdir,  O_RDONLY|O_DIRECTORY);
-	if(myself->root_fd < 0) {
+	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
+	if (myself->root_fd < 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "Could not open VFS mount point %s: rc = %d",
-			 mntdir, errno);
+			 "Could not open VFS mount point %s: rc = %d", mntdir,
+			 errno);
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto errout;
 	} else {
 		struct stat root_stat;
-                vfs_file_handle_t *fh = NULL;
-                vfs_alloc_handle(fh);
+		vfs_file_handle_t *fh = NULL;
+		vfs_alloc_handle(fh);
 		retval = fstat(myself->root_fd, &root_stat);
-		if(retval < 0) {
+		if (retval < 0) {
 			LogMajor(COMPONENT_FSAL,
 				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno, strerror(errno));
+				 mntdir, myself->root_fd, errno,
+				 strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
 			goto errout;
 		}
 		myself->root_dev = root_stat.st_dev;
 		retval = hops->vex_fd_to_handle(myself->root_fd, fh);
-		if(retval != 0) {
+		if (retval != 0) {
 			LogMajor(COMPONENT_FSAL,
 				 "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno, strerror(errno));
+				 mntdir, myself->root_fd, errno,
+				 strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
 			goto errout;
 		}
 		myself->root_handle = gsh_malloc(sizeof(vfs_file_handle_t));
-		if(myself->root_handle == NULL) {
+		if (myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s",
-				 errno, strerror(errno));
+				 "memory for root handle, errno=(%d) %s", errno,
+				 strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
 			goto errout;
 		}
-		memcpy(myself->root_handle,
-		       fh,
-                       sizeof(vfs_file_handle_t));
+		memcpy(myself->root_handle, fh, sizeof(vfs_file_handle_t));
 	}
 
 	if (myself->pnfs_panfs_enabled) {
 		retval = pnfs_panfs_init(myself->root_fd, &myself->pnfs_data);
 		if (retval) {
 			LogCrit(COMPONENT_FSAL,
-				"vfs export_ops_pnfs faild => %d [%s]",
-				retval, strerror(retval));
+				"vfs export_ops_pnfs faild => %d [%s]", retval,
+				strerror(retval));
 			goto errout;
 		}
 	}
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
-        myself->vex_ops = *hops;
+	myself->vex_ops = *hops;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-errout:
-	if(myself->root_fd >= 0)
+ errout:
+	if (myself->root_fd >= 0)
 		close(myself->root_fd);
-	if(myself->root_handle != NULL)
+	if (myself->root_handle != NULL)
 		gsh_free(myself->root_handle);
-	if(myself->fstype != NULL)
+	if (myself->fstype != NULL)
 		gsh_free(myself->fstype);
-	if(myself->mntdir != NULL)
+	if (myself->mntdir != NULL)
 		gsh_free(myself->mntdir);
-	if(myself->fs_spec != NULL)
+	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
 	free_export_ops(&myself->export);
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	gsh_free(myself);  /* elvis has left the building */
+	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }
-
-

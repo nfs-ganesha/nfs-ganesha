@@ -19,13 +19,13 @@
 
 #if (__FreeBSD__ > 0)
 #include <sys/ioccom.h>
-#endif /* (__FreeBSD__ > 0) */
+#endif				/* (__FreeBSD__ > 0) */
 
 #if (__linux__ > 0)
 #include <sys/ioctl.h>
-#endif /* (__linux__ > 0) */
+#endif				/* (__linux__ > 0) */
 
-#endif /* !defined(KERNEL) */
+#endif				/* !defined(KERNEL) */
 
 /* Taken from pan_fs_client_sdk.h */
 #define PAN_FS_CLIENT_SDK_IOCTL                ((unsigned int)0x24)
@@ -54,12 +54,12 @@ struct pan_ioctl_xdr {
  * Valid error codes in RFC 5661, pp. 366-7.
  */
 struct pan_layoutget_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
-	struct pan_ioctl_xdr loc_body;		/* IN/OUT */
-	uint64_t clientid;			/*   IN   */
-	void    *recall_file_info;		/*   IN   */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
+	struct pan_ioctl_xdr loc_body;	/* IN/OUT */
+	uint64_t clientid;	/*   IN   */
+	void *recall_file_info;	/*   IN   */
 	const struct fsal_layoutget_arg *arg;	/*   IN   */
-	struct fsal_layoutget_res *res;		/* IN/OUT */
+	struct fsal_layoutget_res *res;	/* IN/OUT */
 };
 #define PAN_FS_CLIENT_PNFS_LAYOUTGET    \
   _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 100, struct pan_layoutget_ioctl)
@@ -79,14 +79,13 @@ struct pan_layoutget_ioctl {
  * @return Valid error codes in RFC 5661, p. 365.
  */
 struct pan_getdeviceinfo_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
 	struct pan_ioctl_xdr da_addr_body;	/* IN/OUT */
-	const layouttype4 type;			/*   IN   */
+	const layouttype4 type;	/*   IN   */
 	const struct pnfs_deviceid deviceid;	/*   IN   */
 };
 #define PAN_FS_CLIENT_PNFS_DEVICEINFO   \
   _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 101, struct pan_getdeviceinfo_ioctl)
-
 
 /**
  * @brief Potentially return one layout segment
@@ -112,9 +111,9 @@ struct pan_getdeviceinfo_ioctl {
  * @return Valid error codes in RFC 5661, p. 367.
  */
 struct pan_layoutreturn_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
-	struct pan_ioctl_xdr lrf_body;		/*   IN   */
-	const struct fsal_layoutreturn_arg *arg;/*   IN   */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
+	struct pan_ioctl_xdr lrf_body;	/*   IN   */
+	const struct fsal_layoutreturn_arg *arg;	/*   IN   */
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRETURN \
@@ -132,9 +131,9 @@ struct pan_layoutreturn_ioctl {
  * @return Valid error codes in RFC 5661, p. 366.
  */
 struct pan_layoutcommit_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
-	struct pan_ioctl_xdr lou_body;		/*   IN   */
-	const struct fsal_layoutcommit_arg *arg;/*   IN   */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
+	struct pan_ioctl_xdr lou_body;	/*   IN   */
+	const struct fsal_layoutcommit_arg *arg;	/*   IN   */
 	struct fsal_layoutcommit_res *res;	/*  OUT   */
 };
 
@@ -151,16 +150,16 @@ struct pan_layoutcommit_ioctl {
  *
  */
 struct pan_cb_layoutrecall_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
 	struct pan_cb_layoutrecall_event {
 		struct pnfs_segment seg;
 		void *recall_file_info;
 		void *cookie;
 		uint64_t clientid;
 		uint32_t flags;
-	} *events;				/* OUT   */
-	uint32_t max_events;			/* IN    */
-	uint32_t num_events;			/* OUT   */
+	} *events;		/* OUT   */
+	uint32_t max_events;	/* IN    */
+	uint32_t num_events;	/* OUT   */
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRECALL \
@@ -171,12 +170,12 @@ struct pan_cb_layoutrecall_ioctl {
  *
  */
 struct pan_cancel_recalls_ioctl {
-	struct pan_ioctl_hdr hdr;		/* IN/OUT */
+	struct pan_ioctl_hdr hdr;	/* IN/OUT */
 	/* debug_magic must be zero or else ... */
-	uint32_t debug_magic;			/* IN */
+	uint32_t debug_magic;	/* IN */
 };
 
 #define PAN_FS_CLIENT_PNFS_CANCEL_RECALLS \
   _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 105, struct pan_cancel_recalls_ioctl)
 
-#endif /* __PAN_FS_PNFS_API_H__ */
+#endif				/* __PAN_FS_PNFS_API_H__ */
