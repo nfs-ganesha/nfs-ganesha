@@ -100,9 +100,8 @@ void fsi_get_whole_path(const char *parentPath, const char *name, char *path)
 }
 
 // ----------------------------------------------------------------------------
-int
-fsi_cache_name_and_handle(const struct req_op_context *p_context,
-			  char *handle, char *name)
+int fsi_cache_name_and_handle(const struct req_op_context *p_context,
+			      char *handle, char *name)
 {
 	struct fsi_handle_cache_entry_t handle_entry;
 	uint64_t *handlePtr = (uint64_t *) handle;
@@ -111,33 +110,32 @@ fsi_cache_name_and_handle(const struct req_op_context *p_context,
 	g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1)
 	    % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-	memcpy(&g_fsi_name_handle_cache.
-	       m_entry[g_fsi_name_handle_cache.m_count].m_handle, &handle[0],
+	memcpy(&g_fsi_name_handle_cache.m_entry
+	       [g_fsi_name_handle_cache.m_count].m_handle, &handle[0],
 	       sizeof(handle_entry.m_handle));
-	strncpy(g_fsi_name_handle_cache.
-		m_entry[g_fsi_name_handle_cache.m_count].m_name, name,
+	strncpy(g_fsi_name_handle_cache.m_entry
+		[g_fsi_name_handle_cache.m_count].m_name, name,
 		sizeof(handle_entry.m_name));
 	g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
 	    .m_name[sizeof(handle_entry.m_name) - 1] = '\0';
-	FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
-		  name, g_fsi_name_handle_cache.m_count);
+	FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n", name,
+		  g_fsi_name_handle_cache.m_count);
 	pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
 	if (strnlen(name, 1) == 0) {
-		FSI_TRACE(FSI_NOTICE, "The name is empty string for handle : "
-			  "%p->0x%lx %lx %lx %lx", handle,
-			  handlePtr[0], handlePtr[1], handlePtr[2],
-			  handlePtr[3]);
+		FSI_TRACE(FSI_NOTICE,
+			  "The name is empty string for handle : "
+			  "%p->0x%lx %lx %lx %lx", handle, handlePtr[0],
+			  handlePtr[1], handlePtr[2], handlePtr[3]);
 	}
 	return 0;
 }
 
 // -----------------------------------------------------------------------------
-int
-fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
-			 struct fsal_export *export,
-			 ptfsal_handle_t * pt_handle, /*IN*/
-			 char *name, /*OUT*/ int *handle_index) /*OUT*/
+int fsi_get_name_from_handle(const struct req_op_context *p_context,
+			     /*IN*/ struct fsal_export *export,
+			     ptfsal_handle_t * pt_handle, /*IN*/ char *name,
+			     /*OUT*/ int *handle_index) /*OUT*/
 {
 	int index;
 	int rc;
@@ -166,13 +164,14 @@ fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
 			// try and get a direct hit, else drop through code as exists now
 			index = p_cur_context->cur_namecache_handle_index;
 			pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
-			if (memcmp(&handlePtr[0],
-				   &g_fsi_name_handle_cache.m_entry[index].
-				   m_handle,
-				   FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
+			if (memcmp
+			    (&handlePtr[0],
+			     &g_fsi_name_handle_cache.m_entry[index].m_handle,
+			     FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
 				strncpy(name,
-					g_fsi_name_handle_cache.m_entry[index].
-					m_name, sizeof(handle_entry.m_name));
+					g_fsi_name_handle_cache.
+					m_entry[index].m_name,
+					sizeof(handle_entry.m_name));
 				name[sizeof(handle_entry.m_name) - 1] = '\0';
 				FSI_TRACE(FSI_DEBUG,
 					  "FSI - name = %s cache index %d DIRECT HIT\n",
@@ -186,11 +185,11 @@ fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
 						  handlePtr[1], handlePtr[2],
 						  handlePtr[3]);
 					// Need get name from PT side, so will not return and clear cache.
-					memset(g_fsi_name_handle_cache.
-					       m_entry[index].m_handle, 0,
+					memset(g_fsi_name_handle_cache.m_entry
+					       [index].m_handle, 0,
 					       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-					g_fsi_name_handle_cache.m_entry[index].
-					    m_name[0] = '\0';
+					g_fsi_name_handle_cache.
+					    m_entry[index].m_name[0] = '\0';
 				} else {
 					// Return.
 					pthread_rwlock_unlock
@@ -220,8 +219,8 @@ fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
 		strncpy(name, handleToNameEntryPtr->m_name,
 			sizeof(handle_entry.m_name));
 		name[sizeof(handle_entry.m_name) - 1] = '\0';
-		FSI_TRACE(FSI_DEBUG,
-			  "FSI - name = %s opened file cache HIT\n", name);
+		FSI_TRACE(FSI_DEBUG, "FSI - name = %s opened file cache HIT\n",
+			  name);
 		// Check whether the name from cache is empty
 		if (strnlen(name, 1) == 0) {
 			FSI_TRACE(FSI_NOTICE,
@@ -275,11 +274,11 @@ fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
 					  handlePtr[0], handlePtr[1],
 					  handlePtr[2], handlePtr[3]);
 				// Need get name from PT side, so will not return, 
-				memset(g_fsi_name_handle_cache.m_entry[index].
-				       m_handle, 0,
+				memset(g_fsi_name_handle_cache.
+				       m_entry[index].m_handle, 0,
 				       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-				g_fsi_name_handle_cache.m_entry[index].
-				    m_name[0] = '\0';
+				g_fsi_name_handle_cache.
+				    m_entry[index].m_name[0] = '\0';
 				break;
 			} else {
 				// Return, find the non-empty name.
@@ -318,15 +317,15 @@ fsi_get_name_from_handle(const struct req_op_context *p_context, /*IN*/
 			    (g_fsi_name_handle_cache.m_count + 1)
 			    % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-			memcpy(&g_fsi_name_handle_cache.
-			       m_entry[g_fsi_name_handle_cache.m_count].
-			       m_handle, &handlePtr[0],
+			memcpy(&g_fsi_name_handle_cache.m_entry
+			       [g_fsi_name_handle_cache.m_count].m_handle,
+			       &handlePtr[0],
 			       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-			strncpy(g_fsi_name_handle_cache.
-				m_entry[g_fsi_name_handle_cache.m_count].m_name,
-				name, sizeof(handle_entry.m_name));
-			g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.
-							m_count]
+			strncpy(g_fsi_name_handle_cache.m_entry
+				[g_fsi_name_handle_cache.m_count].m_name, name,
+				sizeof(handle_entry.m_name));
+			g_fsi_name_handle_cache.
+			    m_entry[g_fsi_name_handle_cache.m_count]
 			    .m_name[sizeof(handle_entry.m_name) - 1] = '\0';
 			FSI_TRACE(FSI_DEBUG,
 				  "FSI - added %s to name cache entry %d\n",
@@ -436,9 +435,9 @@ void fsi_remove_cache_by_fullpath(char *path)
 int fsi_check_handle_index(int handle_index)
 {
 	// check handle
-	if ((handle_index >= 0) &&
-	    (handle_index <
-	     (FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS))) {
+	if ((handle_index >= 0)
+	    && (handle_index <
+		(FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS))) {
 		return 0;
 	} else {
 		return -1;
@@ -446,12 +445,11 @@ int fsi_check_handle_index(int handle_index)
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_rename(const struct req_op_context *p_context,
-	      struct pt_fsal_obj_handle *p_old_parentdir_handle,
-	      const char *p_old_name,
-	      struct pt_fsal_obj_handle *p_new_parentdir_handle,
-	      const char *p_new_name)
+int ptfsal_rename(const struct req_op_context *p_context,
+		  struct pt_fsal_obj_handle *p_old_parentdir_handle,
+		  const char *p_old_name,
+		  struct pt_fsal_obj_handle *p_new_parentdir_handle,
+		  const char *p_new_name)
 {
 	int rc;
 
@@ -500,10 +498,9 @@ ptfsal_rename(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
-			   struct pt_fsal_obj_handle *p_parentdir_handle,
-			   const char *p_filename, fsi_stat_struct * p_stat)
+int ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
+			       struct pt_fsal_obj_handle *p_parentdir_handle,
+			       const char *p_filename, fsi_stat_struct * p_stat)
 {
 	int stat_rc;
 
@@ -514,10 +511,11 @@ ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(p_parentdir_handle->obj_handle.export,
 				   p_context, &ccl_context);
 
-	stat_rc = fsi_get_name_from_handle(p_context,
-					   p_parentdir_handle->obj_handle.
-					   export, p_parentdir_handle->handle,
-					   fsi_parent_dir_name, NULL);
+	stat_rc =
+	    fsi_get_name_from_handle(p_context,
+				     p_parentdir_handle->obj_handle.export,
+				     p_parentdir_handle->handle,
+				     fsi_parent_dir_name, NULL);
 	if (stat_rc < 0) {
 		FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
 		return stat_rc;
@@ -533,10 +531,9 @@ ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_stat_by_name(const struct req_op_context *p_context,
-		    struct fsal_export *export,
-		    const char *p_fsalpath, fsi_stat_struct * p_stat)
+int ptfsal_stat_by_name(const struct req_op_context *p_context,
+			struct fsal_export *export, const char *p_fsalpath,
+			fsi_stat_struct * p_stat)
 {
 	int stat_rc;
 
@@ -588,9 +585,9 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	memset(fsi_name, 0, sizeof(fsi_name));
-	stat_rc = fsi_get_name_from_handle(p_context,
-					   export,
-					   p_filehandle, fsi_name, NULL);
+	stat_rc =
+	    fsi_get_name_from_handle(p_context, export, p_filehandle, fsi_name,
+				     NULL);
 	FSI_TRACE(FSI_DEBUG, "FSI - rc = %d\n", stat_rc);
 	if (stat_rc) {
 		FSI_TRACE(FSI_ERR, "Return rc %d from get name from handle %s",
@@ -633,8 +630,8 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 		memset(&pt_handler.handle, 0, sizeof(pt_handler.handle));
 		memcpy(&pt_handler.handle, &p_fsi_handle->data.handle.f_handle,
 		       sizeof(pt_handler.handle));
-		stat_rc = CCL_STAT_BY_HANDLE(&ccl_context,
-					     &pt_handler, &fsi_stat);
+		stat_rc =
+		    CCL_STAT_BY_HANDLE(&ccl_context, &pt_handler, &fsi_stat);
 		fsi_stat2stat(&fsi_stat, p_stat);
 
 	}
@@ -649,10 +646,9 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_opendir(const struct req_op_context *p_context,
-	       struct fsal_export *export,
-	       const char *filename, const char *mask, uint32_t attr)
+int ptfsal_opendir(const struct req_op_context *p_context,
+		   struct fsal_export *export, const char *filename,
+		   const char *mask, uint32_t attr)
 {
 	int dir_handle;
 	int err = 0;
@@ -676,10 +672,9 @@ ptfsal_opendir(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_readdir(const struct req_op_context *p_context,
-	       struct fsal_export *export,
-	       fsal_dir_t * dir_desc, fsi_stat_struct * sbuf, char *fsi_dname)
+int ptfsal_readdir(const struct req_op_context *p_context,
+		   struct fsal_export *export, fsal_dir_t * dir_desc,
+		   fsi_stat_struct * sbuf, char *fsi_dname)
 {
 
 	int readdir_rc;
@@ -692,8 +687,8 @@ ptfsal_readdir(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
-	    m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->
+	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
 
 	readdir_rc = CCL_READDIR(&ccl_context, dirp, sbuf);
 	if (readdir_rc == 0) {
@@ -707,9 +702,8 @@ ptfsal_readdir(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_closedir(const struct req_op_context *p_context,
-		struct fsal_export *export, fsal_dir_t * dir_desc)
+int ptfsal_closedir(const struct req_op_context *p_context,
+		    struct fsal_export *export, fsal_dir_t * dir_desc)
 {
 	int dir_hnd_index;
 	ccl_context_t ccl_context;
@@ -720,15 +714,14 @@ ptfsal_closedir(const struct req_op_context *p_context,
 	dir_hnd_index = ptfsal_dir_descriptor->fd;
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
-	    m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->
+	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
 
 	return CCL_CLOSEDIR(&ccl_context, dirp);
 }
 
-int
-ptfsal_closedir_fd(const struct req_op_context *p_context,
-		   struct fsal_export *export, int fd)
+int ptfsal_closedir_fd(const struct req_op_context *p_context,
+		       struct fsal_export *export, int fd)
 {
 	int dir_hnd_index = fd;
 	ccl_context_t ccl_context;
@@ -736,8 +729,8 @@ ptfsal_closedir_fd(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
-	    m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->
+	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
 
 	return CCL_CLOSEDIR(&ccl_context, dirp);
 }
@@ -768,10 +761,9 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor)
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_open_by_handle(const struct req_op_context *p_context,
-		      struct pt_fsal_obj_handle *p_object_handle,
-		      int oflags, mode_t mode)
+int ptfsal_open_by_handle(const struct req_op_context *p_context,
+			  struct pt_fsal_obj_handle *p_object_handle,
+			  int oflags, mode_t mode)
 {
 	int open_rc, rc, err;
 	char fsi_filename[PATH_MAX];
@@ -791,8 +783,8 @@ ptfsal_open_by_handle(const struct req_op_context *p_context,
 	strcpy(fsi_filename, "");
 	rc = fsi_get_name_from_handle(p_context,
 				      p_object_handle->obj_handle.export,
-				      p_object_handle->handle,
-				      fsi_filename, &handle_index);
+				      p_object_handle->handle, fsi_filename,
+				      &handle_index);
 	err = 0;
 	if (rc > 0) {
 		err = rc;
@@ -813,10 +805,10 @@ ptfsal_open_by_handle(const struct req_op_context *p_context,
 	// The file name should not be empty "". In case it is empty, we
 	// return error.
 	if (strnlen(fsi_filename, 1) == 0) {
-		FSI_TRACE(FSI_ERR, "The file name is empty string for handle: "
-			  "0x%lx %lx %lx %lx",
-			  handlePtr[0], handlePtr[1], handlePtr[2],
-			  handlePtr[3]);
+		FSI_TRACE(FSI_ERR,
+			  "The file name is empty string for handle: "
+			  "0x%lx %lx %lx %lx", handlePtr[0], handlePtr[1],
+			  handlePtr[2], handlePtr[3]);
 		return -1;
 	}
 	// If we found the handle index in the opened file handle cache, we 
@@ -825,8 +817,8 @@ ptfsal_open_by_handle(const struct req_op_context *p_context,
 		int handle_index_return = -1;
 		FSI_TRACE(FSI_DEBUG, "cur handle index %d", handle_index);
 		handle_index_return =
-		    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context,
-						   handle_index, fsi_filename);
+		    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context, handle_index,
+						   fsi_filename);
 		if (handle_index_return >= 0) {
 			return handle_index_return;
 		}
@@ -840,13 +832,11 @@ ptfsal_open_by_handle(const struct req_op_context *p_context,
 		if (p_cur_context != NULL) {
 			// try and get a direct hit from context cache,
 			// else drop through to normal search code
-			FSI_TRACE(FSI_DEBUG,
-				  "cur handle index %d",
+			FSI_TRACE(FSI_DEBUG, "cur handle index %d",
 				  p_cur_context->cur_fsi_handle_index);
 			existing_handle_index =
 			    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context,
-							   p_cur_context->
-							   cur_fsi_handle_index,
+							   p_cur_context->cur_fsi_handle_index,
 							   fsi_filename);
 			if (existing_handle_index >= 0) {
 				return existing_handle_index;
@@ -902,8 +892,7 @@ void ptfsal_close(int handle_index)
 // -----------------------------------------------------------------------------
 
 int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
-		const char *p_filename,
-		const struct req_op_context *p_context,
+		const char *p_filename, const struct req_op_context *p_context,
 		mode_t mode, ptfsal_handle_t * p_object_handle)
 {
 	int rc;
@@ -918,11 +907,13 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				   p_context, &ccl_context);
 
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->obj_handle.
-				      export, p_parent_directory_handle->handle,
+				      p_parent_directory_handle->
+				      obj_handle.export,
+				      p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
-		FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d, "
+		FSI_TRACE(FSI_ERR,
+			  "Handle to name failed rc=%d, "
 			  "failed to get parent directory name.", rc);
 		return rc;
 	}
@@ -947,9 +938,8 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		memset(fsal_path, 0, PATH_MAX);
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 		rc = ptfsal_name_to_handle(p_context,
-					   p_parent_directory_handle->
-					   obj_handle.export, fsal_path,
-					   p_object_handle);
+					   p_parent_directory_handle->obj_handle.
+					   export, fsal_path, p_object_handle);
 		if (rc != 0) {
 			FSI_TRACE(FSI_ERR, "Name to handle failed\n");
 			return -1;
@@ -962,8 +952,8 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				  handleOpened);
 		}
 		fsi_cache_name_and_handle(p_context,
-					  (char *)&p_fsi_handle->data.handle.
-					  f_handle, fsi_name);
+					  (char *)&p_fsi_handle->data.
+					  handle.f_handle, fsi_name);
 	}
 	return handleOpened;
 }
@@ -993,9 +983,9 @@ int ptfsal_close_mount_root(fsal_export_context_t * p_export_context)
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_ftruncate(const struct req_op_context *p_context,
-		 struct fsal_export *export, int handle_index, uint64_t offset)
+int ptfsal_ftruncate(const struct req_op_context *p_context,
+		     struct fsal_export *export, int handle_index,
+		     uint64_t offset)
 {
 	ccl_context_t ccl_context;
 	int ftrunc_rc;
@@ -1009,10 +999,9 @@ ptfsal_ftruncate(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_unlink(const struct req_op_context *p_context,
-	      struct pt_fsal_obj_handle *p_parent_directory_handle,
-	      const char *p_filename)
+int ptfsal_unlink(const struct req_op_context *p_context,
+		  struct pt_fsal_obj_handle *p_parent_directory_handle,
+		  const char *p_filename)
 {
 	int rc;
 	ccl_context_t ccl_context;
@@ -1023,8 +1012,9 @@ ptfsal_unlink(const struct req_op_context *p_context,
 	int cacheDeleteRC;
 	int handle_index_to_close;
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->obj_handle.
-				      export, p_parent_directory_handle->handle,
+				      p_parent_directory_handle->
+				      obj_handle.export,
+				      p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -1041,8 +1031,9 @@ ptfsal_unlink(const struct req_op_context *p_context,
 	if (handle_index_to_close != -1) {
 		memset(&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
 		memcpy(key,
-		       &g_fsi_handles_fsal->m_handle[handle_index_to_close].
-		       m_stat.st_persistentHandle.handle[0],
+		       &g_fsi_handles_fsal->
+		       m_handle[handle_index_to_close].m_stat.
+		       st_persistentHandle.handle[0],
 		       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 		cacheEntry.key = key;
 	}
@@ -1060,8 +1051,8 @@ ptfsal_unlink(const struct req_op_context *p_context,
 		if (cacheDeleteRC != FSI_CCL_IPC_EOK) {
 			FSI_TRACE(FSI_ERR,
 				  "Failed to delete cache entry to cache ID = %d",
-				  g_fsi_name_handle_cache_opened_files.
-				  cacheMetaData.cacheTableID);
+				  g_fsi_name_handle_cache_opened_files.cacheMetaData.
+				  cacheTableID);
 			ptfsal_print_handle(cacheEntry.key);
 		}
 	}
@@ -1069,9 +1060,8 @@ ptfsal_unlink(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_chmod(const struct req_op_context *p_context,
-	     struct fsal_export *export, const char *path, mode_t mode)
+int ptfsal_chmod(const struct req_op_context *p_context,
+		 struct fsal_export *export, const char *path, mode_t mode)
 {
 	ccl_context_t ccl_context;
 
@@ -1081,9 +1071,9 @@ ptfsal_chmod(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_chown(const struct req_op_context *p_context,
-	     struct fsal_export *export, const char *path, uid_t uid, gid_t gid)
+int ptfsal_chown(const struct req_op_context *p_context,
+		 struct fsal_export *export, const char *path, uid_t uid,
+		 gid_t gid)
 {
 	ccl_context_t ccl_context;
 
@@ -1093,10 +1083,9 @@ ptfsal_chown(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_ntimes(const struct req_op_context *p_context,
-	      struct fsal_export *export,
-	      const char *filename, uint64_t atime, uint64_t mtime)
+int ptfsal_ntimes(const struct req_op_context *p_context,
+		  struct fsal_export *export, const char *filename,
+		  uint64_t atime, uint64_t mtime)
 {
 	ccl_context_t ccl_context;
 
@@ -1107,11 +1096,9 @@ ptfsal_ntimes(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
-	     const char *p_dirname,
-	     const struct req_op_context *p_context,
-	     mode_t mode, ptfsal_handle_t * p_object_handle)
+int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
+		 const char *p_dirname, const struct req_op_context *p_context,
+		 mode_t mode, ptfsal_handle_t * p_object_handle)
 {
 	int rc;
 	char fsi_parent_dir_name[PATH_MAX];
@@ -1127,8 +1114,9 @@ ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 
 	/* build new entry path */
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->obj_handle.
-				      export, p_parent_directory_handle->handle,
+				      p_parent_directory_handle->
+				      obj_handle.export,
+				      p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Handle to name failed for hanlde %s",
@@ -1156,21 +1144,21 @@ ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 
 		ptfsal_name_to_handle(p_context,
-				      p_parent_directory_handle->obj_handle.
-				      export, fsal_path, p_object_handle);
+				      p_parent_directory_handle->
+				      obj_handle.export, fsal_path,
+				      p_object_handle);
 		fsi_cache_name_and_handle(p_context,
-					  (char *)&p_fsi_handle->data.handle.
-					  f_handle, fsi_name);
+					  (char *)&p_fsi_handle->data.
+					  handle.f_handle, fsi_name);
 	}
 
 	return rc;
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_rmdir(const struct req_op_context *p_context,
-	     struct pt_fsal_obj_handle *p_parent_directory_handle,
-	     const char *p_object_name)
+int ptfsal_rmdir(const struct req_op_context *p_context,
+		 struct pt_fsal_obj_handle *p_parent_directory_handle,
+		 const char *p_object_name)
 {
 	int rc;
 	ccl_context_t ccl_context;
@@ -1178,8 +1166,9 @@ ptfsal_rmdir(const struct req_op_context *p_context,
 	char fsi_fullpath[PATH_MAX];
 
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->obj_handle.
-				      export, p_parent_directory_handle->handle,
+				      p_parent_directory_handle->
+				      obj_handle.export,
+				      p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -1197,10 +1186,9 @@ ptfsal_rmdir(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-uint64_t
-ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
-	    const struct req_op_context * opctx,
-	    char *buf, size_t size, off_t offset, int in_handle)
+uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
+		     const struct req_op_context * opctx, char *buf,
+		     size_t size, off_t offset, int in_handle)
 {
 	off_t cur_offset = offset;
 	size_t cur_size = size;
@@ -1254,10 +1242,9 @@ ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
 }
 
 // -----------------------------------------------------------------------------
-uint64_t
-ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
-	     const struct req_op_context * opctx,
-	     const char *buf, size_t size, off_t offset, int in_handle)
+uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
+		      const struct req_op_context * opctx, const char *buf,
+		      size_t size, off_t offset, int in_handle)
 {
 	off_t cur_offset = offset;
 	size_t cur_size = size;
@@ -1304,10 +1291,9 @@ ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
-		      const struct req_op_context *p_context,
-		      fsal_dynamicfsinfo_t * p_dynamicinfo)
+int ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
+			  const struct req_op_context *p_context,
+			  fsal_dynamicfsinfo_t * p_dynamicinfo)
 {
 	int rc;
 	char fsi_name[PATH_MAX];
@@ -1345,10 +1331,8 @@ ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_readlink(ptfsal_handle_t * p_linkhandle,
-		struct fsal_export *export,
-		const struct req_op_context *p_context, char *p_buf)
+int ptfsal_readlink(ptfsal_handle_t * p_linkhandle, struct fsal_export *export,
+		    const struct req_op_context *p_context, char *p_buf)
 {
 	int rc;
 	char fsi_name[PATH_MAX];
@@ -1375,12 +1359,10 @@ ptfsal_readlink(ptfsal_handle_t * p_linkhandle,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
-	       const char *p_linkname,
-	       const char *p_linkcontent,
-	       const struct req_op_context *p_context,
-	       mode_t accessmode, ptfsal_handle_t * p_link_handle)
+int ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
+		   const char *p_linkname, const char *p_linkcontent,
+		   const struct req_op_context *p_context, mode_t accessmode,
+		   ptfsal_handle_t * p_link_handle)
 {
 	int rc;
 
@@ -1406,10 +1388,9 @@ ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_name_to_handle(const struct req_op_context *p_context,
-		      struct fsal_export *export,
-		      const char *p_fsalpath, ptfsal_handle_t * p_handle)
+int ptfsal_name_to_handle(const struct req_op_context *p_context,
+			  struct fsal_export *export, const char *p_fsalpath,
+			  ptfsal_handle_t * p_handle)
 {
 	int rc;
 
@@ -1453,10 +1434,9 @@ ptfsal_name_to_handle(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int
-ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
-		      const struct req_op_context *p_context,
-		      struct fsal_export *export, char *path)
+int ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
+			  const struct req_op_context *p_context,
+			  struct fsal_export *export, char *path)
 {
 	int rc;
 	ccl_context_t ccl_context;
@@ -1478,14 +1458,13 @@ ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
 void ptfsal_print_handle(char *handle)
 {
 	uint64_t *handlePtr = (uint64_t *) handle;
-	FSI_TRACE(FSI_DEBUG, "FSI - handle 0x%lx %lx %lx %lx",
-		  handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+	FSI_TRACE(FSI_DEBUG, "FSI - handle 0x%lx %lx %lx %lx", handlePtr[0],
+		  handlePtr[1], handlePtr[2], handlePtr[3]);
 }
 
 // -----------------------------------------------------------------------------
-int
-fsi_update_cache_stat(const char *p_filename,
-		      uint64_t newMode, uint64_t export_id)
+int fsi_update_cache_stat(const char *p_filename, uint64_t newMode,
+			  uint64_t export_id)
 {
 	return CCL_UPDATE_CACHE_STAT(p_filename, newMode, export_id);
 }
@@ -1544,8 +1523,10 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 		bytes = NULL;
 	} else {
 		bytes = (unsigned char *)&((((struct sockaddr_in *)
-					     (&(p_context->caller_addr)))->
-					    sin_addr).s_addr);
+					     (&
+					      (p_context->
+					       caller_addr)))->sin_addr).
+					   s_addr);
 	}
 	if (bytes) {
 		snprintf(ccl_context->client_address,
@@ -1569,13 +1550,12 @@ int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
 			 CACHE_TABLE_INIT_PARAM * cacheTableInitParam)
 {
 	// Validate the input parameters.
-	if ((cacheTableToInit == NULL) ||
-	    (cacheTableInitParam == NULL) ||
-	    (cacheTableInitParam->keyLengthInBytes == 0) ||
-	    (cacheTableInitParam->dataSizeInBytes == 0) ||
-	    (cacheTableInitParam->maxNumOfCacheEntries == 0) ||
-	    (cacheTableInitParam->cacheKeyComprefn == NULL) ||
-	    (cacheTableInitParam->cacheTableID == 0)) {
+	if ((cacheTableToInit == NULL) || (cacheTableInitParam == NULL)
+	    || (cacheTableInitParam->keyLengthInBytes == 0)
+	    || (cacheTableInitParam->dataSizeInBytes == 0)
+	    || (cacheTableInitParam->maxNumOfCacheEntries == 0)
+	    || (cacheTableInitParam->cacheKeyComprefn == NULL)
+	    || (cacheTableInitParam->cacheTableID == 0)) {
 		FSI_TRACE(FSI_ERR, "Failed to initialize ");
 		return -1;
 	}
@@ -1586,7 +1566,8 @@ int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
 		   cacheTableInitParam->maxNumOfCacheEntries);
 
 	if (cacheTableToInit->cacheEntries == NULL) {
-		FSI_TRACE(FSI_ERR, "Unable to allocate memory for cache table"
+		FSI_TRACE(FSI_ERR,
+			  "Unable to allocate memory for cache table"
 			  " (cache id = %d", cacheTableInitParam->cacheTableID);
 		return -1;
 	}
@@ -1682,8 +1663,7 @@ int fsi_cache_getInsertionPoint(CACHE_TABLE_T * cacheTable,
 		mid = first + (last - first) / 2;
 		compareRC =
 		    cacheTable->cacheMetaData.cacheKeyComprefn(whatToInsert,
-							       &cacheTable->
-							       cacheEntries
+							       &cacheTable->cacheEntries
 							       [mid]);
 		FSI_TRACE(FSI_INFO,
 			  "compareRC = %d, first %d mid %d, last %d\n",
@@ -1729,8 +1709,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 		return -1;
 	}
 
-	fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
-					    cacheTable,
+	fsi_cache_handle2name_dumpTableKeys(FSI_INFO, cacheTable,
 					    "Dumping cache table keys before insertion:");
 
 	rc = fsi_cache_getInsertionPoint(cacheTable, whatToInsert,
@@ -1742,8 +1721,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 		FSI_TRACE(FSI_INFO,
 			  "Attempted to insert the following handle:");
 		fsi_cache_32Bytes_rawDump(FSI_INFO, whatToInsert->key, 0);
-		fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
-						    cacheTable,
+		fsi_cache_handle2name_dumpTableKeys(FSI_INFO, cacheTable,
 						    "Dumping cache table keys currently:");
 		return -1;
 	}
@@ -1768,15 +1746,14 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 	}
 	cacheTable->cacheEntries[whereToInsert].data = ptr;
 
-	memcpy(cacheTable->cacheEntries[whereToInsert].key,
-	       whatToInsert->key, cacheTable->cacheMetaData.keyLengthInBytes);
-	memcpy(cacheTable->cacheEntries[whereToInsert].data,
-	       whatToInsert->data, cacheTable->cacheMetaData.dataSizeInBytes);
+	memcpy(cacheTable->cacheEntries[whereToInsert].key, whatToInsert->key,
+	       cacheTable->cacheMetaData.keyLengthInBytes);
+	memcpy(cacheTable->cacheEntries[whereToInsert].data, whatToInsert->data,
+	       cacheTable->cacheMetaData.dataSizeInBytes);
 
 	cacheTable->cacheMetaData.numElementsOccupied++;
 
-	fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
-					    cacheTable,
+	fsi_cache_handle2name_dumpTableKeys(FSI_INFO, cacheTable,
 					    "Dumping cache table keys after insertion:");
 	return FSI_CCL_IPC_EOK;
 }
@@ -1807,15 +1784,14 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 		return -1;
 	}
 
-	fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
-					    cacheTable,
+	fsi_cache_handle2name_dumpTableKeys(FSI_INFO, cacheTable,
 					    "Dumping cache table keys before deletion:");
 
-	entryMatched = bsearch(whatToDelete,
-			       &cacheTable->cacheEntries[0],
-			       cacheTable->cacheMetaData.numElementsOccupied,
-			       sizeof(CACHE_TABLE_ENTRY_T),
-			       cacheTable->cacheMetaData.cacheKeyComprefn);
+	entryMatched =
+	    bsearch(whatToDelete, &cacheTable->cacheEntries[0],
+		    cacheTable->cacheMetaData.numElementsOccupied,
+		    sizeof(CACHE_TABLE_ENTRY_T),
+		    cacheTable->cacheMetaData.cacheKeyComprefn);
 
 	if (entryMatched == NULL) {
 		FSI_TRACE(FSI_INFO, "No match for delete");
@@ -1842,15 +1818,16 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 			&cacheTable->cacheEntries[whereToDeleteIdx + 1],
 			((cacheTable->cacheMetaData.numElementsOccupied -
 			  whereToDeleteIdx) - 1) * sizeof(CACHE_TABLE_ENTRY_T));
-		cacheTable->cacheEntries[cacheTable->cacheMetaData.
-					 numElementsOccupied - 1].key = NULL;
-		cacheTable->cacheEntries[cacheTable->cacheMetaData.
-					 numElementsOccupied - 1].data = NULL;
+		cacheTable->cacheEntries[cacheTable->
+					 cacheMetaData.numElementsOccupied -
+					 1].key = NULL;
+		cacheTable->cacheEntries[cacheTable->
+					 cacheMetaData.numElementsOccupied -
+					 1].data = NULL;
 	}
 	cacheTable->cacheMetaData.numElementsOccupied--;
 
-	fsi_cache_handle2name_dumpTableKeys(FSI_INFO,
-					    cacheTable,
+	fsi_cache_handle2name_dumpTableKeys(FSI_INFO, cacheTable,
 					    "Dumping cache table keys after deletion:");
 	return FSI_CCL_IPC_EOK;
 }
@@ -1888,11 +1865,11 @@ int fsi_cache_getEntry(CACHE_TABLE_T * cacheTable, CACHE_TABLE_ENTRY_T * buffer)
 		ptfsal_print_handle(cacheTable->cacheEntries[i].key);
 	}
 
-	entryMatched = bsearch(buffer,
-			       &cacheTable->cacheEntries[0],
-			       cacheTable->cacheMetaData.numElementsOccupied,
-			       sizeof(CACHE_TABLE_ENTRY_T),
-			       cacheTable->cacheMetaData.cacheKeyComprefn);
+	entryMatched =
+	    bsearch(buffer, &cacheTable->cacheEntries[0],
+		    cacheTable->cacheMetaData.numElementsOccupied,
+		    sizeof(CACHE_TABLE_ENTRY_T),
+		    cacheTable->cacheMetaData.cacheKeyComprefn);
 
 	if (entryMatched == NULL) {
 		FSI_TRACE(FSI_INFO, "No match for handle");
@@ -1916,8 +1893,8 @@ void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data,
 
 	if (data != NULL) {
 		ptr = (uint64_t *) data;
-		FSI_TRACE(loglevel, "Data[%d] = 0x%lx %lx %lx %lx",
-			  index, ptr[0], ptr[1], ptr[2], ptr[3]);
+		FSI_TRACE(loglevel, "Data[%d] = 0x%lx %lx %lx %lx", index,
+			  ptr[0], ptr[1], ptr[2], ptr[3]);
 	}
 }
 

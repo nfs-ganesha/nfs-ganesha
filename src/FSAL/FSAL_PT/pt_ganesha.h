@@ -40,52 +40,44 @@
 
 /* VFS operations structure */
 struct vfs_fn_pointers {
-	int (*init_fn) (int multi_threaded,
-			log_function_t log_fn,
+	int (*init_fn) (int multi_threaded, log_function_t log_fn,
 			log_level_check_function_t log_level_check_fn,
-			int ipc_ccl_to_component_trc_level_map
+			int
+			ipc_ccl_to_component_trc_level_map
 			[FSI_NUM_TRACE_LEVELS]);
 	int (*check_handle_index_fn) (int handle_index);
 	int (*find_handle_by_name_and_export_fn) (const char *filename,
 						  ccl_context_t * handle);
-	int (*stat_fn) (ccl_context_t * handle,
-			const char *filename, fsi_stat_struct * sbuf);
+	int (*stat_fn) (ccl_context_t * handle, const char *filename,
+			fsi_stat_struct * sbuf);
 	int (*fstat_fn) (int handle_index, fsi_stat_struct * sbuf);
 	int (*stat_by_handle_fn) (ccl_context_t * context,
 				  struct CCLPersistentHandle * handle,
 				  fsi_stat_struct * sbuf);
-	int (*rcv_msg_nowait_fn) (int msg_id,
-				  void *p_msg_buf,
-				  size_t msg_size, long msg_type);
-	int (*rcv_msg_wait_fn) (int msg_id,
-				void *p_msg_buf,
-				size_t msg_size, long msg_type);
-	int (*rcv_msg_wait_block_fn) (int msg_id,
-				      void *p_msg_buf,
+	int (*rcv_msg_nowait_fn) (int msg_id, void *p_msg_buf, size_t msg_size,
+				  long msg_type);
+	int (*rcv_msg_wait_fn) (int msg_id, void *p_msg_buf, size_t msg_size,
+				long msg_type);
+	int (*rcv_msg_wait_block_fn) (int msg_id, void *p_msg_buf,
 				      size_t msg_size, long msg_type);
 	int (*send_msg_fn) (int msg_id, const void *p_msg_buf, size_t msg_size);
 	int (*chmod_fn) (ccl_context_t * handle, const char *path, mode_t mode);
-	int (*chown_fn) (ccl_context_t * handle,
-			 const char *path, uid_t uid, gid_t gid);
-	int (*ntimes_fn) (ccl_context_t * handle,
-			  const char *filename,
+	int (*chown_fn) (ccl_context_t * handle, const char *path, uid_t uid,
+			 gid_t gid);
+	int (*ntimes_fn) (ccl_context_t * handle, const char *filename,
 			  uint64_t atime, uint64_t mtime, uint64_t btime);
 	int (*mkdir_fn) (ccl_context_t * handle, const char *path, mode_t mode);
 	int (*rmdir_fn) (ccl_context_t * handle, const char *path);
-	int (*get_real_filename_fn) (ccl_context_t * handle,
-				     const char *path,
-				     const char *name,
-				     char *found_name,
+	int (*get_real_filename_fn) (ccl_context_t * handle, const char *path,
+				     const char *name, char *found_name,
 				     const size_t found_name_max_size);
-	 uint64_t(*disk_free_fn) (ccl_context_t * handle,
-				  const char *path,
-				  uint64_t * bsize,
-				  uint64_t * dfree, uint64_t * dsize);
+	 uint64_t(*disk_free_fn) (ccl_context_t * handle, const char *path,
+				  uint64_t * bsize, uint64_t * dfree,
+				  uint64_t * dsize);
 	int (*unlink_fn) (ccl_context_t * handle, char *path);
-	int (*rename_fn) (ccl_context_t * handle,
-			  const char *old_name, const char *new_name);
-	int (*opendir_fn) (ccl_context_t * handle,
-			   const char *filename,
+	int (*rename_fn) (ccl_context_t * handle, const char *old_name,
+			  const char *new_name);
+	int (*opendir_fn) (ccl_context_t * handle, const char *filename,
 			   const char *mask, uint32_t attr);
 	int (*closedir_fn) (ccl_context_t * handle,
 			    struct fsi_struct_dir_t * dirp);
@@ -98,21 +90,17 @@ struct vfs_fn_pointers {
 			    struct fsi_struct_dir_t * dirp);
 	int (*chdir_fn) (ccl_context_t * handle, const char *path);
 	int (*fsync_fn) (ccl_context_t * handle, int handle_index);
-	int (*ftruncate_fn) (ccl_context_t * handle,
-			     int handle_index, uint64_t offset);
-	 ssize_t(*pread_fn) (ccl_context_t * handle,
-			     void *data,
-			     size_t n,
+	int (*ftruncate_fn) (ccl_context_t * handle, int handle_index,
+			     uint64_t offset);
+	 ssize_t(*pread_fn) (ccl_context_t * handle, void *data, size_t n,
 			     uint64_t offset, uint64_t max_readahead_offset);
-	 ssize_t(*pwrite_fn) (ccl_context_t * handle,
-			      int handle_index,
+	 ssize_t(*pwrite_fn) (ccl_context_t * handle, int handle_index,
 			      const void *data, size_t n, uint64_t offset);
-	int (*open_fn) (ccl_context_t * handle,
-			char *path, int flags, mode_t mode);
-	int (*close_fn) (ccl_context_t * handle,
-			 int handle_index, int close_style);
-	int (*get_any_io_responses_fn) (int handle_index,
-					int *p_combined_rc,
+	int (*open_fn) (ccl_context_t * handle, char *path, int flags,
+			mode_t mode);
+	int (*close_fn) (ccl_context_t * handle, int handle_index,
+			 int close_style);
+	int (*get_any_io_responses_fn) (int handle_index, int *p_combined_rc,
 					struct ccl_msg_t * p_msg);
 	void (*ipc_stats_logger_fn) (ccl_context_t * handle);
 	 uint64_t(*update_stats_fn) (struct ipc_client_stats_t * stat,
@@ -134,8 +122,8 @@ struct vfs_fn_pointers {
 	int (*sys_acl_add_perm_fn) (ccl_context_t * handle,
 				    acl_permset_t permset, acl_perm_t perm);
 	 acl_t(*sys_acl_init_fn) (ccl_context_t * handle, int count);
-	int (*sys_acl_create_entry_fn) (ccl_context_t * handle,
-					acl_t * pacl, acl_entry_t * pentry);
+	int (*sys_acl_create_entry_fn) (ccl_context_t * handle, acl_t * pacl,
+					acl_entry_t * pentry);
 	int (*sys_acl_set_tag_type_fn) (ccl_context_t * handle,
 					acl_entry_t entry, acl_tag_t tagtype);
 	int (*sys_acl_set_qualifier_fn) (ccl_context_t * handle,
@@ -143,22 +131,19 @@ struct vfs_fn_pointers {
 	int (*sys_acl_set_permset_fn) (ccl_context_t * handle,
 				       acl_entry_t entry,
 				       acl_permset_t permset);
-	int (*sys_acl_set_file_fn) (ccl_context_t * handle,
-				    const char *name,
+	int (*sys_acl_set_file_fn) (ccl_context_t * handle, const char *name,
 				    acl_type_t acltype, acl_t theacl);
 	int (*sys_acl_delete_def_file_fn) (ccl_context_t * handle,
 					   const char *path);
 	int (*sys_acl_get_perm_fn) (ccl_context_t * handle,
 				    acl_permset_t permset, acl_perm_t perm);
 	int (*sys_acl_free_acl_fn) (ccl_context_t * handle, acl_t posix_acl);
-	int (*name_to_handle_fn) (ccl_context_t * pvfs_handle,
-				  const char *path,
+	int (*name_to_handle_fn) (ccl_context_t * pvfs_handle, const char *path,
 				  struct CCLPersistentHandle * phandle);
 	int (*handle_to_name_fn) (ccl_context_t * pvfs_handle,
 				  struct CCLPersistentHandle * phandle,
 				  char *path);
-	int (*dynamic_fsinfo_fn) (ccl_context_t * pvfs_handle,
-				  char *path,
+	int (*dynamic_fsinfo_fn) (ccl_context_t * pvfs_handle, char *path,
 				  struct CCLClientOpDynamicFsInfoRspMsg *
 				  pfs_info);
 	int (*readlink_fn) (ccl_context_t * pvfs_handle, const char *path,
@@ -181,12 +166,12 @@ struct vfs_fn_pointers {
 	 bool(*can_close_handle_fn) (int handle_index, int timeout);
 	int (*up_mutex_lock_fn) (pthread_mutex_t * mutex);
 	int (*up_mutex_unlock_fn) (pthread_mutex_t * mutex);
-	void (*log_fn) (const fsi_ipc_trace_level level,
-			const char *func, const char *format, ...);
+	void (*log_fn) (const fsi_ipc_trace_level level, const char *func,
+			const char *format, ...);
 	int (*implicit_close_for_nfs_fn) (int handle_index_to_close,
 					  int close_style);
-	int (*update_cache_stat_fn) (const char *filename,
-				     uint64_t newMode, uint64_t export_id);
+	int (*update_cache_stat_fn) (const char *filename, uint64_t newMode,
+				     uint64_t export_id);
 	char *(*get_version_fn) ();
 	int (*check_version_fn) (char *version);
 	void (*close_listener_fn) (int closeHandle_req_msgq,
@@ -309,11 +294,11 @@ int fsi_cache_name_and_handle(const struct req_op_context *p_context,
 			      char *handle, char *name);
 int fsi_get_name_from_handle(const struct req_op_context *p_context,
 			     struct fsal_export *export,
-			     ptfsal_handle_t * pt_handle,
-			     char *name, int *handle_index);
+			     ptfsal_handle_t * pt_handle, char *name,
+			     int *handle_index);
 int fsi_update_cache_name(char *oldname, char *newname);
-int fsi_update_cache_stat(const char *p_filename,
-			  uint64_t newMode, uint64_t export_id);
+int fsi_update_cache_stat(const char *p_filename, uint64_t newMode,
+			  uint64_t export_id);
 void fsi_remove_cache_by_fullpath(char *path);
 
 void fsi_remove_cache_by_handle(char *handle);
@@ -334,8 +319,8 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 			  ptfsal_handle_t * p_filehandle, struct stat *p_stat);
 
 int ptfsal_stat_by_name(const struct req_op_context *p_context,
-			struct fsal_export *export,
-			const char *p_fsalpath, fsi_stat_struct * p_stat);
+			struct fsal_export *export, const char *p_fsalpath,
+			fsi_stat_struct * p_stat);
 
 int ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 			       struct pt_fsal_obj_handle *p_parentdir_handle,
@@ -343,12 +328,11 @@ int ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 			       fsi_stat_struct * p_stat);
 
 int ptfsal_opendir(const struct req_op_context *p_context,
-		   struct fsal_export *export,
-		   const char *filename, const char *mask, uint32_t attr);
+		   struct fsal_export *export, const char *filename,
+		   const char *mask, uint32_t attr);
 
 int ptfsal_readdir(const struct req_op_context *p_context,
-		   struct fsal_export *export,
-		   fsal_dir_t * dir_desc,
+		   struct fsal_export *export, fsal_dir_t * dir_desc,
 		   fsi_stat_struct * sbuf, char *fsi_dname);
 
 int ptfsal_closedir(const struct req_op_context *p_context,
@@ -364,15 +348,14 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 			  int oflags, mode_t mode);
 
 int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
-		const char *p_filename,
-		const struct req_op_context *p_context,
+		const char *p_filename, const struct req_op_context *p_context,
 		mode_t mode, ptfsal_handle_t * p_object_handle);
 
 int ptfsal_close_mount_root(fsal_export_context_t * p_export_context);
 
 int ptfsal_ftruncate(const struct req_op_context *p_context,
-		     struct fsal_export *export,
-		     int handle_index, uint64_t offset);
+		     struct fsal_export *export, int handle_index,
+		     uint64_t offset);
 
 int ptfsal_unlink(const struct req_op_context *p_context,
 		  struct pt_fsal_obj_handle *p_parent_directory_handle,
@@ -387,19 +370,18 @@ int ptfsal_rename(const struct req_op_context *p_context,
 int fsi_check_handle_index(int handle_index);
 
 int ptfsal_chown(const struct req_op_context *p_context,
-		 struct fsal_export *export,
-		 const char *path, uid_t uid, gid_t gid);
+		 struct fsal_export *export, const char *path, uid_t uid,
+		 gid_t gid);
 
 int ptfsal_chmod(const struct req_op_context *p_context,
 		 struct fsal_export *export, const char *path, mode_t mode);
 
 int ptfsal_ntimes(const struct req_op_context *p_context,
-		  struct fsal_export *export,
-		  const char *filename, uint64_t atime, uint64_t mtime);
+		  struct fsal_export *export, const char *filename,
+		  uint64_t atime, uint64_t mtime);
 
 int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
-		 const char *p_dirname,
-		 const struct req_op_context *p_context,
+		 const char *p_dirname, const struct req_op_context *p_context,
 		 mode_t mode, ptfsal_handle_t * p_object_handle);
 
 int ptfsal_rmdir(const struct req_op_context *p_context,
@@ -410,35 +392,32 @@ int ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
 			  const struct req_op_context *p_context,
 			  fsal_dynamicfsinfo_t * p_dynamicinfo);
 
-int ptfsal_readlink(ptfsal_handle_t * p_linkhandle,
-		    struct fsal_export *export,
+int ptfsal_readlink(ptfsal_handle_t * p_linkhandle, struct fsal_export *export,
 		    const struct req_op_context *p_context, char *p_buf);
 
 int ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
-		   const char *p_linkname,
-		   const char *p_linkcontent,
-		   const struct req_op_context *p_context,
-		   mode_t accessmode, ptfsal_handle_t * p_link_handle);
+		   const char *p_linkname, const char *p_linkcontent,
+		   const struct req_op_context *p_context, mode_t accessmode,
+		   ptfsal_handle_t * p_link_handle);
 
 int ptfsal_SetDefault_FS_specific_parameter(
 						   /* param TBD fsal_parameter_t * out_parameter */
-						   );
+    );
 
 int ptfsal_name_to_handle(const struct req_op_context *p_context,
-			  struct fsal_export *export,
-			  const char *p_fsalpath, ptfsal_handle_t * p_handle);
+			  struct fsal_export *export, const char *p_fsalpath,
+			  ptfsal_handle_t * p_handle);
 
 int ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
 			  const struct req_op_context *p_context,
 			  struct fsal_export *export, char *path);
 
 uint64_t ptfsal_read(struct pt_fsal_obj_handle *p_file_descriptor,
-		     const struct req_op_context *opctx,
-		     char *buf, size_t size, off_t offset, int in_handle);
+		     const struct req_op_context *opctx, char *buf, size_t size,
+		     off_t offset, int in_handle);
 
 uint64_t ptfsal_write(struct pt_fsal_obj_handle *p_file_descriptor,
-		      const struct req_op_context *opctx,
-		      const char *buf,
+		      const struct req_op_context *opctx, const char *buf,
 		      size_t size, off_t offset, int in_handle);
 
 void ptfsal_print_handle(char *handle);

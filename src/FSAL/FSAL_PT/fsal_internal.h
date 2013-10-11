@@ -78,8 +78,8 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *p_context,
  */
 fsal_status_t fsal_readlink_by_handle(const struct req_op_context *p_context,
 				      struct fsal_export *export,
-				      ptfsal_handle_t * p_handle,
-				      char *__buf, size_t maxlen);
+				      ptfsal_handle_t * p_handle, char *__buf,
+				      size_t maxlen);
 
 fsal_status_t fsal_internal_get_handle_at(const struct req_op_context *p_context, struct fsal_export *export, int dfd, const char *p_fsalname,	/* IN */
 					  ptfsal_handle_t * p_handle);
@@ -103,8 +103,8 @@ fsal_status_t fsal_internal_testAccess(const struct req_op_context *p_context,
 				       fsal_accessflags_t access_type,
 				       struct attrlist *p_object_attributes);
 
-fsal_status_t fsal_stat_by_handle(int dirfd,
-				  ptfsal_handle_t * p_handle, struct stat *buf);
+fsal_status_t fsal_stat_by_handle(int dirfd, ptfsal_handle_t * p_handle,
+				  struct stat *buf);
 
 fsal_status_t fsal_check_access_by_mode(const struct req_op_context *p_context, fsal_accessflags_t access_type,	/* IN */
 					struct stat *p_buffstat);	/* IN */
@@ -194,8 +194,8 @@ fsal_status_t PTFSAL_dynamic_fsinfo(ptfsal_handle_t * p_handle,	/* IN */
 
 fsal_status_t PTFSAL_test_access(int dirfd,	/* IN */
 				 fsal_accessflags_t access_type,	/* IN */
-				 struct attrlist *p_object_attributes /* IN */
-				 );
+				 struct attrlist *p_object_attributes	/* IN */
+    );
 
 fsal_status_t PTFSAL_terminate();
 
@@ -251,8 +251,8 @@ fsal_status_t PTFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			     ptfsal_handle_t * p_link_handle,	/* OUT */
 			     struct attrlist *p_link_attributes);	/* IN/OUT */
 
-int PTFSAL_handlecmp(ptfsal_handle_t * handle1,
-		     ptfsal_handle_t * handle2, fsal_status_t * status);
+int PTFSAL_handlecmp(ptfsal_handle_t * handle1, ptfsal_handle_t * handle2,
+		     fsal_status_t * status);
 
 unsigned int PTFSAL_Handle_to_HashIndex(ptfsal_handle_t * p_handle,
 					unsigned int cookie,

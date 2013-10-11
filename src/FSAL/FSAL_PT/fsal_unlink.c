@@ -104,8 +104,8 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 		  p_object_name);
 
 	/* get file metadata */
-	rc = ptfsal_stat_by_parent_name(p_context, pt_hdl,
-					p_object_name, &buffstat);
+	rc = ptfsal_stat_by_parent_name(p_context, pt_hdl, p_object_name,
+					&buffstat);
 	if (rc) {
 		FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink stat [%s] rc %d\n",
 			  p_object_name, rc);

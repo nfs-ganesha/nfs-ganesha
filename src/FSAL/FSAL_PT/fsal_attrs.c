@@ -35,9 +35,10 @@
 #include "pt_methods.h"
 #include "pt_ganesha.h"
 
-extern fsal_status_t
-ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t * p_buffxstat,
-			       struct attrlist *p_fsalattr_out);
+extern fsal_status_t ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t *
+						    p_buffxstat,
+						    struct attrlist
+						    *p_fsalattr_out);
 
 /**
  * PTFSAL_getattrs:
@@ -160,8 +161,9 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 
 	/* First, check that FSAL attributes changes are allowed. */
 	if (!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_cansettime)) {
-		if (wanted_attrs.mask
-		    & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME)) {
+		if (wanted_attrs.
+		    mask & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME |
+			    ATTR_MTIME)) {
 			/* handled as an unsettable attribute. */
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
@@ -196,11 +198,9 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 			return status;
 		}
 
-		status = PTFSAL_truncate(dir_hdl->export,
-					 myself,
-					 p_context,
-					 wanted_attrs.filesize,
-					 p_object_attributes);
+		status =
+		    PTFSAL_truncate(dir_hdl->export, myself, p_context,
+				    wanted_attrs.filesize, p_object_attributes);
 
 		if (FSAL_IS_ERROR(status)) {
 			return status;
@@ -227,8 +227,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 
 			rc = fsi_get_name_from_handle(p_context,
 						      myself->obj_handle.export,
-						      myself->handle,
-						      fsi_name, NULL);
+						      myself->handle, fsi_name,
+						      NULL);
 			if (rc < 0) {
 				FSI_TRACE(FSI_ERR,
 					  "Failed to convert file handle back to filename");
@@ -242,20 +242,20 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 				  myself->handle->data.handle.f_handle);
 
 			rc = ptfsal_chmod(p_context, dir_hdl->export, fsi_name,
-					  unix2fsal_mode(buffxstat.buffstat.
-							 st_mode));
+					  unix2fsal_mode(buffxstat.
+							 buffstat.st_mode));
 			if (rc == -1) {
 				FSI_TRACE(FSI_ERR, "chmod FAILED");
 				return fsalstat(ERR_FSAL_PERM, 0);
 			} else {
-				st_mode_in_cache = (buffxstat.buffstat.st_mode
-						    |
-						    fsal_type2unix
-						    (current_attrs.type));
+				st_mode_in_cache =
+				    (buffxstat.buffstat.
+				     st_mode | fsal_type2unix(current_attrs.
+							      type));
 				fsi_update_cache_stat(fsi_name,
 						      st_mode_in_cache,
-						      dir_hdl->export->
-						      exp_entry->id);
+						      dir_hdl->
+						      export->exp_entry->id);
 				FSI_TRACE(FSI_INFO,
 					  "Chmod SUCCEED with st_mode in cache being %o",
 					  st_mode_in_cache);
@@ -278,8 +278,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 		} else {
 			buffxstat.buffstat.st_uid = (int)current_attrs.owner;
 		}
-		FSI_TRACE(FSI_DEBUG,
-			  "current owner = %ld, new uid = %d",
+		FSI_TRACE(FSI_DEBUG, "current owner = %ld, new uid = %d",
 			  current_attrs.owner, buffxstat.buffstat.st_uid);
 
 		/* Fill wanted group. */
@@ -288,8 +287,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 		} else {
 			buffxstat.buffstat.st_gid = (int)current_attrs.group;
 		}
-		FSI_TRACE(FSI_DEBUG,
-			  "current gid = %ld, new gid = %d",
+		FSI_TRACE(FSI_DEBUG, "current gid = %ld, new gid = %d",
 			  current_attrs.group, buffxstat.buffstat.st_gid);
 
 		rc = fsi_get_name_from_handle(p_context,
@@ -338,8 +336,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 			buffxstat.buffstat.st_atime =
 			    (time_t) current_attrs.atime.tv_sec;
 		}
-		FSI_TRACE(FSI_DEBUG,
-			  "current atime = %lu, new atime = %lu",
+		FSI_TRACE(FSI_DEBUG, "current atime = %lu, new atime = %lu",
 			  (unsigned long)current_attrs.atime.tv_sec,
 			  (unsigned long)buffxstat.buffstat.st_atime);
 
@@ -351,8 +348,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 			buffxstat.buffstat.st_mtime =
 			    (time_t) current_attrs.mtime.tv_sec;
 		}
-		FSI_TRACE(FSI_DEBUG,
-			  "current mtime = %lu, new mtime = %lu",
+		FSI_TRACE(FSI_DEBUG, "current mtime = %lu, new mtime = %lu",
 			  (unsigned long)current_attrs.mtime.tv_sec,
 			  (unsigned long)buffxstat.buffstat.st_mtime);
 

@@ -73,8 +73,8 @@ struct acl_handles_struct_t *g_fsi_acl_handles_fsal;
 
 int PTFSAL_log(int level, const char *message)
 {
-	DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT", level,
-				 "%s", (char *)message);
+	DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT", level, "%s",
+				 (char *)message);
 	return 0;
 }
 
@@ -156,16 +156,15 @@ struct fsal_staticfsinfo_t *pt_staticinfo(struct fsal_module *hdl)
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
-	struct pt_fsal_module *pt_me
-	    = container_of(fsal_hdl, struct pt_fsal_module, fsal);
+	struct pt_fsal_module *pt_me =
+	    container_of(fsal_hdl, struct pt_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
 	pt_me->fs_info = default_posix_info;	/* get a copy of the defaults */
 
-	fsal_status = fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl),
-				       config_struct,
-				       &pt_me->fsal_info,
-				       &pt_me->fs_info, NULL);
+	fsal_status =
+	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
+			     &pt_me->fsal_info, &pt_me->fs_info, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
@@ -191,8 +190,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
  */
 
 fsal_status_t pt_create_export(struct fsal_module * fsal_hdl,
-			       const char *export_path,
-			       const char *fs_options,
+			       const char *export_path, const char *fs_options,
 			       struct exportlist * exp_entry,
 			       struct fsal_module * next_fsal,
 			       const struct fsal_up_vector * up_ops,
@@ -258,18 +256,20 @@ MODULE_INIT void pt_init(void)
 		return;
 	}
 
-	FSI_TRACE(FSI_NOTICE, "About to call "
-		  "ptfsal_closeHandle_listener_thread_init");
+	FSI_TRACE(FSI_NOTICE,
+		  "About to call " "ptfsal_closeHandle_listener_thread_init");
 	if (ptfsal_closeHandle_listener_thread_init() == -1) {
-		FSI_TRACE(FSI_ERR, "ptfsal_closeHandle_listener_thread_init "
+		FSI_TRACE(FSI_ERR,
+			  "ptfsal_closeHandle_listener_thread_init "
 			  "returned rc = -1");
 		return;
 	}
 
-	FSI_TRACE(FSI_NOTICE, "About to call "
-		  "ptfsal_polling_closeHandler_thread_init");
+	FSI_TRACE(FSI_NOTICE,
+		  "About to call " "ptfsal_polling_closeHandler_thread_init");
 	if (ptfsal_polling_closeHandler_thread_init() == -1) {
-		FSI_TRACE(FSI_ERR, "ptfsal_polling_closeHandler_thread_init "
+		FSI_TRACE(FSI_ERR,
+			  "ptfsal_polling_closeHandler_thread_init "
 			  "returned rc = -1");
 		return;
 	}
@@ -294,8 +294,9 @@ MODULE_INIT void pt_init(void)
 		return;
 	}
 
-	retval = register_fsal(myself, myname,
-			       FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION);
+	retval =
+	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION);
 	if (retval != 0) {
 		fprintf(stderr, "PT module failed to register");
 		return;
@@ -369,14 +370,15 @@ int pt_ganesha_fsal_ccl_init()
 
 	char *load_return = NULL;
 
-	if (DL_LOAD(&g_ccl_function_map.init_fn, "ccl_init") &&
-	    DL_LOAD(&g_ccl_function_map.check_handle_index_fn,
-		    "ccl_check_handle_index") &&
-	    DL_LOAD(&g_ccl_function_map.find_handle_by_name_and_export_fn,
-		    "ccl_find_handle_by_name_and_export") &&
-	    DL_LOAD(&g_ccl_function_map.stat_fn, "ccl_stat") &&
-	    DL_LOAD(&g_ccl_function_map.fstat_fn, "ccl_fstat") &&
-	    DL_LOAD(&g_ccl_function_map.stat_by_handle_fn, "ccl_stat_by_handle")
+	if (DL_LOAD(&g_ccl_function_map.init_fn, "ccl_init")
+	    && DL_LOAD(&g_ccl_function_map.check_handle_index_fn,
+		       "ccl_check_handle_index")
+	    && DL_LOAD(&g_ccl_function_map.find_handle_by_name_and_export_fn,
+		       "ccl_find_handle_by_name_and_export")
+	    && DL_LOAD(&g_ccl_function_map.stat_fn, "ccl_stat")
+	    && DL_LOAD(&g_ccl_function_map.fstat_fn, "ccl_fstat")
+	    && DL_LOAD(&g_ccl_function_map.stat_by_handle_fn,
+		       "ccl_stat_by_handle")
 	    && DL_LOAD(&g_ccl_function_map.rcv_msg_nowait_fn, "rcv_msg_nowait")
 	    && DL_LOAD(&g_ccl_function_map.rcv_msg_wait_fn, "rcv_msg_wait")
 	    && DL_LOAD(&g_ccl_function_map.rcv_msg_wait_block_fn,
@@ -542,8 +544,7 @@ static int ptfsal_closeHandle_listener_thread_init(void)
 	/* Init for thread parameter (mostly for scheduling) */
 	pthread_attr_init(&attr_thr);
 
-	rc = pthread_create(&g_pthread_closehandle_lisetner,
-			    &attr_thr,
+	rc = pthread_create(&g_pthread_closehandle_lisetner, &attr_thr,
 			    ptfsal_closeHandle_listener_thread, (void *)NULL);
 
 	if (rc != 0) {
@@ -567,8 +568,7 @@ static int ptfsal_polling_closeHandler_thread_init(void)
 	/* Init for thread parameter (mostly for scheduling) */
 	pthread_attr_init(&attr_thr);
 
-	rc = pthread_create(&g_pthread_polling_closehandler,
-			    &attr_thr,
+	rc = pthread_create(&g_pthread_polling_closehandler, &attr_thr,
 			    ptfsal_polling_closeHandler_thread, (void *)NULL);
 
 	if (rc != 0) {
@@ -618,8 +618,8 @@ fsal_status_t PTFSAL_terminate()
 		if (g_fsi_handles_fsal->m_handle[index].m_hndl_in_use != 0) {
 			if ((g_fsi_handles_fsal->m_handle[index].m_nfs_state ==
 			     NFS_CLOSE)
-			    || (g_fsi_handles_fsal->m_handle[index].
-				m_nfs_state == NFS_OPEN)) {
+			    || (g_fsi_handles_fsal->
+				m_handle[index].m_nfs_state == NFS_OPEN)) {
 
 				// ignore error code, just trying to clean up while going down
 				// and want to continue trying to close out other open files
@@ -638,8 +638,8 @@ fsal_status_t PTFSAL_terminate()
 					FSI_TRACE(FSI_NOTICE,
 						  "Created close thread for handle[%d]",
 						  index);
-					parallelCloseThreadMap[index].
-					    isThreadCreated = 1;
+					parallelCloseThreadMap
+					    [index].isThreadCreated = 1;
 				}
 			}
 		}
@@ -648,8 +648,8 @@ fsal_status_t PTFSAL_terminate()
 	for (index = FSI_CIFS_RESERVED_STREAMS;
 	     index < FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS; index++) {
 		if (parallelCloseThreadMap[index].isThreadCreated == 1) {
-			pthread_join(parallelCloseThreadMap[index].
-				     threadContext, NULL);
+			pthread_join(parallelCloseThreadMap
+				     [index].threadContext, NULL);
 		}
 	}
 

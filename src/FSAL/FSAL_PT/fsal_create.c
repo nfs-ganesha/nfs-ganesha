@@ -64,13 +64,12 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
+fsal_status_t PTFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
 			    const char *p_filename,	/* IN */
-			    const struct req_op_context *p_context,	/* IN */
+			    const struct req_op_context * p_context,	/* IN */
 			    uint32_t accessmode,	/* IN */
 			    ptfsal_handle_t * p_object_handle,	/* OUT */
-			    struct attrlist *p_object_attributes)
-
+			    struct attrlist * p_object_attributes)
 {				/* IN/OUT */
 
 	int errsv;
@@ -101,9 +100,9 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
-	open_rc = ptfsal_open(pt_hdl,
-			      p_filename, p_context, unix_mode,
-			      p_object_handle);
+	open_rc =
+	    ptfsal_open(pt_hdl, p_filename, p_context, unix_mode,
+			p_object_handle);
 	if (open_rc < 0) {
 		errsv = errno;
 		return fsalstat(posix2fsal_error(errsv), errsv);
@@ -218,8 +217,8 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 		setgid_bit = 1;
 	}
 
-	rc = ptfsal_mkdir(pt_hdl, p_dirname,
-			  p_context, unix_mode, p_object_handle);
+	rc = ptfsal_mkdir(pt_hdl, p_dirname, p_context, unix_mode,
+			  p_object_handle);
 	errsv = errno;
 	if (rc) {
 		return fsalstat(posix2fsal_error(errsv), errsv);
@@ -239,20 +238,19 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 		 * group       
 		 */
 
-		if (fsi_get_name_from_handle(p_context,
-					     pt_hdl->obj_handle.export,
-					     pt_hdl->handle,
-					     (char *)newPath, NULL) < 0) {
+		if (fsi_get_name_from_handle
+		    (p_context, pt_hdl->obj_handle.export, pt_hdl->handle,
+		     (char *)newPath, NULL) < 0) {
 			FSI_TRACE(FSI_DEBUG,
 				  "Failed to get name from handle %s",
-				  (char *)p_object_handle->data.handle.
-				  f_handle);
+				  (char *)p_object_handle->data.
+				  handle.f_handle);
 			return fsalstat(posix2fsal_error(errsv), errsv);
 		}
 		rc = ptfsal_chown(p_context, dir_hdl->export, newPath,
 				  p_context->creds->caller_uid,
-				  setgid_bit ? -1 : (int)p_context->creds->
-				  caller_gid);
+				  setgid_bit ? -1 : (int)p_context->
+				  creds->caller_gid);
 		errsv = errno;
 		if (rc) {
 			return fsalstat(posix2fsal_error(errsv), errsv);

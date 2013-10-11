@@ -72,8 +72,8 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pthread_mutex_lock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
-		LogMajor(COMPONENT_FSAL,
-			 "PT release: export (0x%p)busy", exp_hdl);
+		LogMajor(COMPONENT_FSAL, "PT release: export (0x%p)busy",
+			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);
 		retval = EBUSY;
 		goto errout;
@@ -241,8 +241,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
 			       fsal_quota_t * pquota)
 {
@@ -273,11 +272,12 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		goto out;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
-	    caller_gid;
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->
+	    creds->caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval = quotactl(QCMD(Q_GETQUOTA, quota_type),
-			  myself->fs_spec, id, (caddr_t) & fs_quota);
+	retval =
+	    quotactl(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
+		     (caddr_t) & fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -301,8 +301,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
 			       fsal_quota_t * pquota, fsal_quota_t * presquota)
 {
@@ -333,8 +332,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
-	    caller_gid;
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->
+	    creds->caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	if (pquota->bhardlimit != 0) {
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
@@ -356,16 +355,17 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		fs_quota.dqb_itime = pquota->ftimeleft;
 		fs_quota.dqb_valid |= QIF_ITIME;
 	}
-	retval = quotactl(QCMD(Q_SETQUOTA, quota_type),
-			  myself->fs_spec, id, (caddr_t) & fs_quota);
+	retval =
+	    quotactl(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
+		     (caddr_t) & fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto err;
 	}
 	if (presquota != NULL) {
-		return get_quota(exp_hdl, filepath, quota_type,
-				 req_ctx, presquota);
+		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
+				 presquota);
 	}
  err:
 	return fsalstat(fsal_error, retval);
@@ -457,8 +457,7 @@ void pt_handle_ops_init(struct fsal_obj_ops *ops);
  */
 
 fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
-			       const char *export_path,
-			       const char *fs_options,
+			       const char *export_path, const char *fs_options,
 			       struct exportlist *exp_entry,
 			       struct fsal_module *next_fsal,
 			       const struct fsal_up_vector *up_ops,
@@ -477,8 +476,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	*export = NULL;		/* poison it first */
-	if (export_path == NULL
-	    || strlen(export_path) == 0 || strlen(export_path) > MAXPATHLEN) {
+	if (export_path == NULL || strlen(export_path) == 0
+	    || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
 			 "pt_create_export: export path empty or too big");
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -521,9 +520,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	fp = setmntent(MOUNTED, "r");
 	if (fp == NULL) {
 		retval = errno;
-		LogCrit(COMPONENT_FSAL,
-			"Error %d in setmntent(%s): %s", retval, MOUNTED,
-			strerror(retval));
+		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
+			MOUNTED, strerror(retval));
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
@@ -533,17 +531,19 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 			if (pathlen > outlen) {
 				if (strcmp(p_mnt->mnt_dir, "/") == 0) {
 					outlen = pathlen;
-					strncpy(mntdir,
-						p_mnt->mnt_dir, MAXPATHLEN);
-					strncpy(type,
-						p_mnt->mnt_type, MAXNAMLEN);
-					strncpy(fs_spec,
-						p_mnt->mnt_fsname, MAXPATHLEN);
-				} else if ((strncmp(export_path,
-						    p_mnt->mnt_dir,
-						    pathlen) == 0) &&
-					   ((export_path[pathlen] == '/') ||
-					    (export_path[pathlen] == '\0'))) {
+					strncpy(mntdir, p_mnt->mnt_dir,
+						MAXPATHLEN);
+					strncpy(type, p_mnt->mnt_type,
+						MAXNAMLEN);
+					strncpy(fs_spec, p_mnt->mnt_fsname,
+						MAXPATHLEN);
+				} else
+				    if ((strncmp
+					 (export_path, p_mnt->mnt_dir,
+					  pathlen) == 0)
+					&& ((export_path[pathlen] == '/')
+					    || (export_path[pathlen] ==
+						'\0'))) {
 					if (strcasecmp(p_mnt->mnt_type, "xfs")
 					    == 0) {
 						LogDebug(COMPONENT_FSAL,
@@ -552,20 +552,19 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 						continue;
 					}
 					outlen = pathlen;
-					strncpy(mntdir,
-						p_mnt->mnt_dir, MAXPATHLEN);
-					strncpy(type,
-						p_mnt->mnt_type, MAXNAMLEN);
-					strncpy(fs_spec,
-						p_mnt->mnt_fsname, MAXPATHLEN);
+					strncpy(mntdir, p_mnt->mnt_dir,
+						MAXPATHLEN);
+					strncpy(type, p_mnt->mnt_type,
+						MAXNAMLEN);
+					strncpy(fs_spec, p_mnt->mnt_fsname,
+						MAXPATHLEN);
 				}
 			}
 		}
 	}
 	endmntent(fp);
 	if (outlen <= 0) {
-		LogCrit(COMPONENT_FSAL,
-			"No mount entry matches '%s' in %s",
+		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
 			export_path, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
@@ -573,8 +572,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
 	if (myself->root_fd < 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "Could not open PT mount point %s: rc = %d",
-			 mntdir, errno);
+			 "Could not open PT mount point %s: rc = %d", mntdir,
+			 errno);
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto errout;
@@ -611,8 +610,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		myself->root_handle = malloc(sizeof(ptfsal_handle_t));
 		if (myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s",
-				 errno, strerror(errno));
+				 "memory for root handle, errno=(%d) %s", errno,
+				 strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
 			goto errout;
@@ -623,8 +622,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
 	myself->pt_export_id = strtoll(fs_options, &endptr, 10);
-	if (myself->pt_export_id == LLONG_MIN ||
-	    myself->pt_export_id == LLONG_MAX || errno != 0) {
+	if (myself->pt_export_id == LLONG_MIN
+	    || myself->pt_export_id == LLONG_MAX || errno != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "FSAL BUILD EXPORT CONTEXT: ERROR: "
 			 "Get Export ID failed : %d", errno);

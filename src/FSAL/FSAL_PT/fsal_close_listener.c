@@ -25,7 +25,8 @@ int ptfsal_closeHandle_attach_to_queues(void)
 	/* Get IO and non-IO request, response message queue IDs */
 	g_closeHandle_req_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, 0);
 	if (g_closeHandle_req_msgq < 0) {
-		FSI_TRACE(FSI_FATAL, "error getting close handle Req Msg Q "
+		FSI_TRACE(FSI_FATAL,
+			  "error getting close handle Req Msg Q "
 			  "id %d (errno = %d)",
 			  FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, errno);
 		/* cleanup the attach made earlier, nothing to clean up for the queues */
@@ -39,7 +40,8 @@ int ptfsal_closeHandle_attach_to_queues(void)
 
 	g_closeHandle_rsp_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, 0);
 	if (g_closeHandle_rsp_msgq < 0) {
-		FSI_TRACE(FSI_FATAL, "error getting close handle Rsp Msg Q "
+		FSI_TRACE(FSI_FATAL,
+			  "error getting close handle Rsp Msg Q "
 			  "id %d (errno = %d)",
 			  FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, errno);
 		/* cleanup the attach made earlier, nothing to clean up for the queues */
@@ -102,12 +104,13 @@ void ptfsal_close_timedout_handle_bkg(void)
 			FSI_TRACE(FSI_INFO,
 				  "Last IO time[%ld] handle index [%d]"
 				  "current_time[%ld] handle state[%d] m_hndl_in_use[%d]",
-				  g_fsi_handles_fsal->m_handle[index].
-				  m_last_io_time, index, current_time,
-				  g_fsi_handles_fsal->m_handle[index].
-				  m_nfs_state,
-				  g_fsi_handles_fsal->m_handle[index].
-				  m_hndl_in_use);
+				  g_fsi_handles_fsal->
+				  m_handle[index].m_last_io_time, index,
+				  current_time,
+				  g_fsi_handles_fsal->
+				  m_handle[index].m_nfs_state,
+				  g_fsi_handles_fsal->
+				  m_handle[index].m_hndl_in_use);
 
 			lock_rc = CCL_LOCK_IO_OPERATION_MUTEX(index);
 			if (lock_rc) {
@@ -115,9 +118,8 @@ void ptfsal_close_timedout_handle_bkg(void)
 					  "Got error when acquire mutex lock= %d",
 					  lock_rc);
 			} else {
-				bool can_close =
-				    CCL_CAN_CLOSE_HANDLE(index,
-							 polling_thread_handle_timeout_sec);
+				bool can_close = CCL_CAN_CLOSE_HANDLE(index,
+								      polling_thread_handle_timeout_sec);
 				if (can_close) {
 					close_rc =
 					    ptfsal_implicit_close_for_nfs(index,
@@ -181,8 +183,8 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 	CCL_LOCK_IO_HANDLE_MUTEX(handle_index_to_close);
 	memset(&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
 	memcpy(key,
-	       &g_fsi_handles_fsal->m_handle[handle_index_to_close].m_stat.
-	       st_persistentHandle.handle[0],
+	       &g_fsi_handles_fsal->m_handle[handle_index_to_close].
+	       m_stat.st_persistentHandle.handle[0],
 	       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 	cacheEntry.key = key;
 	CCL_UNLOCK_IO_HANDLE_MUTEX(handle_index_to_close);
@@ -199,8 +201,8 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 	if (rc != FSI_CCL_IPC_EOK) {
 		FSI_TRACE(FSI_ERR,
 			  "Failed to delete cache entry to cache ID = %d",
-			  g_fsi_name_handle_cache_opened_files.cacheMetaData.
-			  cacheTableID);
+			  g_fsi_name_handle_cache_opened_files.
+			  cacheMetaData.cacheTableID);
 		ptfsal_print_handle(cacheEntry.key);
 	}
 	return close_rc;

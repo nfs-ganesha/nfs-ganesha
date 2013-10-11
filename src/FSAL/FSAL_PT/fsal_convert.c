@@ -332,9 +332,10 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 	}
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
-		p_fsalattr_out->chgtime
-		    = posix2fsal_time(MAX_2(p_buffstat->st_mtime,
-					    p_buffstat->st_ctime), 0);
+		p_fsalattr_out->chgtime =
+		    posix2fsal_time(MAX_2
+				    (p_buffstat->st_mtime,
+				     p_buffstat->st_ctime), 0);
 		p_fsalattr_out->change =
 		    (uint64_t) p_fsalattr_out->chgtime.tv_sec;
 	}
@@ -352,9 +353,8 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t
-posixstat64_2_fsal_attributes(struct stat * p_buffstat,
-			      struct attrlist * p_fsalattr_out)
+fsal_status_t posixstat64_2_fsal_attributes(struct stat * p_buffstat,
+					    struct attrlist * p_fsalattr_out)
 {
 
 	/* sanity checks */
@@ -402,20 +402,21 @@ posixstat64_2_fsal_attributes(struct stat * p_buffstat,
 	}
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME)) {
-		p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime,
-							p_buffstat->st_ctim.
-							tv_nsec);
+		p_fsalattr_out->ctime =
+		    posix2fsal_time(p_buffstat->st_ctime,
+				    p_buffstat->st_ctim.tv_nsec);
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME)) {
-		p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime,
-							p_buffstat->st_mtim.
-							tv_nsec);
+		p_fsalattr_out->mtime =
+		    posix2fsal_time(p_buffstat->st_mtime,
+				    p_buffstat->st_mtim.tv_nsec);
 	}
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
-		p_fsalattr_out->chgtime
-		    = posix2fsal_time(MAX_2(p_buffstat->st_mtime,
-					    p_buffstat->st_ctime), 0);
+		p_fsalattr_out->chgtime =
+		    posix2fsal_time(MAX_2
+				    (p_buffstat->st_mtime,
+				     p_buffstat->st_ctime), 0);
 		p_fsalattr_out->change =
 		    (uint64_t) p_fsalattr_out->chgtime.tv_sec;
 	}

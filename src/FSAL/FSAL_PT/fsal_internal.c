@@ -148,10 +148,10 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 			err = errno;
 		}
 	} else {
-		stat_rc = fsi_get_name_from_handle(p_context,
-						   myself->obj_handle.export,
-						   myself->handle,
-						   fsi_name, NULL);
+		stat_rc =
+		    fsi_get_name_from_handle(p_context,
+					     myself->obj_handle.export,
+					     myself->handle, fsi_name, NULL);
 		if (stat_rc < 0) {
 			err = errno;
 			FSI_TRACE(FSI_DEBUG, "Handle to name failed handle %s",
@@ -320,8 +320,8 @@ fsal_status_t fsal_internal_fd2handle(int fd, ptfsal_handle_t * p_handle)
  */
 fsal_status_t fsal_readlink_by_handle(const struct req_op_context * p_context,
 				      struct fsal_export * export,
-				      ptfsal_handle_t * p_handle,
-				      char *__buf, size_t maxlen)
+				      ptfsal_handle_t * p_handle, char *__buf,
+				      size_t maxlen)
 {
 	int rc;
 
@@ -388,8 +388,9 @@ fsal_status_t fsal_internal_access(int mntfd,	/* IN */
 	LogDebug(COMPONENT_FSAL, "requested v4mask=0x%x, mode=0x%x", v4mask,
 		 mode);
 
-	status = fsal_internal_testAccess(p_context, access_type,
-					  p_object_attributes);
+	status =
+	    fsal_internal_testAccess(p_context, access_type,
+				     p_object_attributes);
 
 	return status;
 }
@@ -414,11 +415,11 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 
 /* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL
  * support is enabled. */
-fsal_status_t
-fsal_set_xstat_by_handle(int dirfd,
-			 const struct req_op_context * p_context,
-			 struct pt_file_handle * p_handle, int attr_valid,
-			 int attr_changed, ptfsal_xstat_t * p_buffxstat)
+fsal_status_t fsal_set_xstat_by_handle(int dirfd,
+				       const struct req_op_context * p_context,
+				       struct pt_file_handle * p_handle,
+				       int attr_valid, int attr_changed,
+				       ptfsal_xstat_t * p_buffxstat)
 {
 	FSI_TRACE(FSI_DEBUG, "FSI - set_xstat_by_handle\n");
 
@@ -456,12 +457,11 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 	gid = p_object_attributes->group;
 	mode = p_object_attributes->mode;
 
-	LogDebug(COMPONENT_FSAL,
-		 "file Mode=%#o, file uid=%d, file gid= %d", mode, uid, gid);
-	LogDebug(COMPONENT_FSAL,
-		 "user uid=%d, user gid= %d, access_type=0X%x",
-		 p_context->creds->caller_uid,
-		 p_context->creds->caller_gid, access_type);
+	LogDebug(COMPONENT_FSAL, "file Mode=%#o, file uid=%d, file gid= %d",
+		 mode, uid, gid);
+	LogDebug(COMPONENT_FSAL, "user uid=%d, user gid= %d, access_type=0X%x",
+		 p_context->creds->caller_uid, p_context->creds->caller_gid,
+		 access_type);
 
 	/* If the uid of the file matches the uid of the user,
 	 * then the uid mode bits take precedence. */
@@ -501,8 +501,7 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 	/* Test if the file belongs to user's group. */
 	is_grp = (p_context->creds->caller_gid == gid);
 	if (is_grp)
-		LogDebug(COMPONENT_FSAL,
-			 "File belongs to user's group %d",
+		LogDebug(COMPONENT_FSAL, "File belongs to user's group %d",
 			 p_context->creds->caller_gid);
 
 	/* Test if file belongs to alt user's groups */
@@ -553,8 +552,8 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	else {
 		LogDebug(COMPONENT_FSAL,
-			 "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-			 mode, access_type, missing_access);
+			 "Mode=%#o, Access=0X%x, Rights missing: 0X%x", mode,
+			 access_type, missing_access);
 		return fsalstat(ERR_FSAL_ACCESS, 0);
 	}
 

@@ -118,8 +118,8 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 		return fsalstat(rc, 0);
 	}
 
-	status = fsal_internal_handle2fd(p_context, myself, file_desc,
-					 posix_flags);
+	status =
+	    fsal_internal_handle2fd(p_context, myself, file_desc, posix_flags);
 
 	FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL fd = %d\n", *file_desc);
 
@@ -133,8 +133,7 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 		p_file_attributes->mask = PT_SUPPORTED_ATTRIBUTES;
 		status =
 		    PTFSAL_getattrs(obj_hdl->export, NULL /*p_context??? */ ,
-				    myself->handle,
-				    p_file_attributes);
+				    myself->handle, p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			*file_desc = 0;
 			PTFSAL_close(*file_desc);
@@ -207,8 +206,9 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
 	i_size = (size_t) buffer_size;
 
 	/* read operation */
-	nb_read = ptfsal_read(myself, opctx, buffer, buffer_size, offset,
-			      handle_index);
+	nb_read =
+	    ptfsal_read(myself, opctx, buffer, buffer_size, offset,
+			handle_index);
 	errsv = errno;
 	if (nb_read == -1)
 		return fsalstat(posix2fsal_error(errsv), errsv);

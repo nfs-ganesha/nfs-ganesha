@@ -148,15 +148,14 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 
 	/* get file handle, it it exists */
 	/* This might be a race, but it's the best we can currently do */
-	rc = ptfsal_stat_by_parent_name(p_context, parent_hdl,
-					p_filename, &buffstat);
+	rc = ptfsal_stat_by_parent_name(p_context, parent_hdl, p_filename,
+					&buffstat);
 	if (rc < 0) {
 		ptfsal_closedir_fd(p_context, parent->export, parent_fd);
 		return fsalstat(ERR_FSAL_NOENT, errno);
 	}
 	memset(fh->data.handle.f_handle, 0, sizeof(fh->data.handle.f_handle));
-	memcpy(&fh->data.handle.f_handle,
-	       &buffstat.st_persistentHandle.handle,
+	memcpy(&fh->data.handle.f_handle, &buffstat.st_persistentHandle.handle,
 	       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 	fh->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;

@@ -63,11 +63,11 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
+fsal_status_t PTFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 			    const char *p_old_name,	/* IN */
-			    struct fsal_obj_handle *new_hdl,	/* IN */
+			    struct fsal_obj_handle * new_hdl,	/* IN */
 			    const char *p_new_name,	/* IN */
-			    const struct req_op_context *p_context)
+			    const struct req_op_context * p_context)
 {				/* IN */
 
 	int rc, errsv;
@@ -93,9 +93,9 @@ fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
 
 	/* build file paths */
 	memset(&st, 0, sizeof(st));
-	stat_rc = ptfsal_stat_by_handle(p_context,
-					old_pt_hdl->obj_handle.export,
-					old_pt_hdl->handle, &st);
+	stat_rc =
+	    ptfsal_stat_by_handle(p_context, old_pt_hdl->obj_handle.export,
+				  old_pt_hdl->handle, &st);
 
 	errsv = errno;
 	if (stat_rc) {
@@ -105,8 +105,8 @@ fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
-	rc = ptfsal_rename(p_context, old_pt_hdl, p_old_name,
-			   new_pt_hdl, p_new_name);
+	rc = ptfsal_rename(p_context, old_pt_hdl, p_old_name, new_pt_hdl,
+			   p_new_name);
 	errsv = errno;
 
 	if (rc) {

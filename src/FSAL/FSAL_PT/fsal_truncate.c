@@ -81,11 +81,11 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t PTFSAL_truncate(struct fsal_export *export,	/* IN */
-			      struct pt_fsal_obj_handle *p_filehandle,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
+fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
+			      struct pt_fsal_obj_handle * p_filehandle,	/* IN */
+			      const struct req_op_context * p_context,	/* IN */
 			      size_t length,	/* IN */
-			      struct attrlist *p_object_attributes)
+			      struct attrlist * p_object_attributes)
 {				/* IN/OUT */
 
 	int rc = 0, errsv;

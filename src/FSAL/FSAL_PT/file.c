@@ -85,10 +85,9 @@ fsal_openflags_t pt_status(struct fsal_obj_handle * obj_hdl)
  */
 
 fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
-		      const struct req_op_context * opctx,
-		      uint64_t offset,
-		      size_t buffer_size,
-		      void *buffer, size_t * read_amount, bool * end_of_file)
+		      const struct req_op_context * opctx, uint64_t offset,
+		      size_t buffer_size, void *buffer, size_t * read_amount,
+		      bool * end_of_file)
 {
 	struct pt_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -99,8 +98,9 @@ fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	status = PTFSAL_read(myself, opctx, offset, buffer_size, buffer,
-			     read_amount, end_of_file);
+	status =
+	    PTFSAL_read(myself, opctx, offset, buffer_size, buffer, read_amount,
+			end_of_file);
 	if (FSAL_IS_ERROR(status))
 		return (status);
 
@@ -114,21 +114,21 @@ fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
  */
 
 fsal_status_t pt_write(struct fsal_obj_handle * obj_hdl,
-		       const struct req_op_context * opctx,
-		       uint64_t offset,
-		       size_t buffer_size,
-		       void *buffer, size_t * wrote_amount, bool * fsal_stable)
+		       const struct req_op_context * opctx, uint64_t offset,
+		       size_t buffer_size, void *buffer, size_t * wrote_amount,
+		       bool * fsal_stable)
 {
 	struct pt_fsal_obj_handle *myself;
 	fsal_status_t status;
 
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.fd >= 0 &&
-	       myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	status = PTFSAL_write(myself, opctx, offset, buffer_size, buffer,
-			      wrote_amount, fsal_stable);
+	status =
+	    PTFSAL_write(myself, opctx, offset, buffer_size, buffer,
+			 wrote_amount, fsal_stable);
 	return (status);
 }
 
@@ -144,8 +144,8 @@ fsal_status_t pt_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
 
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.fd >= 0 &&
-	       myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
 	fsal_error = PTFSAL_commit(myself, offset, len);
 
