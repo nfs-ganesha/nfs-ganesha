@@ -64,16 +64,16 @@
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
+#include <ctype.h>		/* for having isalnum */
+#include <stdlib.h>		/* for having atoi */
+#include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include "log.h"
@@ -105,75 +105,71 @@ mountlist MNT_List_tail = NULL;
 int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 {
 #ifndef _NO_MOUNT_LIST
-  mountlist pnew_mnt_list_entry;
+	mountlist pnew_mnt_list_entry;
 #endif
 
-  /* Sanity check */
-  if(hostname == NULL || dirpath == NULL)
-    return 0;
+	/* Sanity check */
+	if (hostname == NULL || dirpath == NULL)
+		return 0;
 
 #ifndef _NO_MOUNT_LIST
 
-  /* Allocate the new entry */
-  if((pnew_mnt_list_entry = gsh_calloc(1, sizeof(struct mountbody))) == NULL)
-    return 0;
+	/* Allocate the new entry */
+	if ((pnew_mnt_list_entry =
+	     gsh_calloc(1, sizeof(struct mountbody))) == NULL)
+		return 0;
 
-  if((pnew_mnt_list_entry->ml_hostname
-      = gsh_calloc(1, MAXHOSTNAMELEN + 1)) == NULL)
-    {
-      gsh_free(pnew_mnt_list_entry);
-      return 0;
-    }
+	if ((pnew_mnt_list_entry->ml_hostname =
+	     gsh_calloc(1, MAXHOSTNAMELEN + 1)) == NULL) {
+		gsh_free(pnew_mnt_list_entry);
+		return 0;
+	}
 
-  if((pnew_mnt_list_entry->ml_directory
-      = gsh_calloc(1, MAXPATHLEN + 1)) == NULL)
-    {
-      gsh_free(pnew_mnt_list_entry->ml_hostname);
-      gsh_free(pnew_mnt_list_entry);
-      return 0;
-    }
-  /* Copy the data */
-  if (strmaxcpy(pnew_mnt_list_entry->ml_hostname, hostname,
-		MAXHOSTNAMELEN) == -1)
-    {
-      gsh_free(pnew_mnt_list_entry->ml_directory);
-      gsh_free(pnew_mnt_list_entry->ml_hostname);
-      gsh_free(pnew_mnt_list_entry);
-      return 0;
-    }
-  if (strmaxcpy(pnew_mnt_list_entry->ml_directory, dirpath,
-		MAXPATHLEN) == -1)
-    {
-      gsh_free(pnew_mnt_list_entry->ml_directory);
-      gsh_free(pnew_mnt_list_entry->ml_hostname);
-      gsh_free(pnew_mnt_list_entry);
-      return 0;
-    }
+	if ((pnew_mnt_list_entry->ml_directory =
+	     gsh_calloc(1, MAXPATHLEN + 1)) == NULL) {
+		gsh_free(pnew_mnt_list_entry->ml_hostname);
+		gsh_free(pnew_mnt_list_entry);
+		return 0;
+	}
+	/* Copy the data */
+	if (strmaxcpy
+	    (pnew_mnt_list_entry->ml_hostname, hostname,
+	     MAXHOSTNAMELEN) == -1) {
+		gsh_free(pnew_mnt_list_entry->ml_directory);
+		gsh_free(pnew_mnt_list_entry->ml_hostname);
+		gsh_free(pnew_mnt_list_entry);
+		return 0;
+	}
+	if (strmaxcpy(pnew_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN) ==
+	    -1) {
+		gsh_free(pnew_mnt_list_entry->ml_directory);
+		gsh_free(pnew_mnt_list_entry->ml_hostname);
+		gsh_free(pnew_mnt_list_entry);
+		return 0;
+	}
 
-  /* initialize next pointer */
-  pnew_mnt_list_entry->ml_next = NULL;
+	/* initialize next pointer */
+	pnew_mnt_list_entry->ml_next = NULL;
 
-  /* This should occur only for the first mount */
-  if(MNT_List_head == NULL)
-    {
-      MNT_List_head = pnew_mnt_list_entry;
-    }
+	/* This should occur only for the first mount */
+	if (MNT_List_head == NULL) {
+		MNT_List_head = pnew_mnt_list_entry;
+	}
 
-  /* Append to the tail of the list */
-  if(MNT_List_tail == NULL)
-    MNT_List_tail = pnew_mnt_list_entry;
-  else
-    {
-      MNT_List_tail->ml_next = pnew_mnt_list_entry;
-      MNT_List_tail = pnew_mnt_list_entry;
-    }
+	/* Append to the tail of the list */
+	if (MNT_List_tail == NULL)
+		MNT_List_tail = pnew_mnt_list_entry;
+	else {
+		MNT_List_tail->ml_next = pnew_mnt_list_entry;
+		MNT_List_tail = pnew_mnt_list_entry;
+	}
 
-  if(isFullDebug(COMPONENT_NFSPROTO))
-    nfs_Print_MountList();
+	if (isFullDebug(COMPONENT_NFSPROTO))
+		nfs_Print_MountList();
 
 #endif
 
-  return 1;
+	return 1;
 }
 
 /**
@@ -188,58 +184,59 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 bool nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 {
 #ifndef _NO_MOUNT_LIST
-  mountlist piter_mnt_list_entry;
-  mountlist piter_mnt_list_entry_prev;
-  int found = 0;
+	mountlist piter_mnt_list_entry;
+	mountlist piter_mnt_list_entry_prev;
+	int found = 0;
 #endif
 
-  if(hostname == NULL)
-    return 0;
+	if (hostname == NULL)
+		return 0;
 
 #ifndef _NO_MOUNT_LIST
 
-  piter_mnt_list_entry_prev = NULL;
+	piter_mnt_list_entry_prev = NULL;
 
-  for(piter_mnt_list_entry = MNT_List_head;
-      piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
-    {
-      /* BUGAZOMEU: pas de verif sur le path */
-      if(!strncmp(piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN)
-         /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
-        {
-          found = 1;
-          break;
-        }
+	for (piter_mnt_list_entry = MNT_List_head; piter_mnt_list_entry != NULL;
+	     piter_mnt_list_entry = piter_mnt_list_entry->ml_next) {
+		/* BUGAZOMEU: pas de verif sur le path */
+		if (!strncmp
+		    (piter_mnt_list_entry->ml_hostname, hostname,
+		     MAXHOSTNAMELEN)
+		    /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */
+		    ) {
+			found = 1;
+			break;
+		}
 
-      piter_mnt_list_entry_prev = piter_mnt_list_entry;
+		piter_mnt_list_entry_prev = piter_mnt_list_entry;
 
-    }
+	}
 
-  if(found)
-    {
-      /* remove head item ? */
-      if(piter_mnt_list_entry_prev == NULL)
-        MNT_List_head = MNT_List_head->ml_next;
-      else
-        piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next;
+	if (found) {
+		/* remove head item ? */
+		if (piter_mnt_list_entry_prev == NULL)
+			MNT_List_head = MNT_List_head->ml_next;
+		else
+			piter_mnt_list_entry_prev->ml_next =
+			    piter_mnt_list_entry->ml_next;
 
-      /* remove tail item ? */
-      if(MNT_List_tail == piter_mnt_list_entry)
-        MNT_List_tail = piter_mnt_list_entry_prev;
+		/* remove tail item ? */
+		if (MNT_List_tail == piter_mnt_list_entry)
+			MNT_List_tail = piter_mnt_list_entry_prev;
 
-      gsh_free(piter_mnt_list_entry->ml_hostname);
-      gsh_free(piter_mnt_list_entry->ml_directory);
-      gsh_free(piter_mnt_list_entry);
+		gsh_free(piter_mnt_list_entry->ml_hostname);
+		gsh_free(piter_mnt_list_entry->ml_directory);
+		gsh_free(piter_mnt_list_entry);
 
-    }
+	}
 
-  if(isFullDebug(COMPONENT_NFSPROTO))
-    nfs_Print_MountList();
+	if (isFullDebug(COMPONENT_NFSPROTO))
+		nfs_Print_MountList();
 
 #endif
 
-  return 1;
-}                               /* nfs_Remove_MountList_Entry */
+	return 1;
+}				/* nfs_Remove_MountList_Entry */
 
 /**
  * @brief Purges the whole mount list
@@ -248,33 +245,33 @@ bool nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
  */
 bool nfs_Purge_MountList(void)
 {
-  mountlist piter_mnt_list_entry __attribute__((unused)),
-    piter_mnt_list_entry_next __attribute__((unused));
+	mountlist piter_mnt_list_entry
+	    __attribute__ ((unused)), piter_mnt_list_entry_next
+	    __attribute__ ((unused));
 
-  piter_mnt_list_entry = MNT_List_head;
-  piter_mnt_list_entry_next = MNT_List_head;
+	piter_mnt_list_entry = MNT_List_head;
+	piter_mnt_list_entry_next = MNT_List_head;
 
 #ifndef _NO_MOUNT_LIST
 
-  while(piter_mnt_list_entry_next != NULL)
-    {
-      piter_mnt_list_entry_next = piter_mnt_list_entry->ml_next;
-      gsh_free(piter_mnt_list_entry->ml_hostname);
-      gsh_free(piter_mnt_list_entry->ml_directory);
-      gsh_free(piter_mnt_list_entry);
-      piter_mnt_list_entry = piter_mnt_list_entry_next;
-    }
+	while (piter_mnt_list_entry_next != NULL) {
+		piter_mnt_list_entry_next = piter_mnt_list_entry->ml_next;
+		gsh_free(piter_mnt_list_entry->ml_hostname);
+		gsh_free(piter_mnt_list_entry->ml_directory);
+		gsh_free(piter_mnt_list_entry);
+		piter_mnt_list_entry = piter_mnt_list_entry_next;
+	}
 
-  MNT_List_head = NULL;
-  MNT_List_tail = NULL;
+	MNT_List_head = NULL;
+	MNT_List_tail = NULL;
 
-  if(isFullDebug(COMPONENT_NFSPROTO))
-    nfs_Print_MountList();
+	if (isFullDebug(COMPONENT_NFSPROTO))
+		nfs_Print_MountList();
 
 #endif
 
-  return 1;
-}                               /* nfs_Purge_MountList */
+	return 1;
+}				/* nfs_Purge_MountList */
 
 /**
  * @brief Initializes the mount list
@@ -284,14 +281,14 @@ bool nfs_Purge_MountList(void)
  */
 int nfs_Init_MountList(void)
 {
-  MNT_List_head = NULL;
-  MNT_List_tail = NULL;
+	MNT_List_head = NULL;
+	MNT_List_tail = NULL;
 
-  if(isFullDebug(COMPONENT_NFSPROTO))
-    nfs_Print_MountList();
+	if (isFullDebug(COMPONENT_NFSPROTO))
+		nfs_Print_MountList();
 
-  return 1;
-}                               /* nfs_Init_MountList */
+	return 1;
+}				/* nfs_Init_MountList */
 
 /**
  * @brief Returns the mount list
@@ -300,10 +297,10 @@ int nfs_Init_MountList(void)
  */
 mountlist nfs_Get_MountList(void)
 {
-  if(isFullDebug(COMPONENT_NFSPROTO))
-    nfs_Print_MountList();
+	if (isFullDebug(COMPONENT_NFSPROTO))
+		nfs_Print_MountList();
 
-  return MNT_List_head;
+	return MNT_List_head;
 }
 
 /**
@@ -312,17 +309,17 @@ mountlist nfs_Get_MountList(void)
 
 void nfs_Print_MountList(void)
 {
-  mountlist piter_mnt_list_entry = NULL;
+	mountlist piter_mnt_list_entry = NULL;
 
-  if(MNT_List_head == NULL)
-    LogFullDebug(COMPONENT_NFSPROTO, "Mount List Entry is empty");
+	if (MNT_List_head == NULL)
+		LogFullDebug(COMPONENT_NFSPROTO, "Mount List Entry is empty");
 
-  for(piter_mnt_list_entry = MNT_List_head;
-      piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
-    LogFullDebug(COMPONENT_NFSPROTO,
-                 "Mount List Entry : ml_hostname=%s   ml_directory=%s",
-                 piter_mnt_list_entry->ml_hostname,
-                 piter_mnt_list_entry->ml_directory);
+	for (piter_mnt_list_entry = MNT_List_head; piter_mnt_list_entry != NULL;
+	     piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Mount List Entry : ml_hostname=%s   ml_directory=%s",
+			     piter_mnt_list_entry->ml_hostname,
+			     piter_mnt_list_entry->ml_directory);
 
-  return;
-}                               /* nfs_Print_MountList */
+	return;
+}				/* nfs_Print_MountList */

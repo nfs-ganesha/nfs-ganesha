@@ -44,51 +44,62 @@ int next_worker_delay_time = 0;
 #if 0
 int getErrInjectInteger(snmp_adm_type_union * param, void *opt)
 {
-  long option = (long)opt;
+	long option = (long)opt;
 
-  switch(option)
-    {
-      case 0: param->integer = worker_delay_time; break;
-      case 1: param->integer = next_worker_delay_time; break;
-      default: return 1;
-    }
+	switch (option) {
+	case 0:
+		param->integer = worker_delay_time;
+		break;
+	case 1:
+		param->integer = next_worker_delay_time;
+		break;
+	default:
+		return 1;
+	}
 
-  return 0;
+	return 0;
 }
 
 int setErrInjectInteger(const snmp_adm_type_union * param, void *opt)
 {
-  long option = (long)opt;
+	long option = (long)opt;
 
-  switch(option)
-    {
-      case 0: worker_delay_time = param->integer; break;
-      case 1: next_worker_delay_time = param->integer; break;
-      default: return 1;
-    }
+	switch (option) {
+	case 0:
+		worker_delay_time = param->integer;
+		break;
+	case 1:
+		next_worker_delay_time = param->integer;
+		break;
+	default:
+		return 1;
+	}
 
-  return 0;
+	return 0;
 }
 
 static register_get_set snmp_error_injection[] = {
 
-  {"worker_delay", "Delay for each request processed by worker threads", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RW,
-   getErrInjectInteger, setErrInjectInteger, (void *)0},
-  {"next_worker_delay", "Delay for next request processed by worker threads", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RW,
-   getErrInjectInteger, setErrInjectInteger, (void *)1},
+	{"worker_delay", "Delay for each request processed by worker threads",
+	 SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RW,
+	 getErrInjectInteger, setErrInjectInteger, (void *)0},
+	{"next_worker_delay",
+	 "Delay for next request processed by worker threads", SNMP_ADM_INTEGER,
+	 SNMP_ADM_ACCESS_RW,
+	 getErrInjectInteger, setErrInjectInteger, (void *)1},
 };
 
 #define SNMPADM_ERROR_INJECTION_COUNT 2
 
 int init_error_injector()
 {
-   if(snmp_adm_register_get_set_function(INJECT_OID, snmp_error_injection,
-                                          SNMPADM_ERROR_INJECTION_COUNT))
-     {
-       LogCrit(COMPONENT_INIT, "Error registering error injection to SNMP");
-       return 2;
-     }
+	if (snmp_adm_register_get_set_function
+	    (INJECT_OID, snmp_error_injection, SNMPADM_ERROR_INJECTION_COUNT)) {
+		LogCrit(COMPONENT_INIT,
+			"Error registering error injection to SNMP");
+		return 2;
+	}
 
-  return 0;
+	return 0;
 }
 #endif

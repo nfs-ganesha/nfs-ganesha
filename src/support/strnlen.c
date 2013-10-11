@@ -4,14 +4,11 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-
 size_t gsh_strnlen(const char *s, size_t max)
 {
-    register const char *p;
-    for (p = s; *p && max--; ++p);
-    return (p - s);
+	register const char *p;
+	for (p = s; *p && max--; ++p) ;
+	return (p - s);
 }
 
-
 #endif
-

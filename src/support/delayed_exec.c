@@ -61,11 +61,11 @@ LIST_HEAD(delayed_tasklist, delayed_task);
  */
 
 struct delayed_multi {
-	struct timespec realtime; /*< A wallclock time at which to
-				    perform the given task. */
-	struct delayed_tasklist list; /*< The linked list of tasks to
-					  perform. */
-	struct avltree_node node; /*< Our node in the tree */
+	struct timespec realtime;	/*< A wallclock time at which to
+					   perform the given task. */
+	struct delayed_tasklist list;	/*< The linked list of tasks to
+					   perform. */
+	struct avltree_node node;	/*< Our node in the tree */
 };
 
 /**
@@ -73,9 +73,9 @@ struct delayed_multi {
  */
 
 struct delayed_task {
-	void (*func)(void *); /*< Function for delayed task */
-	void *arg; /*< Argument for delayed task */
-	LIST_ENTRY(delayed_task) link; /*< Link in the task list. */
+	void (*func) (void *);	/*< Function for delayed task */
+	void *arg;		/*< Argument for delayed task */
+	 LIST_ENTRY(delayed_task) link;	/*< Link in the task list. */
 };
 
 /**
@@ -89,8 +89,8 @@ LIST_HEAD(delayed_threadlist, delayed_thread);
  */
 
 struct delayed_thread {
-	pthread_t id; /*< Thread id */
-	LIST_ENTRY(delayed_thread) link; /*< Link in the thread list. */
+	pthread_t id;		/*< Thread id */
+	 LIST_ENTRY(delayed_thread) link;	/*< Link in the thread list. */
 };
 
 /**
@@ -110,25 +110,25 @@ static struct avltree tree;
  * @brief Posssible states for the delayed executor
  */
 typedef enum {
-	delayed_running, /*< Executor is running */
-	delayed_stopping /*< Executor is stopping */
+	delayed_running,	/*< Executor is running */
+	delayed_stopping	/*< Executor is stopping */
 } delayed_state_t;
 /** State for the executor */
 static delayed_state_t delayed_state;
 typedef enum {
-	delayed_employed, /*< Work is available, do it. */
-	delayed_on_break, /*< Work is available, but wait for it */
-	delayed_unemployed /*< No work is available, wait indefinitely */
+	delayed_employed,	/*< Work is available, do it. */
+	delayed_on_break,	/*< Work is available, but wait for it */
+	delayed_unemployed	/*< No work is available, wait indefinitely */
 } delayed_employment_t;
 /** @} */
 
 static int comparator(const struct avltree_node *a,
 		      const struct avltree_node *b)
 {
-	struct delayed_multi *p
-		= avltree_container_of(a, struct delayed_multi, node);
-	struct delayed_multi *q
-		= avltree_container_of(b, struct delayed_multi, node);
+	struct delayed_multi *p =
+	    avltree_container_of(a, struct delayed_multi, node);
+	struct delayed_multi *q =
+	    avltree_container_of(b, struct delayed_multi, node);
 
 	return gsh_time_cmp(&p->realtime, &q->realtime);
 }
@@ -152,8 +152,7 @@ static int comparator(const struct avltree_node *a,
  */
 
 static delayed_employment_t delayed_get_work(struct timespec *when,
-					     void (**func)(void *),
-					     void **arg)
+					     void (**func) (void *), void **arg)
 {
 	struct avltree_node *first = avltree_first(&tree);
 	struct delayed_multi *mul;
@@ -164,11 +163,9 @@ static delayed_employment_t delayed_get_work(struct timespec *when,
 	}
 
 	now(&current);
-	mul = avltree_container_of(first,
-				   struct delayed_multi,
-				   node);
+	mul = avltree_container_of(first, struct delayed_multi, node);
 
-	if (gsh_time_cmp(&mul->realtime, &current) > 0){
+	if (gsh_time_cmp(&mul->realtime, &current) > 0) {
 		*when = mul->realtime;
 		return delayed_on_break;
 	}
@@ -209,14 +206,12 @@ void *delayed_thread(void *arg)
 	 */
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_type);
 
-	pthread_sigmask(SIG_SETMASK, NULL,
-			&old_sigmask);
-
+	pthread_sigmask(SIG_SETMASK, NULL, &old_sigmask);
 
 	pthread_mutex_lock(&mtx);
 	while (delayed_state == delayed_running) {
 		struct timespec then;
-		void (*func)(void *);
+		void (*func) (void *);
 		void *arg;
 		switch (delayed_get_work(&then, &func, &arg)) {
 		case delayed_unemployed:
@@ -265,17 +260,15 @@ void delayed_start(void)
 			 "You can't execute tasks with zero threads.");
 	}
 
-
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr,
-				    PTHREAD_CREATE_DETACHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_running;
 
 	for (i = 0; i < threads_to_start; ++i) {
-		struct delayed_thread *thread
-			= gsh_malloc(sizeof(struct delayed_thread));
+		struct delayed_thread *thread =
+		    gsh_malloc(sizeof(struct delayed_thread));
 		int rc = 0;
 
 		if (thread == NULL) {
@@ -283,18 +276,12 @@ void delayed_start(void)
 				 "Unable to start delayed executor: "
 				 "no memory.");
 		}
-		rc = pthread_create(&thread->id,
-				    &attr,
-				    delayed_thread,
-				    thread);
+		rc = pthread_create(&thread->id, &attr, delayed_thread, thread);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
-				 "Unable to start delayed executor: %d",
-				 rc);
+				 "Unable to start delayed executor: %d", rc);
 		}
-		LIST_INSERT_HEAD(&thread_list,
-				 thread,
-				 link);
+		LIST_INSERT_HEAD(&thread_list, thread, link);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -313,8 +300,7 @@ void delayed_shutdown(void)
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_stopping;
 	pthread_cond_broadcast(&cv);
-	while ((rc != ETIMEDOUT) &&
-	       (thread_list.lh_first != NULL)) {
+	while ((rc != ETIMEDOUT) && (thread_list.lh_first != NULL)) {
 		rc = pthread_cond_timedwait(&cv, &mtx, &then);
 	}
 
@@ -344,57 +330,49 @@ void delayed_shutdown(void)
  * @retval ENOMEM on inability to allocate memory causing other than success.
  */
 
-int delayed_submit(void (*func)(void *),
-		   void *arg,
-		   nsecs_elapsed_t delay)
+int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 {
 	struct delayed_multi *mul = NULL;
 	struct delayed_task *task = NULL;
 	struct avltree_node *collision = NULL;
 	struct avltree_node *first = NULL;
 
-    mul = gsh_malloc(sizeof(struct delayed_multi));
+	mul = gsh_malloc(sizeof(struct delayed_multi));
 
-    if (mul == NULL) {
-        LogMajor(COMPONENT_THREAD,
-                 "Unable to allocate memory for delayed task.");
-        return ENOMEM;
-    }
+	if (mul == NULL) {
+		LogMajor(COMPONENT_THREAD,
+			 "Unable to allocate memory for delayed task.");
+		return ENOMEM;
+	}
 
-    task = gsh_malloc(sizeof(struct delayed_task));
+	task = gsh_malloc(sizeof(struct delayed_task));
 
-    if (task == NULL) {
-        gsh_free(mul);
-        LogMajor(COMPONENT_THREAD,
-                 "Unable to allocate memory for delayed task.");
-        return ENOMEM;
-    }
+	if (task == NULL) {
+		gsh_free(mul);
+		LogMajor(COMPONENT_THREAD,
+			 "Unable to allocate memory for delayed task.");
+		return ENOMEM;
+	}
 
 	now(&mul->realtime);
-	timespec_add_nsecs(delay,
-			   &mul->realtime);
+	timespec_add_nsecs(delay, &mul->realtime);
 
 	pthread_mutex_lock(&mtx);
 	first = avltree_first(&tree);
-	collision = avltree_insert(&mul->node,
-				   &tree);
+	collision = avltree_insert(&mul->node, &tree);
 	if (unlikely(collision)) {
 		free(mul);
 		/* There is already a node for this exact time in the
 		   tree.  Add our task to its list. */
-		mul = avltree_container_of(collision,
-					   struct delayed_multi,
-					   node);
+		mul =
+		    avltree_container_of(collision, struct delayed_multi, node);
 	} else {
 		LIST_INIT(&mul->list);
 	}
 	task->func = func;
 	task->arg = arg;
-	LIST_INSERT_HEAD(&mul->list,
-			 task,
-			 link);
-	if (!first ||
-	    comparator(&mul->node, first) <= 0) {
+	LIST_INSERT_HEAD(&mul->list, task, link);
+	if (!first || comparator(&mul->node, first) <= 0) {
 		pthread_cond_broadcast(&cv);
 	}
 	pthread_mutex_unlock(&mtx);

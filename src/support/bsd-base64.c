@@ -57,7 +57,7 @@
 #define Assert(Cond) if (!(Cond)) abort()
 
 static const char Base64[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char Pad64 = '=';
 
 /* (From RFC1521 and draft-ietf-dnssec-secext-03.txt)
@@ -123,8 +123,7 @@ static const char Pad64 = '=';
 	   characters followed by one "=" padding character.
    */
 
-int
-b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
+int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 {
 	size_t datalength = 0;
 	u_char input[3];
@@ -153,14 +152,14 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 		target[datalength++] = Base64[output[2]];
 		target[datalength++] = Base64[output[3]];
 	}
-    
+
 	/* Now we worry about padding. */
 	if (0 != srclength) {
 		/* Get what's left. */
 		input[0] = input[1] = input[2] = '\0';
 		for (i = 0; i < srclength; i++)
 			input[i] = *src++;
-	
+
 		output[0] = input[0] >> 2;
 		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
 		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
@@ -190,8 +189,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
    it returns the number of data bytes stored at the target, or -1 on error.
  */
 
-int
-b64_pton(char const *src, u_char *target, size_t targsize)
+int b64_pton(char const *src, u_char * target, size_t targsize)
 {
 	int tarindex, state, ch;
 	char *pos;
@@ -207,7 +205,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			break;
 
 		pos = strchr(Base64, ch);
-		if (pos == 0) 		/* A non-base64 character. */
+		if (pos == 0)	/* A non-base64 character. */
 			return (-1);
 
 		switch (state) {
@@ -223,9 +221,9 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 4;
-				target[tarindex+1]  = ((pos - Base64) & 0x0f)
-							<< 4 ;
+				target[tarindex] |= (pos - Base64) >> 4;
+				target[tarindex + 1] = ((pos - Base64) & 0x0f)
+				    << 4;
 			}
 			tarindex++;
 			state = 2;
@@ -234,9 +232,9 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 2;
-				target[tarindex+1]  = ((pos - Base64) & 0x03)
-							<< 6;
+				target[tarindex] |= (pos - Base64) >> 2;
+				target[tarindex + 1] = ((pos - Base64) & 0x03)
+				    << 6;
 			}
 			tarindex++;
 			state = 3;
@@ -258,14 +256,14 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 	 * on a byte boundary, and/or with erroneous trailing characters.
 	 */
 
-	if (ch == Pad64) {		/* We got a pad char. */
-		ch = *src++;		/* Skip it, get next. */
+	if (ch == Pad64) {	/* We got a pad char. */
+		ch = *src++;	/* Skip it, get next. */
 		switch (state) {
-		case 0:		/* Invalid = in first position */
-		case 1:		/* Invalid = in second position */
+		case 0:	/* Invalid = in first position */
+		case 1:	/* Invalid = in second position */
 			return (-1);
 
-		case 2:		/* Valid, means one byte of info */
+		case 2:	/* Valid, means one byte of info */
 			/* Skip any number of spaces. */
 			for (; ch != '\0'; ch = *src++)
 				if (!isspace(ch))
@@ -273,11 +271,11 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			/* Make sure there is another trailing = sign. */
 			if (ch != Pad64)
 				return (-1);
-			ch = *src++;		/* Skip the = */
+			ch = *src++;	/* Skip the = */
 			/* Fall through to "single trailing =" case. */
 			/* FALLTHROUGH */
 
-		case 3:		/* Valid, means two bytes of info */
+		case 3:	/* Valid, means two bytes of info */
 			/*
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
@@ -307,4 +305,4 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 	return (tarindex);
 }
 
-#endif /* !defined(HAVE_B64_NTOP) && !defined(HAVE___B64_NTOP) */
+#endif				/* !defined(HAVE_B64_NTOP) && !defined(HAVE___B64_NTOP) */

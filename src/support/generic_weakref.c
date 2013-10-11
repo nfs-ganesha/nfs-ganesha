@@ -65,13 +65,12 @@
  * number, thus reducing thread contention.
  */
 
-typedef struct gweakref_partition_
-{
-    pthread_rwlock_t lock;
-    struct avltree t;
-    uint64_t genctr;
-    struct avltree_node **cache;
-    CACHE_PAD(0);
+typedef struct gweakref_partition_ {
+	pthread_rwlock_t lock;
+	struct avltree t;
+	uint64_t genctr;
+	struct avltree_node **cache;
+	 CACHE_PAD(0);
 } gweakref_partition_t;
 
 /**
@@ -80,13 +79,12 @@ typedef struct gweakref_partition_
  * This is the structure corresponding to a single table of weakrefs.
  */
 
-struct gweakref_table_
-{
-    CACHE_PAD(0);
-    gweakref_partition_t *partition;
-    CACHE_PAD(1);
-    uint32_t npart;
-    uint32_t cache_sz;
+struct gweakref_table_ {
+	CACHE_PAD(0);
+	gweakref_partition_t *partition;
+	 CACHE_PAD(1);
+	uint32_t npart;
+	uint32_t cache_sz;
 };
 
 /**
@@ -111,10 +109,9 @@ struct gweakref_table_
  * serves as the key serves as the value.
  */
 
-typedef struct gweakref_priv_
-{
-    struct avltree_node node_k; /*< The link to the rest of the tree */
-    gweakref_t k; /*< The (pointer, generation) pair */
+typedef struct gweakref_priv_ {
+	struct avltree_node node_k;	/*< The link to the rest of the tree */
+	gweakref_t k;		/*< The (pointer, generation) pair */
 } gweakref_priv_t;
 
 /**
@@ -133,20 +130,20 @@ typedef struct gweakref_priv_
  */
 
 static inline int wk_cmpf(const struct avltree_node *lhs,
-                          const struct avltree_node *rhs)
+			  const struct avltree_node *rhs)
 {
-    gweakref_priv_t *lk, *rk;
+	gweakref_priv_t *lk, *rk;
 
-    lk = avltree_container_of(lhs, gweakref_priv_t, node_k);
-    rk = avltree_container_of(rhs, gweakref_priv_t, node_k);
+	lk = avltree_container_of(lhs, gweakref_priv_t, node_k);
+	rk = avltree_container_of(rhs, gweakref_priv_t, node_k);
 
-    if (lk->k.ptr < rk->k.ptr)
-        return (-1);
+	if (lk->k.ptr < rk->k.ptr)
+		return (-1);
 
-    if (lk->k.ptr == rk->k.ptr)
-        return (0);
+	if (lk->k.ptr == rk->k.ptr)
+		return (0);
 
-    return (1);
+	return (1);
 }
 
 /**
@@ -160,10 +157,9 @@ static inline int wk_cmpf(const struct avltree_node *lhs,
  *
  * @return The computed offset.
  */
-static inline int
-cache_offsetof(gweakref_table_t *wt, void *ptr)
+static inline int cache_offsetof(gweakref_table_t * wt, void *ptr)
 {
-    return ((uintptr_t) ptr % wt->cache_sz);
+	return ((uintptr_t) ptr % wt->cache_sz);
 }
 
 /**
@@ -181,40 +177,40 @@ cache_offsetof(gweakref_table_t *wt, void *ptr)
 
 gweakref_table_t *gweakref_init(uint32_t npart, uint32_t cache_sz)
 {
-    int ix = 0;
-    pthread_rwlockattr_t rwlock_attr;
-    gweakref_partition_t *wp = NULL;
-    gweakref_table_t *wt = NULL;
+	int ix = 0;
+	pthread_rwlockattr_t rwlock_attr;
+	gweakref_partition_t *wp = NULL;
+	gweakref_table_t *wt = NULL;
 
-    wt = gsh_calloc(1, sizeof(gweakref_table_t));
-    if (!wt)
-        goto out;
+	wt = gsh_calloc(1, sizeof(gweakref_table_t));
+	if (!wt)
+		goto out;
 
-    /* prior versions of Linux tirpc are subject to default prefer-reader
-     * behavior (so have potential for writer starvation) */
-    pthread_rwlockattr_init(&rwlock_attr);
+	/* prior versions of Linux tirpc are subject to default prefer-reader
+	 * behavior (so have potential for writer starvation) */
+	pthread_rwlockattr_init(&rwlock_attr);
 #ifdef GLIBC
-    pthread_rwlockattr_setkind_np(
-        &rwlock_attr,
-        PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlockattr_setkind_np(&rwlock_attr,
+				      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 
-    /* npart should be a small integer */
-    wt->npart = npart;
-    wt->partition = gsh_calloc(npart, sizeof(gweakref_partition_t));
-    for (ix = 0; ix < npart; ++ix) {
-        wp = &wt->partition[ix];
-        pthread_rwlock_init(&wp->lock, &rwlock_attr);
-        avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
-        if (cache_sz > 0) {
-            wt->cache_sz = cache_sz;
-            wp->cache = gsh_calloc(cache_sz, sizeof(struct avltree_node *));
-        }
-        wp->genctr = 0;
-    }
+	/* npart should be a small integer */
+	wt->npart = npart;
+	wt->partition = gsh_calloc(npart, sizeof(gweakref_partition_t));
+	for (ix = 0; ix < npart; ++ix) {
+		wp = &wt->partition[ix];
+		pthread_rwlock_init(&wp->lock, &rwlock_attr);
+		avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */ );
+		if (cache_sz > 0) {
+			wt->cache_sz = cache_sz;
+			wp->cache =
+			    gsh_calloc(cache_sz, sizeof(struct avltree_node *));
+		}
+		wp->genctr = 0;
+	}
 
-out:
-    return (wt);
+ out:
+	return (wt);
 }
 
 /**
@@ -232,37 +228,37 @@ out:
  * @return The weak reference created.
  */
 
-gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
+gweakref_t gweakref_insert(gweakref_table_t * wt, void *obj)
 {
-    gweakref_t ret;
-    gweakref_priv_t *ref;
-    gweakref_partition_t *wp;
-    struct avltree_node *node;
+	gweakref_t ret;
+	gweakref_priv_t *ref;
+	gweakref_partition_t *wp;
+	struct avltree_node *node;
 
-    ref = gsh_calloc(1, sizeof(gweakref_priv_t));
-    ref->k.ptr = obj;
+	ref = gsh_calloc(1, sizeof(gweakref_priv_t));
+	ref->k.ptr = obj;
 
-    wp = (gweakref_partition_t *) gwt_partition_of_addr_k(wt, ref->k.ptr);
+	wp = (gweakref_partition_t *) gwt_partition_of_addr_k(wt, ref->k.ptr);
 
-    /* XXX initially wt had a single atomic counter, but for any address,
-     * partition is fixed, and we must take the partition lock exclusive
-     * in any case */
-    PTHREAD_RWLOCK_wrlock(&wp->lock);
+	/* XXX initially wt had a single atomic counter, but for any address,
+	 * partition is fixed, and we must take the partition lock exclusive
+	 * in any case */
+	PTHREAD_RWLOCK_wrlock(&wp->lock);
 
-    ref->k.gen = ++(wp->genctr);
+	ref->k.gen = ++(wp->genctr);
 
-    node = avltree_insert(&ref->node_k, &wp->t);
-    if (! node) {
-        /* success */
-        ret = ref->k;
-    } else {
-        /* matching key existed */
-        ret.ptr = NULL;
-        ret.gen = 0;
-    }
-    PTHREAD_RWLOCK_unlock(&wp->lock);
+	node = avltree_insert(&ref->node_k, &wp->t);
+	if (!node) {
+		/* success */
+		ret = ref->k;
+	} else {
+		/* matching key existed */
+		ret.ptr = NULL;
+		ret.gen = 0;
+	}
+	PTHREAD_RWLOCK_unlock(&wp->lock);
 
-    return (ret);
+	return (ret);
 }
 
 /**
@@ -280,49 +276,54 @@ gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
  * @return The found object, otherwise NULL.
  */
 
-void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
-                        pthread_rwlock_t **lock)
+void *gweakref_lookupex(gweakref_table_t * wt, gweakref_t * ref,
+			pthread_rwlock_t ** lock)
 {
-    struct avltree_node *node = NULL;
-    gweakref_priv_t refk, *tref;
-    gweakref_partition_t *wp;
-    void *ret = NULL;
+	struct avltree_node *node = NULL;
+	gweakref_priv_t refk, *tref;
+	gweakref_partition_t *wp;
+	void *ret = NULL;
 
-    /* look up ref.ptr--return !NULL iff ref.ptr is found and
-     * ref.gen == found.gen */
+	/* look up ref.ptr--return !NULL iff ref.ptr is found and
+	 * ref.gen == found.gen */
 
-    refk.k = *ref;
-    wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
-    PTHREAD_RWLOCK_rdlock(&wp->lock);
+	refk.k = *ref;
+	wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
+	PTHREAD_RWLOCK_rdlock(&wp->lock);
 
-    /* check cache */
-    if (wp->cache)
-        node = (struct avltree_node *)
-            atomic_fetch_voidptr((void **)
-                &(wp->cache[cache_offsetof(wt, refk.k.ptr)]));
+	/* check cache */
+	if (wp->cache)
+		node = (struct avltree_node *)
+		    atomic_fetch_voidptr((void **)
+					 &(wp->
+					   cache[cache_offsetof
+						 (wt, refk.k.ptr)]));
 
-    if (! node)
-        node = avltree_lookup(&refk.node_k, &wp->t);
+	if (!node)
+		node = avltree_lookup(&refk.node_k, &wp->t);
 
-    if (node) {
-        /* found it, maybe */
-        tref = avltree_container_of(node, gweakref_priv_t, node_k);
-        if (tref->k.gen == ref->gen) {
-            ret = ref->ptr;
-            if (wp->cache) {
-                atomic_store_voidptr((void **)
-                    &(wp->cache[cache_offsetof(wt, refk.k.ptr)]), node);
-            }
-        }
-    }
+	if (node) {
+		/* found it, maybe */
+		tref = avltree_container_of(node, gweakref_priv_t, node_k);
+		if (tref->k.gen == ref->gen) {
+			ret = ref->ptr;
+			if (wp->cache) {
+				atomic_store_voidptr((void **)
+						     &(wp->
+						       cache[cache_offsetof
+							     (wt, refk.k.ptr)]),
+						     node);
+			}
+		}
+	}
 
-    if (ret) {
-        *lock = &wp->lock;
-    } else {
-        PTHREAD_RWLOCK_unlock(&wp->lock);
-    }
+	if (ret) {
+		*lock = &wp->lock;
+	} else {
+		PTHREAD_RWLOCK_unlock(&wp->lock);
+	}
 
-    return (ret);
+	return (ret);
 }
 
 /**
@@ -337,20 +338,19 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
  * @return The found object, otherwise NULL.
  */
 
-void *gweakref_lookup(gweakref_table_t *wt, gweakref_t *ref)
+void *gweakref_lookup(gweakref_table_t * wt, gweakref_t * ref)
 {
-    pthread_rwlock_t *treelock = NULL;
-    void *result = NULL;
+	pthread_rwlock_t *treelock = NULL;
+	void *result = NULL;
 
-    result = gweakref_lookupex(wt, ref, &treelock);
+	result = gweakref_lookupex(wt, ref, &treelock);
 
-    if (result) {
-        PTHREAD_RWLOCK_unlock(treelock);
-    }
+	if (result) {
+		PTHREAD_RWLOCK_unlock(treelock);
+	}
 
-    return result;
+	return result;
 }
-
 
 #define GWR_FLAG_NONE    0x0000
 #define GWR_FLAG_WLOCKED  0x0001
@@ -368,35 +368,36 @@ void *gweakref_lookup(gweakref_table_t *wt, gweakref_t *ref)
  *                        GWR_FLAG_WLOCKED: Write lock already held
  */
 
-static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
-                                        uint32_t flags)
+static inline void gweakref_delete_impl(gweakref_table_t * wt, gweakref_t * ref,
+					uint32_t flags)
 {
-    struct avltree_node *node;
-    gweakref_priv_t refk, *tref;
-    gweakref_partition_t *wp;
+	struct avltree_node *node;
+	gweakref_priv_t refk, *tref;
+	gweakref_partition_t *wp;
 
-    /* lookup up ref.ptr, delete iff ref.ptr is found and
-     * ref.gen == found.gen */
+	/* lookup up ref.ptr, delete iff ref.ptr is found and
+	 * ref.gen == found.gen */
 
-    refk.k = *ref;
-    wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
-    if (!(flags & GWR_FLAG_WLOCKED))
-        PTHREAD_RWLOCK_wrlock(&wp->lock);
-    node = avltree_lookup(&refk.node_k, &wp->t);
-    if (node) {
-        /* found it, maybe */
-        tref = avltree_container_of(node, gweakref_priv_t, node_k);
-        /* XXX generation mismatch would be in error, we think */
-        if (tref->k.gen == ref->gen) {
-            /* unhook it */
-            avltree_remove(node, &wp->t);
-            gsh_free(tref);
-            if (wp->cache)
-                wp->cache[cache_offsetof(wt, refk.k.ptr)] = NULL;
-        }
-    }
-    if (!(flags & GWR_FLAG_WLOCKED))
-        PTHREAD_RWLOCK_unlock(&wp->lock);
+	refk.k = *ref;
+	wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
+	if (!(flags & GWR_FLAG_WLOCKED))
+		PTHREAD_RWLOCK_wrlock(&wp->lock);
+	node = avltree_lookup(&refk.node_k, &wp->t);
+	if (node) {
+		/* found it, maybe */
+		tref = avltree_container_of(node, gweakref_priv_t, node_k);
+		/* XXX generation mismatch would be in error, we think */
+		if (tref->k.gen == ref->gen) {
+			/* unhook it */
+			avltree_remove(node, &wp->t);
+			gsh_free(tref);
+			if (wp->cache)
+				wp->cache[cache_offsetof(wt, refk.k.ptr)] =
+				    NULL;
+		}
+	}
+	if (!(flags & GWR_FLAG_WLOCKED))
+		PTHREAD_RWLOCK_unlock(&wp->lock);
 }
 
 /**
@@ -409,9 +410,9 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
  * @param ref [in] The entry to delete
  */
 
-void gweakref_delete(gweakref_table_t *wt, gweakref_t *ref)
+void gweakref_delete(gweakref_table_t * wt, gweakref_t * ref)
 {
-    gweakref_delete_impl(wt, ref, GWR_FLAG_NONE);
+	gweakref_delete_impl(wt, ref, GWR_FLAG_NONE);
 }
 
 /**
@@ -423,33 +424,37 @@ void gweakref_delete(gweakref_table_t *wt, gweakref_t *ref)
  * @param wt [in,out] The table to be freed
  */
 
-void gweakref_destroy(gweakref_table_t *wt)
+void gweakref_destroy(gweakref_table_t * wt)
 {
-    struct avltree_node *node, *onode;
-    gweakref_partition_t *wp;
-    gweakref_priv_t *tref;
-    int ix;
+	struct avltree_node *node, *onode;
+	gweakref_partition_t *wp;
+	gweakref_priv_t *tref;
+	int ix;
 
-    /* quiesce the server, then... */
+	/* quiesce the server, then... */
 
-    for (ix = 0; ix < wt->npart; ++ix) {
-        wp = &wt->partition[ix];
-        onode = NULL;
-        node = avltree_first(&wp->t);
-        do {
-            if (onode) {
-                tref = avltree_container_of(onode, gweakref_priv_t, node_k);
-                gsh_free(tref);
-            }
-        } while ((onode = node) && (node = avltree_next(node)));
-        if (onode) {
-            tref = avltree_container_of(onode, gweakref_priv_t, node_k);
-            gsh_free(tref);
-        }
-        avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
-        if (wp->cache)
-            gsh_free(wp->cache);
-    }
-    gsh_free(wt->partition);
-    gsh_free(wt);
+	for (ix = 0; ix < wt->npart; ++ix) {
+		wp = &wt->partition[ix];
+		onode = NULL;
+		node = avltree_first(&wp->t);
+		do {
+			if (onode) {
+				tref =
+				    avltree_container_of(onode, gweakref_priv_t,
+							 node_k);
+				gsh_free(tref);
+			}
+		} while ((onode = node) && (node = avltree_next(node)));
+		if (onode) {
+			tref =
+			    avltree_container_of(onode, gweakref_priv_t,
+						 node_k);
+			gsh_free(tref);
+		}
+		avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */ );
+		if (wp->cache)
+			gsh_free(wp->cache);
+	}
+	gsh_free(wt->partition);
+	gsh_free(wt);
 }
