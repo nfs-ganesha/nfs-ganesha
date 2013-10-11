@@ -59,8 +59,7 @@ char *cached_enctypes = NULL;
 /*
  * Parse the supported encryption type information
  */
-static int
-parse_enctypes(char *enctypes)
+static int parse_enctypes(char *enctypes)
 {
 	int n = 0;
 	char *curr, *comma;
@@ -97,7 +96,7 @@ parse_enctypes(char *enctypes)
 		return ENOENT;
 
 	/* Allocate space for enctypes array */
-	if ((parsed_enctypes = (int *) calloc(n, sizeof(int))) == NULL) {
+	if ((parsed_enctypes = (int *)calloc(n, sizeof(int))) == NULL) {
 		return ENOMEM;
 	}
 
@@ -110,14 +109,13 @@ parse_enctypes(char *enctypes)
 	}
 
 	parsed_num_enctypes = n;
-	if ((cached_enctypes = malloc(strlen(enctypes)+1)))
+	if ((cached_enctypes = malloc(strlen(enctypes) + 1)))
 		strcpy(cached_enctypes, enctypes);
 
 	return 0;
 }
 
-static void
-get_kernel_supported_enctypes(void)
+static void get_kernel_supported_enctypes(void)
 {
 	FILE *s_e;
 	int ret;
@@ -138,10 +136,10 @@ get_kernel_supported_enctypes(void)
 	if (parse_enctypes(buffer)) {
 		goto out_clean_parsed;
 	}
-out:
+ out:
 	return;
 
-out_clean_parsed:
+ out_clean_parsed:
 	if (parsed_enctypes != NULL) {
 		free(parsed_enctypes);
 		parsed_num_enctypes = 0;
@@ -163,15 +161,15 @@ out_clean_parsed:
  *     -1 => there was an error
  */
 
-int
-svcgssd_limit_krb5_enctypes(void)
+int svcgssd_limit_krb5_enctypes(void)
 {
 #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
 	u_int maj_stat, min_stat;
 	krb5_enctype old_kernel_enctypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD5,
-		ENCTYPE_DES_CBC_MD4 };
+		ENCTYPE_DES_CBC_MD4
+	};
 	krb5_enctype new_kernel_enctypes[] = {
 		ENCTYPE_AES256_CTS_HMAC_SHA1_96,
 		ENCTYPE_AES128_CTS_HMAC_SHA1_96,
@@ -179,19 +177,21 @@ svcgssd_limit_krb5_enctypes(void)
 		ENCTYPE_ARCFOUR_HMAC,
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD5,
-		ENCTYPE_DES_CBC_MD4 };
+		ENCTYPE_DES_CBC_MD4
+	};
 	krb5_enctype *default_enctypes, *enctypes;
 	int default_num_enctypes, num_enctypes;
-
 
 	if (linux_version_code() < MAKE_VERSION(2, 6, 35)) {
 		default_enctypes = old_kernel_enctypes;
 		default_num_enctypes =
-			sizeof(old_kernel_enctypes) / sizeof(old_kernel_enctypes[0]);
+		    sizeof(old_kernel_enctypes) /
+		    sizeof(old_kernel_enctypes[0]);
 	} else {
 		default_enctypes = new_kernel_enctypes;
 		default_num_enctypes =
-			sizeof(new_kernel_enctypes) / sizeof(new_kernel_enctypes[0]);
+		    sizeof(new_kernel_enctypes) /
+		    sizeof(new_kernel_enctypes[0]);
 	}
 
 	get_kernel_supported_enctypes();
@@ -199,21 +199,25 @@ svcgssd_limit_krb5_enctypes(void)
 	if (parsed_enctypes != NULL) {
 		enctypes = parsed_enctypes;
 		num_enctypes = parsed_num_enctypes;
-		printerr(2, "%s: Calling gss_set_allowable_enctypes with %d "
-			"enctypes from the kernel\n", __func__, num_enctypes);
+		printerr(2,
+			 "%s: Calling gss_set_allowable_enctypes with %d "
+			 "enctypes from the kernel\n", __func__, num_enctypes);
 	} else {
 		enctypes = default_enctypes;
 		num_enctypes = default_num_enctypes;
-		printerr(2, "%s: Calling gss_set_allowable_enctypes with %d "
-			"enctypes from defaults\n", __func__, num_enctypes);
+		printerr(2,
+			 "%s: Calling gss_set_allowable_enctypes with %d "
+			 "enctypes from defaults\n", __func__, num_enctypes);
 	}
 
-	maj_stat = gss_set_allowable_enctypes(&min_stat, gssd_creds,
-			&krb5oid, num_enctypes, enctypes);
+	maj_stat =
+	    gss_set_allowable_enctypes(&min_stat, gssd_creds, &krb5oid,
+				       num_enctypes, enctypes);
 	if (maj_stat != GSS_S_COMPLETE) {
 		printerr(1, "WARNING: gss_set_allowable_enctypes failed\n");
-		pgsserr("svcgssd_limit_krb5_enctypes: gss_set_allowable_enctypes",
-			maj_stat, min_stat, &krb5oid);
+		pgsserr
+		    ("svcgssd_limit_krb5_enctypes: gss_set_allowable_enctypes",
+		     maj_stat, min_stat, &krb5oid);
 		return -1;
 	}
 #endif

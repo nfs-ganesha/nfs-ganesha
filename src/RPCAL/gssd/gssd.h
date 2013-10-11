@@ -55,37 +55,35 @@
 /*
  * The gss mechanisms that we can handle
  */
-enum {AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUTHTYPE_LIPKEY};
+enum { AUTHTYPE_KRB5, AUTHTYPE_SPKM3, AUTHTYPE_LIPKEY };
 
-
-
-extern char			pipefs_dir[PATH_MAX + 1];
-extern char			keytabfile[PATH_MAX + 1];
-extern char			*ccachesearch[];
-extern int			use_memcache;
-extern int			root_uses_machine_creds;
-extern unsigned int 		context_timeout;
-extern char			*preferred_realm;
+extern char pipefs_dir[PATH_MAX + 1];
+extern char keytabfile[PATH_MAX + 1];
+extern char *ccachesearch[];
+extern int use_memcache;
+extern int root_uses_machine_creds;
+extern unsigned int context_timeout;
+extern char *preferred_realm;
 
 TAILQ_HEAD(clnt_list_head, clnt_info);
 
 extern struct clnt_list_head clnt_list;
 
 struct clnt_info {
-	TAILQ_ENTRY(clnt_info)	list;
-	char			*dirname;
-	int			dir_fd;
-	char			*servicename;
-	char			*servername;
-	int			prog;
-	int			vers;
-	char			*protocol;
-	int			krb5_fd;
-	int			krb5_poll_index;
-	int			spkm3_fd;
-	int			spkm3_poll_index;
-	int                     gssd_fd;
-	int                     gssd_poll_index;
+	TAILQ_ENTRY(clnt_info) list;
+	char *dirname;
+	int dir_fd;
+	char *servicename;
+	char *servername;
+	int prog;
+	int vers;
+	char *protocol;
+	int krb5_fd;
+	int krb5_poll_index;
+	int spkm3_fd;
+	int spkm3_poll_index;
+	int gssd_fd;
+	int gssd_poll_index;
 	struct sockaddr_storage addr;
 };
 
@@ -94,9 +92,9 @@ TAILQ_HEAD(topdirs_list_head, topdirs_info);
 extern struct topdirs_list_head topdirs_list;
 
 struct topdirs_info {
-	TAILQ_ENTRY(topdirs_info)   list;
-	char			*dirname;
-	int			fd;
+	TAILQ_ENTRY(topdirs_info) list;
+	char *dirname;
+	int fd;
 };
 
 void init_client_list(void);
@@ -106,5 +104,4 @@ void handle_spkm3_upcall(struct clnt_info *clp);
 void handle_gssd_upcall(struct clnt_info *clp);
 void gssd_run(void);
 
-
-#endif /* _RPC_GSSD_H_ */
+#endif				/* _RPC_GSSD_H_ */

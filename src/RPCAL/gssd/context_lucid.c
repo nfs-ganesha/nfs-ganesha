@@ -53,21 +53,21 @@
 typedef uint64_t OM_uint64;
 #endif
 
-static int
-write_lucid_keyblock(char **p, char *end, gss_krb5_lucid_key_t *key)
+static int write_lucid_keyblock(char **p, char *end, gss_krb5_lucid_key_t * key)
 {
 	gss_buffer_desc tmp;
 
-	if (WRITE_BYTES(p, end, key->type)) return -1;
+	if (WRITE_BYTES(p, end, key->type))
+		return -1;
 	tmp.length = key->length;
 	tmp.value = key->data;
-	if (write_buffer(p, end, &tmp)) return -1;
+	if (write_buffer(p, end, &tmp))
+		return -1;
 	return 0;
 }
 
-static int
-prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t *lctx,
-	gss_buffer_desc *buf, int32_t *endtime)
+static int prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t * lctx,
+				       gss_buffer_desc * buf, int32_t * endtime)
 {
 #define FAKESEED_SIZE 16
 	char *p, *end;
@@ -95,20 +95,28 @@ prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t *lctx,
 	p = buf->value;
 	end = buf->value + MAX_CTX_LEN;
 
-	if (WRITE_BYTES(&p, end, lctx->initiate)) goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->initiate))
+		goto out_err;
 
 	/* seed_init and seed not used by kernel anyway */
-	if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
-	if (write_bytes(&p, end, &fakeseed, FAKESEED_SIZE)) goto out_err;
+	if (WRITE_BYTES(&p, end, constant_zero))
+		goto out_err;
+	if (write_bytes(&p, end, &fakeseed, FAKESEED_SIZE))
+		goto out_err;
 
-	if (WRITE_BYTES(&p, end, lctx->rfc1964_kd.sign_alg)) goto out_err;
-	if (WRITE_BYTES(&p, end, lctx->rfc1964_kd.seal_alg)) goto out_err;
-	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->rfc1964_kd.sign_alg))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->rfc1964_kd.seal_alg))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->endtime))
+		goto out_err;
 	if (endtime)
 		*endtime = lctx->endtime;
 	word_send_seq = lctx->send_seq;	/* XXX send_seq is 64-bit */
-	if (WRITE_BYTES(&p, end, word_send_seq)) goto out_err;
-	if (write_oid(&p, end, &krb5oid)) goto out_err;
+	if (WRITE_BYTES(&p, end, word_send_seq))
+		goto out_err;
+	if (write_oid(&p, end, &krb5oid))
+		goto out_err;
 
 #ifdef HAVE_HEIMDAL
 	/*
@@ -132,8 +140,8 @@ prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t *lctx,
 	enc_key.length = lctx->rfc1964_kd.ctx_key.length;
 	if ((enc_key.data = calloc(1, enc_key.length)) == NULL)
 		goto out_err;
-	skd = (char *) lctx->rfc1964_kd.ctx_key.data;
-	dkd = (char *) enc_key.data;
+	skd = (char *)lctx->rfc1964_kd.ctx_key.data;
+	dkd = (char *)enc_key.data;
 	for (i = 0; i < enc_key.length; i++)
 		dkd[i] = skd[i] ^ 0xf0;
 	if (write_lucid_keyblock(&p, end, &enc_key)) {
@@ -147,11 +155,13 @@ prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t *lctx,
 
 	buf->length = p - (char *)buf->value;
 	return 0;
-out_err:
+ out_err:
 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
-	if (buf->value) free(buf->value);
+	if (buf->value)
+		free(buf->value);
 	buf->length = 0;
-	if (enc_key.data) free(enc_key.data);
+	if (enc_key.data)
+		free(enc_key.data);
 	return -1;
 }
 
@@ -176,9 +186,8 @@ out_err:
  *	raw key;			( raw key bytes (kernel will derive))
  *
  */
-static int
-prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
-	gss_buffer_desc *buf, int32_t *endtime)
+static int prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t * lctx,
+				       gss_buffer_desc * buf, int32_t * endtime)
 {
 	char *p, *end;
 	uint32_t v2_flags = 0;
@@ -198,11 +207,14 @@ prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
 	if (lctx->protocol != 0 && lctx->cfx_kd.have_acceptor_subkey == 1)
 		v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
 
-	if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
-	if (WRITE_BYTES(&p, end, lctx->endtime)) goto out_err;
+	if (WRITE_BYTES(&p, end, v2_flags))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->endtime))
+		goto out_err;
 	if (endtime)
 		*endtime = lctx->endtime;
-	if (WRITE_BYTES(&p, end, lctx->send_seq)) goto out_err;
+	if (WRITE_BYTES(&p, end, lctx->send_seq))
+		goto out_err;
 
 	/* Protocol 0 here implies DES3 or RC4 */
 	printerr(2, "%s: protocol %d\n", __FUNCTION__, lctx->protocol);
@@ -221,21 +233,24 @@ prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
 	printerr(2, "%s: serializing key with enctype %d and size %d\n",
 		 __FUNCTION__, enctype, keysize);
 
-	if (WRITE_BYTES(&p, end, enctype)) goto out_err;
+	if (WRITE_BYTES(&p, end, enctype))
+		goto out_err;
 
 	if (lctx->protocol == 0) {
-		if (write_bytes(&p, end, lctx->rfc1964_kd.ctx_key.data,
-				lctx->rfc1964_kd.ctx_key.length))
+		if (write_bytes
+		    (&p, end, lctx->rfc1964_kd.ctx_key.data,
+		     lctx->rfc1964_kd.ctx_key.length))
 			goto out_err;
 	} else {
 		if (lctx->cfx_kd.have_acceptor_subkey) {
-			if (write_bytes(&p, end,
-					lctx->cfx_kd.acceptor_subkey.data,
-					lctx->cfx_kd.acceptor_subkey.length))
+			if (write_bytes
+			    (&p, end, lctx->cfx_kd.acceptor_subkey.data,
+			     lctx->cfx_kd.acceptor_subkey.length))
 				goto out_err;
 		} else {
-			if (write_bytes(&p, end, lctx->cfx_kd.ctx_key.data,
-					lctx->cfx_kd.ctx_key.length))
+			if (write_bytes
+			    (&p, end, lctx->cfx_kd.ctx_key.data,
+			     lctx->cfx_kd.ctx_key.length))
 				goto out_err;
 		}
 	}
@@ -243,7 +258,7 @@ prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t *lctx,
 	buf->length = p - (char *)buf->value;
 	return 0;
 
-out_err:
+ out_err:
 	printerr(0, "ERROR: %s: failed serializing krb5 context for kernel\n",
 		 __FUNCTION__);
 	if (buf->value) {
@@ -254,16 +269,15 @@ out_err:
 	return -1;
 }
 
-extern OM_uint32 gss_export_lucid_sec_context(OM_uint32 *min_stat,
-                                              gss_ctx_id_t *ctx,
-                                              int val, void *rctx);
+extern OM_uint32 gss_export_lucid_sec_context(OM_uint32 * min_stat,
+					      gss_ctx_id_t * ctx, int val,
+					      void *rctx);
 
-extern OM_uint32 gss_free_lucid_sec_context(OM_uint32 *min_stat,
-                                            gss_ctx_id_t ctx,
-                                            void *return_ctx);
+extern OM_uint32 gss_free_lucid_sec_context(OM_uint32 * min_stat,
+					    gss_ctx_id_t ctx, void *return_ctx);
 
-int
-serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
+int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+		       int32_t * endtime)
 {
 	OM_uint32 maj_stat, min_stat;
 	void *return_ctx = 0;
@@ -272,23 +286,23 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 	int retcode = 0;
 
 	printerr(2, "DEBUG: %s: lucid version!\n", __FUNCTION__);
-	maj_stat = gss_export_lucid_sec_context(&min_stat, &ctx,
-						1, &return_ctx);
+	maj_stat =
+	    gss_export_lucid_sec_context(&min_stat, &ctx, 1, &return_ctx);
 	if (maj_stat != GSS_S_COMPLETE) {
-		pgsserr("gss_export_lucid_sec_context",
-			maj_stat, min_stat, &krb5oid);
+		pgsserr("gss_export_lucid_sec_context", maj_stat, min_stat,
+			&krb5oid);
 		goto out_err;
 	}
 
 	/* Check the version returned, we only support v1 right now */
-	vers = ((gss_krb5_lucid_context_version_t *)return_ctx)->version;
+	vers = ((gss_krb5_lucid_context_version_t *) return_ctx)->version;
 	switch (vers) {
 	case 1:
 		lctx = (gss_krb5_lucid_context_v1_t *) return_ctx;
 		break;
 	default:
 		printerr(0, "ERROR: unsupported lucid sec context version %d\n",
-			vers);
+			 vers);
 		goto out_err;
 		break;
 	}
@@ -310,8 +324,8 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 
 	maj_stat = gss_free_lucid_sec_context(&min_stat, ctx, return_ctx);
 	if (maj_stat != GSS_S_COMPLETE) {
-		pgsserr("gss_free_lucid_sec_context",
-			maj_stat, min_stat, &krb5oid);
+		pgsserr("gss_free_lucid_sec_context", maj_stat, min_stat,
+			&krb5oid);
 		printerr(0, "WARN: failed to free lucid sec context\n");
 	}
 
@@ -323,11 +337,9 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 
 	return 0;
 
-out_err:
+ out_err:
 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
 	return -1;
 }
 
-
-
-#endif /* HAVE_LUCID_CONTEXT_SUPPORT */
+#endif				/* HAVE_LUCID_CONTEXT_SUPPORT */

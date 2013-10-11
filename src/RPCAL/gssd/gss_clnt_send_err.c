@@ -51,33 +51,35 @@
 
 char pipefsdir[PATH_MAX + 1] = GSSD_PIPEFS_DIR;
 
-static void
-usage(char *progname)
+static void usage(char *progname)
 {
 	fprintf(stderr, "usage: %s clntdir user [user ...]\n", progname);
 	exit(1);
 }
 
-static int
-do_error_downcall(int k5_fd, uid_t uid, int err)
+static int do_error_downcall(int k5_fd, uid_t uid, int err)
 {
-	char    buf[1024];
-	char    *p = buf, *end = buf + 1024;
+	char buf[1024];
+	char *p = buf, *end = buf + 1024;
 	unsigned int timeout = 0;
-	int     zero = 0;
+	int zero = 0;
 
-	if (WRITE_BYTES(&p, end, uid)) return -1;
-	if (WRITE_BYTES(&p, end, timeout)) return -1;
+	if (WRITE_BYTES(&p, end, uid))
+		return -1;
+	if (WRITE_BYTES(&p, end, timeout))
+		return -1;
 	/* use seq_win = 0 to indicate an error: */
-	if (WRITE_BYTES(&p, end, zero)) return -1;
-	if (WRITE_BYTES(&p, end, err)) return -1;
+	if (WRITE_BYTES(&p, end, zero))
+		return -1;
+	if (WRITE_BYTES(&p, end, err))
+		return -1;
 
-	if (write(k5_fd, buf, p - buf) < p - buf) return -1;
+	if (write(k5_fd, buf, p - buf) < p - buf)
+		return -1;
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int fd;
 	int i;

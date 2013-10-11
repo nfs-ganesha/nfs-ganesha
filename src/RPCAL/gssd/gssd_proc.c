@@ -106,9 +106,9 @@ struct clnt_list_head topdirs_list;
 
 struct clnt_list_head clnt_list;
 
-struct pollfd * pollarray;
+struct pollfd *pollarray;
 
-int pollsize;  /* the size of pollaray (in pollfd's) */
+int pollsize;			/* the size of pollaray (in pollfd's) */
 
 /*
  * convert a presentation address string to a sockaddr_storage struct. Returns
@@ -123,25 +123,24 @@ int pollsize;  /* the size of pollaray (in pollfd's) */
  * Microsoft "standard" of using the ipv6-literal.net domainname, but it's
  * not really feasible at present.
  */
-static int
-addrstr_to_sockaddr(struct sockaddr *sa, const char *node, const char *port)
+static int addrstr_to_sockaddr(struct sockaddr *sa, const char *node,
+			       const char *port)
 {
 	int rc;
 	struct addrinfo *res;
-	struct addrinfo hints = { .ai_flags = AI_NUMERICHOST | AI_NUMERICSERV };
+	struct addrinfo hints = {.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV };
 
 #ifndef IPV6_SUPPORTED
 	hints.ai_family = AF_INET;
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 
 	rc = getaddrinfo(node, port, &hints, &res);
 	if (rc) {
 		printerr(0, "ERROR: unable to convert %s|%s to sockaddr: %s\n",
-			 node, port, rc == EAI_SYSTEM ? strerror(errno) :
-						gai_strerror(rc));
+			 node, port,
+			 rc == EAI_SYSTEM ? strerror(errno) : gai_strerror(rc));
 		return 0;
 	}
-
 #ifdef IPV6_SUPPORTED
 	/*
 	 * getnameinfo ignores the scopeid. If the address turns out to have
@@ -151,13 +150,14 @@ addrstr_to_sockaddr(struct sockaddr *sa, const char *node, const char *port)
 	if (res->ai_addr->sa_family == AF_INET6) {
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)res->ai_addr;
 		if (sin6->sin6_scope_id) {
-			printerr(0, "ERROR: address %s has non-zero "
-				    "sin6_scope_id!\n", node);
+			printerr(0,
+				 "ERROR: address %s has non-zero "
+				 "sin6_scope_id!\n", node);
 			freeaddrinfo(res);
 			return 0;
 		}
 	}
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 
 	memcpy(sa, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
@@ -167,13 +167,12 @@ addrstr_to_sockaddr(struct sockaddr *sa, const char *node, const char *port)
 /*
  * convert a sockaddr to a hostname
  */
-static char *
-sockaddr_to_hostname(const struct sockaddr *sa, const char *addr)
+static char *sockaddr_to_hostname(const struct sockaddr *sa, const char *addr)
 {
-	socklen_t		addrlen;
-	int			err;
-	char 			*hostname;
-	char			hbuf[NI_MAXHOST];
+	socklen_t addrlen;
+	int err;
+	char *hostname;
+	char hbuf[NI_MAXHOST];
 
 	switch (sa->sa_family) {
 	case AF_INET:
@@ -183,19 +182,19 @@ sockaddr_to_hostname(const struct sockaddr *sa, const char *addr)
 	case AF_INET6:
 		addrlen = sizeof(struct sockaddr_in6);
 		break;
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 	default:
 		printerr(0, "ERROR: unrecognized addr family %d\n",
 			 sa->sa_family);
 		return NULL;
 	}
 
-	err = getnameinfo(sa, addrlen, hbuf, sizeof(hbuf), NULL, 0,
-			  NI_NAMEREQD);
+	err =
+	    getnameinfo(sa, addrlen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD);
 	if (err) {
 		printerr(0, "ERROR: unable to resolve %s to hostname: %s\n",
-			 addr, err == EAI_SYSTEM ? strerror(err) :
-						   gai_strerror(err));
+			 addr,
+			 err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
 		return NULL;
 	}
 
@@ -205,23 +204,23 @@ sockaddr_to_hostname(const struct sockaddr *sa, const char *addr)
 }
 
 /* XXX buffer problems: */
-static int
-read_service_info(char *info_file_name, char **servicename, char **servername,
-		  int *prog, int *vers, char **protocol,
-		  struct sockaddr *addr) {
+static int read_service_info(char *info_file_name, char **servicename,
+			     char **servername, int *prog, int *vers,
+			     char **protocol, struct sockaddr *addr)
+{
 #define INFOBUFLEN 256
-	char		buf[INFOBUFLEN + 1];
-	static char	dummy[128];
-	int		nbytes;
-	static char	service[128];
-	static char	address[128];
-	char		program[16];
-	char		version[16];
-	char		protoname[16];
-	char		port[128];
-	char		*p;
-	int		fd = -1;
-	int		numfields;
+	char buf[INFOBUFLEN + 1];
+	static char dummy[128];
+	int nbytes;
+	static char service[128];
+	static char address[128];
+	char program[16];
+	char version[16];
+	char protoname[16];
+	char port[128];
+	char *p;
+	int fd = -1;
+	int numfields;
 
 	*servicename = *servername = *protocol = NULL;
 
@@ -235,14 +234,11 @@ read_service_info(char *info_file_name, char **servicename, char **servername,
 	close(fd);
 	buf[nbytes] = '\0';
 
-	numfields = sscanf(buf,"RPC server: %127s\n"
-		   "service: %127s %15s version %15s\n"
-		   "address: %127s\n"
-		   "protocol: %15s\n",
-		   dummy,
-		   service, program, version,
-		   address,
-		   protoname);
+	numfields =
+	    sscanf(buf,
+		   "RPC server: %127s\n" "service: %127s %15s version %15s\n"
+		   "address: %127s\n" "protocol: %15s\n", dummy, service,
+		   program, version, address, protoname);
 
 	if (numfields == 5) {
 		strcpy(protoname, "tcp");
@@ -257,12 +253,12 @@ read_service_info(char *info_file_name, char **servicename, char **servername,
 	/* check service, program, and version */
 	if (memcmp(service, "nfs", 3) != 0)
 		return -1;
-	*prog = atoi(program + 1); /* skip open paren */
+	*prog = atoi(program + 1);	/* skip open paren */
 	*vers = atoi(version);
 
-	if (strlen(service) == 3 ) {
-		if ((*prog != 100003) || ((*vers != 2) && (*vers != 3) &&
-		    (*vers != 4)))
+	if (strlen(service) == 3) {
+		if ((*prog != 100003)
+		    || ((*vers != 2) && (*vers != 3) && (*vers != 4)))
 			goto fail;
 	} else if (memcmp(service, "nfs4_cb", 7) == 0) {
 		if (*vers != 1)
@@ -287,9 +283,10 @@ read_service_info(char *info_file_name, char **servicename, char **servername,
 	if (!(*protocol = strdup(protoname)))
 		goto fail;
 	return 0;
-fail:
+ fail:
 	printerr(0, "ERROR: failed to read service info\n");
-	if (fd != -1) close(fd);
+	if (fd != -1)
+		close(fd);
 	free(*servername);
 	free(*servicename);
 	free(*protocol);
@@ -297,22 +294,25 @@ fail:
 	return -1;
 }
 
-static void
-destroy_client(struct clnt_info *clp)
+static void destroy_client(struct clnt_info *clp)
 {
 	if (clp->krb5_poll_index != -1)
 		memset(&pollarray[clp->krb5_poll_index], 0,
-					sizeof(struct pollfd));
+		       sizeof(struct pollfd));
 	if (clp->spkm3_poll_index != -1)
 		memset(&pollarray[clp->spkm3_poll_index], 0,
-					sizeof(struct pollfd));
+		       sizeof(struct pollfd));
 	if (clp->gssd_poll_index != -1)
 		memset(&pollarray[clp->gssd_poll_index], 0,
-					sizeof(struct pollfd));
-	if (clp->dir_fd != -1) close(clp->dir_fd);
-	if (clp->krb5_fd != -1) close(clp->krb5_fd);
-	if (clp->spkm3_fd != -1) close(clp->spkm3_fd);
-	if (clp->gssd_fd != -1) close(clp->gssd_fd);
+		       sizeof(struct pollfd));
+	if (clp->dir_fd != -1)
+		close(clp->dir_fd);
+	if (clp->krb5_fd != -1)
+		close(clp->krb5_fd);
+	if (clp->spkm3_fd != -1)
+		close(clp->spkm3_fd);
+	if (clp->gssd_fd != -1)
+		close(clp->gssd_fd);
 	free(clp->dirname);
 	free(clp->servicename);
 	free(clp->servername);
@@ -320,12 +320,11 @@ destroy_client(struct clnt_info *clp)
 	free(clp);
 }
 
-static struct clnt_info *
-insert_new_clnt(void)
+static struct clnt_info *insert_new_clnt(void)
 {
-	struct clnt_info	*clp = NULL;
+	struct clnt_info *clp = NULL;
 
-	if (!(clp = (struct clnt_info *)calloc(1,sizeof(struct clnt_info)))) {
+	if (!(clp = (struct clnt_info *)calloc(1, sizeof(struct clnt_info)))) {
 		printerr(0, "ERROR: can't malloc clnt_info: %s\n",
 			 strerror(errno));
 		goto out;
@@ -339,16 +338,15 @@ insert_new_clnt(void)
 	clp->dir_fd = -1;
 
 	TAILQ_INSERT_HEAD(&clnt_list, clp, list);
-out:
+ out:
 	return clp;
 }
 
-static int
-process_clnt_dir_files(struct clnt_info * clp)
+static int process_clnt_dir_files(struct clnt_info *clp)
 {
-	char	name[PATH_MAX + 1];
-	char	gname[PATH_MAX + 1];
-	char	info_file_name[PATH_MAX + 1];
+	char name[PATH_MAX + 1];
+	char gname[PATH_MAX + 1];
+	char info_file_name[PATH_MAX + 1];
 
 	if (clp->gssd_fd == -1) {
 		snprintf(gname, sizeof(gname), "%s/gssd", clp->dirname);
@@ -381,26 +379,25 @@ process_clnt_dir_files(struct clnt_info * clp)
 		}
 	}
 
-	if ((clp->krb5_fd == -1) && (clp->spkm3_fd == -1) &&
-			(clp->gssd_fd == -1))
+	if ((clp->krb5_fd == -1) && (clp->spkm3_fd == -1)
+	    && (clp->gssd_fd == -1))
 		return -1;
 	snprintf(info_file_name, sizeof(info_file_name), "%s/info",
-			clp->dirname);
-	if ((clp->servicename == NULL) &&
-	     read_service_info(info_file_name, &clp->servicename,
-				&clp->servername, &clp->prog, &clp->vers,
-				&clp->protocol, (struct sockaddr *) &clp->addr))
+		 clp->dirname);
+	if ((clp->servicename == NULL)
+	    && read_service_info(info_file_name, &clp->servicename,
+				 &clp->servername, &clp->prog, &clp->vers,
+				 &clp->protocol, (struct sockaddr *)&clp->addr))
 		return -1;
 	return 0;
 }
 
-static int
-get_poll_index(int *ind)
+static int get_poll_index(int *ind)
 {
 	int i;
 
 	*ind = -1;
-	for (i=0; i<FD_ALLOC_BLOCK; i++) {
+	for (i = 0; i < FD_ALLOC_BLOCK; i++) {
 		if (pollarray[i].events == 0) {
 			*ind = i;
 			break;
@@ -413,9 +410,7 @@ get_poll_index(int *ind)
 	return 0;
 }
 
-
-static int
-insert_clnt_poll(struct clnt_info *clp)
+static int insert_clnt_poll(struct clnt_info *clp)
 {
 	if ((clp->gssd_fd != -1) && (clp->gssd_poll_index == -1)) {
 		if (get_poll_index(&clp->gssd_poll_index)) {
@@ -447,10 +442,9 @@ insert_clnt_poll(struct clnt_info *clp)
 	return 0;
 }
 
-static void
-process_clnt_dir(char *dir, char *pdir)
+static void process_clnt_dir(char *dir, char *pdir)
 {
-	struct clnt_info *	clp;
+	struct clnt_info *clp;
 
 	if (!(clp = insert_new_clnt()))
 		goto fail_destroy_client;
@@ -461,8 +455,8 @@ process_clnt_dir(char *dir, char *pdir)
 	}
 	sprintf(clp->dirname, "%s/%s", pdir, dir);
 	if ((clp->dir_fd = open(clp->dirname, O_RDONLY)) == -1) {
-		printerr(0, "ERROR: can't open %s: %s\n",
-			 clp->dirname, strerror(errno));
+		printerr(0, "ERROR: can't open %s: %s\n", clp->dirname,
+			 strerror(errno));
 		goto fail_destroy_client;
 	}
 	fcntl(clp->dir_fd, F_SETSIG, DNOTIFY_SIGNAL);
@@ -476,20 +470,19 @@ process_clnt_dir(char *dir, char *pdir)
 
 	return;
 
-fail_destroy_client:
+ fail_destroy_client:
 	if (clp) {
 		TAILQ_REMOVE(&clnt_list, clp, list);
 		destroy_client(clp);
 	}
-fail_keep_client:
+ fail_keep_client:
 	/* We couldn't find some subdirectories, but we keep the client
 	 * around in case we get a notification on the directory when the
 	 * subdirectories are created. */
 	return;
 }
 
-void
-init_client_list(void)
+void init_client_list(void)
 {
 	TAILQ_INIT(&clnt_list);
 	/* Eventually plan to grow/shrink poll array: */
@@ -502,8 +495,7 @@ init_client_list(void)
  * directories that are no longer around, and re-scan any existing
  * directories, since the DNOTIFY could have been in there.
  */
-static void
-update_old_clients(struct dirent **namelist, int size, char *pdir)
+static void update_old_clients(struct dirent **namelist, int size, char *pdir)
 {
 	struct clnt_info *clp;
 	void *saveprev;
@@ -514,12 +506,13 @@ update_old_clients(struct dirent **namelist, int size, char *pdir)
 		/* only compare entries in the global list that are from the
 		 * same pipefs parent directory as "pdir"
 		 */
-		if (strncmp(clp->dirname, pdir, strlen(pdir)) != 0) continue;
+		if (strncmp(clp->dirname, pdir, strlen(pdir)) != 0)
+			continue;
 
 		stillhere = 0;
-		for (i=0; i < size; i++) {
-			snprintf(fname, sizeof(fname), "%s/%s",
-				 pdir, namelist[i]->d_name);
+		for (i = 0; i < size; i++) {
+			snprintf(fname, sizeof(fname), "%s/%s", pdir,
+				 namelist[i]->d_name);
 			if (strcmp(clp->dirname, fname) == 0) {
 				stillhere = 1;
 				break;
@@ -540,10 +533,9 @@ update_old_clients(struct dirent **namelist, int size, char *pdir)
 }
 
 /* Search for a client by directory name, return 1 if found, 0 otherwise */
-static int
-find_client(char *dirname, char *pdir)
+static int find_client(char *dirname, char *pdir)
 {
-	struct clnt_info	*clp;
+	struct clnt_info *clp;
 	char fname[PATH_MAX + 1];
 
 	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
@@ -554,30 +546,29 @@ find_client(char *dirname, char *pdir)
 	return 0;
 }
 
-static int
-process_pipedir(char *pipe_name)
+static int process_pipedir(char *pipe_name)
 {
 	struct dirent **namelist;
 	int i, j;
 
 	if (chdir(pipe_name) < 0) {
-		printerr(0, "ERROR: can't chdir to %s: %s\n",
-			 pipe_name, strerror(errno));
+		printerr(0, "ERROR: can't chdir to %s: %s\n", pipe_name,
+			 strerror(errno));
 		return -1;
 	}
 
 	j = scandir(pipe_name, &namelist, NULL, alphasort);
 	if (j < 0) {
-		printerr(0, "ERROR: can't scandir %s: %s\n",
-			 pipe_name, strerror(errno));
+		printerr(0, "ERROR: can't scandir %s: %s\n", pipe_name,
+			 strerror(errno));
 		return -1;
 	}
 
 	update_old_clients(namelist, j, pipe_name);
-	for (i=0; i < j; i++) {
+	for (i = 0; i < j; i++) {
 		if (i < FD_ALLOC_BLOCK
-				&& !strncmp(namelist[i]->d_name, "clnt", 4)
-				&& !find_client(namelist[i]->d_name, pipe_name))
+		    && !strncmp(namelist[i]->d_name, "clnt", 4)
+		    && !find_client(namelist[i]->d_name, pipe_name))
 			process_clnt_dir(namelist[i]->d_name, pipe_name);
 		free(namelist[i]);
 	}
@@ -588,8 +579,7 @@ process_pipedir(char *pipe_name)
 }
 
 /* Used to read (and re-read) list of clients, set up poll array. */
-int
-update_client_list(void)
+int update_client_list(void)
 {
 	int retval = -1;
 	struct topdirs_info *tdi;
@@ -607,8 +597,7 @@ update_client_list(void)
 /*
  * Parse the supported encryption type information
  */
-static int
-parse_enctypes(char *enctypes)
+static int parse_enctypes(char *enctypes)
 {
 	int n = 0;
 	char *curr, *comma;
@@ -642,7 +631,7 @@ parse_enctypes(char *enctypes)
 		return ENOENT;
 
 	/* Allocate space for enctypes array */
-	if ((krb5_enctypes = (int *) calloc(n, sizeof(int))) == NULL) {
+	if ((krb5_enctypes = (int *)calloc(n, sizeof(int))) == NULL) {
 		return ENOMEM;
 	}
 
@@ -655,61 +644,73 @@ parse_enctypes(char *enctypes)
 	}
 
 	num_krb5_enctypes = n;
-	if ((cached_types = malloc(strlen(enctypes)+1)))
+	if ((cached_types = malloc(strlen(enctypes) + 1)))
 		strcpy(cached_types, enctypes);
 
 	return 0;
 }
 
-static int
-do_downcall(int k5_fd, uid_t uid, struct authgss_private_data *pd,
-	    gss_buffer_desc *context_token)
+static int do_downcall(int k5_fd, uid_t uid, struct authgss_private_data *pd,
+		       gss_buffer_desc * context_token)
 {
-	char    *buf = NULL, *p = NULL, *end = NULL;
+	char *buf = NULL, *p = NULL, *end = NULL;
 	unsigned int timeout = context_timeout;
 	unsigned int buf_size = 0;
 
 	printerr(1, "doing downcall\n");
-	buf_size = sizeof(uid) + sizeof(timeout) + sizeof(pd->pd_seq_win) +
-		sizeof(pd->pd_ctx_hndl.length) + pd->pd_ctx_hndl.length +
-		sizeof(context_token->length) + context_token->length;
+	buf_size =
+	    sizeof(uid) + sizeof(timeout) + sizeof(pd->pd_seq_win) +
+	    sizeof(pd->pd_ctx_hndl.length) + pd->pd_ctx_hndl.length +
+	    sizeof(context_token->length) + context_token->length;
 	p = buf = malloc(buf_size);
 	end = buf + buf_size;
 
-	if (WRITE_BYTES(&p, end, uid)) goto out_err;
-	if (WRITE_BYTES(&p, end, timeout)) goto out_err;
-	if (WRITE_BYTES(&p, end, pd->pd_seq_win)) goto out_err;
-	if (write_buffer(&p, end, &pd->pd_ctx_hndl)) goto out_err;
-	if (write_buffer(&p, end, context_token)) goto out_err;
+	if (WRITE_BYTES(&p, end, uid))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, timeout))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, pd->pd_seq_win))
+		goto out_err;
+	if (write_buffer(&p, end, &pd->pd_ctx_hndl))
+		goto out_err;
+	if (write_buffer(&p, end, context_token))
+		goto out_err;
 
-	if (write(k5_fd, buf, p - buf) < p - buf) goto out_err;
-	if (buf) free(buf);
+	if (write(k5_fd, buf, p - buf) < p - buf)
+		goto out_err;
+	if (buf)
+		free(buf);
 	return 0;
-out_err:
-	if (buf) free(buf);
+ out_err:
+	if (buf)
+		free(buf);
 	printerr(1, "Failed to write downcall!\n");
 	return -1;
 }
 
-static int
-do_error_downcall(int k5_fd, uid_t uid, int err)
+static int do_error_downcall(int k5_fd, uid_t uid, int err)
 {
-	char	buf[1024];
-	char	*p = buf, *end = buf + 1024;
+	char buf[1024];
+	char *p = buf, *end = buf + 1024;
 	unsigned int timeout = 0;
-	int	zero = 0;
+	int zero = 0;
 
 	printerr(1, "doing error downcall\n");
 
-	if (WRITE_BYTES(&p, end, uid)) goto out_err;
-	if (WRITE_BYTES(&p, end, timeout)) goto out_err;
+	if (WRITE_BYTES(&p, end, uid))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, timeout))
+		goto out_err;
 	/* use seq_win = 0 to indicate an error: */
-	if (WRITE_BYTES(&p, end, zero)) goto out_err;
-	if (WRITE_BYTES(&p, end, err)) goto out_err;
+	if (WRITE_BYTES(&p, end, zero))
+		goto out_err;
+	if (WRITE_BYTES(&p, end, err))
+		goto out_err;
 
-	if (write(k5_fd, buf, p - buf) < p - buf) goto out_err;
+	if (write(k5_fd, buf, p - buf) < p - buf)
+		goto out_err;
 	return 0;
-out_err:
+ out_err:
 	printerr(1, "Failed to write error downcall!\n");
 	return -1;
 }
@@ -723,16 +724,15 @@ out_err:
  * of the port= option or '2049'. The port field in a new sockaddr should
  * reflect the value that was sent by the kernel.
  */
-static int
-populate_port(struct sockaddr *sa, const socklen_t salen,
-	      const rpcprog_t program, const rpcvers_t version,
-	      const unsigned short protocol)
+static int populate_port(struct sockaddr *sa, const socklen_t salen,
+			 const rpcprog_t program, const rpcvers_t version,
+			 const unsigned short protocol)
 {
-	struct sockaddr_in	*s4 = (struct sockaddr_in *) sa;
+	struct sockaddr_in *s4 = (struct sockaddr_in *)sa;
 #ifdef IPV6_SUPPORTED
-	struct sockaddr_in6	*s6 = (struct sockaddr_in6 *) sa;
-#endif /* IPV6_SUPPORTED */
-	unsigned short		port;
+	struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)sa;
+#endif				/* IPV6_SUPPORTED */
+	unsigned short port;
 
 	/*
 	 * Newer kernels send the port in the upcall. If we already have
@@ -754,10 +754,10 @@ populate_port(struct sockaddr *sa, const socklen_t salen,
 			return 1;
 		}
 		break;
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 	default:
 		printerr(0, "ERROR: unsupported address family %d\n",
-			    sa->sa_family);
+			 sa->sa_family);
 		return 0;
 	}
 
@@ -776,12 +776,13 @@ populate_port(struct sockaddr *sa, const socklen_t salen,
 
 	port = nfs_getport(sa, salen, program, version, protocol);
 	if (!port) {
-		printerr(0, "ERROR: unable to obtain port for prog %ld "
-			    "vers %ld\n", program, version);
+		printerr(0,
+			 "ERROR: unable to obtain port for prog %ld "
+			 "vers %ld\n", program, version);
 		return 0;
 	}
 
-set_port:
+ set_port:
 	printerr(2, "DEBUG: setting port to %hu for prog %lu vers %lu\n", port,
 		 program, version);
 
@@ -793,7 +794,7 @@ set_port:
 	case AF_INET6:
 		s6->sin6_port = htons(port);
 		break;
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 	}
 
 	return 1;
@@ -803,55 +804,51 @@ set_port:
  * Create an RPC connection and establish an authenticated
  * gss context with a server.
  */
-int create_auth_rpc_client(struct clnt_info *clp,
-			   CLIENT **clnt_return,
-			   AUTH **auth_return,
-			   uid_t uid,
-			   int authtype)
+int create_auth_rpc_client(struct clnt_info *clp, CLIENT ** clnt_return,
+			   AUTH ** auth_return, uid_t uid, int authtype)
 {
-	CLIENT			*rpc_clnt = NULL;
-	struct rpc_gss_sec	sec;
-	AUTH			*auth = NULL;
-	uid_t			save_uid = -1;
-	int			retval = -1;
-	OM_uint32		min_stat;
-	char			rpc_errmsg[1024];
-	int			protocol;
-	struct timeval		timeout = {5, 0};
-	struct sockaddr		*addr = (struct sockaddr *) &clp->addr;
-	socklen_t		salen;
+	CLIENT *rpc_clnt = NULL;
+	struct rpc_gss_sec sec;
+	AUTH *auth = NULL;
+	uid_t save_uid = -1;
+	int retval = -1;
+	OM_uint32 min_stat;
+	char rpc_errmsg[1024];
+	int protocol;
+	struct timeval timeout = { 5, 0 };
+	struct sockaddr *addr = (struct sockaddr *)&clp->addr;
+	socklen_t salen;
 
 	/* Create the context as the user (not as root) */
 	save_uid = geteuid();
 	if (setfsuid(uid) != 0) {
-		printerr(0, "WARNING: Failed to setfsuid for "
-			    "user with uid %d\n", uid);
+		printerr(0,
+			 "WARNING: Failed to setfsuid for "
+			 "user with uid %d\n", uid);
 		goto out_fail;
 	}
-	printerr(2, "creating context using fsuid %d (save_uid %d)\n",
-			uid, save_uid);
+	printerr(2, "creating context using fsuid %d (save_uid %d)\n", uid,
+		 save_uid);
 
 	sec.qop = GSS_C_QOP_DEFAULT;
 	sec.svc = RPCSEC_GSS_SVC_NONE;
 	sec.cred = GSS_C_NO_CREDENTIAL;
 	sec.req_flags = 0;
 	if (authtype == AUTHTYPE_KRB5) {
-		sec.mech = (gss_OID)&krb5oid;
+		sec.mech = (gss_OID) & krb5oid;
 		sec.req_flags = GSS_C_MUTUAL_FLAG;
-	}
-	else if (authtype == AUTHTYPE_SPKM3) {
-		sec.mech = (gss_OID)&spkm3oid;
+	} else if (authtype == AUTHTYPE_SPKM3) {
+		sec.mech = (gss_OID) & spkm3oid;
 		/* XXX sec.req_flags = GSS_C_ANON_FLAG;
 		 * Need a way to switch....
 		 */
 		sec.req_flags = GSS_C_MUTUAL_FLAG;
-	}
-	else {
-		printerr(0, "ERROR: Invalid authentication type (%d) "
-			"in create_auth_rpc_client\n", authtype);
+	} else {
+		printerr(0,
+			 "ERROR: Invalid authentication type (%d) "
+			 "in create_auth_rpc_client\n", authtype);
 		goto out_fail;
 	}
-
 
 	if (authtype == AUTHTYPE_KRB5) {
 #ifdef HAVE_SET_ALLOWABLE_ENCTYPES
@@ -860,8 +857,9 @@ int create_auth_rpc_client(struct clnt_info *clp,
 		 * rpc connection if it fails!
 		 */
 		if (limit_krb5_enctypes(&sec)) {
-			printerr(1, "WARNING: Failed while limiting krb5 "
-				    "encryption types for user with uid %d\n",
+			printerr(1,
+				 "WARNING: Failed while limiting krb5 "
+				 "encryption types for user with uid %d\n",
 				 uid);
 			goto out_fail;
 		}
@@ -871,14 +869,15 @@ int create_auth_rpc_client(struct clnt_info *clp,
 	/* create an rpc connection to the nfs server */
 
 	printerr(2, "creating %s client for server %s\n", clp->protocol,
-			clp->servername);
+		 clp->servername);
 
 	if ((strcmp(clp->protocol, "tcp")) == 0) {
 		protocol = IPPROTO_TCP;
 	} else if ((strcmp(clp->protocol, "udp")) == 0) {
 		protocol = IPPROTO_UDP;
 	} else {
-		printerr(0, "WARNING: unrecognized protocol, '%s', requested "
+		printerr(0,
+			 "WARNING: unrecognized protocol, '%s', requested "
 			 "for connection to server %s for user with uid %d\n",
 			 clp->protocol, clp->servername, uid);
 		goto out_fail;
@@ -892,7 +891,7 @@ int create_auth_rpc_client(struct clnt_info *clp,
 	case AF_INET6:
 		salen = sizeof(struct sockaddr_in6);
 		break;
-#endif /* IPV6_SUPPORTED */
+#endif				/* IPV6_SUPPORTED */
 	default:
 		printerr(1, "ERROR: Unknown address family %d\n",
 			 addr->sa_family);
@@ -902,16 +901,16 @@ int create_auth_rpc_client(struct clnt_info *clp,
 	if (!populate_port(addr, salen, clp->prog, clp->vers, protocol))
 		goto out_fail;
 
-	rpc_clnt = nfs_get_rpcclient(addr, salen, protocol, clp->prog,
-				     clp->vers, &timeout);
+	rpc_clnt =
+	    nfs_get_rpcclient(addr, salen, protocol, clp->prog, clp->vers,
+			      &timeout);
 	if (!rpc_clnt) {
 		snprintf(rpc_errmsg, sizeof(rpc_errmsg),
 			 "WARNING: can't create %s rpc_clnt to server %s for "
 			 "user with uid %d",
 			 protocol == IPPROTO_TCP ? "tcp" : "udp",
 			 clp->servername, uid);
-		printerr(0, "%s\n",
-			 clnt_spcreateerror(rpc_errmsg));
+		printerr(0, "%s\n", clnt_spcreateerror(rpc_errmsg));
 		goto out_fail;
 	}
 
@@ -919,10 +918,11 @@ int create_auth_rpc_client(struct clnt_info *clp,
 	auth = authgss_create_default(rpc_clnt, clp->servicename, &sec);
 	if (!auth) {
 		/* Our caller should print appropriate message */
-		printerr(2, "WARNING: Failed to create %s context for "
-			    "user with uid %d for server %s\n",
-			(authtype == AUTHTYPE_KRB5 ? "krb5":"spkm3"),
-			 uid, clp->servername);
+		printerr(2,
+			 "WARNING: Failed to create %s context for "
+			 "user with uid %d for server %s\n",
+			 (authtype == AUTHTYPE_KRB5 ? "krb5" : "spkm3"), uid,
+			 clp->servername);
 		goto out_fail;
 	}
 
@@ -932,19 +932,21 @@ int create_auth_rpc_client(struct clnt_info *clp,
 	*auth_return = auth;
 	retval = 0;
 
-  out:
+ out:
 	if (sec.cred != GSS_C_NO_CREDENTIAL)
 		gss_release_cred(&min_stat, &sec.cred);
 	/* Restore euid to original value */
 	if (((int)save_uid != -1) && (setfsuid(save_uid) != (int)uid)) {
-		printerr(0, "WARNING: Failed to restore fsuid"
-			    " to uid %d from %d\n", save_uid, uid);
+		printerr(0,
+			 "WARNING: Failed to restore fsuid"
+			 " to uid %d from %d\n", save_uid, uid);
 	}
 	return retval;
 
-  out_fail:
+ out_fail:
 	/* Only destroy here if failure.  Otherwise, caller is responsible */
-	if (rpc_clnt) clnt_destroy(rpc_clnt);
+	if (rpc_clnt)
+		clnt_destroy(rpc_clnt);
 
 	goto out;
 }
@@ -953,19 +955,18 @@ int create_auth_rpc_client(struct clnt_info *clp,
  * this code uses the userland rpcsec gss library to create a krb5
  * context on behalf of the kernel
  */
-static void
-process_krb5_upcall(struct clnt_info *clp, uid_t uid, int fd, char *tgtname,
-		    char *service)
+static void process_krb5_upcall(struct clnt_info *clp, uid_t uid, int fd,
+				char *tgtname, char *service)
 {
-	CLIENT			*rpc_clnt = NULL;
-	AUTH			*auth = NULL;
+	CLIENT *rpc_clnt = NULL;
+	AUTH *auth = NULL;
 	struct authgss_private_data pd;
-	gss_buffer_desc		token;
-	char			**credlist = NULL;
-	char			**ccname;
-	char			**dirname;
-	int			create_resp = -1;
-	int			err, downcall_err = -EACCES;
+	gss_buffer_desc token;
+	char **credlist = NULL;
+	char **ccname;
+	char **dirname;
+	int create_resp = -1;
+	int err, downcall_err = -EACCES;
 
 	printerr(1, "handling krb5 upcall (%s)\n", clp->dirname);
 
@@ -1002,90 +1003,107 @@ process_krb5_upcall(struct clnt_info *clp, uid_t uid, int fd, char *tgtname,
 	 */
 	printerr(2, "%s: service is '%s'\n", __func__,
 		 service ? service : "<null>");
-	if (uid != 0 || (uid == 0 && root_uses_machine_creds == 0 &&
-				service == NULL)) {
+	if (uid != 0
+	    || (uid == 0 && root_uses_machine_creds == 0 && service == NULL)) {
 		/* Tell krb5 gss which credentials cache to use */
 		for (dirname = ccachesearch; *dirname != NULL; dirname++) {
-			err = gssd_setup_krb5_user_gss_ccache(uid, clp->servername, *dirname);
+			err =
+			    gssd_setup_krb5_user_gss_ccache(uid,
+							    clp->servername,
+							    *dirname);
 			if (err == -EKEYEXPIRED)
 				downcall_err = -EKEYEXPIRED;
 			else if (!err)
-				create_resp = create_auth_rpc_client(clp, &rpc_clnt, &auth, uid,
-							     AUTHTYPE_KRB5);
+				create_resp =
+				    create_auth_rpc_client(clp, &rpc_clnt,
+							   &auth, uid,
+							   AUTHTYPE_KRB5);
 			if (create_resp == 0)
 				break;
 		}
 	}
 	if (create_resp != 0) {
-		if (uid == 0 && (root_uses_machine_creds == 1 ||
-				service != NULL)) {
+		if (uid == 0
+		    && (root_uses_machine_creds == 1 || service != NULL)) {
 			int nocache = 0;
 			int success = 0;
 			do {
-				gssd_refresh_krb5_machine_credential(clp->servername,
-								     NULL, service);
+				gssd_refresh_krb5_machine_credential(clp->
+								     servername,
+								     NULL,
+								     service);
 				/*
 				 * Get a list of credential cache names and try each
 				 * of them until one works or we've tried them all
 				 */
 				if (gssd_get_krb5_machine_cred_list(&credlist)) {
-					printerr(0, "ERROR: No credentials found "
+					printerr(0,
+						 "ERROR: No credentials found "
 						 "for connection to server %s\n",
 						 clp->servername);
-						goto out_return_error;
+					goto out_return_error;
 				}
-				for (ccname = credlist; ccname && *ccname; ccname++) {
-					gssd_setup_krb5_machine_gss_ccache(*ccname);
-					if ((create_auth_rpc_client(clp, &rpc_clnt,
-								    &auth, uid,
-								    AUTHTYPE_KRB5)) == 0) {
+				for (ccname = credlist; ccname && *ccname;
+				     ccname++) {
+					gssd_setup_krb5_machine_gss_ccache
+					    (*ccname);
+					if ((create_auth_rpc_client
+					     (clp, &rpc_clnt, &auth, uid,
+					      AUTHTYPE_KRB5)) == 0) {
 						/* Success! */
 						success++;
 						break;
-					} 
-					printerr(2, "WARNING: Failed to create machine krb5 context "
+					}
+					printerr(2,
+						 "WARNING: Failed to create machine krb5 context "
 						 "with credentials cache %s for server %s\n",
 						 *ccname, clp->servername);
 				}
-				gssd_free_krb5_machine_cred_list(credlist);			
+				gssd_free_krb5_machine_cred_list(credlist);
 				if (!success) {
-					if(nocache == 0) {
+					if (nocache == 0) {
 						nocache++;
-						printerr(2, "WARNING: Machine cache is prematurely expired or corrupted "
-						            "trying to recreate cache for server %s\n", clp->servername);
+						printerr(2,
+							 "WARNING: Machine cache is prematurely expired or corrupted "
+							 "trying to recreate cache for server %s\n",
+							 clp->servername);
 					} else {
-						printerr(1, "WARNING: Failed to create machine krb5 context "
-						 "with any credentials cache for server %s\n",
-						 clp->servername);
+						printerr(1,
+							 "WARNING: Failed to create machine krb5 context "
+							 "with any credentials cache for server %s\n",
+							 clp->servername);
 						goto out_return_error;
 					}
 				}
-			} while(!success);
+			} while (!success);
 		} else {
-			printerr(1, "WARNING: Failed to create krb5 context "
-				 "for user with uid %d for server %s\n",
-				 uid, clp->servername);
+			printerr(1,
+				 "WARNING: Failed to create krb5 context "
+				 "for user with uid %d for server %s\n", uid,
+				 clp->servername);
 			goto out_return_error;
 		}
 	}
 
 	if (!authgss_get_private_data(auth, &pd)) {
-		printerr(1, "WARNING: Failed to obtain authentication "
-			    "data for user with uid %d for server %s\n",
-			 uid, clp->servername);
+		printerr(1,
+			 "WARNING: Failed to obtain authentication "
+			 "data for user with uid %d for server %s\n", uid,
+			 clp->servername);
 		goto out_return_error;
 	}
 
 	if (serialize_context_for_kernel(pd.pd_ctx, &token, &krb5oid, NULL)) {
-		printerr(0, "WARNING: Failed to serialize krb5 context for "
-			    "user with uid %d for server %s\n",
-			 uid, clp->servername);
+		printerr(0,
+			 "WARNING: Failed to serialize krb5 context for "
+			 "user with uid %d for server %s\n", uid,
+			 clp->servername);
 		goto out_return_error;
 	}
 
 	do_downcall(fd, uid, &pd, &token);
 
-out:
+ out:
 	if (token.value)
 		free(token.value);
 #ifndef HAVE_LIBTIRPC
@@ -1098,7 +1116,7 @@ out:
 		clnt_destroy(rpc_clnt);
 	return;
 
-out_return_error:
+ out_return_error:
 	do_error_downcall(fd, uid, downcall_err);
 	goto out;
 }
@@ -1107,13 +1125,12 @@ out_return_error:
  * this code uses the userland rpcsec gss library to create an spkm3
  * context on behalf of the kernel
  */
-static void
-process_spkm3_upcall(struct clnt_info *clp, uid_t uid, int fd)
+static void process_spkm3_upcall(struct clnt_info *clp, uid_t uid, int fd)
 {
-	CLIENT			*rpc_clnt = NULL;
-	AUTH			*auth = NULL;
+	CLIENT *rpc_clnt = NULL;
+	AUTH *auth = NULL;
 	struct authgss_private_data pd;
-	gss_buffer_desc		token;
+	gss_buffer_desc token;
 
 	printerr(2, "handling spkm3 upcall (%s)\n", clp->dirname);
 
@@ -1121,28 +1138,30 @@ process_spkm3_upcall(struct clnt_info *clp, uid_t uid, int fd)
 	token.value = NULL;
 
 	if (create_auth_rpc_client(clp, &rpc_clnt, &auth, uid, AUTHTYPE_SPKM3)) {
-		printerr(0, "WARNING: Failed to create spkm3 context for "
-			    "user with uid %d\n", uid);
+		printerr(0,
+			 "WARNING: Failed to create spkm3 context for "
+			 "user with uid %d\n", uid);
 		goto out_return_error;
 	}
 
 	if (!authgss_get_private_data(auth, &pd)) {
-		printerr(0, "WARNING: Failed to obtain authentication "
-			    "data for user with uid %d for server %s\n",
-			 uid, clp->servername);
+		printerr(0,
+			 "WARNING: Failed to obtain authentication "
+			 "data for user with uid %d for server %s\n", uid,
+			 clp->servername);
 		goto out_return_error;
 	}
 
 	if (serialize_context_for_kernel(pd.pd_ctx, &token, &spkm3oid, NULL)) {
-		printerr(0, "WARNING: Failed to serialize spkm3 context for "
-			    "user with uid %d for server\n",
-			 uid, clp->servername);
+		printerr(0,
+			 "WARNING: Failed to serialize spkm3 context for "
+			 "user with uid %d for server\n", uid, clp->servername);
 		goto out_return_error;
 	}
 
 	do_downcall(fd, uid, &pd, &token);
 
-out:
+ out:
 	if (token.value)
 		free(token.value);
 	if (auth)
@@ -1151,32 +1170,32 @@ out:
 		clnt_destroy(rpc_clnt);
 	return;
 
-out_return_error:
+ out_return_error:
 	do_error_downcall(fd, uid, -1);
 	goto out;
 }
 
-void
-handle_krb5_upcall(struct clnt_info *clp)
+void handle_krb5_upcall(struct clnt_info *clp)
 {
-	uid_t			uid;
+	uid_t uid;
 
-	if (read(clp->krb5_fd, &uid, sizeof(uid)) < (ssize_t)sizeof(uid)) {
-		printerr(0, "WARNING: failed reading uid from krb5 "
-			    "upcall pipe: %s\n", strerror(errno));
+	if (read(clp->krb5_fd, &uid, sizeof(uid)) < (ssize_t) sizeof(uid)) {
+		printerr(0,
+			 "WARNING: failed reading uid from krb5 "
+			 "upcall pipe: %s\n", strerror(errno));
 		return;
 	}
 
 	return process_krb5_upcall(clp, uid, clp->krb5_fd, NULL, NULL);
 }
 
-void
-handle_spkm3_upcall(struct clnt_info *clp)
+void handle_spkm3_upcall(struct clnt_info *clp)
 {
-	uid_t			uid;
+	uid_t uid;
 
-	if (read(clp->spkm3_fd, &uid, sizeof(uid)) < (ssize_t)sizeof(uid)) {
-		printerr(0, "WARNING: failed reading uid from spkm3 "
+	if (read(clp->spkm3_fd, &uid, sizeof(uid)) < (ssize_t) sizeof(uid)) {
+		printerr(0,
+			 "WARNING: failed reading uid from spkm3 "
 			 "upcall pipe: %s\n", strerror(errno));
 		return;
 	}
@@ -1184,23 +1203,23 @@ handle_spkm3_upcall(struct clnt_info *clp)
 	return process_spkm3_upcall(clp, uid, clp->spkm3_fd);
 }
 
-void
-handle_gssd_upcall(struct clnt_info *clp)
+void handle_gssd_upcall(struct clnt_info *clp)
 {
-	uid_t			uid;
-	char			*lbuf = NULL;
-	int			lbuflen = 0;
-	char			*p;
-	char			*mech = NULL;
-	char			*target = NULL;
-	char			*service = NULL;
-	char			*enctypes = NULL;
+	uid_t uid;
+	char *lbuf = NULL;
+	int lbuflen = 0;
+	char *p;
+	char *mech = NULL;
+	char *target = NULL;
+	char *service = NULL;
+	char *enctypes = NULL;
 
 	printerr(1, "handling gssd upcall (%s)\n", clp->dirname);
 
 	if (readline(clp->gssd_fd, &lbuf, &lbuflen) != 1) {
-		printerr(0, "WARNING: handle_gssd_upcall: "
-			    "failed reading request\n");
+		printerr(0,
+			 "WARNING: handle_gssd_upcall: "
+			 "failed reading request\n");
 		return;
 	}
 	printerr(2, "%s: '%s'\n", __func__, lbuf);
@@ -1211,30 +1230,33 @@ handle_gssd_upcall(struct clnt_info *clp)
 		if (!mech)
 			goto out;
 		if (sscanf(p, "mech=%s", mech) != 1) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				    "failed to parse gss mechanism name "
-				    "in upcall string '%s'\n", lbuf);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "failed to parse gss mechanism name "
+				 "in upcall string '%s'\n", lbuf);
 			goto out;
 		}
 	} else {
-		printerr(0, "WARNING: handle_gssd_upcall: "
-			    "failed to find gss mechanism name "
-			    "in upcall string '%s'\n", lbuf);
+		printerr(0,
+			 "WARNING: handle_gssd_upcall: "
+			 "failed to find gss mechanism name "
+			 "in upcall string '%s'\n", lbuf);
 		goto out;
 	}
 
 	/* read uid */
 	if ((p = strstr(lbuf, "uid=")) != NULL) {
 		if (sscanf(p, "uid=%d", &uid) != 1) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				    "failed to parse uid "
-				    "in upcall string '%s'\n", lbuf);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "failed to parse uid "
+				 "in upcall string '%s'\n", lbuf);
 			goto out;
 		}
 	} else {
-		printerr(0, "WARNING: handle_gssd_upcall: "
-			    "failed to find uid "
-			    "in upcall string '%s'\n", lbuf);
+		printerr(0,
+			 "WARNING: handle_gssd_upcall: " "failed to find uid "
+			 "in upcall string '%s'\n", lbuf);
 		goto out;
 	}
 
@@ -1244,14 +1266,17 @@ handle_gssd_upcall(struct clnt_info *clp)
 		if (!enctypes)
 			goto out;
 		if (sscanf(p, "enctypes=%s", enctypes) != 1) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				    "failed to parse encryption types "
-				    "in upcall string '%s'\n", lbuf);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "failed to parse encryption types "
+				 "in upcall string '%s'\n", lbuf);
 			goto out;
 		}
 		if (parse_enctypes(enctypes) != 0) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				"parsing encryption types failed: errno %d\n", errno);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "parsing encryption types failed: errno %d\n",
+				 errno);
 		}
 	}
 
@@ -1261,9 +1286,10 @@ handle_gssd_upcall(struct clnt_info *clp)
 		if (!target)
 			goto out;
 		if (sscanf(p, "target=%s", target) != 1) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				    "failed to parse target name "
-				    "in upcall string '%s'\n", lbuf);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "failed to parse target name "
+				 "in upcall string '%s'\n", lbuf);
 			goto out;
 		}
 	}
@@ -1283,9 +1309,10 @@ handle_gssd_upcall(struct clnt_info *clp)
 		if (!service)
 			goto out;
 		if (sscanf(p, "service=%s", service) != 1) {
-			printerr(0, "WARNING: handle_gssd_upcall: "
-				    "failed to parse service type "
-				    "in upcall string '%s'\n", lbuf);
+			printerr(0,
+				 "WARNING: handle_gssd_upcall: "
+				 "failed to parse service type "
+				 "in upcall string '%s'\n", lbuf);
 			goto out;
 		}
 	}
@@ -1295,15 +1322,15 @@ handle_gssd_upcall(struct clnt_info *clp)
 	else if (strcmp(mech, "spkm3") == 0)
 		process_spkm3_upcall(clp, uid, clp->gssd_fd);
 	else
-		printerr(0, "WARNING: handle_gssd_upcall: "
-			    "received unknown gss mech '%s'\n", mech);
+		printerr(0,
+			 "WARNING: handle_gssd_upcall: "
+			 "received unknown gss mech '%s'\n", mech);
 
-out:
+ out:
 	free(lbuf);
 	free(mech);
 	free(enctypes);
 	free(target);
 	free(service);
-	return;	
+	return;
 }
-

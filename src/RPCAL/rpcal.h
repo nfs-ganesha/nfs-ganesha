@@ -9,10 +9,10 @@
 
 #ifdef _HAVE_GSSAPI
 
-extern int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
-extern void free_svc_authgss(SVCXPRT *xprt);
+extern int copy_svc_authgss(SVCXPRT * xprt_copy, SVCXPRT * xprt_orig);
+extern void free_svc_authgss(SVCXPRT * xprt);
 extern int sprint_ctx(char *buff, unsigned char *ctx, int len);
 
-#endif                          /* _HAVE_GSSAPI */
+#endif				/* _HAVE_GSSAPI */
 
-#endif /* GANESHA_RPCAL_H */
+#endif				/* GANESHA_RPCAL_H */

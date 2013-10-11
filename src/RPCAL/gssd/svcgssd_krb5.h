@@ -33,4 +33,4 @@
 
 int svcgssd_limit_krb5_enctypes(void);
 
-#endif /* SVCGSSD_KRB5_H */
+#endif				/* SVCGSSD_KRB5_H */

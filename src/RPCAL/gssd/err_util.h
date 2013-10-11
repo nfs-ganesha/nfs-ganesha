@@ -35,7 +35,7 @@ void initerr(char *progname, int verbosity, int fg);
 int get_verbosity(void);
 
 #if NFS_GANESHA
-typedef void (*gssd_err_func_t)(const char *fmt, ...);
+typedef void (*gssd_err_func_t) (const char *fmt, ...);
 extern gssd_err_func_t gss_err;
 void gssd_set_err(gssd_err_func_t func);
 
@@ -45,4 +45,4 @@ void gssd_set_err(gssd_err_func_t func);
 void printerr(int priority, char *format, ...);
 #endif
 
-#endif /* _ERR_UTIL_H_ */
+#endif				/* _ERR_UTIL_H_ */

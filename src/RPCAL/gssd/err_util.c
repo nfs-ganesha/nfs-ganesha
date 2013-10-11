@@ -42,27 +42,27 @@
 
 void gssd_err_default(int priority, const char *fmt, ...)
 {
-    /* XXX do something */
+	/* XXX do something */
 }
 
 gssd_err_func_t gss_err = (gssd_err_func_t) gssd_err_default;
 
 void initerr(char *progname, int set_verbosity, int set_fg)
 {
-    /* do nothing */
+	/* do nothing */
 }
 
 void gssd_set_err(gssd_err_func_t func)
 {
-    gss_err = func;
+	gss_err = func;
 }
 
 int get_verbosity(void)
 {
-    return (0);
+	return (0);
 }
 
-#else /* ! GANESHA */
+#else				/* ! GANESHA */
 
 #include "xlog.h"
 
@@ -76,7 +76,6 @@ void initerr(char *progname, int set_verbosity, int set_fg)
 	if (!fg)
 		xlog_open(progname);
 }
-
 
 void printerr(int priority, char *format, ...)
 {
@@ -99,4 +98,4 @@ int get_verbosity(void)
 	return verbosity;
 }
 
-#endif /* ! NFS_GANESHA */
+#endif				/* ! NFS_GANESHA */

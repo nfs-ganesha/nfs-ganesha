@@ -57,9 +57,9 @@ char pipefs_dir[PATH_MAX + 1] = GSSD_PIPEFS_DIR;
 char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
 char ccachedir[PATH_MAX + 1] = GSSD_DEFAULT_CRED_DIR;
 char *ccachesearch[GSSD_MAX_CCACHE_SEARCH + 1];
-int  use_memcache = 0;
-int  root_uses_machine_creds = 1;
-unsigned int  context_timeout = 0;
+int use_memcache = 0;
+int root_uses_machine_creds = 1;
+unsigned int context_timeout = 0;
 char *preferred_realm = NULL;
 
 /* Encryption types supported by the kernel rpcsec_gss code */
@@ -68,8 +68,7 @@ krb5_enctype *krb5_enctypes = NULL;
 
 #if !defined(NFS_GANESHA)
 
-void
-sig_die(int signal)
+void sig_die(int signal)
 {
 	/* destroy krb5 machine creds */
 	if (root_uses_machine_creds)
@@ -78,24 +77,22 @@ sig_die(int signal)
 	exit(1);
 }
 
-void
-sig_hup(int signal)
+void sig_hup(int signal)
 {
 	/* don't exit on SIGHUP */
 	printerr(1, "Received SIGHUP(%d)... Ignoring.\n", signal);
 	return;
 }
 
-static void
-usage(char *progname)
+static void usage(char *progname)
 {
-	fprintf(stderr, "usage: %s [-f] [-M] [-n] [-v] [-r] [-p pipefsdir] [-k keytab] [-d ccachedir] [-t timeout] [-R preferred realm]\n",
+	fprintf(stderr,
+		"usage: %s [-f] [-M] [-n] [-v] [-r] [-p pipefsdir] [-k keytab] [-d ccachedir] [-t timeout] [-R preferred realm]\n",
 		progname);
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int fg = 0;
 	int verbosity = 0;
@@ -108,48 +105,48 @@ main(int argc, char *argv[])
 	memset(ccachesearch, 0, sizeof(ccachesearch));
 	while ((opt = getopt(argc, argv, "fvrmnMp:k:d:t:R:")) != -1) {
 		switch (opt) {
-			case 'f':
-				fg = 1;
-				break;
-			case 'm':
-				/* Accept but ignore this. Now the default. */
-				break;
-			case 'M':
-				use_memcache = 1;
-				break;
-			case 'n':
-				root_uses_machine_creds = 0;
-				break;
-			case 'v':
-				verbosity++;
-				break;
-			case 'r':
-				rpc_verbosity++;
-				break;
-			case 'p':
-				strmaxcpy(pipefs_dir, optarg, sizeof(pipefs_dir));
-				if (pipefs_dir[sizeof(pipefs_dir)-1] != '\0')
-					errx(1, "pipefs path name too long");
-				break;
-			case 'k':
-				strmaxcpy(keytabfile, optarg, sizeof(keytabfile));
-				if (keytabfile[sizeof(keytabfile)-1] != '\0')
-					errx(1, "keytab path name too long");
-				break;
-			case 'd':
-				strmaxcpy(ccachedir, optarg, sizeof(ccachedir));
-				if (ccachedir[sizeof(ccachedir)-1] != '\0')
-					errx(1, "ccachedir path name too long");
-				break;
-			case 't':
-				context_timeout = atoi(optarg);
-				break;
-			case 'R':
-				preferred_realm = strdup(optarg);
-				break;
-			default:
-				usage(argv[0]);
-				break;
+		case 'f':
+			fg = 1;
+			break;
+		case 'm':
+			/* Accept but ignore this. Now the default. */
+			break;
+		case 'M':
+			use_memcache = 1;
+			break;
+		case 'n':
+			root_uses_machine_creds = 0;
+			break;
+		case 'v':
+			verbosity++;
+			break;
+		case 'r':
+			rpc_verbosity++;
+			break;
+		case 'p':
+			strmaxcpy(pipefs_dir, optarg, sizeof(pipefs_dir));
+			if (pipefs_dir[sizeof(pipefs_dir) - 1] != '\0')
+				errx(1, "pipefs path name too long");
+			break;
+		case 'k':
+			strmaxcpy(keytabfile, optarg, sizeof(keytabfile));
+			if (keytabfile[sizeof(keytabfile) - 1] != '\0')
+				errx(1, "keytab path name too long");
+			break;
+		case 'd':
+			strmaxcpy(ccachedir, optarg, sizeof(ccachedir));
+			if (ccachedir[sizeof(ccachedir) - 1] != '\0')
+				errx(1, "ccachedir path name too long");
+			break;
+		case 't':
+			context_timeout = atoi(optarg);
+			break;
+		case 'R':
+			preferred_realm = strdup(optarg);
+			break;
+		default:
+			usage(argv[0]);
+			break;
 		}
 	}
 
@@ -157,7 +154,7 @@ main(int argc, char *argv[])
 	ccachesearch[i++] = strtok(ccachedir, ":");
 	do {
 		ccachesearch[i++] = strtok(NULL, ":");
-	} while (ccachesearch[i-1] != NULL && i < GSSD_MAX_CCACHE_SEARCH);
+	} while (ccachesearch[i - 1] != NULL && i < GSSD_MAX_CCACHE_SEARCH);
 
 	if (preferred_realm == NULL)
 		gssd_k5_get_default_realm(&preferred_realm);
@@ -173,9 +170,10 @@ main(int argc, char *argv[])
 		rpc_verbosity = verbosity;
 	authgss_set_debug_level(rpc_verbosity);
 #else
-        if (rpc_verbosity > 0)
-		printerr(0, "Warning: rpcsec_gss library does not "
-			    "support setting debug level\n");
+	if (rpc_verbosity > 0)
+		printerr(0,
+			 "Warning: rpcsec_gss library does not "
+			 "support setting debug level\n");
 #endif
 
 	if (gssd_check_mechs() != 0)
@@ -193,4 +191,4 @@ main(int argc, char *argv[])
 	abort();
 }
 
-#endif /* ! NFS_GANESHA */
+#endif				/* ! NFS_GANESHA */

@@ -48,20 +48,19 @@
 #include "svcgssd.h"
 #include "err_util.h"
 
-void
-gssd_run()
+void gssd_run()
 {
-	int			ret;
-	FILE			*f;
-	struct pollfd		pollfd;
+	int ret;
+	FILE *f;
+	struct pollfd pollfd;
 
 #define NULLRPC_FILE "/proc/net/rpc/auth.rpcsec.init/channel"
 
 	f = fopen(NULLRPC_FILE, "rw");
 
 	if (!f) {
-		printerr(0, "failed to open %s: %s\n",
-			 NULLRPC_FILE, strerror(errno));
+		printerr(0, "failed to open %s: %s\n", NULLRPC_FILE,
+			 strerror(errno));
 		exit(1);
 	}
 	pollfd.fd = fileno(f);
@@ -83,7 +82,7 @@ gssd_run()
 		} else {
 			if (ret != 1) {
 				printerr(0, "bug: unexpected poll return %d\n",
-						ret);
+					 ret);
 				exit(1);
 			}
 			if (pollfd.revents & POLLIN)

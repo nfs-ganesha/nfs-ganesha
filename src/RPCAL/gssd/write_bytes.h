@@ -35,8 +35,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>		/* for ntohl */
 
-inline static int
-write_bytes(char **ptr, const char *end, const void *arg, int arg_len)
+inline static int write_bytes(char **ptr, const char *end, const void *arg,
+			      int arg_len)
 {
 	char *p = *ptr, *arg_end;
 
@@ -50,10 +50,9 @@ write_bytes(char **ptr, const char *end, const void *arg, int arg_len)
 
 #define WRITE_BYTES(p, end, arg) write_bytes(p, end, &arg, sizeof(arg))
 
-inline static int
-write_buffer(char **p, char *end, gss_buffer_desc *arg)
+inline static int write_buffer(char **p, char *end, gss_buffer_desc * arg)
 {
-	int len = (int)arg->length;		/* make an int out of size_t */
+	int len = (int)arg->length;	/* make an int out of size_t */
 	if (WRITE_BYTES(p, end, len))
 		return -1;
 	if (*p + len > end)
@@ -63,10 +62,9 @@ write_buffer(char **p, char *end, gss_buffer_desc *arg)
 	return 0;
 }
 
-inline static int
-write_oid(char **p, char *end, gss_OID_desc *arg)
+inline static int write_oid(char **p, char *end, gss_OID_desc * arg)
 {
-	int len = (int)arg->length;		/* make an int out of size_t */
+	int len = (int)arg->length;	/* make an int out of size_t */
 	if (WRITE_BYTES(p, end, len))
 		return -1;
 	if (*p + arg->length > end)
@@ -76,8 +74,7 @@ write_oid(char **p, char *end, gss_OID_desc *arg)
 	return 0;
 }
 
-static inline int
-get_bytes(char **ptr, const char *end, void *res, int len)
+static inline int get_bytes(char **ptr, const char *end, void *res, int len)
 {
 	char *p, *q;
 	p = *ptr;
@@ -89,15 +86,14 @@ get_bytes(char **ptr, const char *end, void *res, int len)
 	return 0;
 }
 
-static inline int
-get_buffer(char **ptr, const char *end, gss_buffer_desc *res)
+static inline int get_buffer(char **ptr, const char *end, gss_buffer_desc * res)
 {
 	char *p, *q;
 	p = *ptr;
 	int len;
 	if (get_bytes(&p, end, &len, sizeof(len)))
 		return -1;
-	res->length = len;		/* promote to size_t if necessary */
+	res->length = len;	/* promote to size_t if necessary */
 	q = p + res->length;
 	if (q > end || q < p)
 		return -1;
@@ -108,8 +104,8 @@ get_buffer(char **ptr, const char *end, gss_buffer_desc *res)
 	return 0;
 }
 
-static inline int
-xdr_get_u32(u_int32_t **ptr, const u_int32_t *end, u_int32_t *res)
+static inline int xdr_get_u32(u_int32_t ** ptr, const u_int32_t * end,
+			      u_int32_t * res)
 {
 	if (get_bytes((char **)ptr, (char *)end, res, sizeof(res)))
 		return -1;
@@ -117,8 +113,8 @@ xdr_get_u32(u_int32_t **ptr, const u_int32_t *end, u_int32_t *res)
 	return 0;
 }
 
-static inline int
-xdr_get_buffer(u_int32_t **ptr, const u_int32_t *end, gss_buffer_desc *res)
+static inline int xdr_get_buffer(u_int32_t ** ptr, const u_int32_t * end,
+				 gss_buffer_desc * res)
 {
 	u_int32_t *p, *q;
 	u_int32_t len;
@@ -136,8 +132,8 @@ xdr_get_buffer(u_int32_t **ptr, const u_int32_t *end, gss_buffer_desc *res)
 	return 0;
 }
 
-static inline int
-xdr_write_u32(u_int32_t **ptr, const u_int32_t *end, u_int32_t arg)
+static inline int xdr_write_u32(u_int32_t ** ptr, const u_int32_t * end,
+				u_int32_t arg)
 {
 	u_int32_t tmp;
 
@@ -145,8 +141,8 @@ xdr_write_u32(u_int32_t **ptr, const u_int32_t *end, u_int32_t arg)
 	return WRITE_BYTES((char **)ptr, (char *)end, tmp);
 }
 
-static inline int
-xdr_write_buffer(u_int32_t **ptr, const u_int32_t *end, gss_buffer_desc *arg)
+static inline int xdr_write_buffer(u_int32_t ** ptr, const u_int32_t * end,
+				   gss_buffer_desc * arg)
 {
 	int len = arg->length;
 	if (xdr_write_u32(ptr, end, len))
@@ -155,4 +151,4 @@ xdr_write_buffer(u_int32_t **ptr, const u_int32_t *end, gss_buffer_desc *arg)
 			   (arg->length + 3) & ~3);
 }
 
-#endif /* _WRITE_BYTES_H_ */
+#endif				/* _WRITE_BYTES_H_ */

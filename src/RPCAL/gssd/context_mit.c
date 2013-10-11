@@ -54,48 +54,48 @@
  */
 
 typedef struct _krb5_gss_ctx_id_rec {
-   unsigned int initiate : 1;   /* nonzero if initiating, zero if accepting */
-   unsigned int established : 1;
-   unsigned int big_endian : 1;
-   unsigned int have_acceptor_subkey : 1;
-   unsigned int seed_init : 1;  /* XXX tested but never actually set */
+	unsigned int initiate:1;	/* nonzero if initiating, zero if accepting */
+	unsigned int established:1;
+	unsigned int big_endian:1;
+	unsigned int have_acceptor_subkey:1;
+	unsigned int seed_init:1;	/* XXX tested but never actually set */
 #ifdef CFX_EXERCISE
-   unsigned int testing_unknown_tokid : 1; /* for testing only */
+	unsigned int testing_unknown_tokid:1;	/* for testing only */
 #endif
-   OM_uint32 gss_flags;
-   unsigned char seed[16];
-   krb5_principal here;
-   krb5_principal there;
-   krb5_keyblock *subkey;
-   int signalg;
-   size_t cksum_size;
-   int sealalg;
-   krb5_keyblock *enc;
-   krb5_keyblock *seq;
-   krb5_timestamp endtime;
-   krb5_flags krb_flags;
-   /* XXX these used to be signed.  the old spec is inspecific, and
-      the new spec specifies unsigned.  I don't believe that the change
-      affects the wire encoding. */
-   uint64_t seq_send;		/* gssint_uint64 */
-   uint64_t seq_recv;		/* gssint_uint64 */
-   void *seqstate;
-   krb5_auth_context auth_context;
-   gss_OID_desc *mech_used;	/* gss_OID_desc */
-    /* Protocol spec revision
-       0 => RFC 1964 with 3DES and RC4 enhancements
-       1 => draft-ietf-krb-wg-gssapi-cfx-01
-       No others defined so far.  */
-   int proto;
-   krb5_cksumtype cksumtype;    /* for "main" subkey */
-   krb5_keyblock *acceptor_subkey; /* CFX only */
-   krb5_cksumtype acceptor_subkey_cksumtype;
+	OM_uint32 gss_flags;
+	unsigned char seed[16];
+	krb5_principal here;
+	krb5_principal there;
+	krb5_keyblock *subkey;
+	int signalg;
+	size_t cksum_size;
+	int sealalg;
+	krb5_keyblock *enc;
+	krb5_keyblock *seq;
+	krb5_timestamp endtime;
+	krb5_flags krb_flags;
+	/* XXX these used to be signed.  the old spec is inspecific, and
+	   the new spec specifies unsigned.  I don't believe that the change
+	   affects the wire encoding. */
+	uint64_t seq_send;	/* gssint_uint64 */
+	uint64_t seq_recv;	/* gssint_uint64 */
+	void *seqstate;
+	krb5_auth_context auth_context;
+	gss_OID_desc *mech_used;	/* gss_OID_desc */
+	/* Protocol spec revision
+	   0 => RFC 1964 with 3DES and RC4 enhancements
+	   1 => draft-ietf-krb-wg-gssapi-cfx-01
+	   No others defined so far.  */
+	int proto;
+	krb5_cksumtype cksumtype;	/* for "main" subkey */
+	krb5_keyblock *acceptor_subkey;	/* CFX only */
+	krb5_cksumtype acceptor_subkey_cksumtype;
 #ifdef CFX_EXERCISE
-    gss_buffer_desc init_token;
+	gss_buffer_desc init_token;
 #endif
 } krb5_gss_ctx_id_rec, *krb5_gss_ctx_id_t;
 
-#else	/* KRB5_VERSION > 131 */
+#else				/* KRB5_VERSION > 131 */
 
 typedef struct _krb5_gss_ctx_id_rec {
 	int initiate;
@@ -123,18 +123,18 @@ typedef struct _krb5_gss_ctx_id_rec {
 	krb5_cksumtype *ctypes;
 } krb5_gss_ctx_id_rec, *krb5_gss_ctx_id_t;
 
-#endif /* KRB5_VERSION */
+#endif				/* KRB5_VERSION */
 
-
-static int
-write_keyblock(char **p, char *end, struct _krb5_keyblock *arg)
+static int write_keyblock(char **p, char *end, struct _krb5_keyblock *arg)
 {
 	gss_buffer_desc tmp;
 
-	if (WRITE_BYTES(p, end, arg->enctype)) return -1;
+	if (WRITE_BYTES(p, end, arg->enctype))
+		return -1;
 	tmp.length = arg->length;
 	tmp.value = arg->contents;
-	if (write_buffer(p, end, &tmp)) return -1;
+	if (write_buffer(p, end, &tmp))
+		return -1;
 	return 0;
 }
 
@@ -145,18 +145,19 @@ write_keyblock(char **p, char *end, struct _krb5_keyblock *arg)
  * prior to 1.4 -- which gives us "legal" access to the context info.
  */
 typedef struct gss_union_ctx_id_t {
-	gss_OID         mech_type;
-	gss_ctx_id_t    internal_ctx_id;
+	gss_OID mech_type;
+	gss_ctx_id_t internal_ctx_id;
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
 
-int
-serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
+int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+		       int32_t * endtime)
 {
-        krb5_gss_ctx_id_t kctx = (krb5_gss_ctx_id_t) ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
+	krb5_gss_ctx_id_t kctx =
+	    (krb5_gss_ctx_id_t) ((gss_union_ctx_id_t) ctx)->internal_ctx_id;
 	char *p, *end;
 	static int constant_zero = 0;
 	static int constant_one = 1;
-        static int constant_two __attribute__((unused)) = 2;
+	static int constant_two __attribute__ ((unused)) = 2;
 	uint32_t word_seq_send;
 	u_int64_t seq_send_64bit;
 	uint32_t v2_flags = 0;
@@ -173,34 +174,44 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 	case ENCTYPE_DES_CBC_RAW:
 		/* Old format of context to the kernel */
 		if (kctx->initiate) {
-			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
-		}
-		else {
-			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+			if (WRITE_BYTES(&p, end, constant_one))
+				goto out_err;
+		} else {
+			if (WRITE_BYTES(&p, end, constant_zero))
+				goto out_err;
 		}
 		if (kctx->seed_init) {
-			if (WRITE_BYTES(&p, end, constant_one)) goto out_err;
-		}
-		else {
-			if (WRITE_BYTES(&p, end, constant_zero)) goto out_err;
+			if (WRITE_BYTES(&p, end, constant_one))
+				goto out_err;
+		} else {
+			if (WRITE_BYTES(&p, end, constant_zero))
+				goto out_err;
 		}
 		if (write_bytes(&p, end, &kctx->seed, sizeof(kctx->seed)))
 			goto out_err;
-		if (WRITE_BYTES(&p, end, kctx->signalg)) goto out_err;
-		if (WRITE_BYTES(&p, end, kctx->sealalg)) goto out_err;
-		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
+		if (WRITE_BYTES(&p, end, kctx->signalg))
+			goto out_err;
+		if (WRITE_BYTES(&p, end, kctx->sealalg))
+			goto out_err;
+		if (WRITE_BYTES(&p, end, kctx->endtime))
+			goto out_err;
 		if (endtime)
 			*endtime = kctx->endtime;
 		word_seq_send = kctx->seq_send;
-		if (WRITE_BYTES(&p, end, word_seq_send)) goto out_err;
-		if (write_oid(&p, end, kctx->mech_used)) goto out_err;
+		if (WRITE_BYTES(&p, end, word_seq_send))
+			goto out_err;
+		if (write_oid(&p, end, kctx->mech_used))
+			goto out_err;
 
-		printerr(2, "serialize_krb5_ctx: serializing keys with "
-			 "enctype %d and length %d\n",
-			 kctx->enc->enctype, kctx->enc->length);
+		printerr(2,
+			 "serialize_krb5_ctx: serializing keys with "
+			 "enctype %d and length %d\n", kctx->enc->enctype,
+			 kctx->enc->length);
 
-		if (write_keyblock(&p, end, kctx->enc)) goto out_err;
-		if (write_keyblock(&p, end, kctx->seq)) goto out_err;
+		if (write_keyblock(&p, end, kctx->enc))
+			goto out_err;
+		if (write_keyblock(&p, end, kctx->seq))
+			goto out_err;
 		break;
 	case ENCTYPE_DES3_CBC_RAW:
 	case ENCTYPE_DES3_CBC_SHA1:
@@ -225,38 +236,45 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 			v2_flags |= KRB5_CTX_FLAG_CFX;
 		if (kctx->have_acceptor_subkey)
 			v2_flags |= KRB5_CTX_FLAG_ACCEPTOR_SUBKEY;
-		if (WRITE_BYTES(&p, end, v2_flags)) goto out_err;
-		if (WRITE_BYTES(&p, end, kctx->endtime)) goto out_err;
+		if (WRITE_BYTES(&p, end, v2_flags))
+			goto out_err;
+		if (WRITE_BYTES(&p, end, kctx->endtime))
+			goto out_err;
 
 		seq_send_64bit = kctx->seq_send;
-		if (WRITE_BYTES(&p, end, seq_send_64bit)) goto out_err;
+		if (WRITE_BYTES(&p, end, seq_send_64bit))
+			goto out_err;
 
 		if (kctx->have_acceptor_subkey) {
-			if (WRITE_BYTES(&p, end, kctx->acceptor_subkey->enctype))
+			if (WRITE_BYTES
+			    (&p, end, kctx->acceptor_subkey->enctype))
 				goto out_err;
-			printerr(2, "serialize_krb5_ctx: serializing subkey "
+			printerr(2,
+				 "serialize_krb5_ctx: serializing subkey "
 				 "with enctype %d and size %d\n",
 				 kctx->acceptor_subkey->enctype,
 				 kctx->acceptor_subkey->length);
 
-			if (write_bytes(&p, end,
-					kctx->acceptor_subkey->contents,
-					kctx->acceptor_subkey->length))
+			if (write_bytes
+			    (&p, end, kctx->acceptor_subkey->contents,
+			     kctx->acceptor_subkey->length))
 				goto out_err;
 		} else {
 			if (WRITE_BYTES(&p, end, kctx->enc->enctype))
 				goto out_err;
-			printerr(2, "serialize_krb5_ctx: serializing key "
+			printerr(2,
+				 "serialize_krb5_ctx: serializing key "
 				 "with enctype %d and size %d\n",
 				 kctx->enc->enctype, kctx->enc->length);
 
-			if (write_bytes(&p, end, kctx->enc->contents,
-					kctx->enc->length))
+			if (write_bytes
+			    (&p, end, kctx->enc->contents, kctx->enc->length))
 				goto out_err;
 		}
 		break;
 	default:
-		printerr(0, "ERROR: serialize_krb5_ctx: unsupported encryption "
+		printerr(0,
+			 "ERROR: serialize_krb5_ctx: unsupported encryption "
 			 "algorithm %d\n", kctx->enc->enctype);
 		goto out_err;
 	}
@@ -264,7 +282,7 @@ serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 	buf->length = p - (char *)buf->value;
 	return 0;
 
-out_err:
+ out_err:
 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
 	if (buf->value) {
 		free(buf->value);
@@ -274,5 +292,5 @@ out_err:
 	return -1;
 }
 
-#endif /* HAVE_KRB5 */
-#endif /* HAVE_LUCID_CONTEXT_SUPPORT */
+#endif				/* HAVE_KRB5 */
+#endif				/* HAVE_LUCID_CONTEXT_SUPPORT */

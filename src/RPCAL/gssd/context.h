@@ -41,11 +41,11 @@
 #define KRB5_CTX_FLAG_CFX               0x00000002
 #define KRB5_CTX_FLAG_ACCEPTOR_SUBKEY   0x00000004
 
-int serialize_context_for_kernel(gss_ctx_id_t ctx, gss_buffer_desc *buf,
-				 gss_OID mech, int32_t *endtime);
-int serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf,
-			int32_t *endtime);
-int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf,
-		       int32_t *endtime);
+int serialize_context_for_kernel(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+				 gss_OID mech, int32_t * endtime);
+int serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+			int32_t * endtime);
+int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+		       int32_t * endtime);
 
-#endif /* _CONTEXT_H_ */
+#endif				/* _CONTEXT_H_ */

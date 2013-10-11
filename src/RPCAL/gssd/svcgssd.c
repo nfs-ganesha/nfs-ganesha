@@ -47,7 +47,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-
 #include <unistd.h>
 #include <err.h>
 #include <stdio.h>
@@ -66,21 +65,20 @@
  * child dies or writes a '1' on the pipe signaling
  * that it started successfully.
  */
-int pipefds[2] = { -1, -1};
+int pipefds[2] = { -1, -1 };
 
-static void
-mydaemon(int nochdir, int noclose)
+static void mydaemon(int nochdir, int noclose)
 {
 	int pid, status, tempfd;
 
 	if (pipe(pipefds) < 0) {
-		printerr(1, "mydaemon: pipe() failed: errno %d (%s)\n",
-			errno, strerror(errno));
+		printerr(1, "mydaemon: pipe() failed: errno %d (%s)\n", errno,
+			 strerror(errno));
 		exit(1);
 	}
-	if ((pid = fork ()) < 0) {
-		printerr(1, "mydaemon: fork() failed: errno %d (%s)\n",
-			errno, strerror(errno));
+	if ((pid = fork()) < 0) {
+		printerr(1, "mydaemon: fork() failed: errno %d (%s)\n", errno,
+			 strerror(errno));
 		exit(1);
 	}
 
@@ -91,15 +89,15 @@ mydaemon(int nochdir, int noclose)
 		close(pipefds[1]);
 		if (read(pipefds[0], &status, 1) != 1)
 			exit(1);
-		exit (0);
+		exit(0);
 	}
-	/* Child.	*/
+	/* Child.       */
 	close(pipefds[0]);
-	setsid ();
+	setsid();
 	if (nochdir == 0) {
-		if (chdir ("/") == -1) {
+		if (chdir("/") == -1) {
 			printerr(1, "mydaemon: chdir() failed: errno %d (%s)\n",
-				errno, strerror(errno));
+				 errno, strerror(errno));
 			exit(1);
 		}
 	}
@@ -108,7 +106,7 @@ mydaemon(int nochdir, int noclose)
 		pipefds[1] = dup(pipefds[1]);
 		if (pipefds[1] < 0) {
 			printerr(1, "mydaemon: dup() failed: errno %d (%s)\n",
-				errno, strerror(errno));
+				 errno, strerror(errno));
 			exit(1);
 		}
 	}
@@ -121,8 +119,9 @@ mydaemon(int nochdir, int noclose)
 			dup2(tempfd, 2);
 			close(tempfd);
 		} else {
-			printerr(1, "mydaemon: can't open /dev/null: errno %d "
-				    "(%s)\n", errno, strerror(errno));
+			printerr(1,
+				 "mydaemon: can't open /dev/null: errno %d "
+				 "(%s)\n", errno, strerror(errno));
 			exit(1);
 		}
 	}
@@ -130,48 +129,43 @@ mydaemon(int nochdir, int noclose)
 	return;
 }
 
-static void
-release_parent(void)
+static void release_parent(void)
 {
 	int status;
 
 	if (pipefds[1] > 0) {
 		if (write(pipefds[1], &status, 1) != 1) {
-			printerr(1, 
-				"WARN: writing to parent pipe failed: errno %d (%s)\n",
-				errno, strerror(errno));
+			printerr(1,
+				 "WARN: writing to parent pipe failed: errno %d (%s)\n",
+				 errno, strerror(errno));
 		}
 		close(pipefds[1]);
 		pipefds[1] = -1;
 	}
 }
 
-void
-sig_die(int signal)
+void sig_die(int signal)
 {
 	/* destroy krb5 machine creds */
 	printerr(1, "exiting on signal %d\n", signal);
 	exit(1);
 }
 
-void
-sig_hup(int signal)
+void sig_hup(int signal)
 {
 	/* don't exit on SIGHUP */
 	printerr(1, "Received SIGHUP(%d)... Ignoring.\n", signal);
 	return;
 }
 
-static void
-usage(char *progname)
+static void usage(char *progname)
 {
 	fprintf(stderr, "usage: %s [-n] [-f] [-v] [-r] [-i] [-p principal]\n",
 		progname);
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int get_creds = 1;
 	int fg = 0;
@@ -185,27 +179,27 @@ main(int argc, char *argv[])
 
 	while ((opt = getopt(argc, argv, "fivrnp:")) != -1) {
 		switch (opt) {
-			case 'f':
-				fg = 1;
-				break;
-			case 'i':
-				idmap_verbosity++;
-				break;
-			case 'n':
-				get_creds = 0;
-				break;
-			case 'v':
-				verbosity++;
-				break;
-			case 'r':
-				rpc_verbosity++;
-				break;
-			case 'p':
-				principal = optarg;
-				break;
-			default:
-				usage(argv[0]);
-				break;
+		case 'f':
+			fg = 1;
+			break;
+		case 'i':
+			idmap_verbosity++;
+			break;
+		case 'n':
+			get_creds = 0;
+			break;
+		case 'v':
+			verbosity++;
+			break;
+		case 'r':
+			rpc_verbosity++;
+			break;
+		case 'p':
+			principal = optarg;
+			break;
+		default:
+			usage(argv[0]);
+			break;
 		}
 	}
 
@@ -221,17 +215,19 @@ main(int argc, char *argv[])
 	authgss_set_debug_level(rpc_verbosity);
 #else
 	if (rpc_verbosity > 0)
-		printerr(0, "Warning: rpcsec_gss library does not "
-			    "support setting debug level\n");
+		printerr(0,
+			 "Warning: rpcsec_gss library does not "
+			 "support setting debug level\n");
 #endif
 #ifdef HAVE_NFS4_SET_DEBUG
-		if (verbosity && idmap_verbosity == 0)
-			idmap_verbosity = verbosity;
-        nfs4_set_debug(idmap_verbosity, NULL);
+	if (verbosity && idmap_verbosity == 0)
+		idmap_verbosity = verbosity;
+	nfs4_set_debug(idmap_verbosity, NULL);
 #else
 	if (idmap_verbosity > 0)
-		printerr(0, "Warning: your nfsidmap library does not "
-			    "support setting debug level\n");
+		printerr(0,
+			 "Warning: your nfsidmap library does not "
+			 "support setting debug level\n");
 #endif
 
 	if (gssd_check_mechs() != 0) {
@@ -248,21 +244,29 @@ main(int argc, char *argv[])
 
 	if (get_creds) {
 		if (principal)
-			status = gssd_acquire_cred(principal, 
-				((const gss_OID)GSS_C_NT_USER_NAME));
+			status =
+			    gssd_acquire_cred(principal,
+					      ((const gss_OID)
+					       GSS_C_NT_USER_NAME));
 		else
-			status = gssd_acquire_cred(GSSD_SERVICE_NAME, 
-				(const gss_OID)GSS_C_NT_HOSTBASED_SERVICE);
+			status =
+			    gssd_acquire_cred(GSSD_SERVICE_NAME,
+					      (const gss_OID)
+					      GSS_C_NT_HOSTBASED_SERVICE);
 		if (!status) {
-			printerr(0, "unable to obtain root (machine) credentials\n");
-			printerr(0, "do you have a keytab entry for "
-				"nfs/<your.host>@<YOUR.REALM> in "
-				"/etc/krb5.keytab?\n");
+			printerr(0,
+				 "unable to obtain root (machine) credentials\n");
+			printerr(0,
+				 "do you have a keytab entry for "
+				 "nfs/<your.host>@<YOUR.REALM> in "
+				 "/etc/krb5.keytab?\n");
 			exit(1);
 		}
 	} else {
-		status = gssd_acquire_cred(NULL,
-			(const gss_OID)GSS_C_NT_HOSTBASED_SERVICE);
+		status =
+		    gssd_acquire_cred(NULL,
+				      (const gss_OID)
+				      GSS_C_NT_HOSTBASED_SERVICE);
 		if (!status) {
 			printerr(0, "unable to obtain nameless credentials\n");
 			exit(1);
@@ -272,7 +276,7 @@ main(int argc, char *argv[])
 	if (!fg)
 		release_parent();
 
-	nfs4_init_name_mapping(NULL); /* XXX: should only do this once */
+	nfs4_init_name_mapping(NULL);	/* XXX: should only do this once */
 	gssd_run();
 	printerr(0, "gssd_run returned!\n");
 	abort();

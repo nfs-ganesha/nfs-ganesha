@@ -58,24 +58,23 @@
 #include "gss_oids.h"
 #include "svcgssd_krb5.h"
 
-extern char * mech2file(gss_OID mech);
+extern char *mech2file(gss_OID mech);
 #define SVCGSSD_CONTEXT_CHANNEL "/proc/net/rpc/auth.rpcsec.context/channel"
 #define SVCGSSD_INIT_CHANNEL    "/proc/net/rpc/auth.rpcsec.init/channel"
 
 #define TOKEN_BUF_SIZE		8192
 
 struct svc_cred {
-	uid_t	cr_uid;
-	gid_t	cr_gid;
-	int	cr_ngroups;
-	gid_t	cr_groups[NGROUPS];
+	uid_t cr_uid;
+	gid_t cr_gid;
+	int cr_ngroups;
+	gid_t cr_groups[NGROUPS];
 };
 static char vbuf[RPC_CHAN_BUF_SIZE];
 
-static int
-do_svc_downcall(gss_buffer_desc *out_handle, struct svc_cred *cred,
-		gss_OID mech, gss_buffer_desc *context_token,
-		int32_t endtime, char *client_name)
+static int do_svc_downcall(gss_buffer_desc * out_handle, struct svc_cred *cred,
+			   gss_OID mech, gss_buffer_desc * context_token,
+			   int32_t endtime, char *client_name)
 {
 	FILE *f;
 	int i;
@@ -87,9 +86,9 @@ do_svc_downcall(gss_buffer_desc *out_handle, struct svc_cred *cred,
 		goto out_err;
 	f = fopen(SVCGSSD_CONTEXT_CHANNEL, "w");
 	if (f == NULL) {
-		printerr(0, "WARNING: unable to open downcall channel "
-			     "%s: %s\n",
-			     SVCGSSD_CONTEXT_CHANNEL, strerror(errno));
+		printerr(0,
+			 "WARNING: unable to open downcall channel " "%s: %s\n",
+			 SVCGSSD_CONTEXT_CHANNEL, strerror(errno));
 		goto out_err;
 	}
 	setvbuf(f, vbuf, _IOLBF, RPC_CHAN_BUF_SIZE);
@@ -100,15 +99,15 @@ do_svc_downcall(gss_buffer_desc *out_handle, struct svc_cred *cred,
 	qword_printint(f, cred->cr_uid);
 	qword_printint(f, cred->cr_gid);
 	qword_printint(f, cred->cr_ngroups);
-	printerr(2, "mech: %s, hndl len: %d, ctx len %d, timeout: %d (%d from now), "
-		 "clnt: %s, uid: %d, gid: %d, num aux grps: %d:\n",
-		 fname, out_handle->length, context_token->length,
-		 endtime, endtime - time(0),
-		 client_name ? client_name : "<null>",
+	printerr(2,
+		 "mech: %s, hndl len: %d, ctx len %d, timeout: %d (%d from now), "
+		 "clnt: %s, uid: %d, gid: %d, num aux grps: %d:\n", fname,
+		 out_handle->length, context_token->length, endtime,
+		 endtime - time(0), client_name ? client_name : "<null>",
 		 cred->cr_uid, cred->cr_gid, cred->cr_ngroups);
-	for (i=0; i < cred->cr_ngroups; i++) {
+	for (i = 0; i < cred->cr_ngroups; i++) {
 		qword_printint(f, cred->cr_groups[i]);
-		printerr(2, "  (%4d) %d\n", i+1, cred->cr_groups[i]);
+		printerr(2, "  (%4d) %d\n", i + 1, cred->cr_groups[i]);
 	}
 	qword_print(f, fname);
 	qword_printhex(f, context_token->value, context_token->length);
@@ -116,27 +115,28 @@ do_svc_downcall(gss_buffer_desc *out_handle, struct svc_cred *cred,
 		qword_print(f, client_name);
 	err = qword_eol(f);
 	if (err) {
-		printerr(1, "WARNING: error writing to downcall channel "
+		printerr(1,
+			 "WARNING: error writing to downcall channel "
 			 "%s: %s\n", SVCGSSD_CONTEXT_CHANNEL, strerror(errno));
 	}
 	fclose(f);
 	return err;
-out_err:
+ out_err:
 	printerr(1, "WARNING: downcall failed\n");
 	return -1;
 }
 
 struct gss_verifier {
-	u_int32_t	flav;
-	gss_buffer_desc	body;
+	u_int32_t flav;
+	gss_buffer_desc body;
 };
 
 #define RPCSEC_GSS_SEQ_WIN	5
 
-static int
-send_response(gss_buffer_desc *in_handle, gss_buffer_desc *in_token,
-	      u_int32_t maj_stat, u_int32_t min_stat,
-	      gss_buffer_desc *out_handle, gss_buffer_desc *out_token)
+static int send_response(gss_buffer_desc * in_handle,
+			 gss_buffer_desc * in_token, u_int32_t maj_stat,
+			 u_int32_t min_stat, gss_buffer_desc * out_handle,
+			 gss_buffer_desc * out_token)
 {
 	char buf[2 * TOKEN_BUF_SIZE];
 	char *bp = buf;
@@ -162,7 +162,7 @@ send_response(gss_buffer_desc *in_handle, gss_buffer_desc *in_token,
 	g = open(SVCGSSD_INIT_CHANNEL, O_WRONLY);
 	if (g == -1) {
 		printerr(0, "WARNING: open %s failed: %s\n",
-				SVCGSSD_INIT_CHANNEL, strerror(errno));
+			 SVCGSSD_INIT_CHANNEL, strerror(errno));
 		return -1;
 	}
 	*bp = '\0';
@@ -185,51 +185,52 @@ send_response(gss_buffer_desc *in_handle, gss_buffer_desc *in_token,
 #define rpcsec_gsserr_credproblem	13
 #define rpcsec_gsserr_ctxproblem	14
 
-static void
-add_supplementary_groups(char *secname, char *name, struct svc_cred *cred)
+static void add_supplementary_groups(char *secname, char *name,
+				     struct svc_cred *cred)
 {
 	int ret;
 	static gid_t *groups = NULL;
 
 	cred->cr_ngroups = NGROUPS;
-	ret = nfs4_gss_princ_to_grouplist(secname, name,
-			cred->cr_groups, &cred->cr_ngroups);
+	ret =
+	    nfs4_gss_princ_to_grouplist(secname, name, cred->cr_groups,
+					&cred->cr_ngroups);
 	if (ret < 0) {
-		groups = realloc(groups, cred->cr_ngroups*sizeof(gid_t));
-		ret = nfs4_gss_princ_to_grouplist(secname, name,
-				groups, &cred->cr_ngroups);
+		groups = realloc(groups, cred->cr_ngroups * sizeof(gid_t));
+		ret =
+		    nfs4_gss_princ_to_grouplist(secname, name, groups,
+						&cred->cr_ngroups);
 		if (ret < 0)
 			cred->cr_ngroups = 0;
 		else {
 			if (cred->cr_ngroups > NGROUPS)
 				cred->cr_ngroups = NGROUPS;
 			memcpy(cred->cr_groups, groups,
-					cred->cr_ngroups*sizeof(gid_t));
+			       cred->cr_ngroups * sizeof(gid_t));
 		}
 	}
 }
 
-static int
-get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
+static int get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
 {
-	u_int32_t	maj_stat, min_stat;
-	gss_buffer_desc	name;
-	char		*sname;
-	int		res = -1;
-	uid_t		uid, gid;
-	gss_OID		name_type = GSS_C_NO_OID;
-	char		*secname;
+	u_int32_t maj_stat, min_stat;
+	gss_buffer_desc name;
+	char *sname;
+	int res = -1;
+	uid_t uid, gid;
+	gss_OID name_type = GSS_C_NO_OID;
+	char *secname;
 
 	maj_stat = gss_display_name(&min_stat, client_name, &name, &name_type);
 	if (maj_stat != GSS_S_COMPLETE) {
-		pgsserr("get_ids: gss_display_name",
-			maj_stat, min_stat, mech);
+		pgsserr("get_ids: gss_display_name", maj_stat, min_stat, mech);
 		goto out;
 	}
-	if (name.length >= 0xffff || /* be certain name.length+1 doesn't overflow */
+	if (name.length >= 0xffff ||	/* be certain name.length+1 doesn't overflow */
 	    !(sname = calloc(name.length + 1, 1))) {
-		printerr(0, "WARNING: get_ids: error allocating %d bytes "
-			"for sname\n", name.length + 1);
+		printerr(0,
+			 "WARNING: get_ids: error allocating %d bytes "
+			 "for sname\n", name.length + 1);
 		gss_release_buffer(&min_stat, &name);
 		goto out;
 	}
@@ -239,8 +240,9 @@ get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
 
 	res = -EINVAL;
 	if ((secname = mech2file(mech)) == NULL) {
-		printerr(0, "WARNING: get_ids: error mapping mech to "
-			"file for name '%s'\n", sname);
+		printerr(0,
+			 "WARNING: get_ids: error mapping mech to "
+			 "file for name '%s'\n", sname);
 		goto out_free;
 	}
 
@@ -261,23 +263,23 @@ get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
 			res = 0;
 			goto out_free;
 		}
-		printerr(1, "WARNING: get_ids: failed to map name '%s' "
-			"to uid/gid: %s\n", sname, strerror(-res));
+		printerr(1,
+			 "WARNING: get_ids: failed to map name '%s' "
+			 "to uid/gid: %s\n", sname, strerror(-res));
 		goto out_free;
 	}
 	cred->cr_uid = uid;
 	cred->cr_gid = gid;
 	add_supplementary_groups(secname, sname, cred);
 	res = 0;
-out_free:
+ out_free:
 	free(sname);
-out:
+ out:
 	return res;
 }
 
 #ifdef DEBUG
-void
-print_hexl(const char *description, unsigned char *cp, int length)
+void print_hexl(const char *description, unsigned char *cp, int length)
 {
 	int i, j, jm;
 	unsigned char c;
@@ -285,15 +287,15 @@ print_hexl(const char *description, unsigned char *cp, int length)
 	printf("%s (length %d)\n", description, length);
 
 	for (i = 0; i < length; i += 0x10) {
-		printf("  %04x: ", (u_int)i);
+		printf("  %04x: ", (u_int) i);
 		jm = length - i;
 		jm = jm > 16 ? 16 : jm;
 
 		for (j = 0; j < jm; j++) {
 			if ((j % 2) == 1)
-				printf("%02x ", (u_int)cp[i+j]);
+				printf("%02x ", (u_int) cp[i + j]);
 			else
-				printf("%02x", (u_int)cp[i+j]);
+				printf("%02x", (u_int) cp[i + j]);
 		}
 		for (; j < 16; j++) {
 			if ((j % 2) == 1)
@@ -304,7 +306,7 @@ print_hexl(const char *description, unsigned char *cp, int length)
 		printf(" ");
 
 		for (j = 0; j < jm; j++) {
-			c = cp[i+j];
+			c = cp[i + j];
 			c = isprint(c) ? c : '.';
 			printf("%c", c);
 		}
@@ -313,20 +315,21 @@ print_hexl(const char *description, unsigned char *cp, int length)
 }
 #endif
 
-static int
-get_krb5_hostbased_name (gss_buffer_desc *name, char **hostbased_name)
+static int get_krb5_hostbased_name(gss_buffer_desc * name,
+				   char **hostbased_name)
 {
 	char *p, *sname = NULL;
 	if (strchr(name->value, '@') && strchr(name->value, '/')) {
 		if ((sname = calloc(name->length, 1)) == NULL) {
-			printerr(0, "ERROR: get_krb5_hostbased_name failed "
+			printerr(0,
+				 "ERROR: get_krb5_hostbased_name failed "
 				 "to allocate %d bytes\n", name->length);
 			return -1;
 		}
 		/* read in name and instance and replace '/' with '@' */
 		sscanf(name->value, "%[^@]", sname);
 		p = strrchr(sname, '/');
-		if (p == NULL) {    /* The '@' preceeded the '/' */
+		if (p == NULL) {	/* The '@' preceeded the '/' */
 			free(sname);
 			return -1;
 		}
@@ -336,27 +339,27 @@ get_krb5_hostbased_name (gss_buffer_desc *name, char **hostbased_name)
 	return 0;
 }
 
-static int
-get_hostbased_client_name(gss_name_t client_name, gss_OID mech,
-			  char **hostbased_name)
+static int get_hostbased_client_name(gss_name_t client_name, gss_OID mech,
+				     char **hostbased_name)
 {
-	u_int32_t	maj_stat, min_stat;
-	gss_buffer_desc	name;
-	gss_OID		name_type = GSS_C_NO_OID;
-	char		*cname;
-	int		res = -1;
+	u_int32_t maj_stat, min_stat;
+	gss_buffer_desc name;
+	gss_OID name_type = GSS_C_NO_OID;
+	char *cname;
+	int res = -1;
 
-	*hostbased_name = NULL;	    /* preset in case we fail */
+	*hostbased_name = NULL;	/* preset in case we fail */
 
 	/* Get the client's gss authenticated name */
 	maj_stat = gss_display_name(&min_stat, client_name, &name, &name_type);
 	if (maj_stat != GSS_S_COMPLETE) {
-		pgsserr("get_hostbased_client_name: gss_display_name",
-			maj_stat, min_stat, mech);
+		pgsserr("get_hostbased_client_name: gss_display_name", maj_stat,
+			min_stat, mech);
 		goto out_err;
 	}
-	if (name.length >= 0xffff) {	    /* don't overflow */
-		printerr(0, "ERROR: get_hostbased_client_name: "
+	if (name.length >= 0xffff) {	/* don't overflow */
+		printerr(0,
+			 "ERROR: get_hostbased_client_name: "
 			 "received gss_name is too long (%d bytes)\n",
 			 name.length);
 		goto out_rel_buf;
@@ -371,73 +374,77 @@ get_hostbased_client_name(gss_name_t client_name, gss_OID mech,
 
 	/* No support for SPKM3, just print a warning (for now) */
 	if (g_OID_equal(&spkm3oid, mech)) {
-		printerr(1, "WARNING: get_hostbased_client_name: "
+		printerr(1,
+			 "WARNING: get_hostbased_client_name: "
 			 "no hostbased_name support for SPKM3\n");
 	}
 
 	res = 0;
-out_rel_buf:
+ out_rel_buf:
 	gss_release_buffer(&min_stat, &name);
-out_err:
+ out_err:
 	return res;
 }
 
-void
-handle_nullreq(FILE *f) {
+void handle_nullreq(FILE * f)
+{
 	/* XXX initialize to a random integer to reduce chances of unnecessary
 	 * invalidation of existing ctx's on restarting svcgssd. */
-	static u_int32_t	handle_seq = 0;
-	char			in_tok_buf[TOKEN_BUF_SIZE];
-	char			in_handle_buf[15];
-	char			out_handle_buf[15];
-	gss_buffer_desc		in_tok = {.value = in_tok_buf},
-				out_tok = {.value = NULL},
-				in_handle = {.value = in_handle_buf},
-				out_handle = {.value = out_handle_buf},
-				ctx_token = {.value = NULL},
-				ignore_out_tok = {.value = NULL},
-	/* XXX isn't there a define for this?: */
-				null_token = {.value = NULL};
-	u_int32_t		ret_flags;
-	gss_ctx_id_t		ctx = GSS_C_NO_CONTEXT;
-	gss_name_t		client_name = NULL;
-	gss_OID			mech = GSS_C_NO_OID;
-	u_int32_t		maj_stat = GSS_S_FAILURE, min_stat = 0;
-	u_int32_t		ignore_min_stat;
-	struct svc_cred		cred;
-	static char		*lbuf = NULL;
-	static int		lbuflen = 0;
-	static char		*cp;
-	int32_t			ctx_endtime;
-	char			*hostbased_name = NULL;
+	static u_int32_t handle_seq = 0;
+	char in_tok_buf[TOKEN_BUF_SIZE];
+	char in_handle_buf[15];
+	char out_handle_buf[15];
+	gss_buffer_desc in_tok = {.value = in_tok_buf }, out_tok = {
+	.value = NULL}, in_handle = {
+	.value = in_handle_buf}, out_handle = {
+	.value = out_handle_buf}, ctx_token = {
+	.value = NULL}, ignore_out_tok = {
+	.value = NULL},
+	    /* XXX isn't there a define for this?: */
+	    null_token = {
+	.value = NULL};
+	u_int32_t ret_flags;
+	gss_ctx_id_t ctx = GSS_C_NO_CONTEXT;
+	gss_name_t client_name = NULL;
+	gss_OID mech = GSS_C_NO_OID;
+	u_int32_t maj_stat = GSS_S_FAILURE, min_stat = 0;
+	u_int32_t ignore_min_stat;
+	struct svc_cred cred;
+	static char *lbuf = NULL;
+	static int lbuflen = 0;
+	static char *cp;
+	int32_t ctx_endtime;
+	char *hostbased_name = NULL;
 
 	printerr(1, "handling null request\n");
 
 	if (readline(fileno(f), &lbuf, &lbuflen) != 1) {
-		printerr(0, "WARNING: handle_nullreq: "
-			    "failed reading request\n");
+		printerr(0,
+			 "WARNING: handle_nullreq: "
+			 "failed reading request\n");
 		return;
 	}
 
 	cp = lbuf;
 
-	in_handle.length = (size_t) qword_get(&cp, in_handle.value,
-					      sizeof(in_handle_buf));
+	in_handle.length =
+	    (size_t) qword_get(&cp, in_handle.value, sizeof(in_handle_buf));
 #ifdef DEBUG
 	print_hexl("in_handle", in_handle.value, in_handle.length);
 #endif
 
-	in_tok.length = (size_t) qword_get(&cp, in_tok.value,
-					   sizeof(in_tok_buf));
+	in_tok.length =
+	    (size_t) qword_get(&cp, in_tok.value, sizeof(in_tok_buf));
 #ifdef DEBUG
 	print_hexl("in_tok", in_tok.value, in_tok.length);
 #endif
 
-	if (in_handle.length != 0) { /* CONTINUE_INIT case */
+	if (in_handle.length != 0) {	/* CONTINUE_INIT case */
 		if (in_handle.length != sizeof(ctx)) {
-			printerr(0, "WARNING: handle_nullreq: "
-				    "input handle has unexpected length %d\n",
-				    in_handle.length);
+			printerr(0,
+				 "WARNING: handle_nullreq: "
+				 "input handle has unexpected length %d\n",
+				 in_handle.length);
 			goto out_err;
 		}
 		/* in_handle is the context id stored in the out_handle
@@ -449,9 +456,10 @@ handle_nullreq(FILE *f) {
 		goto out_err;
 	}
 
-	maj_stat = gss_accept_sec_context(&min_stat, &ctx, gssd_creds,
-			&in_tok, GSS_C_NO_CHANNEL_BINDINGS, &client_name,
-			&mech, &out_tok, &ret_flags, NULL, NULL);
+	maj_stat =
+	    gss_accept_sec_context(&min_stat, &ctx, gssd_creds, &in_tok,
+				   GSS_C_NO_CHANNEL_BINDINGS, &client_name,
+				   &mech, &out_tok, &ret_flags, NULL, NULL);
 
 	if (maj_stat == GSS_S_CONTINUE_NEEDED) {
 		printerr(1, "gss_accept_sec_context GSS_S_CONTINUE_NEEDED\n");
@@ -460,21 +468,20 @@ handle_nullreq(FILE *f) {
 		out_handle.length = sizeof(ctx);
 		memcpy(out_handle.value, &ctx, sizeof(ctx));
 		goto continue_needed;
-	}
-	else if (maj_stat != GSS_S_COMPLETE) {
+	} else if (maj_stat != GSS_S_COMPLETE) {
 		printerr(1, "WARNING: gss_accept_sec_context failed\n");
-		pgsserr("handle_nullreq: gss_accept_sec_context",
-			maj_stat, min_stat, mech);
+		pgsserr("handle_nullreq: gss_accept_sec_context", maj_stat,
+			min_stat, mech);
 		goto out_err;
 	}
 	if (get_ids(client_name, mech, &cred)) {
 		/* get_ids() prints error msg */
-		maj_stat = GSS_S_BAD_NAME; /* XXX ? */
+		maj_stat = GSS_S_BAD_NAME;	/* XXX ? */
 		goto out_err;
 	}
 	if (get_hostbased_client_name(client_name, mech, &hostbased_name)) {
 		/* get_hostbased_client_name() prints error msg */
-		maj_stat = GSS_S_BAD_NAME; /* XXX ? */
+		maj_stat = GSS_S_BAD_NAME;	/* XXX ? */
 		goto out_err;
 	}
 
@@ -487,8 +494,9 @@ handle_nullreq(FILE *f) {
 	/* kernel needs ctx to calculate verifier on null response, so
 	 * must give it context before doing null call: */
 	if (serialize_context_for_kernel(ctx, &ctx_token, mech, &ctx_endtime)) {
-		printerr(0, "WARNING: handle_nullreq: "
-			    "serialize_context_for_kernel failed\n");
+		printerr(0,
+			 "WARNING: handle_nullreq: "
+			 "serialize_context_for_kernel failed\n");
 		maj_stat = GSS_S_FAILURE;
 		goto out_err;
 	}
@@ -497,10 +505,10 @@ handle_nullreq(FILE *f) {
 
 	do_svc_downcall(&out_handle, &cred, mech, &ctx_token, ctx_endtime,
 			hostbased_name);
-continue_needed:
-	send_response(&in_handle, &in_tok, maj_stat, min_stat,
-			&out_handle, &out_tok);
-out:
+ continue_needed:
+	send_response(&in_handle, &in_tok, maj_stat, min_stat, &out_handle,
+		      &out_tok);
+ out:
 	if (ctx_token.value != NULL)
 		free(ctx_token.value);
 	if (out_tok.value != NULL)
@@ -511,10 +519,10 @@ out:
 	printerr(1, "finished handling null request\n");
 	return;
 
-out_err:
+ out_err:
 	if (ctx != GSS_C_NO_CONTEXT)
 		gss_delete_sec_context(&ignore_min_stat, &ctx, &ignore_out_tok);
-	send_response(&in_handle, &in_tok, maj_stat, min_stat,
-			&null_token, &null_token);
+	send_response(&in_handle, &in_tok, maj_stat, min_stat, &null_token,
+		      &null_token);
 	goto out;
 }

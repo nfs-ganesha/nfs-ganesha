@@ -42,4 +42,4 @@ extern gss_OID_desc spkm3oid;
      (memcmp((o1)->elements,(o2)->elements,(unsigned int) (o1)->length) == 0))
 #endif
 
-#endif /* _GSS_OIDS_H_ */
+#endif				/* _GSS_OIDS_H_ */

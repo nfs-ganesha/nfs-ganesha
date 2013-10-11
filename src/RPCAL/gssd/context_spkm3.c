@@ -66,23 +66,21 @@
  *      kyestb 4 + oid_len
  *      owl alg 4 + oid_len
 */
-static int
-prepare_spkm3_ctx_buffer(gss_spkm3_lucid_ctx_t *lctx, gss_buffer_desc *buf)
+static int prepare_spkm3_ctx_buffer(gss_spkm3_lucid_ctx_t * lctx,
+				    gss_buffer_desc * buf)
 {
 	char *p, *end;
 	unsigned int buf_size = 0;
 
-	buf_size = sizeof(lctx->version) +
-		lctx->ctx_id.length + sizeof(lctx->ctx_id.length) +
-		sizeof(lctx->endtime) +
-		sizeof(lctx->mech_used.length) + lctx->mech_used.length +
-		sizeof(lctx->ret_flags) +
-		sizeof(lctx->conf_alg.length) + lctx->conf_alg.length +
-		sizeof(lctx->derived_conf_key.length) +
-		lctx->derived_conf_key.length +
-		sizeof(lctx->intg_alg.length) + lctx->intg_alg.length +
-		sizeof(lctx->derived_integ_key.length) +
-		lctx->derived_integ_key.length;
+	buf_size =
+	    sizeof(lctx->version) + lctx->ctx_id.length +
+	    sizeof(lctx->ctx_id.length) + sizeof(lctx->endtime) +
+	    sizeof(lctx->mech_used.length) + lctx->mech_used.length +
+	    sizeof(lctx->ret_flags) + sizeof(lctx->conf_alg.length) +
+	    lctx->conf_alg.length + sizeof(lctx->derived_conf_key.length) +
+	    lctx->derived_conf_key.length + sizeof(lctx->intg_alg.length) +
+	    lctx->intg_alg.length + sizeof(lctx->derived_integ_key.length) +
+	    lctx->derived_integ_key.length;
 
 	if (!(buf->value = calloc(1, buf_size)))
 		goto out_err;
@@ -111,25 +109,30 @@ prepare_spkm3_ctx_buffer(gss_spkm3_lucid_ctx_t *lctx, gss_buffer_desc *buf)
 
 	if (write_buffer(&p, end, &lctx->conf_alg))
 		goto out_err;
-	printerr(2, "DEBUG: exporting conf_alg oid (%d)\n", lctx->conf_alg.length);
+	printerr(2, "DEBUG: exporting conf_alg oid (%d)\n",
+		 lctx->conf_alg.length);
 
 	if (write_buffer(&p, end, &lctx->derived_conf_key))
 		goto out_err;
-	printerr(2, "DEBUG: exporting conf key (%d)\n", lctx->derived_conf_key.length);
+	printerr(2, "DEBUG: exporting conf key (%d)\n",
+		 lctx->derived_conf_key.length);
 
 	if (write_buffer(&p, end, &lctx->intg_alg))
 		goto out_err;
-	printerr(2, "DEBUG: exporting intg_alg oid (%d)\n", lctx->intg_alg.length);
+	printerr(2, "DEBUG: exporting intg_alg oid (%d)\n",
+		 lctx->intg_alg.length);
 
 	if (write_buffer(&p, end, &lctx->derived_integ_key))
 		goto out_err;
-	printerr(2, "DEBUG: exporting intg key (%d)\n", lctx->derived_integ_key.length);
+	printerr(2, "DEBUG: exporting intg key (%d)\n",
+		 lctx->derived_integ_key.length);
 
 	buf->length = p - (char *)buf->value;
 	return 0;
-out_err:
+ out_err:
 	printerr(0, "ERROR: failed serializing spkm3 context for kernel\n");
-	if (buf->value) free(buf->value);
+	if (buf->value)
+		free(buf->value);
 	buf->length = 0;
 
 	return -1;
@@ -139,12 +142,12 @@ out_err:
  * are needed in the kernel for get_mic, validate, wrap, unwrap, and destroy
  * and only export those fields to the kernel.
  */
-int
-serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
+int serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+			int32_t * endtime)
 {
 	OM_uint32 vers, ret, maj_stat, min_stat;
 	void *ret_ctx = 0;
-	gss_spkm3_lucid_ctx_t     *lctx;
+	gss_spkm3_lucid_ctx_t *lctx;
 
 	printerr(1, "serialize_spkm3_ctx called\n");
 
@@ -153,12 +156,12 @@ serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 	if (maj_stat != GSS_S_COMPLETE)
 		goto out_err;
 
-	lctx = (gss_spkm3_lucid_ctx_t *)ret_ctx;
+	lctx = (gss_spkm3_lucid_ctx_t *) ret_ctx;
 
 	vers = lctx->version;
 	if (vers != 1) {
 		printerr(0, "ERROR: unsupported spkm3 context version %d\n",
-			vers);
+			 vers);
 		goto out_err;
 	}
 	ret = prepare_spkm3_ctx_buffer(lctx, buf);
@@ -175,8 +178,8 @@ serialize_spkm3_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 	printerr(2, "DEBUG: serialize_spkm3_ctx: success\n");
 	return 0;
 
-out_err:
+ out_err:
 	printerr(2, "DEBUG: serialize_spkm3_ctx: failed\n");
 	return -1;
 }
-#endif /* HAVE_SPKM3_H */
+#endif				/* HAVE_SPKM3_H */

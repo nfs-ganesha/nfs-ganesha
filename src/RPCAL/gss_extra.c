@@ -62,48 +62,46 @@
  * @return true is successfull, false otherwise.
  * 
  */
-void
-log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
+void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-  OM_uint32 smin;
-  gss_buffer_desc msg;
-  gss_buffer_desc msg2;
-  int msg_ctx = 0;
+	OM_uint32 smin;
+	gss_buffer_desc msg;
+	gss_buffer_desc msg2;
+	int msg_ctx = 0;
 
-  if(gss_display_status(&smin,
-                        maj_stat,
-                        GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
-    {
-      sprintf(outmsg, "untranslatable error");
-      return;
-    }
+	if (gss_display_status
+	    (&smin, maj_stat, GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx,
+	     &msg) != GSS_S_COMPLETE) {
+		sprintf(outmsg, "untranslatable error");
+		return;
+	}
 
-  if(gss_display_status(&smin,
-                        min_stat,
-                        GSS_C_MECH_CODE,
-                        GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
-    {
-      gss_release_buffer(&smin, &msg);
-      sprintf(outmsg, "%s : untranslatable error", (char *)msg.value);
-      return;
-    }
+	if (gss_display_status
+	    (&smin, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID, &msg_ctx,
+	     &msg2) != GSS_S_COMPLETE) {
+		gss_release_buffer(&smin, &msg);
+		sprintf(outmsg, "%s : untranslatable error", (char *)msg.value);
+		return;
+	}
 
-  sprintf(outmsg, "%s : %s ", (char *)msg.value, (char *)msg2.value);
+	sprintf(outmsg, "%s : %s ", (char *)msg.value, (char *)msg2.value);
 
-  gss_release_buffer(&smin, &msg);
-  gss_release_buffer(&smin, &msg2);
-}                               /* log_sperror_gss */
+	gss_release_buffer(&smin, &msg);
+	gss_release_buffer(&smin, &msg2);
+}				/* log_sperror_gss */
 
-const char *
-str_gc_proc(rpc_gss_proc_t gc_proc)
+const char *str_gc_proc(rpc_gss_proc_t gc_proc)
 {
-  switch(gc_proc)
-   {
-     case RPCSEC_GSS_DATA: return "RPCSEC_GSS_DATA";
-     case RPCSEC_GSS_INIT: return "RPCSEC_GSS_INIT";
-     case RPCSEC_GSS_CONTINUE_INIT: return "RPCSEC_GSS_CONTINUE_INIT";
-     case RPCSEC_GSS_DESTROY: return "RPCSEC_GSS_DESTROY";
-   }
+	switch (gc_proc) {
+	case RPCSEC_GSS_DATA:
+		return "RPCSEC_GSS_DATA";
+	case RPCSEC_GSS_INIT:
+		return "RPCSEC_GSS_INIT";
+	case RPCSEC_GSS_CONTINUE_INIT:
+		return "RPCSEC_GSS_CONTINUE_INIT";
+	case RPCSEC_GSS_DESTROY:
+		return "RPCSEC_GSS_DESTROY";
+	}
 
- return "unknown";
+	return "unknown";
 }

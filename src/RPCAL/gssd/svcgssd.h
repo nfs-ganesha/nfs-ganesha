@@ -35,9 +35,9 @@
 #include <sys/queue.h>
 #include <gssapi/gssapi.h>
 
-void handle_nullreq(FILE *f);
+void handle_nullreq(FILE * f);
 void gssd_run(void);
 
 #define GSSD_SERVICE_NAME	"nfs"
 
-#endif /* _RPC_SVCGSSD_H_ */
+#endif				/* _RPC_SVCGSSD_H_ */

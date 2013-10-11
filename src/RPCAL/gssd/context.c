@@ -41,11 +41,8 @@
 #include "err_util.h"
 #include "context.h"
 
-int
-serialize_context_for_kernel(gss_ctx_id_t ctx,
-			     gss_buffer_desc *buf,
-			     gss_OID mech,
-			     int32_t *endtime)
+int serialize_context_for_kernel(gss_ctx_id_t ctx, gss_buffer_desc * buf,
+				 gss_OID mech, int32_t * endtime)
 {
 	if (g_OID_equal(&krb5oid, mech))
 		return serialize_krb5_ctx(ctx, buf, endtime);
@@ -54,8 +51,9 @@ serialize_context_for_kernel(gss_ctx_id_t ctx,
 		return serialize_spkm3_ctx(ctx, buf, endtime);
 #endif
 	else {
-		printerr(0, "ERROR: attempting to serialize context with "
-				"unknown/unsupported mechanism oid\n");
+		printerr(0,
+			 "ERROR: attempting to serialize context with "
+			 "unknown/unsupported mechanism oid\n");
 		return -1;
 	}
 }

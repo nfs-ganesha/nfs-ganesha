@@ -96,8 +96,8 @@ gss_cred_id_t gssd_creds;
 gss_OID g_mechOid = GSS_C_NULL_OID;;
 
 #if 0
-static void
-display_status_1(char *m, u_int32_t code, int type, const gss_OID mech)
+static void display_status_1(char *m, u_int32_t code, int type,
+			     const gss_OID mech)
 {
 	u_int32_t maj_stat, min_stat;
 	gss_buffer_desc msg = GSS_C_EMPTY_BUFFER;
@@ -117,105 +117,106 @@ display_status_1(char *m, u_int32_t code, int type, const gss_OID mech)
 	}
 
 	for (;;) {
-		maj_stat = gss_display_status(&min_stat, code,
-		    type, mech, &msg_ctx, &msg);
+		maj_stat =
+		    gss_display_status(&min_stat, code, type, mech, &msg_ctx,
+				       &msg);
 		if (maj_stat != GSS_S_COMPLETE) {
-			printerr(0, "ERROR: in call to "
-				"gss_display_status called from %s\n", m);
+			printerr(0,
+				 "ERROR: in call to "
+				 "gss_display_status called from %s\n", m);
 			break;
 		} else {
 			printerr(0, "ERROR: GSS-API: (%s) error in %s(): %s\n",
-			    typestr, m, (char *)msg.value);
+				 typestr, m, (char *)msg.value);
 		}
 
 		if (msg.length != 0)
-			(void) gss_release_buffer(&min_stat, &msg);
+			(void)gss_release_buffer(&min_stat, &msg);
 
 		if (msg_ctx == 0)
 			break;
 	}
 }
 #endif
-static char *
-gss_display_error(OM_uint32 status)
+static char *gss_display_error(OM_uint32 status)
 {
-		char *error = NULL;
+	char *error = NULL;
 
-		switch(status) {
-		case GSS_S_COMPLETE: 
-			error = "GSS_S_COMPLETE";
-			break;
-		case GSS_S_CALL_INACCESSIBLE_READ: 
-			error = "GSS_S_CALL_INACCESSIBLE_READ";
-			break;
-		case GSS_S_CALL_INACCESSIBLE_WRITE:
-			error = "GSS_S_CALL_INACCESSIBLE_WRITE";
-			break;
-		case GSS_S_CALL_BAD_STRUCTURE:
-			error = "GSS_S_CALL_BAD_STRUCTURE";
-			break;
-		case  GSS_S_BAD_MECH:
-			error = "GSS_S_BAD_MECH";
-			break;
-		case  GSS_S_BAD_NAME:
-			error = "GSS_S_BAD_NAME";
-			break;
-		case  GSS_S_BAD_NAMETYPE:
-			error = "GSS_S_BAD_NAMETYPE";
-			break;
-		case  GSS_S_BAD_BINDINGS:
-			error = "GSS_S_BAD_BINDINGS";
-			break;
-		case  GSS_S_BAD_STATUS:
-			error = "GSS_S_BAD_STATUS";
-			break;
-		case  GSS_S_BAD_SIG:
-			error = "GSS_S_BAD_SIG";
-			break;
-		case  GSS_S_NO_CRED:
-			error = "GSS_S_NO_CRED";
-			break;
-		case  GSS_S_NO_CONTEXT:
-			error = "GSS_S_NO_CONTEXT";
-			break;
-		case  GSS_S_DEFECTIVE_TOKEN:
-			error = "GSS_S_DEFECTIVE_TOKEN";
-			break;
-		case  GSS_S_DEFECTIVE_CREDENTIAL:
-			error = "GSS_S_DEFECTIVE_CREDENTIAL";
-			break;
-		case  GSS_S_CREDENTIALS_EXPIRED:
-			error = "GSS_S_CREDENTIALS_EXPIRED";
-			break;
-		case  GSS_S_CONTEXT_EXPIRED:
-			error = "GSS_S_CONTEXT_EXPIRED";
-			break;
-		case  GSS_S_FAILURE:
-			error = "GSS_S_FAILURE";
-			break;
-		case  GSS_S_BAD_QOP:
-			error = "GSS_S_BAD_QOP";
-			break;
-		case  GSS_S_UNAUTHORIZED:
-			error = "GSS_S_UNAUTHORIZED";
-			break;
-		case  GSS_S_UNAVAILABLE:
-			error = "GSS_S_UNAVAILABLE";
-			break;
-		case  GSS_S_DUPLICATE_ELEMENT:
-			error = "GSS_S_DUPLICATE_ELEMENT";
-			break;
-		case  GSS_S_NAME_NOT_MN:
-			error = "GSS_S_NAME_NOT_MN";
-			break;
-		default:
-			error = "Not defined";
-		}
+	switch (status) {
+	case GSS_S_COMPLETE:
+		error = "GSS_S_COMPLETE";
+		break;
+	case GSS_S_CALL_INACCESSIBLE_READ:
+		error = "GSS_S_CALL_INACCESSIBLE_READ";
+		break;
+	case GSS_S_CALL_INACCESSIBLE_WRITE:
+		error = "GSS_S_CALL_INACCESSIBLE_WRITE";
+		break;
+	case GSS_S_CALL_BAD_STRUCTURE:
+		error = "GSS_S_CALL_BAD_STRUCTURE";
+		break;
+	case GSS_S_BAD_MECH:
+		error = "GSS_S_BAD_MECH";
+		break;
+	case GSS_S_BAD_NAME:
+		error = "GSS_S_BAD_NAME";
+		break;
+	case GSS_S_BAD_NAMETYPE:
+		error = "GSS_S_BAD_NAMETYPE";
+		break;
+	case GSS_S_BAD_BINDINGS:
+		error = "GSS_S_BAD_BINDINGS";
+		break;
+	case GSS_S_BAD_STATUS:
+		error = "GSS_S_BAD_STATUS";
+		break;
+	case GSS_S_BAD_SIG:
+		error = "GSS_S_BAD_SIG";
+		break;
+	case GSS_S_NO_CRED:
+		error = "GSS_S_NO_CRED";
+		break;
+	case GSS_S_NO_CONTEXT:
+		error = "GSS_S_NO_CONTEXT";
+		break;
+	case GSS_S_DEFECTIVE_TOKEN:
+		error = "GSS_S_DEFECTIVE_TOKEN";
+		break;
+	case GSS_S_DEFECTIVE_CREDENTIAL:
+		error = "GSS_S_DEFECTIVE_CREDENTIAL";
+		break;
+	case GSS_S_CREDENTIALS_EXPIRED:
+		error = "GSS_S_CREDENTIALS_EXPIRED";
+		break;
+	case GSS_S_CONTEXT_EXPIRED:
+		error = "GSS_S_CONTEXT_EXPIRED";
+		break;
+	case GSS_S_FAILURE:
+		error = "GSS_S_FAILURE";
+		break;
+	case GSS_S_BAD_QOP:
+		error = "GSS_S_BAD_QOP";
+		break;
+	case GSS_S_UNAUTHORIZED:
+		error = "GSS_S_UNAUTHORIZED";
+		break;
+	case GSS_S_UNAVAILABLE:
+		error = "GSS_S_UNAVAILABLE";
+		break;
+	case GSS_S_DUPLICATE_ELEMENT:
+		error = "GSS_S_DUPLICATE_ELEMENT";
+		break;
+	case GSS_S_NAME_NOT_MN:
+		error = "GSS_S_NAME_NOT_MN";
+		break;
+	default:
+		error = "Not defined";
+	}
 	return error;
 }
 
-static void
-display_status_2(char *m, u_int32_t major, u_int32_t minor, const gss_OID mech)
+static void display_status_2(char *m, u_int32_t major, u_int32_t minor,
+			     const gss_OID mech)
 {
 	u_int32_t maj_stat1, min_stat1;
 	u_int32_t maj_stat2, min_stat2;
@@ -224,11 +225,12 @@ display_status_2(char *m, u_int32_t major, u_int32_t minor, const gss_OID mech)
 	char maj_buf[30], min_buf[30];
 	char *maj, *min;
 	u_int32_t msg_ctx = 0;
-        int msg_verbosity __attribute__((unused)) = 0;
+	int msg_verbosity __attribute__ ((unused)) = 0;
 
 	/* Get major status message */
-	maj_stat1 = gss_display_status(&min_stat1, major,
-		GSS_C_GSS_CODE, mech, &msg_ctx, &maj_gss_buf);
+	maj_stat1 =
+	    gss_display_status(&min_stat1, major, GSS_C_GSS_CODE, mech,
+			       &msg_ctx, &maj_gss_buf);
 
 	if (maj_stat1 != GSS_S_COMPLETE) {
 		snprintf(maj_buf, sizeof(maj_buf), "(0x%08x)", major);
@@ -238,8 +240,9 @@ display_status_2(char *m, u_int32_t major, u_int32_t minor, const gss_OID mech)
 	}
 
 	/* Get minor status message */
-	maj_stat2 = gss_display_status(&min_stat2, minor,
-		GSS_C_MECH_CODE, mech, &msg_ctx, &min_gss_buf);
+	maj_stat2 =
+	    gss_display_status(&min_stat2, minor, GSS_C_MECH_CODE, mech,
+			       &msg_ctx, &min_gss_buf);
 
 	if (maj_stat2 != GSS_S_COMPLETE) {
 		snprintf(min_buf, sizeof(min_buf), "(0x%08x)", minor);
@@ -255,19 +258,18 @@ display_status_2(char *m, u_int32_t major, u_int32_t minor, const gss_OID mech)
 		 m, gss_display_error(major), maj, min);
 
 	if (maj_gss_buf.length != 0)
-		(void) gss_release_buffer(&min_stat1, &maj_gss_buf);
+		(void)gss_release_buffer(&min_stat1, &maj_gss_buf);
 	if (min_gss_buf.length != 0)
-		(void) gss_release_buffer(&min_stat2, &min_gss_buf);
+		(void)gss_release_buffer(&min_stat2, &min_gss_buf);
 }
 
-void
-pgsserr(char *msg, u_int32_t maj_stat, u_int32_t min_stat, const gss_OID mech)
+void pgsserr(char *msg, u_int32_t maj_stat, u_int32_t min_stat,
+	     const gss_OID mech)
 {
 	display_status_2(msg, maj_stat, min_stat, mech);
 }
 
-int
-gssd_acquire_cred(char *server_name, const gss_OID oid)
+int gssd_acquire_cred(char *server_name, const gss_OID oid)
 {
 	gss_buffer_desc name;
 	gss_name_t target_name;
@@ -282,29 +284,30 @@ gssd_acquire_cred(char *server_name, const gss_OID oid)
 		name.value = (void *)server_name;
 		name.length = strlen(server_name);
 
-		maj_stat = gss_import_name(&min_stat, &name,
-				oid,
-				&target_name);
+		maj_stat = gss_import_name(&min_stat, &name, oid, &target_name);
 
 		if (maj_stat != GSS_S_COMPLETE) {
-			pgsserr("gss_import_name", maj_stat, min_stat, g_mechOid);
+			pgsserr("gss_import_name", maj_stat, min_stat,
+				g_mechOid);
 			return (false);
 		}
 	}
 
-	maj_stat = gss_acquire_cred(&min_stat, target_name, GSS_C_INDEFINITE,
-			GSS_C_NO_OID_SET, GSS_C_ACCEPT,
-			&gssd_creds, NULL, NULL);
+	maj_stat =
+	    gss_acquire_cred(&min_stat, target_name, GSS_C_INDEFINITE,
+			     GSS_C_NO_OID_SET, GSS_C_ACCEPT, &gssd_creds, NULL,
+			     NULL);
 
 	if (maj_stat != GSS_S_COMPLETE) {
 		pgsserr("gss_acquire_cred", maj_stat, min_stat, g_mechOid);
-		ignore_maj_stat = gss_display_name(&ignore_min_stat,
-				target_name, &pbuf, NULL);
+		ignore_maj_stat =
+		    gss_display_name(&ignore_min_stat, target_name, &pbuf,
+				     NULL);
 		if (ignore_maj_stat == GSS_S_COMPLETE) {
 			printerr(1, "Unable to obtain credentials for '%.*s'\n",
 				 pbuf.length, pbuf.value);
-			ignore_maj_stat = gss_release_buffer(&ignore_min_stat,
-							     &pbuf);
+			ignore_maj_stat =
+			    gss_release_buffer(&ignore_min_stat, &pbuf);
 		}
 	}
 
@@ -321,19 +324,19 @@ int gssd_check_mechs(void)
 
 	maj_stat = gss_indicate_mechs(&min_stat, &supported_mechs);
 	if (maj_stat != GSS_S_COMPLETE) {
-		printerr(0, "Unable to obtain list of supported mechanisms. "
+		printerr(0,
+			 "Unable to obtain list of supported mechanisms. "
 			 "Check that gss library is properly configured.\n");
 		goto out;
 	}
-	if (supported_mechs == GSS_C_NO_OID_SET ||
-	    supported_mechs->count == 0) {
-		printerr(0, "Unable to obtain list of supported mechanisms. "
+	if (supported_mechs == GSS_C_NO_OID_SET || supported_mechs->count == 0) {
+		printerr(0,
+			 "Unable to obtain list of supported mechanisms. "
 			 "Check that gss library is properly configured.\n");
 		goto out;
 	}
 	maj_stat = gss_release_oid_set(&min_stat, &supported_mechs);
 	retval = 0;
-out:
+ out:
 	return retval;
 }
-

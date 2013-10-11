@@ -61,21 +61,20 @@ extern int pollsize;
 
 static volatile int dir_changed = 1;
 
-static void dir_notify_handler(int sig, siginfo_t *si, void *data)
+static void dir_notify_handler(int sig, siginfo_t * si, void *data)
 {
-	printerr(2, "dir_notify_handler: sig %d si %p data %p\n", sig, si, data);
+	printerr(2, "dir_notify_handler: sig %d si %p data %p\n", sig, si,
+		 data);
 
 	dir_changed = 1;
 }
 
-static void
-scan_poll_results(int ret)
+static void scan_poll_results(int ret)
 {
-	int			i;
-	struct clnt_info	*clp;
+	int i;
+	struct clnt_info *clp;
 
-	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next)
-	{
+	for (clp = clnt_list.tqh_first; clp != NULL; clp = clp->list.tqe_next) {
 		i = clp->gssd_poll_index;
 		if (i >= 0 && pollarray[i].revents) {
 			if (pollarray[i].revents & POLLHUP)
@@ -112,8 +111,7 @@ scan_poll_results(int ret)
 	}
 };
 
-static int
-topdirs_add_entry(struct dirent *dent)
+static int topdirs_add_entry(struct dirent *dent)
 {
 	struct topdirs_info *tdi;
 
@@ -133,15 +131,14 @@ topdirs_add_entry(struct dirent *dent)
 	if (tdi->fd != -1) {
 		fcntl(tdi->fd, F_SETSIG, DNOTIFY_SIGNAL);
 		fcntl(tdi->fd, F_NOTIFY,
-		      DN_CREATE|DN_DELETE|DN_MODIFY|DN_MULTISHOT);
+		      DN_CREATE | DN_DELETE | DN_MODIFY | DN_MULTISHOT);
 	}
 
 	TAILQ_INSERT_HEAD(&topdirs_list, tdi, list);
 	return 0;
 }
 
-static void
-topdirs_free_list(void)
+static void topdirs_free_list(void)
 {
 	struct topdirs_info *tdi;
 
@@ -154,25 +151,24 @@ topdirs_free_list(void)
 	}
 }
 
-static int
-topdirs_init_list(void)
+static int topdirs_init_list(void)
 {
-	DIR		*pipedir;
-	struct dirent	*dent;
-	int		ret;
+	DIR *pipedir;
+	struct dirent *dent;
+	int ret;
 
 	TAILQ_INIT(&topdirs_list);
 
 	pipedir = opendir(pipefs_dir);
 	if (pipedir == NULL) {
-		printerr(0, "ERROR: could not open rpc_pipefs directory '%s': "
+		printerr(0,
+			 "ERROR: could not open rpc_pipefs directory '%s': "
 			 "%s\n", pipefs_dir, strerror(errno));
 		return -1;
 	}
 	for (dent = readdir(pipedir); dent != NULL; dent = readdir(pipedir)) {
-		if (dent->d_type != DT_DIR ||
-		    strcmp(dent->d_name, ".") == 0  ||
-		    strcmp(dent->d_name, "..") == 0) {
+		if (dent->d_type != DT_DIR || strcmp(dent->d_name, ".") == 0
+		    || strcmp(dent->d_name, "..") == 0) {
 			continue;
 		}
 		ret = topdirs_add_entry(dent);
@@ -181,17 +177,16 @@ topdirs_init_list(void)
 	}
 	closedir(pipedir);
 	return 0;
-out_err:
+ out_err:
 	topdirs_free_list();
 	return -1;
 }
 
-void
-gssd_run()
+void gssd_run()
 {
-	int			ret;
-	struct sigaction	dn_act;
-	sigset_t		set;
+	int ret;
+	struct sigaction dn_act;
+	sigset_t set;
 
 	/* Taken from linux/Documentation/dnotify.txt: */
 	dn_act.sa_sigaction = dir_notify_handler;
@@ -228,7 +223,7 @@ gssd_run()
 					 "WARNING: error return from poll\n");
 		} else if (ret == 0) {
 			/* timeout */
-		} else { /* ret > 0 */
+		} else {	/* ret > 0 */
 			scan_poll_results(ret);
 		}
 	}
