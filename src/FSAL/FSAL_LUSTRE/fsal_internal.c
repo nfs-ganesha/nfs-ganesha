@@ -38,16 +38,15 @@
 #include  "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include <libgen.h> /* used for 'dirname' */
+#include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <mntent.h>
-#include <unistd.h> /* glibc uses <sys/fsuid.h> */
+#include <unistd.h>		/* glibc uses <sys/fsuid.h> */
 
 #include "abstract_mem.h"
-
 
 /* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
@@ -60,4 +59,3 @@ uint32_t CredentialLifetime = 3600;
  * it is read-only, except during initialization.
  */
 struct fsal_staticfsinfo_t global_fs_info;
-
