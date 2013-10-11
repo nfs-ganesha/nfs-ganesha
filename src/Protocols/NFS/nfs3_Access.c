@@ -34,7 +34,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -66,80 +66,70 @@
  *
  */
 
-int
-nfs3_Access(nfs_arg_t *arg,
-            exportlist_t *export,
-            struct req_op_context *req_ctx,
-            nfs_worker_data_t *worker,
-            struct svc_req *req,
-            nfs_res_t *res)
+int nfs3_Access(nfs_arg_t * arg, exportlist_t * export,
+		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+		struct svc_req *req, nfs_res_t * res)
 {
-        cache_inode_status_t cache_status;
-        cache_entry_t *entry = NULL;
-        int rc = NFS_REQ_OK;
+	cache_inode_status_t cache_status;
+	cache_entry_t *entry = NULL;
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
-                sprint_fhandle3(str, &(arg->arg_access3.object));
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs3_Access handle: %s",
-                         str);
-        }
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
+		sprint_fhandle3(str, &(arg->arg_access3.object));
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs3_Access handle: %s",
+			 str);
+	}
 
-        /* to avoid setting it on each error case */
-        res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow
-                = FALSE;
+	/* to avoid setting it on each error case */
+	res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow =
+	    FALSE;
 
-        /* Convert file handle into a vnode */
-        entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
-                                   req_ctx,
-				   export,
-				   &(res->res_access3.status),
-                                   &rc);
-        if (entry == NULL) {
-                goto out;
-        }
+	/* Convert file handle into a vnode */
+	entry =
+	    nfs3_FhandleToCache(&(arg->arg_access3.object), req_ctx, export,
+				&(res->res_access3.status), &rc);
+	if (entry == NULL) {
+		goto out;
+	}
 
-        /* Perform the 'access' call */
-        cache_status = nfs_access_op(
-                entry,
-                arg->arg_access3.access,
-                &res->res_access3.ACCESS3res_u.resok.access,
-                NULL,
-                req_ctx);
+	/* Perform the 'access' call */
+	cache_status =
+	    nfs_access_op(entry, arg->arg_access3.access,
+			  &res->res_access3.ACCESS3res_u.resok.access, NULL,
+			  req_ctx);
 
-        if(cache_status == CACHE_INODE_SUCCESS ||
-           cache_status == CACHE_INODE_FSAL_EACCESS) {
-                /* Build Post Op Attributes */
-                nfs_SetPostOpAttr(entry,
-                                  req_ctx,
-                                  &(res->res_access3.ACCESS3res_u
-                                    .resok.obj_attributes));
+	if (cache_status == CACHE_INODE_SUCCESS
+	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
+		/* Build Post Op Attributes */
+		nfs_SetPostOpAttr(entry, req_ctx,
+				  &(res->res_access3.ACCESS3res_u.resok.
+				    obj_attributes));
 
-                res->res_access3.status = NFS3_OK;
-                rc = NFS_REQ_OK;
-                goto out;
-        }
+		res->res_access3.status = NFS3_OK;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
 
-        /* If we are here, there was an error */
-        if (nfs_RetryableError(cache_status)) {
-                rc = NFS_REQ_DROP;
-                goto out;
-        }
+	/* If we are here, there was an error */
+	if (nfs_RetryableError(cache_status)) {
+		rc = NFS_REQ_DROP;
+		goto out;
+	}
 
-        res->res_access3.status = nfs3_Errno(cache_status);
-        nfs_SetPostOpAttr(entry,
-                          req_ctx,
-                          &(res->res_access3.ACCESS3res_u.resfail
-                            .obj_attributes));
-out:
+	res->res_access3.status = nfs3_Errno(cache_status);
+	nfs_SetPostOpAttr(entry, req_ctx,
+			  &(res->res_access3.ACCESS3res_u.resfail.
+			    obj_attributes));
+ out:
 
-        if (entry) {
-                cache_inode_put(entry);
-        }
+	if (entry) {
+		cache_inode_put(entry);
+	}
 
-        return rc;
-} /* nfs3_Access */
+	return rc;
+}				/* nfs3_Access */
 
 /**
  * @brief Free the result structure allocated for nfs3_Access.
@@ -149,8 +139,8 @@ out:
  * @param[in,out] res Result structure.
  *
  */
-void nfs3_Access_Free(nfs_res_t *res)
+void nfs3_Access_Free(nfs_res_t * res)
 {
-        /* Nothing to do */
-        return;
-} /* nfs3_Access_Free */
+	/* Nothing to do */
+	return;
+}				/* nfs3_Access_Free */

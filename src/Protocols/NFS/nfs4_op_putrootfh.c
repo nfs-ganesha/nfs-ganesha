@@ -57,26 +57,26 @@
  *
  */
 
-int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
+int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 {
-  pseudofs_entry_t psfsentry;
-  int              status = 0;
+	pseudofs_entry_t psfsentry;
+	int status = 0;
 
-  psfsentry = *(data->pseudofs->reverse_tab[0]);
+	psfsentry = *(data->pseudofs->reverse_tab[0]);
 
-  /* If rootFH already set, return success */
-  if(data->rootFH.nfs_fh4_val != NULL)
-    return NFS4_OK;
+	/* If rootFH already set, return success */
+	if (data->rootFH.nfs_fh4_val != NULL)
+		return NFS4_OK;
 
-  if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
-    return status;
+	if ((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
+		return status;
 
-  nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
+	nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
 
-  LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
+	LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
 
-  return NFS4_OK;
-}                               /* CreateROOTFH4 */
+	return NFS4_OK;
+}				/* CreateROOTFH4 */
 
 /**
  *
@@ -95,53 +95,50 @@ int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
  *
  */
 
-int nfs4_op_putrootfh(struct nfs_argop4 *op,
-                      compound_data_t *data,
-                      struct nfs_resop4 *resp)
+int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t * data,
+		      struct nfs_resop4 *resp)
 {
-  PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+	PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
-  /* First of all, set the reply to zero to make sure
-   * it contains no parasite information
-   */
-  memset(resp, 0, sizeof(struct nfs_resop4));
-  resp->resop = NFS4_OP_PUTROOTFH;
+	/* First of all, set the reply to zero to make sure
+	 * it contains no parasite information
+	 */
+	memset(resp, 0, sizeof(struct nfs_resop4));
+	resp->resop = NFS4_OP_PUTROOTFH;
 
-  /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-  res_PUTROOTFH4->status = CreateROOTFH4(&(data->rootFH), data);
-  if(res_PUTROOTFH4->status != NFS4_OK)
-    return res_PUTROOTFH4->status;
+	/* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
+	res_PUTROOTFH4->status = CreateROOTFH4(&(data->rootFH), data);
+	if (res_PUTROOTFH4->status != NFS4_OK)
+		return res_PUTROOTFH4->status;
 
-  /* I copy the root FH to the currentFH */
-  if(data->currentFH.nfs_fh4_val == NULL)
-    {
-      res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->currentFH));
-      if(res_PUTROOTFH4->status != NFS4_OK)
-        return res_PUTROOTFH4->status;
-    }
+	/* I copy the root FH to the currentFH */
+	if (data->currentFH.nfs_fh4_val == NULL) {
+		res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->currentFH));
+		if (res_PUTROOTFH4->status != NFS4_OK)
+			return res_PUTROOTFH4->status;
+	}
 
-  /* Copy the data where they are supposed to be */
-  memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
+	/* Copy the data where they are supposed to be */
+	memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
+	       data->rootFH.nfs_fh4_len);
+	data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  /* Mark current_stateid as invalid */
-  data->current_stateid_valid = false;
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
 
-  /* Fill in compound data */
-  res_PUTROOTFH4->status = set_compound_data_for_pseudo(data);
-  if(res_PUTROOTFH4->status != NFS4_OK)
-    return res_PUTROOTFH4->status;
+	/* Fill in compound data */
+	res_PUTROOTFH4->status = set_compound_data_for_pseudo(data);
+	if (res_PUTROOTFH4->status != NFS4_OK)
+		return res_PUTROOTFH4->status;
 
-  LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
-  LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
+	LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
+	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
-  LogFullDebug(COMPONENT_NFS_V4,
-                    "NFS4 PUTROOTFH: Ending on status %d",
-                    res_PUTROOTFH4->status);
+	LogFullDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: Ending on status %d",
+		     res_PUTROOTFH4->status);
 
-  return res_PUTROOTFH4->status;
-}                               /* nfs4_op_putrootfh */
+	return res_PUTROOTFH4->status;
+}				/* nfs4_op_putrootfh */
 
 /**
  * @brief Free memory allocated for PUTROOTFH result
@@ -151,8 +148,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putrootfh_Free(nfs_resop4 *resp)
+void nfs4_op_putrootfh_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-}                               /* nfs4_op_putrootfh_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_putrootfh_Free */

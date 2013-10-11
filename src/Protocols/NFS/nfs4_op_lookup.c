@@ -63,101 +63,95 @@
  *
  */
 
-int
-nfs4_op_lookup(struct nfs_argop4 *op,
-               compound_data_t *data,
-               struct nfs_resop4 *resp)
+int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
+		   struct nfs_resop4 *resp)
 {
-        /* Convenient alias for the arguments */
-        LOOKUP4args    *const  arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
-        /* Convenient alias for the response  */
-        LOOKUP4res     *const  res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
-        /* The name to look up */
-        char                 * name = NULL;
-        /* The directory in which to look up the name */
-        cache_entry_t        * dir_entry = NULL;
-        /* The name found */
-        cache_entry_t        * file_entry = NULL;
-        /* Status code from Cache inode */
-        cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+	/* Convenient alias for the arguments */
+	LOOKUP4args *const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+	/* Convenient alias for the response  */
+	LOOKUP4res *const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
+	/* The name to look up */
+	char *name = NULL;
+	/* The directory in which to look up the name */
+	cache_entry_t *dir_entry = NULL;
+	/* The name found */
+	cache_entry_t *file_entry = NULL;
+	/* Status code from Cache inode */
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-        resp->resop = NFS4_OP_LOOKUP;
-        res_LOOKUP4->status = NFS4_OK;
+	resp->resop = NFS4_OP_LOOKUP;
+	res_LOOKUP4->status = NFS4_OK;
 
-        /* Do basic checks on a filehandle */
-        res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY,
-                                                   false);
-        if (res_LOOKUP4->status != NFS4_OK) {
+	/* Do basic checks on a filehandle */
+	res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+	if (res_LOOKUP4->status != NFS4_OK) {
 		/* for some reason lookup is picky.  Just not being
 		 * dir is not enough.  We want to know it is a symlink
 		 */
-		if(res_LOOKUP4->status == NFS4ERR_NOTDIR
-		   && data->current_filetype == SYMBOLIC_LINK)
+		if (res_LOOKUP4->status == NFS4ERR_NOTDIR
+		    && data->current_filetype == SYMBOLIC_LINK)
 			res_LOOKUP4->status = NFS4ERR_SYMLINK;
-                goto out;
-        }
-
-        /* Validate and convert the UFT8 objname to a regular string */
-        res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
-						      UTF8_SCAN_ALL,
-						      &name);
-	if (res_LOOKUP4->status  != NFS4_OK) {
 		goto out;
 	}
 
-        /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
-                goto out;
-        }
+	/* Validate and convert the UFT8 objname to a regular string */
+	res_LOOKUP4->status =
+	    nfs4_utf8string2dynamic(&arg_LOOKUP4->objname, UTF8_SCAN_ALL,
+				    &name);
+	if (res_LOOKUP4->status != NFS4_OK) {
+		goto out;
+	}
 
-        /* Do the lookup in the FSAL */
-        file_entry = NULL;
-        dir_entry = data->current_entry;
+	/* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+		res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
+		goto out;
+	}
 
-        /* Sanity check: dir_entry should be ACTUALLY a directory */
+	/* Do the lookup in the FSAL */
+	file_entry = NULL;
+	dir_entry = data->current_entry;
 
-        cache_status = cache_inode_lookup(dir_entry,
-					  name,
-					  data->req_ctx,
-					  &file_entry);
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                res_LOOKUP4->status = nfs4_Errno(cache_status);
-                goto out;
-        }
+	/* Sanity check: dir_entry should be ACTUALLY a directory */
 
-        /* Convert it to a file handle */
-        if (!nfs4_FSALToFhandle(&data->currentFH,
-                                file_entry->obj_handle)) {
-                res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
-                cache_inode_put(file_entry);
-                goto out;
-        }
-        /* Mark current_stateid as invalid */
-        data->current_stateid_valid = false;
+	cache_status =
+	    cache_inode_lookup(dir_entry, name, data->req_ctx, &file_entry);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_LOOKUP4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
 
-        /* Release dir_entry, as it is not reachable from anywhere in
-           compound after this function returns.  Count on later
-           operations or nfs4_Compound to clean up current_entry. */
+	/* Convert it to a file handle */
+	if (!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle)) {
+		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
+		cache_inode_put(file_entry);
+		goto out;
+	}
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
 
-        if (dir_entry) {
-                cache_inode_put(dir_entry);
-        }
+	/* Release dir_entry, as it is not reachable from anywhere in
+	   compound after this function returns.  Count on later
+	   operations or nfs4_Compound to clean up current_entry. */
 
-        /* Keep the pointer within the compound data */
-        data->current_entry = file_entry;
-        data->current_filetype = file_entry->type;
+	if (dir_entry) {
+		cache_inode_put(dir_entry);
+	}
 
-        /* Return successfully */
-        res_LOOKUP4->status = NFS4_OK;
+	/* Keep the pointer within the compound data */
+	data->current_entry = file_entry;
+	data->current_filetype = file_entry->type;
 
-out:
-        if (name) {
-                gsh_free(name);
-                name = NULL;
-        }
-        return res_LOOKUP4->status;
-}                               /* nfs4_op_lookup */
+	/* Return successfully */
+	res_LOOKUP4->status = NFS4_OK;
+
+ out:
+	if (name) {
+		gsh_free(name);
+		name = NULL;
+	}
+	return res_LOOKUP4->status;
+}				/* nfs4_op_lookup */
 
 /**
  * @brief Free memory allocated for LOOKUP result
@@ -167,8 +161,8 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookup_Free(nfs_resop4 *resp)
+void nfs4_op_lookup_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-        return;
-} /* nfs4_op_lookup_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_lookup_Free */

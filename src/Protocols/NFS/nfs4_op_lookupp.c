@@ -64,92 +64,90 @@
  * @return per RFC5661, p. 369
  *
  */
-int nfs4_op_lookupp(struct nfs_argop4 *op,
-                    compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
+		    struct nfs_resop4 *resp)
 {
-  LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
-  cache_entry_t        * dir_entry = NULL;
-  cache_entry_t        * file_entry = NULL;
-  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+	LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
+	cache_entry_t *dir_entry = NULL;
+	cache_entry_t *file_entry = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-  resp->resop = NFS4_OP_LOOKUPP;
-  res_LOOKUPP4->status = NFS4_OK;
+	resp->resop = NFS4_OP_LOOKUPP;
+	res_LOOKUPP4->status = NFS4_OK;
 
-  /* Do basic checks on a filehandle */
-  res_LOOKUPP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-  if(res_LOOKUPP4->status != NFS4_OK)
-    return res_LOOKUPP4->status;
+	/* Do basic checks on a filehandle */
+	res_LOOKUPP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+	if (res_LOOKUPP4->status != NFS4_OK)
+		return res_LOOKUPP4->status;
 
-  /* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
-  if(data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
-     && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-               data->currentFH.nfs_fh4_len) == 0)
-    {
-      /* Nothing to do, just reply with success */
-      res_LOOKUPP4->status = NFS4ERR_NOENT;
-      return res_LOOKUPP4->status;
-    }
+	/* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
+	if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
+	    && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
+		      data->currentFH.nfs_fh4_len) == 0) {
+		/* Nothing to do, just reply with success */
+		res_LOOKUPP4->status = NFS4ERR_NOENT;
+		return res_LOOKUPP4->status;
+	}
 
-  /* If in pseudoFS, proceed with pseudoFS specific functions */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    return nfs4_op_lookupp_pseudo(op, data, resp);
+	/* If in pseudoFS, proceed with pseudoFS specific functions */
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+		return nfs4_op_lookupp_pseudo(op, data, resp);
 
-  /* If Filehandle points to the root of the current export, then backup
-   * through junction into the pseudo file system.
-   *
-   * @todo FSF: eventually we need to support junctions between exports
-   *            and that will require different code here.
-   */
-  if(data->current_entry->type == DIRECTORY &&
-     data->current_entry == data->req_ctx->export->export.exp_root_cache_inode)
-    return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
+	/* If Filehandle points to the root of the current export, then backup
+	 * through junction into the pseudo file system.
+	 *
+	 * @todo FSF: eventually we need to support junctions between exports
+	 *            and that will require different code here.
+	 */
+	if (data->current_entry->type == DIRECTORY
+	    && data->current_entry ==
+	    data->req_ctx->export->export.exp_root_cache_inode)
+		return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
 
-  /* Preparing for cache_inode_lookup ".." */
-  file_entry = NULL;
-  dir_entry = data->current_entry;
+	/* Preparing for cache_inode_lookup ".." */
+	file_entry = NULL;
+	dir_entry = data->current_entry;
 
-  cache_status = cache_inode_lookupp(dir_entry,
-				     data->req_ctx,
-				     &file_entry);
-  if (file_entry != NULL)
-    {
-      /* Convert it to a file handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle))
-        {
-          res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(file_entry);
-          return res_LOOKUPP4->status;
-        }
+	cache_status =
+	    cache_inode_lookupp(dir_entry, data->req_ctx, &file_entry);
+	if (file_entry != NULL) {
+		/* Convert it to a file handle */
+		if (!nfs4_FSALToFhandle
+		    (&data->currentFH, file_entry->obj_handle)) {
+			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
+			cache_inode_put(file_entry);
+			return res_LOOKUPP4->status;
+		}
 
-      /* Mark current_stateid as invalid */
-      data->current_stateid_valid = false;
+		/* Mark current_stateid as invalid */
+		data->current_stateid_valid = false;
 
-      /* Release dir_pentry, as it is not reachable from anywhere in
-         compound after this function returns.  Count on later
-         operations or nfs4_Compound to clean up current_entry. */
+		/* Release dir_pentry, as it is not reachable from anywhere in
+		   compound after this function returns.  Count on later
+		   operations or nfs4_Compound to clean up current_entry. */
 
-      if (dir_entry)
-        cache_inode_put(dir_entry);
+		if (dir_entry)
+			cache_inode_put(dir_entry);
 
-      /* Keep the pointer within the compound data */
-      data->current_entry = file_entry;
-      data->current_filetype = file_entry->type;
+		/* Keep the pointer within the compound data */
+		data->current_entry = file_entry;
+		data->current_filetype = file_entry->type;
 
-      /* Return successfully */
-      res_LOOKUPP4->status = NFS4_OK;
-      return NFS4_OK;
+		/* Return successfully */
+		res_LOOKUPP4->status = NFS4_OK;
+		return NFS4_OK;
 
-    }
+	}
 
-  /* If the part of the code is reached, then something wrong occured in the
-   * lookup process, status is not HPSS_E_NOERROR and contains the code for
-   * the error */
+	/* If the part of the code is reached, then something wrong occured in the
+	 * lookup process, status is not HPSS_E_NOERROR and contains the code for
+	 * the error */
 
-  /* For any wrong file type LOOKUPP should return NFS4ERR_NOTDIR */
-  res_LOOKUPP4->status = nfs4_Errno(cache_status);
+	/* For any wrong file type LOOKUPP should return NFS4ERR_NOTDIR */
+	res_LOOKUPP4->status = nfs4_Errno(cache_status);
 
-  return res_LOOKUPP4->status;
-}                               /* nfs4_op_lookupp */
+	return res_LOOKUPP4->status;
+}				/* nfs4_op_lookupp */
 
 /**
  * @brief Free memory allocated for LOOKUPP result
@@ -159,8 +157,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookupp_Free(nfs_resop4 *resp)
+void nfs4_op_lookupp_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_lookupp_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_lookupp_Free */

@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -62,40 +62,37 @@
  *
  */
 
-int mnt_Umnt(nfs_arg_t *parg,
-             exportlist_t *pexport,
-	     struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres)
+int mnt_Umnt(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres)
 {
-  char *hostname;
+	char *hostname;
 
-  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Umnt path %s",
-           parg->arg_mnt);
+	LogDebug(COMPONENT_NFSPROTO,
+		 "REQUEST PROCESSING: Calling mnt_Umnt path %s", parg->arg_mnt);
 
-  /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
-  hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
+	/* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
+	hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
 
-  if(hostname == NULL)
-    {
-      LogEvent(COMPONENT_NFSPROTO, "NULL passed as Umount argument !!!");
-      return NFS_REQ_DROP;
-    }
+	if (hostname == NULL) {
+		LogEvent(COMPONENT_NFSPROTO,
+			 "NULL passed as Umount argument !!!");
+		return NFS_REQ_DROP;
+	}
 
-  /* TODO: this should actually process the path also.
-   * nfs_Remove_MountList_Entry() will need updating also.
-   */
-  if(!nfs_Remove_MountList_Entry(hostname, NULL))
-    {
-      LogCrit(COMPONENT_NFSPROTO,
-              "UMOUNT: Cannot remove mount entry for client %s", hostname);
-    }
-  LogInfo(COMPONENT_NFSPROTO,
-          "UMOUNT: Client %s was removed from mount list", hostname);
+	/* TODO: this should actually process the path also.
+	 * nfs_Remove_MountList_Entry() will need updating also.
+	 */
+	if (!nfs_Remove_MountList_Entry(hostname, NULL)) {
+		LogCrit(COMPONENT_NFSPROTO,
+			"UMOUNT: Cannot remove mount entry for client %s",
+			hostname);
+	}
+	LogInfo(COMPONENT_NFSPROTO,
+		"UMOUNT: Client %s was removed from mount list", hostname);
 
-  return NFS_REQ_OK;
-}                               /* mnt_Umnt */
+	return NFS_REQ_OK;
+}				/* mnt_Umnt */
 
 /**
  * mnt_Umnt_Free: Frees the result structure allocated for mnt_Umnt.
@@ -107,6 +104,6 @@ int mnt_Umnt(nfs_arg_t *parg,
  */
 void mnt_Umnt_Free(nfs_res_t * pres)
 {
-  /* Nothing to do */
-  return;
-}                               /* mnt_Umnt_Free */
+	/* Nothing to do */
+	return;
+}				/* mnt_Umnt_Free */

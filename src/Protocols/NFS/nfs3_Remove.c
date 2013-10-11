@@ -32,7 +32,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -75,136 +75,112 @@
  *
  */
 
-int
-nfs_Remove(nfs_arg_t *arg,
-           exportlist_t *export,
-           struct req_op_context *req_ctx,
-           nfs_worker_data_t *worker,
-           struct svc_req *req,
-           nfs_res_t *res)
+int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+	       struct svc_req *req, nfs_res_t * res)
 {
-        cache_entry_t *parent_entry = NULL;
-        cache_entry_t *child_entry = NULL;
-        pre_op_attr pre_parent = {
-                .attributes_follow = false
-        };
-        cache_inode_status_t cache_status;
-        const char *name = arg->arg_remove3.object.name;
-        int rc = NFS_REQ_OK;
+	cache_entry_t *parent_entry = NULL;
+	cache_entry_t *child_entry = NULL;
+	pre_op_attr pre_parent = {
+		.attributes_follow = false
+	};
+	cache_inode_status_t cache_status;
+	const char *name = arg->arg_remove3.object.name;
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
 
-                nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_create3.where.dir,
-                                 NULL,
-                                 str);
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs_Remove handle: %s "
-                         "name: %s", str, name);
-        }
+		nfs_FhandleToStr(req->rq_vers, &arg->arg_create3.where.dir,
+				 NULL, str);
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s "
+			 "name: %s", str, name);
+	}
 
-        /* Convert file handle into a pentry */
+	/* Convert file handle into a pentry */
 	/* to avoid setting it on each error case */
-	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.before
-		.attributes_follow = FALSE;
-	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after
-		.attributes_follow = FALSE;
-	parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
-					   req_ctx,
-					   export,
-					   &res->res_remove3.status,
-					   &rc);
-        if(parent_entry == NULL) {
-                /* Stale NFS FH ? */
-                goto out;
-        }
+	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.before.attributes_follow =
+	    FALSE;
+	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after.attributes_follow =
+	    FALSE;
+	parent_entry =
+	    nfs3_FhandleToCache(&arg->arg_remove3.object.dir, req_ctx, export,
+				&res->res_remove3.status, &rc);
+	if (parent_entry == NULL) {
+		/* Stale NFS FH ? */
+		goto out;
+	}
 
-        nfs_SetPreOpAttr(parent_entry,
-                         req_ctx,
-                         &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
-        /*
-         * Sanity checks: file name must be non-null; parent must be a
-         * directory.
-         */
-        if (parent_entry->type != DIRECTORY) {
-                res->res_remove3.status = NFS3ERR_NOTDIR;
-                rc = NFS_REQ_OK;
-                goto out;
-        }
+	/*
+	 * Sanity checks: file name must be non-null; parent must be a
+	 * directory.
+	 */
+	if (parent_entry->type != DIRECTORY) {
+		res->res_remove3.status = NFS3ERR_NOTDIR;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
 
-        if (name == NULL ||
-            *name == '\0' ) {
-                cache_status = CACHE_INODE_INVALID_ARGUMENT;
-                goto out_fail;
-        }
+	if (name == NULL || *name == '\0') {
+		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		goto out_fail;
+	}
 
-        /* Lookup the child entry to verify that it is not a directory */
-        cache_status = cache_inode_lookup(parent_entry,
-					  name,
-					  req_ctx,
-					  &child_entry);
-        if (child_entry != NULL) {
-                /* Sanity check: make sure we are not removing a
-                   directory */
-                if (child_entry->type == DIRECTORY) {
-                        res->res_remove3.status = NFS3ERR_ISDIR;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-        }
+	/* Lookup the child entry to verify that it is not a directory */
+	cache_status =
+	    cache_inode_lookup(parent_entry, name, req_ctx, &child_entry);
+	if (child_entry != NULL) {
+		/* Sanity check: make sure we are not removing a
+		   directory */
+		if (child_entry->type == DIRECTORY) {
+			res->res_remove3.status = NFS3ERR_ISDIR;
+			rc = NFS_REQ_OK;
+			goto out;
+		}
+	}
 
-        LogFullDebug(COMPONENT_NFSPROTO,
-                     "==== NFS REMOVE ====> Trying to remove"
-                     " file %s",
-                     name);
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "==== NFS REMOVE ====> Trying to remove" " file %s", name);
 
-        /* Remove the entry. */
-        cache_status = cache_inode_remove(parent_entry,
-					  name,
-					  req_ctx);
-        if (cache_status != CACHE_INODE_SUCCESS)
-        {
-                goto out_fail;
-        }
+	/* Remove the entry. */
+	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		goto out_fail;
+	}
 
-        /* Build Weak Cache Coherency data */
-        nfs_SetWccData(&pre_parent,
-                       parent_entry,
-                       req_ctx,
-                       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
+	/* Build Weak Cache Coherency data */
+	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+		       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
 
-        res->res_remove3.status = NFS3_OK;
-        rc = NFS_REQ_OK;
-        
-        goto out;
+	res->res_remove3.status = NFS3_OK;
+	rc = NFS_REQ_OK;
 
-out_fail:
-        res->res_remove3.status = nfs3_Errno(cache_status);
-        nfs_SetWccData(&pre_parent,
-                       parent_entry,
-                       req_ctx,
-                       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
+	goto out;
 
+ out_fail:
+	res->res_remove3.status = nfs3_Errno(cache_status);
+	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
-        if (nfs_RetryableError(cache_status)) {
-                rc = NFS_REQ_DROP;
+	if (nfs_RetryableError(cache_status)) {
+		rc = NFS_REQ_DROP;
 
-        }
+	}
 
-out:
-        /* return references */
-        if (child_entry) 
-                cache_inode_put(child_entry);
-        
+ out:
+	/* return references */
+	if (child_entry)
+		cache_inode_put(child_entry);
 
-        if (parent_entry) 
-                cache_inode_put(parent_entry);
-        
-        return rc;
+	if (parent_entry)
+		cache_inode_put(parent_entry);
 
-} /* nfs_Remove */
+	return rc;
+
+}				/* nfs_Remove */
 
 /**
  * @brief Free the result structure allocated for nfs_Remove.
@@ -214,7 +190,7 @@ out:
  * @param[in,out] res Result structure
  *
  */
-void nfs_Remove_Free(nfs_res_t *res)
+void nfs_Remove_Free(nfs_res_t * res)
 {
-        return;
-} /* nfs_Remove_Free */
+	return;
+}				/* nfs_Remove_Free */

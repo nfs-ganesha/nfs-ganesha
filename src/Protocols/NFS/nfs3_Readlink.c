@@ -32,7 +32,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -67,88 +67,75 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int
-nfs_Readlink(nfs_arg_t *arg,
-             exportlist_t *export,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *worker,
-             struct svc_req *req,
-             nfs_res_t *res)
+int nfs_Readlink(nfs_arg_t * arg, exportlist_t * export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+		 struct svc_req *req, nfs_res_t * res)
 {
-        cache_entry_t *entry = NULL;
-        cache_inode_status_t cache_status;
-        struct gsh_buffdesc link_buffer = {.addr = NULL,
-                                           .len  = 0};
-        int rc = NFS_REQ_OK;
+	cache_entry_t *entry = NULL;
+	cache_inode_status_t cache_status;
+	struct gsh_buffdesc link_buffer = {.addr = NULL,
+		.len = 0
+	};
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
-                nfs_FhandleToStr(req->rq_vers,
-                                 &(arg->arg_readlink3.symlink),
-                                 NULL,
-                                 str);
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs_Readlink handle: %s",
-                         str);
-        }
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
+		nfs_FhandleToStr(req->rq_vers, &(arg->arg_readlink3.symlink),
+				 NULL, str);
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs_Readlink handle: %s",
+			 str);
+	}
 
 	/* to avoid setting it on each error case */
-	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes
-		.attributes_follow = false;
-	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
-				    req_ctx,
-				    export,
-				    &res->res_readlink3.status,
-				    &rc);
-        if(entry == NULL) {
-                goto out;
-        }
+	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes.
+	    attributes_follow = false;
+	entry =
+	    nfs3_FhandleToCache(&arg->arg_readlink3.symlink, req_ctx, export,
+				&res->res_readlink3.status, &rc);
+	if (entry == NULL) {
+		goto out;
+	}
 
-        /* Sanity Check: the entry must be a link */
-        if (entry->type != SYMBOLIC_LINK) {
-                res->res_readlink3.status = NFS3ERR_INVAL;
-                
-                rc = NFS_REQ_OK;
-                goto out;
-        }
+	/* Sanity Check: the entry must be a link */
+	if (entry->type != SYMBOLIC_LINK) {
+		res->res_readlink3.status = NFS3ERR_INVAL;
 
-        cache_status = cache_inode_readlink(entry,
-					    &link_buffer,
-					    req_ctx);
-        if (cache_status != CACHE_INODE_SUCCESS)
-         {
-                res->res_readlink3.status =
-                                nfs3_Errno(cache_status);
-                nfs_SetPostOpAttr(entry,
-                                  req_ctx,
-                                  &res->res_readlink3.READLINK3res_u.resfail.symlink_attributes);
+		rc = NFS_REQ_OK;
+		goto out;
+	}
 
-                if (nfs_RetryableError(cache_status)) {
-                        rc = NFS_REQ_DROP;
-                        goto out;
-                }
-                goto out;
-        }
+	cache_status = cache_inode_readlink(entry, &link_buffer, req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res->res_readlink3.status = nfs3_Errno(cache_status);
+		nfs_SetPostOpAttr(entry, req_ctx,
+				  &res->res_readlink3.READLINK3res_u.resfail.
+				  symlink_attributes);
 
-        /* Reply to the client */
-        res->res_readlink3.READLINK3res_u.resok.data =
-		link_buffer.addr;
-        nfs_SetPostOpAttr(entry,
-                          req_ctx,
-                          &res->res_readlink3.READLINK3res_u.resok.
-                          symlink_attributes);
-        res->res_readlink3.status = NFS3_OK;
+		if (nfs_RetryableError(cache_status)) {
+			rc = NFS_REQ_DROP;
+			goto out;
+		}
+		goto out;
+	}
 
-        rc = NFS_REQ_OK;
+	/* Reply to the client */
+	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
+	nfs_SetPostOpAttr(entry, req_ctx,
+			  &res->res_readlink3.READLINK3res_u.
+			  resok.symlink_attributes);
+	res->res_readlink3.status = NFS3_OK;
 
-out:
-        /* return references */
-        if (entry) {
-                cache_inode_put(entry);
-        }
+	rc = NFS_REQ_OK;
 
-        return rc;
-}                               /* nfs_Readlink */
+ out:
+	/* return references */
+	if (entry) {
+		cache_inode_put(entry);
+	}
+
+	return rc;
+}				/* nfs_Readlink */
 
 /**
  * @brief Free the result structure allocated for nfs3_Readlink.
@@ -159,9 +146,9 @@ out:
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Readlink_Free(nfs_res_t *res)
+void nfs3_Readlink_Free(nfs_res_t * res)
 {
-        if(res->res_readlink3.status == NFS3_OK) {
-                gsh_free(res->res_readlink3.READLINK3res_u.resok.data);
-        }
-} /* nfs3_Readlink_Free */
+	if (res->res_readlink3.status == NFS3_OK) {
+		gsh_free(res->res_readlink3.READLINK3res_u.resok.data);
+	}
+}				/* nfs3_Readlink_Free */

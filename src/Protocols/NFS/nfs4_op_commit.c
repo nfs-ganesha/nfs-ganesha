@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -52,9 +52,8 @@
 #include "nfs_file_handle.h"
 #include "fsal_pnfs.h"
 
-static int op_dscommit(struct nfs_argop4 *op,
-                       compound_data_t * data,
-                       struct nfs_resop4 *resp);
+static int op_dscommit(struct nfs_argop4 *op, compound_data_t * data,
+		       struct nfs_resop4 *resp);
 
 /**
  * @brief Implemtation of NFS4_OP_COMMIT
@@ -69,61 +68,54 @@ static int op_dscommit(struct nfs_argop4 *op,
  *
  */
 
-int nfs4_op_commit(struct nfs_argop4 *op,
-                   compound_data_t *data,
-                   struct nfs_resop4 *resp)
+int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data,
+		   struct nfs_resop4 *resp)
 {
-  COMMIT4args *const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
-  COMMIT4res *const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
-  cache_inode_status_t cache_status;
-  struct gsh_buffdesc verf_desc;
+	COMMIT4args *const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
+	COMMIT4res *const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
+	cache_inode_status_t cache_status;
+	struct gsh_buffdesc verf_desc;
 
-  resp->resop = NFS4_OP_COMMIT;
-  res_COMMIT4->status = NFS4_OK;
+	resp->resop = NFS4_OP_COMMIT;
+	res_COMMIT4->status = NFS4_OK;
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "      COMMIT4: Commit order over offset = %"PRIu64
-               ", size = %"PRIu32,
-               arg_COMMIT4->offset,
-               arg_COMMIT4->count);
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "      COMMIT4: Commit order over offset = %" PRIu64
+		     ", size = %" PRIu32, arg_COMMIT4->offset,
+		     arg_COMMIT4->count);
 
-  /*
-   * Do basic checks on a filehandle Commit is done only on a file
-   */
-  res_COMMIT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
-  if(res_COMMIT4->status != NFS4_OK)
-    return res_COMMIT4->status;
+	/*
+	 * Do basic checks on a filehandle Commit is done only on a file
+	 */
+	res_COMMIT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
+	if (res_COMMIT4->status != NFS4_OK)
+		return res_COMMIT4->status;
 
-  if ((nfs4_Is_Fh_DSHandle(&data->currentFH)))
-    {
-      return(op_dscommit(op, data, resp));
-    }
+	if ((nfs4_Is_Fh_DSHandle(&data->currentFH))) {
+		return (op_dscommit(op, data, resp));
+	}
+	// FIX ME!! At the moment we just assume the user is _not_ using
+	// the ganesha unsafe buffer. In the future, a check based on
+	// export config params (similar to nfs3_Commit.c) should be made.
+	cache_status =
+	    cache_inode_commit(data->current_entry, arg_COMMIT4->offset,
+			       arg_COMMIT4->count, data->req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_COMMIT4->status = nfs4_Errno(cache_status);
+		return res_COMMIT4->status;
+	}
 
-  // FIX ME!! At the moment we just assume the user is _not_ using
-  // the ganesha unsafe buffer. In the future, a check based on
-  // export config params (similar to nfs3_Commit.c) should be made.
-  cache_status = cache_inode_commit(data->current_entry,
-				    arg_COMMIT4->offset,
-				    arg_COMMIT4->count,
-				    data->req_ctx);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_COMMIT4->status = nfs4_Errno(cache_status);
-      return res_COMMIT4->status;
-    }
+	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
+	verf_desc.len = sizeof(verifier4);
+	data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
 
-  verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
-  verf_desc.len = sizeof(verifier4);
-  data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
+	LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Commit verifier %d-%d",
+		     ((int *)verf_desc.addr)[0], ((int *)verf_desc.addr)[1]);
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "      COMMIT4: Commit verifier %d-%d",
-                ((int *)verf_desc.addr)[0], ((int *)verf_desc.addr)[1]);
-
-  /* If you reach this point, then an error occured */
-  res_COMMIT4->status = NFS4_OK;
-  return res_COMMIT4->status;
-}                               /* nfs4_op_commit */
+	/* If you reach this point, then an error occured */
+	res_COMMIT4->status = NFS4_OK;
+	return res_COMMIT4->status;
+}				/* nfs4_op_commit */
 
 /**
  * @brief Free memory allocated for COMMIT result
@@ -133,11 +125,11 @@ int nfs4_op_commit(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_commit_Free(nfs_resop4 *resp)
+void nfs4_op_commit_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_commit_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_commit_Free */
 
 /**
  *
@@ -154,25 +146,24 @@ void nfs4_op_commit_Free(nfs_resop4 *resp)
  *
  */
 
-static int
-op_dscommit(struct nfs_argop4 *op,
-            compound_data_t *data,
-            struct nfs_resop4 *resp)
+static int op_dscommit(struct nfs_argop4 *op, compound_data_t * data,
+		       struct nfs_resop4 *resp)
 {
 	COMMIT4args *const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
 	COMMIT4res *const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
-        /* NFSv4 status code */
-        nfsstat4 nfs_status = 0;
+	/* NFSv4 status code */
+	nfsstat4 nfs_status = 0;
 
-        /* Construct the FSAL file handle */
+	/* Construct the FSAL file handle */
 
-        /* Call the commit operation */
-        nfs_status = data->current_ds->ops->commit(
-		data->current_ds, data->req_ctx,
-		arg_COMMIT4->offset, arg_COMMIT4->count,
-		&res_COMMIT4->COMMIT4res_u.resok4.writeverf);
+	/* Call the commit operation */
+	nfs_status =
+	    data->current_ds->ops->commit(data->current_ds, data->req_ctx,
+					  arg_COMMIT4->offset,
+					  arg_COMMIT4->count,
+					  &res_COMMIT4->COMMIT4res_u.resok4.
+					  writeverf);
 
-        res_COMMIT4->status = nfs_status;
-        return res_COMMIT4->status;
+	res_COMMIT4->status = nfs_status;
+	return res_COMMIT4->status;
 }
-

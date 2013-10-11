@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -67,21 +67,20 @@
  *
  */
 
-int nfs4_op_set_ssv(struct nfs_argop4 *op,
-                     compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_set_ssv(struct nfs_argop4 *op, compound_data_t * data,
+		    struct nfs_resop4 *resp)
 {
-  SET_SSV4args *const arg_SET_SSV4 __attribute__((unused))
-    = &op->nfs_argop4_u.opset_ssv;
-  SET_SSV4res *const res_SET_SSV4 = &resp->nfs_resop4_u.opset_ssv;
-  resp->resop = NFS4_OP_SET_SSV;
-  res_SET_SSV4->ssr_status = NFS4_OK;
-  if (data->minorversion == 0)
-    {
-      return (res_SET_SSV4->ssr_status = NFS4ERR_INVAL);
-    }
+	SET_SSV4args *const arg_SET_SSV4 __attribute__ ((unused))
+	    = &op->nfs_argop4_u.opset_ssv;
+	SET_SSV4res *const res_SET_SSV4 = &resp->nfs_resop4_u.opset_ssv;
+	resp->resop = NFS4_OP_SET_SSV;
+	res_SET_SSV4->ssr_status = NFS4_OK;
+	if (data->minorversion == 0) {
+		return (res_SET_SSV4->ssr_status = NFS4ERR_INVAL);
+	}
 
-  return res_SET_SSV4->ssr_status;       /* I know this is pretty dirty... But this is an early implementation... */
-}                               /* nfs41_op_set_ssv */
+	return res_SET_SSV4->ssr_status;	/* I know this is pretty dirty... But this is an early implementation... */
+}				/* nfs41_op_set_ssv */
 
 /**
  * @brief Free memory allocated for SET_SSV result
@@ -93,6 +92,6 @@ int nfs4_op_set_ssv(struct nfs_argop4 *op,
  */
 void nfs4_op_set_ssv_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_set_ssv_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_set_ssv_Free */

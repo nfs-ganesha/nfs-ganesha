@@ -55,67 +55,65 @@
  *
  */
 
-int nfs4_op_nverify(struct nfs_argop4 *op,
-                    compound_data_t *data,
-                    struct nfs_resop4 *resp)
+int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
+		    struct nfs_resop4 *resp)
 {
 	NVERIFY4args *const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
 	NVERIFY4res *const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
-        fattr4               file_attr4;
-        int                  rc = 0;
+	fattr4 file_attr4;
+	int rc = 0;
 
-        resp->resop = NFS4_OP_NVERIFY;
-        res_NVERIFY4->status = NFS4_OK;
+	resp->resop = NFS4_OP_NVERIFY;
+	res_NVERIFY4->status = NFS4_OK;
 
-        /* Do basic checks on a filehandle */
-        res_NVERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-        if (res_NVERIFY4->status != NFS4_OK) {
-                return res_NVERIFY4->status;
-        }
+	/* Do basic checks on a filehandle */
+	res_NVERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+	if (res_NVERIFY4->status != NFS4_OK) {
+		return res_NVERIFY4->status;
+	}
 
-        /* operation is always permitted on pseudofs */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                res_NVERIFY4->status = NFS4_OK;
-                return res_NVERIFY4->status;
-        }
+	/* operation is always permitted on pseudofs */
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+		res_NVERIFY4->status = NFS4_OK;
+		return res_NVERIFY4->status;
+	}
 
-        /* Get only attributes that are allowed to be read */
-        if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4->obj_attributes,
-                                    FATTR4_ATTR_READ)) {
-                res_NVERIFY4->status = NFS4ERR_INVAL;
-                return res_NVERIFY4->status;
-        }
+	/* Get only attributes that are allowed to be read */
+	if (!nfs4_Fattr_Check_Access
+	    (&arg_NVERIFY4->obj_attributes, FATTR4_ATTR_READ)) {
+		res_NVERIFY4->status = NFS4ERR_INVAL;
+		return res_NVERIFY4->status;
+	}
 
-        /* Ask only for supported attributes */
-        if (!nfs4_Fattr_Supported(&arg_NVERIFY4->obj_attributes)) {
-                res_NVERIFY4->status = NFS4ERR_ATTRNOTSUPP;
-                return res_NVERIFY4->status;
-        }
+	/* Ask only for supported attributes */
+	if (!nfs4_Fattr_Supported(&arg_NVERIFY4->obj_attributes)) {
+		res_NVERIFY4->status = NFS4ERR_ATTRNOTSUPP;
+		return res_NVERIFY4->status;
+	}
 
-        res_NVERIFY4->status = cache_entry_To_Fattr(
-                                 data->current_entry,
-                                 &file_attr4,
-                                 data,
-                                 &(data->currentFH),
-                                 &(arg_NVERIFY4->obj_attributes.attrmask));
-        if (res_NVERIFY4->status != NFS4_OK) {
-                return res_NVERIFY4->status;
-        }
+	res_NVERIFY4->status =
+	    cache_entry_To_Fattr(data->current_entry, &file_attr4, data,
+				 &(data->currentFH),
+				 &(arg_NVERIFY4->obj_attributes.attrmask));
+	if (res_NVERIFY4->status != NFS4_OK) {
+		return res_NVERIFY4->status;
+	}
 
-        if ((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4->obj_attributes),
-                                 &file_attr4)) == false) {
-                res_NVERIFY4->status = NFS4_OK;
-        } else {
-                if(rc == -1) {
-                        res_NVERIFY4->status = NFS4ERR_INVAL;
-                } else {
-                        res_NVERIFY4->status = NFS4ERR_SAME;
-                }
-        }
+	if ((rc =
+	     nfs4_Fattr_cmp(&(arg_NVERIFY4->obj_attributes),
+			    &file_attr4)) == false) {
+		res_NVERIFY4->status = NFS4_OK;
+	} else {
+		if (rc == -1) {
+			res_NVERIFY4->status = NFS4ERR_INVAL;
+		} else {
+			res_NVERIFY4->status = NFS4ERR_SAME;
+		}
+	}
 
-        nfs4_Fattr_Free(&file_attr4);
-        return res_NVERIFY4->status;
-} /* nfs4_op_nverify */
+	nfs4_Fattr_Free(&file_attr4);
+	return res_NVERIFY4->status;
+}				/* nfs4_op_nverify */
 
 /**
  * @brief Free memory allocated for NVERIFY result
@@ -125,7 +123,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
  *
  * @param[in] resp nfs4_op results
  */
-void nfs4_op_nverify_Free(nfs_resop4 *resp)
+void nfs4_op_nverify_Free(nfs_resop4 * resp)
 {
-        return;
-} /* nfs4_op_nverify_Free */
+	return;
+}				/* nfs4_op_nverify_Free */

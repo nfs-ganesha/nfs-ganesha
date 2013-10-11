@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -56,16 +56,13 @@
  * @param[out] res     ignored
  */
 
-int nfs_Null(nfs_arg_t *arg,
-             exportlist_t *export,
-	     struct req_op_context *req_ctx,
-             nfs_worker_data_t *worker,
-             struct svc_req *req,
-             nfs_res_t *res)
+int nfs_Null(nfs_arg_t * arg, exportlist_t * export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+	     struct svc_req *req, nfs_res_t * res)
 {
-  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
-  return NFS3_OK;
-} /* nfs_cb_Null */
+	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
+	return NFS3_OK;
+}				/* nfs_cb_Null */
 
 /**
  * @brief Free memory allocated for the nfs4_cb_Null result
@@ -76,8 +73,8 @@ int nfs_Null(nfs_arg_t *arg,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Null_Free(nfs_res_t *res)
+void nfs_Null_Free(nfs_res_t * res)
 {
-  /* Nothing to do here */
-  return;
-} /* nfs4_cb_Null_Free */
+	/* Nothing to do here */
+	return;
+}				/* nfs4_cb_Null_Free */

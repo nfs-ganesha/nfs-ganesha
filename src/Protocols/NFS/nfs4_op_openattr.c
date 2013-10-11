@@ -55,19 +55,18 @@
  * @return per RFC5661, pp. 370-1
  *
  */
-int nfs4_op_openattr(struct nfs_argop4 *op,
-                     compound_data_t *data,
-                     struct nfs_resop4 *resp)
+int nfs4_op_openattr(struct nfs_argop4 *op, compound_data_t * data,
+		     struct nfs_resop4 *resp)
 {
-  OPENATTR4args *const arg_OPENATTR4 __attribute__((unused))
-    = &op->nfs_argop4_u.opopenattr;
-  OPENATTR4res *const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
+	OPENATTR4args *const arg_OPENATTR4 __attribute__ ((unused))
+	    = &op->nfs_argop4_u.opopenattr;
+	OPENATTR4res *const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
 
-  resp->resop = NFS4_OP_OPENATTR;
-  res_OPENATTR4->status = NFS4ERR_NOTSUPP;
+	resp->resop = NFS4_OP_OPENATTR;
+	res_OPENATTR4->status = NFS4ERR_NOTSUPP;
 
-  return res_OPENATTR4->status;
-}                               /* nfs4_op_openattr */
+	return res_OPENATTR4->status;
+}				/* nfs4_op_openattr */
 
 /**
  * @brief Free memory allocated for OPENATTR result
@@ -79,6 +78,6 @@ int nfs4_op_openattr(struct nfs_argop4 *op,
  */
 void nfs4_op_openattr_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_openattr_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_openattr_Free */

@@ -56,45 +56,45 @@
  *
  */
 
-int nfs4_op_readlink(struct nfs_argop4 *op,
-                     compound_data_t *data,
-                     struct nfs_resop4 *resp)
+int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t * data,
+		     struct nfs_resop4 *resp)
 {
-  READLINK4res *const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
-  cache_inode_status_t cache_status;
-  struct gsh_buffdesc  link_buffer = {.addr = NULL,
-                                      .len  = 0};
+	READLINK4res *const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
+	cache_inode_status_t cache_status;
+	struct gsh_buffdesc link_buffer = {.addr = NULL,
+		.len = 0
+	};
 
-  resp->resop = NFS4_OP_READLINK;
-  res_READLINK4->status = NFS4_OK;
+	resp->resop = NFS4_OP_READLINK;
+	res_READLINK4->status = NFS4_OK;
 
-  /*
-   * Do basic checks on a filehandle You can readlink only on a link
-   * ...
-   */
-  res_READLINK4->status = nfs4_sanity_check_FH(data, SYMBOLIC_LINK,
-                                              false);
-  if(res_READLINK4->status != NFS4_OK)
-    return res_READLINK4->status;
+	/*
+	 * Do basic checks on a filehandle You can readlink only on a link
+	 * ...
+	 */
+	res_READLINK4->status =
+	    nfs4_sanity_check_FH(data, SYMBOLIC_LINK, false);
+	if (res_READLINK4->status != NFS4_OK)
+		return res_READLINK4->status;
 
-  /* Using cache_inode_readlink */
-  cache_status = cache_inode_readlink(data->current_entry,
-				      &link_buffer,
-				      data->req_ctx);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_READLINK4->status = nfs4_Errno(cache_status);
-      return res_READLINK4->status;
-    }
+	/* Using cache_inode_readlink */
+	cache_status =
+	    cache_inode_readlink(data->current_entry, &link_buffer,
+				 data->req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_READLINK4->status = nfs4_Errno(cache_status);
+		return res_READLINK4->status;
+	}
 
-  res_READLINK4->READLINK4res_u.resok4.link.utf8string_val = link_buffer.addr;
-  /* NFSv4 does not require the \NUL terminator. */
-  res_READLINK4->READLINK4res_u.resok4.link.utf8string_len
-	  = link_buffer.len - 1;
+	res_READLINK4->READLINK4res_u.resok4.link.utf8string_val =
+	    link_buffer.addr;
+	/* NFSv4 does not require the \NUL terminator. */
+	res_READLINK4->READLINK4res_u.resok4.link.utf8string_len =
+	    link_buffer.len - 1;
 
-  res_READLINK4->status = NFS4_OK;
-  return res_READLINK4->status;
-} /* nfs4_op_readlink */
+	res_READLINK4->status = NFS4_OK;
+	return res_READLINK4->status;
+}				/* nfs4_op_readlink */
 
 /**
  * @brief Free memory allocated for READLINK result
@@ -106,10 +106,10 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 */
 void nfs4_op_readlink_Free(nfs_resop4 * res)
 {
-  READLINK4res * resp = &res->nfs_resop4_u.opreadlink;
+	READLINK4res *resp = &res->nfs_resop4_u.opreadlink;
 
-  if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link
-     .utf8string_len > 0)
-    gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
-  return;
-} /* nfs4_op_readlink_Free */
+	if (resp->status == NFS4_OK
+	    && resp->READLINK4res_u.resok4.link.utf8string_len > 0)
+		gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
+	return;
+}				/* nfs4_op_readlink_Free */

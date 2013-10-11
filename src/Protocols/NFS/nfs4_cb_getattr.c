@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -65,9 +65,8 @@
  *
  */
 
-int nfs4_cb_getattr(struct nfs_cb_argop4 *op,
-                    compound_data_t *data,
-                    struct nfs_cb_resop4 *resp)
+int nfs4_cb_getattr(struct nfs_cb_argop4 *op, compound_data_t * data,
+		    struct nfs_cb_resop4 *resp)
 {
-  return NFS4_OK;
-} /* nfs4_cb_getattr */
+	return NFS4_OK;
+}				/* nfs4_cb_getattr */

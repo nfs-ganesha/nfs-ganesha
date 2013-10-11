@@ -63,93 +63,91 @@
  *
  */
 
-int nfs4_op_savefh(struct nfs_argop4 *op,
-                   compound_data_t *data,
-                   struct nfs_resop4 *resp)
+int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
+		   struct nfs_resop4 *resp)
 {
-  SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
+	SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
 
-  /* First of all, set the reply to zero to make sure it contains no
-     parasite information */
-  memset(resp, 0, sizeof(struct nfs_resop4));
-  resp->resop = NFS4_OP_SAVEFH;
-  res_SAVEFH->status = NFS4_OK;
+	/* First of all, set the reply to zero to make sure it contains no
+	   parasite information */
+	memset(resp, 0, sizeof(struct nfs_resop4));
+	resp->resop = NFS4_OP_SAVEFH;
+	res_SAVEFH->status = NFS4_OK;
 
-  /* Do basic checks on a filehandle */
-  res_SAVEFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
-  if(res_SAVEFH->status != NFS4_OK)
-    return res_SAVEFH->status;
+	/* Do basic checks on a filehandle */
+	res_SAVEFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
+	if (res_SAVEFH->status != NFS4_OK)
+		return res_SAVEFH->status;
 
-  /* If the savefh is not allocated, do it now */
-  if(data->savedFH.nfs_fh4_val == NULL)
-    {
-      res_SAVEFH->status = nfs4_AllocateFH(&(data->savedFH));
-      if(res_SAVEFH->status != NFS4_OK)
-        return res_SAVEFH->status;
-    }
+	/* If the savefh is not allocated, do it now */
+	if (data->savedFH.nfs_fh4_val == NULL) {
+		res_SAVEFH->status = nfs4_AllocateFH(&(data->savedFH));
+		if (res_SAVEFH->status != NFS4_OK)
+			return res_SAVEFH->status;
+	}
 
-  /* Copy the data from current FH to saved FH */
-  memcpy(data->savedFH.nfs_fh4_val,
-         data->currentFH.nfs_fh4_val,
-         data->currentFH.nfs_fh4_len);
-  data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
+	/* Copy the data from current FH to saved FH */
+	memcpy(data->savedFH.nfs_fh4_val, data->currentFH.nfs_fh4_val,
+	       data->currentFH.nfs_fh4_len);
+	data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
-  /* Save the current stateid */
-  data->saved_stateid = data->current_stateid;
-  data->saved_stateid_valid = data->current_stateid_valid;
+	/* Save the current stateid */
+	data->saved_stateid = data->current_stateid;
+	data->saved_stateid_valid = data->current_stateid_valid;
 
-  /* If old SavedFH had a related export, release reference. */
-  if(data->saved_export != NULL) {
-      put_gsh_export(data->saved_export);
-  }
-  /* Save the export information by taking a reference since
-   * currentFH is still active.  Assert this just to be sure...
-   */
-  if (data->req_ctx->export != NULL) {
-      data->saved_export = get_gsh_export(data->req_ctx->export->export.id, true);
-  } else {
-      data->saved_export = NULL;
-  }
-  
-  assert((data->saved_export != NULL) || nfs4_Is_Fh_Pseudo(&data->currentFH) );
-  data->saved_export_perms = data->export_perms;
+	/* If old SavedFH had a related export, release reference. */
+	if (data->saved_export != NULL) {
+		put_gsh_export(data->saved_export);
+	}
+	/* Save the export information by taking a reference since
+	 * currentFH is still active.  Assert this just to be sure...
+	 */
+	if (data->req_ctx->export != NULL) {
+		data->saved_export =
+		    get_gsh_export(data->req_ctx->export->export.id, true);
+	} else {
+		data->saved_export = NULL;
+	}
 
-  /* If saved and current entry are equal, skip the following. */
+	assert((data->saved_export != NULL)
+	       || nfs4_Is_Fh_Pseudo(&data->currentFH));
+	data->saved_export_perms = data->export_perms;
 
-  if (data->saved_entry == data->current_entry) {
-      goto out;
-  }
+	/* If saved and current entry are equal, skip the following. */
 
-  if (data->saved_entry) {
-      cache_inode_put(data->saved_entry);
-      data->saved_entry = NULL;
-  }
-  if (data->saved_ds) {
-      data->saved_ds->ops->put(data->saved_ds);
-      data->saved_ds = NULL;
-  }
+	if (data->saved_entry == data->current_entry) {
+		goto out;
+	}
 
-  data->saved_entry = data->current_entry;
-  data->saved_filetype = data->current_filetype;
+	if (data->saved_entry) {
+		cache_inode_put(data->saved_entry);
+		data->saved_entry = NULL;
+	}
+	if (data->saved_ds) {
+		data->saved_ds->ops->put(data->saved_ds);
+		data->saved_ds = NULL;
+	}
 
-  /* Take another reference.  As of now the filehandle is both saved
-     and current and both must be counted.  Guard this, in case we
-     have a pseudofs handle. */
+	data->saved_entry = data->current_entry;
+	data->saved_filetype = data->current_filetype;
 
-  if (data->saved_entry)
-      cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
+	/* Take another reference.  As of now the filehandle is both saved
+	   and current and both must be counted.  Guard this, in case we
+	   have a pseudofs handle. */
+
+	if (data->saved_entry)
+		cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
 
  out:
 
-  if(isFullDebug(COMPONENT_NFS_V4))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle4(str, &data->savedFH);
-      LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
-    }
+	if (isFullDebug(COMPONENT_NFS_V4)) {
+		char str[LEN_FH_STR];
+		sprint_fhandle4(str, &data->savedFH);
+		LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
+	}
 
-  return NFS4_OK;
-} /* nfs4_op_savefh */
+	return NFS4_OK;
+}				/* nfs4_op_savefh */
 
 /**
  * @brief Free memory allocated for SAVEFH result
@@ -159,8 +157,8 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_savefh_Free(nfs_resop4 *resp)
+void nfs4_op_savefh_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_savefh_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_savefh_Free */

@@ -53,18 +53,17 @@
  *
  */
 
-int nfs4_op_create_session(struct nfs_argop4 *op,
-			   compound_data_t *data,
+int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 			   struct nfs_resop4 *resp)
 {
 	/* Result of looking up the clientid in the confirmed ID
 	   table */
-	nfs_client_id_t *conf   = NULL; /* XXX these are not good names */
+	nfs_client_id_t *conf = NULL;	/* XXX these are not good names */
 	/* Result of looking up the clientid in the unconfirmed ID
 	   table */
 	nfs_client_id_t *unconf = NULL;
 	/* The found clientid (either one of the preceding) */
-	nfs_client_id_t *found  = NULL;
+	nfs_client_id_t *found = NULL;
 	/* The found client record */
 	nfs_client_record_t *client_record;
 	/* The created session */
@@ -82,18 +81,17 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	/* Component for logging */
 	log_components_t component = COMPONENT_CLIENTID;
 	/* Abbreviated alias for arguments */
-	CREATE_SESSION4args *const arg_CREATE_SESSION4
-		= &op->nfs_argop4_u.opcreate_session;
+	CREATE_SESSION4args *const arg_CREATE_SESSION4 =
+	    &op->nfs_argop4_u.opcreate_session;
 	/* Abbreviated alias for response */
-	CREATE_SESSION4res *const res_CREATE_SESSION4
-		= &resp->nfs_resop4_u.opcreate_session;
+	CREATE_SESSION4res *const res_CREATE_SESSION4 =
+	    &resp->nfs_resop4_u.opcreate_session;
 	/* Abbreviated alias for successful response */
-	CREATE_SESSION4resok *const res_CREATE_SESSION4ok
-		= &res_CREATE_SESSION4->CREATE_SESSION4res_u.csr_resok4;
+	CREATE_SESSION4resok *const res_CREATE_SESSION4ok =
+	    &res_CREATE_SESSION4->CREATE_SESSION4res_u.csr_resok4;
 
 	if (isDebug(COMPONENT_SESSIONS))
 		component = COMPONENT_SESSIONS;
-
 
 	resp->resop = NFS4_OP_CREATE_SESSION;
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
@@ -110,10 +108,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			      sizeof(str_client_addr));
 
 	LogDebug(component,
-		 "CREATE_SESSION client addr=%s clientid=%"
-		 PRIx64" -------------------",
-		 str_client_addr,
-		 clientid);
+		 "CREATE_SESSION client addr=%s clientid=%" PRIx64
+		 " -------------------", str_client_addr, clientid);
 
 	/* First try to look up unconfirmed record */
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
@@ -125,13 +121,13 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		rc = nfs_client_id_get_confirmed(clientid, &conf);
 		if (rc != CLIENT_ID_SUCCESS) {
 			/* No record whatsoever of this clientid */
-			LogDebug(component,
-				 "%s clientid = %"PRIx64,
+			LogDebug(component, "%s clientid = %" PRIx64,
 				 clientid_error_to_str(rc), clientid);
-			if(rc == CLIENT_ID_EXPIRED) {
+			if (rc == CLIENT_ID_EXPIRED) {
 				rc = CLIENT_ID_STALE;
 			}
-			res_CREATE_SESSION4->csr_status = clientid_error_to_nfsstat(rc);
+			res_CREATE_SESSION4->csr_status =
+			    clientid_error_to_nfsstat(rc);
 
 			return res_CREATE_SESSION4->csr_status;
 		}
@@ -150,8 +146,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 		LogFullDebug(component,
 			     "Client Record %s cr_confirmed_rec=%p "
-			     "cr_unconfirmed_rec=%p",
-			     str,
+			     "cr_unconfirmed_rec=%p", str,
 			     client_record->cr_confirmed_rec,
 			     client_record->cr_unconfirmed_rec);
 	}
@@ -162,21 +157,17 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	 */
 
 	LogDebug(component,
-		 "CREATE_SESSION clientid=%"PRIx64" csa_sequence=%"PRIu32
-		 " clientid_cs_seq=%" PRIu32" data_oppos=%d data_use_drc=%d",
-		 clientid,
-		 arg_CREATE_SESSION4->csa_sequence,
-		 found->cid_create_session_sequence,
-		 data->oppos,
+		 "CREATE_SESSION clientid=%" PRIx64 " csa_sequence=%" PRIu32
+		 " clientid_cs_seq=%" PRIu32 " data_oppos=%d data_use_drc=%d",
+		 clientid, arg_CREATE_SESSION4->csa_sequence,
+		 found->cid_create_session_sequence, data->oppos,
 		 data->use_drc);
 
 	if (isFullDebug(component)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
 		display_client_id_rec(found, str);
-		LogFullDebug(component,
-			     "Found %s",
-			     str);
+		LogFullDebug(component, "Found %s", str);
 	}
 
 	data->use_drc = false;
@@ -184,13 +175,12 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	if (data->oppos == 0) {
 		/* Special case : the request is used without use of
 		   OP_SEQUENCE */
-		if ((arg_CREATE_SESSION4->csa_sequence + 1
-		     == found->cid_create_session_sequence)
+		if ((arg_CREATE_SESSION4->csa_sequence + 1 ==
+		     found->cid_create_session_sequence)
 		    && (found->cid_create_session_slot.cache_used)) {
 			data->use_drc = true;
 			data->pcached_res =
-				&found->cid_create_session_slot
-				.cached_result;
+			    &found->cid_create_session_slot.cached_result;
 
 			res_CREATE_SESSION4->csr_status = NFS4_OK;
 
@@ -203,8 +193,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			goto out;
 		} else if (arg_CREATE_SESSION4->csa_sequence !=
 			   found->cid_create_session_sequence) {
-			res_CREATE_SESSION4->csr_status
-				= NFS4ERR_SEQ_MISORDERED;
+			res_CREATE_SESSION4->csr_status =
+			    NFS4ERR_SEQ_MISORDERED;
 
 			dec_client_id_ref(found);
 
@@ -219,8 +209,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	if (unconf != NULL) {
 		/* First must match principal */
-		if (!nfs_compare_clientcred(&unconf->cid_credential,
-					    &data->credential)) {
+		if (!nfs_compare_clientcred
+		    (&unconf->cid_credential, &data->credential)) {
 			if (isDebug(component)) {
 				char unconfirmed_addr[SOCK_NAME_MAX + 1];
 
@@ -229,12 +219,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 					      sizeof(unconfirmed_addr));
 
 				LogDebug(component,
-					 "Unconfirmed ClientId %"PRIx64
+					 "Unconfirmed ClientId %" PRIx64
 					 "->'%s': Principals do not match... "
 					 "unconfirmed addr=%s "
-					 "Return NFS4ERR_CLID_INUSE",
-					 clientid, str_client_addr,
-					 unconfirmed_addr);
+					 "Return NFS4ERR_CLID_INUSE", clientid,
+					 str_client_addr, unconfirmed_addr);
 			}
 
 			dec_client_id_ref(unconf);
@@ -248,8 +237,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			display_clientid_name(conf, str_client);
 
 		/* First must match principal */
-		if (!nfs_compare_clientcred(&conf->cid_credential,
-					    &data->credential)) {
+		if (!nfs_compare_clientcred
+		    (&conf->cid_credential, &data->credential)) {
 			if (isDebug(component)) {
 				char confirmed_addr[SOCK_NAME_MAX + 1];
 
@@ -258,12 +247,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 					      sizeof(confirmed_addr));
 
 				LogDebug(component,
-					 "Confirmed ClientId %"PRIx64"->%s "
+					 "Confirmed ClientId %" PRIx64 "->%s "
 					 "addr=%s: Principals do not match... "
 					 "confirmed addr=%s Return "
-					 "NFS4ERR_CLID_INUSE",
-					 clientid, str_client,
-					 str_client_addr,
+					 "NFS4ERR_CLID_INUSE", clientid,
+					 str_client, str_client_addr,
 					 confirmed_addr);
 			}
 
@@ -288,12 +276,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	 */
 
 	/* Check flags value (test CSESS15) */
-	if (arg_CREATE_SESSION4->csa_flags &
-	    ~(CREATE_SESSION4_FLAG_PERSIST |
-	      CREATE_SESSION4_FLAG_CONN_BACK_CHAN |
-	      CREATE_SESSION4_FLAG_CONN_RDMA)) {
-		LogDebug(component,
-			 "Invalid create session flags %"PRIu32,
+	if (arg_CREATE_SESSION4->
+	    csa_flags & ~(CREATE_SESSION4_FLAG_PERSIST |
+			  CREATE_SESSION4_FLAG_CONN_BACK_CHAN |
+			  CREATE_SESSION4_FLAG_CONN_RDMA)) {
+		LogDebug(component, "Invalid create session flags %" PRIu32,
 			 arg_CREATE_SESSION4->csa_flags);
 		dec_client_id_ref(found);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
@@ -304,8 +291,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	nfs41_session = pool_alloc(nfs41_session_pool, NULL);
 
 	if (nfs41_session == NULL) {
-		LogCrit(component,
-			"Could not allocate memory for a session");
+		LogCrit(component, "Could not allocate memory for a session");
 		dec_client_id_ref(found);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
 		goto out;
@@ -313,11 +299,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	nfs41_session->clientid = clientid;
 	nfs41_session->clientid_record = found;
-	nfs41_session->refcount = 2; /* sentinel ref + call path ref */
-	nfs41_session->fore_channel_attrs
-		= arg_CREATE_SESSION4->csa_fore_chan_attrs;
-	nfs41_session->back_channel_attrs
-		= arg_CREATE_SESSION4->csa_back_chan_attrs;
+	nfs41_session->refcount = 2;	/* sentinel ref + call path ref */
+	nfs41_session->fore_channel_attrs =
+	    arg_CREATE_SESSION4->csa_fore_chan_attrs;
+	nfs41_session->back_channel_attrs =
+	    arg_CREATE_SESSION4->csa_back_chan_attrs;
 	nfs41_session->xprt = data->reqp->rq_xprt;
 	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
@@ -337,19 +323,17 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
 	nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
-	res_CREATE_SESSION4ok->csr_sequence
-		= arg_CREATE_SESSION4->csa_sequence;
+	res_CREATE_SESSION4ok->csr_sequence = arg_CREATE_SESSION4->csa_sequence;
 
 	/* return the input for wanting of something better (will
 	   change in later versions) */
-	res_CREATE_SESSION4ok->csr_fore_chan_attrs
-		= nfs41_session->fore_channel_attrs;
-	res_CREATE_SESSION4ok->csr_back_chan_attrs
-		= nfs41_session->back_channel_attrs;
+	res_CREATE_SESSION4ok->csr_fore_chan_attrs =
+	    nfs41_session->fore_channel_attrs;
+	res_CREATE_SESSION4ok->csr_back_chan_attrs =
+	    nfs41_session->back_channel_attrs;
 	res_CREATE_SESSION4ok->csr_flags = 0;
 
-	memcpy(res_CREATE_SESSION4ok->csr_sessionid,
-	       nfs41_session->session_id,
+	memcpy(res_CREATE_SESSION4ok->csr_sessionid, nfs41_session->session_id,
 	       NFS4_SESSIONID_SIZE);
 
 	/* Create Session replay cache */
@@ -359,8 +343,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);
 
 	if (!nfs41_Session_Set(nfs41_session)) {
-		LogDebug(component,
-			 "Could not insert session into table");
+		LogDebug(component, "Could not insert session into table");
 
 		pthread_mutex_lock(&found->cid_mutex);
 		glist_del(&nfs41_session->session_link);
@@ -398,9 +381,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
 			display_client_id_rec(conf, str);
-			LogDebug(component,
-				 "Expiring %s",
-				 str);
+			LogDebug(component, "Expiring %s", str);
 		}
 
 		/* Expire clientid and release our reference. */
@@ -414,9 +395,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		 * clientid.  Update the confirmed record from the
 		 * unconfirmed record. */
 		LogDebug(component,
-			 "Updating clientid %"PRIx64"->%s cb_program=%u",
-			 conf->cid_clientid,
-			 str_client,
+			 "Updating clientid %" PRIx64 "->%s cb_program=%u",
+			 conf->cid_clientid, str_client,
 			 arg_CREATE_SESSION4->csa_cb_program);
 
 		if (unconf != NULL) {
@@ -430,9 +410,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
 			display_client_id_rec(conf, str);
-			LogDebug(component,
-				 "Updated %s",
-				 str);
+			LogDebug(component, "Updated %s", str);
 		}
 	} else {
 		/* This is a new clientid */
@@ -440,15 +418,14 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
 			display_client_id_rec(unconf, str);
-			LogFullDebug(component,
-				     "Confirming new %s",
-				     str);
+			LogFullDebug(component, "Confirming new %s", str);
 		}
 
 		rc = nfs_client_id_confirm(unconf, component);
 
 		if (rc != CLIENT_ID_SUCCESS) {
-			res_CREATE_SESSION4->csr_status = clientid_error_to_nfsstat(rc);
+			res_CREATE_SESSION4->csr_status =
+			    clientid_error_to_nfsstat(rc);
 
 			/* Need to destroy the session */
 			if (!nfs41_Session_Del(nfs41_session->session_id))
@@ -459,18 +436,16 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			dec_client_id_ref(unconf);
 			goto out;
 		}
-                nfs4_chk_clid(unconf);
+		nfs4_chk_clid(unconf);
 
-		conf   = unconf;
+		conf = unconf;
 		unconf = NULL;
 
 		if (isDebug(component)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
 			display_client_id_rec(conf, str);
-			LogDebug(component,
-				 "Confirmed %s",
-				 str);
+			LogDebug(component, "Confirmed %s", str);
 		}
 	}
 	conf->cid_create_session_sequence++;
@@ -481,8 +456,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	/* Release our reference to the confirmed record */
 	dec_client_id_ref(conf);
 
-        /* And to the session */
-        dec_session_ref(nfs41_session);
+	/* And to the session */
+	dec_session_ref(nfs41_session);
 
 	if (isFullDebug(component)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
@@ -490,36 +465,32 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		display_client_record(client_record, str);
 		LogFullDebug(component,
 			     "Client Record %s cr_confirmed_rec=%p "
-			     "cr_unconfirmed_rec=%p",
-			     str,
+			     "cr_unconfirmed_rec=%p", str,
 			     client_record->cr_confirmed_rec,
 			     client_record->cr_unconfirmed_rec);
 	}
 
 	/* Handle the creation of the back channel, if the client
 	   requested one. */
-	if (arg_CREATE_SESSION4->csa_flags &
-	    CREATE_SESSION4_FLAG_CONN_BACK_CHAN) {
-		nfs41_session->cb_program
-			= arg_CREATE_SESSION4->csa_cb_program;
-		if (nfs_rpc_create_chan_v41(
-			    nfs41_session,
-			    arg_CREATE_SESSION4->csa_sec_parms
-			    .csa_sec_parms_len,
-			    arg_CREATE_SESSION4->csa_sec_parms
-			    .csa_sec_parms_val) == 0) {
-			res_CREATE_SESSION4ok->csr_flags
-				|= CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
+	if (arg_CREATE_SESSION4->
+	    csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN) {
+		nfs41_session->cb_program = arg_CREATE_SESSION4->csa_cb_program;
+		if (nfs_rpc_create_chan_v41
+		    (nfs41_session,
+		     arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_len,
+		     arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_val) ==
+		    0) {
+			res_CREATE_SESSION4ok->csr_flags |=
+			    CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 		}
 	}
 
-	LogDebug(component,
-		 "CREATE_SESSION success session=%p", nfs41_session);
+	LogDebug(component, "CREATE_SESSION success session=%p", nfs41_session);
 
 	/* Successful exit */
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
 
-out:
+ out:
 	pthread_mutex_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);

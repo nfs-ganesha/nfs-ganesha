@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -62,28 +62,24 @@
  *
  */
 
-int mnt_UmntAll(nfs_arg_t *parg,
-                exportlist_t *pexport,
-		struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres)
+int mnt_UmntAll(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres)
 {
-  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
+	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
 
-  /* TODO: This should clear all mounts for the calling client, using
-   * nfs_Remove_MountList_Entry(hostname, NULL)
-   */
-  /* Just empty the Mount list, take void as argument and returns void */
-  if(!nfs_Purge_MountList())
-    {
-      /* Purge mount list failed */
-      LogCrit(COMPONENT_NFSPROTO,
-              "UMOUNT ALL: Error when emptying the mount list");
-    }
+	/* TODO: This should clear all mounts for the calling client, using
+	 * nfs_Remove_MountList_Entry(hostname, NULL)
+	 */
+	/* Just empty the Mount list, take void as argument and returns void */
+	if (!nfs_Purge_MountList()) {
+		/* Purge mount list failed */
+		LogCrit(COMPONENT_NFSPROTO,
+			"UMOUNT ALL: Error when emptying the mount list");
+	}
 
-  return NFS_REQ_OK;
-}                               /* mnt_UmntAll */
+	return NFS_REQ_OK;
+}				/* mnt_UmntAll */
 
 /**
  * mnt_UmntAll_Free: Frees the result structure allocated for mnt_UmntAll.
@@ -95,6 +91,6 @@ int mnt_UmntAll(nfs_arg_t *parg,
  */
 void mnt_UmntAll_Free(nfs_res_t * pres)
 {
-  /* Nothing to do */
-  return;
-}                               /* mnt_UmntAll_Free */
+	/* Nothing to do */
+	return;
+}				/* mnt_UmntAll_Free */

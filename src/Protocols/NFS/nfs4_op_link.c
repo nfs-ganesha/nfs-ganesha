@@ -62,78 +62,73 @@
  * @return per RFC5661, p. 367
  */
 
-int nfs4_op_link(struct nfs_argop4 *op,
-                 compound_data_t *data,
-                 struct nfs_resop4 *resp)
+int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
+		 struct nfs_resop4 *resp)
 {
-	LINK4args *const arg_LINK4
-		= &op->nfs_argop4_u.oplink;
-	LINK4res *const res_LINK4
-		= &resp->nfs_resop4_u.oplink;
-        cache_entry_t        * dir_entry = NULL;
-        cache_entry_t        * file_entry = NULL;
-        cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
-        char                 * newname = NULL;
+	LINK4args *const arg_LINK4 = &op->nfs_argop4_u.oplink;
+	LINK4res *const res_LINK4 = &resp->nfs_resop4_u.oplink;
+	cache_entry_t *dir_entry = NULL;
+	cache_entry_t *file_entry = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	char *newname = NULL;
 
-        resp->resop = NFS4_OP_LINK;
-        res_LINK4->status = NFS4_OK;
+	resp->resop = NFS4_OP_LINK;
+	res_LINK4->status = NFS4_OK;
 
-        /* Do basic checks on a filehandle */
-        res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-        if (res_LINK4->status != NFS4_OK) {
-                goto out;
-        }
+	/* Do basic checks on a filehandle */
+	res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+	if (res_LINK4->status != NFS4_OK) {
+		goto out;
+	}
 
-        res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
-        if (res_LINK4->status != NFS4_OK) {
-                goto out;
-        }
+	res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
+	if (res_LINK4->status != NFS4_OK) {
+		goto out;
+	}
 
-        /*
-         * This operation creates a hard link, for the file
-         * represented by the saved FH, in directory represented by
-         * currentFH under the name arg_LINK4.target
-         */
+	/*
+	 * This operation creates a hard link, for the file
+	 * represented by the saved FH, in directory represented by
+	 * currentFH under the name arg_LINK4.target
+	 */
 
-        /* Validate and convert the UFT8 objname to a regular string */
-        res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
-						    UTF8_SCAN_ALL,
-						    &newname);
-        if (res_LINK4->status != NFS4_OK) {
-                goto out;
-        }
+	/* Validate and convert the UFT8 objname to a regular string */
+	res_LINK4->status =
+	    nfs4_utf8string2dynamic(&arg_LINK4->newname, UTF8_SCAN_ALL,
+				    &newname);
+	if (res_LINK4->status != NFS4_OK) {
+		goto out;
+	}
 
-        /* get info from compound data */
-        dir_entry = data->current_entry;
+	/* get info from compound data */
+	dir_entry = data->current_entry;
 
-        res_LINK4->LINK4res_u.resok4.cinfo.before
-                = cache_inode_get_changeid4(dir_entry, data->req_ctx);
+	res_LINK4->LINK4res_u.resok4.cinfo.before =
+	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
 
-        file_entry = data->saved_entry;
+	file_entry = data->saved_entry;
 
-        /* make the link */
-        cache_status = cache_inode_link(file_entry,
-					dir_entry,
-					newname,
-					data->req_ctx);
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                res_LINK4->status = nfs4_Errno(cache_status);
-                goto out;
-        }
+	/* make the link */
+	cache_status =
+	    cache_inode_link(file_entry, dir_entry, newname, data->req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_LINK4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
 
-        res_LINK4->LINK4res_u.resok4.cinfo.after
-                = cache_inode_get_changeid4(dir_entry, data->req_ctx);
-        res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
+	res_LINK4->LINK4res_u.resok4.cinfo.after =
+	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
+	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
-        res_LINK4->status = NFS4_OK;
+	res_LINK4->status = NFS4_OK;
 
  out:
 
-        if (newname) {
-                gsh_free(newname);
-        }
-        return res_LINK4->status;
-}                               /* nfs4_op_link */
+	if (newname) {
+		gsh_free(newname);
+	}
+	return res_LINK4->status;
+}				/* nfs4_op_link */
 
 /**
  * @brief Free memory allocated for LINK result
@@ -143,7 +138,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_link_Free(nfs_resop4 *resp)
+void nfs4_op_link_Free(nfs_resop4 * resp)
 {
-        return;
-} /* nfs4_op_link_Free */
+	return;
+}				/* nfs4_op_link_Free */

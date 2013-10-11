@@ -32,7 +32,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h> /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -66,63 +66,55 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int
-nfs_Getattr(nfs_arg_t *arg,
-            exportlist_t *export,
-            struct req_op_context *req_ctx,
-            nfs_worker_data_t *worker,
-            struct svc_req *req,
-            nfs_res_t *res)
+int nfs_Getattr(nfs_arg_t * arg, exportlist_t * export,
+		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+		struct svc_req *req, nfs_res_t * res)
 {
-        cache_entry_t *entry = NULL;
-        int rc = NFS_REQ_OK;
+	cache_entry_t *entry = NULL;
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
-                nfs_FhandleToStr(req->rq_vers,
-                                 &(arg->arg_getattr3.object),
-                                 NULL,
-                                 str);
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs_Getattr handle: %s",
-                         str);
-        }
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
+		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
+				 NULL, str);
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs_Getattr handle: %s",
+			 str);
+	}
 
-	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
-				    req_ctx,
-				    export,
-				    &res->res_getattr3.status,
-				    &rc);
-        if(entry == NULL) {
-                LogFullDebug(COMPONENT_NFSPROTO,
-                             "nfs_Getattr returning %d", rc);
-                goto out;
-        }
+	entry =
+	    nfs3_FhandleToCache(&arg->arg_getattr3.object, req_ctx, export,
+				&res->res_getattr3.status, &rc);
+	if (entry == NULL) {
+		LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d",
+			     rc);
+		goto out;
+	}
 
-        if (!(cache_entry_to_nfs3_Fattr(entry,
-                                        req_ctx,
-                                        &(res->res_getattr3.GETATTR3res_u.resok.obj_attributes))))
-         {
-            res->res_getattr3.status = nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
+	if (!
+	    (cache_entry_to_nfs3_Fattr
+	     (entry, req_ctx,
+	      &(res->res_getattr3.GETATTR3res_u.resok.obj_attributes)))) {
+		res->res_getattr3.status =
+		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
 
-            LogFullDebug(COMPONENT_NFSPROTO,
-                         "nfs_Getattr set failed status v3");
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs_Getattr set failed status v3");
 
-            rc = NFS_REQ_OK;
-            goto out;
-         }
-       res->res_getattr3.status = NFS3_OK;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
+	res->res_getattr3.status = NFS3_OK;
 
-       LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
-       rc = NFS_REQ_OK;
+	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
+	rc = NFS_REQ_OK;
 
-out:
-        /* return references */
-        if (entry) 
-                cache_inode_put(entry);
-        
+ out:
+	/* return references */
+	if (entry)
+		cache_inode_put(entry);
 
-        return rc;
+	return rc;
 
 }
 
@@ -132,8 +124,8 @@ out:
  * @param[in,out] resp Result structure
  *
  */
-void nfs_Getattr_Free(nfs_res_t *resp)
+void nfs_Getattr_Free(nfs_res_t * resp)
 {
-  /* Nothing to do here */
-  return;
-}                               /* nfs_Getattr_Free */
+	/* Nothing to do here */
+	return;
+}				/* nfs_Getattr_Free */

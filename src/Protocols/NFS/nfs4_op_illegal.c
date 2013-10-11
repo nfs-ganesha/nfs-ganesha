@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -59,15 +59,14 @@
  * @retval NFS4ERR_OP_ILLEGAL always.
  *
  */
-int nfs4_op_illegal(struct nfs_argop4 *op,
-                    compound_data_t *data,
-                    struct nfs_resop4 *resp)
+int nfs4_op_illegal(struct nfs_argop4 *op, compound_data_t * data,
+		    struct nfs_resop4 *resp)
 {
-  resp->resop = NFS4_OP_ILLEGAL;
-  resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
+	resp->resop = NFS4_OP_ILLEGAL;
+	resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
 
-  return NFS4ERR_OP_ILLEGAL;
-}                               /* nfs4_op_illegal */
+	return NFS4ERR_OP_ILLEGAL;
+}				/* nfs4_op_illegal */
 
 /**
  * @brief Free memory allocated for ILLEGAL result
@@ -77,8 +76,8 @@ int nfs4_op_illegal(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_illegal_Free(nfs_resop4 *resp)
+void nfs4_op_illegal_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_illegal_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_illegal_Free */

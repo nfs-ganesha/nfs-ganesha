@@ -32,7 +32,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -68,161 +68,140 @@
  *
  */
 
-int
-nfs_Link(nfs_arg_t *arg,
-         exportlist_t *export,
-         struct req_op_context *req_ctx,
-         nfs_worker_data_t *worker,
-         struct svc_req *req,
-         nfs_res_t *res)
+int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+	     struct svc_req *req, nfs_res_t * res)
 {
-        const char *link_name = arg->arg_link3.link.name;
-        cache_entry_t *target_entry = NULL;
-        cache_entry_t *parent_entry = NULL;
-        pre_op_attr pre_parent = {
-                .attributes_follow = false
-        };
-        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-        short to_exportid = 0;
-        short from_exportid = 0;
-        int rc = NFS_REQ_OK;
+	const char *link_name = arg->arg_link3.link.name;
+	cache_entry_t *target_entry = NULL;
+	cache_entry_t *parent_entry = NULL;
+	pre_op_attr pre_parent = {
+		.attributes_follow = false
+	};
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	short to_exportid = 0;
+	short from_exportid = 0;
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO))
-         {
-           char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-           nfs_FhandleToStr( req->rq_vers,
-                             &(arg->arg_link3.file),
-                             NULL,
-                             strfrom);
+		nfs_FhandleToStr(req->rq_vers, &(arg->arg_link3.file), NULL,
+				 strfrom);
 
-           nfs_FhandleToStr( req->rq_vers,
-                             &(arg->arg_link3.link.dir),
-                             NULL,
-                             strto);
+		nfs_FhandleToStr(req->rq_vers, &(arg->arg_link3.link.dir), NULL,
+				 strto);
 
-           LogDebug( COMPONENT_NFSPROTO,
-                     "REQUEST PROCESSING: Calling nfs_Link handle: %s to "
-                      "handle: %s name: %s",
-                      strfrom, strto, link_name);
-        }
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs_Link handle: %s to "
+			 "handle: %s name: %s", strfrom, strto, link_name);
+	}
 
-        /* to avoid setting it on each error case */
-        res->res_link3.LINK3res_u.resfail.file_attributes.attributes_follow = FALSE;
-        res->res_link3.LINK3res_u.resfail.linkdir_wcc.before.attributes_follow = FALSE;
-        res->res_link3.LINK3res_u.resfail.linkdir_wcc.after.attributes_follow = FALSE;
+	/* to avoid setting it on each error case */
+	res->res_link3.LINK3res_u.resfail.file_attributes.attributes_follow =
+	    FALSE;
+	res->res_link3.LINK3res_u.resfail.linkdir_wcc.before.attributes_follow =
+	    FALSE;
+	res->res_link3.LINK3res_u.resfail.linkdir_wcc.after.attributes_follow =
+	    FALSE;
 
-        /* Get the exportids for the two handles. */
-        to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
-        from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
+	/* Get the exportids for the two handles. */
+	to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
+	from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
 
-        /* Validate the to_exportid */
-        if(to_exportid < 0 || from_exportid < 0) {
-                LogInfo(COMPONENT_DISPATCH,
-                        "NFS%d LINK Request from client %s has badly formed handle for link dir",
-                        req->rq_vers, req_ctx->client->hostaddr_str);
+	/* Validate the to_exportid */
+	if (to_exportid < 0 || from_exportid < 0) {
+		LogInfo(COMPONENT_DISPATCH,
+			"NFS%d LINK Request from client %s has badly formed handle for link dir",
+			req->rq_vers, req_ctx->client->hostaddr_str);
 
-                /* Bad handle, report to client */
-                res->res_link3.status = NFS3ERR_BADHANDLE;
-                goto out;
-        }
+		/* Bad handle, report to client */
+		res->res_link3.status = NFS3ERR_BADHANDLE;
+		goto out;
+	}
 
-        /* Both objects have to be in the same filesystem */
-        if(to_exportid != from_exportid) {
-                res->res_link3.status = NFS3ERR_XDEV;
-                goto out;
-        }
+	/* Both objects have to be in the same filesystem */
+	if (to_exportid != from_exportid) {
+		res->res_link3.status = NFS3ERR_XDEV;
+		goto out;
+	}
 
-        /* Get entry for parent directory */
-        if ((parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
-						req_ctx,
-						export,
-						&res->res_link3.status,
-						&rc)) == NULL) {
-                goto out;
-        }
+	/* Get entry for parent directory */
+	if ((parent_entry =
+	     nfs3_FhandleToCache(&arg->arg_link3.link.dir, req_ctx, export,
+				 &res->res_link3.status, &rc)) == NULL) {
+		goto out;
+	}
 
-        nfs_SetPreOpAttr(parent_entry,
-                         req_ctx,
-                         &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
-        if ((target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
-						req_ctx,
-						export,
-						&res->res_link3.status,
-						&rc)) == NULL) {
-                goto out;;
-        }
+	if ((target_entry =
+	     nfs3_FhandleToCache(&arg->arg_link3.file, req_ctx, export,
+				 &res->res_link3.status, &rc)) == NULL) {
+		goto out;;
+	}
 
-        /* Sanity checks: */
-        if (parent_entry->type != DIRECTORY)
-         {
-            res->res_link3.status = NFS3ERR_NOTDIR;
-            rc = NFS_REQ_OK;
-            goto out;
-         }
+	/* Sanity checks: */
+	if (parent_entry->type != DIRECTORY) {
+		res->res_link3.status = NFS3ERR_NOTDIR;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
 
-        if (link_name == NULL || *link_name == '\0' ) 
-          res->res_link3.status = NFS3ERR_INVAL;
-        else 
-          {
-                /* Both objects have to be in the same filesystem */
-                if (to_exportid != from_exportid)
-                    res->res_link3.status = NFS3ERR_XDEV;
-		else
-                  {
-		    cache_status = cache_inode_link(target_entry,
-						    parent_entry,
-						    link_name,
-						    req_ctx);
-		    if (cache_status == CACHE_INODE_SUCCESS)
-                       {
-                            nfs_SetPostOpAttr( target_entry,
-                                               req_ctx,
-                                               &(res->res_link3.LINK3res_u.resok.file_attributes));
+	if (link_name == NULL || *link_name == '\0')
+		res->res_link3.status = NFS3ERR_INVAL;
+	else {
+		/* Both objects have to be in the same filesystem */
+		if (to_exportid != from_exportid)
+			res->res_link3.status = NFS3ERR_XDEV;
+		else {
+			cache_status =
+			    cache_inode_link(target_entry, parent_entry,
+					     link_name, req_ctx);
+			if (cache_status == CACHE_INODE_SUCCESS) {
+				nfs_SetPostOpAttr(target_entry, req_ctx,
+						  &(res->res_link3.LINK3res_u.
+						    resok.file_attributes));
 
-                            nfs_SetWccData( &pre_parent,
-                                            parent_entry,
-                                            req_ctx,
-                                            &(res->res_link3.LINK3res_u.resok.linkdir_wcc));
-                            res->res_link3.status = NFS3_OK;
-                            rc = NFS_REQ_OK;
-                             goto out;
-                        }
-                }                   /* else */
-        }
+				nfs_SetWccData(&pre_parent, parent_entry,
+					       req_ctx,
+					       &(res->res_link3.LINK3res_u.
+						 resok.linkdir_wcc));
+				res->res_link3.status = NFS3_OK;
+				rc = NFS_REQ_OK;
+				goto out;
+			}
+		}		/* else */
+	}
 
-        /* If we are here, there was an error */
-        if (nfs_RetryableError(cache_status)) {
-                rc = NFS_REQ_DROP;
-                goto out;
-        }
+	/* If we are here, there was an error */
+	if (nfs_RetryableError(cache_status)) {
+		rc = NFS_REQ_DROP;
+		goto out;
+	}
 
-        res->res_link3.status = nfs3_Errno(cache_status);
-         nfs_SetPostOpAttr( target_entry,
-                            req_ctx,
-                            &(res->res_link3.LINK3res_u.resfail.file_attributes));
+	res->res_link3.status = nfs3_Errno(cache_status);
+	nfs_SetPostOpAttr(target_entry, req_ctx,
+			  &(res->res_link3.LINK3res_u.resfail.file_attributes));
 
-        nfs_SetWccData(&pre_parent,
-                       parent_entry,
-                       req_ctx,
-                       &res->res_link3.LINK3res_u.resfail.linkdir_wcc);
+	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+		       &res->res_link3.LINK3res_u.resfail.linkdir_wcc);
 
-        rc = NFS_REQ_OK;
+	rc = NFS_REQ_OK;
 
-out:
-        /* return references */
-        if (target_entry) {
-                cache_inode_put(target_entry);
-        }
+ out:
+	/* return references */
+	if (target_entry) {
+		cache_inode_put(target_entry);
+	}
 
-        if (parent_entry) {
-                cache_inode_put(parent_entry);
-        }
+	if (parent_entry) {
+		cache_inode_put(parent_entry);
+	}
 
-        return rc;
+	return rc;
 
-}                               /* nfs_Link */
+}				/* nfs_Link */
 
 /**
  * @brief Free the result structure allocated for nfs_Link
@@ -232,7 +211,7 @@ out:
  * @param[in,out] resp Result structure
  *
  */
-void nfs_Link_Free(nfs_res_t *resp)
+void nfs_Link_Free(nfs_res_t * resp)
 {
 	return;
-} /* nfs_Link_Free */
+}				/* nfs_Link_Free */

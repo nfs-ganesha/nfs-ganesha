@@ -35,7 +35,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -62,58 +62,56 @@
  * @return per RFC5661, p. 362
  *
  */
-int nfs4_op_access(struct nfs_argop4 *op,
-                   compound_data_t *data,
-                   struct nfs_resop4 *resp)
+int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data,
+		   struct nfs_resop4 *resp)
 {
-        ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
-        ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
-        cache_inode_status_t cache_status;
-        uint32_t max_access = (ACCESS4_READ   | ACCESS4_LOOKUP |
-                               ACCESS4_MODIFY | ACCESS4_EXTEND |
-                               ACCESS4_DELETE | ACCESS4_EXECUTE);
+	ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
+	ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
+	cache_inode_status_t cache_status;
+	uint32_t max_access =
+	    (ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_EXTEND |
+	     ACCESS4_DELETE | ACCESS4_EXECUTE);
 
-        /* initialize output */
-        res_ACCESS4->ACCESS4res_u.resok4.supported = 0;
-        res_ACCESS4->ACCESS4res_u.resok4.access = 0;
-        resp->resop = NFS4_OP_ACCESS;
-        res_ACCESS4->status = NFS4_OK;
+	/* initialize output */
+	res_ACCESS4->ACCESS4res_u.resok4.supported = 0;
+	res_ACCESS4->ACCESS4res_u.resok4.access = 0;
+	resp->resop = NFS4_OP_ACCESS;
+	res_ACCESS4->status = NFS4_OK;
 
-        /* Do basic checks on a filehandle */
-        res_ACCESS4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-        if (res_ACCESS4->status != NFS4_OK) {
-                return res_ACCESS4->status;
-        }
+	/* Do basic checks on a filehandle */
+	res_ACCESS4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+	if (res_ACCESS4->status != NFS4_OK) {
+		return res_ACCESS4->status;
+	}
 
-        /* If Filehandle points to a pseudo fs entry, manage it via
-           pseudofs specific functions */
-        if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-                return nfs4_op_access_pseudo(op, data, resp);
-        }
+	/* If Filehandle points to a pseudo fs entry, manage it via
+	   pseudofs specific functions */
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+		return nfs4_op_access_pseudo(op, data, resp);
+	}
 
-        /* Check for input parameter's sanity */
-        if (arg_ACCESS4->access > max_access) {
-                res_ACCESS4->status = NFS4ERR_INVAL;
-                return res_ACCESS4->status;
-        }
+	/* Check for input parameter's sanity */
+	if (arg_ACCESS4->access > max_access) {
+		res_ACCESS4->status = NFS4ERR_INVAL;
+		return res_ACCESS4->status;
+	}
 
-        /* Perform the 'access' call */
-        cache_status = nfs_access_op(
-                data->current_entry,
-                arg_ACCESS4->access,
-                &res_ACCESS4->ACCESS4res_u.resok4.access,
-                &res_ACCESS4->ACCESS4res_u.resok4.supported,
-                data->req_ctx);
+	/* Perform the 'access' call */
+	cache_status =
+	    nfs_access_op(data->current_entry, arg_ACCESS4->access,
+			  &res_ACCESS4->ACCESS4res_u.resok4.access,
+			  &res_ACCESS4->ACCESS4res_u.resok4.supported,
+			  data->req_ctx);
 
-        if(cache_status == CACHE_INODE_SUCCESS ||
-           cache_status == CACHE_INODE_FSAL_EACCESS) {
-                res_ACCESS4->status = NFS4_OK;
-        } else {
-                res_ACCESS4->status = nfs4_Errno(cache_status);
-        }
+	if (cache_status == CACHE_INODE_SUCCESS
+	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
+		res_ACCESS4->status = NFS4_OK;
+	} else {
+		res_ACCESS4->status = nfs4_Errno(cache_status);
+	}
 
-        return res_ACCESS4->status;
-} /* nfs4_op_access */
+	return res_ACCESS4->status;
+}				/* nfs4_op_access */
 
 /**
  * @brief Free memory allocated for ACCESS result
@@ -123,7 +121,7 @@ int nfs4_op_access(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_access_Free(nfs_resop4 *resp)
+void nfs4_op_access_Free(nfs_resop4 * resp)
 {
-        return;
-} /* nfs4_op_access_Free */
+	return;
+}				/* nfs4_op_access_Free */

@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -63,9 +63,8 @@
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-int nfs4_cb_illegal(struct nfs_cb_argop4 *op,
-                    compound_data_t *data,
-                    struct nfs_cb_resop4 *resp)
+int nfs4_cb_illegal(struct nfs_cb_argop4 *op, compound_data_t * data,
+		    struct nfs_cb_resop4 *resp)
 {
-  return NFS4ERR_OP_ILLEGAL;
-}                               /* nfs4_cb_getattr */
+	return NFS4ERR_OP_ILLEGAL;
+}				/* nfs4_cb_getattr */

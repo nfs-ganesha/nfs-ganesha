@@ -59,51 +59,48 @@
  *
  */
 
-int nfs4_op_putpubfh(struct nfs_argop4 *op,
-                     compound_data_t *data,
-                     struct nfs_resop4 *resp)
+int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t * data,
+		     struct nfs_resop4 *resp)
 {
-  PUTPUBFH4res *const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
+	PUTPUBFH4res *const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
 
-  /* First of all, set the reply to zero to make sure
-   * it contains no parasite information */
-  memset(resp, 0, sizeof(struct nfs_resop4));
-  resp->resop = NFS4_OP_PUTPUBFH;
+	/* First of all, set the reply to zero to make sure
+	 * it contains no parasite information */
+	memset(resp, 0, sizeof(struct nfs_resop4));
+	resp->resop = NFS4_OP_PUTPUBFH;
 
-  /* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-   res_PUTPUBFH4->status = CreateROOTFH4(&(data->rootFH), data);
-  if( res_PUTPUBFH4->status != NFS4_OK)
-    return  res_PUTPUBFH4->status;
+	/* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
+	res_PUTPUBFH4->status = CreateROOTFH4(&(data->rootFH), data);
+	if (res_PUTPUBFH4->status != NFS4_OK)
+		return res_PUTPUBFH4->status;
 
-  /* I copy the root FH to the currentFH */
-  if(data->currentFH.nfs_fh4_val == NULL)
-    {
-       res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
-      if( res_PUTPUBFH4->status != NFS4_OK)
-        return  res_PUTPUBFH4->status;
-    }
+	/* I copy the root FH to the currentFH */
+	if (data->currentFH.nfs_fh4_val == NULL) {
+		res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
+		if (res_PUTPUBFH4->status != NFS4_OK)
+			return res_PUTPUBFH4->status;
+	}
 
-  /* Copy the data where they are supposed to be */
-  memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
+	/* Copy the data where they are supposed to be */
+	memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
+	       data->rootFH.nfs_fh4_len);
+	data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  /* Mark current_stateid as invalid */
-  data->current_stateid_valid = false;
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
 
-  /* Fill in compound data */
-   res_PUTPUBFH4->status = set_compound_data_for_pseudo(data);
-  if( res_PUTPUBFH4->status != NFS4_OK)
-    return  res_PUTPUBFH4->status;
+	/* Fill in compound data */
+	res_PUTPUBFH4->status = set_compound_data_for_pseudo(data);
+	if (res_PUTPUBFH4->status != NFS4_OK)
+		return res_PUTPUBFH4->status;
 
-  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->rootFH);
-  LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
+	LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->rootFH);
+	LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
 
-  LogFullDebug(COMPONENT_NFS_V4,
-                    "NFS4 PUTPUBFH: Ending on status %d",
-                    res_PUTPUBFH4->status);
+	LogFullDebug(COMPONENT_NFS_V4, "NFS4 PUTPUBFH: Ending on status %d",
+		     res_PUTPUBFH4->status);
 
-  return res_PUTPUBFH4->status;
+	return res_PUTPUBFH4->status;
 }
 
 /**
@@ -114,8 +111,8 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putpubfh_Free(nfs_resop4 *resp)
+void nfs4_op_putpubfh_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_putpubfh_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_putpubfh_Free */

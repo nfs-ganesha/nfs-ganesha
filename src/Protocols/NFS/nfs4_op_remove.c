@@ -54,80 +54,73 @@
  * @return per RFC5661, pp. 372-3
  */
 
-int nfs4_op_remove(struct nfs_argop4 *op,
-                   compound_data_t *data,
-                   struct nfs_resop4 *resp)
+int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data,
+		   struct nfs_resop4 *resp)
 {
-  REMOVE4args *const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
-  REMOVE4res *const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
-  cache_entry_t        * parent_entry = NULL;
-  char                 * name = NULL;
-  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+	REMOVE4args *const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
+	REMOVE4res *const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
+	cache_entry_t *parent_entry = NULL;
+	char *name = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-  resp->resop = NFS4_OP_REMOVE;
-  res_REMOVE4->status = NFS4_OK;
+	resp->resop = NFS4_OP_REMOVE;
+	res_REMOVE4->status = NFS4_OK;
 
-  /*
-   * Do basic checks on a filehandle
-   * Delete arg_REMOVE4.target in directory pointed by currentFH
-   * Make sure the currentFH is pointed a directory
-   */
-  res_REMOVE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-  if(res_REMOVE4->status != NFS4_OK)
-    goto out;
+	/*
+	 * Do basic checks on a filehandle
+	 * Delete arg_REMOVE4.target in directory pointed by currentFH
+	 * Make sure the currentFH is pointed a directory
+	 */
+	res_REMOVE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+	if (res_REMOVE4->status != NFS4_OK)
+		goto out;
 
-  /* Validate and convert the UFT8 target to a regular string */
-  res_REMOVE4->status = nfs4_utf8string2dynamic(&arg_REMOVE4->target,
-						UTF8_SCAN_ALL,
-						&name);
-  if (res_REMOVE4->status != NFS4_OK) {
-      goto out;
-  }
+	/* Validate and convert the UFT8 target to a regular string */
+	res_REMOVE4->status =
+	    nfs4_utf8string2dynamic(&arg_REMOVE4->target, UTF8_SCAN_ALL, &name);
+	if (res_REMOVE4->status != NFS4_OK) {
+		goto out;
+	}
 
-  if (nfs_in_grace())
-    {
-      res_REMOVE4->status = NFS4ERR_GRACE;
-      goto out;
-    }
+	if (nfs_in_grace()) {
+		res_REMOVE4->status = NFS4ERR_GRACE;
+		goto out;
+	}
 
-  /* Get the parent entry (aka the current one in the compound data) */
-  parent_entry = data->current_entry;
+	/* Get the parent entry (aka the current one in the compound data) */
+	parent_entry = data->current_entry;
 
-  /* We have to keep track of the 'change' file attribute for reply structure */
-  memset(&(res_REMOVE4->REMOVE4res_u.resok4.cinfo.before),
-	 0, sizeof(changeid4));
-  res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
-       cache_inode_get_changeid4(parent_entry, data->req_ctx);
+	/* We have to keep track of the 'change' file attribute for reply structure */
+	memset(&(res_REMOVE4->REMOVE4res_u.resok4.cinfo.before), 0,
+	       sizeof(changeid4));
+	res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
+	    cache_inode_get_changeid4(parent_entry, data->req_ctx);
 
+	cache_status = cache_inode_remove(parent_entry, name, data->req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_REMOVE4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
 
-  cache_status = cache_inode_remove(parent_entry,
-				    name,
-				    data->req_ctx);
-  if (cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_REMOVE4->status = nfs4_Errno(cache_status);
-      goto out;
-    }
+	res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
+	    cache_inode_get_changeid4(parent_entry, data->req_ctx);
 
-  res_REMOVE4->REMOVE4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(parent_entry, data->req_ctx);
+	/* Operation was not atomic .... */
+	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;
 
-  /* Operation was not atomic .... */
-  res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;
+	/* If you reach this point, everything was ok */
 
-  /* If you reach this point, everything was ok */
-
-  res_REMOVE4->status = NFS4_OK;
+	res_REMOVE4->status = NFS4_OK;
 
  out:
 
-  if (name) {
-    gsh_free(name);
-    name = NULL;
-  }
+	if (name) {
+		gsh_free(name);
+		name = NULL;
+	}
 
-  return res_REMOVE4->status;
-}                               /* nfs4_op_remove */
+	return res_REMOVE4->status;
+}				/* nfs4_op_remove */
 
 /**
  * @brief Free memory allocated for REMOVE result
@@ -137,8 +130,8 @@ int nfs4_op_remove(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_remove_Free(nfs_resop4 *resp)
+void nfs4_op_remove_Free(nfs_resop4 * resp)
 {
-  /* Nothing to be done */
-  return;
-} /* nfs4_op_remove_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_remove_Free */

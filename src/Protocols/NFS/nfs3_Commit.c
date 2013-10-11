@@ -38,7 +38,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -70,77 +70,65 @@
  *
  */
 
-int
-nfs3_Commit(nfs_arg_t *arg,
-            exportlist_t *export,
-            struct req_op_context *req_ctx,
-            nfs_worker_data_t *worker,
-            struct svc_req *req,
-            nfs_res_t *res)
+int nfs3_Commit(nfs_arg_t * arg, exportlist_t * export,
+		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+		struct svc_req *req, nfs_res_t * res)
 {
-        cache_inode_status_t cache_status;
-        cache_entry_t *entry = NULL;
-        int rc = NFS_REQ_OK;
+	cache_inode_status_t cache_status;
+	cache_entry_t *entry = NULL;
+	int rc = NFS_REQ_OK;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
-                sprint_fhandle3(str, &(arg->arg_commit3.file));
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs3_Commit handle: %s",
-                         str);
-        }
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
+		sprint_fhandle3(str, &(arg->arg_commit3.file));
+		LogDebug(COMPONENT_NFSPROTO,
+			 "REQUEST PROCESSING: Calling nfs3_Commit handle: %s",
+			 str);
+	}
 
-        /* To avoid setting it on each error case */
-        res->res_commit3.COMMIT3res_u.resfail.file_wcc.before
-                .attributes_follow = FALSE;
-        res->res_commit3.COMMIT3res_u.resfail.file_wcc.after
-                .attributes_follow = FALSE;
+	/* To avoid setting it on each error case */
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
+	    attributes_follow = FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
+	    FALSE;
 
-	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
-				    req_ctx,
-				    export,
-				    &res->res_commit3.status,
-				    &rc);
-        if (entry == NULL) {
-                goto out;
-        }
+	entry =
+	    nfs3_FhandleToCache(&arg->arg_commit3.file, req_ctx, export,
+				&res->res_commit3.status, &rc);
+	if (entry == NULL) {
+		goto out;
+	}
 
-        cache_status = cache_inode_commit(entry,
-					  arg->arg_commit3.offset,
-					  arg->arg_commit3.count,
-					  req_ctx);
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                res->res_commit3.status = nfs3_Errno(cache_status);
+	cache_status =
+	    cache_inode_commit(entry, arg->arg_commit3.offset,
+			       arg->arg_commit3.count, req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res->res_commit3.status = nfs3_Errno(cache_status);
 
-                nfs_SetWccData(NULL,
-                               entry,
-                               req_ctx,
-                               &(res->res_commit3.COMMIT3res_u.resfail
-                                 .file_wcc));
+		nfs_SetWccData(NULL, entry, req_ctx,
+			       &(res->res_commit3.COMMIT3res_u.resfail.
+				 file_wcc));
 
-                rc = NFS_REQ_OK;
-                goto out;
-        }
+		rc = NFS_REQ_OK;
+		goto out;
+	}
 
-        nfs_SetWccData(NULL,
-                       entry,
-                       req_ctx,
-                       &(res->res_commit3.COMMIT3res_u.resok
-                         .file_wcc));
+	nfs_SetWccData(NULL, entry, req_ctx,
+		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
-        /* Set the write verifier */
-        memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-               sizeof(writeverf3));
-        res->res_commit3.status = NFS3_OK;
+	/* Set the write verifier */
+	memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
+	       sizeof(writeverf3));
+	res->res_commit3.status = NFS3_OK;
 
-out:
+ out:
 
-        if (entry) {
-                cache_inode_put(entry);
-        }
+	if (entry) {
+		cache_inode_put(entry);
+	}
 
-        return rc;
-}                               /* nfs3_Commit */
+	return rc;
+}				/* nfs3_Commit */
 
 /**
  * @brief Free the result structure allocated for nfs3_Commit.
@@ -150,8 +138,7 @@ out:
  * @param[in,out] res Result structure
  *
  */
-void
-nfs3_Commit_Free(nfs_res_t *res)
+void nfs3_Commit_Free(nfs_res_t * res)
 {
 	return;
 }
