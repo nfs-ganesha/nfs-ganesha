@@ -43,125 +43,131 @@
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_auth( _9p_request_data_t * preq9p,
-              void  * pworker_data,
-              u32 * plenout,
-              char * preply)
+int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	     char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16 * msgtag = NULL ;
-  u32 * afid = NULL ;
-  u16 * uname_len = NULL ;
-  char * uname_str = NULL ;
-  u16 * aname_len = NULL ;
-  char * aname_str = NULL ;
-  u32 * n_aname = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *afid = NULL;
+	u16 *uname_len = NULL;
+	char *uname_str = NULL;
+	u16 *aname_len = NULL;
+	char *aname_str = NULL;
+	u32 *n_aname = NULL;
 
-  uint64_t fileid;
+	uint64_t fileid;
 
-  u32 err = 0 ;
- 
-  _9p_fid_t * pfid = NULL ;
+	u32 err = 0;
 
-  struct gsh_export *exp;
-  exportlist_t * pexport = NULL;
-  cache_inode_status_t cache_status ;
-  char exppath[MAXPATHLEN] ;
+	_9p_fid_t *pfid = NULL;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	struct gsh_export *exp;
+	exportlist_t *pexport = NULL;
+	cache_inode_status_t cache_status;
+	char exppath[MAXPATHLEN];
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, afid,   u32 ) ; 
-  _9p_getstr( cursor, uname_len, uname_str ) ;
-  _9p_getstr( cursor, aname_len, aname_str ) ;
-  _9p_getptr( cursor, n_aname, u32 ) ; 
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
 
-  LogDebug( COMPONENT_9P, "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
-            (u32)*msgtag, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, afid, u32);
+	_9p_getstr(cursor, uname_len, uname_str);
+	_9p_getstr(cursor, aname_len, aname_str);
+	_9p_getptr(cursor, n_aname, u32);
 
-  if( *afid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
- 
-  /*
-   * Find the export for the aname (using as well Path or Tag ) 
-   */
-  snprintf( exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str ) ;
+	LogDebug(COMPONENT_9P,
+		 "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
+		 (u32) * msgtag, *afid, (int)*uname_len, uname_str,
+		 (int)*aname_len, aname_str, *n_aname);
 
-  if(exppath[0] == '/')
-     exp = get_gsh_export_by_path(exppath);
-  else
-     exp = get_gsh_export_by_tag(exppath);
+	if (*afid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  /* Did we find something ? */
-  if( exp == NULL )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOENT, plenout, preply ) ;
+	/*
+	 * Find the export for the aname (using as well Path or Tag ) 
+	 */
+	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
-  /* Set pexport and fid id in fid */
-  pexport = &exp->export;
-  pfid = preq9p->pconn->fids[*afid] ;
-  if(pfid->pexport != NULL && pfid->pexport != pexport)
-    {
-      struct gsh_export *oldexp = container_of(pexport, struct gsh_export, export);
-      put_gsh_export(oldexp);
-    }
-  pfid->pexport = pexport ;
-  pfid->fid = *afid ;
+	if (exppath[0] == '/')
+		exp = get_gsh_export_by_path(exppath);
+	else
+		exp = get_gsh_export_by_tag(exppath);
 
-  /* Is user name provided as a string or as an uid ? */
-  if( *uname_len != 0 )
-   {
-     /* Build the fid creds */
-    if( ( err = _9p_tools_get_req_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
-       return  _9p_rerror( preq9p, pworker_data,  msgtag, -err, plenout, preply ) ;
-   }
-  else
-   {
-    /* Build the fid creds */
-    if( ( err = _9p_tools_get_req_context_by_uid( *n_aname, pfid ) ) !=  0 )
-       return  _9p_rerror( preq9p, pworker_data,  msgtag, -err, plenout, preply ) ;
-   }
+	/* Did we find something ? */
+	if (exp == NULL)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ENOENT, plenout,
+				  preply);
 
-  /* Check if root cache entry is correctly set */
-  if( pexport->exp_root_cache_inode == NULL )
-     return _9p_rerror( preq9p, pworker_data,msgtag, err, plenout, preply ) ;
+	/* Set pexport and fid id in fid */
+	pexport = &exp->export;
+	pfid = preq9p->pconn->fids[*afid];
+	if (pfid->pexport != NULL && pfid->pexport != pexport) {
+		struct gsh_export *oldexp =
+		    container_of(pexport, struct gsh_export, export);
+		put_gsh_export(oldexp);
+	}
+	pfid->pexport = pexport;
+	pfid->fid = *afid;
 
-  /* get the export information for this fid */ 
-  pfid->pentry = pexport->exp_root_cache_inode ;
+	/* Is user name provided as a string or as an uid ? */
+	if (*uname_len != 0) {
+		/* Build the fid creds */
+		if ((err =
+		     _9p_tools_get_req_context_by_name(*uname_len, uname_str,
+						       pfid)) != 0)
+			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+					  plenout, preply);
+	} else {
+		/* Build the fid creds */
+		if ((err =
+		     _9p_tools_get_req_context_by_uid(*n_aname, pfid)) != 0)
+			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+					  plenout, preply);
+	}
 
-  /* Keep track of the pexport in the req_ctx */
-  pfid->op_context.export = exp;
+	/* Check if root cache entry is correctly set */
+	if (pexport->exp_root_cache_inode == NULL)
+		return _9p_rerror(preq9p, pworker_data, msgtag, err, plenout,
+				  preply);
 
-  /* This fid is a special one : it comes from TATTACH and so generate a record
-   * int the export manager 
-   * In this case TAUTH is managed the same way as TATTACH */
-  pfid->from_attach = TRUE ;
+	/* get the export information for this fid */
+	pfid->pentry = pexport->exp_root_cache_inode;
 
-  cache_status = cache_inode_fileid(pfid->pentry,
-				    &pfid->op_context, &fileid);
-  if(cache_status != CACHE_INODE_SUCCESS)
-      return _9p_rerror( preq9p, pworker_data, msgtag,
-			_9p_tools_errno( cache_status ), plenout, preply ) ;
+	/* Keep track of the pexport in the req_ctx */
+	pfid->op_context.export = exp;
 
-  /* Compute the qid */
-  pfid->qid.type = _9P_QTDIR ;
-  pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-  pfid->qid.path = fileid ;
+	/* This fid is a special one : it comes from TATTACH and so generate a record
+	 * int the export manager 
+	 * In this case TAUTH is managed the same way as TATTACH */
+	pfid->from_attach = TRUE;
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	cache_status =
+	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(preq9p, pworker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  _9p_setqid( cursor, pfid->qid ) ;
+	/* Compute the qid */
+	pfid->qid.type = _9P_QTDIR;
+	pfid->qid.version = 0;	/* No cache, we want the client to stay synchronous with the server */
+	pfid->qid.path = fileid;
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RATTACH);
+	_9p_setptr(cursor, msgtag, u16);
 
-  LogDebug( COMPONENT_9P, "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)", 
-            *msgtag, *afid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
+	_9p_setqid(cursor, pfid->qid);
 
-  return 1 ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)",
+		 *msgtag, *afid, (u32) pfid->qid.type, pfid->qid.version,
+		 (unsigned long long)pfid->qid.path);
+
+	return 1;
 }
-

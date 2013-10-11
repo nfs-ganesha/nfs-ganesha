@@ -42,37 +42,35 @@
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_flush( _9p_request_data_t * preq9p, 
-               void  * pworker_data,
-               u32 * plenout, 
-               char * preply)
+int _9p_flush(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	      char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16 * msgtag = NULL ;
-  u16 * oldtag = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u16 *oldtag = NULL;
 
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, oldtag, u16);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, oldtag, u16 ) ; 
+	LogDebug(COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32) * msgtag,
+		 (u32) * oldtag);
 
-  LogDebug( COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32)*msgtag, (u32)*oldtag ) ;
+	_9p_FlushFlushHook(preq9p->pconn, (int)*oldtag,
+			   preq9p->flush_hook.sequence);
 
-  _9p_FlushFlushHook(preq9p->pconn, (int) *oldtag, preq9p->flush_hook.sequence);
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RFLUSH);
+	_9p_setptr(cursor, msgtag, u16);
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RFLUSH ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	LogDebug(COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32) * msgtag,
+		 (u32) * oldtag);
 
-  LogDebug( COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32)*msgtag, (u32)*oldtag ) ;
-
-  return 1 ;
+	return 1;
 }
-

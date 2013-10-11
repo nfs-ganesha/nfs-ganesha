@@ -36,8 +36,8 @@
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
-#include <unistd.h> /* for using gethostname */
-#include <stdlib.h> /* for using exit */
+#include <unistd.h>		/* for using gethostname */
+#include <stdlib.h>		/* for using exit */
 #include <strings.h>
 #include <string.h>
 #include <sys/types.h>
@@ -49,79 +49,84 @@
 #include "uid2grp.h"
 
 #define MAX_GRP 100
-bool pwentname2grp( char * namebuff, uid_t * puid, struct group_data * pgdata ) 
+bool pwentname2grp(char *namebuff, uid_t * puid, struct group_data * pgdata)
 {
-  char buff[1024];
-  struct passwd p;
-  struct passwd *pp;
- 
-  if((getpwnam_r( namebuff, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
-    {
-      LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff ) ;
-      return false;
-    }
- 
-  /** @todo Waste of memory here. To be fixed */ 
-  if( ( pgdata->pgroups = (gid_t *)gsh_malloc( MAX_GRP * sizeof( gid_t ) ) ) == NULL )
-    return false ;
+	char buff[1024];
+	struct passwd p;
+	struct passwd *pp;
 
-  pgdata->nbgroups = MAX_GRP ;
-  if( getgrouplist( p.pw_name, p.pw_gid, pgdata->pgroups, &pgdata->nbgroups ) == -1 )
-   {
-      LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed", p.pw_name ) ;
-      gsh_free(pgdata->pgroups) ;
-      return false;
-   }
+	if ((getpwnam_r(namebuff, &p, buff, MAXPATHLEN, &pp) != 0)
+	    || (pp == NULL)) {
+		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff);
+		return false;
+	}
 
-  /* Resize pgroups to what it should be */
-  gsh_realloc(  pgdata->pgroups, pgdata->nbgroups*sizeof( gid_t ) ) ;
+  /** @todo Waste of memory here. To be fixed */
+	if ((pgdata->pgroups =
+	     (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t))) == NULL)
+		return false;
 
-  /* Set puid */
-  *puid = p.pw_uid ;
- 
-  /* Set uid/gid */
-  pgdata->uid = p.pw_uid ; 
-  pgdata->gid = p.pw_gid ; 
+	pgdata->nbgroups = MAX_GRP;
+	if (getgrouplist
+	    (p.pw_name, p.pw_gid, pgdata->pgroups, &pgdata->nbgroups) == -1) {
+		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed",
+			 p.pw_name);
+		gsh_free(pgdata->pgroups);
+		return false;
+	}
 
-  return true ;
+	/* Resize pgroups to what it should be */
+	gsh_realloc(pgdata->pgroups, pgdata->nbgroups * sizeof(gid_t));
+
+	/* Set puid */
+	*puid = p.pw_uid;
+
+	/* Set uid/gid */
+	pgdata->uid = p.pw_uid;
+	pgdata->gid = p.pw_gid;
+
+	return true;
 }
 
-bool pwentuid2grp( uid_t uid, struct gsh_buffdesc * name, struct group_data * pgdata ) 
+bool pwentuid2grp(uid_t uid, struct gsh_buffdesc * name,
+		  struct group_data * pgdata)
 {
-  char buff[1024];
-  struct passwd p;
-  struct passwd *pp;
- 
-  if((getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
-    {
-      LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %u failed", uid ) ;
-      return false;
-    }
- 
-  /** @todo Waste of memory here. To be fixed */ 
-  if( ( pgdata->pgroups = (gid_t *)gsh_malloc( MAX_GRP * sizeof( gid_t ) ) ) == NULL )
-    return false ;
+	char buff[1024];
+	struct passwd p;
+	struct passwd *pp;
 
-  pgdata->nbgroups = MAX_GRP ;
-  if( getgrouplist( p.pw_name, p.pw_gid, pgdata->pgroups, &pgdata->nbgroups ) == -1 )
-   {
-      LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed", p.pw_name ) ;
-      gsh_free(pgdata->pgroups) ;
-      return false;
-   }
+	if ((getpwuid_r(uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL)) {
+		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %u failed", uid);
+		return false;
+	}
 
-  /* Resize pgroups to what it should be */
-  pgdata->pgroups = gsh_realloc(  pgdata->pgroups, pgdata->nbgroups*sizeof( gid_t ) ) ;
+  /** @todo Waste of memory here. To be fixed */
+	if ((pgdata->pgroups =
+	     (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t))) == NULL)
+		return false;
 
-  /* Set puid */
-  name->addr = p.pw_name ;
-  name->len = strlen( p.pw_name ) ;
+	pgdata->nbgroups = MAX_GRP;
+	if (getgrouplist
+	    (p.pw_name, p.pw_gid, pgdata->pgroups, &pgdata->nbgroups) == -1) {
+		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed",
+			 p.pw_name);
+		gsh_free(pgdata->pgroups);
+		return false;
+	}
 
-  /* Set uid/gid */
-  pgdata->uid = p.pw_uid ; 
-  pgdata->gid = p.pw_gid ; 
+	/* Resize pgroups to what it should be */
+	pgdata->pgroups =
+	    gsh_realloc(pgdata->pgroups, pgdata->nbgroups * sizeof(gid_t));
 
-  return true ;
+	/* Set puid */
+	name->addr = p.pw_name;
+	name->len = strlen(p.pw_name);
+
+	/* Set uid/gid */
+	pgdata->uid = p.pw_uid;
+	pgdata->gid = p.pw_gid;
+
+	return true;
 }
 
 /**
@@ -135,77 +140,71 @@ bool pwentuid2grp( uid_t uid, struct gsh_buffdesc * name, struct group_data * pg
  * @return true if successful, false otherwise
  */
 
-bool name2grp( const struct gsh_buffdesc * name, struct group_data ** pgdata ) 
+bool name2grp(const struct gsh_buffdesc * name, struct group_data ** pgdata)
 {
-  bool success;
-  uid_t uid=-1 ;
+	bool success;
+	uid_t uid = -1;
 
-  pthread_rwlock_rdlock(&uid2grp_user_lock);
+	pthread_rwlock_rdlock(&uid2grp_user_lock);
 
-  success = uid2grp_lookup_by_uname(name, &uid, pgdata );
+	success = uid2grp_lookup_by_uname(name, &uid, pgdata);
 
-  pthread_rwlock_unlock(&uid2grp_user_lock);
+	pthread_rwlock_unlock(&uid2grp_user_lock);
 
-  if (success)
-    return true;
-  else
-    {
-      /* Something we can mutate and count on as terminated */
-      char *namebuff = alloca(name->len + 1);
+	if (success)
+		return true;
+	else {
+		/* Something we can mutate and count on as terminated */
+		char *namebuff = alloca(name->len + 1);
 
-      memcpy(namebuff, name->addr, name->len);
-      *(namebuff + name->len) = '\0';
+		memcpy(namebuff, name->addr, name->len);
+		*(namebuff + name->len) = '\0';
 
- 
-      if( pwentname2grp( namebuff, &uid, *pgdata ) )
-       {
-         pthread_rwlock_wrlock(&uid2grp_user_lock);
+		if (pwentname2grp(namebuff, &uid, *pgdata)) {
+			pthread_rwlock_wrlock(&uid2grp_user_lock);
 
-         success = uid2grp_add_user(name, uid, *pgdata ) ;
+			success = uid2grp_add_user(name, uid, *pgdata);
 
-         pthread_rwlock_unlock(&uid2grp_user_lock);
+			pthread_rwlock_unlock(&uid2grp_user_lock);
 
-         if (!success)
-	   LogMajor(COMPONENT_IDMAPPER, "name2grp %s", namebuff ) ;
-         return true;
-       }
-      else
-	return false ;
-    }
+			if (!success)
+				LogMajor(COMPONENT_IDMAPPER, "name2grp %s",
+					 namebuff);
+			return true;
+		} else
+			return false;
+	}
 }
 
-bool uid2grp( uid_t uid, struct group_data ** pgdata ) 
+bool uid2grp(uid_t uid, struct group_data ** pgdata)
 {
-  bool success;
-   
-  struct gsh_buffdesc name;
-  struct gsh_buffdesc * pname = &name ;
+	bool success;
 
-  pthread_rwlock_rdlock(&uid2grp_user_lock);
+	struct gsh_buffdesc name;
+	struct gsh_buffdesc *pname = &name;
 
-  success = uid2grp_lookup_by_uid( uid, &pname, pgdata );
+	pthread_rwlock_rdlock(&uid2grp_user_lock);
 
-  pthread_rwlock_unlock(&uid2grp_user_lock);
+	success = uid2grp_lookup_by_uid(uid, &pname, pgdata);
 
-  if (success)
-    return true;
-  else
-    {
-      if( pwentuid2grp( uid, &name, *pgdata ) )
-       {
-         pthread_rwlock_wrlock(&uid2grp_user_lock);
+	pthread_rwlock_unlock(&uid2grp_user_lock);
 
-         success = uid2grp_add_user(&name, uid, *pgdata ) ;
+	if (success)
+		return true;
+	else {
+		if (pwentuid2grp(uid, &name, *pgdata)) {
+			pthread_rwlock_wrlock(&uid2grp_user_lock);
 
-         pthread_rwlock_unlock(&uid2grp_user_lock);
+			success = uid2grp_add_user(&name, uid, *pgdata);
 
-         if (!success)
-	   LogMajor(COMPONENT_IDMAPPER, "uid2grp %u", uid ) ;
-         return true;
-       }
-      else
-	return false ;
-    }
+			pthread_rwlock_unlock(&uid2grp_user_lock);
+
+			if (!success)
+				LogMajor(COMPONENT_IDMAPPER, "uid2grp %u", uid);
+			return true;
+		} else
+			return false;
+	}
 }
 
 /** @} */

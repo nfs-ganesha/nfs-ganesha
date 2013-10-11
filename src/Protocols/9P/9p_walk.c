@@ -44,183 +44,187 @@
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_walk( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	     char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  unsigned int i = 0 ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	unsigned int i = 0;
 
-  u16                  * msgtag = NULL ;
-  u32                  * fid    = NULL ;
-  u32                  * newfid = NULL ;
-  u16                  * nwname = NULL ;
-  u16                  * wnames_len;
-  char                 * wnames_str;
-  uint64_t               fileid;
-  cache_inode_status_t   cache_status ;
-  cache_entry_t        * pentry = NULL ;
-  char name[MAXNAMLEN] ;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
+	u32 *newfid = NULL;
+	u16 *nwname = NULL;
+	u16 *wnames_len;
+	char *wnames_str;
+	uint64_t fileid;
+	cache_inode_status_t cache_status;
+	cache_entry_t *pentry = NULL;
+	char name[MAXNAMLEN];
 
-  u16 * nwqid ;
+	u16 *nwqid;
 
-  _9p_fid_t * pfid = NULL ;
-  _9p_fid_t * pnewfid = NULL ;
+	_9p_fid_t *pfid = NULL;
+	_9p_fid_t *pnewfid = NULL;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
 
-  /* Now Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getptr( cursor, newfid, u32 ) ; 
-  _9p_getptr( cursor, nwname, u16 ) ; 
+	/* Now Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
+	_9p_getptr(cursor, newfid, u32);
+	_9p_getptr(cursor, nwname, u16);
 
-  LogDebug( COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
-            (u32)*msgtag, *fid, *newfid, *nwname ) ;
+	LogDebug(COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
+		 (u32) * msgtag, *fid, *newfid, *nwname);
 
-  if( *fid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  if( *newfid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if (*newfid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  pfid = preq9p->pconn->fids[*fid] ;
-  /* Check that it is a valid fid */
-  if (pfid == NULL || pfid->pentry == NULL) 
-  {
-    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
-  }
+	pfid = preq9p->pconn->fids[*fid];
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  if( (pnewfid = gsh_calloc( 1, sizeof( _9p_fid_t ) ) ) == NULL )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if ((pnewfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  /* Is this a lookup or a fid cloning operation ? */
-  if( *nwname == 0 )
-   {
-      /* Cloning operation */
-      memcpy( (char *)pnewfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
-  
-      /* Set the new fid id */
-      pnewfid->fid = *newfid ;
+	/* Is this a lookup or a fid cloning operation ? */
+	if (*nwname == 0) {
+		/* Cloning operation */
+		memcpy((char *)pnewfid, (char *)pfid, sizeof(_9p_fid_t));
 
-      /* This is not a TATTACH fid */
-      pnewfid->from_attach = FALSE ;
+		/* Set the new fid id */
+		pnewfid->fid = *newfid;
 
-      /* Increments refcount so it won't fall below 0 when we clunk later */
-      cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL);
-   }
-  else 
-   {
-      /* the walk is in fact a lookup */
-      pentry = pfid->pentry ;
+		/* This is not a TATTACH fid */
+		pnewfid->from_attach = FALSE;
 
-      for( i = 0 ; i <  *nwname ; i ++ )
-        {
-           _9p_getstr( cursor, wnames_len, wnames_str ) ;
-           snprintf( name, MAXNAMLEN, "%.*s", *wnames_len, wnames_str ) ;
+		/* Increments refcount so it won't fall below 0 when we clunk later */
+		cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL);
+	} else {
+		/* the walk is in fact a lookup */
+		pentry = pfid->pentry;
 
-           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
-            (u32)*msgtag, *fid, *newfid, i+1, *nwname, name ) ;
+		for (i = 0; i < *nwname; i++) {
+			_9p_getstr(cursor, wnames_len, wnames_str);
+			snprintf(name, MAXNAMLEN, "%.*s", *wnames_len,
+				 wnames_str);
 
-           if (pnewfid->pentry == pentry)
-              pnewfid->pentry = NULL ;
+			LogDebug(COMPONENT_9P,
+				 "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
+				 (u32) * msgtag, *fid, *newfid, i + 1, *nwname,
+				 name);
 
-	   /* refcount +1 */
-	   cache_status = cache_inode_lookup(pentry,
-						name,
-						&pfid->op_context,
-						&pnewfid->pentry);
+			if (pnewfid->pentry == pentry)
+				pnewfid->pentry = NULL;
 
-	   if(pnewfid->pentry == NULL ) {
-              gsh_free(pnewfid);
-              return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-           }
+			/* refcount +1 */
+			cache_status =
+			    cache_inode_lookup(pentry, name, &pfid->op_context,
+					       &pnewfid->pentry);
 
-	   if(pentry != pfid->pentry)
-              cache_inode_put( pentry ) ;
+			if (pnewfid->pentry == NULL) {
+				gsh_free(pnewfid);
+				return _9p_rerror(preq9p, pworker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+			}
 
-           pentry =  pnewfid->pentry ;
-        }
-      
-      pnewfid->fid = *newfid ;
-      pnewfid->op_context = pfid->op_context ;
-      pnewfid->pexport = pfid->pexport ;
-      pnewfid->ppentry = pfid->pentry ;
-      strncpy( pnewfid->name, name, MAXNAMLEN ) ;
+			if (pentry != pfid->pentry)
+				cache_inode_put(pentry);
 
-      /* This is not a TATTACH fid */
-      pnewfid->from_attach = FALSE ;
+			pentry = pnewfid->pentry;
+		}
 
-      cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
-      if(cache_status != CACHE_INODE_SUCCESS) {
-          gsh_free(pnewfid);
-          return _9p_rerror( preq9p, pworker_data, msgtag,
-			     _9p_tools_errno( cache_status ), plenout, preply ) ;
-      }
+		pnewfid->fid = *newfid;
+		pnewfid->op_context = pfid->op_context;
+		pnewfid->pexport = pfid->pexport;
+		pnewfid->ppentry = pfid->pentry;
+		strncpy(pnewfid->name, name, MAXNAMLEN);
 
-     /* Build the qid */
-     pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-     pnewfid->qid.path = fileid ;
+		/* This is not a TATTACH fid */
+		pnewfid->from_attach = FALSE;
 
-     pnewfid->specdata.xattr.xattr_id = 0 ;
-     pnewfid->specdata.xattr.xattr_content = NULL ;
+		cache_status =
+		    cache_inode_fileid(pnewfid->pentry, &pfid->op_context,
+				       &fileid);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			gsh_free(pnewfid);
+			return _9p_rerror(preq9p, pworker_data, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+		}
 
-     switch( pnewfid->pentry->type )
-      {
-        case REGULAR_FILE:
-        case CHARACTER_FILE:
-        case BLOCK_FILE:
-        case SOCKET_FILE:
-        case FIFO_FILE:
-          pnewfid->qid.type = _9P_QTFILE ;
-	  break ;
+		/* Build the qid */
+		pnewfid->qid.version = 0;	/* No cache, we want the client to stay synchronous with the server */
+		pnewfid->qid.path = fileid;
 
-        case SYMBOLIC_LINK:
-          pnewfid->qid.type = _9P_QTSYMLINK ;
-	  break ;
+		pnewfid->specdata.xattr.xattr_id = 0;
+		pnewfid->specdata.xattr.xattr_content = NULL;
 
-        case DIRECTORY:
-        case FS_JUNCTION:
-          pnewfid->qid.type = _9P_QTDIR ;
-	  break ;
+		switch (pnewfid->pentry->type) {
+		case REGULAR_FILE:
+		case CHARACTER_FILE:
+		case BLOCK_FILE:
+		case SOCKET_FILE:
+		case FIFO_FILE:
+			pnewfid->qid.type = _9P_QTFILE;
+			break;
 
-        default:
-          LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
-          gsh_free(pnewfid);
-          return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
-          break ;
-      }
+		case SYMBOLIC_LINK:
+			pnewfid->qid.type = _9P_QTSYMLINK;
+			break;
 
-   }
+		case DIRECTORY:
+		case FS_JUNCTION:
+			pnewfid->qid.type = _9P_QTDIR;
+			break;
 
-  /* keep info on new fid */
-  preq9p->pconn->fids[*newfid] = pnewfid ;
+		default:
+			LogMajor(COMPONENT_9P,
+				 "implementation error, you should not see this message !!!!!!");
+			gsh_free(pnewfid);
+			return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL,
+					  plenout, preply);
+			break;
+		}
 
-  /* As much qid as requested fid */
-  nwqid = nwname ;
+	}
 
-   /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RWALK ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* keep info on new fid */
+	preq9p->pconn->fids[*newfid] = pnewfid;
 
+	/* As much qid as requested fid */
+	nwqid = nwname;
 
-  _9p_setptr( cursor, nwqid, u16 ) ;
-  for( i = 0 ; i < *nwqid ; i++ )
-    { 
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RWALK);
+	_9p_setptr(cursor, msgtag, u16);
+
+	_9p_setptr(cursor, nwqid, u16);
+	for (i = 0; i < *nwqid; i++) {
       /** @todo: should be different qids for each directory walked through */
-      _9p_setqid( cursor, pnewfid->qid ) ;
-    }
+		_9p_setqid(cursor, pnewfid->qid);
+	}
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p refcount=%i",
-            (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry, pnewfid->pentry->lru.refcnt ) ;
+	LogDebug(COMPONENT_9P,
+		 "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p refcount=%i",
+		 (u32) * msgtag, *fid, *newfid, *nwqid,
+		 (unsigned long long)pnewfid->qid.path, pnewfid->pentry,
+		 pnewfid->pentry->lru.refcnt);
 
-  return 1 ;
+	return 1;
 }
-

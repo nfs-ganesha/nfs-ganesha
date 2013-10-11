@@ -53,122 +53,127 @@
  * @param preq9p [IN] pointer to request data
  */
 
-static void free_fid(_9p_fid_t * pfid,
-		     u32 *fid,
-		     _9p_request_data_t * preq9p)
+static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t * preq9p)
 {
 	struct gsh_export *exp;
 
-        cache_inode_put(pfid->pentry);
-        if( pfid->from_attach )
-         {
-	   exp = container_of(pfid->pexport, struct gsh_export, export);
-	   put_gsh_export(exp);
-         }
+	cache_inode_put(pfid->pentry);
+	if (pfid->from_attach) {
+		exp = container_of(pfid->pexport, struct gsh_export, export);
+		put_gsh_export(exp);
+	}
 	gsh_free(pfid);
-	preq9p->pconn->fids[*fid] = NULL; /* poison the entry */
+	preq9p->pconn->fids[*fid] = NULL;	/* poison the entry */
 }
 
-int _9p_clunk( _9p_request_data_t * preq9p,
-               void  * pworker_data,
-               u32 * plenout,
-               char * preply)
+int _9p_clunk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	      char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
 
-  _9p_fid_t * pfid = NULL ;
-  cache_inode_status_t cache_status ;
-  fsal_status_t fsal_status ;
+	_9p_fid_t *pfid = NULL;
+	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
 
-  LogDebug( COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
+	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
 
-  if( *fid >= _9P_FID_PER_CONN )
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  pfid =  preq9p->pconn->fids[*fid] ;
+	pfid = preq9p->pconn->fids[*fid];
 
-  /* Check that it is a valid fid */
-  if (pfid == NULL || pfid->pentry == NULL) 
-  {
-    LogDebug( COMPONENT_9P, "clunk request on invalid fid=%u", *fid ) ;
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
-  }
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "clunk request on invalid fid=%u", *fid);
+		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  /* If the fid is related to a xattr, free the related memory */
-  if( pfid->specdata.xattr.xattr_content != NULL )
-  {
+	/* If the fid is related to a xattr, free the related memory */
+	if (pfid->specdata.xattr.xattr_content != NULL) {
 
-    if(  pfid->specdata.xattr.xattr_write == TRUE )
-    {
-      /* Check size give at TXATTRCREATE against the one resulting from the writes */
-      if( pfid->specdata.xattr.xattr_size != pfid->specdata.xattr.xattr_offset )
-      {
-         free_fid(pfid, fid, preq9p);
-         return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
-      }
+		if (pfid->specdata.xattr.xattr_write == TRUE) {
+			/* Check size give at TXATTRCREATE against the one resulting from the writes */
+			if (pfid->specdata.xattr.xattr_size !=
+			    pfid->specdata.xattr.xattr_offset) {
+				free_fid(pfid, fid, preq9p);
+				return _9p_rerror(preq9p, pworker_data, msgtag,
+						  EINVAL, plenout, preply);
+			}
 
-      /* Write the xattr content */
-      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
-                                                                           &pfid->op_context,
-                                                                           pfid->specdata.xattr.xattr_id,
-                                                                           pfid->specdata.xattr.xattr_content,
-                                                                           pfid->specdata.xattr.xattr_size ) ;
-      if(FSAL_IS_ERROR(fsal_status))
-      {
-         free_fid(pfid, fid, preq9p);
-         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
-      }
-     }
+			/* Write the xattr content */
+			fsal_status =
+			    pfid->pentry->obj_handle->ops->
+			    setextattr_value_by_id(pfid->pentry->obj_handle,
+						   &pfid->op_context,
+						   pfid->specdata.xattr.
+						   xattr_id,
+						   pfid->specdata.xattr.
+						   xattr_content,
+						   pfid->specdata.xattr.
+						   xattr_size);
+			if (FSAL_IS_ERROR(fsal_status)) {
+				free_fid(pfid, fid, preq9p);
+				return _9p_rerror(preq9p, pworker_data, msgtag,
+						  _9p_tools_errno
+						  (cache_inode_error_convert
+						   (fsal_status)), plenout,
+						  preply);
+			}
+		}
 
-    gsh_free( pfid->specdata.xattr.xattr_content ) ;
-  }
+		gsh_free(pfid->specdata.xattr.xattr_content);
+	}
 
-  /* If object is an opened file, close it */
-  if( ( pfid->pentry->type == REGULAR_FILE ) && 
-      is_open( pfid->pentry ) )
-   {
-     if( pfid->opens )
-      {
-        cache_inode_dec_pin_ref(pfid->pentry, FALSE);
-        pfid->opens = 0; /* dead */
+	/* If object is an opened file, close it */
+	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
+		if (pfid->opens) {
+			cache_inode_dec_pin_ref(pfid->pentry, FALSE);
+			pfid->opens = 0;	/* dead */
 
-        /* Under this flag, pin ref is still checked */
-        cache_status = cache_inode_close(pfid->pentry,
-				      CACHE_INODE_FLAG_REALLYCLOSE);
-        if(cache_status != CACHE_INODE_SUCCESS)
-        {
-           free_fid(pfid, fid, preq9p);
-           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-        }
-	cache_status = cache_inode_refresh_attrs_locked(pfid->pentry, &pfid->op_context);
-	if (cache_status != CACHE_INODE_SUCCESS && cache_status != CACHE_INODE_FSAL_ESTALE)
-        {
-           free_fid(pfid, fid, preq9p);
-           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-        }
-      }
-   }
+			/* Under this flag, pin ref is still checked */
+			cache_status =
+			    cache_inode_close(pfid->pentry,
+					      CACHE_INODE_FLAG_REALLYCLOSE);
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				free_fid(pfid, fid, preq9p);
+				return _9p_rerror(preq9p, pworker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+			}
+			cache_status =
+			    cache_inode_refresh_attrs_locked(pfid->pentry,
+							     &pfid->op_context);
+			if (cache_status != CACHE_INODE_SUCCESS
+			    && cache_status != CACHE_INODE_FSAL_ESTALE) {
+				free_fid(pfid, fid, preq9p);
+				return _9p_rerror(preq9p, pworker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+			}
+		}
+	}
 
-  free_fid(pfid, fid, preq9p);
+	free_fid(pfid, fid, preq9p);
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RCLUNK);
+	_9p_setptr(cursor, msgtag, u16);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  LogDebug( COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
+	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
 
-  return 1 ;
+	return 1;
 }
-

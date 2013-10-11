@@ -40,40 +40,32 @@
 #include "log.h"
 #include "9p.h"
 
-extern  _9p_function_desc_t _9pfuncdesc[] ;
+extern _9p_function_desc_t _9pfuncdesc[];
 
-int _9p_rerror( _9p_request_data_t * preq9p,
-                void * pworker_data,
-                u16 * msgtag,
-                u32   err, 
-	        u32 * plenout, 
-                char * preply)
+int _9p_rerror(_9p_request_data_t * preq9p, void *pworker_data, u16 * msgtag,
+	       u32 err, u32 * plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u8     msgtype =  *(preq9p->_9pmsg + _9P_HDR_SIZE) ;
-  if ( !preq9p || !plenout || !preply )
-   return -1 ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u8 msgtype = *(preq9p->_9pmsg + _9P_HDR_SIZE);
+	if (!preq9p || !plenout || !preply)
+		return -1;
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RERROR ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RERROR);
+	_9p_setptr(cursor, msgtag, u16);
 
-  _9p_setvalue( cursor, err, u32 ) ;
+	_9p_setvalue(cursor, err, u32);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  /* Check boundaries. 0 is no_function fallback */
-  if( msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
-      || _9pfuncdesc[msgtype].service_function == NULL)
-    msgtype = 0 ;
+	/* Check boundaries. 0 is no_function fallback */
+	if (msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
+	    || _9pfuncdesc[msgtype].service_function == NULL)
+		msgtype = 0;
 
-  LogDebug( COMPONENT_9P, "RERROR(%s) tag=%u err=(%u|%s)", 
-            _9pfuncdesc[msgtype].funcname,
-            *msgtag, err, strerror( err ) ) ;
+	LogDebug(COMPONENT_9P, "RERROR(%s) tag=%u err=(%u|%s)",
+		 _9pfuncdesc[msgtype].funcname, *msgtag, err, strerror(err));
 
-
-  return 1 ;
+	return 1;
 }
-
-

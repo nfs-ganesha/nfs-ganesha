@@ -48,13 +48,12 @@
  * @brief User entry in the IDMapper cache
  */
 
-
 struct cache_info {
-	uid_t uid; /*< Corresponding UID */
-        struct gsh_buffdesc uname;
-	struct group_data group_data ;
-	struct avltree_node uname_node; /*< Node in the name tree */
-	struct avltree_node uid_node; /*< Node in the UID tree */
+	uid_t uid;		/*< Corresponding UID */
+	struct gsh_buffdesc uname;
+	struct group_data group_data;
+	struct avltree_node uname_node;	/*< Node in the name tree */
+	struct avltree_node uid_node;	/*< Node in the UID tree */
 };
 
 /**
@@ -71,7 +70,6 @@ struct cache_info {
  */
 
 static struct avltree_node *uid_grplist_cache[id_cache_size];
-
 
 /**
  * @brief Lock that protects the idmapper user cache
@@ -137,12 +135,12 @@ static inline int buffdesc_comparator(const struct gsh_buffdesc *buffa,
 static int uname_comparator(const struct avltree_node *node1,
 			    const struct avltree_node *nodea)
 {
-	struct cache_info *user1
-		= avltree_container_of(node1, struct cache_info,
-				       uname_node);
-	struct cache_info *usera
-		= avltree_container_of(nodea, struct cache_info,
-				       uname_node);
+	struct cache_info *user1 =
+	    avltree_container_of(node1, struct cache_info,
+				 uname_node);
+	struct cache_info *usera =
+	    avltree_container_of(nodea, struct cache_info,
+				 uname_node);
 
 	return buffdesc_comparator(&user1->uname, &usera->uname);
 }
@@ -161,12 +159,12 @@ static int uname_comparator(const struct avltree_node *node1,
 static int uid_comparator(const struct avltree_node *node1,
 			  const struct avltree_node *nodea)
 {
-	struct cache_info *user1
-		= avltree_container_of(node1, struct cache_info,
-				       uid_node);
-	struct cache_info *usera
-		= avltree_container_of(nodea, struct cache_info,
-				       uid_node);
+	struct cache_info *user1 =
+	    avltree_container_of(node1, struct cache_info,
+				 uid_node);
+	struct cache_info *usera =
+	    avltree_container_of(nodea, struct cache_info,
+				 uid_node);
 
 	if (user1->uid < usera->uid) {
 		return -1;
@@ -186,7 +184,7 @@ void uid2grp_cache_init(void)
 	avltree_init(&uname_tree, uname_comparator, 0);
 	avltree_init(&uid_tree, uid_comparator, 0);
 	memset(uid_grplist_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
+	       id_cache_size * sizeof(struct avltree_node *));
 }
 
 /**
@@ -202,14 +200,13 @@ void uid2grp_cache_init(void)
  * @retval false if our reach exceeds our grasp.
  */
 
-bool uid2grp_add_user(const struct gsh_buffdesc *name,
-		       uid_t uid,
-                       struct group_data * pgdata)
+bool uid2grp_add_user(const struct gsh_buffdesc *name, uid_t uid,
+		      struct group_data *pgdata)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
-	struct cache_info *new = gsh_malloc(sizeof(struct cache_info) +
-					    name->len);
+	struct cache_info *new =
+	    gsh_malloc(sizeof(struct cache_info) + name->len);
 
 	if (new == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
@@ -221,7 +218,7 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name,
 	new->uname.len = name->len;
 	new->uid = uid;
 	memcpy(new->uname.addr, name->addr, name->len);
-        memcpy(&new->group_data, pgdata, sizeof( struct group_data ) ) ;
+	memcpy(&new->group_data, pgdata, sizeof(struct group_data));
 
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
 	found_id = avltree_insert(&new->uid_node, &uid_tree);
@@ -229,18 +226,14 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name,
 	if (unlikely(found_name || found_id)) {
 		/* Obnoxious complexity.  And we can't even reuse the
 		   code because the types are different.  Foo. */
-		struct cache_info *coll_name
-			= (found_name ?
-			   avltree_container_of(found_name,
-						struct cache_info,
-						uname_node) :
-			   NULL);
-		struct cache_info *coll_id
-			= (found_id ?
-			   avltree_container_of(found_id,
-						struct cache_info,
-						uid_node) :
-			   NULL);
+		struct cache_info *coll_name =
+		    (found_name ? avltree_container_of(found_name,
+						       struct cache_info,
+						       uname_node) : NULL);
+		struct cache_info *coll_id =
+		    (found_id ? avltree_container_of(found_id,
+						     struct cache_info,
+						     uid_node) : NULL);
 
 		LogWarn(COMPONENT_IDMAPPER,
 			"Collision found in user cache.  This likely "
@@ -250,10 +243,10 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name,
 		if (coll_name) {
 			avltree_remove(found_name, &uname_tree);
 			if (coll_name != coll_id) {
-				uid_grplist_cache[coll_name->uid % id_cache_size]
-					= NULL;
-				avltree_remove(&coll_name->uid_node,
-					       &uid_tree);
+				uid_grplist_cache[coll_name->uid %
+						  id_cache_size]
+				    = NULL;
+				avltree_remove(&coll_name->uid_node, &uid_tree);
 			}
 		}
 		if (coll_id) {
@@ -298,37 +291,33 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name,
  * @retval false if we need to try, try again.
  */
 
-bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *name,
-			      uid_t *uid,
-                              struct group_data **pgdata )
+bool uid2grp_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
+			     struct group_data ** pgdata)
 {
 	struct cache_info prototype = {
 		.uname = *name
 	};
-	struct avltree_node *found_node
-		= avltree_lookup(&prototype.uname_node,
-				 &uname_tree);
+	struct avltree_node *found_node = avltree_lookup(&prototype.uname_node,
+							 &uname_tree);
 	struct cache_info *found_user;
 	struct avltree_node **cache_entry;
 
 	if (unlikely(!found_node)) {
 		return false;
 	}
-	found_user = avltree_container_of(found_node,
-					  struct cache_info,
-					  uname_node);
+	found_user =
+	    avltree_container_of(found_node, struct cache_info, uname_node);
 
 	/* I assume that if someone likes this user enough to look it
 	   up by name, they'll like it enough to look it up by ID
 	   later. */
 
 	cache_entry = uid_grplist_cache + (found_user->uid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *)cache_entry,
-			       (uint64_t) &found_user->uid_node);
+	atomic_store_uint64_t((uint64_t *) cache_entry,
+			      (uint64_t) & found_user->uid_node);
 
 	*uid = found_user->uid;
 	*pgdata = &found_user->group_data;
-	
 
 	return true;
 }
@@ -349,43 +338,40 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *name,
  * @retval false if we weren't so successful.
  */
 
-bool uid2grp_lookup_by_uid(const uid_t uid,
-			   struct gsh_buffdesc **name,
-			   struct group_data **pgdata )
+bool uid2grp_lookup_by_uid(const uid_t uid, struct gsh_buffdesc ** name,
+			   struct group_data ** pgdata)
 {
 	struct cache_info prototype = {
 		.uid = uid
 	};
-	struct avltree_node **cache_entry = uid_grplist_cache +
-		(prototype.uid % id_cache_size);
-	struct avltree_node *found_node
-		= ((struct avltree_node*)
-		   atomic_fetch_uint64_t((uint64_t *)cache_entry));
+	struct avltree_node **cache_entry =
+	    uid_grplist_cache + (prototype.uid % id_cache_size);
+	struct avltree_node *found_node = ((struct avltree_node *)
+					   atomic_fetch_uint64_t((uint64_t *)
+								 cache_entry));
 	struct cache_info *found_user;
 
 	if (likely(found_node)) {
-		found_user = avltree_container_of(found_node,
-						  struct cache_info,
-						  uid_node);
+		found_user =
+		    avltree_container_of(found_node, struct cache_info,
+					 uid_node);
 	} else {
-		found_node = avltree_lookup(&prototype.uid_node,
-					    &uid_tree);
+		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
 		if (unlikely(!found_node)) {
 			return false;
 		}
-		atomic_store_uint64_t((uintptr_t *)cache_entry,
+		atomic_store_uint64_t((uintptr_t *) cache_entry,
 				      (uintptr_t) found_node);
-		found_user = avltree_container_of(found_node,
-						  struct cache_info,
-						  uid_node);
+		found_user =
+		    avltree_container_of(found_node, struct cache_info,
+					 uid_node);
 	}
 
 	*name = &found_user->uname;
-	*pgdata = &found_user->group_data ;
+	*pgdata = &found_user->group_data;
 
 	return true;
 }
-
 
 /**
  * @brief Wipe out the idmapper cache
@@ -398,13 +384,13 @@ void uid2grp_clear_cache(void)
 	pthread_rwlock_wrlock(&uid2grp_user_lock);
 
 	memset(uid_grplist_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
+	       id_cache_size * sizeof(struct avltree_node *));
 
 	while ((node = avltree_first(&uname_tree))) {
-		struct cache_info *user
-			= avltree_container_of(node,
-					       struct cache_info,
-					       uname_node);
+		struct cache_info *user = avltree_container_of(node,
+							       struct
+							       cache_info,
+							       uname_node);
 		avltree_remove(&user->uname_node, &uname_tree);
 		avltree_remove(&user->uid_node, &uid_tree);
 		gsh_free(user);

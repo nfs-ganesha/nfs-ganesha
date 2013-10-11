@@ -43,82 +43,79 @@
 #include "fsal.h"
 #include "9p.h"
 
-
-
-int _9p_statfs( _9p_request_data_t * preq9p, 
-                void  * pworker_data,
-                u32 * plenout, 
-                char * preply)
+int _9p_statfs(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	       char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
 
-  _9p_fid_t * pfid = NULL ;
+	_9p_fid_t *pfid = NULL;
 
-  u32 type      = 0x6969 ; /* NFS_SUPER_MAGIC for wanting of better, FSAL do not return this information */
-  u32 bsize     = 1 ;  // cache_inode_statfs and FSAL already care for blocksize 
-  u64 * blocks  = NULL ;
-  u64 * bfree   = NULL ;
-  u64 * bavail  = NULL ;
-  u64 * files   = NULL ;
-  u64 * ffree   = NULL ;
-  u64  fsid     = 0LL ;
+	u32 type = 0x6969;	/* NFS_SUPER_MAGIC for wanting of better, FSAL do not return this information */
+	u32 bsize = 1;		// cache_inode_statfs and FSAL already care for blocksize 
+	u64 *blocks = NULL;
+	u64 *bfree = NULL;
+	u64 *bavail = NULL;
+	u64 *files = NULL;
+	u64 *ffree = NULL;
+	u64 fsid = 0LL;
 
-  u32 namelen = MAXNAMLEN ;
+	u32 namelen = MAXNAMLEN;
 
-  fsal_dynamicfsinfo_t dynamicinfo;
-  cache_inode_status_t cache_status;
+	fsal_dynamicfsinfo_t dynamicinfo;
+	cache_inode_status_t cache_status;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
 
-  LogDebug( COMPONENT_9P, "TSTATFS: tag=%u fid=%u",
-            (u32)*msgtag, *fid ) ;
- 
-  if( *fid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32) * msgtag, *fid);
 
-  pfid = preq9p->pconn->fids[*fid] ;
-  if( pfid == NULL )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
+	pfid = preq9p->pconn->fids[*fid];
+	if (pfid == NULL)
+		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+				  preply);
 
-  /* Get the FS's stats */
-  if( ( cache_status = cache_inode_statfs( pfid->pentry,
-                                           &dynamicinfo, &pfid->op_context ) ) != CACHE_INODE_SUCCESS )
-    return _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+	/* Get the FS's stats */
+	if ((cache_status =
+	     cache_inode_statfs(pfid->pentry, &dynamicinfo,
+				&pfid->op_context)) != CACHE_INODE_SUCCESS)
+		return _9p_rerror(preq9p, pworker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  blocks  = (u64 *)&dynamicinfo.total_bytes ;
-  bfree   = (u64 *)&dynamicinfo.free_bytes ;
-  bavail  = (u64 *)&dynamicinfo.avail_bytes ;
-  files   = (u64 *)&dynamicinfo.total_files ;
-  ffree   = (u64 *)&dynamicinfo.free_files ; 
-  fsid    = (u64 )pfid->pentry->obj_handle->attributes.rawdev.major ;
+	blocks = (u64 *) & dynamicinfo.total_bytes;
+	bfree = (u64 *) & dynamicinfo.free_bytes;
+	bavail = (u64 *) & dynamicinfo.avail_bytes;
+	files = (u64 *) & dynamicinfo.total_files;
+	ffree = (u64 *) & dynamicinfo.free_files;
+	fsid = (u64) pfid->pentry->obj_handle->attributes.rawdev.major;
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RSTATFS ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RSTATFS);
+	_9p_setptr(cursor, msgtag, u16);
 
-  _9p_setvalue( cursor, type,    u32 ) ;
-  _9p_setvalue( cursor, bsize,   u32 ) ;
-  _9p_setptr( cursor, blocks,    u64 ) ;
-  _9p_setptr( cursor, bfree,     u64 ) ;
-  _9p_setptr( cursor, bavail,    u64 ) ;
-  _9p_setptr( cursor, files,     u64 ) ;
-  _9p_setptr( cursor, ffree,     u64 ) ;
-  _9p_setvalue( cursor, fsid,    u64 ) ;
-  _9p_setvalue( cursor, namelen, u32 ) ;
+	_9p_setvalue(cursor, type, u32);
+	_9p_setvalue(cursor, bsize, u32);
+	_9p_setptr(cursor, blocks, u64);
+	_9p_setptr(cursor, bfree, u64);
+	_9p_setptr(cursor, bavail, u64);
+	_9p_setptr(cursor, files, u64);
+	_9p_setptr(cursor, ffree, u64);
+	_9p_setvalue(cursor, fsid, u64);
+	_9p_setvalue(cursor, namelen, u32);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  LogDebug( COMPONENT_9P, "RSTATFS: tag=%u fid=%u",
-            (u32)*msgtag, *fid ) ;
- 
-  return 1 ;
+	LogDebug(COMPONENT_9P, "RSTATFS: tag=%u fid=%u", (u32) * msgtag, *fid);
+
+	return 1;
 }
-

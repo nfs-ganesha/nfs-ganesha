@@ -42,88 +42,91 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_renameat( _9p_request_data_t * preq9p, 
-                void  * pworker_data,
-                u32 * plenout, 
-                char * preply)
+int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+		 char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16  * msgtag      = NULL ;
-  u32  * oldfid      = NULL ;
-  u16  * oldname_len = NULL ;
-  char * oldname_str = NULL ;
-  u32  * newfid      = NULL ;
-  u16  * newname_len = NULL ;
-  char * newname_str = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *oldfid = NULL;
+	u16 *oldname_len = NULL;
+	char *oldname_str = NULL;
+	u32 *newfid = NULL;
+	u16 *newname_len = NULL;
+	char *newname_str = NULL;
 
-  _9p_fid_t * poldfid = NULL ;
-  _9p_fid_t * pnewfid = NULL ;
+	_9p_fid_t *poldfid = NULL;
+	_9p_fid_t *pnewfid = NULL;
 
-  cache_inode_status_t  cache_status ;
+	cache_inode_status_t cache_status;
 
-  char oldname[MAXNAMLEN] ;
-  char newname[MAXNAMLEN] ;
+	char oldname[MAXNAMLEN];
+	char newname[MAXNAMLEN];
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	if (!preq9p || !pworker_data || !plenout || !preply)
+		return -1;
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
 
-  _9p_getptr( cursor, oldfid,   u32 ) ; 
-  _9p_getstr( cursor, oldname_len, oldname_str ) ;
-  _9p_getptr( cursor, newfid,   u32 ) ; 
-  _9p_getstr( cursor, newname_len, newname_str ) ;
+	_9p_getptr(cursor, oldfid, u32);
+	_9p_getstr(cursor, oldname_len, oldname_str);
+	_9p_getptr(cursor, newfid, u32);
+	_9p_getstr(cursor, newname_len, newname_str);
 
-  LogDebug( COMPONENT_9P, "TRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-            (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
+	LogDebug(COMPONENT_9P,
+		 "TRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
+		 (u32) * msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		 *newname_len, newname_str);
 
-  if( *oldfid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if (*oldfid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  poldfid = preq9p->pconn->fids[*oldfid] ;
+	poldfid = preq9p->pconn->fids[*oldfid];
 
-  /* Check that it is a valid fid */
-  if (poldfid == NULL || poldfid->pentry == NULL) 
-  {
-    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *oldfid ) ;
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
-  }
+	/* Check that it is a valid fid */
+	if (poldfid == NULL || poldfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *oldfid);
+		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  if( *newfid >= _9P_FID_PER_CONN )
-   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	if (*newfid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  pnewfid = preq9p->pconn->fids[*newfid] ;
+	pnewfid = preq9p->pconn->fids[*newfid];
 
-  /* Check that it is a valid fid */
-  if (pnewfid == NULL || pnewfid->pentry == NULL) 
-  {
-    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *newfid ) ;
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
-  }
+	/* Check that it is a valid fid */
+	if (pnewfid == NULL || pnewfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *newfid);
+		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  /* Let's do the job */
-  snprintf( oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str ) ;
-  snprintf( newname, MAXNAMLEN, "%.*s", *newname_len, newname_str ) ;
+	/* Let's do the job */
+	snprintf(oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str);
+	snprintf(newname, MAXNAMLEN, "%.*s", *newname_len, newname_str);
 
-  cache_status = cache_inode_rename(poldfid->pentry,
-				    oldname,
-				    pnewfid->pentry,
-				    newname,
-				    &poldfid->op_context);
-  if (cache_status != CACHE_INODE_SUCCESS)
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+	cache_status =
+	    cache_inode_rename(poldfid->pentry, oldname, pnewfid->pentry,
+			       newname, &poldfid->op_context);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(preq9p, pworker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RRENAMEAT ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RRENAMEAT);
+	_9p_setptr(cursor, msgtag, u16);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  LogDebug( COMPONENT_9P, "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-            (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
+	LogDebug(COMPONENT_9P,
+		 "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
+		 (u32) * msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		 *newname_len, newname_str);
 
-  return 1 ;
+	return 1;
 }
-

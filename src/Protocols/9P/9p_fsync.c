@@ -42,53 +42,52 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_fsync( _9p_request_data_t * preq9p, 
-               void  * pworker_data,
-               u32 * plenout, 
-               char * preply)
+int _9p_fsync(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+	      char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
+	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
 
-  _9p_fid_t * pfid = NULL ;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	_9p_fid_t *pfid = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  
-  LogDebug( COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
 
-  if( *fid >= _9P_FID_PER_CONN )
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
+	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32) * msgtag, *fid);
 
-  pfid = preq9p->pconn->fids[*fid] ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  /* Check that it is a valid open file */
-  if (pfid == NULL || pfid->pentry == NULL) 
-  {
-    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
-  }
+	pfid = preq9p->pconn->fids[*fid];
 
-  cache_status = cache_inode_commit(pfid->pentry,
-				    0LL, // start at beginning of file
-				    0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
-				    &pfid->op_context);
+	/* Check that it is a valid open file */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  if (cache_status != CACHE_INODE_SUCCESS )
-    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
+	cache_status = cache_inode_commit(pfid->pentry, 0LL,	// start at beginning of file
+					  0LL,	// Mimic sync_file_range's behavior : count=0 means "whole file"
+					  &pfid->op_context);
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RFSYNC ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(preq9p, pworker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RFSYNC);
+	_9p_setptr(cursor, msgtag, u16);
 
-  LogDebug( COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  return 1 ;
+	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32) * msgtag, *fid);
+
+	return 1;
 }
-
