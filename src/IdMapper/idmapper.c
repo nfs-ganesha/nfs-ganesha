@@ -36,8 +36,8 @@
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
-#include <unistd.h> /* for using gethostname */
-#include <stdlib.h> /* for using exit */
+#include <unistd.h>		/* for using gethostname */
+#include <stdlib.h>		/* for using exit */
 #include <strings.h>
 #include <string.h>
 #include <sys/types.h>
@@ -47,7 +47,7 @@
 #include <stdbool.h>
 #ifdef USE_NFSIDMAP
 #include <nfsidmap.h>
-#endif /* USE_NFSIDMAP */
+#endif				/* USE_NFSIDMAP */
 #ifdef _MSPAC_SUPPORT
 #include <wbclient.h>
 #endif
@@ -74,23 +74,20 @@ bool idmapper_init(void)
 		if (owner_domain.addr == NULL) {
 			return false;
 		}
-		if (nfs4_get_default_domain(NULL,
-					    owner_domain.addr,
-					    NFS4_MAX_DOMAIN_LEN) != 0) {
+		if (nfs4_get_default_domain
+		    (NULL, owner_domain.addr, NFS4_MAX_DOMAIN_LEN) != 0) {
 			gsh_free(owner_domain.addr);
 			return false;
 		}
 		owner_domain.len = strlen(owner_domain.addr);
 	}
-#endif /* USE_NFSIDMAP */
+#endif				/* USE_NFSIDMAP */
 	if (nfs_param.nfsv4_param.use_getpwnam) {
-		owner_domain.addr
-			= strdup(nfs_param.nfsv4_param.domainname);
+		owner_domain.addr = strdup(nfs_param.nfsv4_param.domainname);
 		if (owner_domain.addr == NULL) {
 			return false;
 		}
-		owner_domain.len
-			= strlen(nfs_param.nfsv4_param.domainname);
+		owner_domain.len = strlen(nfs_param.nfsv4_param.domainname);
 	}
 
 	idmapper_cache_init();
@@ -108,24 +105,18 @@ bool idmapper_init(void)
  * @retval false on failure.
  */
 
-static bool xdr_encode_nfs4_princ(XDR *xdrs,
-				  uint32_t id,
-				  bool group)
+static bool xdr_encode_nfs4_princ(XDR * xdrs, uint32_t id, bool group)
 {
 	const struct gsh_buffdesc *found;
 	uint32_t not_a_size_t;
 	bool success = false;
 
-	pthread_rwlock_rdlock(group ?
-			      &idmapper_group_lock :
+	pthread_rwlock_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 	if (group) {
-		success = idmapper_lookup_by_gid(id,
-						 &found);
+		success = idmapper_lookup_by_gid(id, &found);
 	} else {
-		success = idmapper_lookup_by_uid(id,
-						 &found,
-						 NULL);
+		success = idmapper_lookup_by_uid(id, &found, NULL);
 	}
 
 	if (likely(success)) {
@@ -133,23 +124,21 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
 
 		/* Fully qualified owners are always stored in the
 		   hash table, no matter what our lookup method. */
-		success = inline_xdr_bytes(xdrs, (char **)&found->addr,
-					   &not_a_size_t,
-					   UINT32_MAX);
-		pthread_rwlock_unlock(group ?
-				      &idmapper_group_lock :
+		success =
+		    inline_xdr_bytes(xdrs, (char **)&found->addr, &not_a_size_t,
+				     UINT32_MAX);
+		pthread_rwlock_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		return success;
 	} else {
-		pthread_rwlock_unlock(group ?
-				      &idmapper_group_lock :
+		pthread_rwlock_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		int rc;
 		bool looked_up = false;
-		char *namebuff
-			= alloca(nfs_param.nfsv4_param.use_getpwnam ?
-				 (PWENT_MAX_LEN + owner_domain.len + 2) :
-				 (NFS4_MAX_DOMAIN_LEN + 2));
+		char *namebuff =
+		    alloca(nfs_param.nfsv4_param.
+			   use_getpwnam ? (PWENT_MAX_LEN + owner_domain.len +
+					   2) : (NFS4_MAX_DOMAIN_LEN + 2));
 		struct gsh_buffdesc new_name = {
 			.addr = namebuff
 		};
@@ -161,15 +150,15 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
 				struct group g;
 				struct group *pg;
 
-				rc = getgrgid_r(id, &g, namebuff,
-						PWENT_MAX_LEN, &pg);
+				rc = getgrgid_r(id, &g, namebuff, PWENT_MAX_LEN,
+						&pg);
 				nulled = (pg == NULL);
 			} else {
 				struct passwd p;
 				struct passwd *pp;
 
-				rc = getpwuid_r(id, &p, namebuff,
-						PWENT_MAX_LEN, &pp);
+				rc = getpwuid_r(id, &p, namebuff, PWENT_MAX_LEN,
+						&pp);
 				nulled = (pp == NULL);
 			}
 
@@ -208,17 +197,16 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
 					(group ? "nfs4_gid_to_name" :
 					 "nfs4_uid_to_name"), rc);
 			}
-#else /* USE_NFSIDMAP */
+#else				/* USE_NFSIDMAP */
 			looked_up = false;
-#endif /* !USE_NFSIDMAP */
+#endif				/* !USE_NFSIDMAP */
 		}
 
 		if (!looked_up) {
 			if (nfs_param.nfsv4_param.allow_numeric_owners) {
 				LogWarn(COMPONENT_IDMAPPER,
 					"Lookup for %d failed, "
-					"using numeric %s",
-					id,
+					"using numeric %s", id,
 					(group ? "group" : "owner"));
 				/* 2³² is 10 digits long in decimal */
 				sprintf(namebuff, "%u", id);
@@ -233,28 +221,23 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
 		}
 
 		/* Add to the cache and encode the result. */
-		pthread_rwlock_wrlock(group ?
-				      &idmapper_group_lock :
+		pthread_rwlock_wrlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (group) {
 			success = idmapper_add_group(&new_name, id);
 		} else {
 			success = idmapper_add_user(&new_name, id, NULL, false);
 		}
-		pthread_rwlock_unlock(group ?
-				      &idmapper_group_lock :
+		pthread_rwlock_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (unlikely(!success)) {
-			LogMajor(COMPONENT_IDMAPPER,
-				 "%s failed.",
-				 group ?
-				 "idmapper_add_group" :
+			LogMajor(COMPONENT_IDMAPPER, "%s failed.",
+				 group ? "idmapper_add_group" :
 				 "idmaper_add_user");
 		}
 		not_a_size_t = new_name.len;
 		return inline_xdr_bytes(xdrs, (char **)&new_name.addr,
-					&not_a_size_t,
-					UINT32_MAX);
+					&not_a_size_t, UINT32_MAX);
 	}
 }
 
@@ -268,12 +251,9 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs,
  * @retval false on failure.
  */
 
-bool xdr_encode_nfs4_owner(XDR *xdrs,
-			   uid_t uid)
+bool xdr_encode_nfs4_owner(XDR * xdrs, uid_t uid)
 {
-  return xdr_encode_nfs4_princ(xdrs,
-			       uid,
-			       false);
+	return xdr_encode_nfs4_princ(xdrs, uid, false);
 }
 
 /**
@@ -286,12 +266,9 @@ bool xdr_encode_nfs4_owner(XDR *xdrs,
  * @retval false on failure.
  */
 
-bool xdr_encode_nfs4_group(XDR *xdrs,
-			   gid_t gid)
+bool xdr_encode_nfs4_group(XDR * xdrs, gid_t gid)
 {
-  return xdr_encode_nfs4_princ(xdrs,
-			       gid,
-			       true);
+	return xdr_encode_nfs4_princ(xdrs, gid, true);
 }
 
 /**
@@ -305,27 +282,21 @@ bool xdr_encode_nfs4_group(XDR *xdrs,
  * @return true on success, false on just phoning it in.
  */
 
-static bool atless2id(char *name,
-		      size_t len,
-		      uint32_t *id,
+static bool atless2id(char *name, size_t len, uint32_t * id,
 		      const uint32_t anon)
 {
-  if ((len == 6) &&
-      (!memcmp(name, "nobody", 6)))
-    {
-      *id = anon;
-      return true;
-    }
-  else if (nfs_param.nfsv4_param.allow_numeric_owners)
-    {
-      char *end = NULL;
-      *id = strtol(name, &end, 10);
-      if (!(end && *end != '\0'))
-	return true;
-    }
+	if ((len == 6) && (!memcmp(name, "nobody", 6))) {
+		*id = anon;
+		return true;
+	} else if (nfs_param.nfsv4_param.allow_numeric_owners) {
+		char *end = NULL;
+		*id = strtol(name, &end, 10);
+		if (!(end && *end != '\0'))
+			return true;
+	}
 
-  /* Nothing else without an @ is allowed. */
-  return false;
+	/* Nothing else without an @ is allowed. */
+	return false;
 }
 
 /**
@@ -343,94 +314,74 @@ static bool atless2id(char *name,
  *
  * @return true on success, false not making the grade
  */
-static bool pwentname2id(char *name,
-			 size_t len,
-			 uint32_t *id,
-			 const uint32_t anon,
-			 bool group,
-			 gid_t *gid,
-			 bool *got_gid,
-			 char *at)
+static bool pwentname2id(char *name, size_t len, uint32_t * id,
+			 const uint32_t anon, bool group, gid_t * gid,
+			 bool * got_gid, char *at)
 {
-  if( at != NULL )
-   {
-     if (strcmp(at + 1, owner_domain.addr) != 0)
-      {
-        /* We won't map what isn't even in the right domain */
-        return false;
-      }
-      *at = '\0';
-   }
-  if (group)
-    {
-      struct group g;
-      struct group *pg;
-      char *gbuf = alloca(PWENT_MAX_LEN);
+	if (at != NULL) {
+		if (strcmp(at + 1, owner_domain.addr) != 0) {
+			/* We won't map what isn't even in the right domain */
+			return false;
+		}
+		*at = '\0';
+	}
+	if (group) {
+		struct group g;
+		struct group *pg;
+		char *gbuf = alloca(PWENT_MAX_LEN);
 
-      if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) != 0) 
-	   {
-	     LogMajor(COMPONENT_IDMAPPER,
-		   "getpwnam_r %s failed",
-		   name);
-	     return false;
-	   }
-	  else if (pg != NULL)
-   	   {
-	     *id = pg->gr_gid;
-	     return true;
-	   }
-#ifndef USE_NFSIDMAP	   
-      else
-	   {
-         char *end = NULL;
-         gid_t gid;
+		if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) != 0) {
+			LogMajor(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
+				 name);
+			return false;
+		} else if (pg != NULL) {
+			*id = pg->gr_gid;
+			return true;
+		}
+#ifndef USE_NFSIDMAP
+		else {
+			char *end = NULL;
+			gid_t gid;
 
-         gid = strtol(name, &end, 10);
-         if (end && *end != '\0')
-           return 0;
-         
-		 *id = gid;
-         return true;
-	   }
-#endif	   
-    }
-  else
-    {
-      struct passwd p;
-      struct passwd *pp;
-      char *pbuf = alloca(PWENT_MAX_LEN);
+			gid = strtol(name, &end, 10);
+			if (end && *end != '\0')
+				return 0;
 
-      if (getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) != 0) 
-       {
-         LogInfo(COMPONENT_IDMAPPER,
-		  "getpwnam_r %s failed",
-		  name);
-	     return false;
-	   } 
-	  else if (pp != NULL)
-	   {
-	     *id = pp->pw_uid;
-         *gid = pp->pw_gid;
-	     *got_gid = true;
-	     return true;
-	   }
-#ifndef USE_NFSIDMAP	   
-      else
-	   {
-         char *end = NULL;
-         uid_t uid;
+			*id = gid;
+			return true;
+		}
+#endif
+	} else {
+		struct passwd p;
+		struct passwd *pp;
+		char *pbuf = alloca(PWENT_MAX_LEN);
 
-         uid = strtol(name, &end, 10);
-         if (end && *end != '\0')
-           return 0;
-         
-		 *id = uid;
-         *got_gid = false;
-         return true;
-	   }
-#endif	   
-    }
-  return false;
+		if (getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) != 0) {
+			LogInfo(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
+				name);
+			return false;
+		} else if (pp != NULL) {
+			*id = pp->pw_uid;
+			*gid = pp->pw_gid;
+			*got_gid = true;
+			return true;
+		}
+#ifndef USE_NFSIDMAP
+		else {
+			char *end = NULL;
+			uid_t uid;
+
+			uid = strtol(name, &end, 10);
+			if (end && *end != '\0')
+				return 0;
+
+			*id = uid;
+			*got_gid = false;
+			return true;
+		}
+#endif
+	}
+	return false;
 }
 
 /**
@@ -449,55 +400,44 @@ static bool pwentname2id(char *name,
  * @return true on success, false not making the grade
  */
 
-static bool idmapname2id(char *name,
-			 size_t len,
-			 uint32_t *id,
-			 const uint32_t anon,
-			 bool group,
-			 gid_t *gid,
-			 bool *got_gid,
-			 char *at)
+static bool idmapname2id(char *name, size_t len, uint32_t * id,
+			 const uint32_t anon, bool group, gid_t * gid,
+			 bool * got_gid, char *at)
 {
 #ifdef USE_NFSIDMAP
-  int rc;
+	int rc;
 
-  if (group)
-    rc = nfs4_name_to_gid(name, id);
-  else
-    rc = nfs4_name_to_uid(name, id);
+	if (group)
+		rc = nfs4_name_to_gid(name, id);
+	else
+		rc = nfs4_name_to_uid(name, id);
 
-  if (rc == 0)
-    {
-      if (!group)
-	{
+	if (rc == 0) {
+		if (!group) {
 #ifdef _HAVE_GSSAPI
-	  /* nfs4_gss_princ_to_ids takes the unqualified
-	     name. */
-	  *at = '\0';
-	  rc = nfs4_gss_princ_to_ids("krb5", name,
-				     id,
-				     gid);
-	  if (rc == 0)
-	    *got_gid = true;
-	  else
-	    LogMajor(COMPONENT_IDMAPPER,
-		     "nfs4_gss_princ_to_ids %s failed %d",
-		     name, -rc);
+			/* nfs4_gss_princ_to_ids takes the unqualified
+			   name. */
+			*at = '\0';
+			rc = nfs4_gss_princ_to_ids("krb5", name, id, gid);
+			if (rc == 0)
+				*got_gid = true;
+			else
+				LogMajor(COMPONENT_IDMAPPER,
+					 "nfs4_gss_princ_to_ids %s failed %d",
+					 name, -rc);
+		}
+#endif				/* _HAVE_GSSAPI */
+		return true;
+	} else {
+		LogInfo(COMPONENT_IDMAPPER,
+			"%s %s failed with %d, using anonymous.",
+			(group ? "nfs4_name_to_gid" : "nfs4_name_to_uid"), name,
+			-rc);
+		return false;
 	}
-#endif /* _HAVE_GSSAPI */
-      return true;
-    }
-  else
-    {
-      LogInfo(COMPONENT_IDMAPPER,
-	      "%s %s failed with %d, using anonymous.",
-	      (group ? "nfs4_name_to_gid" : "nfs4_name_to_uid"),
-	      name, -rc);
-      return false;
-    }
-#else /* USE_NFSIDMAP */
-  return false;
-#endif /* USE_NFSIDMAP */
+#else				/* USE_NFSIDMAP */
+	return false;
+#endif				/* USE_NFSIDMAP */
 }
 
 /**
@@ -511,89 +451,78 @@ static bool idmapname2id(char *name,
  * @return true if successful, false otherwise
  */
 
-static bool name2id(const struct gsh_buffdesc *name,
-		    uint32_t *id,
-		    bool group,
+static bool name2id(const struct gsh_buffdesc *name, uint32_t * id, bool group,
 		    const uint32_t anon)
 {
-  bool success;
+	bool success;
 
-  pthread_rwlock_rdlock(group ?
-			&idmapper_group_lock :
-			&idmapper_user_lock);
-  if (group)
-    success = idmapper_lookup_by_gname(name, id);
-  else
-    success = idmapper_lookup_by_uname(name, id, NULL, false);
-  pthread_rwlock_unlock(group ?
-			&idmapper_group_lock :
-			&idmapper_user_lock);
-
-  if (success)
-    return true;
-  else
-    {
-      gid_t gid;
-      bool got_gid = false;
-      /* Something we can mutate and count on as terminated */
-      char *namebuff = alloca(name->len + 1);
-      char *at;
-      bool looked_up = false;
-
-      memcpy(namebuff, name->addr, name->len);
-      *(namebuff + name->len) = '\0';
-      at = memchr(namebuff, '@', name->len);
-
-      if (at == NULL)
-	{
-          if( pwentname2id(namebuff, name->len, id, anon,
-				   group, &gid, &got_gid, NULL ) )
-	    looked_up = true;
-	  else if (atless2id(namebuff, name->len, id, anon))
-	    looked_up = true;
-	  else
-	    return false;
-	}
-      else if (nfs_param.nfsv4_param.use_getpwnam)
-	{
-	  looked_up = pwentname2id(namebuff, name->len, id, anon,
-				   group, &gid, &got_gid, at);
-	}
-      else
-	{
-	  looked_up = idmapname2id(namebuff, name->len, id, anon,
-				   group, &gid, &got_gid, at);
-	}
-
-      if (!looked_up)
-	{
-	  LogInfo(COMPONENT_IDMAPPER,
-		  "All lookups failed for %s, using anonymous.",
-		  namebuff);
-	  *id = anon;
-	}
-
-      pthread_rwlock_wrlock(group ?
-			    &idmapper_group_lock :
-			    &idmapper_user_lock);
-      if (group)
-	success = idmapper_add_group(name, *id);
-      else
-	success = idmapper_add_user(name, *id,
-				    got_gid ? &gid : NULL,
-				    false);
-
-       pthread_rwlock_unlock(group ?
-			      &idmapper_group_lock :
+	pthread_rwlock_rdlock(group ? &idmapper_group_lock :
+			      &idmapper_user_lock);
+	if (group)
+		success = idmapper_lookup_by_gname(name, id);
+	else
+		success = idmapper_lookup_by_uname(name, id, NULL, false);
+	pthread_rwlock_unlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 
-      if (!success)
-	LogMajor(COMPONENT_IDMAPPER,
-		 "%s(%s %u) failed",
-		 (group ? "gidmap_add" : "uidmap_add"),
-		 namebuff, *id);
-      return true;
-    }
+	if (success)
+		return true;
+	else {
+		gid_t gid;
+		bool got_gid = false;
+		/* Something we can mutate and count on as terminated */
+		char *namebuff = alloca(name->len + 1);
+		char *at;
+		bool looked_up = false;
+
+		memcpy(namebuff, name->addr, name->len);
+		*(namebuff + name->len) = '\0';
+		at = memchr(namebuff, '@', name->len);
+
+		if (at == NULL) {
+			if (pwentname2id
+			    (namebuff, name->len, id, anon, group, &gid,
+			     &got_gid, NULL))
+				looked_up = true;
+			else if (atless2id(namebuff, name->len, id, anon))
+				looked_up = true;
+			else
+				return false;
+		} else if (nfs_param.nfsv4_param.use_getpwnam) {
+			looked_up =
+			    pwentname2id(namebuff, name->len, id, anon, group,
+					 &gid, &got_gid, at);
+		} else {
+			looked_up =
+			    idmapname2id(namebuff, name->len, id, anon, group,
+					 &gid, &got_gid, at);
+		}
+
+		if (!looked_up) {
+			LogInfo(COMPONENT_IDMAPPER,
+				"All lookups failed for %s, using anonymous.",
+				namebuff);
+			*id = anon;
+		}
+
+		pthread_rwlock_wrlock(group ? &idmapper_group_lock :
+				      &idmapper_user_lock);
+		if (group)
+			success = idmapper_add_group(name, *id);
+		else
+			success =
+			    idmapper_add_user(name, *id, got_gid ? &gid : NULL,
+					      false);
+
+		pthread_rwlock_unlock(group ? &idmapper_group_lock :
+				      &idmapper_user_lock);
+
+		if (!success)
+			LogMajor(COMPONENT_IDMAPPER, "%s(%s %u) failed",
+				 (group ? "gidmap_add" : "uidmap_add"),
+				 namebuff, *id);
+		return true;
+	}
 }
 
 /**
@@ -606,10 +535,9 @@ static bool name2id(const struct gsh_buffdesc *name,
  * @return true if successful, false otherwise
  *
  */
-bool name2uid(const struct gsh_buffdesc *name, uid_t *uid,
-	      const uid_t anon)
+bool name2uid(const struct gsh_buffdesc * name, uid_t * uid, const uid_t anon)
 {
-  return name2id(name, uid, false, anon);
+	return name2id(name, uid, false, anon);
 }
 
 /**
@@ -621,13 +549,10 @@ bool name2uid(const struct gsh_buffdesc *name, uid_t *uid,
  *
  * @return true  if successful, false otherwise
  */
-bool name2gid(const struct gsh_buffdesc *name,
-	      gid_t *gid, const gid_t anon)
+bool name2gid(const struct gsh_buffdesc * name, gid_t * gid, const gid_t anon)
 {
-  return name2id(name, gid, true, anon);
+	return name2id(name, gid, true, anon);
 }
-
-
 
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
@@ -640,7 +565,8 @@ bool name2gid(const struct gsh_buffdesc *name,
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t *puid, gid_t *pgid, struct svc_rpc_gss_data *gd)
+bool principal2uid(char *principal, uid_t * puid, gid_t * pgid,
+		   struct svc_rpc_gss_data * gd)
 #else
 /**
  * @brief Convert a principal (as returned by @c gss_display_name) to a UID
@@ -650,134 +576,141 @@ bool principal2uid(char *principal, uid_t *puid, gid_t *pgid, struct svc_rpc_gss
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
+bool principal2uid(char *principal, uid_t * puid, gid_t * pgid)
 #endif
 {
 #ifdef USE_NFSIDMAP
-  uid_t gss_uid = ANON_UID;
-  gid_t gss_gid = ANON_GID;
-  const gid_t *pgss_gid = NULL;
-  int rc;
-  bool success;
-  struct gsh_buffdesc princbuff =
-    {
-      .addr = principal,
-      .len = strlen(principal)
-    };
+	uid_t gss_uid = ANON_UID;
+	gid_t gss_gid = ANON_GID;
+	const gid_t *pgss_gid = NULL;
+	int rc;
+	bool success;
+	struct gsh_buffdesc princbuff = {
+		.addr = principal,
+		.len = strlen(principal)
+	};
 #endif
 
-  if (nfs_param.nfsv4_param.use_getpwnam)
-    return false;
+	if (nfs_param.nfsv4_param.use_getpwnam)
+		return false;
 
 #ifdef USE_NFSIDMAP
-  pthread_rwlock_rdlock(&idmapper_user_lock);
-  success = idmapper_lookup_by_uname(&princbuff, &gss_uid, &pgss_gid, true);
-  if (success && pgss_gid)
-  	gss_gid = *pgss_gid;
-  pthread_rwlock_unlock(&idmapper_user_lock);
-  if (unlikely(!success))
-    {
-	  if ((princbuff.len >= 4) && 
-	      (!memcmp(princbuff.addr, "nfs/", 4) ||
-               !memcmp(princbuff.addr, "root/", 5) ||
-               !memcmp(princbuff.addr, "host/", 5)))
-    	{
-          /* NFSv4 specific features: RPCSEC_GSS will provide user like
-		   * nfs/<host> 
-		   * root/<host>
-		   * host/<host>
-		   * choice is made to map them to root */
-		  /* This is a "root" request made from the hostbased nfs principal, use root */
-		  *puid = 0;
-          return true;
-    	}
-      /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
-      rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
-      if(rc)
-        {
+	pthread_rwlock_rdlock(&idmapper_user_lock);
+	success =
+	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &pgss_gid, true);
+	if (success && pgss_gid)
+		gss_gid = *pgss_gid;
+	pthread_rwlock_unlock(&idmapper_user_lock);
+	if (unlikely(!success)) {
+		if ((princbuff.len >= 4)
+		    && (!memcmp(princbuff.addr, "nfs/", 4)
+			|| !memcmp(princbuff.addr, "root/", 5)
+			|| !memcmp(princbuff.addr, "host/", 5))) {
+			/* NFSv4 specific features: RPCSEC_GSS will provide user like
+			 * nfs/<host> 
+			 * root/<host>
+			 * host/<host>
+			 * choice is made to map them to root */
+			/* This is a "root" request made from the hostbased nfs principal, use root */
+			*puid = 0;
+			return true;
+		}
+		/* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
+		rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
+					   &gss_gid);
+		if (rc) {
 #ifdef _MSPAC_SUPPORT
-	  bool found_uid = false;
-	  bool found_gid = false;
-          if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC)
-          {
-            struct wbcAuthUserParams params;
-            wbcErr wbc_err;
-            struct wbcAuthUserInfo *info;
-            struct wbcAuthErrorInfo *error = NULL;
+			bool found_uid = false;
+			bool found_gid = false;
+			if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC) {
+				struct wbcAuthUserParams params;
+				wbcErr wbc_err;
+				struct wbcAuthUserInfo *info;
+				struct wbcAuthErrorInfo *error = NULL;
 
-            memset(&params, 0, sizeof(params));
-            params.level = WBC_AUTH_USER_LEVEL_PAC;
-            params.password.pac.data = (uint8_t *)gd->pac.ms_pac.value;
-            params.password.pac.length = gd->pac.ms_pac.length;
+				memset(&params, 0, sizeof(params));
+				params.level = WBC_AUTH_USER_LEVEL_PAC;
+				params.password.pac.data =
+				    (uint8_t *) gd->pac.ms_pac.value;
+				params.password.pac.length =
+				    gd->pac.ms_pac.length;
 
-            wbc_err = wbcAuthenticateUserEx(&params, &info, &error);
-            if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogCrit(COMPONENT_IDMAPPER,"wbcAuthenticateUserEx returned %s",
-                       wbcErrorString(wbc_err));
-              return false;
-            }
+				wbc_err =
+				    wbcAuthenticateUserEx(&params, &info,
+							  &error);
+				if (!WBC_ERROR_IS_OK(wbc_err)) {
+					LogCrit(COMPONENT_IDMAPPER,
+						"wbcAuthenticateUserEx returned %s",
+						wbcErrorString(wbc_err));
+					return false;
+				}
 
-            if (error) {
-              LogCrit(COMPONENT_IDMAPPER,"nt_status: %s, display_string %s",
-                      error->nt_string, error->display_string);
-              wbcFreeMemory(error);
-              return false;
-            }
+				if (error) {
+					LogCrit(COMPONENT_IDMAPPER,
+						"nt_status: %s, display_string %s",
+						error->nt_string,
+						error->display_string);
+					wbcFreeMemory(error);
+					return false;
+				}
 
-            /* 1st SID is account sid, see wbclient.h */
-            wbc_err = wbcSidToUid(&info->sids[0].sid, &gss_uid);
-            if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for uid returned %s",
-                      wbcErrorString(wbc_err));
-              wbcFreeMemory(info);
-              return false;
-            }
+				/* 1st SID is account sid, see wbclient.h */
+				wbc_err =
+				    wbcSidToUid(&info->sids[0].sid, &gss_uid);
+				if (!WBC_ERROR_IS_OK(wbc_err)) {
+					LogCrit(COMPONENT_IDMAPPER,
+						"wbcSidToUid for uid returned %s",
+						wbcErrorString(wbc_err));
+					wbcFreeMemory(info);
+					return false;
+				}
 
-            /* 2nd SID is primary_group sid, see wbclient.h */
-            wbc_err = wbcSidToGid(&info->sids[1].sid, &gss_gid);
-            if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for gid returned %s\n",
-                      wbcErrorString(wbc_err));
-              wbcFreeMemory(info);
-              return false;
-            }
-            wbcFreeMemory(info);
-	    found_uid = true;
-	    found_gid = true;
-          }
-#endif /* _MSPAC_SUPPORT */
+				/* 2nd SID is primary_group sid, see wbclient.h */
+				wbc_err =
+				    wbcSidToGid(&info->sids[1].sid, &gss_gid);
+				if (!WBC_ERROR_IS_OK(wbc_err)) {
+					LogCrit(COMPONENT_IDMAPPER,
+						"wbcSidToUid for gid returned %s\n",
+						wbcErrorString(wbc_err));
+					wbcFreeMemory(info);
+					return false;
+				}
+				wbcFreeMemory(info);
+				found_uid = true;
+				found_gid = true;
+			}
+#endif				/* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
-          if ((found_uid == true) && (found_gid == true))
-          {
-            goto principal_found;
-          }
+			if ((found_uid == true) && (found_gid == true)) {
+				goto principal_found;
+			}
 #endif
-      
-          return false;
-        }
+
+			return false;
+		}
 #ifdef _MSPAC_SUPPORT
-principal_found:
+ principal_found:
 #endif
 
-      pthread_rwlock_wrlock(&idmapper_user_lock);
-      success = idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
-      pthread_rwlock_unlock(&idmapper_user_lock);
+		pthread_rwlock_wrlock(&idmapper_user_lock);
+		success =
+		    idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
+		pthread_rwlock_unlock(&idmapper_user_lock);
 
-      if (!success)
-      {
-	    LogMajor(COMPONENT_IDMAPPER,
-		     "idmapper_add_user(%s, %d, %d) failed",
-		     principal, gss_uid, gss_gid);
-	  }
-    }
+		if (!success) {
+			LogMajor(COMPONENT_IDMAPPER,
+				 "idmapper_add_user(%s, %d, %d) failed",
+				 principal, gss_uid, gss_gid);
+		}
+	}
 
-  *puid = gss_uid;
-  *pgid = gss_gid;
+	*puid = gss_uid;
+	*pgid = gss_gid;
 
-  return true;
-#else           /* !USE_NFSIDMAP */
-  assert(!"prohibited by configuration");
-  return false;
+	return true;
+#else				/* !USE_NFSIDMAP */
+	assert(!"prohibited by configuration");
+	return false;
 #endif
 }
 #endif

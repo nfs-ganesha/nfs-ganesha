@@ -49,12 +49,12 @@
  */
 
 struct cache_user {
-	struct gsh_buffdesc uname; /*< Username */
-	uid_t uid; /*< Corresponding UID */
-	gid_t gid; /*< Corresponding GID */
-	bool gid_set; /*< if the GID has been set */
-	struct avltree_node uname_node; /*< Node in the name tree */
-	struct avltree_node uid_node; /*< Node in the UID tree */
+	struct gsh_buffdesc uname;	/*< Username */
+	uid_t uid;		/*< Corresponding UID */
+	gid_t gid;		/*< Corresponding GID */
+	bool gid_set;		/*< if the GID has been set */
+	struct avltree_node uname_node;	/*< Node in the name tree */
+	struct avltree_node uid_node;	/*< Node in the UID tree */
 };
 
 /**
@@ -62,10 +62,10 @@ struct cache_user {
  */
 
 struct cache_group {
-	struct gsh_buffdesc gname; /*< Group name */
-	gid_t gid; /*< Group ID */
-	struct avltree_node gname_node; /*< Node in the name tree */
-	struct avltree_node gid_node; /*< Node in the GID tree */
+	struct gsh_buffdesc gname;	/*< Group name */
+	gid_t gid;		/*< Group ID */
+	struct avltree_node gname_node;	/*< Node in the name tree */
+	struct avltree_node gid_node;	/*< Node in the GID tree */
 };
 
 /**
@@ -91,7 +91,6 @@ static struct avltree_node *uid_cache[id_cache_size];
  */
 
 static struct avltree_node *gid_cache[id_cache_size];
-
 
 /**
  * @brief Lock that protects the idmapper user cache
@@ -174,12 +173,12 @@ static inline int buffdesc_comparator(const struct gsh_buffdesc *buffa,
 static int uname_comparator(const struct avltree_node *node1,
 			    const struct avltree_node *nodea)
 {
-	struct cache_user *user1
-		= avltree_container_of(node1, struct cache_user,
-				       uname_node);
-	struct cache_user *usera
-		= avltree_container_of(nodea, struct cache_user,
-				       uname_node);
+	struct cache_user *user1 =
+	    avltree_container_of(node1, struct cache_user,
+				 uname_node);
+	struct cache_user *usera =
+	    avltree_container_of(nodea, struct cache_user,
+				 uname_node);
 
 	return buffdesc_comparator(&user1->uname, &usera->uname);
 }
@@ -198,12 +197,12 @@ static int uname_comparator(const struct avltree_node *node1,
 static int uid_comparator(const struct avltree_node *node1,
 			  const struct avltree_node *nodea)
 {
-	struct cache_user *user1
-		= avltree_container_of(node1, struct cache_user,
-				       uid_node);
-	struct cache_user *usera
-		= avltree_container_of(nodea, struct cache_user,
-				       uid_node);
+	struct cache_user *user1 =
+	    avltree_container_of(node1, struct cache_user,
+				 uid_node);
+	struct cache_user *usera =
+	    avltree_container_of(nodea, struct cache_user,
+				 uid_node);
 
 	if (user1->uid < usera->uid) {
 		return -1;
@@ -228,12 +227,12 @@ static int uid_comparator(const struct avltree_node *node1,
 static inline int gname_comparator(const struct avltree_node *node1,
 				   const struct avltree_node *nodea)
 {
-	struct cache_group *group1
-		= avltree_container_of(node1, struct cache_group,
-				       gname_node);
-	struct cache_group *groupa
-		= avltree_container_of(nodea, struct cache_group,
-				       gname_node);
+	struct cache_group *group1 =
+	    avltree_container_of(node1, struct cache_group,
+				 gname_node);
+	struct cache_group *groupa =
+	    avltree_container_of(nodea, struct cache_group,
+				 gname_node);
 
 	return buffdesc_comparator(&group1->gname, &groupa->gname);
 }
@@ -252,12 +251,12 @@ static inline int gname_comparator(const struct avltree_node *node1,
 static int gid_comparator(const struct avltree_node *node1,
 			  const struct avltree_node *nodea)
 {
-	struct cache_group *group1
-		= avltree_container_of(node1, struct cache_group,
-				       gid_node);
-	struct cache_group *groupa
-		= avltree_container_of(nodea, struct cache_group,
-				       gid_node);
+	struct cache_group *group1 =
+	    avltree_container_of(node1, struct cache_group,
+				 gid_node);
+	struct cache_group *groupa =
+	    avltree_container_of(nodea, struct cache_group,
+				 gid_node);
 
 	if (group1->gid < groupa->gid) {
 		return -1;
@@ -276,13 +275,11 @@ void idmapper_cache_init(void)
 {
 	avltree_init(&uname_tree, uname_comparator, 0);
 	avltree_init(&uid_tree, uid_comparator, 0);
-	memset(uid_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
+	memset(uid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 
 	avltree_init(&gname_tree, gname_comparator, 0);
 	avltree_init(&gid_tree, gid_comparator, 0);
-	memset(gid_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
+	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 }
 
 /**
@@ -300,15 +297,13 @@ void idmapper_cache_init(void)
  * @retval false if our reach exceeds our grasp.
  */
 
-bool idmapper_add_user(const struct gsh_buffdesc *name,
-		       uid_t uid,
-		       const gid_t *gid,
-		       bool gss_princ)
+bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
+		       const gid_t * gid, bool gss_princ)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
-	struct cache_user *new = gsh_malloc(sizeof(struct cache_user) +
-					    name->len);
+	struct cache_user *new =
+	    gsh_malloc(sizeof(struct cache_user) + name->len);
 
 	if (new == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
@@ -329,25 +324,21 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
 	}
 
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
-	if(!gss_princ) {
-   	  found_id = avltree_insert(&new->uid_node, &uid_tree);
+	if (!gss_princ) {
+		found_id = avltree_insert(&new->uid_node, &uid_tree);
 	}
 
 	if (unlikely(found_name || found_id)) {
 		/* Obnoxious complexity.  And we can't even reuse the
 		   code because the types are different.  Foo. */
-		struct cache_user *coll_name
-			= (found_name ?
-			   avltree_container_of(found_name,
-						struct cache_user,
-						uname_node) :
-			   NULL);
-		struct cache_user *coll_id
-			= (found_id ?
-			   avltree_container_of(found_id,
-						struct cache_user,
-						uid_node) :
-			   NULL);
+		struct cache_user *coll_name =
+		    (found_name ? avltree_container_of(found_name,
+						       struct cache_user,
+						       uname_node) : NULL);
+		struct cache_user *coll_id =
+		    (found_id ? avltree_container_of(found_id,
+						     struct cache_user,
+						     uid_node) : NULL);
 
 		LogWarn(COMPONENT_IDMAPPER,
 			"Collision found in user cache.  This likely "
@@ -358,8 +349,9 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
 			avltree_remove(found_name, &uname_tree);
 			if (!gss_princ) {
 				if (coll_name != coll_id) {
-					uid_cache[coll_name->uid % id_cache_size]
-						= NULL;
+					uid_cache[coll_name->uid %
+						  id_cache_size]
+					    = NULL;
 					avltree_remove(&coll_name->uid_node,
 						       &uid_tree);
 				}
@@ -406,13 +398,12 @@ bool idmapper_add_user(const struct gsh_buffdesc *name,
  * @retval false if our reach exceeds our grasp.
  */
 
-bool idmapper_add_group(const struct gsh_buffdesc *name,
-			const gid_t gid)
+bool idmapper_add_group(const struct gsh_buffdesc * name, const gid_t gid)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
-	struct cache_group *new = gsh_malloc(sizeof(struct cache_group) +
-					     name->len);
+	struct cache_group *new =
+	    gsh_malloc(sizeof(struct cache_group) + name->len);
 
 	if (new == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
@@ -431,18 +422,14 @@ bool idmapper_add_group(const struct gsh_buffdesc *name,
 	if (unlikely(found_name || found_id)) {
 		/* Obnoxious complexity.  And we couldn't even reuse the
 		   code because the types were different.  Confound it. */
-		struct cache_group *coll_name
-			= (found_name ?
-			   avltree_container_of(found_name,
-						struct cache_group,
-						gname_node) :
-			   NULL);
-		struct cache_group *coll_id
-			= (found_id ?
-			   avltree_container_of(found_id,
-						struct cache_group,
-						gid_node) :
-			   NULL);
+		struct cache_group *coll_name =
+		    (found_name ? avltree_container_of(found_name,
+						       struct cache_group,
+						       gname_node) : NULL);
+		struct cache_group *coll_id =
+		    (found_id ? avltree_container_of(found_id,
+						     struct cache_group,
+						     gid_node) : NULL);
 
 		LogWarn(COMPONENT_IDMAPPER,
 			"Collision found in group cache.  This likely "
@@ -453,9 +440,8 @@ bool idmapper_add_group(const struct gsh_buffdesc *name,
 			avltree_remove(found_name, &gname_tree);
 			if (coll_name != coll_id) {
 				uid_cache[coll_name->gid % id_cache_size]
-					= NULL;
-				avltree_remove(&coll_name->gid_node,
-					       &gid_tree);
+				    = NULL;
+				avltree_remove(&coll_name->gid_node, &gid_tree);
 			}
 		}
 		if (coll_id) {
@@ -500,35 +486,31 @@ bool idmapper_add_group(const struct gsh_buffdesc *name,
  * @retval false if we need to try, try again.
  */
 
-bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name,
-			      uid_t *uid,
-			      const gid_t **gid,
-			      bool gss_princ)
+bool idmapper_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
+			      const gid_t ** gid, bool gss_princ)
 {
 	struct cache_user prototype = {
 		.uname = *name
 	};
-	struct avltree_node *found_node
-		= avltree_lookup(&prototype.uname_node,
-				 &uname_tree);
+	struct avltree_node *found_node = avltree_lookup(&prototype.uname_node,
+							 &uname_tree);
 	struct cache_user *found_user;
 	struct avltree_node **cache_entry;
 
 	if (unlikely(!found_node)) {
 		return false;
 	}
-	found_user = avltree_container_of(found_node,
-					  struct cache_user,
-					  uname_node);
+	found_user =
+	    avltree_container_of(found_node, struct cache_user, uname_node);
 	if (!gss_princ) {
 		/* I assume that if someone likes this user enough to look it
 		   up by name, they'll like it enough to look it up by ID
 		   later. 
-		   If the name is gss principal it does not have entry in uid tree*/
+		   If the name is gss principal it does not have entry in uid tree */
 
 		cache_entry = uid_cache + (found_user->uid % id_cache_size);
-		atomic_store_uint64_t((uint64_t *)cache_entry,
-				       (uint64_t) &found_user->uid_node);
+		atomic_store_uint64_t((uint64_t *) cache_entry,
+				      (uint64_t) & found_user->uid_node);
 	}
 
 	if (likely(uid)) {
@@ -557,35 +539,33 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name,
  * @retval false if we weren't so successful.
  */
 
-bool idmapper_lookup_by_uid(const uid_t uid,
-			    const struct gsh_buffdesc **name,
-			    const gid_t **gid)
+bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc ** name,
+			    const gid_t ** gid)
 {
 	struct cache_user prototype = {
 		.uid = uid
 	};
-	struct avltree_node **cache_entry = uid_cache +
-		(prototype.uid % id_cache_size);
-	struct avltree_node *found_node
-		= ((struct avltree_node*)
-		   atomic_fetch_uint64_t((uint64_t *)cache_entry));
+	struct avltree_node **cache_entry =
+	    uid_cache + (prototype.uid % id_cache_size);
+	struct avltree_node *found_node = ((struct avltree_node *)
+					   atomic_fetch_uint64_t((uint64_t *)
+								 cache_entry));
 	struct cache_user *found_user;
 
 	if (likely(found_node)) {
-		found_user = avltree_container_of(found_node,
-						  struct cache_user,
-						  uid_node);
+		found_user =
+		    avltree_container_of(found_node, struct cache_user,
+					 uid_node);
 	} else {
-		found_node = avltree_lookup(&prototype.uid_node,
-					    &uid_tree);
+		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
 		if (unlikely(!found_node)) {
 			return false;
 		}
-		atomic_store_uint64_t((uintptr_t *)cache_entry,
+		atomic_store_uint64_t((uintptr_t *) cache_entry,
 				      (uintptr_t) found_node);
-		found_user = avltree_container_of(found_node,
-						  struct cache_user,
-						  uid_node);
+		found_user =
+		    avltree_container_of(found_node, struct cache_user,
+					 uid_node);
 	}
 
 	if (likely(name)) {
@@ -613,38 +593,34 @@ bool idmapper_lookup_by_uid(const uid_t uid,
  * @retval false if we need to try, try again.
  */
 
-bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name,
-			      uid_t *gid)
+bool idmapper_lookup_by_gname(const struct gsh_buffdesc * name, uid_t * gid)
 {
 	struct cache_group prototype = {
 		.gname = *name
 	};
-	struct avltree_node *found_node
-		= avltree_lookup(&prototype.gname_node,
-				 &gname_tree);
+	struct avltree_node *found_node = avltree_lookup(&prototype.gname_node,
+							 &gname_tree);
 	struct cache_group *found_group;
 	struct avltree_node **cache_entry;
 
 	if (unlikely(!found_node)) {
 		return false;
 	}
-	found_group = avltree_container_of(found_node,
-					   struct cache_group,
-					   gname_node);
+	found_group =
+	    avltree_container_of(found_node, struct cache_group, gname_node);
 
 	/* I assume that if someone likes this group enough to look it
 	   up by name, they'll like it enough to look it up by ID
 	   later. */
 
 	cache_entry = gid_cache + (found_group->gid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *)cache_entry,
-			      (uint64_t) &found_group->gid_node);
+	atomic_store_uint64_t((uint64_t *) cache_entry,
+			      (uint64_t) & found_group->gid_node);
 
 	if (likely(gid)) {
 		*gid = found_group->gid;
 	} else {
-		LogDebug(COMPONENT_IDMAPPER,
-			 "Caller is being weird.");
+		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 	}
 
 	return true;
@@ -663,41 +639,38 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name,
  * @retval false if we're most unfortunate.
  */
 
-bool idmapper_lookup_by_gid(const gid_t gid,
-			    const struct gsh_buffdesc **name)
+bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc ** name)
 {
 	struct cache_group prototype = {
 		.gid = gid
 	};
-	struct avltree_node **cache_entry = gid_cache +
-		(prototype.gid % id_cache_size);
-	struct avltree_node *found_node
-		= ((struct avltree_node*)
-		   atomic_fetch_uint64_t((uint64_t *)cache_entry));
+	struct avltree_node **cache_entry =
+	    gid_cache + (prototype.gid % id_cache_size);
+	struct avltree_node *found_node = ((struct avltree_node *)
+					   atomic_fetch_uint64_t((uint64_t *)
+								 cache_entry));
 	struct cache_group *found_group;
 
 	if (likely(found_node)) {
-		found_group = avltree_container_of(found_node,
-						   struct cache_group,
-						   gid_node);
+		found_group =
+		    avltree_container_of(found_node, struct cache_group,
+					 gid_node);
 	} else {
-		found_node = avltree_lookup(&prototype.gid_node,
-					    &gid_tree);
+		found_node = avltree_lookup(&prototype.gid_node, &gid_tree);
 		if (unlikely(!found_node)) {
 			return false;
 		}
-		atomic_store_uint64_t((uint64_t *)cache_entry,
+		atomic_store_uint64_t((uint64_t *) cache_entry,
 				      (uint64_t) found_node);
-		found_group = avltree_container_of(found_node,
-						   struct cache_group,
-						   gid_node);
+		found_group =
+		    avltree_container_of(found_node, struct cache_group,
+					 gid_node);
 	}
 
 	if (likely(name)) {
 		*name = &found_group->gname;
 	} else {
-		LogDebug(COMPONENT_IDMAPPER,
-			 "Caller is being weird.");
+		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 	}
 
 	return true;
@@ -714,16 +687,14 @@ void idmapper_clear_cache(void)
 	pthread_rwlock_wrlock(&idmapper_user_lock);
 	pthread_rwlock_wrlock(&idmapper_group_lock);
 
-	memset(uid_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
-	memset(gid_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node*));
+	memset(uid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
+	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 
 	while ((node = avltree_first(&uname_tree))) {
-		struct cache_user *user
-			= avltree_container_of(node,
-					       struct cache_user,
-					       uname_node);
+		struct cache_user *user = avltree_container_of(node,
+							       struct
+							       cache_user,
+							       uname_node);
 		avltree_remove(&user->uname_node, &uname_tree);
 		avltree_remove(&user->uid_node, &uid_tree);
 		gsh_free(user);
@@ -732,10 +703,10 @@ void idmapper_clear_cache(void)
 	assert(avltree_first(&uid_tree) == NULL);
 
 	while ((node = avltree_first(&gname_tree))) {
-		struct cache_group *group
-			= avltree_container_of(node,
-					       struct cache_group,
-					       gname_node);
+		struct cache_group *group = avltree_container_of(node,
+								 struct
+								 cache_group,
+								 gname_node);
 		avltree_remove(&group->gname_node, &gname_tree);
 		avltree_remove(&group->gid_node, &gid_tree);
 		gsh_free(group);
