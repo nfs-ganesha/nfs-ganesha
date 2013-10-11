@@ -41,12 +41,12 @@
 
 static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -75,7 +75,7 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 
 	gsh_free(objhandle);
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_release);
@@ -90,27 +90,27 @@ out:
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const struct req_op_context *opctx,
-			    const char *path,
-			    struct fsal_obj_handle **handle)
+			    const char *path, struct fsal_obj_handle **handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(parent->export, struct glusterfs_export, export);
+	    container_of(parent->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(parent, struct glusterfs_handle, handle);
+	    container_of(parent, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	glhandle = glfs_h_lookupat(glfs_export->gl_fs, parenthandle->glhandle, 
-				   path, &sb);
+	glhandle =
+	    glfs_h_lookupat(glfs_export->gl_fs, parenthandle->glhandle, path,
+			    &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -131,11 +131,10 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	*handle = &objhandle->handle;
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_lookup);
@@ -150,22 +149,20 @@ out:
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t *whence,
-				  void *dir_state,
-				  fsal_readdir_cb cb,
-				  bool *eof)
+				  fsal_cookie_t * whence, void *dir_state,
+				  fsal_readdir_cb cb, bool * eof)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glfs_fd          *glfd = NULL;
-	long                     offset = 0;
-	struct dirent           *pde = NULL;
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glfs_fd *glfd = NULL;
+	long offset = 0;
+	struct dirent *pde = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -187,13 +184,13 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		rc = glfs_readdir_r(glfd, &de, &pde);
 		if (rc == 0 && pde != NULL) {
 			/* skip . and .. */
-			if((strcmp(de.d_name, ".") == 0) ||
-				 (strcmp(de.d_name, "..") == 0)) {
+			if ((strcmp(de.d_name, ".") == 0)
+			    || (strcmp(de.d_name, "..") == 0)) {
 				continue;
 			}
 
-			if (!cb(opctx, de.d_name, dir_state,
-				 glfs_telldir(glfd))) {
+			if (!cb
+			    (opctx, de.d_name, dir_state, glfs_telldir(glfd))) {
 				goto out;
 			}
 		} else if (rc == 0 && pde == NULL) {
@@ -207,12 +204,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 	}
 
-out:
+ out:
 	rc = glfs_closedir(glfd);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_read_dirents);
@@ -226,29 +222,29 @@ out:
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			    const struct req_op_context *opctx,
-			    const char *name,
-			    struct attrlist *attrib,
+			    const char *name, struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
-		
+	struct timespec s_time, e_time;
+
 	now(&s_time);
 #endif
 
 	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-		      &opctx->creds->caller_gid, opctx->creds->caller_glen,
-	              opctx->creds->caller_garray);
+			     &opctx->creds->caller_gid,
+			     opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -256,9 +252,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* FIXME: what else from attrib should we use? */
-	glhandle = glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle,
-				name, O_CREAT, fsal2unix_mode(attrib->mode),
-				&sb);
+	glhandle =
+	    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle, name,
+			 O_CREAT, fsal2unix_mode(attrib->mode), &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -288,11 +284,10 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create);
@@ -307,28 +302,28 @@ out:
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const struct req_op_context *opctx,
-			     const char *name,
-			     struct attrlist *attrib,
+			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     &opctx->creds->caller_gid,
+			     opctx->creds->caller_glen,
 			     opctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
@@ -337,8 +332,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* FIXME: what else from attrib should we use? */
-	glhandle = glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle,
-				name, fsal2unix_mode(attrib->mode), &sb);
+	glhandle =
+	    glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle, name,
+			 fsal2unix_mode(attrib->mode), &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -368,11 +364,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makedir);
@@ -386,53 +381,51 @@ out:
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const struct req_op_context *opctx,
-			      const char *name,
-			      object_file_type_t nodetype,
-			      fsal_dev_t *dev,
-			      struct attrlist *attrib,
+			      const char *name, object_file_type_t nodetype,
+			      fsal_dev_t * dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
-	dev_t                    ndev = {0, };
+	dev_t ndev = { 0, };
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	switch (nodetype) {
-		case BLOCK_FILE:
-			if (!dev)
-				return fsalstat (ERR_FSAL_INVAL, 0);
-			/* FIXME: This needs a feature flag test? */
-			ndev = makedev(dev->major, dev->minor);
-			break;
-		case CHARACTER_FILE:
-			if (!dev)
-				return fsalstat (ERR_FSAL_INVAL, 0);
-			ndev = makedev(dev->major, dev->minor);
-			break;
-		case FIFO_FILE:
-		case SOCKET_FILE:
-			break;
-		default:
-			LogMajor (COMPONENT_FSAL, 
-				  "Invalid node type in FSAL_mknode: %d",
-				  nodetype);
-			return fsalstat (ERR_FSAL_INVAL, 0);
+	case BLOCK_FILE:
+		if (!dev)
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		/* FIXME: This needs a feature flag test? */
+		ndev = makedev(dev->major, dev->minor);
+		break;
+	case CHARACTER_FILE:
+		if (!dev)
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		ndev = makedev(dev->major, dev->minor);
+		break;
+	case FIFO_FILE:
+	case SOCKET_FILE:
+		break;
+	default:
+		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
+			 nodetype);
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     &opctx->creds->caller_gid,
+			     opctx->creds->caller_glen,
 			     opctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
@@ -441,8 +434,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* FIXME: what else from attrib should we use? */
-	glhandle = glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle,
-				name, fsal2unix_mode(attrib->mode), ndev, &sb);
+	glhandle =
+	    glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle, name,
+			 fsal2unix_mode(attrib->mode), ndev, &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -472,11 +466,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makenode);
@@ -490,30 +483,30 @@ out:
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const struct req_op_context *opctx,
-				 const char *name,
-				 const char *link_path,
+				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
-		      opctx->creds->caller_garray);
+			     &opctx->creds->caller_gid,
+			     opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -521,8 +514,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* FIXME: what else from attrib should we use? */
-	glhandle = glfs_h_symlink(glfs_export->gl_fs, parenthandle->glhandle,
-				name, link_path, &sb);
+	glhandle =
+	    glfs_h_symlink(glfs_export->gl_fs, parenthandle->glhandle, name,
+			   link_path, &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -552,11 +546,10 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makesymlink);
@@ -574,19 +567,19 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-		container_of(obj_hdl->export, struct glusterfs_export, export);
+	    container_of(obj_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	link_content->len = 1024; // bad bad!!! need to determine size
+	link_content->len = 1024;	// bad bad!!! need to determine size
 	link_content->addr = gsh_malloc(link_content->len);
 	if (link_content->addr == NULL) {
 		status = gluster2fsal_error(rc);
@@ -603,13 +596,12 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	/* Check if return buffer overflowed, it is still '\0' terminated */
 	link_content->len = (strlen(link_content->addr) + 1);
 
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gsh_free(link_content->addr);
 		link_content->addr = NULL;
 		link_content->len = 0;
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_readsymlink);
@@ -625,15 +617,15 @@ out:
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      const struct req_op_context *opctx)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
 	struct glusterfs_export *glfs_export =
-		container_of(obj_hdl->export, struct glusterfs_export, export);
+	    container_of(obj_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -650,7 +642,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 	stat2fsal_attributes(&sb, &objhandle->handle.attributes);
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_getattrs);
@@ -667,16 +659,16 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	int                      mask = 0;
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	int mask = 0;
 	struct glusterfs_export *glfs_export =
-		container_of(obj_hdl->export, struct glusterfs_export, export);
+	    container_of(obj_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -684,8 +676,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	memset(&sb, 0, sizeof(struct stat));
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-		rc = glfs_h_truncate (glfs_export->gl_fs, objhandle->glhandle,
-				      attrs->filesize);
+		rc = glfs_h_truncate(glfs_export->gl_fs, objhandle->glhandle,
+				     attrs->filesize);
 		if (rc != 0) {
 			status = gluster2fsal_error(errno);
 			goto out;
@@ -717,7 +709,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
-		if(rc != 0) {
+		if (rc != 0) {
 			status = gluster2fsal_error(errno);
 			goto out;
 		}
@@ -733,7 +725,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
-		if(rc != 0) {
+		if (rc != 0) {
 			status = gluster2fsal_error(rc);
 			goto out;
 		}
@@ -747,7 +739,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_setattrs);
@@ -764,23 +756,25 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
-	int                      rc = 0, credrc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0, credrc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-		container_of(obj_hdl->export, struct glusterfs_export, export);
+	    container_of(obj_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 	struct glusterfs_handle *dstparenthandle =
-		container_of(destdir_hdl, struct glusterfs_handle, handle);
+	    container_of(destdir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
-		      opctx->creds->caller_garray);
+	credrc =
+	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			    &opctx->creds->caller_gid,
+			    opctx->creds->caller_glen,
+			    opctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -802,7 +796,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_linkfile);
@@ -821,23 +815,25 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	int                      rc = 0, credrc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0, credrc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-		container_of(olddir_hdl->export, struct glusterfs_export, export);
+	    container_of(olddir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *srcparenthandle =
-		container_of(olddir_hdl, struct glusterfs_handle, handle);
+	    container_of(olddir_hdl, struct glusterfs_handle, handle);
 	struct glusterfs_handle *dstparenthandle =
-		container_of(newdir_hdl, struct glusterfs_handle, handle);
+	    container_of(newdir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
-		      opctx->creds->caller_garray);
+	credrc =
+	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			    &opctx->creds->caller_gid,
+			    opctx->creds->caller_glen,
+			    opctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -859,7 +855,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 		goto out;
 	}
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_renamefile);
@@ -876,28 +872,30 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const struct req_op_context *opctx,
 				 const char *name)
 {
-	int                      rc = 0, credrc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0, credrc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-		container_of(dir_hdl->export, struct glusterfs_export, export);
+	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
-		container_of(dir_hdl, struct glusterfs_handle, handle);
+	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-				 &opctx->creds->caller_gid, opctx->creds->caller_glen,
-			  opctx->creds->caller_garray);
+	credrc =
+	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			    &opctx->creds->caller_gid,
+			    opctx->creds->caller_glen,
+			    opctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 		goto out;
 	}
 
-	rc =  glfs_h_unlink (glfs_export->gl_fs, parenthandle->glhandle, name);
+	rc = glfs_h_unlink(glfs_export->gl_fs, parenthandle->glhandle, name);
 
 	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (credrc != 0) {
@@ -910,14 +908,13 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		status = gluster2fsal_error(errno);
 	}
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_unlink);
 #endif
 	return status;
 }
-
 
 /**
  * @brief Implements GLUSTER FSAL objectoperation open
@@ -927,16 +924,16 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glfs_fd          *glfd = NULL;
-	int                      p_flags = 0;
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glfs_fd *glfd = NULL;
+	int p_flags = 0;
 	struct glusterfs_export *glfs_export =
-		container_of(obj_hdl->export, struct glusterfs_export, export);
+	    container_of(obj_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -960,7 +957,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	objhandle->openflags = openflags;
 	objhandle->glfd = glfd;
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_open);
@@ -974,8 +971,8 @@ out:
 
 static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 {
-	struct glusterfs_handle *objhandle = 
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	struct glusterfs_handle *objhandle =
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	return objhandle->openflags;
 }
@@ -986,24 +983,22 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 			       const struct req_op_context *opctx,
-			       uint64_t seek_descriptor,
-			       size_t buffer_size,
-			       void *buffer,
-			       size_t *read_amount,
-			       bool *end_of_file)
+			       uint64_t seek_descriptor, size_t buffer_size,
+			       void *buffer, size_t * read_amount,
+			       bool * end_of_file)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	rc = glfs_pread(objhandle->glfd, buffer, buffer_size, seek_descriptor,
-			0 /*TODO: flags is unused, so pass in something */);
+			0 /*TODO: flags is unused, so pass in something */ );
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -1015,7 +1010,7 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 
 	*read_amount = rc;
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_read);
@@ -1029,24 +1024,22 @@ out:
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 				const struct req_op_context *opctx,
-				uint64_t seek_descriptor,
-				size_t buffer_size,
-				void *buffer,
-				size_t *write_amount,
-				bool *fsal_stable)
+				uint64_t seek_descriptor, size_t buffer_size,
+				void *buffer, size_t * write_amount,
+				bool * fsal_stable)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	rc = glfs_pwrite(objhandle->glfd, buffer, buffer_size, seek_descriptor,
-			 ((*fsal_stable)? O_SYNC: 0));
+			 ((*fsal_stable) ? O_SYNC : 0));
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -1056,7 +1049,7 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 	if (objhandle->openflags & FSAL_O_SYNC)
 		*fsal_stable = true;
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_write);
@@ -1070,16 +1063,15 @@ out:
  * This function commits the entire file and ignores the range provided
  */
 
-static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
-			    off_t offset,
-			    size_t len)
+static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    off_t offset, size_t len)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -1089,7 +1081,6 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_commit);
@@ -1128,12 +1119,12 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -1147,7 +1138,7 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	objhandle->glfd = NULL;
 	objhandle->openflags = FSAL_O_CLOSED;
 
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_close);
@@ -1277,14 +1268,14 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * For now this function closed the fd if open as a part of the lru_cleanup.
  */
 
-fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
+fsal_status_t lru_cleanup(struct fsal_obj_handle * obj_hdl,
 			  lru_actions_t requests)
 {
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
-		container_of(obj_hdl, struct glusterfs_handle, handle);
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -1292,7 +1283,6 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	if (objhandle->glfd != NULL) {
 		status = file_close(obj_hdl);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_lru_cleanup);
@@ -1308,41 +1298,41 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 				   fsal_digesttype_t output_type,
 				   struct gsh_buffdesc *fh_desc)
 {
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	size_t                   fh_size;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	size_t fh_size;
 	struct glusterfs_handle *objhandle;
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	if( !fh_desc)
+	if (!fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	objhandle = container_of(obj_hdl, struct glusterfs_handle, handle);
 
-	switch(output_type) {
-		case FSAL_DIGEST_NFSV2:
-		case FSAL_DIGEST_NFSV3:
-		case FSAL_DIGEST_NFSV4:
-			fh_size = GLAPI_HANDLE_LENGTH;
-			if(fh_desc->len < fh_size) {
-				LogMajor(COMPONENT_FSAL,
-			 "Space too small for handle.  need %lu, have %lu",
-			 fh_size, fh_desc->len);
-				status.major = ERR_FSAL_TOOSMALL;
-				goto out;
-			}
-			memcpy(fh_desc->addr, objhandle->globjhdl, fh_size);
-			break;
-		default:
-			status.major = ERR_FSAL_SERVERFAULT;
+	switch (output_type) {
+	case FSAL_DIGEST_NFSV2:
+	case FSAL_DIGEST_NFSV3:
+	case FSAL_DIGEST_NFSV4:
+		fh_size = GLAPI_HANDLE_LENGTH;
+		if (fh_desc->len < fh_size) {
+			LogMajor(COMPONENT_FSAL,
+				 "Space too small for handle.  need %lu, have %lu",
+				 fh_size, fh_desc->len);
+			status.major = ERR_FSAL_TOOSMALL;
 			goto out;
+		}
+		memcpy(fh_desc->addr, objhandle->globjhdl, fh_size);
+		break;
+	default:
+		status.major = ERR_FSAL_SERVERFAULT;
+		goto out;
 	}
 
 	fh_desc->len = fh_size;
-out:
+ out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_digest);
@@ -1359,7 +1349,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 {
 	struct glusterfs_handle *objhandle;
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif

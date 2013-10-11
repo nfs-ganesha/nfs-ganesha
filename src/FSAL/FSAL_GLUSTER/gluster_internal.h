@@ -83,7 +83,7 @@ typedef enum {
 #define LATENCY_SLOTS 23
 
 struct latency_data {
-	uint64_t        count;
+	uint64_t count;
 	nsecs_elapsed_t overall_time;
 };
 #endif
@@ -94,26 +94,26 @@ struct glusterfs_fsal_module {
 };
 
 struct glusterfs_export {
-	glfs_t             *gl_fs;
-	char               *export_path;
-	uid_t               saveduid;
-	gid_t               savedgid;
-	struct fsal_export  export;
+	glfs_t *gl_fs;
+	char *export_path;
+	uid_t saveduid;
+	gid_t savedgid;
+	struct fsal_export export;
 };
 
-struct glusterfs_handle{
-	struct glfs_object    *glhandle;
-	unsigned char          globjhdl[GLAPI_HANDLE_LENGTH]; /* handle 
-						descriptor, for wire handle */
-	struct glfs_fd        *glfd;
-	fsal_openflags_t       openflags;
-	struct fsal_obj_handle handle; /* public FSAL handle */
+struct glusterfs_handle {
+	struct glfs_object *glhandle;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];	/* handle 
+							   descriptor, for wire handle */
+	struct glfs_fd *glfd;
+	fsal_openflags_t openflags;
+	struct fsal_obj_handle handle;	/* public FSAL handle */
 };
 
 #ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];
 
-void latency_update(struct timespec *s_time, struct timespec *e_time, 
+void latency_update(struct timespec *s_time, struct timespec *e_time,
 		    int opnum);
 
 void latency_dump(void);
@@ -140,10 +140,10 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 
-bool fs_specific_has(const char *fs_specific, const char* key,char *val,
+bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 		     int *max_val_bytes);
 
-int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
-		    gid_t *gid, unsigned int ngrps, gid_t *groups);
+int setglustercreds(struct glusterfs_export *glfs_export, uid_t * uid,
+		    gid_t * gid, unsigned int ngrps, gid_t * groups);
 
-#endif /* GLUSTER_INTERNAL */
+#endif				/* GLUSTER_INTERNAL */

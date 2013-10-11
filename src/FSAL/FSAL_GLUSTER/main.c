@@ -42,7 +42,7 @@ const char glfsal_name[] = "GLUSTERFS";
 
 /* filesystem info for GLUSTERFS */
 static struct fsal_staticfsinfo_t default_gluster_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
+	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -66,7 +66,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.maxwrite = 0,
 	.umask = 0,
 	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400, /* root=RW, owner=R */
+	.xattr_access_rights = 0400,	/* root=RW, owner=R */
 };
 
 static struct glusterfs_fsal_module *glfsal_module = NULL;
@@ -74,7 +74,8 @@ static struct glusterfs_fsal_module *glfsal_module = NULL;
 /* Module methods
  */
 
-MODULE_INIT void glusterfs_init(void) {
+MODULE_INIT void glusterfs_init(void)
+{
 	/* register_fsal seems to expect zeroed memory. */
 	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
 	if (glfsal_module == NULL) {
@@ -83,8 +84,9 @@ MODULE_INIT void glusterfs_init(void) {
 		return;
 	}
 
-	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
-		FSAL_MINOR_VERSION) != 0) {
+	if (register_fsal
+	    (&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
+	     FSAL_MINOR_VERSION) != 0) {
 		gsh_free(glfsal_module);
 		LogCrit(COMPONENT_FSAL,
 			"Gluster FSAL module failed to register.");
@@ -99,9 +101,10 @@ MODULE_INIT void glusterfs_init(void) {
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
 }
 
-MODULE_FINI void glusterfs_unload(void) {
+MODULE_FINI void glusterfs_unload(void)
+{
 	if (unregister_fsal(&glfsal_module->fsal) != 0) {
-		LogCrit(COMPONENT_FSAL, 
+		LogCrit(COMPONENT_FSAL,
 			"FSAL Gluster unable to unload.  Dying ...");
 		abort();
 	}

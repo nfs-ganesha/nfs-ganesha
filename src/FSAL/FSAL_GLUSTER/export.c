@@ -44,14 +44,14 @@
 
 static fsal_status_t export_release(struct fsal_export *exp_hdl)
 {
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_export *glfs_export = 
-		container_of(exp_hdl, struct glusterfs_export, export);
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glusterfs_export *glfs_export =
+	    container_of(exp_hdl, struct glusterfs_export, export);
 
 	/* check activity on the export */
 	pthread_mutex_lock(&glfs_export->export.lock);
-	if((glfs_export->export.refs > 0) ||
-		 (!glist_empty(&glfs_export->export.handles))) {
+	if ((glfs_export->export.refs > 0)
+	    || (!glist_empty(&glfs_export->export.handles))) {
 		pthread_mutex_unlock(&glfs_export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;
@@ -85,15 +85,15 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 				 const char *path,
 				 struct fsal_obj_handle **pub_handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	char                    *realpath;
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	char *realpath;
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(export_pub, struct glusterfs_export, export);
+	    container_of(export_pub, struct glusterfs_export, export);
 
 	LogFullDebug(COMPONENT_FSAL, "In args: path = %s", path);
 
@@ -122,7 +122,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	*pub_handle = &objhandle->handle;
 
 	return status;
-out:
+ out:
 	gluster_cleanup_vars(glhandle);
 
 	return status;
@@ -138,31 +138,31 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 {
 	size_t fh_size;
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	/* sanity checks */
-	if( !fh_desc || !fh_desc->addr)
+	if (!fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	fh_size = GLAPI_HANDLE_LENGTH;
-	if(in_type == FSAL_DIGEST_NFSV2) {
-		if(fh_desc->len < fh_size) {
+	if (in_type == FSAL_DIGEST_NFSV2) {
+		if (fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-			"V2 size too small for handle.  should be %lu, got %lu",
-			fh_size, fh_desc->len);
+				 "V2 size too small for handle.  should be %lu, got %lu",
+				 fh_size, fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
-	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	} else if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	fh_desc->len = fh_size;  /* pass back the actual size */
+	fh_desc->len = fh_size;	/* pass back the actual size */
 
 #ifdef GLTIMING
 	now(&e_time);
@@ -180,16 +180,16 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 				   struct gsh_buffdesc *fh_desc,
 				   struct fsal_obj_handle **pub_handle)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct stat              sb;
-	struct glfs_object      *glhandle = NULL;
-	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-		container_of(export_pub, struct glusterfs_export, export);
+	    container_of(export_pub, struct glusterfs_export, export);
 #ifdef GLTIMING
-	struct timespec          s_time, e_time;
+	struct timespec s_time, e_time;
 
 	now(&s_time);
 #endif
@@ -203,8 +203,9 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	memcpy(globjhdl, fh_desc->addr, 16);
 
-	glhandle = glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
-					     GLAPI_HANDLE_LENGTH, &sb);
+	glhandle =
+	    glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
+				      GLAPI_HANDLE_LENGTH, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -218,11 +219,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	*pub_handle = &objhandle->handle;
-out:
+ out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		gluster_cleanup_vars(glhandle);
 	}
-
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create_handle);
@@ -236,16 +236,15 @@ out:
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t *infop)
+				      fsal_dynamicfsinfo_t * infop)
 {
-	int                      rc = 0;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct statvfs           vfssb;
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct statvfs vfssb;
 	struct glusterfs_export *glfs_export =
-		container_of(exp_hdl, struct glusterfs_export, export);
+	    container_of(exp_hdl, struct glusterfs_export, export);
 
-	rc = glfs_statvfs(glfs_export->gl_fs, glfs_export->export_path,
-			  &vfssb);
+	rc = glfs_statvfs(glfs_export->gl_fs, glfs_export->export_path, &vfssb);
 	if (rc != 0) {
 		return gluster2fsal_error(rc);
 	}
@@ -270,144 +269,145 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
  * @brief Implements GLUSTER FSAL exportoperation fs_supports
  */
 
-static bool fs_supports (struct fsal_export *exp_hdl, fsal_fsinfo_options_t option)
+static bool fs_supports(struct fsal_export *exp_hdl,
+			fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_supports (info, option);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_supports(info, option);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxfilesize
  */
 
-static uint64_t fs_maxfilesize (struct fsal_export *exp_hdl)
+static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxfilesize (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxfilesize(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxread
  */
 
-static uint32_t fs_maxread (struct fsal_export *exp_hdl)
+static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxread (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxread(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxwrite
  */
 
-static uint32_t fs_maxwrite (struct fsal_export *exp_hdl)
+static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxwrite (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxwrite(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxlink
  */
 
-static uint32_t fs_maxlink (struct fsal_export *exp_hdl)
+static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxlink (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxlink(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxnamelen
  */
 
-static uint32_t fs_maxnamelen (struct fsal_export *exp_hdl)
+static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxnamelen (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxnamelen(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_maxpathlen
  */
 
-static uint32_t fs_maxpathlen (struct fsal_export *exp_hdl)
+static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_maxpathlen (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_maxpathlen(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_lease_time
  */
 
-static struct timespec fs_lease_time (struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_lease_time (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_lease_time(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_acl_support
  */
 
-static fsal_aclsupp_t fs_acl_support (struct fsal_export *exp_hdl)
+static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_acl_support (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_acl_support(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_supported_attrs
  */
 
-static attrmask_t fs_supported_attrs (struct fsal_export *exp_hdl)
+static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_supported_attrs (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_supported_attrs(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_umask
  */
 
-static uint32_t fs_umask (struct fsal_export *exp_hdl)
+static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_umask (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_umask(info);
 }
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_xattr_access_rights
  */
 
-static uint32_t fs_xattr_access_rights (struct fsal_export *exp_hdl)
+static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	
-	info = gluster_staticinfo (exp_hdl->fsal);
-	return fsal_xattr_access_rights (info);
+
+	info = gluster_staticinfo(exp_hdl->fsal);
+	return fsal_xattr_access_rights(info);
 }
 
 /**
@@ -487,25 +487,24 @@ void handle_ops_init(struct fsal_obj_ops *ops);
  */
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
-                                const char *export_path,
-                                const char *fs_options,
-                                struct exportlist *exp_entry,
-                                struct fsal_module *next_fsal,
-                                const struct fsal_up_vector *up_ops,
-                                struct fsal_export **pub_export)
+				      const char *export_path,
+				      const char *fs_options,
+				      struct exportlist *exp_entry,
+				      struct fsal_module *next_fsal,
+				      const struct fsal_up_vector *up_ops,
+				      struct fsal_export **pub_export)
 {
-	int                      rc;
-	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	int rc;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
-	glfs_t                  *fs = NULL;
-	char                    *glvolname = NULL, *glhostname = NULL,
-	                        *glvolpath = NULL;
-	int                      oplen = 0, export_inited = 0;
+	glfs_t *fs = NULL;
+	char *glvolname = NULL, *glhostname = NULL, *glvolpath = NULL;
+	int oplen = 0, export_inited = 0;
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s, fs options = %s",
 		 export_path, fs_options);
 
-	if (( NULL == export_path ) || (strlen(export_path) == 0)) {
+	if ((NULL == export_path) || (strlen(export_path) == 0)) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL, "No path to export.");
 		goto out;
@@ -514,20 +513,20 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if ((NULL == fs_options) || (strlen(fs_options) == 0)) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL,
-		"Missing FS specific information. Export: %s", export_path);
+			"Missing FS specific information. Export: %s",
+			export_path);
 		goto out;
 	}
 
 	if (next_fsal != NULL) {
 		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"Stacked FSALs unsupported. Export: %s", export_path);
+		LogCrit(COMPONENT_FSAL, "Stacked FSALs unsupported. Export: %s",
+			export_path);
 		goto out;
 	}
 
 	/* Process FSSpecific Gluster volume name */
-	if (!(fs_specific_has(fs_options, GLUSTER_VOLNAME_KEY, NULL,
-		&oplen))) {
+	if (!(fs_specific_has(fs_options, GLUSTER_VOLNAME_KEY, NULL, &oplen))) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL,
 			"FS specific missing gluster volume name. Export: %s",
@@ -545,8 +544,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fs_specific_has(fs_options, GLUSTER_VOLNAME_KEY, glvolname, &oplen);
 
 	/* Process FSSpecific Gluster host name */
-	if (!(fs_specific_has(fs_options, GLUSTER_HOSTNAME_KEY, NULL,
-		 &oplen))) {
+	if (!(fs_specific_has(fs_options, GLUSTER_HOSTNAME_KEY, NULL, &oplen))) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL,
 			"FS specific missing gluster hostname or IP address. Export: %s",
@@ -564,10 +562,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fs_specific_has(fs_options, GLUSTER_HOSTNAME_KEY, glhostname, &oplen);
 
 	/* Process FSSpecific Gluster volume path (optional) */
-	if (!(fs_specific_has(fs_options, GLUSTER_VOLPATH_KEY, NULL,
-		&oplen))) {
-		LogEvent(COMPONENT_FSAL,"Volume %s exported at : '/'",
-			glvolname);
+	if (!(fs_specific_has(fs_options, GLUSTER_VOLPATH_KEY, NULL, &oplen))) {
+		LogEvent(COMPONENT_FSAL, "Volume %s exported at : '/'",
+			 glvolname);
 
 		glvolpath = gsh_calloc(2, sizeof(char));
 		if (glvolpath == NULL) {
@@ -578,8 +575,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			goto out;
 		}
 		strcpy(glvolpath, "/");
-	}
-	else {
+	} else {
 		glvolpath = gsh_calloc(oplen, sizeof(char));
 		if (glvolpath == NULL) {
 			status.major = ERR_FSAL_NOMEM;
@@ -591,7 +587,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		fs_specific_has(fs_options, GLUSTER_VOLPATH_KEY, glvolpath,
 				&oplen);
 		LogEvent(COMPONENT_FSAL, "Volume %s exported at : '%s'",
-			glvolname, glvolpath);
+			 glvolname, glvolpath);
 	}
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
@@ -616,31 +612,31 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->export.up_ops = up_ops;
 	export_inited = 1;
 
-	fs = glfs_new (glvolname);
+	fs = glfs_new(glvolname);
 	if (!fs) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create new glfs. Export: %s", export_path);
+		LogCrit(COMPONENT_FSAL, "Unable to create new glfs. Export: %s",
+			export_path);
 		goto out;
 	}
 
-	rc = glfs_set_volfile_server (fs, "tcp", glhostname, 24007);
+	rc = glfs_set_volfile_server(fs, "tcp", glhostname, 24007);
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set volume file. Export: %s", export_path);
+		LogCrit(COMPONENT_FSAL, "Unable to set volume file. Export: %s",
+			export_path);
 		goto out;
 	}
 
-	rc = glfs_set_logging (fs, "/tmp/gfapi.log", 7);
+	rc = glfs_set_logging(fs, "/tmp/gfapi.log", 7);
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set logging. Export: %s", export_path);
+		LogCrit(COMPONENT_FSAL, "Unable to set logging. Export: %s",
+			export_path);
 		goto out;
 	}
 
-	rc = glfs_init (fs);
+	rc = glfs_init(fs);
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -648,11 +644,11 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		goto out;
 	}
 
-	if ((rc = fsal_attach_export(fsal_hdl,
-		 &glfsexport->export.exports)) != 0) {
+	if ((rc =
+	     fsal_attach_export(fsal_hdl, &glfsexport->export.exports)) != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to attach export. Export: %s", export_path);
+		LogCrit(COMPONENT_FSAL, "Unable to attach export. Export: %s",
+			export_path);
 		goto out;
 	}
 
@@ -664,7 +660,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	*pub_export = &glfsexport->export;
 
-out:
+ out:
 	if (glvolname)
 		gsh_free(glvolname);
 	if (glhostname)
