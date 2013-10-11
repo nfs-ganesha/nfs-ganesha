@@ -62,11 +62,9 @@
  *
  * @return The cache page size
  */
-static inline size_t
-CACHE_PAGE_SIZE(const hash_table_t *ht)
+static inline size_t CACHE_PAGE_SIZE(const hash_table_t * ht)
 {
-	return ((ht->parameter.cache_entry_count) *
-		sizeof(struct rbt_node*));
+	return ((ht->parameter.cache_entry_count) * sizeof(struct rbt_node *));
 }
 
 /**
@@ -98,7 +96,7 @@ static inline int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
  */
 const char *hash_table_err_to_str(hash_error_t err)
 {
-	switch(err) {
+	switch (err) {
 	case HASHTABLE_SUCCESS:
 		return "HASHTABLE_SUCCESS";
 	case HASHTABLE_UNKNOWN_HASH_TYPE:
@@ -139,10 +137,8 @@ const char *hash_table_err_to_str(hash_error_t err)
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
  */
 static hash_error_t Key_Locate(struct hash_table *ht,
-			       const struct gsh_buffdesc *key,
-			       uint32_t index,
-			       uint64_t rbthash,
-			       struct rbt_node **node)
+			       const struct gsh_buffdesc *key, uint32_t index,
+			       uint64_t rbthash, struct rbt_node **node)
 {
 	/* The current partition */
 	struct hash_partition *partition = &(ht->partitions[index]);
@@ -164,17 +160,17 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 
 	if (partition->cache) {
 		void **cache_slot = (void **)
-			&(partition->cache[cache_offsetof(ht, rbthash)]);
+		    &(partition->cache[cache_offsetof(ht, rbthash)]);
 		cursor = atomic_fetch_voidptr(cache_slot);
 		LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-			     "hash %s index %"PRIu32" slot %d\n",
-			     (cursor) ? "hit" : "miss",
-			     index, cache_offsetof(ht, rbthash));
+			     "hash %s index %" PRIu32 " slot %d\n",
+			     (cursor) ? "hit" : "miss", index,
+			     cache_offsetof(ht, rbthash));
 		if (cursor) {
 			data = RBT_OPAQ(cursor);
-			if (ht->parameter.compare_key(
-				    (struct gsh_buffdesc *)key,
-				    &(data->key)) == 0) {
+			if (ht->parameter.
+			    compare_key((struct gsh_buffdesc *)key,
+					&(data->key)) == 0) {
 				goto out;
 			}
 		}
@@ -187,23 +183,23 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 	RBT_FIND_LEFT(root, cursor, rbthash);
 
 	if (cursor == NULL) {
-		if(isFullDebug(COMPONENT_HASHTABLE) &&
-		   isFullDebug(ht->parameter.ht_log_component))
+		if (isFullDebug(COMPONENT_HASHTABLE)
+		    && isFullDebug(ht->parameter.ht_log_component))
 			LogFullDebug(ht->parameter.ht_log_component,
-				     "Key not found: rbthash = %"PRIu64,
+				     "Key not found: rbthash = %" PRIu64,
 				     rbthash);
 		return HASHTABLE_ERROR_NO_SUCH_KEY;
 	}
 
 	while ((cursor != NULL) && (RBT_VALUE(cursor) == rbthash)) {
 		data = RBT_OPAQ(cursor);
-		if (ht->parameter.compare_key(
-			    (struct gsh_buffdesc *)key,
-			    &(data->key)) == 0) {
+		if (ht->parameter.
+		    compare_key((struct gsh_buffdesc *)key,
+				&(data->key)) == 0) {
 			if (partition->cache) {
 				void **cache_slot = (void **)
-					&(partition->cache[
-						  cache_offsetof(ht, rbthash)]);
+				    &(partition->
+				      cache[cache_offsetof(ht, rbthash)]);
 				atomic_store_voidptr(cache_slot, cursor);
 			}
 			found = true;
@@ -213,15 +209,15 @@ static hash_error_t Key_Locate(struct hash_table *ht,
 	}
 
 	if (!found) {
-		if (isFullDebug(COMPONENT_HASHTABLE) &&
-		    isFullDebug(ht->parameter.ht_log_component))
+		if (isFullDebug(COMPONENT_HASHTABLE)
+		    && isFullDebug(ht->parameter.ht_log_component))
 			LogFullDebug(ht->parameter.ht_log_component,
 				     "Matching hash found, but no "
 				     "matching key.");
 		return HASHTABLE_ERROR_NO_SUCH_KEY;
 	}
 
-out:
+ out:
 	*node = cursor;
 
 	return HASHTABLE_SUCCESS;
@@ -245,23 +241,23 @@ out:
 
 static inline hash_error_t compute(struct hash_table *ht,
 				   const struct gsh_buffdesc *key,
-				   uint32_t *index,
-				   uint64_t *rbt_hash)
+				   uint32_t * index, uint64_t * rbt_hash)
 {
 	/* Compute the partition index and red-black tree hash */
 	if (ht->parameter.hash_func_both) {
-		if (!(*(ht->parameter.hash_func_both))(
-			    &ht->parameter,
-			    (struct gsh_buffdesc *)key, index,
-			    rbt_hash))
+		if (!(*(ht->parameter.hash_func_both))
+		    (&ht->parameter, (struct gsh_buffdesc *)key, index,
+		     rbt_hash))
 			return HASHTABLE_ERROR_INVALID_ARGUMENT;
 	} else {
-		*index = (*(ht->parameter.hash_func_key))(
-			&ht->parameter,
-			(struct gsh_buffdesc *)key);
-		*rbt_hash = (*(ht->parameter.hash_func_rbt))(
-			&ht->parameter,
-			(struct gsh_buffdesc *)key);
+		*index =
+		    (*(ht->parameter.hash_func_key)) (&ht->parameter,
+						      (struct gsh_buffdesc *)
+						      key);
+		*rbt_hash =
+		    (*(ht->parameter.hash_func_rbt)) (&ht->parameter,
+						      (struct gsh_buffdesc *)
+						      key);
 	}
 
 	/* At the suggestion of Jim Lieb, die if a hash function sends
@@ -309,24 +305,26 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 	/* At some point factor this out into the OS directory.  it is
 	   necessary to prevent writer starvation under GLIBC. */
 #ifdef GLIBC
-	if ((pthread_rwlockattr_setkind_np(
-		     &rwlockattrs,
-		     PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) != 0) {
+	if ((pthread_rwlockattr_setkind_np
+	     (&rwlockattrs,
+	      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) != 0) {
 		LogCrit(COMPONENT_HASHTABLE,
 			"Unable to set writer-preference on lock attribute.");
 		goto deconstruct;
-     }
-#endif /* GLIBC */
+	}
+#endif				/* GLIBC */
 
-	if ((ht = gsh_calloc(1, sizeof(struct hash_table) +
-			     (sizeof(struct hash_partition) *
-			      hparam->index_size))) == NULL) {
+	if ((ht =
+	     gsh_calloc(1,
+			sizeof(struct hash_table) +
+			(sizeof(struct hash_partition) *
+			 hparam->index_size))) == NULL) {
 		goto deconstruct;
 	}
 
 	/* Fixup entry size */
 	if (hparam->flags & HT_FLAG_CACHE) {
-		if (! hparam->cache_entry_count)
+		if (!hparam->cache_entry_count)
 			/* works fine with a good hash algo */
 			hparam->cache_entry_count = 32767;
 	}
@@ -354,29 +352,28 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 		completed++;
 	}
 
-	ht->node_pool = pool_init(NULL, sizeof(rbt_node_t),
-				  pool_basic_substrate,
-				  NULL, NULL, NULL);
+	ht->node_pool =
+	    pool_init(NULL, sizeof(rbt_node_t), pool_basic_substrate, NULL,
+		      NULL, NULL);
 	if (!(ht->node_pool)) {
 		goto deconstruct;
 	}
-	ht->data_pool = pool_init(NULL, sizeof(struct hash_data),
-				  pool_basic_substrate,
-				  NULL, NULL, NULL);
+	ht->data_pool =
+	    pool_init(NULL, sizeof(struct hash_data), pool_basic_substrate,
+		      NULL, NULL, NULL);
 	if (!(ht->data_pool))
 		goto deconstruct;
 
 	pthread_rwlockattr_destroy(&rwlockattr);
 	return ht;
 
-deconstruct:
+ deconstruct:
 
 	while (completed != 0) {
 		if (hparam->flags & HT_FLAG_CACHE)
 			gsh_free(ht->partitions[completed - 1].cache);
 
-		pthread_rwlock_destroy(
-			&(ht->partitions[completed - 1].lock));
+		pthread_rwlock_destroy(&(ht->partitions[completed - 1].lock));
 		completed--;
 	}
 	pool_destroy(ht->node_pool);
@@ -400,9 +397,9 @@ deconstruct:
  *
  * @return HASHTABLE_SUCCESS on success, other things on failure
  */
-hash_error_t HashTable_Destroy(struct hash_table *ht,
-			       int (*free_func)(struct gsh_buffdesc,
-						struct gsh_buffdesc))
+hash_error_t HashTable_Destroy(struct hash_table * ht,
+			       int (*free_func) (struct gsh_buffdesc,
+						 struct gsh_buffdesc))
 {
 	size_t index = 0;
 	hash_error_t hrc = HASHTABLE_SUCCESS;
@@ -424,7 +421,7 @@ hash_error_t HashTable_Destroy(struct hash_table *ht,
 	pool_destroy(ht->data_pool);
 	gsh_free(ht);
 
-out:
+ out:
 	return hrc;
 }
 
@@ -450,11 +447,10 @@ out:
  *         table is latched.
  * @retval Others, failure, the table is not latched.
  */
-hash_error_t HashTable_GetLatch(struct hash_table *ht,
-				const struct gsh_buffdesc *key,
-				struct gsh_buffdesc *val,
-				bool may_write,
-				struct hash_latch *latch)
+hash_error_t HashTable_GetLatch(struct hash_table * ht,
+				const struct gsh_buffdesc * key,
+				struct gsh_buffdesc * val, bool may_write,
+				struct hash_latch * latch)
 {
 	/* The index specifying the partition to search */
 	uint32_t index = 0;
@@ -492,26 +488,24 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
 			val->len = data->val.len;
 		}
 
-		if (isDebug(COMPONENT_HASHTABLE) &&
-		    isFullDebug(ht->parameter.ht_log_component)) {
+		if (isDebug(COMPONENT_HASHTABLE)
+		    && isFullDebug(ht->parameter.ht_log_component)) {
 			char dispval[HASHTABLE_DISPLAY_STRLEN];
 
 			if (ht->parameter.val_to_str != NULL)
-				ht->parameter.val_to_str(&data->val,
-							 dispval);
+				ht->parameter.val_to_str(&data->val, dispval);
 			else
 				dispval[0] = '\0';
 
 			LogFullDebug(ht->parameter.ht_log_component,
 				     "Get %s returning Value=%p {%s}",
-				     ht->parameter.ht_name,
-				     data->val.addr, dispval);
+				     ht->parameter.ht_name, data->val.addr,
+				     dispval);
 		}
 	}
 
-	if (((rc == HASHTABLE_SUCCESS) ||
-	     (rc == HASHTABLE_ERROR_NO_SUCH_KEY)) &&
-	    (latch != NULL)) {
+	if (((rc == HASHTABLE_SUCCESS) || (rc == HASHTABLE_ERROR_NO_SUCH_KEY))
+	    && (latch != NULL)) {
 		latch->index = index;
 		latch->rbt_hash = rbt_hash;
 		latch->locator = locator;
@@ -519,13 +513,11 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
 		PTHREAD_RWLOCK_unlock(&ht->partitions[index].lock);
 	}
 
-	if (rc != HASHTABLE_SUCCESS &&
-	    isDebug(COMPONENT_HASHTABLE) &&
-	    isFullDebug(ht->parameter.ht_log_component))
+	if (rc != HASHTABLE_SUCCESS && isDebug(COMPONENT_HASHTABLE)
+	    && isFullDebug(ht->parameter.ht_log_component))
 		LogFullDebug(ht->parameter.ht_log_component,
 			     "Get %s returning failure %s",
-			     ht->parameter.ht_name,
-			     hash_table_err_to_str(rc));
+			     ht->parameter.ht_name, hash_table_err_to_str(rc));
 
 	return rc;
 }
@@ -544,8 +536,7 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
  * @param[in] latch The latch structure holding retained state
  */
 
-void HashTable_ReleaseLatched(struct hash_table *ht,
-			      struct hash_latch *latch)
+void HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
 {
 	if (latch) {
 		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].lock);
@@ -582,8 +573,7 @@ void HashTable_ReleaseLatched(struct hash_table *ht,
 hash_error_t HashTable_SetLatched(struct hash_table *ht,
 				  struct gsh_buffdesc *key,
 				  struct gsh_buffdesc *val,
-				  struct hash_latch *latch,
-				  int overwrite,
+				  struct hash_latch *latch, int overwrite,
 				  struct gsh_buffdesc *stored_key,
 				  struct gsh_buffdesc *stored_val)
 {
@@ -597,8 +587,8 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 	/* New node for the case of non-overwrite */
 	struct rbt_node *mutator = NULL;
 
-	if(isDebug(COMPONENT_HASHTABLE) &&
-	   isFullDebug(ht->parameter.ht_log_component)) {
+	if (isDebug(COMPONENT_HASHTABLE)
+	    && isFullDebug(ht->parameter.ht_log_component)) {
 		char dispkey[HASHTABLE_DISPLAY_STRLEN];
 		char dispval[HASHTABLE_DISPLAY_STRLEN];
 
@@ -607,16 +597,15 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 		else
 			dispkey[0] = '\0';
 
-		if(ht->parameter.val_to_str != NULL)
+		if (ht->parameter.val_to_str != NULL)
 			ht->parameter.val_to_str(val, dispval);
 		else
 			dispval[0] = '\0';
 
 		LogFullDebug(ht->parameter.ht_log_component,
-			     "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64,
-			     ht->parameter.ht_name,
-			     key->addr, dispkey,
-			     val->addr, dispval,
+			     "Set %s Key=%p {%s} Value=%p {%s} index=%" PRIu32
+			     " rbt_hash=%" PRIu64, ht->parameter.ht_name,
+			     key->addr, dispkey, val->addr, dispval,
 			     latch->index, latch->rbt_hash);
 	}
 
@@ -629,18 +618,18 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 
 		descriptors = RBT_OPAQ(latch->locator);
 
-		if(isDebug(COMPONENT_HASHTABLE) &&
-		   isFullDebug(ht->parameter.ht_log_component)) {
+		if (isDebug(COMPONENT_HASHTABLE)
+		    && isFullDebug(ht->parameter.ht_log_component)) {
 			char dispkey[HASHTABLE_DISPLAY_STRLEN];
 			char dispval[HASHTABLE_DISPLAY_STRLEN];
 
-			if(ht->parameter.key_to_str != NULL)
+			if (ht->parameter.key_to_str != NULL)
 				ht->parameter.key_to_str(&descriptors->key,
 							 dispkey);
 			else
 				dispkey[0] = '\0';
 
-			if(ht->parameter.val_to_str != NULL)
+			if (ht->parameter.val_to_str != NULL)
 				ht->parameter.val_to_str(&descriptors->val,
 							 dispval);
 			else
@@ -648,9 +637,8 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 
 			LogFullDebug(ht->parameter.ht_log_component,
 				     "Set %s Key=%p {%s} Value=%p {%s} "
-				     "index=%"PRIu32" rbt_hash=%"PRIu64
-				     " was replaced",
-				     ht->parameter.ht_name,
+				     "index=%" PRIu32 " rbt_hash=%" PRIu64
+				     " was replaced", ht->parameter.ht_name,
 				     descriptors->key.addr, dispkey,
 				     descriptors->val.addr, dispval,
 				     latch->index, latch->rbt_hash);
@@ -671,8 +659,7 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 	/* We have no collision, so go about creating and inserting a new
 	   node. */
 
-	RBT_FIND(&ht->partitions[latch->index].rbt,
-		 locator, latch->rbt_hash);
+	RBT_FIND(&ht->partitions[latch->index].rbt, locator, latch->rbt_hash);
 
 	mutator = pool_alloc(ht->node_pool, NULL);
 	if (mutator == NULL) {
@@ -702,16 +689,14 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 
 	rc = HASHTABLE_SUCCESS;
 
-out:
+ out:
 	HashTable_ReleaseLatched(ht, latch);
 
-	if (rc != HASHTABLE_SUCCESS &&
-	    isDebug(COMPONENT_HASHTABLE) &&
-	    isFullDebug(ht->parameter.ht_log_component))
+	if (rc != HASHTABLE_SUCCESS && isDebug(COMPONENT_HASHTABLE)
+	    && isFullDebug(ht->parameter.ht_log_component))
 		LogFullDebug(ht->parameter.ht_log_component,
 			     "Set %s returning failure %s",
-			     ht->parameter.ht_name,
-			     hash_table_err_to_str(rc));
+			     ht->parameter.ht_name, hash_table_err_to_str(rc));
 
 	return rc;
 }
@@ -737,11 +722,11 @@ out:
  * @retval Other errors on failure
  */
 
-hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
-				     const struct gsh_buffdesc *key,
-				     struct hash_latch *latch,
-				     struct gsh_buffdesc *stored_key,
-				     struct gsh_buffdesc *stored_val)
+hash_error_t HashTable_DeleteLatched(struct hash_table * ht,
+				     const struct gsh_buffdesc * key,
+				     struct hash_latch * latch,
+				     struct gsh_buffdesc * stored_key,
+				     struct gsh_buffdesc * stored_val)
 {
 	/* The pair of buffer descriptors comprising the stored entry */
 	struct hash_data *data = NULL;
@@ -755,8 +740,8 @@ hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
 
 	data = RBT_OPAQ(latch->locator);
 
-	if (isDebug(COMPONENT_HASHTABLE) &&
-	    isFullDebug(ht->parameter.ht_log_component)) {
+	if (isDebug(COMPONENT_HASHTABLE)
+	    && isFullDebug(ht->parameter.ht_log_component)) {
 		char dispkey[HASHTABLE_DISPLAY_STRLEN];
 		char dispval[HASHTABLE_DISPLAY_STRLEN];
 
@@ -765,17 +750,17 @@ hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
 		else
 			dispkey[0] = '\0';
 
-		if(ht->parameter.val_to_str != NULL)
+		if (ht->parameter.val_to_str != NULL)
 			ht->parameter.val_to_str(&data->val, dispval);
 		else
 			dispval[0] = '\0';
 
 		LogFullDebug(ht->parameter.ht_log_component,
-			     "Delete %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was removed",
-			     ht->parameter.ht_name,
-			     data->key.addr, dispkey,
-			     data->val.addr, dispval,
-			     latch->index, latch->rbt_hash);
+			     "Delete %s Key=%p {%s} Value=%p {%s} index=%"
+			     PRIu32 " rbt_hash=%" PRIu64 " was removed",
+			     ht->parameter.ht_name, data->key.addr, dispkey,
+			     data->val.addr, dispval, latch->index,
+			     latch->rbt_hash);
 	}
 
 	if (stored_key) {
@@ -794,13 +779,12 @@ hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
 #if COMPARE_BEFORE_CLEAR_CACHE
 			struct hash_data *data1 = RBT_OPAQ(cnode);
 			struct hash_data *data2 = RBT_OPAQ(latch->locator);
-			if (ht->parameter.compare_key(&(data1->key),
-						      &(data2->key))
+			if (ht->parameter.
+			    compare_key(&(data1->key), &(data2->key))
 			    == 0) {
 				LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-					     "hash clear index %d slot %"
-					     PRIu64"\n",
-					     latch->index, offset);
+					     "hash clear index %d slot %" PRIu64
+					     "\n", latch->index, offset);
 				partition->cache[offset] = NULL;
 			}
 #else
@@ -815,7 +799,7 @@ hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
 	RBT_UNLINK(&partition->rbt, latch->locator);
 	pool_free(ht->data_pool, data);
 	pool_free(ht->node_pool, latch->locator);
-        --ht->partitions[latch->index].count;
+	--ht->partitions[latch->index].count;
 
 	HashTable_ReleaseLatched(ht, latch);
 	return HASHTABLE_SUCCESS;
@@ -833,9 +817,9 @@ hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
  *
  * @return HASHTABLE_SUCCESS or errors
  */
-hash_error_t HashTable_Delall(struct hash_table *ht,
-			      int (*free_func)(struct gsh_buffdesc,
-					       struct gsh_buffdesc))
+hash_error_t HashTable_Delall(struct hash_table * ht,
+			      int (*free_func) (struct gsh_buffdesc,
+						struct gsh_buffdesc))
 {
 	/* Successive partition numbers */
 	uint32_t index = 0;
@@ -877,8 +861,8 @@ hash_error_t HashTable_Delall(struct hash_table *ht,
 			rc = free_func(key, val);
 
 			if (rc == 0) {
-				PTHREAD_RWLOCK_unlock(
-					&ht->partitions[index].lock);
+				PTHREAD_RWLOCK_unlock(&ht->partitions[index].
+						      lock);
 				return HASHTABLE_ERROR_DELALL_FAIL;
 			}
 		}
@@ -898,8 +882,7 @@ hash_error_t HashTable_Delall(struct hash_table *ht,
  * @param[in] ht        The hashtable to be used.
  */
 
-void HashTable_Log(log_components_t component,
-		   struct hash_table *ht)
+void HashTable_Log(log_components_t component, struct hash_table *ht)
 {
 	/* The current position in the hash table */
 	struct rbt_node *it = NULL;
@@ -917,26 +900,23 @@ void HashTable_Log(log_components_t component,
 	size_t nb_entries = 0;
 	/* Recomputed partitionindex */
 	uint32_t index = 0;
-	/* Recomputed hash for Red-Black tree*/
+	/* Recomputed hash for Red-Black tree */
 	uint64_t rbt_hash = 0;
 
-	LogFullDebug(component,
-		     "The hash is partitioned into %d trees",
+	LogFullDebug(component, "The hash is partitioned into %d trees",
 		     ht->parameter.index_size);
 
 	for (i = 0; i < ht->parameter.index_size; i++) {
 		nb_entries += ht->partitions[i].count;
 	}
 
-	LogFullDebug(component, "The hash contains %zd entries",
-		     nb_entries);
+	LogFullDebug(component, "The hash contains %zd entries", nb_entries);
 
 	for (i = 0; i < ht->parameter.index_size; i++) {
 		root = &ht->partitions[i].rbt;
 		LogFullDebug(component,
-			     "The partition in position %"PRIu32
-			     "contains: %u entries",
-			     i, root->rbt_num_node);
+			     "The partition in position %" PRIu32
+			     "contains: %u entries", i, root->rbt_num_node);
 		RBT_LOOP(root, it) {
 			data = it->rbt_opaq;
 
@@ -953,9 +933,8 @@ void HashTable_Log(log_components_t component,
 			}
 
 			LogFullDebug(component,
-				     "%s => %s; index=%"PRIu32
-				     " rbt_hash=%"PRIu64,
-				     dispkey, dispval, index, rbt_hash);
+				     "%s => %s; index=%" PRIu32 " rbt_hash=%"
+				     PRIu64, dispkey, dispval, index, rbt_hash);
 			RBT_INCREMENT(it);
 		}
 	}
@@ -989,11 +968,9 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
 	hash_error_t rc = 0;
 
 	rc = HashTable_GetLatch(ht, key, NULL,
-				(how != HASHTABLE_SET_HOW_TEST_ONLY),
-				&latch);
+				(how != HASHTABLE_SET_HOW_TEST_ONLY), &latch);
 
-	if ((rc != HASHTABLE_SUCCESS) &&
-	    (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+	if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
 		return rc;
 	}
 
@@ -1005,19 +982,15 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
 	/* No point in calling HashTable_SetLatched when we know it
 	   will error. */
 
-	if ((how == HASHTABLE_SET_HOW_SET_NO_OVERWRITE) &&
-	    (rc == HASHTABLE_SUCCESS)) {
+	if ((how == HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
+	    && (rc == HASHTABLE_SUCCESS)) {
 		HashTable_ReleaseLatched(ht, &latch);
 		return HASHTABLE_ERROR_KEY_ALREADY_EXISTS;
 	}
 
-	rc = HashTable_SetLatched(ht,
-				  key,
-				  val,
-				  &latch,
+	rc = HashTable_SetLatched(ht, key, val, &latch,
 				  (how == HASHTABLE_SET_HOW_SET_OVERWRITE),
-				  NULL,
-				  NULL);
+				  NULL, NULL);
 
 	if (rc == HASHTABLE_OVERWRITTEN) {
 		rc = HASHTABLE_SUCCESS;
@@ -1042,10 +1015,9 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
  *
  * @return HASHTABLE_SUCCESS or errors
  */
-hash_error_t HashTable_GetRef(hash_table_t *ht,
-			      struct gsh_buffdesc *key,
-			      struct gsh_buffdesc *val,
-			      void (*get_ref)(struct gsh_buffdesc *))
+hash_error_t HashTable_GetRef(hash_table_t * ht, struct gsh_buffdesc * key,
+			      struct gsh_buffdesc * val,
+			      void (*get_ref) (struct gsh_buffdesc *))
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -1070,7 +1042,6 @@ hash_error_t HashTable_GetRef(hash_table_t *ht,
 	return rc;
 }
 
-
 /**
  *
  * @brief Decrement the refcount of and possibly remove an entry
@@ -1092,23 +1063,21 @@ hash_error_t HashTable_GetRef(hash_table_t *ht,
  * @retval HASHTABLE_NOT_DELETED put_ref returned a non-zero value
  */
 
-hash_error_t HashTable_DelRef(hash_table_t *ht,
-			      struct gsh_buffdesc *key,
-			      struct gsh_buffdesc *stored_key,
-			      struct gsh_buffdesc *stored_val,
-			      int (*put_ref)(struct gsh_buffdesc *))
+hash_error_t HashTable_DelRef(hash_table_t * ht, struct gsh_buffdesc * key,
+			      struct gsh_buffdesc * stored_key,
+			      struct gsh_buffdesc * stored_val,
+			      int (*put_ref) (struct gsh_buffdesc *))
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
 	/* Stored return code */
 	hash_error_t rc = 0;
 	/* Temporary buffer descriptor.  We need the value to call the
-        decrement function, even if the caller didn't request the
-        value. */
+	   decrement function, even if the caller didn't request the
+	   value. */
 	struct gsh_buffdesc temp_val;
 
-	rc = HashTable_GetLatch(ht, key, &temp_val,
-				true, &latch);
+	rc = HashTable_GetLatch(ht, key, &temp_val, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
@@ -1123,10 +1092,7 @@ hash_error_t HashTable_DelRef(hash_table_t *ht,
 				goto out;
 			}
 		}
-		rc = HashTable_DeleteLatched(ht,
-					     key,
-					     &latch,
-					     stored_key,
+		rc = HashTable_DeleteLatched(ht, key, &latch, stored_key,
 					     stored_val);
 		break;
 
@@ -1134,7 +1100,7 @@ hash_error_t HashTable_DelRef(hash_table_t *ht,
 		break;
 	}
 
-out:
+ out:
 
 	return rc;
 }
@@ -1155,9 +1121,8 @@ out:
  *         values did not match.
  */
 
-hash_error_t HashTable_DelSafe(hash_table_t *ht,
-			       struct gsh_buffdesc *key,
-			       struct gsh_buffdesc *val)
+hash_error_t HashTable_DelSafe(hash_table_t * ht, struct gsh_buffdesc * key,
+			       struct gsh_buffdesc * val)
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -1168,8 +1133,7 @@ hash_error_t HashTable_DelSafe(hash_table_t *ht,
 	   value. */
 	struct gsh_buffdesc found_val;
 
-	rc = HashTable_GetLatch(ht, key, &found_val,
-				true, &latch);
+	rc = HashTable_GetLatch(ht, key, &found_val, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
@@ -1178,10 +1142,7 @@ hash_error_t HashTable_DelSafe(hash_table_t *ht,
 
 	case HASHTABLE_SUCCESS:
 		if (found_val.addr == val->addr) {
-			rc = HashTable_DeleteLatched(ht,
-						     key,
-						     &latch,
-						     NULL,
+			rc = HashTable_DeleteLatched(ht, key, &latch, NULL,
 						     NULL);
 		} else {
 			rc = HASHTABLE_ERROR_NO_SUCH_KEY;
@@ -1195,5 +1156,5 @@ hash_error_t HashTable_DelSafe(hash_table_t *ht,
 
 	return rc;
 }
-/** @} */
 
+/** @} */
