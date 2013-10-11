@@ -31,32 +31,32 @@
 /**
  * GPFSFSAL_share_op:
  */
-fsal_status_t GPFSFSAL_share_op(int mntfd,                        /* IN */
-                                int fd,                           /* IN */
-                                void *p_owner,                     /* IN */
-                                fsal_share_param_t request_share) /* IN */
-{
-  int rc = 0;
-  struct share_reserve_arg share_arg;
+fsal_status_t GPFSFSAL_share_op(int mntfd,	/* IN */
+				int fd,	/* IN */
+				void *p_owner,	/* IN */
+				fsal_share_param_t request_share)
+{				/* IN */
+	int rc = 0;
+	struct share_reserve_arg share_arg;
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Share reservation: access:%u deny:%u owner:%p",
-               request_share.share_access, request_share.share_deny, p_owner);
+	LogFullDebug(COMPONENT_FSAL,
+		     "Share reservation: access:%u deny:%u owner:%p",
+		     request_share.share_access, request_share.share_deny,
+		     p_owner);
 
-  share_arg.mountdirfd = mntfd;
-  share_arg.openfd = fd;
-  share_arg.share_access = request_share.share_access;
-  share_arg.share_deny = request_share.share_deny;
+	share_arg.mountdirfd = mntfd;
+	share_arg.openfd = fd;
+	share_arg.share_access = request_share.share_access;
+	share_arg.share_deny = request_share.share_deny;
 
-  rc = gpfs_ganesha(OPENHANDLE_SHARE_RESERVE, &share_arg);
+	rc = gpfs_ganesha(OPENHANDLE_SHARE_RESERVE, &share_arg);
 
-  if(rc < 0)
-    {
-      LogDebug(COMPONENT_FSAL,
-               "gpfs_ganesha: OPENHANDLE_SHARE_RESERVE returned error, rc=%d, errno=%d",
-               rc, errno);
-      return fsalstat(posix2fsal_error(errno), errno);
-    }
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "gpfs_ganesha: OPENHANDLE_SHARE_RESERVE returned error, rc=%d, errno=%d",
+			 rc, errno);
+		return fsalstat(posix2fsal_error(errno), errno);
+	}
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

@@ -56,16 +56,16 @@ extern "C" {
 #endif
 
 #ifdef WIN32
-struct flock
-{};
+	struct flock {
+	};
 #endif
 
 //#define GPFS_PRINTK
 
 /* GANESHA common information */
 
-#define GPFS_DEVNAMEX "/dev/ss0"  /* Must be the same as GPFS_DEVNAME */
-#define kGanesha 140             /* Must be the same as Ganesha in enum kxOps */
+#define GPFS_DEVNAMEX "/dev/ss0"	/* Must be the same as GPFS_DEVNAME */
+#define kGanesha 140		/* Must be the same as Ganesha in enum kxOps */
 
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_NAME_TO_HANDLE 101
@@ -104,457 +104,426 @@ struct flock
 #define OPENHANDLE_CREATE_BY_NAME_ATTR 137
 #define OPENHANDLE_TRACE_ME       150
 
-struct trace_arg
-{
-  uint32_t level;
-  uint32_t len;
-  char     *str;
-};
+	struct trace_arg {
+		uint32_t level;
+		uint32_t len;
+		char *str;
+	};
 
-int gpfs_ganesha(int op, void *oarg);
+	int gpfs_ganesha(int op, void *oarg);
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_KEY_LEN 28
 #define OPENHANDLE_VERSION 1
 
-struct xstat_cred_t
-{
-  uint32_t principal;          /* user id */
-  uint32_t group;              /* primary group id */
-  uint16_t num_groups;         /* number secondary groups for this user */
+	struct xstat_cred_t {
+		uint32_t principal;	/* user id */
+		uint32_t group;	/* primary group id */
+		uint16_t num_groups;	/* number secondary groups for this user */
 #define XSTAT_CRED_NGROUPS 32
-  uint32_t eGroups[XSTAT_CRED_NGROUPS];/* array of secondary groups */
-};
+		uint32_t eGroups[XSTAT_CRED_NGROUPS];	/* array of secondary groups */
+	};
 
-struct gpfs_time_t
-{
-  uint32_t t_sec;
-  uint32_t t_nsec;
-};
+	struct gpfs_time_t {
+		uint32_t t_sec;
+		uint32_t t_nsec;
+	};
 
-struct gpfs_file_handle
-{
-  uint16_t handle_size;
-  uint16_t handle_type;
-  uint16_t handle_version;
-  uint16_t handle_key_size;
-  uint32_t handle_fsid[2];
-  /* file identifier */
-  unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
-};
+	struct gpfs_file_handle {
+		uint16_t handle_size;
+		uint16_t handle_type;
+		uint16_t handle_version;
+		uint16_t handle_key_size;
+		uint32_t handle_fsid[2];
+		/* file identifier */
+		unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
+	};
 
-struct name_handle_arg
-{
-  int dfd;
-  int flag;
-  const char *name;
-  struct gpfs_file_handle *handle;
-};
+	struct name_handle_arg {
+		int dfd;
+		int flag;
+		const char *name;
+		struct gpfs_file_handle *handle;
+	};
 
-struct get_handle_arg
-{
-  int mountdirfd;
-  int len;
-  const char *name;
-  struct gpfs_file_handle *dir_fh;
-  struct gpfs_file_handle *out_fh;
-};
+	struct get_handle_arg {
+		int mountdirfd;
+		int len;
+		const char *name;
+		struct gpfs_file_handle *dir_fh;
+		struct gpfs_file_handle *out_fh;
+	};
 
-struct open_arg
-{
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct gpfs_file_handle *handle;
-};
+	struct open_arg {
+		int mountdirfd;
+		int flags;
+		int openfd;
+		struct gpfs_file_handle *handle;
+	};
 
-struct link_fh_arg
-{
-  int mountdirfd;
-  int len;
-  const char *name;
-  struct gpfs_file_handle *dir_fh;
-  struct gpfs_file_handle *dst_fh;
-};
+	struct link_fh_arg {
+		int mountdirfd;
+		int len;
+		const char *name;
+		struct gpfs_file_handle *dir_fh;
+		struct gpfs_file_handle *dst_fh;
+	};
 
-struct rename_fh_arg
-{
-  int mountdirfd;
-  int old_len;
-  const char *old_name;
-  int new_len;
-  const char *new_name;
-  struct gpfs_file_handle *old_fh;
-  struct gpfs_file_handle *new_fh;
-};
+	struct rename_fh_arg {
+		int mountdirfd;
+		int old_len;
+		const char *old_name;
+		int new_len;
+		const char *new_name;
+		struct gpfs_file_handle *old_fh;
+		struct gpfs_file_handle *new_fh;
+	};
 
-struct glock
-{
-  int cmd;
-  int lfd;
-  void *lock_owner;
-  struct flock flock;
-};
-#define GPFS_F_CANCELLK (1024 + 5)   /* Maps to Linux F_CANCELLK */
+	struct glock {
+		int cmd;
+		int lfd;
+		void *lock_owner;
+		struct flock flock;
+	};
+#define GPFS_F_CANCELLK (1024 + 5)	/* Maps to Linux F_CANCELLK */
 
-struct set_get_lock_arg
-{
-  int mountdirfd;
-  struct glock *lock;
-};
+	struct set_get_lock_arg {
+		int mountdirfd;
+		struct glock *lock;
+	};
 
-struct open_share_arg
-{
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct gpfs_file_handle *handle;
-  int share_access;
-  int share_deny;
-};
+	struct open_share_arg {
+		int mountdirfd;
+		int flags;
+		int openfd;
+		struct gpfs_file_handle *handle;
+		int share_access;
+		int share_deny;
+	};
 
-struct share_reserve_arg
-{
-  int mountdirfd;
-  int openfd;
-  int share_access;
-  int share_deny;
-};
+	struct share_reserve_arg {
+		int mountdirfd;
+		int openfd;
+		int share_access;
+		int share_deny;
+	};
 
-struct close_file_arg
-{
-  int mountdirfd;
-  int close_fd;
-  int close_flags;
-  void *close_owner;
-};
+	struct close_file_arg {
+		int mountdirfd;
+		int close_fd;
+		int close_flags;
+		void *close_owner;
+	};
 
-struct link_arg
-{
-  int file_fd;
-  int dir_fd;
-  const char *name;
-};
+	struct link_arg {
+		int file_fd;
+		int dir_fd;
+		const char *name;
+	};
 
-struct readlink_arg
-{
-  int fd;
-  char *buffer;
-  int size;
-};
+	struct readlink_arg {
+		int fd;
+		char *buffer;
+		int size;
+	};
 
-struct readlink_fh_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  char *buffer;
-  int size;
-};
+	struct readlink_fh_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		char *buffer;
+		int size;
+	};
 
-struct nfsd4_pnfs_deviceid {
-	unsigned long	sbid;		/* per-superblock unique ID */
-	unsigned long	devid;		/* filesystem-wide unique device ID */
-};
+	struct nfsd4_pnfs_deviceid {
+		unsigned long sbid;	/* per-superblock unique ID */
+		unsigned long devid;	/* filesystem-wide unique device ID */
+	};
 
-struct gpfs_exp_xdr_stream {
-  int *p;
-  int *end;
-};
+	struct gpfs_exp_xdr_stream {
+		int *p;
+		int *end;
+	};
 
-enum x_nfsd_fsid {
-	x_FSID_DEV = 0,
-	x_FSID_NUM,
-	x_FSID_MAJOR_MINOR,
-	x_FSID_ENCODE_DEV,
-	x_FSID_UUID4_INUM,
-	x_FSID_UUID8,
-	x_FSID_UUID16,
-	x_FSID_UUID16_INUM,
-	x_FSID_MAX
-};
+	enum x_nfsd_fsid {
+		x_FSID_DEV = 0,
+		x_FSID_NUM,
+		x_FSID_MAJOR_MINOR,
+		x_FSID_ENCODE_DEV,
+		x_FSID_UUID4_INUM,
+		x_FSID_UUID8,
+		x_FSID_UUID16,
+		x_FSID_UUID16_INUM,
+		x_FSID_MAX
+	};
 
-enum x_pnfs_layouttype {
-	x_LAYOUT_NFSV4_1_FILES  = 1,
-	x_LAYOUT_OSD2_OBJECTS = 2,
-	x_LAYOUT_BLOCK_VOLUME = 3,
+	enum x_pnfs_layouttype {
+		x_LAYOUT_NFSV4_1_FILES = 1,
+		x_LAYOUT_OSD2_OBJECTS = 2,
+		x_LAYOUT_BLOCK_VOLUME = 3,
 
-	x_NFS4_PNFS_PRIVATE_LAYOUT = 0x80000000
-};
+		x_NFS4_PNFS_PRIVATE_LAYOUT = 0x80000000
+	};
 
 /* used for both layout return and recall */
-enum x_pnfs_layoutreturn_type {
-	x_RETURN_FILE = 1,
-	x_RETURN_FSID = 2,
-	x_RETURN_ALL  = 3
-};
+	enum x_pnfs_layoutreturn_type {
+		x_RETURN_FILE = 1,
+		x_RETURN_FSID = 2,
+		x_RETURN_ALL = 3
+	};
 
-enum x_pnfs_iomode {
-	x_IOMODE_READ = 1,
-	x_IOMODE_RW = 2,
-	x_IOMODE_ANY = 3,
-};
+	enum x_pnfs_iomode {
+		x_IOMODE_READ = 1,
+		x_IOMODE_RW = 2,
+		x_IOMODE_ANY = 3,
+	};
 
-enum stable_nfs
-{
-  x_UNSTABLE4 = 0,
-  x_DATA_SYNC4 = 1,
-  x_FILE_SYNC4 = 2
-};
+	enum stable_nfs {
+		x_UNSTABLE4 = 0,
+		x_DATA_SYNC4 = 1,
+		x_FILE_SYNC4 = 2
+	};
 
-struct pnfstime4 {
-	uint64_t	seconds;
-	uint32_t	nseconds;
-};
+	struct pnfstime4 {
+		uint64_t seconds;
+		uint32_t nseconds;
+	};
 
-struct nfsd4_pnfs_dev_iter_res {
-	uint64_t		gd_cookie;	/* request/repsonse */
-	uint64_t		gd_verf;	/* request/repsonse */
-	uint64_t		gd_devid;	/* response */
-	uint32_t		gd_eof;		/* response */
-};
+	struct nfsd4_pnfs_dev_iter_res {
+		uint64_t gd_cookie;	/* request/repsonse */
+		uint64_t gd_verf;	/* request/repsonse */
+		uint64_t gd_devid;	/* response */
+		uint32_t gd_eof;	/* response */
+	};
 
 /* Arguments for set_device_notify */
-struct pnfs_devnotify_arg {
-	struct nfsd4_pnfs_deviceid dn_devid;	/* request */
-	uint32_t dn_layout_type;		/* request */
-	uint32_t dn_notify_types;		/* request/response */
-};
+	struct pnfs_devnotify_arg {
+		struct nfsd4_pnfs_deviceid dn_devid;	/* request */
+		uint32_t dn_layout_type;	/* request */
+		uint32_t dn_notify_types;	/* request/response */
+	};
 
-struct nfsd4_layout_seg {
-	uint64_t	clientid;
-	uint32_t	layout_type;
-	uint32_t	iomode;
-	uint64_t	offset;
-	uint64_t	length;
-};
+	struct nfsd4_layout_seg {
+		uint64_t clientid;
+		uint32_t layout_type;
+		uint32_t iomode;
+		uint64_t offset;
+		uint64_t length;
+	};
 
-struct nfsd4_pnfs_layoutget_arg {
-	uint64_t		lg_minlength;
-	uint64_t		lg_sbid;
-	struct gpfs_file_handle	*lg_fh;
-	uint32_t		lg_iomode;
-};
+	struct nfsd4_pnfs_layoutget_arg {
+		uint64_t lg_minlength;
+		uint64_t lg_sbid;
+		struct gpfs_file_handle *lg_fh;
+		uint32_t lg_iomode;
+	};
 
-struct nfsd4_pnfs_layoutget_res {
-	struct nfsd4_layout_seg	lg_seg;	/* request/resopnse */
-	uint32_t		lg_return_on_close;
-};
+	struct nfsd4_pnfs_layoutget_res {
+		struct nfsd4_layout_seg lg_seg;	/* request/resopnse */
+		uint32_t lg_return_on_close;
+	};
 
-struct nfsd4_pnfs_layoutcommit_arg {
-	struct nfsd4_layout_seg	lc_seg;		/* request */
-	uint32_t		lc_reclaim;	/* request */
-	uint32_t		lc_newoffset;	/* request */
-	uint64_t		lc_last_wr;	/* request */
-	struct pnfstime4		lc_mtime;	/* request */
-	uint32_t		lc_up_len;	/* layout length */
-	void			*lc_up_layout;	/* decoded by callback */
-};
+	struct nfsd4_pnfs_layoutcommit_arg {
+		struct nfsd4_layout_seg lc_seg;	/* request */
+		uint32_t lc_reclaim;	/* request */
+		uint32_t lc_newoffset;	/* request */
+		uint64_t lc_last_wr;	/* request */
+		struct pnfstime4 lc_mtime;	/* request */
+		uint32_t lc_up_len;	/* layout length */
+		void *lc_up_layout;	/* decoded by callback */
+	};
 
-struct nfsd4_pnfs_layoutcommit_res {
-	uint32_t		lc_size_chg;	/* boolean for response */
-	uint64_t		lc_newsize;	/* response */
-};
+	struct nfsd4_pnfs_layoutcommit_res {
+		uint32_t lc_size_chg;	/* boolean for response */
+		uint64_t lc_newsize;	/* response */
+	};
 
-struct nfsd4_pnfs_layoutreturn_arg {
-	uint32_t		lr_return_type;	/* request */
-	struct nfsd4_layout_seg	lr_seg;		/* request */
-	uint32_t		lr_reclaim;	/* request */
-	uint32_t		lrf_body_len;	/* request */
-	void			*lrf_body;	/* request */
-	void			*lr_cookie;	/* fs private */
-};
+	struct nfsd4_pnfs_layoutreturn_arg {
+		uint32_t lr_return_type;	/* request */
+		struct nfsd4_layout_seg lr_seg;	/* request */
+		uint32_t lr_reclaim;	/* request */
+		uint32_t lrf_body_len;	/* request */
+		void *lrf_body;	/* request */
+		void *lr_cookie;	/* fs private */
+	};
 
-struct x_xdr_netobj {
-	unsigned int	len;
-	unsigned char	*data;
-};
-struct pnfs_filelayout_devaddr {
-	struct x_xdr_netobj	r_netid;
-	struct x_xdr_netobj	r_addr;
-};
+	struct x_xdr_netobj {
+		unsigned int len;
+		unsigned char *data;
+	};
+	struct pnfs_filelayout_devaddr {
+		struct x_xdr_netobj r_netid;
+		struct x_xdr_netobj r_addr;
+	};
 
 /* list of multipath servers */
-struct pnfs_filelayout_multipath {
-	uint32_t			fl_multipath_length;
-	struct pnfs_filelayout_devaddr 	*fl_multipath_list;
-};
+	struct pnfs_filelayout_multipath {
+		uint32_t fl_multipath_length;
+		struct pnfs_filelayout_devaddr *fl_multipath_list;
+	};
 
-struct pnfs_filelayout_device {
-	uint32_t			fl_stripeindices_length;
-	uint32_t			*fl_stripeindices_list;
-	uint32_t			fl_device_length;
-	struct pnfs_filelayout_multipath *fl_device_list;
-};
+	struct pnfs_filelayout_device {
+		uint32_t fl_stripeindices_length;
+		uint32_t *fl_stripeindices_list;
+		uint32_t fl_device_length;
+		struct pnfs_filelayout_multipath *fl_device_list;
+	};
 
-struct pnfs_filelayout_layout {
-	uint32_t                        lg_layout_type; /* response */
-	uint32_t                        lg_stripe_type; /* response */
-	uint32_t                        lg_commit_through_mds; /* response */
-	uint64_t                        lg_stripe_unit; /* response */
-	uint64_t                        lg_pattern_offset; /* response */
-	uint32_t                        lg_first_stripe_index;	/* response */
-	struct nfsd4_pnfs_deviceid	device_id;		/* response */
-	uint32_t                        lg_fh_length;		/* response */
-	struct gpfs_file_handle          *lg_fh_list;		/* response */
-};
+	struct pnfs_filelayout_layout {
+		uint32_t lg_layout_type;	/* response */
+		uint32_t lg_stripe_type;	/* response */
+		uint32_t lg_commit_through_mds;	/* response */
+		uint64_t lg_stripe_unit;	/* response */
+		uint64_t lg_pattern_offset;	/* response */
+		uint32_t lg_first_stripe_index;	/* response */
+		struct nfsd4_pnfs_deviceid device_id;	/* response */
+		uint32_t lg_fh_length;	/* response */
+		struct gpfs_file_handle *lg_fh_list;	/* response */
+	};
 
-enum stripetype4 {
-	STRIPE_SPARSE = 1,
-	STRIPE_DENSE = 2
-};
+	enum stripetype4 {
+		STRIPE_SPARSE = 1,
+		STRIPE_DENSE = 2
+	};
 
-struct deviceinfo_arg
-{
-  int mountdirfd;
-  int type;
-  struct nfsd4_pnfs_deviceid devid;
-  struct gpfs_exp_xdr_stream xdr;
-};
+	struct deviceinfo_arg {
+		int mountdirfd;
+		int type;
+		struct nfsd4_pnfs_deviceid devid;
+		struct gpfs_exp_xdr_stream xdr;
+	};
 
-struct layoutget_arg
-{
-  int fd;
-  struct gpfs_file_handle *handle;
-  struct nfsd4_pnfs_layoutget_arg args;
-  struct pnfs_filelayout_layout *file_layout;
-  struct gpfs_exp_xdr_stream *xdr;
-};
+	struct layoutget_arg {
+		int fd;
+		struct gpfs_file_handle *handle;
+		struct nfsd4_pnfs_layoutget_arg args;
+		struct pnfs_filelayout_layout *file_layout;
+		struct gpfs_exp_xdr_stream *xdr;
+	};
 
-struct layoutreturn_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  struct nfsd4_pnfs_layoutreturn_arg args;
-};
+	struct layoutreturn_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		struct nfsd4_pnfs_layoutreturn_arg args;
+	};
 
-struct dsread_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  char *bufP;
-  uint64_t offset;
-  uint64_t length;
-};
+	struct dsread_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		char *bufP;
+		uint64_t offset;
+		uint64_t length;
+	};
 
-struct dswrite_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  const char *bufP;
-  uint64_t offset;
-  uint64_t length;
-  uint32_t stability_wanted;
-  uint32_t *stability_got;
-  uint32_t *verifier4;
-};
+	struct dswrite_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		const char *bufP;
+		uint64_t offset;
+		uint64_t length;
+		uint32_t stability_wanted;
+		uint32_t *stability_got;
+		uint32_t *verifier4;
+	};
 
-struct read_arg
-{
-  int mountdirfd;
-  int fd;
-  char *bufP;
-  uint64_t offset;
-  uint64_t length;
-  uint32_t stability_wanted;
-  uint32_t *stability_got;
-  uint32_t *verifier4;
-};
+	struct read_arg {
+		int mountdirfd;
+		int fd;
+		char *bufP;
+		uint64_t offset;
+		uint64_t length;
+		uint32_t stability_wanted;
+		uint32_t *stability_got;
+		uint32_t *verifier4;
+	};
 
-struct write_arg
-{
-  int mountdirfd;
-  int fd;
-  char *bufP;
-  uint64_t offset;
-  uint64_t length;
-  uint32_t stability_wanted;
-  uint32_t *stability_got;
-  uint32_t *verifier4;
-};
+	struct write_arg {
+		int mountdirfd;
+		int fd;
+		char *bufP;
+		uint64_t offset;
+		uint64_t length;
+		uint32_t stability_wanted;
+		uint32_t *stability_got;
+		uint32_t *verifier4;
+	};
 
-struct layoutcommit_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  uint64_t offset;
-  uint64_t length;
-  uint32_t reclaim;      /* True if this is a reclaim commit */
-  uint32_t new_offset;   /* True if the client has suggested a new offset */
-  uint64_t last_write;   /* The offset of the last byte written, if
-                               new_offset if set, otherwise undefined. */
-  uint32_t time_changed; /* True if the client provided a new value for mtime */
-  struct gpfs_time_t new_time;  /* If time_changed is true, the client-supplied
-                               modification tiem for the file.  otherwise, undefined. */
-  struct gpfs_exp_xdr_stream *xdr;
-};
+	struct layoutcommit_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		uint64_t offset;
+		uint64_t length;
+		uint32_t reclaim;	/* True if this is a reclaim commit */
+		uint32_t new_offset;	/* True if the client has suggested a new offset */
+		uint64_t last_write;	/* The offset of the last byte written, if
+					   new_offset if set, otherwise undefined. */
+		uint32_t time_changed;	/* True if the client provided a new value for mtime */
+		struct gpfs_time_t new_time;	/* If time_changed is true, the client-supplied
+						   modification tiem for the file.  otherwise, undefined. */
+		struct gpfs_exp_xdr_stream *xdr;
+	};
 
-struct fsync_arg
-{
-  int mountdirfd;
-  struct gpfs_file_handle *handle;
-  uint64_t offset;
-  uint64_t length;
-  uint32_t *verifier4;
-};
+	struct fsync_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		uint64_t offset;
+		uint64_t length;
+		uint32_t *verifier4;
+	};
 
-struct stat_arg
-{
-    int mountdirfd;
-    struct gpfs_file_handle *handle;
-    struct stat *buf;
-};
+	struct stat_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		struct stat *buf;
+	};
 
-struct create_name_arg
-{
-    int mountdirfd;                 /* in     */
-    struct gpfs_file_handle *dir_fh;/* in     */
-    uint32_t dev;                   /* in     */
-    int mode;                       /* in     */
-    int len;                        /* in     */
-    const char *name;               /* in     */
-    struct gpfs_file_handle *new_fh;/* out    */
-    struct stat *buf;               /* in/out */
-    int attr_valid;                 /* in     */
-    int attr_changed;               /* in     */
-    struct gpfs_acl *acl;           /* in/out  */
-};
+	struct create_name_arg {
+		int mountdirfd;	/* in     */
+		struct gpfs_file_handle *dir_fh;	/* in     */
+		uint32_t dev;	/* in     */
+		int mode;	/* in     */
+		int len;	/* in     */
+		const char *name;	/* in     */
+		struct gpfs_file_handle *new_fh;	/* out    */
+		struct stat *buf;	/* in/out */
+		int attr_valid;	/* in     */
+		int attr_changed;	/* in     */
+		struct gpfs_acl *acl;	/* in/out  */
+	};
 
-struct stat_name_arg
-{
-    int mountdirfd;
-    int len;
-    const char *name;
-    struct gpfs_file_handle *handle;
-    struct stat *buf;
-};
+	struct stat_name_arg {
+		int mountdirfd;
+		int len;
+		const char *name;
+		struct gpfs_file_handle *handle;
+		struct stat *buf;
+	};
 
-struct callback_arg
-{
-    int interface_version;
-    int mountdirfd;
-    int *reason;
-    struct gpfs_file_handle *handle;
-    struct glock *fl;
-    int *flags;
-    struct stat *buf;
-    struct nfsd4_pnfs_deviceid *dev_id;
-    uint32_t *expire_attr;
-};
+	struct callback_arg {
+		int interface_version;
+		int mountdirfd;
+		int *reason;
+		struct gpfs_file_handle *handle;
+		struct glock *fl;
+		int *flags;
+		struct stat *buf;
+		struct nfsd4_pnfs_deviceid *dev_id;
+		uint32_t *expire_attr;
+	};
 #define GPFS_INTERFACE_VERSION 10000
 #define GPFS_INTERFACE_SUB_VER     1
 
 /* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
-#define UP_NLINK        0x00000001   /* update nlink */
-#define UP_MODE         0x00000002   /* update mode and ctime */
-#define UP_OWN          0x00000004   /* update mode,uid,gid and ctime */
-#define UP_SIZE         0x00000008   /* update fsize */
-#define UP_SIZE_BIG     0x00000010   /* update fsize if bigger */
-#define UP_TIMES        0x00000020   /* update all times */
-#define UP_ATIME        0x00000040   /* update atime only */
-#define UP_PERM         0x00000080   /* update fields needed for permission checking*/
-#define UP_RENAME       0x00000100   /* this is a rename op */
-#define UP_DESTROY_FLAG 0x00000200   /* clear destroyIfDelInode flag */
-#define UP_GANESHA      0x00000400   /* this is a ganesha op */
+#define UP_NLINK        0x00000001	/* update nlink */
+#define UP_MODE         0x00000002	/* update mode and ctime */
+#define UP_OWN          0x00000004	/* update mode,uid,gid and ctime */
+#define UP_SIZE         0x00000008	/* update fsize */
+#define UP_SIZE_BIG     0x00000010	/* update fsize if bigger */
+#define UP_TIMES        0x00000020	/* update all times */
+#define UP_ATIME        0x00000040	/* update atime only */
+#define UP_PERM         0x00000080	/* update fields needed for permission checking */
+#define UP_RENAME       0x00000100	/* this is a rename op */
+#define UP_DESTROY_FLAG 0x00000200	/* clear destroyIfDelInode flag */
+#define UP_GANESHA      0x00000400	/* this is a ganesha op */
 
 /* reason list for reason in callback_arg */
 #define INODE_INVALIDATE        1
@@ -575,42 +544,39 @@ struct callback_arg
 #define XATTR_EXPIRE    (1 << 3)
 
 /* define flags for attr_chaged */
-#define XATTR_MODE      (1 << 0) //  01
-#define XATTR_UID       (1 << 1) //  02
-#define XATTR_GID       (1 << 2) //  04
-#define XATTR_SIZE      (1 << 3) //  08
-#define XATTR_ATIME     (1 << 4) //  10
-#define XATTR_MTIME     (1 << 5) //  20
-#define XATTR_CTIME     (1 << 6) //  40
-#define XATTR_ATIME_SET (1 << 7) //  80
-#define XATTR_MTIME_SET (1 << 8) // 100
-#define XATTR_ATIME_NOW (1 << 9) // 200
-#define XATTR_MTIME_NOW (1 << 10)// 400
+#define XATTR_MODE      (1 << 0)	//  01
+#define XATTR_UID       (1 << 1)	//  02
+#define XATTR_GID       (1 << 2)	//  04
+#define XATTR_SIZE      (1 << 3)	//  08
+#define XATTR_ATIME     (1 << 4)	//  10
+#define XATTR_MTIME     (1 << 5)	//  20
+#define XATTR_CTIME     (1 << 6)	//  40
+#define XATTR_ATIME_SET (1 << 7)	//  80
+#define XATTR_MTIME_SET (1 << 8)	// 100
+#define XATTR_ATIME_NOW (1 << 9)	// 200
+#define XATTR_MTIME_NOW (1 << 10)	// 400
 
-struct xstat_arg
-{
-    int attr_valid;
-    int mountdirfd;
-    struct gpfs_file_handle *handle;
-    struct gpfs_acl *acl;
-    int attr_changed;
-    struct stat *buf;
-    uint32_t *expire_attr;
-};
+	struct xstat_arg {
+		int attr_valid;
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		struct gpfs_acl *acl;
+		int attr_changed;
+		struct stat *buf;
+		uint32_t *expire_attr;
+	};
 
-struct xstat_access_arg
-{
-    int mountdirfd;
-    struct gpfs_file_handle *handle;
-    struct gpfs_acl *acl;
-    struct xstat_cred_t *cred;
-    unsigned int posix_mode;
-    unsigned int access;       /* v4maske */
-    unsigned int *supported;	
-};
+	struct xstat_access_arg {
+		int mountdirfd;
+		struct gpfs_file_handle *handle;
+		struct gpfs_acl *acl;
+		struct xstat_cred_t *cred;
+		unsigned int posix_mode;
+		unsigned int access;	/* v4maske */
+		unsigned int *supported;
+	};
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* H_GPFS_NFS */
+#endif				/* H_GPFS_NFS */

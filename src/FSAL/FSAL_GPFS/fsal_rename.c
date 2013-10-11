@@ -58,48 +58,53 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,    /* IN */
-                          const char * p_old_name,                /* IN */
-                          struct fsal_obj_handle *new_hdl,        /* IN */
-                          const char * p_new_name,                /* IN */
-                          const struct req_op_context * p_context) /* IN */
-{
+fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
+			      const char *p_old_name,	/* IN */
+			      struct fsal_obj_handle * new_hdl,	/* IN */
+			      const char *p_new_name,	/* IN */
+			      const struct req_op_context * p_context)
+{				/* IN */
 
-  fsal_status_t status;
-  struct stat buffstat;
-  int mount_fd;
-  struct gpfs_fsal_obj_handle *old_gpfs_hdl, *new_gpfs_hdl;
+	fsal_status_t status;
+	struct stat buffstat;
+	int mount_fd;
+	struct gpfs_fsal_obj_handle *old_gpfs_hdl, *new_gpfs_hdl;
 
-  /* sanity checks.
-   * note : src/tgt_dir_attributes are optional.
-   */
-  if(!old_hdl || !new_hdl || !p_old_name || !p_new_name || !p_context)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : src/tgt_dir_attributes are optional.
+	 */
+	if (!old_hdl || !new_hdl || !p_old_name || !p_new_name || !p_context)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  old_gpfs_hdl = container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-  new_gpfs_hdl = container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-  mount_fd = gpfs_get_root_fd(old_hdl->export);
+	old_gpfs_hdl =
+	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	new_gpfs_hdl =
+	    container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	mount_fd = gpfs_get_root_fd(old_hdl->export);
 
-  /* build file paths */
-  status = fsal_internal_stat_name(mount_fd, old_gpfs_hdl->handle, p_old_name, &buffstat);
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	/* build file paths */
+	status =
+	    fsal_internal_stat_name(mount_fd, old_gpfs_hdl->handle, p_old_name,
+				    &buffstat);
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
-  fsal_set_credentials(p_context->creds);
+	fsal_set_credentials(p_context->creds);
 
-  status = fsal_internal_rename_fh(mount_fd, old_gpfs_hdl->handle,
-                                   new_gpfs_hdl->handle, p_old_name,
-                                   p_new_name);
+	status =
+	    fsal_internal_rename_fh(mount_fd, old_gpfs_hdl->handle,
+				    new_gpfs_hdl->handle, p_old_name,
+				    p_new_name);
 
-  fsal_restore_ganesha_credentials();
+	fsal_restore_ganesha_credentials();
 
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
-  /* OK */
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	/* OK */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

@@ -21,37 +21,34 @@
 #include "include/gpfs.h"
 #include "include/gpfs_nfs.h"
 
-struct kxArgs
-{
-  signed long arg1;
-  signed long arg2;
+struct kxArgs {
+	signed long arg1;
+	signed long arg2;
 };
 
 static int fd = -1;
 
-int
-gpfs_ganesha(int op, void *oarg)
+int gpfs_ganesha(int op, void *oarg)
 {
-  int rc;
-  int localFD;
-  struct kxArgs args;
+	int rc;
+	int localFD;
+	struct kxArgs args;
 
-  if (fd >= 0)
-    localFD = fd;
-  else
-  {
-    localFD = open(GPFS_DEVNAMEX, O_RDONLY);
-    if (localFD < 0)
-    {
-      fprintf(stderr, "Ganesha call to GPFS failed with ENOSYS\n");
-      return(ENOSYS);
-    }
-    fd = localFD;
-  }
+	if (fd >= 0)
+		localFD = fd;
+	else {
+		localFD = open(GPFS_DEVNAMEX, O_RDONLY);
+		if (localFD < 0) {
+			fprintf(stderr,
+				"Ganesha call to GPFS failed with ENOSYS\n");
+			return (ENOSYS);
+		}
+		fd = localFD;
+	}
 
-  args.arg1 = op;
-  args.arg2 = (long)oarg;
-  rc = ioctl(localFD, kGanesha, &args);
+	args.arg1 = op;
+	args.arg2 = (long)oarg;
+	rc = ioctl(localFD, kGanesha, &args);
 
-  return rc;
+	return rc;
 }

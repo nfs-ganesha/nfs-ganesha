@@ -42,26 +42,23 @@
  *                        after export reference is relinquished
  */
 
-static void
-fs_layouttypes(struct fsal_export *export_hdl,
-               size_t *count,
-               const layouttype4 **types)
+static void fs_layouttypes(struct fsal_export *export_hdl, size_t * count,
+			   const layouttype4 ** types)
 {
-  int rc;
-  struct open_arg arg;
-  static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
+	int rc;
+	struct open_arg arg;
+	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
 
-  arg.mountdirfd = gpfs_get_root_fd(export_hdl);
-  rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
-  if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES))
-  {
-    LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d \n", rc);
-    *count = 0;
-    return;
+	arg.mountdirfd = gpfs_get_root_fd(export_hdl);
+	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
+	if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES)) {
+		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d \n", rc);
+		*count = 0;
+		return;
 
-  }
-  *types = &supported_layout_type;
-  *count = 1;
+	}
+	*types = &supported_layout_type;
+	*count = 1;
 }
 
 /**
@@ -73,10 +70,9 @@ fs_layouttypes(struct fsal_export *export_hdl,
  *
  * @return 4 MB.
  */
-static uint32_t
-fs_layout_blocksize(struct fsal_export *export_pub)
+static uint32_t fs_layout_blocksize(struct fsal_export *export_pub)
 {
-        return 0x400000;
+	return 0x400000;
 }
 
 /**
@@ -88,10 +84,9 @@ fs_layout_blocksize(struct fsal_export *export_pub)
  *
  * @return 1
  */
-static uint32_t
-fs_maximum_segments(struct fsal_export *export_pub)
+static uint32_t fs_maximum_segments(struct fsal_export *export_pub)
 {
-        return 1;
+	return 1;
 }
 
 /**
@@ -103,10 +98,9 @@ fs_maximum_segments(struct fsal_export *export_pub)
  *
  * @return Size of the buffer needed for a loc_body
  */
-static size_t
-fs_loc_body_size(struct fsal_export *export_pub)
+static size_t fs_loc_body_size(struct fsal_export *export_pub)
 {
-        return 0x100;
+	return 0x100;
 }
 
 /**
@@ -120,7 +114,7 @@ fs_loc_body_size(struct fsal_export *export_pub)
  */
 static size_t fs_da_addr_size(struct fsal_export *export_pub)
 {
-        return 0x1400;
+	return 0x1400;
 }
 
 /**
@@ -137,50 +131,47 @@ static size_t fs_da_addr_size(struct fsal_export *export_pub)
  * @return Valid error codes in RFC 5661, p. 365.
  */
 
-static nfsstat4
-getdeviceinfo(struct fsal_export *export_hdl,
-              XDR *da_addr_body,
-              const layouttype4 type,
-              const struct pnfs_deviceid *deviceid)
+static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
+			      XDR * da_addr_body, const layouttype4 type,
+			      const struct pnfs_deviceid *deviceid)
 {
-  /* The position before any bytes are sent to the stream */
-  size_t da_beginning = 0;
-  /* The total length of the XDR-encoded da_addr_body */
-  size_t da_length = 0;
-  int rc = 0;
-  size_t ds_buffer = 0;
-  struct deviceinfo_arg darg;
+	/* The position before any bytes are sent to the stream */
+	size_t da_beginning = 0;
+	/* The total length of the XDR-encoded da_addr_body */
+	size_t da_length = 0;
+	int rc = 0;
+	size_t ds_buffer = 0;
+	struct deviceinfo_arg darg;
 
-  darg.mountdirfd = gpfs_get_root_fd(export_hdl);
-  darg.type = LAYOUT4_NFSV4_1_FILES;
-  darg.devid.sbid = deviceid->export_id;
-  darg.devid.devid = deviceid->devid;
+	darg.mountdirfd = gpfs_get_root_fd(export_hdl);
+	darg.type = LAYOUT4_NFSV4_1_FILES;
+	darg.devid.sbid = deviceid->export_id;
+	darg.devid.devid = deviceid->devid;
 
-  ds_buffer = fs_da_addr_size(export_hdl);
+	ds_buffer = fs_da_addr_size(export_hdl);
 
-  darg.xdr.p = (int *)da_addr_body->x_base;
-  da_beginning = xdr_getpos(da_addr_body);
-  darg.xdr.end = (int *)(darg.xdr.p + (ds_buffer - da_beginning));
+	darg.xdr.p = (int *)da_addr_body->x_base;
+	da_beginning = xdr_getpos(da_addr_body);
+	darg.xdr.end = (int *)(darg.xdr.p + (ds_buffer - da_beginning));
 
-  LogDebug(COMPONENT_PNFS,
-           "getdeviceinfo p %p end %p da_length %ld devid %ld-%016lx\n",
-                            darg.xdr.p, darg.xdr.end, da_beginning,
-                            darg.devid.sbid, darg.devid.devid);
+	LogDebug(COMPONENT_PNFS,
+		 "getdeviceinfo p %p end %p da_length %ld devid %ld-%016lx\n",
+		 darg.xdr.p, darg.xdr.end, da_beginning, darg.devid.sbid,
+		 darg.devid.devid);
 
-  rc = gpfs_ganesha(OPENHANDLE_GET_DEVICEINFO, &darg);
-  if (rc < 0)
-  {
+	rc = gpfs_ganesha(OPENHANDLE_GET_DEVICEINFO, &darg);
+	if (rc < 0) {
 
-    LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d \n", rc);
-    return NFS4ERR_RESOURCE;
-  }
-  xdr_setpos(da_addr_body, rc);
-  da_length = xdr_getpos(da_addr_body) - da_beginning;
+		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d \n", rc);
+		return NFS4ERR_RESOURCE;
+	}
+	xdr_setpos(da_addr_body, rc);
+	da_length = xdr_getpos(da_addr_body) - da_beginning;
 
-  LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %ld\n",
-                            rc, da_length);
+	LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %ld\n", rc,
+		 da_length);
 
-        return NFS4_OK;
+	return NFS4_OK;
 }
 
 /**
@@ -197,28 +188,24 @@ getdeviceinfo(struct fsal_export *export_hdl,
  * @return Valid error codes in RFC 5661, pp. 365-6.
  */
 
-static nfsstat4
-getdevicelist(struct fsal_export *export_pub,
-              layouttype4 type,
-              void *opaque,
-              bool (*cb)(void *opaque,
-                         const uint64_t id),
-              struct fsal_getdevicelist_res *res)
+static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
+			      void *opaque, bool(*cb) (void *opaque,
+						       const uint64_t id),
+			      struct fsal_getdevicelist_res *res)
 {
-        res->eof = true;
-        return NFS4_OK;
+	res->eof = true;
+	return NFS4_OK;
 }
 
-void
-export_ops_pnfs(struct export_ops *ops)
+void export_ops_pnfs(struct export_ops *ops)
 {
-        ops->getdeviceinfo = getdeviceinfo;
-        ops->getdevicelist = getdevicelist;
-        ops->fs_layouttypes = fs_layouttypes;
-        ops->fs_layout_blocksize = fs_layout_blocksize;
-        ops->fs_maximum_segments = fs_maximum_segments;
-        ops->fs_loc_body_size = fs_loc_body_size;
-        ops->fs_da_addr_size = fs_da_addr_size;
+	ops->getdeviceinfo = getdeviceinfo;
+	ops->getdevicelist = getdevicelist;
+	ops->fs_layouttypes = fs_layouttypes;
+	ops->fs_layout_blocksize = fs_layout_blocksize;
+	ops->fs_maximum_segments = fs_maximum_segments;
+	ops->fs_loc_body_size = fs_loc_body_size;
+	ops->fs_da_addr_size = fs_da_addr_size;
 }
 
 /**
@@ -239,135 +226,127 @@ export_ops_pnfs(struct export_ops *ops)
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 
-static nfsstat4
-layoutget(struct fsal_obj_handle *obj_hdl,
-          struct req_op_context *req_ctx,
-          XDR *loc_body,
-          const struct fsal_layoutget_arg *arg,
-          struct fsal_layoutget_res *res)
+static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
+			  struct req_op_context *req_ctx, XDR * loc_body,
+			  const struct fsal_layoutget_arg *arg,
+			  struct fsal_layoutget_res *res)
 {
 	struct gpfs_fsal_obj_handle *myself;
-        struct gpfs_file_handle gpfs_ds_handle;
-        struct layoutget_arg larg;
+	struct gpfs_file_handle gpfs_ds_handle;
+	struct layoutget_arg larg;
 	struct layoutreturn_arg lrarg;
-        unsigned int rc, *fh;
-        /* Structure containing the storage parameters of the file within
-            the GPFS cluster. */
-        struct pnfs_filelayout_layout file_layout;
-        /* Width of each stripe on the file */
-        uint32_t stripe_width = 0;
-        /* Utility parameter */
-        nfl_util4 util = 0;
-        /* The last byte that can be accessed through pNFS */
+	unsigned int rc, *fh;
+	/* Structure containing the storage parameters of the file within
+	   the GPFS cluster. */
+	struct pnfs_filelayout_layout file_layout;
+	/* Width of each stripe on the file */
+	uint32_t stripe_width = 0;
+	/* Utility parameter */
+	nfl_util4 util = 0;
+	/* The last byte that can be accessed through pNFS */
 /*         uint64_t last_possible_byte = 0; strict. set but unused */
-        /* The deviceid for this layout */
-        struct pnfs_deviceid deviceid = {0, 0};
-        /* NFS Status */
-        nfsstat4 nfs_status = 0;
-        /* Descriptor for DS handle */
-        struct gsh_buffdesc ds_desc;
+	/* The deviceid for this layout */
+	struct pnfs_deviceid deviceid = { 0, 0 };
+	/* NFS Status */
+	nfsstat4 nfs_status = 0;
+	/* Descriptor for DS handle */
+	struct gsh_buffdesc ds_desc;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-        /* We support only LAYOUT4_NFSV4_1_FILES layouts */
+	/* We support only LAYOUT4_NFSV4_1_FILES layouts */
 
-        if (arg->type != LAYOUT4_NFSV4_1_FILES) {
-                LogCrit(COMPONENT_PNFS,
-                        "Unsupported layout type: %x",
-                        arg->type);
-                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
-        }
+	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
+			arg->type);
+		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+	}
 
-        /* Get basic information on the file and calculate the dimensions
-           of the layout we can support. */
+	/* Get basic information on the file and calculate the dimensions
+	   of the layout we can support. */
 
-        memset(&file_layout, 0, sizeof(struct pnfs_filelayout_layout));
+	memset(&file_layout, 0, sizeof(struct pnfs_filelayout_layout));
 
-        memcpy(&gpfs_ds_handle, myself->handle, sizeof(struct gpfs_file_handle));
+	memcpy(&gpfs_ds_handle, myself->handle,
+	       sizeof(struct gpfs_file_handle));
 
-        larg.fd = myself->u.file.fd;
-        larg.args.lg_minlength = arg->minlength;
-        larg.args.lg_sbid = arg->export_id;
-        larg.args.lg_fh = &gpfs_ds_handle;
-        larg.args.lg_iomode = res->segment.io_mode;
-        larg.handle = &gpfs_ds_handle;
-        larg.file_layout = &file_layout;
-        larg.xdr = NULL;
+	larg.fd = myself->u.file.fd;
+	larg.args.lg_minlength = arg->minlength;
+	larg.args.lg_sbid = arg->export_id;
+	larg.args.lg_fh = &gpfs_ds_handle;
+	larg.args.lg_iomode = res->segment.io_mode;
+	larg.handle = &gpfs_ds_handle;
+	larg.file_layout = &file_layout;
+	larg.xdr = NULL;
 
-        fh = (int *)&(gpfs_ds_handle.f_handle);
-        LogDebug(COMPONENT_PNFS,
-                "fh in len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-                 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
-                 gpfs_ds_handle.handle_key_size,
-                 fh[0],fh[1],fh[2],fh[3],fh[4],fh[5],fh[6],fh[7],fh[8],fh[9]);
+	fh = (int *)&(gpfs_ds_handle.f_handle);
+	LogDebug(COMPONENT_PNFS,
+		 "fh in len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
+		 gpfs_ds_handle.handle_key_size, fh[0], fh[1], fh[2], fh[3],
+		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
 
-        rc = gpfs_ganesha(OPENHANDLE_LAYOUT_GET, &larg);
-        if (rc != 0)
-        {
-          LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d \n", rc);
-          return NFS4ERR_UNKNOWN_LAYOUTTYPE;
-        }
-        fh = (int *)&(gpfs_ds_handle.f_handle);
-        LogDebug(COMPONENT_PNFS,
-                "fh out len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-                 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
-                 gpfs_ds_handle.handle_key_size,
-                 fh[0],fh[1],fh[2],fh[3],fh[4],fh[5],fh[6],fh[7],fh[8],fh[9]);
+	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_GET, &larg);
+	if (rc != 0) {
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d \n", rc);
+		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+	}
+	fh = (int *)&(gpfs_ds_handle.f_handle);
+	LogDebug(COMPONENT_PNFS,
+		 "fh out len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
+		 gpfs_ds_handle.handle_key_size, fh[0], fh[1], fh[2], fh[3],
+		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
 
-        /* We grant only one segment, and we want it back when the file is closed. */
-        res->return_on_close = true;
-        res->last_segment = true;
-        res->segment.offset = 0;
-        res->segment.length = NFS4_UINT64_MAX;
+	/* We grant only one segment, and we want it back when the file is closed. */
+	res->return_on_close = true;
+	res->last_segment = true;
+	res->segment.offset = 0;
+	res->segment.length = NFS4_UINT64_MAX;
 
-        stripe_width = file_layout.lg_stripe_unit;
-        util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
+	stripe_width = file_layout.lg_stripe_unit;
+	util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
 
-        deviceid.export_id = arg->export_id;
-        deviceid.devid = file_layout.device_id.devid;
-        /* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
+	deviceid.export_id = arg->export_id;
+	deviceid.devid = file_layout.device_id.devid;
+	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
-        LogDebug(COMPONENT_PNFS,
-           "devid expid-nodeAddr %ld-%016lx\n", deviceid.export_id, deviceid.devid);
+	LogDebug(COMPONENT_PNFS, "devid expid-nodeAddr %ld-%016lx\n",
+		 deviceid.export_id, deviceid.devid);
 
-        ds_desc.addr = &gpfs_ds_handle;
-        ds_desc.len = sizeof(struct gpfs_file_handle);
+	ds_desc.addr = &gpfs_ds_handle;
+	ds_desc.len = sizeof(struct gpfs_file_handle);
 
-        if ((nfs_status
-             = FSAL_encode_file_layout(loc_body,
-                                       &deviceid,
-                                       util,
-                                       0,
-                                       0,
-                                       obj_hdl->export->exp_entry->id,
-                                       1,
-                                       &ds_desc))) {
-                LogCrit(COMPONENT_PNFS,
-                        "Failed to encode nfsv4_1_file_layout.");
-                goto relinquish;
-        }
+	if ((nfs_status =
+	     FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
+				     obj_hdl->export->exp_entry->id, 1,
+				     &ds_desc))) {
+		LogCrit(COMPONENT_PNFS,
+			"Failed to encode nfsv4_1_file_layout.");
+		goto relinquish;
+	}
 
-        return NFS4_OK;
+	return NFS4_OK;
 
-relinquish:
+ relinquish:
 
-        /* If we failed in encoding the lo_content, relinquish what we
-           reserved for it. */
+	/* If we failed in encoding the lo_content, relinquish what we
+	   reserved for it. */
 
-        lrarg.mountdirfd = myself->u.file.fd;
-        lrarg.handle = &gpfs_ds_handle;
-        lrarg.args.lr_return_type = arg->type;
-        lrarg.args.lr_reclaim = false;
-        lrarg.args.lr_seg.clientid = 0;
-        lrarg.args.lr_seg.layout_type = arg->type;
-        lrarg.args.lr_seg.iomode = res->segment.io_mode;
-        lrarg.args.lr_seg.offset = 0;
-        lrarg.args.lr_seg.length = NFS4_UINT64_MAX;
+	lrarg.mountdirfd = myself->u.file.fd;
+	lrarg.handle = &gpfs_ds_handle;
+	lrarg.args.lr_return_type = arg->type;
+	lrarg.args.lr_reclaim = false;
+	lrarg.args.lr_seg.clientid = 0;
+	lrarg.args.lr_seg.layout_type = arg->type;
+	lrarg.args.lr_seg.iomode = res->segment.io_mode;
+	lrarg.args.lr_seg.offset = 0;
+	lrarg.args.lr_seg.length = NFS4_UINT64_MAX;
 
-        rc = gpfs_ganesha(OPENHANDLE_LAYOUT_RETURN, &lrarg);
-           LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutreturn rc %d", rc);
+	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_RETURN, &lrarg);
+	LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutreturn rc %d", rc);
 
-        return nfs_status;
+	return nfs_status;
 }
 
 /**
@@ -384,37 +363,33 @@ relinquish:
  * @return Valid error codes in RFC 5661, p. 367.
  */
 
-static nfsstat4
-layoutreturn(struct fsal_obj_handle *obj_hdl,
-             struct req_op_context *req_ctx,
-             XDR *lrf_body,
-             const struct fsal_layoutreturn_arg *arg)
+static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
+			     struct req_op_context *req_ctx, XDR * lrf_body,
+			     const struct fsal_layoutreturn_arg *arg)
 {
 	struct layoutreturn_arg larg;
 	struct gpfs_fsal_obj_handle *myself;
-        /* The private 'full' object handle */
-        struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' object handle */
+	struct gpfs_file_handle *gpfs_handle;
 
 	int rc = 0;
 
-        /* Sanity check on type */
-        if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
-                LogCrit(COMPONENT_PNFS,
-                        "Unsupported layout type: %x",
-                        arg->lo_type);
-                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
-        }
+	/* Sanity check on type */
+	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
+			arg->lo_type);
+		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+	}
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-        gpfs_handle = myself->handle;
+	gpfs_handle = myself->handle;
 
-        if (arg->dispose)
-        {
+	if (arg->dispose) {
 		larg.mountdirfd = myself->u.file.fd;
 		larg.handle = gpfs_handle;
 		larg.args.lr_return_type = arg->lo_type;
-		larg.args.lr_reclaim
-			= (arg->circumstance == circumstance_reclaim);
+		larg.args.lr_reclaim =
+		    (arg->circumstance == circumstance_reclaim);
 		larg.args.lr_seg.clientid = 0;
 		larg.args.lr_seg.layout_type = arg->lo_type;
 		larg.args.lr_seg.iomode = arg->spec_segment.io_mode;
@@ -422,13 +397,13 @@ layoutreturn(struct fsal_obj_handle *obj_hdl,
 		larg.args.lr_seg.length = arg->spec_segment.length;
 
 		rc = gpfs_ganesha(OPENHANDLE_LAYOUT_RETURN, &larg);
-		if (rc != 0)
-		{
-		   LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutreturn rc %d \n", rc);
-		   return NFS4ERR_NOMATCHING_LAYOUT;
+		if (rc != 0) {
+			LogDebug(COMPONENT_PNFS,
+				 "GPFSFSAL_layoutreturn rc %d \n", rc);
+			return NFS4ERR_NOMATCHING_LAYOUT;
 		}
-        }
-        return NFS4_OK;
+	}
+	return NFS4_OK;
 }
 
 /**
@@ -447,30 +422,27 @@ layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 
-static nfsstat4
-layoutcommit(struct fsal_obj_handle *obj_hdl,
-             struct req_op_context *req_ctx,
-             XDR *lou_body,
-             const struct fsal_layoutcommit_arg *arg,
-             struct fsal_layoutcommit_res *res)
+static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
+			     struct req_op_context *req_ctx, XDR * lou_body,
+			     const struct fsal_layoutcommit_arg *arg,
+			     struct fsal_layoutcommit_res *res)
 {
 	struct gpfs_fsal_obj_handle *myself;
-        /* The private 'full' object handle */
-        struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' object handle */
+	struct gpfs_file_handle *gpfs_handle;
 
 	int rc = 0;
 	struct layoutcommit_arg targ;
 
-        /* Sanity check on type */
-        if (arg->type != LAYOUT4_NFSV4_1_FILES) {
-                LogCrit(COMPONENT_PNFS,
-                        "Unsupported layout type: %x",
-                        arg->type);
-                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
-        }
+	/* Sanity check on type */
+	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
+			arg->type);
+		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+	}
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-        gpfs_handle = myself->handle;
+	gpfs_handle = myself->handle;
 
 	targ.mountdirfd = myself->u.file.fd;
 	targ.handle = gpfs_handle;
@@ -478,34 +450,30 @@ layoutcommit(struct fsal_obj_handle *obj_hdl,
 	targ.offset = arg->segment.offset;
 	targ.length = arg->segment.length;
 
-	targ.reclaim = arg->reclaim;           /* True if this is a reclaim commit */
-	targ.new_offset = arg->new_offset;     /* True if the client has suggested a new offset */
+	targ.reclaim = arg->reclaim;	/* True if this is a reclaim commit */
+	targ.new_offset = arg->new_offset;	/* True if the client has suggested a new offset */
 	if (arg->new_offset)
-	  targ.last_write = arg->last_write;   /* The offset of the last byte written */
+		targ.last_write = arg->last_write;	/* The offset of the last byte written */
 
-	targ.time_changed = arg->time_changed; /* True if provided a new mtime */
-	if (arg->time_changed)
-	{
-	  targ.new_time.t_sec = arg->new_time.seconds;
-	  targ.new_time.t_nsec = arg->new_time.nseconds;
+	targ.time_changed = arg->time_changed;	/* True if provided a new mtime */
+	if (arg->time_changed) {
+		targ.new_time.t_sec = arg->new_time.seconds;
+		targ.new_time.t_nsec = arg->new_time.nseconds;
 	}
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_COMMIT, &targ);
-	if (rc != 0)
-	{
-	  LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d \n", rc);
-	  return posix2nfs4_error(-rc);
+	if (rc != 0) {
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d \n", rc);
+		return posix2nfs4_error(-rc);
 	}
 	res->size_supplied = false;
 	res->commit_done = true;
 
-        return NFS4_OK;
+	return NFS4_OK;
 }
 
-
-void
-handle_ops_pnfs(struct fsal_obj_ops *ops)
+void handle_ops_pnfs(struct fsal_obj_ops *ops)
 {
-        ops->layoutget = layoutget;
-        ops->layoutreturn = layoutreturn;
-        ops->layoutcommit = layoutcommit;
+	ops->layoutget = layoutget;
+	ops->layoutreturn = layoutreturn;
+	ops->layoutcommit = layoutcommit;
 }

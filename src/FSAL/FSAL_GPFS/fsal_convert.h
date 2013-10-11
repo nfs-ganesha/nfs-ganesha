@@ -49,7 +49,7 @@ int fsal2posix_testperm(fsal_accessflags_t testperm);
  * Converts POSIX attributes (struct stat) to FSAL attributes (fsal_attrib_list_t)
  */
 fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
-                                    struct attrlist * p_fsalattr_out);
+				    struct attrlist *p_fsalattr_out);
 
 /** converts hpss object type to fsal object type. */
 object_file_type_t posix2fsal_type(mode_t posix_type_in);
@@ -66,11 +66,10 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
  * The routine is in include/FSAL/fsal_convert.h 
  *
  */
-static inline struct timespec
-posix2fsal_time(time_t tsec, time_t nsec)
+static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-    struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
-    return (ts);
+	struct timespec ts = {.tv_sec = tsec,.tv_nsec = nsec };
+	return (ts);
 }
 
 #define high32m( a ) ( (unsigned int)( a >> 32 ) )

@@ -49,64 +49,65 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
-                          const char * p_filename,                     /* IN */
-                          const struct req_op_context *p_context,      /* IN */
-                          uint32_t accessmode,                        /* IN */
-                          struct gpfs_file_handle * p_object_handle,  /* OUT */
-                          struct attrlist * p_object_attributes)    /* IN/OUT */
-{
-  fsal_status_t status;
-  int mount_fd;
-  mode_t unix_mode;
-  struct gpfs_fsal_obj_handle *gpfs_hdl;
+fsal_status_t GPFSFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
+			      const char *p_filename,	/* IN */
+			      const struct req_op_context * p_context,	/* IN */
+			      uint32_t accessmode,	/* IN */
+			      struct gpfs_file_handle * p_object_handle,	/* OUT */
+			      struct attrlist * p_object_attributes)
+{				/* IN/OUT */
+	fsal_status_t status;
+	int mount_fd;
+	mode_t unix_mode;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
 
-  /* sanity checks.
-   * note : object_attributes is optional.
-   */
-  if(!dir_hdl || !p_context || !p_object_handle || !p_filename)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : object_attributes is optional.
+	 */
+	if (!dir_hdl || !p_context || !p_object_handle || !p_filename)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-  mount_fd = gpfs_get_root_fd(dir_hdl->export);
+	gpfs_hdl =
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
-  /* convert fsal mode to unix mode. */
-  unix_mode = fsal2unix_mode(accessmode);
+	/* convert fsal mode to unix mode. */
+	unix_mode = fsal2unix_mode(accessmode);
 
-  /* Apply umask */
-  unix_mode = unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	/* Apply umask */
+	unix_mode =
+	    unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 
-  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
+	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
-  /* call to filesystem */
+	/* call to filesystem */
 
-  fsal_set_credentials(p_context->creds);
-  status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
-                                p_filename, unix_mode | S_IFREG, 0,
-                                p_object_handle, NULL);
-  fsal_restore_ganesha_credentials();
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	fsal_set_credentials(p_context->creds);
+	status =
+	    fsal_internal_create(mount_fd, gpfs_hdl->handle, p_filename,
+				 unix_mode | S_IFREG, 0, p_object_handle, NULL);
+	fsal_restore_ganesha_credentials();
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
-  /* retrieve file attributes */
-  if(p_object_attributes)
-    {
-      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, p_object_handle,
-                                 p_object_attributes);
+	/* retrieve file attributes */
+	if (p_object_attributes) {
+		status =
+		    GPFSFSAL_getattrs(dir_hdl->export, p_context,
+				      p_object_handle, p_object_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->mask);
-          FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
-        }
+		/* on error, we set a special bit in the mask. */
+		if (FSAL_IS_ERROR(status)) {
+			FSAL_CLEAR_MASK(p_object_attributes->mask);
+			FSAL_SET_MASK(p_object_attributes->mask,
+				      ATTR_RDATTR_ERR);
+		}
 
-    }
-
-  // error injection to test DRC
-  //sleep(61);
-  /* OK */
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+	// error injection to test DRC
+	//sleep(61);
+	/* OK */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -139,63 +140,65 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN */
-                         const char * p_dirname,                         /* IN */
-                         const struct req_op_context *p_context,          /* IN */
-                         uint32_t accessmode,                           /* IN */
-                         struct gpfs_file_handle * p_object_handle,     /* OUT */
-                         struct attrlist * p_object_attributes)      /* IN/OUT */
-{
+fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
+			     const char *p_dirname,	/* IN */
+			     const struct req_op_context * p_context,	/* IN */
+			     uint32_t accessmode,	/* IN */
+			     struct gpfs_file_handle * p_object_handle,	/* OUT */
+			     struct attrlist * p_object_attributes)
+{				/* IN/OUT */
 /*   int setgid_bit = 0; */
-  mode_t unix_mode;
-  fsal_status_t status;
-  int mount_fd;
-  struct gpfs_fsal_obj_handle *gpfs_hdl;
+	mode_t unix_mode;
+	fsal_status_t status;
+	int mount_fd;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
 
-  /* sanity checks.
-   * note : object_attributes is optional.
-   */
-  if(!dir_hdl || !p_context || !p_object_handle || !p_dirname)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : object_attributes is optional.
+	 */
+	if (!dir_hdl || !p_context || !p_object_handle || !p_dirname)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_hdl =
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-  mount_fd = gpfs_get_root_fd(dir_hdl->export);
+	mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
-  /* convert FSAL mode to unix mode. */
-  unix_mode = fsal2unix_mode(accessmode);
+	/* convert FSAL mode to unix mode. */
+	unix_mode = fsal2unix_mode(accessmode);
 
-  /* Apply umask */
-  unix_mode = unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	/* Apply umask */
+	unix_mode =
+	    unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 
-  /* build new entry path */
+	/* build new entry path */
 
-  /* creates the directory and get its handle */
+	/* creates the directory and get its handle */
 
-  fsal_set_credentials(p_context->creds);
-  status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
-                                p_dirname, unix_mode | S_IFDIR, 0,
-                                p_object_handle, NULL);
-  fsal_restore_ganesha_credentials();
+	fsal_set_credentials(p_context->creds);
+	status =
+	    fsal_internal_create(mount_fd, gpfs_hdl->handle, p_dirname,
+				 unix_mode | S_IFDIR, 0, p_object_handle, NULL);
+	fsal_restore_ganesha_credentials();
 
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
-  /* retrieve file attributes */
-  if(p_object_attributes)
-    {
-      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, p_object_handle,
-                                 p_object_attributes);
+	/* retrieve file attributes */
+	if (p_object_attributes) {
+		status =
+		    GPFSFSAL_getattrs(dir_hdl->export, p_context,
+				      p_object_handle, p_object_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->mask);
-          FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
-        }
-    }
-  /* OK */
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		/* on error, we set a special bit in the mask. */
+		if (FSAL_IS_ERROR(status)) {
+			FSAL_CLEAR_MASK(p_object_attributes->mask);
+			FSAL_SET_MASK(p_object_attributes->mask,
+				      ATTR_RDATTR_ERR);
+		}
+	}
+	/* OK */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -224,63 +227,65 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,            /* IN *
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,   /* IN */
-                        struct gpfs_file_handle  *target_handle,   /* IN */
-                        const char  *p_link_name,                  /* IN */
-                        const struct req_op_context *p_context,     /* IN */
-                        struct attrlist * p_attributes)            /* IN/OUT */
-{
-  int mount_fd;
-  fsal_status_t status;
-  struct gpfs_fsal_obj_handle *dest_dir;
+fsal_status_t GPFSFSAL_link(struct fsal_obj_handle * destdir_hdl,	/* IN */
+			    struct gpfs_file_handle * target_handle,	/* IN */
+			    const char *p_link_name,	/* IN */
+			    const struct req_op_context * p_context,	/* IN */
+			    struct attrlist * p_attributes)
+{				/* IN/OUT */
+	int mount_fd;
+	fsal_status_t status;
+	struct gpfs_fsal_obj_handle *dest_dir;
 
-  /* sanity checks.
-   * note : attributes is optional.
-   */
-  if(!destdir_hdl || !target_handle || !p_context || !p_link_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : attributes is optional.
+	 */
+	if (!destdir_hdl || !target_handle || !p_context || !p_link_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  dest_dir = container_of(destdir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	dest_dir =
+	    container_of(destdir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-  mount_fd = gpfs_get_root_fd(destdir_hdl->export);
+	mount_fd = gpfs_get_root_fd(destdir_hdl->export);
 
-  /* Tests if hardlinking is allowed by configuration. */
+	/* Tests if hardlinking is allowed by configuration. */
 
-  if(!destdir_hdl->export->ops->fs_supports(destdir_hdl->export, fso_link_support))
-    return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	if (!destdir_hdl->export->ops->
+	    fs_supports(destdir_hdl->export, fso_link_support))
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
-  /* Create the link on the filesystem */
+	/* Create the link on the filesystem */
 
-  fsal_set_credentials(p_context->creds);
-  status = fsal_internal_link_fh(mount_fd, target_handle, dest_dir->handle,
-                                 p_link_name);
+	fsal_set_credentials(p_context->creds);
+	status =
+	    fsal_internal_link_fh(mount_fd, target_handle, dest_dir->handle,
+				  p_link_name);
 
-  fsal_restore_ganesha_credentials();
+	fsal_restore_ganesha_credentials();
 
-  if(FSAL_IS_ERROR(status))
-    goto out_status_fsal_err;
+	if (FSAL_IS_ERROR(status))
+		goto out_status_fsal_err;
 
-  /* optionnaly get attributes */
+	/* optionnaly get attributes */
 
-  if(p_attributes)
-    {
-      status = GPFSFSAL_getattrs(destdir_hdl->export, p_context, target_handle,
-                                 p_attributes);
+	if (p_attributes) {
+		status =
+		    GPFSFSAL_getattrs(destdir_hdl->export, p_context,
+				      target_handle, p_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_attributes->mask);
-          FSAL_SET_MASK(p_attributes->mask, ATTR_RDATTR_ERR);
-        }
-    }
+		/* on error, we set a special bit in the mask. */
+		if (FSAL_IS_ERROR(status)) {
+			FSAL_CLEAR_MASK(p_attributes->mask);
+			FSAL_SET_MASK(p_attributes->mask, ATTR_RDATTR_ERR);
+		}
+	}
 
-  /* OK */
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	/* OK */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-out_status_fsal_err:
+ out_status_fsal_err:
 
-  return(status);
+	return (status);
 }
 
 /**
@@ -316,97 +321,97 @@ out_status_fsal_err:
  *        - Another error code if an error occurred.
  *
  */
-fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,       /* IN */
-                          const char * p_node_name,                  /* IN */
-                          const struct req_op_context *p_context,     /* IN */
-                          uint32_t accessmode,                       /* IN */
-                          mode_t nodetype,                           /* IN */
-                          fsal_dev_t * dev,                          /* IN */
-                          struct gpfs_file_handle * p_object_handle, /* OUT */
-                          struct attrlist * node_attributes          /* IN/OUT */
+fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle * dir_hdl,	/* IN */
+			      const char *p_node_name,	/* IN */
+			      const struct req_op_context * p_context,	/* IN */
+			      uint32_t accessmode,	/* IN */
+			      mode_t nodetype,	/* IN */
+			      fsal_dev_t * dev,	/* IN */
+			      struct gpfs_file_handle * p_object_handle,	/* OUT */
+			      struct attrlist * node_attributes	/* IN/OUT */
     )
 {
-  fsal_status_t status;
+	fsal_status_t status;
 /*   int flags=(O_RDONLY|O_NOFOLLOW); */
-  int mount_fd;
+	int mount_fd;
 
-  mode_t unix_mode = 0;
-  dev_t unix_dev = 0;
-  struct gpfs_fsal_obj_handle *gpfs_hdl;
+	mode_t unix_mode = 0;
+	dev_t unix_dev = 0;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
 
-  /* sanity checks.
-   * note : link_attributes is optional.
-   */
-  if(!dir_hdl || !p_context || !p_node_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : link_attributes is optional.
+	 */
+	if (!dir_hdl || !p_context || !p_node_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-  mount_fd = gpfs_get_root_fd(dir_hdl->export);
+	gpfs_hdl =
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
-  unix_mode = fsal2unix_mode(accessmode);
+	unix_mode = fsal2unix_mode(accessmode);
 
-  /* Apply umask */
-  unix_mode = unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	/* Apply umask */
+	unix_mode =
+	    unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 
-  switch (nodetype)
-    {
-    case BLOCK_FILE:
-      if(!dev)
-        return fsalstat(ERR_FSAL_FAULT, 0);
-      unix_mode |= S_IFBLK;
-      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
-      break;
+	switch (nodetype) {
+	case BLOCK_FILE:
+		if (!dev)
+			return fsalstat(ERR_FSAL_FAULT, 0);
+		unix_mode |= S_IFBLK;
+		unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
+		break;
 
-    case CHARACTER_FILE:
-      if(!dev)
-        return fsalstat(ERR_FSAL_FAULT, 0);
-      unix_mode |= S_IFCHR;
-      unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
-      break;
+	case CHARACTER_FILE:
+		if (!dev)
+			return fsalstat(ERR_FSAL_FAULT, 0);
+		unix_mode |= S_IFCHR;
+		unix_dev = (dev->major << 20) | (dev->minor & 0xFFFFF);
+		break;
 
-    case SOCKET_FILE:
-      unix_mode |= S_IFSOCK;
-      break;
+	case SOCKET_FILE:
+		unix_mode |= S_IFSOCK;
+		break;
 
-    case FIFO_FILE:
-      unix_mode |= S_IFIFO;
+	case FIFO_FILE:
+		unix_mode |= S_IFIFO;
 /*       flags = (O_RDONLY | O_NOFOLLOW | O_NONBLOCK); */
-      break;
+		break;
 
-    default:
-      LogMajor(COMPONENT_FSAL,
-               "Invalid node type in FSAL_mknode: %d", nodetype);
-      return fsalstat(ERR_FSAL_INVAL, 0);
-    }
+	default:
+		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
+			 nodetype);
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
 
-  fsal_set_credentials(p_context->creds);
-  status = fsal_internal_create(mount_fd, gpfs_hdl->handle,
-                                p_node_name, unix_mode, unix_dev,
-                                p_object_handle, NULL);
+	fsal_set_credentials(p_context->creds);
+	status =
+	    fsal_internal_create(mount_fd, gpfs_hdl->handle, p_node_name,
+				 unix_mode, unix_dev, p_object_handle, NULL);
 
-  fsal_restore_ganesha_credentials();
+	fsal_restore_ganesha_credentials();
 
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
-  /* Fills the attributes if needed */
-  if(node_attributes)
-    {
+	/* Fills the attributes if needed */
+	if (node_attributes) {
 
-      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
-                                 node_attributes);
+		status =
+		    GPFSFSAL_getattrs(dir_hdl->export, p_context,
+				      gpfs_hdl->handle, node_attributes);
 
-      /* on error, we set a special bit in the mask. */
+		/* on error, we set a special bit in the mask. */
 
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(node_attributes->mask);
-          FSAL_SET_MASK(node_attributes->mask, ATTR_RDATTR_ERR);
-        }
+		if (FSAL_IS_ERROR(status)) {
+			FSAL_CLEAR_MASK(node_attributes->mask);
+			FSAL_SET_MASK(node_attributes->mask, ATTR_RDATTR_ERR);
+		}
 
-    }
+	}
 
-  /* Finished */
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	/* Finished */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

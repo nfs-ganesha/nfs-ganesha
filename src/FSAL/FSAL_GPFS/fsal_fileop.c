@@ -77,25 +77,29 @@
  *        ERR_FSAL_IO, ...
  */
 
-#if 0 //??? not needed for now
-fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,      /* IN */
-                                fsal_name_t * filename, /* IN */
-                                fsal_op_context_t * p_context,  /* IN */
-                                fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+#if 0				//??? not needed for now
+fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,	/* IN */
+				    fsal_name_t * filename,	/* IN */
+				    fsal_op_context_t * p_context,	/* IN */
+				    fsal_openflags_t openflags,	/* IN */
+				    fsal_file_t * file_descriptor,	/* OUT */
+				    fsal_attrib_list_t *
+				    file_attributes /* [ IN/OUT ] */ )
 {
-  fsal_status_t fsal_status;
-  struct gpfs_file_handle filehandle;
+	fsal_status_t fsal_status;
+	struct gpfs_file_handle filehandle;
 
-  if(!dirhandle || !filename || !p_context || !file_descriptor)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!dirhandle || !filename || !p_context || !file_descriptor)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
+	fsal_status =
+	    FSAL_lookup(dirhandle, filename, p_context, &filehandle,
+			file_attributes);
+	if (FSAL_IS_ERROR(fsal_status))
+		return fsal_status;
 
-  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
+	return FSAL_open(&filehandle, p_context, openflags, file_descriptor,
+			 file_attributes);
 }
 #endif
 
@@ -129,64 +133,62 @@ fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,      /*
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,        /* IN */
-                            const struct req_op_context *p_context, /* IN */
-                            fsal_openflags_t openflags,            /* IN */
-                            int * file_desc,                      /* OUT */
-                            struct attrlist *p_file_attributes  /* IN/OUT */
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle * obj_hdl,	/* IN */
+			    const struct req_op_context * p_context,	/* IN */
+			    fsal_openflags_t openflags,	/* IN */
+			    int *file_desc,	/* OUT */
+			    struct attrlist * p_file_attributes	/* IN/OUT */
     )
 {
 
-  int rc;
-  fsal_status_t status;
-  int posix_flags = 0;
-  struct gpfs_fsal_obj_handle *myself;
-  int mntfd;
+	int rc;
+	fsal_status_t status;
+	int posix_flags = 0;
+	struct gpfs_fsal_obj_handle *myself;
+	int mntfd;
 
-  /* sanity checks.
-   * note : file_attributes is optional.
-   */
-  if(!obj_hdl || !file_desc)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity checks.
+	 * note : file_attributes is optional.
+	 */
+	if (!obj_hdl || !file_desc)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-  mntfd = gpfs_get_root_fd(obj_hdl->export);
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	mntfd = gpfs_get_root_fd(obj_hdl->export);
 
+	/* convert fsal open flags to posix open flags */
+	rc = fsal2posix_openflags(openflags, &posix_flags);
+	/* flags conflicts. */
+	if (rc) {
+		LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X",
+			openflags);
+		return fsalstat(rc, 0);
+	}
 
-  /* convert fsal open flags to posix open flags */
-  rc = fsal2posix_openflags(openflags, &posix_flags);
-  /* flags conflicts. */
-  if(rc)
-    {
-      LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
-      return fsalstat(rc, 0);
-    }
+	status =
+	    fsal_internal_handle2fd(mntfd, myself->handle, file_desc,
+				    posix_flags);
 
-  status = fsal_internal_handle2fd(mntfd, myself->handle, file_desc,
-                                   posix_flags);
+	if (FSAL_IS_ERROR(status)) {
+		*file_desc = 0;
+		return (status);
+	}
 
-  if(FSAL_IS_ERROR(status))
-    {
-      *file_desc = 0;
-      return(status);
-    }
+	/* output attributes */
+	if (p_file_attributes) {
 
-  /* output attributes */
-  if(p_file_attributes)
-    {
+		p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
+		status =
+		    GPFSFSAL_getattrs(obj_hdl->export, p_context,
+				      myself->handle, p_file_attributes);
+		if (FSAL_IS_ERROR(status)) {
+			*file_desc = 0;
+			close(*file_desc);
+			return (status);
+		}
+	}
 
-      p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
-      status = GPFSFSAL_getattrs(obj_hdl->export, p_context, myself->handle,
-                                 p_file_attributes);
-      if(FSAL_IS_ERROR(status))
-        {
-          *file_desc = 0;
-          close(*file_desc);
-          return(status);
-        }
-    }
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -211,44 +213,44 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(int fd,               /* IN */
-                        uint64_t offset,          /* IN */
-                        size_t buffer_size,       /* IN */
-                        caddr_t buffer,           /* OUT */
-                        size_t * p_read_amount,   /* OUT */
-                        bool * p_end_of_file)     /* OUT */
-{
-  struct read_arg rarg;
-  ssize_t nb_read;
-  int errsv = 0;
+fsal_status_t GPFSFSAL_read(int fd,	/* IN */
+			    uint64_t offset,	/* IN */
+			    size_t buffer_size,	/* IN */
+			    caddr_t buffer,	/* OUT */
+			    size_t * p_read_amount,	/* OUT */
+			    bool * p_end_of_file)
+{				/* OUT */
+	struct read_arg rarg;
+	ssize_t nb_read;
+	int errsv = 0;
 
-  /* sanity checks. */
+	/* sanity checks. */
 
-  if(!buffer || !p_read_amount || !p_end_of_file)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!buffer || !p_read_amount || !p_end_of_file)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
+	rarg.mountdirfd = fd;
+	rarg.fd = fd;
+	rarg.bufP = buffer;
+	rarg.offset = offset;
+	rarg.length = buffer_size;
 
-  rarg.mountdirfd = fd;
-  rarg.fd = fd;
-  rarg.bufP = buffer;
-  rarg.offset = offset;
-  rarg.length = buffer_size;
+	/* read operation */
 
-  /* read operation */
+	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
+	errsv = errno;
 
-  nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
-  errsv = errno;
+	if (nb_read == -1)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	else if (nb_read == 0 || nb_read < buffer_size)
+		*p_end_of_file = TRUE;
 
-  if(nb_read == -1)
-    return fsalstat(posix2fsal_error(errsv), errsv);
-  else if(nb_read == 0 || nb_read < buffer_size)
-    *p_end_of_file = TRUE;
+	*p_read_amount = nb_read;
 
-  *p_read_amount = nb_read;
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
+
 /**
  * FSAL_write:
  * Perform a write operation on an opened file.
@@ -267,44 +269,44 @@ fsal_status_t GPFSFSAL_read(int fd,               /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_write(int fd,             /* IN */
-                        uint64_t offset,         /* IN */
-                        size_t buffer_size,      /* IN */
-                        caddr_t buffer,          /* IN */
-                        size_t *p_write_amount,  /* OUT */
-                             bool *fsal_stable,       /* IN/OUT */
-                             const struct req_op_context *p_context)
+fsal_status_t GPFSFSAL_write(int fd,	/* IN */
+			     uint64_t offset,	/* IN */
+			     size_t buffer_size,	/* IN */
+			     caddr_t buffer,	/* IN */
+			     size_t * p_write_amount,	/* OUT */
+			     bool * fsal_stable,	/* IN/OUT */
+			     const struct req_op_context * p_context)
 {
-  struct write_arg warg;
-  ssize_t nb_write;
-  int errsv = 0;
+	struct write_arg warg;
+	ssize_t nb_write;
+	int errsv = 0;
 
-  /* sanity checks. */
+	/* sanity checks. */
 
-  if(!buffer || !p_write_amount)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!buffer || !p_write_amount)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  warg.mountdirfd = fd;
-  warg.fd = fd;
-  warg.bufP = buffer;
-  warg.offset = offset;
-  warg.length = buffer_size;
-  warg.stability_wanted = *fsal_stable;
-  warg.stability_got = (uint32_t *)fsal_stable;
-  /* read operation */
+	warg.mountdirfd = fd;
+	warg.fd = fd;
+	warg.bufP = buffer;
+	warg.offset = offset;
+	warg.length = buffer_size;
+	warg.stability_wanted = *fsal_stable;
+	warg.stability_got = (uint32_t *) fsal_stable;
+	/* read operation */
 
-  fsal_set_credentials(p_context->creds);
+	fsal_set_credentials(p_context->creds);
 
-  nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
-  errsv = errno;
+	nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
+	errsv = errno;
 
-  fsal_restore_ganesha_credentials();
+	fsal_restore_ganesha_credentials();
 
-  if(nb_write == -1)
-    return fsalstat(posix2fsal_error(errsv), errsv);
+	if (nb_write == -1)
+		return fsalstat(posix2fsal_error(errsv), errsv);
 
-  *p_write_amount = nb_write;
+	*p_write_amount = nb_write;
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

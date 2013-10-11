@@ -82,31 +82,27 @@
 #include <gpfs.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /* Header of the parameter area passed to gpfs_fcntl */
-typedef struct
-{
-  int           totalLength;    /* length of this structure plus the sum of
-                                   the lengths of all structures in this
-                                   gpfs_fcntl argument */
-  int           fcntlVersion;   /* version number: GPFS_FCNTL_CURRENT_VERSION */
-  int           errorOffset;    /* Returned value giving offset into parameter
-                                   area of the structure to which errno
-                                   pertains.  Only set if errno is set. */
-  int           fcntlReserved;  /* not used, should be set to 0 */
-} gpfsFcntlHeader_t;
+	typedef struct {
+		int totalLength;	/* length of this structure plus the sum of
+					   the lengths of all structures in this
+					   gpfs_fcntl argument */
+		int fcntlVersion;	/* version number: GPFS_FCNTL_CURRENT_VERSION */
+		int errorOffset;	/* Returned value giving offset into parameter
+					   area of the structure to which errno
+					   pertains.  Only set if errno is set. */
+		int fcntlReserved;	/* not used, should be set to 0 */
+	} gpfsFcntlHeader_t;
 
 /* Moved it here from tshints.C, since function tschattr also uses it while 
  * filling in errReason into argument structure. */
-typedef struct
-{
-    int structLen;    /* length of the entire argument */
-    int structType;   /* identifier of the hint */
-} genericStruct_t;
-
+	typedef struct {
+		int structLen;	/* length of the entire argument */
+		int structType;	/* identifier of the hint */
+	} genericStruct_t;
 
 /* Interface version number (fcntlVersion field of gpfsFcntlHeader_t) */
 #define GPFS_FCNTL_CURRENT_VERSION      1
@@ -116,9 +112,8 @@ typedef struct
 
 /* Maximum length of a name arguement passed to or returned from gpfs_fcntl.
    Length of buffer must be a multiple of 8. */
-#define GPFS_FCNTL_MAX_NAME_BUFFER  1024 
+#define GPFS_FCNTL_MAX_NAME_BUFFER  1024
 #define GPFS_FCNTL_MIN_NAME_BUFFER  8
-
 
 /* Definitions of structType fields for GPFS hints.  Hints can be ignored
    by GPFS without affecting correct operation, although performance might
@@ -140,7 +135,6 @@ typedef struct
 #define GPFS_FCNTL_RESTRIPE_DATA     2007
 #define GPFS_FCNTL_RESTRIPE_RANGE    2008
 
-
 /* Definitions of structType fileds for GPFS inquiries. Inquiries merely
    return GPFS attributes of existing files. */
 #define GPFS_FCNTL_GET_REPLICATION       3001
@@ -149,45 +143,39 @@ typedef struct
 #define GPFS_FCNTL_GET_SNAPSHOTNAME      3004
 #define GPFS_FCNTL_GET_DATABLKDISKIDX    3005
 
-
 /* Structures for specifying the various gpfs_fnctl hints */
 
 /* Access range hint:  The application will soon access file offsets within
    the given range, and will not access offsets outside the range.  Violating
    this hint may produce worse performance than if no hint was specified. */
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* hint identifier: GPFS_ACCESS_RANGE */
-  long long     start;          /* start offset in bytes from beginning of file */
-  long long     length;         /* length of range; 0 indicates to end of file */
-  int           isWrite;        /* 0 - read access, 1 - write access */
-  char          padding[4];
-} gpfsAccessRange_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* hint identifier: GPFS_ACCESS_RANGE */
+		long long start;	/* start offset in bytes from beginning of file */
+		long long length;	/* length of range; 0 indicates to end of file */
+		int isWrite;	/* 0 - read access, 1 - write access */
+		char padding[4];
+	} gpfsAccessRange_t;
 
 /* Free range hint: the application will no longer access file offsets
    within the given range, so GPFS is free to flush those file offsets from
    its cache. */
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* hint identifier: GPFS_FREE_RANGE */
-  long long     start;          /* start offset in bytes from beginning of file */
-  long long     length;         /* length of range; 0 indicates to end of file */
-} gpfsFreeRange_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* hint identifier: GPFS_FREE_RANGE */
+		long long start;	/* start offset in bytes from beginning of file */
+		long long length;	/* length of range; 0 indicates to end of file */
+	} gpfsFreeRange_t;
 
 /* Format of accRangeArray and relRangeArray entries used by
    GPFS_MULTIPLE_ACCESS_RANGE hint */
-typedef struct
-{
-  long long     blockNumber;    /* data block number to access */
-  int           start;          /* start of range (from beginning of block) */
-  int           length;         /* number of bytes in the range  */
-  int           isWrite;        /* 0 - read access, 1 - write access */
-  char          padding[4];
-} gpfsRangeArray_t;
+	typedef struct {
+		long long blockNumber;	/* data block number to access */
+		int start;	/* start of range (from beginning of block) */
+		int length;	/* number of bytes in the range  */
+		int isWrite;	/* 0 - read access, 1 - write access */
+		char padding[4];
+	} gpfsRangeArray_t;
 
 /* Multiple access range hint: This hint is used to drive application-defined
    prefetching and writebehind.  The application will soon access the
@@ -201,30 +189,25 @@ typedef struct
    released via relRangeArray, or else GPFS will stop prefetching blocks
    for this file. */
 #define GPFS_MAX_RANGE_COUNT 8
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* hint identifier: GPFS_MULTIPLE_ACCESS_RANGE */
-  int           accRangeCnt;    /* on input, number of ranges in accRangeArray
-                                   on output, number of processed ranges (the
-                                   first n of the given ranges) */
-  int           relRangeCnt;    /* number of ranges in relRangeArray */
-  gpfsRangeArray_t accRangeArray[GPFS_MAX_RANGE_COUNT]; /* requested ranges */
-  gpfsRangeArray_t relRangeArray[GPFS_MAX_RANGE_COUNT]; /* ranges to release */
-} gpfsMultipleAccessRange_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* hint identifier: GPFS_MULTIPLE_ACCESS_RANGE */
+		int accRangeCnt;	/* on input, number of ranges in accRangeArray
+					   on output, number of processed ranges (the
+					   first n of the given ranges) */
+		int relRangeCnt;	/* number of ranges in relRangeArray */
+		gpfsRangeArray_t accRangeArray[GPFS_MAX_RANGE_COUNT];	/* requested ranges */
+		gpfsRangeArray_t relRangeArray[GPFS_MAX_RANGE_COUNT];	/* ranges to release */
+	} gpfsMultipleAccessRange_t;
 
 /* Clear file cache hint: the application expects to no longer access any
    portion of the file, so GPFS should flush and invalidate any cached
    data belonging to this file.  This may avoid synchronous cache invalidations
    on later uses of the file by other nodes. */
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* hint identifier: GPFS_CLEAR_FILE_CACHE */
-} gpfsClearFileCache_t;
-
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* hint identifier: GPFS_CLEAR_FILE_CACHE */
+	} gpfsClearFileCache_t;
 
 /* Structures for specifying the various gpfs_fnctl directives */
 
@@ -232,12 +215,10 @@ typedef struct
    against this file.  Does not affect the contents of the GPFS file cache.
    Note that this directive does not cancel the effect of other directives,
    such as GPFS_DATA_SHIP_START. */
-typedef struct  /* cancelAccessHints hint */
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* hint identifier: GPFS_CANCEL_HINTS */
-} gpfsCancelHints_t;
-
+	typedef struct {	/* cancelAccessHints hint */
+		int structLen;	/* length of this structure */
+		int structType;	/* hint identifier: GPFS_CANCEL_HINTS */
+	} gpfsCancelHints_t;
 
 /* Initiate data shipping mode: once all participating threads have issued
    this hint for a file, GPFS enters a mode where it partitions the blocks
@@ -248,16 +229,14 @@ typedef struct  /* cancelAccessHints hint */
    invalidations will be avoided.  Because an application level read or
    write may be split across several agents, Posix read/write file atomicity
    is not enforced while in data shipping mode. */
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* directive identifier: GPFS_DATA_SHIP_START */
-  int           numInstances;   /* number of open file instances collaborating
-                                   to operate on the file.  These may be on
-                                   any number of nodes. */
-  int           reserved;       /* not used, should be set to 0 */
-} gpfsDataShipStart_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: GPFS_DATA_SHIP_START */
+		int numInstances;	/* number of open file instances collaborating
+					   to operate on the file.  These may be on
+					   any number of nodes. */
+		int reserved;	/* not used, should be set to 0 */
+	} gpfsDataShipStart_t;
 
 /* Specify the agent mapping for data shipping: tells GPFS which agent
    nodes to use for data shipping.  This directive can only appear in a
@@ -302,39 +281,37 @@ typedef struct
   within a larger structure that contains the necessary gpfsFcntlHeader_t
   and gpfsDataShipStart_t structures. */
 #define GPFS_MAX_DS_AGENT_NODES 2048
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* directive identifier: GPFS_DATA_SHIP_MAP */
-  int           partitionSize;  /* number of contiguous bytes per server */
-  int           agentCount;     /* number of entries used in the
-                                   agentNodeNumber array */
-  int           agentNodeNumber[GPFS_MAX_DS_AGENT_NODES]; 
-                                /* data ship agent node numbers, using 
-                                   GPFS configuration data repository
-                                   node numbers */
-} gpfsDataShipMap_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: GPFS_DATA_SHIP_MAP */
+		int partitionSize;	/* number of contiguous bytes per server */
+		int agentCount;	/* number of entries used in the
+				   agentNodeNumber array */
+		int agentNodeNumber[GPFS_MAX_DS_AGENT_NODES];
+		/* data ship agent node numbers, using 
+		   GPFS configuration data repository
+		   node numbers */
+	} gpfsDataShipMap_t;
 
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* directive identifier: GPFS_DATA_SHIP_MAP */
-  int           partitionSize;  /* number of contiguous bytes per server */
-  int           agentCount;     /* number of entries used in the
-                                   agentNodeNumber array */
-  int           agentNodeNumber[2]; 
-                                /* data ship agent node numbers, using 
-                                   GPFS configuration data repository
-                                   node numbers.  The actual size of this
-                                   array will be inferred from structLen.
-                                   The number of elements in the array must
-                                   be even, so that the total structure size
-                                   is a multiple of 8.  The number of
-                                   entries used in the array is given by
-                                   agentCount, and may be any positive value
-                                   less than or equal to the size of the
-                                   array. */
-} gpfsDataShipMapVariable_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: GPFS_DATA_SHIP_MAP */
+		int partitionSize;	/* number of contiguous bytes per server */
+		int agentCount;	/* number of entries used in the
+				   agentNodeNumber array */
+		int agentNodeNumber[2];
+		/* data ship agent node numbers, using 
+		   GPFS configuration data repository
+		   node numbers.  The actual size of this
+		   array will be inferred from structLen.
+		   The number of elements in the array must
+		   be even, so that the total structure size
+		   is a multiple of 8.  The number of
+		   entries used in the array is given by
+		   agentCount, and may be any positive value
+		   less than or equal to the size of the
+		   array. */
+	} gpfsDataShipMapVariable_t;
 
 /* Compute the size in bytes of a gpfsDataShipMapVariable_t structure large
    enough to hold _nAgents data shipping agent node numbers */
@@ -342,58 +319,52 @@ typedef struct
   ( sizeof(gpfsDataShipMapVariable_t) - 2*sizeof(int) + \
     ((((_nAgents)+1)/2)*2)*sizeof(int) )
 
-
 /* Terminate data shipping: waits for all threads that issued the
    GPFS_DATA_SHIP_START directive to issue this directive, then leaves data
    shipping mode. */
-typedef struct
-{
-  int           structLen;      /* length of this structure */
-  int           structType;     /* directive identifier: GPFS_DATA_SHIP_STOP */
-} gpfsDataShipStop_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: GPFS_DATA_SHIP_STOP */
+	} gpfsDataShipStop_t;
 
 /* This directive is used to set a file's replication factors. 
    However, the directive does not cause the file data to be restriped 
    immediately. Instead the caller must append a gpfsRestripeData_t directive
    or invoke a mmrestripefs or a mmrestripefile command. */
-typedef struct
-{
-  int structLen;               /* length of this structure */
-  int structType;              /* directive identifier: 
-                                  GPFS_FCNTL_SET_REPLICATION */
-  int metadataReplicas;        /* Set the number of copies of the file's 
-                                  indirect blocks. Valid values are 1 or 2,
-                                  but not greater than the value of 
-                                  maxMetadataReplicas. A value of 0 indicates
-                                  not to change the current value. */  
-  int maxMetadataReplicas;     /* Set the maximum number of copies of a file's
-                                  indirect blocks. Space in the file's inode
-                                  and indirect blocks is reserved for the
-                                  maximum number of copies, regardless of the
-                                  current value. Valid values are 1 or 2.
-                                  A value of 0 indicates not to change the 
-                                  current value. */
-  int dataReplicas;            /* Set the number of copies of the file's
-                                  data blocks. Valid values are 1 or 2,
-                                  but cannot be greater than the value of
-                                  maxDataReplicas. A value of 0 indicates
-                                  not to change the current value. */
-  int maxDataReplicas;         /* Set the maximum number of copies of a file's
-                                  data blocks. Space in the file's inode
-                                  and indirect blocks is reserved for the
-                                  maximum number of copues, regardless of the
-                                  current value. Valid values are 1 or 2. 
-                                  A value of 0 indicates not the change the
-                                  current value. */
-  int errReason;               /* returned reason request failed.
-                                  Defined below. */
-  int errValue1;               /* returned value depending upon errReason */
-  int errValue2;               /* returned value depending upon errReason */
-  int reserved;                /* unused, but should be set to 0 */
-} gpfsSetReplication_t;
-
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: 
+				   GPFS_FCNTL_SET_REPLICATION */
+		int metadataReplicas;	/* Set the number of copies of the file's 
+					   indirect blocks. Valid values are 1 or 2,
+					   but not greater than the value of 
+					   maxMetadataReplicas. A value of 0 indicates
+					   not to change the current value. */
+		int maxMetadataReplicas;	/* Set the maximum number of copies of a file's
+						   indirect blocks. Space in the file's inode
+						   and indirect blocks is reserved for the
+						   maximum number of copies, regardless of the
+						   current value. Valid values are 1 or 2.
+						   A value of 0 indicates not to change the 
+						   current value. */
+		int dataReplicas;	/* Set the number of copies of the file's
+					   data blocks. Valid values are 1 or 2,
+					   but cannot be greater than the value of
+					   maxDataReplicas. A value of 0 indicates
+					   not to change the current value. */
+		int maxDataReplicas;	/* Set the maximum number of copies of a file's
+					   data blocks. Space in the file's inode
+					   and indirect blocks is reserved for the
+					   maximum number of copues, regardless of the
+					   current value. Valid values are 1 or 2. 
+					   A value of 0 indicates not the change the
+					   current value. */
+		int errReason;	/* returned reason request failed.
+				   Defined below. */
+		int errValue1;	/* returned value depending upon errReason */
+		int errValue2;	/* returned value depending upon errReason */
+		int reserved;	/* unused, but should be set to 0 */
+	} gpfsSetReplication_t;
 
 /* Values that may be returned by errReason */
 
@@ -425,26 +396,23 @@ typedef struct
    errValue2 contains the maximum number of data failure groups. */
 #define GPFS_FCNTL_ERR_REPLICAS_EXCEED_FGMAX      6
 
-
 /* This directive is used to set a file's assigned storage pool. 
    However, the directive does not cause the file data to be migrated 
    immediately. Instead the caller must append a gpfsRestripeData_t 
    directive or invoke a mmrestripefs or mmrestripefile command. 
    The caller must have root privileges to change a file's storage pool. */
-typedef struct
-{
-  int structLen;               /* length of this structure */
-  int structType;              /* directive identifier: 
-                                  GPFS_FCNTL_SET_STORAGEPOOL */
-  int errReason;               /* returned reason request failed.
-                                  Defined below. */
-  int errValue1;               /* returned value depending upon errReason */
-  int errValue2;               /* returned value depending upon errReason */
-  int reserved;                /* unused, but should be set to 0 */
-  char buffer[GPFS_FCNTL_MAX_NAME_BUFFER]; /* Null-terminated name of 
-                                              storage pool to be assigned */
-} gpfsSetStoragePool_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: 
+				   GPFS_FCNTL_SET_STORAGEPOOL */
+		int errReason;	/* returned reason request failed.
+				   Defined below. */
+		int errValue1;	/* returned value depending upon errReason */
+		int errValue2;	/* returned value depending upon errReason */
+		int reserved;	/* unused, but should be set to 0 */
+		char buffer[GPFS_FCNTL_MAX_NAME_BUFFER];	/* Null-terminated name of 
+								   storage pool to be assigned */
+	} gpfsSetStoragePool_t;
 
 /* Values that may be returned by errReason */
 
@@ -469,51 +437,44 @@ typedef struct
 /* User does not have permission to perform the requested operation */
 #define GPFS_FCNTL_ERR_NOPERM                     13
 
-
-
-
 /* This directive is used to restripe a file's data blocks to update 
    its replication and/or migrate its data. The data movement is always 
    done immediately. */
 
-typedef struct 
-{
-  long long startOffset;
-  long long numOfBlks;
-} gpfsByteRange_t;
+	typedef struct {
+		long long startOffset;
+		long long numOfBlks;
+	} gpfsByteRange_t;
 
-typedef struct 
-{
-  int structLen;               /* length of this structure */
-  int structType;              /* directive identifier: 
-                                  GPFS_FCNTL_RESTRIPE_FILE */
-  int options;                 /* options for restripe command. Defined below.
-                                  See mmrestripefs command for details. */
-  int errReason;               /* returned reason request failed.
-                                  Defined below. */
-  int errValue1;               /* returned value depending upon errReason */
-  int errValue2;               /* returned value depending upon errReason */
-  int reserved1;               /* unused, but should be set to 0 */  
-  int reserved2;               /* unused, but should be set to 0 */  
-} gpfsRestripeData_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: 
+				   GPFS_FCNTL_RESTRIPE_FILE */
+		int options;	/* options for restripe command. Defined below.
+				   See mmrestripefs command for details. */
+		int errReason;	/* returned reason request failed.
+				   Defined below. */
+		int errValue1;	/* returned value depending upon errReason */
+		int errValue2;	/* returned value depending upon errReason */
+		int reserved1;	/* unused, but should be set to 0 */
+		int reserved2;	/* unused, but should be set to 0 */
+	} gpfsRestripeData_t;
 
-typedef struct 
-{
-  int structLen;               /* length of this structure */
-  int structType;              /* directive identifier: 
-                                  GPFS_FCNTL_RESTRIPE_FILE */
-  int options;                 /* options for restripe command. Defined below.
-                                  See mmrestripefs command for details. */
-  int errReason;               /* returned reason request failed.
-                                  Defined below. */
-  int errValue1;               /* returned value depending upon errReason */
-  int errValue2;               /* returned value depending upon errReason */
-  gpfsByteRange_t range;       /* Should be zero when GPFS_FCNTL_RESTRIPE_RANGE
-                                  is not set */
-  int reserved1;               /* unused, but should be set to 0 */  
-  int reserved2;               /* unused, but should be set to 0 */  
-} gpfsRestripeRange_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* directive identifier: 
+				   GPFS_FCNTL_RESTRIPE_FILE */
+		int options;	/* options for restripe command. Defined below.
+				   See mmrestripefs command for details. */
+		int errReason;	/* returned reason request failed.
+				   Defined below. */
+		int errValue1;	/* returned value depending upon errReason */
+		int errValue2;	/* returned value depending upon errReason */
+		gpfsByteRange_t range;	/* Should be zero when GPFS_FCNTL_RESTRIPE_RANGE
+					   is not set */
+		int reserved1;	/* unused, but should be set to 0 */
+		int reserved2;	/* unused, but should be set to 0 */
+	} gpfsRestripeRange_t;
 
 /* Define values for restripe options.
    See mmrestripefs command for complete definitions. */
@@ -580,11 +541,6 @@ typedef struct
 /* Give reason that it's not GPFS file*/
 #define GPFS_FCNTL_ERR_NOT_GPFS_FILE             26
 
-
-
-
-
-
 /* Values that may be returned by errValue1 */
 
 /* Strict replica allocation option set to be yes */
@@ -602,24 +558,22 @@ typedef struct
    fileset name or snapshot name. */
 
 /* This inquiry is used to obtain a file's replication factors. */
-typedef struct
- {
-   int structLen;               /* length of this structure */
-   int structType;              /* inquiry identifier: 
-                                   GPFS_FCNTL_GET_REPLICATION */
-   int metadataReplicas;        /* returns the current number of copies 
-                                   of indirect blocks for the file. */
-   int maxMetadataReplicas;     /* returns the maximum number of copies
-                                   of indirect blocks for the file. */
-   int dataReplicas;            /* returns the current number of copies
-                                   of data blocks for the file. */
-   int maxDataReplicas;         /* returns the maximum number of copies
-                                   of data blocks for the file. */
-   int status;                 /* returns the status of the file.
-                                   Status values defined below. */
-   int reserved;                /* unused, but should be set to 0 */
-} gpfsGetReplication_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* inquiry identifier: 
+				   GPFS_FCNTL_GET_REPLICATION */
+		int metadataReplicas;	/* returns the current number of copies 
+					   of indirect blocks for the file. */
+		int maxMetadataReplicas;	/* returns the maximum number of copies
+						   of indirect blocks for the file. */
+		int dataReplicas;	/* returns the current number of copies
+					   of data blocks for the file. */
+		int maxDataReplicas;	/* returns the maximum number of copies
+					   of data blocks for the file. */
+		int status;	/* returns the status of the file.
+				   Status values defined below. */
+		int reserved;	/* unused, but should be set to 0 */
+	} gpfsGetReplication_t;
 
 /* Flag definitions */
 
@@ -649,37 +603,31 @@ typedef struct
    be stored in an incorrect storage pool */
 #define GPFS_FCNTL_STATUS_ILLPLACED      0x02000000
 
-
-
 /* This inquiry is used to obtain the name of the storage assigned
    for the file's data. The size of the buffer may vary, but it must be 
    a multiple of 8. Upon successful completion of the call, the buffer 
    will contain a null-terminated character string for the name of the
    file's storage pool. */
-typedef struct
-{
-  int structLen;               /* length of this structure */
-  int structType;              /* inquiry identifier: 
-                                   GPFS_FCNTL_GET_STORAGEPOOL */
-  char buffer[GPFS_FCNTL_MAX_NAME_BUFFER]; /* returns with the file's
-                                              storage pool name */
-} gpfsGetStoragePool_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* inquiry identifier: 
+				   GPFS_FCNTL_GET_STORAGEPOOL */
+		char buffer[GPFS_FCNTL_MAX_NAME_BUFFER];	/* returns with the file's
+								   storage pool name */
+	} gpfsGetStoragePool_t;
 
 /* This inquiry is used to obtain the name of the fileset to which this 
    file has been assigned. The size of the buffer may vary, but it must be 
    a multiple of 8. Upon successful completion of the call, the buffer 
    will contain a null-terminated character string for the name of the
    file's fileset. */
-typedef struct
-{
-   int structLen;               /* length of this structure */
-   int structType;              /* inquiry identifier: 
-                                   GPFS_FCNTL_GET_FILESETNAME */
-  char buffer[GPFS_FCNTL_MAX_NAME_BUFFER]; /* returns with the file's
-                                              fileset name */
-} gpfsGetFilesetName_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* inquiry identifier: 
+				   GPFS_FCNTL_GET_FILESETNAME */
+		char buffer[GPFS_FCNTL_MAX_NAME_BUFFER];	/* returns with the file's
+								   fileset name */
+	} gpfsGetFilesetName_t;
 
 /* This inquiry is used to obtain the name of the snapshot that includes 
    this file. If the file is not part of a snapshot, then a zero-length
@@ -687,87 +635,84 @@ typedef struct
    a multiple of 8. Upon successful completion of the call, the buffer 
    will contain a null-terminated character string for the name of the
    snapshot that includes this file. */
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* inquiry identifier: 
-                                   GPFS_FCNTL_GET_SNAPSHOTNAME */
-  char buffer[GPFS_FCNTL_MAX_NAME_BUFFER]; /* returns with the file's
-                                              snapshot name */
-} gpfsGetSnapshotName_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* inquiry identifier: 
+				   GPFS_FCNTL_GET_SNAPSHOTNAME */
+		char buffer[GPFS_FCNTL_MAX_NAME_BUFFER];	/* returns with the file's
+								   snapshot name */
+	} gpfsGetSnapshotName_t;
 
 /* Allow tschattr to change file immutable attribute */
 #define GPFS_FCNTL_SET_IMMUTABLE   5000
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                   GPFS_FCNTL_SET_IMMUTABLE */
-  int setImmutable;            /* value to set the immutable flag */
-  int setIndefiniteRetention;  /* value to set IndefiniteRetention */
-  int errReasonCode;           /* Reason code                   */
-  int reserved;                /* reserved field */
-} gpfsSetImmutable_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		int setImmutable;	/* value to set the immutable flag */
+		int setIndefiniteRetention;	/* value to set IndefiniteRetention */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;	/* reserved field */
+	} gpfsSetImmutable_t;
 
 #define GPFS_FCNTL_GET_IMMUTABLE   5001
 
-typedef struct {
-   int structLen;               /* length of this structure */
-   int structType;              /* function identifier: 
-                                   GPFS_FCNTL_SET_IMMUTABLE */
-   int immutable;               /* value of the immutable flag */
-   int indefiniteRetention;     /* value of the indeiniteRetention flag */
-   int errReasonCode;           /* Reason code                   */
-   int reserved;
-} gpfsGetImmutable_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		int immutable;	/* value of the immutable flag */
+		int indefiniteRetention;	/* value of the indeiniteRetention flag */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;
+	} gpfsGetImmutable_t;
 
 #define GPFS_FCNTL_SET_EXPIRATION_TIME   5002
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                   GPFS_FCNTL_SET_IMMUTABLE */
-  long long expTime;           /* expiration Time               */
-  int errReasonCode;           /* Reason code                   */
-  int reserved;                /* reserved field */
-} gpfsSetExpTime_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		long long expTime;	/* expiration Time               */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;	/* reserved field */
+	} gpfsSetExpTime_t;
 
 #define GPFS_FCNTL_GET_EXPIRATION_TIME   5003
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                   GPFS_FCNTL_SET_IMMUTABLE */
-  long long expTime;           /* expiration Time          */
-  int errReasonCode;           /* Reason code                   */
-  int reserved;                /* reserved field */
-} gpfsGetExpTime_t;
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		long long expTime;	/* expiration Time          */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;	/* reserved field */
+	} gpfsGetExpTime_t;
 
 #define GPFS_FCNTL_SET_APPENDONLY   5004
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                   GPFS_FCNTL_SET_IMMUTABLE */
-  int setAppendOnly;           /* value to set the appendOnly flag */
-  int setIndefiniteRetention;  /* value to set IndefiniteRetention */
-  int errReasonCode;           /* Reason code                   */
-  int reserved;                /* reserved field */
-} gpfsSetAppendOnly_t;
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		int setAppendOnly;	/* value to set the appendOnly flag */
+		int setIndefiniteRetention;	/* value to set IndefiniteRetention */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;	/* reserved field */
+	} gpfsSetAppendOnly_t;
 
 #define GPFS_FCNTL_GET_APPENDONLY  5005
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                  GPFS_FCNTL_SET_IMMUTABLE */
-  int appendOnly;              /* value of the appendOnly flag */
-  int indefiniteRetention;     /* value of the indeiniteRetention flag */
-  int errReasonCode;           /* Reason code                   */
-  int reserved;                /* reserved field */
-} gpfsGetAppendOnly_t;
-
-
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_SET_IMMUTABLE */
+		int appendOnly;	/* value of the appendOnly flag */
+		int indefiniteRetention;	/* value of the indeiniteRetention flag */
+		int errReasonCode;	/* Reason code                   */
+		int reserved;	/* reserved field */
+	} gpfsGetAppendOnly_t;
 
 /* 
  * Provide access to a file's extended attributes
@@ -839,21 +784,21 @@ typedef struct {
 #define GPFS_FCNTL_SET_XATTR  6002
 #define GPFS_FCNTL_LIST_XATTR 6003
 
-#define GPFS_FCNTL_XATTR_MAX_NAMELEN   256 /* includes trailing null char */
-#define GPFS_FCNTL_XATTR_MAX_VALUELEN (16 * 1024) 
+#define GPFS_FCNTL_XATTR_MAX_NAMELEN   256	/* includes trailing null char */
+#define GPFS_FCNTL_XATTR_MAX_VALUELEN (16 * 1024)
 
 #define GPFS_FCNTL_XATTRFLAG_NONE      0x0000
-#define GPFS_FCNTL_XATTRFLAG_SYNC      0x0001 /* synchronous update
-                                                 All updates are committed
-                                                 before the call returns */
-#define GPFS_FCNTL_XATTRFLAG_CREATE    0x0002 /* pure create
-                                                 will fail if already exists */
-#define GPFS_FCNTL_XATTRFLAG_REPLACE   0x0004 /* pure replace
-                                                 will fail if does not exist */
-#define GPFS_FCNTL_XATTRFLAG_DELETE    0x0008 /* pure delete
-                                                 will fail if does not exist */
-#define GPFS_FCNTL_XATTRFLAG_NO_CTIME  0x0010 /* Update will not set ctime.
-                                                 Must have admin authority. */
+#define GPFS_FCNTL_XATTRFLAG_SYNC      0x0001	/* synchronous update
+						   All updates are committed
+						   before the call returns */
+#define GPFS_FCNTL_XATTRFLAG_CREATE    0x0002	/* pure create
+						   will fail if already exists */
+#define GPFS_FCNTL_XATTRFLAG_REPLACE   0x0004	/* pure replace
+						   will fail if does not exist */
+#define GPFS_FCNTL_XATTRFLAG_DELETE    0x0008	/* pure delete
+						   will fail if does not exist */
+#define GPFS_FCNTL_XATTRFLAG_NO_CTIME  0x0010	/* Update will not set ctime.
+						   Must have admin authority. */
 
 /* Define error reason codes for extended attributes */
 #define GPFS_FCNTL_ERR_NO_ATTR             27
@@ -862,125 +807,116 @@ typedef struct {
 #define GPFS_FCNTL_ERR_NO_ATTR_SPACE       30
 #define GPFS_FCNTL_ERR_INVAL_VALUE         31
 
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_GET_XATTR 
+				   or GPFS_FCNTL_SET_XATTR */
+		int nameLen;	/* length of attribute name
+				   may include trailing '\0' character */
+		int bufferLen;	/* 
+				   for GPFS_FCNTL_GET_XATTR
+				   INPUT: length of buffer
+				   OUTPUT: length of attribute value
 
+				   for GPFS_FCNTL_SET_XATTR
+				   INPUT: length of attribute value
+				   length = -1 to delete attribute */
+		unsigned int flags;	/* defined above. */
+		int errReasonCode;	/* Reason code */
+		char buffer[0];	/* buffer for name and value.
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                  GPFS_FCNTL_GET_XATTR 
-                                  or GPFS_FCNTL_SET_XATTR */
-  int nameLen;                 /* length of attribute name
-                                  may include trailing '\0' character */
-  int bufferLen;                /* 
-                                  for GPFS_FCNTL_GET_XATTR
-                                    INPUT: length of buffer
-                                    OUTPUT: length of attribute value
- 
-                                  for GPFS_FCNTL_SET_XATTR
-                                    INPUT: length of attribute value
-                                           length = -1 to delete attribute */
-  unsigned int flags;          /* defined above. */
-  int errReasonCode;           /* Reason code */
-  char buffer[0];              /* buffer for name and value.
-                                  
-                                  for GPFS_FCNTL_GET_XATTR
+				   for GPFS_FCNTL_GET_XATTR
 
-                                    INPUT: name begins at offset 0 
-                                           and must be null terminated.
-                                    OUTPUT: name is returned unchanged
-                                            value begins at nameLen rounded up
-                                            to a multiple of 8.
+				   INPUT: name begins at offset 0 
+				   and must be null terminated.
+				   OUTPUT: name is returned unchanged
+				   value begins at nameLen rounded up
+				   to a multiple of 8.
 
-                                  for GPFS_FCNTL_SET_XATTR
+				   for GPFS_FCNTL_SET_XATTR
 
-                                    INPUT: name begins at offset 0 
-                                           and must be null terminated.
-                                           value begins at nameLen rounded up
-                                           to a multiple of 8.
+				   INPUT: name begins at offset 0 
+				   and must be null terminated.
+				   value begins at nameLen rounded up
+				   to a multiple of 8.
 
-                                  actual length of buffer should be 
-                                  nameLen rounded up to a multiple of 8 
-                                  + valueLen rounded up to a multiple of 8 
+				   actual length of buffer should be 
+				   nameLen rounded up to a multiple of 8 
+				   + valueLen rounded up to a multiple of 8 
 
-                                  Buffer size set by caller. Maximum
-                                  size is (GPFS_FCNTL_XATTR_MAX_NAMELEN +
-                                  GPFS_FCNTL_XATTR_MAX_VALUELEN) */
-} gpfsGetSetXAttr_t;
+				   Buffer size set by caller. Maximum
+				   size is (GPFS_FCNTL_XATTR_MAX_NAMELEN +
+				   GPFS_FCNTL_XATTR_MAX_VALUELEN) */
+	} gpfsGetSetXAttr_t;
 
-typedef struct {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-                                  GPFS_FCNTL_LIST_XATTR */
-  int bufferLen;               /* INPUT: length of buffer
-                                  OUTPUT: length of returned list of names */
-  int errReasonCode;           /* Reason code */
-  char buffer[0];
-                               /* buffer for returned list of names
-                                  Each attribute name is prefixed with
-                                  a 1-byte name length that includes the
-                                  trailing null. The next attribute name
-                                  follows immediately in the buffer (and is
-                                  prefixed with its own length). Following
-                                  the last name a '\0' is appended to
-                                  terminate the list. The returned bufferLen
-                                  includes the final '\0'.
-                                  
-                                  \7abcdef\0\4ABC\0\10user.name\0\0
-                                  
-                                  The actual length of the buffer required 
-                                  depends on the number of attributes set on
-                                  the file and the length of each attribute name.
-                                  If the buffer provided is too small for all
-                                  of the returned names, the errReasonCode
-                                  will be set to GPFS_FCNTL_ERR_BUFFER_TOO_SMALL
-                                  and bufferLen will be set to the minimum
-                                  size buffer required to list all attributes.
-                                  An initial buffer length of 0 may be used to
-                                  query the attributes and determine the 
-                                  correct buffer size for this file. */
+	typedef struct {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_LIST_XATTR */
+		int bufferLen;	/* INPUT: length of buffer
+				   OUTPUT: length of returned list of names */
+		int errReasonCode;	/* Reason code */
+		char buffer[0];
+		/* buffer for returned list of names
+		   Each attribute name is prefixed with
+		   a 1-byte name length that includes the
+		   trailing null. The next attribute name
+		   follows immediately in the buffer (and is
+		   prefixed with its own length). Following
+		   the last name a '\0' is appended to
+		   terminate the list. The returned bufferLen
+		   includes the final '\0'.
 
-} gpfsListXAttr_t;
+		   \7abcdef\0\4ABC\0\10user.name\0\0
 
+		   The actual length of the buffer required 
+		   depends on the number of attributes set on
+		   the file and the length of each attribute name.
+		   If the buffer provided is too small for all
+		   of the returned names, the errReasonCode
+		   will be set to GPFS_FCNTL_ERR_BUFFER_TOO_SMALL
+		   and bufferLen will be set to the minimum
+		   size buffer required to list all attributes.
+		   An initial buffer length of 0 may be used to
+		   query the attributes and determine the 
+		   correct buffer size for this file. */
 
-
-
-
+	} gpfsListXAttr_t;
 
 #ifdef GPFS_SNC_FILEMAP
 
-typedef struct OffsetLoc {
-  long long offset;
-  int diskNum[3];      /* array of locations based on number of replicas returned */
-} OffsetLoc;
+	typedef struct OffsetLoc {
+		long long offset;
+		int diskNum[3];	/* array of locations based on number of replicas returned */
+	} OffsetLoc;
 
-typedef struct FilemapIn {
-  long long startOffset;                  /* start offset in bytes */
-  long long skipfactor;              /* number of bytes to skip before next offset read */
-  long long length;                  /* number of bytes (start offset + length / skipfactor = numblks returned */
-  int mreplicas;               /* number of replicas user wants, 0 is all, 
-				  1 primary, 2, primary and 1st replica 3 all */
-  int reserved;                  /* for now to align it to the 8byte boundary */
-} FilemapIn;
+	typedef struct FilemapIn {
+		long long startOffset;	/* start offset in bytes */
+		long long skipfactor;	/* number of bytes to skip before next offset read */
+		long long length;	/* number of bytes (start offset + length / skipfactor = numblks returned */
+		int mreplicas;	/* number of replicas user wants, 0 is all, 
+				   1 primary, 2, primary and 1st replica 3 all */
+		int reserved;	/* for now to align it to the 8byte boundary */
+	} FilemapIn;
 
-typedef struct FilemapOut {
-  int numReplicasReturned;
-  int numBlksReturned;
-  int blockSize;
-  int reserved;
-  char buffer [GPFS_MAX_FCNTL_LENGTH-1024]; /* packs offset, disklocation1, disklocation2.... */
-} FilemapOut;
+	typedef struct FilemapOut {
+		int numReplicasReturned;
+		int numBlksReturned;
+		int blockSize;
+		int reserved;
+		char buffer[GPFS_MAX_FCNTL_LENGTH - 1024];	/* packs offset, disklocation1, disklocation2.... */
+	} FilemapOut;
 
+	typedef struct GetDataBlkDiskIdx {
+		int structLen;	/* length of this structure */
+		int structType;	/* function identifier: 
+				   GPFS_FCNTL_GET_DATABLKDISKIDX */
+		FilemapIn filemapIn;	/* Input parameters specified by the user */
+		FilemapOut filemapOut;	/* Output data */
+	} GetDataBlkDiskIdx;
 
-typedef struct GetDataBlkDiskIdx {
-  int structLen;               /* length of this structure */
-  int structType;              /* function identifier: 
-				  GPFS_FCNTL_GET_DATABLKDISKIDX */
-  FilemapIn filemapIn;     /* Input parameters specified by the user */
-  FilemapOut filemapOut;   /* Output data */
-} GetDataBlkDiskIdx;
-
-#endif /* GPFS_SNC_FILEMAP */
-
+#endif				/* GPFS_SNC_FILEMAP */
 
 /* NAME:        gpfs_fcntl()
  *
@@ -997,9 +933,8 @@ typedef struct GetDataBlkDiskIdx {
  *              E2BIG   Argument longer than GPFS_MAX_FCNTL_LENGTH
  */
 
-int GPFS_API
-gpfs_fcntl(gpfs_file_t fileDesc,   /* Open file descriptor */
-           void* fcntlArgP);       /* argument list */
+	int GPFS_API gpfs_fcntl(gpfs_file_t fileDesc,	/* Open file descriptor */
+				void *fcntlArgP);	/* argument list */
 
 /*
  * NAME:        gpfs_restripe_file()
@@ -1016,15 +951,13 @@ gpfs_fcntl(gpfs_file_t fileDesc,   /* Open file descriptor */
  *              ESTALE  cached fs information was invalid
  */
 
-int GPFS_API
-gpfs_restripe_file(gpfs_file_t fileDesc, /* Open file descriptor */
-                   void* fcntlArgP,      /* argument list */
-                   int noBlocks);        /* number of blocks used for each
-                                            iteration when restriping a
-                                            file */
+	int GPFS_API gpfs_restripe_file(gpfs_file_t fileDesc,	/* Open file descriptor */
+					void *fcntlArgP,	/* argument list */
+					int noBlocks);	/* number of blocks used for each
+							   iteration when restriping a
+							   file */
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _h_gpfs_fcntl */
+#endif				/* _h_gpfs_fcntl */

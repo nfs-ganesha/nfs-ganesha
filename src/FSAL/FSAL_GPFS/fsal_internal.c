@@ -40,7 +40,7 @@
 #include "fsal_internal.h"
 #include "gpfs_methods.h"
 #include "fsal_convert.h"
-#include <libgen.h> /* used for 'dirname' */
+#include <libgen.h>		/* used for 'dirname' */
 #include "abstract_mem.h"
 
 #include <pthread.h>
@@ -51,7 +51,7 @@
 
 #ifdef _USE_NFS4_ACL
 #define ACL_DEBUG_BUF_SIZE 256
-#endif                          /* _USE_NFS4_ACL */
+#endif				/* _USE_NFS4_ACL */
 
 /* credential lifetime (1h) */
 uint32_t CredentialLifetime = 3600;
@@ -62,33 +62,32 @@ uint32_t CredentialLifetime = 3600;
  */
 struct fsal_staticfsinfo_t global_fs_info;
 
-
 #ifdef _USE_NFS4_ACL
 extern fsal_status_t fsal_cred_2_gpfs_cred(struct user_cred *p_fsalcred,
-                                           struct xstat_cred_t *p_gpfscred);
+					   struct xstat_cred_t *p_gpfscred);
 
 extern fsal_status_t fsal_mode_2_gpfs_mode(mode_t fsal_mode,
-                                           fsal_accessflags_t v4mask,
-                                           unsigned int *p_gpfsmode,
-                                           bool is_dir);
-#endif                          /* _USE_NFS4_ACL */
+					   fsal_accessflags_t v4mask,
+					   unsigned int *p_gpfsmode,
+					   bool is_dir);
+#endif				/* _USE_NFS4_ACL */
 
-#if 0 //???   not needed for now
+#if 0				//???   not needed for now
 static void free_pthread_specific_stats(void *buff)
 {
-  gsh_free(buff);
+	gsh_free(buff);
 }
 
 /* init keys */
 static void init_keys(void)
 {
-  if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
-    LogMajor(COMPONENT_FSAL,
-             "Could not create thread specific stats (pthread_key_create) err %d (%s)",
-             errno, strerror(errno));
+	if (pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
+		LogMajor(COMPONENT_FSAL,
+			 "Could not create thread specific stats (pthread_key_create) err %d (%s)",
+			 errno, strerror(errno));
 
-  return;
-}                               /* init_keys */
+	return;
+}				/* init_keys */
 
 /**
  * fsal_increment_nbcall:
@@ -104,74 +103,71 @@ static void init_keys(void)
 void fsal_increment_nbcall(int function_index, fsal_status_t status)
 {
 
-  fsal_statistics_t *bythread_stat = NULL;
+	fsal_statistics_t *bythread_stat = NULL;
 
-  /* verify index */
+	/* verify index */
 
-  if(function_index >= FSAL_NB_FUNC)
-    return;
+	if (function_index >= FSAL_NB_FUNC)
+		return;
 
-  /* first, we init the keys if this is the first time */
+	/* first, we init the keys if this is the first time */
 
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
-      return;
-    }
+	if (pthread_once(&once_key, init_keys) != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "Could not create thread specific stats (pthread_once) err %d (%s)",
+			 errno, strerror(errno));
+		return;
+	}
 
-  /* we get the specific value */
+	/* we get the specific value */
 
-  bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
+	bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
 
-  /* we allocate stats if this is the first time */
+	/* we allocate stats if this is the first time */
 
-  if(bythread_stat == NULL)
-    {
-      int i;
+	if (bythread_stat == NULL) {
+		int i;
 
-      bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
+		bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
 
-      if(bythread_stat == NULL)
-        {
-          LogCrit(COMPONENT_FSAL,
-                  "Could not allocate memory for FSAL statistics err %d (%s)",
-                  ENOMEM, strerror(ENOMEM));
-          /* we don't have real memory, bail */
-          return;
-        }
+		if (bythread_stat == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not allocate memory for FSAL statistics err %d (%s)",
+				ENOMEM, strerror(ENOMEM));
+			/* we don't have real memory, bail */
+			return;
+		}
 
-      /* inits the struct */
+		/* inits the struct */
 
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
+		for (i = 0; i < FSAL_NB_FUNC; i++) {
+			bythread_stat->func_stats.nb_call[i] = 0;
+			bythread_stat->func_stats.nb_success[i] = 0;
+			bythread_stat->func_stats.nb_err_retryable[i] = 0;
+			bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+		}
 
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
+		/* set the specific value */
+		pthread_setspecific(key_stats, (void *)bythread_stat);
 
-    }
+	}
 
-  /* we increment the values */
+	/* we increment the values */
 
-  if(bythread_stat)
-    {
-      bythread_stat->func_stats.nb_call[function_index]++;
+	if (bythread_stat) {
+		bythread_stat->func_stats.nb_call[function_index]++;
 
-      if(!FSAL_IS_ERROR(status))
-        bythread_stat->func_stats.nb_success[function_index]++;
-      else if(fsal_is_retryable(status))
-        bythread_stat->func_stats.nb_err_retryable[function_index]++;
-      else
-        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
-    }
+		if (!FSAL_IS_ERROR(status))
+			bythread_stat->func_stats.nb_success[function_index]++;
+		else if (fsal_is_retryable(status))
+			bythread_stat->func_stats.
+			    nb_err_retryable[function_index]++;
+		else
+			bythread_stat->func_stats.
+			    nb_err_unrecover[function_index]++;
+	}
 
-  return;
+	return;
 }
 
 /**
@@ -187,52 +183,48 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 void fsal_internal_getstats(fsal_statistics_t * output_stats)
 {
 
-  fsal_statistics_t *bythread_stat = NULL;
+	fsal_statistics_t *bythread_stat = NULL;
 
-  /* first, we init the keys if this is the first time */
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
-      return;
-    }
+	/* first, we init the keys if this is the first time */
+	if (pthread_once(&once_key, init_keys) != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "Could not create thread specific stats (pthread_once) err %d (%s)",
+			 errno, strerror(errno));
+		return;
+	}
 
-  /* we get the specific value */
-  bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
+	/* we get the specific value */
+	bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
 
-  /* we allocate stats if this is the first time */
-  if(bythread_stat == NULL)
-    {
-      int i;
+	/* we allocate stats if this is the first time */
+	if (bythread_stat == NULL) {
+		int i;
 
-      if((bythread_stat =
-          gsh_malloc(sizeof(fsal_statistics_t))) == NULL)
-      {
-        /* we don't have working memory, bail */
-        LogCrit(COMPONENT_FSAL,
-                "Could not allocate memory for FSAL statistics");
-        return;
-      }
+		if ((bythread_stat =
+		     gsh_malloc(sizeof(fsal_statistics_t))) == NULL) {
+			/* we don't have working memory, bail */
+			LogCrit(COMPONENT_FSAL,
+				"Could not allocate memory for FSAL statistics");
+			return;
+		}
 
-      /* inits the struct */
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
+		/* inits the struct */
+		for (i = 0; i < FSAL_NB_FUNC; i++) {
+			bythread_stat->func_stats.nb_call[i] = 0;
+			bythread_stat->func_stats.nb_success[i] = 0;
+			bythread_stat->func_stats.nb_err_retryable[i] = 0;
+			bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+		}
 
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
+		/* set the specific value */
+		pthread_setspecific(key_stats, (void *)bythread_stat);
 
-    }
+	}
 
-  if(output_stats)
-    (*output_stats) = (*bythread_stat);
+	if (output_stats)
+		(*output_stats) = (*bythread_stat);
 
-  return;
+	return;
 
 }
 
@@ -248,102 +240,100 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
  */
 void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
 {
-  CredentialLifetime = lifetime_in;
+	CredentialLifetime = lifetime_in;
 }
 
 /*
  *  This function initializes shared variables of the fsal.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-                                        fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+					fs_common_initinfo_t * fs_common_info,
+					fs_specific_initinfo_t *
+					fs_specific_info)
 {
 
-  /* sanity check */
-  if(!fsal_info || !fs_common_info || !fs_specific_info)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	/* sanity check */
+	if (!fsal_info || !fs_common_info || !fs_specific_info)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /* inits FS call semaphore */
-  if(fsal_info->max_fs_calls > 0)
-    {
-      int rc;
+	/* inits FS call semaphore */
+	if (fsal_info->max_fs_calls > 0) {
+		int rc;
 
-      limit_calls = true;
+		limit_calls = true;
 
-      rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
+		rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
-      if(rc != 0)
-        return fsalstat(ERR_FSAL_SERVERFAULT, rc);
+		if (rc != 0)
+			return fsalstat(ERR_FSAL_SERVERFAULT, rc);
 
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-               fsal_info->max_fs_calls);
-    }
-  else
-    {
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
-    }
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+			 fsal_info->max_fs_calls);
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+	}
 
-  /* setting default values. */
-  global_fs_info = default_gpfs_info;
+	/* setting default values. */
+	global_fs_info = default_gpfs_info;
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      display_fsinfo(&default_gpfs_info);
-    }
+	if (isFullDebug(COMPONENT_FSAL)) {
+		display_fsinfo(&default_gpfs_info);
+	}
 
-  /* Analyzing fs_common_info struct */
+	/* Analyzing fs_common_info struct */
 
-  if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
-     (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-    return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	if ((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.case_insensitive !=
+		FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.case_preserving !=
+		FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.supported_attrs !=
+		FSAL_INIT_FS_DEFAULT)
+	    || (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info,
+			  lock_support_async_block);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
+	SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
+	SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
+	SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
+	SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, accesscheck_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support_owner);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, accesscheck_support);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support);
+	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support_owner);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes constant = 0x%llX.",
-               GPFS_SUPPORTED_ATTRIBUTES);
+	LogFullDebug(COMPONENT_FSAL, "Supported attributes constant = 0x%llX.",
+		     GPFS_SUPPORTED_ATTRIBUTES);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes default = 0x%llX.",
-               default_gpfs_info.supported_attrs);
+	LogFullDebug(COMPONENT_FSAL, "Supported attributes default = 0x%llX.",
+		     default_gpfs_info.supported_attrs);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "FSAL INIT: Supported attributes mask = 0x%llX.",
-               global_fs_info.supported_attrs);
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL INIT: Supported attributes mask = 0x%llX.",
+		     global_fs_info.supported_attrs);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 #endif
-
 
 /*********************************************************************
  *
@@ -368,20 +358,20 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  */
 
 fsal_status_t fsal_internal_handle2fd(int dirfd,
-                                      struct gpfs_file_handle *phandle,
-                                      int *pfd, int oflags)
+				      struct gpfs_file_handle * phandle,
+				      int *pfd, int oflags)
 {
-  fsal_status_t status;
+	fsal_status_t status;
 
-  if(!phandle || !pfd)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!phandle || !pfd)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
+	status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
 
-  if(FSAL_IS_ERROR(status))
-    return(status);
+	if (FSAL_IS_ERROR(status))
+		return (status);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -396,22 +386,23 @@ fsal_status_t fsal_internal_handle2fd(int dirfd,
 
 fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 {
-  int rc = 0;
-  struct close_file_arg carg;
+	int rc = 0;
+	struct close_file_arg carg;
 
-  carg.mountdirfd = fd;
-  carg.close_fd = fd;
-  carg.close_flags = cflags;
-  carg.close_owner = owner;
+	carg.mountdirfd = fd;
+	carg.close_fd = fd;
+	carg.close_flags = cflags;
+	carg.close_owner = owner;
 
-  rc = gpfs_ganesha(OPENHANDLE_CLOSE_FILE, &carg);
+	rc = gpfs_ganesha(OPENHANDLE_CLOSE_FILE, &carg);
 
-  LogFullDebug(COMPONENT_FSAL, "OPENHANDLE_CLOSE_FILE returned: rc %d", rc);
+	LogFullDebug(COMPONENT_FSAL, "OPENHANDLE_CLOSE_FILE returned: rc %d",
+		     rc);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -431,28 +422,30 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
  */
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-                        struct gpfs_file_handle *phandle, int *pfd, int oflags)
+					 struct gpfs_file_handle * phandle,
+					 int *pfd, int oflags)
 {
-  int rc = 0;
-  struct open_arg oarg;
+	int rc = 0;
+	struct open_arg oarg;
 
-  if(!phandle || !pfd)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!phandle || !pfd)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  oarg.mountdirfd = dirfd;
-  oarg.handle = phandle;
-  oarg.flags = oflags;
+	oarg.mountdirfd = dirfd;
+	oarg.handle = phandle;
+	oarg.flags = oflags;
 
-  rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+	rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
 
-  LogFullDebug(COMPONENT_FSAL, "OPENHANDLE_OPEN_BY_HANDLE returned: rc %d", rc);
+	LogFullDebug(COMPONENT_FSAL,
+		     "OPENHANDLE_OPEN_BY_HANDLE returned: rc %d", rc);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  *pfd = rc;
+	*pfd = rc;
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -468,40 +461,39 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
  *
  * \return status of operation
  */
-fsal_status_t
-fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
-                         struct gpfs_file_handle *p_handle)   /* OUT */
-{
-  int rc;
-  struct name_handle_arg harg;
+fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
+				       struct gpfs_file_handle * p_handle)
+{				/* OUT */
+	int rc;
+	struct name_handle_arg harg;
 
-  if(!p_handle || !p_fsalpath)
-    return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
-#endif
-
-  harg.handle = p_handle;
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
-  harg.handle->handle_version = OPENHANDLE_VERSION;
-  harg.name = p_fsalpath;
-  harg.dfd = AT_FDCWD;
-  harg.flag = 0;
+	if (!p_handle || !p_fsalpath)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+	memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
 #endif
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath);
+	harg.handle = p_handle;
+	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
+	harg.handle->handle_version = OPENHANDLE_VERSION;
+	harg.name = p_fsalpath;
+	harg.dfd = AT_FDCWD;
+	harg.flag = 0;
 
-  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+#ifdef _VALGRIND_MEMCHECK
+	memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -518,39 +510,40 @@ fsal_internal_get_handle(const char              *p_fsalpath, /* IN */
  * \return status of operation
  */
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN */
-                                          struct gpfs_file_handle *p_handle)/* OUT */
-{
-  int rc;
-  struct name_handle_arg harg;
+fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,	/* IN */
+					  struct gpfs_file_handle * p_handle)
+{				/* OUT */
+	int rc;
+	struct name_handle_arg harg;
 
-  if(!p_handle)
-    return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
-#endif
-
-  harg.handle = p_handle;
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.handle->handle_version = OPENHANDLE_VERSION;
-  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
-  harg.name = p_fsalname;
-  harg.dfd = dfd;
-  harg.flag = 0;
+	if (!p_handle)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+	memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
 #endif
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d %s", dfd, p_fsalname);
+	harg.handle = p_handle;
+	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+	harg.handle->handle_version = OPENHANDLE_VERSION;
+	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
+	harg.name = p_fsalname;
+	harg.dfd = dfd;
+	harg.flag = 0;
 
-  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+#ifdef _VALGRIND_MEMCHECK
+	memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d %s", dfd,
+		     p_fsalname);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -568,44 +561,42 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
  *
  * \return status of operation
  */
- fsal_status_t fsal_internal_get_fh(int dirfd, /* IN  */
-                                    struct gpfs_file_handle * p_dir_fh,      /* IN  */
-                                    const char * p_fsalname,      /* IN  */
-                                    struct gpfs_file_handle * p_out_fh)      /* OUT */
-{
-  int rc;
-  struct get_handle_arg harg;
+fsal_status_t fsal_internal_get_fh(int dirfd,	/* IN  */
+				   struct gpfs_file_handle * p_dir_fh,	/* IN  */
+				   const char *p_fsalname,	/* IN  */
+				   struct gpfs_file_handle * p_out_fh)
+{				/* OUT */
+	int rc;
+	struct get_handle_arg harg;
 
-  if(!p_out_fh || !p_dir_fh || !p_fsalname)
-    return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
-#endif
-
-  harg.mountdirfd = dirfd;
-  harg.dir_fh = p_dir_fh;
-  harg.out_fh = p_out_fh;
-  harg.out_fh->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.out_fh->handle_version = OPENHANDLE_VERSION;
-  harg.out_fh->handle_key_size = OPENHANDLE_KEY_LEN;
-  harg.len = strlen(p_fsalname);
-  harg.name = p_fsalname;
+	if (!p_out_fh || !p_dir_fh || !p_fsalname)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(harg.out_fh, 0, harg.out_fh->handle_size);
+	memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
 #endif
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Lookup handle for %s",
-               p_fsalname);
+	harg.mountdirfd = dirfd;
+	harg.dir_fh = p_dir_fh;
+	harg.out_fh = p_out_fh;
+	harg.out_fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	harg.out_fh->handle_version = OPENHANDLE_VERSION;
+	harg.out_fh->handle_key_size = OPENHANDLE_KEY_LEN;
+	harg.len = strlen(p_fsalname);
+	harg.name = p_fsalname;
 
-  rc = gpfs_ganesha(OPENHANDLE_GET_HANDLE, &harg);
+#ifdef _VALGRIND_MEMCHECK
+	memset(harg.out_fh, 0, harg.out_fh->handle_size);
+#endif
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalname);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	rc = gpfs_ganesha(OPENHANDLE_GET_HANDLE, &harg);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -619,40 +610,39 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname, /* IN
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_fd2handle(int fd, struct gpfs_file_handle * p_handle)
+fsal_status_t fsal_internal_fd2handle(int fd,
+				      struct gpfs_file_handle * p_handle)
 {
-  int rc;
-  struct name_handle_arg harg;
+	int rc;
+	struct name_handle_arg harg;
 
-  if(!p_handle)
-    return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-  memset(p_handle, 0, sizeof(*p_handle));
-#endif
-
-  harg.handle = p_handle;
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
-  harg.handle->handle_version = OPENHANDLE_VERSION;
-  harg.name = NULL;
-  harg.dfd = fd;
-  harg.flag = 0;
+	if (!p_handle)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+	memset(p_handle, 0, sizeof(*p_handle));
 #endif
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Lookup handle by fd for %d",
-               fd);
+	harg.handle = p_handle;
+	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
+	harg.handle->handle_version = OPENHANDLE_VERSION;
+	harg.name = NULL;
+	harg.dfd = fd;
+	harg.flag = 0;
 
-  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+#ifdef _VALGRIND_MEMCHECK
+	memset(harg.handle->f_handle, 0, harg.handle->handle_size);
+#endif
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -671,28 +661,28 @@ fsal_status_t fsal_internal_fd2handle(int fd, struct gpfs_file_handle * p_handle
  * \return status of operation
  */
 fsal_status_t fsal_internal_link_fh(int dirfd,
-                                    struct gpfs_file_handle * p_target_handle,
-                                    struct gpfs_file_handle * p_dir_handle,
-                                    const char * p_link_name)
+				    struct gpfs_file_handle * p_target_handle,
+				    struct gpfs_file_handle * p_dir_handle,
+				    const char *p_link_name)
 {
-  int rc;
-  struct link_fh_arg linkarg;
+	int rc;
+	struct link_fh_arg linkarg;
 
-  if(!p_link_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_link_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  linkarg.mountdirfd = dirfd;
-  linkarg.len = strlen(p_link_name);
-  linkarg.name = p_link_name;
-  linkarg.dir_fh = p_dir_handle;
-  linkarg.dst_fh = p_target_handle;
+	linkarg.mountdirfd = dirfd;
+	linkarg.len = strlen(p_link_name);
+	linkarg.name = p_link_name;
+	linkarg.dir_fh = p_dir_handle;
+	linkarg.dst_fh = p_target_handle;
 
-  rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FH, &linkarg);
+	rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FH, &linkarg);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -710,32 +700,32 @@ fsal_status_t fsal_internal_link_fh(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_stat_name(int dirfd,
-                                    struct gpfs_file_handle * p_dir_handle,
-                                    const char * p_stat_name,
-                                    struct stat *buf)
+				      struct gpfs_file_handle * p_dir_handle,
+				      const char *p_stat_name,
+				      struct stat * buf)
 {
-  int rc;
-  struct stat_name_arg statarg;
+	int rc;
+	struct stat_name_arg statarg;
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(buf, 0, sizeof(*buf));
+	memset(buf, 0, sizeof(*buf));
 #endif
 
-  if(!p_stat_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_stat_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  statarg.mountdirfd = dirfd;
-  statarg.len = strlen(p_stat_name);
-  statarg.name = p_stat_name;
-  statarg.handle = p_dir_handle;
-  statarg.buf = buf;
+	statarg.mountdirfd = dirfd;
+	statarg.len = strlen(p_stat_name);
+	statarg.name = p_stat_name;
+	statarg.handle = p_dir_handle;
+	statarg.buf = buf;
 
-  rc = gpfs_ganesha(OPENHANDLE_STAT_BY_NAME, &statarg);
+	rc = gpfs_ganesha(OPENHANDLE_STAT_BY_NAME, &statarg);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -753,28 +743,27 @@ fsal_status_t fsal_internal_stat_name(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_unlink(int dirfd,
-                                   struct gpfs_file_handle * p_dir_handle,
-                                   const char * p_stat_name,
-                                   struct stat *buf)
+				   struct gpfs_file_handle * p_dir_handle,
+				   const char *p_stat_name, struct stat * buf)
 {
-  int rc;
-  struct stat_name_arg statarg;
+	int rc;
+	struct stat_name_arg statarg;
 
-  if(!p_stat_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_stat_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  statarg.mountdirfd = dirfd;
-  statarg.len = strlen(p_stat_name);
-  statarg.name = p_stat_name;
-  statarg.handle = p_dir_handle;
-  statarg.buf = buf;
+	statarg.mountdirfd = dirfd;
+	statarg.len = strlen(p_stat_name);
+	statarg.name = p_stat_name;
+	statarg.handle = p_dir_handle;
+	statarg.buf = buf;
 
-  rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
+	rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -796,47 +785,47 @@ fsal_status_t fsal_internal_unlink(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_create(int dirfd,
-                                   struct gpfs_file_handle * p_dir_handle,
-                                   const char * p_stat_name,
-                                   mode_t mode, dev_t dev,
-                                   struct gpfs_file_handle * p_new_handle,
-                                   struct stat *buf)
+				   struct gpfs_file_handle * p_dir_handle,
+				   const char *p_stat_name, mode_t mode,
+				   dev_t dev,
+				   struct gpfs_file_handle * p_new_handle,
+				   struct stat * buf)
 {
-  int rc;
-  struct create_name_arg crarg;
+	int rc;
+	struct create_name_arg crarg;
 #ifdef _VALGRIND_MEMCHECK
-  gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)p_new_handle;
+	gpfsfsal_handle_t *p_handle = (gpfsfsal_handle_t *) p_new_handle;
 #endif
 
-  if(!p_stat_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_stat_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(p_handle, 0, sizeof(*p_handle));
+	memset(p_handle, 0, sizeof(*p_handle));
 #endif
 
-  crarg.mountdirfd = dirfd;
-  crarg.mode = mode;
-  crarg.dev = dev;
-  crarg.len = strlen(p_stat_name);
-  crarg.name = p_stat_name;
-  crarg.dir_fh = p_dir_handle;
-  crarg.new_fh = p_new_handle;
-  crarg.new_fh->handle_size = OPENHANDLE_HANDLE_LEN;
-  crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
-  crarg.new_fh->handle_version = OPENHANDLE_VERSION;
-  crarg.buf = buf;
+	crarg.mountdirfd = dirfd;
+	crarg.mode = mode;
+	crarg.dev = dev;
+	crarg.len = strlen(p_stat_name);
+	crarg.name = p_stat_name;
+	crarg.dir_fh = p_dir_handle;
+	crarg.new_fh = p_new_handle;
+	crarg.new_fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
+	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
+	crarg.buf = buf;
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(crarg.new_fh->f_handle, 0, crarg.new_fh->handle_size);
+	memset(crarg.new_fh->f_handle, 0, crarg.new_fh->handle_size);
 #endif
 
-  rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
+	rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -857,31 +846,31 @@ fsal_status_t fsal_internal_create(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_rename_fh(int dirfd,
-                                    struct gpfs_file_handle * p_old_handle,
-                                    struct gpfs_file_handle * p_new_handle,
-                                    const char * p_old_name,
-                                    const char * p_new_name)
+				      struct gpfs_file_handle * p_old_handle,
+				      struct gpfs_file_handle * p_new_handle,
+				      const char *p_old_name,
+				      const char *p_new_name)
 {
-  int rc;
-  struct rename_fh_arg renamearg;
+	int rc;
+	struct rename_fh_arg renamearg;
 
-  if(!p_old_name || !p_new_name)
-    return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_old_name || !p_new_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  renamearg.mountdirfd = dirfd;
-  renamearg.old_len = strlen(p_old_name);
-  renamearg.old_name = p_old_name;
-  renamearg.new_len = strlen(p_new_name);
-  renamearg.new_name = p_new_name;
-  renamearg.old_fh = p_old_handle;
-  renamearg.new_fh = p_new_handle;
+	renamearg.mountdirfd = dirfd;
+	renamearg.old_len = strlen(p_old_name);
+	renamearg.old_name = p_old_name;
+	renamearg.new_len = strlen(p_new_name);
+	renamearg.new_name = p_new_name;
+	renamearg.old_fh = p_old_handle;
+	renamearg.new_fh = p_new_handle;
 
-  rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
+	rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -894,32 +883,31 @@ fsal_status_t fsal_internal_rename_fh(int dirfd,
  */
 
 fsal_status_t fsal_readlink_by_handle(int dirfd,
-                                      struct gpfs_file_handle * p_handle,
-                                      char *__buf, size_t *maxlen)
+				      struct gpfs_file_handle * p_handle,
+				      char *__buf, size_t * maxlen)
 {
-  int rc;
-  struct readlink_fh_arg readlinkarg;
+	int rc;
+	struct readlink_fh_arg readlinkarg;
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(__buf, 0, maxlen);
+	memset(__buf, 0, maxlen);
 #endif
 
-  readlinkarg.mountdirfd = dirfd;
-  readlinkarg.handle = p_handle;
-  readlinkarg.buffer = __buf;
-  readlinkarg.size = *maxlen;
+	readlinkarg.mountdirfd = dirfd;
+	readlinkarg.handle = p_handle;
+	readlinkarg.buffer = __buf;
+	readlinkarg.size = *maxlen;
 
-  rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FH, &readlinkarg);
+	rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FH, &readlinkarg);
 
-  if(rc < 0)
-      return fsalstat(rc, 0);
+	if (rc < 0)
+		return fsalstat(rc, 0);
 
-  if(rc < *maxlen)
-  {
-    __buf[rc] = '\0';
-    *maxlen = rc;
-  }
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (rc < *maxlen) {
+		__buf[rc] = '\0';
+		*maxlen = rc;
+	}
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -930,153 +918,153 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
 
 int fsal_internal_version()
 {
-  int rc;
+	int rc;
 
-  rc = gpfs_ganesha(OPENHANDLE_GET_VERSION, &rc);
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION, &rc);
 
-  if(rc < 0)
-      LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d", rc);
-  else
-      LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc);
+	if (rc < 0)
+		LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d",
+			 rc);
+	else
+		LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc);
 
-  return rc;
+	return rc;
 }
 
 /* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
-                                       struct gpfs_file_handle *p_handle,
-                                       gpfsfsal_xstat_t *p_buffxstat,
-                                       uint32_t *grace_period_attr,
-                                       bool expire)
+				       struct gpfs_file_handle * p_handle,
+				       gpfsfsal_xstat_t * p_buffxstat,
+				       uint32_t * grace_period_attr,
+				       bool expire)
 {
-  int rc;
-  struct xstat_arg xstatarg;
+	int rc;
+	struct xstat_arg xstatarg;
 #ifdef _USE_NFS4_ACL
-  gpfs_acl_t *pacl_gpfs;
-#endif                          /* _USE_NFS4_ACL */
+	gpfs_acl_t *pacl_gpfs;
+#endif				/* _USE_NFS4_ACL */
 
-  if(!p_handle || !p_buffxstat)
-      return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_handle || !p_buffxstat)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 #ifdef _VALGRIND_MEMCHECK
-  memset(p_buffxstat, 0, sizeof(*p_buffxstat));
+	memset(p_buffxstat, 0, sizeof(*p_buffxstat));
 #endif
 
 #ifdef _USE_NFS4_ACL
-  /* Initialize acl header so that GPFS knows what we want. */
-  pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
-  pacl_gpfs->acl_level = 0;
-  pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
-  pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
-  pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
-#endif                          /* _USE_NFS4_ACL */
+	/* Initialize acl header so that GPFS knows what we want. */
+	pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
+	pacl_gpfs->acl_level = 0;
+	pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
+	pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
+	pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
+#endif				/* _USE_NFS4_ACL */
 
 #ifdef _USE_NFS4_ACL
-  xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
+	xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 #else
-  xstatarg.attr_valid = XATTR_STAT;
+	xstatarg.attr_valid = XATTR_STAT;
 #endif
-  if (expire)
-    xstatarg.attr_valid |= XATTR_EXPIRE;
+	if (expire)
+		xstatarg.attr_valid |= XATTR_EXPIRE;
 
-  xstatarg.mountdirfd = dirfd;
-  xstatarg.handle = p_handle;
+	xstatarg.mountdirfd = dirfd;
+	xstatarg.handle = p_handle;
 #ifdef _USE_NFS4_ACL
-  xstatarg.acl = pacl_gpfs;
+	xstatarg.acl = pacl_gpfs;
 #else
-  xstatarg.acl = NULL;
+	xstatarg.acl = NULL;
 #endif
-  xstatarg.attr_changed = 0;
-  xstatarg.buf = &p_buffxstat->buffstat;
-  xstatarg.expire_attr = grace_period_attr;
+	xstatarg.attr_changed = 0;
+	xstatarg.buf = &p_buffxstat->buffstat;
+	xstatarg.expire_attr = grace_period_attr;
 
-  rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
-  LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d",
-                                                                 dirfd, rc);
+	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
+	LogDebug(COMPONENT_FSAL,
+		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d", dirfd, rc);
 
-  if(rc < 0)
-    {
-      if(errno == ENODATA)
-        {
-          /* For the special file that do not have ACL, GPFS returns ENODATA.
-           * In this case, return okay with stat. */
-          p_buffxstat->attr_valid = XATTR_STAT;
-          LogFullDebug(COMPONENT_FSAL, "retrieved only stat, not acl");
-          return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        }
-      else
-        {
-          /* Handle other errors. */
-          LogFullDebug(COMPONENT_FSAL, "fsal_get_xstat_by_handle returned errno:%d -- %s",
-                       errno, strerror(errno));
-          return fsalstat(posix2fsal_error(errno), errno);
-        }
-    }
-
+	if (rc < 0) {
+		if (errno == ENODATA) {
+			/* For the special file that do not have ACL, GPFS returns ENODATA.
+			 * In this case, return okay with stat. */
+			p_buffxstat->attr_valid = XATTR_STAT;
+			LogFullDebug(COMPONENT_FSAL,
+				     "retrieved only stat, not acl");
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		} else {
+			/* Handle other errors. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "fsal_get_xstat_by_handle returned errno:%d -- %s",
+				     errno, strerror(errno));
+			return fsalstat(posix2fsal_error(errno), errno);
+		}
+	}
 #ifdef _USE_NFS4_ACL
-  p_buffxstat->attr_valid = XATTR_STAT | XATTR_ACL;
+	p_buffxstat->attr_valid = XATTR_STAT | XATTR_ACL;
 #else
-  p_buffxstat->attr_valid = XATTR_STAT;
+	p_buffxstat->attr_valid = XATTR_STAT;
 #endif
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,
-                                       const struct req_op_context *p_context,
-                                       struct gpfs_file_handle * p_handle, int attr_valid,
-                                       int attr_changed, gpfsfsal_xstat_t *p_buffxstat)
+				       const struct req_op_context * p_context,
+				       struct gpfs_file_handle * p_handle,
+				       int attr_valid, int attr_changed,
+				       gpfsfsal_xstat_t * p_buffxstat)
 {
-  int rc, errsv;
-  struct xstat_arg xstatarg;
+	int rc, errsv;
+	struct xstat_arg xstatarg;
 
-  if(!p_handle || !p_buffxstat)
-      return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_handle || !p_buffxstat)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  xstatarg.attr_valid = attr_valid;
-  xstatarg.mountdirfd = dirfd;
-  xstatarg.handle = p_handle;
-  xstatarg.acl = (gpfs_acl_t *) p_buffxstat->buffacl;
-  xstatarg.attr_changed = attr_changed;
-  xstatarg.buf = &p_buffxstat->buffstat;
+	xstatarg.attr_valid = attr_valid;
+	xstatarg.mountdirfd = dirfd;
+	xstatarg.handle = p_handle;
+	xstatarg.acl = (gpfs_acl_t *) p_buffxstat->buffacl;
+	xstatarg.attr_changed = attr_changed;
+	xstatarg.buf = &p_buffxstat->buffstat;
 
-  /* We explicitly do NOT do setfsuid/setfsgid here because truncate, even to
-   * enlarge a file, doesn't actually allocate blocks. GPFS implements sparse
-   * files, so blocks of all 0 will not actually be allocated.
-   */
-  rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
-  errsv = errno;
+	/* We explicitly do NOT do setfsuid/setfsgid here because truncate, even to
+	 * enlarge a file, doesn't actually allocate blocks. GPFS implements sparse
+	 * files, so blocks of all 0 will not actually be allocated.
+	 */
+	rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
+	errsv = errno;
 
-  LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d", rc);
+	LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d",
+		 rc);
 
-  if(rc < 0)
-    return fsalstat(posix2fsal_error(errsv), errsv);
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errsv), errsv);
 
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* trucate by handle */
 fsal_status_t fsal_trucate_by_handle(int dirfd,
-                                     const struct req_op_context *p_context,
-                                     struct gpfs_file_handle * p_handle,
-                                     u_int64_t size)
+				     const struct req_op_context * p_context,
+				     struct gpfs_file_handle * p_handle,
+				     u_int64_t size)
 {
-  int attr_valid;
-  int attr_changed;
-  gpfsfsal_xstat_t buffxstat;
+	int attr_valid;
+	int attr_changed;
+	gpfsfsal_xstat_t buffxstat;
 
-  if(!p_handle || !p_context)
-      return fsalstat(ERR_FSAL_FAULT, 0);
+	if (!p_handle || !p_context)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  attr_valid = XATTR_STAT;
-  attr_changed = XATTR_SIZE;
-  buffxstat.buffstat.st_size = size;
+	attr_valid = XATTR_STAT;
+	attr_changed = XATTR_SIZE;
+	buffxstat.buffstat.st_size = size;
 
-  return fsal_set_xstat_by_handle(dirfd, p_context, p_handle, attr_valid,
-                                 attr_changed, &buffxstat);
+	return fsal_set_xstat_by_handle(dirfd, p_context, p_handle, attr_valid,
+					attr_changed, &buffxstat);
 }
 
 /**
@@ -1089,16 +1077,15 @@ fsal_status_t fsal_trucate_by_handle(int dirfd,
 bool fsal_error_is_event(fsal_status_t status)
 {
 
-  switch (status.major)
-    {
+	switch (status.major) {
 
-    case ERR_FSAL_IO:
-    case ERR_FSAL_STALE:
-      return TRUE;
+	case ERR_FSAL_IO:
+	case ERR_FSAL_STALE:
+		return TRUE;
 
-    default:
-      return FALSE;
-    }
+	default:
+		return FALSE;
+	}
 }
 
 /**
@@ -1110,28 +1097,27 @@ bool fsal_error_is_event(fsal_status_t status)
  */
 bool fsal_error_is_info(fsal_status_t status)
 {
-  switch (status.major)
-    {
-    case ERR_FSAL_NOTDIR:
-    case ERR_FSAL_NOMEM:
-    case ERR_FSAL_FAULT:
-    case ERR_FSAL_EXIST:
-    case ERR_FSAL_XDEV:
-    case ERR_FSAL_ISDIR:
-    case ERR_FSAL_INVAL:
-    case ERR_FSAL_FBIG:
-    case ERR_FSAL_NOSPC:
-    case ERR_FSAL_MLINK:
-    case ERR_FSAL_NAMETOOLONG:
-    case ERR_FSAL_STALE:
-    case ERR_FSAL_NOTSUPP:
-    case ERR_FSAL_OVERFLOW:
-    case ERR_FSAL_DEADLOCK:
-    case ERR_FSAL_INTERRUPT:
-    case ERR_FSAL_SERVERFAULT:
-      return TRUE;
+	switch (status.major) {
+	case ERR_FSAL_NOTDIR:
+	case ERR_FSAL_NOMEM:
+	case ERR_FSAL_FAULT:
+	case ERR_FSAL_EXIST:
+	case ERR_FSAL_XDEV:
+	case ERR_FSAL_ISDIR:
+	case ERR_FSAL_INVAL:
+	case ERR_FSAL_FBIG:
+	case ERR_FSAL_NOSPC:
+	case ERR_FSAL_MLINK:
+	case ERR_FSAL_NAMETOOLONG:
+	case ERR_FSAL_STALE:
+	case ERR_FSAL_NOTSUPP:
+	case ERR_FSAL_OVERFLOW:
+	case ERR_FSAL_DEADLOCK:
+	case ERR_FSAL_INTERRUPT:
+	case ERR_FSAL_SERVERFAULT:
+		return TRUE;
 
-    default:
-      return FALSE;
-    }
+	default:
+		return FALSE;
+	}
 }
