@@ -71,7 +71,7 @@ struct invalidate_args {
 	struct fsal_export *export;
 	struct gsh_buffdesc obj;
 	uint32_t flags;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -81,9 +81,9 @@ static void queue_invalidate(struct fridgethr_context *ctx)
 	struct invalidate_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->invalidate(args->export,
-						  &args->obj,
-						  args->flags);
+	status =
+	    args->export->up_ops->invalidate(args->export, &args->obj,
+					     args->flags);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -93,13 +93,9 @@ static void queue_invalidate(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_invalidate(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *obj,
-	uint32_t flags,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_invalidate(struct fridgethr *fr, struct fsal_export *export,
+			const struct gsh_buffdesc *obj, uint32_t flags,
+			void (*cb) (void *, cache_inode_status_t), void *cb_arg)
 {
 	struct invalidate_args *args = NULL;
 	int rc = 0;
@@ -121,7 +117,7 @@ int up_async_invalidate(
 	args->obj.len = obj->len;
 
 	rc = fridgethr_submit(fr, queue_invalidate, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -140,7 +136,7 @@ struct update_args {
 	struct gsh_buffdesc obj;
 	struct attrlist attr;
 	uint32_t flags;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -150,10 +146,9 @@ static void queue_update(struct fridgethr_context *ctx)
 	struct update_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->update(args->export,
-					      &args->obj,
-					      &args->attr,
-					      args->flags);
+	status =
+	    args->export->up_ops->update(args->export, &args->obj, &args->attr,
+					 args->flags);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -163,15 +158,10 @@ static void queue_update(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-
-int up_async_update(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *obj,
-	struct attrlist *attr,
-	uint32_t flags,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_update(struct fridgethr *fr, struct fsal_export *export,
+		    const struct gsh_buffdesc *obj, struct attrlist *attr,
+		    uint32_t flags, void (*cb) (void *, cache_inode_status_t),
+		    void *cb_arg)
 {
 	struct update_args *args = NULL;
 	int rc = 0;
@@ -194,7 +184,7 @@ int up_async_update(
 	args->obj.len = obj->len;
 
 	rc = fridgethr_submit(fr, queue_update, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -213,7 +203,7 @@ struct lock_grant_args {
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
-	void (*cb)(void *, state_status_t);
+	void (*cb) (void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -223,10 +213,9 @@ static void queue_lock_grant(struct fridgethr_context *ctx)
 	struct lock_grant_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->export->up_ops->lock_grant(args->export,
-						  &args->file,
-						  args->owner,
-						  &args->lock_param);
+	status =
+	    args->export->up_ops->lock_grant(args->export, &args->file,
+					     args->owner, &args->lock_param);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -236,15 +225,11 @@ static void queue_lock_grant(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-
-int up_async_lock_grant(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *file,
-	void *owner,
-	fsal_lock_param_t *lock_param,
-	void (*cb)(void *, state_status_t),
-	void *cb_arg)
+int up_async_lock_grant(struct fridgethr *fr, struct fsal_export *export,
+			const struct gsh_buffdesc *file, void *owner,
+			fsal_lock_param_t * lock_param, void (*cb) (void *,
+								    state_status_t),
+			void *cb_arg)
 {
 	struct lock_grant_args *args = NULL;
 	int rc = 0;
@@ -267,7 +252,7 @@ int up_async_lock_grant(
 	args->file.len = file->len;
 
 	rc = fridgethr_submit(fr, queue_lock_grant, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -286,7 +271,7 @@ struct lock_avail_args {
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
-	void (*cb)(void *, state_status_t);
+	void (*cb) (void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -296,10 +281,9 @@ static void queue_lock_avail(struct fridgethr_context *ctx)
 	struct lock_avail_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->export->up_ops->lock_avail(args->export,
-						  &args->file,
-						  args->owner,
-						  &args->lock_param);
+	status =
+	    args->export->up_ops->lock_avail(args->export, &args->file,
+					     args->owner, &args->lock_param);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -309,14 +293,11 @@ static void queue_lock_avail(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_lock_avail(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *file,
-	void *owner,
-	fsal_lock_param_t *lock_param,
-	void (*cb)(void *, state_status_t),
-	void *cb_arg)
+int up_async_lock_avail(struct fridgethr *fr, struct fsal_export *export,
+			const struct gsh_buffdesc *file, void *owner,
+			fsal_lock_param_t * lock_param, void (*cb) (void *,
+								    state_status_t),
+			void *cb_arg)
 {
 	struct lock_avail_args *args = NULL;
 	int rc = 0;
@@ -339,7 +320,7 @@ int up_async_lock_avail(
 	args->file.len = file->len;
 
 	rc = fridgethr_submit(fr, queue_lock_avail, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -358,7 +339,7 @@ struct link_args {
 	struct gsh_buffdesc dir;
 	char *name;
 	struct gsh_buffdesc target;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -368,12 +349,10 @@ static void queue_link(struct fridgethr_context *ctx)
 	struct link_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->link(args->export,
-					    &args->dir,
-					    args->name,
-					    (args->target.addr ?
-					     &args->target :
-					     NULL));
+	status =
+	    args->export->up_ops->link(args->export, &args->dir, args->name,
+				       (args->target.addr ? &args->
+					target : NULL));
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -383,14 +362,11 @@ static void queue_link(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_link(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *dir,
-	const char *name,
-	const struct gsh_buffdesc *target,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_link(struct fridgethr *fr, struct fsal_export *export,
+		  const struct gsh_buffdesc *dir, const char *name,
+		  const struct gsh_buffdesc *target, void (*cb) (void *,
+								 cache_inode_status_t),
+		  void *cb_arg)
 {
 	struct link_args *args = NULL;
 	int rc = 0;
@@ -399,8 +375,9 @@ int up_async_link(
 
 	export->ops->get(export);
 
-	args = gsh_malloc(sizeof(struct link_args) + dir->len +
-			  namelen + (target ? target->len : 0));
+	args =
+	    gsh_malloc(sizeof(struct link_args) + dir->len + namelen +
+		       (target ? target->len : 0));
 	if (!args) {
 		rc = ENOMEM;
 		goto out;
@@ -429,7 +406,7 @@ int up_async_link(
 	}
 
 	rc = fridgethr_submit(fr, queue_link, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -445,7 +422,7 @@ out:
 
 struct unlink_args {
 	struct fsal_export *export;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	struct gsh_buffdesc dir;
 	char *name;
 	void *cb_arg;
@@ -457,9 +434,8 @@ static void queue_unlink(struct fridgethr_context *ctx)
 	struct unlink_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->unlink(args->export,
-					      &args->dir,
-					      args->name);
+	status =
+	    args->export->up_ops->unlink(args->export, &args->dir, args->name);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -469,13 +445,9 @@ static void queue_unlink(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_unlink(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *dir,
-	const char *name,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_unlink(struct fridgethr *fr, struct fsal_export *export,
+		    const struct gsh_buffdesc *dir, const char *name,
+		    void (*cb) (void *, cache_inode_status_t), void *cb_arg)
 {
 	struct unlink_args *args = NULL;
 	int rc = 0;
@@ -504,7 +476,7 @@ int up_async_unlink(
 	cursor += namelen;
 
 	rc = fridgethr_submit(fr, queue_unlink, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -522,7 +494,7 @@ struct move_from_args {
 	struct fsal_export *export;
 	struct gsh_buffdesc dir;
 	char *name;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -532,9 +504,9 @@ static void queue_move_from(struct fridgethr_context *ctx)
 	struct move_from_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->move_from(args->export,
-						 &args->dir,
-						 args->name);
+	status =
+	    args->export->up_ops->move_from(args->export, &args->dir,
+					    args->name);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -544,13 +516,9 @@ static void queue_move_from(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_move_from(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *dir,
-	const char *name,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_move_from(struct fridgethr *fr, struct fsal_export *export,
+		       const struct gsh_buffdesc *dir, const char *name,
+		       void (*cb) (void *, cache_inode_status_t), void *cb_arg)
 {
 	struct move_from_args *args = NULL;
 	int rc = 0;
@@ -580,7 +548,7 @@ int up_async_move_from(
 
 	rc = fridgethr_submit(fr, queue_move_from, args);
 
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -599,7 +567,7 @@ struct move_to_args {
 	struct gsh_buffdesc dir;
 	char *name;
 	struct gsh_buffdesc target;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -609,12 +577,10 @@ static void queue_move_to(struct fridgethr_context *ctx)
 	struct move_to_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->move_to(args->export,
-					       &args->dir,
-					       args->name,
-					       (args->target.addr ?
-						&args->target :
-						NULL));
+	status =
+	    args->export->up_ops->move_to(args->export, &args->dir, args->name,
+					  (args->target.addr ? &args->
+					   target : NULL));
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -624,14 +590,11 @@ static void queue_move_to(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_move_to(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *dir,
-	const char *name,
-	const struct gsh_buffdesc *target,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_move_to(struct fridgethr *fr, struct fsal_export *export,
+		     const struct gsh_buffdesc *dir, const char *name,
+		     const struct gsh_buffdesc *target, void (*cb) (void *,
+								    cache_inode_status_t),
+		     void *cb_arg)
 {
 	struct move_to_args *args = NULL;
 	int rc = 0;
@@ -640,8 +603,9 @@ int up_async_move_to(
 
 	export->ops->get(export);
 
-	args = gsh_malloc(sizeof(struct move_to_args) + dir->len
-			  + namelen + (target ? target->len : 0));
+	args =
+	    gsh_malloc(sizeof(struct move_to_args) + dir->len + namelen +
+		       (target ? target->len : 0));
 	if (!args) {
 		rc = ENOMEM;
 		goto out;
@@ -671,7 +635,7 @@ int up_async_move_to(
 
 	rc = fridgethr_submit(fr, queue_move_to, args);
 
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -690,7 +654,7 @@ struct rename_args {
 	struct gsh_buffdesc dir;
 	char *old;
 	char *new;
-	void (*cb)(void *, cache_inode_status_t);
+	void (*cb) (void *, cache_inode_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -700,10 +664,9 @@ static void queue_rename(struct fridgethr_context *ctx)
 	struct rename_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->export->up_ops->rename(args->export,
-					      &args->dir,
-					      args->old,
-					      args->new);
+	status =
+	    args->export->up_ops->rename(args->export, &args->dir, args->old,
+					 args->new);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -713,14 +676,10 @@ static void queue_rename(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_rename(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *dir,
-	const char *old,
-	const char *new,
-	void (*cb)(void *, cache_inode_status_t),
-	void *cb_arg)
+int up_async_rename(struct fridgethr *fr, struct fsal_export *export,
+		    const struct gsh_buffdesc *dir, const char *old,
+		    const char *new, void (*cb) (void *, cache_inode_status_t),
+		    void *cb_arg)
 {
 	struct rename_args *args = NULL;
 	int rc = 0;
@@ -730,8 +689,8 @@ int up_async_rename(
 
 	export->ops->get(export);
 
-	args = gsh_malloc(sizeof(struct rename_args) + dir->len
-			  + oldlen + newlen);
+	args =
+	    gsh_malloc(sizeof(struct rename_args) + dir->len + oldlen + newlen);
 	if (!args) {
 		rc = ENOMEM;
 		goto out;
@@ -756,7 +715,7 @@ int up_async_rename(
 
 	rc = fridgethr_submit(fr, queue_rename, args);
 
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -778,7 +737,7 @@ struct layoutrecall_args {
 	struct pnfs_segment segment;
 	void *cookie;
 	struct layoutrecall_spec spec;
-	void (*cb)(void *, state_status_t);
+	void (*cb) (void *, state_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -788,15 +747,13 @@ static void queue_layoutrecall(struct fridgethr_context *ctx)
 	struct layoutrecall_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->export->up_ops->layoutrecall(
-		args->export,
-		&args->handle,
-		args->layout_type,
-		args->changed,
-		&args->segment,
-		args->cookie,
-		(args->spec.how == layoutrecall_not_specced ?
-		 NULL : &args->spec));
+	status =
+	    args->export->up_ops->layoutrecall(args->export, &args->handle,
+					       args->layout_type, args->changed,
+					       &args->segment, args->cookie,
+					       (args->spec.how ==
+						layoutrecall_not_specced ? NULL
+						: &args->spec));
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -806,17 +763,13 @@ static void queue_layoutrecall(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_layoutrecall(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *handle,
-	layouttype4 layout_type,
-	bool changed,
-	const struct pnfs_segment *segment,
-	void *cookie,
-	struct layoutrecall_spec *spec,
-	void (*cb)(void *, state_status_t),
-	void *cb_arg)
+int up_async_layoutrecall(struct fridgethr *fr, struct fsal_export *export,
+			  const struct gsh_buffdesc *handle,
+			  layouttype4 layout_type, bool changed,
+			  const struct pnfs_segment *segment, void *cookie,
+			  struct layoutrecall_spec *spec, void (*cb) (void *,
+								      state_status_t),
+			  void *cb_arg)
 {
 	struct layoutrecall_args *args = NULL;
 	int rc = 0;
@@ -849,7 +802,7 @@ int up_async_layoutrecall(
 
 	rc = fridgethr_submit(fr, queue_layoutrecall, args);
 
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -869,7 +822,7 @@ struct notify_device_args {
 	layouttype4 layout_type;
 	uint64_t devid;
 	bool immediate;
-	void (*cb)(void *, state_status_t);
+	void (*cb) (void *, state_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -879,11 +832,10 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 	struct notify_device_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->export->up_ops->notify_device(args->export,
-						     args->notify_type,
-						     args->layout_type,
-						     args->devid,
-						     args->immediate);
+	status =
+	    args->export->up_ops->notify_device(args->export, args->notify_type,
+						args->layout_type, args->devid,
+						args->immediate);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -893,15 +845,11 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_notify_device(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	notify_deviceid_type4 notify_type,
-	layouttype4 layout_type,
-	uint64_t devid,
-	bool immediate,
-	void (*cb)(void *, state_status_t),
-	void *cb_arg)
+int up_async_notify_device(struct fridgethr *fr, struct fsal_export *export,
+			   notify_deviceid_type4 notify_type,
+			   layouttype4 layout_type, uint64_t devid,
+			   bool immediate, void (*cb) (void *, state_status_t),
+			   void *cb_arg)
 {
 	struct notify_device_args *args = NULL;
 	int rc = 0;
@@ -924,7 +872,7 @@ int up_async_notify_device(
 
 	rc = fridgethr_submit(fr, queue_notify_device, args);
 
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -941,7 +889,7 @@ out:
 struct delegrecall_args {
 	struct fsal_export *export;
 	struct gsh_buffdesc handle;
-	void (*cb)(void *, state_status_t);
+	void (*cb) (void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -951,8 +899,7 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 	struct delegrecall_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->export->up_ops->delegrecall(args->export,
-						   &args->handle);
+	status = args->export->up_ops->delegrecall(args->export, &args->handle);
 
 	if (args->cb) {
 		args->cb(args->cb_arg, status);
@@ -962,12 +909,10 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 	gsh_free(args);
 }
 
-int up_async_delegrecall(
-	struct fridgethr *fr,
-	struct fsal_export *export,
-	const struct gsh_buffdesc *handle,
-	void (*cb)(void *, state_status_t),
-	void *cb_arg)
+int up_async_delegrecall(struct fridgethr *fr, struct fsal_export *export,
+			 const struct gsh_buffdesc *handle, void (*cb) (void *,
+									state_status_t),
+			 void *cb_arg)
 {
 	struct delegrecall_args *args = NULL;
 	int rc = 0;
@@ -989,7 +934,7 @@ int up_async_delegrecall(
 	args->handle.len = handle->len;
 
 	rc = fridgethr_submit(fr, queue_delegrecall, args);
-out:
+ out:
 
 	if (rc != 0) {
 		if (args) {
@@ -1000,6 +945,5 @@ out:
 
 	return rc;
 }
-
 
 /** @} */
