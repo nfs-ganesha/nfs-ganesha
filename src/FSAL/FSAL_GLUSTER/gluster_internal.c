@@ -25,7 +25,6 @@
  * Module core functions
  */
 
-#include <sys/fsuid.h>
 #include "gluster_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -34,7 +33,7 @@
  * @brief FSAL status mapping from GlusterFS errors
  *
  * This function returns a fsal_status_t with the FSAL error as the
- * major, and the posix error as minor.	
+ * major, and the posix error as minor.
  *
  * @param[in] gluster_errorcode Gluster error
  *
@@ -243,9 +242,9 @@ struct fsal_staticfsinfo_t *gluster_staticinfo (struct fsal_module *hdl)
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(struct glusterfs_export *glexport, const struct stat *sb, 
-		     struct glfs_object *glhandle, struct glfs_gfid *gfid, 
-		     struct glusterfs_handle **obj)
+int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
+		     struct glfs_object *glhandle, unsigned char *globjhdl,
+		     int len, struct glusterfs_handle **obj)
 {
 	int                      rc = 0;
 	struct glusterfs_handle *constructing = NULL;
@@ -260,7 +259,7 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	stat2fsal_attributes(sb, &constructing->handle.attributes);
 	constructing->glhandle = glhandle;
-	constructing->gfid = gfid;
+	memcpy(constructing->globjhdl, globjhdl, len);
 	constructing->glfd = NULL;
 
 	rc = (fsal_obj_handle_init(&constructing->handle,
@@ -276,14 +275,8 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	return 0;
 }
 
-void gluster_cleanup_vars(struct glfs_object *glhandle, struct glfs_gfid *gfid)
+void gluster_cleanup_vars(struct glfs_object *glhandle)
 {
-	if (gfid) {
-		if (gfid->id)
-			free(gfid->id);
-		free(gfid);
-	}
-
 	if (glhandle) {
 		/* Error ignored, this is a cleanup operation, can't do much.
 		 * TODO: Useful point for logging? */
@@ -302,7 +295,7 @@ void gluster_cleanup_vars(struct glfs_object *glhandle, struct glfs_gfid *gfid)
  *	FS_specific = "foo=baz,enable_A";
  */
 bool fs_specific_has(const char *fs_specific, const char* key,
-			    char *val, int max_val_bytes)
+		     char *val, int *max_val_bytes)
 {
 	char *next_comma, *option;
 	bool ret;
@@ -325,7 +318,9 @@ bool fs_specific_has(const char *fs_specific, const char* key,
 		strsep(&v, "=");
 		if (0 == strcmp(k, key)) {
 			if(val)
-				strncpy(val, v, max_val_bytes);
+				strncpy(val, v, *max_val_bytes);
+			if (max_val_bytes)
+				*max_val_bytes = strlen(v) + 1;
 			ret = true;
 			goto cleanup;
 		}
@@ -337,46 +332,46 @@ cleanup:
 	return ret;
 }
 
-int setids(uid_t nuid, uid_t ngid, uid_t *suid, uid_t *sgid)
+int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
+		    gid_t *gid, unsigned int ngrps, gid_t *groups)
 {
-	int rc = 0;
-	uid_t euid, egid;
+	int             rc = 0;
 
-	/* TODO: Speed up same ID checking, store the euid/gid 
-	 * than get it each time? */
-	euid = geteuid();
-	if (euid != nuid) {
-		if (euid != setfsuid(nuid)) {
-			rc = -1;
-			errno = EPERM;
-			goto out;
-		}
+	if (uid) {
+		if (*uid != glfs_export->saveduid)
+			rc = glfs_setfsuid(*uid);
 	}
-
-	egid = getegid();
-	if (egid != ngid) {
-		if (egid != setfsgid(ngid)) {
-			rc = -1;
-			errno = EPERM;
-			/* revert the fsuid on errors */
-			setfsuid(euid);
-			goto out;
-		}
+	else {
+		rc = glfs_setfsuid(glfs_export->saveduid);
 	}
+	if (rc)
+		goto out;
 
-	if (suid != NULL)
-		*suid = euid;
+	if (gid) {
+		if (*gid != glfs_export->savedgid)
+			rc = glfs_setfsgid (*gid);
+	}
+	else {
+		rc = glfs_setfsgid (glfs_export->savedgid);
+	}
+	if (rc)
+		goto out;
 
-	if (sgid != NULL)
-		*sgid = egid;
+	if (ngrps != 0 && groups) {
+		rc = glfs_setfsgroups (ngrps, groups);
+	}
+	else {
+		rc = glfs_setfsgroups (0, NULL);
+	}
 
 out:
 	return rc;
 }
 
+#ifdef GLTIMING
 void latency_update(struct timespec *s_time, struct timespec *e_time, int opnum)
 {
-	atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time, 
+	atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time,
 			      timespec_diff(s_time, e_time));
 	atomic_add_uint64_t(&glfsal_latencies[opnum].count, 1);
 }
@@ -386,107 +381,9 @@ void latency_dump(void)
 	int i = 0;
 	
 	for (; i < LATENCY_SLOTS; i++) {
-		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%llu:nsecs:%llu", i, 
-			(long long unsigned int)glfsal_latencies[i].count, 
-			(long long unsigned int)glfsal_latencies[i].overall_time);
+		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%llu:nsecs:%llu", i,
+		    (long long unsigned int)glfsal_latencies[i].count,
+		    (long long unsigned int)glfsal_latencies[i].overall_time);
 	}
 }
-
-
-/**
- * @brief pthread set/getspecific functions for uid/gid key based ops
- * 
- * The following set of functions setup the uid/gid pthread key structs
- * for use by gluster apis to set uid/gid for different fops.
- * Since these are thread-specific, they don't need special locking
- * primitives right now.
- *
- * Following function inits the uid key
- *
- * @param[in] none
- * @param[out] int 
- */
-int
-glfs_uid_keyinit( void )
-{
-	int rc = -1;
-
-	if ( uid_key == NULL ) {
-		uid_key = calloc( 1, sizeof( pthread_key_t ));
-	}	
-	rc = pthread_key_create( uid_key, NULL );
-
-	return rc;
-}
-
-/**
- * @brief initialize the gid pthread_key struct for use by gluster api
- *
- * @param[in] none
- * @param[out] int
- */
-int
-glfs_gid_keyinit( void )
-{
-	int rc = -1;
-	
-	if ( gid_key == NULL ) {
-		gid_key = calloc( 1, sizeof( pthread_key_t ));
-	}	
-	rc = pthread_key_create( gid_key, NULL );
-
-	return rc;
-}
-
-/**
- * @brief return the value associated with the uid pthread_key_t struct
- *
- * @param[in] void
- * @param[out] void * ptr to the key value
- */
-void *glfs_uid_get( void )
-{
-	uid_t *uid = NULL;
-
-	uid = pthread_getspecific( *uid_key );
-
-	return uid;  
-}
-
-/**
- * @brief set a value wrt either the uid or gid pthread_key_t object
- *
- * @param[in] pthread_key_t * ptr to the key to be used
- * @param[in] const void *    ptr to the value to be stored in the key
- * 
- * @param[out] int a negative return value indicates the set function failed
- */
-int glfs_uidgid_set( pthread_key_t *key, const void *val )
-{
-	int rc = -1;
-
-	if ( (NULL == val) || (NULL == key) ) {
-		return rc;
-	}
-
-	rc = pthread_setspecific( *key, val );
-
-	return rc;
-
-}
-
-/**
- * @brief return the value associated with the gid pthread_key_t struct
- *
- * @param[in] void
- * @param[out] void * ptr to the key value
- */
-void *glfs_gid_get( void )
-{
-	gid_t *gid = NULL;
-
-	gid = pthread_getspecific( *gid_key );
-
-	return gid;  
-}
-
+#endif

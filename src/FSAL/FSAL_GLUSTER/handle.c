@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 #include <fcntl.h>
@@ -26,25 +26,26 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "gluster_internal.h"
-#include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_convert.h"
 
 /* fsal_obj_handle common methods
  */
 
-/* handle_release
- * default case is to throw a fault error.
- * creating an handle is not supported so getting here is bad
+/**
+ * @brief Implements GLUSTER FSAL objectoperation handle_release
+ *
+ * Free up the GLUSTER handle and associated data if any
+ * Typically free up any members of the struct glusterfs_handle
  */
 
 static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 {
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
@@ -56,18 +57,11 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 		goto out;
 	}
 
-	if (objhandle->gfid) {
-		if (objhandle->gfid->id)
-			free(objhandle->gfid->id);
-		free(objhandle->gfid);
-	}
-
 	if (objhandle->glfd) {
 		rc = glfs_close(objhandle->glfd);
 		if (rc) {
 			status = gluster2fsal_error(errno);
-			/* FIXME: cleanup as much as possible, or error out? */
-			goto out;
+			/* cleanup as much as possible */
 		}
 	}
 
@@ -82,7 +76,7 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(objhandle);
 
 out:
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_release);
 #endif
@@ -90,8 +84,8 @@ out:
 	return status;
 }
 
-/* lookup
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation lookup
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
@@ -103,13 +97,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(parent->export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle = 
+	struct glusterfs_handle *parenthandle =
 		container_of(parent, struct glusterfs_handle, handle);
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
@@ -122,13 +116,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	gfid = glfs_h_extract_gfid(glhandle);
-	if (gfid == NULL) {
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -136,16 +131,12 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	*handle = &objhandle->handle;
 
-#ifdef GLUSTER_FSAL_DEBUG
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_lookup);
-#endif
-
-	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
 
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_lookup);
 #endif
@@ -153,8 +144,8 @@ out:
 	return status;
 }
 
-/* read_dirents
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation readdir
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
@@ -169,12 +160,15 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct glfs_fd          *glfd = NULL;
 	long                     offset = 0;
 	struct dirent           *pde = NULL;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(dir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
 	glfd = glfs_h_opendir(glfs_export->gl_fs, objhandle->glhandle);
 	if (glfd == NULL) {
@@ -193,12 +187,12 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		rc = glfs_readdir_r(glfd, &de, &pde);
 		if (rc == 0 && pde != NULL) {
 			/* skip . and .. */
-			if((strcmp(de.d_name, ".") == 0) || 
+			if((strcmp(de.d_name, ".") == 0) ||
 				 (strcmp(de.d_name, "..") == 0)) {
 				continue;
 			}
 
-			if (!cb(opctx, de.d_name, dir_state, 
+			if (!cb(opctx, de.d_name, dir_state,
 				 glfs_telldir(glfd))) {
 				goto out;
 			}
@@ -219,11 +213,15 @@ out:
 		status = gluster2fsal_error(errno);
 	}
 
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_read_dirents);
+#endif
 	return status;
 }
 
-/* create
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation create
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
@@ -236,76 +234,52 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle = 
+	struct glusterfs_handle *parenthandle =
 		container_of(dir_hdl, struct glusterfs_handle, handle);
-	uid_t t_uid;
-	gid_t t_gid;
-
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 		
 	now(&s_time);
 #endif
-	/*
- 	 * Set caller uid/gid for further consumption by gfapi
- 	 */
-	t_uid = opctx->creds->caller_uid;
 
-	rc = glfs_uidgid_set( uid_key, &t_uid );
-	if ( rc != 0 ) {
-		printf( "Failure setting UID, rc = %d, t_uid = %u\n", rc, t_uid ) ;
-
-		LogCrit( COMPONENT_FSAL, 
-			 "Failure setting UID : %u, errno = %d", 
-			 opctx->creds->caller_uid, errno );
-
-		status = gluster2fsal_error( errno );
-
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+		      &opctx->creds->caller_gid, opctx->creds->caller_glen,
+	              opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 		goto out;
-	} else {
-		printf( "Successfully set UID, caller_uid = %u\n", opctx->creds->caller_uid );
 	}
 
-	t_gid = opctx->creds->caller_gid;
-
-	rc = glfs_uidgid_set( gid_key, &t_gid );
-	if ( rc != 0 ) {
-		printf( "Failure setting UID, rc = %d, t_gid = %u\n", rc, t_gid ) ;
-
-		LogCrit( COMPONENT_FSAL, 
-			 "Failure setting GID : %u, errno = %d",
-			 opctx->creds->caller_gid, errno );
-
-		status = gluster2fsal_error( errno );
-
-		goto out;
-	} else {
-		printf( "Successfully set GID, caller_gid = %u\n", opctx->creds->caller_gid );
-	}
-	
-
-	/* FIXME: Is it enough to convert the mode as is? 
-	 * what else from attrib should we use? */
-	glhandle = glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle, 
-				name, O_CREAT, fsal2unix_mode(attrib->mode), 
+	/* FIXME: what else from attrib should we use? */
+	glhandle = glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle,
+				name, O_CREAT, fsal2unix_mode(attrib->mode),
 				&sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
 
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	gfid = glfs_h_extract_gfid(glhandle);
-	if (gfid == NULL) {
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -314,16 +288,12 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-#ifdef GLUSTER_FSAL_DEBUG
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_create);
-#endif
-
-	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
 
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create);
 #endif
@@ -331,8 +301,8 @@ out:
 	return status;
 }
 
-/* makedir
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation mkdir
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
@@ -345,32 +315,51 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle = 
+	struct glusterfs_handle *parenthandle =
 		container_of(dir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
-	/* FIXME: We need to handle the UID/GID for creat */
-	/* FIXME: Is it enough to convert the mode as is? 
-	 * what else from attrib should we use? */
-	glhandle = glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle, 
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	/* FIXME: what else from attrib should we use? */
+	glhandle = glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle,
 				name, fsal2unix_mode(attrib->mode), &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	gfid = glfs_h_extract_gfid(glhandle);
-	if (gfid == NULL) {
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -379,15 +368,20 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
 
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_makedir);
+#endif
 	return status;
 }
 
-/* makenode
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation mknode
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
@@ -402,15 +396,18 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	struct glfs_object      *glhandle = NULL;
-	struct glfs_gfid        *gfid = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
 	struct glusterfs_handle *objhandle = NULL;
 	dev_t                    ndev = {0, };
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle = 
+	struct glusterfs_handle *parenthandle =
 		container_of(dir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
 	switch (nodetype) {
 		case BLOCK_FILE:
@@ -429,28 +426,44 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			break;
 		default:
 			LogMajor (COMPONENT_FSAL, 
-				  "Invalid node type in FSAL_mknode: %d", 
+				  "Invalid node type in FSAL_mknode: %d",
 				  nodetype);
 			return fsalstat (ERR_FSAL_INVAL, 0);
 	}
 
-	/* FIXME: We need to handle the UID/GID for creat */
-	/* FIXME: Is it enough to convert the mode as is? 
-	 * what else from attrib should we use? */
-	glhandle = glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle, 
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			     opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	/* FIXME: what else from attrib should we use? */
+	glhandle = glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle,
 				name, fsal2unix_mode(attrib->mode), ndev, &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	gfid = glfs_h_extract_gfid(glhandle);
-	if (gfid == NULL) {
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, gfid, &objhandle);
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -459,15 +472,20 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	*handle = &objhandle->handle;
 	*attrib = objhandle->handle.attributes;
 
-	return status;
 out:
-	gluster_cleanup_vars(glhandle, gfid);
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
 
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_makenode);
+#endif
 	return status;
 }
 
-/* makesymlink
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation symlink
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
@@ -477,13 +495,78 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
 {
-	LogCrit(COMPONENT_FSAL, "called");
-	latency_dump();
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct stat              sb;
+	struct glfs_object      *glhandle = NULL;
+	unsigned char            globjhdl[GLAPI_HANDLE_LENGTH];
+	struct glusterfs_handle *objhandle = NULL;
+	struct glusterfs_export *glfs_export =
+		container_of(dir_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *parenthandle =
+		container_of(dir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	/* FIXME: what else from attrib should we use? */
+	glhandle = glfs_h_symlink(glfs_export->gl_fs, parenthandle->glhandle,
+				name, link_path, &sb);
+
+	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (rc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (glhandle == NULL) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			      GLAPI_HANDLE_LENGTH, &objhandle);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
+	*handle = &objhandle->handle;
+	*attrib = objhandle->handle.attributes;
+
+out:
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gluster_cleanup_vars(glhandle);
+	}
+
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_makesymlink);
+#endif
+
+	return status;
 }
 
-/* readsymlink
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation readlink
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
@@ -491,12 +574,52 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
-	LogCrit(COMPONENT_FSAL, "called");
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(obj_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *objhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	link_content->len = 1024; // bad bad!!! need to determine size
+	link_content->addr = gsh_malloc(link_content->len);
+	if (link_content->addr == NULL) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
+	rc = glfs_h_readlink(glfs_export->gl_fs, objhandle->glhandle,
+			     link_content->addr, link_content->len);
+	if (rc < 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	/* Check if return buffer overflowed, it is still '\0' terminated */
+	link_content->len = (strlen(link_content->addr) + 1);
+
+out:
+	if (status.major != ERR_FSAL_NO_ERROR) {
+		gsh_free(link_content->addr);
+		link_content->addr = NULL;
+		link_content->len = 0;
+	}
+
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_readsymlink);
+#endif
+
+	return status;
 }
 
-/* getattrs
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation getattrs
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
@@ -505,26 +628,30 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(obj_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
 #endif
 
-	rc = glfs_h_getattrs(glfs_export->gl_fs, objhandle->glhandle, &sb);
+	rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &sb);
 	if (rc != 0) {
-		status = gluster2fsal_error(errno);
+		if (errno == ENOENT)
+			status = gluster2fsal_error(ESTALE);
+		else
+			status = gluster2fsal_error(errno);
+
 		goto out;
 	}
 
 	stat2fsal_attributes(&sb, &objhandle->handle.attributes);
 
 out:
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_getattrs);
 #endif
@@ -532,8 +659,8 @@ out:
 	return status;
 }
 
-/* setattrs
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation setattrs
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
@@ -544,45 +671,51 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct stat              sb;
 	int                      mask = 0;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(obj_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called: %x", (unsigned int)attrs->mask);
+	now(&s_time);
+#endif
 
 	memset(&sb, 0, sizeof(struct stat));
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-		/* TODO: we need a glfs_h_truncate */
-		//LogCrit(COMPONENT_FSAL, "Size change requested, not implemented");
+		rc = glfs_h_truncate (glfs_export->gl_fs, objhandle->glhandle,
+				      attrs->filesize);
+		if (rc != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
 	}
-	
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
 		mask |= GLAPI_SET_ATTR_MODE;
 		sb.st_mode = fsal2unix_mode(attrs->mode);
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_OWNER)) {
 		mask |= GLAPI_SET_ATTR_UID;
 		sb.st_uid = attrs->owner;
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)) {
 		mask |= GLAPI_SET_ATTR_GID;
 		sb.st_gid = attrs->group;
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
 		mask |= GLAPI_SET_ATTR_ATIME;
 		sb.st_atim = attrs->atime;
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
 		mask |= GLAPI_SET_ATTR_ATIME;
 		struct timespec timestamp;
-		
+
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if(rc != 0) {
 			status = gluster2fsal_error(errno);
@@ -590,7 +723,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		sb.st_atim = timestamp;
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
 		mask |= GLAPI_SET_ATTR_MTIME;
 		sb.st_mtim = attrs->mtime;
@@ -598,7 +731,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER)) {
 		mask |= GLAPI_SET_ATTR_MTIME;
 		struct timespec timestamp;
-		
+
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if(rc != 0) {
 			status = gluster2fsal_error(rc);
@@ -607,19 +740,23 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		sb.st_mtim = timestamp;
 	}
 
-	rc = glfs_h_setattrs(glfs_export->gl_fs, objhandle->glhandle, &sb, 
-			     mask, 1);
+	rc = glfs_h_setattrs(glfs_export->gl_fs, objhandle->glhandle, &sb,
+			     mask);
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
 out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_setattrs);
+#endif
 	return status;
 }
 
-/* linkfile
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation link
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
@@ -627,12 +764,55 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
-	LogCrit(COMPONENT_FSAL, "called");
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0, credrc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(obj_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *objhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+	struct glusterfs_handle *dstparenthandle =
+		container_of(destdir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	rc = glfs_h_link(glfs_export->gl_fs, objhandle->glhandle,
+			 dstparenthandle->glhandle, name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_linkfile);
+#endif
+
+	return status;
 }
 
-/* renamefile
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation rename
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
@@ -641,38 +821,106 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	LogCrit(COMPONENT_FSAL, "called");
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int                      rc = 0, credrc = 0;
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_export *glfs_export =
+		container_of(olddir_hdl->export, struct glusterfs_export, export);
+	struct glusterfs_handle *srcparenthandle =
+		container_of(olddir_hdl, struct glusterfs_handle, handle);
+	struct glusterfs_handle *dstparenthandle =
+		container_of(newdir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+			     &opctx->creds->caller_gid, opctx->creds->caller_glen,
+		      opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	rc = glfs_h_rename(glfs_export->gl_fs, srcparenthandle->glhandle,
+			   old_name, dstparenthandle->glhandle, new_name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
+	if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_renamefile);
+#endif
+
+	return status;
 }
 
-/* file_unlink
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation unlink
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const struct req_op_context *opctx,
 				 const char *name)
 {
-	int                      rc = 0;
+	int                      rc = 0, credrc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(dir_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle = 
+	struct glusterfs_handle *parenthandle =
 		container_of(dir_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
+
+	credrc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
+				 &opctx->creds->caller_gid, opctx->creds->caller_glen,
+			  opctx->creds->caller_garray);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
 
 	rc =  glfs_h_unlink (glfs_export->gl_fs, parenthandle->glhandle, name);
+
+	credrc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (credrc != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+		goto out;
+	}
+
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 	}
 
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_unlink);
+#endif
 	return status;
 }
 
 
-/* file_open
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation open
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
@@ -683,18 +931,20 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	struct glfs_fd          *glfd = NULL;
 	int                      p_flags = 0;
-	struct glusterfs_export *glfs_export = 
+	struct glusterfs_export *glfs_export =
 		container_of(obj_hdl->export, struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
 	if (objhandle->openflags != FSAL_O_CLOSED) {
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	/* TODO: Do we take O_SYNC as an in flag? */
 	rc = fsal2posix_openflags(openflags, &p_flags);
 	if (rc != 0) {
 		status.major = rc;
@@ -710,13 +960,16 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	objhandle->openflags = openflags;
 	objhandle->glfd = glfd;
 
-	return status;
 out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_open);
+#endif
 	return status;
 }
 
-/* file_status
- * default case file always closed
+/**
+ * @brief Implements GLUSTER FSAL objectoperation status
  */
 
 static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
@@ -727,8 +980,8 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 	return objhandle->openflags;
 }
 
-/* file_read
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation read
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
@@ -741,12 +994,15 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 {
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
-	rc = glfs_pread(objhandle->glfd, buffer, buffer_size, seek_descriptor, 
+	rc = glfs_pread(objhandle->glfd, buffer, buffer_size, seek_descriptor,
 			0 /*TODO: flags is unused, so pass in something */);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
@@ -759,13 +1015,16 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 
 	*read_amount = rc;
 
-	return status;
 out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_read);
+#endif
 	return status;
 }
 
-/* file_write
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation write
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
@@ -778,29 +1037,37 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 {
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
-	/* FIXME: Handle fsal_stable (as O_SYNC?) here */
-	rc = glfs_pwrite(objhandle->glfd, buffer, buffer_size, seek_descriptor, 
-			0 /*TODO: flags is USED, so pass in appropriately */);
+	rc = glfs_pwrite(objhandle->glfd, buffer, buffer_size, seek_descriptor,
+			 ((*fsal_stable)? O_SYNC: 0));
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
 	*write_amount = rc;
-	*fsal_stable = false;
+	if (objhandle->openflags & FSAL_O_SYNC)
+		*fsal_stable = true;
 
-	return status;
 out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_write);
+#endif
 	return status;
 }
 
-/* commit
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation commit
+ *
+ * This function commits the entire file and ignores the range provided
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
@@ -809,10 +1076,13 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
 {
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
 	/* TODO: Everybody pretty much ignores the range sent */
 	rc = glfs_fsync(objhandle->glfd);
@@ -820,11 +1090,15 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
 		status = gluster2fsal_error(errno);
 	}
 
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_commit);
+#endif
 	return status;
 }
 
-/* lock_op
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation lock_op
  */
 /*
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
@@ -834,34 +1108,35 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* share_op
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation share_op
  */
 /*
 static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 			      void *p_owner,
 			      fsal_share_param_t  request_share)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* file_close
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation close
  */
 
 static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 {
 	int                      rc = 0;
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
 	rc = glfs_close(objhandle->glfd);
 	if (rc != 0) {
@@ -872,13 +1147,16 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	objhandle->glfd = NULL;
 	objhandle->openflags = FSAL_O_CLOSED;
 
-	return status;
 out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_close);
+#endif
 	return status;
 }
 
-/* list_ext_attrs
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation list_ext_attrs
  */
 /*
 static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
@@ -889,12 +1167,11 @@ static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int *p_nb_returned,
 				    int *end_of_list)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* getextattr_id_by_name
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation getextattr_id_by_name
  */
 /*
 static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
@@ -902,12 +1179,11 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* getextattr_value_by_name
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation getextattr_value_by_name
  */
 /*
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
@@ -917,12 +1193,11 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					      size_t buffer_size,
 					      size_t * p_output_size)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* getextattr_value_by_id
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation getextattr_value_by_id
  */
 /*
 static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -932,12 +1207,11 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    size_t buffer_size,
 					    size_t *p_output_size)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* setextattr_value
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation setextattr_value
  */
 /*
 static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
@@ -947,12 +1221,11 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
 				      size_t buffer_size,
 				      int create)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* setextattr_value_by_id
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation setextattr_value_by_id
  */
 /*
 static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -961,12 +1234,11 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* getextattr_attrs
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation getextattr_attrs
  */
 /*
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
@@ -974,67 +1246,72 @@ static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				      unsigned int xattr_id,
 				      struct attrlist* p_attrs)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* remove_extattr_by_id
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation remove_extattr_by_id
  */
 /*
 static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* remove_extattr_by_name
- * default case not supported
+/**
+ * @brief Implements GLUSTER FSAL objectoperation remove_extattr_by_name
  */
 /*
 static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
-	LogCrit(COMPONENT_FSAL, "called");
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/* lru_cleanup
- * default case always be happy
+/**
+ * @brief Implements GLUSTER FSAL objectoperation lru_cleanup
+ *
+ * For now this function closed the fd if open as a part of the lru_cleanup.
  */
 
 fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			  lru_actions_t requests)
 {
 	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
-	struct glusterfs_handle *objhandle = 
+	struct glusterfs_handle *objhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
+#ifdef GLTIMING
+	struct timespec          s_time, e_time;
 
-	//LogCrit(COMPONENT_FSAL, "called");
+	now(&s_time);
+#endif
 
-	/* TODO: need to determine what else is safely clean-able so that we 
-	 * can free those up as well */
 	if (objhandle->glfd != NULL) {
 		status = file_close(obj_hdl);
 	}
 
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_lru_cleanup);
+#endif
 	return status;
 }
 
-/* handle_digest
- * default case server fault
+/**
+ * @brief Implements GLUSTER FSAL objectoperation handle_digest
  */
 
 static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 				   fsal_digesttype_t output_type,
 				   struct gsh_buffdesc *fh_desc)
 {
+	fsal_status_t            status = {ERR_FSAL_NO_ERROR, 0};
 	size_t                   fh_size;
 	struct glusterfs_handle *objhandle;
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
@@ -1042,63 +1319,56 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 
 	if( !fh_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
+
 	objhandle = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	switch(output_type) {
 		case FSAL_DIGEST_NFSV2:
 		case FSAL_DIGEST_NFSV3:
 		case FSAL_DIGEST_NFSV4:
-			fh_size = objhandle->gfid->len;
-			if(fh_desc->len < fh_size)
+			fh_size = GLAPI_HANDLE_LENGTH;
+			if(fh_desc->len < fh_size) {
+				LogMajor(COMPONENT_FSAL,
+			 "Space too small for handle.  need %lu, have %lu",
+			 fh_size, fh_desc->len);
+				status.major = ERR_FSAL_TOOSMALL;
 				goto out;
-			memcpy(fh_desc->addr, objhandle->gfid->id, fh_size);
+			}
+			memcpy(fh_desc->addr, objhandle->globjhdl, fh_size);
 			break;
 		default:
-			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+			status.major = ERR_FSAL_SERVERFAULT;
+			goto out;
 	}
 
 	fh_desc->len = fh_size;
-
-#ifdef GLUSTER_FSAL_DEBUG
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_handle_digest);
-#endif
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 out:
-	LogMajor(COMPONENT_FSAL,
-		 "Space too small for handle.  need %lu, have %lu", 
-		 fh_size, fh_desc->len);
-
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_digest);
 #endif
-
-	return fsalstat(ERR_FSAL_TOOSMALL, 0);
+	return status;
 }
 
 /**
- * handle_digest
- * default case return a safe empty key
+ * @brief Implements GLUSTER FSAL objectoperation handle_to_key
  */
 
 static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 			  struct gsh_buffdesc *fh_desc)
 {
 	struct glusterfs_handle *objhandle;
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	struct timespec          s_time, e_time;
 
 	now(&s_time);
 #endif
 
 	objhandle = container_of(obj_hdl, struct glusterfs_handle, handle);
-	fh_desc->addr = objhandle->gfid->id;
-	fh_desc->len = objhandle->gfid->len;
+	fh_desc->addr = objhandle->globjhdl;
+	fh_desc->len = GLAPI_HANDLE_LENGTH;
 
-#ifdef GLUSTER_FSAL_DEBUG
+#ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_to_key);
 #endif
@@ -1107,87 +1377,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Fail to grant a layout segment.
- *
- * @param[in]     obj_hdl  The handle of the file on which the layout is
- *                         requested.
- * @param[in]     req_ctx  Request context
- * @param[out]    loc_body An XDR stream to which the FSAL must encode
- *                         the layout specific portion of the granted
- *                         layout segment.
- * @param[in]     arg      Input arguments of the function
- * @param[in,out] res      In/out and output arguments of the function
- *
- * @return NFS4ERR_LAYOUTUNAVAILABLE
- */
-/*
-static nfsstat4
-layoutget(struct fsal_obj_handle *obj_hdl,
-	  struct req_op_context *req_ctx,
-	  XDR *loc_body,
-	  const struct fsal_layoutget_arg *arg,
-	  struct fsal_layoutget_res *res)
-{
-	LogCrit(COMPONENT_FSAL, "called");
-	return NFS4ERR_LAYOUTUNAVAILABLE;
-}
-*/
-
-/**
- * @brief Don't return a layout segment
- *
- * @param[in] obj_hdl  The object on which a segment is to be returned
- * @param[in] req_ctx  Request context
- * @param[in] lrf_body In the case of a non-synthetic return, this is
- *                     an XDR stream corresponding to the layout
- *                     type-specific argument to LAYOUTRETURN.  In
- *                     the case of a synthetic or bulk return,
- *                     this is a NULL pointer.
- * @param[in] arg      Input arguments of the function
- *
- * @return NFS4ERR_NOTSUPP
- */
-/*
-static nfsstat4
-layoutreturn(struct fsal_obj_handle *obj_hdl,
-	     struct req_op_context *req_ctx,
-	     XDR *lrf_body,
-	     const struct fsal_layoutreturn_arg *arg)
-{
-	LogCrit(COMPONENT_FSAL, "called");
-	return NFS4ERR_NOTSUPP;
-}
-*/
-
-/**
- * @brief Fail to commit a segment of a layout
- *
- * @param[in]     obj_hdl  The object on which to commit
- * @param[in]     req_ctx  Request context
- * @param[in]     lou_body An XDR stream containing the layout
- *                         type-specific portion of the LAYOUTCOMMIT
- *                         arguments.
- * @param[in]     arg      Input arguments of the function
- * @param[in,out] res      In/out and output arguments of the function
- *
- * @return Valid error codes in RFC 5661, p. 366.
- */
-/*
-static nfsstat4
-layoutcommit(struct fsal_obj_handle *obj_hdl,
-	     struct req_op_context *req_ctx,
-	     XDR *lou_body,
-	     const struct fsal_layoutcommit_arg *arg,
-	     struct fsal_layoutcommit_res *res)
-{
-	LogCrit(COMPONENT_FSAL, "called");
-	return NFS4ERR_NOTSUPP;
-}
-*/
-
-
-/* Default fsal handle object method vector.
- * copied to allocated vector at register time
+ * @brief Registers GLUSTER FSAL objectoperation vector
  */
 
 void handle_ops_init(struct fsal_obj_ops *ops)

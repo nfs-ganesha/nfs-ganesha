@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -31,14 +31,7 @@
  * 
  */
 
-#include "config.h"
 #include "fsal.h"
-#include <libgen.h>             /* used for 'dirname' */
-#include <pthread.h>
-#include <string.h>
-#include <limits.h>
-#include <sys/types.h>
-#include "nlm_list.h"
 #include "FSAL/fsal_init.h"
 #include "gluster_internal.h"
 
@@ -82,21 +75,18 @@ static struct glusterfs_fsal_module *glfsal_module = NULL;
  */
 
 MODULE_INIT void glusterfs_init(void) {
-
-	int rc = 0;
-
 	/* register_fsal seems to expect zeroed memory. */
 	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
 	if (glfsal_module == NULL) {
-		LogCrit(COMPONENT_FSAL, 
+		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate memory for Gluster FSAL module.");
 		return;
 	}
 
-	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION, 
+	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
 		FSAL_MINOR_VERSION) != 0) {
 		gsh_free(glfsal_module);
-		LogCrit(COMPONENT_FSAL, 
+		LogCrit(COMPONENT_FSAL,
 			"Gluster FSAL module failed to register.");
 	}
 
@@ -106,35 +96,7 @@ MODULE_INIT void glusterfs_init(void) {
 	/* setup global handle internals */
 	glfsal_module->fs_info = default_gluster_info;
 
-	rc = glfs_uid_keyinit();
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL, "Could not init glfs uid key mapping" );
-		goto error_out;
-	}
-
-	rc = glfs_gid_keyinit();
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL, "Could not init glfs gid key mapping" );
-		goto error_out;
-	}
-
-	rc = glfs_caller_specific_init( uid_key, gid_key, NULL );
-	if ( rc != 0 ) {
-		LogCrit( COMPONENT_FSAL,
-			 "Failed in caller specific init for uid/gid" );
-		goto error_out;
-	}
-
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
-
-out:
-	return;
-
-error_out:
-	LogCrit( COMPONENT_FSAL, "Gluster FSAL Initialization FAILED!!!" );
-
-	goto out;
-
 }
 
 MODULE_FINI void glusterfs_unload(void) {
