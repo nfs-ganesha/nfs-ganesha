@@ -23,7 +23,6 @@
 
 #include "avltree.h"
 
-
 #ifdef UINTPTR_MAX
 
 #define NODE_INIT	{ 0, }
@@ -34,9 +33,9 @@ static inline void INIT_NODE(struct splaytree_node *node)
 	node->right = 0;
 }
 
-static inline void set_thread(struct splaytree_node *t, uintptr_t *p)
+static inline void set_thread(struct splaytree_node *t, uintptr_t * p)
 {
-	*p = (uintptr_t)t | 1;
+	*p = (uintptr_t) t | 1;
 }
 
 static inline struct splaytree_node *get_thread(uintptr_t u)
@@ -44,9 +43,9 @@ static inline struct splaytree_node *get_thread(uintptr_t u)
 	return (struct splaytree_node *)((u & -(int)(u & 1)) & ~1UL);
 }
 
-static inline void set_link(struct splaytree_node *n, uintptr_t *p)
+static inline void set_link(struct splaytree_node *n, uintptr_t * p)
 {
-	*p = (uintptr_t)n;
+	*p = (uintptr_t) n;
 }
 
 static inline struct splaytree_node *get_link(uintptr_t u)
@@ -64,7 +63,7 @@ static inline struct splaytree_node *get_link(uintptr_t u)
 #define get_prev(n)	get_thread((n)->left)
 #define get_next(n)	get_thread((n)->right)
 
-#else  /* !UINTPTR_MAX */
+#else				/* !UINTPTR_MAX */
 
 #define NODE_INIT	{ NULL, }
 
@@ -128,7 +127,7 @@ static inline struct splaytree_node *get_next(const struct splaytree_node *n)
 	return NULL;
 }
 
-#endif	/* UINTPTR_MAX */
+#endif				/* UINTPTR_MAX */
 
 /*
  * Iterators
@@ -177,7 +176,7 @@ struct splaytree_node *splaytree_prev(const struct splaytree_node *node)
 
 static inline void rotate_right(struct splaytree_node *node)
 {
-	struct splaytree_node *left = get_left(node); /* can't be NULL */
+	struct splaytree_node *left = get_left(node);	/* can't be NULL */
 	struct splaytree_node *r = get_right(left);
 
 	if (r)
@@ -189,7 +188,7 @@ static inline void rotate_right(struct splaytree_node *node)
 
 static inline void rotate_left(struct splaytree_node *node)
 {
-	struct splaytree_node *right = get_right(node); /* can't be NULL */
+	struct splaytree_node *right = get_right(node);	/* can't be NULL */
 	struct splaytree_node *l = get_left(right);
 
 	if (l)
@@ -199,8 +198,7 @@ static inline void rotate_left(struct splaytree_node *node)
 	set_left(node, right);
 }
 
-static int do_splay(const struct splaytree_node *key,
-		    struct splaytree *tree)
+static int do_splay(const struct splaytree_node *key, struct splaytree *tree)
 {
 	struct splaytree_node subroots = NODE_INIT;
 	struct splaytree_node *subleft = &subroots, *subright = &subroots;
@@ -324,10 +322,10 @@ void splaytree_remove(struct splaytree_node *node, struct splaytree *tree)
 	struct splaytree_node *right, *left, *prev;
 
 	do_splay(node, tree);
-	assert(tree->root == node); /* 'node' must be present */
+	assert(tree->root == node);	/* 'node' must be present */
 
 	right = get_right(node);
-	left  = get_left(node);
+	left = get_left(node);
 	if (!left) {
 		tree->root = right;
 		tree->first = splaytree_next(node);
@@ -359,7 +357,8 @@ void splaytree_replace(struct splaytree_node *old, struct splaytree_node *new,
 	*new = *old;
 }
 
-int splaytree_init(struct splaytree *tree, splaytree_cmp_fn_t cmp, unsigned long flags)
+int splaytree_init(struct splaytree *tree, splaytree_cmp_fn_t cmp,
+		   unsigned long flags)
 {
 	if (flags)
 		return -1;

@@ -39,9 +39,9 @@ static inline void INIT_NODE(struct bstree_node *node)
 	node->right = 0;
 }
 
-static inline void set_thread(struct bstree_node *t, uintptr_t *p)
+static inline void set_thread(struct bstree_node *t, uintptr_t * p)
 {
-	*p = (uintptr_t)t | 1;
+	*p = (uintptr_t) t | 1;
 }
 
 static inline struct bstree_node *get_thread(uintptr_t u)
@@ -49,9 +49,9 @@ static inline struct bstree_node *get_thread(uintptr_t u)
 	return (struct bstree_node *)((u & -(int)(u & 1)) & ~1UL);
 }
 
-static inline void set_link(struct bstree_node *n, uintptr_t *p)
+static inline void set_link(struct bstree_node *n, uintptr_t * p)
 {
-	*p = (uintptr_t)n;
+	*p = (uintptr_t) n;
 }
 
 static inline struct bstree_node *get_link(uintptr_t u)
@@ -133,7 +133,7 @@ static inline struct bstree_node *get_next(const struct bstree_node *n)
 	return n->right;
 }
 
-#endif	/* UINTPTR_MAX */
+#endif				/* UINTPTR_MAX */
 
 /*
  * Iterators
@@ -189,8 +189,7 @@ struct bstree_node *bstree_prev(const struct bstree_node *node)
  */
 static struct bstree_node *do_lookup(const struct bstree_node *key,
 				     const struct bstree *tree,
-				     struct bstree_node **pparent,
-				     int *is_left)
+				     struct bstree_node **pparent, int *is_left)
 {
 	struct bstree_node *node = tree->root;
 
@@ -249,7 +248,8 @@ struct bstree_node *bstree_insert(struct bstree_node *node, struct bstree *tree)
 	return NULL;
 }
 
-static void set_child(struct bstree_node *child, struct bstree_node *node, int left)
+static void set_child(struct bstree_node *child, struct bstree_node *node,
+		      int left)
 {
 	if (left)
 		set_left(child, node);
@@ -270,7 +270,7 @@ void bstree_remove(struct bstree_node *node, struct bstree *tree)
 		parent = &fake_parent;
 		is_left = 0;
 	}
-	left  = get_left(node);
+	left = get_left(node);
 	right = get_right(node);
 
 	if (!left && !right) {
@@ -309,12 +309,12 @@ void bstree_remove(struct bstree_node *node, struct bstree *tree)
 	set_child(next, parent, is_left);
 	set_left(left, next);
 	set_next(next, get_last(left));
-out:
+ out:
 	if (parent == &fake_parent)
 		tree->root = get_right(parent);
 	return;
 
-update_first_last:
+ update_first_last:
 	if (node == tree->first)
 		tree->first = next;
 	if (node == tree->last)
