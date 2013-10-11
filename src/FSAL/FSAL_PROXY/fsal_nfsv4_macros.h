@@ -28,7 +28,7 @@
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
-#define TIMEOUTRPC {2, 0} 
+#define TIMEOUTRPC {2, 0}
 
 #define PRINT_HANDLE( tag, handle )                                                     \
   do {                                                                                  \
@@ -282,4 +282,4 @@ do {                                                                         \
               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
               timeout )
 
-#endif                          /* _FSAL_NFSV4_MACROS_H */
+#endif				/* _FSAL_NFSV4_MACROS_H */

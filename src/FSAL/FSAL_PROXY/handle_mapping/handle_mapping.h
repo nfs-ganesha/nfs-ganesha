@@ -38,22 +38,21 @@
 #include "fsal.h"
 
 /* parameters for Handle Map module */
-typedef struct handle_map_param__
-{
-  /* path where database files are located */
-  char databases_directory[MAXPATHLEN + 1];
+typedef struct handle_map_param__ {
+	/* path where database files are located */
+	char databases_directory[MAXPATHLEN + 1];
 
-  /* temp dir for database work */
-  char temp_directory[MAXPATHLEN + 1];
+	/* temp dir for database work */
+	char temp_directory[MAXPATHLEN + 1];
 
-  /* number of databases */
-  unsigned int database_count;
+	/* number of databases */
+	unsigned int database_count;
 
-  /* hash table size */
-  unsigned int hashtable_size;
+	/* hash table size */
+	unsigned int hashtable_size;
 
-  /* synchronous insert mode */
-  int synchronous_insert;
+	/* synchronous insert mode */
+	int synchronous_insert;
 
 } handle_map_param_t;
 
@@ -61,14 +60,13 @@ typedef struct handle_map_param__
 
 #define PXY_HANDLE_MAPPED 0x23
 
-typedef struct nfs23_map_handle__
-{
-  uint8_t len;
-  uint8_t type; /* Must be PXY_HANDLE_MAPPED */
-  /* to avoid reusing handles, when object_id is reused */
-  unsigned int handle_hash;
-  /* object id */
-  uint64_t object_id;
+typedef struct nfs23_map_handle__ {
+	uint8_t len;
+	uint8_t type;		/* Must be PXY_HANDLE_MAPPED */
+	/* to avoid reusing handles, when object_id is reused */
+	unsigned int handle_hash;
+	/* object id */
+	uint64_t object_id;
 
 } nfs23_map_handle_t;
 
@@ -85,10 +83,10 @@ typedef struct nfs23_map_handle__
 
 int HandleMap_Init(const handle_map_param_t * p_param);
 
-int HandleMap_GetFH(const nfs23_map_handle_t *,
-		    struct gsh_buffdesc *);
+int HandleMap_GetFH(const nfs23_map_handle_t *, struct gsh_buffdesc *);
 
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const void *p_in_handle, uint32_t len);
+int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest,
+		    const void *p_in_handle, uint32_t len);
 
 int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest);
 

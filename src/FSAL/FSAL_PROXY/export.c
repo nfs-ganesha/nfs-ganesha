@@ -32,129 +32,116 @@
 #include "pxy_fsal_methods.h"
 #include <nfs_exports.h>
 
-static fsal_status_t
-pxy_release(struct fsal_export *exp_hdl)
+static fsal_status_t pxy_release(struct fsal_export *exp_hdl)
 {
-        struct pxy_export *pxy_exp =
-                container_of(exp_hdl, struct pxy_export, exp);
+	struct pxy_export *pxy_exp =
+	    container_of(exp_hdl, struct pxy_export, exp);
 
-        pthread_mutex_lock(&exp_hdl->lock);
-        if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
-                pthread_mutex_unlock(&exp_hdl->lock);
-                return fsalstat(ERR_FSAL_INVAL, EBUSY);
-        }
-        fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+	pthread_mutex_lock(&exp_hdl->lock);
+	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+		pthread_mutex_unlock(&exp_hdl->lock);
+		return fsalstat(ERR_FSAL_INVAL, EBUSY);
+	}
+	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-        pthread_mutex_unlock(&exp_hdl->lock);
+	pthread_mutex_unlock(&exp_hdl->lock);
 
-        pthread_mutex_destroy(&exp_hdl->lock);
-        free(pxy_exp);
-        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	pthread_mutex_destroy(&exp_hdl->lock);
+	free(pxy_exp);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static bool
-pxy_get_supports(struct fsal_export *exp_hdl,
-                 fsal_fsinfo_options_t option)
+static bool pxy_get_supports(struct fsal_export *exp_hdl,
+			     fsal_fsinfo_options_t option)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_supports(&pm->fsinfo, option);
 }
 
-static uint64_t
-pxy_get_maxfilesize(struct fsal_export *exp_hdl)
+static uint64_t pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_maxfilesize(&pm->fsinfo);
 }
 
-static uint32_t
-pxy_get_maxread(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_maxread(struct fsal_export *exp_hdl)
 {
-        uint32_t sz;
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	uint32_t sz;
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	sz = fsal_maxread(&pm->fsinfo);
-        if (sz)
-                return MIN(sz, exp_hdl->exp_entry->MaxRead);
-        return exp_hdl->exp_entry->MaxRead;
+	if (sz)
+		return MIN(sz, exp_hdl->exp_entry->MaxRead);
+	return exp_hdl->exp_entry->MaxRead;
 }
 
-static uint32_t
-pxy_get_maxwrite(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_maxwrite(struct fsal_export *exp_hdl)
 {
-        uint32_t sz;
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	uint32_t sz;
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	sz = fsal_maxwrite(&pm->fsinfo);
-        if (sz)
-                return MIN(sz, exp_hdl->exp_entry->MaxWrite);
-        return exp_hdl->exp_entry->MaxWrite;
+	if (sz)
+		return MIN(sz, exp_hdl->exp_entry->MaxWrite);
+	return exp_hdl->exp_entry->MaxWrite;
 }
 
-static uint32_t
-pxy_get_maxlink(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_maxlink(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_maxlink(&pm->fsinfo);
 }
 
-static uint32_t
-pxy_get_maxnamelen(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_maxnamelen(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_maxnamelen(&pm->fsinfo);
 }
 
-static uint32_t
-pxy_get_maxpathlen(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_maxpathlen(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_maxpathlen(&pm->fsinfo);
 }
 
-static struct timespec
-pxy_get_lease_time(struct fsal_export *exp_hdl)
+static struct timespec pxy_get_lease_time(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_lease_time(&pm->fsinfo);
 }
 
-static fsal_aclsupp_t
-pxy_get_acl_support(struct fsal_export *exp_hdl)
+static fsal_aclsupp_t pxy_get_acl_support(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_acl_support(&pm->fsinfo);
 }
 
-static attrmask_t
-pxy_get_supported_attrs(struct fsal_export *exp_hdl)
+static attrmask_t pxy_get_supported_attrs(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_supported_attrs(&pm->fsinfo);
 }
 
-static uint32_t
-pxy_get_umask(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_umask(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
 	return fsal_umask(&pm->fsinfo);
 }
 
-static uint32_t
-pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
+static uint32_t pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-        struct pxy_fsal_module *pm =
-                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-        return fsal_xattr_access_rights(&pm->fsinfo);
+	struct pxy_fsal_module *pm =
+	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_xattr_access_rights(&pm->fsinfo);
 }
 
 void pxy_handle_ops_init(struct fsal_obj_ops *ops);
@@ -180,35 +167,31 @@ void pxy_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = pxy_get_xattr_access_rights;
 };
 
-
 /* Here and not static because proxy.c needs this function
  * but we also need access to pxy_exp_ops - I'd rather
  * keep the later static then the former */
-fsal_status_t
-pxy_create_export(struct fsal_module *fsal_hdl,
-                  const char *export_path,
-                  const char *fs_options,
-                  struct exportlist *exp_entry,
-                  struct fsal_module *next_fsal,
-                  const struct fsal_up_vector *up_ops,
-                  struct fsal_export **export)
+fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
+				const char *export_path, const char *fs_options,
+				struct exportlist *exp_entry,
+				struct fsal_module *next_fsal,
+				const struct fsal_up_vector *up_ops,
+				struct fsal_export **export)
 {
-        struct pxy_export *exp = calloc(1, sizeof(*exp));
-        struct pxy_fsal_module *pxy =
-                container_of(fsal_hdl, struct pxy_fsal_module, module);
+	struct pxy_export *exp = calloc(1, sizeof(*exp));
+	struct pxy_fsal_module *pxy =
+	    container_of(fsal_hdl, struct pxy_fsal_module, module);
 
-        if (!exp)
-                return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-        if(fsal_export_init(&exp->exp, exp_entry) != 0) {
-                free(exp);
-                return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-        }
-        pxy_export_ops_init(exp->exp.ops);
-        pxy_handle_ops_init(exp->exp.obj_ops);
-        exp->exp.up_ops = up_ops;
-        exp->info = &pxy->special;
-        exp->exp.fsal = fsal_hdl;
-        *export = &exp->exp;
-        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (!exp)
+		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	if (fsal_export_init(&exp->exp, exp_entry) != 0) {
+		free(exp);
+		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	}
+	pxy_export_ops_init(exp->exp.ops);
+	pxy_handle_ops_init(exp->exp.obj_ops);
+	exp->exp.up_ops = up_ops;
+	exp->info = &pxy->special;
+	exp->exp.fsal = fsal_hdl;
+	*export = &exp->exp;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
