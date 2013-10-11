@@ -59,13 +59,11 @@ static void shutdown_handles(struct fsal_export *export)
 		return;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Extra file handles hanging around.");
+	LogDebug(COMPONENT_FSAL, "Extra file handles hanging around.");
 	glist_for_each_safe(hi, hn, &export->handles) {
-		struct fsal_obj_handle *h
-			= glist_entry(hi,
-				      struct fsal_obj_handle,
-				      handles);
+		struct fsal_obj_handle *h = glist_entry(hi,
+							struct fsal_obj_handle,
+							handles);
 		if (h->refs != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Extra references hanging around.");
@@ -73,9 +71,8 @@ static void shutdown_handles(struct fsal_export *export)
 		}
 		fsal_status = h->ops->release(h);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			LogMajor(COMPONENT_FSAL,
-				 "Error releasing handle: %d",
-				fsal_status.major);
+			LogMajor(COMPONENT_FSAL, "Error releasing handle: %d",
+				 fsal_status.major);
 		}
 	}
 }
@@ -97,13 +94,11 @@ static void shutdown_ds_handles(struct fsal_export *export)
 		return;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Extra DS file handles hanging around.");
+	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
 	glist_for_each_safe(hi, hn, &export->ds_handles) {
-		struct fsal_ds_handle *h
-			= glist_entry(hi,
-				      struct fsal_ds_handle,
-				      ds_handles);
+		struct fsal_ds_handle *h = glist_entry(hi,
+						       struct fsal_ds_handle,
+						       ds_handles);
 		h->ops->release(h);
 		if (h->refs != 0) {
 			LogDebug(COMPONENT_FSAL,
@@ -112,8 +107,7 @@ static void shutdown_ds_handles(struct fsal_export *export)
 		}
 		status = h->ops->release(h);
 		if (status != 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "Error releasing handle: %d",
+			LogMajor(COMPONENT_FSAL, "Error releasing handle: %d",
 				 status);
 		}
 	}
@@ -140,8 +134,7 @@ static void shutdown_export(struct fsal_export *export)
 
 	fsal_status = export->ops->release(export);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogMajor(COMPONENT_FSAL,
-			 "Cannot release FSAL export object!");
+		LogMajor(COMPONENT_FSAL, "Cannot release FSAL export object!");
 	}
 }
 
@@ -158,28 +151,24 @@ void destroy_fsals(void)
 
 	glist_for_each_safe(mi, mn, &fsal_list) {
 		/* The module to destroy */
-		struct fsal_module *m
-			= glist_entry(mi,
-				      struct fsal_module,
-				      fsals);
+		struct fsal_module *m = glist_entry(mi,
+						    struct fsal_module,
+						    fsals);
 		/* Iterator over exports */
 		struct glist_head *ei = NULL;
 		/* Next export */
 		struct glist_head *en = NULL;
 
-		LogEvent(COMPONENT_FSAL,
-			 "Shutting down exports for FSAL %s",
+		LogEvent(COMPONENT_FSAL, "Shutting down exports for FSAL %s",
 			 m->name);
 		glist_for_each_safe(ei, en, &m->exports) {
 			/* The module to destroy */
-			struct fsal_export *e
-				= glist_entry(ei,
-					      struct fsal_export,
-					      exports);
+			struct fsal_export *e = glist_entry(ei,
+							    struct fsal_export,
+							    exports);
 			shutdown_export(e);
 		}
-		LogEvent(COMPONENT_FSAL,
-			 "Exports for FSAL %s shut down",
+		LogEvent(COMPONENT_FSAL, "Exports for FSAL %s shut down",
 			 m->name);
 		if (m->refs != 0) {
 			LogDebug(COMPONENT_FSAL,
@@ -200,8 +189,7 @@ void destroy_fsals(void)
 			int rc = 0;
 			char *fsal_name = gsh_strdup(m->name);
 
-			LogEvent(COMPONENT_FSAL,
-				 "Unloading FSAL %s",
+			LogEvent(COMPONENT_FSAL, "Unloading FSAL %s",
 				 fsal_name);
 			rc = m->ops->unload(m);
 			if (rc != 0) {
@@ -209,9 +197,7 @@ void destroy_fsals(void)
 					 "Unload of %s failed with error %d",
 					 fsal_name, rc);
 			}
-			LogEvent(COMPONENT_FSAL,
-				 "FSAL %s unloaded",
-				 fsal_name);
+			LogEvent(COMPONENT_FSAL, "FSAL %s unloaded", fsal_name);
 			gsh_free(fsal_name);
 		}
 	}

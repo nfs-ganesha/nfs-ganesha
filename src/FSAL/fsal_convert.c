@@ -30,16 +30,16 @@
 int fsal2posix_testperm(fsal_accessflags_t testperm)
 {
 
-  int posix_testperm = 0;
+	int posix_testperm = 0;
 
-  if(testperm & FSAL_R_OK)
-    posix_testperm |= R_OK;
-  if(testperm & FSAL_W_OK)
-    posix_testperm |= W_OK;
-  if(testperm & FSAL_X_OK)
-    posix_testperm |= X_OK;
+	if (testperm & FSAL_R_OK)
+		posix_testperm |= R_OK;
+	if (testperm & FSAL_W_OK)
+		posix_testperm |= W_OK;
+	if (testperm & FSAL_X_OK)
+		posix_testperm |= X_OK;
 
-  return posix_testperm;
+	return posix_testperm;
 
 }
 
@@ -58,7 +58,7 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
  */
 mode_t fsal2unix_mode(uint32_t fsal_mode)
 {
-  return fsal_mode &  S_IALLUGO;
+	return fsal_mode & S_IALLUGO;
 }
 
 /**
@@ -72,7 +72,7 @@ mode_t fsal2unix_mode(uint32_t fsal_mode)
  */
 uint32_t unix2fsal_mode(mode_t unix_mode)
 {
-  return unix_mode & S_IALLUGO;
+	return unix_mode & S_IALLUGO;
 }
 
 /**
@@ -88,60 +88,59 @@ uint32_t unix2fsal_mode(mode_t unix_mode)
 object_file_type_t posix2fsal_type(mode_t posix_type_in)
 {
 
-  switch (posix_type_in & S_IFMT)
-    {
-    case S_IFIFO:
-      return FIFO_FILE;
+	switch (posix_type_in & S_IFMT) {
+	case S_IFIFO:
+		return FIFO_FILE;
 
-    case S_IFCHR:
-      return CHARACTER_FILE;
+	case S_IFCHR:
+		return CHARACTER_FILE;
 
-    case S_IFDIR:
-      return DIRECTORY;
+	case S_IFDIR:
+		return DIRECTORY;
 
-    case S_IFBLK:
-      return BLOCK_FILE;
+	case S_IFBLK:
+		return BLOCK_FILE;
 
-    case S_IFREG:
-    case S_IFMT:
-      return REGULAR_FILE;
+	case S_IFREG:
+	case S_IFMT:
+		return REGULAR_FILE;
 
-    case S_IFLNK:
-      return SYMBOLIC_LINK;
+	case S_IFLNK:
+		return SYMBOLIC_LINK;
 
-    case S_IFSOCK:
-      return SOCKET_FILE;
+	case S_IFSOCK:
+		return SOCKET_FILE;
 
-    default:
-      LogWarn(COMPONENT_FSAL, "Unknown object type: %d", posix_type_in);
-      return -1;
-    }
+	default:
+		LogWarn(COMPONENT_FSAL, "Unknown object type: %d",
+			posix_type_in);
+		return -1;
+	}
 
 }
 
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 {
 
-  fsal_fsid_t fsid;
+	fsal_fsid_t fsid;
 
-  fsid.major = posix_devid;
-  fsid.minor = 0;
+	fsid.major = posix_devid;
+	fsid.minor = 0;
 
-  return fsid;
+	return fsid;
 
 }
 
 fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 {
 
-  fsal_dev_t dev;
+	fsal_dev_t dev;
 
-  dev.major = major(posix_devid);
-  dev.minor = minor(posix_devid);
+	dev.major = major(posix_devid);
+	dev.minor = minor(posix_devid);
 
-  return dev;
+	return dev;
 }
-
 
 /**
  * fsal2posix_openflags:
@@ -156,13 +155,14 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
  *         - ERR_FSAL_FAULT    (p_posix_flags is a NULL pointer).
  *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
  */
-int fsal2posix_openflags (fsal_openflags_t fsal_flags, int *p_posix_flags)
+int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
 	if (!p_posix_flags)
 		return ERR_FSAL_FAULT;
 
 	/* check that all used flags exist */
-	if (fsal_flags & ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
+	if (fsal_flags &
+	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
 		return ERR_FSAL_INVAL;
 
 	/* conversion */
@@ -183,17 +183,27 @@ int fsal2posix_openflags (fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 const char *object_file_type_to_str(object_file_type_t type)
 {
-	switch(type) {
-		case NO_FILE_TYPE:   return "NO_FILE_TYPE";
-		case REGULAR_FILE:   return "REGULAR_FILE";
-		case CHARACTER_FILE: return "CHARACTER_FILE";
-		case BLOCK_FILE:     return "BLOCK_FILE";
-		case SYMBOLIC_LINK:  return "SYMBOLIC_LINK";
-		case SOCKET_FILE:    return "SOCKET_FILE";
-		case FIFO_FILE:      return "FIFO_FILE";
-		case DIRECTORY:      return "DIRECTORY";
-		case FS_JUNCTION:    return "FS_JUNCTION";
-		case EXTENDED_ATTR:  return "EXTENDED_ATTR";
+	switch (type) {
+	case NO_FILE_TYPE:
+		return "NO_FILE_TYPE";
+	case REGULAR_FILE:
+		return "REGULAR_FILE";
+	case CHARACTER_FILE:
+		return "CHARACTER_FILE";
+	case BLOCK_FILE:
+		return "BLOCK_FILE";
+	case SYMBOLIC_LINK:
+		return "SYMBOLIC_LINK";
+	case SOCKET_FILE:
+		return "SOCKET_FILE";
+	case FIFO_FILE:
+		return "FIFO_FILE";
+	case DIRECTORY:
+		return "DIRECTORY";
+	case FS_JUNCTION:
+		return "FS_JUNCTION";
+	case EXTENDED_ATTR:
+		return "EXTENDED_ATTR";
 	}
 	return "unexpected type";
 }

@@ -81,10 +81,10 @@ extern pthread_mutex_t fsal_lock;
 
 static int put_fsal(struct fsal_module *fsal_hdl)
 {
-	int retval = EINVAL; /* too many 'puts" */
+	int retval = EINVAL;	/* too many 'puts" */
 
 	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs > 0) {
+	if (fsal_hdl->refs > 0) {
 		fsal_hdl->refs--;
 		retval = 0;
 	}
@@ -104,9 +104,8 @@ static const char *get_name(struct fsal_module *fsal_hdl)
 	char *name;
 
 	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Called without reference!");
+	if (fsal_hdl->refs <= 0) {
+		LogCrit(COMPONENT_CONFIG, "Called without reference!");
 		name = NULL;
 	} else {
 		name = fsal_hdl->name;
@@ -127,9 +126,8 @@ static const char *get_lib_name(struct fsal_module *fsal_hdl)
 	char *path;
 
 	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Called without reference!");
+	if (fsal_hdl->refs <= 0) {
+		LogCrit(COMPONENT_CONFIG, "Called without reference!");
 		path = NULL;
 	} else {
 		path = fsal_hdl->path;
@@ -147,14 +145,14 @@ static const char *get_lib_name(struct fsal_module *fsal_hdl)
 
 static int unload_fsal(struct fsal_module *fsal_hdl)
 {
-	int retval = EBUSY; /* someone still has a reference */
+	int retval = EBUSY;	/* someone still has a reference */
 
 	pthread_mutex_lock(&fsal_lock);
 	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs != 0 || !glist_empty(&fsal_hdl->exports))
+	if (fsal_hdl->refs != 0 || !glist_empty(&fsal_hdl->exports))
 		goto err;
-	if(fsal_hdl->dl_handle == NULL) {
-		retval = EACCES;  /* cannot unload static linked fsals */
+	if (fsal_hdl->dl_handle == NULL) {
+		retval = EACCES;	/* cannot unload static linked fsals */
 		goto err;
 	}
 	glist_del(&fsal_hdl->fsals);
@@ -163,10 +161,10 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	fsal_hdl->refs = 0;
 
 	retval = dlclose(fsal_hdl->dl_handle);
-        pthread_mutex_unlock(&fsal_lock);
+	pthread_mutex_unlock(&fsal_lock);
 	return retval;
 
-err:
+ err:
 	pthread_mutex_unlock(&fsal_hdl->lock);
 	pthread_mutex_unlock(&fsal_lock);
 	return retval;
@@ -177,9 +175,9 @@ err:
  */
 
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-                                 config_file_t config_struct)
+				 config_file_t config_struct)
 {
-        return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* dump_config
@@ -200,10 +198,10 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 				   const char *fs_options,
 				   struct exportlist *exp_entry,
 				   struct fsal_module *next_fsal,
-                                   const struct fsal_up_vector *upops,
+				   const struct fsal_up_vector *upops,
 				   struct fsal_export **export)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* Default fsal module method vector.
@@ -220,7 +218,6 @@ struct fsal_ops def_fsal_ops = {
 	.create_export = create_export
 };
 
-
 /* fsal_export common methods
  */
 
@@ -233,10 +230,10 @@ static void export_get(struct fsal_export *exp_hdl)
 
 static int export_put(struct fsal_export *exp_hdl)
 {
-	int retval = EINVAL; /* too many 'puts" */
+	int retval = EINVAL;	/* too many 'puts" */
 
 	pthread_mutex_lock(&exp_hdl->lock);
-	if(exp_hdl->refs > 0) {
+	if (exp_hdl->refs > 0) {
 		exp_hdl->refs--;
 		retval = 0;
 	}
@@ -251,26 +248,25 @@ static int export_put(struct fsal_export *exp_hdl)
 
 static fsal_status_t export_release(struct fsal_export *exp_hdl)
 {
-	return fsalstat(ERR_FSAL_FAULT, 0) ;
+	return fsalstat(ERR_FSAL_FAULT, 0);
 }
 
 /* lookup_path
  * default case is not supported
  */
 
-fsal_status_t lookup_path(struct fsal_export *exp_hdl,
-			  const struct req_op_context *opctx,
-                          const char *path,
-			  struct fsal_obj_handle **handle)
+fsal_status_t lookup_path(struct fsal_export * exp_hdl,
+			  const struct req_op_context * opctx, const char *path,
+			  struct fsal_obj_handle ** handle)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
 				     struct fsal_obj_handle *junction,
 				     struct fsal_obj_handle **handle)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);	
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* extract_handle
@@ -284,17 +280,16 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
-
 /* create_handle
  * default case is not supported
  */
 
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
-                                   const struct req_op_context *opctx,
-                                   struct gsh_buffdesc *hdl_desc,
-                                   struct fsal_obj_handle **handle)
+				   const struct req_op_context *opctx,
+				   struct gsh_buffdesc *hdl_desc,
+				   struct fsal_obj_handle **handle)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /**
@@ -306,12 +301,11 @@ static fsal_status_t create_handle(struct fsal_export *exp_hdl,
  * @retval NFS4ERR_BADHANDLE.
  */
 
-static nfsstat4
-create_ds_handle(struct fsal_export *const exp_hdl,
-                 const struct gsh_buffdesc *const hdl_desc,
-                 struct fsal_ds_handle **const handle)
+static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
+				 const struct gsh_buffdesc *const hdl_desc,
+				 struct fsal_ds_handle **const handle)
 {
-        return NFS4ERR_BADHANDLE;
+	return NFS4ERR_BADHANDLE;
 }
 
 /* get_dynamic_info
@@ -320,9 +314,9 @@ create_ds_handle(struct fsal_export *const exp_hdl,
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-                                      fsal_dynamicfsinfo_t *infop)
+				      fsal_dynamicfsinfo_t * infop)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* fs_supports
@@ -330,7 +324,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
  */
 
 static bool fs_supports(struct fsal_export *exp_hdl,
-                          fsal_fsinfo_options_t option)
+			fsal_fsinfo_options_t option)
 {
 	return false;
 }
@@ -368,7 +362,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /* fs_maxnamelen
@@ -377,7 +371,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /* fs_maxpathlen
@@ -386,7 +380,7 @@ static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /* fs_lease_time
@@ -395,9 +389,9 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 
 static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-        struct timespec lease_time = {0,0};
+	struct timespec lease_time = { 0, 0 };
 
-        return lease_time;
+	return lease_time;
 }
 
 /* fs_acl_support
@@ -415,7 +409,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /* fs_umask
@@ -424,7 +418,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 
 static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
-        return 0000;
+	return 0000;
 }
 
 /* fs_xattr_access_rights
@@ -433,7 +427,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-        return 0000;
+	return 0000;
 }
 
 /* check_quota
@@ -441,11 +435,10 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char * filepath,
-				 int quota_type,
+				 const char *filepath, int quota_type,
 				 struct req_op_context *req_ctx)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* get_quota
@@ -453,12 +446,11 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char * filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota)
+			       fsal_quota_t * pquota)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* set_quota
@@ -466,94 +458,81 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
+			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota,
-			       fsal_quota_t * presquota)
+			       fsal_quota_t * pquota, fsal_quota_t * presquota)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /**
  * @brief Be uninformative about a device
  */
 
-static nfsstat4
-getdeviceinfo(struct fsal_export *exp_hdl,
-               XDR *da_addr_body,
-               const layouttype4 type,
-               const struct pnfs_deviceid *deviceid)
+static nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR * da_addr_body,
+			      const layouttype4 type,
+			      const struct pnfs_deviceid *deviceid)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 /**
  * @brief Be uninformative about all devices
  */
 
-static nfsstat4
-getdevicelist(struct fsal_export *exp_hdl,
-              layouttype4 type,
-              void *opaque,
-              bool (*cb)(void *opaque,
-                         const uint64_t id),
-              struct fsal_getdevicelist_res *res)
+static nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
+			      void *opaque, bool(*cb) (void *opaque,
+						       const uint64_t id),
+			      struct fsal_getdevicelist_res *res)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 /**
  * @brief Support no layout types
  */
 
-static void
-fs_layouttypes(struct fsal_export *exp_hdl,
-               size_t *count,
-               const layouttype4 **types)
+static void fs_layouttypes(struct fsal_export *exp_hdl, size_t * count,
+			   const layouttype4 ** types)
 {
-        *count = 0;
-        *types = NULL;
+	*count = 0;
+	*types = NULL;
 }
 
 /**
  * @brief Read no bytes through layouts
  */
 
-static uint32_t
-fs_layout_blocksize(struct fsal_export *exp_hdl)
+static uint32_t fs_layout_blocksize(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /**
  * @brief No segments
  */
 
-static uint32_t
-fs_maximum_segments(struct fsal_export *exp_hdl)
+static uint32_t fs_maximum_segments(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /**
  * @brief No loc_body
  */
 
-static size_t
-fs_loc_body_size(struct fsal_export *exp_hdl)
+static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /**
  * No da_addr.
  */
 
-static size_t
-fs_da_addr_size(struct fsal_export *exp_hdl)
+static size_t fs_da_addr_size(struct fsal_export *exp_hdl)
 {
-        return 0;
+	return 0;
 }
 
 /**
@@ -566,53 +545,49 @@ fs_da_addr_size(struct fsal_export *exp_hdl)
  *
  * @return No errors
  */
-static void
-global_verifier(struct gsh_buffdesc *verf_desc)
+static void global_verifier(struct gsh_buffdesc *verf_desc)
 {
-        memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
+	memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
 };
 
 /* Default fsal export method vector.
  * copied to allocated vector at register time
  */
 
-
 struct export_ops def_export_ops = {
-        .get = export_get,
-        .put = export_put,
-        .release = export_release,
-        .lookup_path = lookup_path,
-        .lookup_junction = lookup_junction,
-        .extract_handle = extract_handle,
-        .create_handle = create_handle,
-        .create_ds_handle = create_ds_handle,
-        .get_fs_dynamic_info = get_dynamic_info,
-        .fs_supports = fs_supports,
-        .fs_maxfilesize = fs_maxfilesize,
-        .fs_maxread = fs_maxread,
-        .fs_maxwrite = fs_maxwrite,
-        .fs_maxlink = fs_maxlink,
-        .fs_maxnamelen = fs_maxnamelen,
-        .fs_maxpathlen = fs_maxpathlen,
-        .fs_lease_time = fs_lease_time,
-        .fs_acl_support = fs_acl_support,
-        .fs_supported_attrs = fs_supported_attrs,
-        .fs_umask = fs_umask,
-        .fs_xattr_access_rights = fs_xattr_access_rights,
-        .check_quota = check_quota,
-        .get_quota = get_quota,
-        .set_quota = set_quota,
-        .getdeviceinfo = getdeviceinfo,
-        .getdevicelist = getdevicelist,
-        .fs_layouttypes = fs_layouttypes,
-        .fs_layout_blocksize = fs_layout_blocksize,
-        .fs_maximum_segments = fs_maximum_segments,
-        .fs_loc_body_size = fs_loc_body_size,
-        .fs_da_addr_size = fs_da_addr_size,
-        .get_write_verifier = global_verifier
+	.get = export_get,
+	.put = export_put,
+	.release = export_release,
+	.lookup_path = lookup_path,
+	.lookup_junction = lookup_junction,
+	.extract_handle = extract_handle,
+	.create_handle = create_handle,
+	.create_ds_handle = create_ds_handle,
+	.get_fs_dynamic_info = get_dynamic_info,
+	.fs_supports = fs_supports,
+	.fs_maxfilesize = fs_maxfilesize,
+	.fs_maxread = fs_maxread,
+	.fs_maxwrite = fs_maxwrite,
+	.fs_maxlink = fs_maxlink,
+	.fs_maxnamelen = fs_maxnamelen,
+	.fs_maxpathlen = fs_maxpathlen,
+	.fs_lease_time = fs_lease_time,
+	.fs_acl_support = fs_acl_support,
+	.fs_supported_attrs = fs_supported_attrs,
+	.fs_umask = fs_umask,
+	.fs_xattr_access_rights = fs_xattr_access_rights,
+	.check_quota = check_quota,
+	.get_quota = get_quota,
+	.set_quota = set_quota,
+	.getdeviceinfo = getdeviceinfo,
+	.getdevicelist = getdevicelist,
+	.fs_layouttypes = fs_layouttypes,
+	.fs_layout_blocksize = fs_layout_blocksize,
+	.fs_maximum_segments = fs_maximum_segments,
+	.fs_loc_body_size = fs_loc_body_size,
+	.fs_da_addr_size = fs_da_addr_size,
+	.get_write_verifier = global_verifier
 };
-
-
 
 /* fsal_obj_handle common methods
  */
@@ -626,10 +601,10 @@ static void handle_get(struct fsal_obj_handle *obj_hdl)
 
 static int handle_put(struct fsal_obj_handle *obj_hdl)
 {
-	int retval = EINVAL; /* too many 'puts" */
+	int retval = EINVAL;	/* too many 'puts" */
 
 	pthread_mutex_lock(&obj_hdl->lock);
-	if(obj_hdl->refs > 0) {
+	if (obj_hdl->refs > 0) {
 		obj_hdl->refs--;
 		retval = 0;
 	}
@@ -641,10 +616,9 @@ static int handle_put(struct fsal_obj_handle *obj_hdl)
  * test the type of this handle
  */
 
-static bool handle_is(struct fsal_obj_handle *obj_hdl,
-                        object_file_type_t type)
+static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 {
-        return obj_hdl->type == type;
+	return obj_hdl->type == type;
 }
 
 /* handle_release
@@ -654,7 +628,7 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 {
-	return fsalstat(ERR_FSAL_FAULT, 0) ;
+	return fsalstat(ERR_FSAL_FAULT, 0);
 }
 
 /* lookup
@@ -663,8 +637,7 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const struct req_op_context *opctx,
-                            const char *path,
-			    struct fsal_obj_handle **handle)
+			    const char *path, struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -675,10 +648,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t *whence,
-				  void *dir_state,
-				  fsal_readdir_cb cb,
-                                  bool *eof)
+				  fsal_cookie_t * whence, void *dir_state,
+				  fsal_readdir_cb cb, bool * eof)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -688,10 +659,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-                            const struct req_op_context *opctx,
-                            const char *name,
-                            struct attrlist *attrib,
-                            struct fsal_obj_handle **handle)
+			    const struct req_op_context *opctx,
+			    const char *name, struct attrlist *attrib,
+			    struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -701,9 +671,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-                             const struct req_op_context *opctx,
-                             const char *name,
-			     struct attrlist *attrib,
+			     const struct req_op_context *opctx,
+			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -714,12 +683,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-                              const struct req_op_context *opctx,
-                              const char *name,
-                              object_file_type_t nodetype,
-                              fsal_dev_t *dev,
-                              struct attrlist *attrib,
-                              struct fsal_obj_handle **handle)
+			      const struct req_op_context *opctx,
+			      const char *name, object_file_type_t nodetype,
+			      fsal_dev_t * dev, struct attrlist *attrib,
+			      struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -729,13 +696,12 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-                                 const struct req_op_context *opctx,
-                                 const char *name,
-                                 const char *link_path,
-                                 struct attrlist *attrib,
-                                 struct fsal_obj_handle **handle)
+				 const struct req_op_context *opctx,
+				 const char *name, const char *link_path,
+				 struct attrlist *attrib,
+				 struct fsal_obj_handle **handle)
 {
-        return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* readsymlink
@@ -743,9 +709,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-                                 const struct req_op_context *opctx,
-                                 struct gsh_buffdesc *link_content,
-                                 bool refresh)
+				 const struct req_op_context *opctx,
+				 struct gsh_buffdesc *link_content,
+				 bool refresh)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -755,7 +721,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-                              const struct req_op_context *opctx)
+			      const struct req_op_context *opctx)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -765,8 +731,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-                              const struct req_op_context *opctx,
-                              struct attrlist *attrs)
+			      const struct req_op_context *opctx,
+			      struct attrlist *attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -776,9 +742,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-                              const struct req_op_context *opctx,
-                              struct fsal_obj_handle *destdir_hdl,
-                              const char *name)
+			      const struct req_op_context *opctx,
+			      struct fsal_obj_handle *destdir_hdl,
+			      const char *name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -788,10 +754,10 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-                                const struct req_op_context *opctx,
-                                const char *old_name,
-                                struct fsal_obj_handle *newdir_hdl,
-                                const char *new_name)
+				const struct req_op_context *opctx,
+				const char *old_name,
+				struct fsal_obj_handle *newdir_hdl,
+				const char *new_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -801,12 +767,11 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-                                 const struct req_op_context *opctx,
-                                 const char *name)
+				 const struct req_op_context *opctx,
+				 const char *name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
-
 
 /* file_open
  * default case not supported
@@ -825,7 +790,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 
 static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 {
-	return  FSAL_O_CLOSED;
+	return FSAL_O_CLOSED;
 }
 
 /* file_read
@@ -833,12 +798,10 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-                               const struct req_op_context *opctx,
-                               uint64_t seek_descriptor,
-                               size_t buffer_size,
-                               void *buffer,
-                               size_t *read_amount,
-                               bool *end_of_file)
+			       const struct req_op_context *opctx,
+			       uint64_t seek_descriptor, size_t buffer_size,
+			       void *buffer, size_t * read_amount,
+			       bool * end_of_file)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -848,12 +811,10 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-                                const struct req_op_context *opctx,
-                                uint64_t seek_descriptor,
-                                size_t buffer_size,
-                                void *buffer,
-                                size_t *write_amount,
-                                bool *fsal_stable)
+				const struct req_op_context *opctx,
+				uint64_t seek_descriptor, size_t buffer_size,
+				void *buffer, size_t * write_amount,
+				bool * fsal_stable)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -862,9 +823,8 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
-			    off_t offset,
-			    size_t len)
+static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    off_t offset, size_t len)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -874,11 +834,10 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
  */
 
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx,
-			     void * p_owner,
+			     const struct req_op_context *opctx, void *p_owner,
 			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock)
+			     fsal_lock_param_t * request_lock,
+			     fsal_lock_param_t * conflicting_lock)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -887,9 +846,8 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,
-			      fsal_share_param_t  request_share)
+static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
+			      fsal_share_param_t request_share)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -908,7 +866,7 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-                                    const struct req_op_context *opctx,
+				    const struct req_op_context *opctx,
 				    unsigned int cookie,
 				    fsal_xattrent_t * xattrs_tab,
 				    unsigned int xattrs_tabsize,
@@ -923,7 +881,7 @@ static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-                                           const struct req_op_context *opctx,
+					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
@@ -935,8 +893,8 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-                                              const struct req_op_context *opctx,
-					      const char *xattr_name,
+					      const struct req_op_context
+					      *opctx, const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
 					      size_t * p_output_size)
@@ -949,11 +907,11 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-                                            const struct req_op_context *opctx,
+					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
-					    size_t *p_output_size)
+					    size_t * p_output_size)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -963,10 +921,9 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
-                                      const struct req_op_context *opctx,
+				      const struct req_op_context *opctx,
 				      const char *xattr_name,
-				      caddr_t buffer_addr,
-				      size_t buffer_size,
+				      caddr_t buffer_addr, size_t buffer_size,
 				      int create)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -977,7 +934,7 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-                                            const struct req_op_context *opctx,
+					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
@@ -990,9 +947,9 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-                                      const struct req_op_context *opctx,
-                                      unsigned int xattr_id,
-                                      struct attrlist* p_attrs)
+				      const struct req_op_context *opctx,
+				      unsigned int xattr_id,
+				      struct attrlist *p_attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -1002,7 +959,7 @@ static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-                                          const struct req_op_context *opctx,
+					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -1013,7 +970,7 @@ static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-                                            const struct req_op_context *opctx,
+					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -1023,8 +980,8 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * default case always be happy
  */
 
-fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			      lru_actions_t requests)
+fsal_status_t lru_cleanup(struct fsal_obj_handle * obj_hdl,
+			  lru_actions_t requests)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1034,10 +991,10 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
-                                   fsal_digesttype_t output_type,
-                                   struct gsh_buffdesc *fh_desc)
+				   fsal_digesttype_t output_type,
+				   struct gsh_buffdesc *fh_desc)
 {
-        return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 }
 
 /**
@@ -1046,10 +1003,10 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
  */
 
 static void handle_to_key(struct fsal_obj_handle *obj_hdl,
-                          struct gsh_buffdesc *fh_desc)
+			  struct gsh_buffdesc *fh_desc)
 {
-        fh_desc->addr = obj_hdl;
-        fh_desc->len = 0;
+	fh_desc->addr = obj_hdl;
+	fh_desc->len = 0;
 }
 
 /**
@@ -1066,14 +1023,12 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  *
  * @return NFS4ERR_LAYOUTUNAVAILABLE
  */
-static nfsstat4
-layoutget(struct fsal_obj_handle *obj_hdl,
-          struct req_op_context *req_ctx,
-          XDR *loc_body,
-          const struct fsal_layoutget_arg *arg,
-          struct fsal_layoutget_res *res)
+static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
+			  struct req_op_context *req_ctx, XDR * loc_body,
+			  const struct fsal_layoutget_arg *arg,
+			  struct fsal_layoutget_res *res)
 {
-        return NFS4ERR_LAYOUTUNAVAILABLE;
+	return NFS4ERR_LAYOUTUNAVAILABLE;
 }
 
 /**
@@ -1090,13 +1045,11 @@ layoutget(struct fsal_obj_handle *obj_hdl,
  *
  * @return NFS4ERR_NOTSUPP
  */
-static nfsstat4
-layoutreturn(struct fsal_obj_handle *obj_hdl,
-             struct req_op_context *req_ctx,
-             XDR *lrf_body,
-             const struct fsal_layoutreturn_arg *arg)
+static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
+			     struct req_op_context *req_ctx, XDR * lrf_body,
+			     const struct fsal_layoutreturn_arg *arg)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1112,62 +1065,59 @@ layoutreturn(struct fsal_obj_handle *obj_hdl,
  *
  * @return Valid error codes in RFC 5661, p. 366.
  */
-static nfsstat4
-layoutcommit(struct fsal_obj_handle *obj_hdl,
-             struct req_op_context *req_ctx,
-             XDR *lou_body,
-             const struct fsal_layoutcommit_arg *arg,
-             struct fsal_layoutcommit_res *res)
+static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
+			     struct req_op_context *req_ctx, XDR * lou_body,
+			     const struct fsal_layoutcommit_arg *arg,
+			     struct fsal_layoutcommit_res *res)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
-
 
 /* Default fsal handle object method vector.
  * copied to allocated vector at register time
  */
 
 struct fsal_obj_ops def_handle_ops = {
-        .get = handle_get,
-        .put = handle_put,
-        .release = handle_release,
-        .lookup = lookup,
-        .readdir = read_dirents,
-        .create = create,
-        .mkdir = makedir,
-        .mknode = makenode,
-        .symlink = makesymlink,
-        .readlink = readsymlink,
-        .test_access = fsal_test_access, /* default is use common test */
-        .getattrs = getattrs,
-        .setattrs = setattrs,
-        .link = linkfile,
-        .rename = renamefile,
-        .unlink = file_unlink,
-        .open = file_open,
-        .status = file_status,
-        .read = file_read,
-        .write = file_write,
-        .commit = commit,
-        .lock_op = lock_op,
-        .share_op = share_op,
-        .close = file_close,
-        .list_ext_attrs = list_ext_attrs,
-        .getextattr_id_by_name = getextattr_id_by_name,
-        .getextattr_value_by_name = getextattr_value_by_name,
-        .getextattr_value_by_id = getextattr_value_by_id,
-        .setextattr_value = setextattr_value,
-        .setextattr_value_by_id = setextattr_value_by_id,
-        .getextattr_attrs = getextattr_attrs,
-        .remove_extattr_by_id = remove_extattr_by_id,
-        .remove_extattr_by_name = remove_extattr_by_name,
-        .handle_is = handle_is,
-        .lru_cleanup = lru_cleanup,
-        .handle_digest = handle_digest,
-        .handle_to_key = handle_to_key,
-        .layoutget = layoutget,
-        .layoutreturn = layoutreturn,
-        .layoutcommit = layoutcommit
+	.get = handle_get,
+	.put = handle_put,
+	.release = handle_release,
+	.lookup = lookup,
+	.readdir = read_dirents,
+	.create = create,
+	.mkdir = makedir,
+	.mknode = makenode,
+	.symlink = makesymlink,
+	.readlink = readsymlink,
+	.test_access = fsal_test_access,	/* default is use common test */
+	.getattrs = getattrs,
+	.setattrs = setattrs,
+	.link = linkfile,
+	.rename = renamefile,
+	.unlink = file_unlink,
+	.open = file_open,
+	.status = file_status,
+	.read = file_read,
+	.write = file_write,
+	.commit = commit,
+	.lock_op = lock_op,
+	.share_op = share_op,
+	.close = file_close,
+	.list_ext_attrs = list_ext_attrs,
+	.getextattr_id_by_name = getextattr_id_by_name,
+	.getextattr_value_by_name = getextattr_value_by_name,
+	.getextattr_value_by_id = getextattr_value_by_id,
+	.setextattr_value = setextattr_value,
+	.setextattr_value_by_id = setextattr_value_by_id,
+	.getextattr_attrs = getextattr_attrs,
+	.remove_extattr_by_id = remove_extattr_by_id,
+	.remove_extattr_by_name = remove_extattr_by_name,
+	.handle_is = handle_is,
+	.lru_cleanup = lru_cleanup,
+	.handle_digest = handle_digest,
+	.handle_to_key = handle_to_key,
+	.layoutget = layoutget,
+	.layoutreturn = layoutreturn,
+	.layoutcommit = layoutcommit
 };
 
 /* fsal_ds_handle common methods */
@@ -1181,14 +1131,13 @@ struct fsal_obj_ops def_handle_ops = {
  * @param[in] obj_hdl The handle to reference
  */
 
-static void
-ds_get(struct fsal_ds_handle *const ds_hdl)
+static void ds_get(struct fsal_ds_handle *const ds_hdl)
 {
-        pthread_mutex_lock(&ds_hdl->lock);
-        if (ds_hdl->refs > 0) {
-                ds_hdl->refs++;
-        }
-        pthread_mutex_unlock(&ds_hdl->lock);
+	pthread_mutex_lock(&ds_hdl->lock);
+	if (ds_hdl->refs > 0) {
+		ds_hdl->refs++;
+	}
+	pthread_mutex_unlock(&ds_hdl->lock);
 }
 
 /**
@@ -1203,22 +1152,21 @@ ds_get(struct fsal_ds_handle *const ds_hdl)
  *
  * @return NFS status codes.
  */
-static nfsstat4
-ds_put(struct fsal_ds_handle *const ds_hdl)
+static nfsstat4 ds_put(struct fsal_ds_handle *const ds_hdl)
 {
-        int retval = EINVAL; /* too many 'puts" */
+	int retval = EINVAL;	/* too many 'puts" */
 
-        pthread_mutex_lock(&ds_hdl->lock);
-        if (ds_hdl->refs > 0) {
-                ds_hdl->refs--;
-                retval = 0;
-        }
-        pthread_mutex_unlock(&ds_hdl->lock);
-        if (ds_hdl->refs == 0) {
-                return ds_hdl->ops->release(ds_hdl);
-        }
+	pthread_mutex_lock(&ds_hdl->lock);
+	if (ds_hdl->refs > 0) {
+		ds_hdl->refs--;
+		retval = 0;
+	}
+	pthread_mutex_unlock(&ds_hdl->lock);
+	if (ds_hdl->refs == 0) {
+		return ds_hdl->ops->release(ds_hdl);
+	}
 
-        return retval;
+	return retval;
 }
 
 /**
@@ -1231,12 +1179,10 @@ ds_put(struct fsal_ds_handle *const ds_hdl)
  *
  * @return NFSv4.1 status codes.
  */
-static nfsstat4
-ds_release(struct fsal_ds_handle *const ds_hdl)
+static nfsstat4 ds_release(struct fsal_ds_handle *const ds_hdl)
 {
-        LogCrit(COMPONENT_PNFS,
-                "Unimplemented DS release!");
-        return NFS4ERR_SERVERFAULT;
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS release!");
+	return NFS4ERR_SERVERFAULT;
 }
 
 /**
@@ -1254,17 +1200,14 @@ ds_release(struct fsal_ds_handle *const ds_hdl)
  *
  * @return NFS4ERR_NOTSUPP.
  */
-static nfsstat4
-ds_read(struct fsal_ds_handle *const ds_hdl,
-        struct req_op_context *const req_ctx,
-        const stateid4 *stateid,
-        const offset4 offset,
-        const count4 requested_length,
-        void *const buffer,
-        count4 *const supplied_length,
-        bool *const end_of_file)
+static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
+			struct req_op_context *const req_ctx,
+			const stateid4 * stateid, const offset4 offset,
+			const count4 requested_length, void *const buffer,
+			count4 * const supplied_length,
+			bool * const end_of_file)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1285,19 +1228,16 @@ ds_read(struct fsal_ds_handle *const ds_hdl,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4
-ds_write(struct fsal_ds_handle *const ds_hdl,
-         struct req_op_context *const req_ctx,
-         const stateid4 *stateid,
-         const offset4 offset,
-         const count4 write_length,
-         const void *buffer,
-         const stable_how4 stability_wanted,
-         count4 *const written_length,
-         verifier4 *const writeverf,
-         stable_how4 *const stability_got)
+static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
+			 struct req_op_context *const req_ctx,
+			 const stateid4 * stateid, const offset4 offset,
+			 const count4 write_length, const void *buffer,
+			 const stable_how4 stability_wanted,
+			 count4 * const written_length,
+			 verifier4 * const writeverf,
+			 stable_how4 * const stability_got)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1311,22 +1251,21 @@ ds_write(struct fsal_ds_handle *const ds_hdl,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4
-ds_commit(struct fsal_ds_handle *const ds_hdl,
-          struct req_op_context *const req_ctx,
-          const offset4 offset,
-          const count4 count,
-          verifier4 *const writeverf)
+static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
+			  struct req_op_context *const req_ctx,
+			  const offset4 offset, const count4 count,
+			  verifier4 * const writeverf)
 {
-        return NFS4ERR_NOTSUPP;
+	return NFS4ERR_NOTSUPP;
 }
 
 struct fsal_ds_ops def_ds_ops = {
-        .get = ds_get,
-        .put = ds_put,
-        .release = ds_release,
-        .read = ds_read,
-        .write = ds_write,
-        .commit = ds_commit
+	.get = ds_get,
+	.put = ds_put,
+	.release = ds_release,
+	.read = ds_read,
+	.write = ds_write,
+	.commit = ds_commit
 };
+
 /** @} */
