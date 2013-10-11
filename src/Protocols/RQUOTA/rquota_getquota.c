@@ -26,7 +26,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -38,7 +38,7 @@
 #include "nfs_creds.h"
 #include "nfs_tools.h"
 #include "mount.h"
-#include <os/quota.h>          /* For USRQUOTA */
+#include <os/quota.h>		/* For USRQUOTA */
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
@@ -56,12 +56,9 @@
  * @param[out] pres    Ignored
  *
  */
-int rquota_getquota(nfs_arg_t  *parg,
-                    exportlist_t  *pexport,
-		    struct req_op_context *req_ctx,
-                    nfs_worker_data_t *pworker,
-                    struct svc_req *preq,
-                    nfs_res_t * pres)
+int rquota_getquota(nfs_arg_t * parg, exportlist_t * pexport,
+		    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		    struct svc_req *preq, nfs_res_t * pres)
 {
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota;
@@ -73,28 +70,29 @@ int rquota_getquota(nfs_arg_t  *parg,
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getquota");
 
-	if(preq->rq_vers == EXT_RQUOTAVERS)
+	if (preq->rq_vers == EXT_RQUOTAVERS)
 		quota_type = parg->arg_ext_rquota_getquota.gqa_type;
 	qres->status = Q_EPERM;
 
-	if(parg->arg_rquota_getquota.gqa_pathp[0] == '/') {
-		exp = get_gsh_export_by_path(parg->arg_rquota_getquota.gqa_pathp);
-		if(exp == NULL)
+	if (parg->arg_rquota_getquota.gqa_pathp[0] == '/') {
+		exp =
+		    get_gsh_export_by_path(parg->arg_rquota_getquota.gqa_pathp);
+		if (exp == NULL)
 			goto out;
 		quota_path = parg->arg_rquota_getquota.gqa_pathp;
 	} else {
-		exp = get_gsh_export_by_tag(parg->arg_rquota_getquota.gqa_pathp);
-		if(exp  == NULL)
+		exp =
+		    get_gsh_export_by_tag(parg->arg_rquota_getquota.gqa_pathp);
+		if (exp == NULL)
 			goto out;
 		quota_path = exp->export.fullpath;
 	}
-	fsal_status = exp->export.export_hdl->ops->get_quota(exp->export.export_hdl,
-							     quota_path,
-							     quota_type,
-							     req_ctx,
-							     &fsal_quota);
-	if(FSAL_IS_ERROR(fsal_status)) {
-		if(fsal_status.major == ERR_FSAL_NO_QUOTA)
+	fsal_status =
+	    exp->export.export_hdl->ops->get_quota(exp->export.export_hdl,
+						   quota_path, quota_type,
+						   req_ctx, &fsal_quota);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;
 		goto out;
 	}
@@ -103,26 +101,19 @@ int rquota_getquota(nfs_arg_t  *parg,
 
 	qres->getquota_rslt_u.gqr_rquota.rq_active = TRUE;
 	qres->getquota_rslt_u.gqr_rquota.rq_bsize = fsal_quota.bsize;
-	qres->getquota_rslt_u.gqr_rquota.rq_bhardlimit =
-		fsal_quota.bhardlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_bsoftlimit =
-		fsal_quota.bsoftlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_curblocks =
-		fsal_quota.curblocks;
+	qres->getquota_rslt_u.gqr_rquota.rq_bhardlimit = fsal_quota.bhardlimit;
+	qres->getquota_rslt_u.gqr_rquota.rq_bsoftlimit = fsal_quota.bsoftlimit;
+	qres->getquota_rslt_u.gqr_rquota.rq_curblocks = fsal_quota.curblocks;
 	qres->getquota_rslt_u.gqr_rquota.rq_curfiles = fsal_quota.curfiles;
-	qres->getquota_rslt_u.gqr_rquota.rq_fhardlimit =
-		fsal_quota.fhardlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_fsoftlimit =
-		fsal_quota.fsoftlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_btimeleft =
-		fsal_quota.btimeleft;
-	qres->getquota_rslt_u.gqr_rquota.rq_ftimeleft =
-		fsal_quota.ftimeleft;
+	qres->getquota_rslt_u.gqr_rquota.rq_fhardlimit = fsal_quota.fhardlimit;
+	qres->getquota_rslt_u.gqr_rquota.rq_fsoftlimit = fsal_quota.fsoftlimit;
+	qres->getquota_rslt_u.gqr_rquota.rq_btimeleft = fsal_quota.btimeleft;
+	qres->getquota_rslt_u.gqr_rquota.rq_ftimeleft = fsal_quota.ftimeleft;
 	qres->status = Q_OK;
 
-out:
+ out:
 	return NFS_REQ_OK;
-}                               /* rquota_getquota */
+}				/* rquota_getquota */
 
 /**
  * rquota_getquota_Free: Frees the result structure allocated for rquota_getquota
