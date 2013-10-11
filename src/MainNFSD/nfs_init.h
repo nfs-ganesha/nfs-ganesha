@@ -35,17 +35,17 @@
 #include "log.h"
 #include "nfs_core.h"
 
-typedef struct __nfs_start_info
-{
-  int dump_default_config;
-  int lw_mark_trigger;
+typedef struct __nfs_start_info {
+	int dump_default_config;
+	int lw_mark_trigger;
 } nfs_start_info_t;
 
 /**
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
+void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
+		     char *log_path);
 
 /**
  * nfs_set_param_from_conf:
@@ -66,4 +66,4 @@ int nfs_check_param_consistency();
  */
 void nfs_start(nfs_start_info_t * p_start_info);
 
-#endif /* !NFS_INIT_H */
+#endif				/* !NFS_INIT_H */

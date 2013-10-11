@@ -38,15 +38,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <signal.h>             /* for sigaction */
+#include <signal.h>		/* for sigaction */
 #include <errno.h>
 #include "fsal_pnfs.h"
 
 /* parameters for NFSd startup and default values */
 
 nfs_start_info_t my_nfs_start_info = {
-  .dump_default_config = false,
-  .lw_mark_trigger = false
+	.dump_default_config = false,
+	.lw_mark_trigger = false
 };
 
 config_file_t config_struct;
@@ -74,8 +74,7 @@ char usage[] =
     "SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
     "SIGTERM    : Cleanly terminate the program\n"
     "------------- Default Values -------------\n"
-    "LogFile    : /tmp/nfs-ganesha.log\n"
-    "PidFile    : /var/run/ganesha.pid\n"
+    "LogFile    : /tmp/nfs-ganesha.log\n" "PidFile    : /var/run/ganesha.pid\n"
     "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**
@@ -92,278 +91,261 @@ char usage[] =
 
 int main(int argc, char *argv[])
 {
-  char *tempo_exec_name = NULL;
-  char localmachine[MAXHOSTNAMELEN + 1];
-  int c;
-  int pidfile;
+	char *tempo_exec_name = NULL;
+	char localmachine[MAXHOSTNAMELEN + 1];
+	int c;
+	int pidfile;
 #ifndef HAVE_DAEMON
-  pid_t son_pid;
+	pid_t son_pid;
 #endif
-  sigset_t signals_to_block;
+	sigset_t signals_to_block;
 
-  /* Set the server's boot time and epoch */
-  now(&ServerBootTime);
-  ServerEpoch    = (time_t)ServerBootTime.tv_sec;
+	/* Set the server's boot time and epoch */
+	now(&ServerBootTime);
+	ServerEpoch = (time_t) ServerBootTime.tv_sec;
 
-  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
-    {
-      exec_name = gsh_strdup(tempo_exec_name + 1);
-      if (!exec_name)
-	{
-	  fprintf(stderr,
-		  "Unable to allocate memory for exec name, exiting...\n");
-	  exit(1);
-      }
-    }
-
-  if(*exec_name == '\0')
-    exec_name = argv[0];
-
-  /* get host name */
-  if(gethostname(localmachine, sizeof(localmachine)) != 0)
-    {
-      fprintf(stderr, "Could not get local host name, exiting...\n");
-      exit(1);
-    }
-  else
-    {
-      host_name = gsh_strdup(localmachine);
-      if (!host_name)
-	{
-	  fprintf(stderr,
-		  "Unable to allocate memory for hostname, exiting...\n");
-	  exit(1);
+	if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL) {
+		exec_name = gsh_strdup(tempo_exec_name + 1);
+		if (!exec_name) {
+			fprintf(stderr,
+				"Unable to allocate memory for exec name, exiting...\n");
+			exit(1);
+		}
 	}
-    }
 
-  /* now parsing options with getopt */
-  while((c = getopt(argc, argv, options)) != EOF)
-    {
-      switch (c)
-        {
-        case '@':
-          /* A litlle backdoor to keep track of binary versions */
-          printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
-          printf("Release = %s\n", VERSION);
-          printf("Release comment = %s\n", VERSION_COMMENT);
-          printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT ) ;
-          printf("Git Describe = %s\n", _GIT_DESCRIBE ) ;
-          exit(0);
-          break;
+	if (*exec_name == '\0')
+		exec_name = argv[0];
 
-        case 'L':
-          /* Default Log */
-	  log_path = gsh_strdup(optarg);
-	  if (!log_path)
-            {
-              fprintf(stderr,
-		      "Unable to allocate memory for log path.\n");
-              exit(1);
-            }
-          break;
+	/* get host name */
+	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
+		fprintf(stderr, "Could not get local host name, exiting...\n");
+		exit(1);
+	} else {
+		host_name = gsh_strdup(localmachine);
+		if (!host_name) {
+			fprintf(stderr,
+				"Unable to allocate memory for hostname, exiting...\n");
+			exit(1);
+		}
+	}
 
-        case 'N':
-          /* debug level */
-          debug_level = ReturnLevelAscii(optarg);
-          if(debug_level == -1)
-            {
-              fprintf(stderr,
-                      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG, NIV_MID_DEBUG or NIV_FULL_DEBUG expected.\n");
-              exit(1);
-            }
-          break;
+	/* now parsing options with getopt */
+	while ((c = getopt(argc, argv, options)) != EOF) {
+		switch (c) {
+		case '@':
+			/* A litlle backdoor to keep track of binary versions */
+			printf("%s compiled on %s at %s\n", exec_name, __DATE__,
+			       __TIME__);
+			printf("Release = %s\n", VERSION);
+			printf("Release comment = %s\n", VERSION_COMMENT);
+			printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT);
+			printf("Git Describe = %s\n", _GIT_DESCRIBE);
+			exit(0);
+			break;
 
-        case 'f':
-          /* config file */
-	  
-	  config_path = gsh_strdup(optarg);
-	  if (!config_path)
-            {
-              fprintf(stderr,
-                      "Unable to allocate memory for config path.\n");
-              exit(1);
-            }
-          break;
+		case 'L':
+			/* Default Log */
+			log_path = gsh_strdup(optarg);
+			if (!log_path) {
+				fprintf(stderr,
+					"Unable to allocate memory for log path.\n");
+				exit(1);
+			}
+			break;
 
-        case 'p':
-          /* PID file */
-	  pidfile_path = gsh_strdup(optarg);
-	  if (!pidfile_path)
-            {
-              fprintf(stderr,
-                      "Path %s too long for option 'f'.\n",
-                      optarg);
-              exit(1);
-            }
-          break ;
+		case 'N':
+			/* debug level */
+			debug_level = ReturnLevelAscii(optarg);
+			if (debug_level == -1) {
+				fprintf(stderr,
+					"Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG, NIV_MID_DEBUG or NIV_FULL_DEBUG expected.\n");
+				exit(1);
+			}
+			break;
 
-        case 'd':
-          /* Detach or not detach ? */
-          detach_flag = true;
-          break;
+		case 'f':
+			/* config file */
 
-        case 'R':
-          /* Shall we manage  RPCSEC_GSS ? */
-          fprintf(stderr,
-                  "\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
-          fprintf(stderr, "NFS_KRB5\n");
-          fprintf(stderr, "{\n");
-          fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
-          fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
-          fprintf(stderr, "\tActive_krb5 = true ;\n");
-          fprintf(stderr, "}\n\n\n");
-          exit(1);
-          break;
+			config_path = gsh_strdup(optarg);
+			if (!config_path) {
+				fprintf(stderr,
+					"Unable to allocate memory for config path.\n");
+				exit(1);
+			}
+			break;
 
-        case 'T':
-          /* Dump the default configuration on stdout */
-          my_nfs_start_info.dump_default_config = true;
-          break;
+		case 'p':
+			/* PID file */
+			pidfile_path = gsh_strdup(optarg);
+			if (!pidfile_path) {
+				fprintf(stderr,
+					"Path %s too long for option 'f'.\n",
+					optarg);
+				exit(1);
+			}
+			break;
 
-        case 'E':
-          ServerEpoch = (time_t) atoll(optarg);
-          break;
+		case 'd':
+			/* Detach or not detach ? */
+			detach_flag = true;
+			break;
 
-        case '?':
-        case 'h':
-        default:
-          /* display the help */
-          fprintf(stderr, usage, exec_name);
-          exit(0);
-          break;
-        }
-    }
+		case 'R':
+			/* Shall we manage  RPCSEC_GSS ? */
+			fprintf(stderr,
+				"\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
+			fprintf(stderr, "NFS_KRB5\n");
+			fprintf(stderr, "{\n");
+			fprintf(stderr,
+				"\tPrincipalName = nfs@<your_host> ;\n");
+			fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
+			fprintf(stderr, "\tActive_krb5 = true ;\n");
+			fprintf(stderr, "}\n\n\n");
+			exit(1);
+			break;
 
-  /* initialize memory and logging */
-  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+		case 'T':
+			/* Dump the default configuration on stdout */
+			my_nfs_start_info.dump_default_config = true;
+			break;
 
-  /* Start in background, if wanted */
-  if(detach_flag)
-    {
+		case 'E':
+			ServerEpoch = (time_t) atoll(optarg);
+			break;
+
+		case '?':
+		case 'h':
+		default:
+			/* display the help */
+			fprintf(stderr, usage, exec_name);
+			exit(0);
+			break;
+		}
+	}
+
+	/* initialize memory and logging */
+	nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+
+	/* Start in background, if wanted */
+	if (detach_flag) {
 #ifdef HAVE_DAEMON
-        /* daemonize the process (fork, close xterm fds,
-         * detach from parent process) */
-        if (daemon(0, 0))
-          LogFatal(COMPONENT_MAIN,
-                   "Error detaching process from parent: %s",
-                   strerror(errno));
+		/* daemonize the process (fork, close xterm fds,
+		 * detach from parent process) */
+		if (daemon(0, 0))
+			LogFatal(COMPONENT_MAIN,
+				 "Error detaching process from parent: %s",
+				 strerror(errno));
 #else
-      /* Step 1: forking a service process */
-      switch (son_pid = fork())
-        {
-        case -1:
-          /* Fork failed */
-          LogFatal(COMPONENT_MAIN,
-                   "Could not start nfs daemon (fork error %d (%s)",
-                   errno, strerror(errno));
-          break;
+		/* Step 1: forking a service process */
+		switch (son_pid = fork()) {
+		case -1:
+			/* Fork failed */
+			LogFatal(COMPONENT_MAIN,
+				 "Could not start nfs daemon (fork error %d (%s)",
+				 errno, strerror(errno));
+			break;
 
-        case 0:
-          /* This code is within the son (that will actually work)
-           * Let's make it the leader of its group of process */
-          if(setsid() == -1)
-            {
-	      LogFatal(COMPONENT_MAIN,
-	               "Could not start nfs daemon (setsid error %d (%s)",
-	               errno, strerror(errno));
-            }
-          break;
+		case 0:
+			/* This code is within the son (that will actually work)
+			 * Let's make it the leader of its group of process */
+			if (setsid() == -1) {
+				LogFatal(COMPONENT_MAIN,
+					 "Could not start nfs daemon (setsid error %d (%s)",
+					 errno, strerror(errno));
+			}
+			break;
 
-        default:
-          /* This code is within the father, it is useless, it must die */
-          LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d", son_pid);
-          exit(0);
-          break;
-        }
+		default:
+			/* This code is within the father, it is useless, it must die */
+			LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d",
+				     son_pid);
+			exit(0);
+			break;
+		}
 #endif
-    }
+	}
 
-  /* Make sure Linux file i/o will return with error if file size is exceeded. */
+	/* Make sure Linux file i/o will return with error if file size is exceeded. */
 #ifdef _LINUX
-  signal(SIGXFSZ, SIG_IGN);
+	signal(SIGXFSZ, SIG_IGN);
 #endif
 
-  /* Echo PID into pidfile */
-  if( ( pidfile = open(pidfile_path, O_CREAT|O_RDWR, 0644)) == -1 )
-   {
-     LogFatal( COMPONENT_MAIN, "Can't open pid file %s for writing", pidfile_path ) ;
-   }
-  else
-   {
-     char linebuf[1024];
-     struct flock lk;
+	/* Echo PID into pidfile */
+	if ((pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644)) == -1) {
+		LogFatal(COMPONENT_MAIN, "Can't open pid file %s for writing",
+			 pidfile_path);
+	} else {
+		char linebuf[1024];
+		struct flock lk;
 
-     /* Try to obtain a lock on the file */
-     lk.l_type = F_WRLCK;
-     lk.l_whence = SEEK_SET;
-     lk.l_start = (off_t)0;
-     lk.l_len = (off_t)0;
-     if (fcntl(pidfile, F_SETLK, &lk) == -1)
-       LogFatal( COMPONENT_MAIN, "Ganesha already started");
+		/* Try to obtain a lock on the file */
+		lk.l_type = F_WRLCK;
+		lk.l_whence = SEEK_SET;
+		lk.l_start = (off_t) 0;
+		lk.l_len = (off_t) 0;
+		if (fcntl(pidfile, F_SETLK, &lk) == -1)
+			LogFatal(COMPONENT_MAIN, "Ganesha already started");
 
-     /* Put pid into file, then close it */
-     (void) snprintf(linebuf, sizeof(linebuf), "%u\n", getpid() ) ;
-     if (write(pidfile, linebuf, strlen(linebuf)) == -1)
-       LogCrit( COMPONENT_MAIN, "Couldn't write pid to file %s",
-           pidfile_path);
-   }
+		/* Put pid into file, then close it */
+		(void)snprintf(linebuf, sizeof(linebuf), "%u\n", getpid());
+		if (write(pidfile, linebuf, strlen(linebuf)) == -1)
+			LogCrit(COMPONENT_MAIN, "Couldn't write pid to file %s",
+				pidfile_path);
+	}
 
-  /* Set up for the signal handler.
-   * Blocks the signals the signal handler will handle.
-   */
-  sigemptyset(&signals_to_block);
-  sigaddset(&signals_to_block, SIGTERM);
-  sigaddset(&signals_to_block, SIGHUP);
-  sigaddset(&signals_to_block, SIGPIPE);
-  if(pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
-    LogFatal(COMPONENT_MAIN,
-             "Could not start nfs daemon, pthread_sigmask failed");
+	/* Set up for the signal handler.
+	 * Blocks the signals the signal handler will handle.
+	 */
+	sigemptyset(&signals_to_block);
+	sigaddset(&signals_to_block, SIGTERM);
+	sigaddset(&signals_to_block, SIGHUP);
+	sigaddset(&signals_to_block, SIGPIPE);
+	if (pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
+		LogFatal(COMPONENT_MAIN,
+			 "Could not start nfs daemon, pthread_sigmask failed");
 
-  /* Parse the configuration file so we all know what is going on. */
+	/* Parse the configuration file so we all know what is going on. */
 
-  if(config_path == NULL) {
-	  LogFatal(COMPONENT_INIT,
-		   "start_fsals: No configuration file named.");
-	  return 1;
-  }
-  config_struct = config_ParseFile(config_path);
+	if (config_path == NULL) {
+		LogFatal(COMPONENT_INIT,
+			 "start_fsals: No configuration file named.");
+		return 1;
+	}
+	config_struct = config_ParseFile(config_path);
 
-  if(!config_struct)
-    {
-      LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
-	       config_path, config_GetErrorMsg());
-    }
+	if (!config_struct) {
+		LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
+			 config_path, config_GetErrorMsg());
+	}
 
-  /* We need all the fsal modules loaded so we can have the list available
-   * at exports parsing time.
-   */
-  start_fsals(config_struct);
+	/* We need all the fsal modules loaded so we can have the list available
+	 * at exports parsing time.
+	 */
+	start_fsals(config_struct);
 
-  /* parse configuration file */
+	/* parse configuration file */
 
-  if(nfs_set_param_from_conf(config_struct, &my_nfs_start_info))
-    {
-      LogFatal(COMPONENT_INIT, "Error setting parameters from configuration file.");
-    }
+	if (nfs_set_param_from_conf(config_struct, &my_nfs_start_info)) {
+		LogFatal(COMPONENT_INIT,
+			 "Error setting parameters from configuration file.");
+	}
 
-  if(nfs_check_param_consistency())
-    {
-      LogFatal(COMPONENT_INIT,
-	       "Inconsistent parameters found. Exiting..." ) ;
-    }
-  if(init_fsals(config_struct))  /* init the FSALs from the config */
-    {
-      LogFatal(COMPONENT_INIT,
-	       "FSALs could not initialize. Exiting..." ) ;
-    }
+	if (nfs_check_param_consistency()) {
+		LogFatal(COMPONENT_INIT,
+			 "Inconsistent parameters found. Exiting...");
+	}
+	if (init_fsals(config_struct)) {	/* init the FSALs from the config */
+		LogFatal(COMPONENT_INIT,
+			 "FSALs could not initialize. Exiting...");
+	}
 
-  /* freeing syntax tree : */
+	/* freeing syntax tree : */
 
-  config_Free(config_struct);
+	config_Free(config_struct);
 
-  /* Everything seems to be OK! We can now start service threads */
-  nfs_start(&my_nfs_start_info);
+	/* Everything seems to be OK! We can now start service threads */
+	nfs_start(&my_nfs_start_info);
 
-  return 0;
+	return 0;
 
 }

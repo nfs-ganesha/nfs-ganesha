@@ -43,92 +43,87 @@ static struct fridgethr *reaper_fridge;
 
 static int reap_hash_table(hash_table_t * ht_reap)
 {
-  struct rbt_head     * head_rbt;
-  struct hash_data    * addr = NULL;
-  uint32_t              i;
-  int                   rc;
-  struct rbt_node     * pn;
-  nfs_client_id_t     * pclientid;
-  nfs_client_record_t * precord;
-  int                   count = 0;
-  struct req_op_context req_ctx;
-  struct user_cred creds;
+	struct rbt_head *head_rbt;
+	struct hash_data *addr = NULL;
+	uint32_t i;
+	int rc;
+	struct rbt_node *pn;
+	nfs_client_id_t *pclientid;
+	nfs_client_record_t *precord;
+	int count = 0;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
 
-  /* We need a real context.  Make all reaping done
-   * by root,root
-   */
-  memset(&creds, 0, sizeof(creds));
-  req_ctx.creds = &creds;
+	/* We need a real context.  Make all reaping done
+	 * by root,root
+	 */
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
 
-  /* For each bucket of the requested hashtable */
-  for(i = 0; i < ht_reap->parameter.index_size; i++)
-    {
-      head_rbt = &ht_reap->partitions[i].rbt;
+	/* For each bucket of the requested hashtable */
+	for (i = 0; i < ht_reap->parameter.index_size; i++) {
+		head_rbt = &ht_reap->partitions[i].rbt;
 
  restart:
-      /* acquire mutex */
-      PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
+		/* acquire mutex */
+		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
 
-      /* go through all entries in the red-black-tree*/
-      RBT_LOOP(head_rbt, pn)
-        {
-          addr = RBT_OPAQ(pn);
+		/* go through all entries in the red-black-tree */
+		RBT_LOOP(head_rbt, pn) {
+			addr = RBT_OPAQ(pn);
 
-          pclientid = addr->val.addr;
-          count++;
+			pclientid = addr->val.addr;
+			count++;
 
-          P(pclientid->cid_mutex);
+			P(pclientid->cid_mutex);
 
-          if(!valid_lease(pclientid))
-            {
-              inc_client_id_ref(pclientid);
+			if (!valid_lease(pclientid)) {
+				inc_client_id_ref(pclientid);
 
-              /* Take a reference to the client record */
-              precord = pclientid->cid_client_record;
-              inc_client_record_ref(precord);
+				/* Take a reference to the client record */
+				precord = pclientid->cid_client_record;
+				inc_client_record_ref(precord);
 
-              V(pclientid->cid_mutex);
+				V(pclientid->cid_mutex);
 
-              PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+				PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].
+						      lock);
 
-              if(isDebug(COMPONENT_CLIENTID))
-                {
-                  char str[HASHTABLE_DISPLAY_STRLEN];
+				if (isDebug(COMPONENT_CLIENTID)) {
+					char str[HASHTABLE_DISPLAY_STRLEN];
 
-                  display_client_id_rec(pclientid, str);
+					display_client_id_rec(pclientid, str);
 
-                  LogFullDebug(COMPONENT_CLIENTID,
-                               "Expire index %d %s",
-                               i, str);
-                }
+					LogFullDebug(COMPONENT_CLIENTID,
+						     "Expire index %d %s", i,
+						     str);
+				}
 
-              /* Take cr_mutex and expire clientid */
-              P(precord->cr_mutex);
+				/* Take cr_mutex and expire clientid */
+				P(precord->cr_mutex);
 /* @TODO@ This is incomplete! the context has to be filled in 
  * from somewhere
  */
-	      memset(&req_ctx, 0, sizeof(req_ctx));
-              rc = nfs_client_id_expire(pclientid, &req_ctx);
+				memset(&req_ctx, 0, sizeof(req_ctx));
+				rc = nfs_client_id_expire(pclientid, &req_ctx);
 
-              V(precord->cr_mutex);
+				V(precord->cr_mutex);
 
-              dec_client_id_ref(pclientid);
-              dec_client_record_ref(precord);
-              if(rc)
-                goto restart;
-            }
-          else
-            {
-              V(pclientid->cid_mutex);
-            }
+				dec_client_id_ref(pclientid);
+				dec_client_record_ref(precord);
+				if (rc)
+					goto restart;
+			} else {
+				V(pclientid->cid_mutex);
+			}
 
-          RBT_INCREMENT(pn);
-        }
+			RBT_INCREMENT(pn);
+		}
 
-      PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
-    }
+		PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+	}
 
-  return count;
+	return count;
 }
 
 struct reaper_state {
@@ -139,107 +134,94 @@ struct reaper_state {
 };
 
 static struct reaper_state reaper_state = {
-  .old_state_cleaned = false,
-  .count = 0,
-  .logged = false,
-  .in_grace = false
+	.old_state_cleaned = false,
+	.count = 0,
+	.logged = false,
+	.in_grace = false
 };
 
 static void reaper_run(struct fridgethr_context *ctx)
 {
-  struct reaper_state *rst = ctx->arg;
+	struct reaper_state *rst = ctx->arg;
 
-  SetNameFunction("reaper");
-  rst->in_grace = nfs_in_grace();
+	SetNameFunction("reaper");
+	rst->in_grace = nfs_in_grace();
 
-  if (!rst->old_state_cleaned)
-    {
-      /* if not in grace period, clean up the old state */
-      if(!rst->in_grace)
-	{
-	  nfs4_clean_old_recov_dir();
-	  rst->old_state_cleaned = true;
+	if (!rst->old_state_cleaned) {
+		/* if not in grace period, clean up the old state */
+		if (!rst->in_grace) {
+			nfs4_clean_old_recov_dir();
+			rst->old_state_cleaned = true;
+		}
 	}
-    }
 
-  if(isDebug(COMPONENT_CLIENTID) && ((rst->count > 0) || !rst->logged))
-    {
-      LogDebug(COMPONENT_CLIENTID,
-	       "Now checking NFS4 clients for expiration");
+	if (isDebug(COMPONENT_CLIENTID) && ((rst->count > 0) || !rst->logged)) {
+		LogDebug(COMPONENT_CLIENTID,
+			 "Now checking NFS4 clients for expiration");
 
-      rst->logged = (rst->count == 0);
+		rst->logged = (rst->count == 0);
 
 #ifdef DEBUG_SAL
-      if(rst->count == 0)
-	{
-	  dump_all_states();
-	  dump_all_owners();
-	}
+		if (rst->count == 0) {
+			dump_all_states();
+			dump_all_owners();
+		}
 #endif
-    }
+	}
 
-  rst->count = (reap_hash_table(ht_confirmed_client_id) +
-		reap_hash_table(ht_unconfirmed_client_id));
+	rst->count =
+	    (reap_hash_table(ht_confirmed_client_id) +
+	     reap_hash_table(ht_unconfirmed_client_id));
 }
 
 int reaper_init(void)
 {
-  struct fridgethr_params frp;
-  int rc = 0;
+	struct fridgethr_params frp;
+	int rc = 0;
 
-  if(nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
-    reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;
+	if (nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
+		reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;
 
-  memset(&frp, 0, sizeof(struct fridgethr_params));
-  frp.thr_max = 1;
-  frp.thr_min = 1;
-  frp.thread_delay = reaper_delay;
-  frp.flavor = fridgethr_flavor_looper;
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = 1;
+	frp.thr_min = 1;
+	frp.thread_delay = reaper_delay;
+	frp.flavor = fridgethr_flavor_looper;
 
-  rc = fridgethr_init(&reaper_fridge,
-		      /* You may be a king or a little street sweeper
-			 but sooner or later you'll dance with */
-		      "The Reaper",
-		      &frp);
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_CLIENTID,
-	       "Unable to initialize reaper fridge, error code %d.",
-	       rc);
-      return rc;
-    }
+	rc = fridgethr_init(&reaper_fridge,
+			    /* You may be a king or a little street sweeper
+			       but sooner or later you'll dance with */
+			    "The Reaper", &frp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_CLIENTID,
+			 "Unable to initialize reaper fridge, error code %d.",
+			 rc);
+		return rc;
+	}
 
-  rc = fridgethr_submit(reaper_fridge,
-			reaper_run,
-			&reaper_state);
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_CLIENTID,
-	       "Unable to start reaper thread, error code %d.",
-	       rc);
-      return rc;
-    }
+	rc = fridgethr_submit(reaper_fridge, reaper_run, &reaper_state);
+	if (rc != 0) {
+		LogMajor(COMPONENT_CLIENTID,
+			 "Unable to start reaper thread, error code %d.", rc);
+		return rc;
+	}
 
-  return 0;
+	return 0;
 }
 
 int reaper_shutdown(void)
 {
-  int rc = fridgethr_sync_command(reaper_fridge,
-				  fridgethr_comm_stop,
-				  120);
+	int rc = fridgethr_sync_command(reaper_fridge,
+					fridgethr_comm_stop,
+					120);
 
-  if (rc == ETIMEDOUT)
-    {
-      LogMajor(COMPONENT_CLIENTID,
-	       "Shutdown timed out, cancelling threads.");
-      fridgethr_cancel(reaper_fridge);
-    }
-  else if (rc != 0)
-    {
-      LogMajor(COMPONENT_CLIENTID,
-	       "Failed shutting down reaper thread: %d",
-	       rc);
-    }
-  return rc;
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_CLIENTID,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(reaper_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_CLIENTID,
+			 "Failed shutting down reaper thread: %d", rc);
+	}
+	return rc;
 }

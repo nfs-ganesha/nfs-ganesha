@@ -73,8 +73,8 @@ extern hash_table_t *ht_session_id;
  * @param reply   the message reply
  */
 
-static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
-					     DBusMessage *reply)
+static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter * args,
+					     DBusMessage * reply)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
@@ -92,16 +92,15 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 	dbus_append_timestamp(&iter, &ts);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 DBUS_TYPE_UINT64_AS_STRING,
-					 &sub_iter);
+					 DBUS_TYPE_UINT64_AS_STRING, &sub_iter);
 	/* For each bucket of the hashtable */
-	for(i = 0; i < ht->parameter.index_size; i++) {
+	for (i = 0; i < ht->parameter.index_size; i++) {
 		head_rbt = &(ht->partitions[i].rbt);
 
 		/* acquire mutex */
 		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
 
-		/* go through all entries in the red-black-tree*/
+		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
 			pdata = RBT_OPAQ(pn);
 			pclientid = pdata->val.addr;
@@ -124,20 +123,17 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
 	.name = "get_client_ids",
 	.method = nfs_rpc_cbsim_get_v40_client_ids,
 	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
-		{
-			.name = "clientids",
-			.type = "at",
-			.direction = "out"
-		},
-		{NULL, NULL, NULL}
-	}
+		 {
+		  .name = "time",
+		  .type = "(tt)",
+		  .direction = "out"},
+		 {
+		  .name = "clientids",
+		  .type = "at",
+		  .direction = "out"},
+		 {NULL, NULL, NULL}
+		 }
 };
-
 
 /**
  * @brief Return a timestamped list of session ids.
@@ -146,16 +142,15 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
  * @param reply   the message reply
  */
 
-static bool
-nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
-			      DBusMessage *reply)
+static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter * args,
+					  DBusMessage * reply)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_session_id;
 	struct rbt_head *head_rbt;
 	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
-	char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
+	char session_id[2 * NFS4_SESSIONID_SIZE];	/* guaranteed to fit */
 	nfs41_session_t *session_data;
 	DBusMessageIter iter, sub_iter;
 	struct timespec ts;
@@ -166,24 +161,22 @@ nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 	dbus_append_timestamp(&iter, &ts);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 DBUS_TYPE_UINT64_AS_STRING,
-					 &sub_iter);
+					 DBUS_TYPE_UINT64_AS_STRING, &sub_iter);
 	/* For each bucket of the hashtable */
-	for(i = 0; i < ht->parameter.index_size; i++) {
+	for (i = 0; i < ht->parameter.index_size; i++) {
 		head_rbt = &(ht->partitions[i].rbt);
 
 		/* acquire mutex */
 		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
 
-		/* go through all entries in the red-black-tree*/
+		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
 			pdata = RBT_OPAQ(pn);
 			session_data = pdata->val.addr;
 			/* format */
-			b64_ntop((unsigned char *) session_data->session_id,
-				 NFS4_SESSIONID_SIZE,
-				 session_id,
-				 (2*NFS4_SESSIONID_SIZE));
+			b64_ntop((unsigned char *)session_data->session_id,
+				 NFS4_SESSIONID_SIZE, session_id,
+				 (2 * NFS4_SESSIONID_SIZE));
 			dbus_message_iter_append_basic(&sub_iter,
 						       DBUS_TYPE_STRING,
 						       &session_id);
@@ -202,32 +195,30 @@ static struct gsh_dbus_method cbsim_get_session_ids = {
 	.name = "get_session_ids",
 	.method = nfs_rpc_cbsim_get_session_ids,
 	.args = {
-		{
-			.name = "time",
-			.type = "(tt)",
-			.direction = "out"
-		},
-		{
-			.name = "sessionids",
-			.type = "at",
-			.direction = "out"
-		},
-		{NULL, NULL, NULL}
-	}
+		 {
+		  .name = "time",
+		  .type = "(tt)",
+		  .direction = "out"},
+		 {
+		  .name = "sessionids",
+		  .type = "at",
+		  .direction = "out"},
+		 {NULL, NULL, NULL}
+		 }
 };
 
 static int32_t cbsim_test_bchan(clientid4 clientid)
 {
 	int32_t tries, code = 0;
 	nfs_client_id_t *pclientid = NULL;
-	struct timeval CB_TIMEOUT = {15, 0};
+	struct timeval CB_TIMEOUT = { 15, 0 };
 	rpc_call_channel_t *chan;
 	enum clnt_stat stat;
 
 	code = nfs_client_id_get_confirmed(clientid, &pclientid);
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
-			"No clid record for %"PRIx64" (%d) code %d", clientid,
+			"No clid record for %" PRIx64 " (%d) code %d", clientid,
 			(int32_t) clientid, code);
 		code = EINVAL;
 		goto out;
@@ -253,9 +244,8 @@ static int32_t cbsim_test_bchan(clientid4 clientid)
 		/* try the CB_NULL proc -- inline here, should be ok-ish */
 		stat = rpc_cb_null(chan, CB_TIMEOUT, false);
 		LogDebug(COMPONENT_NFS_CB,
-			 "rpc_cb_null on client %"PRIx64" returns %d",
+			 "rpc_cb_null on client %" PRIx64 " returns %d",
 			 clientid, stat);
-
 
 		/* RPC_INTR indicates that we should refresh the
 		 * channel and retry */
@@ -263,16 +253,16 @@ static int32_t cbsim_test_bchan(clientid4 clientid)
 			break;
 	}
 
-out:
+ out:
 	return code;
 }
 
 /**
  * Demonstration callback invocation.
  */
-static void cbsim_free_compound(nfs4_compound_t *cbt) __attribute__((unused));
+static void cbsim_free_compound(nfs4_compound_t * cbt) __attribute__ ((unused));
 
-static void cbsim_free_compound(nfs4_compound_t *cbt)
+static void cbsim_free_compound(nfs4_compound_t * cbt)
 {
 	int ix;
 	nfs_cb_argop4 *argop = NULL;
@@ -281,8 +271,9 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
 		argop = cbt->v_u.v4.args.argarray.argarray_val + ix;
 		if (argop) {
 			switch (argop->argop) {
-			case  NFS4_OP_CB_RECALL:
-				gsh_free(argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val);
+			case NFS4_OP_CB_RECALL:
+				gsh_free(argop->nfs_cb_argop4_u.opcbrecall.fh.
+					 nfs_fh4_val);
 				break;
 			default:
 				/* TODO:  ahem */
@@ -295,13 +286,12 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
 	cb_compound_free(cbt);
 }
 
-static int32_t cbsim_completion_func(rpc_call_t* call, rpc_call_hook hook,
-				     void* arg, uint32_t flags)
+static int32_t cbsim_completion_func(rpc_call_t * call, rpc_call_hook hook,
+				     void *arg, uint32_t flags)
 {
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
-		 (hook == RPC_CALL_ABORT) ?
-		 "RPC_CALL_ABORT" :
-		 "RPC_CALL_COMPLETE");
+		 (hook ==
+		  RPC_CALL_ABORT) ? "RPC_CALL_ABORT" : "RPC_CALL_COMPLETE");
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
 		/* potentially, do something more interesting here */
@@ -324,13 +314,12 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 	nfs_cb_argop4 argop[1];
 	rpc_call_t *call;
 
-	LogDebug(COMPONENT_NFS_CB,
-		 "called with clientid %"PRIx64, clientid);
+	LogDebug(COMPONENT_NFS_CB, "called with clientid %" PRIx64, clientid);
 
-	code  = nfs_client_id_get_confirmed(clientid, &pclientid);
+	code = nfs_client_id_get_confirmed(clientid, &pclientid);
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
-			"No clid record for %"PRIx64" (%d) code %d", clientid,
+			"No clid record for %" PRIx64 " (%d) code %d", clientid,
 			(int32_t) clientid, code);
 		code = EINVAL;
 		goto out;
@@ -362,13 +351,13 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 	memset(argop, 0, sizeof(nfs_cb_argop4));
 	argop->argop = NFS4_OP_CB_RECALL;
 	argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid = 0xdeadbeef;
-	strlcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
-		"0xdeadbeef", 12);
+	strlcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other, "0xdeadbeef",
+		12);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
 	/* leaks, sorry */
-	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val
-		= gsh_strdup("0xabadcafe");
+	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val =
+	    gsh_strdup("0xabadcafe");
 
 	/* add ops, till finished (dont exceed count) */
 	cb_compound_add_op(&call->cbt, argop);
@@ -377,15 +366,11 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 	call->call_hook = cbsim_completion_func;
 
 	/* call it (here, in current thread context) */
-	code = nfs_rpc_submit_call(
-		call,
-		NULL,
-		NFS_RPC_FLAG_NONE);
+	code = nfs_rpc_submit_call(call, NULL, NFS_RPC_FLAG_NONE);
 
-out:
+ out:
 	return code;
 }
-
 
 /**
  * @brief Fake/force a recall of a client id.
@@ -397,23 +382,21 @@ out:
  * @param reply   the message reply (empty)
  */
 
-static bool nfs_rpc_cbsim_fake_recall(
-	DBusMessageIter *args,
-	DBusMessage *reply)
+static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter * args,
+				      DBusMessage * reply)
 {
-	clientid4 clientid = 9315; /* XXX ew! */
+	clientid4 clientid = 9315;	/* XXX ew! */
 
 	LogDebug(COMPONENT_NFS_CB, "called!");
 
 	/* read the arguments */
 	if (args == NULL) {
 		LogDebug(COMPONENT_DBUS, "message has no arguments");
-	} else if (DBUS_TYPE_UINT64 !=
-		   dbus_message_iter_get_arg_type(args)) {
+	} else if (DBUS_TYPE_UINT64 != dbus_message_iter_get_arg_type(args)) {
 		LogDebug(COMPONENT_DBUS, "arg not uint64");
 	} else {
 		dbus_message_iter_get_basic(args, &clientid);
-		LogDebug(COMPONENT_DBUS, "param: %"PRIx64, clientid);
+		LogDebug(COMPONENT_DBUS, "param: %" PRIx64, clientid);
 	}
 
 	cbsim_test_bchan(clientid);
@@ -429,13 +412,12 @@ static struct gsh_dbus_method cbsim_fake_recall = {
 	.name = "fake_recall",
 	.method = nfs_rpc_cbsim_fake_recall,
 	.args = {
-		{
-			.name = "clientid",
-			.type = "t",
-			.direction = "in"
-		},
-		{NULL, NULL, NULL}
-	}
+		 {
+		  .name = "clientid",
+		  .type = "t",
+		  .direction = "in"},
+		 {NULL, NULL, NULL}
+		 }
 };
 
 /* DBUS org.ganesha.nfsd.cbsim methods list
@@ -462,14 +444,14 @@ static struct gsh_dbus_interface *cbsim_interfaces[] = {
 	&cbsim_interface,
 	NULL
 };
-				
+
 /**
  * @brief Initialize subsystem
  */
 void nfs_rpc_cbsim_pkginit(void)
 {
-    gsh_dbus_register_path("CBSIM", cbsim_interfaces);
-    LogEvent(COMPONENT_NFS_CB, "Callback Simulator Initialized");
+	gsh_dbus_register_path("CBSIM", cbsim_interfaces);
+	LogEvent(COMPONENT_NFS_CB, "Callback Simulator Initialized");
 }
 
 /**
