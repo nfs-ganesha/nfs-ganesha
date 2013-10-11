@@ -69,112 +69,107 @@
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
 
-cache_inode_status_t
-cache_inode_remove(cache_entry_t *entry,
-		   const char *name,
-		   struct req_op_context *req_ctx)
+cache_inode_status_t cache_inode_remove(cache_entry_t * entry, const char *name,
+					struct req_op_context * req_ctx)
 {
-     cache_entry_t *to_remove_entry = NULL;
-     fsal_status_t fsal_status = {0, 0};
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
+	cache_entry_t *to_remove_entry = NULL;
+	fsal_status_t fsal_status = { 0, 0 };
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
 
-     if(entry->type != DIRECTORY) {
-         status = CACHE_INODE_NOT_A_DIRECTORY;
-         goto out;
-     }
+	if (entry->type != DIRECTORY) {
+		status = CACHE_INODE_NOT_A_DIRECTORY;
+		goto out;
+	}
 
-     /* Factor this somewhat.  In the case where the directory hasn't
-        been populated, the entry may not exist in the cache and we'd
-        be bringing it in just to dispose of it. */
+	/* Factor this somewhat.  In the case where the directory hasn't
+	   been populated, the entry may not exist in the cache and we'd
+	   be bringing it in just to dispose of it. */
 
-     /* Looks up for the entry to remove */
-     status = cache_inode_lookup_impl(entry,
-				      name,
-				      req_ctx,
-				      &to_remove_entry);
+	/* Looks up for the entry to remove */
+	status =
+	    cache_inode_lookup_impl(entry, name, req_ctx, &to_remove_entry);
 
-     if (to_remove_entry == NULL) {
-         LogFullDebug(COMPONENT_CACHE_INODE,
-                      "lookup %s failure %s",
-                      name, cache_inode_err_str(status));
-	 goto out;
-     }
+	if (to_remove_entry == NULL) {
+		LogFullDebug(COMPONENT_CACHE_INODE, "lookup %s failure %s",
+			     name, cache_inode_err_str(status));
+		goto out;
+	}
 
-     LogDebug(COMPONENT_CACHE_INODE,
-              "---> Cache_inode_remove : %s", name);
+	LogDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", name);
 
+	if (is_open(to_remove_entry)) {
+		/* entry is not locked and seems to be open for fd caching purpose.
+		 * candidate for closing since unlink of an open file results in 'silly
+		 * rename' on certain platforms */
+		status =
+		    cache_inode_close(to_remove_entry,
+				      CACHE_INODE_FLAG_REALLYCLOSE);
+		if (status != CACHE_INODE_SUCCESS) {
+			/* non-fatal error. log the warning and move on */
+			LogCrit(COMPONENT_CACHE_INODE,
+				"Error closing %s before unlink: %s.", name,
+				cache_inode_err_str(status));
+		}
+	}
 
-     if (is_open(to_remove_entry)) {
-	 /* entry is not locked and seems to be open for fd caching purpose.
-	  * candidate for closing since unlink of an open file results in 'silly
-	  * rename' on certain platforms */
-	 status = cache_inode_close(to_remove_entry,
-                                    CACHE_INODE_FLAG_REALLYCLOSE);
-	 if (status != CACHE_INODE_SUCCESS) {
-	     /* non-fatal error. log the warning and move on */
-	     LogCrit(COMPONENT_CACHE_INODE,
-                   "Error closing %s before unlink: %s.",
-                   name, cache_inode_err_str(status));
-	 }
-     }
+	fsal_status =
+	    entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx, name);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		LogFullDebug(COMPONENT_CACHE_INODE, "unlink %s failure %s",
+			     name, cache_inode_err_str(status));
+		if (to_remove_entry->type == DIRECTORY
+		    && status == CACHE_INODE_DIR_NOT_EMPTY) {
+			/* its dirent tree is probably stale, flush it
+			 * to try and make things right again */
+			PTHREAD_RWLOCK_wrlock(&to_remove_entry->content_lock);
+			(void)
+			    cache_inode_invalidate_all_cached_dirent
+			    (to_remove_entry);
+			PTHREAD_RWLOCK_unlock(&to_remove_entry->content_lock);
+		}
+		goto out;
+	}
 
-     fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
-                                                  name);
-     if (FSAL_IS_ERROR(fsal_status)) {
-         status = cache_inode_error_convert(fsal_status);
-         LogFullDebug(COMPONENT_CACHE_INODE,
-                      "unlink %s failure %s",
-                      name, cache_inode_err_str(status));
-	 if(to_remove_entry->type == DIRECTORY &&
-	    status == CACHE_INODE_DIR_NOT_EMPTY) {
-	     /* its dirent tree is probably stale, flush it
-	      * to try and make things right again */
-	     PTHREAD_RWLOCK_wrlock(&to_remove_entry->content_lock);
-	     (void)cache_inode_invalidate_all_cached_dirent(to_remove_entry);
-	     PTHREAD_RWLOCK_unlock(&to_remove_entry->content_lock);
-	 }
-         goto out;
-     }
+	/* Remove the entry from parent dir_entries avl */
+	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	status_ref_entry =
+	    cache_inode_remove_cached_dirent(entry, name, req_ctx);
+	LogDebug(COMPONENT_CACHE_INODE,
+		 "cache_inode_remove_cached_dirent %s status %s", name,
+		 cache_inode_err_str(status_ref_entry));
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
-     /* Remove the entry from parent dir_entries avl */
-     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-     status_ref_entry = cache_inode_remove_cached_dirent(entry, name, req_ctx);
-     LogDebug(COMPONENT_CACHE_INODE,
-              "cache_inode_remove_cached_dirent %s status %s",
-              name, cache_inode_err_str(status_ref_entry));
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
 
-     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "not sure this code makes sense %s failure %s",
+			     name, cache_inode_err_str(status));
+		goto out;
+	}
 
-     if(FSAL_IS_ERROR(fsal_status)) {
-         status = cache_inode_error_convert(fsal_status);
-         LogFullDebug(COMPONENT_CACHE_INODE,
-                      "not sure this code makes sense %s failure %s",
-                      name, cache_inode_err_str(status));
-         goto out;
-     }
+	/* Update the attributes for the removed entry */
+	(void)cache_inode_refresh_attrs_locked(to_remove_entry, req_ctx);
 
-     /* Update the attributes for the removed entry */
-     (void) cache_inode_refresh_attrs_locked(to_remove_entry, req_ctx);
+	if ((status = status_ref_entry) != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cache_inode_refresh_attrs_locked(entry %p %s) returned %s",
+			 entry, name, cache_inode_err_str(status_ref_entry));
+	}
 
-     if ((status = status_ref_entry) != CACHE_INODE_SUCCESS) {
-         LogDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_refresh_attrs_locked(entry %p %s) returned %s",
-                  entry, name,
-                  cache_inode_err_str(status_ref_entry));
-     }
+ out:
+	LogFullDebug(COMPONENT_CACHE_INODE, "remove %s: status=%s", name,
+		     cache_inode_err_str(status));
 
-out:
-     LogFullDebug(COMPONENT_CACHE_INODE,
-                  "remove %s: status=%s",
-                  name, cache_inode_err_str(status));
+	/* This is for the reference taken by lookup */
+	if (to_remove_entry) {
+		cache_inode_put(to_remove_entry);
+	}
 
-     /* This is for the reference taken by lookup */
-     if (to_remove_entry) {
-         cache_inode_put(to_remove_entry);
-     }
-
-     return status;
+	return status;
 }
+
 /** @} */

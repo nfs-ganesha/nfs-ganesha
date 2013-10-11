@@ -76,70 +76,70 @@
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t
-cache_inode_lookupp_impl(cache_entry_t *entry,
-                         struct req_op_context *req_ctx,
-                         cache_entry_t **parent)
+cache_inode_status_t cache_inode_lookupp_impl(cache_entry_t * entry,
+					      struct req_op_context * req_ctx,
+					      cache_entry_t ** parent)
 {
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     /* Never even think of calling FSAL_lookup on root/.. */
+	/* Never even think of calling FSAL_lookup on root/.. */
 
-     if(entry->type == DIRECTORY &&
-	entry == req_ctx->export->export.exp_root_cache_inode) {
-          /* This entry is the root of the current export, so if we get
-           * this far, return itself. Note that NFS v4 LOOKUPP will not
-           * come here, it catches the root entry earlier.
-           */
-          /* Bump the refcount on the current entry (so the caller's
-             releasing decrementing it doesn't take us below the
-             sentinel count) */
-          cache_inode_lru_ref(entry, LRU_FLAG_NONE);
-          *parent = entry;
-	  return CACHE_INODE_SUCCESS;
-     }
+	if (entry->type == DIRECTORY
+	    && entry == req_ctx->export->export.exp_root_cache_inode) {
+		/* This entry is the root of the current export, so if we get
+		 * this far, return itself. Note that NFS v4 LOOKUPP will not
+		 * come here, it catches the root entry earlier.
+		 */
+		/* Bump the refcount on the current entry (so the caller's
+		   releasing decrementing it doesn't take us below the
+		   sentinel count) */
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		*parent = entry;
+		return CACHE_INODE_SUCCESS;
+	}
 
-     /* Try to lookup by key (fh) */
-     *parent = cache_inode_get_keyed(&entry->object.dir.parent, req_ctx,
-				     CIG_KEYED_FLAG_NONE, &status);
-     if (!(*parent)) {
-          /* If we didn't find it, drop the read lock, get a write
-             lock, and got to FSAL. */
-          struct fsal_obj_handle *parent_handle;
-          fsal_status_t fsal_status;
+	/* Try to lookup by key (fh) */
+	*parent =
+	    cache_inode_get_keyed(&entry->object.dir.parent, req_ctx,
+				  CIG_KEYED_FLAG_NONE, &status);
+	if (!(*parent)) {
+		/* If we didn't find it, drop the read lock, get a write
+		   lock, and got to FSAL. */
+		struct fsal_obj_handle *parent_handle;
+		fsal_status_t fsal_status;
 
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
-          fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
-                                                       req_ctx, "..",
-                                                       &parent_handle);
-          if(FSAL_IS_ERROR(fsal_status)) {
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                             "FSAL returned STALE from lookup.");
-                    cache_inode_kill_entry(entry);
-               }
-               status = cache_inode_error_convert(fsal_status);
-               *parent = NULL;
-               return status;
-          }
+		fsal_status =
+		    entry->obj_handle->ops->lookup(entry->obj_handle, req_ctx,
+						   "..", &parent_handle);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			if (fsal_status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_CACHE_INODE,
+					 "FSAL returned STALE from lookup.");
+				cache_inode_kill_entry(entry);
+			}
+			status = cache_inode_error_convert(fsal_status);
+			*parent = NULL;
+			return status;
+		}
 
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "Creating entry");
+		LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
-          /* Allocation of a new entry in the cache */
-          status = cache_inode_new_entry(parent_handle,
-                                         CACHE_INODE_FLAG_NONE,
-                                         parent);
-          if (*parent == NULL)
-               return status;
+		/* Allocation of a new entry in the cache */
+		status =
+		    cache_inode_new_entry(parent_handle, CACHE_INODE_FLAG_NONE,
+					  parent);
+		if (*parent == NULL)
+			return status;
 
-          /* Dup keys */
-          cache_inode_key_dup(&entry->object.dir.parent, &((*parent)->fh_hk.key));
-     }
+		/* Dup keys */
+		cache_inode_key_dup(&entry->object.dir.parent,
+				    &((*parent)->fh_hk.key));
+	}
 
-     return status;
+	return status;
 }
 
 /**
@@ -157,15 +157,15 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t
-cache_inode_lookupp(cache_entry_t *entry,
-		    struct req_op_context *req_ctx,
-		    cache_entry_t **parent)
+cache_inode_status_t cache_inode_lookupp(cache_entry_t * entry,
+					 struct req_op_context * req_ctx,
+					 cache_entry_t ** parent)
 {
-     cache_inode_status_t status;
-     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-     status = cache_inode_lookupp_impl(entry, req_ctx, parent);
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
-     return status;
+	cache_inode_status_t status;
+	PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+	status = cache_inode_lookupp_impl(entry, req_ctx, parent);
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	return status;
 }
+
 /** @} */

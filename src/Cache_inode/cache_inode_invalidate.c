@@ -67,47 +67,47 @@
  * @retval Other errors shows a FSAL error.
  */
 
-cache_inode_status_t
-cache_inode_invalidate(cache_entry_t *entry,
-                       uint32_t flags)
+cache_inode_status_t cache_inode_invalidate(cache_entry_t * entry,
+					    uint32_t flags)
 {
-        cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-        if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
-	        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-        /* We can invalidate entries with state just fine.  We force
-           Cache_inode to contact the FSAL for any use of content or
-           attributes, and if the FSAL indicates the entry is stale,
-           it can be disposed of then. */
+	/* We can invalidate entries with state just fine.  We force
+	   Cache_inode to contact the FSAL for any use of content or
+	   attributes, and if the FSAL indicates the entry is stale,
+	   it can be disposed of then. */
 
-        /* We should have a way to invalidate content and attributes
-           separately.  Or at least a way to invalidate attributes
-           without invalidating content (since any change in content
-           really ought to modify mtime, at least.) */
+	/* We should have a way to invalidate content and attributes
+	   separately.  Or at least a way to invalidate attributes
+	   without invalidating content (since any change in content
+	   really ought to modify mtime, at least.) */
 
-        if (flags & CACHE_INODE_INVALIDATE_ATTRS) {
-                atomic_clear_uint32_t_bits(&entry->flags,
-                                           CACHE_INODE_TRUST_ATTRS);
-        }
+	if (flags & CACHE_INODE_INVALIDATE_ATTRS) {
+		atomic_clear_uint32_t_bits(&entry->flags,
+					   CACHE_INODE_TRUST_ATTRS);
+	}
 
-        if (flags & CACHE_INODE_INVALIDATE_CONTENT) {
-                atomic_clear_uint32_t_bits(&entry->flags,
-                                           CACHE_INODE_TRUST_CONTENT |
-                                           CACHE_INODE_DIR_POPULATED);
-        }
+	if (flags & CACHE_INODE_INVALIDATE_CONTENT) {
+		atomic_clear_uint32_t_bits(&entry->flags,
+					   CACHE_INODE_TRUST_CONTENT |
+					   CACHE_INODE_DIR_POPULATED);
+	}
 
-        if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0) &&
-                                  (entry->type == REGULAR_FILE)) {
-            status = cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE);
-        }
+	if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0)
+	    && (entry->type == REGULAR_FILE)) {
+		status = cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE);
+	}
 
-        if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
-	        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-        /* Memory copying attributes with every call is expensive.
-           Let's not do it.  */
+	/* Memory copying attributes with every call is expensive.
+	   Let's not do it.  */
 
-        return status;
-} /* cache_inode_invalidate */
+	return status;
+}				/* cache_inode_invalidate */
+
 /** @} */

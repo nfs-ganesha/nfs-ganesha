@@ -53,101 +53,99 @@
 #include <assert.h>
 #include <stdbool.h>
 
-
 pool_t *cache_inode_entry_pool;
 
 const char *cache_inode_err_str(cache_inode_status_t err)
 {
-  switch(err)
-    {
-      case CACHE_INODE_SUCCESS:
-        return "CACHE_INODE_SUCCESS";
-      case CACHE_INODE_MALLOC_ERROR:
-        return "CACHE_INODE_MALLOC_ERROR";
-      case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
-        return "CACHE_INODE_POOL_MUTEX_INIT_ERROR";
-      case CACHE_INODE_GET_NEW_LRU_ENTRY:
-        return "CACHE_INODE_GET_NEW_LRU_ENTRY";
-      case CACHE_INODE_INIT_ENTRY_FAILED:
-        return "CACHE_INODE_INIT_ENTRY_FAILED";
-      case CACHE_INODE_FSAL_ERROR:
-        return "CACHE_INODE_FSAL_ERROR";
-      case CACHE_INODE_LRU_ERROR:
-        return "CACHE_INODE_LRU_ERROR";
-      case CACHE_INODE_HASH_SET_ERROR:
-        return "CACHE_INODE_HASH_SET_ERROR";
-      case CACHE_INODE_NOT_A_DIRECTORY:
-        return "CACHE_INODE_NOT_A_DIRECTORY";
-      case CACHE_INODE_INCONSISTENT_ENTRY:
-        return "CACHE_INODE_INCONSISTENT_ENTRY";
-      case CACHE_INODE_BAD_TYPE:
-        return "CACHE_INODE_BAD_TYPE";
-      case CACHE_INODE_ENTRY_EXISTS:
-        return "CACHE_INODE_ENTRY_EXISTS";
-      case CACHE_INODE_DIR_NOT_EMPTY:
-        return "CACHE_INODE_DIR_NOT_EMPTY";
-      case CACHE_INODE_NOT_FOUND:
-        return "CACHE_INODE_NOT_FOUND";
-      case CACHE_INODE_INVALID_ARGUMENT:
-        return "CACHE_INODE_INVALID_ARGUMENT";
-      case CACHE_INODE_INSERT_ERROR:
-        return "CACHE_INODE_INSERT_ERROR";
-      case CACHE_INODE_HASH_TABLE_ERROR:
-        return "CACHE_INODE_HASH_TABLE_ERROR";
-      case CACHE_INODE_FSAL_EACCESS:
-        return "CACHE_INODE_FSAL_EACCESS";
-      case CACHE_INODE_IS_A_DIRECTORY:
-        return "CACHE_INODE_IS_A_DIRECTORY";
-      case CACHE_INODE_FSAL_EPERM:
-        return "CACHE_INODE_FSAL_EPERM";
-      case CACHE_INODE_NO_SPACE_LEFT:
-        return "CACHE_INODE_NO_SPACE_LEFT";
-      case CACHE_INODE_READ_ONLY_FS:
-        return "CACHE_INODE_READ_ONLY_FS";
-      case CACHE_INODE_IO_ERROR:
-        return "CACHE_INODE_IO_ERROR";
-      case CACHE_INODE_FSAL_ESTALE:
-        return "CACHE_INODE_FSAL_ESTALE";
-      case CACHE_INODE_FSAL_ERR_SEC:
-        return "CACHE_INODE_FSAL_ERR_SEC";
-      case CACHE_INODE_STATE_CONFLICT:
-        return "CACHE_INODE_STATE_CONFLICT";
-      case CACHE_INODE_QUOTA_EXCEEDED:
-        return "CACHE_INODE_QUOTA_EXCEEDED";
-      case CACHE_INODE_DEAD_ENTRY:
-        return "CACHE_INODE_DEAD_ENTRY";
-      case CACHE_INODE_ASYNC_POST_ERROR:
-        return "CACHE_INODE_ASYNC_POST_ERROR";
-      case CACHE_INODE_NOT_SUPPORTED:
-        return "CACHE_INODE_NOT_SUPPORTED";
-      case CACHE_INODE_STATE_ERROR:
-        return "CACHE_INODE_STATE_ERROR";
-      case CACHE_INODE_DELAY:
-        return "CACHE_INODE_FSAL_DELAY";
-      case CACHE_INODE_NAME_TOO_LONG:
-        return "CACHE_INODE_NAME_TOO_LONG";
-      case CACHE_INODE_BAD_COOKIE:
-        return "CACHE_INODE_BAD_COOKIE";
-      case CACHE_INODE_FILE_BIG:
-        return "CACHE_INODE_FILE_BIG";
-      case CACHE_INODE_KILLED:
-        return "CACHE_INODE_KILLED";
-      case CACHE_INODE_FILE_OPEN:
-        return "CACHE_INODE_FILE_OPEN";
-      case CACHE_INODE_FSAL_XDEV:
-	return "CACHE_INOE_FSAL_XDEV";
-      case CACHE_INODE_FSAL_MLINK:
-	return "CACHE_INOE_FSAL_MLINK";
-      case CACHE_INODE_SERVERFAULT:
-        return "CACHE_INODE_SERVERFAULT";
-      case CACHE_INODE_TOOSMALL:
-        return "CACHE_INODE_TOOSMALL";
-      case CACHE_INODE_FSAL_SHARE_DENIED:
-        return "CACHE_INODE_FSAL_SHARE_DENIED";  
-      case CACHE_INODE_BADNAME:
-        return "CACHE_INODE_BADNAME";
-    }
-  return "unknown";
+	switch (err) {
+	case CACHE_INODE_SUCCESS:
+		return "CACHE_INODE_SUCCESS";
+	case CACHE_INODE_MALLOC_ERROR:
+		return "CACHE_INODE_MALLOC_ERROR";
+	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
+		return "CACHE_INODE_POOL_MUTEX_INIT_ERROR";
+	case CACHE_INODE_GET_NEW_LRU_ENTRY:
+		return "CACHE_INODE_GET_NEW_LRU_ENTRY";
+	case CACHE_INODE_INIT_ENTRY_FAILED:
+		return "CACHE_INODE_INIT_ENTRY_FAILED";
+	case CACHE_INODE_FSAL_ERROR:
+		return "CACHE_INODE_FSAL_ERROR";
+	case CACHE_INODE_LRU_ERROR:
+		return "CACHE_INODE_LRU_ERROR";
+	case CACHE_INODE_HASH_SET_ERROR:
+		return "CACHE_INODE_HASH_SET_ERROR";
+	case CACHE_INODE_NOT_A_DIRECTORY:
+		return "CACHE_INODE_NOT_A_DIRECTORY";
+	case CACHE_INODE_INCONSISTENT_ENTRY:
+		return "CACHE_INODE_INCONSISTENT_ENTRY";
+	case CACHE_INODE_BAD_TYPE:
+		return "CACHE_INODE_BAD_TYPE";
+	case CACHE_INODE_ENTRY_EXISTS:
+		return "CACHE_INODE_ENTRY_EXISTS";
+	case CACHE_INODE_DIR_NOT_EMPTY:
+		return "CACHE_INODE_DIR_NOT_EMPTY";
+	case CACHE_INODE_NOT_FOUND:
+		return "CACHE_INODE_NOT_FOUND";
+	case CACHE_INODE_INVALID_ARGUMENT:
+		return "CACHE_INODE_INVALID_ARGUMENT";
+	case CACHE_INODE_INSERT_ERROR:
+		return "CACHE_INODE_INSERT_ERROR";
+	case CACHE_INODE_HASH_TABLE_ERROR:
+		return "CACHE_INODE_HASH_TABLE_ERROR";
+	case CACHE_INODE_FSAL_EACCESS:
+		return "CACHE_INODE_FSAL_EACCESS";
+	case CACHE_INODE_IS_A_DIRECTORY:
+		return "CACHE_INODE_IS_A_DIRECTORY";
+	case CACHE_INODE_FSAL_EPERM:
+		return "CACHE_INODE_FSAL_EPERM";
+	case CACHE_INODE_NO_SPACE_LEFT:
+		return "CACHE_INODE_NO_SPACE_LEFT";
+	case CACHE_INODE_READ_ONLY_FS:
+		return "CACHE_INODE_READ_ONLY_FS";
+	case CACHE_INODE_IO_ERROR:
+		return "CACHE_INODE_IO_ERROR";
+	case CACHE_INODE_FSAL_ESTALE:
+		return "CACHE_INODE_FSAL_ESTALE";
+	case CACHE_INODE_FSAL_ERR_SEC:
+		return "CACHE_INODE_FSAL_ERR_SEC";
+	case CACHE_INODE_STATE_CONFLICT:
+		return "CACHE_INODE_STATE_CONFLICT";
+	case CACHE_INODE_QUOTA_EXCEEDED:
+		return "CACHE_INODE_QUOTA_EXCEEDED";
+	case CACHE_INODE_DEAD_ENTRY:
+		return "CACHE_INODE_DEAD_ENTRY";
+	case CACHE_INODE_ASYNC_POST_ERROR:
+		return "CACHE_INODE_ASYNC_POST_ERROR";
+	case CACHE_INODE_NOT_SUPPORTED:
+		return "CACHE_INODE_NOT_SUPPORTED";
+	case CACHE_INODE_STATE_ERROR:
+		return "CACHE_INODE_STATE_ERROR";
+	case CACHE_INODE_DELAY:
+		return "CACHE_INODE_FSAL_DELAY";
+	case CACHE_INODE_NAME_TOO_LONG:
+		return "CACHE_INODE_NAME_TOO_LONG";
+	case CACHE_INODE_BAD_COOKIE:
+		return "CACHE_INODE_BAD_COOKIE";
+	case CACHE_INODE_FILE_BIG:
+		return "CACHE_INODE_FILE_BIG";
+	case CACHE_INODE_KILLED:
+		return "CACHE_INODE_KILLED";
+	case CACHE_INODE_FILE_OPEN:
+		return "CACHE_INODE_FILE_OPEN";
+	case CACHE_INODE_FSAL_XDEV:
+		return "CACHE_INOE_FSAL_XDEV";
+	case CACHE_INODE_FSAL_MLINK:
+		return "CACHE_INOE_FSAL_MLINK";
+	case CACHE_INODE_SERVERFAULT:
+		return "CACHE_INODE_SERVERFAULT";
+	case CACHE_INODE_TOOSMALL:
+		return "CACHE_INODE_TOOSMALL";
+	case CACHE_INODE_FSAL_SHARE_DENIED:
+		return "CACHE_INODE_FSAL_SHARE_DENIED";
+	case CACHE_INODE_BADNAME:
+		return "CACHE_INODE_BADNAME";
+	}
+	return "unknown";
 }
 
 /**
@@ -167,23 +165,22 @@ const char *cache_inode_err_str(cache_inode_status_t err)
  *
  */
 int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
-                                 struct gsh_buffdesc *buff2)
+				 struct gsh_buffdesc *buff2)
 {
-  /* Test if one of the entries is NULL */
-  if(buff1->addr == NULL)
-    return (buff2->addr == NULL) ? 0 : 1;
-  else
-    {
-      if(buff2->addr == NULL) {
-        return -1;              /* left member is the greater one */
-      }
-      if(buff1->len == buff2->len)
-	      return memcmp(buff1->addr, buff2->addr, buff1->len);
-      else
-	      return (buff1->len > buff2->len) ? -1 : 1;
-    }
-  /* This line should never be reached */
-} /* cache_inode_compare_key_fsal */
+	/* Test if one of the entries is NULL */
+	if (buff1->addr == NULL)
+		return (buff2->addr == NULL) ? 0 : 1;
+	else {
+		if (buff2->addr == NULL) {
+			return -1;	/* left member is the greater one */
+		}
+		if (buff1->len == buff2->len)
+			return memcmp(buff1->addr, buff2->addr, buff1->len);
+		else
+			return (buff1->len > buff2->len) ? -1 : 1;
+	}
+	/* This line should never be reached */
+}				/* cache_inode_compare_key_fsal */
 
 /**
  *
@@ -199,20 +196,19 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
  */
 int cache_inode_set_time_current(struct timespec *time)
 {
-  struct timeval t;
+	struct timeval t;
 
-  if (time == NULL)
-    return -1;
+	if (time == NULL)
+		return -1;
 
-  if (gettimeofday(&t, NULL) != 0)
-    return -1;
+	if (gettimeofday(&t, NULL) != 0)
+		return -1;
 
-  time->tv_sec  = t.tv_sec;
-  time->tv_nsec = 1000*t.tv_usec;
+	time->tv_sec = t.tv_sec;
+	time->tv_nsec = 1000 * t.tv_usec;
 
-  return 0;
-} /* cache_inode_set_time_current */
-
+	return 0;
+}				/* cache_inode_set_time_current */
 
 /**
  * @brief Adds a new entry to the cache
@@ -226,206 +222,206 @@ int cache_inode_set_time_current(struct timespec *time)
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_inode_status_t
-cache_inode_new_entry(struct fsal_obj_handle *new_obj,
-                      uint32_t flags,
-                      cache_entry_t **entry)
+cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
+					   uint32_t flags,
+					   cache_entry_t ** entry)
 {
-     cache_inode_status_t status;
-     fsal_status_t fsal_status;
-     cache_entry_t *oentry, *nentry;
-     struct gsh_buffdesc fh_desc;
-     cih_latch_t latch;
-     bool lrurefed = false;
-     bool locksinited = false;
-     int rc = 0;
+	cache_inode_status_t status;
+	fsal_status_t fsal_status;
+	cache_entry_t *oentry, *nentry;
+	struct gsh_buffdesc fh_desc;
+	cih_latch_t latch;
+	bool lrurefed = false;
+	bool locksinited = false;
+	int rc = 0;
 
-     /* Get FSAL-specific key */
-     new_obj->ops->handle_to_key(new_obj, &fh_desc);
+	/* Get FSAL-specific key */
+	new_obj->ops->handle_to_key(new_obj, &fh_desc);
 
-     /* Check if the entry already exists.  We allow the following race
-      * because cache_inode_lru_get has a slow path, and the latch is a
-      * shared lock. */
-     oentry = cih_get_by_fh_latched(&fh_desc, &latch,
-				    CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
-                                    __func__, __LINE__);
-     if (oentry) {
-          /* Entry is already in the cache, do not add it */
-          status = CACHE_INODE_ENTRY_EXISTS;
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Trying to add an already existing "
-                   "entry 1. Found entry %p type: %d, New type: %d",
-                   oentry, oentry->type, new_obj->type);
-          cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
-          /* Release the subtree hash table lock */
-          cih_latch_rele(&latch);
-          *entry = oentry;
-          goto out;
-     }
-     /* !LATCHED */
+	/* Check if the entry already exists.  We allow the following race
+	 * because cache_inode_lru_get has a slow path, and the latch is a
+	 * shared lock. */
+	oentry =
+	    cih_get_by_fh_latched(&fh_desc, &latch,
+				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+				  __func__, __LINE__);
+	if (oentry) {
+		/* Entry is already in the cache, do not add it */
+		status = CACHE_INODE_ENTRY_EXISTS;
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Trying to add an already existing "
+			 "entry 1. Found entry %p type: %d, New type: %d",
+			 oentry, oentry->type, new_obj->type);
+		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		/* Release the subtree hash table lock */
+		cih_latch_rele(&latch);
+		*entry = oentry;
+		goto out;
+	}
+	/* !LATCHED */
 
-     /* We did not find the object.  Pull an entry off the LRU. */
-     status = cache_inode_lru_get(&nentry);
-     if (! nentry) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_lru_get failed");
-          status = CACHE_INODE_MALLOC_ERROR;
-          goto out;
-     }
+	/* We did not find the object.  Pull an entry off the LRU. */
+	status = cache_inode_lru_get(&nentry);
+	if (!nentry) {
+		LogCrit(COMPONENT_CACHE_INODE, "cache_inode_lru_get failed");
+		status = CACHE_INODE_MALLOC_ERROR;
+		goto out;
+	}
 
-     locksinited = true;
+	locksinited = true;
 
-     /* See if someone raced us. */
-     oentry = cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK,
-                                    __func__, __LINE__);
-     if (oentry) {
-	     /* Entry is already in the cache, do not add it. */
-	     status = CACHE_INODE_ENTRY_EXISTS;
-	     LogDebug(COMPONENT_CACHE_INODE,
-		      "lost race to add entry %p type: %d, New type: %d",
-		      oentry, oentry->obj_handle->type, new_obj->type);
-	     /* Ref it */
-	     cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
-             /* Release the subtree hash table lock */
-             cih_latch_rele(&latch);
-             /* Release the new entry we acquired. */
-             cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
-             *entry = oentry;
-             goto out;
-     }
+	/* See if someone raced us. */
+	oentry =
+	    cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK, __func__,
+				  __LINE__);
+	if (oentry) {
+		/* Entry is already in the cache, do not add it. */
+		status = CACHE_INODE_ENTRY_EXISTS;
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "lost race to add entry %p type: %d, New type: %d",
+			 oentry, oentry->obj_handle->type, new_obj->type);
+		/* Ref it */
+		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		/* Release the subtree hash table lock */
+		cih_latch_rele(&latch);
+		/* Release the new entry we acquired. */
+		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
+		*entry = oentry;
+		goto out;
+	}
 
-     /* We won the race. */
-     *entry = nentry;
+	/* We won the race. */
+	*entry = nentry;
 
-     /* This should be the sentinel, plus one to use the entry we
-        just returned. */
-     lrurefed = true;
+	/* This should be the sentinel, plus one to use the entry we
+	   just returned. */
+	lrurefed = true;
 
-     /* Set cache key */
-     cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
+	/* Set cache key */
+	cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
 
-     /* Set export id (unhashed, uncompared key component) */
-     nentry->fh_hk.key.exportid = new_obj->export->exp_entry->id;
+	/* Set export id (unhashed, uncompared key component) */
+	nentry->fh_hk.key.exportid = new_obj->export->exp_entry->id;
 
-     /* Initialize common fields */
-     nentry->type = new_obj->type;
-     nentry->flags = 0;
-     glist_init(&nentry->state_list);
-     glist_init(&nentry->layoutrecall_list);
+	/* Initialize common fields */
+	nentry->type = new_obj->type;
+	nentry->flags = 0;
+	glist_init(&nentry->state_list);
+	glist_init(&nentry->layoutrecall_list);
 
-     switch (nentry->type) {
-     case REGULAR_FILE:
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Adding a REGULAR_FILE, entry=%p",
-                   nentry);
+	switch (nentry->type) {
+	case REGULAR_FILE:
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Adding a REGULAR_FILE, entry=%p", nentry);
 
-          /* No locks, yet. */
-          glist_init(&nentry->object.file.lock_list);
-          glist_init(&nentry->object.file.nlm_share_list); /* No associated NLM shares yet */
+		/* No locks, yet. */
+		glist_init(&nentry->object.file.lock_list);
+		glist_init(&nentry->object.file.nlm_share_list);	/* No associated NLM shares yet */
 
-          memset(&nentry->object.file.share_state, 0,
-		 sizeof(cache_inode_share_t));
-	  break;
-     
-     case DIRECTORY:
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Adding a DIRECTORY, entry=%p",
-                   nentry);
+		memset(&nentry->object.file.share_state, 0,
+		       sizeof(cache_inode_share_t));
+		break;
 
-          atomic_set_uint32_t_bits(&nentry->flags, CACHE_INODE_TRUST_CONTENT);
+	case DIRECTORY:
+		LogDebug(COMPONENT_CACHE_INODE, "Adding a DIRECTORY, entry=%p",
+			 nentry);
 
-          /* If the directory is newly created, it is empty.  Because
-             we know its content, we consider it read. */
-          if (flags & CACHE_INODE_FLAG_CREATE) {
-		  atomic_set_uint32_t_bits(&nentry->flags, CACHE_INODE_DIR_POPULATED);
-          } else {
-		  atomic_clear_uint32_t_bits(&nentry->flags, CACHE_INODE_DIR_POPULATED);
-          }
-	  
-          nentry->object.dir.avl.collisions = 0;
-          nentry->object.dir.nbactive = 0;
-          /* init avl tree */
-          cache_inode_avl_init(nentry);
-          break;
+		atomic_set_uint32_t_bits(&nentry->flags,
+					 CACHE_INODE_TRUST_CONTENT);
 
-     case SYMBOLIC_LINK:
-     case SOCKET_FILE:
-     case FIFO_FILE:
-     case BLOCK_FILE:
-     case CHARACTER_FILE:
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Adding a special file of type %d "
-                   "entry=%p", nentry->type, nentry);
-          break;
+		/* If the directory is newly created, it is empty.  Because
+		   we know its content, we consider it read. */
+		if (flags & CACHE_INODE_FLAG_CREATE) {
+			atomic_set_uint32_t_bits(&nentry->flags,
+						 CACHE_INODE_DIR_POPULATED);
+		} else {
+			atomic_clear_uint32_t_bits(&nentry->flags,
+						   CACHE_INODE_DIR_POPULATED);
+		}
 
-     case FS_JUNCTION:
-          /* I don't think this ever actually gets called */
-          abort();
-          break;
+		nentry->object.dir.avl.collisions = 0;
+		nentry->object.dir.nbactive = 0;
+		/* init avl tree */
+		cache_inode_avl_init(nentry);
+		break;
 
-     default:
-          /* Should never happen */
-          status = CACHE_INODE_INCONSISTENT_ENTRY;
-          LogMajor(COMPONENT_CACHE_INODE,
-                   "unknown type %u provided",
-                   nentry->type);
-	  cih_latch_rele(&latch);
-	  *entry = NULL;
-          goto out;
-     }
+	case SYMBOLIC_LINK:
+	case SOCKET_FILE:
+	case FIFO_FILE:
+	case BLOCK_FILE:
+	case CHARACTER_FILE:
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Adding a special file of type %d " "entry=%p",
+			 nentry->type, nentry);
+		break;
 
-     nentry->obj_handle = new_obj;
-     new_obj = NULL; /* mark it as having a home */
-     cache_inode_fixup_md(nentry);
+	case FS_JUNCTION:
+		/* I don't think this ever actually gets called */
+		abort();
+		break;
 
-     /* Everything ready and we are reaty to insert into hash table.
-      * change the lru state from LRU_ENTRY_UNINIT to LRU_FLAG_NONE
-      */
-     nentry->flags = LRU_FLAG_NONE;
+	default:
+		/* Should never happen */
+		status = CACHE_INODE_INCONSISTENT_ENTRY;
+		LogMajor(COMPONENT_CACHE_INODE, "unknown type %u provided",
+			 nentry->type);
+		cih_latch_rele(&latch);
+		*entry = NULL;
+		goto out;
+	}
 
-     /* Hash and insert entry */
-     rc = cih_set_latched(nentry, &latch, &fh_desc, CIH_SET_UNLOCK | CIH_SET_HASHED);
-     if (unlikely(rc)) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "entry could not be added to hash, rc=%d", rc);
-          new_obj = nentry->obj_handle;
-          nentry->obj_handle = NULL;  /* give it back and poison the entry */
-          status = CACHE_INODE_HASH_SET_ERROR;
-	  *entry = NULL;
-          goto out;
-     }
+	nentry->obj_handle = new_obj;
+	new_obj = NULL;		/* mark it as having a home */
+	cache_inode_fixup_md(nentry);
 
-     LogDebug(COMPONENT_CACHE_INODE,
-              "New entry %p added", nentry);
-     status = CACHE_INODE_SUCCESS;
+	/* Everything ready and we are reaty to insert into hash table.
+	 * change the lru state from LRU_ENTRY_UNINIT to LRU_FLAG_NONE
+	 */
+	nentry->flags = LRU_FLAG_NONE;
 
-out:
-     if (status != CACHE_INODE_SUCCESS) {
-          /* Deconstruct the object */
-          if (locksinited) {
-               pthread_rwlock_destroy(&nentry->attr_lock);
-               pthread_rwlock_destroy(&nentry->content_lock);
-               pthread_rwlock_destroy(&nentry->state_lock);
-          }
-          if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
-               cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
-          }
-     }
+	/* Hash and insert entry */
+	rc = cih_set_latched(nentry, &latch, &fh_desc,
+			     CIH_SET_UNLOCK | CIH_SET_HASHED);
+	if (unlikely(rc)) {
+		LogCrit(COMPONENT_CACHE_INODE,
+			"entry could not be added to hash, rc=%d", rc);
+		new_obj = nentry->obj_handle;
+		nentry->obj_handle = NULL;	/* give it back and poison the entry */
+		status = CACHE_INODE_HASH_SET_ERROR;
+		*entry = NULL;
+		goto out;
+	}
 
-     /* must free new_obj if no new entry was created to reference it. */
-     if(new_obj != NULL) {
-	  fsal_status = new_obj->ops->release(new_obj);
-	  if (FSAL_IS_ERROR(fsal_status))
-	    {
-	      status = cache_inode_error_convert(fsal_status);
-	      LogDebug(COMPONENT_CACHE_INODE,
-		       "failed to release unused new_obj %p", new_obj);
-	      /* further recovery ?? */
-	    }
-     }
+	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
+	status = CACHE_INODE_SUCCESS;
 
-     return status;
-}                               /* cache_inode_new_entry */
+ out:
+	if (status != CACHE_INODE_SUCCESS) {
+		/* Deconstruct the object */
+		if (locksinited) {
+			pthread_rwlock_destroy(&nentry->attr_lock);
+			pthread_rwlock_destroy(&nentry->content_lock);
+			pthread_rwlock_destroy(&nentry->state_lock);
+		}
+		if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
+			cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
+		}
+	}
+
+	/* must free new_obj if no new entry was created to reference it. */
+	if (new_obj != NULL) {
+		fsal_status = new_obj->ops->release(new_obj);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			status = cache_inode_error_convert(fsal_status);
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "failed to release unused new_obj %p",
+				 new_obj);
+			/* further recovery ?? */
+		}
+	}
+
+	return status;
+}				/* cache_inode_new_entry */
 
 /**
  * @brief Converts an FSAL error to the corresponding cache_inode error
@@ -438,128 +434,126 @@ out:
  * @return the result of the conversion.
  *
  */
-cache_inode_status_t
-cache_inode_error_convert(fsal_status_t fsal_status)
+cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 {
-  switch (fsal_status.major)
-    {
-    case ERR_FSAL_NO_ERROR:
-      return CACHE_INODE_SUCCESS;
+	switch (fsal_status.major) {
+	case ERR_FSAL_NO_ERROR:
+		return CACHE_INODE_SUCCESS;
 
-    case ERR_FSAL_NOENT:
-      return CACHE_INODE_NOT_FOUND;
+	case ERR_FSAL_NOENT:
+		return CACHE_INODE_NOT_FOUND;
 
-    case ERR_FSAL_EXIST:
-      return CACHE_INODE_ENTRY_EXISTS;
+	case ERR_FSAL_EXIST:
+		return CACHE_INODE_ENTRY_EXISTS;
 
-    case ERR_FSAL_ACCESS:
-      return CACHE_INODE_FSAL_EACCESS;
+	case ERR_FSAL_ACCESS:
+		return CACHE_INODE_FSAL_EACCESS;
 
-    case ERR_FSAL_PERM:
-      return CACHE_INODE_FSAL_EPERM;
+	case ERR_FSAL_PERM:
+		return CACHE_INODE_FSAL_EPERM;
 
-    case ERR_FSAL_NOSPC:
-      return CACHE_INODE_NO_SPACE_LEFT;
+	case ERR_FSAL_NOSPC:
+		return CACHE_INODE_NO_SPACE_LEFT;
 
-    case ERR_FSAL_NOTEMPTY:
-      return CACHE_INODE_DIR_NOT_EMPTY;
+	case ERR_FSAL_NOTEMPTY:
+		return CACHE_INODE_DIR_NOT_EMPTY;
 
-    case ERR_FSAL_ROFS:
-      return CACHE_INODE_READ_ONLY_FS;
+	case ERR_FSAL_ROFS:
+		return CACHE_INODE_READ_ONLY_FS;
 
-    case ERR_FSAL_NOTDIR:
-      return CACHE_INODE_NOT_A_DIRECTORY;
+	case ERR_FSAL_NOTDIR:
+		return CACHE_INODE_NOT_A_DIRECTORY;
 
-    case ERR_FSAL_IO:
-    case ERR_FSAL_NXIO:
-      return CACHE_INODE_IO_ERROR;
+	case ERR_FSAL_IO:
+	case ERR_FSAL_NXIO:
+		return CACHE_INODE_IO_ERROR;
 
-    case ERR_FSAL_STALE:
-    case ERR_FSAL_BADHANDLE:
-    case ERR_FSAL_FHEXPIRED:
-      return CACHE_INODE_FSAL_ESTALE;
+	case ERR_FSAL_STALE:
+	case ERR_FSAL_BADHANDLE:
+	case ERR_FSAL_FHEXPIRED:
+		return CACHE_INODE_FSAL_ESTALE;
 
-    case ERR_FSAL_INVAL:
-    case ERR_FSAL_OVERFLOW:
-      return CACHE_INODE_INVALID_ARGUMENT;
+	case ERR_FSAL_INVAL:
+	case ERR_FSAL_OVERFLOW:
+		return CACHE_INODE_INVALID_ARGUMENT;
 
-    case ERR_FSAL_DQUOT:
-    case ERR_FSAL_NO_QUOTA:
-      return CACHE_INODE_QUOTA_EXCEEDED;
+	case ERR_FSAL_DQUOT:
+	case ERR_FSAL_NO_QUOTA:
+		return CACHE_INODE_QUOTA_EXCEEDED;
 
-    case ERR_FSAL_SEC:
-      return CACHE_INODE_FSAL_ERR_SEC;
+	case ERR_FSAL_SEC:
+		return CACHE_INODE_FSAL_ERR_SEC;
 
-    case ERR_FSAL_NOTSUPP:
-    case ERR_FSAL_ATTRNOTSUPP:
-      return CACHE_INODE_NOT_SUPPORTED;
+	case ERR_FSAL_NOTSUPP:
+	case ERR_FSAL_ATTRNOTSUPP:
+		return CACHE_INODE_NOT_SUPPORTED;
 
-    case ERR_FSAL_DELAY:
-      return CACHE_INODE_DELAY;
+	case ERR_FSAL_DELAY:
+		return CACHE_INODE_DELAY;
 
-    case ERR_FSAL_NAMETOOLONG:
-      return CACHE_INODE_NAME_TOO_LONG;
+	case ERR_FSAL_NAMETOOLONG:
+		return CACHE_INODE_NAME_TOO_LONG;
 
-    case ERR_FSAL_NOMEM:
-      return CACHE_INODE_MALLOC_ERROR;
+	case ERR_FSAL_NOMEM:
+		return CACHE_INODE_MALLOC_ERROR;
 
-    case ERR_FSAL_BADCOOKIE:
-      return CACHE_INODE_BAD_COOKIE;
+	case ERR_FSAL_BADCOOKIE:
+		return CACHE_INODE_BAD_COOKIE;
 
-    case ERR_FSAL_FILE_OPEN:
-      return CACHE_INODE_FILE_OPEN;
+	case ERR_FSAL_FILE_OPEN:
+		return CACHE_INODE_FILE_OPEN;
 
-    case ERR_FSAL_NOT_OPENED:
-      LogDebug(COMPONENT_CACHE_INODE,
-               "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
-      return CACHE_INODE_FSAL_ERROR;
+	case ERR_FSAL_NOT_OPENED:
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
+		return CACHE_INODE_FSAL_ERROR;
 
-    case ERR_FSAL_ISDIR:
-      return CACHE_INODE_IS_A_DIRECTORY;
+	case ERR_FSAL_ISDIR:
+		return CACHE_INODE_IS_A_DIRECTORY;
 
-    case ERR_FSAL_SYMLINK:
-    case ERR_FSAL_BADTYPE:
-      return CACHE_INODE_BAD_TYPE;
+	case ERR_FSAL_SYMLINK:
+	case ERR_FSAL_BADTYPE:
+		return CACHE_INODE_BAD_TYPE;
 
-    case ERR_FSAL_FBIG:
-      return CACHE_INODE_FILE_BIG;
+	case ERR_FSAL_FBIG:
+		return CACHE_INODE_FILE_BIG;
 
-    case ERR_FSAL_XDEV:
-      return CACHE_INODE_FSAL_XDEV ;
+	case ERR_FSAL_XDEV:
+		return CACHE_INODE_FSAL_XDEV;
 
-    case ERR_FSAL_MLINK:
-      return CACHE_INODE_FSAL_MLINK ;
+	case ERR_FSAL_MLINK:
+		return CACHE_INODE_FSAL_MLINK;
 
-    case ERR_FSAL_FAULT:
-    case ERR_FSAL_SERVERFAULT:
-    case ERR_FSAL_DEADLOCK:
-      return CACHE_INODE_SERVERFAULT;
+	case ERR_FSAL_FAULT:
+	case ERR_FSAL_SERVERFAULT:
+	case ERR_FSAL_DEADLOCK:
+		return CACHE_INODE_SERVERFAULT;
 
-    case ERR_FSAL_TOOSMALL:
-      return CACHE_INODE_TOOSMALL;
+	case ERR_FSAL_TOOSMALL:
+		return CACHE_INODE_TOOSMALL;
 
-    case ERR_FSAL_SHARE_DENIED:
-      return CACHE_INODE_FSAL_SHARE_DENIED;
+	case ERR_FSAL_SHARE_DENIED:
+		return CACHE_INODE_FSAL_SHARE_DENIED;
 
-    case ERR_FSAL_BLOCKED:
-    case ERR_FSAL_INTERRUPT:
-    case ERR_FSAL_NOT_INIT:
-    case ERR_FSAL_ALREADY_INIT:
-    case ERR_FSAL_BAD_INIT:
-    case ERR_FSAL_TIMEOUT:
-      /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
-      LogDebug(COMPONENT_CACHE_INODE,
-               "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
-               fsal_status.major, fsal_status.minor);
-      return CACHE_INODE_FSAL_ERROR;
-    }
+	case ERR_FSAL_BLOCKED:
+	case ERR_FSAL_INTERRUPT:
+	case ERR_FSAL_NOT_INIT:
+	case ERR_FSAL_ALREADY_INIT:
+	case ERR_FSAL_BAD_INIT:
+	case ERR_FSAL_TIMEOUT:
+		/* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
+			 fsal_status.major, fsal_status.minor);
+		return CACHE_INODE_FSAL_ERROR;
+	}
 
-  /* We should never reach this line, this may produce a warning with certain compiler */
-  LogCrit(COMPONENT_CACHE_INODE,
-          "cache_inode_error_convert: default conversion to "
-          "CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
-          fsal_status.major, __LINE__);
-  return CACHE_INODE_FSAL_ERROR;
+	/* We should never reach this line, this may produce a warning with certain compiler */
+	LogCrit(COMPONENT_CACHE_INODE,
+		"cache_inode_error_convert: default conversion to "
+		"CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
+		fsal_status.major, __LINE__);
+	return CACHE_INODE_FSAL_ERROR;
 }
 
 /**
@@ -571,32 +565,30 @@ cache_inode_error_convert(fsal_status_t fsal_status)
  * @param[in] entry the input pentry.
  *
  */
-void cache_inode_print_dir(cache_entry_t *entry)
+void cache_inode_print_dir(cache_entry_t * entry)
 {
-  struct avltree_node *dirent_node;
-  cache_inode_dir_entry_t *dirent;
-  int i = 0;
+	struct avltree_node *dirent_node;
+	cache_inode_dir_entry_t *dirent;
+	int i = 0;
 
-  if(entry->type != DIRECTORY)
-    {
-      LogDebug(COMPONENT_CACHE_INODE,
-               "This entry is not a directory");
-      return;
-    }
+	if (entry->type != DIRECTORY) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "This entry is not a directory");
+		return;
+	}
 
-  dirent_node = avltree_first(&entry->object.dir.avl.t);
-  do {
-      dirent = avltree_container_of(dirent_node, cache_inode_dir_entry_t,
-                                    node_hk);
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Name = %s, i=%d",
-                   dirent->name,
-                   i);
-      i++;
-  } while ((dirent_node = avltree_next(dirent_node)));
+	dirent_node = avltree_first(&entry->object.dir.avl.t);
+	do {
+		dirent =
+		    avltree_container_of(dirent_node, cache_inode_dir_entry_t,
+					 node_hk);
+		LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, i=%d",
+			     dirent->name, i);
+		i++;
+	} while ((dirent_node = avltree_next(dirent_node)));
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "------------------");
-} /* cache_inode_print_dir */
+	LogFullDebug(COMPONENT_CACHE_INODE, "------------------");
+}				/* cache_inode_print_dir */
 
 /**
  * cache_inode_release_dirents: release cached dirents associated
@@ -609,60 +601,60 @@ void cache_inode_print_dir(cache_entry_t *entry)
  * @param[in] which Caches to clear (dense, sparse, or both)
  *
  */
-void cache_inode_release_dirents(cache_entry_t *entry,
-                                 cache_inode_avl_which_t which)
+void cache_inode_release_dirents(cache_entry_t * entry,
+				 cache_inode_avl_which_t which)
 {
-    struct avltree_node *dirent_node = NULL;
-    struct avltree_node *next_dirent_node = NULL;
-    struct avltree *tree = NULL;
-    cache_inode_dir_entry_t *dirent = NULL;
+	struct avltree_node *dirent_node = NULL;
+	struct avltree_node *next_dirent_node = NULL;
+	struct avltree *tree = NULL;
+	cache_inode_dir_entry_t *dirent = NULL;
 
-    /* Won't see this */
-    if (entry->type != DIRECTORY)
-        return;
+	/* Won't see this */
+	if (entry->type != DIRECTORY)
+		return;
 
-    switch (which)
-    {
-    case CACHE_INODE_AVL_NAMES:
-        tree = &entry->object.dir.avl.t;
-        break;
+	switch (which) {
+	case CACHE_INODE_AVL_NAMES:
+		tree = &entry->object.dir.avl.t;
+		break;
 
-    case CACHE_INODE_AVL_COOKIES:
-        tree = &entry->object.dir.avl.c;
-        break;
+	case CACHE_INODE_AVL_COOKIES:
+		tree = &entry->object.dir.avl.c;
+		break;
 
-    case CACHE_INODE_AVL_BOTH:
-        cache_inode_release_dirents(entry, CACHE_INODE_AVL_NAMES);
-        cache_inode_release_dirents(entry, CACHE_INODE_AVL_COOKIES);
-        /* tree == NULL */
-        break;
+	case CACHE_INODE_AVL_BOTH:
+		cache_inode_release_dirents(entry, CACHE_INODE_AVL_NAMES);
+		cache_inode_release_dirents(entry, CACHE_INODE_AVL_COOKIES);
+		/* tree == NULL */
+		break;
 
-    default:
-        /* tree == NULL */
-        break;
-    }
+	default:
+		/* tree == NULL */
+		break;
+	}
 
-    if (tree) {
-          dirent_node = avltree_first(tree);
+	if (tree) {
+		dirent_node = avltree_first(tree);
 
-          while( dirent_node )
-           {
-             next_dirent_node = avltree_next(dirent_node);
-             dirent = avltree_container_of(dirent_node,
-                                           cache_inode_dir_entry_t,
-                                           node_hk);
-             avltree_remove(dirent_node, tree);
-             if (dirent->ckey.kv.len)
-               cache_inode_key_delete(&dirent->ckey);
-             gsh_free(dirent);
-             dirent_node = next_dirent_node;
-           }
+		while (dirent_node) {
+			next_dirent_node = avltree_next(dirent_node);
+			dirent =
+			    avltree_container_of(dirent_node,
+						 cache_inode_dir_entry_t,
+						 node_hk);
+			avltree_remove(dirent_node, tree);
+			if (dirent->ckey.kv.len)
+				cache_inode_key_delete(&dirent->ckey);
+			gsh_free(dirent);
+			dirent_node = next_dirent_node;
+		}
 
-          if (tree == &entry->object.dir.avl.t) {
-              entry->object.dir.nbactive = 0;
-              atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_DIR_POPULATED);
-          }
-    }
+		if (tree == &entry->object.dir.avl.t) {
+			entry->object.dir.nbactive = 0;
+			atomic_clear_uint32_t_bits(&entry->flags,
+						   CACHE_INODE_DIR_POPULATED);
+		}
+	}
 }
 
 /**
@@ -683,74 +675,74 @@ void cache_inode_release_dirents(cache_entry_t *entry,
  *         trustworthy, various cache_inode error codes otherwise.
  */
 
-cache_inode_status_t
-cache_inode_lock_trust_attrs(cache_entry_t *entry,
-                             const struct req_op_context *opctx,
-                             bool need_wr_lock)
+cache_inode_status_t cache_inode_lock_trust_attrs(cache_entry_t * entry,
+						  const struct req_op_context
+						  *opctx, bool need_wr_lock)
 {
-        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-        time_t oldmtime = 0;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	time_t oldmtime = 0;
 
-        if (entry->type == FS_JUNCTION) {
-                LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_lock_trust_attrs called on file %p of bad type %d",
-                        entry, entry->type);
+	if (entry->type == FS_JUNCTION) {
+		LogCrit(COMPONENT_CACHE_INODE,
+			"cache_inode_lock_trust_attrs called on file %p of bad type %d",
+			entry, entry->type);
 
-                cache_status = CACHE_INODE_BAD_TYPE;
-                goto out;
-        }
+		cache_status = CACHE_INODE_BAD_TYPE;
+		goto out;
+	}
 
-        if (need_wr_lock) {
-                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-        } else {
-                PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-        }
+	if (need_wr_lock) {
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	} else {
+		PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	}
 
-        /* Do we need to refresh? */
-        if (cache_inode_is_attrs_valid(entry)) {
-                goto out;
-        }
+	/* Do we need to refresh? */
+	if (cache_inode_is_attrs_valid(entry)) {
+		goto out;
+	}
 
-        if (!need_wr_lock) {
-                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	if (!need_wr_lock) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-                /* Has someone else done it for us?  */
-                if (cache_inode_is_attrs_valid(entry)) {
-                        goto out;
-                }
-        }
+		/* Has someone else done it for us?  */
+		if (cache_inode_is_attrs_valid(entry)) {
+			goto out;
+		}
+	}
 
-        oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
+	oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
-        cache_status = cache_inode_refresh_attrs(entry, opctx);
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                goto unlock;
-        }
+	cache_status = cache_inode_refresh_attrs(entry, opctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		goto unlock;
+	}
 
-        if ((entry->type == DIRECTORY) &&
-            (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
-                PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	if ((entry->type == DIRECTORY)
+	    && (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
-                cache_status = cache_inode_invalidate_all_cached_dirent(entry);
+		cache_status = cache_inode_invalidate_all_cached_dirent(entry);
 
-                PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        LogCrit(COMPONENT_CACHE_INODE,
-                                "cache_inode_invalidate_all_cached_dirent "
-                                "returned %d (%s)", cache_status,
-                                cache_inode_err_str(cache_status));
-                        goto unlock;
-                }
-        }
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			LogCrit(COMPONENT_CACHE_INODE,
+				"cache_inode_invalidate_all_cached_dirent "
+				"returned %d (%s)", cache_status,
+				cache_inode_err_str(cache_status));
+			goto unlock;
+		}
+	}
 
-out:
-        return cache_status;
+ out:
+	return cache_status;
 
-unlock:
-        /* Release the lock on error */
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-        return cache_status;
+ unlock:
+	/* Release the lock on error */
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	return cache_status;
 }
+
 /** @} */

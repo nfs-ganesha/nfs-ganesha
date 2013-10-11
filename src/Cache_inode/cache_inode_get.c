@@ -44,7 +44,7 @@
 #include "cache_inode.h"
 #include "cache_inode_hash.h"
 #include "cache_inode_lru.h"
-#include "nfs_core.h" /* exportlist_t */
+#include "nfs_core.h"		/* exportlist_t */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -68,82 +68,82 @@
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_inode_status_t
-cache_inode_get(cache_inode_fsal_data_t *fsdata,
-		const struct req_op_context *req_ctx,
-		cache_entry_t **entry)
+cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t * fsdata,
+				     const struct req_op_context * req_ctx,
+				     cache_entry_t ** entry)
 {
-     fsal_status_t fsal_status = {0, 0};
-     struct fsal_export *exp_hdl = NULL;
-     struct fsal_obj_handle *new_hdl;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     cih_latch_t latch;
+	fsal_status_t fsal_status = { 0, 0 };
+	struct fsal_export *exp_hdl = NULL;
+	struct fsal_obj_handle *new_hdl;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cih_latch_t latch;
 
-     /* Do lookup */
-     *entry = cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
-                                    CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
-                                    __func__, __LINE__);
-     if (*entry) {
-	 /* take an extra reference within the critical section */
-	 cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
-	 cih_latch_rele(&latch);
+	/* Do lookup */
+	*entry =
+	    cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
+				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+				  __func__, __LINE__);
+	if (*entry) {
+		/* take an extra reference within the critical section */
+		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+		cih_latch_rele(&latch);
 
-	     /* This is the replacement for cache_inode_renew_entry.
-		Rather than calling that function at the start of
-		every cache_inode call with the inode locked, we call
-		cache_inode_check trust to perform 'heavyweight'
-		(timed expiration of cached attributes, getattr-based
-		directory trust) checks the first time after getting
-		an inode.  It does all of the checks read-locked and
-		only acquires a write lock if there's something
-		requiring a change.
+		/* This is the replacement for cache_inode_renew_entry.
+		   Rather than calling that function at the start of
+		   every cache_inode call with the inode locked, we call
+		   cache_inode_check trust to perform 'heavyweight'
+		   (timed expiration of cached attributes, getattr-based
+		   directory trust) checks the first time after getting
+		   an inode.  It does all of the checks read-locked and
+		   only acquires a write lock if there's something
+		   requiring a change.
 
-		There is a second light-weight check done before use
-		of cached data that checks whether the bits saying
-		that inode attributes or inode content are trustworthy
-		have been cleared by, for example, FSAL_CB.
+		   There is a second light-weight check done before use
+		   of cached data that checks whether the bits saying
+		   that inode attributes or inode content are trustworthy
+		   have been cleared by, for example, FSAL_CB.
 
-		To summarize, the current implementation is that
-		policy-based trust of validity is checked once per
-		logical series of operations at cache_inode_get, and
-		asynchronous trust is checked with use (when the
-		attributes are locked for reading, for example.) */
+		   To summarize, the current implementation is that
+		   policy-based trust of validity is checked once per
+		   logical series of operations at cache_inode_get, and
+		   asynchronous trust is checked with use (when the
+		   attributes are locked for reading, for example.) */
 
-	     if ((status = cache_inode_lock_trust_attrs(*entry, req_ctx, false))
-		 != CACHE_INODE_SUCCESS) {
-		 cache_inode_put(*entry);
-		 *entry = NULL;
-	     } else {
-                 PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
-	     }
-	     return status;
-     }
+		if ((status =
+		     cache_inode_lock_trust_attrs(*entry, req_ctx, false))
+		    != CACHE_INODE_SUCCESS) {
+			cache_inode_put(*entry);
+			*entry = NULL;
+		} else {
+			PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
+		}
+		return status;
+	}
 
-     /* Cache miss, allocate a new entry */
-     exp_hdl = fsdata->export;
-     fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
-                                               &fsdata->fh_desc,
-                                               &new_hdl);
-     if (FSAL_IS_ERROR(fsal_status)) {
-         status = cache_inode_error_convert(fsal_status);
-         LogDebug(COMPONENT_CACHE_INODE,
-                  "could not get create_handle object");
-         *entry = NULL;
-         return status;
-     }
+	/* Cache miss, allocate a new entry */
+	exp_hdl = fsdata->export;
+	fsal_status =
+	    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &fsdata->fh_desc,
+					&new_hdl);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "could not get create_handle object");
+		*entry = NULL;
+		return status;
+	}
 
-     LogFullDebug(COMPONENT_CACHE_INODE,
-                  "Creating entry");
+	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
-     status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
-     if (*entry == NULL) {
-         return status;
-     }
+	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
+	if (*entry == NULL) {
+		return status;
+	}
 
-     /* If we have an entry, we succeeded.  Don't propagate any
-	ENTRY_EXISTS errors upward. */
-     return CACHE_INODE_SUCCESS;
-} /* cache_inode_get */
+	/* If we have an entry, we succeeded.  Don't propagate any
+	   ENTRY_EXISTS errors upward. */
+	return CACHE_INODE_SUCCESS;
+}				/* cache_inode_get */
 
 /**
  * @brief Get an initial reference to a cache entry by its key.
@@ -157,39 +157,40 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  *
  * @return Pointer to a ref'd entry if found, else NULL.
  */
-cache_entry_t *
-cache_inode_get_keyed(cache_inode_key_t *key,
-		      const struct req_op_context *req_ctx,
-		      uint32_t flags,
-		      cache_inode_status_t * status)
+cache_entry_t *cache_inode_get_keyed(cache_inode_key_t * key,
+				     const struct req_op_context * req_ctx,
+				     uint32_t flags,
+				     cache_inode_status_t * status)
 {
 	cache_entry_t *entry = NULL;
 	cih_latch_t latch;
 
 	/* Check if the entry already exists */
-	entry = cih_get_by_key_latched(key, &latch,
-				       CIH_GET_RLOCK|CIH_GET_UNLOCK_ON_MISS,
-                                       __func__, __LINE__);
+	entry =
+	    cih_get_by_key_latched(key, &latch,
+				   CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+				   __func__, __LINE__);
 	if (likely(entry)) {
-             /* Ref entry */
-             cache_inode_lru_ref(entry, LRU_FLAG_NONE);
-             /* Release the subtree hash table lock */
-             cih_latch_rele(&latch);
-             goto out;
+		/* Ref entry */
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		/* Release the subtree hash table lock */
+		cih_latch_rele(&latch);
+		goto out;
 	}
 	/* Cache miss, allocate a new entry */
-        if (! (flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
+	if (!(flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
 		struct fsal_obj_handle *new_hdl;
 		struct fsal_export *exp_hdl;
 		struct gsh_export *exp;
 		fsal_status_t fsal_status;
 
 		exp = get_gsh_export(key->exportid, true);
-		if(exp == NULL)
+		if (exp == NULL)
 			goto out;
 		exp_hdl = exp->export.export_hdl;
-		fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
-							  &key->kv, &new_hdl);
+		fsal_status =
+		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,
+						&new_hdl);
 		put_gsh_export(exp);
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
 			*status = cache_inode_error_convert(fsal_status);
@@ -199,25 +200,27 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 			goto out;
 		}
 
-                LogFullDebug(COMPONENT_CACHE_INODE,
-                             "Creating entry");
+		LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
 		/* if all else fails, create a new entry */
-		*status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					        &entry);
-		if (unlikely(! entry))
+		*status =
+		    cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
+					  &entry);
+		if (unlikely(!entry))
 			goto out;
 
-		if (unlikely((*status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-			     != CACHE_INODE_SUCCESS)) {
+		if (unlikely
+		    ((*status =
+		      cache_inode_lock_trust_attrs(entry, req_ctx, false))
+		     != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
 			entry = NULL;
 			goto out;
 		}
 
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-        } /* ! cached only */
-out:
+	}			/* ! cached only */
+ out:
 	return (entry);
 }
 
@@ -237,8 +240,9 @@ out:
  *
  * @param[in] entry Cache entry being returned
  */
-void cache_inode_put(cache_entry_t *entry)
+void cache_inode_put(cache_entry_t * entry)
 {
-  cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }
+
 /** @} */

@@ -64,39 +64,38 @@
  *         supplied callback.
  *
  */
-cache_inode_status_t
-cache_inode_getattr(cache_entry_t *entry,
-		    const struct req_op_context *req_ctx,
-		    void *opaque,
-		    cache_inode_getattr_cb_t cb)
+cache_inode_status_t cache_inode_getattr(cache_entry_t * entry,
+					 const struct req_op_context *req_ctx,
+					 void *opaque,
+					 cache_inode_getattr_cb_t cb)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-        /* Set the return default to CACHE_INODE_SUCCESS */
+	/* Set the return default to CACHE_INODE_SUCCESS */
 	status = CACHE_INODE_SUCCESS;
 
-        /* Lock (and refresh if necessary) the attributes, copy them
-           out, and unlock. */
+	/* Lock (and refresh if necessary) the attributes, copy them
+	   out, and unlock. */
 
-        if ((status
-             = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-            != CACHE_INODE_SUCCESS) {
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "Failed %s", cache_inode_err_str(status));
-                goto out;
-        }
+	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+	    != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_CACHE_INODE, "Failed %s",
+			 cache_inode_err_str(status));
+		goto out;
+	}
 
-        status = cb(opaque,
-                    &entry->obj_handle->attributes,
-                    entry == req_ctx->export->export.exp_root_cache_inode ?
-                    	req_ctx->export->export.exp_mounted_on_file_id :
-                    	entry->obj_handle->attributes.fileid);
+	status =
+	    cb(opaque, &entry->obj_handle->attributes,
+	       entry ==
+	       req_ctx->export->export.exp_root_cache_inode ? req_ctx->export->
+	       export.exp_mounted_on_file_id : entry->obj_handle->attributes.
+	       fileid);
 
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-out:
+ out:
 
-        return status;
+	return status;
 }
 
 /**
@@ -111,33 +110,34 @@ out:
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t
-cache_inode_fileid(cache_entry_t *entry,
-                   const struct req_op_context *req_ctx,
-                   uint64_t *fileid)
+cache_inode_status_t cache_inode_fileid(cache_entry_t * entry,
+					const struct req_op_context * req_ctx,
+					uint64_t * fileid)
 {
-        cache_inode_status_t status = 0;
+	cache_inode_status_t status = 0;
 
-        /* Set the return default to CACHE_INODE_SUCCESS */
-        status = CACHE_INODE_SUCCESS;
+	/* Set the return default to CACHE_INODE_SUCCESS */
+	status = CACHE_INODE_SUCCESS;
 
-        /* Lock (and refresh if necessary) the attributes, copy them
-           out, and unlock. */
+	/* Lock (and refresh if necessary) the attributes, copy them
+	   out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-            != CACHE_INODE_SUCCESS) {
-                goto out;
-        }
+	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+	    != CACHE_INODE_SUCCESS) {
+		goto out;
+	}
 
-        *fileid = (entry == req_ctx->export->export.exp_root_cache_inode) ?
-		req_ctx->export->export.exp_mounted_on_file_id
-		: entry->obj_handle->attributes.fileid;
+	*fileid =
+	    (entry ==
+	     req_ctx->export->export.exp_root_cache_inode) ? req_ctx->export->
+	    export.exp_mounted_on_file_id : entry->obj_handle->attributes.
+	    fileid;
 
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-out:
+ out:
 
-        return status;
+	return status;
 }
 
 /**
@@ -152,31 +152,30 @@ out:
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t
-cache_inode_fsid(cache_entry_t *entry,
-                 const struct req_op_context *req_ctx,
-                 fsal_fsid_t *fsid)
+cache_inode_status_t cache_inode_fsid(cache_entry_t * entry,
+				      const struct req_op_context * req_ctx,
+				      fsal_fsid_t * fsid)
 {
-        cache_inode_status_t status = 0;
+	cache_inode_status_t status = 0;
 
-        /* Set the return default to CACHE_INODE_SUCCESS */
-        status = CACHE_INODE_SUCCESS;
+	/* Set the return default to CACHE_INODE_SUCCESS */
+	status = CACHE_INODE_SUCCESS;
 
-        /* Lock (and refresh if necessary) the attributes, copy them
-           out, and unlock. */
+	/* Lock (and refresh if necessary) the attributes, copy them
+	   out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-            != CACHE_INODE_SUCCESS) {
-                goto out;
-        }
+	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+	    != CACHE_INODE_SUCCESS) {
+		goto out;
+	}
 
-        *fsid = entry->obj_handle->attributes.fsid;
+	*fsid = entry->obj_handle->attributes.fsid;
 
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-out:
+ out:
 
-        return status;
+	return status;
 }
 
 /**
@@ -191,31 +190,30 @@ out:
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t
-cache_inode_size(cache_entry_t *entry,
-                 const struct req_op_context *req_ctx,
-                 uint64_t *size)
+cache_inode_status_t cache_inode_size(cache_entry_t * entry,
+				      const struct req_op_context * req_ctx,
+				      uint64_t * size)
 {
-        cache_inode_status_t status = 0;
+	cache_inode_status_t status = 0;
 
-        /* Set the return default to CACHE_INODE_SUCCESS */
-        status = CACHE_INODE_SUCCESS;
+	/* Set the return default to CACHE_INODE_SUCCESS */
+	status = CACHE_INODE_SUCCESS;
 
-        /* Lock (and refresh if necessary) the attributes, copy them
-           out, and unlock. */
+	/* Lock (and refresh if necessary) the attributes, copy them
+	   out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-            != CACHE_INODE_SUCCESS) {
-                goto out;
-        }
+	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
+	    != CACHE_INODE_SUCCESS) {
+		goto out;
+	}
 
-        *size = entry->obj_handle->attributes.filesize;
+	*size = entry->obj_handle->attributes.filesize;
 
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-out:
+ out:
 
-        return status;
+	return status;
 }
 
 /** @} */

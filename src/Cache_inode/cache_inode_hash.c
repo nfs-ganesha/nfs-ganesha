@@ -72,27 +72,26 @@ void cih_pkginit(void)
 	pthread_rwlockattr_t rwlock_attr;
 	cih_partition_t *cp;
 	uint32_t npart;
-	uint32_t cache_sz = 32767; /* XXX */
+	uint32_t cache_sz = 32767;	/* XXX */
 	int ix;
 
 	/* avoid writer starvation */
 	pthread_rwlockattr_init(&rwlock_attr);
 #ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-	&rwlock_attr,
-        PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlockattr_setkind_np(&rwlock_attr,
+				      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	npart = nfs_param.cache_param.nparts;
 	cih_fhcache.npart = npart;
 	cih_fhcache.partition = gsh_calloc(npart, sizeof(cih_partition_t));
 	for (ix = 0; ix < npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
-                cp->part_ix = ix;
+		cp->part_ix = ix;
 		pthread_rwlock_init(&cp->lock, &rwlock_attr);
-		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
+		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */ );
 		cih_fhcache.cache_sz = cache_sz;
 		cp->cache = gsh_calloc(cache_sz, sizeof(struct avltree_node *));
-        }
+	}
 	initialized = true;
 }
 

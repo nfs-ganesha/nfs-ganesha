@@ -67,17 +67,16 @@
  * @param[in] entry The entry to be killed
  */
 
-void
-cache_inode_kill_entry(cache_entry_t *entry)
+void cache_inode_kill_entry(cache_entry_t * entry)
 {
-     LogDebug(COMPONENT_CACHE_INODE,
-              "Using cache_inode_kill_entry for entry %p", entry);
+	LogDebug(COMPONENT_CACHE_INODE,
+		 "Using cache_inode_kill_entry for entry %p", entry);
 
-     cih_remove_checked(entry); /* !reachable, drop sentinel ref */
+	cih_remove_checked(entry);	/* !reachable, drop sentinel ref */
 
-     /* queue for cleanup */
-     cache_inode_lru_cleanup_push(entry);
+	/* queue for cleanup */
+	cache_inode_lru_cleanup_push(entry);
 
-} /* cache_inode_kill_entry */
+}				/* cache_inode_kill_entry */
+
 /** @} */
-

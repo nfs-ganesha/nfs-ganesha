@@ -61,52 +61,51 @@
  * @return CACHE_INODE_SUCCESS on success, other things on failure.
  */
 
-cache_inode_status_t
-cache_inode_readlink(cache_entry_t *entry,
-                     struct gsh_buffdesc *link_content,
-		     struct req_op_context *req_ctx)
+cache_inode_status_t cache_inode_readlink(cache_entry_t * entry,
+					  struct gsh_buffdesc * link_content,
+					  struct req_op_context * req_ctx)
 {
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
-     bool refresh = false;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
+	bool refresh = false;
 
-     if (entry->type != SYMBOLIC_LINK) {
-          status = CACHE_INODE_BAD_TYPE;
-          return status;
-     }
+	if (entry->type != SYMBOLIC_LINK) {
+		status = CACHE_INODE_BAD_TYPE;
+		return status;
+	}
 
-     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-     if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
-          /* Our data are stale.  Drop the lock, get a
-             write-lock, load in new data, and copy it out to
-             the caller. */
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-          /* Make sure nobody updated the content while we were
-             waiting. */
-          refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
-     }
-     fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
-						    req_ctx,
-						    link_content,
-						    refresh);
-     if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
-	 atomic_set_uint32_t_bits(&entry->flags,
-				  CACHE_INODE_TRUST_CONTENT);
-     }
+	PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+	if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
+		/* Our data are stale.  Drop the lock, get a
+		   write-lock, load in new data, and copy it out to
+		   the caller. */
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		/* Make sure nobody updated the content while we were
+		   waiting. */
+		refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
+	}
+	fsal_status =
+	    entry->obj_handle->ops->readlink(entry->obj_handle, req_ctx,
+					     link_content, refresh);
+	if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
+		atomic_set_uint32_t_bits(&entry->flags,
+					 CACHE_INODE_TRUST_CONTENT);
+	}
 
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
-     if (FSAL_IS_ERROR(fsal_status)) {
-          status = cache_inode_error_convert(fsal_status);
-          if (fsal_status.major == ERR_FSAL_STALE) {
-	       LogEvent(COMPONENT_CACHE_INODE,
-			"FSAL returned STALE from readlink");
-               cache_inode_kill_entry(entry);
-          }
-          return status;
-     }
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		if (fsal_status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_CACHE_INODE,
+				 "FSAL returned STALE from readlink");
+			cache_inode_kill_entry(entry);
+		}
+		return status;
+	}
 
-     return status;
+	return status;
 }
+
 /** @} */

@@ -65,14 +65,14 @@
  * @return true/false
  */
 
-bool
-is_open(cache_entry_t *entry)
+bool is_open(cache_entry_t * entry)
 {
-     if (entry == NULL || entry->obj_handle == NULL
-         || entry->type != REGULAR_FILE) {
-          return false ;
-     }
-     return entry->obj_handle->ops->status(entry->obj_handle) != FSAL_O_CLOSED;
+	if (entry == NULL || entry->obj_handle == NULL
+	    || entry->type != REGULAR_FILE) {
+		return false;
+	}
+	return entry->obj_handle->ops->status(entry->obj_handle) !=
+	    FSAL_O_CLOSED;
 }
 
 /**
@@ -86,17 +86,15 @@ is_open(cache_entry_t *entry)
  * @return true if the file is open for writes
  */
 
-bool
-is_open_for_write(cache_entry_t *entry)
+bool is_open_for_write(cache_entry_t * entry)
 {
-     fsal_openflags_t openflags;
+	fsal_openflags_t openflags;
 
-     if (entry == NULL ||
-         entry->type != REGULAR_FILE) {
-          return false;
-     }
-     openflags = entry->obj_handle->ops->status(entry->obj_handle);
-     return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE);
+	if (entry == NULL || entry->type != REGULAR_FILE) {
+		return false;
+	}
+	openflags = entry->obj_handle->ops->status(entry->obj_handle);
+	return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE);
 }
 
 /**
@@ -110,17 +108,15 @@ is_open_for_write(cache_entry_t *entry)
  * @return true if the file is opened for reads
  */
 
-bool
-is_open_for_read(cache_entry_t *entry)
+bool is_open_for_read(cache_entry_t * entry)
 {
-     fsal_openflags_t openflags;
+	fsal_openflags_t openflags;
 
-     if (entry == NULL
-         || entry->type != REGULAR_FILE) {
-          return false;
-     }
-     openflags = entry->obj_handle->ops->status(entry->obj_handle);
-     return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ);
+	if (entry == NULL || entry->type != REGULAR_FILE) {
+		return false;
+	}
+	openflags = entry->obj_handle->ops->status(entry->obj_handle);
+	return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ);
 }
 
 /**
@@ -137,103 +133,101 @@ is_open_for_read(cache_entry_t *entry)
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
  */
 
-cache_inode_status_t
-cache_inode_open(cache_entry_t *entry,
-                 fsal_openflags_t openflags,
-                 struct req_op_context *req_ctx,
-                 uint32_t flags)
+cache_inode_status_t cache_inode_open(cache_entry_t * entry,
+				      fsal_openflags_t openflags,
+				      struct req_op_context * req_ctx,
+				      uint32_t flags)
 {
-     /* Error return from FSAL */
-     fsal_status_t fsal_status = {0, 0};
-     fsal_openflags_t current_flags;
-     struct fsal_obj_handle *obj_hdl;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	/* Error return from FSAL */
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_openflags_t current_flags;
+	struct fsal_obj_handle *obj_hdl;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     assert(entry->obj_handle != NULL);
+	assert(entry->obj_handle != NULL);
 
-     if (entry->type != REGULAR_FILE) {
-          status = CACHE_INODE_BAD_TYPE;
-          goto out;
-     }
+	if (entry->type != REGULAR_FILE) {
+		status = CACHE_INODE_BAD_TYPE;
+		goto out;
+	}
 
-     if (!cache_inode_lru_fds_available()) {
-          /* This seems the best idea, let the client try again later
-             after the reap. */
-          status = CACHE_INODE_DELAY;
-          goto out;
-     }
+	if (!cache_inode_lru_fds_available()) {
+		/* This seems the best idea, let the client try again later
+		   after the reap. */
+		status = CACHE_INODE_DELAY;
+		goto out;
+	}
 
-     if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-     }
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	}
 
-     obj_hdl = entry->obj_handle;
-     current_flags = obj_hdl->ops->status(obj_hdl);
-     /* Open file need to be closed, unless it is already open as read/write */
-     if ((current_flags != FSAL_O_RDWR) &&
-         (current_flags != FSAL_O_CLOSED) &&
-         (current_flags != openflags)) {
-          fsal_status = obj_hdl->ops->close(obj_hdl);
-          if (FSAL_IS_ERROR(fsal_status) &&
-              (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
-               status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-		    LogEvent(COMPONENT_CACHE_INODE,
-			"FSAL returned STALE on close.");
-                    cache_inode_kill_entry(entry);
-               }
+	obj_hdl = entry->obj_handle;
+	current_flags = obj_hdl->ops->status(obj_hdl);
+	/* Open file need to be closed, unless it is already open as read/write */
+	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
+	    && (current_flags != openflags)) {
+		fsal_status = obj_hdl->ops->close(obj_hdl);
+		if (FSAL_IS_ERROR(fsal_status)
+		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
+			status = cache_inode_error_convert(fsal_status);
+			if (fsal_status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_CACHE_INODE,
+					 "FSAL returned STALE on close.");
+				cache_inode_kill_entry(entry);
+			}
 
-               LogDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_open: returning %d(%s) from FSAL_close",
-                        status, cache_inode_err_str(status));
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "cache_inode_open: returning %d(%s) from FSAL_close",
+				 status, cache_inode_err_str(status));
 
-               goto unlock;
-          }
+			goto unlock;
+		}
 
-          if (!FSAL_IS_ERROR(fsal_status))
-              atomic_dec_size_t(&open_fd_count);
+		if (!FSAL_IS_ERROR(fsal_status))
+			atomic_dec_size_t(&open_fd_count);
 
-          /* Force re-openning */
-	  current_flags = obj_hdl->ops->status(obj_hdl);
-     }
+		/* Force re-openning */
+		current_flags = obj_hdl->ops->status(obj_hdl);
+	}
 
-     if ((current_flags == FSAL_O_CLOSED)) {
-	  fsal_status = obj_hdl->ops->open(obj_hdl, req_ctx, openflags);
-          if (FSAL_IS_ERROR(fsal_status)) {
-               status = cache_inode_error_convert(fsal_status);
-               LogDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_open: returning %d(%s) from FSAL_open",
-                        status, cache_inode_err_str(status));
-               if (fsal_status.major == ERR_FSAL_STALE) {
-		    LogEvent(COMPONENT_CACHE_INODE,
-			"FSAL returned STALE on open.");
-                    cache_inode_kill_entry(entry);
-               }
-               goto unlock;
-          }
+	if ((current_flags == FSAL_O_CLOSED)) {
+		fsal_status = obj_hdl->ops->open(obj_hdl, req_ctx, openflags);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			status = cache_inode_error_convert(fsal_status);
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "cache_inode_open: returning %d(%s) from FSAL_open",
+				 status, cache_inode_err_str(status));
+			if (fsal_status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_CACHE_INODE,
+					 "FSAL returned STALE on open.");
+				cache_inode_kill_entry(entry);
+			}
+			goto unlock;
+		}
 
-          /* This is temporary code, until Jim Lieb makes FSALs cache
-             their own file descriptors.  Under that regime, the LRU
-             thread will interrogate FSALs for their FD use. */
-          atomic_inc_size_t(&open_fd_count);
+		/* This is temporary code, until Jim Lieb makes FSALs cache
+		   their own file descriptors.  Under that regime, the LRU
+		   thread will interrogate FSALs for their FD use. */
+		atomic_inc_size_t(&open_fd_count);
 
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_open: pentry %p: openflags = %d, "
-                   "open_fd_count = %zd", entry, openflags,
-                   open_fd_count);
-     }
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cache_inode_open: pentry %p: openflags = %d, "
+			 "open_fd_count = %zd", entry, openflags,
+			 open_fd_count);
+	}
 
-     status = CACHE_INODE_SUCCESS;
+	status = CACHE_INODE_SUCCESS;
 
-unlock:
+ unlock:
 
-     if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-     }
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
 
-out:
+ out:
 
-     return status;
+	return status;
 
 }
 
@@ -248,79 +242,77 @@ out:
  * @return CACHE_INODE_SUCCESS or errors on failure
  */
 
-cache_inode_status_t
-cache_inode_close(cache_entry_t *entry,
-                  uint32_t flags)
+cache_inode_status_t cache_inode_close(cache_entry_t * entry, uint32_t flags)
 {
-     /* Error return from the FSAL */
-     fsal_status_t fsal_status;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	/* Error return from the FSAL */
+	fsal_status_t fsal_status;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     if (entry->type != REGULAR_FILE) {
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "Entry %p File not a REGULAR_FILE", entry);
-          status = CACHE_INODE_BAD_TYPE;
-          goto out;
-     }
+	if (entry->type != REGULAR_FILE) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Entry %p File not a REGULAR_FILE", entry);
+		status = CACHE_INODE_BAD_TYPE;
+		goto out;
+	}
 
-     if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-     }
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	}
 
-     /* If nothing is opened, do nothing */
-     if ( !is_open(entry)) {
-          if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-               PTHREAD_RWLOCK_unlock(&entry->content_lock);
-          }
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "Entry %p File not open", entry);
-          status = CACHE_INODE_SUCCESS;
-          return status;
-     }
+	/* If nothing is opened, do nothing */
+	if (!is_open(entry)) {
+		if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		}
+		LogFullDebug(COMPONENT_CACHE_INODE, "Entry %p File not open",
+			     entry);
+		status = CACHE_INODE_SUCCESS;
+		return status;
+	}
 
-     /* If file is pinned, do not close it.  This should
-        be refined.  (A non return_on_close layout should not prevent
-        the file from closing.) */
-     if (((flags & CACHE_INODE_FLAG_NOT_PINNED) == 0) &&
-         cache_inode_is_pinned(entry)) {
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "Entry %p is pinned", entry);
-          status = CACHE_INODE_SUCCESS;
-          goto unlock;
-     }
+	/* If file is pinned, do not close it.  This should
+	   be refined.  (A non return_on_close layout should not prevent
+	   the file from closing.) */
+	if (((flags & CACHE_INODE_FLAG_NOT_PINNED) == 0)
+	    && cache_inode_is_pinned(entry)) {
+		LogFullDebug(COMPONENT_CACHE_INODE, "Entry %p is pinned",
+			     entry);
+		status = CACHE_INODE_SUCCESS;
+		goto unlock;
+	}
 
-     if (!cache_inode_lru_caching_fds() ||
-         (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Closing entry %p", entry);
-	  fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
-          if (FSAL_IS_ERROR(fsal_status) &&
-              (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
-               status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-		    LogEvent(COMPONENT_CACHE_INODE,
-			"FSAL returned STALE on close.");
-                    cache_inode_kill_entry(entry);
-               }
-               LogCrit(COMPONENT_CACHE_INODE,
-                       "FSAL_close failed, returning %d(%s) for entry %p",
-                       status, cache_inode_err_str(status), entry);
-               goto unlock;
-          }
-          if (!FSAL_IS_ERROR(fsal_status))
-              atomic_dec_size_t(&open_fd_count);
-     }
+	if (!cache_inode_lru_caching_fds()
+	    || (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
+		LogFullDebug(COMPONENT_CACHE_INODE, "Closing entry %p", entry);
+		fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
+		if (FSAL_IS_ERROR(fsal_status)
+		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
+			status = cache_inode_error_convert(fsal_status);
+			if (fsal_status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_CACHE_INODE,
+					 "FSAL returned STALE on close.");
+				cache_inode_kill_entry(entry);
+			}
+			LogCrit(COMPONENT_CACHE_INODE,
+				"FSAL_close failed, returning %d(%s) for entry %p",
+				status, cache_inode_err_str(status), entry);
+			goto unlock;
+		}
+		if (!FSAL_IS_ERROR(fsal_status))
+			atomic_dec_size_t(&open_fd_count);
+	}
 
-     status = CACHE_INODE_SUCCESS;
+	status = CACHE_INODE_SUCCESS;
 
-unlock:
+ unlock:
 
-     if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-     }
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
 
-out:
+ out:
 
-     return status;
+	return status;
 }
+
 /** @} */

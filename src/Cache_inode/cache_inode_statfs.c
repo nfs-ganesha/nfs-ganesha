@@ -38,7 +38,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -52,35 +52,35 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-                                        fsal_dynamicfsinfo_t * dynamicinfo,
-                                        const struct req_op_context *req_ctx)
+					fsal_dynamicfsinfo_t * dynamicinfo,
+					const struct req_op_context *req_ctx)
 {
-  fsal_status_t fsal_status;
-  struct fsal_export *export;
-  cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status;
+	struct fsal_export *export;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-  export = pentry->obj_handle->export;
-  /* Get FSAL to get dynamic info */
-  fsal_status = export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      status =  cache_inode_error_convert(fsal_status);
-      if (fsal_status.major == ERR_FSAL_STALE) {
-          LogEvent(COMPONENT_CACHE_INODE,
-             "FSAL returned STALE from fsinfo");
-          cache_inode_kill_entry(pentry);
-      }
-    }
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_statfs: dynamicinfo: {total_bytes = %"PRIu64", "
-               "free_bytes = %"PRIu64", avail_bytes = %"PRIu64
-               ", total_files = %"PRIu64", free_files = %"PRIu64
-               ", avail_files = %"PRIu64"}",
-               dynamicinfo->total_bytes, dynamicinfo->free_bytes,
-               dynamicinfo->avail_bytes, dynamicinfo->total_files,
-               dynamicinfo->free_files, dynamicinfo->avail_files);
-  return status;
-} /* cache_inode_statfs */
+	export = pentry->obj_handle->export;
+	/* Get FSAL to get dynamic info */
+	fsal_status =
+	    export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		if (fsal_status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_CACHE_INODE,
+				 "FSAL returned STALE from fsinfo");
+			cache_inode_kill_entry(pentry);
+		}
+	}
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "cache_inode_statfs: dynamicinfo: {total_bytes = %" PRIu64
+		     ", " "free_bytes = %" PRIu64 ", avail_bytes = %" PRIu64
+		     ", total_files = %" PRIu64 ", free_files = %" PRIu64
+		     ", avail_files = %" PRIu64 "}", dynamicinfo->total_bytes,
+		     dynamicinfo->free_bytes, dynamicinfo->avail_bytes,
+		     dynamicinfo->total_files, dynamicinfo->free_files,
+		     dynamicinfo->avail_files);
+	return status;
+}				/* cache_inode_statfs */
+
 /** @} */

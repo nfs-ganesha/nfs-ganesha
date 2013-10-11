@@ -65,56 +65,56 @@
  * @retval CACHE_INODE_ENTRY_EXISTS entry of that name already exists
  *                                  in destination.
  */
-cache_inode_status_t cache_inode_link(cache_entry_t *entry,
-				      cache_entry_t *dest_dir,
+cache_inode_status_t cache_inode_link(cache_entry_t * entry,
+				      cache_entry_t * dest_dir,
 				      const char *name,
-				      struct req_op_context *req_ctx)
+				      struct req_op_context * req_ctx)
 {
-     fsal_status_t fsal_status = {0, 0};
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
-     cache_inode_status_t status_ref_dest_dir = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = { 0, 0 };
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status_ref_dest_dir = CACHE_INODE_SUCCESS;
 
-     /* The file to be hardlinked can't be a DIRECTORY */
-     if (entry->type == DIRECTORY) {
-          status = CACHE_INODE_BAD_TYPE;
-          goto out;
-     }
+	/* The file to be hardlinked can't be a DIRECTORY */
+	if (entry->type == DIRECTORY) {
+		status = CACHE_INODE_BAD_TYPE;
+		goto out;
+	}
 
-     /* Is the destination a directory? */
-     if (dest_dir->type != DIRECTORY) {
-          status = CACHE_INODE_NOT_A_DIRECTORY;
-          goto out;
-     }
+	/* Is the destination a directory? */
+	if (dest_dir->type != DIRECTORY) {
+		status = CACHE_INODE_NOT_A_DIRECTORY;
+		goto out;
+	}
 
-     /* Rather than performing a lookup first, just try to make the
-        link and return the FSAL's error if it fails. */
-     fsal_status = entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
-                                                dest_dir->obj_handle, name);
-     status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
-     status_ref_dest_dir = cache_inode_refresh_attrs_locked(dest_dir, req_ctx);
+	/* Rather than performing a lookup first, just try to make the
+	   link and return the FSAL's error if it fails. */
+	fsal_status =
+	    entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
+					 dest_dir->obj_handle, name);
+	status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+	status_ref_dest_dir =
+	    cache_inode_refresh_attrs_locked(dest_dir, req_ctx);
 
-     if(FSAL_IS_ERROR(fsal_status)) {
-         status = cache_inode_error_convert(fsal_status);
-         goto out;
-     }
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		goto out;
+	}
 
-     if (((status = status_ref_entry) != CACHE_INODE_SUCCESS) ||
-         ((status = status_ref_dest_dir) != CACHE_INODE_SUCCESS)) {
-         goto out;
-     }
+	if (((status = status_ref_entry) != CACHE_INODE_SUCCESS)
+	    || ((status = status_ref_dest_dir) != CACHE_INODE_SUCCESS)) {
+		goto out;
+	}
 
-     /* Add the new entry in the destination directory */
-     PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);
+	/* Add the new entry in the destination directory */
+	PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);
 
-     status = cache_inode_add_cached_dirent(dest_dir,
-					    name,
-					    entry,
-					    NULL);
+	status = cache_inode_add_cached_dirent(dest_dir, name, entry, NULL);
 
-     PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
+	PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
 
-out:
-     return status;
+ out:
+	return status;
 }
+
 /** @} */

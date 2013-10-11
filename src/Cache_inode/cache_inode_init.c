@@ -62,21 +62,19 @@
  */
 cache_inode_status_t cache_inode_init(void)
 {
-  cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-  cache_inode_entry_pool = pool_init("Entry Pool",
-                                     sizeof(cache_entry_t),
-                                     pool_basic_substrate,
-                                     NULL, NULL, NULL);
-  if(!(cache_inode_entry_pool))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init Entry Pool");
-      status = CACHE_INODE_INVALID_ARGUMENT;
-    }
+	cache_inode_entry_pool =
+	    pool_init("Entry Pool", sizeof(cache_entry_t), pool_basic_substrate,
+		      NULL, NULL, NULL);
+	if (!(cache_inode_entry_pool)) {
+		LogCrit(COMPONENT_CACHE_INODE, "Can't init Entry Pool");
+		status = CACHE_INODE_INVALID_ARGUMENT;
+	}
 
-  cih_pkginit();
+	cih_pkginit();
 
-  return status;
-}                               /* cache_inode_init */
+	return status;
+}				/* cache_inode_init */
+
 /** @} */

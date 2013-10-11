@@ -42,7 +42,6 @@
 #include "nfs4_acls.h"
 #include "FSAL/access_check.h"
 
-
 /**
  * @brief Set the attributes for a file.
  *
@@ -55,114 +54,107 @@
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
-cache_inode_status_t
-cache_inode_setattr(cache_entry_t *entry,
-		    struct attrlist *attr,
-		    bool is_open_write,
-		    struct req_op_context *req_ctx)
+cache_inode_status_t cache_inode_setattr(cache_entry_t * entry,
+					 struct attrlist *attr,
+					 bool is_open_write,
+					 struct req_op_context *req_ctx)
 {
-     struct fsal_obj_handle *obj_handle = entry->obj_handle;
-     fsal_status_t fsal_status = {0, 0};
-     fsal_acl_t *saved_acl = NULL;
-     fsal_acl_status_t acl_status = 0;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     uint64_t before;
+	struct fsal_obj_handle *obj_handle = entry->obj_handle;
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_acl_t *saved_acl = NULL;
+	fsal_acl_status_t acl_status = 0;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	uint64_t before;
 
-     /* True if we have taken the content lock on 'entry' */
-     bool content_locked = false;
+	/* True if we have taken the content lock on 'entry' */
+	bool content_locked = false;
 
+	if ((attr->mask & ATTR_SIZE) && (entry->type != REGULAR_FILE)) {
+		LogWarn(COMPONENT_CACHE_INODE,
+			"Attempt to truncate non-regular file: type=%d",
+			entry->type);
+		status = CACHE_INODE_BAD_TYPE;
+	}
 
-     if ((attr->mask & ATTR_SIZE) &&
-         (entry->type != REGULAR_FILE)) {
-          LogWarn(COMPONENT_CACHE_INODE,
-                   "Attempt to truncate non-regular file: type=%d",
-                   entry->type);
-          status = CACHE_INODE_BAD_TYPE;
-     }
+	/* Is it allowed to change times ? */
+	if (!obj_handle->export->ops->
+	    fs_supports(obj_handle->export, fso_cansettime)
+	    &&
+	    (FSAL_TEST_MASK
+	     (attr->mask,
+	      (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME)))) {
+		status = CACHE_INODE_INVALID_ARGUMENT;
+		goto out;
+	}
 
-     /* Is it allowed to change times ? */
-     if(!obj_handle->export->ops->fs_supports(obj_handle->export,
-                                              fso_cansettime) &&
-        (FSAL_TEST_MASK(attr->mask, (ATTR_ATIME | ATTR_CREATION |
-                                     ATTR_CTIME | ATTR_MTIME)))) {
-             status = CACHE_INODE_INVALID_ARGUMENT;
-             goto out;
-     }
+	/* Get wrlock on attr_lock and verify attrs */
+	status = cache_inode_lock_trust_attrs(entry, req_ctx, true);
+	if (status != CACHE_INODE_SUCCESS)
+		return status;
 
-     /* Get wrlock on attr_lock and verify attrs */
-     status = cache_inode_lock_trust_attrs(entry, req_ctx, true);
-     if(status != CACHE_INODE_SUCCESS)
-           return status;
+	/* Do permission checks */
+	status =
+	    cache_inode_check_setattr_perms(entry, attr, is_open_write,
+					    req_ctx);
+	if (status != CACHE_INODE_SUCCESS) {
+		goto unlock;
+	}
 
+	if (attr->mask & ATTR_SIZE) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		content_locked = true;
+	}
 
-     /* Do permission checks */
-     status = cache_inode_check_setattr_perms(entry,
-             attr,
-             is_open_write,
-             req_ctx);
-     if (status != CACHE_INODE_SUCCESS)
-     {
-         goto unlock;
-     }
+	saved_acl = obj_handle->attributes.acl;
+	before = obj_handle->attributes.change;
+	fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		if (fsal_status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_CACHE_INODE,
+				 "FSAL returned STALE from truncate");
+			cache_inode_kill_entry(entry);
+		}
+		goto unlock;
+	}
+	fsal_status = obj_handle->ops->getattrs(obj_handle, req_ctx);
+	*attr = obj_handle->attributes;
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		if (fsal_status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_CACHE_INODE,
+				 "FSAL returned STALE from setattrs");
+			cache_inode_kill_entry(entry);
+		}
+		goto unlock;
+	}
+	if (before == obj_handle->attributes.change) {
+		obj_handle->attributes.change++;
+	}
+	/* Decrement refcount on saved ACL */
+	nfs4_acl_release_entry(saved_acl, &acl_status);
+	if (acl_status != NFS_V4_ACL_SUCCESS) {
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Failed to release old acl, status=%d", acl_status);
+	}
 
+	cache_inode_fixup_md(entry);
 
-     if (attr->mask & ATTR_SIZE) {
-         PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-         content_locked = true;
-     }
+	/* Copy the complete set of new attributes out. */
 
-     saved_acl = obj_handle->attributes.acl;
-     before = obj_handle->attributes.change;
-     fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
-     if (FSAL_IS_ERROR(fsal_status)) {
-          status = cache_inode_error_convert(fsal_status);
-          if (fsal_status.major == ERR_FSAL_STALE) {
-               LogEvent(COMPONENT_CACHE_INODE,
-                  "FSAL returned STALE from truncate");
-               cache_inode_kill_entry(entry);
-          }
-          goto unlock;
-     }
-     fsal_status = obj_handle->ops->getattrs(obj_handle, req_ctx);
-     *attr = obj_handle->attributes;
-     if (FSAL_IS_ERROR(fsal_status)) {
-          status = cache_inode_error_convert(fsal_status);
-          if (fsal_status.major == ERR_FSAL_STALE) {
-               LogEvent(COMPONENT_CACHE_INODE,
-                  "FSAL returned STALE from setattrs");
-               cache_inode_kill_entry(entry);
-          }
-          goto unlock;
-     }
-     if(before == obj_handle->attributes.change) {
-          obj_handle->attributes.change++;
-     }
-     /* Decrement refcount on saved ACL */
-     nfs4_acl_release_entry(saved_acl, &acl_status);
-     if (acl_status != NFS_V4_ACL_SUCCESS) {
-	     LogCrit(COMPONENT_CACHE_INODE,
-		     "Failed to release old acl, status=%d",
-		     acl_status);
-     }
+	*attr = entry->obj_handle->attributes;
 
-     cache_inode_fixup_md(entry);
+	status = CACHE_INODE_SUCCESS;
 
-     /* Copy the complete set of new attributes out. */
+ unlock:
+	if (content_locked) {
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-     *attr = entry->obj_handle->attributes;
+ out:
 
-     status = CACHE_INODE_SUCCESS;
-
-unlock:
-     if (content_locked)
-     {
-         PTHREAD_RWLOCK_unlock(&entry->content_lock);
-     }
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-
-out:
-
-     return status;
+	return status;
 }
+
 /** @} */
