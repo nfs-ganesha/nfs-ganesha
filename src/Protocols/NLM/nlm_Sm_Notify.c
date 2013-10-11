@@ -43,44 +43,38 @@
  * @param[out] pres
  */
 
-int nlm4_Sm_Notify(nfs_arg_t *parg,
-                   exportlist_t *pexport,
-		   struct req_op_context *req_ctx,
-                   nfs_worker_data_t *pworker,
-                   struct svc_req *preq,
-                   nfs_res_t *pres)
+int nlm4_Sm_Notify(nfs_arg_t * parg, exportlist_t * pexport,
+		   struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		   struct svc_req *preq, nfs_res_t * pres)
 {
-  nlm4_sm_notifyargs * arg = &parg->arg_nlm4_sm_notify;
-  state_status_t       state_status = STATE_SUCCESS;
-  state_nsm_client_t * nsm_client;
+	nlm4_sm_notifyargs *arg = &parg->arg_nlm4_sm_notify;
+	state_status_t state_status = STATE_SUCCESS;
+	state_nsm_client_t *nsm_client;
 
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
-           arg->name);
+	LogDebug(COMPONENT_NLM,
+		 "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
+		 arg->name);
 
-  nsm_client = get_nsm_client(CARE_NOT, NULL, arg->name);
-  if(nsm_client != NULL)
-    {
-      /* Cast the state number into a state pointer to protect
-       * locks from a client that has rebooted from being released
-       * by this SM_NOTIFY.
-       */
-      state_status = state_nlm_notify(nsm_client,
-				      req_ctx,
-				      (void*) (ptrdiff_t) arg->state);
-		       
-      if(state_status != STATE_SUCCESS)
-        {
-          /* TODO FSF: Deal with error */
-        }
+	nsm_client = get_nsm_client(CARE_NOT, NULL, arg->name);
+	if (nsm_client != NULL) {
+		/* Cast the state number into a state pointer to protect
+		 * locks from a client that has rebooted from being released
+		 * by this SM_NOTIFY.
+		 */
+		state_status =
+		    state_nlm_notify(nsm_client, req_ctx,
+				     (void *)(ptrdiff_t) arg->state);
 
-      dec_nsm_client_ref(nsm_client);
-    }
+		if (state_status != STATE_SUCCESS) {
+			/* TODO FSF: Deal with error */
+		}
 
-  LogDebug(COMPONENT_NLM,
-           "REQUEST RESULT: nlm4_sm_notify DONE");
+		dec_nsm_client_ref(nsm_client);
+	}
 
-  return NFS_REQ_OK;
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_sm_notify DONE");
+
+	return NFS_REQ_OK;
 }
 
 /**
@@ -93,5 +87,5 @@ int nlm4_Sm_Notify(nfs_arg_t *parg,
  */
 void nlm4_Sm_Notify_Free(nfs_res_t * pres)
 {
-  return;
+	return;
 }

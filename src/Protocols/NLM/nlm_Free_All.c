@@ -43,48 +43,41 @@
  * @param[out] pres
  */
 
-int nlm4_Free_All(nfs_arg_t *parg,
-                  exportlist_t *pexport,
-		  struct req_op_context *req_ctx,
-                  nfs_worker_data_t *pworker,
-                  struct svc_req *preq,
-                  nfs_res_t *pres)
+int nlm4_Free_All(nfs_arg_t * parg, exportlist_t * pexport,
+		  struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		  struct svc_req *preq, nfs_res_t * pres)
 {
-  nlm4_free_allargs  * arg = &parg->arg_nlm4_free_allargs;
-  state_status_t       state_status = STATE_SUCCESS;
-  state_nsm_client_t * nsm_client;
+	nlm4_free_allargs *arg = &parg->arg_nlm4_free_allargs;
+	state_status_t state_status = STATE_SUCCESS;
+	state_nsm_client_t *nsm_client;
 
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_Free_All for %s",
-           arg->name);
+	LogDebug(COMPONENT_NLM,
+		 "REQUEST PROCESSING: Calling nlm4_Free_All for %s", arg->name);
 
-  nsm_client = get_nsm_client(CARE_NOT, preq->rq_xprt, arg->name);
-  if(nsm_client != NULL)
-    {
-      /* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
-       *
-       * Cast the state number into a state pointer to protect
-       * locks from a client that has rebooted from being released
-       * by this NLM_FREE_ALL.
-       */
-      state_status = state_nlm_notify(nsm_client,
-				      req_ctx,
-				      (void *) (ptrdiff_t) arg->state);
-      if(state_status != STATE_SUCCESS)
-        {
-          /* NLM_FREE_ALL has void result so all we can do is log error */
-          LogWarn(COMPONENT_NLM,
-                  "NLM_FREE_ALL failed with result %s",
-                  state_err_str(state_status));
-        }
+	nsm_client = get_nsm_client(CARE_NOT, preq->rq_xprt, arg->name);
+	if (nsm_client != NULL) {
+		/* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
+		 *
+		 * Cast the state number into a state pointer to protect
+		 * locks from a client that has rebooted from being released
+		 * by this NLM_FREE_ALL.
+		 */
+		state_status =
+		    state_nlm_notify(nsm_client, req_ctx,
+				     (void *)(ptrdiff_t) arg->state);
+		if (state_status != STATE_SUCCESS) {
+			/* NLM_FREE_ALL has void result so all we can do is log error */
+			LogWarn(COMPONENT_NLM,
+				"NLM_FREE_ALL failed with result %s",
+				state_err_str(state_status));
+		}
 
-      dec_nsm_client_ref(nsm_client);
-    }
+		dec_nsm_client_ref(nsm_client);
+	}
 
-  LogDebug(COMPONENT_NLM,
-           "REQUEST RESULT: nlm4_Free_All DONE");
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Free_All DONE");
 
-  return NFS_REQ_OK;
+	return NFS_REQ_OK;
 }
 
 /**
@@ -97,5 +90,5 @@ int nlm4_Free_All(nfs_arg_t *parg,
  */
 void nlm4_Free_All_Free(nfs_res_t * pres)
 {
-  return;
+	return;
 }

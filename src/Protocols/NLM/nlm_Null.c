@@ -46,16 +46,13 @@
  *
  */
 
-int nlm_Null(nfs_arg_t *parg,
-             exportlist_t *pexport,
-	     struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres)
+int nlm_Null(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres)
 {
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
-  /* 0 is success */
-  return 0;
+	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
+	/* 0 is success */
+	return 0;
 }
 
 /**
@@ -68,5 +65,5 @@ int nlm_Null(nfs_arg_t *parg,
  */
 void nlm_Null_Free(nfs_res_t * pres)
 {
-  return;
+	return;
 }

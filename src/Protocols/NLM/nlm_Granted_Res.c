@@ -44,69 +44,62 @@
  * @param[out] pres
  *
  */
-int nlm4_Granted_Res(nfs_arg_t *parg,
-                     exportlist_t *pexport,
+int nlm4_Granted_Res(nfs_arg_t * parg, exportlist_t * pexport,
 		     struct req_op_context *req_ctx,
-                     nfs_worker_data_t *pworker,
-                     struct svc_req *preq,
-                     nfs_res_t *pres)
+		     nfs_worker_data_t * pworker, struct svc_req *preq,
+		     nfs_res_t * pres)
 {
-  nlm4_res             * arg = &parg->arg_nlm4_res;
-  char                   buffer[1024];
-  state_status_t         state_status = STATE_SUCCESS;
-  state_cookie_entry_t * cookie_entry;
+	nlm4_res *arg = &parg->arg_nlm4_res;
+	char buffer[1024];
+	state_status_t state_status = STATE_SUCCESS;
+	state_cookie_entry_t *cookie_entry;
 
-  netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
-           buffer);
+	netobj_to_string(&arg->cookie, buffer, 1024);
+	LogDebug(COMPONENT_NLM,
+		 "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
+		 buffer);
 
-  state_status = state_find_grant(arg->cookie.n_bytes,
-				  arg->cookie.n_len,
-				  &cookie_entry);
-  if(state_status != STATE_SUCCESS)
-    {
-      /* This must be an old NLM_GRANTED_RES */
-      LogFullDebug(COMPONENT_NLM,
-                   "Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
-                   buffer);
-      return NFS_REQ_OK;
-    }
+	state_status =
+	    state_find_grant(arg->cookie.n_bytes, arg->cookie.n_len,
+			     &cookie_entry);
+	if (state_status != STATE_SUCCESS) {
+		/* This must be an old NLM_GRANTED_RES */
+		LogFullDebug(COMPONENT_NLM,
+			     "Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
+			     buffer);
+		return NFS_REQ_OK;
+	}
 
-  PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
+	PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
 
-  if(cookie_entry->sce_lock_entry == NULL ||
-     cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data))
-    {
-      /* This must be an old NLM_GRANTED_RES */
-      PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
-      LogFullDebug(COMPONENT_NLM,
-                   "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
-                   buffer);
-      return NFS_REQ_OK;
-    }
+	if (cookie_entry->sce_lock_entry == NULL
+	    || cookie_entry->sce_lock_entry->sle_block_data == NULL
+	    || !nlm_block_data_to_export(cookie_entry->sce_lock_entry->
+					 sle_block_data)) {
+		/* This must be an old NLM_GRANTED_RES */
+		PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
+		LogFullDebug(COMPONENT_NLM,
+			     "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+			     buffer);
+		return NFS_REQ_OK;
+	}
 
-  PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-  if(arg->stat.stat != NLM4_GRANTED)
-    {
-      LogMajor(COMPONENT_NLM,
-               "Granted call failed due to client error, releasing lock");
-      state_status = state_release_grant(cookie_entry, req_ctx);
-      if(state_status != STATE_SUCCESS)
-        {
-          LogDebug(COMPONENT_NLM,
-                   "cache_inode_release_grant failed");
-        }
-    }
-  else
-    {
-      state_complete_grant(cookie_entry, req_ctx);
-      nlm_signal_async_resp(cookie_entry);
-    }
+	if (arg->stat.stat != NLM4_GRANTED) {
+		LogMajor(COMPONENT_NLM,
+			 "Granted call failed due to client error, releasing lock");
+		state_status = state_release_grant(cookie_entry, req_ctx);
+		if (state_status != STATE_SUCCESS) {
+			LogDebug(COMPONENT_NLM,
+				 "cache_inode_release_grant failed");
+		}
+	} else {
+		state_complete_grant(cookie_entry, req_ctx);
+		nlm_signal_async_resp(cookie_entry);
+	}
 
-  return NFS_REQ_OK;
+	return NFS_REQ_OK;
 }
 
 /**
@@ -120,5 +113,5 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
  */
 void nlm4_Granted_Res_Free(nfs_res_t * pres)
 {
-  return;
+	return;
 }
