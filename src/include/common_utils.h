@@ -44,7 +44,6 @@ extern int __build_bug_on_failed;
         } while(0)
 #endif
 
-
 /* Most machines scandir callback requires a const. But not all */
 #define SCANDIR_CONST           const
 
@@ -134,21 +133,21 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 
 #ifndef HAVE_STRNLEN
 #define strnlen(a,b)            gsh_strnlen(a,b)
-extern size_t gsh_strnlen(const char *s, size_t max);   /* prefix with gsh_ to prevent library conflict -- will fix properly with new build system */
+extern size_t gsh_strnlen(const char *s, size_t max);	/* prefix with gsh_ to prevent library conflict -- will fix properly with new build system */
 #endif
 
 #if defined(__APPLE__)
-#  define clock_gettime(a,ts)     portable_clock_gettime(ts)
+#define clock_gettime(a,ts)     portable_clock_gettime(ts)
 extern int portable_clock_gettime(struct timespec *ts);
-#  define pthread_yield()         pthread_yield_np()
-#  undef SCANDIR_CONST
-#  define SCANDIR_CONST
-#  undef HAVE_MNTENT_H
+#define pthread_yield()         pthread_yield_np()
+#undef SCANDIR_CONST
+#define SCANDIR_CONST
+#undef HAVE_MNTENT_H
 #endif
 
 #if defined(__FreeBSD__)
-#  undef SCANDIR_CONST
-#  define SCANDIR_CONST
+#undef SCANDIR_CONST
+#define SCANDIR_CONST
 #endif
 
 /* My habit with mutex */
@@ -288,7 +287,6 @@ extern int portable_clock_gettime(struct timespec *ts);
  * but too complicated to explain here).
  */
 
-
 /**
  * @brief Get the abs difference between two timespecs in nsecs
  *
@@ -304,14 +302,14 @@ static
 inline nsecs_elapsed_t timespec_diff(struct timespec *start,
 				     struct timespec *end)
 {
-	if((end->tv_sec > start->tv_sec) ||
-	   (end->tv_sec == start->tv_sec &&
-	    end->tv_nsec >= start->tv_nsec)) {
-		return (end->tv_sec - start->tv_sec) * NS_PER_SEC
-			+ (end->tv_nsec - start->tv_nsec);
+	if ((end->tv_sec > start->tv_sec)
+	    || (end->tv_sec == start->tv_sec
+		&& end->tv_nsec >= start->tv_nsec)) {
+		return (end->tv_sec - start->tv_sec) * NS_PER_SEC +
+		    (end->tv_nsec - start->tv_nsec);
 	} else {
-		return (start->tv_sec - end->tv_sec) * NS_PER_SEC
-			+ (start->tv_nsec - end->tv_nsec);
+		return (start->tv_sec - end->tv_sec) * NS_PER_SEC +
+		    (start->tv_nsec - end->tv_nsec);
 	}
 }
 
@@ -348,11 +346,11 @@ inline void nsecs_to_timespec(nsecs_elapsed_t interval,
 
 static
 inline void timespec_add_nsecs(nsecs_elapsed_t interval,
-			      struct timespec *timespec)
+			       struct timespec *timespec)
 {
 	timespec->tv_sec += (interval / NS_PER_SEC);
 	timespec->tv_nsec += (interval % NS_PER_SEC);
-	if(timespec->tv_nsec > NS_PER_SEC) {
+	if (timespec->tv_nsec > NS_PER_SEC) {
 		timespec->tv_sec += (timespec->tv_nsec / NS_PER_SEC);
 		timespec->tv_nsec = timespec->tv_nsec % NS_PER_SEC;
 	}
@@ -366,15 +364,14 @@ inline void timespec_add_nsecs(nsecs_elapsed_t interval,
  */
 
 static
-inline void timespec_sub_nsecs(nsecs_elapsed_t interval,
-			      struct timespec *t)
+inline void timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec *t)
 {
 	struct timespec ts;
 
 	nsecs_to_timespec(interval, &ts);
 
-	if(ts.tv_nsec > t->tv_nsec) {
-		t->tv_sec -= (ts.tv_sec +1);
+	if (ts.tv_nsec > t->tv_nsec) {
+		t->tv_sec -= (ts.tv_sec + 1);
 		t->tv_nsec = ts.tv_nsec - t->tv_nsec;
 	} else {
 		t->tv_sec -= ts.tv_sec;
@@ -395,23 +392,22 @@ inline void timespec_sub_nsecs(nsecs_elapsed_t interval,
  * @retval 1 @c t1 is greater-than @c t2
  */
 
-static inline int
-gsh_time_cmp(const struct timespec *t1,
-             const struct timespec *t2)
+static inline int gsh_time_cmp(const struct timespec *t1,
+			       const struct timespec *t2)
 {
-        if (t1->tv_sec < t2->tv_sec) {
-                return -1;
-        } else if (t1->tv_sec > t2->tv_sec) {
-                return 1;
-        } else {
-                if (t1->tv_nsec < t2->tv_nsec) {
-                        return -1;
-                } else if (t1->tv_nsec > t2->tv_nsec) {
-                        return 1;
-                }
-        }
+	if (t1->tv_sec < t2->tv_sec) {
+		return -1;
+	} else if (t1->tv_sec > t2->tv_sec) {
+		return 1;
+	} else {
+		if (t1->tv_nsec < t2->tv_nsec) {
+			return -1;
+		} else if (t1->tv_nsec > t2->tv_nsec) {
+			return 1;
+		}
+	}
 
-        return 0;
+	return 0;
 }
 
 /**
@@ -425,13 +421,11 @@ static inline void now(struct timespec *ts)
 	int rc;
 
 	rc = clock_gettime(CLOCK_REALTIME, ts);
-	if(rc != 0) {
+	if (rc != 0) {
 		LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
-		assert(0);  /* if this is broken, we are toast so die */
+		assert(0);	/* if this is broken, we are toast so die */
 	}
 }
-
-
 
 /**
  * @brief Copy a string into a buffer safely
@@ -474,8 +468,8 @@ static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
 static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
 {
 	int destlen = strlen(dest);
-	int remain  = dest_size - destlen;
-	int srclen  = strlen(src);
+	int remain = dest_size - destlen;
+	int srclen = strlen(src);
 	if (remain <= srclen) {
 		return -1;
 	}
@@ -483,4 +477,4 @@ static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
 	return 0;
 }
 
-#endif /* !COMMON_UTILS_H */
+#endif				/* !COMMON_UTILS_H */

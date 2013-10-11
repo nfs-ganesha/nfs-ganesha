@@ -29,10 +29,9 @@
 #ifndef MesureTemps_h
 #define MesureTemps_h
 
-struct Temps
-{
-  unsigned long secondes;
-  unsigned long micro_secondes;
+struct Temps {
+	unsigned long secondes;
+	unsigned long micro_secondes;
 };
 
 void MesureTemps(struct Temps *, struct Temps *);

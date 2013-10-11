@@ -84,11 +84,10 @@
  *  ReturnCode :
  *  Macro for returning a fsal_status_t without trace nor stats increment.
  */
-static inline fsal_status_t
-fsalstat(fsal_errors_t major, uint32_t minor)
-{                                                                       \
-        fsal_status_t status = {major, minor};
-        return status;
+static inline fsal_status_t fsalstat(fsal_errors_t major, uint32_t minor)
+{
+	fsal_status_t status = { major, minor };
+	return status;
 }
 
 /******************************************************
@@ -104,8 +103,6 @@ fsalstat(fsal_errors_t major, uint32_t minor)
 #define FSAL_IS_ERROR( _status_ ) \
         ( ! ( ( _status_ ).major == ERR_FSAL_NO_ERROR ) )
 
-
-
 /******************************************************
  *          FSAL extended attributes management.
  ******************************************************/
@@ -114,12 +111,11 @@ fsalstat(fsal_errors_t major, uint32_t minor)
 #define XATTRS_READLIST_FROM_BEGINNING  (0)
 
 /** An extented attribute entry */
-typedef struct fsal_xattrent
-{
-  uint64_t xattr_id; /*< xattr index */
-  uint64_t xattr_cookie; /*< cookie for getting xattrs list from the next entry */
-  struct attrlist attributes;/*< entry attributes (if supported) */
-  char xattr_name[MAXNAMLEN + 1]; /*< attribute name  */
+typedef struct fsal_xattrent {
+	uint64_t xattr_id;	/*< xattr index */
+	uint64_t xattr_cookie;	/*< cookie for getting xattrs list from the next entry */
+	struct attrlist attributes;	/*< entry attributes (if supported) */
+	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
 } fsal_xattrent_t;
 
 /* generic definitions for extended attributes */
@@ -131,7 +127,7 @@ typedef struct fsal_xattrent
 #define XATTR_RO           0x00000100
 #define XATTR_RW           0x00000200
 /* function for getting an attribute value */
-#define XATTR_RW_COOKIE ~0 
+#define XATTR_RW_COOKIE ~0
 
 /**
  * fsal2unix_mode:
@@ -162,7 +158,7 @@ uint32_t unix2fsal_mode(mode_t unix_mode);
  ******************************************************/
 
 #include "fsal_api.h"
-#include "FSAL/access_check.h" /* rethink where this should go */
+#include "FSAL/access_check.h"	/* rethink where this should go */
 
 void display_fsinfo(struct fsal_staticfsinfo_t *info);
 
@@ -175,5 +171,5 @@ static const size_t fsal_default_linksize = 4096;
 
 void destroy_fsals(void);
 
-#endif /* !FSAL_H */
+#endif				/* !FSAL_H */
 /** @} */

@@ -35,7 +35,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-
 #include "log.h"
 #include "nfs23.h"
 #include "nlm4.h"
@@ -54,12 +53,11 @@
  * @brief An NFSv2 filehandle (only used for (un)mount?)
  * This must be exactly 32 bytes long, and aligned on 32 bits
  */
-typedef struct file_handle_v2
-{
-  uint8_t fhversion; /*< set to 0x41 to separate from Linux knfsd */
-  uint8_t xattr_pos; /*< Used for xattr management */
-  uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint8_t fsopaque[28]; /*< Persistent part of FSAL handle */
+typedef struct file_handle_v2 {
+	uint8_t fhversion;	/*< set to 0x41 to separate from Linux knfsd */
+	uint8_t xattr_pos;	/*< Used for xattr management */
+	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
+	uint8_t fsopaque[28];	/*< Persistent part of FSAL handle */
 } file_handle_v2_t;
 
 /**
@@ -69,7 +67,7 @@ typedef struct file_handle_v2
  */
 
 struct alloc_file_handle_v2 {
-  struct file_handle_v2 handle; /* the real handle */
+	struct file_handle_v2 handle;	/* the real handle */
 };
 
 /**
@@ -78,13 +76,12 @@ struct alloc_file_handle_v2 {
  * This may be up to 64 bytes long, aligned on 32 bits
  */
 
-typedef struct file_handle_v3
-{
-  uint8_t fhversion; /*< Set to 0x41 to separate from Linux knfsd */
-  uint8_t xattr_pos; /*< Used for xattr management */
-  uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint8_t fs_len; /*< Actual length of opaque handle */
-  uint8_t fsopaque[]; /*< Persistent part of FSAL handle, <= 59 bytes */
+typedef struct file_handle_v3 {
+	uint8_t fhversion;	/*< Set to 0x41 to separate from Linux knfsd */
+	uint8_t xattr_pos;	/*< Used for xattr management */
+	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
+	uint8_t fs_len;		/*< Actual length of opaque handle */
+	uint8_t fsopaque[];	/*< Persistent part of FSAL handle, <= 59 bytes */
 } file_handle_v3_t;
 
 /**
@@ -95,8 +92,8 @@ typedef struct file_handle_v3
  */
 
 struct alloc_file_handle_v3 {
-	struct file_handle_v3 handle; /*< The real handle */
-	uint8_t pad[58]; /*< Pad to mandatory max 64 bytes */
+	struct file_handle_v3 handle;	/*< The real handle */
+	uint8_t pad[58];	/*< Pad to mandatory max 64 bytes */
 };
 
 /**
@@ -107,18 +104,18 @@ struct alloc_file_handle_v3 {
 
 static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 {
-  int padding = 0;
-  int hsize = 0;
+	int padding = 0;
+	int hsize = 0;
 
-  hsize = offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
+	hsize = offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
 
-  /* correct packet's fh length so it's divisible by 4 to trick dNFS into
-     working. This is essentially sending the padding. */
-  padding = (4 - (hsize%4))%4;
-  if ((hsize + padding) <= sizeof(struct alloc_file_handle_v3))
-    hsize += padding;
-  
-  return hsize;
+	/* correct packet's fh length so it's divisible by 4 to trick dNFS into
+	   working. This is essentially sending the padding. */
+	padding = (4 - (hsize % 4)) % 4;
+	if ((hsize + padding) <= sizeof(struct alloc_file_handle_v3))
+		hsize += padding;
+
+	return hsize;
 }
 
 #define FILE_HANDLE_V4_FLAG_DS 0x0001
@@ -129,13 +126,12 @@ static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
  * This may be up to 128 bytes, aligned on 32 bits.
  */
 
-typedef struct __attribute__((__packed__)) file_handle_v4
-{
-  uint8_t fhversion; /*< Set to 0x41 to separate from Linux knfsd */
-  uint16_t exportid; /*< Must be correlated to exportlist_t::id */
-  uint16_t flags; /*< To replace things like ds_flag */
-  uint8_t fs_len; /*< Length of opaque handle */
-  uint8_t fsopaque[]; /*< FSAL handle */
+typedef struct __attribute__ ((__packed__)) file_handle_v4 {
+	uint8_t fhversion;	/*< Set to 0x41 to separate from Linux knfsd */
+	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
+	uint16_t flags;		/*< To replace things like ds_flag */
+	uint8_t fs_len;		/*< Length of opaque handle */
+	uint8_t fsopaque[];	/*< FSAL handle */
 } file_handle_v4_t;
 
 /**
@@ -145,9 +141,9 @@ typedef struct __attribute__((__packed__)) file_handle_v4
  * where the opaque handle expands into.  Pad is struct aligned.
  */
 
-struct __attribute__((__packed__)) alloc_file_handle_v4 {
-	struct file_handle_v4 handle; /*< The real handle */
-	uint8_t pad[122]; /*< Pad to mandatory max 128 bytes */
+struct __attribute__ ((__packed__)) alloc_file_handle_v4 {
+	struct file_handle_v4 handle;	/*< The real handle */
+	uint8_t pad[122];	/*< Pad to mandatory max 128 bytes */
 };
 
 /**
@@ -158,18 +154,14 @@ struct __attribute__((__packed__)) alloc_file_handle_v4 {
 
 static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 {
-  return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
+	return offsetof(struct file_handle_v4, fsopaque)+hdl->fs_len;
 }
 
 #define LEN_FH_STR 1024
 
-
 /* File handle translation utility */
-cache_entry_t * nfs3_FhandleToCache(nfs_fh3 *,
-				   const struct req_op_context *,
-				   exportlist_t *,
-				   nfsstat3 *,
-				   int *);
+cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, const struct req_op_context *,
+				   exportlist_t *, nfsstat3 *, int *);
 
 bool nfs4_FSALToFhandle(nfs_fh4 *, const struct fsal_obj_handle *);
 bool nfs3_FSALToFhandle(nfs_fh3 *, const struct fsal_obj_handle *);
@@ -191,24 +183,24 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *);
  */
 static inline short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 {
-  file_handle_v3_t *pfile_handle;
+	file_handle_v3_t *pfile_handle;
 
-  if(nfs3_Is_Fh_Invalid(pfh3) != NFS4_OK)
-    return -1;                  /* Badly formed argument */
+	if (nfs3_Is_Fh_Invalid(pfh3) != NFS4_OK)
+		return -1;	/* Badly formed argument */
 
-  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+	pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
-  return pfile_handle->exportid;
-}                               /* nfs3_FhandleToExportId */
+	return pfile_handle->exportid;
+}				/* nfs3_FhandleToExportId */
 
 static inline short nlm4_FhandleToExportId(netobj * pfh3)
 {
-  nfs_fh3 fh3;
-  if(pfh3 == NULL)
-    return nfs3_FhandleToExportId(NULL);
-  fh3.data.data_val = pfh3->n_bytes;
-  fh3.data.data_len = pfh3->n_len;
-  return nfs3_FhandleToExportId(&fh3);
+	nfs_fh3 fh3;
+	if (pfh3 == NULL)
+		return nfs3_FhandleToExportId(NULL);
+	fh3.data.data_val = pfh3->n_bytes;
+	fh3.data.data_len = pfh3->n_len;
+	return nfs3_FhandleToExportId(&fh3);
 }
 
 /**
@@ -224,28 +216,24 @@ static inline short nlm4_FhandleToExportId(netobj * pfh3)
  */
 static inline int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
 {
-  if(pfh == NULL)
-    {
-      LogMajor(COMPONENT_FILEHANDLE,
-               "INVALID HANDLE: pfh=NULL");
-      return NFS4ERR_NOFILEHANDLE;
-    }
+	if (pfh == NULL) {
+		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: pfh=NULL");
+		return NFS4ERR_NOFILEHANDLE;
+	}
 
-  if(pfh->nfs_fh4_len == 0)
-    {
-      LogInfo(COMPONENT_FILEHANDLE,
-              "INVALID HANDLE: empty");
-      return NFS4ERR_NOFILEHANDLE;
-    }
+	if (pfh->nfs_fh4_len == 0) {
+		LogInfo(COMPONENT_FILEHANDLE, "INVALID HANDLE: empty");
+		return NFS4ERR_NOFILEHANDLE;
+	}
 
-  return NFS4_OK;
-}                               /* nfs4_Is_Fh_Empty */
+	return NFS4_OK;
+}				/* nfs4_Is_Fh_Empty */
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
-int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data);
+int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data);
 
 /* File handle print function (mostly used for debugging) */
 void print_fhandle2(log_components_t, fhandle2 *);
@@ -255,10 +243,10 @@ void print_fhandle_nlm(log_components_t, netobj *);
 void print_buff(log_components_t, char *, int);
 void LogCompoundFH(compound_data_t *);
 
-void sprint_fhandle2(char *str, fhandle2 *fh);
-void sprint_fhandle3(char *str, nfs_fh3 *fh);
-void sprint_fhandle4(char *str, nfs_fh4 *fh);
-void sprint_fhandle_nlm(char *str, netobj *fh);
+void sprint_fhandle2(char *str, fhandle2 * fh);
+void sprint_fhandle3(char *str, nfs_fh3 * fh);
+void sprint_fhandle4(char *str, nfs_fh4 * fh);
+void sprint_fhandle_nlm(char *str, netobj * fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
 
@@ -272,4 +260,4 @@ void sprint_mem(char *str, char *buff, int len);
       }							    \
   } while (0)
 
-#endif/* NFS_FILE_HANDLE_H */
+#endif				/* NFS_FILE_HANDLE_H */

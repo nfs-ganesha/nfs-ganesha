@@ -27,4 +27,4 @@
 #define QUOTACTL(cmd, path, id, addr) \
 	quotactl((cmd), path, id, (caddr_t)addr);
 
-#endif /* _QUOTA_LINUX_H */
+#endif				/* _QUOTA_LINUX_H */

@@ -5,8 +5,8 @@
 #include <sys/param.h>
 
 #include "ganesha_rpc.h"
-#include <dirent.h>             /* for having MAXNAMLEN */
-#include <netdb.h>              /* for having MAXHOSTNAMELEN */
+#include <dirent.h>		/* for having MAXNAMLEN */
+#include <netdb.h>		/* for having MAXHOSTNAMELEN */
 #include "HashTable.h"
 
 /* IP/name cache error */
@@ -18,24 +18,23 @@
 #define IP_NAME_PREALLOC_SIZE      200
 
 /* NFS IPaddr cache entry structure */
-typedef struct nfs_ip_name__
-{
-  time_t timestamp;
-  char hostname[MAXHOSTNAMELEN + 1];
+typedef struct nfs_ip_name__ {
+	time_t timestamp;
+	char hostname[MAXHOSTNAMELEN + 1];
 } nfs_ip_name_t;
 
-int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size);
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size);
-int nfs_ip_name_remove(sockaddr_t *ipaddr);
+int nfs_ip_name_get(sockaddr_t * ipaddr, char *hostname, size_t size);
+int nfs_ip_name_add(sockaddr_t * ipaddr, char *hostname, size_t size);
+int nfs_ip_name_remove(sockaddr_t * ipaddr);
 
 int nfs_ip_name_populate(char *path);
 
-int display_ip_name_key(struct gsh_buffdesc * pbuff, char *str);
-int display_ip_name_val(struct gsh_buffdesc * pbuff, char *str);
-int compare_ip_name(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
+int display_ip_name_key(struct gsh_buffdesc *pbuff, char *str);
+int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str);
+int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
-                               struct gsh_buffdesc * buffclef);
+			       struct gsh_buffdesc *buffclef);
 uint32_t ip_name_value_hash_func(hash_parameter_t * p_hparam,
-                                 struct gsh_buffdesc * buffclef);
+				 struct gsh_buffdesc *buffclef);
 
 #endif

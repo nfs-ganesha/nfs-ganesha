@@ -72,89 +72,86 @@
 /*
  * Log message severity constants
  */
-typedef enum log_levels
-{
-  NIV_NULL,
-  NIV_FATAL,
-  NIV_MAJ,
-  NIV_CRIT,
-  NIV_WARN,
-  NIV_EVENT,
-  NIV_INFO,
-  NIV_DEBUG,
-  NIV_MID_DEBUG,	// new debug log level
-  NIV_FULL_DEBUG,
-  NB_LOG_LEVEL
+typedef enum log_levels {
+	NIV_NULL,
+	NIV_FATAL,
+	NIV_MAJ,
+	NIV_CRIT,
+	NIV_WARN,
+	NIV_EVENT,
+	NIV_INFO,
+	NIV_DEBUG,
+	NIV_MID_DEBUG,		// new debug log level
+	NIV_FULL_DEBUG,
+	NB_LOG_LEVEL
 } log_levels_t;
 
 /*
  * Log components used throughout the code.
  */
-typedef enum log_components
-{
-  COMPONENT_ALL = 0,               /* Used for changing logging for all
-                                    * components */
-  COMPONENT_LOG,                   /* Keep this first, some code depends on it
-                                    * being the first component */
-  COMPONENT_LOG_EMERG,             /* Component for logging emergency log
-                                    * messages - avoid infinite recursion */
-  COMPONENT_MEMALLOC,
-  COMPONENT_MEMLEAKS,
-  COMPONENT_FSAL,
-  COMPONENT_NFSPROTO,
-  COMPONENT_NFS_V4,
-  COMPONENT_NFS_V4_PSEUDO,
-  COMPONENT_FILEHANDLE,
-  COMPONENT_NFS_SHELL,
-  COMPONENT_DISPATCH,
-  COMPONENT_CACHE_INODE,
-  COMPONENT_CACHE_INODE_GC,
-  COMPONENT_CACHE_INODE_LRU,
-  COMPONENT_HASHTABLE,
-  COMPONENT_HASHTABLE_CACHE,
-  COMPONENT_LRU,
-  COMPONENT_DUPREQ,
-  COMPONENT_RPCSEC_GSS,
-  COMPONENT_INIT,
-  COMPONENT_MAIN,
-  COMPONENT_IDMAPPER,
-  COMPONENT_NFS_READDIR,
-  COMPONENT_NFS_V4_LOCK,
-  COMPONENT_NFS_V4_XATTR,
-  COMPONENT_NFS_V4_REFERRAL,
-  COMPONENT_MEMCORRUPT,
-  COMPONENT_CONFIG,
-  COMPONENT_CLIENTID,
-  COMPONENT_STDOUT,
-  COMPONENT_SESSIONS,
-  COMPONENT_PNFS,
-  COMPONENT_RPC_CACHE,
-  COMPONENT_RW_LOCK,
-  COMPONENT_NLM,
-  COMPONENT_RPC,
-  COMPONENT_NFS_CB,
-  COMPONENT_THREAD,
-  COMPONENT_NFS_V4_ACL,
-  COMPONENT_STATE,
-  COMPONENT_9P,
-  COMPONENT_9P_DISPATCH,
-  COMPONENT_FSAL_UP,
-  COMPONENT_DBUS,
-  /* All real log components must be above this line.
-   * Components below are for special purposes and may
-   * only be manipulated individually.
-   */
-  COMPONENT_FAKE,
-  LOG_MESSAGE_DEBUGINFO,
-  COMPONENT_COUNT
+typedef enum log_components {
+	COMPONENT_ALL = 0,	/* Used for changing logging for all
+				 * components */
+	COMPONENT_LOG,		/* Keep this first, some code depends on it
+				 * being the first component */
+	COMPONENT_LOG_EMERG,	/* Component for logging emergency log
+				 * messages - avoid infinite recursion */
+	COMPONENT_MEMALLOC,
+	COMPONENT_MEMLEAKS,
+	COMPONENT_FSAL,
+	COMPONENT_NFSPROTO,
+	COMPONENT_NFS_V4,
+	COMPONENT_NFS_V4_PSEUDO,
+	COMPONENT_FILEHANDLE,
+	COMPONENT_NFS_SHELL,
+	COMPONENT_DISPATCH,
+	COMPONENT_CACHE_INODE,
+	COMPONENT_CACHE_INODE_GC,
+	COMPONENT_CACHE_INODE_LRU,
+	COMPONENT_HASHTABLE,
+	COMPONENT_HASHTABLE_CACHE,
+	COMPONENT_LRU,
+	COMPONENT_DUPREQ,
+	COMPONENT_RPCSEC_GSS,
+	COMPONENT_INIT,
+	COMPONENT_MAIN,
+	COMPONENT_IDMAPPER,
+	COMPONENT_NFS_READDIR,
+	COMPONENT_NFS_V4_LOCK,
+	COMPONENT_NFS_V4_XATTR,
+	COMPONENT_NFS_V4_REFERRAL,
+	COMPONENT_MEMCORRUPT,
+	COMPONENT_CONFIG,
+	COMPONENT_CLIENTID,
+	COMPONENT_STDOUT,
+	COMPONENT_SESSIONS,
+	COMPONENT_PNFS,
+	COMPONENT_RPC_CACHE,
+	COMPONENT_RW_LOCK,
+	COMPONENT_NLM,
+	COMPONENT_RPC,
+	COMPONENT_NFS_CB,
+	COMPONENT_THREAD,
+	COMPONENT_NFS_V4_ACL,
+	COMPONENT_STATE,
+	COMPONENT_9P,
+	COMPONENT_9P_DISPATCH,
+	COMPONENT_FSAL_UP,
+	COMPONENT_DBUS,
+	/* All real log components must be above this line.
+	 * Components below are for special purposes and may
+	 * only be manipulated individually.
+	 */
+	COMPONENT_FAKE,
+	LOG_MESSAGE_DEBUGINFO,
+	COMPONENT_COUNT
 } log_components_t;
 
-typedef struct loglev
-{
-  log_levels_t value;
-  char *str;
-  char *short_str;
-  int syslog_level;
+typedef struct loglev {
+	log_levels_t value;
+	char *str;
+	char *short_str;
+	int syslog_level;
 } log_level_t;
 
 extern log_level_t tabLogLevel[NB_LOG_LEVEL];
@@ -166,30 +163,27 @@ extern log_level_t tabLogLevel[NB_LOG_LEVEL];
 #define LOG_LABEL_LEN 50
 #define LOG_MSG_LEN   255
 
-typedef struct
-{
-  int numero;
-  char label[LOG_LABEL_LEN];
-  char msg[LOG_MSG_LEN];
+typedef struct {
+	int numero;
+	char label[LOG_LABEL_LEN];
+	char msg[LOG_MSG_LEN];
 } family_error_t;
 
 /* Error family type */
-typedef struct
-{
-  int num_family;
-  char name_family[STR_LEN];
-  family_error_t *tab_err;
+typedef struct {
+	int num_family;
+	char name_family[STR_LEN];
+	family_error_t *tab_err;
 } family_t;
 
 typedef family_error_t status_t;
 typedef family_error_t errctx_t;
 
-typedef struct
-{
-  int err_family;
-  int ctx_family;
-  errctx_t contexte;
-  status_t status;
+typedef struct {
+	int err_family;
+	int ctx_family;
+	errctx_t contexte;
+	status_t status;
 } log_error_t;
 
 #define ERR_NULL -1
@@ -272,84 +266,46 @@ typedef struct
 
 #define ERR_POSIX 1
 
-static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
-{
-  {
-  0, "NO_ERROR", "No errors"},
-  {
-  EPERM, "EPERM", "Reserved to root"},
-  {
-  ENOENT, "ENOENT", "No such file or directory"},
-  {
-  ESRCH, "ESRCH", "No such process"},
-  {
-  EINTR, "EINTR", "interrupted system call"},
-  {
-  EIO, "EIO", "I/O error"},
-  {
-  ENXIO, "ENXIO", "No such device or address"},
-  {
-  E2BIG, "E2BIG", "Arg list too long"},
-  {
-  ENOEXEC, "ENOEXEC", "Exec format error"},
-  {
-  EBADF, "EBADF", "Bad file number"},
-  {
-  ECHILD, "ECHILD", "No children"},
-  {
-  EAGAIN, "EAGAIN", "Resource temporarily unavailable"},
-  {
-  ENOMEM, "ENOMEM", "Not enough core"},
-  {
-  EACCES, "ENOMEM", "Permission denied"},
-  {
-  EFAULT, "EFAULT", "Bad address"},
-  {
-  ENOTBLK, "ENOTBLK", "Block device required"},
-  {
-  EBUSY, "EBUSY", "Mount device busy"},
-  {
-  EEXIST, "EEXIST", "File exists"},
-  {
-  EXDEV, "EXDEV", "Cross-device link"},
-  {
-  ENODEV, "ENODEV", "No such device"},
-  {
-  ENOTDIR, "ENOTDIR", "Not a directory"},
-  {
-  EISDIR, "EISDIR", "Is a directory"},
-  {
-  EINVAL, "EINVAL", "Invalid argument"},
-  {
-  ENFILE, "ENFILE", "File table overflow"},
-  {
-  EMFILE, "EMFILE", "Too many open files"},
-  {
-  ENOTTY, "ENOTTY", "Inappropriate ioctl for device"},
-  {
-  ETXTBSY, "ETXTBSY", "Text file busy"},
-  {
-  EFBIG, "EFBIG", "File too large"},
-  {
-  ENOSPC, "ENOSPC", "No space left on device"},
-  {
-  ESPIPE, "ESPIPE", "Illegal seek"},
-  {
-  EROFS, "EROFS", "Read only file system"},
-  {
-  EMLINK, "EMLINK", "Too many links"},
-  {
-  EPIPE, "EPIPE", "Broken pipe"},
-  {
-  EDOM, "EDOM", "Math arg out of domain of func"},
-  {
-  ERANGE, "ERANGE", "Math result not representable"},
-  {
-  ENOMSG, "ENOMSG", "No message of desired type"},
-  {
-  EIDRM, "EIDRM", "Identifier removed"},
-  {
-  ERR_NULL, "ERR_NULL", ""}
+static status_t __attribute__ ((__unused__)) tab_systeme_status[] = {
+	{
+	0, "NO_ERROR", "No errors"}, {
+	EPERM, "EPERM", "Reserved to root"}, {
+	ENOENT, "ENOENT", "No such file or directory"}, {
+	ESRCH, "ESRCH", "No such process"}, {
+	EINTR, "EINTR", "interrupted system call"}, {
+	EIO, "EIO", "I/O error"}, {
+	ENXIO, "ENXIO", "No such device or address"}, {
+	E2BIG, "E2BIG", "Arg list too long"}, {
+	ENOEXEC, "ENOEXEC", "Exec format error"}, {
+	EBADF, "EBADF", "Bad file number"}, {
+	ECHILD, "ECHILD", "No children"}, {
+	EAGAIN, "EAGAIN", "Resource temporarily unavailable"}, {
+	ENOMEM, "ENOMEM", "Not enough core"}, {
+	EACCES, "ENOMEM", "Permission denied"}, {
+	EFAULT, "EFAULT", "Bad address"}, {
+	ENOTBLK, "ENOTBLK", "Block device required"}, {
+	EBUSY, "EBUSY", "Mount device busy"}, {
+	EEXIST, "EEXIST", "File exists"}, {
+	EXDEV, "EXDEV", "Cross-device link"}, {
+	ENODEV, "ENODEV", "No such device"}, {
+	ENOTDIR, "ENOTDIR", "Not a directory"}, {
+	EISDIR, "EISDIR", "Is a directory"}, {
+	EINVAL, "EINVAL", "Invalid argument"}, {
+	ENFILE, "ENFILE", "File table overflow"}, {
+	EMFILE, "EMFILE", "Too many open files"}, {
+	ENOTTY, "ENOTTY", "Inappropriate ioctl for device"}, {
+	ETXTBSY, "ETXTBSY", "Text file busy"}, {
+	EFBIG, "EFBIG", "File too large"}, {
+	ENOSPC, "ENOSPC", "No space left on device"}, {
+	ESPIPE, "ESPIPE", "Illegal seek"}, {
+	EROFS, "EROFS", "Read only file system"}, {
+	EMLINK, "EMLINK", "Too many links"}, {
+	EPIPE, "EPIPE", "Broken pipe"}, {
+	EDOM, "EDOM", "Math arg out of domain of func"}, {
+	ERANGE, "ERANGE", "Math result not representable"}, {
+	ENOMSG, "ENOMSG", "No message of desired type"}, {
+	EIDRM, "EIDRM", "Identifier removed"}, {
+	ERR_NULL, "ERR_NULL", ""}
 };
 
 /* other codes families */
@@ -359,11 +315,10 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 #define ERR_CACHE_INODE   16
 
 /* previously at log_macros.h */
-typedef void (*cleanup_function)(void);
-typedef struct cleanup_list_element
-{
-  struct cleanup_list_element *next;
-  cleanup_function             clean;
+typedef void (*cleanup_function) (void);
+typedef struct cleanup_list_element {
+	struct cleanup_list_element *next;
+	cleanup_function clean;
 } cleanup_list_element;
 
 /* Allocates buffer containing debug info to be printed.
@@ -377,7 +332,7 @@ char *get_debug_info(int *size);
 void SetNamePgm(const char *nom);
 void SetNameHost(const char *nom);
 void SetDefaultLogging(const char *name);
-void SetNameFunction(const char *nom); /* thread safe */
+void SetNameFunction(const char *nom);	/* thread safe */
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
@@ -391,24 +346,18 @@ void SetLevelDebug(int level_to_set);
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
-int display_LogError(struct display_buffer * dspbuf,
-                     int                     num_family,
-                     int                     num_error,
-                     int                     status);
+int display_LogError(struct display_buffer *dspbuf, int num_family,
+		     int num_error, int status);
 
-static inline void MakeLogError(char   * buffer,
-                                size_t   size,
-                                int      num_family,
-                                int      num_error,
-                                int      status,
-                                int      line)
+static inline void MakeLogError(char *buffer, size_t size, int num_family,
+				int num_error, int status, int line)
 {
-  struct display_buffer dspbuf = {size, buffer, buffer};
-  (void) display_LogError(&dspbuf, num_family, num_error, status);
+	struct display_buffer dspbuf = { size, buffer, buffer };
+	(void)display_LogError(&dspbuf, num_family, num_error, status);
 }
 
 /* previously at log_macros.h */
-void RegisterCleanup(cleanup_list_element *clean);
+void RegisterCleanup(cleanup_list_element * clean);
 void Cleanup(void);
 void Fatal(void);
 
@@ -417,82 +366,70 @@ void Fatal(void);
  */
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
-void DisplayLogComponentLevel(log_components_t   component,
-                              char             * file,
-                              int                line,
-                              char             * function,
-                              log_levels_t       level,
-                              char             * format, ...)
-__attribute__((format(printf, 6, 7))); /* 6=format 7=params */ ;
+void DisplayLogComponentLevel(log_components_t component, char *file, int line,
+			      char *function, log_levels_t level, char *format,
+			      ...)
+    __attribute__ ((format(printf, 6, 7))); /* 6=format 7=params */ ;
 
-void DisplayErrorComponentLogLine(log_components_t   component,
-                                  char             * file,
-                                  int                line,
-                                  char             * function,
-                                  int                num_family,
-                                  int                num_error,
-                                  int                status);
+void DisplayErrorComponentLogLine(log_components_t component, char *file,
+				  int line, char *function, int num_family,
+				  int num_error, int status);
 
 int read_log_config(config_file_t in_config);
 void reread_log_config();
 
-typedef enum log_type
-{
-  SYSLOG = 0,
-  FILELOG,
-  STDERRLOG,
-  STDOUTLOG,
-  TESTLOG
+typedef enum log_type {
+	SYSLOG = 0,
+	FILELOG,
+	STDERRLOG,
+	STDOUTLOG,
+	TESTLOG
 } log_type_t;
 
-typedef enum log_header_t
-{
-  LH_NONE,
-  LH_COMPONENT,
-  LH_ALL
+typedef enum log_header_t {
+	LH_NONE,
+	LH_COMPONENT,
+	LH_ALL
 } log_header_t;
 
 struct log_facility;
 
-typedef int (lf_function_t) (struct log_facility   * facility,
-                             log_levels_t            level,
-                             struct display_buffer * buffer,
-                             char                  * compstr,
-                             char                  * message);
+typedef int (lf_function_t) (struct log_facility * facility, log_levels_t level,
+			     struct display_buffer * buffer, char *compstr,
+			     char *message);
 
 /**
  * @brief Define the structure for a log facility.
  *
  */
-struct log_facility
-{
-  struct glist_head   lf_list;        /*< List of log facilities */
-  struct glist_head   lf_active;      /*< This is an active facility */
-  char              * lf_name;        /*< Name of log facility */
-  log_levels_t        lf_max_level;   /*< Max log level for this facility    */
-  log_header_t        lf_headers;     /*< If time stamp etc. are part of msg */
-  lf_function_t     * lf_func;        /*< Function that describes facility   */
-  void              * lf_private;     /*< Private info for facility          */
+struct log_facility {
+	struct glist_head lf_list;	/*< List of log facilities */
+	struct glist_head lf_active;	/*< This is an active facility */
+	char *lf_name;		/*< Name of log facility */
+	log_levels_t lf_max_level;	/*< Max log level for this facility    */
+	log_header_t lf_headers;	/*< If time stamp etc. are part of msg */
+	lf_function_t *lf_func;	/*< Function that describes facility   */
+	void *lf_private;	/*< Private info for facility          */
 };
 
-void deactivate_log_facility(struct log_facility * facility);
-void activate_log_facility(struct log_facility * facility);
-int register_log_facility(struct log_facility * facility);
-int unregister_log_facility(struct log_facility * facility);
-int activate_custom_log_facility(struct log_facility * facility);
+void deactivate_log_facility(struct log_facility *facility);
+void activate_log_facility(struct log_facility *facility);
+int register_log_facility(struct log_facility *facility);
+int unregister_log_facility(struct log_facility *facility);
+int activate_custom_log_facility(struct log_facility *facility);
 
-typedef struct log_component_info
-{
-  log_components_t        comp_value;
-  const char            * comp_name;
-  const char            * comp_str;
-  log_levels_t            comp_log_level;
-  int                     comp_env_set;
+typedef struct log_component_info {
+	log_components_t comp_value;
+	const char *comp_name;
+	const char *comp_str;
+	log_levels_t comp_log_level;
+	int comp_env_set;
 } log_component_info;
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level
 
-extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
+extern log_component_info
+    __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
@@ -679,10 +616,9 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
     } \
   } while (0)
 
-
 /*
  *  Re-export component logging to TI-RPC internal logging
  */
-void rpc_warnx(/* const */ char *fmt, ...);
+void rpc_warnx( /* const */ char *fmt, ...);
 
 #endif

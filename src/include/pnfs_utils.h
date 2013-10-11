@@ -62,8 +62,8 @@ static inline bool pnfs_segments_overlap(const struct pnfs_segment *segment1,
 	} else if (segment1->offset < segmenta->offset) {
 		if (segment1->length == NFS4_UINT64_MAX) {
 			return true;
-		} else if (segment1->offset + segment1->length
-			   < segmenta->offset) {
+		} else if (segment1->offset + segment1->length <
+			   segmenta->offset) {
 			return false;
 		} else {
 			return true;
@@ -135,9 +135,11 @@ static inline bool pnfs_segment_contains(const struct pnfs_segment *segment1,
  *	   segments.
  */
 
-static inline struct pnfs_segment pnfs_segment_difference(
-	const struct pnfs_segment *minuend,
-	const struct pnfs_segment *subtrahend)
+static inline struct pnfs_segment pnfs_segment_difference(const struct
+							  pnfs_segment *minuend,
+							  const struct
+							  pnfs_segment
+							  *subtrahend)
 {
 	if (!(minuend->io_mode & subtrahend->io_mode)) {
 		return *minuend;
@@ -156,8 +158,9 @@ static inline struct pnfs_segment pnfs_segment_difference(
 				struct pnfs_segment difference = {
 					.io_mode = minuend->io_mode,
 					.offset = minuend->offset,
-					.length = (subtrahend->offset
-						   - minuend->offset)
+					.length =
+					    (subtrahend->offset -
+					     minuend->offset)
 				};
 				return difference;
 			} else {
@@ -171,8 +174,9 @@ static inline struct pnfs_segment pnfs_segment_difference(
 				struct pnfs_segment difference = {
 					.io_mode = minuend->io_mode,
 					.offset = minuend->offset,
-					.length = (minuend->offset
-						   - subtrahend->offset)
+					.length =
+					    (minuend->offset -
+					     subtrahend->offset)
 				};
 				return difference;
 			}
@@ -195,11 +199,9 @@ static inline struct pnfs_segment pnfs_segment_difference(
  *	      Convenience XDR functions
  ******************************************************/
 
-bool xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
+bool xdr_fsal_deviceid(XDR * xdrs, struct pnfs_deviceid * deviceid);
 
-nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
-				  uint16_t proto,
-				  uint32_t addr,
+nfsstat4 FSAL_encode_ipv4_netaddr(XDR * xdrs, uint16_t proto, uint32_t addr,
 				  uint16_t port);
 
 /**
@@ -208,27 +210,24 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
  */
 
 typedef struct fsal_multipath_member {
-	uint16_t proto; /*< Protocool number */
-	uint32_t addr; /*< IPv4 address */
-	uint16_t port; /*< Port */
+	uint16_t proto;		/*< Protocool number */
+	uint32_t addr;		/*< IPv4 address */
+	uint16_t port;		/*< Port */
 } fsal_multipath_member_t;
 
-nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
+nfsstat4 FSAL_encode_file_layout(XDR * xdrs,
 				 const struct pnfs_deviceid *deviceid,
-				 nfl_util4 util,
-				 const uint32_t first_idx,
+				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
 				 const unsigned int export_id,
 				 const uint32_t num_fhs,
 				 const struct gsh_buffdesc *fhs);
 
-
-nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs,
-				  const uint32_t num_hosts,
-				  const fsal_multipath_member_t *hosts);
+nfsstat4 FSAL_encode_v4_multipath(XDR * xdrs, const uint32_t num_hosts,
+				  const fsal_multipath_member_t * hosts);
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
 
 uint64_t pnfs_common_dummy(void);
 
-#endif /* PNFS_UTILS_H */
+#endif				/* PNFS_UTILS_H */

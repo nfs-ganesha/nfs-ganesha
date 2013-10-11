@@ -31,7 +31,6 @@
  * @{
  */
 
-
 /**
  * @file idmapper.c
  * @brief Id mapping functions
@@ -56,23 +55,15 @@ extern pthread_rwlock_t idmapper_user_lock;
 extern pthread_rwlock_t idmapper_group_lock;
 
 void idmapper_cache_init(void);
-bool idmapper_add_user(const struct gsh_buffdesc *,
-		       uid_t,
-		       const gid_t *,
+bool idmapper_add_user(const struct gsh_buffdesc *, uid_t, const gid_t *,
 		       bool gss_princ);
-bool idmapper_add_group(const struct gsh_buffdesc *,
-			gid_t);
-bool idmapper_lookup_by_uname(const struct gsh_buffdesc *,
-			      uid_t *,
-			      const gid_t **,
-		       	      bool gss_princ);
-bool idmapper_lookup_by_uid(const uid_t,
-			    const struct gsh_buffdesc **,
+bool idmapper_add_group(const struct gsh_buffdesc *, gid_t);
+bool idmapper_lookup_by_uname(const struct gsh_buffdesc *, uid_t *,
+			      const gid_t **, bool gss_princ);
+bool idmapper_lookup_by_uid(const uid_t, const struct gsh_buffdesc **,
 			    const gid_t **);
-bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name,
-			      uid_t *gid);
-bool idmapper_lookup_by_gid(const gid_t gid,
-			    const struct gsh_buffdesc **name);
+bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t * gid);
+bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name);
 /** @} */
 
 bool idmapper_init(void);
@@ -84,7 +75,6 @@ bool xdr_encode_nfs4_group(XDR *, gid_t);
 bool name2uid(const struct gsh_buffdesc *, uid_t *, const uid_t);
 bool name2gid(const struct gsh_buffdesc *, gid_t *, const gid_t);
 
-
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
 bool principal2uid(char *, uid_t *, gid_t *, struct svc_rpc_gss_data *);
@@ -93,5 +83,5 @@ bool principal2uid(char *, uid_t *, gid_t *);
 #endif
 #endif
 
-#endif /* IDMAPPER_H */
+#endif				/* IDMAPPER_H */
 /** @} */

@@ -58,18 +58,18 @@ typedef struct nfs4_cb_tag {
 /* CB compound tags */
 #define NFS4_CB_TAG_DEFAULT 0
 
-void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
-			 uint32_t minorversion, uint32_t ident,
-			 char *tag, uint32_t tag_len);
+void cb_compound_init_v4(nfs4_compound_t * cbt, uint32_t n_ops,
+			 uint32_t minorversion, uint32_t ident, char *tag,
+			 uint32_t tag_len);
 
-void cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src);
+void cb_compound_add_op(nfs4_compound_t * cbt, nfs_cb_argop4 * src);
 
-void cb_compound_free(nfs4_compound_t *cbt);
+void cb_compound_free(nfs4_compound_t * cbt);
 
 #define NFS_CB_FLAG_NONE 0x0000
 #define NFS_RPC_FLAG_NONE 0x0000
 
-enum nfs_cb_call_states{
+enum nfs_cb_call_states {
 	NFS_CB_CALL_NONE,
 	NFS_CB_CALL_QUEUED,
 	NFS_CB_CALL_DISPATCH,
@@ -79,7 +79,7 @@ enum nfs_cb_call_states{
 };
 
 rpc_call_t *alloc_rpc_call();
-void free_rpc_call(rpc_call_t *call);
+void free_rpc_call(rpc_call_t * call);
 
 static inline nfs_cb_argop4 *alloc_cb_argop(uint32_t cnt)
 {
@@ -91,21 +91,20 @@ static inline nfs_cb_resop4 *alloc_cb_resop(uint32_t cnt)
 	return (gsh_calloc(cnt, sizeof(nfs_cb_resop4)));
 }
 
-static inline void free_cb_argop(nfs_cb_argop4 *ptr)
+static inline void free_cb_argop(nfs_cb_argop4 * ptr)
 {
 	gsh_free(ptr);
 }
 
-static inline void free_cb_resop(nfs_cb_resop4 *ptr)
+static inline void free_cb_resop(nfs_cb_resop4 * ptr)
 {
 	gsh_free(ptr);
 }
 
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t * pclientid,
 				     uint32_t flags);
 
-enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
-			   struct timeval timeout,
+enum clnt_stat rpc_cb_null(rpc_call_channel_t * chan, struct timeval timeout,
 			   bool locked);
 
 static inline void nfs_rpc_init_call(void *ptr, void *parameters)
@@ -117,40 +116,34 @@ static inline void nfs_rpc_init_call(void *ptr, void *parameters)
 
 void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);
-int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
-			    uint32_t flags);
+int nfs_rpc_create_chan_v40(nfs_client_id_t * pclientid, uint32_t flags);
 
-int nfs_rpc_create_chan_v41(nfs41_session_t *session,
-			    int num_sec_parms,
-			    callback_sec_parms4 *sec_parms);
+int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
+			    callback_sec_parms4 * sec_parms);
 
 /* Dispose a channel. */
-void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+void nfs_rpc_destroy_chan(rpc_call_channel_t * chan);
 
 int nfs_rpc_call_init(rpc_call_t call, uint32_t flags);
 
 #define NFS_RPC_CALL_NONE 0x0000
-#define NFS_RPC_CALL_INLINE 0x0001 /*< execute in current thread ctxt */
+#define NFS_RPC_CALL_INLINE 0x0001	/*< execute in current thread ctxt */
 #define NFS_RPC_CALL_BROADCAST 0x0002
 
 /* Submit rpc to be called on chan, optionally waiting for completion. */
-int32_t nfs_rpc_submit_call(rpc_call_t *call,
-			    void *completion_arg,
+int32_t nfs_rpc_submit_call(rpc_call_t * call, void *completion_arg,
 			    uint32_t flags);
 
 /* Dispatch method to process a (queued) call */
-int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+int32_t nfs_rpc_dispatch_call(rpc_call_t * call, uint32_t flags);
 
-int nfs_rpc_v41_single(nfs_client_id_t *clientid,
-		       nfs_cb_argop4 *op,
+int nfs_rpc_v41_single(nfs_client_id_t * clientid, nfs_cb_argop4 * op,
 		       struct state_refer *refer,
-		       int32_t (*completion)(rpc_call_t *,
-					     rpc_call_hook,
-					     void *arg,
-					     uint32_t flags),
+		       int32_t(*completion) (rpc_call_t *, rpc_call_hook,
+					     void *arg, uint32_t flags),
 		       void *completion_arg,
-		       void (*free_op)(nfs_cb_argop4 *op));
-void nfs41_complete_single(rpc_call_t* call, rpc_call_hook hook,
-			   void* arg, uint32_t flags);
+		       void (*free_op) (nfs_cb_argop4 * op));
+void nfs41_complete_single(rpc_call_t * call, rpc_call_hook hook, void *arg,
+			   uint32_t flags);
 
-#endif /* !NFS_RPC_CALLBACK_H */
+#endif				/* !NFS_RPC_CALLBACK_H */

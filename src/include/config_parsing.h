@@ -29,8 +29,7 @@
 typedef caddr_t config_file_t;
 typedef caddr_t config_item_t;
 
-typedef enum
-{ CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
+typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
 
 /* config_ParseFile:
  * Reads the content of a configuration file and
@@ -62,7 +61,8 @@ void config_Free(config_file_t config);
 int config_GetNbBlocks(config_file_t config);
 
 /* retrieves a given block from the config file, from its index */
-config_item_t config_GetBlockByIndex(config_file_t config, unsigned int block_no);
+config_item_t config_GetBlockByIndex(config_file_t config,
+				     unsigned int block_no);
 
 /* Return the name of a block */
 char *config_GetBlockName(config_item_t block);
@@ -84,7 +84,9 @@ config_item_t config_FindItemByName(config_file_t config, const char *name);
 
 /* Returns a block or variable with the specified name, and ensure it is unique.
  * The name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
-config_item_t config_FindItemByName_CheckUnique(config_file_t config, const char *name, int * is_unique);
+config_item_t config_FindItemByName_CheckUnique(config_file_t config,
+						const char *name,
+						int *is_unique);
 
 /* Directly returns the value of the key with the specified name.
  * This name can be "BLOCK::SUBBLOCK::SUBBLOCK::VARNAME"

@@ -47,17 +47,12 @@
 
 #define  ATTRVALS_BUFFLEN  1024
 
-int token_to_proc(char *line,
-		  char separator,
-		  bool (*proc)(char * token, void *arg),
-		  void *arg);
-int nfs_ParseConfLine(char *Argv[],
-                      int nbArgv,
-                      char *line,
-                      char separator);
+int token_to_proc(char *line, char separator,
+		  bool(*proc) (char *token, void *arg), void *arg);
+int nfs_ParseConfLine(char *Argv[], int nbArgv, char *line, char separator);
 
 int ReadExports(config_file_t in_config);
-void free_export_resources(exportlist_t *export);
+void free_export_resources(exportlist_t * export);
 void exports_pkginit(void);
 exportlist_t *BuildDefaultExport();
 
@@ -73,4 +68,4 @@ char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);
 
-#endif                          /* _NFS_TOOLS_H */
+#endif				/* _NFS_TOOLS_H */

@@ -62,17 +62,19 @@ struct file_handle {
 #endif
 
 static inline int name_to_handle_at(int mdirfd, const char *name,
-				    struct file_handle * handle, int *mnt_id, int flags)
+				    struct file_handle *handle, int *mnt_id,
+				    int flags)
 {
-	return syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id, flags);
+	return syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id,
+		       flags);
 }
 
-static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
+static inline int open_by_handle_at(int mdirfd, struct file_handle *handle,
 				    int flags)
 {
 	return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
 }
-#endif /* MAX_HANDLE_SZ */
+#endif				/* MAX_HANDLE_SZ */
 
 #ifndef O_PATH
 #define O_PATH 010000000
@@ -86,10 +88,10 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 #define O_NOACCESS O_ACCMODE
 #endif
 
-static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
+static inline size_t vfs_sizeof_handle(vfs_file_handle_t * fh)
 {
 	struct file_handle *hdl = (struct file_handle *)fh;
-	return offsetof(struct file_handle, f_handle) + hdl->handle_bytes;
+	return offsetof(struct file_handle, f_handle)+hdl->handle_bytes;
 }
 
 #define vfs_alloc_handle(fh) \
@@ -97,56 +99,61 @@ static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 	memset((fh), 0, (sizeof(struct file_handle) + MAX_HANDLE_SZ)); \
 	(fh)->handle_bytes = MAX_HANDLE_SZ;
 
-static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t *fh, int *mnt_id)
+static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
-	return name_to_handle_at(fd, "", (struct file_handle *)fh, mnt_id, AT_EMPTY_PATH);
+	return name_to_handle_at(fd, "", (struct file_handle *)fh, mnt_id,
+				 AT_EMPTY_PATH);
 }
 
-static inline int vfs_name_to_handle_at(int atfd, const char *name, vfs_file_handle_t *fh)
+static inline int vfs_name_to_handle_at(int atfd, const char *name,
+					vfs_file_handle_t * fh)
 {
 	int mnt_id = 0;
-	return name_to_handle_at(atfd, name,(struct file_handle *)fh, &mnt_id, 0);
+	return name_to_handle_at(atfd, name, (struct file_handle *)fh, &mnt_id,
+				 0);
 }
 
-static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t *fh, int flags)
+static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh,
+				     int flags)
 {
 	return open_by_handle_at(mountfd, (struct file_handle *)fh, flags);
 }
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf,
-				   int flags)
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t * fh,
+				     struct stat *buf, int flags)
 {
 	/* Must use fstatat() even though fstat() seems like it might work, the Linux
 	 * version rejects the file descriptor we've obtained with the O_NOACCESS flag */
 	return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
 }
 
-static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t owner, gid_t group)
+static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t * fh,
+				      uid_t owner, gid_t group)
 {
-        int fd, ret;
-        fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        /* Must use fchownat - cannot use fchown on this kind of file descriptor */
-        ret = fchownat(fd, "", owner, group, AT_EMPTY_PATH);
-        close(fd);
-        return ret;
+	int fd, ret;
+	fd = vfs_open_by_handle(mountfd, fh, (O_PATH | O_NOACCESS));
+	if (fd < 0)
+		return fd;
+	/* Must use fchownat - cannot use fchown on this kind of file descriptor */
+	ret = fchownat(fd, "", owner, group, AT_EMPTY_PATH);
+	close(fd);
+	return ret;
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
-                                 int srcfd, const char *sname,
-                                 int destdirfd, const char *dname,
-                                 int flags, fsal_errors_t *fsal_error)
+static inline int vfs_link_by_handle(vfs_file_handle_t * fh, int srcfd,
+				     const char *sname, int destdirfd,
+				     const char *dname, int flags,
+				     fsal_errors_t * fsal_error)
 {
-       return linkat(srcfd, sname, destdirfd, dname, flags);
+	return linkat(srcfd, sname, destdirfd, dname, flags);
 }
 
-static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh,
-                                 int srcfd, const char *sname,
-				 char *buf, size_t bufsize)
+static inline int vfs_readlink_by_handle(vfs_file_handle_t * fh, int srcfd,
+					 const char *sname, char *buf,
+					 size_t bufsize)
 {
-       return readlinkat(srcfd, sname, buf, bufsize);
+	return readlinkat(srcfd, sname, buf, bufsize);
 }
 
-#endif /* HANDLE_LINUX_H */
+#endif				/* HANDLE_LINUX_H */
 /** @} */

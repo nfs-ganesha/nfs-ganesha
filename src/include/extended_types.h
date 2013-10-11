@@ -56,7 +56,7 @@ typedef unsigned int uint_t;
  */
 
 #ifndef ENOATTR
-#define ENOATTR ENODATA /* No such attribute */
+#define ENOATTR ENODATA		/* No such attribute */
 #endif
 
-#endif /* _EXTENDED_TYPES_H */
+#endif				/* _EXTENDED_TYPES_H */

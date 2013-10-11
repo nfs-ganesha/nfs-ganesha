@@ -3,7 +3,7 @@
  */
 
 bool fsal_supports(struct fsal_staticfsinfo_t *info,
-                   fsal_fsinfo_options_t option);
+		   fsal_fsinfo_options_t option);
 
 uint64_t fsal_maxfilesize(struct fsal_staticfsinfo_t *info);
 

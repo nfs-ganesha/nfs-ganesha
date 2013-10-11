@@ -53,4 +53,4 @@
 #endif
 #define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
 
-#endif /* _GSH_INTRINSIC_H */
+#endif				/* _GSH_INTRINSIC_H */

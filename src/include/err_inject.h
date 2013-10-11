@@ -30,5 +30,4 @@ extern int next_worker_delay_time;
 int init_error_injector();
 #endif
 
-
-#endif                          /* ERR_INJECT_H */
+#endif				/* ERR_INJECT_H */

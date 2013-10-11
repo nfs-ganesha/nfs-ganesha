@@ -47,11 +47,10 @@
 #include <misc/rbtree_x.h>
 #include <misc/queue.h>
 
-enum drc_type
-{
-    DRC_TCP_V4,  /* safe to use an XID-based, per-connection DRC */
-    DRC_TCP_V3,  /* a shared, checksummed DRC per address */
-    DRC_UDP_V234 /* UDP is strongly discouraged in RFC 3530bis */
+enum drc_type {
+	DRC_TCP_V4,		/* safe to use an XID-based, per-connection DRC */
+	DRC_TCP_V3,		/* a shared, checksummed DRC per address */
+	DRC_UDP_V234		/* UDP is strongly discouraged in RFC 3530bis */
 };
 
 #define DRC_FLAG_NONE          0x0000
@@ -63,99 +62,92 @@ enum drc_type
 #define DRC_FLAG_RECYCLE       0x0020
 #define DRC_FLAG_RELEASE       0x0040
 
-typedef struct drc
-{
-    enum drc_type type;
-    struct rbtree_x xt;
-    TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
-    pthread_mutex_t mtx;
-    uint32_t npart;
-    uint32_t cachesz;
-    uint32_t size;
-    uint32_t maxsize;
-    uint32_t hiwat;
-    uint32_t flags;
-    uint32_t refcnt; /* call path refs */
-    uint32_t retwnd;
-    union {
-        struct {
-            sockaddr_t addr;
-            struct opr_rbtree_node recycle_k;
-            TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
-            time_t recycle_time;
-            uint64_t hk; /* hash key */
-        } tcp;
-    } d_u;
+typedef struct drc {
+	enum drc_type type;
+	struct rbtree_x xt;
+	 TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
+	pthread_mutex_t mtx;
+	uint32_t npart;
+	uint32_t cachesz;
+	uint32_t size;
+	uint32_t maxsize;
+	uint32_t hiwat;
+	uint32_t flags;
+	uint32_t refcnt;	/* call path refs */
+	uint32_t retwnd;
+	union {
+		struct {
+			sockaddr_t addr;
+			struct opr_rbtree_node recycle_k;
+			 TAILQ_ENTRY(drc) recycle_q;	/* XXX drc */
+			time_t recycle_time;
+			uint64_t hk;	/* hash key */
+		} tcp;
+	} d_u;
 } drc_t;
 
-typedef enum dupreq_state
-{
-    DUPREQ_START = 0,
-    DUPREQ_COMPLETE,
-    DUPREQ_DELETED
+typedef enum dupreq_state {
+	DUPREQ_START = 0,
+	DUPREQ_COMPLETE,
+	DUPREQ_DELETED
 } dupreq_state_t;
 
-struct dupreq_entry
-{
-    struct opr_rbtree_node rbt_k;
-    TAILQ_ENTRY(dupreq_entry) fifo_q;
-    pthread_mutex_t mtx;
-    struct {
-        drc_t *drc;
-        sockaddr_t addr;
-        struct {
-            uint32_t rq_xid;
-            uint64_t checksum;
-        } tcp;
-        uint32_t rq_prog;
-        uint32_t rq_vers;
-        uint32_t rq_proc;
-    } hin;
-    uint64_t hk; /* hash key */
-    dupreq_state_t state;
-    uint32_t refcnt;
-    nfs_res_t *res;
-    time_t timestamp;
+struct dupreq_entry {
+	struct opr_rbtree_node rbt_k;
+	 TAILQ_ENTRY(dupreq_entry) fifo_q;
+	pthread_mutex_t mtx;
+	struct {
+		drc_t *drc;
+		sockaddr_t addr;
+		struct {
+			uint32_t rq_xid;
+			uint64_t checksum;
+		} tcp;
+		uint32_t rq_prog;
+		uint32_t rq_vers;
+		uint32_t rq_proc;
+	} hin;
+	uint64_t hk;		/* hash key */
+	dupreq_state_t state;
+	uint32_t refcnt;
+	nfs_res_t *res;
+	time_t timestamp;
 };
 
 typedef struct dupreq_entry dupreq_entry_t;
 
 extern pool_t *nfs_res_pool;
 
-static inline nfs_res_t *
-alloc_nfs_res(void)
+static inline nfs_res_t *alloc_nfs_res(void)
 {
-    nfs_res_t *res =
-        pool_alloc(nfs_res_pool, NULL); /* XXX can pool/ctor zero mem? */
-    memset(res, 0, sizeof(nfs_res_t));
-    return (res);
+	nfs_res_t *res = pool_alloc(nfs_res_pool, NULL);	/* XXX can pool/ctor zero mem? */
+	memset(res, 0, sizeof(nfs_res_t));
+	return (res);
 }
 
-static inline void
-free_nfs_res(nfs_res_t *res)
+static inline void free_nfs_res(nfs_res_t * res)
 {
-    pool_free(nfs_res_pool, res);
+	pool_free(nfs_res_pool, res);
 }
 
-typedef enum dupreq_status
-{
-    DUPREQ_SUCCESS = 0,
-    DUPREQ_INSERT_MALLOC_ERROR,
-    DUPREQ_BEING_PROCESSED,
-    DUPREQ_EXISTS,
-    DUPREQ_ERROR,
+typedef enum dupreq_status {
+	DUPREQ_SUCCESS = 0,
+	DUPREQ_INSERT_MALLOC_ERROR,
+	DUPREQ_BEING_PROCESSED,
+	DUPREQ_EXISTS,
+	DUPREQ_ERROR,
 } dupreq_status_t;
 
 void dupreq2_pkginit(void);
 void dupreq2_pkgshutdown(void);
 
 drc_t *drc_get_tcp_drc(struct svc_req *req);
-void drc_release_tcp_drc(drc_t *drc);
+void drc_release_tcp_drc(drc_t * drc);
 
-dupreq_status_t
-nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req);
-dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs);
+dupreq_status_t nfs_dupreq_start(nfs_request_data_t * nfs_req,
+				 struct svc_req *req);
+dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t * res_nfs);
 dupreq_status_t nfs_dupreq_delete(struct svc_req *req);
-void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func);
+void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t * func);
 
-#endif                          /* _NFS_DUPREQ_H */
+#endif				/* _NFS_DUPREQ_H */

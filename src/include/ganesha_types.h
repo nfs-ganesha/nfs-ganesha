@@ -18,7 +18,6 @@
  * 02110-1301 USA
  */
 
-
 /**
  * @file   ganesha_types.h
  * @author Adam C. Emerson <aemerson@linuxbox.com>
@@ -47,7 +46,6 @@ static const nsecs_elapsed_t NS_PER_USEC = 1000;
 static const nsecs_elapsed_t NS_PER_MSEC = 1000000;
 static const nsecs_elapsed_t NS_PER_SEC = 1000000000;
 
-
 /**
  * @brief Buffer descriptor
  *
@@ -56,8 +54,8 @@ static const nsecs_elapsed_t NS_PER_SEC = 1000000000;
  */
 
 struct gsh_buffdesc {
-	void *addr;  /*< First octet/byte of the buffer */
-	size_t len;  /*< Length of the buffer */
+	void *addr;		/*< First octet/byte of the buffer */
+	size_t len;		/*< Length of the buffer */
 };
 
-#endif /* !GANESHA_TYPES__ */
+#endif				/* !GANESHA_TYPES__ */

@@ -56,7 +56,7 @@ int fsal2posix_testperm(fsal_accessflags_t testperm);
  * (fsal_attrib_list_t)
  */
 fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
-                                    struct attrlist *fsalattr_out);
+				    struct attrlist *fsalattr_out);
 
 /** converts FSAL access mode to unix mode. */
 mode_t fsal2unix_mode(uint32_t fsal_mode);
@@ -75,11 +75,10 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
  * Convert POSIX time structure (time_t)
  * to FSAL time type (now struct timespec).
  */
-static inline struct timespec
-posix2fsal_time(time_t tsec, time_t nsec)
+static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-    struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
-    return (ts);
+	struct timespec ts = {.tv_sec = tsec,.tv_nsec = nsec };
+	return (ts);
 }
 
 const char *object_file_type_to_str(object_file_type_t type);
@@ -87,5 +86,5 @@ const char *object_file_type_to_str(object_file_type_t type);
 #define my_high32m( a ) ( (unsigned int)( a >> 32 ) )
 #define my_low32m( a ) ( (unsigned int)a )
 
-#endif /* !FSAL_CONVERT_H */
+#endif				/* !FSAL_CONVERT_H */
 /** @} */

@@ -310,5 +310,5 @@ struct fsal_getdevicelist_res {
 	bool eof;
 };
 
-#endif /* !FSAL_PNFS_H */
+#endif				/* !FSAL_PNFS_H */
 /** @} */

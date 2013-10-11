@@ -45,8 +45,8 @@ struct mntent {
 };
 
 #define setmntent(x,y) ((FILE *)0x1)
-extern struct mntent *getmntent __P ((FILE *fp));
-char *hasmntopt __P ((const struct mntent *mnt, const char *option));
+extern struct mntent *getmntent __P((FILE * fp));
+char *hasmntopt __P((const struct mntent * mnt, const char *option));
 #define endmntent(x) ((void)(int)1)
 
-#endif /* _MNTENT_FREEBSD_H */
+#endif				/* _MNTENT_FREEBSD_H */

@@ -59,8 +59,7 @@
  * Each tree is independent, having its own lock, thus reducing thread
  * contention.
  */
-typedef struct cih_partition
-{
+typedef struct cih_partition {
 	uint32_t part_ix;
 	pthread_rwlock_t lock;
 	struct avltree t;
@@ -69,7 +68,7 @@ typedef struct cih_partition
 		char *func;
 		uint32_t line;
 	} locktrace;
-	CACHE_PAD(0);
+	 CACHE_PAD(0);
 } cih_partition_t;
 
 /**
@@ -77,8 +76,7 @@ typedef struct cih_partition
  *
  * This is the structure corresponding to a single table of weakrefs.
  */
-struct cih_lookup_table
-{
+struct cih_lookup_table {
 	CACHE_PAD(0);
 	cih_partition_t *partition;
 	uint32_t npart;
@@ -116,10 +114,10 @@ void cih_pkginit(void);
  *
  * @return The computed offset.
  */
-static inline uint32_t
-cih_cache_offsetof(struct cih_lookup_table *lt, uint64_t k)
+static inline uint32_t cih_cache_offsetof(struct cih_lookup_table *lt,
+					  uint64_t k)
 {
-    return (k % lt->cache_sz);
+	return (k % lt->cache_sz);
 }
 
 /**
@@ -139,9 +137,8 @@ cih_cache_offsetof(struct cih_lookup_table *lt, uint64_t k)
  * @retval 0: lhs and rhs compare equal
  * @retval 1: lhs is greater than rhs
  */
-static inline int
-cih_fh_cmpf(const struct avltree_node *lhs,
-	    const struct avltree_node *rhs)
+static inline int cih_fh_cmpf(const struct avltree_node *lhs,
+			      const struct avltree_node *rhs)
 {
 	cache_entry_t *lk, *rk;
 
@@ -153,9 +150,9 @@ cih_fh_cmpf(const struct avltree_node *lhs,
 
 	if (unlikely(lk->fh_hk.key.hk == rk->fh_hk.key.hk)) {
 		/* deep compare */
-		return (memcmp(lk->fh_hk.key.kv.addr, lk->fh_hk.key.kv.addr,
-			       MIN(lk->fh_hk.key.kv.len,
-				   rk->fh_hk.key.kv.len)));
+		return (memcmp
+			(lk->fh_hk.key.kv.addr, lk->fh_hk.key.kv.addr,
+			 MIN(lk->fh_hk.key.kv.len, rk->fh_hk.key.kv.len)));
 	}
 
 	return (1);
@@ -171,24 +168,24 @@ cih_fh_cmpf(const struct avltree_node *lhs,
  *
  * @return Pointer to node if found, else NULL.
  */
-static inline struct avltree_node *
-cih_fhcache_inline_lookup(
-	const struct avltree *tree,
-	const struct avltree_node *key)
+static inline struct avltree_node *cih_fhcache_inline_lookup(const struct
+							     avltree *tree,
+							     const struct
+							     avltree_node *key)
 {
-    struct avltree_node *node = tree->root;
-    int is_left = 0, res = 0;
+	struct avltree_node *node = tree->root;
+	int is_left = 0, res = 0;
 
-    while (node) {
-        res = cih_fh_cmpf(node, key);
-        if (res == 0)
-            return node;
-        if ((is_left = res > 0))
-            node = node->left;
-        else
-            node = node->right;
-    }
-    return NULL;
+	while (node) {
+		res = cih_fh_cmpf(node, key);
+		if (res == 0)
+			return node;
+		if ((is_left = res > 0))
+			node = node->left;
+		else
+			node = node->right;
+	}
+	return NULL;
 }
 
 #define CIH_HASH_NONE           0x0000
@@ -205,13 +202,13 @@ cih_fhcache_inline_lookup(
  *
  * @return (void)
  */
-static inline void
-cih_hash_entry(cache_entry_t *entry, const struct gsh_buffdesc *fh_desc,
-	       uint32_t flags)
+static inline void cih_hash_entry(cache_entry_t * entry,
+				  const struct gsh_buffdesc *fh_desc,
+				  uint32_t flags)
 {
 	/* fh prototype fixup */
 	if (flags & CIH_HASH_KEY_PROTOTYPE)
-		entry->fh_hk.key.kv = *(struct gsh_buffdesc *) fh_desc;
+		entry->fh_hk.key.kv = *(struct gsh_buffdesc *)fh_desc;
 	else {
 		/* XXX dups fh_desc */
 		entry->fh_hk.key.kv.len = fh_desc->len;
@@ -221,7 +218,7 @@ cih_hash_entry(cache_entry_t *entry, const struct gsh_buffdesc *fh_desc,
 
 	/* hash it */
 	entry->fh_hk.key.hk =
-		CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
+	    CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
 }
 
 #define CIH_GET_NONE           0x0000
@@ -235,13 +232,11 @@ cih_hash_entry(cache_entry_t *entry, const struct gsh_buffdesc *fh_desc,
  * Used to memoize a partition and its lock state between calls.  Nod 
  * to Adam's precursor in HashTable.
  */
-typedef struct cih_latch
-{
+typedef struct cih_latch {
 	cih_partition_t *cp;
 } cih_latch_t;
 
-static inline void
-cih_latch_rele(cih_latch_t *latch)
+static inline void cih_latch_rele(cih_latch_t * latch)
 {
 	PTHREAD_RWLOCK_unlock(&(latch->cp->lock));
 }
@@ -259,9 +254,11 @@ cih_latch_rele(cih_latch_t *latch)
  *
  * @return Pointer to cache entry if found, else NULL
  */
-static inline cache_entry_t *
-cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
-		      uint32_t flags, const char *func, int line)
+static inline cache_entry_t *cih_get_by_fh_latched(const struct gsh_buffdesc
+						   *fh_desc,
+						   cih_latch_t * latch,
+						   uint32_t flags,
+						   const char *func, int line)
 {
 	cache_entry_t k_entry, *entry = NULL;
 	struct avltree_node *node;
@@ -269,26 +266,26 @@ cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
 
 	cih_hash_entry(&k_entry, fh_desc, CIH_HASH_KEY_PROTOTYPE);
 	latch->cp = cp =
-		cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
+	    cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
 
 	if (flags & CIH_GET_WLOCK)
-		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
+		PTHREAD_RWLOCK_wrlock(&cp->lock);	/* SUBTREE_WLOCK */
 	else
-		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
-	cp->locktrace.func = (char*) func;
-        cp->locktrace.line = line;
+	cp->locktrace.func = (char *)func;
+	cp->locktrace.line = line;
 
 	node = cih_fhcache_inline_lookup(&cp->t, &k_entry.fh_hk.node_k);
-	if (! node) {
-            if (flags & CIH_GET_UNLOCK_ON_MISS)
-                PTHREAD_RWLOCK_unlock(&cp->lock);
-            goto out;
-        }
+	if (!node) {
+		if (flags & CIH_GET_UNLOCK_ON_MISS)
+			PTHREAD_RWLOCK_unlock(&cp->lock);
+		goto out;
+	}
 
 	entry = avltree_container_of(node, cache_entry_t, fh_hk.node_k);
 
-out:
+ out:
 	return (entry);
 }
 
@@ -307,16 +304,14 @@ out:
  */
 
 #ifdef GCC_ATOMIC_FUNCTIONS
-static inline void *
-atomic_fetch_voidptr(void **var)
+static inline void *atomic_fetch_voidptr(void **var)
 {
-     return __atomic_load_n(var, __ATOMIC_SEQ_CST);
+	return __atomic_load_n(var, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
-static inline void *
-atomic_fetch_voidptr(void **var)
+static inline void *atomic_fetch_voidptr(void **var)
 {
-     return __sync_fetch_and_add(var, 0);
+	return __sync_fetch_and_add(var, 0);
 }
 #endif
 
@@ -331,14 +326,12 @@ atomic_fetch_voidptr(void **var)
  */
 
 #ifdef GCC_ATOMIC_FUNCTIONS
-static inline void
-atomic_store_voidptr(void **var, void *val)
+static inline void atomic_store_voidptr(void **var, void *val)
 {
-     (void)__atomic_store_n(var, val, __ATOMIC_SEQ_CST);
+	(void)__atomic_store_n(var, val, __ATOMIC_SEQ_CST);
 }
 #elif defined(GCC_SYNC_FUNCTIONS)
-static inline void
-atomic_store_voidptr(void **var, void *val)
+static inline void atomic_store_voidptr(void **var, void *val)
 {
 	(void)__sync_lock_test_and_set(var, 0);
 }
@@ -358,61 +351,60 @@ atomic_store_voidptr(void **var, void *val)
  *
  * @return Pointer to cache entry if found, else NULL
  */
-static inline cache_entry_t *
-cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
-                       uint32_t flags, const char *func, int line)
+static inline cache_entry_t *cih_get_by_key_latched(cache_inode_key_t * key,
+						    cih_latch_t * latch,
+						    uint32_t flags,
+						    const char *func, int line)
 {
 	cache_entry_t k_entry, *entry = NULL;
 	struct avltree_node *node;
 	cih_partition_t *cp;
-        void **cache_slot;
+	void **cache_slot;
 
 	k_entry.fh_hk.key = *key;
 	latch->cp = cp =
-		cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
+	    cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
 
 	if (flags & CIH_GET_WLOCK)
-		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
+		PTHREAD_RWLOCK_wrlock(&cp->lock);	/* SUBTREE_WLOCK */
 	else
-		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
-	cp->locktrace.func = (char*) func;
-        cp->locktrace.line = line;
+	cp->locktrace.func = (char *)func;
+	cp->locktrace.line = line;
 
-        /* check cache */
-        cache_slot = (void **)
-            &(cp->cache[cih_cache_offsetof(&cih_fhcache, key->hk)]);
-        node = (struct avltree_node *) atomic_fetch_voidptr(cache_slot);
-        if (node) {
-            if (cih_fh_cmpf(&k_entry.fh_hk.node_k, node) == 0) {
-                /* got it in 1 */
-		LogDebug(COMPONENT_HASHTABLE_CACHE,
-                         "cih cache hit slot %d\n",
-                         cih_cache_offsetof(&cih_fhcache, key->hk));
-                goto found;
-            }
-        }
+	/* check cache */
+	cache_slot = (void **)
+	    &(cp->cache[cih_cache_offsetof(&cih_fhcache, key->hk)]);
+	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
+	if (node) {
+		if (cih_fh_cmpf(&k_entry.fh_hk.node_k, node) == 0) {
+			/* got it in 1 */
+			LogDebug(COMPONENT_HASHTABLE_CACHE,
+				 "cih cache hit slot %d\n",
+				 cih_cache_offsetof(&cih_fhcache, key->hk));
+			goto found;
+		}
+	}
 
-        /* check AVL */
+	/* check AVL */
 	node = cih_fhcache_inline_lookup(&cp->t, &k_entry.fh_hk.node_k);
-	if (! node) {
-            if (flags & CIH_GET_UNLOCK_ON_MISS)
-                PTHREAD_RWLOCK_unlock(&cp->lock);
-            LogDebug(COMPONENT_HASHTABLE_CACHE,
-                     "fdcache MISS\n");
-            goto out;
-        }
+	if (!node) {
+		if (flags & CIH_GET_UNLOCK_ON_MISS)
+			PTHREAD_RWLOCK_unlock(&cp->lock);
+		LogDebug(COMPONENT_HASHTABLE_CACHE, "fdcache MISS\n");
+		goto out;
+	}
 
-        /* update cache */
-        atomic_store_voidptr(cache_slot, node);
+	/* update cache */
+	atomic_store_voidptr(cache_slot, node);
 
-        LogDebug(COMPONENT_HASHTABLE_CACHE,
-                 "cih AVL hit slot %d\n",
-                 cih_cache_offsetof(&cih_fhcache, key->hk));
+	LogDebug(COMPONENT_HASHTABLE_CACHE, "cih AVL hit slot %d\n",
+		 cih_cache_offsetof(&cih_fhcache, key->hk));
 
-found:
+ found:
 	entry = avltree_container_of(node, cache_entry_t, fh_hk.node_k);
-out:
+ out:
 	return (entry);
 }
 
@@ -427,28 +419,27 @@ out:
  *
  * @return void
  */
-static inline bool
-cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch,
-                uint32_t flags, const char *func, int line)
+static inline bool cih_latch_entry(cache_entry_t * entry, cih_latch_t * latch,
+				   uint32_t flags, const char *func, int line)
 {
 	cih_partition_t *cp;
 
 	latch->cp = cp =
-		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
 
 	if (flags & CIH_GET_WLOCK)
-		PTHREAD_RWLOCK_wrlock(&cp->lock); /* SUBTREE_WLOCK */
+		PTHREAD_RWLOCK_wrlock(&cp->lock);	/* SUBTREE_WLOCK */
 	else
-		PTHREAD_RWLOCK_rdlock(&cp->lock); /* SUBTREE_RLOCK */
+		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
-        cp->locktrace.func = (char*) func;
-        cp->locktrace.line = line;
+	cp->locktrace.func = (char *)func;
+	cp->locktrace.line = line;
 
 	return (true);
 }
 
 #define CIH_SET_NONE     0x0000
-#define CIH_SET_HASHED   0x0001 /* previously hashed entry */
+#define CIH_SET_HASHED   0x0001	/* previously hashed entry */
 #define CIH_SET_UNLOCK   0x0002
 
 /**
@@ -462,22 +453,22 @@ cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch,
  *
  * @return Pointer to cache entry if found, else NULL
  */
-static inline int
-cih_set_latched(cache_entry_t *entry, cih_latch_t *latch,
-		const struct gsh_buffdesc *fh_desc, uint32_t flags)
+static inline int cih_set_latched(cache_entry_t * entry, cih_latch_t * latch,
+				  const struct gsh_buffdesc *fh_desc,
+				  uint32_t flags)
 {
 	cih_partition_t *cp = latch->cp;
 
-        /* Omit hash if you are SURE we hashed it, and that the
-         * hash remains valid */
-	if (unlikely(! (flags & CIH_SET_HASHED)))
+	/* Omit hash if you are SURE we hashed it, and that the
+	 * hash remains valid */
+	if (unlikely(!(flags & CIH_SET_HASHED)))
 		cih_hash_entry(entry, fh_desc, CIH_HASH_NONE);
 
-        (void) avltree_insert(&entry->fh_hk.node_k, &cp->t);
-        entry->fh_hk.inavl = true;
+	(void)avltree_insert(&entry->fh_hk.node_k, &cp->t);
+	entry->fh_hk.inavl = true;
 
-        if (likely(flags & CIH_SET_UNLOCK))
-            PTHREAD_RWLOCK_unlock(&cp->lock);
+	if (likely(flags & CIH_SET_UNLOCK))
+		PTHREAD_RWLOCK_unlock(&cp->lock);
 
 	return (0);
 }
@@ -492,22 +483,21 @@ cih_set_latched(cache_entry_t *entry, cih_latch_t *latch,
  *
  * @return (void)
  */
-static inline void
-cih_remove_checked(cache_entry_t *entry)
+static inline void cih_remove_checked(cache_entry_t * entry)
 {
 	struct avltree_node *node;
 	cih_partition_t *cp =
-		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
 	if (node) {
 		avltree_remove(node, &cp->t);
-		cp->cache[cih_cache_offsetof(&cih_fhcache,
-					     entry->fh_hk.key.hk)] = NULL;
-                entry->fh_hk.inavl = false;
-                /* return sentinel ref */
-                cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		cp->cache[cih_cache_offsetof(&cih_fhcache, entry->fh_hk.key.hk)]
+		    = NULL;
+		entry->fh_hk.inavl = false;
+		/* return sentinel ref */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
 }
@@ -525,21 +515,21 @@ cih_remove_checked(cache_entry_t *entry)
 #define CIH_REMOVE_UNLOCK  0x0001
 #define CIH_REMOVE_QLOCKED 0x0002
 
-static inline bool
-cih_remove_latched(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
+static inline bool cih_remove_latched(cache_entry_t * entry,
+				      cih_latch_t * latch, uint32_t flags)
 {
 	cih_partition_t *cp =
-		cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
-        uint32_t lflags = LRU_FLAG_NONE;
+	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+	uint32_t lflags = LRU_FLAG_NONE;
 
 	if (entry->fh_hk.inavl) {
 		avltree_remove(&entry->fh_hk.node_k, &cp->t);
-		cp->cache[cih_cache_offsetof(&cih_fhcache,
-					     entry->fh_hk.key.hk)] = NULL;
-                entry->fh_hk.inavl = false;
-                if (flags & CIH_REMOVE_QLOCKED)
-                    lflags |= LRU_UNREF_QLOCKED;
-                cache_inode_lru_unref(entry, lflags);
+		cp->cache[cih_cache_offsetof(&cih_fhcache, entry->fh_hk.key.hk)]
+		    = NULL;
+		entry->fh_hk.inavl = false;
+		if (flags & CIH_REMOVE_QLOCKED)
+			lflags |= LRU_UNREF_QLOCKED;
+		cache_inode_lru_unref(entry, lflags);
 		if (flags & CIH_REMOVE_UNLOCK)
 			PTHREAD_RWLOCK_unlock(&cp->lock);
 		return (true);
@@ -552,5 +542,5 @@ cih_remove_latched(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 
 /* stuff */
 
-#endif /* CACHE_INODE_HASH_H */
+#endif				/* CACHE_INODE_HASH_H */
 /** @} */

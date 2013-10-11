@@ -54,11 +54,11 @@ struct exportlist;
  */
 
 typedef enum protos {
-	P_NFS, /*< NFS, of course. */
-	P_MNT, /*< Mount (for v3) */
-	P_NLM, /*< NLM (for v3) */
-	P_RQUOTA, /*< RQUOTA (for v3) */
-	P_COUNT /*< Number of protocols */
+	P_NFS,			/*< NFS, of course. */
+	P_MNT,			/*< Mount (for v3) */
+	P_NLM,			/*< NLM (for v3) */
+	P_RQUOTA,		/*< RQUOTA (for v3) */
+	P_COUNT			/*< Number of protocols */
 } protos;
 
 /**
@@ -105,12 +105,12 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.tcp.cachesz
  */
-#define DRC_TCP_CACHESZ 127 /* make prime */
+#define DRC_TCP_CACHESZ 127	/* make prime */
 
 /**
  * @brief Default value for core_param.drc.tcp.hiwat
  */
-#define DRC_TCP_HIWAT 64 /* 1/2(size) */
+#define DRC_TCP_HIWAT 64	/* 1/2(size) */
 
 /**
  * @brief Default value for core_param.drc.tcp.recycle_npart
@@ -120,7 +120,7 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.tcp.expire_s
  */
-#define DRC_TCP_RECYCLE_EXPIRE_S 600 /* 10m */
+#define DRC_TCP_RECYCLE_EXPIRE_S 600	/* 10m */
 
 /**
  * @brief Default value for core_param.drc.tcp.checkstum
@@ -140,12 +140,12 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.udp.cachesz
  */
-#define DRC_UDP_CACHESZ 599 /* make prime */
+#define DRC_UDP_CACHESZ 599	/* make prime */
 
 /**
  * @brief Default value for core_param.drc.udp.hiwat
  */
-#define DRC_UDP_HIWAT 16384 /* 1/2(size) */
+#define DRC_UDP_HIWAT 16384	/* 1/2(size) */
 
 /**
  * @brief Default value for core_param.drc.udp.checksum
@@ -171,12 +171,12 @@ typedef enum protos {
  * @brief Support NFSv3
  */
 
-#define CORE_OPTION_NFSV3 0x00000001 /*< NFSv3 operations are supported */
+#define CORE_OPTION_NFSV3 0x00000001	/*< NFSv3 operations are supported */
 
 /**
  * @brief Support NFSv4
  */
-#define CORE_OPTION_NFSV4 0x00000002 /*< NFSv4 operations are supported */
+#define CORE_OPTION_NFSV4 0x00000002	/*< NFSv4 operations are supported */
 
 /**
  * @brief Support NFSv3 and NFSv4.
@@ -438,19 +438,18 @@ typedef struct nfs_version4_parameter {
 /**
  * @brief Default value for _9p_tcp_msize
  */
-#define _9P_TCP_MSIZE 65536 
+#define _9P_TCP_MSIZE 65536
 
 /**
  * @brief Default value for _9p_rdma_msize
  */
-#define _9P_RDMA_MSIZE 1048576 
+#define _9P_RDMA_MSIZE 1048576
 
 /**
  * @brief 9p configuration
  */
 
-typedef struct _9p_param
-{
+typedef struct _9p_param {
 	/** TCP port for 9p operations.  Defaults to _9P_TCP_PORT,
 	    settable by _9P_TCP_Port */
 	uint16_t _9p_tcp_port;
@@ -467,7 +466,7 @@ typedef struct _9p_param
 	    settable by _9P_RDMA_Backlog */
 	uint32_t _9p_rdma_backlog;
 } _9p_parameter_t;
-#endif /* _USE_9P */
+#endif				/* _USE_9P */
 
 /** @} */
 
@@ -488,15 +487,14 @@ typedef struct _9p_param
  */
 
 typedef enum cache_inode_expire_type {
-	CACHE_INODE_EXPIRE = 0, /*< Data expire when they have been
-				    refreshed less recently than grace
-				    period for their type allows. */
-	CACHE_INODE_EXPIRE_NEVER = 1, /*< Data never expire based on
-					  time. */
-	CACHE_INODE_EXPIRE_IMMEDIATE = 2 /*< Data are always treated
-					     as expired. */
+	CACHE_INODE_EXPIRE = 0,	/*< Data expire when they have been
+				   refreshed less recently than grace
+				   period for their type allows. */
+	CACHE_INODE_EXPIRE_NEVER = 1,	/*< Data never expire based on
+					   time. */
+	CACHE_INODE_EXPIRE_IMMEDIATE = 2	/*< Data are always treated
+						   as expired. */
 } cache_inode_expire_type_t;
-
 
 /**
  * @brief Structure to hold cache_inode paramaters
@@ -583,7 +581,6 @@ typedef struct cache_inode_parameter {
  */
 #define CONF_LABEL_IP_NAME_HOSTS "Hosts"
 
-
 /**
  * @brief Default index size for IP-Name hash
  */
@@ -645,7 +642,7 @@ typedef struct nfs_param {
 #ifdef _HAVE_GSSAPI
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
-#endif /* _HAVE_GSSAPI */
+#endif				/* _HAVE_GSSAPI */
 	/** Client ID cache parameters  */
 	nfs_client_id_parameter_t client_id_param;
 	/** State ID cache parameters  */
@@ -663,11 +660,11 @@ typedef struct nfs_param {
 #ifdef _USE_9P
 	/** 9P owner cache parameters  */
 	hash_parameter_t _9p_owner_hash_param;
-#endif /* _USE_9P */
+#endif				/* _USE_9P */
 } nfs_parameter_t;
 
 extern nfs_parameter_t nfs_param;
 
-#endif /* GSH_CONFIG_H */
+#endif				/* GSH_CONFIG_H */
 
 /** @} */

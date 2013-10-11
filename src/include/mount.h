@@ -16,18 +16,17 @@
 #define MNT_RPC_GSS_INTEGRITY 390004
 #define MNT_RPC_GSS_PRIVACY   390005
 
-enum mountstat3
-{
-  MNT3_OK = 0,
-  MNT3ERR_PERM = 1,
-  MNT3ERR_NOENT = 2,
-  MNT3ERR_IO = 5,
-  MNT3ERR_ACCES = 13,
-  MNT3ERR_NOTDIR = 20,
-  MNT3ERR_INVAL = 22,
-  MNT3ERR_NAMETOOLONG = 63,
-  MNT3ERR_NOTSUPP = 10004,
-  MNT3ERR_SERVERFAULT = 10006
+enum mountstat3 {
+	MNT3_OK = 0,
+	MNT3ERR_PERM = 1,
+	MNT3ERR_NOENT = 2,
+	MNT3ERR_IO = 5,
+	MNT3ERR_ACCES = 13,
+	MNT3ERR_NOTDIR = 20,
+	MNT3ERR_INVAL = 22,
+	MNT3ERR_NAMETOOLONG = 63,
+	MNT3ERR_NOTSUPP = 10004,
+	MNT3ERR_SERVERFAULT = 10006
 };
 typedef enum mountstat3 mountstat3;
 
@@ -37,10 +36,9 @@ typedef enum mountstat3 mountstat3;
  * this struct is overlayed with nfs_fh3 in nfs23.h!!
  * This needs to be fixed
  */
-typedef struct
-{
-  u_int fhandle3_len;
-  char *fhandle3_val;
+typedef struct {
+	u_int fhandle3_len;
+	char *fhandle3_val;
 } fhandle3;
 
 typedef char *dirpath;
@@ -49,51 +47,44 @@ typedef char *name;
 
 typedef struct groupnode *groups;
 
-struct groupnode
-{
-  name gr_name;
-  groups gr_next;
+struct groupnode {
+	name gr_name;
+	groups gr_next;
 };
 typedef struct groupnode groupnode;
 
 typedef struct exportnode *exports;
 
-struct exportnode
-{
-  dirpath ex_dir;
-  groups ex_groups;
-  exports ex_next;
+struct exportnode {
+	dirpath ex_dir;
+	groups ex_groups;
+	exports ex_next;
 };
 typedef struct exportnode exportnode;
 
 typedef struct mountbody *mountlist;
 
-struct mountbody
-{
-  name ml_hostname;
-  dirpath ml_directory;
-  mountlist ml_next;
+struct mountbody {
+	name ml_hostname;
+	dirpath ml_directory;
+	mountlist ml_next;
 };
 typedef struct mountbody mountbody;
 
-struct mountres3_ok
-{
-  fhandle3 fhandle;
-  struct
-  {
-    u_int auth_flavors_len;
-    int *auth_flavors_val;
-  } auth_flavors;
+struct mountres3_ok {
+	fhandle3 fhandle;
+	struct {
+		u_int auth_flavors_len;
+		int *auth_flavors_val;
+	} auth_flavors;
 };
 typedef struct mountres3_ok mountres3_ok;
 
-struct mountres3
-{
-  mountstat3 fhs_status;
-  union
-  {
-    mountres3_ok mountinfo;
-  } mountres3_u;
+struct mountres3 {
+	mountstat3 fhs_status;
+	union {
+		mountres3_ok mountinfo;
+	} mountres3_u;
 };
 typedef struct mountres3 mountres3;
 
@@ -127,4 +118,4 @@ extern bool xdr_mountbody(XDR *, mountbody *);
 extern bool xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool xdr_mountres3(XDR *, mountres3 *);
 
-#endif /* !_MOUNT_H_RPCGEN */
+#endif				/* !_MOUNT_H_RPCGEN */

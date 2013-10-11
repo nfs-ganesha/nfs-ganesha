@@ -24,7 +24,6 @@
 #ifndef NLM_ASYNC_H
 #define NLM_ASYNC_H
 
-
 #include <pthread.h>
 
 #include "nfs_proto_functions.h"
@@ -34,25 +33,20 @@
 #include "cache_inode.h"
 #include "sal_data.h"
 
-extern pthread_mutex_t                nlm_async_resp_mutex;
-extern pthread_cond_t                 nlm_async_resp_cond;
+extern pthread_mutex_t nlm_async_resp_mutex;
+extern pthread_cond_t nlm_async_resp_cond;
 
 int nlm_async_callback_init();
 
-int nlm_send_async_res_nlm4(state_nlm_client_t * host,
-                            state_async_func_t   func,
-                            nfs_res_t          * pres);
+int nlm_send_async_res_nlm4(state_nlm_client_t * host, state_async_func_t func,
+			    nfs_res_t * pres);
 
 int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-                                state_async_func_t   func,
-                                nfs_res_t          * pres);
+				state_async_func_t func, nfs_res_t * pres);
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
-int nlm_send_async(int                  proc,
-                   state_nlm_client_t * host,
-                   void               * inarg,
-                   void               * key);
+int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key);
 
 void nlm_signal_async_resp(void *key);
 
-#endif                          /* NLM_ASYNC_H */
+#endif				/* NLM_ASYNC_H */

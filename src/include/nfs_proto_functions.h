@@ -59,774 +59,634 @@
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
-typedef union nfs_arg__
-{
-  GETATTR3args arg_getattr3;
-  SETATTR3args arg_setattr3;
-  LOOKUP3args arg_lookup3;
-  ACCESS3args arg_access3;
-  READLINK3args arg_readlink3;
-  READ3args arg_read3;
-  WRITE3args arg_write3;
-  CREATE3args arg_create3;
-  MKDIR3args arg_mkdir3;
-  SYMLINK3args arg_symlink3;
-  MKNOD3args arg_mknod3;
-  REMOVE3args arg_remove3;
-  RMDIR3args arg_rmdir3;
-  RENAME3args arg_rename3;
-  LINK3args arg_link3;
-  READDIR3args arg_readdir3;
-  READDIRPLUS3args arg_readdirplus3;
-  FSSTAT3args arg_fsstat3;
-  FSINFO3args arg_fsinfo3;
-  PATHCONF3args arg_pathconf3;
-  COMMIT3args arg_commit3;
-  COMPOUND4args arg_compound4;
+typedef union nfs_arg__ {
+	GETATTR3args arg_getattr3;
+	SETATTR3args arg_setattr3;
+	LOOKUP3args arg_lookup3;
+	ACCESS3args arg_access3;
+	READLINK3args arg_readlink3;
+	READ3args arg_read3;
+	WRITE3args arg_write3;
+	CREATE3args arg_create3;
+	MKDIR3args arg_mkdir3;
+	SYMLINK3args arg_symlink3;
+	MKNOD3args arg_mknod3;
+	REMOVE3args arg_remove3;
+	RMDIR3args arg_rmdir3;
+	RENAME3args arg_rename3;
+	LINK3args arg_link3;
+	READDIR3args arg_readdir3;
+	READDIRPLUS3args arg_readdirplus3;
+	FSSTAT3args arg_fsstat3;
+	FSINFO3args arg_fsinfo3;
+	PATHCONF3args arg_pathconf3;
+	COMMIT3args arg_commit3;
+	COMPOUND4args arg_compound4;
 
-  /* mnt */
-  dirpath arg_mnt;
+	/* mnt */
+	dirpath arg_mnt;
 
-  /* nlm */
-  nlm4_testargs arg_nlm4_test;
-  nlm4_lockargs arg_nlm4_lock;
-  nlm4_cancargs arg_nlm4_cancel;
-  nlm4_shareargs arg_nlm4_share;
-  nlm4_unlockargs arg_nlm4_unlock;
-  nlm4_sm_notifyargs arg_nlm4_sm_notify;
-  nlm4_free_allargs arg_nlm4_free_allargs;
-  nlm4_res arg_nlm4_res;
+	/* nlm */
+	nlm4_testargs arg_nlm4_test;
+	nlm4_lockargs arg_nlm4_lock;
+	nlm4_cancargs arg_nlm4_cancel;
+	nlm4_shareargs arg_nlm4_share;
+	nlm4_unlockargs arg_nlm4_unlock;
+	nlm4_sm_notifyargs arg_nlm4_sm_notify;
+	nlm4_free_allargs arg_nlm4_free_allargs;
+	nlm4_res arg_nlm4_res;
 
-  /* Rquota */
-  getquota_args arg_rquota_getquota;
-  getquota_args arg_rquota_getactivequota;
-  setquota_args arg_rquota_setquota;
-  setquota_args arg_rquota_setactivequota;
+	/* Rquota */
+	getquota_args arg_rquota_getquota;
+	getquota_args arg_rquota_getactivequota;
+	setquota_args arg_rquota_setquota;
+	setquota_args arg_rquota_setactivequota;
 
-  /* Rquota */
-  ext_getquota_args arg_ext_rquota_getquota;
-  ext_getquota_args arg_ext_rquota_getactivequota;
-  ext_setquota_args arg_ext_rquota_setquota;
-  ext_setquota_args arg_ext_rquota_setactivequota;
+	/* Rquota */
+	ext_getquota_args arg_ext_rquota_getquota;
+	ext_getquota_args arg_ext_rquota_getactivequota;
+	ext_setquota_args arg_ext_rquota_setquota;
+	ext_setquota_args arg_ext_rquota_setactivequota;
 } nfs_arg_t;
 
-struct COMPOUND4res_extended
-{
-  COMPOUND4res res_compound4;
-  bool         res_cached;
+struct COMPOUND4res_extended {
+	COMPOUND4res res_compound4;
+	bool res_cached;
 };
 
-typedef union nfs_res__
-{
-  GETATTR3res res_getattr3;
-  SETATTR3res res_setattr3;
-  LOOKUP3res res_lookup3;
-  ACCESS3res res_access3;
-  READLINK3res res_readlink3;
-  READ3res res_read3;
-  WRITE3res res_write3;
-  CREATE3res res_create3;
-  MKDIR3res res_mkdir3;
-  SYMLINK3res res_symlink3;
-  MKNOD3res res_mknod3;
-  REMOVE3res res_remove3;
-  RMDIR3res res_rmdir3;
-  RENAME3res res_rename3;
-  LINK3res res_link3;
-  READDIR3res res_readdir3;
-  READDIRPLUS3res res_readdirplus3;
-  FSSTAT3res res_fsstat3;
-  FSINFO3res res_fsinfo3;
-  PATHCONF3res res_pathconf3;
-  COMMIT3res res_commit3;
-  COMPOUND4res res_compound4;
-  COMPOUND4res_extended res_compound4_extended;
+typedef union nfs_res__ {
+	GETATTR3res res_getattr3;
+	SETATTR3res res_setattr3;
+	LOOKUP3res res_lookup3;
+	ACCESS3res res_access3;
+	READLINK3res res_readlink3;
+	READ3res res_read3;
+	WRITE3res res_write3;
+	CREATE3res res_create3;
+	MKDIR3res res_mkdir3;
+	SYMLINK3res res_symlink3;
+	MKNOD3res res_mknod3;
+	REMOVE3res res_remove3;
+	RMDIR3res res_rmdir3;
+	RENAME3res res_rename3;
+	LINK3res res_link3;
+	READDIR3res res_readdir3;
+	READDIRPLUS3res res_readdirplus3;
+	FSSTAT3res res_fsstat3;
+	FSINFO3res res_fsinfo3;
+	PATHCONF3res res_pathconf3;
+	COMMIT3res res_commit3;
+	COMPOUND4res res_compound4;
+	COMPOUND4res_extended res_compound4_extended;
 
-  /* mount */
-  fhstatus2 res_mnt1;
-  exports res_mntexport;
-  mountres3 res_mnt3;
-  mountlist res_dump;
+	/* mount */
+	fhstatus2 res_mnt1;
+	exports res_mntexport;
+	mountres3 res_mnt3;
+	mountlist res_dump;
 
-  /* nlm4 */
-  nlm4_testres  res_nlm4test;
-  nlm4_res      res_nlm4;
-  nlm4_shareres res_nlm4share;
+	/* nlm4 */
+	nlm4_testres res_nlm4test;
+	nlm4_res res_nlm4;
+	nlm4_shareres res_nlm4share;
 
-  /* Ext Rquota */
-  getquota_rslt res_rquota_getquota;
-  getquota_rslt res_rquota_getactivequota;
-  setquota_rslt res_rquota_setquota;
-  setquota_rslt res_rquota_setactivequota;
-  /* Rquota */
-  getquota_rslt res_ext_rquota_getquota;
-  getquota_rslt res_ext_rquota_getactivequota;
-  setquota_rslt res_ext_rquota_setquota;
-  setquota_rslt res_ext_rquota_setactivequota;
+	/* Ext Rquota */
+	getquota_rslt res_rquota_getquota;
+	getquota_rslt res_rquota_getactivequota;
+	setquota_rslt res_rquota_setquota;
+	setquota_rslt res_rquota_setactivequota;
+	/* Rquota */
+	getquota_rslt res_ext_rquota_getquota;
+	getquota_rslt res_ext_rquota_getactivequota;
+	setquota_rslt res_ext_rquota_setquota;
+	setquota_rslt res_ext_rquota_setactivequota;
 } nfs_res_t;
 
 /* flags related to the behaviour of the requests (to be stored in the dispatch behaviour field)  */
-#define NOTHING_SPECIAL 0x0000  /* Nothing to be done for this kind of request                    */
-#define MAKES_WRITE     0x0001  /* The function modifyes the FSAL (not permitted for RO FS)       */
-#define NEEDS_CRED      0x0002  /* A credential is needed for this operation                      */
-#define CAN_BE_DUP      0x0004  /* Handling of dup request can be done for this request           */
-#define SUPPORTS_GSS    0x0008  /* Request may be authenticated by RPCSEC_GSS                     */
-#define MAKES_IO        0x0010  /* Request may do I/O (not allowed on MD ONLY exports             */
-#define NEEDS_EXPORT    0x0020  /* Request needs an export                                        */
+#define NOTHING_SPECIAL 0x0000	/* Nothing to be done for this kind of request                    */
+#define MAKES_WRITE     0x0001	/* The function modifyes the FSAL (not permitted for RO FS)       */
+#define NEEDS_CRED      0x0002	/* A credential is needed for this operation                      */
+#define CAN_BE_DUP      0x0004	/* Handling of dup request can be done for this request           */
+#define SUPPORTS_GSS    0x0008	/* Request may be authenticated by RPCSEC_GSS                     */
+#define MAKES_IO        0x0010	/* Request may do I/O (not allowed on MD ONLY exports             */
+#define NEEDS_EXPORT    0x0020	/* Request needs an export                                        */
 
-typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
-                                        exportlist_t *,
-                                        struct req_op_context *req_ctx,
-                                        nfs_worker_data_t *,
-                                        struct svc_req *, nfs_res_t *);
+typedef int (*nfs_protocol_function_t) (nfs_arg_t *, exportlist_t *,
+					struct req_op_context * req_ctx,
+					nfs_worker_data_t *, struct svc_req *,
+					nfs_res_t *);
 
-typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *, nfs_res_t *);
+typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *,
+					      nfs_res_t *);
 
 typedef void (*nfs_protocol_free_t) (nfs_res_t *);
 
-typedef struct nfs_function_desc__
-{
-  nfs_protocol_function_t service_function;
-  nfs_protocol_free_t free_function;
-  xdrproc_t xdr_decode_func;
-  xdrproc_t xdr_encode_func;
-  char *funcname;
-  unsigned int dispatch_behaviour;
+typedef struct nfs_function_desc__ {
+	nfs_protocol_function_t service_function;
+	nfs_protocol_free_t free_function;
+	xdrproc_t xdr_decode_func;
+	xdrproc_t xdr_encode_func;
+	char *funcname;
+	unsigned int dispatch_behaviour;
 } nfs_function_desc_t;
 
-int mnt_Null(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int mnt_Null(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int mnt_Mnt(nfs_arg_t *parg,
-            exportlist_t *pexport,
-            struct req_op_context *req_ctx,
-            nfs_worker_data_t *pworker,
-            struct svc_req *preq,
-            nfs_res_t *pres);
+int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
+	    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	    struct svc_req *preq, nfs_res_t * pres);
 
-int mnt_Dump(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int mnt_Dump(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int mnt_Umnt(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int mnt_Umnt(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int mnt_UmntAll(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int mnt_UmntAll(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int mnt_Export(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t * pres);
+int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
 /* @}
  * -- End of MNT protocol functions. --
  */
 
-int nlm_Null(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int nlm_Null(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Test(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
+int nlm4_Test(nfs_arg_t * parg, exportlist_t * pexport,
+	      struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	      struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Lock(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
+int nlm4_Lock(nfs_arg_t * parg, exportlist_t * pexport,
+	      struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	      struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Cancel(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nlm4_Cancel(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Unlock(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nlm4_Unlock(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Sm_Notify(nfs_arg_t *parg,
-                   exportlist_t *pexport,
-                   struct req_op_context *req_ctx,
-                   nfs_worker_data_t *pworker,
-                   struct svc_req *preq,
-                   nfs_res_t *pres);
+int nlm4_Sm_Notify(nfs_arg_t * parg, exportlist_t * pexport,
+		   struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		   struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Test_Message(nfs_arg_t *parg,
-                      exportlist_t *pexport,
-                      struct req_op_context *req_ctx,
-                      nfs_worker_data_t *pworker,
-                      struct svc_req *preq,
-                      nfs_res_t *pres);
+int nlm4_Test_Message(nfs_arg_t * parg, exportlist_t * pexport,
+		      struct req_op_context *req_ctx,
+		      nfs_worker_data_t * pworker, struct svc_req *preq,
+		      nfs_res_t * pres);
 
-int nlm4_Cancel_Message(nfs_arg_t *parg,
-                        exportlist_t *pexport,
-                        struct req_op_context *req_ctx,
-                        nfs_worker_data_t *pworker,
-                        struct svc_req *preq,
-                        nfs_res_t *pres);
+int nlm4_Cancel_Message(nfs_arg_t * parg, exportlist_t * pexport,
+			struct req_op_context *req_ctx,
+			nfs_worker_data_t * pworker, struct svc_req *preq,
+			nfs_res_t * pres);
 
-int nlm4_Lock_Message(nfs_arg_t *parg,
-                      exportlist_t *pexport,
-                      struct req_op_context *req_ctx,
-                      nfs_worker_data_t *pworker,
-                      struct svc_req *preq,
-                      nfs_res_t *pres);
+int nlm4_Lock_Message(nfs_arg_t * parg, exportlist_t * pexport,
+		      struct req_op_context *req_ctx,
+		      nfs_worker_data_t * pworker, struct svc_req *preq,
+		      nfs_res_t * pres);
 
-int nlm4_Unlock_Message(nfs_arg_t *parg,
-                        exportlist_t *pexport,
-                        struct req_op_context *req_ctx,
-                        nfs_worker_data_t *pworker,
-                        struct svc_req *preq,
-                        nfs_res_t *pres);
+int nlm4_Unlock_Message(nfs_arg_t * parg, exportlist_t * pexport,
+			struct req_op_context *req_ctx,
+			nfs_worker_data_t * pworker, struct svc_req *preq,
+			nfs_res_t * pres);
 
+int nlm4_Granted_Res(nfs_arg_t * parg, exportlist_t * pexport,
+		     struct req_op_context *req_ctx,
+		     nfs_worker_data_t * pworker, struct svc_req *preq,
+		     nfs_res_t * pres);
 
-int nlm4_Granted_Res(nfs_arg_t *parg,
-                     exportlist_t *pexport,
-                     struct req_op_context *req_ctx,
-                     nfs_worker_data_t *pworker,
-                     struct svc_req *preq,
-                     nfs_res_t *pres);
+int nlm4_Share(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Share(nfs_arg_t            * parg,
-               exportlist_t         * pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t    * pworker,
-               struct svc_req       * preq,
-               nfs_res_t            * pres);
+int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
+		 struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		 struct svc_req *preq, nfs_res_t * pres);
 
-int nlm4_Unshare(nfs_arg_t            * parg,
-                 exportlist_t         * pexport,
-                 struct req_op_context *req_ctx,
-                 nfs_worker_data_t    * pworker,
-                 struct svc_req       * preq,
-                 nfs_res_t            * pres);
-
-int nlm4_Free_All(nfs_arg_t *parg,
-                  exportlist_t *pexport,
-                  struct req_op_context *req_ctx,
-                  nfs_worker_data_t *pworker,
-                  struct svc_req *preq,
-                  nfs_res_t *pres);
+int nlm4_Free_All(nfs_arg_t * parg, exportlist_t * pexport,
+		  struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		  struct svc_req *preq, nfs_res_t * pres);
 
 /* @}
  * -- End of NLM protocol functions. --
  */
 
-int rquota_Null(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int rquota_Null(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int rquota_getquota(nfs_arg_t *parg,
-                    exportlist_t *pexport,
-                    struct req_op_context *req_ctx,
-                    nfs_worker_data_t *pworker,
-                    struct svc_req *preq,
-                    nfs_res_t *pres);
+int rquota_getquota(nfs_arg_t * parg, exportlist_t * pexport,
+		    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		    struct svc_req *preq, nfs_res_t * pres);
 
-int rquota_getactivequota(nfs_arg_t *parg,
-                          exportlist_t *pexport,
-                          struct req_op_context *req_ctx,
-                          nfs_worker_data_t *pworker,
-                          struct svc_req *preq,
-                          nfs_res_t * pres);
+int rquota_getactivequota(nfs_arg_t * parg, exportlist_t * pexport,
+			  struct req_op_context *req_ctx,
+			  nfs_worker_data_t * pworker, struct svc_req *preq,
+			  nfs_res_t * pres);
 
 int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
-                    exportlist_t * pexport /* IN  */ ,
-                    struct req_op_context *req_ctx,
-                    nfs_worker_data_t *pworker,
-                    struct svc_req *preq /* IN  */ ,
-                    nfs_res_t * pres /* OUT */ );
+		    exportlist_t * pexport /* IN  */ ,
+		    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		    struct svc_req *preq /* IN  */ ,
+		    nfs_res_t * pres /* OUT */ );
 
-int rquota_setactivequota(nfs_arg_t *parg,
-                          exportlist_t *pexport,
-                          struct req_op_context *req_ctx,
-                          nfs_worker_data_t *pworker,
-                          struct svc_req *preq,
-                          nfs_res_t *pres);
+int rquota_setactivequota(nfs_arg_t * parg, exportlist_t * pexport,
+			  struct req_op_context *req_ctx,
+			  nfs_worker_data_t * pworker, struct svc_req *preq,
+			  nfs_res_t * pres);
 
 /* @}
  *  * -- End of RQUOTA protocol functions. --
  *   */
 
-int nfs_Null(nfs_arg_t *arg,
-             exportlist_t *export,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *worker,
-             struct svc_req *req,
-             nfs_res_t *res);
+int nfs_Null(nfs_arg_t * arg, exportlist_t * export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
+	     struct svc_req *req, nfs_res_t * res);
 
-int nfs_Getattr(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs_Getattr(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Setattr(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs_Setattr(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Lookup(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs_Lookup(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Readlink(nfs_arg_t *parg,
-                 exportlist_t *pexport,
-                 struct req_op_context *req_ctx,
-                 nfs_worker_data_t *pworker,
-                 struct svc_req *preq,
-                 nfs_res_t *pres);
+int nfs_Readlink(nfs_arg_t * parg, exportlist_t * pexport,
+		 struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		 struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Read(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int nfs_Read(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Write(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
+int nfs_Write(nfs_arg_t * parg, exportlist_t * pexport,
+	      struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	      struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Create(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs_Create(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Remove(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs_Remove(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Rename(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs_Rename(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Link(nfs_arg_t *parg,
-             exportlist_t *pexport,
-             struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+int nfs_Link(nfs_arg_t * parg, exportlist_t * pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	     struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Symlink(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs_Symlink(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Mkdir(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
+int nfs_Mkdir(nfs_arg_t * parg, exportlist_t * pexport,
+	      struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	      struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Rmdir(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
+int nfs_Rmdir(nfs_arg_t * parg, exportlist_t * pexport,
+	      struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	      struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Readdir(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs_Readdir(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs_Fsstat(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs_Fsstat(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
-int nfs3_Access(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs3_Access(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs3_Readdirplus(nfs_arg_t *parg,
-                     exportlist_t *pexport,
-                     struct req_op_context *req_ctx,
-                     nfs_worker_data_t *pworker,
-                     struct svc_req *preq,
-                     nfs_res_t *pres);
+int nfs3_Readdirplus(nfs_arg_t * parg, exportlist_t * pexport,
+		     struct req_op_context *req_ctx,
+		     nfs_worker_data_t * pworker, struct svc_req *preq,
+		     nfs_res_t * pres);
 
-int nfs3_Fsinfo(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs3_Fsinfo(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs3_Pathconf(nfs_arg_t *parg,
-                  exportlist_t *pexport,
-                  struct req_op_context *req_ctx,
-                  nfs_worker_data_t *pworker,
-                  struct svc_req *preq,
-                  nfs_res_t *pres);
+int nfs3_Pathconf(nfs_arg_t * parg, exportlist_t * pexport,
+		  struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		  struct svc_req *preq, nfs_res_t * pres);
 
-int nfs3_Commit(nfs_arg_t *parg,
-                exportlist_t *pexport,
-                struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres);
+int nfs3_Commit(nfs_arg_t * parg, exportlist_t * pexport,
+		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		struct svc_req *preq, nfs_res_t * pres);
 
-int nfs3_Mknod(nfs_arg_t *parg,
-               exportlist_t *pexport,
-               struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t *pres);
+int nfs3_Mknod(nfs_arg_t * parg, exportlist_t * pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+	       struct svc_req *preq, nfs_res_t * pres);
 
 /* Functions needed for nfs v4 */
 
-int nfs4_Compound(nfs_arg_t *parg,
-                  exportlist_t *pexport,
-                  struct req_op_context *req_ctx,
-                  nfs_worker_data_t *pworker,
-                  struct svc_req *preq /* IN  */ ,
-                  nfs_res_t *pres);
+int nfs4_Compound(nfs_arg_t * parg, exportlist_t * pexport,
+		  struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
+		  struct svc_req *preq /* IN  */ ,
+		  nfs_res_t * pres);
 
 typedef int (*nfs4_op_function_t) (struct nfs_argop4 *, compound_data_t *,
-                                   struct nfs_resop4 *);
+				   struct nfs_resop4 *);
 
-int nfs4_op_access(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_access(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_close(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_close(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_commit(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_commit(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_create(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_create(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_delegpurge(struct nfs_argop4 *op,   /* [IN] NFS4 OP arguments */
-                       compound_data_t * data,  /* [IN] current data for the compound request */
-                       struct nfs_resop4 *resp);        /* [OUT] NFS4 OP results */
+int nfs4_op_delegpurge(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		       compound_data_t * data,	/* [IN] current data for the compound request */
+		       struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_delegreturn(struct nfs_argop4 *op,  /* [IN] NFS4 OP arguments */
-                        compound_data_t * data, /* [IN] current data for the compound request */
-                        struct nfs_resop4 *resp);       /* [OUT] NFS4 OP results */
+int nfs4_op_delegreturn(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			compound_data_t * data,	/* [IN] current data for the compound request */
+			struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_getattr(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_getattr(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_getfh(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_getfh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_link(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,        /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_link(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lock(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,        /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_lock(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lockt(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_lockt(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_locku(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_locku(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lookup(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_lookup(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lookupp(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_lookupp(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lookupp(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_lookupp(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_nverify(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_nverify(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_open(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,        /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_open(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_open_confirm(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,        /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_open_confirm(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			 compound_data_t * data,	/* [IN] current data for the compound request */
+			 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_open_downgrade(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                           compound_data_t * data,      /* [IN] current data for the compound request */
-                           struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_open_downgrade(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			   compound_data_t * data,	/* [IN] current data for the compound request */
+			   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_openattr(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                     compound_data_t * data,    /* [IN] current data for the compound request */
-                     struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+int nfs4_op_openattr(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		     compound_data_t * data,	/* [IN] current data for the compound request */
+		     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_putfh(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_putfh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_putpubfh(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                     compound_data_t * data,    /* [IN] current data for the compound request */
-                     struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
-int nfs4_op_putrootfh(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                      compound_data_t * data,   /* [IN] current data for the compound request */
-                      struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
+int nfs4_op_putpubfh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		     compound_data_t * data,	/* [IN] current data for the compound request */
+		     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
+int nfs4_op_putrootfh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		      compound_data_t * data,	/* [IN] current data for the compound request */
+		      struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_read(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,        /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_read(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_readdir(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_readdir(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_remove(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_remove(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_renew(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_renew(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_rename(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_rename(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_restorefh(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                      compound_data_t * data,   /* [IN] current data for the compound request */
-                      struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
+int nfs4_op_restorefh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		      compound_data_t * data,	/* [IN] current data for the compound request */
+		      struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_readdir(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_readdir(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_readlink(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                     compound_data_t * data,    /* [IN] current data for the compound request */
-                     struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+int nfs4_op_readlink(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		     compound_data_t * data,	/* [IN] current data for the compound request */
+		     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_savefh(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_savefh(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_secinfo(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_secinfo(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_secinfo_no_name(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                            compound_data_t * data,     /* [IN] current data for the compound request */
-                            struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_secinfo_no_name(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			    compound_data_t * data,	/* [IN] current data for the compound request */
+			    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_setattr(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_setattr(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_setclientid(struct nfs_argop4 *op,  /* [IN] NFS4 OP arguments */
-                        compound_data_t * data, /* [IN] current data for the compound request */
-                        struct nfs_resop4 *resp);       /* [OUT] NFS4 OP results */
+int nfs4_op_setclientid(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			compound_data_t * data,	/* [IN] current data for the compound request */
+			struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,  /* [IN] NFS4 OP arguments */
-                                compound_data_t * data, /* [IN] current data for the compound request */
-                                struct nfs_resop4 *resp);       /* [OUT] NFS4 OP results */
+int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+				compound_data_t * data,	/* [IN] current data for the compound request */
+				struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_verify(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_verify(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_write(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,       /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_write(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_release_lockowner(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                              compound_data_t * data,   /* [IN] current data for the compound request */
-                              struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
+int nfs4_op_release_lockowner(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			      compound_data_t * data,	/* [IN] current data for the compound request */
+			      struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_illegal(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,     /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_illegal(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_exchange_id(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,        /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
+int nfs4_op_exchange_id(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			compound_data_t * data,	/* [IN] current data for the compound request */
+			struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_commit(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_commit(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		   compound_data_t * data,	/* [IN] current data for the compound request */
+		   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_close(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                   compound_data_t * data,      /* [IN] current data for the compound request */
-                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_close(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_create_session(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
-                           compound_data_t * data,     /* [IN] current data for the compound request */
-                           struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
+int nfs4_op_create_session(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			   compound_data_t * data,	/* [IN] current data for the compound request */
+			   struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_getdevicelist(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                          compound_data_t * data,      /* [IN] current data for the compound request */
-                          struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_getdevicelist(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			  compound_data_t * data,	/* [IN] current data for the compound request */
+			  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_free_stateid(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,      /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_free_stateid(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			 compound_data_t * data,	/* [IN] current data for the compound request */
+			 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                          compound_data_t * data,      /* [IN] current data for the compound request */
-                          struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			  compound_data_t * data,	/* [IN] current data for the compound request */
+			  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_destroy_clientid(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                          compound_data_t * data,      /* [IN] current data for the compound request */
-                          struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_destroy_clientid(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			     compound_data_t * data,	/* [IN] current data for the compound request */
+			     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_destroy_session(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                            compound_data_t * data,    /* [IN] current data for the compound request */
-                            struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+int nfs4_op_destroy_session(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			    compound_data_t * data,	/* [IN] current data for the compound request */
+			    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lock(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,       /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_lock(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_lockt(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,      /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_lockt(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_locku(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,      /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+int nfs4_op_locku(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_layoutget(struct nfs_argop4 *op,   /* [IN] NFS4 OP arguments */
-                      compound_data_t * data,  /* [IN] current data for the compound request */
-                      struct nfs_resop4 *resp);        /* [OUT] NFS4 OP results */
+int nfs4_op_layoutget(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		      compound_data_t * data,	/* [IN] current data for the compound request */
+		      struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_layoutcommit(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,       /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_layoutcommit(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			 compound_data_t * data,	/* [IN] current data for the compound request */
+			 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_layoutreturn(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,       /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_layoutreturn(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			 compound_data_t * data,	/* [IN] current data for the compound request */
+			 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_reclaim_complete(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                             compound_data_t * data,   /* [IN] current data for the compound request */
-                             struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
+int nfs4_op_reclaim_complete(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			     compound_data_t * data,	/* [IN] current data for the compound request */
+			     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_sequence(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
-                     compound_data_t * data,   /* [IN] current data for the compound request */
-                     struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
+int nfs4_op_sequence(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		     compound_data_t * data,	/* [IN] current data for the compound request */
+		     struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_read(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                 compound_data_t * data,       /* [IN] current data for the compound request */
-                 struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs4_op_read(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		 compound_data_t * data,	/* [IN] current data for the compound request */
+		 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_set_ssv(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                    compound_data_t * data,    /* [IN] current data for the compound request */
-                    struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+int nfs4_op_set_ssv(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		    compound_data_t * data,	/* [IN] current data for the compound request */
+		    struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_test_stateid(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
-                         compound_data_t * data,    /* [IN] current data for the compound request */
-                         struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+int nfs4_op_test_stateid(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+			 compound_data_t * data,	/* [IN] current data for the compound request */
+			 struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
-int nfs4_op_write(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
-                  compound_data_t * data,      /* [IN] current data for the compound request */
-                  struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
-
+int nfs4_op_write(struct nfs_argop4 *op,	/* [IN] NFS4 OP arguments */
+		  compound_data_t * data,	/* [IN] current data for the compound request */
+		  struct nfs_resop4 *resp);	/* [OUT] NFS4 OP results */
 
 /* Available operations on pseudo fs */
-int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
-                           compound_data_t * data, struct nfs_resop4 *resp);
+int nfs4_op_getattr_pseudo(struct nfs_argop4 *op, compound_data_t * data,
+			   struct nfs_resop4 *resp);
 
-int nfs4_op_access_pseudo(struct nfs_argop4 *op,
-                          compound_data_t * data, struct nfs_resop4 *resp);
+int nfs4_op_access_pseudo(struct nfs_argop4 *op, compound_data_t * data,
+			  struct nfs_resop4 *resp);
 
 int set_compound_data_for_pseudo(compound_data_t * data);
 
-int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
-                          compound_data_t * data, struct nfs_resop4 *resp);
+int nfs4_op_lookup_pseudo(struct nfs_argop4 *op, compound_data_t * data,
+			  struct nfs_resop4 *resp);
 
-int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
-                           compound_data_t * data, struct nfs_resop4 *resp);
+int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op, compound_data_t * data,
+			   struct nfs_resop4 *resp);
 
-int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
-                                  compound_data_t    * data,
-                                  struct nfs_resop4  * resp);
+int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4 *op, compound_data_t * data,
+				  struct nfs_resop4 *resp);
 
-int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
-                           compound_data_t * data, struct nfs_resop4 *resp);
+int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
+			   struct nfs_resop4 *resp);
 
 /* NFSv4 CB calls */
-int nfs4_cb_getattr(struct nfs_cb_argop4 *op,
-                    compound_data_t * data, struct nfs_cb_resop4 *resp);
+int nfs4_cb_getattr(struct nfs_cb_argop4 *op, compound_data_t * data,
+		    struct nfs_cb_resop4 *resp);
 
-int nfs4_cb_recall(struct nfs_cb_argop4 *op,
-                   compound_data_t * data, struct nfs_cb_resop4 *resp);
+int nfs4_cb_recall(struct nfs_cb_argop4 *op, compound_data_t * data,
+		   struct nfs_cb_resop4 *resp);
 
-int nfs4_cb_illegal(struct nfs_cb_argop4 *op,
-                    compound_data_t * data, struct nfs_cb_resop4 *resp);
+int nfs4_cb_illegal(struct nfs_cb_argop4 *op, compound_data_t * data,
+		    struct nfs_cb_resop4 *resp);
 
 /* @}
  * -- End of NFS protocols functions. --
@@ -852,10 +712,10 @@ struct xdr_attrs_args {
 	struct attrlist *attrs;
 	nfs_fh4 *hdl4;
 	uint32_t rdattr_error;
-        uint64_t mounted_on_fileid; /*< If this is the root directory
-                                        of a filesystem, the fileid of
-                                        the directory on which the
-                                        filesystem is mounted. */
+	uint64_t mounted_on_fileid;	/*< If this is the root directory
+					   of a filesystem, the fileid of
+					   the directory on which the
+					   filesystem is mounted. */
 	int nfs_status;
 	compound_data_t *data;
 	bool statfscalled;
@@ -863,16 +723,16 @@ struct xdr_attrs_args {
 };
 
 typedef struct fattr4_dent {
-	char *name;                   /* The name of the operation              */
-	unsigned int supported;       /* Is this action supported ?             */
-	unsigned int size_fattr4;     /* The size of the dedicated attr subtype */
-	unsigned int access;          /* The access type for this attributes    */
-	attrmask_t attrmask;          /* attr bit for decoding to attrs */
-	attrmask_t exp_attrmask;      /* attr bit for decoding to attrs in case of exepction */
-	fattr_xdr_result (*encode)(XDR *xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result (*decode)(XDR *xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result (*compare)(XDR *xdr1, XDR *xdr2);
-	
+	char *name;		/* The name of the operation              */
+	unsigned int supported;	/* Is this action supported ?             */
+	unsigned int size_fattr4;	/* The size of the dedicated attr subtype */
+	unsigned int access;	/* The access type for this attributes    */
+	attrmask_t attrmask;	/* attr bit for decoding to attrs */
+	attrmask_t exp_attrmask;	/* attr bit for decoding to attrs in case of exepction */
+	 fattr_xdr_result(*encode) (XDR * xdr, struct xdr_attrs_args * args);
+	 fattr_xdr_result(*decode) (XDR * xdr, struct xdr_attrs_args * args);
+	 fattr_xdr_result(*compare) (XDR * xdr1, XDR * xdr2);
+
 } fattr4_dent_t;
 
 extern const struct fattr4_dent fattr4tab[];
@@ -880,30 +740,30 @@ extern const struct fattr4_dent fattr4tab[];
 #define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
 #define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
 
-static inline int check_for_wrongsec_ok_attr(struct bitmap4 * attr_request)
+static inline int check_for_wrongsec_ok_attr(struct bitmap4 *attr_request)
 {
-  if(attr_request->bitmap4_len < 1)
-    return true;
-  if((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
-    return false;
-  if(attr_request->bitmap4_len < 2)
-    return true;
-  if((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
-    return false;
-  if(attr_request->bitmap4_len < 3)
-    return true;
-  if(attr_request->map[2] != 0)
-    return false;
-  return true;
+	if (attr_request->bitmap4_len < 1)
+		return true;
+	if ((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
+		return false;
+	if (attr_request->bitmap4_len < 2)
+		return true;
+	if ((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
+		return false;
+	if (attr_request->bitmap4_len < 3)
+		return true;
+	if (attr_request->map[2] != 0)
+		return false;
+	return true;
 }
 
-static inline int check_for_rdattr_error(struct bitmap4 * attr_request)
+static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
 {
-  if(attr_request->bitmap4_len < 1)
-    return false;
-  if((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
-    return true;
-  return false;
+	if (attr_request->bitmap4_len < 1)
+		return false;
+	if ((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
+		return true;
+	return false;
 }
 
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */
@@ -1020,9 +880,12 @@ void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src);
 void nfs4_op_lock_CopyRes(LOCK4res * resp_dst, LOCK4res * resp_src);
 void nfs4_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src);
 void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
-void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
-void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
-void nfs4_op_delegreturn_CopyRes(DELEGRETURN4res * resp_dst, DELEGRETURN4res * resp_src);
+void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst,
+				  OPEN_CONFIRM4res * resp_src);
+void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst,
+				    OPEN_DOWNGRADE4res * resp_src);
+void nfs4_op_delegreturn_CopyRes(DELEGRETURN4res * resp_dst,
+				 DELEGRETURN4res * resp_src);
 
 void nfs4_op_exchange_id_Free(nfs_resop4 * resp);
 void nfs4_op_close_Free(nfs_resop4 * resp);
@@ -1050,52 +913,46 @@ pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_MakeCred(compound_data_t * data);
 
-nfsstat4
-cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
-                     compound_data_t *data, nfs_fh4 *objFH,
-                     struct bitmap4 *Bitmap);
+nfsstat4 cache_entry_To_Fattr(cache_entry_t * entry, fattr4 * Fattr,
+			      compound_data_t * data, nfs_fh4 * objFH,
+			      struct bitmap4 *Bitmap);
 
 int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
-                            compound_data_t * data, struct bitmap4 * Bitmap);
+			    compound_data_t * data, struct bitmap4 *Bitmap);
 int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
-                            compound_data_t * data, struct bitmap4 * Bitmap);
+			    compound_data_t * data, struct bitmap4 *Bitmap);
 bool nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
-bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
+bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *pbitmap, int access);
 bool nfs4_Fattr_Supported(fattr4 * Fattr);
-bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
+bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
 bool nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
-                            const struct attrlist *pFSAL_attr,
-                            fattr3 * pFattr);
+			    const struct attrlist *pFSAL_attr, fattr3 * pFattr);
 
-bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
-                               struct req_op_context *ctx,
-                               fattr3 *Fattr);
+bool cache_entry_to_nfs3_Fattr(cache_entry_t * entry,
+			       struct req_op_context *ctx, fattr3 * Fattr);
 
-bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
-                            sattr3 *Fattr);
+bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 * Fattr);
 
-int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
-                       fattr4 * Fattr,
-                       compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
+int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp, fattr4 * Fattr,
+		       compound_data_t * data, nfs_fh4 * objFH,
+		       struct bitmap4 *Bitmap);
 
 void nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *,
-			    compound_data_t *);
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
 
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 
-int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 error);
+int nfs4_Fattr_Fill_Error(fattr4 * Fattr, nfsstat4 error);
 
-int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args,
-                           struct bitmap4 *Bitmap,
-                           fattr4 *Fattr);
+int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
+			   fattr4 * Fattr);
 
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);
-void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *pbitmap) ;
+void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *pbitmap);
 
 /* Error conversion routines */
 nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *);
@@ -1104,4 +961,4 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *);
 #define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
-#endif /* _NFS_PROTO_FUNCTIONS_H */
+#endif				/* _NFS_PROTO_FUNCTIONS_H */

@@ -44,7 +44,7 @@
 
 #ifndef AT_EMPTY_PATH
 #define AT_EMPTY_PATH 0x1000
-#endif 
+#endif
 
 #define PANFS_HANDLE_SIZE 40
 #if VFS_HANDLE_LEN < (PANFS_HANDLE_SIZE + 8)
@@ -63,14 +63,14 @@
 #define MAXFIDSIZE 36
 
 struct v_fid {
-        u_short         fid_len;                /* length of data in bytes */
-        u_short         fid_reserved;           /* force longword alignment */
-        char            fid_data[MAXFIDSIZE];     /* data (variable length) */
+	u_short fid_len;	/* length of data in bytes */
+	u_short fid_reserved;	/* force longword alignment */
+	char fid_data[MAXFIDSIZE];	/* data (variable length) */
 };
 
 struct v_fhandle {
-        fsid_t  fh_fsid;        /* Filesystem id of mount point */
-        struct  v_fid fh_fid;     /* Filesys specific id */
+	fsid_t fh_fsid;		/* Filesystem id of mount point */
+	struct v_fid fh_fid;	/* Filesys specific id */
 };
 
 /*
@@ -87,9 +87,9 @@ struct v_fhandle {
 	_fh->handle_type = 0; \
 	memcpy((void *)&_fh->handle[0], (void *)&_handle, _fh->handle_bytes);
 
-static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
+static inline size_t vfs_sizeof_handle(vfs_file_handle_t * fh)
 {
-	return offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
+	return offsetof(struct fhandle, fh_fid)+PANFS_HANDLE_SIZE;
 }
 
 #define vfs_alloc_handle(fh) \
@@ -109,25 +109,27 @@ static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 }
 
 static inline int vfs_name_to_handle_at(int atfd, const char *name,
-					vfs_file_handle_t *fh)
+					vfs_file_handle_t * fh)
 {
 	int error;
 	struct v_fhandle handle;
-	error = getfhat(atfd, (char *)name, (struct fhandle *)&handle,
-			AT_SYMLINK_NOFOLLOW);
+	error =
+	    getfhat(atfd, (char *)name, (struct fhandle *)&handle,
+		    AT_SYMLINK_NOFOLLOW);
 	if (error == 0) {
 		VFS_BSD_HANDLE_INIT(fh, handle);
 	}
 	return error;
 }
 
-static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int flags)
+static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh,
+				     int flags)
 {
 	return fhopen((struct fhandle *)fh->handle, flags);
 }
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf,
-				     int flags)
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t * fh,
+				     struct stat *buf, int flags)
 {
 	int fd, ret;
 	fd = vfs_open_by_handle(mountfd, fh, flags);
@@ -139,10 +141,11 @@ static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct 
 	return ret;
 }
 
-static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t owner, gid_t group)
+static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t * fh,
+				      uid_t owner, gid_t group)
 {
 	int fd, ret;
-	fd = vfs_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
+	fd = vfs_open_by_handle(mountfd, fh, (O_PATH | O_NOACCESS));
 	if (fd < 0)
 		return fd;
 	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fchown() */
@@ -151,28 +154,28 @@ static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t 
 	return ret;
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
-                                 int srcfd, const char *sname,
-                                 int destdirfd, const char *dname,
-                                 int flags, fsal_errors_t *fsal_error)
+static inline int vfs_link_by_handle(vfs_file_handle_t * fh, int srcfd,
+				     const char *sname, int destdirfd,
+				     const char *dname, int flags,
+				     fsal_errors_t * fsal_error)
 {
-       int retval;
-       struct fhandle *handle = (struct fhandle *)fh->handle;
-       retval = fhlink(handle, destdirfd, dname);
-       if(retval < 0) {
-               retval = -errno;
-               *fsal_error = posix2fsal_error(errno);
-       }
-       return retval;
+	int retval;
+	struct fhandle *handle = (struct fhandle *)fh->handle;
+	retval = fhlink(handle, destdirfd, dname);
+	if (retval < 0) {
+		retval = -errno;
+		*fsal_error = posix2fsal_error(errno);
+	}
+	return retval;
 }
 
-static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh,
-                                 int srcfd, const char *sname,
-				 char *buf, size_t bufsize)
+static inline int vfs_readlink_by_handle(vfs_file_handle_t * fh, int srcfd,
+					 const char *sname, char *buf,
+					 size_t bufsize)
 {
-       struct fhandle *handle = (struct fhandle *)fh->handle;
-       return fhreadlink(handle, buf, bufsize);
+	struct fhandle *handle = (struct fhandle *)fh->handle;
+	return fhreadlink(handle, buf, bufsize);
 }
 
-#endif  /* HANDLE_FREEBSD_H */
+#endif				/* HANDLE_FREEBSD_H */
 /** @} */

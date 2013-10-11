@@ -83,20 +83,20 @@
  * Buffer may be allocated global, on the stack, or by malloc.
  */
 struct display_buffer {
-  size_t   b_size;    /*< Size of the buffer, will hold b_size - 1 chars plus a
-                          '\0' */
-  char   * b_current; /*< Current position in the buffer, where the next string
-                          will be appended */
-  char   * b_start;   /*< Start of the buffer */
+	size_t b_size;		/*< Size of the buffer, will hold b_size - 1 chars plus a
+				   '\0' */
+	char *b_current;	/*< Current position in the buffer, where the next string
+				   will be appended */
+	char *b_start;		/*< Start of the buffer */
 };
 
-int display_buffer_remain(struct display_buffer * dspbuf);
+int display_buffer_remain(struct display_buffer *dspbuf);
 
-int display_start(struct display_buffer * dspbuf);
+int display_start(struct display_buffer *dspbuf);
 
-int display_finish(struct display_buffer * dspbuf);
+int display_finish(struct display_buffer *dspbuf);
 
-int display_force_overflow(struct display_buffer * dspbuf);
+int display_force_overflow(struct display_buffer *dspbuf);
 
 /**
  * @brief Reset current position in buffer to start.
@@ -104,10 +104,10 @@ int display_force_overflow(struct display_buffer * dspbuf);
  * @param[in,out] dspbuf The buffer.
  * 
  */
-static inline void display_reset_buffer(struct display_buffer * dspbuf)
+static inline void display_reset_buffer(struct display_buffer *dspbuf)
 {
-  /* To re-use a buffer, all we need to do is roll b_current back to b_start. */
-  dspbuf->b_current = dspbuf->b_start;
+	/* To re-use a buffer, all we need to do is roll b_current back to b_start. */
+	dspbuf->b_current = dspbuf->b_start;
 }
 
 /**
@@ -120,26 +120,22 @@ static inline void display_reset_buffer(struct display_buffer * dspbuf)
  * This function is more efficient than strlen if the buffer hasn't overflowed.
  * 
  */
-static inline int display_buffer_len(struct display_buffer * dspbuf)
+static inline int display_buffer_len(struct display_buffer *dspbuf)
 {
-  int len = dspbuf->b_current - dspbuf->b_start;
-  if(len == dspbuf->b_size)
-    {
-      /* Buffer has overflowed, due to forced overflow or partial UTF-8 fixup,
-       * the actual string length might actually be less than the full length
-       * of the buffer. Just use strlen.
-       */
-      return strlen(dspbuf->b_start);
-    }
-  else
-    {
-      return len;
-    }
+	int len = dspbuf->b_current - dspbuf->b_start;
+	if (len == dspbuf->b_size) {
+		/* Buffer has overflowed, due to forced overflow or partial UTF-8 fixup,
+		 * the actual string length might actually be less than the full length
+		 * of the buffer. Just use strlen.
+		 */
+		return strlen(dspbuf->b_start);
+	} else {
+		return len;
+	}
 }
 
-int display_vprintf(struct display_buffer * dspbuf,
-                    const char            * fmt,
-                    va_list                 args);
+int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
+		    va_list args);
 
 /**
  * @brief Format a string into the buffer.
@@ -151,28 +147,25 @@ int display_vprintf(struct display_buffer * dspbuf,
  * @return the bytes remaining in the buffer.
  * 
  */
-static inline int display_printf(struct display_buffer * dspbuf,
-                                 const char            * fmt,
-                                 ...)
+static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
+				 ...)
 {
-  va_list args;
-  int     b_left;
-  
-  va_start(args, fmt);
+	va_list args;
+	int b_left;
 
-  b_left = display_vprintf(dspbuf, fmt, args);
+	va_start(args, fmt);
 
-  va_end(args);
+	b_left = display_vprintf(dspbuf, fmt, args);
 
-  return b_left;
+	va_end(args);
+
+	return b_left;
 }
 
-int display_opaque_bytes(struct display_buffer * dspbuf, void * value, int len);
+int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len);
 
-int display_opaque_value_max(struct display_buffer * dspbuf,
-                             void                  * value,
-                             int                     len,
-                             int                     max);
+int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
+			     int len, int max);
 
 /**
  * @brief Display a number of opaque bytes as a hex string.
@@ -186,14 +179,13 @@ int display_opaque_value_max(struct display_buffer * dspbuf,
  * This routine just calls display_opaque_value_max with max = len.
  * 
  */
-static inline int display_opaque_value(struct display_buffer * dspbuf,
-                                       void                  * value,
-                                       int                     len)
+static inline int display_opaque_value(struct display_buffer *dspbuf,
+				       void *value, int len)
 {
-  return display_opaque_value_max(dspbuf, value, len, len);
+	return display_opaque_value_max(dspbuf, value, len, len);
 }
 
-int display_len_cat(struct display_buffer * dspbuf, char * str, int len);
+int display_len_cat(struct display_buffer *dspbuf, char *str, int len);
 
 /**
  * @brief Append a null delimited string to the buffer.
@@ -204,13 +196,13 @@ int display_len_cat(struct display_buffer * dspbuf, char * str, int len);
  * @return the bytes remaining in the buffer.
  * 
  */
-static inline int display_cat(struct display_buffer * dspbuf, char * str)
+static inline int display_cat(struct display_buffer *dspbuf, char *str)
 {
-  return display_len_cat(dspbuf, str, strlen(str));
+	return display_len_cat(dspbuf, str, strlen(str));
 }
 
-int display_cat_trunc(struct display_buffer * dspbuf, char * str, size_t max);
+int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max);
 
 /** @} */
 
-#endif /* _DISPLAY_H */
+#endif				/* _DISPLAY_H */

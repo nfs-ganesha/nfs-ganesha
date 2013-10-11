@@ -103,7 +103,6 @@
 	.set = dbus_prop_set_##prop_name			\
 },
 
-
 #define END_ARG_LIST {NULL, NULL, NULL}
 
 #define END_PROPS_LIST {NULL, DBUS_PROP_READ, "", NULL, NULL}
@@ -118,27 +117,25 @@ struct gsh_dbus_prop {
 	const char *name;
 	dbus_prop_access_t access;
 	const char *type;
-	bool (*get)(DBusMessageIter *reply);
-	bool (*set)(DBusMessageIter *args);
+	 bool(*get) (DBusMessageIter * reply);
+	 bool(*set) (DBusMessageIter * args);
 };
 
 struct gsh_dbus_arg {
 	const char *name;
 	const char *type;
-	const char *direction; /* not used for signals */
+	const char *direction;	/* not used for signals */
 };
 
 struct gsh_dbus_method {
 	const char *name;
-	bool (*method)(DBusMessageIter *args,
-		       DBusMessage *reply);
+	 bool(*method) (DBusMessageIter * args, DBusMessage * reply);
 	struct gsh_dbus_arg args[];
 };
 
 struct gsh_dbus_signal {
 	const char *name;
-	bool (*signal)(DBusMessageIter *args,
-		       DBusMessage *reply);
+	 bool(*signal) (DBusMessageIter * args, DBusMessage * reply);
 	struct gsh_dbus_arg args[];
 };
 
@@ -155,14 +152,11 @@ void gsh_dbus_pkgshutdown(void);
 void *gsh_dbus_thread(void *arg);
 
 /* callout method */
-void dbus_append_timestamp(DBusMessageIter *iterp,
-			   struct timespec *ts);
-void dbus_status_reply(DBusMessageIter *iter,
-		       bool success,
-		       char *errormsg);
+void dbus_append_timestamp(DBusMessageIter * iterp, struct timespec *ts);
+void dbus_status_reply(DBusMessageIter * iter, bool success, char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
-                               struct gsh_dbus_interface **interfaces);
+			       struct gsh_dbus_interface **interfaces);
 
 /* more to come */
 
-#endif /* _GANESHA_DBUS_H */
+#endif				/* _GANESHA_DBUS_H */

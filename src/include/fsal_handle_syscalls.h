@@ -45,7 +45,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <stddef.h> /* For having offsetof defined */
+#include <stddef.h>		/* For having offsetof defined */
 
 /* This is large enough for PanFS file handles embedded in a BSD fhandle */
 #define VFS_HANDLE_LEN 48
@@ -63,10 +63,10 @@
  */
 
 typedef struct vfs_file_handle {
-        unsigned int handle_bytes;
-        int handle_type;
-        unsigned char handle[VFS_HANDLE_LEN];
-} vfs_file_handle_t ;
+	unsigned int handle_bytes;
+	int handle_type;
+	unsigned char handle[VFS_HANDLE_LEN];
+} vfs_file_handle_t;
 
 #define VFS_FILE_HANDLE_MIN \
 	offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL

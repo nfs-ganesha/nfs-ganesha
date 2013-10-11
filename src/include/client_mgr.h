@@ -53,12 +53,10 @@ void client_pkginit(void);
 #ifdef USE_DBUS_STATS
 void dbus_client_init(void);
 #endif
-struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr,
-				  bool lookup_only);
+struct gsh_client *get_gsh_client(sockaddr_t * client_ipaddr, bool lookup_only);
 void put_gsh_client(struct gsh_client *client);
-int foreach_gsh_client(bool (*cb)(struct gsh_client *cl,
-				   void *state),
+int foreach_gsh_client(bool(*cb) (struct gsh_client * cl, void *state),
 		       void *state);
 
-#endif /* !CLIENT_MGR_H */
+#endif				/* !CLIENT_MGR_H */
 /** @} */

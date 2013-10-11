@@ -30,10 +30,9 @@
 
 #include <stddef.h>
 
-struct glist_head
-{
-  struct glist_head *next;
-  struct glist_head *prev;
+struct glist_head {
+	struct glist_head *next;
+	struct glist_head *prev;
 };
 
 #define GLIST_HEAD_INIT(name) { &(name), &(name) }
@@ -41,87 +40,88 @@ struct glist_head
 #define GLIST_HEAD(name) \
         struct glist_head name = GLIST_HEAD_INIT(name)
 
-static inline void glist_init(struct glist_head *head) /* XXX glist_init? */
-{
-  head->next = head;
-  head->prev = head;
+static inline void glist_init(struct glist_head *head)
+{				/* XXX glist_init? */
+	head->next = head;
+	head->prev = head;
 }
 
 /* Add the new element between left and right */
-static inline void __glist_add(struct glist_head *left, struct glist_head *right,
-                               struct glist_head *new)
+static inline void __glist_add(struct glist_head *left,
+			       struct glist_head *right, struct glist_head *new)
 {
-  new->prev = left;
-  new->next = right;
-  left->next = new;
-  right->prev = new;
+	new->prev = left;
+	new->next = right;
+	left->next = new;
+	right->prev = new;
 }
 
-static inline void glist_add_tail(struct glist_head *head, struct glist_head *new)
+static inline void glist_add_tail(struct glist_head *head,
+				  struct glist_head *new)
 {
 
-  __glist_add(head->prev, head, new);
+	__glist_add(head->prev, head, new);
 }
 
 /* add after the specified entry*/
 static inline void glist_add(struct glist_head *head, struct glist_head *new)
 {
-  __glist_add(head, head->next, new);
+	__glist_add(head, head->next, new);
 }
 
 static inline void glist_del(struct glist_head *node)
 {
-  struct glist_head *left = node->prev;
-  struct glist_head *right = node->next;
-  if(left != NULL)
-    left->next = right;
-  if(right != NULL)
-    right->prev = left;
-  node->next = NULL;
-  node->prev = NULL;
+	struct glist_head *left = node->prev;
+	struct glist_head *right = node->next;
+	if (left != NULL)
+		left->next = right;
+	if (right != NULL)
+		right->prev = left;
+	node->next = NULL;
+	node->prev = NULL;
 }
 
 static inline int glist_empty(struct glist_head *head)
 {
-  return head->next == head;
+	return head->next == head;
 }
 
 static inline int glist_null(struct glist_head *head)
 {
-  return (head->next == NULL) && (head->prev == NULL);
+	return (head->next == NULL) && (head->prev == NULL);
 }
 
-static inline void glist_add_list_tail(struct glist_head *list, struct glist_head *new)
+static inline void glist_add_list_tail(struct glist_head *list,
+				       struct glist_head *new)
 {
-  struct glist_head *first = new->next;
-  struct glist_head *last = new->prev;
+	struct glist_head *first = new->next;
+	struct glist_head *last = new->prev;
 
-  if(glist_empty(new))
-    {
-      /* nothing to add */
-      return;
-    }
+	if (glist_empty(new)) {
+		/* nothing to add */
+		return;
+	}
 
-  first->prev = list->prev;
-  list->prev->next = first;
+	first->prev = list->prev;
+	list->prev->next = first;
 
-  last->next = list;
-  list->prev = last;
+	last->next = list;
+	list->prev = last;
 }
 
 /* Move all of src onto the tail of tgt.  Clears src. */
 static inline void glist_splice_tail(struct glist_head *tgt,
-                                     struct glist_head *src)
+				     struct glist_head *src)
 {
-    if (glist_empty(src))
-        return;
+	if (glist_empty(src))
+		return;
 
-    src->next->prev = tgt->prev;
-    tgt->prev->next = src->next;
-    src->prev->next = tgt;
-    tgt->prev = src->prev;
+	src->next->prev = tgt->prev;
+	tgt->prev->next = src->next;
+	src->prev->next = tgt;
+	tgt->prev = src->prev;
 
-    glist_init(src);
+	glist_init(src);
 }
 
 #define glist_for_each(node, head) \
@@ -129,12 +129,12 @@ static inline void glist_splice_tail(struct glist_head *tgt,
 
 static inline size_t glist_length(struct glist_head *head)
 {
-    size_t length = 0;
-    struct glist_head *dummy = NULL;
-    glist_for_each(dummy, head) {
-	++length;
-    }
-    return length;
+	size_t length = 0;
+	struct glist_head *dummy = NULL;
+	glist_for_each(dummy, head) {
+		++length;
+	}
+	return length;
 }
 
 #define container_of(addr, type, member) ({			\
@@ -152,4 +152,4 @@ static inline size_t glist_length(struct glist_head *head)
   for (node = (head)->next, noden = node->next; node != (head);	    \
        node = noden, noden = node->next)
 
-#endif                          /* _NLM_LIST_H */
+#endif				/* _NLM_LIST_H */

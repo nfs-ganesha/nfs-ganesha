@@ -40,13 +40,13 @@
  * labels in the config file
  */
 
-static const char *CONF_LABEL_FSAL __attribute__((unused)) = "FSAL";
-static const char *CONF_LABEL_FS_COMMON __attribute__((unused)) = "FileSystem";
+static const char *CONF_LABEL_FSAL __attribute__ ((unused)) = "FSAL";
+static const char *CONF_LABEL_FS_COMMON __attribute__ ((unused)) = "FileSystem";
 
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <dirent.h>             /* for MAXNAMLEN */
+#include <dirent.h>		/* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "err_fsal.h"
 #include "ganesha_rpc.h"
@@ -62,16 +62,16 @@ static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
  * @brief Object file type within the system
  */
 typedef enum {
-        NO_FILE_TYPE = 0, /* sanity check to ignore type */
-        REGULAR_FILE = 1,
-        CHARACTER_FILE = 2,
-        BLOCK_FILE = 3,
-        SYMBOLIC_LINK = 4,
-        SOCKET_FILE = 5,
-        FIFO_FILE = 6,
-        DIRECTORY = 7,
-        FS_JUNCTION = 8,
-        EXTENDED_ATTR = 9
+	NO_FILE_TYPE = 0,	/* sanity check to ignore type */
+	REGULAR_FILE = 1,
+	CHARACTER_FILE = 2,
+	BLOCK_FILE = 3,
+	SYMBOLIC_LINK = 4,
+	SOCKET_FILE = 5,
+	FIFO_FILE = 6,
+	DIRECTORY = 7,
+	FS_JUNCTION = 8,
+	EXTENDED_ATTR = 9
 } object_file_type_t;
 
 /**
@@ -80,10 +80,8 @@ typedef enum {
  * FSALs, they should go here.
  */
 
-typedef struct fsal_init_info__
-{
+typedef struct fsal_init_info__ {
 } fsal_init_info_t;
-
 
 /* ---------------
  *  FS dependant :
@@ -109,15 +107,15 @@ typedef struct fsal_init_info__
 
 /* Used to record the uid and gid of the client that made a request. */
 struct user_cred {
-  uid_t caller_uid;
-  gid_t caller_gid;
-  uid_t caller_uid_saved;
-  gid_t caller_gid_saved;
-  int   caller_flags;
-  unsigned int caller_glen_saved;
-  unsigned int caller_gpos_root;
-  unsigned int caller_glen;
-  gid_t *caller_garray;
+	uid_t caller_uid;
+	gid_t caller_gid;
+	uid_t caller_uid_saved;
+	gid_t caller_gid_saved;
+	int caller_flags;
+	unsigned int caller_glen_saved;
+	unsigned int caller_gpos_root;
+	unsigned int caller_glen;
+	gid_t *caller_garray;
 };
 
 /**
@@ -154,37 +152,33 @@ struct user_cred {
  */
 
 struct req_op_context {
-        struct user_cred *creds; /*< resolved user creds from request */
-        sockaddr_t *caller_addr; /*< IP connection info */
-        const uint64_t*clientid; /*< Client ID of caller, NULL if
-                                     unknown/not applicable. */
-	uint32_t nfs_vers;       /*< NFS protocol version of request */
-	uint32_t nfs_minorvers;  /*< NFSv4 minor version */
-	uint32_t req_type;       /*< request_type NFS | 9P */
-	struct gsh_client *client; /*< client host info including stats */
-	struct gsh_export *export; /*< current export info including stats */
-	nsecs_elapsed_t start_time; /*< start time of this op/request */
-	nsecs_elapsed_t queue_wait; /*< time in wait queue */
-        /* add new context members here */
+	struct user_cred *creds;	/*< resolved user creds from request */
+	sockaddr_t *caller_addr;	/*< IP connection info */
+	const uint64_t *clientid;	/*< Client ID of caller, NULL if
+					   unknown/not applicable. */
+	uint32_t nfs_vers;	/*< NFS protocol version of request */
+	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
+	uint32_t req_type;	/*< request_type NFS | 9P */
+	struct gsh_client *client;	/*< client host info including stats */
+	struct gsh_export *export;	/*< current export info including stats */
+	nsecs_elapsed_t start_time;	/*< start time of this op/request */
+	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
+	/* add new context members here */
 };
-
 
 /** filesystem identifier */
 
-typedef struct fsal_fsid__
-{
-        uint64_t major;
-        uint64_t minor;
+typedef struct fsal_fsid__ {
+	uint64_t major;
+	uint64_t minor;
 } fsal_fsid_t;
 
 /** raw device spec */
 
-typedef struct fsal_dev__
-{
-  uint64_t major;
-  uint64_t minor;
+typedef struct fsal_dev__ {
+	uint64_t major;
+	uint64_t minor;
 } fsal_dev_t;
-
 
 /* constants for specifying which ACL types are supported  */
 
@@ -200,7 +194,6 @@ typedef uint32_t fsal_acetype_t;
 #define FSAL_ACE_TYPE_DENY  1
 #define FSAL_ACE_TYPE_AUDIT 2
 #define FSAL_ACE_TYPE_ALARM 3
-
 
 /** ACE flag */
 
@@ -253,33 +246,29 @@ typedef uint32_t fsal_aceperm_t;
 #define FSAL_ACE_SPECIAL_GROUP              2
 #define FSAL_ACE_SPECIAL_EVERYONE           3
 
-typedef struct fsal_ace__
-{
+typedef struct fsal_ace__ {
 
-  fsal_acetype_t type;
-  fsal_aceperm_t perm;
+	fsal_acetype_t type;
+	fsal_aceperm_t perm;
 
-  fsal_aceflag_t flag;
-  fsal_aceflag_t iflag;  /* Internal flags. */
-  union
-  {
-    uid_t uid;
-    gid_t gid;
-  } who;
+	fsal_aceflag_t flag;
+	fsal_aceflag_t iflag;	/* Internal flags. */
+	union {
+		uid_t uid;
+		gid_t gid;
+	} who;
 } fsal_ace_t;
 
-typedef struct fsal_acl__
-{
-  uint32_t naces;
-  fsal_ace_t *aces;
-  pthread_rwlock_t lock;
-  uint32_t ref;
+typedef struct fsal_acl__ {
+	uint32_t naces;
+	fsal_ace_t *aces;
+	pthread_rwlock_t lock;
+	uint32_t ref;
 } fsal_acl_t;
 
-typedef struct fsal_acl_data__
-{
-  uint32_t naces;
-  fsal_ace_t *aces;
+typedef struct fsal_acl_data__ {
+	uint32_t naces;
+	fsal_ace_t *aces;
 } fsal_acl_data_t;
 
 /* Macros for NFS4 ACE flags, masks, and special who values. */
@@ -413,67 +402,64 @@ typedef uint64_t attrmask_t;
                       ATTR_ATIME    | ATTR_MTIME    | \
                       ATTR_CTIME    | ATTR_SPACEUSED)
 
-
 /**
  * @brief A list of FS object's attributes.
  */
 
 struct attrlist {
-        attrmask_t mask; /*< Indicates the attributes to be set or
-                             that have been filled in by the FSAL. */
-        object_file_type_t type; /*< Type of this object */
-        uint64_t filesize; /*< Logical size (amount of data that can be
-                               read) */
-        fsal_fsid_t fsid; /*< Filesystem on which this object is
-                              stored */
-        fsal_acl_t *acl; /*< ACL for this object */
-        uint64_t fileid; /*< Unique identifier for this object within
-                             the scope of the fsid, (e.g. inode number) */
-        uint32_t mode; /*< POSIX access mode */
-        uint32_t numlinks; /*< Number of links to this file */
-        uint64_t owner; /*< Owner ID */
-        uint64_t group; /*< Group ID */
-        fsal_dev_t rawdev; /*< Major/minor device number (only
-                               meaningful for character/block special
-                               files.) */
-        struct timespec atime; /*< Time of last access */
-        struct timespec creation; /*< Creation time */
-        struct timespec ctime; /*< Inode modification time (a la stat.
-                              NOT creation.) */
-        struct timespec mtime; /*< Time of last modification */
-        struct timespec chgtime; /*< Time of last 'change' */
-        uint64_t spaceused; /*< Space used on underlying filesystem */
-        uint64_t change; /*< A 'change id' */
-        uint64_t generation; /*< Generation number for this file */
-	uint32_t grace_period_attr; /*< Expiration time interval in seconds
-					for attributes. Settable by FSAL. */
+	attrmask_t mask;	/*< Indicates the attributes to be set or
+				   that have been filled in by the FSAL. */
+	object_file_type_t type;	/*< Type of this object */
+	uint64_t filesize;	/*< Logical size (amount of data that can be
+				   read) */
+	fsal_fsid_t fsid;	/*< Filesystem on which this object is
+				   stored */
+	fsal_acl_t *acl;	/*< ACL for this object */
+	uint64_t fileid;	/*< Unique identifier for this object within
+				   the scope of the fsid, (e.g. inode number) */
+	uint32_t mode;		/*< POSIX access mode */
+	uint32_t numlinks;	/*< Number of links to this file */
+	uint64_t owner;		/*< Owner ID */
+	uint64_t group;		/*< Group ID */
+	fsal_dev_t rawdev;	/*< Major/minor device number (only
+				   meaningful for character/block special
+				   files.) */
+	struct timespec atime;	/*< Time of last access */
+	struct timespec creation;	/*< Creation time */
+	struct timespec ctime;	/*< Inode modification time (a la stat.
+				   NOT creation.) */
+	struct timespec mtime;	/*< Time of last modification */
+	struct timespec chgtime;	/*< Time of last 'change' */
+	uint64_t spaceused;	/*< Space used on underlying filesystem */
+	uint64_t change;	/*< A 'change id' */
+	uint64_t generation;	/*< Generation number for this file */
+	uint32_t grace_period_attr;	/*< Expiration time interval in seconds
+					   for attributes. Settable by FSAL. */
 };
 
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
 
 typedef enum {
-        FSAL_R_OK = 0x04000000, /*< Test for Read permission */
-        FSAL_W_OK = 0x02000000, /*< Test for Write permission */
-        FSAL_X_OK = 0x01000000, /*< Test for execute permission */
-        FSAL_ACCESS_OK = 0x00000000, /*< Allow */
-        FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
-        FSAL_MODE_BIT_MASK = 0x07000000,
-        FSAL_ACE4_BIT_MASK = 0x40FFFFFF,
-        FSAL_MODE_MASK_FLAG = 0x00000000,
-        FSAL_ACE4_MASK_FLAG = 0x80000000,
-        FSAL_ACE4_PERM_CONTINUE = 0x40000000 /*< Indicate ACL evaluation should continue */
+	FSAL_R_OK = 0x04000000,	/*< Test for Read permission */
+	FSAL_W_OK = 0x02000000,	/*< Test for Write permission */
+	FSAL_X_OK = 0x01000000,	/*< Test for execute permission */
+	FSAL_ACCESS_OK = 0x00000000,	/*< Allow */
+	FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
+	FSAL_MODE_BIT_MASK = 0x07000000,
+	FSAL_ACE4_BIT_MASK = 0x40FFFFFF,
+	FSAL_MODE_MASK_FLAG = 0x00000000,
+	FSAL_ACE4_MASK_FLAG = 0x80000000,
+	FSAL_ACE4_PERM_CONTINUE = 0x40000000	/*< Indicate ACL evaluation should continue */
 } fsal_accessflags_t;
 
-static inline fsal_accessflags_t
-FSAL_MODE_MASK(fsal_accessflags_t access)
+static inline fsal_accessflags_t FSAL_MODE_MASK(fsal_accessflags_t access)
 {
-        return (access & FSAL_MODE_BIT_MASK);
+	return (access & FSAL_MODE_BIT_MASK);
 }
 
-static inline fsal_accessflags_t
-FSAL_ACE4_MASK(fsal_accessflags_t access)
+static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 {
-        return (access & FSAL_ACE4_BIT_MASK);
+	return (access & FSAL_ACE4_BIT_MASK);
 }
 
 #define FSAL_MODE_MASK_SET(access) (access | FSAL_MODE_MASK_FLAG)
@@ -488,7 +474,6 @@ FSAL_ACE4_MASK(fsal_accessflags_t access)
 #define FSAL_READ_ACCESS (FSAL_MODE_MASK_SET(FSAL_R_OK) | \
                           FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA))
 
-
 /* Object handle LRU resource actions
  */
 
@@ -497,20 +482,19 @@ FSAL_ACE4_MASK(fsal_accessflags_t access)
  */
 
 typedef enum {
-        LRU_CLOSE_FILES = 0x1,
-        LRU_FREE_MEMORY = 0x2
+	LRU_CLOSE_FILES = 0x1,
+	LRU_FREE_MEMORY = 0x2
 } lru_actions_t;
-
 
 /** FSAL_open behavior. */
 
 typedef uint16_t fsal_openflags_t;
 
-#define FSAL_O_CLOSED   0x0000  /* Closed */
-#define FSAL_O_READ     0x0001  /* read */
-#define FSAL_O_WRITE    0x0002  /* write */
-#define FSAL_O_RDWR     (FSAL_O_READ|FSAL_O_WRITE)  /* read/write: both flags explicitly or'd together so that FSAL_O_RDWR can be used as a mask */
-#define FSAL_O_SYNC     0x0004  /* sync */
+#define FSAL_O_CLOSED   0x0000	/* Closed */
+#define FSAL_O_READ     0x0001	/* read */
+#define FSAL_O_WRITE    0x0002	/* write */
+#define FSAL_O_RDWR     (FSAL_O_READ|FSAL_O_WRITE)	/* read/write: both flags explicitly or'd together so that FSAL_O_RDWR can be used as a mask */
+#define FSAL_O_SYNC     0x0004	/* sync */
 
 /** File system static info. */
 
@@ -518,70 +502,69 @@ typedef uint16_t fsal_openflags_t;
  * boolean fields of staticfsinfo
  */
 typedef enum enum_fsal_fsinfo_options {
-        fso_no_trunc,
-        fso_chown_restricted,
-        fso_case_insensitive,
-        fso_case_preserving,
-        fso_link_support,
-        fso_symlink_support,
-        fso_lock_support,
-        fso_lock_support_owner,
-        fso_lock_support_async_block,
-        fso_named_attr,
-        fso_unique_handles,
-        fso_cansettime,
-        fso_homogenous,
-        fso_auth_exportpath_xdev,
-        fso_delegations,
-        fso_accesscheck_support,
-        fso_share_support,
-        fso_share_support_owner,
-        fso_pnfs_ds_supported
+	fso_no_trunc,
+	fso_chown_restricted,
+	fso_case_insensitive,
+	fso_case_preserving,
+	fso_link_support,
+	fso_symlink_support,
+	fso_lock_support,
+	fso_lock_support_owner,
+	fso_lock_support_async_block,
+	fso_named_attr,
+	fso_unique_handles,
+	fso_cansettime,
+	fso_homogenous,
+	fso_auth_exportpath_xdev,
+	fso_delegations,
+	fso_accesscheck_support,
+	fso_share_support,
+	fso_share_support_owner,
+	fso_pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
-struct fsal_staticfsinfo_t
-{
-        uint64_t maxfilesize; /*< maximum allowed filesize     */
-        uint32_t maxlink; /*< maximum hard links on a file */
-        uint32_t maxnamelen; /*< maximum name length */
-        uint32_t maxpathlen; /*< maximum path length */
-        bool no_trunc; /*< is it errorneous when name>maxnamelen? */
-        bool chown_restricted; /*< is chown limited to super-user.*/
-        bool case_insensitive;  /*< case insensitive FS? */
-        bool case_preserving;  /*< FS preserves case? */
-        bool link_support; /*< FS supports hardlinks? */
-        bool symlink_support;  /*< FS supports symlinks? */
-        bool lock_support; /*< FS supports file locking? */
-        bool lock_support_owner; /*< FS supports lock owners? */
-        bool lock_support_async_block; /*< FS supports blocking locks? */
-        bool named_attr; /*< FS supports named attributes. */
-        bool unique_handles; /*< Handles are unique and persistent.*/
-        struct timespec lease_time; /*< Duration of lease at FS in seconds */
-        fsal_aclsupp_t acl_support; /*< what type of ACLs are supported */
-        bool cansettime; /*< Is it possible to change file times
-                             using SETATTR. */
-        bool homogenous; /*< Are supported attributes the same
-                             for all objects of this filesystem. */
-        attrmask_t supported_attrs;  /*< If the FS is homogenous, this
-                                         indicates the set of
-                                         supported attributes. */
-        uint32_t maxread; /*< Max read size */
-        uint32_t maxwrite; /*< Max write size */
-        uint32_t umask;/*< This mask is applied to the mode of created
-                           objects */
-        bool auth_exportpath_xdev;  /*< This flag indicates weither
-                                        it is possible to cross junctions
-                                        for resolving an NFS export path. */
+struct fsal_staticfsinfo_t {
+	uint64_t maxfilesize;	/*< maximum allowed filesize     */
+	uint32_t maxlink;	/*< maximum hard links on a file */
+	uint32_t maxnamelen;	/*< maximum name length */
+	uint32_t maxpathlen;	/*< maximum path length */
+	bool no_trunc;		/*< is it errorneous when name>maxnamelen? */
+	bool chown_restricted;	/*< is chown limited to super-user. */
+	bool case_insensitive;	/*< case insensitive FS? */
+	bool case_preserving;	/*< FS preserves case? */
+	bool link_support;	/*< FS supports hardlinks? */
+	bool symlink_support;	/*< FS supports symlinks? */
+	bool lock_support;	/*< FS supports file locking? */
+	bool lock_support_owner;	/*< FS supports lock owners? */
+	bool lock_support_async_block;	/*< FS supports blocking locks? */
+	bool named_attr;	/*< FS supports named attributes. */
+	bool unique_handles;	/*< Handles are unique and persistent. */
+	struct timespec lease_time;	/*< Duration of lease at FS in seconds */
+	fsal_aclsupp_t acl_support;	/*< what type of ACLs are supported */
+	bool cansettime;	/*< Is it possible to change file times
+				   using SETATTR. */
+	bool homogenous;	/*< Are supported attributes the same
+				   for all objects of this filesystem. */
+	attrmask_t supported_attrs;	/*< If the FS is homogenous, this
+					   indicates the set of
+					   supported attributes. */
+	uint32_t maxread;	/*< Max read size */
+	uint32_t maxwrite;	/*< Max write size */
+	uint32_t umask;		/*< This mask is applied to the mode of created
+				   objects */
+	bool auth_exportpath_xdev;	/*< This flag indicates weither
+					   it is possible to cross junctions
+					   for resolving an NFS export path. */
 
-        uint32_t xattr_access_rights; /*< This indicates who is allowed
-                                          to read/modify xattrs value. */
-        bool accesscheck_support; /*< This indicates whether access check
-                                      will be done in FSAL. */
-        bool share_support; /*< FS supports share reservation? */
-        bool share_support_owner;  /*< FS supports share reservation
-                                       with open owners ? */
-        bool delegations; /*< fsal supports delegations */
-        bool pnfs_file;   /*< fsal supports file pnfs */
+	uint32_t xattr_access_rights;	/*< This indicates who is allowed
+					   to read/modify xattrs value. */
+	bool accesscheck_support;	/*< This indicates whether access check
+					   will be done in FSAL. */
+	bool share_support;	/*< FS supports share reservation? */
+	bool share_support_owner;	/*< FS supports share reservation
+					   with open owners ? */
+	bool delegations;	/*< fsal supports delegations */
+	bool pnfs_file;		/*< fsal supports file pnfs */
 };
 
 /**
@@ -589,24 +572,22 @@ struct fsal_staticfsinfo_t
  */
 
 typedef struct fsal_status__ {
-        fsal_errors_t major; /*< FSAL status code */
-        int minor; /*< Other error code (usually POSIX) */
+	fsal_errors_t major;	/*< FSAL status code */
+	int minor;		/*< Other error code (usually POSIX) */
 } fsal_status_t;
-
 
 /**
  * @brief File system dynamic info.
  */
 
-typedef struct fsal_dynamicfsinfo__
-{
-        uint64_t total_bytes;
-        uint64_t free_bytes;
-        uint64_t avail_bytes;
-        uint64_t total_files;
-        uint64_t free_files;
-        uint64_t avail_files;
-        struct timespec time_delta;
+typedef struct fsal_dynamicfsinfo__ {
+	uint64_t total_bytes;
+	uint64_t free_bytes;
+	uint64_t avail_bytes;
+	uint64_t total_files;
+	uint64_t free_files;
+	uint64_t avail_files;
+	struct timespec time_delta;
 } fsal_dynamicfsinfo_t;
 
 /**
@@ -614,22 +595,21 @@ typedef struct fsal_dynamicfsinfo__
  */
 
 /* quotas */
-typedef struct fsal_quota__
-{
-        uint64_t bhardlimit;
-        uint64_t bsoftlimit;
-        uint64_t curblocks;
-        uint64_t fhardlimit;
-        uint64_t fsoftlimit;
-        uint64_t curfiles;
-        uint64_t btimeleft;
-        uint64_t ftimeleft;
-        uint64_t bsize;
+typedef struct fsal_quota__ {
+	uint64_t bhardlimit;
+	uint64_t bsoftlimit;
+	uint64_t curblocks;
+	uint64_t fhardlimit;
+	uint64_t fsoftlimit;
+	uint64_t curfiles;
+	uint64_t btimeleft;
+	uint64_t ftimeleft;
+	uint64_t bsize;
 } fsal_quota_t;
 
 typedef enum {
-        FSAL_QUOTA_BLOCKS = 1,
-        FSAL_QUOTA_INODES = 2
+	FSAL_QUOTA_BLOCKS = 1,
+	FSAL_QUOTA_INODES = 2
 } fsal_quota_type_t;
 
 /**
@@ -637,11 +617,11 @@ typedef enum {
  */
 
 typedef enum fsal_digesttype_t {
-     FSAL_DIGEST_SIZEOF, /* just tell me how big... */
-     /* NFS handles */
-     FSAL_DIGEST_NFSV2,
-     FSAL_DIGEST_NFSV3,
-     FSAL_DIGEST_NFSV4,
+	FSAL_DIGEST_SIZEOF,	/* just tell me how big... */
+	/* NFS handles */
+	FSAL_DIGEST_NFSV2,
+	FSAL_DIGEST_NFSV3,
+	FSAL_DIGEST_NFSV4,
 } fsal_digesttype_t;
 
 /* output digest sizes */
@@ -650,41 +630,36 @@ static const size_t FSAL_DIGEST_SIZE_HDLV2 = 29;
 static const size_t FSAL_DIGEST_SIZE_HDLV3 = 61;
 static const size_t FSAL_DIGEST_SIZE_HDLV4 = 108;
 
-typedef enum
-{
-        FSAL_OP_LOCKT,  /*< test if this lock may be applied      */
-        FSAL_OP_LOCK,   /*< request a non-blocking lock           */
-        FSAL_OP_LOCKB,  /*< request a blocking lock         (NEW) */
-        FSAL_OP_UNLOCK, /*< release a lock                        */
-        FSAL_OP_CANCEL  /*< cancel a blocking lock          (NEW) */
-
+typedef enum {
+	FSAL_OP_LOCKT,		/*< test if this lock may be applied      */
+	FSAL_OP_LOCK,		/*< request a non-blocking lock           */
+	FSAL_OP_LOCKB,		/*< request a blocking lock         (NEW) */
+	FSAL_OP_UNLOCK,		/*< release a lock                        */
+	FSAL_OP_CANCEL		/*< cancel a blocking lock          (NEW) */
 } fsal_lock_op_t;
 
 typedef enum {
-        FSAL_LOCK_R,
-        FSAL_LOCK_W,
-        FSAL_NO_LOCK
+	FSAL_LOCK_R,
+	FSAL_LOCK_W,
+	FSAL_NO_LOCK
 } fsal_lock_t;
 
-typedef enum fsal_sle_type_t
-{
-  FSAL_POSIX_LOCK,
-  FSAL_LEASE_LOCK
+typedef enum fsal_sle_type_t {
+	FSAL_POSIX_LOCK,
+	FSAL_LEASE_LOCK
 } fsal_sle_type_t;
 
-typedef struct fsal_lock_param_t
-{
-        fsal_sle_type_t lock_sle_type;
-        fsal_lock_t lock_type;
-        uint64_t lock_start;
-        uint64_t lock_length;
+typedef struct fsal_lock_param_t {
+	fsal_sle_type_t lock_sle_type;
+	fsal_lock_t lock_type;
+	uint64_t lock_start;
+	uint64_t lock_length;
 } fsal_lock_param_t;
 
-typedef struct fsal_share_param_t
-{
-        uint32_t share_access;
-        uint32_t share_deny;
+typedef struct fsal_share_param_t {
+	uint32_t share_access;
+	uint32_t share_deny;
 } fsal_share_param_t;
 
-#endif /* _FSAL_TYPES_H */
+#endif				/* _FSAL_TYPES_H */
 /** @} */

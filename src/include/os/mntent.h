@@ -34,4 +34,4 @@
 #include <os/freebsd/mntent.h>
 #endif
 
-#endif                          /* MNTENT_H */
+#endif				/* MNTENT_H */

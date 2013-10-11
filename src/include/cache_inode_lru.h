@@ -77,8 +77,8 @@ struct lru_state {
 	uint32_t futility;
 	uint32_t per_lane_work;
 	uint32_t biggest_window;
-	uint64_t prev_fd_count; /* previous # of open fds */
-	time_t prev_time; /* previous time the gc thread was run. */
+	uint64_t prev_fd_count;	/* previous # of open fds */
+	time_t prev_time;	/* previous time the gc thread was run. */
 	bool caching_fds;
 };
 
@@ -119,7 +119,6 @@ extern struct lru_state lru_state;
 
 #define LRU_SENTINEL_REFCOUNT  1
 
-
 /**
  * The number of lanes comprising a logical queue.  This must be
  * prime.
@@ -132,22 +131,20 @@ extern int cache_inode_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry);
-void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
+void cache_inode_lru_ref(cache_entry_t * entry, uint32_t flags);
 
 /* XXX */
-void cache_inode_lru_kill(cache_entry_t *entry);
-void cache_inode_lru_cleanup_push(cache_entry_t *entry);
+void cache_inode_lru_kill(cache_entry_t * entry);
+void cache_inode_lru_cleanup_push(cache_entry_t * entry);
 
-void cache_inode_lru_unref(cache_entry_t *entry,
-				  uint32_t flags);
-void cache_inode_lru_putback(cache_entry_t *entry,
-                             uint32_t flags);
+void cache_inode_lru_unref(cache_entry_t * entry, uint32_t flags);
+void cache_inode_lru_putback(cache_entry_t * entry, uint32_t flags);
 void lru_wake_thread(void);
-cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
-void cache_inode_unpinnable(cache_entry_t *entry);
-cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry, bool c);
-bool cache_inode_is_pinned(cache_entry_t *entry);
-void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
+cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t * entry);
+void cache_inode_unpinnable(cache_entry_t * entry);
+cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t * entry, bool c);
+bool cache_inode_is_pinned(cache_entry_t * entry);
+void cache_inode_lru_kill_for_shutdown(cache_entry_t * entry);
 
 /**
  * Return true if there are FDs available to serve open requests,
@@ -157,7 +154,8 @@ void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
 
 static inline bool cache_inode_lru_fds_available(void)
 {
-	if ((open_fd_count >= lru_state.fds_hard_limit) && lru_state.caching_fds) {
+	if ((open_fd_count >= lru_state.fds_hard_limit)
+	    && lru_state.caching_fds) {
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
 			"FD Hard Limit Exceeded.  Disabling FD Cache and waking"
 			" LRU thread.");
@@ -182,5 +180,5 @@ static inline bool cache_inode_lru_caching_fds(void)
 {
 	return lru_state.caching_fds;
 }
-#endif /* CACHE_INODE_LRU_H */
+#endif				/* CACHE_INODE_LRU_H */
 /** @} */

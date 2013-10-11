@@ -47,12 +47,10 @@
 #include "HashTable.h"
 #include "rbt_tree.h"
 
-static inline int cache_offsetof(struct hash_table *ht,
-				 struct rbt_node *node)
+static inline int cache_offsetof(struct hash_table *ht, struct rbt_node *node)
 {
 	return (RBT_VALUE(node) % ht->parameter.cache_entry_count);
 }
-
 
 static inline void ht_unsafe_zap(struct hash_table *ht,
 				 struct hash_partition *partition,
@@ -98,15 +96,12 @@ static inline void ht_unsafe_zap_by_key(struct hash_table *ht,
 	/* true if we have located the key */
 	int found = false;
 
-
 	if (ht->parameter.hash_func_both) {
-		ht->parameter.hash_func_both(&ht->parameter,
-					     key, &index,
+		ht->parameter.hash_func_both(&ht->parameter, key, &index,
 					     &rbt_hash);
 	} else {
 		index = ht->parameter.hash_func_key(&ht->parameter, key);
-		rbt_hash = ht->parameter.hash_func_rbt(&ht->parameter,
-						       key);
+		rbt_hash = ht->parameter.hash_func_rbt(&ht->parameter, key);
 	}
 
 	partition = &(ht->partitions[index]);
@@ -120,12 +115,10 @@ static inline void ht_unsafe_zap_by_key(struct hash_table *ht,
 
 	while ((cursor != NULL) && (RBT_VALUE(cursor) == rbt_hash)) {
 		data = RBT_OPAQ(cursor);
-		if (ht->parameter.compare_key(key,
-					      &(data->key)) == 0) {
+		if (ht->parameter.compare_key(key, &(data->key)) == 0) {
 			if (partition->cache) {
-				partition->cache[cache_offsetof(ht,
-								cursor)]
-					= NULL;
+				partition->cache[cache_offsetof(ht, cursor)]
+				    = NULL;
 			}
 			found = true;
 			break;
@@ -137,11 +130,9 @@ static inline void ht_unsafe_zap_by_key(struct hash_table *ht,
 		return;
 	}
 
-	ht_unsafe_zap(ht,
-		      partition,
-		      cursor);
+	ht_unsafe_zap(ht, partition, cursor);
 }
 
-#endif /* !HT_SHUTDOWN_H */
+#endif				/* !HT_SHUTDOWN_H */
 
 /** @} */
