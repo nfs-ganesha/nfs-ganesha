@@ -72,48 +72,46 @@ static struct gsh_dbus_interface props_interface = {
 
 static struct gsh_dbus_interface *props_ptr = &props_interface;
 
-static inline
-struct gsh_dbus_interface **lookup_interface(const char *interface,
-					    struct gsh_dbus_interface **interfaces,
-					    DBusError *error)
+static inline struct gsh_dbus_interface **lookup_interface(const char
+							   *interface,
+							   struct
+							   gsh_dbus_interface
+							   **interfaces,
+							   DBusError * error)
 {
 	struct gsh_dbus_interface **iface;
 
-	if(strcmp(interface, DBUS_INTERFACE_PROPERTIES) == 0)
+	if (strcmp(interface, DBUS_INTERFACE_PROPERTIES) == 0)
 		return &props_ptr;
-	for(iface = interfaces; *iface; iface++) {
-		if(strcmp(interface, (*iface)->name) == 0)
+	for (iface = interfaces; *iface; iface++) {
+		if (strcmp(interface, (*iface)->name) == 0)
 			break;
 	}
-	if(*iface == NULL) {
-		dbus_set_error(error,
-			       DBUS_ERROR_UNKNOWN_INTERFACE,
-			       "Requested interface: %s",
-			       interface);
+	if (*iface == NULL) {
+		dbus_set_error(error, DBUS_ERROR_UNKNOWN_INTERFACE,
+			       "Requested interface: %s", interface);
 	}
 	return iface;
 }
 
-static inline
-struct gsh_dbus_prop **lookup_property(const char *prop_name,
-				       struct gsh_dbus_interface **iface,
-				       DBusError *error)
+static inline struct gsh_dbus_prop **lookup_property(const char *prop_name,
+						     struct gsh_dbus_interface
+						     **iface, DBusError * error)
 {
 	struct gsh_dbus_prop **prop;
 
-	for(prop = (*iface)->props; prop && *prop; prop++) {
-		if(strcmp(prop_name, (*prop)->name) == 0)
+	for (prop = (*iface)->props; prop && *prop; prop++) {
+		if (strcmp(prop_name, (*prop)->name) == 0)
 			break;
 	}
-	if(prop == NULL) {
-		dbus_set_error(error,
-			       DBUS_ERROR_UNKNOWN_PROPERTY,
-			       "Requested property: %s from %s",
-			       prop_name, (*iface)->name);
+	if (prop == NULL) {
+		dbus_set_error(error, DBUS_ERROR_UNKNOWN_PROPERTY,
+			       "Requested property: %s from %s", prop_name,
+			       (*iface)->name);
 	}
 	return prop;
 }
-	
+
 /**
  *
  * @brief Handle object properties
@@ -126,11 +124,9 @@ struct gsh_dbus_prop **lookup_property(const char *prop_name,
  * @return bool success or failure if bad request
  */
 
-bool dbus_proc_property(const char *method,
-			DBusMessage *msg,
-			DBusMessage *reply,
-			DBusError *error,
-			struct gsh_dbus_interface **interfaces)
+bool dbus_proc_property(const char *method, DBusMessage * msg,
+			DBusMessage * reply, DBusError * error,
+			struct gsh_dbus_interface ** interfaces)
 {
 	const char *interface;
 	const char *prop_name;
@@ -141,50 +137,44 @@ bool dbus_proc_property(const char *method,
 
 	dbus_message_iter_init_append(reply, &reply_iter);
 
-	if(strcmp(method, "GetAll") == 0) {
+	if (strcmp(method, "GetAll") == 0) {
 		DBusMessageIter getall_dict, dict_entry, val_iter;
 
-		if( !dbus_message_get_args(msg,
-					   error,
-					   DBUS_TYPE_STRING, &interface,
-					   DBUS_TYPE_INVALID))
+		if (!dbus_message_get_args
+		    (msg, error, DBUS_TYPE_STRING, &interface,
+		     DBUS_TYPE_INVALID))
 			goto err_out;
 		iface = lookup_interface(interface, interfaces, error);
-		if(*iface == NULL)
+		if (*iface == NULL)
 			goto err_out;
-		if( !dbus_message_iter_open_container(&reply_iter,
-						      DBUS_TYPE_ARRAY,
-						      DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-						      DBUS_TYPE_STRING_AS_STRING
-						      DBUS_TYPE_VARIANT_AS_STRING
-						      DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
-						      &getall_dict))
+		if (!dbus_message_iter_open_container
+		    (&reply_iter, DBUS_TYPE_ARRAY,
+		     DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+		     DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING
+		     DBUS_DICT_ENTRY_END_CHAR_AS_STRING, &getall_dict))
 			goto getall_err;
-		for(prop = (*iface)->props; prop && *prop; prop++) {
-			if((*prop)->access == DBUS_PROP_READ ||
-			   (*prop)->access == DBUS_PROP_READWRITE) {
-				if( !dbus_message_iter_open_container(&getall_dict,
-								      DBUS_TYPE_DICT_ENTRY,
-								      NULL,
-								      &dict_entry))
+		for (prop = (*iface)->props; prop && *prop; prop++) {
+			if ((*prop)->access == DBUS_PROP_READ
+			    || (*prop)->access == DBUS_PROP_READWRITE) {
+				if (!dbus_message_iter_open_container
+				    (&getall_dict, DBUS_TYPE_DICT_ENTRY, NULL,
+				     &dict_entry))
 					goto getall_err;
 				prop_name = (*prop)->name;
-				if( !dbus_message_iter_append_basic(&dict_entry,
-								    DBUS_TYPE_STRING,
-								    &prop_name))
+				if (!dbus_message_iter_append_basic
+				    (&dict_entry, DBUS_TYPE_STRING, &prop_name))
 					goto getall_err;
-				if( !dbus_message_iter_open_container(&dict_entry,
-								      DBUS_TYPE_VARIANT,
-								      (*prop)->type,
-								      &val_iter))
+				if (!dbus_message_iter_open_container
+				    (&dict_entry, DBUS_TYPE_VARIANT,
+				     (*prop)->type, &val_iter))
 					goto getall_err;
-				if( !(*prop)->get(&val_iter))
+				if (!(*prop)->get(&val_iter))
 					goto getall_err;;
-				if( !dbus_message_iter_close_container(&dict_entry,
-								       &val_iter))
+				if (!dbus_message_iter_close_container
+				    (&dict_entry, &val_iter))
 					goto getall_err;
-				if( !dbus_message_iter_close_container(&getall_dict,
-								       &dict_entry))
+				if (!dbus_message_iter_close_container
+				    (&getall_dict, &dict_entry))
 					goto getall_err;
 			} else {
 				dbus_set_error(error,
@@ -195,116 +185,107 @@ bool dbus_proc_property(const char *method,
 				goto err_out;
 			}
 		}
-		if( !dbus_message_iter_close_container(&reply_iter,
-						       &getall_dict))
+		if (!dbus_message_iter_close_container
+		    (&reply_iter, &getall_dict))
 			goto getall_err;
 
-		return true; /* DONE! */
+		return true;	/* DONE! */
 
-	} else if(strcmp(method, "Get") == 0) {
-		if( !dbus_message_get_args(msg,
-					   error,
-					   DBUS_TYPE_STRING, &interface,
-					   DBUS_TYPE_STRING, &prop_name,
-					   DBUS_TYPE_INVALID))
+	} else if (strcmp(method, "Get") == 0) {
+		if (!dbus_message_get_args
+		    (msg, error, DBUS_TYPE_STRING, &interface, DBUS_TYPE_STRING,
+		     &prop_name, DBUS_TYPE_INVALID))
 			goto err_out;
 		iface = lookup_interface(interface, interfaces, error);
-		if(*iface == NULL)
+		if (*iface == NULL)
 			goto err_out;
 		prop = lookup_property(prop_name, iface, error);
-		if(*prop == NULL)
+		if (*prop == NULL)
 			goto err_out;
-		if((*prop)->access == DBUS_PROP_READ ||
-		   (*prop)->access == DBUS_PROP_READWRITE) {
+		if ((*prop)->access == DBUS_PROP_READ
+		    || (*prop)->access == DBUS_PROP_READWRITE) {
 			DBusMessageIter variant_iter;
 
-			if( !dbus_message_iter_open_container(&reply_iter,
-							      DBUS_TYPE_VARIANT,
-							      (*prop)->type,
-							      &variant_iter)) {
-				dbus_set_error_const(error,
-						     DBUS_ERROR_FAILED,
+			if (!dbus_message_iter_open_container
+			    (&reply_iter, DBUS_TYPE_VARIANT, (*prop)->type,
+			     &variant_iter)) {
+				dbus_set_error_const(error, DBUS_ERROR_FAILED,
 						     "Couldn't open Get container");
 				goto err_out;
 			}
 			retval = (*prop)->get(&variant_iter);
-			if(retval == false ||
-			   !dbus_message_iter_close_container(&reply_iter,
-							      &variant_iter)) {
-				dbus_set_error_const(error,
-						     DBUS_ERROR_FAILED,
+			if (retval == false
+			    || !dbus_message_iter_close_container(&reply_iter,
+								  &variant_iter))
+			{
+				dbus_set_error_const(error, DBUS_ERROR_FAILED,
 						     "Couldn't close Get container");
 				goto err_out;
 			}
 		} else {
-			dbus_set_error(error,
-				       DBUS_ERROR_PROPERTY_READ_ONLY,
-				       "%s of %s from %s (write only?)",
-				       method, prop_name, interface);
+			dbus_set_error(error, DBUS_ERROR_PROPERTY_READ_ONLY,
+				       "%s of %s from %s (write only?)", method,
+				       prop_name, interface);
 			/** @todo@ check does write only make sense?? */
 			goto err_out;
 		}
-		
-		return true; /* DONE! */
 
-	} else if(strcmp(method, "Set") == 0) {
+		return true;	/* DONE! */
+
+	} else if (strcmp(method, "Set") == 0) {
 		DBusMessageIter iter_args;
 
-		if( !dbus_message_iter_init(msg, &iter_args) ||
-		    dbus_message_iter_get_arg_type(&iter_args) != DBUS_TYPE_STRING) {
+		if (!dbus_message_iter_init(msg, &iter_args)
+		    || dbus_message_iter_get_arg_type(&iter_args) !=
+		    DBUS_TYPE_STRING) {
 			goto invalid_args;
 		}
 		dbus_message_iter_get_basic(&iter_args, &interface);
-		if( !dbus_message_iter_next(&iter_args) ||
-		    dbus_message_iter_get_arg_type(&iter_args) != DBUS_TYPE_STRING) {
+		if (!dbus_message_iter_next(&iter_args)
+		    || dbus_message_iter_get_arg_type(&iter_args) !=
+		    DBUS_TYPE_STRING) {
 			goto invalid_args;
 		}
 		dbus_message_iter_get_basic(&iter_args, &prop_name);
-		if( !dbus_message_iter_next(&iter_args) ||
-		    dbus_message_iter_get_arg_type(&iter_args) != DBUS_TYPE_VARIANT ||
-		    dbus_message_iter_has_next(&iter_args)) {
+		if (!dbus_message_iter_next(&iter_args)
+		    || dbus_message_iter_get_arg_type(&iter_args) !=
+		    DBUS_TYPE_VARIANT
+		    || dbus_message_iter_has_next(&iter_args)) {
 			goto invalid_args;
 		}
 		iface = lookup_interface(interface, interfaces, error);
-		if(*iface == NULL)
+		if (*iface == NULL)
 			goto err_out;
 		prop = lookup_property(prop_name, iface, error);
-		if(*prop == NULL)
+		if (*prop == NULL)
 			goto err_out;
-		if((*prop)->access == DBUS_PROP_WRITE ||
-		   (*prop)->access == DBUS_PROP_READWRITE) {
+		if ((*prop)->access == DBUS_PROP_WRITE
+		    || (*prop)->access == DBUS_PROP_READWRITE) {
 			DBusMessageIter arg;
 
-			dbus_message_iter_recurse (&iter_args, &arg);
+			dbus_message_iter_recurse(&iter_args, &arg);
 
-			return (*prop)->set(&arg); /* DONE! */
+			return (*prop)->set(&arg);	/* DONE! */
 
 		} else {
-			dbus_set_error(error,
-				       DBUS_ERROR_PROPERTY_READ_ONLY,
-				       "%s of %s from %s",
-				       method, prop_name, interface);
+			dbus_set_error(error, DBUS_ERROR_PROPERTY_READ_ONLY,
+				       "%s of %s from %s", method, prop_name,
+				       interface);
 			goto err_out;
 		}
 	} else {
-		dbus_set_error(error,
-			       DBUS_ERROR_UNKNOWN_METHOD,
+		dbus_set_error(error, DBUS_ERROR_UNKNOWN_METHOD,
 			       "Requested method: %s", method);
 	}
 	return retval;
 
-getall_err:
-	dbus_set_error(error,
-		       DBUS_ERROR_FAILED,
-		       "GetAll container failure");
+ getall_err:
+	dbus_set_error(error, DBUS_ERROR_FAILED, "GetAll container failure");
 	goto err_out;
 
-invalid_args:
-	dbus_set_error(error,
-		       DBUS_ERROR_INVALID_ARGS,
-		       "Method %s",
-		       method);
-	
-err_out:
+ invalid_args:
+	dbus_set_error(error, DBUS_ERROR_INVALID_ARGS, "Method %s", method);
+
+ err_out:
 	return retval;
 }
