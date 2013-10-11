@@ -31,47 +31,46 @@
 int posix2fsal_error(int posix_errorcode)
 {
 
-  switch (posix_errorcode)
-    {
-    case 0:
-      return ERR_FSAL_NO_ERROR;
+	switch (posix_errorcode) {
+	case 0:
+		return ERR_FSAL_NO_ERROR;
 
-    case EPERM:
-      return ERR_FSAL_PERM;
+	case EPERM:
+		return ERR_FSAL_PERM;
 
-    case ENOENT:
-      return ERR_FSAL_NOENT;
+	case ENOENT:
+		return ERR_FSAL_NOENT;
 
-      /* connection error */
+		/* connection error */
 #ifdef _AIX_5
-    case ENOCONNECT:
+	case ENOCONNECT:
 #elif defined _LINUX
-    case ECONNREFUSED:
-    case ECONNABORTED:
-    case ECONNRESET:
+	case ECONNREFUSED:
+	case ECONNABORTED:
+	case ECONNRESET:
 #endif
 
-      /* IO error */
-    case EIO:
+		/* IO error */
+	case EIO:
 
-      /* too many open files */
-    case ENFILE:
-    case EMFILE:
+		/* too many open files */
+	case ENFILE:
+	case EMFILE:
 
-      /* broken pipe */
-    case EPIPE:
+		/* broken pipe */
+	case EPIPE:
 
-      /* all shown as IO errors */
-      return ERR_FSAL_IO;
+		/* all shown as IO errors */
+		return ERR_FSAL_IO;
 
-      /* no such device */
-    case ENODEV:
-    case ENXIO:
-      return ERR_FSAL_NXIO;
+		/* no such device */
+	case ENODEV:
+	case ENXIO:
+		return ERR_FSAL_NXIO;
 
-      /* invalid file descriptor : */
-    case EBADF:
-      /* we suppose it was not opened... */
+		/* invalid file descriptor : */
+	case EBADF:
+		/* we suppose it was not opened... */
 
       /**
        * @todo: The EBADF error also happens when file
@@ -80,47 +79,47 @@ int posix2fsal_error(int posix_errorcode)
        *        but it doesn't seems to be a correct error translation.
        */
 
-      return ERR_FSAL_NOT_OPENED;
+		return ERR_FSAL_NOT_OPENED;
 
-    case ENOMEM:
-    case ENOLCK:
-      return ERR_FSAL_NOMEM;
+	case ENOMEM:
+	case ENOLCK:
+		return ERR_FSAL_NOMEM;
 
-    case EACCES:
-      return ERR_FSAL_ACCESS;
+	case EACCES:
+		return ERR_FSAL_ACCESS;
 
-    case EFAULT:
-      return ERR_FSAL_FAULT;
+	case EFAULT:
+		return ERR_FSAL_FAULT;
 
-    case EEXIST:
-      return ERR_FSAL_EXIST;
+	case EEXIST:
+		return ERR_FSAL_EXIST;
 
-    case EXDEV:
-      return ERR_FSAL_XDEV;
+	case EXDEV:
+		return ERR_FSAL_XDEV;
 
-    case ENOTDIR:
-      return ERR_FSAL_NOTDIR;
+	case ENOTDIR:
+		return ERR_FSAL_NOTDIR;
 
-    case EISDIR:
-      return ERR_FSAL_ISDIR;
+	case EISDIR:
+		return ERR_FSAL_ISDIR;
 
-    case EINVAL:
-      return ERR_FSAL_INVAL;
+	case EINVAL:
+		return ERR_FSAL_INVAL;
 
-    case EFBIG:
-      return ERR_FSAL_FBIG;
+	case EFBIG:
+		return ERR_FSAL_FBIG;
 
-    case ENOSPC:
-      return ERR_FSAL_NOSPC;
+	case ENOSPC:
+		return ERR_FSAL_NOSPC;
 
-    case EMLINK:
-      return ERR_FSAL_MLINK;
+	case EMLINK:
+		return ERR_FSAL_MLINK;
 
-    case EDQUOT:
-      return ERR_FSAL_DQUOT;
+	case EDQUOT:
+		return ERR_FSAL_DQUOT;
 
-    case ENAMETOOLONG:
-      return ERR_FSAL_NAMETOOLONG;
+	case ENAMETOOLONG:
+		return ERR_FSAL_NAMETOOLONG;
 
 /**
  * @warning
@@ -129,47 +128,45 @@ int posix2fsal_error(int posix_errorcode)
  * Thus, we explicitely write its value (87).
  */
 #ifdef _AIX
-    case 87:
+	case 87:
 #else
-    case ENOTEMPTY:
-    case -ENOTEMPTY:
+	case ENOTEMPTY:
+	case -ENOTEMPTY:
 #endif
-      return ERR_FSAL_NOTEMPTY;
+		return ERR_FSAL_NOTEMPTY;
 
-    case ESTALE:
-      return ERR_FSAL_STALE;
+	case ESTALE:
+		return ERR_FSAL_STALE;
 
-      /* Error code that needs a retry */
-    case EAGAIN:
-    case EBUSY:
+		/* Error code that needs a retry */
+	case EAGAIN:
+	case EBUSY:
 
-      return ERR_FSAL_DELAY;
+		return ERR_FSAL_DELAY;
 
-    case ENOTSUP:
-      return ERR_FSAL_NOTSUPP;
+	case ENOTSUP:
+		return ERR_FSAL_NOTSUPP;
 
-    case EOVERFLOW:
-      return ERR_FSAL_OVERFLOW;
+	case EOVERFLOW:
+		return ERR_FSAL_OVERFLOW;
 
-    case EDEADLK:
-      return ERR_FSAL_DEADLOCK;
+	case EDEADLK:
+		return ERR_FSAL_DEADLOCK;
 
-    case EINTR:
-      return ERR_FSAL_INTERRUPT;
+	case EINTR:
+		return ERR_FSAL_INTERRUPT;
 
-    case EROFS:
-       return ERR_FSAL_ROFS ;
+	case EROFS:
+		return ERR_FSAL_ROFS;
 
-    case ESRCH:                /* Returned by quotaclt */
-      return ERR_FSAL_NO_QUOTA;
+	case ESRCH:		/* Returned by quotaclt */
+		return ERR_FSAL_NO_QUOTA;
 
-    default:
+	default:
 
-      /* other unexpected errors */
-      return ERR_FSAL_SERVERFAULT;
+		/* other unexpected errors */
+		return ERR_FSAL_SERVERFAULT;
 
-    }
+	}
 
 }
-
-
