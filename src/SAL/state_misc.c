@@ -367,17 +367,21 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_TOOSMALL:
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_SERVERFAULT:
-		/* These errors should be handled inside state (or should never be seen by state) */
+		/* These errors should be handled inside state
+		 * (or should never be seen by state)
+		 */
 		LogDebug(COMPONENT_STATE,
 			 "Conversion of FSAL error %d,%d to STATE_FSAL_ERROR",
 			 fsal_status.major, fsal_status.minor);
 		return STATE_FSAL_ERROR;
 	}
 
-	/* We should never reach this line, this may produce a warning with certain compiler */
+	/* We should never reach this line, this may produce a warning with
+	 * certain compiler */
 	LogCrit(COMPONENT_STATE,
 		"Default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
 		fsal_status.major, __LINE__);
+
 	return STATE_FSAL_ERROR;
 }
 
@@ -581,7 +585,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		break;
 
 	case STATE_FSAL_ERROR:
-					 /** @todo: Check if this works by making stress tests */
+		/** @todo: Check if this works by making stress tests */
 		LogCrit(COMPONENT_NFSPROTO,
 			"Error STATE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
 		nfserror = NFS3ERR_IO;
@@ -743,12 +747,12 @@ const char *state_owner_type_to_str(state_owner_type_t type)
  * @retval true if owners differ.
  * @retval false if owners are the same.
  */
-bool different_owners(state_owner_t * owner1, state_owner_t * owner2)
+bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (owner1 == NULL || owner2 == NULL)
 		return true;
 
-	/* Shortcut in case we actually are pointing to the same owner structure */
+	/* Shortcut if we actually are pointing to the same owner structure */
 	if (owner1 == owner2)
 		return false;
 
@@ -788,7 +792,7 @@ bool different_owners(state_owner_t * owner1, state_owner_t * owner2)
  *
  * @return Length of output string.
  */
-int DisplayOwner(state_owner_t * owner, char *buf)
+int DisplayOwner(state_owner_t *owner, char *buf)
 {
 	if (owner == NULL)
 		return sprintf(buf, "<NULL>");
@@ -820,7 +824,7 @@ int DisplayOwner(state_owner_t * owner, char *buf)
  *
  * @param[in] owner Owner to acquire
  */
-void inc_state_owner_ref(state_owner_t * owner)
+void inc_state_owner_ref(state_owner_t *owner)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	int32_t refcount;
@@ -839,7 +843,7 @@ void inc_state_owner_ref(state_owner_t * owner)
  *
  * @param[in] owner Owner to free
  */
-void free_state_owner(state_owner_t * owner)
+void free_state_owner(state_owner_t *owner)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -887,7 +891,7 @@ void free_state_owner(state_owner_t * owner)
  *
  * @param[in] owner Owner to get associated hash table for
  */
-hash_table_t *get_state_owner_hash_table(state_owner_t * owner)
+hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 {
 	switch (owner->so_type) {
 	case STATE_LOCK_OWNER_NLM:
@@ -915,7 +919,7 @@ hash_table_t *get_state_owner_hash_table(state_owner_t * owner)
  *
  * @param[in] owner Owner to release
  */
-void dec_state_owner_ref(state_owner_t * owner)
+void dec_state_owner_ref(state_owner_t *owner)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	struct hash_latch latch;
@@ -1010,12 +1014,12 @@ void dec_state_owner_ref(state_owner_t * owner)
  * @param[in] care indicates how we care about the owner
  * @param[in] key the owner key we are searching for
  * @param[in] init_owner routine to initialize a new owner
- * @param[in,out] isnew optional pointer to flag indicating a new owner was created
+ * @param[in,out] isnew pointer to flag indicating a new owner was created
  *
  * @return the owner found or NULL if no owner was found or created
  */
-state_owner_t *get_state_owner(care_t care, state_owner_t * key,
-			       state_owner_init_t init_owner, bool_t * isnew)
+state_owner_t *get_state_owner(care_t care, state_owner_t *key,
+			       state_owner_init_t init_owner, bool_t *isnew)
 {
 	state_owner_t *owner;
 	char str[HASHTABLE_DISPLAY_STRLEN];
@@ -1060,8 +1064,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
 		}
 
 		/* Increment refcount under hash latch.
-		 * This prevents dec ref from removing this entry from hash if a race
-		 * occurs.
+		 * This prevents dec ref from removing this entry from hash if
+		 * a race occurs.
 		 */
 		inc_state_owner_ref(owner);
 
@@ -1181,7 +1185,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
  *
  * @param[in,out] entry File to be wiped
  */
-void state_wipe_file(cache_entry_t * entry)
+void state_wipe_file(cache_entry_t *entry)
 {
 	/*
 	 * currently, only REGULAR files can have state; byte range locks and

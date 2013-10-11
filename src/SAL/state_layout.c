@@ -61,7 +61,7 @@
  * @return STATE_SUCCESS on completion, other values of state_status_t
  *         on failure.
  */
-state_status_t state_add_segment(state_t * state, struct pnfs_segment *segment,
+state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 				 void *fsal_data, bool return_on_close)
 {
 	/* Pointer to the new segment being added to the state */
@@ -76,16 +76,16 @@ state_status_t state_add_segment(state_t * state, struct pnfs_segment *segment,
 	}
 
 	new_segment = gsh_calloc(1, sizeof(*new_segment));
-	if (!new_segment) {
+	if (!new_segment)
 		return STATE_MALLOC_ERROR;
-	}
 
 	if (pthread_mutexattr_init(&mattr) != 0) {
 		gsh_free(new_segment);
 		return STATE_INIT_ENTRY_FAILED;
 	}
 #if defined(__linux__)
-	if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
+	if (pthread_mutexattr_settype(&mattr,
+				      PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
 		gsh_free(new_segment);
 		return STATE_INIT_ENTRY_FAILED;
 	}
@@ -113,9 +113,8 @@ state_status_t state_add_segment(state_t * state, struct pnfs_segment *segment,
 	/* Based on comments by Benny Halevy, if any segment is marked
 	   return_on_close, all segments should be treated as
 	   return_on_close. */
-	if (return_on_close) {
+	if (return_on_close)
 		state->state_data.layout.state_return_on_close = true;
-	}
 
 	return STATE_SUCCESS;
 }
@@ -129,7 +128,7 @@ state_status_t state_add_segment(state_t * state, struct pnfs_segment *segment,
  *
  * @return State status.
  */
-state_status_t state_delete_segment(state_layout_segment_t * segment)
+state_status_t state_delete_segment(state_layout_segment_t *segment)
 {
 	glist_del(&segment->sls_state_segments);
 	pthread_mutex_unlock(&segment->sls_mutex);
@@ -152,9 +151,9 @@ state_status_t state_delete_segment(state_layout_segment_t * segment)
  *         isn't, and an appropriate code if other bad things happen.
  */
 
-state_status_t state_lookup_layout_state(cache_entry_t * entry,
-					 state_owner_t * owner,
-					 layouttype4 type, state_t ** state)
+state_status_t state_lookup_layout_state(cache_entry_t *entry,
+					 state_owner_t *owner,
+					 layouttype4 type, state_t **state)
 {
 	/* Pointer for iterating over the list of states on the file */
 	struct glist_head *glist_iter = NULL;

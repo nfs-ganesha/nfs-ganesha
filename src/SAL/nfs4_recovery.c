@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -44,34 +45,11 @@ char v4_recov_dir[PATH_MAX + 1];
 char v4_old_dir[PATH_MAX + 1];
 
 /**
- * @brief Grace period control structure
- *
- * This could be expanded to implement grace instances, where a new
- * grace period is started for every failover.  for now keep it
- * simple, just a global used by all clients.
- */
-typedef struct grace {
-	pthread_mutex_t g_mutex;	/*< Mutex */
-	time_t g_start;		/*< Start of grace period */
-	time_t g_duration;	/*< Duration of grace period */
-	struct glist_head g_clid_list;	/*< Clients */
-} grace_t;
-
-/**
  * @brief Grace period control data
  */
 static grace_t grace;
 
-/**
- * @brief A client entry
- */
-typedef struct clid_entry {
-	struct glist_head cl_list;	/*< Link in the list */
-	char cl_name[256];	/*< Client name */
-} clid_entry_t;
-
-static void nfs4_load_recov_clids_nolock(nfs_grace_start_t * gsp);
-extern hash_table_t *ht_nsm_client;
+static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state();
 static void nfs_release_v4_client(char *ip);
 
@@ -93,13 +71,14 @@ void nfs4_init_grace()
  *
  * @param[in] gsp Grace period start information
  */
-void nfs4_start_grace(nfs_grace_start_t * gsp)
+void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
 	P(grace.g_mutex);
 
 	/* grace should always be greater than or equal to lease time,
-	 * some clients are known to have problems with grace greater than 60 seconds
-	 * Lease_Lifetime should be set to a smaller value for those setups. 
+	 * some clients are known to have problems with grace greater than 60
+	 * seconds Lease_Lifetime should be set to a smaller value for those
+	 * setups.
 	 */
 	grace.g_start = time(NULL);
 	grace.g_duration = nfs_param.nfsv4_param.lease_lifetime;
@@ -171,8 +150,8 @@ int nfs_in_grace(void)
  * @param[in] clientid Client record
  * @param[in] svc      RPC transport
  */
-void nfs4_create_clid_name(nfs_client_record_t * cl_rec,
-			   nfs_client_id_t * clientid, struct svc_req *svc)
+void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
+			   nfs_client_id_t *clientid, struct svc_req *svc)
 {
 	int i;
 	sockaddr_t sa;
@@ -209,8 +188,8 @@ void nfs4_create_clid_name(nfs_client_record_t * cl_rec,
  * @param[in] cl_rec   Client name record
  * @param[in] clientid Client record
  */
-void nfs4_create_clid_name41(nfs_client_record_t * cl_rec,
-			     nfs_client_id_t * clientid)
+void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
+			     nfs_client_id_t *clientid)
 {
 	int i;
 	char buf[SOCK_NAME_MAX + 1];
@@ -241,7 +220,7 @@ void nfs4_create_clid_name41(nfs_client_record_t * cl_rec,
  *
  * @param[in] clientid Client record
  */
-void nfs4_add_clid(nfs_client_id_t * clientid)
+void nfs4_add_clid(nfs_client_id_t *clientid)
 {
 	int err;
 	char path[PATH_MAX + 1];
@@ -300,7 +279,7 @@ void nfs4_rm_clid(char *recov_dir)
  *
  * @param[in] clientid Client record
  */
-void nfs4_chk_clid(nfs_client_id_t * clientid)
+void nfs4_chk_clid(nfs_client_id_t *clientid)
 {
 	struct glist_head *node;
 	clid_entry_t *clid_ent;
@@ -365,7 +344,7 @@ void nfs4_chk_clid(nfs_client_id_t * clientid)
  *
  * @return POSIX error codes.
  */
-static int nfs4_read_recov_clids(DIR * dp, char *srcdir, bool takeover)
+static int nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
 {
 	struct dirent *dentp;
 	clid_entry_t *new_ent;
@@ -413,7 +392,7 @@ static int nfs4_read_recov_clids(DIR * dp, char *srcdir, bool takeover)
  *
  * @param[in] nodeid Node, on takeover
  */
-static void nfs4_load_recov_clids_nolock(nfs_grace_start_t * gsp)
+static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
 {
 	DIR *dp;
 	struct glist_head *node;
@@ -523,7 +502,7 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t * gsp)
  *
  * @param[in] nodeid Node, on takeover
  */
-void nfs4_load_recov_clids(nfs_grace_start_t * gsp)
+void nfs4_load_recov_clids(nfs_grace_start_t *gsp)
 {
 	P(grace.g_mutex);
 
@@ -667,7 +646,7 @@ static void nfs_release_nlm_state()
 	return;
 }
 
-static int ip_match(char *ip, nfs_client_id_t * cid)
+static int ip_match(char *ip, nfs_client_id_t *cid)
 {
 	LogDebug(COMPONENT_STATE, "NFS Server V4 match ip %s with (%s) or (%s)",
 		 ip, cid->cid_server_owner,

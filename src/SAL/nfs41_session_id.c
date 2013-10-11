@@ -42,8 +42,6 @@
  */
 pool_t *nfs41_session_pool = NULL;
 
-size_t strnlen(const char *s, size_t maxlen);
-
 /**
  * @param Session ID hash
  */
@@ -97,7 +95,7 @@ int display_session_id_key(struct gsh_buffdesc *buff, char *str)
  * @return Length of displayed string.
  */
 
-int display_session(nfs41_session_t * session, char *str)
+int display_session(nfs41_session_t *session, char *str)
 {
 	char *strtmp = str;
 
@@ -142,14 +140,14 @@ int compare_session_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
  * @return The hash index of the key.
  */
 
-uint32_t session_id_value_hash_func(hash_parameter_t * hparam,
-				    struct gsh_buffdesc * key)
+uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
+				    struct gsh_buffdesc *key)
 {
 	/* Only need to take the mod of the global counter portion
 	   since it is unique */
 	uint64_t *counter = key->addr + sizeof(clientid4);
 
-	return (*counter % hparam->index_size);
+	return *counter % hparam->index_size;
 }
 
 /**
@@ -161,8 +159,8 @@ uint32_t session_id_value_hash_func(hash_parameter_t * hparam,
  * @return The RBT hash of the key.
  */
 
-uint64_t session_id_rbt_hash_func(hash_parameter_t * hparam,
-				  struct gsh_buffdesc * key)
+uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
+				  struct gsh_buffdesc *key)
 {
 	/* Only need to return the global counter portion since it is unique */
 	uint64_t *counter = key->addr + sizeof(clientid4);
@@ -180,9 +178,11 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t * hparam,
  *
  */
 
-int nfs41_Init_session_id(hash_parameter_t * param)
+int nfs41_Init_session_id(hash_parameter_t *param)
 {
-	if ((ht_session_id = HashTable_Init(param)) == NULL) {
+	ht_session_id = HashTable_Init(param);
+
+	if (ht_session_id == NULL) {
 		LogCrit(COMPONENT_SESSIONS,
 			"NFS SESSION_ID: Cannot init Session Id cache");
 		return -1;
@@ -198,7 +198,7 @@ int nfs41_Init_session_id(hash_parameter_t * param)
  * @param[out] sessionid The sessionid
  */
 
-void nfs41_Build_sessionid(clientid4 * clientid, char *sessionid)
+void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 {
 	uint64_t seq;
 
@@ -209,13 +209,13 @@ void nfs41_Build_sessionid(clientid4 * clientid, char *sessionid)
 	memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
 }
 
-int32_t inc_session_ref(nfs41_session_t * session)
+int32_t inc_session_ref(nfs41_session_t *session)
 {
 	int32_t refcnt = atomic_inc_int32_t(&session->refcount);
-	return (refcnt);
+	return refcnt;
 }
 
-int32_t dec_session_ref(nfs41_session_t * session)
+int32_t dec_session_ref(nfs41_session_t *session)
 {
 	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
 	if (refcnt == 0) {
@@ -230,14 +230,14 @@ int32_t dec_session_ref(nfs41_session_t * session)
 		dec_client_id_ref(session->clientid_record);
 
 		/* Destroy the session's back channel (if any) */
-		if (session->flags & session_bc_up) {
+		if (session->flags & session_bc_up)
 			nfs_rpc_destroy_chan(&session->cb_chan);
-		}
+
 		/* Free the memory for the session */
 		pool_free(nfs41_session_pool, session);
 	}
 
-	return (refcnt);
+	return refcnt;
 }
 
 /**
@@ -251,7 +251,7 @@ int32_t dec_session_ref(nfs41_session_t * session)
  *
  */
 
-int nfs41_Session_Set(nfs41_session_t * session_data)
+int nfs41_Session_Set(nfs41_session_t *session_data)
 {
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
@@ -277,9 +277,8 @@ int nfs41_Session_Set(nfs41_session_t * session_data)
 		code =
 		    HashTable_SetLatched(ht_session_id, &key, &val, &latch,
 					 FALSE, NULL, NULL);
-		if (code == HASHTABLE_SUCCESS) {
+		if (code == HASHTABLE_SUCCESS)
 			rc = 1;
-		}
 	}
 
  out:
@@ -297,7 +296,7 @@ int nfs41_Session_Set(nfs41_session_t * session_data)
  */
 
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
-			      nfs41_session_t ** session_data)
+			      nfs41_session_t **session_data)
 {
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;

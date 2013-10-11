@@ -66,8 +66,8 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  * @retval true if there is a conflict.
  * @retval false if no conflict has been found
  */
-bool state_conflict(state_t * state, state_type_t state_type,
-		    state_data_t * state_data)
+bool state_conflict(state_t *state, state_type_t state_type,
+		    state_data_t *state_data)
 {
 	if (state == NULL || state_data == NULL)
 		return true;
@@ -87,13 +87,17 @@ bool state_conflict(state_t * state, state_type_t state_type,
 		return false;
 
 	case STATE_TYPE_LOCK:
-		return false;	/* lock conflict is managed in the NFS request */
+		/* lock conflict is managed in the NFS request */
+		return false;
 
 	case STATE_TYPE_LAYOUT:
-		return false;	 /** layout conflict is managed by the FSAL */
+		/** layout conflict is managed by the FSAL */
+		return false;
 
 	case STATE_TYPE_DELEG:
-		/* Not yet implemented for now, answer true to avoid weird behavior */
+		/** @todo: Not yet implemented for now, answer true to avoid
+		 * weird behavior
+		 */
 		return true;
 	}
 
@@ -116,10 +120,10 @@ bool state_conflict(state_t * state, state_type_t state_type,
  *
  * @return Operation status
  */
-state_status_t state_add_impl(cache_entry_t * entry, state_type_t state_type,
-			      state_data_t * state_data,
-			      state_owner_t * owner_input, state_t ** state,
-			      struct state_refer * refer)
+state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
+			      state_data_t *state_data,
+			      state_owner_t *owner_input, state_t **state,
+			      struct state_refer *refer)
 {
 	state_t *pnew_state = NULL;
 	state_t *piter_state = NULL;
@@ -188,9 +192,9 @@ state_status_t state_add_impl(cache_entry_t * entry, state_type_t state_type,
 	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
 	pnew_state->state_entry = entry;
 	pnew_state->state_owner = owner_input;
-	if (refer) {
+
+	if (refer)
 		pnew_state->state_refer = *refer;
-	}
 
 	if (isDebug(COMPONENT_STATE))
 		sprint_mem(debug_str, (char *)pnew_state->stateid_other,
@@ -210,8 +214,8 @@ state_status_t state_add_impl(cache_entry_t * entry, state_type_t state_type,
 
 		pool_free(state_v4_pool, pnew_state);
 
-		/* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
-		 * to allocate memory.
+		/* Return STATE_MALLOC_ERROR since most likely the
+		 * nfs4_State_Set failed to allocate memory.
 		 */
 		status = STATE_MALLOC_ERROR;
 
@@ -263,9 +267,9 @@ state_status_t state_add_impl(cache_entry_t * entry, state_type_t state_type,
  *
  * @return Operation status
  */
-state_status_t state_add(cache_entry_t * entry, state_type_t state_type,
-			 state_data_t * state_data, state_owner_t * owner_input,
-			 state_t ** state, struct state_refer * refer)
+state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
+			 state_data_t *state_data, state_owner_t *owner_input,
+			 state_t **state, struct state_refer *refer)
 {
 	state_status_t status = 0;
 
@@ -303,7 +307,7 @@ state_status_t state_add(cache_entry_t * entry, state_type_t state_type,
  * @return State status.
  */
 
-state_status_t state_del_locked(state_t * state, cache_entry_t * entry)
+state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
 {
 	char debug_str[OTHERSIZE * 2 + 1];
 
@@ -371,7 +375,7 @@ state_status_t state_del_locked(state_t * state, cache_entry_t * entry)
  * @return Status of operation
  *
  */
-state_status_t state_del(state_t * state, bool hold_lock)
+state_status_t state_del(state_t *state, bool hold_lock)
 {
 	cache_entry_t *entry = state->state_entry;
 	state_status_t status = 0;
@@ -395,7 +399,7 @@ state_status_t state_del(state_t * state, bool hold_lock)
  *
  * @param[in,out] entry The entry to wipe
  */
-void state_nfs4_state_wipe(cache_entry_t * entry)
+void state_nfs4_state_wipe(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glistn;
 	state_t *state = NULL;
@@ -416,7 +420,7 @@ void state_nfs4_state_wipe(cache_entry_t * entry)
  *
  * @param[in] lock_owner Lock owner to release
  */
-void release_lockstate(state_owner_t * lock_owner)
+void release_lockstate(state_owner_t *lock_owner)
 {
 	state_status_t state_status;
 	struct glist_head *glist, *glistn;
@@ -440,7 +444,9 @@ void release_lockstate(state_owner_t * lock_owner)
 				 state_err_str(state_status));
 		}
 
-		/* Release the lru ref to the cache inode we held while calling state_del */
+		/* Release the lru ref to the cache inode we held while
+		 * calling state_del
+		 */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 }
@@ -450,7 +456,7 @@ void release_lockstate(state_owner_t * lock_owner)
  *
  * @param[in,out] open_owner Open owner
  */
-void release_openstate(state_owner_t * open_owner)
+void release_openstate(state_owner_t *open_owner)
 {
 	state_status_t state_status;
 	struct glist_head *glist, *glistn;
@@ -480,8 +486,9 @@ void release_openstate(state_owner_t * open_owner)
 			}
 		}
 
-		if ((state_status =
-		     state_del_locked(state_found, entry)) != STATE_SUCCESS) {
+		state_status = state_del_locked(state_found, entry);
+
+		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_CLIENTID,
 				 "EXPIRY failed to release stateid error %s",
 				 state_err_str(state_status));
@@ -492,7 +499,9 @@ void release_openstate(state_owner_t * open_owner)
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		/* Release the lru ref to the cache inode we held while calling state_del */
+		/* Release the lru ref to the cache inode we held while
+		 * calling state_del
+		 */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 }
