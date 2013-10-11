@@ -57,17 +57,16 @@
 static fsal_status_t release(struct fsal_export *export_pub)
 {
 	/* The priate, expanded export */
-	struct export *export
-		= container_of(export_pub, struct export, export);
+	struct export *export = container_of(export_pub, struct export, export);
 	/* Return code */
-	fsal_status_t status = {ERR_FSAL_INVAL, 0};
+	fsal_status_t status = { ERR_FSAL_INVAL, 0 };
 
 	deconstruct_handle(export->root);
 	export->root = 0;
 
 	pthread_mutex_lock(&export->export.lock);
-	if((export->export.refs > 0) ||
-	   (!glist_empty(&export->export.handles))) {
+	if ((export->export.refs > 0)
+	    || (!glist_empty(&export->export.handles))) {
 		pthread_mutex_lock(&export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;
@@ -116,7 +115,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	/* The buffer in which to store stat info */
 	struct stat st;
 	/* FSAL status structure */
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* Return code from Ceph */
 	int rc = 0;
 	/* Find the actual path in the supplied path */
@@ -160,7 +159,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	*pub_handle = &handle->handle;
 
-out:
+ out:
 	return status;
 }
 
@@ -208,9 +207,9 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
  *
  * @return NFSv4.1 error codes.
  */
-nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
-			  const struct gsh_buffdesc *const desc,
-			  struct fsal_ds_handle **const ds_pub)
+nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
+			  const struct gsh_buffdesc * const desc,
+			  struct fsal_ds_handle ** const ds_pub)
 {
 	/* Full 'private' export structure */
 	struct export *export = container_of(export_pub,
@@ -219,7 +218,7 @@ nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
 	/* Handle to be created */
 	struct ds *ds = NULL;
 
-	*ds_pub= NULL;
+	*ds_pub = NULL;
 
 	if (desc->len != sizeof(struct ds_wire)) {
 		return NFS4ERR_BADHANDLE;
@@ -232,10 +231,9 @@ nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
 	}
 
 	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-           here. */
+	   here. */
 
 	ds->connected = false;
-
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 
@@ -244,9 +242,8 @@ nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
 		return NFS4ERR_BADHANDLE;
 	}
 
-	if (fsal_ds_handle_init(&ds->ds,
-				export->export.ds_ops,
-				&export->export)) {
+	if (fsal_ds_handle_init
+	    (&ds->ds, export->export.ds_ops, &export->export)) {
 		gsh_free(ds);
 		return NFS4ERR_SERVERFAULT;
 	}
@@ -256,7 +253,7 @@ nfsstat4 create_ds_handle(struct fsal_export *const export_pub,
 	return NFS4_OK;
 }
 
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 
 /**
  * @brief Create a handle object from a wire handle
@@ -280,9 +277,9 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 					     struct export,
 					     export);
 	/* FSAL status to return */
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the
-           client */
+	   client */
 	vinodeno_t *vi = desc->addr;
 	/* Ceph return code */
 	int rc = 0;
@@ -306,7 +303,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	/* The ceph_ll_connectable_m should have populated libceph's
-           cache with all this anyway */
+	   cache with all this anyway */
 	rc = ceph_ll_getattr(export->cmount, i, &st, 0, 0);
 	if (rc < 0) {
 		return ceph2fsal_error(rc);
@@ -321,7 +318,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	*pub_handle = &handle->handle;
 
-out:
+ out:
 	return status;
 }
 
@@ -339,11 +336,10 @@ out:
 
 static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 					 const struct req_op_context *opctx,
-					 fsal_dynamicfsinfo_t *info)
+					 fsal_dynamicfsinfo_t * info)
 {
 	/* Full 'private' export */
-	struct export* export
-		= container_of(export_pub, struct export, export);
+	struct export *export = container_of(export_pub, struct export, export);
 	/* Return value from Ceph calls */
 	int rc = 0;
 	/* Filesystem stat */
@@ -392,7 +388,6 @@ static bool fs_supports(struct fsal_export *export_pub,
 
 	case fso_case_insensitive:
 		return false;
-
 
 	case fso_case_preserving:
 		return true;
@@ -504,8 +499,8 @@ static uint32_t fs_maxwrite(struct fsal_export *export_pub)
 static uint32_t fs_maxlink(struct fsal_export *export_pub)
 {
 	/* Ceph does not like hard links.  See the anchor table
-           design.  We should fix this, but have to do it in the Ceph
-           core. */
+	   design.  We should fix this, but have to do it in the Ceph
+	   core. */
 	return 1024;
 }
 
@@ -522,8 +517,8 @@ static uint32_t fs_maxlink(struct fsal_export *export_pub)
 static uint32_t fs_maxnamelen(struct fsal_export *export_pub)
 {
 	/* Ceph actually supports filenames of unlimited length, at
-           least according to the protocol docs.  We may wish to
-           constrain this later. */
+	   least according to the protocol docs.  We may wish to
+	   constrain this later. */
 	return UINT32_MAX;
 }
 
@@ -555,7 +550,7 @@ static uint32_t fs_maxpathlen(struct fsal_export *export_pub)
 
 static struct timespec fs_lease_time(struct fsal_export *export_pub)
 {
-	struct timespec lease = {300, 0};
+	struct timespec lease = { 300, 0 };
 
 	return lease;
 }
@@ -638,7 +633,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->create_handle = create_handle;
 #ifdef CEPH_PNFS
 	ops->create_ds_handle = create_ds_handle;
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;
@@ -654,6 +649,5 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 #ifdef CEPH_PNFS
 	export_ops_pnfs(ops);
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 }
-

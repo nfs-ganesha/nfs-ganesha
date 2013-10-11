@@ -45,11 +45,11 @@
  */
 
 struct export {
-	struct ceph_mount_info *cmount; /*< The mount object used to
-                                            access all Ceph methods on
-                                            this export. */
-	struct fsal_export export; /*< The public export object */
-	struct handle* root; /*< The root handle */
+	struct ceph_mount_info *cmount;	/*< The mount object used to
+					   access all Ceph methods on
+					   this export. */
+	struct fsal_export export;	/*< The public export object */
+	struct handle *root;	/*< The root handle */
 };
 
 /**
@@ -57,10 +57,10 @@ struct export {
  */
 
 struct handle {
-	vinodeno_t vi; /*< The object identifier */
-	struct fsal_obj_handle handle; /*< The public handle */
+	vinodeno_t vi;		/*< The object identifier */
+	struct fsal_obj_handle handle;	/*< The public handle */
 	Fh *fd;
-	struct Inode *i; /*< The Ceph inode */
+	struct Inode *i;	/*< The Ceph inode */
 	fsal_openflags_t openflags;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
@@ -68,7 +68,7 @@ struct handle {
 	uint64_t rw_issued;
 	uint64_t rw_serial;
 	uint64_t rw_max_len;
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 };
 
 #ifdef CEPH_PNFS
@@ -78,10 +78,10 @@ struct handle {
  */
 
 struct ds_wire {
-	struct wire_handle wire; /*< All the information of a regualr handle */
-	struct ceph_file_layout layout; /*< Layout information */
-	uint64_t snapseq; /*< And a single entry giving a degernate
-                              snaprealm. */
+	struct wire_handle wire;	/*< All the information of a regualr handle */
+	struct ceph_file_layout layout;	/*< Layout information */
+	uint64_t snapseq;	/*< And a single entry giving a degernate
+				   snaprealm. */
 };
 
 /**
@@ -89,19 +89,19 @@ struct ds_wire {
  */
 
 struct ds {
-	struct ds_wire wire; /*< Wire data */
-	struct fsal_ds_handle ds; /*< Public DS handle */
-	bool connected; /*< True if the handle has been connected
-                            (in Ceph) */
+	struct ds_wire wire;	/*< Wire data */
+	struct fsal_ds_handle ds;	/*< Public DS handle */
+	bool connected;		/*< True if the handle has been connected
+				   (in Ceph) */
 };
 
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 
 #ifndef CEPH_INTERNAL_C
 /* Keep internal.c from clashing with itself */
 extern attrmask_t supported_attributes;
 extern attrmask_t settable_attributes;
-#endif /* !CEPH_INTERNAL_C */
+#endif				/* !CEPH_INTERNAL_C */
 
 /**
  * Linux supports a stripe pattern with no more than 4096 stripes, but
@@ -113,10 +113,8 @@ static const size_t BIGGEST_PATTERN = 1024;
 
 /* Prototypes */
 
-int construct_handle(const struct stat *st,
-		     struct Inode *i,
-		     struct export *export,
-		     struct handle **obj);
+int construct_handle(const struct stat *st, struct Inode *i,
+		     struct export *export, struct handle **obj);
 int deconstruct_handle(struct handle *obj);
 fsal_status_t ceph2fsal_error(const int ceph_errorcode);
 void ceph2fsal_attributes(const struct stat *buffstat,
@@ -127,6 +125,6 @@ void handle_ops_init(struct fsal_obj_ops *ops);
 void ds_ops_init(struct fsal_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
-#endif /* CEPH_PNFS */
+#endif				/* CEPH_PNFS */
 
-#endif /* !FSAL_CEPH_INTERNAL_INTERNAL__ */
+#endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */

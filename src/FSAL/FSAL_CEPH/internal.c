@@ -41,28 +41,24 @@
 #define CEPH_INTERNAL_C
 #include "internal.h"
 
-
 #define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
 
 /**
  * The attributes tis FSAL can interpret or supply.
  */
 
-const attrmask_t supported_attributes = (
-	ATTR_TYPE     | ATTR_SIZE      |
-	ATTR_FSID     | ATTR_FILEID    | ATTR_MODE	|
-	ATTR_NUMLINKS | ATTR_OWNER     | ATTR_GROUP	|
-	ATTR_ATIME    | ATTR_RAWDEV    | ATTR_CTIME	|
-	ATTR_MTIME    | ATTR_SPACEUSED | ATTR_CHGTIME);
+const attrmask_t supported_attributes =
+    (ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE | ATTR_NUMLINKS
+     | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_RAWDEV | ATTR_CTIME |
+     ATTR_MTIME | ATTR_SPACEUSED | ATTR_CHGTIME);
 
 /**
  * The attributes this FSAL can set.
  */
 
-const attrmask_t settable_attributes = (
-	ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |
-	ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |
-	ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER);
+const attrmask_t settable_attributes =
+    (ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_CTIME | ATTR_MTIME
+     | ATTR_SIZE | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER);
 
 /**
  * @brief FSAL status from Ceph error
@@ -243,9 +239,8 @@ void ceph2fsal_attributes(const struct stat *buffstat,
 	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
 	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
-	fsalattr->chgtime
-		= posix2fsal_time(MAX_2(buffstat->st_mtime,
-					buffstat->st_ctime), 0);
+	fsalattr->chgtime =
+	    posix2fsal_time(MAX_2(buffstat->st_mtime, buffstat->st_ctime), 0);
 	fsalattr->change = fsalattr->chgtime.tv_sec;
 	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
@@ -270,10 +265,8 @@ void ceph2fsal_attributes(const struct stat *buffstat,
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(const struct stat *st,
-		     struct Inode *i,
-		     struct export *export,
-		     struct handle **obj)
+int construct_handle(const struct stat *st, struct Inode *i,
+		     struct export *export, struct handle **obj)
 {
 	/* Poitner to the handle under construction */
 	struct handle *constructing = NULL;
@@ -299,10 +292,9 @@ int construct_handle(const struct stat *st,
 
 	ceph2fsal_attributes(st, &constructing->handle.attributes);
 
-	rc = -(fsal_obj_handle_init(&constructing->handle,
-				    &export->export,
-				    constructing->handle.attributes.type));
-
+	rc = -(fsal_obj_handle_init
+	       (&constructing->handle, &export->export,
+		constructing->handle.attributes.type));
 
 	if (rc < 0) {
 		gsh_free(constructing);
@@ -325,8 +317,8 @@ int construct_handle(const struct stat *st,
 
 int deconstruct_handle(struct handle *obj)
 {
-	struct export *export
-		= container_of(obj->handle.export, struct export, export);
+	struct export *export =
+	    container_of(obj->handle.export, struct export, export);
 	int retval;
 
 	ceph_ll_put(export->cmount, obj->i);
