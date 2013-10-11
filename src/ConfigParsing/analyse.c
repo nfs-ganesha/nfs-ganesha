@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #if HAVE_STRING_H
-#   include <string.h>
+#include <string.h>
 #endif
 
 /**
@@ -37,10 +37,10 @@
  */
 list_items *config_CreateItemsList()
 {
-  list_items *new = (list_items *) malloc(sizeof(list_items));
+	list_items *new = (list_items *) malloc(sizeof(list_items));
 
-  (*new) = NULL;
-  return new;
+	(*new) = NULL;
+	return new;
 }
 
 /**
@@ -48,23 +48,21 @@ list_items *config_CreateItemsList()
  */
 generic_item *config_CreateBlock(char *blockname, list_items * list)
 {
-  generic_item *new = (generic_item *) malloc(sizeof(generic_item));
+	generic_item *new = (generic_item *) malloc(sizeof(generic_item));
 
-  new->type = TYPE_BLOCK;
+	new->type = TYPE_BLOCK;
 
-  strncpy(new->item.block.block_name, blockname, MAXSTRLEN);
+	strncpy(new->item.block.block_name, blockname, MAXSTRLEN);
 
-  if(list)
-    {
-      new->item.block.block_content = *list;
-      free(list);
-    }
-  else
-    new->item.block.block_content = NULL;
+	if (list) {
+		new->item.block.block_content = *list;
+		free(list);
+	} else
+		new->item.block.block_content = NULL;
 
-  new->next = NULL;
+	new->next = NULL;
 
-  return new;
+	return new;
 
 }
 
@@ -73,15 +71,15 @@ generic_item *config_CreateBlock(char *blockname, list_items * list)
  */
 generic_item *config_CreateAffect(char *varname, char *varval)
 {
-  generic_item *new = (generic_item *) malloc(sizeof(generic_item));
+	generic_item *new = (generic_item *) malloc(sizeof(generic_item));
 
-  new->type = TYPE_AFFECT;
-  strncpy(new->item.affect.varname, varname, MAXSTRLEN);
-  strncpy(new->item.affect.varvalue, varval, MAXSTRLEN);
+	new->type = TYPE_AFFECT;
+	strncpy(new->item.affect.varname, varname, MAXSTRLEN);
+	strncpy(new->item.affect.varvalue, varval, MAXSTRLEN);
 
-  new->next = NULL;
+	new->next = NULL;
 
-  return new;
+	return new;
 
 }
 
@@ -90,47 +88,44 @@ generic_item *config_CreateAffect(char *varname, char *varval)
  */
 void config_AddItem(list_items * list, generic_item * item)
 {
-  if((*list) == NULL)
-    {
-      (*list) = item;
-    }
-  else
-    {
-      item->next = (*list);
-      (*list) = item;
-    }
+	if ((*list) == NULL) {
+		(*list) = item;
+	} else {
+		item->next = (*list);
+		(*list) = item;
+	}
 }
 
 /**
  *  Displays the content of a list of blocks.
  */
-static void print_list_ident(FILE * output, list_items * list, unsigned int indent)
+static void print_list_ident(FILE * output, list_items * list,
+			     unsigned int indent)
 {
 
-  generic_item *curr_item;
+	generic_item *curr_item;
 
-  curr_item = (*list);
+	curr_item = (*list);
 
-  while(curr_item)
-    {
+	while (curr_item) {
 
-      if(curr_item->type == TYPE_BLOCK)
-        {
-          fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
-                  curr_item->item.block.block_name);
-          print_list_ident(output, &curr_item->item.block.block_content, indent + 3);
-          fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
-                  curr_item->item.block.block_name);
-        }
-      else
-        {
-          /* affectation */
-          fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent, " ",
-                  curr_item->item.affect.varname, curr_item->item.affect.varvalue);
-        }
+		if (curr_item->type == TYPE_BLOCK) {
+			fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
+				curr_item->item.block.block_name);
+			print_list_ident(output,
+					 &curr_item->item.block.block_content,
+					 indent + 3);
+			fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
+				curr_item->item.block.block_name);
+		} else {
+			/* affectation */
+			fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent,
+				" ", curr_item->item.affect.varname,
+				curr_item->item.affect.varvalue);
+		}
 
-      curr_item = curr_item->next;
-    }
+		curr_item = curr_item->next;
+	}
 
 }
 
@@ -140,32 +135,31 @@ static void print_list_ident(FILE * output, list_items * list, unsigned int inde
 void config_print_list(FILE * output, list_items * list)
 {
 
-  print_list_ident(output, list, 0);
+	print_list_ident(output, list, 0);
 
 }
 
 static void free_list_items_recurse(list_items * list)
 {
-  generic_item *curr_item;
-  generic_item *next_item;
+	generic_item *curr_item;
+	generic_item *next_item;
 
-  curr_item = (*list);
+	curr_item = (*list);
 
-  while(curr_item)
-    {
+	while (curr_item) {
 
-      next_item = curr_item->next;
+		next_item = curr_item->next;
 
-      if(curr_item->type == TYPE_BLOCK)
-        {
-          free_list_items_recurse(&curr_item->item.block.block_content);
-        }
+		if (curr_item->type == TYPE_BLOCK) {
+			free_list_items_recurse(&curr_item->item.block.
+						block_content);
+		}
 
-      free(curr_item);
-      curr_item = next_item;
+		free(curr_item);
+		curr_item = next_item;
 
-    }
-  return;
+	}
+	return;
 }
 
 /**
@@ -175,7 +169,7 @@ static void free_list_items_recurse(list_items * list)
 void config_free_list(list_items * list)
 {
 
-  free_list_items_recurse(list);
-  free(list);
-  return;
+	free_list_items_recurse(list);
+	free(list);
+	return;
 }
