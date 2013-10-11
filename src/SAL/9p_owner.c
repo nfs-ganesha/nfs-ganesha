@@ -55,24 +55,27 @@ hash_table_t *ht_9p_owner;
  * @return Length of display string.
  */
 
-int display_9p_owner(state_owner_t *key, char *str)
+int display_9p_owner(state_owner_t * key, char *str)
 {
-  char *strtmp = str;
+	char *strtmp = str;
 
-  if(key == NULL)
-    return sprintf(str, "<NULL>");
+	if (key == NULL)
+		return sprintf(str, "<NULL>");
 
-  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", key);
-  strtmp += sprint_sockaddr( (sockaddr_t *)&(key->so_owner.so_9p_owner.client_addr),
-                             strtmp, 
-                             SOCK_NAME_MAX ) ;
+	strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", key);
+	strtmp +=
+	    sprint_sockaddr((sockaddr_t *) &
+			    (key->so_owner.so_9p_owner.client_addr), strtmp,
+			    SOCK_NAME_MAX);
 
-  strtmp += sprintf(strtmp, " proc_id=%u", key->so_owner.so_9p_owner.proc_id);
- 
-  strtmp += sprintf(strtmp, " refcount=%d",
-                    atomic_fetch_int32_t(&key->so_refcount));
+	strtmp +=
+	    sprintf(strtmp, " proc_id=%u", key->so_owner.so_9p_owner.proc_id);
 
-  return strtmp - str;
+	strtmp +=
+	    sprintf(strtmp, " refcount=%d",
+		    atomic_fetch_int32_t(&key->so_refcount));
+
+	return strtmp - str;
 }
 
 /**
@@ -86,7 +89,7 @@ int display_9p_owner(state_owner_t *key, char *str)
 
 int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 {
-  return display_9p_owner(buff->addr, str);
+	return display_9p_owner(buff->addr, str);
 }
 
 /**
@@ -100,7 +103,7 @@ int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 
 int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 {
-  return display_9p_owner(buff->addr, str);
+	return display_9p_owner(buff->addr, str);
 }
 
 /**
@@ -113,43 +116,39 @@ int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
  * @retval 0 if they're identical.
  */
 
-int compare_9p_owner(state_owner_t *owner1,
-                     state_owner_t *owner2)
+int compare_9p_owner(state_owner_t * owner1, state_owner_t * owner2)
 {
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
+		char str1[HASHTABLE_DISPLAY_STRLEN];
+		char str2[HASHTABLE_DISPLAY_STRLEN];
 
-      display_9p_owner(owner1, str1);
-      display_9p_owner(owner2, str2);
-      LogFullDebug(COMPONENT_STATE,
-                   "{%s} vs {%s}", str1, str2);
-    }
+		display_9p_owner(owner1, str1);
+		display_9p_owner(owner2, str2);
+		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
+	}
 
-  if(owner1 == NULL || owner2 == NULL)
-    return 1;
+	if (owner1 == NULL || owner2 == NULL)
+		return 1;
 
-  if(owner1 == owner2)
-    return 0;
+	if (owner1 == owner2)
+		return 0;
 
-  if(owner1->so_owner.so_9p_owner.proc_id !=
-     owner2->so_owner.so_9p_owner.proc_id)
-    return 1;
+	if (owner1->so_owner.so_9p_owner.proc_id !=
+	    owner2->so_owner.so_9p_owner.proc_id)
+		return 1;
 #if 0
-  if( memcmp(&owner1->so_owner.so_9p_owner.client_addr, 
-             &owner2->so_owner.so_9p_owner.client_addr,
-              sizeof( struct sockaddr_storage ) ) )
-    return 1;
-#endif 
+	if (memcmp
+	    (&owner1->so_owner.so_9p_owner.client_addr,
+	     &owner2->so_owner.so_9p_owner.client_addr,
+	     sizeof(struct sockaddr_storage)))
+		return 1;
+#endif
 
-  if(owner1->so_owner_len !=
-     owner2->so_owner_len)
-    return 1;
+	if (owner1->so_owner_len != owner2->so_owner_len)
+		return 1;
 
-  return memcmp(owner1->so_owner_val,
-                owner2->so_owner_val,
-                owner1->so_owner_len);
+	return memcmp(owner1->so_owner_val, owner2->so_owner_val,
+		      owner1->so_owner_len);
 }
 
 /**
@@ -164,8 +163,7 @@ int compare_9p_owner(state_owner_t *owner1,
 
 int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
-  return compare_9p_owner(buff1->addr,
-                          buff2->addr);
+	return compare_9p_owner(buff1->addr, buff2->addr);
 
 }
 
@@ -178,30 +176,31 @@ int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
  * @return The hash index.
  */
 
-uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
-                                   struct gsh_buffdesc *key)
+uint32_t _9p_owner_value_hash_func(hash_parameter_t * hparam,
+				   struct gsh_buffdesc * key)
 {
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_owner_t *pkey = key->addr;
+	unsigned int sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_owner_t *pkey = key->addr;
 
-  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
+	struct sockaddr_in *paddr =
+	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner_len; i++)
-    sum += (unsigned char)pkey->so_owner_val[i];
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->so_owner_len; i++)
+		sum += (unsigned char)pkey->so_owner_val[i];
 
-  res = (unsigned long) (pkey->so_owner.so_9p_owner.proc_id)  +
-        (unsigned long) paddr->sin_addr.s_addr +
-        (unsigned long) sum +
-        (unsigned long) pkey->so_owner_len;
+	res =
+	    (unsigned long)(pkey->so_owner.so_9p_owner.proc_id) +
+	    (unsigned long)paddr->sin_addr.s_addr + (unsigned long)sum +
+	    (unsigned long)pkey->so_owner_len;
 
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-		 "value = %lu", res % hparam->index_size);
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %lu",
+			     res % hparam->index_size);
 
-  return (unsigned long)(res % hparam->index_size);
+	return (unsigned long)(res % hparam->index_size);
 
 }
 
@@ -214,29 +213,30 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
  * @return The RBT hash.
  */
 
-uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
-                                 struct gsh_buffdesc *key)
+uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * hparam,
+				 struct gsh_buffdesc *key)
 {
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_owner_t *pkey = key->addr;
+	unsigned int sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_owner_t *pkey = key->addr;
 
-  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
+	struct sockaddr_in *paddr =
+	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner_len; i++)
-    sum += (unsigned char)pkey->so_owner_val[i];
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->so_owner_len; i++)
+		sum += (unsigned char)pkey->so_owner_val[i];
 
-  res = (unsigned long) (pkey->so_owner.so_9p_owner.proc_id)  +
-        (unsigned long) paddr->sin_addr.s_addr +
-        (unsigned long) sum +
-        (unsigned long) pkey->so_owner_len;
+	res =
+	    (unsigned long)(pkey->so_owner.so_9p_owner.proc_id) +
+	    (unsigned long)paddr->sin_addr.s_addr + (unsigned long)sum +
+	    (unsigned long)pkey->so_owner_len;
 
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
-  return res;
+	return res;
 }
 
 /**
@@ -248,14 +248,13 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 
 int Init_9p_hash(void)
 {
-  if((ht_9p_owner = HashTable_Init(&nfs_param._9p_owner_hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_STATE,
-              "Cannot init 9P Owner cache");
-      return -1;
-    }
+	if ((ht_9p_owner =
+	     HashTable_Init(&nfs_param._9p_owner_hash_param)) == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init 9P Owner cache");
+		return -1;
+	}
 
-  return 0;
+	return 0;
 }
 
 /**
@@ -267,21 +266,21 @@ int Init_9p_hash(void)
  * @return The found owner or NULL.
  */
 
-state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
-                            uint32_t proc_id)
+state_owner_t *get_9p_owner(struct sockaddr_storage * client_addr,
+			    uint32_t proc_id)
 {
-  state_owner_t key;
+	state_owner_t key;
 
-  memset(&key, 0, sizeof(key));
+	memset(&key, 0, sizeof(key));
 
-  key.so_type                      = STATE_LOCK_OWNER_9P;
-  key.so_refcount                  = 1;
-  key.so_owner.so_9p_owner.proc_id = proc_id;
+	key.so_type = STATE_LOCK_OWNER_9P;
+	key.so_refcount = 1;
+	key.so_owner.so_9p_owner.proc_id = proc_id;
 
-  memcpy(&key.so_owner.so_9p_owner.client_addr,
-         client_addr,
-         sizeof(*client_addr)); 
+	memcpy(&key.so_owner.so_9p_owner.client_addr, client_addr,
+	       sizeof(*client_addr));
 
-  return get_state_owner(CARE_ALWAYS, &key, NULL, NULL);
+	return get_state_owner(CARE_ALWAYS, &key, NULL, NULL);
 }
+
 /** @} */

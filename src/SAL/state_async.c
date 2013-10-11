@@ -61,15 +61,15 @@ static struct fridgethr *state_async_fridge = NULL;
 
 static void state_blocked_lock_caller(struct fridgethr_context *ctx)
 {
-  state_block_data_t *block = ctx->arg;
-  struct req_op_context req_ctx;
+	state_block_data_t *block = ctx->arg;
+	struct req_op_context req_ctx;
 
   /**
    * @todo this is obviously wrong.  we need to fill in the context
    * from somewhere!
    */
-  memset(&req_ctx, 0, sizeof(req_ctx));
-  process_blocked_lock_upcall(block, &req_ctx);
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	process_blocked_lock_upcall(block, &req_ctx);
 }
 
 /**
@@ -82,15 +82,15 @@ static void state_blocked_lock_caller(struct fridgethr_context *ctx)
  */
 static void state_async_func_caller(struct fridgethr_context *ctx)
 {
-  state_async_queue_t *entry = ctx->arg;
-  struct req_op_context req_ctx;
+	state_async_queue_t *entry = ctx->arg;
+	struct req_op_context req_ctx;
 
   /**
    * @todo this is obviously wrong.  we need to fill in the context
    * from somewhere!
    */
-  memset(&req_ctx, 0, sizeof(req_ctx));
-  entry->state_async_func(entry, &req_ctx);
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	entry->state_async_func(entry, &req_ctx);
 }
 
 /**
@@ -100,24 +100,19 @@ static void state_async_func_caller(struct fridgethr_context *ctx)
  *
  * @return State status.
  */
-state_status_t state_async_schedule(state_async_queue_t *arg)
+state_status_t state_async_schedule(state_async_queue_t * arg)
 {
-  int rc;
+	int rc;
 
-  LogFullDebug(COMPONENT_STATE, "Schedule %p", arg);
+	LogFullDebug(COMPONENT_STATE, "Schedule %p", arg);
 
-  rc = fridgethr_submit(state_async_fridge,
-			state_async_func_caller,
-			arg);
+	rc = fridgethr_submit(state_async_fridge, state_async_func_caller, arg);
 
-  if (rc != 0)
-    {
-      LogCrit(COMPONENT_STATE,
-	       "Unable to schedule request: %d",
-	       rc);
-    }
+	if (rc != 0) {
+		LogCrit(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+	}
 
-  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /**
@@ -127,24 +122,20 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
  *
  * @return State status.
  */
-state_status_t state_block_schedule(state_block_data_t *block)
+state_status_t state_block_schedule(state_block_data_t * block)
 {
-  int rc;
+	int rc;
 
-  LogFullDebug(COMPONENT_STATE, "Schedule notification %p", block);
+	LogFullDebug(COMPONENT_STATE, "Schedule notification %p", block);
 
-  rc = fridgethr_submit(state_async_fridge,
-			state_blocked_lock_caller,
-			block);
+	rc = fridgethr_submit(state_async_fridge, state_blocked_lock_caller,
+			      block);
 
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Unable to schedule request: %d",
-	       rc);
-    }
+	if (rc != 0) {
+		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+	}
 
-  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /**
@@ -154,23 +145,20 @@ state_status_t state_block_schedule(state_block_data_t *block)
  */
 state_status_t state_async_init(void)
 {
-  int rc = 0;
-  struct fridgethr_params frp;
+	int rc = 0;
+	struct fridgethr_params frp;
 
-  memset(&frp, 0, sizeof(struct fridgethr_params));
-  frp.thr_max = 1;
-  frp.deferment = fridgethr_defer_queue;
-  rc = fridgethr_init(&state_async_fridge,
-		      "State Async",
-		      &frp);
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Unable to initialize state async thread fridge: %d",
-	       rc);
-      return STATE_INIT_ENTRY_FAILED;
-    }
-  return STATE_SUCCESS;
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = 1;
+	frp.deferment = fridgethr_defer_queue;
+	rc = fridgethr_init(&state_async_fridge, "State Async", &frp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_STATE,
+			 "Unable to initialize state async thread fridge: %d",
+			 rc);
+		return STATE_INIT_ENTRY_FAILED;
+	}
+	return STATE_SUCCESS;
 }
 
 /**
@@ -180,55 +168,47 @@ state_status_t state_async_init(void)
  */
 state_status_t state_async_shutdown(void)
 {
-  int rc = fridgethr_sync_command(state_async_fridge,
-				  fridgethr_comm_stop,
-				  120);
-  if (rc == ETIMEDOUT)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Shutdown timed out, cancelling threads.");
-      fridgethr_cancel(state_async_fridge);
-    }
-  else if (rc != 0)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Failed shutting down state async thread: %d",
-	       rc);
-    }
+	int rc = fridgethr_sync_command(state_async_fridge,
+					fridgethr_comm_stop,
+					120);
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_STATE,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(state_async_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_STATE,
+			 "Failed shutting down state async thread: %d", rc);
+	}
 
-  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 state_status_t state_async_pause(void)
 {
-  int rc = fridgethr_sync_command(state_async_fridge,
-				  fridgethr_comm_pause,
-				  120);
+	int rc = fridgethr_sync_command(state_async_fridge,
+					fridgethr_comm_pause,
+					120);
 
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Unable to pause state async thread fridge: %d",
-	       rc);
-    }
+	if (rc != 0) {
+		LogMajor(COMPONENT_STATE,
+			 "Unable to pause state async thread fridge: %d", rc);
+	}
 
-  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 state_status_t state_async_resume(void)
 {
-  int rc = fridgethr_sync_command(state_async_fridge,
-				  fridgethr_comm_run,
-				  120);
+	int rc = fridgethr_sync_command(state_async_fridge,
+					fridgethr_comm_run,
+					120);
 
-  if (rc != 0)
-    {
-      LogMajor(COMPONENT_STATE,
-	       "Unable to resume state async thread fridge: %d",
-	       rc);
-    }
+	if (rc != 0) {
+		LogMajor(COMPONENT_STATE,
+			 "Unable to resume state async thread fridge: %d", rc);
+	}
 
-  return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /** @} */

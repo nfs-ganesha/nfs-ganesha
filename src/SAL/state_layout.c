@@ -61,67 +61,63 @@
  * @return STATE_SUCCESS on completion, other values of state_status_t
  *         on failure.
  */
-state_status_t
-state_add_segment(state_t *state,
-                  struct pnfs_segment *segment,
-                  void *fsal_data,
-                  bool return_on_close)
+state_status_t state_add_segment(state_t * state, struct pnfs_segment *segment,
+				 void *fsal_data, bool return_on_close)
 {
-     /* Pointer to the new segment being added to the state */
-     state_layout_segment_t *new_segment = NULL;
-     pthread_mutexattr_t mattr;
+	/* Pointer to the new segment being added to the state */
+	state_layout_segment_t *new_segment = NULL;
+	pthread_mutexattr_t mattr;
 
-     if (state->state_type != STATE_TYPE_LAYOUT) {
-          LogCrit(COMPONENT_PNFS, "Attempt to add layout segment to "
-                  "non-layout state: %p", state);
-          return STATE_BAD_TYPE;
-     }
+	if (state->state_type != STATE_TYPE_LAYOUT) {
+		LogCrit(COMPONENT_PNFS,
+			"Attempt to add layout segment to "
+			"non-layout state: %p", state);
+		return STATE_BAD_TYPE;
+	}
 
-     new_segment = gsh_calloc(1, sizeof(*new_segment));
-     if(!new_segment) {
-          return STATE_MALLOC_ERROR;
-     }
+	new_segment = gsh_calloc(1, sizeof(*new_segment));
+	if (!new_segment) {
+		return STATE_MALLOC_ERROR;
+	}
 
-     if (pthread_mutexattr_init(&mattr) != 0) {
-          gsh_free(new_segment);
-          return STATE_INIT_ENTRY_FAILED;
-     }
-
+	if (pthread_mutexattr_init(&mattr) != 0) {
+		gsh_free(new_segment);
+		return STATE_INIT_ENTRY_FAILED;
+	}
 #if defined(__linux__)
-     if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
-          gsh_free(new_segment);
-          return STATE_INIT_ENTRY_FAILED;
-     }
+	if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
+		gsh_free(new_segment);
+		return STATE_INIT_ENTRY_FAILED;
+	}
 #else
-     if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE) != 0) {
-          gsh_free(new_segment);
-          return STATE_INIT_ENTRY_FAILED;
-     }
+	if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+		gsh_free(new_segment);
+		return STATE_INIT_ENTRY_FAILED;
+	}
 #endif
 
-     if (pthread_mutex_init(&new_segment->sls_mutex,
-			    &mattr) != 0) {
-          gsh_free(new_segment);
-	  return STATE_INIT_ENTRY_FAILED;
-     }
+	if (pthread_mutex_init(&new_segment->sls_mutex, &mattr) != 0) {
+		gsh_free(new_segment);
+		return STATE_INIT_ENTRY_FAILED;
+	}
 
-     pthread_mutexattr_destroy(&mattr);
+	pthread_mutexattr_destroy(&mattr);
 
-     new_segment->sls_fsal_data = fsal_data;
-     new_segment->sls_state     = state;
-     new_segment->sls_segment   = *segment;
+	new_segment->sls_fsal_data = fsal_data;
+	new_segment->sls_state = state;
+	new_segment->sls_segment = *segment;
 
-     glist_add_tail(&state->state_data.layout.state_segments,
-                    &new_segment->sls_state_segments);
+	glist_add_tail(&state->state_data.layout.state_segments,
+		       &new_segment->sls_state_segments);
 
-     /* Based on comments by Benny Halevy, if any segment is marked
-        return_on_close, all segments should be treated as
-        return_on_close. */
-     if (return_on_close) {
-          state->state_data.layout.state_return_on_close = true;
-     }
+	/* Based on comments by Benny Halevy, if any segment is marked
+	   return_on_close, all segments should be treated as
+	   return_on_close. */
+	if (return_on_close) {
+		state->state_data.layout.state_return_on_close = true;
+	}
 
-     return STATE_SUCCESS;
+	return STATE_SUCCESS;
 }
 
 /**
@@ -133,14 +129,13 @@ state_add_segment(state_t *state,
  *
  * @return State status.
  */
-state_status_t state_delete_segment(state_layout_segment_t *segment)
+state_status_t state_delete_segment(state_layout_segment_t * segment)
 {
-     glist_del(&segment->sls_state_segments);
-     pthread_mutex_unlock(&segment->sls_mutex);
-     gsh_free(segment);
-     return STATE_SUCCESS;
+	glist_del(&segment->sls_state_segments);
+	pthread_mutex_unlock(&segment->sls_mutex);
+	gsh_free(segment);
+	return STATE_SUCCESS;
 }
-
 
 /**
  * @brief Find pre-existing layouts
@@ -157,36 +152,36 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
  *         isn't, and an appropriate code if other bad things happen.
  */
 
-state_status_t
-state_lookup_layout_state(cache_entry_t *entry,
-                          state_owner_t *owner,
-                          layouttype4 type,
-                          state_t **state)
+state_status_t state_lookup_layout_state(cache_entry_t * entry,
+					 state_owner_t * owner,
+					 layouttype4 type, state_t ** state)
 {
-     /* Pointer for iterating over the list of states on the file */
-     struct glist_head * glist_iter = NULL;
-     /* The state under inspection in the loop */
-     state_t *state_iter = NULL;
-     /* The state found, if one exists */
-     state_t *state_found = NULL;
+	/* Pointer for iterating over the list of states on the file */
+	struct glist_head *glist_iter = NULL;
+	/* The state under inspection in the loop */
+	state_t *state_iter = NULL;
+	/* The state found, if one exists */
+	state_t *state_found = NULL;
 
-     glist_for_each(glist_iter, &entry->state_list) {
-          state_iter = glist_entry(glist_iter, state_t, state_list);
-          if ((state_iter->state_type == STATE_TYPE_LAYOUT) &&
-              (state_iter->state_owner == owner) &&
-              (state_iter->state_data.layout.state_layout_type == type)) {
-               state_found = state_iter;
-               break;
-          }
-     }
+	glist_for_each(glist_iter, &entry->state_list) {
+		state_iter = glist_entry(glist_iter, state_t, state_list);
+		if ((state_iter->state_type == STATE_TYPE_LAYOUT)
+		    && (state_iter->state_owner == owner)
+		    && (state_iter->state_data.layout.state_layout_type ==
+			type)) {
+			state_found = state_iter;
+			break;
+		}
+	}
 
-     if (!state_found) {
-          return STATE_NOT_FOUND;
-     } else if (state_found->state_entry != entry) {
-          return STATE_INCONSISTENT_ENTRY;
-     } else {
-          *state = state_found;
-          return STATE_SUCCESS;
-     }
+	if (!state_found) {
+		return STATE_NOT_FOUND;
+	} else if (state_found->state_entry != entry) {
+		return STATE_INCONSISTENT_ENTRY;
+	} else {
+		*state = state_found;
+		return STATE_SUCCESS;
+	}
 }
+
 /** @} */

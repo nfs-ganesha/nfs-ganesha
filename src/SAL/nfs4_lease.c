@@ -46,22 +46,23 @@
  *
  * @return The lease lifetime or 0 if expired.
  */
-static unsigned int _valid_lease(nfs_client_id_t *clientid)
+static unsigned int _valid_lease(nfs_client_id_t * clientid)
 {
-  time_t t;
+	time_t t;
 
-  if(clientid->cid_confirmed == EXPIRED_CLIENT_ID)
-    return 0;
+	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID)
+		return 0;
 
-  if(clientid->cid_lease_reservations != 0)
-    return nfs_param.nfsv4_param.lease_lifetime;
+	if (clientid->cid_lease_reservations != 0)
+		return nfs_param.nfsv4_param.lease_lifetime;
 
-  t = time(NULL);
+	t = time(NULL);
 
-  if(clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
-    return (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime) - t;
+	if (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
+		return (clientid->cid_last_renew +
+			nfs_param.nfsv4_param.lease_lifetime) - t;
 
-  return 0;
+	return 0;
 }
 
 /**
@@ -74,23 +75,22 @@ static unsigned int _valid_lease(nfs_client_id_t *clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-bool valid_lease(nfs_client_id_t *clientid)
+bool valid_lease(nfs_client_id_t * clientid)
 {
-  unsigned int valid;
+	unsigned int valid;
 
-  valid = _valid_lease(clientid);
+	valid = _valid_lease(clientid);
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(clientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Check Lease %s (Valid=%s %u seconds left)",
-                   str, valid ? "YES" : "NO", valid);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID,
+			     "Check Lease %s (Valid=%s %u seconds left)", str,
+			     valid ? "YES" : "NO", valid);
+	}
 
-  return valid != 0;
+	return valid != 0;
 }
 
 /**
@@ -104,26 +104,25 @@ bool valid_lease(nfs_client_id_t *clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int reserve_lease(nfs_client_id_t *clientid)
+int reserve_lease(nfs_client_id_t * clientid)
 {
-  unsigned int valid;
+	unsigned int valid;
 
-  valid = _valid_lease(clientid);
+	valid = _valid_lease(clientid);
 
-  if(valid != 0)
-    clientid->cid_lease_reservations++;
+	if (valid != 0)
+		clientid->cid_lease_reservations++;
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(clientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Reserve Lease %s (Valid=%s %u seconds left)",
-                   str, valid ? "YES" : "NO", valid);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID,
+			     "Reserve Lease %s (Valid=%s %u seconds left)", str,
+			     valid ? "YES" : "NO", valid);
+	}
 
-  return valid != 0;
+	return valid != 0;
 }
 
 /**
@@ -138,22 +137,20 @@ int reserve_lease(nfs_client_id_t *clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-void update_lease(nfs_client_id_t *clientid)
+void update_lease(nfs_client_id_t * clientid)
 {
-  clientid->cid_lease_reservations--;
+	clientid->cid_lease_reservations--;
 
-  /* Renew lease when last reservation is released */
-  if(clientid->cid_lease_reservations == 0)
-    clientid->cid_last_renew = time(NULL);
+	/* Renew lease when last reservation is released */
+	if (clientid->cid_lease_reservations == 0)
+		clientid->cid_last_renew = time(NULL);
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(clientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Update Lease %s",
-                   str);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID, "Update Lease %s", str);
+	}
 }
+
 /** @} */

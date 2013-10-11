@@ -49,7 +49,7 @@
 #include "fsal.h"
 #include "sal_functions.h"
 
-pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
+pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
 struct glist_head state_owners_all;
@@ -66,58 +66,105 @@ pthread_mutex_t all_state_owners_mutex = PTHREAD_MUTEX_INITIALIZER;
  */
 const char *state_err_str(state_status_t err)
 {
-  switch(err)
-    {
-      case STATE_SUCCESS:               return "STATE_SUCCESS";
-      case STATE_MALLOC_ERROR:          return "STATE_MALLOC_ERROR";
-      case STATE_POOL_MUTEX_INIT_ERROR: return "STATE_POOL_MUTEX_INIT_ERROR";
-      case STATE_GET_NEW_LRU_ENTRY:     return "STATE_GET_NEW_LRU_ENTRY";
-      case STATE_INIT_ENTRY_FAILED:     return "STATE_INIT_ENTRY_FAILED";
-      case STATE_FSAL_ERROR:            return "STATE_FSAL_ERROR";
-      case STATE_LRU_ERROR:             return "STATE_LRU_ERROR";
-      case STATE_HASH_SET_ERROR:        return "STATE_HASH_SET_ERROR";
-      case STATE_NOT_A_DIRECTORY:       return "STATE_NOT_A_DIRECTORY";
-      case STATE_INCONSISTENT_ENTRY:    return "STATE_INCONSISTENT_ENTRY";
-      case STATE_BAD_TYPE:              return "STATE_BAD_TYPE";
-      case STATE_ENTRY_EXISTS:          return "STATE_ENTRY_EXISTS";
-      case STATE_DIR_NOT_EMPTY:         return "STATE_DIR_NOT_EMPTY";
-      case STATE_NOT_FOUND:             return "STATE_NOT_FOUND";
-      case STATE_INVALID_ARGUMENT:      return "STATE_INVALID_ARGUMENT";
-      case STATE_INSERT_ERROR:          return "STATE_INSERT_ERROR";
-      case STATE_HASH_TABLE_ERROR:      return "STATE_HASH_TABLE_ERROR";
-      case STATE_FSAL_EACCESS:          return "STATE_FSAL_EACCESS";
-      case STATE_IS_A_DIRECTORY:        return "STATE_IS_A_DIRECTORY";
-      case STATE_FSAL_EPERM:            return "STATE_FSAL_EPERM";
-      case STATE_NO_SPACE_LEFT:         return "STATE_NO_SPACE_LEFT";
-      case STATE_READ_ONLY_FS:          return "STATE_READ_ONLY_FS";
-      case STATE_IO_ERROR:              return "STATE_IO_ERROR";
-      case STATE_FSAL_ESTALE:           return "STATE_FSAL_ESTALE";
-      case STATE_FSAL_ERR_SEC:          return "STATE_FSAL_ERR_SEC";
-      case STATE_STATE_CONFLICT:        return "STATE_STATE_CONFLICT";
-      case STATE_QUOTA_EXCEEDED:        return "STATE_QUOTA_EXCEEDED";
-      case STATE_DEAD_ENTRY:            return "STATE_DEAD_ENTRY";
-      case STATE_ASYNC_POST_ERROR:      return "STATE_ASYNC_POST_ERROR";
-      case STATE_NOT_SUPPORTED:         return "STATE_NOT_SUPPORTED";
-      case STATE_STATE_ERROR:           return "STATE_STATE_ERROR";
-      case STATE_FSAL_DELAY:            return "STATE_FSAL_DELAY";
-      case STATE_NAME_TOO_LONG:         return "STATE_NAME_TOO_LONG";
-      case STATE_LOCK_CONFLICT:         return "STATE_LOCK_CONFLICT";
-      case STATE_LOCK_BLOCKED:          return "STATE_LOCK_BLOCKED";
-      case STATE_LOCK_DEADLOCK:         return "STATE_LOCK_DEADLOCK";
-      case STATE_BAD_COOKIE:            return "STATE_BAD_COOKIE";
-      case STATE_FILE_BIG:              return "STATE_FILE_BIG";
-      case STATE_GRACE_PERIOD:          return "STATE_GRACE_PERIOD";
-      case STATE_CACHE_INODE_ERR:       return "STATE_CACHE_INODE_ERR";
-      case STATE_SIGNAL_ERROR:          return "STATE_SIGNAL_ERROR";
-      case STATE_KILLED:                return "STATE_KILLED";
-      case STATE_FILE_OPEN:             return "STATE_FILE_OPEN";
-      case STATE_FSAL_SHARE_DENIED:     return "STATE_FSAL_SHARE_DENIED";
-      case STATE_MLINK:                 return "STATE_MLINK";
-      case STATE_SERVERFAULT:           return "STATE_SERVERFAULT";
-      case STATE_TOOSMALL:              return "STATE_TOOSMALL";
-      case STATE_XDEV:                  return "STATE_XDEV";
-    }
-  return "unknown";
+	switch (err) {
+	case STATE_SUCCESS:
+		return "STATE_SUCCESS";
+	case STATE_MALLOC_ERROR:
+		return "STATE_MALLOC_ERROR";
+	case STATE_POOL_MUTEX_INIT_ERROR:
+		return "STATE_POOL_MUTEX_INIT_ERROR";
+	case STATE_GET_NEW_LRU_ENTRY:
+		return "STATE_GET_NEW_LRU_ENTRY";
+	case STATE_INIT_ENTRY_FAILED:
+		return "STATE_INIT_ENTRY_FAILED";
+	case STATE_FSAL_ERROR:
+		return "STATE_FSAL_ERROR";
+	case STATE_LRU_ERROR:
+		return "STATE_LRU_ERROR";
+	case STATE_HASH_SET_ERROR:
+		return "STATE_HASH_SET_ERROR";
+	case STATE_NOT_A_DIRECTORY:
+		return "STATE_NOT_A_DIRECTORY";
+	case STATE_INCONSISTENT_ENTRY:
+		return "STATE_INCONSISTENT_ENTRY";
+	case STATE_BAD_TYPE:
+		return "STATE_BAD_TYPE";
+	case STATE_ENTRY_EXISTS:
+		return "STATE_ENTRY_EXISTS";
+	case STATE_DIR_NOT_EMPTY:
+		return "STATE_DIR_NOT_EMPTY";
+	case STATE_NOT_FOUND:
+		return "STATE_NOT_FOUND";
+	case STATE_INVALID_ARGUMENT:
+		return "STATE_INVALID_ARGUMENT";
+	case STATE_INSERT_ERROR:
+		return "STATE_INSERT_ERROR";
+	case STATE_HASH_TABLE_ERROR:
+		return "STATE_HASH_TABLE_ERROR";
+	case STATE_FSAL_EACCESS:
+		return "STATE_FSAL_EACCESS";
+	case STATE_IS_A_DIRECTORY:
+		return "STATE_IS_A_DIRECTORY";
+	case STATE_FSAL_EPERM:
+		return "STATE_FSAL_EPERM";
+	case STATE_NO_SPACE_LEFT:
+		return "STATE_NO_SPACE_LEFT";
+	case STATE_READ_ONLY_FS:
+		return "STATE_READ_ONLY_FS";
+	case STATE_IO_ERROR:
+		return "STATE_IO_ERROR";
+	case STATE_FSAL_ESTALE:
+		return "STATE_FSAL_ESTALE";
+	case STATE_FSAL_ERR_SEC:
+		return "STATE_FSAL_ERR_SEC";
+	case STATE_STATE_CONFLICT:
+		return "STATE_STATE_CONFLICT";
+	case STATE_QUOTA_EXCEEDED:
+		return "STATE_QUOTA_EXCEEDED";
+	case STATE_DEAD_ENTRY:
+		return "STATE_DEAD_ENTRY";
+	case STATE_ASYNC_POST_ERROR:
+		return "STATE_ASYNC_POST_ERROR";
+	case STATE_NOT_SUPPORTED:
+		return "STATE_NOT_SUPPORTED";
+	case STATE_STATE_ERROR:
+		return "STATE_STATE_ERROR";
+	case STATE_FSAL_DELAY:
+		return "STATE_FSAL_DELAY";
+	case STATE_NAME_TOO_LONG:
+		return "STATE_NAME_TOO_LONG";
+	case STATE_LOCK_CONFLICT:
+		return "STATE_LOCK_CONFLICT";
+	case STATE_LOCK_BLOCKED:
+		return "STATE_LOCK_BLOCKED";
+	case STATE_LOCK_DEADLOCK:
+		return "STATE_LOCK_DEADLOCK";
+	case STATE_BAD_COOKIE:
+		return "STATE_BAD_COOKIE";
+	case STATE_FILE_BIG:
+		return "STATE_FILE_BIG";
+	case STATE_GRACE_PERIOD:
+		return "STATE_GRACE_PERIOD";
+	case STATE_CACHE_INODE_ERR:
+		return "STATE_CACHE_INODE_ERR";
+	case STATE_SIGNAL_ERROR:
+		return "STATE_SIGNAL_ERROR";
+	case STATE_KILLED:
+		return "STATE_KILLED";
+	case STATE_FILE_OPEN:
+		return "STATE_FILE_OPEN";
+	case STATE_FSAL_SHARE_DENIED:
+		return "STATE_FSAL_SHARE_DENIED";
+	case STATE_MLINK:
+		return "STATE_MLINK";
+	case STATE_SERVERFAULT:
+		return "STATE_SERVERFAULT";
+	case STATE_TOOSMALL:
+		return "STATE_TOOSMALL";
+	case STATE_XDEV:
+		return "STATE_XDEV";
+	}
+	return "unknown";
 }
 
 /**
@@ -129,53 +176,94 @@ const char *state_err_str(state_status_t err)
  */
 state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 {
-  switch(status)
-    {
-      case CACHE_INODE_SUCCESS:               return STATE_SUCCESS;
-      case CACHE_INODE_MALLOC_ERROR:          return STATE_MALLOC_ERROR;
-      case CACHE_INODE_POOL_MUTEX_INIT_ERROR: return STATE_POOL_MUTEX_INIT_ERROR;
-      case CACHE_INODE_GET_NEW_LRU_ENTRY:     return STATE_GET_NEW_LRU_ENTRY;
-      case CACHE_INODE_INIT_ENTRY_FAILED:     return STATE_INIT_ENTRY_FAILED;
-      case CACHE_INODE_FSAL_ERROR:            return STATE_FSAL_ERROR;
-      case CACHE_INODE_LRU_ERROR:             return STATE_LRU_ERROR;
-      case CACHE_INODE_HASH_SET_ERROR:        return STATE_HASH_SET_ERROR;
-      case CACHE_INODE_NOT_A_DIRECTORY:       return STATE_NOT_A_DIRECTORY;
-      case CACHE_INODE_INCONSISTENT_ENTRY:    return STATE_INCONSISTENT_ENTRY;
-      case CACHE_INODE_BAD_TYPE:              return STATE_BAD_TYPE;
-      case CACHE_INODE_ENTRY_EXISTS:          return STATE_ENTRY_EXISTS;
-      case CACHE_INODE_DIR_NOT_EMPTY:         return STATE_DIR_NOT_EMPTY;
-      case CACHE_INODE_NOT_FOUND:             return STATE_NOT_FOUND;
-      case CACHE_INODE_BADNAME:
-      case CACHE_INODE_INVALID_ARGUMENT:      return STATE_INVALID_ARGUMENT;
-      case CACHE_INODE_INSERT_ERROR:          return STATE_INSERT_ERROR;
-      case CACHE_INODE_HASH_TABLE_ERROR:      return STATE_HASH_TABLE_ERROR;
-      case CACHE_INODE_FSAL_EACCESS:          return STATE_FSAL_EACCESS;
-      case CACHE_INODE_IS_A_DIRECTORY:        return STATE_IS_A_DIRECTORY;
-      case CACHE_INODE_FSAL_EPERM:            return STATE_FSAL_EPERM;
-      case CACHE_INODE_NO_SPACE_LEFT:         return STATE_NO_SPACE_LEFT;
-      case CACHE_INODE_READ_ONLY_FS:          return STATE_READ_ONLY_FS;
-      case CACHE_INODE_IO_ERROR:              return STATE_IO_ERROR;
-      case CACHE_INODE_FSAL_ESTALE:           return STATE_FSAL_ESTALE;
-      case CACHE_INODE_FSAL_ERR_SEC:          return STATE_FSAL_ERR_SEC;
-      case CACHE_INODE_STATE_CONFLICT:        return STATE_STATE_CONFLICT;
-      case CACHE_INODE_QUOTA_EXCEEDED:        return STATE_QUOTA_EXCEEDED;
-      case CACHE_INODE_DEAD_ENTRY:            return STATE_DEAD_ENTRY;
-      case CACHE_INODE_ASYNC_POST_ERROR:      return STATE_ASYNC_POST_ERROR;
-      case CACHE_INODE_NOT_SUPPORTED:         return STATE_NOT_SUPPORTED;
-      case CACHE_INODE_STATE_ERROR:           return STATE_STATE_ERROR;
-      case CACHE_INODE_DELAY:                 return STATE_FSAL_DELAY;
-      case CACHE_INODE_NAME_TOO_LONG:         return STATE_NAME_TOO_LONG;
-      case CACHE_INODE_BAD_COOKIE:            return STATE_BAD_COOKIE;
-      case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
-      case CACHE_INODE_KILLED:                return STATE_KILLED;
-      case CACHE_INODE_FILE_OPEN:             return STATE_FILE_OPEN;
-      case CACHE_INODE_FSAL_SHARE_DENIED:     return STATE_FSAL_SHARE_DENIED;
-      case CACHE_INODE_FSAL_MLINK:            return STATE_MLINK;
-      case CACHE_INODE_SERVERFAULT:           return STATE_SERVERFAULT;
-      case CACHE_INODE_TOOSMALL:              return STATE_TOOSMALL;
-      case CACHE_INODE_FSAL_XDEV:             return STATE_XDEV;
-    }
-  return STATE_CACHE_INODE_ERR;
+	switch (status) {
+	case CACHE_INODE_SUCCESS:
+		return STATE_SUCCESS;
+	case CACHE_INODE_MALLOC_ERROR:
+		return STATE_MALLOC_ERROR;
+	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
+		return STATE_POOL_MUTEX_INIT_ERROR;
+	case CACHE_INODE_GET_NEW_LRU_ENTRY:
+		return STATE_GET_NEW_LRU_ENTRY;
+	case CACHE_INODE_INIT_ENTRY_FAILED:
+		return STATE_INIT_ENTRY_FAILED;
+	case CACHE_INODE_FSAL_ERROR:
+		return STATE_FSAL_ERROR;
+	case CACHE_INODE_LRU_ERROR:
+		return STATE_LRU_ERROR;
+	case CACHE_INODE_HASH_SET_ERROR:
+		return STATE_HASH_SET_ERROR;
+	case CACHE_INODE_NOT_A_DIRECTORY:
+		return STATE_NOT_A_DIRECTORY;
+	case CACHE_INODE_INCONSISTENT_ENTRY:
+		return STATE_INCONSISTENT_ENTRY;
+	case CACHE_INODE_BAD_TYPE:
+		return STATE_BAD_TYPE;
+	case CACHE_INODE_ENTRY_EXISTS:
+		return STATE_ENTRY_EXISTS;
+	case CACHE_INODE_DIR_NOT_EMPTY:
+		return STATE_DIR_NOT_EMPTY;
+	case CACHE_INODE_NOT_FOUND:
+		return STATE_NOT_FOUND;
+	case CACHE_INODE_BADNAME:
+	case CACHE_INODE_INVALID_ARGUMENT:
+		return STATE_INVALID_ARGUMENT;
+	case CACHE_INODE_INSERT_ERROR:
+		return STATE_INSERT_ERROR;
+	case CACHE_INODE_HASH_TABLE_ERROR:
+		return STATE_HASH_TABLE_ERROR;
+	case CACHE_INODE_FSAL_EACCESS:
+		return STATE_FSAL_EACCESS;
+	case CACHE_INODE_IS_A_DIRECTORY:
+		return STATE_IS_A_DIRECTORY;
+	case CACHE_INODE_FSAL_EPERM:
+		return STATE_FSAL_EPERM;
+	case CACHE_INODE_NO_SPACE_LEFT:
+		return STATE_NO_SPACE_LEFT;
+	case CACHE_INODE_READ_ONLY_FS:
+		return STATE_READ_ONLY_FS;
+	case CACHE_INODE_IO_ERROR:
+		return STATE_IO_ERROR;
+	case CACHE_INODE_FSAL_ESTALE:
+		return STATE_FSAL_ESTALE;
+	case CACHE_INODE_FSAL_ERR_SEC:
+		return STATE_FSAL_ERR_SEC;
+	case CACHE_INODE_STATE_CONFLICT:
+		return STATE_STATE_CONFLICT;
+	case CACHE_INODE_QUOTA_EXCEEDED:
+		return STATE_QUOTA_EXCEEDED;
+	case CACHE_INODE_DEAD_ENTRY:
+		return STATE_DEAD_ENTRY;
+	case CACHE_INODE_ASYNC_POST_ERROR:
+		return STATE_ASYNC_POST_ERROR;
+	case CACHE_INODE_NOT_SUPPORTED:
+		return STATE_NOT_SUPPORTED;
+	case CACHE_INODE_STATE_ERROR:
+		return STATE_STATE_ERROR;
+	case CACHE_INODE_DELAY:
+		return STATE_FSAL_DELAY;
+	case CACHE_INODE_NAME_TOO_LONG:
+		return STATE_NAME_TOO_LONG;
+	case CACHE_INODE_BAD_COOKIE:
+		return STATE_BAD_COOKIE;
+	case CACHE_INODE_FILE_BIG:
+		return STATE_FILE_BIG;
+	case CACHE_INODE_KILLED:
+		return STATE_KILLED;
+	case CACHE_INODE_FILE_OPEN:
+		return STATE_FILE_OPEN;
+	case CACHE_INODE_FSAL_SHARE_DENIED:
+		return STATE_FSAL_SHARE_DENIED;
+	case CACHE_INODE_FSAL_MLINK:
+		return STATE_MLINK;
+	case CACHE_INODE_SERVERFAULT:
+		return STATE_SERVERFAULT;
+	case CACHE_INODE_TOOSMALL:
+		return STATE_TOOSMALL;
+	case CACHE_INODE_FSAL_XDEV:
+		return STATE_XDEV;
+	}
+	return STATE_CACHE_INODE_ERR;
 }
 
 /**
@@ -187,111 +275,110 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
  */
 state_status_t state_error_convert(fsal_status_t fsal_status)
 {
-  switch (fsal_status.major)
-    {
-    case ERR_FSAL_NO_ERROR:
-      return STATE_SUCCESS;
+	switch (fsal_status.major) {
+	case ERR_FSAL_NO_ERROR:
+		return STATE_SUCCESS;
 
-    case ERR_FSAL_NOENT:
-      return STATE_NOT_FOUND;
+	case ERR_FSAL_NOENT:
+		return STATE_NOT_FOUND;
 
-    case ERR_FSAL_DELAY:
-    case ERR_FSAL_ACCESS:
-      /* EDELAY and EACCESS are documented by fcntl as
-       * indicating lock conflict
-       */
-      return STATE_LOCK_CONFLICT;
+	case ERR_FSAL_DELAY:
+	case ERR_FSAL_ACCESS:
+		/* EDELAY and EACCESS are documented by fcntl as
+		 * indicating lock conflict
+		 */
+		return STATE_LOCK_CONFLICT;
 
-    case ERR_FSAL_PERM:
-      return STATE_FSAL_EPERM;
+	case ERR_FSAL_PERM:
+		return STATE_FSAL_EPERM;
 
-    case ERR_FSAL_NOSPC:
-      return STATE_NO_SPACE_LEFT;
+	case ERR_FSAL_NOSPC:
+		return STATE_NO_SPACE_LEFT;
 
-    case ERR_FSAL_ROFS:
-      return STATE_READ_ONLY_FS;
+	case ERR_FSAL_ROFS:
+		return STATE_READ_ONLY_FS;
 
-    case ERR_FSAL_IO:
-    case ERR_FSAL_NXIO:
-      return STATE_IO_ERROR;
+	case ERR_FSAL_IO:
+	case ERR_FSAL_NXIO:
+		return STATE_IO_ERROR;
 
-    case ERR_FSAL_STALE:
-    case ERR_FSAL_BADHANDLE:
-    case ERR_FSAL_FHEXPIRED:
-      return STATE_FSAL_ESTALE;
+	case ERR_FSAL_STALE:
+	case ERR_FSAL_BADHANDLE:
+	case ERR_FSAL_FHEXPIRED:
+		return STATE_FSAL_ESTALE;
 
-    case ERR_FSAL_INVAL:
-    case ERR_FSAL_OVERFLOW:
-      return STATE_INVALID_ARGUMENT;
+	case ERR_FSAL_INVAL:
+	case ERR_FSAL_OVERFLOW:
+		return STATE_INVALID_ARGUMENT;
 
-    case ERR_FSAL_SEC:
-      return STATE_FSAL_ERR_SEC;
+	case ERR_FSAL_SEC:
+		return STATE_FSAL_ERR_SEC;
 
-    case ERR_FSAL_NOTSUPP:
-    case ERR_FSAL_ATTRNOTSUPP:
-      return STATE_NOT_SUPPORTED;
+	case ERR_FSAL_NOTSUPP:
+	case ERR_FSAL_ATTRNOTSUPP:
+		return STATE_NOT_SUPPORTED;
 
-    case ERR_FSAL_NOMEM:
-      return STATE_MALLOC_ERROR;
+	case ERR_FSAL_NOMEM:
+		return STATE_MALLOC_ERROR;
 
-    case ERR_FSAL_DEADLOCK:
-      return STATE_LOCK_DEADLOCK;
+	case ERR_FSAL_DEADLOCK:
+		return STATE_LOCK_DEADLOCK;
 
-    case ERR_FSAL_BADCOOKIE:
-      return STATE_BAD_COOKIE;
+	case ERR_FSAL_BADCOOKIE:
+		return STATE_BAD_COOKIE;
 
-    case ERR_FSAL_NOT_OPENED:
-      LogCrit(COMPONENT_STATE,
-              "Conversion of ERR_FSAL_NOT_OPENED to STATE_FSAL_ERROR");
-      return STATE_FSAL_ERROR;
+	case ERR_FSAL_NOT_OPENED:
+		LogCrit(COMPONENT_STATE,
+			"Conversion of ERR_FSAL_NOT_OPENED to STATE_FSAL_ERROR");
+		return STATE_FSAL_ERROR;
 
-    case ERR_FSAL_SYMLINK:
-    case ERR_FSAL_BADTYPE:
-      return STATE_BAD_TYPE;
+	case ERR_FSAL_SYMLINK:
+	case ERR_FSAL_BADTYPE:
+		return STATE_BAD_TYPE;
 
-    case ERR_FSAL_ISDIR:
-      return STATE_IS_A_DIRECTORY;
+	case ERR_FSAL_ISDIR:
+		return STATE_IS_A_DIRECTORY;
 
-    case ERR_FSAL_FBIG:
-      return STATE_FILE_BIG;
+	case ERR_FSAL_FBIG:
+		return STATE_FILE_BIG;
 
-    case ERR_FSAL_FILE_OPEN:
-      return STATE_FILE_OPEN;
+	case ERR_FSAL_FILE_OPEN:
+		return STATE_FILE_OPEN;
 
-    case ERR_FSAL_SHARE_DENIED:
-      return STATE_FSAL_SHARE_DENIED;
+	case ERR_FSAL_SHARE_DENIED:
+		return STATE_FSAL_SHARE_DENIED;
 
-     case ERR_FSAL_BLOCKED:
-      return STATE_LOCK_BLOCKED;
+	case ERR_FSAL_BLOCKED:
+		return STATE_LOCK_BLOCKED;
 
-    case ERR_FSAL_DQUOT:
-    case ERR_FSAL_NAMETOOLONG:
-    case ERR_FSAL_EXIST:
-    case ERR_FSAL_NOTEMPTY:
-    case ERR_FSAL_NOTDIR:
-    case ERR_FSAL_INTERRUPT:
-    case ERR_FSAL_FAULT:
-    case ERR_FSAL_NOT_INIT:
-    case ERR_FSAL_ALREADY_INIT:
-    case ERR_FSAL_BAD_INIT:
-    case ERR_FSAL_NO_QUOTA:
-    case ERR_FSAL_XDEV:
-    case ERR_FSAL_MLINK:
-    case ERR_FSAL_TOOSMALL:
-    case ERR_FSAL_TIMEOUT:
-    case ERR_FSAL_SERVERFAULT:
-      /* These errors should be handled inside state (or should never be seen by state) */
-      LogDebug(COMPONENT_STATE,
-               "Conversion of FSAL error %d,%d to STATE_FSAL_ERROR",
-               fsal_status.major, fsal_status.minor);
-      return STATE_FSAL_ERROR;
-    }
+	case ERR_FSAL_DQUOT:
+	case ERR_FSAL_NAMETOOLONG:
+	case ERR_FSAL_EXIST:
+	case ERR_FSAL_NOTEMPTY:
+	case ERR_FSAL_NOTDIR:
+	case ERR_FSAL_INTERRUPT:
+	case ERR_FSAL_FAULT:
+	case ERR_FSAL_NOT_INIT:
+	case ERR_FSAL_ALREADY_INIT:
+	case ERR_FSAL_BAD_INIT:
+	case ERR_FSAL_NO_QUOTA:
+	case ERR_FSAL_XDEV:
+	case ERR_FSAL_MLINK:
+	case ERR_FSAL_TOOSMALL:
+	case ERR_FSAL_TIMEOUT:
+	case ERR_FSAL_SERVERFAULT:
+		/* These errors should be handled inside state (or should never be seen by state) */
+		LogDebug(COMPONENT_STATE,
+			 "Conversion of FSAL error %d,%d to STATE_FSAL_ERROR",
+			 fsal_status.major, fsal_status.minor);
+		return STATE_FSAL_ERROR;
+	}
 
-  /* We should never reach this line, this may produce a warning with certain compiler */
-  LogCrit(COMPONENT_STATE,
-          "Default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
-           fsal_status.major, __LINE__);
-  return STATE_FSAL_ERROR;
+	/* We should never reach this line, this may produce a warning with certain compiler */
+	LogCrit(COMPONENT_STATE,
+		"Default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
+		fsal_status.major, __LINE__);
+	return STATE_FSAL_ERROR;
 }
 
 /**
@@ -304,160 +391,159 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
  */
 nfsstat4 nfs4_Errno_state(state_status_t error)
 {
-  nfsstat4 nfserror= NFS4ERR_INVAL;
+	nfsstat4 nfserror = NFS4ERR_INVAL;
 
-  switch (error)
-    {
-    case STATE_SUCCESS:
-      nfserror = NFS4_OK;
-      break;
+	switch (error) {
+	case STATE_SUCCESS:
+		nfserror = NFS4_OK;
+		break;
 
-    case STATE_MALLOC_ERROR:
-      nfserror = NFS4ERR_RESOURCE;
-      break;
+	case STATE_MALLOC_ERROR:
+		nfserror = NFS4ERR_RESOURCE;
+		break;
 
-    case STATE_POOL_MUTEX_INIT_ERROR:
-    case STATE_GET_NEW_LRU_ENTRY:
-    case STATE_INIT_ENTRY_FAILED:
-      nfserror = NFS4ERR_SERVERFAULT;
-      break;
+	case STATE_POOL_MUTEX_INIT_ERROR:
+	case STATE_GET_NEW_LRU_ENTRY:
+	case STATE_INIT_ENTRY_FAILED:
+		nfserror = NFS4ERR_SERVERFAULT;
+		break;
 
-    case STATE_BAD_TYPE:
-      nfserror = NFS4ERR_INVAL;
-      break;
+	case STATE_BAD_TYPE:
+		nfserror = NFS4ERR_INVAL;
+		break;
 
-    case STATE_NOT_A_DIRECTORY:
-      nfserror = NFS4ERR_NOTDIR;
-      break;
+	case STATE_NOT_A_DIRECTORY:
+		nfserror = NFS4ERR_NOTDIR;
+		break;
 
-    case STATE_ENTRY_EXISTS:
-      nfserror = NFS4ERR_EXIST;
-      break;
+	case STATE_ENTRY_EXISTS:
+		nfserror = NFS4ERR_EXIST;
+		break;
 
-    case STATE_DIR_NOT_EMPTY:
-      nfserror = NFS4ERR_NOTEMPTY;
-      break;
+	case STATE_DIR_NOT_EMPTY:
+		nfserror = NFS4ERR_NOTEMPTY;
+		break;
 
-    case STATE_NOT_FOUND:
-      nfserror = NFS4ERR_NOENT;
-      break;
+	case STATE_NOT_FOUND:
+		nfserror = NFS4ERR_NOENT;
+		break;
 
-    case STATE_FSAL_ERROR:
-    case STATE_INSERT_ERROR:
-    case STATE_LRU_ERROR:
-    case STATE_HASH_SET_ERROR:
-      nfserror = NFS4ERR_IO;
-      break;
+	case STATE_FSAL_ERROR:
+	case STATE_INSERT_ERROR:
+	case STATE_LRU_ERROR:
+	case STATE_HASH_SET_ERROR:
+		nfserror = NFS4ERR_IO;
+		break;
 
-    case STATE_FSAL_EACCESS:
-      nfserror = NFS4ERR_ACCESS;
-      break;
+	case STATE_FSAL_EACCESS:
+		nfserror = NFS4ERR_ACCESS;
+		break;
 
-    case STATE_FSAL_EPERM:
-    case STATE_FSAL_ERR_SEC:
-      nfserror = NFS4ERR_PERM;
-      break;
+	case STATE_FSAL_EPERM:
+	case STATE_FSAL_ERR_SEC:
+		nfserror = NFS4ERR_PERM;
+		break;
 
-    case STATE_NO_SPACE_LEFT:
-      nfserror = NFS4ERR_NOSPC;
-      break;
+	case STATE_NO_SPACE_LEFT:
+		nfserror = NFS4ERR_NOSPC;
+		break;
 
-    case STATE_IS_A_DIRECTORY:
-      nfserror = NFS4ERR_ISDIR;
-      break;
+	case STATE_IS_A_DIRECTORY:
+		nfserror = NFS4ERR_ISDIR;
+		break;
 
-    case STATE_READ_ONLY_FS:
-      nfserror = NFS4ERR_ROFS;
-      break;
+	case STATE_READ_ONLY_FS:
+		nfserror = NFS4ERR_ROFS;
+		break;
 
-    case STATE_IO_ERROR:
-      nfserror = NFS4ERR_IO;
-      break;
+	case STATE_IO_ERROR:
+		nfserror = NFS4ERR_IO;
+		break;
 
-    case STATE_FILE_OPEN:
-      nfserror = NFS4ERR_FILE_OPEN;
-      break;
+	case STATE_FILE_OPEN:
+		nfserror = NFS4ERR_FILE_OPEN;
+		break;
 
-     case STATE_NAME_TOO_LONG:
-      nfserror = NFS4ERR_NAMETOOLONG;
-      break;
+	case STATE_NAME_TOO_LONG:
+		nfserror = NFS4ERR_NAMETOOLONG;
+		break;
 
-    case STATE_KILLED:
-    case STATE_DEAD_ENTRY:
-    case STATE_FSAL_ESTALE:
-      nfserror = NFS4ERR_STALE;
-      break;
+	case STATE_KILLED:
+	case STATE_DEAD_ENTRY:
+	case STATE_FSAL_ESTALE:
+		nfserror = NFS4ERR_STALE;
+		break;
 
-    case STATE_STATE_CONFLICT:
-    case STATE_FSAL_SHARE_DENIED:
-      nfserror = NFS4ERR_SHARE_DENIED;
-      break;
+	case STATE_STATE_CONFLICT:
+	case STATE_FSAL_SHARE_DENIED:
+		nfserror = NFS4ERR_SHARE_DENIED;
+		break;
 
-    case STATE_QUOTA_EXCEEDED:
-      nfserror = NFS4ERR_DQUOT;
-      break;
+	case STATE_QUOTA_EXCEEDED:
+		nfserror = NFS4ERR_DQUOT;
+		break;
 
-    case STATE_NOT_SUPPORTED:
-      nfserror = NFS4ERR_NOTSUPP;
-      break;
+	case STATE_NOT_SUPPORTED:
+		nfserror = NFS4ERR_NOTSUPP;
+		break;
 
-    case STATE_FSAL_DELAY:
-      nfserror = NFS4ERR_DELAY;
-      break;
+	case STATE_FSAL_DELAY:
+		nfserror = NFS4ERR_DELAY;
+		break;
 
-    case STATE_FILE_BIG:
-      nfserror = NFS4ERR_FBIG;
-      break;
+	case STATE_FILE_BIG:
+		nfserror = NFS4ERR_FBIG;
+		break;
 
-    case STATE_LOCK_DEADLOCK:
-      nfserror = NFS4ERR_DEADLOCK;
-      break;
+	case STATE_LOCK_DEADLOCK:
+		nfserror = NFS4ERR_DEADLOCK;
+		break;
 
-    case STATE_LOCK_BLOCKED:
-    case STATE_LOCK_CONFLICT:
-      nfserror = NFS4ERR_DENIED;
-      break;
+	case STATE_LOCK_BLOCKED:
+	case STATE_LOCK_CONFLICT:
+		nfserror = NFS4ERR_DENIED;
+		break;
 
-    case STATE_STATE_ERROR:
-      nfserror = NFS4ERR_BAD_STATEID;
-      break;
+	case STATE_STATE_ERROR:
+		nfserror = NFS4ERR_BAD_STATEID;
+		break;
 
-    case STATE_BAD_COOKIE:
-      nfserror = NFS4ERR_BAD_COOKIE;
-      break;
+	case STATE_BAD_COOKIE:
+		nfserror = NFS4ERR_BAD_COOKIE;
+		break;
 
-    case STATE_GRACE_PERIOD:
-      nfserror = NFS4ERR_GRACE;
-      break;
+	case STATE_GRACE_PERIOD:
+		nfserror = NFS4ERR_GRACE;
+		break;
 
-    case STATE_SERVERFAULT:
-      nfserror = NFS4ERR_SERVERFAULT;
-      break;
+	case STATE_SERVERFAULT:
+		nfserror = NFS4ERR_SERVERFAULT;
+		break;
 
-    case STATE_MLINK:
-      nfserror = NFS4ERR_MLINK;
-      break;
+	case STATE_MLINK:
+		nfserror = NFS4ERR_MLINK;
+		break;
 
-    case STATE_TOOSMALL:
-      nfserror = NFS4ERR_TOOSMALL;
-      break;
+	case STATE_TOOSMALL:
+		nfserror = NFS4ERR_TOOSMALL;
+		break;
 
-    case STATE_XDEV:
-      nfserror = NFS4ERR_XDEV;
-      break;
+	case STATE_XDEV:
+		nfserror = NFS4ERR_XDEV;
+		break;
 
-    case STATE_INVALID_ARGUMENT:
-    case STATE_CACHE_INODE_ERR:
-    case STATE_INCONSISTENT_ENTRY:
-    case STATE_HASH_TABLE_ERROR:
-    case STATE_ASYNC_POST_ERROR:
-    case STATE_SIGNAL_ERROR:
-      /* Should not occur */
-      nfserror = NFS4ERR_INVAL;
-      break;
-    }
+	case STATE_INVALID_ARGUMENT:
+	case STATE_CACHE_INODE_ERR:
+	case STATE_INCONSISTENT_ENTRY:
+	case STATE_HASH_TABLE_ERROR:
+	case STATE_ASYNC_POST_ERROR:
+	case STATE_SIGNAL_ERROR:
+		/* Should not occur */
+		nfserror = NFS4ERR_INVAL;
+		break;
+	}
 
-  return nfserror;
+	return nfserror;
 }
 
 /**
@@ -469,153 +555,152 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
  */
 nfsstat3 nfs3_Errno_state(state_status_t error)
 {
-  nfsstat3 nfserror= NFS3ERR_INVAL;
+	nfsstat3 nfserror = NFS3ERR_INVAL;
 
-  switch (error)
-    {
-    case STATE_SUCCESS:
-      nfserror = NFS3_OK;
-      break;
+	switch (error) {
+	case STATE_SUCCESS:
+		nfserror = NFS3_OK;
+		break;
 
-    case STATE_MALLOC_ERROR:
-    case STATE_POOL_MUTEX_INIT_ERROR:
-    case STATE_GET_NEW_LRU_ENTRY:
-    case STATE_INIT_ENTRY_FAILED:
-    case STATE_INSERT_ERROR:
-    case STATE_LRU_ERROR:
-    case STATE_HASH_SET_ERROR:
-    case STATE_FILE_OPEN:
-      LogCrit(COMPONENT_NFSPROTO,
-              "Error %u converted to NFS3ERR_IO but was set non-retryable",
-              error);
-      nfserror = NFS3ERR_IO;
-      break;
+	case STATE_MALLOC_ERROR:
+	case STATE_POOL_MUTEX_INIT_ERROR:
+	case STATE_GET_NEW_LRU_ENTRY:
+	case STATE_INIT_ENTRY_FAILED:
+	case STATE_INSERT_ERROR:
+	case STATE_LRU_ERROR:
+	case STATE_HASH_SET_ERROR:
+	case STATE_FILE_OPEN:
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error %u converted to NFS3ERR_IO but was set non-retryable",
+			error);
+		nfserror = NFS3ERR_IO;
+		break;
 
-    case STATE_INVALID_ARGUMENT:
-      nfserror = NFS3ERR_INVAL;
-      break;
+	case STATE_INVALID_ARGUMENT:
+		nfserror = NFS3ERR_INVAL;
+		break;
 
-    case STATE_FSAL_ERROR:
-                                         /** @todo: Check if this works by making stress tests */
-      LogCrit(COMPONENT_NFSPROTO,
-              "Error STATE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
-      nfserror = NFS3ERR_IO;
-      break;
+	case STATE_FSAL_ERROR:
+					 /** @todo: Check if this works by making stress tests */
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error STATE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+		nfserror = NFS3ERR_IO;
+		break;
 
-    case STATE_NOT_A_DIRECTORY:
-      nfserror = NFS3ERR_NOTDIR;
-      break;
+	case STATE_NOT_A_DIRECTORY:
+		nfserror = NFS3ERR_NOTDIR;
+		break;
 
-    case STATE_ENTRY_EXISTS:
-      nfserror = NFS3ERR_EXIST;
-      break;
+	case STATE_ENTRY_EXISTS:
+		nfserror = NFS3ERR_EXIST;
+		break;
 
-    case STATE_DIR_NOT_EMPTY:
-      nfserror = NFS3ERR_NOTEMPTY;
-      break;
+	case STATE_DIR_NOT_EMPTY:
+		nfserror = NFS3ERR_NOTEMPTY;
+		break;
 
-    case STATE_NOT_FOUND:
-      nfserror = NFS3ERR_NOENT;
-      break;
+	case STATE_NOT_FOUND:
+		nfserror = NFS3ERR_NOENT;
+		break;
 
-    case STATE_FSAL_EACCESS:
-      nfserror = NFS3ERR_ACCES;
-      break;
+	case STATE_FSAL_EACCESS:
+		nfserror = NFS3ERR_ACCES;
+		break;
 
-    case STATE_FSAL_EPERM:
-    case STATE_FSAL_ERR_SEC:
-      nfserror = NFS3ERR_PERM;
-      break;
+	case STATE_FSAL_EPERM:
+	case STATE_FSAL_ERR_SEC:
+		nfserror = NFS3ERR_PERM;
+		break;
 
-    case STATE_NO_SPACE_LEFT:
-      nfserror = NFS3ERR_NOSPC;
-      break;
+	case STATE_NO_SPACE_LEFT:
+		nfserror = NFS3ERR_NOSPC;
+		break;
 
-    case STATE_IS_A_DIRECTORY:
-      nfserror = NFS3ERR_ISDIR;
-      break;
+	case STATE_IS_A_DIRECTORY:
+		nfserror = NFS3ERR_ISDIR;
+		break;
 
-    case STATE_READ_ONLY_FS:
-      nfserror = NFS3ERR_ROFS;
-      break;
+	case STATE_READ_ONLY_FS:
+		nfserror = NFS3ERR_ROFS;
+		break;
 
-    case STATE_KILLED:
-    case STATE_DEAD_ENTRY:
-    case STATE_FSAL_ESTALE:
-      nfserror = NFS3ERR_STALE;
-      break;
+	case STATE_KILLED:
+	case STATE_DEAD_ENTRY:
+	case STATE_FSAL_ESTALE:
+		nfserror = NFS3ERR_STALE;
+		break;
 
-    case STATE_QUOTA_EXCEEDED:
-      nfserror = NFS3ERR_DQUOT;
-      break;
+	case STATE_QUOTA_EXCEEDED:
+		nfserror = NFS3ERR_DQUOT;
+		break;
 
-    case STATE_BAD_TYPE:
-      nfserror = NFS3ERR_BADTYPE;
-      break;
+	case STATE_BAD_TYPE:
+		nfserror = NFS3ERR_BADTYPE;
+		break;
 
-    case STATE_NOT_SUPPORTED:
-      nfserror = NFS3ERR_NOTSUPP;
-      break;
+	case STATE_NOT_SUPPORTED:
+		nfserror = NFS3ERR_NOTSUPP;
+		break;
 
-    case STATE_FSAL_DELAY:
-    case STATE_FSAL_SHARE_DENIED:
-      nfserror = NFS3ERR_JUKEBOX;
-      break;
+	case STATE_FSAL_DELAY:
+	case STATE_FSAL_SHARE_DENIED:
+		nfserror = NFS3ERR_JUKEBOX;
+		break;
 
-    case STATE_IO_ERROR:
-        LogCrit(COMPONENT_NFSPROTO,
-                "Error STATE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
-      nfserror = NFS3ERR_IO;
-      break;
+	case STATE_IO_ERROR:
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error STATE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+		nfserror = NFS3ERR_IO;
+		break;
 
-    case STATE_NAME_TOO_LONG:
-      nfserror = NFS3ERR_NAMETOOLONG;
-      break;
+	case STATE_NAME_TOO_LONG:
+		nfserror = NFS3ERR_NAMETOOLONG;
+		break;
 
-    case STATE_FILE_BIG:
-      nfserror = NFS3ERR_FBIG;
-      break;
+	case STATE_FILE_BIG:
+		nfserror = NFS3ERR_FBIG;
+		break;
 
-    case STATE_BAD_COOKIE:
-      nfserror = NFS3ERR_BAD_COOKIE;
-      break;
+	case STATE_BAD_COOKIE:
+		nfserror = NFS3ERR_BAD_COOKIE;
+		break;
 
-    case STATE_MLINK:
-      nfserror = NFS3ERR_MLINK;
-      break;
+	case STATE_MLINK:
+		nfserror = NFS3ERR_MLINK;
+		break;
 
-    case STATE_SERVERFAULT:
-      nfserror = NFS3ERR_SERVERFAULT;
-      break;
+	case STATE_SERVERFAULT:
+		nfserror = NFS3ERR_SERVERFAULT;
+		break;
 
-    case STATE_TOOSMALL:
-      nfserror = NFS3ERR_TOOSMALL;
-      break;
+	case STATE_TOOSMALL:
+		nfserror = NFS3ERR_TOOSMALL;
+		break;
 
-    case STATE_XDEV:
-      nfserror = NFS3ERR_XDEV;
-      break;
+	case STATE_XDEV:
+		nfserror = NFS3ERR_XDEV;
+		break;
 
-    case STATE_CACHE_INODE_ERR:
-    case STATE_INCONSISTENT_ENTRY:
-    case STATE_HASH_TABLE_ERROR:
-    case STATE_STATE_CONFLICT:
-    case STATE_ASYNC_POST_ERROR:
-    case STATE_STATE_ERROR:
-    case STATE_LOCK_CONFLICT:
-    case STATE_LOCK_BLOCKED:
-    case STATE_LOCK_DEADLOCK:
-    case STATE_GRACE_PERIOD:
-    case STATE_SIGNAL_ERROR:
-        /* Should not occur */
-        LogCrit(COMPONENT_NFSPROTO,
-                "Unexpected status for conversion = %s",
-                state_err_str(error));
-      nfserror = NFS3ERR_INVAL;
-      break;
-    }
+	case STATE_CACHE_INODE_ERR:
+	case STATE_INCONSISTENT_ENTRY:
+	case STATE_HASH_TABLE_ERROR:
+	case STATE_STATE_CONFLICT:
+	case STATE_ASYNC_POST_ERROR:
+	case STATE_STATE_ERROR:
+	case STATE_LOCK_CONFLICT:
+	case STATE_LOCK_BLOCKED:
+	case STATE_LOCK_DEADLOCK:
+	case STATE_GRACE_PERIOD:
+	case STATE_SIGNAL_ERROR:
+		/* Should not occur */
+		LogCrit(COMPONENT_NFSPROTO,
+			"Unexpected status for conversion = %s",
+			state_err_str(error));
+		nfserror = NFS3ERR_INVAL;
+		break;
+	}
 
-  return nfserror;
+	return nfserror;
 }
 
 /** String for undefined state owner types */
@@ -630,18 +715,23 @@ const char *invalid_state_owner_type = "INVALID STATE OWNER TYPE";
  */
 const char *state_owner_type_to_str(state_owner_type_t type)
 {
-  switch(type)
-    {
-      case STATE_LOCK_OWNER_UNKNOWN:     return "STATE_LOCK_OWNER_UNKNOWN";
-      case STATE_LOCK_OWNER_NLM:         return "STATE_LOCK_OWNER_NLM";
+	switch (type) {
+	case STATE_LOCK_OWNER_UNKNOWN:
+		return "STATE_LOCK_OWNER_UNKNOWN";
+	case STATE_LOCK_OWNER_NLM:
+		return "STATE_LOCK_OWNER_NLM";
 #ifdef _USE_9P
-      case STATE_LOCK_OWNER_9P:          return "STALE_LOCK_OWNER_9P";
+	case STATE_LOCK_OWNER_9P:
+		return "STALE_LOCK_OWNER_9P";
 #endif
-      case STATE_OPEN_OWNER_NFSV4:       return "STATE_OPEN_OWNER_NFSV4";
-      case STATE_LOCK_OWNER_NFSV4:       return "STATE_LOCK_OWNER_NFSV4";
-      case STATE_CLIENTID_OWNER_NFSV4:   return "STATE_CLIENTID_OWNER_NFSV4";
-    }
-  return invalid_state_owner_type;
+	case STATE_OPEN_OWNER_NFSV4:
+		return "STATE_OPEN_OWNER_NFSV4";
+	case STATE_LOCK_OWNER_NFSV4:
+		return "STATE_LOCK_OWNER_NFSV4";
+	case STATE_CLIENTID_OWNER_NFSV4:
+		return "STATE_CLIENTID_OWNER_NFSV4";
+	}
+	return invalid_state_owner_type;
 }
 
 /**
@@ -653,42 +743,41 @@ const char *state_owner_type_to_str(state_owner_type_t type)
  * @retval true if owners differ.
  * @retval false if owners are the same.
  */
-bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
+bool different_owners(state_owner_t * owner1, state_owner_t * owner2)
 {
-  if(owner1 == NULL || owner2 == NULL)
-    return true;
+	if (owner1 == NULL || owner2 == NULL)
+		return true;
 
-  /* Shortcut in case we actually are pointing to the same owner structure */
-  if(owner1 == owner2)
-    return false;
+	/* Shortcut in case we actually are pointing to the same owner structure */
+	if (owner1 == owner2)
+		return false;
 
-  if(owner1->so_type != owner2->so_type)
-    return true;
+	if (owner1->so_type != owner2->so_type)
+		return true;
 
-  switch(owner1->so_type)
-    {
-      case STATE_LOCK_OWNER_NLM:
-        if(owner2->so_type != STATE_LOCK_OWNER_NLM)
-           return true;
-        return compare_nlm_owner(owner1, owner2);
+	switch (owner1->so_type) {
+	case STATE_LOCK_OWNER_NLM:
+		if (owner2->so_type != STATE_LOCK_OWNER_NLM)
+			return true;
+		return compare_nlm_owner(owner1, owner2);
 #ifdef _USE_9P
-      case STATE_LOCK_OWNER_9P:
-        if(owner2->so_type != STATE_LOCK_OWNER_9P)
-           return true;
-        return compare_9p_owner(owner1, owner2);
+	case STATE_LOCK_OWNER_9P:
+		if (owner2->so_type != STATE_LOCK_OWNER_9P)
+			return true;
+		return compare_9p_owner(owner1, owner2);
 #endif
-      case STATE_OPEN_OWNER_NFSV4:
-      case STATE_LOCK_OWNER_NFSV4:
-      case STATE_CLIENTID_OWNER_NFSV4:
-        if(owner1->so_type != owner2->so_type)
-          return true;
-        return compare_nfs4_owner(owner1, owner2);
+	case STATE_OPEN_OWNER_NFSV4:
+	case STATE_LOCK_OWNER_NFSV4:
+	case STATE_CLIENTID_OWNER_NFSV4:
+		if (owner1->so_type != owner2->so_type)
+			return true;
+		return compare_nfs4_owner(owner1, owner2);
 
-      case STATE_LOCK_OWNER_UNKNOWN:
-        break;
-    }
+	case STATE_LOCK_OWNER_UNKNOWN:
+		break;
+	}
 
-  return true;
+	return true;
 }
 
 /**
@@ -699,36 +788,31 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
  *
  * @return Length of output string.
  */
-int DisplayOwner(state_owner_t *owner, char *buf)
+int DisplayOwner(state_owner_t * owner, char *buf)
 {
-  if(owner == NULL)
-    return sprintf(buf, "<NULL>");
+	if (owner == NULL)
+		return sprintf(buf, "<NULL>");
 
-  switch(owner->so_type)
-    {
-      case STATE_LOCK_OWNER_NLM:
-        return display_nlm_owner(owner, buf);
+	switch (owner->so_type) {
+	case STATE_LOCK_OWNER_NLM:
+		return display_nlm_owner(owner, buf);
 #ifdef _USE_9P
-      case STATE_LOCK_OWNER_9P:
-        return display_9p_owner(owner, buf);
+	case STATE_LOCK_OWNER_9P:
+		return display_9p_owner(owner, buf);
 #endif
 
-      case STATE_OPEN_OWNER_NFSV4:
-      case STATE_LOCK_OWNER_NFSV4:
-      case STATE_CLIENTID_OWNER_NFSV4:
-        return display_nfs4_owner(owner, buf);
+	case STATE_OPEN_OWNER_NFSV4:
+	case STATE_LOCK_OWNER_NFSV4:
+	case STATE_CLIENTID_OWNER_NFSV4:
+		return display_nfs4_owner(owner, buf);
 
-      case STATE_LOCK_OWNER_UNKNOWN:
-        return sprintf(buf,
-                       "%s powner=%p: refcount=%d",
-                       state_owner_type_to_str(owner->so_type),
-                       owner,
-                       atomic_fetch_int32_t(&owner->so_refcount));
-    }
+	case STATE_LOCK_OWNER_UNKNOWN:
+		return sprintf(buf, "%s powner=%p: refcount=%d",
+			       state_owner_type_to_str(owner->so_type), owner,
+			       atomic_fetch_int32_t(&owner->so_refcount));
+	}
 
-  return sprintf(buf,
-                 "%s powner=%p",
-                 invalid_state_owner_type, owner);
+	return sprintf(buf, "%s powner=%p", invalid_state_owner_type, owner);
 }
 
 /**
@@ -738,17 +822,16 @@ int DisplayOwner(state_owner_t *owner, char *buf)
  */
 void inc_state_owner_ref(state_owner_t * owner)
 {
-  char    str[HASHTABLE_DISPLAY_STRLEN];
-  int32_t refcount;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	int32_t refcount;
 
-  if(isDebug(COMPONENT_STATE))
-    DisplayOwner(owner, str);
+	if (isDebug(COMPONENT_STATE))
+		DisplayOwner(owner, str);
 
-  refcount = atomic_inc_int32_t(&owner->so_refcount);
+	refcount = atomic_inc_int32_t(&owner->so_refcount);
 
-  LogFullDebug(COMPONENT_STATE,
-               "Increment refcount now=%"PRId32" {%s}",
-               refcount, str);
+	LogFullDebug(COMPONENT_STATE, "Increment refcount now=%" PRId32 " {%s}",
+		     refcount, str);
 }
 
 /**
@@ -758,48 +841,45 @@ void inc_state_owner_ref(state_owner_t * owner)
  */
 void free_state_owner(state_owner_t * owner)
 {
-  char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[HASHTABLE_DISPLAY_STRLEN];
 
-  switch(owner->so_type)
-    {
-      case STATE_LOCK_OWNER_NLM:
-        free_nlm_owner(owner);
-        break;
+	switch (owner->so_type) {
+	case STATE_LOCK_OWNER_NLM:
+		free_nlm_owner(owner);
+		break;
 
 #ifdef _USE_9P
-      case STATE_LOCK_OWNER_9P:
-        break;
+	case STATE_LOCK_OWNER_9P:
+		break;
 #endif
 
-      case STATE_OPEN_OWNER_NFSV4:
-      case STATE_LOCK_OWNER_NFSV4:
-      case STATE_CLIENTID_OWNER_NFSV4:
-        free_nfs4_owner(owner);
-        break;
+	case STATE_OPEN_OWNER_NFSV4:
+	case STATE_LOCK_OWNER_NFSV4:
+	case STATE_CLIENTID_OWNER_NFSV4:
+		free_nfs4_owner(owner);
+		break;
 
-      case STATE_LOCK_OWNER_UNKNOWN:
-        DisplayOwner(owner, str);
+	case STATE_LOCK_OWNER_UNKNOWN:
+		DisplayOwner(owner, str);
 
-        LogCrit(COMPONENT_STATE,
-                "Unexpected removal of {%s}",
-                str);
-        return;
-    }
+		LogCrit(COMPONENT_STATE, "Unexpected removal of {%s}", str);
+		return;
+	}
 
-  if(owner->so_owner_val != NULL)
-    gsh_free(owner->so_owner_val);
+	if (owner->so_owner_val != NULL)
+		gsh_free(owner->so_owner_val);
 
-  pthread_mutex_destroy(&owner->so_mutex);
+	pthread_mutex_destroy(&owner->so_mutex);
 
 #ifdef DEBUG_SAL
-  P(all_state_owners_mutex);
+	P(all_state_owners_mutex);
 
-  glist_del(&owner->so_all_owners);
+	glist_del(&owner->so_all_owners);
 
-  V(all_state_owners_mutex);
+	V(all_state_owners_mutex);
 #endif
 
-  pool_free(state_owner_pool, owner);
+	pool_free(state_owner_pool, owner);
 }
 
 /**
@@ -807,28 +887,27 @@ void free_state_owner(state_owner_t * owner)
  *
  * @param[in] owner Owner to get associated hash table for
  */
-hash_table_t * get_state_owner_hash_table(state_owner_t * owner)
+hash_table_t *get_state_owner_hash_table(state_owner_t * owner)
 {
-  switch(owner->so_type)
-    {
-      case STATE_LOCK_OWNER_NLM:
-        return ht_nlm_owner;
+	switch (owner->so_type) {
+	case STATE_LOCK_OWNER_NLM:
+		return ht_nlm_owner;
 
 #ifdef _USE_9P
-      case STATE_LOCK_OWNER_9P:
-        return ht_9p_owner;
+	case STATE_LOCK_OWNER_9P:
+		return ht_9p_owner;
 #endif
 
-      case STATE_OPEN_OWNER_NFSV4:
-      case STATE_LOCK_OWNER_NFSV4:
-      case STATE_CLIENTID_OWNER_NFSV4:
-        return ht_nfs4_owner;
+	case STATE_OPEN_OWNER_NFSV4:
+	case STATE_LOCK_OWNER_NFSV4:
+	case STATE_CLIENTID_OWNER_NFSV4:
+		return ht_nfs4_owner;
 
-      case STATE_LOCK_OWNER_UNKNOWN:
-        break;
-    }
+	case STATE_LOCK_OWNER_UNKNOWN:
+		break;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 /**
@@ -838,109 +917,91 @@ hash_table_t * get_state_owner_hash_table(state_owner_t * owner)
  */
 void dec_state_owner_ref(state_owner_t * owner)
 {
-  char                str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch   latch;
-  hash_error_t        rc;
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc old_value;
-  struct gsh_buffdesc old_key;
-  int32_t             refcount;
-  hash_table_t      * ht_owner;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc old_value;
+	struct gsh_buffdesc old_key;
+	int32_t refcount;
+	hash_table_t *ht_owner;
 
-  if(isDebug(COMPONENT_STATE))
-    DisplayOwner(owner, str);
+	if (isDebug(COMPONENT_STATE))
+		DisplayOwner(owner, str);
 
-  refcount = atomic_dec_int32_t(&owner->so_refcount);
+	refcount = atomic_dec_int32_t(&owner->so_refcount);
 
-  if(refcount != 0)
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount now=%"PRId32" {%s}",
-                   refcount, str);
+	if (refcount != 0) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Decrement refcount now=%" PRId32 " {%s}",
+			     refcount, str);
 
-      assert(refcount > 0);
+		assert(refcount > 0);
 
-      return;
-    }
+		return;
+	}
 
-  ht_owner = get_state_owner_hash_table(owner);
+	ht_owner = get_state_owner_hash_table(owner);
 
-  if(ht_owner == NULL)
-    {
-      DisplayOwner(owner, str);
+	if (ht_owner == NULL) {
+		DisplayOwner(owner, str);
 
-      LogCrit(COMPONENT_STATE,
-              "Unexpected owner {%s}",
-              str);
+		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}", str);
 
-      assert(ht_owner);
+		assert(ht_owner);
 
-      return;
-    }
+		return;
+	}
 
-  buffkey.addr = owner;
-  buffkey.len  = sizeof(*owner);
+	buffkey.addr = owner;
+	buffkey.len = sizeof(*owner);
 
-  /* Get the hash table entry and hold latch */
-  rc = HashTable_GetLatch(ht_owner,
-                          &buffkey,
-                          &old_value,
-                          TRUE,
-                          &latch);
+	/* Get the hash table entry and hold latch */
+	rc = HashTable_GetLatch(ht_owner, &buffkey, &old_value, TRUE, &latch);
 
-  if(rc != HASHTABLE_SUCCESS)
-    {
-      if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-        HashTable_ReleaseLatched(ht_owner, &latch);
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			HashTable_ReleaseLatched(ht_owner, &latch);
 
-      DisplayOwner(owner, str);
+		DisplayOwner(owner, str);
 
-      LogCrit(COMPONENT_STATE,
-              "Error %s, could not find {%s}",
-              hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
 
-      return;
-    }
+		return;
+	}
 
-  refcount = atomic_fetch_int32_t(&owner->so_refcount);
+	refcount = atomic_fetch_int32_t(&owner->so_refcount);
 
-  if(refcount > 0)
-    {
-      LogDebug(COMPONENT_STATE,
-               "Did not release {%s} refcount now=%"PRId32,
-               str, refcount);
+	if (refcount > 0) {
+		LogDebug(COMPONENT_STATE,
+			 "Did not release {%s} refcount now=%" PRId32, str,
+			 refcount);
 
-      HashTable_ReleaseLatched(ht_owner, &latch);
+		HashTable_ReleaseLatched(ht_owner, &latch);
 
-      return;
-    }
+		return;
+	}
 
-  /* use the key to delete the entry */
-  rc = HashTable_DeleteLatched(ht_owner,
-                               &buffkey,
-                               &latch,
-                               &old_key,
-                               &old_value);
+	/* use the key to delete the entry */
+	rc = HashTable_DeleteLatched(ht_owner, &buffkey, &latch, &old_key,
+				     &old_value);
 
-  if(rc != HASHTABLE_SUCCESS)
-    {
-      if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-        HashTable_ReleaseLatched(ht_owner, &latch);
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			HashTable_ReleaseLatched(ht_owner, &latch);
 
-      DisplayOwner(owner, str);
+		DisplayOwner(owner, str);
 
-      LogCrit(COMPONENT_STATE,
-              "Error %s, could not remove {%s}",
-              hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
+			hash_table_err_to_str(rc), str);
 
-      return;
-    }
+		return;
+	}
 
-  LogFullDebug(COMPONENT_STATE,
-               "Free {%s}",
-               str);
+	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
-  free_state_owner(owner);
+	free_state_owner(owner);
 }
 
 /**
@@ -953,201 +1014,162 @@ void dec_state_owner_ref(state_owner_t * owner)
  *
  * @return the owner found or NULL if no owner was found or created
  */
-state_owner_t *get_state_owner(care_t               care,
-                               state_owner_t      * key,
-                               state_owner_init_t   init_owner,
-                               bool_t             * isnew)
+state_owner_t *get_state_owner(care_t care, state_owner_t * key,
+			       state_owner_init_t init_owner, bool_t * isnew)
 {
-  state_owner_t      * owner;
-  char                 str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch    latch;
-  hash_error_t         rc;
-  struct gsh_buffdesc  buffkey;
-  struct gsh_buffdesc  buffval;
-  hash_table_t       * ht_owner;
+	state_owner_t *owner;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc buffval;
+	hash_table_t *ht_owner;
 
-  if(isnew != NULL)
-    *isnew = FALSE;
+	if (isnew != NULL)
+		*isnew = FALSE;
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      DisplayOwner(key, str);
+	if (isFullDebug(COMPONENT_STATE)) {
+		DisplayOwner(key, str);
 
-      LogFullDebug(COMPONENT_STATE,
-                   "Find {%s}", str);
-    }
+		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+	}
 
-  ht_owner = get_state_owner_hash_table(key);
+	ht_owner = get_state_owner_hash_table(key);
 
-  if(ht_owner == NULL)
-    {
-      DisplayOwner(key, str);
+	if (ht_owner == NULL) {
+		DisplayOwner(key, str);
 
-      LogCrit(COMPONENT_STATE,
-              "ht=%p Unexpected key {%s}",
-              ht_owner, str);
-      return NULL;
-    }
+		LogCrit(COMPONENT_STATE, "ht=%p Unexpected key {%s}", ht_owner,
+			str);
+		return NULL;
+	}
 
-  buffkey.addr = key;
-  buffkey.len  = sizeof(*key);
+	buffkey.addr = key;
+	buffkey.len = sizeof(*key);
 
-  rc = HashTable_GetLatch(ht_owner,
-                          &buffkey,
-                          &buffval,
-                          TRUE,
-                          &latch);
+	rc = HashTable_GetLatch(ht_owner, &buffkey, &buffval, TRUE, &latch);
 
-  /* If we found it, return it */
-  if(rc == HASHTABLE_SUCCESS)
-    {
-      owner = buffval.addr;
+	/* If we found it, return it */
+	if (rc == HASHTABLE_SUCCESS) {
+		owner = buffval.addr;
 
-      /* Return the found NSM Client */
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          DisplayOwner(owner, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Found {%s}",
-                       str);
-        }
+		/* Return the found NSM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			DisplayOwner(owner, str);
+			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
+		}
 
-      /* Increment refcount under hash latch.
-       * This prevents dec ref from removing this entry from hash if a race
-       * occurs.
-       */
-      inc_state_owner_ref(owner);
+		/* Increment refcount under hash latch.
+		 * This prevents dec ref from removing this entry from hash if a race
+		 * occurs.
+		 */
+		inc_state_owner_ref(owner);
 
-      HashTable_ReleaseLatched(ht_owner, &latch);
+		HashTable_ReleaseLatched(ht_owner, &latch);
 
-      return owner;
-    }
-  /* An error occurred, return NULL */
-  if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
-    {
-      DisplayOwner(key, str);
+		return owner;
+	}
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+		DisplayOwner(key, str);
 
-      LogCrit(COMPONENT_STATE,
-              "Error %s, could not find {%s}",
-              hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
 
-      return NULL;
-    }
+		return NULL;
+	}
 
-  /* Not found, but we don't care, return NULL */
-  if(care == CARE_NOT)
-    {
-      /* Return the found NSM Client */
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          DisplayOwner(key, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Ignoring {%s}",
-                       str);
-        }
+	/* Not found, but we don't care, return NULL */
+	if (care == CARE_NOT) {
+		/* Return the found NSM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			DisplayOwner(key, str);
+			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
+		}
 
-      HashTable_ReleaseLatched(ht_owner, &latch);
+		HashTable_ReleaseLatched(ht_owner, &latch);
 
-      return NULL;
-    }
+		return NULL;
+	}
 
-  owner = pool_alloc(state_owner_pool, NULL);
+	owner = pool_alloc(state_owner_pool, NULL);
 
-  if(owner == NULL)
-    {
-      DisplayOwner(key, str);
-      LogCrit(COMPONENT_STATE,
-              "No memory for {%s}",
-              str);
+	if (owner == NULL) {
+		DisplayOwner(key, str);
+		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
-      return NULL;
-    }
+		return NULL;
+	}
 
-  /* Copy everything over */
-  memcpy(owner, key, sizeof(*key));
+	/* Copy everything over */
+	memcpy(owner, key, sizeof(*key));
 
-  if(pthread_mutex_init(&owner->so_mutex, NULL) == -1)
-    {
-      /* Mutex initialization failed, free the created owner */
-      DisplayOwner(key, str);
-      LogCrit(COMPONENT_STATE,
-              "Could not init mutex for {%s}",
-              str);
+	if (pthread_mutex_init(&owner->so_mutex, NULL) == -1) {
+		/* Mutex initialization failed, free the created owner */
+		DisplayOwner(key, str);
+		LogCrit(COMPONENT_STATE, "Could not init mutex for {%s}", str);
 
-      gsh_free(owner);
-      return NULL;
-    }
-
+		gsh_free(owner);
+		return NULL;
+	}
 #ifdef DEBUG_SAL
-  P(all_state_owners_mutex);
+	P(all_state_owners_mutex);
 
-  glist_add_tail(&state_owners_all, &owner->so_all_owners);
+	glist_add_tail(&state_owners_all, &owner->so_all_owners);
 
-  V(all_state_owners_mutex);
+	V(all_state_owners_mutex);
 #endif
 
-  /* Do any owner type specific initialization */
-  if(init_owner != NULL)
-    init_owner(owner);
+	/* Do any owner type specific initialization */
+	if (init_owner != NULL)
+		init_owner(owner);
 
-  owner->so_owner_val = gsh_malloc(key->so_owner_len);
+	owner->so_owner_val = gsh_malloc(key->so_owner_len);
 
-  if(owner->so_owner_val == NULL)
-    {
-      /* Discard the created owner */
-      DisplayOwner(key, str);
-      LogCrit(COMPONENT_STATE,
-              "No memory for {%s}",
-              str);
+	if (owner->so_owner_val == NULL) {
+		/* Discard the created owner */
+		DisplayOwner(key, str);
+		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
-      free_state_owner(owner);
-      return NULL;
-    }
+		free_state_owner(owner);
+		return NULL;
+	}
 
-  memcpy(owner->so_owner_val, key->so_owner_val, key->so_owner_len);
+	memcpy(owner->so_owner_val, key->so_owner_val, key->so_owner_len);
 
-  glist_init(&owner->so_lock_list);
+	glist_init(&owner->so_lock_list);
 
-  owner->so_refcount = 1;
+	owner->so_refcount = 1;
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      DisplayOwner(owner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "New {%s}", str);
-    }
+	if (isFullDebug(COMPONENT_STATE)) {
+		DisplayOwner(owner, str);
+		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
+	}
 
-  buffkey.addr = owner;
-  buffkey.len  = sizeof(*owner);
-  buffval.addr = owner;
-  buffval.len  = sizeof(*owner);
+	buffkey.addr = owner;
+	buffkey.len = sizeof(*owner);
+	buffval.addr = owner;
+	buffval.len = sizeof(*owner);
 
-  rc = HashTable_SetLatched(ht_owner,
-                            &buffval,
-                            &buffval,
-                            &latch,
-                            FALSE,
-                            NULL,
-                            NULL);
+	rc = HashTable_SetLatched(ht_owner, &buffval, &buffval, &latch, FALSE,
+				  NULL, NULL);
 
-  /* An error occurred, return NULL */
-  if(rc != HASHTABLE_SUCCESS)
-    {
-      DisplayOwner(owner, str);
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_SUCCESS) {
+		DisplayOwner(owner, str);
 
-      LogCrit(COMPONENT_STATE,
-              "Error %s, inserting {%s}",
-              hash_table_err_to_str(rc), str);
+		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
+			hash_table_err_to_str(rc), str);
 
-      free_state_owner(owner);
+		free_state_owner(owner);
 
-      return NULL;
-    }
+		return NULL;
+	}
 
-  if(isnew != NULL)
-    *isnew = TRUE;
+	if (isnew != NULL)
+		*isnew = TRUE;
 
-  return owner;
+	return owner;
 }
 
 /**
@@ -1159,27 +1181,27 @@ state_owner_t *get_state_owner(care_t               care,
  *
  * @param[in,out] entry File to be wiped
  */
-void state_wipe_file(cache_entry_t *entry)
+void state_wipe_file(cache_entry_t * entry)
 {
-  /*
-   * currently, only REGULAR files can have state; byte range locks and
-   * stateid (for v4).  In the future, 4.1, directories could have
-   * delegations, which is state.  At that point, we may need to modify
-   * this routine to clear state on directories.
-   */
-  if (entry->type != REGULAR_FILE)
-    return;
+	/*
+	 * currently, only REGULAR files can have state; byte range locks and
+	 * stateid (for v4).  In the future, 4.1, directories could have
+	 * delegations, which is state.  At that point, we may need to modify
+	 * this routine to clear state on directories.
+	 */
+	if (entry->type != REGULAR_FILE)
+		return;
 
-  PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-  state_lock_wipe(entry);
-  state_share_wipe(entry);
-  state_nfs4_state_wipe(entry);
+	state_lock_wipe(entry);
+	state_share_wipe(entry);
+	state_nfs4_state_wipe(entry);
 
-  PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 #ifdef DEBUG_SAL
-  dump_all_states();
+	dump_all_states();
 #endif
 }
 
@@ -1197,71 +1219,67 @@ void state_wipe_file(cache_entry_t *entry)
  */
 int DisplayOpaqueValue(char *value, int len, char *str)
 {
-  unsigned int   i = 0;
-  char         * strtmp = str;
+	unsigned int i = 0;
+	char *strtmp = str;
 
-  if(value == NULL || len == 0)
-    return sprintf(str, "(NULL)");
+	if (value == NULL || len == 0)
+		return sprintf(str, "(NULL)");
 
-  strtmp += sprintf(strtmp, "(%d:", len);
+	strtmp += sprintf(strtmp, "(%d:", len);
 
-  assert(len > 0);
+	assert(len > 0);
 
-  if(len < 0 || len > 1024)
-    len = 1024;
+	if (len < 0 || len > 1024)
+		len = 1024;
 
-  for(i = 0; i < len; i++)
-    if(!isprint(value[i]))
-      break;
+	for (i = 0; i < len; i++)
+		if (!isprint(value[i]))
+			break;
 
-  if(i == len)
-    {
-      memcpy(strtmp, value, len);
-      strtmp += len;
-      *strtmp = '\0';
-    }
-  else
-    {
-      strtmp += sprintf(strtmp, "0x");
-      for(i = 0; i < len; i++)
-        strtmp += sprintf(strtmp, "%02x", (unsigned char)value[i]);
-    }
+	if (i == len) {
+		memcpy(strtmp, value, len);
+		strtmp += len;
+		*strtmp = '\0';
+	} else {
+		strtmp += sprintf(strtmp, "0x");
+		for (i = 0; i < len; i++)
+			strtmp +=
+			    sprintf(strtmp, "%02x", (unsigned char)value[i]);
+	}
 
-  strtmp += sprintf(strtmp, ")");
+	strtmp += sprintf(strtmp, ")");
 
-  return strtmp - str;
+	return strtmp - str;
 }
 
 #ifdef DEBUG_SAL
 void dump_all_owners(void)
 {
-  if(!isDebug(COMPONENT_STATE))
-    return;
+	if (!isDebug(COMPONENT_STATE))
+		return;
 
-  P(all_state_owners_mutex);
+	P(all_state_owners_mutex);
 
-  if(!glist_empty(&state_owners_all))
-    {
-      char                str[HASHTABLE_DISPLAY_STRLEN];
-      struct glist_head * glist;
+	if (!glist_empty(&state_owners_all)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
+		struct glist_head *glist;
 
-      LogDebug(COMPONENT_STATE,
-               " ---------------------- State Owner List ----------------------");
+		LogDebug(COMPONENT_STATE,
+			 " ---------------------- State Owner List ----------------------");
 
-      glist_for_each(glist, &state_owners_all)
-        {
-          DisplayOwner(glist_entry(glist, state_owner_t, so_all_owners), str);
-          LogDebug(COMPONENT_STATE,
-                   "{%s}", str);
-        }
+		glist_for_each(glist, &state_owners_all) {
+			DisplayOwner(glist_entry
+				     (glist, state_owner_t, so_all_owners),
+				     str);
+			LogDebug(COMPONENT_STATE, "{%s}", str);
+		}
 
-      LogDebug(COMPONENT_STATE,
-               " ---------------------- --------------- ----------------------");
-    }
-  else
-    LogDebug(COMPONENT_STATE, "All state owners released");
+		LogDebug(COMPONENT_STATE,
+			 " ---------------------- --------------- ----------------------");
+	} else
+		LogDebug(COMPONENT_STATE, "All state owners released");
 
-  V(all_state_owners_mutex);
+	V(all_state_owners_mutex);
 }
 #endif
 
