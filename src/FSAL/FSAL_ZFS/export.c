@@ -41,10 +41,9 @@
 #include "FSAL/fsal_config.h"
 #include "zfs_methods.h"
 
-libzfswrap_handle_t *p_zhd = NULL ;
-size_t i_snapshots = 0 ;
-snapshot_t *p_snapshots = NULL ;
-
+libzfswrap_handle_t *p_zhd = NULL;
+size_t i_snapshots = 0;
+snapshot_t *p_snapshots = NULL;
 
 /*
  * VFS internal export
@@ -52,7 +51,7 @@ snapshot_t *p_snapshots = NULL ;
 
 struct zfs_fsal_export {
 	struct fsal_export export;
-        libzfswrap_vfs_t *p_vfs;
+	libzfswrap_vfs_t *p_vfs;
 };
 
 /* helpers to/from other VFS objects
@@ -60,7 +59,8 @@ struct zfs_fsal_export {
 
 struct fsal_staticfsinfo_t *zfs_staticinfo(struct fsal_module *hdl);
 
-libzfswrap_vfs_t * tank_get_root_pvfs(struct fsal_export *exp_hdl) {
+libzfswrap_vfs_t *tank_get_root_pvfs(struct fsal_export *exp_hdl)
+{
 	struct zfs_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
@@ -79,9 +79,8 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
 
 	pthread_mutex_lock(&exp_hdl->lock);
-	if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
-		LogMajor(COMPONENT_FSAL,
-			 "ZFS release: export (0x%p)busy",
+	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+		LogMajor(COMPONENT_FSAL, "ZFS release: export (0x%p)busy",
 			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);
 		retval = EBUSY;
@@ -89,59 +88,58 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	myself->export.ops = NULL; /* poison myself */
+	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	free(myself);  /* elvis has left the building */
+	free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
-errout:
+ errout:
 	pthread_mutex_unlock(&exp_hdl->lock);
 	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t *infop)
+				      fsal_dynamicfsinfo_t * infop)
 {
 	struct zfs_fsal_export *myself;
-         struct statvfs statfs;
-        
+	struct statvfs statfs;
+
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
-	if( !infop) {
+	if (!infop) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
-        retval = libzfswrap_statfs( myself->p_vfs,
-                                    &statfs);
-        
-	if(retval < 0) {
+	retval = libzfswrap_statfs(myself->p_vfs, &statfs);
+
+	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
 
-        infop->total_bytes = statfs.f_frsize * statfs.f_blocks;
-        infop->free_bytes = statfs.f_frsize * statfs.f_bfree;
-        infop->avail_bytes = statfs.f_frsize * statfs.f_bavail;
+	infop->total_bytes = statfs.f_frsize * statfs.f_blocks;
+	infop->free_bytes = statfs.f_frsize * statfs.f_bfree;
+	infop->avail_bytes = statfs.f_frsize * statfs.f_bavail;
 
-        infop->total_files = statfs.f_files;
-        infop->free_files = statfs.f_ffree;
-        infop->avail_files = statfs.f_favail;
+	infop->total_files = statfs.f_files;
+	infop->free_files = statfs.f_ffree;
+	infop->avail_files = statfs.f_favail;
 
-        infop->time_delta.tv_sec = 1;
-        infop->time_delta.tv_nsec= 0;
-        
-out:
+	infop->time_delta.tv_sec = 1;
+	infop->time_delta.tv_nsec = 0;
+
+ out:
 	return fsalstat(fsal_error, retval);
 }
 
 static bool fs_supports(struct fsal_export *exp_hdl,
-                        fsal_fsinfo_options_t option)
+			fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -245,25 +243,26 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc)
+					 fsal_digesttype_t in_type,
+					 struct gsh_buffdesc *fh_desc)
 {
 	struct zfs_file_handle *hdl;
 	size_t fh_size;
 
 	/* sanity checks */
-	if( !fh_desc || !fh_desc->addr)
+	if (!fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	hdl = (struct zfs_file_handle *)fh_desc->addr;
 	fh_size = zfs_sizeof_handle(hdl);
-	if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %u",
-			 (unsigned long int)fh_size, (unsigned int)fh_desc->len);
+			 (unsigned long int)fh_size,
+			 (unsigned int)fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = fh_size;  /* pass back the actual size */
+	fh_desc->len = fh_size;	/* pass back the actual size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -276,7 +275,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops);
 void zfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
-	ops->lookup_path = tank_lookup_path; 
+	ops->lookup_path = tank_lookup_path;
 	ops->extract_handle = tank_extract_handle;
 	ops->create_handle = tank_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
@@ -302,97 +301,87 @@ void zfs_export_ops_init(struct export_ops *ops)
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-                                   const char *export_path,
-                                   const char *fs_options,
-                                   struct exportlist *exp_entry,
-                                   struct fsal_module *next_fsal,
-                                   const struct fsal_up_vector *up_ops,
-                                   struct fsal_export **export)
+				const char *export_path, const char *fs_options,
+				struct exportlist *exp_entry,
+				struct fsal_module *next_fsal,
+				const struct fsal_up_vector *up_ops,
+				struct fsal_export **export)
 {
 	struct zfs_fsal_export *myself;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-        libzfswrap_vfs_t *p_zfs = NULL ;
+	libzfswrap_vfs_t *p_zfs = NULL;
 
-	*export = NULL; /* poison it first */
-	if(export_path == NULL
-	   || strlen(export_path) == 0
-	   || strlen(export_path) > MAXPATHLEN) {
+	*export = NULL;		/* poison it first */
+	if (export_path == NULL || strlen(export_path) == 0
+	    || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
 			 "zfs_create_export: export path empty or too big");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-	if(next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"This module is not stackable");
+	if (next_fsal != NULL) {
+		LogCrit(COMPONENT_FSAL, "This module is not stackable");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	myself = malloc(sizeof(struct zfs_fsal_export));
-	if(myself == NULL) {
+	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "zfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	memset(myself, 0, sizeof(struct zfs_fsal_export));
 
-                
-        retval = fsal_export_init(&myself->export, exp_entry);
-	if(retval != 0)
+	retval = fsal_export_init(&myself->export, exp_entry);
+	if (retval != 0)
 		goto errout;
 
 	zfs_export_ops_init(myself->export.ops);
 	zfs_handle_ops_init(myself->export.obj_ops);
-        myself->export.up_ops = up_ops;
+	myself->export.up_ops = up_ops;
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
 
 	pthread_mutex_lock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if(retval != 0)
-		goto errout; /* seriously bad */
+	if (retval != 0)
+		goto errout;	/* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
-        if( p_zhd == NULL )
-        {
-          /* init libzfs library */
-          if( ( p_zhd = libzfswrap_init() ) == NULL )
-           {
-             LogMajor( COMPONENT_FSAL,
-                       "Could not init libzfswrap library");
-	     return fsalstat(ERR_FSAL_INVAL, 0);
-           }
+	if (p_zhd == NULL) {
+		/* init libzfs library */
+		if ((p_zhd = libzfswrap_init()) == NULL) {
+			LogMajor(COMPONENT_FSAL,
+				 "Could not init libzfswrap library");
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
 
-        }
+	}
 
-        if( p_snapshots == NULL )
-        {
-          /* Mount the libs */
-          if( ( p_zfs = libzfswrap_mount(fs_options, "/tank", "") ) == NULL )
-            {
-              LogMajor( COMPONENT_FSAL, "Could not mount libzfswrap");
-	      return fsalstat(ERR_FSAL_INVAL, 0);
-            }
+	if (p_snapshots == NULL) {
+		/* Mount the libs */
+		if ((p_zfs = libzfswrap_mount(fs_options, "/tank", "")) == NULL) {
+			LogMajor(COMPONENT_FSAL, "Could not mount libzfswrap");
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
 
-          /** @todo: Place snapshot management here */
-          p_snapshots = calloc(1, sizeof(*p_snapshots));
-          p_snapshots[0].p_vfs = p_zfs ;
-          i_snapshots = 0 ; 
-        }
+	  /** @todo: Place snapshot management here */
+		p_snapshots = calloc(1, sizeof(*p_snapshots));
+		p_snapshots[0].p_vfs = p_zfs;
+		i_snapshots = 0;
+	}
 
-        myself->p_vfs = p_snapshots[0].p_vfs;
-      	*export = &myself->export;
-        pthread_mutex_unlock(&myself->export.lock);
+	myself->p_vfs = p_snapshots[0].p_vfs;
+	*export = &myself->export;
+	pthread_mutex_unlock(&myself->export.lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-errout:
-	myself->export.ops = NULL; /* poison myself */
+ errout:
+	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	free(myself);  /* elvis has left the building */
+	free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }
-
-
