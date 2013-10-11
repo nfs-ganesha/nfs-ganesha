@@ -7,10 +7,10 @@
 #include "nfs23.h"
 
 static struct nfs_request_lookahead dummy_lookahead = {
-  .flags = 0,
-  .read = 0,
-  .write = 0
-  };
+	.flags = 0,
+	.read = 0,
+	.write = 0
+};
 
 bool xdr_nfspath2(xdrs, objp)
 register XDR *xdrs;
@@ -18,14 +18,14 @@ nfspath2 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, NFS2_MAXPATHLEN))
-    return (false);
-  return (true);
+	if (!xdr_string(xdrs, objp, NFS2_MAXPATHLEN))
+		return (false);
+	return (true);
 }
 
 bool xdr_filename2(xdrs, objp)
@@ -34,14 +34,14 @@ filename2 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, NFS2_MAXNAMLEN))
-    return (false);
-  return (true);
+	if (!xdr_string(xdrs, objp, NFS2_MAXNAMLEN))
+		return (false);
+	return (true);
 }
 
 bool xdr_fhandle2(xdrs, objp)
@@ -50,14 +50,14 @@ fhandle2 objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_opaque(xdrs, objp, NFS2_FHSIZE))
-    return (false);
-  return (true);
+	if (!xdr_opaque(xdrs, objp, NFS2_FHSIZE))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfsdata2(xdrs, objp)
@@ -66,15 +66,16 @@ nfsdata2 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bytes
-     (xdrs, (char **)&objp->nfsdata2_val, (u_int *) & objp->nfsdata2_len, NFS2_MAXDATA))
-    return (false);
-  return (true);
+	if (!xdr_bytes
+	    (xdrs, (char **)&objp->nfsdata2_val, (u_int *) & objp->nfsdata2_len,
+	     NFS2_MAXDATA))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfscookie2(xdrs, objp)
@@ -83,14 +84,14 @@ nfscookie2 objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_opaque(xdrs, objp, NFS2_COOKIESIZE))
-    return (false);
-  return (true);
+	if (!xdr_opaque(xdrs, objp, NFS2_COOKIESIZE))
+		return (false);
+	return (true);
 }
 
 bool xdr_fhstatus2(xdrs, objp)
@@ -99,23 +100,21 @@ fhstatus2 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_u_int(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case 0:
-      if(!xdr_fhandle2(xdrs, objp->fhstatus2_u.directory))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_u_int(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case 0:
+		if (!xdr_fhandle2(xdrs, objp->fhstatus2_u.directory))
+			return (false);
+		break;
+	}
+	return (true);
 }
-
 
 bool xdr_nfs3_uint64(xdrs, objp)
 register XDR *xdrs;
@@ -123,14 +122,14 @@ nfs3_uint64 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_u_longlong_t(xdrs, (quad_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_u_longlong_t(xdrs, (quad_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfs3_int64(xdrs, objp)
@@ -139,14 +138,14 @@ nfs3_int64 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_longlong_t(xdrs, (quad_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_longlong_t(xdrs, (quad_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfs3_uint32(xdrs, objp)
@@ -155,14 +154,14 @@ nfs3_uint32 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_u_int(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_u_int(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfs3_int32(xdrs, objp)
@@ -171,14 +170,14 @@ nfs3_int32 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_int(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_int(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_filename3(xdrs, objp)
@@ -187,14 +186,14 @@ filename3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, ~0))
-    return (false);
-  return (true);
+	if (!xdr_string(xdrs, objp, ~0))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfspath3(xdrs, objp)
@@ -203,14 +202,14 @@ nfspath3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, ~0))
-    return (false);
-  return (true);
+	if (!xdr_string(xdrs, objp, ~0))
+		return (false);
+	return (true);
 }
 
 bool xdr_fileid3(xdrs, objp)
@@ -219,14 +218,14 @@ fileid3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint64(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint64(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_cookie3(xdrs, objp)
@@ -235,14 +234,14 @@ cookie3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint64(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint64(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_cookieverf3(xdrs, objp)
@@ -251,14 +250,14 @@ cookieverf3 objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_opaque(xdrs, objp, 8))
-    return (false);
-  return (true);
+	if (!xdr_opaque(xdrs, objp, 8))
+		return (false);
+	return (true);
 }
 
 bool xdr_createverf3(xdrs, objp)
@@ -267,14 +266,14 @@ createverf3 objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_opaque(xdrs, objp, 8))
-    return (false);
-  return (true);
+	if (!xdr_opaque(xdrs, objp, 8))
+		return (false);
+	return (true);
 }
 
 bool xdr_writeverf3(xdrs, objp)
@@ -283,14 +282,14 @@ writeverf3 objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_opaque(xdrs, objp, 8))
-    return (false);
-  return (true);
+	if (!xdr_opaque(xdrs, objp, 8))
+		return (false);
+	return (true);
 }
 
 bool xdr_uid3(xdrs, objp)
@@ -299,14 +298,14 @@ uid3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_gid3(xdrs, objp)
@@ -315,14 +314,14 @@ gid3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_size3(xdrs, objp)
@@ -331,14 +330,14 @@ size3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint64(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint64(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_offset3(xdrs, objp)
@@ -347,14 +346,14 @@ offset3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint64(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint64(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_mode3(xdrs, objp)
@@ -363,14 +362,14 @@ mode3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_count3(xdrs, objp)
@@ -379,14 +378,14 @@ count3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, objp))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfsstat3(xdrs, objp)
@@ -395,14 +394,14 @@ nfsstat3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_enum(xdrs, (enum_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_ftype3(xdrs, objp)
@@ -411,14 +410,14 @@ ftype3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_enum(xdrs, (enum_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_specdata3(xdrs, objp)
@@ -427,16 +426,16 @@ specdata3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, &objp->specdata1))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->specdata2))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, &objp->specdata1))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->specdata2))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfs_fh3(xdrs, objp)
@@ -445,14 +444,16 @@ nfs_fh3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bytes(xdrs, (char **)&objp->data.data_val, (u_int *) & objp->data.data_len, 64))
-    return (false);
-  return (true);
+	if (!xdr_bytes
+	    (xdrs, (char **)&objp->data.data_val,
+	     (u_int *) & objp->data.data_len, 64))
+		return (false);
+	return (true);
 }
 
 bool xdr_nfstime3(xdrs, objp)
@@ -461,16 +462,16 @@ nfstime3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, &objp->tv_sec))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->tv_nsec))
-    return (false);
-  return (true);
+	if (!xdr_nfs3_uint32(xdrs, &objp->tv_sec))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->tv_nsec))
+		return (false);
+	return (true);
 }
 
 bool xdr_fattr3(xdrs, objp)
@@ -479,38 +480,38 @@ fattr3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_ftype3(xdrs, &objp->type))
-    return (false);
-  if(!xdr_mode3(xdrs, &objp->mode))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->nlink))
-    return (false);
-  if(!xdr_uid3(xdrs, &objp->uid))
-    return (false);
-  if(!xdr_gid3(xdrs, &objp->gid))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->size))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->used))
-    return (false);
-  if(!xdr_specdata3(xdrs, &objp->rdev))
-    return (false);
-  if(!xdr_nfs3_uint64(xdrs, &objp->fsid))
-    return (false);
-  if(!xdr_fileid3(xdrs, &objp->fileid))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->atime))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->mtime))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->ctime))
-    return (false);
-  return (true);
+	if (!xdr_ftype3(xdrs, &objp->type))
+		return (false);
+	if (!xdr_mode3(xdrs, &objp->mode))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->nlink))
+		return (false);
+	if (!xdr_uid3(xdrs, &objp->uid))
+		return (false);
+	if (!xdr_gid3(xdrs, &objp->gid))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->size))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->used))
+		return (false);
+	if (!xdr_specdata3(xdrs, &objp->rdev))
+		return (false);
+	if (!xdr_nfs3_uint64(xdrs, &objp->fsid))
+		return (false);
+	if (!xdr_fileid3(xdrs, &objp->fileid))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->atime))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->mtime))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->ctime))
+		return (false);
+	return (true);
 }
 
 bool xdr_post_op_attr(xdrs, objp)
@@ -519,25 +520,24 @@ post_op_attr *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->attributes_follow))
-    return (false);
-  switch (objp->attributes_follow)
-    {
-    case TRUE:
-      if(!xdr_fattr3(xdrs, &objp->post_op_attr_u.attributes))
-        return (false);
-      break;
-    case FALSE:
-      break;
-    default:
-      return (false);
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->attributes_follow))
+		return (false);
+	switch (objp->attributes_follow) {
+	case TRUE:
+		if (!xdr_fattr3(xdrs, &objp->post_op_attr_u.attributes))
+			return (false);
+		break;
+	case FALSE:
+		break;
+	default:
+		return (false);
+	}
+	return (true);
 }
 
 bool xdr_wcc_attr(xdrs, objp)
@@ -546,18 +546,18 @@ wcc_attr *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_size3(xdrs, &objp->size))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->mtime))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->ctime))
-    return (false);
-  return (true);
+	if (!xdr_size3(xdrs, &objp->size))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->mtime))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->ctime))
+		return (false);
+	return (true);
 }
 
 bool xdr_pre_op_attr(xdrs, objp)
@@ -566,25 +566,24 @@ pre_op_attr *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->attributes_follow))
-    return (false);
-  switch (objp->attributes_follow)
-    {
-    case TRUE:
-      if(!xdr_wcc_attr(xdrs, &objp->pre_op_attr_u.attributes))
-        return (false);
-      break;
-    case FALSE:
-      break;
-    default:
-      return (false);
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->attributes_follow))
+		return (false);
+	switch (objp->attributes_follow) {
+	case TRUE:
+		if (!xdr_wcc_attr(xdrs, &objp->pre_op_attr_u.attributes))
+			return (false);
+		break;
+	case FALSE:
+		break;
+	default:
+		return (false);
+	}
+	return (true);
 }
 
 bool xdr_wcc_data(xdrs, objp)
@@ -593,16 +592,16 @@ wcc_data *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_pre_op_attr(xdrs, &objp->before))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->after))
-    return (false);
-  return (true);
+	if (!xdr_pre_op_attr(xdrs, &objp->before))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->after))
+		return (false);
+	return (true);
 }
 
 bool xdr_post_op_fh3(xdrs, objp)
@@ -611,25 +610,24 @@ post_op_fh3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->handle_follows))
-    return (false);
-  switch (objp->handle_follows)
-    {
-    case TRUE:
-      if(!xdr_nfs_fh3(xdrs, &objp->post_op_fh3_u.handle))
-        return (false);
-      break;
-    case FALSE:
-      break;
-    default:
-      return (false);
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->handle_follows))
+		return (false);
+	switch (objp->handle_follows) {
+	case TRUE:
+		if (!xdr_nfs_fh3(xdrs, &objp->post_op_fh3_u.handle))
+			return (false);
+		break;
+	case FALSE:
+		break;
+	default:
+		return (false);
+	}
+	return (true);
 }
 
 bool xdr_time_how(xdrs, objp)
@@ -638,14 +636,14 @@ time_how *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_enum(xdrs, (enum_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_set_mode3(xdrs, objp)
@@ -654,21 +652,20 @@ set_mode3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case TRUE:
-      if(!xdr_mode3(xdrs, &objp->set_mode3_u.mode))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case TRUE:
+		if (!xdr_mode3(xdrs, &objp->set_mode3_u.mode))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_set_uid3(xdrs, objp)
@@ -677,21 +674,20 @@ set_uid3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case TRUE:
-      if(!xdr_uid3(xdrs, &objp->set_uid3_u.uid))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case TRUE:
+		if (!xdr_uid3(xdrs, &objp->set_uid3_u.uid))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_set_gid3(xdrs, objp)
@@ -700,21 +696,20 @@ set_gid3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case TRUE:
-      if(!xdr_gid3(xdrs, &objp->set_gid3_u.gid))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case TRUE:
+		if (!xdr_gid3(xdrs, &objp->set_gid3_u.gid))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_set_size3(xdrs, objp)
@@ -723,21 +718,20 @@ set_size3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case TRUE:
-      if(!xdr_size3(xdrs, &objp->set_size3_u.size))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case TRUE:
+		if (!xdr_size3(xdrs, &objp->set_size3_u.size))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_set_atime(xdrs, objp)
@@ -746,24 +740,23 @@ set_atime *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_time_how(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case SET_TO_CLIENT_TIME:
-      if(!xdr_nfstime3(xdrs, &objp->set_atime_u.atime))
-        return (false);
-      break;
-    default:
-      return (true);
-      break;
-    }
-  return (true);
+	if (!xdr_time_how(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case SET_TO_CLIENT_TIME:
+		if (!xdr_nfstime3(xdrs, &objp->set_atime_u.atime))
+			return (false);
+		break;
+	default:
+		return (true);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_set_mtime(xdrs, objp)
@@ -772,24 +765,23 @@ set_mtime *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_time_how(xdrs, &objp->set_it))
-    return (false);
-  switch (objp->set_it)
-    {
-    case SET_TO_CLIENT_TIME:
-      if(!xdr_nfstime3(xdrs, &objp->set_mtime_u.mtime))
-        return (false);
-      break;
-    default:
-      return (true);
-      break;
-    }
-  return (true);
+	if (!xdr_time_how(xdrs, &objp->set_it))
+		return (false);
+	switch (objp->set_it) {
+	case SET_TO_CLIENT_TIME:
+		if (!xdr_nfstime3(xdrs, &objp->set_mtime_u.mtime))
+			return (false);
+		break;
+	default:
+		return (true);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_sattr3(xdrs, objp)
@@ -798,24 +790,24 @@ sattr3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_set_mode3(xdrs, &objp->mode))
-    return (false);
-  if(!xdr_set_uid3(xdrs, &objp->uid))
-    return (false);
-  if(!xdr_set_gid3(xdrs, &objp->gid))
-    return (false);
-  if(!xdr_set_size3(xdrs, &objp->size))
-    return (false);
-  if(!xdr_set_atime(xdrs, &objp->atime))
-    return (false);
-  if(!xdr_set_mtime(xdrs, &objp->mtime))
-    return (false);
-  return (true);
+	if (!xdr_set_mode3(xdrs, &objp->mode))
+		return (false);
+	if (!xdr_set_uid3(xdrs, &objp->uid))
+		return (false);
+	if (!xdr_set_gid3(xdrs, &objp->gid))
+		return (false);
+	if (!xdr_set_size3(xdrs, &objp->size))
+		return (false);
+	if (!xdr_set_atime(xdrs, &objp->atime))
+		return (false);
+	if (!xdr_set_mtime(xdrs, &objp->mtime))
+		return (false);
+	return (true);
 }
 
 bool xdr_diropargs3(xdrs, objp)
@@ -824,16 +816,16 @@ diropargs3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->dir))
-    return (false);
-  if(!xdr_filename3(xdrs, &objp->name))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->dir))
+		return (false);
+	if (!xdr_filename3(xdrs, &objp->name))
+		return (false);
+	return (true);
 }
 
 bool xdr_GETATTR3args(xdrs, objp)
@@ -842,14 +834,14 @@ GETATTR3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->object))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->object))
+		return (false);
+	return (true);
 }
 
 bool xdr_GETATTR3resok(xdrs, objp)
@@ -858,14 +850,14 @@ GETATTR3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_fattr3(xdrs, &objp->obj_attributes))
-    return (false);
-  return (true);
+	if (!xdr_fattr3(xdrs, &objp->obj_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_GETATTR3res(xdrs, objp)
@@ -874,24 +866,23 @@ GETATTR3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_GETATTR3resok(xdrs, &objp->GETATTR3res_u.resok))
-        return (false);
-      break;
-    default:
-      return (true);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_GETATTR3resok(xdrs, &objp->GETATTR3res_u.resok))
+			return (false);
+		break;
+	default:
+		return (true);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_sattrguard3(xdrs, objp)
@@ -900,25 +891,24 @@ sattrguard3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bool(xdrs, &objp->check))
-    return (false);
-  switch (objp->check)
-    {
-    case TRUE:
-      if(!xdr_nfstime3(xdrs, &objp->sattrguard3_u.obj_ctime))
-        return (false);
-      break;
-    case FALSE:
-      break;
-    default:
-      return (false);
-    }
-  return (true);
+	if (!xdr_bool(xdrs, &objp->check))
+		return (false);
+	switch (objp->check) {
+	case TRUE:
+		if (!xdr_nfstime3(xdrs, &objp->sattrguard3_u.obj_ctime))
+			return (false);
+		break;
+	case FALSE:
+		break;
+	default:
+		return (false);
+	}
+	return (true);
 }
 
 bool xdr_SETATTR3args(xdrs, objp)
@@ -927,18 +917,18 @@ SETATTR3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->object))
-    return (false);
-  if(!xdr_sattr3(xdrs, &objp->new_attributes))
-    return (false);
-  if(!xdr_sattrguard3(xdrs, &objp->guard))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->object))
+		return (false);
+	if (!xdr_sattr3(xdrs, &objp->new_attributes))
+		return (false);
+	if (!xdr_sattrguard3(xdrs, &objp->guard))
+		return (false);
+	return (true);
 }
 
 bool xdr_SETATTR3resok(xdrs, objp)
@@ -947,14 +937,14 @@ SETATTR3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->obj_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->obj_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_SETATTR3resfail(xdrs, objp)
@@ -963,14 +953,14 @@ SETATTR3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->obj_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->obj_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_SETATTR3res(xdrs, objp)
@@ -979,25 +969,24 @@ SETATTR3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_SETATTR3resok(xdrs, &objp->SETATTR3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_SETATTR3resfail(xdrs, &objp->SETATTR3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_SETATTR3resok(xdrs, &objp->SETATTR3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_SETATTR3resfail(xdrs, &objp->SETATTR3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_LOOKUP3args(xdrs, objp)
@@ -1006,14 +995,14 @@ LOOKUP3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_diropargs3(xdrs, &objp->what))
-    return (false);
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->what))
+		return (false);
+	return (true);
 }
 
 bool xdr_LOOKUP3resok(xdrs, objp)
@@ -1022,18 +1011,18 @@ LOOKUP3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->object))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->object))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_LOOKUP3resfail(xdrs, objp)
@@ -1042,14 +1031,14 @@ LOOKUP3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_LOOKUP3res(xdrs, objp)
@@ -1058,25 +1047,24 @@ LOOKUP3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_LOOKUP3resok(xdrs, &objp->LOOKUP3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_LOOKUP3resfail(xdrs, &objp->LOOKUP3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_LOOKUP3resok(xdrs, &objp->LOOKUP3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_LOOKUP3resfail(xdrs, &objp->LOOKUP3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_ACCESS3args(xdrs, objp)
@@ -1085,16 +1073,16 @@ ACCESS3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->object))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->access))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->object))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->access))
+		return (false);
+	return (true);
 }
 
 bool xdr_ACCESS3resok(xdrs, objp)
@@ -1103,16 +1091,16 @@ ACCESS3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->access))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->access))
+		return (false);
+	return (true);
 }
 
 bool xdr_ACCESS3resfail(xdrs, objp)
@@ -1121,14 +1109,14 @@ ACCESS3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_ACCESS3res(xdrs, objp)
@@ -1137,25 +1125,24 @@ ACCESS3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_ACCESS3resok(xdrs, &objp->ACCESS3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_ACCESS3resfail(xdrs, &objp->ACCESS3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_ACCESS3resok(xdrs, &objp->ACCESS3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_ACCESS3resfail(xdrs, &objp->ACCESS3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_READLINK3args(xdrs, objp)
@@ -1164,14 +1151,14 @@ READLINK3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->symlink))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->symlink))
+		return (false);
+	return (true);
 }
 
 bool xdr_READLINK3resok(xdrs, objp)
@@ -1180,16 +1167,16 @@ READLINK3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->symlink_attributes))
-    return (false);
-  if(!xdr_nfspath3(xdrs, &objp->data))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->symlink_attributes))
+		return (false);
+	if (!xdr_nfspath3(xdrs, &objp->data))
+		return (false);
+	return (true);
 }
 
 bool xdr_READLINK3resfail(xdrs, objp)
@@ -1198,14 +1185,14 @@ READLINK3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->symlink_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->symlink_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_READLINK3res(xdrs, objp)
@@ -1214,25 +1201,24 @@ READLINK3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_READLINK3resok(xdrs, &objp->READLINK3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_READLINK3resfail(xdrs, &objp->READLINK3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_READLINK3resok(xdrs, &objp->READLINK3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_READLINK3resfail(xdrs, &objp->READLINK3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_READ3args(xdrs, objp)
@@ -1240,23 +1226,23 @@ register XDR *xdrs;
 READ3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_nfs_fh3(xdrs, &objp->file))
-    return (false);
-  if(!xdr_offset3(xdrs, &objp->offset))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  lkhd->flags = NFS_LOOKAHEAD_READ;
-  (lkhd->read)++;
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->file))
+		return (false);
+	if (!xdr_offset3(xdrs, &objp->offset))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	lkhd->flags = NFS_LOOKAHEAD_READ;
+	(lkhd->read)++;
+	return (true);
 }
 
 bool xdr_READ3resok(xdrs, objp)
@@ -1265,20 +1251,22 @@ READ3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->file_attributes))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->eof))
-    return (false);
-  if(!xdr_bytes(xdrs, (char **)&objp->data.data_val, (u_int *) & objp->data.data_len, ~0))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->file_attributes))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->eof))
+		return (false);
+	if (!xdr_bytes
+	    (xdrs, (char **)&objp->data.data_val,
+	     (u_int *) & objp->data.data_len, ~0))
+		return (false);
+	return (true);
 }
 
 bool xdr_READ3resfail(xdrs, objp)
@@ -1287,14 +1275,14 @@ READ3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->file_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->file_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_READ3res(xdrs, objp)
@@ -1303,25 +1291,24 @@ READ3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_READ3resok(xdrs, &objp->READ3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_READ3resfail(xdrs, &objp->READ3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_READ3resok(xdrs, &objp->READ3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_READ3resfail(xdrs, &objp->READ3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_stable_how(xdrs, objp)
@@ -1330,14 +1317,14 @@ stable_how *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_enum(xdrs, (enum_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_WRITE3args(xdrs, objp)
@@ -1345,28 +1332,29 @@ register XDR *xdrs;
 WRITE3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_nfs_fh3(xdrs, &objp->file))
-    return (false);
-  if(!xdr_offset3(xdrs, &objp->offset))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  if(!xdr_stable_how(xdrs, &objp->stable))
-    return (false);
-  if(!xdr_bytes(xdrs, (char **)&objp->data.data_val,
-                (u_int *) & objp->data.data_len, ~0))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_WRITE;
-  (lkhd->write)++;
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->file))
+		return (false);
+	if (!xdr_offset3(xdrs, &objp->offset))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	if (!xdr_stable_how(xdrs, &objp->stable))
+		return (false);
+	if (!xdr_bytes
+	    (xdrs, (char **)&objp->data.data_val,
+	     (u_int *) & objp->data.data_len, ~0))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_WRITE;
+	(lkhd->write)++;
+	return (true);
 }
 
 bool xdr_WRITE3resok(xdrs, objp)
@@ -1375,20 +1363,20 @@ WRITE3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->file_wcc))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  if(!xdr_stable_how(xdrs, &objp->committed))
-    return (false);
-  if(!xdr_writeverf3(xdrs, objp->verf))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->file_wcc))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	if (!xdr_stable_how(xdrs, &objp->committed))
+		return (false);
+	if (!xdr_writeverf3(xdrs, objp->verf))
+		return (false);
+	return (true);
 }
 
 bool xdr_WRITE3resfail(xdrs, objp)
@@ -1397,14 +1385,14 @@ WRITE3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->file_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->file_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_WRITE3res(xdrs, objp)
@@ -1413,25 +1401,24 @@ WRITE3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_WRITE3resok(xdrs, &objp->WRITE3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_WRITE3resfail(xdrs, &objp->WRITE3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_WRITE3resok(xdrs, &objp->WRITE3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_WRITE3resfail(xdrs, &objp->WRITE3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_createmode3(xdrs, objp)
@@ -1440,14 +1427,14 @@ createmode3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
-    return (false);
-  return (true);
+	if (!xdr_enum(xdrs, (enum_t *) objp))
+		return (false);
+	return (true);
 }
 
 bool xdr_createhow3(xdrs, objp)
@@ -1456,28 +1443,27 @@ createhow3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_createmode3(xdrs, &objp->mode))
-    return (false);
-  switch (objp->mode)
-    {
-    case UNCHECKED:
-    case GUARDED:
-      if(!xdr_sattr3(xdrs, &objp->createhow3_u.obj_attributes))
-        return (false);
-      break;
-    case EXCLUSIVE:
-      if(!xdr_createverf3(xdrs, objp->createhow3_u.verf))
-        return (false);
-      break;
-    default:
-      return (false);
-    }
-  return (true);
+	if (!xdr_createmode3(xdrs, &objp->mode))
+		return (false);
+	switch (objp->mode) {
+	case UNCHECKED:
+	case GUARDED:
+		if (!xdr_sattr3(xdrs, &objp->createhow3_u.obj_attributes))
+			return (false);
+		break;
+	case EXCLUSIVE:
+		if (!xdr_createverf3(xdrs, objp->createhow3_u.verf))
+			return (false);
+		break;
+	default:
+		return (false);
+	}
+	return (true);
 }
 
 bool xdr_CREATE3args(xdrs, objp)
@@ -1485,20 +1471,20 @@ register XDR *xdrs;
 CREATE3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_diropargs3(xdrs, &objp->where))
-    return (false);
-  if(!xdr_createhow3(xdrs, &objp->how))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_CREATE;
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->where))
+		return (false);
+	if (!xdr_createhow3(xdrs, &objp->how))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_CREATE;
+	return (true);
 }
 
 bool xdr_CREATE3resok(xdrs, objp)
@@ -1507,18 +1493,18 @@ CREATE3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_fh3(xdrs, &objp->obj))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_fh3(xdrs, &objp->obj))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_CREATE3resfail(xdrs, objp)
@@ -1527,14 +1513,14 @@ CREATE3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_CREATE3res(xdrs, objp)
@@ -1543,25 +1529,24 @@ CREATE3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_CREATE3resok(xdrs, &objp->CREATE3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_CREATE3resfail(xdrs, &objp->CREATE3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_CREATE3resok(xdrs, &objp->CREATE3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_CREATE3resfail(xdrs, &objp->CREATE3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_MKDIR3args(xdrs, objp)
@@ -1570,16 +1555,16 @@ MKDIR3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_diropargs3(xdrs, &objp->where))
-    return (false);
-  if(!xdr_sattr3(xdrs, &objp->attributes))
-    return (false);
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->where))
+		return (false);
+	if (!xdr_sattr3(xdrs, &objp->attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKDIR3resok(xdrs, objp)
@@ -1588,18 +1573,18 @@ MKDIR3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_fh3(xdrs, &objp->obj))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_fh3(xdrs, &objp->obj))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKDIR3resfail(xdrs, objp)
@@ -1608,14 +1593,14 @@ MKDIR3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKDIR3res(xdrs, objp)
@@ -1624,25 +1609,24 @@ MKDIR3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_MKDIR3resok(xdrs, &objp->MKDIR3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_MKDIR3resfail(xdrs, &objp->MKDIR3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_MKDIR3resok(xdrs, &objp->MKDIR3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_MKDIR3resfail(xdrs, &objp->MKDIR3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_symlinkdata3(xdrs, objp)
@@ -1651,16 +1635,16 @@ symlinkdata3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_sattr3(xdrs, &objp->symlink_attributes))
-    return (false);
-  if(!xdr_nfspath3(xdrs, &objp->symlink_data))
-    return (false);
-  return (true);
+	if (!xdr_sattr3(xdrs, &objp->symlink_attributes))
+		return (false);
+	if (!xdr_nfspath3(xdrs, &objp->symlink_data))
+		return (false);
+	return (true);
 }
 
 bool xdr_SYMLINK3args(xdrs, objp)
@@ -1669,16 +1653,16 @@ SYMLINK3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_diropargs3(xdrs, &objp->where))
-    return (false);
-  if(!xdr_symlinkdata3(xdrs, &objp->symlink))
-    return (false);
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->where))
+		return (false);
+	if (!xdr_symlinkdata3(xdrs, &objp->symlink))
+		return (false);
+	return (true);
 }
 
 bool xdr_SYMLINK3resok(xdrs, objp)
@@ -1687,18 +1671,18 @@ SYMLINK3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_fh3(xdrs, &objp->obj))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_fh3(xdrs, &objp->obj))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_SYMLINK3resfail(xdrs, objp)
@@ -1707,14 +1691,14 @@ SYMLINK3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_SYMLINK3res(xdrs, objp)
@@ -1723,25 +1707,24 @@ SYMLINK3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_SYMLINK3resok(xdrs, &objp->SYMLINK3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_SYMLINK3resfail(xdrs, &objp->SYMLINK3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_SYMLINK3resok(xdrs, &objp->SYMLINK3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_SYMLINK3resfail(xdrs, &objp->SYMLINK3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_devicedata3(xdrs, objp)
@@ -1750,16 +1733,16 @@ devicedata3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_sattr3(xdrs, &objp->dev_attributes))
-    return (false);
-  if(!xdr_specdata3(xdrs, &objp->spec))
-    return (false);
-  return (true);
+	if (!xdr_sattr3(xdrs, &objp->dev_attributes))
+		return (false);
+	if (!xdr_specdata3(xdrs, &objp->spec))
+		return (false);
+	return (true);
 }
 
 bool xdr_mknoddata3(xdrs, objp)
@@ -1768,30 +1751,29 @@ mknoddata3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_ftype3(xdrs, &objp->type))
-    return (false);
-  switch (objp->type)
-    {
-    case NF3CHR:
-    case NF3BLK:
-      if(!xdr_devicedata3(xdrs, &objp->mknoddata3_u.device))
-        return (false);
-      break;
-    case NF3SOCK:
-    case NF3FIFO:
-      if(!xdr_sattr3(xdrs, &objp->mknoddata3_u.pipe_attributes))
-        return (false);
-      break;
-    default:
-      return (true);
-      break;
-    }
-  return (true);
+	if (!xdr_ftype3(xdrs, &objp->type))
+		return (false);
+	switch (objp->type) {
+	case NF3CHR:
+	case NF3BLK:
+		if (!xdr_devicedata3(xdrs, &objp->mknoddata3_u.device))
+			return (false);
+		break;
+	case NF3SOCK:
+	case NF3FIFO:
+		if (!xdr_sattr3(xdrs, &objp->mknoddata3_u.pipe_attributes))
+			return (false);
+		break;
+	default:
+		return (true);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_MKNOD3args(xdrs, objp)
@@ -1800,16 +1782,16 @@ MKNOD3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_diropargs3(xdrs, &objp->where))
-    return (false);
-  if(!xdr_mknoddata3(xdrs, &objp->what))
-    return (false);
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->where))
+		return (false);
+	if (!xdr_mknoddata3(xdrs, &objp->what))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKNOD3resok(xdrs, objp)
@@ -1818,18 +1800,18 @@ MKNOD3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_fh3(xdrs, &objp->obj))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_fh3(xdrs, &objp->obj))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKNOD3resfail(xdrs, objp)
@@ -1838,14 +1820,14 @@ MKNOD3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_MKNOD3res(xdrs, objp)
@@ -1854,25 +1836,24 @@ MKNOD3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_MKNOD3resok(xdrs, &objp->MKNOD3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_MKNOD3resfail(xdrs, &objp->MKNOD3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_MKNOD3resok(xdrs, &objp->MKNOD3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_MKNOD3resfail(xdrs, &objp->MKNOD3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_REMOVE3args(xdrs, objp)
@@ -1880,18 +1861,18 @@ register XDR *xdrs;
 REMOVE3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_diropargs3(xdrs, &objp->object))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_REMOVE;
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->object))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_REMOVE;
+	return (true);
 }
 
 bool xdr_REMOVE3resok(xdrs, objp)
@@ -1900,14 +1881,14 @@ REMOVE3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_REMOVE3resfail(xdrs, objp)
@@ -1916,14 +1897,14 @@ REMOVE3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_REMOVE3res(xdrs, objp)
@@ -1932,25 +1913,24 @@ REMOVE3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_REMOVE3resok(xdrs, &objp->REMOVE3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_REMOVE3resfail(xdrs, &objp->REMOVE3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_REMOVE3resok(xdrs, &objp->REMOVE3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_REMOVE3resfail(xdrs, &objp->REMOVE3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_RMDIR3args(xdrs, objp)
@@ -1959,14 +1939,14 @@ RMDIR3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_diropargs3(xdrs, &objp->object))
-    return (false);
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->object))
+		return (false);
+	return (true);
 }
 
 bool xdr_RMDIR3resok(xdrs, objp)
@@ -1975,14 +1955,14 @@ RMDIR3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_RMDIR3resfail(xdrs, objp)
@@ -1991,14 +1971,14 @@ RMDIR3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->dir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->dir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_RMDIR3res(xdrs, objp)
@@ -2007,25 +1987,24 @@ RMDIR3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_RMDIR3resok(xdrs, &objp->RMDIR3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_RMDIR3resfail(xdrs, &objp->RMDIR3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_RMDIR3resok(xdrs, &objp->RMDIR3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_RMDIR3resfail(xdrs, &objp->RMDIR3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_RENAME3args(xdrs, objp)
@@ -2033,20 +2012,20 @@ register XDR *xdrs;
 RENAME3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_diropargs3(xdrs, &objp->from))
-    return (false);
-  if(!xdr_diropargs3(xdrs, &objp->to))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_RENAME;
-  return (true);
+	if (!xdr_diropargs3(xdrs, &objp->from))
+		return (false);
+	if (!xdr_diropargs3(xdrs, &objp->to))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_RENAME;
+	return (true);
 }
 
 bool xdr_RENAME3resok(xdrs, objp)
@@ -2055,16 +2034,16 @@ RENAME3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->fromdir_wcc))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->todir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->fromdir_wcc))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->todir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_RENAME3resfail(xdrs, objp)
@@ -2073,16 +2052,16 @@ RENAME3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->fromdir_wcc))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->todir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->fromdir_wcc))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->todir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_RENAME3res(xdrs, objp)
@@ -2091,25 +2070,24 @@ RENAME3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_RENAME3resok(xdrs, &objp->RENAME3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_RENAME3resfail(xdrs, &objp->RENAME3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_RENAME3resok(xdrs, &objp->RENAME3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_RENAME3resfail(xdrs, &objp->RENAME3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_LINK3args(xdrs, objp)
@@ -2118,16 +2096,16 @@ LINK3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->file))
-    return (false);
-  if(!xdr_diropargs3(xdrs, &objp->link))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->file))
+		return (false);
+	if (!xdr_diropargs3(xdrs, &objp->link))
+		return (false);
+	return (true);
 }
 
 bool xdr_LINK3resok(xdrs, objp)
@@ -2136,16 +2114,16 @@ LINK3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->file_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->linkdir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->file_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->linkdir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_LINK3resfail(xdrs, objp)
@@ -2154,16 +2132,16 @@ LINK3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->file_attributes))
-    return (false);
-  if(!xdr_wcc_data(xdrs, &objp->linkdir_wcc))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->file_attributes))
+		return (false);
+	if (!xdr_wcc_data(xdrs, &objp->linkdir_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_LINK3res(xdrs, objp)
@@ -2172,25 +2150,24 @@ LINK3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_LINK3resok(xdrs, &objp->LINK3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_LINK3resfail(xdrs, &objp->LINK3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_LINK3resok(xdrs, &objp->LINK3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_LINK3resfail(xdrs, &objp->LINK3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_READDIR3args(xdrs, objp)
@@ -2198,24 +2175,24 @@ register XDR *xdrs;
 READDIR3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_nfs_fh3(xdrs, &objp->dir))
-    return (false);
-  if(!xdr_cookie3(xdrs, &objp->cookie))
-    return (false);
-  if(!xdr_cookieverf3(xdrs, objp->cookieverf))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_READDIR;
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->dir))
+		return (false);
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return (false);
+	if (!xdr_cookieverf3(xdrs, objp->cookieverf))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_READDIR;
+	return (true);
 }
 
 bool xdr_entry3(xdrs, objp)
@@ -2224,21 +2201,22 @@ entry3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_fileid3(xdrs, &objp->fileid))
-    return (false);
-  if(!xdr_filename3(xdrs, &objp->name))
-    return (false);
-  if(!xdr_cookie3(xdrs, &objp->cookie))
-    return (false);
-  if(!xdr_pointer
-     (xdrs, (char **)&objp->nextentry, sizeof(entry3), (xdrproc_t) xdr_entry3))
-    return (false);
-  return (true);
+	if (!xdr_fileid3(xdrs, &objp->fileid))
+		return (false);
+	if (!xdr_filename3(xdrs, &objp->name))
+		return (false);
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return (false);
+	if (!xdr_pointer
+	    (xdrs, (char **)&objp->nextentry, sizeof(entry3),
+	     (xdrproc_t) xdr_entry3))
+		return (false);
+	return (true);
 }
 
 bool xdr_dirlist3(xdrs, objp)
@@ -2247,16 +2225,18 @@ dirlist3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_pointer(xdrs, (char **)&objp->entries, sizeof(entry3), (xdrproc_t) xdr_entry3))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->eof))
-    return (false);
-  return (true);
+	if (!xdr_pointer
+	    (xdrs, (char **)&objp->entries, sizeof(entry3),
+	     (xdrproc_t) xdr_entry3))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->eof))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIR3resok(xdrs, objp)
@@ -2265,18 +2245,18 @@ READDIR3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  if(!xdr_cookieverf3(xdrs, objp->cookieverf))
-    return (false);
-  if(!xdr_dirlist3(xdrs, &objp->reply))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	if (!xdr_cookieverf3(xdrs, objp->cookieverf))
+		return (false);
+	if (!xdr_dirlist3(xdrs, &objp->reply))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIR3resfail(xdrs, objp)
@@ -2285,14 +2265,14 @@ READDIR3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIR3res(xdrs, objp)
@@ -2301,25 +2281,24 @@ READDIR3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_READDIR3resok(xdrs, &objp->READDIR3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_READDIR3resfail(xdrs, &objp->READDIR3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_READDIR3resok(xdrs, &objp->READDIR3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_READDIR3resfail(xdrs, &objp->READDIR3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_READDIRPLUS3args(xdrs, objp)
@@ -2327,26 +2306,26 @@ register XDR *xdrs;
 READDIRPLUS3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_nfs_fh3(xdrs, &objp->dir))
-    return (false);
-  if(!xdr_cookie3(xdrs, &objp->cookie))
-    return (false);
-  if(!xdr_cookieverf3(xdrs, objp->cookieverf))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->dircount))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->maxcount))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_READDIR;
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->dir))
+		return (false);
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return (false);
+	if (!xdr_cookieverf3(xdrs, objp->cookieverf))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->dircount))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->maxcount))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_READDIR;
+	return (true);
 }
 
 bool xdr_entryplus3(xdrs, objp)
@@ -2355,25 +2334,26 @@ entryplus3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_fileid3(xdrs, &objp->fileid))
-    return (false);
-  if(!xdr_filename3(xdrs, &objp->name))
-    return (false);
-  if(!xdr_cookie3(xdrs, &objp->cookie))
-    return (false);
-  if(!xdr_post_op_attr(xdrs, &objp->name_attributes))
-    return (false);
-  if(!xdr_post_op_fh3(xdrs, &objp->name_handle))
-    return (false);
-  if(!xdr_pointer
-     (xdrs, (char **)&objp->nextentry, sizeof(entryplus3), (xdrproc_t) xdr_entryplus3))
-    return (false);
-  return (true);
+	if (!xdr_fileid3(xdrs, &objp->fileid))
+		return (false);
+	if (!xdr_filename3(xdrs, &objp->name))
+		return (false);
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return (false);
+	if (!xdr_post_op_attr(xdrs, &objp->name_attributes))
+		return (false);
+	if (!xdr_post_op_fh3(xdrs, &objp->name_handle))
+		return (false);
+	if (!xdr_pointer
+	    (xdrs, (char **)&objp->nextentry, sizeof(entryplus3),
+	     (xdrproc_t) xdr_entryplus3))
+		return (false);
+	return (true);
 }
 
 bool xdr_dirlistplus3(xdrs, objp)
@@ -2382,17 +2362,18 @@ dirlistplus3 *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_pointer
-     (xdrs, (char **)&objp->entries, sizeof(entryplus3), (xdrproc_t) xdr_entryplus3))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->eof))
-    return (false);
-  return (true);
+	if (!xdr_pointer
+	    (xdrs, (char **)&objp->entries, sizeof(entryplus3),
+	     (xdrproc_t) xdr_entryplus3))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->eof))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIRPLUS3resok(xdrs, objp)
@@ -2401,18 +2382,18 @@ READDIRPLUS3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  if(!xdr_cookieverf3(xdrs, objp->cookieverf))
-    return (false);
-  if(!xdr_dirlistplus3(xdrs, &objp->reply))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	if (!xdr_cookieverf3(xdrs, objp->cookieverf))
+		return (false);
+	if (!xdr_dirlistplus3(xdrs, &objp->reply))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIRPLUS3resfail(xdrs, objp)
@@ -2421,14 +2402,14 @@ READDIRPLUS3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->dir_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->dir_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_READDIRPLUS3res(xdrs, objp)
@@ -2437,25 +2418,26 @@ READDIRPLUS3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_READDIRPLUS3resok(xdrs, &objp->READDIRPLUS3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_READDIRPLUS3resfail(xdrs, &objp->READDIRPLUS3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_READDIRPLUS3resok
+		    (xdrs, &objp->READDIRPLUS3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_READDIRPLUS3resfail
+		    (xdrs, &objp->READDIRPLUS3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_FSSTAT3args(xdrs, objp)
@@ -2464,14 +2446,14 @@ FSSTAT3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->fsroot))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->fsroot))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSSTAT3resok(xdrs, objp)
@@ -2480,28 +2462,28 @@ FSSTAT3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->tbytes))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->fbytes))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->abytes))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->tfiles))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->ffiles))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->afiles))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->invarsec))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->tbytes))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->fbytes))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->abytes))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->tfiles))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->ffiles))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->afiles))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->invarsec))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSSTAT3resfail(xdrs, objp)
@@ -2510,14 +2492,14 @@ FSSTAT3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSSTAT3res(xdrs, objp)
@@ -2526,25 +2508,24 @@ FSSTAT3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_FSSTAT3resok(xdrs, &objp->FSSTAT3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_FSSTAT3resfail(xdrs, &objp->FSSTAT3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_FSSTAT3resok(xdrs, &objp->FSSTAT3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_FSSTAT3resfail(xdrs, &objp->FSSTAT3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_FSINFO3args(xdrs, objp)
@@ -2553,14 +2534,14 @@ FSINFO3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->fsroot))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->fsroot))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSINFO3resok(xdrs, objp)
@@ -2569,34 +2550,34 @@ FSINFO3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->rtmax))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->rtpref))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->rtmult))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->wtmax))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->wtpref))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->wtmult))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->dtpref))
-    return (false);
-  if(!xdr_size3(xdrs, &objp->maxfilesize))
-    return (false);
-  if(!xdr_nfstime3(xdrs, &objp->time_delta))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->properties))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->rtmax))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->rtpref))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->rtmult))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->wtmax))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->wtpref))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->wtmult))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->dtpref))
+		return (false);
+	if (!xdr_size3(xdrs, &objp->maxfilesize))
+		return (false);
+	if (!xdr_nfstime3(xdrs, &objp->time_delta))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->properties))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSINFO3resfail(xdrs, objp)
@@ -2605,14 +2586,14 @@ FSINFO3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_FSINFO3res(xdrs, objp)
@@ -2621,25 +2602,24 @@ FSINFO3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_FSINFO3resok(xdrs, &objp->FSINFO3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_FSINFO3resfail(xdrs, &objp->FSINFO3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_FSINFO3resok(xdrs, &objp->FSINFO3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_FSINFO3resfail(xdrs, &objp->FSINFO3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_PATHCONF3args(xdrs, objp)
@@ -2648,14 +2628,14 @@ PATHCONF3args *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs_fh3(xdrs, &objp->object))
-    return (false);
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->object))
+		return (false);
+	return (true);
 }
 
 bool xdr_PATHCONF3resok(xdrs, objp)
@@ -2664,26 +2644,26 @@ PATHCONF3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->linkmax))
-    return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->name_max))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->no_trunc))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->chown_restricted))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->case_insensitive))
-    return (false);
-  if(!xdr_bool(xdrs, &objp->case_preserving))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->linkmax))
+		return (false);
+	if (!xdr_nfs3_uint32(xdrs, &objp->name_max))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->no_trunc))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->chown_restricted))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->case_insensitive))
+		return (false);
+	if (!xdr_bool(xdrs, &objp->case_preserving))
+		return (false);
+	return (true);
 }
 
 bool xdr_PATHCONF3resfail(xdrs, objp)
@@ -2692,14 +2672,14 @@ PATHCONF3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_post_op_attr(xdrs, &objp->obj_attributes))
-    return (false);
-  return (true);
+	if (!xdr_post_op_attr(xdrs, &objp->obj_attributes))
+		return (false);
+	return (true);
 }
 
 bool xdr_PATHCONF3res(xdrs, objp)
@@ -2708,25 +2688,24 @@ PATHCONF3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_PATHCONF3resok(xdrs, &objp->PATHCONF3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_PATHCONF3resfail(xdrs, &objp->PATHCONF3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_PATHCONF3resok(xdrs, &objp->PATHCONF3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_PATHCONF3resfail(xdrs, &objp->PATHCONF3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
 
 bool xdr_COMMIT3args(xdrs, objp)
@@ -2734,22 +2713,22 @@ register XDR *xdrs;
 COMMIT3args *objp;
 {
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
-  struct nfs_request_lookahead *lkhd =
-    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
-    &dummy_lookahead;
+	struct nfs_request_lookahead *lkhd =
+	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
+	    x_public : &dummy_lookahead;
 
-  if(!xdr_nfs_fh3(xdrs, &objp->file))
-    return (false);
-  if(!xdr_offset3(xdrs, &objp->offset))
-    return (false);
-  if(!xdr_count3(xdrs, &objp->count))
-    return (false);
-  lkhd->flags |= NFS_LOOKAHEAD_COMMIT;
-  return (true);
+	if (!xdr_nfs_fh3(xdrs, &objp->file))
+		return (false);
+	if (!xdr_offset3(xdrs, &objp->offset))
+		return (false);
+	if (!xdr_count3(xdrs, &objp->count))
+		return (false);
+	lkhd->flags |= NFS_LOOKAHEAD_COMMIT;
+	return (true);
 }
 
 bool xdr_COMMIT3resok(xdrs, objp)
@@ -2758,16 +2737,16 @@ COMMIT3resok *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->file_wcc))
-    return (false);
-  if(!xdr_writeverf3(xdrs, objp->verf))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->file_wcc))
+		return (false);
+	if (!xdr_writeverf3(xdrs, objp->verf))
+		return (false);
+	return (true);
 }
 
 bool xdr_COMMIT3resfail(xdrs, objp)
@@ -2776,14 +2755,14 @@ COMMIT3resfail *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_wcc_data(xdrs, &objp->file_wcc))
-    return (false);
-  return (true);
+	if (!xdr_wcc_data(xdrs, &objp->file_wcc))
+		return (false);
+	return (true);
 }
 
 bool xdr_COMMIT3res(xdrs, objp)
@@ -2792,23 +2771,22 @@ COMMIT3res *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
-  register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__ ((__unused__)) * buf;
 #else
-  register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfsstat3(xdrs, &objp->status))
-    return (false);
-  switch (objp->status)
-    {
-    case NFS3_OK:
-      if(!xdr_COMMIT3resok(xdrs, &objp->COMMIT3res_u.resok))
-        return (false);
-      break;
-    default:
-      if(!xdr_COMMIT3resfail(xdrs, &objp->COMMIT3res_u.resfail))
-        return (false);
-      break;
-    }
-  return (true);
+	if (!xdr_nfsstat3(xdrs, &objp->status))
+		return (false);
+	switch (objp->status) {
+	case NFS3_OK:
+		if (!xdr_COMMIT3resok(xdrs, &objp->COMMIT3res_u.resok))
+			return (false);
+		break;
+	default:
+		if (!xdr_COMMIT3resfail(xdrs, &objp->COMMIT3res_u.resfail))
+			return (false);
+		break;
+	}
+	return (true);
 }
