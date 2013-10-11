@@ -36,21 +36,21 @@
 
 #if __FreeBSD_cc_version  >= 800001
 /* Fllowing syscalls are not yet implemented in vanilla FreeBSD kernels  */
-int getfhat(int fd, const char *path, fhandle_t *fhp)
+int getfhat(int fd, const char *path, fhandle_t * fhp)
 {
-	 /* currently this is only a stub untill we implement getfhat() */
-	 /* in FreeBSD kernel */
-	 return ENOTSUP;
+	/* currently this is only a stub untill we implement getfhat() */
+	/* in FreeBSD kernel */
+	return ENOTSUP;
 }
 
 int fhlink(struct fhandle *fhp, int tofd, const char *to)
 {
-	 return ENOTSUP;
+	return ENOTSUP;
 }
 
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 {
-	 return ENOTSUP;
+	return ENOTSUP;
 }
 
 #endif
@@ -79,85 +79,84 @@ int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 #define SYS_fhlink      526
 #define SYS_fhreadlink  527
 
-
 int openat(int dir_fd, const char *file, int oflag, mode_t mode)
 {
-          return syscall(SYS_openat, dir_fd, file, oflag, mode);
+	return syscall(SYS_openat, dir_fd, file, oflag, mode);
 }
 
-int mkdirat (int dir_fd, const char *file, mode_t mode)
+int mkdirat(int dir_fd, const char *file, mode_t mode)
 {
-          return syscall(SYS_mkdirat, dir_fd, file, mode);
+	return syscall(SYS_mkdirat, dir_fd, file, mode);
 }
 
-int mknodat (int dir_fd, const char *file, mode_t mode, dev_t dev)
+int mknodat(int dir_fd, const char *file, mode_t mode, dev_t dev)
 {
-          return syscall(SYS_mknodat, dir_fd, file, mode, dev);
+	return syscall(SYS_mknodat, dir_fd, file, mode, dev);
 }
 
-int fchownat (int dir_fd, const char *file, uid_t owner, gid_t group, int flag)
+int fchownat(int dir_fd, const char *file, uid_t owner, gid_t group, int flag)
 {
-          return syscall(SYS_fchownat, dir_fd, file, owner, group, flag);
+	return syscall(SYS_fchownat, dir_fd, file, owner, group, flag);
 }
 
 int futimesat(int dir_fd, char *filename, struct timeval *utimes)
 {
-          return syscall(SYS_futimesat, dir_fd, filename, utimes);
+	return syscall(SYS_futimesat, dir_fd, filename, utimes);
 }
 
-int fstatat (int dir_fd, const char *file, struct stat *st, int flag)
+int fstatat(int dir_fd, const char *file, struct stat *st, int flag)
 {
-          return syscall(SYS_fstatat, dir_fd, file, st, flag);
+	return syscall(SYS_fstatat, dir_fd, file, st, flag);
 }
 
-int unlinkat (int dir_fd, const char *file, int flag)
+int unlinkat(int dir_fd, const char *file, int flag)
 {
-          return syscall(SYS_unlinkat, dir_fd, file, flag);
+	return syscall(SYS_unlinkat, dir_fd, file, flag);
 }
 
-int renameat (int oldfd, const char *old, int newfd, const char *new)
+int renameat(int oldfd, const char *old, int newfd, const char *new)
 {
-          return syscall(SYS_renameat, oldfd, old, newfd, new);
+	return syscall(SYS_renameat, oldfd, old, newfd, new);
 }
 
-int linkat (int fromfd, const char *from, int tofd, const char *to, int flags)
+int linkat(int fromfd, const char *from, int tofd, const char *to, int flags)
 {
-          return syscall(SYS_linkat, fromfd, from, tofd, to, flags);
+	return syscall(SYS_linkat, fromfd, from, tofd, to, flags);
 }
 
-int symlinkat (const char *from, int tofd, const char *to)
+int symlinkat(const char *from, int tofd, const char *to)
 {
-          return syscall(SYS_symlinkat, from, tofd, to);
+	return syscall(SYS_symlinkat, from, tofd, to);
 }
 
-int readlinkat (int fd, const char *path, char *buf, size_t len)
+int readlinkat(int fd, const char *path, char *buf, size_t len)
 {
-          return syscall(SYS_readlinkat, fd, path, buf, len);
+	return syscall(SYS_readlinkat, fd, path, buf, len);
 }
 
 int fchmodat(int dir_fd, const char *filename, mode_t mode, int flags)
 {
-          return syscall(SYS_fchmodat, dir_fd, filename, mode, flags);
+	return syscall(SYS_fchmodat, dir_fd, filename, mode, flags);
 }
 
 int faccessat(int dir_fd, char *filename, int mode, int flags)
 {
-          return syscall(SYS_faccessat, dir_fd, filename, mode, flags);
+	return syscall(SYS_faccessat, dir_fd, filename, mode, flags);
 }
 
 int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
 {
-          return syscall(SYS_getfhat, dir_fd, fname, fhp, flag);
+	return syscall(SYS_getfhat, dir_fd, fname, fhp, flag);
 }
 
 int fhlink(struct fhandle *fhp, int tofd, const char *to)
 {
-          return syscall(SYS_fhlink, fhp, tofd, to);
+	return syscall(SYS_fhlink, fhp, tofd, to);
 }
 
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 {
-          return syscall(SYS_fhreadlink, fhp, buf, bufsize);
+	return syscall(SYS_fhreadlink, fhp, buf, bufsize);
 }
 
-#endif /* SYS_openat */
+#endif				/* SYS_openat */
