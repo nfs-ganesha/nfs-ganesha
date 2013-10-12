@@ -107,7 +107,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
-	if (rc != 0) {
+	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
