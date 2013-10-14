@@ -74,7 +74,6 @@ struct gpfs_ds {
                fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;          \
                (_struct_status_).major = (_code_) ;                            \
                (_struct_status_).minor = (_minor_) ;                           \
-               fsal_increment_nbcall( _f_,_struct_status_ );                   \
                if(fsal_error_is_event(_struct_status_))                        \
                  {                                                             \
                    LogEvent(COMPONENT_FSAL,                                    \

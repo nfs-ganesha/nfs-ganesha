@@ -29,16 +29,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 					fs_common_initinfo_t * fs_common_info);
 
 /**
- *  Increments the number of calls for a function.
- */
-void fsal_increment_nbcall(int function_index, fsal_status_t status);
-
-/**
- * Retrieves current thread statistics.
- */
-void fsal_internal_getstats(fsal_statistics_t * output_stats);
-
-/**
  * fsal_do_log:
  * Indicates if an FSAL error has to be traced
  * into its log file in the NIV_EVENT level.
@@ -237,9 +227,6 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,	/* IN */
 			    fsal_op_context_t * p_context,	/* IN */
 			    fsal_path_t * p_local_path,	/* IN */
 			    fsal_rcpflag_t transfer_opt /* IN */ );
-
-void PROXYFSAL_get_stats(fsal_statistics_t * stats,	/* OUT */
-			 bool reset /* IN */ );
 
 int PROXYFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
 			fsal_status_t * status);

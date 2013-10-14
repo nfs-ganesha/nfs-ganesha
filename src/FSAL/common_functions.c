@@ -10,8 +10,6 @@
 
 #include "config.h"
 
-#define fsal_increment_nbcall( _f_,_struct_status_ )
-
 #include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>

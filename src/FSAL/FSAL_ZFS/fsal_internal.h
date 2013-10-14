@@ -57,11 +57,6 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 
 #endif
 
-/**
- *  Increments the number of calls for a function.
- */
-void fsal_increment_nbcall(int function_index, fsal_status_t status);
-
 #if 0
 
 /* All the call to FSAL to be wrapped */
@@ -207,9 +202,6 @@ fsal_status_t ZFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
 			     fsal_attrib_list_t * p_src_dir_attributes,	/* [ IN/OUT ] */
 			     fsal_attrib_list_t *
 			     p_tgt_dir_attributes /* [ IN/OUT ] */ );
-
-void ZFSFSAL_get_stats(fsal_statistics_t * stats,	/* OUT */
-		       bool reset /* IN */ );
 
 fsal_status_t ZFSFSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
 			       fsal_op_context_t * p_context,	/* IN */

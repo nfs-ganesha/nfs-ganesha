@@ -61,11 +61,6 @@ extern int open_by_handle_fd;
 
 #endif
 
-/**
- *  Increments the number of calls for a function.
- */
-void fsal_increment_nbcall(int function_index, fsal_status_t status);
-
 void set_credentials(struct user_cred *creds);
 void set_creds_to_root();
 
@@ -138,9 +133,6 @@ fsal_status_t LUSTREFSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
 				fsal_attrib_list_t * p_src_dir_attributes,	/* [ IN/OUT ] */
 				fsal_attrib_list_t *
 				p_tgt_dir_attributes /* [ IN/OUT ] */ );
-
-void LUSTREFSAL_get_stats(fsal_statistics_t * stats,	/* OUT */
-			  bool reset /* IN */ );
 
 fsal_status_t LUSTREFSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
 				  fsal_op_context_t * p_context,	/* IN */
