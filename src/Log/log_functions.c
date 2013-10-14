@@ -752,121 +752,6 @@ void Fatal(void)
 	exit(2);
 }
 
-/* Feel free to add what you want here. This is a collection
- * of debug info that will be printed when a log message is
- * printed that matches or exceeds the severity level of
- * component LOG_MESSAGE_DEBUGINFO. */
-extern uint32_t open_fd_count;
-
-#define BT_MAX 256
-
-char *get_debug_info(int *size)
-{
-	int bt_count, i, b_left;
-	long bt_data[BT_MAX];
-	char **bt_str;
-	struct display_buffer dspbuf;
-
-	struct rlimit rlim = {
-		.rlim_cur = RLIM_INFINITY,
-		.rlim_max = RLIM_INFINITY
-	};
-
-	bt_count = backtrace((void **)&bt_data, BT_MAX);
-
-	if (bt_count > 0)
-		bt_str = backtrace_symbols((void **)&bt_data, bt_count);
-	else
-		return NULL;
-
-	if (bt_str == NULL || *bt_str == NULL)
-		return NULL;
-
-	/* Form a single printable string from array of backtrace symbols */
-	dspbuf.b_size = 256;	/* Account for rest of string. */
-
-	for (i = 0; i < bt_count; i++)
-		dspbuf.b_size += strlen(bt_str[i]) + 1;	/* account for \n */
-
-	dspbuf.b_start = gsh_malloc(dspbuf.b_size);
-	dspbuf.b_current = dspbuf.b_start;
-
-	if (dspbuf.b_start == NULL) {
-		free(bt_str);
-		return NULL;
-	}
-
-	b_left = display_cat(&dspbuf, "\nDEBUG INFO -->\n" "backtrace:\n");
-
-	for (i = 0; i < bt_count && b_left > 0; i++) {
-		b_left = display_cat(&dspbuf, bt_str[i]);
-
-		if (b_left > 0)
-			b_left = display_cat(&dspbuf, "\n");
-	}
-
-	getrlimit(RLIMIT_NOFILE, &rlim);
-
-	if (b_left > 0)
-		b_left =
-		    display_printf(&dspbuf,
-				   "\n" "open_fd_count        = %-6d\n"
-				   "rlimit_cur           = %-6ld\n"
-				   "rlimit_max           = %-6ld\n"
-				   "<--DEBUG INFO\n\n", open_fd_count,
-				   rlim.rlim_cur, rlim.rlim_max);
-
-	if (size != NULL)
-		*size = display_buffer_len(&dspbuf);
-
-	free(bt_str);
-
-	return dspbuf.b_start;
-}
-
-void print_debug_info_fd(int fd)
-{
-	int size;
-	char *str = get_debug_info(&size);
-	int __attribute__ ((unused)) rc;
-
-	if (str != NULL) {
-		rc = write(fd, str, size);
-		gsh_free(str);
-	}
-}
-
-void print_debug_info_file(FILE *flux)
-{
-	char *str = get_debug_info(NULL);
-
-	if (str != NULL) {
-		fputs(str, flux);
-		gsh_free(str);
-	}
-}
-
-void print_debug_info_syslog(int level)
-{
-	int size;
-	char *debug_str = get_debug_info(&size);
-	char *end_c = debug_str, *first_c = debug_str;
-
-	if (debug_str != NULL) {
-		while (*end_c != '\0' && (end_c - debug_str) <= size) {
-			if (*end_c == '\n' || *end_c == '\0') {
-				*end_c = '\0';
-				if ((end_c - debug_str) != 0)
-					syslog(tabLogLevel[level].syslog_level,
-					       "%s", first_c);
-				first_c = end_c + 1;
-			}
-			end_c++;
-		}
-		gsh_free(debug_str);
-	}
-}
-
 #ifdef _DONT_HAVE_LOCALTIME_R
 
 /* Localtime is not reentrant...
@@ -1121,7 +1006,7 @@ void _SetLevelDebug(int level_to_set)
 	if (level_to_set >= NB_LOG_LEVEL)
 		level_to_set = NB_LOG_LEVEL - 1;
 
-	for (i = COMPONENT_ALL; i < COMPONENT_FAKE; i++)
+	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
 		LogComponents[i].comp_log_level = level_to_set;
 }				/* _SetLevelDebug */
 
@@ -1424,10 +1309,6 @@ static int log_to_syslog(struct log_facility *facility, log_levels_t level,
 	/* Writing to syslog. */
 	syslog(tabLogLevel[level].syslog_level, "%s", compstr);
 
-	if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
-	    && level != NIV_NULL)
-		print_debug_info_syslog(level);
-
 	return 0;
 }
 
@@ -1459,10 +1340,6 @@ static int log_to_file(struct log_facility *facility, log_levels_t level,
 
 			goto error;
 		}
-
-		if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
-		    && level != NIV_NULL)
-			print_debug_info_fd(fd);
 
 		rc = close(fd);
 
@@ -1515,10 +1392,6 @@ static int log_to_stream(struct log_facility *facility, log_levels_t level,
 	}
 
 	rc = fputs(msg, stream);
-
-	if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
-	    && level != NIV_NULL && facility->lf_headers != LH_NONE)
-		print_debug_info_file(stream);
 
 	if (rc != EOF)
 		rc = fflush(stream);
@@ -1792,10 +1665,7 @@ log_component_info LogComponents[COMPONENT_COUNT] = {
 	{COMPONENT_9P_DISPATCH, "COMPONENT_9P_DISPATCH", "9P DISP", NIV_EVENT,},
 	{COMPONENT_FSAL_UP, "COMPONENT_FSAL_UP", "FSAL_UP", NIV_EVENT,},
 	{COMPONENT_DBUS, "COMPONENT_DBUS", "DBUS", NIV_EVENT,},
-	{COMPONENT_FAKE, "COMPONENT_FAKE", "FAKE", NIV_NULL,},
-	{LOG_MESSAGE_DEBUGINFO, "LOG_MESSAGE_DEBUGINFO",
-		"LOG MESSAGE DEBUGINFO", NIV_NULL,}
-,};
+};
 
 void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 			      char *function, log_levels_t level, char *format,
@@ -2162,8 +2032,6 @@ HANDLE_PROP(COMPONENT_9P);
 HANDLE_PROP(COMPONENT_9P_DISPATCH);
 HANDLE_PROP(COMPONENT_FSAL_UP);
 HANDLE_PROP(COMPONENT_DBUS);
-HANDLE_PROP(COMPONENT_FAKE);
-HANDLE_PROP(LOG_MESSAGE_DEBUGINFO);
 
 static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(COMPONENT_ALL),
@@ -2210,8 +2078,6 @@ static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(COMPONENT_9P_DISPATCH),
 	LOG_PROPERTY_ITEM(COMPONENT_FSAL_UP),
 	LOG_PROPERTY_ITEM(COMPONENT_DBUS),
-	LOG_PROPERTY_ITEM(COMPONENT_FAKE),
-	LOG_PROPERTY_ITEM(LOG_MESSAGE_DEBUGINFO),
 	NULL
 };
 
@@ -2448,7 +2314,7 @@ void reread_log_config()
 	config_file_t config_struct;
 
 	/* Clear out the flag indicating component was set from environment. */
-	for (i = COMPONENT_ALL; i < COMPONENT_FAKE; i++)
+	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
 		LogComponents[i].comp_env_set = FALSE;
 
 	/* If no configuration file is given, then the caller must want to
