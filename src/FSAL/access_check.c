@@ -41,7 +41,7 @@ static bool fsal_check_ace_group(gid_t gid, struct user_cred *creds)
 	return false;
 }
 
-static bool fsal_check_ace_matches(fsal_ace_t * pace, struct user_cred *creds,
+static bool fsal_check_ace_matches(fsal_ace_t *pace, struct user_cred *creds,
 				   bool is_owner, bool is_group)
 {
 	bool result = false;
@@ -89,9 +89,11 @@ static bool fsal_check_ace_matches(fsal_ace_t * pace, struct user_cred *creds,
 	return result;
 }
 
-static bool fsal_check_ace_applicable(fsal_ace_t * pace,
-				      struct user_cred *creds, bool is_dir,
-				      bool is_owner, bool is_group,
+static bool fsal_check_ace_applicable(fsal_ace_t *pace,
+				      struct user_cred *creds,
+				      bool is_dir,
+				      bool is_owner,
+				      bool is_group,
 				      bool is_root)
 {
 	bool is_applicable = false;
@@ -104,8 +106,8 @@ static bool fsal_check_ace_applicable(fsal_ace_t * pace,
 		return false;
 	}
 
-	/* Use GPFS internal flag to further check the entry is applicable to this
-	 * object type. */
+	/* Use GPFS internal flag to further check the entry is applicable
+	 * to this object type. */
 	if (is_file) {
 		if (!IS_FSAL_FILE_APPLICABLE(*pace)) {
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
@@ -138,7 +140,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t * pace,
 
 #define ACL_DEBUG_BUF_SIZE 256
 
-int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t * pace)
+int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t *pace)
 {
 	if (!pace)
 		return display_cat(dspbuf, "NULL");
@@ -153,7 +155,7 @@ int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t * pace)
 }
 
 int display_fsal_ace(struct display_buffer *dspbuf, int ace_number,
-		     fsal_ace_t * pace, bool is_dir)
+		     fsal_ace_t *pace, bool is_dir)
 {
 	int b_left;
 
@@ -266,9 +268,11 @@ int display_fsal_v4mask(struct display_buffer *dspbuf, fsal_aceperm_t v4mask,
 }
 
 static void fsal_print_access_by_acl(int naces, int ace_number,
-				     fsal_ace_t * pace, fsal_aceperm_t perm,
+				     fsal_ace_t *pace,
+				     fsal_aceperm_t perm,
 				     enum fsal_errors_t access_result,
-				     bool is_dir, struct user_cred *creds)
+				     bool is_dir,
+				     struct user_cred *creds)
 {
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = { sizeof(str), str, str };
@@ -298,12 +302,23 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
 	LogFullDebug(COMPONENT_NFS_V4_ACL, "%s", str);
 }
 
-static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
-					   fsal_aceperm_t v4mask,	/* IN */
-					   fsal_accessflags_t * allowed,
-					   fsal_accessflags_t * denied,
-					   struct attrlist *p_object_attributes
-					   /* IN */ )
+/**
+ * @brief Check access using v4 ACL list
+ *
+ * @param[in] creds
+ * @param[in] v4mask
+ * @param[in] allowed
+ * @param[in] denied
+ * @param[in] p_object_attributes
+ *
+ * @return ERR_FSAL_NO_ERROR or ERR_FSAL_ACCESS
+ */
+
+static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
+					   fsal_aceperm_t v4mask,
+					   fsal_accessflags_t *allowed,
+					   fsal_accessflags_t *denied,
+					   struct attrlist *p_object_attributes)
 {
 	fsal_aceperm_t missing_access;
 	fsal_aceperm_t tperm;
@@ -380,8 +395,8 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 	is_owner = fsal_check_ace_owner(uid, creds);
 	is_group = fsal_check_ace_group(gid, creds);
 
-	/* Always grant READ_ACL, WRITE_ACL and READ_ATTR, WRITE_ATTR to the file
-	 * owner. */
+	/* Always grant READ_ACL, WRITE_ACL and READ_ATTR, WRITE_ATTR
+	 * to the file owner. */
 	if (is_owner) {
 		if (allowed != NULL)
 			*allowed |=
@@ -400,7 +415,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 			fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
-	// TODO: Even if user is admin, audit/alarm checks should be done.
+	/** @TODO@ Even if user is admin, audit/alarm checks should be done. */
 
 	for (pace = pacl->aces; pace < pacl->aces + pacl->naces; pace++) {
 		ace_number += 1;
@@ -419,7 +434,8 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 			    (pace, creds, is_dir, is_owner, is_group,
 			     is_root)) {
 				if (IS_FSAL_ACE_ALLOW(*pace)) {
-					/* Do not set bits which are already denied */
+					/* Do not set bits which
+					 * are already denied */
 					if (denied)
 						tperm = pace->perm & ~*denied;
 					else
@@ -468,9 +484,9 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 
 					if (denied != NULL)
 						*denied |= v4mask & pace->perm;
-					if (denied == NULL
-					    || (v4mask &
-						FSAL_ACE4_PERM_CONTINUE) == 0) {
+					if (denied == NULL ||
+					    (v4mask &
+					     FSAL_ACE4_PERM_CONTINUE) == 0) {
 						if ((pace->
 						     perm & missing_access &
 						     (FSAL_ACE_PERM_WRITE_ATTR |
@@ -497,8 +513,10 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 					missing_access &=
 					    ~(pace->perm & missing_access);
 
-					/* If this DENY ACE blocked the last remaining requested access
-					 * bits, break out of the loop because we're done and don't
+					/* If this DENY ACE blocked the last
+					 * remaining requested access
+					 * bits, break out of the loop because
+					 * we're done and don't
 					 * want to evaluate any more ACEs.
 					 */
 					if (!missing_access)
@@ -525,25 +543,36 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,	/* IN */
 	}
 }
 
-static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,	/* IN */
-					      struct req_op_context *req_ctx, fsal_accessflags_t access_type,	/* IN */
-					      fsal_accessflags_t * allowed,
-					      fsal_accessflags_t * denied,
-					      struct attrlist
-					      *p_object_attributes /* IN */ )
+/**
+ * @brief Check access using mode bits only
+ *
+ * @param[in] creds
+ * @param[in] req_ctx
+ * @param[in] access_type
+ * @param[in] allowed
+ * @param[in] denied
+ * @param[in] p_object_attributes
+ *
+ * @return ERR_FSAL_NO_ERROR or ERR_FSAL_ACCESS
+ */
+
+static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,
+					      struct req_op_context *req_ctx,
+					      fsal_accessflags_t access_type,
+					      fsal_accessflags_t *allowed,
+					      fsal_accessflags_t *denied,
+					      struct attrlist *p_object_attributes)
 {
 	uid_t uid;
 	gid_t gid;
 	mode_t mode, mask;
 	bool rc;
 
-	if (allowed != NULL) {
+	if (allowed != NULL)
 		*allowed = 0;
-	}
 
-	if (denied != NULL) {
+	if (denied != NULL)
 		*denied = 0;
-	}
 
 	if (!access_type) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
@@ -563,18 +592,15 @@ static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,	/* IN */
 		rc = ((access_type & FSAL_X_OK) == 0)
 		    || ((mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0);
 		if (!rc) {
-			if (allowed != NULL) {
+			if (allowed != NULL)
 				*allowed = access_type & ~FSAL_X_OK;
-			}
-			if (denied != NULL) {
+			if (denied != NULL)
 				*denied = access_type & FSAL_X_OK;
-			}
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 				     "Root is not allowed execute access unless at least one user is allowed execute access.");
 		} else {
-			if (allowed != NULL) {
+			if (allowed != NULL)
 				*allowed = access_type;
-			}
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 				     "Root is granted access.");
 		}
@@ -610,13 +636,11 @@ static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,	/* IN */
 						  0) | ((mode & S_IXOTH) ?
 							FSAL_X_OK : 0);
 
-	if (allowed != NULL) {
+	if (allowed != NULL)
 		*allowed = mask & access_type;
-	}
 
-	if (denied != NULL) {
+	if (denied != NULL)
 		*denied = ~mask & access_type;
-	}
 
 	/* Success if mask covers all the requested bits */
 	return (mask & access_type) == access_type ? fsalstat(ERR_FSAL_NO_ERROR,
@@ -629,14 +653,14 @@ static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,	/* IN */
  * NOTE: A fsal can replace this method with their own custom access
  *       checker.  If so and they wish to have an option to switch
  *       between their custom and this one, it their test_access
- *       method's responsibility to do that test and select this one. 
+ *       method's responsibility to do that test and select this one.
  */
 
-fsal_status_t fsal_test_access(struct fsal_obj_handle * obj_hdl,
-			       struct req_op_context * req_ctx,
+fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
+			       struct req_op_context *req_ctx,
 			       fsal_accessflags_t access_type,
-			       fsal_accessflags_t * allowed,
-			       fsal_accessflags_t * denied)
+			       fsal_accessflags_t *allowed,
+			       fsal_accessflags_t *denied)
 {
 	struct attrlist *attribs = &obj_hdl->attributes;
 

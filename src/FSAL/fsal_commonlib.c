@@ -80,7 +80,7 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 
 /* fsal_detach_export
  * called by an export when it is releasing itself.
- * does not require a reference to be taken.  The list has 
+ * does not require a reference to be taken.  The list has
  * kept the fsal "busy".
  */
 
@@ -123,27 +123,24 @@ static void fsal_detach_handle(struct fsal_export *exp_hdl,
 
 int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 {
-	extern struct export_ops def_export_ops;
+	extern struct export_ops def_export_ops; /* freebsd gcc workaround */
 	extern struct fsal_obj_ops def_handle_ops;
 	extern struct fsal_ds_ops def_ds_ops;
 	pthread_mutexattr_t attrs;
 
 	exp->ops = gsh_malloc(sizeof(struct export_ops));
-	if (exp->ops == NULL) {
+	if (exp->ops == NULL)
 		goto errout;
-	}
 	memcpy(exp->ops, &def_export_ops, sizeof(struct export_ops));
 
 	exp->obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
-	if (exp->obj_ops == NULL) {
+	if (exp->obj_ops == NULL)
 		goto errout;
-	}
 	memcpy(exp->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 
 	exp->ds_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
-	if (exp->ds_ops == NULL) {
+	if (exp->ds_ops == NULL)
 		goto errout;
-	}
 	memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
 	glist_init(&exp->handles);
@@ -222,7 +219,7 @@ int fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 int fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
 {
 	pthread_mutex_lock(&obj->lock);
-	obj->refs--;		/* subtract the reference when we were created */
+	obj->refs--;	/* subtract the reference when we were created */
 	if (obj->refs != 0) {
 		pthread_mutex_unlock(&obj->lock);
 		return EBUSY;

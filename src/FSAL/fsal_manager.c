@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -69,11 +69,11 @@ static int so_error;
 static struct fsal_module *new_fsal;
 
 static enum load_state {
-	init,			/* server start state when program .init sections can run */
-	idle,			/* switch from init->idle early in main() */
-	loading,		/* dlopen is doing its thing. set by load_fsal() just prior */
-	registered,		/* signal by registration by module that all is well */
-	error			/* signal by registration by module that all is not well */
+	init,		/* in server start state. .init sections can run */
+	idle,		/* switch from init->idle early in main() */
+	loading,	/* in dlopen(). set by load_fsal() just prior */
+	registered,	/* signal by registration that all is well */
+	error		/* signal by registration that all is not well */
 } load_state = init;
 
 /* start_fsals
@@ -117,14 +117,16 @@ int start_fsals(config_file_t config)
 			item_cnt = config_GetNbItems(block);
 			for (i = 0; i < item_cnt; i++) {
 				item = config_GetItemByIndex(block, i);
-				if (config_GetKeyValue(item, &key, &value) != 0) {
+				if (config_GetKeyValue(item,
+						       &key, &value) != 0) {
 					LogFatal(COMPONENT_INIT,
 						 "Error fetching [%d]"
 						 " from config section \"%s\"",
 						 i, CONF_LABEL_NFS_CORE);
 					return 1;
 				}
-				if (strcasecmp(key, "FSAL_Shared_Library") == 0) {
+				if (strcasecmp(key,
+					       "FSAL_Shared_Library") == 0) {
 					struct fsal_module *fsal_hdl;
 					int rc;
 
@@ -161,10 +163,8 @@ int start_fsals(config_file_t config)
 			}
 		}
 	}
-	if (glist_empty(&fsal_list)) {
+	if (glist_empty(&fsal_list))
 		LogFatal(COMPONENT_INIT, "No fsal modules loaded");
-	}
-
 	return 1;
 }
 
@@ -291,7 +291,7 @@ int load_fsal(const char *path, const char *name,
 
 /* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;	/* recover handle from .ctor  and poison again */
+	fsal = new_fsal;	/* recover handle from .ctor and poison again */
 	new_fsal = NULL;
 	fsal->path = dl_path;
 	fsal->dl_handle = dl;

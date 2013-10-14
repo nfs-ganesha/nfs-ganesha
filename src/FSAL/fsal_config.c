@@ -112,75 +112,81 @@ struct fsal_fs_params {
  *
  */
 
-#define SET_INIT_INFO( _common_info_p_ , _field_name_ ,   \
-                                    _field_behavior_ , _value_ ) do \
-           {                                                        \
-             _common_info_p_->_field_name_.how = _field_behavior_ ; \
-             if ( _field_behavior_ != FSAL_INIT_FS_DEFAULT )        \
-               _common_info_p_->_field_name_.val = _value_ ; \
-           } while (0)
+#define SET_INIT_INFO(_common_info_p_ , _field_name_ ,	    \
+		      _field_behavior_ , _value_)		\
+	do {								\
+		_common_info_p_->_field_name_.how = _field_behavior_;	\
+		if (_field_behavior_ != FSAL_INIT_FS_DEFAULT)		\
+			_common_info_p_->_field_name_.val = _value_;	\
+	} while (0)
 
-#define SET_INTEGER_PARAM( cfg, init_info, _field )          \
-    switch( init_info._field.how ){                          \
-    case FSAL_INIT_FORCE_VALUE :                             \
-      /* force the value in any case */                      \
-      cfg->_field = init_info._field.val;                    \
-      break;                                                 \
-    case FSAL_INIT_MAX_LIMIT :                               \
-      /* check the higher limit */                           \
-      if ( cfg->_field > init_info._field.val )              \
-        cfg->_field = init_info._field.val ;                 \
-      break;                                                 \
-    case FSAL_INIT_MIN_LIMIT :                               \
-      /* check the lower limit */                            \
-      if ( cfg->_field < init_info._field.val )              \
-        cfg->_field = init_info._field.val ;                 \
-      break;                                                 \
-    case FSAL_INIT_FS_DEFAULT:                               \
-    default:                                                 \
-    /* In the other cases, we keep the default value. */     \
-        break;                                               \
-    }
+#define SET_INTEGER_PARAM(cfg, init_info, _field)          \
+	do { \
+		switch (init_info._field.how) {		    \
+		case FSAL_INIT_FORCE_VALUE:		    \
+			/* force the value in any case */   \
+			cfg->_field = init_info._field.val; \
+			break;				    \
+		case FSAL_INIT_MAX_LIMIT:			\
+			/* check the higher limit */		\
+			if (cfg->_field > init_info._field.val)	\
+				cfg->_field = init_info._field.val;	\
+			break;						\
+		case FSAL_INIT_MIN_LIMIT:				\
+			/* check the lower limit */			\
+			if (cfg->_field < init_info._field.val)	\
+				cfg->_field = init_info._field.val;	\
+			break;						\
+		case FSAL_INIT_FS_DEFAULT:				\
+		default:						\
+			/* In the other cases, we keep the default value. */ \
+			break;						\
+		}							\
+	} while (0)
 
-#define SET_BITMAP_PARAM( cfg, init_info, _field )           \
-    switch( init_info._field.how ){                          \
-    case FSAL_INIT_FORCE_VALUE :                             \
-        /* force the value in any case */                    \
-        cfg->_field = init_info._field.val;                  \
-        break;                                               \
-    case FSAL_INIT_MAX_LIMIT :                               \
-      /* proceed a bit AND */                                \
-      cfg->_field &= init_info._field.val ;                  \
-      break;                                                 \
-    case FSAL_INIT_MIN_LIMIT :                               \
-      /* proceed a bit OR */                                 \
-      cfg->_field |= init_info._field.val ;                  \
-      break;                                                 \
-    case FSAL_INIT_FS_DEFAULT:                               \
-    default:                                                 \
-    /* In the other cases, we keep the default value. */     \
-        break;                                               \
-    }
+#define SET_BITMAP_PARAM(cfg, init_info, _field)           \
+	do { \
+		switch (init_info._field.how) {		     \
+		case FSAL_INIT_FORCE_VALUE:		     \
+			/* force the value in any case */    \
+			cfg->_field = init_info._field.val;  \
+			break;				     \
+		case FSAL_INIT_MAX_LIMIT:		     \
+			/* proceed a bit AND */		     \
+			cfg->_field &= init_info._field.val; \
+			break;				     \
+		case FSAL_INIT_MIN_LIMIT:		     \
+			/* proceed a bit OR */		     \
+			cfg->_field |= init_info._field.val; \
+			break;				     \
+		case FSAL_INIT_FS_DEFAULT:		     \
+		default:						\
+			/* In the other cases, we keep the default value. */ \
+			break;						\
+		}							\
+	} while (0)
 
-#define SET_BOOLEAN_PARAM( cfg, init_info, _field )          \
-    switch( init_info._field.how ){                          \
-    case FSAL_INIT_FORCE_VALUE :                             \
-        /* force the value in any case */                    \
-        cfg->_field = init_info._field.val;                  \
-        break;                                               \
-    case FSAL_INIT_MAX_LIMIT :                               \
-      /* proceed a boolean AND */                            \
-      cfg->_field = cfg->_field && init_info._field.val ;    \
-      break;                                                 \
-    case FSAL_INIT_MIN_LIMIT :                               \
-      /* proceed a boolean OR */                             \
-      cfg->_field = cfg->_field && init_info._field.val ;    \
-      break;                                                 \
-    case FSAL_INIT_FS_DEFAULT:                               \
-    default:                                                 \
-    /* In the other cases, we keep the default value. */     \
-        break;                                               \
-    }
+#define SET_BOOLEAN_PARAM(cfg, init_info, _field)          \
+	do {					     \
+		switch (init_info._field.how) {		     \
+		case FSAL_INIT_FORCE_VALUE:		     \
+			/* force the value in any case */    \
+			cfg->_field = init_info._field.val;  \
+			break;				     \
+		case FSAL_INIT_MAX_LIMIT:		     \
+			/* proceed a boolean AND */			\
+			cfg->_field = cfg->_field && init_info._field.val; \
+			break;						\
+		case FSAL_INIT_MIN_LIMIT:				\
+			/* proceed a boolean OR */			\
+			cfg->_field = cfg->_field && init_info._field.val; \
+			break;						\
+		case FSAL_INIT_FS_DEFAULT:				\
+		default:						\
+			/* In the other cases, we keep the default value. */ \
+			break;						\
+		}							\
+	} while (0)
 
 static fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
 						    const char *fsal_name,
@@ -281,8 +287,7 @@ static fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
 }
 
 fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
-						  struct fsal_fs_params *
-						  common_info)
+						  struct fsal_fs_params *common_info)
 {
 	int err;
 	int var_max, var_index;
@@ -440,48 +445,48 @@ fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
  * common functions for fsal info methods
  */
 
-bool fsal_supports(struct fsal_staticfsinfo_t * info,
+bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		   fsal_fsinfo_options_t option)
 {
 	switch (option) {
 	case fso_no_trunc:
-		return ! !info->no_trunc;
+		return !!info->no_trunc;
 	case fso_chown_restricted:
-		return ! !info->chown_restricted;
+		return !!info->chown_restricted;
 	case fso_case_insensitive:
-		return ! !info->case_insensitive;
+		return !!info->case_insensitive;
 	case fso_case_preserving:
-		return ! !info->case_preserving;
+		return !!info->case_preserving;
 	case fso_link_support:
-		return ! !info->link_support;
+		return !!info->link_support;
 	case fso_symlink_support:
-		return ! !info->symlink_support;
+		return !!info->symlink_support;
 	case fso_lock_support:
-		return ! !info->lock_support;
+		return !!info->lock_support;
 	case fso_lock_support_owner:
-		return ! !info->lock_support_owner;
+		return !!info->lock_support_owner;
 	case fso_lock_support_async_block:
-		return ! !info->lock_support_async_block;
+		return !!info->lock_support_async_block;
 	case fso_named_attr:
-		return ! !info->named_attr;
+		return !!info->named_attr;
 	case fso_unique_handles:
-		return ! !info->unique_handles;
+		return !!info->unique_handles;
 	case fso_cansettime:
-		return ! !info->cansettime;
+		return !!info->cansettime;
 	case fso_homogenous:
-		return ! !info->homogenous;
+		return !!info->homogenous;
 	case fso_auth_exportpath_xdev:
-		return ! !info->auth_exportpath_xdev;
+		return !!info->auth_exportpath_xdev;
 	case fso_delegations:
-		return ! !info->delegations;
+		return !!info->delegations;
 	case fso_pnfs_ds_supported:
-		return ! !info->pnfs_file;
+		return !!info->pnfs_file;
 	case fso_accesscheck_support:
-		return ! !info->accesscheck_support;
+		return !!info->accesscheck_support;
 	case fso_share_support:
-		return ! !info->share_support;
+		return !!info->share_support;
 	case fso_share_support_owner:
-		return ! !info->share_support_owner;
+		return !!info->share_support_owner;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do
@@ -489,22 +494,22 @@ bool fsal_supports(struct fsal_staticfsinfo_t * info,
 	}
 }
 
-uint64_t fsal_maxfilesize(struct fsal_staticfsinfo_t * info)
+uint64_t fsal_maxfilesize(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxfilesize;
 }
 
-uint32_t fsal_maxlink(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_maxlink(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxlink;
 }
 
-uint32_t fsal_maxnamelen(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_maxnamelen(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxnamelen;
 }
 
-uint32_t fsal_maxpathlen(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_maxpathlen(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxpathlen;
 }
@@ -514,39 +519,39 @@ struct timespec fsal_lease_time(struct fsal_staticfsinfo_t *info)
 	return info->lease_time;
 }
 
-fsal_aclsupp_t fsal_acl_support(struct fsal_staticfsinfo_t * info)
+fsal_aclsupp_t fsal_acl_support(struct fsal_staticfsinfo_t *info)
 {
 	return info->acl_support;
 }
 
-attrmask_t fsal_supported_attrs(struct fsal_staticfsinfo_t * info)
+attrmask_t fsal_supported_attrs(struct fsal_staticfsinfo_t *info)
 {
 	return info->supported_attrs;
 }
 
-uint32_t fsal_maxread(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_maxread(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxread;
 }
 
-uint32_t fsal_maxwrite(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_maxwrite(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxwrite;
 }
 
-uint32_t fsal_umask(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_umask(struct fsal_staticfsinfo_t *info)
 {
 	return info->umask;
 }
 
-uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t * info)
+uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info)
 {
 	return info->xattr_access_rights;
 }
 
 fsal_status_t fsal_load_config(const char *name, config_file_t config_struct,
-			       fsal_init_info_t * fsal_init,
-			       struct fsal_staticfsinfo_t * fs_info,
+			       fsal_init_info_t *fsal_init,
+			       struct fsal_staticfsinfo_t *fs_info,
 			       fsal_extra_arg_parser_f extra)
 {
 	fsal_status_t st;
@@ -578,7 +583,7 @@ fsal_status_t fsal_load_config(const char *name, config_file_t config_struct,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void init_fsal_parameters(fsal_init_info_t * init_info)
+void init_fsal_parameters(fsal_init_info_t *init_info)
 {
 	return;
 }

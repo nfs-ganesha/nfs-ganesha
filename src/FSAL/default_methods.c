@@ -70,6 +70,7 @@
 
 /* Global lock for fsal list.
  * kept in fsal_manager.c
+ * Special checkpatch case here.  This is private between the two files.
  */
 
 extern pthread_mutex_t fsal_lock;
@@ -255,9 +256,9 @@ static fsal_status_t export_release(struct fsal_export *exp_hdl)
  * default case is not supported
  */
 
-fsal_status_t lookup_path(struct fsal_export * exp_hdl,
-			  const struct req_op_context * opctx, const char *path,
-			  struct fsal_obj_handle ** handle)
+fsal_status_t lookup_path(struct fsal_export *exp_hdl,
+			  const struct req_op_context *opctx, const char *path,
+			  struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -314,7 +315,7 @@ static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -448,7 +449,7 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+			       fsal_quota_t *pquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -460,7 +461,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -469,7 +470,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
  * @brief Be uninformative about a device
  */
 
-static nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR * da_addr_body,
+static nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
 			      const layouttype4 type,
 			      const struct pnfs_deviceid *deviceid)
 {
@@ -492,8 +493,8 @@ static nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
  * @brief Support no layout types
  */
 
-static void fs_layouttypes(struct fsal_export *exp_hdl, size_t * count,
-			   const layouttype4 ** types)
+static void fs_layouttypes(struct fsal_export *exp_hdl, size_t *count,
+			   const layouttype4 **types)
 {
 	*count = 0;
 	*types = NULL;
@@ -648,8 +649,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof)
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, bool *eof)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -685,7 +686,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const struct req_op_context *opctx,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t * dev, struct attrlist *attrib,
+			      fsal_dev_t *dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -800,8 +801,8 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t * read_amount,
-			       bool * end_of_file)
+			       void *buffer, size_t *read_amount,
+			       bool *end_of_file)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -813,8 +814,8 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t * write_amount,
-				bool * fsal_stable)
+				void *buffer, size_t *write_amount,
+				bool *fsal_stable)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -836,8 +837,8 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 			     const struct req_op_context *opctx, void *p_owner,
 			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t * request_lock,
-			     fsal_lock_param_t * conflicting_lock)
+			     fsal_lock_param_t *request_lock,
+			     fsal_lock_param_t *conflicting_lock)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -868,7 +869,7 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				    const struct req_op_context *opctx,
 				    unsigned int cookie,
-				    fsal_xattrent_t * xattrs_tab,
+				    fsal_xattrent_t *xattrs_tab,
 				    unsigned int xattrs_tabsize,
 				    unsigned int *p_nb_returned,
 				    int *end_of_list)
@@ -897,7 +898,7 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					      *opctx, const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
-					      size_t * p_output_size)
+					      size_t *p_output_size)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -911,7 +912,7 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
-					    size_t * p_output_size)
+					    size_t *p_output_size)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -980,7 +981,7 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * default case always be happy
  */
 
-fsal_status_t lru_cleanup(struct fsal_obj_handle * obj_hdl,
+fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			  lru_actions_t requests)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1024,7 +1025,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_LAYOUTUNAVAILABLE
  */
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR * loc_body,
+			  struct req_op_context *req_ctx, XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -1046,7 +1047,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_NOTSUPP
  */
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR * lrf_body,
+			     struct req_op_context *req_ctx, XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	return NFS4ERR_NOTSUPP;
@@ -1066,7 +1067,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR * lou_body,
+			     struct req_op_context *req_ctx, XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -1134,9 +1135,8 @@ struct fsal_obj_ops def_handle_ops = {
 static void ds_get(struct fsal_ds_handle *const ds_hdl)
 {
 	pthread_mutex_lock(&ds_hdl->lock);
-	if (ds_hdl->refs > 0) {
+	if (ds_hdl->refs > 0)
 		ds_hdl->refs++;
-	}
 	pthread_mutex_unlock(&ds_hdl->lock);
 }
 
@@ -1162,9 +1162,8 @@ static nfsstat4 ds_put(struct fsal_ds_handle *const ds_hdl)
 		retval = 0;
 	}
 	pthread_mutex_unlock(&ds_hdl->lock);
-	if (ds_hdl->refs == 0) {
+	if (ds_hdl->refs == 0)
 		return ds_hdl->ops->release(ds_hdl);
-	}
 
 	return retval;
 }
@@ -1202,7 +1201,7 @@ static nfsstat4 ds_release(struct fsal_ds_handle *const ds_hdl)
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
 			struct req_op_context *const req_ctx,
-			const stateid4 * stateid, const offset4 offset,
+			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
 			bool * const end_of_file)
@@ -1230,7 +1229,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
 			 struct req_op_context *const req_ctx,
-			 const stateid4 * stateid, const offset4 offset,
+			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
 			 count4 * const written_length,

@@ -80,7 +80,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 
 	for (i = 0;
 	     tab_errstatus_FSAL[i].numero != fsal_err
-	     && tab_errstatus_FSAL[i].numero != ERR_NULL; i++) ;
+	     && tab_errstatus_FSAL[i].numero != ERR_NULL; i++)
+		;
 
 	return tab_errstatus_FSAL[i].msg;
 }
@@ -91,7 +92,8 @@ const char *label_fsal_err(fsal_errors_t fsal_err)
 
 	for (i = 0;
 	     tab_errstatus_FSAL[i].numero != fsal_err
-	     && tab_errstatus_FSAL[i].numero != ERR_NULL; i++) ;
+	     && tab_errstatus_FSAL[i].numero != ERR_NULL; i++)
+		;
 
 	return tab_errstatus_FSAL[i].label;
 }

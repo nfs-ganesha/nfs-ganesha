@@ -55,9 +55,8 @@ static void shutdown_handles(struct fsal_export *export)
 	/* FSAL return code */
 	fsal_status_t fsal_status;
 
-	if (glist_empty(&export->handles)) {
+	if (glist_empty(&export->handles))
 		return;
-	}
 
 	LogDebug(COMPONENT_FSAL, "Extra file handles hanging around.");
 	glist_for_each_safe(hi, hn, &export->handles) {
@@ -90,9 +89,8 @@ static void shutdown_ds_handles(struct fsal_export *export)
 	struct glist_head *hn = NULL;
 	/* FSAL return code */
 	nfsstat4 status = 0;
-	if (glist_empty(&export->ds_handles)) {
+	if (glist_empty(&export->ds_handles))
 		return;
-	}
 
 	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
 	glist_for_each_safe(hi, hn, &export->ds_handles) {
@@ -133,9 +131,8 @@ static void shutdown_export(struct fsal_export *export)
 	}
 
 	fsal_status = export->ops->release(export);
-	if (FSAL_IS_ERROR(fsal_status)) {
+	if (FSAL_IS_ERROR(fsal_status))
 		LogMajor(COMPONENT_FSAL, "Cannot release FSAL export object!");
-	}
 }
 
 /**
