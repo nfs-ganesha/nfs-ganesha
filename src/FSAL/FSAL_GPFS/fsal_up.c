@@ -152,8 +152,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		retry = 0;
 
 		LogDebug(COMPONENT_FSAL_UP,
-			 "inode update: rc %d reason %d update ino %ld", rc,
-			 reason, callback.buf->st_ino);
+			 "inode update: rc %d reason %d update ino %ld flags:%x",
+			 rc, reason, callback.buf->st_ino, flags);
 
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "inode update: flags:%x callback.handle:%p"
@@ -284,13 +284,21 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				/* Check for accepted flags, any other changes just invalidate. */
 				if (flags &
 				    (UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
-				     UP_TIMES | UP_ATIME)) {
+				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
 					uint32_t upflags = 0;
 					attr.mask = 0;
 					if (flags & UP_SIZE)
 						attr.mask |=
 						    ATTR_CHGTIME | ATTR_CHANGE |
 						    ATTR_SIZE | ATTR_SPACEUSED;
+					if (flags & UP_SIZE_BIG) {
+						attr.mask |=
+						    ATTR_CHGTIME | ATTR_CHANGE |
+						    ATTR_SIZE | ATTR_SPACEUSED;
+						upflags |=
+						    fsal_up_update_filesize_inc |
+						    fsal_up_update_spaceused_inc;
+					}
 					if (flags & UP_MODE)
 						attr.mask |=
 						    ATTR_CHGTIME | ATTR_CHANGE |

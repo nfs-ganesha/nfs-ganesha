@@ -165,12 +165,33 @@ static cache_inode_status_t update(struct fsal_export *export,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)
-	    && ((flags & ~fsal_up_update_filesize_inc)
-		|| (entry->obj_handle->attributes.filesize <=
-		    attr->filesize))) {
-		entry->obj_handle->attributes.filesize = attr->filesize;
-		mutatis_mutandis = true;
+	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+		if (flags & fsal_up_update_filesize_inc) {
+			if (attr->filesize >
+			    entry->obj_handle->attributes.filesize) {
+			  entry->obj_handle->attributes.filesize =
+			      attr->filesize;
+			  mutatis_mutandis = true;
+			}
+		} else {
+			entry->obj_handle->attributes.filesize = attr->filesize;
+			mutatis_mutandis = true;
+		}
+	}
+
+	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
+		if (flags & fsal_up_update_spaceused_inc) {
+			if (attr->spaceused >
+			    entry->obj_handle->attributes.spaceused) {
+			  entry->obj_handle->attributes.spaceused =
+			      attr->spaceused;
+			  mutatis_mutandis = true;
+			}
+		} else {
+			entry->obj_handle->attributes.spaceused =
+			   attr->spaceused;
+			mutatis_mutandis = true;
+		}
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
@@ -246,14 +267,6 @@ static cache_inode_status_t update(struct fsal_export *export,
 		(gsh_time_cmp
 		 (&attr->mtime, &entry->obj_handle->attributes.mtime) == 1))) {
 		entry->obj_handle->attributes.mtime = attr->mtime;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)
-	    && ((flags & ~fsal_up_update_spaceused_inc)
-		|| (entry->obj_handle->attributes.spaceused <=
-		    attr->spaceused))) {
-		entry->obj_handle->attributes.spaceused = attr->spaceused;
 		mutatis_mutandis = true;
 	}
 
