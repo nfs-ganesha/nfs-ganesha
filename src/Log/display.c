@@ -52,7 +52,9 @@
  */
 static inline int _display_buffer_remain(struct display_buffer *dspbuf)
 {
-	/* Compute number of bytes remaining in buffer (including space for null). */
+	/* Compute number of bytes remaining in buffer
+	 * (including space for null).
+	 */
 	return dspbuf->b_size - (dspbuf->b_current - dspbuf->b_start);
 }
 
@@ -78,8 +80,8 @@ int display_buffer_remain(struct display_buffer *dspbuf)
 	    || dspbuf->b_current > (dspbuf->b_start + dspbuf->b_size))
 		dspbuf->b_current = dspbuf->b_start;
 
-	/* Buffer is too small, just make it an emptry string and mark the buffer
-	 * as overrun.
+	/* Buffer is too small, just make it an emptry
+	 * string and mark the buffer as overrun.
 	 */
 	if (dspbuf->b_size < 4) {
 		dspbuf->b_start[0] = '\0';
@@ -87,7 +89,9 @@ int display_buffer_remain(struct display_buffer *dspbuf)
 		return 0;
 	}
 
-	/* Compute number of bytes remaining in buffer (including space for null). */
+	/* Compute number of bytes remaining in buffer
+	 * (including space for null).
+	 */
 	return _display_buffer_remain(dspbuf);
 }
 
@@ -95,7 +99,7 @@ int display_buffer_remain(struct display_buffer *dspbuf)
  * @brief Finish up a buffer after overflowing it.
  *
  * @param[in,out] dspbuf The buffer.
- * @param[in]     ptr    The proposed position in the buffer for the "..." string.
+ * @param[in]     ptr    Proposed position in the buffer for the "..." string.
  *
  * This routine will validate the final character that will remain in the buffer
  * prior to the "..." to make sure it is not a partial UTF-8 character. If so,
@@ -117,7 +121,8 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
 	end = ptr + 1;
 
 	/* Now ptr points to last byte that will remain part of string.
-	 * Next we need to check if this byte is the end of a valid UTF-8 character.
+	 * Next we need to check if this byte is the end of a valid UTF-8
+	 * character.
 	 */
 	while ((ptr > dspbuf->b_start) && ((*ptr & 0xc0) == 0x80))
 		ptr--;
@@ -129,10 +134,10 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
 	/* Compute the length of the last UTF-8 character */
 	utf8len = end - ptr;
 
-	/* Check if last character is valid UTF-8, for multibyte characters the first
-	 * byte is a string of 1 bits followed by a 0 bit. So for example, a 2 byte
-	 * character leads off with 110xxxxxxx, so we mask with 11100000 (0xe0) and
-	 * test for 11000000 (0xc0).
+	/* Check if last character is valid UTF-8, for multibyte characters the
+	 * first byte is a string of 1 bits followed by a 0 bit. So for example,
+	 * a 2 byte character leads off with 110xxxxxxx, so we mask with
+	 * 11100000 (0xe0) and test for 11000000 (0xc0).
 	 */
 	if ((((*ptr & 0x80) == 0x00) && (utf8len == 1))
 	    || (((*ptr & 0xe0) == 0xc0) && (utf8len == 2))
@@ -158,7 +163,7 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
  *
  * This routine validates the buffer, then checks if the buffer is already full
  * in which case it will mark the buffer as overflowed and finish up the buffer.
- * 
+ *
  */
 int display_start(struct display_buffer *dspbuf)
 {
@@ -168,16 +173,17 @@ int display_start(struct display_buffer *dspbuf)
 	if (b_left == 0)
 		return 0;
 
-	/* If buffer is already full, indicate overflow now, and indicate no space
-	 * is left (so caller doesn't bother to do anything.
+	/* If buffer is already full, indicate overflow now, and indicate
+	 * no space is left (so caller doesn't bother to do anything.
 	 */
 	if (b_left == 1) {
 		/* Increment past end and finish buffer. */
 		dspbuf->b_current++;
 		b_left--;
 
-		/* Back up 3 bytes before last byte (note that b_current points
-		 * PAST the last byte of the buffer since the buffer has overflowed).
+		/* Back up 3 bytes before last byte (note that b_current
+		 * points PAST the last byte of the buffer since the
+		 * buffer has overflowed).
 		 */
 		_display_complete_overflow(dspbuf, dspbuf->b_current - 4);
 	}
@@ -199,18 +205,17 @@ int display_start(struct display_buffer *dspbuf)
  * display_buffer. It must not be called by routines that use other display
  * routines to build a buffer (since the last such routine executed will
  * have called this routine).
- * 
+ *
  */
 int display_finish(struct display_buffer *dspbuf)
 {
-	/*
-	 * display_buffer_remain will return the current number of bytes left in the
-	 * buffer. If this is 0, and we just appended to the buffer (i.e.
-	 * display_buffer_remain was NOT 0 before appending), then the last append
-	 * just overflowed the buffer (note that if it exactly filled the buffer,
-	 * display_buffer_remain would have returned 1). Since the buffer just
-	 * overflowed, the overflow will be indicated by truncating the string to
-	 * allow space for a three character "..." sequence.
+	/* display_buffer_remain will return the current number of bytes left in
+	 * the buffer. If this is 0, and we just appended to the buffer (i.e.
+	 * display_buffer_remain was NOT 0 before appending), then the last
+	 * append just overflowed the buffer (note that if it exactly filled the
+	 * buffer, display_buffer_remain would have returned 1). Since the
+	 * buffer just overflowed, the overflow will be indicated by truncating
+	 * the string to allow space for a three character "..." sequence.
 	 */
 	int b_left = display_buffer_remain(dspbuf);
 
@@ -235,7 +240,7 @@ int display_finish(struct display_buffer *dspbuf)
  * @return the bytes remaining in the buffer.
  *
  * After a buffer has been appended to, check for overflow.
- * 
+ *
  */
 int display_force_overflow(struct display_buffer *dspbuf)
 {
@@ -245,14 +250,16 @@ int display_force_overflow(struct display_buffer *dspbuf)
 		return b_left;
 
 	if (b_left < 3) {
-		/* There aren't at least 3 characters left, back up to allow for them.
-		 * If there aren't room for 3 more non-0 bytes in the buffer, then (baring
-		 * multi-byte UTF-8 charts), the "..." will always be at the very end of
-		 * the buffer, that is determined by b_start + b_size, b_current is
-		 * currently b_start + b_size - b_left so instead of using b_current,
-		 * we just back up 4 bytes from the end of the buffer to make the space.
-		 * _display_complete_overflow will deal with the possibility that a UTF-8
-		 * character ended up truncated as a result.
+		/* There aren't at least 3 characters left, back up to allow for
+		 * them. If there aren't room for 3 more non-0 bytes in the
+		 * buffer, then (baring multi-byte UTF-8 charts), the "..." will
+		 * always be at the very end of the buffer, that is determined
+		 * by b_start + b_size, b_current is currently
+		 * b_start + b_size - b_left so instead of using b_current, we
+		 * just back up 4 bytes from the end of the buffer to make the
+		 * space. _display_complete_overflow will deal with the
+		 * possibility that a UTF-8 character ended up truncated as a
+		 * result.
 		 */
 		_display_complete_overflow(dspbuf,
 					   dspbuf->b_start + dspbuf->b_size -
@@ -276,7 +283,7 @@ int display_force_overflow(struct display_buffer *dspbuf)
  * @param[in]     args   The va_list args
  *
  * @return the bytes remaining in the buffer.
- * 
+ *
  */
 int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
 		    va_list args)
@@ -287,15 +294,17 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
 	if (b_left <= 0)
 		return b_left;
 
-	/* snprintf into the buffer no more than b_left bytes. snprintf assures the
-	 * buffer is null terminated (so will copy at most b_left characters).
+	/* snprintf into the buffer no more than b_left bytes. snprintf assures
+	 * the buffer is null terminated (so will copy at most b_left
+	 * characters).
 	 */
 	len = vsnprintf(dspbuf->b_current, b_left, fmt, args);
 
 	if (len >= b_left) {
-		/* snprintf indicated that if the full string was printed, it would have
-		 * overflowed. By incrementing b_current by b_left, b_current now points
-		 * beyond the buffer and clearly marks the buffer as full.
+		/* snprintf indicated that if the full string was printed, it
+		 * would have overflowed. By incrementing b_current by b_left,
+		 * b_current now points beyond the buffer and clearly marks the
+		 * buffer as full.
 		 */
 		dspbuf->b_current += b_left;
 	} else {
@@ -315,7 +324,7 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @param[in]     len    The number of bytes to display
  *
  * @return the bytes remaining in the buffer.
- * 
+ *
  */
 int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
 {
@@ -356,14 +365,14 @@ int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
  * @param[in,out] dspbuf The buffer.
  * @oaram[in]     value  The bytes to display
  * @param[in]     len    The number of bytes to display
- * @param[in]     max    The maximum number of bytes from the opaque value to display
+ * @param[in]     max    Max number of bytes from the opaque value to display
  *
  * @return the bytes remaining in the buffer.
  *
  * This routine also attempts to detect a printable value and if so, displays
  * that instead of converting value to a hex string. It uses min(len,max) as
  * the number of bytes to use from the opaque value.
- * 
+ *
  */
 int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 			     int len, int max)
@@ -402,8 +411,9 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 			break;
 
 	if (i == len) {
-		/* Entirely printable character, so we will just copy the characters into
-		 * the buffer (to the extent there is room for them).
+		/* Entirely printable character, so we will just copy the
+		 * characters into the buffer (to the extent there is room
+		 * for them).
 		 */
 		b_left = display_len_cat(dspbuf, value, cpy);
 	} else {
@@ -427,7 +437,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
  * @param[in]     len    The length of the string
  *
  * @return the bytes remaining in the buffer.
- * 
+ *
  */
 int display_len_cat(struct display_buffer *dspbuf, char *str, int len)
 {
@@ -477,7 +487,7 @@ int display_len_cat(struct display_buffer *dspbuf, char *str, int len)
  * If the string is truncated, that will be indicated with "..." characters.
  * Basically this routine makes a sub-display buffer of max+1 bytes and uses
  * display_cat to achieve the truncation.
- * 
+ *
  */
 int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max)
 {
@@ -487,8 +497,8 @@ int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max)
 	if (b_left <= 0)
 		return b_left;
 
-	/* If there isn't room left in dspbuf after max, then just use display_cat
-	 * so that dspbuf will be properly finished.
+	/* If there isn't room left in dspbuf after max, then just use
+	 * display_cat so that dspbuf will be properly finished.
 	 */
 	if ((max + 1) >= b_left)
 		return display_cat(dspbuf, str);
@@ -504,8 +514,8 @@ int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max)
 	 * NOTE b_left can't be -1 because catbuf is declared on the stack.
 	 */
 	if (b_left == 0) {
-		/* Overflowed catbuf, catbuf.b_current points past the terminating null.
-		 * Roll back to point at the null.
+		/* Overflowed catbuf, catbuf.b_current points past the
+		 * terminating null. Roll back to point at the null.
 		 */
 		dspbuf->b_current = catbuf.b_current - 1;
 	} else {
@@ -513,8 +523,8 @@ int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max)
 		dspbuf->b_current = catbuf.b_current;
 	}
 
-	/* we know dspbuf itself can not have overflowed so just return the new
-	 * remaing buffer space.
+	/* we know dspbuf itself can not have overflowed
+	 * so just return the new remaing buffer space.
 	 */
 	return _display_buffer_remain(dspbuf);
 }
