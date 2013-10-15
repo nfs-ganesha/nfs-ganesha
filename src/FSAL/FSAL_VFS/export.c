@@ -23,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* export.c
@@ -63,8 +63,8 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl)
 	return myself->root_fd;
 }
 
-static int vfs_fsal_open_exp(struct fsal_export *exp, vfs_file_handle_t * fh,
-			     int openflags, fsal_errors_t * fsal_error)
+static int vfs_fsal_open_exp(struct fsal_export *exp, vfs_file_handle_t *fh,
+			     int openflags, fsal_errors_t *fsal_error)
 {
 	int mount_fd = vfs_get_root_fd(exp);
 	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
@@ -81,7 +81,7 @@ static int vfs_fsal_open_exp(struct fsal_export *exp, vfs_file_handle_t * fh,
 	return fd;
 }
 
-static int vfs_exp_fd_to_handle(int fd, vfs_file_handle_t * fh)
+static int vfs_exp_fd_to_handle(int fd, vfs_file_handle_t *fh)
 {
 	int mntid;
 	return vfs_fd_to_handle(fd, fh, &mntid);
@@ -139,7 +139,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	struct vfs_fsal_export *myself;
 	struct statvfs buffstatvfs;
@@ -279,7 +279,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+			       fsal_quota_t *pquota)
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -313,7 +313,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval =
 	    QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -339,7 +339,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -371,50 +371,40 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
 	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	if (pquota->bhardlimit != 0) {
+	if (pquota->bhardlimit != 0)
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
-	}
-	if (pquota->bsoftlimit != 0) {
+	if (pquota->bsoftlimit != 0)
 		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
-	}
-	if (pquota->fhardlimit != 0) {
+	if (pquota->fhardlimit != 0)
 		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
-	}
-	if (pquota->btimeleft != 0) {
+	if (pquota->btimeleft != 0)
 		fs_quota.dqb_btime = pquota->btimeleft;
-	}
-	if (pquota->ftimeleft != 0) {
+	if (pquota->ftimeleft != 0)
 		fs_quota.dqb_itime = pquota->ftimeleft;
-	}
 #ifdef LINUX
-	if (pquota->bhardlimit != 0) {
+	if (pquota->bhardlimit != 0)
 		fs_quota.dqb_valid |= QIF_BLIMITS;
-	}
-	if (pquota->bsoftlimit != 0) {
+	if (pquota->bsoftlimit != 0)
 		fs_quota.dqb_valid |= QIF_BLIMITS;
-	}
-	if (pquota->fhardlimit != 0) {
+	if (pquota->fhardlimit != 0)
 		fs_quota.dqb_valid |= QIF_ILIMITS;
-	}
-	if (pquota->btimeleft != 0) {
+	if (pquota->btimeleft != 0)
 		fs_quota.dqb_valid |= QIF_BTIME;
-	}
-	if (pquota->ftimeleft != 0) {
+	if (pquota->ftimeleft != 0)
 		fs_quota.dqb_valid |= QIF_ITIME;
-	}
 #endif
 	retval =
 	    QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto err;
 	}
-	if (presquota != NULL) {
+	if (presquota != NULL)
 		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
 				 presquota);
-	}
+
  err:
 	return fsalstat(fsal_error, retval);
 }
@@ -486,7 +476,7 @@ void vfs_export_ops_init(struct export_ops *ops)
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
-/* fs_specific_has() parses the fs_specific string for a particular key, 
+/* fs_specific_has() parses the fs_specific string for a particular key,
    returns true if found, and optionally returns a val if the string is
    of the form key=val.
  *
@@ -537,19 +527,19 @@ static bool fs_specific_has(const char *fs_specific, const char *key, char *val,
  * returns the export with one reference taken.
  */
 
-fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path,
 				const char *fs_specific,
-				struct exportlist * exp_entry,
-				struct fsal_module * next_fsal,
-				const struct fsal_up_vector * up_ops,
-				struct fsal_export ** export)
+				struct exportlist *exp_entry,
+				struct fsal_module *next_fsal,
+				const struct fsal_up_vector *up_ops,
+				struct fsal_export **export)
 {
 	struct vfs_fsal_export *myself;
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way... */
+	char mntdir[MAXPATHLEN + 1]; /* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN + 1];
 #ifdef LINUX
 	char hdllib[MAXPATHLEN + 1];
@@ -657,7 +647,10 @@ fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
 		goto errout;
 	}
 #ifdef LINUX
-	if (fs_specific_has(fs_specific, "handle_lib", hdllib, sizeof(hdllib))) {
+	if (fs_specific_has(fs_specific,
+			    "handle_lib",
+			    hdllib,
+			    sizeof(hdllib))) {
 		void *dl;
 		void *sym;
 

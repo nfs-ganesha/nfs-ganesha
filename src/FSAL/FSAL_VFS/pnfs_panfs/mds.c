@@ -62,7 +62,7 @@
 	do { if (0) printf(fmt, ##a); } while (0)
 
 /* FIXME: We assume xdrmem. How to do this generic I don't know */
-static void _XDR_2_ioctlxdr_read_begin(XDR * xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_read_begin(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
 	pixdr->xdr_buff = xdr->x_private;
 	pixdr->xdr_alloc_len = xdr->x_handy;
@@ -72,14 +72,14 @@ static void _XDR_2_ioctlxdr_read_begin(XDR * xdr, struct pan_ioctl_xdr *pixdr)
 }
 
 /* We need to update the XDR with the encoded bytes */
-static void _XDR_2_ioctlxdr_read_end(XDR * xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_read_end(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
 	xdr->x_handy -= pixdr->xdr_len;
 	xdr->x_private = (char *)xdr->x_private + pixdr->xdr_len;
 	DBG_PRNT2("xdr_len=%d x_private=%p\n", pixdr->xdr_len, xdr->x_private);
 }
 
-static void _XDR_2_ioctlxdr_write(XDR * xdr, struct pan_ioctl_xdr *pixdr)
+static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
 	pixdr->xdr_len = xdr ? xdr_getpos(xdr) : 0;
 	if (pixdr->xdr_len && xdr->x_base) {
@@ -128,7 +128,7 @@ size_t fs_da_addr_size(struct fsal_export *exp_hdl)
 }
 
 static
-nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR * da_addr_body,
+nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
 		       const layouttype4 type,
 		       const struct pnfs_deviceid *deviceid)
 {
@@ -157,8 +157,8 @@ nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
 }
 
 static
-void fs_layouttypes(struct fsal_export *exp_hdl, size_t * count,
-		    const layouttype4 ** types)
+void fs_layouttypes(struct fsal_export *exp_hdl, size_t *count,
+		    const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_OSD2_OBJECTS;
 
@@ -193,7 +193,7 @@ size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 /*================================= handle ops ===============================*/
 static
 nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-		   struct req_op_context *req_ctx, XDR * loc_body,
+		   struct req_op_context *req_ctx, XDR *loc_body,
 		   const struct fsal_layoutget_arg *arg,
 		   struct fsal_layoutget_res *res)
 {
@@ -218,7 +218,7 @@ nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 static
 nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-		      struct req_op_context *req_ctx, XDR * lrf_body,
+		      struct req_op_context *req_ctx, XDR *lrf_body,
 		      const struct fsal_layoutreturn_arg *arg)
 {
 	struct pan_ioctl_xdr pixdr;
@@ -239,7 +239,7 @@ nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 
 static
 nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-		      struct req_op_context *req_ctx, XDR * lou_body,
+		      struct req_op_context *req_ctx, XDR *lou_body,
 		      const struct fsal_layoutcommit_arg *arg,
 		      struct fsal_layoutcommit_res *res)
 {
@@ -263,7 +263,7 @@ static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 		.addr = myself->handle,
 		.len = vfs_sizeof_handle(myself->handle)
 	};
-	up_segment.io_mode = LAYOUTIOMODE4_ANY /*TODO: seg->io_mode */ ;
+	up_segment.io_mode = LAYOUTIOMODE4_ANY; /*TODO: seg->io_mode */
 
 	/* For layoutrecall up_ops are probably set to default recieved at
 	 * vfs_create_export
@@ -385,9 +385,7 @@ int pnfs_panfs_init(int root_fd, void **pnfs_data /*OUT*/)
 
 void pnfs_panfs_fini(void *pnfs_data)
 {
-	if (!pnfs_data) {
+	if (!pnfs_data)
 		return;
-	}
-
 	_stop_callback_thread(pnfs_data);
 }

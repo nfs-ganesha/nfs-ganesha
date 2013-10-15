@@ -22,7 +22,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -46,7 +46,7 @@
 
 /* defined by libhandle but no prototype in xfs/handle.h */
 
-int fd_to_handle(int fd, void **hanp, size_t * hlen);
+int fd_to_handle(int fd, void **hanp, size_t *hlen);
 
 /* The code that follows is intended to fake a XFS handle from
  * the bulkstat data.
@@ -70,7 +70,7 @@ struct xfs_filehandle {
 	xfs_ino_t fh_ino;	/* 64 bit ino */
 };
 
-static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino, xfs_bstat_t * bstat)
+static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino, xfs_bstat_t *bstat)
 {
 	xfs_fsop_bulkreq_t bulkreq;
 	__u64 i = ino;
@@ -82,7 +82,7 @@ static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino, xfs_bstat_t * bstat)
 	return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
 }
 
-static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t * fh)
+static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 {
 	xfs_bstat_t bstat;
 	struct xfs_filehandle hdl;
@@ -98,7 +98,8 @@ static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t * fh)
 	    || (fd_to_handle(fd, &data, &sz) < 0))
 		return -1;
 
-	if ((rv = handle_to_fshandle(data, sz, &fhdata, &fhsz)) >= 0) {
+	rv = handle_to_fshandle(data, sz, &fhdata, &fhsz);
+	if (rv  >= 0) {
 		memset(&hdl, 0, sizeof(hdl));
 		memcpy(&hdl.fh_fshdl, fhdata, fhsz);
 		hdl.fh_sz_following = XFS_FILEHANDLE_SZ_FOLLOWING;
@@ -256,8 +257,8 @@ static int p2fsal_error(int posix_errorcode)
 }
 
 static int vfs_xfs_open_by_handle(struct fsal_export *exp,
-				  vfs_file_handle_t * fh, int openflags,
-				  fsal_errors_t * fsal_error)
+				  vfs_file_handle_t *fh, int openflags,
+				  fsal_errors_t *fsal_error)
 {
 	int fd;
 
@@ -275,7 +276,7 @@ static int vfs_xfs_open_by_handle(struct fsal_export *exp,
 	return fd;
 }
 
-static int vfs_xfs_fd_to_handle(int fd, vfs_file_handle_t * fh)
+static int vfs_xfs_fd_to_handle(int fd, vfs_file_handle_t *fh)
 {
 	void *data;
 	size_t sz;
@@ -296,7 +297,7 @@ static int vfs_xfs_fd_to_handle(int fd, vfs_file_handle_t * fh)
 }
 
 static int vfs_xfs_name_to_handle(int fd, const char *name,
-				  vfs_file_handle_t * fh)
+				  vfs_file_handle_t *fh)
 {
 	int retval;
 	struct stat stat;
@@ -322,7 +323,7 @@ static int vfs_xfs_name_to_handle(int fd, const char *name,
 }
 
 static int vfs_xfs_readlink(struct vfs_fsal_obj_handle *hdl,
-			    fsal_errors_t * ferr)
+			    fsal_errors_t *ferr)
 {
 	char ldata[MAXPATHLEN + 1];
 	int retval = readlink_by_handle(hdl->handle->handle,

@@ -14,8 +14,8 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
-#define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
+#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
+#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
 
 /**
  * posix2fsal_error :
@@ -171,8 +171,8 @@ int posix2fsal_error(int posix_errorcode)
 
 }
 
-fsal_status_t posix2fsal_attributes(const struct stat * buffstat,
-				    struct attrlist * fsalattr)
+fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
+				    struct attrlist *fsalattr)
 {
 	FSAL_CLEAR_MASK(fsalattr->mask);
 	/* sanity checks */

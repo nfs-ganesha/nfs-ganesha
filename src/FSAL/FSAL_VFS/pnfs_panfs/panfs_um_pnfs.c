@@ -64,10 +64,10 @@ nfsstat4 panfs_um_getdeviceinfo(int fd, struct pan_ioctl_xdr *da_addr_body,
 	return pgi.hdr.nfsstat;
 }
 
-nfsstat4 panfs_um_layoutget(int fd, struct pan_ioctl_xdr * loc_body,
+nfsstat4 panfs_um_layoutget(int fd, struct pan_ioctl_xdr *loc_body,
 			    uint64_t clientid, void *recall_file_info,
-			    const struct fsal_layoutget_arg * arg,
-			    struct fsal_layoutget_res * res)
+			    const struct fsal_layoutget_arg *arg,
+			    struct fsal_layoutget_res *res)
 {
 	struct pan_layoutget_ioctl pli = {
 		.hdr.size = sizeof(pli),
@@ -80,16 +80,15 @@ nfsstat4 panfs_um_layoutget(int fd, struct pan_ioctl_xdr * loc_body,
 	int ret;
 
 	ret = ioctl(fd, PAN_FS_CLIENT_PNFS_LAYOUTGET, &pli);
-	if (ret) {
+	if (ret)
 		return NFS4ERR_SERVERFAULT;
-	}
 
 	*loc_body = pli.loc_body;
 	return pli.hdr.nfsstat;
 }
 
-nfsstat4 panfs_um_layoutreturn(int fd, struct pan_ioctl_xdr * lrf_body,
-			       const struct fsal_layoutreturn_arg * arg)
+nfsstat4 panfs_um_layoutreturn(int fd, struct pan_ioctl_xdr *lrf_body,
+			       const struct fsal_layoutreturn_arg *arg)
 {
 	struct pan_layoutreturn_ioctl plri = {
 		.hdr.size = sizeof(plri),
@@ -105,9 +104,9 @@ nfsstat4 panfs_um_layoutreturn(int fd, struct pan_ioctl_xdr * lrf_body,
 	return plri.hdr.nfsstat;
 }
 
-nfsstat4 panfs_um_layoutcommit(int fd, struct pan_ioctl_xdr * lou_body,
-			       const struct fsal_layoutcommit_arg * arg,
-			       struct fsal_layoutcommit_res * res)
+nfsstat4 panfs_um_layoutcommit(int fd, struct pan_ioctl_xdr *lou_body,
+			       const struct fsal_layoutcommit_arg *arg,
+			       struct fsal_layoutcommit_res *res)
 {
 	struct pan_layoutcommit_ioctl plci = {
 		.hdr.size = sizeof(plci),

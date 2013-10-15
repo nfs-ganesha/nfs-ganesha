@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* main.c
@@ -45,12 +45,12 @@
 
 /* defined the set of attributes supported with POSIX */
 #define VFS_SUPPORTED_ATTRIBUTES (                                       \
-          ATTR_TYPE     | ATTR_SIZE     |                  \
-          ATTR_FSID     | ATTR_FILEID   |                  \
-          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-          ATTR_CHGTIME  )
+		ATTR_TYPE     | ATTR_SIZE     |				\
+		ATTR_FSID     | ATTR_FILEID   |				\
+		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
+		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
+		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
+		ATTR_CHGTIME)
 
 struct vfs_fsal_module {
 	struct fsal_module fsal;
@@ -144,12 +144,12 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal VFS method linkage to export object
  */
 
-fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path, const char *fs_options,
-				struct exportlist * exp_entry,
-				struct fsal_module * next_fsal,
-				const struct fsal_up_vector * up_ops,
-				struct fsal_export ** export);
+				struct exportlist *exp_entry,
+				struct fsal_module *next_fsal,
+				const struct fsal_up_vector *up_ops,
+				struct fsal_export **export);
 
 /* Module initialization.
  * Called by dlopen() to register the module
