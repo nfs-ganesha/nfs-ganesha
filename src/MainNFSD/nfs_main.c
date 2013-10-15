@@ -225,6 +225,9 @@ int main(int argc, char *argv[])
 
 	/* initialize memory and logging */
 	nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+	LogEvent(COMPONENT_MAIN,
+		 "%s Starting: Version %s, built at %s %s on %s",
+		 exec_name, GANESHA_VERSION, __DATE__, __TIME__, BUILD_HOST);
 
 	/* Start in background, if wanted */
 	if (detach_flag) {

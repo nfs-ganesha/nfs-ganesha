@@ -11,10 +11,12 @@ project(nfs-ganesha C)
 # Project versioning
 set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 0)
+
 # Patch level is empty (blank) for mainline (master)
 # when starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 0. Remember to include the "." !!
 set(GANESHA_PATCH_LEVEL )
+
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 set(GANESHA_EXTRA_VERSION -RC0)
@@ -57,6 +59,12 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(WINDOWS ON)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+# Identify the host we are building on
+EXECUTE_PROCESS( COMMAND hostname
+  OUTPUT_VARIABLE BUILD_HOST_NAME
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 
 find_package(Toolchain REQUIRED)
 
@@ -665,6 +673,7 @@ message(STATUS)
 message(STATUS "-------------------------------------------------------")
 message(STATUS "PLATFORM = ${PLATFORM}")
 message(STATUS "VERSION = ${GANESHA_VERSION}")
+message(STATUS "BUILD HOST = ${BUILD_HOST_NAME}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
