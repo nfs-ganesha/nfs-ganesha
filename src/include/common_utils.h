@@ -123,10 +123,6 @@ int sscanmem(void *target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
 
-#ifndef HAVE_STRLCAT
-extern size_t strlcat(char *dst, const char *src, size_t siz);
-#endif
-
 #ifndef HAVE_STRLCPY
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif

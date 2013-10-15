@@ -12,7 +12,6 @@ endif(USE_DBUS_STATS)
 # because BSD has them and Linux doesn't
 
 set(string_utils_STAT_SRCS
-   strlcat.c
    strlcpy.c
    strnlen.c
 )
