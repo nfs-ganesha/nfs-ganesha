@@ -5,7 +5,6 @@
 #include "log.h"
 #include "nfs4_acls.h"
 #include <pthread.h>
-#include "lookup3.h"
 #include "city.h"
 
 pool_t *fsal_acl_pool;
