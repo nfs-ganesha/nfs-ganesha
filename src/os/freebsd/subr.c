@@ -45,7 +45,7 @@
  * @param[in]     bcount Buffer size
  * @param[in,out] basepp Offset into "file" after this read
  */
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t * basepp)
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
 	return getdirentries(fd, buf, bcount, basepp);
 }
@@ -60,7 +60,7 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t * basepp)
  *
  * @return true if entry valid, false if not (empty)
  */
-bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent * vd, off_t base)
+bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
 {
 	struct dirent *dp = (struct dirent *)(buf + bpos);
 
@@ -79,15 +79,16 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent * vd, off_t base)
  */
 
 #define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
-        do {                                                            \
-                (ts)->tv_sec = (tv)->tv_sec;                            \
-                (ts)->tv_nsec = (tv)->tv_usec * 1000;                   \
-        } while (0)
+	do {                                                            \
+		(ts)->tv_sec = (tv)->tv_sec;                            \
+		(ts)->tv_nsec = (tv)->tv_usec * 1000;                   \
+	} while (0)
+
 #define TIMESPEC_TO_TIMEVAL(tv, ts)                                     \
-        do {                                                            \
-                (tv)->tv_sec = (ts)->tv_sec;                            \
-                (tv)->tv_usec = (ts)->tv_nsec / 1000;                   \
-        } while (0)
+	do {                                                            \
+		(tv)->tv_sec = (ts)->tv_sec;                            \
+		(tv)->tv_usec = (ts)->tv_nsec / 1000;                   \
+	} while (0)
 
 int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
 		 int flags)
@@ -128,9 +129,9 @@ uid_t setuser(uid_t uid)
 {
 	int rc = 0;
 	uid_t orig_uid = syscall(SYS_getuid);
-	if ((rc = syscall(SYS_seteuid, uid)) != 0) {
+	rc = syscall(SYS_seteuid, uid);
+	if (rc != 0)
 		LogCrit(COMPONENT_FSAL, "Could not set user identity");
-	}
 	return orig_uid;
 }
 
@@ -138,13 +139,13 @@ gid_t setgroup(gid_t gid)
 {
 	int rc = 0;
 	gid_t orig_gid = syscall(SYS_getgid);
-	if ((rc = syscall(SYS_setegid, gid)) != 0) {
+	rc = syscall(SYS_setegid, gid);
+	if (rc != 0)
 		LogCrit(COMPONENT_FSAL, "Could not set group identity");
-	}
 	return orig_gid;
 }
 
-int set_threadgroups(size_t size, const gid_t * list)
+int set_threadgroups(size_t size, const gid_t *list)
 {
 	return syscall(SYS_setgroups, size, list);
 }

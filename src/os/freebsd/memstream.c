@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -25,9 +25,10 @@
  * \brief   Set of function to provide open_memstream() API on FreeBSD
  *
  * Following set of function facilitate open_memstream API which really
- * is a wrapper around funopen() call on FreeBSD platform. These are taken from the
- * implementation at http://people.freebsd.org/~jhb/mcelog/memstream.c and all the
- * relevant licences apply.
+ * is a wrapper around funopen() call on FreeBSD platform.
+ * These are taken from the implementation at
+ * http://people.freebsd.org/~jhb/mcelog/memstream.c
+ * and all the relevant licences apply.
  */
 
 #include <stdio.h>
@@ -75,7 +76,7 @@ static int memstream_read(void *cookie, char *buf, int len)
 #ifdef DEBUG
 	fprintf(stderr, "MS: read(%p, %d) = %d\n", ms, len, tocopy);
 #endif
-	return (tocopy);
+	return tocopy;
 }
 
 static int memstream_write(void *cookie, const char *buf, int len)
@@ -93,7 +94,7 @@ static int memstream_write(void *cookie, const char *buf, int len)
 #ifdef DEBUG
 	fprintf(stderr, "MS: write(%p, %d) = %d\n", ms, len, tocopy);
 #endif
-	return (tocopy);
+	return tocopy;
 }
 
 static fpos_t memstream_seek(void *cookie, fpos_t pos, int whence)
@@ -122,17 +123,17 @@ static fpos_t memstream_seek(void *cookie, fpos_t pos, int whence)
 	fprintf(stderr, "MS: seek(%p, %zd, %d) %zd -> %zd\n", ms, pos, whence,
 		old, ms->offset);
 #endif
-	return (ms->offset);
+	return ms->offset;
 }
 
 static int memstream_close(void *cookie)
 {
 
 	free(cookie);
-	return (0);
+	return 0;
 }
 
-FILE *open_memstream(char **cp, size_t * lenp)
+FILE *open_memstream(char **cp, size_t *lenp)
 {
 	struct memstream *ms;
 	int save_errno;
@@ -151,5 +152,5 @@ FILE *open_memstream(char **cp, size_t * lenp)
 		free(ms);
 		errno = save_errno;
 	}
-	return (fp);
+	return fp;
 }

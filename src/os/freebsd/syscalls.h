@@ -16,15 +16,15 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
  * \file    syscalls.h
- * \author  $Author: Sachin Bhamare $
- * \version $Revision: 1.0 $
+ * \author  Author: Sachin Bhamare
+ * \version Revision: 1.0
  * \brief   platform dependant syscalls
  *
  */
@@ -46,7 +46,7 @@
 
 #if __FreeBSD_cc_version  >= 800001
 /* getfhat() is not implemented in FreeBSD kernel yet */
-int getfhat(int fd, const char *path, fhandle_t * fhp);
+int getfhat(int fd, const char *path, fhandle_t *fhp);
 int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
 #endif				/* __FreeBSD_cc_version */
