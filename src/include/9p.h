@@ -66,11 +66,10 @@ typedef uint64_t u64;
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
 
-/* _9P_RDMA_CHUNK_SIZE : buffer size, and maximum message size for 9P/RDMA */
-#define _9P_RDMA_CHUNK_SIZE (1024*1024)
-#define _9P_RDMA_BUFF_NUM 64
-/* Half the buffers are for recv, half for send */
-#define _9P_RDMA_OUT (_9P_RDMA_BUFF_NUM/2)
+/* number of receive buffers per child */
+#define _9P_RDMA_BUFF_NUM 32
+/* shared pool for sends - optimal when set to number of workers (todo: use conf value) */
+#define _9P_RDMA_OUT 32
 #define _9P_RDMA_BACKLOG 10
 
 /**
@@ -357,9 +356,15 @@ typedef struct _9p_conn__ {
 } _9p_conn_t;
 
 #ifdef _USE_9P_RDMA
+typedef struct _9p_outqueue {
+	msk_data_t *data;
+	pthread_mutex_t lock;
+	pthread_cond_t cond;
+} _9p_outqueue_t;
+
 typedef struct _9p_datalock {
 	msk_data_t *data;
-	struct _9p_datalock *sender;
+	msk_data_t *out;
 	pthread_mutex_t lock;
 } _9p_datalock_t;
 
@@ -368,6 +373,7 @@ typedef struct _9p_rdma_priv {
 	uint8_t *rdmabuf;
 	msk_data_t *rdata;
 	_9p_datalock_t *datalock;
+	_9p_outqueue_t *outqueue;
 } _9p_rdma_priv;
 #define _9p_rdma_priv_of(x) ((_9p_rdma_priv*)x->private_data)
 #endif

@@ -57,29 +57,36 @@
 
 void DispatchWork9P(request_data_t *req);
 
-void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *pdata, void *arg)
+void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
-	_9p_datalock_t *outdatalock = (_9p_datalock_t *) arg;
-	pthread_mutex_unlock(&outdatalock->lock);
+	_9p_outqueue_t *outqueue =  (_9p_outqueue_t *) arg;
+
+	pthread_mutex_lock(&outqueue->lock);
+	data->next = outqueue->data;
+	outqueue->data = data;
+	pthread_cond_signal(&outqueue->cond);
+	pthread_mutex_unlock(&outqueue->lock);
 }
 
-void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *pdata,
+void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 				void *arg)
 {
-	_9p_datalock_t *outdatalock = (_9p_datalock_t *) arg;
+	_9p_outqueue_t *outqueue =  (_9p_outqueue_t *) arg;
+	/** @todo: This should probably try to send again a few times before unlocking */
 
-  /** @todo: This should probably try to send again
-   * a few times before unlocking */
-
-	pthread_mutex_unlock(&outdatalock->lock);
+	pthread_mutex_lock(&outqueue->lock);
+	data->next = outqueue->data;
+	outqueue->data = data;
+	pthread_cond_signal(&outqueue->cond);
+	pthread_mutex_unlock(&outqueue->lock);
 }
 
-void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *pdata,
+void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *data,
 				void *arg)
 {
 
 	if (trans->state == MSK_CONNECTED)
-		msk_post_recv(trans, pdata, _9p_rdma_callback_recv,
+		msk_post_recv(trans, data, _9p_rdma_callback_recv,
 			      _9p_rdma_callback_recv_err, arg);
 }
 
@@ -95,73 +102,77 @@ void _9p_rdma_process_request(_9p_request_data_t *req9p,
 			      nfs_worker_data_t *worker_data)
 {
 	msk_trans_t *trans = req9p->pconn->trans_data.rdma_trans;
+	_9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 
-	msk_data_t *pdata = req9p->datalock->data;
 	_9p_datalock_t *datalock = req9p->datalock;
 
-  /** @todo: don't need another datalock for sender, only put data there */
-	_9p_datalock_t *outdatalock = req9p->datalock->sender;
-	msk_data_t *poutdata = outdatalock->data;
+	/* get output buffer and move forward in queue */
+	pthread_mutex_lock(&priv->outqueue->lock);
+	while (priv->outqueue->data == NULL) {
+		pthread_cond_wait(&priv->outqueue->cond, &priv->outqueue->lock);
+	}
+	datalock->out = priv->outqueue->data;
+	priv->outqueue->data = datalock->out->next;
+	pthread_mutex_unlock(&priv->outqueue->lock);
 
-	uint32_t *p_9pmsglen = NULL;
+	uint32_t msglen;
 	u32 outdatalen = 0;
 	int rc = 0;
 
-	if (pdata->size < _9P_HDR_SIZE) {
+	/* Use buffer received via RDMA as a 9P message */
+	req9p->_9pmsg = datalock->data->data;
+	msglen = *(uint32_t *)req9p->_9pmsg;
+
+	if (datalock->data->size < _9P_HDR_SIZE
+	    || msglen != datalock->data->size) {
 		LogMajor(COMPONENT_9P,
 			 "Malformed 9P/RDMA packet, bad header size");
-		msk_post_recv(trans, pdata, _9p_rdma_callback_recv,
+		/* semd a rerror ? */
+		msk_post_recv(trans, datalock->data, _9p_rdma_callback_recv,
 			      _9p_rdma_callback_recv_err, datalock);
 	} else {
-		p_9pmsglen = (uint32_t *) pdata->data;
-
 		LogFullDebug(COMPONENT_9P,
 			     "Received 9P/RDMA message of size %u",
-			     *p_9pmsglen);
+			     msglen);
 
-		/* Use buffer received via RDMA as a 9P message */
-		req9p->_9pmsg = pdata->data;
-
-		/* We start using the send buffer. Lock it. */
-		pthread_mutex_lock(&outdatalock->lock);
-
-		rc = _9p_process_buffer(req9p, worker_data, poutdata->data,
+		rc = _9p_process_buffer(req9p, worker_data, datalock->out->data,
 					&outdatalen);
 		if (rc != 1) {
-		if ((rc =
-		     _9p_process_buffer(req9p, worker_data, poutdata->data,
-					&outdatalen)) != 1) {
 			LogMajor(COMPONENT_9P,
 				 "Could not process 9P buffer on socket #%lu",
 				 req9p->pconn->trans_data.sockfd);
 		}
 
 		/* Mark the buffer ready for later receive and post the reply */
-		msk_post_recv(trans, pdata, _9p_rdma_callback_recv,
+		msk_post_recv(trans, datalock->data, _9p_rdma_callback_recv,
 			      _9p_rdma_callback_recv_err, datalock);
 
 		/* If earlier processing succeeded, post it */
 		if (rc == 1) {
-			poutdata->size = outdatalen;
+			datalock->out->size = outdatalen;
 			if (0 !=
-			    msk_post_send(trans, poutdata,
+			    msk_post_send(trans, datalock->out,
 					  _9p_rdma_callback_send,
 					  _9p_rdma_callback_send_err,
-					  (void *)outdatalock))
+					  priv->outqueue))
 				rc = -1;
 		}
 
 		if (rc != 1) {
-			/* Unlock the buffer right away
-			 * since no message is being sent */
-			pthread_mutex_unlock(&outdatalock->lock);
+			/* Give the buffer back right away
+			 * since no buffer is being sent */
+			pthread_mutex_lock(&priv->outqueue->lock);
+			datalock->out->next = priv->outqueue->data;
+			priv->outqueue->data = datalock->out;
+			pthread_cond_signal(&priv->outqueue->cond);
+			pthread_mutex_unlock(&priv->outqueue->lock);
 		}
 
 		_9p_DiscardFlushHook(req9p);
 	}
 }
 
-void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *pdata, void *arg)
+void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_datalock *_9p_datalock = arg;
 	request_data_t *req = NULL;
@@ -182,7 +193,7 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *pdata, void *arg)
 	req->r_u._9p.datalock = _9p_datalock;
 
 	/* Add this request to the request list, should it be flushed later. */
-	_9pmsg = pdata->data;
+	_9pmsg = data->data;
 	tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
 	_9p_AddFlushHook(&req->r_u._9p, tag, req->r_u._9p.pconn->sequence++);
 
