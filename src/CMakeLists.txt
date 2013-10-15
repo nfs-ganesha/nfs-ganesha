@@ -586,7 +586,6 @@ set(GANESHA_CORE
   cache_inode
   idmap
   avltree
-  weakref
   hashtable
   rpcal
   gssd

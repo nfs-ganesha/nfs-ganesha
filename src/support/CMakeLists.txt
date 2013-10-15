@@ -29,12 +29,6 @@ set(hash_SRCS
 
 add_library(hash STATIC ${hash_SRCS})
 
-set(weakrefSRCS
-   generic_weakref.c
-)
-
-add_library(weakref STATIC ${weakrefSRCS})
-
 ########### next target ###############
 
 SET(support_STAT_SRCS
