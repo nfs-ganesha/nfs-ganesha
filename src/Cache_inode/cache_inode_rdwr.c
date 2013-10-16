@@ -72,13 +72,14 @@
  * @return CACHE_INODE_SUCCESS or various errors
  */
 
-cache_inode_status_t cache_inode_rdwr(cache_entry_t * entry,
-				      cache_inode_io_direction_t io_direction,
-				      uint64_t offset, size_t io_size,
-				      size_t * bytes_moved, void *buffer,
-				      bool * eof,
-				      struct req_op_context *req_ctx,
-				      bool * sync)
+cache_inode_status_t
+cache_inode_rdwr(cache_entry_t *entry,
+		 cache_inode_io_direction_t io_direction,
+		 uint64_t offset, size_t io_size,
+		 size_t *bytes_moved, void *buffer,
+		 bool *eof,
+		 struct req_op_context *req_ctx,
+		 bool *sync)
 {
 	/* Error return from FSAL calls */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -132,9 +133,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * entry,
 			    cache_inode_open(entry, openflags, req_ctx,
 					     (CACHE_INODE_FLAG_CONTENT_HAVE |
 					      CACHE_INODE_FLAG_CONTENT_HOLD));
-			if (status != CACHE_INODE_SUCCESS) {
+			if (status != CACHE_INODE_SUCCESS)
 				goto out;
-			}
 			opened = true;
 		}
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
@@ -244,13 +244,11 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * entry,
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 	attributes_locked = true;
 	if (io_direction == CACHE_INODE_WRITE) {
-		if ((status = cache_inode_refresh_attrs(entry, req_ctx))
-		    != CACHE_INODE_SUCCESS) {
+		status = cache_inode_refresh_attrs(entry, req_ctx);
+		if (status != CACHE_INODE_SUCCESS)
 			goto out;
-		}
-	} else {
+	} else
 		cache_inode_set_time_current(&obj_hdl->attributes.atime);
-	}
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	attributes_locked = false;
 

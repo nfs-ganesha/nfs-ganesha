@@ -41,7 +41,8 @@
 #include "log.h"
 #include "cache_inode.h"
 
-static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] = {
+static family_error_t __attribute__ ((__unused__))
+tab_errstatus_cache_inode[] = {
 #define ERR_CACHE_INODE_NO_ERROR CACHE_INODE_SUCCESS
 #define ERR_CACHE_INODE_SUCCESS ERR_CACHE_INODE_NO_ERROR
 	{
@@ -164,7 +165,8 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
 #define ERR_CACHE_INODE_SERVERFAULT CACHE_INODE_SERVERFAULT
 	{
 	ERR_CACHE_INODE_SERVERFAULT, "ERR_CACHE_INODE_SERVERFAULT",
-		    "The FSAL layer returned an error that can't be recovered."},
+		    "The FSAL layer returned an error that can't be "
+	"recovered."},
 #define ERR_CACHE_INODE_TOOSMALL CACHE_INODE_TOOSMALL
 	{
 	ERR_CACHE_INODE_TOOSMALL, "ERR_CACHE_INODE_TOOSMALL",

@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -64,10 +65,11 @@
  *         supplied callback.
  *
  */
-cache_inode_status_t cache_inode_getattr(cache_entry_t * entry,
-					 const struct req_op_context *req_ctx,
-					 void *opaque,
-					 cache_inode_getattr_cb_t cb)
+cache_inode_status_t
+cache_inode_getattr(cache_entry_t *entry,
+		    const struct req_op_context *req_ctx,
+		    void *opaque,
+		    cache_inode_getattr_cb_t cb)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -76,9 +78,8 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-
-	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-	    != CACHE_INODE_SUCCESS) {
+	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	if (status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_CACHE_INODE, "Failed %s",
 			 cache_inode_err_str(status));
 		goto out;
@@ -94,7 +95,6 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * entry,
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
  out:
-
 	return status;
 }
 
@@ -110,9 +110,10 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * entry,
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t cache_inode_fileid(cache_entry_t * entry,
-					const struct req_op_context * req_ctx,
-					uint64_t * fileid)
+cache_inode_status_t
+cache_inode_fileid(cache_entry_t *entry,
+		   const struct req_op_context *req_ctx,
+		   uint64_t *fileid)
 {
 	cache_inode_status_t status = 0;
 
@@ -121,11 +122,9 @@ cache_inode_status_t cache_inode_fileid(cache_entry_t * entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-
-	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-	    != CACHE_INODE_SUCCESS) {
+	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	if (status != CACHE_INODE_SUCCESS)
 		goto out;
-	}
 
 	*fileid =
 	    (entry ==
@@ -152,9 +151,10 @@ cache_inode_status_t cache_inode_fileid(cache_entry_t * entry,
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t cache_inode_fsid(cache_entry_t * entry,
-				      const struct req_op_context * req_ctx,
-				      fsal_fsid_t * fsid)
+cache_inode_status_t
+cache_inode_fsid(cache_entry_t *entry,
+		 const struct req_op_context *req_ctx,
+		 fsal_fsid_t *fsid)
 {
 	cache_inode_status_t status = 0;
 
@@ -163,11 +163,9 @@ cache_inode_status_t cache_inode_fsid(cache_entry_t * entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-
-	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-	    != CACHE_INODE_SUCCESS) {
+	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	if (status != CACHE_INODE_SUCCESS)
 		goto out;
-	}
 
 	*fsid = entry->obj_handle->attributes.fsid;
 
@@ -190,9 +188,10 @@ cache_inode_status_t cache_inode_fsid(cache_entry_t * entry,
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-cache_inode_status_t cache_inode_size(cache_entry_t * entry,
-				      const struct req_op_context * req_ctx,
-				      uint64_t * size)
+cache_inode_status_t
+cache_inode_size(cache_entry_t *entry,
+		 const struct req_op_context *req_ctx,
+		 uint64_t *size)
 {
 	cache_inode_status_t status = 0;
 
@@ -201,18 +200,15 @@ cache_inode_status_t cache_inode_size(cache_entry_t * entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-
-	if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
-	    != CACHE_INODE_SUCCESS) {
+	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	if (status != CACHE_INODE_SUCCESS)
 		goto out;
-	}
 
 	*size = entry->obj_handle->attributes.filesize;
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
  out:
-
 	return status;
 }
 

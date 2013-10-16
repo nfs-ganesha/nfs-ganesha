@@ -16,7 +16,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -65,14 +66,14 @@
  * @return true/false
  */
 
-bool is_open(cache_entry_t * entry)
+bool
+is_open(cache_entry_t *entry)
 {
-	if (entry == NULL || entry->obj_handle == NULL
-	    || entry->type != REGULAR_FILE) {
+	if ((entry == NULL) || (entry->obj_handle == NULL)
+	    || (entry->type != REGULAR_FILE))
 		return false;
-	}
-	return entry->obj_handle->ops->status(entry->obj_handle) !=
-	    FSAL_O_CLOSED;
+	return (entry->obj_handle->ops->status(entry->obj_handle) !=
+		FSAL_O_CLOSED);
 }
 
 /**
@@ -86,15 +87,15 @@ bool is_open(cache_entry_t * entry)
  * @return true if the file is open for writes
  */
 
-bool is_open_for_write(cache_entry_t * entry)
+bool
+is_open_for_write(cache_entry_t *entry)
 {
 	fsal_openflags_t openflags;
 
-	if (entry == NULL || entry->type != REGULAR_FILE) {
+	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
-	}
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE);
+	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE));
 }
 
 /**
@@ -108,15 +109,14 @@ bool is_open_for_write(cache_entry_t * entry)
  * @return true if the file is opened for reads
  */
 
-bool is_open_for_read(cache_entry_t * entry)
+bool is_open_for_read(cache_entry_t *entry)
 {
 	fsal_openflags_t openflags;
 
-	if (entry == NULL || entry->type != REGULAR_FILE) {
+	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
-	}
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ);
+	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ));
 }
 
 /**
@@ -133,10 +133,11 @@ bool is_open_for_read(cache_entry_t * entry)
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
  */
 
-cache_inode_status_t cache_inode_open(cache_entry_t * entry,
-				      fsal_openflags_t openflags,
-				      struct req_op_context * req_ctx,
-				      uint32_t flags)
+cache_inode_status_t
+cache_inode_open(cache_entry_t *entry,
+		 fsal_openflags_t openflags,
+		 struct req_op_context *req_ctx,
+		 uint32_t flags)
 {
 	/* Error return from FSAL */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -158,13 +159,13 @@ cache_inode_status_t cache_inode_open(cache_entry_t * entry,
 		goto out;
 	}
 
-	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE))
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-	}
 
 	obj_hdl = entry->obj_handle;
 	current_flags = obj_hdl->ops->status(obj_hdl);
-	/* Open file need to be closed, unless it is already open as read/write */
+	/* Open file need to be closed, unless it is already open as
+	 * read/write */
 	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
 	    && (current_flags != openflags)) {
 		fsal_status = obj_hdl->ops->close(obj_hdl);
@@ -178,8 +179,9 @@ cache_inode_status_t cache_inode_open(cache_entry_t * entry,
 			}
 
 			LogDebug(COMPONENT_CACHE_INODE,
-				 "cache_inode_open: returning %d(%s) from FSAL_close",
-				 status, cache_inode_err_str(status));
+				 "cache_inode_open: returning %d(%s) from "
+				 "FSAL_close", status,
+				 cache_inode_err_str(status));
 
 			goto unlock;
 		}
@@ -196,8 +198,9 @@ cache_inode_status_t cache_inode_open(cache_entry_t * entry,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
-				 "cache_inode_open: returning %d(%s) from FSAL_open",
-				 status, cache_inode_err_str(status));
+				 "cache_inode_open: returning %d(%s) from "
+				 "FSAL_open", status,
+				 cache_inode_err_str(status));
 			if (fsal_status.major == ERR_FSAL_STALE) {
 				LogEvent(COMPONENT_CACHE_INODE,
 					 "FSAL returned STALE on open.");
@@ -219,14 +222,11 @@ cache_inode_status_t cache_inode_open(cache_entry_t * entry,
 
 	status = CACHE_INODE_SUCCESS;
 
- unlock:
-
-	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+unlock:
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD))
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-	}
 
- out:
-
+out:
 	return status;
 
 }
@@ -242,7 +242,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * entry,
  * @return CACHE_INODE_SUCCESS or errors on failure
  */
 
-cache_inode_status_t cache_inode_close(cache_entry_t * entry, uint32_t flags)
+cache_inode_status_t
+cache_inode_close(cache_entry_t *entry, uint32_t flags)
 {
 	/* Error return from the FSAL */
 	fsal_status_t fsal_status;
@@ -255,15 +256,13 @@ cache_inode_status_t cache_inode_close(cache_entry_t * entry, uint32_t flags)
 		goto out;
 	}
 
-	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE))
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-	}
 
 	/* If nothing is opened, do nothing */
 	if (!is_open(entry)) {
-		if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+		if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD))
 			PTHREAD_RWLOCK_unlock(&entry->content_lock);
-		}
 		LogFullDebug(COMPONENT_CACHE_INODE, "Entry %p File not open",
 			     entry);
 		status = CACHE_INODE_SUCCESS;
@@ -294,8 +293,9 @@ cache_inode_status_t cache_inode_close(cache_entry_t * entry, uint32_t flags)
 				cache_inode_kill_entry(entry);
 			}
 			LogCrit(COMPONENT_CACHE_INODE,
-				"FSAL_close failed, returning %d(%s) for entry %p",
-				status, cache_inode_err_str(status), entry);
+				"FSAL_close failed, returning %d(%s) for entry "
+				"%p", status, cache_inode_err_str(status),
+				entry);
 			goto unlock;
 		}
 		if (!FSAL_IS_ERROR(fsal_status))
@@ -304,14 +304,11 @@ cache_inode_status_t cache_inode_close(cache_entry_t * entry, uint32_t flags)
 
 	status = CACHE_INODE_SUCCESS;
 
- unlock:
-
-	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+unlock:
+	if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD))
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-	}
 
- out:
-
+out:
 	return status;
 }
 

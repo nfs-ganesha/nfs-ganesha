@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -49,17 +50,24 @@
 #include "abstract_mem.h"
 
 #define LogDebugCIA(comp1, comp2, format, args...) \
-  do { \
-    if (unlikely(LogComponents[comp1].comp_log_level >= NIV_FULL_DEBUG) || \
-        unlikely(LogComponents[comp2].comp_log_level >= NIV_DEBUG)) { \
-      log_components_t component = \
-        LogComponents[comp1].comp_log_level >= NIV_DEBUG ? comp1 : comp2; \
-      DisplayLogComponentLevel(component,  (char *) __FILE__, __LINE__, \
-                               (char *)__FUNCTION__, NIV_DEBUG, \
-                               "%s: DEBUG: " format, \
-                               LogComponents[component].comp_str, ## args ); \
-    } \
-  } while (0)
+	do { \
+		if (unlikely(LogComponents[comp1].comp_log_level >= \
+			     NIV_FULL_DEBUG) || \
+		    unlikely(LogComponents[comp2].comp_log_level >= \
+			     NIV_DEBUG)) { \
+			log_components_t component = \
+				LogComponents[comp1].comp_log_level >= \
+				NIV_DEBUG ? comp1 : comp2; \
+			DisplayLogComponentLevel( \
+				component, \
+				(char *) __FILE__, \
+				__LINE__, \
+				(char *) __func__, \
+				NIV_DEBUG, \
+				"%s: DEBUG: " format, \
+				LogComponents[component].comp_str, ## args); \
+		} \
+	} while (0)
 
 /**
  *
@@ -76,12 +84,13 @@
  * @return CACHE_INODE_SUCCESS if operation is a success
  *
  */
-cache_inode_status_t cache_inode_access_sw(cache_entry_t * entry,
-					   fsal_accessflags_t access_type,
-					   fsal_accessflags_t * allowed,
-					   fsal_accessflags_t * denied,
-					   struct req_op_context * req_ctx,
-					   bool use_mutex)
+cache_inode_status_t
+cache_inode_access_sw(cache_entry_t *entry,
+		      fsal_accessflags_t access_type,
+		      fsal_accessflags_t *allowed,
+		      fsal_accessflags_t *denied,
+		      struct req_op_context *req_ctx,
+		      bool use_mutex)
 {
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
@@ -97,19 +106,15 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * entry,
 	   the attribute cache, so get it if the caller didn't
 	   acquire it.  */
 	if (use_mutex) {
-		if ((status =
-		     cache_inode_lock_trust_attrs(entry, req_ctx, false))
-		    != CACHE_INODE_SUCCESS) {
+		status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+		if (status != CACHE_INODE_SUCCESS)
 			goto out;
-		}
 	}
 	fsal_status =
 	    pfsal_handle->ops->test_access(pfsal_handle, req_ctx, access_type,
 					   allowed, denied);
-
-	if (use_mutex) {
+	if (use_mutex)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	}
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
 		LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
@@ -127,7 +132,8 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * entry,
 	return status;
 }
 
-bool not_in_group_list(gid_t gid, struct req_op_context * req_ctx)
+bool
+not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
 {
 	const struct user_cred *creds = req_ctx->creds;
 	int i;
@@ -167,11 +173,11 @@ bool not_in_group_list(gid_t gid, struct req_op_context * req_ctx)
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
-cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
-						     struct attrlist * attr,
-						     bool is_open_write,
-						     struct req_op_context *
-						     req_ctx)
+cache_inode_status_t
+cache_inode_check_setattr_perms(cache_entry_t *entry,
+				struct attrlist *attr,
+				bool is_open_write,
+				struct req_op_context *req_ctx)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	fsal_accessflags_t access_check = 0;
@@ -219,7 +225,8 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 			    setattr_acl, setattr_mtime, setattr_atime);
 	}
 
-	/* Shortcut, if current user is root, then we can just bail out with success. */
+	/* Shortcut, if current user is root, then we can just bail out with
+	 * success. */
 	if (creds->caller_uid == 0) {
 		note = " (Ok for root user)";
 		goto out;
@@ -227,7 +234,7 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 
 	not_owner = (creds->caller_uid != entry->obj_handle->attributes.owner);
 
-	// Only ownership change need to be checked for owner
+	/* Only ownership change need to be checked for owner */
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
 		/* non-root is only allowed to "take ownership of file" */
 		if (attr->owner != creds->caller_uid) {
@@ -236,7 +243,8 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 			goto out;
 		}
 
-		/* Owner of file will always be able to "change" the owner to himself. */
+		/* Owner of file will always be able to "change" the owner to
+		 * himself. */
 		if (not_owner) {
 			access_check |=
 			    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
@@ -245,9 +253,8 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 		}
 	}
 	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-		/* non-root is only allowed to change group_owner to a group user is a
-		 * member of.
-		 */
+		/* non-root is only allowed to change group_owner to a group
+		 * user is a member of. */
 		int not_in_group = not_in_group_list(attr->group, req_ctx);
 
 		if (not_in_group) {
@@ -255,8 +262,8 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 			note = " (user is not member of new GROUP)";
 			goto out;
 		}
-		/* Owner is always allowed to change the group_owner of a file to a group
-		 * they are a member of.
+		/* Owner is always allowed to change the group_owner of a file
+		 * to a group they are a member of.
 		 */
 		if (not_owner) {
 			access_check |=
@@ -267,10 +274,10 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 	}
 
 	/* Any attribute after this is always changeable by the owner.
-	 * And the above attributes have already been validated as a valid change
-	 * for the file owner to make. Note that the owner may be setting
-	 * ATTR_OWNER but at this point it MUST be to himself, and thus is a
-	 * no-op and does not need FSAL_ACE_PERM_WRITE_OWNER.
+	 * And the above attributes have already been validated as a valid
+	 * change for the file owner to make. Note that the owner may be
+	 * setting ATTR_OWNER but at this point it MUST be to himself, and
+	 * thus is no-op and does not need FSAL_ACE_PERM_WRITE_OWNER.
 	 */
 	if (!not_owner) {
 		note = " (Ok for owner)";
@@ -298,12 +305,12 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 	     || FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER))
 	    && !FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
 	    && !FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
-		/* If either atime and/or mtime are set to "now" then need only have
-		 * write permission.
+		/* If either atime and/or mtime are set to "now" then need only
+		 * have write permission.
 		 *
-		 * Technically, client should not send atime updates, but if they
-		 * really do, we'll let them to make the perm check a bit simpler.
-		 */
+		 * Technically, client should not send atime updates, but if
+		 * they really do, we'll let them to make the perm check a bit
+		 * simpler. */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
 		LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,
 			    "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
@@ -314,9 +321,9 @@ cache_inode_status_t cache_inode_check_setattr_perms(cache_entry_t * entry,
 		/* Any other changes to atime or mtime require owner, root, or
 		 * ACES4_WRITE_ATTRIBUTES.
 		 *
-		 * NOTE: we explicity do NOT check for update of atime only to "now".
-		 * Section 10.6 of both RFC 3530 and RFC 5661 document the reasons
-		 * clients should not do atime updates.
+		 * NOTE: we explicity do NOT check for update of atime only to
+		 * "now". Section 10.6 of both RFC 3530 and RFC 5661 document
+		 * the reasons clients should not do atime updates.
 		 */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 		LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,

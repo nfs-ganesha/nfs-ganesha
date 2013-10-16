@@ -65,8 +65,8 @@
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */
-cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t *
-							      entry)
+cache_inode_status_t
+cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -113,14 +113,15 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t *
  *                             populated directory.
  */
 
-cache_inode_status_t cache_inode_operate_cached_dirent(cache_entry_t *
-						       directory,
-						       const char *name,
-						       const char *newname,
-						       const struct
-						       req_op_context * req_ctx,
-						       cache_inode_dirent_op_t
-						       dirent_op)
+#define CIV_FLAGS (CACHE_INODE_INVALIDATE_ATTRS| \
+		   CACHE_INODE_INVALIDATE_CONTENT)
+
+cache_inode_status_t
+cache_inode_operate_cached_dirent(cache_entry_t *directory,
+				  const char *name,
+				  const char *newname,
+				  const struct req_op_context *req_ctx,
+				  cache_inode_dirent_op_t dirent_op)
 {
 	cache_inode_dir_entry_t *dirent, *dirent2, *dirent3;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
@@ -194,28 +195,30 @@ cache_inode_status_t cache_inode_operate_cached_dirent(cache_entry_t *
 		if (dirent2) {
 			/* rename would cause a collision */
 			if (directory->flags & CACHE_INODE_TRUST_CONTENT) {
-				/* overwrite, replace entry and expire the old */
+				/* overwrite, replace entry and expire the
+				 * old */
 				cache_entry_t *oldentry;
 				avl_dirent_set_deleted(directory, dirent);
 				cache_inode_key_dup(&dirent2->ckey,
 						    &dirent->ckey);
 				oldentry =
-				    cache_inode_get_keyed(&dirent2->ckey,
-							  req_ctx,
-							  CIG_KEYED_FLAG_CACHED_ONLY,
-							  &status);
-				if (oldentry) {	/* if it is still around, mark it gone/stale */
+				    cache_inode_get_keyed(
+					    &dirent2->ckey,
+					    req_ctx,
+					    CIG_KEYED_FLAG_CACHED_ONLY,
+					    &status);
+				if (oldentry) {
+					/* if it is still around, mark it
+					 * gone/stale */
 					status =
-					    cache_inode_invalidate(oldentry,
-								   (CACHE_INODE_INVALIDATE_ATTRS
-								    |
-								    CACHE_INODE_INVALIDATE_CONTENT));
+					    cache_inode_invalidate(
+						    oldentry,
+						    CIV_FLAGS);
 					cache_inode_lru_unref(oldentry,
 							      LRU_FLAG_NONE);
 				}
-			} else {
+			} else
 				status = CACHE_INODE_ENTRY_EXISTS;
-			}
 		} else {
 			/* Size (including terminating NUL) of the filename */
 			size_t newnamesize = strlen(newname) + 1;
@@ -243,7 +246,7 @@ cache_inode_status_t cache_inode_operate_cached_dirent(cache_entry_t *
 		break;
 	}
 
- out:
+out:
 	return (status);
 }				/* cache_inode_operate_cached_dirent */
 
@@ -265,11 +268,11 @@ cache_inode_status_t cache_inode_operate_cached_dirent(cache_entry_t *
  * @return CACHE_INODE_SUCCESS or errors on failure.
  */
 
-cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * parent,
-						   const char *name,
-						   cache_entry_t * entry,
-						   cache_inode_dir_entry_t **
-						   dir_entry)
+cache_inode_status_t
+cache_inode_add_cached_dirent(cache_entry_t *parent,
+			      const char *name,
+			      cache_entry_t *entry,
+			      cache_inode_dir_entry_t **dir_entry)
 {
 	cache_inode_dir_entry_t *new_dir_entry = NULL;
 	size_t namesize = strlen(name) + 1;
@@ -297,17 +300,16 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * parent,
 	/* add to avl */
 	code = cache_inode_avl_qp_insert(parent, new_dir_entry);
 	if (code < 0) {
-		/* collision, tree not updated--release both pool objects and return
-		 * err */
+		/* collision, tree not updated--release both pool objects and
+		 * return err */
 		gsh_free(new_dir_entry->ckey.kv.addr);
 		gsh_free(new_dir_entry);
 		status = CACHE_INODE_ENTRY_EXISTS;
 		return status;
 	}
 
-	if (dir_entry) {
+	if (dir_entry)
 		*dir_entry = new_dir_entry;
-	}
 
 	/* we're going to succeed */
 	parent->object.dir.nbactive++;
@@ -330,10 +332,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * parent,
  * @retval The result of cache_inode_operate_cached_dirent
  *
  */
-cache_inode_status_t cache_inode_remove_cached_dirent(cache_entry_t * directory,
-						      const char *name,
-						      const struct
-						      req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_remove_cached_dirent(cache_entry_t *directory,
+				 const char *name,
+				 const struct req_op_context *req_ctx)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -375,9 +377,10 @@ struct cache_inode_populate_cb_state {
  * @retval false if no more should be sent and the last was not processed
  */
 
-static bool populate_dirent(const struct req_op_context *opctx,
-			    const char *name, void *dir_state,
-			    fsal_cookie_t cookie)
+static bool
+populate_dirent(const struct req_op_context *opctx,
+		const char *name, void *dir_state,
+		fsal_cookie_t cookie)
 {
 	struct cache_inode_populate_cb_state *state =
 	    (struct cache_inode_populate_cb_state *)dir_state;
@@ -410,10 +413,9 @@ static bool populate_dirent(const struct req_op_context *opctx,
 	/* return initial ref */
 	cache_inode_put(cache_entry);
 
-	if (*state->status != CACHE_INODE_SUCCESS
-	    && *state->status != CACHE_INODE_ENTRY_EXISTS) {
+	if ((*state->status != CACHE_INODE_SUCCESS) &&
+	    (*state->status != CACHE_INODE_ENTRY_EXISTS))
 		return (false);
-	}
 
 	return (true);
 }
@@ -432,11 +434,9 @@ static bool populate_dirent(const struct req_op_context *opctx,
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-static cache_inode_status_t cache_inode_readdir_populate(const struct
-							 req_op_context
-							 *req_ctx,
-							 cache_entry_t *
-							 directory)
+static cache_inode_status_t
+cache_inode_readdir_populate(const struct req_op_context *req_ctx,
+			     cache_entry_t *directory)
 {
 	fsal_status_t fsal_status;
 	bool eod = false;
@@ -465,10 +465,12 @@ static cache_inode_status_t cache_inode_readdir_populate(const struct
 	state.status = &status;
 	state.offset_cookie = 0;
 
-	fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle, req_ctx, NULL,	/* starting at the beginning */
-							  (void *)&state,
-							  populate_dirent,
-							  &eod);
+	fsal_status =
+		directory->obj_handle->ops->readdir(directory->obj_handle,
+						    req_ctx, NULL,
+						    (void *)&state,
+						    populate_dirent,
+						    &eod);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
@@ -505,19 +507,21 @@ static cache_inode_status_t cache_inode_readdir_populate(const struct
  *                       really all that matters is ATTR_ACL and any attrs
  *                       at all, specifics never actually matter.
  * @param[in]  cb        The callback function to receive entries
- * @param[in]  opaque    A pointer passed to be passed in cache_inode_readdir_cb_parms
+ * @param[in]  opaque    A pointer passed to be passed in
+ *                       cache_inode_readdir_cb_parms
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE if entry is not related to a directory
  */
 
-cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
-					 uint64_t cookie, unsigned int *nbfound,
-					 bool * eod_met,
-					 struct req_op_context * req_ctx,
-					 attrmask_t attrmask,
-					 cache_inode_getattr_cb_t cb,
-					 void *opaque)
+cache_inode_status_t
+cache_inode_readdir(cache_entry_t *directory,
+		    uint64_t cookie, unsigned int *nbfound,
+		    bool *eod_met,
+		    struct req_op_context *req_ctx,
+		    attrmask_t attrmask,
+		    cache_inode_getattr_cb_t cb,
+		    void *opaque)
 {
 	/* The entry being examined */
 	cache_inode_dir_entry_t *dirent = NULL;
@@ -534,8 +538,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cache_inode_status_t attr_status;
-	struct cache_inode_readdir_cb_parms cb_parms =
-	    { opaque, NULL, NULL, true, 0, true };
+	struct cache_inode_readdir_cb_parms cb_parms = { opaque, NULL, NULL,
+							 true, 0, true };
 	bool retry_stale = true;
 
 	/* readdir can be done only with a directory */
@@ -545,8 +549,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 		return status;
 	}
 
-	/* cache_inode_lock_trust_attrs can return an error, and no lock will be
-	   acquired */
+	/* cache_inode_lock_trust_attrs can return an error, and no lock will
+	 * be acquired */
 	status = cache_inode_lock_trust_attrs(directory, req_ctx, false);
 	if (status != CACHE_INODE_SUCCESS)
 		return status;
@@ -576,13 +580,13 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 						req_ctx);
 		if (attr_status != CACHE_INODE_SUCCESS) {
 			LogFullDebug(COMPONENT_CACHE_INODE,
-				     "permission check for attributes status=%s",
+				     "permission check for attributes "
+				     "status=%s",
 				     cache_inode_err_str(attr_status));
 		}
-	} else {
+	} else
 		/* No attributes requested, we don't need permission */
 		attr_status = CACHE_INODE_SUCCESS;
-	}
 
 	PTHREAD_RWLOCK_rdlock(&directory->content_lock);
 	PTHREAD_RWLOCK_unlock(&directory->attr_lock);
@@ -592,9 +596,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 		PTHREAD_RWLOCK_unlock(&directory->content_lock);
 		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 		status = cache_inode_readdir_populate(req_ctx, directory);
-		if (status != CACHE_INODE_SUCCESS) {
+		if (status != CACHE_INODE_SUCCESS)
 			goto unlock_dir;
-		}
 	}
 
 	/* deal with initial cookie value:
@@ -602,7 +605,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 	 * 2. cookie is 0 (first cookie) -- ok
 	 * 3. cookie is > than highest dirent position (error)
 	 * 4. cookie <= highest dirent position but > highest cached cookie
-	 *    (currently equivalent to #2, because we pre-populate the cookie avl)
+	 *    (currently equivalent to #2, because we pre-populate the cookie
+	 *    avl)
 	 * 5. cookie is in cached range -- ok */
 
 	if (cookie > 0) {
@@ -617,9 +621,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 		    cache_inode_avl_lookup_k(directory, cookie,
 					     CACHE_INODE_FLAG_NEXT_ACTIVE);
 		if (!dirent) {
-			/* Linux (3.4, etc) has been observed to send readder at the
-			 * offset of the last entry's cookie, and returns no dirents
-			 * to userland if that readdir notfound or badcookie. */
+			/* Linux (3.4, etc) has been observed to send readdir
+			 * at the offset of the last entry's cookie, and
+			 * returns no dirents to userland if that readdir
+			 * notfound or badcookie. */
 			if (cache_inode_avl_lookup_k
 			    (directory, cookie, CACHE_INODE_FLAG_NONE)) {
 				/* yup, it was the last entry */
@@ -663,7 +668,6 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 					 node_hk);
 
  estale_retry:
-
 		entry =
 		    cache_inode_get_keyed(&dirent->ckey, req_ctx,
 					  CIG_KEYED_FLAG_NONE, &tmp_status);
@@ -675,10 +679,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 			if (retry_stale
 			    && tmp_status == CACHE_INODE_FSAL_ESTALE) {
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_get_keyed returned %s for %s - retrying entry",
+					 "cache_inode_get_keyed returned %s "
+					 "for %s - retrying entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
-				retry_stale = false;	/* only one retry per dirent */
+				retry_stale = false; /* only one retry per
+						      * dirent */
 				goto estale_retry;
 			}
 
@@ -687,10 +693,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 				/* Directory changed out from under us.
 				   Invalidate it, skip the name, and keep
 				   going. */
-				atomic_clear_uint32_t_bits(&directory->flags,
-							   CACHE_INODE_TRUST_CONTENT);
+				atomic_clear_uint32_t_bits(
+					&directory->flags,
+					CACHE_INODE_TRUST_CONTENT);
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_get_keyed returned %s for %s - skipping entry",
+					 "cache_inode_get_keyed returned %s "
+					 "for %s - skipping entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
 				continue;
@@ -699,7 +707,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 				   probably an inconsistency. */
 				status = tmp_status;
 				LogCrit(COMPONENT_NFS_READDIR,
-					"cache_inode_get_keyed returned %s for %s - bailing out",
+					"cache_inode_get_keyed returned %s "
+					"for %s - bailing out",
 					cache_inode_err_str(status),
 					dirent->name);
 				goto unlock_dir;
@@ -723,21 +732,25 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 			if (tmp_status == CACHE_INODE_FSAL_ESTALE) {
 				if (retry_stale) {
 					LogDebug(COMPONENT_NFS_READDIR,
-						 "cache_inode_getattr returned %s for %s - retrying entry",
+						 "cache_inode_getattr returned "
+						 "%s for %s - retrying entry",
 						 cache_inode_err_str
 						 (tmp_status), dirent->name);
-					retry_stale = false;	/* only one retry per dirent */
+					retry_stale = false; /* only one retry
+							      * per dirent */
 					goto estale_retry;
 				}
 
 				/* Directory changed out from under us.
 				   Invalidate it, skip the name, and keep
 				   going. */
-				atomic_clear_uint32_t_bits(&directory->flags,
-							   CACHE_INODE_TRUST_CONTENT);
+				atomic_clear_uint32_t_bits(
+					&directory->flags,
+					CACHE_INODE_TRUST_CONTENT);
 
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
+					 "cache_inode_lock_trust_attrs "
+					 "returned %s for %s - skipping entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
 				continue;
@@ -746,7 +759,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 			status = tmp_status;
 
 			LogCrit(COMPONENT_NFS_READDIR,
-				"cache_inode_lock_trust_attrs returned %s for %s - bailing out",
+				"cache_inode_lock_trust_attrs returned %s for "
+				"%s - bailing out",
 				cache_inode_err_str(status), dirent->name);
 
 			goto unlock_dir;
@@ -764,22 +778,21 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * directory,
 	}
 
 	/* We have reached the last node and every node traversed was
-	   added to the result */ ;
+	   added to the result */
 
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "dirent_node = %p, nbfound = %u, in_result = %s", dirent_node,
 		 *nbfound, cb_parms.in_result ? "TRUE" : "FALSE");
-	if (!dirent_node && cb_parms.in_result) {
+	if (!dirent_node && cb_parms.in_result)
 		*eod_met = true;
-	} else {
+	else
 		*eod_met = false;
-	}
 
- unlock_dir:
+unlock_dir:
 	PTHREAD_RWLOCK_unlock(&directory->content_lock);
 	return status;
 
- unlock_attrs:
+unlock_attrs:
 	PTHREAD_RWLOCK_unlock(&directory->attr_lock);
 	return status;
 }				/* cache_inode_readdir */

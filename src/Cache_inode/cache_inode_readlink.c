@@ -61,9 +61,10 @@
  * @return CACHE_INODE_SUCCESS on success, other things on failure.
  */
 
-cache_inode_status_t cache_inode_readlink(cache_entry_t * entry,
-					  struct gsh_buffdesc * link_content,
-					  struct req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_readlink(cache_entry_t *entry,
+		     struct gsh_buffdesc *link_content,
+		     struct req_op_context *req_ctx)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
@@ -88,10 +89,9 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * entry,
 	fsal_status =
 	    entry->obj_handle->ops->readlink(entry->obj_handle, req_ctx,
 					     link_content, refresh);
-	if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
+	if (refresh && !(FSAL_IS_ERROR(fsal_status)))
 		atomic_set_uint32_t_bits(&entry->flags,
 					 CACHE_INODE_TRUST_CONTENT);
-	}
 
 	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 

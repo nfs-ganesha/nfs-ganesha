@@ -68,9 +68,10 @@
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t * fsdata,
-				     const struct req_op_context * req_ctx,
-				     cache_entry_t ** entry)
+cache_inode_status_t
+cache_inode_get(cache_inode_fsal_data_t *fsdata,
+		const struct req_op_context *req_ctx,
+		cache_entry_t **entry)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_export *exp_hdl = NULL;
@@ -109,14 +110,13 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t * fsdata,
 		   asynchronous trust is checked with use (when the
 		   attributes are locked for reading, for example.) */
 
-		if ((status =
-		     cache_inode_lock_trust_attrs(*entry, req_ctx, false))
-		    != CACHE_INODE_SUCCESS) {
+		status = cache_inode_lock_trust_attrs(*entry, req_ctx, false);
+		if (status != CACHE_INODE_SUCCESS) {
 			cache_inode_put(*entry);
 			*entry = NULL;
-		} else {
+		} else
 			PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
-		}
+
 		return status;
 	}
 
@@ -136,9 +136,8 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t * fsdata,
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
 	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
-	if (*entry == NULL) {
+	if (*entry == NULL)
 		return status;
-	}
 
 	/* If we have an entry, we succeeded.  Don't propagate any
 	   ENTRY_EXISTS errors upward. */
@@ -157,10 +156,11 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t * fsdata,
  *
  * @return Pointer to a ref'd entry if found, else NULL.
  */
-cache_entry_t *cache_inode_get_keyed(cache_inode_key_t * key,
-				     const struct req_op_context * req_ctx,
-				     uint32_t flags,
-				     cache_inode_status_t * status)
+cache_entry_t *
+cache_inode_get_keyed(cache_inode_key_t *key,
+		      const struct req_op_context *req_ctx,
+		      uint32_t flags,
+		      cache_inode_status_t *status)
 {
 	cache_entry_t *entry = NULL;
 	cih_latch_t latch;
@@ -209,10 +209,9 @@ cache_entry_t *cache_inode_get_keyed(cache_inode_key_t * key,
 		if (unlikely(!entry))
 			goto out;
 
-		if (unlikely
-		    ((*status =
-		      cache_inode_lock_trust_attrs(entry, req_ctx, false))
-		     != CACHE_INODE_SUCCESS)) {
+		*status =
+			cache_inode_lock_trust_attrs(entry, req_ctx, false);
+		if (unlikely(*status != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
 			entry = NULL;
 			goto out;
@@ -240,7 +239,8 @@ cache_entry_t *cache_inode_get_keyed(cache_inode_key_t * key,
  *
  * @param[in] entry Cache entry being returned
  */
-void cache_inode_put(cache_entry_t * entry)
+void
+cache_inode_put(cache_entry_t *entry)
 {
 	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }

@@ -47,8 +47,9 @@
 #include <pthread.h>
 #include <string.h>
 
-int parse_cache_expire(cache_inode_expire_type_t * type, time_t * value,
-		       char *key_value)
+int
+parse_cache_expire(cache_inode_expire_type_t *type, time_t *value,
+		   char *key_value)
 {
 	if (key_value[0] >= '0' && key_value[0] <= '9') {
 		*value = atoi(key_value);
@@ -61,9 +62,9 @@ int parse_cache_expire(cache_inode_expire_type_t * type, time_t * value,
 	}
 
 	/*
-	 * Note the CACHE_INODE_EXPIRE_IMMEDIATE is now a special value that works
-	 * fine with the value being set to 0, there will not need to be special
-	 * tests for CACHE_INODE_EXPIRE_IMMEDIATE.
+	 * Note the CACHE_INODE_EXPIRE_IMMEDIATE is now a special value that
+	 * works fine with the value being set to 0, there will not need to be
+	 * special tests for CACHE_INODE_EXPIRE_IMMEDIATE.
 	 */
 	*value = 0;
 
@@ -87,9 +88,9 @@ int parse_cache_expire(cache_inode_expire_type_t * type, time_t * value,
  * @retval CACHE_INODE_NOT_FOUND if stanza not present
  * @retval CACHE_INODE_INVALID_ARGUMENT otherwise
  */
-cache_inode_status_t cache_inode_read_conf_parameter(config_file_t config,
-						     cache_inode_parameter_t *
-						     param)
+cache_inode_status_t
+cache_inode_read_conf_parameter(config_file_t config,
+				cache_inode_parameter_t *param)
 {
 	int var_max;
 	int var_index;
@@ -99,8 +100,8 @@ cache_inode_status_t cache_inode_read_conf_parameter(config_file_t config,
 	config_item_t block;
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(config, CONF_LABEL_CACHE_INODE)) == NULL) {
+	block = config_FindItemByName(config, CONF_LABEL_CACHE_INODE);
+	if (block == NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Cannot read item \"%s\" from configuration file",
 			 CONF_LABEL_CACHE_INODE);
@@ -121,10 +122,11 @@ cache_inode_status_t cache_inode_read_conf_parameter(config_file_t config,
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
-				"Error reading key[%d] from section \"%s\" of configuration file.",
+				"Error reading key[%d] from section \"%s\" of "
+				"configuration file.",
 				var_index, CONF_LABEL_CACHE_INODE);
 			return CACHE_INODE_INVALID_ARGUMENT;
 		}

@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -52,15 +53,16 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-					fsal_dynamicfsinfo_t * dynamicinfo,
-					const struct req_op_context *req_ctx)
+cache_inode_status_t
+cache_inode_statfs(cache_entry_t *entry,
+		   fsal_dynamicfsinfo_t *dynamicinfo,
+		   const struct req_op_context *req_ctx)
 {
 	fsal_status_t fsal_status;
 	struct fsal_export *export;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-	export = pentry->obj_handle->export;
+	export = entry->obj_handle->export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
 	    export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);
@@ -69,7 +71,7 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
 				 "FSAL returned STALE from fsinfo");
-			cache_inode_kill_entry(pentry);
+			cache_inode_kill_entry(entry);
 		}
 	}
 	LogFullDebug(COMPONENT_CACHE_INODE,

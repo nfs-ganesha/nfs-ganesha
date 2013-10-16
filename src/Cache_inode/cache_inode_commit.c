@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -62,9 +63,9 @@
  * @return CACHE_INODE_SUCCESS or various errors
  */
 
-cache_inode_status_t cache_inode_commit(cache_entry_t * entry, uint64_t offset,
-					size_t count,
-					struct req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_commit(cache_entry_t *entry, uint64_t offset,
+		   size_t count, struct req_op_context *req_ctx)
 {
 	/* Error return from FSAL operations */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -89,9 +90,8 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * entry, uint64_t offset,
 			    cache_inode_open(entry, FSAL_O_WRITE, req_ctx,
 					     CACHE_INODE_FLAG_CONTENT_HAVE |
 					     CACHE_INODE_FLAG_CONTENT_HOLD);
-			if (status != CACHE_INODE_SUCCESS) {
+			if (status != CACHE_INODE_SUCCESS)
 				goto out;
-			}
 			opened = true;
 		}
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
@@ -149,9 +149,8 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * entry, uint64_t offset,
 
 	/* In other case cache_inode_rdwr call FSAL_Commit */
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	if ((cstatus =
-	     cache_inode_refresh_attrs(entry,
-				       req_ctx)) != CACHE_INODE_SUCCESS) {
+	cstatus = cache_inode_refresh_attrs(entry, req_ctx);
+	if (cstatus != CACHE_INODE_SUCCESS) {
 		LogMajor(COMPONENT_CACHE_INODE,
 			 "cache_inode_refresh_attrs = %s",
 			 cache_inode_err_str(cstatus));
@@ -160,9 +159,8 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * entry, uint64_t offset,
 
  out:
 
-	if (content_locked) {
+	if (content_locked)
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-	}
 
 	return status;
 }

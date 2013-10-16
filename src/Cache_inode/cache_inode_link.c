@@ -65,10 +65,11 @@
  * @retval CACHE_INODE_ENTRY_EXISTS entry of that name already exists
  *                                  in destination.
  */
-cache_inode_status_t cache_inode_link(cache_entry_t * entry,
-				      cache_entry_t * dest_dir,
-				      const char *name,
-				      struct req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_link(cache_entry_t *entry,
+		 cache_entry_t *dest_dir,
+		 const char *name,
+		 struct req_op_context *req_ctx)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
@@ -101,10 +102,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t * entry,
 		goto out;
 	}
 
-	if (((status = status_ref_entry) != CACHE_INODE_SUCCESS)
-	    || ((status = status_ref_dest_dir) != CACHE_INODE_SUCCESS)) {
+	status = status_ref_entry;
+	if (status != CACHE_INODE_SUCCESS)
 		goto out;
-	}
+
+	status = status_ref_dest_dir;
+	if (status != CACHE_INODE_SUCCESS)
+		goto out;
 
 	/* Add the new entry in the destination directory */
 	PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);

@@ -69,8 +69,9 @@
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
 
-cache_inode_status_t cache_inode_remove(cache_entry_t * entry, const char *name,
-					struct req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_remove(cache_entry_t *entry, const char *name,
+		   struct req_op_context *req_ctx)
 {
 	cache_entry_t *to_remove_entry = NULL;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -99,9 +100,10 @@ cache_inode_status_t cache_inode_remove(cache_entry_t * entry, const char *name,
 	LogDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", name);
 
 	if (is_open(to_remove_entry)) {
-		/* entry is not locked and seems to be open for fd caching purpose.
-		 * candidate for closing since unlink of an open file results in 'silly
-		 * rename' on certain platforms */
+		/* entry is not locked and seems to be open for fd caching
+		 * purpose.
+		 * candidate for closing since unlink of an open file results
+		 * in 'silly rename' on certain platforms */
 		status =
 		    cache_inode_close(to_remove_entry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
@@ -154,20 +156,21 @@ cache_inode_status_t cache_inode_remove(cache_entry_t * entry, const char *name,
 	/* Update the attributes for the removed entry */
 	(void)cache_inode_refresh_attrs_locked(to_remove_entry, req_ctx);
 
-	if ((status = status_ref_entry) != CACHE_INODE_SUCCESS) {
+	status = status_ref_entry;
+	if (status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "cache_inode_refresh_attrs_locked(entry %p %s) returned %s",
-			 entry, name, cache_inode_err_str(status_ref_entry));
+			 "cache_inode_refresh_attrs_locked(entry %p %s) "
+			 "returned %s", entry, name,
+			 cache_inode_err_str(status_ref_entry));
 	}
 
- out:
+out:
 	LogFullDebug(COMPONENT_CACHE_INODE, "remove %s: status=%s", name,
 		     cache_inode_err_str(status));
 
 	/* This is for the reference taken by lookup */
-	if (to_remove_entry) {
+	if (to_remove_entry)
 		cache_inode_put(to_remove_entry);
-	}
 
 	return status;
 }

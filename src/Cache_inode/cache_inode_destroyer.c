@@ -46,14 +46,16 @@
 #include "cache_inode_hash.h"
 #include "nsm.h"
 
-extern void free_nsm_client(state_nsm_client_t * client);
-extern void free_client_record(nfs_client_record_t * record);
-void dec_nsm_client_ref_for_shutdown(state_nsm_client_t * client);
-void dec_state_owner_ref_for_shutdown(state_owner_t * owner);
-void dec_client_id_ref_for_shutdown(nfs_client_id_t * clientid);
-void free_client_id_for_shutdown(nfs_client_id_t * clientid);
-void remove_from_locklist_for_shutdown(state_lock_entry_t * lock_entry);
-void state_del_for_shutdown(state_t * state, cache_entry_t * entry);
+void free_nsm_client(state_nsm_client_t *client);
+void free_client_record(nfs_client_record_t *record);
+void dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client);
+void dec_state_owner_ref_for_shutdown(state_owner_t *owner);
+void dec_client_id_ref_for_shutdown(nfs_client_id_t *clientid);
+void free_client_id_for_shutdown(nfs_client_id_t *clientid);
+void remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry);
+void state_del_for_shutdown(state_t *state, cache_entry_t *entry);
+
+/* XXX checkpatch.pl doesn't like these */
 extern hash_table_t *ht_nsm_client;
 extern hash_table_t *ht_client_record;
 extern hash_table_t *ht_session_id;
@@ -75,7 +77,8 @@ extern pool_t *client_id_pool;
  * @param[in] client The client to release
  */
 
-void dec_nsm_client_ref_for_shutdown(state_nsm_client_t * client)
+void
+dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client)
 {
 	struct gsh_buffdesc key = {
 		.addr = client,
@@ -83,9 +86,8 @@ void dec_nsm_client_ref_for_shutdown(state_nsm_client_t * client)
 	};
 	int32_t refcount = atomic_dec_int32_t(&client->ssc_refcount);
 
-	if (refcount > 0) {
+	if (refcount > 0)
 		return;
-	}
 
 	ht_unsafe_zap_by_key(ht_nsm_client, &key);
 
@@ -105,7 +107,8 @@ void dec_nsm_client_ref_for_shutdown(state_nsm_client_t * client)
  * @param[in] record Record on which to release a reference
  */
 
-void dec_client_record_ref_for_shutdown(nfs_client_record_t * record)
+void
+dec_client_record_ref_for_shutdown(nfs_client_record_t *record)
 {
 	struct gsh_buffdesc key = {
 		.addr = record,
@@ -113,9 +116,8 @@ void dec_client_record_ref_for_shutdown(nfs_client_record_t * record)
 	};
 	int32_t refcount = atomic_dec_int32_t(&record->cr_refcount);
 
-	if (refcount > 0) {
+	if (refcount > 0)
 		return;
-	}
 
 	ht_unsafe_zap_by_key(ht_client_record, &key);
 	free_client_record(record);
@@ -131,17 +133,16 @@ void dec_client_record_ref_for_shutdown(nfs_client_record_t * record)
  *
  * @param[in] clientid The client record to free
  */
-void free_client_id_for_shutdown(nfs_client_id_t * clientid)
+void
+free_client_id_for_shutdown(nfs_client_id_t *clientid)
 {
-	if (clientid->cid_client_record != NULL) {
+	if (clientid->cid_client_record != NULL)
 		dec_client_record_ref_for_shutdown(clientid->cid_client_record);
-	}
 
-	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0) {
+	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0)
 		LogDebug(COMPONENT_CLIENTID,
-			 "pthread_mutex_destroy returned errno %d (%s)", errno,
-			 strerror(errno));
-	}
+			 "pthread_mutex_destroy returned errno %d (%s)",
+			 errno, strerror(errno));
 
 	/* For NFSv4.1 clientids, destroy all associated sessions */
 	if (clientid->cid_minorversion > 0) {
@@ -167,9 +168,8 @@ void free_client_id_for_shutdown(nfs_client_id_t * clientid)
 			dec_client_id_ref_for_shutdown
 			    (session->clientid_record);
 			/* Destroy the session's back channel (if any) */
-			if (session->flags & session_bc_up) {
+			if (session->flags & session_bc_up)
 				nfs_rpc_destroy_chan(&session->cb_chan);
-			}
 			/* Free the memory for the session */
 			pool_free(nfs41_session_pool, session);
 		}
@@ -188,15 +188,15 @@ void free_client_id_for_shutdown(nfs_client_id_t * clientid)
  * @param[in] clientid Client record
  */
 
-void dec_client_id_ref_for_shutdown(nfs_client_id_t * clientid)
+void
+dec_client_id_ref_for_shutdown(nfs_client_id_t *clientid)
 {
 	int32_t cid_refcount;
 
 	cid_refcount = atomic_dec_int32_t(&clientid->cid_refcount);
 
-	if (cid_refcount > 0) {
+	if (cid_refcount > 0)
 		return;
-	}
 
 	free_client_id_for_shutdown(clientid);
 }
@@ -212,7 +212,8 @@ void dec_client_id_ref_for_shutdown(nfs_client_id_t * clientid)
  * @param[in] client Client to release
  */
 
-void dec_nlm_client_ref_for_shutdown(state_nlm_client_t * client)
+void
+dec_nlm_client_ref_for_shutdown(state_nlm_client_t *client)
 {
 	struct gsh_buffdesc key = {
 		.addr = client,
@@ -220,19 +221,16 @@ void dec_nlm_client_ref_for_shutdown(state_nlm_client_t * client)
 	};
 	int32_t refcount = atomic_dec_int32_t(&client->slc_refcount);
 
-	if (refcount > 0) {
+	if (refcount > 0)
 		return;
-	}
 
 	ht_unsafe_zap_by_key(ht_nlm_client, &key);
 
-	if (client->slc_nsm_client != NULL) {
+	if (client->slc_nsm_client != NULL)
 		dec_nsm_client_ref_for_shutdown(client->slc_nsm_client);
-	}
 
-	if (client->slc_nlm_caller_name != NULL) {
+	if (client->slc_nlm_caller_name != NULL)
 		gsh_free(client->slc_nlm_caller_name);
-	}
 
 	gsh_free(client);
 }
@@ -248,7 +246,8 @@ void dec_nlm_client_ref_for_shutdown(state_nlm_client_t * client)
  * @param[in] owner Owner to remove
  */
 
-static void remove_nlm_owner_for_shutdown(state_owner_t * owner)
+static
+void remove_nlm_owner_for_shutdown(state_owner_t *owner)
 {
 	struct gsh_buffdesc key = {
 		.addr = owner,
@@ -272,7 +271,7 @@ static void remove_nlm_owner_for_shutdown(state_owner_t * owner)
  */
 
 #ifdef _USE_9P
-void remove_9p_owner_for_shutdown(state_owner_t * owner)
+void remove_9p_owner_for_shutdown(state_owner_t *owner)
 {
 	struct gsh_buffdesc key = {
 		.addr = owner,
@@ -295,7 +294,8 @@ void remove_9p_owner_for_shutdown(state_owner_t * owner)
  * @param[in] owner Owner to remove
  */
 
-void remove_nfs4_owner_for_shutdown(state_owner_t * owner)
+void
+remove_nfs4_owner_for_shutdown(state_owner_t *owner)
 {
 #ifdef _USE_9P
 	state_nfs4_owner_name_t oname = {
@@ -335,12 +335,12 @@ void remove_nfs4_owner_for_shutdown(state_owner_t * owner)
  * @param[in] owner The owner to release
  */
 
-void dec_state_owner_ref_for_shutdown(state_owner_t * owner)
+void
+dec_state_owner_ref_for_shutdown(state_owner_t *owner)
 {
 	owner->so_refcount--;
-	if (owner->so_refcount > 0) {
+	if (owner->so_refcount > 0)
 		return;
-	}
 
 	switch (owner->so_type) {
 	case STATE_LOCK_OWNER_NLM:
@@ -372,17 +372,16 @@ void dec_state_owner_ref_for_shutdown(state_owner_t * owner)
  *
  * @param[in,out] lock_entry Entry to release
  */
-void lock_entry_dec_ref_for_shutdown(state_lock_entry_t * lock_entry)
+void
+lock_entry_dec_ref_for_shutdown(state_lock_entry_t *lock_entry)
 {
 	lock_entry->sle_ref_count--;
-	if (lock_entry->sle_ref_count > 0) {
+	if (lock_entry->sle_ref_count > 0)
 		return;
-	}
 
 	/* Release block data if present */
-	if (lock_entry->sle_block_data != NULL) {
+	if (lock_entry->sle_block_data != NULL)
 		gsh_free(lock_entry->sle_block_data);
-	}
 	gsh_free(lock_entry);
 }
 
@@ -396,7 +395,8 @@ void lock_entry_dec_ref_for_shutdown(state_lock_entry_t * lock_entry)
  *
  * @param[in,out] lock_entry Entry to remove
  */
-void remove_from_locklist_for_shutdown(state_lock_entry_t * lock_entry)
+void
+remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry)
 {
 	state_owner_t *owner = lock_entry->sle_owner;
 	if (owner != NULL) {
@@ -409,9 +409,8 @@ void remove_from_locklist_for_shutdown(state_lock_entry_t * lock_entry)
 							slc_nsm_client);
 			glist_del(&lock_entry->sle_export_locks);
 		}
-		if (owner->so_type == STATE_LOCK_OWNER_NFSV4) {
+		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
 			glist_del(&lock_entry->sle_state_locks);
-		}
 		glist_del(&lock_entry->sle_owner_locks);
 		dec_state_owner_ref_for_shutdown(owner);
 	}
@@ -432,7 +431,8 @@ void remove_from_locklist_for_shutdown(state_lock_entry_t * lock_entry)
  * @param[in,out] entry The cache entry to modify
  */
 
-void state_del_for_shutdown(state_t * state, cache_entry_t * entry)
+void
+state_del_for_shutdown(state_t *state, cache_entry_t *entry)
 {
 	struct gsh_buffdesc key = {
 		.addr = state->stateid_other,
@@ -451,9 +451,8 @@ void state_del_for_shutdown(state_t * state, cache_entry_t * entry)
 	glist_del(&state->state_list);
 
 	/* Remove from the list of lock states for a particular open state */
-	if (state->state_type == STATE_TYPE_LOCK) {
+	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
-	}
 
 	/* Remove from list of states for a particular export */
 	glist_del(&state->state_export_list);
@@ -471,12 +470,14 @@ void state_del_for_shutdown(state_t * state, cache_entry_t * entry)
  * @param[in] entry Entry to clear
  */
 
-static void clear_fsal_locks(cache_entry_t * entry)
+static void
+clear_fsal_locks(cache_entry_t *entry)
 {
 	/* FSAL object handle */
 	struct fsal_obj_handle *handle = entry->obj_handle;
 
-	if (handle->export->ops->fs_supports(handle->export, fso_lock_support)) {
+	if (handle->export->ops->fs_supports(handle->export,
+					     fso_lock_support)) {
 		/* Lock that covers the whole file - type doesn't
 		   matter for unlock */
 		fsal_lock_param_t lock = {
@@ -528,12 +529,14 @@ static void clear_fsal_locks(cache_entry_t * entry)
  * @param[in] entry Entry to clear
  */
 
-static void clear_fsal_shares(cache_entry_t * entry)
+static void
+clear_fsal_shares(cache_entry_t *entry)
 {
 	/* FSAL object handle */
 	struct fsal_obj_handle *handle = entry->obj_handle;
 
-	if (handle->export->ops->fs_supports(handle->export, fso_share_support)) {
+	if (handle->export->ops->fs_supports(handle->export,
+					     fso_share_support)) {
 		/* Fully released shares */
 		fsal_share_param_t releaser = {
 			.share_access = 0,
@@ -544,11 +547,10 @@ static void clear_fsal_shares(cache_entry_t * entry)
 		    handle->ops->share_op(entry->obj_handle,
 					  NULL,
 					  releaser);
-		if (FSAL_IS_ERROR(fsal_status)) {
+		if (FSAL_IS_ERROR(fsal_status))
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Couldn't release share: major=%u",
 				 fsal_status.major);
-		}
 	}
 }
 
@@ -566,7 +568,8 @@ static void clear_fsal_shares(cache_entry_t * entry)
  * @return false if there weren't.
  */
 
-static bool destroy_nsm_shares(cache_entry_t * entry)
+static bool
+destroy_nsm_shares(cache_entry_t *entry)
 {
 	/* Iterator for NSM shares */
 	struct glist_head *nsi;
@@ -581,9 +584,8 @@ static bool destroy_nsm_shares(cache_entry_t * entry)
 				sns_share_per_file);
 		state_owner_t *owner = nlm_share->sns_owner;
 		glist_del(&nlm_share->sns_share_per_file);
-		if (glist_empty(&entry->object.file.nlm_share_list)) {
+		if (glist_empty(&entry->object.file.nlm_share_list))
 			cache_inode_dec_pin_ref(entry, FALSE);
-		}
 		glist_del(&nlm_share->sns_share_per_client);
 		dec_nsm_client_ref_for_shutdown(owner->so_owner.so_nlm_owner.
 						so_client->slc_nsm_client);
@@ -609,16 +611,16 @@ static bool destroy_nsm_shares(cache_entry_t * entry)
  * @param[in] entry File to wipe
  */
 
-static void destroy_locks(cache_entry_t * entry)
+static void
+destroy_locks(cache_entry_t *entry)
 {
 	/* Lock entry iterator */
 	struct glist_head *lei = NULL;
 	/* Next lock entry for safe iteration */
 	struct glist_head *len = NULL;
 
-	if (glist_empty(&entry->object.file.lock_list)) {
+	if (glist_empty(&entry->object.file.lock_list))
 		return;
-	}
 
 	glist_for_each_safe(lei, len, &entry->object.file.lock_list) {
 		state_lock_entry_t *found_entry =
@@ -642,7 +644,8 @@ static void destroy_locks(cache_entry_t * entry)
  * @retval false if they don't.
  */
 
-static bool destroy_nfs4_state(cache_entry_t * entry)
+static bool
+destroy_nfs4_state(cache_entry_t *entry)
 {
 	/* NFSv4 state iterator */
 	struct glist_head *si = NULL;
@@ -654,9 +657,8 @@ static bool destroy_nfs4_state(cache_entry_t * entry)
 
 	glist_init(&opens);
 
-	if (glist_empty(&entry->state_list)) {
+	if (glist_empty(&entry->state_list))
 		return false;
-	}
 
 	glist_for_each_safe(si, sn, &entry->state_list) {
 		/* Current state */
@@ -775,7 +777,8 @@ static bool destroy_nfs4_state(cache_entry_t * entry)
 	return true;
 }
 
-static void destroy_file_state(cache_entry_t * entry)
+static void
+destroy_file_state(cache_entry_t *entry)
 {
 	/* If NSM shares were found */
 	bool nsm_shares = false;
@@ -784,17 +787,16 @@ static void destroy_file_state(cache_entry_t * entry)
 	nsm_shares = destroy_nsm_shares(entry);
 	destroy_locks(entry);
 	nfs4_shares = destroy_nfs4_state(entry);
-	if (nsm_shares || nfs4_shares) {
+	if (nsm_shares || nfs4_shares)
 		clear_fsal_shares(entry);
-	}
-	if (entry->obj_handle->ops->status(entry->obj_handle) != FSAL_O_CLOSED) {
+	if (entry->obj_handle->ops->status(entry->obj_handle)
+	    != FSAL_O_CLOSED) {
 		fsal_status_t fsal_status =
 		    entry->obj_handle->ops->close(entry->obj_handle);
-		if (FSAL_IS_ERROR(fsal_status)) {
+		if (FSAL_IS_ERROR(fsal_status))
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Couldn't close file: major=%u",
 				 fsal_status.major);
-		}
 	}
 }
 
@@ -809,18 +811,17 @@ static void destroy_file_state(cache_entry_t * entry)
  * @param[in] entry The entry to be destroyed
  */
 
-static void destroy_entry(cache_entry_t * entry)
+static void
+destroy_entry(cache_entry_t *entry)
 {
 	/* FSAL Error Code */
 	fsal_status_t fsal_status = { 0, 0 };
 
-	if (entry->type == REGULAR_FILE) {
+	if (entry->type == REGULAR_FILE)
 		destroy_file_state(entry);
-	}
 
-	if (entry->type == DIRECTORY) {
+	if (entry->type == DIRECTORY)
 		cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
-	}
 
 	if (entry->obj_handle) {
 		fsal_status =
@@ -843,7 +844,8 @@ static void destroy_entry(cache_entry_t * entry)
  * threads accessing SAL, Cache_inode, or FSAL are running.
  */
 
-void cache_inode_destroyer(void)
+void
+cache_inode_destroyer(void)
 {
 	/* Index over partitions */
 	uint32_t i = 0;
@@ -853,10 +855,11 @@ void cache_inode_destroyer(void)
 		    avltree_first(&cih_fhcache.partition[i].t);
 		while (node) {
 			/* The current entry to destroy */
-			cache_entry_t *entry = avltree_container_of(node,
-								    cache_entry_t,
-								    fh_hk.
-								    node_k);
+			cache_entry_t *entry =
+				avltree_container_of(node,
+						     cache_entry_t,
+						     fh_hk.
+						     node_k);
 			destroy_entry(entry);
 			avltree_remove(node, &cih_fhcache.partition[i].t);
 			pool_free(cache_inode_entry_pool, entry);

@@ -66,12 +66,13 @@
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t cache_inode_create(cache_entry_t * parent,
-					const char *name,
-					object_file_type_t type, uint32_t mode,
-					cache_inode_create_arg_t * create_arg,
-					struct req_op_context * req_ctx,
-					cache_entry_t ** entry)
+cache_inode_status_t
+cache_inode_create(cache_entry_t *parent,
+		   const char *name,
+		   object_file_type_t type, uint32_t mode,
+		   cache_inode_create_arg_t *create_arg,
+		   struct req_op_context *req_ctx,
+		   cache_entry_t **entry)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -83,9 +84,8 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 	memset(&zero_create_arg, 0, sizeof(zero_create_arg));
 	memset(&object_attributes, 0, sizeof(object_attributes));
 
-	if (create_arg == NULL) {
+	if (create_arg == NULL)
 		create_arg = &zero_create_arg;
-	}
 
 	if ((type != REGULAR_FILE) && (type != DIRECTORY)
 	    && (type != SYMBOLIC_LINK) && (type != SOCKET_FILE)
@@ -104,11 +104,12 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 	/* Try to create it first */
 
 	dir_handle = parent->obj_handle;
-/* we pass in attributes to the create.  We will get them back below */
+	/* we pass in attributes to the create.  We will get them back below */
 	FSAL_SET_MASK(object_attributes.mask,
 		      ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
 	object_attributes.owner = req_ctx->creds->caller_uid;
-	object_attributes.group = req_ctx->creds->caller_gid;	/* be more selective? */
+	object_attributes.group = req_ctx->creds->caller_gid; /* be more
+							       * selective? */
 	object_attributes.mode = mode;
 
 	switch (type) {
@@ -134,7 +135,9 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
-		fsal_status = dir_handle->ops->mknode(dir_handle, req_ctx, name, type, NULL,	/* no dev_t needed */
+		fsal_status = dir_handle->ops->mknode(dir_handle, req_ctx,
+						      name, type,
+						      NULL, /* dev_t !needed */
 						      &object_attributes,
 						      &object_handle);
 		break;
@@ -173,7 +176,8 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 			if (*entry != NULL) {
 				status = CACHE_INODE_ENTRY_EXISTS;
 				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "create failed because it already exists");
+					     "create failed because it already "
+					     "exists");
 				if ((*entry)->type != type) {
 					/* Incompatible types, returns NULL */
 					cache_inode_put(*entry);
@@ -183,8 +187,9 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 			}
 
 			if (status == CACHE_INODE_NOT_FOUND) {
-				/* Too bad, FSAL insist the file exists when we try to
-				 * create it, but lookup couldn't find it, retry. */
+				/* Too bad, FSAL insist the file exists when
+				 * we try to create it, but lookup couldn't
+				 * find it, retry. */
 				status = CACHE_INODE_INCONSISTENT_ENTRY;
 				goto out;
 			}
@@ -218,7 +223,6 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 	}
 
  out:
-
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Returning entry=%p status=%s for %s", entry,
 		     cache_inode_err_str(status), name);
@@ -229,14 +233,16 @@ cache_inode_status_t cache_inode_create(cache_entry_t * parent,
 /**
  * @brief Set the create verifier
  *
- * This function sets the mtime/atime attributes according to the create verifier
+ * This function sets the mtime/atime attributes according to the create
+ * verifier
  *
  * @param[in] sattr   attrlist to be managed.
  * @param[in] verf_hi High long of verifier
  * @param[in] verf_lo Low long of verifier
  *
  */
-void cache_inode_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
+void
+cache_inode_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 				     uint32_t verf_lo)
 {
 	sattr->atime.tv_sec = verf_hi;
@@ -260,9 +266,10 @@ void cache_inode_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
  * @return Errors from cache_inode_lock_trust_attributes.
  *
  */
-bool cache_inode_create_verify(cache_entry_t * entry,
-			       const struct req_op_context *req_ctx,
-			       uint32_t verf_hi, uint32_t verf_lo)
+bool
+cache_inode_create_verify(cache_entry_t *entry,
+			  const struct req_op_context *req_ctx,
+			  uint32_t verf_hi, uint32_t verf_lo)
 {
 	/* True if the verifier matches */
 	bool verified = false;

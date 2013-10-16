@@ -53,27 +53,28 @@
 #include <pthread.h>
 #include <assert.h>
 
-void cache_inode_avl_init(cache_entry_t * entry)
+void
+cache_inode_avl_init(cache_entry_t *entry)
 {
 	avltree_init(&entry->object.dir.avl.t, avl_dirent_hk_cmpf,
-		     0 /* flags */ );
+		     0 /* flags */);
 	avltree_init(&entry->object.dir.avl.c, avl_dirent_hk_cmpf,
-		     0 /* flags */ );
+		     0 /* flags */);
 }
 
-static inline struct avltree_node *avltree_inline_lookup(const struct
-							 avltree_node *key,
-							 const struct avltree
-							 *tree)
+static inline struct avltree_node *
+avltree_inline_lookup(
+	const struct avltree_node *key,
+	const struct avltree *tree)
 {
 	struct avltree_node *node = tree->root;
-	int is_left = 0, res = 0;
+	int res = 0;
 
 	while (node) {
 		res = avl_dirent_hk_cmpf(node, key);
 		if (res == 0)
 			return node;
-		if ((is_left = res > 0))
+		if (res > 0)
 			node = node->left;
 		else
 			node = node->right;
@@ -81,7 +82,8 @@ static inline struct avltree_node *avltree_inline_lookup(const struct
 	return NULL;
 }
 
-void avl_dirent_set_deleted(cache_entry_t * entry, cache_inode_dir_entry_t * v)
+void
+avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 {
 	struct avltree *t = &entry->object.dir.avl.t;
 	struct avltree_node *node;
@@ -104,8 +106,9 @@ void avl_dirent_set_deleted(cache_entry_t * entry, cache_inode_dir_entry_t * v)
 	avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
 }
 
-void avl_dirent_clear_deleted(cache_entry_t * entry,
-			      cache_inode_dir_entry_t * v)
+void
+avl_dirent_clear_deleted(cache_entry_t *entry,
+			 cache_inode_dir_entry_t *v)
 {
 	struct avltree *t = &entry->object.dir.avl.t;
 	struct avltree *c = &entry->object.dir.avl.c;
@@ -122,9 +125,10 @@ void avl_dirent_clear_deleted(cache_entry_t * entry,
 	v->flags &= ~DIR_ENTRY_FLAG_DELETED;
 }
 
-static inline int cache_inode_avl_insert_impl(cache_entry_t * entry,
-					      cache_inode_dir_entry_t * v,
-					      int j, int j2)
+static inline int
+cache_inode_avl_insert_impl(cache_entry_t *entry,
+			    cache_inode_dir_entry_t *v,
+			    int j, int j2)
 {
 	int code = -1;
 	struct avltree_node *node;
@@ -167,9 +171,8 @@ static inline int cache_inode_avl_insert_impl(cache_entry_t * entry,
 		node = NULL;
 	}
 	node = avltree_insert(&v->node_hk, t);
-	if (!node) {
+	if (!node)
 		code = 0;
-	}
 
 	switch (code) {
 	case 0:
@@ -207,8 +210,9 @@ static inline int cache_inode_avl_insert_impl(cache_entry_t * entry,
  * On return, the stored key is in v->hk.k, the iteration
  * count in v->hk.p.
  **/
-int cache_inode_avl_qp_insert(cache_entry_t * entry,
-			      cache_inode_dir_entry_t * v)
+int
+cache_inode_avl_qp_insert(cache_entry_t *entry,
+			  cache_inode_dir_entry_t *v)
 {
 #if AVL_HASH_MURMUR3
 	uint32_t hk[4];
@@ -224,8 +228,9 @@ int cache_inode_avl_qp_insert(cache_entry_t * entry,
 #endif
 
 #ifdef _USE_9P
-	// tmp hook : it seems like client running v9fs dislike "negative" cookies
-	v->hk.k &= ~(1L << 63);	/* just kill the sign bit, making cookies 63 bits... */
+	/* tmp hook : it seems like client running v9fs dislike "negative"
+	 * cookies v->hk.k &= ~(1L << 63); just kill the sign bit, making
+	 * cookies 63 bits... */
 #endif
 
 	/* XXX would we really wait for UINT64_MAX?  if not, how many
@@ -248,10 +253,10 @@ int cache_inode_avl_qp_insert(cache_entry_t * entry,
 		v->name);
 
 #ifdef _USE_9P
-	// tmp hook : it seems like client running v9fs dislike "negative" cookies
-	v->hk.k &= ~(1L << 63);
+	/* tmp hook : it seems like client running v9fs dislike "negative"
+	 * cookies v->hk.k &= ~(1L << 63); */
 #endif
-	for (j2 = 1 /* tried j=0 */ ; j2 < UINT64_MAX; j2++) {
+	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
 		v->hk.k = v->hk.k + j2;
 		code = cache_inode_avl_insert_impl(entry, v, j, j2);
 		if (code >= 0)
@@ -266,8 +271,8 @@ int cache_inode_avl_qp_insert(cache_entry_t * entry,
 	return (-1);
 }
 
-cache_inode_dir_entry_t *cache_inode_avl_lookup_k(cache_entry_t * entry,
-						  uint64_t k, uint32_t flags)
+cache_inode_dir_entry_t *
+cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 {
 	struct avltree *t = &entry->object.dir.avl.t;
 	struct avltree *c = &entry->object.dir.avl.c;
@@ -310,8 +315,8 @@ cache_inode_dir_entry_t *cache_inode_avl_lookup_k(cache_entry_t * entry,
 	return (dirent);
 }
 
-cache_inode_dir_entry_t *cache_inode_avl_qp_lookup_s(cache_entry_t * entry,
-						     const char *name, int maxj)
+cache_inode_dir_entry_t *
+cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 {
 	struct avltree *t = &entry->object.dir.avl.t;
 	struct avltree_node *node;
@@ -334,8 +339,8 @@ cache_inode_dir_entry_t *cache_inode_avl_qp_lookup_s(cache_entry_t * entry,
 #endif
 
 #ifdef _USE_9P
-	// tmp hook : it seems like client running v9fs dislike "negative" cookies
-	v.hk.k &= ~(1L << 63);
+	/* tmp hook : it seems like client running v9fs dislike "negative"
+	 * cookies v.hk.k &= ~(1L << 63); */
 #endif
 
 	for (j = 0; j < maxj; j++) {

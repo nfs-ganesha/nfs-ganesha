@@ -66,10 +66,11 @@
  *
  * @return CACHE_INDOE_SUCCESS or error.
  */
-cache_inode_status_t cache_inode_lookup_impl(cache_entry_t * parent,
-					     const char *name,
-					     struct req_op_context * req_ctx,
-					     cache_entry_t ** entry)
+cache_inode_status_t
+cache_inode_lookup_impl(cache_entry_t *parent,
+			const char *name,
+			struct req_op_context *req_ctx,
+			cache_entry_t **entry)
 {
 	cache_inode_dir_entry_t *dirent = NULL;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -107,29 +108,33 @@ cache_inode_status_t cache_inode_lookup_impl(cache_entry_t * parent,
 		 * dispatch to the FSAL. */
 		/* XXX this ++write_locked idiom is not good style */
 		for (write_locked = 0; write_locked < 2; ++write_locked) {
-			/* If the dirent cache is untrustworthy, don't even ask it */
+			/* If the dirent cache is untrustworthy, don't even ask
+			 * it */
 			if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
 				dirent =
 				    cache_inode_avl_qp_lookup_s(parent, name,
 								1);
 				if (dirent) {
 					*entry =
-					    cache_inode_get_keyed(&dirent->ckey,
-								  req_ctx,
-								  CIG_KEYED_FLAG_NONE,
-								  &status);
+					    cache_inode_get_keyed(
+						    &dirent->ckey,
+						    req_ctx,
+						    CIG_KEYED_FLAG_NONE,
+						    &status);
 					if (*entry) {
-						/* We have our entry and a valid reference.
-						   Declare victory. */
+						/* We have our entry and a
+						 * valid reference.
+						 * Declare victory. */
 						status = CACHE_INODE_SUCCESS;
 						goto out;
 					}
 				} else {	/* ! dirent */
 					if (parent->
 					    flags & CACHE_INODE_DIR_POPULATED) {
-						/* If the dirent cache is both fully
-						   populated and valid, it can serve
-						   negative lookups. */
+						/* If the dirent cache is both
+						 * fully populated and valid,
+						 * it can serve negative
+						 * lookups. */
 						*entry = NULL;
 						status = CACHE_INODE_NOT_FOUND;
 						goto out;
@@ -140,8 +145,9 @@ cache_inode_status_t cache_inode_lookup_impl(cache_entry_t * parent,
 				   && !(parent->
 					flags & CACHE_INODE_TRUST_CONTENT)) {
 				/* We have the write lock and the content is
-				   still invalid.  Empty it out and mark it valid
-				   in preparation for caching the result of this lookup. */
+				   still invalid.  Empty it out and mark it
+				   * valid in preparation for caching the
+				   * result of this lookup. */
 				cache_inode_invalidate_all_cached_dirent
 				    (parent);
 			}
@@ -207,10 +213,11 @@ cache_inode_status_t cache_inode_lookup_impl(cache_entry_t * parent,
  * @return CACHE_INODE_SUCCESS or error.
  */
 
-cache_inode_status_t cache_inode_lookup(cache_entry_t * parent,
-					const char *name,
-					struct req_op_context * req_ctx,
-					cache_entry_t ** entry)
+cache_inode_status_t
+cache_inode_lookup(cache_entry_t *parent,
+		   const char *name,
+		   struct req_op_context *req_ctx,
+		   cache_entry_t **entry)
 {
 	fsal_accessflags_t access_mask =
 	    (FSAL_MODE_MASK_SET(FSAL_X_OK) |

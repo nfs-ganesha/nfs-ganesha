@@ -67,7 +67,8 @@
  * @param[in] entry The entry to be killed
  */
 
-void cache_inode_kill_entry(cache_entry_t * entry)
+void
+cache_inode_kill_entry(cache_entry_t *entry)
 {
 	LogDebug(COMPONENT_CACHE_INODE,
 		 "Using cache_inode_kill_entry for entry %p", entry);

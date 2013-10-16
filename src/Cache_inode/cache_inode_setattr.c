@@ -54,10 +54,11 @@
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
-cache_inode_status_t cache_inode_setattr(cache_entry_t * entry,
-					 struct attrlist *attr,
-					 bool is_open_write,
-					 struct req_op_context *req_ctx)
+cache_inode_status_t
+cache_inode_setattr(cache_entry_t *entry,
+		    struct attrlist *attr,
+		    bool is_open_write,
+		    struct req_op_context *req_ctx)
 {
 	struct fsal_obj_handle *obj_handle = entry->obj_handle;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -96,9 +97,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * entry,
 	status =
 	    cache_inode_check_setattr_perms(entry, attr, is_open_write,
 					    req_ctx);
-	if (status != CACHE_INODE_SUCCESS) {
+	if (status != CACHE_INODE_SUCCESS)
 		goto unlock;
-	}
 
 	if (attr->mask & ATTR_SIZE) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
@@ -128,15 +128,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * entry,
 		}
 		goto unlock;
 	}
-	if (before == obj_handle->attributes.change) {
+	if (before == obj_handle->attributes.change)
 		obj_handle->attributes.change++;
-	}
 	/* Decrement refcount on saved ACL */
 	nfs4_acl_release_entry(saved_acl, &acl_status);
-	if (acl_status != NFS_V4_ACL_SUCCESS) {
+	if (acl_status != NFS_V4_ACL_SUCCESS)
 		LogCrit(COMPONENT_CACHE_INODE,
 			"Failed to release old acl, status=%d", acl_status);
-	}
 
 	cache_inode_fixup_md(entry);
 
@@ -146,14 +144,12 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * entry,
 
 	status = CACHE_INODE_SUCCESS;
 
- unlock:
-	if (content_locked) {
+unlock:
+	if (content_locked)
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-	}
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
- out:
-
+out:
 	return status;
 }
 

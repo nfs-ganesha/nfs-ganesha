@@ -76,9 +76,10 @@
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t cache_inode_lookupp_impl(cache_entry_t * entry,
-					      struct req_op_context * req_ctx,
-					      cache_entry_t ** parent)
+cache_inode_status_t
+cache_inode_lookupp_impl(cache_entry_t *entry,
+			 struct req_op_context *req_ctx,
+			 cache_entry_t **parent)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -157,9 +158,10 @@ cache_inode_status_t cache_inode_lookupp_impl(cache_entry_t * entry,
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t cache_inode_lookupp(cache_entry_t * entry,
-					 struct req_op_context * req_ctx,
-					 cache_entry_t ** parent)
+cache_inode_status_t
+cache_inode_lookupp(cache_entry_t *entry,
+		    struct req_op_context *req_ctx,
+		    cache_entry_t **parent)
 {
 	cache_inode_status_t status;
 	PTHREAD_RWLOCK_rdlock(&entry->content_lock);

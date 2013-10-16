@@ -55,7 +55,8 @@
 
 pool_t *cache_inode_entry_pool;
 
-const char *cache_inode_err_str(cache_inode_status_t err)
+const char *
+cache_inode_err_str(cache_inode_status_t err)
 {
 	switch (err) {
 	case CACHE_INODE_SUCCESS:
@@ -164,16 +165,16 @@ const char *cache_inode_err_str(cache_inode_status_t err)
  * @see FSAL_handlecmp
  *
  */
-int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
-				 struct gsh_buffdesc *buff2)
+int
+cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
+			     struct gsh_buffdesc *buff2)
 {
 	/* Test if one of the entries is NULL */
 	if (buff1->addr == NULL)
 		return (buff2->addr == NULL) ? 0 : 1;
 	else {
-		if (buff2->addr == NULL) {
-			return -1;	/* left member is the greater one */
-		}
+		if (buff2->addr == NULL)
+			return -1; /* left member is the greater one */
 		if (buff1->len == buff2->len)
 			return memcmp(buff1->addr, buff2->addr, buff1->len);
 		else
@@ -194,7 +195,8 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
  * @return 0 if keys if successfully build, -1 otherwise
  *
  */
-int cache_inode_set_time_current(struct timespec *time)
+int
+cache_inode_set_time_current(struct timespec *time)
 {
 	struct timeval t;
 
@@ -222,9 +224,10 @@ int cache_inode_set_time_current(struct timespec *time)
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
-					   uint32_t flags,
-					   cache_entry_t ** entry)
+cache_inode_status_t
+cache_inode_new_entry(struct fsal_obj_handle *new_obj,
+		      uint32_t flags,
+		      cache_entry_t **entry)
 {
 	cache_inode_status_t status;
 	fsal_status_t fsal_status;
@@ -314,10 +317,9 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Adding a REGULAR_FILE, entry=%p", nentry);
 
-		/* No locks, yet. */
+		/* No shares or locks, yet. */
 		glist_init(&nentry->object.file.lock_list);
-		glist_init(&nentry->object.file.nlm_share_list);	/* No associated NLM shares yet */
-
+		glist_init(&nentry->object.file.nlm_share_list);
 		memset(&nentry->object.file.share_state, 0,
 		       sizeof(cache_inode_share_t));
 		break;
@@ -386,7 +388,8 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
 		LogCrit(COMPONENT_CACHE_INODE,
 			"entry could not be added to hash, rc=%d", rc);
 		new_obj = nentry->obj_handle;
-		nentry->obj_handle = NULL;	/* give it back and poison the entry */
+		nentry->obj_handle = NULL; /* give it back and poison the
+					    * entry */
 		status = CACHE_INODE_HASH_SET_ERROR;
 		*entry = NULL;
 		goto out;
@@ -403,9 +406,8 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
 			pthread_rwlock_destroy(&nentry->content_lock);
 			pthread_rwlock_destroy(&nentry->state_lock);
 		}
-		if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
+		if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS)
 			cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
-		}
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
@@ -434,7 +436,8 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle * new_obj,
  * @return the result of the conversion.
  *
  */
-cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
+cache_inode_status_t
+cache_inode_error_convert(fsal_status_t fsal_status)
 {
 	switch (fsal_status.major) {
 	case ERR_FSAL_NO_ERROR:
@@ -505,7 +508,8 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_NOT_OPENED:
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
+			 "Conversion of ERR_FSAL_NOT_OPENED to "
+			 "CACHE_INODE_FSAL_ERROR");
 		return CACHE_INODE_FSAL_ERROR;
 
 	case ERR_FSAL_ISDIR:
@@ -541,17 +545,21 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_ALREADY_INIT:
 	case ERR_FSAL_BAD_INIT:
 	case ERR_FSAL_TIMEOUT:
-		/* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
+		/* These errors should be handled inside Cache Inode (or
+		 * should never be seen by Cache Inode) */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
+			 "Conversion of FSAL error %d,%d to "
+			 "CACHE_INODE_FSAL_ERROR",
 			 fsal_status.major, fsal_status.minor);
 		return CACHE_INODE_FSAL_ERROR;
 	}
 
-	/* We should never reach this line, this may produce a warning with certain compiler */
+	/* We should never reach this line, this may produce a warning with
+	 * certain compiler */
 	LogCrit(COMPONENT_CACHE_INODE,
 		"cache_inode_error_convert: default conversion to "
-		"CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
+		"CACHE_INODE_FSAL_ERROR for error %d, line %u should never be "
+		"reached",
 		fsal_status.major, __LINE__);
 	return CACHE_INODE_FSAL_ERROR;
 }
@@ -565,7 +573,8 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
  * @param[in] entry the input pentry.
  *
  */
-void cache_inode_print_dir(cache_entry_t * entry)
+void
+cache_inode_print_dir(cache_entry_t *entry)
 {
 	struct avltree_node *dirent_node;
 	cache_inode_dir_entry_t *dirent;
@@ -601,8 +610,9 @@ void cache_inode_print_dir(cache_entry_t * entry)
  * @param[in] which Caches to clear (dense, sparse, or both)
  *
  */
-void cache_inode_release_dirents(cache_entry_t * entry,
-				 cache_inode_avl_which_t which)
+void
+cache_inode_release_dirents(cache_entry_t *entry,
+			    cache_inode_avl_which_t which)
 {
 	struct avltree_node *dirent_node = NULL;
 	struct avltree_node *next_dirent_node = NULL;
@@ -675,49 +685,46 @@ void cache_inode_release_dirents(cache_entry_t * entry,
  *         trustworthy, various cache_inode error codes otherwise.
  */
 
-cache_inode_status_t cache_inode_lock_trust_attrs(cache_entry_t * entry,
-						  const struct req_op_context
-						  *opctx, bool need_wr_lock)
+cache_inode_status_t
+cache_inode_lock_trust_attrs(cache_entry_t *entry,
+			     const struct req_op_context
+			     *opctx, bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	time_t oldmtime = 0;
 
 	if (entry->type == FS_JUNCTION) {
 		LogCrit(COMPONENT_CACHE_INODE,
-			"cache_inode_lock_trust_attrs called on file %p of bad type %d",
-			entry, entry->type);
+			"cache_inode_lock_trust_attrs called on file %p of bad "
+			"type %d", entry, entry->type);
 
 		cache_status = CACHE_INODE_BAD_TYPE;
 		goto out;
 	}
 
-	if (need_wr_lock) {
+	if (need_wr_lock)
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	} else {
+	else
 		PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-	}
 
 	/* Do we need to refresh? */
-	if (cache_inode_is_attrs_valid(entry)) {
+	if (cache_inode_is_attrs_valid(entry))
 		goto out;
-	}
 
 	if (!need_wr_lock) {
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
 		/* Has someone else done it for us?  */
-		if (cache_inode_is_attrs_valid(entry)) {
+		if (cache_inode_is_attrs_valid(entry))
 			goto out;
-		}
 	}
 
 	oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
 	cache_status = cache_inode_refresh_attrs(entry, opctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+	if (cache_status != CACHE_INODE_SUCCESS)
 		goto unlock;
-	}
 
 	if ((entry->type == DIRECTORY)
 	    && (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {

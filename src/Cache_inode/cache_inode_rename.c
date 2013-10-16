@@ -63,11 +63,11 @@
  * @return the same as *status
  */
 
-cache_inode_status_t cache_inode_rename_cached_dirent(cache_entry_t * parent,
-						      const char *oldname,
-						      const char *newname,
-						      const struct
-						      req_op_context * req_ctx)
+cache_inode_status_t
+cache_inode_rename_cached_dirent(cache_entry_t *parent,
+				 const char *oldname,
+				 const char *newname,
+				 const struct req_op_context *req_ctx)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
@@ -95,7 +95,8 @@ cache_inode_status_t cache_inode_rename_cached_dirent(cache_entry_t * parent,
  * @param[in] dest Destination directory to lock
  */
 
-static inline void src_dest_lock(cache_entry_t * src, cache_entry_t * dest)
+static inline void
+src_dest_lock(cache_entry_t *src, cache_entry_t *dest)
 {
 
 	if (src == dest)
@@ -122,11 +123,12 @@ static inline void src_dest_lock(cache_entry_t * src, cache_entry_t * dest)
  * @param[in] dest Destination directory to lock
  */
 
-static inline void src_dest_unlock(cache_entry_t * src, cache_entry_t * dest)
+static inline void
+src_dest_unlock(cache_entry_t *src, cache_entry_t *dest)
 {
-	if (src == dest) {
+	if (src == dest)
 		PTHREAD_RWLOCK_unlock(&src->content_lock);
-	} else {
+	else {
 		if (src < dest) {
 			PTHREAD_RWLOCK_unlock(&dest->content_lock);
 			PTHREAD_RWLOCK_unlock(&src->content_lock);
@@ -156,11 +158,12 @@ static inline void src_dest_unlock(cache_entry_t * src, cache_entry_t * dest)
  *                              directory.
  * @retval CACHE_INODE_BADNAME if either name is "." or ".."
  */
-cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
-					const char *oldname,
-					cache_entry_t * dir_dest,
-					const char *newname,
-					struct req_op_context *req_ctx)
+cache_inode_status_t
+cache_inode_rename(cache_entry_t *dir_src,
+		   const char *oldname,
+		   cache_entry_t *dir_dest,
+		   const char *newname,
+		   struct req_op_context *req_ctx)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	cache_entry_t *lookup_src = NULL;
@@ -187,7 +190,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 	    cache_inode_lookup_impl(dir_src, oldname, req_ctx, &lookup_src);
 
 	if (lookup_src == NULL) {
-		/* If FSAL FH is stale, then this was managed in cache_inode_lookup */
+		/* If FSAL FH is stale, then this was managed in
+		 * cache_inode_lookup */
 		if (status != CACHE_INODE_FSAL_ESTALE)
 			status = CACHE_INODE_NOT_FOUND;
 
@@ -217,21 +221,22 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 
 	if (lookup_src == lookup_dst) {
 		/* Nothing to do according to POSIX and NFS3/4
-		   If from and to both refer to the same file (they might be hard links
-		   of each other), then RENAME should perform no action and return success */
+		 * If from and to both refer to the same file (they might be
+		 * hard links of each other), then RENAME should perform no
+		 * action and return success */
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Rename (%p,%s)->(%p,%s) : same file so skipping out",
 			 dir_src, oldname, dir_dest, newname);
 		goto out;
 	}
 
-	/* Perform the rename operation in FSAL before doing anything in the cache.
-	 * Indeed, if the FSAL_rename fails unexpectly, the cache would be
-	 * inconsistent!
+	/* Perform the rename operation in FSAL before doing anything in the
+	 * cache. Indeed, if the FSAL_rename fails unexpectly, the cache would
+	 * be inconsistent!
 	 *
 	 * We do almost no checking before making call because we want to return
-	 * error based on the files actually present in the directories, not what
-	 * we have in our cache.
+	 * error based on the files actually present in the directories, not
+	 * what we have in our cache.
 	 */
 	LogFullDebug(COMPONENT_CACHE_INODE, "about to call FSAL rename");
 
@@ -244,10 +249,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 
 	status_ref_dir_src = cache_inode_refresh_attrs_locked(dir_src, req_ctx);
 
-	if (dir_src != dir_dest) {
+	if (dir_src != dir_dest)
 		status_ref_dir_dst =
-		    cache_inode_refresh_attrs_locked(dir_dest, req_ctx);
-	}
+			cache_inode_refresh_attrs_locked(dir_dest, req_ctx);
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "done refreshing attributes");
 
@@ -265,16 +269,14 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 		/* Force a refresh of the overwritten inode */
 		status_ref_dst =
 		    cache_inode_refresh_attrs_locked(lookup_dst, req_ctx);
-		if (status_ref_dst == CACHE_INODE_FSAL_ESTALE) {
+		if (status_ref_dst == CACHE_INODE_FSAL_ESTALE)
 			status_ref_dst = CACHE_INODE_SUCCESS;
-		}
 	}
 
 	if (((status = status_ref_dir_src) != CACHE_INODE_SUCCESS)
 	    || ((status = status_ref_dir_dst) != CACHE_INODE_SUCCESS)
-	    || ((status = status_ref_dst) != CACHE_INODE_SUCCESS)) {
+	    || ((status = status_ref_dst) != CACHE_INODE_SUCCESS))
 		goto out;
-	}
 
 	/* Must take locks on directories now,
 	 * because if another thread checks source and destination existence
@@ -304,8 +306,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 		 * resource in this case */
 
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Rename (%p,%s)->(%p,%s) : source and target directory are "
-			 "the same", dir_src, oldname, dir_dest, newname);
+			 "Rename (%p,%s)->(%p,%s) : source and target "
+			 "directory  the same", dir_src, oldname, dir_dest,
+			 newname);
 
 		cache_inode_status_t tmp_status =
 		    cache_inode_rename_cached_dirent(dir_dest, oldname, newname,
@@ -323,9 +326,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 			 oldname, dir_dest, newname);
 
 		/* We may have a cache entry for the destination
-		 * filename. 
-		 * If we do, we must delete it : it is stale.
-		 */
+		 * filename.  If we do, we must delete it : it is stale. */
 		tmp_status =
 		    cache_inode_remove_cached_dirent(dir_dest, newname,
 						     req_ctx);
@@ -364,7 +365,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * dir_src,
 	/* unlock entries */
 	src_dest_unlock(dir_src, dir_dest);
 
- out:
+out:
 	if (lookup_src)
 		cache_inode_put(lookup_src);
 
