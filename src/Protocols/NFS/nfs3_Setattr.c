@@ -66,9 +66,9 @@
  *
  */
 
-int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
-		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		struct svc_req *req, nfs_res_t * res)
+int nfs_Setattr(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	struct attrlist setattr;
 	cache_entry_t *entry = NULL;
@@ -80,8 +80,12 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_setattr3.object, NULL,
+
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_setattr3.object,
+				 NULL,
 				 str);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Setattr handle: %s",
 			 str);
@@ -92,21 +96,25 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 	    attributes_follow = FALSE;
 	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
 	    attributes_follow = FALSE;
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_setattr3.object, req_ctx, export,
-				&res->res_setattr3.status, &rc);
+
+	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
+				    req_ctx,
+				    export,
+				    &res->res_setattr3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {
-		/* This pack of lines implements the "guard
-		 * check" setattr.  This feature of nfsv3 is
-		 * used to avoid several setattr to occur
-		 * concurently on the same object, from
-		 * different clients */
+		/* This pack of lines implements the "guard check" setattr. This
+		 * feature of nfsv3 is used to avoid several setattr to occur
+		 * concurently on the same object, from different clients
+		 */
 		LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d csn=%d acn=%d",
 			     arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
 			     tv_sec,
@@ -116,10 +124,10 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 			     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec);
 
 		if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
-		     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec)
-		    || (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
-			tv_nsec !=
-			pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
+		     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
+		    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
+		     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
+
 			res->res_setattr3.status = NFS3ERR_NOT_SYNC;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -127,8 +135,8 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	/* Conversion to FSAL attributes */
-	if (!nfs3_Sattr_To_FSALattr
-	    (&setattr, &arg->arg_setattr3.new_attributes)) {
+	if (!nfs3_Sattr_To_FSALattr(&setattr,
+				    &arg->arg_setattr3.new_attributes)) {
 		res->res_setattr3.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -139,12 +147,14 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
 		squash_setattr(&export->export_perms, req_ctx->creds, &setattr);
-		cache_status =
-		    cache_inode_setattr(entry, &setattr, false, req_ctx);
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
+		cache_status = cache_inode_setattr(entry,
+						   &setattr,
+						   false,
+						   req_ctx);
+
+		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
-		}
 	}
 
 	/* Set the NFS return */
@@ -175,6 +185,7 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
 
 	/* Set the NFS return */
 	res->res_setattr3.status = nfs3_Errno(cache_status);
+
 	nfs_SetWccData(&pre_attr, entry, req_ctx,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
@@ -198,7 +209,7 @@ int nfs_Setattr(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  */
 
-void nfs_Setattr_Free(nfs_res_t * res)
+void nfs_Setattr_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs_Setattr_Free */

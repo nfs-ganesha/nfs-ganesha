@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -67,21 +67,25 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs_Readlink(nfs_arg_t * arg, exportlist_t * export,
-		 struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		 struct svc_req *req, nfs_res_t * res)
+int nfs_Readlink(nfs_arg_t *arg, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	cache_inode_status_t cache_status;
-	struct gsh_buffdesc link_buffer = {.addr = NULL,
+	struct gsh_buffdesc link_buffer = {
+		.addr = NULL,
 		.len = 0
 	};
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_readlink3.symlink),
+
+		nfs_FhandleToStr(req->rq_vers,
+				 &(arg->arg_readlink3.symlink),
 				 NULL, str);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Readlink handle: %s",
 			 str);
@@ -90,37 +94,42 @@ int nfs_Readlink(nfs_arg_t * arg, exportlist_t * export,
 	/* to avoid setting it on each error case */
 	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes.
 	    attributes_follow = false;
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_readlink3.symlink, req_ctx, export,
-				&res->res_readlink3.status, &rc);
+
+	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
+				    req_ctx,
+				    export,
+				    &res->res_readlink3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	/* Sanity Check: the entry must be a link */
 	if (entry->type != SYMBOLIC_LINK) {
 		res->res_readlink3.status = NFS3ERR_INVAL;
-
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
 	cache_status = cache_inode_readlink(entry, &link_buffer, req_ctx);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_readlink3.status = nfs3_Errno(cache_status);
 		nfs_SetPostOpAttr(entry, req_ctx,
 				  &res->res_readlink3.READLINK3res_u.resfail.
 				  symlink_attributes);
 
-		if (nfs_RetryableError(cache_status)) {
+		if (nfs_RetryableError(cache_status))
 			rc = NFS_REQ_DROP;
-			goto out;
-		}
+
 		goto out;
 	}
 
 	/* Reply to the client */
 	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
+
 	nfs_SetPostOpAttr(entry, req_ctx,
 			  &res->res_readlink3.READLINK3res_u.
 			  resok.symlink_attributes);
@@ -130,9 +139,8 @@ int nfs_Readlink(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 	/* return references */
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs_Readlink */
@@ -146,9 +154,8 @@ int nfs_Readlink(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Readlink_Free(nfs_res_t * res)
+void nfs3_Readlink_Free(nfs_res_t *res)
 {
-	if (res->res_readlink3.status == NFS3_OK) {
+	if (res->res_readlink3.status == NFS3_OK)
 		gsh_free(res->res_readlink3.READLINK3res_u.resok.data);
-	}
 }				/* nfs3_Readlink_Free */

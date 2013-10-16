@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -57,16 +57,7 @@
  * @param[in]  export  NFS export list
  * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
- * @param[in]  req     SVC request related to this call= nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_create2.where.dir,
-                                               &arg->arg_create3.where.dir,
-                                               NULL,
-                                               &res->res_dirop2.status,
-                                               &res->res_create3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) 
+ * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
@@ -75,9 +66,9 @@
  *
  */
 
-int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs_Remove(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
 	cache_entry_t *child_entry = NULL;
@@ -91,8 +82,11 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_create3.where.dir,
-				 NULL, str);
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_create3.where.dir,
+				 NULL,
+				 str);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s "
 			 "name: %s", str, name);
@@ -104,18 +98,21 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
 	    FALSE;
 	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
-	parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_remove3.object.dir, req_ctx, export,
-				&res->res_remove3.status, &rc);
+
+	parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
+					   req_ctx,
+					   export,
+					   &res->res_remove3.status,
+					   &rc);
+
 	if (parent_entry == NULL) {
-		/* Stale NFS FH ? */
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
-	/*
-	 * Sanity checks: file name must be non-null; parent must be a
+	/* Sanity checks: file name must be non-null; parent must be a
 	 * directory.
 	 */
 	if (parent_entry->type != DIRECTORY) {
@@ -130,11 +127,15 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	/* Lookup the child entry to verify that it is not a directory */
-	cache_status =
-	    cache_inode_lookup(parent_entry, name, req_ctx, &child_entry);
+	cache_status = cache_inode_lookup(parent_entry,
+					  name,
+					  req_ctx,
+					  &child_entry);
+
 	if (child_entry != NULL) {
 		/* Sanity check: make sure we are not removing a
-		   directory */
+		 * directory
+		 */
 		if (child_entry->type == DIRECTORY) {
 			res->res_remove3.status = NFS3ERR_ISDIR;
 			rc = NFS_REQ_OK;
@@ -147,9 +148,9 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
 
 	/* Remove the entry. */
 	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+
+	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
-	}
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
@@ -165,10 +166,8 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
 	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
 		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(cache_status))
 		rc = NFS_REQ_DROP;
-
-	}
 
  out:
 	/* return references */
@@ -190,7 +189,7 @@ int nfs_Remove(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Remove_Free(nfs_res_t * res)
+void nfs_Remove_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs_Remove_Free */

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs_Create(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
 	uint32_t mode = 0;
@@ -103,11 +103,14 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 	res->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
 
-	parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_create3.where.dir, req_ctx, export,
-				&res->res_create3.status, &rc);
+	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
+					   req_ctx,
+					   export,
+					   &res->res_create3.status,
+					   &rc);
+
 	if (parent_entry == NULL) {
-		/* Stale NFS FH ? */
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -127,7 +130,9 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 	fsal_status =
 	    export->export_hdl->ops->check_quota(export->export_hdl,
 						 export->fullpath,
-						 FSAL_QUOTA_INODES, req_ctx);
+						 FSAL_QUOTA_INODES,
+						 req_ctx);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_create3.status = NFS3ERR_DQUOT;
 		rc = NFS_REQ_OK;
@@ -150,8 +155,8 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 					   mode);
 		}
 
-		if (nfs3_Sattr_To_FSALattr
-		    (&sattr,
+		if (nfs3_Sattr_To_FSALattr(
+		     &sattr,
 		     &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) {
 			res->res_create3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
@@ -173,9 +178,13 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 		cache_inode_create_set_verifier(&sattr, verf_hi, verf_lo);
 	}
 
-	cache_status =
-	    cache_inode_create(parent_entry, file_name, REGULAR_FILE, mode,
-			       NULL, req_ctx, &file_entry);
+	cache_status = cache_inode_create(parent_entry,
+					  file_name,
+					  REGULAR_FILE,
+					  mode,
+					  NULL,
+					  req_ctx,
+					  &file_entry);
 
 	/* Complete failure */
 	if (((cache_status != CACHE_INODE_SUCCESS)
@@ -188,8 +197,10 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 		if (arg->arg_create3.how.mode == GUARDED) {
 			goto out_fail;
 		} else if (arg->arg_create3.how.mode == EXCLUSIVE
-			   && !cache_inode_create_verify(file_entry, req_ctx,
-							 verf_hi, verf_lo)) {
+			   && !cache_inode_create_verify(file_entry,
+							 req_ctx,
+							 verf_hi,
+							 verf_lo)) {
 			goto out_fail;
 		}
 
@@ -211,12 +222,13 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 		    || ((sattr.mask & ATTR_GROUP)
 			&& (req_ctx->creds->caller_gid != sattr.group))) {
 			/* A call to cache_inode_setattr is required */
-			cache_status =
-			    cache_inode_setattr(file_entry, &sattr, false,
-						req_ctx);
-			if (cache_status != CACHE_INODE_SUCCESS) {
+			cache_status = cache_inode_setattr(file_entry,
+							   &sattr,
+							   false,
+							   req_ctx);
+
+			if (cache_status != CACHE_INODE_SUCCESS)
 				goto out_fail;
-			}
 		}
 	}
 
@@ -224,14 +236,15 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 	res->res_create3.status =
 	    nfs3_AllocateFH(&res->res_create3.CREATE3res_u.resok.obj.
 			    post_op_fh3_u.handle);
+
 	if (res->res_create3.status != NFS3_OK) {
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
 	/* Set Post Op Fh3 structure */
-	if (!nfs3_FSALToFhandle
-	    (&(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle),
+	if (!nfs3_FSALToFhandle(
+	     &(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle),
 	     file_entry->obj_handle)) {
 		gsh_free(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
 			 handle.data.data_val);
@@ -257,13 +270,11 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 	/* return references */
-	if (file_entry) {
+	if (file_entry)
 		cache_inode_put(file_entry);
-	}
 
-	if (parent_entry) {
+	if (parent_entry)
 		cache_inode_put(parent_entry);
-	}
 
 	return rc;
 
@@ -287,7 +298,7 @@ int nfs_Create(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Create_Free(nfs_res_t * res)
+void nfs_Create_Free(nfs_res_t *res)
 {
 	if ((res->res_create3.status == NFS3_OK)
 	    && (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {

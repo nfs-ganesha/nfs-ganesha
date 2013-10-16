@@ -60,25 +60,16 @@
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
- *= nfs_FhandleToCache(req_ctx,
-                                        req->rq_vers,
-                                        &arg->arg_readlink2,
-                                        &arg->arg_readlink3.symlink,
-                                        NULL,
-                                        &res->res_readlink2.status,
-                                        &res->res_readlink3.status,
-                                        NULL,
-                                        export,
-                                        &rc)) 
+ *
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Fsstat(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs_Fsstat(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	fsal_dynamicfsinfo_t dynamicinfo;
 	cache_inode_status_t cache_status;
@@ -97,18 +88,24 @@ int nfs_Fsstat(nfs_arg_t * arg, exportlist_t * export,
 	/* to avoid setting it on each error case */
 	res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =
 	    FALSE;
-	entry =
-	    nfs3_FhandleToCache(&(arg->arg_fsstat3.fsroot), req_ctx, export,
-				&(res->res_fsstat3.status), &rc);
+
+	entry = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
+				    req_ctx,
+				    export,
+				    &res->res_fsstat3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	/* Get statistics and convert from cache */
+	cache_status = cache_inode_statfs(entry,
+					  &dynamicinfo,
+					  req_ctx);
 
-	if ((cache_status =
-	     cache_inode_statfs(entry, &dynamicinfo,
-				req_ctx)) == CACHE_INODE_SUCCESS) {
+	if (cache_status == CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "nfs_Fsstat --> dynamicinfo.total_bytes "
 			     "= %zu dynamicinfo.free_bytes = %zu "
@@ -138,7 +135,8 @@ int nfs_Fsstat(nfs_arg_t * arg, exportlist_t * export,
 		    dynamicinfo.free_files;
 		res->res_fsstat3.FSSTAT3res_u.resok.afiles =
 		    dynamicinfo.avail_files;
-		res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;	/* volatile FS */
+		/* volatile FS */
+		res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;
 
 		res->res_fsstat3.status = NFS3_OK;
 
@@ -171,9 +169,8 @@ int nfs_Fsstat(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 	/* return references */
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs_Fsstat */
@@ -186,7 +183,7 @@ int nfs_Fsstat(nfs_arg_t * arg, exportlist_t * export,
  * @param[in] res Result structure
  *
  */
-void nfs_Fsstat_Free(nfs_res_t * res)
+void nfs_Fsstat_Free(nfs_res_t *res)
 {
 	/* Nothing to do here */
 	return;

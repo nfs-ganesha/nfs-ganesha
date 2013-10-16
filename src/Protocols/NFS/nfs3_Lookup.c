@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Lookup(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs_Lookup(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry_dir = NULL;
 	cache_entry_t *entry_file = NULL;
@@ -92,22 +92,30 @@ int nfs_Lookup(nfs_arg_t * arg, exportlist_t * export,
 	/* to avoid setting it on each error case */
 	res->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow =
 	    FALSE;
-	entry_dir =
-	    nfs3_FhandleToCache(&(arg->arg_lookup3.what.dir), req_ctx, export,
-				&(res->res_lookup3.status), &rc);
+
+	entry_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
+					req_ctx,
+					export,
+					&res->res_lookup3.status,
+					&rc);
+
 	if (entry_dir == NULL) {
-		/* Stale NFS FH? */
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	name = arg->arg_lookup3.what.name;
 
-	cache_status =
-	    cache_inode_lookup(entry_dir, name, req_ctx, &entry_file);
+	cache_status = cache_inode_lookup(entry_dir,
+					  name,
+					  req_ctx,
+					  &entry_file);
+
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
 		/* Build FH */
 		res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
 		    gsh_malloc(sizeof(struct alloc_file_handle_v3));
+
 		if (res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val ==
 		    NULL)
 			res->res_lookup3.status = NFS3ERR_INVAL;
@@ -152,7 +160,7 @@ int nfs_Lookup(nfs_arg_t * arg, exportlist_t * export,
 	if (entry_file)
 		cache_inode_put(entry_file);
 
-	return (rc);
+	return rc;
 }				/* nfs_Lookup */
 
 /**
@@ -163,7 +171,7 @@ int nfs_Lookup(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Lookup_Free(nfs_res_t * res)
+void nfs3_Lookup_Free(nfs_res_t *res)
 {
 	if (res->res_lookup3.status == NFS3_OK) {
 		gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data.
@@ -178,7 +186,7 @@ void nfs3_Lookup_Free(nfs_res_t * res)
  *
  * @param[in,out] res Result structure
  */
-void nfs2_Lookup_Free(nfs_res_t * res)
+void nfs2_Lookup_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs2_Lookup_Free */

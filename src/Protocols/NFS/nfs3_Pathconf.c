@@ -66,9 +66,9 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Pathconf(nfs_arg_t * arg, exportlist_t * export,
-		  struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		  struct svc_req *req, nfs_res_t * res)
+int nfs3_Pathconf(nfs_arg_t *arg, exportlist_t *export,
+		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
@@ -87,10 +87,14 @@ int nfs3_Pathconf(nfs_arg_t * arg, exportlist_t * export,
 	    attributes_follow = FALSE;
 
 	/* Convert file handle into a fsal_handle */
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_pathconf3.object, req_ctx, export,
-				&res->res_pathconf3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
+				    req_ctx,
+				    export,
+				    &res->res_pathconf3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -114,9 +118,8 @@ int nfs3_Pathconf(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs3_Pathconf */
@@ -129,7 +132,7 @@ int nfs3_Pathconf(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure.
  *
  */
-void nfs3_Pathconf_Free(nfs_res_t * res)
+void nfs3_Pathconf_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs3_Pathconf_Free */
