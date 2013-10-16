@@ -10,24 +10,22 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    mnt_Mnt.c
- * \date    $Date: 2006/01/18 07:29:11 $
- * \version $Revision: 1.18 $
- * \brief   MOUNTPROC_MNT for Mount protocol v1 and v3.
+ * file    mnt_Mnt.c
+ * brief   MOUNTPROC_MNT for Mount protocol v1 and v3.
  *
  * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
  *
@@ -67,9 +65,9 @@
  *
  */
 
-int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
-	    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	    struct svc_req *preq, nfs_res_t * pres)
+int mnt_Mnt(nfs_arg_t *parg, exportlist_t *pexport,
+	    struct req_op_context *req_ctx, nfs_worker_data_t *pworker,
+	    struct svc_req *preq, nfs_res_t *pres)
 {
 
 	exportlist_t *p_current_item = NULL;
@@ -79,7 +77,6 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
 	int i = 0;
-	char *hostname;
 	char dumpfh[1024];
 	export_perms_t export_perms;
 	int retval = NFS_REQ_OK;
@@ -97,12 +94,13 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 		goto out;
 	}
 
-	/* If the path ends with a '/', get rid if it should it be a while()?? */
+	/* If the path ends with a '/', get rid if it should it be a while()??
+	 */
 	if (parg->arg_mnt[strlen(parg->arg_mnt) - 1] == '/')
 		parg->arg_mnt[strlen(parg->arg_mnt) - 1] = '\0';
 
 	/*
-	 * Find the export for the dirname (using as well Path or Tag ) 
+	 * Find the export for the dirname (using as well Path or Tag )
 	 */
 	if (parg->arg_mnt[0] == '/')
 		exp = get_gsh_export_by_path(parg->arg_mnt);
@@ -198,7 +196,7 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
  * redefine and eliminate one or the other.
  */
 		pres->res_mnt3.fhs_status =
-		    nfs3_AllocateFH((nfs_fh3 *) & pres->res_mnt3.mountres3_u.
+		    nfs3_AllocateFH((nfs_fh3 *) &pres->res_mnt3.mountres3_u.
 				    mountinfo.fhandle);
 		if (pres->res_mnt3.fhs_status == MNT3_OK) {
 			if (!nfs3_FSALToFhandle
@@ -209,7 +207,7 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 			} else {
 				if (isDebug(COMPONENT_NFSPROTO))
 					sprint_fhandle3(dumpfh,
-							(nfs_fh3 *) & pres->
+							(nfs_fh3 *) &pres->
 							res_mnt3.mountres3_u.
 							mountinfo.fhandle);
 				pres->res_mnt3.fhs_status = MNT3_OK;
@@ -246,10 +244,13 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 			 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
 			 index_auth, dumpfh, req_ctx->client->hostaddr_str);
 
-		mountres3_ok *const RES_MOUNTINFO =
+		mountres3_ok * const RES_MOUNTINFO =
 		    &pres->res_mnt3.mountres3_u.mountinfo;
-		if ((RES_MOUNTINFO->auth_flavors.auth_flavors_val =
-		     gsh_calloc(index_auth, sizeof(int))) == NULL)
+
+		RES_MOUNTINFO->auth_flavors.auth_flavors_val =
+			gsh_calloc(index_auth, sizeof(int));
+
+		if (RES_MOUNTINFO->auth_flavors.auth_flavors_val == NULL)
 			return NFS_REQ_DROP;
 
 		RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
@@ -258,21 +259,8 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 			    auth_flavor[i];
 	}
 
-	/* Add the client to the mount list */
-	if (preq->rq_cred.oa_flavor == AUTH_SYS) {
-		hostname =
-		    ((struct authunix_parms *)(preq->rq_clntcred))->
-		    aup_machname;
-	} else {
-		hostname = req_ctx->client->hostaddr_str;
-	}
+	/* Ganesha does not support the mount list so ignore this part */
 
-	if (!nfs_Add_MountList_Entry(hostname, parg->arg_mnt)) {
-		LogInfo(COMPONENT_NFSPROTO,
-			"MOUNT: Error when adding entry (%s,%s) to the mount list,"
-			" Mount command will be successfull anyway", hostname,
-			parg->arg_mnt);
-	}
  out:
 	if (exp != NULL)
 		put_gsh_export(exp);
@@ -282,19 +270,19 @@ int mnt_Mnt(nfs_arg_t * parg, exportlist_t * pexport,
 
 /**
  * mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
- * 
+ *
  * Frees the result structure allocated for mnt_Mnt.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
 
-void mnt1_Mnt_Free(nfs_res_t * pres)
+void mnt1_Mnt_Free(nfs_res_t *pres)
 {
 	return;
 }				/* mnt_Mnt_Free */
 
-void mnt3_Mnt_Free(nfs_res_t * pres)
+void mnt3_Mnt_Free(nfs_res_t *pres)
 {
 	if (pres->res_mnt3.fhs_status == MNT3_OK) {
 		gsh_free(pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.

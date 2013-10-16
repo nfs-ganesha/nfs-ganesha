@@ -15,20 +15,18 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    mnt_Export.c
- * \date    $Date: 2006/01/18 17:01:40 $
- * \version $Revision: 1.19 $
- * \brief   MOUNTPROC_EXPORT for Mount protocol v1 and v3.
+ * file    mnt_Export.c
+ * brief   MOUNTPROC_EXPORT for Mount protocol v1 and v3.
  *
  * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
  *
@@ -88,13 +86,15 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 		    glist_entry(glist_item, exportlist_client_entry_t,
 				cle_list);
 		group = gsh_calloc(1, sizeof(struct groupnode));
+
 		if (group == NULL)
 			goto nomem;
-		if (new_expnode->ex_groups == NULL) {
+
+		if (new_expnode->ex_groups == NULL)
 			new_expnode->ex_groups = group;
-		} else {
+		else
 			grp_tail->gr_next = group;
-		}
+
 		grp_tail = group;
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -129,11 +129,12 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 		if (group->gr_name == NULL)
 			goto nomem;
 	}
-	if (state->head == NULL) {
+
+	if (state->head == NULL)
 		state->head = new_expnode;
-	} else {
+	else
 		state->tail->ex_next = new_expnode;
-	}
+
 	state->tail = new_expnode;
 	return true;
 
@@ -156,9 +157,9 @@ static bool proc_export(struct gsh_export *exp, void *arg)
  *
  */
 
-int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	       struct svc_req *preq, nfs_res_t * pres)
+int mnt_Export(nfs_arg_t *parg, exportlist_t *pexport,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *pworker,
+	       struct svc_req *preq, nfs_res_t *pres)
 {
 	struct proc_state proc_state;
 
@@ -178,13 +179,13 @@ int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
 
 /**
  * mnt_Export_Free: Frees the result structure allocated for mnt_Export.
- * 
+ *
  * Frees the result structure allocated for mnt_Dump.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Export_Free(nfs_res_t * pres)
+void mnt_Export_Free(nfs_res_t *pres)
 {
 	struct exportnode *exp, *next_exp;
 	struct groupnode *grp, *next_grp;

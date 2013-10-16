@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    mnt_Dump.c
- * \brief   MOUNTPROC_Dump for Mount protocol v1 and v3.
+ * file    mnt_Dump.c
+ * brief   MOUNTPROC_Dump for Mount protocol v1 and v3.
  *
  */
 #include "config.h"
@@ -58,27 +58,28 @@
  *
  */
 
-int mnt_Dump(nfs_arg_t * parg, exportlist_t * pexport,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	     struct svc_req *preq, nfs_res_t * pres)
+int mnt_Dump(nfs_arg_t *parg, exportlist_t *pexport,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *pworker,
+	     struct svc_req *preq, nfs_res_t *pres)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
-	/* Get the root of the mount list */
-	pres->res_dump = nfs_Get_MountList();
+	/* Ganesha does not support the mount list so this is a NOOP */
+
+	pres->res_dump = NULL;
 
 	return NFS_REQ_OK;
 }				/* mnt_Null */
 
 /**
  * mnt_Dump_Free: Frees the result structure allocated for mnt_Dump.
- * 
+ *
  * Frees the result structure allocated for mnt_Dump.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Dump_Free(nfs_res_t * pres)
+void mnt_Dump_Free(nfs_res_t *pres)
 {
 	/* Nothing to do */
 	return;
