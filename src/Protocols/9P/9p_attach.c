@@ -44,10 +44,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_attach(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	       char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u32 *afid = NULL;
@@ -68,7 +68,7 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	cache_inode_status_t cache_status;
 	char exppath[MAXPATHLEN];
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
+	if (!req9p || !pworker_data || !plenout || !preply)
 		return -1;
 
 	/* Get data */
@@ -96,45 +96,45 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 	/* Did we find something ? */
 	if (exp == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ENOENT, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ENOENT, plenout,
 				  preply);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Set export and fid id in fid */
 	if ((pfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ENOMEM, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ENOMEM, plenout,
 				  preply);
 	export = &exp->export;
 	pfid->export = export;
 	pfid->fid = *fid;
-	preq9p->pconn->fids[*fid] = pfid;
+	req9p->pconn->fids[*fid] = pfid;
 
 	/* Is user name provided as a string or as an uid ? */
 	if (*n_uname != _9P_NONUNAME) {
 		/* Build the fid creds */
 		if ((err =
 		     _9p_tools_get_req_context_by_uid(*n_uname, pfid)) != 0)
-			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, pworker_data, msgtag, -err,
 					  plenout, preply);
 	} else if (*uname_len != 0) {
 		/* Build the fid creds */
 		if ((err =
 		     _9p_tools_get_req_context_by_name(*uname_len, uname_str,
 						       pfid)) != 0)
-			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, pworker_data, msgtag, -err,
 					  plenout, preply);
 	} else {
 		/* No n_uname nor uname */
-		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EINVAL, plenout,
 				  preply);
 	}
 
 	/* Check if root cache entry is correctly set */
 	if (export->exp_root_cache_inode == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, err, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, err, plenout,
 				  preply);
 
 	/* get the export information for this fid */
@@ -150,7 +150,7 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	cache_status =
 	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

@@ -45,10 +45,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_lcreate(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u32 *flags = NULL;
@@ -67,8 +67,6 @@ int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	cache_inode_status_t cache_status;
 	fsal_openflags_t openflags = 0;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -84,15 +82,15 @@ int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
@@ -104,14 +102,14 @@ int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
 			       NULL, &pfid->op_context, &pentry_newfile);
 	if (pentry_newfile == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
 	cache_status =
 	    cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
@@ -142,11 +140,11 @@ int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 			pfid->op_context.creds->caller_uid = saved_uid;
 
 			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(preq9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, pworker_data, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 		} else
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 	}
@@ -157,7 +155,7 @@ int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	/* Pin as well. We probably want to close the file if this fails, but it won't happen - right?! */
 	cache_status = cache_inode_inc_pin_ref(pentry_newfile);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

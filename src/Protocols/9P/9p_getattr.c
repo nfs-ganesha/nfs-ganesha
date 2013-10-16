@@ -46,10 +46,10 @@
 u32 zero32 = 0;
 u64 zero64 = 0LL;
 
-int _9p_getattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_getattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u64 *request_mask = NULL;
@@ -76,8 +76,6 @@ int _9p_getattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	u64 *gen = NULL;
 	u64 *data_version = NULL;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
@@ -87,15 +85,15 @@ int _9p_getattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, (unsigned long long)*request_mask);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 

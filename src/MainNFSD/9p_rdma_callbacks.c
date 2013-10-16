@@ -55,7 +55,7 @@
 
 #include <mooshika.h>
 
-void DispatchWork9P(request_data_t * preq);
+void DispatchWork9P(request_data_t *req);
 
 void _9p_rdma_callback_send(msk_trans_t * trans, msk_data_t * pdata, void *arg)
 {
@@ -90,16 +90,16 @@ void _9p_rdma_callback_disconnect(msk_trans_t * trans)
 	_9p_rdma_cleanup_conn(trans);
 }
 
-void _9p_rdma_process_request(_9p_request_data_t * preq9p,
+void _9p_rdma_process_request(_9p_request_data_t *req9p,
 			      nfs_worker_data_t * pworker_data)
 {
-	msk_trans_t *trans = preq9p->pconn->trans_data.rdma_trans;
+	msk_trans_t *trans = req9p->pconn->trans_data.rdma_trans;
 
-	msk_data_t *pdata = preq9p->datalock->data;
-	_9p_datalock_t *datalock = preq9p->datalock;
+	msk_data_t *pdata = req9p->datalock->data;
+	_9p_datalock_t *datalock = req9p->datalock;
 
   /** @todo: don't need another datalock for sender, only put data there */
-	_9p_datalock_t *outdatalock = preq9p->datalock->sender;
+	_9p_datalock_t *outdatalock = req9p->datalock->sender;
 	msk_data_t *poutdata = outdatalock->data;
 
 	uint32_t *p_9pmsglen = NULL;
@@ -119,17 +119,17 @@ void _9p_rdma_process_request(_9p_request_data_t * preq9p,
 			     *p_9pmsglen);
 
 		/* Use buffer received via RDMA as a 9P message */
-		preq9p->_9pmsg = pdata->data;
+		req9p->_9pmsg = pdata->data;
 
 		/* We start using the send buffer. Lock it. */
 		pthread_mutex_lock(&outdatalock->lock);
 
 		if ((rc =
-		     _9p_process_buffer(preq9p, pworker_data, poutdata->data,
+		     _9p_process_buffer(req9p, pworker_data, poutdata->data,
 					&outdatalen)) != 1) {
 			LogMajor(COMPONENT_9P,
 				 "Could not process 9P buffer on socket #%lu",
-				 preq9p->pconn->trans_data.sockfd);
+				 req9p->pconn->trans_data.sockfd);
 		}
 
 		/* Mark the buffer ready for later receive and post the reply */
@@ -152,14 +152,14 @@ void _9p_rdma_process_request(_9p_request_data_t * preq9p,
 			pthread_mutex_unlock(&outdatalock->lock);
 		}
 
-		_9p_DiscardFlushHook(preq9p);
+		_9p_DiscardFlushHook(req9p);
 	}
 }
 
 void _9p_rdma_callback_recv(msk_trans_t * trans, msk_data_t * pdata, void *arg)
 {
 	struct _9p_datalock *_9p_datalock = arg;
-	request_data_t *preq = NULL;
+	request_data_t *req = NULL;
 	u16 tag = 0;
 	char *_9pmsg = NULL;
 
@@ -169,17 +169,17 @@ void _9p_rdma_callback_recv(msk_trans_t * trans, msk_data_t * pdata, void *arg)
 		return;
 	}
 
-	preq = pool_alloc(request_pool, NULL);
+	req = pool_alloc(request_pool, NULL);
 
-	preq->rtype = _9P_REQUEST;
-	preq->r_u._9p._9pmsg = _9pmsg;
-	preq->r_u._9p.pconn = _9p_rdma_priv_of(trans)->pconn;
-	preq->r_u._9p.datalock = _9p_datalock;
+	req->rtype = _9P_REQUEST;
+	req->r_u._9p._9pmsg = _9pmsg;
+	req->r_u._9p.pconn = _9p_rdma_priv_of(trans)->pconn;
+	req->r_u._9p.datalock = _9p_datalock;
 
 	/* Add this request to the request list, should it be flushed later. */
 	_9pmsg = pdata->data;
 	tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
-	_9p_AddFlushHook(&preq->r_u._9p, tag, preq->r_u._9p.pconn->sequence++);
+	_9p_AddFlushHook(&req->r_u._9p, tag, req->r_u._9p.pconn->sequence++);
 
-	DispatchWork9P(preq);
+	DispatchWork9P(req);
 }				/* _9p_rdma_callback_recv */

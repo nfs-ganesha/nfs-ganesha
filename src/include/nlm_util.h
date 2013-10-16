@@ -62,7 +62,7 @@ int nlm_process_parameters(struct svc_req *, bool,
 			   state_owner_t **,
 			   state_block_data_t **);
 
-int nlm_process_share_parms(struct svc_req *preq, nlm4_share * share,
+int nlm_process_share_parms(struct svc_req *req, nlm4_share * share,
 			    struct fsal_export *exp_hdl,
 			    struct req_op_context *req_ctx,
 			    cache_entry_t ** ppentry, care_t care,

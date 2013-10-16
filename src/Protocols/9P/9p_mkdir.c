@@ -43,10 +43,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_mkdir(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	      char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u32 *mode = NULL;
@@ -62,9 +62,6 @@ int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	uint64_t fileid;
 	cache_inode_status_t cache_status;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -78,15 +75,15 @@ int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, *name_len, name_str, *mode, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -98,7 +95,7 @@ int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	    cache_inode_create(pfid->pentry, dir_name, DIRECTORY, *mode, NULL,
 			       &pfid->op_context, &pentry_newdir);
 	if (pentry_newdir == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
@@ -112,7 +109,7 @@ int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	cache_inode_put(pentry_newdir);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

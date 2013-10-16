@@ -45,10 +45,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_getlock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_getlock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u8 *type = NULL;
@@ -59,9 +59,6 @@ int _9p_getlock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	char *client_id_str = NULL;
 
 /*   _9p_fid_t * pfid = NULL ; */
-
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -80,10 +77,10 @@ int _9p_getlock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-/*    pfid = preq9p->pconn->fids[*fid] ; */
+/*    pfid = req9p->pconn->fids[*fid] ; */
 
    /** @todo This function does nothing for the moment. Make it compliant with fcntl( F_GETLCK, ... */
 

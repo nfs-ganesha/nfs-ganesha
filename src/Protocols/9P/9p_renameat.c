@@ -42,10 +42,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *oldfid = NULL;
 	u16 *oldname_len = NULL;
@@ -62,9 +62,6 @@ int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	char oldname[MAXNAMLEN];
 	char newname[MAXNAMLEN];
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -79,28 +76,28 @@ int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 *newname_len, newname_str);
 
 	if (*oldfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	poldfid = preq9p->pconn->fids[*oldfid];
+	poldfid = req9p->pconn->fids[*oldfid];
 
 	/* Check that it is a valid fid */
 	if (poldfid == NULL || poldfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *oldfid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
 	if (*newfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pnewfid = preq9p->pconn->fids[*newfid];
+	pnewfid = req9p->pconn->fids[*newfid];
 
 	/* Check that it is a valid fid */
 	if (pnewfid == NULL || pnewfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *newfid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -112,7 +109,7 @@ int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	    cache_inode_rename(poldfid->pentry, oldname, pnewfid->pentry,
 			       newname, &poldfid->op_context);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, pworker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

@@ -405,7 +405,7 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4);
 
 void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 		    struct user_cred *user_credentials);
-bool get_req_uid_gid(struct svc_req *ptr_req,
+bool get_req_uid_gid(struct svc_req *req,
 		     struct user_cred *user_credentials);
 
 void init_credentials(struct user_cred *user_credentials);
@@ -423,7 +423,7 @@ int export_client_match_any(sockaddr_t * hostaddr,
 void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 			     export_perms_t * export_perms);
 
-bool nfs_export_check_security(struct svc_req *ptr_req,
+bool nfs_export_check_security(struct svc_req *req,
 			       export_perms_t *export_perms,
 			       exportlist_t *export);
 

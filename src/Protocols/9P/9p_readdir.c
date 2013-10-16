@@ -154,10 +154,10 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 	return CACHE_INODE_SUCCESS;
 }
 
-int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_readdir(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	_9p_cb_data_t tracker;
 
 	u16 *msgtag = NULL;
@@ -176,9 +176,6 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	uint64_t cookie = 0LL;
 	unsigned int num_entries = 0;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
-
 	_9p_fid_t *pfid = NULL;
 
 	/* Get data */
@@ -191,20 +188,20 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Make sure the requested amount of data respects negotiated msize */
-	if (*count + _9P_ROOM_RREADDIR > preq9p->pconn->msize)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+	if (*count + _9P_ROOM_RREADDIR > req9p->pconn->msize)
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -218,7 +215,7 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	 * total   = ~40 bytes (average size) per dentry */
 
 	if (*count < 52)	/* require room for . and .. */
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 
 	/* Build the reply - it'll just be overwritten if error */
@@ -235,7 +232,7 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		    cache_inode_lookupp(pfid->pentry, &pfid->op_context,
 					&pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 
@@ -262,7 +259,7 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		    cache_inode_lookupp(pfid->pentry, &pfid->op_context,
 					&pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 
@@ -292,7 +289,7 @@ int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		/* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
 		/* In the 9P logic, this situation just mean "end of directory reached */
 		if (cache_status != CACHE_INODE_NOT_FOUND)
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 	}

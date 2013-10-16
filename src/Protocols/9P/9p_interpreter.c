@@ -80,10 +80,10 @@ const _9p_function_desc_t _9pfuncdesc[] = {
 	[_9P_TWSTAT] = {_9p_not_2000L, "_9P_TWSTAT"}
 };
 
-int _9p_not_2000L(_9p_request_data_t * preq9p, void *pworker_data,
+int _9p_not_2000L(_9p_request_data_t *req9p, void *pworker_data,
 		  u32 * plenout, char *preply)
 {
-	char *msgdata = preq9p->_9pmsg + _9P_HDR_SIZE;
+	char *msgdata = req9p->_9pmsg + _9P_HDR_SIZE;
 	u8 *pmsgtype = NULL;
 	u16 msgtag = 0;
 
@@ -93,7 +93,7 @@ int _9p_not_2000L(_9p_request_data_t * preq9p, void *pworker_data,
 		 "(%u|%s) is not a 9P2000.L message, returning ENOTSUP",
 		 *pmsgtype, _9pfuncdesc[*pmsgtype].funcname);
 
-	_9p_rerror(preq9p, pworker_data, &msgtag, ENOTSUP, plenout, preply);
+	_9p_rerror(req9p, pworker_data, &msgtag, ENOTSUP, plenout, preply);
 
 	return -1;
 }				/* _9p_not_2000L */
@@ -109,7 +109,7 @@ static ssize_t tcp_conn_send(_9p_conn_t * conn, const void *buf, size_t len,
 	return ret;
 }
 
-void _9p_tcp_process_request(_9p_request_data_t * preq9p,
+void _9p_tcp_process_request(_9p_request_data_t *req9p,
 			     nfs_worker_data_t * pworker_data)
 {
 	u32 outdatalen = 0;
@@ -117,24 +117,24 @@ void _9p_tcp_process_request(_9p_request_data_t * preq9p,
 	char replydata[_9P_MSG_SIZE];
 
 	if ((rc =
-	     _9p_process_buffer(preq9p, pworker_data, replydata,
+	     _9p_process_buffer(req9p, pworker_data, replydata,
 				&outdatalen)) != 1) {
 		LogMajor(COMPONENT_9P,
 			 "Could not process 9P buffer on socket #%lu",
-			 preq9p->pconn->trans_data.sockfd);
+			 req9p->pconn->trans_data.sockfd);
 	} else {
-		if (tcp_conn_send(preq9p->pconn, replydata, outdatalen, 0) !=
+		if (tcp_conn_send(req9p->pconn, replydata, outdatalen, 0) !=
 		    outdatalen)
 			LogMajor(COMPONENT_9P,
 				 "Could not send 9P/TCP reply correclty on socket #%lu",
-				 preq9p->pconn->trans_data.sockfd);
+				 req9p->pconn->trans_data.sockfd);
 	}
-	_9p_DiscardFlushHook(preq9p);
+	_9p_DiscardFlushHook(req9p);
 	return;
 }				/* _9p_process_request */
 
-int _9p_process_buffer(_9p_request_data_t * preq9p,
-		       nfs_worker_data_t * pworker_data, char *replydata,
+int _9p_process_buffer(_9p_request_data_t *req9p,
+		       nfs_worker_data_t *pworker_data, char *replydata,
 		       u32 * poutlen)
 {
 	char *msgdata;
@@ -142,7 +142,7 @@ int _9p_process_buffer(_9p_request_data_t * preq9p,
 	u8 msgtype;
 	int rc = 0;
 
-	msgdata = preq9p->_9pmsg;
+	msgdata = req9p->_9pmsg;
 
 	/* Get message's length */
 	msglen = *(u32 *) msgdata;
@@ -164,11 +164,11 @@ int _9p_process_buffer(_9p_request_data_t * preq9p,
 	 * inside the protocol functions for additional bound checking,
 	 * and then replaced by the actual message size, (see _9p_checkbound())
 	 */
-	*poutlen = preq9p->pconn->msize;
+	*poutlen = req9p->pconn->msize;
 
 	/* Call the 9P service function */
 	if (((rc =
-	      _9pfuncdesc[msgtype].service_function(preq9p,
+	      _9pfuncdesc[msgtype].service_function(req9p,
 						    (void *)pworker_data,
 						    poutlen, replydata)) < 0))
 		LogDebug(COMPONENT_9P, "%s: Error",

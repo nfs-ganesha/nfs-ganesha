@@ -46,10 +46,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
+int _9p_xattrwalk(_9p_request_data_t *req9p, void *pworker_data,
 		  u32 * plenout, char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u32 *attrfid = NULL;
@@ -68,9 +68,6 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 
 	_9p_fid_t *pfid = NULL;
 	_9p_fid_t *pxattrfid = NULL;
-
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -92,23 +89,23 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 			 (u32) * msgtag, *fid, *attrfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	if (*attrfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
 	if ((pxattrfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ENOMEM, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ENOMEM, plenout,
 				  preply);
 
 	/* Initiate xattr's fid by copying file's fid in it */
@@ -119,7 +116,7 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 	if ((pxattrfid->specdata.xattr.xattr_content =
 	     gsh_malloc(XATTR_BUFFERSIZE)) == NULL) {
 		gsh_free(pxattrfid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, ENOMEM, plenout,
+		return _9p_rerror(req9p, pworker_data, msgtag, ENOMEM, plenout,
 				  preply);
 	}
 
@@ -133,7 +130,7 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
@@ -143,7 +140,7 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 		if (eod_met != TRUE) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE,
+			return _9p_rerror(req9p, pworker_data, msgtag, ERANGE,
 					  plenout, preply);
 		}
 
@@ -162,7 +159,7 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 				gsh_free(pxattrfid->specdata.xattr.
 					 xattr_content);
 				gsh_free(pxattrfid);
-				return _9p_rerror(preq9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, pworker_data, msgtag,
 						  ERANGE, plenout, preply);
 			}
 		}
@@ -179,10 +176,10 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 			gsh_free(pxattrfid);
 
 			if (fsal_status.major == ERR_FSAL_NOENT)	/* ENOENT for xattr is ENOATTR (set setxattr's manpage) */
-				return _9p_rerror(preq9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, pworker_data, msgtag,
 						  ENOATTR, plenout, preply);
 			else
-				return _9p_rerror(preq9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, pworker_data, msgtag,
 						  _9p_tools_errno
 						  (cache_inode_error_convert
 						   (fsal_status)), plenout,
@@ -200,14 +197,14 @@ int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, pworker_data, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
 		}
 	}
 
-	preq9p->pconn->fids[*attrfid] = pxattrfid;
+	req9p->pconn->fids[*attrfid] = pxattrfid;
 
 	/* Increments refcount so it won't fall below 0 when we clunk later */
 	cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);
