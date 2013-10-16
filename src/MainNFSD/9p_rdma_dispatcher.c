@@ -116,7 +116,7 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
 	if (pthread_attr_init(&attr_thr) ||
 	    pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) ||
-	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
+	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
 		return;
 
 	pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread, trans);
@@ -299,7 +299,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	trans_attr.worker_count = -1;
 	/* if worker_count isn't -1: trans_attr.worker_queue_size = 256; */
 	trans_attr.debug = MSK_DEBUG_EVENT;
-	/* stats:  (what does this mean????
+	/* mooshika stats:
 	 * trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
 
 	SetNameFunction("_9p_rdma_dispatch_thr");
@@ -322,7 +322,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA dispatcher could not set pthread_attr_t:scope_system");
 
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
+	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA dispatcher could not set pthread_attr_t:create_joignable");
 

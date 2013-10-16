@@ -455,7 +455,7 @@ void _9p_dispatcher_svc_run(long int sock)
 		LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's scope");
 
 	if (pthread_attr_setdetachstate(&attr_thr,
-					PTHREAD_CREATE_JOINABLE) != 0)
+					PTHREAD_CREATE_DETACHED) != 0)
 		LogDebug(COMPONENT_9P_DISPATCH,
 			 "can't set pthread's join state");
 
