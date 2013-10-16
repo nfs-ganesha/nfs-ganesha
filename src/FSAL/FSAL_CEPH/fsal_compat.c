@@ -106,7 +106,8 @@ fsal_functions_t fsal_ceph_functions = {
   .fsal_removexattrbyname = CEPHFSAL_RemoveXAttrByName,
   .fsal_getextattrs = CEPHFSAL_getextattrs,
   .fsal_getfileno = CEPHFSAL_GetFileno,
-  .fsal_share_op = COMMON_share_op_notsupp
+  .fsal_share_op = COMMON_share_op_notsupp,
+  .fsal_start_grace = COMMON_start_grace_notsupp
 };
 
 fsal_const_t fsal_ceph_consts = {

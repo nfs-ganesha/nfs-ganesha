@@ -83,12 +83,11 @@ void
 nfs4_start_grace(nfs_grace_start_array_t *gsap)
 {
         int duration;
-        int i, iend, rc;
+        int i, iend;
         nfs_grace_start_t *gsp;
-        char tmp_buffer[512] = {0};
-
-#define GPFS_CMD1 "/usr/lpp/mmfs/bin/mmfsadm"
-#define GPFS_CMD2 "graceperiod"
+        fsal_op_context_t  context;
+        int                secs = 0;
+        extern void        get_first_context(fsal_op_context_t *);
 
         /*
          * grace should always be greater than or equal to lease time,
@@ -98,6 +97,7 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
          */
 
         duration = nfs_param.nfsv4_param.lease_lifetime;
+        get_first_context(&context);
 
         P(grace.g_mutex);
 
@@ -116,12 +116,15 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
                 }
         }
 
-        (void) sprintf(tmp_buffer, "%s %s %d", GPFS_CMD1, GPFS_CMD2, 1);
-        rc = system(tmp_buffer);        /* Will use FSAL_GRACE API in round 2 */
-
+        /*
+         * GPFS grace of 0 == Default (ie. 60 Secs)
+         * NB:  Revisit in 2.0 code (S1050331)
+         */
+        secs = 0;
+        FSAL_start_grace(&context, secs);
         LogEvent(COMPONENT_STATE,
-                 "NFS Server Now IN GRACE, duration %d",
-                 duration);
+                 "NFS Server Now IN GRACE: ganesha = %d, FSAL = %d",
+                 duration, secs);
 
         grace.g_start = time(NULL);
         grace.g_duration = duration;

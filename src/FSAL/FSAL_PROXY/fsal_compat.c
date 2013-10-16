@@ -84,7 +84,8 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_removexattrbyname = PROXYFSAL_RemoveXAttrByName,
   .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = PROXYFSAL_GetFileno,
-  .fsal_share_op = COMMON_share_op_notsupp
+  .fsal_share_op = COMMON_share_op_notsupp,
+  .fsal_start_grace = COMMON_start_grace_notsupp
 };
 
 fsal_const_t fsal_proxy_consts = {

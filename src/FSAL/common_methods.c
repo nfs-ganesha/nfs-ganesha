@@ -886,3 +886,10 @@ fsal_status_t COMMON_share_op_notsupp( fsal_file_t       * p_file_descriptor,   
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_share_op);
 }
+
+fsal_status_t
+COMMON_start_grace_notsupp(fsal_op_context_t *p_context,	/* IN */
+					int   grace_period)	/* IN */
+{
+	Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_start_grace);
+}

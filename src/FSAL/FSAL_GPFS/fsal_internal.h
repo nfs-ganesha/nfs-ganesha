@@ -360,6 +360,10 @@ fsal_status_t GPFSFSAL_share_op( fsal_file_t          * p_file_descriptor,   /* 
                                  void                 * p_owner,             /* IN */
                                  fsal_share_param_t     request_share        /* IN */ );
 
+fsal_status_t
+GPFSFSAL_start_grace(fsal_op_context_t *p_context,              /* IN */
+                                   int  grace_period);          /* IN */
+
 fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
                           fsal_op_context_t * p_context,     /* IN */
                           fsal_path_t * p_local_path,   /* IN */

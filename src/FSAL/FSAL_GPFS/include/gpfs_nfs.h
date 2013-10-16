@@ -96,6 +96,7 @@ struct flock
 #define OPENHANDLE_READLINK_BY_FH 132
 #define OPENHANDLE_UNLINK_BY_NAME 133
 #define OPENHANDLE_CREATE_BY_NAME 134
+#define OPENHANDLE_GRACE_PERIOD   138
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -235,6 +236,12 @@ struct readlink_fh_arg
   struct gpfs_file_handle *handle;
   char *buffer;
   int size;
+};
+
+struct grace_period_arg
+{
+        int	mountdirfd;
+        int	grace_sec;
 };
 
 struct nfsd4_pnfs_deviceid {

@@ -1194,3 +1194,39 @@ int fsal_internal_version()
  
   return rc; 
 } 
+
+/**
+ * GPFSFSAL_start_grace:
+ * Interface to manipulate GPFS' grace period
+ *
+ * grace_period:  -1 == Grace period ends immediately
+ *                 0 == Use GPFS' Default (ie. 60 secs)
+ *                 n == number of seconds
+ */
+fsal_status_t
+GPFSFSAL_start_grace(fsal_op_context_t *p_context,      /* IN */
+                                   int  grace_period)   /* IN */
+{
+        int                     rc = 0;
+        struct grace_period_arg gpa;
+
+        if (!p_context || grace_period < -1)
+                Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_start_grace);
+
+        gpa.mountdirfd =
+            ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+        gpa.grace_sec = grace_period;
+
+        LogFullDebug(COMPONENT_FSAL, "mountdirfd = %d, grace_period = %d",
+                gpa.mountdirfd, gpa.grace_sec);
+
+        rc = gpfs_ganesha(OPENHANDLE_GRACE_PERIOD, &gpa);
+
+        LogFullDebug(COMPONENT_FSAL,
+                "OPENHANDLE_GRACE_PERIOD returned: rc = %d", rc);
+
+        if (rc < 0)
+                ReturnCode(posix2fsal_error(errno), errno);
+
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}

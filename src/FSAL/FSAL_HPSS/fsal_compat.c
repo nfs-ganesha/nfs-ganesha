@@ -660,7 +660,8 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_removexattrbyname = WRAP_HPSSFSAL_RemoveXAttrByName,
   .fsal_getextattrs = WRAP_HPSSFSAL_getextattrs,
   .fsal_getfileno = HPSSFSAL_GetFileno,
-  .fsal_share_op = COMMON_share_op_notsupp
+  .fsal_share_op = COMMON_share_op_notsupp,
+  .fsal_start_grace = COMMON_start_grace_notsupp
 };
 
 fsal_const_t fsal_hpss_consts = {

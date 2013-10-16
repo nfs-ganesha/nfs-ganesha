@@ -3286,21 +3286,32 @@ resub_all_nlm_blocked()
                                           NULL,
                                           FALSE);
 
-                if (state_status != STATE_LOCK_BLOCKED) {
-                        /*
-                         * Still needed for 2nd phase of fix:
-                         *
-                         * - check for success of getting the lock
-                         *   . if we got the lock, notify NLM client
-                         */
+                switch (state_status) {
+                case STATE_SUCCESS:
+                        /* Resubmitted block successfully; let client know */
+                        glist_del(&pblock->sbd_list);
+                        found_entry->sle_block_data->sbd_grant_type =
+                                STATE_GRANT_FSAL;
+                        (void) nlm_granted_callback(pentry, found_entry,
+                            &state_status);
+                        LogEntry("Lock successfully acquired", found_entry);
+                        remove_from_locklist(found_entry);
+                        break;
+
+                case STATE_LOCK_BLOCKED:
+                        /* Able to resubmit blocked lock */
+                        LogEntry("Lock successfully resubmitted", found_entry);
+                        lock_entry_dec_ref(found_entry);
+                        break;
+
+                default:
+                        /* Anything else, we throw up our hands... */
                         LogMajor(COMPONENT_STATE,
-                                "Lock %s got %s status",
+                                "WARNING: Blocked Lock %s got %s status",
                                 str_blocked(found_entry->sle_blocked),
                                 state_err_str(state_status));
-                } else {
-                        LogEntry("Lock successfully resubmitted", found_entry);
+                        remove_from_locklist(found_entry);
                 }
-                lock_entry_dec_ref(found_entry);
                 P(blocked_locks_mutex);
         }
         V(blocked_locks_mutex);

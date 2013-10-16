@@ -1268,6 +1268,29 @@ fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /* IN */
   return rc;
 }
 
+fsal_status_t
+FSAL_start_grace(fsal_op_context_t *p_context,      /* IN */
+                               int  grace_period)   /* IN */
+{
+    fsal_status_t  rc;
+    msectimer_t    timer_start;
+    msectimer_t    timer_end;
+
+    timer_start = timer_get();
+
+    if (fsal_functions.fsal_start_grace != NULL)
+        rc = fsal_functions.fsal_start_grace(p_context, grace_period);
+    else
+        Return (ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_start_grace);
+
+    timer_end = timer_get();
+
+    p_context->latency += timer_end - timer_start;
+    p_context->count++;
+
+    return rc;
+}
+
 /* FSAL_UP functions */
 #ifdef _USE_FSAL_UP
 fsal_status_t FSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */

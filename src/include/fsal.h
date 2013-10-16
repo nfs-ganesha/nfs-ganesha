@@ -753,6 +753,9 @@ fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /* IN */
                              fsal_share_param_t  request_share        /* IN */
                              );
 
+fsal_status_t FSAL_start_grace(fsal_op_context_t *p_context,		/* IN */
+					     int  grace_period);	/* IN */
+
 /* FSAL_UP functions */
 /* These structs are defined here because including fsal_up.h causes
  * preprocessor issues. */
@@ -1442,6 +1445,11 @@ typedef struct fsal_functions__
                                   fsal_op_context_t      * p_context,           /* IN */
                                   void                   * p_owner,             /* IN (opaque to FSAL) */
                                   fsal_share_param_t       request_share        /* IN */ );
+
+  /* FSAL_start_grace */
+  fsal_status_t (*fsal_start_grace)(fsal_op_context_t *p_context,	/* IN */
+						  int  grace_period);	/* IN */
+
 } fsal_functions_t;
 
 /* Structure allow assignement, char[<n>] do not */

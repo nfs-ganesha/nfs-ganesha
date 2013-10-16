@@ -82,7 +82,8 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_removexattrbyname = XFSFSAL_RemoveXAttrByName,
   .fsal_getextattrs = XFSFSAL_getextattrs,
   .fsal_getfileno = XFSFSAL_GetFileno,
-  .fsal_share_op = COMMON_share_op_notsupp
+  .fsal_share_op = COMMON_share_op_notsupp,
+  .fsal_start_grace = COMMON_start_grace_notsupp
 };
 
 fsal_const_t fsal_xfs_consts = {

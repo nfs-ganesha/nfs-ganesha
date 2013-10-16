@@ -4140,3 +4140,73 @@ void set_mounted_on_fileid(cache_entry_t      * entry,
                    exp->pseudopath);
     }
 }
+
+/*
+ * XXX - Giganto-hack
+ *
+ * Get rid of this monstrosity if/when GPFS ever supports per-FS grace
+ */
+void
+get_first_context(fsal_op_context_t *p_context)
+{
+      exportlist_t              *pcurrent = NULL;
+      struct glist_head         *glist;
+      struct glist_head         *glistn;
+      fsal_status_t              fsal_status;
+      fsal_path_t                exportpath_fsal;
+
+      /* Get the context for FSAL super user */
+      memset(p_context, 0, sizeof(fsal_op_context_t));
+      fsal_status = FSAL_InitClientContext(p_context);
+      if (FSAL_IS_ERROR(fsal_status)) {
+          LogCrit(COMPONENT_INIT,
+                "Couldn't get the context for FSAL super user");
+          return;
+      }
+
+      /* loop the export list */
+      glist_for_each_safe(glist, glistn, nfs_param.pexportlist)
+      {
+          pcurrent = glist_entry(glist, exportlist_t, exp_list);
+
+          /* Build the FSAL path */
+          fsal_status = FSAL_str2path(pcurrent->fullpath, 0, &exportpath_fsal);
+          if (FSAL_IS_ERROR(fsal_status)) {
+              LogCrit(COMPONENT_INIT,
+                    "Couldn't build FSAL path for %s, removing export id %u",
+                    pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
+          }
+
+          /* inits context for the current export entry */
+          fsal_status = FSAL_BuildExportContext(
+                &pcurrent->FS_export_context,
+                &exportpath_fsal, pcurrent->FS_specific);
+
+          if (FSAL_IS_ERROR(fsal_status)) {
+              LogCrit(COMPONENT_INIT,
+                        "Couldn't build export context for %s, "
+                        "removing export id %u",
+                        pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
+          }
+          pcurrent->FS_export_context.fe_export = pcurrent;
+
+          /* get the related client context */
+          fsal_status = FSAL_GetClientContext(p_context,
+                &pcurrent->FS_export_context, 0, 0, NULL, 0) ;
+          if (FSAL_IS_ERROR(fsal_status)) {
+              LogCrit(COMPONENT_INIT,
+                        "Couldn't get the credentials for FSAL "
+                        "super user for %s, removing export id %u",
+                        pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
+          }
+
+          /* We're done ! - p_context has the goods */
+          return;
+      }
+}

@@ -85,7 +85,8 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_removexattrbyname = FUSEFSAL_RemoveXAttrByName,
   .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = FUSEFSAL_GetFileno,
-  .fsal_share_op = COMMON_share_op_notsupp
+  .fsal_share_op = COMMON_share_op_notsupp,
+  .fsal_start_grace = COMMON_start_grace_notsupp
 };
 
 fsal_const_t fsal_fuse_consts = {

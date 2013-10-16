@@ -150,9 +150,10 @@ typedef struct exportlist__        exportlist_t;
 #define INDEX_FSAL_ds_write             65
 #define INDEX_FSAL_ds_commit            66
 #define INDEX_FSAL_share_op             67
+#define INDEX_FSAL_start_grace          68
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  68
+#define FSAL_NB_FUNC  69
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
 #define FSAL_XATTR_RW_COOKIE ~0 
