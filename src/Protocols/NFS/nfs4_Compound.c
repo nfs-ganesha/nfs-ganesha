@@ -475,7 +475,7 @@ int nfs4_Compound(nfs_arg_t * arg, exportlist_t * export,
 
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
-	data.pworker = worker;
+	data.worker = worker;
 	data.pseudofs = nfs4_GetPseudoFs();
 	data.req = req;
 
@@ -666,11 +666,11 @@ int nfs4_Compound(nfs_arg_t * arg, exportlist_t * export,
 			gsh_free(res->res_compound4.resarray.resarray_val);
 
 			/* Copy the reply from the cache */
-			res->res_compound4_extended = *data.pcached_res;
-			status = ((COMPOUND4res *) data.pcached_res)->status;
+			res->res_compound4_extended = *data.cached_res;
+			status = ((COMPOUND4res *) data.cached_res)->status;
 			LogFullDebug(COMPONENT_SESSIONS,
 				     "Use session replay cache %p result %s",
-				     data.pcached_res, nfsstat4_to_str(status));
+				     data.cached_res, nfsstat4_to_str(status));
 			break;	/* Exit the for loop */
 		}
 	}			/* for */
@@ -686,25 +686,25 @@ int nfs4_Compound(nfs_arg_t * arg, exportlist_t * export,
 	/* Manage session's DRC: keep NFS4.1 replay for later use, but don't save a
 	 * replayed result again.
 	 */
-	if (data.pcached_res != NULL && !data.use_drc) {
+	if (data.cached_res != NULL && !data.use_drc) {
 		/* Pointer has been set by nfs4_op_sequence and points to slot to cache
 		 * result in.
 		 */
 		LogFullDebug(COMPONENT_SESSIONS,
 			     "Save result in session replay cache %p sizeof nfs_res_t=%d",
-			     data.pcached_res, (int)sizeof(nfs_res_t));
+			     data.cached_res, (int)sizeof(nfs_res_t));
 
 		/* Indicate to nfs4_Compound_Free that this reply is cached. */
 		res->res_compound4_extended.res_cached = true;
 
 		/* If the cache is already in use, free it. */
-		if (data.pcached_res->res_cached) {
-			data.pcached_res->res_cached = false;
-			nfs4_Compound_Free((nfs_res_t *) data.pcached_res);
+		if (data.cached_res->res_cached) {
+			data.cached_res->res_cached = false;
+			nfs4_Compound_Free((nfs_res_t *) data.cached_res);
 		}
 
 		/* Save the result in the cache. */
-		*data.pcached_res = res->res_compound4_extended;
+		*data.cached_res = res->res_compound4_extended;
 	}
 
 	/* If we have reserved a lease, update it and release it */

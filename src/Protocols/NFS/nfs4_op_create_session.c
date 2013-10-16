@@ -179,7 +179,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 		     found->cid_create_session_sequence)
 		    && (found->cid_create_session_slot.cache_used)) {
 			data->use_drc = true;
-			data->pcached_res =
+			data->cached_res =
 			    &found->cid_create_session_slot.cached_result;
 
 			res_CREATE_SESSION4->csr_status = NFS4_OK;
@@ -188,7 +188,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 
 			LogDebug(component,
 				 "CREATE_SESSION replay=%p special case",
-				 data->pcached_res);
+				 data->cached_res);
 
 			goto out;
 		} else if (arg_CREATE_SESSION4->csa_sequence !=
@@ -337,10 +337,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 	       NFS4_SESSIONID_SIZE);
 
 	/* Create Session replay cache */
-	data->pcached_res = &found->cid_create_session_slot.cached_result;
+	data->cached_res = &found->cid_create_session_slot.cached_result;
 	found->cid_create_session_slot.cache_used = true;
 
-	LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);
+	LogDebug(component, "CREATE_SESSION replay=%p", data->cached_res);
 
 	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component, "Could not insert session into table");

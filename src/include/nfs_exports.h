@@ -382,11 +382,11 @@ typedef struct compound_data {
 	export_perms_t saved_export_perms;	/*< Permissions for export for savedFH */
 	pseudofs_t *pseudofs;	/*< Pointer to the pseudo filesystem tree */
 	struct svc_req *req;	/*< RPC Request related to the compound */
-	struct nfs_worker_data *pworker;	/*< Worker thread data */
+	struct nfs_worker_data *worker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
 						   reserved, if any */
-	COMPOUND4res_extended *pcached_res;	/*< NFv41: pointer to
+	COMPOUND4res_extended *cached_res;	/*< NFv41: pointer to
 						   cached RPC res in a
 						   session's slot */
 	bool use_drc;		/*< Set to true if session DRC is to be used */

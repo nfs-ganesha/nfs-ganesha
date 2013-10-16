@@ -145,7 +145,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 #endif
 				/* Replay operation through the DRC */
 				data->use_drc = true;
-				data->pcached_res =
+				data->cached_res =
 				    &session->slots[arg_SEQUENCE4->sa_slotid].
 				    cached_result;
 
@@ -154,7 +154,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 						"Use sesson slot %" PRIu32
 						"=%p for DRC",
 						arg_SEQUENCE4->sa_slotid,
-						data->pcached_res);
+						data->cached_res);
 
 				V(session->slots[arg_SEQUENCE4->sa_slotid].
 				  lock);
@@ -217,16 +217,16 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 /* Ganesha always caches result anyway so ignore cachethis */
 	if (arg_SEQUENCE4->sa_cachethis) {
 #endif
-		data->pcached_res =
+		data->cached_res =
 		    &session->slots[arg_SEQUENCE4->sa_slotid].cached_result;
 		session->slots[arg_SEQUENCE4->sa_slotid].cache_used = true;
 
 		LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 				"Use sesson slot %" PRIu32 "=%p for DRC",
-				arg_SEQUENCE4->sa_slotid, data->pcached_res);
+				arg_SEQUENCE4->sa_slotid, data->cached_res);
 #if IMPLEMENT_CACHETHIS
 	} else {
-		data->pcached_res = NULL;
+		data->cached_res = NULL;
 		session->slots[arg_SEQUENCE4->sa_slotid].cache_used = false;
 
 		LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
