@@ -666,13 +666,13 @@ const nfs_function_desc_t rquota2_func_desc[] = {
  * the default invalid handler.  We have already sanity checked
  * everything so just grab and go.
  *
- * @param[in,out] preqnfs Raw request data
+ * @param[in,out] reqnfs Raw request data
  *
  * @return Function vector for program.
  */
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs)
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *reqnfs)
 {
-	struct svc_req *req = &preqnfs->req;
+	struct svc_req *req = &reqnfs->req;
 	const nfs_function_desc_t *funcdesc = INVALID_FUNCDESC;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
@@ -684,7 +684,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs)
 	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]) {
 		funcdesc = &nlm4_func_desc[req->rq_proc];
 	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]) {
-		preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
+		reqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
 		funcdesc =
 		    (req->rq_vers ==
 		     MOUNT_V1) ? &mnt1_func_desc[req->
@@ -710,12 +710,12 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs)
 static void nfs_rpc_execute(request_data_t * preq,
 			    nfs_worker_data_t * worker_data)
 {
-	nfs_request_data_t *preqnfs = preq->r_u.nfs;
-	nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
+	nfs_request_data_t *reqnfs = preq->r_u.nfs;
+	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
 	nfs_res_t *res_nfs;
 	int exportid = -1;
-	struct svc_req *req = &preqnfs->req;
-	SVCXPRT *xprt = preqnfs->xprt;
+	struct svc_req *req = &reqnfs->req;
+	SVCXPRT *xprt = reqnfs->xprt;
 	export_perms_t export_perms;
 	int protocol_options = 0;
 	struct user_cred user_credentials;
@@ -798,8 +798,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
 	 * path is short, lockless, and does no hash/search). */
-	dpq_status = nfs_dupreq_start(preqnfs, req);
-	res_nfs = preqnfs->res_nfs;
+	dpq_status = nfs_dupreq_start(reqnfs, req);
+	res_nfs = reqnfs->res_nfs;
 	if (dpq_status == DUPREQ_SUCCESS) {
 		/* A new request, continue processing it. */
 		LogFullDebug(COMPONENT_DISPATCH,
@@ -819,7 +819,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 
 			DISP_SLOCK(xprt);
 			if (svc_sendreply
-			    (xprt, req, preqnfs->funcdesc->xdr_encode_func,
+			    (xprt, req, reqnfs->funcdesc->xdr_encode_func,
 			     (caddr_t) res_nfs) == false) {
 				LogDebug(COMPONENT_DISPATCH,
 					 "NFS DISPATCHER: FAILURE: Error while calling "
@@ -827,7 +827,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 					 "socket=%d function:%s client:%s program:%d "
 					 "nfs version:%d proc:%d xid:%u errno: %d",
 					 req->rq_xid, xprt->xp_fd,
-					 preqnfs->funcdesc->funcname,
+					 reqnfs->funcdesc->funcname,
 					 req_ctx.client->hostaddr_str,
 					 (int)req->rq_prog, (int)req->rq_vers,
 					 (int)req->rq_proc, req->rq_xid, errno);
@@ -882,7 +882,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 	 * NFS v2 is set to invalid_funcdesc in nfs_rpc_get_funcdesc()
 	 */
 
-	if (preqnfs->funcdesc == &invalid_funcdesc
+	if (reqnfs->funcdesc == &invalid_funcdesc
 	    || req->rq_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
@@ -1090,7 +1090,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 		}
 
 		/* Test if export allows the authentication provided */
-		if (((preqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) !=
+		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) !=
 		     0)
 		    &&
 		    (nfs_export_check_security
@@ -1122,7 +1122,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 	}
 
 	/* Get user credentials */
-	if (preqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED) {
+	if (reqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED) {
 		if (get_req_uid_gid(req, &user_credentials) == FALSE) {
 			LogInfo(COMPONENT_DISPATCH,
 				"could not get uid and gid, rejecting client %s",
@@ -1138,7 +1138,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 	 * the request
 	 */
 	if (req_ctx.export != NULL
-	    && (preqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0
+	    && (reqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0
 	    && (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0) {
 		/* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
 		 * This is done by replying EDQUOT (this error is known for not disturbing
@@ -1164,7 +1164,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 			rc = NFS_REQ_DROP;
 		}
 	} else if (req_ctx.export != NULL
-		   && (preqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0
+		   && (reqnfs->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0
 		   && (export_perms.
 		       options & (EXPORT_OPTION_WRITE_ACCESS |
 				  EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
@@ -1201,7 +1201,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 	} else {
 		/* Do the authentication stuff, if needed */
 		if (req_ctx.export != NULL
-		    && (preqnfs->funcdesc->
+		    && (reqnfs->funcdesc->
 			dispatch_behaviour & (NEEDS_CRED | NEEDS_EXPORT)) ==
 		    (NEEDS_CRED | NEEDS_EXPORT)) {
 			/* Swap the anonymous uid/gid if the user should be anonymous */
@@ -1231,7 +1231,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 #endif
 
  null_op:
-		rc = preqnfs->funcdesc->service_function(arg_nfs,
+		rc = reqnfs->funcdesc->service_function(arg_nfs,
 							 &req_ctx.export->
 							 export, &req_ctx,
 							 worker_data, req,
@@ -1272,7 +1272,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 
 		/* encoding the result on xdr output */
 		if (svc_sendreply
-		    (xprt, req, preqnfs->funcdesc->xdr_encode_func,
+		    (xprt, req, reqnfs->funcdesc->xdr_encode_func,
 		     (caddr_t) res_nfs) == false) {
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS DISPATCHER: FAILURE: Error while calling "
@@ -1280,7 +1280,7 @@ static void nfs_rpc_execute(request_data_t * preq,
 				 "socket=%d function:%s client:%s program:%d "
 				 "nfs version:%d proc:%d xid:%u errno: %d",
 				 req->rq_xid, xprt->xp_fd,
-				 preqnfs->funcdesc->funcname,
+				 reqnfs->funcdesc->funcname,
 				 req_ctx.client->hostaddr_str,
 				 (int)req->rq_prog, (int)req->rq_vers,
 				 (int)req->rq_proc, req->rq_xid, errno);
@@ -1329,20 +1329,20 @@ static void nfs_rpc_execute(request_data_t * preq,
 
 	/* Free the allocated resources once the work is done */
 	/* Free the arguments */
-	if ((preqnfs->req.rq_vers == 2) || (preqnfs->req.rq_vers == 3)
-	    || (preqnfs->req.rq_vers == 4)) {
+	if ((reqnfs->req.rq_vers == 2) || (reqnfs->req.rq_vers == 3)
+	    || (reqnfs->req.rq_vers == 4)) {
 		if (!SVC_FREEARGS
-		    (xprt, preqnfs->funcdesc->xdr_decode_func,
+		    (xprt, reqnfs->funcdesc->xdr_decode_func,
 		     (caddr_t) arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
 				"NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-				preqnfs->funcdesc->funcname);
+				reqnfs->funcdesc->funcname);
 		}
 	}
 
 	/* Finalize the request. */
 	if (res_nfs)
-		nfs_dupreq_rele(req, preqnfs->funcdesc);
+		nfs_dupreq_rele(req, reqnfs->funcdesc);
 
 	if (req_ctx.client != NULL)
 		put_gsh_client(req_ctx.client);

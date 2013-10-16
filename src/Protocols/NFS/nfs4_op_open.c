@@ -102,7 +102,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
-		memcpy(refer.session, data->psession->session_id,
+		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
 		refer.slot = data->slot;
@@ -983,7 +983,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	retval =
 	    nfs_client_id_get_confirmed((data->minorversion ==
 					 0 ? arg_OPEN4->owner.clientid : data->
-					 psession->clientid), &clientid);
+					 session->clientid), &clientid);
 	if (retval != CLIENT_ID_SUCCESS) {
 		res_OPEN4->status = clientid_error_to_nfsstat(retval);
 		LogDebug(COMPONENT_NFS_V4,

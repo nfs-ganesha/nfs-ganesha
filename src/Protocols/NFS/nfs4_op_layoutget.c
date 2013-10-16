@@ -87,12 +87,12 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 	/* Tracking data for the layout state */
 	struct state_refer refer;
 
-	memcpy(refer.session, data->psession->session_id, sizeof(sessionid4));
+	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
 	refer.slot = data->slot;
 
 	if ((state_status =
-	     get_clientid_owner(data->psession->clientid, &clientid_owner))
+	     get_clientid_owner(data->session->clientid, &clientid_owner))
 	    != STATE_SUCCESS) {
 		nfs_status = nfs4_Errno_state(state_status);
 	}

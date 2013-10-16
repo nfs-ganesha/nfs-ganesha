@@ -138,7 +138,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	/* Check clientid */
 	rc = nfs_client_id_get_confirmed((data->minorversion ==
 					  0 ? arg_LOCKT4->owner.
-					  clientid : data->psession->clientid),
+					  clientid : data->session->clientid),
 					 &clientid);
 	if (rc != CLIENT_ID_SUCCESS) {
 		res_LOCKT4->status = clientid_error_to_nfsstat(rc);

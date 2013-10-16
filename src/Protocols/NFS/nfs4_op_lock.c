@@ -110,7 +110,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
-		memcpy(refer.session, data->psession->session_id,
+		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
 		refer.slot = data->slot;
@@ -191,7 +191,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 						  0 ? arg_LOCK4->locker.
 						  locker4_u.open_owner.
 						  lock_owner.clientid : data->
-						  psession->clientid),
+						  session->clientid),
 						 &clientid);
 		if (rc != CLIENT_ID_SUCCESS) {
 			res_LOCK4->status = clientid_error_to_nfsstat(rc);

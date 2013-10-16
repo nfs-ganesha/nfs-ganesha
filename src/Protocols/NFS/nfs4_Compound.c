@@ -565,8 +565,8 @@ int nfs4_Compound(nfs_arg_t * arg, exportlist_t * export,
 				opcode = 0;
 			}
 		} else {	/* already range checked for minor version mismatch, must be 4.1 */
-			if (data.psession != NULL) {
-				if (data.psession->fore_channel_attrs.
+			if (data.session != NULL) {
+				if (data.session->fore_channel_attrs.
 				    ca_maxoperations == i) {
 					status = NFS4ERR_TOO_MANY_OPS;
 					goto bad_op_state;
@@ -814,9 +814,9 @@ void compound_data_Free(compound_data_t * data)
 		data->saved_ds = NULL;
 	}
 
-	if (data->psession) {
-		dec_session_ref(data->psession);
-		data->psession = NULL;
+	if (data->session) {
+		dec_session_ref(data->session);
+		data->session = NULL;
 	}
 
 	/* Release CurrentFH reference to export. */

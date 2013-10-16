@@ -217,7 +217,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data,
 			    && (state->state_owner->so_type ==
 				STATE_OPEN_OWNER_NFSV4)
 			    && (state->state_owner->so_owner.so_nfs4_owner.
-				so_clientid == data->psession->clientid)) {
+				so_clientid == data->session->clientid)) {
 				last_close = false;
 				break;
 			}
@@ -238,7 +238,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data,
 				if ((state->state_type == STATE_TYPE_LAYOUT)
 				    && (state->state_owner->so_owner.
 					so_nfs4_owner.so_clientrec ==
-					data->psession->clientid_record)
+					data->session->clientid_record)
 				    && state->state_data.layout.
 				    state_return_on_close) {
 					nfs4_return_one_state(data->
