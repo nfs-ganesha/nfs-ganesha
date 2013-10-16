@@ -133,7 +133,7 @@ int _9p_getattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	    obj_handle->attributes.numlinks : &zero64;
 	//rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major:&zero64 ; 
 	rdev =
-	    (*request_mask & _9P_GETATTR_RDEV) ? (u64 *) & pfid->pexport->
+	    (*request_mask & _9P_GETATTR_RDEV) ? (u64 *) & pfid->export->
 	    filesystem_id.major : &zero64;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ? (u64 *) & pfid->pentry->

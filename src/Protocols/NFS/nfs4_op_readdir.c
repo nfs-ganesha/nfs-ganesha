@@ -362,7 +362,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
 	   '.' and '..' are not returned, so all cookies will be offset
 	   by 2 */
 
-	if ((cookie != 0) && (data->pexport->UseCookieVerifier == 1)) {
+	if ((cookie != 0) && (data->export->UseCookieVerifier == 1)) {
 		if (memcmp
 		    (cookie_verifier, arg_READDIR4->cookieverf,
 		     NFS4_VERIFIER_SIZE) != 0) {

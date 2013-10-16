@@ -158,7 +158,7 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		}
 
 		if (state_lock
-		    (pfid->pentry, pfid->pexport, &pfid->op_context, powner,
+		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
 		     &state, STATE_NON_BLOCKING, NULL, &lock, &holder,
 		     &conflict, POSIX_LOCK) != STATE_SUCCESS) {
 			if (state_status == STATE_LOCK_BLOCKED)
@@ -172,7 +172,7 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 	case _9P_LOCK_TYPE_UNLCK:
 		if (state_unlock
-		    (pfid->pentry, pfid->pexport, &pfid->op_context, powner,
+		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
 		     NULL, &lock, POSIX_LOCK) != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else

@@ -185,11 +185,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 		if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE)) {
 			if ((sattr.mode & S_ISUID)
 			    &&
-			    ((data->pexport->export_perms.
+			    ((data->export->export_perms.
 			      options & EXPORT_OPTION_NOSUID)
 			     || ((sattr.mode & S_ISGID)
 				 &&
-				 ((data->pexport->export_perms.
+				 ((data->export->export_perms.
 				   options & EXPORT_OPTION_NOSGID))))) {
 				LogInfo(COMPONENT_NFS_V4,
 					"Setattr denied because setuid "

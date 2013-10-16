@@ -62,7 +62,7 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	_9p_fid_t *pfid = NULL;
 
 	struct gsh_export *exp;
-	exportlist_t *pexport = NULL;
+	exportlist_t *export = NULL;
 	cache_inode_status_t cache_status;
 	char exppath[MAXPATHLEN];
 
@@ -100,15 +100,15 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		return _9p_rerror(preq9p, pworker_data, msgtag, ENOENT, plenout,
 				  preply);
 
-	/* Set pexport and fid id in fid */
-	pexport = &exp->export;
+	/* Set export and fid id in fid */
+	export = &exp->export;
 	pfid = preq9p->pconn->fids[*afid];
-	if (pfid->pexport != NULL && pfid->pexport != pexport) {
+	if (pfid->export != NULL && pfid->export != export) {
 		struct gsh_export *oldexp =
-		    container_of(pexport, struct gsh_export, export);
+		    container_of(export, struct gsh_export, export);
 		put_gsh_export(oldexp);
 	}
-	pfid->pexport = pexport;
+	pfid->export = export;
 	pfid->fid = *afid;
 
 	/* Is user name provided as a string or as an uid ? */
@@ -128,14 +128,14 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	}
 
 	/* Check if root cache entry is correctly set */
-	if (pexport->exp_root_cache_inode == NULL)
+	if (export->exp_root_cache_inode == NULL)
 		return _9p_rerror(preq9p, pworker_data, msgtag, err, plenout,
 				  preply);
 
 	/* get the export information for this fid */
-	pfid->pentry = pexport->exp_root_cache_inode;
+	pfid->pentry = export->exp_root_cache_inode;
 
-	/* Keep track of the pexport in the req_ctx */
+	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;
 
 	/* This fid is a special one : it comes from TATTACH and so generate a record

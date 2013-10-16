@@ -124,7 +124,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 		    get_gsh_export(v4_handle->exportid, true);
 
 		if (data->req_ctx->export == NULL) {
-			data->pexport = NULL;
+			data->export = NULL;
 
 			LogInfo(COMPONENT_DISPATCH,
 				"NFS4 Request from client %s has invalid export %d",
@@ -136,8 +136,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 			return res_PUTFH4->status;
 		}
 
-		if (&data->req_ctx->export->export != data->pexport) {
-			data->pexport = &data->req_ctx->export->export;
+		if (&data->req_ctx->export->export != data->export) {
+			data->export = &data->req_ctx->export->export;
 
 			res_PUTFH4->status = nfs4_MakeCred(data);
 

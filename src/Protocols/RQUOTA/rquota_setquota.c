@@ -48,17 +48,17 @@
  *
  * The RQUOTA setquota function, for all versions.
  *
- * @param[in]  parg    quota args
- * @param[in]  pexport Ignored
+ * @param[in]  arg     quota args
+ * @param[in]  export  Ignored
  * @param[in]  req_ctx Ignored
- * @param[in]  pworker Ignored
- * @param[in]  preq    Ignored
- * @param[out] pres    returned quota (modified)
+ * @param[in]  worker  Ignored
+ * @param[in]  req     Ignored
+ * @param[out] res     returned quota (modified)
  *
  */
-int rquota_setquota(nfs_arg_t * parg, exportlist_t * pexport,
-		    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		    struct svc_req *preq, nfs_res_t * pres)
+int rquota_setquota(nfs_arg_t *arg, exportlist_t *export,
+		    struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		    struct svc_req *req, nfs_res_t *res)
 {
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota_in;
@@ -66,14 +66,14 @@ int rquota_setquota(nfs_arg_t * parg, exportlist_t * pexport,
 	int quota_type = USRQUOTA;
 	struct gsh_export *exp;
 	char *quota_path;
-	setquota_args *qarg = &parg->arg_rquota_setquota;
-	setquota_rslt *qres = &pres->res_rquota_setquota;
+	setquota_args *qarg = &arg->arg_rquota_setquota;
+	setquota_rslt *qres = &res->res_rquota_setquota;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_setquota");
 
-	if (preq->rq_vers == EXT_RQUOTAVERS)
-		quota_type = parg->arg_ext_rquota_setquota.sqa_type;
+	if (req->rq_vers == EXT_RQUOTAVERS)
+		quota_type = arg->arg_ext_rquota_setquota.sqa_type;
 
 	qres->status = Q_EPERM;
 	if (qarg->sqa_pathp[0] == '/') {
@@ -138,10 +138,10 @@ int rquota_setquota(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for rquota_setquota. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void rquota_setquota_Free(nfs_res_t * pres)
+void rquota_setquota_Free(nfs_res_t *res)
 {
 	return;
 }

@@ -35,26 +35,26 @@
 /**
  * @brief Free All Locks
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  arg
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  */
 
-int nlm4_Free_All(nfs_arg_t * parg, exportlist_t * pexport,
-		  struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		  struct svc_req *preq, nfs_res_t * pres)
+int nlm4_Free_All(nfs_arg_t *args, exportlist_t *export,
+		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  struct svc_req *req, nfs_res_t *res)
 {
-	nlm4_free_allargs *arg = &parg->arg_nlm4_free_allargs;
+	nlm4_free_allargs *arg = &args->arg_nlm4_free_allargs;
 	state_status_t state_status = STATE_SUCCESS;
 	state_nsm_client_t *nsm_client;
 
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Free_All for %s", arg->name);
 
-	nsm_client = get_nsm_client(CARE_NOT, preq->rq_xprt, arg->name);
+	nsm_client = get_nsm_client(CARE_NOT, req->rq_xprt, arg->name);
 	if (nsm_client != NULL) {
 		/* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
 		 *
@@ -85,10 +85,10 @@ int nlm4_Free_All(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm4_Free_All. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Free_All_Free(nfs_res_t * pres)
+void nlm4_Free_All_Free(nfs_res_t *res)
 {
 	return;
 }

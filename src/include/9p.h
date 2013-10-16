@@ -286,7 +286,7 @@ typedef struct _9p_fid__ {
 	u32 fid;
 	struct req_op_context op_context;
 	struct user_cred ucred;
-	exportlist_t *pexport;
+	exportlist_t *export;
 	cache_entry_t *pentry;
 	_9p_qid_t qid;
 	cache_entry_t *ppentry;

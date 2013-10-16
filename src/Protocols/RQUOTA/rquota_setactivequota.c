@@ -44,19 +44,18 @@
 /**
  * @brief The Rquota setactivequota function, for all versions.
  *
- * @param[in]  parg    Ignored
- * @param[in]  pexport Ignored
+ * @param[in]  arg     Ignored
+ * @param[in]  export  Ignored
  * @param[in]  req_ctx Ignored
- * @param[in]  pworker Ignored
- * @param[in]  preq    Ignored
- * @param[out] pres    Ignored
- 
+ * @param[in]  worker  Ignored
+ * @param[in]  req     Ignored
+ * @param[out] res     Ignored
  */
 
-int rquota_setactivequota(nfs_arg_t * parg, exportlist_t * pexport,
+int rquota_setactivequota(nfs_arg_t *arg, exportlist_t *export,
 			  struct req_op_context *req_ctx,
-			  nfs_worker_data_t * pworker, struct svc_req *preq,
-			  nfs_res_t * pres)
+			  nfs_worker_data_t *worker, struct svc_req *req,
+			  nfs_res_t *res)
 {
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_setactivequota");
@@ -69,10 +68,10 @@ int rquota_setactivequota(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for rquota_setactivequota. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param[in,out] res Pointer to the result structure.
  *
  */
-void rquota_setactivequota_Free(nfs_res_t * pres)
+void rquota_setactivequota_Free(nfs_res_t *res)
 {
 	return;
 }

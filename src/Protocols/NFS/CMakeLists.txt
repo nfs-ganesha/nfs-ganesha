@@ -92,25 +92,7 @@ add_library(nfsproto STATIC ${nfsproto_STAT_SRCS})
 
 set(nfs4callbackSRCS
    nfs4_cb_Compound.c
-   nfs4_cb_getattr.c
-   nfs4_cb_illegal.c
-   nfs4_cb_recall.c
 )
 
 add_library(nfs4callbacks STATIC ${nfs4callbackSRCS})
 
-########### next target ###############
-
-SET(test_mnt_proto_SRCS
-   test_mnt_proto.c
-)
-
-add_executable(test_mnt_proto EXCLUDE_FROM_ALL ${test_mnt_proto_SRCS})
-
-target_link_libraries(test_mnt_proto
-  nfsproto
-  log
-  ${CMAKE_THREAD_LIBS_INIT})
-
-
-########### install files ###############

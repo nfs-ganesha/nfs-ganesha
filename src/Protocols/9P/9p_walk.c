@@ -148,7 +148,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 		pnewfid->fid = *newfid;
 		pnewfid->op_context = pfid->op_context;
-		pnewfid->pexport = pfid->pexport;
+		pnewfid->export = pfid->export;
 		pnewfid->ppentry = pfid->pentry;
 		strncpy(pnewfid->name, name, MAXNAMLEN);
 

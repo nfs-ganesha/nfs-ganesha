@@ -196,7 +196,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
 	if (data->req_ctx->export) {
 		put_gsh_export(data->req_ctx->export);
 		data->req_ctx->export = NULL;
-		data->pexport = NULL;
+		data->export = NULL;
 	}
 
 	res_SECINFO_NO_NAME4->status = NFS4_OK;

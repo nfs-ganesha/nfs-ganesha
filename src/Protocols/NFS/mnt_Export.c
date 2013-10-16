@@ -147,23 +147,23 @@ static bool proc_export(struct gsh_export *exp, void *arg)
  *
  * Return a list of all exports and their allowed clients/groups/networks.
  *
- * @param[in]  parg     Ignored
- * @param[in]  pexport  The export list to be return to the client.
+ * @param[in]  arg     Ignored
+ * @param[in]  export  The export list to be return to the client.
  * @param[in]  req_ctx  Ignored
- * @param[in]  pworker  Ignored
- * @param[in]  preq     Ignored
- * @param[out] pres     Pointer to the export list
+ * @param[in]  worker  Ignored
+ * @param[in]  req     Ignored
+ * @param[out] res     Pointer to the export list
  *
  */
 
-int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	       struct svc_req *preq, nfs_res_t * pres)
+int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	struct proc_state proc_state;
 
 	/* init everything of interest to good state. */
-	memset(pres, 0, sizeof(nfs_res_t));
+	memset(res, 0, sizeof(nfs_res_t));
 	memset(&proc_state, 0, sizeof(proc_state));
 
 	(void)foreach_gsh_export(proc_export, &proc_state);
@@ -172,7 +172,7 @@ int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	pres->res_mntexport = proc_state.head;
+	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */
 
@@ -181,15 +181,15 @@ int mnt_Export(nfs_arg_t * parg, exportlist_t * pexport,
  * 
  * Frees the result structure allocated for mnt_Dump.
  * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Export_Free(nfs_res_t * pres)
+void mnt_Export_Free(nfs_res_t *res)
 {
 	struct exportnode *exp, *next_exp;
 	struct groupnode *grp, *next_grp;
 
-	exp = pres->res_mntexport;
+	exp = res->res_mntexport;
 	while (exp != NULL) {
 		next_exp = exp->ex_next;
 		grp = exp->ex_groups;

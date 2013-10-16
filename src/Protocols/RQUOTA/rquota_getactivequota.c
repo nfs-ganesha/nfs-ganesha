@@ -44,19 +44,19 @@
 /**
  * @brief The Rquota getactivequota function, for all versions.
  *
- * @param[in]  parg     Ignored
- * @param[in]  pexport  Ignored
- * @param[in]  req_ctx  Ignored
- * @param[in]  pworker  Ignored
- * @param[in]  preq     Ignored
- * @param[out] pres     Ignored
+ * @param[in]  arg     Ignored
+ * @param[in]  export  Ignored
+ * @param[in]  req_ctx Ignored
+ * @param[in]  worker  Ignored
+ * @param[in]  req     Ignored
+ * @param[out] res     Ignored
  *
  */
 
-int rquota_getactivequota(nfs_arg_t * parg, exportlist_t * pexport,
+int rquota_getactivequota(nfs_arg_t *arg, exportlist_t *export,
 			  struct req_op_context *req_ctx,
-			  nfs_worker_data_t * pworker, struct svc_req *preq,
-			  nfs_res_t * pres)
+			  nfs_worker_data_t *worker, struct svc_req *req,
+			  nfs_res_t *res)
 {
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getactivequota");
@@ -65,14 +65,12 @@ int rquota_getactivequota(nfs_arg_t * parg, exportlist_t * pexport,
 }
 
 /**
- * rquota_getactivequota_Free: Frees the result structure allocated for rquota_getactivequota
+ * @brief Frees the result structure allocated for rquota_getactivequota
  *
- * Frees the result structure allocated for rquota_getactivequota. Does Nothing in fact.
- *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param[in,oujt] res Pointer to the result structure.
  *
  */
-void rquota_getactivequota_Free(nfs_res_t * pres)
+void rquota_getactivequota_Free(nfs_res_t *res)
 {
 	return;
 }

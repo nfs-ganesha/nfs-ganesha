@@ -56,32 +56,30 @@
  *
  * The MOUNT proc null function, for all versions.
  *
- * @param[in]  parg     ignored
- * @param[in]  pexport  ignored
+ * @param[in]  arg     ignored
+ * @param[in]  export  ignored
  * @param[in]  req_ctx  ignored
- * @param[in]  pworker  ignored
- * @param[in]  preq     ignored
- * @param[out] pres     ignored
+ * @param[in]  worker  ignored
+ * @param[in]  req     ignored
+ * @param[out] res     ignored
  *
  */
 
-int mnt_Null(nfs_arg_t * parg, exportlist_t * pexport,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	     struct svc_req *preq, nfs_res_t * pres)
+int mnt_Null(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Null");
 	return MNT3_OK;
 }				/* mnt_Null */
 
 /**
- * mnt_Null_Free: Frees the result structure allocated for mnt_Null
- * 
- * Frees the result structure allocated for mnt_Null. Does Nothing in fact.
- * 
+ * @brief Frees the result structure allocated for mnt_Null
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
 void mnt_Null_Free(nfs_res_t * pres)
 {
 	return;
-}				/* mnt_Export_Free */
+}

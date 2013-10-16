@@ -59,7 +59,7 @@ static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t * preq9p)
 
 	cache_inode_put(pfid->pentry);
 	if (pfid->from_attach) {
-		exp = container_of(pfid->pexport, struct gsh_export, export);
+		exp = container_of(pfid->export, struct gsh_export, export);
 		put_gsh_export(exp);
 	}
 	gsh_free(pfid);

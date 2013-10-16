@@ -94,9 +94,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* if quota support is active, then we should check is the FSAL allows
 	 * inode creation or not */
-	exp_hdl = data->pexport->export_hdl;
+	exp_hdl = data->export->export_hdl;
 	fsal_status =
-	    exp_hdl->ops->check_quota(exp_hdl, data->pexport->fullpath,
+	    exp_hdl->ops->check_quota(exp_hdl, data->export->fullpath,
 				      FSAL_QUOTA_INODES, data->req_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = NFS4ERR_DQUOT;

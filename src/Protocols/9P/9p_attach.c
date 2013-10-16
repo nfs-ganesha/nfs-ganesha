@@ -64,7 +64,7 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	_9p_fid_t *pfid = NULL;
 
 	struct gsh_export *exp;
-	exportlist_t *pexport = NULL;
+	exportlist_t *export = NULL;
 	cache_inode_status_t cache_status;
 	char exppath[MAXPATHLEN];
 
@@ -103,12 +103,12 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	/* Set pexport and fid id in fid */
+	/* Set export and fid id in fid */
 	if ((pfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
 		return _9p_rerror(preq9p, pworker_data, msgtag, ENOMEM, plenout,
 				  preply);
-	pexport = &exp->export;
-	pfid->pexport = pexport;
+	export = &exp->export;
+	pfid->export = export;
 	pfid->fid = *fid;
 	preq9p->pconn->fids[*fid] = pfid;
 
@@ -133,14 +133,14 @@ int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	}
 
 	/* Check if root cache entry is correctly set */
-	if (pexport->exp_root_cache_inode == NULL)
+	if (export->exp_root_cache_inode == NULL)
 		return _9p_rerror(preq9p, pworker_data, msgtag, err, plenout,
 				  preply);
 
 	/* get the export information for this fid */
-	pfid->pentry = pexport->exp_root_cache_inode;
+	pfid->pentry = export->exp_root_cache_inode;
 
-	/* Keep track of the pexport in the req_ctx */
+	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;
 
 	/* This fid is a special one : it comes from TATTACH and so generate a record
