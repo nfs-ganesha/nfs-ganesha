@@ -76,7 +76,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		return res_SETCLIENTID4->status;
 	}
 
-	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
+	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	if (isDebug(COMPONENT_CLIENTID)) {
 		sprint_sockip(&client_addr, str_client_addr,

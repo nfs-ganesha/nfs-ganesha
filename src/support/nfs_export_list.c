@@ -429,7 +429,7 @@ bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
 	return true;
 }
 
-int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
+int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t * pcred)
 {
 	/* Structure for managing basic AUTH_UNIX authentication */
 	struct authunix_parms *aup = NULL;
@@ -439,16 +439,16 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 	struct svc_rpc_gss_data *gd = NULL;
 #endif
 
-	pcred->flavor = reqp->rq_cred.oa_flavor;
-	pcred->length = reqp->rq_cred.oa_length;
+	pcred->flavor = req->rq_cred.oa_flavor;
+	pcred->length = req->rq_cred.oa_length;
 
-	switch (reqp->rq_cred.oa_flavor) {
+	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
 		/* Do nothing... because there seems like nothing is to be done... */
 		break;
 
 	case AUTH_UNIX:
-		aup = (struct authunix_parms *)(reqp->rq_clntcred);
+		aup = (struct authunix_parms *)(req->rq_clntcred);
 
 		pcred->auth_union.auth_unix.aup_uid = aup->aup_uid;
 		pcred->auth_union.auth_unix.aup_gid = aup->aup_gid;
@@ -459,7 +459,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
 		/* Extract the information from the RPCSEC_GSS opaque structure */
-		gd = SVCAUTH_PRIVATE(reqp->rq_auth);
+		gd = SVCAUTH_PRIVATE(req->rq_auth);
 
 		pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
 		pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);

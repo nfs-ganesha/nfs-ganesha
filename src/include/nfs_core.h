@@ -326,7 +326,7 @@ void admin_replace_exports(void);
 void admin_halt(void);
 
 /* Tools */
-unsigned int get_rpc_xid(struct svc_req *reqp);
+unsigned int get_rpc_xid(struct svc_req *);
 
 void nfs_reset_stats(void);
 

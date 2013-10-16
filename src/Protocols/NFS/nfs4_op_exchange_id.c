@@ -117,7 +117,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t * data,
 		return (res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL);
 	}
 
-	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
+	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	/**
 	 * @todo Look into this again later, if no exports support
@@ -134,7 +134,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t * data,
 	    (arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) !=
 	    0;
 
-	server_addr = get_raddr(data->reqp->rq_xprt);
+	server_addr = get_raddr(data->req->rq_xprt);
 
 	/* Do we already have one or more records for client id (x)? */
 	client_record =

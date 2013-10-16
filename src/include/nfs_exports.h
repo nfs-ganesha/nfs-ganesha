@@ -381,7 +381,7 @@ typedef struct compound_data {
 	export_perms_t export_perms;	/*< Permissions for export for currentFH */
 	export_perms_t saved_export_perms;	/*< Permissions for export for savedFH */
 	pseudofs_t *pseudofs;	/*< Pointer to the pseudo filesystem tree */
-	struct svc_req *reqp;	/*< RPC Request related to the compound */
+	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *pworker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
@@ -413,7 +413,7 @@ void clean_credentials(struct user_cred *user_credentials);
 
 bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
 			    nfs_client_cred_t * cred2);
-int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred);
+int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t * pcred);
 
 int export_client_match_any(sockaddr_t * hostaddr,
 			    exportlist_client_t * clients,

@@ -477,7 +477,7 @@ int nfs4_Compound(nfs_arg_t * arg, exportlist_t * export,
 	data.minorversion = compound4_minor;
 	data.pworker = worker;
 	data.pseudofs = nfs4_GetPseudoFs();
-	data.reqp = req;
+	data.req = req;
 
 	/* Building the client credential field */
 	if (nfs_rpc_req2client_cred(req, &(data.credential)) == -1)

@@ -101,7 +101,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 		return (res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL);
 	}
 
-	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
+	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	if (isDebug(component))
 		sprint_sockip(&client_addr, str_client_addr,
@@ -304,7 +304,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t * data,
 	    arg_CREATE_SESSION4->csa_fore_chan_attrs;
 	nfs41_session->back_channel_attrs =
 	    arg_CREATE_SESSION4->csa_back_chan_attrs;
-	nfs41_session->xprt = data->reqp->rq_xprt;
+	nfs41_session->xprt = data->req->rq_xprt;
 	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
 	pthread_mutex_init(&nfs41_session->cb_mutex, NULL);

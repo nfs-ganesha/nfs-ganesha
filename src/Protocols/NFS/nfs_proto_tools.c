@@ -4494,10 +4494,10 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
  */
 int nfs4_MakeCred(compound_data_t * data)
 {
-	xprt_type_t xprt_type = svc_get_xprt_type(data->reqp->rq_xprt);
+	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	if (!get_req_uid_gid(data->reqp, data->req_ctx->creds))
+	if (!get_req_uid_gid(data->req, data->req_ctx->creds))
 		return NFS4ERR_ACCESS;
 
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -4536,7 +4536,7 @@ int nfs4_MakeCred(compound_data_t * data)
 	}
 	/* Test if export allows the authentication provided */
 	if (nfs_export_check_security
-	    (data->reqp, &data->export_perms, data->export) == FALSE) {
+	    (data->req, &data->export_perms, data->export) == FALSE) {
 		LogInfo(COMPONENT_NFS_V4,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			data->export->id, data->export->fullpath,
