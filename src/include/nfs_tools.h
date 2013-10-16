@@ -56,14 +56,6 @@ void free_export_resources(exportlist_t * export);
 void exports_pkginit(void);
 exportlist_t *BuildDefaultExport();
 
-/* Mount list management */
-int nfs_Add_MountList_Entry(char *hostname, char *path);
-bool nfs_Remove_MountList_Entry(char *hostname, char *path);
-int nfs_Init_MountList(void);
-bool nfs_Purge_MountList(void);
-mountlist nfs_Get_MountList(void);
-void nfs_Print_MountList(void);
-
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);

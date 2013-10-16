@@ -33,7 +33,6 @@ SET(support_STAT_SRCS
    nfs4_acls.c
    nfs_export_list.c
    nfs_filehandle_mgmt.c
-   nfs_mnt_list.c
    nfs_read_conf.c
    nfs_convert.c
    nfs_ip_name.c
