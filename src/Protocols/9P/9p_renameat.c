@@ -42,7 +42,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		 char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -76,7 +76,7 @@ int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 *newname_len, newname_str);
 
 	if (*oldfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	poldfid = req9p->pconn->fids[*oldfid];
@@ -84,12 +84,12 @@ int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	/* Check that it is a valid fid */
 	if (poldfid == NULL || poldfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *oldfid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
 	if (*newfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	pnewfid = req9p->pconn->fids[*newfid];
@@ -97,7 +97,7 @@ int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	/* Check that it is a valid fid */
 	if (pnewfid == NULL || pnewfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *newfid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -109,7 +109,7 @@ int _9p_renameat(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	    cache_inode_rename(poldfid->pentry, oldname, pnewfid->pentry,
 			       newname, &poldfid->op_context);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

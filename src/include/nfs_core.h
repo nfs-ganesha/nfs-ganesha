@@ -282,16 +282,16 @@ void *state_async_thread(void *UnusedArg);
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
 void _9p_tcp_process_request(_9p_request_data_t *req9p,
-			     nfs_worker_data_t * pworker_data);
+			     nfs_worker_data_t * worker_data);
 int _9p_process_buffer(_9p_request_data_t *req9p,
-		       nfs_worker_data_t * pworker_data, char *replydata,
+		       nfs_worker_data_t * worker_data, char *replydata,
 		       u32 * poutlen);
 #endif
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
 void _9p_rdma_process_request(_9p_request_data_t *req9p,
-			      nfs_worker_data_t * pworker_data);
+			      nfs_worker_data_t * worker_data);
 void _9p_rdma_cleanup_conn(msk_trans_t * trans);
 #endif
 

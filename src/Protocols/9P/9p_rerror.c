@@ -42,7 +42,7 @@
 
 extern _9p_function_desc_t _9pfuncdesc[];
 
-int _9p_rerror(_9p_request_data_t *req9p, void *pworker_data, u16 * msgtag,
+int _9p_rerror(_9p_request_data_t *req9p, void *worker_data, u16 * msgtag,
 	       u32 err, u32 * plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;

@@ -91,7 +91,7 @@ void _9p_rdma_callback_disconnect(msk_trans_t * trans)
 }
 
 void _9p_rdma_process_request(_9p_request_data_t *req9p,
-			      nfs_worker_data_t * pworker_data)
+			      nfs_worker_data_t *worker_data)
 {
 	msk_trans_t *trans = req9p->pconn->trans_data.rdma_trans;
 
@@ -125,7 +125,7 @@ void _9p_rdma_process_request(_9p_request_data_t *req9p,
 		pthread_mutex_lock(&outdatalock->lock);
 
 		if ((rc =
-		     _9p_process_buffer(req9p, pworker_data, poutdata->data,
+		     _9p_process_buffer(req9p, worker_data, poutdata->data,
 					&outdatalen)) != 1) {
 			LogMajor(COMPONENT_9P,
 				 "Could not process 9P buffer on socket #%lu",

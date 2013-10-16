@@ -44,7 +44,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_walk(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -76,23 +76,23 @@ int _9p_walk(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, *newfid, *nwname);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	if (*newfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	pfid = req9p->pconn->fids[*fid];
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
 	if ((pnewfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Is this a lookup or a fid cloning operation ? */
@@ -132,7 +132,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 
 			if (pnewfid->pentry == NULL) {
 				gsh_free(pnewfid);
-				return _9p_rerror(req9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, worker_data, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 			}
@@ -157,7 +157,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 				       &fileid);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			gsh_free(pnewfid);
-			return _9p_rerror(req9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 		}
@@ -191,7 +191,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 			LogMajor(COMPONENT_9P,
 				 "implementation error, you should not see this message !!!!!!");
 			gsh_free(pnewfid);
-			return _9p_rerror(req9p, pworker_data, msgtag, EINVAL,
+			return _9p_rerror(req9p, worker_data, msgtag, EINVAL,
 					  plenout, preply);
 			break;
 		}

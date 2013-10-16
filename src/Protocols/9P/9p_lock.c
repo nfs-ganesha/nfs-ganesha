@@ -65,7 +65,7 @@ char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
  */
 char *strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
 
-int _9p_lock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -113,7 +113,7 @@ int _9p_lock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 *proc_id, *client_id_len, client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	pfid = req9p->pconn->fids[*fid];
@@ -121,7 +121,7 @@ int _9p_lock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -130,13 +130,13 @@ int _9p_lock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
 
 	if ((hp = gethostbyname(name)) == NULL)
-		return _9p_rerror(req9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	memcpy((char *)&client_addr, hp->h_addr, hp->h_length);
 
 	if ((powner = get_9p_owner(&client_addr, *proc_id)) == NULL)
-		return _9p_rerror(req9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	/* Do the job */
@@ -178,7 +178,7 @@ int _9p_lock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		break;
 
 	default:
-		return _9p_rerror(req9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 		break;
 	}			/* switch( *type ) */

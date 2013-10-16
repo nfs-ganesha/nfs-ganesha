@@ -45,7 +45,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lopen(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -67,7 +67,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, *flags);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	pfid = req9p->pconn->fids[*fid];
@@ -75,7 +75,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -86,7 +86,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		if (!pfid->opens) {
 			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(req9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, worker_data, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 		}
@@ -96,7 +96,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		    cache_inode_open(pfid->pentry, openflags, &pfid->op_context,
 				     0);
 		if (cache_status != CACHE_INODE_SUCCESS)
-			return _9p_rerror(req9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 

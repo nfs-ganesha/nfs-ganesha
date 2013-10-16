@@ -43,7 +43,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_setattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -90,7 +90,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 (unsigned long long)*mtime_nsec);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	pfid = req9p->pconn->fids[*fid];
@@ -98,7 +98,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -109,7 +109,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 			LogMajor(COMPONENT_9P,
 				 "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
 				 (u32) * msgtag, *fid, errno);
-			return _9p_rerror(req9p, pworker_data, msgtag, errno,
+			return _9p_rerror(req9p, worker_data, msgtag, errno,
 					  plenout, preply);
 		}
 	}
@@ -177,7 +177,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	    cache_inode_setattr(pfid->pentry, &fsalattr, false,
 				&pfid->op_context);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

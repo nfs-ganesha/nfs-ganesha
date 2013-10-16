@@ -43,7 +43,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_auth(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 	     char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -79,7 +79,7 @@ int _9p_auth(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 (int)*aname_len, aname_str, *n_aname);
 
 	if (*afid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/*
@@ -94,7 +94,7 @@ int _9p_auth(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 
 	/* Did we find something ? */
 	if (exp == NULL)
-		return _9p_rerror(req9p, pworker_data, msgtag, ENOENT, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ENOENT, plenout,
 				  preply);
 
 	/* Set export and fid id in fid */
@@ -114,19 +114,19 @@ int _9p_auth(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		if ((err =
 		     _9p_tools_get_req_context_by_name(*uname_len, uname_str,
 						       pfid)) != 0)
-			return _9p_rerror(req9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	} else {
 		/* Build the fid creds */
 		if ((err =
 		     _9p_tools_get_req_context_by_uid(*n_aname, pfid)) != 0)
-			return _9p_rerror(req9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	}
 
 	/* Check if root cache entry is correctly set */
 	if (export->exp_root_cache_inode == NULL)
-		return _9p_rerror(req9p, pworker_data, msgtag, err, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, err, plenout,
 				  preply);
 
 	/* get the export information for this fid */
@@ -143,7 +143,7 @@ int _9p_auth(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 	cache_status =
 	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

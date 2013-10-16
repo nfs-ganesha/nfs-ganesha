@@ -45,7 +45,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_getlock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -77,7 +77,7 @@ int _9p_getlock(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
 		 client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 /*    pfid = req9p->pconn->fids[*fid] ; */

@@ -42,7 +42,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_flush(_9p_request_data_t *req9p, void *pworker_data, u32 * plenout,
+int _9p_flush(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
