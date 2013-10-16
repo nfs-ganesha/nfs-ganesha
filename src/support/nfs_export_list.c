@@ -56,8 +56,8 @@
 #include "idmapper.h"
 #include "export_mgr.h"
 
-const char *Rpc_gss_svc_name[] =
-    { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
+const char *Rpc_gss_svc_name[] = {
+	"no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
 	"RPCSEC_GSS_SVC_PRIVACY"
 };
 
@@ -66,11 +66,11 @@ const char *Rpc_gss_svc_name[] =
  *
  * @todo This MUST be refactored to not use TI-RPC private structures.
  * Instead, export appropriate functions from lib(n)tirpc.
- * 
+ *
  * @param[in]  req              Incoming request.
  * @param[out] user_credentials Filled in structure with UID and GIDs
- * 
- * @return true if successful, false otherwise 
+ *
+ * @return true if successful, false otherwise
  *
  */
 bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
@@ -154,9 +154,11 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 				     gd->established, gd->sec.qop, gd->ctx,
 				     ptr);
 
-			if ((maj_stat =
-			     gss_oid_to_str(&min_stat, gd->sec.mech,
-					    &oidbuff)) != GSS_S_COMPLETE) {
+			maj_stat = gss_oid_to_str(&min_stat,
+						  gd->sec.mech,
+						  &oidbuff);
+
+			if (maj_stat != GSS_S_COMPLETE) {
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "Error in gss_oid_to_str: %u|%u",
 					     maj_stat, min_stat);
@@ -180,21 +182,23 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 
 		/* Convert to uid */
 #if _MSPAC_SUPPORT
-		if (!principal2uid
-		    (principal, &user_credentials->caller_uid,
-		     &user_credentials->caller_gid, gd))
+		if (!principal2uid(principal,
+				   &user_credentials->caller_uid,
+				   &user_credentials->caller_gid,
+				   gd)) {
 #else
-		if (!principal2uid
-		    (principal, &user_credentials->caller_uid,
-		     &user_credentials->caller_gid))
+		if (!principal2uid(principal,
+				   &user_credentials->caller_uid,
+				   &user_credentials->caller_gid)) {
 #endif
-		{
 			LogWarn(COMPONENT_IDMAPPER,
 				"WARNING: Could not map principal to uid; mapping principal "
 				"to anonymous uid/gid");
 
-			/* For compatibility with Linux knfsd, we set the uid/gid
-			 * to anonymous when a name->uid mapping can't be found. */
+			/* For compatibility with Linux knfsd, we set the
+			 * uid/gid to anonymous when a name->uid mapping can't
+			 * be found.
+			 */
 			user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
 
 			return true;
@@ -213,7 +217,9 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "FAILURE: Request xid=%u, has unsupported authentication %d",
 			     req->rq_xid, req->rq_cred.oa_flavor);
-		/* Reject the request for weak authentication and return to worker */
+		/* Reject the request for weak authentication and
+		 * return to worker
+		 */
 		return false;
 
 		break;
@@ -221,7 +227,7 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 	return true;
 }
 
-void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
+void nfs_check_anon(export_perms_t *pexport_perms, exportlist_t *pexport,
 		    struct user_cred *user_credentials)
 {
 	/* Do we need to revert? */
@@ -321,7 +327,9 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 					    USER_CRED_SAVED;
 				}
 
-				/* Save the position of the first instance of root in the garray */
+				/* Save the position of the first instance
+				 * of root in the garray
+				 */
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "Squashing alternate group #%d to %d",
 					     i, pexport_perms->anonymous_gid);
@@ -335,7 +343,7 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 	}
 }
 
-void squash_setattr(export_perms_t * pexport_perms,
+void squash_setattr(export_perms_t *pexport_perms,
 		    struct user_cred *user_credentials, struct attrlist *attr)
 {
 	if (attr->mask & ATTR_OWNER) {
@@ -397,8 +405,8 @@ void clean_credentials(struct user_cred *user_credentials)
  *
  * @return true if same, false otherwise
  */
-bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
-			    nfs_client_cred_t * cred2)
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
+			    nfs_client_cred_t *cred2)
 {
 	if (cred1 == NULL)
 		return false;
@@ -429,7 +437,7 @@ bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
 	return true;
 }
 
-int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
+int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t *pcred)
 {
 	/* Structure for managing basic AUTH_UNIX authentication */
 	struct authunix_parms *aup = NULL;
@@ -444,7 +452,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
 	switch (reqp->rq_cred.oa_flavor) {
 	case AUTH_NONE:
-		/* Do nothing... because there seems like nothing is to be done... */
+		/* Do nothing... */
 		break;
 
 	case AUTH_UNIX:
@@ -458,7 +466,9 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		/* Extract the information from the RPCSEC_GSS opaque structure */
+		/* Extract the information from the RPCSEC_GSS
+		 * opaque structure
+		 */
 		gd = SVCAUTH_PRIVATE(reqp->rq_auth);
 
 		pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);

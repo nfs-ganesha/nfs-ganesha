@@ -67,9 +67,9 @@
  * @return cache entry or NULL on failure
  *
  */
-cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
+cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 				   const struct req_op_context *req_ctx,
-				   exportlist_t * exp_list, nfsstat3 * status,
+				   exportlist_t *exp_list, nfsstat3 *status,
 				   int *rc)
 {
 	fsal_status_t fsal_status;
@@ -86,9 +86,8 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 	/* validate the filehandle  */
 	*status = nfs3_Is_Fh_Invalid(fh3);
 
-	if (*status != NFS3_OK) {
+	if (*status != NFS3_OK)
 		goto badhdl;
-	}
 
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
@@ -116,17 +115,15 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 	if (exp != NULL)
 		put_gsh_export(exp);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
+	if (FSAL_IS_ERROR(fsal_status))
 		cache_status = cache_inode_error_convert(fsal_status);
-	} else {
+	else
 		cache_status = cache_inode_get(&fsal_data, req_ctx, &entry);
-	}
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		*status = nfs3_Errno(cache_status);
-		if (nfs_RetryableError(cache_status)) {
+		if (nfs_RetryableError(cache_status))
 			*rc = NFS_REQ_DROP;
-		}
 	}
 
  badhdl:
@@ -141,8 +138,8 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
  *
  * @return true if successful, false otherwise
  */
-bool nfs4_FSALToFhandle(nfs_fh4 * fh4,
-			const struct fsal_obj_handle * fsalhandle)
+bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+			const struct fsal_obj_handle *fsalhandle)
 {
 	fsal_status_t fsal_status;
 	file_handle_v4_t *file_handle;
@@ -190,8 +187,8 @@ bool nfs4_FSALToFhandle(nfs_fh4 * fh4,
  * @todo Do we have to worry about buffer alignment and memcpy to
  * compensate??
  */
-bool nfs3_FSALToFhandle(nfs_fh3 * fh3,
-			const struct fsal_obj_handle * fsalhandle)
+bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
+			const struct fsal_obj_handle *fsalhandle)
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *file_handle;
@@ -237,8 +234,8 @@ bool nfs3_FSALToFhandle(nfs_fh3 * fh3,
  *
  * @return true if successful, false otherwise
  */
-bool nfs2_FSALToFhandle(fhandle2 * fh2,
-			const struct fsal_obj_handle * fsalhandle)
+bool nfs2_FSALToFhandle(fhandle2 *fh2,
+			const struct fsal_obj_handle *fsalhandle)
 {
 	fsal_status_t fsal_status;
 	file_handle_v2_t *file_handle;
@@ -284,21 +281,21 @@ bool nfs2_FSALToFhandle(fhandle2 * fh2,
  *
  * This routine is used to test if a fh refers to pseudo fs
  *
- * @param pfh [IN] file handle to test.
- * 
- * @return true if in pseudo fh, false otherwise 
+ * @param fh [IN] file handle to test.
+ *
+ * @return true if in pseudo fh, false otherwise
  *
  */
-int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
+int nfs4_Is_Fh_Pseudo(nfs_fh4 *fh)
 {
-	file_handle_v4_t *pfhandle4;
+	file_handle_v4_t *fhandle4;
 
-	if (pfh == NULL || pfh->nfs_fh4_val == NULL)
+	if (fh == NULL || fh->nfs_fh4_val == NULL)
 		return 0;
 
-	pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
+	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
 
-	return pfhandle4->exportid == 0;
+	return fhandle4->exportid == 0;
 }				/* nfs4_Is_Fh_Pseudo */
 
 /**
@@ -307,21 +304,21 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
  *
  * This routine is used to test if a fh is a DS fh
  *
- * @param pfh [IN] file handle to test.
+ * @param fh [IN] file handle to test.
  *
  * @return true if DS fh, false otherwise
  *
  */
-int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
+int nfs4_Is_Fh_DSHandle(nfs_fh4 *fh)
 {
-	file_handle_v4_t *pfhandle4;
+	file_handle_v4_t *fhandle4;
 
-	if (pfh == NULL)
+	if (fh == NULL)
 		return 0;
 
-	pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
+	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
 
-	return (pfhandle4->flags & FILE_HANDLE_V4_FLAG_DS) != 0;
+	return (fhandle4->flags & FILE_HANDLE_V4_FLAG_DS) != 0;
 }
 
 /**
@@ -332,7 +329,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
  * @return NFS4_OK if successfull.
  */
 
-int nfs4_Is_Fh_Invalid(nfs_fh4 * fh)
+int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 {
 	file_handle_v4_t *pfile_handle;
 
@@ -403,39 +400,39 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 * fh)
 /**
  * @brief Test if a filehandle is invalid.
  *
- * @param[in] pfh3 File handle to test.
+ * @param[in] fh3 File handle to test.
  *
  * @return NFS4_OK if successfull.
  *
  */
-int nfs3_Is_Fh_Invalid(nfs_fh3 * pfh3)
+int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 {
 	file_handle_v3_t *pfile_handle;
 
 	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
 
-	if (pfh3 == NULL) {
-		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: pfh3==NULL");
+	if (fh3 == NULL) {
+		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: fh3==NULL");
 		return NFS3ERR_BADHANDLE;
 	}
 
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS3 Handle %s", LEN_FH_STR,
-			   pfh3->data.data_val, pfh3->data.data_len);
+			   fh3->data.data_val, fh3->data.data_len);
 
 	/* Cast the fh as a non opaque structure */
-	pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+	pfile_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
 	/* validate the filehandle  */
-	if (pfile_handle == NULL || pfh3->data.data_len == 0
+	if (pfile_handle == NULL || fh3->data.data_len == 0
 	    || pfile_handle->fhversion != GANESHA_FH_VERSION
-	    || pfh3->data.data_len < sizeof(file_handle_v3_t)
-	    || pfh3->data.data_len > sizeof(struct alloc_file_handle_v3)
-	    || pfh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
+	    || fh3->data.data_len < sizeof(file_handle_v3_t)
+	    || fh3->data.data_len > sizeof(struct alloc_file_handle_v3)
+	    || fh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_val=NULL");
-			} else if (pfh3->data.data_len == 0) {
+			} else if (fh3->data.data_len == 0) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: zero length handle");
 			} else if (pfile_handle->fhversion !=
@@ -443,24 +440,24 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 * pfh3)
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: not a Ganesha handle, fhversion=%d",
 					pfile_handle->fhversion);
-			} else if (pfh3->data.data_len <
+			} else if (fh3->data.data_len <
 				   sizeof(file_handle_v3_t)) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is less than %d",
-					pfh3->data.data_len,
+					fh3->data.data_len,
 					(int)sizeof(file_handle_v3_t));
-			} else if (pfh3->data.data_len >
+			} else if (fh3->data.data_len >
 				   sizeof(struct alloc_file_handle_v3)) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is greater than %d",
-					pfh3->data.data_len,
+					fh3->data.data_len,
 					(int)sizeof(struct
 						    alloc_file_handle_v3));
-			} else if (pfh3->data.data_len !=
+			} else if (fh3->data.data_len !=
 				   nfs3_sizeof_handle(pfile_handle)) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d, should be %d",
-					pfh3->data.data_len,
+					fh3->data.data_len,
 					(int)nfs3_sizeof_handle(pfile_handle));
 			}
 		}
@@ -477,7 +474,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 * pfh3)
  * @param[in] component Subsystem component ID
  * @param[in] fh        File handle to print
  */
-void print_fhandle2(log_components_t component, fhandle2 * fh)
+void print_fhandle2(log_components_t component, fhandle2 *fh)
 {
 	if (isFullDebug(component)) {
 		char str[LEN_FH_STR];
@@ -487,7 +484,7 @@ void print_fhandle2(log_components_t component, fhandle2 * fh)
 	}
 }
 
-void sprint_fhandle2(char *str, fhandle2 * fh)
+void sprint_fhandle2(char *str, fhandle2 *fh)
 {
 	char *tmp = str + sprintf(str, "File Handle V2: ");
 
@@ -500,7 +497,7 @@ void sprint_fhandle2(char *str, fhandle2 * fh)
  * @param[in] component Subsystem component ID
  * @param[in] fh        File handle to prin
  */
-void print_fhandle3(log_components_t component, nfs_fh3 * fh)
+void print_fhandle3(log_components_t component, nfs_fh3 *fh)
 {
 	if (isFullDebug(component)) {
 		char str[LEN_FH_STR];
@@ -510,7 +507,7 @@ void print_fhandle3(log_components_t component, nfs_fh3 * fh)
 	}
 }
 
-void sprint_fhandle3(char *str, nfs_fh3 * fh)
+void sprint_fhandle3(char *str, nfs_fh3 *fh)
 {
 	char *tmp =
 	    str + sprintf(str, "File Handle V3: Len=%u ", fh->data.data_len);
@@ -524,7 +521,7 @@ void sprint_fhandle3(char *str, nfs_fh3 * fh)
  * @param[in] component Subsystem component ID
  * @param[in] fh        File handle to print
  */
-void print_fhandle4(log_components_t component, nfs_fh4 * fh)
+void print_fhandle4(log_components_t component, nfs_fh4 *fh)
 {
 	if (isFullDebug(component)) {
 		char str[LEN_FH_STR];
@@ -534,7 +531,7 @@ void print_fhandle4(log_components_t component, nfs_fh4 * fh)
 	}
 }
 
-void sprint_fhandle4(char *str, nfs_fh4 * fh)
+void sprint_fhandle4(char *str, nfs_fh4 *fh)
 {
 	char *tmp =
 	    str + sprintf(str, "File Handle V4: Len=%u ", fh->nfs_fh4_len);
@@ -548,7 +545,7 @@ void sprint_fhandle4(char *str, nfs_fh4 * fh)
  * @param[in] component Subsystem component ID
  * @param[in] fh        File handle to print
  */
-void print_fhandle_nlm(log_components_t component, netobj * fh)
+void print_fhandle_nlm(log_components_t component, netobj *fh)
 {
 	if (isFullDebug(component)) {
 		char str[LEN_FH_STR];
@@ -558,7 +555,7 @@ void print_fhandle_nlm(log_components_t component, netobj * fh)
 	}
 }				/* print_fhandle_nlm */
 
-void sprint_fhandle_nlm(char *str, netobj * fh)
+void sprint_fhandle_nlm(char *str, netobj *fh)
 {
 	char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->n_len);
 
@@ -604,11 +601,12 @@ void sprint_mem(char *str, char *buff, int len)
  *
  * print_compound_fh
  *
- * This routine prints all the file handle within a compoud request's data structure.
- * 
+ * This routine prints all the file handle within a compoud request's data
+ * structure.
+ *
  * @param data [IN] compound's data to manage.
  */
-void LogCompoundFH(compound_data_t * data)
+void LogCompoundFH(compound_data_t *data)
 {
 	if (isFullDebug(COMPONENT_FILEHANDLE)) {
 		char str[LEN_FH_STR];

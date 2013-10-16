@@ -1,20 +1,20 @@
-//-----------------------------------------------------------------------------
-// MurmurHash3 was written by Austin Appleby, and is placed in the public
-// domain. The author hereby disclaims copyright to this source code.
-
-// Note - The x86 and x64 versions do _not_ produce the same results, as the
-// algorithms are optimized for their respective platforms. You can still
-// compile and run any of them on any platform, but your performance with the
-// non-native version will be less than optimal.
+/*-----------------------------------------------------------------------------
+ * MurmurHash3 was written by Austin Appleby, and is placed in the public
+ * domain. The author hereby disclaims copyright to this source code.
+ *
+ * Note - The x86 and x64 versions do _not_ produce the same results, as the
+ * algorithms are optimized for their respective platforms. You can still
+ * compile and run any of them on any platform, but your performance with the
+ * non-native version will be less than optimal.
+ */
 
 #include "config.h"
 
 #include "murmur3.h"
 
-//-----------------------------------------------------------------------------
-// Platform-specific functions and macros
-
-#define	FORCE_INLINE static inline __attribute__((always_inline))
+/*------------------------------------------------------------------------------
+ * Platform-specific functions and macros
+ */
 
 inline uint32_t rotl32(uint32_t x, int8_t r)
 {
@@ -26,21 +26,23 @@ inline uint64_t rotl64(uint64_t x, int8_t r)
 	return (x << r) | (x >> (64 - r));
 }
 
-#define	ROTL32(x,y)	rotl32(x,y)
-#define ROTL64(x,y)	rotl64(x,y)
+#define	ROTL32(x, y)	rotl32(x, y)
+#define ROTL64(x, y)	rotl64(x, y)
 
 #define BIG_CONSTANT(x) (x##LLU)
 
-//-----------------------------------------------------------------------------
-// Block read - if your platform needs to do endian-swapping or can only
-// handle aligned reads, do the conversion here
+/*------------------------------------------------------------------------------
+ * Block read - if your platform needs to do endian-swapping or can only
+ * handle aligned reads, do the conversion here
+ */
 
 #define getblock(p, i) (p[i])
 
-//-----------------------------------------------------------------------------
-// Finalization mix - force all bits of a hash block to avalanche
+/*------------------------------------------------------------------------------
+ * Finalization mix - force all bits of a hash block to avalanche
+ */
 
-FORCE_INLINE uint32_t fmix32(uint32_t h)
+static inline __attribute__((always_inline)) uint32_t fmix32(uint32_t h)
 {
 	h ^= h >> 16;
 	h *= 0x85ebca6b;
@@ -51,9 +53,7 @@ FORCE_INLINE uint32_t fmix32(uint32_t h)
 	return h;
 }
 
-//----------
-
-FORCE_INLINE uint64_t fmix64(uint64_t k)
+static inline __attribute__((always_inline)) uint64_t fmix64(uint64_t k)
 {
 	k ^= k >> 33;
 	k *= BIG_CONSTANT(0xff51afd7ed558ccd);
@@ -64,7 +64,7 @@ FORCE_INLINE uint64_t fmix64(uint64_t k)
 	return k;
 }
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 
 void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out)
 {
@@ -77,8 +77,7 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out)
 	uint32_t c1 = 0xcc9e2d51;
 	uint32_t c2 = 0x1b873593;
 
-	//----------
-	// body
+	/* body */
 
 	const uint32_t *blocks = (const uint32_t *)(data + nblocks * 4);
 
@@ -94,8 +93,7 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out)
 		h1 = h1 * 5 + 0xe6546b64;
 	}
 
-	//----------
-	// tail
+	/* tail */
 
 	const uint8_t *tail = (const uint8_t *)(data + nblocks * 4);
 
@@ -114,8 +112,7 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out)
 		h1 ^= k1;
 	};
 
-	//----------
-	// finalization
+	/* finalization */
 
 	h1 ^= len;
 
@@ -124,7 +121,7 @@ void MurmurHash3_x86_32(const void *key, int len, uint32_t seed, void *out)
 	*(uint32_t *) out = h1;
 }
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 
 void MurmurHash3_x86_128(const void *key, const int len, uint32_t seed,
 			 void *out)
@@ -143,8 +140,7 @@ void MurmurHash3_x86_128(const void *key, const int len, uint32_t seed,
 	uint32_t c3 = 0x38b34ae5;
 	uint32_t c4 = 0xa1e38b93;
 
-	//----------
-	// body
+	/* body */
 
 	const uint32_t *blocks = (const uint32_t *)(data + nblocks * 16);
 
@@ -191,8 +187,7 @@ void MurmurHash3_x86_128(const void *key, const int len, uint32_t seed,
 		h4 = h4 * 5 + 0x32ac3b17;
 	}
 
-	//----------
-	// tail
+	/* tail */
 
 	const uint8_t *tail = (const uint8_t *)(data + nblocks * 16);
 
@@ -253,8 +248,7 @@ void MurmurHash3_x86_128(const void *key, const int len, uint32_t seed,
 		h1 ^= k1;
 	};
 
-	//----------
-	// finalization
+	/* finalization */
 
 	h1 ^= len;
 	h2 ^= len;
@@ -286,7 +280,7 @@ void MurmurHash3_x86_128(const void *key, const int len, uint32_t seed,
 	((uint32_t *) out)[3] = h4;
 }
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 
 void MurmurHash3_x64_128(const void *key, const int len, const uint32_t seed,
 			 void *out)
@@ -301,8 +295,7 @@ void MurmurHash3_x64_128(const void *key, const int len, const uint32_t seed,
 	uint64_t c1 = BIG_CONSTANT(0x87c37b91114253d5);
 	uint64_t c2 = BIG_CONSTANT(0x4cf5ad432745937f);
 
-	//----------
-	// body
+	/* body */
 
 	const uint64_t *blocks = (const uint64_t *)(data);
 
@@ -329,8 +322,7 @@ void MurmurHash3_x64_128(const void *key, const int len, const uint32_t seed,
 		h2 = h2 * 5 + 0x38495ab5;
 	}
 
-	//----------
-	// tail
+	/* tail */
 
 	const uint8_t *tail = (const uint8_t *)(data + nblocks * 16);
 
@@ -379,8 +371,7 @@ void MurmurHash3_x64_128(const void *key, const int len, const uint32_t seed,
 		h1 ^= k1;
 	};
 
-	//----------
-	// finalization
+	/* finalization */
 
 	h1 ^= len;
 	h2 ^= len;
@@ -398,4 +389,4 @@ void MurmurHash3_x64_128(const void *key, const int len, const uint32_t seed,
 	((uint64_t *) out)[1] = h2;
 }
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/

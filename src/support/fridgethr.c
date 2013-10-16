@@ -84,7 +84,8 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 		goto out;
 	}
 
-	if ((p->wake_threads != NULL) && (p->flavor != fridgethr_flavor_looper)) {
+	if ((p->wake_threads != NULL) &&
+	    (p->flavor != fridgethr_flavor_looper)) {
 		LogMajor(COMPONENT_THREAD,
 			 "Wake function only allowed on loopers: %s", s);
 		rc = EINVAL;
@@ -250,25 +251,26 @@ void fridgethr_destroy(struct fridgethr *fr)
 
 static void fridgethr_finish_transition(struct fridgethr *fr, bool locked)
 {
-	if (!fr->transitioning) {
+	if (!fr->transitioning)
 		return;
-	}
-	if (fr->cb_mtx && !locked) {
+
+	if (fr->cb_mtx && !locked)
 		pthread_mutex_lock(fr->cb_mtx);
-	}
-	if (fr->cb_func != NULL) {
+
+	if (fr->cb_func != NULL)
 		fr->cb_func(fr->cb_arg);
-	}
-	if (fr->cb_cv) {
+
+	if (fr->cb_cv)
 		pthread_cond_broadcast(fr->cb_cv);
-	}
-	if (fr->cb_mtx && !locked) {
+
+	if (fr->cb_mtx && !locked)
 		pthread_mutex_unlock(fr->cb_mtx);
-	}
+
 	if (!locked) {
 		fr->cb_mtx = NULL;
 		fr->cb_cv = NULL;
 	}
+
 	fr->cb_func = NULL;
 	fr->cb_arg = NULL;
 	fr->transitioning = false;
@@ -368,7 +370,8 @@ static bool fridgethr_freeze(struct fridgethr *fr,
  restart:
 	/* If we are not paused and there is work left to do in the
 	   queue, do it. */
-	if (!(fr->command == fridgethr_comm_pause) && fridgethr_getwork(fr, fe)) {
+	if (!(fr->command == fridgethr_comm_pause) &&
+	    fridgethr_getwork(fr, fe)) {
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 		return true;
 	}
@@ -424,16 +427,15 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 				rc = pthread_cond_timedwait(&fe->ctx.cv,
 							    &fe->ctx.mtx,
 							    &fe->timeout);
-			} else {
+			} else
 				rc = pthread_cond_wait(&fe->ctx.cv,
 						       &fe->ctx.mtx);
-			}
 		}
-		if (rc == ETIMEDOUT) {
+
+		if (rc == ETIMEDOUT)
 			fe->ctx.woke = false;
-		} else {
+		else
 			fe->ctx.woke = true;
-		}
 
 		/* Clear this while we have the lock, we can set it
 		   again before continuing */
@@ -475,9 +477,9 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 
 		--(fr->nidle);
 		glist_del(&fe->idle_link);
-		if (fr->p.flavor == fridgethr_flavor_worker) {
+		if (fr->p.flavor == fridgethr_flavor_worker)
 			goto restart;
-		} else {
+		else {
 			PTHREAD_MUTEX_unlock(&fr->mtx);
 			break;
 		}
@@ -530,22 +532,21 @@ static void *fridgethr_start_routine(void *arg)
 	   which would indicate bugs in the code. */
 	assert(rc == 0);
 
-	if (fr->p.thread_initialize) {
+	if (fr->p.thread_initialize)
 		fr->p.thread_initialize(&fe->ctx);
-	}
 
 	do {
 		fe->ctx.func(&fe->ctx);
-		if (fr->p.task_cleanup) {
+		if (fr->p.task_cleanup)
 			fr->p.task_cleanup(&fe->ctx);
-		}
+
 		reschedule = fridgethr_freeze(fr, &fe->ctx);
 
 	} while (reschedule);
 
-	if (fr->p.thread_finalize) {
+	if (fr->p.thread_finalize)
 		fr->p.thread_finalize(&fe->ctx);
-	}
+
 	pthread_mutex_destroy(&fe->ctx.mtx);
 	pthread_cond_destroy(&fe->ctx.cv);
 	gsh_free(fe);
@@ -582,9 +583,8 @@ static int fridgethr_spawn(struct fridgethr *fr,
 
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
-	if (fe == NULL) {
+	if (fe == NULL)
 		goto create_err;
-	}
 
 	/* Make a new thread */
 	++(fr->nthreads);
@@ -637,17 +637,14 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	--(fr->nthreads);
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 
-	if (conditioned) {
+	if (conditioned)
 		pthread_cond_destroy(&fe->ctx.cv);
-	}
 
-	if (mutexed) {
+	if (mutexed)
 		pthread_mutex_destroy(&fe->ctx.mtx);
-	}
 
-	if (fe != NULL) {
+	if (fe != NULL)
 		gsh_free(fe);
-	}
 
 	return rc;
 }
@@ -946,8 +943,8 @@ int fridgethr_wake(struct fridgethr *fr)
  *         both.
  */
 
-int fridgethr_pause(struct fridgethr *fr, pthread_mutex_t * mtx,
-		    pthread_cond_t * cv, void (*cb) (void *), void *arg)
+int fridgethr_pause(struct fridgethr *fr, pthread_mutex_t *mtx,
+		    pthread_cond_t *cv, void (*cb) (void *), void *arg)
 {
 	PTHREAD_MUTEX_lock(&fr->mtx);
 	if (fr->transitioning) {
@@ -986,12 +983,12 @@ int fridgethr_pause(struct fridgethr *fr, pthread_mutex_t * mtx,
 	fr->cb_func = cb;
 	fr->cb_arg = arg;
 
-	if (fr->nthreads == fr->nidle) {
+	if (fr->nthreads == fr->nidle)
 		fridgethr_finish_transition(fr, true);
-	}
-	if (fr->p.wake_threads != NULL) {
+
+	if (fr->p.wake_threads != NULL)
 		fr->p.wake_threads(fr->p.wake_threads_arg);
-	}
+
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	return 0;
 }
@@ -1029,8 +1026,8 @@ static void fridgethr_noop(struct fridgethr_context *dummy)
  * @retval EINVAL if one of @c mtx and @c cv was NULL but not both.
  */
 
-int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t * mtx,
-		   pthread_cond_t * cv, void (*cb) (void *), void *arg)
+int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t *mtx,
+		   pthread_cond_t *cv, void (*cb) (void *), void *arg)
 {
 	int rc = 0;
 
@@ -1083,10 +1080,13 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t * mtx,
 		struct glist_head *g = NULL;
 
 		glist_for_each(g, &fr->idle_q) {
-			struct fridgethr_entry *fe = container_of(g,
-								  struct
-								  fridgethr_entry,
-								  idle_link);
+			struct fridgethr_entry *fe;
+
+			fe = container_of(g,
+					  struct
+					  fridgethr_entry,
+					  idle_link);
+
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			/* We don't dispatch or anything, just wake
 			   them all up and let them grab work off the
@@ -1094,9 +1094,8 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t * mtx,
 			pthread_cond_signal(&fe->ctx.cv);
 			PTHREAD_MUTEX_unlock(&fe->ctx.mtx);
 
-			if (fr->p.wake_threads != NULL) {
+			if (fr->p.wake_threads != NULL)
 				fr->p.wake_threads(fr->p.wake_threads_arg);
-			}
 		}
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	} else {
@@ -1139,8 +1138,8 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t * mtx,
  * @retval EALREADY if the fridge is already paused.
  */
 
-int fridgethr_start(struct fridgethr *fr, pthread_mutex_t * mtx,
-		    pthread_cond_t * cv, void (*cb) (void *), void *arg)
+int fridgethr_start(struct fridgethr *fr, pthread_mutex_t *mtx,
+		    pthread_cond_t *cv, void (*cb) (void *), void *arg)
 {
 	/* Return code */
 	int rc = 0;
@@ -1190,10 +1189,13 @@ int fridgethr_start(struct fridgethr *fr, pthread_mutex_t * mtx,
 		struct glist_head *g = NULL;
 
 		glist_for_each(g, &fr->idle_q) {
-			struct fridgethr_entry *fe = container_of(g,
-								  struct
-								  fridgethr_entry,
-								  idle_link);
+			struct fridgethr_entry *fe;
+
+			fe = container_of(g,
+					  struct
+					  fridgethr_entry,
+					  idle_link);
+
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			/* We don't dispatch or anything, just wake
 			   them all up and let them grab work off the
@@ -1216,21 +1218,19 @@ int fridgethr_start(struct fridgethr *fr, pthread_mutex_t * mtx,
 			rc = fridgethr_spawn(fr, q->func, q->arg);
 			gsh_free(q);
 			PTHREAD_MUTEX_lock(&fr->mtx);
-			if (rc != 0) {
+			if (rc != 0)
 				break;
-			}
 		} else {
 			rc = fridgethr_spawn(fr, fridgethr_noop, NULL);
 			PTHREAD_MUTEX_lock(&fr->mtx);
-			if (rc != 0) {
+			if (rc != 0)
 				break;
-			}
 		}
 	}
 
-	if (fr->p.wake_threads != NULL) {
+	if (fr->p.wake_threads != NULL)
 		fr->p.wake_threads(fr->p.wake_threads_arg);
-	}
+
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 	return rc;
 }
@@ -1306,11 +1306,10 @@ int fridgethr_sync_command(struct fridgethr *fr, fridgethr_comm_t command,
 
  retry:
 	while ((rc == 0) && !done) {
-		if (timeout == 0) {
+		if (timeout == 0)
 			rc = pthread_cond_wait(&cv, &mtx);
-		} else {
+		else
 			rc = pthread_cond_timedwait(&cv, &mtx, &ts);
-		}
 	}
 
 	if (rc == EINTR) {
@@ -1318,9 +1317,8 @@ int fridgethr_sync_command(struct fridgethr *fr, fridgethr_comm_t command,
 		goto retry;
 	}
 
-	if (rc == 0) {
+	if (rc == 0)
 		PTHREAD_MUTEX_unlock(&mtx);
-	}
 
 	return rc;
 }
@@ -1337,7 +1335,7 @@ int fridgethr_sync_command(struct fridgethr *fr, fridgethr_comm_t command,
  * @retval false if you don't have to.  You still can if you want to.
  */
 
-bool fridgethr_you_should_break(struct fridgethr_context * ctx)
+bool fridgethr_you_should_break(struct fridgethr_context *ctx)
 {
 	/* Entry for this thread */
 	struct fridgethr_entry *fe = container_of(ctx, struct fridgethr_entry,

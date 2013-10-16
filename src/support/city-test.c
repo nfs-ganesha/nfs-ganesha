@@ -1,30 +1,29 @@
-// city-test.c - cityhash-c
-// CityHash on C
-// Copyright (c) 2011-2012, Alexander Nusov
-//
-// - original copyright notice -
-// Copyright (c) 2011 Google, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+/* city-test.c - cityhash-c
+ * CityHash on C
+ * Copyright (c) 2011-2012, Alexander Nusov
+ *
+ * - original copyright notice -
+ * Copyright (c) 2011 Google, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
-//#include <cstdio>
-//#include <iostream>
 #include <string.h>
 #include <stdio.h>
 
@@ -43,9 +42,10 @@ static const int kTestSize = 300;
 
 static char data[1 << 20];
 
-static int errors = 0;		// global error count
+static int errors;		/* global error count */
 
-// Initialize data to pseudorandom values.
+/* Initialize data to pseudorandom values.
+ */
 void setup()
 {
 	uint64 a = 9;
@@ -55,11 +55,12 @@ void setup()
 		a = (a ^ (a >> 41)) * k0 + b;
 		b = (b ^ (b >> 41)) * k0 + i;
 		uint8 u = b >> 37;
-		memcpy(data + i, &u, 1);	// uint8 -> char
+		memcpy(data + i, &u, 1);	/* uint8 -> char */
 	}
 }
 
-#define C(x) 0x ## x ## ULL
+#define C(x) (0x ## x ## ULL)
+
 static const uint64 testdata[300][15] = {
 	{C(9 ae16a3b2f90404f), C(75106 db890237a4a), C(3f eac5f636039766),
 	 C(3df 09df c64c09a2b), C(3 cb540c392e51e29), C(6 b56343feac0663),
@@ -4350,86 +4351,57 @@ static const uint64 testdata[300][15] = {
 						       C(33f c6ffd1ffb8676),
 						       C(36 db7617b765f6e2)},
 						      };
-						      void Check(uint64
-								 expected,
-								 uint64 actual)
-						      {
-						      if (expected != actual) {
-						      fprintf(stderr,
-							      "ERROR: expected %llx, but got %llx",
-							      expected, actual);
-						      ++errors;}
-						      }
 
-						      void Test(const uint64 *
-								expected,
-								int offset,
-								int len) {
-						      const uint128 u =
-						      CityHash128(data + offset,
-								  len);
-						      const uint128 v =
-						      CityHash128WithSeed(data +
-									  offset,
-									  len,
-									  kSeed128);
-						      Check(expected[0],
-							    CityHash64(data +
-								       offset,
-								       len));
-						      Check(expected[1],
-							    CityHash64WithSeed
-							    (data + offset, len,
-							     kSeed0));
-						      Check(expected[2],
-							    CityHash64WithSeeds
-							    (data + offset, len,
-							     kSeed0, kSeed1));
-						      Check(expected[3],
-							    Uint128Low64(u));
-						      Check(expected[4],
-							    Uint128High64(u));
-						      Check(expected[5],
-							    Uint128Low64(v));
-						      Check(expected[6],
-							    Uint128High64(v));
+	void Check(uint64 expected, uint64 actual)
+{
+	if (expected != actual) {
+		fprintf(stderr,
+			"ERROR: expected %llx, but got %llx",
+			expected, actual);
+		++errors;
+	}
+}
+
+void Test(const uint64 *expected, int offset, int len)
+{
+	const uint128 u = CityHash128(data + offset, len);
+	const uint128 v = CityHash128WithSeed(data + offset,
+					      len, kSeed128);
+
+	Check(expected[0], CityHash64(data + offset, len));
+	Check(expected[1], CityHash64WithSeed(data + offset, len, kSeed0));
+	Check(expected[2], CityHash64WithSeeds(data + offset, len,
+					       kSeed0, kSeed1));
+	Check(expected[3], Uint128Low64(u));
+	Check(expected[4], Uint128High64(u));
+	Check(expected[5], Uint128Low64(v));
+	Check(expected[6], Uint128High64(v));
+
 #ifdef __SSE4_2__
-						      const uint128 y =
-						      CityHashCrc128(data +
-								     offset,
-								     len);
-						      const uint128 z =
-						      CityHashCrc128WithSeed
-						      (data + offset, len,
-						       kSeed128);
-						      uint64 crc256_results[4];
-						      CityHashCrc256(data +
-								     offset,
-								     len,
-								     crc256_results);
-						      Check(expected[7],
-							    Uint128Low64(y));
-						      Check(expected[8],
-							    Uint128High64(y));
-						      Check(expected[9],
-							    Uint128Low64(z));
-						      Check(expected[10],
-							    Uint128High64(z));
-						      int i; for (i = 0; i < 4;
-								  i++) {
-						      Check(expected[11 + i],
-							    crc256_results[i]);}
-#endif
-						      }
+	const uint128 y = CityHashCrc128(data + offset, len);
+	const uint128 z = CityHashCrc128WithSeed(data + offset, len, kSeed128);
+	uint64 crc256_results[4];
 
-						      int main(int argc,
-							       char **argv) {
-						      setup(); int i;
-						      for (i = 0;
-							   i < kTestSize - 1;
-							   i++) {
-						      Test(testdata[i], i * i,
-							   i);}
-						      Test(testdata[i], 0,
-							   kDataSize);
-						      return errors > 0;}
+	CityHashCrc256(data + offset, len, crc256_results);
+	Check(expected[7], Uint128Low64(y));
+	Check(expected[8], Uint128High64(y));
+	Check(expected[9], Uint128Low64(z));
+	Check(expected[10], Uint128High64(z));
+
+	int i;
+
+	for (i = 0; i < 4; i++)
+		Check(expected[11 + i], crc256_results[i]);
+#endif
+}
+
+int main(int argc, char **argv)
+{
+	setup(); int i;
+	for (i = 0; i < kTestSize - 1; i++)
+		Test(testdata[i], i * i, i);
+
+	Test(testdata[i], 0, kDataSize);
+
+	return errors > 0;
+}

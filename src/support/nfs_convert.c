@@ -37,10 +37,6 @@
 #include "mount.h"
 #include "nfs23.h"
 
-#ifdef HAVE_GSSAPI
-OM_uint32 Gss_release_buffer(OM_uint32 * minor_status, gss_buffer_t buffer);
-#endif
-
 char *nfsstat3_to_str(nfsstat3 code)
 {
 	switch (code) {

@@ -32,18 +32,25 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {
 		do {
-			if ((*d++ = *s++) == 0)
+			*d++ = *s;
+			if (*s++ == 0)
 				break;
 		} while (--n != 0);
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0) {
-		if (siz != 0)
-			*d = '\0';	/* NUL-terminate dst */
-		while (*s++) ;
+		if (siz != 0) {
+			/* NUL-terminate dst */
+			*d = '\0';
+		}
+
+		/* Search for NUL in string */
+		while (*s++)
+			/* do nothing */;
 	}
 
-	return (s - src - 1);	/* count does not include NUL */
+	/* count does not include NUL */
+	return s - src - 1;
 }
 #endif

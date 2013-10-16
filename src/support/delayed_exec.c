@@ -106,20 +106,24 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
 /** The timer tree */
 static struct avltree tree;
+
 /**
  * @brief Posssible states for the delayed executor
  */
-typedef enum {
+enum delayed_state {
 	delayed_running,	/*< Executor is running */
 	delayed_stopping	/*< Executor is stopping */
-} delayed_state_t;
+};
+
 /** State for the executor */
-static delayed_state_t delayed_state;
-typedef enum {
+static enum delayed_state delayed_state;
+
+enum delayed_employment {
 	delayed_employed,	/*< Work is available, do it. */
 	delayed_on_break,	/*< Work is available, but wait for it */
 	delayed_unemployed	/*< No work is available, wait indefinitely */
-} delayed_employment_t;
+};
+
 /** @} */
 
 static int comparator(const struct avltree_node *a,
@@ -151,16 +155,16 @@ static int comparator(const struct avltree_node *a,
  *         should wait indefinitely to be signalled.
  */
 
-static delayed_employment_t delayed_get_work(struct timespec *when,
-					     void (**func) (void *), void **arg)
+static enum delayed_employment delayed_get_work(struct timespec *when,
+						void (**func) (void *),
+						void **arg)
 {
 	struct avltree_node *first = avltree_first(&tree);
 	struct delayed_multi *mul;
 	struct timespec current;
 
-	if (first == NULL) {
+	if (first == NULL)
 		return delayed_unemployed;
-	}
 
 	now(&current);
 	mul = avltree_container_of(first, struct delayed_multi, node);
@@ -169,15 +173,19 @@ static delayed_employment_t delayed_get_work(struct timespec *when,
 		*when = mul->realtime;
 		return delayed_on_break;
 	}
+
 	struct delayed_task *task = mul->list.lh_first;
+
 	*func = task->func;
 	*arg = task->arg;
 	LIST_REMOVE(task, link);
 	gsh_free(task);
+
 	if (mul->list.lh_first == NULL) {
 		avltree_remove(first, &tree);
 		gsh_free(mul);
 	}
+
 	return delayed_employed;
 }
 
@@ -230,9 +238,9 @@ void *delayed_thread(void *arg)
 		}
 	}
 	LIST_REMOVE(thr, link);
-	if (thread_list.lh_first == NULL) {
+	if (thread_list.lh_first == NULL)
 		pthread_cond_broadcast(&cv);
-	}
+
 	pthread_mutex_unlock(&mtx);
 	gsh_free(thr);
 
@@ -300,9 +308,8 @@ void delayed_shutdown(void)
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_stopping;
 	pthread_cond_broadcast(&cv);
-	while ((rc != ETIMEDOUT) && (thread_list.lh_first != NULL)) {
+	while ((rc != ETIMEDOUT) && (thread_list.lh_first != NULL))
 		rc = pthread_cond_timedwait(&cv, &mtx, &then);
-	}
 
 	if (thread_list.lh_first != NULL) {
 		struct delayed_thread *thr;
@@ -372,9 +379,9 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	task->func = func;
 	task->arg = arg;
 	LIST_INSERT_HEAD(&mul->list, task, link);
-	if (!first || comparator(&mul->node, first) <= 0) {
+	if (!first || comparator(&mul->node, first) <= 0)
 		pthread_cond_broadcast(&cv);
-	}
+
 	pthread_mutex_unlock(&mtx);
 
 	return 0;
