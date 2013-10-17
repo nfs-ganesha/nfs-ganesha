@@ -1,23 +1,26 @@
 /*
  *   Copyright (C) Panasas, Inc. 2011
  *   Author(s): Brent Welch <welch@panasas.com>
-		Sachin Bhamare <sbhamare@panasas.com>		
+		Sachin Bhamare <sbhamare@panasas.com>
  *
- *   This library is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published
- *   by the Free Software Foundation; either version 2.1 of the License, or
- *   (at your option) any later version.
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Lesser General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2.1 of the License, or (at your option) any later
+ *   version.
  *
- *   This library can be distributed with a BSD license as well, just ask.
+ *   This library can be distributed with a BSD license as well, just
+ *   ask.
  *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Lesser General Public License for more details.
  *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *   You should have received a copy of the GNU Lesser General Public
+ *   License along with this library; if not, write to the Free
+ *   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ *   02111-1307 USA
  */
 
 /**
@@ -82,53 +85,59 @@ struct v_fhandle {
  * So we copy the struct fhandle into the handle array instead of
  * overlaying the whole type like the Linux code does it.
  */
-#define VFS_BSD_HANDLE_INIT(_fh, _handle) \
-	_fh->handle_bytes = vfs_sizeof_handle(_fh); \
-	_fh->handle_type = 0; \
-	memcpy((void *)&_fh->handle[0], (void *)&_handle, _fh->handle_bytes);
+#define VFS_BSD_HANDLE_INIT(_fh, _handle)				\
+	do {								\
+		_fh->handle_bytes = vfs_sizeof_handle(_fh);		\
+		_fh->handle_type = 0;					\
+		memcpy(&_fh->handle[0], &_handle, _fh->handle_bytes);	\
+	} while (0)
 
-static inline size_t vfs_sizeof_handle(vfs_file_handle_t * fh)
+static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 {
 	return offsetof(struct fhandle, fh_fid)+PANFS_HANDLE_SIZE;
 }
 
-#define vfs_alloc_handle(fh) \
-	(fh) = alloca(sizeof(vfs_file_handle_t)); \
-	memset((fh), 0, sizeof(vfs_file_handle_t)); \
-	(fh)->handle_bytes = offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
+#define vfs_alloc_handle(fh)						\
+	do {								\
+		(fh) = alloca(sizeof(vfs_file_handle_t));		\
+		memset((fh), 0, sizeof(vfs_file_handle_t));		\
+		(fh)->handle_bytes = offsetof(struct fhandle, fh_fid) + \
+			PANFS_HANDLE_SIZE;				\
+	} while (0)
 
-static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
+static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t *fh, int *mnt_id)
 {
 	int error;
 	struct v_fhandle handle;
-	error = getfhat(fd, NULL, (struct fhandle *)&handle, AT_SYMLINK_FOLLOW);
-	if (error == 0) {
+	error = getfhat(fd, NULL, (struct fhandle *)&handle,
+			AT_SYMLINK_FOLLOW);
+	if (error == 0)
 		VFS_BSD_HANDLE_INIT(fh, handle);
-	}
+
 	return error;
 }
 
 static inline int vfs_name_to_handle_at(int atfd, const char *name,
-					vfs_file_handle_t * fh)
+					vfs_file_handle_t *fh)
 {
 	int error;
 	struct v_fhandle handle;
 	error =
 	    getfhat(atfd, (char *)name, (struct fhandle *)&handle,
 		    AT_SYMLINK_NOFOLLOW);
-	if (error == 0) {
+	if (error == 0)
 		VFS_BSD_HANDLE_INIT(fh, handle);
-	}
+
 	return error;
 }
 
-static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh,
+static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t *fh,
 				     int flags)
 {
 	return fhopen((struct fhandle *)fh->handle, flags);
 }
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t * fh,
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
 				     struct stat *buf, int flags)
 {
 	int fd, ret;
@@ -141,23 +150,24 @@ static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t * fh,
 	return ret;
 }
 
-static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t * fh,
+static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh,
 				      uid_t owner, gid_t group)
 {
 	int fd, ret;
 	fd = vfs_open_by_handle(mountfd, fh, (O_PATH | O_NOACCESS));
 	if (fd < 0)
 		return fd;
-	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fchown() */
+	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use
+	   fchown() */
 	ret = fchown(fd, owner, group);
 	close(fd);
 	return ret;
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t * fh, int srcfd,
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh, int srcfd,
 				     const char *sname, int destdirfd,
 				     const char *dname, int flags,
-				     fsal_errors_t * fsal_error)
+				     fsal_errors_t *fsal_error)
 {
 	int retval;
 	struct fhandle *handle = (struct fhandle *)fh->handle;
@@ -169,7 +179,7 @@ static inline int vfs_link_by_handle(vfs_file_handle_t * fh, int srcfd,
 	return retval;
 }
 
-static inline int vfs_readlink_by_handle(vfs_file_handle_t * fh, int srcfd,
+static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 					 const char *sname, char *buf,
 					 size_t bufsize)
 {

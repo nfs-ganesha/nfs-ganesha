@@ -96,11 +96,11 @@ char *hasmntopt(const struct mntent *mnt, const char *option)
 		if (!strcasecmp(opt, option)) {
 			opt = opt - optbuf + mnt->mnt_opts;
 			gsh_free(optbuf);
-			return (opt);
+			return opt;
 		}
 	}
 	gsh_free(optbuf);
-	return (NULL);
+	return NULL;
 }
 
 static char *catopt(char *s0, const char *s1)
@@ -113,15 +113,16 @@ static char *catopt(char *s0, const char *s1)
 
 	if (s0 != NULL) {
 		newlen = strlen(s0) + strlen(s1) + 1 + 1;
-		if ((cp = gsh_realloc(s0, newlen)) == NULL)
-			return (NULL);
+		cp = gsh_realloc(s0, newlen);
+		if (cp == NULL)
+			return NULL;
 
 		strcat(cp, " ");
 		strcat(cp, s1);
 	} else
 		cp = gsh_strdup(s1);
 
-	return (cp);
+	return cp;
 }
 
 static char *flags2opts(int flags)
@@ -154,10 +155,10 @@ static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
 	}
 	_mntent.mnt_opts = opts_buf;
 	_mntent.mnt_freq = _mntent.mnt_passno = 0;
-	return (&_mntent);
+	return &_mntent;
 }
 
-struct mntent *getmntent(FILE * fp)
+struct mntent *getmntent(FILE *fp)
 {
 	struct statfs *mntbuf;
 
@@ -167,8 +168,8 @@ struct mntent *getmntent(FILE * fp)
 	++pos;
 	if (pos == mntsize) {
 		pos = mntsize = -1;
-		return (NULL);
+		return NULL;
 	}
 
-	return (statfs_to_mntent(&mntbuf[pos]));
+	return statfs_to_mntent(&mntbuf[pos]);
 }

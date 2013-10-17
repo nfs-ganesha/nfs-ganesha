@@ -59,7 +59,7 @@ struct linux_dirent {
  * @param[in]     bcount Buffer size
  * @param[in,out] basepp Offset into "file" after this read
  */
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t * basepp)
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
 	int retval = 0;
 
@@ -80,7 +80,7 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t * basepp)
  * @return true. Linux entries are never empty.
  */
 
-bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent * vd, off_t base)
+bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
 {
 	struct linux_dirent *dp = (struct linux_dirent *)(buf + bpos);
 	char type;
@@ -143,7 +143,7 @@ gid_t setgroup(gid_t gid)
 	return orig_gid;
 }
 
-int set_threadgroups(size_t size, const gid_t * list)
+int set_threadgroups(size_t size, const gid_t *list)
 {
 	return syscall(__NR_setgroups, size, list);
 }

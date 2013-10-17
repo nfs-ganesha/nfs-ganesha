@@ -26,8 +26,8 @@
  * @brief platform dependant subroutine type definitions
  */
 
-#ifndef _SUBR_OS_H
-#define _SUBR_OS_H
+#ifndef SUBR_OS_H
+#define SUBR_OS_H
 
 #include <stdbool.h>
 #include <extended_types.h>
@@ -49,10 +49,10 @@ struct vfs_dirent {
 	char *vd_name;
 };
 
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t * basepp);
+int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp);
 bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base);
 uid_t setuser(uid_t uid);
 gid_t setgroup(gid_t gid);
-int set_threadgroups(size_t size, const gid_t * list);
+int set_threadgroups(size_t size, const gid_t *list);
 
-#endif				/* _SUBR_OS_H */
+#endif/* SUBR_OS_H */
