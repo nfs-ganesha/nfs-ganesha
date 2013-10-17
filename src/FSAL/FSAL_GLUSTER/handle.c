@@ -396,6 +396,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	    container_of(dir_hdl->export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
+	mode_t create_mode;
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -408,14 +409,19 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		/* FIXME: This needs a feature flag test? */
 		ndev = makedev(dev->major, dev->minor);
+		create_mode = S_IFBLK;
 		break;
 	case CHARACTER_FILE:
 		if (!dev)
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		ndev = makedev(dev->major, dev->minor);
+		create_mode = S_IFCHR;
 		break;
 	case FIFO_FILE:
+		create_mode = S_IFIFO;
+		break;
 	case SOCKET_FILE:
+		create_mode = S_IFSOCK;
 		break;
 	default:
 		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
@@ -436,7 +442,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle, name,
-			 fsal2unix_mode(attrib->mode), ndev, &sb);
+			 create_mode | fsal2unix_mode(attrib->mode), ndev, &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -630,7 +636,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &sb);
+	/* FIXME: Should we hold the fd so that any async op does
+	 * not close it */
+	if (objhandle->openflags != FSAL_O_CLOSED) {
+		rc = glfs_fstat(objhandle->glfd, &sb);
+	} else {
+		rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &sb);
+	}
+
 	if (rc != 0) {
 		if (errno == ENOENT)
 			status = gluster2fsal_error(ESTALE);
@@ -1090,8 +1103,12 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 
 /**
  * @brief Implements GLUSTER FSAL objectoperation lock_op
+ *
+ * The lock operations do not yet support blocking locks, as cancel is probably
+ * needed and the current implementation would block a thread that seems
+ * excessive.
  */
-/*
+
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 			     const struct req_op_context *opctx,
 			     void * p_owner,
@@ -1099,9 +1116,102 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glusterfs_handle *objhandle =
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
+	struct flock flock;
+	int cmd;
+	int saverrno = 0;
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	if (objhandle->openflags == FSAL_O_CLOSED) {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: Attempting to lock with no file descriptor open");
+		status.major = ERR_FSAL_FAULT;
+		goto out;
+	}
+
+	if (lock_op == FSAL_OP_LOCKT) {
+		cmd = F_GETLK;
+	} else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK) {
+		cmd = F_SETLK;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: Unsupported lock operation %d\n", lock_op);
+		status.major = ERR_FSAL_NOTSUPP;
+		goto out;
+	}
+
+	if (request_lock->lock_type == FSAL_LOCK_R) {
+		flock.l_type = F_RDLCK;
+	} else if (request_lock->lock_type == FSAL_LOCK_W) {
+		flock.l_type = F_WRLCK;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: The requested lock type was not read or write.");
+		status.major = ERR_FSAL_NOTSUPP;
+		goto out;
+	}
+
+	/* TODO: Override R/W and just provide U? */
+	if (lock_op == FSAL_OP_UNLOCK)
+		flock.l_type = F_UNLCK;
+
+	flock.l_len = request_lock->lock_length;
+	flock.l_start = request_lock->lock_start;
+	flock.l_whence = SEEK_SET;
+
+	rc = glfs_posix_lock (objhandle->glfd, cmd, &flock);
+	if (rc != 0 && lock_op == FSAL_OP_LOCK
+	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {
+		/* process conflicting lock */
+		saverrno = errno;
+		cmd = F_GETLK;
+		rc = glfs_posix_lock (objhandle->glfd, cmd, &flock);
+		if (rc) {
+			LogCrit(COMPONENT_FSAL,
+				"Failed to get conflicting lock post lock"
+				" failure");
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
+
+		conflicting_lock->lock_length = flock.l_len;
+		conflicting_lock->lock_start = flock.l_start;
+		conflicting_lock->lock_type = flock.l_type;
+
+		status = gluster2fsal_error(saverrno);
+		goto out;
+	} else if (rc != 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	if (conflicting_lock != NULL) {
+		if (lock_op == FSAL_OP_LOCKT && flock.l_type != F_UNLCK) {
+			conflicting_lock->lock_length = flock.l_len;
+			conflicting_lock->lock_start = flock.l_start;
+			conflicting_lock->lock_type = flock.l_type;
+		} else {
+			conflicting_lock->lock_length = 0;
+			conflicting_lock->lock_start = 0;
+			conflicting_lock->lock_type = FSAL_NO_LOCK;
+		}
+	}
+
+ out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_lock_op);
+#endif
+	return status;
 }
-*/
+
 /**
  * @brief Implements GLUSTER FSAL objectoperation share_op
  */
@@ -1390,6 +1500,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->read = file_read;
 	ops->write = file_write;
 	ops->commit = commit;
+	ops->lock_op = lock_op;
 	ops->close = file_close;
 	ops->lru_cleanup = lru_cleanup;
 	ops->handle_digest = handle_digest;

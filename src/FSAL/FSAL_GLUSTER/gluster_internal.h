@@ -97,9 +97,10 @@ typedef enum {
 	lat_readsymlink,
 	lat_linkfile,
 	lat_renamefile,
+	lat_lock_op,
 	lat_end_slots
 } latency_slots_t;
-#define LATENCY_SLOTS 23
+#define LATENCY_SLOTS 24
 
 struct latency_data {
 	uint64_t count;
