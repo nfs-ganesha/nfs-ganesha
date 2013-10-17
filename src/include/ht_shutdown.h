@@ -37,7 +37,7 @@
  * @note This file is intended for use with the shutdown procedure.
  * Functions declared here take no locks to avoid a potential hang in
  * the event that a thread was cancelled while holding one.  They
- * *must not* be called while any threads accessing SAL, Cache_inode,
+ * *must not* be called while any threads accessing SAL, Cache Inode,
  * or FSAL are running.  In general, you should not include this file.
  */
 

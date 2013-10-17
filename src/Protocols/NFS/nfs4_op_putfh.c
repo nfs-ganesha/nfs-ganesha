@@ -154,7 +154,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 
 		/* The export and fsalid should be updated, but DS handles
 		   don't support metdata operations.  Thus, we can't call into
-		   Cache_inode to populate the metadata cache. */
+		   cache_inode to populate the metadata cache. */
 		if (nfs4_Is_Fh_DSHandle(&data->currentFH)) {
 			struct gsh_buffdesc fh_desc;
 

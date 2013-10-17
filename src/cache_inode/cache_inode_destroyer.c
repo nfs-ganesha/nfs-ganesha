@@ -26,7 +26,7 @@
  */
 
 /**
- * @addtogroup Cache_inode
+ * @addtogroup cache_inode
  * @{
  */
 
@@ -72,7 +72,7 @@ extern pool_t *client_id_pool;
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] client The client to release
  */
@@ -102,7 +102,7 @@ dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] record Record on which to release a reference
  */
@@ -129,7 +129,7 @@ dec_client_record_ref_for_shutdown(nfs_client_record_t *record)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] clientid The client record to free
  */
@@ -183,7 +183,7 @@ free_client_id_for_shutdown(nfs_client_id_t *clientid)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] clientid Client record
  */
@@ -207,7 +207,7 @@ dec_client_id_ref_for_shutdown(nfs_client_id_t *clientid)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] client Client to release
  */
@@ -241,7 +241,7 @@ dec_nlm_client_ref_for_shutdown(state_nlm_client_t *client)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] owner Owner to remove
  */
@@ -265,7 +265,7 @@ void remove_nlm_owner_for_shutdown(state_owner_t *owner)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] owner Owner to remove
  */
@@ -289,7 +289,7 @@ void remove_9p_owner_for_shutdown(state_owner_t *owner)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] owner Owner to remove
  */
@@ -330,7 +330,7 @@ remove_nfs4_owner_for_shutdown(state_owner_t *owner)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] owner The owner to release
  */
@@ -368,7 +368,7 @@ dec_state_owner_ref_for_shutdown(state_owner_t *owner)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in,out] lock_entry Entry to release
  */
@@ -391,7 +391,7 @@ lock_entry_dec_ref_for_shutdown(state_lock_entry_t *lock_entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in,out] lock_entry Entry to remove
  */
@@ -425,7 +425,7 @@ remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in]     state The state to remove
  * @param[in,out] entry The cache entry to modify
@@ -465,7 +465,7 @@ state_del_for_shutdown(state_t *state, cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] entry Entry to clear
  */
@@ -524,7 +524,7 @@ clear_fsal_locks(cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] entry Entry to clear
  */
@@ -560,7 +560,7 @@ clear_fsal_shares(cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] entry File to wipe
  *
@@ -606,7 +606,7 @@ destroy_nsm_shares(cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] entry File to wipe
  */
@@ -806,7 +806,7 @@ destroy_file_state(cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  *
  * @param[in] entry The entry to be destroyed
  */
@@ -841,7 +841,7 @@ destroy_entry(cache_entry_t *entry)
  * @note This function is intended to be called only at shutdown.  It
  * takes no locks to avoid a potential hang in the event that a thread
  * was cancelled while holding one.  It *must not* be called while any
- * threads accessing SAL, Cache_inode, or FSAL are running.
+ * threads accessing SAL, cache_inode, or FSAL are running.
  */
 
 void

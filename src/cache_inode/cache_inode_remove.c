@@ -23,7 +23,7 @@
  */
 
 /**
- * @defgroup Cache_inode Cache Inode
+ * @addtogroup cache_inode
  * @{
  */
 
@@ -97,7 +97,7 @@ cache_inode_remove(cache_entry_t *entry, const char *name,
 		goto out;
 	}
 
-	LogDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", name);
+	LogDebug(COMPONENT_CACHE_INODE, "%s", name);
 
 	if (is_open(to_remove_entry)) {
 		/* entry is not locked and seems to be open for fd caching

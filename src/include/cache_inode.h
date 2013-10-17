@@ -22,7 +22,7 @@
  */
 
 /**
- * @defgroup Cache_inode Cache Inode
+ * @defgroup cache_inode Cache Inode
  * @{
  */
 

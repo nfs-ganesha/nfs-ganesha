@@ -44,17 +44,17 @@
 #include "cache_inode_hash.h"
 
 /**
- * @defgroup Cache_inode Cache Inode
+ * @addtogroup cache_inode
  * @{
  */
 
 /**
  *
- * \file cache_inode_hash.c
- * \author Matt Benjamin
- * \brief Cache inode hashed dictionary package
+ * @file cache_inode_hash.c
+ * @author Matt Benjamin
+ * @brief Cache inode hashed dictionary package
  *
- * \section DESCRIPTION
+ * @section Description
  *
  * This module exports an interface for efficient lookup of cache entries
  * by file handle.  Refactored from the prior abstract HashTable

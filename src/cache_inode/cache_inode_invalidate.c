@@ -25,7 +25,7 @@
  */
 
 /**
- * @defgroup Cache_inode Cache Inode
+ * @addtogroup cache_inode
  * @{
  */
 
@@ -77,7 +77,7 @@ cache_inode_invalidate(cache_entry_t *entry, uint32_t flags)
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
 	/* We can invalidate entries with state just fine.  We force
-	   Cache_inode to contact the FSAL for any use of content or
+	   cache_inode to contact the FSAL for any use of content or
 	   attributes, and if the FSAL indicates the entry is stale,
 	   it can be disposed of then. */
 
