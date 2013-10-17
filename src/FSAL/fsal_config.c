@@ -323,7 +323,7 @@ fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
 		/* does the variable exists ? */
 		if (!STRCMP(key_name, "link_support")) {
 
-			int val = StrToBoolean(key_value);
+			int val = str_to_bool(key_value);
 
 			if (val == -1) {
 				LogCrit(COMPONENT_CONFIG,
@@ -339,7 +339,7 @@ fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
 				      FSAL_INIT_MAX_LIMIT, val);
 
 		} else if (!STRCMP(key_name, "symlink_support")) {
-			int val = StrToBoolean(key_value);
+			int val = str_to_bool(key_value);
 
 			if (val == -1) {
 				LogCrit(COMPONENT_CONFIG,
@@ -354,7 +354,7 @@ fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
 			SET_INIT_INFO(common_info, symlink_support,
 				      FSAL_INIT_MAX_LIMIT, val);
 		} else if (!STRCMP(key_name, "cansettime")) {
-			int val = StrToBoolean(key_value);
+			int val = str_to_bool(key_value);
 
 			if (val == -1) {
 				LogCrit(COMPONENT_CONFIG,
@@ -399,7 +399,7 @@ fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
 				      unix2fsal_mode(mode));
 
 		} else if (!STRCMP(key_name, "auth_xdev_export")) {
-			int val = StrToBoolean(key_value);
+			int val = str_to_bool(key_value);
 
 			if (val == -1) {
 				LogCrit(COMPONENT_CONFIG,

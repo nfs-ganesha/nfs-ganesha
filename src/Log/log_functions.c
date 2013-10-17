@@ -2415,7 +2415,7 @@ int read_log_config(config_file_t in_config)
 		}
 
 		if (flag != NULL) {
-			flag->lf_val = StrToBoolean(key_value);
+			flag->lf_val = str_to_bool(key_value);
 			continue;
 		}
 

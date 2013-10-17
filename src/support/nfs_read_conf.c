@@ -134,17 +134,17 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 		} else if (!strcasecmp(key_name, "Core_Dump_Size")) {
 			pparam->core_dump_size = atol(key_value);
 		} else if (!strcasecmp(key_name, "Drop_IO_Errors")) {
-			pparam->drop_io_errors = StrToBoolean(key_value);
+			pparam->drop_io_errors = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Drop_Inval_Errors")) {
-			pparam->drop_inval_errors = StrToBoolean(key_value);
+			pparam->drop_inval_errors = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Drop_Delay_Errors")) {
-			pparam->drop_delay_errors = StrToBoolean(key_value);
+			pparam->drop_delay_errors = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Dispatch_Max_Reqs")) {
 			pparam->dispatch_max_reqs = atoi(key_value);
 		} else if (!strcasecmp(key_name, "Dispatch_Max_Reqs_Xprt")) {
 			pparam->dispatch_max_reqs_xprt = atoi(key_value);
 		} else if (!strcasecmp(key_name, "DRC_Disabled")) {
-			pparam->drc.disabled = StrToBoolean(key_value);
+			pparam->drc.disabled = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "DRC_TCP_Npart")) {
 			pparam->drc.tcp.npart = atoi(key_value);
 		} else if (!strcasecmp(key_name, "DRC_TCP_Size")) {
@@ -158,7 +158,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 		} else if (!strcasecmp(key_name, "DRC_TCP_Recycle_Expire_S")) {
 			pparam->drc.tcp.recycle_expire_s = atoi(key_value);
 		} else if (!strcasecmp(key_name, "DRC_TCP_Checksum")) {
-			pparam->drc.tcp.checksum = StrToBoolean(key_value);
+			pparam->drc.tcp.checksum = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "DRC_UDP_Npart")) {
 			pparam->drc.udp.npart = atoi(key_value);
 		} else if (!strcasecmp(key_name, "DRC_UDP_Size")) {
@@ -168,7 +168,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 		} else if (!strcasecmp(key_name, "DRC_UDP_Hiwat")) {
 			pparam->drc.udp.hiwat = atoi(key_value);
 		} else if (!strcasecmp(key_name, "DRC_UDP_Checksum")) {
-			pparam->drc.udp.checksum = StrToBoolean(key_value);
+			pparam->drc.udp.checksum = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "RPC_Debug_Flags")) {
 			pparam->rpc.debug_flags = atoi(key_value);
 		} else if (!strcasecmp(key_name, "RPC_Max_Connections")) {
@@ -239,13 +239,13 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 				return -1;
 			}
 		} else if (!strcasecmp(key_name, "NSM_Use_Caller_Name")) {
-			pparam->nsm_use_caller_name = StrToBoolean(key_value);
+			pparam->nsm_use_caller_name = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Clustered")) {
-			pparam->clustered = StrToBoolean(key_value);
+			pparam->clustered = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Enable_NLM")) {
-			pparam->enable_NLM = StrToBoolean(key_value);
+			pparam->enable_NLM = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Enable_RQUOTA")) {
-			pparam->enable_RQUOTA = StrToBoolean(key_value);
+			pparam->enable_RQUOTA = str_to_bool(key_value);
 		} else {
 			LogCrit(COMPONENT_CONFIG,
 				"Unknown or unsettable key: %s (item %s)",
@@ -394,7 +394,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 					key_name, key_value);
 			}
 		} else if (!strcasecmp(key_name, "Active_krb5")) {
-			pparam->active_krb5 = StrToBoolean(key_value);
+			pparam->active_krb5 = str_to_bool(key_value);
 		} else {
 			LogCrit(COMPONENT_CONFIG,
 				"Unknown or unsettable key: %s (item %s)",
@@ -458,7 +458,7 @@ int nfs_read_version4_conf(config_file_t in_config,
 		}
 
 		if (!strcasecmp(key_name, "Graceless")) {
-			pparam->graceless = StrToBoolean(key_value);
+			pparam->graceless = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Lease_Lifetime")) {
 			pparam->lease_lifetime = atoi(key_value);
 		} else if (!strcasecmp(key_name, "Grace_Period")) {
@@ -477,9 +477,9 @@ int nfs_read_version4_conf(config_file_t in_config,
 					 "Unable to allocate space for idmap conffile path.");
 			}
 		} else if (!strcasecmp(key_name, "UseGetpwnam")) {
-			pparam->use_getpwnam = StrToBoolean(key_value);
+			pparam->use_getpwnam = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Allow_Numeric_Owners")) {
-			pparam->allow_numeric_owners = StrToBoolean(key_value);
+			pparam->allow_numeric_owners = str_to_bool(key_value);
 		} else {
 			LogWarn(COMPONENT_CONFIG,
 				"Unknown or unsettable key: %s (item %s)",

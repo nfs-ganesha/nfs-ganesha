@@ -753,7 +753,7 @@ static bool parse_bool(char *var_value, uint64_t * set_opts, uint64_t option,
 			blk_name, var_name);
 		return false;
 	}
-	val = StrToBoolean(var_value);
+	val = str_to_bool(var_value);
 	if (val == -1) {
 		LogCrit(COMPONENT_CONFIG,
 			"NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
@@ -1041,7 +1041,7 @@ static int BuildExportClient(config_item_t block,
 							 CONF_EXPORT_SQUASH);
 				continue;
 			}
-			if (StrToBoolean(var_value))
+			if (str_to_bool(var_value))
 				perms->options |= EXPORT_OPTION_ALL_ANONYMOUS;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ANON_ROOT)) {
 			uid_t anon_uid;

@@ -144,13 +144,13 @@ cache_inode_read_conf_parameter(config_file_t config,
 		    if (!strcasecmp
 			(key_name, "Use_Getattr_Directory_Invalidation")) {
 			param->getattr_dir_invalidation =
-			    StrToBoolean(key_value);
+			    str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "Entries_HWMark")) {
 			param->entries_hwmark = atoi(key_value);
 		} else if (!strcasecmp(key_name, "LRU_Run_Interval")) {
 			param->lru_run_interval = atoi(key_value);
 		} else if (!strcasecmp(key_name, "Cache_FDs")) {
-			param->use_fd_cache = StrToBoolean(key_value);
+			param->use_fd_cache = str_to_bool(key_value);
 		} else if (!strcasecmp(key_name, "FD_Limit_Percent")) {
 			param->fd_limit_percent = atoi(key_value);
 		} else if (!strcasecmp(key_name, "FD_HWMark_Percent")) {

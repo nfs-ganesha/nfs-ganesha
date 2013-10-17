@@ -9,31 +9,27 @@
  */
 #include "config.h"
 
-#include "common_utils.h"
-
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include "common_utils.h"
 
 /**
- * This function converts a string to an integer.
+ * @brief Convert a decimal string to an integer
  *
- * \param str (in char *) The string to be converted.
+ * @param[in] str The string to be converted.
  *
- * \return A negative value on error.
- *         Else, the converted integer.
+ * @return The converted integer, negative on error.
  */
-int s_read_int(char *str)
+int s_read_int(const char *str)
 {
-
 	int i;
 	int out = 0;
 
 	for (i = 0; str[i]; i++) {
-
 		if ((str[i] < '0') || (str[i] > '9'))
-			return -1;	/* error */
+			return -1; /* error */
 		else {
 			out *= 10;
 			out += (int)(str[i] - '0');
@@ -48,14 +44,13 @@ int s_read_int(char *str)
 }
 
 /**
- * This function converts an octal to an integer.
+ * @brief Convert an octal string to an integer
  *
- * \param str (in char *) The string to be converted.
+ * @param[in] str The string to be converted.
  *
- * \return A negative value on error.
- *         Else, the converted integer.
+ * @return The converted integer, negative on error.
  */
-int s_read_octal(char *str)
+int s_read_octal(const char *str)
 {
 
 	int i;
@@ -79,14 +74,15 @@ int s_read_octal(char *str)
 }
 
 /**
- * This function converts a string to an integer.
+ * @brief Convert a decimal string to a 64-bit integer.
  *
- * \param str (in char *) The string to be converted.
+ * @param[in]  str   The string to be converted.
+ * @param[out] out64 Converted integer
  *
- * \return A non null value on error.
- *         Else, 0.
+ * @retval True on success
+ * @retval False on error
  */
-int s_read_int64(char *str, unsigned long long *out64)
+bool s_read_uint64(const char *str, uint64_t *out64)
 {
 
 	int i;
@@ -106,18 +102,21 @@ int s_read_int64(char *str, unsigned long long *out64)
 	}
 
 	if (i == 0)
-		return -1;
+		return false;
 
 	*out64 = out;
 
-	return 0;
+	return true;
 }
 
 /**
- * string to boolean convertion.
- * \return 1 for TRUE, 0 for FALSE, -1 on error
+ * @brief Convert a string to a boolean
+ *
+ * @retval 1 for true
+ * @retval 0 for false
+ * @retval -1 for error
  */
-int StrToBoolean(const char *str)
+int str_to_bool(const char *str)
 {
 	if (!strcasecmp(str, "1") || !strcasecmp(str, "TRUE")
 	    || !strcasecmp(str, "YES"))
@@ -131,30 +130,26 @@ int StrToBoolean(const char *str)
 }
 
 /**
- * snprintmem:
- * Print the content of a handle, a cookie,...
- * to an hexa string.
+ * @brief Print memory to a a hex string
  *
- * \param target (output):
- *        The target buffer where memory is to be printed in ASCII.
- * \param tgt_size (input):
- *        Size (in bytes) of the target buffer.
- * \param source (input):
- *        The buffer to be printed.
- * \param mem_size (input):
- *        Size of the buffer to be printed.
+ * @param[out] target   Buffer where memory is to be printed
+ * @param[in]  tgt_size Size of the target buffer
+ * @param[in]  source   Buffer to be printed
+ * @param[in]  mem_size Size of the buffer
  *
- * \return The number of bytes written in the target buffer.
+ * @return The number of bytes written in the target buffer.
  */
-int snprintmem(char *target, int tgt_size, void *source, int mem_size)
+int
+snprintmem(char *target, size_t tgt_size, const void *source,
+	   size_t mem_size)
 {
 
-	unsigned char *c = '\0';	/* the current char to be printed */
+	const unsigned char *c = '\0';	/* the current char to be printed */
 	char *str = target;	/* the current position in target buffer */
 	int wrote = 0;
 
-	for (c = (unsigned char *)source;
-	     c < ((unsigned char *)source + mem_size); c++) {
+	for (c = (const unsigned char *)source;
+	     c < ((const unsigned char *)source + mem_size); c++) {
 		int tmp_wrote = 0;
 
 		if (wrote >= tgt_size) {
@@ -188,54 +183,51 @@ int snprintmem(char *target, int tgt_size, void *source, int mem_size)
 					     ((c) - 'a' + 10) : 0))))
 
 /**
- * snscanmem:
- * Read the content of a string and convert it to a handle, a cookie,...
+ * @brief Read a hexadecimal string into memory
  *
- * \param target (output):
- *        The target address where memory is to be written.
- * \param tgt_size (input):
- *        Size (in bytes) of the target memory buffer.
- * \param str_source (input):
- *        A hexadecimal string that represents
- *        the data to be stored into memory.
+ * @param[out] target     Where memory is to be written
+ * @param[in]  tgt_size   Size of the target buffer
+ * @param[in]  str_source Hexadecimal string
  *
- * \return - The number of bytes read in the source string.
- *         - -1 on error.
+ * @retval The number of bytes read in the source string.
+ * @retval -1 on error.
  */
-int sscanmem(void *target, int tgt_size, const char *str_source)
+
+int
+sscanmem(void *target, size_t tgt_size, const char *str_source)
 {
 
-	unsigned char *p_mem;	/* the current byte to be set */
+	unsigned char *mem;	/* the current byte to be set */
 
-	const char *p_src;	/* pointer to the current char to be read. */
+	const char *src;	/* pointer to the current char to be read. */
 
 	int nb_read = 0;
 
-	p_src = str_source;
+	src = str_source;
 
-	for (p_mem = (unsigned char *)target;
-	     p_mem < ((unsigned char *)target + tgt_size); p_mem++) {
+	for (mem = (unsigned char *)target;
+	     mem < ((unsigned char *)target + tgt_size); mem++) {
 
 		unsigned char tmp_val;
 
 		/* we must read 2 bytes (written in hexa) to have 1
 		   target byte value. */
-		if ((*p_src == '\0') || (*(p_src + 1) == '\0')) {
+		if ((*src == '\0') || (*(src + 1) == '\0')) {
 			/* error, the source string is too small */
 			return -1;
 		}
 
 		/* they must be hexa values */
-		if (!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1)))
+		if (!IS_HEXA(*src) || !IS_HEXA(*(src + 1)))
 			return -1;
 
 		/* we read hexa values. */
-		tmp_val = (HEXA2BYTE(*p_src) << 4) + HEXA2BYTE(*(p_src + 1));
+		tmp_val = (HEXA2BYTE(*src) << 4) + HEXA2BYTE(*(src + 1));
 
 		/* we had them to the target buffer */
-		(*p_mem) = tmp_val;
+		(*mem) = tmp_val;
 
-		p_src += 2;
+		src += 2;
 		nb_read += 2;
 
 	}
