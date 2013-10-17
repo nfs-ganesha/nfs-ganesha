@@ -42,7 +42,7 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "fsal.h"

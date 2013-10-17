@@ -45,7 +45,7 @@
 #include <assert.h>
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "sal_functions.h"
 
@@ -957,11 +957,11 @@ void dec_state_owner_ref(state_owner_t * owner)
 	buffkey.len = sizeof(*owner);
 
 	/* Get the hash table entry and hold latch */
-	rc = HashTable_GetLatch(ht_owner, &buffkey, &old_value, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, TRUE, &latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_owner, &latch);
+			hashtable_releaselatched(ht_owner, &latch);
 
 		DisplayOwner(owner, str);
 
@@ -978,18 +978,18 @@ void dec_state_owner_ref(state_owner_t * owner)
 			 "Did not release {%s} refcount now=%" PRId32, str,
 			 refcount);
 
-		HashTable_ReleaseLatched(ht_owner, &latch);
+		hashtable_releaselatched(ht_owner, &latch);
 
 		return;
 	}
 
 	/* use the key to delete the entry */
-	rc = HashTable_DeleteLatched(ht_owner, &buffkey, &latch, &old_key,
+	rc = hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
 				     &old_value);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_owner, &latch);
+			hashtable_releaselatched(ht_owner, &latch);
 
 		DisplayOwner(owner, str);
 
@@ -1047,7 +1047,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
 	buffkey.addr = key;
 	buffkey.len = sizeof(*key);
 
-	rc = HashTable_GetLatch(ht_owner, &buffkey, &buffval, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, TRUE, &latch);
 
 	/* If we found it, return it */
 	if (rc == HASHTABLE_SUCCESS) {
@@ -1065,7 +1065,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
 		 */
 		inc_state_owner_ref(owner);
 
-		HashTable_ReleaseLatched(ht_owner, &latch);
+		hashtable_releaselatched(ht_owner, &latch);
 
 		return owner;
 	}
@@ -1087,7 +1087,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
 			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
 		}
 
-		HashTable_ReleaseLatched(ht_owner, &latch);
+		hashtable_releaselatched(ht_owner, &latch);
 
 		return NULL;
 	}
@@ -1151,7 +1151,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t * key,
 	buffval.addr = owner;
 	buffval.len = sizeof(*owner);
 
-	rc = HashTable_SetLatched(ht_owner, &buffval, &buffval, &latch, FALSE,
+	rc = hashtable_setlatched(ht_owner, &buffval, &buffval, &latch, FALSE,
 				  NULL, NULL);
 
 	/* An error occurred, return NULL */

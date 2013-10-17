@@ -40,7 +40,7 @@
 #include "fsal.h"
 #include "abstract_atomic.h"
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 

@@ -47,7 +47,7 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "wait_queue.h"
-#include "err_HashTable.h"
+#include "err_hashtable.h"
 #include "gsh_config.h"
 #include "cache_inode.h"
 #ifdef _USE_9P

@@ -38,7 +38,7 @@
 #include "fsal.h"
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "cache_inode.h"
 #include "nfs_core.h"
 

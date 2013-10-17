@@ -52,7 +52,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "fsal.h"
@@ -214,7 +214,7 @@ int nfs4_Init_state_id(hash_parameter_t * param)
 	memset(all_zero, 0, OTHERSIZE);
 	memset(all_ones, 0xFF, OTHERSIZE);
 
-	if ((ht_state_id = HashTable_Init(param)) == NULL) {
+	if ((ht_state_id = hashtable_init(param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
 		return -1;
 	}
@@ -270,11 +270,11 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (HashTable_Test_And_Set
+	if (hashtable_test_and_set
 	    (ht_state_id, &buffkey, &buffval,
 	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
 		LogCrit(COMPONENT_STATE,
-			"HashTable_Test_And_Set failed for key %p",
+			"hashtable_test_and_set failed for key %p",
 			buffkey.addr);
 		gsh_free(buffkey.addr);
 		return 0;
@@ -699,7 +699,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 void nfs_State_PrintAll(void)
 {
 	if (isFullDebug(COMPONENT_STATE))
-		HashTable_Log(COMPONENT_STATE, ht_state_id);
+		hashtable_log(COMPONENT_STATE, ht_state_id);
 }
 
 /**

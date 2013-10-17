@@ -44,7 +44,7 @@
 #ifndef HT_SHUTDOWN_H
 #define HT_SHUTDOWN_H
 #include "abstract_mem.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "rbt_tree.h"
 
 static inline int cache_offsetof(struct hash_table *ht, struct rbt_node *node)

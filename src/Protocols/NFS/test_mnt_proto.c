@@ -39,7 +39,7 @@
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
 #include <sys/socket.h>		/* For getsockname */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"

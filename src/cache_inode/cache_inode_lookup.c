@@ -36,7 +36,7 @@
 #include "config.h"
 #include "log.h"
 #include "abstract_atomic.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_avl.h"

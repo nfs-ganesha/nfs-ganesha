@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <pthread.h>
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
 
@@ -249,7 +249,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * hparam,
 int Init_9p_hash(void)
 {
 	if ((ht_9p_owner =
-	     HashTable_Init(&nfs_param._9p_owner_hash_param)) == NULL) {
+	     hashtable_init(&nfs_param._9p_owner_hash_param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init 9P Owner cache");
 		return -1;
 	}

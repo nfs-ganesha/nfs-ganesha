@@ -25,7 +25,7 @@
  */
 
 /**
- * @defgroup HashTable A non-intrusive, partitioned hash-keyed tree
+ * @defgroup hashtable A non-intrusive, partitioned hash-keyed tree
  * @{
  */
 
@@ -206,29 +206,29 @@ const char *hash_table_err_to_str(hash_error_t err);
 
 /* These are the primitives of the hash table */
 
-struct hash_table *HashTable_Init(struct hash_param *);
-hash_error_t HashTable_Destroy(struct hash_table *,
+struct hash_table *hashtable_init(struct hash_param *);
+hash_error_t hashtable_destroy(struct hash_table *,
 			       int (*)(struct gsh_buffdesc,
 				       struct gsh_buffdesc));
-hash_error_t HashTable_GetLatch(struct hash_table *,
+hash_error_t hashtable_getlatch(struct hash_table *,
 				const struct gsh_buffdesc *,
 				struct gsh_buffdesc *, bool ,
 				struct hash_latch *);
-void HashTable_ReleaseLatched(struct hash_table *, struct hash_latch *);
-hash_error_t HashTable_SetLatched(struct hash_table *, struct gsh_buffdesc *,
+void hashtable_releaselatched(struct hash_table *, struct hash_latch *);
+hash_error_t hashtable_setlatched(struct hash_table *, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *, struct hash_latch *,
 				  int, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *);
-hash_error_t HashTable_DeleteLatched(struct hash_table *,
+hash_error_t hashtable_deletelatched(struct hash_table *,
 				     const struct gsh_buffdesc *,
 				     struct hash_latch *,
 				     struct gsh_buffdesc *,
 				     struct gsh_buffdesc *);
-hash_error_t HashTable_Delall(struct hash_table *,
+hash_error_t hashtable_delall(struct hash_table *,
 			      int (*)(struct gsh_buffdesc,
 				      struct gsh_buffdesc));
 
-void HashTable_Log(log_components_t, struct hash_table *);
+void hashtable_log(log_components_t, struct hash_table *);
 
 /* These are very simple wrappers around the primitives */
 
@@ -237,7 +237,7 @@ void HashTable_Log(log_components_t, struct hash_table *);
  *
  * This function attempts to locate a key in the hash store and return
  * the associated value.  It is implemented as a wrapper around
- * the HashTable_GetLatched function.
+ * the hashtable_getlatched function.
  *
  * @param[in]  ht  The hash store to be searched
  * @param[in]  key A buffer descriptor locating the key to find
@@ -250,7 +250,7 @@ static inline hash_error_t HashTable_Get(struct hash_table *ht,
 					 const struct gsh_buffdesc *key,
 					 struct gsh_buffdesc *val)
 {
-	return HashTable_GetLatch(ht, key, val, false, NULL);
+	return hashtable_getlatch(ht, key, val, false, NULL);
 }
 
 /**
@@ -279,13 +279,13 @@ static inline hash_error_t HashTable_Set(struct hash_table *ht,
 	/* Stored return code */
 	hash_error_t rc = HASHTABLE_SUCCESS;
 
-	rc = HashTable_GetLatch(ht, key, NULL, true, &latch);
+	rc = hashtable_getlatch(ht, key, NULL, true, &latch);
 
 	if ((rc != HASHTABLE_SUCCESS) &&
 	    (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
 		return rc;
 
-	rc = HashTable_SetLatched(ht, key, val, &latch, false, NULL, NULL);
+	rc = hashtable_setlatched(ht, key, val, &latch, false, NULL, NULL);
 
 	return rc;
 }				/* HashTable_Set */
@@ -314,15 +314,15 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
 	/* Stored return code */
 	hash_error_t rc = HASHTABLE_SUCCESS;
 
-	rc = HashTable_GetLatch(ht, key, NULL, true, &latch);
+	rc = hashtable_getlatch(ht, key, NULL, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
-		return HashTable_DeleteLatched(ht, key, &latch, stored_key,
+		return hashtable_deletelatched(ht, key, &latch, stored_key,
 					       stored_val);
 
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 	default:
 		return rc;
 	}
@@ -331,18 +331,18 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
 /* These are the prototypes for large wrappers implementing more
    complex semantics on top of the primitives. */
 
-hash_error_t HashTable_Test_And_Set(struct hash_table *,
+hash_error_t hashtable_test_and_set(struct hash_table *,
 				    struct gsh_buffdesc *,
 				    struct gsh_buffdesc *,
 				    enum hash_set_how);
-hash_error_t HashTable_GetRef(struct hash_table *, struct gsh_buffdesc *,
+hash_error_t hashtable_getref(struct hash_table *, struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      void (*)(struct gsh_buffdesc *));
-hash_error_t HashTable_DelRef(struct hash_table *, struct gsh_buffdesc *,
+hash_error_t hashtable_delref(struct hash_table *, struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      int (*)(struct gsh_buffdesc *));
-hash_error_t HashTable_DelSafe(hash_table_t *, struct gsh_buffdesc *,
+hash_error_t hashtable_delsafe(hash_table_t *, struct gsh_buffdesc *,
 			       struct gsh_buffdesc *);
 
 /** @} */

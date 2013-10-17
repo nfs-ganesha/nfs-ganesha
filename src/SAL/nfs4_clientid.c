@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include <assert.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -390,7 +390,7 @@ int32_t dec_client_id_ref(nfs_client_id_t * clientid)
  *
  * @return The computed hash value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint32_t client_id_value_hash_func(hash_parameter_t * hparam,
@@ -416,7 +416,7 @@ uint32_t client_id_value_hash_func(hash_parameter_t * hparam,
  *
  * @return The computed RBT value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint64_t client_id_rbt_hash_func(hash_parameter_t * hparam,
@@ -595,7 +595,7 @@ clientid_status_t nfs_client_id_insert(nfs_client_id_t * clientid)
 	buffdata.addr = clientid;
 	buffdata.len = sizeof(nfs_client_id_t);
 
-	rc = HashTable_Test_And_Set(ht_unconfirmed_client_id, &buffkey,
+	rc = hashtable_test_and_set(ht_unconfirmed_client_id, &buffkey,
 				    &buffdata,
 				    HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -617,7 +617,7 @@ clientid_status_t nfs_client_id_insert(nfs_client_id_t * clientid)
 	if (isFullDebug(COMPONENT_CLIENTID) && isFullDebug(COMPONENT_HASHTABLE)) {
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "-=-=-=-=-=-=-=-=-=-> ht_unconfirmed_client_id ");
-		HashTable_Log(COMPONENT_CLIENTID, ht_unconfirmed_client_id);
+		hashtable_log(COMPONENT_CLIENTID, ht_unconfirmed_client_id);
 	}
 
 	/* Attach new clientid to client record's cr_punconfirmed_id. */
@@ -756,7 +756,7 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t * clientid,
 
 	clientid->cid_confirmed = CONFIRMED_CLIENT_ID;
 
-	rc = HashTable_Test_And_Set(ht_confirmed_client_id, &old_key,
+	rc = hashtable_test_and_set(ht_confirmed_client_id, &old_key,
 				    &old_value,
 				    HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -1050,10 +1050,10 @@ clientid_status_t nfs_client_id_get(hash_table_t * ht, clientid4 clientid,
 	if (isFullDebug(COMPONENT_CLIENTID) && isFullDebug(COMPONENT_HASHTABLE)) {
 		LogFullDebug(COMPONENT_CLIENTID, "-=-=-=-=-=-=-=-=-=-> %s",
 			     ht->parameter.ht_name);
-		HashTable_Log(COMPONENT_CLIENTID, ht);
+		hashtable_log(COMPONENT_CLIENTID, ht);
 	}
 
-	if (HashTable_GetRef(ht, &buffkey, &buffval, Hash_inc_client_id_ref) ==
+	if (hashtable_getref(ht, &buffkey, &buffval, Hash_inc_client_id_ref) ==
 	    HASHTABLE_SUCCESS) {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID, "%s FOUND",
@@ -1114,20 +1114,20 @@ clientid_status_t nfs_client_id_get_confirmed(clientid4 clientid,
 int nfs_Init_client_id(nfs_client_id_parameter_t * param)
 {
 	if ((ht_confirmed_client_id =
-	     HashTable_Init(&param->cid_confirmed_hash_param)) == NULL) {
+	     hashtable_init(&param->cid_confirmed_hash_param)) == NULL) {
 		LogCrit(COMPONENT_INIT,
 			"NFS CLIENT_ID: Cannot init Client Id cache");
 		return -1;
 	}
 
 	if ((ht_unconfirmed_client_id =
-	     HashTable_Init(&param->cid_unconfirmed_hash_param)) == NULL) {
+	     hashtable_init(&param->cid_unconfirmed_hash_param)) == NULL) {
 		LogCrit(COMPONENT_INIT,
 			"NFS CLIENT_ID: Cannot init Client Id cache");
 		return -1;
 	}
 
-	if ((ht_client_record = HashTable_Init(&param->cr_hash_param)) == NULL) {
+	if ((ht_client_record = hashtable_init(&param->cr_hash_param)) == NULL) {
 		LogCrit(COMPONENT_INIT,
 			"NFS CLIENT_ID: Cannot init Client Record cache");
 		return -1;
@@ -1279,12 +1279,12 @@ int32_t dec_client_record_ref(nfs_client_record_t * record)
 	buffkey.len = sizeof(*record);
 
 	/* Get the hash table entry and hold latch */
-	rc = HashTable_GetLatch(ht_client_record, &buffkey, &old_value, true,
+	rc = hashtable_getlatch(ht_client_record, &buffkey, &old_value, true,
 				&latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_client_record, &latch);
+			hashtable_releaselatched(ht_client_record, &latch);
 
 		display_client_record(record, str);
 
@@ -1301,17 +1301,17 @@ int32_t dec_client_record_ref(nfs_client_record_t * record)
 			 "Did not release refcount now=%" PRId32 " {%s}",
 			 refcount, str);
 
-		HashTable_ReleaseLatched(ht_client_record, &latch);
+		hashtable_releaselatched(ht_client_record, &latch);
 		return (refcount);
 	}
 
 	/* use the key to delete the entry */
-	rc = HashTable_DeleteLatched(ht_client_record, &buffkey, &latch,
+	rc = hashtable_deletelatched(ht_client_record, &buffkey, &latch,
 				     &old_key, &old_value);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_client_record, &latch);
+			hashtable_releaselatched(ht_client_record, &latch);
 
 		display_client_record(record, str);
 
@@ -1355,7 +1355,7 @@ uint64_t client_record_value_hash(nfs_client_record_t * key)
  *
  * @return the computed hash value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint32_t client_record_value_hash_func(hash_parameter_t * hparam,
@@ -1379,7 +1379,7 @@ uint32_t client_record_value_hash_func(hash_parameter_t * hparam,
  *
  * @return The computed rbt value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint64_t client_record_rbt_hash_func(hash_parameter_t * hparam,
@@ -1481,7 +1481,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 	buffkey.len = sizeof(*record);
 
 	/* If we found it, return it, if we don't care, return NULL */
-	rc = HashTable_GetLatch(ht_client_record, &buffkey, &buffval, true,
+	rc = hashtable_getlatch(ht_client_record, &buffkey, &buffval, true,
 				&latch);
 
 	if (rc == HASHTABLE_SUCCESS) {
@@ -1492,7 +1492,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 		gsh_free(record);
 		record = buffval.addr;
 		inc_client_record_ref(record);
-		HashTable_ReleaseLatched(ht_client_record, &latch);
+		hashtable_releaselatched(ht_client_record, &latch);
 		return record;
 	}
 
@@ -1513,7 +1513,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 		 * record since we failed to initialize it. Also
 		 * release hash latch since we failed to add record.
 		 */
-		HashTable_ReleaseLatched(ht_client_record, &latch);
+		hashtable_releaselatched(ht_client_record, &latch);
 		LogFatal(COMPONENT_CLIENTID,
 			 "Unable to initialize mutex in client record.");
 		gsh_free(record);
@@ -1524,7 +1524,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 	buffval.addr = record;
 	buffval.len = sizeof(sizeof(nfs_client_record_t) + len);
 
-	rc = HashTable_SetLatched(ht_client_record, &buffkey, &buffval, &latch,
+	rc = hashtable_setlatched(ht_client_record, &buffkey, &buffval, &latch,
 				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE, NULL,
 				  NULL);
 

@@ -40,7 +40,7 @@
 #include <grp.h>
 #include <stdint.h>
 #include <assert.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"

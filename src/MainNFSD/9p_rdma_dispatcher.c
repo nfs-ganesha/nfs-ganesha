@@ -46,7 +46,7 @@
 #include <netinet/tcp.h>
 #include <poll.h>
 #include <arpa/inet.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "abstract_mem.h"
 #include "abstract_atomic.h"

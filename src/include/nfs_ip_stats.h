@@ -7,7 +7,7 @@
 #include "ganesha_rpc.h"
 #include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>		/* for having MAXHOSTNAMELEN */
-#include "HashTable.h"
+#include "hashtable.h"
 
 /* IP/name cache error */
 #define IP_NAME_SUCCESS             0

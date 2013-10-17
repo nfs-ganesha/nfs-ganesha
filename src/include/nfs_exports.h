@@ -46,7 +46,7 @@
 #endif
 #include <dirent.h>		/* For having MAXNAMLEN */
 #include <netdb.h>		/* For having MAXHOSTNAMELEN */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"

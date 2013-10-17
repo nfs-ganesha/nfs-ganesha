@@ -46,7 +46,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
 #include "nfs4.h"

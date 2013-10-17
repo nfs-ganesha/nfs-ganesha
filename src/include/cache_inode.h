@@ -43,7 +43,7 @@
 #include <time.h>
 #include <pthread.h>
 #include "abstract_mem.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "avltree.h"
 #include "fsal.h"
 #include "log.h"

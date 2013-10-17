@@ -39,7 +39,7 @@
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_hash.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
 #include "pnfs_utils.h"

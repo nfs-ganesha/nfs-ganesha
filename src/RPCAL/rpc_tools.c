@@ -51,7 +51,7 @@
 #include <grp.h>
 
 #include "rpcal.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs23.h"

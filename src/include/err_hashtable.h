@@ -7,7 +7,7 @@
 #define ERR_HASHTABLE_H
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 
 /*
  *

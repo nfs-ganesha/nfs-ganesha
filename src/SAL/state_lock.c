@@ -43,7 +43,7 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "nfs4.h"
@@ -141,7 +141,7 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
 		return status;
 	}
 
-	ht_lock_cookies = HashTable_Init(&cookie_param);
+	ht_lock_cookies = hashtable_init(&cookie_param);
 	if (ht_lock_cookies == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
 		status = STATE_INIT_ENTRY_FAILED;
@@ -1389,7 +1389,7 @@ state_status_t state_add_grant_cookie(cache_entry_t * entry,
 	if (isFullDebug(COMPONENT_STATE))
 		display_lock_cookie_entry(hash_entry, str);
 
-	if (HashTable_Test_And_Set
+	if (hashtable_test_and_set
 	    (ht_lock_cookies, &buffkey, &buffval,
 	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
 		gsh_free(hash_entry);

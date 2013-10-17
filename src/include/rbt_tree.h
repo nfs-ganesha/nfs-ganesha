@@ -1,3 +1,12 @@
+/**
+ * @addtogroup hashtable
+ * @{
+ */
+
+/**
+ * @file rbt_tree.h
+ * @brief Red-Black Tree
+ */
 /*
  * Implementation of RedBlack trees
  * Macros and algorithms
@@ -666,3 +675,5 @@ iterators invalidated are those referring to the deleted node.
 })
 
 #endif /* RBT_TREE_H */
+
+/** @{ */

@@ -43,7 +43,7 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "sal_functions.h"
 #include "fridgethr.h"

@@ -182,7 +182,7 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t * hparam,
 
 int nfs41_Init_session_id(hash_parameter_t * param)
 {
-	if ((ht_session_id = HashTable_Init(param)) == NULL) {
+	if ((ht_session_id = hashtable_init(param)) == NULL) {
 		LogCrit(COMPONENT_SESSIONS,
 			"NFS SESSION_ID: Cannot init Session Id cache");
 		return -1;
@@ -266,16 +266,16 @@ int nfs41_Session_Set(nfs41_session_t * session_data)
 	val.len = sizeof(nfs41_session_t);
 
 	/* The latch idiom isn't strictly necessary here */
-	code = HashTable_GetLatch(ht_session_id, &key, &val, true, &latch);
+	code = hashtable_getlatch(ht_session_id, &key, &val, true, &latch);
 	if (code == HASHTABLE_SUCCESS) {
-		HashTable_ReleaseLatched(ht_session_id, &latch);
+		hashtable_releaselatched(ht_session_id, &latch);
 		goto out;
 	}
 	if (code == HASHTABLE_ERROR_NO_SUCH_KEY) {
 		/* nfs4_op_create_session ensures refcount == 2 for new
 		 * session records */
 		code =
-		    HashTable_SetLatched(ht_session_id, &key, &val, &latch,
+		    hashtable_setlatched(ht_session_id, &key, &val, &latch,
 					 FALSE, NULL, NULL);
 		if (code == HASHTABLE_SUCCESS) {
 			rc = 1;
@@ -313,9 +313,9 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	key.addr = sessionid;
 	key.len = NFS4_SESSIONID_SIZE;
 
-	code = HashTable_GetLatch(ht_session_id, &key, &val, false, &latch);
+	code = hashtable_getlatch(ht_session_id, &key, &val, false, &latch);
 	if (code != HASHTABLE_SUCCESS) {
-		HashTable_ReleaseLatched(ht_session_id, &latch);
+		hashtable_releaselatched(ht_session_id, &latch);
 		LogFullDebug(COMPONENT_SESSIONS, "Session %s Not Found", str);
 		return 0;
 	}
@@ -323,7 +323,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	*session_data = val.addr;
 	inc_session_ref(*session_data);	/* XXX more locks? */
 
-	HashTable_ReleaseLatched(ht_session_id, &latch);
+	hashtable_releaselatched(ht_session_id, &latch);
 
 	LogFullDebug(COMPONENT_SESSIONS, "Session %s Found", str);
 
@@ -367,7 +367,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 
 void nfs41_Session_PrintAll(void)
 {
-	HashTable_Log(COMPONENT_SESSIONS, ht_session_id);
+	hashtable_log(COMPONENT_SESSIONS, ht_session_id);
 }
 
 /** @} */

@@ -36,7 +36,7 @@
 #include <pthread.h>
 #include <ctype.h>
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
@@ -312,7 +312,7 @@ void free_nfs4_owner(state_owner_t * owner)
  */
 int Init_nfs4_owner(hash_parameter_t * param)
 {
-	if ((ht_nfs4_owner = HashTable_Init(param)) == NULL) {
+	if ((ht_nfs4_owner = hashtable_init(param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NFS Open Owner cache");
 		return -1;
 	}
@@ -360,7 +360,7 @@ static void init_nfs4_owner(state_owner_t * owner)
  */
 void nfs4_owner_PrintAll(void)
 {
-	HashTable_Log(COMPONENT_STATE, ht_nfs4_owner);
+	hashtable_log(COMPONENT_STATE, ht_nfs4_owner);
 }
 
 /**

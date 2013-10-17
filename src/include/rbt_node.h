@@ -1,3 +1,13 @@
+/**
+ * @addtogroup hashtable
+ * @{
+ */
+
+/**
+ * @file rbt_node.h
+ * @brief Red-black tree node structure
+ */
+
 /*
  * Implementation of RedBlack trees
  * Definitions and structures
@@ -142,3 +152,5 @@ typedef struct rbt_node {
 #define RBT_RED 01	/* red node */
 
 #endif /* RBT_NODE_H */
+
+/** @} */

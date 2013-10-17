@@ -643,19 +643,19 @@ int Init_nlm_hash(void)
 {
 
 	if ((ht_nsm_client =
-	     HashTable_Init(&nfs_param.nsm_client_hash_param)) == NULL) {
+	     hashtable_init(&nfs_param.nsm_client_hash_param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NSM Client cache");
 		return -1;
 	}
 
 	if ((ht_nlm_client =
-	     HashTable_Init(&nfs_param.nlm_client_hash_param)) == NULL) {
+	     hashtable_init(&nfs_param.nlm_client_hash_param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
 		return -1;
 	}
 
 	if ((ht_nlm_owner =
-	     HashTable_Init(&nfs_param.nlm_owner_hash_param)) == NULL) {
+	     hashtable_init(&nfs_param.nlm_owner_hash_param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NLM Owner cache");
 		return -1;
 	}
@@ -728,12 +728,12 @@ void dec_nsm_client_ref(state_nsm_client_t * client)
 	buffkey.len = sizeof(*client);
 
 	/* Get the hash table entry and hold latch */
-	rc = HashTable_GetLatch(ht_nsm_client, &buffkey, &old_value, true,
+	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &old_value, true,
 				&latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_nsm_client, &latch);
+			hashtable_releaselatched(ht_nsm_client, &latch);
 
 		display_nsm_client(client, str);
 
@@ -750,18 +750,18 @@ void dec_nsm_client_ref(state_nsm_client_t * client)
 			 "Did not release refcount now=%" PRId32 " {%s}",
 			 refcount, str);
 
-		HashTable_ReleaseLatched(ht_nsm_client, &latch);
+		hashtable_releaselatched(ht_nsm_client, &latch);
 
 		return;
 	}
 
 	/* use the key to delete the entry */
-	rc = HashTable_DeleteLatched(ht_nsm_client, &buffkey, &latch, &old_key,
+	rc = hashtable_deletelatched(ht_nsm_client, &buffkey, &latch, &old_key,
 				     &old_value);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_nsm_client, &latch);
+			hashtable_releaselatched(ht_nsm_client, &latch);
 
 		display_nsm_client(client, str);
 
@@ -861,7 +861,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT * xprt,
 	buffkey.addr = &key;
 	buffkey.len = sizeof(key);
 
-	rc = HashTable_GetLatch(ht_nsm_client, &buffkey, &buffval, true,
+	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &buffval, true,
 				&latch);
 
 	/* If we found it, return it */
@@ -880,7 +880,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT * xprt,
 		 */
 		inc_nsm_client_ref(pclient);
 
-		HashTable_ReleaseLatched(ht_nsm_client, &latch);
+		hashtable_releaselatched(ht_nsm_client, &latch);
 
 		if (care == CARE_MONITOR && !nsm_monitor(pclient)) {
 			dec_nsm_client_ref(pclient);
@@ -908,7 +908,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT * xprt,
 			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
 		}
 
-		HashTable_ReleaseLatched(ht_nsm_client, &latch);
+		hashtable_releaselatched(ht_nsm_client, &latch);
 
 		return NULL;
 	}
@@ -956,7 +956,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT * xprt,
 	buffval.addr = pclient;
 	buffval.len = sizeof(*pclient);
 
-	rc = HashTable_SetLatched(ht_nsm_client, &buffval, &buffval, &latch,
+	rc = hashtable_setlatched(ht_nsm_client, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
 
 	/* An error occurred, return NULL */
@@ -1048,12 +1048,12 @@ void dec_nlm_client_ref(state_nlm_client_t * client)
 	buffkey.len = sizeof(*client);
 
 	/* Get the hash table entry and hold latch */
-	rc = HashTable_GetLatch(ht_nlm_client, &buffkey, &old_value, true,
+	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &old_value, true,
 				&latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_nlm_client, &latch);
+			hashtable_releaselatched(ht_nlm_client, &latch);
 
 		display_nlm_client(client, str);
 
@@ -1070,18 +1070,18 @@ void dec_nlm_client_ref(state_nlm_client_t * client)
 			 "Did not release refcount now=%" PRId32 " {%s}",
 			 refcount, str);
 
-		HashTable_ReleaseLatched(ht_nlm_client, &latch);
+		hashtable_releaselatched(ht_nlm_client, &latch);
 
 		return;
 	}
 
 	/* use the key to delete the entry */
-	rc = HashTable_DeleteLatched(ht_nlm_client, &buffkey, &latch, &old_key,
+	rc = hashtable_deletelatched(ht_nlm_client, &buffkey, &latch, &old_key,
 				     &old_value);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			HashTable_ReleaseLatched(ht_nlm_client, &latch);
+			hashtable_releaselatched(ht_nlm_client, &latch);
 
 		display_nlm_client(client, str);
 
@@ -1151,7 +1151,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT * xprt,
 	buffkey.addr = &key;
 	buffkey.len = sizeof(key);
 
-	rc = HashTable_GetLatch(ht_nlm_client, &buffkey, &buffval, true,
+	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &buffval, true,
 				&latch);
 
 	/* If we found it, return it */
@@ -1170,7 +1170,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT * xprt,
 		 */
 		inc_nlm_client_ref(pclient);
 
-		HashTable_ReleaseLatched(ht_nlm_client, &latch);
+		hashtable_releaselatched(ht_nlm_client, &latch);
 
 		if (care == CARE_MONITOR && !nsm_monitor(nsm_client)) {
 			dec_nlm_client_ref(pclient);
@@ -1198,7 +1198,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT * xprt,
 			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
 		}
 
-		HashTable_ReleaseLatched(ht_nlm_client, &latch);
+		hashtable_releaselatched(ht_nlm_client, &latch);
 
 		return NULL;
 	}
@@ -1238,7 +1238,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT * xprt,
 	buffval.addr = pclient;
 	buffval.len = sizeof(*pclient);
 
-	rc = HashTable_SetLatched(ht_nlm_client, &buffval, &buffval, &latch,
+	rc = hashtable_setlatched(ht_nlm_client, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
 
 	/* An error occurred, return NULL */

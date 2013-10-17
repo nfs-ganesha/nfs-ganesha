@@ -25,12 +25,12 @@
  */
 
 /**
- * @defgroup HashTable A non-intrusive, partitioned hash-keyed tree
+ * @addtogroup hashtable
  * @{
  */
 
 /**
- * @file  HashTable.c
+ * @file hashtable.c
  * @brief Implement an RBTree-based partitioend hash lookup
  *
  * This file implements a partitioned, tree-based, concurrent
@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "abstract_atomic.h"
 #include "common_utils.h"
@@ -63,7 +63,7 @@
  * @return The cache page size
  */
 static inline size_t
-CACHE_PAGE_SIZE(const hash_table_t *ht)
+cache_page_size(const hash_table_t *ht)
 {
 	return (ht->parameter.cache_entry_count) * sizeof(struct rbt_node *);
 }
@@ -140,7 +140,7 @@ hash_table_err_to_str(hash_error_t err)
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
  */
 static hash_error_t
-Key_Locate(struct hash_table *ht, const struct gsh_buffdesc *key,
+key_locate(struct hash_table *ht, const struct gsh_buffdesc *key,
 	   uint32_t index, uint64_t rbthash, struct rbt_node **node)
 {
 	/* The current partition */
@@ -287,7 +287,7 @@ compute(struct hash_table *ht, const struct gsh_buffdesc *key,
  */
 
 struct hash_table *
-HashTable_Init(struct hash_param *hparam)
+hashtable_init(struct hash_param *hparam)
 {
 	/* The hash table being constructed */
 	struct hash_table *ht = NULL;
@@ -343,7 +343,7 @@ HashTable_Init(struct hash_param *hparam)
 
 		/* Allocate a cache if requested */
 		if (hparam->flags & HT_FLAG_CACHE) {
-			partition->cache = gsh_calloc(1, CACHE_PAGE_SIZE(ht));
+			partition->cache = gsh_calloc(1, cache_page_size(ht));
 			if (!(partition->cache)) {
 				pthread_rwlock_destroy(&partition->lock);
 				goto deconstruct;
@@ -398,14 +398,14 @@ HashTable_Init(struct hash_param *hparam)
  * @return HASHTABLE_SUCCESS on success, other things on failure
  */
 hash_error_t
-HashTable_Destroy(struct hash_table *ht,
+hashtable_destroy(struct hash_table *ht,
 		  int (*free_func)(struct gsh_buffdesc,
 				   struct gsh_buffdesc))
 {
 	size_t index = 0;
 	hash_error_t hrc = HASHTABLE_SUCCESS;
 
-	hrc = HashTable_Delall(ht, free_func);
+	hrc = hashtable_delall(ht, free_func);
 	if (hrc != HASHTABLE_SUCCESS)
 		goto out;
 
@@ -448,7 +448,7 @@ HashTable_Destroy(struct hash_table *ht,
  * @retval Others, failure, the table is not latched.
  */
 hash_error_t
-HashTable_GetLatch(struct hash_table *ht,
+hashtable_getlatch(struct hash_table *ht,
 		   const struct gsh_buffdesc *key,
 		   struct gsh_buffdesc *val, bool may_write,
 		   struct hash_latch *latch)
@@ -477,7 +477,7 @@ HashTable_GetLatch(struct hash_table *ht,
 	else
 		PTHREAD_RWLOCK_rdlock(&(ht->partitions[index].lock));
 
-	rc = Key_Locate(ht, key, index, rbt_hash, &locator);
+	rc = key_locate(ht, key, index, rbt_hash, &locator);
 
 	if (rc == HASHTABLE_SUCCESS) {
 		/* Key was found */
@@ -526,9 +526,9 @@ HashTable_GetLatch(struct hash_table *ht,
  * @brief Release lock held on hash table
  *
  * This function releases the lock on the hash partition acquired and
- * retained by a call to HashTable_GetLatch.  This function must be
+ * retained by a call to hashtable_getlatch.  This function must be
  * used to free any acquired lock but ONLY if the lock was not already
- * freed by some other means (HashTable_SetLatched or
+ * freed by some other means (hashtable_setlatched or
  * HashTable_DelLatched).
  *
  * @param[in] ht    The hash table with the lock to be released
@@ -536,7 +536,7 @@ HashTable_GetLatch(struct hash_table *ht,
  */
 
 void
-HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
+hashtable_releaselatched(struct hash_table *ht, struct hash_latch *latch)
 {
 	if (latch) {
 		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].lock);
@@ -548,7 +548,7 @@ HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
  * @brief Set a value in a table following a previous GetLatch
  *
  * This function sets a value in a hash table following a previous
- * call to the HashTable_GetLatch function.  It must only be used
+ * call to the hashtable_getlatch function.  It must only be used
  * after such a call made with the may_write parameter set to true.
  * In all cases, the lock on the hash table is released.
  *
@@ -556,7 +556,7 @@ HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
  * @param[in]     key         A buffer descriptor locating the key to set
  * @param[in]     val         A buffer descriptor locating the value to insert
  * @param[in]     latch       A pointer to a structure filled by a previous
- *                            call to HashTable_GetLatched.
+ *                            call to hashtable_getlatched.
  * @param[in]     overwrite   If true, overwrite a prexisting key,
  *                            otherwise return error on collision.
  * @param[out]    stored_key If non-NULL, a buffer descriptor for an
@@ -571,7 +571,7 @@ HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
  */
 
 hash_error_t
-HashTable_SetLatched(struct hash_table *ht,
+hashtable_setlatched(struct hash_table *ht,
 		     struct gsh_buffdesc *key,
 		     struct gsh_buffdesc *val,
 		     struct hash_latch *latch, int overwrite,
@@ -691,7 +691,7 @@ HashTable_SetLatched(struct hash_table *ht,
 	rc = HASHTABLE_SUCCESS;
 
  out:
-	HashTable_ReleaseLatched(ht, latch);
+	hashtable_releaselatched(ht, latch);
 
 	if (rc != HASHTABLE_SUCCESS && isDebug(COMPONENT_HASHTABLE)
 	    && isFullDebug(ht->parameter.ht_log_component))
@@ -707,13 +707,13 @@ HashTable_SetLatched(struct hash_table *ht,
  *
  * This function removes a value from the a hash store, the value
  * already having been looked up with GetLatched.  In all cases, the
- * lock is released.  HashTable_GetLatch must have been called with
+ * lock is released.  hashtable_getlatch must have been called with
  * may_read true.
  *
  * @param[in,out] ht      The hash store to be modified
  * @param[in]     key     A buffer descriptore locating the key to remove
  * @param[in]     latch   A pointer to a structure filled by a previous
- *                        call to HashTable_GetLatched.
+ *                        call to hashtable_getlatched.
  * @param[out] stored_key If non-NULL, a buffer descriptor the
  *                        removed key as stored.
  * @param[out] stored_val If non-NULL, a buffer descriptor for the
@@ -724,7 +724,7 @@ HashTable_SetLatched(struct hash_table *ht,
  */
 
 hash_error_t
-HashTable_DeleteLatched(struct hash_table *ht,
+hashtable_deletelatched(struct hash_table *ht,
 			const struct gsh_buffdesc *key,
 			struct hash_latch *latch,
 			struct gsh_buffdesc *stored_key,
@@ -736,7 +736,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
 	struct hash_partition *partition = &ht->partitions[latch->index];
 
 	if (!latch->locator) {
-		HashTable_ReleaseLatched(ht, latch);
+		hashtable_releaselatched(ht, latch);
 		return HASHTABLE_SUCCESS;
 	}
 
@@ -801,7 +801,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
 	pool_free(ht->node_pool, latch->locator);
 	--ht->partitions[latch->index].count;
 
-	HashTable_ReleaseLatched(ht, latch);
+	hashtable_releaselatched(ht, latch);
 	return HASHTABLE_SUCCESS;
 }
 
@@ -818,7 +818,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
  * @return HASHTABLE_SUCCESS or errors
  */
 hash_error_t
-HashTable_Delall(struct hash_table *ht,
+hashtable_delall(struct hash_table *ht,
 		 int (*free_func)(struct gsh_buffdesc,
 				  struct gsh_buffdesc))
 {
@@ -884,7 +884,7 @@ HashTable_Delall(struct hash_table *ht,
  */
 
 void
-HashTable_Log(log_components_t component, struct hash_table *ht)
+hashtable_log(log_components_t component, struct hash_table *ht)
 {
 	/* The current position in the hash table */
 	struct rbt_node *it = NULL;
@@ -959,7 +959,7 @@ HashTable_Log(log_components_t component, struct hash_table *ht)
  */
 
 hash_error_t
-HashTable_Test_And_Set(struct hash_table *ht,
+hashtable_test_and_set(struct hash_table *ht,
 		       struct gsh_buffdesc *key,
 		       struct gsh_buffdesc *val,
 		       hash_set_how_t how)
@@ -969,7 +969,7 @@ HashTable_Test_And_Set(struct hash_table *ht,
 	/* Stored return code */
 	hash_error_t rc = 0;
 
-	rc = HashTable_GetLatch(ht, key, NULL,
+	rc = hashtable_getlatch(ht, key, NULL,
 				(how != HASHTABLE_SET_HOW_TEST_ONLY), &latch);
 
 	if ((rc != HASHTABLE_SUCCESS) &&
@@ -977,20 +977,20 @@ HashTable_Test_And_Set(struct hash_table *ht,
 		return rc;
 
 	if (how == HASHTABLE_SET_HOW_TEST_ONLY) {
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 		return rc;
 	}
 
-	/* No point in calling HashTable_SetLatched when we know it
+	/* No point in calling hashtable_setlatched when we know it
 	   will error. */
 
 	if ((how == HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
 	    && (rc == HASHTABLE_SUCCESS)) {
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 		return HASHTABLE_ERROR_KEY_ALREADY_EXISTS;
 	}
 
-	rc = HashTable_SetLatched(ht, key, val, &latch,
+	rc = hashtable_setlatched(ht, key, val, &latch,
 				  (how == HASHTABLE_SET_HOW_SET_OVERWRITE),
 				  NULL, NULL);
 
@@ -1006,7 +1006,7 @@ HashTable_Test_And_Set(struct hash_table *ht,
  * This function attempts to locate a key in the hash store and return
  * the associated value.  It also calls the supplied function to take
  * a reference before releasing the partition lock.  It is implemented
- * as a wrapper around HashTable_GetLatched.
+ * as a wrapper around hashtable_getlatched.
  *
  * @param[in]  ht      The hash store to be searched
  * @param[in]  key     A buffer descriptore locating the key to find
@@ -1017,7 +1017,7 @@ HashTable_Test_And_Set(struct hash_table *ht,
  * @return HASHTABLE_SUCCESS or errors
  */
 hash_error_t
-HashTable_GetRef(hash_table_t *ht, struct gsh_buffdesc *key,
+hashtable_getref(hash_table_t *ht, struct gsh_buffdesc *key,
 		 struct gsh_buffdesc *val,
 		 void (*get_ref)(struct gsh_buffdesc *))
 {
@@ -1026,14 +1026,14 @@ HashTable_GetRef(hash_table_t *ht, struct gsh_buffdesc *key,
 	/* Stored return code */
 	hash_error_t rc = 0;
 
-	rc = HashTable_GetLatch(ht, key, val, false, &latch);
+	rc = hashtable_getlatch(ht, key, val, false, &latch);
 
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		if (get_ref != NULL)
 			get_ref(val);
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 		break;
 
 	default:
@@ -1044,7 +1044,6 @@ HashTable_GetRef(hash_table_t *ht, struct gsh_buffdesc *key,
 }
 
 /**
- *
  * @brief Decrement the refcount of and possibly remove an entry
  *
  * This function decrements the reference count and deletes the entry
@@ -1065,7 +1064,7 @@ HashTable_GetRef(hash_table_t *ht, struct gsh_buffdesc *key,
  */
 
 hash_error_t
-HashTable_DelRef(hash_table_t *ht, struct gsh_buffdesc *key,
+hashtable_delref(hash_table_t *ht, struct gsh_buffdesc *key,
 		 struct gsh_buffdesc *stored_key,
 		 struct gsh_buffdesc *stored_val,
 		 int (*put_ref)(struct gsh_buffdesc *))
@@ -1079,22 +1078,22 @@ HashTable_DelRef(hash_table_t *ht, struct gsh_buffdesc *key,
 	   value. */
 	struct gsh_buffdesc temp_val;
 
-	rc = HashTable_GetLatch(ht, key, &temp_val, true, &latch);
+	rc = hashtable_getlatch(ht, key, &temp_val, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 		break;
 
 	case HASHTABLE_SUCCESS:
 		if (put_ref != NULL) {
 			if (put_ref(&temp_val) != 0) {
-				HashTable_ReleaseLatched(ht, &latch);
+				hashtable_releaselatched(ht, &latch);
 				rc = HASHTABLE_NOT_DELETED;
 				goto out;
 			}
 		}
-		rc = HashTable_DeleteLatched(ht, key, &latch, stored_key,
+		rc = hashtable_deletelatched(ht, key, &latch, stored_key,
 					     stored_val);
 		break;
 
@@ -1124,7 +1123,7 @@ HashTable_DelRef(hash_table_t *ht, struct gsh_buffdesc *key,
  */
 
 hash_error_t
-HashTable_DelSafe(hash_table_t *ht, struct gsh_buffdesc *key,
+hashtable_delsafe(hash_table_t *ht, struct gsh_buffdesc *key,
 		  struct gsh_buffdesc *val)
 {
 	/* structure to hold retained state */
@@ -1136,20 +1135,20 @@ HashTable_DelSafe(hash_table_t *ht, struct gsh_buffdesc *key,
 	   value. */
 	struct gsh_buffdesc found_val;
 
-	rc = HashTable_GetLatch(ht, key, &found_val, true, &latch);
+	rc = hashtable_getlatch(ht, key, &found_val, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(ht, &latch);
+		hashtable_releaselatched(ht, &latch);
 		break;
 
 	case HASHTABLE_SUCCESS:
 		if (found_val.addr == val->addr) {
-			rc = HashTable_DeleteLatched(ht, key, &latch, NULL,
+			rc = hashtable_deletelatched(ht, key, &latch, NULL,
 						     NULL);
 		} else {
 			rc = HASHTABLE_ERROR_NO_SUCH_KEY;
-			HashTable_ReleaseLatched(ht, &latch);
+			hashtable_releaselatched(ht, &latch);
 		}
 		break;
 

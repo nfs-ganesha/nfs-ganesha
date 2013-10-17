@@ -37,7 +37,7 @@
 #include <sys/select.h>
 #include <poll.h>
 #include <assert.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "abstract_atomic.h"
