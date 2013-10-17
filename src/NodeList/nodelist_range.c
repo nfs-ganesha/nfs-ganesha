@@ -138,9 +138,8 @@ int nodelist_rangelist_init(nodelist_rangelist_t * array)
 	int fstatus = -1;
 	array->pre_allocated_ranges = DEFAULT_RANGELIST_SIZE;
 	array->ranges_nb = 0;
-	array->array =
-	    (nodelist_range_t *) malloc(array->pre_allocated_ranges *
-					sizeof(nodelist_range_t));
+	array->array = gsh_malloc(array->pre_allocated_ranges *
+				  sizeof(nodelist_range_t));
 	if (array->array != NULL) {
 		fstatus = 0;
 	} else {
@@ -156,9 +155,8 @@ int nodelist_rangelist_init_by_copy(nodelist_rangelist_t * array,
 	int i;
 	array->pre_allocated_ranges = a2c->pre_allocated_ranges;
 	array->ranges_nb = a2c->ranges_nb;
-	array->array =
-	    (nodelist_range_t *) malloc(array->pre_allocated_ranges *
-					sizeof(nodelist_range_t));
+	array->array = gsh_malloc(array->pre_allocated_ranges *
+				  sizeof(nodelist_range_t));
 	if (array->array != NULL) {
 		for (i = 0; i < array->ranges_nb; i++) {
 			memcpy(((array->array) + i), ((a2c->array) + i),
@@ -177,7 +175,7 @@ int nodelist_rangelist_free_contents(nodelist_rangelist_t * array)
 	array->pre_allocated_ranges = 0;
 	array->ranges_nb = 0;
 	if (array->array != NULL) {
-		free(array->array);
+		gsh_free(array->array);
 		array->array = NULL;
 	}
 	return fstatus;
@@ -188,10 +186,8 @@ int nodelist_rangelist_incremente_size(nodelist_rangelist_t * array)
 
 	int fstatus = -1;
 	array->pre_allocated_ranges += DEFAULT_RANGELIST_INC_SIZE;
-	array->array =
-	    (nodelist_range_t *) realloc(array->array,
-					 array->pre_allocated_ranges *
-					 sizeof(nodelist_range_t));
+	array->array = gsh_realloc(array->array, array->pre_allocated_ranges *
+				   sizeof(nodelist_range_t));
 	if (array->array != NULL)
 		fstatus = 0;
 	return fstatus;
@@ -410,7 +406,7 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
 	in_list_size = strlen(in_list);
 
 	/* create working buffer */
-	work_buffer = (char *)malloc(in_list_size + 1);
+	work_buffer = gsh_malloc(in_list_size + 1);
 	if (work_buffer == NULL) {
 		fstatus = -1;
 	} else {
@@ -485,11 +481,12 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
 		}
 
 		/* free working buffer */
-		free(work_buffer);
+		gsh_free(work_buffer);
 
 	}
 
-	/* at this point fstatus=0 if process was done succesfully, we may update it to padding value */
+	/* at this point fstatus=0 if process was done succesfully, we
+	   may update it to padding value */
 	if (fstatus != 0)
 		fstatus = -1;
 	else

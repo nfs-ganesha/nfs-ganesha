@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 			context_timeout = atoi(optarg);
 			break;
 		case 'R':
-			preferred_realm = strdup(optarg);
+			preferred_realm = gsh_strdup(optarg);
 			break;
 		default:
 			usage(argv[0]);

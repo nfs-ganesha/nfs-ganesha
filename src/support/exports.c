@@ -651,7 +651,7 @@ static int parseAccessParam(char *var_name, char *var_value,
 	}
 #ifdef USE_NODELIST
 	/* free the buffer the nodelist module has allocated */
-	free(expanded_node_list);
+	gsh_free(expanded_node_list);
 #endif				/* USE_NODELIST */
 
 	return rc;

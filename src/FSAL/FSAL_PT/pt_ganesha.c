@@ -63,7 +63,7 @@ ptfsal_threadcontext_t *ptfsal_get_thread_context()
 	    (ptfsal_threadcontext_t *) pthread_getspecific(ptfsal_thread_key);
 
 	if (p_cur_context == NULL) {
-		p_cur_context = malloc(sizeof(ptfsal_threadcontext_t));
+		p_cur_context = gsh_malloc(sizeof(ptfsal_threadcontext_t));
 		FSI_TRACE(FSI_NOTICE, "malloc %lu bytes fsal specific data",
 			  sizeof(ptfsal_threadcontext_t));
 		if (p_cur_context != NULL) {
@@ -1562,8 +1562,8 @@ int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
 	// Populate the cache table meta data
 	memset(cacheTableToInit, 0x00, sizeof(CACHE_TABLE_T));
 	cacheTableToInit->cacheEntries =
-	    malloc(sizeof(CACHE_TABLE_ENTRY_T) *
-		   cacheTableInitParam->maxNumOfCacheEntries);
+	    gsh_malloc(sizeof(CACHE_TABLE_ENTRY_T) *
+		       cacheTableInitParam->maxNumOfCacheEntries);
 
 	if (cacheTableToInit->cacheEntries == NULL) {
 		FSI_TRACE(FSI_ERR,
@@ -1731,16 +1731,16 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 		(cacheTable->cacheMetaData.numElementsOccupied -
 		 whereToInsert) * sizeof(CACHE_TABLE_ENTRY_T));
 
-	ptr = (void *)malloc(cacheTable->cacheMetaData.keyLengthInBytes);
+	ptr = gsh_malloc(cacheTable->cacheMetaData.keyLengthInBytes);
 	if (ptr == NULL) {
 		FSI_TRACE(FSI_ERR, "Failed allocate memory for inserting key");
 		return -1;
 	}
 	cacheTable->cacheEntries[whereToInsert].key = ptr;
 
-	ptr = (void *)malloc(cacheTable->cacheMetaData.dataSizeInBytes);
+	ptr = gsh_malloc(cacheTable->cacheMetaData.dataSizeInBytes);
 	if (ptr == NULL) {
-		free(cacheTable->cacheEntries[whereToInsert].key);
+		gsh_free(cacheTable->cacheEntries[whereToInsert].key);
 		FSI_TRACE(FSI_ERR, "Failed allocate memory for inserting data");
 		return -1;
 	}
@@ -1805,8 +1805,8 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 	// Deleting the cache entry
 
 	// Free the current entry and set the current entry pointers to NULL
-	free(cacheTable->cacheEntries[whereToDeleteIdx].key);
-	free(cacheTable->cacheEntries[whereToDeleteIdx].data);
+	gsh_free(cacheTable->cacheEntries[whereToDeleteIdx].key);
+	gsh_free(cacheTable->cacheEntries[whereToDeleteIdx].data);
 	cacheTable->cacheEntries[whereToDeleteIdx].key = NULL;
 	cacheTable->cacheEntries[whereToDeleteIdx].data = NULL;
 

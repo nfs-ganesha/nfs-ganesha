@@ -504,7 +504,7 @@ static bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 	if (!fs_specific || !fs_specific[0])
 		return false;
 
-	fso_dup = strdup(fs_specific);
+	fso_dup = gsh_strdup(fs_specific);
 	if (!fso_dup) {
 		LogCrit(COMPONENT_FSAL, "strdup(%s) failed", fs_specific);
 		return false;
@@ -526,7 +526,7 @@ static bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 
 	ret = false;
  cleanup:
-	free(fso_dup);
+	gsh_free(fso_dup);
 	return ret;
 }
 
@@ -746,9 +746,9 @@ fsal_status_t vfs_create_export(struct fsal_module * fsal_hdl,
 			goto errout;
 		}
 	}
-	myself->fstype = strdup(type);
-	myself->fs_spec = strdup(fs_spec);
-	myself->mntdir = strdup(mntdir);
+	myself->fstype = gsh_strdup(type);
+	myself->fs_spec = gsh_strdup(fs_spec);
+	myself->mntdir = gsh_strdup(mntdir);
 	myself->vex_ops = *hops;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);

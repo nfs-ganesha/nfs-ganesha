@@ -196,7 +196,7 @@ static void add_supplementary_groups(char *secname, char *name,
 	    nfs4_gss_princ_to_grouplist(secname, name, cred->cr_groups,
 					&cred->cr_ngroups);
 	if (ret < 0) {
-		groups = realloc(groups, cred->cr_ngroups * sizeof(gid_t));
+		groups = gsh_realloc(groups, cred->cr_ngroups * sizeof(gid_t));
 		ret =
 		    nfs4_gss_princ_to_grouplist(secname, name, groups,
 						&cred->cr_ngroups);
@@ -227,7 +227,7 @@ static int get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
 		goto out;
 	}
 	if (name.length >= 0xffff ||	/* be certain name.length+1 doesn't overflow */
-	    !(sname = calloc(name.length + 1, 1))) {
+	    !(sname = gsh_calloc(name.length + 1, 1))) {
 		printerr(0,
 			 "WARNING: get_ids: error allocating %d bytes "
 			 "for sname\n", name.length + 1);
@@ -273,7 +273,7 @@ static int get_ids(gss_name_t client_name, gss_OID mech, struct svc_cred *cred)
 	add_supplementary_groups(secname, sname, cred);
 	res = 0;
  out_free:
-	free(sname);
+	gsh_free(sname);
  out:
 	return res;
 }
@@ -320,7 +320,7 @@ static int get_krb5_hostbased_name(gss_buffer_desc * name,
 {
 	char *p, *sname = NULL;
 	if (strchr(name->value, '@') && strchr(name->value, '/')) {
-		if ((sname = calloc(name->length, 1)) == NULL) {
+		if ((sname = gsh_calloc(name->length, 1)) == NULL) {
 			printerr(0,
 				 "ERROR: get_krb5_hostbased_name failed "
 				 "to allocate %d bytes\n", name->length);
@@ -330,7 +330,7 @@ static int get_krb5_hostbased_name(gss_buffer_desc * name,
 		sscanf(name->value, "%[^@]", sname);
 		p = strrchr(sname, '/');
 		if (p == NULL) {	/* The '@' preceeded the '/' */
-			free(sname);
+			gsh_free(sname);
 			return -1;
 		}
 		*p = '@';
@@ -510,12 +510,12 @@ void handle_nullreq(FILE * f)
 		      &out_tok);
  out:
 	if (ctx_token.value != NULL)
-		free(ctx_token.value);
+		gsh_free(ctx_token.value);
 	if (out_tok.value != NULL)
 		gss_release_buffer(&ignore_min_stat, &out_tok);
 	if (client_name)
 		gss_release_name(&ignore_min_stat, &client_name);
-	free(hostbased_name);
+	gsh_free(hostbased_name);
 	printerr(1, "finished handling null request\n");
 	return;
 

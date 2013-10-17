@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include "abstract_mem.h"
 
 struct memstream {
 	char **cp;
@@ -47,7 +48,7 @@ static void memstream_grow(struct memstream *ms, size_t newsize)
 	char *buf;
 
 	if (newsize > *ms->lenp) {
-		buf = realloc(*ms->cp, newsize + 1);
+		buf = gsh_realloc(*ms->cp, newsize + 1);
 		if (buf != NULL) {
 #ifdef DEBUG
 			fprintf(stderr, "MS: %p growing from %zd to %zd\n", ms,
@@ -128,7 +129,7 @@ static fpos_t memstream_seek(void *cookie, fpos_t pos, int whence)
 static int memstream_close(void *cookie)
 {
 
-	free(cookie);
+	gsh_free(cookie);
 	return (0);
 }
 
@@ -140,7 +141,7 @@ FILE *open_memstream(char **cp, size_t * lenp)
 
 	*cp = NULL;
 	*lenp = 0;
-	ms = malloc(sizeof(*ms));
+	ms = gsh_malloc(sizeof(*ms));
 	ms->cp = cp;
 	ms->lenp = lenp;
 	ms->offset = 0;
@@ -148,7 +149,7 @@ FILE *open_memstream(char **cp, size_t * lenp)
 		     memstream_close);
 	if (fp == NULL) {
 		save_errno = errno;
-		free(ms);
+		gsh_free(ms);
 		errno = save_errno;
 	}
 	return (fp);

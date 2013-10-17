@@ -73,8 +73,8 @@ static struct lustre_fsal_obj_handle *alloc_handle(struct lustre_file_handle
 	fsal_status_t st;
 
 	hdl =
-	    malloc(sizeof(struct lustre_fsal_obj_handle) +
-		   sizeof(struct lustre_file_handle));
+	    gsh_malloc(sizeof(struct lustre_fsal_obj_handle) +
+		       sizeof(struct lustre_file_handle));
 	if (hdl == NULL)
 		return NULL;
 	memset(hdl, 0,
@@ -90,7 +90,7 @@ static struct lustre_fsal_obj_handle *alloc_handle(struct lustre_file_handle
 		   && link_content != NULL) {
 		size_t len = strlen(link_content) + 1;
 
-		hdl->u.symlink.link_content = malloc(len);
+		hdl->u.symlink.link_content = gsh_malloc(len);
 		if (hdl->u.symlink.link_content == NULL) {
 			goto spcerr;
 		}
@@ -99,12 +99,12 @@ static struct lustre_fsal_obj_handle *alloc_handle(struct lustre_file_handle
 	} else if (hdl->obj_handle.type == SOCKET_FILE && dir_fh != NULL
 		   && sock_name != NULL) {
 		hdl->u.sock.sock_dir =
-		    malloc(sizeof(struct lustre_file_handle));
+		    gsh_malloc(sizeof(struct lustre_file_handle));
 		if (hdl->u.sock.sock_dir == NULL)
 			goto spcerr;
 		memcpy(hdl->u.sock.sock_dir, dir_fh,
 		       sizeof(struct lustre_file_handle));
-		hdl->u.sock.sock_name = malloc(strlen(sock_name) + 1);
+		hdl->u.sock.sock_name = gsh_malloc(strlen(sock_name) + 1);
 		if (hdl->u.sock.sock_name == NULL)
 			goto spcerr;
 		strcpy(hdl->u.sock.sock_name, sock_name);
@@ -125,14 +125,14 @@ static struct lustre_fsal_obj_handle *alloc_handle(struct lustre_file_handle
  spcerr:
 	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if (hdl->u.symlink.link_content != NULL)
-			free(hdl->u.symlink.link_content);
+			gsh_free(hdl->u.symlink.link_content);
 	} else if (hdl->obj_handle.type == SOCKET_FILE) {
 		if (hdl->u.sock.sock_name != NULL)
-			free(hdl->u.sock.sock_name);
+			gsh_free(hdl->u.sock.sock_name);
 		if (hdl->u.sock.sock_dir != NULL)
-			free(hdl->u.sock.sock_dir);
+			gsh_free(hdl->u.sock.sock_dir);
 	}
-	free(hdl);		/* elvis has left the building */
+	gsh_free(hdl);		/* elvis has left the building */
 	return NULL;
 }
 
@@ -646,7 +646,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 		char link_buff[1024];
 
 		if (myself->u.symlink.link_content != NULL) {
-			free(myself->u.symlink.link_content);
+			gsh_free(myself->u.symlink.link_content);
 			myself->u.symlink.link_content = NULL;
 			myself->u.symlink.link_size = 0;
 		}
@@ -659,7 +659,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 			goto out;
 		}
 
-		myself->u.symlink.link_content = malloc(retlink + 1);
+		myself->u.symlink.link_content = gsh_malloc(retlink + 1);
 		if (myself->u.symlink.link_content == NULL) {
 			fsal_error = ERR_FSAL_NOMEM;
 			goto out;
@@ -1228,14 +1228,14 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
-			free(myself->u.symlink.link_content);
+			gsh_free(myself->u.symlink.link_content);
 	} else if (type == SOCKET_FILE) {
 		if (myself->u.sock.sock_name != NULL)
-			free(myself->u.sock.sock_name);
+			gsh_free(myself->u.sock.sock_name);
 		if (myself->u.sock.sock_dir != NULL)
-			free(myself->u.sock.sock_dir);
+			gsh_free(myself->u.sock.sock_dir);
 	}
-	free(myself);
+	gsh_free(myself);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -1348,7 +1348,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	if (S_ISLNK(stat.st_mode)) {
-		link_content = malloc(PATH_MAX);
+		link_content = gsh_malloc(PATH_MAX);
 		retlink = readlinkat(dir_fd, basepart, link_content, PATH_MAX);
 		if (retlink < 0 || retlink == PATH_MAX) {
 			retval = errno;
@@ -1358,7 +1358,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 		}
 		link_content[retlink] = '\0';
 	} else if (S_ISSOCK(stat.st_mode)) {	/* AF_UNIX sockets require craziness */
-		dir_fh = malloc(sizeof(struct lustre_file_handle));
+		dir_fh = gsh_malloc(sizeof(struct lustre_file_handle));
 		memset(dir_fh, 0, sizeof(struct lustre_file_handle));
 		retval = lustre_path_to_handle(path, dir_fh);
 		if (retval < 0) {
@@ -1371,9 +1371,9 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &stat, link_content, dir_fh, sock_name, exp_hdl);
 	if (link_content != NULL)
-		free(link_content);
+		gsh_free(link_content);
 	if (dir_fh != NULL)
-		free(dir_fh);
+		gsh_free(dir_fh);
 	if (hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL;	/* poison it */
@@ -1386,9 +1386,9 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	retval = errno;
  linkerr:
 	if (link_content != NULL)
-		free(link_content);
+		gsh_free(link_content);
 	if (dir_fh != NULL)
-		free(dir_fh);
+		gsh_free(dir_fh);
 	close(dir_fd);
 	fsal_error = posix2fsal_error(retval);
 

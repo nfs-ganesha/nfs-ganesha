@@ -198,14 +198,14 @@ int load_fsal(const char *path, const char *name,
 	char *dl_path;
 	struct fsal_module *fsal;
 
-	dl_path = strdup(path);
+	dl_path = gsh_strdup(path);
 	if (dl_path == NULL)
 		return ENOMEM;
 	pthread_mutex_lock(&fsal_lock);
 	if (load_state != idle)
 		goto errout;
 	if (dl_error) {
-		free(dl_error);
+		gsh_free(dl_error);
 		dl_error = NULL;
 	}
 #ifdef LINUX
@@ -237,12 +237,12 @@ int load_fsal(const char *path, const char *name,
 #else
 		retval = EPERM;	/* ELIBACC does not exist on MacOS */
 #endif
-		dl_error = strdup(dlerror());
+		dl_error = gsh_strdup(dlerror());
 		LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s",
 			path, dl_error);
 		goto errout;
 	}
-	(void)dlerror();	/* clear it */
+	dlerror();	/* clear it */
 
 /* now it is the module's turn to register itself */
 
@@ -253,7 +253,7 @@ int load_fsal(const char *path, const char *name,
 		module_init = dlsym(dl, "fsal_init");
 		sym_error = (char *)dlerror();
 		if (sym_error != NULL) {
-			dl_error = strdup(sym_error);
+			dl_error = gsh_strdup(sym_error);
 			so_error = ENOENT;
 			LogCrit(COMPONENT_INIT,
 				"Could not execute symbol fsal_init"
@@ -304,10 +304,10 @@ int load_fsal(const char *path, const char *name,
 				strcpy(fsal->name, name);
 			} else {
 				oldname = fsal->name;
-				fsal->name = strdup(name);
+				fsal->name = gsh_strdup(name);
 			}
 		} else {
-			fsal->name = strdup(name);
+			fsal->name = gsh_strdup(name);
 		}
 		if (fsal->name == NULL) {
 			fsal->name = oldname;
@@ -326,7 +326,7 @@ int load_fsal(const char *path, const char *name,
 	pthread_mutex_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s", path,
 		 strerror(retval));
-	free(dl_path);
+	gsh_free(dl_path);
 	return retval;
 }
 
@@ -445,7 +445,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	}
 	new_fsal = fsal_hdl;
 	if (name != NULL) {
-		new_fsal->name = strdup(name);
+		new_fsal->name = gsh_strdup(name);
 		if (new_fsal->name == NULL) {
 			so_error = ENOMEM;
 			goto errout;

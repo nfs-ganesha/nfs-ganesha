@@ -92,7 +92,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	free(myself);		/* elvis has left the building */
+	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
  errout:
@@ -324,7 +324,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	myself = malloc(sizeof(struct zfs_fsal_export));
+	myself = gsh_malloc(sizeof(struct zfs_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "zfs_fsal_create: out of memory for object");
@@ -367,7 +367,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		}
 
 	  /** @todo: Place snapshot management here */
-		p_snapshots = calloc(1, sizeof(*p_snapshots));
+		p_snapshots = gsh_calloc(1, sizeof(*p_snapshots));
 		p_snapshots[0].p_vfs = p_zfs;
 		i_snapshots = 0;
 	}
@@ -382,6 +382,6 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	free(myself);		/* elvis has left the building */
+	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

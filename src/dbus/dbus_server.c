@@ -302,7 +302,7 @@ static bool dbus_reply_introspection(DBusMessage * reply,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
 				       &introspection_xml);
-	free(introspection_xml);
+	gsh_free(introspection_xml);
 
  out:
 	return retval;

@@ -97,7 +97,7 @@ int write_heimdal_enc_key(char **p, char *end, gss_ctx_id_t ctx)
 	}
 	enc_key.keyvalue.length = key->keyvalue.length;
 	if ((enc_key.keyvalue.data =
-	     calloc(1, enc_key.keyvalue.length)) == NULL) {
+	     gsh_calloc(1, enc_key.keyvalue.length)) == NULL) {
 		k5err = gssd_k5_err_msg(context, ENOMEM);
 		printerr(0, "ERROR: allocating memory for enc key: %s\n",
 			 k5err);
@@ -120,7 +120,7 @@ int write_heimdal_enc_key(char **p, char *end, gss_ctx_id_t ctx)
  out_err_free_context:
 	krb5_free_context(context);
  out_err:
-	free(k5err);
+	gsh_free(k5err);
 	printerr(2, "write_heimdal_enc_key: %s\n", code ? "FAILED" : "SUCCESS");
 	return (code);
 }
@@ -166,7 +166,7 @@ int write_heimdal_seq_key(char **p, char *end, gss_ctx_id_t ctx)
  out_err_free_context:
 	krb5_free_context(context);
  out_err:
-	free(k5err);
+	gsh_free(k5err);
 	printerr(2, "write_heimdal_seq_key: %s\n", code ? "FAILED" : "SUCCESS");
 	return (code);
 }
@@ -214,7 +214,7 @@ int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
 	unsigned char fakeseed[16];
 	uint32_t algorithm;
 
-	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+	if (!(buf->value = gsh_calloc(1, MAX_CTX_LEN)))
 		goto out_err;
 	p = buf->value;
 	end = buf->value + MAX_CTX_LEN;
@@ -277,7 +277,7 @@ int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
  out_err:
 	printerr(0, "ERROR: failed exporting Heimdal krb5 ctx to kernel\n");
 	if (buf->value)
-		free(buf->value);
+		gsh_free(buf->value);
 	buf->length = 0;
 	return -1;
 }

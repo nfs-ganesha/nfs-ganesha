@@ -582,12 +582,12 @@ void remove_test_list_head()
 	if (tl_tail == item)
 		tl_tail = NULL;
 
-	free(item);
+	gsh_free(item);
 }
 
 void make_test_item(long long int start, long long int end)
 {
-	test_list_t *item = malloc(sizeof(*item));
+	test_list_t *item = gsh_malloc(sizeof(*item));
 
 	if (item == NULL)
 		fatal("Could not allocate test list item\n");

@@ -88,8 +88,8 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	fsal_status_t st;
 
 	hdl =
-	    malloc(sizeof(struct zfs_fsal_obj_handle) +
-		   sizeof(struct zfs_file_handle));
+	    gsh_malloc(sizeof(struct zfs_fsal_obj_handle) +
+		       sizeof(struct zfs_file_handle));
 	if (hdl == NULL)
 		return NULL;
 	memset(hdl, 0,
@@ -1026,9 +1026,9 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
-			free(myself->u.symlink.link_content);
+			gsh_free(myself->u.symlink.link_content);
 	}
-	free(myself);
+	gsh_free(myself);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

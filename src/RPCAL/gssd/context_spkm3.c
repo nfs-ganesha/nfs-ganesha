@@ -82,7 +82,7 @@ static int prepare_spkm3_ctx_buffer(gss_spkm3_lucid_ctx_t * lctx,
 	    lctx->intg_alg.length + sizeof(lctx->derived_integ_key.length) +
 	    lctx->derived_integ_key.length;
 
-	if (!(buf->value = calloc(1, buf_size)))
+	if (!(buf->value = gsh_calloc(1, buf_size)))
 		goto out_err;
 	p = buf->value;
 	end = buf->value + buf_size;
@@ -132,7 +132,7 @@ static int prepare_spkm3_ctx_buffer(gss_spkm3_lucid_ctx_t * lctx,
  out_err:
 	printerr(0, "ERROR: failed serializing spkm3 context for kernel\n");
 	if (buf->value)
-		free(buf->value);
+		gsh_free(buf->value);
 	buf->length = 0;
 
 	return -1;

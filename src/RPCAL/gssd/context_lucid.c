@@ -90,7 +90,7 @@ static int prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t * lctx,
 	memset(&fakeoid, 0, sizeof(fakeoid));
 	memset(fakeseed, 0, FAKESEED_SIZE);
 
-	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+	if (!(buf->value = gsh_calloc(1, MAX_CTX_LEN)))
 		goto out_err;
 	p = buf->value;
 	end = buf->value + MAX_CTX_LEN;
@@ -138,17 +138,17 @@ static int prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t * lctx,
 	/* derive the encryption key and copy it into buffer */
 	enc_key.type = lctx->rfc1964_kd.ctx_key.type;
 	enc_key.length = lctx->rfc1964_kd.ctx_key.length;
-	if ((enc_key.data = calloc(1, enc_key.length)) == NULL)
+	if ((enc_key.data = gsh_calloc(1, enc_key.length)) == NULL)
 		goto out_err;
 	skd = (char *)lctx->rfc1964_kd.ctx_key.data;
 	dkd = (char *)enc_key.data;
 	for (i = 0; i < enc_key.length; i++)
 		dkd[i] = skd[i] ^ 0xf0;
 	if (write_lucid_keyblock(&p, end, &enc_key)) {
-		free(enc_key.data);
+		gsh_free(enc_key.data);
 		goto out_err;
 	}
-	free(enc_key.data);
+	gsh_free(enc_key.data);
 
 	if (write_lucid_keyblock(&p, end, &lctx->rfc1964_kd.ctx_key))
 		goto out_err;
@@ -158,10 +158,10 @@ static int prepare_krb5_rfc1964_buffer(gss_krb5_lucid_context_v1_t * lctx,
  out_err:
 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
 	if (buf->value)
-		free(buf->value);
+		gsh_free(buf->value);
 	buf->length = 0;
 	if (enc_key.data)
-		free(enc_key.data);
+		gsh_free(enc_key.data);
 	return -1;
 }
 
@@ -194,7 +194,7 @@ static int prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t * lctx,
 	uint32_t enctype;
 	uint32_t keysize;
 
-	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+	if (!(buf->value = gsh_calloc(1, MAX_CTX_LEN)))
 		goto out_err;
 	p = buf->value;
 	end = buf->value + MAX_CTX_LEN;
@@ -262,7 +262,7 @@ static int prepare_krb5_rfc4121_buffer(gss_krb5_lucid_context_v1_t * lctx,
 	printerr(0, "ERROR: %s: failed serializing krb5 context for kernel\n",
 		 __FUNCTION__);
 	if (buf->value) {
-		free(buf->value);
+		gsh_free(buf->value);
 		buf->value = NULL;
 	}
 	buf->length = 0;

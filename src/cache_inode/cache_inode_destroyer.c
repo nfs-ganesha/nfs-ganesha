@@ -300,7 +300,7 @@ remove_nfs4_owner_for_shutdown(state_owner_t *owner)
 #ifdef _USE_9P
 	state_nfs4_owner_name_t oname = {
 		.son_owner_len = owner->so_owner_len,
-		.son_owner_val = malloc(sizeof(char) * owner->so_owner_len),
+		.son_owner_val = gsh_malloc(sizeof(char) * owner->so_owner_len),
 	};
 
 	memcpy(oname.son_owner_val, owner->so_owner_val, owner->so_owner_len);

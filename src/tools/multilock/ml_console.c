@@ -83,7 +83,7 @@ void open_socket()
 
 void do_accept()
 {
-	client_t *client = malloc(sizeof(*client));
+	client_t *client = gsh_malloc(sizeof(*client));
 	socklen_t len;
 	int rc;
 
@@ -289,7 +289,7 @@ void error()
 
 response_t *alloc_resp(client_t * client)
 {
-	response_t *resp = malloc(sizeof(*resp));
+	response_t *resp = gsh_malloc(sizeof(*resp));
 
 	if (resp == NULL)
 		fatal("Could not allocate response\n");

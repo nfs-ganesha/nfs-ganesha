@@ -70,10 +70,10 @@ static int parse_enctypes(char *enctypes)
 		return 0;
 
 	/* Free any existing cached_enctypes */
-	free(cached_enctypes);
+	gsh_free(cached_enctypes);
 
 	if (parsed_enctypes != NULL) {
-		free(parsed_enctypes);
+		gsh_free(parsed_enctypes);
 		parsed_enctypes = NULL;
 		parsed_num_enctypes = 0;
 	}
@@ -96,7 +96,7 @@ static int parse_enctypes(char *enctypes)
 		return ENOENT;
 
 	/* Allocate space for enctypes array */
-	if ((parsed_enctypes = (int *)calloc(n, sizeof(int))) == NULL) {
+	if ((parsed_enctypes = gsh_calloc(n, sizeof(int))) == NULL) {
 		return ENOMEM;
 	}
 
@@ -109,7 +109,7 @@ static int parse_enctypes(char *enctypes)
 	}
 
 	parsed_num_enctypes = n;
-	if ((cached_enctypes = malloc(strlen(enctypes) + 1)))
+	if ((cached_enctypes = gsh_malloc(strlen(enctypes) + 1)))
 		strcpy(cached_enctypes, enctypes);
 
 	return 0;
@@ -141,7 +141,7 @@ static void get_kernel_supported_enctypes(void)
 
  out_clean_parsed:
 	if (parsed_enctypes != NULL) {
-		free(parsed_enctypes);
+		gsh_free(parsed_enctypes);
 		parsed_num_enctypes = 0;
 	}
 	goto out;

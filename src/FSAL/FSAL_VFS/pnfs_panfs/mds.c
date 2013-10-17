@@ -323,7 +323,7 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	struct _recall_thread *_rt;
 	int err;
 
-	_rt = calloc(1, sizeof(*_rt));
+	_rt = gsh_calloc(1, sizeof(*_rt));
 	if (!_rt)
 		return ENOMEM;
 
@@ -340,7 +340,7 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	return 0;
 
  error:
-	free(_rt);
+	gsh_free(_rt);
 	return err;
 }
 
@@ -353,7 +353,7 @@ static void _stop_callback_thread(void *td)
 	panfs_um_cancel_recalls(_rt->fd, 0);
 	pthread_join(_rt->thread, &tret);
 	DBG_PRNT("_rt->thread => %ld\n", (long)tret);
-	free(_rt);
+	gsh_free(_rt);
 }
 
 /*============================== initialization ==============================*/

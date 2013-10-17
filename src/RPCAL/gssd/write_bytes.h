@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <netinet/in.h>		/* for ntohl */
+#include "abstract_mem.h"
 
 inline static int write_bytes(char **ptr, const char *end, const void *arg,
 			      int arg_len)
@@ -97,7 +98,7 @@ static inline int get_buffer(char **ptr, const char *end, gss_buffer_desc * res)
 	q = p + res->length;
 	if (q > end || q < p)
 		return -1;
-	if (!(res->value = malloc(res->length)))
+	if (!(res->value = gsh_malloc(res->length)))
 		return -1;
 	memcpy(res->value, p, res->length);
 	*ptr = q;
@@ -125,7 +126,7 @@ static inline int xdr_get_buffer(u_int32_t ** ptr, const u_int32_t * end,
 	q = p + ((res->length + 3) >> 2);
 	if (q > end || q < p)
 		return -1;
-	if (!(res->value = malloc(res->length)))
+	if (!(res->value = gsh_malloc(res->length)))
 		return -1;
 	memcpy(res->value, p, res->length);
 	*ptr = q;

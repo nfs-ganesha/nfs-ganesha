@@ -7,19 +7,20 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -27,17 +28,17 @@
 #include "analyse.h"
 #include <stdlib.h>
 #include <stdio.h>
-
 #if HAVE_STRING_H
 #include <string.h>
 #endif
+#include "abstract_mem.h"
 
 /**
  *  create a list of items
  */
 list_items *config_CreateItemsList()
 {
-	list_items *new = (list_items *) malloc(sizeof(list_items));
+	list_items *new = gsh_malloc(sizeof(list_items));
 
 	(*new) = NULL;
 	return new;
@@ -48,7 +49,7 @@ list_items *config_CreateItemsList()
  */
 generic_item *config_CreateBlock(char *blockname, list_items * list)
 {
-	generic_item *new = (generic_item *) malloc(sizeof(generic_item));
+	generic_item *new = gsh_malloc(sizeof(generic_item));
 
 	new->type = TYPE_BLOCK;
 
@@ -56,7 +57,7 @@ generic_item *config_CreateBlock(char *blockname, list_items * list)
 
 	if (list) {
 		new->item.block.block_content = *list;
-		free(list);
+		gsh_free(list);
 	} else
 		new->item.block.block_content = NULL;
 
@@ -71,7 +72,7 @@ generic_item *config_CreateBlock(char *blockname, list_items * list)
  */
 generic_item *config_CreateAffect(char *varname, char *varval)
 {
-	generic_item *new = (generic_item *) malloc(sizeof(generic_item));
+	generic_item *new = gsh_malloc(sizeof(generic_item));
 
 	new->type = TYPE_AFFECT;
 	strncpy(new->item.affect.varname, varname, MAXSTRLEN);
@@ -155,7 +156,7 @@ static void free_list_items_recurse(list_items * list)
 						block_content);
 		}
 
-		free(curr_item);
+		gsh_free(curr_item);
 		curr_item = next_item;
 
 	}
@@ -170,6 +171,6 @@ void config_free_list(list_items * list)
 {
 
 	free_list_items_recurse(list);
-	free(list);
+	gsh_free(list);
 	return;
 }

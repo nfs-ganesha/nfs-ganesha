@@ -83,7 +83,8 @@ bool idmapper_init(void)
 	}
 #endif				/* USE_NFSIDMAP */
 	if (nfs_param.nfsv4_param.use_getpwnam) {
-		owner_domain.addr = strdup(nfs_param.nfsv4_param.domainname);
+		owner_domain.addr = gsh_strdup(nfs_param.nfsv4_param
+					       .domainname);
 		if (owner_domain.addr == NULL)
 			return false;
 

@@ -115,15 +115,15 @@ static int topdirs_add_entry(struct dirent *dent)
 {
 	struct topdirs_info *tdi;
 
-	tdi = calloc(sizeof(struct topdirs_info), 1);
+	tdi = gsh_calloc(sizeof(struct topdirs_info), 1);
 	if (tdi == NULL) {
 		printerr(0, "ERROR: Couldn't allocate struct topdirs_info\n");
 		return -1;
 	}
-	tdi->dirname = malloc(PATH_MAX + 1);
+	tdi->dirname = gsh_malloc(PATH_MAX + 1);
 	if (tdi->dirname == NULL) {
 		printerr(0, "ERROR: Couldn't allocate directory name\n");
-		free(tdi);
+		gsh_free(tdi);
 		return -1;
 	}
 	snprintf(tdi->dirname, PATH_MAX, "%s/%s", pipefs_dir, dent->d_name);
@@ -143,11 +143,11 @@ static void topdirs_free_list(void)
 	struct topdirs_info *tdi;
 
 	TAILQ_FOREACH(tdi, &topdirs_list, list) {
-		free(tdi->dirname);
+		gsh_free(tdi->dirname);
 		if (tdi->fd != -1)
 			close(tdi->fd);
 		TAILQ_REMOVE(&topdirs_list, tdi, list);
-		free(tdi);
+		gsh_free(tdi);
 	}
 }
 
