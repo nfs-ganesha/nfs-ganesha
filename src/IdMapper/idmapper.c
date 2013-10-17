@@ -71,9 +71,9 @@ bool idmapper_init(void)
 			return false;
 		}
 		owner_domain.addr = gsh_malloc(NFS4_MAX_DOMAIN_LEN + 1);
-		if (owner_domain.addr == NULL) {
+		if (owner_domain.addr == NULL)
 			return false;
-		}
+
 		if (nfs4_get_default_domain
 		    (NULL, owner_domain.addr, NFS4_MAX_DOMAIN_LEN) != 0) {
 			gsh_free(owner_domain.addr);
@@ -84,14 +84,14 @@ bool idmapper_init(void)
 #endif				/* USE_NFSIDMAP */
 	if (nfs_param.nfsv4_param.use_getpwnam) {
 		owner_domain.addr = strdup(nfs_param.nfsv4_param.domainname);
-		if (owner_domain.addr == NULL) {
+		if (owner_domain.addr == NULL)
 			return false;
-		}
+
 		owner_domain.len = strlen(nfs_param.nfsv4_param.domainname);
 	}
 
 	idmapper_cache_init();
-	return true;;
+	return true;
 }
 
 /**
@@ -105,7 +105,7 @@ bool idmapper_init(void)
  * @retval false on failure.
  */
 
-static bool xdr_encode_nfs4_princ(XDR * xdrs, uint32_t id, bool group)
+static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 {
 	const struct gsh_buffdesc *found;
 	uint32_t not_a_size_t;
@@ -113,11 +113,10 @@ static bool xdr_encode_nfs4_princ(XDR * xdrs, uint32_t id, bool group)
 
 	pthread_rwlock_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
-	if (group) {
+	if (group)
 		success = idmapper_lookup_by_gid(id, &found);
-	} else {
+	else
 		success = idmapper_lookup_by_uid(id, &found, NULL);
-	}
 
 	if (likely(success)) {
 		not_a_size_t = found->len;
@@ -223,11 +222,11 @@ static bool xdr_encode_nfs4_princ(XDR * xdrs, uint32_t id, bool group)
 		/* Add to the cache and encode the result. */
 		pthread_rwlock_wrlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
-		if (group) {
+		if (group)
 			success = idmapper_add_group(&new_name, id);
-		} else {
+		else
 			success = idmapper_add_user(&new_name, id, NULL, false);
-		}
+
 		pthread_rwlock_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (unlikely(!success)) {
@@ -251,7 +250,7 @@ static bool xdr_encode_nfs4_princ(XDR * xdrs, uint32_t id, bool group)
  * @retval false on failure.
  */
 
-bool xdr_encode_nfs4_owner(XDR * xdrs, uid_t uid)
+bool xdr_encode_nfs4_owner(XDR *xdrs, uid_t uid)
 {
 	return xdr_encode_nfs4_princ(xdrs, uid, false);
 }
@@ -266,7 +265,7 @@ bool xdr_encode_nfs4_owner(XDR * xdrs, uid_t uid)
  * @retval false on failure.
  */
 
-bool xdr_encode_nfs4_group(XDR * xdrs, gid_t gid)
+bool xdr_encode_nfs4_group(XDR *xdrs, gid_t gid)
 {
 	return xdr_encode_nfs4_princ(xdrs, gid, true);
 }
@@ -282,7 +281,7 @@ bool xdr_encode_nfs4_group(XDR * xdrs, gid_t gid)
  * @return true on success, false on just phoning it in.
  */
 
-static bool atless2id(char *name, size_t len, uint32_t * id,
+static bool atless2id(char *name, size_t len, uint32_t *id,
 		      const uint32_t anon)
 {
 	if ((len == 6) && (!memcmp(name, "nobody", 6))) {
@@ -314,9 +313,9 @@ static bool atless2id(char *name, size_t len, uint32_t * id,
  *
  * @return true on success, false not making the grade
  */
-static bool pwentname2id(char *name, size_t len, uint32_t * id,
-			 const uint32_t anon, bool group, gid_t * gid,
-			 bool * got_gid, char *at)
+static bool pwentname2id(char *name, size_t len, uint32_t *id,
+			 const uint32_t anon, bool group, gid_t *gid,
+			 bool *got_gid, char *at)
 {
 	if (at != NULL) {
 		if (strcmp(at + 1, owner_domain.addr) != 0) {
@@ -400,9 +399,9 @@ static bool pwentname2id(char *name, size_t len, uint32_t * id,
  * @return true on success, false not making the grade
  */
 
-static bool idmapname2id(char *name, size_t len, uint32_t * id,
-			 const uint32_t anon, bool group, gid_t * gid,
-			 bool * got_gid, char *at)
+static bool idmapname2id(char *name, size_t len, uint32_t *id,
+			 const uint32_t anon, bool group, gid_t *gid,
+			 bool *got_gid, char *at)
 {
 #ifdef USE_NFSIDMAP
 	int rc;
@@ -451,7 +450,7 @@ static bool idmapname2id(char *name, size_t len, uint32_t * id,
  * @return true if successful, false otherwise
  */
 
-static bool name2id(const struct gsh_buffdesc *name, uint32_t * id, bool group,
+static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 		    const uint32_t anon)
 {
 	bool success;
@@ -535,7 +534,7 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t * id, bool group,
  * @return true if successful, false otherwise
  *
  */
-bool name2uid(const struct gsh_buffdesc * name, uid_t * uid, const uid_t anon)
+bool name2uid(const struct gsh_buffdesc *name, uid_t *uid, const uid_t anon)
 {
 	return name2id(name, uid, false, anon);
 }
@@ -549,7 +548,7 @@ bool name2uid(const struct gsh_buffdesc * name, uid_t * uid, const uid_t anon)
  *
  * @return true  if successful, false otherwise
  */
-bool name2gid(const struct gsh_buffdesc * name, gid_t * gid, const gid_t anon)
+bool name2gid(const struct gsh_buffdesc *name, gid_t *gid, const gid_t anon)
 {
 	return name2id(name, gid, true, anon);
 }
@@ -565,8 +564,8 @@ bool name2gid(const struct gsh_buffdesc * name, gid_t * gid, const gid_t anon)
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t * puid, gid_t * pgid,
-		   struct svc_rpc_gss_data * gd)
+bool principal2uid(char *principal, uid_t *puid, gid_t *pgid,
+		   struct svc_rpc_gss_data *gd)
 #else
 /**
  * @brief Convert a principal (as returned by @c gss_display_name) to a UID
@@ -576,7 +575,7 @@ bool principal2uid(char *principal, uid_t * puid, gid_t * pgid,
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t * puid, gid_t * pgid)
+bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
 #endif
 {
 #ifdef USE_NFSIDMAP
@@ -606,16 +605,20 @@ bool principal2uid(char *principal, uid_t * puid, gid_t * pgid)
 		    && (!memcmp(princbuff.addr, "nfs/", 4)
 			|| !memcmp(princbuff.addr, "root/", 5)
 			|| !memcmp(princbuff.addr, "host/", 5))) {
-			/* NFSv4 specific features: RPCSEC_GSS will provide user like
-			 * nfs/<host> 
+			/* NFSv4 specific features: RPCSEC_GSS will
+			 * provide user like
+			 *
+			 * nfs/<host>
 			 * root/<host>
 			 * host/<host>
 			 * choice is made to map them to root */
-			/* This is a "root" request made from the hostbased nfs principal, use root */
+			/* This is a "root" request made from the
+			   hostbased nfs principal, use root */
 			*puid = 0;
 			return true;
 		}
-		/* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
+		/* nfs4_gss_princ_to_ids required to extract uid/gid
+		   from gss creds */
 		rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
 					   &gss_gid);
 		if (rc) {
@@ -665,7 +668,8 @@ bool principal2uid(char *principal, uid_t * puid, gid_t * pgid)
 					return false;
 				}
 
-				/* 2nd SID is primary_group sid, see wbclient.h */
+				/* 2nd SID is primary_group sid, see
+				   wbclient.h */
 				wbc_err =
 				    wbcSidToGid(&info->sids[1].sid, &gss_gid);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
@@ -681,9 +685,8 @@ bool principal2uid(char *principal, uid_t * puid, gid_t * pgid)
 			}
 #endif				/* _MSPAC_SUPPORT */
 #ifdef _MSPAC_SUPPORT
-			if ((found_uid == true) && (found_gid == true)) {
+			if ((found_uid == true) && (found_gid == true))
 				goto principal_found;
-			}
 #endif
 
 			return false;

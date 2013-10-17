@@ -147,13 +147,12 @@ static inline int buffdesc_comparator(const struct gsh_buffdesc *buffa,
 	int mr = memcmp(buff1->addr, buffa->addr, MIN(buff1->len,
 						      buffa->len));
 	if (unlikely(mr == 0)) {
-		if (buff1->len < buffa->len) {
+		if (buff1->len < buffa->len)
 			return -1;
-		} else if (buff1->len > buffa->len) {
+		else if (buff1->len > buffa->len)
 			return 1;
-		} else {
+		else
 			return 0;
-		}
 	} else {
 		return mr;
 	}
@@ -204,13 +203,12 @@ static int uid_comparator(const struct avltree_node *node1,
 	    avltree_container_of(nodea, struct cache_user,
 				 uid_node);
 
-	if (user1->uid < usera->uid) {
+	if (user1->uid < usera->uid)
 		return -1;
-	} else if (user1->uid > usera->uid) {
+	else if (user1->uid > usera->uid)
 		return 1;
-	} else {
+	else
 		return 0;
-	}
 }
 
 /**
@@ -258,13 +256,12 @@ static int gid_comparator(const struct avltree_node *node1,
 	    avltree_container_of(nodea, struct cache_group,
 				 gid_node);
 
-	if (group1->gid < groupa->gid) {
+	if (group1->gid < groupa->gid)
 		return -1;
-	} else if (group1->gid > groupa->gid) {
+	else if (group1->gid > groupa->gid)
 		return 1;
-	} else {
+	else
 		return 0;
-	}
 }
 
 /**
@@ -298,7 +295,7 @@ void idmapper_cache_init(void)
  */
 
 bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
-		       const gid_t * gid, bool gss_princ)
+		       const gid_t *gid, bool gss_princ)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
@@ -324,9 +321,8 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	}
 
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
-	if (!gss_princ) {
+	if (!gss_princ)
 		found_id = avltree_insert(&new->uid_node, &uid_tree);
-	}
 
 	if (unlikely(found_name || found_id)) {
 		/* Obnoxious complexity.  And we can't even reuse the
@@ -350,8 +346,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 			if (!gss_princ) {
 				if (coll_name != coll_id) {
 					uid_cache[coll_name->uid %
-						  id_cache_size]
-					    = NULL;
+						  id_cache_size] = NULL;
 					avltree_remove(&coll_name->uid_node,
 						       &uid_tree);
 				}
@@ -375,13 +370,11 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 			gsh_free(coll_name);
 		}
 		avltree_insert(&new->uname_node, &uname_tree);
-		if (!gss_princ) {
+		if (!gss_princ)
 			avltree_insert(&new->uid_node, &uid_tree);
-		}
 	}
-	if (!gss_princ) {
+	if (!gss_princ)
 		uid_cache[uid % id_cache_size] = &new->uid_node;
-	}
 
 	return true;
 }
@@ -398,7 +391,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
  * @retval false if our reach exceeds our grasp.
  */
 
-bool idmapper_add_group(const struct gsh_buffdesc * name, const gid_t gid)
+bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 {
 	struct avltree_node *found_name = NULL;
 	struct avltree_node *found_id = NULL;
@@ -439,9 +432,10 @@ bool idmapper_add_group(const struct gsh_buffdesc * name, const gid_t gid)
 		if (coll_name) {
 			avltree_remove(found_name, &gname_tree);
 			if (coll_name != coll_id) {
-				uid_cache[coll_name->gid % id_cache_size]
-				    = NULL;
-				avltree_remove(&coll_name->gid_node, &gid_tree);
+				uid_cache[coll_name->gid %
+					  id_cache_size] = NULL;
+				avltree_remove(&coll_name->gid_node,
+					       &gid_tree);
 			}
 		}
 		if (coll_id) {
@@ -486,8 +480,8 @@ bool idmapper_add_group(const struct gsh_buffdesc * name, const gid_t gid)
  * @retval false if we need to try, try again.
  */
 
-bool idmapper_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
-			      const gid_t ** gid, bool gss_princ)
+bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
+			      const gid_t **gid, bool gss_princ)
 {
 	struct cache_user prototype = {
 		.uname = *name
@@ -497,28 +491,29 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
 	struct cache_user *found_user;
 	struct avltree_node **cache_entry;
 
-	if (unlikely(!found_node)) {
+	if (unlikely(!found_node))
 		return false;
-	}
+
 	found_user =
 	    avltree_container_of(found_node, struct cache_user, uname_node);
 	if (!gss_princ) {
 		/* I assume that if someone likes this user enough to look it
 		   up by name, they'll like it enough to look it up by ID
-		   later. 
-		   If the name is gss principal it does not have entry in uid tree */
+		   later.
+
+		   If the name is gss principal it does not have entry
+		   in uid tree */
 
 		cache_entry = uid_cache + (found_user->uid % id_cache_size);
-		atomic_store_uint64_t((uint64_t *) cache_entry,
-				      (uint64_t) & found_user->uid_node);
+		atomic_store_uint64_t((uint64_t *)cache_entry,
+				      (uint64_t) &found_user->uid_node);
 	}
 
-	if (likely(uid)) {
+	if (likely(uid))
 		*uid = found_user->uid;
-	}
-	if (unlikely(gid)) {
+
+	if (unlikely(gid))
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
-	}
 
 	return true;
 }
@@ -539,8 +534,8 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
  * @retval false if we weren't so successful.
  */
 
-bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc ** name,
-			    const gid_t ** gid)
+bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
+			    const gid_t **gid)
 {
 	struct cache_user prototype = {
 		.uid = uid
@@ -558,22 +553,21 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc ** name,
 					 uid_node);
 	} else {
 		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
-		if (unlikely(!found_node)) {
+		if (unlikely(!found_node))
 			return false;
-		}
-		atomic_store_uint64_t((uintptr_t *) cache_entry,
+
+		atomic_store_uint64_t((uintptr_t *)cache_entry,
 				      (uintptr_t) found_node);
 		found_user =
 		    avltree_container_of(found_node, struct cache_user,
 					 uid_node);
 	}
 
-	if (likely(name)) {
+	if (likely(name))
 		*name = &found_user->uname;
-	}
-	if (gid) {
+
+	if (gid)
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
-	}
 
 	return true;
 }
@@ -593,7 +587,7 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc ** name,
  * @retval false if we need to try, try again.
  */
 
-bool idmapper_lookup_by_gname(const struct gsh_buffdesc * name, uid_t * gid)
+bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t *gid)
 {
 	struct cache_group prototype = {
 		.gname = *name
@@ -603,9 +597,9 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc * name, uid_t * gid)
 	struct cache_group *found_group;
 	struct avltree_node **cache_entry;
 
-	if (unlikely(!found_node)) {
+	if (unlikely(!found_node))
 		return false;
-	}
+
 	found_group =
 	    avltree_container_of(found_node, struct cache_group, gname_node);
 
@@ -614,14 +608,13 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc * name, uid_t * gid)
 	   later. */
 
 	cache_entry = gid_cache + (found_group->gid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *) cache_entry,
-			      (uint64_t) & found_group->gid_node);
+	atomic_store_uint64_t((uint64_t *)cache_entry,
+			      (uint64_t) &found_group->gid_node);
 
-	if (likely(gid)) {
+	if (likely(gid))
 		*gid = found_group->gid;
-	} else {
+	else
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
-	}
 
 	return true;
 }
@@ -639,7 +632,7 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc * name, uid_t * gid)
  * @retval false if we're most unfortunate.
  */
 
-bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc ** name)
+bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 {
 	struct cache_group prototype = {
 		.gid = gid
@@ -657,21 +650,20 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc ** name)
 					 gid_node);
 	} else {
 		found_node = avltree_lookup(&prototype.gid_node, &gid_tree);
-		if (unlikely(!found_node)) {
+		if (unlikely(!found_node))
 			return false;
-		}
-		atomic_store_uint64_t((uint64_t *) cache_entry,
+
+		atomic_store_uint64_t((uint64_t *)cache_entry,
 				      (uint64_t) found_node);
 		found_group =
 		    avltree_container_of(found_node, struct cache_group,
 					 gid_node);
 	}
 
-	if (likely(name)) {
+	if (likely(name))
 		*name = &found_group->gname;
-	} else {
+	else
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
-	}
 
 	return true;
 }
