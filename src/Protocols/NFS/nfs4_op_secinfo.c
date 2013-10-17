@@ -103,12 +103,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   if(res_SECINFO4.status != NFS4_OK)
     return res_SECINFO4.status;
 
-  if (nfs_in_grace())
-    {
-      res_SECINFO4.status = NFS4ERR_GRACE;
-      return res_SECINFO4.status;
-    }
-
   /* get the name from the RPC input */
   cache_status = utf8_to_name(&arg_SECINFO4.name, &secinfo_fh_name);
 
