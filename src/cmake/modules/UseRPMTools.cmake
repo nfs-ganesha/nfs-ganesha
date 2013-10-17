@@ -192,7 +192,7 @@ FILE(APPEND ${RPMBULILD_CMAKE} "set(DISTNAME_HAS_GIT_DATA ON)
 	  "# -*- rpm-spec -*-
 Summary:        ${RPM_SUMMARY}
 Name:           ${RPMNAME}
-Version:        ${PACKAGE_VERSION}
+Version:        ${GANESHA_VERSION}
 Release:        ${RPM_RELEASE}
 License:        ${RPM_PACKAGE_LICENSE}
 Group:          ${RPM_PACKAGE_GROUP}
@@ -210,8 +210,7 @@ Requires:  libnfsidmap
 Url:            ${RPM_URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-#%define srcdirname %{name}-%{version}-Source
-%define srcdirname %{name}${PACKNAME}-%{version}-Source
+%define srcdirname  ${CPACK_SOURCE_PACKAGE_FILE_NAME}
 
 %description
 ${RPMNAME} : ${RPM_DESCRIPTION}
