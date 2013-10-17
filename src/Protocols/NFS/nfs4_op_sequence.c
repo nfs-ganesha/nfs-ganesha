@@ -103,10 +103,10 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 	LogDebug(COMPONENT_SESSIONS, "SEQUENCE session=%p", session);
 
 	/* Check if lease is expired and reserve it */
-	P(session->clientid_record->cid_mutex);
+	pthread_mutex_lock(&session->clientid_record->cid_mutex);
 
 	if (!reserve_lease(session->clientid_record)) {
-		V(session->clientid_record->cid_mutex);
+		pthread_mutex_unlock(&session->clientid_record->cid_mutex);
 
 		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_EXPIRED;
@@ -118,7 +118,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 
 	data->preserved_clientid = session->clientid_record;
 
-	V(session->clientid_record->cid_mutex);
+	pthread_mutex_unlock(&session->clientid_record->cid_mutex);
 
 	/* Check is slot is compliant with ca_maxrequests */
 	if (arg_SEQUENCE4->sa_slotid >=
@@ -134,7 +134,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 	/* By default, no DRC replay */
 	data->use_drc = false;
 
-	P(session->slots[arg_SEQUENCE4->sa_slotid].lock);
+	pthread_mutex_lock(&session->slots[arg_SEQUENCE4->sa_slotid].lock);
 	if (session->slots[arg_SEQUENCE4->sa_slotid].sequence + 1 !=
 	    arg_SEQUENCE4->sa_sequenceid) {
 		if (session->slots[arg_SEQUENCE4->sa_slotid].sequence ==
@@ -156,7 +156,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 						arg_SEQUENCE4->sa_slotid,
 						data->cached_res);
 
-				V(session->slots[arg_SEQUENCE4->sa_slotid].
+				pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].
 				  lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status = NFS4_OK;
@@ -164,7 +164,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 #if IMPLEMENT_CACHETHIS
 			} else {
 				/* Illegal replay */
-				V(session->slots[arg_SEQUENCE4->sa_slotid].
+				pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].
 				  lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status =
@@ -178,7 +178,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 			}
 #endif
 		}
-		V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
+		pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].lock);
 		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
@@ -234,7 +234,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 				"=NULL for DRC", arg_SEQUENCE4->sa_slotid);
 	}
 #endif
-	V(session->slots[arg_SEQUENCE4->sa_slotid].lock);
+	pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].lock);
 
 	/* If we were successful, stash the clientid in the request
 	   context. */

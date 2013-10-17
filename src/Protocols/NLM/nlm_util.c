@@ -59,10 +59,10 @@ pthread_mutex_t granted_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void next_granted_cookie(granted_cookie_t * cookie)
 {
-	P(granted_mutex);
+	pthread_mutex_lock(&granted_mutex);
 	granted_cookie.gc_cookie++;
 	*cookie = granted_cookie;
-	V(granted_mutex);
+	pthread_mutex_unlock(&granted_mutex);
 }
 
 const char *lock_result_str(int rc)

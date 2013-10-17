@@ -95,7 +95,7 @@ void nfs4_init_grace()
  */
 void nfs4_start_grace(nfs_grace_start_t * gsp)
 {
-	P(grace.g_mutex);
+	pthread_mutex_lock(&grace.g_mutex);
 
 	/* grace should always be greater than or equal to lease time,
 	 * some clients are known to have problems with grace greater than 60 seconds
@@ -125,7 +125,7 @@ void nfs4_start_grace(nfs_grace_start_t * gsp)
 				nfs4_load_recov_clids_nolock(gsp);
 		}
 	}
-	V(grace.g_mutex);
+	pthread_mutex_unlock(&grace.g_mutex);
 }
 
 int last_grace = -1;
@@ -143,7 +143,7 @@ int nfs_in_grace(void)
 	if (nfs_param.nfsv4_param.graceless)
 		return 0;
 
-	P(grace.g_mutex);
+	pthread_mutex_lock(&grace.g_mutex);
 
 	in_grace = ((grace.g_start + grace.g_duration) > time(NULL));
 
@@ -155,7 +155,7 @@ int nfs_in_grace(void)
 		LogDebug(COMPONENT_STATE, "NFS Server IN GRACE");
 	}
 
-	V(grace.g_mutex);
+	pthread_mutex_unlock(&grace.g_mutex);
 
 	return in_grace;
 }
@@ -313,11 +313,11 @@ void nfs4_chk_clid(nfs_client_id_t * clientid)
 	if (!nfs_in_grace())
 		return;
 
-	P(grace.g_mutex);
+	pthread_mutex_lock(&grace.g_mutex);
 
 	/* If there were no clients at time of restart, we're done */
 	if (glist_empty(&grace.g_clid_list)) {
-		V(grace.g_mutex);
+		pthread_mutex_unlock(&grace.g_mutex);
 		return;
 	}
 
@@ -341,11 +341,11 @@ void nfs4_chk_clid(nfs_client_id_t * clientid)
 					     str);
 			}
 			clientid->cid_allow_reclaim = 1;
-			V(grace.g_mutex);
+			pthread_mutex_unlock(&grace.g_mutex);
 			return;
 		}
 	}
-	V(grace.g_mutex);
+	pthread_mutex_unlock(&grace.g_mutex);
 }
 
 /**
@@ -525,11 +525,11 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t * gsp)
  */
 void nfs4_load_recov_clids(nfs_grace_start_t * gsp)
 {
-	P(grace.g_mutex);
+	pthread_mutex_lock(&grace.g_mutex);
 
 	nfs4_load_recov_clids_nolock(gsp);
 
-	V(grace.g_mutex);
+	pthread_mutex_unlock(&grace.g_mutex);
 }
 
 /**
@@ -715,7 +715,7 @@ static void nfs_release_v4_client(char *ip)
 			pdata = RBT_OPAQ(pn);
 
 			cp = (nfs_client_id_t *) pdata->val.addr;
-			P(cp->cid_mutex);
+			pthread_mutex_lock(&cp->cid_mutex);
 			if (ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
@@ -723,22 +723,22 @@ static void nfs_release_v4_client(char *ip)
 				recp = cp->cid_client_record;
 				inc_client_record_ref(recp);
 
-				V(cp->cid_mutex);
+				pthread_mutex_unlock(&cp->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 
-				P(recp->cr_mutex);
+				pthread_mutex_lock(&recp->cr_mutex);
 
-				(void)nfs_client_id_expire(cp, NULL);
+				nfs_client_id_expire(cp, NULL);
 
-				V(recp->cr_mutex);
+				pthread_mutex_unlock(&recp->cr_mutex);
 
 				dec_client_id_ref(cp);
 				dec_client_record_ref(recp);
 				return;
 
 			} else {
-				V(cp->cid_mutex);
+				pthread_mutex_unlock(&cp->cid_mutex);
 			}
 			RBT_INCREMENT(pn);
 		}

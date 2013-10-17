@@ -75,7 +75,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
 			pclientid = addr->val.addr;
 			count++;
 
-			P(pclientid->cid_mutex);
+			pthread_mutex_lock(&pclientid->cid_mutex);
 
 			if (!valid_lease(pclientid)) {
 				inc_client_id_ref(pclientid);
@@ -84,7 +84,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
 				precord = pclientid->cid_client_record;
 				inc_client_record_ref(precord);
 
-				V(pclientid->cid_mutex);
+				pthread_mutex_unlock(&pclientid->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].
 						      lock);
@@ -100,21 +100,22 @@ static int reap_hash_table(hash_table_t * ht_reap)
 				}
 
 				/* Take cr_mutex and expire clientid */
-				P(precord->cr_mutex);
-/* @TODO@ This is incomplete! the context has to be filled in 
- * from somewhere
+				pthread_mutex_lock(&precord->cr_mutex);
+/**
+ * @TODO This is incomplete! the context has to be filled in from
+ * somewhere
  */
 				memset(&req_ctx, 0, sizeof(req_ctx));
 				rc = nfs_client_id_expire(pclientid, &req_ctx);
 
-				V(precord->cr_mutex);
+				pthread_mutex_unlock(&precord->cr_mutex);
 
 				dec_client_id_ref(pclientid);
 				dec_client_record_ref(precord);
 				if (rc)
 					goto restart;
 			} else {
-				V(pclientid->cid_mutex);
+				pthread_mutex_unlock(&pclientid->cid_mutex);
 			}
 
 			RBT_INCREMENT(pn);

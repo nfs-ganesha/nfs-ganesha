@@ -815,7 +815,7 @@ bool nfs_client_id_expire(nfs_client_id_t * clientid,
 	nfs_client_record_t *record;
 	char str[HASHTABLE_DISPLAY_STRLEN];
 
-	P(clientid->cid_mutex);
+	pthread_mutex_lock(&clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			display_client_id_rec(clientid, str);
@@ -823,7 +823,7 @@ bool nfs_client_id_expire(nfs_client_id_t * clientid,
 				     "Expired (skipped) {%s}", str);
 		}
 
-		V(clientid->cid_mutex);
+		pthread_mutex_unlock(&clientid->cid_mutex);
 		return false;
 	}
 
@@ -842,7 +842,7 @@ bool nfs_client_id_expire(nfs_client_id_t * clientid,
 	/* Need to clean up the client record. */
 	record = clientid->cid_client_record;
 
-	V(clientid->cid_mutex);
+	pthread_mutex_unlock(&clientid->cid_mutex);
 
 	/* Detach the clientid record from the client record */
 	if (record->cr_confirmed_rec == clientid)

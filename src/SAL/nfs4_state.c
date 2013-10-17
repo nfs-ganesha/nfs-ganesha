@@ -226,19 +226,19 @@ state_status_t state_add_impl(cache_entry_t * entry, state_type_t state_type,
 
 	inc_state_owner_ref(owner_input);
 
-	P(owner_input->so_mutex);
+	pthread_mutex_lock(&owner_input->so_mutex);
 
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
 		       &pnew_state->state_owner_list);
 
-	V(owner_input->so_mutex);
+	pthread_mutex_unlock(&owner_input->so_mutex);
 
 #ifdef DEBUG_SAL
-	P(all_state_v4_mutex);
+	pthread_mutex_lock(&all_state_v4_mutex);
 
 	glist_add_tail(&state_v4_all, &pnew_state->state_list_all);
 
-	V(all_state_v4_mutex);
+	pthread_mutex_unlock(&all_state_v4_mutex);
 #endif
 
 	/* Copy the result */
@@ -326,9 +326,9 @@ state_status_t state_del_locked(state_t * state, cache_entry_t * entry)
 
 	/* Release the state owner reference */
 	if (state->state_owner != NULL) {
-		P(state->state_owner->so_mutex);
+		pthread_mutex_lock(&state->state_owner->so_mutex);
 		glist_del(&state->state_owner_list);
-		V(state->state_owner->so_mutex);
+		pthread_mutex_unlock(&state->state_owner->so_mutex);
 		dec_state_owner_ref(state->state_owner);
 	}
 
@@ -340,16 +340,16 @@ state_status_t state_del_locked(state_t * state, cache_entry_t * entry)
 		glist_del(&state->state_data.lock.state_sharelist);
 
 	/* Remove from list of states for a particular export */
-	P(state->state_export->exp_state_mutex);
+	pthread_mutex_lock(&state->state_export->exp_state_mutex);
 	glist_del(&state->state_export_list);
-	V(state->state_export->exp_state_mutex);
+	pthread_mutex_unlock(&state->state_export->exp_state_mutex);
 
 #ifdef DEBUG_SAL
-	P(all_state_v4_mutex);
+	pthread_mutex_lock(&all_state_v4_mutex);
 
 	glist_del(&state->state_list_all);
 
-	V(all_state_v4_mutex);
+	pthread_mutex_unlock(&all_state_v4_mutex);
 #endif
 
 	pool_free(state_v4_pool, state);
@@ -503,13 +503,13 @@ void dump_all_states(void)
 	if (!isDebug(COMPONENT_STATE))
 		return;
 
-	P(all_state_v4_mutex);
+	pthread_mutex_lock(&all_state_v4_mutex);
 
 	if (!glist_empty(&state_v4_all)) {
 		struct glist_head *glist;
 
 		LogDebug(COMPONENT_STATE,
-			 " ---------------------- State List ----------------------");
+			 " =State List= ");
 
 		glist_for_each(glist, &state_v4_all) {
 			state_t *pstate =
@@ -541,11 +541,11 @@ void dump_all_states(void)
 		}
 
 		LogDebug(COMPONENT_STATE,
-			 " ---------------------- ---------- ----------------------");
+			 " ----------------------");
 	} else
 		LogDebug(COMPONENT_STATE, "All states released");
 
-	V(all_state_v4_mutex);
+	pthread_mutex_unlock(&all_state_v4_mutex);
 }
 #endif
 

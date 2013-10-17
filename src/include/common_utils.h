@@ -92,10 +92,6 @@ extern int portable_clock_gettime(struct timespec *ts);
 #define SCANDIR_CONST
 #endif
 
-/* My habit with mutex */
-#define P(_mutex_) pthread_mutex_lock(&_mutex_)
-#define V(_mutex_) pthread_mutex_unlock(&_mutex_)
-
 /**
  * @brief Logging write-lock
  *

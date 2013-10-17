@@ -736,12 +736,12 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 	/* Add share to list for NLM Owner */
 	inc_state_owner_ref(owner);
 
-	P(owner->so_mutex);
+	pthread_mutex_lock(&owner->so_mutex);
 
 	glist_add_tail(&owner->so_owner.so_nlm_owner.so_nlm_shares,
 		       &nlm_share->sns_share_per_owner);
 
-	V(owner->so_mutex);
+	pthread_mutex_unlock(&owner->so_mutex);
 
 	dec_state_owner_ref(owner);
 
@@ -749,12 +749,12 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 	inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 			   slc_nsm_client);
 
-	P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+	pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
 	glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		       ssc_share_list, &nlm_share->sns_share_per_client);
 
-	V(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+	pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
 	/* Add share to list for file, if list was empty take a pin ref to keep this
 	 * file pinned in the inode cache.
@@ -805,23 +805,23 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 				cache_inode_dec_pin_ref(entry, TRUE);
 
 			/* Remove the share from the NSM Client list */
-			P(owner->so_owner.so_nlm_owner.so_client->
+			pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client->
 			  slc_nsm_client->ssc_mutex);
 
 			glist_del(&nlm_share->sns_share_per_client);
 
-			V(owner->so_owner.so_nlm_owner.so_client->
+			pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client->
 			  slc_nsm_client->ssc_mutex);
 
 			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
 					   so_client->slc_nsm_client);
 
 			/* Remove the share from the NLM Owner list */
-			P(owner->so_mutex);
+			pthread_mutex_lock(&owner->so_mutex);
 
 			glist_del(&nlm_share->sns_share_per_owner);
 
-			V(owner->so_mutex);
+			pthread_mutex_unlock(&owner->so_mutex);
 
 			dec_state_owner_ref(owner);
 
@@ -959,23 +959,23 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 			cache_inode_dec_pin_ref(entry, TRUE);
 
 		/* Remove the share from the NSM Client list */
-		P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
+		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		  ssc_mutex);
 
 		glist_del(&nlm_share->sns_share_per_client);
 
-		V(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
+		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		  ssc_mutex);
 
 		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 				   slc_nsm_client);
 
 		/* Remove the share from the NLM Owner list */
-		P(owner->so_mutex);
+		pthread_mutex_lock(&owner->so_mutex);
 
 		glist_del(&nlm_share->sns_share_per_owner);
 
-		V(owner->so_mutex);
+		pthread_mutex_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
 
@@ -1017,23 +1017,23 @@ void state_share_wipe(cache_entry_t * entry)
 			cache_inode_dec_pin_ref(entry, FALSE);
 
 		/* Remove the share from the NSM Client list */
-		P(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
+		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		  ssc_mutex);
 
 		glist_del(&nlm_share->sns_share_per_client);
 
-		V(owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
+		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		  ssc_mutex);
 
 		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 				   slc_nsm_client);
 
 		/* Remove the share from the NLM Owner list */
-		P(owner->so_mutex);
+		pthread_mutex_lock(&owner->so_mutex);
 
 		glist_del(&nlm_share->sns_share_per_owner);
 
-		V(owner->so_mutex);
+		pthread_mutex_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
 

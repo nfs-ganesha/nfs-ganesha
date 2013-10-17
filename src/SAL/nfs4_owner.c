@@ -293,11 +293,11 @@ void free_nfs4_owner(state_owner_t * owner)
 	nfs4_Compound_FreeOne(&owner->so_owner.so_nfs4_owner.so_resp);
 
 	/* Remove the owner from the owners per clientid list. */
-	P(owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
 	glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
 
-	V(owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
 	dec_client_id_ref(owner->so_owner.so_nfs4_owner.so_clientrec);
 }
@@ -338,7 +338,7 @@ static void init_nfs4_owner(state_owner_t * owner)
 	/* Increment reference count for clientid record */
 	inc_client_id_ref(owner->so_owner.so_nfs4_owner.so_clientrec);
 
-	P(owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
 	if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
 		/* If open owner, add to clientid lock owner list */
@@ -352,7 +352,7 @@ static void init_nfs4_owner(state_owner_t * owner)
 			       &owner->so_owner.so_nfs4_owner.so_perclient);
 	}
 
-	V(owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 }
 
 /**
@@ -410,7 +410,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
 	owner = get_state_owner(care, &key, init_nfs4_owner, &isnew);
 
 	if (owner != NULL && related_owner != NULL) {
-		P(owner->so_mutex);
+		pthread_mutex_lock(&owner->so_mutex);
 		/* Related owner already exists. */
 		if (owner->so_owner.so_nfs4_owner.so_related_owner == NULL) {
 			/* Attach related owner to owner now that we know it. */
@@ -428,14 +428,14 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
 			LogCrit(COMPONENT_NFS_V4_LOCK,
 				"Related {%s} doesn't match for {%s}", str1,
 				str2);
-			V(owner->so_mutex);
+			pthread_mutex_unlock(&owner->so_mutex);
 
 			/* Release the reference to the owner. */
 			dec_state_owner_ref(owner);
 
 			return NULL;
 		}
-		V(owner->so_mutex);
+		pthread_mutex_unlock(&owner->so_mutex);
 	}
 
 	if (!isnew && owner != NULL && pisnew != NULL) {

@@ -995,13 +995,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	pthread_mutex_lock(&clientid->cid_mutex);
 
 	if (!reserve_lease(clientid)) {
-		V(clientid->cid_mutex);
+		pthread_mutex_unlock(&clientid->cid_mutex);
 		res_OPEN4->status = NFS4ERR_EXPIRED;
 		LogDebug(COMPONENT_NFS_V4, "Lease expired");
 		goto out3;
 	}
 
-	V(clientid->cid_mutex);
+	pthread_mutex_unlock(&clientid->cid_mutex);
 
 	/* Get the open owner */
 

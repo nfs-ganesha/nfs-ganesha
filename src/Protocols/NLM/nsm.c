@@ -92,10 +92,10 @@ bool nsm_monitor(state_nsm_client_t * host)
 	if (host == NULL)
 		return true;
 
-	P(host->ssc_mutex);
+	pthread_mutex_lock(&host->ssc_mutex);
 
 	if (atomic_fetch_int32_t(&host->ssc_monitored)) {
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return true;
 	}
 
@@ -106,15 +106,15 @@ bool nsm_monitor(state_nsm_client_t * host)
 	/* nothing to put in the private data */
 	LogDebug(COMPONENT_NLM, "Monitor %s", host->ssc_nlm_caller_name);
 
-	P(nsm_mutex);
+	pthread_mutex_lock(&nsm_mutex);
 
 	/* create a connection to nsm on the localhost */
 	if (!nsm_connect()) {
 		LogCrit(COMPONENT_NLM,
 			"Can not monitor %s clnt_create returned NULL",
 			nsm_mon.mon_id.mon_name);
-		V(nsm_mutex);
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return false;
 	}
 
@@ -131,8 +131,8 @@ bool nsm_monitor(state_nsm_client_t * host)
 			nsm_mon.mon_id.mon_name, ret, clnt_sperror(nsm_clnt,
 								   ""));
 		nsm_disconnect();
-		V(nsm_mutex);
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return false;
 	}
 
@@ -140,8 +140,8 @@ bool nsm_monitor(state_nsm_client_t * host)
 		LogCrit(COMPONENT_NLM, "Can not monitor %s SM_MON status %d",
 			nsm_mon.mon_id.mon_name, res.res_stat);
 		nsm_disconnect();
-		V(nsm_mutex);
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return false;
 	}
 
@@ -150,8 +150,8 @@ bool nsm_monitor(state_nsm_client_t * host)
 	LogDebug(COMPONENT_NLM, "Monitored %s for nodename %s",
 		 nsm_mon.mon_id.mon_name, nodename);
 
-	V(nsm_mutex);
-	V(host->ssc_mutex);
+	pthread_mutex_unlock(&nsm_mutex);
+	pthread_mutex_unlock(&host->ssc_mutex);
 	return true;
 }
 
@@ -165,10 +165,10 @@ bool nsm_unmonitor(state_nsm_client_t * host)
 	if (host == NULL)
 		return true;
 
-	P(host->ssc_mutex);
+	pthread_mutex_lock(&host->ssc_mutex);
 
 	if (!atomic_fetch_int32_t(&host->ssc_monitored)) {
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return true;
 	}
 
@@ -177,15 +177,15 @@ bool nsm_unmonitor(state_nsm_client_t * host)
 	nsm_mon_id.my_id.my_vers = NLM4_VERS;
 	nsm_mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
 
-	P(nsm_mutex);
+	pthread_mutex_lock(&nsm_mutex);
 
 	/* create a connection to nsm on the localhost */
 	if (!nsm_connect()) {
 		LogCrit(COMPONENT_NLM,
 			"Can not unmonitor %s clnt_create returned NULL",
 			nsm_mon_id.mon_name);
-		V(nsm_mutex);
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return false;
 	}
 
@@ -201,8 +201,8 @@ bool nsm_unmonitor(state_nsm_client_t * host)
 		LogCrit(COMPONENT_NLM, "Can not unmonitor %s SM_MON ret %d %s",
 			nsm_mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
 		nsm_disconnect();
-		V(nsm_mutex);
-		V(host->ssc_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
+		pthread_mutex_unlock(&host->ssc_mutex);
 		return false;
 	}
 
@@ -214,8 +214,8 @@ bool nsm_unmonitor(state_nsm_client_t * host)
 
 	nsm_disconnect();
 
-	V(nsm_mutex);
-	V(host->ssc_mutex);
+	pthread_mutex_unlock(&nsm_mutex);
+	pthread_mutex_unlock(&host->ssc_mutex);
 	return true;
 }
 
@@ -230,13 +230,13 @@ void nsm_unmonitor_all(void)
 	nsm_id.my_vers = NLM4_VERS;
 	nsm_id.my_proc = NLMPROC4_SM_NOTIFY;
 
-	P(nsm_mutex);
+	pthread_mutex_lock(&nsm_mutex);
 
 	/* create a connection to nsm on the localhost */
 	if (!nsm_connect()) {
 		LogCrit(COMPONENT_NLM,
 			"Can not unmonitor all clnt_create returned NULL");
-		V(nsm_mutex);
+		pthread_mutex_unlock(&nsm_mutex);
 		return;
 	}
 
@@ -254,5 +254,5 @@ void nsm_unmonitor_all(void)
 	}
 
 	nsm_disconnect();
-	V(nsm_mutex);
+	pthread_mutex_unlock(&nsm_mutex);
 }
