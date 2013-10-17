@@ -62,9 +62,10 @@
  *
  * @return The cache page size
  */
-static inline size_t CACHE_PAGE_SIZE(const hash_table_t * ht)
+static inline size_t
+CACHE_PAGE_SIZE(const hash_table_t *ht)
 {
-	return ((ht->parameter.cache_entry_count) * sizeof(struct rbt_node *));
+	return (ht->parameter.cache_entry_count) * sizeof(struct rbt_node *);
 }
 
 /**
@@ -79,9 +80,10 @@ static inline size_t CACHE_PAGE_SIZE(const hash_table_t * ht)
  * @return the offset into the cache at which the hash value might be
  *         found
  */
-static inline int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
+static inline int
+cache_offsetof(struct hash_table *ht, uint64_t rbthash)
 {
-	return (rbthash % ht->parameter.cache_entry_count);
+	return rbthash % ht->parameter.cache_entry_count;
 }
 
 /**
@@ -94,7 +96,8 @@ static inline int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
  *
  * @return An error string or "UNKNOWN HASH TABLE ERROR"
  */
-const char *hash_table_err_to_str(hash_error_t err)
+const char *
+hash_table_err_to_str(hash_error_t err)
 {
 	switch (err) {
 	case HASHTABLE_SUCCESS:
@@ -136,9 +139,9 @@ const char *hash_table_err_to_str(hash_error_t err)
  * @retval HASHTABLE_SUCCESS if successfull
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
  */
-static hash_error_t Key_Locate(struct hash_table *ht,
-			       const struct gsh_buffdesc *key, uint32_t index,
-			       uint64_t rbthash, struct rbt_node **node)
+static hash_error_t
+Key_Locate(struct hash_table *ht, const struct gsh_buffdesc *key,
+	   uint32_t index, uint64_t rbthash, struct rbt_node **node)
 {
 	/* The current partition */
 	struct hash_partition *partition = &(ht->partitions[index]);
@@ -239,9 +242,9 @@ static hash_error_t Key_Locate(struct hash_table *ht,
  *         fails
  */
 
-static inline hash_error_t compute(struct hash_table *ht,
-				   const struct gsh_buffdesc *key,
-				   uint32_t * index, uint64_t * rbt_hash)
+static inline hash_error_t
+compute(struct hash_table *ht, const struct gsh_buffdesc *key,
+	uint32_t *index, uint64_t *rbt_hash)
 {
 	/* Compute the partition index and red-black tree hash */
 	if (ht->parameter.hash_func_both) {
@@ -272,7 +275,6 @@ static inline hash_error_t compute(struct hash_table *ht,
    actual functionality. */
 
 /**
- *
  * @brief Initialize a new hash table
  *
  * This function initializes and allocates storage for a hash table.
@@ -284,7 +286,8 @@ static inline hash_error_t compute(struct hash_table *ht,
  *
  */
 
-struct hash_table *HashTable_Init(struct hash_param *hparam)
+struct hash_table *
+HashTable_Init(struct hash_param *hparam)
 {
 	/* The hash table being constructed */
 	struct hash_table *ht = NULL;
@@ -298,9 +301,8 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 	/* The number of fully initialized partitions */
 	uint32_t completed = 0;
 
-	if (pthread_rwlockattr_init(&rwlockattr) != 0) {
+	if (pthread_rwlockattr_init(&rwlockattr) != 0)
 		return NULL;
-	}
 
 	/* At some point factor this out into the OS directory.  it is
 	   necessary to prevent writer starvation under GLIBC. */
@@ -314,13 +316,11 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 	}
 #endif				/* GLIBC */
 
-	if ((ht =
-	     gsh_calloc(1,
-			sizeof(struct hash_table) +
+	ht = gsh_calloc(1, sizeof(struct hash_table) +
 			(sizeof(struct hash_partition) *
-			 hparam->index_size))) == NULL) {
+			 hparam->index_size));
+	if (ht == NULL)
 		goto deconstruct;
-	}
 
 	/* Fixup entry size */
 	if (hparam->flags & HT_FLAG_CACHE) {
@@ -355,9 +355,9 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 	ht->node_pool =
 	    pool_init(NULL, sizeof(rbt_node_t), pool_basic_substrate, NULL,
 		      NULL, NULL);
-	if (!(ht->node_pool)) {
+	if (!(ht->node_pool))
 		goto deconstruct;
-	}
+
 	ht->data_pool =
 	    pool_init(NULL, sizeof(struct hash_data), pool_basic_substrate,
 		      NULL, NULL, NULL);
@@ -380,7 +380,7 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
 	pool_destroy(ht->data_pool);
 
 	gsh_free(ht);
-	return (ht = NULL);
+	return ht = NULL;
 }
 
 /**
@@ -397,17 +397,17 @@ struct hash_table *HashTable_Init(struct hash_param *hparam)
  *
  * @return HASHTABLE_SUCCESS on success, other things on failure
  */
-hash_error_t HashTable_Destroy(struct hash_table * ht,
-			       int (*free_func) (struct gsh_buffdesc,
-						 struct gsh_buffdesc))
+hash_error_t
+HashTable_Destroy(struct hash_table *ht,
+		  int (*free_func)(struct gsh_buffdesc,
+				   struct gsh_buffdesc))
 {
 	size_t index = 0;
 	hash_error_t hrc = HASHTABLE_SUCCESS;
 
 	hrc = HashTable_Delall(ht, free_func);
-	if (hrc != HASHTABLE_SUCCESS) {
+	if (hrc != HASHTABLE_SUCCESS)
 		goto out;
-	}
 
 	for (index = 0; index < ht->parameter.index_size; ++index) {
 		if (ht->partitions[index].cache) {
@@ -447,10 +447,11 @@ hash_error_t HashTable_Destroy(struct hash_table * ht,
  *         table is latched.
  * @retval Others, failure, the table is not latched.
  */
-hash_error_t HashTable_GetLatch(struct hash_table * ht,
-				const struct gsh_buffdesc * key,
-				struct gsh_buffdesc * val, bool may_write,
-				struct hash_latch * latch)
+hash_error_t
+HashTable_GetLatch(struct hash_table *ht,
+		   const struct gsh_buffdesc *key,
+		   struct gsh_buffdesc *val, bool may_write,
+		   struct hash_latch *latch)
 {
 	/* The index specifying the partition to search */
 	uint32_t index = 0;
@@ -466,17 +467,15 @@ hash_error_t HashTable_GetLatch(struct hash_table * ht,
 	/* This combination of options makes no sense ever */
 	assert(!(may_write && !latch));
 
-	if ((rc = compute(ht, key, &index, &rbt_hash))
-	    != HASHTABLE_SUCCESS) {
+	rc = compute(ht, key, &index, &rbt_hash);
+	if (rc != HASHTABLE_SUCCESS)
 		return rc;
-	}
 
 	/* Acquire mutex */
-	if (may_write) {
+	if (may_write)
 		PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].lock));
-	} else {
+	else
 		PTHREAD_RWLOCK_rdlock(&(ht->partitions[index].lock));
-	}
 
 	rc = Key_Locate(ht, key, index, rbt_hash, &locator);
 
@@ -536,7 +535,8 @@ hash_error_t HashTable_GetLatch(struct hash_table * ht,
  * @param[in] latch The latch structure holding retained state
  */
 
-void HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
+void
+HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
 {
 	if (latch) {
 		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].lock);
@@ -570,12 +570,13 @@ void HashTable_ReleaseLatched(struct hash_table *ht, struct hash_latch *latch)
  * @retval Other errors on failure
  */
 
-hash_error_t HashTable_SetLatched(struct hash_table *ht,
-				  struct gsh_buffdesc *key,
-				  struct gsh_buffdesc *val,
-				  struct hash_latch *latch, int overwrite,
-				  struct gsh_buffdesc *stored_key,
-				  struct gsh_buffdesc *stored_val)
+hash_error_t
+HashTable_SetLatched(struct hash_table *ht,
+		     struct gsh_buffdesc *key,
+		     struct gsh_buffdesc *val,
+		     struct hash_latch *latch, int overwrite,
+		     struct gsh_buffdesc *stored_key,
+		     struct gsh_buffdesc *stored_val)
 {
 	/* Stored error return */
 	hash_error_t rc = HASHTABLE_SUCCESS;
@@ -644,12 +645,12 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
 				     latch->index, latch->rbt_hash);
 		}
 
-		if (stored_key) {
+		if (stored_key)
 			*stored_key = descriptors->key;
-		}
-		if (stored_val) {
+
+		if (stored_val)
 			*stored_val = descriptors->val;
-		}
+
 		descriptors->key = *key;
 		descriptors->val = *val;
 		rc = HASHTABLE_OVERWRITTEN;
@@ -722,11 +723,12 @@ hash_error_t HashTable_SetLatched(struct hash_table *ht,
  * @retval Other errors on failure
  */
 
-hash_error_t HashTable_DeleteLatched(struct hash_table * ht,
-				     const struct gsh_buffdesc * key,
-				     struct hash_latch * latch,
-				     struct gsh_buffdesc * stored_key,
-				     struct gsh_buffdesc * stored_val)
+hash_error_t
+HashTable_DeleteLatched(struct hash_table *ht,
+			const struct gsh_buffdesc *key,
+			struct hash_latch *latch,
+			struct gsh_buffdesc *stored_key,
+			struct gsh_buffdesc *stored_val)
 {
 	/* The pair of buffer descriptors comprising the stored entry */
 	struct hash_data *data = NULL;
@@ -763,13 +765,11 @@ hash_error_t HashTable_DeleteLatched(struct hash_table * ht,
 			     latch->rbt_hash);
 	}
 
-	if (stored_key) {
+	if (stored_key)
 		*stored_key = data->key;
-	}
 
-	if (stored_val) {
+	if (stored_val)
 		*stored_val = data->val;
-	}
 
 	/* Clear cache */
 	if (partition->cache) {
@@ -817,9 +817,10 @@ hash_error_t HashTable_DeleteLatched(struct hash_table * ht,
  *
  * @return HASHTABLE_SUCCESS or errors
  */
-hash_error_t HashTable_Delall(struct hash_table * ht,
-			      int (*free_func) (struct gsh_buffdesc,
-						struct gsh_buffdesc))
+hash_error_t
+HashTable_Delall(struct hash_table *ht,
+		 int (*free_func)(struct gsh_buffdesc,
+				  struct gsh_buffdesc))
 {
 	/* Successive partition numbers */
 	uint32_t index = 0;
@@ -882,7 +883,8 @@ hash_error_t HashTable_Delall(struct hash_table * ht,
  * @param[in] ht        The hashtable to be used.
  */
 
-void HashTable_Log(log_components_t component, struct hash_table *ht)
+void
+HashTable_Log(log_components_t component, struct hash_table *ht)
 {
 	/* The current position in the hash table */
 	struct rbt_node *it = NULL;
@@ -906,9 +908,8 @@ void HashTable_Log(log_components_t component, struct hash_table *ht)
 	LogFullDebug(component, "The hash is partitioned into %d trees",
 		     ht->parameter.index_size);
 
-	for (i = 0; i < ht->parameter.index_size; i++) {
+	for (i = 0; i < ht->parameter.index_size; i++)
 		nb_entries += ht->partitions[i].count;
-	}
 
 	LogFullDebug(component, "The hash contains %zd entries", nb_entries);
 
@@ -957,10 +958,11 @@ void HashTable_Log(log_components_t component, struct hash_table *ht)
  * @retval HASHTABLE_SUCCESS if successfull.
  */
 
-hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
-				    struct gsh_buffdesc *key,
-				    struct gsh_buffdesc *val,
-				    hash_set_how_t how)
+hash_error_t
+HashTable_Test_And_Set(struct hash_table *ht,
+		       struct gsh_buffdesc *key,
+		       struct gsh_buffdesc *val,
+		       hash_set_how_t how)
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -970,9 +972,9 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
 	rc = HashTable_GetLatch(ht, key, NULL,
 				(how != HASHTABLE_SET_HOW_TEST_ONLY), &latch);
 
-	if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+	if ((rc != HASHTABLE_SUCCESS) &&
+	    (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
 		return rc;
-	}
 
 	if (how == HASHTABLE_SET_HOW_TEST_ONLY) {
 		HashTable_ReleaseLatched(ht, &latch);
@@ -992,9 +994,8 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
 				  (how == HASHTABLE_SET_HOW_SET_OVERWRITE),
 				  NULL, NULL);
 
-	if (rc == HASHTABLE_OVERWRITTEN) {
+	if (rc == HASHTABLE_OVERWRITTEN)
 		rc = HASHTABLE_SUCCESS;
-	}
 
 	return rc;
 }
@@ -1015,9 +1016,10 @@ hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
  *
  * @return HASHTABLE_SUCCESS or errors
  */
-hash_error_t HashTable_GetRef(hash_table_t * ht, struct gsh_buffdesc * key,
-			      struct gsh_buffdesc * val,
-			      void (*get_ref) (struct gsh_buffdesc *))
+hash_error_t
+HashTable_GetRef(hash_table_t *ht, struct gsh_buffdesc *key,
+		 struct gsh_buffdesc *val,
+		 void (*get_ref)(struct gsh_buffdesc *))
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -1028,9 +1030,8 @@ hash_error_t HashTable_GetRef(hash_table_t * ht, struct gsh_buffdesc * key,
 
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
-		if (get_ref != NULL) {
+		if (get_ref != NULL)
 			get_ref(val);
-		}
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		HashTable_ReleaseLatched(ht, &latch);
 		break;
@@ -1063,10 +1064,11 @@ hash_error_t HashTable_GetRef(hash_table_t * ht, struct gsh_buffdesc * key,
  * @retval HASHTABLE_NOT_DELETED put_ref returned a non-zero value
  */
 
-hash_error_t HashTable_DelRef(hash_table_t * ht, struct gsh_buffdesc * key,
-			      struct gsh_buffdesc * stored_key,
-			      struct gsh_buffdesc * stored_val,
-			      int (*put_ref) (struct gsh_buffdesc *))
+hash_error_t
+HashTable_DelRef(hash_table_t *ht, struct gsh_buffdesc *key,
+		 struct gsh_buffdesc *stored_key,
+		 struct gsh_buffdesc *stored_val,
+		 int (*put_ref)(struct gsh_buffdesc *))
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -1121,8 +1123,9 @@ hash_error_t HashTable_DelRef(hash_table_t * ht, struct gsh_buffdesc * key,
  *         values did not match.
  */
 
-hash_error_t HashTable_DelSafe(hash_table_t * ht, struct gsh_buffdesc * key,
-			       struct gsh_buffdesc * val)
+hash_error_t
+HashTable_DelSafe(hash_table_t *ht, struct gsh_buffdesc *key,
+		  struct gsh_buffdesc *val)
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;

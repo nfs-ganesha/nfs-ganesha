@@ -1,10 +1,10 @@
 /**
- * @defgroup HashTable A non-intrusive, partitioned hash-keyed tree
+ * @addtogroup hashtable
  * @{
  */
 
-#ifndef _ERR_HASHTABLE_H
-#define _ERR_HASHTABLE_H
+#ifndef ERR_HASHTABLE_H
+#define ERR_HASHTABLE_H
 
 #include "log.h"
 #include "HashTable.h"
@@ -17,18 +17,19 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -73,6 +74,6 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_hash[] = {
 	ERR_NULL, "ERR_NULL", ""}
 };
 
-#endif				/* _ERR_HASHTABLE_H */
+#endif /* ERR_HASHTABLE_H */
 
 /** @} */
