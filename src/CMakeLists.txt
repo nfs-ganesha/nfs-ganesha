@@ -650,7 +650,7 @@ add_subdirectory(support)
 add_subdirectory(os)
 
 add_subdirectory(FSAL)
-add_subdirectory(IdMapper)
+add_subdirectory(idmapper)
 
 add_subdirectory(MainNFSD)
 add_subdirectory(tools)

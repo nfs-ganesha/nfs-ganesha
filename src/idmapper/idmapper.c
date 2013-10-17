@@ -57,7 +57,7 @@
 static struct gsh_buffdesc owner_domain;
 
 /**
- * @brief Initialize the IdMapper
+ * @brief Initialize the ID Mapper
  *
  * @return true on success, false on failure
  */
