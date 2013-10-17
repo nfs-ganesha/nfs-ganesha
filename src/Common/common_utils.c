@@ -174,12 +174,18 @@ int snprintmem(char *target, int tgt_size, void *source, int mem_size)
 }
 
 /* test if a letter is hexa */
-#define IS_HEXA( c )  ( (((c) >= '0') && ((c) <= '9')) || (((c) >= 'A') && ((c) <= 'F')) || (((c) >= 'a') && ((c) <= 'f')) )
+#define IS_HEXA(c)  \
+	((((c) >= '0') && ((c) <= '9')) || (((c) >= 'A') && ((c) <= 'F')) \
+	 || (((c) >= 'a') && ((c) <= 'f')))
 
 /* converts an hexa letter */
-#define HEXA2BYTE( c ) ((unsigned char)(((c) >= '0') && ((c) <= '9')?((c) - '0'):\
-                        (((c) >= 'A') && ((c) <= 'F')?((c)-'A'+10) :\
-                        (((c) >= 'a') && ((c) <= 'f')?((c)-'a'+10) : /*error :*/ 0 ))))
+#define HEXA2BYTE(c)							\
+	((unsigned char)						\
+	 (((c) >= '0') && ((c) <= '9') ?				\
+	  ((c) - '0') : (((c) >= 'A') && ((c) <= 'F') ?			\
+			 ((c) - 'A' + 10) : (((c) >= 'a') &&		\
+					     ((c) <= 'f') ?		\
+					     ((c) - 'a' + 10) : 0))))
 
 /**
  * snscanmem:
@@ -212,16 +218,16 @@ int sscanmem(void *target, int tgt_size, const char *str_source)
 
 		unsigned char tmp_val;
 
-		/* we must read 2 bytes (written in hexa) to have 1 target byte value. */
+		/* we must read 2 bytes (written in hexa) to have 1
+		   target byte value. */
 		if ((*p_src == '\0') || (*(p_src + 1) == '\0')) {
 			/* error, the source string is too small */
 			return -1;
 		}
 
 		/* they must be hexa values */
-		if (!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1))) {
+		if (!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1)))
 			return -1;
-		}
 
 		/* we read hexa values. */
 		tmp_val = (HEXA2BYTE(*p_src) << 4) + HEXA2BYTE(*(p_src + 1));
