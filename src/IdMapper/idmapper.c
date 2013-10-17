@@ -147,18 +147,18 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 
 			if (group) {
 				struct group g;
-				struct group *pg;
+				struct group *gres;
 
 				rc = getgrgid_r(id, &g, namebuff, PWENT_MAX_LEN,
-						&pg);
-				nulled = (pg == NULL);
+						&gres);
+				nulled = (gres == NULL);
 			} else {
 				struct passwd p;
-				struct passwd *pp;
+				struct passwd *pres;
 
 				rc = getpwuid_r(id, &p, namebuff, PWENT_MAX_LEN,
-						&pp);
-				nulled = (pp == NULL);
+						&pres);
+				nulled = (pres == NULL);
 			}
 
 			if ((rc == 0) && !nulled) {
@@ -326,15 +326,15 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 	}
 	if (group) {
 		struct group g;
-		struct group *pg;
+		struct group *gres;
 		char *gbuf = alloca(PWENT_MAX_LEN);
 
-		if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &pg) != 0) {
+		if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &gres) != 0) {
 			LogMajor(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
 				 name);
 			return false;
-		} else if (pg != NULL) {
-			*id = pg->gr_gid;
+		} else if (gres != NULL) {
+			*id = gres->gr_gid;
 			return true;
 		}
 #ifndef USE_NFSIDMAP
@@ -352,16 +352,16 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 #endif
 	} else {
 		struct passwd p;
-		struct passwd *pp;
-		char *pbuf = alloca(PWENT_MAX_LEN);
+		struct passwd *pres;
+		char *buf = alloca(PWENT_MAX_LEN);
 
-		if (getpwnam_r(name, &p, pbuf, PWENT_MAX_LEN, &pp) != 0) {
+		if (getpwnam_r(name, &p, buf, PWENT_MAX_LEN, &pres) != 0) {
 			LogInfo(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
 				name);
 			return false;
-		} else if (pp != NULL) {
-			*id = pp->pw_uid;
-			*gid = pp->pw_gid;
+		} else if (pres != NULL) {
+			*id = pres->pw_uid;
+			*gid = pres->pw_gid;
 			*got_gid = true;
 			return true;
 		}
@@ -559,29 +559,29 @@ bool name2gid(const struct gsh_buffdesc *name, gid_t *gid, const gid_t anon)
  * @brief Convert a principal (as returned by @c gss_display_name) to a UID
  *
  * @param[in]     name The principal of the user
- * @param[out]    puid The resulting UID
+ * @param[out]    uid The resulting UID
  * @param[in,out] gd   GSS data
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t *puid, gid_t *pgid,
+bool principal2uid(char *principal, uid_t *uid, gid_t *gid,
 		   struct svc_rpc_gss_data *gd)
 #else
 /**
  * @brief Convert a principal (as returned by @c gss_display_name) to a UID
  *
  * @param[in]     name The principal of the user
- * @param[out]    puid The resulting UID
+ * @param[out]    uid The resulting UID
  *
  * @return true if successful, false otherwise
  */
-bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
+bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #endif
 {
 #ifdef USE_NFSIDMAP
 	uid_t gss_uid = ANON_UID;
 	gid_t gss_gid = ANON_GID;
-	const gid_t *pgss_gid = NULL;
+	const gid_t *gss_gidres = NULL;
 	int rc;
 	bool success;
 	struct gsh_buffdesc princbuff = {
@@ -596,9 +596,9 @@ bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
 #ifdef USE_NFSIDMAP
 	pthread_rwlock_rdlock(&idmapper_user_lock);
 	success =
-	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &pgss_gid, true);
-	if (success && pgss_gid)
-		gss_gid = *pgss_gid;
+	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
+	if (success && gss_gidres)
+		gss_gid = *gss_gidres;
 	pthread_rwlock_unlock(&idmapper_user_lock);
 	if (unlikely(!success)) {
 		if ((princbuff.len >= 4)
@@ -614,7 +614,7 @@ bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
 			 * choice is made to map them to root */
 			/* This is a "root" request made from the
 			   hostbased nfs principal, use root */
-			*puid = 0;
+			*uid = 0;
 			return true;
 		}
 		/* nfs4_gss_princ_to_ids required to extract uid/gid
@@ -707,8 +707,8 @@ bool principal2uid(char *principal, uid_t *puid, gid_t *pgid)
 		}
 	}
 
-	*puid = gss_uid;
-	*pgid = gss_gid;
+	*uid = gss_uid;
+	*gid = gss_gid;
 
 	return true;
 #else				/* !USE_NFSIDMAP */
