@@ -53,6 +53,25 @@ ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
 ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
 
+/**
+ * Override internal Gluster defines for the time being.
+ */
+/* Values for valid falgs to be used when using XXXsetattr, to set multiple
+ a ttribute values passed via t*he related stat structure.
+ */
+#define GLAPI_SET_ATTR_MODE  GFAPI_SET_ATTR_MODE
+#define GLAPI_SET_ATTR_UID   GFAPI_SET_ATTR_UID
+#define GLAPI_SET_ATTR_GID   GFAPI_SET_ATTR_GID
+#define GLAPI_SET_ATTR_SIZE  GFAPI_SET_ATTR_SIZE
+#define GLAPI_SET_ATTR_ATIME GFAPI_SET_ATTR_ATIME
+#define GLAPI_SET_ATTR_MTIME GFAPI_SET_ATTR_MTIME
+
+/* Handle length for object handles returned from glfs_h_extract_handle or
+ * glfs_h_create_from_handle */
+#define GLAPI_HANDLE_LENGTH GFAPI_HANDLE_LENGTH
+
+/* END Override */
+
 #ifdef GLTIMING
 typedef enum {
 	lat_handle_release = 0,
@@ -78,9 +97,10 @@ typedef enum {
 	lat_readsymlink,
 	lat_linkfile,
 	lat_renamefile,
+	lat_lock_op,
 	lat_end_slots
 } latency_slots_t;
-#define LATENCY_SLOTS 23
+#define LATENCY_SLOTS 24
 
 struct latency_data {
 	uint64_t count;
