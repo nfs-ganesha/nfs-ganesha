@@ -2725,13 +2725,13 @@ bool export_client_match(sockaddr_t *hostaddr, exportlist_client_t *clients,
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test HOSTIF_CLIENT: Test entry %d: clientaddr %d.%d.%d.%d, "
 				     "match with %d.%d.%d.%d", i,
-				     (int)(ntohl(p_client->client.hostif.
+				     (int)(ntohl(client->client.hostif.
 						 clientaddr) >> 24),
-				     (int)((ntohl(p_client->client.hostif.
+				     (int)((ntohl(client->client.hostif.
 						  clientaddr) >> 16) & 0xFF),
-				     (int)((ntohl(p_client->client.hostif.
+				     (int)((ntohl(client->client.hostif.
 						  clientaddr) >> 8) & 0xFF),
-				     (int)(ntohl(p_client->client.hostif.
+				     (int)(ntohl(client->client.hostif.
 						 clientaddr) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
@@ -2749,21 +2749,21 @@ bool export_client_match(sockaddr_t *hostaddr, exportlist_client_t *clients,
 		case NETWORK_CLIENT:
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test NETWORK_CLIENT: Test net %d.%d.%d.%d mask %d.%d.%d.%d, match with %d.%d.%d.%d",
-				     (int)(ntohl(p_client->client.network.
+				     (int)(ntohl(client->client.network.
 						 netaddr) >> 24),
-				     (int)((ntohl(p_client->client.network.
+				     (int)((ntohl(client->client.network.
 						  netaddr) >> 16) & 0xFF),
-				     (int)((ntohl(p_client->client.network.
+				     (int)((ntohl(client->client.network.
 						  netaddr) >> 8) & 0xFF),
-				     (int)(ntohl(p_client->client.network.
+				     (int)(ntohl(client->client.network.
 						 netaddr) & 0xFF),
-				     (int)(ntohl(p_client->client.network.
+				     (int)(ntohl(client->client.network.
 						 netmask) >> 24),
-				     (int)((ntohl(p_client->client.network.
+				     (int)((ntohl(client->client.network.
 						  netmask) >> 16) & 0xFF),
-				     (int)((ntohl(p_client->client.network.
+				     (int)((ntohl(client->client.network.
 						  netmask) >> 8) & 0xFF),
-				     (int)(ntohl(p_client->client.network.
+				     (int)(ntohl(client->client.network.
 						 netmask) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
@@ -3011,7 +3011,7 @@ bool export_client_matchv6(struct in6_addr *paddrv6,
 
 int export_client_match_any(sockaddr_t *hostaddr,
 			    exportlist_client_t *clients,
-			    exportlist_client_entry_t *pclient_found,
+			    exportlist_client_entry_t *client_found,
 			    unsigned int export_option)
 {
 	if (hostaddr->ss_family == AF_INET6) {

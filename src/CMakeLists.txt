@@ -636,7 +636,7 @@ Please run the following command to do that and use cmake again:
 ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
 add_subdirectory(log)
-add_subdirectory(Common)
+add_subdirectory(common)
 add_subdirectory(ConfigParsing)
 add_subdirectory(cidr)
 add_subdirectory(test)

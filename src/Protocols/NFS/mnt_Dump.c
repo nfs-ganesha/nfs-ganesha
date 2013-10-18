@@ -66,7 +66,7 @@ int mnt_Dump(nfs_arg_t *arg, exportlist_t *export,
 
 	/* Ganesha does not support the mount list so this is a NOOP */
 
-	pres->res_dump = NULL;
+	res->res_dump = NULL;
 
 	return NFS_REQ_OK;
 }				/* mnt_Null */
@@ -76,10 +76,10 @@ int mnt_Dump(nfs_arg_t *arg, exportlist_t *export,
  *
  * Frees the result structure allocated for mnt_Dump.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Dump_Free(nfs_res_t *pres)
+void mnt_Dump_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
 	return;
