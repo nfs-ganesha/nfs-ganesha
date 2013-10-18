@@ -25,12 +25,10 @@
  */
 
 /**
- * \file    9p_dispatcher.c
+ * \file    9p_rdma_dispatcher.c
  * \date    $Date: 2006/02/23 12:33:05 $
- * \brief   The file that contain the '_9p_dispatcher_thread' routine for ganesha.
+ * \brief   The file that contains the '_9p_rdma_dispatcher_thread' function.
  *
- * 9p_dispatcher.c : The file that contain the '_9p_dispatcher_thread' routine
- * for ganesha (and all the related stuff).
  *
  */
 #include "config.h"
@@ -83,9 +81,8 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 			 "9P/RDMA: Freeing data associated with trans [%p]",
 			 trans);
 
-		if (priv->pconn) {
+		if (priv->pconn)
 			_9p_cleanup_fids(priv->pconn);
-		}
 
 		if (priv->datalock) {
 			if (priv->datalock->data && priv->datalock->data->mr)
@@ -93,9 +90,8 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 			gsh_free(priv->datalock);
 		}
 
-		if (priv->rdata) {
+		if (priv->rdata)
 			gsh_free(priv->rdata);
-		}
 
 		if (priv->rdmabuf)
 			gsh_free(priv->rdmabuf);
@@ -110,16 +106,16 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 	pthread_exit(NULL);
 }
 
-void _9p_rdma_cleanup_conn(msk_trans_t * trans)
+void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 {
 	pthread_attr_t attr_thr;
 	pthread_t thr_id;
 
 	/* Set the pthread attributes */
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
-	if (pthread_attr_init(&attr_thr)
-	    || pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM)
-	    || pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
+	if (pthread_attr_init(&attr_thr) ||
+	    pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) ||
+	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
 		return;
 
 	pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread, trans);
@@ -127,13 +123,13 @@ void _9p_rdma_cleanup_conn(msk_trans_t * trans)
 
 /**
  * _9p_rdma_handle_trans_thr: 9P/RDMA listener
- * 
+ *
  * @param Arg : contains the child trans to be managed
- * 
- * @return NULL 
- * 
+ *
+ * @return NULL
+ *
  */
-/* Equivalent du _9p_socket_thread( */
+/* Equivalent du _9p_socket_thread */
 void *_9p_rdma_thread(void *Arg)
 {
 	msk_trans_t *trans = Arg;
@@ -147,7 +143,8 @@ void *_9p_rdma_thread(void *Arg)
 	unsigned int i = 0;
 	int rc = 0;
 
-	if ((priv = gsh_malloc(sizeof(*priv))) == NULL) {
+	priv = gsh_malloc(sizeof(*priv));
+	if (priv == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc private structure");
 		goto error;
@@ -155,7 +152,8 @@ void *_9p_rdma_thread(void *Arg)
 	memset(priv, 0, sizeof(*priv));
 	trans->private_data = priv;
 
-	if ((p_9p_conn = gsh_malloc(sizeof(*p_9p_conn))) == NULL) {
+	p_9p_conn = gsh_malloc(sizeof(*p_9p_conn));
+	if (p_9p_conn == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc _9p_conn");
 		goto error;
@@ -177,15 +175,16 @@ void *_9p_rdma_thread(void *Arg)
 	/* Init the fids pointers array */
 	memset(&p_9p_conn->fids, 0, _9P_FID_PER_CONN * sizeof(_9p_fid_t *));
 
-	/* Set initial msize. Client may request a lower value during TVERSION */
+	/* Set initial msize.
+	 * Client may request a lower value during TVERSION */
 	p_9p_conn->msize = nfs_param._9p_param._9p_rdma_msize;
 
 	if (gettimeofday(&p_9p_conn->birth, NULL) == -1)
 		LogMajor(COMPONENT_9P, "Cannot get connection's time of birth");
 
 	/* Alloc rdmabuf */
-	if ((rdmabuf =
-	     gsh_malloc((_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE)) == NULL) {
+	rdmabuf = gsh_malloc((_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE);
+	if (rdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
 		goto error;
@@ -194,10 +193,10 @@ void *_9p_rdma_thread(void *Arg)
 	priv->rdmabuf = rdmabuf;
 
 	/* Register rdmabuf */
-	if ((mr =
-	     msk_reg_mr(trans, rdmabuf,
+	mr = msk_reg_mr(trans, rdmabuf,
 			(_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE,
-			IBV_ACCESS_LOCAL_WRITE)) == NULL) {
+			IBV_ACCESS_LOCAL_WRITE);
+	if (mr == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not register rdmabuf");
 		goto error;
@@ -205,7 +204,8 @@ void *_9p_rdma_thread(void *Arg)
 
 	/* Get prepared to recv data */
 
-	if ((rdata = gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*rdata))) == NULL) {
+	rdata = gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*rdata));
+	if (rdata == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdata");
 		goto error;
@@ -213,8 +213,8 @@ void *_9p_rdma_thread(void *Arg)
 	memset(rdata, 0, (_9P_RDMA_BUFF_NUM * sizeof(*rdata)));
 	priv->rdata = rdata;
 
-	if ((datalock =
-	     gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*datalock))) == NULL) {
+	datalock = gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*datalock));
+	if (datalock == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc datalock");
 		goto error;
@@ -233,13 +233,13 @@ void *_9p_rdma_thread(void *Arg)
 			datalock[i].sender = &datalock[i + _9P_RDMA_OUT];
 		else
 			datalock[i].sender = NULL;
-	}			/*  for (unsigned int i=0; i < _9P_RDMA_BUFF_NUM; i++)  */
+	}
 
 	for (i = 0; i < _9P_RDMA_OUT; i++) {
-		if ((rc =
-		     msk_post_recv(trans, &rdata[i], _9p_rdma_callback_recv,
+		rc = msk_post_recv(trans, &rdata[i], _9p_rdma_callback_recv,
 				   _9p_rdma_callback_recv_err,
-				   &(datalock[i]))) != 0) {
+				   &(datalock[i]));
+		if (rc != 0) {
 			LogEvent(COMPONENT_9P,
 				 "9P/RDMA: trans handler could recv first byte of datalock[%u], rc=%u",
 				 i, rc);
@@ -248,7 +248,8 @@ void *_9p_rdma_thread(void *Arg)
 	}
 
 	/* Finalize accept */
-	if ((rc = msk_finalize_accept(trans)) != 0) {
+	rc = msk_finalize_accept(trans);
+	if (rc != 0) {
 		LogMajor(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not finalize accept, rc=%u",
 			 rc);
@@ -295,7 +296,8 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	trans_attr.worker_count = -1;
 	/* if worker_count isn't -1: trans_attr.worker_queue_size = 256; */
 	trans_attr.debug = MSK_DEBUG_EVENT;
-	/* stats: trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
+	/* stats:  (what does this mean????
+	 * trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
 
 	SetNameFunction("_9p_rdma_dispatch_thr");
 
@@ -337,13 +339,15 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 
 	/* Start infinite loop here */
 	while (1) {
-		if ((child_trans = msk_accept_one(trans)) == NULL)
+		child_trans = msk_accept_one(trans);
+		if (child_trans == NULL)
 			LogMajor(COMPONENT_9P,
 				 "9P/RDMA : dispatcher failed to accept a new client");
 		else {
-			if (pthread_create
-			    (&thrid_handle_trans, &attr_thr, _9p_rdma_thread,
-			     child_trans))
+			if (pthread_create(&thrid_handle_trans,
+					   &attr_thr,
+					   _9p_rdma_thread,
+					   child_trans))
 				LogMajor(COMPONENT_9P,
 					 "9P/RDMA : dispatcher accepted a new client but could not spawn a related thread");
 			else

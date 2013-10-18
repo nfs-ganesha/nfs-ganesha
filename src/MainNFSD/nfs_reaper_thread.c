@@ -41,7 +41,7 @@ unsigned int reaper_delay = REAPER_DELAY;
 
 static struct fridgethr *reaper_fridge;
 
-static int reap_hash_table(hash_table_t * ht_reap)
+static int reap_hash_table(hash_table_t *ht_reap)
 {
 	struct rbt_head *head_rbt;
 	struct hash_data *addr = NULL;
@@ -101,7 +101,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
 
 				/* Take cr_mutex and expire clientid */
 				P(precord->cr_mutex);
-/* @TODO@ This is incomplete! the context has to be filled in 
+/* @TODO@ This is incomplete! the context has to be filled in
  * from somewhere
  */
 				memset(&req_ctx, 0, sizeof(req_ctx));

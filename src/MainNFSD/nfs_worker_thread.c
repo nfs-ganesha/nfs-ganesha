@@ -540,8 +540,9 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 			      .funcname = "nlm4_Unshare",
 			      .dispatch_behaviour = NEEDS_CRED | NEEDS_EXPORT},
 	[NLMPROC4_NM_LOCK] = {
-			      /* NLM_NM_LOCK uses the same handling as NLM_LOCK except for
-			       * monitoring, nlm4_Lock will make that determination.
+			      /* NLM_NM_LOCK uses the same handling as NLM_LOCK
+			       * except for monitoring, nlm4_Lock will make
+			       * that determination.
 			       */
 			      .service_function = nlm4_Lock,
 			      .free_function = nlm4_Lock_Free,
@@ -670,32 +671,26 @@ const nfs_function_desc_t rquota2_func_desc[] = {
  *
  * @return Function vector for program.
  */
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs)
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 {
 	struct svc_req *req = &preqnfs->req;
 	const nfs_function_desc_t *funcdesc = INVALID_FUNCDESC;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
-		funcdesc =
-		    (req->rq_vers ==
-		     NFS_V3) ? &nfs3_func_desc[req->
-					       rq_proc] : &nfs4_func_desc[req->
-									  rq_proc];
+		funcdesc = (req->rq_vers == NFS_V3) ?
+			&nfs3_func_desc[req->rq_proc] :
+			&nfs4_func_desc[req->rq_proc];
 	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]) {
 		funcdesc = &nlm4_func_desc[req->rq_proc];
 	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]) {
 		preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
-		funcdesc =
-		    (req->rq_vers ==
-		     MOUNT_V1) ? &mnt1_func_desc[req->
-						 rq_proc] :
-		    &mnt3_func_desc[req->rq_proc];
+		funcdesc = (req->rq_vers == MOUNT_V1) ?
+			&mnt1_func_desc[req->rq_proc] :
+			&mnt3_func_desc[req->rq_proc];
 	} else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
-		funcdesc =
-		    (req->rq_vers ==
-		     RQUOTAVERS) ? &rquota1_func_desc[req->
-						      rq_proc] :
-		    &rquota2_func_desc[req->rq_proc];
+		funcdesc = (req->rq_vers == RQUOTAVERS) ?
+			&rquota1_func_desc[req->rq_proc] :
+			&rquota2_func_desc[req->rq_proc];
 	}
 	return funcdesc;
 }
@@ -707,8 +702,8 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs)
  * @param[in,out] worker_data Worker thread context
  *
  */
-static void nfs_rpc_execute(request_data_t * preq,
-			    nfs_worker_data_t * worker_data)
+static void nfs_rpc_execute(request_data_t *preq,
+			    nfs_worker_data_t *worker_data)
 {
 	nfs_request_data_t *preqnfs = preq->r_u.nfs;
 	nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
@@ -751,13 +746,11 @@ static void nfs_rpc_execute(request_data_t * preq,
 	 * capture hostaddr at SVC_RECV).  For TCP, if we intend to use
 	 * this, we should sprint a buffer once, in when we're setting up
 	 * xprt private data. */
-	if (copy_xprt_addr(req_ctx.caller_addr, xprt) == 0)
 
 /* can I change this to be call by ref instead of copy?
  * the xprt is valid for the lifetime here
  */
-
-	{
+	if (copy_xprt_addr(req_ctx.caller_addr, xprt) == 0) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "copy_xprt_addr failed for Program %d, Version %d, "
 			     "Function %d", (int)req->rq_prog,
@@ -808,7 +801,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 	} else {
 		switch (dpq_status) {
 		case DUPREQ_EXISTS:
-			/* Found the request in the dupreq cache.  Send cached reply. */
+			/* Found the request in the dupreq cache.
+			 * Send cached reply. */
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "DUP: DupReq Cache Hit: using previous "
 				     "reply, rpcxid=%u", req->rq_xid);
@@ -845,7 +839,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 			/* Ignore the request, send no error */
 			break;
 
-			/* something is very wrong with the duplicate request cache */
+			/* something is very wrong with
+			 * the duplicate request cache */
 		case DUPREQ_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Did not find the request in the duplicate request cache "
@@ -888,9 +883,10 @@ static void nfs_rpc_execute(request_data_t * preq,
 	/* Get the export entry */
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
 		/* The NFSv3 functions' arguments always begin with the file
-		 * handle (but not the NULL function).  This hook is used to get the
-		 * fhandle with the arguments and so determine the export entry to be
-		 * used.  In NFSv4, junction traversal is managed by the protocol.
+		 * handle (but not the NULL function).  This hook is used to
+		 * get the fhandle with the arguments and so determine the
+		 * export entry to be used.  In NFSv4, junction traversal
+		 * is managed by the protocol.
 		 */
 
 		progname = "NFS";
@@ -922,8 +918,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 			if ((req_ctx.export->export.export_perms.
 			     options & EXPORT_OPTION_NFSV3) == 0)
 				goto handle_err;
-			/* privileged port only makes sense for V3.  V4 can go thru
-			 * firewalls and so all bets are off
+			/* privileged port only makes sense for V3.
+			 * V4 can go thru firewalls and so all bets are off
 			 */
 			if ((req_ctx.export->export.export_perms.
 			     options & EXPORT_OPTION_PRIVILEGED_PORT)
@@ -939,7 +935,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 				     "Found export entry for path=%s as exportid=%d",
 				     req_ctx.export->export.fullpath,
 				     req_ctx.export->export.id);
-		} else {	/* NFS V4 gets its own export id from the ops in the compound */
+		} else {	/* NFS V4 gets its own export id from the ops
+				 * in the compound */
 			protocol_options |= EXPORT_OPTION_NFSV4;
 		}
 	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]) {
@@ -995,10 +992,12 @@ static void nfs_rpc_execute(request_data_t * preq,
 					req_ctx.client->hostaddr_str);
 				req_ctx.export = NULL;
 
-				/* We need to send a NLM4_STALE_FH response (NLM doesn't have an
-				 * error code for BADHANDLE), but we don't know how to do that
-				 * here, we will send a NULL pexport to NLM routine to let it know
-				 * what to do since it can respond to ASYNC calls.
+				/* We need to send a NLM4_STALE_FH response
+				 * (NLM doesn't have an error code for
+				 * BADHANDLE), but we don't know how to do that
+				 * here, we will send a NULL pexport to NLM
+				 * routine to let it know what to do since it
+				 * can respond to ASYNC calls.
 				 */
 			} else {
 				req_ctx.export = get_gsh_export(exportid, true);
@@ -1008,10 +1007,13 @@ static void nfs_rpc_execute(request_data_t * preq,
 						req_ctx.client->hostaddr_str,
 						exportid);
 
-					/* We need to send a NLM4_STALE_FH response (NLM doesn't have an
-					 * error code for BADHANDLE), but we don't know how to do that
-					 * here, we will send a NULL pexport to NLM routine to let it know
-					 * what to do since it can respond to ASYNC calls.
+					/* We need to send a NLM4_STALE_FH
+					 * response (NLM doesn't have an error
+					 * code for BADHANDLE), but we don't
+					 * know how to do that here, we will
+					 * send a NULL pexport to NLM routine
+					 * to let it know what to do since it
+					 * can respond to ASYNC calls.
 					 */
 				} else
 				    if ((req_ctx.export->export.export_perms.
@@ -1106,7 +1108,8 @@ static void nfs_rpc_execute(request_data_t * preq,
 			goto auth_failure;
 		}
 
-		/* Check if client is using a privileged port, but only for NFS protocol */
+		/* Check if client is using a privileged port,
+		 * but only for NFS protocol */
 		if ((req->rq_prog == nfs_param.core_param.program[P_NFS])
 		    && ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT)
 			!= 0) && (port >= IPPORT_RESERVED)) {
@@ -1134,15 +1137,17 @@ static void nfs_rpc_execute(request_data_t * preq,
 	}
 
 	/*
-	 * It is now time for checking if export list allows the machine to perform
-	 * the request
+	 * It is now time for checking if export list allows the machine
+	 * to perform the request
 	 */
 	if (req_ctx.export != NULL
 	    && (preqnfs->funcdesc->dispatch_behaviour & MAKES_IO) != 0
 	    && (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0) {
-		/* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
-		 * This is done by replying EDQUOT (this error is known for not disturbing
-		 * the client's requests cache
+		/* Request of type MDONLY_RO were rejected at the
+		 * nfs_rpc_dispatcher level.
+		 * This is done by replying EDQUOT
+		 * (this error is known for not disturbing
+		 * the client's requests cache)
 		 */
 		if (req->rq_prog == nfs_param.core_param.program[P_NFS])
 			switch (req->rq_vers) {
@@ -1204,21 +1209,25 @@ static void nfs_rpc_execute(request_data_t * preq,
 		    && (preqnfs->funcdesc->
 			dispatch_behaviour & (NEEDS_CRED | NEEDS_EXPORT)) ==
 		    (NEEDS_CRED | NEEDS_EXPORT)) {
-			/* Swap the anonymous uid/gid if the user should be anonymous */
+			/* Swap the anonymous uid/gid if the user
+			 * should be anonymous */
 			nfs_check_anon(&export_perms, &req_ctx.export->export,
 				       &user_credentials);
 		}
 
 		/* processing
-		 * At this point, req_ctx.export has one of the following conditions:
-		 * non-NULL - valid handle for NFS v3 or NLM functions that take handles
+		 * At this point, req_ctx.export has one of the following
+		 * conditions:
+		 * non-NULL - valid handle for NFS v3 or NLM functions
+		 *            that take handles
 		 * NULL - For NULL RPC calls
 		 * NULL - for RQUOTAD calls
 		 * NULL - for NFS v4 COMPOUND call
 		 * NULL - for MOUNT calls
-		 * NULL - for NLM calls where handle is bad, NLM must handle response in
-		 *        the case of async "MSG" calls, so we just defer to NLM routines
-		 *        to respond with NLM4_STALE_FH (NLM doesn't have a BADHANDLE code)
+		 * NULL - for NLM calls where handle is bad, NLM must handle
+		 *        response in the case of async "MSG" calls, so we
+		 *        just defer to NLM routines to respond with
+		 *        NLM4_STALE_FH (NLM doesn't have a BADHANDLE code)
 		 */
 
 #ifdef _ERROR_INJECTION
@@ -1255,9 +1264,10 @@ static void nfs_rpc_execute(request_data_t * preq,
 			 req->rq_xid, (int)req->rq_prog, (int)req->rq_vers,
 			 (int)req->rq_proc);
 
-		/* If the request is not normally cached, then the entry will be removed
-		 * later.  We only remove a reply that is normally cached that has been
-		 * dropped. */
+		/* If the request is not normally cached, then the entry
+		 * will be removed later.  We only remove a reply that is
+		 * normally cached that has been dropped.
+		 */
 		if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS) {
 			LogCrit(COMPONENT_DISPATCH,
 				"Attempt to delete duplicate request failed on line %d",
@@ -1358,7 +1368,7 @@ static void nfs_rpc_execute(request_data_t * preq,
  * @param[in,out] req9p       9p request
  * @param[in,out] worker_data Worker's specific data
  */
-static void _9p_execute(request_data_t * preq, nfs_worker_data_t * worker_data)
+static void _9p_execute(request_data_t *preq, nfs_worker_data_t *worker_data)
 {
 	_9p_request_data_t *req9p = &preq->r_u._9p;
 
@@ -1379,7 +1389,7 @@ static void _9p_execute(request_data_t * preq, nfs_worker_data_t * worker_data)
  *
  * @param[in] nfsreq 9p request
  */
-static void _9p_free_reqdata(_9p_request_data_t * preq9p)
+static void _9p_free_reqdata(_9p_request_data_t *preq9p)
 {
 	if (preq9p->pconn->trans_type == _9P_TCP)
 		gsh_free(preq9p->_9pmsg);
@@ -1390,9 +1400,9 @@ static void _9p_free_reqdata(_9p_request_data_t * preq9p)
 #endif
 
 /* XXX include dependency issue prevented declaring in nfs_req_queue.h */
-request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker);
+request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
 
-static uint32_t worker_indexer = 0;
+static uint32_t worker_indexer;
 
 /**
  * @brief Initialize a worker thread
@@ -1450,9 +1460,8 @@ static void worker_run(struct fridgethr_context *ctx)
 	while (!fridgethr_you_should_break(ctx)) {
 		nfsreq = nfs_rpc_dequeue_req(worker_data);
 
-		if (!nfsreq) {
+		if (!nfsreq)
 			continue;
-		}
 
 /* need to do a getpeername(2) on the socket fd before we dive into the
  * rpc_execute.  9p is messy but we do have the fd....
@@ -1481,8 +1490,7 @@ static void worker_run(struct fridgethr_context *ctx)
 
 		case NFS_CALL:
 			/* NFSv4 rpc call (callback) */
-			nfs_rpc_dispatch_call(nfsreq->r_u.call,
-					      0 /* XXX flags */ );
+			nfs_rpc_dispatch_call(nfsreq->r_u.call, 0);
 			break;
 
 #ifdef _USE_9P

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -60,31 +60,32 @@ int detach_flag = false;
 
 char options[] = "h@RTdS:F:S:P:f:L:N:E:p:";
 char usage[] =
-    "Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
-    "\t[-h]                display this help\n"
-    "\t[-L <logfile>]      set the default logfile for the daemon\n"
-    "\t[-N <dbg_lvl>]      set the verbosity level\n"
-    "\t[-f <config_file>]  set the config file to be used\n"
-    "\t[-p <pid_file>]     set the pid file\n"
-    "\t[-d]                the daemon starts in background, in a new process group\n"
-    "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
-    "\t[-T]                dump the default configuration on stdout\n"
-    "\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
-    "----------------- Signals ----------------\n"
-    "SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
-    "SIGTERM    : Cleanly terminate the program\n"
-    "------------- Default Values -------------\n"
-    "LogFile    : /tmp/nfs-ganesha.log\n" "PidFile    : /var/run/ganesha.pid\n"
-    "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
+	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
+	"\t[-h]                display this help\n"
+	"\t[-L <logfile>]      set the default logfile for the daemon\n"
+	"\t[-N <dbg_lvl>]      set the verbosity level\n"
+	"\t[-f <config_file>]  set the config file to be used\n"
+	"\t[-p <pid_file>]     set the pid file\n"
+	"\t[-d]                the daemon starts in background, in a new process group\n"
+	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
+	"\t[-T]                dump the default configuration on stdout\n"
+	"\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
+	"----------------- Signals ----------------\n"
+	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
+	"SIGTERM    : Cleanly terminate the program\n"
+	"------------- Default Values -------------\n"
+	"LogFile    : /tmp/nfs-ganesha.log\n"
+	"PidFile    : /var/run/ganesha.pid\n"
+	"DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**
  * main: simply the main function.
  *
- * The 'main' function as in every C program. 
- * 
+ * The 'main' function as in every C program.
+ *
  * @param argc number of arguments
  * @param argv array of arguments
- * 
+ *
  * @return status to calling program by calling the exit(3C) function.
  *
  */
@@ -104,7 +105,8 @@ int main(int argc, char *argv[])
 	now(&ServerBootTime);
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
 
-	if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL) {
+	tempo_exec_name = strrchr(argv[0], '/');
+	if (tempo_exec_name != NULL) {
 		exec_name = gsh_strdup(tempo_exec_name + 1);
 		if (!exec_name) {
 			fprintf(stderr,
@@ -259,8 +261,10 @@ int main(int argc, char *argv[])
 			break;
 
 		default:
-			/* This code is within the father, it is useless, it must die */
-			LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d",
+			/* This code is within the parent process,
+			 * it is useless, it must die */
+			LogFullDebug(COMPONENT_MAIN,
+				     "Starting a child of pid %d",
 				     son_pid);
 			exit(0);
 			break;
@@ -268,13 +272,15 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-	/* Make sure Linux file i/o will return with error if file size is exceeded. */
+	/* Make sure Linux file i/o will return with error
+	 * if file size is exceeded. */
 #ifdef _LINUX
 	signal(SIGXFSZ, SIG_IGN);
 #endif
 
 	/* Echo PID into pidfile */
-	if ((pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644)) == -1) {
+	pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644);
+	if (pidfile == -1) {
 		LogFatal(COMPONENT_MAIN, "Can't open pid file %s for writing",
 			 pidfile_path);
 	} else {
@@ -321,8 +327,8 @@ int main(int argc, char *argv[])
 			 config_path, config_GetErrorMsg());
 	}
 
-	/* We need all the fsal modules loaded so we can have the list available
-	 * at exports parsing time.
+	/* We need all the fsal modules loaded so we can have
+	 * the list available at exports parsing time.
 	 */
 	start_fsals(config_struct);
 
@@ -337,7 +343,7 @@ int main(int argc, char *argv[])
 		LogFatal(COMPONENT_INIT,
 			 "Inconsistent parameters found. Exiting...");
 	}
-	if (init_fsals(config_struct)) {	/* init the FSALs from the config */
+	if (init_fsals(config_struct)) { /* init the FSALs from the config */
 		LogFatal(COMPONENT_INIT,
 			 "FSALs could not initialize. Exiting...");
 	}

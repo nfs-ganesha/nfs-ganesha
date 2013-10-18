@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * -------------
  */
@@ -73,8 +73,8 @@ extern hash_table_t *ht_session_id;
  * @param reply   the message reply
  */
 
-static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter * args,
-					     DBusMessage * reply)
+static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
+					     DBusMessage *reply)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
@@ -142,8 +142,8 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
  * @param reply   the message reply
  */
 
-static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter * args,
-					  DBusMessage * reply)
+static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
+					  DBusMessage *reply)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_session_id;
@@ -260,9 +260,9 @@ static int32_t cbsim_test_bchan(clientid4 clientid)
 /**
  * Demonstration callback invocation.
  */
-static void cbsim_free_compound(nfs4_compound_t * cbt) __attribute__ ((unused));
+static void cbsim_free_compound(nfs4_compound_t *cbt) __attribute__ ((unused));
 
-static void cbsim_free_compound(nfs4_compound_t * cbt)
+static void cbsim_free_compound(nfs4_compound_t *cbt)
 {
 	int ix;
 	nfs_cb_argop4 *argop = NULL;
@@ -286,7 +286,7 @@ static void cbsim_free_compound(nfs4_compound_t * cbt)
 	cb_compound_free(cbt);
 }
 
-static int32_t cbsim_completion_func(rpc_call_t * call, rpc_call_hook hook,
+static int32_t cbsim_completion_func(rpc_call_t *call, rpc_call_hook hook,
 				     void *arg, uint32_t flags)
 {
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
@@ -382,8 +382,8 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
  * @param reply   the message reply (empty)
  */
 
-static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter * args,
-				      DBusMessage * reply)
+static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args,
+				      DBusMessage *reply)
 {
 	clientid4 clientid = 9315;	/* XXX ew! */
 

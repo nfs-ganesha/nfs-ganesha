@@ -72,7 +72,7 @@ struct rpc_evchan {
 #define UDP_EVENT_CHAN    0	/*< Put UDP on a dedicated channel */
 #define TCP_RDVS_CHAN     1	/*< Accepts new tcp connections */
 #define TCP_EVCHAN_0      2
-#define N_EVENT_CHAN N_TCP_EVENT_CHAN + 2
+#define N_EVENT_CHAN (N_TCP_EVENT_CHAN + 2)
 
 static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 
@@ -86,10 +86,10 @@ const char *req_q_s[N_REQ_QUEUES] = {
 	"REQ_Q_HIGH_LATENCY"
 };
 
-static u_int nfs_rpc_rdvs(SVCXPRT * xprt, SVCXPRT * newxprt, const u_int flags,
+static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 			  void *u_data);
-static bool nfs_rpc_getreq_ng(SVCXPRT * xprt /*, int chan_id */ );
-static void nfs_rpc_free_xprt(SVCXPRT * xprt);
+static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
+static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
 const char *xprt_stat_s[4] = {
 	"XPRT_DIED",
@@ -104,7 +104,7 @@ const char *xprt_stat_s[4] = {
  * @param[in] ptr_req Unused
  * @param[in] ptr_svc Unused
  */
-void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT * ptr_svc)
+void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT *ptr_svc)
 {
 	LogMajor(COMPONENT_DISPATCH,
 		 "NFS DISPATCH DUMMY: Possible error, function "
@@ -172,9 +172,8 @@ static void unregister_rpc(void)
 	} else {
 		unregister(nfs_param.core_param.program[P_NFS], NFS_V4, NFS_V4);
 	}
-	if (nfs_param.core_param.enable_NLM) {
+	if (nfs_param.core_param.enable_NLM)
 		unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
-	}
 	if (nfs_param.core_param.enable_RQUOTA) {
 		unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS,
 			   EXT_RQUOTAVERS);
@@ -182,8 +181,8 @@ static void unregister_rpc(void)
 }
 
 #define test_for_additional_nfs_protocols(p) \
-  ((p != P_MNT && p != P_NLM) || \
-  (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
+	((p != P_MNT && p != P_NLM) ||					\
+	 (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
 
 /**
  * @brief Close file descriptors used for RPC services.
@@ -201,12 +200,10 @@ static void close_rpc_fd()
 	protos p;
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (udp_socket[p] != -1) {
+		if (udp_socket[p] != -1)
 			close(udp_socket[p]);
-		}
-		if (tcp_socket[p] != -1) {
+		if (tcp_socket[p] != -1)
 			close(tcp_socket[p]);
-		}
 	}
 }
 
@@ -229,7 +226,8 @@ void Create_udp(protos prot)
 
 	/* Setup private data */
 	(udp_xprt[prot])->xp_u1 =
-	    alloc_gsh_xprt_private(udp_xprt[prot], XPRT_PRIVATE_FLAG_NONE);
+		alloc_gsh_xprt_private(udp_xprt[prot],
+				       XPRT_PRIVATE_FLAG_NONE);
 
 	/* bind xprt to channel--unregister it from the global event
 	 * channel (if applicable) */
@@ -240,10 +238,10 @@ void Create_udp(protos prot)
 void Create_tcp(protos prot)
 {
 	tcp_xprt[prot] =
-	    svc_vc_create2(tcp_socket[prot],
-			   nfs_param.core_param.rpc.max_send_buffer_size,
-			   nfs_param.core_param.rpc.max_recv_buffer_size,
-			   SVC_VC_CREATE_LISTEN);
+		svc_vc_create2(tcp_socket[prot],
+			       nfs_param.core_param.rpc.max_send_buffer_size,
+			       nfs_param.core_param.rpc.max_recv_buffer_size,
+			       SVC_VC_CREATE_LISTEN);
 	if (tcp_xprt[prot] == NULL)
 		LogFatal(COMPONENT_DISPATCH, "Cannot allocate %s/TCP SVCXPRT",
 			 tags[prot]);
@@ -265,7 +263,8 @@ void Create_tcp(protos prot)
 
 	/* Setup private data */
 	(tcp_xprt[prot])->xp_u1 =
-	    alloc_gsh_xprt_private(tcp_xprt[prot], XPRT_PRIVATE_FLAG_NONE);
+		alloc_gsh_xprt_private(tcp_xprt[prot],
+				       XPRT_PRIVATE_FLAG_NONE);
 }
 
 /**
@@ -296,7 +295,8 @@ void Bind_sockets(void)
 			memset(&pdatap->sinaddr_udp6, 0,
 			       sizeof(pdatap->sinaddr_udp6));
 			pdatap->sinaddr_udp6.sin6_family = AF_INET6;
-			pdatap->sinaddr_udp6.sin6_addr = in6addr_any;	/* all interfaces */
+			/* all interfaces */
+			pdatap->sinaddr_udp6.sin6_addr = in6addr_any;
 			pdatap->sinaddr_udp6.sin6_port =
 			    htons(nfs_param.core_param.port[p]);
 
@@ -313,10 +313,10 @@ void Bind_sockets(void)
 					 "Cannot get %s socket info for udp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if (bind
-			    (udp_socket[p],
-			     (struct sockaddr *)pdatap->bindaddr_udp6.addr.buf,
-			     (socklen_t) pdatap->si_udp6.si_alen) == -1)
+			if (bind(udp_socket[p],
+				 (struct sockaddr *)
+				  pdatap->bindaddr_udp6.addr.buf,
+				 (socklen_t) pdatap->si_udp6.si_alen) == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot bind %s udp6 socket, error %d (%s)",
 					 tags[p], errno, strerror(errno));
@@ -324,7 +324,8 @@ void Bind_sockets(void)
 			memset(&pdatap->sinaddr_tcp6, 0,
 			       sizeof(pdatap->sinaddr_tcp6));
 			pdatap->sinaddr_tcp6.sin6_family = AF_INET6;
-			pdatap->sinaddr_tcp6.sin6_addr = in6addr_any;	/* all interfaces */
+			/* all interfaces */
+			pdatap->sinaddr_tcp6.sin6_addr = in6addr_any;
 			pdatap->sinaddr_tcp6.sin6_port =
 			    htons(nfs_param.core_param.port[p]);
 
@@ -341,10 +342,10 @@ void Bind_sockets(void)
 					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if (bind
-			    (tcp_socket[p],
-			     (struct sockaddr *)pdatap->bindaddr_tcp6.addr.buf,
-			     (socklen_t) pdatap->si_tcp6.si_alen) == -1)
+			if (bind(tcp_socket[p],
+				 (struct sockaddr *)
+				   pdatap->bindaddr_tcp6.addr.buf,
+				 (socklen_t) pdatap->si_tcp6.si_alen) == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot bind %s tcp6 socket, error %d (%s)",
 					 tags[p], errno, strerror(errno));
@@ -364,12 +365,14 @@ void Clean_RPC(void)
 cleanup_list_element clean_rpc = { NULL, Clean_RPC };
 
 #define UDP_REGISTER(prot, vers, netconfig) \
-    svc_reg(udp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
-                 nfs_rpc_dispatch_dummy, netconfig)
+	svc_reg(udp_xprt[prot], nfs_param.core_param.program[prot], \
+		(u_long) vers,					    \
+		nfs_rpc_dispatch_dummy, netconfig)
 
 #define TCP_REGISTER(prot, vers, netconfig) \
-    svc_reg(tcp_xprt[prot], nfs_param.core_param.program[prot], (u_long) vers, \
-                 nfs_rpc_dispatch_dummy, netconfig)
+	svc_reg(tcp_xprt[prot], nfs_param.core_param.program[prot], \
+		(u_long) vers,					    \
+		nfs_rpc_dispatch_dummy, netconfig)
 
 void Register_program(protos prot, int flag, int vers)
 {
@@ -432,7 +435,7 @@ void nfs_Init_svc()
 
 	/* New TI-RPC package init function */
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */
-	svc_params.flags |= SVC_INIT_NOREG_XPRTS;	/* don't call xprt_register */
+	svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
 	svc_params.max_connections = nfs_param.core_param.rpc.max_connections;
 	svc_params.max_events = 1024;	/* length of epoll event queue */
 	svc_params.svc_ioq_maxbuf =
@@ -468,10 +471,10 @@ void nfs_Init_svc()
 
 	for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
 		rpc_evchan[ix].chan_id = 0;
-		if ((code =
-		     svc_rqst_new_evchan(&rpc_evchan[ix].chan_id,
-					 NULL /* u_data */ ,
-					 SVC_RQST_FLAG_NONE)))
+		code = svc_rqst_new_evchan(&rpc_evchan[ix].chan_id,
+					   NULL /* u_data */,
+					   SVC_RQST_FLAG_NONE);
+		if (code)
 			LogFatal(COMPONENT_DISPATCH,
 				 "Cannot create TI-RPC event channel (%d, %d)",
 				 ix, code);
@@ -479,14 +482,14 @@ void nfs_Init_svc()
 	}
 
 	/* Get the netconfig entries from /etc/netconfig */
-	if ((netconfig_udpv4 =
-	     (struct netconfig *)getnetconfigent("udp")) == NULL)
+	netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp");
+	if (netconfig_udpv4 == NULL)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	if ((netconfig_tcpv4 =
-	     (struct netconfig *)getnetconfigent("tcp")) == NULL)
+	netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp");
+	if (netconfig_tcpv4 == NULL)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Cannot get tcp netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
@@ -496,14 +499,14 @@ void nfs_Init_svc()
 	LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	if ((netconfig_udpv6 =
-	     (struct netconfig *)getnetconfigent("udp6")) == NULL)
+	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
+	if (netconfig_udpv6 == NULL)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	if ((netconfig_tcpv6 =
-	     (struct netconfig *)getnetconfigent("tcp6")) == NULL)
+	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");
+	if (netconfig_tcpv6 == NULL)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
@@ -514,42 +517,47 @@ void nfs_Init_svc()
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
 	for (p = P_NFS; p < P_COUNT; p++)
 		if (test_for_additional_nfs_protocols(p)) {
-			/* Initialize all the sockets to -1 because it makes some code later easier */
+			/* Initialize all the sockets to -1 because
+			 * it makes some code later easier */
 			udp_socket[p] = -1;
 			tcp_socket[p] = -1;
 
-			udp_socket[p] =
-			    socket(P_FAMILY, SOCK_DGRAM, IPPROTO_UDP);
+			udp_socket[p] = socket(P_FAMILY,
+					       SOCK_DGRAM,
+					       IPPROTO_UDP);
 
 			if (udp_socket[p] == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot allocate a udp socket for %s, error %d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			tcp_socket[p] =
-			    socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
+			tcp_socket[p] = socket(P_FAMILY,
+					       SOCK_STREAM,
+					       IPPROTO_TCP);
 
 			if (tcp_socket[p] == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot allocate a tcp socket for %s, error %d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			/* Use SO_REUSEADDR in order to avoid wait the 2MSL timeout */
-			if (setsockopt
-			    (udp_socket[p], SOL_SOCKET, SO_REUSEADDR, &one,
-			     sizeof(one)))
+			/* Use SO_REUSEADDR in order to avoid wait
+			 * the 2MSL timeout */
+			if (setsockopt(udp_socket[p],
+				       SOL_SOCKET, SO_REUSEADDR,
+				       &one, sizeof(one)))
 				LogFatal(COMPONENT_DISPATCH,
 					 "Bad udp socket options for %s, error %d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if (setsockopt
-			    (tcp_socket[p], SOL_SOCKET, SO_REUSEADDR, &one,
-			     sizeof(one)))
+			if (setsockopt(tcp_socket[p],
+				       SOL_SOCKET, SO_REUSEADDR,
+				       &one, sizeof(one)))
 				LogFatal(COMPONENT_DISPATCH,
 					 "Bad tcp socket options for %s, error %d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			/* We prefer using non-blocking socket in the specific case */
+			/* We prefer using non-blocking socket
+			 * in the specific case */
 			if (fcntl(udp_socket[p], F_SETFL, FNDELAY) == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot set udp socket for %s as non blocking, error %d (%s)",
@@ -559,7 +567,8 @@ void nfs_Init_svc()
 	socket_setoptions(tcp_socket[P_NFS]);
 
 	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) {
-		/* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
+		/* Some log that can be useful when debug ONC/RPC
+		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
 			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
 			 "mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
@@ -567,13 +576,15 @@ void nfs_Init_svc()
 			 udp_socket[P_MNT], tcp_socket[P_MNT],
 			 udp_socket[P_NLM], tcp_socket[P_NLM]);
 	} else {
-		/* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
+		/* Some log that can be useful when debug ONC/RPC
+		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
 			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u",
 			 udp_socket[P_NFS], tcp_socket[P_NFS]);
 	}
 
-	/* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
+	/* Some log that can be useful when debug ONC/RPC
+	 * and RPCSEC_GSS matter */
 	LogDebug(COMPONENT_DISPATCH,
 		 "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
 		 udp_socket[P_RQUOTA], tcp_socket[P_RQUOTA]);
@@ -601,7 +612,8 @@ void nfs_Init_svc()
 				"Successfully imported principal %s into GSSAPI",
 				nfs_param.krb5_param.svc.principal);
 
-			/* Trying to acquire a credentials for checking name's validity */
+			/* Trying to acquire a credentials
+			 * for checking name's validity */
 			if (!svcauth_gss_acquire_cred())
 				LogCrit(COMPONENT_DISPATCH,
 					"Cannot acquire credentials for principal %s",
@@ -615,14 +627,14 @@ void nfs_Init_svc()
 #endif				/* _HAVE_GSSAPI */
 
 #ifndef _NO_PORTMAPPER
-	/* Perform all the RPC registration, for UDP and TCP, for NFS_V2, NFS_V3 and NFS_V4 */
+	/* Perform all the RPC registration, for UDP and TCP,
+	 * for NFS_V2, NFS_V3 and NFS_V4 */
 	Register_program(P_NFS, CORE_OPTION_NFSV3, NFS_V3);
 	Register_program(P_NFS, CORE_OPTION_NFSV4, NFS_V4);
 	Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V1);
 	Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V3);
-	if (nfs_param.core_param.enable_NLM) {
+	if (nfs_param.core_param.enable_NLM)
 		Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
-	}
 	if (nfs_param.core_param.enable_RQUOTA) {
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
@@ -637,20 +649,19 @@ void nfs_Init_svc()
  *
  * @param[in] attr_thr Attributes for started threads
  */
-void nfs_rpc_dispatch_threads(pthread_attr_t * attr_thr)
+void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
 {
 	int ix, code = 0;
 
 	/* Start event channel service threads */
 	for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
-		if ((code =
-		     pthread_create(&rpc_evchan[ix].thread_id, attr_thr,
-				    rpc_dispatcher_thread,
-				    (void *)&rpc_evchan[ix].chan_id)) != 0) {
+		code = pthread_create(&rpc_evchan[ix].thread_id, attr_thr,
+				      rpc_dispatcher_thread,
+				      (void *)&rpc_evchan[ix].chan_id);
+		if (code != 0)
 			LogFatal(COMPONENT_THREAD,
 				 "Could not create rpc_dispatcher_thread #%u, error = %d (%s)",
 				 ix, errno, strerror(errno));
-		}
 	}
 	LogInfo(COMPONENT_THREAD,
 		"%d rpc dispatcher threads were started successfully",
@@ -682,7 +693,7 @@ void nfs_rpc_dispatch_stop(void)
  *
  * @return Always returns 0.
  */
-static u_int nfs_rpc_rdvs(SVCXPRT * xprt, SVCXPRT * newxprt, const u_int flags,
+static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 			  void *u_data)
 {
 	static uint32_t next_chan = TCP_EVCHAN_0;
@@ -708,7 +719,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT * xprt, SVCXPRT * newxprt, const u_int flags,
 	(void)svc_rqst_evchan_reg(rpc_evchan[tchan].chan_id, newxprt,
 				  SVC_RQST_FLAG_NONE);
 
-	return (0);
+	return 0;
 }
 
 /**
@@ -716,7 +727,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT * xprt, SVCXPRT * newxprt, const u_int flags,
  *
  * @param[in] xprt Transport to destroy
  */
-static void nfs_rpc_free_xprt(SVCXPRT * xprt)
+static void nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
 	free_gsh_xprt_private(xprt);
 }
@@ -734,20 +745,19 @@ request_data_t *nfs_rpc_get_nfsreq(uint32_t __attribute__ ((unused)) flags)
 
 	nfsreq = pool_alloc(request_pool, NULL);
 
-	return (nfsreq);
+	return nfsreq;
 }
 
 uint32_t nfs_rpc_outstanding_reqs_est(void)
 {
-	static uint32_t ctr = 0;
-	static uint32_t nreqs = 0;
+	static uint32_t ctr;
+	static uint32_t nreqs;
 	struct req_q_pair *qpair;
 	uint32_t treqs;
 	int ix;
 
-	if ((atomic_inc_uint32_t(&ctr) % 10) != 0) {
-		return (atomic_fetch_uint32_t(&nreqs));
-	}
+	if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
+		return atomic_fetch_uint32_t(&nreqs);
 
 	treqs = 0;
 	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
@@ -757,10 +767,10 @@ uint32_t nfs_rpc_outstanding_reqs_est(void)
 	}
 
 	atomic_store_uint32_t(&nreqs, treqs);
-	return (treqs);
+	return treqs;
 }
 
-static inline bool stallq_should_unstall(gsh_xprt_private_t * xu)
+static inline bool stallq_should_unstall(gsh_xprt_private_t *xu)
 {
 	return ((xu->req_cnt < nfs_param.core_param.dispatch_max_reqs_xprt / 2)
 		|| (xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
@@ -787,7 +797,8 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 			/* handle stalled xprts that idle out */
 			if (stallq_should_unstall(xu)) {
 				xprt = xu->xprt;
-				/* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
+				/* lock ordering
+				 * (cf. nfs_rpc_cond_stall_xprt) */
 				pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
 				/* !LOCKED */
 				LogDebug(COMPONENT_DISPATCH,
@@ -812,7 +823,7 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 	LogDebug(COMPONENT_DISPATCH, "stallq idle, thread exit");
 }
 
-static bool nfs_rpc_cond_stall_xprt(SVCXPRT * xprt)
+static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 {
 	gsh_xprt_private_t *xu;
 	bool activate = FALSE;
@@ -831,7 +842,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT * xprt)
 	/* check per-xprt quota */
 	if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
 		pthread_mutex_unlock(&xprt->xp_lock);
-		return (FALSE);
+		return FALSE;
 	}
 
 	/* XXX can't happen */
@@ -839,7 +850,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT * xprt)
 		pthread_mutex_unlock(&xprt->xp_lock);
 		LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
 			 xprt);
-		return (TRUE);
+		return TRUE;
 	}
 
 	LogDebug(COMPONENT_DISPATCH, "xprt %p has %u reqs, marking stalled",
@@ -864,15 +875,14 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT * xprt)
 		int rc = 0;
 		LogDebug(COMPONENT_DISPATCH, "starting stallq service thread");
 		rc = fridgethr_submit(req_fridge, thr_stallq,
-				      NULL /* no arg */ );
-		if (rc != 0) {
+				      NULL /* no arg */);
+		if (rc != 0)
 			LogCrit(COMPONENT_DISPATCH,
 				"Failed to start stallq: %d", rc);
-		}
 	}
 
 	/* stalled */
-	return (TRUE);
+	return TRUE;
 }
 
 void nfs_rpc_queue_init(void)
@@ -889,19 +899,20 @@ void nfs_rpc_queue_init(void)
 	reqparams.thr_max = 0;
 	reqparams.thr_min = 1;
 	reqparams.thread_delay =
-	    ((nfs_param.core_param.decoder_fridge_expiration_delay >=
-	      0) ? nfs_param.core_param.decoder_fridge_expiration_delay : 600);
+	    ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
+	     nfs_param.core_param.decoder_fridge_expiration_delay :
+	     600);
 	reqparams.deferment = fridgethr_defer_block;
 	reqparams.block_delay =
-	    ((nfs_param.core_param.decoder_fridge_block_timeout >=
-	      0) ? nfs_param.core_param.decoder_fridge_block_timeout : 600);
+	    ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
+	     nfs_param.core_param.decoder_fridge_block_timeout :
+	     600);
 
 	/* decoder thread pool */
 	rc = fridgethr_init(&req_fridge, "decoder_thr", &reqparams);
-	if (rc != 0) {
+	if (rc != 0)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Unable to initialize decoder thread pool: %d", rc);
-	}
 
 	/* queues */
 	pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
@@ -924,10 +935,10 @@ void nfs_rpc_queue_init(void)
 	nfs_req_st.stallq.stalled = 0;
 }
 
-static uint32_t enqueued_reqs = 0;
-static uint32_t dequeued_reqs = 0;
+static uint32_t enqueued_reqs;
+static uint32_t dequeued_reqs;
 
-void nfs_rpc_enqueue_req(request_data_t * req)
+void nfs_rpc_enqueue_req(request_data_t *req)
 {
 	struct req_q_set *nfs_request_q;
 	struct req_q_pair *qpair;
@@ -955,8 +966,8 @@ void nfs_rpc_enqueue_req(request_data_t * req)
 		break;
 #ifdef _USE_9P
 	case _9P_REQUEST:
-		/* XXX identify high-latency requests and allocate to the high-latency
-		 * queue, as above */
+		/* XXX identify high-latency requests and allocate
+		 * to the high-latency queue, as above */
 		qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
 		break;
 #endif
@@ -987,11 +998,12 @@ void nfs_rpc_enqueue_req(request_data_t * req)
 	/* global waitq */
 	{
 		wait_q_entry_t *wqe;
-		pthread_spin_lock(&nfs_req_st.reqs.sp);	/* SPIN LOCKED */
+
+		/* SPIN LOCKED */
+		pthread_spin_lock(&nfs_req_st.reqs.sp);
 		if (nfs_req_st.reqs.waiters) {
-			wqe =
-			    glist_first_entry(&nfs_req_st.reqs.wait_list,
-					      wait_q_entry_t, waitq);
+			wqe = glist_first_entry(&nfs_req_st.reqs.wait_list,
+						wait_q_entry_t, waitq);
 
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "nfs_req_st.reqs.waiters %u signal wqe %p (for q %p)",
@@ -1001,16 +1013,17 @@ void nfs_rpc_enqueue_req(request_data_t * req)
 			glist_del(&wqe->waitq);
 			--(nfs_req_st.reqs.waiters);
 			--(wqe->waiters);
-			pthread_spin_unlock(&nfs_req_st.reqs.sp);	/* ! SPIN LOCKED */
+			/* ! SPIN LOCKED */
+			pthread_spin_unlock(&nfs_req_st.reqs.sp);
 			pthread_mutex_lock(&wqe->lwe.mtx);
 			/* XXX reliable handoff */
 			wqe->flags |= Wqe_LFlag_SyncDone;
-			if (wqe->flags & Wqe_LFlag_WaitSync) {
+			if (wqe->flags & Wqe_LFlag_WaitSync)
 				pthread_cond_signal(&wqe->lwe.cv);
-			}
 			pthread_mutex_unlock(&wqe->lwe.mtx);
 		} else
-			pthread_spin_unlock(&nfs_req_st.reqs.sp);	/* ! SPIN LOCKED */
+			/* ! SPIN LOCKED */
+			pthread_spin_unlock(&nfs_req_st.reqs.sp);
 	}
 
  out:
@@ -1018,7 +1031,7 @@ void nfs_rpc_enqueue_req(request_data_t * req)
 }
 
 /* static inline */
-request_data_t *nfs_rpc_consume_req(struct req_q_pair * qpair)
+request_data_t *nfs_rpc_consume_req(struct req_q_pair *qpair)
 {
 	request_data_t *nfsreq = NULL;
 
@@ -1073,10 +1086,10 @@ request_data_t *nfs_rpc_consume_req(struct req_q_pair * qpair)
 				     "producer qsize=%u", s, csize, psize);
 	}
  out:
-	return (nfsreq);
+	return nfsreq;
 }
 
-request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker)
+request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 {
 	request_data_t *nfsreq = NULL;
 	struct req_q_set *nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
@@ -1133,7 +1146,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker)
 	/* wait */
 	if (!nfsreq) {
 		wait_q_entry_t *wqe = &worker->wqe;
-		assert(wqe->waiters == 0);	/* wqe is not on any wait queue */
+		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
 		pthread_mutex_lock(&wqe->lwe.mtx);
 		wqe->flags = Wqe_LFlag_WaitSync;
 		wqe->waiters = 1;
@@ -1148,11 +1161,13 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker)
 			pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx,
 					       &timeout);
 			if (fridgethr_you_should_break(worker->ctx)) {
-				/* We are returning; so take us out of the waitq */
+				/* We are returning;
+				 * so take us out of the waitq */
 				pthread_spin_lock(&nfs_req_st.reqs.sp);
 				if (wqe->waitq.next != NULL
 				    || wqe->waitq.prev != NULL) {
-					/* Element is still in wqitq, remove it */
+					/* Element is still in wqitq,
+					 * remove it */
 					glist_del(&wqe->waitq);
 					--(nfs_req_st.reqs.waiters);
 					--(wqe->waiters);
@@ -1166,14 +1181,15 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker)
 			}
 		}
 
-		/* XXX wqe was removed from nfs_req_st.waitq (by signalling thread) */
+		/* XXX wqe was removed from nfs_req_st.waitq
+		 * (by signalling thread) */
 		wqe->flags &= ~(Wqe_LFlag_WaitSync | Wqe_LFlag_SyncDone);
 		pthread_mutex_unlock(&wqe->lwe.mtx);
 		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
 		goto retry_deq;
 	}
 
-	return (nfsreq);
+	return nfsreq;
 }
 
 /**
@@ -1183,7 +1199,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t * worker)
  *
  * @return New request data
  */
-static inline request_data_t *alloc_nfs_request(SVCXPRT * xprt)
+static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt)
 {
 	request_data_t *nfsreq;
 	struct svc_req *req;
@@ -1213,10 +1229,10 @@ static inline request_data_t *alloc_nfs_request(SVCXPRT * xprt)
 	req->rq_xprt = xprt;
 	req->rq_rtaddr.len = 0;
 
-	return (nfsreq);
+	return nfsreq;
 }
 
-static inline void free_nfs_request(request_data_t * nfsreq)
+static inline void free_nfs_request(request_data_t *nfsreq)
 {
 	switch (nfsreq->rtype) {
 	case NFS_REQUEST:
@@ -1245,8 +1261,8 @@ extern enum auth_stat svc_auth_authenticate(struct svc_req *, struct rpc_msg *,
 
 static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 						 *thr_ctx,
-						 nfs_request_data_t * nfsreq,
-						 bool * no_dispatch)
+						 nfs_request_data_t *nfsreq,
+						 bool *no_dispatch)
 {
 	struct svc_req *req = &(nfsreq->req);
 	struct rpc_msg *msg = req->rq_msg;
@@ -1256,13 +1272,13 @@ static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 	bool slocked = FALSE;
 
 	/* A few words of explanation are required here:
-	 * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch
-	 * remains false and the request is proceeded normally.
-	 * If authentication is RPCSEC_GSS, no_dispatch may have value true, this
-	 * means that gc->gc_proc != RPCSEC_GSS_DATA and that the message is in fact
-	 * an internal negociation message from RPCSEC_GSS using GSSAPI. It then
-	 * should not be proceed by the worker and SVC_STAT should be returned to
-	 * the dispatcher.
+	 * In authentication is AUTH_NONE or AUTH_UNIX, then the value of
+	 * no_dispatch remains false and the request is proceeded normally.
+	 * If authentication is RPCSEC_GSS, no_dispatch may have value true,
+	 * this means that gc->gc_proc != RPCSEC_GSS_DATA and that the message
+	 * is in fact an internal negociation message from RPCSEC_GSS using
+	 * GSSAPI. It then should not be proceed by the worker and SVC_STAT
+	 * should be returned to the dispatcher.
 	 */
 
 	*no_dispatch = false;
@@ -1278,7 +1294,8 @@ static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 		     (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
 		     req->rq_xid, req->rq_xprt);
 
-	if ((why = svc_auth_authenticate(req, msg, no_dispatch)) != AUTH_OK) {
+	why = svc_auth_authenticate(req, msg, no_dispatch);
+	if (why != AUTH_OK) {
 		LogInfo(COMPONENT_DISPATCH,
 			"Could not authenticate request... rejecting with AUTH_STAT=%s",
 			auth_stat2str(why));
@@ -1299,11 +1316,11 @@ static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 				     str_gc_proc(gc->gc_proc));
 		}
 #endif
-	}			/* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+	} /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
 	return AUTH_OK;
 }
 
-static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT * xprt,
+static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 						       enum xprt_stat stat)
 {
 	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
@@ -1323,9 +1340,8 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT * xprt,
 			struct pollfd fd;
 			fd.fd = xprt->xp_fd;
 			fd.events = POLLIN;
-			if (poll(&fd, 1, 0 /* ms, ie, now */ ) > 0) {
+			if (poll(&fd, 1, 0) > 0) /* ms, ie, now */
 				stat = XPRT_MOREREQS;
-			}
 		}
 		break;
 	default:
@@ -1333,7 +1349,7 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT * xprt,
 	}			/* switch */
 
  out:
-	return (stat);
+	return stat;
 }
 
 /**
@@ -1347,7 +1363,7 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT * xprt,
  *
  * @return True if the request is valid, false otherwise.
  */
-static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
+static bool is_rpc_call_valid(nfs_request_data_t *preqnfs)
 {
 	struct svc_req *req = &preqnfs->req;
 	bool slocked = FALSE;
@@ -1361,20 +1377,18 @@ static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
 		if (req->rq_vers == NFS_V3) {
 			if ((nfs_param.core_param.
 			     core_options & CORE_OPTION_NFSV3)
-			    && req->rq_proc <= NFSPROC3_COMMIT) {
+			    && req->rq_proc <= NFSPROC3_COMMIT)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else if (req->rq_vers == NFS_V4) {
 			if ((nfs_param.core_param.
 			     core_options & CORE_OPTION_NFSV4)
-			    && req->rq_proc <= NFSPROC4_COMPOUND) {
+			    && req->rq_proc <= NFSPROC4_COMPOUND)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
-		} else {	/* version error, set the range and throw the error */
+		} else { /* version error, set the range and throw the error */
 			lo_vers = NFS_V4;
 			hi_vers = NFS_V3;
 			if ((nfs_param.core_param.
@@ -1389,11 +1403,10 @@ static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
 		if (req->rq_vers == NLM4_VERS) {
-			if (req->rq_proc <= NLMPROC4_FREE_ALL) {
+			if (req->rq_proc <= NLMPROC4_FREE_ALL)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else {
 			lo_vers = NLM4_VERS;
 			hi_vers = NLM4_VERS;
@@ -1402,24 +1415,23 @@ static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
 	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
-		/* Some clients may use the wrong mount version to umount, so always
-		 * allow umount, otherwise only allow request if the appropriate mount
-		 * version is enabled.  Also need to allow dump and export, so just
-		 * disallow mount if version not supported.
+		/* Some clients may use the wrong mount version to umount, so
+		 * always allow umount, otherwise only allow request if the
+		 * appropriate mount version is enabled.  Also need to allow
+		 * dump and export, so just disallow mount if version not
+		 * supported.
 		 */
 		if (req->rq_vers == MOUNT_V3) {
-			if (req->rq_proc <= MOUNTPROC3_EXPORT) {
+			if (req->rq_proc <= MOUNTPROC3_EXPORT)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else if (req->rq_vers == MOUNT_V1) {
 			if (req->rq_proc <= MOUNTPROC2_EXPORT
-			    && req->rq_proc != MOUNTPROC2_MNT) {
+			    && req->rq_proc != MOUNTPROC2_MNT)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else {
 			lo_vers = MOUNT_V1;
 			hi_vers = MOUNT_V3;
@@ -1427,17 +1439,15 @@ static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
 		}
 	} else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
 		if (req->rq_vers == RQUOTAVERS) {
-			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
+			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else if (req->rq_vers == EXT_RQUOTAVERS) {
-			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
+			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
-			} else {
+			else
 				goto noproc_err;
-			}
 		} else {
 			lo_vers = RQUOTAVERS;
 			hi_vers = EXT_RQUOTAVERS;
@@ -1482,7 +1492,7 @@ static bool is_rpc_call_valid(nfs_request_data_t * preqnfs)
 }				/* is_rpc_call_valid */
 
 static inline enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
-						    *thr_ctx, SVCXPRT * xprt)
+						    *thr_ctx, SVCXPRT *xprt)
 {
 	request_data_t *nfsreq;
 	enum xprt_stat stat = XPRT_IDLE;
@@ -1506,12 +1516,13 @@ static inline enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 
 	if (unlikely(!recv_status)) {
 
-		/* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE,
-		 * because UDP is mostly a stateless protocol.  With RPC/TCP, they can be
-		 * XPRT_DIED especially when the client closes the peer's socket. We
-		 * have to cope with this aspect in the next lines.  Finally, xdrrec
-		 * uses XPRT_MOREREQS to indicate that additional records are ready to
-		 * be consumed immediately. */
+		/* RPC over TCP specific: RPC/UDP's xprt know only one state:
+		 * XPRT_IDLE, because UDP is mostly a stateless protocol.
+		 * With RPC/TCP, they can be XPRT_DIED especially when the
+		 * client closes the peer's socket.
+		 * We have to cope with this aspect in the next lines.  Finally,
+		 * xdrrec uses XPRT_MOREREQS to indicate that additional
+		 * records are ready to be consumed immediately. */
 
 		/* XXXX */
 		sockaddr_t addr;
@@ -1556,10 +1567,11 @@ static inline enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 			goto finish;
 		nfsreq->r_u.nfs->funcdesc =
 		    nfs_rpc_get_funcdesc(nfsreq->r_u.nfs);
-		if (AuthenticateRequest(thr_ctx, nfsreq->r_u.nfs, &no_dispatch)
-		    != AUTH_OK || no_dispatch) {
+		if (AuthenticateRequest(thr_ctx,
+					nfsreq->r_u.nfs,
+					&no_dispatch) != AUTH_OK ||
+		    no_dispatch)
 			goto finish;
-		}
 
 		if (!nfs_rpc_get_args(thr_ctx, nfsreq->r_u.nfs))
 			goto finish;
@@ -1587,17 +1599,17 @@ static inline enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 		free_nfs_request(nfsreq);
 
 #if 0
-	/* XXX dont bother re-arming epoll for xprt if there is data 
+	/* XXX dont bother re-arming epoll for xprt if there is data
 	 * waiting.  this is logically harmless, since the predicate observes
 	 * request quotas.  however, empirically, the function is infrequently
 	 * effective. */
 	stat = nfs_rpc_continue_decoding(xprt, stat);
 #endif
 
-	return (stat);
+	return stat;
 }
 
-static inline bool thr_continue_decoding(SVCXPRT * xprt, enum xprt_stat stat)
+static inline bool thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
 {
 	gsh_xprt_private_t *xu;
 	uint32_t nreqs;
@@ -1608,7 +1620,7 @@ static inline bool thr_continue_decoding(SVCXPRT * xprt, enum xprt_stat stat)
 	pthread_mutex_unlock(&xprt->xp_lock);
 
 	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
-		return (FALSE);
+		return FALSE;
 
 	return (stat == XPRT_MOREREQS);
 }
@@ -1626,7 +1638,8 @@ void thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
 
 	LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
-	/* order MUST be SVC_DESTROY, gsh_xprt_unref (current refcnt balancing) */
+	/* order MUST be SVC_DESTROY, gsh_xprt_unref
+	 * (current refcnt balancing) */
 	if (stat != XPRT_DIED)
 		(void)svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
 	else
@@ -1636,25 +1649,25 @@ void thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
 	gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING, __func__, __LINE__);
 }
 
-static bool nfs_rpc_getreq_ng(SVCXPRT * xprt /*, int chan_id */ )
+static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 {
-	/* Ok, in the new world, TI-RPC's job is merely to tell us there is activity
-	 * on a specific xprt handle.
+	/* Ok, in the new world, TI-RPC's job is merely to tell us there is
+	 * activity on a specific xprt handle.
 	 *
-	 * Note that we have a builtin mechanism to bind, unbind, and (in response
-	 * to connect events, through a new callout made from within the rendezvous
-	 * in vc xprts) rebind/rebalance xprt handles to independent event channels,
-	 * each with their own platform event demultiplexer.  The current callout
-	 * is one event (request, or, if applicable, new vc connect) on the active
-	 * xprt handle xprt.
+	 * Note that we have a builtin mechanism to bind, unbind, and (in
+	 * response to connect events, through a new callout made from within
+	 * the rendezvous in vc xprts) rebind/rebalance xprt handles to
+	 * independent event channels, each with their own platform event
+	 * demultiplexer.  The current callout is one event (request, or, if
+	 * applicable, new vc connect) on the active xprt handle xprt.
 	 *
-	 * We are a blocking call from the svc_run thread specific to our current
-	 * event channel (whatever it is).  Our goal is to hand off processing of
-	 * xprt to a request dispatcher thread as quickly as possible, to minimize
-	 * latency of all xprts on this channel.
+	 * We are a blocking call from the svc_run thread specific to our
+	 * current event channel (whatever it is).  Our goal is to hand off
+	 * processing of xprt to a request dispatcher thread as quickly as
+	 * possible, to minimize latency of all xprts on this channel.
 	 *
-	 * Next, the preferred dispatch thread should be, I speculate, one which has
-	 * (most) recently handled a request for this xprt.
+	 * Next, the preferred dispatch thread should be, I speculate, one
+	 * which has (most) recently handled a request for this xprt.
 	 */
 
 	/*
@@ -1696,8 +1709,8 @@ static bool nfs_rpc_getreq_ng(SVCXPRT * xprt /*, int chan_id */ )
 		LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request %d",
 			     rpc_fd);
 	else if (tcp_socket[P_NFS] == rpc_fd) {
-		/* In this case, the SVC_RECV only produces a new connected socket (it
-		 * does just a call to accept) */
+		/* In this case, the SVC_RECV only produces a new connected
+		 * socket (it does just a call to accept) */
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "An initial NFS TCP request from a new client %d",
 			     rpc_fd);
@@ -1783,7 +1796,7 @@ static bool nfs_rpc_getreq_ng(SVCXPRT * xprt /*, int chan_id */ )
 	LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");
 
  out:
-	return (TRUE);
+	return TRUE;
 }
 
 /**
@@ -1808,14 +1821,14 @@ void *rpc_dispatcher_thread(void *arg)
 
 	svc_rqst_thrd_run(chan_id, SVC_RQST_FLAG_NONE);
 
-	return (NULL);
+	return NULL;
 }				/* rpc_dispatcher_thread */
 
 /*
  * Extract RPC argument.
  */
 int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
-		     nfs_request_data_t * preqnfs)
+		     nfs_request_data_t *preqnfs)
 {
 	SVCXPRT *xprt = preqnfs->xprt;
 	nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;

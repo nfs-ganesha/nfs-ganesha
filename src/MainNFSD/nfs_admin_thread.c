@@ -79,7 +79,7 @@ typedef enum {
  */
 
 typedef enum {
-	admin_stable,		/*< The admin thread is not performing an action. */
+	admin_stable,		/*< The admin thread is not doing an action. */
 	admin_reloading,	/*< The admin thread is reloading exports */
 	admin_shutting_down,	/*< The admin thread is shutting down Ganesha */
 	admin_halted		/*< All threads should exit. */
@@ -97,7 +97,7 @@ static admin_status_t admin_status;
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_reload(DBusMessageIter * args, DBusMessage * reply)
+static bool admin_dbus_reload(DBusMessageIter *args, DBusMessage *reply)
 {
 	char *errormsg = "Exports reloaded";
 	bool success = true;
@@ -131,7 +131,7 @@ static struct gsh_dbus_method method_reload = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_grace(DBusMessageIter * args, DBusMessage * reply)
+static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply)
 {
 #define IP_INPUT 120
 	char *errormsg = "Started grace period";
@@ -195,7 +195,7 @@ static struct gsh_dbus_method method_grace_period = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_shutdown(DBusMessageIter * args, DBusMessage * reply)
+static bool admin_dbus_shutdown(DBusMessageIter *args, DBusMessage *reply)
 {
 	char *errormsg = "Server shut down";
 	bool success = true;
@@ -308,8 +308,8 @@ int rebuild_export_list(void)
 	int status = 0;
 	config_file_t config_struct;
 
-	/* If no configuration file is given, then the caller must want to reparse the
-	 * configuration file from startup. */
+	/* If no configuration file is given, then the caller must want to
+	 * reparse the configuration file from startup. */
 	if (config_path == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Error: No configuration file was specified for reloading exports.");
@@ -396,9 +396,8 @@ static void redo_exports(void)
    */
 	int rc = 0;
 
-	if (rebuild_export_list() <= 0) {
+	if (rebuild_export_list() <= 0)
 		return;
-	}
 
 	rc = state_async_pause();
 	if (rc != STATE_SUCCESS) {
@@ -550,9 +549,8 @@ void *admin_thread(void *UnusedArg)
 			admin_status = admin_stable;
 			pthread_cond_broadcast(&admin_control_cv);
 		}
-		if (admin_command != admin_none_pending) {
+		if (admin_command != admin_none_pending)
 			continue;
-		}
 		pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
 	}
 

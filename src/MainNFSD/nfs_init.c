@@ -96,7 +96,7 @@ nfs_parameter_t nfs_param = {
 	.core_param.rpc.max_connections = 1024,
 	.core_param.rpc.idle_timeout_s = 300,
 	.core_param.port[P_NFS] = NFS_PORT,
-	.core_param.bind_addr.sin_family = AF_INET,	/* IPv4 only right now */
+	.core_param.bind_addr.sin_family = AF_INET, /* IPv4 only right now */
 	.core_param.program[P_NFS] = NFS_PROGRAM,
 	.core_param.program[P_MNT] = MOUNTPROG,
 	.core_param.program[P_NLM] = NLMPROG,
@@ -413,46 +413,46 @@ void nfs_print_param_config()
 	printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
 	printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
-	printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
-	printf("\tDRC_TCP_Npart = %u ; \n", nfs_param.core_param.drc.tcp.npart);
-	printf("\tDRC_TCP_Size = %u ; \n", nfs_param.core_param.drc.tcp.size);
-	printf("\tDRC_TCP_Cachesz = %u ; \n",
+	printf("\tNb_Worker = %u ;\n", nfs_param.core_param.nb_worker);
+	printf("\tDRC_TCP_Npart = %u ;\n", nfs_param.core_param.drc.tcp.npart);
+	printf("\tDRC_TCP_Size = %u ;\n", nfs_param.core_param.drc.tcp.size);
+	printf("\tDRC_TCP_Cachesz = %u ;\n",
 	       nfs_param.core_param.drc.tcp.cachesz);
-	printf("\tDRC_TCP_Hiwat = %u ; \n", nfs_param.core_param.drc.tcp.hiwat);
-	printf("\tDRC_TCP_Recycle_Npart = %u ; \n",
+	printf("\tDRC_TCP_Hiwat = %u ;\n", nfs_param.core_param.drc.tcp.hiwat);
+	printf("\tDRC_TCP_Recycle_Npart = %u ;\n",
 	       nfs_param.core_param.drc.tcp.recycle_npart);
-	printf("\tDRC_TCP_Recycle_Expire_S = %u ; \n",
+	printf("\tDRC_TCP_Recycle_Expire_S = %u ;\n",
 	       nfs_param.core_param.drc.tcp.recycle_expire_s);
-	printf("\tDRC_TCP_Checksum = %u ; \n",
+	printf("\tDRC_TCP_Checksum = %u ;\n",
 	       nfs_param.core_param.drc.tcp.checksum);
-	printf("\tDRC_UDP_Npart = %u ; \n", nfs_param.core_param.drc.udp.npart);
-	printf("\tDRC_UDP_Size = %u ; \n", nfs_param.core_param.drc.udp.size);
-	printf("\tDRC_UDP_Cachesz = %u ; \n",
+	printf("\tDRC_UDP_Npart = %u ;\n", nfs_param.core_param.drc.udp.npart);
+	printf("\tDRC_UDP_Size = %u ;\n", nfs_param.core_param.drc.udp.size);
+	printf("\tDRC_UDP_Cachesz = %u ;\n",
 	       nfs_param.core_param.drc.udp.cachesz);
-	printf("\tDRC_UDP_Hiwat = %u ; \n", nfs_param.core_param.drc.udp.hiwat);
-	printf("\tDRC_UDP_Checksum = %u ; \n",
+	printf("\tDRC_UDP_Hiwat = %u ;\n", nfs_param.core_param.drc.udp.hiwat);
+	printf("\tDRC_UDP_Checksum = %u ;\n",
 	       nfs_param.core_param.drc.udp.checksum);
-	printf("\tCore_Dump_Size = %ld ; \n",
+	printf("\tCore_Dump_Size = %ld ;\n",
 	       nfs_param.core_param.core_dump_size);
-	printf("\tLong_Processing_Threshold = %" PRIu64 " ; \n",
+	printf("\tLong_Processing_Threshold = %" PRIu64 " ;\n",
 	       nfs_param.core_param.long_processing_threshold);
-	printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ; \n",
+	printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n",
 	       nfs_param.core_param.decoder_fridge_expiration_delay);
-	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ; \n",
+	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
 	       nfs_param.core_param.decoder_fridge_block_timeout);
 
 	if (nfs_param.core_param.drop_io_errors)
-		printf("\tDrop_IO_Errors = true ; \n");
+		printf("\tDrop_IO_Errors = true ;\n");
 	else
 		printf("\tDrop_IO_Errors = false ;\n");
 
 	if (nfs_param.core_param.drop_inval_errors)
-		printf("\tDrop_Inval_Errors = true ; \n");
+		printf("\tDrop_Inval_Errors = true ;\n");
 	else
 		printf("\tDrop_Inval_Errors = false ;\n");
 
 	if (nfs_param.core_param.drop_delay_errors)
-		printf("\tDrop_Delay_Errors = true ; \n");
+		printf("\tDrop_Delay_Errors = true ;\n");
 	else
 		printf("\tDrop_Delay_Errors = false ;\n");
 
@@ -471,7 +471,7 @@ void nfs_print_param_config()
  * @return -1 on failure.
  */
 int nfs_set_param_from_conf(config_file_t config_struct,
-			    nfs_start_info_t * p_start_info)
+			    nfs_start_info_t *p_start_info)
 {
 	int rc;
 	cache_inode_status_t cache_inode_status;
@@ -483,14 +483,16 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 	client_pkginit();
 	export_pkginit();
 
-	if ((rc = read_log_config(config_struct)) < 0) {
+	rc = read_log_config(config_struct);
+	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing log configuration");
 		return -1;
 	}
 
 	/* Core parameters */
-	if ((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0) {
+	rc = nfs_read_core_conf(config_struct, &nfs_param.core_param);
+	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing core configuration");
 		return -1;
@@ -505,9 +507,8 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 	}
 
 	/* Worker paramters: ip/name hash table and expiration for each entry */
-	if ((rc =
-	     nfs_read_ip_name_conf(config_struct,
-				   &nfs_param.ip_name_param)) < 0) {
+	rc = nfs_read_ip_name_conf(config_struct, &nfs_param.ip_name_param);
+	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing IP/name configuration");
 		return -1;
@@ -523,7 +524,8 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 
 #ifdef _HAVE_GSSAPI
 	/* NFS kerberos5 configuration */
-	if ((rc = nfs_read_krb5_conf(config_struct, &nfs_param.krb5_param)) < 0) {
+	rc = nfs_read_krb5_conf(config_struct, &nfs_param.krb5_param);
+	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
 		return -1;
@@ -539,9 +541,8 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 #endif
 
 	/* NFSv4 specific configuration */
-	if ((rc =
-	     nfs_read_version4_conf(config_struct,
-				    &nfs_param.nfsv4_param)) < 0) {
+	rc = nfs_read_version4_conf(config_struct, &nfs_param.nfsv4_param);
+	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFSv4 specific configuration");
 		return -1;
@@ -556,7 +557,8 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 	}
 
 #ifdef _USE_9P
-	if ((rc = _9p_read_conf(config_struct, &nfs_param._9p_param)) < 0) {
+	rc = _9p_read_conf(config_struct, &nfs_param._9p_param);
+	if (rc < 0) {
 		if (rc == -2)
 			LogDebug(COMPONENT_INIT,
 				 "No 9P configuration found, using default");
@@ -569,10 +571,10 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 #endif
 
 	/* Cache inode client parameters */
-	if ((cache_inode_status =
-	     cache_inode_read_conf_parameter(config_struct,
-					     &nfs_param.cache_param))
-	    != CACHE_INODE_SUCCESS) {
+	cache_inode_status =
+		cache_inode_read_conf_parameter(config_struct,
+						&nfs_param.cache_param);
+	if (cache_inode_status != CACHE_INODE_SUCCESS) {
 		if (cache_inode_status == CACHE_INODE_NOT_FOUND)
 			LogDebug(COMPONENT_INIT,
 				 "No Cache Inode Client configuration found, using default");
@@ -619,7 +621,7 @@ static bool is_prime(int v)
 		return true;
 	if (v % 2 == 0)
 		return false;
-	// dont link with libm just for this
+	/* dont link with libm just for this */
 #ifdef LINK_LIBM
 	m = (int)sqrt(v);
 #else
@@ -639,33 +641,13 @@ static bool is_prime(int v)
  */
 int nfs_check_param_consistency()
 {
-
-  /** @todo BUGAZOMEU: check we don't have twice the same export id in the export list */
-
 	if (nfs_param.core_param.nb_worker <= 0) {
 		LogCrit(COMPONENT_INIT,
 			"BAD PARAMETER: There must be more than %d workers",
 			nfs_param.core_param.nb_worker);
 		return 1;
 	}
-#if 0
-/* XXXX this seems somewhat the obvious of what I would have reasoned.
- * Where we had a thread for every connection (but sharing a single
- * fdset for select), dispatching on a small, fixed worker pool, we
- * now had an arbitrary, fixed work pool, with flexible event
- * channels.
- */
-	if (2 * nfs_param.core_param.nb_worker >
-	    nfs_param.cache_layers_param.cache_param.hparam.index_size) {
-		LogCrit(COMPONENT_INIT,
-			"BAD PARAMETER: number of workers is too large compared to "
-			"Cache_Inode's index size, it should be smaller than "
-			"half of it");
-		return 1;
-	}
-#endif
-
-	// check for parameters which need to be primes
+	/* check for parameters which need to be primes */
 	if (!is_prime(nfs_param.ip_name_param.hash_param.index_size)
 	    || !is_prime(nfs_param.client_id_param.cid_unconfirmed_hash_param.
 			 index_size)
@@ -699,17 +681,16 @@ static void nfs_Start_threads(void)
 	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
 		LogDebug(COMPONENT_THREAD, "can't set pthread's scope");
 
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) !=
-	    0)
+	if (pthread_attr_setdetachstate(&attr_thr,
+					PTHREAD_CREATE_JOINABLE) != 0)
 		LogDebug(COMPONENT_THREAD, "can't set pthread's join state");
 
 	LogEvent(COMPONENT_THREAD, "Starting delayed executor.");
 	delayed_start();
 
 	/* Starting the thread dedicated to signal handling */
-	if ((rc =
-	     pthread_create(&sigmgr_thrid, &attr_thr, sigmgr_thread,
-			    NULL)) != 0) {
+	rc = pthread_create(&sigmgr_thrid, &attr_thr, sigmgr_thread, NULL);
+	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create sigmgr_thread, error = %d (%s)",
 			 errno, strerror(errno));
@@ -727,9 +708,9 @@ static void nfs_Start_threads(void)
 
 #ifdef _USE_9P
 	/* Starting the 9P/TCP dispatcher thread */
-	if ((rc =
-	     pthread_create(&_9p_dispatcher_thrid, &attr_thr,
-			    _9p_dispatcher_thread, NULL)) != 0) {
+	rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
+			    _9p_dispatcher_thread, NULL);
+	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create  9P/TCP dispatcher, error = %d (%s)",
 			 errno, strerror(errno));
@@ -740,9 +721,9 @@ static void nfs_Start_threads(void)
 
 #ifdef _USE_9P_RDMA
 	/* Starting the 9P/RDMA dispatcher thread */
-	if ((rc =
-	     pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
-			    _9p_rdma_dispatcher_thread, NULL)) != 0) {
+	rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
+			    _9p_rdma_dispatcher_thread, NULL);
+	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create  9P/RDMA dispatcher, error = %d (%s)",
 			 errno, strerror(errno));
@@ -753,9 +734,8 @@ static void nfs_Start_threads(void)
 
 #ifdef USE_DBUS
 	/* DBUS event thread */
-	if ((rc =
-	     pthread_create(&gsh_dbus_thrid, &attr_thr, gsh_dbus_thread,
-			    NULL)) != 0) {
+	rc = pthread_create(&gsh_dbus_thrid, &attr_thr, gsh_dbus_thread, NULL);
+	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create gsh_dbus_thread, error = %d (%s)",
 			 errno, strerror(errno));
@@ -764,9 +744,8 @@ static void nfs_Start_threads(void)
 #endif
 
 	/* Starting the admin thread */
-	if ((rc =
-	     pthread_create(&admin_thrid, &attr_thr, admin_thread,
-			    NULL)) != 0) {
+	rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL);
+	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create admin_thread, error = %d (%s)",
 			 errno, strerror(errno));
@@ -799,7 +778,7 @@ static void nfs_Start_threads(void)
  * @param[in] p_start_info Unused
  */
 
-static void nfs_Init(const nfs_start_info_t * p_start_info)
+static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
 	cache_inode_status_t cache_status;
 	state_status_t state_status;
@@ -914,12 +893,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
 		/* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
 		gss_service_buf.value = nfs_param.krb5_param.svc.principal;
-		gss_service_buf.length = strlen(nfs_param.krb5_param.svc.principal) + 1;	/* The '+1' is not to be forgotten, for the '\0' at the end */
+		gss_service_buf.length =
+			strlen(nfs_param.krb5_param.svc.principal) + 1;
+		/* The '+1' is not to be forgotten, for the '\0' at the end */
 
-		maj_stat =
-		    gss_import_name(&min_stat, &gss_service_buf,
-				    (gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
-				    &nfs_param.krb5_param.svc.gss_name);
+		maj_stat = gss_import_name(&min_stat, &gss_service_buf,
+					   (gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
+					   &nfs_param.krb5_param.svc.gss_name);
 		if (maj_stat != GSS_S_COMPLETE) {
 			log_sperror_gss(GssError, maj_stat, min_stat);
 			LogFatal(COMPONENT_INIT,
@@ -964,7 +944,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-	if (nfs_Init_client_id(&nfs_param.client_id_param) != CLIENT_ID_SUCCESS) {
+	if (nfs_Init_client_id(&nfs_param.client_id_param) !=
+	    CLIENT_ID_SUCCESS) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 clientid cache");
 	}
@@ -1050,7 +1031,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
 	/* Creates the pseudo fs */
 	LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-	if ((rc = nfs4_ExportToPseudoFS()) != 0)
+	rc = nfs4_ExportToPseudoFS();
+	if (rc != 0)
 		LogFatal(COMPONENT_INIT,
 			 "Error %d while initializing NFSv4 pseudo file system",
 			 rc);
@@ -1086,7 +1068,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
  *
  * @param[in] p_start_info Startup parameters
  */
-void nfs_start(nfs_start_info_t * p_start_info)
+void nfs_start(nfs_start_info_t *p_start_info)
 {
 	struct rlimit ulimit_data;
 
@@ -1134,8 +1116,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
 	{
 		/* Set the write verifiers */
 		union {
-			verifier4 NFS4_write_verifier;	/* NFS V4 write verifier */
-			writeverf3 NFS3_write_verifier;	/* NFS V3 write verifier */
+			verifier4 NFS4_write_verifier;
+			writeverf3 NFS3_write_verifier;
 			uint64_t epoch;
 		} build_verifier;
 
@@ -1150,7 +1132,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
 #ifdef LINUX
 	/* Deal with capabilities in order to remove CAP_SYS_RESOURCE (needed
 	 * for proper management of data quotas) */
-	caphdr.version = _LINUX_CAPABILITY_VERSION_2;	// kernel is newer than 2.6.25
+	/* kernel is newer than 2.6.25 */
+	caphdr.version = _LINUX_CAPABILITY_VERSION_2;
 	caphdr.pid = getpid();
 
 	if (capget(&caphdr, &capdata) != 0)
@@ -1176,7 +1159,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
 		LogEvent(COMPONENT_INIT,
 			 "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL");
 
-	/* Print newly set capabilities (same display as what CLI "getpcaps" does */
+	/* Print newly set capabilities (same as what CLI "getpcaps" displays */
 	cap_t my_cap = cap_get_proc();
 	LogEvent(COMPONENT_INIT, "currenty set capabilities are: %s",
 		 cap_to_text(my_cap, &capstrlen));

@@ -66,7 +66,7 @@ static pool_t *rpc_call_pool;
 
 extern char host_name[MAXHOSTNAMELEN + 1];
 
-void _nfs_rpc_destroy_chan(rpc_call_channel_t * chan);
+void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 
 /**
  * @brief Initialize the callback credential cache
@@ -78,21 +78,19 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
 	int code = 0;
 
-	if (mkdir(ccache, 700) < 0) {
+	if (mkdir(ccache, 700) < 0)
 		LogWarn(COMPONENT_INIT,
-			"mkdir failed creating credential "
-			"cache directory: %s (%d)", ccache, errno);
-	}
+			"mkdir failed creating credential cache directory: %s (%d)",
+			ccache, errno);
 	ccachesearch[0] = nfs_param.krb5_param.ccache_dir;
 
-	code =
-	    gssd_refresh_krb5_machine_credential(host_name, NULL,
-						 nfs_param.krb5_param.svc.
-						 principal);
+	code = gssd_refresh_krb5_machine_credential(host_name, NULL,
+						    nfs_param.krb5_param.svc.
+						    principal);
 	if (code) {
 		LogWarn(COMPONENT_INIT,
-			"gssd_refresh_krb5_machine_credential "
-			"failed (%d:%d)", code, errno);
+			"gssd_refresh_krb5_machine_credential failed (%d:%d)",
+			code, errno);
 		goto out;
 	}
 
@@ -107,11 +105,12 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 void nfs_rpc_cb_pkginit(void)
 {
 	/* Create a pool of rpc_call_t */
-	rpc_call_pool =
-	    pool_init("RPC Call Pool", sizeof(rpc_call_t), pool_basic_substrate,
-		      NULL, nfs_rpc_init_call, NULL);
+	rpc_call_pool = pool_init("RPC Call Pool",
+				  sizeof(rpc_call_t), pool_basic_substrate,
+				  NULL, nfs_rpc_init_call, NULL);
 	if (!(rpc_call_pool)) {
-		LogCrit(COMPONENT_INIT, "Error while allocating rpc call pool");
+		LogCrit(COMPONENT_INIT,
+			"Error while allocating rpc call pool");
 		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
 		Fatal();
 	}
@@ -150,44 +149,36 @@ void nfs_rpc_cb_pkgshutdown(void)
 
 nc_type nfs_netid_to_nc(const char *netid)
 {
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_TCP].netid,
-	     netid_nc_table[_NC_TCP].netid_len))
-		return (_NC_TCP);
+	if (!strncmp(netid, netid_nc_table[_NC_TCP].netid,
+		     netid_nc_table[_NC_TCP].netid_len))
+		return _NC_TCP;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_TCP6].netid,
-	     netid_nc_table[_NC_TCP6].netid_len))
-		return (_NC_TCP6);
+	if (!strncmp(netid, netid_nc_table[_NC_TCP6].netid,
+		     netid_nc_table[_NC_TCP6].netid_len))
+		return _NC_TCP6;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_UDP].netid,
-	     netid_nc_table[_NC_UDP].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_UDP].netid,
+		     netid_nc_table[_NC_UDP].netid_len))
 		return _NC_UDP;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_UDP6].netid,
-	     netid_nc_table[_NC_UDP6].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_UDP6].netid,
+		     netid_nc_table[_NC_UDP6].netid_len))
 		return _NC_UDP6;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_RDMA].netid,
-	     netid_nc_table[_NC_RDMA].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_RDMA].netid,
+		     netid_nc_table[_NC_RDMA].netid_len))
 		return _NC_RDMA;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_RDMA6].netid,
-	     netid_nc_table[_NC_RDMA6].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_RDMA6].netid,
+		     netid_nc_table[_NC_RDMA6].netid_len))
 		return _NC_RDMA6;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_SCTP].netid,
-	     netid_nc_table[_NC_SCTP].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_SCTP].netid,
+		     netid_nc_table[_NC_SCTP].netid_len))
 		return _NC_SCTP;
 
-	if (!strncmp
-	    (netid, netid_nc_table[_NC_SCTP6].netid,
-	     netid_nc_table[_NC_SCTP6].netid_len))
+	if (!strncmp(netid, netid_nc_table[_NC_SCTP6].netid,
+		     netid_nc_table[_NC_SCTP6].netid_len))
 		return _NC_SCTP6;
 
 	return _NC_ERR;
@@ -204,7 +195,7 @@ nc_type nfs_netid_to_nc(const char *netid)
  * @param[in]     uaddr    na_r_addr from the clientaddr4
  */
 
-static inline void setup_client_saddr(nfs_client_id_t * clientid,
+static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
 	char addr_buf[SOCK_NAME_MAX + 1];
@@ -222,9 +213,10 @@ static inline void setup_client_saddr(nfs_client_id_t * clientid,
 	case _NC_SCTP:
 	case _NC_UDP:
 		/* IPv4 (ws inspired) */
-		if (sscanf
-		    (uaddr, "%u.%u.%u.%u.%u.%u", &bytes[1], &bytes[2],
-		     &bytes[3], &bytes[4], &bytes[5], &bytes[6]) == 6) {
+		if (sscanf(uaddr,
+			   "%u.%u.%u.%u.%u.%u",
+			   &bytes[1], &bytes[2], &bytes[3], &bytes[4],
+			   &bytes[5], &bytes[6]) == 6) {
 			struct sockaddr_in *sin = ((struct sockaddr_in *)
 						   &clientid->cid_cb.v40.
 						   cb_addr.ss);
@@ -249,13 +241,15 @@ static inline void setup_client_saddr(nfs_client_id_t * clientid,
 	case _NC_SCTP6:
 	case _NC_UDP6:
 		/* IPv6 (ws inspired) */
-		if (sscanf
-		    (uaddr, "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x.%u.%u", &bytes[1],
-		     &bytes[2], &bytes[3], &bytes[4], &bytes[5], &bytes[6],
-		     &bytes[7], &bytes[8], &bytes[9], &bytes[10]) == 10) {
+		if (sscanf(uaddr,
+			   "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x.%u.%u",
+			   &bytes[1], &bytes[2], &bytes[3], &bytes[4],
+			   &bytes[5], &bytes[6], &bytes[7], &bytes[8],
+			   &bytes[9], &bytes[10]) == 10) {
 			struct sockaddr_in6 *sin6 = ((struct sockaddr_in6 *)
 						     &clientid->cid_cb.v40.
 						     cb_addr.ss);
+
 			snprintf(addr_buf, sizeof(addr_buf),
 				 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x", bytes[1],
 				 bytes[2], bytes[3], bytes[4], bytes[5],
@@ -287,8 +281,8 @@ static inline void setup_client_saddr(nfs_client_id_t * clientid,
  * @param[in]     addr4    The client's supplied callback address
  */
 
-void nfs_set_client_location(nfs_client_id_t * clientid,
-			     const clientaddr4 * addr4)
+void nfs_set_client_location(nfs_client_id_t *clientid,
+			     const clientaddr4 *addr4)
 {
 	assert(clientid->cid_minorversion == 0);
 	clientid->cid_cb.v40.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
@@ -307,7 +301,7 @@ void nfs_set_client_location(nfs_client_id_t * clientid,
  * @return 0 or values of errno.
  */
 
-static inline int32_t nfs_clid_connected_socket(nfs_client_id_t * clientid,
+static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
 						int *fd, int *proto)
 {
 	struct sockaddr_in *sin;
@@ -337,9 +331,8 @@ static inline int32_t nfs_clid_connected_socket(nfs_client_id_t * clientid,
 			break;
 		}
 
-		code =
-		    connect(nfd, (struct sockaddr *)sin,
-			    sizeof(struct sockaddr_in));
+		code = connect(nfd, (struct sockaddr *)sin,
+			       sizeof(struct sockaddr_in));
 		if (code == -1) {
 			LogWarn(COMPONENT_NFS_CB, "connect fail errno %d",
 				errno);
@@ -363,9 +356,8 @@ static inline int32_t nfs_clid_connected_socket(nfs_client_id_t * clientid,
 			goto out;
 			break;
 		}
-		code =
-		    connect(nfd, (struct sockaddr *)sin6,
-			    sizeof(struct sockaddr_in6));
+		code = connect(nfd, (struct sockaddr *)sin6,
+			       sizeof(struct sockaddr_in6));
 		if (code == -1) {
 			LogWarn(COMPONENT_NFS_CB, "connect fail errno %d",
 				errno);
@@ -428,7 +420,7 @@ gss_OID_desc krb5oid = { 9, "\052\206\110\206\367\022\001\002\002" };
  * @return The principle or NULL.
  */
 
-static inline char *format_host_principal(rpc_call_channel_t * chan, char *buf,
+static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 					  size_t len)
 {
 	char addr_buf[SOCK_NAME_MAX + 1];
@@ -490,8 +482,8 @@ static inline char *format_host_principal(rpc_call_channel_t * chan, char *buf,
  * @param[in]     cred GSS Credential
  */
 
-static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t * chan,
-					      nfs_client_cred_t * cred)
+static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
+					      nfs_client_cred_t *cred)
 {
 	AUTH *auth;
 	char hprinc[MAXPATHLEN + 1];
@@ -528,8 +520,8 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t * chan,
 		/* no more lipkey, spkm3 */
 		chan->gss_sec.mech = (gss_OID) & krb5oid;
 		chan->gss_sec.req_flags = GSS_C_MUTUAL_FLAG;	/* XXX */
-		auth =
-		    authgss_create_default(chan->clnt, hprinc, &chan->gss_sec);
+		auth = authgss_create_default(chan->clnt, hprinc,
+					      &chan->gss_sec);
 		/* authgss_create and authgss_create_default return NULL on
 		 * failure, don't assign NULL to clnt->cl_auth */
 		if (auth)
@@ -549,7 +541,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t * chan,
  * @return Status code.
  */
 
-int nfs_rpc_create_chan_v40(nfs_client_id_t * clientid, uint32_t flags)
+int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 {
 	struct netbuf raddr;
 	int fd, proto, code = 0;
@@ -578,17 +570,17 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t * clientid, uint32_t flags)
 	switch (proto) {
 	case IPPROTO_TCP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in);
-		chan->clnt =
-		    clnt_vc_create(fd, &raddr, clientid->cid_cb.v40.cb_program,
-				   NFS_CB /* Errata ID: 2291 */ ,
-				   0, 0);
+		chan->clnt = clnt_vc_create(fd, &raddr,
+					    clientid->cid_cb.v40.cb_program,
+					    NFS_CB /* Errata ID: 2291 */,
+					    0, 0);
 		break;
 	case IPPROTO_UDP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
-		chan->clnt =
-		    clnt_dg_create(fd, &raddr, clientid->cid_cb.v40.cb_program,
-				   NFS_CB /* Errata ID: 2291 */ ,
-				   0, 0);
+		chan->clnt = clnt_dg_create(fd, &raddr,
+					    clientid->cid_cb.v40.cb_program,
+					    NFS_CB /* Errata ID: 2291 */,
+					    0, 0);
 		break;
 	default:
 		break;
@@ -605,15 +597,15 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t * clientid, uint32_t flags)
 		nfs_rpc_callback_setup_gss(chan, &clientid->cid_credential);
 		break;
 	case AUTH_SYS:
-		if (!(chan->auth = authunix_create_default())) {
+		chan->auth = authunix_create_default();
+		if (!chan->auth)
 			code = EINVAL;
-		}
 		code = 0;
 		break;
 	case AUTH_NONE:
-		if (!(chan->auth = authnone_ncreate())) {
+		chan->auth = authnone_ncreate();
+		if (!chan->auth)
 			code = EINVAL;
-		}
 		break;
 	default:
 		code = EINVAL;
@@ -639,8 +631,8 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t * clientid, uint32_t flags)
  * @return 0 or POSIX error code.
  */
 
-int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
-			    callback_sec_parms4 * sec_parms)
+int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
+			    callback_sec_parms4 *sec_parms)
 {
 	int code = 0;
 	rpc_call_channel_t *chan = &session->cb_chan;
@@ -664,10 +656,9 @@ int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
 	/* connect an RPC client
 	 * Use version 1 per errata ID 2291 for RFC 5661
 	 */
-	chan->clnt =
-	    clnt_vc_create_svc(session->xprt, session->cb_program,
-			       NFS_CB /* Errata ID: 2291 */ ,
-			       SVC_VC_CREATE_BOTHWAYS);
+	chan->clnt = clnt_vc_create_svc(session->xprt, session->cb_program,
+					NFS_CB /* Errata ID: 2291 */,
+					SVC_VC_CREATE_BOTHWAYS);
 
 	if (!chan->clnt) {
 		code = EINVAL;
@@ -676,23 +667,22 @@ int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
 
 	for (i = 0; i < num_sec_parms; ++i) {
 		if (sec_parms[i].cb_secflavor == AUTH_NONE) {
-			if (!(chan->auth = authnone_ncreate())) {
+			chan->auth = authnone_ncreate();
+			if (!chan->auth)
 				continue;
-			}
 			authed = true;
 			break;
 		} else if (sec_parms[i].cb_secflavor == AUTH_SYS) {
 			struct authunix_parms *sys_parms =
 			    &sec_parms[i].callback_sec_parms4_u.cbsp_sys_cred;
-			if (!
-			    (chan->auth =
-			     authunix_create(sys_parms->aup_machname,
-					     sys_parms->aup_uid,
-					     sys_parms->aup_gid,
-					     sys_parms->aup_len,
-					     sys_parms->aup_gids))) {
+
+			chan->auth = authunix_create(sys_parms->aup_machname,
+						     sys_parms->aup_uid,
+						     sys_parms->aup_gid,
+						     sys_parms->aup_len,
+						     sys_parms->aup_gids);
+			if (!chan->auth)
 				continue;
-			}
 			authed = true;
 			break;
 		} else if (sec_parms[i].cb_secflavor == RPCSEC_GSS) {
@@ -728,9 +718,8 @@ int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
 	code = 0;
 
  out:
-	if ((code != 0) && chan->clnt) {
+	if ((code != 0) && chan->clnt)
 		_nfs_rpc_destroy_chan(chan);
-	}
 
 	pthread_mutex_unlock(&chan->mtx);
 
@@ -749,16 +738,14 @@ int nfs_rpc_create_chan_v41(nfs41_session_t * session, int num_sec_parms,
  * @return The back channel or NULL if none existed or could be
  *         established.
  */
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t * clientid, uint32_t flags)
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 {
 	rpc_call_channel_t *chan = NULL;
 
 	if (clientid->cid_minorversion == 0) {
 		chan = &clientid->cid_cb.v40.cb_chan;
-		if (!chan->clnt) {
-			if (nfs_rpc_create_chan_v40(clientid, flags) == 0) {
-			}
-		}
+		if (!chan->clnt)
+			(void)nfs_rpc_create_chan_v40(clientid, flags);
 	} else {		/* 1 and higher */
 		struct glist_head *glist = NULL;
 
@@ -768,9 +755,8 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t * clientid, uint32_t flags)
 			nfs41_session_t *session = glist_entry(glist,
 							       nfs41_session_t,
 							       session_link);
-			if (session->flags & session_bc_up) {
+			if (session->flags & session_bc_up)
 				chan = &session->cb_chan;
-			}
 		/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 		}
 	}
@@ -785,7 +771,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t * clientid, uint32_t flags)
  *
  * @param[in] chan The channel to dispose of
  */
-void nfs_rpc_destroy_v40_chan(rpc_call_channel_t * chan)
+void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 {
 	/* channel has a dedicated RPC client */
 	if (chan->clnt) {
@@ -795,9 +781,8 @@ void nfs_rpc_destroy_v40_chan(rpc_call_channel_t * chan)
 			chan->auth = NULL;
 		}
 		/* destroy it */
-		if (chan->clnt) {
+		if (chan->clnt)
 			clnt_destroy(chan->clnt);
-		}
 	}
 }
 
@@ -808,16 +793,15 @@ void nfs_rpc_destroy_v40_chan(rpc_call_channel_t * chan)
  *
  * @param[in] chan The channel to dispose of
  */
-void nfs_rpc_destroy_v41_chan(rpc_call_channel_t * chan)
+void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
 {
 	if (chan->auth) {
 		AUTH_DESTROY(chan->auth);
 		chan->auth = NULL;
 	}
-	if (chan->clnt) {
+	if (chan->clnt)
 		chan->clnt->cl_ops->cl_release(chan->clnt,
 					       CLNT_RELEASE_FLAG_NONE);
-	}
 }
 
 /**
@@ -825,7 +809,7 @@ void nfs_rpc_destroy_v41_chan(rpc_call_channel_t * chan)
  *
  * @param[in] chan The channel to dispose of
  */
-void _nfs_rpc_destroy_chan(rpc_call_channel_t * chan)
+void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
 
@@ -847,7 +831,7 @@ void _nfs_rpc_destroy_chan(rpc_call_channel_t * chan)
  *
  * @param[in] chan The channel to dispose of
  */
-void nfs_rpc_destroy_chan(rpc_call_channel_t * chan)
+void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
 
@@ -868,35 +852,32 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t * chan)
  * @return Client status.
  */
 
-enum clnt_stat rpc_cb_null(rpc_call_channel_t * chan, struct timeval timeout,
+enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 			   bool locked)
 {
 	enum clnt_stat stat = RPC_SUCCESS;
 
 	/* XXX TI-RPC does the signal masking */
-	if (!locked) {
+	if (!locked)
 		pthread_mutex_lock(&chan->mtx);
-	}
 
 	if (!chan->clnt) {
 		stat = RPC_INTR;
 		goto unlock;
 	}
 
-	stat =
-	    clnt_call(chan->clnt, chan->auth, CB_NULL, (xdrproc_t) xdr_void,
-		      NULL, (xdrproc_t) xdr_void, NULL, timeout);
+	stat = clnt_call(chan->clnt, chan->auth,
+			 CB_NULL, (xdrproc_t) xdr_void,
+			 NULL, (xdrproc_t) xdr_void, NULL, timeout);
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
-	if (stat != RPC_SUCCESS) {
+	if (stat != RPC_SUCCESS)
 		_nfs_rpc_destroy_chan(chan);
-	}
 
  unlock:
-	if (!locked) {
+	if (!locked)
 		pthread_mutex_unlock(&chan->mtx);
-	}
 
 	return stat;
 }
@@ -907,7 +888,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t * chan, struct timeval timeout,
  * @param[in] op The argop to free
  */
 
-static inline void free_argop(nfs_cb_argop4 * op)
+static inline void free_argop(nfs_cb_argop4 *op)
 {
 	gsh_free(op);
 }
@@ -918,7 +899,7 @@ static inline void free_argop(nfs_cb_argop4 * op)
  * @param[in] op The resop to free
  */
 
-static inline void free_resop(nfs_cb_resop4 * op)
+static inline void free_resop(nfs_cb_resop4 *op)
 {
 	gsh_free(op);
 }
@@ -943,7 +924,7 @@ rpc_call_t *alloc_rpc_call(void)
  *
  * @param[in] call The call to free
  */
-void free_rpc_call(rpc_call_t * call)
+void free_rpc_call(rpc_call_t *call)
 {
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
 	free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
@@ -961,12 +942,11 @@ void free_rpc_call(rpc_call_t * call)
  * @param[in] arg   Supplied arguments
  * @param[in] flags Any flags
  */
-static inline void RPC_CALL_HOOK(rpc_call_t * call, rpc_call_hook hook,
+static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void *arg, uint32_t flags)
 {
-	if (call) {
+	if (call)
 		call->call_hook(call, hook, arg, flags);
-	}
 }
 
 /**
@@ -978,7 +958,7 @@ static inline void RPC_CALL_HOOK(rpc_call_t * call, rpc_call_hook hook,
  *
  * @return 0 or POSIX error codes.
  */
-int32_t nfs_rpc_submit_call(rpc_call_t * call, void *completion_arg,
+int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
 			    uint32_t flags)
 {
 	int32_t code = 0;
@@ -991,7 +971,7 @@ int32_t nfs_rpc_submit_call(rpc_call_t * call, void *completion_arg,
 	if (flags & NFS_RPC_CALL_INLINE) {
 		code = nfs_rpc_dispatch_call(call, NFS_RPC_CALL_NONE);
 	} else {
-		nfsreq = nfs_rpc_get_nfsreq(0 /* flags */ );
+		nfsreq = nfs_rpc_get_nfsreq(0 /* flags */);
 		pthread_mutex_lock(&call->we.mtx);
 		call->states = NFS_CB_CALL_QUEUED;
 		nfsreq->rtype = NFS_CALL;
@@ -1012,7 +992,7 @@ int32_t nfs_rpc_submit_call(rpc_call_t * call, void *completion_arg,
  * @return 0 or POSIX errors.
  */
 
-int32_t nfs_rpc_dispatch_call(rpc_call_t * call, uint32_t flags)
+int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 {
 	int code = 0;
 	struct timeval CB_TIMEOUT = { 15, 0 };	/* XXX */
@@ -1038,17 +1018,18 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t * call, uint32_t flags)
 		goto unlock;
 	}
 
-	call->stat =
-	    clnt_call(call->chan->clnt, call->chan->auth, CB_COMPOUND,
-		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
-		      (xdrproc_t) xdr_CB_COMPOUND4res, &call->cbt.v_u.v4.res,
-		      CB_TIMEOUT);
+	call->stat = clnt_call(call->chan->clnt,
+			       call->chan->auth, CB_COMPOUND,
+			       (xdrproc_t) xdr_CB_COMPOUND4args,
+			       &call->cbt.v_u.v4.args,
+			       (xdrproc_t) xdr_CB_COMPOUND4res,
+			       &call->cbt.v_u.v4.res,
+			       CB_TIMEOUT);
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
-	if (call->stat != RPC_SUCCESS) {
+	if (call->stat != RPC_SUCCESS)
 		_nfs_rpc_destroy_chan(call->chan);
-	}
 
  unlock:
 	pthread_mutex_unlock(&call->chan->mtx);
@@ -1079,7 +1060,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t * call, uint32_t flags)
  * @return But it does it successfully.
  */
 
-int32_t nfs_rpc_abort_call(rpc_call_t * call)
+int32_t nfs_rpc_abort_call(rpc_call_t *call)
 {
 	return 0;
 }
@@ -1097,8 +1078,8 @@ int32_t nfs_rpc_abort_call(rpc_call_t * call)
  *
  * @return The constructed call or NULL.
  */
-static rpc_call_t *construct_single_call(nfs41_session_t * session,
-					 nfs_cb_argop4 * op,
+static rpc_call_t *construct_single_call(nfs41_session_t *session,
+					 nfs_cb_argop4 *op,
 					 struct state_refer *refer,
 					 slotid4 slot, slotid4 highest_slot)
 {
@@ -1106,9 +1087,8 @@ static rpc_call_t *construct_single_call(nfs41_session_t * session,
 	nfs_cb_argop4 sequenceop;
 	CB_SEQUENCE4args *sequence = &sequenceop.nfs_cb_argop4_u.opcbsequence;
 
-	if (!call) {
+	if (!call)
 		return NULL;
-	}
 
 	call->chan = &session->cb_chan;
 	cb_compound_init_v4(&call->cbt, 2,
@@ -1167,7 +1147,7 @@ static rpc_call_t *construct_single_call(nfs41_session_t * session,
  *
  * @return The constructed call or NULL.
  */
-static void free_single_call(rpc_call_t * call)
+static void free_single_call(rpc_call_t *call)
 {
 	CB_SEQUENCE4args *sequence =
 	    (&call->cbt.v_u.v4.args.argarray.argarray_val[0].nfs_cb_argop4_u.
@@ -1200,8 +1180,8 @@ static void free_single_call(rpc_call_t * call)
  * @retval false if a slot was not found.
  * @retval true if a slot was found.
  */
-static bool find_cb_slot(nfs41_session_t * session, bool wait, slotid4 * slot,
-			 slotid4 * highest_slot)
+static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
+			 slotid4 *highest_slot)
 {
 	slotid4 cur = 0;
 	bool found = false;
@@ -1216,9 +1196,8 @@ static bool find_cb_slot(nfs41_session_t * session, bool wait, slotid4 * slot,
 			*slot = cur;
 			*highest_slot = cur;
 		}
-		if (session->cb_slots[cur].in_use) {
+		if (session->cb_slots[cur].in_use)
 			*highest_slot = cur;
-		}
 	}
 
 	if (!found && wait) {
@@ -1255,13 +1234,12 @@ static bool find_cb_slot(nfs41_session_t * session, bool wait, slotid4 * slot,
  * @param[in]     bool    Whether the operation was ever sent
  */
 
-static void release_cb_slot(nfs41_session_t * session, slotid4 slot, bool sent)
+static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
 {
 	pthread_mutex_lock(&session->cb_mutex);
 	session->cb_slots[slot].in_use = false;
-	if (!sent) {
+	if (!sent)
 		--session->cb_slots[slot].sequence;
-	}
 	pthread_cond_broadcast(&session->cb_cond);
 	pthread_mutex_unlock(&session->cb_mutex);
 }
@@ -1293,20 +1271,19 @@ static void release_cb_slot(nfs41_session_t * session, slotid4 slot, bool sent)
  *
  * @return POSIX error codes.
  */
-int nfs_rpc_v41_single(nfs_client_id_t * clientid, nfs_cb_argop4 * op,
+int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
 		       int32_t(*completion) (rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
 		       void *completion_arg,
-		       void (*free_op) (nfs_cb_argop4 * op))
+		       void (*free_op) (nfs_cb_argop4 *op))
 {
 	int scan = 0;
 	bool sent = false;
 	struct glist_head *glist = NULL;
 
-	if (clientid->cid_minorversion < 1) {
+	if (clientid->cid_minorversion < 1)
 		return EINVAL;
-	}
 
 	for (scan = 0; scan < 2; ++scan) {
 		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
@@ -1314,9 +1291,8 @@ int nfs_rpc_v41_single(nfs_client_id_t * clientid, nfs_cb_argop4 * op,
 			nfs41_session_t *session = glist_entry(glist,
 							       nfs41_session_t,
 							       session_link);
-			if (!(session->flags & session_bc_up)) {
+			if (!(session->flags & session_bc_up))
 				continue;
-			}
 			rpc_call_channel_t *chan = &session->cb_chan;
 			slotid4 slot = 0;
 			slotid4 highest_slot = 0;
@@ -1355,18 +1331,14 @@ int nfs_rpc_v41_single(nfs_client_id_t * clientid, nfs_cb_argop4 * op,
 	}
 
  out:
-	if (sent) {
-		return 0;
-	} else {
-		return ENOTCONN;
-	}
+	return (sent) ? 0 : ENOTCONN;
 }
 
 /**
  * @brief Free information associated with any 'single' call
  */
 
-void nfs41_complete_single(rpc_call_t * call, rpc_call_hook hook, void *arg,
+void nfs41_complete_single(rpc_call_t *call, rpc_call_hook hook, void *arg,
 			   uint32_t flags)
 {
 	release_cb_slot(call->chan->source.session,

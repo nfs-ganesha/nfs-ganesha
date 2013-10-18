@@ -27,10 +27,10 @@
 /**
  * \file    9p_dispatcher.c
  * \date    $Date: 2006/02/23 12:33:05 $
- * \brief   The file that contain the '_9p_dispatcher_thread' routine for ganesha.
+ * \brief   9P protocol dispatch thread.
  *
- * 9p_dispatcher.c : The file that contain the '_9p_dispatcher_thread' routine for ganesha (and all
- * the related stuff).
+ * The file that contains the '_9p_dispatcher_thread' routine for ganesha
+ * (and all the related stuff).
  *
  */
 #include "config.h"
@@ -62,7 +62,7 @@
 
 #define P_FAMILY AF_INET6
 
-void DispatchWork9P(request_data_t * preq)
+void DispatchWork9P(request_data_t *preq)
 {
 	switch (preq->rtype) {
 	case _9P_REQUEST:
@@ -103,11 +103,12 @@ void DispatchWork9P(request_data_t * preq)
 /**
  * _9p_socket_thread: 9p socket manager.
  *
- * This function is the main loop for the 9p socket manager. One such thread exists per connection.
+ * This function is the main loop for the 9p socket manager.
+ * One such thread exists per connection.
  *
  * @param Arg the socket number cast as a void * in pthread_create
  *
- * @return NULL 
+ * @return NULL
  *
  */
 
@@ -147,16 +148,17 @@ void *_9p_socket_thread(void *Arg)
 	/* Init the fids pointers array */
 	memset(&_9p_conn.fids, 0, _9P_FID_PER_CONN * sizeof(_9p_fid_t *));
 
-	/* Set initial msize. Client may request a lower value during TVERSION */
+	/* Set initial msize.
+	 * Client may request a lower value during TVERSION */
 	_9p_conn.msize = nfs_param._9p_param._9p_tcp_msize;
 
 	if (gettimeofday(&_9p_conn.birth, NULL) == -1)
 		LogFatal(COMPONENT_9P, "Cannot get connection's time of birth");
 
 	addrpeerlen = sizeof(_9p_conn.addrpeer);
-	if ((rc =
-	     getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
-			 &addrpeerlen)) == -1) {
+	rc = getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
+			 &addrpeerlen);
+	if (rc == -1) {
 		LogMajor(COMPONENT_9P,
 			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
 			 errno, strerror(errno));
@@ -195,7 +197,9 @@ void *_9p_socket_thread(void *Arg)
 
 	for (;;) {		/* Infinite loop */
 
-		if ((rc = poll(fds, fdcount, -1)) == -1) {	/* timeout = -1 =>Wait indefinitely for incoming events */
+		rc = poll(fds, fdcount, -1);
+		if (rc == -1) {
+			/* timeout = -1 => Wait indefinitely for events */
 			/* Interruption if not an issue */
 			if (errno == EINTR)
 				continue;
@@ -221,7 +225,8 @@ void *_9p_socket_thread(void *Arg)
 
 		if (fds[0].revents & (POLLIN | POLLRDNORM)) {
 			/* Prepare to read the message */
-			if ((_9pmsg = gsh_malloc(_9p_conn.msize)) == NULL) {
+			_9pmsg = gsh_malloc(_9p_conn.msize);
+			if (_9pmsg == NULL) {
 				LogCrit(COMPONENT_9P,
 					"Could not allocate 9pmsg buffer for client %s on socket %lu",
 					strcaller, tcp_sock);
@@ -230,9 +235,9 @@ void *_9p_socket_thread(void *Arg)
 
 			/* An incoming 9P request: the msg has a 4 bytes header
 			   showing the size of the msg including the header */
-			if ((readlen =
-			     recv(fds[0].fd, _9pmsg, _9P_HDR_SIZE,
-				  MSG_WAITALL)) == _9P_HDR_SIZE) {
+			readlen = recv(fds[0].fd, _9pmsg,
+				       _9P_HDR_SIZE, MSG_WAITALL);
+			if (readlen == _9P_HDR_SIZE) {
 				p_9pmsglen = (uint32_t *) _9pmsg;
 
 				LogFullDebug(COMPONENT_9P,
@@ -268,7 +273,8 @@ void *_9p_socket_thread(void *Arg)
 						goto end;
 					}
 
-					/* After this point, read() is supposed to be OK */
+					/* After this point,
+					 * read() is supposed to be OK */
 					total_readlen += readlen;
 				}	/* while */
 
@@ -279,10 +285,10 @@ void *_9p_socket_thread(void *Arg)
 				preq->r_u._9p._9pmsg = _9pmsg;
 				preq->r_u._9p.pconn = &_9p_conn;
 
-				/* Add this request to the request list, should it be flushed later. */
-				tag =
-				    *(u16 *) (_9pmsg + _9P_HDR_SIZE +
-					      _9P_TYPE_SIZE);
+				/* Add this request to the request list,
+				 * should it be flushed later. */
+				tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE +
+						_9P_TYPE_SIZE);
 				_9p_AddFlushHook(&preq->r_u._9p, tag,
 						 sequence++);
 				LogFullDebug(COMPONENT_9P,
@@ -291,7 +297,7 @@ void *_9p_socket_thread(void *Arg)
 				/* Message was OK push it */
 				DispatchWork9P(preq);
 
-				/* We are not responsible for this buffer anymore: */
+				/* Not our buffer anymore */
 				_9pmsg = NULL;
 			} else {	/* readlen != _9P_HDR_SIZE */
 
@@ -305,8 +311,10 @@ void *_9p_socket_thread(void *Arg)
 						 strcaller, tcp_sock, readlen,
 						 _9P_HDR_SIZE);
 
-				/* Either way, we close the connection. It is not possible to survive
-				 * once we get out of sync in the TCP stream with the client
+				/* Either way, we close the connection.
+				 * It is not possible to survive
+				 * once we get out of sync in the TCP stream
+				 * with the client
 				 */
 				goto end;
 			}
@@ -317,7 +325,8 @@ void *_9p_socket_thread(void *Arg)
 	LogEvent(COMPONENT_9P, "Closing connection on socket %lu", tcp_sock);
 	close(tcp_sock);
 
-	/* Free buffer if we encountered an error before we could give it to a worker */
+	/* Free buffer if we encountered an error
+	 * before we could give it to a worker */
 	if (_9pmsg)
 		gsh_free(_9pmsg);
 
@@ -332,7 +341,7 @@ void *_9p_socket_thread(void *Arg)
 }				/* _9p_socket_thread */
 
 /**
- * _9p_create_socket: create the accept socket for 9P 
+ * _9p_create_socket: create the accept socket for 9P
  *
  * This function create the accept socket for the 9p dispatcher thread.
  *
@@ -349,35 +358,32 @@ int _9p_create_socket(void)
 	struct netbuf netbuf_tcp6;
 	struct t_bind bindaddr_tcp6;
 	struct __rpc_sockinfo si_tcp6;
-	int bad = 1;
 
-	if ((sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP)) != -1)
-		if (!setsockopt
-		    (sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
-			if (!setsockopt
-			    (sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)))
-				if (!setsockopt
-				    (sock, IPPROTO_TCP, TCP_KEEPIDLE,
-				     &centvingt, sizeof(centvingt)))
-					if (!setsockopt
-					    (sock, IPPROTO_TCP, TCP_KEEPINTVL,
-					     &centvingt, sizeof(centvingt)))
-						if (!setsockopt
-						    (sock, IPPROTO_TCP,
-						     TCP_KEEPCNT, &neuf,
-						     sizeof(neuf)))
-							bad = 0;
+	sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == -1)
+		goto bad_socket;
+	if ((setsockopt(sock,
+			SOL_SOCKET, SO_REUSEADDR,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_NODELAY,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPIDLE,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPINTVL,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPCNT,
+			&neuf, sizeof(neuf)) == -1))
+		goto bad_socket;
 
-	if (bad) {
-		LogFatal(COMPONENT_9P_DISPATCH,
-			 "Bad socket option 9p, error %d (%s)", errno,
-			 strerror(errno));
-		return -1;
-	}
 	socket_setoptions(sock);
 	memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
 	sinaddr_tcp6.sin6_family = AF_INET6;
-	sinaddr_tcp6.sin6_addr = in6addr_any;	/* All the interfaces on the machine are used */
+	/* All the interfaces on the machine are used */
+	sinaddr_tcp6.sin6_addr = in6addr_any;
 	sinaddr_tcp6.sin6_port = htons(nfs_param._9p_param._9p_tcp_port);
 
 	netbuf_tcp6.maxlen = sizeof(sinaddr_tcp6);
@@ -394,9 +400,9 @@ int _9p_create_socket(void)
 		return -1;
 	}
 
-	if (bind
-	    (sock, (struct sockaddr *)bindaddr_tcp6.addr.buf,
-	     (socklen_t) si_tcp6.si_alen) == -1) {
+	if (bind(sock,
+		 (struct sockaddr *)bindaddr_tcp6.addr.buf,
+		 (socklen_t) si_tcp6.si_alen) == -1) {
 		LogFatal(COMPONENT_DISPATCH,
 			 "Cannot bind 9p tcp6 socket, error %d (%s)", errno,
 			 strerror(errno));
@@ -411,16 +417,23 @@ int _9p_create_socket(void)
 	}
 
 	return sock;
+
+bad_socket:
+	LogFatal(COMPONENT_9P_DISPATCH,
+		 "Bad socket option 9p, error %d (%s)", errno,
+		 strerror(errno));
+	return -1;
 }				/* _9p_create_socket */
 
 /**
  * _9p_dispatcher_svc_run: main loop for 9p dispatcher
  *
- * This function is the main loop for the 9p dispatcher. It never returns because it is an infinite loop.
+ * This function is the main loop for the 9p dispatcher.
+ * It never returns because it is an infinite loop.
  *
  * @param sock accept socket for 9p dispatch
  *
- * @return nothing (void function). 
+ * @return nothing (void function).
  *
  */
 void _9p_dispatcher_svc_run(long int sock)
@@ -440,23 +453,23 @@ void _9p_dispatcher_svc_run(long int sock)
 	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
 		LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's scope");
 
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) !=
-	    0)
+	if (pthread_attr_setdetachstate(&attr_thr,
+					PTHREAD_CREATE_JOINABLE) != 0)
 		LogDebug(COMPONENT_9P_DISPATCH,
 			 "can't set pthread's join state");
 
 	LogEvent(COMPONENT_9P_DISPATCH, "9P dispatcher started");
 	while (true) {
-		if ((newsock =
-		     accept(sock, (struct sockaddr *)&addr, &addrlen)) < 0) {
+		newsock = accept(sock, (struct sockaddr *)&addr, &addrlen);
+		if (newsock < 0) {
 			LogCrit(COMPONENT_9P_DISPATCH, "accept failed");
 			continue;
 		}
 
 		/* Starting the thread dedicated to signal handling */
-		if ((rc =
-		     pthread_create(&tcp_thrid, &attr_thr, _9p_socket_thread,
-				    (void *)newsock)) != 0) {
+		rc = pthread_create(&tcp_thrid, &attr_thr,
+				    _9p_socket_thread, (void *)newsock);
+		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
 				 "Could not create 9p socket manager thread, error = %d (%s)",
 				 errno, strerror(errno));
@@ -468,8 +481,9 @@ void _9p_dispatcher_svc_run(long int sock)
 /**
  * _9p_dispatcher_thread: thread used for RPC dispatching.
  *
- * Thead used for RPC dispatching. It gets the requests and then spool it to one of the worker's LRU.
- * The worker chosen is the one with the smaller load (its LRU is the shorter one).
+ * Thead used for RPC dispatching. It gets the requests and then spool it to
+ * one of the worker's LRU.  The worker chosen is the one with the smaller load
+ * (its LRU is the shorter one).
  *
  * @param Arg (unused)
  *
@@ -489,7 +503,8 @@ void *_9p_dispatcher_thread(void *Arg)
 		 (caddr_t) pthread_self());
 
 	/* Set up the _9p_socket */
-	if ((_9p_socket = _9p_create_socket()) == -1) {
+	_9p_socket = _9p_create_socket();
+	if (_9p_socket == -1) {
 		LogCrit(COMPONENT_9P_DISPATCH,
 			"Can't get socket for 9p dispatcher");
 		exit(1);
