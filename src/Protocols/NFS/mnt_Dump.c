@@ -30,19 +30,9 @@
  *
  */
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
 

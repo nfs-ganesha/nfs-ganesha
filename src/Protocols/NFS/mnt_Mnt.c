@@ -31,23 +31,11 @@
  *
  */
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
 
@@ -192,12 +180,12 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		break;
 
 	case MOUNT_V3:
-/* FIXME: The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
- * redefine and eliminate one or the other.
- */
-		res->res_mnt3.fhs_status =
-		    nfs3_AllocateFH((nfs_fh3 *) & res->res_mnt3.mountres3_u.
-				    mountinfo.fhandle);
+		/** @todo:
+		 * The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
+		 * redefine and eliminate one or the other.
+		 */
+		res->res_mnt3.fhs_status = nfs3_AllocateFH((nfs_fh3 *)
+			&res->res_mnt3.mountres3_u.mountinfo.fhandle);
 		if (res->res_mnt3.fhs_status == MNT3_OK) {
 			if (!nfs3_FSALToFhandle
 			    ((nfs_fh3 *) &
@@ -206,10 +194,10 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 				res->res_mnt3.fhs_status = MNT3ERR_INVAL;
 			} else {
 				if (isDebug(COMPONENT_NFSPROTO))
-					sprint_fhandle3(dumpfh,
-							(nfs_fh3 *) & res->
-							res_mnt3.mountres3_u.
-							mountinfo.fhandle);
+					sprint_fhandle3(
+					    dumpfh,
+					    (nfs_fh3 *) &res->res_mnt3.
+						mountres3_u.mountinfo.fhandle);
 				res->res_mnt3.fhs_status = MNT3_OK;
 			}
 		}
@@ -272,17 +260,17 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
  * mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
  *
  * Frees the result structure allocated for mnt_Mnt.
- * 
+ *
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
 
-void mnt1_Mnt_Free(nfs_res_t * res)
+void mnt1_Mnt_Free(nfs_res_t *res)
 {
 	return;
-}				/* mnt_Mnt_Free */
+}
 
-void mnt3_Mnt_Free(nfs_res_t * res)
+void mnt3_Mnt_Free(nfs_res_t *res)
 {
 	if (res->res_mnt3.fhs_status == MNT3_OK) {
 		gsh_free(res->res_mnt3.mountres3_u.mountinfo.auth_flavors.
@@ -291,4 +279,4 @@ void mnt3_Mnt_Free(nfs_res_t * res)
 			 fhandle3_val);
 	}
 	return;
-}				/* mnt_Mnt_Free */
+}

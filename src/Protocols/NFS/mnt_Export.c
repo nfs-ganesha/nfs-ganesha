@@ -34,25 +34,10 @@
  *
  */
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <errno.h>
-
-#include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
@@ -181,7 +166,7 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
  * mnt_Export_Free: Frees the result structure allocated for mnt_Export.
  *
  * Frees the result structure allocated for mnt_Dump.
- * 
+ *
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */

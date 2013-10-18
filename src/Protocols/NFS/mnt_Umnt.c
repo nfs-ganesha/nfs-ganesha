@@ -30,20 +30,9 @@
  *
  */
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
 
@@ -75,7 +64,7 @@ int mnt_Umnt(nfs_arg_t *arg, exportlist_t *export,
  * mnt_Umnt_Free: Frees the result structure allocated for mnt_Umnt.
  *
  * Frees the result structure allocated for mnt_UmntAll.
- * 
+ *
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
