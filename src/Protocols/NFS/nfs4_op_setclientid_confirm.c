@@ -52,12 +52,12 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 				struct nfs_resop4 *resp)
 {
-	SETCLIENTID_CONFIRM4args *const arg_SETCLIENTID_CONFIRM4 =
+	SETCLIENTID_CONFIRM4args * const arg_SETCLIENTID_CONFIRM4 =
 	    &op->nfs_argop4_u.opsetclientid_confirm;
-	SETCLIENTID_CONFIRM4res *const res_SETCLIENTID_CONFIRM4 =
+	SETCLIENTID_CONFIRM4res * const res_SETCLIENTID_CONFIRM4 =
 	    &resp->nfs_resop4_u.opsetclientid_confirm;
 	nfs_client_id_t *conf = NULL;
 	nfs_client_id_t *unconf = NULL;
@@ -91,8 +91,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
 	LogDebug(COMPONENT_CLIENTID,
 		 "SETCLIENTID_CONFIRM client addr=%s clientid=%" PRIx64
-		 " setclientid_confirm=%s", str_client_addr, clientid,
-		 str_verifier);
+		 " setclientid_confirm=%s",
+		 str_client_addr, clientid, str_verifier);
 
 	/* First try to look up unconfirmed record */
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
@@ -111,7 +111,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
 		if (rc != CLIENT_ID_SUCCESS) {
 			/* No record whatsoever of this clientid */
-			LogDebug(COMPONENT_CLIENTID, "%s clientid = %" PRIx64,
+			LogDebug(COMPONENT_CLIENTID,
+				 "%s clientid = %" PRIx64,
 				 clientid_error_to_str(rc), clientid);
 			res_SETCLIENTID_CONFIRM4->status =
 			    clientid_error_to_nfsstat(rc);
@@ -149,9 +150,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
 	if (unconf != NULL) {
 		/* First must match principal */
-		if (!nfs_compare_clientcred
-		    (&unconf->cid_credential, &data->credential)
-		    || !cmp_sockaddr(&unconf->cid_client_addr, &client_addr,
+		if (!nfs_compare_clientcred(&unconf->cid_credential,
+					    &data->credential)
+		    || !cmp_sockaddr(&unconf->cid_client_addr,
+				     &client_addr,
 				     IGNORE_PORT)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char unconfirmed_addr[SOCK_NAME_MAX + 1];
@@ -162,20 +164,19 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Unconfirmed ClientId %" PRIx64
-					 "->'%s': Principals do not match... "
-					 "unconfirmed addr=%s Return "
-					 "NFS4ERR_CLID_INUSE", clientid,
-					 str_client_addr, unconfirmed_addr);
+					 "->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					 clientid,
+					 str_client_addr,
+					 unconfirmed_addr);
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
 			dec_client_id_ref(unconf);
 			goto out;
-		} else if (unconf->cid_confirmed == CONFIRMED_CLIENT_ID
-			   && memcmp(unconf->cid_verifier,
-				     arg_SETCLIENTID_CONFIRM4->
-				     setclientid_confirm,
-				     NFS4_VERIFIER_SIZE) == 0) {
+		} else if (unconf->cid_confirmed == CONFIRMED_CLIENT_ID &&
+			   memcmp(unconf->cid_verifier,
+				  arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+				  NFS4_VERIFIER_SIZE) == 0) {
 			/* We must have raced with another
 			   SETCLIENTID_CONFIRM */
 			if (isDebug(COMPONENT_CLIENTID)) {
@@ -219,9 +220,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 			display_clientid_name(conf, str_client);
 
 		/* First must match principal */
-		if (!nfs_compare_clientcred
-		    (&conf->cid_credential, &data->credential)
-		    || !cmp_sockaddr(&conf->cid_client_addr, &client_addr,
+		if (!nfs_compare_clientcred(&conf->cid_credential,
+					    &data->credential)
+		    || !cmp_sockaddr(&conf->cid_client_addr,
+				     &client_addr,
 				     IGNORE_PORT)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char confirmed_addr[SOCK_NAME_MAX + 1];
@@ -232,21 +234,21 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Confirmed ClientId %" PRIx64 "->%s "
-					 "addr=%s: Principals do not match... "
-					 "confirmed addr=%s "
-					 "Return NFS4ERR_CLID_INUSE", clientid,
-					 str_client, str_client_addr,
+					 "addr=%s: Principals do not match...  confirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					 clientid,
+					 str_client,
+					 str_client_addr,
 					 confirmed_addr);
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
 		} else
-		    if (memcmp
-			(conf->cid_verifier,
-			 arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
-			 NFS4_VERIFIER_SIZE) == 0) {
+		    if (memcmp(conf->cid_verifier,
+			       arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+			       NFS4_VERIFIER_SIZE) == 0) {
 			/* In this case, the record was confirmed and
-			   we have received a retry */
+			 * we have received a retry
+			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -258,7 +260,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 			res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
 		} else {
 			/* This is a case not covered... Return
-			   NFS4ERR_CLID_INUSE */
+			 * NFS4ERR_CLID_INUSE
+			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[HASHTABLE_DISPLAY_STRLEN];
 				char str_conf_verifier[NFS4_VERIFIER_SIZE * 2 +
@@ -271,8 +274,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 				display_client_id_rec(conf, str);
 
 				LogDebug(COMPONENT_CLIENTID,
-					 "Confirm verifier=%s doesn't match "
-					 "verifier=%s for %s",
+					 "Confirm verifier=%s doesn't match verifier=%s for %s",
 					 str_conf_verifier, str_verifier, str);
 			}
 
@@ -292,7 +294,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 	 */
 
 	/* Make sure we have a reference to the confirmed clientid
-	   record if any */
+	 * record if any
+	 */
 	if (conf == NULL) {
 		conf = client_record->cr_confirmed_rec;
 
@@ -371,7 +374,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
 			display_client_id_rec(unconf, str);
-			LogFullDebug(COMPONENT_CLIENTID, "Confirming new %s",
+			LogFullDebug(COMPONENT_CLIENTID,
+				     "Confirming new %s",
 				     str);
 		}
 
@@ -390,8 +394,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 			goto out;
 		}
 
-		/*
-		 * We have successfully added a new confirmed client
+		/* We have successfully added a new confirmed client
 		 * id.  Now add it to stable storage.
 		 */
 		nfs4_create_clid_name(client_record, unconf, data->req);
@@ -439,7 +442,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_setclientid_confirm_Free(nfs_resop4 * resp)
+void nfs4_op_setclientid_confirm_Free(nfs_resop4 *resp)
 {
 	return;
 }

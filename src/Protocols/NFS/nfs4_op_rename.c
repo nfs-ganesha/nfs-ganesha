@@ -56,11 +56,11 @@
  * @return per RFC5661, p. 373
  */
 
-int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		   struct nfs_resop4 *resp)
 {
-	RENAME4args *const arg_RENAME4 = &op->nfs_argop4_u.oprename;
-	RENAME4res *const res_RENAME4 = &resp->nfs_resop4_u.oprename;
+	RENAME4args * const arg_RENAME4 = &op->nfs_argop4_u.oprename;
+	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
 	cache_entry_t *dst_entry = NULL;
 	cache_entry_t *src_entry = NULL;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -71,26 +71,29 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data,
 	res_RENAME4->status = NFS4_OK;
 
 	/* Read and validate oldname and newname from uft8 strings. */
-	res_RENAME4->status =
-	    nfs4_utf8string2dynamic(&arg_RENAME4->oldname, UTF8_SCAN_ALL,
-				    &oldname);
-	if (res_RENAME4->status != NFS4_OK) {
+	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->oldname,
+						      UTF8_SCAN_ALL,
+						      &oldname);
+
+	if (res_RENAME4->status != NFS4_OK)
 		goto out;
-	}
-	res_RENAME4->status =
-	    nfs4_utf8string2dynamic(&arg_RENAME4->newname, UTF8_SCAN_ALL,
-				    &newname);
-	if (res_RENAME4->status != NFS4_OK) {
+
+	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->newname,
+						      UTF8_SCAN_ALL,
+						      &newname);
+
+	if (res_RENAME4->status != NFS4_OK)
 		goto out;
-	}
 
 	/* Do basic checks on a filehandle */
 	res_RENAME4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
 
 	res_RENAME4->status =
 	    nfs4_sanity_check_saved_FH(data, DIRECTORY, false);
+
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
 
@@ -113,17 +116,21 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data,
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
 	    cache_inode_get_changeid4(dst_entry, data->req_ctx);
 
-	cache_status =
-	    cache_inode_rename(src_entry, oldname, dst_entry, newname,
-			       data->req_ctx);
+	cache_status = cache_inode_rename(src_entry,
+					  oldname,
+					  dst_entry,
+					  newname,
+					  data->req_ctx);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_RENAME4->status = nfs4_Errno(cache_status);
 		goto out;
 	}
 
-	/* If you reach this point, then everything was alright */
-	/* For the change_info4, get the 'change' attributes for both directories */
-
+	/* If you reach this point, then everything was alright
+	 * For the change_info4, get the 'change' attributes
+	 * for both directories
+	 */
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
 	    cache_inode_get_changeid4(src_entry, data->req_ctx);
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
@@ -133,14 +140,11 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data,
 	res_RENAME4->status = nfs4_Errno(cache_status);
 
  out:
-	if (oldname) {
+	if (oldname)
 		gsh_free(oldname);
-		oldname = NULL;
-	}
 
-	if (newname) {
+	if (newname)
 		gsh_free(newname);
-	}
 
 	return res_RENAME4->status;
 }
@@ -153,7 +157,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_rename_Free(nfs_resop4 * resp)
+void nfs4_op_rename_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

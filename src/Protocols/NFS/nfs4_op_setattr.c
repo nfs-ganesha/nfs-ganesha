@@ -55,11 +55,11 @@
  * @return per RFC5661, p. 373-4
  */
 
-int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
-	SETATTR4args *const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
-	SETATTR4res *const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
+	SETATTR4args * const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
+	SETATTR4res * const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
 	struct attrlist sattr;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	const char *tag = "SETATTR";
@@ -73,9 +73,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_SETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-	if (res_SETATTR4->status != NFS4_OK) {
+
+	if (res_SETATTR4->status != NFS4_OK)
 		return res_SETATTR4->status;
-	}
 
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access
@@ -92,20 +92,23 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Convert the fattr4 in the request to a fsal sattr structure */
 	res_SETATTR4->status =
-	    nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4->obj_attributes),
-				    data);
-	if (res_SETATTR4->status != NFS4_OK) {
+		nfs4_Fattr_To_FSAL_attr(&sattr,
+					&arg_SETATTR4->obj_attributes,
+					data);
+
+	if (res_SETATTR4->status != NFS4_OK)
 		return res_SETATTR4->status;
-	}
 
 	/* Trunc may change Xtime so we have to start with trunc and
-	 * finish by the mtime and atime */
+	 * finish by the mtime and atime
+	 */
 	if (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)) {
 		/* Setting the size of a directory is prohibited */
 		if (data->current_filetype == DIRECTORY) {
 			res_SETATTR4->status = NFS4ERR_ISDIR;
 			return res_SETATTR4->status;
 		}
+
 		/* Object should be a file */
 		if (data->current_entry->type != REGULAR_FILE) {
 			res_SETATTR4->status = NFS4ERR_INVAL;
@@ -117,14 +120,20 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 		/* Check stateid correctness and get pointer to state */
 		res_SETATTR4->status =
 		    nfs4_Check_Stateid(&arg_SETATTR4->stateid,
-				       data->current_entry, &state_found, data,
-				       STATEID_SPECIAL_ANY, 0, FALSE, tag);
-		if (res_SETATTR4->status != NFS4_OK) {
+				       data->current_entry,
+				       &state_found,
+				       data,
+				       STATEID_SPECIAL_ANY,
+				       0,
+				       false,
+				       tag);
+
+		if (res_SETATTR4->status != NFS4_OK)
 			return res_SETATTR4->status;
-		}
 
 		/* NB: After this point, if state_found == NULL, then
-		   the stateid is all-0 or all-1 */
+		 * the stateid is all-0 or all-1
+		 */
 		if (state_found != NULL) {
 			switch (state_found->state_type) {
 			case STATE_TYPE_SHARE:
@@ -146,31 +155,34 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 			}
 
 			/* This is a size operation, this means that
-			   the file MUST have been opened for
-			   writing */
-			if (state_open != NULL
-			    && (state_open->state_data.share.
-				share_access & OPEN4_SHARE_ACCESS_WRITE) == 0) {
+			 * the file MUST have been opened for writing
+			 */
+			if (state_open != NULL &&
+			    (state_open->state_data.share.share_access &
+			     OPEN4_SHARE_ACCESS_WRITE) == 0) {
 				/* Bad open mode, return NFS4ERR_OPENMODE */
 				res_SETATTR4->status = NFS4ERR_OPENMODE;
 				return res_SETATTR4->status;
 			}
 		} else {
 			/* Special stateid, no open state, check to
-			   see if any share conflicts */
+			 * see if any share conflicts
+			 */
 			state_open = NULL;
 
-			/* Special stateid, no open state, check to
-			   see if any share conflicts The stateid is
-			   all-0 or all-1 */
+			/* Special stateid, no open state, check to see if
+			 * any share conflicts The stateid is all-0 or all-1
+			 */
 			res_SETATTR4->status =
-			    nfs4_check_special_stateid(entry, "SETATTR(size)",
+			    nfs4_check_special_stateid(entry,
+						       "SETATTR(size)",
 						       FATTR4_ATTR_WRITE);
-			if (res_SETATTR4->status != NFS4_OK) {
+
+			if (res_SETATTR4->status != NFS4_OK)
 				return res_SETATTR4->status;
-			}
 		}
 	}
+
 	/* Now, we set the mode */
 	if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_OWNER)
@@ -184,18 +196,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 		/* Check for root access when using chmod */
 		if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE)) {
 			if ((sattr.mode & S_ISUID)
-			    &&
-			    ((data->export->export_perms.
+			    && ((data->export->export_perms.
 			      options & EXPORT_OPTION_NOSUID)
 			     || ((sattr.mode & S_ISGID)
-				 &&
-				 ((data->export->export_perms.
+				 && ((data->export->export_perms.
 				   options & EXPORT_OPTION_NOSGID))))) {
 				LogInfo(COMPONENT_NFS_V4,
-					"Setattr denied because setuid "
-					"or setgid bit is disabled in "
-					"configuration file. setuid=%d, "
-					"setgid=%d",
+					"Setattr denied because setuid or setgid bit is disabled in configuration file. setuid=%d, setgid=%d",
 					sattr.mode & S_ISUID ? 1 : 0,
 					sattr.mode & S_ISGID ? 1 : 0);
 				res_SETATTR4->status = NFS4ERR_PERM;
@@ -212,10 +219,12 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 		res_SETATTR4->status = NFS4ERR_INVAL;
 		return res_SETATTR4->status;
 	}
+
 	if (sattr.mtime.tv_nsec >= S_NSECS) {
 		res_SETATTR4->status = NFS4ERR_INVAL;
 		return res_SETATTR4->status;
 	}
+
 	/* If owner or owner_group are set, and the credential was
 	 * squashed, then we must squash the set owner and owner_group.
 	 */
@@ -226,9 +235,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
 	 * is_open_write is simple at this stage, it's just a check that
 	 * we have an open owner.
 	 */
-	cache_status =
-	    cache_inode_setattr(data->current_entry, &sattr, state_open != NULL,
-				data->req_ctx);
+	cache_status = cache_inode_setattr(data->current_entry,
+					   &sattr,
+					   state_open != NULL,
+					   data->req_ctx);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_SETATTR4->status = nfs4_Errno(cache_status);
 		return res_SETATTR4->status;
@@ -251,7 +262,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_setattr_Free(nfs_resop4 * resp)
+void nfs4_op_setattr_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs4_op_setattr_Free */

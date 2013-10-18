@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -62,11 +62,11 @@
  * @return per RFC5661, p. 367
  */
 
-int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 		 struct nfs_resop4 *resp)
 {
-	LINK4args *const arg_LINK4 = &op->nfs_argop4_u.oplink;
-	LINK4res *const res_LINK4 = &resp->nfs_resop4_u.oplink;
+	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
+	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
 	cache_entry_t *dir_entry = NULL;
 	cache_entry_t *file_entry = NULL;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -77,14 +77,14 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-	if (res_LINK4->status != NFS4_OK) {
+
+	if (res_LINK4->status != NFS4_OK)
 		goto out;
-	}
 
 	res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
-	if (res_LINK4->status != NFS4_OK) {
+
+	if (res_LINK4->status != NFS4_OK)
 		goto out;
-	}
 
 	/*
 	 * This operation creates a hard link, for the file
@@ -93,12 +93,12 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
 	 */
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_LINK4->status =
-	    nfs4_utf8string2dynamic(&arg_LINK4->newname, UTF8_SCAN_ALL,
-				    &newname);
-	if (res_LINK4->status != NFS4_OK) {
+	res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
+						    UTF8_SCAN_ALL,
+						    &newname);
+
+	if (res_LINK4->status != NFS4_OK)
 		goto out;
-	}
 
 	/* get info from compound data */
 	dir_entry = data->current_entry;
@@ -111,6 +111,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
 	/* make the link */
 	cache_status =
 	    cache_inode_link(file_entry, dir_entry, newname, data->req_ctx);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_LINK4->status = nfs4_Errno(cache_status);
 		goto out;
@@ -124,9 +125,9 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
 
  out:
 
-	if (newname) {
+	if (newname)
 		gsh_free(newname);
-	}
+
 	return res_LINK4->status;
 }				/* nfs4_op_link */
 
@@ -138,7 +139,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_link_Free(nfs_resop4 * resp)
+void nfs4_op_link_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs4_op_link_Free */

@@ -44,20 +44,6 @@
 #include "export_mgr.h"
 
 /**
- * @brief The NFS4_OP_SECINFO_NO_NAME
- *
- * Implements the NFS4_OP_SECINFO_NO_NAME operation.
- *
- * @param[in]     op   Arguments for nfs4_op
- * @param[in,out] data Compound request's data
- * @param[out]    resp Results for nfs4_op
- *
- * @return per RFC5661, pp. 373-4
- */
-
-extern gss_OID_desc krb5oid;
-
-/**
  * @brief NFSv4 SECINFO_NO_NAME operation
  *
  * This function impelments the NFSv4 SECINFO_NO_NAME operation.
@@ -69,12 +55,11 @@ extern gss_OID_desc krb5oid;
  * @return NFS status codes.
  */
 
-int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 			    struct nfs_resop4 *resp)
 {
-	SECINFO_NO_NAME4res *const res_SECINFO_NO_NAME4 =
+	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
 	    &resp->nfs_resop4_u.opsecinfo_no_name;
-//        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	cache_entry_t *entry_src = NULL;
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 	int num_entry = 0;
@@ -84,60 +69,60 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
 	/* Do basic checks on a filehandle */
 	res_SECINFO_NO_NAME4->status =
 	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-	if (res_SECINFO_NO_NAME4->status != NFS4_OK) {
+
+	if (res_SECINFO_NO_NAME4->status != NFS4_OK)
 		goto out;
-	}
 
 	if (op->nfs_argop4_u.opsecinfo_no_name == SECINFO_STYLE4_PARENT) {
 		/* Use LOOKUPP to get the parent into CurrentFH. */
 		res_SECINFO_NO_NAME4->status = nfs4_op_lookupp(op, data, resp);
 
-		if (res_SECINFO_NO_NAME4->status != NFS4_OK) {
+		if (res_SECINFO_NO_NAME4->status != NFS4_OK)
 			goto out;
-		}
 	}
 
 	/* Get the number of entries */
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE) {
+	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		num_entry++;
-	}
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX) {
-		num_entry++;
-	}
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		num_entry++;
-	}
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
-		num_entry++;
-	}
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
-		num_entry++;
-	}
 
-	if ((res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val =
-	     gsh_calloc(num_entry, sizeof(secinfo4))) == NULL) {
+	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
+		num_entry++;
+
+	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+		num_entry++;
+
+	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+		num_entry++;
+
+	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+		num_entry++;
+
+	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val =
+	     gsh_calloc(num_entry, sizeof(secinfo4));
+
+	if (res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val
+	    == NULL) {
 		res_SECINFO_NO_NAME4->status = NFS4ERR_SERVERFAULT;
+
 		if (entry_src != NULL)
 			cache_inode_put(entry_src);
 		goto out;
 	}
 
 	/**
-         * @todo We have the opportunity to associate a preferred
-         * security triple with a specific fs/export.  For now, list
-         * all implemented.
-         */
+	 * @todo We have the opportunity to associate a preferred
+	 * security triple with a specific fs/export.  For now, list
+	 * all implemented.
+	 */
 	int idx = 0;
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE) {
+	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++]
-		    .flavor = AUTH_NONE;
-	}
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX) {
+		    SECINFO4resok_val[idx++].flavor = AUTH_NONE;
+
+	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++]
-		    .flavor = AUTH_UNIX;
-	}
+		    SECINFO4resok_val[idx++].flavor = AUTH_UNIX;
+
 	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
@@ -151,6 +136,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
 		    SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+
 	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
@@ -164,6 +150,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
 		    SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+
 	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx]
@@ -178,6 +165,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
 		    SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+
 	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
 	if (entry_src != NULL)
@@ -216,11 +204,11 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_secinfo_no_name_Free(nfs_resop4 * res)
+void nfs4_op_secinfo_no_name_Free(nfs_resop4 *res)
 {
 	SECINFO_NO_NAME4res *resp = &res->nfs_resop4_u.opsecinfo_no_name;
 
-	if ((resp->status = NFS4_OK)
+	if ((resp->status == NFS4_OK)
 	    && (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
 		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;

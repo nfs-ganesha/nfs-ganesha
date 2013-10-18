@@ -57,7 +57,7 @@
  *
  */
 
-int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
+int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
 {
 	pseudofs_entry_t psfsentry;
 	int status = 0;
@@ -68,7 +68,9 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 	if (data->rootFH.nfs_fh4_val != NULL)
 		return NFS4_OK;
 
-	if ((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
+	status = nfs4_AllocateFH(&data->rootFH);
+
+	if (status != NFS4_OK)
 		return status;
 
 	nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
@@ -95,10 +97,10 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
  *
  */
 
-int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
-	PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
 	/* First of all, set the reply to zero to make sure
 	 * it contains no parasite information
@@ -148,7 +150,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putrootfh_Free(nfs_resop4 * resp)
+void nfs4_op_putrootfh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

@@ -29,7 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>
 #include <stdint.h>
 #include "hashtable.h"
 #include "log.h"
@@ -69,10 +69,10 @@
  * @return NFS4_OK if successfull, other values on error
  */
 
-static nfsstat4 acquire_layout_state(compound_data_t * data,
-				     stateid4 * supplied_stateid,
+static nfsstat4 acquire_layout_state(compound_data_t *data,
+				     stateid4 *supplied_stateid,
 				     layouttype4 layout_type,
-				     state_t ** layout_state, const char *tag)
+				     state_t **layout_state, const char *tag)
 {
 	/* State associated with the client-supplied stateid */
 	state_t *supplied_state = NULL;
@@ -91,21 +91,26 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 	refer.sequence = data->sequence;
 	refer.slot = data->slot;
 
-	if ((state_status =
-	     get_clientid_owner(data->session->clientid, &clientid_owner))
-	    != STATE_SUCCESS) {
+	state_status = get_clientid_owner(data->session->clientid,
+					  &clientid_owner);
+
+	if (state_status != STATE_SUCCESS)
 		nfs_status = nfs4_Errno_state(state_status);
-	}
 
 	/* Retrieve state corresponding to supplied ID, inspect it
-	   and, if necessary, create a new layout state */
+	 * and, if necessary, create a new layout state
+	 */
+	nfs_status = nfs4_Check_Stateid(supplied_stateid,
+					data->current_entry,
+					&supplied_state,
+					data,
+					STATEID_SPECIAL_CURRENT,
+					0,
+					false,
+					tag);
 
-	if ((nfs_status =
-	     nfs4_Check_Stateid(supplied_stateid, data->current_entry,
-				&supplied_state, data, STATEID_SPECIAL_CURRENT,
-				0, FALSE, tag)) != NFS4_OK) {
+	if (nfs_status != NFS4_OK)
 		goto out;
-	}
 
 	if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
 		/* If the state supplied is a layout state, we can
@@ -118,18 +123,23 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 		   new layout state. */
 		state_data_t layout_data;
 		memset(&layout_data, 0, sizeof(state_data_t));
+
 		/* See if a layout state already exists */
 		state_status =
 		    state_lookup_layout_state(data->current_entry,
-					      clientid_owner, layout_type,
+					      clientid_owner,
+					      layout_type,
 					      &condemned_state);
+
 		/* If it does, we assume that the client is using the
-		   forgetful model and has forgotten it had any
-		   layouts.  Free all layouts associated with the
-		   state and delete it. */
+		 * forgetful model and has forgotten it had any
+		 * layouts.  Free all layouts associated with the
+		 * state and delete it.
+		 */
 		if (state_status == STATE_SUCCESS) {
 			/* Flag indicating whether all layouts were returned
-			   and the state was deleted */
+			 * and the state was deleted
+			 */
 			bool deleted = false;
 			struct pnfs_segment entire = {
 				.io_mode = LAYOUTIOMODE4_ANY,
@@ -142,20 +152,28 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 				goto out;
 			}
 
-			if ((nfs_status =
+			nfs_status =
 			     nfs4_return_one_state(data->current_entry,
-						   data->req_ctx, 0,
+						   data->req_ctx,
+						   0,
 						   circumstance_forgotten,
-						   condemned_state, entire, 0,
-						   NULL, &deleted,
-						   false)) != NFS4_OK) {
+						   condemned_state,
+						   entire,
+						   0,
+						   NULL,
+						   &deleted,
+						   false);
+
+			if (nfs_status != NFS4_OK)
 				goto out;
-			}
+
 			if (!deleted) {
 				nfs_status = NFS4ERR_SERVERFAULT;
 				goto out;
 			}
+
 			condemned_state = NULL;
+
 		} else if (state_status != STATE_NOT_FOUND) {
 			nfs_status = nfs4_Errno_state(state_status);
 			goto out;
@@ -164,10 +182,13 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
 
-		state_status =
-		    state_add(data->current_entry, STATE_TYPE_LAYOUT,
-			      &layout_data, clientid_owner, layout_state,
-			      &refer);
+		state_status = state_add(data->current_entry,
+					 STATE_TYPE_LAYOUT,
+					 &layout_data,
+					 clientid_owner,
+					 layout_state,
+					 &refer);
+
 		if (state_status != STATE_SUCCESS) {
 			nfs_status = nfs4_Errno_state(state_status);
 			goto out;
@@ -194,6 +215,26 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 
 /**
  *
+ * @brief Free layouts array.
+ *
+ * @param[in]     layouts    Layouts array
+ * @param[in]     numlayouts Size of array
+ */
+
+void free_layouts(layout4 *layouts, uint32_t numlayouts)
+{
+	size_t i;
+
+	for (i = 0; i < numlayouts; i++) {
+		if (layouts[i].lo_content.loc_body.loc_body_val)
+			gsh_free(layouts[i].lo_content.loc_body.loc_body_val);
+	}
+
+	gsh_free(layouts);
+}
+
+/**
+ *
  * @brief Grant and add one layout segment
  *
  * This is a wrapper around the FSAL call that populates one entry in
@@ -208,11 +249,11 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-static nfsstat4 one_segment(cache_entry_t * entry, exportlist_t * export,
+static nfsstat4 one_segment(cache_entry_t *entry, exportlist_t *export,
 			    struct req_op_context *req_ctx,
-			    state_t * layout_state,
+			    state_t *layout_state,
 			    const struct fsal_layoutget_arg *arg,
-			    struct fsal_layoutget_res *res, layout4 * current)
+			    struct fsal_layoutget_res *res, layout4 *current)
 {
 	/* The initial position of the XDR stream after creation, so we
 	   can find the total length of encoded data. */
@@ -241,7 +282,8 @@ static nfsstat4 one_segment(cache_entry_t * entry, exportlist_t * export,
 	current->lo_content.loc_type = arg->type;
 	current->lo_content.loc_body.loc_body_val = gsh_malloc(loc_body_size);
 
-	xdrmem_create(&loc_body, current->lo_content.loc_body.loc_body_val,
+	xdrmem_create(&loc_body,
+		      current->lo_content.loc_body.loc_body_val,
 		      loc_body_size, XDR_ENCODE);
 
 	start_position = xdr_getpos(&loc_body);
@@ -250,15 +292,18 @@ static nfsstat4 one_segment(cache_entry_t * entry, exportlist_t * export,
 	++layout_state->state_data.layout.granting;
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	nfs_status =
-	    entry->obj_handle->ops->layoutget(entry->obj_handle, req_ctx,
-					      &loc_body, arg, res);
+	nfs_status = entry->obj_handle->ops->layoutget(entry->obj_handle,
+						      req_ctx,
+						      &loc_body,
+						      arg,
+						      res);
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	--layout_state->state_data.layout.granting;
 
 	current->lo_content.loc_body.loc_body_len =
 	    xdr_getpos(&loc_body) - start_position;
+
 	xdr_destroy(&loc_body);
 
 	if (nfs_status != NFS4_OK) {
@@ -270,9 +315,10 @@ static nfsstat4 one_segment(cache_entry_t * entry, exportlist_t * export,
 	current->lo_length = res->segment.length;
 	current->lo_iomode = res->segment.io_mode;
 
-	state_status =
-	    state_add_segment(layout_state, &res->segment, res->fsal_seg_data,
-			      res->return_on_close);
+	state_status = state_add_segment(layout_state,
+					 &res->segment,
+					 res->fsal_seg_data,
+					 res->return_on_close);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -312,13 +358,13 @@ static nfsstat4 one_segment(cache_entry_t * entry, exportlist_t * export,
  * @see nfs4_Compound
  */
 
-int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	LAYOUTGET4args *const arg_LAYOUTGET4 = &op->nfs_argop4_u.oplayoutget;
+	LAYOUTGET4args * const arg_LAYOUTGET4 = &op->nfs_argop4_u.oplayoutget;
 	/* Convenience alias for response */
-	LAYOUTGET4res *const res_LAYOUTGET4 = &resp->nfs_resop4_u.oplayoutget;
+	LAYOUTGET4res * const res_LAYOUTGET4 = &resp->nfs_resop4_u.oplayoutget;
 	/* NFSv4.1 status code */
 	nfsstat4 nfs_status = 0;
 	/* Pointer to state governing layouts */
@@ -338,19 +384,20 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 	int max_segment_count = 0;
 
 	resp->resop = NFS4_OP_LAYOUTGET;
+
 	if (data->minorversion == 0) {
-		return (res_LAYOUTGET4->logr_status = NFS4ERR_INVAL);
+		res_LAYOUTGET4->logr_status = NFS4ERR_INVAL;
+		return res_LAYOUTGET4->logr_status;
 	}
 
-	if ((nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false))
-	    != NFS4_OK) {
+	nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
+
+	if (nfs_status != NFS4_OK)
 		goto out;
-	}
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
-	max_segment_count =
-	    (data->export->export_hdl->ops->
-	     fs_maximum_segments(data->export->export_hdl));
+	max_segment_count = data->export->export_hdl->ops->
+			fs_maximum_segments(data->export->export_hdl);
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
@@ -360,13 +407,14 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 		goto out;
 	}
 
-	if ((nfs_status =
-	     acquire_layout_state(data, &arg_LAYOUTGET4->loga_stateid,
-				  arg_LAYOUTGET4->loga_layout_type,
-				  &layout_state, tag))
-	    != NFS4_OK) {
+	nfs_status = acquire_layout_state(data,
+					  &arg_LAYOUTGET4->loga_stateid,
+					  arg_LAYOUTGET4->loga_layout_type,
+					  &layout_state,
+					  tag);
+
+	if (nfs_status != NFS4_OK)
 		goto out;
-	}
 
 	/*
 	 * Blank out argument structures and get the filehandle.
@@ -378,8 +426,9 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 	/*
 	 * Initialize segment array and fill out input-only arguments
 	 */
-	if ((layouts = gsh_calloc(max_segment_count, sizeof(layout4)))
-	    == NULL) {
+	layouts = gsh_calloc(max_segment_count, sizeof(layout4));
+
+	if (layouts == NULL) {
 		nfs_status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}
@@ -393,10 +442,10 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 	res.context = NULL;
 
 	/**
-         * @todo ACE: Currently we have no callbacks, so it makes no
-         * sense to pass the client-supplied value to the FSAL.  When
-         * we get callbacks, it will.
-         */
+	 * @todo ACE: Currently we have no callbacks, so it makes no
+	 * sense to pass the client-supplied value to the FSAL.  When
+	 * we get callbacks, it will.
+	 */
 	res.signal_available = false;
 
 	do {
@@ -410,13 +459,16 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 		/* Clear anything from a previous segment */
 		res.fsal_seg_data = NULL;
 
-		if ((nfs_status =
-		     one_segment(data->current_entry, data->export,
-				 data->req_ctx, layout_state, &arg, &res,
-				 layouts + numlayouts))
-		    != NFS4_OK) {
+		nfs_status = one_segment(data->current_entry,
+					 data->export,
+					 data->req_ctx,
+					 layout_state,
+					 &arg,
+					 &res,
+					 layouts + numlayouts);
+
+		if (nfs_status != NFS4_OK)
 			goto out;
-		}
 
 		arg.maxcount -=
 		    layouts[numlayouts].lo_content.loc_body.loc_body_len;
@@ -447,16 +499,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
  out:
 
 	if (res_LAYOUTGET4->logr_status != NFS4_OK || nfs_status != NFS4_OK) {
-		if (layouts) {
-			size_t i;
-			for (i = 0; i < numlayouts; i++) {
-				if (layouts[i].lo_content.loc_body.loc_body_val) {
-					gsh_free(layouts[i].lo_content.loc_body.
-						 loc_body_val);
-				}
-			}
-			gsh_free(layouts);
-		}
+		if (layouts != NULL)
+			free_layouts(layouts, numlayouts);
 
 		if ((layout_state) && (layout_state->state_seqid == 0)) {
 			state_del(layout_state, false);
@@ -480,20 +524,14 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_layoutget_Free(nfs_resop4 * res)
+void nfs4_op_layoutget_Free(nfs_resop4 *res)
 {
 	LAYOUTGET4res *resp = &res->nfs_resop4_u.oplayoutget;
 
-	size_t i = 0;
-	if (resp->logr_status == NFS4_OK) {
-		for (i = 0;
-		     i <
-		     (resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
-		      logr_layout_len); i++) {
-			gsh_free(resp->LAYOUTGET4res_u.logr_resok4.
-				 logr_layout.logr_layout_val[i].lo_content.
-				 loc_body.loc_body_val);
-		}
-	}
-	return;
+	if (resp->logr_status == NFS4_OK)
+		free_layouts(resp->LAYOUTGET4res_u.logr_resok4.
+					logr_layout.logr_layout_val,
+			     resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
+					logr_layout_len);
+
 }				/* nfs41_op_layoutget_Free */

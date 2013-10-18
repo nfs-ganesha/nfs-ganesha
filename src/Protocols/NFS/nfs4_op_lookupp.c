@@ -64,10 +64,10 @@
  * @return per RFC5661, p. 369
  *
  */
-int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
-	LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
+	LOOKUPP4res * const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
 	cache_entry_t *dir_entry = NULL;
 	cache_entry_t *file_entry = NULL;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -77,10 +77,13 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_LOOKUPP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+
 	if (res_LOOKUPP4->status != NFS4_OK)
 		return res_LOOKUPP4->status;
 
-	/* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
+	/* looking up for parent directory from ROOTFH return NFS4ERR_NOENT
+	 * (RFC3530, page 166)
+	 */
 	if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
 	    && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
 		      data->currentFH.nfs_fh4_len) == 0) {
@@ -110,10 +113,11 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
 
 	cache_status =
 	    cache_inode_lookupp(dir_entry, data->req_ctx, &file_entry);
+
 	if (file_entry != NULL) {
 		/* Convert it to a file handle */
-		if (!nfs4_FSALToFhandle
-		    (&data->currentFH, file_entry->obj_handle)) {
+		if (!nfs4_FSALToFhandle(&data->currentFH,
+					file_entry->obj_handle)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			cache_inode_put(file_entry);
 			return res_LOOKUPP4->status;
@@ -123,9 +127,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
 		data->current_stateid_valid = false;
 
 		/* Release dir_pentry, as it is not reachable from anywhere in
-		   compound after this function returns.  Count on later
-		   operations or nfs4_Compound to clean up current_entry. */
-
+		 * compound after this function returns.  Count on later
+		 * operations or nfs4_Compound to clean up current_entry.
+		 */
 		if (dir_entry)
 			cache_inode_put(dir_entry);
 
@@ -139,9 +143,10 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
 
 	}
 
-	/* If the part of the code is reached, then something wrong occured in the
-	 * lookup process, status is not HPSS_E_NOERROR and contains the code for
-	 * the error */
+	/* If the part of the code is reached, then something wrong occured
+	 * in the lookup process, status is not HPSS_E_NOERROR and contains
+	 * the code for the error
+	 */
 
 	/* For any wrong file type LOOKUPP should return NFS4ERR_NOTDIR */
 	res_LOOKUPP4->status = nfs4_Errno(cache_status);
@@ -157,7 +162,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookupp_Free(nfs_resop4 * resp)
+void nfs4_op_lookupp_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

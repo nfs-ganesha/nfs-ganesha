@@ -33,8 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -60,11 +58,11 @@
  * @return per RFC5661, p. 365
  *
  */
-int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
-	GETATTR4args *const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
-	GETATTR4res *const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
+	GETATTR4args * const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
+	GETATTR4res * const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -72,14 +70,13 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_GETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-	if (res_GETATTR4->status != NFS4_OK) {
+
+	if (res_GETATTR4->status != NFS4_OK)
 		return res_GETATTR4->status;
-	}
 
 	/* Pseudo Fs management */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
 		return nfs4_op_getattr_pseudo(op, data, resp);
-	}
 
 	/* Sanity check: if no attributes are wanted, nothing is to be
 	 * done.  In this case NFS4_OK is to be returned */
@@ -89,8 +86,8 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Get only attributes that are allowed to be read */
-	if (!nfs4_Fattr_Check_Access_Bitmap
-	    (&arg_GETATTR4->attr_request, FATTR4_ATTR_READ)) {
+	if (!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4->attr_request,
+					    FATTR4_ATTR_READ)) {
 		res_GETATTR4->status = NFS4ERR_INVAL;
 		return res_GETATTR4->status;
 	}
@@ -98,10 +95,12 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t * data,
 	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4->attr_request);
 
 	res_GETATTR4->status =
-	    cache_entry_To_Fattr(data->current_entry,
-				 &res_GETATTR4->GETATTR4res_u.resok4.
-				 obj_attributes, data, &data->currentFH,
-				 &arg_GETATTR4->attr_request);
+		   cache_entry_To_Fattr(data->current_entry,
+					&res_GETATTR4->GETATTR4res_u.resok4.
+					obj_attributes,
+					data,
+					&data->currentFH,
+					&arg_GETATTR4->attr_request);
 
 	return res_GETATTR4->status;
 }				/* nfs4_op_getattr */
@@ -114,12 +113,10 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_getattr_Free(nfs_resop4 * res)
+void nfs4_op_getattr_Free(nfs_resop4 *res)
 {
 	GETATTR4res *resp = &res->nfs_resop4_u.opgetattr;
 
-	if (resp->status == NFS4_OK) {
+	if (resp->status == NFS4_OK)
 		nfs4_Fattr_Free(&resp->GETATTR4res_u.resok4.obj_attributes);
-	}
-	return;
 }				/* nfs4_op_getattr_Free */

@@ -61,12 +61,12 @@
  *
  */
 
-int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
-	TEST_STATEID4args *const arg_TEST_STATEID4 __attribute__ ((unused))
+	TEST_STATEID4args * const arg_TEST_STATEID4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.optest_stateid;
-	TEST_STATEID4res *const res_TEST_STATEID4 =
+	TEST_STATEID4res * const res_TEST_STATEID4 =
 	    &resp->nfs_resop4_u.optest_stateid;
 
 	/* Lock are not supported */
@@ -74,7 +74,8 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t * data,
 	res_TEST_STATEID4->tsr_status = NFS4_OK;
 
 	if (data->minorversion == 0) {
-		return (res_TEST_STATEID4->tsr_status = NFS4ERR_INVAL);
+		res_TEST_STATEID4->tsr_status = NFS4ERR_INVAL;
+		return res_TEST_STATEID4->tsr_status;
 	}
 
 	/* Do basic checks on a filehandle */
@@ -92,7 +93,7 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_test_stateid_Free(nfs_resop4 * resp)
+void nfs4_op_test_stateid_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs41_op_test_stateid_Free */

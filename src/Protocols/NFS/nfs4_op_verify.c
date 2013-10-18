@@ -56,11 +56,11 @@
  * @return per RFC5661, p. 375
  */
 
-int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t *data,
 		   struct nfs_resop4 *resp)
 {
-	VERIFY4args *const arg_VERIFY4 = &op->nfs_argop4_u.opverify;
-	VERIFY4res *const res_VERIFY4 = &resp->nfs_resop4_u.opverify;
+	VERIFY4args * const arg_VERIFY4 = &op->nfs_argop4_u.opverify;
+	VERIFY4res * const res_VERIFY4 = &resp->nfs_resop4_u.opverify;
 	fattr4 file_attr4;
 	int rc = 0;
 
@@ -69,9 +69,9 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_VERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-	if (res_VERIFY4->status != NFS4_OK) {
+
+	if (res_VERIFY4->status != NFS4_OK)
 		return res_VERIFY4->status;
-	}
 
 	/* operation is always permitted on pseudofs */
 	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
@@ -93,23 +93,23 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	res_VERIFY4->status =
-	    cache_entry_To_Fattr(data->current_entry, &file_attr4, data,
-				 &(data->currentFH),
-				 &(arg_VERIFY4->obj_attributes.attrmask));
-	if (res_VERIFY4->status != NFS4_OK) {
-		return res_VERIFY4->status;
-	}
+	    cache_entry_To_Fattr(data->current_entry,
+				 &file_attr4,
+				 data,
+				 &data->currentFH,
+				 &arg_VERIFY4->obj_attributes.attrmask);
 
-	if ((rc = nfs4_Fattr_cmp(&(arg_VERIFY4->obj_attributes), &file_attr4))
-	    == true) {
+	if (res_VERIFY4->status != NFS4_OK)
+		return res_VERIFY4->status;
+
+	rc = nfs4_Fattr_cmp(&(arg_VERIFY4->obj_attributes), &file_attr4);
+
+	if (rc == true)
 		res_VERIFY4->status = NFS4_OK;
-	} else {
-		if (rc == -1) {
-			res_VERIFY4->status = NFS4ERR_INVAL;
-		} else {
-			res_VERIFY4->status = NFS4ERR_NOT_SAME;
-		}
-	}
+	else if (rc == -1)
+		res_VERIFY4->status = NFS4ERR_INVAL;
+	else
+		res_VERIFY4->status = NFS4ERR_NOT_SAME;
 
 	nfs4_Fattr_Free(&file_attr4);
 	return res_VERIFY4->status;
@@ -123,7 +123,7 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_verify_Free(nfs_resop4 * resp)
+void nfs4_op_verify_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;
