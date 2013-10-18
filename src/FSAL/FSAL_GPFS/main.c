@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* main.c
@@ -161,13 +161,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal GPFS method linkage to export object
  */
 
-fsal_status_t gpfs_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 				 const char *export_path,
 				 const char *fs_options,
-				 struct exportlist * exp_entry,
-				 struct fsal_module * next_fsal,
-				 const struct fsal_up_vector * up_ops,
-				 struct fsal_export ** export);
+				 struct exportlist *exp_entry,
+				 struct fsal_module *next_fsal,
+				 const struct fsal_up_vector *up_ops,
+				 struct fsal_export **export);
 
 /* Module initialization.
  * Called by dlopen() to register the module

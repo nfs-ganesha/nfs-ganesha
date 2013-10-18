@@ -63,26 +63,26 @@ static inline bool gpfs_unopenable_type(object_file_type_t type)
 }
 
 	/* I/O management */
-fsal_status_t gpfs_open(struct fsal_obj_handle * obj_hdl,
-			const struct req_op_context * opctx,
+fsal_status_t gpfs_open(struct fsal_obj_handle *obj_hdl,
+			const struct req_op_context *opctx,
 			fsal_openflags_t openflags);
 fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
 			const struct req_op_context *opctx, uint64_t offset,
-			size_t buffer_size, void *buffer, size_t * read_amount,
-			bool * end_of_file);
+			size_t buffer_size, void *buffer, size_t *read_amount,
+			bool *end_of_file);
 fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 			 const struct req_op_context *opctx, uint64_t offset,
 			 size_t buffer_size, void *buffer,
-			 size_t * write_amount, bool * fsal_stable);
+			 size_t *write_amount, bool *fsal_stable);
 fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			  off_t offset, size_t len);
 fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			   const struct req_op_context *opctx, void *p_owner,
 			   fsal_lock_op_t lock_op,
-			   fsal_lock_param_t * request_lock,
-			   fsal_lock_param_t * conflicting_lock);
-fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,	/* IN (opaque to FSAL) */
+			   fsal_lock_param_t *request_lock,
+			   fsal_lock_param_t *conflicting_lock);
+fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t gpfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
@@ -92,7 +92,7 @@ fsal_status_t gpfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				  const struct req_op_context *opctx,
 				  unsigned int cookie,
-				  fsal_xattrent_t * xattrs_tab,
+				  fsal_xattrent_t *xattrs_tab,
 				  unsigned int xattrs_tabsize,
 				  unsigned int *p_nb_returned,
 				  int *end_of_list);
@@ -107,14 +107,14 @@ fsal_status_t gpfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
-					    size_t * p_output_size);
+					    size_t *p_output_size);
 
 fsal_status_t gpfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					  const struct req_op_context *opctx,
 					  unsigned int xattr_id,
 					  caddr_t buffer_addr,
 					  size_t buffer_size,
-					  size_t * p_output_size);
+					  size_t *p_output_size);
 
 fsal_status_t gpfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				    const struct req_op_context *opctx,

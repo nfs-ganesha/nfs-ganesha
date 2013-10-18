@@ -41,7 +41,7 @@ int gpfs_ganesha(int op, void *oarg)
 		if (localFD < 0) {
 			fprintf(stderr,
 				"Ganesha call to GPFS failed with ENOSYS\n");
-			return (ENOSYS);
+			return ENOSYS;
 		}
 		fd = localFD;
 	}

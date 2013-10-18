@@ -80,9 +80,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	while (1) {
 		/* Make sure we have at least one export. */
 		if (glist_empty(&gpfs_fsal_up_ctx_list)) {
-	  /** @todo FSF: should properly clean up if we have unexported all
-           *             exports on this file system.
-           */
+			/** @todo FSF: should properly clean up if we have
+			*              unexported all exports on this
+			*              file system.
+			*/
 			LogCrit(COMPONENT_FSAL_UP,
 				"All exports for file system %d have gone away",
 				gpfs_fsal_up_ctx->gf_fd);
@@ -233,12 +234,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 flags, callback.buf->st_ino);
 
 				rc = up_async_layoutrecall(general_fridge,
-							   gpfs_fsal_up_ctx->
-							   gf_export, &key,
-							   LAYOUT4_NFSV4_1_FILES,
-							   false, &segment,
-							   NULL, NULL, NULL,
-							   NULL);
+							gpfs_fsal_up_ctx->
+							gf_export, &key,
+							LAYOUT4_NFSV4_1_FILES,
+							false, &segment,
+							NULL, NULL, NULL,
+							NULL);
 			}
 			break;
 
@@ -258,18 +259,18 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			break;
 
 		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
-			dev_id.sbid = gpfs_fsal_up_ctx->gf_exp_id;	/* override with export id */
+			dev_id.sbid = gpfs_fsal_up_ctx->gf_exp_id;
 			LogDebug(COMPONENT_FSAL_UP,
 				 "layout device update: flags:%x ino %ld devid %ld-%016lx",
 				 flags, callback.buf->st_ino, dev_id.sbid,
 				 dev_id.devid);
 
 			rc = up_async_notify_device(general_fridge,
-						    gpfs_fsal_up_ctx->gf_export,
-						    NOTIFY_DEVICEID4_DELETE_MASK,
-						    LAYOUT4_NFSV4_1_FILES,
-						    dev_id.devid, true, NULL,
-						    NULL);
+						gpfs_fsal_up_ctx->gf_export,
+						NOTIFY_DEVICEID4_DELETE_MASK,
+						LAYOUT4_NFSV4_1_FILES,
+						dev_id.devid, true, NULL,
+						NULL);
 			break;
 
 		case INODE_UPDATE:	/* Update Event */
@@ -281,7 +282,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    flags, callback.buf->st_ino,
 					    (int)callback.buf->st_nlink);
 
-				/* Check for accepted flags, any other changes just invalidate. */
+				/* Check for accepted flags, any other changes
+				   just invalidate. */
 				if (flags &
 				    (UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
 				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
@@ -289,33 +291,33 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					attr.mask = 0;
 					if (flags & UP_SIZE)
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_SIZE | ATTR_SPACEUSED;
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_SIZE | ATTR_SPACEUSED;
 					if (flags & UP_SIZE_BIG) {
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_SIZE | ATTR_SPACEUSED;
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_SIZE | ATTR_SPACEUSED;
 						upflags |=
-						    fsal_up_update_filesize_inc |
-						    fsal_up_update_spaceused_inc;
+						   fsal_up_update_filesize_inc |
+						   fsal_up_update_spaceused_inc;
 					}
 					if (flags & UP_MODE)
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_MODE;
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_MODE;
 					if (flags & UP_OWN)
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_OWNER;
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_OWNER;
 					if (flags & UP_TIMES)
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_ATIME | ATTR_CTIME |
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_ATIME | ATTR_CTIME |
 						    ATTR_MTIME;
 					if (flags & UP_ATIME)
 						attr.mask |=
-						    ATTR_CHGTIME | ATTR_CHANGE |
-						    ATTR_ATIME;
+						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_ATIME;
 
 					posix2fsal_attributes(&buf, &attr);
 					attr.grace_period_attr =
@@ -338,10 +340,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				} else {
 					rc = event_func->
 					    invalidate(gpfs_fsal_up_ctx->
-						       gf_export, &key,
-						       CACHE_INODE_INVALIDATE_ATTRS
-						       |
-						       CACHE_INODE_INVALIDATE_CONTENT);
+						gf_export, &key,
+						CACHE_INODE_INVALIDATE_ATTRS
+						|
+						CACHE_INODE_INVALIDATE_CONTENT);
 				}
 
 			}
@@ -358,10 +360,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				    "inode invalidate: flags:%x update ino %ld",
 				    flags, callback.buf->st_ino);
 			rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
-						    &key,
-						    CACHE_INODE_INVALIDATE_ATTRS
-						    |
-						    CACHE_INODE_INVALIDATE_CONTENT);
+						&key,
+						CACHE_INODE_INVALIDATE_ATTRS
+						|
+						CACHE_INODE_INVALIDATE_CONTENT);
 			break;
 
 		default:

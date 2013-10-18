@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* export.c
@@ -119,7 +119,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	struct gpfs_fsal_export *myself;
 	struct statvfs buffstatgpfs;
@@ -259,7 +259,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+			       fsal_quota_t *pquota)
 {
 	struct gpfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -293,7 +293,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval =
 	    quotactl(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -319,7 +319,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct gpfs_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -373,7 +373,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	}
 	retval =
 	    quotactl(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -447,14 +447,14 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 
 	*ds_pub = NULL;
 
-	if (desc->len != sizeof(struct gpfs_file_handle)) {
+	if (desc->len != sizeof(struct gpfs_file_handle))
 		return NFS4ERR_BADHANDLE;
-	}
+
 	ds = gsh_calloc(1, sizeof(struct gpfs_ds));
 
-	if (ds == NULL) {
+	if (ds == NULL)
 		return NFS4ERR_SERVERFAULT;
-	}
+
 	/* Connect lazily when a FILE_SYNC4 write forces us to, not
 	   here. */
 
@@ -478,7 +478,7 @@ static void gpfs_verifier(struct gsh_buffdesc *verf_desc)
 	memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
 }
 
-void set_gpfs_verifier(verifier4 * verifier)
+void set_gpfs_verifier(verifier4 *verifier)
 {
 	memcpy(&GPFS_write_verifier, verifier, sizeof(verifier4));
 }
@@ -512,8 +512,6 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->get_write_verifier = gpfs_verifier;
 }
 
-void gpfs_handle_ops_init(struct fsal_obj_ops *ops);
-
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -533,7 +531,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way... */
+	char mntdir[MAXPATHLEN + 1]; /* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN + 1];
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
@@ -677,7 +675,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 				 mntdir, myself->root_fd, retval);
 			goto errout;
 		}
-		myself->root_handle = gsh_malloc(sizeof(struct gpfs_file_handle));
+		myself->root_handle =
+				gsh_malloc(sizeof(struct gpfs_file_handle));
 		if (myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "memory for root handle, errno=(%d) %s", errno,
@@ -734,7 +733,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 		memset(&attr_thr, 0, sizeof(attr_thr));
 
-		/* Initialization of thread attributes borrowed from nfs_init.c */
+		/* Initialization of thread attributes from nfs_init.c */
 		if (pthread_attr_init(&attr_thr) != 0)
 			LogCrit(COMPONENT_THREAD,
 				"can't init pthread's attributes");

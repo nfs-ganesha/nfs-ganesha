@@ -18,15 +18,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
  * \file    fsal_lookup.c
  * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.17 $
  * \brief   Lookup operations.
  *
  */
@@ -63,13 +62,13 @@
  *
  * \return - ERR_FSAL_NO_ERROR, if no error.
  *         - Another error code else.
- *          
+ *
  */
-fsal_status_t GPFSFSAL_lookup(const struct req_op_context * p_context,
-			      struct fsal_obj_handle * parent,
+fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
+			      struct fsal_obj_handle *parent,
 			      const char *p_filename,
-			      struct attrlist * p_object_attr,
-			      struct gpfs_file_handle * fh)
+			      struct attrlist *p_object_attr,
+			      struct gpfs_file_handle *fh)
 {
 	fsal_status_t status;
 	int parent_fd;
@@ -92,17 +91,17 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context * p_context,
 	/* Be careful about junction crossing, symlinks, hardlinks,... */
 	switch (parent->type) {
 	case DIRECTORY:
-		// OK
+		/* OK */
 		break;
 
 	case FS_JUNCTION:
-		// This is a junction
+		/* This is a junction */
 		close(parent_fd);
 		return fsalstat(ERR_FSAL_XDEV, 0);
 
 	case REGULAR_FILE:
 	case SYMBOLIC_LINK:
-		// not a directory
+		/* not a directory */
 		close(parent_fd);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
@@ -114,7 +113,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context * p_context,
 	status = fsal_internal_get_handle_at(parent_fd, p_filename, fh);
 	if (FSAL_IS_ERROR(status)) {
 		close(parent_fd);
-		return (status);
+		return status;
 	}
 	/* get object attributes */
 	if (p_object_attr) {
@@ -134,7 +133,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context * p_context,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-#if 0				//???  not needed for now
+#if 0				/*???  not needed for now */
 
 /**
  * FSAL_lookupPath :
@@ -158,11 +157,10 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context * p_context,
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_handle_t * object_handle,	/* OUT */
-				  fsal_attrib_list_t * p_object_attributes	/* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_lookupPath(fsal_path_t *p_path,	/* IN */
+				  fsal_op_context_t *p_context,	/* IN */
+				  fsal_handle_t *object_handle,	/* OUT */
+				  fsal_attrib_list_t *p_object_attributes)/*IO*/
 {
 	fsal_status_t status;
 
@@ -221,13 +219,12 @@ fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,	/* IN */
  *
  * \return - ERR_FSAL_NO_ERROR, if no error.
  *         - Another error code else.
- *          
+ *
  */
-fsal_status_t GPFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
-				      fsal_op_context_t * p_context,	/* IN */
-				      fsal_handle_t * p_fsoot_handle,	/* OUT */
-				      fsal_attrib_list_t * p_fsroot_attributes	/* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_lookupJunction(fsal_handle_t *p_junction_handle,/* IN */
+				fsal_op_context_t *p_context,    /* IN */
+				fsal_handle_t *p_fsoot_handle,   /* OUT */
+				fsal_attrib_list_t *p_fsroot_attributes) /*IO*/
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

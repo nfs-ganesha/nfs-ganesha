@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -27,7 +27,6 @@
  *
  * \file    fsal_internal.c
  * \date    $Date: 2006/01/17 14:20:07 $
- * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
  *
@@ -62,124 +61,6 @@ uint32_t CredentialLifetime = 3600;
  */
 struct fsal_staticfsinfo_t global_fs_info;
 
-#ifdef _USE_NFS4_ACL
-extern fsal_status_t fsal_cred_2_gpfs_cred(struct user_cred *p_fsalcred,
-					   struct xstat_cred_t *p_gpfscred);
-
-extern fsal_status_t fsal_mode_2_gpfs_mode(mode_t fsal_mode,
-					   fsal_accessflags_t v4mask,
-					   unsigned int *p_gpfsmode,
-					   bool is_dir);
-#endif				/* _USE_NFS4_ACL */
-
-#if 0				//???   not needed for now
-/**
- * Set credential lifetime.
- * (For internal use in the FSAL).
- * Set the period for thread's credential renewal.
- *
- * \param lifetime_in (input):
- *        The period for thread's credential renewal.
- *
- * \return Nothing.
- */
-void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
-{
-	CredentialLifetime = lifetime_in;
-}
-
-/*
- *  This function initializes shared variables of the fsal.
- */
-fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info,
-					fs_specific_initinfo_t *
-					fs_specific_info)
-{
-
-	/* sanity check */
-	if (!fsal_info || !fs_common_info || !fs_specific_info)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	/* inits FS call semaphore */
-	if (fsal_info->max_fs_calls > 0) {
-		int rc;
-
-		limit_calls = true;
-
-		rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
-
-		if (rc != 0)
-			return fsalstat(ERR_FSAL_SERVERFAULT, rc);
-
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-			 fsal_info->max_fs_calls);
-	} else {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
-	}
-
-	/* setting default values. */
-	global_fs_info = default_gpfs_info;
-
-	if (isFullDebug(COMPONENT_FSAL)) {
-		display_fsinfo(&default_gpfs_info);
-	}
-
-	/* Analyzing fs_common_info struct */
-
-	if ((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.case_insensitive !=
-		FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.case_preserving !=
-		FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.supported_attrs !=
-		FSAL_INIT_FS_DEFAULT)
-	    || (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
-
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info,
-			  lock_support_async_block);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
-
-	SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-	SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
-
-	SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
-
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
-
-	SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
-
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, accesscheck_support);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support);
-	SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, share_support_owner);
-
-	LogFullDebug(COMPONENT_FSAL, "Supported attributes constant = 0x%llX.",
-		     GPFS_SUPPORTED_ATTRIBUTES);
-
-	LogFullDebug(COMPONENT_FSAL, "Supported attributes default = 0x%llX.",
-		     default_gpfs_info.supported_attrs);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL INIT: Supported attributes mask = 0x%llX.",
-		     global_fs_info.supported_attrs);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-#endif
-
 /*********************************************************************
  *
  *  GPFS FSAL char device driver interaces
@@ -203,7 +84,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  */
 
 fsal_status_t fsal_internal_handle2fd(int dirfd,
-				      struct gpfs_file_handle * phandle,
+				      struct gpfs_file_handle *phandle,
 				      int *pfd, int oflags)
 {
 	fsal_status_t status;
@@ -214,7 +95,7 @@ fsal_status_t fsal_internal_handle2fd(int dirfd,
 	status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -267,7 +148,7 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
  */
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-					 struct gpfs_file_handle * phandle,
+					 struct gpfs_file_handle *phandle,
 					 int *pfd, int oflags)
 {
 	int rc = 0;
@@ -307,7 +188,7 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
-				       struct gpfs_file_handle * p_handle)
+				       struct gpfs_file_handle *p_handle)
 {				/* OUT */
 	int rc;
 	struct name_handle_arg harg;
@@ -355,8 +236,8 @@ fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
  * \return status of operation
  */
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,	/* IN */
-					  struct gpfs_file_handle * p_handle)
+fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,
+					  struct gpfs_file_handle *p_handle)
 {				/* OUT */
 	int rc;
 	struct name_handle_arg harg;
@@ -407,9 +288,9 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,	/* IN
  * \return status of operation
  */
 fsal_status_t fsal_internal_get_fh(int dirfd,	/* IN  */
-				   struct gpfs_file_handle * p_dir_fh,	/* IN  */
+				   struct gpfs_file_handle *p_dir_fh, /* IN  */
 				   const char *p_fsalname,	/* IN  */
-				   struct gpfs_file_handle * p_out_fh)
+				   struct gpfs_file_handle *p_out_fh)
 {				/* OUT */
 	int rc;
 	struct get_handle_arg harg;
@@ -456,7 +337,7 @@ fsal_status_t fsal_internal_get_fh(int dirfd,	/* IN  */
  * \return status of operation
  */
 fsal_status_t fsal_internal_fd2handle(int fd,
-				      struct gpfs_file_handle * p_handle)
+				      struct gpfs_file_handle *p_handle)
 {
 	int rc;
 	struct name_handle_arg harg;
@@ -506,8 +387,8 @@ fsal_status_t fsal_internal_fd2handle(int fd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_link_fh(int dirfd,
-				    struct gpfs_file_handle * p_target_handle,
-				    struct gpfs_file_handle * p_dir_handle,
+				    struct gpfs_file_handle *p_target_handle,
+				    struct gpfs_file_handle *p_dir_handle,
 				    const char *p_link_name)
 {
 	int rc;
@@ -545,9 +426,9 @@ fsal_status_t fsal_internal_link_fh(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_stat_name(int dirfd,
-				      struct gpfs_file_handle * p_dir_handle,
+				      struct gpfs_file_handle *p_dir_handle,
 				      const char *p_stat_name,
-				      struct stat * buf)
+				      struct stat *buf)
 {
 	int rc;
 	struct stat_name_arg statarg;
@@ -588,8 +469,8 @@ fsal_status_t fsal_internal_stat_name(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_unlink(int dirfd,
-				   struct gpfs_file_handle * p_dir_handle,
-				   const char *p_stat_name, struct stat * buf)
+				   struct gpfs_file_handle *p_dir_handle,
+				   const char *p_stat_name, struct stat *buf)
 {
 	int rc;
 	struct stat_name_arg statarg;
@@ -630,11 +511,11 @@ fsal_status_t fsal_internal_unlink(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_create(int dirfd,
-				   struct gpfs_file_handle * p_dir_handle,
+				   struct gpfs_file_handle *p_dir_handle,
 				   const char *p_stat_name, mode_t mode,
 				   dev_t dev,
-				   struct gpfs_file_handle * p_new_handle,
-				   struct stat * buf)
+				   struct gpfs_file_handle *p_new_handle,
+				   struct stat *buf)
 {
 	int rc;
 	struct create_name_arg crarg;
@@ -691,8 +572,8 @@ fsal_status_t fsal_internal_create(int dirfd,
  * \return status of operation
  */
 fsal_status_t fsal_internal_rename_fh(int dirfd,
-				      struct gpfs_file_handle * p_old_handle,
-				      struct gpfs_file_handle * p_new_handle,
+				      struct gpfs_file_handle *p_old_handle,
+				      struct gpfs_file_handle *p_new_handle,
 				      const char *p_old_name,
 				      const char *p_new_name)
 {
@@ -728,8 +609,8 @@ fsal_status_t fsal_internal_rename_fh(int dirfd,
  */
 
 fsal_status_t fsal_readlink_by_handle(int dirfd,
-				      struct gpfs_file_handle * p_handle,
-				      char *__buf, size_t * maxlen)
+				      struct gpfs_file_handle *p_handle,
+				      char *__buf, size_t *maxlen)
 {
 	int rc;
 	struct readlink_fh_arg readlinkarg;
@@ -779,9 +660,9 @@ int fsal_internal_version()
 /* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
-				       struct gpfs_file_handle * p_handle,
-				       gpfsfsal_xstat_t * p_buffxstat,
-				       uint32_t * grace_period_attr,
+				       struct gpfs_file_handle *p_handle,
+				       gpfsfsal_xstat_t *p_buffxstat,
+				       uint32_t *grace_period_attr,
 				       bool expire)
 {
 	int rc;
@@ -831,8 +712,10 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 
 	if (rc < 0) {
 		if (errno == ENODATA) {
-			/* For the special file that do not have ACL, GPFS returns ENODATA.
-			 * In this case, return okay with stat. */
+			/* For the special file that do not have ACL, GPFS
+			   returns ENODATA. In this case, return okay with
+			   stat.
+			*/
 			p_buffxstat->attr_valid = XATTR_STAT;
 			LogFullDebug(COMPONENT_FSAL,
 				     "retrieved only stat, not acl");
@@ -857,10 +740,10 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 /* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,
-				       const struct req_op_context * p_context,
-				       struct gpfs_file_handle * p_handle,
+				       const struct req_op_context *p_context,
+				       struct gpfs_file_handle *p_handle,
 				       int attr_valid, int attr_changed,
-				       gpfsfsal_xstat_t * p_buffxstat)
+				       gpfsfsal_xstat_t *p_buffxstat)
 {
 	int rc, errsv;
 	struct xstat_arg xstatarg;
@@ -875,9 +758,10 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 	xstatarg.attr_changed = attr_changed;
 	xstatarg.buf = &p_buffxstat->buffstat;
 
-	/* We explicitly do NOT do setfsuid/setfsgid here because truncate, even to
-	 * enlarge a file, doesn't actually allocate blocks. GPFS implements sparse
-	 * files, so blocks of all 0 will not actually be allocated.
+	/* We explicitly do NOT do setfsuid/setfsgid here because truncate,
+	   even to enlarge a file, doesn't actually allocate blocks. GPFS
+	   implements sparse files, so blocks of all 0 will not actually
+	   be allocated.
 	 */
 	rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
 	errsv = errno;
@@ -893,8 +777,8 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 
 /* trucate by handle */
 fsal_status_t fsal_trucate_by_handle(int dirfd,
-				     const struct req_op_context * p_context,
-				     struct gpfs_file_handle * p_handle,
+				     const struct req_op_context *p_context,
+				     struct gpfs_file_handle *p_handle,
 				     u_int64_t size)
 {
 	int attr_valid;

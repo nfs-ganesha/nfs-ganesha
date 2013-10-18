@@ -6,7 +6,6 @@
  *
  * \file    fsal_create.c
  * \date    $Date: 2006/01/24 13:45:36 $
- * \version $Revision: 1.18 $
  * \brief   Filesystem objects creation functions.
  *
  */
@@ -49,12 +48,12 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t GPFSFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
+fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const char *p_filename,	/* IN */
-			      const struct req_op_context * p_context,	/* IN */
+			      const struct req_op_context *p_context,	/* IN */
 			      uint32_t accessmode,	/* IN */
-			      struct gpfs_file_handle * p_object_handle,	/* OUT */
-			      struct attrlist * p_object_attributes)
+			      struct gpfs_file_handle *p_object_handle, /*OUT*/
+			      struct attrlist *p_object_attributes)
 {				/* IN/OUT */
 	fsal_status_t status;
 	int mount_fd;
@@ -88,7 +87,7 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
 				 unix_mode | S_IFREG, 0, p_object_handle, NULL);
 	fsal_restore_ganesha_credentials();
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* retrieve file attributes */
 	if (p_object_attributes) {
@@ -104,8 +103,8 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
 		}
 
 	}
-	// error injection to test DRC
-	//sleep(61);
+	/* error injection to test DRC */
+	/* sleep(61); */
 	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
@@ -140,13 +139,13 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle * dir_hdl,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
+fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,	/* IN */
 			     const char *p_dirname,	/* IN */
-			     const struct req_op_context * p_context,	/* IN */
+			     const struct req_op_context *p_context, /* IN */
 			     uint32_t accessmode,	/* IN */
-			     struct gpfs_file_handle * p_object_handle,	/* OUT */
-			     struct attrlist * p_object_attributes)
-{				/* IN/OUT */
+			     struct gpfs_file_handle *p_object_handle, /* OUT */
+			     struct attrlist *p_object_attributes) /* IN/OUT */
+{
 /*   int setgid_bit = 0; */
 	mode_t unix_mode;
 	fsal_status_t status;
@@ -182,7 +181,7 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* retrieve file attributes */
 	if (p_object_attributes) {
@@ -227,12 +226,12 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_link(struct fsal_obj_handle * destdir_hdl,	/* IN */
-			    struct gpfs_file_handle * target_handle,	/* IN */
+fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
+			    struct gpfs_file_handle *target_handle,	/* IN */
 			    const char *p_link_name,	/* IN */
-			    const struct req_op_context * p_context,	/* IN */
-			    struct attrlist * p_attributes)
-{				/* IN/OUT */
+			    const struct req_op_context *p_context,  /* IN */
+			    struct attrlist *p_attributes)          /* IN/OUT */
+{
 	int mount_fd;
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *dest_dir;
@@ -285,7 +284,7 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle * destdir_hdl,	/* IN */
 
  out_status_fsal_err:
 
-	return (status);
+	return status;
 }
 
 /**
@@ -321,15 +320,14 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle * destdir_hdl,	/* IN */
  *        - Another error code if an error occurred.
  *
  */
-fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle * dir_hdl,	/* IN */
+fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const char *p_node_name,	/* IN */
-			      const struct req_op_context * p_context,	/* IN */
+			      const struct req_op_context *p_context,	/* IN */
 			      uint32_t accessmode,	/* IN */
 			      mode_t nodetype,	/* IN */
-			      fsal_dev_t * dev,	/* IN */
-			      struct gpfs_file_handle * p_object_handle,	/* OUT */
-			      struct attrlist * node_attributes	/* IN/OUT */
-    )
+			      fsal_dev_t *dev,	/* IN */
+			      struct gpfs_file_handle *p_object_handle,/* OUT */
+			      struct attrlist *node_attributes) /* IN/OUT */
 {
 	fsal_status_t status;
 /*   int flags=(O_RDONLY|O_NOFOLLOW); */
@@ -393,7 +391,7 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle * dir_hdl,	/* IN */
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* Fills the attributes if needed */
 	if (node_attributes) {

@@ -18,15 +18,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
  * \file    fsal_symlinks.c
  * \date    $Date: 2005/07/29 09:39:04 $
- * \version $Revision: 1.15 $
  * \brief   symlinks operations.
  *
  */
@@ -65,11 +64,11 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle * dir_hdl,	/* IN */
-				const struct req_op_context * p_context,	/* IN */
+fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
+				const struct req_op_context *p_context,	/* IN */
 				char *p_link_content,	/* OUT */
-				size_t * link_len,	/* IN/OUT */
-				struct attrlist * p_link_attributes)
+				size_t *link_len,	/* IN/OUT */
+				struct attrlist *p_link_attributes)
 {				/* IN/OUT */
 
 /*   int errsv; */
@@ -93,7 +92,7 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle * dir_hdl,	/* IN */
 				    link_len);
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* retrieves object attributes, if asked */
 
@@ -130,7 +129,7 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle * dir_hdl,	/* IN */
  *        It has no sense in HPSS nor UNIX filesystems.
  * \param p_link_handle (output):
  *        Pointer to the handle of the created symlink.
- * \param link_attributes (optionnal input/output): 
+ * \param link_attributes (optionnal input/output):
  *        Attributes of the newly created symlink.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -142,13 +141,13 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle * dir_hdl,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle * dir_hdl,	/* IN */
+fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			       const char *p_linkname,	/* IN */
 			       const char *p_linkcontent,	/* IN */
-			       const struct req_op_context * p_context,	/* IN */
+			       const struct req_op_context *p_context,	/* IN */
 			       uint32_t accessmode,	/* IN (ignored) */
-			       struct gpfs_file_handle * p_link_handle,	/* OUT */
-			       struct attrlist * p_link_attributes)
+			       struct gpfs_file_handle *p_link_handle, /* OUT */
+			       struct attrlist *p_link_attributes)
 {				/* IN/OUT */
 
 	int rc, errsv;
@@ -179,7 +178,7 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle * dir_hdl,	/* IN */
 				    O_RDONLY | O_DIRECTORY);
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* build symlink path */
 
@@ -205,7 +204,7 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle * dir_hdl,	/* IN */
 
 	if (FSAL_IS_ERROR(status)) {
 		close(fd);
-		return (status);
+		return status;
 	}
 
 	/* get attributes if asked */

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -26,7 +26,6 @@
 /**
  * \file    fsal_fileop.c
  * \date    $Date: 2006/01/17 14:20:07 $
- * \version $Revision: 1.9 $
  * \brief   Files operations.
  *
  */
@@ -68,23 +67,22 @@
  *
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
- *      - ERR_FSAL_ACCESS       (user doesn't have the permissions for opening the file)
+ *      - ERR_FSAL_ACCESS       (user doesn't have permissions for opening file)
  *      - ERR_FSAL_STALE        (filehandle does not address an existing object)
  *      - ERR_FSAL_INVAL        (filehandle does not address a regular file,
  *                               or open flags are conflicting)
- *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
+ *      - ERR_FSAL_FAULT        (NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
 
-#if 0				//??? not needed for now
-fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,	/* IN */
-				    fsal_name_t * filename,	/* IN */
-				    fsal_op_context_t * p_context,	/* IN */
+#if 0				/* ??? not needed for now  */
+fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle *dirhandle,	/* IN */
+				    fsal_name_t *filename,	/* IN */
+				    fsal_op_context_t *p_context,	/* IN */
 				    fsal_openflags_t openflags,	/* IN */
-				    fsal_file_t * file_descriptor,	/* OUT */
-				    fsal_attrib_list_t *
-				    file_attributes /* [ IN/OUT ] */ )
+				    fsal_file_t *file_descriptor, /* OUT */
+				    fsal_attrib_list_t *file_attributes)
 {
 	fsal_status_t fsal_status;
 	struct gpfs_file_handle filehandle;
@@ -133,12 +131,11 @@ fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,	/* IN *
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(struct fsal_obj_handle * obj_hdl,	/* IN */
-			    const struct req_op_context * p_context,	/* IN */
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
+			    const struct req_op_context *p_context,	/* IN */
 			    fsal_openflags_t openflags,	/* IN */
 			    int *file_desc,	/* OUT */
-			    struct attrlist * p_file_attributes	/* IN/OUT */
-    )
+			    struct attrlist *p_file_attributes) /* IN/OUT */
 {
 
 	int rc;
@@ -171,7 +168,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle * obj_hdl,	/* IN */
 
 	if (FSAL_IS_ERROR(status)) {
 		*file_desc = 0;
-		return (status);
+		return status;
 	}
 
 	/* output attributes */
@@ -184,7 +181,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle * obj_hdl,	/* IN */
 		if (FSAL_IS_ERROR(status)) {
 			*file_desc = 0;
 			close(*file_desc);
-			return (status);
+			return status;
 		}
 	}
 
@@ -217,9 +214,9 @@ fsal_status_t GPFSFSAL_read(int fd,	/* IN */
 			    uint64_t offset,	/* IN */
 			    size_t buffer_size,	/* IN */
 			    caddr_t buffer,	/* OUT */
-			    size_t * p_read_amount,	/* OUT */
-			    bool * p_end_of_file)
-{				/* OUT */
+			    size_t *p_read_amount,	/* OUT */
+			    bool *p_end_of_file)   /* OUT */
+{
 	struct read_arg rarg;
 	ssize_t nb_read;
 	int errsv = 0;
@@ -273,9 +270,9 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 			     uint64_t offset,	/* IN */
 			     size_t buffer_size,	/* IN */
 			     caddr_t buffer,	/* IN */
-			     size_t * p_write_amount,	/* OUT */
-			     bool * fsal_stable,	/* IN/OUT */
-			     const struct req_op_context * p_context)
+			     size_t *p_write_amount,	/* OUT */
+			     bool *fsal_stable,	/* IN/OUT */
+			     const struct req_op_context *p_context)
 {
 	struct write_arg warg;
 	ssize_t nb_write;

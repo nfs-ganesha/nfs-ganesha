@@ -6,7 +6,6 @@
  *
  * \file    fsal_convert.c
  * \date    $Date: 2006/01/17 15:53:39 $
- * \version $Revision: 1.31 $
  * \brief   HPSS-FSAL type translation functions.
  *
  *
@@ -23,13 +22,12 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
-#define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
-extern uint32_t open_fd_count;
+#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
+#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
 
 #ifdef _USE_NFS4_ACL
 static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
-			       gpfs_acl_t * p_gpfsacl);
+			       gpfs_acl_t *p_gpfsacl);
 #endif				/* _USE_NFS4_ACL */
 
 /**
@@ -207,8 +205,8 @@ int posix2fsal_error(int posix_errorcode)
 
 }
 
-fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
-				    struct attrlist * p_fsalattr_out)
+fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
+				    struct attrlist *p_fsalattr_out)
 {
 	/* sanity checks */
 	if (!p_buffstat || !p_fsalattr_out)
@@ -219,43 +217,42 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 	p_fsalattr_out->acl = NULL;
 
 	/* Fills the output struct */
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE)) {
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
 		p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SIZE)) {
-		p_fsalattr_out->filesize = p_buffstat->st_size;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FSID)) {
-		p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ACL)) {
-		p_fsalattr_out->acl = NULL;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID)) {
-		p_fsalattr_out->fileid = (uint64_t) (p_buffstat->st_ino);
-	}
 
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SIZE))
+		p_fsalattr_out->filesize = p_buffstat->st_size;
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FSID))
+		p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ACL))
+		p_fsalattr_out->acl = NULL;
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID))
+		p_fsalattr_out->fileid = (uint64_t) (p_buffstat->st_ino);
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MODE))
 		p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_NUMLINKS)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_NUMLINKS))
 		p_fsalattr_out->numlinks = p_buffstat->st_nlink;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_OWNER)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_OWNER))
 		p_fsalattr_out->owner = p_buffstat->st_uid;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_GROUP)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_GROUP))
 		p_fsalattr_out->group = p_buffstat->st_gid;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME))
 		p_fsalattr_out->atime = p_buffstat->st_atim;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME))
 		p_fsalattr_out->ctime = p_buffstat->st_ctim;
-	}
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME)) {
+
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME))
 		p_fsalattr_out->mtime = p_buffstat->st_mtim;
-	}
+
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
 		p_fsalattr_out->chgtime =
 		    (gsh_time_cmp(&p_buffstat->st_mtim, &p_buffstat->st_ctim) >
@@ -266,13 +263,11 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 		    p_fsalattr_out->chgtime.tv_nsec;
 	}
 
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SPACEUSED)) {
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SPACEUSED))
 		p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-	}
 
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_RAWDEV)) {
-		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);	/* XXX: convert ? */
-	}
+	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_RAWDEV))
+		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);
 
 	/* everything has been copied ! */
 
@@ -281,8 +276,8 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
 /* Same function as posixstat64_2_fsal_attributes. When NFS4 ACL support
  * is enabled, this will replace posixstat64_2_fsal_attributes. */
-fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t * p_buffxstat,
-					       struct attrlist * p_fsalattr_out)
+fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
+					       struct attrlist *p_fsalattr_out)
 {
 	struct stat *p_buffstat;
 
@@ -291,6 +286,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t * p_buffxstat,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	p_buffstat = &p_buffxstat->buffstat;
+
+	LogDebug(COMPONENT_FSAL, "inode %ld", p_buffstat->st_ino);
 
 	/* Fills the output struct */
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE)) {
@@ -407,7 +404,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t * p_buffxstat,
 	}
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_RAWDEV)) {
-		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);	/* XXX: convert ? */
+		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);
 		LogFullDebug(COMPONENT_FSAL, "rawdev major = %u, minor = %u",
 			     (unsigned int)p_fsalattr_out->rawdev.major,
 			     (unsigned int)p_fsalattr_out->rawdev.minor);
@@ -422,7 +419,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t * p_buffxstat,
 /* Covert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
  * pointer of attribute. */
 static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
-			       gpfs_acl_t * p_gpfsacl)
+			       gpfs_acl_t *p_gpfsacl)
 {
 	fsal_acl_status_t status;
 	fsal_acl_data_t acldata;
@@ -446,16 +443,16 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 		pace->iflag = pace_gpfs->aceIFlags;
 		pace->perm = pace_gpfs->aceMask;
 
-		if (IS_FSAL_ACE_SPECIAL_ID(*pace)) {	/* Record special user. */
+		if (IS_FSAL_ACE_SPECIAL_ID(*pace)) { /* Record special user. */
 			pace->who.uid = pace_gpfs->aceWho;
 		} else {
-			if (IS_FSAL_ACE_GROUP_ID(*pace))	/* Record group. */
+			if (IS_FSAL_ACE_GROUP_ID(*pace))
 				pace->who.gid = pace_gpfs->aceWho;
 			else	/* Record user. */
 				pace->who.uid = pace_gpfs->aceWho;
 		}
 
-		LogDebug(COMPONENT_FSAL,
+		LogMidDebug(COMPONENT_FSAL,
 			 "gpfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 pace->type, pace->flag, pace->perm,
 			 IS_FSAL_ACE_SPECIAL_ID(*pace),
@@ -464,7 +461,7 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 
 	/* Create a new hash table entry for fsal acl. */
 	pacl = nfs4_acl_new_entry(&acldata, &status);
-	LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u", pacl,
+	LogMidDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u", pacl,
 		 status);
 
 	if (pacl == NULL) {
@@ -480,8 +477,8 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 }
 
 /* Covert FSAL ACLs to GPFS NFS4 ACLs. */
-fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t * p_fsalacl,
-				  gpfsfsal_xstat_t * p_buffxstat)
+fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
+				  gpfsfsal_xstat_t *p_buffxstat)
 {
 	int i;
 	fsal_ace_t *pace;
@@ -513,7 +510,7 @@ fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t * p_fsalacl,
 				p_gpfsacl->ace_v4[i].aceWho = pace->who.uid;
 		}
 
-		LogDebug(COMPONENT_FSAL,
+		LogMidDebug(COMPONENT_FSAL,
 			 "fsal_acl_2_gpfs_acl: gpfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 p_gpfsacl->ace_v4[i].aceType,
 			 p_gpfsacl->ace_v4[i].aceFlags,
@@ -529,8 +526,8 @@ fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t * p_fsalacl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_cred_2_gpfs_cred(struct user_cred * p_fsalcred,
-				    struct xstat_cred_t * p_gpfscred)
+fsal_status_t fsal_cred_2_gpfs_cred(struct user_cred *p_fsalcred,
+				    struct xstat_cred_t *p_gpfscred)
 {
 	int i;
 
@@ -541,9 +538,8 @@ fsal_status_t fsal_cred_2_gpfs_cred(struct user_cred * p_fsalcred,
 	p_gpfscred->group = p_fsalcred->caller_gid;
 	p_gpfscred->num_groups = p_fsalcred->caller_glen;
 
-	for (i = 0; i < p_fsalcred->caller_glen; i++) {
+	for (i = 0; i < p_fsalcred->caller_glen; i++)
 		p_gpfscred->eGroups[i] = p_fsalcred->caller_garray[i];
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -633,7 +629,7 @@ fsal_status_t fsal_mode_2_gpfs_mode(mode_t fsal_mode, fsal_accessflags_t v4mask,
 		gpfs_mode = fsal_mode >> 24;
 	}
 
-	LogDebug(COMPONENT_FSAL,
+	LogMidDebug(COMPONENT_FSAL,
 		 "fsal_mode 0x%x, v4mask 0x%x, is_dir %d converted to gpfs_mode 0x%x",
 		 fsal_mode, v4mask, is_dir, gpfs_mode);
 
