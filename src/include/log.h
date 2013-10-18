@@ -340,6 +340,7 @@ char *ReturnNameFamilyError(int num_family);
 void InitLogging();
 void ReadLogEnvironment();
 void SetLevelDebug(int level_to_set);
+void Log_FreeThreadContext();
 
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);

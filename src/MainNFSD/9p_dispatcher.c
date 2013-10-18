@@ -337,7 +337,8 @@ void *_9p_socket_thread(void *Arg)
 
 	_9p_cleanup_fids(&_9p_conn);
 
-	return NULL;
+	Log_FreeThreadContext();
+	pthread_exit(NULL);
 }				/* _9p_socket_thread */
 
 /**
