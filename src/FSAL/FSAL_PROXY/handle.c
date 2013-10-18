@@ -922,7 +922,7 @@ static void free_io_contexts(void)
 		struct pxy_rpc_io_context *c =
 		    container_of(cur, struct pxy_rpc_io_context, calls);
 		glist_del(cur);
-		free(c);
+		gsh_free(c);
 	}
 }
 
@@ -950,8 +950,8 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 
 	for (i = 16; i > 0; i--) {
 		struct pxy_rpc_io_context *c =
-		    malloc(sizeof(*c) + pm->special.srv_sendsize +
-			   pm->special.srv_recvsize);
+		    gsh_malloc(sizeof(*c) + pm->special.srv_sendsize +
+			       pm->special.srv_recvsize);
 		if (!c) {
 			free_io_contexts();
 			return ENOMEM;
@@ -1875,7 +1875,7 @@ static fsal_status_t pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 		return fsalstat(ERR_FSAL_DELAY, EBUSY);
 	}
 
-	free(ph);
+	gsh_free(ph);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -2078,7 +2078,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 					       const nfs_fh4 * fh,
 					       const struct attrlist *attr)
 {
-	struct pxy_obj_handle *n = malloc(sizeof(*n) + fh->nfs_fh4_len);
+	struct pxy_obj_handle *n = gsh_malloc(sizeof(*n) + fh->nfs_fh4_len);
 
 	if (n) {
 		n->fh4 = *fh;
@@ -2097,12 +2097,12 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 
 		rc = HandleMap_SetFH(&n->h23, &n->blob, n->blob.len);
 		if ((rc != HANDLEMAP_SUCCESS) && (rc != HANDLEMAP_EXISTS)) {
-			free(n);
+			gsh_free(n);
 			return NULL;
 		}
 #endif
 		if (fsal_obj_handle_init(&n->obj, exp, attr->type)) {
-			free(n);
+			gsh_free(n);
 			n = NULL;
 		}
 	}
@@ -2127,7 +2127,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export * exp_hdl,
 	if (!path || path[0] != '/')
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 
-	pcopy = strdup(path);
+	pcopy = gsh_strdup(path);
 	if (!pcopy)
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
@@ -2136,7 +2136,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export * exp_hdl,
 		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl,
 						   creds, p, &next);
 		if (FSAL_IS_ERROR(st)) {
-			free(pcopy);
+			gsh_free(pcopy);
 			return st;
 		}
 
@@ -2146,7 +2146,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export * exp_hdl,
 		}
 	} while (p);
 
-	free(pcopy);
+	gsh_free(pcopy);
 	*handle = next;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

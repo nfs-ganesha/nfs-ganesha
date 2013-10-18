@@ -47,7 +47,7 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "wait_queue.h"
-#include "err_HashTable.h"
+#include "err_hashtable.h"
 #include "gsh_config.h"
 #include "cache_inode.h"
 #ifdef _USE_9P
@@ -281,17 +281,17 @@ void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
-void _9p_tcp_process_request(_9p_request_data_t * preq9p,
-			     nfs_worker_data_t * pworker_data);
-int _9p_process_buffer(_9p_request_data_t * preq9p,
-		       nfs_worker_data_t * pworker_data, char *replydata,
+void _9p_tcp_process_request(_9p_request_data_t *req9p,
+			     nfs_worker_data_t * worker_data);
+int _9p_process_buffer(_9p_request_data_t *req9p,
+		       nfs_worker_data_t * worker_data, char *replydata,
 		       u32 * poutlen);
 #endif
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(_9p_request_data_t * preq9p,
-			      nfs_worker_data_t * pworker_data);
+void _9p_rdma_process_request(_9p_request_data_t *req9p,
+			      nfs_worker_data_t * worker_data);
 void _9p_rdma_cleanup_conn(msk_trans_t * trans);
 #endif
 
@@ -326,7 +326,7 @@ void admin_replace_exports(void);
 void admin_halt(void);
 
 /* Tools */
-unsigned int get_rpc_xid(struct svc_req *reqp);
+unsigned int get_rpc_xid(struct svc_req *);
 
 void nfs_reset_stats(void);
 

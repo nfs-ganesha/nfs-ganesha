@@ -109,18 +109,18 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	if (myself->root_fd >= 0)
 		close(myself->root_fd);
 	if (myself->root_handle != NULL)
-		free(myself->root_handle);
+		gsh_free(myself->root_handle);
 	if (myself->fstype != NULL)
-		free(myself->fstype);
+		gsh_free(myself->fstype);
 	if (myself->mntdir != NULL)
-		free(myself->mntdir);
+		gsh_free(myself->mntdir);
 	if (myself->fs_spec != NULL)
-		free(myself->fs_spec);
+		gsh_free(myself->fs_spec);
 	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	free(myself);		/* elvis has left the building */
+	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
  errout:
@@ -521,7 +521,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	myself = malloc(sizeof(struct lustre_fsal_export));
+	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "lustre_fsal_create: out of memory for object");
@@ -642,7 +642,8 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 			retval = errno;
 			goto errout;
 		}
-		myself->root_handle = malloc(sizeof(struct lustre_file_handle));
+		myself->root_handle
+			= gsh_malloc(sizeof(struct lustre_file_handle));
 		if (myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "memory for root handle, errno=(%d) %s", errno,
@@ -654,9 +655,9 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		memcpy(myself->root_handle, fh,
 		       sizeof(struct lustre_file_handle));
 	}
-	myself->fstype = strdup(type);
-	myself->fs_spec = strdup(fs_spec);
-	myself->mntdir = strdup(mntdir);
+	myself->fstype = gsh_strdup(type);
+	myself->fs_spec = gsh_strdup(fs_spec);
+	myself->mntdir = gsh_strdup(mntdir);
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -665,16 +666,16 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	if (myself->root_fd >= 0)
 		close(myself->root_fd);
 	if (myself->root_handle != NULL)
-		free(myself->root_handle);
+		gsh_free(myself->root_handle);
 	if (myself->fstype != NULL)
-		free(myself->fstype);
+		gsh_free(myself->fstype);
 	if (myself->mntdir != NULL)
-		free(myself->mntdir);
+		gsh_free(myself->mntdir);
 	if (myself->fs_spec != NULL)
-		free(myself->fs_spec);
+		gsh_free(myself->fs_spec);
 	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	free(myself);		/* elvis has left the building */
+	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

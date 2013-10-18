@@ -13,6 +13,8 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include "ganesha_types.h"
 #include "log.h"
 
@@ -37,89 +39,27 @@
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 #else
 extern int __build_bug_on_failed;
-#define BUILD_BUG_ON(condition)                                 \
-        do {                                                    \
-                ((void)sizeof(char[1 - 2*!!(condition)]));      \
-                if (condition) __build_bug_on_failed = 1;       \
-        } while(0)
+#define BUILD_BUG_ON(condition)					\
+	do {							\
+		((void)sizeof(char[1 - 2*!!(condition)]));      \
+		if (condition)					\
+			__build_bug_on_failed = 1;		\
+	} while (0)
 #endif
 
 /* Most machines scandir callback requires a const. But not all */
-#define SCANDIR_CONST           const
+#define SCANDIR_CONST const
 
 /* Most machines have mntent.h. */
-#define HAVE_MNTENT_H           1
+#define HAVE_MNTENT_H 1
 
-/**
- * This function converts a string to an integer.
- *
- * \param str (in char *) The string to be converted.
- *
- * \return A negative value on error.
- *         Else, the converted integer.
- */
-int s_read_int(char *str);
-
-/**
- * This function converts an octal to an integer.
- *
- * \param str (in char *) The string to be converted.
- *
- * \return A negative value on error.
- *         Else, the converted integer.
- */
-int s_read_octal(char *str);
-
-/**
- * This function converts a string to an integer.
- *
- * \param str (in char *) The string to be converted.
- *
- * \return A non null value on error.
- *         Else, 0.
- */
-int s_read_int64(char *str, unsigned long long *out64);
-
-/**
- * string to boolean convertion.
- * \return 1 for TRUE, 0 for FALSE, -1 on error
- */
-int StrToBoolean(const char *str);
-
-/**
- * snprintmem:
- * Print the content of a handle, a cookie,...
- * to an hexa string.
- *
- * \param target (output):
- *        The target buffer where memory is to be printed in ASCII.
- * \param tgt_size (input):
- *        Size (in bytes) of the target buffer.
- * \param source (input):
- *        The buffer to be printed.
- * \param mem_size (input):
- *        Size of the buffer to be printed.
- *
- * \return The number of bytes written in the target buffer.
- */
-int snprintmem(char *target, int tgt_size, void *source, int mem_size);
-
-/**
- * snscanmem:
- * Read the content of a string and convert it to a handle, a cookie,...
- *
- * \param target (output):
- *        The target address where memory is to be written.
- * \param tgt_size (input):
- *        Size (in bytes) of the target memory buffer.
- * \param str_source (input):
- *        A hexadecimal string that represents
- *        the data to be stored into memory.
- *
- * \return - The number of bytes read in the source string.
- *         - -1 on error.
- */
-int sscanmem(void *target, int tgt_size, const char *str_source);
+int s_read_int(const char *str);
+int s_read_octal(const char *str);
+bool s_read_uint64(const char *str, uint64_t *out64);
+int str_to_bool(const char *str);
+int snprintmem(char *target, size_t tgt_size, const void *source,
+	       size_t mem_size);
+int sscanmem(void *target, size_t tgt_size, const char *str_source);
 
 /* String parsing functions */
 
@@ -132,14 +72,16 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
 #ifndef HAVE_STRNLEN
-#define strnlen(a,b)            gsh_strnlen(a,b)
-extern size_t gsh_strnlen(const char *s, size_t max);	/* prefix with gsh_ to prevent library conflict -- will fix properly with new build system */
+#define strnlen(a, b) gsh_strnlen(a, b)
+/* prefix with gsh_ to prevent library conflict -- will fix properly
+   with new build system */
+extern size_t gsh_strnlen(const char *s, size_t max);
 #endif
 
 #if defined(__APPLE__)
-#define clock_gettime(a,ts)     portable_clock_gettime(ts)
+#define clock_gettime(a, ts) portable_clock_gettime(ts)
 extern int portable_clock_gettime(struct timespec *ts);
-#define pthread_yield()         pthread_yield_np()
+#define pthread_yield() pthread_yield_np()
 #undef SCANDIR_CONST
 #define SCANDIR_CONST
 #undef HAVE_MNTENT_H
@@ -149,10 +91,6 @@ extern int portable_clock_gettime(struct timespec *ts);
 #undef SCANDIR_CONST
 #define SCANDIR_CONST
 #endif
-
-/* My habit with mutex */
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /**
  * @brief Logging write-lock
@@ -176,7 +114,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
 		}							\
-	} while(0)							\
+	} while (0)							\
 
 /**
  * @brief Logging read-lock
@@ -200,7 +138,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
 		}							\
-	} while(0)							\
+	} while (0)							\
 
 /**
  * @brief Logging read-write lock unlock
@@ -224,7 +162,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				rc, _lock, #_lock,			\
 				__FILE__, __LINE__);			\
 		}							\
-	} while(0)							\
+	} while (0)							\
 
 /**
  * @brief Logging mutex lock
@@ -248,7 +186,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
 		}							\
-	} while(0)
+	} while (0)
 
 /**
  * @brief Logging mutex unlock
@@ -272,7 +210,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
 		}							\
-	} while(0)
+	} while (0)
 
 /**
  * @brief Inline functions for timespec math
@@ -292,15 +230,15 @@ extern int portable_clock_gettime(struct timespec *ts);
  *
  * useful for cheap time calculation. Works with Dr. Who...
  *
- * @param start timespec of before end
- * @param end   timespec after start time
+ * @param[in] start timespec of before end
+ * @param[in] end   timespec after start time
  *
- * @return elapsed time in nsecs
+ * @return Elapsed time in nsecs
  */
 
-static
-inline nsecs_elapsed_t timespec_diff(struct timespec *start,
-				     struct timespec *end)
+static inline nsecs_elapsed_t
+timespec_diff(const struct timespec *start,
+	      const struct timespec *end)
 {
 	if ((end->tv_sec > start->tv_sec)
 	    || (end->tv_sec == start->tv_sec
@@ -340,13 +278,13 @@ inline void nsecs_to_timespec(nsecs_elapsed_t interval,
 /**
  * @brief Add an interval to a timespec
  *
- * @param interval in nsecs
- * @param timespec call by reference time
+ * @param[in]     interval Nanoseconds to add
+ * @param[in,out] timespec Time
  */
 
-static
-inline void timespec_add_nsecs(nsecs_elapsed_t interval,
-			       struct timespec *timespec)
+static inline void
+timespec_add_nsecs(nsecs_elapsed_t interval,
+		   struct timespec *timespec)
 {
 	timespec->tv_sec += (interval / NS_PER_SEC);
 	timespec->tv_nsec += (interval % NS_PER_SEC);
@@ -357,14 +295,14 @@ inline void timespec_add_nsecs(nsecs_elapsed_t interval,
 }
 
 /**
- * @brief Add an interval to a timespec
+ * @brief Subtract an interval from a timespec
  *
- * @param interval in nsecs
- * @param timespec call by reference time
+ * @param[in]     interval Nanoseconds to subtract
+ * @param[in,out] timespec Time
  */
 
-static
-inline void timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec *t)
+static inline void
+timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec *t)
 {
 	struct timespec ts;
 
@@ -400,20 +338,19 @@ static inline int gsh_time_cmp(const struct timespec *t1,
 	} else if (t1->tv_sec > t2->tv_sec) {
 		return 1;
 	} else {
-		if (t1->tv_nsec < t2->tv_nsec) {
+		if (t1->tv_nsec < t2->tv_nsec)
 			return -1;
-		} else if (t1->tv_nsec > t2->tv_nsec) {
+		else if (t1->tv_nsec > t2->tv_nsec)
 			return 1;
-		}
 	}
 
 	return 0;
 }
 
 /**
- * Get the time right now as a timespec
+ * @brief Get the time right now as a timespec
  *
- * @param ts [in] pointer to a timespec struct
+ * @param[out] ts Timespec struct
  */
 
 static inline void now(struct timespec *ts)
@@ -444,9 +381,9 @@ static inline void now(struct timespec *ts)
 static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
 {
 	int len = strlen(src);
-	if (len >= dest_size) {
+	if (len >= dest_size)
 		return -1;
-	}
+
 	memcpy(dest, src, len + 1);
 	return 0;
 }
@@ -470,9 +407,9 @@ static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
 	int destlen = strlen(dest);
 	int remain = dest_size - destlen;
 	int srclen = strlen(src);
-	if (remain <= srclen) {
+	if (remain <= srclen)
 		return -1;
-	}
+
 	memcpy(dest + destlen, src, srclen + 1);
 	return 0;
 }

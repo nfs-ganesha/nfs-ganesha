@@ -1,7 +1,7 @@
 #include "config.h"
 #include "abstract_mem.h"
 #include "fsal.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs4_acls.h"
 #include <pthread.h>
@@ -127,7 +127,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
 	key.len = acldata->naces * sizeof(fsal_ace_t);
 
 	/* Check if the entry already exists */
-	rc = HashTable_GetLatch(fsal_acl_hash, &key, &value, true, &latch);
+	rc = hashtable_getlatch(fsal_acl_hash, &key, &value, true, &latch);
 	if (rc == HASHTABLE_SUCCESS) {
 		/* Entry is already in the cache, do not add it */
 		acl = value.addr;
@@ -135,7 +135,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
 
 		nfs4_ace_free(acldata->aces);
 		nfs4_acl_entry_inc_ref(acl);
-		HashTable_ReleaseLatched(fsal_acl_hash, &latch);
+		hashtable_releaselatched(fsal_acl_hash, &latch);
 
 		return acl;
 	}
@@ -157,7 +157,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
 		*status = NFS_V4_ACL_INIT_ENTRY_FAILED;
 
 		nfs4_ace_free(acldata->aces);
-		HashTable_ReleaseLatched(fsal_acl_hash, &latch);
+		hashtable_releaselatched(fsal_acl_hash, &latch);
 
 		return NULL;
 	}
@@ -170,7 +170,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
 	value.addr = acl;
 	value.len = sizeof(fsal_acl_t);
 
-	rc = HashTable_SetLatched(fsal_acl_hash, &key, &value, &latch,
+	rc = hashtable_setlatched(fsal_acl_hash, &key, &value, &latch,
 				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE, NULL,
 				  NULL);
 
@@ -215,11 +215,11 @@ void nfs4_acl_release_entry(fsal_acl_t * acl, fsal_acl_status_t * status)
 	PTHREAD_RWLOCK_unlock(&acl->lock);
 
 	/* Get the hash table entry and hold latch */
-	rc = HashTable_GetLatch(fsal_acl_hash, &key, &old_value, true, &latch);
+	rc = hashtable_getlatch(fsal_acl_hash, &key, &old_value, true, &latch);
 
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		HashTable_ReleaseLatched(fsal_acl_hash, &latch);
+		hashtable_releaselatched(fsal_acl_hash, &latch);
 		return;
 
 	case HASHTABLE_SUCCESS:
@@ -227,13 +227,13 @@ void nfs4_acl_release_entry(fsal_acl_t * acl, fsal_acl_status_t * status)
 		nfs4_acl_entry_dec_ref(acl);
 		if (acl->ref != 0) {
 			/* Did not actually release last reference */
-			HashTable_ReleaseLatched(fsal_acl_hash, &latch);
+			hashtable_releaselatched(fsal_acl_hash, &latch);
 			PTHREAD_RWLOCK_unlock(&acl->lock);
 			return;
 		}
 
 		/* use the key to delete the entry */
-		rc = HashTable_DeleteLatched(fsal_acl_hash, &key, &latch,
+		rc = hashtable_deletelatched(fsal_acl_hash, &key, &latch,
 					     &old_key, &old_value);
 		if (rc == HASHTABLE_SUCCESS)
 			break;
@@ -330,7 +330,7 @@ int nfs4_acls_init()
 		      NULL, NULL);
 
 	/* Create hash table. */
-	fsal_acl_hash = HashTable_Init(&fsal_acl_hash_config);
+	fsal_acl_hash = hashtable_init(&fsal_acl_hash_config);
 
 	if (!fsal_acl_hash) {
 		LogCrit(COMPONENT_NFS_V4_ACL,

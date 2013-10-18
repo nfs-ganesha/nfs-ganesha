@@ -64,9 +64,9 @@ static digest_pool_entry_t *digest_alloc()
 {
 	digest_pool_entry_t *p_new;
 
-	P(digest_pool_mutex);
+	pthread_mutex_lock(&digest_pool_mutex);
 	p_new = pool_alloc(digest_pool, NULL);
-	V(digest_pool_mutex);
+	pthread_mutex_unlock(&digest_pool_mutex);
 
 	memset(p_new, 0, sizeof(digest_pool_entry_t));
 
@@ -77,18 +77,18 @@ static void digest_free(digest_pool_entry_t * p_digest)
 {
 	memset(p_digest, 0, sizeof(digest_pool_entry_t));
 
-	P(digest_pool_mutex);
+	pthread_mutex_lock(&digest_pool_mutex);
 	pool_free(digest_pool, p_digest);
-	V(digest_pool_mutex);
+	pthread_mutex_unlock(&digest_pool_mutex);
 }
 
 static handle_pool_entry_t *handle_alloc()
 {
 	handle_pool_entry_t *p_new;
 
-	P(handle_pool_mutex);
+	pthread_mutex_lock(&handle_pool_mutex);
 	p_new = pool_alloc(handle_pool, NULL);
-	V(handle_pool_mutex);
+	pthread_mutex_unlock(&handle_pool_mutex);
 
 	memset(p_new, 0, sizeof(handle_pool_entry_t));
 
@@ -99,9 +99,9 @@ static void handle_free(handle_pool_entry_t * p_handle)
 {
 	memset(p_handle, 0, sizeof(handle_pool_entry_t));
 
-	P(handle_pool_mutex);
+	pthread_mutex_lock(&handle_pool_mutex);
 	pool_free(handle_pool, p_handle);
-	V(handle_pool_mutex);
+	pthread_mutex_unlock(&handle_pool_mutex);
 }
 
 /* hash table functions */
@@ -200,7 +200,7 @@ int handle_mapping_hash_add(hash_table_t * p_hash, uint64_t object_id,
 	buffval.addr = (caddr_t) handle;
 	buffval.len = sizeof(handle_pool_entry_t);
 
-	rc = HashTable_Test_And_Set(handle_map_hash, &buffkey, &buffval,
+	rc = hashtable_test_and_set(handle_map_hash, &buffkey, &buffval,
 				    HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
 	if (rc != HASHTABLE_SUCCESS) {
@@ -279,7 +279,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
 	handle_hash_config.index_size = p_param->hashtable_size;
 
-	handle_map_hash = HashTable_Init(&handle_hash_config);
+	handle_map_hash = hashtable_init(&handle_hash_config);
 
 	if (!handle_map_hash) {
 		LogCrit(COMPONENT_FSAL,
@@ -326,7 +326,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t * nfs23_digest,
 	buffkey.addr = (caddr_t) & digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
-	rc = HashTable_GetLatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
+	rc = hashtable_getlatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
 
 	if (rc == HASHTABLE_SUCCESS) {
 		handle_pool_entry_t *h = (handle_pool_entry_t *) buffval.addr;
@@ -337,12 +337,12 @@ int HandleMap_GetFH(const nfs23_map_handle_t * nfs23_digest,
 		} else {
 			rc = HANDLEMAP_INTERNAL_ERROR;
 		}
-		HashTable_ReleaseLatched(handle_map_hash, &hl);
+		hashtable_releaselatched(handle_map_hash, &hl);
 		return rc;
 	}
 
 	if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-		HashTable_ReleaseLatched(handle_map_hash, &hl);
+		hashtable_releaselatched(handle_map_hash, &hl);
 	return HANDLEMAP_STALE;
 }				/* HandleMap_GetFH */
 

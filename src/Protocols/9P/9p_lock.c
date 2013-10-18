@@ -65,10 +65,10 @@ char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
  */
 char *strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
 
-int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u8 *type = NULL;
@@ -95,9 +95,6 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 	_9p_fid_t *pfid = NULL;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -116,15 +113,15 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 *proc_id, *client_id_len, client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -133,13 +130,13 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
 
 	if ((hp = gethostbyname(name)) == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	memcpy((char *)&client_addr, hp->h_addr, hp->h_length);
 
 	if ((powner = get_9p_owner(&client_addr, *proc_id)) == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	/* Do the job */
@@ -158,7 +155,7 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		}
 
 		if (state_lock
-		    (pfid->pentry, pfid->pexport, &pfid->op_context, powner,
+		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
 		     &state, STATE_NON_BLOCKING, NULL, &lock, &holder,
 		     &conflict, POSIX_LOCK) != STATE_SUCCESS) {
 			if (state_status == STATE_LOCK_BLOCKED)
@@ -172,7 +169,7 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 	case _9P_LOCK_TYPE_UNLCK:
 		if (state_unlock
-		    (pfid->pentry, pfid->pexport, &pfid->op_context, powner,
+		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
 		     NULL, &lock, POSIX_LOCK) != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else
@@ -181,7 +178,7 @@ int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		break;
 
 	default:
-		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 		break;
 	}			/* switch( *type ) */

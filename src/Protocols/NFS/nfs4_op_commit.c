@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -107,7 +107,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data,
 
 	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
+	data->export->export_hdl->ops->get_write_verifier(&verf_desc);
 
 	LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Commit verifier %d-%d",
 		     ((int *)verf_desc.addr)[0], ((int *)verf_desc.addr)[1]);

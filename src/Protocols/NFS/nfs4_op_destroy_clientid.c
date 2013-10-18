@@ -103,7 +103,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 		goto out;
 	}
 
-	P(client_record->cr_mutex);
+	pthread_mutex_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
@@ -176,8 +176,8 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 
  cleanup:
 	if (client_record) {
-		V(client_record->cr_mutex);
-		(void)dec_client_record_ref(client_record);	/* ref +0 */
+		pthread_mutex_unlock(&client_record->cr_mutex);
+		dec_client_record_ref(client_record);	/* ref +0 */
 	}
 
  out:

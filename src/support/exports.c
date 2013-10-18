@@ -447,14 +447,14 @@ static bool add_export_client(char *client_hostname, void *arg)
 {
 	struct client_args *argp = (struct client_args *)arg;
 	struct addrinfo *info;
-	exportlist_client_entry_t *p_client;
+	exportlist_client_entry_t *client;
 	unsigned long netMask;
 	unsigned long netAddr;
 
 	/* Allocate a new export client entry */
-	p_client = gsh_calloc(1, sizeof(exportlist_client_entry_t));
+	client = gsh_calloc(1, sizeof(exportlist_client_entry_t));
 
-	if (p_client == NULL) {
+	if (client == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Unable to allocate memory for export client %s",
 			client_hostname);
@@ -462,129 +462,129 @@ static bool add_export_client(char *client_hostname, void *arg)
 	}
 
 	/* Set client options */
-	p_client->client_perms.options = argp->option;
+	client->client_perms.options = argp->option;
 
 	/* using netdb to get information about the hostname */
 	if ((client_hostname[0] == '*') && (client_hostname[1] == '\0')) {
-		p_client->type = MATCH_ANY_CLIENT;
+		client->type = MATCH_ANY_CLIENT;
 		LogDebug(COMPONENT_CONFIG, "entry %p: %s is match any client",
-			 p_client, argp->var_name);
+			 client, argp->var_name);
 	} else if (client_hostname[0] == '@') {
 		/* Entry is a netgroup definition */
 		if (strmaxcpy
-		    (p_client->client.netgroup.netgroupname,
+		    (client->client.netgroup.netgroupname,
 		     client_hostname + 1,
-		     sizeof(p_client->client.netgroup.netgroupname)) == -1) {
+		     sizeof(client->client.netgroup.netgroupname)) == -1) {
 			LogCrit(COMPONENT_CONFIG,
 				"netgroup %s too long, ignoring",
 				client_hostname);
-			gsh_free(p_client);
+			gsh_free(client);
 			return true;
 		}
-		p_client->type = NETGROUP_CLIENT;
+		client->type = NETGROUP_CLIENT;
 		LogDebug(COMPONENT_CONFIG, "entry %p: %s to netgroup %s",
-			 p_client, argp->var_name,
-			 p_client->client.netgroup.netgroupname);
+			 client, argp->var_name,
+			 client->client.netgroup.netgroupname);
 	} else if (index(client_hostname, '/') != NULL
 		   && nfs_LookupNetworkAddr(client_hostname, &netAddr,
 					    &netMask) == 0) {
 		/* Entry is a network definition */
-		p_client->client.network.netaddr = netAddr;
-		p_client->client.network.netmask = netMask;
-		p_client->type = NETWORK_CLIENT;
+		client->client.network.netaddr = netAddr;
+		client->client.network.netmask = netMask;
+		client->type = NETWORK_CLIENT;
 		LogDebug(COMPONENT_CONFIG,
 			 "entry %p: %s to network %s = %d.%d.%d.%d/%d.%d.%d.%d",
-			 p_client, argp->var_name, client_hostname,
-			 (int)(ntohl(p_client->client.network.netaddr) >> 24),
-			 (int)((ntohl(p_client->client.network.netaddr) >> 16) &
+			 client, argp->var_name, client_hostname,
+			 (int)(ntohl(client->client.network.netaddr) >> 24),
+			 (int)((ntohl(client->client.network.netaddr) >> 16) &
 			       0xFF),
-			 (int)((ntohl(p_client->client.network.netaddr) >> 8) &
+			 (int)((ntohl(client->client.network.netaddr) >> 8) &
 			       0xFF),
-			 (int)(ntohl(p_client->client.network.netaddr) & 0xFF),
-			 (int)(ntohl(p_client->client.network.netmask) >> 24),
-			 (int)((ntohl(p_client->client.network.netmask) >> 16) &
+			 (int)(ntohl(client->client.network.netaddr) & 0xFF),
+			 (int)(ntohl(client->client.network.netmask) >> 24),
+			 (int)((ntohl(client->client.network.netmask) >> 16) &
 			       0xFF),
-			 (int)((ntohl(p_client->client.network.netmask) >> 8) &
+			 (int)((ntohl(client->client.network.netmask) >> 8) &
 			       0xFF),
-			 (int)(ntohl(p_client->client.network.netmask) & 0xFF));
+			 (int)(ntohl(client->client.network.netmask) & 0xFF));
 	} else if (index(client_hostname, '*') != NULL
 		   || index(client_hostname, '?') != NULL) {
 		/* this is a wildcarded host if it contains '*' or '?' */
-		p_client->type = WILDCARDHOST_CLIENT;
+		client->type = WILDCARDHOST_CLIENT;
 		if (strmaxcpy
-		    (p_client->client.wildcard.wildcard, client_hostname,
-		     sizeof(p_client->client.wildcard.wildcard)) == -1) {
+		    (client->client.wildcard.wildcard, client_hostname,
+		     sizeof(client->client.wildcard.wildcard)) == -1) {
 			LogCrit(COMPONENT_CONFIG,
 				"host wildcard %s too long, ignoring",
 				client_hostname);
-			gsh_free(p_client);
+			gsh_free(client);
 			return true;
 		}
 		LogFullDebug(COMPONENT_CONFIG,
-			     "entry %p: %s to wildcard \"%s\"", p_client,
+			     "entry %p: %s to wildcard \"%s\"", client,
 			     argp->var_name, client_hostname);
 	} else if (getaddrinfo(client_hostname, NULL, NULL, &info) == 0) {
 		struct addrinfo *ip;
 
 		for (ip = info; ip != NULL; ip = ip->ai_next) {
 			/* Entry is a hostif */
-			if (p_client == NULL) {
+			if (client == NULL) {
 				/* Allocate a new export client entry */
-				p_client =
+				client =
 				    gsh_calloc(1,
 					       sizeof
 					       (exportlist_client_entry_t));
-				if (p_client == NULL) {
+				if (client == NULL) {
 					LogCrit(COMPONENT_CONFIG,
 						"Unable to allocate memory for export client %s",
 						client_hostname);
 					return false;
 				}
 				/* Set client options */
-				p_client->client_perms.options = argp->option;
+				client->client_perms.options = argp->option;
 			}
 			if (ip->ai_family == AF_INET) {
 				struct in_addr infoaddr =
 				    ((struct sockaddr_in *)ip->ai_addr)->
 				    sin_addr;
-				memcpy(&(p_client->client.hostif.clientaddr),
+				memcpy(&(client->client.hostif.clientaddr),
 				       &infoaddr, sizeof(struct in_addr));
-				p_client->type = HOSTIF_CLIENT;
+				client->type = HOSTIF_CLIENT;
 				LogDebug(COMPONENT_CONFIG,
 					 "entry %p: %s to client %s = %d.%d.%d.%d",
-					 p_client, argp->var_name,
+					 client, argp->var_name,
 					 client_hostname,
 					 (int)(ntohl
-					       (p_client->client.hostif.
+					       (client->client.hostif.
 						clientaddr) >> 24),
 					 (int)((ntohl
-						(p_client->client.hostif.
+						(client->client.hostif.
 						 clientaddr) >> 16) & 0xFF),
 					 (int)((ntohl
-						(p_client->client.hostif.
+						(client->client.hostif.
 						 clientaddr) >> 8) & 0xFF),
 					 (int)(ntohl
-					       (p_client->client.hostif.
+					       (client->client.hostif.
 						clientaddr) & 0xFF));
 			} else if (ip->ai_family == AF_INET6) {
 				struct in6_addr infoaddr =
 				    ((struct sockaddr_in6 *)ip->ai_addr)->
 				    sin6_addr;
 				/* IPv6 address */
-				memcpy(&(p_client->client.hostif.clientaddr6),
+				memcpy(&(client->client.hostif.clientaddr6),
 				       &infoaddr, sizeof(struct in6_addr));
-				p_client->type = HOSTIF_CLIENT_V6;
+				client->type = HOSTIF_CLIENT_V6;
 				LogDebug(COMPONENT_CONFIG,
 					 "entry %p: %s to client %s = IPv6",
-					 p_client, argp->var_name,
+					 client, argp->var_name,
 					 client_hostname);
 			} else {
 				continue;
 			}
 			glist_add_tail(&argp->client->client_list,
-				       &p_client->cle_list);
+				       &client->cle_list);
 			argp->client->num_clients++;
-			p_client = NULL;
+			client = NULL;
 		}
 		freeaddrinfo(info);
 		return true;
@@ -592,10 +592,10 @@ static bool add_export_client(char *client_hostname, void *arg)
 		/* Last case: client could not be identified, DNS failed. */
 		LogCrit(COMPONENT_CONFIG, "Unknown client %s (DNS failed)",
 			client_hostname);
-		gsh_free(p_client);
+		gsh_free(client);
 		return true;
 	}
-	glist_add_tail(&argp->client->client_list, &p_client->cle_list);
+	glist_add_tail(&argp->client->client_list, &client->cle_list);
 	argp->client->num_clients++;
 	return true;
 }
@@ -651,7 +651,7 @@ static int parseAccessParam(char *var_name, char *var_value,
 	}
 #ifdef USE_NODELIST
 	/* free the buffer the nodelist module has allocated */
-	free(expanded_node_list);
+	gsh_free(expanded_node_list);
 #endif				/* USE_NODELIST */
 
 	return rc;
@@ -663,11 +663,11 @@ static void FreeClientList(exportlist_client_t * clients)
 	struct glist_head *glistn;
 
 	glist_for_each_safe(glist, glistn, &clients->client_list) {
-		exportlist_client_entry_t *p_client;
-		p_client =
+		exportlist_client_entry_t *client;
+		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
-		glist_del(&p_client->cle_list);
-		gsh_free(p_client);
+		glist_del(&client->cle_list);
+		gsh_free(client);
 	}
 }
 
@@ -753,7 +753,7 @@ static bool parse_bool(char *var_value, uint64_t * set_opts, uint64_t option,
 			blk_name, var_name);
 		return false;
 	}
-	val = StrToBoolean(var_value);
+	val = str_to_bool(var_value);
 	if (val == -1) {
 		LogCrit(COMPONENT_CONFIG,
 			"NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
@@ -1041,7 +1041,7 @@ static int BuildExportClient(config_item_t block,
 							 CONF_EXPORT_SQUASH);
 				continue;
 			}
-			if (StrToBoolean(var_value))
+			if (str_to_bool(var_value))
 				perms->options |= EXPORT_OPTION_ALL_ANONYMOUS;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ANON_ROOT)) {
 			uid_t anon_uid;
@@ -1222,13 +1222,13 @@ static int BuildExportClient(config_item_t block,
 	 * list entries.
 	 */
 	glist_for_each(glist, &p_access_list->client_list) {
-		exportlist_client_entry_t *p_client_entry;
+		exportlist_client_entry_t *client_entry;
 
-		p_client_entry =
+		client_entry =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
-		p_client_entry->client_perms = *perms;
+		client_entry->client_perms = *perms;
 		if (isFullDebug(COMPONENT_CONFIG))
-			LogClientListEntry(COMPONENT_CONFIG, p_client_entry);
+			LogClientListEntry(COMPONENT_CONFIG, client_entry);
 	}
 	/* append this client list to the export
 	 */
@@ -2148,22 +2148,22 @@ static int BuildExportEntry(config_item_t block)
 		bool found = false;
 
 		glist_for_each(glist, &p_access_list->client_list) {
-			exportlist_client_entry_t *p_client_entry;
+			exportlist_client_entry_t *client_entry;
 
-			p_client_entry =
+			client_entry =
 			    glist_entry(glist, exportlist_client_entry_t,
 					cle_list);
-			if (p_client_entry->client_perms.
+			if (client_entry->client_perms.
 			    options & EXPORT_OPTION_ACCESS_LIST) {
-				p_client_entry->client_perms.anonymous_uid =
+				client_entry->client_perms.anonymous_uid =
 				    p_perms->anonymous_uid;
-				p_client_entry->client_perms.anonymous_gid =
+				client_entry->client_perms.anonymous_gid =
 				    p_perms->anonymous_gid;
-				p_client_entry->client_perms.options |=
+				client_entry->client_perms.options |=
 				    p_perms->options;
 				if (isFullDebug(COMPONENT_CONFIG))
 					LogClientListEntry(COMPONENT_CONFIG,
-							   p_client_entry);
+							   client_entry);
 				found = true;
 			}
 		}
@@ -2507,13 +2507,13 @@ void exports_pkginit(void)
  *
  * @param[in]  hostaddr      Host to search for
  * @param[in]  clients       Client list to search
- * @param[out] pclient_found Matching entry
+ * @param[out] client_found Matching entry
  * @param[in]  export_option Option to search for
  *
  * @return true if found, false otherwise.
  */
 bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
-			 exportlist_client_entry_t * pclient_found,
+			 exportlist_client_entry_t *client_found,
 			 unsigned int export_option)
 {
 	struct glist_head *glist;
@@ -2566,42 +2566,42 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 	}
 
 	glist_for_each(glist, &clients->client_list) {
-		exportlist_client_entry_t *p_client;
-		p_client =
+		exportlist_client_entry_t *client;
+		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		i++;
 
 		/* Make sure the client entry has the permission flags we're looking for. */
-		if ((p_client->client_perms.options & export_option) !=
+		if ((client->client_perms.options & export_option) !=
 		    export_option)
 			continue;
 
-		switch (p_client->type) {
+		switch (client->type) {
 		case HOSTIF_CLIENT:
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test HOSTIF_CLIENT: Test entry %d: clientaddr %d.%d.%d.%d, "
 				     "match with %d.%d.%d.%d", i,
 				     (int)(ntohl
-					   (p_client->client.hostif.
+					   (client->client.hostif.
 					    clientaddr) >> 24),
 				     (int)((ntohl
-					    (p_client->client.hostif.
+					    (client->client.hostif.
 					     clientaddr) >> 16) & 0xFF),
 				     (int)((ntohl
-					    (p_client->client.hostif.
+					    (client->client.hostif.
 					     clientaddr) >> 8) & 0xFF),
 				     (int)(ntohl
-					   (p_client->client.hostif.
+					   (client->client.hostif.
 					    clientaddr) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
 				     (int)(ntohl(addr) >> 8) & 0xFF,
 				     (int)(ntohl(addr) & 0xFF));
-			if (p_client->client.hostif.clientaddr == addr) {
+			if (client->client.hostif.clientaddr == addr) {
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches host address for entry %u",
 					     i);
-				*pclient_found = *p_client;
+				*client_found = *client;
 				return true;
 			}
 			break;
@@ -2610,40 +2610,40 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test NETWORK_CLIENT: Test net %d.%d.%d.%d mask %d.%d.%d.%d, match with %d.%d.%d.%d",
 				     (int)(ntohl
-					   (p_client->client.network.
+					   (client->client.network.
 					    netaddr) >> 24),
 				     (int)((ntohl
-					    (p_client->client.network.
+					    (client->client.network.
 					     netaddr) >> 16) & 0xFF),
 				     (int)((ntohl
-					    (p_client->client.network.
+					    (client->client.network.
 					     netaddr) >> 8) & 0xFF),
 				     (int)(ntohl
-					   (p_client->client.network.
+					   (client->client.network.
 					    netaddr) & 0xFF),
 				     (int)(ntohl
-					   (p_client->client.network.
+					   (client->client.network.
 					    netmask) >> 24),
 				     (int)((ntohl
-					    (p_client->client.network.
+					    (client->client.network.
 					     netmask) >> 16) & 0xFF),
 				     (int)((ntohl
-					    (p_client->client.network.
+					    (client->client.network.
 					     netmask) >> 8) & 0xFF),
 				     (int)(ntohl
-					   (p_client->client.network.
+					   (client->client.network.
 					    netmask) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
 				     (int)(ntohl(addr) >> 8) & 0xFF,
 				     (int)(ntohl(addr) & 0xFF));
 
-			if ((p_client->client.network.netmask & ntohl(addr)) ==
-			    p_client->client.network.netaddr) {
+			if ((client->client.network.netmask & ntohl(addr)) ==
+			    client->client.network.netaddr) {
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches network address for entry %u",
 					     i);
-				*pclient_found = *p_client;
+				*client_found = *client;
 				return true;
 			}
 			break;
@@ -2668,9 +2668,9 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 
 			/* At this point 'hostname' should contain the name that was found */
 			if (innetgr
-			    (p_client->client.netgroup.netgroupname, hostname,
+			    (client->client.netgroup.netgroupname, hostname,
 			     NULL, NULL) == 1) {
-				*pclient_found = *p_client;
+				*client_found = *client;
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches netgroup for entry %u",
 					     i);
@@ -2688,9 +2688,9 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			if (ipvalid
 			    &&
 			    (fnmatch
-			     (p_client->client.wildcard.wildcard, ipstring,
+			     (client->client.wildcard.wildcard, ipstring,
 			      FNM_PATHNAME) == 0)) {
-				*pclient_found = *p_client;
+				*client_found = *client;
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches wildcard for entry %u",
 					     i);
@@ -2733,13 +2733,13 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Wildcarded hostname: testing if '%s' matches '%s'",
 				     hostname,
-				     p_client->client.wildcard.wildcard);
+				     client->client.wildcard.wildcard);
 
 			/* At this point 'hostname' should contain the name that was found */
 			if (fnmatch
-			    (p_client->client.wildcard.wildcard, hostname,
+			    (client->client.wildcard.wildcard, hostname,
 			     FNM_PATHNAME) == 0) {
-				*pclient_found = *p_client;
+				*client_found = *client;
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches wildcard for entry %u",
 					     i);
@@ -2747,7 +2747,7 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			}
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "'%s' not matching '%s'", hostname,
-				     p_client->client.wildcard.wildcard);
+				     client->client.wildcard.wildcard);
 
 			break;
 
@@ -2762,7 +2762,7 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			break;
 
 		case MATCH_ANY_CLIENT:
-			*pclient_found = *p_client;
+			*client_found = *client;
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "This matches any client wildcard for entry %u",
 				     i);
@@ -2777,7 +2777,7 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"Unsupported client in position %u in export list with type %u",
-				i, p_client->type);
+				i, client->type);
 			continue;
 		}
 	}
@@ -2792,14 +2792,14 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
  *
  * @param[in]  paddrv6       Host to search for
  * @param[in]  clients       Client list to search
- * @param[out] pclient_found Matching entry
+ * @param[out] client_found Matching entry
  * @param[in]  export_option Option to search for
  *
  * @return true if found, false otherwise.
  */
 bool export_client_matchv6(struct in6_addr * paddrv6,
 			   exportlist_client_t * clients,
-			   exportlist_client_entry_t * pclient_found,
+			   exportlist_client_entry_t * client_found,
 			   unsigned int export_option)
 {
 	struct glist_head *glist;
@@ -2817,16 +2817,16 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 			     "Looking for nonroot access write entries");
 
 	glist_for_each(glist, &clients->client_list) {
-		exportlist_client_entry_t *p_client;
-		p_client =
+		exportlist_client_entry_t *client;
+		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 
 		/* Make sure the client entry has the permission flags we're looking for. */
-		if ((p_client->client_perms.options & export_option) !=
+		if ((client->client_perms.options & export_option) !=
 		    export_option)
 			continue;
 
-		switch (p_client->type) {
+		switch (client->type) {
 		case HOSTIF_CLIENT:
 		case NETWORK_CLIENT:
 		case NETGROUP_CLIENT:
@@ -2836,19 +2836,19 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 			break;
 
 		case HOSTIF_CLIENT_V6:
-			if (!memcmp(p_client->client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16)) {	/* Remember that IPv6 address are 128 bits = 16 bytes long */
+			if (!memcmp(client->client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16)) {	/* Remember that IPv6 address are 128 bits = 16 bytes long */
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches host adress in IPv6");
-				*pclient_found = *p_client;
+				*client_found = *client;
 				return true;
 			}
 			break;
 
 		case MATCH_ANY_CLIENT:
-			*pclient_found = *p_client;
+			*client_found = *client;
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "This matches any client wildcard for entry %p",
-				     p_client);
+				     client);
 			return true;
 
 		default:
@@ -2863,17 +2863,17 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 
 int export_client_match_any(sockaddr_t * hostaddr,
 			    exportlist_client_t * clients,
-			    exportlist_client_entry_t * pclient_found,
+			    exportlist_client_entry_t * client_found,
 			    unsigned int export_option)
 {
 	if (hostaddr->ss_family == AF_INET6) {
 		struct sockaddr_in6 *psockaddr_in6 =
 		    (struct sockaddr_in6 *)hostaddr;
 		return export_client_matchv6(&(psockaddr_in6->sin6_addr),
-					     clients, pclient_found,
+					     clients, client_found,
 					     export_option);
 	} else {
-		return export_client_match(hostaddr, clients, pclient_found,
+		return export_client_match(hostaddr, clients, client_found,
 					   export_option);
 	}
 }
@@ -2882,43 +2882,43 @@ int export_client_match_any(sockaddr_t * hostaddr,
  * @brief Checks if request security flavor is suffcient for the requested export
  *
  * @param[in] req     Related RPC request.
- * @param[in] pexport Related export entry
+ * @param[in] export Related export entry
  *
  * @return true if the request flavor exists in the matching export
  * false otherwise
  */
-bool nfs_export_check_security(struct svc_req * req,
-			       export_perms_t * p_export_perms,
-			       exportlist_t * pexport)
+bool nfs_export_check_security(struct svc_req *req,
+			       export_perms_t *export_perms,
+			       exportlist_t *export)
 {
 	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
-		if ((p_export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0) {
+		if ((export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Export %s does not support AUTH_NONE",
-				pexport->fullpath);
+				export->fullpath);
 			return false;
 		}
 		break;
 
 	case AUTH_UNIX:
-		if ((p_export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0) {
+		if ((export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Export %s does not support AUTH_UNIX",
-				pexport->fullpath);
+				export->fullpath);
 			return false;
 		}
 		break;
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		if ((p_export_perms->
+		if ((export_perms->
 		     options & (EXPORT_OPTION_RPCSEC_GSS_NONE |
 				EXPORT_OPTION_RPCSEC_GSS_INTG |
 				EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Export %s does not support RPCSEC_GSS",
-				pexport->fullpath);
+				export->fullpath);
 			return false;
 		} else {
 			struct svc_rpc_gss_data *gd;
@@ -2929,37 +2929,37 @@ bool nfs_export_check_security(struct svc_req * req,
 				     (int)svc);
 			switch (svc) {
 			case RPCSEC_GSS_SVC_NONE:
-				if ((p_export_perms->
+				if ((export_perms->
 				     options & EXPORT_OPTION_RPCSEC_GSS_NONE) ==
 				    0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_NONE",
-						pexport->fullpath);
+						export->fullpath);
 					return false;
 				}
 				break;
 
 			case RPCSEC_GSS_SVC_INTEGRITY:
-				if ((p_export_perms->
+				if ((export_perms->
 				     options & EXPORT_OPTION_RPCSEC_GSS_INTG) ==
 				    0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_INTEGRITY",
-						pexport->fullpath);
+						export->fullpath);
 					return false;
 				}
 				break;
 
 			case RPCSEC_GSS_SVC_PRIVACY:
-				if ((p_export_perms->
+				if ((export_perms->
 				     options & EXPORT_OPTION_RPCSEC_GSS_PRIV) ==
 				    0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_PRIVACY",
-						pexport->fullpath);
+						export->fullpath);
 					return false;
 				}
 				break;
@@ -2967,7 +2967,7 @@ bool nfs_export_check_security(struct svc_req * req,
 			default:
 				LogInfo(COMPONENT_DISPATCH,
 					"Export %s does not support unknown "
-					"RPCSEC_GSS_SVC %d", pexport->fullpath,
+					"RPCSEC_GSS_SVC %d", export->fullpath,
 					(int)svc);
 				return false;
 			}
@@ -2977,7 +2977,7 @@ bool nfs_export_check_security(struct svc_req * req,
 	default:
 		LogInfo(COMPONENT_DISPATCH,
 			"Export %s does not support unknown oa_flavor %d",
-			pexport->fullpath, (int)req->rq_cred.oa_flavor);
+			export->fullpath, (int)req->rq_cred.oa_flavor);
 		return false;
 	}
 
@@ -3033,10 +3033,10 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4)
  *
  * @param[in]     hostaddr         The complete remote address (as a sockaddr_storage to be IPv6 compliant)
  * @param[in]     ptr_req          The related RPC request.
- * @param[in]     pexport          Related export entry (if found, NULL otherwise).
+ * @param[in]     export          Related export entry (if found, NULL otherwise).
  * @param[in]     nfs_prog         Number for the NFS program.
  * @param[in]     mnt_prog         Number for the MOUNT program.
- * @param[out]    pclient_found    Client entry found in export list, NULL if nothing was found.
+ * @param[out]    client_found    Client entry found in export list, NULL if nothing was found.
  * @param[in]     user_credentials User credentials
  * @param[in]     proc_makes_write Whether this operation counts as a write
  *
@@ -3046,8 +3046,8 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4)
  * @retval EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO
  */
 
-void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
-			     export_perms_t * pexport_perms)
+void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * export,
+			     export_perms_t * export_perms)
 {
 	char ipstring[SOCK_NAME_MAX];
 	int ipvalid;
@@ -3056,9 +3056,9 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
 	sockaddr_t *puse_hostaddr;
 
 	/* Initialize permissions to allow nothing */
-	pexport_perms->options = 0;
-	pexport_perms->anonymous_uid = (uid_t) ANON_UID;
-	pexport_perms->anonymous_gid = (gid_t) ANON_GID;
+	export_perms->options = 0;
+	export_perms->anonymous_uid = (uid_t) ANON_UID;
+	export_perms->anonymous_gid = (gid_t) ANON_GID;
 
 	puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
 
@@ -3078,7 +3078,7 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
 			     ipstring);
 	}
 
-	if (pexport == NULL) {
+	if (export == NULL) {
 		LogCrit(COMPONENT_DISPATCH,
 			"No export to check permission against");
 		return;
@@ -3086,74 +3086,74 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
 
 	/* Test if client is in EXPORT_CLIENT Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_ACCESS_OPT_LIST)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches EXPORT_CLIENT Access List",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		*pexport_perms = client_found.client_perms;
+		*export_perms = client_found.client_perms;
 
 		return;
 	}
 
 	/* Grab anonymous uid and gid and base permissions from export. */
-	pexport_perms->anonymous_uid = pexport->export_perms.anonymous_uid;
-	pexport_perms->anonymous_gid = pexport->export_perms.anonymous_gid;
-	pexport_perms->options =
-	    pexport->export_perms.options & EXPORT_OPTION_BASE_ACCESS;
+	export_perms->anonymous_uid = export->export_perms.anonymous_uid;
+	export_perms->anonymous_gid = export->export_perms.anonymous_gid;
+	export_perms->options =
+	    export->export_perms.options & EXPORT_OPTION_BASE_ACCESS;
 
 	/* Test if client is in Root_Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_ROOT)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches Root_Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		pexport_perms->options |= client_found.client_perms.options;
+		export_perms->options |= client_found.client_perms.options;
 	}
 
 	/* Continue on to see if client matches any other kind of access list */
 
 	/* Test if client is in RW_Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_WRITE_ACCESS)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches RW_Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		pexport_perms->options |=
+		export_perms->options |=
 		    EXPORT_OPTION_RW_ACCESS | EXPORT_OPTION_MD_ACCESS;
 		return;
 	}
 
 	/* Test if client is in R_Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_READ_ACCESS)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches R_Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		pexport_perms->options |=
+		export_perms->options |=
 		    EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_MD_READ_ACCESS;
 
 		return;
@@ -3161,68 +3161,68 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
 
 	/* Test if client is in MDONLY_Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_MD_WRITE_ACCESS)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches MDONLY_Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		pexport_perms->options |= EXPORT_OPTION_MD_ACCESS;
+		export_perms->options |= EXPORT_OPTION_MD_ACCESS;
 
 		return;
 	}
 
 	/* Test if client is in MDONLY_RO_Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_MD_READ_ACCESS)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches MDONLY_RO_Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		pexport_perms->options |= EXPORT_OPTION_MD_READ_ACCESS;
+		export_perms->options |= EXPORT_OPTION_MD_READ_ACCESS;
 
 		return;
 	}
 
 	/* Test if client is in Access list */
 	if (export_client_match_any
-	    (puse_hostaddr, &(pexport->clients), &client_found,
+	    (puse_hostaddr, &(export->clients), &client_found,
 	     EXPORT_OPTION_ACCESS_LIST)) {
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Export %d Client %s matches Access",
-				     pexport->id, ipstring);
+				     export->id, ipstring);
 
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
 		/* Grab the root access and rw/ro/mdonly/mdonly ro access from export */
-		pexport_perms->options |=
-		    pexport->export_perms.options & EXPORT_OPTION_CUR_ACCESS;
+		export_perms->options |=
+		    export->export_perms.options & EXPORT_OPTION_CUR_ACCESS;
 
 		return;
 	}
 
 	/* Client is in no other list, check if it was in Root_Access list above */
-	if (pexport_perms->options & EXPORT_OPTION_ROOT) {
+	if (export_perms->options & EXPORT_OPTION_ROOT) {
 		/* Root_Access is specified, but no other access list matched.
 		 * Use base export access, and make sure at least READ access is granted.
 		 */
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Export %d Client %s matches Root_Access and no other, granting export access (at least Read)",
-			     pexport->id, ipstring);
+			     export->id, ipstring);
 
-		pexport_perms->options |=
-		    (pexport->export_perms.
+		export_perms->options |=
+		    (export->export_perms.
 		     options & EXPORT_OPTION_CUR_ACCESS) |
 		    EXPORT_OPTION_READ_ACCESS;
 
@@ -3232,9 +3232,9 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * pexport,
 	/* If this point is reached, no matching entry was found */
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "export %d permission denied - no matching entry",
-		     pexport->id);
+		     export->id);
 
-	pexport_perms->options = 0;
+	export_perms->options = 0;
 
 	return;
 }				/* nfs_export_check_access */

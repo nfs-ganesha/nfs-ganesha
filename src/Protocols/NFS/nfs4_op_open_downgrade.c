@@ -101,17 +101,18 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t * data,
 
 	open_owner = state_found->state_owner;
 
-	P(open_owner->so_mutex);
+	pthread_mutex_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (!Check_nfs4_seqid
 	    (open_owner, arg_OPEN_DOWNGRADE4->seqid, op, data->current_entry,
 	     resp, tag)) {
-		/* Response is all setup for us and LogDebug told what was wrong */
-		V(open_owner->so_mutex);
+		/* Response is all setup for us and LogDebug told what
+		   was wrong */
+		pthread_mutex_unlock(&open_owner->so_mutex);
 		return res_OPEN_DOWNGRADE4->status;
 	}
-	V(open_owner->so_mutex);
+	pthread_mutex_unlock(&open_owner->so_mutex);
 
 	/* What kind of open is it ? */
 	LogFullDebug(COMPONENT_STATE,

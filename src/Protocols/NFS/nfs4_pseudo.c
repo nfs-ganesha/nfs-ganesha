@@ -37,7 +37,7 @@
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
 #include <sys/param.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -666,7 +666,7 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op, compound_data_t * data,
  *
  * data->current_entry
  * data->current_filetype
- * data->pexport
+ * data->export
  * data->export_perms.options
  *
  * @param data  [INOUT] Pointer to the compound request's data
@@ -693,7 +693,7 @@ int set_compound_data_for_pseudo(compound_data_t * data)
 	data->current_entry = NULL;	/* No cache inode entry */
 	data->current_filetype = DIRECTORY;	/* Always a directory */
 	data->req_ctx->export = NULL;
-	data->pexport = NULL;	/* No exportlist is related to pseudo fs */
+	data->export = NULL;	/* No exportlist is related to pseudo fs */
 	data->export_perms.options =
 	    EXPORT_OPTION_ROOT | EXPORT_OPTION_MD_READ_ACCESS |
 	    EXPORT_OPTION_AUTH_TYPES | EXPORT_OPTION_NFSV4 |
@@ -787,7 +787,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 		data->req_ctx->export =
 		    get_gsh_export(iter->junction_export->id, true);
 		assert(data->req_ctx->export != NULL);
-		data->pexport = &data->req_ctx->export->export;
+		data->export = &data->req_ctx->export->export;
 
 		/* Build credentials */
 		res_LOOKUP4->status = nfs4_MakeCred(data);
@@ -800,7 +800,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 			 */
 			LogDebug(COMPONENT_NFS_V4_PSEUDO,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->pexport->id, data->pexport->fullpath);
+				 data->export->id, data->export->fullpath);
 			res_LOOKUP4->status = NFS4ERR_NOENT;
 			if (name)
 				gsh_free(name);
@@ -810,15 +810,15 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 		if (res_LOOKUP4->status != NFS4_OK) {
 			LogMajor(COMPONENT_NFS_V4_PSEUDO,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
-				 data->pexport->fullpath, data->pexport->id);
+				 data->export->fullpath, data->export->id);
 			goto out;
 		}
 
-		cache_status = nfs_export_get_root_entry(data->pexport, &entry);
+		cache_status = nfs_export_get_root_entry(data->export, &entry);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_NFS_V4_PSEUDO,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->pexport->fullpath, data->pexport->id,
+				 data->export->fullpath, data->export->id,
 				 cache_inode_err_str(cache_status));
 			res_LOOKUP4->status = nfs4_Errno(cache_status);
 			goto out;
@@ -1035,7 +1035,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 	pseudofs_entry_t *psfsentry;
 	pseudofs_entry_t *iter = NULL;
 	entry4 *entry_nfs_array = NULL;
-	exportlist_t *save_pexport;
+	exportlist_t *save_export;
 	export_perms_t save_export_perms;
 	struct gsh_export *saved_gsh_export;
 	nfs_fh4 entryFH = { 0, NULL };
@@ -1092,22 +1092,22 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
        */
 		data->req_ctx->export =
 		    get_gsh_export(psfsentry->junction_export->id, true);
-		data->pexport = &data->req_ctx->export->export;
+		data->export = &data->req_ctx->export->export;
 
 		/* Build the credentials */
 		res_READDIR4->status = nfs4_MakeCred(data);
 		if (res_READDIR4->status != NFS4_OK) {
 			LogMajor(COMPONENT_NFS_V4_PSEUDO,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
-				 data->pexport->fullpath, data->pexport->id);
+				 data->export->fullpath, data->export->id);
 			return res_READDIR4->status;
 		}
 
-		cache_status = nfs_export_get_root_entry(data->pexport, &entry);
+		cache_status = nfs_export_get_root_entry(data->export, &entry);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_NFS_V4_PSEUDO,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->pexport->fullpath, data->pexport->id,
+				 data->export->fullpath, data->export->id,
 				 cache_inode_err_str(cache_status));
 			res_READDIR4->status = nfs4_Errno(cache_status);
 			return res_READDIR4->status;
@@ -1247,11 +1247,11 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 				    iter->junction_export->id,
 				    iter->junction_export->fullpath);
 			/* Save the compound data context */
-			save_pexport = data->pexport;
+			save_export = data->export;
 			save_export_perms = data->export_perms;
 			saved_gsh_export = data->req_ctx->export;
 
-			data->pexport = iter->junction_export;
+			data->export = iter->junction_export;
 			data->req_ctx->export =
 			    get_gsh_export(iter->junction_export->id, true);
 			/* Build the credentials */
@@ -1268,10 +1268,10 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 				 */
 				LogDebug(COMPONENT_NFS_V4_PSEUDO,
 					 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
-					 data->pexport->id,
-					 data->pexport->fullpath);
+					 data->export->id,
+					 data->export->fullpath);
 				put_gsh_export(data->req_ctx->export);
-				data->pexport = save_pexport;
+				data->export = save_export;
 				data->export_perms = save_export_perms;
 				data->req_ctx->export = saved_gsh_export;
 				continue;
@@ -1288,8 +1288,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 				 */
 				LogDebug(COMPONENT_NFS_V4_PSEUDO,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
-					 data->pexport->id,
-					 data->pexport->fullpath);
+					 data->export->id,
+					 data->export->fullpath);
 
 				if (check_for_wrongsec_ok_attr
 				    (&arg_READDIR4->attr_request)) {
@@ -1327,7 +1327,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 					}
 				} else {
 					put_gsh_export(data->req_ctx->export);
-					data->pexport = save_pexport;
+					data->export = save_export;
 					data->export_perms = save_export_perms;
 					data->req_ctx->export =
 					    saved_gsh_export;
@@ -1358,8 +1358,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 					 (&entryFH, entry->obj_handle)) {
 					LogMajor(COMPONENT_NFS_V4_PSEUDO,
 						 "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle for %s, id=%d",
-						 data->pexport->fullpath,
-						 data->pexport->id);
+						 data->export->fullpath,
+						 data->export->id);
 					status = NFS4ERR_RESOURCE;
 				} else {
 					status =
@@ -1390,7 +1390,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 							       export);
 						data->req_ctx->export =
 						    saved_gsh_export;
-						data->pexport = save_pexport;
+						data->export = save_export;
 						data->export_perms =
 						    save_export_perms;
 						continue;
@@ -1400,7 +1400,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op, compound_data_t * data,
 
 			put_gsh_export(data->req_ctx->export);
 			data->req_ctx->export = saved_gsh_export;
-			data->pexport = save_pexport;
+			data->export = save_export;
 			data->export_perms = save_export_perms;
 		}
 		/* Chain the entry together */

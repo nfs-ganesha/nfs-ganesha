@@ -306,7 +306,7 @@ char *get_client(char *line, client_t ** pclient, int create,
 
 	if (client == NULL) {
 		if (create) {
-			client = malloc(sizeof(*client));
+			client = gsh_malloc(sizeof(*client));
 			if (client == NULL) {
 				strcpy(errdetail, "Could not create client");
 				errno = ENOMEM;
@@ -320,7 +320,7 @@ char *get_client(char *line, client_t ** pclient, int create,
 			*pclient = client;
 			c = SkipWhite(c, requires_more, "get_client");
 			if (c == NULL)
-				free(client);
+				gsh_free(client);
 			else if (!quiet && !syntax)
 				fprintf(output, "Created temp client %s\n",
 					client->c_name);
@@ -617,7 +617,7 @@ void free_client(client_t * client)
 	if (client_list == client)
 		client_list = client->c_next;
 
-	free(client);
+	gsh_free(client);
 }
 
 void free_response(response_t * resp, response_t ** list)
@@ -639,7 +639,7 @@ void free_response(response_t * resp, response_t ** list)
 		resp->r_client = NULL;
 	}
 
-	free(resp);
+	gsh_free(resp);
 }
 
 const char *str_lock_type(int type)

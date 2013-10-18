@@ -46,9 +46,9 @@
  *
  */
 
-int nlm_Null(nfs_arg_t * parg, exportlist_t * pexport,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	     struct svc_req *preq, nfs_res_t * pres)
+int nlm_Null(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
 	/* 0 is success */
@@ -60,10 +60,10 @@ int nlm_Null(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm_Null. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm_Null_Free(nfs_res_t * pres)
+void nlm_Null_Free(nfs_res_t *res)
 {
 	return;
 }

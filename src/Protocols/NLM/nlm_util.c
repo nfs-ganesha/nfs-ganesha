@@ -59,10 +59,10 @@ pthread_mutex_t granted_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void next_granted_cookie(granted_cookie_t * cookie)
 {
-	P(granted_mutex);
+	pthread_mutex_lock(&granted_mutex);
 	granted_cookie.gc_cookie++;
 	*cookie = granted_cookie;
-	V(granted_mutex);
+	pthread_mutex_unlock(&granted_mutex);
 }
 
 const char *lock_result_str(int rc)
@@ -260,17 +260,17 @@ static void nlm4_send_grant_msg(state_async_queue_t * arg,
 	free_grant_arg(arg);
 }
 
-int nlm_process_parameters(struct svc_req *preq, bool exclusive,
+int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock * alock, fsal_lock_param_t * plock,
 			   struct req_op_context *req_ctx,
-			   cache_entry_t ** ppentry, exportlist_t * pexport,
+			   cache_entry_t ** ppentry, exportlist_t *export,
 			   care_t care, state_nsm_client_t ** ppnsm_client,
 			   state_nlm_client_t ** ppnlm_client,
 			   state_owner_t ** ppowner,
 			   state_block_data_t ** ppblock_data)
 {
 	nfsstat3 nfsstat3;
-	SVCXPRT *ptr_svc = preq->rq_xprt;
+	SVCXPRT *ptr_svc = req->rq_xprt;
 	int rc;
 
 	*ppnsm_client = NULL;
@@ -279,7 +279,7 @@ int nlm_process_parameters(struct svc_req *preq, bool exclusive,
 
 	/* Convert file handle into a cache entry */
 	*ppentry =
-	    nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh, req_ctx, pexport,
+	    nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh, req_ctx, export,
 				&nfsstat3, &rc);
 	if (*ppentry == NULL) {
 		/* handle is not valid */
@@ -352,9 +352,9 @@ int nlm_process_parameters(struct svc_req *preq, bool exclusive,
 			     ptr_svc) == 0) {
 				LogFullDebug(COMPONENT_NLM,
 					     "copy_xprt_addr failed for Program %d, Version %d, Function %d",
-					     (int)preq->rq_prog,
-					     (int)preq->rq_vers,
-					     (int)preq->rq_proc);
+					     (int)req->rq_prog,
+					     (int)req->rq_vers,
+					     (int)req->rq_proc);
 				gsh_free(*ppblock_data);
 				*ppblock_data = NULL;
 				rc = NLM4_FAILED;
@@ -389,7 +389,7 @@ int nlm_process_parameters(struct svc_req *preq, bool exclusive,
 	return rc;
 }
 
-int nlm_process_share_parms(struct svc_req *preq, nlm4_share * share,
+int nlm_process_share_parms(struct svc_req *req, nlm4_share * share,
 			    struct fsal_export *exp_hdl,
 			    struct req_op_context *req_ctx,
 			    cache_entry_t ** ppentry, care_t care,
@@ -398,7 +398,7 @@ int nlm_process_share_parms(struct svc_req *preq, nlm4_share * share,
 			    state_owner_t ** ppowner)
 {
 	nfsstat3 nfsstat3;
-	SVCXPRT *ptr_svc = preq->rq_xprt;
+	SVCXPRT *ptr_svc = req->rq_xprt;
 	int rc;
 
 	*ppnsm_client = NULL;

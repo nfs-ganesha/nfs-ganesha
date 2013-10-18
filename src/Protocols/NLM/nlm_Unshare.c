@@ -35,20 +35,20 @@
 /**
  * @brief Set a share reservation
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  args
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  *
  */
 
-int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
-		 struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		 struct svc_req *preq, nfs_res_t * pres)
+int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
-	nlm4_shareargs *arg = &parg->arg_nlm4_share;
+	nlm4_shareargs *arg = &args->arg_nlm4_share;
 	cache_entry_t *pentry;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
@@ -58,23 +58,23 @@ int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
 	int rc;
 	int grace = nfs_in_grace();
 
-	if (pexport == NULL) {
-		pres->res_nlm4share.stat = NLM4_STALE_FH;
+	if (export == NULL) {
+		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unshare");
 		return NFS_REQ_OK;
 	}
 
-	pres->res_nlm4share.sequence = 0;
+	res->res_nlm4share.sequence = 0;
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Unshare cookie=%s reclaim=%s",
 		 buffer, arg->reclaim ? "yes" : "no");
 
-	if (!copy_netobj(&pres->res_nlm4share.cookie, &arg->cookie)) {
-		pres->res_nlm4share.stat = NLM4_FAILED;
+	if (!copy_netobj(&res->res_nlm4share.cookie, &arg->cookie)) {
+		res->res_nlm4share.stat = NLM4_FAILED;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
@@ -85,21 +85,21 @@ int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
 	 * the reclaim flag.
 	 */
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
-		pres->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
+		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_share_parms(preq, &arg->share, pexport->export_hdl,
+	rc = nlm_process_share_parms(req, &arg->share, export->export_hdl,
 				     req_ctx, &pentry, CARE_NOT, &nsm_client,
 				     &nlm_client, &nlm_owner);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
-		pres->res_nlm4share.stat = (nlm4_stats) rc;
+		res->res_nlm4share.stat = (nlm4_stats) rc;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
@@ -107,10 +107,10 @@ int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
 	    state_nlm_unshare(pentry, arg->share.access, arg->share.mode,
 			      nlm_owner);
 	if (state_status != STATE_SUCCESS) {
-		pres->res_nlm4share.stat =
+		res->res_nlm4share.stat =
 		    nlm_convert_state_error(state_status);
 	} else {
-		pres->res_nlm4share.stat = NLM4_GRANTED;
+		res->res_nlm4share.stat = NLM4_GRANTED;
 	}
 
 	/* Release the NLM Client and NLM Owner references we have */
@@ -120,7 +120,7 @@ int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
 	cache_inode_put(pentry);
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
-		 lock_result_str(pres->res_nlm4share.stat));
+		 lock_result_str(res->res_nlm4share.stat));
 	return NFS_REQ_OK;
 }
 
@@ -129,11 +129,11 @@ int nlm4_Unshare(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm4_Lock. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Unshare_Free(nfs_res_t * pres)
+void nlm4_Unshare_Free(nfs_res_t *res)
 {
-	netobj_free(&pres->res_nlm4share.cookie);
+	netobj_free(&res->res_nlm4share.cookie);
 	return;
 }

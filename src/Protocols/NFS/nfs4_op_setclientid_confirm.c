@@ -78,7 +78,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 		return res_SETCLIENTID_CONFIRM4->status;
 	}
 
-	copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
+	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	if (isDebug(COMPONENT_CLIENTID)) {
 		sprint_sockip(&client_addr, str_client_addr,
@@ -129,7 +129,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 		}
 	}
 
-	P(client_record->cr_mutex);
+	pthread_mutex_lock(&client_record->cr_mutex);
 
 	inc_client_record_ref(client_record);
 
@@ -394,7 +394,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 		 * We have successfully added a new confirmed client
 		 * id.  Now add it to stable storage.
 		 */
-		nfs4_create_clid_name(client_record, unconf, data->reqp);
+		nfs4_create_clid_name(client_record, unconf, data->req);
 		nfs4_add_clid(unconf);
 
 		/* check if the client can perform reclaims */
@@ -428,7 +428,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t * data,
 
  out:
 
-	V(client_record->cr_mutex);
+	pthread_mutex_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
 	return res_SETCLIENTID_CONFIRM4->status;

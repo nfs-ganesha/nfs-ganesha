@@ -40,7 +40,7 @@
 #include <grp.h>
 #include <stdint.h>
 #include <assert.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"
@@ -504,8 +504,8 @@ static fattr_xdr_result encode_linksupport(XDR * xdr,
 	struct fsal_export *export;
 	int linksupport;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		linksupport =
 		    export->ops->fs_supports(export, fso_link_support);
 	} else {
@@ -532,8 +532,8 @@ static fattr_xdr_result encode_symlinksupport(XDR * xdr,
 	struct fsal_export *export;
 	int symlinksupport;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		symlinksupport =
 		    export->ops->fs_supports(export, fso_symlink_support);
 	} else {
@@ -562,8 +562,8 @@ static fattr_xdr_result encode_namedattrsupport(XDR * xdr,
 	struct fsal_export *export;
 	int namedattrsupport;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		namedattrsupport =
 		    export->ops->fs_supports(export, fso_named_attr);
 	} else {
@@ -588,9 +588,9 @@ static fattr_xdr_result encode_fsid(XDR * xdr, struct xdr_attrs_args *args)
 {
 	fsid4 fsid;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		fsid.major = args->data->pexport->filesystem_id.major;
-		fsid.minor = args->data->pexport->filesystem_id.minor;
+	if (args->data != NULL && args->data->export != NULL) {
+		fsid.major = args->data->export->filesystem_id.major;
+		fsid.minor = args->data->export->filesystem_id.minor;
 	} else {
 		fsid.major = 152LL;	/* 153,153 for junctions in pseudos */
 		fsid.minor = 152LL;
@@ -621,8 +621,8 @@ static fattr_xdr_result encode_uniquehandles(XDR * xdr,
 	struct fsal_export *export;
 	int uniquehandles;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		uniquehandles =
 		    export->ops->fs_supports(export, fso_unique_handles);
 	} else {
@@ -803,7 +803,7 @@ static fattr_xdr_result decode_acl(XDR * xdr, struct xdr_attrs_args *args)
 				};
 				if (!name2gid
 				    (&gname, &(pace->who.gid),
-				     (args->data ? args->data->pexport->
+				     (args->data ? args->data->export->
 				      export_perms.anonymous_gid : -1))) {
 					goto baderr;
 				}
@@ -818,7 +818,7 @@ static fattr_xdr_result decode_acl(XDR * xdr, struct xdr_attrs_args *args)
 				if (!name2uid
 				    (&uname, &(pace->who.uid),
 				     (args->data ? args->data->
-				      pexport->export_perms.
+				      export->export_perms.
 				      anonymous_uid : -1))) {
 					goto baderr;
 				}
@@ -868,8 +868,8 @@ static fattr_xdr_result encode_aclsupport(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t aclsupport;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		aclsupport = export->ops->fs_acl_support(export);
 	} else {
 		aclsupport = FALSE;
@@ -916,8 +916,8 @@ static fattr_xdr_result encode_cansettime(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t cansettime;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		cansettime = export->ops->fs_supports(export, fso_cansettime);
 	} else {
 		cansettime = TRUE;
@@ -944,8 +944,8 @@ static fattr_xdr_result encode_case_insensitive(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t caseinsensitive;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		caseinsensitive =
 		    export->ops->fs_supports(export, fso_case_insensitive);
 	} else {
@@ -973,8 +973,8 @@ static fattr_xdr_result encode_case_preserving(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t casepreserving;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		casepreserving =
 		    export->ops->fs_supports(export, fso_case_preserving);
 	} else {
@@ -1002,8 +1002,8 @@ static fattr_xdr_result encode_chown_restricted(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t chownrestricted;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		chownrestricted =
 		    export->ops->fs_supports(export, fso_chown_restricted);
 	} else {
@@ -1244,8 +1244,8 @@ static fattr_xdr_result encode_homogeneous(XDR * xdr,
 	struct fsal_export *export;
 	uint32_t homogeneous;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		homogeneous = export->ops->fs_supports(export, fso_homogenous);
 	} else {
 		homogeneous = TRUE;
@@ -1271,8 +1271,8 @@ static fattr_xdr_result encode_maxfilesize(XDR * xdr,
 	struct fsal_export *export;
 	uint64_t maxfilesize;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		maxfilesize = export->ops->fs_maxfilesize(export);
 	} else {
 		maxfilesize = FSINFO_MAX_FILESIZE;
@@ -1297,8 +1297,8 @@ static fattr_xdr_result encode_maxlink(XDR * xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t maxlink;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		maxlink = export->ops->fs_maxlink(export);
 	} else {
 		maxlink = MAX_HARD_LINK_VALUE;
@@ -1322,8 +1322,8 @@ static fattr_xdr_result encode_maxname(XDR * xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t maxname;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		maxname = export->ops->fs_maxnamelen(export);
 	} else {
 		maxname = MAXNAMLEN;
@@ -1359,11 +1359,11 @@ static fattr_xdr_result encode_maxread(XDR * xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint64_t maxread;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
-		if ((args->data->pexport->export_perms.
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
+		if ((args->data->export->export_perms.
 		     options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD)
-			maxread = args->data->pexport->MaxRead;
+			maxread = args->data->export->MaxRead;
 		else
 			maxread = export->ops->fs_maxread(export);
 	} else {
@@ -1388,12 +1388,12 @@ static fattr_xdr_result encode_maxwrite(XDR * xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint64_t maxwrite;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
-		if ((args->data->pexport->export_perms.
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
+		if ((args->data->export->export_perms.
 		     options & EXPORT_OPTION_MAXWRITE) ==
 		    EXPORT_OPTION_MAXWRITE)
-			maxwrite = args->data->pexport->MaxWrite;
+			maxwrite = args->data->export->MaxWrite;
 		else
 			maxwrite = export->ops->fs_maxwrite(export);
 	} else {
@@ -1459,8 +1459,8 @@ static fattr_xdr_result encode_no_trunc(XDR * xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t no_trunc = 0;
 
-	if (args->data != NULL && args->data->pexport != NULL) {
-		export = args->data->pexport->export_hdl;
+	if (args->data != NULL && args->data->export != NULL) {
+		export = args->data->export->export_hdl;
 		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
 	} else {
 		no_trunc = TRUE;
@@ -1529,7 +1529,7 @@ static fattr_xdr_result decode_owner(XDR * xdr, struct xdr_attrs_args *args)
 
 	if (!name2uid
 	    (&ownerdesc, &uid,
-	     (args->data ? args->data->pexport->export_perms.
+	     (args->data ? args->data->export->export_perms.
 	      anonymous_uid : -1))) {
 		return FATTR_BADOWNER;
 	}
@@ -1575,7 +1575,7 @@ static fattr_xdr_result decode_group(XDR * xdr, struct xdr_attrs_args *args)
 
 	if (!name2gid
 	    (&groupdesc, &gid,
-	     (args->data ? args->data->pexport->export_perms.
+	     (args->data ? args->data->export->export_perms.
 	      anonymous_gid : -1)))
 		return FATTR_BADOWNER;
 
@@ -2131,9 +2131,9 @@ static fattr_xdr_result encode_fs_layout_types(XDR * xdr,
 	size_t typecount = 0;
 	size_t index = 0;
 
-	if (args->data == NULL || args->data->pexport == NULL)
+	if (args->data == NULL || args->data->export == NULL)
 		return FATTR_XDR_NOOP;
-	export = args->data->pexport->export_hdl;
+	export = args->data->export->export_hdl;
 	export->ops->fs_layouttypes(export, &typecount, &layouttypes);
 	if (!inline_xdr_u_int32_t(xdr, (uint32_t *) & typecount))
 		return FATTR_XDR_FAILED;
@@ -2191,10 +2191,10 @@ static fattr_xdr_result encode_layout_blocksize(XDR * xdr,
 						struct xdr_attrs_args *args)
 {
 
-	if (args->data == NULL || args->data->pexport == NULL) {
+	if (args->data == NULL || args->data->export == NULL) {
 		return FATTR_XDR_NOOP;
 	} else {
-		struct fsal_export *export = args->data->pexport->export_hdl;
+		struct fsal_export *export = args->data->export->export_hdl;
 		uint32_t blocksize = export->ops->fs_layout_blocksize(export);
 
 		if (!inline_xdr_u_int32_t(xdr, &blocksize)) {
@@ -4494,22 +4494,22 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
  */
 int nfs4_MakeCred(compound_data_t * data)
 {
-	xprt_type_t xprt_type = svc_get_xprt_type(data->reqp->rq_xprt);
+	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	if (!get_req_uid_gid(data->reqp, data->req_ctx->creds))
+	if (!get_req_uid_gid(data->req, data->req_ctx->creds))
 		return NFS4ERR_ACCESS;
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "nfs4_MakeCred about to call nfs_export_check_access");
-	nfs_export_check_access(data->req_ctx->caller_addr, data->pexport,
+	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
 
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfo(COMPONENT_NFS_V4,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
-			data->pexport->id, data->pexport->fullpath,
+			data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -4520,8 +4520,8 @@ int nfs4_MakeCred(compound_data_t * data)
 		&& ((data->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
 		LogInfo(COMPONENT_NFS_V4,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
-			xprt_type_to_str(xprt_type), data->pexport->id,
-			data->pexport->fullpath,
+			xprt_type_to_str(xprt_type), data->export->id,
+			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -4530,20 +4530,20 @@ int nfs4_MakeCred(compound_data_t * data)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfo(COMPONENT_NFS_V4,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-			port, data->pexport->id, data->pexport->fullpath,
+			port, data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 	/* Test if export allows the authentication provided */
 	if (nfs_export_check_security
-	    (data->reqp, &data->export_perms, data->pexport) == FALSE) {
+	    (data->req, &data->export_perms, data->export) == FALSE) {
 		LogInfo(COMPONENT_NFS_V4,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			data->pexport->id, data->pexport->fullpath,
+			data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}
-	nfs_check_anon(&data->export_perms, data->pexport,
+	nfs_check_anon(&data->export_perms, data->export,
 		       data->req_ctx->creds);
 	return NFS4_OK;
 }

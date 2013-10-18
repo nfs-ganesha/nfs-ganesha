@@ -102,7 +102,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
-		memcpy(refer.session, data->psession->session_id,
+		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
 		refer.slot = data->slot;
@@ -218,20 +218,20 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t * data,
 		glist_init(&(file_state->state_data.share.share_lockstates));
 
 		/* Attach this open to an export */
-		file_state->state_export = data->pexport;
-		pthread_mutex_lock(&data->pexport->exp_state_mutex);
-		glist_add_tail(&data->pexport->exp_state_list,
+		file_state->state_export = data->export;
+		pthread_mutex_lock(&data->export->exp_state_mutex);
+		glist_add_tail(&data->export->exp_state_list,
 			       &file_state->state_export_list);
-		pthread_mutex_unlock(&data->pexport->exp_state_mutex);
+		pthread_mutex_unlock(&data->export->exp_state_mutex);
 	} else {
 		/* Check if open from another export */
-		if (file_state->state_export != data->pexport) {
+		if (file_state->state_export != data->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for "
 				 "export %d (%s), request for export %d (%s)",
 				 file_state->state_export->id,
 				 file_state->state_export->fullpath,
-				 data->pexport->id, data->pexport->fullpath);
+				 data->export->id, data->export->fullpath);
 			return STATE_INVALID_ARGUMENT;
 		}
 	}
@@ -571,9 +571,9 @@ static nfsstat4 open4_create(OPEN4args * arg, compound_data_t * data,
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
 	fsal_status =
-	    data->pexport->export_hdl->ops->check_quota(data->pexport->
+	    data->export->export_hdl->ops->check_quota(data->export->
 							export_hdl,
-							data->pexport->fullpath,
+							data->export->fullpath,
 							FSAL_QUOTA_INODES,
 							data->req_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -832,7 +832,7 @@ static void get_delegation(compound_data_t * data, state_t * file_state,
 	lock_desc.lock_length = 0;
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
-	state_status = state_lock(data->current_entry, data->pexport, data->req_ctx, powner, file_state, STATE_NON_BLOCKING, NULL,	/* No block data */
+	state_status = state_lock(data->current_entry, data->export, data->req_ctx, powner, file_state, STATE_NON_BLOCKING, NULL,	/* No block data */
 				  &lock_desc, NULL, NULL, LEASE_LOCK);
 	if (state_status != STATE_SUCCESS) {
 
@@ -983,7 +983,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	retval =
 	    nfs_client_id_get_confirmed((data->minorversion ==
 					 0 ? arg_OPEN4->owner.clientid : data->
-					 psession->clientid), &clientid);
+					 session->clientid), &clientid);
 	if (retval != CLIENT_ID_SUCCESS) {
 		res_OPEN4->status = clientid_error_to_nfsstat(retval);
 		LogDebug(COMPONENT_NFS_V4,
@@ -995,13 +995,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	pthread_mutex_lock(&clientid->cid_mutex);
 
 	if (!reserve_lease(clientid)) {
-		V(clientid->cid_mutex);
+		pthread_mutex_unlock(&clientid->cid_mutex);
 		res_OPEN4->status = NFS4ERR_EXPIRED;
 		LogDebug(COMPONENT_NFS_V4, "Lease expired");
 		goto out3;
 	}
 
-	V(clientid->cid_mutex);
+	pthread_mutex_unlock(&clientid->cid_mutex);
 
 	/* Get the open owner */
 
@@ -1096,8 +1096,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	case CLAIM_DELEGATE_CUR:
 
 		if (!
-		    (data->pexport->export_hdl->ops->
-		     fs_supports(data->pexport->export_hdl, fso_delegations))) {
+		    (data->export->export_hdl->ops->
+		     fs_supports(data->export->export_hdl, fso_delegations))) {
 			res_OPEN4->status = NFS4ERR_NOTSUPP;
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
@@ -1280,9 +1280,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data,
 	update_stateid(file_state, &res_OPEN4->OPEN4res_u.resok4.stateid, data,
 		       open_tag);
 
-	if (data->pexport->export_hdl->ops->
-	    fs_supports(data->pexport->export_hdl, fso_delegations)
-	    && (data->pexport->export_perms.options & EXPORT_OPTION_USE_DELEG)
+	if (data->export->export_hdl->ops->
+	    fs_supports(data->export->export_hdl, fso_delegations)
+	    && (data->export->export_perms.options & EXPORT_OPTION_USE_DELEG)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
 	    && claim != CLAIM_DELEGATE_CUR)
 

@@ -7,33 +7,30 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_ip_name.c
- * \date    $Date: 2006/01/20 07:39:23 $
- * \version $Revision: 1.6 $
- * \brief   The management of the IP/name cache.
- *
- * nfs_ip_name.c : The management of the IP/name cache.
- *
+ * @file    nfs_ip_name.c
+ * @brief   The management of the IP/name cache.
  */
+
 #include "config.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -56,7 +53,7 @@ unsigned int expiration_time;
  *
  * @return the computed hash value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint32_t ip_name_value_hash_func(hash_parameter_t * hparam,
@@ -73,7 +70,7 @@ uint32_t ip_name_value_hash_func(hash_parameter_t * hparam,
  *
  * @return the computed rbt value.
  *
- * @see HashTable_Init
+ * @see hashtable_init
  *
  */
 uint64_t ip_name_rbt_hash_func(hash_parameter_t * hparam,
@@ -312,7 +309,7 @@ int nfs_ip_name_remove(sockaddr_t * ipaddr)
  */
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
 {
-	if ((ht_ip_name = HashTable_Init(&param.hash_param)) == NULL) {
+	if ((ht_ip_name = hashtable_init(&param.hash_param)) == NULL) {
 		LogCrit(COMPONENT_INIT,
 			"NFS IP_NAME: Cannot init IP/name cache");
 		return -1;
@@ -415,7 +412,7 @@ int nfs_ip_name_populate(char *path)
 	}
 
 	if (isFullDebug(COMPONENT_CONFIG))
-		HashTable_Log(COMPONENT_CONFIG, ht_ip_name);
+		hashtable_log(COMPONENT_CONFIG, ht_ip_name);
 
 	return IP_NAME_SUCCESS;
 }				/* nfs_ip_name_populate */

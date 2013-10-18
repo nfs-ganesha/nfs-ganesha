@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
+#include "abstract_mem.h"
 
 static int pos = -1;
 static int mntsize = -1;
@@ -89,17 +90,17 @@ char *hasmntopt(const struct mntent *mnt, const char *option)
 	int found;
 	char *opt, *optbuf;
 
-	optbuf = strdup(mnt->mnt_opts);
+	optbuf = gsh_strdup(mnt->mnt_opts);
 	found = 0;
 	for (opt = optbuf; (opt = strtok(opt, " ")) != NULL; opt = NULL) {
 		if (!strcasecmp(opt, option)) {
 			opt = opt - optbuf + mnt->mnt_opts;
-			free(optbuf);
-			return (opt);
+			gsh_free(optbuf);
+			return opt;
 		}
 	}
-	free(optbuf);
-	return (NULL);
+	gsh_free(optbuf);
+	return NULL;
 }
 
 static char *catopt(char *s0, const char *s1)
@@ -112,15 +113,16 @@ static char *catopt(char *s0, const char *s1)
 
 	if (s0 != NULL) {
 		newlen = strlen(s0) + strlen(s1) + 1 + 1;
-		if ((cp = (char *)realloc(s0, newlen)) == NULL)
-			return (NULL);
+		cp = gsh_realloc(s0, newlen);
+		if (cp == NULL)
+			return NULL;
 
-		(void)strcat(cp, " ");
-		(void)strcat(cp, s1);
+		strcat(cp, " ");
+		strcat(cp, s1);
 	} else
-		cp = strdup(s1);
+		cp = gsh_strdup(s1);
 
-	return (cp);
+	return cp;
 }
 
 static char *flags2opts(int flags)
@@ -147,16 +149,16 @@ static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
 	if (tmp) {
 		opts_buf[sizeof(opts_buf) - 1] = '\0';
 		strncpy(opts_buf, tmp, sizeof(opts_buf) - 1);
-		free(tmp);
+		gsh_free(tmp);
 	} else {
 		*opts_buf = '\0';
 	}
 	_mntent.mnt_opts = opts_buf;
 	_mntent.mnt_freq = _mntent.mnt_passno = 0;
-	return (&_mntent);
+	return &_mntent;
 }
 
-struct mntent *getmntent(FILE * fp)
+struct mntent *getmntent(FILE *fp)
 {
 	struct statfs *mntbuf;
 
@@ -166,8 +168,8 @@ struct mntent *getmntent(FILE * fp)
 	++pos;
 	if (pos == mntsize) {
 		pos = mntsize = -1;
-		return (NULL);
+		return NULL;
 	}
 
-	return (statfs_to_mntent(&mntbuf[pos]));
+	return statfs_to_mntent(&mntbuf[pos]);
 }

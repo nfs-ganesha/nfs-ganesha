@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -85,8 +85,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t * data,
 	resp->resop = NFS4_OP_DELEGRETURN;
 
 	if (!
-	    (data->pexport->export_hdl->ops->
-	     fs_supports(data->pexport->export_hdl, fso_delegations))) {
+	    (data->export->export_hdl->ops->
+	     fs_supports(data->export->export_hdl, fso_delegations))) {
 		res_DELEGRETURN4->status = NFS4_OK;
 		return res_DELEGRETURN4->status;
 	}
@@ -165,7 +165,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t * data,
 	 * Go ahead and push unlock into SAL (and FSAL).
 	 */
 	state_status =
-	    state_unlock(data->current_entry, data->pexport, data->req_ctx,
+	    state_unlock(data->current_entry, data->export, data->req_ctx,
 			 plock_owner, pstate_found, &lock_desc, LEASE_LOCK);
 	if (state_status != STATE_SUCCESS) {
 		res_DELEGRETURN4->status = nfs4_Errno_state(state_status);

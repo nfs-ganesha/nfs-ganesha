@@ -44,10 +44,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	unsigned int i = 0;
 
 	u16 *msgtag = NULL;
@@ -66,9 +66,6 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	_9p_fid_t *pfid = NULL;
 	_9p_fid_t *pnewfid = NULL;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
-
 	/* Now Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
@@ -79,23 +76,23 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, *newfid, *nwname);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	if (*newfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
 	if ((pnewfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Is this a lookup or a fid cloning operation ? */
@@ -135,7 +132,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 			if (pnewfid->pentry == NULL) {
 				gsh_free(pnewfid);
-				return _9p_rerror(preq9p, pworker_data, msgtag,
+				return _9p_rerror(req9p, worker_data, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 			}
@@ -148,7 +145,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 		pnewfid->fid = *newfid;
 		pnewfid->op_context = pfid->op_context;
-		pnewfid->pexport = pfid->pexport;
+		pnewfid->export = pfid->export;
 		pnewfid->ppentry = pfid->pentry;
 		strncpy(pnewfid->name, name, MAXNAMLEN);
 
@@ -160,7 +157,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 				       &fileid);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			gsh_free(pnewfid);
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 		}
@@ -194,7 +191,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 			LogMajor(COMPONENT_9P,
 				 "implementation error, you should not see this message !!!!!!");
 			gsh_free(pnewfid);
-			return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL,
+			return _9p_rerror(req9p, worker_data, msgtag, EINVAL,
 					  plenout, preply);
 			break;
 		}
@@ -202,7 +199,7 @@ int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	}
 
 	/* keep info on new fid */
-	preq9p->pconn->fids[*newfid] = pnewfid;
+	req9p->pconn->fids[*newfid] = pnewfid;
 
 	/* As much qid as requested fid */
 	nwqid = nwname;

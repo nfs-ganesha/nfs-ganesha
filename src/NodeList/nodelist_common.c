@@ -118,9 +118,9 @@ int nodelist_common_string_appends_and_extends(char **p_io_string,
 			while (new_string_length > new_output_length)
 				new_output_length += inc_length;
 			*p_io_string =
-			    (char *)realloc(*p_io_string,
-					    (new_output_length +
-					     1) * sizeof(char));
+			    gsh_realloc(*p_io_string,
+					(new_output_length + 1) *
+					sizeof(char));
 			if (*p_io_string != NULL)
 				*p_current_length = new_output_length;
 			else
@@ -333,8 +333,8 @@ int _nodelist_common_string_get_token_common(char *string,
 						    (size_t) (best_pointer -
 							      old_pointer);
 					*p_token =
-					    (char *)malloc((copy_length + 1) *
-							   sizeof(char));
+					    gsh_malloc((copy_length + 1) *
+						       sizeof(char));
 					if (*p_token != NULL) {
 						(*p_token)[copy_length] = '\0';
 						strncpy(*p_token, old_pointer,

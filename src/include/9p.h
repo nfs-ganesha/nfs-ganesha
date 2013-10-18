@@ -286,7 +286,7 @@ typedef struct _9p_fid__ {
 	u32 fid;
 	struct req_op_context op_context;
 	struct user_cred ucred;
-	exportlist_t *pexport;
+	exportlist_t *export;
 	cache_entry_t *pentry;
 	_9p_qid_t qid;
 	cache_entry_t *ppentry;
@@ -381,7 +381,7 @@ typedef struct _9p_request_data__ {
 	_9p_flush_hook_t flush_hook;
 } _9p_request_data_t;
 
-typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, void *pworker_data,
+typedef int (*_9p_function_t) (_9p_request_data_t *req9p, void *worker_data,
 			       u32 * plenout, char *preply);
 
 typedef struct _9p_function_desc__ {
@@ -595,94 +595,94 @@ void _9p_ReleaseFlushHook(_9p_request_data_t * req);
 void _9p_DiscardFlushHook(_9p_request_data_t * req);
 
 /* Protocol functions */
-int _9p_not_2000L(_9p_request_data_t * preq9p, void *pworker_data,
+int _9p_not_2000L(_9p_request_data_t *req9p, void *worker_data,
 		  u32 * plenout, char *preply);
 
-int _9p_clunk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_attach(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_attach(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	       char *preply);
 
-int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply);
 
-int _9p_lcreate(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_flush(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_flush(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_getattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_getattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_getlock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_link(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_link(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply);
 
-int _9p_lock(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply);
 
-int _9p_lopen(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_mkdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_mknod(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_read(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply);
 
-int _9p_readdir(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_readlink(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_readlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		 char *preply);
 
-int _9p_setattr(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_symlink(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_remove(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_remove(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	       char *preply);
 
-int _9p_rename(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_rename(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	       char *preply);
 
-int _9p_renameat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		 char *preply);
 
-int _9p_statfs(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	       char *preply);
 
-int _9p_fsync(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_fsync(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_unlinkat(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_unlinkat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		 char *preply);
 
-int _9p_version(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_version(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		char *preply);
 
-int _9p_walk(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply);
 
-int _9p_write(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	      char *preply);
 
-int _9p_xattrcreate(_9p_request_data_t * preq9p, void *pworker_data,
+int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 		    u32 * plenout, char *preply);
 
-int _9p_xattrwalk(_9p_request_data_t * preq9p, void *pworker_data,
+int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 		  u32 * plenout, char *preply);
 
-int _9p_rerror(_9p_request_data_t * preq9p, void *pworker_data, u16 * msgtag,
+int _9p_rerror(_9p_request_data_t *req9p, void *worker_data, u16 * msgtag,
 	       u32 err, u32 * plenout, char *preply);
 
 #endif				/* _9P_H */

@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"
@@ -85,16 +85,16 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t * data,
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_INVAL;
 		return res_RECLAIM_COMPLETE4->rcr_status;
 	}
-	if (data->psession == NULL) {
+	if (data->session == NULL) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_OP_NOT_IN_SESSION;
 		return res_RECLAIM_COMPLETE4->rcr_status;
 	}
-	if (data->psession->clientid_record->cid_cb.v41.cid_reclaim_complete) {
+	if (data->session->clientid_record->cid_cb.v41.cid_reclaim_complete) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_COMPLETE_ALREADY;
 		return res_RECLAIM_COMPLETE4->rcr_status;
 	}
 	if (!arg_RECLAIM_COMPLETE4->rca_one_fs) {
-		data->psession->clientid_record->cid_cb.v41.
+		data->session->clientid_record->cid_cb.v41.
 		    cid_reclaim_complete = true;
 	}
 	return res_RECLAIM_COMPLETE4->rcr_status;

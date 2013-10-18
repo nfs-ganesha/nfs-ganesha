@@ -361,7 +361,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	first = avltree_first(&tree);
 	collision = avltree_insert(&mul->node, &tree);
 	if (unlikely(collision)) {
-		free(mul);
+		gsh_free(mul);
 		/* There is already a node for this exact time in the
 		   tree.  Add our task to its list. */
 		mul =

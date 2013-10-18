@@ -209,7 +209,7 @@ static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 			if (lstat(statname, &tmp_stat)) {
 				printerr(0, "Error doing stat on file '%s'\n",
 					 statname);
-				free(namelist[i]);
+				gsh_free(namelist[i]);
 				continue;
 			}
 			/* Only pick caches owned by the user (uid) */
@@ -217,14 +217,14 @@ static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 				printerr(3,
 					 "CC file '%s' owned by %u, not %u\n",
 					 statname, tmp_stat.st_uid, uid);
-				free(namelist[i]);
+				gsh_free(namelist[i]);
 				continue;
 			}
 			if (!S_ISREG(tmp_stat.st_mode)) {
 				printerr(3,
 					 "CC file '%s' is not a regular file\n",
 					 statname);
-				free(namelist[i]);
+				gsh_free(namelist[i]);
 				continue;
 			}
 			if (uid == 0 && !root_uses_machine_creds
@@ -232,14 +232,14 @@ static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 				printerr(3,
 					 "CC file '%s' not available to root\n",
 					 statname);
-				free(namelist[i]);
+				gsh_free(namelist[i]);
 				continue;
 			}
 			if (!query_krb5_ccache(buf, &princname, &realm)) {
 				printerr(3,
 					 "CC file '%s' is expired or corrupt\n",
 					 statname);
-				free(namelist[i]);
+				gsh_free(namelist[i]);
 				err = -EKEYEXPIRED;
 				continue;
 			}
@@ -276,12 +276,12 @@ static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 				    || (best_match_score == score
 					&& tmp_stat.st_mtime >
 					best_match_stat.st_mtime)) {
-					free(best_match_dir);
+					gsh_free(best_match_dir);
 					best_match_dir = namelist[i];
 					best_match_stat = tmp_stat;
 					best_match_score = score;
 				} else {
-					free(namelist[i]);
+					gsh_free(namelist[i]);
 				}
 				printerr(3,
 					 "CC file '%s/%s' is our "
@@ -290,10 +290,10 @@ static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 					 best_match_dir->d_name,
 					 best_match_stat.st_mtime);
 			}
-			free(princname);
-			free(realm);
+			gsh_free(princname);
+			gsh_free(realm);
 		}
-		free(namelist);
+		gsh_free(namelist);
 	}
 	if (found) {
 		*d = best_match_dir;
@@ -405,8 +405,8 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		 GSSD_DEFAULT_MACHINE_CRED_SUFFIX, ple->realm);
 	ple->endtime = my_creds.times.endtime;
 	if (ple->ccname != NULL)
-		free(ple->ccname);
-	ple->ccname = strdup(cc_name);
+		gsh_free(ple->ccname);
+	ple->ccname = gsh_strdup(cc_name);
 	if (ple->ccname == NULL) {
 		printerr(0,
 			 "ERROR: no storage to duplicate credentials "
@@ -448,7 +448,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	if (ccache)
 		krb5_cc_close(context, ccache);
 	krb5_free_cred_contents(context, &my_creds);
-	free(k5err);
+	gsh_free(k5err);
 	return (code);
 }
 
@@ -510,17 +510,17 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	char *default_realm;
 	int is_default_realm = 0;
 
-	ple = malloc(sizeof(struct gssd_k5_kt_princ));
+	ple = gsh_malloc(sizeof(struct gssd_k5_kt_princ));
 	if (ple == NULL)
 		goto outerr;
 	memset(ple, 0, sizeof(*ple));
 
 #ifdef HAVE_KRB5
-	ple->realm = (char *)malloc(princ->realm.length + 1);
+	ple->realm = gsh_malloc(princ->realm.length + 1);
 	strmaxcpy(ple->realm, princ->realm.data, princ->realm.length);
 	ple->realm[princ->realm.length] = '\0';
 #else
-	ple->realm = strdup(princ->realm);
+	ple->realm = gsh_strdup(princ->realm);
 #endif
 	if (ple->realm == NULL)
 		goto outerr;
@@ -557,8 +557,8 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
  outerr:
 	if (ple) {
 		if (ple->realm)
-			free(ple->realm);
-		free(ple);
+			gsh_free(ple->realm);
+		gsh_free(ple);
 	}
 	return NULL;
 }
@@ -697,7 +697,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	if ((code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ))) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s attempting to get keytab name\n", k5err);
-		free(k5err);
+		gsh_free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -706,7 +706,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		printerr(0,
 			 "ERROR: %s while beginning keytab scan "
 			 "for keytab '%s'\n", k5err, kt_name);
-		free(k5err);
+		gsh_free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -719,7 +719,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 				 "we failed to unparse principal name: %s\n",
 				 k5err);
 			k5_free_kt_entry(context, kte);
-			free(k5err);
+			gsh_free(k5err);
 			continue;
 		}
 		printerr(4, "Processing keytab entry for principal '%s'\n",
@@ -761,7 +761,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		printerr(0,
 			 "WARNING: %s while ending keytab scan for "
 			 "keytab '%s'\n", k5err, kt_name);
-		free(k5err);
+		gsh_free(k5err);
 	}
 
 	retval = 0;
@@ -800,7 +800,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	if (retval) {
 		k5err = gssd_k5_err_msg(context, retval);
 		printerr(1, "%s while getting local hostname\n", k5err);
-		free(k5err);
+		gsh_free(k5err);
 		goto out;
 	}
 
@@ -820,7 +820,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		retval = code;
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(1, "%s while getting default realm name\n", k5err);
-		free(k5err);
+		gsh_free(k5err);
 		goto out;
 	}
 
@@ -835,7 +835,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s while getting realm(s) for host '%s'\n",
 			 k5err, targethostname);
-		free(k5err);
+		gsh_free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -891,7 +891,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 				printerr(1,
 					 "%s while building principal for '%s'\n",
 					 k5err, spn);
-				free(k5err);
+				gsh_free(k5err);
 				continue;
 			}
 			code = krb5_kt_get_entry(context, kt, princ, 0, 0, kte);
@@ -901,7 +901,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 				printerr(3,
 					 "%s while getting keytab entry for '%s'\n",
 					 k5err, spn);
-				free(k5err);
+				gsh_free(k5err);
 			} else {
 				printerr(3,
 					 "Success getting keytab entry for '%s'\n",
@@ -1010,8 +1010,8 @@ static int query_krb5_ccache(const char *cred_cache, char **ret_princname,
 		if (ret == 0) {
 			if ((str = strchr(princstring, '@')) != NULL) {
 				*str = '\0';
-				*ret_princname = strdup(princstring);
-				*ret_realm = strdup(str + 1);
+				*ret_princname = gsh_strdup(princstring);
+				*ret_realm = gsh_strdup(str + 1);
 			}
 			k5_free_unparsed_name(context, princstring);
 		} else {
@@ -1053,7 +1053,7 @@ int gssd_setup_krb5_user_gss_ccache(uid_t uid, char *servername, char *dirname)
 		return err;
 
 	snprintf(buf, sizeof(buf), "FILE:%s/%s", dirname, d->d_name);
-	free(d);
+	gsh_free(d);
 
 	printerr(2,
 		 "using %s as credentials cache for client with "
@@ -1098,7 +1098,7 @@ int gssd_get_krb5_machine_cred_list(char ***list)
 
 	pthread_mutex_lock(&ple_mtx);
 
-	if ((l = (char **)malloc(listsize * sizeof(char *))) == NULL) {
+	if ((l = gsh_malloc(listsize * sizeof(char *))) == NULL) {
 		retval = ENOMEM;
 		goto out;
 	}
@@ -1113,14 +1113,13 @@ int gssd_get_krb5_machine_cred_list(char ***list)
 				continue;
 			if (i + 1 > listsize) {
 				listsize += listinc;
-				l = (char **)
-				    realloc(l, listsize * sizeof(char *));
+				l = gsh_realloc(l, listsize * sizeof(char *));
 				if (l == NULL) {
 					retval = ENOMEM;
 					goto out;
 				}
 			}
-			if ((l[i++] = strdup(ple->ccname)) == NULL) {
+			if ((l[i++] = gsh_strdup(ple->ccname)) == NULL) {
 				retval = ENOMEM;
 				goto out;
 			}
@@ -1148,9 +1147,9 @@ void gssd_free_krb5_machine_cred_list(char **list)
 	if (list == NULL)
 		return;
 	for (n = list; n && *n; n++) {
-		free(*n);
+		gsh_free(*n);
 	}
-	free(list);
+	gsh_free(list);
 }
 
 /*
@@ -1168,7 +1167,7 @@ void gssd_destroy_krb5_machine_creds(void)
 	if (code) {
 		k5err = gssd_k5_err_msg(NULL, code);
 		printerr(0, "ERROR: %s while initializing krb5\n", k5err);
-		free(k5err);
+		gsh_free(k5err);
 		goto out;
 	}
 
@@ -1181,7 +1180,7 @@ void gssd_destroy_krb5_machine_creds(void)
 				 "WARNING: %s while resolving credential "
 				 "cache '%s' for destruction\n", k5err,
 				 ple->ccname);
-			free(k5err);
+			gsh_free(k5err);
 			continue;
 		}
 
@@ -1190,7 +1189,7 @@ void gssd_destroy_krb5_machine_creds(void)
 			printerr(0,
 				 "WARNING: %s while destroying credential "
 				 "cache '%s'\n", k5err, ple->ccname);
-			free(k5err);
+			gsh_free(k5err);
 		}
 	}
  out:
@@ -1228,7 +1227,7 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 		printerr(0, "ERROR: %s: %s while initializing krb5 context\n",
 			 __func__, k5err);
 		retval = code;
-		free(k5err);
+		gsh_free(k5err);
 		goto out_wo_context;
 	}
 
@@ -1236,7 +1235,7 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s: %s while resolving keytab '%s'\n",
 			 __func__, k5err, keytabfile);
-		free(k5err);
+		gsh_free(k5err);
 		goto out;
 	}
 
@@ -1290,19 +1289,19 @@ char *gssd_k5_err_msg(krb5_context context, krb5_error_code code)
 #if HAVE_KRB5_GET_ERROR_MESSAGE
 	if (context != NULL) {
 		origmsg = krb5_get_error_message(context, code);
-		msg = strdup(origmsg);
+		msg = gsh_strdup(origmsg);
 		krb5_free_error_message(context, origmsg);
 	}
 #endif
 	if (msg != NULL)
 		return msg;
 #if HAVE_KRB5
-	return strdup(error_message(code));
+	return gsh_strdup(error_message(code));
 #else
 	if (context != NULL)
-		return strdup(krb5_get_err_text(context, code));
+		return gsh_strdup(krb5_get_err_text(context, code));
 	else
-		return strdup(error_message(code));
+		return gsh_strdup(error_message(code));
 #endif
 }
 

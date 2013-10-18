@@ -46,7 +46,7 @@
 #include <netinet/tcp.h>
 #include <poll.h>
 #include <arpa/inet.h>		/* For inet_ntop() */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "abstract_mem.h"
 #include "abstract_atomic.h"
@@ -62,20 +62,20 @@
 
 #define P_FAMILY AF_INET6
 
-void DispatchWork9P(request_data_t *preq)
+void DispatchWork9P(request_data_t *req)
 {
-	switch (preq->rtype) {
+	switch (req->rtype) {
 	case _9P_REQUEST:
-		switch (preq->r_u._9p.pconn->trans_type) {
+		switch (req->r_u._9p.pconn->trans_type) {
 		case _9P_TCP:
 			LogDebug(COMPONENT_DISPATCH,
 				 "Dispatching 9P/TCP request %p, tcpsock=%lu",
-				 preq, preq->r_u._9p.pconn->trans_data.sockfd);
+				 req, req->r_u._9p.pconn->trans_data.sockfd);
 			break;
 
 		case _9P_RDMA:
 			LogDebug(COMPONENT_DISPATCH,
-				 "Dispatching 9P/RDMA request %p", preq);
+				 "Dispatching 9P/RDMA request %p", req);
 			break;
 
 		default:
@@ -94,10 +94,10 @@ void DispatchWork9P(request_data_t *preq)
 	}
 
 	/* increase connection refcount */
-	atomic_inc_uint32_t(&preq->r_u._9p.pconn->refcount);
+	atomic_inc_uint32_t(&req->r_u._9p.pconn->refcount);
 
 	/* new-style dispatch */
-	nfs_rpc_enqueue_req(preq);
+	nfs_rpc_enqueue_req(req);
 }
 
 /**
@@ -121,7 +121,7 @@ void *_9p_socket_thread(void *Arg)
 	static char my_name[MAXNAMLEN + 1];
 	socklen_t addrpeerlen = 0;
 	char strcaller[INET6_ADDRSTRLEN];
-	request_data_t *preq = NULL;
+	request_data_t *req = NULL;
 	int tag;
 	unsigned long sequence = 0;
 	unsigned int i = 0;
@@ -279,23 +279,23 @@ void *_9p_socket_thread(void *Arg)
 				}	/* while */
 
 				/* Message is good. */
-				preq = pool_alloc(request_pool, NULL);
+				req = pool_alloc(request_pool, NULL);
 
-				preq->rtype = _9P_REQUEST;
-				preq->r_u._9p._9pmsg = _9pmsg;
-				preq->r_u._9p.pconn = &_9p_conn;
+				req->rtype = _9P_REQUEST;
+				req->r_u._9p._9pmsg = _9pmsg;
+				req->r_u._9p.pconn = &_9p_conn;
 
 				/* Add this request to the request list,
 				 * should it be flushed later. */
 				tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE +
 						_9P_TYPE_SIZE);
-				_9p_AddFlushHook(&preq->r_u._9p, tag,
+				_9p_AddFlushHook(&req->r_u._9p, tag,
 						 sequence++);
 				LogFullDebug(COMPONENT_9P,
 					     "Request tag is %d\n", tag);
 
 				/* Message was OK push it */
-				DispatchWork9P(preq);
+				DispatchWork9P(req);
 
 				/* Not our buffer anymore */
 				_9pmsg = NULL;

@@ -582,10 +582,8 @@ state_status_t state_share_anonymous_io_start(cache_entry_t * entry,
 
 void state_share_anonymous_io_done(cache_entry_t * entry, int share_access);
 
-state_status_t state_nlm_share(cache_entry_t * entry,
-			       struct req_op_context *req_ctx,
-			       exportlist_t * pexport, int share_access,
-			       int share_deny, state_owner_t * owner);
+state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
+			       exportlist_t *, int, int, state_owner_t *);
 
 state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 				 int share_deny, state_owner_t * owner);

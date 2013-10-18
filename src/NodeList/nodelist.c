@@ -227,7 +227,7 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix,
 	prefix_end = list;
 
 	/* get prefix */
-	prefix = (char *)malloc((strlen(list) + 1) * sizeof(char));
+	prefix = gsh_malloc((strlen(list) + 1) * sizeof(char));
 	if (prefix != NULL) {
 		while (*prefix_end != '[' && !isdigit(*prefix_end)
 		       && prefix_end < list_end)
@@ -267,8 +267,8 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix,
 		}
 		/* dump idlist */
 		idlist =
-		    (char *)malloc((idlist_end - idlist_begin + 1) *
-				   sizeof(char));
+		    gsh_malloc((idlist_end - idlist_begin + 1) *
+			       sizeof(char));
 		if (idlist != NULL) {
 			memcpy(idlist, idlist_begin,
 			       (idlist_end - idlist_begin) * sizeof(char));
@@ -286,8 +286,8 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix,
 	/* dump suffix */
 	if (suffix_begin != list_end) {
 		suffix =
-		    (char *)malloc((list_end - suffix_begin + 1) *
-				   sizeof(char));
+		    gsh_malloc((list_end - suffix_begin + 1) *
+			       sizeof(char));
 		if (suffix != NULL) {
 			memcpy(suffix, suffix_begin,
 			       (list_end - suffix_begin) * sizeof(char));
@@ -528,8 +528,7 @@ int nodelist_nodelist_add_nodelist(nodelist_nodelist_t * nodelist,
 			/* add a new sublist to dest list if no equivalent pattern list was found */
 			if (*pwldest == NULL) {
 				*pwldest =
-				    (nodelist_nodelist_t *)
-				    malloc(sizeof(nodelist_nodelist_t));
+				    gsh_malloc(sizeof(nodelist_nodelist_t));
 				if (*pwldest != NULL) {
 					fstatus =
 					    nodelist_nodelist_init(*pwldest,
@@ -723,7 +722,7 @@ int nodelist_nodelist_add_nodes(nodelist_nodelist_t * nodelist, char *list)
 					xfree(idlist);
 				}
 
-				free(token);
+				gsh_free(token);
 			}
 			token = NULL;
 		}
@@ -796,7 +795,7 @@ int nodelist_nodelist_remove_nodes(nodelist_nodelist_t * nodelist, char *list)
 					xfree(idlist);
 				}
 
-				free(token);
+				gsh_free(token);
 			}
 			token = NULL;
 		}
@@ -889,7 +888,7 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist,
 	char *prefix;
 	char *suffix;
 
-	output_string = (char *)malloc(output_string_size * sizeof(char));
+	output_string = gsh_malloc(output_string_size * sizeof(char));
 	if (output_string) {
 		output_string[0] = '\0';
 
@@ -910,7 +909,7 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist,
 				node_string_size += strlen(suffix);
 			node_string_size += MAX_LONG_INT_STRING_SIZE;
 			node_string =
-			    (char *)malloc(node_string_size * sizeof(char));
+			    gsh_malloc(node_string_size * sizeof(char));
 			if (node_string != NULL) {
 
 				if (nlist->pattern.basic == 1) {
@@ -955,14 +954,14 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist,
 					}
 				}
 
-				free(node_string);
+				gsh_free(node_string);
 			}
 
 			nlist = nlist->next;
 		}
 
 		if (fstatus != 0) {
-			free(output_string);
+			gsh_free(output_string);
 		} else {
 			*p_string = output_string;
 		}
@@ -1002,7 +1001,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 	char *suffix;
 
 	/* initialize output string */
-	output_string = (char *)malloc(output_string_size * sizeof(char));
+	output_string = gsh_malloc(output_string_size * sizeof(char));
 	if (output_string) {
 		output_string[0] = '\0';
 
@@ -1017,7 +1016,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 			    nodelist_nodelist_non_recursive_nodes_quantity
 			    (nlist);
 			if (nodes_nb == 0) {
-				free(output_string);
+				gsh_free(output_string);
 				return fstatus;
 			} else if (nodes_nb == 1)
 				brackets_flag = 0;
@@ -1032,7 +1031,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 				if (suffix != NULL)
 					ranges_string_size += strlen(suffix);
 				ranges_string =
-				    (char *)malloc(ranges_string_size *
+					gsh_malloc(ranges_string_size *
 						   sizeof(char));
 				if (ranges_string != NULL) {
 					snprintf(ranges_string,
@@ -1057,8 +1056,8 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 
 				ranges_string_size = 1024;
 				ranges_string =
-				    (char *)malloc(ranges_string_size *
-						   sizeof(char));
+				    gsh_malloc(ranges_string_size *
+					       sizeof(char));
 				if (ranges_string != NULL) {
 					ranges_string[0] = '\0';
 					/* add prefix */
@@ -1074,8 +1073,8 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 						     &ranges_string_size, 1,
 						     "[", "");
 					range_string =
-					    (char *)malloc(range_string_size *
-							   sizeof(char));
+					    gsh_malloc(range_string_size *
+						       sizeof(char));
 					if (range_string != NULL) {
 						range_string[0] = '\0';
 						for (i = 0;
@@ -1122,7 +1121,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 								fstatus = 0;
 							}
 						}
-						free(range_string);
+						gsh_free(range_string);
 					}
 					if (brackets_flag)
 						nodelist_common_string_appends_and_extends
@@ -1148,7 +1147,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 			    (&output_string, &output_string_size,
 			     ranges_string_size, ranges_string, ",")) {
 				fstatus = -1;
-				free(ranges_string);
+				gsh_free(ranges_string);
 				break;
 			}
 
@@ -1157,7 +1156,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 		}
 
 		if (fstatus != 0) {
-			free(output_string);
+			gsh_free(output_string);
 		} else {
 			*p_string = output_string;
 		}
@@ -1210,14 +1209,14 @@ int nodelist_nodepattern_init_by_copy(nodelist_nodepattern_t * np,
 	np->prefix = NULL;
 	np->suffix = NULL;
 	if (npin->prefix != NULL) {
-		np->prefix = strdup(npin->prefix);
+		np->prefix = gsh_strdup(npin->prefix);
 		if (np->prefix == NULL) {
 			nodelist_nodepattern_free_contents(np);
 			return fstatus;
 		}
 	}
 	if (npin->suffix != NULL) {
-		np->suffix = strdup(npin->suffix);
+		np->suffix = gsh_strdup(npin->suffix);
 		if (np->suffix == NULL) {
 			nodelist_nodepattern_free_contents(np);
 			return fstatus;
@@ -1277,7 +1276,7 @@ int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix)
 	int fstatus = -1;
 	if (np != NULL && prefix != NULL) {
 		xfree(np->prefix);
-		np->prefix = strdup(prefix);
+		np->prefix = gsh_strdup(prefix);
 		if (np->prefix != NULL)
 			fstatus = 0;
 	}
@@ -1289,7 +1288,7 @@ int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix)
 	int fstatus = -1;
 	if (np != NULL && suffix != NULL) {
 		xfree(np->suffix);
-		np->suffix = strdup(suffix);
+		np->suffix = gsh_strdup(suffix);
 		if (np->suffix != NULL)
 			fstatus = 0;
 	}

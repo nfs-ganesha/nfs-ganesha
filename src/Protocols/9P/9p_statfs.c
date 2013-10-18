@@ -43,10 +43,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_statfs(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	       char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
@@ -66,8 +66,6 @@ int _9p_statfs(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	fsal_dynamicfsinfo_t dynamicinfo;
 	cache_inode_status_t cache_status;
 
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
@@ -75,19 +73,19 @@ int _9p_statfs(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32) * msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 	if (pfid == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, EINVAL, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	/* Get the FS's stats */
 	if ((cache_status =
 	     cache_inode_statfs(pfid->pentry, &dynamicinfo,
 				&pfid->op_context)) != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

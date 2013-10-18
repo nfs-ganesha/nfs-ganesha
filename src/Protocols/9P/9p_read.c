@@ -45,10 +45,10 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
-int _9p_read(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	     char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	char *databuffer;
 
 	u16 *msgtag = NULL;
@@ -75,20 +75,20 @@ int _9p_read(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-	pfid = preq9p->pconn->fids[*fid];
+	pfid = req9p->pconn->fids[*fid];
 
 	/* Make sure the requested amount of data respects negotiated msize */
-	if (*count + _9P_ROOM_RREAD > preq9p->pconn->msize)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+	if (*count + _9P_ROOM_RREAD > req9p->pconn->msize)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(preq9p, pworker_data, msgtag, EIO, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
 
@@ -115,7 +115,7 @@ int _9p_read(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 #ifdef USE_DBUS_STATS
 		/* Get the handle, for stats */
-		sockaddr_t *paddr = (sockaddr_t *) & preq9p->pconn->addrpeer;
+		sockaddr_t *paddr = (sockaddr_t *) &req9p->pconn->addrpeer;
 		struct gsh_client *client = get_gsh_client(paddr, false);
 
 		if (client == NULL)
@@ -133,7 +133,7 @@ int _9p_read(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 #endif
 
 		if (cache_status != CACHE_INODE_SUCCESS)
-			return _9p_rerror(preq9p, pworker_data, msgtag,
+			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 

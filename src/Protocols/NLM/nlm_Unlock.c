@@ -35,19 +35,19 @@
 /**
  * @brief Free a range lock
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  args
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  */
 
-int nlm4_Unlock(nfs_arg_t * parg, exportlist_t * pexport,
-		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		struct svc_req *preq, nfs_res_t * pres)
+int nlm4_Unlock(nfs_arg_t *args, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
-	nlm4_unlockargs *arg = &parg->arg_nlm4_unlock;
+	nlm4_unlockargs *arg = &args->arg_nlm4_unlock;
 	cache_entry_t *pentry;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
@@ -57,8 +57,8 @@ int nlm4_Unlock(nfs_arg_t * parg, exportlist_t * pexport,
 	fsal_lock_param_t lock;
 	int rc;
 
-	if (pexport == NULL) {
-		pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+	if (export == NULL) {
+		res->res_nlm4.stat.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unlock");
 		return NFS_REQ_OK;
 	}
@@ -69,44 +69,44 @@ int nlm4_Unlock(nfs_arg_t * parg, exportlist_t * pexport,
 		 (int)arg->alock.svid, (unsigned long long)arg->alock.l_offset,
 		 (unsigned long long)arg->alock.l_len, buffer);
 
-	if (!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie)) {
-		pres->res_nlm4.stat.stat = NLM4_FAILED;
+	if (!copy_netobj(&res->res_nlm4test.cookie, &arg->cookie)) {
+		res->res_nlm4.stat.stat = NLM4_FAILED;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-			 lock_result_str(pres->res_nlm4.stat.stat));
+			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	if (nfs_in_grace()) {
-		pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-			 lock_result_str(pres->res_nlm4.stat.stat));
+			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_parameters(preq, false,	/* exlcusive doesn't matter */
-				    &arg->alock, &lock, req_ctx, &pentry, pexport, CARE_NOT,	/* unlock doesn't care if owner is found */
+	rc = nlm_process_parameters(req, false,	/* exlcusive doesn't matter */
+				    &arg->alock, &lock, req_ctx, &pentry, export, CARE_NOT,	/* unlock doesn't care if owner is found */
 				    &nsm_client, &nlm_client, &nlm_owner, NULL);
 
 	if (rc >= 0) {
-		/* Present the error back to the client */
-		pres->res_nlm4.stat.stat = (nlm4_stats) rc;
+		/* resent the error back to the client */
+		res->res_nlm4.stat.stat = (nlm4_stats) rc;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-			 lock_result_str(pres->res_nlm4.stat.stat));
+			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	state_status =
-	    state_unlock(pentry, pexport, req_ctx, nlm_owner, NULL, &lock,
+	    state_unlock(pentry, export, req_ctx, nlm_owner, NULL, &lock,
 			 POSIX_LOCK);
 	if (state_status != STATE_SUCCESS) {
 		/* Unlock could fail in the FSAL and make a bit of a mess, especially if
 		 * we are in out of memory situation. Such an error is logged by
 		 * Cache Inode.
 		 */
-		pres->res_nlm4test.test_stat.stat =
+		res->res_nlm4test.test_stat.stat =
 		    nlm_convert_state_error(state_status);
 	} else {
-		pres->res_nlm4.stat.stat = NLM4_GRANTED;
+		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
 
 	/* Release the NLM Client and NLM Owner references we have */
@@ -116,7 +116,7 @@ int nlm4_Unlock(nfs_arg_t * parg, exportlist_t * pexport,
 	cache_inode_put(pentry);
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-		 lock_result_str(pres->res_nlm4.stat.stat));
+		 lock_result_str(res->res_nlm4.stat.stat));
 	return NFS_REQ_OK;
 }
 
@@ -147,44 +147,44 @@ static void nlm4_unlock_message_resp(state_async_queue_t * arg,
 /**
  * @brief Unlock Message
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  args
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  *
  */
-int nlm4_Unlock_Message(nfs_arg_t * parg, exportlist_t * pexport,
+int nlm4_Unlock_Message(nfs_arg_t *args, exportlist_t *export,
 			struct req_op_context *req_ctx,
-			nfs_worker_data_t * pworker, struct svc_req *preq,
-			nfs_res_t * pres)
+			nfs_worker_data_t *worker, struct svc_req *req,
+			nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
-	nlm4_unlockargs *arg = &parg->arg_nlm4_unlock;
+	nlm4_unlockargs *arg = &args->arg_nlm4_unlock;
 	int rc = NFS_REQ_OK;
 
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm_Unlock_Message");
 
 	nsm_client =
-	    get_nsm_client(CARE_NO_MONITOR, preq->rq_xprt,
+	    get_nsm_client(CARE_NO_MONITOR, req->rq_xprt,
 			   arg->alock.caller_name);
 
 	if (nsm_client != NULL)
 		nlm_client =
-		    get_nlm_client(CARE_NO_MONITOR, preq->rq_xprt, nsm_client,
+		    get_nlm_client(CARE_NO_MONITOR, req->rq_xprt, nsm_client,
 				   arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Unlock(parg, pexport, req_ctx, pworker, preq, pres);
+		rc = nlm4_Unlock(args, export, req_ctx, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,
-					     nlm4_unlock_message_resp, pres);
+					     nlm4_unlock_message_resp, res);
 
 	if (rc == NFS_REQ_DROP) {
 		if (nsm_client != NULL)
@@ -203,11 +203,11 @@ int nlm4_Unlock_Message(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm4_Lock. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Unlock_Free(nfs_res_t * pres)
+void nlm4_Unlock_Free(nfs_res_t *res)
 {
-	netobj_free(&pres->res_nlm4test.cookie);
+	netobj_free(&res->res_nlm4test.cookie);
 	return;
 }

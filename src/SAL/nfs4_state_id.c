@@ -52,7 +52,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "fsal.h"
@@ -214,7 +214,7 @@ int nfs4_Init_state_id(hash_parameter_t * param)
 	memset(all_zero, 0, OTHERSIZE);
 	memset(all_ones, 0xFF, OTHERSIZE);
 
-	if ((ht_state_id = HashTable_Init(param)) == NULL) {
+	if ((ht_state_id = hashtable_init(param)) == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
 		return -1;
 	}
@@ -270,11 +270,11 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (HashTable_Test_And_Set
+	if (hashtable_test_and_set
 	    (ht_state_id, &buffkey, &buffval,
 	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
 		LogCrit(COMPONENT_STATE,
-			"HashTable_Test_And_Set failed for key %p",
+			"hashtable_test_and_set failed for key %p",
 			buffkey.addr);
 		gsh_free(buffkey.addr);
 		return 0;
@@ -495,19 +495,19 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 				/* We don't ever expect this to happen, but, just in case...
 				 * Update and release already reserved lease.
 				 */
-				P(data->preserved_clientid->cid_mutex);
+				pthread_mutex_lock(&data->preserved_clientid->cid_mutex);
 				update_lease(data->preserved_clientid);
-				V(data->preserved_clientid->cid_mutex);
+				pthread_mutex_unlock(&data->preserved_clientid->cid_mutex);
 				data->preserved_clientid = NULL;
 			}
 
 			/* Check if lease is expired and reserve it */
-			P(pclientid->cid_mutex);
+			pthread_mutex_lock(&pclientid->cid_mutex);
 
 			if (!reserve_lease(pclientid)) {
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
-				V(pclientid->cid_mutex);
+				pthread_mutex_unlock(&pclientid->cid_mutex);
 				status = NFS4ERR_EXPIRED;
 				goto failure;
 			}
@@ -519,7 +519,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 				/* Remember the reserved clientid for the rest of the compound. */
 				data->preserved_clientid = pclientid;
 			}
-			V(pclientid->cid_mutex);
+			pthread_mutex_unlock(&pclientid->cid_mutex);
 
 			/* Replayed close, it's ok, but stateid doesn't exist */
 			LogDebug(COMPONENT_STATE,
@@ -542,25 +542,25 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 			/* We don't ever expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
 			 */
-			P(data->preserved_clientid->cid_mutex);
+			pthread_mutex_lock(&data->preserved_clientid->cid_mutex);
 
 			update_lease(data->preserved_clientid);
 
-			V(data->preserved_clientid->cid_mutex);
+			pthread_mutex_unlock(&data->preserved_clientid->cid_mutex);
 
 			data->preserved_clientid = NULL;
 		}
 
 		/* Check if lease is expired and reserve it */
-		P(state2->state_owner->so_owner.so_nfs4_owner.so_clientrec->
-		  cid_mutex);
+		pthread_mutex_lock(&state2->state_owner->so_owner
+				    .so_nfs4_owner.so_clientrec->cid_mutex);
 
 		if (!reserve_lease
 		    (state2->state_owner->so_owner.so_nfs4_owner.
 		     so_clientrec)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
-			V(state2->state_owner->so_owner.so_nfs4_owner.
+			pthread_mutex_unlock(&state2->state_owner->so_owner.so_nfs4_owner.
 			  so_clientrec->cid_mutex);
 
 			status = NFS4ERR_EXPIRED;
@@ -570,8 +570,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 		data->preserved_clientid =
 		    state2->state_owner->so_owner.so_nfs4_owner.so_clientrec;
 
-		V(state2->state_owner->so_owner.so_nfs4_owner.so_clientrec->
-		  cid_mutex);
+		pthread_mutex_unlock(&state2->state_owner->so_owner
+				     .so_nfs4_owner.so_clientrec->cid_mutex);
 	}
 
 	/* Sanity check : Is this the right file ? */
@@ -588,12 +588,14 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 	if ((state2->state_type == STATE_TYPE_LAYOUT) || (stateid->seqid != 0)) {
 		/* Check seqid in stateid */
       /**
-       * @todo fsf: maybe change to simple comparison stateid->seqid < state2->state_seqid
-       *       as good enough and maybe makes pynfs happy.
+       * @todo fsf: maybe change to simple comparison stateid->seqid <
+       *       state2->state_seqid as good enough and maybe makes
+       *       pynfs happy.
        */
 		diff = stateid->seqid - state2->state_seqid;
 		if (diff < 0) {
-			/* if this is NFSv4.0 and stateid's seqid is one less than current */
+			/* if this is NFSv4.0 and stateid's seqid is
+			   one less than current */
 			/* AND if owner_seqid is current */
 			/* pass state back to allow replay check */
 			if ((check_seqid)
@@ -615,8 +617,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 			status = NFS4ERR_OLD_STATEID;
 			goto failure;
 		}
-		/* stateid seqid is current and owner seqid is previous, replay (should be
-		   an error condition that did not change the stateid, no real need to check
+		/* stateid seqid is current and owner seqid is
+		   previous, replay (should be an error condition that
+		   did not change the stateid, no real need to check
 		   since the operation must be the same) */
 		else if ((diff == 0) && (check_seqid)
 			 && (owner_seqid ==
@@ -696,7 +699,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 * stateid, cache_entry_t * entry,
 void nfs_State_PrintAll(void)
 {
 	if (isFullDebug(COMPONENT_STATE))
-		HashTable_Log(COMPONENT_STATE, ht_state_id);
+		hashtable_log(COMPONENT_STATE, ht_state_id);
 }
 
 /**

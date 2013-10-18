@@ -36,20 +36,20 @@
 /**
  * @brief Set a share reservation
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  arg
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  */
 
-int nlm4_Share(nfs_arg_t * parg, exportlist_t * pexport,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	       struct svc_req *preq, nfs_res_t * pres)
+int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
-	nlm4_shareargs *arg = &parg->arg_nlm4_share;
-	cache_entry_t *pentry;
+	nlm4_shareargs *arg = &args->arg_nlm4_share;
+	cache_entry_t *entry;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
 	state_nsm_client_t *nsm_client;
@@ -58,23 +58,23 @@ int nlm4_Share(nfs_arg_t * parg, exportlist_t * pexport,
 	int rc;
 	int grace = nfs_in_grace();
 
-	if (pexport == NULL) {
-		pres->res_nlm4share.stat = NLM4_STALE_FH;
+	if (export == NULL) {
+		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Share");
 		return NFS_REQ_OK;
 	}
 
-	pres->res_nlm4share.sequence = 0;
+	res->res_nlm4share.sequence = 0;
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Share cookie=%s reclaim=%s",
 		 buffer, arg->reclaim ? "yes" : "no");
 
-	if (!copy_netobj(&pres->res_nlm4share.cookie, &arg->cookie)) {
-		pres->res_nlm4share.stat = NLM4_FAILED;
+	if (!copy_netobj(&res->res_nlm4share.cookie, &arg->cookie)) {
+		res->res_nlm4share.stat = NLM4_FAILED;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
@@ -83,43 +83,43 @@ int nlm4_Share(nfs_arg_t * parg, exportlist_t * pexport,
 	 * have a reclaim flag, so we will honor the reclaim flag if used.
 	 */
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
-		pres->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
+		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_share_parms(preq, &arg->share, pexport->export_hdl,
-				     req_ctx, &pentry, CARE_NO_MONITOR,
+	rc = nlm_process_share_parms(req, &arg->share, export->export_hdl,
+				     req_ctx, &entry, CARE_NO_MONITOR,
 				     &nsm_client, &nlm_client, &nlm_owner);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
-		pres->res_nlm4share.stat = (nlm4_stats) rc;
+		res->res_nlm4share.stat = (nlm4_stats) rc;
 		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
-			 lock_result_str(pres->res_nlm4share.stat));
+			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
 	state_status =
-	    state_nlm_share(pentry, req_ctx, pexport, arg->share.access,
+	    state_nlm_share(entry, req_ctx, export, arg->share.access,
 			    arg->share.mode, nlm_owner);
 
 	if (state_status != STATE_SUCCESS) {
-		pres->res_nlm4share.stat =
+		res->res_nlm4share.stat =
 		    nlm_convert_state_error(state_status);
 	} else {
-		pres->res_nlm4share.stat = NLM4_GRANTED;
+		res->res_nlm4share.stat = NLM4_GRANTED;
 	}
 
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
-	cache_inode_put(pentry);
+	cache_inode_put(entry);
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
-		 lock_result_str(pres->res_nlm4share.stat));
+		 lock_result_str(res->res_nlm4share.stat));
 	return NFS_REQ_OK;
 }
 
@@ -128,11 +128,11 @@ int nlm4_Share(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm4_Lock. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Share_Free(nfs_res_t * pres)
+void nlm4_Share_Free(nfs_res_t *res)
 {
-	netobj_free(&pres->res_nlm4share.cookie);
+	netobj_free(&res->res_nlm4share.cookie);
 	return;
 }

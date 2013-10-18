@@ -81,7 +81,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t * data,
 	 * with the session being destroyed */
 
 	// Copy the address coming over the wire.
-	copy_xprt_addr(&nw_addr, data->reqp->rq_xprt);
+	copy_xprt_addr(&nw_addr, data->req->rq_xprt);
 
 	// Copy the address recorded in the session.
 	copy_xprt_addr(&client_addr, session->xprt);

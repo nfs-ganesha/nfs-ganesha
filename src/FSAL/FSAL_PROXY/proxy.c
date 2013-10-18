@@ -113,7 +113,7 @@ static int pxy_key_to_param(const char *key, const char *val,
 	} else if (!strcasecmp(key, "NFS_RecvSize")) {
 		init_info->srv_recvsize = (unsigned int)atoi(val);
 	} else if (!strcasecmp(key, "Use_Privileged_Client_Port")) {
-		init_info->use_privileged_client_port = StrToBoolean(val);
+		init_info->use_privileged_client_port = str_to_bool(val);
 	} else if (!strcasecmp(key, "Retry_SleepTime")) {
 		init_info->retry_sleeptime = (unsigned int)atoi(val);
 	} else if (!strcasecmp(key, "NFS_Proto")) {
@@ -127,7 +127,7 @@ static int pxy_key_to_param(const char *key, const char *val,
 		strncpy(init_info->srv_proto, val, MAXNAMLEN);
 #ifdef _USE_GSSRPC
 	} else if (!strcasecmp(key, "Active_krb5")) {
-		init_info->active_krb5 = StrToBoolean(val);
+		init_info->active_krb5 = str_to_bool(val);
 	} else if (!strcasecmp(key, "Remote_PrincipalName")) {
 		strncpy(init_info->remote_principal, val, MAXNAMLEN);
 	} else if (!strcasecmp(key, "KeytabPath")) {
@@ -148,7 +148,7 @@ static int pxy_key_to_param(const char *key, const char *val,
 		}
 #endif
 	} else if (!strcasecmp(key, "Enable_Handle_Mapping")) {
-		init_info->enable_handle_mapping = StrToBoolean(val);
+		init_info->enable_handle_mapping = str_to_bool(val);
 
 		if (init_info->enable_handle_mapping == -1) {
 			LogCrit(COMPONENT_CONFIG,

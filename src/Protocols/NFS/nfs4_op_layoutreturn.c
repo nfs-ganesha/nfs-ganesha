@@ -36,7 +36,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -191,7 +191,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
 		spec.length = NFS4_UINT64_MAX;
 
 		if ((state_status =
-		     get_clientid_owner(data->psession->clientid,
+		     get_clientid_owner(data->session->clientid,
 					&clientid_owner))
 		    != STATE_SUCCESS) {
 			res_LAYOUTRETURN4->lorr_status =

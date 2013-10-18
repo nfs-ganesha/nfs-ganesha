@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"

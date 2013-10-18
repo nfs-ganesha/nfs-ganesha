@@ -303,7 +303,7 @@ bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 	if (!fs_specific || !fs_specific[0])
 		return false;
 
-	fso_dup = strdup(fs_specific);
+	fso_dup = gsh_strdup(fs_specific);
 	if (!fso_dup) {
 		LogCrit(COMPONENT_FSAL, "strdup(%s) failed", fs_specific);
 		return false;
@@ -327,7 +327,7 @@ bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 
 	ret = false;
  cleanup:
-	free(fso_dup);
+	gsh_free(fso_dup);
 	return ret;
 }
 

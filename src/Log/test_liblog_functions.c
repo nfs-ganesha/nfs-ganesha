@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 			/* creation of threads with their names */
 			for (i = 0; i < NB_THREADS; i++) {
 				int rc;
-				char *thread_name = malloc(256);
+				char *thread_name = gsh_malloc(256);
 				snprintf(thread_name, 256, "thread %3d", i);
 				rc = pthread_create(&(threads[i]), &th_attr[i],
 						    run_MT_Tests,

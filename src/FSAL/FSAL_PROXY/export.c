@@ -47,7 +47,7 @@ static fsal_status_t pxy_release(struct fsal_export *exp_hdl)
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	free(pxy_exp);
+	gsh_free(pxy_exp);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -177,14 +177,14 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 				const struct fsal_up_vector *up_ops,
 				struct fsal_export **export)
 {
-	struct pxy_export *exp = calloc(1, sizeof(*exp));
+	struct pxy_export *exp = gsh_calloc(1, sizeof(*exp));
 	struct pxy_fsal_module *pxy =
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
 
 	if (!exp)
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	if (fsal_export_init(&exp->exp, exp_entry) != 0) {
-		free(exp);
+		gsh_free(exp);
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
 	pxy_export_ops_init(exp->exp.ops);

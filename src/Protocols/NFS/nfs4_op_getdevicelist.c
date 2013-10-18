@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"
@@ -128,7 +128,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t * data,
 
 	cb_opaque.count = 0;
 	cb_opaque.max = 32;
-	cb_opaque.swexport = nfs_htonl64(data->pexport->id);
+	cb_opaque.swexport = nfs_htonl64(data->export->id);
 
 	if ((res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
 	     gdlr_deviceid_list.gdlr_deviceid_list_val =
@@ -142,12 +142,12 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t * data,
 	    gdlr_deviceid_list.gdlr_deviceid_list_val;
 
 	if ((nfs_status =
-	     data->pexport->export_hdl->ops->getdevicelist(data->pexport->
-							   export_hdl,
-							   arg_GETDEVICELIST4->
-							   gdla_layout_type,
-							   &cb_opaque, cb,
-							   &res))
+	     data->export->export_hdl->ops->getdevicelist(data->export->
+							  export_hdl,
+							  arg_GETDEVICELIST4->
+							  gdla_layout_type,
+							  &cb_opaque, cb,
+							  &res))
 	    != NFS4_OK) {
 		gsh_free(cb_opaque.buffer);
 		goto out;

@@ -42,14 +42,11 @@
 
 extern _9p_function_desc_t _9pfuncdesc[];
 
-int _9p_rerror(_9p_request_data_t * preq9p, void *pworker_data, u16 * msgtag,
+int _9p_rerror(_9p_request_data_t *req9p, void *worker_data, u16 * msgtag,
 	       u32 err, u32 * plenout, char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
-	u8 msgtype = *(preq9p->_9pmsg + _9P_HDR_SIZE);
-	if (!preq9p || !plenout || !preply)
-		return -1;
-
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u8 msgtype = *(req9p->_9pmsg + _9P_HDR_SIZE);
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RERROR);
 	_9p_setptr(cursor, msgtag, u16);

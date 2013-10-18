@@ -35,7 +35,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
 #include "nfs_core.h"
@@ -58,14 +58,14 @@
  *
  */
 
-int mnt_Dump(nfs_arg_t * parg, exportlist_t * pexport,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-	     struct svc_req *preq, nfs_res_t * pres)
+int mnt_Dump(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
 	/* Get the root of the mount list */
-	pres->res_dump = nfs_Get_MountList();
+	res->res_dump = nfs_Get_MountList();
 
 	return NFS_REQ_OK;
 }				/* mnt_Null */

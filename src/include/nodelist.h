@@ -2,11 +2,11 @@
 #define _NODELIST_H
 
 /* define a macro that make an advanced free on pointer */
-#define xfree(a) \
-if(a!=NULL){ \
-  free(a); \
-  a=NULL; \
-}
+#define xfree(a)				\
+	if (a != NULL){				\
+		gsh_free(a);			\
+		a = NULL;			\
+	}
 
 /*! \addtogroup NODELIST_RANGE
  *  @{

@@ -162,7 +162,7 @@ int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
 	u_int64_t seq_send_64bit;
 	uint32_t v2_flags = 0;
 
-	if (!(buf->value = calloc(1, MAX_CTX_LEN)))
+	if (!(buf->value = gsh_calloc(1, MAX_CTX_LEN)))
 		goto out_err;
 	p = buf->value;
 	end = buf->value + MAX_CTX_LEN;
@@ -285,7 +285,7 @@ int serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc * buf,
  out_err:
 	printerr(0, "ERROR: failed serializing krb5 context for kernel\n");
 	if (buf->value) {
-		free(buf->value);
+		gsh_free(buf->value);
 	}
 	buf->value = NULL;
 	buf->length = 0;

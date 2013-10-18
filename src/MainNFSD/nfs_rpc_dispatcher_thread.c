@@ -37,7 +37,7 @@
 #include <sys/select.h>
 #include <poll.h>
 #include <assert.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "abstract_atomic.h"
@@ -1359,13 +1359,13 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
  * Reply at svc level on errors.  On return false will bypass straight to
  * returning error.
  *
- * @param[in] preqnfs Request to validate
+ * @param[in] reqnfs Request to validate
  *
  * @return True if the request is valid, false otherwise.
  */
-static bool is_rpc_call_valid(nfs_request_data_t *preqnfs)
+static bool is_rpc_call_valid(nfs_request_data_t *reqnfs)
 {
-	struct svc_req *req = &preqnfs->req;
+	struct svc_req *req = &reqnfs->req;
 	bool slocked = FALSE;
 	/* This function is only ever called from one point, and the
 	   read-lock is always held at that call.  If this changes,
@@ -1455,38 +1455,38 @@ static bool is_rpc_call_valid(nfs_request_data_t *preqnfs)
 		}
 	} else {		/* No such program */
 		/* xprt == NULL??? */
-		if (preqnfs->xprt != NULL) {
+		if (reqnfs->xprt != NULL) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Invalid Program number #%d",
 				     (int)req->rq_prog);
-			DISP_SLOCK2(preqnfs->xprt);
-			svcerr_noprog(preqnfs->xprt, req);
-			DISP_SUNLOCK2(preqnfs->xprt);
+			DISP_SLOCK2(reqnfs->xprt);
+			svcerr_noprog(reqnfs->xprt, req);
+			DISP_SUNLOCK2(reqnfs->xprt);
 		}
 		return false;
 	}
 
  progvers_err:
 	/* xprt == NULL??? */
-	if (preqnfs->xprt != NULL) {
+	if (reqnfs->xprt != NULL) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Invalid protocol Version #%d for program number #%d",
 			     (int)req->rq_vers, (int)req->rq_prog);
-		DISP_SLOCK(preqnfs->xprt);
-		svcerr_progvers(preqnfs->xprt, req, lo_vers, hi_vers);
-		DISP_SUNLOCK(preqnfs->xprt);
+		DISP_SLOCK(reqnfs->xprt);
+		svcerr_progvers(reqnfs->xprt, req, lo_vers, hi_vers);
+		DISP_SUNLOCK(reqnfs->xprt);
 	}
 	return false;
 
  noproc_err:
 	/* xprt == NULL??? */
-	if (preqnfs->xprt != NULL) {
+	if (reqnfs->xprt != NULL) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Invalid protocol program number #%d",
 			     (int)req->rq_prog);
-		DISP_SLOCK(preqnfs->xprt);
-		svcerr_noproc(preqnfs->xprt, req);
-		DISP_SUNLOCK(preqnfs->xprt);
+		DISP_SLOCK(reqnfs->xprt);
+		svcerr_noproc(reqnfs->xprt, req);
+		DISP_SUNLOCK(reqnfs->xprt);
 	}
 	return false;
 }				/* is_rpc_call_valid */
@@ -1828,11 +1828,11 @@ void *rpc_dispatcher_thread(void *arg)
  * Extract RPC argument.
  */
 int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
-		     nfs_request_data_t *preqnfs)
+		     nfs_request_data_t *reqnfs)
 {
-	SVCXPRT *xprt = preqnfs->xprt;
-	nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
-	struct svc_req *req = &preqnfs->req;
+	SVCXPRT *xprt = reqnfs->xprt;
+	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
+	struct svc_req *req = &reqnfs->req;
 	bool rlocked = TRUE;
 	bool slocked = FALSE;
 
@@ -1843,8 +1843,8 @@ int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
 		     xprt);
 
 	if (svc_getargs
-	    (xprt, req, preqnfs->funcdesc->xdr_decode_func, (caddr_t) arg_nfs,
-	     &preqnfs->lookahead) == false) {
+	    (xprt, req, reqnfs->funcdesc->xdr_decode_func, (caddr_t) arg_nfs,
+	     &reqnfs->lookahead) == false) {
 		LogInfo(COMPONENT_DISPATCH,
 			"svc_getargs failed for Program %d, Version %d, "
 			"Function %d xid=%u", (int)req->rq_prog,

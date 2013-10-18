@@ -784,7 +784,7 @@ char *get_debug_info(int *size)
 	dspbuf.b_current = dspbuf.b_start;
 
 	if (dspbuf.b_start == NULL) {
-		free(bt_str);
+		gsh_free(bt_str);
 		return NULL;
 	}
 
@@ -811,7 +811,7 @@ char *get_debug_info(int *size)
 	if (size != NULL)
 		*size = display_buffer_len(&dspbuf);
 
-	free(bt_str);
+	gsh_free(bt_str);
 
 	return dspbuf.b_start;
 }
@@ -2415,7 +2415,7 @@ int read_log_config(config_file_t in_config)
 		}
 
 		if (flag != NULL) {
-			flag->lf_val = StrToBoolean(key_value);
+			flag->lf_val = str_to_bool(key_value);
 			continue;
 		}
 

@@ -43,10 +43,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
+int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 	     char *preply)
 {
-	char *cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *afid = NULL;
 	u16 *uname_len = NULL;
@@ -62,12 +62,9 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	_9p_fid_t *pfid = NULL;
 
 	struct gsh_export *exp;
-	exportlist_t *pexport = NULL;
+	exportlist_t *export = NULL;
 	cache_inode_status_t cache_status;
 	char exppath[MAXPATHLEN];
-
-	if (!preq9p || !pworker_data || !plenout || !preply)
-		return -1;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -82,7 +79,7 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		 (int)*aname_len, aname_str, *n_aname);
 
 	if (*afid >= _9P_FID_PER_CONN)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ERANGE, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/*
@@ -97,18 +94,18 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 
 	/* Did we find something ? */
 	if (exp == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, ENOENT, plenout,
+		return _9p_rerror(req9p, worker_data, msgtag, ENOENT, plenout,
 				  preply);
 
-	/* Set pexport and fid id in fid */
-	pexport = &exp->export;
-	pfid = preq9p->pconn->fids[*afid];
-	if (pfid->pexport != NULL && pfid->pexport != pexport) {
+	/* Set export and fid id in fid */
+	export = &exp->export;
+	pfid = req9p->pconn->fids[*afid];
+	if (pfid->export != NULL && pfid->export != export) {
 		struct gsh_export *oldexp =
-		    container_of(pexport, struct gsh_export, export);
+		    container_of(export, struct gsh_export, export);
 		put_gsh_export(oldexp);
 	}
-	pfid->pexport = pexport;
+	pfid->export = export;
 	pfid->fid = *afid;
 
 	/* Is user name provided as a string or as an uid ? */
@@ -117,25 +114,25 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 		if ((err =
 		     _9p_tools_get_req_context_by_name(*uname_len, uname_str,
 						       pfid)) != 0)
-			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	} else {
 		/* Build the fid creds */
 		if ((err =
 		     _9p_tools_get_req_context_by_uid(*n_aname, pfid)) != 0)
-			return _9p_rerror(preq9p, pworker_data, msgtag, -err,
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	}
 
 	/* Check if root cache entry is correctly set */
-	if (pexport->exp_root_cache_inode == NULL)
-		return _9p_rerror(preq9p, pworker_data, msgtag, err, plenout,
+	if (export->exp_root_cache_inode == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag, err, plenout,
 				  preply);
 
 	/* get the export information for this fid */
-	pfid->pentry = pexport->exp_root_cache_inode;
+	pfid->pentry = export->exp_root_cache_inode;
 
-	/* Keep track of the pexport in the req_ctx */
+	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;
 
 	/* This fid is a special one : it comes from TATTACH and so generate a record
@@ -146,7 +143,7 @@ int _9p_auth(_9p_request_data_t * preq9p, void *pworker_data, u32 * plenout,
 	cache_status =
 	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(preq9p, pworker_data, msgtag,
+		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

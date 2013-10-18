@@ -25,16 +25,12 @@
  */
 
 /**
- * \file    nfs4_op_openattr.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
- *
- * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c,v 1.8 2005/11/28 17:02:51 deniel Exp $
- *
+ * @file    nfs4_op_openattr.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  */
+
 #include "config.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"

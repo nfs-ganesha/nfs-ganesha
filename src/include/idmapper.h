@@ -56,14 +56,14 @@ extern pthread_rwlock_t idmapper_group_lock;
 
 void idmapper_cache_init(void);
 bool idmapper_add_user(const struct gsh_buffdesc *, uid_t, const gid_t *,
-		       bool gss_princ);
+		       bool);
 bool idmapper_add_group(const struct gsh_buffdesc *, gid_t);
 bool idmapper_lookup_by_uname(const struct gsh_buffdesc *, uid_t *,
-			      const gid_t **, bool gss_princ);
+			      const gid_t **, bool);
 bool idmapper_lookup_by_uid(const uid_t, const struct gsh_buffdesc **,
 			    const gid_t **);
-bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t * gid);
-bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name);
+bool idmapper_lookup_by_gname(const struct gsh_buffdesc *, uid_t *);
+bool idmapper_lookup_by_gid(const gid_t, const struct gsh_buffdesc **);
 /** @} */
 
 bool idmapper_init(void);

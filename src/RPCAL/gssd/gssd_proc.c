@@ -198,7 +198,7 @@ static char *sockaddr_to_hostname(const struct sockaddr *sa, const char *addr)
 		return NULL;
 	}
 
-	hostname = strdup(hbuf);
+	hostname = gsh_strdup(hbuf);
 
 	return hostname;
 }
@@ -276,20 +276,20 @@ static int read_service_info(char *info_file_name, char **servicename,
 	if (nbytes > INFOBUFLEN)
 		goto fail;
 
-	if (!(*servicename = calloc(strlen(buf) + 1, 1)))
+	if (!(*servicename = gsh_calloc(strlen(buf) + 1, 1)))
 		goto fail;
 	memcpy(*servicename, buf, strlen(buf));
 
-	if (!(*protocol = strdup(protoname)))
+	if (!(*protocol = gsh_strdup(protoname)))
 		goto fail;
 	return 0;
  fail:
 	printerr(0, "ERROR: failed to read service info\n");
 	if (fd != -1)
 		close(fd);
-	free(*servername);
-	free(*servicename);
-	free(*protocol);
+	gsh_free(*servername);
+	gsh_free(*servicename);
+	gsh_free(*protocol);
 	*servicename = *servername = *protocol = NULL;
 	return -1;
 }
@@ -313,18 +313,18 @@ static void destroy_client(struct clnt_info *clp)
 		close(clp->spkm3_fd);
 	if (clp->gssd_fd != -1)
 		close(clp->gssd_fd);
-	free(clp->dirname);
-	free(clp->servicename);
-	free(clp->servername);
-	free(clp->protocol);
-	free(clp);
+	gsh_free(clp->dirname);
+	gsh_free(clp->servicename);
+	gsh_free(clp->servername);
+	gsh_free(clp->protocol);
+	gsh_free(clp);
 }
 
 static struct clnt_info *insert_new_clnt(void)
 {
 	struct clnt_info *clp = NULL;
 
-	if (!(clp = (struct clnt_info *)calloc(1, sizeof(struct clnt_info)))) {
+	if (!(clp = gsh_calloc(1, sizeof(struct clnt_info)))) {
 		printerr(0, "ERROR: can't malloc clnt_info: %s\n",
 			 strerror(errno));
 		goto out;
@@ -450,7 +450,7 @@ static void process_clnt_dir(char *dir, char *pdir)
 		goto fail_destroy_client;
 
 	/* An extra for the '/', and an extra for the null */
-	if (!(clp->dirname = calloc(strlen(dir) + strlen(pdir) + 2, 1))) {
+	if (!(clp->dirname = gsh_calloc(strlen(dir) + strlen(pdir) + 2, 1))) {
 		goto fail_destroy_client;
 	}
 	sprintf(clp->dirname, "%s/%s", pdir, dir);
@@ -487,7 +487,7 @@ void init_client_list(void)
 	TAILQ_INIT(&clnt_list);
 	/* Eventually plan to grow/shrink poll array: */
 	pollsize = FD_ALLOC_BLOCK;
-	pollarray = calloc(pollsize, sizeof(struct pollfd));
+	pollarray = gsh_calloc(pollsize, sizeof(struct pollfd));
 }
 
 /*
@@ -570,10 +570,10 @@ static int process_pipedir(char *pipe_name)
 		    && !strncmp(namelist[i]->d_name, "clnt", 4)
 		    && !find_client(namelist[i]->d_name, pipe_name))
 			process_clnt_dir(namelist[i]->d_name, pipe_name);
-		free(namelist[i]);
+		gsh_free(namelist[i]);
 	}
 
-	free(namelist);
+	gsh_free(namelist);
 
 	return 0;
 }
@@ -606,10 +606,10 @@ static int parse_enctypes(char *enctypes)
 
 	if (cached_types && strcmp(cached_types, enctypes) == 0)
 		return 0;
-	free(cached_types);
+	gsh_free(cached_types);
 
 	if (krb5_enctypes != NULL) {
-		free(krb5_enctypes);
+		gsh_free(krb5_enctypes);
 		krb5_enctypes = NULL;
 		num_krb5_enctypes = 0;
 	}
@@ -631,7 +631,7 @@ static int parse_enctypes(char *enctypes)
 		return ENOENT;
 
 	/* Allocate space for enctypes array */
-	if ((krb5_enctypes = (int *)calloc(n, sizeof(int))) == NULL) {
+	if ((krb5_enctypes = gsh_calloc(n, sizeof(int))) == NULL) {
 		return ENOMEM;
 	}
 
@@ -644,7 +644,7 @@ static int parse_enctypes(char *enctypes)
 	}
 
 	num_krb5_enctypes = n;
-	if ((cached_types = malloc(strlen(enctypes) + 1)))
+	if ((cached_types = gsh_malloc(strlen(enctypes) + 1)))
 		strcpy(cached_types, enctypes);
 
 	return 0;
@@ -662,7 +662,7 @@ static int do_downcall(int k5_fd, uid_t uid, struct authgss_private_data *pd,
 	    sizeof(uid) + sizeof(timeout) + sizeof(pd->pd_seq_win) +
 	    sizeof(pd->pd_ctx_hndl.length) + pd->pd_ctx_hndl.length +
 	    sizeof(context_token->length) + context_token->length;
-	p = buf = malloc(buf_size);
+	p = buf = gsh_malloc(buf_size);
 	end = buf + buf_size;
 
 	if (WRITE_BYTES(&p, end, uid))
@@ -679,11 +679,11 @@ static int do_downcall(int k5_fd, uid_t uid, struct authgss_private_data *pd,
 	if (write(k5_fd, buf, p - buf) < p - buf)
 		goto out_err;
 	if (buf)
-		free(buf);
+		gsh_free(buf);
 	return 0;
  out_err:
 	if (buf)
-		free(buf);
+		gsh_free(buf);
 	printerr(1, "Failed to write downcall!\n");
 	return -1;
 }
@@ -972,8 +972,8 @@ static void process_krb5_upcall(struct clnt_info *clp, uid_t uid, int fd,
 
 	if (tgtname) {
 		if (clp->servicename) {
-			free(clp->servicename);
-			clp->servicename = strdup(tgtname);
+			gsh_free(clp->servicename);
+			clp->servicename = gsh_strdup(tgtname);
 		}
 	}
 	token.length = 0;
@@ -1105,7 +1105,7 @@ static void process_krb5_upcall(struct clnt_info *clp, uid_t uid, int fd,
 
  out:
 	if (token.value)
-		free(token.value);
+		gsh_free(token.value);
 #ifndef HAVE_LIBTIRPC
 	if (pd.pd_ctx_hndl.length != 0)
 		authgss_free_private_data(&pd);
@@ -1163,7 +1163,7 @@ static void process_spkm3_upcall(struct clnt_info *clp, uid_t uid, int fd)
 
  out:
 	if (token.value)
-		free(token.value);
+		gsh_free(token.value);
 	if (auth)
 		AUTH_DESTROY(auth);
 	if (rpc_clnt)
@@ -1226,7 +1226,7 @@ void handle_gssd_upcall(struct clnt_info *clp)
 
 	/* find the mechanism name */
 	if ((p = strstr(lbuf, "mech=")) != NULL) {
-		mech = malloc(lbuflen);
+		mech = gsh_malloc(lbuflen);
 		if (!mech)
 			goto out;
 		if (sscanf(p, "mech=%s", mech) != 1) {
@@ -1262,7 +1262,7 @@ void handle_gssd_upcall(struct clnt_info *clp)
 
 	/* read supported encryption types if supplied */
 	if ((p = strstr(lbuf, "enctypes=")) != NULL) {
-		enctypes = malloc(lbuflen);
+		enctypes = gsh_malloc(lbuflen);
 		if (!enctypes)
 			goto out;
 		if (sscanf(p, "enctypes=%s", enctypes) != 1) {
@@ -1282,7 +1282,7 @@ void handle_gssd_upcall(struct clnt_info *clp)
 
 	/* read target name */
 	if ((p = strstr(lbuf, "target=")) != NULL) {
-		target = malloc(lbuflen);
+		target = gsh_malloc(lbuflen);
 		if (!target)
 			goto out;
 		if (sscanf(p, "target=%s", target) != 1) {
@@ -1305,7 +1305,7 @@ void handle_gssd_upcall(struct clnt_info *clp)
 	 * used.
 	 */
 	if ((p = strstr(lbuf, "service=")) != NULL) {
-		service = malloc(lbuflen);
+		service = gsh_malloc(lbuflen);
 		if (!service)
 			goto out;
 		if (sscanf(p, "service=%s", service) != 1) {
@@ -1327,10 +1327,10 @@ void handle_gssd_upcall(struct clnt_info *clp)
 			 "received unknown gss mech '%s'\n", mech);
 
  out:
-	free(lbuf);
-	free(mech);
-	free(enctypes);
-	free(target);
-	free(service);
+	gsh_free(lbuf);
+	gsh_free(mech);
+	gsh_free(enctypes);
+	gsh_free(target);
+	gsh_free(service);
 	return;
 }

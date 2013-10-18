@@ -97,11 +97,11 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 	/* if quota support is active, then we should check is the FSAL
 	   allows inode creation or not */
 	fsal_status =
-	    data->pexport->export_hdl->ops->check_quota(data->pexport->
-							export_hdl,
-							data->pexport->fullpath,
-							FSAL_QUOTA_INODES,
-							data->req_ctx);
+	    data->export->export_hdl->ops->check_quota(data->export->
+						       export_hdl,
+						       data->export->fullpath,
+						       FSAL_QUOTA_INODES,
+						       data->req_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_WRITE4->status = NFS4ERR_DQUOT;
 		return res_WRITE4->status;
@@ -113,7 +113,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Manage access type */
-	switch (data->pexport->access_type) {
+	switch (data->export->access_type) {
 	case ACCESSTYPE_MDONLY:
 	case ACCESSTYPE_MDONLY_RO:
 		res_WRITE4->status = NFS4ERR_DQUOT;
@@ -127,7 +127,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 
 	default:
 		break;
-	}			/* switch( data->pexport->access_type ) */
+	}			/* switch( data->export->access_type ) */
 
 	/* vnode to manage is the current one */
 	entry = data->current_entry;
@@ -226,10 +226,10 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 		     "NFS4_OP_WRITE: offset = %" PRIu64 "  length = %" PRIu32
 		     "  stable = %d", offset, size, stable_how);
 
-	if ((data->pexport->export_perms.
+	if ((data->export->export_perms.
 	     options & EXPORT_OPTION_MAXOFFSETWRITE) ==
 	    EXPORT_OPTION_MAXOFFSETWRITE)
-		if ((offset + size) > data->pexport->MaxOffsetWrite) {
+		if ((offset + size) > data->export->MaxOffsetWrite) {
 			res_WRITE4->status = NFS4ERR_DQUOT;
 			if (anonymous) {
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
@@ -244,9 +244,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 	/* We should check against the value we returned in getattr. This was not
 	 * the case before the following check_size code was added.
 	 */
-	if (((data->pexport->export_perms.options & EXPORT_OPTION_MAXWRITE) ==
+	if (((data->export->export_perms.options & EXPORT_OPTION_MAXWRITE) ==
 	     EXPORT_OPTION_MAXWRITE))
-		check_size = data->pexport->MaxWrite;
+		check_size = data->export->MaxWrite;
 	else
 		check_size =
 		    entry->obj_handle->export->ops->fs_maxwrite(entry->
@@ -280,7 +280,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
-		data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
+		data->export->export_hdl->ops->get_write_verifier(&verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
 		if (anonymous) {
@@ -329,7 +329,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data,
 
 	verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
+	data->export->export_hdl->ops->get_write_verifier(&verf_desc);
 
 	res_WRITE4->status = NFS4_OK;
 

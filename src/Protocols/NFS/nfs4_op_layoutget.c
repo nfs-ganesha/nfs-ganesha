@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
 #include <stdint.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"
@@ -87,12 +87,12 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 	/* Tracking data for the layout state */
 	struct state_refer refer;
 
-	memcpy(refer.session, data->psession->session_id, sizeof(sessionid4));
+	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
 	refer.slot = data->slot;
 
 	if ((state_status =
-	     get_clientid_owner(data->psession->clientid, &clientid_owner))
+	     get_clientid_owner(data->session->clientid, &clientid_owner))
 	    != STATE_SUCCESS) {
 		nfs_status = nfs4_Errno_state(state_status);
 	}
@@ -176,11 +176,11 @@ static nfsstat4 acquire_layout_state(compound_data_t * data,
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
 
 		/* Attach this open to an export */
-		(*layout_state)->state_export = data->pexport;
-		pthread_mutex_lock(&data->pexport->exp_state_mutex);
-		glist_add_tail(&data->pexport->exp_state_list,
+		(*layout_state)->state_export = data->export;
+		pthread_mutex_lock(&data->export->exp_state_mutex);
+		glist_add_tail(&data->export->exp_state_list,
 			       &(*layout_state)->state_export_list);
-		pthread_mutex_unlock(&data->pexport->exp_state_mutex);
+		pthread_mutex_unlock(&data->export->exp_state_mutex);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;
@@ -349,8 +349,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
 	max_segment_count =
-	    (data->pexport->export_hdl->ops->
-	     fs_maximum_segments(data->pexport->export_hdl));
+	    (data->export->export_hdl->ops->
+	     fs_maximum_segments(data->export->export_hdl));
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
@@ -386,7 +386,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
 	arg.type = arg_LAYOUTGET4->loga_layout_type;
 	arg.minlength = arg_LAYOUTGET4->loga_minlength;
-	arg.export_id = data->pexport->id;
+	arg.export_id = data->export->id;
 	arg.maxcount = arg_LAYOUTGET4->loga_maxcount;
 
 	/* Guaranteed on the first call */
@@ -411,7 +411,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 		res.fsal_seg_data = NULL;
 
 		if ((nfs_status =
-		     one_segment(data->current_entry, data->pexport,
+		     one_segment(data->current_entry, data->export,
 				 data->req_ctx, layout_state, &arg, &res,
 				 layouts + numlayouts))
 		    != NFS4_OK) {

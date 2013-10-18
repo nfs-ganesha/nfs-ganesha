@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -138,7 +138,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	/* Check clientid */
 	rc = nfs_client_id_get_confirmed((data->minorversion ==
 					  0 ? arg_LOCKT4->owner.
-					  clientid : data->psession->clientid),
+					  clientid : data->session->clientid),
 					 &clientid);
 	if (rc != CLIENT_ID_SUCCESS) {
 		res_LOCKT4->status = clientid_error_to_nfsstat(rc);
@@ -182,7 +182,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	   the lock in SAL (and FSAL). */
 
 	state_status =
-	    state_test(data->current_entry, data->pexport, data->req_ctx,
+	    state_test(data->current_entry, data->export, data->req_ctx,
 		       lock_owner, &lock_desc, &conflict_owner, &conflict_desc);
 	if (state_status == STATE_LOCK_CONFLICT) {
 		/* A conflicting lock from a different lock_owner,

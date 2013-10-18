@@ -212,7 +212,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t * data,
 		if (data->req_ctx->export) {
 			put_gsh_export(data->req_ctx->export);
 			data->req_ctx->export = NULL;
-			data->pexport = NULL;
+			data->export = NULL;
 		}
 	}
 

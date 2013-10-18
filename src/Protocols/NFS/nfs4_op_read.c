@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs4.h"
@@ -101,8 +101,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Manage access type MDONLY */
-	if ((data->pexport->access_type == ACCESSTYPE_MDONLY)
-	    || (data->pexport->access_type == ACCESSTYPE_MDONLY_RO)) {
+	if ((data->export->access_type == ACCESSTYPE_MDONLY)
+	    || (data->export->access_type == ACCESSTYPE_MDONLY_RO)) {
 		res_READ4->status = NFS4ERR_DQUOT;
 		return res_READ4->status;
 	}
@@ -254,10 +254,10 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data,
 	offset = arg_READ4->offset;
 	size = arg_READ4->count;
 
-	if (((data->pexport->export_perms.
+	if (((data->export->export_perms.
 	      options & EXPORT_OPTION_MAXOFFSETREAD) ==
 	     EXPORT_OPTION_MAXOFFSETREAD)
-	    && ((offset + size) > data->pexport->MaxOffsetRead)) {
+	    && ((offset + size) > data->export->MaxOffsetRead)) {
 		res_READ4->status = NFS4ERR_DQUOT;
 		goto done;
 	}
@@ -265,9 +265,9 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data,
 	/* Do not read more than FATTR4_MAXREAD.  We should check
 	   against the value we returned in getattr. This was not the
 	   case before the following check_size code was added. */
-	if (((data->pexport->export_perms.options & EXPORT_OPTION_MAXREAD)
+	if (((data->export->export_perms.options & EXPORT_OPTION_MAXREAD)
 	     == EXPORT_OPTION_MAXREAD)) {
-		check_size = data->pexport->MaxRead;
+		check_size = data->export->MaxRead;
 	} else {
 		check_size =
 		    entry->obj_handle->export->ops->fs_maxread(entry->

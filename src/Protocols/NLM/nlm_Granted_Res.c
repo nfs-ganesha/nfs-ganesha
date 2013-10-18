@@ -36,20 +36,20 @@
 /**
  * @brief Lock Granted Result Handler
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  arg
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  *
  */
-int nlm4_Granted_Res(nfs_arg_t * parg, exportlist_t * pexport,
+int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 		     struct req_op_context *req_ctx,
-		     nfs_worker_data_t * pworker, struct svc_req *preq,
-		     nfs_res_t * pres)
+		     nfs_worker_data_t *worker, struct svc_req *req,
+		     nfs_res_t *res)
 {
-	nlm4_res *arg = &parg->arg_nlm4_res;
+	nlm4_res *arg = &args->arg_nlm4_res;
 	char buffer[1024];
 	state_status_t state_status = STATE_SUCCESS;
 	state_cookie_entry_t *cookie_entry;
@@ -108,10 +108,10 @@ int nlm4_Granted_Res(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for nlm4_Granted_Res. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Granted_Res_Free(nfs_res_t * pres)
+void nlm4_Granted_Res_Free(nfs_res_t *res)
 {
 	return;
 }

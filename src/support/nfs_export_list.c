@@ -221,7 +221,7 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 	return true;
 }
 
-void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
+void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 		    struct user_cred *user_credentials)
 {
 	/* Do we need to revert? */
@@ -241,15 +241,15 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 	/* Do we have root access ? */
 	/* Are we squashing _all_ users to the anonymous uid/gid ? */
 	if (((user_credentials->caller_uid == 0)
-	     && !(pexport_perms->options & EXPORT_OPTION_ROOT))
-	    || pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
+	     && !(export_perms->options & EXPORT_OPTION_ROOT))
+	    || export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
 	    || ((user_credentials->caller_flags & USER_CRED_ANONYMOUS) != 0)) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
-			     pexport->id, user_credentials->caller_uid,
+			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid,
-			     pexport_perms->anonymous_uid,
-			     pexport_perms->anonymous_gid);
+			     export_perms->anonymous_uid,
+			     export_perms->anonymous_gid);
 
 		/* Save old credentials */
 		user_credentials->caller_uid_saved =
@@ -263,20 +263,20 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 		user_credentials->caller_flags |= USER_CRED_SAVED;
 
 		/* Map uid and gid to "nobody" */
-		user_credentials->caller_uid = pexport_perms->anonymous_uid;
-		user_credentials->caller_gid = pexport_perms->anonymous_gid;
+		user_credentials->caller_uid = export_perms->anonymous_uid;
+		user_credentials->caller_gid = export_perms->anonymous_gid;
 
 		/* No alternate groups for "nobody" */
 		user_credentials->caller_glen = 0;
 		user_credentials->caller_garray = NULL;
 	} else if ((user_credentials->caller_gid == 0)
-		   && !(pexport_perms->options & EXPORT_OPTION_ROOT)) {
+		   && !(export_perms->options & EXPORT_OPTION_ROOT)) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
-			     pexport->id, user_credentials->caller_uid,
+			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid,
 			     user_credentials->caller_uid,
-			     pexport_perms->anonymous_gid);
+			     export_perms->anonymous_gid);
 
 		/* Save old credentials */
 		user_credentials->caller_uid_saved =
@@ -290,18 +290,18 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 		user_credentials->caller_flags |= USER_CRED_SAVED;
 
 		/* Map gid to "nobody" */
-		user_credentials->caller_gid = pexport_perms->anonymous_gid;
+		user_credentials->caller_gid = export_perms->anonymous_gid;
 
 		/* Keep alternate groups, we may squash them below */
 	} else {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Accepting credentials for export %d caller uid=%d gid=%d",
-			     pexport->id, user_credentials->caller_uid,
+			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid);
 	}
 
 	/* Check the garray for gid 0 to squash */
-	if (!(pexport_perms->options & EXPORT_OPTION_ROOT)
+	if (!(export_perms->options & EXPORT_OPTION_ROOT)
 	    && user_credentials->caller_glen > 0) {
 		unsigned int i;
 		for (i = 0; i < user_credentials->caller_glen; i++) {
@@ -324,28 +324,28 @@ void nfs_check_anon(export_perms_t * pexport_perms, exportlist_t * pexport,
 				/* Save the position of the first instance of root in the garray */
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "Squashing alternate group #%d to %d",
-					     i, pexport_perms->anonymous_gid);
+					     i, export_perms->anonymous_gid);
 				if (user_credentials->caller_gpos_root >=
 				    user_credentials->caller_glen_saved)
 					user_credentials->caller_gpos_root = i;
 				user_credentials->caller_garray[i] =
-				    pexport_perms->anonymous_gid;
+				    export_perms->anonymous_gid;
 			}
 		}
 	}
 }
 
-void squash_setattr(export_perms_t * pexport_perms,
+void squash_setattr(export_perms_t *export_perms,
 		    struct user_cred *user_credentials, struct attrlist *attr)
 {
 	if (attr->mask & ATTR_OWNER) {
-		if (pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->owner = pexport_perms->anonymous_uid;
-		else if (!(pexport_perms->options & EXPORT_OPTION_ROOT)
+		if (export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->owner = export_perms->anonymous_uid;
+		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->owner == 0)
 			 && (user_credentials->caller_uid ==
-			     pexport_perms->anonymous_uid))
-			attr->owner = pexport_perms->anonymous_uid;
+			     export_perms->anonymous_uid))
+			attr->owner = export_perms->anonymous_uid;
 	}
 
 	if (attr->mask & ATTR_GROUP) {
@@ -355,18 +355,18 @@ void squash_setattr(export_perms_t * pexport_perms,
 		 * caller_gid has been squashed or one of the caller's
 		 * alternate groups has been squashed.
 		 */
-		if (pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->group = pexport_perms->anonymous_gid;
-		else if (!(pexport_perms->options & EXPORT_OPTION_ROOT)
+		if (export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->group = export_perms->anonymous_gid;
+		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->group == 0)
 			 &&
 			 ((user_credentials->caller_gid ==
-			   pexport_perms->anonymous_gid)
+			   export_perms->anonymous_gid)
 			  ||
 			  (((user_credentials->caller_flags & USER_CRED_SAVED)
 			    && (user_credentials->caller_gpos_root <
 				user_credentials->caller_glen_saved)))))
-			attr->group = pexport_perms->anonymous_gid;
+			attr->group = export_perms->anonymous_gid;
 	}
 }
 
@@ -429,7 +429,7 @@ bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
 	return true;
 }
 
-int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
+int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t * pcred)
 {
 	/* Structure for managing basic AUTH_UNIX authentication */
 	struct authunix_parms *aup = NULL;
@@ -439,16 +439,16 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 	struct svc_rpc_gss_data *gd = NULL;
 #endif
 
-	pcred->flavor = reqp->rq_cred.oa_flavor;
-	pcred->length = reqp->rq_cred.oa_length;
+	pcred->flavor = req->rq_cred.oa_flavor;
+	pcred->length = req->rq_cred.oa_length;
 
-	switch (reqp->rq_cred.oa_flavor) {
+	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
 		/* Do nothing... because there seems like nothing is to be done... */
 		break;
 
 	case AUTH_UNIX:
-		aup = (struct authunix_parms *)(reqp->rq_clntcred);
+		aup = (struct authunix_parms *)(req->rq_clntcred);
 
 		pcred->auth_union.auth_unix.aup_uid = aup->aup_uid;
 		pcred->auth_union.auth_unix.aup_gid = aup->aup_gid;
@@ -459,7 +459,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
 		/* Extract the information from the RPCSEC_GSS opaque structure */
-		gd = SVCAUTH_PRIVATE(reqp->rq_auth);
+		gd = SVCAUTH_PRIVATE(req->rq_auth);
 
 		pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
 		pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);

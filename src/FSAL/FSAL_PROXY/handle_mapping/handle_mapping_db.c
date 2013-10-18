@@ -436,7 +436,7 @@ static int db_delete_operation(db_thread_info_t * p_info,
 /* push a task to the queue */
 static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
 {
-	P(p_queue->queues_mutex);
+	pthread_mutex_lock(&p_queue->queues_mutex);
 
 	/* add an item at the end of the queue */
 	switch (p_op->op_type) {
@@ -488,7 +488,7 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
 	/* there now some work available */
 	pthread_cond_signal(&p_queue->work_avail_condition);
 
-	V(p_queue->queues_mutex);
+	pthread_mutex_unlock(&p_queue->queues_mutex);
 
 	return HANDLEMAP_SUCCESS;
 
@@ -521,7 +521,7 @@ static void *database_worker_thread(void *arg)
 
 		/* Is "work done" or "work available" condition verified ? */
 
-		P(p_info->work_queue.queues_mutex);
+		pthread_mutex_lock(&p_info->work_queue.queues_mutex);
 
 		/* nothing to be done ? */
 		while (p_info->work_queue.highprio_first == NULL
@@ -534,7 +534,7 @@ static void *database_worker_thread(void *arg)
 			/* if termination is requested, exit */
 			if (do_terminate) {
 				p_info->work_queue.status = FINISHED;
-				V(p_info->work_queue.queues_mutex);
+				pthread_mutex_unlock(&p_info->work_queue.queues_mutex);
 				return (void *)p_info;
 			}
 
@@ -585,7 +585,7 @@ static void *database_worker_thread(void *arg)
 
 		p_info->work_queue.nb_waiting--;
 
-		V(p_info->work_queue.queues_mutex);
+		pthread_mutex_unlock(&p_info->work_queue.queues_mutex);
 
 		/* PROCESS THE REQUEST */
 
@@ -612,9 +612,9 @@ static void *database_worker_thread(void *arg)
 		}
 
 		/* free the db operation item */
-		P(p_info->pool_mutex);
+		pthread_mutex_lock(&p_info->pool_mutex);
 		pool_free(p_info->dbop_pool, to_be_done);
-		V(p_info->pool_mutex);
+		pthread_mutex_unlock(&p_info->pool_mutex);
 
 	}			/* loop forever */
 
@@ -748,7 +748,7 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
 static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
 {
 
-	P(p_thr_info->work_queue.queues_mutex);
+	pthread_mutex_lock(&p_thr_info->work_queue.queues_mutex);
 
 	/* wait until the thread has no more tasks in its queue
 	 * and it is no more working
@@ -759,7 +759,7 @@ static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
 		pthread_cond_wait(&p_thr_info->work_queue.work_done_condition,
 				  &p_thr_info->work_queue.queues_mutex);
 
-	V(p_thr_info->work_queue.queues_mutex);
+	pthread_mutex_unlock(&p_thr_info->work_queue.queues_mutex);
 
 }
 
@@ -778,11 +778,11 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
 	/* give the job to all threads */
 	for (i = 0; i < nb_db_threads; i++) {
 		/* get a new db operation  */
-		P(db_thread[i].pool_mutex);
+		pthread_mutex_lock(&db_thread[i].pool_mutex);
 
 		new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
-		V(db_thread[i].pool_mutex);
+		pthread_mutex_unlock(&db_thread[i].pool_mutex);
 
 		if (!new_task)
 			return HANDLEMAP_SYSTEM_ERROR;
@@ -824,11 +824,11 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
 		i = select_db_queue(p_in_nfs23_digest);
 
 		/* get a new db operation  */
-		P(db_thread[i].pool_mutex);
+		pthread_mutex_lock(&db_thread[i].pool_mutex);
 
 		new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
-		V(db_thread[i].pool_mutex);
+		pthread_mutex_unlock(&db_thread[i].pool_mutex);
 
 		if (!new_task)
 			return HANDLEMAP_SYSTEM_ERROR;
@@ -866,11 +866,11 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
 	i = select_db_queue(p_in_nfs23_digest);
 
 	/* get a new db operation  */
-	P(db_thread[i].pool_mutex);
+	pthread_mutex_lock(&db_thread[i].pool_mutex);
 
 	new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
-	V(db_thread[i].pool_mutex);
+	pthread_mutex_unlock(&db_thread[i].pool_mutex);
 
 	if (!new_task)
 		return HANDLEMAP_SYSTEM_ERROR;

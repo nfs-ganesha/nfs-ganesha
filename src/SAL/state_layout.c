@@ -41,7 +41,7 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
@@ -143,7 +143,7 @@ state_status_t state_delete_segment(state_layout_segment_t * segment)
  * This function finds a state corresponding to a given file,
  * clientid, and layout type if one exists.
  *
- * @param[in]  entry Cache_inode entry for the file
+ * @param[in]  entry Cache inode entry for the file
  * @param[in]  owner The state owner.  This must be a clientid owner.
  * @param[in]  type  Layout type specified by the client.
  * @param[out] state The found state, NULL if not found.

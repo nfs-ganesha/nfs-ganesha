@@ -27,7 +27,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"
@@ -46,43 +46,41 @@
 /**
  * @brief The Rquota getquota function, for all versions.
  *
- * The RQUOTA getquota function, for all versions.
- *
- * @param[in]  parg    Ignored
- * @param[in]  pexport Ignored
+ * @param[in]  arg    Ignored
+ * @param[in]  export Ignored
  * @param[in]  req_ctx Ignored
- * @param[in]  pworker Ignored
- * @param[in]  preq    Ignored
- * @param[out] pres    Ignored
+ * @param[in]  worker Ignored
+ * @param[in]  req    Ignored
+ * @param[out] res    Ignored
  *
  */
-int rquota_getquota(nfs_arg_t * parg, exportlist_t * pexport,
-		    struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		    struct svc_req *preq, nfs_res_t * pres)
+int rquota_getquota(nfs_arg_t *arg, exportlist_t *export,
+		    struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		    struct svc_req *req, nfs_res_t *res)
 {
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota;
 	int quota_type = USRQUOTA;
 	struct gsh_export *exp;
 	char *quota_path;
-	getquota_rslt *qres = &pres->res_rquota_getquota;
+	getquota_rslt *qres = &res->res_rquota_getquota;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getquota");
 
-	if (preq->rq_vers == EXT_RQUOTAVERS)
-		quota_type = parg->arg_ext_rquota_getquota.gqa_type;
+	if (req->rq_vers == EXT_RQUOTAVERS)
+		quota_type = arg->arg_ext_rquota_getquota.gqa_type;
 	qres->status = Q_EPERM;
 
-	if (parg->arg_rquota_getquota.gqa_pathp[0] == '/') {
+	if (arg->arg_rquota_getquota.gqa_pathp[0] == '/') {
 		exp =
-		    get_gsh_export_by_path(parg->arg_rquota_getquota.gqa_pathp);
+		    get_gsh_export_by_path(arg->arg_rquota_getquota.gqa_pathp);
 		if (exp == NULL)
 			goto out;
-		quota_path = parg->arg_rquota_getquota.gqa_pathp;
+		quota_path = arg->arg_rquota_getquota.gqa_pathp;
 	} else {
 		exp =
-		    get_gsh_export_by_tag(parg->arg_rquota_getquota.gqa_pathp);
+		    get_gsh_export_by_tag(arg->arg_rquota_getquota.gqa_pathp);
 		if (exp == NULL)
 			goto out;
 		quota_path = exp->export.fullpath;
@@ -120,10 +118,10 @@ int rquota_getquota(nfs_arg_t * parg, exportlist_t * pexport,
  *
  * Frees the result structure allocated for rquota_getquota. Does Nothing in fact.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void rquota_getquota_Free(nfs_res_t * pres)
+void rquota_getquota_Free(nfs_res_t *res)
 {
 	return;
 }

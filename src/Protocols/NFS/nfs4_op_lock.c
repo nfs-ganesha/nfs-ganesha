@@ -110,7 +110,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
-		memcpy(refer.session, data->psession->session_id,
+		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
 		refer.slot = data->slot;
@@ -191,7 +191,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 						  0 ? arg_LOCK4->locker.
 						  locker4_u.open_owner.
 						  lock_owner.clientid : data->
-						  psession->clientid),
+						  session->clientid),
 						 &clientid);
 		if (rc != CLIENT_ID_SUCCESS) {
 			res_LOCK4->status = clientid_error_to_nfsstat(rc);
@@ -273,13 +273,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 		}
 
 		/* Check if lock state belongs to same export */
-		if (lock_state->state_export != data->pexport) {
+		if (lock_state->state_export != data->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held "
 				 "for export %d (%s), request for "
 				 "export %d (%s)", lock_state->state_export->id,
 				 lock_state->state_export->fullpath,
-				 data->pexport->id, data->pexport->fullpath);
+				 data->export->id, data->export->fullpath);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			return res_LOCK4->status;
 		}
@@ -423,7 +423,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 		release_lock_owner = TRUE;
 
 		if (!isnew) {
-			P(lock_owner->so_mutex);
+			pthread_mutex_lock(&lock_owner->so_mutex);
 			/* Check lock_seqid if it has attached locks. */
 			if (!glist_empty(&lock_owner->so_lock_list)
 			    && (data->minorversion == 0)
@@ -439,13 +439,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 				dump_all_locks("All locks (re-use of lock "
 					       "owner)");
 
-				V(lock_owner->so_mutex);
+				pthread_mutex_unlock(&lock_owner->so_mutex);
 				/* Response is all setup for us and
 				   LogDebug told what was wrong */
 				goto out2;
 			}
 
-			V(lock_owner->so_mutex);
+			pthread_mutex_unlock(&lock_owner->so_mutex);
 
 		}
 
@@ -470,11 +470,11 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 		glist_init(&lock_state->state_data.lock.state_locklist);
 
 		/* Attach this lock to an export */
-		lock_state->state_export = data->pexport;
-		pthread_mutex_lock(&data->pexport->exp_state_mutex);
-		glist_add_tail(&data->pexport->exp_state_list,
+		lock_state->state_export = data->export;
+		pthread_mutex_lock(&data->export->exp_state_mutex);
+		glist_add_tail(&data->export->exp_state_list,
 			       &lock_state->state_export_list);
-		pthread_mutex_unlock(&data->pexport->exp_state_mutex);
+		pthread_mutex_unlock(&data->export->exp_state_mutex);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
@@ -489,7 +489,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   lock into SAL (and FSAL). */
-	state_status = state_lock(data->current_entry, data->pexport, data->req_ctx, lock_owner, lock_state, blocking, NULL,	/* No block data for now */
+	state_status = state_lock(data->current_entry, data->export, data->req_ctx, lock_owner, lock_state, blocking, NULL,	/* No block data for now */
 				  &lock_desc, &conflict_owner, &conflict_desc,
 				  POSIX_LOCK);
 	if (state_status != STATE_SUCCESS) {

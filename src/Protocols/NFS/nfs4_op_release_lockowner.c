@@ -85,10 +85,10 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 		goto out2;
 	}
 
-	P(nfs_client_id->cid_mutex);
+	pthread_mutex_lock(&nfs_client_id->cid_mutex);
 
 	if (!reserve_lease(nfs_client_id)) {
-		V(nfs_client_id->cid_mutex);
+		pthread_mutex_unlock(&nfs_client_id->cid_mutex);
 
 		dec_client_id_ref(nfs_client_id);
 
@@ -96,7 +96,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 		goto out2;
 	}
 
-	V(nfs_client_id->cid_mutex);
+	pthread_mutex_unlock(&nfs_client_id->cid_mutex);
 
 	/* look up the lock owner and see if we can find it */
 	convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4->lock_owner,
@@ -114,15 +114,15 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 		goto out1;
 	}
 
-	P(lock_owner->so_mutex);
+	pthread_mutex_lock(&lock_owner->so_mutex);
 
 	/* got the owner, does it still have any locks being held */
 	if (!glist_empty(&lock_owner->so_lock_list)) {
-		V(lock_owner->so_mutex);
+		pthread_mutex_unlock(&lock_owner->so_mutex);
 
 		res_RELEASE_LOCKOWNER4->status = NFS4ERR_LOCKS_HELD;
 	} else {
-		V(lock_owner->so_mutex);
+		pthread_mutex_unlock(&lock_owner->so_mutex);
 
 		/* found the lock owner and it doesn't have any locks, release it */
 		release_lockstate(lock_owner);
@@ -136,11 +136,11 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
  out1:
 
 	/* Update the lease before exit */
-	P(nfs_client_id->cid_mutex);
+	pthread_mutex_lock(&nfs_client_id->cid_mutex);
 
 	update_lease(nfs_client_id);
 
-	V(nfs_client_id->cid_mutex);
+	pthread_mutex_unlock(&nfs_client_id->cid_mutex);
 
 	dec_client_id_ref(nfs_client_id);
 

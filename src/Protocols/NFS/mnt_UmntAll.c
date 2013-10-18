@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -53,18 +53,18 @@
 /**
  * @brief The Mount proc umount_all function, for all versions.
  *
- * @param[in]  parg
- * @param[in]  pexport
+ * @param[in]  arg
+ * @param[in]  export
  * @param[in]  req_ctx
- * @param[in]  pworker
- * @param[in]  preq
- * @param[out] pres
+ * @param[in]  worker
+ * @param[in]  req
+ * @param[out] res
  *
  */
 
-int mnt_UmntAll(nfs_arg_t * parg, exportlist_t * pexport,
-		struct req_op_context *req_ctx, nfs_worker_data_t * pworker,
-		struct svc_req *preq, nfs_res_t * pres)
+int mnt_UmntAll(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
 
@@ -86,10 +86,10 @@ int mnt_UmntAll(nfs_arg_t * parg, exportlist_t * pexport,
  * 
  * Frees the result structure allocated for mnt_UmntAll.
  * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_UmntAll_Free(nfs_res_t * pres)
+void mnt_UmntAll_Free(nfs_res_t * res)
 {
 	/* Nothing to do */
 	return;

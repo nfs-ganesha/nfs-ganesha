@@ -37,14 +37,14 @@
  * @note This file is intended for use with the shutdown procedure.
  * Functions declared here take no locks to avoid a potential hang in
  * the event that a thread was cancelled while holding one.  They
- * *must not* be called while any threads accessing SAL, Cache_inode,
+ * *must not* be called while any threads accessing SAL, Cache Inode,
  * or FSAL are running.  In general, you should not include this file.
  */
 
 #ifndef HT_SHUTDOWN_H
 #define HT_SHUTDOWN_H
 #include "abstract_mem.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "rbt_tree.h"
 
 static inline int cache_offsetof(struct hash_table *ht, struct rbt_node *node)

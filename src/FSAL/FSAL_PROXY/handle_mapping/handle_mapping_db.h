@@ -2,7 +2,7 @@
 #define _HANDLE_MAPPING_DB_H
 
 #include "handle_mapping.h"
-#include "HashTable.h"
+#include "hashtable.h"
 
 #define DB_FILE_PREFIX "handlemap.sqlite"
 

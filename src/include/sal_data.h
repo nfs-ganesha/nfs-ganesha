@@ -46,7 +46,7 @@
 #include "cache_inode.h"
 #include "abstract_atomic.h"
 #include "abstract_mem.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "fsal.h"
 #include "fsal_types.h"
 #include "log.h"
