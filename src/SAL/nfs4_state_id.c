@@ -89,6 +89,8 @@ int display_state_id_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 int display_state_id_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
   state_t *pstate = (state_t *) (pbuff->pdata);
+  if (!pstate)
+    return display_printf(dspbuf,"state is NULL");
 
   return display_printf(dspbuf,
                         "state %p is associated with pentry=%p type=%u seqid=%u",
