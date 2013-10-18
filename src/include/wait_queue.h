@@ -24,11 +24,11 @@
 
 /**
  *
- * \file wait_queue.h
- * \author Matt Benjamin
- * \brief Pthreads-based wait queue package
+ * @file wait_queue.h
+ * @author Matt Benjamin
+ * @brief Pthreads-based wait queue package
  *
- * \section DESCRIPTION
+ * @section DESCRIPTION
  *
  * This module provides simple wait queues using pthreads primitives.
  */
@@ -97,4 +97,4 @@ static inline void thread_delay_ms(unsigned long ms)
 	nanosleep(&then, NULL);
 }
 
-#endif				/* WAIT_QUEUE_H */
+#endif /* WAIT_QUEUE_H */

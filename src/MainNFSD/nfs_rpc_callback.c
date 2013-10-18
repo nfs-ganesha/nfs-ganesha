@@ -53,9 +53,7 @@
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs4.h"
-#include "gssd.h"
-#include "gss_util.h"
-#include "krb5_util.h"
+#include "gss_credcache.h"
 #include "sal_data.h"
 #include <misc/timespec.h>
 

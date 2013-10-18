@@ -28,21 +28,23 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _ERR_UTIL_H_
-#define _ERR_UTIL_H_
+#ifndef GSS_CREDCACHE_H
+#define GSS_CREDCACHE_H
 
-void initerr(char *progname, int verbosity, int fg);
-int get_verbosity(void);
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/queue.h>
+#include <rpc/rpc.h>
+#include <rpc/auth_gss.h>
+#include <krb5.h>
+#include <gssapi/gssapi.h>
 
-#if NFS_GANESHA
-typedef void (*gssd_err_func_t) (const char *fmt, ...);
-extern gssd_err_func_t gss_err;
-void gssd_set_err(gssd_err_func_t func);
+struct gssd_k5_kt_princ;
 
-#define printerr(pri, ...) gss_err(__VA_ARGS__)
+extern char *ccachesearch[];
 
-#else
-void printerr(int priority, char *format, ...);
-#endif
-
-#endif				/* _ERR_UTIL_H_ */
+int gssd_check_mechs(void);
+int gssd_refresh_krb5_machine_credential(char *,
+					 struct gssd_k5_kt_princ *,
+					 char *);
+#endif /* !GSS_CREDCACHE */

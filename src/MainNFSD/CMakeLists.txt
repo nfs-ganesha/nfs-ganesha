@@ -4,7 +4,6 @@ add_definitions(
 )
 
 include_directories(
-  ${PROJECT_SOURCE_DIR}/RPCAL/gssd
   ${LIBTIRPC_INCLUDE_DIR}
 )
 

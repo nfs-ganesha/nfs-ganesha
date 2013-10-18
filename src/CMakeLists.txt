@@ -344,12 +344,6 @@ if(KRB5_FOUND)
   set(_HAVE_GSSAPI ON)
 endif(KRB5_FOUND)
 
-# needed by RPCAL/gssd for some reason
-if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  find_package(Curses)
-endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-find_package(Readline)
-
 # Validate fsal dependencies
 
 if(USE_FSAL_GLUSTER)
@@ -593,7 +587,6 @@ set(GANESHA_CORE
   avltree
   hashtable
   rpcal
-  gssd
   common_utils
   support
   nfs4callbacks
