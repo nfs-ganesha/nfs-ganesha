@@ -98,13 +98,20 @@
  */
 
 #ifdef HAVE_KRB5
-#define k5_free_unparsed_name(ctx, name)	krb5_free_unparsed_name((ctx), (name))
-#define k5_free_default_realm(ctx, realm)	krb5_free_default_realm((ctx), (realm))
-#define k5_free_kt_entry(ctx, kte)		krb5_free_keytab_entry_contents((ctx),(kte))
+#define k5_free_unparsed_name(ctx, name)	\
+	krb5_free_unparsed_name((ctx), (name))
+#define k5_free_default_realm(ctx, realm)	\
+	krb5_free_default_realm((ctx), (realm))
+#define k5_free_kt_entry(ctx, kte)			\
+	krb5_free_keytab_entry_contents((ctx), (kte))
 #else				/* Heimdal */
-#define k5_free_unparsed_name(ctx, name)	gsh_free(name)
-#define k5_free_default_realm(ctx, realm)	gsh_free(realm)
-#define k5_free_kt_entry(ctx, kte)		krb5_kt_free_entry((ctx),(kte))
+#define k5_free_unparsed_name(ctx, name)	\
+	gsh_free(name)
+#define k5_free_default_realm(ctx, realm)	\
+	gsh_free(realm)
+#define k5_free_kt_entry(ctx, kte)		\
+	krb5_kt_free_entry((ctx), (kte))
+
 #undef USE_GSS_KRB5_CCACHE_NAME
 #define USE_GSS_KRB5_CCACHE_NAME 1
 #endif
@@ -126,8 +133,8 @@ typedef void (*gssd_err_func_t)(const char *, ...);
 
 
 static char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
-static int use_memcache = 0;
-static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
+static int use_memcache;
+static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list;
 static pthread_mutex_t ple_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static char *gssd_k5_err_msg(krb5_context context, krb5_error_code code);
@@ -188,7 +195,8 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		goto out;
 	}
 
-	if ((code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ))) {
+	code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ);
+	if (code != 0) {
 		printerr(0,
 			 "ERROR: Unable to get keytab name in "
 			 "gssd_get_single_krb5_cred\n");
@@ -216,7 +224,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 #endif
 	opts = init_opts;
 
-#else				/* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ADDRESSLESS */
+#else /* HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ADDRESSLESS */
 
 	krb5_get_init_creds_opt_init(&options);
 	krb5_get_init_creds_opt_set_address_list(&options, NULL);
@@ -228,9 +236,10 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	opts = &options;
 #endif
 
-	if ((code =
-	     krb5_get_init_creds_keytab(context, &my_creds, ple->princ, kt, 0,
-					NULL, opts))) {
+	code = krb5_get_init_creds_keytab(context, &my_creds,
+					  ple->princ, kt, 0,
+					  NULL, opts);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(1,
 			 "WARNING: %s while getting initial ticket for "
@@ -261,19 +270,22 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		code = ENOMEM;
 		goto out;
 	}
-	if ((code = krb5_cc_resolve(context, cc_name, &ccache))) {
+	code = krb5_cc_resolve(context, cc_name, &ccache);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s while opening credential cache '%s'\n",
 			 k5err, cc_name);
 		goto out;
 	}
-	if ((code = krb5_cc_initialize(context, ccache, ple->princ))) {
+	code = krb5_cc_initialize(context, ccache, ple->princ);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0,
 			 "ERROR: %s while initializing credential "
 			 "cache '%s'\n", k5err, cc_name);
 	}
-	if ((code = krb5_cc_store_cred(context, ccache, &my_creds))) {
+	code = krb5_cc_store_cred(context, ccache, &my_creds);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s while storing credentials in '%s'\n",
 			 k5err, cc_name);
@@ -296,7 +308,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		krb5_cc_close(context, ccache);
 	krb5_free_cred_contents(context, &my_creds);
 	gsh_free(k5err);
-	return (code);
+	return code;
 }
 
 /*
@@ -421,9 +433,8 @@ static struct gssd_k5_kt_princ *get_ple_by_princ(krb5_context context,
 	pthread_mutex_lock(&ple_mtx);
 
 	ple = find_ple_by_princ(context, princ);
-	if (ple == NULL) {
+	if (ple == NULL)
 		ple = new_ple(context, princ);
-	}
 
 	pthread_mutex_unlock(&ple_mtx);
 
@@ -520,7 +531,7 @@ static int realm_and_service_match(krb5_context context, krb5_principal p,
  */
 static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 				   const char *realm, const char *service,
-				   int *found, krb5_keytab_entry * kte)
+				   int *found, krb5_keytab_entry *kte)
 {
 	krb5_kt_cursor cursor;
 	krb5_error_code code;
@@ -541,14 +552,17 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	 * if we might want to use it as machine credentials.  If so,
 	 * save info in the global principal list (gssd_k5_kt_princ_list).
 	 */
-	if ((code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ))) {
+	code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
-		printerr(0, "ERROR: %s attempting to get keytab name\n", k5err);
+		printerr(0, "ERROR: %s attempting to get keytab name\n",
+			 k5err);
 		gsh_free(k5err);
 		retval = code;
 		goto out;
 	}
-	if ((code = krb5_kt_start_seq_get(context, kt, &cursor))) {
+	code = krb5_kt_start_seq_get(context, kt, &cursor);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0,
 			 "ERROR: %s while beginning keytab scan "
@@ -559,7 +573,8 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	}
 
 	while ((code = krb5_kt_next_entry(context, kt, kte, &cursor)) == 0) {
-		if ((code = krb5_unparse_name(context, kte->principal, &pname))) {
+		code = krb5_unparse_name(context, kte->principal, &pname);
+		if (code != 0) {
 			k5err = gssd_k5_err_msg(context, code);
 			printerr(0,
 				 "WARNING: Skipping keytab entry because "
@@ -603,7 +618,8 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		k5_free_kt_entry(context, kte);
 	}
 
-	if ((code = krb5_kt_end_seq_get(context, kt, &cursor))) {
+	code = krb5_kt_end_seq_get(context, kt, &cursor);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0,
 			 "WARNING: %s while ending keytab scan for "
@@ -622,7 +638,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
  * name of the host we are trying to connect with.
  */
 static int find_keytab_entry(krb5_context context, krb5_keytab kt,
-			     const char *hostname, krb5_keytab_entry * kte,
+			     const char *hostname, krb5_keytab_entry *kte,
 			     const char **svcnames)
 {
 	krb5_error_code code;
@@ -837,7 +853,7 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 {
 	krb5_error_code code = 0;
 	krb5_context context;
-	krb5_keytab kt = NULL;;
+	krb5_keytab kt = NULL;
 	int retval = 0;
 	char *k5err = NULL;
 	const char *svcnames[5] = { "$", "root", "nfs", "host", NULL };
@@ -863,7 +879,8 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 		goto out_wo_context;
 	}
 
-	if ((code = krb5_kt_resolve(context, keytabfile, &kt))) {
+	code = krb5_kt_resolve(context, keytabfile, &kt);
+	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s: %s while resolving keytab '%s'\n",
 			 __func__, k5err, keytabfile);
@@ -874,12 +891,13 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 	if (ple == NULL) {
 		krb5_keytab_entry kte;
 
-		code = find_keytab_entry(context, kt, hostname, &kte, svcnames);
+		code = find_keytab_entry(context, kt, hostname, &kte,
+					 svcnames);
 		if (code) {
 			printerr(0,
 				 "ERROR: %s: no usable keytab entry found "
 				 "in keytab %s for connection with host %s\n",
-				 __FUNCTION__, keytabfile, hostname);
+				 __func__, keytabfile, hostname);
 			retval = code;
 			goto out;
 		}
@@ -888,13 +906,13 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 		k5_free_kt_entry(context, &kte);
 		if (ple == NULL) {
 			char *pname;
-			if ((krb5_unparse_name(context, kte.principal, &pname))) {
+			if ((krb5_unparse_name(context, kte.principal,
+					       &pname))) {
 				pname = NULL;
 			}
 			printerr(0,
-				 "ERROR: %s: Could not locate or create "
-				 "ple struct for principal %s for connection "
-				 "with host %s\n", __FUNCTION__,
+				 "ERROR: %s: Could not locate or create ple struct for principal %s for connection with host %s\n",
+				 __func__,
 				 pname ? pname : "<unparsable>", hostname);
 			if (pname)
 				k5_free_unparsed_name(context, pname);
@@ -923,10 +941,10 @@ int gssd_check_mechs(void)
 			 "Check that gss library is properly configured.\n");
 		goto out;
 	}
-	if (supported_mechs == GSS_C_NO_OID_SET || supported_mechs->count == 0) {
+	if (supported_mechs == GSS_C_NO_OID_SET ||
+	    supported_mechs->count == 0) {
 		printerr(0,
-			 "Unable to obtain list of supported mechanisms. "
-			 "Check that gss library is properly configured.\n");
+			 "Unable to obtain list of supported mechanisms. Check that gss library is properly configured.\n");
 		goto out;
 	}
 	maj_stat = gss_release_oid_set(&min_stat, &supported_mechs);
