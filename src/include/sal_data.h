@@ -90,6 +90,12 @@ typedef struct state_layout_segment state_layout_segment_t;
  *****************************************************************************/
 
 /**
+ * @param Session ID hash
+ */
+
+extern hash_table_t *ht_session_id;
+
+/**
  * @brief Number of forechannel slots in a session
  *
  * This is also the maximum number of backchannel slots we'll use,
@@ -169,6 +175,34 @@ struct state_refer {
 				   call. */
 	slotid4 slot;		/*< The slot ID of the creating call. */
 };
+
+/******************************************************************************
+ *
+ * NFSv4 Recovery data
+ *
+ *****************************************************************************/
+
+/**
+ * @brief Grace period control structure
+ *
+ * This could be expanded to implement grace instances, where a new
+ * grace period is started for every failover.  for now keep it
+ * simple, just a global used by all clients.
+ */
+typedef struct grace {
+	pthread_mutex_t g_mutex;	/*< Mutex */
+	time_t g_start;		/*< Start of grace period */
+	time_t g_duration;	/*< Duration of grace period */
+	struct glist_head g_clid_list;	/*< Clients */
+} grace_t;
+
+/**
+ * @brief A client entry
+ */
+typedef struct clid_entry {
+	struct glist_head cl_list;	/*< Link in the list */
+	char cl_name[256];	/*< Client name */
+} clid_entry_t;
 
 /******************************************************************************
  *
@@ -342,6 +376,8 @@ typedef enum care_t {
 	CARE_NO_MONITOR,	/*< Care, but will not actively monitor */
 	CARE_MONITOR		/*< Will actively monitor client status */
 } care_t;
+
+extern hash_table_t *ht_nsm_client;
 
 /**
  * @brief NSM (rpc.statd) state for a given client.

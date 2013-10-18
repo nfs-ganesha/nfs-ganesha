@@ -212,9 +212,6 @@ option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
 # This option will trigger "long distro name" aka name that contains git information
 option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF )
 
-# Compile with "NO_MOUNT_LIST" [Don't use MOUNT PROTOCOL's  client list]
-set(_NO_MOUNT_LIST ON)
-
 # Choose a shortcut build config
 
 IF(BUILD_CONFIG)
@@ -594,7 +591,6 @@ set(GANESHA_CORE
   cache_inode
   idmap
   avltree
-  weakref
   hashtable
   rpcal
   gssd
@@ -639,8 +635,8 @@ Please run the following command to do that and use cmake again:
     git submodule update --init" )
 ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
-add_subdirectory(Log)
-add_subdirectory(common)
+add_subdirectory(log)
+add_subdirectory(Common)
 add_subdirectory(ConfigParsing)
 add_subdirectory(cidr)
 add_subdirectory(test)

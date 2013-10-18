@@ -50,13 +50,13 @@
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
 
-static void state_share_update_counter(cache_entry_t * entry, int old_access,
+static void state_share_update_counter(cache_entry_t *entry, int old_access,
 				       int old_deny, int new_access,
 				       int new_deny, bool v4);
 
-static unsigned int state_share_get_share_access(cache_entry_t * entry);
+static unsigned int state_share_get_share_access(cache_entry_t *entry);
 
-static unsigned int state_share_get_share_deny(cache_entry_t * entry);
+static unsigned int state_share_get_share_deny(cache_entry_t *entry);
 
 /**
  * @brief Push share state down to FSAL
@@ -69,8 +69,8 @@ static unsigned int state_share_get_share_deny(cache_entry_t * entry);
  *
  * @return State status.
  */
-static state_status_t do_share_op(cache_entry_t * entry, state_owner_t * owner,
-				  fsal_share_param_t * share)
+static state_status_t do_share_op(cache_entry_t *entry, state_owner_t *owner,
+				  fsal_share_param_t *share)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
@@ -103,8 +103,8 @@ static state_status_t do_share_op(cache_entry_t * entry, state_owner_t * owner,
  *
  * @return State status.
  */
-state_status_t state_share_add(cache_entry_t * entry, state_owner_t * owner,
-			       state_t * state)
+state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
+			       state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -144,8 +144,8 @@ state_status_t state_share_add(cache_entry_t * entry, state_owner_t * owner,
 	new_entry_share_access = state_share_get_share_access(entry);
 	new_entry_share_deny = state_share_get_share_deny(entry);
 
-	/* If this file's share bits are different from the supposed value, update
-	 * it.
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
 	 */
 	if ((new_entry_share_access != old_entry_share_access)
 	    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -186,8 +186,8 @@ state_status_t state_share_add(cache_entry_t * entry, state_owner_t * owner,
  *
  * @return State status.
  */
-state_status_t state_share_remove(cache_entry_t * entry, state_owner_t * owner,
-				  state_t * state)
+state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -215,8 +215,8 @@ state_status_t state_share_remove(cache_entry_t * entry, state_owner_t * owner,
 	new_entry_share_access = state_share_get_share_access(entry);
 	new_entry_share_deny = state_share_get_share_deny(entry);
 
-	/* If this file's share bits are different from the supposed value, update
-	 * it.
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
 	 */
 	if ((new_entry_share_access != old_entry_share_access)
 	    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -256,9 +256,9 @@ state_status_t state_share_remove(cache_entry_t * entry, state_owner_t * owner,
  *
  * @return State status.
  */
-state_status_t state_share_upgrade(cache_entry_t * entry,
-				   state_data_t * state_data,
-				   state_owner_t * owner, state_t * state)
+state_status_t state_share_upgrade(cache_entry_t *entry,
+				   state_data_t *state_data,
+				   state_owner_t *owner, state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -302,8 +302,8 @@ state_status_t state_share_upgrade(cache_entry_t * entry,
 	new_entry_share_access = state_share_get_share_access(entry);
 	new_entry_share_deny = state_share_get_share_deny(entry);
 
-	/* If this file's share bits are different from the supposed value, update
-	 * it.
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
 	 */
 	if ((new_entry_share_access != old_entry_share_access)
 	    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -339,7 +339,7 @@ state_status_t state_share_upgrade(cache_entry_t * entry,
 
 /**
  * @brief Downgrade share mode
- * 
+ *
  * The state lock _must_ be held for this call.
  *
  * @param[in,out] entry      File to modify
@@ -349,9 +349,9 @@ state_status_t state_share_upgrade(cache_entry_t * entry,
  *
  * @return State status.
  */
-state_status_t state_share_downgrade(cache_entry_t * entry,
-				     state_data_t * state_data,
-				     state_owner_t * owner, state_t * state)
+state_status_t state_share_downgrade(cache_entry_t *entry,
+				     state_data_t *state_data,
+				     state_owner_t *owner, state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -384,8 +384,8 @@ state_status_t state_share_downgrade(cache_entry_t * entry,
 	new_entry_share_access = state_share_get_share_access(entry);
 	new_entry_share_deny = state_share_get_share_deny(entry);
 
-	/* If this file's share bits are different from the supposed value, update
-	 * it.
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
 	 */
 	if ((new_entry_share_access != old_entry_share_access)
 	    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -422,7 +422,7 @@ state_status_t state_share_downgrade(cache_entry_t * entry,
  * @param[in] state      State to update
  * @param[in] state_data Previous modes to add
  */
-state_status_t state_share_set_prev(state_t * state, state_data_t * state_data)
+state_status_t state_share_set_prev(state_t *state, state_data_t *state_data)
 {
 	state_status_t status = STATE_SUCCESS;
 
@@ -443,8 +443,8 @@ state_status_t state_share_set_prev(state_t * state, state_data_t * state_data)
  * @param[in] state      State to check
  * @param[in] state_data Alleged previous mode
  */
-state_status_t state_share_check_prev(state_t * state,
-				      state_data_t * state_data)
+state_status_t state_share_check_prev(state_t *state,
+				      state_data_t *state_data)
 {
 	state_status_t status = STATE_SUCCESS;
 
@@ -470,7 +470,7 @@ state_status_t state_share_check_prev(state_t * state,
  *
  * @return State status.
  */
-state_status_t state_share_check_conflict(cache_entry_t * entry,
+state_status_t state_share_check_conflict(cache_entry_t *entry,
 					  int share_access, int share_deny)
 {
 	char *cause = "";
@@ -519,7 +519,7 @@ state_status_t state_share_check_conflict(cache_entry_t * entry,
  * @param[in] new_deny   Current deny mode
  * @param[in] v4         True if this is a v4 share/open
  */
-static void state_share_update_counter(cache_entry_t * entry, int old_access,
+static void state_share_update_counter(cache_entry_t *entry, int old_access,
 				       int old_deny, int new_access,
 				       int new_deny, bool v4)
 {
@@ -562,7 +562,7 @@ static void state_share_update_counter(cache_entry_t * entry, int old_access,
  *
  * @return Calculated access.
  */
-static unsigned int state_share_get_share_access(cache_entry_t * entry)
+static unsigned int state_share_get_share_access(cache_entry_t *entry)
 {
 	unsigned int share_access = 0;
 
@@ -585,7 +585,7 @@ static unsigned int state_share_get_share_access(cache_entry_t * entry)
  *
  * @return Deny mode union.
  */
-static unsigned int state_share_get_share_deny(cache_entry_t * entry)
+static unsigned int state_share_get_share_deny(cache_entry_t *entry)
 {
 	unsigned int share_deny = 0;
 
@@ -612,7 +612,7 @@ static unsigned int state_share_get_share_deny(cache_entry_t * entry)
  *
  * @return State status.
  */
-state_status_t state_share_anonymous_io_start(cache_entry_t * entry,
+state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 					      int share_access)
 {
 	state_status_t status = 0;
@@ -639,7 +639,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t * entry,
  * @param[in,out] entry        Entry on which to operate
  * @param[in]     share_access Access bits indicating I/O type
  */
-void state_share_anonymous_io_done(cache_entry_t * entry, int share_access)
+void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
 {
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -665,10 +665,10 @@ void state_share_anonymous_io_done(cache_entry_t * entry, int share_access)
  *
  * @return State status.
  */
-state_status_t state_nlm_share(cache_entry_t * entry,
+state_status_t state_nlm_share(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
-			       exportlist_t * export, int share_access,
-			       int share_deny, state_owner_t * owner)
+			       exportlist_t *export, int share_access,
+			       int share_deny, state_owner_t *owner)
 {
 	unsigned int old_entry_share_access;
 	unsigned int old_entry_share_deny;
@@ -756,8 +756,8 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 
 	pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
-	/* Add share to list for file, if list was empty take a pin ref to keep this
-	 * file pinned in the inode cache.
+	/* Add share to list for file, if list was empty take a pin ref to
+	 * keep this file pinned in the inode cache.
 	 */
 	if (glist_empty(&entry->object.file.nlm_share_list))
 		cache_inode_inc_pin_ref(entry);
@@ -778,8 +778,8 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 	new_entry_share_access = state_share_get_share_access(entry);
 	new_entry_share_deny = state_share_get_share_deny(entry);
 
-	/* If this file's share bits are different from the supposed value, update
-	 * it.
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
 	 */
 	if ((new_entry_share_access != old_entry_share_access)
 	    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -796,8 +796,8 @@ state_status_t state_nlm_share(cache_entry_t * entry,
 						   OPEN4_SHARE_ACCESS_NONE,
 						   OPEN4_SHARE_DENY_NONE, true);
 
-			/* Remove the share from the list for the file. If the list is now
-			 * empty also remove the extra pin ref.
+			/* Remove the share from the list for the file. If the
+			 * list is now empty also remove the extra pin ref.
 			 */
 			glist_del(&nlm_share->sns_share_per_file);
 
@@ -858,8 +858,8 @@ state_status_t state_nlm_share(cache_entry_t * entry,
  *
  * @return State status.
  */
-state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
-				 int share_deny, state_owner_t * owner)
+state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
+				 int share_deny, state_owner_t *owner)
 {
 	struct glist_head *glist, *glistn;
 	unsigned int old_entry_share_access;
@@ -890,8 +890,8 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 		if (different_owners(owner, nlm_share->sns_owner))
 			continue;
 
-		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that any share
-		 * should be matched for unshare.
+		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that
+		 * any share should be matched for unshare.
 		 */
 		if (share_access != OPEN4_SHARE_ACCESS_NONE
 		    && (nlm_share->sns_access != share_access
@@ -916,8 +916,8 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 		new_entry_share_access = state_share_get_share_access(entry);
 		new_entry_share_deny = state_share_get_share_deny(entry);
 
-		/* If this file's share bits are different from the supposed value, update
-		 * it.
+		/* If this file's share bits are different from the supposed
+		 * value, update it.
 		 */
 		if ((new_entry_share_access != old_entry_share_access)
 		    || (new_entry_share_deny != old_entry_share_deny)) {
@@ -928,13 +928,16 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 			status = do_share_op(entry, owner, &share_param);
 
 			if (status != STATE_SUCCESS) {
-				/* Revert the ref counted share state of this file. */
-				state_share_update_counter(entry,
-							   OPEN4_SHARE_ACCESS_NONE,
-							   OPEN4_SHARE_DENY_NONE,
-							   removed_share_access,
-							   removed_share_deny,
-							   true);
+				/* Revert the ref counted share state
+				 * of this file.
+				 */
+				state_share_update_counter(
+					entry,
+					OPEN4_SHARE_ACCESS_NONE,
+					OPEN4_SHARE_DENY_NONE,
+					removed_share_access,
+					removed_share_deny,
+					true);
 
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -950,8 +953,8 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
 			     "removed share_access %u, share_deny %u",
 			     removed_share_access, removed_share_deny);
 
-		/* Remove the share from the list for the file. If the list is now
-		 * empty also remove the extra pin ref.
+		/* Remove the share from the list for the file. If the list
+		 * is now empty also remove the extra pin ref.
 		 */
 		glist_del(&nlm_share->sns_share_per_file);
 
@@ -995,7 +998,7 @@ state_status_t state_nlm_unshare(cache_entry_t * entry, int share_access,
  *
  * @param[in] entry File to wipe
  */
-void state_share_wipe(cache_entry_t * entry)
+void state_share_wipe(cache_entry_t *entry)
 {
 	state_nlm_share_t *nlm_share;
 	struct glist_head *glist;
@@ -1008,8 +1011,8 @@ void state_share_wipe(cache_entry_t * entry)
 
 		owner = nlm_share->sns_owner;
 
-		/* Remove the share from the list for the file. If the list is now
-		 * empty also remove the extra pin ref.
+		/* Remove the share from the list for the file. If the list
+		 * is now empty also remove the extra pin ref.
 		 */
 		glist_del(&nlm_share->sns_share_per_file);
 

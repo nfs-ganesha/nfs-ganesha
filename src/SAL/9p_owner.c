@@ -55,7 +55,7 @@ hash_table_t *ht_9p_owner;
  * @return Length of display string.
  */
 
-int display_9p_owner(state_owner_t * key, char *str)
+int display_9p_owner(state_owner_t *key, char *str)
 {
 	char *strtmp = str;
 
@@ -116,7 +116,7 @@ int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
  * @retval 0 if they're identical.
  */
 
-int compare_9p_owner(state_owner_t * owner1, state_owner_t * owner2)
+int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[HASHTABLE_DISPLAY_STRLEN];
@@ -176,8 +176,8 @@ int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
  * @return The hash index.
  */
 
-uint32_t _9p_owner_value_hash_func(hash_parameter_t * hparam,
-				   struct gsh_buffdesc * key)
+uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
+				   struct gsh_buffdesc *key)
 {
 	unsigned int sum = 0;
 	unsigned int i;
@@ -213,7 +213,7 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t * hparam,
  * @return The RBT hash.
  */
 
-uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * hparam,
+uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 				 struct gsh_buffdesc *key)
 {
 	unsigned int sum = 0;
@@ -248,8 +248,9 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * hparam,
 
 int Init_9p_hash(void)
 {
-	if ((ht_9p_owner =
-	     hashtable_init(&nfs_param._9p_owner_hash_param)) == NULL) {
+	ht_9p_owner = hashtable_init(&nfs_param._9p_owner_hash_param);
+
+	if (ht_9p_owner == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init 9P Owner cache");
 		return -1;
 	}
@@ -266,7 +267,7 @@ int Init_9p_hash(void)
  * @return The found owner or NULL.
  */
 
-state_owner_t *get_9p_owner(struct sockaddr_storage * client_addr,
+state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
 			    uint32_t proc_id)
 {
 	state_owner_t key;

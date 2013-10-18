@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  * Test de libaglae
@@ -177,15 +177,15 @@ void Test1(char *str, char *file)
 	for (i = NIV_NULL; i < NB_LOG_LEVEL; i++) {
 		int j;
 		if (strcmp(tabLogLevel[i].str, ReturnLevelInt(i)) != 0) {
-			LogTest
-			    ("FAILURE: Log level %d did not convert to %s, it converted to %s",
+			LogTest(
+			     "FAILURE: Log level %d did not convert to %s, it converted to %s",
 			     i, tabLogLevel[i].str, ReturnLevelInt(i));
 			exit(1);
 		}
 		j = ReturnLevelAscii(tabLogLevel[i].str);
 		if (j != i) {
-			LogTest
-			    ("FAILURE: Log level %s did not convert to %d, it converted to %d",
+			LogTest(
+			     "FAILURE: Log level %s did not convert to %d, it converted to %d",
 			     tabLogLevel[i].str, i, j);
 			exit(1);
 		}
@@ -214,12 +214,12 @@ void Test1(char *str, char *file)
 	LogTest("Got it set");
 	LogEvent(COMPONENT_DISPATCH, "This should go to %s", file);
 
-	/*
-	 * Set up for tests that will verify what was actually produced by log messages.
-	 * This is used to test log levels and to test the log_vnsprintf function.
+	/* Set up for tests that will verify what was actually produced by log
+	 * messages. This is used to test log levels and to test the
+	 * log_vnsprintf function.
 	 */
-	/* TODO FSF: this can be done by setting the right header flags and peeking at
-	 * the context buffer.
+	/** @todo FSF: this can be done by setting the right header flags and
+	 * peeking at the context buffer.
 	 */
 	SetComponentLogBuffer(COMPONENT_MAIN, &buffer);
 	SetComponentLogBuffer(COMPONENT_INIT, &buffer);
@@ -280,9 +280,8 @@ void run_Tests(int all, char *arg, char *str, char *file)
 {
 	SetNameFunction(arg);
 
-	if (all) {
+	if (all)
 		Test1(str, file);
-	}
 }
 
 void *run_MT_Tests(void *arg)
@@ -292,7 +291,7 @@ void *run_MT_Tests(void *arg)
 	return NULL;
 }
 
-static char usage[] = "usage:\n\ttest_liblog STD|MT\n";
+static const char usage[] = "usage:\n\ttest_liblog STD|MT\n";
 
 #define NB_THREADS 20
 
@@ -353,8 +352,9 @@ int main(int argc, char *argv[])
 			/* creation of attributes */
 			for (th_index = 0; th_index < NB_THREADS; th_index++) {
 				pthread_attr_init(&th_attr[th_index]);
-				pthread_attr_setdetachstate(&th_attr[th_index],
-							    PTHREAD_CREATE_JOINABLE);
+				pthread_attr_setdetachstate(
+					&th_attr[th_index],
+					PTHREAD_CREATE_JOINABLE);
 			}
 
 			/* creation of threads with their names */

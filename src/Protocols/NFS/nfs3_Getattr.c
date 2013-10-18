@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -66,9 +66,9 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs_Getattr(nfs_arg_t * arg, exportlist_t * export,
-		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		struct svc_req *req, nfs_res_t * res)
+int nfs_Getattr(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
@@ -82,19 +82,24 @@ int nfs_Getattr(nfs_arg_t * arg, exportlist_t * export,
 			 str);
 	}
 
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_getattr3.object, req_ctx, export,
-				&res->res_getattr3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
+				    req_ctx,
+				    export,
+				    &res->res_getattr3.status,
+				    &rc);
+
 	if (entry == NULL) {
-		LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d",
+		/* Status and rc have been set by nfs3_FhandleToCache */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs_Getattr returning %d",
 			     rc);
 		goto out;
 	}
 
-	if (!
-	    (cache_entry_to_nfs3_Fattr
-	     (entry, req_ctx,
-	      &(res->res_getattr3.GETATTR3res_u.resok.obj_attributes)))) {
+	if (!cache_entry_to_nfs3_Fattr(
+		       entry,
+		       req_ctx,
+		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
 		res->res_getattr3.status =
 		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
 
@@ -104,6 +109,7 @@ int nfs_Getattr(nfs_arg_t * arg, exportlist_t * export,
 		rc = NFS_REQ_OK;
 		goto out;
 	}
+
 	res->res_getattr3.status = NFS3_OK;
 
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
@@ -124,7 +130,7 @@ int nfs_Getattr(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] resp Result structure
  *
  */
-void nfs_Getattr_Free(nfs_res_t * resp)
+void nfs_Getattr_Free(nfs_res_t *resp)
 {
 	/* Nothing to do here */
 	return;

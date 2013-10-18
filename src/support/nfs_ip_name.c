@@ -7,12 +7,12 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 3 of
- * the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
@@ -56,7 +56,7 @@ unsigned int expiration_time;
  * @see hashtable_init
  *
  */
-uint32_t ip_name_value_hash_func(hash_parameter_t * hparam,
+uint32_t ip_name_value_hash_func(hash_parameter_t *hparam,
 				 struct gsh_buffdesc *buffclef)
 {
 	return hash_sockaddr(buffclef->addr, IGNORE_PORT) % hparam->index_size;
@@ -73,8 +73,8 @@ uint32_t ip_name_value_hash_func(hash_parameter_t * hparam,
  * @see hashtable_init
  *
  */
-uint64_t ip_name_rbt_hash_func(hash_parameter_t * hparam,
-			       struct gsh_buffdesc * buffclef)
+uint64_t ip_name_rbt_hash_func(hash_parameter_t *hparam,
+			       struct gsh_buffdesc *buffclef)
 {
 	return hash_sockaddr(buffclef->addr, IGNORE_PORT);
 }
@@ -83,13 +83,13 @@ uint64_t ip_name_rbt_hash_func(hash_parameter_t * hparam,
  *
  * compare_ip_name: compares the ip address stored in the key buffers.
  *
- * compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in 
- * the hashtable storing the nfs duplicated requests. 
+ * compare the ip address stored in the key buffers. This function is to be used
+ * as 'compare_key' field in the hashtable storing the nfs duplicated requests.
  *
  * @param buff1 [IN] first key
  * @param buff2 [IN] second key
  *
- * @return 0 if keys are identifical, 1 if they are different. 
+ * @return 0 if keys are identifical, 1 if they are different.
  *
  */
 int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
@@ -145,7 +145,7 @@ int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str)
  *
  */
 
-int nfs_ip_name_add(sockaddr_t * ipaddr, char *hostname, size_t size)
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffdata;
@@ -166,8 +166,9 @@ int nfs_ip_name_add(sockaddr_t * ipaddr, char *hostname, size_t size)
 		return IP_NAME_INSERT_MALLOC_ERROR;
 	}
 
-	/* I have to keep an integer as key, I wil use the pointer buffkey->addr for this, 
-	 * this also means that buffkey->len will be 0 */
+	/* I have to keep an integer as key, I wil use the pointer buffkey->addr
+	 * for this, this also means that buffkey->len will be 0
+	 */
 	memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
 
 	buffkey.addr = (caddr_t) pipaddr;
@@ -204,7 +205,9 @@ int nfs_ip_name_add(sockaddr_t * ipaddr, char *hostname, size_t size)
 	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache", ipstring,
 		 nfs_ip_name->hostname);
 
-	/* I build the data with the request pointer that should be in state 'IN USE' */
+	/* I build the data with the request pointer
+	 * that should be in state 'IN USE'
+	 */
 	nfs_ip_name->timestamp = time(NULL);
 
 	buffdata.addr = (caddr_t) nfs_ip_name;
@@ -224,14 +227,14 @@ int nfs_ip_name_add(sockaddr_t * ipaddr, char *hostname, size_t size)
  * nfs_ip_name_get: Tries to get an entry for ip_name cache.
  *
  * Tries to get an entry for ip_name cache.
- * 
+ *
  * @param ipaddr   [IN]  the ip address requested
  * @param hostname [OUT] the hostname
  *
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_get(sockaddr_t * ipaddr, char *hostname, size_t size)
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
@@ -243,7 +246,9 @@ int nfs_ip_name_get(sockaddr_t * ipaddr, char *hostname, size_t size)
 	buffkey.addr = (caddr_t) ipaddr;
 	buffkey.len = sizeof(sockaddr_t);
 
-	if (HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS) {
+	if (HashTable_Get(ht_ip_name,
+			  &buffkey,
+			  &buffval) == HASHTABLE_SUCCESS) {
 		nfs_ip_name = buffval.addr;
 		strmaxcpy(hostname, nfs_ip_name->hostname, size);
 
@@ -263,13 +268,13 @@ int nfs_ip_name_get(sockaddr_t * ipaddr, char *hostname, size_t size)
  * nfs_ip_name_remove: Tries to remove an entry for ip_name cache
  *
  * Tries to remove an entry for ip_name cache.
- * 
+ *
  * @param ipaddr           [IN]    the ip address to be uncached.
  *
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_remove(sockaddr_t * ipaddr)
+int nfs_ip_name_remove(sockaddr_t *ipaddr)
 {
 	struct gsh_buffdesc buffkey, old_value;
 	nfs_ip_name_t *nfs_ip_name = NULL;
@@ -301,7 +306,7 @@ int nfs_ip_name_remove(sockaddr_t * ipaddr)
  * nfs_Init_ip_name: Init the hashtable for IP/name cache.
  *
  * Perform all the required initialization for hashtable IP/name cache
- * 
+ *
  * @param param [IN] parameter used to init the ip name cache
  *
  * @return 0 if successful, -1 otherwise
@@ -309,7 +314,9 @@ int nfs_ip_name_remove(sockaddr_t * ipaddr)
  */
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
 {
-	if ((ht_ip_name = hashtable_init(&param.hash_param)) == NULL) {
+	ht_ip_name = hashtable_init(&param.hash_param);
+
+	if (ht_ip_name == NULL) {
 		LogCrit(COMPONENT_INIT,
 			"NFS IP_NAME: Cannot init IP/name cache");
 		return -1;
@@ -346,9 +353,9 @@ int nfs_ip_name_populate(char *path)
 	}
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(config_file,
-				   CONF_LABEL_IP_NAME_HOSTS)) == NULL) {
+	block = config_FindItemByName(config_file, CONF_LABEL_IP_NAME_HOSTS);
+
+	if (block == NULL) {
 		LogCrit(COMPONENT_CONFIG, "Can't get label %s in file %s",
 			CONF_LABEL_IP_NAME_HOSTS, path);
 		return IP_NAME_NOT_FOUND;
@@ -365,8 +372,9 @@ int nfs_ip_name_populate(char *path)
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Error reading key[%d] from section \"%s\" of configuration file.",
 				var_index, label);

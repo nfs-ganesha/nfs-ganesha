@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -48,9 +48,9 @@
 #include "nfs_tools.h"
 #include "server_stats.h"
 
-static void nfs_read_ok(exportlist_t * export, struct svc_req *req,
-			struct req_op_context *req_ctx, nfs_res_t * res,
-			char *data, uint32_t read_size, cache_entry_t * entry,
+static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
+			struct req_op_context *req_ctx, nfs_res_t *res,
+			char *data, uint32_t read_size, cache_entry_t *entry,
 			int eof)
 {
 	if ((read_size == 0) && (data != NULL)) {
@@ -89,9 +89,9 @@ static void nfs_read_ok(exportlist_t * export, struct svc_req *req,
  *
  */
 
-int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	     struct svc_req *req, nfs_res_t * res)
+int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr;
@@ -128,7 +128,9 @@ int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
 	entry =
 	    nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx, export,
 				&res->res_read3.status, &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -215,10 +217,16 @@ int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
 			goto out;
 		}
 
-		cache_status =
-		    cache_inode_rdwr(entry, CACHE_INODE_READ, offset, size,
-				     &read_size, data, &eof_met, req_ctx,
-				     &sync);
+		cache_status = cache_inode_rdwr(entry,
+						CACHE_INODE_READ,
+						offset,
+						size,
+						&read_size,
+						data,
+						&eof_met,
+						req_ctx,
+						&sync);
+
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			nfs_read_ok(export, req, req_ctx, res, data, read_size,
 				    entry, eof_met);
@@ -235,6 +243,7 @@ int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	res->res_read3.status = nfs3_Errno(cache_status);
+
 	nfs_SetPostOpAttr(entry, req_ctx,
 			  &res->res_read3.READ3res_u.resfail.file_attributes);
 
@@ -244,6 +253,7 @@ int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
 	/* return references */
 	if (entry)
 		cache_inode_put(entry);
+
 #ifdef USE_DBUS_STATS
 	server_stats_io_done(req_ctx, size, read_size,
 			     (rc == NFS_REQ_OK) ? true : false, false);
@@ -258,7 +268,7 @@ int nfs_Read(nfs_arg_t * arg, exportlist_t * export,
  *
  * @param[in,out] res Result structure
  */
-void nfs3_Read_Free(nfs_res_t * res)
+void nfs3_Read_Free(nfs_res_t *res)
 {
 	if ((res->res_read3.status == NFS3_OK)
 	    && (res->res_read3.READ3res_u.resok.data.data_len != 0)) {

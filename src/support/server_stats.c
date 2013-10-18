@@ -74,12 +74,12 @@
 /* Classify protocol ops for stats purposes
  */
 
-typedef enum {
+enum proto_op_type {
 	GENERAL_OP = 0,		/* default for array init */
 	READ_OP,
 	WRITE_OP,
 	LAYOUT_OP
-} proto_op_type;
+};
 
 static const uint32_t nfsv3_optype[NFS_V3_NB_COMMAND] = {
 	[NFSPROC3_READ] = READ_OP,
@@ -216,7 +216,7 @@ struct _9p_stats {
  */
 
 static struct nfsv3_stats *get_v3(struct gsh_stats *stats,
-				  pthread_mutex_t * lock)
+				  pthread_mutex_t *lock)
 {
 	if (unlikely(stats->nfsv3 == NULL)) {
 		pthread_mutex_lock(lock);
@@ -229,7 +229,7 @@ static struct nfsv3_stats *get_v3(struct gsh_stats *stats,
 }
 
 static struct mnt_stats *get_mnt(struct gsh_stats *stats,
-				 pthread_mutex_t * lock)
+				 pthread_mutex_t *lock)
 {
 	if (unlikely(stats->mnt == NULL)) {
 		pthread_mutex_lock(lock);
@@ -241,7 +241,7 @@ static struct mnt_stats *get_mnt(struct gsh_stats *stats,
 }
 
 static struct nlmv4_stats *get_nlm4(struct gsh_stats *stats,
-				    pthread_mutex_t * lock)
+				    pthread_mutex_t *lock)
 {
 	if (unlikely(stats->nlm4 == NULL)) {
 		pthread_mutex_lock(lock);
@@ -253,7 +253,7 @@ static struct nlmv4_stats *get_nlm4(struct gsh_stats *stats,
 }
 
 static struct rquota_stats *get_rquota(struct gsh_stats *stats,
-				       pthread_mutex_t * lock)
+				       pthread_mutex_t *lock)
 {
 	if (unlikely(stats->rquota == NULL)) {
 		pthread_mutex_lock(lock);
@@ -266,7 +266,7 @@ static struct rquota_stats *get_rquota(struct gsh_stats *stats,
 }
 
 static struct nfsv40_stats *get_v40(struct gsh_stats *stats,
-				    pthread_mutex_t * lock)
+				    pthread_mutex_t *lock)
 {
 	if (unlikely(stats->nfsv40 == NULL)) {
 		pthread_mutex_lock(lock);
@@ -279,7 +279,7 @@ static struct nfsv40_stats *get_v40(struct gsh_stats *stats,
 }
 
 static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
-				    pthread_mutex_t * lock)
+				    pthread_mutex_t *lock)
 {
 	if (unlikely(stats->nfsv41 == NULL)) {
 		pthread_mutex_lock(lock);
@@ -292,7 +292,7 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 }
 
 #ifdef _USE_9P
-static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_mutex_t * lock)
+static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_mutex_t *lock)
 {
 	if (unlikely(stats->_9p == NULL)) {
 		pthread_mutex_lock(lock);
@@ -377,7 +377,7 @@ static void record_io(struct xfer_op *iop, size_t requested, size_t transferred,
  * @brief record i/o stats by protocol
  */
 
-static void record_io_stats(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
+static void record_io_stats(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
 			    struct req_op_context *req_ctx, size_t requested,
 			    size_t transferred, bool success, bool is_write)
 {
@@ -484,7 +484,7 @@ static void record_layout(struct nfsv41_stats *sp, int proto_op, int status)
  * @brief Record NFS V4 compound stats
  */
 
-static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
+static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
 			    int proto_op, int minorversion,
 			    nsecs_elapsed_t request_time,
 			    nsecs_elapsed_t qwait_time, int status)
@@ -538,7 +538,7 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
  * @brief Record NFS V4 compound stats
  */
 
-static void record_compound(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
+static void record_compound(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
 			    int minorversion, uint64_t num_ops,
 			    nsecs_elapsed_t request_time,
 			    nsecs_elapsed_t qwait_time, bool success)
@@ -581,8 +581,8 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
  * @param dup          [IN] detected this was a dup request
  */
 
-static void record_stats(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
-			 request_data_t * reqdata, bool success,
+static void record_stats(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
+			 request_data_t *reqdata, bool success,
 			 nsecs_elapsed_t request_time,
 			 nsecs_elapsed_t qwait_time, bool dup)
 {
@@ -656,7 +656,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_mutex_t * lock,
  */
 
 void server_stats_nfs_done(struct req_op_context *req_ctx,
-			   request_data_t * reqdata, int rc, bool dup)
+			   request_data_t *reqdata, int rc, bool dup)
 {
 	struct gsh_client *client = req_ctx->client;
 	struct server_stats *server_st;
@@ -698,8 +698,10 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
-	if (client == NULL)
-		return;		/* we can have cases where we cannot find the client... */
+	if (client == NULL) {
+		/* we can have cases where we cannot find the client... */
+		return;
+	}
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	server_st = container_of(client, struct server_stats, client);
@@ -809,29 +811,29 @@ void server_stats_io_done(struct req_op_context *req_ctx, size_t requested,
  * @param iter        [IN] iterator to stuff struct into
  */
 
-void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st)
+void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 {
 	int stats_available;
 
-	stats_available = ! !(st->nfsv3);
+	stats_available = st->nfsv3 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->mnt);
+	stats_available = st->mnt != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->nlm4);
+	stats_available = st->nlm4 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->rquota);
+	stats_available = st->rquota != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->nfsv40);
+	stats_available = st->nfsv40 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->nfsv41);
+	stats_available = st->nfsv41 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
-	stats_available = ! !(st->_9p);
+	stats_available = st->_9p != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
 }
@@ -852,7 +854,7 @@ void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st)
  * @param iter  [IN] interator in reply stream to fill
  */
 
-static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter * iter)
+static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 {
 	DBusMessageIter struct_iter;
 
@@ -873,7 +875,7 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter * iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
-void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter * iter)
+void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
@@ -883,7 +885,7 @@ void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter * iter)
 	server_dbus_iostats(&v3p->write, iter);
 }
 
-void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter * iter)
+void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
@@ -893,7 +895,7 @@ void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter * iter)
 	server_dbus_iostats(&v40p->write, iter);
 }
 
-void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter * iter)
+void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
@@ -903,7 +905,7 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter * iter)
 	server_dbus_iostats(&v41p->write, iter);
 }
 
-void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter * iter)
+void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
@@ -926,7 +928,7 @@ void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter * iter)
  * @param iter  [IN] interator in reply stream to fill
  */
 
-static void server_dbus_layouts(struct layout_op *lop, DBusMessageIter * iter)
+static void server_dbus_layouts(struct layout_op *lop, DBusMessageIter *iter)
 {
 	DBusMessageIter struct_iter;
 
@@ -941,7 +943,7 @@ static void server_dbus_layouts(struct layout_op *lop, DBusMessageIter * iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
-void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter * iter)
+void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 

@@ -181,7 +181,7 @@ typedef enum protos {
 /**
  * @brief Support NFSv3 and NFSv4.
  */
-#define CORE_OPTION_ALL_VERS CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4
+#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)
 
 typedef struct nfs_core_param {
 	/** An array of port numbers, one for each protocol.  Set by

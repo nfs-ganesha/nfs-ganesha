@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -67,9 +67,9 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs3_Mknod(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
 	pre_op_attr pre_parent;
@@ -101,11 +101,14 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 	    FALSE;
 
 	/* retrieve parent entry */
-	parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_mknod3.where.dir, req_ctx, export,
-				&res->res_mknod3.status, &rc);
+	parent_entry = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
+					   req_ctx,
+					   export,
+					   &res->res_mknod3.status,
+					   &rc);
+
 	if (parent_entry == NULL) {
-		/* Stale NFS FH ? */
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -131,9 +134,8 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 	case NF3BLK:
 		if (arg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.
 		    mode.set_it) {
-			mode =
-			    (arg->arg_mknod3.what.mknoddata3_u.device.
-			     dev_attributes.mode.set_mode3_u.mode);
+			mode = arg->arg_mknod3.what.mknoddata3_u.device.
+					dev_attributes.mode.set_mode3_u.mode;
 		} else {
 			mode = 0;
 		}
@@ -143,10 +145,9 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 		create_arg.dev_spec.minor =
 		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
 
-		if (nfs3_Sattr_To_FSALattr
-		    (&sattr,
-		     &arg->arg_mknod3.what.mknoddata3_u.
-		     device.dev_attributes) == 0) {
+		if (nfs3_Sattr_To_FSALattr(&sattr,
+					   &arg->arg_mknod3.what.mknoddata3_u.
+						device.dev_attributes) == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -157,20 +158,18 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 	case NF3FIFO:
 	case NF3SOCK:
 		if (arg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.
-		    set_it) {
-			mode =
-			    (arg->arg_mknod3.what.mknoddata3_u.pipe_attributes.
-			     mode.set_mode3_u.mode);
-		} else {
+		    set_it)
+			mode = (arg->arg_mknod3.what.mknoddata3_u.
+				pipe_attributes.mode.set_mode3_u.mode);
+		else
 			mode = 0;
-		}
 
 		create_arg.dev_spec.major = 0;
 		create_arg.dev_spec.minor = 0;
 
-		if (nfs3_Sattr_To_FSALattr
-		    (&sattr,
-		     &arg->arg_mknod3.what.mknoddata3_u.pipe_attributes) == 0) {
+		if (nfs3_Sattr_To_FSALattr(&sattr,
+					   &arg->arg_mknod3.what.mknoddata3_u.
+						pipe_attributes) == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -205,35 +204,40 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
-	fsal_status =
-	    export->export_hdl->ops->check_quota(export->export_hdl,
-						 export->fullpath,
-						 FSAL_QUOTA_INODES, req_ctx);
+	fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,
+							   export->fullpath,
+							   FSAL_QUOTA_INODES,
+							   req_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mknod3.status = NFS3ERR_DQUOT;
 		return NFS_REQ_OK;
 	}
 
 	/* Try to create it */
-	cache_status =
-	    cache_inode_create(parent_entry, file_name, nodetype, mode,
-			       &create_arg, req_ctx, &node_entry);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		goto out_fail;
-	}
+	cache_status = cache_inode_create(parent_entry,
+					  file_name,
+					  nodetype,
+					  mode,
+					  &create_arg,
+					  req_ctx,
+					  &node_entry);
 
-	MKNOD3resok *const rok = &res->res_mknod3.MKNOD3res_u.resok;
+	if (cache_status != CACHE_INODE_SUCCESS)
+		goto out_fail;
+
+	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
 
 	/* Build file handle */
 	res->res_mknod3.status =
-	    nfs3_AllocateFH(&rok->obj.post_op_fh3_u.handle);
+		nfs3_AllocateFH(&rok->obj.post_op_fh3_u.handle);
+
 	if (res->res_mknod3.status != NFS3_OK) {
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	if (nfs3_FSALToFhandle
-	    (&rok->obj.post_op_fh3_u.handle, node_entry->obj_handle) == 0) {
+	if (nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
+			       node_entry->obj_handle) == 0) {
 		gsh_free(rok->obj.post_op_fh3_u.handle.data.data_val);
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -251,11 +255,13 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 		&& (req_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (req_ctx->creds->caller_gid != sattr.group))) {
-		cache_status =
-		    cache_inode_setattr(node_entry, &sattr, req_ctx, false);
-		if (cache_status != CACHE_INODE_SUCCESS) {
+		cache_status = cache_inode_setattr(node_entry,
+						   &sattr,
+						   req_ctx,
+						   false);
+
+		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
-		}
 	}
 
 	/* Build entry attributes */
@@ -279,13 +285,11 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 	/* return references */
-	if (parent_entry) {
+	if (parent_entry)
 		cache_inode_put(parent_entry);
-	}
 
-	if (node_entry) {
+	if (node_entry)
 		cache_inode_put(node_entry);
-	}
 
 	return rc;
 }				/* nfs3_Mknod */
@@ -298,7 +302,7 @@ int nfs3_Mknod(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res The result structure.
  *
  */
-void nfs3_Mknod_Free(nfs_res_t * res)
+void nfs3_Mknod_Free(nfs_res_t *res)
 {
 	if ((res->res_mknod3.status == NFS3_OK)
 	    && (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {

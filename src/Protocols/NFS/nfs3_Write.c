@@ -34,7 +34,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -69,9 +69,9 @@
  *
  */
 
-int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
-	      struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	      struct svc_req *req, nfs_res_t * res)
+int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
+	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr = {
@@ -92,6 +92,7 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 
 		offset = arg->arg_write3.offset;
 		size = arg->arg_write3.count;
+
 		switch (arg->arg_write3.stable) {
 		case UNSTABLE:
 			stables = "UNSTABLE";
@@ -104,8 +105,11 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 			break;
 		}
 
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_write3.file, NULL,
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_write3.file,
+				 NULL,
 				 str);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Write handle: %s "
 			 "start: %" PRIx64 " len: %" PRIx64 " %s", str, offset,
@@ -117,19 +121,25 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 	    false;
 	res->res_write3.WRITE3res_u.resfail.file_wcc.after.attributes_follow =
 	    false;
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_write3.file, req_ctx, export,
-				&res->res_write3.status, &rc);
+
+	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
+				    req_ctx,
+				    export,
+				    &res->res_write3.status,
+				    &rc);
+
 	if (entry == NULL) {
-		/* Stale NFS FH ? */
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
 
 	if (entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid) {
-		cache_status =
-		    cache_inode_access(entry, FSAL_WRITE_ACCESS, req_ctx);
+		cache_status = cache_inode_access(entry,
+						  FSAL_WRITE_ACCESS,
+						  req_ctx);
+
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res->res_write3.status = nfs3_Errno(cache_status);
 			rc = NFS_REQ_OK;
@@ -153,16 +163,18 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 	fsal_status =
 	    export->export_hdl->ops->check_quota(export->export_hdl,
 						 export->fullpath,
-						 FSAL_QUOTA_BLOCKS, req_ctx);
+						 FSAL_QUOTA_BLOCKS,
+						 req_ctx);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
-
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
 	offset = arg->arg_write3.offset;
 	size = arg->arg_write3.count;
+
 	if (size > arg->arg_write3.data.data_len) {
 		/* should never happen */
 		res->res_write3.status = NFS3ERR_INVAL;
@@ -193,6 +205,7 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 			res->res_write3.status = NFS3ERR_INVAL;
 
 			res->res_write3.status = nfs3_Errno(cache_status);
+
 			nfs_SetWccData(NULL, entry, req_ctx,
 				       &res->res_write3.WRITE3res_u.resfail.
 				       file_wcc);
@@ -202,12 +215,10 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 		}
 	}
 
-	/* We should take care not to exceed FSINFO wtmax field for
-	   the size */
+	/* We should take care not to exceed FSINFO wtmax field for the size */
 	if ((export->export_perms.options & EXPORT_OPTION_MAXWRITE)
 	    && size > export->MaxWrite) {
-		/* The client asked for too much data, we must
-		   restrict him */
+		/* The client asked for too much data, we must restrict him */
 		size = export->MaxWrite;
 	}
 
@@ -230,17 +241,17 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 			res->res_write3.WRITE3res_u.resok.count = written_size;
 
 			/* How do we commit data ? */
-			if (sync) {
+			if (sync)
 				res->res_write3.WRITE3res_u.resok.committed =
 				    FILE_SYNC;
-			} else {
+			else
 				res->res_write3.WRITE3res_u.resok.committed =
 				    UNSTABLE;
-			}
 
 			/* Set the write verifier */
 			memcpy(res->res_write3.WRITE3res_u.resok.verf,
-			       NFS3_write_verifier, sizeof(writeverf3));
+			       NFS3_write_verifier,
+			       sizeof(writeverf3));
 
 			res->res_write3.status = NFS3_OK;
 
@@ -249,7 +260,8 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 		}
 	}
 
-	LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%s",
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "failed write: cache_status=%s",
 		     cache_inode_err_str(cache_status));
 
 	/* If we are here, there was an error */
@@ -259,6 +271,7 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	res->res_write3.status = nfs3_Errno(cache_status);
+
 	nfs_SetWccData(NULL, entry, req_ctx,
 		       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
@@ -286,7 +299,7 @@ int nfs_Write(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Write_Free(nfs_res_t * res)
+void nfs_Write_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs_Write_Free */

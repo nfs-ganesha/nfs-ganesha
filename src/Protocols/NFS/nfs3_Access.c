@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -66,9 +66,9 @@
  *
  */
 
-int nfs3_Access(nfs_arg_t * arg, exportlist_t * export,
-		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		struct svc_req *req, nfs_res_t * res)
+int nfs3_Access(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	cache_inode_status_t cache_status;
 	cache_entry_t *entry = NULL;
@@ -87,10 +87,14 @@ int nfs3_Access(nfs_arg_t * arg, exportlist_t * export,
 	    FALSE;
 
 	/* Convert file handle into a vnode */
-	entry =
-	    nfs3_FhandleToCache(&(arg->arg_access3.object), req_ctx, export,
-				&(res->res_access3.status), &rc);
+	entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
+				    req_ctx,
+				    export,
+				    &(res->res_access3.status),
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -124,9 +128,8 @@ int nfs3_Access(nfs_arg_t * arg, exportlist_t * export,
 			    obj_attributes));
  out:
 
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs3_Access */
@@ -139,7 +142,7 @@ int nfs3_Access(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure.
  *
  */
-void nfs3_Access_Free(nfs_res_t * res)
+void nfs3_Access_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
 	return;

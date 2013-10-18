@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -46,7 +47,7 @@
  *
  * @return The lease lifetime or 0 if expired.
  */
-static unsigned int _valid_lease(nfs_client_id_t * clientid)
+static unsigned int _valid_lease(nfs_client_id_t *clientid)
 {
 	time_t t;
 
@@ -75,7 +76,7 @@ static unsigned int _valid_lease(nfs_client_id_t * clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-bool valid_lease(nfs_client_id_t * clientid)
+bool valid_lease(nfs_client_id_t *clientid)
 {
 	unsigned int valid;
 
@@ -104,7 +105,7 @@ bool valid_lease(nfs_client_id_t * clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int reserve_lease(nfs_client_id_t * clientid)
+int reserve_lease(nfs_client_id_t *clientid)
 {
 	unsigned int valid;
 
@@ -137,7 +138,7 @@ int reserve_lease(nfs_client_id_t * clientid)
  * @return 1 if lease is valid, 0 if not.
  *
  */
-void update_lease(nfs_client_id_t * clientid)
+void update_lease(nfs_client_id_t *clientid)
 {
 	clientid->cid_lease_reservations--;
 

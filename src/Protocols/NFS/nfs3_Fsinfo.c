@@ -67,9 +67,9 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Fsinfo(nfs_arg_t * arg, exportlist_t * export,
-		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		struct svc_req *req, nfs_res_t * res)
+int nfs3_Fsinfo(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
@@ -86,17 +86,22 @@ int nfs3_Fsinfo(nfs_arg_t * arg, exportlist_t * export,
 	res->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow =
 	    FALSE;
 
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot, req_ctx, export,
-				&res->res_fsinfo3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
+				    req_ctx,
+				    export,
+				    &res->res_fsinfo3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	/* New fields were added to nfs_config_t to handle this
 	   value. We use them */
 
-	FSINFO3resok *const FSINFO_FIELD = &res->res_fsinfo3.FSINFO3res_u.resok;
+	FSINFO3resok * const FSINFO_FIELD =
+		&res->res_fsinfo3.FSINFO3res_u.resok;
 
 	FSINFO_FIELD->rtmax = export->MaxRead;
 	FSINFO_FIELD->rtpref = export->PrefRead;
@@ -137,9 +142,8 @@ int nfs3_Fsinfo(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs3_Fsinfo */
@@ -152,7 +156,7 @@ int nfs3_Fsinfo(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res The result structure
  *
  */
-void nfs3_Fsinfo_Free(nfs_res_t * res)
+void nfs3_Fsinfo_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs3_Fsinfo_Free */

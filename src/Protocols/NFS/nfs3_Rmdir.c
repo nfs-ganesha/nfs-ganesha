@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
-	      struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	      struct svc_req *req, nfs_res_t * res)
+int nfs_Rmdir(nfs_arg_t *arg, exportlist_t *export,
+	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
 	cache_entry_t *child_entry = NULL;
@@ -83,8 +83,11 @@ int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_rmdir3.object.dir,
-				 NULL, str);
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_rmdir3.object.dir,
+				 NULL,
+				 str);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s "
 			 "name: %s", str, name);
@@ -96,20 +99,25 @@ int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
 	    FALSE;
 	res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
-	parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir, req_ctx, export,
-				&res->res_rmdir3.status, &rc);
+
+	parent_entry = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
+					   req_ctx,
+					   export,
+					   &res->res_rmdir3.status,
+					   &rc);
+
 	if (parent_entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
 	/* Sanity checks: directory name must be non-null; parent
-	   must be a directory. */
+	 * must be a directory.
+	 */
 	if (parent_entry->type != DIRECTORY) {
 		res->res_rmdir3.status = NFS3ERR_NOTDIR;
-
 		rc = NFS_REQ_OK;
 		goto out;
 	}
@@ -118,28 +126,34 @@ int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
 		cache_status = CACHE_INODE_INVALID_ARGUMENT;
 		goto out_fail;
 	}
+
 	/* Lookup to the entry to be removed to check that it is a
-	   directory */
-	cache_status =
-	    cache_inode_lookup(parent_entry, name, req_ctx, &child_entry);
+	 * directory
+	 */
+	cache_status = cache_inode_lookup(parent_entry,
+					  name,
+					  req_ctx,
+					  &child_entry);
+
 	if (child_entry != NULL) {
 		/* Sanity check: make sure we are about to remove a
-		   directory */
+		 * directory
+		 */
 		if (child_entry->type != DIRECTORY) {
 			res->res_rmdir3.status = NFS3ERR_NOTDIR;
-
 			rc = NFS_REQ_OK;
 			goto out;
 		}
 	}
 
 	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+
+	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
-	}
 
 	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
 		       &res->res_rmdir3.RMDIR3res_u.resok.dir_wcc);
+
 	res->res_rmdir3.status = NFS3_OK;
 
 	rc = NFS_REQ_OK;
@@ -152,9 +166,8 @@ int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
 		       &res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc);
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(cache_status))
 		rc = NFS_REQ_DROP;
-	}
 
  out:
 	/* return references */
@@ -175,7 +188,7 @@ int nfs_Rmdir(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Rmdir_Free(nfs_res_t * res)
+void nfs_Rmdir_Free(nfs_res_t *res)
 {
 	return;
 }				/* nfs_Rmdir_Free */

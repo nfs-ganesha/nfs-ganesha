@@ -55,8 +55,7 @@
 #include <strings.h>
 #include <ctype.h>
 #include "export_mgr.h"
-
-extern struct fsal_up_vector fsal_up_top;
+#include "fsal_up.h"
 
 #define LASTDEFAULT 1048576
 
@@ -249,13 +248,17 @@ int nfs_LookupNetworkAddr(char *host, unsigned long *netAddr,
 {
 	CIDR *pcidr = NULL;
 
-	if ((pcidr = cidr_from_str(host)) == NULL)
+	pcidr = cidr_from_str(host);
+
+	if (pcidr == NULL)
 		return 1;
 
 	memcpy(netAddr, pcidr->addr, sizeof(unsigned long));
 	memcpy(netMask, pcidr->mask, sizeof(unsigned long));
 
-	/* BE CAREFUL !! The following lines are specific to IPv4. The libcidr support IPv6 as well */
+	/** @todo BE CAREFUL !! The following lines are specific to IPv4.
+	 * The libcidr support IPv6 as well
+	 */
 	memset(netAddr, 0, sizeof(unsigned long));
 	memcpy(netAddr, &pcidr->addr[12], 4);
 	*netAddr = ntohl(*netAddr);
@@ -267,7 +270,7 @@ int nfs_LookupNetworkAddr(char *host, unsigned long *netAddr,
 	return 0;
 }
 
-static void StrExportOptions(export_perms_t * p_perms, char *buffer)
+static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 {
 	char *buf = buffer;
 
@@ -358,7 +361,7 @@ static void StrExportOptions(export_perms_t * p_perms, char *buffer)
 }
 
 void LogClientListEntry(log_components_t component,
-			exportlist_client_entry_t * entry)
+			exportlist_client_entry_t *entry)
 {
 	char perms[1024];
 	char addr[INET6_ADDRSTRLEN];
@@ -427,15 +430,16 @@ void LogClientListEntry(log_components_t component,
 		entry->type, perms);
 }
 
-#define DEFINED_TWICE_WARNING( _lbl_ , _str_ ) \
-  LogWarn(COMPONENT_CONFIG,            \
-          "NFS READ %s: WARNING: %s defined twice !!! (ignored)", \
-          _lbl_ , _str_ )
+#define DEFINED_TWICE_WARNING(_lbl_, _str_) \
+	LogWarn(COMPONENT_CONFIG, \
+		"NFS READ %s: %s defined twice (ignored)", \
+		_lbl_, _str_)
 
-#define DEFINED_CONFLICT_WARNING( _lbl_ , _opt1_ , _opt2_ ) \
-  LogWarn(COMPONENT_CONFIG,            \
-          "NFS READ %s: %s defined when %s was already defined (ignored)", \
-          _lbl_ , _opt1_ , _opt2_ )
+#define DEFINED_CONFLICT_WARNING(_lbl_, _opt1_, _opt2_) \
+	LogWarn(COMPONENT_CONFIG, \
+		"NFS READ %s: %s defined when %s" \
+		" was already defined (ignored)", \
+		_lbl_, _opt1_, _opt2_)
 
 struct client_args {
 	exportlist_client_t *client;
@@ -578,9 +582,9 @@ static bool add_export_client(char *client_hostname, void *arg)
 					 "entry %p: %s to client %s = IPv6",
 					 client, argp->var_name,
 					 client_hostname);
-			} else {
+			} else
 				continue;
-			}
+
 			glist_add_tail(&argp->client->client_list,
 				       &client->cle_list);
 			argp->client->num_clients++;
@@ -601,7 +605,7 @@ static bool add_export_client(char *client_hostname, void *arg)
 }
 
 static int parseAccessParam(char *var_name, char *var_value,
-			    exportlist_client_t * clients, int access_option,
+			    exportlist_client_t *clients, int access_option,
 			    const char *label)
 {
 	int rc;
@@ -657,7 +661,7 @@ static int parseAccessParam(char *var_name, char *var_value,
 	return rc;
 }
 
-static void FreeClientList(exportlist_client_t * clients)
+static void FreeClientList(exportlist_client_t *clients)
 {
 	struct glist_head *glist;
 	struct glist_head *glistn;
@@ -672,9 +676,9 @@ static void FreeClientList(exportlist_client_t * clients)
 }
 
 static bool parse_int32_t(char *var_value, int32_t min, int32_t max,
-			  uint64_t * set_opts, uint64_t option,
+			  uint64_t *set_opts, uint64_t option,
 			  const char *blk_name, const char *var_name,
-			  bool * err_flag, int32_t * valptr)
+			  bool *err_flag, int32_t *valptr)
 {
 	int32_t val;
 	char *end_ptr;
@@ -707,9 +711,9 @@ static bool parse_int32_t(char *var_value, int32_t min, int32_t max,
 }
 
 static bool parse_int64_t(char *var_value, int64_t min, int64_t max,
-			  uint64_t * set_opts, uint64_t option,
+			  uint64_t *set_opts, uint64_t option,
 			  const char *blk_name, const char *var_name,
-			  bool * err_flag, int64_t * valptr)
+			  bool *err_flag, int64_t *valptr)
 {
 	int64_t val;
 	char *end_ptr;
@@ -741,9 +745,9 @@ static bool parse_int64_t(char *var_value, int64_t min, int64_t max,
 	return true;
 }
 
-static bool parse_bool(char *var_value, uint64_t * set_opts, uint64_t option,
+static bool parse_bool(char *var_value, uint64_t *set_opts, uint64_t option,
 		       const char *blk_name, const char *var_name,
-		       bool * err_flag, bool * valptr)
+		       bool *err_flag, bool *valptr)
 {
 	int val;
 
@@ -761,7 +765,7 @@ static bool parse_bool(char *var_value, uint64_t * set_opts, uint64_t option,
 		*err_flag = true;
 		return false;
 	}
-	*valptr = ! !val;
+	*valptr = val != 0;
 	*set_opts |= option;
 	return true;
 }
@@ -848,7 +852,7 @@ static bool proto_sectype(char *tok, void *void_arg)
 }
 
 static int BuildExportClient(config_item_t block,
-			     exportlist_client_t * client_list)
+			     exportlist_client_t *client_list)
 {
 	export_perms_t client_perms;
 	exportlist_client_t access_list;
@@ -911,7 +915,8 @@ static int BuildExportClient(config_item_t block,
 
 		if (!STRCMP(var_name, CONF_EXPORT_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 			if (*var_value == '\0')
@@ -946,8 +951,7 @@ static int BuildExportClient(config_item_t block,
 					     "Export access type NONE");
 			} else {
 				LogCrit(COMPONENT_CONFIG,
-					"NFS READ %s: Invalid access type \"%s\"."
-					" Values can be: RW, RO, MDONLY, MDONLY_RO, NONE.",
+					"NFS READ %s: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO, NONE.",
 					label, var_value);
 				err_flag = true;
 				continue;
@@ -978,7 +982,9 @@ static int BuildExportClient(config_item_t block,
 				continue;
 			}
 
-			/* check that at least one nfs protocol has been specified */
+			/* check that at least one nfs protocol has been
+			 * specified
+			 */
 			if ((perms->options & EXPORT_OPTION_PROTOCOLS) == 0) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Empty NFS_protocols list",
@@ -1016,7 +1022,9 @@ static int BuildExportClient(config_item_t block,
 				continue;
 			}
 
-			/* check that at least one TRANS protocol has been specified */
+			/* check that at least one TRANS protocol
+			 * has been specified
+			 */
 			if ((perms->options & EXPORT_OPTION_TRANSPORTS) == 0) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Empty transport list",
@@ -1054,10 +1062,15 @@ static int BuildExportClient(config_item_t block,
 							 CONF_EXPORT_ANON_USER);
 				continue;
 			}
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_ROOT, label, var_name, &err_flag,
-			     &anon_uid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_ROOT,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &anon_uid))
 				continue;
 			/* set anon_uid */
 			perms->anonymous_uid = (uid_t) anon_uid;
@@ -1072,19 +1085,29 @@ static int BuildExportClient(config_item_t block,
 							 CONF_EXPORT_ANON_ROOT);
 				continue;
 			}
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_USER, label, var_name, &err_flag,
-			     &anon_uid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_USER,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &anon_uid))
 				continue;
 			perms->anonymous_uid = (uid_t) anon_uid;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ANON_GROUP)) {
 			gid_t anon_gid;
 
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_GROUP, label, var_name, &err_flag,
-			     &anon_gid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_GROUP,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &anon_gid))
 				continue;
 			perms->anonymous_gid = anon_gid;
 		} else if (!STRCMP(var_name, CONF_EXPORT_SECTYPE)) {
@@ -1125,28 +1148,39 @@ static int BuildExportClient(config_item_t block,
 		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_NOSUID, label,
-			     var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_NOSUID,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				perms->options |= EXPORT_OPTION_NOSUID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_NOSGID, label,
-			     var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_NOSGID,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options,
-			     FLAG_EXPORT_PRIVILEGED_PORT, label, var_name,
-			     &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_PRIVILEGED_PORT,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				perms->options |= EXPORT_OPTION_PRIVILEGED_PORT;
@@ -1284,9 +1318,15 @@ static int BuildExportEntry(config_item_t block)
 			CONF_EXPORT_ID);
 		return -1;
 	}
-	if (!parse_int32_t
-	    (var_value, 1, USHRT_MAX, &set_options, FLAG_EXPORT_ID, label,
-	     var_name, &err_flag, &export_id))
+	if (!parse_int32_t(var_value,
+			   1,
+			   USHRT_MAX,
+			   &set_options,
+			   FLAG_EXPORT_ID,
+			   label,
+			   var_name,
+			   &err_flag,
+			   &export_id))
 		return -1;
 	exp = get_gsh_export(export_id, false);
 	if (exp == NULL) {	/* gsh_calloc error */
@@ -1300,9 +1340,11 @@ static int BuildExportEntry(config_item_t block)
 			CONF_EXPORT_ID);
 		put_gsh_export(exp);
 		return -1;
-	} else {		/* initialize the exportlist part with the id */
+	} else {
+		/* initialize the exportlist part with the id */
 		p_entry = &exp->export;
-		set_options &= ~FLAG_EXPORT_ID;	/* to warn defined twice nicely */
+		/* warn defined twice nicely */
+		set_options &= ~FLAG_EXPORT_ID;
 		if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
 			LogCrit(COMPONENT_CONFIG,
 				"NFS READ %s: could not initialize exp_state_mutex",
@@ -1387,18 +1429,23 @@ static int BuildExportEntry(config_item_t block)
 					label, var_name, var_value);
 			else
 				LogCrit(COMPONENT_CONFIG,
-					"NFS READ %s: internal error %d", label,
-					rc);
+					"NFS READ %s: internal error %d",
+					label, rc);
 			err_flag = true;
 		}
 
 		if (!STRCMP(var_name, CONF_EXPORT_ID)) {
 			int32_t export_id;
 
-			if (!parse_int32_t
-			    (var_value, 1, USHRT_MAX, &set_options,
-			     FLAG_EXPORT_ID, label, var_name, &err_flag,
-			     &export_id))
+			if (!parse_int32_t(var_value,
+					   1,
+					   USHRT_MAX,
+					   &set_options,
+					   FLAG_EXPORT_ID,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &export_id))
 				continue;
 			if (export_id != p_entry->id) {
 				LogCrit(COMPONENT_CONFIG,
@@ -1439,8 +1486,10 @@ static int BuildExportEntry(config_item_t block)
 			}
 
 			/* Some admins stuff a '/' at  the end for some reason.
-			 * chomp it so we have a /dir/path/basename to work with.
-			 * But only if it's a non-root path starting with /. */
+			 * chomp it so we have a /dir/path/basename to work
+			 * with. But only if it's a non-root path starting
+			 * with /.
+			 */
 			if ((var_value[pathlen - 1] == '/') && (pathlen > 1)
 			    && (var_value[0] == '/')) {
 				var_value[pathlen - 1] = '\0';
@@ -1448,9 +1497,10 @@ static int BuildExportEntry(config_item_t block)
 			ppath = var_value;
 
 			exp = get_gsh_export_by_path(ppath);
-			/* Pseudo, Tag, and Export_Id must be unique, Path may be
-			 * duplicated if at least Tag or Pseudo is specified (and
-			 * unique).
+
+			/* Pseudo, Tag, and Export_Id must be unique, Path may
+			 * be duplicated if at least Tag or Pseudo is specified
+			 * (and unique).
 			 */
 			if (exp != NULL && path_matches) {
 				LogCrit(COMPONENT_CONFIG,
@@ -1463,75 +1513,82 @@ static int BuildExportEntry(config_item_t block)
 
 			p_entry->fullpath = gsh_strdup(var_value);
 
-			/* Remember the entry we found so we can verify Tag and/or Pseudo
-			 * is set by the time the EXPORT stanza is complete.
+			/* Remember the entry we found so we can verify Tag
+			 * and/or Pseudo is set by the time the EXPORT stanza
+			 * is complete.
 			 */
 			path_matches = true;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ROOT)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_ROOT, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_ACCESS_LIST, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_MD_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_MD_ACCESS, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_MD_RO_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_MD_READ_ACCESS, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_READ_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_READ_ACCESS, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_READWRITE_ACCESS)) {
 			/* Notice that as least one of the three options
-			 * Root_Access, R_Access, or RW_Access has been specified.
+			 * Root_Access, R_Access, or RW_Access has been
+			 * specified.
 			 */
 			set_options |= FLAG_EXPORT_ACCESS_LIST;
 
-			if (*var_value == '\0') {
+			if (*var_value == '\0')
 				continue;
-			}
+
 			parseAccessParam(var_name, var_value, p_access_list,
 					 EXPORT_OPTION_RW_ACCESS, label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_PSEUDO)) {
@@ -1645,7 +1702,9 @@ static int BuildExportEntry(config_item_t block)
 
 				continue;
 			}
-			/* check that at least one nfs protocol has been specified */
+			/* check that at least one nfs protocol has been
+			 * specified
+			 */
 			if ((p_perms->options & EXPORT_OPTION_PROTOCOLS) == 0) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Empty NFS_protocols list",
@@ -1684,8 +1743,11 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			}
 
-			/* check that at least one TRANS protocol has been specified */
-			if ((p_perms->options & EXPORT_OPTION_TRANSPORTS) == 0) {
+			/* check that at least one TRANS protocol has been
+			 * specified
+			 */
+			if ((p_perms->options &
+			     EXPORT_OPTION_TRANSPORTS) == 0) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Empty transport list",
 					label);
@@ -1705,9 +1767,13 @@ static int BuildExportEntry(config_item_t block)
 							 CONF_EXPORT_SQUASH);
 				continue;
 			}
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_ALL_ANON,
-			     label, var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_ALL_ANON,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				p_perms->options |= EXPORT_OPTION_ALL_ANONYMOUS;
@@ -1723,10 +1789,14 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			}
 
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_ROOT, label, var_name, &err_flag,
-			     &anon_uid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_ROOT,
+					   label, var_name,
+					   &err_flag,
+					   &anon_uid))
 				continue;
 			/* set anon_uid */
 			p_perms->anonymous_uid = (uid_t) anon_uid;
@@ -1742,20 +1812,30 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			}
 
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_USER, label, var_name, &err_flag,
-			     &anon_uid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_USER,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &anon_uid))
 				continue;
 			p_perms->anonymous_uid = (uid_t) anon_uid;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ANON_GROUP)) {
 
 			gid_t anon_gid;
 
-			if (!parse_int32_t
-			    (var_value, 0, 0, &set_options,
-			     FLAG_EXPORT_ANON_GROUP, label, var_name, &err_flag,
-			     &anon_gid))
+			if (!parse_int32_t(var_value,
+					   0,
+					   0,
+					   &set_options,
+					   FLAG_EXPORT_ANON_GROUP,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &anon_gid))
 				continue;
 			p_perms->anonymous_gid = anon_gid;
 		} else if (!STRCMP(var_name, CONF_EXPORT_SECTYPE)) {
@@ -1780,9 +1860,10 @@ static int BuildExportEntry(config_item_t block)
 			 */
 			proto_args.label = label;
 			proto_args.perms = p_perms;
-			count =
-			    token_to_proc(var_value, ',', proto_sectype,
-					  &proto_args);
+			count = token_to_proc(var_value,
+					      ',',
+					      proto_sectype,
+					      &proto_args);
 			if (count < 0) {
 				err_flag = true;
 				LogCrit(COMPONENT_CONFIG,
@@ -1795,14 +1876,20 @@ static int BuildExportEntry(config_item_t block)
 			/* check that at least one sectype has been specified */
 			if ((p_perms->options & EXPORT_OPTION_AUTH_TYPES) == 0)
 				LogWarn(COMPONENT_CONFIG,
-					"NFS READ %s: Empty SecType", label);
+					"NFS READ %s: Empty SecType",
+					label);
 		} else if (!STRCMP(var_name, CONF_EXPORT_MAX_READ)) {
 			int64_t size;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_MAX_READ, label, var_name, &err_flag,
-			     &size))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_MAX_READ,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &size))
 				continue;
 			p_entry->MaxRead = (uint32_t) size;
 			if (p_entry->MaxRead >
@@ -1816,10 +1903,15 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_MAX_WRITE)) {
 			int64_t size;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_MAX_WRITE, label, var_name, &err_flag,
-			     &size))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_MAX_WRITE,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &size))
 				continue;
 			p_entry->MaxWrite = (uint32_t) size;
 			if (p_entry->MaxWrite >
@@ -1833,30 +1925,44 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_PREF_READ)) {
 			int64_t size;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_PREF_READ, label, var_name, &err_flag,
-			     &size))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_PREF_READ,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &size))
 				continue;
 			p_entry->PrefRead = (uint32_t) size;
 			p_perms->options |= EXPORT_OPTION_PREFREAD;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE)) {
 			int64_t size;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_PREF_WRITE, label, var_name, &err_flag,
-			     &size))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_PREF_WRITE,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &size))
 				continue;
 			p_entry->PrefWrite = (uint32_t) size;
 			p_perms->options |= EXPORT_OPTION_PREFWRITE;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PREF_READDIR)) {
 			int64_t size;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_PREF_READDIR, label, var_name,
-			     &err_flag, &size))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_PREF_READDIR,
+					   label,
+					   var_name,
+					   &err_flag, &size))
 				continue;
 			p_entry->PrefReaddir = (uint32_t) size;
 			p_perms->options |= EXPORT_OPTION_PREFRDDIR;
@@ -1913,28 +2019,39 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_NOSUID, label,
-			     var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_NOSUID,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				p_perms->options |= EXPORT_OPTION_NOSUID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_NOSGID, label,
-			     var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_NOSGID,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				p_perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options,
-			     FLAG_EXPORT_PRIVILEGED_PORT, label, var_name,
-			     &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_PRIVILEGED_PORT,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				p_perms->options |=
@@ -1942,10 +2059,13 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_UQUOTA)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options,
-			     FLAG_EXPORT_PRIVILEGED_PORT, label, var_name,
-			     &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_PRIVILEGED_PORT,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			if (on)
 				p_perms->options |= EXPORT_OPTION_USE_UQUOTA;
@@ -2003,10 +2123,15 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE)) {
 			int64_t offset;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_PREF_READ, label, var_name, &err_flag,
-			     &offset))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_PREF_READ,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &offset))
 				continue;
 			p_entry->MaxOffsetWrite = (uint32_t) offset;
 			p_perms->options |= EXPORT_OPTION_MAXOFFSETWRITE;
@@ -2016,10 +2141,15 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ)) {
 			int64_t offset;
 
-			if (!parse_int64_t
-			    (var_value, 0, INTMAX_MAX, &set_options,
-			     FLAG_EXPORT_PREF_READ, label, var_name, &err_flag,
-			     &offset))
+			if (!parse_int64_t(var_value,
+					   0,
+					   INTMAX_MAX,
+					   &set_options,
+					   FLAG_EXPORT_PREF_READ,
+					   label,
+					   var_name,
+					   &err_flag,
+					   &offset))
 				continue;
 			p_entry->MaxOffsetRead = (uint32_t) offset;
 			p_perms->options |= EXPORT_OPTION_MAXOFFSETREAD;
@@ -2029,18 +2159,25 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_USE_COMMIT)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options, FLAG_EXPORT_USE_COMMIT,
-			     label, var_name, &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_USE_COMMIT,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			p_entry->use_commit = on;
 		} else if (!STRCMP(var_name, CONF_EXPORT_USE_COOKIE_VERIFIER)) {
 			bool on;
 
-			if (!parse_bool
-			    (var_value, &set_options,
-			     FLAG_EXPORT_USE_COOKIE_VERIFIER, label, var_name,
-			     &err_flag, &on))
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_USE_COOKIE_VERIFIER,
+					label,
+					var_name,
+					&err_flag,
+					&on))
 				continue;
 			p_entry->UseCookieVerifier = on;
 		} else if (!STRCMP(var_name, CONF_EXPORT_SQUASH)) {
@@ -2188,7 +2325,8 @@ static int BuildExportEntry(config_item_t block)
 
 	if (path_matches && ((set_options & FLAG_EXPORT_PSEUDO) == 0)
 	    && ((set_options & FLAG_EXPORT_FS_TAG) == 0)) {
-		/* Duplicate export must specify at least one of tag and pseudo */
+		/* Duplicate export must specify at least one of tag and pseudo
+		 */
 		LogCrit(COMPONENT_CONFIG,
 			"NFS READ %s: Duplicate %s must have at least %s or %s",
 			label, label, CONF_EXPORT_PSEUDO, CONF_EXPORT_FS_TAG);
@@ -2204,19 +2342,21 @@ static int BuildExportEntry(config_item_t block)
 		LogMajor(COMPONENT_CONFIG,
 			 "NFS READ %s: No FSAL for this export defined. Fallback to using VFS",
 			 label);
-		fsal_hdl = lookup_fsal("VFS");	/* should have a "Default_FSAL" param... */
+		/** @todo: should have a "Default_FSAL" param... */
+		fsal_hdl = lookup_fsal("VFS");
 	}
 	if (!err_flag && fsal_hdl != NULL) {
-		fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
-								    p_entry->
-								    fullpath,
-								    p_entry->
-								    FS_specific,
-								    p_entry,
-								    NULL,
-								    &fsal_up_top,
-								    &p_entry->
-								    export_hdl);
+		fsal_status_t expres = fsal_hdl->ops->create_export(
+					fsal_hdl,
+					p_entry->
+					fullpath,
+					p_entry->
+					FS_specific,
+					p_entry,
+					NULL,
+					&fsal_up_top,
+					&p_entry->
+					export_hdl);
 		if (FSAL_IS_ERROR(expres)) {
 			LogCrit(COMPONENT_CONFIG,
 				"Could not create FSAL export for %s",
@@ -2300,7 +2440,7 @@ static int BuildExportEntry(config_item_t block)
  * @return true if all went well
  */
 
-void free_export_resources(exportlist_t * export)
+void free_export_resources(exportlist_t *export)
 {
 	fsal_status_t fsal_status;
 
@@ -2367,7 +2507,9 @@ exportlist_t *BuildDefaultExport()
 	p_entry->export_perms.options |=
 	    EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
-	/* by default, we support all NFS versions supported by the core and both transport protocols */
+	/* by default, we support all NFS versions supported
+	 * by the core and both transport protocols
+	 */
 	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
 		p_entry->export_perms.options |= EXPORT_OPTION_NFSV3;
 	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
@@ -2471,9 +2613,9 @@ int ReadExports(config_file_t in_config)
 		}
 	}
 
-	if (err_flag) {
+	if (err_flag)
 		return -1;
-	} else
+	else
 		return nb_entries;
 }
 
@@ -2512,7 +2654,7 @@ void exports_pkginit(void)
  *
  * @return true if found, false otherwise.
  */
-bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
+bool export_client_match(sockaddr_t *hostaddr, exportlist_client_t *clients,
 			 exportlist_client_entry_t *client_found,
 			 unsigned int export_option)
 {
@@ -2571,7 +2713,9 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		i++;
 
-		/* Make sure the client entry has the permission flags we're looking for. */
+		/* Make sure the client entry has the permission
+		 * flags we're looking for.
+		 */
 		if ((client->client_perms.options & export_option) !=
 		    export_option)
 			continue;
@@ -2581,18 +2725,14 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test HOSTIF_CLIENT: Test entry %d: clientaddr %d.%d.%d.%d, "
 				     "match with %d.%d.%d.%d", i,
-				     (int)(ntohl
-					   (client->client.hostif.
-					    clientaddr) >> 24),
-				     (int)((ntohl
-					    (client->client.hostif.
-					     clientaddr) >> 16) & 0xFF),
-				     (int)((ntohl
-					    (client->client.hostif.
-					     clientaddr) >> 8) & 0xFF),
-				     (int)(ntohl
-					   (client->client.hostif.
-					    clientaddr) & 0xFF),
+				     (int)(ntohl(p_client->client.hostif.
+						 clientaddr) >> 24),
+				     (int)((ntohl(p_client->client.hostif.
+						  clientaddr) >> 16) & 0xFF),
+				     (int)((ntohl(p_client->client.hostif.
+						  clientaddr) >> 8) & 0xFF),
+				     (int)(ntohl(p_client->client.hostif.
+						 clientaddr) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
 				     (int)(ntohl(addr) >> 8) & 0xFF,
@@ -2609,30 +2749,22 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 		case NETWORK_CLIENT:
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Test NETWORK_CLIENT: Test net %d.%d.%d.%d mask %d.%d.%d.%d, match with %d.%d.%d.%d",
-				     (int)(ntohl
-					   (client->client.network.
-					    netaddr) >> 24),
-				     (int)((ntohl
-					    (client->client.network.
-					     netaddr) >> 16) & 0xFF),
-				     (int)((ntohl
-					    (client->client.network.
-					     netaddr) >> 8) & 0xFF),
-				     (int)(ntohl
-					   (client->client.network.
-					    netaddr) & 0xFF),
-				     (int)(ntohl
-					   (client->client.network.
-					    netmask) >> 24),
-				     (int)((ntohl
-					    (client->client.network.
-					     netmask) >> 16) & 0xFF),
-				     (int)((ntohl
-					    (client->client.network.
-					     netmask) >> 8) & 0xFF),
-				     (int)(ntohl
-					   (client->client.network.
-					    netmask) & 0xFF),
+				     (int)(ntohl(p_client->client.network.
+						 netaddr) >> 24),
+				     (int)((ntohl(p_client->client.network.
+						  netaddr) >> 16) & 0xFF),
+				     (int)((ntohl(p_client->client.network.
+						  netaddr) >> 8) & 0xFF),
+				     (int)(ntohl(p_client->client.network.
+						 netaddr) & 0xFF),
+				     (int)(ntohl(p_client->client.network.
+						 netmask) >> 24),
+				     (int)((ntohl(p_client->client.network.
+						  netmask) >> 16) & 0xFF),
+				     (int)((ntohl(p_client->client.network.
+						  netmask) >> 8) & 0xFF),
+				     (int)(ntohl(p_client->client.network.
+						 netmask) & 0xFF),
 				     (int)(ntohl(addr) >> 24),
 				     (int)(ntohl(addr) >> 16) & 0xFF,
 				     (int)(ntohl(addr) >> 8) & 0xFF,
@@ -2650,23 +2782,29 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 
 		case NETGROUP_CLIENT:
 			/* Try to get the entry from th IP/name cache */
-			if ((rc =
-			     nfs_ip_name_get(hostaddr, hostname,
-					     sizeof(hostname))) !=
-			    IP_NAME_SUCCESS) {
+			rc = nfs_ip_name_get(hostaddr, hostname,
+					     sizeof(hostname));
+
+			if (rc != IP_NAME_SUCCESS) {
 				if (rc == IP_NAME_NOT_FOUND) {
-					/* IPaddr was not cached, add it to the cache */
-					if (nfs_ip_name_add
-					    (hostaddr, hostname,
-					     sizeof(hostname)) !=
-					    IP_NAME_SUCCESS) {
-						/* Major failure, name could not be resolved */
+					/* IPaddr was not cached, add it to the
+					 * cache
+					 */
+					if (nfs_ip_name_add(hostaddr,
+							    hostname,
+							    sizeof(hostname))
+					    != IP_NAME_SUCCESS) {
+						/* Major failure, name could not
+						 * be resolved
+						 */
 						break;
 					}
 				}
 			}
 
-			/* At this point 'hostname' should contain the name that was found */
+			/* At this point 'hostname' should contain the
+			 * name that was found
+			 */
 			if (innetgr
 			    (client->client.netgroup.netgroupname, hostname,
 			     NULL, NULL) == 1) {
@@ -2681,15 +2819,14 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 		case WILDCARDHOST_CLIENT:
 			/* Now checking for IP wildcards */
 			if (ipvalid < 0)
-				ipvalid =
-				    sprint_sockip(hostaddr, ipstring,
-						  sizeof(ipstring));
+				ipvalid = sprint_sockip(hostaddr,
+							ipstring,
+							sizeof(ipstring));
 
-			if (ipvalid
-			    &&
-			    (fnmatch
-			     (client->client.wildcard.wildcard, ipstring,
-			      FNM_PATHNAME) == 0)) {
+			if (ipvalid &&
+			    (fnmatch(client->client.wildcard.wildcard,
+				     ipstring,
+				     FNM_PATHNAME) == 0)) {
 				*client_found = *client;
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches wildcard for entry %u",
@@ -2701,31 +2838,34 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 				     "Did not match the ip address with a wildcard.");
 
 			/* Try to get the entry from th IP/name cache */
-			if ((rc =
-			     nfs_ip_name_get(hostaddr, hostname,
-					     sizeof(hostname))) !=
-			    IP_NAME_SUCCESS) {
+			rc = nfs_ip_name_get(hostaddr, hostname,
+					     sizeof(hostname));
+
+			if (rc != IP_NAME_SUCCESS) {
 				if (rc == IP_NAME_NOT_FOUND) {
-					/* IPaddr was not cached, add it to the cache */
-					if (nfs_ip_name_add
-					    (hostaddr, hostname,
-					     sizeof(hostname)) !=
-					    IP_NAME_SUCCESS) {
-						/* Major failure, name could not be resolved */
-/**
- * @TODO this change from 1.5 is not IPv6 useful.
+					/* IPaddr was not cached, add it to
+					 * the cache
+					 */
+					if (nfs_ip_name_add(hostaddr,
+							    hostname,
+							    sizeof(hostname))
+					    != IP_NAME_SUCCESS) {
+						/* Major failure, name could
+						 * not be resolved
+						 */
+/** @todo this change from 1.5 is not IPv6 useful.
  * come back to this and use the string from client mgr inside req_ctx...
  */
 						LogInfo(COMPONENT_DISPATCH,
 							"Could not resolve hostame for addr %d.%d.%d.%d ... not checking if a hostname wildcard matches",
-							(int)(ntohl(addr) >>
-							      24),
-							(int)(ntohl(addr) >> 16)
-							& 0xFF,
-							(int)(ntohl(addr) >> 8)
-							& 0xFF,
-							(int)(ntohl(addr) &
-							      0xFF));
+							(int)(ntohl(addr)
+							      >> 24),
+							(int)(ntohl(addr)
+							      >> 16) & 0xFF,
+							(int)(ntohl(addr)
+							      >> 8) & 0xFF,
+							(int)(ntohl(addr)
+							      & 0xFF));
 						break;
 					}
 				}
@@ -2735,7 +2875,9 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
 				     hostname,
 				     client->client.wildcard.wildcard);
 
-			/* At this point 'hostname' should contain the name that was found */
+			/* At this point 'hostname' should contain the
+			 * name that was found
+			 */
 			if (fnmatch
 			    (client->client.wildcard.wildcard, hostname,
 			     FNM_PATHNAME) == 0) {
@@ -2797,9 +2939,9 @@ bool export_client_match(sockaddr_t * hostaddr, exportlist_client_t * clients,
  *
  * @return true if found, false otherwise.
  */
-bool export_client_matchv6(struct in6_addr * paddrv6,
-			   exportlist_client_t * clients,
-			   exportlist_client_entry_t * client_found,
+bool export_client_matchv6(struct in6_addr *paddrv6,
+			   exportlist_client_t *clients,
+			   exportlist_client_entry_t *client_found,
 			   unsigned int export_option)
 {
 	struct glist_head *glist;
@@ -2821,7 +2963,9 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 
-		/* Make sure the client entry has the permission flags we're looking for. */
+		/* Make sure the client entry has the permission flags
+		 * we're looking for.
+		 */
 		if ((client->client_perms.options & export_option) !=
 		    export_option)
 			continue;
@@ -2836,7 +2980,11 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 			break;
 
 		case HOSTIF_CLIENT_V6:
-			if (!memcmp(client->client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16)) {	/* Remember that IPv6 address are 128 bits = 16 bytes long */
+			if (!memcmp(client->client.hostif.clientaddr6.s6_addr,
+				    paddrv6->s6_addr, 16)) {
+				/* Remember that IPv6 address are
+				 * 128 bits = 16 bytes long
+				 */
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "This matches host adress in IPv6");
 				*client_found = *client;
@@ -2861,9 +3009,9 @@ bool export_client_matchv6(struct in6_addr * paddrv6,
 	return false;
 }
 
-int export_client_match_any(sockaddr_t * hostaddr,
-			    exportlist_client_t * clients,
-			    exportlist_client_entry_t * client_found,
+int export_client_match_any(sockaddr_t *hostaddr,
+			    exportlist_client_t *clients,
+			    exportlist_client_entry_t *pclient_found,
 			    unsigned int export_option)
 {
 	if (hostaddr->ss_family == AF_INET6) {
@@ -2879,7 +3027,8 @@ int export_client_match_any(sockaddr_t * hostaddr,
 }
 
 /**
- * @brief Checks if request security flavor is suffcient for the requested export
+ * @brief Checks if request security flavor is suffcient for the requested
+ *        export
  *
  * @param[in] req     Related RPC request.
  * @param[in] export Related export entry
@@ -2929,9 +3078,8 @@ bool nfs_export_check_security(struct svc_req *req,
 				     (int)svc);
 			switch (svc) {
 			case RPCSEC_GSS_SVC_NONE:
-				if ((export_perms->
-				     options & EXPORT_OPTION_RPCSEC_GSS_NONE) ==
-				    0) {
+				if ((export_perms->options &
+				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_NONE",
@@ -2941,9 +3089,8 @@ bool nfs_export_check_security(struct svc_req *req,
 				break;
 
 			case RPCSEC_GSS_SVC_INTEGRITY:
-				if ((export_perms->
-				     options & EXPORT_OPTION_RPCSEC_GSS_INTG) ==
-				    0) {
+				if ((export_perms->options &
+				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_INTEGRITY",
@@ -2953,9 +3100,8 @@ bool nfs_export_check_security(struct svc_req *req,
 				break;
 
 			case RPCSEC_GSS_SVC_PRIVACY:
-				if ((export_perms->
-				     options & EXPORT_OPTION_RPCSEC_GSS_PRIV) ==
-				    0) {
+				if ((export_perms->options &
+				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
 					LogInfo(COMPONENT_DISPATCH,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_PRIVACY",
@@ -2986,19 +3132,20 @@ bool nfs_export_check_security(struct svc_req *req,
 
 static char ten_bytes_all_0[10];
 
-sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4)
+sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 {
 	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
 	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
 
-	/* If the client socket is IPv4, then it is wrapped into a ::ffff:a.b.c.d
-	 * IPv6 address. We check this here.
+	/* If the client socket is IPv4, then it is wrapped into a
+	 * ::ffff:a.b.c.d IPv6 address. We check this here.
 	 * This kind of adress is shaped like this:
 	 * |---------------------------------------------------------------|
 	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
 	 * |---------------------------------------------------------------|
 	 * |            0          |        FFFF       |    IPv4 address   |
-	 * |---------------------------------------------------------------|   */
+	 * |---------------------------------------------------------------|
+	 */
 	if ((ipv6->ss_family == AF_INET6)
 	    && !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10)
 	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
@@ -3031,7 +3178,8 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4)
 /**
  * @brief Checks if a machine is authorized to access an export entry
  *
- * @param[in]     hostaddr         The complete remote address (as a sockaddr_storage to be IPv6 compliant)
+ * @param[in]     hostaddr         The complete remote address (as a
+ *                                 sockaddr_storage to be IPv6 compliant)
  * @param[in]     ptr_req          The related RPC request.
  * @param[in]     export          Related export entry (if found, NULL otherwise).
  * @param[in]     nfs_prog         Number for the NFS program.
@@ -3046,8 +3194,8 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4)
  * @retval EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO
  */
 
-void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * export,
-			     export_perms_t * export_perms)
+void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
+			     export_perms_t *export_perms)
 {
 	char ipstring[SOCK_NAME_MAX];
 	int ipvalid;
@@ -3067,7 +3215,8 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * export,
 		ipvalid =
 		    sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
 
-		/* Use IP address as a string for wild character access checks. */
+		/* Use IP address as a string for wild character access checks.
+		 */
 		if (!ipvalid) {
 			LogCrit(COMPONENT_DISPATCH,
 				"Could not convert the IP address to a character string.");
@@ -3205,17 +3354,22 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * export,
 			LogClientListEntry(COMPONENT_DISPATCH, &client_found);
 		}
 
-		/* Grab the root access and rw/ro/mdonly/mdonly ro access from export */
+		/* Grab the root access and rw/ro/mdonly/mdonly ro access
+		 * from export
+		 */
 		export_perms->options |=
 		    export->export_perms.options & EXPORT_OPTION_CUR_ACCESS;
 
 		return;
 	}
 
-	/* Client is in no other list, check if it was in Root_Access list above */
+	/* Client is in no other list, check if it was in Root_Access
+	 * list above
+	 */
 	if (export_perms->options & EXPORT_OPTION_ROOT) {
 		/* Root_Access is specified, but no other access list matched.
-		 * Use base export access, and make sure at least READ access is granted.
+		 * Use base export access, and make sure at least READ access
+		 * is granted.
 		 */
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Export %d Client %s matches Root_Access and no other, granting export access (at least Read)",
@@ -3252,8 +3406,8 @@ void nfs_export_check_access(sockaddr_t * hostaddr, exportlist_t * export,
  * @return status cache inode status code
  */
 
-cache_inode_status_t nfs_export_get_root_entry(exportlist_t * export,
-					       cache_entry_t ** entryp)
+cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
+					       cache_entry_t **entryp)
 {
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;

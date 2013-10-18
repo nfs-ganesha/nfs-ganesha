@@ -56,9 +56,9 @@
  * @param[out] res     ignored
  */
 
-int nfs_Null(nfs_arg_t * arg, exportlist_t * export,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	     struct svc_req *req, nfs_res_t * res)
+int nfs_Null(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
 	return NFS3_OK;
@@ -73,7 +73,7 @@ int nfs_Null(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Null_Free(nfs_res_t * res)
+void nfs_Null_Free(nfs_res_t *res)
 {
 	/* Nothing to do here */
 	return;

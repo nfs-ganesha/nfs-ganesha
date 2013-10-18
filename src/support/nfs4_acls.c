@@ -5,7 +5,6 @@
 #include "log.h"
 #include "nfs4_acls.h"
 #include <pthread.h>
-#include "lookup3.h"
 #include "city.h"
 
 pool_t *fsal_acl_pool;
@@ -27,13 +26,13 @@ static hash_parameter_t fsal_acl_hash_config = {
 	.ht_log_component = COMPONENT_NFS_V4_ACL
 };
 
-static hash_table_t *fsal_acl_hash = NULL;
+static hash_table_t *fsal_acl_hash;
 
 /* hash table functions */
 
-static int fsal_acl_hash_both(hash_parameter_t * hparam,
-			      struct gsh_buffdesc *key, uint32_t * index,
-			      uint64_t * rbthash)
+static int fsal_acl_hash_both(hash_parameter_t *hparam,
+			      struct gsh_buffdesc *key, uint32_t *index,
+			      uint64_t *rbthash)
 {
 	*rbthash = CityHash64(key->addr, key->len);
 	*index = *rbthash % hparam->index_size;
@@ -73,7 +72,7 @@ static fsal_acl_t *nfs4_acl_alloc()
 	return acl;
 }
 
-void nfs4_ace_free(fsal_ace_t * ace)
+void nfs4_ace_free(fsal_ace_t *ace)
 {
 	if (!ace)
 		return;
@@ -83,7 +82,7 @@ void nfs4_ace_free(fsal_ace_t * ace)
 	gsh_free(ace);
 }
 
-static void nfs4_acl_free(fsal_acl_t * acl)
+static void nfs4_acl_free(fsal_acl_t *acl)
 {
 	if (!acl)
 		return;
@@ -94,7 +93,7 @@ static void nfs4_acl_free(fsal_acl_t * acl)
 	pool_free(fsal_acl_pool, acl);
 }
 
-void nfs4_acl_entry_inc_ref(fsal_acl_t * acl)
+void nfs4_acl_entry_inc_ref(fsal_acl_t *acl)
 {
 	/* Increase ref counter */
 	PTHREAD_RWLOCK_wrlock(&acl->lock);
@@ -104,15 +103,15 @@ void nfs4_acl_entry_inc_ref(fsal_acl_t * acl)
 }
 
 /* Should be called with lock held. */
-static void nfs4_acl_entry_dec_ref(fsal_acl_t * acl)
+static void nfs4_acl_entry_dec_ref(fsal_acl_t *acl)
 {
 	/* Decrease ref counter */
 	acl->ref--;
 	LogDebug(COMPONENT_NFS_V4_ACL, "(acl, ref) = (%p, %u)", acl, acl->ref);
 }
 
-fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
-			       fsal_acl_status_t * status)
+fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
+			       fsal_acl_status_t *status)
 {
 	fsal_acl_t *acl = NULL;
 	struct gsh_buffdesc key;
@@ -188,7 +187,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t * acldata,
 	return acl;
 }
 
-void nfs4_acl_release_entry(fsal_acl_t * acl, fsal_acl_status_t * status)
+void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 {
 	struct gsh_buffdesc key, old_key;
 	struct gsh_buffdesc old_value;

@@ -48,7 +48,7 @@
 #include "sal_functions.h"
 #include "fridgethr.h"
 
-static struct fridgethr *state_async_fridge = NULL;
+static struct fridgethr *state_async_fridge;
 
 /**
  * @brief Process a blocked lock request
@@ -100,7 +100,7 @@ static void state_async_func_caller(struct fridgethr_context *ctx)
  *
  * @return State status.
  */
-state_status_t state_async_schedule(state_async_queue_t * arg)
+state_status_t state_async_schedule(state_async_queue_t *arg)
 {
 	int rc;
 
@@ -108,9 +108,8 @@ state_status_t state_async_schedule(state_async_queue_t * arg)
 
 	rc = fridgethr_submit(state_async_fridge, state_async_func_caller, arg);
 
-	if (rc != 0) {
+	if (rc != 0)
 		LogCrit(COMPONENT_STATE, "Unable to schedule request: %d", rc);
-	}
 
 	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
@@ -122,7 +121,7 @@ state_status_t state_async_schedule(state_async_queue_t * arg)
  *
  * @return State status.
  */
-state_status_t state_block_schedule(state_block_data_t * block)
+state_status_t state_block_schedule(state_block_data_t *block)
 {
 	int rc;
 
@@ -131,9 +130,8 @@ state_status_t state_block_schedule(state_block_data_t * block)
 	rc = fridgethr_submit(state_async_fridge, state_blocked_lock_caller,
 			      block);
 
-	if (rc != 0) {
+	if (rc != 0)
 		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
-	}
 
 	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }

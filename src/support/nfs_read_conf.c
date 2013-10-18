@@ -62,7 +62,7 @@
  *
  * @return 0 if ok, -1 if failed, 1 is stanza is not there.
  */
-int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
+int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 {
 	int var_max;
 	int var_index;
@@ -72,8 +72,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 	config_item_t block;
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL) {
+	block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE);
+
+	if (block == NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Cannot read item \"%s\" from configuration file",
 			 CONF_LABEL_NFS_CORE);
@@ -94,8 +95,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Error reading key[%d] from section \"%s\" of configuration file.",
 				var_index, CONF_LABEL_NFS_CORE);
@@ -118,8 +120,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 			rc = inet_pton(AF_INET, key_value,
 				       &pparam->bind_addr.sin_addr);
 			if (rc <= 0) {
-				/* Revert to INADDR_ANY in case of any error */
-				pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;	/* All the interfaces on the machine are used */
+				/* Revert to INADDR_ANY in case of any error
+				 * All the interfaces on the machine are used
+				 */
+				pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;
 			}
 		} else if (!strcasecmp(key_name, "NFS_Program")) {
 			pparam->program[P_NFS] = atoi(key_value);
@@ -231,9 +235,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 				}
 			}
 
-			/* check that at least one nfs protocol has been specified */
-			if ((pparam->core_options & (CORE_OPTION_ALL_VERS)) ==
-			    0) {
+			/* check that at least one nfs protocol has been
+			 * specified */
+			if ((pparam->core_options &
+			     CORE_OPTION_ALL_VERS) == 0) {
 				LogCrit(COMPONENT_CONFIG,
 					"Empty NFS_Protocols list");
 				return -1;
@@ -267,7 +272,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
  */
 int nfs_read_ip_name_conf(config_file_t in_config,
-			  nfs_ip_name_parameter_t * pparam)
+			  nfs_ip_name_parameter_t *pparam)
 {
 	int var_max;
 	int var_index;
@@ -277,9 +282,9 @@ int nfs_read_ip_name_conf(config_file_t in_config,
 	config_item_t block;
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(in_config,
-				   CONF_LABEL_NFS_IP_NAME)) == NULL) {
+	block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME);
+
+	if (block == NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Cannot read item \"%s\" from configuration file",
 			 CONF_LABEL_NFS_IP_NAME);
@@ -300,8 +305,9 @@ int nfs_read_ip_name_conf(config_file_t in_config,
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Error reading key[%d] from section \"%s\" of configuration file.",
 				var_index, CONF_LABEL_NFS_IP_NAME);
@@ -339,7 +345,7 @@ int nfs_read_ip_name_conf(config_file_t in_config,
  *
  * @return 0 if ok, -1 if failed,1 is stanza is not there
  */
-int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
+int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 {
 	int var_max;
 	int var_index;
@@ -349,8 +355,9 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 	config_item_t block;
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL) {
+	block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5);
+
+	if (block == NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Cannot read item \"%s\" from configuration file",
 			 CONF_LABEL_NFS_KRB5);
@@ -371,8 +378,9 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Error reading key[%d] from section \"%s\" of configuration file.",
 				var_index, CONF_LABEL_NFS_KRB5);
@@ -416,7 +424,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
  * @return 0 if ok, -1 if failed,1 is stanza is not there
  */
 int nfs_read_version4_conf(config_file_t in_config,
-			   nfs_version4_parameter_t * pparam)
+			   nfs_version4_parameter_t *pparam)
 {
 	int var_max;
 	int var_index;
@@ -426,9 +434,9 @@ int nfs_read_version4_conf(config_file_t in_config,
 	config_item_t block;
 
 	/* Get the config BLOCK */
-	if ((block =
-	     config_FindItemByName(in_config,
-				   CONF_LABEL_NFS_VERSION4)) == NULL) {
+	block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4);
+
+	if (block == NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Cannot read item \"%s\" from configuration file",
 			 CONF_LABEL_NFS_VERSION4);
@@ -449,8 +457,9 @@ int nfs_read_version4_conf(config_file_t in_config,
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+
+		if (err != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Error reading key[%d] from section \"%s\" of configuration file.",
 				var_index, CONF_LABEL_NFS_VERSION4);

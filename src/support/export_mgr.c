@@ -92,7 +92,7 @@ static struct glist_head exportlist;
  */
 static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
 {
-	return (k % eid->cache_sz);
+	return k % eid->cache_sz;
 }
 
 /* XXX GCC header include issue (abstract_atomic.h IS included, but
@@ -220,9 +220,9 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 	export_st = gsh_calloc(sizeof(struct export_stats), 1);
-	if (export_st == NULL) {
+	if (export_st == NULL)
 		return NULL;
-	}
+
 	exp = &export_st->export;
 	exp->export.id = export_id;
 	exp->refcnt = 0;	/* we will hold a ref starting out... */
@@ -277,7 +277,7 @@ void set_gsh_export_state(struct gsh_export *export, export_state_t state)
  * @brief Lookup the export manager struct by export path
  *
  * Gets an export entry from its path using a substring match and
- * linear search of the export list. 
+ * linear search of the export list.
  * If path has a trailing '/', ignor it.
  *
  * @param path       [IN] the path for the entry to be found.
@@ -461,7 +461,7 @@ bool remove_gsh_export(int export_id)
  * @param state [IN] param block to pass
  */
 
-int foreach_gsh_export(bool(*cb) (struct gsh_export * exp, void *state),
+int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 		       void *state)
 {
 	struct glist_head *glist;
@@ -516,7 +516,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	return true;
 }
 
-static bool gsh_export_showexports(DBusMessageIter * args, DBusMessage * reply)
+static bool gsh_export_showexports(DBusMessageIter *args, DBusMessage *reply)
 {
 	DBusMessageIter iter;
 	struct showexports_state iter_state;
@@ -567,7 +567,7 @@ static struct gsh_dbus_interface export_mgr_table = {
 /* parse the ipaddr string in args
  */
 
-static bool arg_export_id(DBusMessageIter * args, int32_t * export_id,
+static bool arg_export_id(DBusMessageIter *args, int32_t *export_id,
 			  char **errormsg)
 {
 	bool success = true;
@@ -587,7 +587,7 @@ static bool arg_export_id(DBusMessageIter * args, int32_t * export_id,
 /* DBUS client manager stats helpers
  */
 
-static struct gsh_export *lookup_export(DBusMessageIter * args, char **errormsg)
+static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 {
 	int32_t export_id;
 	struct gsh_export *export = NULL;
@@ -607,7 +607,7 @@ static struct gsh_export *lookup_export(DBusMessageIter * args, char **errormsg)
  *
  */
 
-static bool get_nfsv3_export_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv3_export_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -649,7 +649,7 @@ static struct gsh_dbus_method export_show_v3_io = {
  * DBUS method to report 9p I/O statistics
  *
  */
-static bool get_9p_export_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_9p_export_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -692,7 +692,7 @@ static struct gsh_dbus_method export_show_9p_io = {
  *
  */
 
-static bool get_nfsv40_export_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv40_export_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -735,7 +735,7 @@ static struct gsh_dbus_method export_show_v40_io = {
  *
  */
 
-static bool get_nfsv41_export_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv41_export_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -778,8 +778,8 @@ static struct gsh_dbus_method export_show_v41_io = {
  *
  */
 
-static bool get_nfsv41_export_layouts(DBusMessageIter * args,
-				      DBusMessage * reply)
+static bool get_nfsv41_export_layouts(DBusMessageIter *args,
+				      DBusMessage *reply)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -856,8 +856,9 @@ void export_pkginit(void)
 
 	pthread_rwlockattr_init(&rwlock_attr);
 #ifdef GLIBC
-	pthread_rwlockattr_setkind_np(&rwlock_attr,
-				      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlockattr_setkind_np(
+		&rwlock_attr,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);

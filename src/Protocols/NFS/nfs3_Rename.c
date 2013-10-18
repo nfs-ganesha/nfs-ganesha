@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	       struct svc_req *req, nfs_res_t * res)
+int nfs_Rename(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	const char *entry_name = arg->arg_rename3.from.name;
 	const char *new_entry_name = arg->arg_rename3.to.name;
@@ -91,11 +91,16 @@ int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_rename3.from.dir, NULL,
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_rename3.from.dir,
+				 NULL,
 				 strfrom);
 
-		nfs_FhandleToStr(req->rq_vers, &arg->arg_rename3.to.dir, NULL,
+		nfs_FhandleToStr(req->rq_vers,
+				 &arg->arg_rename3.to.dir,
+				 NULL,
 				 strto);
+
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Rename from "
 			 "handle: %s name %s to handle: %s name: %s", strfrom,
@@ -134,20 +139,28 @@ int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	/* Convert fromdir file handle into a cache_entry */
-	parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_rename3.from.dir, req_ctx, export,
-				&res->res_create3.status, &rc);
+	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
+					   req_ctx,
+					   export,
+					   &res->res_create3.status,
+					   &rc);
+
 	if (parent_entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
 	/* Convert todir file handle into a cache_entry */
-	new_parent_entry =
-	    nfs3_FhandleToCache(&arg->arg_rename3.to.dir, req_ctx, export,
-				&res->res_create3.status, &rc);
+	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
+					       req_ctx,
+					       export,
+					       &res->res_create3.status,
+					       &rc);
+
 	if (new_parent_entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -159,16 +172,20 @@ int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
 		goto out_fail;
 	}
 
-	cache_status =
-	    cache_inode_rename(parent_entry, entry_name, new_parent_entry,
-			       new_entry_name, req_ctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+	cache_status = cache_inode_rename(parent_entry,
+					  entry_name,
+					  new_parent_entry,
+					  new_entry_name,
+					  req_ctx);
+
+	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
-	}
 
 	res->res_rename3.status = NFS3_OK;
+
 	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
 		       &res->res_rename3.RENAME3res_u.resok.fromdir_wcc);
+
 	nfs_SetWccData(&pre_new_parent, new_parent_entry, req_ctx,
 		       &res->res_rename3.RENAME3res_u.resok.todir_wcc);
 
@@ -178,6 +195,7 @@ int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
 
  out_fail:
 	res->res_rename3.status = nfs3_Errno(cache_status);
+
 	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
 		       &res->res_rename3.RENAME3res_u.resfail.fromdir_wcc);
 
@@ -206,7 +224,7 @@ int nfs_Rename(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs_Rename_Free(nfs_res_t * res)
+void nfs_Rename_Free(nfs_res_t *res)
 {
 	return;
 }

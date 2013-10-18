@@ -138,12 +138,6 @@ typedef enum log_components {
 	COMPONENT_9P_DISPATCH,
 	COMPONENT_FSAL_UP,
 	COMPONENT_DBUS,
-	/* All real log components must be above this line.
-	 * Components below are for special purposes and may
-	 * only be manipulated individually.
-	 */
-	COMPONENT_FAKE,
-	LOG_MESSAGE_DEBUGINFO,
 	COMPONENT_COUNT
 } log_components_t;
 

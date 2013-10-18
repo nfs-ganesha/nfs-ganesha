@@ -18,17 +18,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs3_Commit.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:49 $
- * \version $Revision: 1.10 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * file    nfs3_Commit.c
+ * brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * nfs3_Commit.c : Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -70,9 +67,9 @@
  *
  */
 
-int nfs3_Commit(nfs_arg_t * arg, exportlist_t * export,
-		struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		struct svc_req *req, nfs_res_t * res)
+int nfs3_Commit(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	cache_inode_status_t cache_status;
 	cache_entry_t *entry = NULL;
@@ -92,16 +89,22 @@ int nfs3_Commit(nfs_arg_t * arg, exportlist_t * export,
 	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
 	    FALSE;
 
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_commit3.file, req_ctx, export,
-				&res->res_commit3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
+				    req_ctx,
+				    export,
+				    &res->res_commit3.status,
+				    &rc);
+
 	if (entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	cache_status =
-	    cache_inode_commit(entry, arg->arg_commit3.offset,
-			       arg->arg_commit3.count, req_ctx);
+	cache_status = cache_inode_commit(entry,
+					  arg->arg_commit3.offset,
+					  arg->arg_commit3.count,
+					  req_ctx);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_commit3.status = nfs3_Errno(cache_status);
 
@@ -123,9 +126,8 @@ int nfs3_Commit(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 
-	if (entry) {
+	if (entry)
 		cache_inode_put(entry);
-	}
 
 	return rc;
 }				/* nfs3_Commit */
@@ -138,7 +140,7 @@ int nfs3_Commit(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Commit_Free(nfs_res_t * res)
+void nfs3_Commit_Free(nfs_res_t *res)
 {
 	return;
 }

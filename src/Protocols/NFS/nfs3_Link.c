@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
-	     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-	     struct svc_req *req, nfs_res_t * res)
+int nfs_Link(nfs_arg_t *arg, exportlist_t *export,
+	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     struct svc_req *req, nfs_res_t *res)
 {
 	const char *link_name = arg->arg_link3.link.name;
 	cache_entry_t *target_entry = NULL;
@@ -86,10 +86,14 @@ int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_link3.file), NULL,
+		nfs_FhandleToStr(req->rq_vers,
+				 &(arg->arg_link3.file),
+				 NULL,
 				 strfrom);
 
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_link3.link.dir), NULL,
+		nfs_FhandleToStr(req->rq_vers,
+				 &(arg->arg_link3.link.dir),
+				 NULL,
 				 strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
@@ -127,18 +131,28 @@ int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	/* Get entry for parent directory */
-	if ((parent_entry =
-	     nfs3_FhandleToCache(&arg->arg_link3.link.dir, req_ctx, export,
-				 &res->res_link3.status, &rc)) == NULL) {
+	parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
+					   req_ctx,
+					   export,
+					   &res->res_link3.status,
+					   &rc);
+
+	if (parent_entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
 
-	if ((target_entry =
-	     nfs3_FhandleToCache(&arg->arg_link3.file, req_ctx, export,
-				 &res->res_link3.status, &rc)) == NULL) {
-		goto out;;
+	target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
+					   req_ctx,
+					   export,
+					   &res->res_link3.status,
+					   &rc);
+
+	if (target_entry == NULL) {
+		/* Status and rc have been set by nfs3_FhandleToCache */
+		goto out;
 	}
 
 	/* Sanity checks: */
@@ -155,15 +169,19 @@ int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
 		if (to_exportid != from_exportid)
 			res->res_link3.status = NFS3ERR_XDEV;
 		else {
-			cache_status =
-			    cache_inode_link(target_entry, parent_entry,
-					     link_name, req_ctx);
+			cache_status = cache_inode_link(target_entry,
+							parent_entry,
+							link_name,
+							req_ctx);
+
 			if (cache_status == CACHE_INODE_SUCCESS) {
-				nfs_SetPostOpAttr(target_entry, req_ctx,
+				nfs_SetPostOpAttr(target_entry,
+						  req_ctx,
 						  &(res->res_link3.LINK3res_u.
 						    resok.file_attributes));
 
-				nfs_SetWccData(&pre_parent, parent_entry,
+				nfs_SetWccData(&pre_parent,
+					       parent_entry,
 					       req_ctx,
 					       &(res->res_link3.LINK3res_u.
 						 resok.linkdir_wcc));
@@ -191,13 +209,11 @@ int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
 
  out:
 	/* return references */
-	if (target_entry) {
+	if (target_entry)
 		cache_inode_put(target_entry);
-	}
 
-	if (parent_entry) {
+	if (parent_entry)
 		cache_inode_put(parent_entry);
-	}
 
 	return rc;
 
@@ -211,7 +227,7 @@ int nfs_Link(nfs_arg_t * arg, exportlist_t * export,
  * @param[in,out] resp Result structure
  *
  */
-void nfs_Link_Free(nfs_res_t * resp)
+void nfs_Link_Free(nfs_res_t *resp)
 {
 	return;
 }				/* nfs_Link_Free */

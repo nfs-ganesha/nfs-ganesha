@@ -54,7 +54,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 					       const struct attrlist *attr,
 					       uint64_t mounted_on_fileid);
 
-static void free_entryplus3s(entryplus3 * entryplus3s);
+static void free_entryplus3s(entryplus3 *entryplus3s);
 
 /**
  * @brief Opaque bookkeeping structure for NFSv3 READDIRPLUS
@@ -76,7 +76,7 @@ struct nfs3_readdirplus_cb_data {
 };
 
 static
-nfsstat3 nfs_readdir_dot_entry(cache_entry_t * entry, const char *name,
+nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 			       uint64_t cookie, cache_inode_getattr_cb_t cb,
 			       struct nfs3_readdirplus_cb_data *tracker)
 {
@@ -90,11 +90,11 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t * entry, const char *name,
 	cb_parms.cookie = cookie;
 	cb_parms.in_result = true;
 	cache_status = cb(&cb_parms, &entry->obj_handle->attributes, 0);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+
+	if (cache_status != CACHE_INODE_SUCCESS)
 		return nfs3_Errno(cache_status);
-	} else {
+	else
 		return tracker->error;
-	}
 }
 
 /**
@@ -114,9 +114,9 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t * entry, const char *name,
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
-		     struct req_op_context *req_ctx, nfs_worker_data_t * worker,
-		     struct svc_req *req, nfs_res_t * res)
+int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
+		     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		     struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *dir_entry = NULL;
 	uint64_t begin_cookie = 0;
@@ -129,7 +129,8 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	cache_inode_status_t cache_status = 0;
 	cache_inode_status_t cache_status_gethandle = 0;
 	int rc = NFS_REQ_OK;
-	struct nfs3_readdirplus_cb_data tracker = {.entries = NULL,
+	struct nfs3_readdirplus_cb_data tracker = {
+		.entries = NULL,
 		.mem_left = 0,
 		.count = 0,
 		.error = NFS3_OK
@@ -138,15 +139,17 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
 		char str[LEN_FH_STR];
 		log_components_t component;
+
 		sprint_fhandle3(str, &(arg->arg_readdirplus3.dir));
-		if (isDebug(COMPONENT_NFSPROTO)) {
+
+		if (isDebug(COMPONENT_NFSPROTO))
 			component = COMPONENT_NFSPROTO;
-		} else {
+		else
 			component = COMPONENT_NFS_READDIR;
-			LogDebug(component,
-				 "REQUEST PROCESSING: Calling nfs3_Readdirplus "
-				 " handle: %s", str);
-		}
+
+		LogDebug(component,
+			 "REQUEST PROCESSING: Calling nfs3_Readdirplus handle: %s",
+			 str);
 	}
 
 	/* to avoid setting it on each error case */
@@ -159,13 +162,15 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	tracker.mem_left -= sizeof(READDIRPLUS3resok);
 
 	/* Estimate assuming that we're going to send no names and no handles.
-	 * Don't count space for pointers for nextentry or 
-	 * name_handle.data.data_val in entryplus3 */
+	 * Don't count space for pointers for nextentry or
+	 * name_handle.data.data_val in entryplus3
+	 */
 	estimated_num_entries = MIN((tracker.mem_left + sizeof(entryplus3 *))
 				    / (sizeof(entryplus3) - sizeof(char *) * 2),
 				    50);
 
 	tracker.total_entries = estimated_num_entries;
+
 	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "nfs3_Readdirplus: dircount=%u " "begin_cookie=%" PRIu64
 		     " " "estimated_num_entries=%lu, mem_left=%zd",
@@ -173,11 +178,14 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 		     estimated_num_entries, tracker.mem_left);
 
 	/* Convert file handle into a vnode */
-	dir_entry =
-	    nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir), req_ctx, export,
-				&(res->res_readdirplus3.status), &rc);
+	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
+					  req_ctx,
+					  export,
+					  &(res->res_readdirplus3.status),
+					  &rc);
+
 	if (dir_entry == NULL) {
-		rc = NFS_REQ_DROP;
+		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
@@ -199,17 +207,17 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	   directory. If verifier is unused (as in many NFS Servers) then
 	   only a set of zeros is returned (trivial value) */
 
-	if (export->UseCookieVerifier) {
-		memcpy(cookie_verifier, &(dir_entry->change_time),
+	if (export->UseCookieVerifier)
+		memcpy(cookie_verifier,
+		       &(dir_entry->change_time),
 		       sizeof(dir_entry->change_time));
-	}
 
 	if (export->UseCookieVerifier && (begin_cookie != 0)) {
 		/* Not the first call, so we have to check the cookie
 		   verifier */
-		if (memcmp
-		    (cookie_verifier, arg->arg_readdirplus3.cookieverf,
-		     NFS3_COOKIEVERFSIZE) != 0) {
+		if (memcmp(cookie_verifier,
+			   arg->arg_readdirplus3.cookieverf,
+			   NFS3_COOKIEVERFSIZE) != 0) {
 			res->res_readdirplus3.status = NFS3ERR_BAD_COOKIE;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -220,14 +228,14 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
 	/* Fudge cookie for "." and "..", if necessary */
-	if (begin_cookie > 2) {
+	if (begin_cookie > 2)
 		cache_inode_cookie = begin_cookie;
-	} else {
+	else
 		cache_inode_cookie = 0;
-	}
 
 	/* Allocate space for entries */
 	tracker.entries = gsh_calloc(estimated_num_entries, sizeof(entryplus3));
+
 	if (tracker.entries == NULL) {
 		rc = NFS_REQ_DROP;
 		goto out;
@@ -236,8 +244,11 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	if (begin_cookie == 0) {
 		/* Fill in "." */
 		res->res_readdir3.status =
-		    nfs_readdir_dot_entry(dir_entry, ".", 1,
-					  nfs3_readdirplus_callback, &tracker);
+		    nfs_readdir_dot_entry(dir_entry,
+					  ".",
+					  1,
+					  nfs3_readdirplus_callback,
+					  &tracker);
 
 		if (res->res_readdir3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
@@ -248,8 +259,10 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	/* Fill in ".." */
 	if (begin_cookie <= 1) {
 		cache_entry_t *parent_dir_entry = NULL;
-		cache_status_gethandle =
-		    cache_inode_lookupp(dir_entry, req_ctx, &parent_dir_entry);
+		cache_status_gethandle = cache_inode_lookupp(dir_entry,
+							     req_ctx,
+							     &parent_dir_entry);
+
 		if (parent_dir_entry == NULL) {
 			res->res_readdirplus3.status =
 			    nfs3_Errno(cache_status_gethandle);
@@ -258,8 +271,11 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 		}
 
 		res->res_readdir3.status =
-		    nfs_readdir_dot_entry(parent_dir_entry, "..", 2,
-					  nfs3_readdirplus_callback, &tracker);
+		    nfs_readdir_dot_entry(parent_dir_entry,
+					  "..",
+					  2,
+					  nfs3_readdirplus_callback,
+					  &tracker);
 
 		cache_inode_put(parent_dir_entry);
 
@@ -270,10 +286,15 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 	}
 
 	/* Call readdir */
-	cache_status =
-	    cache_inode_readdir(dir_entry, cache_inode_cookie, &num_entries,
-				&eod_met, req_ctx, ATTRS_NFS3,
-				nfs3_readdirplus_callback, &tracker);
+	cache_status = cache_inode_readdir(dir_entry,
+					   cache_inode_cookie,
+					   &num_entries,
+					   &eod_met,
+					   req_ctx,
+					   ATTRS_NFS3,
+					   nfs3_readdirplus_callback,
+					   &tracker);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* Is this a retryable error */
 		if (nfs_RetryableError(cache_status)) {
@@ -288,6 +309,7 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 
 		goto out;
 	}
+
 	if (tracker.error != NFS3_OK) {
 		res->res_readdir3.status = tracker.error;
 		nfs_SetPostOpAttr(dir_entry, req_ctx,
@@ -295,6 +317,7 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 				  dir_attributes);
 		goto out;
 	}
+
 	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "Readdirplus3 -> Call to cache_inode_readdir( cookie=%"
 		     PRIu64 ") -> num_entries = %u", cache_inode_cookie,
@@ -311,7 +334,8 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 				  resok.dir_attributes);
 
 		memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
-		       cookie_verifier, sizeof(cookieverf3));
+		       cookie_verifier,
+		       sizeof(cookieverf3));
 	} else {
 		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
 		    tracker.entries;
@@ -324,12 +348,14 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 			  dir_attributes);
 
 	memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
-	       cookie_verifier, sizeof(cookieverf3));
+	       cookie_verifier,
+	       sizeof(cookieverf3));
 
 	res->res_readdirplus3.status = NFS3_OK;
 
 	memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
-	       cookie_verifier, sizeof(cookieverf3));
+	       cookie_verifier,
+	       sizeof(cookieverf3));
 
 	rc = NFS_REQ_OK;
 
@@ -338,9 +364,8 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
 		cache_inode_put(dir_entry);
 
 	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK))
-	    && (tracker.entries != NULL)) {
+	    && (tracker.entries != NULL))
 		free_entryplus3s(tracker.entries);
-	}
 
 	return rc;
 }				/* nfs3_Readdirplus */
@@ -353,13 +378,12 @@ int nfs3_Readdirplus(nfs_arg_t * arg, exportlist_t * export,
  * @param resp [in,out] Pointer to the result structure
  *
  */
-void nfs3_Readdirplus_Free(nfs_res_t * resp)
+void nfs3_Readdirplus_Free(nfs_res_t *resp)
 {
 #define RESREADDIRPLUSREPLY resp->res_readdirplus3.READDIRPLUS3res_u.resok.reply
 	if ((resp->res_readdirplus3.status == NFS3_OK)
-	    && (RESREADDIRPLUSREPLY.entries != NULL)) {
+	    && (RESREADDIRPLUSREPLY.entries != NULL))
 		free_entryplus3s(RESREADDIRPLUSREPLY.entries);
-	}
 }				/*  nfs3_Readdirplus_Free */
 
 /**
@@ -397,10 +421,11 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 	 * to send attributes and full size handle - if it fails then
 	 * we're close enough to the buffer size limit and t's time to
 	 * stop anyway */
-	if ((tracker->mem_left < (sizeof(entryplus3) + namelen + NFS3_FHSIZE))) {
-		if (tracker->count == 0) {
+	if (tracker->mem_left
+	    < (sizeof(entryplus3) + namelen + NFS3_FHSIZE)) {
+		if (tracker->count == 0)
 			tracker->error = NFS3ERR_TOOSMALL;
-		}
+
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
@@ -421,7 +446,8 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		ep3->name_handle.handle_follows = TRUE;
 		ep3->name_handle.post_op_fh3_u.handle.data.data_val =
 		    gsh_malloc(NFS3_FHSIZE);
-		if (ep3->name_handle.post_op_fh3_u.handle.data.data_val == NULL) {
+		if (ep3->name_handle.post_op_fh3_u.handle.data.data_val
+		    == NULL) {
 			LogEvent(COMPONENT_NFS_READDIR,
 				 "FAILED to allocate FH");
 			tracker->error = NFS3ERR_SERVERFAULT;
@@ -430,9 +456,8 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 			return CACHE_INODE_SUCCESS;
 		}
 
-		if (!nfs3_FSALToFhandle
-		    (&ep3->name_handle.post_op_fh3_u.handle,
-		     cb_parms->entry->obj_handle)) {
+		if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
+					cb_parms->entry->obj_handle)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);
 			gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.
@@ -456,17 +481,18 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		tracker->mem_left -= sizeof(ep3->name_handle.handle_follows);
 	}
 
-	if (ep3->name_attributes.attributes_follow) {
+	if (ep3->name_attributes.attributes_follow)
 		tracker->mem_left -= sizeof(ep3->name_attributes);
-	} else {
+	else
 		tracker->mem_left -=
 		    sizeof(ep3->name_attributes.attributes_follow);
-	}
-	if (tracker->count > 0) {
+
+	if (tracker->count > 0)
 		tracker->entries[tracker->count - 1].nextentry = ep3;
-	}
+
 	++(tracker->count);
 	cb_parms->in_result = true;
+
 	return CACHE_INODE_SUCCESS;
 }				/* nfs3_readdirplus_callback */
 
@@ -479,7 +505,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
  * @param entryplus3s [in] Pointer to first entry
  */
 
-static void free_entryplus3s(entryplus3 * entryplus3s)
+static void free_entryplus3s(entryplus3 *entryplus3s)
 {
 	entryplus3 *entry = NULL;
 
@@ -487,6 +513,7 @@ static void free_entryplus3s(entryplus3 * entryplus3s)
 		gsh_free(entry->name);
 		gsh_free(entry->name_handle.post_op_fh3_u.handle.data.data_val);
 	}
+
 	gsh_free(entryplus3s);
 
 	return;
