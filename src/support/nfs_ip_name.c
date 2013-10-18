@@ -59,7 +59,7 @@ unsigned int expiration_time;
 uint32_t ip_name_value_hash_func(hash_parameter_t *hparam,
 				 struct gsh_buffdesc *buffclef)
 {
-	return hash_sockaddr(buffclef->addr, IGNORE_PORT) % hparam->index_size;
+	return hash_sockaddr(buffclef->addr, true) % hparam->index_size;
 }
 
 /**
@@ -76,7 +76,7 @@ uint32_t ip_name_value_hash_func(hash_parameter_t *hparam,
 uint64_t ip_name_rbt_hash_func(hash_parameter_t *hparam,
 			       struct gsh_buffdesc *buffclef)
 {
-	return hash_sockaddr(buffclef->addr, IGNORE_PORT);
+	return hash_sockaddr(buffclef->addr, true);
 }
 
 /**
@@ -94,7 +94,7 @@ uint64_t ip_name_rbt_hash_func(hash_parameter_t *hparam,
  */
 int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
-	return (cmp_sockaddr(buff1->addr, buff2->addr, IGNORE_PORT) !=
+	return (cmp_sockaddr(buff1->addr, buff2->addr, true) !=
 		0) ? 0 : 1;
 }
 

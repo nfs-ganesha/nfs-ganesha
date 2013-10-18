@@ -24,33 +24,27 @@
  */
 
 /**
- * \file    rpc_tools.c
- * \author  $Author: ffilz $
- * \date    $Date: 2006/01/20 07:39:22 $
- * \version $Revision: 1.14 $
- * \brief   Some tools very usefull in the nfs protocol implementation.
- *
- * rpc_tools.c : Some tools very usefull in the nfs protocol implementation
- *
+ * @file    rpc_tools.c
+ * @brief   Some tools very usefull in the nfs protocol implementation.
  *
  */
+
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h> /* for having isalnum */
+#include <stdlib.h> /* for having atoi */
+#include <dirent.h> /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 
-#include "rpcal.h"
 #include "hashtable.h"
 #include "log.h"
 #include "nfs_core.h"
@@ -125,18 +119,16 @@ const char *xprt_type_to_str(xprt_type_t type)
 }
 
 /**
+ * @brief Copy transport address into an address field
  *
- * copy_xprt_addr: copies and transport address into an address field.
+ * @param[out] addr Address field to fill in.
+ * @param[in]  xprt Transport to get address from.
  *
- * copies and transport address into an address field.
- *
- * @param addr [OUT] address field to fill in.
- * @param xprt [IN]  transport to get address from.
- *
- * @return 1 if ok, 0 if failure.
- *
+ * @retval true if okay.
+ * @retval false if not.
  */
-int copy_xprt_addr(sockaddr_t * addr, SVCXPRT * xprt)
+
+bool copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 {
 	struct netbuf *phostaddr = svc_getcaller_netbuf(xprt);
 	if (phostaddr->len > sizeof(sockaddr_t) || phostaddr->buf == NULL)
@@ -158,7 +150,7 @@ int copy_xprt_addr(sockaddr_t * addr, SVCXPRT * xprt)
  * @return hash value
  *
  */
-unsigned long hash_sockaddr(sockaddr_t * addr, ignore_port_t ignore_port)
+uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 {
 	unsigned long addr_hash = 0;
 	int port;
@@ -168,7 +160,7 @@ unsigned long hash_sockaddr(sockaddr_t * addr, ignore_port_t ignore_port)
 		{
 			struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
 			addr_hash = paddr->sin_addr.s_addr;
-			if (ignore_port == CHECK_PORT) {
+			if (!ignore_port) {
 				port = paddr->sin_port;
 				addr_hash ^= (port << 16);
 			}
@@ -179,9 +171,9 @@ unsigned long hash_sockaddr(sockaddr_t * addr, ignore_port_t ignore_port)
 			struct sockaddr_in6 *paddr =
 			    (struct sockaddr_in6 *)addr;
 			uint32_t *va;
-			va = (uint32_t *) & paddr->sin6_addr;
+			va = (uint32_t *)&paddr->sin6_addr;
 			addr_hash = va[0] ^ va[1] ^ va[2] ^ va[3];
-			if (ignore_port == CHECK_PORT) {
+			if (!ignore_port) {
 				port = paddr->sin6_port;
 				addr_hash ^= (port << 16);
 			}
@@ -194,7 +186,7 @@ unsigned long hash_sockaddr(sockaddr_t * addr, ignore_port_t ignore_port)
 	return addr_hash;
 }
 
-int sprint_sockaddr(sockaddr_t * addr, char *buf, int len)
+int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
 	const char *name = NULL;
 	int port, alen;
@@ -237,7 +229,7 @@ int sprint_sockaddr(sockaddr_t * addr, char *buf, int len)
 	return 1;
 }
 
-int sprint_sockip(sockaddr_t * addr, char *buf, int len)
+int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
 	const char *name = NULL;
 
@@ -271,48 +263,46 @@ int sprint_sockip(sockaddr_t * addr, char *buf, int len)
 
 /**
  *
- * cmp_sockaddr: compare 2 sockaddrs, including ports
+ * @brief Compare 2 sockaddrs, including ports
  *
- * @param addr_1 [IN] first address
- * @param addr_2 [IN] second address
- * @param ignore_port [IN] 1 if you want to ignore port
- *       comparison, 0 if you need port comparisons
+ * @param[in] addr_1      First address
+ * @param[in] addr_2      Second address
+ * @param[in] ignore_port Whether to ignore the port
  *
- * @return 1 if addresses match, 0 if they don't
- *
+ * @return Comparator trichotomy,
  */
-int cmp_sockaddr(sockaddr_t * addr_1, sockaddr_t * addr_2,
-		 ignore_port_t ignore_port)
+int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2,
+		 bool ignore_port)
 {
 	if (addr_1->ss_family != addr_2->ss_family)
 		return 0;
 
 	switch (addr_1->ss_family) {
 	case AF_INET:
-		{
-			struct sockaddr_in *paddr1 =
-			    (struct sockaddr_in *)addr_1;
-			struct sockaddr_in *paddr2 =
-			    (struct sockaddr_in *)addr_2;
+	{
+		struct sockaddr_in *inaddr1 =
+			(struct sockaddr_in *)addr_1;
+		struct sockaddr_in *inaddr2 =
+			(struct sockaddr_in *)addr_2;
 
-			return (paddr1->sin_addr.s_addr ==
-				paddr2->sin_addr.s_addr
-				&& (ignore_port == IGNORE_PORT
-				    || paddr1->sin_port == paddr2->sin_port));
-		}
+		return (inaddr1->sin_addr.s_addr ==
+			inaddr2->sin_addr.s_addr
+			&& (ignore_port ||
+			    inaddr1->sin_port == inaddr2->sin_port));
+	}
 	case AF_INET6:
-		{
-			struct sockaddr_in6 *paddr1 =
-			    (struct sockaddr_in6 *)addr_1;
-			struct sockaddr_in6 *paddr2 =
-			    (struct sockaddr_in6 *)addr_2;
+	{
+		struct sockaddr_in6 *ip6addr1 =
+			(struct sockaddr_in6 *)addr_1;
+		struct sockaddr_in6 *ip6addr2 =
+			(struct sockaddr_in6 *)addr_2;
 
-			return (memcmp
-				(paddr1->sin6_addr.s6_addr,
-				 paddr2->sin6_addr.s6_addr,
-				 sizeof(paddr2->sin6_addr.s6_addr)) == 0)
-			    && (ignore_port == IGNORE_PORT
-				|| paddr1->sin6_port == paddr2->sin6_port);
+		return (memcmp
+			(ip6addr1->sin6_addr.s6_addr,
+			 ip6addr2->sin6_addr.s6_addr,
+			 sizeof(ip6addr2->sin6_addr.s6_addr)) == 0) &&
+			(ignore_port ||
+			 ip6addr1->sin6_port == ip6addr2->sin6_port);
 		}
 	default:
 		return 0;
@@ -326,62 +316,60 @@ int cmp_sockaddr(sockaddr_t * addr_1, sockaddr_t * addr_2,
  * @param[in] addr2       Second address
  * @param[in] ignore_port Whether to ignore the port
  *
- * @return -1 if addr1<addr2, 0 if addr1==addr2, 1 if addr1>addr2
- *
+ * @return Comparator trichotomy
  */
-int sockaddr_cmpf(sockaddr_t * addr1, sockaddr_t * addr2,
-		  ignore_port_t ignore_port)
+int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2,
+		  bool ignore_port)
 {
 	switch (addr1->ss_family) {
 	case AF_INET:
-		{
-			struct sockaddr_in *in1 = (struct sockaddr_in *)addr1;
-			struct sockaddr_in *in2 = (struct sockaddr_in *)addr2;
+	{
+		struct sockaddr_in *in1 = (struct sockaddr_in *)addr1;
+		struct sockaddr_in *in2 = (struct sockaddr_in *)addr2;
 
-			if (in1->sin_addr.s_addr < in2->sin_addr.s_addr)
-				return (-1);
+		if (in1->sin_addr.s_addr < in2->sin_addr.s_addr)
+			return -1;
 
-			if (in1->sin_addr.s_addr == in2->sin_addr.s_addr) {
-				if (ignore_port == IGNORE_PORT)
-					return (0);
-				/* else */
-				if (in1->sin_port < in2->sin_port)
-					return (-1);
-				if (in1->sin_port == in2->sin_port)
-					return (0);
-				return (1);
-			}
-			return (1);
+		if (in1->sin_addr.s_addr == in2->sin_addr.s_addr) {
+			if (ignore_port)
+				return 0;
+			/* else */
+			if (in1->sin_port < in2->sin_port)
+				return -1;
+			if (in1->sin_port == in2->sin_port)
+				return 0;
+			return 1;
 		}
+		return 1;
+	}
 	case AF_INET6:
-		{
-			struct sockaddr_in6 *in1 = (struct sockaddr_in6 *)addr1;
-			struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
-			int acmp =
-			    memcmp(in1->sin6_addr.s6_addr,
-				   in2->sin6_addr.s6_addr,
-				   sizeof(struct sockaddr_in6));
-			if (acmp < 1)
-				return (-1);
-			if (acmp == 0) {
-				if (ignore_port == IGNORE_PORT)
-					return (0);
-				/* else */
-				if (in1->sin6_port < in2->sin6_port)
-					return (-1);
-				if (in1->sin6_port == in2->sin6_port)
-					return (0);
-				return (1);
-			}
-			return (1);
+	{
+		struct sockaddr_in6 *in1 = (struct sockaddr_in6 *)addr1;
+		struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
+		int acmp = memcmp(in1->sin6_addr.s6_addr,
+				  in2->sin6_addr.s6_addr,
+				  sizeof(struct sockaddr_in6));
+		if (acmp < 1)
+			return -1;
+		if (acmp == 0) {
+			if (ignore_port)
+				return 0;
+			/* else */
+			if (in1->sin6_port < in2->sin6_port)
+				return -1;
+			if (in1->sin6_port == in2->sin6_port)
+				return 0;
+			return 1;
 		}
+		return 1;
+	}
 	default:
 		/* unhandled AF */
 		return -2;
 	}
 }
 
-in_addr_t get_in_addr(sockaddr_t * addr)
+in_addr_t get_in_addr(sockaddr_t *addr)
 {
 	if (addr->ss_family == AF_INET)
 		return ((struct sockaddr_in *)addr)->sin_addr.s_addr;
@@ -389,7 +377,7 @@ in_addr_t get_in_addr(sockaddr_t * addr)
 		return 0;
 }
 
-int get_port(sockaddr_t * addr)
+int get_port(sockaddr_t *addr)
 {
 	switch (addr->ss_family) {
 	case AF_INET:
@@ -425,7 +413,7 @@ void socket_setoptions(int socketFd)
 
 #define SIZE_AI_ADDR sizeof(struct sockaddr)
 
-int ipstring_to_sockaddr(const char *str, sockaddr_t * addr)
+int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 {
 	struct addrinfo *info, hints, *p;
 	int rc;
@@ -490,7 +478,7 @@ CLIENT *gsh_clnt_create(char *host, unsigned long prog, unsigned long vers,
 	return clnt;
 }
 
-void gsh_clnt_destroy(CLIENT * clnt)
+void gsh_clnt_destroy(CLIENT *clnt)
 {
 	pthread_mutex_lock(&clnt_create_mutex);
 	clnt_destroy(clnt);

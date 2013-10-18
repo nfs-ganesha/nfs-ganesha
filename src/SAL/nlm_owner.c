@@ -149,9 +149,9 @@ int compare_nsm_client(state_nsm_client_t *client1,
 		return 0;
 
 	if (!nfs_param.core_param.nsm_use_caller_name) {
-		if (cmp_sockaddr
-		    (&client1->ssc_client_addr, &client2->ssc_client_addr,
-		     IGNORE_PORT) == 0)
+		if (cmp_sockaddr(&client1->ssc_client_addr,
+				 &client2->ssc_client_addr,
+				 true) == 0)
 			return 1;
 		return 0;
 	}
@@ -211,7 +211,7 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
 	} else {
 		res =
 		    hash_sockaddr(&pkey->ssc_client_addr,
-				  IGNORE_PORT) % hparam->index_size;
+				  true) % hparam->index_size;
 	}
 
 	if (isDebug(COMPONENT_HASHTABLE))
@@ -249,7 +249,7 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
 		    (unsigned long)sum +
 		    (unsigned long)pkey->ssc_nlm_caller_name_len;
 	} else {
-		res = hash_sockaddr(&pkey->ssc_client_addr, IGNORE_PORT);
+		res = hash_sockaddr(&pkey->ssc_client_addr, true);
 	}
 
 	if (isDebug(COMPONENT_HASHTABLE))
@@ -352,7 +352,7 @@ int compare_nlm_client(state_nlm_client_t *client1,
 
 	if (cmp_sockaddr
 	    (&client1->slc_server_addr, &client2->slc_server_addr,
-	     IGNORE_PORT) == 0)
+	     true) == 0)
 		return 1;
 
 	if (client1->slc_client_type != client2->slc_client_type)

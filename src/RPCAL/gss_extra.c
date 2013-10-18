@@ -38,7 +38,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "ganesha_rpc.h"
-#include "rpcal.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE
@@ -51,17 +50,14 @@
 #include "log.h"
 
 /**
+ * @brief Convert GSSAPI status to a string
  *
- * sperror_gss: converts GSSAPI status to a string.
- * 
- * @param outmsg    [OUT] output string 
- * @param tag       [IN]  input tag
- * @param maj_stat  [IN]  GSSAPI major status
- * @param min_stat  [IN]  GSSAPI minor status
- *
- * @return true is successfull, false otherwise.
- * 
+ * @param[out] outmsg    Output string
+ * @param[in]  tag       Tag
+ * @param[in]  maj_stat  GSSAPI major status
+ * @param[in]  min_stat  GSSAPI minor status
  */
+
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
 	OM_uint32 smin;
@@ -88,7 +84,7 @@ void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 
 	gss_release_buffer(&smin, &msg);
 	gss_release_buffer(&smin, &msg2);
-}				/* log_sperror_gss */
+}
 
 const char *str_gc_proc(rpc_gss_proc_t gc_proc)
 {

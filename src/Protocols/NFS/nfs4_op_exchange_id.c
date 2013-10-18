@@ -222,7 +222,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t * data,
 			if (!nfs_compare_clientcred
 			    (&conf->cid_credential, &data->credential)
 			    || !cmp_sockaddr(&conf->cid_client_addr,
-					     &client_addr, IGNORE_PORT)) {
+					     &client_addr, true)) {
 				/* CASE 9, Update but wrong principal */
 				res_EXCHANGE_ID4->eir_status = NFS4ERR_PERM;
 			} else {
