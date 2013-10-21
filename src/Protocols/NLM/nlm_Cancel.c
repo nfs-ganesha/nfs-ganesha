@@ -66,6 +66,7 @@ int nlm4_Cancel(nfs_arg_t *args, exportlist_t *export,
 	}
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
+
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx cookie=%s",
 		 (int)arg->alock.svid, (unsigned long long)arg->alock.l_offset,
@@ -73,34 +74,48 @@ int nlm4_Cancel(nfs_arg_t *args, exportlist_t *export,
 
 	if (!copy_netobj(&res->res_nlm4test.cookie, &arg->cookie)) {
 		res->res_nlm4.stat.stat = NLM4_FAILED;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Test %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	if (nfs_in_grace()) {
 		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Cancel %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_parameters(req, arg->exclusive, &arg->alock, &lock, req_ctx, &entry, export, CARE_NOT,	/* cancel doesn't care if owner is found */
-				    &nsm_client, &nlm_client, &nlm_owner, NULL);
+	/* cancel doesn't care if owner is found */
+	rc = nlm_process_parameters(req,
+				    arg->exclusive,
+				    &arg->alock,
+				    &lock,
+				    req_ctx,
+				    &entry,
+				    export,
+				    CARE_NOT,
+				    &nsm_client,
+				    &nlm_client,
+				    &nlm_owner,
+				    NULL);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
 		res->res_nlm4.stat.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Unlock %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	state_status = state_cancel(entry, export, req_ctx, nlm_owner, &lock);
 	if (state_status != STATE_SUCCESS) {
-		/* Cancel could fail in the FSAL and make a bit of a mess, especially if
-		 * we are in out of memory situation. Such an error is logged by
-		 * Cache Inode.
+		/* Cancel could fail in the FSAL and make a bit of a mess,
+		 * especially if we are in out of memory situation. Such an
+		 * error is logged by Cache Inode.
 		 */
 		res->res_nlm4test.test_stat.stat =
 		    nlm_convert_state_error(state_status);
@@ -114,12 +129,13 @@ int nlm4_Cancel(nfs_arg_t *args, exportlist_t *export,
 	dec_state_owner_ref(nlm_owner);
 	cache_inode_put(entry);
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+	LogDebug(COMPONENT_NLM,
+		 "REQUEST RESULT: nlm4_Cancel %s",
 		 lock_result_str(res->res_nlm4.stat.stat));
 	return NFS_REQ_OK;
 }				/* nlm4_Cancel */
 
-static void nlm4_cancel_message_resp(state_async_queue_t * arg,
+static void nlm4_cancel_message_resp(state_async_queue_t *arg,
 				     struct req_op_context *req_ctx)
 {
 	state_nlm_async_data_t *nlm_arg =
@@ -169,14 +185,15 @@ int nlm4_Cancel_Message(nfs_arg_t *args, exportlist_t *export,
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm_Cancel_Message");
 
-	nsm_client =
-	    get_nsm_client(CARE_NO_MONITOR, req->rq_xprt,
-			   arg->alock.caller_name);
+	nsm_client = get_nsm_client(CARE_NO_MONITOR,
+				    req->rq_xprt,
+				    arg->alock.caller_name);
 
 	if (nsm_client != NULL)
-		nlm_client =
-		    get_nlm_client(CARE_NO_MONITOR, req->rq_xprt, nsm_client,
-				   arg->alock.caller_name);
+		nlm_client = get_nlm_client(CARE_NO_MONITOR,
+					    req->rq_xprt,
+					    nsm_client,
+					    arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
@@ -185,7 +202,8 @@ int nlm4_Cancel_Message(nfs_arg_t *args, exportlist_t *export,
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,
-					     nlm4_cancel_message_resp, res);
+					     nlm4_cancel_message_resp,
+					     res);
 
 	if (rc == NFS_REQ_DROP) {
 		if (nsm_client != NULL)
@@ -207,8 +225,7 @@ int nlm4_Cancel_Message(nfs_arg_t *args, exportlist_t *export,
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Cancel_Free(nfs_res_t * res)
+void nlm4_Cancel_Free(nfs_res_t *res)
 {
 	netobj_free(&res->res_nlm4test.cookie);
-	return;
 }				/* nlm4_Cancel_Free */

@@ -44,8 +44,9 @@ bool nsm_connect()
 		return true;
 
 	if (uname(&utsname) == -1) {
-		LogCrit(COMPONENT_NLM, "uname failed with errno %d (%s)", errno,
-			strerror(errno));
+		LogCrit(COMPONENT_NLM,
+			"uname failed with errno %d (%s)",
+			errno, strerror(errno));
 		return false;
 	}
 
@@ -82,7 +83,7 @@ void nsm_disconnect()
 	}
 }
 
-bool nsm_monitor(state_nsm_client_t * host)
+bool nsm_monitor(state_nsm_client_t *host)
 {
 	enum clnt_stat ret;
 	struct mon nsm_mon;
@@ -121,15 +122,22 @@ bool nsm_monitor(state_nsm_client_t * host)
 	/* Set this after we call nsm_connect() */
 	nsm_mon.mon_id.my_id.my_name = nodename;
 
-	ret =
-	    clnt_call(nsm_clnt, nsm_auth, SM_MON, (xdrproc_t) xdr_mon,
-		      (caddr_t) & nsm_mon, (xdrproc_t) xdr_sm_stat_res,
-		      (caddr_t) & res, tout);
+	ret = clnt_call(nsm_clnt,
+			nsm_auth,
+			SM_MON,
+			(xdrproc_t) xdr_mon,
+			&nsm_mon,
+			(xdrproc_t) xdr_sm_stat_res,
+			&res,
+			tout);
 
 	if (ret != RPC_SUCCESS) {
-		LogCrit(COMPONENT_NLM, "Can not monitor %s SM_MON ret %d %s",
-			nsm_mon.mon_id.mon_name, ret, clnt_sperror(nsm_clnt,
-								   ""));
+		LogCrit(COMPONENT_NLM,
+			"Can not monitor %s SM_MON ret %d %s",
+			nsm_mon.mon_id.mon_name,
+			ret,
+			clnt_sperror(nsm_clnt, ""));
+
 		nsm_disconnect();
 		pthread_mutex_unlock(&nsm_mutex);
 		pthread_mutex_unlock(&host->ssc_mutex);
@@ -137,8 +145,10 @@ bool nsm_monitor(state_nsm_client_t * host)
 	}
 
 	if (res.res_stat != STAT_SUCC) {
-		LogCrit(COMPONENT_NLM, "Can not monitor %s SM_MON status %d",
+		LogCrit(COMPONENT_NLM,
+			"Can not monitor %s SM_MON status %d",
 			nsm_mon.mon_id.mon_name, res.res_stat);
+
 		nsm_disconnect();
 		pthread_mutex_unlock(&nsm_mutex);
 		pthread_mutex_unlock(&host->ssc_mutex);
@@ -147,7 +157,9 @@ bool nsm_monitor(state_nsm_client_t * host)
 
 	nsm_count++;
 	atomic_store_int32_t(&host->ssc_monitored, true);
-	LogDebug(COMPONENT_NLM, "Monitored %s for nodename %s",
+
+	LogDebug(COMPONENT_NLM,
+		 "Monitored %s for nodename %s",
 		 nsm_mon.mon_id.mon_name, nodename);
 
 	pthread_mutex_unlock(&nsm_mutex);
@@ -155,7 +167,7 @@ bool nsm_monitor(state_nsm_client_t * host)
 	return true;
 }
 
-bool nsm_unmonitor(state_nsm_client_t * host)
+bool nsm_unmonitor(state_nsm_client_t *host)
 {
 	enum clnt_stat ret;
 	struct sm_stat res;
@@ -192,14 +204,22 @@ bool nsm_unmonitor(state_nsm_client_t * host)
 	/* Set this after we call nsm_connect() */
 	nsm_mon_id.my_id.my_name = nodename;
 
-	ret =
-	    clnt_call(nsm_clnt, nsm_auth, SM_UNMON, (xdrproc_t) xdr_mon_id,
-		      (caddr_t) & nsm_mon_id, (xdrproc_t) xdr_sm_stat,
-		      (caddr_t) & res, tout);
+	ret = clnt_call(nsm_clnt,
+			nsm_auth,
+			SM_UNMON,
+			(xdrproc_t) xdr_mon_id,
+			&nsm_mon_id,
+			(xdrproc_t) xdr_sm_stat,
+			&res,
+			tout);
 
 	if (ret != RPC_SUCCESS) {
-		LogCrit(COMPONENT_NLM, "Can not unmonitor %s SM_MON ret %d %s",
-			nsm_mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
+		LogCrit(COMPONENT_NLM,
+			"Can not unmonitor %s SM_MON ret %d %s",
+			nsm_mon_id.mon_name,
+			ret,
+			clnt_sperror(nsm_clnt, ""));
+
 		nsm_disconnect();
 		pthread_mutex_unlock(&nsm_mutex);
 		pthread_mutex_unlock(&host->ssc_mutex);
@@ -243,13 +263,19 @@ void nsm_unmonitor_all(void)
 	/* Set this after we call nsm_connect() */
 	nsm_id.my_name = nodename;
 
-	ret =
-	    clnt_call(nsm_clnt, nsm_auth, SM_UNMON_ALL, (xdrproc_t) xdr_my_id,
-		      (caddr_t) & nsm_id, (xdrproc_t) xdr_sm_stat,
-		      (caddr_t) & res, tout);
+	ret = clnt_call(nsm_clnt,
+			nsm_auth,
+			SM_UNMON_ALL,
+			(xdrproc_t) xdr_my_id,
+			&nsm_id,
+			(xdrproc_t) xdr_sm_stat,
+			&res,
+			tout);
 
 	if (ret != RPC_SUCCESS) {
-		LogCrit(COMPONENT_NLM, "Can not unmonitor all ret %d %s", ret,
+		LogCrit(COMPONENT_NLM,
+			"Can not unmonitor all ret %d %s",
+			ret,
 			clnt_sperror(nsm_clnt, ""));
 	}
 

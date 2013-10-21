@@ -8,16 +8,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  *
  */
 
@@ -67,13 +67,16 @@ int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
 	res->res_nlm4share.sequence = 0;
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
+
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Unshare cookie=%s reclaim=%s",
-		 buffer, arg->reclaim ? "yes" : "no");
+		 buffer,
+		 arg->reclaim ? "yes" : "no");
 
 	if (!copy_netobj(&res->res_nlm4share.cookie, &arg->cookie)) {
 		res->res_nlm4share.stat = NLM4_FAILED;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Unshare %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
@@ -86,26 +89,36 @@ int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
 	 */
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
 		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Unshare %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_share_parms(req, &arg->share, export->export_hdl,
-				     req_ctx, &pentry, CARE_NOT, &nsm_client,
-				     &nlm_client, &nlm_owner);
+	rc = nlm_process_share_parms(req,
+				     &arg->share,
+				     export->export_hdl,
+				     req_ctx,
+				     &pentry,
+				     CARE_NOT,
+				     &nsm_client,
+				     &nlm_client,
+				     &nlm_owner);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
 		res->res_nlm4share.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Unshare %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	state_status =
-	    state_nlm_unshare(pentry, arg->share.access, arg->share.mode,
-			      nlm_owner);
+	state_status = state_nlm_unshare(pentry,
+					 arg->share.access,
+					 arg->share.mode,
+					 nlm_owner);
+
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4share.stat =
 		    nlm_convert_state_error(state_status);
@@ -121,6 +134,7 @@ int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
 		 lock_result_str(res->res_nlm4share.stat));
+
 	return NFS_REQ_OK;
 }
 
@@ -135,5 +149,4 @@ int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
 void nlm4_Unshare_Free(nfs_res_t *res)
 {
 	netobj_free(&res->res_nlm4share.cookie);
-	return;
 }
