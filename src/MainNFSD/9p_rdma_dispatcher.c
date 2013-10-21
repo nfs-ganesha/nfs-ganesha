@@ -143,6 +143,7 @@ void *_9p_rdma_thread(void *Arg)
 	_9p_datalock_t *datalock = NULL;
 	unsigned int i = 0;
 	int rc = 0;
+	_9p_outqueue_t *outqueue = trans->private_data;
 
 	priv = gsh_malloc(sizeof(*priv));
 	if (priv == NULL) {
@@ -153,7 +154,8 @@ void *_9p_rdma_thread(void *Arg)
 	memset(priv, 0, sizeof(*priv));
 	trans->private_data = priv;
 
-	priv->outqueue = msk_getpd(trans)->private;
+	priv->outqueue = outqueue;
+	priv->outmr = msk_getpd(trans)->private;
 
 	p_9p_conn = gsh_malloc(sizeof(*p_9p_conn));
 	if (p_9p_conn == NULL) {
@@ -266,13 +268,9 @@ void *_9p_rdma_thread(void *Arg)
 	pthread_exit(NULL);
 }				/* _9p_rdma_handle_trans */
 
-static void _9p_rdma_setup_outqueue(msk_trans_t *trans, uint8_t *outrdmabuf)
+static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
 {
-	/* Register rdmabuf */
 	struct ibv_mr *mr;
-	int i;
-	msk_data_t *wdata;
-	_9p_outqueue_t *outqueue;
 
 	/* Do nothing if we already have stuff setup */
 	if (msk_getpd(trans)->private)
@@ -287,28 +285,52 @@ static void _9p_rdma_setup_outqueue(msk_trans_t *trans, uint8_t *outrdmabuf)
 	}
 
 
+	msk_getpd(trans)->private = mr;
+}
+
+static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
+				   _9p_outqueue_t **poutqueue)
+{
+	uint8_t *outrdmabuf;
+	int i;
+	msk_data_t *wdata;
+	_9p_outqueue_t *outqueue;
+
+	outrdmabuf =
+	  gsh_malloc(_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize);
+	if (outrdmabuf == NULL) {
+		LogFatal(COMPONENT_9P,
+			 "9P/RDMA: trans handler could not malloc rdmabuf");
+		return;
+	}
+	*poutrdmabuf = outrdmabuf;
+
 	if ((wdata = gsh_malloc(_9P_RDMA_OUT * sizeof(*wdata))) == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc wdata");
+		return;
 	}
 
 	for (i = 0; i < _9P_RDMA_OUT; i++) {
-		wdata[i].data = outrdmabuf + i * nfs_param._9p_param._9p_rdma_msize;
+		wdata[i].data = outrdmabuf +
+				i * nfs_param._9p_param._9p_rdma_msize;
 		wdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
-		wdata[i].mr = mr;
 		if (i != _9P_RDMA_OUT - 1)
 			wdata[i].next = &wdata[i+1];
 	}
+	*pwdata = wdata;
 
 	if ((outqueue = gsh_malloc(sizeof(*outqueue))) == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc outqueue");
+		return;
 	}
-	msk_getpd(trans)->private = outqueue;
 	pthread_mutex_init(&outqueue->lock, NULL);
 	pthread_cond_init(&outqueue->cond, NULL);
 	outqueue->data = wdata;
+	*poutqueue = outqueue;
 }
+
 
 /**
  * _9p_rdma_dispatcher_thread: 9P/RDMA dispatcher
@@ -328,6 +350,8 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	pthread_t thrid_handle_trans;
 
 	uint8_t *outrdmabuf;
+	msk_data_t *wdata;
+	_9p_outqueue_t *outqueue;
 
 #define PORT_MAX_LEN 6
 	char port[PORT_MAX_LEN];
@@ -391,18 +415,19 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 			LogMajor(COMPONENT_9P,
 				 "9P/RDMA : dispatcher failed to accept a new client");
 		else {
-			/* Create output buffers on first connection for each verb.
+			/* Create output buffers on first connection.
 			 * need it here because we don't want multiple children to do this job.
-			 * The function does nothing if not on first pass.
 			 */
 			if (!outrdmabuf) {
-				outrdmabuf =
-				  gsh_malloc(_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize);
-				if (outrdmabuf == NULL)
-					LogFatal(COMPONENT_9P,
-						 "9P/RDMA: trans handler could not malloc rdmabuf");
+				_9p_rdma_setup_buffers(&outrdmabuf,
+						       &wdata,
+						       &outqueue);
+				/* this means ENOMEM - abort */
+				if (!outrdmabuf || !wdata || !outqueue)
+					break;
 			}
-			_9p_rdma_setup_outqueue(child_trans, outrdmabuf);
+			_9p_rdma_setup_mr(child_trans, outrdmabuf);
+			child_trans->private_data = outqueue;
 
 			if (pthread_create(&thrid_handle_trans,
 					   &attr_thr,

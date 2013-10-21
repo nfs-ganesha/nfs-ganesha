@@ -374,6 +374,7 @@ typedef struct _9p_rdma_priv {
 	msk_data_t *rdata;
 	_9p_datalock_t *datalock;
 	_9p_outqueue_t *outqueue;
+	struct ibv_mr *outmr;
 } _9p_rdma_priv;
 #define _9p_rdma_priv_of(x) ((_9p_rdma_priv*)x->private_data)
 #endif

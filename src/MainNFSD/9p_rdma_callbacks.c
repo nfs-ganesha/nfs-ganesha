@@ -150,6 +150,7 @@ void _9p_rdma_process_request(_9p_request_data_t *req9p,
 		/* If earlier processing succeeded, post it */
 		if (rc == 1) {
 			datalock->out->size = outdatalen;
+			datalock->out->mr = priv->outmr;
 			if (0 !=
 			    msk_post_send(trans, datalock->out,
 					  _9p_rdma_callback_send,
