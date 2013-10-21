@@ -298,7 +298,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   gPseudoFs.root.junction_export = NULL;
 
   /* root is its own parent */
-  gPseudoFs.root.parent = &PseudoFs.root;
+  gPseudoFs.root.parent = &gPseudoFs.root;
   avltree_init(&gPseudoFs.root.child_tree_byname, avl_pseudo_name_cmp, 0);
   avltree_init(&gPseudoFs.root.child_tree_byid, avl_pseudo_id_cmp, 0);
 
@@ -435,7 +435,8 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                       free_pseudo_handle_key(key);
                       gsh_free(newPseudoFsEntry);
                       return -1;
-                    } else
+                    }
+                  else
                     {
                       /* Now we have the cached pseudofs entry*/
                       PseudoFsCurrent = value.pdata;
@@ -443,7 +444,6 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                       /* Release the lock ... we should be calling this funciton
                        * in a serial fashion before Ganesha is operational. No
                        * chance of contention. */
-                      free_pseudo_handle_key(key);
                       HashTable_ReleaseLatched(ht_nfs4_pseudo, &latch);
                     }
                   /* Free the key and value that we weren't able to add. */
@@ -2157,17 +2157,18 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* make sure to start at the right position given by the cookie */
   if (cookie == 0)
     currnode = avltree_first(&psfsentry->child_tree_byid);
-  else {
-    /* Find entry with cookie (which was set to pseudo_id) */
-    memset(&tempentry.idavlnode, 0, sizeof(tempentry.idavlnode));
-    keynode = &tempentry.idavlnode;
-    tempentry.pseudo_id = cookie;
-    currnode = avltree_lookup(keynode, &psfsentry->child_tree_byid);
-    if(currnode == NULL)
-      {
-        res_READDIR4.status = NFS4ERR_BAD_COOKIE;
-        return res_READDIR4.status;
-      }
+  else
+    {
+      /* Find entry with cookie (which was set to pseudo_id) */
+      memset(&tempentry.idavlnode, 0, sizeof(tempentry.idavlnode));
+      keynode = &tempentry.idavlnode;
+      tempentry.pseudo_id = cookie;
+      currnode = avltree_lookup(keynode, &psfsentry->child_tree_byid);
+      if(currnode == NULL)
+        {
+          res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+          return res_READDIR4.status;
+        }
   }
   for( ;
        currnode != NULL;
