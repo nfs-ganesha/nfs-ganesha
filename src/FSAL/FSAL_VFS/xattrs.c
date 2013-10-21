@@ -453,13 +453,16 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(-rc, errno);
 		} else {
 			index = rc;
+			found = TRUE;
 		}
 		close(fd);
 	}
 
-	/* If we're here, we got it (early return on error) */
-	*pxattr_id = index;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (found) {
+		*pxattr_id = index;
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else
+		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 }
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -510,17 +513,17 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		*p_output_size = rc;
 
 		close(fd);
-
-		rc = ERR_FSAL_NO_ERROR;
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else {		/* built-in attr */
 
 		/* get the value */
 		rc = xattr_list[xattr_id].get_func(obj_hdl, buffer_addr,
 						   buffer_size, p_output_size,
 						   xattr_list[xattr_id].arg);
+		return fsalstat(rc, 0);
 	}
 
-	return fsalstat(rc, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
@@ -587,17 +590,9 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 	int fd = -1;
 	fsal_errors_t fe;
 	int rc = 0;
-/*	int flags = 0; */
 
 	obj_handle =
 	    container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-	/* /!\ ACL HOOK. If name is "system.posix_acl_access",
-	 *  flags must remain unset */
-/*	if (strncmp(xattr_name, "system.posix_acl_access", MAXNAMLEN)) */
-/*		flags = create ? XATTR_CREATE : XATTR_REPLACE; */
-/*	else */
-/*		flags = 0; */
 
 	fd = (obj_hdl->type == DIRECTORY) ? vfs_fsal_open(obj_handle,
 							  O_DIRECTORY,
