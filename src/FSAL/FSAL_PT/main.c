@@ -618,8 +618,8 @@ fsal_status_t PTFSAL_terminate()
 		if (g_fsi_handles_fsal->m_handle[index].m_hndl_in_use != 0) {
 			if ((g_fsi_handles_fsal->m_handle[index].m_nfs_state ==
 			     NFS_CLOSE)
-			    || (g_fsi_handles_fsal->
-				m_handle[index].m_nfs_state == NFS_OPEN)) {
+			    || (g_fsi_handles_fsal->m_handle[index].
+				m_nfs_state == NFS_OPEN)) {
 
 				// ignore error code, just trying to clean up while going down
 				// and want to continue trying to close out other open files
@@ -638,8 +638,8 @@ fsal_status_t PTFSAL_terminate()
 					FSI_TRACE(FSI_NOTICE,
 						  "Created close thread for handle[%d]",
 						  index);
-					parallelCloseThreadMap
-					    [index].isThreadCreated = 1;
+					parallelCloseThreadMap[index].
+					    isThreadCreated = 1;
 				}
 			}
 		}
@@ -648,8 +648,8 @@ fsal_status_t PTFSAL_terminate()
 	for (index = FSI_CIFS_RESERVED_STREAMS;
 	     index < FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS; index++) {
 		if (parallelCloseThreadMap[index].isThreadCreated == 1) {
-			pthread_join(parallelCloseThreadMap
-				     [index].threadContext, NULL);
+			pthread_join(parallelCloseThreadMap[index].
+				     threadContext, NULL);
 		}
 	}
 

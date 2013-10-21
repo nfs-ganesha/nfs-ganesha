@@ -283,8 +283,8 @@ extern "C" {
 		int m_prev_io_op;	// enumerated I/O operation
 		// (read/write/other I/O)
 		struct io_buf_status_t
-		    m_writebuf_state[MAX_FSI_CCL_IPC_SHMEM_BUF_PER_STREAM *
-				     FSI_CCL_IPC_SHMEM_WRITEBUF_PER_BUF];
+		 m_writebuf_state[MAX_FSI_CCL_IPC_SHMEM_BUF_PER_STREAM *
+				  FSI_CCL_IPC_SHMEM_WRITEBUF_PER_BUF];
 		// one entry per write data buffer
 		int m_writebuf_cnt;	// how many write buffers this
 		// handle actually uses
@@ -295,8 +295,8 @@ extern "C" {
 		uint64_t m_write_inuse_offset;	// offset of first byte in
 		// filling buffer
 		struct io_buf_status_t
-		    m_readbuf_state[MAX_FSI_CCL_IPC_SHMEM_BUF_PER_STREAM *
-				    FSI_CCL_IPC_SHMEM_READBUF_PER_BUF];
+		 m_readbuf_state[MAX_FSI_CCL_IPC_SHMEM_BUF_PER_STREAM *
+				 FSI_CCL_IPC_SHMEM_READBUF_PER_BUF];
 		// one entry per read data buffer
 		int m_readbuf_cnt;	// how many read buffers this
 		// handle actually uses
@@ -626,8 +626,7 @@ extern "C" {
 	int ccl_check_version(char *version);
 	char *ccl_get_version(void);
 	int ccl_init(int multi_threaded, log_function_t log_fn,
-		     log_level_check_function_t log_level_check_fn,
-		     int
+		     log_level_check_function_t log_level_check_fn, int
 		     ipc_ccl_to_component_trc_level_map[FSI_NUM_TRACE_LEVELS]);
 	int add_acl_handle(uint64_t fs_acl_handle);
 	int add_dir_handle(uint64_t fs_dir_handle);

@@ -36,8 +36,7 @@
 #include "pt_ganesha.h"
 
 extern fsal_status_t ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t *
-						    p_buffxstat,
-						    struct attrlist
+						    p_buffxstat, struct attrlist
 						    *p_fsalattr_out);
 
 /**
@@ -161,9 +160,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 
 	/* First, check that FSAL attributes changes are allowed. */
 	if (!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_cansettime)) {
-		if (wanted_attrs.
-		    mask & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME |
-			    ATTR_MTIME)) {
+		if (wanted_attrs.mask &
+		    (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME)) {
 			/* handled as an unsettable attribute. */
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
@@ -242,20 +240,20 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 				  myself->handle->data.handle.f_handle);
 
 			rc = ptfsal_chmod(p_context, dir_hdl->export, fsi_name,
-					  unix2fsal_mode(buffxstat.
-							 buffstat.st_mode));
+					  unix2fsal_mode(buffxstat.buffstat.
+							 st_mode));
 			if (rc == -1) {
 				FSI_TRACE(FSI_ERR, "chmod FAILED");
 				return fsalstat(ERR_FSAL_PERM, 0);
 			} else {
 				st_mode_in_cache =
-				    (buffxstat.buffstat.
-				     st_mode | fsal_type2unix(current_attrs.
-							      type));
+				    (buffxstat.
+				     buffstat.st_mode |
+				     fsal_type2unix(current_attrs.type));
 				fsi_update_cache_stat(fsi_name,
 						      st_mode_in_cache,
-						      dir_hdl->
-						      export->exp_entry->id);
+						      dir_hdl->export->
+						      exp_entry->id);
 				FSI_TRACE(FSI_INFO,
 					  "Chmod SUCCEED with st_mode in cache being %o",
 					  st_mode_in_cache);

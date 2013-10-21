@@ -110,11 +110,11 @@ int fsi_cache_name_and_handle(const struct req_op_context *p_context,
 	g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1)
 	    % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-	memcpy(&g_fsi_name_handle_cache.m_entry
-	       [g_fsi_name_handle_cache.m_count].m_handle, &handle[0],
+	memcpy(&g_fsi_name_handle_cache.
+	       m_entry[g_fsi_name_handle_cache.m_count].m_handle, &handle[0],
 	       sizeof(handle_entry.m_handle));
-	strncpy(g_fsi_name_handle_cache.m_entry
-		[g_fsi_name_handle_cache.m_count].m_name, name,
+	strncpy(g_fsi_name_handle_cache.
+		m_entry[g_fsi_name_handle_cache.m_count].m_name, name,
 		sizeof(handle_entry.m_name));
 	g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
 	    .m_name[sizeof(handle_entry.m_name) - 1] = '\0';
@@ -169,9 +169,8 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 			     &g_fsi_name_handle_cache.m_entry[index].m_handle,
 			     FSI_CCL_PERSISTENT_HANDLE_N_BYTES) == 0) {
 				strncpy(name,
-					g_fsi_name_handle_cache.
-					m_entry[index].m_name,
-					sizeof(handle_entry.m_name));
+					g_fsi_name_handle_cache.m_entry[index].
+					m_name, sizeof(handle_entry.m_name));
 				name[sizeof(handle_entry.m_name) - 1] = '\0';
 				FSI_TRACE(FSI_DEBUG,
 					  "FSI - name = %s cache index %d DIRECT HIT\n",
@@ -185,11 +184,11 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 						  handlePtr[1], handlePtr[2],
 						  handlePtr[3]);
 					// Need get name from PT side, so will not return and clear cache.
-					memset(g_fsi_name_handle_cache.m_entry
-					       [index].m_handle, 0,
+					memset(g_fsi_name_handle_cache.
+					       m_entry[index].m_handle, 0,
 					       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-					g_fsi_name_handle_cache.
-					    m_entry[index].m_name[0] = '\0';
+					g_fsi_name_handle_cache.m_entry[index].
+					    m_name[0] = '\0';
 				} else {
 					// Return.
 					pthread_rwlock_unlock
@@ -274,11 +273,11 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 					  handlePtr[0], handlePtr[1],
 					  handlePtr[2], handlePtr[3]);
 				// Need get name from PT side, so will not return, 
-				memset(g_fsi_name_handle_cache.
-				       m_entry[index].m_handle, 0,
+				memset(g_fsi_name_handle_cache.m_entry[index].
+				       m_handle, 0,
 				       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-				g_fsi_name_handle_cache.
-				    m_entry[index].m_name[0] = '\0';
+				g_fsi_name_handle_cache.m_entry[index].
+				    m_name[0] = '\0';
 				break;
 			} else {
 				// Return, find the non-empty name.
@@ -317,15 +316,15 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 			    (g_fsi_name_handle_cache.m_count + 1)
 			    % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-			memcpy(&g_fsi_name_handle_cache.m_entry
-			       [g_fsi_name_handle_cache.m_count].m_handle,
-			       &handlePtr[0],
+			memcpy(&g_fsi_name_handle_cache.
+			       m_entry[g_fsi_name_handle_cache.m_count].
+			       m_handle, &handlePtr[0],
 			       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-			strncpy(g_fsi_name_handle_cache.m_entry
-				[g_fsi_name_handle_cache.m_count].m_name, name,
-				sizeof(handle_entry.m_name));
-			g_fsi_name_handle_cache.
-			    m_entry[g_fsi_name_handle_cache.m_count]
+			strncpy(g_fsi_name_handle_cache.
+				m_entry[g_fsi_name_handle_cache.m_count].m_name,
+				name, sizeof(handle_entry.m_name));
+			g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.
+							m_count]
 			    .m_name[sizeof(handle_entry.m_name) - 1] = '\0';
 			FSI_TRACE(FSI_DEBUG,
 				  "FSI - added %s to name cache entry %d\n",
@@ -687,8 +686,8 @@ int ptfsal_readdir(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->
-	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
+	    m_fsi_struct_dir;
 
 	readdir_rc = CCL_READDIR(&ccl_context, dirp, sbuf);
 	if (readdir_rc == 0) {
@@ -714,8 +713,8 @@ int ptfsal_closedir(const struct req_op_context *p_context,
 	dir_hnd_index = ptfsal_dir_descriptor->fd;
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->
-	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
+	    m_fsi_struct_dir;
 
 	return CCL_CLOSEDIR(&ccl_context, dirp);
 }
@@ -729,8 +728,8 @@ int ptfsal_closedir_fd(const struct req_op_context *p_context,
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
-	    &g_fsi_dir_handles_fsal->
-	    m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
+	    &g_fsi_dir_handles_fsal->m_dir_handle[dir_hnd_index].
+	    m_fsi_struct_dir;
 
 	return CCL_CLOSEDIR(&ccl_context, dirp);
 }
@@ -836,7 +835,8 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 				  p_cur_context->cur_fsi_handle_index);
 			existing_handle_index =
 			    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context,
-							   p_cur_context->cur_fsi_handle_index,
+							   p_cur_context->
+							   cur_fsi_handle_index,
 							   fsi_filename);
 			if (existing_handle_index >= 0) {
 				return existing_handle_index;
@@ -907,9 +907,8 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				   p_context, &ccl_context);
 
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->
-				      obj_handle.export,
-				      p_parent_directory_handle->handle,
+				      p_parent_directory_handle->obj_handle.
+				      export, p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR,
@@ -938,8 +937,9 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		memset(fsal_path, 0, PATH_MAX);
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 		rc = ptfsal_name_to_handle(p_context,
-					   p_parent_directory_handle->obj_handle.
-					   export, fsal_path, p_object_handle);
+					   p_parent_directory_handle->
+					   obj_handle.export, fsal_path,
+					   p_object_handle);
 		if (rc != 0) {
 			FSI_TRACE(FSI_ERR, "Name to handle failed\n");
 			return -1;
@@ -952,8 +952,8 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				  handleOpened);
 		}
 		fsi_cache_name_and_handle(p_context,
-					  (char *)&p_fsi_handle->data.
-					  handle.f_handle, fsi_name);
+					  (char *)&p_fsi_handle->data.handle.
+					  f_handle, fsi_name);
 	}
 	return handleOpened;
 }
@@ -1012,9 +1012,8 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 	int cacheDeleteRC;
 	int handle_index_to_close;
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->
-				      obj_handle.export,
-				      p_parent_directory_handle->handle,
+				      p_parent_directory_handle->obj_handle.
+				      export, p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -1031,9 +1030,8 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 	if (handle_index_to_close != -1) {
 		memset(&cacheEntry, 0x00, sizeof(CACHE_TABLE_ENTRY_T));
 		memcpy(key,
-		       &g_fsi_handles_fsal->
-		       m_handle[handle_index_to_close].m_stat.
-		       st_persistentHandle.handle[0],
+		       &g_fsi_handles_fsal->m_handle[handle_index_to_close].
+		       m_stat.st_persistentHandle.handle[0],
 		       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 		cacheEntry.key = key;
 	}
@@ -1051,8 +1049,8 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 		if (cacheDeleteRC != FSI_CCL_IPC_EOK) {
 			FSI_TRACE(FSI_ERR,
 				  "Failed to delete cache entry to cache ID = %d",
-				  g_fsi_name_handle_cache_opened_files.cacheMetaData.
-				  cacheTableID);
+				  g_fsi_name_handle_cache_opened_files.
+				  cacheMetaData.cacheTableID);
 			ptfsal_print_handle(cacheEntry.key);
 		}
 	}
@@ -1114,9 +1112,8 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 
 	/* build new entry path */
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->
-				      obj_handle.export,
-				      p_parent_directory_handle->handle,
+				      p_parent_directory_handle->obj_handle.
+				      export, p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Handle to name failed for hanlde %s",
@@ -1144,12 +1141,11 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 
 		ptfsal_name_to_handle(p_context,
-				      p_parent_directory_handle->
-				      obj_handle.export, fsal_path,
-				      p_object_handle);
+				      p_parent_directory_handle->obj_handle.
+				      export, fsal_path, p_object_handle);
 		fsi_cache_name_and_handle(p_context,
-					  (char *)&p_fsi_handle->data.
-					  handle.f_handle, fsi_name);
+					  (char *)&p_fsi_handle->data.handle.
+					  f_handle, fsi_name);
 	}
 
 	return rc;
@@ -1166,9 +1162,8 @@ int ptfsal_rmdir(const struct req_op_context *p_context,
 	char fsi_fullpath[PATH_MAX];
 
 	rc = fsi_get_name_from_handle(p_context,
-				      p_parent_directory_handle->
-				      obj_handle.export,
-				      p_parent_directory_handle->handle,
+				      p_parent_directory_handle->obj_handle.
+				      export, p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
@@ -1523,10 +1518,8 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 		bytes = NULL;
 	} else {
 		bytes = (unsigned char *)&((((struct sockaddr_in *)
-					     (&
-					      (p_context->
-					       caller_addr)))->sin_addr).
-					   s_addr);
+					     (&(p_context->caller_addr)))->
+					    sin_addr).s_addr);
 	}
 	if (bytes) {
 		snprintf(ccl_context->client_address,
@@ -1663,7 +1656,8 @@ int fsi_cache_getInsertionPoint(CACHE_TABLE_T * cacheTable,
 		mid = first + (last - first) / 2;
 		compareRC =
 		    cacheTable->cacheMetaData.cacheKeyComprefn(whatToInsert,
-							       &cacheTable->cacheEntries
+							       &cacheTable->
+							       cacheEntries
 							       [mid]);
 		FSI_TRACE(FSI_INFO,
 			  "compareRC = %d, first %d mid %d, last %d\n",
@@ -1818,12 +1812,10 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 			&cacheTable->cacheEntries[whereToDeleteIdx + 1],
 			((cacheTable->cacheMetaData.numElementsOccupied -
 			  whereToDeleteIdx) - 1) * sizeof(CACHE_TABLE_ENTRY_T));
-		cacheTable->cacheEntries[cacheTable->
-					 cacheMetaData.numElementsOccupied -
-					 1].key = NULL;
-		cacheTable->cacheEntries[cacheTable->
-					 cacheMetaData.numElementsOccupied -
-					 1].data = NULL;
+		cacheTable->cacheEntries[cacheTable->cacheMetaData.
+					 numElementsOccupied - 1].key = NULL;
+		cacheTable->cacheEntries[cacheTable->cacheMetaData.
+					 numElementsOccupied - 1].data = NULL;
 	}
 	cacheTable->cacheMetaData.numElementsOccupied--;
 
