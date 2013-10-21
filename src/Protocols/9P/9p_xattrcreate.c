@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -121,19 +121,8 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		if (pfid->specdata.xattr.xattr_content == NULL)
 			return _9p_rerror(req9p, worker_data, msgtag, ENOMEM,
 					  plenout, preply);
-
-		fsal_status =
-		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(
-			pfid->pentry->obj_handle,
-			&pfid->op_context, name,
-			&pfid->specdata.xattr.xattr_id);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
-
+		/* Special Value */
+		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
 	} else {
 		/* Size != 0 , this is a creation/replacement of xattr */
 

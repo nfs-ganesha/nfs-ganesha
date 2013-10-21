@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -56,13 +56,13 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
 				int,	/* creation flag */
 				void *arg);	/* optionnal argument */
 
-typedef struct fsal_xattr_def__ {
+struct fsal_xattr_def {
 	char xattr_name[MAXNAMLEN];
 	xattr_getfunc_t get_func;
 	xattr_setfunc_t set_func;
 	int flags;
 	void *arg;
-} fsal_xattr_def_t;
+};
 
 /*
  * DEFINE GET/SET FUNCTIONS
@@ -79,7 +79,7 @@ int print_vfshandle(struct fsal_obj_handle *obj_hdl, caddr_t buffer_addr,
 
 /* DEFINE HERE YOUR ATTRIBUTES LIST */
 
-static fsal_xattr_def_t xattr_list[] = {
+static struct fsal_xattr_def xattr_list[] = {
 	{"vfshandle", print_vfshandle, NULL, XATTR_FOR_ALL | XATTR_RO, NULL},
 };
 
@@ -118,22 +118,6 @@ static int attr_is_read_only(unsigned int attr_index)
 	return FALSE;
 }
 
-#if 0
-static void chomp_attr_value(char *str, size_t size)
-{
-	int len;
-
-	if (str == NULL)
-		return;
-
-	/* security: set last char to '\0' */
-	str[size - 1] = '\0';
-
-	len = strnlen(str, size);
-	if ((len > 0) && (str[len - 1] == '\n'))
-		str[len - 1] = '\0';
-}
-#endif
 
 static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
 					  struct attrlist *xattr_attrs,
@@ -474,9 +458,11 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 		close(fd);
 	}
 
-	*pxattr_id = index;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (found) {
+		*pxattr_id = index;
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else
+		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 }
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -537,6 +523,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(rc, 0);
 	}
 
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
@@ -554,6 +541,12 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 
 	obj_handle =
 	    container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+
+	/* sanity checks */
+	if (!obj_hdl || !p_output_size || !buffer_addr || !xattr_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
 
 	/* look for this name */
 	for (index = 0; index < XATTR_COUNT; index++) {
@@ -597,28 +590,31 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 	int fd = -1;
 	fsal_errors_t fe;
 	int rc = 0;
-	size_t len;
+	int flags = 0;
 
 	obj_handle =
 	    container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
-	/* remove final '\n', if any */
-	/* chomp_attr_value((char *)buffer_addr, buffer_size); */
+	/* /!\ ACL HOOK. If name is "system.posix_acl_access",
+	 *  flags must remain unset */
+	if (strncmp(xattr_name, "system.posix_acl_access", MAXNAMLEN))
+		flags = create ? XATTR_CREATE : XATTR_REPLACE;
+	else
+		flags = 0;
 
 	fd = (obj_hdl->type == DIRECTORY) ? vfs_fsal_open(obj_handle,
 							  O_DIRECTORY,
 							  &fe) :
-	    vfs_fsal_open(obj_handle, O_RDWR, &fe);
+				vfs_fsal_open(obj_handle, O_RDWR, &fe);
 	if (fd < 0)
 		return fsalstat(fe, -fd);
 
-	len = buffer_size;
 
-	if (len == 0)
+	if (buffer_size == 0)
 		rc = fsetxattr(fd, xattr_name, "", 1,
 			       create ? XATTR_CREATE : XATTR_REPLACE);
 	else
-		rc = fsetxattr(fd, xattr_name, (char *)buffer_addr, len,
+		rc = fsetxattr(fd, xattr_name, (char *)buffer_addr, buffer_size,
 			       create ? XATTR_CREATE : XATTR_REPLACE);
 
 	close(fd);
