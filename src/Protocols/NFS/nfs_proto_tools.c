@@ -4260,10 +4260,11 @@ int nfs4_MakeCred(compound_data_t * data)
   /* Check protocol version */
   if((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
     {
-      LogInfo(COMPONENT_NFS_V4,
-              "NFS4 not allowed on Export_Id %d %s for client %s",
-              data->pexport->id, data->pexport->fullpath,
-              data->pworker->hostaddr_str);
+      if (data->pexport != NULL) /* NULL if this node is pseudofs */
+        LogInfo(COMPONENT_NFS_V4,
+                "NFS4 not allowed on Export_Id %d %s for client %s",
+                data->pexport->id, data->pexport->fullpath,
+                data->pworker->hostaddr_str);
 
       return NFS4ERR_ACCESS;
     }
