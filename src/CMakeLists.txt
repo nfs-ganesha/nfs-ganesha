@@ -493,8 +493,13 @@ if(USE_DBUS)
 endif(USE_DBUS)
 
 if(USE_NFSIDMAP)
-  find_package(NfsIdmap REQUIRED)
-  set(SYSTEM_LIBRARIES ${NFSIDMAP_LIBRARY} ${SYSTEM_LIBRARIES})
+  find_package(NfsIdmap)
+  if(NFSIDMAP_FOUND)
+    set(SYSTEM_LIBRARIES ${NFSIDMAP_LIBRARY} ${SYSTEM_LIBRARIES})
+  else(NFSIDMAP_FOUND)
+    message(WARNING "libnfsidmap not found, disabling USE_NFSIDMAP")
+    set(USE_NFSIDMAP OFF)
+  endif(NFSIDMAP_FOUND)
 endif(USE_NFSIDMAP)
 
 if(USE_EXECINFO)
@@ -625,7 +630,9 @@ message( FATAL_ERROR
 "No CMakeLists.txt found in libntirpc
 This probably means that the directory was not properly populated.
 Please run the following command to do that and use cmake again:
-    git submodule update --init" )
+    git submodule update --init
+Alternatively, if you are not using git, get the current version at
+    https://github.com/nfs-ganesha/ntirpc" )
 ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
 add_subdirectory(log)
