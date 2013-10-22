@@ -73,7 +73,8 @@ struct acl_handles_struct_t *g_fsi_acl_handles_fsal;
 
 int PTFSAL_log(int level, const char *message)
 {
-	DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT", level, "%s",
+	DisplayLogComponentLevel(COMPONENT_FSAL_PT, __FILE__, __LINE__,
+				 (char *)__func__, level, "FSALPT %s",
 				 (char *)message);
 	return 0;
 }
@@ -132,7 +133,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
-	.dirs_have_sticky_bit = true
 };
 
 /* private helper for export object

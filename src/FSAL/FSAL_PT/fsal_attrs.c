@@ -88,8 +88,6 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 	FSI_TRACE(FSI_DEBUG, "Handle type=%d st_mode=%o (octal)",
 		  p_object_attributes->type, buffstat.st_mode);
 
-	p_object_attributes->mounted_on_fileid = export->exp_entry->id;
-
 	if (FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(p_object_attributes->mask);
 		FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);

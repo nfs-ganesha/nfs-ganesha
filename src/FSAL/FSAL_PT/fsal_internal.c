@@ -442,10 +442,6 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 
 	FSI_TRACE(FSI_DEBUG, "FSI - testAccess_no_acl\n");
 
-	/* If the FSAL_F_OK flag is set, returns ERR INVAL */
-	if (access_type & FSAL_F_OK)
-		return fsalstat(ERR_FSAL_INVAL, 0);
-
 	/* unsatisfied flags */
 	missing_access = access_type;
 	if (!missing_access) {
@@ -478,10 +474,6 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 		if (mode & S_IXUSR)
 			missing_access &= ~FSAL_X_OK;
 
-		/* handle the creation of a new 500 file correctly */
-		if ((missing_access & FSAL_OWNER_OK) != 0)
-			missing_access = 0;
-
 		if (missing_access == 0)
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		else {
@@ -492,11 +484,6 @@ static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context
 		}
 
 	}
-
-	/* missing_access will be nonzero triggering a failure
-	 * even though FSAL_OWNER_OK is not even a real posix file
-	 * permission */
-	missing_access &= ~FSAL_OWNER_OK;
 
 	/* Test if the file belongs to user's group. */
 	is_grp = (p_context->creds->caller_gid == gid);
