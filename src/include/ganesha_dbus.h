@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -73,17 +73,6 @@
 
 #define END_ARG_LIST {NULL, NULL, NULL}
 
-#define STATUS_REPLY      \
-{                         \
-	.name = "status", \
-	.type = "b",      \
-	.direction = "out"\
-},                        \
-{                         \
-	.name = "error",  \
-	.type = "s",      \
-	.direction = "out"\
-}
 #define IPADDR_ARG       \
 {                        \
 	.name = "ipaddr",\
@@ -93,15 +82,6 @@
 
 /* Properties list helper macros
  */
-
-#define PROPERTY_ITEM (prop_name, prop_access, prop_type)	\
-{								\
-	.name = "prop_name",					\
-	.access = prop_access,					\
-	.type = prop_type,					\
-	.get = dbus_prop_get_##prop_name,			\
-	.set = dbus_prop_set_##prop_name			\
-},
 
 #define END_ARG_LIST {NULL, NULL, NULL}
 
@@ -117,8 +97,8 @@ struct gsh_dbus_prop {
 	const char *name;
 	dbus_prop_access_t access;
 	const char *type;
-	 bool(*get) (DBusMessageIter * reply);
-	 bool(*set) (DBusMessageIter * args);
+	 bool(*get) (DBusMessageIter *reply);
+	 bool(*set) (DBusMessageIter *args);
 };
 
 struct gsh_dbus_arg {
@@ -129,13 +109,13 @@ struct gsh_dbus_arg {
 
 struct gsh_dbus_method {
 	const char *name;
-	 bool(*method) (DBusMessageIter * args, DBusMessage * reply);
+	 bool(*method) (DBusMessageIter *args, DBusMessage *reply);
 	struct gsh_dbus_arg args[];
 };
 
 struct gsh_dbus_signal {
 	const char *name;
-	 bool(*signal) (DBusMessageIter * args, DBusMessage * reply);
+	 bool(*signal) (DBusMessageIter *args, DBusMessage *reply);
 	struct gsh_dbus_arg args[];
 };
 
@@ -147,13 +127,15 @@ struct gsh_dbus_interface {
 	struct gsh_dbus_signal **signals;
 };
 
+struct gsh_dbus_interface log_interface;
+
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);
 void *gsh_dbus_thread(void *arg);
 
 /* callout method */
-void dbus_append_timestamp(DBusMessageIter * iterp, struct timespec *ts);
-void dbus_status_reply(DBusMessageIter * iter, bool success, char *errormsg);
+void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
+void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
 			       struct gsh_dbus_interface **interfaces);
 

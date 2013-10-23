@@ -46,8 +46,6 @@
 #include "ganesha_dbus.h"
 #endif
 
-extern struct fridgethr *req_fridge;	/*< Decoder thread pool */
-
 struct glist_head temp_exportlist;
 
 /**
@@ -236,8 +234,6 @@ static struct gsh_dbus_interface admin_interface = {
 	.methods = admin_methods,
 	.signals = NULL
 };
-
-extern struct gsh_dbus_interface log_interface;
 
 static struct gsh_dbus_interface *admin_interfaces[] = {
 	&admin_interface,

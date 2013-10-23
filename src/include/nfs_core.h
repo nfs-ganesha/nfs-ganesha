@@ -69,6 +69,8 @@
 
 #define XATTR_BUFFERSIZE 4096
 
+char *host_name;
+
 /*
  * Bind protocol family, pending a richer interface model.
  */

@@ -48,6 +48,9 @@
 
 struct fridgethr;
 
+/*< Decoder thread pool */
+extern struct fridgethr *req_fridge;
+
 /**
  * @brief A given thread in the fridge
  */
@@ -61,7 +64,8 @@ struct fridgethr_entry {
 		pthread_t id;	/*< Thread ID */
 		pthread_mutex_t mtx;	/*< Mutex for fiddling this
 					   thread */
-		pthread_cond_t cv;	/*< Condition variable to wait for sync */
+		pthread_cond_t cv;	/*< Condition variable to wait for sync
+					 */
 		sigset_t sigmask;	/*< This thread's signal mask */
 		bool woke;	/*< Set to false on first run and if wait
 				   in fridgethr_freeze didn't time out. */
@@ -69,8 +73,8 @@ struct fridgethr_entry {
 					   user and associated with the
 					   thread.  Never modified by the
 					   fridgethr code. */
-		void (*func) (struct fridgethr_context *);	/*< Function being
-								   executed */
+		void (*func) (struct fridgethr_context *); /*< Function being
+							       executed */
 		void *arg;	/*< Functions argument */
 	} ctx;
 	uint32_t flags;		/*< Thread-fridge flags (for handoff) */
@@ -200,7 +204,8 @@ struct fridgethr {
 	fridgethr_comm_t command;	/*< Command state */
 	void (*cb_func) (void *);	/*< Callback on command completion */
 	void *cb_arg;		/*< Argument for completion callback */
-	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition variable */
+	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition
+					    variable */
 	pthread_cond_t *cb_cv;	/*< Condition variable, signalled on
 				   completion */
 	bool transitioning;	/*< Changing state */

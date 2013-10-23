@@ -1254,10 +1254,7 @@ static inline void free_nfs_request(request_data_t *nfsreq)
 }
 
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
-int nfs_rpc_get_args(struct fridgethr_context *, nfs_request_data_t *);
-
-extern enum auth_stat svc_auth_authenticate(struct svc_req *, struct rpc_msg *,
-					    bool *);
+static int nfs_rpc_get_args(struct fridgethr_context *, nfs_request_data_t *);
 
 static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 						 *thr_ctx,
