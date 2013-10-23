@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -68,7 +68,6 @@ struct ganesha_dbus_handler {
 	struct avltree_node node_k;
 	DBusObjectPathVTable vtable;
 };
-typedef struct ganesha_dbus_handler ganesha_dbus_handler_t;
 
 struct _dbus_thread_state {
 	int initialized;
@@ -86,12 +85,12 @@ static struct _dbus_thread_state thread_state;
 static inline int dbus_callout_cmpf(const struct avltree_node *lhs,
 				    const struct avltree_node *rhs)
 {
-	ganesha_dbus_handler_t *lk, *rk;
+	struct ganesha_dbus_handler *lk, *rk;
 
-	lk = avltree_container_of(lhs, ganesha_dbus_handler_t, node_k);
-	rk = avltree_container_of(rhs, ganesha_dbus_handler_t, node_k);
+	lk = avltree_container_of(lhs, struct ganesha_dbus_handler, node_k);
+	rk = avltree_container_of(rhs, struct ganesha_dbus_handler, node_k);
 
-	return (strcmp(lk->name, rk->name));
+	return strcmp(lk->name, rk->name);
 }
 
 void gsh_dbus_pkginit(void)
@@ -102,7 +101,7 @@ void gsh_dbus_pkginit(void)
 	LogDebug(COMPONENT_DBUS, "init");
 
 	avltree_init(&thread_state.callouts, dbus_callout_cmpf,
-		     0 /* must be 0 */ );
+		     0 /* must be 0 */);
 
 	dbus_error_init(&thread_state.dbus_err);	/* sigh */
 	thread_state.dbus_conn =
@@ -207,13 +206,13 @@ void gsh_dbus_pkginit(void)
 #define INTROSPECT_SIGNAL_ARG \
 "      <arg name=\"%s\" type=\"%s\"/>\n"
 
-static const char *prop_access[] = {
+static const char * const prop_access[] = {
 	[DBUS_PROP_READ] = "read",
 	[DBUS_PROP_WRITE] = "write",
 	[DBUS_PROP_READWRITE] = "readwrite"
 };
 
-static bool dbus_reply_introspection(DBusMessage * reply,
+static bool dbus_reply_introspection(DBusMessage *reply,
 				     struct gsh_dbus_interface **interfaces)
 {
 	DBusMessageIter iter;
@@ -322,21 +321,20 @@ static bool dbus_reply_introspection(DBusMessage * reply,
  * @param errmessage [IN] an error message string
  */
 
-void dbus_status_reply(DBusMessageIter * iter, bool success, char *errormsg)
+void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg)
 {
 	char *error;
 	int retcode = success;
 
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &retcode);
-	if (errormsg == NULL) {
+	if (errormsg == NULL)
 		error = success ? "OK" : "BUSY";
-	} else {
+	else
 		error = errormsg;
-	}
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &error);
 }
 
-void dbus_append_timestamp(DBusMessageIter * iterp, struct timespec *timestamp)
+void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *timestamp)
 {
 	DBusMessageIter ts_iter;
 
@@ -349,8 +347,8 @@ void dbus_append_timestamp(DBusMessageIter * iterp, struct timespec *timestamp)
 	dbus_message_iter_close_container(iterp, &ts_iter);
 }
 
-static DBusHandlerResult dbus_message_entrypoint(DBusConnection * conn,
-						 DBusMessage * msg,
+static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
+						 DBusMessage *msg,
 						 void *user_data)
 {
 	const char *interface = dbus_message_get_interface(msg);
@@ -416,25 +414,23 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection * conn,
 		retval = dbus_connection_send(conn, reply, NULL);
 		dbus_message_unref(reply);
 		dbus_error_free(&error);
-		if (retval) {
-			return DBUS_HANDLER_RESULT_HANDLED;
-		} else {
-			return DBUS_HANDLER_RESULT_NEED_MEMORY;
-		}
+		return retval ?
+			DBUS_HANDLER_RESULT_HANDLED :
+			DBUS_HANDLER_RESULT_NEED_MEMORY;
 	}
-	if (!dbus_connection_send(conn, reply, &serial)) {
+	if (!dbus_connection_send(conn, reply, &serial))
 		LogCrit(COMPONENT_DBUS, "reply failed");
-	}
 	dbus_connection_flush(conn);
 	if (reply)
 		dbus_message_unref(reply);
 	dbus_error_free(&error);
 	serial++;
-	return (retval ? DBUS_HANDLER_RESULT_HANDLED :
-		DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
+	return retval ?
+		DBUS_HANDLER_RESULT_HANDLED :
+		DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-static void path_unregistered_func(DBusConnection * connection, void *user_data)
+static void path_unregistered_func(DBusConnection *connection, void *user_data)
 {
 	/* connection was finalized -- do nothing */
 }
@@ -442,7 +438,7 @@ static void path_unregistered_func(DBusConnection * connection, void *user_data)
 int32_t gsh_dbus_register_path(const char *name,
 			       struct gsh_dbus_interface **interfaces)
 {
-	ganesha_dbus_handler_t *handler;
+	struct ganesha_dbus_handler *handler;
 	struct avltree_node *node;
 	char path[512];
 	int code = 0;
@@ -450,8 +446,8 @@ int32_t gsh_dbus_register_path(const char *name,
 	/* XXX if this works, add ifc level */
 	snprintf(path, 512, "/org/ganesha/nfsd/%s", name);
 
-	handler = (ganesha_dbus_handler_t *)
-	    gsh_malloc(sizeof(ganesha_dbus_handler_t));
+	handler = (struct ganesha_dbus_handler *)
+	    gsh_malloc(sizeof(struct ganesha_dbus_handler));
 	handler->name = gsh_strdup(path);
 	handler->vtable.unregister_function = path_unregistered_func;
 	handler->vtable.message_function = dbus_message_entrypoint;
@@ -485,13 +481,13 @@ int32_t gsh_dbus_register_path(const char *name,
 	LogDebug(COMPONENT_DBUS, "registered handler for %s", path);
 
  out:
-	return (code);
+	return code;
 }
 
 void gsh_dbus_pkgshutdown(void)
 {
 	struct avltree_node *node, *onode;
-	ganesha_dbus_handler_t *handler;
+	struct ganesha_dbus_handler *handler;
 
 	LogDebug(COMPONENT_DBUS, "shutdown");
 
@@ -501,7 +497,8 @@ void gsh_dbus_pkgshutdown(void)
 	do {
 		if (onode) {
 			handler =
-			    avltree_container_of(onode, ganesha_dbus_handler_t,
+			    avltree_container_of(onode,
+						 struct ganesha_dbus_handler,
 						 node_k);
 			dbus_bus_release_name(thread_state.dbus_conn,
 					      handler->name,
@@ -519,7 +516,8 @@ void gsh_dbus_pkgshutdown(void)
 	} while ((onode = node) && (node = avltree_next(node)));
 	if (onode) {
 		handler =
-		    avltree_container_of(onode, ganesha_dbus_handler_t, node_k);
+		    avltree_container_of(onode, struct ganesha_dbus_handler,
+					 node_k);
 		dbus_bus_release_name(thread_state.dbus_conn, handler->name,
 				      &thread_state.dbus_err);
 		if (dbus_error_is_set(&thread_state.dbus_err)) {
@@ -567,7 +565,7 @@ void *gsh_dbus_thread(void *arg)
  out:
 	LogCrit(COMPONENT_DBUS, "shutdown");
 
-	return (NULL);
+	return NULL;
 }
 
 void gsh_dbus_wake_thread(uint32_t flags)

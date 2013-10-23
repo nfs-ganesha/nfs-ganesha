@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * -------------
  */
@@ -43,15 +43,18 @@
 #include "dbus_priv.h"
 
 #ifndef DBUS_ERROR_UNKNOWN_INTERFACE
-#define DBUS_ERROR_UNKNOWN_INTERFACE          "org.freedesktop.DBus.Error.UnknownInterface"
+#define DBUS_ERROR_UNKNOWN_INTERFACE \
+"org.freedesktop.DBus.Error.UnknownInterface"
 #endif
 
 #ifndef DBUS_ERROR_UNKNOWN_PROPERTY
-#define DBUS_ERROR_UNKNOWN_PROPERTY           "org.freedesktop.DBus.Error.UnknownProperty"
+#define DBUS_ERROR_UNKNOWN_PROPERTY \
+"org.freedesktop.DBus.Error.UnknownProperty"
 #endif
 
 #ifndef DBUS_ERROR_PROPERTY_READ_ONLY
-#define DBUS_ERROR_PROPERTY_READ_ONLY         "org.freedesktop.DBus.Error.PropertyReadOnly"
+#define DBUS_ERROR_PROPERTY_READ_ONLY \
+"org.freedesktop.DBus.Error.PropertyReadOnly"
 #endif
 
 /**
@@ -77,7 +80,7 @@ static inline struct gsh_dbus_interface **lookup_interface(const char
 							   struct
 							   gsh_dbus_interface
 							   **interfaces,
-							   DBusError * error)
+							   DBusError *error)
 {
 	struct gsh_dbus_interface **iface;
 
@@ -96,7 +99,8 @@ static inline struct gsh_dbus_interface **lookup_interface(const char
 
 static inline struct gsh_dbus_prop **lookup_property(const char *prop_name,
 						     struct gsh_dbus_interface
-						     **iface, DBusError * error)
+						     **iface,
+						     DBusError *error)
 {
 	struct gsh_dbus_prop **prop;
 
@@ -124,9 +128,9 @@ static inline struct gsh_dbus_prop **lookup_property(const char *prop_name,
  * @return bool success or failure if bad request
  */
 
-bool dbus_proc_property(const char *method, DBusMessage * msg,
-			DBusMessage * reply, DBusError * error,
-			struct gsh_dbus_interface ** interfaces)
+bool dbus_proc_property(const char *method, DBusMessage *msg,
+			DBusMessage *reply, DBusError *error,
+			struct gsh_dbus_interface **interfaces)
 {
 	const char *interface;
 	const char *prop_name;
@@ -169,7 +173,7 @@ bool dbus_proc_property(const char *method, DBusMessage * msg,
 				     (*prop)->type, &val_iter))
 					goto getall_err;
 				if (!(*prop)->get(&val_iter))
-					goto getall_err;;
+					goto getall_err;
 				if (!dbus_message_iter_close_container
 				    (&dict_entry, &val_iter))
 					goto getall_err;
@@ -214,10 +218,9 @@ bool dbus_proc_property(const char *method, DBusMessage * msg,
 				goto err_out;
 			}
 			retval = (*prop)->get(&variant_iter);
-			if (retval == false
-			    || !dbus_message_iter_close_container(&reply_iter,
-								  &variant_iter))
-			{
+			if (retval == false ||
+			    !dbus_message_iter_close_container(&reply_iter,
+							       &variant_iter)) {
 				dbus_set_error_const(error, DBUS_ERROR_FAILED,
 						     "Couldn't close Get container");
 				goto err_out;
