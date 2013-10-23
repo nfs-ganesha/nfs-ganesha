@@ -120,7 +120,7 @@ typedef enum rpc_call_hook {
 
 typedef struct _rpc_call rpc_call_t;
 
-typedef int32_t(*rpc_call_func) (rpc_call_t * call, rpc_call_hook hook,
+typedef int32_t(*rpc_call_func) (rpc_call_t *call, rpc_call_hook hook,
 				 void *arg, uint32_t flags);
 
 extern gss_OID_desc krb5oid;
@@ -157,8 +157,9 @@ typedef struct request_data {
 		_9p_request_data_t _9p;
 #endif
 	} r_u;
-	struct timespec time_queued;	/*< The time at which a request was added
-					 *  to the worker thread queue. */
+	struct timespec time_queued;	/*< The time at which a request was
+					 *  added to the worker thread queue.
+					 */
 } request_data_t;
 
 /**
@@ -195,11 +196,11 @@ static const struct __netid_nc_table {
 	"sctp", 4, _NC_SCTP, AF_INET}, {
 	"sctp6", 5, _NC_SCTP6, AF_INET6}, {
 	"udp", 3, _NC_UDP, AF_INET}, {
-"udp6", 4, _NC_UDP6, AF_INET6},};
+	"udp6", 4, _NC_UDP6, AF_INET6},};
 
 nc_type nfs_netid_to_nc(const char *netid);
-void nfs_set_client_location(nfs_client_id_t * pclientid,
-			     const clientaddr4 * addr4);
+void nfs_set_client_location(nfs_client_id_t *pclientid,
+			     const clientaddr4 *addr4);
 
 /* end TI-RPC */
 
@@ -263,7 +264,7 @@ extern pool_t *nfs_clientid_pool;
  * function prototypes
  */
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
-void nfs_rpc_enqueue_req(request_data_t * req);
+void nfs_rpc_enqueue_req(request_data_t *req);
 int stats_snmp(void);
 
 /*
@@ -282,17 +283,17 @@ void *state_async_thread(void *UnusedArg);
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
 void _9p_tcp_process_request(_9p_request_data_t *req9p,
-			     nfs_worker_data_t * worker_data);
+			     nfs_worker_data_t *worker_data);
 int _9p_process_buffer(_9p_request_data_t *req9p,
-		       nfs_worker_data_t * worker_data, char *replydata,
-		       u32 * poutlen);
+		       nfs_worker_data_t *worker_data, char *replydata,
+		       u32 *poutlen);
 #endif
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
 void _9p_rdma_process_request(_9p_request_data_t *req9p,
-			      nfs_worker_data_t * worker_data);
-void _9p_rdma_cleanup_conn(msk_trans_t * trans);
+			      nfs_worker_data_t *worker_data);
+void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
 void nfs_operate_on_sigusr1(void);
@@ -300,24 +301,24 @@ void nfs_operate_on_sigterm(void);
 void nfs_operate_on_sighup(void);
 
 void nfs_Init_svc(void);
-int nfs_Init_worker_data(nfs_worker_data_t * pdata);
-int nfs_Init_request_data(nfs_request_data_t * pdata);
-void nfs_rpc_dispatch_threads(pthread_attr_t * attr_thr);
+int nfs_Init_worker_data(nfs_worker_data_t *pdata);
+int nfs_Init_request_data(nfs_request_data_t *pdata);
+void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 void nfs_rpc_dispatch_stop(void);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
 
-int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam);
+int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam);
 int nfs_read_ip_name_conf(config_file_t in_config,
-			  nfs_ip_name_parameter_t * pparam);
+			  nfs_ip_name_parameter_t *pparam);
 int nfs_read_version4_conf(config_file_t in_config,
-			   nfs_version4_parameter_t * pparam);
+			   nfs_version4_parameter_t *pparam);
 #ifdef _HAVE_GSSAPI
-int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam);
+int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
 #endif
-cache_inode_status_t nfs_export_get_root_entry(exportlist_t * export,
-					       cache_entry_t ** entryp);
+cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
+					       cache_entry_t **entryp);
 
 /* Admin thread control */
 
@@ -336,15 +337,15 @@ int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 /* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */
 int b64_ntop(u_char const *src, size_t srclength, char *target,
 	     size_t targsize);
-int b64_pton(char const *src, u_char * target, size_t targsize);
+int b64_pton(char const *src, u_char *target, size_t targsize);
 
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index);
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-void nfs_rpc_destroy_chan(rpc_call_channel_t * chan);
-int32_t nfs_rpc_dispatch_call(rpc_call_t * call, uint32_t flags);
+void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
 int reaper_init(void);
 int reaper_shutdown(void);

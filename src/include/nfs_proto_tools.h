@@ -18,15 +18,12 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  *
- * \file nfs_proto_tools.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:03:23 $
- * \version $Revision: 1.9 $
- * \brief   A set of functions used to managed NFS.
+ * @file nfs_proto_tools.c
+ * @brief   A set of functions used to managed NFS.
  *
  * nfs_proto_tools.c -  A set of functions used to managed NFS.
  *
@@ -129,7 +126,7 @@ static inline bool attribute_is_set(struct bitmap4 *bits, int attr)
 
 	if (offset >= bits->bitmap4_len)
 		return FALSE;
-	return ! !(bits->map[offset] & (1 << (attr % 32)));
+	return (bits->map[offset] & (1 << (attr % 32))) != 0;
 }
 
 static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
@@ -154,40 +151,39 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	return TRUE;
 }
 
-void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 * pfh3, nfs_fh4 * pfh4,
-		      char *str);
+void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 *pfh3, nfs_fh4 *pfh4, char *str);
 
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
-		    cache_entry_t * entry, struct req_op_context *ctx,
-		    wcc_data * pwcc_data);
+		    cache_entry_t *entry, struct req_op_context *ctx,
+		    wcc_data *pwcc_data);
 
-void nfs_SetPostOpAttr(cache_entry_t * entry, struct req_op_context *ctx,
-		       post_op_attr * attr);
+void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
+		       post_op_attr *attr);
 
-void nfs_SetPreOpAttr(cache_entry_t * entry, struct req_op_context *ctx,
-		      pre_op_attr * attr);
+void nfs_SetPreOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
+		      pre_op_attr *attr);
 
 bool nfs_RetryableError(cache_inode_status_t cache_status);
 
-int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 * psattr);
+int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 *psattr);
 
-void nfs4_Fattr_Free(fattr4 * fattr);
+void nfs4_Fattr_Free(fattr4 *fattr);
 
-cache_inode_status_t nfs_access_op(cache_entry_t * entry,
+cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 				   uint32_t requested_access,
-				   uint32_t * granted_access,
-				   uint32_t * supported_access,
+				   uint32_t *granted_access,
+				   uint32_t *supported_access,
 				   struct req_op_context *req_ctx);
 
-nfsstat4 nfs4_return_one_state(cache_entry_t * entry,
+nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
 			       layoutreturn_type4 return_type,
 			       enum fsal_layoutreturn_circumstance circumstance,
-			       state_t * layout_state,
+			       state_t *layout_state,
 			       struct pnfs_segment spec_segment,
 			       size_t body_len, const void *body_val,
-			       bool * deleted, bool hold_lock);
-nfsstat4 nfs4_sanity_check_FH(compound_data_t * data,
+			       bool *deleted, bool hold_lock);
+nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 			      object_file_type_t required_type,
 			      bool ds_allowed);
 
@@ -201,11 +197,12 @@ typedef enum {
 	UTF8_SCAN_ALL = 7	/* do the whole thing, name+valid utf8 */
 } utf8_scantype_t;
 
-nfsstat4 nfs4_utf8string2dynamic(const utf8string * input, utf8_scantype_t scan,
+nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
 				 char **obj_name);
 
-nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t * data, int required_type,
+nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 				    bool ds_allowed);
-void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t * state,
+void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 		    const struct pnfs_segment *segment);
+
 #endif				/* _NFS_PROTO_TOOLS_H */

@@ -89,7 +89,7 @@ typedef struct exportlist_client_gss__ {
 
 typedef enum exportlist_access_type__ {
 	ACCESSTYPE_RW = 1,	/*< All operations are allowed */
-	ACCESSTYPE_RO = 2,	/*< Filesystem is readonly (nfs_read allowed) */
+	ACCESSTYPE_RO = 2,	/*< Filesystem is readonly */
 	ACCESSTYPE_MDONLY = 3,	/*< Data operations are forbidden */
 	ACCESSTYPE_MDONLY_RO = 4	/*< Data operations are forbidden,
 					   and the filesystem is
@@ -179,15 +179,17 @@ typedef struct exportlist {
 
 	pthread_mutex_t exp_state_mutex;	/*< Mutex to protect per-export
 						   state information. */
-	struct glist_head exp_state_list;	/*< List of NFS v4 state belonging
-						   to this export */
+	struct glist_head exp_state_list;	/*< List of NFS v4 state
+						    belonging to this export */
 	struct glist_head exp_lock_list;	/*< List of locks belonging
 						   to this export Only need
 						   this list if NLM,
 						   otherwise state list is
 						   sufficient */
-	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on */
-	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this export  */
+	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
+						 */
+	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
+						    export  */
 	cache_inode_expire_type_t expire_type_attr;
 } exportlist_t;
 
@@ -195,13 +197,18 @@ typedef struct exportlist {
 #define EXPORT_OPTION_NOSUID 0x00000001	/*< Mask off setuid mode bit */
 #define EXPORT_OPTION_NOSGID 0x00000002	/*< Mask off setgid mode bit */
 #define EXPORT_OPTION_ROOT 0x00000004	/*< Allow root access as root uid */
-#define EXPORT_OPTION_ALL_ANONYMOUS 0x00000008	/*< all users are squashed to anonymous */
-#define EXPORT_OPTION_READ_ACCESS 0x00000010	/*< R_Access= option specified */
-#define EXPORT_OPTION_WRITE_ACCESS 0x00000020	/*< RW_Access= option specified */
+#define EXPORT_OPTION_ALL_ANONYMOUS 0x00000008	/*< all users are squashed to
+						    anonymous */
+#define EXPORT_OPTION_READ_ACCESS 0x00000010	/*< R_Access= option specified
+						 */
+#define EXPORT_OPTION_WRITE_ACCESS 0x00000020	/*< RW_Access= option specified
+						 */
 #define EXPORT_OPTION_RW_ACCESS       (EXPORT_OPTION_READ_ACCESS     | \
 				       EXPORT_OPTION_WRITE_ACCESS)
-#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000040	/*< MDONLY_Access= option specified */
-#define EXPORT_OPTION_MD_READ_ACCESS 0x00000080	/*< MDONLY_RO_Access= option specified */
+#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000040 /*< MDONLY_Access= option
+						     specified */
+#define EXPORT_OPTION_MD_READ_ACCESS 0x00000080	/*< MDONLY_RO_Access= option
+						    specified */
 #define EXPORT_OPTION_MD_ACCESS       (EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS)
 #define EXPORT_OPTION_MODIFY_ACCESS   (EXPORT_OPTION_WRITE_ACCESS | \
@@ -222,7 +229,8 @@ typedef struct exportlist {
 #define EXPORT_OPTION_MAXWRITE 0x00000400	/*< Max write is provided */
 #define EXPORT_OPTION_PREFREAD 0x00000800	/*< Pref read is provided */
 #define EXPORT_OPTION_PREFWRITE 0x00001000	/*< Pref write is provided */
-#define EXPORT_OPTION_PREFRDDIR 0x00002000	/*< Pref readdir size is provided */
+#define EXPORT_OPTION_PREFRDDIR 0x00002000	/*< Pref readdir size is
+						    provided */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000	/*< Clients use only
 							   privileged port */
 
@@ -234,11 +242,12 @@ typedef struct exportlist {
 						   supported  */
 
 #define EXPORT_OPTION_RPCSEC_GSS_NONE 0x00040000	/*< RPCSEC_GSS_NONE
-							   supported */
-#define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00080000	/*< RPCSEC_GSS INTEGRITY
-							   supported */
+							    supported */
+#define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00080000	/*< RPCSEC_GSS
+							    INTEGRITY supported
+							 */
 #define EXPORT_OPTION_RPCSEC_GSS_PRIV 0x00100000	/*< RPCSEC_GSS PRIVACY
-							   supported	    */
+							    supported	    */
 #define EXPORT_OPTION_AUTH_TYPES      (EXPORT_OPTION_AUTH_NONE	     | \
 				       EXPORT_OPTION_AUTH_UNIX	     | \
 				       EXPORT_OPTION_RPCSEC_GSS_NONE | \
@@ -286,12 +295,16 @@ typedef struct exportlist {
 						   is set */
 #define EXPORT_OPTION_MAXOFFSETREAD 0x08000000	/*< Maximum Offset for read is
 						   set */
-#define EXPORT_OPTION_ACCESS_OPT_LIST 0x10000000	/*< Access list from CLIENT sub-block */
-#define EXPORT_OPTION_USE_PNFS   0x20000000	/*< Using pNFS or not using pNFS? */
-#define EXPORT_OPTION_USE_UQUOTA 0x40000000	/*< Using user quota for this export */
-#define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this export */
-/* recycled the unused 0x8000 bit! */
-#define EXPORT_OPTION_ACCESS_LIST 0x00008000	/*< Flags access list entry as Access=  */
+#define EXPORT_OPTION_ACCESS_OPT_LIST 0x10000000 /*< Access list from CLIENT
+						     sub-block */
+#define EXPORT_OPTION_USE_PNFS   0x20000000	/*< Using pNFS or not using
+						    pNFS? */
+#define EXPORT_OPTION_USE_UQUOTA 0x40000000	/*< Using user quota for this
+						    export */
+#define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this
+						    export */
+#define EXPORT_OPTION_ACCESS_LIST 0x00008000	/*< Flags access list entry as
+						    Access=  */
 
 /* NFS4 specific structures */
 
@@ -301,12 +314,13 @@ typedef struct exportlist {
 typedef struct pseudofs_entry {
 	char name[MAXNAMLEN + 1];	/*< The entry name */
 	int8_t *fsopaque; /** do not garbage collect this, it points
-	                      to an already gc'd file_handle_v4_t.
-	                      this is used for convenience when
-	                      converting from entry to handle. */
+			      to an already gc'd file_handle_v4_t.
+			      this is used for convenience when
+			      converting from entry to handle. */
 	uint64_t pseudo_id;	/*< ID within the pseudoFS  */
-	exportlist_t *junction_export;	/*< Export list related to the junction,
-					   NULL if entry is no junction */
+	exportlist_t *junction_export;	/*< Export list related to the
+					    junction, NULL if entry is no
+					    junction */
 	struct pseudofs_entry *sons;	/*< Pointer to a linked list of sons */
 	struct pseudofs_entry *parent;	/*< Reverse pointer (for LOOKUPP) */
 	struct pseudofs_entry *next;	/*< Next entry in a list of sons */
@@ -365,11 +379,13 @@ typedef struct compound_data {
 	stateid4 saved_stateid;	/*< Saved stateid */
 	bool saved_stateid_valid;	/*< Saved stateid is valid */
 	unsigned int minorversion;	/*< NFSv4 minor version */
-	cache_entry_t *current_entry;	/*< Cache entry for current filehandle */
+	cache_entry_t *current_entry;	/*< Cache entry for current filehandle
+					 */
 	cache_entry_t *saved_entry;	/*< Cache entry for saved filehandle */
 	struct fsal_ds_handle *current_ds;	/*< current ds handle */
 	struct fsal_ds_handle *saved_ds;	/*< Saved DS handle */
-	object_file_type_t current_filetype;	/*< File type of current entry */
+	object_file_type_t current_filetype;	/*< File type of current entry
+						 */
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
 	struct req_op_context *req_ctx;	/*< the context including
 					   related, mapped creds */
@@ -377,9 +393,11 @@ typedef struct compound_data {
  * at some point.
  */
 	exportlist_t *export;	/*< Export entry related to the request */
-	struct gsh_export *saved_export;	/*< Export entry related to the savedFH */
-	export_perms_t export_perms;	/*< Permissions for export for currentFH */
-	export_perms_t saved_export_perms;	/*< Permissions for export for savedFH */
+	struct gsh_export *saved_export; /*< Export entry related to the
+					     savedFH */
+	export_perms_t export_perms; /*< Permissions for export for currentFH */
+	export_perms_t saved_export_perms; /*< Permissions for export for
+					       savedFH */
 	pseudofs_t *pseudofs;	/*< Pointer to the pseudo filesystem tree */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
@@ -390,8 +408,8 @@ typedef struct compound_data {
 						   cached RPC res in a
 						   session's slot */
 	bool use_drc;		/*< Set to true if session DRC is to be used */
-	uint32_t oppos;		/*< Position of the operation within the request
-				   processed  */
+	uint32_t oppos;		/*< Position of the operation within the
+				    request processed  */
 	nfs41_session_t *session;	/*< Related session (found by
 					   OP_SEQUENCE) */
 	sequenceid4 sequence;	/*< Sequence ID of the current compound
@@ -401,7 +419,7 @@ typedef struct compound_data {
 } compound_data_t;
 
 /* Export list related functions */
-sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t * ipv4);
+sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
 
 void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 		    struct user_cred *user_credentials);
@@ -411,25 +429,26 @@ bool get_req_uid_gid(struct svc_req *req,
 void init_credentials(struct user_cred *user_credentials);
 void clean_credentials(struct user_cred *user_credentials);
 
-bool nfs_compare_clientcred(nfs_client_cred_t * cred1,
-			    nfs_client_cred_t * cred2);
-int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t * pcred);
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
+			    nfs_client_cred_t *cred2);
+int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
 
-int export_client_match_any(sockaddr_t * hostaddr,
-			    exportlist_client_t * clients,
-			    exportlist_client_entry_t * pclient_found,
+int export_client_match_any(sockaddr_t *hostaddr,
+			    exportlist_client_t *clients,
+			    exportlist_client_entry_t *pclient_found,
 			    unsigned int export_option);
 
 void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
-			     export_perms_t * export_perms);
+			     export_perms_t *export_perms);
 
 bool nfs_export_check_security(struct svc_req *req,
 			       export_perms_t *export_perms,
 			       exportlist_t *export);
 
 void LogClientListEntry(log_components_t component,
-			exportlist_client_entry_t * entry);
+			exportlist_client_entry_t *entry);
 
 void squash_setattr(export_perms_t *export_perms,
 		    struct user_cred *user_credentials, struct attrlist *attr);
+
 #endif				/* !NFS_EXPORTS_H */

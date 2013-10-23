@@ -38,7 +38,7 @@ struct glist_head {
 #define GLIST_HEAD_INIT(name) { &(name), &(name) }
 
 #define GLIST_HEAD(name) \
-        struct glist_head name = GLIST_HEAD_INIT(name)
+	struct glist_head name = GLIST_HEAD_INIT(name)
 
 static inline void glist_init(struct glist_head *head)
 {				/* XXX glist_init? */
@@ -125,7 +125,7 @@ static inline void glist_splice_tail(struct glist_head *tgt,
 }
 
 #define glist_for_each(node, head) \
-	for(node = (head)->next; node != head; node = node->next)
+	for (node = (head)->next; node != head; node = node->next)
 
 static inline size_t glist_length(struct glist_head *head)
 {
@@ -138,18 +138,19 @@ static inline size_t glist_length(struct glist_head *head)
 }
 
 #define container_of(addr, type, member) ({			\
-	const typeof( ((type *)0)->member ) *__mptr = (addr);	\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
+	const typeof(((type *) 0)->member) * __mptr = (addr);	\
+	(type *)((char *) __mptr - offsetof(type, member)); })
 
 #define glist_first_entry(head, type, member) \
-        ((head)->next != (head) ? \
-          container_of((head)->next, type, member) : NULL)
+	((head)->next != (head) ? \
+	container_of((head)->next, type, member) : NULL)
 
 #define glist_entry(node, type, member) \
 	container_of(node, type, member)
 
-#define glist_for_each_safe(node, noden, head)			    \
-  for (node = (head)->next, noden = node->next; node != (head);	    \
-       node = noden, noden = node->next)
+#define glist_for_each_safe(node, noden, head)		\
+	for (node = (head)->next, noden = node->next;	\
+	     node != (head);				\
+	     node = noden, noden = node->next)
 
 #endif				/* _NLM_LIST_H */

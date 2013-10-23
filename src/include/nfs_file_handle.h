@@ -45,9 +45,7 @@
  * they come/go are 4 byte aligned.
  */
 
-#define ULTIMATE_ANSWER 0x42
-
-#define GANESHA_FH_VERSION ULTIMATE_ANSWER - 1
+#define GANESHA_FH_VERSION 0x41
 
 /**
  * @brief An NFSv2 filehandle (only used for (un)mount?)
@@ -81,7 +79,8 @@ typedef struct file_handle_v3 {
 	uint8_t xattr_pos;	/*< Used for xattr management */
 	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
 	uint8_t fs_len;		/*< Actual length of opaque handle */
-	uint8_t fsopaque[];	/*< Persistent part of FSAL handle, <= 59 bytes */
+	uint8_t fsopaque[];	/*< Persistent part of FSAL handle,
+				    <= 59 bytes */
 } file_handle_v3_t;
 
 /**
@@ -177,11 +176,11 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *);
  * This routine extracts the export id from the file handle NFSv3
  *
  * @param pfh3 [IN] file handle to manage.
- * 
+ *
  * @return the export id.
  *
  */
-static inline short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
+static inline short nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 {
 	file_handle_v3_t *pfile_handle;
 
@@ -193,7 +192,7 @@ static inline short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 	return pfile_handle->exportid;
 }				/* nfs3_FhandleToExportId */
 
-static inline short nlm4_FhandleToExportId(netobj * pfh3)
+static inline short nlm4_FhandleToExportId(netobj *pfh3)
 {
 	nfs_fh3 fh3;
 	if (pfh3 == NULL)
@@ -210,11 +209,11 @@ static inline short nlm4_FhandleToExportId(netobj * pfh3)
  * This routine is used to test if a fh is empty (contains no data).
  *
  * @param pfh [IN] file handle to test.
- * 
- * @return NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.  
+ *
+ * @return NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.
  *
  */
-static inline int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
+static inline int nfs4_Is_Fh_Empty(nfs_fh4 *pfh)
 {
 	if (pfh == NULL) {
 		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: pfh=NULL");
@@ -233,7 +232,7 @@ static inline int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
 int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
-int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data);
+int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data);
 
 /* File handle print function (mostly used for debugging) */
 void print_fhandle2(log_components_t, fhandle2 *);
@@ -243,21 +242,20 @@ void print_fhandle_nlm(log_components_t, netobj *);
 void print_buff(log_components_t, char *, int);
 void LogCompoundFH(compound_data_t *);
 
-void sprint_fhandle2(char *str, fhandle2 * fh);
-void sprint_fhandle3(char *str, nfs_fh3 * fh);
-void sprint_fhandle4(char *str, nfs_fh4 * fh);
-void sprint_fhandle_nlm(char *str, netobj * fh);
+void sprint_fhandle2(char *str, fhandle2 *fh);
+void sprint_fhandle3(char *str, nfs_fh3 *fh);
+void sprint_fhandle4(char *str, nfs_fh4 *fh);
+void sprint_fhandle_nlm(char *str, netobj *fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
 
-#define LogHandleNFS4(label, fh4)			    \
-  do {							    \
-    if (isFullDebug(COMPONENT_NFS_V4))			    \
-      {							    \
-	char str[LEN_FH_STR];				    \
-	sprint_fhandle4(str, fh4);			    \
-	LogFullDebug(COMPONENT_NFS_V4, "%s%s", label, str); \
-      }							    \
-  } while (0)
+#define LogHandleNFS4(label, fh4) \
+	do { \
+		if (isFullDebug(COMPONENT_NFS_V4)) { \
+			char str[LEN_FH_STR]; \
+			sprint_fhandle4(str, fh4); \
+			LogFullDebug(COMPONENT_NFS_V4, "%s%s", label, str); \
+		} \
+	} while (0)
 
 #endif				/* NFS_FILE_HANDLE_H */
