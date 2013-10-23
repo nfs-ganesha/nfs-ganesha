@@ -45,7 +45,7 @@
  * A local copy of the handle for this module, so it can be disposed
  * of.
  */
-static struct fsal_module *module = NULL;
+static struct fsal_module *module;
 
 /**
  * The name of this module.
@@ -145,9 +145,8 @@ static fsal_status_t create_export(struct fsal_module *module, const char *path,
 	}
 
 	ceph_status = ceph_conf_read_file(export->cmount, NULL);
-	if (ceph_status == 0) {
+	if (ceph_status == 0)
 		ceph_status = ceph_conf_parse_argv(export->cmount, 2, argv);
-	}
 
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;

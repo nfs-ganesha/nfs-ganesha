@@ -220,15 +220,13 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 
 	*ds_pub = NULL;
 
-	if (desc->len != sizeof(struct ds_wire)) {
+	if (desc->len != sizeof(struct ds_wire))
 		return NFS4ERR_BADHANDLE;
-	}
 
 	ds = gsh_calloc(1, sizeof(struct ds));
 
-	if (ds == NULL) {
+	if (ds == NULL)
 		return NFS4ERR_SERVERFAULT;
-	}
 
 	/* Connect lazily when a FILE_SYNC4 write forces us to, not
 	   here. */
@@ -298,16 +296,15 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	i = ceph_ll_get_inode(export->cmount, *vi);
-	if (!i) {
+	if (!i)
 		return ceph2fsal_error(-ESTALE);
-	}
 
 	/* The ceph_ll_connectable_m should have populated libceph's
 	   cache with all this anyway */
 	rc = ceph_ll_getattr(export->cmount, i, &st, 0, 0);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
+
 
 	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
@@ -336,7 +333,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 					 const struct req_op_context *opctx,
-					 fsal_dynamicfsinfo_t * info)
+					 fsal_dynamicfsinfo_t *info)
 {
 	/* Full 'private' export */
 	struct export *export = container_of(export_pub, struct export, export);
@@ -347,9 +344,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 
 	rc = ceph_ll_statfs(export->cmount, export->root->i, &vfs_st);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
 	info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
