@@ -3181,10 +3181,12 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
  * @param[in]     hostaddr         The complete remote address (as a
  *                                 sockaddr_storage to be IPv6 compliant)
  * @param[in]     ptr_req          The related RPC request.
- * @param[in]     export          Related export entry (if found, NULL otherwise).
+ * @param[in]     export           Related export entry (if found, NULL
+ *                                 otherwise).
  * @param[in]     nfs_prog         Number for the NFS program.
  * @param[in]     mnt_prog         Number for the MOUNT program.
- * @param[out]    client_found    Client entry found in export list, NULL if nothing was found.
+ * @param[out]    client_found     Client entry found in export list, NULL
+ *                                 if nothing was found.
  * @param[in]     user_credentials User credentials
  * @param[in]     proc_makes_write Whether this operation counts as a write
  *
