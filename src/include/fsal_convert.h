@@ -77,14 +77,14 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
  */
 static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-	struct timespec ts = {.tv_sec = tsec,.tv_nsec = nsec };
-	return (ts);
+	struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
+	return ts;
 }
 
 const char *object_file_type_to_str(object_file_type_t type);
 
-#define my_high32m( a ) ( (unsigned int)( a >> 32 ) )
-#define my_low32m( a ) ( (unsigned int)a )
+#define my_high32m(a) ((unsigned int)(a >> 32))
+#define my_low32m(a) ((unsigned int)a)
 
 #endif				/* !FSAL_CONVERT_H */
 /** @} */

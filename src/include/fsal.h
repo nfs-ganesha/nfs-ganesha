@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -52,29 +52,25 @@
  *  example :
  *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_TEST_MASK( _attrib_mask_ , _attr_const_ ) \
-                      ( (_attrib_mask_) & (_attr_const_) )
+#define FSAL_TEST_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) & (_attr_const_))
 
 /** this macro sets an attribute
  *  example :
  *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_SET_MASK( _attrib_mask_ , _attr_const_ ) \
-                    ( (_attrib_mask_) |= (_attr_const_) )
+#define FSAL_SET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) |= (_attr_const_))
 
-#define FSAL_UNSET_MASK( _attrib_mask_ , _attr_const_ ) \
-                    ( (_attrib_mask_) &= ~(_attr_const_) )
+#define FSAL_UNSET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) &= ~(_attr_const_))
 
 /** this macro clears the attribute mask
  *  example :
  *  FSAL_CLEAR_MASK( attrib_list.asked_attributes )
  */
-#define FSAL_CLEAR_MASK( _attrib_mask_ ) \
-                    ( (_attrib_mask_) = 0LL )
-
-/** This macro sets the cookie to its initial value
- */
-#define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( fsal_cookie_t ) )
+#define FSAL_CLEAR_MASK(_attrib_mask_) \
+	((_attrib_mask_) = 0LL)
 
 /******************************************************
  *              FSAL Returns macros
@@ -86,7 +82,7 @@
  */
 static inline fsal_status_t fsalstat(fsal_errors_t major, uint32_t minor)
 {
-	fsal_status_t status = { major, minor };
+	fsal_status_t status = {major, minor};
 	return status;
 }
 
@@ -100,20 +96,17 @@ static inline fsal_status_t fsalstat(fsal_errors_t major, uint32_t minor)
  *     printf("ERROR status = %d, %d\n", status.major,status.minor);
  *  }
  */
-#define FSAL_IS_ERROR( _status_ ) \
-        ( ! ( ( _status_ ).major == ERR_FSAL_NO_ERROR ) )
+#define FSAL_IS_ERROR(_status_) \
+	(!((_status_).major == ERR_FSAL_NO_ERROR))
 
 /******************************************************
  *          FSAL extended attributes management.
  ******************************************************/
 
-/** cookie for reading attrs from the first one */
-#define XATTRS_READLIST_FROM_BEGINNING  (0)
-
 /** An extented attribute entry */
 typedef struct fsal_xattrent {
 	uint64_t xattr_id;	/*< xattr index */
-	uint64_t xattr_cookie;	/*< cookie for getting xattrs list from the next entry */
+	uint64_t xattr_cookie;	/*< cookie for the next entry */
 	struct attrlist attributes;	/*< entry attributes (if supported) */
 	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
 } fsal_xattrent_t;

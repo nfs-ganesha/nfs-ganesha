@@ -69,10 +69,10 @@ typedef struct vfs_file_handle {
 } vfs_file_handle_t;
 
 #define VFS_FILE_HANDLE_MIN \
-	offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL
+	(offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL)
 
 #define vfs_file_handle_size(fh) \
-	offsetof(vfs_file_handle_t, handle) + fh->handle_bytes
+	(offsetof(vfs_file_handle_t, handle) + fh->handle_bytes)
 
 #ifdef LINUX
 #include "os/linux/fsal_handle_syscalls.h"

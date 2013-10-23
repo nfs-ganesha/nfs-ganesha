@@ -297,8 +297,9 @@ struct fsal_export;
 struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
-struct exportlist;		/* We just need a pointer, not all of nfs_exports.h
-				   full def in include/nfs_exports.h */
+struct exportlist;		/* We just need a pointer, not all of
+				 * nfs_exports.h full def in
+				 * include/nfs_exports.h */
 struct fsal_ds_handle;
 struct fsal_ds_ops;
 
@@ -318,7 +319,7 @@ struct fsal_module {
 				   incrementing/decrementing the
 				   reference count or manipulating the
 				   list of exports. */
-	volatile int refs;	/*< Reference count */
+	int refs;		/*< Reference count */
 	struct glist_head exports;	/*< Head of list of exports from
 					   this FSAL */
 	char *name;		/*< Name set from .so and/or config */
@@ -348,7 +349,7 @@ struct fsal_ops {
  * @retval 0     On success.
  * @retval EBUSY If there are outstanding references or exports.
  */
-	int (*unload) (struct fsal_module * fsal_hdl);
+	int (*unload) (struct fsal_module *fsal_hdl);
 
 /**
  * @brief Get the name of the FSAL
@@ -363,7 +364,7 @@ struct fsal_ops {
  * name.  This buffer must not be freed or modified.  This pointer
  * must not be dereferenced after a call to @c put.
  */
-	const char *(*get_name) (struct fsal_module * fsal_hdl);
+	const char *(*get_name) (struct fsal_module *fsal_hdl);
 
 /**
  * @brief Get the name of the library
@@ -377,7 +378,7 @@ struct fsal_ops {
  * library name.  This buffer must not be freed or modified.  This
  * pointer must not be dereferenced after a call to @c put.
  */
-	const char *(*get_lib_name) (struct fsal_module * fsal_hdl);
+	const char *(*get_lib_name) (struct fsal_module *fsal_hdl);
 /**
  * @brief Relinquish a reference to the module
  *
@@ -390,7 +391,7 @@ struct fsal_ops {
  * @retval 0 on success.
  * @retval EINVAL if there are no references to put.
  */
-	int (*put) (struct fsal_module * fsal_hdl);
+	int (*put) (struct fsal_module *fsal_hdl);
 
 /*@}*/
 
@@ -410,7 +411,7 @@ struct fsal_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*init_config) (struct fsal_module * fsal_hdl,
+	 fsal_status_t(*init_config) (struct fsal_module *fsal_hdl,
 				      config_file_t config_struct);
 /**
  * @brief Dump configuration
@@ -421,7 +422,7 @@ struct fsal_ops {
  * @param[in] fsal_hdl The FSAL module.
  * @param[in] log_fd   File descriptor to which to output the dump
  */
-	void (*dump_config) (struct fsal_module * fsal_hdl, int log_fd);
+	void (*dump_config) (struct fsal_module *fsal_hdl, int log_fd);
 
 /**
  * @brief Create a new export
@@ -465,13 +466,13 @@ struct fsal_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*create_export) (struct fsal_module * fsal_hdl,
+	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
 					const char *export_path,
 					const char *fs_options,
-					struct exportlist * exp_entry,
-					struct fsal_module * next_fsal,
-					const struct fsal_up_vector * up_ops,
-					struct fsal_export ** export);
+					struct exportlist *exp_entry,
+					struct fsal_module *next_fsal,
+					const struct fsal_up_vector *up_ops,
+					struct fsal_export **export);
 /*@}*/
 };
 
@@ -546,7 +547,7 @@ struct fsal_export {
 	pthread_mutex_t lock;	/*< A lock, to be held when
 				   taking/yielding references and
 				   manipulating the list of handles. */
-	volatile int refs;	/*< Reference count */
+	int refs;			/*< Reference count */
 	struct glist_head handles;	/*< Head of list of object handles */
 	struct glist_head ds_handles;	/*< Head of lsit of DS handles */
 	struct glist_head exports;	/*< Link in list of exports from
@@ -578,7 +579,7 @@ struct export_ops {
  *
  * @param[in] exp_hdl The export to reference.
  */
-	void (*get) (struct fsal_export * exp_hdl);
+	void (*get) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Relinquish a reference
@@ -593,7 +594,7 @@ struct export_ops {
  * @retval 0 on success.
  * @retval EINVAL if no reference exists.
  */
-	int (*put) (struct fsal_export * exp_hdl);
+	int (*put) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Finalize an export
@@ -606,7 +607,7 @@ struct export_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*release) (struct fsal_export * exp_hdl);
+	 fsal_status_t(*release) (struct fsal_export *exp_hdl);
 /*@}*/
 
 /*@{*/
@@ -627,10 +628,10 @@ struct export_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*lookup_path) (struct fsal_export * exp_hdl,
-				      const struct req_op_context * opctx,
+	 fsal_status_t(*lookup_path) (struct fsal_export *exp_hdl,
+				      const struct req_op_context *opctx,
 				      const char *path,
-				      struct fsal_obj_handle ** handle);
+				      struct fsal_obj_handle **handle);
 
 /**
  * @brief Look up a junction
@@ -649,9 +650,9 @@ struct export_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*lookup_junction) (struct fsal_export * exp_hdl,
-					  struct fsal_obj_handle * junction,
-					  struct fsal_obj_handle ** handle);
+	 fsal_status_t(*lookup_junction) (struct fsal_export *exp_hdl,
+					  struct fsal_obj_handle *junction,
+					  struct fsal_obj_handle **handle);
 /**
  * @brief Extract an opaque handle
  *
@@ -675,9 +676,9 @@ struct export_ops {
  *
  * @return FSAL type.
  */
-	 fsal_status_t(*extract_handle) (struct fsal_export * exp_hdl,
+	 fsal_status_t(*extract_handle) (struct fsal_export *exp_hdl,
 					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc * fh_desc);
+					 struct gsh_buffdesc *fh_desc);
 /**
  * @brief Create a FSAL object handle from a wire handle
  *
@@ -692,10 +693,10 @@ struct export_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*create_handle) (struct fsal_export * exp_hdl,
-					const struct req_op_context * opctx,
-					struct gsh_buffdesc * hdl_desc,
-					struct fsal_obj_handle ** handle);
+	 fsal_status_t(*create_handle) (struct fsal_export *exp_hdl,
+					const struct req_op_context *opctx,
+					struct gsh_buffdesc *hdl_desc,
+					struct fsal_obj_handle **handle);
 
 /**
  * @brief Create a FSAL data server handle from a wire handle
@@ -709,10 +710,10 @@ struct export_ops {
  *
  * @return NFSv4.1 error codes.
  */
-	 nfsstat4(*create_ds_handle) (struct fsal_export * const exp_hdl,
+	 nfsstat4(*create_ds_handle) (struct fsal_export *const exp_hdl,
 				      const struct gsh_buffdesc *
 				      const hdl_desc,
-				      struct fsal_ds_handle ** const handle);
+				      struct fsal_ds_handle **const handle);
 /*@}*/
 
 /**
@@ -732,10 +733,10 @@ struct export_ops {
  *
  * @retval FSAL status.
  */
-	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_export * exp_hdl,
+	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_export *exp_hdl,
 					      const struct req_op_context *
 					      opctx,
-					      fsal_dynamicfsinfo_t * info);
+					      fsal_dynamicfsinfo_t *info);
 /**
  * @brief Export feature test
  *
@@ -749,7 +750,7 @@ struct export_ops {
  * @retval true if the feature is supported.
  * @retval false if the feature is unsupported or unknown.
  */
-	 bool(*fs_supports) (struct fsal_export * exp_hdl,
+	 bool(*fs_supports) (struct fsal_export *exp_hdl,
 			     fsal_fsinfo_options_t option);
 /**
  * @brief Get the greatest file size supported
@@ -758,7 +759,7 @@ struct export_ops {
  *
  * @return Greatest file size supported.
  */
-	 uint64_t(*fs_maxfilesize) (struct fsal_export * exp_hdl);
+	 uint64_t(*fs_maxfilesize) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the greatest read size supported
@@ -767,7 +768,7 @@ struct export_ops {
  *
  * @return Greatest read size supported.
  */
-	 uint32_t(*fs_maxread) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maxread) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the greatest write size supported
@@ -776,7 +777,7 @@ struct export_ops {
  *
  * @return Greatest write size supported.
  */
-	 uint32_t(*fs_maxwrite) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maxwrite) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the greatest link count supported
@@ -785,7 +786,7 @@ struct export_ops {
  *
  * @return Greatest link count supported.
  */
-	 uint32_t(*fs_maxlink) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maxlink) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the greatest name length supported
@@ -794,7 +795,7 @@ struct export_ops {
  *
  * @return Greatest name length supported.
  */
-	 uint32_t(*fs_maxnamelen) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maxnamelen) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the greatest path length supported
@@ -803,7 +804,7 @@ struct export_ops {
  *
  * @return Greatest path length supported.
  */
-	 uint32_t(*fs_maxpathlen) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maxpathlen) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get the lease time for this filesystem
@@ -815,7 +816,7 @@ struct export_ops {
  *
  * @return Lease time.
  */
-	struct timespec (*fs_lease_time) (struct fsal_export * exp_hdl);
+	struct timespec (*fs_lease_time) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get supported ACL types
@@ -832,7 +833,7 @@ struct export_ops {
  *
  * @return supported ACL types.
  */
-	 fsal_aclsupp_t(*fs_acl_support) (struct fsal_export * exp_hdl);
+	 fsal_aclsupp_t(*fs_acl_support) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get supported attributes
@@ -846,7 +847,7 @@ struct export_ops {
  *
  * @return supported attributes.
  */
-	 attrmask_t(*fs_supported_attrs) (struct fsal_export * exp_hdl);
+	 attrmask_t(*fs_supported_attrs) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get umask applied to created files
@@ -859,7 +860,7 @@ struct export_ops {
  *
  * @return creation umask.
  */
-	 uint32_t(*fs_umask) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_umask) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get permissions applied to names attributes
@@ -873,7 +874,7 @@ struct export_ops {
  *
  * @return permissions on named attributes.
  */
-	 uint32_t(*fs_xattr_access_rights) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_xattr_access_rights) (struct fsal_export *exp_hdl);
 /*@}*/
 
 /*@{*/
@@ -897,9 +898,9 @@ struct export_ops {
  *
  * @return FSAL types.
  */
-	 fsal_status_t(*check_quota) (struct fsal_export * exp_hdl,
+	 fsal_status_t(*check_quota) (struct fsal_export *exp_hdl,
 				      const char *filepath, int quota_type,
-				      struct req_op_context * req_ctx);
+				      struct req_op_context *req_ctx);
 
 /**
  * @brief Get a user's quota
@@ -914,10 +915,10 @@ struct export_ops {
  *
  * @return FSAL types.
  */
-	 fsal_status_t(*get_quota) (struct fsal_export * exp_hdl,
+	 fsal_status_t(*get_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context * req_ctx,
-				    fsal_quota_t * quota);
+				    struct req_op_context *req_ctx,
+				    fsal_quota_t *quota);
 
 /**
  * @brief Set a user's quota
@@ -933,11 +934,11 @@ struct export_ops {
  *
  * @return FSAL types.
  */
-	 fsal_status_t(*set_quota) (struct fsal_export * exp_hdl,
+	 fsal_status_t(*set_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context * req_ctx,
-				    fsal_quota_t * quota,
-				    fsal_quota_t * resquota);
+				    struct req_op_context *req_ctx,
+				    fsal_quota_t *quota,
+				    fsal_quota_t *resquota);
 /*@}*/
 
 /*@{*/
@@ -961,9 +962,10 @@ struct export_ops {
  *
  * @return Valid error codes in RFC 5661, p. 365.
  */
-	 nfsstat4(*getdeviceinfo) (struct fsal_export * exp_hdl,
-				   XDR * da_addr_body, const layouttype4 type,
-				   const struct pnfs_deviceid * deviceid);
+	 nfsstat4(*getdeviceinfo) (struct fsal_export *exp_hdl,
+				   XDR * da_addr_body,
+				   const layouttype4 type,
+				   const struct pnfs_deviceid *deviceid);
 
 /**
  * @brief Get list of available devices
@@ -986,10 +988,10 @@ struct export_ops {
  *
  * @return Valid error codes in RFC 5661, pp. 365-6.
  */
-	 nfsstat4(*getdevicelist) (struct fsal_export * exp_hdl,
+	 nfsstat4(*getdevicelist) (struct fsal_export *exp_hdl,
 				   layouttype4 type, void *opaque,
 				   bool(*cb) (void *opaque, const uint64_t id),
-				   struct fsal_getdevicelist_res * res);
+				   struct fsal_getdevicelist_res *res);
 
 /**
  * @brief Get layout types supported by export
@@ -1003,8 +1005,8 @@ struct export_ops {
  *                     freed or modified and must not be dereferenced
  *                     after export reference is relinquished
  */
-	void (*fs_layouttypes) (struct fsal_export * exp_hdl, size_t * count,
-				const layouttype4 ** types);
+	void (*fs_layouttypes) (struct fsal_export *exp_hdl, size_t *count,
+				const layouttype4 **types);
 
 /**
  * @brief Get layout block size for export
@@ -1021,7 +1023,7 @@ struct export_ops {
  *
  * @return The preferred layout block size.
  */
-	 uint32_t(*fs_layout_blocksize) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_layout_blocksize) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Maximum number of segments we will use
@@ -1034,7 +1036,7 @@ struct export_ops {
  *
  * @return The Maximum number of layout segments in a campound layoutget.
  */
-	 uint32_t(*fs_maximum_segments) (struct fsal_export * exp_hdl);
+	 uint32_t(*fs_maximum_segments) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Size of the buffer needed for loc_body at layoutget
@@ -1048,7 +1050,7 @@ struct export_ops {
  *
  * @return Max size of the buffer needed for a loc_body
  */
-	 size_t(*fs_loc_body_size) (struct fsal_export * exp_hdl);
+	 size_t(*fs_loc_body_size) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
@@ -1062,7 +1064,7 @@ struct export_ops {
  *
  * @return Max size of the buffer needed for a da_addr_body
  */
-	 size_t(*fs_da_addr_size) (struct fsal_export * exp_hdl);
+	 size_t(*fs_da_addr_size) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get write verifier
@@ -1072,7 +1074,7 @@ struct export_ops {
  *
  * @param[in,out] verf_desc Address and length of verifier
  */
-	void (*get_write_verifier) (struct gsh_buffdesc * verf_desc);
+	void (*get_write_verifier) (struct gsh_buffdesc *verf_desc);
 
 /*@}*/
 };
@@ -1113,7 +1115,7 @@ struct fsal_obj_handle {
 
 typedef uint64_t fsal_cookie_t;
 
-typedef bool(*fsal_readdir_cb) (const struct req_op_context * opctx,
+typedef bool(*fsal_readdir_cb) (const struct req_op_context *opctx,
 				const char *name, void *dir_state,
 				fsal_cookie_t cookie);
 /**
@@ -1135,7 +1137,7 @@ struct fsal_obj_ops {
  *
  * @param[in] obj_hdl The handle to reference
  */
-	void (*get) (struct fsal_obj_handle * obj_hdl);
+	void (*get) (struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Release a reference on a handle
@@ -1150,7 +1152,7 @@ struct fsal_obj_ops {
  * @retval 0 on success.
  * @retval EINVAL if no references were outstanding.
  */
-	int (*put) (struct fsal_obj_handle * obj_hdl);
+	int (*put) (struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Clean up a filehandle
@@ -1163,7 +1165,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*release) (struct fsal_obj_handle * obj_hdl);
+	 fsal_status_t(*release) (struct fsal_obj_handle *obj_hdl);
 /*@}*/
 
 /*@{*/
@@ -1189,10 +1191,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*lookup) (struct fsal_obj_handle * dir_hdl,
-				 const struct req_op_context * opctx,
+	 fsal_status_t(*lookup) (struct fsal_obj_handle *dir_hdl,
+				 const struct req_op_context *opctx,
 				 const char *path,
-				 struct fsal_obj_handle ** handle);
+				 struct fsal_obj_handle **handle);
 
 /**
  * @brief Read a directory
@@ -1212,10 +1214,12 @@ struct fsal_obj_ops {
  * @retval false if no more entries are required (and the current one
  *               has not been consumed)
  */
-	 fsal_status_t(*readdir) (struct fsal_obj_handle * dir_hdl,
-				  const struct req_op_context * opctx,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof);
+	 fsal_status_t(*readdir) (struct fsal_obj_handle *dir_hdl,
+				  const struct req_op_context *opctx,
+				  fsal_cookie_t *whence,
+				  void *dir_state,
+				  fsal_readdir_cb cb,
+				  bool *eof);
 /*@}*/
 
 /*@{*/
@@ -1238,10 +1242,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*create) (struct fsal_obj_handle * dir_hdl,
-				 const struct req_op_context * opctx,
-				 const char *name, struct attrlist * attrib,
-				 struct fsal_obj_handle ** new_obj);
+	 fsal_status_t(*create) (struct fsal_obj_handle *dir_hdl,
+				 const struct req_op_context *opctx,
+				 const char *name, struct attrlist *attrib,
+				 struct fsal_obj_handle **new_obj);
 
 /**
  * @brief Create a directory
@@ -1257,10 +1261,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*mkdir) (struct fsal_obj_handle * dir_hdl,
-				const struct req_op_context * opctx,
-				const char *name, struct attrlist * attrib,
-				struct fsal_obj_handle ** new_obj);
+	 fsal_status_t(*mkdir) (struct fsal_obj_handle *dir_hdl,
+				const struct req_op_context *opctx,
+				const char *name, struct attrlist *attrib,
+				struct fsal_obj_handle **new_obj);
 
 /**
  * @brief Create a special file
@@ -1279,11 +1283,13 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*mknode) (struct fsal_obj_handle * dir_hdl,
-				 const struct req_op_context * opctx,
-				 const char *name, object_file_type_t nodetype,
-				 fsal_dev_t * dev, struct attrlist * attrib,
-				 struct fsal_obj_handle ** new_obj);
+	 fsal_status_t(*mknode) (struct fsal_obj_handle *dir_hdl,
+				 const struct req_op_context *opctx,
+				 const char *name,
+				 object_file_type_t nodetype,
+				 fsal_dev_t *dev,
+				 struct attrlist *attrib,
+				 struct fsal_obj_handle **new_obj);
 
 /**
  * @brief Create a symbolic link
@@ -1300,11 +1306,12 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*symlink) (struct fsal_obj_handle * dir_hdl,
-				  const struct req_op_context * opctx,
-				  const char *name, const char *link_path,
-				  struct attrlist * attrib,
-				  struct fsal_obj_handle ** new_obj);
+	 fsal_status_t(*symlink) (struct fsal_obj_handle *dir_hdl,
+				  const struct req_op_context *opctx,
+				  const char *name,
+				  const char *link_path,
+				  struct attrlist *attrib,
+				  struct fsal_obj_handle **new_obj);
 /*@}*/
 
 /*@{*/
@@ -1336,9 +1343,9 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*readlink) (struct fsal_obj_handle * obj_hdl,
-				   const struct req_op_context * opctx,
-				   struct gsh_buffdesc * link_content,
+	 fsal_status_t(*readlink) (struct fsal_obj_handle *obj_hdl,
+				   const struct req_op_context *opctx,
+				   struct gsh_buffdesc *link_content,
 				   bool refresh);
 
 /**
@@ -1357,11 +1364,11 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*test_access) (struct fsal_obj_handle * obj_hdl,
-				      struct req_op_context * req_ctx,
+	 fsal_status_t(*test_access) (struct fsal_obj_handle *obj_hdl,
+				      struct req_op_context *req_ctx,
 				      fsal_accessflags_t access_type,
-				      fsal_accessflags_t * allowed,
-				      fsal_accessflags_t * denied);
+				      fsal_accessflags_t *allowed,
+				      fsal_accessflags_t *denied);
 
 /**
  * @brief Get attributes
@@ -1375,8 +1382,8 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*getattrs) (struct fsal_obj_handle * obj_hdl,
-				   const struct req_op_context * opctx);
+	 fsal_status_t(*getattrs) (struct fsal_obj_handle *obj_hdl,
+				   const struct req_op_context *opctx);
 
 /**
  * @brief Set attributes on an object
@@ -1390,9 +1397,9 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*setattrs) (struct fsal_obj_handle * obj_hdl,
-				   const struct req_op_context * opctx,
-				   struct attrlist * attrib_set);
+	 fsal_status_t(*setattrs) (struct fsal_obj_handle *obj_hdl,
+				   const struct req_op_context *opctx,
+				   struct attrlist *attrib_set);
 
 /**
  * @brief Create a new link
@@ -1406,9 +1413,9 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t(*link) (struct fsal_obj_handle * obj_hdl,
-			       const struct req_op_context * opctx,
-			       struct fsal_obj_handle * destdir_hdl,
+	 fsal_status_t(*link) (struct fsal_obj_handle *obj_hdl,
+			       const struct req_op_context *opctx,
+			       struct fsal_obj_handle *destdir_hdl,
 			       const char *name);
 
 /**
@@ -1425,10 +1432,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t(*rename) (struct fsal_obj_handle * olddir_hdl,
-				 const struct req_op_context * opctx,
+	 fsal_status_t(*rename) (struct fsal_obj_handle *olddir_hdl,
+				 const struct req_op_context *opctx,
 				 const char *old_name,
-				 struct fsal_obj_handle * newdir_hdl,
+				 struct fsal_obj_handle *newdir_hdl,
 				 const char *new_name);
 /**
  * @brief Remove a name from a directory
@@ -1442,8 +1449,8 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*unlink) (struct fsal_obj_handle * obj_hdl,
-				 const struct req_op_context * opctx,
+	 fsal_status_t(*unlink) (struct fsal_obj_handle *obj_hdl,
+				 const struct req_op_context *opctx,
 				 const char *name);
 
 /*@}*/
@@ -1467,8 +1474,8 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*open) (struct fsal_obj_handle * obj_hdl,
-			       const struct req_op_context * opctx,
+	 fsal_status_t(*open) (struct fsal_obj_handle *obj_hdl,
+			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags);
 
 /**
@@ -1481,7 +1488,7 @@ struct fsal_obj_ops {
  *
  * @retval Flags representing current open status
  */
-	 fsal_openflags_t(*status) (struct fsal_obj_handle * obj_hdl);
+	 fsal_openflags_t(*status) (struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Read data from a file
@@ -1503,7 +1510,13 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*read) (struct fsal_obj_handle * obj_hdl, const struct req_op_context * opctx, uint64_t offset, size_t buffer_size, void *buffer, size_t * read_amount, bool * end_of_file);	/* needed? */
+	 fsal_status_t(*read) (struct fsal_obj_handle *obj_hdl,
+			       const struct req_op_context *opctx,
+			       uint64_t offset,
+			       size_t buffer_size,
+			       void *buffer,
+			       size_t *read_amount,
+			       bool *end_of_file);	/* needed? */
 
 /**
  * @brief Write data to a file
@@ -1522,11 +1535,13 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*write) (struct fsal_obj_handle * obj_hdl,
-				const struct req_op_context * opctx,
-				uint64_t offset, size_t buffer_size,
-				void *buffer, size_t * wrote_amount,
-				bool * fsal_stable);
+	 fsal_status_t(*write) (struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				uint64_t offset,
+				size_t buffer_size,
+				void *buffer,
+				size_t *wrote_amount,
+				bool *fsal_stable);
 /**
  * @brief Commit written data
  *
@@ -1538,7 +1553,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*commit) (struct fsal_obj_handle * obj_hdl,	/* sync */
+	 fsal_status_t(*commit) (struct fsal_obj_handle *obj_hdl,  /* sync */
 				 off_t offset, size_t len);
 
 /**
@@ -1556,11 +1571,12 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*lock_op) (struct fsal_obj_handle * obj_hdl,
-				  const struct req_op_context * opctx,
-				  void *owner, fsal_lock_op_t lock_op,
-				  fsal_lock_param_t * request_lock,
-				  fsal_lock_param_t * conflicting_lock);
+	 fsal_status_t(*lock_op) (struct fsal_obj_handle *obj_hdl,
+				  const struct req_op_context *opctx,
+				  void *owner,
+				  fsal_lock_op_t lock_op,
+				  fsal_lock_param_t *request_lock,
+				  fsal_lock_param_t *conflicting_lock);
 
 /**
  * @brief Handle share reservations
@@ -1574,7 +1590,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*share_op) (struct fsal_obj_handle * obj_hdl,
+	 fsal_status_t(*share_op) (struct fsal_obj_handle *obj_hdl,
 				   void *owner,
 				   fsal_share_param_t request_share);
 /**
@@ -1587,7 +1603,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*close) (struct fsal_obj_handle * obj_hdl);
+	 fsal_status_t(*close) (struct fsal_obj_handle *obj_hdl);
 /*@}*/
 
 /*@{*/
@@ -1609,10 +1625,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*list_ext_attrs) (struct fsal_obj_handle * obj_hdl,
-					 const struct req_op_context * opctx,
+	 fsal_status_t(*list_ext_attrs) (struct fsal_obj_handle *obj_hdl,
+					 const struct req_op_context *opctx,
 					 unsigned int cookie,
-					 struct fsal_xattrent * xattrs_tab,
+					 struct fsal_xattrent *xattrs_tab,
 					 unsigned int xattrs_tabsize,
 					 unsigned int *nb_returned,
 					 int *end_of_list);
@@ -1630,8 +1646,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*getextattr_id_by_name) (struct fsal_obj_handle *
-						obj_hdl,
+	 fsal_status_t(*getextattr_id_by_name) (struct fsal_obj_handle *obj_hdl,
 						const struct req_op_context *
 						opctx, const char *xattr_name,
 						unsigned int *xattr_id);
@@ -1656,7 +1671,7 @@ struct fsal_obj_ops {
 						   const char *xattr_name,
 						   caddr_t buffer_addr,
 						   size_t buffer_size,
-						   size_t * output_size);
+						   size_t *output_size);
 
 /**
  * @brief Get content of an attribute by id
@@ -1675,10 +1690,11 @@ struct fsal_obj_ops {
 	 fsal_status_t(*getextattr_value_by_id) (struct fsal_obj_handle *
 						 obj_hdl,
 						 const struct req_op_context *
-						 opctx, unsigned int xattr_id,
+						 opctx,
+						 unsigned int xattr_id,
 						 caddr_t buffer_addr,
 						 size_t buffer_size,
-						 size_t * output_size);
+						 size_t *output_size);
 
 /**
  * @brief Set content of an attribute
@@ -1693,8 +1709,8 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*setextattr_value) (struct fsal_obj_handle * obj_hdl,
-					   const struct req_op_context * opctx,
+	 fsal_status_t(*setextattr_value) (struct fsal_obj_handle *obj_hdl,
+					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   caddr_t buffer_addr,
 					   size_t buffer_size, int create);
@@ -1714,7 +1730,8 @@ struct fsal_obj_ops {
 	 fsal_status_t(*setextattr_value_by_id) (struct fsal_obj_handle *
 						 obj_hdl,
 						 const struct req_op_context *
-						 opctx, unsigned int xattr_id,
+						 opctx,
+						 unsigned int xattr_id,
 						 caddr_t buffer_addr,
 						 size_t buffer_size);
 
@@ -1729,10 +1746,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*getextattr_attrs) (struct fsal_obj_handle * obj_hdl,
-					   const struct req_op_context * opctx,
+	 fsal_status_t(*getextattr_attrs) (struct fsal_obj_handle *obj_hdl,
+					   const struct req_op_context *opctx,
 					   unsigned int xattr_id,
-					   struct attrlist * attrs);
+					   struct attrlist *attrs);
 
 /**
  * @brief Remove an extended attribute by id
@@ -1744,9 +1761,10 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*remove_extattr_by_id) (struct fsal_obj_handle * obj_hdl,
+	 fsal_status_t(*remove_extattr_by_id) (struct fsal_obj_handle *obj_hdl,
 					       const struct req_op_context *
-					       opctx, unsigned int xattr_id);
+					       opctx,
+					       unsigned int xattr_id);
 
 /**
  * @brief Remove an extended attribute by name
@@ -1761,7 +1779,8 @@ struct fsal_obj_ops {
 	 fsal_status_t(*remove_extattr_by_name) (struct fsal_obj_handle *
 						 obj_hdl,
 						 const struct req_op_context *
-						 opctx, const char *xattr_name);
+						 opctx,
+						 const char *xattr_name);
 /*@}*/
 
 /**
@@ -1776,7 +1795,7 @@ struct fsal_obj_ops {
  * @retval true if it is.
  * @retval false if it isn't.
  */
-	 bool(*handle_is) (struct fsal_obj_handle * obj_hdl,
+	 bool(*handle_is) (struct fsal_obj_handle *obj_hdl,
 			   object_file_type_t type);
 
 /**
@@ -1791,7 +1810,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t(*lru_cleanup) (struct fsal_obj_handle * obj_hdl,
+	 fsal_status_t(*lru_cleanup) (struct fsal_obj_handle *obj_hdl,
 				      lru_actions_t requests);
 
 /**
@@ -1808,9 +1827,9 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t(*handle_digest) (const struct fsal_obj_handle * obj_hdl,
+	 fsal_status_t(*handle_digest) (const struct fsal_obj_handle *obj_hdl,
 					fsal_digesttype_t output_type,
-					struct gsh_buffdesc * fh_desc);
+					struct gsh_buffdesc *fh_desc);
 /**
  * @brief Get key for handle
  *
@@ -1821,8 +1840,8 @@ struct fsal_obj_ops {
  * @param[out] fh_desc Address and length giving sub-region of handle
  *                     to be used as key
  */
-	void (*handle_to_key) (struct fsal_obj_handle * obj_hdl,
-			       struct gsh_buffdesc * fh_desc);
+	void (*handle_to_key) (struct fsal_obj_handle *obj_hdl,
+			       struct gsh_buffdesc *fh_desc);
 /*@}*/
 
 /*@{*/
@@ -1855,10 +1874,11 @@ struct fsal_obj_ops {
  *
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
-	 nfsstat4(*layoutget) (struct fsal_obj_handle * obj_hdl,
-			       struct req_op_context * req_ctx, XDR * loc_body,
-			       const struct fsal_layoutget_arg * arg,
-			       struct fsal_layoutget_res * res);
+	 nfsstat4(*layoutget) (struct fsal_obj_handle *obj_hdl,
+			       struct req_op_context *req_ctx,
+			       XDR * loc_body,
+			       const struct fsal_layoutget_arg *arg,
+			       struct fsal_layoutget_res *res);
 
 /**
  * @brief Potentially return one layout segment
@@ -1885,10 +1905,10 @@ struct fsal_obj_ops {
  *
  * @return Valid error codes in RFC 5661, p. 367.
  */
-	 nfsstat4(*layoutreturn) (struct fsal_obj_handle * obj_hdl,
-				  struct req_op_context * req_ctx,
+	 nfsstat4(*layoutreturn) (struct fsal_obj_handle *obj_hdl,
+				  struct req_op_context *req_ctx,
 				  XDR * lrf_body,
-				  const struct fsal_layoutreturn_arg * arg);
+				  const struct fsal_layoutreturn_arg *arg);
 
 /**
  * @brief Commit a segment of a layout
@@ -1911,11 +1931,11 @@ struct fsal_obj_ops {
  *
  * @return Valid error codes in RFC 5661, p. 366.
  */
-	 nfsstat4(*layoutcommit) (struct fsal_obj_handle * obj_hdl,
-				  struct req_op_context * req_ctx,
+	 nfsstat4(*layoutcommit) (struct fsal_obj_handle *obj_hdl,
+				  struct req_op_context *req_ctx,
 				  XDR * lou_body,
-				  const struct fsal_layoutcommit_arg * arg,
-				  struct fsal_layoutcommit_res * res);
+				  const struct fsal_layoutcommit_arg *arg,
+				  struct fsal_layoutcommit_res *res);
 /*@}*/
 };
 
@@ -1953,7 +1973,7 @@ struct fsal_ds_ops {
  *
  * @param[in] ds_hdl The handle to reference
  */
-	void (*get) (struct fsal_ds_handle * const ds_hdl);
+	void (*get) (struct fsal_ds_handle *const ds_hdl);
 
 /**
  * @brief Release a reference on a handle
@@ -1968,7 +1988,7 @@ struct fsal_ds_ops {
  * @retval 0 on success.
  * @retval EINVAL if no references were outstanding.
  */
-	 nfsstat4(*put) (struct fsal_ds_handle * const ds_hdl);
+	 nfsstat4(*put) (struct fsal_ds_handle *const ds_hdl);
 
 /**
  * @brief Clean up a DS handle
@@ -1981,7 +2001,7 @@ struct fsal_ds_ops {
  *
  * @return NFSv4.1 status codes.
  */
-	 nfsstat4(*release) (struct fsal_ds_handle * const ds_hdl);
+	 nfsstat4(*release) (struct fsal_ds_handle *const ds_hdl);
 /*@}*/
 
 /*@{*/
@@ -2010,12 +2030,14 @@ struct fsal_ds_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*read) (struct fsal_ds_handle * const ds_hdl,
-			  struct req_op_context * const req_ctx,
-			  const stateid4 * stateid, const offset4 offset,
-			  const count4 requested_length, void *const buffer,
+	 nfsstat4(*read) (struct fsal_ds_handle *const ds_hdl,
+			  struct req_op_context *const req_ctx,
+			  const stateid4 * stateid,
+			  const offset4 offset,
+			  const count4 requested_length,
+			  void *const buffer,
 			  count4 * const supplied_length,
-			  bool * const end_of_file);
+			  bool *const end_of_file);
 
 /**
  *
@@ -2041,10 +2063,12 @@ struct fsal_ds_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*write) (struct fsal_ds_handle * const ds_hdl,
-			   struct req_op_context * const req_ctx,
-			   const stateid4 * stateid, const offset4 offset,
-			   const count4 write_length, const void *buffer,
+	 nfsstat4(*write) (struct fsal_ds_handle *const ds_hdl,
+			   struct req_op_context *const req_ctx,
+			   const stateid4 * stateid,
+			   const offset4 offset,
+			   const count4 write_length,
+			   const void *buffer,
 			   const stable_how4 stability_wanted,
 			   count4 * const written_length,
 			   verifier4 * const writeverf,
@@ -2066,9 +2090,10 @@ struct fsal_ds_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*commit) (struct fsal_ds_handle * const ds_hdl,
-			    struct req_op_context * const req_ctx,
-			    const offset4 offset, const count4 count,
+	 nfsstat4(*commit) (struct fsal_ds_handle *const ds_hdl,
+			    struct req_op_context *const req_ctx,
+			    const offset4 offset,
+			    const count4 count,
 			    verifier4 * const writeverf);
 };
 #endif				/* !FSAL_API */
