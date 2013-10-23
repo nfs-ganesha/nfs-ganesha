@@ -58,8 +58,8 @@ typedef struct wait_q_entry {
 	struct glist_head waitq;
 } wait_q_entry_t;
 
-static inline int gsh_mutex_init(pthread_mutex_t * m,
-				 const pthread_mutexattr_t * a
+static inline int gsh_mutex_init(pthread_mutex_t *m,
+				 const pthread_mutexattr_t *a
 				 __attribute__ ((unused)))
 {
 	pthread_mutexattr_t attr;
@@ -72,16 +72,16 @@ static inline int gsh_mutex_init(pthread_mutex_t * m,
 				  PTHREAD_MUTEX_DEFAULT
 #endif
 	    );
-	return (pthread_mutex_init(m, &attr));
+	return pthread_mutex_init(m, &attr);
 }
 
-static inline void init_wait_entry(wait_entry_t * we)
+static inline void init_wait_entry(wait_entry_t *we)
 {
 	gsh_mutex_init(&we->mtx, NULL);
 	pthread_cond_init(&we->cv, NULL);
 }
 
-static inline void init_wait_q_entry(wait_q_entry_t * wqe)
+static inline void init_wait_q_entry(wait_q_entry_t *wqe)
 {
 	glist_init(&wqe->waitq);
 	init_wait_entry(&wqe->lwe);
