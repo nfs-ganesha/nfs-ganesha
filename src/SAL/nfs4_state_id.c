@@ -504,9 +504,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 				/* We don't expect this, but, just in case...
 				 * Update and release already reserved lease.
 				 */
-				pthread_mutex_lock(&data->preserved_clientid->cid_mutex);
+				pthread_mutex_lock(&data->preserved_clientid
+						   ->cid_mutex);
 				update_lease(data->preserved_clientid);
-				pthread_mutex_unlock(&data->preserved_clientid->cid_mutex);
+				pthread_mutex_unlock(&data->preserved_clientid
+						     ->cid_mutex);
 				data->preserved_clientid = NULL;
 			}
 
@@ -555,26 +557,29 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* We don't expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
 			 */
-			pthread_mutex_lock(&data->preserved_clientid->cid_mutex);
+			pthread_mutex_lock(&data->preserved_clientid
+					   ->cid_mutex);
 
 			update_lease(data->preserved_clientid);
 
-			pthread_mutex_unlock(&data->preserved_clientid->cid_mutex);
+			pthread_mutex_unlock(&data->preserved_clientid
+					     ->cid_mutex);
 
 			data->preserved_clientid = NULL;
 		}
 
 		/* Check if lease is expired and reserve it */
 		pthread_mutex_lock(&state2->state_owner->so_owner
-				    .so_nfs4_owner.so_clientrec->cid_mutex);
+				   .so_nfs4_owner.so_clientrec->cid_mutex);
 
 		if (!reserve_lease
 		    (state2->state_owner->so_owner.so_nfs4_owner.
 		     so_clientrec)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
-			pthread_mutex_unlock(&state2->state_owner->so_owner.so_nfs4_owner.
-			  so_clientrec->cid_mutex);
+			pthread_mutex_unlock(&state2->state_owner->so_owner
+					     .so_nfs4_owner.so_clientrec
+					     ->cid_mutex);
 
 			status = NFS4ERR_EXPIRED;
 			goto failure;

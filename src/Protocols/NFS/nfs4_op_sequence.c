@@ -46,16 +46,17 @@
  * @see nfs4_Compound
  *
  */
-int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		     struct nfs_resop4 *resp)
 {
-	SEQUENCE4args *const arg_SEQUENCE4 = &op->nfs_argop4_u.opsequence;
-	SEQUENCE4res *const res_SEQUENCE4 = &resp->nfs_resop4_u.opsequence;
+	SEQUENCE4args * const arg_SEQUENCE4 = &op->nfs_argop4_u.opsequence;
+	SEQUENCE4res * const res_SEQUENCE4 = &resp->nfs_resop4_u.opsequence;
 
 	nfs41_session_t *session;
 
 	resp->resop = NFS4_OP_SEQUENCE;
 	res_SEQUENCE4->sr_status = NFS4_OK;
+
 	if (data->minorversion == 0) {
 		res_SEQUENCE4->sr_status = NFS4ERR_INVAL;
 		return res_SEQUENCE4->sr_status;
@@ -140,8 +141,13 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 		if (session->slots[arg_SEQUENCE4->sa_slotid].sequence ==
 		    arg_SEQUENCE4->sa_sequenceid) {
 #if IMPLEMENT_CACHETHIS
-/* Ganesha always caches result anyway so ignore cachethis */
-			if (session->slots[arg_SEQUENCE4->sa_slotid].cache_used) {
+			/** @todo
+			 *
+			 * Ganesha always caches result anyway so ignore
+			 * cachethis
+			 */
+			if (session->slots[arg_SEQUENCE4->sa_slotid]
+			    .cache_used) {
 #endif
 				/* Replay operation through the DRC */
 				data->use_drc = true;
@@ -156,16 +162,16 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 						arg_SEQUENCE4->sa_slotid,
 						data->cached_res);
 
-				pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].
-				  lock);
+				pthread_mutex_unlock(&session->
+					slots[arg_SEQUENCE4->sa_slotid].lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status = NFS4_OK;
 				return res_SEQUENCE4->sr_status;
 #if IMPLEMENT_CACHETHIS
 			} else {
 				/* Illegal replay */
-				pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].
-				  lock);
+				pthread_mutex_unlock(&session->
+					slots[arg_SEQUENCE4->sa_slotid].lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status =
 				    NFS4ERR_RETRY_UNCACHED_REP;
@@ -178,7 +184,9 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 			}
 #endif
 		}
-		pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].lock);
+
+		pthread_mutex_unlock(&session->
+			slots[arg_SEQUENCE4->sa_slotid].lock);
 		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
@@ -205,7 +213,8 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 	    arg_SEQUENCE4->sa_slotid;
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_highest_slotid =
 	    NFS41_NB_SLOTS - 1;
-	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4->sa_slotid;	/* Maybe not the best choice */
+	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid =
+	    arg_SEQUENCE4->sa_slotid;	/* Maybe not the best choice */
 
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_status_flags = 0;
 
@@ -213,6 +222,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 		res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_status_flags |=
 		    SEQ4_STATUS_CB_PATH_DOWN;
 	}
+
 #if IMPLEMENT_CACHETHIS
 /* Ganesha always caches result anyway so ignore cachethis */
 	if (arg_SEQUENCE4->sa_cachethis) {
@@ -234,11 +244,12 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
 				"=NULL for DRC", arg_SEQUENCE4->sa_slotid);
 	}
 #endif
+
 	pthread_mutex_unlock(&session->slots[arg_SEQUENCE4->sa_slotid].lock);
 
 	/* If we were successful, stash the clientid in the request
-	   context. */
-
+	 * context.
+	 */
 	data->req_ctx->clientid = &data->session->clientid;
 
 	res_SEQUENCE4->sr_status = NFS4_OK;
@@ -253,7 +264,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_sequence_Free(nfs_resop4 * resp)
+void nfs4_op_sequence_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

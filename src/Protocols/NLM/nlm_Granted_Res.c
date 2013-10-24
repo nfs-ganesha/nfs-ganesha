@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  *
  */
@@ -59,9 +59,10 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 		 "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
 		 buffer);
 
-	state_status =
-	    state_find_grant(arg->cookie.n_bytes, arg->cookie.n_len,
-			     &cookie_entry);
+	state_status = state_find_grant(arg->cookie.n_bytes,
+					arg->cookie.n_len,
+					&cookie_entry);
+
 	if (state_status != STATE_SUCCESS) {
 		/* This must be an old NLM_GRANTED_RES */
 		LogFullDebug(COMPONENT_NLM,
@@ -106,7 +107,8 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
  * nlm4_Granted_Res_Free: Frees the result structure allocated for
  * nlm4_Granted_Res
  *
- * Frees the result structure allocated for nlm4_Granted_Res. Does Nothing in fact.
+ * Frees the result structure allocated for nlm4_Granted_Res. Does Nothing
+ * in fact.
  *
  * @param res        [INOUT]   Pointer to the result structure.
  *

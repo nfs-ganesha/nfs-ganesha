@@ -291,11 +291,13 @@ void free_nfs4_owner(state_owner_t *owner)
 	nfs4_Compound_FreeOne(&owner->so_owner.so_nfs4_owner.so_resp);
 
 	/* Remove the owner from the owners per clientid list. */
-	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec
+			   ->cid_mutex);
 
 	glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
 
-	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec
+			     ->cid_mutex);
 
 	dec_client_id_ref(owner->so_owner.so_nfs4_owner.so_clientrec);
 }
@@ -338,7 +340,8 @@ static void init_nfs4_owner(state_owner_t *owner)
 	/* Increment reference count for clientid record */
 	inc_client_id_ref(owner->so_owner.so_nfs4_owner.so_clientrec);
 
-	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_lock(&owner->so_owner.so_nfs4_owner.so_clientrec
+			   ->cid_mutex);
 
 	if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
 		/* If open owner, add to clientid lock owner list */
@@ -352,7 +355,8 @@ static void init_nfs4_owner(state_owner_t *owner)
 			       &owner->so_owner.so_nfs4_owner.so_perclient);
 	}
 
-	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
+	pthread_mutex_unlock(&owner->so_owner.so_nfs4_owner.so_clientrec
+			     ->cid_mutex);
 }
 
 /**

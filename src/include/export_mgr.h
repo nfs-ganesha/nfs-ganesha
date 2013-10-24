@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -66,7 +66,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
 bool remove_gsh_export(int export_id);
-int foreach_gsh_export(bool(*cb) (struct gsh_export * exp, void *state),
+int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 		       void *state);
 
 #endif				/* !EXPORT_MGR_H */

@@ -58,14 +58,14 @@
  * @return per RFC 5661, pp. 363-4
  *
  */
-int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t *data,
 		       struct nfs_resop4 *resp)
 {
 	/* Unused for now, but when we actually implement this function it
 	   won't be, so remove the attribute. */
-	DELEGPURGE4args *const arg_DELEGPURGE4 __attribute__ ((unused))
+	DELEGPURGE4args * const arg_DELEGPURGE4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.opdelegpurge;
-	DELEGPURGE4res *const res_DELEGPURGE4 =
+	DELEGPURGE4res * const res_DELEGPURGE4 =
 	    &resp->nfs_resop4_u.opdelegpurge;
 
 	/* Lock are not supported */
@@ -84,7 +84,7 @@ int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_delegpurge_Free(nfs_resop4 * resp)
+void nfs4_op_delegpurge_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

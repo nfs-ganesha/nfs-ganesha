@@ -1,6 +1,6 @@
 /*
  * Copyright IBM Corporation, 2012
- *  Contributor: Frank Filz  <ffilz@us.ibm.com>
+ *  Contributor: Frank Filz <ffilzlnx@mindspring.com>
  *
  *
  * This software is a server that implements the NFS protocol.
@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  *
  */
 
@@ -43,26 +43,18 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <time.h>
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
+#include <stdbool.h>
 
 #define MAXSTR 1024
 #define MAXFPOS 16
 
-int readln(FILE * in, char *buf, int buflen);
+int readln(FILE *in, char *buf, int buflen);
 
-typedef struct response_t response_t;
-typedef struct command_def_t command_def_t;
-typedef struct client_t client_t;
-typedef struct token_t token_t;
+struct response;
+struct command_def;
+struct client;
 
-struct token_t {
+struct token {
 	const char *t_name;
 	int t_len;
 	int t_value;
@@ -70,7 +62,7 @@ struct token_t {
 
 /* Commands to Client */
 /* Responses use the same strings */
-typedef enum commands_t {
+enum commands {
 	CMD_OPEN,
 	CMD_CLOSE,
 	CMD_LOCKW,
@@ -88,22 +80,22 @@ typedef enum commands_t {
 	CMD_HELLO,
 	CMD_QUIT,
 	NUM_COMMANDS
-} commands_t;
+};
 
-typedef enum requires_more_t {
+enum requires_more {
 	REQUIRES_MORE,
 	REQUIRES_NO_MORE,
 	REQUIRES_EITHER,
-} requires_more_t;
+};
 
-struct command_def_t {
+struct command_def {
 	const char *cmd_name;
 	int cmd_len;
 };
 
-struct client_t {
-	client_t *c_next;
-	client_t *c_prev;
+struct client {
+	struct client *c_next;
+	struct client *c_prev;
 	int c_socket;
 	struct sockaddr c_addr;
 	char c_name[MAXSTR];
@@ -112,7 +104,7 @@ struct client_t {
 	int c_refcount;
 };
 
-typedef enum status_t {
+enum status {
 	STATUS_OK,
 	STATUS_AVAILABLE,
 	STATUS_GRANTED,
@@ -123,103 +115,104 @@ typedef enum status_t {
 	STATUS_COMPLETED,
 	STATUS_ERRNO,
 	STATUS_PARSE_ERROR,
-	STATUS_ERROR		// must be last
-} status_t;
+	STATUS_ERROR		/* must be last */
+};
 
 extern char errdetail[MAXSTR * 2];
 extern char badtoken[MAXSTR];
-extern client_t *client_list;
+extern struct client *client_list;
 extern FILE *input;
 extern FILE *output;
-extern int script;
-extern int quiet;
-extern int duperrors;
-extern int strict;
-extern int error_is_fatal;
-extern int syntax;
+extern bool script;
+extern bool quiet;
+extern bool duperrors;
+extern bool strict;
+extern bool error_is_fatal;
+extern bool syntax;
 extern long int lno;
 extern long int global_tag;
 
-long int get_global_tag(int increment);
+long int get_global_tag(bool increment);
 
-#define fprintf_stderr(fmt, args...) \
-  do {                               \
-    if(duperrors)                    \
-      fprintf(output, fmt, ## args); \
-    fprintf(stderr, fmt, ## args);   \
-  } while(0)
+#define fprintf_stderr(fmt, args...)			\
+	do {						\
+		if (duperrors)				\
+			fprintf(output, fmt, ## args);	\
+		fprintf(stderr, fmt, ## args);		\
+	} while (0)
 
-#define fatal(str, args...)       \
-  do {                            \
-    fprintf_stderr(str, ## args); \
-    fprintf_stderr("FAIL\n");     \
-    fflush(output);               \
-    fflush(stderr);               \
-    exit(1);                      \
-  } while(0)
+#define fatal(str, args...)			\
+	do {					\
+		fprintf_stderr(str, ## args);	\
+		fprintf_stderr("FAIL\n");	\
+		fflush(output);			\
+		fflush(stderr);			\
+		exit(1);			\
+	} while (0)
 
-#define show_usage(ret, fmt, args...)  \
-  do {                                 \
-    fprintf_stderr(fmt, ## args);      \
-    fprintf_stderr("%s", usage);       \
-    fflush(stderr);                    \
-    fflush(stdout);                    \
-    exit(ret);                         \
-  } while(0)
+#define show_usage(ret, fmt, args...)		\
+	do {					\
+		fprintf_stderr(fmt, ## args);	\
+		fprintf_stderr("%s", usage);	\
+		fflush(stderr);			\
+		fflush(stdout);			\
+		exit(ret);			\
+	} while (0)
 
-char *get_command(char *line, commands_t * cmd);
-char *get_tag(char *line, response_t * resp, int required,
-	      requires_more_t requires_more);
-char *get_rq_tag(char *line, response_t * req, int required,
-		 requires_more_t requires_more);
-char *get_long(char *line, long int *value, requires_more_t requires_more,
+char *get_command(char *line, enum commands *cmd);
+char *get_tag(char *line, struct response *resp, int required,
+	      enum requires_more requires_more);
+char *get_rq_tag(char *line, struct response *req, int required,
+		 enum requires_more requires_more);
+char *get_long(char *line, long int *value, enum requires_more requires_more,
 	       const char *invalid);
 char *get_longlong(char *line, long long int *value,
-		   requires_more_t requires_more, const char *invalid);
-char *get_fpos(char *line, long int *fpos, requires_more_t requires_more);
+		   enum requires_more requires_more, const char *invalid);
+char *get_fpos(char *line, long int *fpos, enum requires_more requires_more);
 char *get_str(char *line, char *str, long long int *len,
-	      requires_more_t requires_more);
+	      enum requires_more requires_more);
 char *get_lock_type(char *line, int *type);
-char *get_client(char *line, client_t ** pclient, int create,
-		 requires_more_t requires_more);
-char *get_token(char *line, char **token, int *len, int optional,
-		requires_more_t requires_more, const char *invalid);
-char *get_token_value(char *line, int *value, token_t * tokens, int optional,
-		      requires_more_t requires_more, const char *invalid);
-char *get_status(char *line, response_t * resp);
+char *get_client(char *line, struct client **pclient, bool create,
+		 enum requires_more requires_more);
+char *get_token(char *line, char **token, int *len, bool optional,
+		enum requires_more requires_more, const char *invalid);
+char *get_token_value(char *line, int *value, struct token *tokens,
+		      bool optional, enum requires_more requires_more,
+		      const char *invalid);
+char *get_status(char *line, struct response *resp);
 char *get_open_opts(char *line, long int *fpos, int *flags, int *mode);
-char *parse_response(char *line, response_t * resp);
-char *parse_request(char *line, response_t * req, int no_tag);
-char *get_on_off(char *line, int *value);
-char *SkipWhite(char *line, requires_more_t requires_more, const char *who);
+char *parse_response(char *line, struct response *resp);
+char *parse_request(char *line, struct response *req, int no_tag);
+char *get_on_off(char *line, bool *value);
+char *SkipWhite(char *line, enum requires_more requires_more, const char *who);
 
-void respond(response_t * resp);
+void respond(struct response *resp);
 const char *str_lock_type(int type);
-void sprintf_resp(char *line, const char *lead, response_t * resp);
-void sprintf_req(char *line, const char *lead, response_t * req);
-void send_cmd(response_t * req);
+void sprintf_resp(char *line, const char *lead, struct response *resp);
+void sprintf_req(char *line, const char *lead, struct response *req);
+void send_cmd(struct response *req);
 
-const char *str_status(status_t status);
+const char *str_status(enum status status);
 
 const char *str_read_write_flags(int flags);
 int sprintf_open_flags(char *line, int flags);
 
-status_t parse_status(char *str, int len);
+enum status parse_status(char *str, int len);
 
-void free_response(response_t * resp, response_t ** list);
-void free_client(client_t * client);
+void free_response(struct response *resp, struct response **list);
+void free_client(struct client *client);
 
-int compare_responses(response_t * expected, response_t * received);
-void add_response(response_t * resp, response_t ** list);
-response_t *check_expected_responses(response_t * expected_responses,
-				     response_t * client_resp);
+int compare_responses(struct response *expected, struct response *received);
+void add_response(struct response *resp, struct response **list);
+struct response *check_expected_responses(struct response *expected_responses,
+					  struct response *client_resp);
 
-struct response_t {
-	response_t *r_next;
-	response_t *r_prev;
-	client_t *r_client;
-	commands_t r_cmd;
-	status_t r_status;
+struct response {
+	struct response *r_next;
+	struct response *r_prev;
+	struct client *r_client;
+	enum commands r_cmd;
+	enum status r_status;
 	long int r_tag;
 	long int r_fpos;
 	long int r_fno;
@@ -235,7 +228,7 @@ struct response_t {
 	char r_original[MAXSTR * 3];
 };
 
-extern command_def_t commands[NUM_COMMANDS + 1];
+extern struct command_def commands[NUM_COMMANDS + 1];
 
 /* Command forms
  *
@@ -271,7 +264,8 @@ extern command_def_t commands[NUM_COMMANDS + 1];
  * tag TEST    CONFLICT fpos pid type start length
  * tag LIST    GRANTED fpos start length (returned if no locks to list)
  * tag LIST    DENIED fpos start length (returned if list had locks)
- * tag LIST    CONFLICT fpos pid type start length (returned for each lock in list)
+ * tag LIST    CONFLICT fpos pid type start length (returned for each lock in
+ *             list)
  * tag SEEK    OK fpos
  * tag READ    OK fpos len "data"
  * tag WRITE   OK fpos len

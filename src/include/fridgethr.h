@@ -48,6 +48,9 @@
 
 struct fridgethr;
 
+/*< Decoder thread pool */
+extern struct fridgethr *req_fridge;
+
 /**
  * @brief A given thread in the fridge
  */
@@ -59,19 +62,20 @@ struct fridgethr_entry {
 	struct fridgethr_context {
 		uint32_t uflags; /*< Flags (for any use) */
 		pthread_t id;	/*< Thread ID */
-		pthread_mutex_t mtx; /*< Mutex for fiddling this
-					 thread */
-		pthread_cond_t cv; /*< Condition variable to wait for sync */
-		sigset_t sigmask; /*< This thread's signal mask */
-		bool woke; /*< Set to false on first run and if wait
-			       in fridgethr_freeze didn't time out. */
-		void *thread_info; /*< Information belonging to the
-				       user and associated with the
-				       thread.	Never modified by the
-				       fridgethr code. */
-		void (*func)(struct fridgethr_context *); /*< Function being
-							      executed */
-		void *arg; /*< Functions argument */
+		pthread_mutex_t mtx;	/*< Mutex for fiddling this
+					   thread */
+		pthread_cond_t cv;	/*< Condition variable to wait for sync
+					 */
+		sigset_t sigmask;	/*< This thread's signal mask */
+		bool woke;	/*< Set to false on first run and if wait
+				   in fridgethr_freeze didn't time out. */
+		void *thread_info;	/*< Information belonging to the
+					   user and associated with the
+					   thread.  Never modified by the
+					   fridgethr code. */
+		void (*func) (struct fridgethr_context *); /*< Function being
+							       executed */
+		void *arg;	/*< Functions argument */
 	} ctx;
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
 	bool frozen; /*< Thread is frozen */
@@ -190,20 +194,21 @@ typedef enum {
  */
 
 struct fridgethr {
-	char *s; /*< Name for this fridge */
-	struct fridgethr_params p; /*< Parameters */
-	pthread_mutex_t mtx; /*< Mutex */
-	pthread_attr_t attr; /*< Creation attributes */
-	struct glist_head thread_list; /*< List of threads */
-	uint32_t nthreads; /*< Number of threads in fridge */
-	struct glist_head idle_q; /*< Idle threads */
-	uint32_t nidle; /*< Number of idle threads */
-	uint32_t flags; /*< Fridge-wide flags */
-	fridgethr_comm_t command; /*< Command state */
-	void (*cb_func)(void *); /*< Callback on command completion */
-	void *cb_arg; /*< Argument for completion callback */
-	pthread_mutex_t *cb_mtx; /*< Mutex for completion condition variable */
-	pthread_cond_t *cb_cv; /*< Condition variable, signalled on
+	char *s;		/*< Name for this fridge */
+	struct fridgethr_params p;	/*< Parameters */
+	pthread_mutex_t mtx;	/*< Mutex */
+	pthread_attr_t attr;	/*< Creation attributes */
+	struct glist_head thread_list;	/*< List of threads */
+	uint32_t nthreads;	/*< Number of threads in fridge */
+	struct glist_head idle_q;	/*< Idle threads */
+	uint32_t nidle;		/*< Number of idle threads */
+	uint32_t flags;		/*< Fridge-wide flags */
+	fridgethr_comm_t command;	/*< Command state */
+	void (*cb_func) (void *);	/*< Callback on command completion */
+	void *cb_arg;		/*< Argument for completion callback */
+	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition
+					    variable */
+	pthread_cond_t *cb_cv;	/*< Condition variable, signalled on
 				   completion */
 	bool transitioning; /*< Changing state */
 	union {

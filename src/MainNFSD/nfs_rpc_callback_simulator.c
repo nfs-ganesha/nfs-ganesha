@@ -58,11 +58,6 @@
  * state are available.
  */
 
-/* Pick these up from the SAL. */
-
-extern hash_table_t *ht_confirmed_client_id;
-extern hash_table_t *ht_session_id;
-
 /**
  * @brief Return a timestamped list of NFSv4 client ids.
  *

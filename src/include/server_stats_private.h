@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -156,13 +156,13 @@ struct export_stats {
 	.direction = "out"	\
 }				\
 
-void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st);
-void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter * iter);
-void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter * iter);
-void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter * iter);
-void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter * iter);
+void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st);
+void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
+void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter);
+void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
+void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 
-void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter * iter);
+void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 #endif				/* USE_DBUS_STATS */
 
 void server_stats_free(struct gsh_stats *statsp);

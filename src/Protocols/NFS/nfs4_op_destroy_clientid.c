@@ -50,12 +50,12 @@
  *
  */
 
-int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 			     struct nfs_resop4 *resp)
 {
-	DESTROY_CLIENTID4args *const arg_DESTROY_CLIENTID4 =
+	DESTROY_CLIENTID4args * const arg_DESTROY_CLIENTID4 =
 	    &op->nfs_argop4_u.opdestroy_clientid;
-	DESTROY_CLIENTID4res *const res_DESTROY_CLIENTID4 =
+	DESTROY_CLIENTID4res * const res_DESTROY_CLIENTID4 =
 	    &resp->nfs_resop4_u.opdestroy_clientid;
 	nfs_client_record_t *client_record = NULL;
 	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
@@ -63,6 +63,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 	int rc;
 
 	resp->resop = NFS4_OP_DESTROY_CLIENTID;
+
 	if (data->minorversion < 1) {
 		res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_NOTSUPP;
 		return res_DESTROY_CLIENTID4->dcr_status;
@@ -70,26 +71,31 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 
 	clientid = arg_DESTROY_CLIENTID4->dca_clientid;
 
-	LogDebug(COMPONENT_CLIENTID, "DESTROY_CLIENTID clientid=%" PRIx64,
+	LogDebug(COMPONENT_CLIENTID,
+		 "DESTROY_CLIENTID clientid=%" PRIx64,
 		 clientid);
 
 	res_DESTROY_CLIENTID4->dcr_status = NFS4_OK;
 
 	/* First try to look up confirmed record */
 	rc = nfs_client_id_get_confirmed(clientid, &conf);
+
 	if (rc == CLIENT_ID_SUCCESS) {
 		client_record = conf->cid_client_record;
 		found = conf;
 	} else {
 		/* fall back to unconfirmed */
 		rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
+
 		if (rc == CLIENT_ID_SUCCESS) {
 			client_record = unconf->cid_client_record;
 			found = unconf;
 		}
+
 		/* handle the perverse case of a clientid being confirmed
 		 * in the above interval */
 		rc = nfs_client_id_get_confirmed(clientid, &conf);
+
 		if (rc == CLIENT_ID_SUCCESS) {
 			client_record = conf->cid_client_record;
 			found = conf;
@@ -122,6 +128,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 	 */
 	conf = client_record->cr_confirmed_rec;
 	unconf = client_record->cr_unconfirmed_rec;
+
 	if ((!conf) && (!unconf)) {
 		/* We raced a thread destroying clientid, and lost.
 		 * We're done. */
@@ -130,7 +137,8 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* We MUST NOT destroy a clientid that has nfsv41 sessions or state.
 	 * Since the minorversion is 4.1 or higher, this is equivalent to a
-	 * session check. */
+	 * session check.
+	 */
 	if (client_id_has_nfs41_sessions(found)) {
 		res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_CLIENTID_BUSY;
 		goto cleanup;
@@ -190,7 +198,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp nfs4_op results
  */
 
-void nfs4_op_destroy_clientid_Free(nfs_resop4 * resp)
+void nfs4_op_destroy_clientid_Free(nfs_resop4 *resp)
 {
 	return;
 }

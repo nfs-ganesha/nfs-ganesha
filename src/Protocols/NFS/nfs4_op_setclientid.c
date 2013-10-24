@@ -50,14 +50,14 @@
  *
  */
 
-int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 			struct nfs_resop4 *resp)
 {
-	SETCLIENTID4args *const arg_SETCLIENTID4 =
+	SETCLIENTID4args * const arg_SETCLIENTID4 =
 	    &op->nfs_argop4_u.opsetclientid;
-	SETCLIENTID4res *const res_SETCLIENTID4 =
+	SETCLIENTID4res * const res_SETCLIENTID4 =
 	    &resp->nfs_resop4_u.opsetclientid;
-	clientaddr4 *const res_SETCLIENTID4_INUSE =
+	clientaddr4 * const res_SETCLIENTID4_INUSE =
 	    &resp->nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.client_using;
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
@@ -71,6 +71,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 	int rc;
 
 	resp->resop = NFS4_OP_SETCLIENTID;
+
 	if (data->minorversion > 0) {
 		res_SETCLIENTID4->status = NFS4ERR_NOTSUPP;
 		return res_SETCLIENTID4->status;
@@ -91,8 +92,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	LogDebug(COMPONENT_CLIENTID,
-		 "SETCLIENTID Client addr=%s id=%s verf=%s "
-		 "callback={program=%u r_addr=%s r_netid=%s} ident=%u",
+		 "SETCLIENTID Client addr=%s id=%s verf=%s callback={program=%u r_addr=%s r_netid=%s} ident=%u",
 		 str_client_addr, str_client, str_verifier,
 		 arg_SETCLIENTID4->callback.cb_program,
 		 arg_SETCLIENTID4->callback.cb_location.r_addr,
@@ -100,9 +100,11 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		 arg_SETCLIENTID4->callback_ident);
 
 	/* Do we already have one or more records for client id (x)? */
-	client_record =
-	    get_client_record(arg_SETCLIENTID4->client.id.id_val,
-			      arg_SETCLIENTID4->client.id.id_len, 0, 0);
+	client_record = get_client_record(arg_SETCLIENTID4->client.id.id_val,
+					  arg_SETCLIENTID4->client.id.id_len,
+					  0,
+					  0);
+
 	if (client_record == NULL) {
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID, "SETCLIENTID failed");
@@ -111,8 +113,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		return res_SETCLIENTID4->status;
 	}
 
-	/*
-	 * The following checks are based on RFC3530bis draft 16
+	/* The following checks are based on RFC3530bis draft 16
 	 *
 	 * This attempts to implement the logic described in
 	 * 15.35.5. IMPLEMENTATION Consider the major bullets as CASE
@@ -139,10 +140,11 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		/* Need a reference to the confirmed record for below */
 		inc_client_id_ref(conf);
 
-		if (!nfs_compare_clientcred
-		    (&conf->cid_credential, &data->credential)
-		    || !cmp_sockaddr(&conf->cid_client_addr, &client_addr,
-				     true)) {
+		if (!nfs_compare_clientcred(&conf->cid_credential,
+					    &data->credential)
+		    || !cmp_sockaddr(&conf->cid_client_addr,
+				     &client_addr,
+				     IGNORE_PORT)) {
 			/* CASE 1:
 			 *
 			 * Confirmed record exists and not the same principal
@@ -156,9 +158,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Confirmed ClientId %" PRIx64
-					 "->'%s': Principals do "
-					 "not match... confirmed addr=%s "
-					 "Return NFS4ERR_CLID_INUSE",
+					 "->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
 					 conf->cid_clientid, str_client,
 					 confirmed_addr);
 			}
@@ -271,9 +271,11 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 	 * above.
 	 */
 
-	unconf =
-	    create_client_id(clientid, client_record, &client_addr,
-			     &data->credential, 0);
+	unconf = create_client_id(clientid,
+				  client_record,
+				  &client_addr,
+				  &data->credential,
+				  0);
 
 	if (unconf == NULL) {
 		/* Error already logged, return */
@@ -281,10 +283,9 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		goto out;
 	}
 
-	if (strmaxcpy
-	    (unconf->cid_cb.v40.cb_client_r_addr,
-	     arg_SETCLIENTID4->callback.cb_location.r_addr,
-	     sizeof(unconf->cid_cb.v40.cb_client_r_addr)) == -1) {
+	if (strmaxcpy(unconf->cid_cb.v40.cb_client_r_addr,
+		      arg_SETCLIENTID4->callback.cb_location.r_addr,
+		      sizeof(unconf->cid_cb.v40.cb_client_r_addr)) == -1) {
 		LogCrit(COMPONENT_CLIENTID, "Callback r_addr %s too long",
 			arg_SETCLIENTID4->callback.cb_location.r_addr);
 		res_SETCLIENTID4->status = NFS4ERR_INVAL;
@@ -295,14 +296,17 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 	nfs_set_client_location(unconf,
 				&arg_SETCLIENTID4->callback.cb_location);
 
-	memcpy(unconf->cid_incoming_verifier, arg_SETCLIENTID4->client.verifier,
+	memcpy(unconf->cid_incoming_verifier,
+	       arg_SETCLIENTID4->client.verifier,
 	       NFS4_VERIFIER_SIZE);
+
 	memcpy(unconf->cid_verifier, verifier, sizeof(NFS4_write_verifier));
 
 	unconf->cid_cb.v40.cb_program = arg_SETCLIENTID4->callback.cb_program;
 	unconf->cid_cb.v40.cb_callback_ident = arg_SETCLIENTID4->callback_ident;
 
 	rc = nfs_client_id_insert(unconf);
+
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
 		res_SETCLIENTID4->status = clientid_error_to_nfsstat(rc);
@@ -327,6 +331,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
  out:
 
 	pthread_mutex_unlock(&client_record->cr_mutex);
+
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);
 
@@ -339,7 +344,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp nfs4_op results
  */
 
-void nfs4_op_setclientid_Free(nfs_resop4 * res)
+void nfs4_op_setclientid_Free(nfs_resop4 *res)
 {
 	SETCLIENTID4res *resp = &res->nfs_resop4_u.opsetclientid;
 

@@ -79,14 +79,14 @@
 /**
  * @brief Descriptor for display buffers.
  *
- * This structure defines a display buffer. 
+ * This structure defines a display buffer.
  * Buffer may be allocated global, on the stack, or by malloc.
  */
 struct display_buffer {
-	size_t b_size;		/*< Size of the buffer, will hold b_size - 1 chars plus a
-				   '\0' */
-	char *b_current;	/*< Current position in the buffer, where the next string
-				   will be appended */
+	size_t b_size;		/*< Size of the buffer, will hold b_size
+				    - 1 chars plus a '\0' */
+	char *b_current;	/*< Current position in the buffer, where the
+				    next string will be appended */
 	char *b_start;		/*< Start of the buffer */
 };
 
@@ -102,11 +102,13 @@ int display_force_overflow(struct display_buffer *dspbuf);
  * @brief Reset current position in buffer to start.
  *
  * @param[in,out] dspbuf The buffer.
- * 
+ *
  */
 static inline void display_reset_buffer(struct display_buffer *dspbuf)
 {
-	/* To re-use a buffer, all we need to do is roll b_current back to b_start. */
+	/* To re-use a buffer, all we need to do is roll b_current back to
+	 * b_start.
+	 */
 	dspbuf->b_current = dspbuf->b_start;
 }
 
@@ -118,15 +120,15 @@ static inline void display_reset_buffer(struct display_buffer *dspbuf)
  * @return the length.
  *
  * This function is more efficient than strlen if the buffer hasn't overflowed.
- * 
+ *
  */
 static inline int display_buffer_len(struct display_buffer *dspbuf)
 {
 	int len = dspbuf->b_current - dspbuf->b_start;
 	if (len == dspbuf->b_size) {
-		/* Buffer has overflowed, due to forced overflow or partial UTF-8 fixup,
-		 * the actual string length might actually be less than the full length
-		 * of the buffer. Just use strlen.
+		/* Buffer has overflowed, due to forced overflow or partial
+		 * UTF-8 fixup, the actual string length might actually be less
+		 * than the full length of the buffer. Just use strlen.
 		 */
 		return strlen(dspbuf->b_start);
 	} else {
@@ -145,7 +147,7 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @param[in] ... the    args
  *
  * @return the bytes remaining in the buffer.
- * 
+ *
  */
 static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 				 ...)
@@ -177,7 +179,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
  * @return the bytes remaining in the buffer.
  *
  * This routine just calls display_opaque_value_max with max = len.
- * 
+ *
  */
 static inline int display_opaque_value(struct display_buffer *dspbuf,
 				       void *value, int len)
@@ -194,7 +196,7 @@ int display_len_cat(struct display_buffer *dspbuf, char *str, int len);
  * @oaram[in]     str    The string
  *
  * @return the bytes remaining in the buffer.
- * 
+ *
  */
 static inline int display_cat(struct display_buffer *dspbuf, char *str)
 {

@@ -63,8 +63,8 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 	care_t care = CARE_MONITOR;
 
 	if (req->rq_proc == NLMPROC4_NM_LOCK) {
-		/* If call is a NM lock, indicate that we care about NLM client but
-		 * will not monitor.
+		/* If call is a NM lock, indicate that we care about NLM
+		 * client but will not monitor.
 		 */
 		proc_name = "nlm4_NM_Lock";
 		care = CARE_NO_MONITOR;
@@ -86,28 +86,40 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 
 	if (!copy_netobj(&res->res_nlm4test.cookie, &arg->cookie)) {
 		res->res_nlm4.stat.stat = NLM4_FAILED;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
-			 lock_result_str(res->res_nlm4.stat.stat));
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: %s %s",
+			 proc_name, lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	/* allow only reclaim lock request during recovery and visa versa */
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
 		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
-			 lock_result_str(res->res_nlm4.stat.stat));
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: %s %s",
+			 proc_name, lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_parameters(req, arg->exclusive, &arg->alock, &lock,
-				    req_ctx, &entry, export, care,
-				    &nsm_client, &nlm_client, &nlm_owner,
+	rc = nlm_process_parameters(req,
+				    arg->exclusive,
+				    &arg->alock,
+				    &lock,
+				    req_ctx,
+				    &entry,
+				    export,
+				    care,
+				    &nsm_client,
+				    &nlm_client,
+				    &nlm_owner,
 				    &pblock_data);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
 		res->res_nlm4.stat.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: %s %s",
+			 proc_name,
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
@@ -116,19 +128,28 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 	 * locks from a client that has rebooted from the SM_NOTIFY
 	 * that will release old locks
 	 */
-	state_status =
-	    state_lock(entry, export, req_ctx, nlm_owner,
-		       (void *)(ptrdiff_t) arg->state,
-		       arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
-		       pblock_data, &lock, &holder, &conflict, POSIX_LOCK);
+	state_status = state_lock(entry,
+				 export,
+				 req_ctx,
+				 nlm_owner,
+				 (void *)(ptrdiff_t) arg->state,
+				 arg->block ? STATE_NLM_BLOCKING :
+					      STATE_NON_BLOCKING,
+				 pblock_data,
+				 &lock,
+				 &holder,
+				 &conflict,
+				 POSIX_LOCK);
+
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4test.test_stat.stat =
-		    nlm_convert_state_error(state_status);
+				nlm_convert_state_error(state_status);
 
 		if (state_status == STATE_LOCK_CONFLICT) {
-			nlm_process_conflict(&res->res_nlm4test.test_stat.
-					     nlm4_testrply_u.holder, holder,
-					     &conflict);
+			nlm_process_conflict(
+			    &res->res_nlm4test.test_stat.nlm4_testrply_u.holder,
+			    holder,
+			    &conflict);
 		}
 
 		/* If we didn't block, release the block data */
@@ -144,12 +165,15 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 	dec_state_owner_ref(nlm_owner);
 	cache_inode_put(entry);
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
+	LogDebug(COMPONENT_NLM,
+		 "REQUEST RESULT: %s %s",
+		 proc_name,
 		 lock_result_str(res->res_nlm4.stat.stat));
+
 	return NFS_REQ_OK;
 }
 
-static void nlm4_lock_message_resp(state_async_queue_t * arg,
+static void nlm4_lock_message_resp(state_async_queue_t *arg,
 				   struct req_op_context *req_ctx)
 {
 	state_nlm_async_data_t *nlm_arg =
@@ -157,16 +181,24 @@ static void nlm4_lock_message_resp(state_async_queue_t * arg,
 
 	if (isFullDebug(COMPONENT_NLM)) {
 		char buffer[1024];
+
 		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
-				 res_nlm4test.cookie, buffer, 1024);
+				 res_nlm4test.cookie,
+				 buffer,
+				 1024);
+
 		LogFullDebug(COMPONENT_NLM,
 			     "Calling nlm_send_async cookie=%s status=%s",
 			     buffer,
 			     lock_result_str(nlm_arg->nlm_async_args.
 					     nlm_async_res.res_nlm4.stat.stat));
 	}
-	nlm_send_async(NLMPROC4_LOCK_RES, nlm_arg->nlm_async_host,
-		       &(nlm_arg->nlm_async_args.nlm_async_res), NULL);
+
+	nlm_send_async(NLMPROC4_LOCK_RES,
+		       nlm_arg->nlm_async_host,
+		       &nlm_arg->nlm_async_args.nlm_async_res,
+		       NULL);
+
 	nlm4_Lock_Free(&nlm_arg->nlm_async_args.nlm_async_res);
 	dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
@@ -196,14 +228,15 @@ int nlm4_Lock_Message(nfs_arg_t *args, exportlist_t *export,
 
 	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
 
-	nsm_client =
-	    get_nsm_client(CARE_NO_MONITOR, req->rq_xprt,
-			   arg->alock.caller_name);
+	nsm_client = get_nsm_client(CARE_NO_MONITOR,
+				    req->rq_xprt,
+				    arg->alock.caller_name);
 
 	if (nsm_client != NULL)
-		nlm_client =
-		    get_nlm_client(CARE_NO_MONITOR, req->rq_xprt, nsm_client,
-				   arg->alock.caller_name);
+		nlm_client = get_nlm_client(CARE_NO_MONITOR,
+					    req->rq_xprt,
+					    nsm_client,
+					    arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
@@ -211,7 +244,8 @@ int nlm4_Lock_Message(nfs_arg_t *args, exportlist_t *export,
 		rc = nlm4_Lock(args, export, req_ctx, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
-		rc = nlm_send_async_res_nlm4(nlm_client, nlm4_lock_message_resp,
+		rc = nlm_send_async_res_nlm4(nlm_client,
+					     nlm4_lock_message_resp,
 					     res);
 
 	if (rc == NFS_REQ_DROP) {
@@ -219,6 +253,7 @@ int nlm4_Lock_Message(nfs_arg_t *args, exportlist_t *export,
 			dec_nsm_client_ref(nsm_client);
 		if (nlm_client != NULL)
 			dec_nlm_client_ref(nlm_client);
+
 		LogCrit(COMPONENT_NLM,
 			"Could not send async response for nlm_Lock_Message");
 	}
@@ -235,8 +270,7 @@ int nlm4_Lock_Message(nfs_arg_t *args, exportlist_t *export,
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Lock_Free(nfs_res_t * res)
+void nlm4_Lock_Free(nfs_res_t *res)
 {
 	netobj_free(&res->res_nlm4test.cookie);
-	return;
 }

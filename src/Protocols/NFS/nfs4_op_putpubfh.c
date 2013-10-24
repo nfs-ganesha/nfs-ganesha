@@ -59,13 +59,14 @@
  *
  */
 
-int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t *data,
 		     struct nfs_resop4 *resp)
 {
-	PUTPUBFH4res *const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
+	PUTPUBFH4res * const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
 
 	/* First of all, set the reply to zero to make sure
-	 * it contains no parasite information */
+	 * it contains no parasite information
+	 */
 	memset(resp, 0, sizeof(struct nfs_resop4));
 	resp->resop = NFS4_OP_PUTPUBFH;
 
@@ -111,7 +112,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putpubfh_Free(nfs_resop4 * resp)
+void nfs4_op_putpubfh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

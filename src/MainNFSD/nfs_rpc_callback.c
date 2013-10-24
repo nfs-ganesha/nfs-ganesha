@@ -62,9 +62,7 @@
  */
 static pool_t *rpc_call_pool;
 
-extern char host_name[MAXHOSTNAMELEN + 1];
-
-void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 
 /**
  * @brief Initialize the callback credential cache

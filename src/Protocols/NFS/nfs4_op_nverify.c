@@ -55,11 +55,11 @@
  *
  */
 
-int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
-	NVERIFY4args *const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
-	NVERIFY4res *const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
+	NVERIFY4args * const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
+	NVERIFY4res * const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
 	fattr4 file_attr4;
 	int rc = 0;
 
@@ -68,9 +68,9 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Do basic checks on a filehandle */
 	res_NVERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-	if (res_NVERIFY4->status != NFS4_OK) {
+
+	if (res_NVERIFY4->status != NFS4_OK)
 		return res_NVERIFY4->status;
-	}
 
 	/* operation is always permitted on pseudofs */
 	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
@@ -79,8 +79,8 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Get only attributes that are allowed to be read */
-	if (!nfs4_Fattr_Check_Access
-	    (&arg_NVERIFY4->obj_attributes, FATTR4_ATTR_READ)) {
+	if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4->obj_attributes,
+				     FATTR4_ATTR_READ)) {
 		res_NVERIFY4->status = NFS4ERR_INVAL;
 		return res_NVERIFY4->status;
 	}
@@ -92,23 +92,24 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	res_NVERIFY4->status =
-	    cache_entry_To_Fattr(data->current_entry, &file_attr4, data,
+	    cache_entry_To_Fattr(data->current_entry,
+				 &file_attr4,
+				 data,
 				 &(data->currentFH),
 				 &(arg_NVERIFY4->obj_attributes.attrmask));
-	if (res_NVERIFY4->status != NFS4_OK) {
-		return res_NVERIFY4->status;
-	}
 
-	if ((rc =
-	     nfs4_Fattr_cmp(&(arg_NVERIFY4->obj_attributes),
-			    &file_attr4)) == false) {
+	if (res_NVERIFY4->status != NFS4_OK)
+		return res_NVERIFY4->status;
+
+	rc = nfs4_Fattr_cmp(&arg_NVERIFY4->obj_attributes, &file_attr4);
+
+	if (rc == false) {
 		res_NVERIFY4->status = NFS4_OK;
 	} else {
-		if (rc == -1) {
+		if (rc == -1)
 			res_NVERIFY4->status = NFS4ERR_INVAL;
-		} else {
+		else
 			res_NVERIFY4->status = NFS4ERR_SAME;
-		}
 	}
 
 	nfs4_Fattr_Free(&file_attr4);
@@ -123,7 +124,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in] resp nfs4_op results
  */
-void nfs4_op_nverify_Free(nfs_resop4 * resp)
+void nfs4_op_nverify_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs4_op_nverify_Free */

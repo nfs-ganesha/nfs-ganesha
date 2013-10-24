@@ -63,13 +63,13 @@
  *
  */
 
-int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		   struct nfs_resop4 *resp)
 {
 	/* Convenient alias for the arguments */
-	LOOKUP4args *const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+	LOOKUP4args * const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
 	/* Convenient alias for the response  */
-	LOOKUP4res *const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
+	LOOKUP4res * const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
 	/* The name to look up */
 	char *name = NULL;
 	/* The directory in which to look up the name */
@@ -95,14 +95,16 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_LOOKUP4->status =
-	    nfs4_utf8string2dynamic(&arg_LOOKUP4->objname, UTF8_SCAN_ALL,
-				    &name);
-	if (res_LOOKUP4->status != NFS4_OK) {
-		goto out;
-	}
+	res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						      UTF8_SCAN_ALL,
+						      &name);
 
-	/* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
+	if (res_LOOKUP4->status != NFS4_OK)
+		goto out;
+
+	/* If Filehandle points to a pseudo fs entry, manage it
+	 * via pseudofs specific functions
+	 */
 	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
 		res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
 		goto out;
@@ -116,6 +118,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
 
 	cache_status =
 	    cache_inode_lookup(dir_entry, name, data->req_ctx, &file_entry);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_LOOKUP4->status = nfs4_Errno(cache_status);
 		goto out;
@@ -131,12 +134,12 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
 	data->current_stateid_valid = false;
 
 	/* Release dir_entry, as it is not reachable from anywhere in
-	   compound after this function returns.  Count on later
-	   operations or nfs4_Compound to clean up current_entry. */
+	 * compound after this function returns.  Count on later
+	 * operations or nfs4_Compound to clean up current_entry.
+	 */
 
-	if (dir_entry) {
+	if (dir_entry)
 		cache_inode_put(dir_entry);
-	}
 
 	/* Keep the pointer within the compound data */
 	data->current_entry = file_entry;
@@ -146,10 +149,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
 	res_LOOKUP4->status = NFS4_OK;
 
  out:
-	if (name) {
+	if (name)
 		gsh_free(name);
-		name = NULL;
-	}
+
 	return res_LOOKUP4->status;
 }				/* nfs4_op_lookup */
 
@@ -161,7 +163,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookup_Free(nfs_resop4 * resp)
+void nfs4_op_lookup_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

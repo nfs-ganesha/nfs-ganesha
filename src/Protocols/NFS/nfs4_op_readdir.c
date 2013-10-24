@@ -90,31 +90,35 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
+
 	memset(val_fh, 0, NFS4_FHSIZE);
+
 	/* Bits that don't require allocation */
 	if (tracker->mem_left < sizeof(entry4)) {
-		if (tracker->count == 0) {
+		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
-		}
+
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
+
 	tracker->mem_left -= sizeof(entry4);
 	tracker->entries[tracker->count].cookie = cb_parms->cookie;
 	tracker->entries[tracker->count].nextentry = NULL;
 
 	/* The filename.  We don't use str2utf8 because that has an
-	   additional copy into a buffer before copying into the
-	   destination. */
-
+	 * additional copy into a buffer before copying into the
+	 * destination.
+	 */
 	namelen = strlen(cb_parms->name);
 	if (tracker->mem_left < (namelen + 1)) {
-		if (tracker->count == 0) {
+		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
-		}
+
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
+
 	tracker->mem_left -= (namelen);
 	tracker->entries[tracker->count].name.utf8string_len = namelen;
 	tracker->entries[tracker->count].name.utf8string_val =
@@ -124,7 +128,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 
 	if (cb_parms->attr_allowed
 	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
-		if (!nfs4_FSALToFhandle(&entryFH, cb_parms->entry->obj_handle)) {
+		if (!nfs4_FSALToFhandle(&entryFH,
+					cb_parms->entry->obj_handle)) {
 			tracker->error = NFS4ERR_SERVERFAULT;
 			gsh_free(tracker->entries[tracker->count].name.
 				 utf8string_val);
@@ -140,9 +145,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 * search permission in this directory, so we can't return any
 		 * attributes, but must indicate NFS4ERR_ACCESS.
 		 */
-		if (nfs4_Fattr_Fill_Error
-		    (&tracker->entries[tracker->count].attrs,
-		     NFS4ERR_ACCESS) == -1) {
+		if (nfs4_Fattr_Fill_Error(
+				 &tracker->entries[tracker->count].attrs,
+				 NFS4ERR_ACCESS) == -1) {
 			tracker->error = NFS4ERR_SERVERFAULT;
 			gsh_free(tracker->entries[tracker->count].name.
 				 utf8string_val);
@@ -163,8 +168,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
 		}
 
-		/* cache_inode_readdir holds attr_lock while making callback, so we
-		 * need to do access check with no mutex.
+		/* cache_inode_readdir holds attr_lock while making callback,
+		 * so we need to do access check with no mutex.
 		 */
 		attr_status =
 		    cache_inode_access_no_mutex(cb_parms->entry,
@@ -175,9 +180,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				     "permission check for attributes status=%s",
 				     cache_inode_err_str(attr_status));
 
-			if (nfs4_Fattr_Fill_Error
-			    (&tracker->entries[tracker->count].attrs,
-			     nfs4_Errno(attr_status)) == -1) {
+			if (nfs4_Fattr_Fill_Error(
+				     &tracker->entries[tracker->count].attrs,
+				     nfs4_Errno(attr_status)) == -1) {
 				tracker->error = NFS4ERR_SERVERFAULT;
 				gsh_free(tracker->entries[tracker->count].name.
 					 utf8string_val);
@@ -192,8 +197,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			args.data = tracker->data;
 			args.hdl4 = &entryFH;
 			args.mounted_on_fileid = mounted_on_fileid;
-			if (nfs4_FSALattr_To_Fattr
-			    (&args, tracker->req_attr,
+			if (nfs4_FSALattr_To_Fattr(
+			     &args, tracker->req_attr,
 			     &tracker->entries[tracker->count].attrs) != 0) {
 				LogFatal(COMPONENT_NFS_V4,
 					 "nfs4_FSALattr_To_Fattr failed to convert attr");
@@ -211,12 +216,14 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		    NULL;
 		gsh_free(tracker->entries[tracker->count].name.utf8string_val);
 		tracker->entries[tracker->count].name.utf8string_val = NULL;
-		if (tracker->count == 0) {
+
+		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
-		}
+
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
+
 	tracker->mem_left -=
 	    (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
 	     sizeof(uint32_t));
@@ -241,17 +248,16 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
  * @param[in,out] entries The entries to be freed
  */
 
-static void free_entries(entry4 * entries)
+static void free_entries(entry4 *entries)
 {
 	entry4 *entry = NULL;
 
 	for (entry = entries; entry != NULL; entry = entry->nextentry) {
-		if (entry->attrs.attr_vals.attrlist4_val != NULL) {
+		if (entry->attrs.attr_vals.attrlist4_val != NULL)
 			gsh_free(entry->attrs.attr_vals.attrlist4_val);
-		}
-		if (entry->name.utf8string_val != NULL) {
+
+		if (entry->name.utf8string_val != NULL)
 			gsh_free(entry->name.utf8string_val);
-		}
 	}
 	gsh_free(entries);
 
@@ -271,11 +277,11 @@ static void free_entries(entry4 * entries)
  * @return per RFC5661, pp. 371-2
  *
  */
-int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
-	READDIR4args *const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
-	READDIR4res *const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
+	READDIR4args * const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
+	READDIR4res * const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
 	cache_entry_t *dir_entry = NULL;
 	bool eod_met = false;
 	unsigned long dircount = 0;
@@ -292,10 +298,10 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
 	resp->resop = NFS4_OP_READDIR;
 	res_READDIR4->status = NFS4_OK;
 
-	if ((res_READDIR4->status =
-	     nfs4_sanity_check_FH(data, DIRECTORY, false)) != NFS4_OK) {
+	res_READDIR4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+
+	if (res_READDIR4->status != NFS4_OK)
 		goto out;
-	}
 
 	/* Pseudo Fs management */
 	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
@@ -310,22 +316,23 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
 	maxcount = (arg_READDIR4->maxcount * 9) / 10;
 	cookie = arg_READDIR4->cookie;
 
-	/* Dircount is considered meaningless by many nfsv4 client (like the CITI
-	   one).  we use maxcount instead. */
-
-	/* The Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 10x slower
-	   with 500 max entries */
-
+	/* Dircount is considered meaningless by many nfsv4 client (like the
+	 * CITI one).  we use maxcount instead.
+	 *
+	 * The Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 10x slower
+	 * with 500 max entries
+	 */
 	estimated_num_entries = 50;
 	tracker.total_entries = estimated_num_entries;
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu "
-		     "cookie=%" PRIu64 " estimated_num_entries=%u", dircount,
-		     maxcount, cookie, estimated_num_entries);
+		     "cookie=%" PRIu64 " estimated_num_entries=%u",
+		     dircount, maxcount, cookie, estimated_num_entries);
 
 	/* Since we never send a cookie of 1 or 2, we shouldn't ever get
-	   them back. */
+	 * them back.
+	 */
 	if (cookie == 1 || cookie == 2) {
 		res_READDIR4->status = NFS4ERR_BAD_COOKIE;
 		goto out;
@@ -338,34 +345,36 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
 		goto out;
 	}
 
-	/* If maxcount is too short (14 should be enough for an empty directory)
-	   return NFS4ERR_TOOSMALL */
+	/* If maxcount is too short (14 should be enough for an empty
+	 * directory) return NFS4ERR_TOOSMALL
+	 */
 	if (maxcount < 14 || estimated_num_entries == 0) {
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
 		goto out;
 	}
 
 	/* If a cookie verifier is used, then a non-trivial value is
-	   returned to the client.  This value is the mtime of the
-	   directory.  If verifier is unused (as in many NFS Servers)
-	   then only a set of zeros is returned (trivial value) */
+	 * returned to the client.  This value is the mtime of the
+	 * directory.  If verifier is unused (as in many NFS Servers)
+	 * then only a set of zeros is returned (trivial value)
+	 */
 	memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 
 	/* Cookie delivered by the server and used by the client SHOULD
-	   not be 0, 1 or 2 because these values are reserved (see RFC
-	   3530, p. 192/RFC 5661, p468).
-
-	   0 - cookie for first READDIR
-	   1 - reserved for . on client
-	   2 - reserved for .. on client
-
-	   '.' and '..' are not returned, so all cookies will be offset
-	   by 2 */
+	 * not be 0, 1 or 2 because these values are reserved (see RFC
+	 * 3530, p. 192/RFC 5661, p468).
+	 *
+	 * 0 - cookie for first READDIR
+	 * 1 - reserved for . on client
+	 * 2 - reserved for .. on client
+	 *
+	 * '.' and '..' are not returned, so all cookies will be offset by 2
+	 */
 
 	if ((cookie != 0) && (data->export->UseCookieVerifier == 1)) {
-		if (memcmp
-		    (cookie_verifier, arg_READDIR4->cookieverf,
-		     NFS4_VERIFIER_SIZE) != 0) {
+		if (memcmp(cookie_verifier,
+			   arg_READDIR4->cookieverf,
+			   NFS4_VERIFIER_SIZE) != 0) {
 			res_READDIR4->status = NFS4ERR_BAD_COOKIE;
 			goto out;
 		}
@@ -381,61 +390,66 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
 	tracker.req_attr = &arg_READDIR4->attr_request;
 	tracker.data = data;
 
-	attrmask = ATTRS_NFS3;	/* Assume we need at least the NFS v3 attr.
-				 * Any attr is sufficient for permission checking.
-				 */
+	/* Assume we need at least the NFS v3 attr.
+	 * Any attr is sufficient for permission checking.
+	 */
+	attrmask = ATTRS_NFS3;
 
 	/* If ACL is requested, we need to add that for permission checking. */
-	if (attribute_is_set(tracker.req_attr, FATTR4_ACL)) {
+	if (attribute_is_set(tracker.req_attr, FATTR4_ACL))
 		attrmask |= ATTR_ACL;
-	}
 
 	/* Perform the readdir operation */
-	cache_status =
-	    cache_inode_readdir(dir_entry, cookie, &num_entries, &eod_met,
-				data->req_ctx, attrmask, nfs4_readdir_callback,
-				&tracker);
+	cache_status = cache_inode_readdir(dir_entry,
+					   cookie,
+					   &num_entries,
+					   &eod_met,
+					   data->req_ctx,
+					   attrmask,
+					   nfs4_readdir_callback,
+					   &tracker);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READDIR4->status = nfs4_Errno(cache_status);
 		goto out;
 	}
 
-	if ((res_READDIR4->status = tracker.error) != NFS4_OK) {
+	res_READDIR4->status = tracker.error;
+
+	if (res_READDIR4->status != NFS4_OK)
 		goto out;
-	}
 
 	if (tracker.count != 0) {
-		/* Put the entry's list in the READDIR reply if there were any. */
+		/* Put the entry's list in the READDIR reply if
+		 * there were any.
+		 */
 		res_READDIR4->READDIR4res_u.resok4.reply.entries = entries;
 	} else {
 		gsh_free(entries);
-		res_READDIR4->READDIR4res_u.resok4.reply.entries = entries =
-		    NULL;
+		entries = NULL;
+		res_READDIR4->READDIR4res_u.resok4.reply.entries = NULL;
 	}
 
 	/* This slight bit of oddness is caused by most booleans
-	   throughout Ganesha being of C99's bool type (taking the values
-	   true and false), but fields in XDR being of the older bool_t
-	   type i(taking the values TRUE and FALSE) */
-
-	if (eod_met) {
+	 * throughout Ganesha being of C99's bool type (taking the values
+	 * true and false), but fields in XDR being of the older bool_t
+	 * type i(taking the values TRUE and FALSE)
+	 */
+	if (eod_met)
 		res_READDIR4->READDIR4res_u.resok4.reply.eof = TRUE;
-	} else {
+	else
 		res_READDIR4->READDIR4res_u.resok4.reply.eof = FALSE;
-	}
 
 	/* Do not forget to set the verifier */
-	memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf, cookie_verifier,
+	memcpy(res_READDIR4->READDIR4res_u.resok4.cookieverf,
+	       cookie_verifier,
 	       NFS4_VERIFIER_SIZE);
 
 	res_READDIR4->status = NFS4_OK;
 
  out:
-	if (res_READDIR4->status != NFS4_OK) {
-		if (entries) {
-			free_entries(entries);
-		}
-	}
+	if ((res_READDIR4->status != NFS4_OK) && (entries != NULL))
+		free_entries(entries);
 
 	return res_READDIR4->status;
 }				/* nfs4_op_readdir */
@@ -448,7 +462,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_readdir_Free(nfs_resop4 * res)
+void nfs4_op_readdir_Free(nfs_resop4 *res)
 {
 	READDIR4res *resp = &res->nfs_resop4_u.opreaddir;
 

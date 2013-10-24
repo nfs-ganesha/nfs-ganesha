@@ -36,8 +36,8 @@
 pthread_mutex_t nlm_async_resp_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t nlm_async_resp_cond = PTHREAD_COND_INITIALIZER;
 
-int nlm_send_async_res_nlm4(state_nlm_client_t * host, state_async_func_t func,
-			    nfs_res_t * pres)
+int nlm_send_async_res_nlm4(state_nlm_client_t *host, state_async_func_t func,
+			    nfs_res_t *pres)
 {
 	state_async_queue_t *arg = gsh_malloc(sizeof(*arg));
 	state_nlm_async_data_t *nlm_arg;
@@ -72,8 +72,8 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host, state_async_func_t func,
 	return NFS_REQ_OK;
 }
 
-int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-				state_async_func_t func, nfs_res_t * pres)
+int nlm_send_async_res_nlm4test(state_nlm_client_t *host,
+				state_async_func_t func, nfs_res_t *pres)
 {
 	state_async_queue_t *arg = gsh_malloc(sizeof(*arg));
 	state_nlm_async_data_t *nlm_arg;
@@ -85,19 +85,19 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
 		arg->state_async_func = func;
 		nlm_arg->nlm_async_host = host;
 		nlm_arg->nlm_async_args.nlm_async_res = *pres;
-		if (!copy_netobj
-		    (&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
+		if (!copy_netobj(
+		     &nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
 		     &pres->res_nlm4test.cookie)) {
 			LogCrit(COMPONENT_NLM,
 				"Unable to copy async response file handle");
 			gsh_free(arg);
 			return NFS_REQ_DROP;
 		} else if (pres->res_nlm4test.test_stat.stat == NLM4_DENIED) {
-			if (!copy_netobj
-			    (&nlm_arg->nlm_async_args.nlm_async_res.
-			     res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
+			if (!copy_netobj(
+			     &nlm_arg->nlm_async_args.nlm_async_res.
+			      res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
 			     &pres->res_nlm4test.test_stat.nlm4_testrply_u.
-			     holder.oh)) {
+			      holder.oh)) {
 				LogCrit(COMPONENT_NLM,
 					"Unable to copy async response oh");
 				netobj_free(&nlm_arg->nlm_async_args.
@@ -114,8 +114,8 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
 	status = state_async_schedule(arg);
 
 	if (status != STATE_SUCCESS) {
-		netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.
-			    cookie);
+		netobj_free(
+		    &nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
 		if (pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
 			netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.
 				    res_nlm4test.test_stat.nlm4_testrply_u.
@@ -139,8 +139,10 @@ static void *resp_key;
 
 static const int MAX_ASYNC_RETRY = 2;
 
-/* Client routine  to send the asynchrnous response, key is used to wait for a response */
-int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
+/* Client routine  to send the asynchrnous response,
+ * key is used to wait for a response
+ */
+int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 {
 	struct timeval tout = { 0, 10 };
 	int retval, retry;
@@ -149,7 +151,8 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 
 	for (retry = 1; retry <= MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
-			LogFullDebug(COMPONENT_NLM, "gsh_clnt_create %s",
+			LogFullDebug(COMPONENT_NLM,
+				     "gsh_clnt_create %s",
 				     host->slc_nsm_client->ssc_nlm_caller_name);
 
 			if (host->slc_client_type == XPRT_TCP) {
@@ -164,32 +167,32 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 				if (fd < 0)
 					return -1;
 
-				memcpy(&server_addr, &(host->slc_server_addr),
+				memcpy(&server_addr,
+				       &(host->slc_server_addr),
 				       sizeof(struct sockaddr_in6));
 				server_addr.sin6_port = 0;
 
-				if (bind
-				    (fd, (struct sockaddr *)&server_addr,
-				     sizeof(server_addr)) == -1) {
+				if (bind(fd,
+					 (struct sockaddr *)&server_addr,
+					  sizeof(server_addr)) == -1) {
 					LogMajor(COMPONENT_NLM, "Cannot bind");
 					close(fd);
 					return -1;
 				}
 
-				buf =
-				    rpcb_find_mapped_addr((char *)
-							  xprt_type_to_str
-							  (host->
-							   slc_client_type),
-							  NLMPROG, NLM4_VERS,
-							  host->slc_nsm_client->
-							  ssc_nlm_caller_name);
-				/* handle error here, for example, client side blocking rpc call */
+				buf = rpcb_find_mapped_addr(
+				     (char *) xprt_type_to_str(
+							host->slc_client_type),
+				     NLMPROG, NLM4_VERS,
+				     host->slc_nsm_client->ssc_nlm_caller_name);
+				/* handle error here, for example,
+				 * client side blocking rpc call
+				 */
 				if (buf == NULL) {
 					LogMajor(COMPONENT_NLM,
 						 "Cannot create NLM async %s connection to client %s",
-						 xprt_type_to_str(host->
-								  slc_client_type),
+						 xprt_type_to_str(
+							host->slc_client_type),
 						 host->slc_nsm_client->
 						 ssc_nlm_caller_name);
 					close(fd);
@@ -198,7 +201,7 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 
 				memset(&hints, 0, sizeof(struct addrinfo));
 				hints.ai_family = AF_INET6;	/* only INET6 */
-				hints.ai_socktype = SOCK_STREAM;	/* TCP */
+				hints.ai_socktype = SOCK_STREAM; /* TCP */
 				hints.ai_protocol = 0;	/* Any protocol */
 				hints.ai_canonname = NULL;
 				hints.ai_addr = NULL;
@@ -206,8 +209,8 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 
 				/* convert port to string format */
 				sprintf(port_str, "%d",
-					htons(((struct sockaddr_in *)buf->buf)->
-					      sin_port));
+					htons(((struct sockaddr_in *)
+						buf->buf)->sin_port));
 
 				/* buf with inet is only needed for the port */
 				gsh_free(buf->buf);
@@ -215,8 +218,10 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 
 				/* get the IPv4 mapped IPv6 address */
 				getaddrinfo(host->slc_nsm_client->
-					    ssc_nlm_caller_name, port_str,
-					    &hints, &result);
+					    ssc_nlm_caller_name,
+					    port_str,
+					    &hints,
+					    &result);
 
 				/* setup the netbuf with in6 address */
 				local_buf.buf = result->ai_addr;
@@ -229,13 +234,12 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 				freeaddrinfo(result);
 			} else {
 
-				host->slc_callback_clnt =
-				    gsh_clnt_create(host->slc_nsm_client->
-						    ssc_nlm_caller_name,
-						    NLMPROG, NLM4_VERS,
-						    (char *)
-						    xprt_type_to_str(host->
-								     slc_client_type));
+				host->slc_callback_clnt = gsh_clnt_create(
+				    host->slc_nsm_client->ssc_nlm_caller_name,
+				    NLMPROG,
+				    NLM4_VERS,
+				    (char *) xprt_type_to_str(
+						host->slc_client_type));
 			}
 
 			if (host->slc_callback_clnt == NULL) {
@@ -257,10 +261,16 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 		pthread_mutex_unlock(&nlm_async_resp_mutex);
 
 		LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
-		retval =
-		    clnt_call(host->slc_callback_clnt, host->slc_callback_auth,
-			      proc, nlm_reply_proc[proc], inarg,
-			      (xdrproc_t) xdr_void, NULL, tout);
+
+		retval = clnt_call(host->slc_callback_clnt,
+				   host->slc_callback_auth,
+				   proc,
+				   nlm_reply_proc[proc],
+				   inarg,
+				   (xdrproc_t) xdr_void,
+				   NULL,
+				   tout);
+
 		LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 
 		if (retval == RPC_TIMEDOUT || retval == RPC_SUCCESS) {
@@ -270,8 +280,8 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 
 		LogCrit(COMPONENT_NLM,
 			"NLM async Client procedure call %d failed with return code %d %s",
-			proc, retval, clnt_sperror(host->slc_callback_clnt,
-						   ""));
+			proc, retval,
+			clnt_sperror(host->slc_callback_clnt, ""));
 
 		gsh_clnt_destroy(host->slc_callback_clnt);
 		host->slc_callback_clnt = NULL;
@@ -288,25 +298,30 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 	}
 
 	pthread_mutex_lock(&nlm_async_resp_mutex);
+
 	if (resp_key != NULL) {
 		/* Wait for 5 seconds or a signal */
 		gettimeofday(&start, NULL);
 		gettimeofday(&now, NULL);
 		timeout.tv_sec = 5 + start.tv_sec;
 		timeout.tv_nsec = 0;
+
 		LogFullDebug(COMPONENT_NLM,
 			     "About to wait for signal for key %p", resp_key);
+
 		while (resp_key != NULL && now.tv_sec < (start.tv_sec + 5)) {
-			int rc =
-			    pthread_cond_timedwait(&nlm_async_resp_cond,
-						   &nlm_async_resp_mutex,
-						   &timeout);
+			int rc;
+			rc = pthread_cond_timedwait(&nlm_async_resp_cond,
+						    &nlm_async_resp_mutex,
+						    &timeout);
 			LogFullDebug(COMPONENT_NLM,
-				     "pthread_cond_timedwait returned %d", rc);
+				     "pthread_cond_timedwait returned %d",
+				     rc);
 			gettimeofday(&now, NULL);
 		}
 		LogFullDebug(COMPONENT_NLM, "Done waiting");
 	}
+
 	pthread_mutex_unlock(&nlm_async_resp_mutex);
 
 	return retval;
@@ -315,6 +330,7 @@ int nlm_send_async(int proc, state_nlm_client_t * host, void *inarg, void *key)
 void nlm_signal_async_resp(void *key)
 {
 	pthread_mutex_lock(&nlm_async_resp_mutex);
+
 	if (resp_key == key) {
 		resp_key = NULL;
 		pthread_cond_signal(&nlm_async_resp_cond);
@@ -322,5 +338,6 @@ void nlm_signal_async_resp(void *key)
 	} else {
 		LogFullDebug(COMPONENT_NLM, "Didn't signal condition variable");
 	}
+
 	pthread_mutex_unlock(&nlm_async_resp_mutex);
 }

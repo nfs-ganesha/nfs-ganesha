@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -155,7 +155,9 @@ typedef union nfs_res__ {
 	setquota_rslt res_ext_rquota_setactivequota;
 } nfs_res_t;
 
-/* flags related to the behaviour of the requests (to be stored in the dispatch behaviour field)  */
+/* flags related to the behaviour of the requests (to be stored in the dispatch
+ * behaviour field)
+ */
 #define NOTHING_SPECIAL 0x0000	/* Nothing to be done for this kind of
 				   request */
 #define MAKES_WRITE	0x0001	/* The function modifyes the FSAL (not
@@ -171,7 +173,7 @@ typedef union nfs_res__ {
 #define NEEDS_EXPORT	0x0020	/* Request needs an export */
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *, exportlist_t *,
-					struct req_op_context * req_ctx,
+					struct req_op_context *req_ctx,
 					nfs_worker_data_t *, struct svc_req *,
 					nfs_res_t *);
 
@@ -575,8 +577,8 @@ typedef struct fattr4_dent {
 	attrmask_t attrmask;	/* attr bit for decoding to attrs */
 	attrmask_t exp_attrmask; /* attr bit for decoding to attrs in
 				    case of exepction */
-	fattr_xdr_result(*encode) (XDR * xdr, struct xdr_attrs_args * args);
-	fattr_xdr_result(*decode) (XDR * xdr, struct xdr_attrs_args * args);
+	fattr_xdr_result(*encode) (XDR * xdr, struct xdr_attrs_args *args);
+	fattr_xdr_result(*decode) (XDR * xdr, struct xdr_attrs_args *args);
 	fattr_xdr_result(*compare) (XDR * xdr1, XDR * xdr2);
 } fattr4_dent_t;
 

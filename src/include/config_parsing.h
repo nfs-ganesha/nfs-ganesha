@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -49,7 +49,7 @@ char *config_GetErrorMsg();
  * Print the content of the syntax tree
  * to a file.
  */
-void config_Print(FILE * output, config_file_t config);
+void config_Print(FILE *output, config_file_t config);
 
 /* Free the memory structure that store the configuration. */
 void config_Free(config_file_t config);
@@ -79,7 +79,9 @@ config_item_type config_ItemType(config_item_t item);
 /* Retrieves a key-value peer from a CONFIG_ITEM_VAR */
 int config_GetKeyValue(config_item_t item, char **var_name, char **var_value);
 
-/* Returns a block or variable with the specified name. This name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
+/* Returns a block or variable with the specified name. This name can be
+ * "BLOCK::SUBBLOCK::SUBBLOCK"
+ */
 config_item_t config_FindItemByName(config_file_t config, const char *name);
 
 /* Returns a block or variable with the specified name, and ensure it is unique.

@@ -62,10 +62,10 @@
  *
  */
 
-int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
-	RESTOREFH4res *const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
+	RESTOREFH4res * const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
 	/* First of all, set the reply to zero to make sure it contains no
 	   parasite information */
 	memset(resp, 0, sizeof(struct nfs_resop4));
@@ -73,14 +73,17 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	resp->resop = NFS4_OP_RESTOREFH;
 	res_RESTOREFH->status = NFS4_OK;
 
-	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "Saved FH %s", LEN_FH_STR,
+	LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+			   "Saved FH %s",
+			   LEN_FH_STR,
 			   data->savedFH.nfs_fh4_val,
 			   data->savedFH.nfs_fh4_len);
 
 	/* If there is no savedFH, then return an error */
 	if (nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE) {
-		/* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
-		   page 202) */
+		/* There is no current FH, return NFS4ERR_RESTOREFH
+		 * (cg RFC3530, page 202)
+		 */
 		res_RESTOREFH->status = NFS4ERR_RESTOREFH;
 		return res_RESTOREFH->status;
 	}
@@ -88,6 +91,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	/* Do basic checks on saved filehandle */
 	res_RESTOREFH->status =
 	    nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
+
 	if (res_RESTOREFH->status != NFS4_OK)
 		return res_RESTOREFH->status;
 
@@ -101,9 +105,9 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	data->current_stateid = data->saved_stateid;
 	data->current_stateid_valid = data->saved_stateid_valid;
 
-	if (data->req_ctx->export != NULL) {
+	if (data->req_ctx->export != NULL)
 		put_gsh_export(data->req_ctx->export);
-	}
+
 	/* Restore the export information */
 	data->req_ctx->export = data->saved_export;
 	if (data->req_ctx->export != NULL) {
@@ -114,6 +118,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 		 */
 		(void)get_gsh_export(data->req_ctx->export->export.id, true);
 	}
+
 	data->export_perms = data->saved_export_perms;
 
 	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
@@ -122,16 +127,16 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	 */
 
 	/* If current and saved entry are identical, get no references and
-	   make no changes. */
-
-	if (data->current_entry == data->saved_entry) {
+	 * make no changes.
+	 */
+	if (data->current_entry == data->saved_entry)
 		goto out;
-	}
 
 	if (data->current_entry) {
 		cache_inode_put(data->current_entry);
 		data->current_entry = NULL;
 	}
+
 	if (data->current_ds) {
 		data->current_ds->ops->put(data->current_ds);
 		data->current_ds = NULL;
@@ -141,9 +146,9 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	data->current_filetype = data->saved_filetype;
 
 	/* Take another reference.  As of now the filehandle is both saved
-	   and current and both must be counted.  Protect in case of
-	   pseudofs handle. */
-
+	 * and current and both must be counted.  Protect in case of
+	 * pseudofs handle.
+	 */
 	if (data->current_entry)
 		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
 
@@ -152,7 +157,8 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
 	if (isFullDebug(COMPONENT_NFS_V4)) {
 		char str[LEN_FH_STR];
 		sprint_fhandle4(str, &data->currentFH);
-		LogFullDebug(COMPONENT_NFS_V4, "RESTORE FH: Current FH %s",
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "RESTORE FH: Current FH %s",
 			     str);
 	}
 
@@ -167,7 +173,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_restorefh_Free(nfs_resop4 * resp)
+void nfs4_op_restorefh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

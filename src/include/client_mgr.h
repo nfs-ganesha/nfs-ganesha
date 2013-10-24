@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
@@ -53,9 +53,9 @@ void client_pkginit(void);
 #ifdef USE_DBUS_STATS
 void dbus_client_init(void);
 #endif
-struct gsh_client *get_gsh_client(sockaddr_t * client_ipaddr, bool lookup_only);
+struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only);
 void put_gsh_client(struct gsh_client *client);
-int foreach_gsh_client(bool(*cb) (struct gsh_client * cl, void *state),
+int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
 		       void *state);
 
 #endif				/* !CLIENT_MGR_H */

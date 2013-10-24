@@ -10,25 +10,22 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    test_mnt_proto.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/12/20 10:52:15 $
- * \version $Revision: 1.8 $
- * \brief   Tests for testing the mount protocol routines.
+ * @file    test_mnt_proto.c
+ * @brief   Tests for testing the mount protocol routines.
  *
  *
  */
@@ -39,11 +36,8 @@
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
 #include <sys/socket.h>		/* For getsockname */
-#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -124,23 +118,24 @@ int test_mnt_Export()
 
 	/* TEST 2 : MNT_EXPORT complex */
 
-	if ((mysock = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+	mysock = socket(PF_INET, SOCK_STREAM, 0);
+
+	if (mysock == -1)
 		LogTest("socket ERROR %d : %s", errno, strerror(errno));
-	}
 
 	in_addr.sin_family = AF_INET;
 	in_addr.sin_addr.s_addr = INADDR_ANY;
 	in_addr.sin_port = htons(5100);
 
-	if (bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1) {
+	if (bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1)
 		LogTest("bind ERROR %d : %s", errno, strerror(errno));
-	}
 
 	size = sizeof(struct sockaddr);
-	if (getsockname(mysock, (struct sockaddr *)&addr, (socklen_t *) & size)
-	    == -1) {
+	if (getsockname(mysock,
+			(struct sockaddr *) &addr,
+			(socklen_t *) &size) == -1)
 		LogTest("getsockname ERROR %d : %s", errno, strerror(errno));
-	}
+
 	/* we don't use the resource, only its adress. */
 	close(mysock);
 
@@ -245,19 +240,19 @@ int test_mnt_Export()
 	/* printing the export_list */
 	print_export_list(result.res_mntexport);
 
-	return (error);
+	return error;
 
 }
 
-#define Maketest(func,name) do {                      \
-  int rc;                                             \
-  LogTest("\n======== TEST %s =========",name);    \
-  rc = func();                                        \
-  if (rc)                                             \
-    LogTest("\n-------- %s : %d ---------",name,rc); \
-  else                                                \
-    LogTest("\n-------- %s : OK ---------",name); \
-  } while (0)
+#define Maketest(func, name) do {                      \
+	int rc;                                             \
+	LogTest("\n======== TEST %s =========", name);    \
+	rc = func();                                        \
+	if (rc)                                             \
+		LogTest("\n-------- %s : %d ---------", name, rc); \
+	else                                                \
+		LogTest("\n-------- %s : OK ---------", name); \
+	} while (0)
 
 int main(int argc, char **argv)
 {

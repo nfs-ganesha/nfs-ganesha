@@ -61,13 +61,13 @@
  *
  */
 
-int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for args */
-	PUTFH4args *const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
+	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
 	/* Convenience alias for resopnse */
-	PUTFH4res *const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
+	PUTFH4res * const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
 
 	resp->resop = NFS4_OP_PUTFH;
 
@@ -80,9 +80,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL) {
 		res_PUTFH4->status = nfs4_AllocateFH(&(data->currentFH));
-		if (res_PUTFH4->status != NFS4_OK) {
+		if (res_PUTFH4->status != NFS4_OK)
 			return res_PUTFH4->status;
-		}
 	}
 
 	/* Copy the filehandle from the arg structure */
@@ -96,9 +95,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 	data->current_stateid_valid = false;
 
 	/* If old CurrentFH had a related export, release reference. */
-	if (data->req_ctx->export != NULL) {
+	if (data->req_ctx->export != NULL)
 		put_gsh_export(data->req_ctx->export);
-	}
 
 	/* As usual, protect existing refcounts */
 	if (data->current_entry) {
@@ -111,13 +109,13 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 	   entry related to it, otherwise use fake values */
 	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
 		res_PUTFH4->status = set_compound_data_for_pseudo(data);
-		if (res_PUTFH4->status != NFS4_OK) {
+
+		if (res_PUTFH4->status != NFS4_OK)
 			return res_PUTFH4->status;
-		}
 	} else {
 		struct fsal_export *export;
 		struct file_handle_v4 *v4_handle =
-		    ((struct file_handle_v4 *)data->currentFH.nfs_fh4_val);
+		    (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
 		/* Get the exportid from the handle. */
 		data->req_ctx->export =
@@ -132,7 +130,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 				v4_handle->exportid);
 
 			res_PUTFH4->status = NFS4ERR_STALE;
-
 			return res_PUTFH4->status;
 		}
 
@@ -145,16 +142,17 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 				return res_PUTFH4->status;
 		}
 
-		if (data->current_ds) {
+		if (data->current_ds)
 			data->current_ds->ops->put(data->current_ds);
-		}
+
 		data->current_ds = NULL;
 		data->current_filetype = NO_FILE_TYPE;
 		export = data->req_ctx->export->export.export_hdl;
 
 		/* The export and fsalid should be updated, but DS handles
-		   don't support metdata operations.  Thus, we can't call into
-		   cache_inode to populate the metadata cache. */
+		 * don't support metdata operations.  Thus, we can't call into
+		 * cache_inode to populate the metadata cache.
+		 */
 		if (nfs4_Is_Fh_DSHandle(&data->currentFH)) {
 			struct gsh_buffdesc fh_desc;
 
@@ -163,12 +161,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 			data->current_entry = NULL;
 			data->current_filetype = REGULAR_FILE;
 			res_PUTFH4->status =
-			    export->ops->create_ds_handle(export, &fh_desc,
+			    export->ops->create_ds_handle(export,
+							  &fh_desc,
 							  &data->current_ds);
 
-			if (res_PUTFH4->status != NFS4_OK) {
+			if (res_PUTFH4->status != NFS4_OK)
 				return res_PUTFH4->status;
-			}
 		} else {
 			cache_inode_fsal_data_t fsal_data;
 			fsal_status_t fsal_status;
@@ -190,7 +188,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 			} else {
 				/* Build the pentry.  Refcount +1. */
 				cache_status =
-				    cache_inode_get(&fsal_data, data->req_ctx,
+				    cache_inode_get(&fsal_data,
+						    data->req_ctx,
 						    &data->current_entry);
 			}
 
@@ -205,22 +204,22 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
 			LogFullDebug(COMPONENT_FILEHANDLE,
 				     "File handle is of type %s(%d)",
 				     data->current_filetype ==
-				     REGULAR_FILE ? "FILE" : data->
-				     current_filetype ==
-				     CHARACTER_FILE ? "CHARACTER" : data->
-				     current_filetype ==
-				     BLOCK_FILE ? "BLOCK" : data->
-				     current_filetype ==
-				     SYMBOLIC_LINK ? "SYMLINK" : data->
-				     current_filetype ==
-				     SOCKET_FILE ? "SOCKET" : data->
-				     current_filetype ==
-				     FIFO_FILE ? "FIFO" : data->
-				     current_filetype ==
-				     DIRECTORY ? "DIRECTORY" : data->
-				     current_filetype ==
-				     FS_JUNCTION ? "JUNCTION" : data->
-				     current_filetype ==
+				     REGULAR_FILE ? "FILE" :
+				     data->current_filetype ==
+				     CHARACTER_FILE ? "CHARACTER" :
+				     data->current_filetype ==
+				     BLOCK_FILE ? "BLOCK" :
+				     data->current_filetype ==
+				     SYMBOLIC_LINK ? "SYMLINK" :
+				     data->current_filetype ==
+				     SOCKET_FILE ? "SOCKET" :
+				     data->current_filetype ==
+				     FIFO_FILE ? "FIFO" :
+				     data->current_filetype ==
+				     DIRECTORY ? "DIRECTORY" :
+				     data->current_filetype ==
+				     FS_JUNCTION ? "JUNCTION" :
+				     data->current_filetype ==
 				     NO_FILE_TYPE ? "NO_FILE_TYPE" : "Unknown",
 				     data->current_filetype);
 		}
@@ -237,7 +236,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putfh_Free(nfs_resop4 * resp)
+void nfs4_op_putfh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be freed */
 	return;

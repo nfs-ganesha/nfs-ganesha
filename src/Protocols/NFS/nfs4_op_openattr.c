@@ -51,12 +51,12 @@
  * @return per RFC5661, pp. 370-1
  *
  */
-int nfs4_op_openattr(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_openattr(struct nfs_argop4 *op, compound_data_t *data,
 		     struct nfs_resop4 *resp)
 {
-	OPENATTR4args *const arg_OPENATTR4 __attribute__ ((unused))
+	OPENATTR4args * const arg_OPENATTR4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.opopenattr;
-	OPENATTR4res *const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
+	OPENATTR4res * const res_OPENATTR4 = &resp->nfs_resop4_u.opopenattr;
 
 	resp->resop = NFS4_OP_OPENATTR;
 	res_OPENATTR4->status = NFS4ERR_NOTSUPP;
@@ -72,7 +72,7 @@ int nfs4_op_openattr(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_openattr_Free(nfs_resop4 * resp)
+void nfs4_op_openattr_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

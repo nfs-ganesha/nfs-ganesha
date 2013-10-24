@@ -67,14 +67,19 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 	res->res_nlm4share.sequence = 0;
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
+
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_Share cookie=%s reclaim=%s",
-		 buffer, arg->reclaim ? "yes" : "no");
+		 buffer,
+		 arg->reclaim ? "yes" : "no");
 
 	if (!copy_netobj(&res->res_nlm4share.cookie, &arg->cookie)) {
 		res->res_nlm4share.stat = NLM4_FAILED;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
+
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Share %s",
 			 lock_result_str(res->res_nlm4share.stat));
+
 		return NFS_REQ_OK;
 	}
 
@@ -84,26 +89,39 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 	 */
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
 		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
+
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Share %s",
 			 lock_result_str(res->res_nlm4share.stat));
+
 		return NFS_REQ_OK;
 	}
 
-	rc = nlm_process_share_parms(req, &arg->share, export->export_hdl,
-				     req_ctx, &entry, CARE_NO_MONITOR,
-				     &nsm_client, &nlm_client, &nlm_owner);
+	rc = nlm_process_share_parms(req,
+				     &arg->share,
+				     export->export_hdl,
+				     req_ctx,
+				     &entry,
+				     CARE_NO_MONITOR,
+				     &nsm_client,
+				     &nlm_client,
+				     &nlm_owner);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
 		res->res_nlm4share.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST RESULT: nlm4_Share %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	state_status =
-	    state_nlm_share(entry, req_ctx, export, arg->share.access,
-			    arg->share.mode, nlm_owner);
+	state_status = state_nlm_share(entry,
+				       req_ctx,
+				       export,
+				       arg->share.access,
+				       arg->share.mode,
+				       nlm_owner);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4share.stat =
@@ -120,6 +138,7 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
 		 lock_result_str(res->res_nlm4share.stat));
+
 	return NFS_REQ_OK;
 }
 

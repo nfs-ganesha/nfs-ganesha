@@ -74,8 +74,6 @@
 #include <sys/capability.h>	/* For capget/capset */
 #endif
 
-extern struct fridgethr *req_fridge;
-
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param = {
 	/* Core parameters */

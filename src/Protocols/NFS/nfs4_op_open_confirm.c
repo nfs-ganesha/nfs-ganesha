@@ -52,12 +52,12 @@
  * @retval NFS4ERR_NOTSUPP for NFSv4.1
  *
  */
-int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
-	OPEN_CONFIRM4args *const arg_OPEN_CONFIRM4 =
+	OPEN_CONFIRM4args * const arg_OPEN_CONFIRM4 =
 	    &op->nfs_argop4_u.opopen_confirm;
-	OPEN_CONFIRM4res *const res_OPEN_CONFIRM4 =
+	OPEN_CONFIRM4res * const res_OPEN_CONFIRM4 =
 	    &resp->nfs_resop4_u.opopen_confirm;
 	int rc = 0;
 	state_t *state_found = NULL;
@@ -72,28 +72,33 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t * data,
 		return res_OPEN_CONFIRM4->status;
 	}
 
-	/*
-	 * Do basic checks on a filehandle
+	/* Do basic checks on a filehandle
 	 * Should not operate on non-file objects
 	 */
 	res_OPEN_CONFIRM4->status =
 	    nfs4_sanity_check_FH(data, REGULAR_FILE, false);
+
 	if (res_OPEN_CONFIRM4->status != NFS4_OK)
 		return res_OPEN_CONFIRM4->status;
 
 	/* Check stateid correctness and get pointer to state */
-	if ((rc =
-	     nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
-				data->current_entry, &state_found, data,
-				STATEID_SPECIAL_FOR_LOCK,
-				arg_OPEN_CONFIRM4->seqid,
-				data->minorversion == 0, tag)) != NFS4_OK) {
+	rc =  nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
+				 data->current_entry,
+				 &state_found,
+				 data,
+				 STATEID_SPECIAL_FOR_LOCK,
+				 arg_OPEN_CONFIRM4->seqid,
+				 data->minorversion == 0,
+				 tag);
+
+	if (rc != NFS4_OK) {
 		if ((rc == NFS4ERR_REPLAY) && (state_found != NULL)
 		    && (state_found->state_owner != NULL)) {
 			open_owner = state_found->state_owner;
 			inc_state_owner_ref(open_owner);
 			goto check_seqid;
 		}
+
 		res_OPEN_CONFIRM4->status = rc;
 		return res_OPEN_CONFIRM4->status;
 	}
@@ -106,10 +111,15 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t * data,
  check_seqid:
 
 	/* Check seqid */
-	if (!Check_nfs4_seqid
-	    (open_owner, arg_OPEN_CONFIRM4->seqid, op, data->current_entry,
-	     resp, tag)) {
-		/* Response is all setup for us and LogDebug told what was wrong */
+	if (!Check_nfs4_seqid(open_owner,
+			      arg_OPEN_CONFIRM4->seqid,
+			      op,
+			      data->current_entry,
+			      resp,
+			      tag)) {
+		/* Response is all setup for us and LogDebug
+		 * told what was wrong
+		 */
 		pthread_mutex_unlock(&open_owner->so_mutex);
 		dec_state_owner_ref(open_owner);
 		return res_OPEN_CONFIRM4->status;
@@ -133,8 +143,12 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t * data,
 		       open_stateid, data, tag);
 
 	/* Save the response in the open owner */
-	Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4->seqid, op,
-			    data->current_entry, resp, tag);
+	Copy_nfs4_state_req(open_owner,
+			    arg_OPEN_CONFIRM4->seqid,
+			    op,
+			    data->current_entry,
+			    resp,
+			    tag);
 
 	dec_state_owner_ref(open_owner);
 
@@ -149,14 +163,14 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_open_confirm_Free(nfs_resop4 * resp)
+void nfs4_op_open_confirm_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;
 }				/* nfs4_op_open_confirm_Free */
 
-void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst,
-				  OPEN_CONFIRM4res * resp_src)
+void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *resp_dst,
+				  OPEN_CONFIRM4res *resp_src)
 {
 	/* Nothing to be done */
 	return;

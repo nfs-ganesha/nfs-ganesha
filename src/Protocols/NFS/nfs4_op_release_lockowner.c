@@ -54,12 +54,12 @@
  * @retval NFS4ERR_NOTSUPP for NFSv4.1.
  */
 
-int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 			      struct nfs_resop4 *resp)
 {
-	RELEASE_LOCKOWNER4args *const arg_RELEASE_LOCKOWNER4 =
+	RELEASE_LOCKOWNER4args * const arg_RELEASE_LOCKOWNER4 =
 	    &op->nfs_argop4_u.oprelease_lockowner;
-	RELEASE_LOCKOWNER4res *const res_RELEASE_LOCKOWNER4 =
+	RELEASE_LOCKOWNER4res * const res_RELEASE_LOCKOWNER4 =
 	    &resp->nfs_resop4_u.oprelease_lockowner;
 	nfs_client_id_t *nfs_client_id;
 	state_owner_t *lock_owner;
@@ -79,7 +79,9 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 
 	/* Check clientid */
 	rc = nfs_client_id_get_confirmed(arg_RELEASE_LOCKOWNER4->lock_owner.
-					 clientid, &nfs_client_id);
+					 clientid,
+					 &nfs_client_id);
+
 	if (rc != CLIENT_ID_SUCCESS) {
 		res_RELEASE_LOCKOWNER4->status = clientid_error_to_nfsstat(rc);
 		goto out2;
@@ -102,10 +104,16 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 	convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4->lock_owner,
 				&owner_name);
 
-	/* If this open owner is not known yet, allocated and set up a new one */
-	lock_owner =
-	    create_nfs4_owner(&owner_name, nfs_client_id,
-			      STATE_OPEN_OWNER_NFSV4, NULL, 0, NULL, CARE_NOT);
+	/* If this open owner is not known yet, allocated
+	 * and set up a new one
+	 */
+	lock_owner = create_nfs4_owner(&owner_name,
+				       nfs_client_id,
+				       STATE_OPEN_OWNER_NFSV4,
+				       NULL,
+				       0,
+				       NULL,
+				       CARE_NOT);
 
 	if (lock_owner == NULL) {
 		/* the owner doesn't exist, we are done */
@@ -124,13 +132,17 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
 	} else {
 		pthread_mutex_unlock(&lock_owner->so_mutex);
 
-		/* found the lock owner and it doesn't have any locks, release it */
+		/* found the lock owner and it doesn't have any locks,
+		 * release it
+		 */
 		release_lockstate(lock_owner);
 
 		res_RELEASE_LOCKOWNER4->status = NFS4_OK;
 	}
 
-	/* Release the reference to the lock owner acquired via create_nfs4_owner */
+	/* Release the reference to the lock owner acquired
+	 * via create_nfs4_owner
+	 */
 	dec_state_owner_ref(lock_owner);
 
  out1:
@@ -160,7 +172,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_release_lockowner_Free(nfs_resop4 * resp)
+void nfs4_op_release_lockowner_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

@@ -62,12 +62,12 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
-	FREE_STATEID4args *const arg_FREE_STATEID4 __attribute__ ((unused))
+	FREE_STATEID4args * const arg_FREE_STATEID4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.opfree_stateid;
-	FREE_STATEID4res *const res_FREE_STATEID4 =
+	FREE_STATEID4res * const res_FREE_STATEID4 =
 	    &resp->nfs_resop4_u.opfree_stateid;
 	state_t *state;
 	state_status_t state_status;
@@ -75,23 +75,27 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data,
 	resp->resop = NFS4_OP_FREE_STATEID;
 	res_FREE_STATEID4->fsr_status = NFS4_OK;
 
-	if (data->minorversion == 0) {
-		return (res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL);
-	}
+	if (data->minorversion == 0)
+		return res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL;
 
 	res_FREE_STATEID4->fsr_status =
-	    nfs4_Check_Stateid(&arg_FREE_STATEID4->fsa_stateid, NULL, &state,
-			       data, STATEID_SPECIAL_FOR_FREE, 0, false,
+	    nfs4_Check_Stateid(&arg_FREE_STATEID4->fsa_stateid,
+			       NULL,
+			       &state,
+			       data,
+			       STATEID_SPECIAL_FOR_FREE,
+			       0,
+			       false,
 			       "FREE_STATEID");
 
-	if (res_FREE_STATEID4->fsr_status != NFS4_OK) {
+	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return res_FREE_STATEID4->fsr_status;
-	}
 
 	state_status = state_del(state, false);
 
 	if (state_status != STATE_SUCCESS) {
-		LogEvent(COMPONENT_STATE, "state_del failed with status %s",
+		LogEvent(COMPONENT_STATE,
+			 "state_del failed with status %s",
 			 state_err_str(state_status));
 	}
 
@@ -110,7 +114,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs4_op_free_stateid_Free(nfs_resop4 * resp)
+void nfs4_op_free_stateid_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs41_op_free_stateid_Free */

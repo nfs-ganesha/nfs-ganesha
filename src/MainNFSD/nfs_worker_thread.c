@@ -1375,7 +1375,7 @@ static void nfs_rpc_execute(request_data_t *req,
  * @param[in,out] req9p       9p request
  * @param[in,out] worker_data Worker's specific data
  */
-static void _9p_execute(request_data_t *req, nfs_worker_data_t * worker_data)
+static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 {
 	_9p_request_data_t *req9p = &req->r_u._9p;
 

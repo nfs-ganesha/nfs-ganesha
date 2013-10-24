@@ -1,6 +1,6 @@
 /*
  * Copyright IBM Corporation, 2012
- *  Contributor: Frank Filz  <ffilz@us.ibm.com>
+ *  Contributor: Frank Filz <ffilzlnx@mindspring.com>
  *
  *
  * This software is a server that implements the NFS protocol.
@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  *
  */
 
@@ -29,20 +29,20 @@
 
 char options[] = "c:qdx:s:n:p:h?";
 char usage[] =
-    "Usage: ml_posix_client -s server -p port -n name [-q] [-d] [-c path]\n"
-    "       ml_posix_client -x script [-q] [-d] [-c path]\n"
-    "       ml_posix_client [-q] [-d] [-c path]\n" "\n"
-    "  ml_posix_client may be run in three modes\n"
-    "  - In the first mode, the client will be driven by a master.\n"
-    "  - In the second mode, the client is driven by a script.\n"
-    "  - In the third mode, the client interractive.\n" "\n"
-    "  -s server - specify the master's hostname or IP address\n"
-    "  -p port   - specify the master's port number\n"
-    "  -n name   - specify the client's name\n"
-    "  -x script - specify the name of a script to execute\n"
-    "  -q        - specify quiet mode\n"
-    "  -d        - specify dup errors mode (errors are sent to stdout and stderr)\n"
-    "  -c path   - chdir\n";
+	"Usage: ml_posix_client -s server -p port -n name [-q] [-d] [-c path]\n"
+	"       ml_posix_client -x script [-q] [-d] [-c path]\n"
+	"       ml_posix_client [-q] [-d] [-c path]\n" "\n"
+	"  ml_posix_client may be run in three modes\n"
+	"  - In the first mode, the client will be driven by a master.\n"
+	"  - In the second mode, the client is driven by a script.\n"
+	"  - In the third mode, the client interractive.\n" "\n"
+	"  -s server - specify the master's hostname or IP address\n"
+	"  -p port   - specify the master's port number\n"
+	"  -n name   - specify the client's name\n"
+	"  -x script - specify the name of a script to execute\n"
+	"  -q        - specify quiet mode\n"
+	"  -d        - specify dup errors mode (errors are sent to stdout and stderr)\n"
+	"  -c path   - chdir\n";
 
 char server[MAXSTR];
 char name[MAXSTR];
@@ -58,7 +58,7 @@ void openserver()
 	int rc;
 	struct addrinfo hint;
 	int sock;
-	response_t resp;
+	struct response resp;
 
 	if (!quiet)
 		fprintf(stdout, "server=%s port=%d name=%s\n", server, port,
@@ -90,15 +90,15 @@ void openserver()
 	input = fdopen(sock, "r");
 
 	if (input == NULL)
-		fatal
-		    ("Could not create input stream from socket ERROr %d \"%s\"\n",
+		fatal(
+		     "Could not create input stream from socket ERROr %d \"%s\"\n",
 		     errno, strerror(errno));
 
 	output = fdopen(sock, "w");
 
 	if (output == NULL)
-		fatal
-		    ("Could not create output stream from socket ERROr %d \"%s\"\n",
+		fatal(
+		     "Could not create output stream from socket ERROr %d \"%s\"\n",
 		     errno, strerror(errno));
 
 	if (!quiet)
@@ -118,7 +118,7 @@ void command()
 
 void sighandler(int sig)
 {
-	response_t resp;
+	struct response resp;
 
 	switch (sig) {
 	case SIGALRM:
@@ -134,14 +134,14 @@ void sighandler(int sig)
 	}
 }
 
-void do_alarm(response_t * resp)
+void do_alarm(struct response *resp)
 {
 	unsigned int remain;
 
 	remain = alarm(resp->r_secs);
 
 	if (remain != 0) {
-		response_t resp2;
+		struct response resp2;
 
 		resp2.r_cmd = CMD_ALARM;
 		resp2.r_tag = alarmtag;
@@ -158,7 +158,7 @@ void do_alarm(response_t * resp)
 	resp->r_status = STATUS_OK;
 }
 
-void do_open(response_t * resp)
+void do_open(struct response *resp)
 {
 	int fd;
 
@@ -186,7 +186,7 @@ void do_open(response_t * resp)
 	}
 }
 
-void do_write(response_t * resp)
+void do_write(struct response *resp)
 {
 	long long int rc;
 
@@ -218,7 +218,7 @@ void do_write(response_t * resp)
 	resp->r_status = STATUS_OK;
 }
 
-void do_read(response_t * resp)
+void do_read(struct response *resp)
 {
 	long long int rc;
 
@@ -247,7 +247,7 @@ void do_read(response_t * resp)
 	resp->r_status = STATUS_OK;
 }
 
-void do_seek(response_t * resp)
+void do_seek(struct response *resp)
 {
 	int rc;
 
@@ -271,7 +271,7 @@ void do_seek(response_t * resp)
 	resp->r_status = STATUS_OK;
 }
 
-void do_lock(response_t * resp)
+void do_lock(struct response *resp)
 {
 	int rc;
 	struct flock lock;
@@ -296,8 +296,10 @@ void do_lock(response_t * resp)
 	lock.l_len = resp->r_length;
 
 	if (cmd == F_SETLKW && alarmtag == 0) {
-		/* Don't let a blocking lock block hang us */
-		/* Test case can set an alarm before LOCKW to specify a different time */
+		/* Don't let a blocking lock block hang us
+		 * Test case can set an alarm before LOCKW to specify
+		 * a different time
+		 */
 		resp->r_secs = 30;
 		do_alarm(resp);
 	}
@@ -329,7 +331,7 @@ void do_lock(response_t * resp)
 	}
 }
 
-void do_hop(response_t * resp)
+void do_hop(struct response *resp)
 {
 	int rc;
 	int pos;
@@ -393,7 +395,7 @@ void do_hop(response_t * resp)
 	}
 }
 
-void do_unhop(response_t * resp)
+void do_unhop(struct response *resp)
 {
 	int rc;
 	int pos;
@@ -449,7 +451,7 @@ void do_unhop(response_t * resp)
 	}
 }
 
-void do_unlock(response_t * resp)
+void do_unlock(struct response *resp)
 {
 	int rc;
 	struct flock lock;
@@ -482,7 +484,7 @@ void do_unlock(response_t * resp)
 	resp->r_status = STATUS_GRANTED;
 }
 
-void do_test(response_t * resp)
+void do_test(struct response *resp)
 {
 	int rc;
 	struct flock lock;
@@ -526,7 +528,7 @@ void do_test(response_t * resp)
 	}
 }
 
-void do_close(response_t * resp)
+void do_close(struct response *resp)
 {
 	int rc;
 
@@ -559,20 +561,18 @@ static inline long long int lock_end(long long int start, long long int length)
 		return start + length;
 }
 
-typedef struct test_list_t test_list_t;
-
-struct test_list_t {
-	test_list_t *tl_next;
+struct test_list {
+	struct test_list *tl_next;
 	long long int tl_start;
 	long long int tl_end;
 };
 
-test_list_t *tl_head;
-test_list_t *tl_tail;
+struct test_list *tl_head;
+struct test_list *tl_tail;
 
 void remove_test_list_head()
 {
-	test_list_t *item = tl_head;
+	struct test_list *item = tl_head;
 
 	if (item == NULL)
 		fatal("Corruption in test list\n");
@@ -582,12 +582,12 @@ void remove_test_list_head()
 	if (tl_tail == item)
 		tl_tail = NULL;
 
-	gsh_free(item);
+	free(item);
 }
 
 void make_test_item(long long int start, long long int end)
 {
-	test_list_t *item = gsh_malloc(sizeof(*item));
+	struct test_list *item = malloc(sizeof(*item));
 
 	if (item == NULL)
 		fatal("Could not allocate test list item\n");
@@ -605,7 +605,7 @@ void make_test_item(long long int start, long long int end)
 	tl_tail = item;
 }
 
-int list_locks(long long int start, long long int end, response_t * resp)
+int list_locks(long long int start, long long int end, struct response *resp)
 {
 	long long int conf_end;
 	struct flock lock;
@@ -629,12 +629,12 @@ int list_locks(long long int start, long long int end, response_t * resp)
 		resp->r_errno = errno;
 		resp->r_status = STATUS_ERRNO;
 		respond(resp);
-		return FALSE;
+		return false;
 	}
 
 	/* Our test succeeded */
 	if (lock.l_type == F_UNLCK)
-		return FALSE;
+		return false;
 
 	resp->r_status = STATUS_CONFLICT;
 	resp->r_lock_type = lock.l_type;
@@ -652,14 +652,14 @@ int list_locks(long long int start, long long int end, response_t * resp)
 	if (conf_end < end)
 		make_test_item(conf_end, end);
 
-	return TRUE;
+	return true;
 }
 
-void do_list(response_t * resp)
+void do_list(struct response *resp)
 {
 	long long int start = resp->r_start;
 	long long int length = resp->r_length;
-	int conflict = FALSE;
+	int conflict = false;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -723,11 +723,11 @@ int main(int argc, char **argv)
 			break;
 
 		case 'q':
-			quiet = TRUE;
+			quiet = true;
 			break;
 
 		case 'd':
-			duperrors = TRUE;
+			duperrors = true;
 			break;
 
 		case 's':
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
 				show_usage(1, "Can not combine -x and -s\n");
 
 			oflags |= 1;
-			script = TRUE;
+			script = true;
 			strncpy(server, optarg, MAXSTR);
 			break;
 
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 					   "Can not combine -x and -s/-p/-n\n");
 
 			oflags |= 8;
-			script = TRUE;
+			script = true;
 			input = fopen(optarg, "r");
 
 			if (input == NULL)
@@ -791,7 +791,7 @@ int main(int argc, char **argv)
 			else
 				break;
 		} else {
-			response_t resp;
+			struct response resp;
 
 			lno++;
 			memset(&resp, 0, sizeof(resp));
@@ -819,8 +819,8 @@ int main(int argc, char **argv)
 				resp.r_status = STATUS_OK;
 
 				if (*rest != '\0' && *rest != '#')
-					fprintf_stderr
-					    ("Command line not consumed, rest=\"%s\"\n",
+					fprintf_stderr(
+					     "Command line not consumed, rest=\"%s\"\n",
 					     rest);
 
 				switch (resp.r_cmd) {

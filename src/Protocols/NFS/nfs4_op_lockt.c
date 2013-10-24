@@ -58,13 +58,13 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
 	/* Alias for arguments */
-	LOCKT4args *const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
+	LOCKT4args * const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
 	/* Alias for response */
-	LOCKT4res *const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
+	LOCKT4res * const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
 	/* Return code from state calls */
 	state_status_t state_status = STATE_SUCCESS;
 	/* Client id record */
@@ -89,9 +89,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	resp->resop = NFS4_OP_LOCKT;
 
 	res_LOCKT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
-	if (res_LOCKT4->status != NFS4_OK) {
+
+	if (res_LOCKT4->status != NFS4_OK)
 		return res_LOCKT4->status;
-	}
+
 
 	/* Lock length should not be 0 */
 	if (arg_LOCKT4->length == 0LL) {
@@ -119,15 +120,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 
 	lock_desc.lock_start = arg_LOCKT4->offset;
 
-	if (arg_LOCKT4->length != STATE_LOCK_OFFSET_EOF) {
+	if (arg_LOCKT4->length != STATE_LOCK_OFFSET_EOF)
 		lock_desc.lock_length = arg_LOCKT4->length;
-	} else {
+	else
 		lock_desc.lock_length = 0;
-	}
 
 	/* Check for range overflow.  Comparing beyond 2^64 is not
-	   possible in 64 bit precision, but off+len > 2^64-1 is
-	   equivalent to len > 2^64-1 - off */
+	 * possible in 64 bit precision, but off+len > 2^64-1 is
+	 * equivalent to len > 2^64-1 - off
+	 */
 
 	if (lock_desc.lock_length >
 	    (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start)) {
@@ -136,16 +137,18 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Check clientid */
-	rc = nfs_client_id_get_confirmed((data->minorversion ==
-					  0 ? arg_LOCKT4->owner.
-					  clientid : data->session->clientid),
+	rc = nfs_client_id_get_confirmed(data->minorversion == 0 ?
+						arg_LOCKT4->owner.clientid :
+						data->session->clientid,
 					 &clientid);
+
 	if (rc != CLIENT_ID_SUCCESS) {
 		res_LOCKT4->status = clientid_error_to_nfsstat(rc);
 		return res_LOCKT4->status;
 	}
 
 	pthread_mutex_lock(&clientid->cid_mutex);
+
 	if (!reserve_lease(clientid)) {
 		pthread_mutex_unlock(&clientid->cid_mutex);
 		dec_client_id_ref(clientid);
@@ -159,9 +162,13 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
 
 	/* This lock owner is not known yet, allocated and set up a new one */
-	lock_owner =
-	    create_nfs4_owner(&owner_name, clientid, STATE_LOCK_OWNER_NFSV4,
-			      NULL, 0, NULL, CARE_ALWAYS);
+	lock_owner = create_nfs4_owner(&owner_name,
+				       clientid,
+				       STATE_LOCK_OWNER_NFSV4,
+				       NULL,
+				       0,
+				       NULL,
+				       CARE_ALWAYS);
 
 	if (lock_owner == NULL) {
 		LogEvent(COMPONENT_NFS_V4_LOCK,
@@ -179,21 +186,28 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Now we have a lock owner and a stateid.  Go ahead and test
-	   the lock in SAL (and FSAL). */
+	 * the lock in SAL (and FSAL).
+	 */
 
-	state_status =
-	    state_test(data->current_entry, data->export, data->req_ctx,
-		       lock_owner, &lock_desc, &conflict_owner, &conflict_desc);
+	state_status = state_test(data->current_entry,
+				  data->export,
+				  data->req_ctx,
+				  lock_owner,
+				  &lock_desc,
+				  &conflict_owner,
+				  &conflict_desc);
+
 	if (state_status == STATE_LOCK_CONFLICT) {
 		/* A conflicting lock from a different lock_owner,
-		   returns NFS4ERR_DENIED */
+		 * returns NFS4ERR_DENIED
+		 */
 		Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
-				      conflict_owner, &conflict_desc);
+				      conflict_owner,
+				      &conflict_desc);
 	}
 
-	if (data->minorversion == 0) {
+	if (data->minorversion == 0)
 		data->req_ctx->clientid = NULL;
-	}
 
 	/* Release NFS4 Open Owner reference */
 	dec_state_owner_ref(lock_owner);
@@ -223,11 +237,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lockt_Free(nfs_resop4 * res)
+void nfs4_op_lockt_Free(nfs_resop4 *res)
 {
 	LOCKT4res *resp = &res->nfs_resop4_u.oplockt;
 
-	if (resp->status == NFS4ERR_DENIED) {
+	if (resp->status == NFS4ERR_DENIED)
 		Release_nfs4_denied(&resp->LOCKT4res_u.denied);
-	}
 }				/* nfs4_op_lockt_Free */

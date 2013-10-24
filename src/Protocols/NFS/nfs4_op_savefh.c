@@ -63,19 +63,21 @@
  *
  */
 
-int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		   struct nfs_resop4 *resp)
 {
-	SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
+	SAVEFH4res * const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
 
 	/* First of all, set the reply to zero to make sure it contains no
-	   parasite information */
+	 * parasite information
+	 */
 	memset(resp, 0, sizeof(struct nfs_resop4));
 	resp->resop = NFS4_OP_SAVEFH;
 	res_SAVEFH->status = NFS4_OK;
 
 	/* Do basic checks on a filehandle */
 	res_SAVEFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
+
 	if (res_SAVEFH->status != NFS4_OK)
 		return res_SAVEFH->status;
 
@@ -87,8 +89,10 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
 	}
 
 	/* Copy the data from current FH to saved FH */
-	memcpy(data->savedFH.nfs_fh4_val, data->currentFH.nfs_fh4_val,
+	memcpy(data->savedFH.nfs_fh4_val,
+	       data->currentFH.nfs_fh4_val,
 	       data->currentFH.nfs_fh4_len);
+
 	data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
 	/* Save the current stateid */
@@ -96,33 +100,32 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
 	data->saved_stateid_valid = data->current_stateid_valid;
 
 	/* If old SavedFH had a related export, release reference. */
-	if (data->saved_export != NULL) {
+	if (data->saved_export != NULL)
 		put_gsh_export(data->saved_export);
-	}
+
 	/* Save the export information by taking a reference since
 	 * currentFH is still active.  Assert this just to be sure...
 	 */
 	if (data->req_ctx->export != NULL) {
 		data->saved_export =
 		    get_gsh_export(data->req_ctx->export->export.id, true);
-	} else {
+	} else
 		data->saved_export = NULL;
-	}
 
 	assert((data->saved_export != NULL)
 	       || nfs4_Is_Fh_Pseudo(&data->currentFH));
+
 	data->saved_export_perms = data->export_perms;
 
 	/* If saved and current entry are equal, skip the following. */
-
-	if (data->saved_entry == data->current_entry) {
+	if (data->saved_entry == data->current_entry)
 		goto out;
-	}
 
 	if (data->saved_entry) {
 		cache_inode_put(data->saved_entry);
 		data->saved_entry = NULL;
 	}
+
 	if (data->saved_ds) {
 		data->saved_ds->ops->put(data->saved_ds);
 		data->saved_ds = NULL;
@@ -132,9 +135,9 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
 	data->saved_filetype = data->current_filetype;
 
 	/* Take another reference.  As of now the filehandle is both saved
-	   and current and both must be counted.  Guard this, in case we
-	   have a pseudofs handle. */
-
+	 * and current and both must be counted.  Guard this, in case we
+	 * have a pseudofs handle.
+	 */
 	if (data->saved_entry)
 		cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
 
@@ -157,7 +160,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_savefh_Free(nfs_resop4 * resp)
+void nfs4_op_savefh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
 	return;

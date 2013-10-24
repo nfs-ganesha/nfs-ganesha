@@ -36,12 +36,12 @@ static inline int avl_unit_hk_cmpf(const struct avltree_node *lhs,
 	rk = avltree_container_of(rhs, avl_unit_val_t, node_hk);
 
 	if (lk->hk.k < rk->hk.k)
-		return (-1);
+		return -1;
 
 	if (lk->hk.k == rk->hk.k)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 avl_unit_val_t *avl_unit_new_val(const char *name)
@@ -53,7 +53,7 @@ avl_unit_val_t *avl_unit_new_val(const char *name)
 	return v;
 }
 
-static int qp_avl_insert(struct avltree *t, avl_unit_val_t * v)
+static int qp_avl_insert(struct avltree *t, avl_unit_val_t *v)
 {
 	/*
 	 * Insert with quadatic, linear probing.  A unique k is assured for
@@ -81,34 +81,33 @@ static int qp_avl_insert(struct avltree *t, avl_unit_val_t * v)
 		if (!tmpnode) {
 			/* success, note iterations and return */
 			v->hk.p = j;
-			return (0);
+			return 0;
 		}
 	}
 
 	/* warn debug */
 
 	memcpy(&v->hk.k, hk, 8);
-	for (j2 = 1 /* tried j=0 */ ; j2 < UINT64_MAX; j2++) {
+	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
 		v->hk.k = v->hk.k + j2;
 		tmpnode = avltree_insert(&v->node_hk, t);
 		if (!tmpnode) {
 			/* success, note iterations and return */
 			v->hk.p = j + j2;
-			return (0);
+			return 0;
 		}
 		j2++;
 	}
 
 	/* warn crit  */
-	return (-1);
+	return -1;
 }
 
 /* This permits inlining, also elides some locally-scoped stores in
  * do_lookup. */
-static inline struct avltree_node *avltree_inline_lookup(const struct
-							 avltree_node *key,
-							 const struct avltree
-							 *tree)
+static inline struct avltree_node *
+avltree_inline_lookup(const struct avltree_node *key,
+		      const struct avltree *tree)
 {
 	struct avltree_node *node = tree->root;
 	int is_left = 0, res = 0;
@@ -117,15 +116,18 @@ static inline struct avltree_node *avltree_inline_lookup(const struct
 		res = avl_unit_hk_cmpf(node, key);	/* may inline */
 		if (res == 0)
 			return node;
-		if ((is_left = res > 0))
+
+		is_left = res;
+
+		if (is_left > 0)
 			node = node->left;
 		else
 			node = node->right;
 	}
-	return (NULL);
+	return NULL;
 }
 
-static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t * v,
+static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t *v,
 				       int maxj)
 {
 	struct avltree_node *node;
@@ -148,12 +150,12 @@ static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t * v,
 			v2 = avltree_container_of(node, avl_unit_val_t,
 						  node_hk);
 			if (!strcmp(v->name, v2->name))
-				return (v2);
+				return v2;
 		}
 	}
 
 	/* warn crit  */
-	return (NULL);
+	return NULL;
 }
 
 static struct dir_data {
@@ -184,7 +186,7 @@ static struct dir_data {
 	    "unaligned.c", "uncached.c", "unwind.c", "unwind_decoder.c",
 	    "unwind_i.h", "vmlinux.lds.S", 0};
 
-void avl_unit_free_val(avl_unit_val_t * v)
+void avl_unit_free_val(avl_unit_val_t *v)
 {
 	gsh_free(v);
 }
@@ -229,7 +231,7 @@ void avl_unit_PkgInit(void)
 	/* nothing */
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -238,7 +240,7 @@ void avl_unit_PkgInit(void)
 int init_suite1(void)
 {
 
-	avltree_init(&avl_tree_1, avl_unit_hk_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_hk_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -261,7 +263,7 @@ int clean_suite1(void)
  *  END SUITE INITIALIZATION and CLEANUP FUNCTIONS
  */
 
-/* 
+/*
  *  BEGIN BASIC TESTS
  */
 
@@ -304,9 +306,10 @@ void lookups_tree_1(void)
 		v2 = qp_avl_lookup_s(&avl_tree_1, v, 1);
 		if (!v2)
 			abort();
-		else {
-			/* printf("%d %d %s\n", ix, v2->hk.p, v2->name); */
-		}
+		else
+			/*
+			printf("%d %d %s\n", ix, v2->hk.p, v2->name);
+			*/
 		++ix;
 	}
 
@@ -317,7 +320,7 @@ void lookups_tree_1(void)
 void deletes_tree_1(void)
 {
 	avl_unit_clear_tree(&avl_tree_1);
-	avltree_init(&avl_tree_1, avl_unit_hk_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_hk_cmpf, 0 /* flags */);
 }
 
 void inserts_tree_2(void)
@@ -358,9 +361,10 @@ void lookups_tree_2(void)
 		if (!v2)
 			if (ix < 100000)
 				abort();
-			else {
-				/* printf("%d %d %s\n", ix, v2->hk.p, v2->name); */
-			}
+			else
+				/*
+				printf("%d %d %s\n", ix, v2->hk.p, v2->name);
+				*/
 	}
 
 	/* free v */

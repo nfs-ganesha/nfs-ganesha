@@ -8,16 +8,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  *
  */
 
@@ -56,17 +56,19 @@ int nlm4_Sm_Notify(nfs_arg_t *args, exportlist_t *export,
 		 arg->name);
 
 	nsm_client = get_nsm_client(CARE_NOT, NULL, arg->name);
+
 	if (nsm_client != NULL) {
 		/* Cast the state number into a state pointer to protect
 		 * locks from a client that has rebooted from being released
 		 * by this SM_NOTIFY.
 		 */
-		state_status =
-		    state_nlm_notify(nsm_client, req_ctx,
-				     (void *)(ptrdiff_t) arg->state);
+		state_status = state_nlm_notify(nsm_client,
+						req_ctx,
+						(void *)(ptrdiff_t) arg->state);
 
 		if (state_status != STATE_SUCCESS) {
-			/* TODO FSF: Deal with error */
+			/** @todo FSF: Deal with error
+			 */
 		}
 
 		dec_nsm_client_ref(nsm_client);
@@ -80,7 +82,8 @@ int nlm4_Sm_Notify(nfs_arg_t *args, exportlist_t *export,
 /**
  * nlm4_Sm_Notify_Free: Frees the result structure allocated for nlm4_Sm_Notify
  *
- * Frees the result structure allocated for nlm4_Sm_Notify. Does Nothing in fact.
+ * Frees the result structure allocated for nlm4_Sm_Notify. Does Nothing in
+ * fact.
  *
  * @param res        [INOUT]   Pointer to the result structure.
  *

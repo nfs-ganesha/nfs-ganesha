@@ -51,13 +51,13 @@
  *
  */
 
-int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 			    struct nfs_resop4 *resp)
 {
 
-	DESTROY_SESSION4args *const arg_DESTROY_SESSION4 =
+	DESTROY_SESSION4args * const arg_DESTROY_SESSION4 =
 	    &op->nfs_argop4_u.opdestroy_session;
-	DESTROY_SESSION4res *const res_DESTROY_SESSION4 =
+	DESTROY_SESSION4res * const res_DESTROY_SESSION4 =
 	    &resp->nfs_resop4_u.opdestroy_session;
 
 	sockaddr_t nw_addr;
@@ -68,26 +68,28 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t * data,
 	res_DESTROY_SESSION4->dsr_status = NFS4_OK;
 
 	if (data->minorversion == 0) {
-		return (res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL);
+		res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL;
+		return res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL;
 	}
 
-	if (!nfs41_Session_Get_Pointer
-	    (arg_DESTROY_SESSION4->dsa_sessionid, &session)) {
+	if (!nfs41_Session_Get_Pointer(arg_DESTROY_SESSION4->dsa_sessionid,
+				       &session)) {
 		res_DESTROY_SESSION4->dsr_status = NFS4ERR_BADSESSION;
 		return res_DESTROY_SESSION4->dsr_status;
 	}
 
 	/* DESTROY_SESSION MUST be invoked on a connection that is associated
-	 * with the session being destroyed */
+	 * with the session being destroyed
+	 */
 
-	// Copy the address coming over the wire.
+	/* Copy the address coming over the wire. */
 	copy_xprt_addr(&nw_addr, data->req->rq_xprt);
 
-	// Copy the address recorded in the session.
+	/* Copy the address recorded in the session. */
 	copy_xprt_addr(&client_addr, session->xprt);
 
-	// Compare these fields.
-	if (!cmp_sockaddr(&nw_addr, &client_addr, false)) {
+	/* Compare these fields. */
+	if (!cmp_sockaddr(&nw_addr, &client_addr, CHECK_PORT)) {
 		res_DESTROY_SESSION4->dsr_status =
 		    NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
 		return res_DESTROY_SESSION4->dsr_status;
@@ -114,7 +116,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp  nfs4_op results
  *
  */
-void nfs4_op_destroy_session_Free(nfs_resop4 * resp)
+void nfs4_op_destroy_session_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs41_op_destroy_session_Free */

@@ -58,14 +58,14 @@
  *
  */
 
-int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
+int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	LAYOUTCOMMIT4args *const arg_LAYOUTCOMMIT4 =
+	LAYOUTCOMMIT4args * const arg_LAYOUTCOMMIT4 =
 	    &op->nfs_argop4_u.oplayoutcommit;
 	/* Convenience alias for response */
-	LAYOUTCOMMIT4res *const res_LAYOUTCOMMIT4 =
+	LAYOUTCOMMIT4res * const res_LAYOUTCOMMIT4 =
 	    &resp->nfs_resop4_u.oplayoutcommit;
 	/* Return from cache_inode calls */
 	cache_inode_status_t cache_status = 0;
@@ -89,14 +89,19 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 	unsigned int beginning = 0;
 
 	resp->resop = NFS4_OP_LAYOUTCOMMIT;
+
 	if (data->minorversion == 0) {
-		return (res_LAYOUTCOMMIT4->locr_status = NFS4ERR_INVAL);
+		res_LAYOUTCOMMIT4->locr_status = NFS4ERR_INVAL;
+		return res_LAYOUTCOMMIT4->locr_status;
 	}
 
-	if ((nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false))
-	    != NFS4_OK) {
-		goto out;
+	nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
+
+	if (nfs_status != NFS4_OK) {
+		res_LAYOUTCOMMIT4->locr_status = nfs_status;
+		return res_LAYOUTCOMMIT4->locr_status;
 	}
+
 
 	memset(&arg, 0, sizeof(struct fsal_layoutcommit_arg));
 	memset(&res, 0, sizeof(struct fsal_layoutcommit_res));
@@ -104,12 +109,10 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 	/* Suggest a new size, if we have it */
 	if (arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset) {
 		arg.new_offset = true;
-		arg.last_write =
-		    arg_LAYOUTCOMMIT4->loca_last_write_offset.newoffset4_u.
-		    no_offset;
-	} else {
+		arg.last_write = arg_LAYOUTCOMMIT4->loca_last_write_offset.
+					newoffset4_u.no_offset;
+	} else
 		arg.new_offset = false;
-	}
 
 	arg.reclaim = arg_LAYOUTCOMMIT4->loca_reclaim;
 
@@ -124,53 +127,49 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 	/* Suggest a new modification time if we have it */
 	if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged) {
 		arg.time_changed = true;
-		arg.new_time.seconds =
-		    arg_LAYOUTCOMMIT4->loca_time_modify.newtime4_u.nt_time.
-		    seconds;
-		arg.new_time.nseconds =
-		    arg_LAYOUTCOMMIT4->loca_time_modify.newtime4_u.nt_time.
-		    nseconds;
+		arg.new_time.seconds = arg_LAYOUTCOMMIT4->loca_time_modify.
+					newtime4_u.nt_time.seconds;
+		arg.new_time.nseconds = arg_LAYOUTCOMMIT4->loca_time_modify.
+					newtime4_u.nt_time.nseconds;
 	}
 
 	/* Retrieve state corresponding to supplied ID */
 
-	if ((nfs_status =
-	     nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4->loca_stateid,
-				data->current_entry, &layout_state, data,
-				STATEID_SPECIAL_CURRENT, 0, FALSE,
-				tag)) != NFS4_OK) {
+	nfs_status = nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4->loca_stateid,
+					data->current_entry,
+					&layout_state, data,
+					STATEID_SPECIAL_CURRENT,
+					0,
+					false,
+					tag);
+
+	if (nfs_status != NFS4_OK)
 		goto out;
-	}
 
 	arg.type = layout_state->state_data.layout.state_layout_type;
 
 	glist_for_each(glist, &layout_state->state_data.layout.state_segments) {
-		segment =
-		    glist_entry(glist, state_layout_segment_t,
-				sls_state_segments);
+		segment = glist_entry(glist,
+				      state_layout_segment_t,
+				      sls_state_segments);
 
 		pthread_mutex_lock(&segment->sls_mutex);
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
 		pthread_mutex_unlock(&segment->sls_mutex);
 
-		nfs_status =
-		    data->current_entry->obj_handle->ops->layoutcommit(data->
-								       current_entry->
-								       obj_handle,
-								       data->
-								       req_ctx,
-								       &lou_body,
-								       &arg,
-								       &res);
+		nfs_status = data->current_entry->obj_handle->ops->layoutcommit(
+						data->current_entry->obj_handle,
+						data->req_ctx,
+						&lou_body,
+						&arg,
+						&res);
 
-		if (nfs_status != NFS4_OK) {
+		if (nfs_status != NFS4_OK)
 			goto out;
-		}
 
-		if (res.commit_done) {
+		if (res.commit_done)
 			break;
-		}
 
 		/* This really should work in all cases for an
 		   in-memory decode stream. */
@@ -180,17 +179,18 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 	if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged
 	    || arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset
 	    || res.size_supplied) {
-		if ((cache_status =
+		cache_status =
 		     cache_inode_invalidate(data->current_entry,
-					    CACHE_INODE_INVALIDATE_ATTRS))
-		    != CACHE_INODE_SUCCESS) {
+					    CACHE_INODE_INVALIDATE_ATTRS);
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
 			nfs_status = nfs4_Errno(cache_status);
 			goto out;
 		}
 	}
 
-	(res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
-	 ns_sizechanged) = res.size_supplied;
+	res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
+		ns_sizechanged = res.size_supplied;
 
 	if (res.size_supplied) {
 		(res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
@@ -217,7 +217,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
  * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs4_op_layoutcommit_Free(nfs_resop4 * resp)
+void nfs4_op_layoutcommit_Free(nfs_resop4 *resp)
 {
 	return;
 }				/* nfs41_op_layoutcommit_Free */
