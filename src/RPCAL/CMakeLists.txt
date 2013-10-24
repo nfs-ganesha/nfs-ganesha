@@ -2,9 +2,6 @@ include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
 )
 
-add_subdirectory(gssd)
-
-
 ########### next target ###############
 
 SET(rpcal_STAT_SRCS
@@ -13,7 +10,7 @@ SET(rpcal_STAT_SRCS
 )
 
 if(_HAVE_GSSAPI)
-  set(rpcal_STAT_SRCS ${rpcal_STAT_SRCS} gss_extra.c)
+  set(rpcal_STAT_SRCS ${rpcal_STAT_SRCS} gss_credcache.c gss_extra.c)
 endif(_HAVE_GSSAPI)
 
 add_library(rpcal STATIC ${rpcal_STAT_SRCS})

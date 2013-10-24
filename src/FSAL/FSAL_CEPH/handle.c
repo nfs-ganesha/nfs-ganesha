@@ -57,11 +57,10 @@ static fsal_status_t release(struct fsal_obj_handle *obj_pub)
 	struct export *export =
 	    container_of(obj_pub->export, struct export, export);
 
-	if (obj == export->root) {
+	if (obj == export->root)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else {
+	else
 		return ceph2fsal_error(deconstruct_handle(obj));
-	}
 }
 
 /**
@@ -93,9 +92,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 	rc = ceph_ll_lookup(export->cmount, dir->i, path, &st, &i, 0, 0);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &obj);
 
@@ -129,8 +127,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof)
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, bool *eof)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -147,13 +145,11 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 
 	rc = ceph_ll_opendir(export->cmount, dir->i, &dir_desc, 0, 0);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
-	if (whence != NULL) {
+	if (whence != NULL)
 		start = *whence;
-	}
 
 	ceph_seekdir(export->cmount, dir_desc, start);
 
@@ -174,9 +170,9 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 				continue;
 			}
 
-			if (!cb(opctx, de.d_name, dir_state, de.d_off)) {
+			if (!cb(opctx, de.d_name, dir_state, de.d_off))
 				goto closedir;
-			}
+
 		} else if (rc == 0) {
 			*eof = true;
 		} else {
@@ -189,9 +185,8 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 
 	rc = ceph_ll_releasedir(export->cmount, dir_desc);
 
-	if (rc < 0) {
+	if (rc < 0)
 		fsal_status = ceph2fsal_error(rc);
-	}
 
 	return fsal_status;
 }
@@ -232,9 +227,8 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	rc = ceph_ll_create(export->cmount, dir->i, name, 0600, O_CREAT, &st,
 			    &i, NULL, opctx->creds->caller_uid,
 			    opctx->creds->caller_gid);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &obj);
 
@@ -284,9 +278,8 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	rc = ceph_ll_mkdir(export->cmount, dir->i, name, 0700, &st, &i,
 			   opctx->creds->caller_uid, opctx->creds->caller_gid);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &obj);
 
@@ -338,9 +331,8 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	rc = ceph_ll_symlink(export->cmount, dir->i, name, link_path, &st, &i,
 			     opctx->creds->caller_uid,
 			     opctx->creds->caller_gid);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &obj);
 	if (rc < 0) {
@@ -389,15 +381,13 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 
 	rc = ceph_ll_readlink(export->cmount, link->i, &content, 0, 0);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	content_buf->len = (strlen(content) + 1);
 	content_buf->addr = gsh_malloc(content_buf->len);
-	if (content_buf->addr == NULL) {
+	if (content_buf->addr == NULL)
 		return fsalstat(ERR_FSAL_NOMEM, 0);
-	}
 	memcpy(content_buf->addr, content, content_buf->len);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -429,9 +419,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 
 	rc = ceph_ll_getattr(export->cmount, handle->i, &st, 0, 0);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	ceph2fsal_attributes(&st, &handle->handle.attributes);
 
@@ -468,17 +457,15 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 
 	memset(&st, 0, sizeof(struct stat));
 
-	if (attrs->mask & ~settable_attributes) {
+	if (attrs->mask & ~settable_attributes)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
 		rc = ceph_ll_truncate(export->cmount, handle->i,
 				      attrs->filesize, 0, 0);
 
-		if (rc < 0) {
+		if (rc < 0)
 			return ceph2fsal_error(rc);
-		}
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
@@ -532,9 +519,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 
 	rc = ceph_ll_setattr(export->cmount, handle->i, &st, mask, 0, 0);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -573,9 +559,8 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
 	rc = ceph_ll_link(export->cmount, handle->i, destdir->i, name, &st,
 			  opctx->creds->caller_uid, opctx->creds->caller_gid);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -615,9 +600,8 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
 			    new_name, opctx->creds->caller_uid,
 			    opctx->creds->caller_gid);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -656,9 +640,8 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
 				   opctx->creds->caller_gid);
 	}
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -690,20 +673,18 @@ static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
 	/* Posix open flags */
 	int posix_flags = 0;
 
-	if (openflags & FSAL_O_RDWR) {
+	if (openflags & FSAL_O_RDWR)
 		posix_flags = O_RDWR;
-	} else if (openflags & FSAL_O_READ) {
+	else if (openflags & FSAL_O_READ)
 		posix_flags = O_RDONLY;
-	} else if (openflags & FSAL_O_WRITE) {
+	else if (openflags & FSAL_O_WRITE)
 		posix_flags = O_WRONLY;
-	}
 
 	/* We shouldn't need to lock anything, the content lock
 	   should keep the file descriptor protected. */
 
-	if (handle->openflags != FSAL_O_CLOSED) {
+	if (handle->openflags != FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	}
 
 	rc = ceph_ll_open(export->cmount, handle->i, posix_flags, &(handle->fd),
 			  0, 0);
@@ -758,8 +739,8 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
 static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
 			       const struct req_op_context *opctx,
 			       uint64_t offset, size_t buffer_size,
-			       void *buffer, size_t * read_amount,
-			       bool * end_of_file)
+			       void *buffer, size_t *read_amount,
+			       bool *end_of_file)
 {
 	/* The private 'full' export */
 	struct export *export =
@@ -773,13 +754,11 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
 	    ceph_ll_read(export->cmount, handle->fd, offset, buffer_size,
 			 buffer);
 
-	if (nb_read < 0) {
+	if (nb_read < 0)
 		return ceph2fsal_error(nb_read);
-	}
 
-	if ((uint64_t) nb_read < buffer_size) {
+	if ((uint64_t) nb_read < buffer_size)
 		*end_of_file = true;
-	}
 
 	*read_amount = nb_read;
 
@@ -807,8 +786,8 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
 static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
 				const struct req_op_context *opctx,
 				uint64_t offset, size_t buffer_size,
-				void *buffer, size_t * write_amount,
-				bool * fsal_stable)
+				void *buffer, size_t *write_amount,
+				bool *fsal_stable)
 {
 	/* The private 'full' export */
 	struct export *export =
@@ -822,9 +801,8 @@ static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
 	    ceph_ll_write(export->cmount, handle->fd, offset, buffer_size,
 			  buffer);
 
-	if (nb_written < 0) {
+	if (nb_written < 0)
 		return ceph2fsal_error(nb_written);
-	}
 
 	*write_amount = nb_written;
 	*fsal_stable = false;
@@ -859,9 +837,8 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub, off_t offset,
 
 	rc = ceph_ll_fsync(export->cmount, handle->fd, false);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -889,9 +866,8 @@ static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
 
 	rc = ceph_ll_close(export->cmount, handle->fd);
 
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	handle->fd = NULL;
 	handle->openflags = FSAL_O_CLOSED;

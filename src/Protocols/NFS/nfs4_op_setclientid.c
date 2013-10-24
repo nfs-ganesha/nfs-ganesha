@@ -142,7 +142,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t * data,
 		if (!nfs_compare_clientcred
 		    (&conf->cid_credential, &data->credential)
 		    || !cmp_sockaddr(&conf->cid_client_addr, &client_addr,
-				     IGNORE_PORT)) {
+				     true)) {
 			/* CASE 1:
 			 *
 			 * Confirmed record exists and not the same principal

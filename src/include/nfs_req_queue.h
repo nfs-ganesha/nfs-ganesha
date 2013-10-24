@@ -108,7 +108,7 @@ static inline uint32_t nfs_rpc_q_next_slot(void)
 	uint32_t ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
 	if (!ix)
 		ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
-	return (ix);
+	return ix;
 }
 
 static inline void nfs_rpc_queue_awaken(void *arg)

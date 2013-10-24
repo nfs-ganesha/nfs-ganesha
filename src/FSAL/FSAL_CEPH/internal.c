@@ -41,24 +41,27 @@
 #define CEPH_INTERNAL_C
 #include "internal.h"
 
-#define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
+#define MAX_2(x, y)				\
+	((x) > (y) ? (x) : (y))
 
 /**
  * The attributes tis FSAL can interpret or supply.
  */
 
-const attrmask_t supported_attributes =
-    (ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE | ATTR_NUMLINKS
-     | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_RAWDEV | ATTR_CTIME |
-     ATTR_MTIME | ATTR_SPACEUSED | ATTR_CHGTIME);
+const attrmask_t supported_attributes = (
+	ATTR_TYPE      | ATTR_SIZE     | ATTR_FSID  | ATTR_FILEID |
+	ATTR_MODE      | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP  |
+	ATTR_ATIME     | ATTR_RAWDEV   | ATTR_CTIME | ATTR_MTIME  |
+	ATTR_SPACEUSED | ATTR_CHGTIME);
 
 /**
  * The attributes this FSAL can set.
  */
 
-const attrmask_t settable_attributes =
-    (ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_CTIME | ATTR_MTIME
-     | ATTR_SIZE | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER);
+const attrmask_t settable_attributes = (
+	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |
+	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |
+	ATTR_ATIME_SERVER);
 
 /**
  * @brief FSAL status from Ceph error
@@ -277,9 +280,8 @@ int construct_handle(const struct stat *st, struct Inode *i,
 	*obj = NULL;
 
 	constructing = gsh_calloc(1, sizeof(struct handle));
-	if (constructing == NULL) {
+	if (constructing == NULL)
 		return -ENOMEM;
-	}
 
 	constructing->vi.ino.val = st->st_ino;
 	constructing->vi.snapid.val = st->st_dev;
@@ -323,9 +325,9 @@ int deconstruct_handle(struct handle *obj)
 
 	ceph_ll_put(export->cmount, obj->i);
 	retval = fsal_obj_handle_uninit(&obj->handle);
-	if (retval != 0) {
+	if (retval != 0)
 		return -retval;
-	}
+
 	gsh_free(obj);
 	return 0;
 }

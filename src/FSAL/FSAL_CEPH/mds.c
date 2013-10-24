@@ -69,9 +69,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 						LAYOUT4_NFSV4_1_FILES, false,
 						&segment, NULL, NULL);
 
-	if (status != STATE_SUCCESS) {
+	if (status != STATE_SUCCESS)
 		return false;
-	}
 
 	return true;
 }
@@ -91,7 +90,7 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
  */
 
 static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
-			      XDR * da_addr_body, const layouttype4 type,
+			      XDR *da_addr_body, const layouttype4 type,
 			      const struct pnfs_deviceid *deviceid)
 {
 	/* Full 'private' export */
@@ -186,11 +185,9 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 			return NFS4ERR_SERVERFAULT;
 		}
 		host.port = 2049;
-		if ((nfs_status =
-		     FSAL_encode_v4_multipath(da_addr_body, 1, &host))
-		    != NFS4_OK) {
+		nfs_status = FSAL_encode_v4_multipath(da_addr_body, 1, &host);
+		if (nfs_status != NFS4_OK)
 			return nfs_status;
-		}
 	}
 
 	return NFS4_OK;
@@ -231,8 +228,8 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
  *                        after export reference is relinquished
  */
 
-static void fs_layouttypes(struct fsal_export *export_pub, size_t * count,
-			   const layouttype4 ** types)
+static void fs_layouttypes(struct fsal_export *export_pub, size_t *count,
+			   const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
 	*types = &supported_layout_type;
@@ -326,7 +323,7 @@ void export_ops_pnfs(struct export_ops *ops)
  */
 
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
-			  struct req_op_context *req_ctx, XDR * loc_body,
+			  struct req_op_context *req_ctx, XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -481,10 +478,10 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	ds_wire.layout = file_layout;
 	ds_wire.snapseq = ceph_ll_snap_seq(export->cmount, handle->wire.vi);
 
-	if ((nfs_status =
-	     FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-				     obj_pub->export->exp_entry->id, 1,
-				     &ds_desc))) {
+	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
+					     obj_pub->export->exp_entry->id, 1,
+					     &ds_desc);
+	if (nfs_status != NFS4_OK) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode nfsv4_1_file_layout.");
 		goto relinquish;
@@ -541,7 +538,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
  */
 
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
-			     struct req_op_context *req_ctx, XDR * lrf_body,
+			     struct req_op_context *req_ctx, XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	/* The private 'full' export */
@@ -599,7 +596,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
  */
 
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
-			     struct req_op_context *req_ctx, XDR * lou_body,
+			     struct req_op_context *req_ctx, XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -629,9 +626,9 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 	   those before it can work. */
 
 	memset(&stold, 0, sizeof(struct stat));
-	if ((ceph_status =
-	     ceph_ll_getattr(export->cmount, handle->wire.vi, &stold, 0,
-			     0)) < 0) {
+	ceph_status = ceph_ll_getattr(export->cmount, handle->wire.vi,
+				      &stold, 0, 0);
+	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
 			"Error %d in attempt to get attributes of " "file %"
 			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);
@@ -648,17 +645,17 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 		}
 	}
 
-	if ((arg->time_changed) && (arg->new_time.seconds > stold.st_mtime)) {
+	if ((arg->time_changed) &&
+	    (arg->new_time.seconds > stold.st_mtime))
 		stnew.st_mtime = arg->new_time.seconds;
-	} else {
+	else
 		stnew.st_mtime = time(NULL);
-	}
 
 	attrmask |= CEPH_SETATTR_MTIME;
 
-	if ((ceph_status =
-	     ceph_ll_setattr(export->cmount, handle->wire.vi, &stnew, attrmask,
-			     0, 0)) < 0) {
+	ceph_status = ceph_ll_setattr(export->cmount, handle->wire.vi,
+				      &stnew, attrmask, 0, 0);
+	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
 			"Error %d in attempt to get attributes of " "file %"
 			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);

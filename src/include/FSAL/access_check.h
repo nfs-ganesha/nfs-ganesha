@@ -14,8 +14,8 @@
 fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       struct req_op_context *req_ctx,
 			       fsal_accessflags_t access_type,
-			       fsal_accessflags_t * allowed,
-			       fsal_accessflags_t * denied);
+			       fsal_accessflags_t *allowed,
+			       fsal_accessflags_t *denied);
 
 int display_fsal_v4mask(struct display_buffer *dspbuf, fsal_aceperm_t v4mask,
 			bool is_dir);

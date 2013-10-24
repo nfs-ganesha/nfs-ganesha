@@ -50,7 +50,7 @@
  */
 
 cache_inode_status_t up_get(const struct gsh_buffdesc *key,
-			    cache_entry_t ** entry)
+			    cache_entry_t **entry)
 {
 	cih_latch_t latch;
 
@@ -60,9 +60,8 @@ cache_inode_status_t up_get(const struct gsh_buffdesc *key,
 	    cih_get_by_fh_latched(key, &latch,
 				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
 				  __func__, __LINE__);
-	if (*entry == NULL) {
+	if (*entry == NULL)
 		return CACHE_INODE_NOT_FOUND;
-	}
 
 	/* Found entry, ref it */
 	cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);

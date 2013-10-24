@@ -344,12 +344,6 @@ if(KRB5_FOUND)
   set(_HAVE_GSSAPI ON)
 endif(KRB5_FOUND)
 
-# needed by RPCAL/gssd for some reason
-if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  find_package(Curses)
-endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-find_package(Readline)
-
 # Validate fsal dependencies
 
 if(USE_FSAL_GLUSTER)
@@ -532,7 +526,7 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/libntirpc/tirpc/"
+  "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/"
   "${PROJECT_SOURCE_DIR}/include"
   "${OS_INCLUDE_DIR}"
   "${KRB5_INCLUDE_DIRS}"
@@ -550,8 +544,8 @@ endif(USE_CB_SIMULATOR)
 #callers add:
 #  target_link_libraries(your_library ${LIBTIRPC_LIBRARIES})
 set(LIBTIRPC_INCLUDE_DIR
-  "${PROJECT_BINARY_DIR}/libtirpc/tirpc"
-  "${PROJECT_BINARY_DIR}/libtirpc/tirpc/rpc"
+  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc"
+  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc/rpc"
 )
 set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 
@@ -593,7 +587,6 @@ set(GANESHA_CORE
   avltree
   hashtable
   rpcal
-  gssd
   common_utils
   support
   nfs4callbacks
