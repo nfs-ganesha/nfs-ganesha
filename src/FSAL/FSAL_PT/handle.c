@@ -63,9 +63,8 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t * fh,
 {
 	struct pt_fsal_obj_handle *hdl;
 
-	hdl =
-	    gsh_malloc(sizeof(struct pt_fsal_obj_handle)
-		       + sizeof(ptfsal_handle_t));
+	hdl = gsh_malloc(sizeof(struct pt_fsal_obj_handle)
+			 + sizeof(ptfsal_handle_t));
 	if (hdl == NULL)
 		return NULL;
 	memset(hdl, 0,
@@ -92,8 +91,8 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t * fh,
 		if (hdl->u.unopenable.dir == NULL)
 			goto spcerr;
 		memcpy(hdl->u.unopenable.dir, dir_fh, sizeof(ptfsal_handle_t));
-		hdl->u.unopenable.name
-			= gsh_malloc(strlen(unopenable_name) + 1);
+		hdl->u.unopenable.name =
+		    gsh_malloc(strlen(unopenable_name) + 1);
 		if (hdl->u.unopenable.name == NULL)
 			goto spcerr;
 		strcpy(hdl->u.unopenable.name, unopenable_name);

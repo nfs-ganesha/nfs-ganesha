@@ -93,7 +93,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	gsh_free(myself);		/* elvis has left the building */
+	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
  errout:
@@ -272,8 +272,8 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		goto out;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->
-	    creds->caller_gid;
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval =
 	    quotactl(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
@@ -332,8 +332,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->
-	    creds->caller_gid;
+	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	if (pquota->bhardlimit != 0) {
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
@@ -542,8 +542,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 					 (export_path, p_mnt->mnt_dir,
 					  pathlen) == 0)
 					&& ((export_path[pathlen] == '/')
-					    || (export_path[pathlen] ==
-						'\0'))) {
+					    || (export_path[pathlen] == '\0')))
+					{
 					if (strcasecmp(p_mnt->mnt_type, "xfs")
 					    == 0) {
 						LogDebug(COMPONENT_FSAL,
@@ -649,6 +649,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	free_export_ops(&myself->export);
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	gsh_free(myself);		/* elvis has left the building */
+	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }
