@@ -27,7 +27,6 @@
 /**
  *
  * \file    fsal_convert.h
- * \version $Revision: 1.13 $
  * \brief   XFS to FSAL type converting function.
  *
  */
@@ -63,16 +62,18 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
  * to FSAL time type (now struct timespec).
  *
  * XXX Remove me (the entire file), included in
- * The routine is in include/FSAL/fsal_convert.h 
+ * The routine is in include/FSAL/fsal_convert.h
  *
  */
 static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-	struct timespec ts = {.tv_sec = tsec,.tv_nsec = nsec };
-	return (ts);
+	struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec };
+	return ts;
 }
 
-#define high32m( a ) ( (unsigned int)( a >> 32 ) )
-#define low32m( a ) ( (unsigned int)a )
+#define high32m(a) ((unsigned int)(a >> 32))
+#define low32m(a) ((unsigned int)a)
+
+extern uint32_t open_fd_count;
 
 #endif

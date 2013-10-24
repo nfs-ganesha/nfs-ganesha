@@ -42,8 +42,8 @@
  *                        after export reference is relinquished
  */
 
-static void fs_layouttypes(struct fsal_export *export_hdl, size_t * count,
-			   const layouttype4 ** types)
+static void fs_layouttypes(struct fsal_export *export_hdl, size_t *count,
+			   const layouttype4 **types)
 {
 	int rc;
 	struct open_arg arg;
@@ -52,7 +52,7 @@ static void fs_layouttypes(struct fsal_export *export_hdl, size_t * count,
 	arg.mountdirfd = gpfs_get_root_fd(export_hdl);
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
 	if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES)) {
-		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d \n", rc);
+		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d\n", rc);
 		*count = 0;
 		return;
 
@@ -132,7 +132,7 @@ static size_t fs_da_addr_size(struct fsal_export *export_pub)
  */
 
 static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
-			      XDR * da_addr_body, const layouttype4 type,
+			      XDR *da_addr_body, const layouttype4 type,
 			      const struct pnfs_deviceid *deviceid)
 {
 	/* The position before any bytes are sent to the stream */
@@ -162,7 +162,7 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
 	rc = gpfs_ganesha(OPENHANDLE_GET_DEVICEINFO, &darg);
 	if (rc < 0) {
 
-		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d \n", rc);
+		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d\n", rc);
 		return NFS4ERR_RESOURCE;
 	}
 	xdr_setpos(da_addr_body, rc);
@@ -227,7 +227,7 @@ void export_ops_pnfs(struct export_ops *ops)
  */
 
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR * loc_body,
+			  struct req_op_context *req_ctx, XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -288,7 +288,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_GET, &larg);
 	if (rc != 0) {
-		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d \n", rc);
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d\n", rc);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 	fh = (int *)&(gpfs_ds_handle.f_handle);
@@ -298,7 +298,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 		 gpfs_ds_handle.handle_key_size, fh[0], fh[1], fh[2], fh[3],
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
 
-	/* We grant only one segment, and we want it back when the file is closed. */
+	/* We grant only one segment, and we want it back when file is closed.*/
 	res->return_on_close = true;
 	res->last_segment = true;
 	res->segment.offset = 0;
@@ -317,10 +317,11 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	ds_desc.addr = &gpfs_ds_handle;
 	ds_desc.len = sizeof(struct gpfs_file_handle);
 
-	if ((nfs_status =
+	nfs_status =
 	     FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
 				     obj_hdl->export->exp_entry->id, 1,
-				     &ds_desc))) {
+				     &ds_desc);
+	if (nfs_status) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode nfsv4_1_file_layout.");
 		goto relinquish;
@@ -364,7 +365,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  */
 
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR * lrf_body,
+			     struct req_op_context *req_ctx, XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	struct layoutreturn_arg larg;
@@ -399,7 +400,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 		rc = gpfs_ganesha(OPENHANDLE_LAYOUT_RETURN, &larg);
 		if (rc != 0) {
 			LogDebug(COMPONENT_PNFS,
-				 "GPFSFSAL_layoutreturn rc %d \n", rc);
+				 "GPFSFSAL_layoutreturn rc %d\n", rc);
 			return NFS4ERR_NOMATCHING_LAYOUT;
 		}
 	}
@@ -423,7 +424,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  */
 
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR * lou_body,
+			     struct req_op_context *req_ctx, XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -451,18 +452,19 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	targ.length = arg->segment.length;
 
 	targ.reclaim = arg->reclaim;	/* True if this is a reclaim commit */
-	targ.new_offset = arg->new_offset;	/* True if the client has suggested a new offset */
+	targ.new_offset = arg->new_offset; /* True if the client has suggested a
+						new offset */
 	if (arg->new_offset)
-		targ.last_write = arg->last_write;	/* The offset of the last byte written */
-
-	targ.time_changed = arg->time_changed;	/* True if provided a new mtime */
+		targ.last_write = arg->last_write; /* The offset of the last
+							byte written */
+	targ.time_changed = arg->time_changed; /*True if provided a new mtime*/
 	if (arg->time_changed) {
 		targ.new_time.t_sec = arg->new_time.seconds;
 		targ.new_time.t_nsec = arg->new_time.nseconds;
 	}
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_COMMIT, &targ);
 	if (rc != 0) {
-		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d \n", rc);
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d\n", rc);
 		return posix2nfs4_error(-rc);
 	}
 	res->size_supplied = false;

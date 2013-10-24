@@ -18,16 +18,15 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
  *
  * \file    fsal_unlink.c
  * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.9 $
  * \brief   object removing function.
  *
  */
@@ -93,7 +92,7 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	    fsal_internal_stat_name(mount_fd, gpfs_hdl->handle, p_object_name,
 				    &buffxstat.buffstat);
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
   /******************************
    * DELETE FROM THE FILESYSTEM *
@@ -107,7 +106,7 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
   /***********************
    * FILL THE ATTRIBUTES *

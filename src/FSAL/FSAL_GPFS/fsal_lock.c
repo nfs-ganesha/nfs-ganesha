@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  *
  */
 #include "config.h"
@@ -31,7 +31,7 @@
 
 /**
  * GPFSFSAL_lock_op:
- * Lock/unlock/test an owner independent (anonymous) lock for a region in a file.
+ * Lock/unlock/test an owner independent (anonymous) lock for region in a file.
  *
  * \param obj_hdl (input):
  *        File handle of the file to lock.
@@ -49,13 +49,14 @@
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
- *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the operation would not be possible.
+ *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the
+ *                       operation would not be possible.
  */
 fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,	/* IN */
 			       void *p_owner,	/* IN */
 			       fsal_lock_op_t lock_op,	/* IN */
 			       fsal_lock_param_t request_lock,	/* IN */
-			       fsal_lock_param_t * conflicting_lock)
+			       fsal_lock_param_t *conflicting_lock)
 {				/* OUT */
 	int retval;
 	struct glock glock_args;

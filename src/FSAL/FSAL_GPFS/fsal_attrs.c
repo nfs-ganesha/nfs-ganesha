@@ -41,14 +41,13 @@
 #include <utime.h>
 #include <sys/time.h>
 
-extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *
-						      p_buffxstat,
-						      struct attrlist
-						      *p_fsalattr_out);
+extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
+					gpfsfsal_xstat_t *p_buffxstat,
+					struct attrlist *p_fsalattr_out);
 
 #ifdef _USE_NFS4_ACL
-extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t * p_fsalacl,
-					 gpfsfsal_xstat_t * p_buffxstat);
+extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
+					 gpfsfsal_xstat_t *p_buffxstat);
 #endif				/* _USE_NFS4_ACL */
 
 /**
@@ -84,7 +83,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat,
 				      &grace_period_attr, expire);
 	if (FSAL_IS_ERROR(st))
-		return (st);
+		return st;
 
 	/* convert attributes */
 	p_object_attributes->grace_period_attr = grace_period_attr;
@@ -92,7 +91,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	if (FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(p_object_attributes->mask);
 		FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
-		return (st);
+		return st;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -123,9 +122,9 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
-				const struct req_op_context * p_context,	/* IN */
-				struct attrlist * p_object_attributes)
+fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
+				const struct req_op_context *p_context,	/* IN */
+				struct attrlist *p_object_attributes)
 {				/* IN */
 	unsigned int mntfd;
 	fsal_status_t status;
@@ -151,8 +150,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 
 	/* Is it allowed to change times ? */
 
-	if (!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_cansettime)) {
-
+	if (!dir_hdl->export->ops->fs_supports(dir_hdl->export,
+							fso_cansettime)) {
 		if (p_object_attributes->
 		    mask & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME
 			    | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)) {
@@ -278,13 +277,13 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 			LogDebug(COMPONENT_FSAL, "setattr acl = %p",
 				 p_object_attributes->acl);
 
-			/* Convert FSAL ACL to GPFS NFS4 ACL and fill the buffer. */
+			/* Convert FSAL ACL to GPFS NFS4 ACL and fill buffer. */
 			status =
 			    fsal_acl_2_gpfs_acl(p_object_attributes->acl,
 						&buffxstat);
 
 			if (FSAL_IS_ERROR(status))
-				return (status);
+				return status;
 		} else {
 			LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
 			return fsalstat(ERR_FSAL_FAULT, 0);
@@ -292,7 +291,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 	}
 #endif				/* _USE_NFS4_ACL */
 
-	/* If there is any change in stat or acl or both, send it down to file system. */
+	/* If there is any change in stat or acl or both, send it down to fs. */
 	if (attr_valid != 0) {
 		status =
 		    fsal_set_xstat_by_handle(mntfd, p_context, myself->handle,
@@ -300,7 +299,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 					     &buffxstat);
 
 		if (FSAL_IS_ERROR(status))
-			return (status);
+			return status;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

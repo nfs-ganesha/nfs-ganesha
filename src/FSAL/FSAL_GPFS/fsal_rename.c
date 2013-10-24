@@ -18,16 +18,15 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
  *
  * \file    fsal_rename.c
  * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.9 $
  * \brief   object renaming/moving function.
  *
  */
@@ -58,11 +57,11 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
+fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
 			      const char *p_old_name,	/* IN */
-			      struct fsal_obj_handle * new_hdl,	/* IN */
+			      struct fsal_obj_handle *new_hdl,	/* IN */
 			      const char *p_new_name,	/* IN */
-			      const struct req_op_context * p_context)
+			      const struct req_op_context *p_context)
 {				/* IN */
 
 	fsal_status_t status;
@@ -87,7 +86,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 	    fsal_internal_stat_name(mount_fd, old_gpfs_hdl->handle, p_old_name,
 				    &buffstat);
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
   /*************************************
    * Rename the file on the filesystem *
@@ -102,7 +101,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

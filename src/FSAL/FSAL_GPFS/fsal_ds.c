@@ -43,10 +43,10 @@
 #include "gpfs_methods.h"
 #include "pnfs_utils.h"
 
-#define min(a,b)          \
-     ({ typeof (a) _a = (a);                    \
-          typeof (b) _b = (b);                  \
-          _a < _b ? _a : _b; })
+#define min(a, b)			\
+	({ typeof(a) _a = (a);		\
+	typeof(b) _b = (b);		\
+	_a < _b ? _a : _b; })
 
 /**
  * @brief Release an object
@@ -62,9 +62,9 @@ static nfsstat4 release(struct fsal_ds_handle *const ds_pub)
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	if (fsal_ds_handle_uninit(&ds->ds)) {
+	if (fsal_ds_handle_uninit(&ds->ds))
 		return EINVAL;
-	}
+
 	gsh_free(ds);
 
 	return 0;
@@ -92,7 +92,7 @@ static nfsstat4 release(struct fsal_ds_handle *const ds_pub)
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			struct req_op_context *const req_ctx,
-			const stateid4 * stateid, const offset4 offset,
+			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
 			bool * const end_of_file)
@@ -122,9 +122,8 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
 
 	amount_read = gpfs_ganesha(OPENHANDLE_DS_READ, &rarg);
-	if (amount_read < 0) {
+	if (amount_read < 0)
 		return posix2nfs4_error(-amount_read);
-	}
 
 	*supplied_length = amount_read;
 
@@ -159,7 +158,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			 struct req_op_context *const req_ctx,
-			 const stateid4 * stateid, const offset4 offset,
+			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
 			 count4 * const written_length,
@@ -196,9 +195,9 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
 
 	amount_written = gpfs_ganesha(OPENHANDLE_DS_WRITE, &warg);
-	if (amount_written < 0) {
+	if (amount_written < 0)
 		return posix2nfs4_error(-amount_written);
-	}
+
 	LogDebug(COMPONENT_PNFS, "write verifier %d-%d\n", warg.verifier4[0],
 		 warg.verifier4[1]);
 
