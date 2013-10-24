@@ -87,7 +87,7 @@ static struct client_by_ip client_by_ip;
  */
 static inline uint32_t eip_cache_offsetof(struct client_by_ip *eid, uint32_t k)
 {
-	return (k % eid->cache_sz);
+	return k % eid->cache_sz;
 }
 
 /**
@@ -169,7 +169,7 @@ static int client_ip_cmpf(const struct avltree_node *lhs,
  * @return pointer to ref locked stats block
  */
 
-struct gsh_client *get_gsh_client(sockaddr_t * client_ipaddr, bool lookup_only)
+struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 {
 	struct avltree_node *node = NULL;
 	struct gsh_client *cl;
@@ -183,20 +183,20 @@ struct gsh_client *get_gsh_client(sockaddr_t * client_ipaddr, bool lookup_only)
 	switch (client_ipaddr->ss_family) {
 	case AF_INET:
 		addr =
-		    (uint8_t *) & ((struct sockaddr_in *)client_ipaddr)->
+		    (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
 		    sin_addr;
 		addr_len = 4;
 		memcpy(&ipaddr,
-		       (uint8_t *) & ((struct sockaddr_in *)client_ipaddr)->
+		       (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
 		       sin_addr, sizeof(ipaddr));
 		break;
 	case AF_INET6:
 		addr =
-		    (uint8_t *) & ((struct sockaddr_in6 *)client_ipaddr)->
+		    (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
 		    sin6_addr;
 		addr_len = 16;
 		memcpy(&ipaddr,
-		       (uint8_t *) & ((struct sockaddr_in6 *)client_ipaddr)->
+		       (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
 		       sin6_addr, sizeof(ipaddr));
 		break;
 	default:
@@ -237,9 +237,10 @@ struct gsh_client *get_gsh_client(sockaddr_t * client_ipaddr, bool lookup_only)
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 
 	server_st = gsh_calloc((sizeof(struct server_stats) + addr_len), 1);
-	if (server_st == NULL) {
+
+	if (server_st == NULL)
 		return NULL;
-	}
+
 	cl = &server_st->client;
 	memcpy(cl->addrbuf, addr, addr_len);
 	cl->addr.addr = cl->addrbuf;
@@ -283,7 +284,7 @@ void put_gsh_client(struct gsh_client *client)
  * @return true if removed or was not found, false if busy.
  */
 
-bool remove_gsh_client(sockaddr_t * client_ipaddr)
+bool remove_gsh_client(sockaddr_t *client_ipaddr)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
@@ -299,20 +300,20 @@ bool remove_gsh_client(sockaddr_t * client_ipaddr)
 	switch (client_ipaddr->ss_family) {
 	case AF_INET:
 		addr =
-		    (uint8_t *) & ((struct sockaddr_in *)client_ipaddr)->
+		    (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
 		    sin_addr;
 		addr_len = 4;
 		memcpy(&ipaddr,
-		       (uint8_t *) & ((struct sockaddr_in *)client_ipaddr)->
+		       (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
 		       sin_addr, sizeof(ipaddr));
 		break;
 	case AF_INET6:
 		addr =
-		    (uint8_t *) & ((struct sockaddr_in6 *)client_ipaddr)->
+		    (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
 		    sin6_addr;
 		addr_len = 16;
 		memcpy(&ipaddr,
-		       (uint8_t *) & ((struct sockaddr_in6 *)client_ipaddr)->
+		       (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
 		       sin6_addr, sizeof(ipaddr));
 		break;
 	default:
@@ -354,7 +355,7 @@ bool remove_gsh_client(sockaddr_t * client_ipaddr)
  * @param state [IN] param block to pass
  */
 
-int foreach_gsh_client(bool(*cb) (struct gsh_client * cl, void *state),
+int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
 		       void *state)
 {
 	struct avltree_node *client_node;
@@ -382,7 +383,7 @@ int foreach_gsh_client(bool(*cb) (struct gsh_client * cl, void *state),
 /* parse the ipaddr string in args
  */
 
-static bool arg_ipaddr(DBusMessageIter * args, sockaddr_t * sp, char **errormsg)
+static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 {
 	char *client_addr;
 	unsigned char addrbuf[16];
@@ -427,7 +428,7 @@ static bool arg_ipaddr(DBusMessageIter * args, sockaddr_t * sp, char **errormsg)
  * @param reply [OUT] dbus reply stream for method to fill
  */
 
-static bool gsh_client_addclient(DBusMessageIter * args, DBusMessage * reply)
+static bool gsh_client_addclient(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_client *client;
 	sockaddr_t sockaddr;
@@ -458,7 +459,7 @@ static struct gsh_dbus_method cltmgr_add_client = {
 		 END_ARG_LIST}
 };
 
-static bool gsh_client_removeclient(DBusMessageIter * args, DBusMessage * reply)
+static bool gsh_client_removeclient(DBusMessageIter *args, DBusMessage *reply)
 {
 	sockaddr_t sockaddr;
 	bool success = true;
@@ -512,7 +513,7 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	return true;
 }
 
-static bool gsh_client_showclients(DBusMessageIter * args, DBusMessage * reply)
+static bool gsh_client_showclients(DBusMessageIter *args, DBusMessage *reply)
 {
 	DBusMessageIter iter;
 	struct showclients_state iter_state;
@@ -563,17 +564,17 @@ static struct gsh_dbus_interface cltmgr_client_table = {
 /* DBUS client manager stats helpers
  */
 
-static struct gsh_client *lookup_client(DBusMessageIter * args, char **errormsg)
+static struct gsh_client *lookup_client(DBusMessageIter *args, char **errormsg)
 {
 	sockaddr_t sockaddr;
 	bool success = true;
 
 	success = arg_ipaddr(args, &sockaddr, errormsg);
-	if (success) {
+
+	if (success)
 		return get_gsh_client(&sockaddr, true);
-	} else {
+	else
 		return NULL;
-	}
 }
 
 /**
@@ -581,7 +582,7 @@ static struct gsh_client *lookup_client(DBusMessageIter * args, char **errormsg)
  *
  */
 
-static bool get_nfsv3_stats_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv3_stats_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -626,7 +627,7 @@ static struct gsh_dbus_method cltmgr_show_v3_io = {
  *
  */
 
-static bool get_nfsv40_stats_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv40_stats_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -671,7 +672,7 @@ static struct gsh_dbus_method cltmgr_show_v40_io = {
  *
  */
 
-static bool get_nfsv41_stats_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_nfsv41_stats_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -716,7 +717,7 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
  *
  */
 
-static bool get_9p_stats_io(DBusMessageIter * args, DBusMessage * reply)
+static bool get_9p_stats_io(DBusMessageIter *args, DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -761,8 +762,8 @@ static struct gsh_dbus_method cltmgr_show_9p_io = {
  *
  */
 
-static bool get_nfsv41_stats_layouts(DBusMessageIter * args,
-				     DBusMessage * reply)
+static bool get_nfsv41_stats_layouts(DBusMessageIter *args,
+				     DBusMessage *reply)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -844,8 +845,9 @@ void client_pkginit(void)
 
 	pthread_rwlockattr_init(&rwlock_attr);
 #ifdef GLIBC
-	pthread_rwlockattr_setkind_np(&rwlock_attr,
-				      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlockattr_setkind_np(
+		&rwlock_attr,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
