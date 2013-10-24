@@ -7,16 +7,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -106,8 +106,8 @@ void splice_tail_test()
 	print_glist(&mytestglist);
 	printf("List mytestglist_new should have nodes 6..10\n");
 	print_glist(&mytestglist_new);
-	printf
-	    ("Now after glist_splice_tail mytestglist should have all 10 nodes:\n");
+	printf(
+	    "Now after glist_splice_tail mytestglist should have all 10 nodes:\n");
 	glist_splice_tail(&mytestglist, &mytestglist_new);
 	print_glist(&mytestglist);
 	printf("And mytestglist_new no nodes:\n");

@@ -32,12 +32,12 @@ int avl_unit_cmpf(const struct avltree_node *lhs,
 	rk = avltree_container_of(rhs, avl_unit_val_t, node_k);
 
 	if (lk->key < rk->key)
-		return (-1);
+		return -1;
 
 	if (lk->key == rk->key)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 avl_unit_val_t *avl_unit_new_val(unsigned long intval)
@@ -49,7 +49,7 @@ avl_unit_val_t *avl_unit_new_val(unsigned long intval)
 	return v;
 }
 
-void avl_unit_free_val(avl_unit_val_t * v)
+void avl_unit_free_val(avl_unit_val_t *v)
 {
 	gsh_free(v);
 }
@@ -93,7 +93,7 @@ void avl_unit_PkgInit(void)
 	/* nothing */
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -102,7 +102,7 @@ void avl_unit_PkgInit(void)
 int init_suite1(void)
 {
 
-	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -121,7 +121,7 @@ int clean_suite1(void)
 	return 0;
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -129,7 +129,7 @@ int clean_suite1(void)
  */
 int init_suite2(void)
 {
-	avltree_init(&avl_tree_2, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_2, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -146,7 +146,7 @@ int clean_suite2(void)
 	return 0;
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -154,7 +154,7 @@ int clean_suite2(void)
  */
 int init_suite100(void)
 {
-	avltree_init(&avl_tree_100, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_100, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -171,7 +171,7 @@ int clean_suite100(void)
 	return 0;
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -179,7 +179,7 @@ int clean_suite100(void)
  */
 int init_suite10000(void)
 {
-	avltree_init(&avl_tree_10000, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_10000, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -195,7 +195,7 @@ int clean_suite10000(void)
 	return 0;
 }
 
-/* 
+/*
  * The suite initialization function.
  * Initializes resources to be shared across tests.
  * Returns zero on success, non-zero otherwise.
@@ -203,7 +203,7 @@ int clean_suite10000(void)
  */
 int init_supremum(void)
 {
-	avltree_init(&avl_tree_2, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_2, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
 }
@@ -224,7 +224,7 @@ int clean_supremum(void)
  *  END SUITE INITIALIZATION and CLEANUP FUNCTIONS
  */
 
-/* 
+/*
  *  BEGIN BASIC TESTS
  */
 
@@ -386,7 +386,6 @@ void deletes_tree_2(void)
 	avl_unit_free_val(v);
 }
 
-// xxxx
 void inserts_supremum(void)
 {
 	avl_unit_val_t *v;
@@ -721,7 +720,7 @@ void check_delete_1(void)
 
 	avl_unit_clear_and_destroy_tree(&avl_tree_1);
 
-	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */);
 
 	insert_long_val(&avl_tree_1, 4);
 	insert_long_val(&avl_tree_1, 1);
@@ -766,7 +765,7 @@ void check_min_1(void)
 
 	avl_unit_clear_and_destroy_tree(&avl_tree_1);
 
-	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */);
 
 	insert_long_val(&avl_tree_1, 4);
 	insert_long_val(&avl_tree_1, 10);
@@ -804,7 +803,7 @@ void check_min_2(void)
 
 	avl_unit_clear_and_destroy_tree(&avl_tree_1);
 
-	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */ );
+	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */);
 
 	mval = ULONG_MAX;
 	for (ix = 0; ix < 100000; ix++) {
