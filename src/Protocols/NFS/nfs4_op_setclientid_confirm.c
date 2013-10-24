@@ -154,7 +154,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 					    &data->credential)
 		    || !cmp_sockaddr(&unconf->cid_client_addr,
 				     &client_addr,
-				     IGNORE_PORT)) {
+				     true)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char unconfirmed_addr[SOCK_NAME_MAX + 1];
 
@@ -220,18 +220,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			display_clientid_name(conf, str_client);
 
 		/* First must match principal */
-<<<<<<< HEAD
-		if (!nfs_compare_clientcred
-		    (&conf->cid_credential, &data->credential)
-		    || !cmp_sockaddr(&conf->cid_client_addr, &client_addr,
-				     true)) {
-=======
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)
 		    || !cmp_sockaddr(&conf->cid_client_addr,
 				     &client_addr,
-				     IGNORE_PORT)) {
->>>>>>> ffilz/rc1-checkpatch
+				     true)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char confirmed_addr[SOCK_NAME_MAX + 1];
 
