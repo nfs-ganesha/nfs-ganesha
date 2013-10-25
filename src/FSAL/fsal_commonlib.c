@@ -52,6 +52,7 @@
 #include <os/quota.h>
 #include "nlm_list.h"
 #include "FSAL/fsal_commonlib.h"
+#include "fsal_private.h"
 
 /* fsal_module to fsal_export helpers
  */
@@ -123,9 +124,6 @@ static void fsal_detach_handle(struct fsal_export *exp_hdl,
 
 int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 {
-	extern struct export_ops def_export_ops; /* freebsd gcc workaround */
-	extern struct fsal_obj_ops def_handle_ops;
-	extern struct fsal_ds_ops def_ds_ops;
 	pthread_mutexattr_t attrs;
 
 	exp->ops = gsh_malloc(sizeof(struct export_ops));

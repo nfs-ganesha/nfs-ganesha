@@ -51,6 +51,7 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 #include "ganesha_types.h"
+#include "fsal_private.h"
 
 /** fsal module method defaults and common methods
  */
@@ -67,13 +68,6 @@
  * 3. The version numbers are bumped in fsal_api.h appropriately so
  *    version detection is correct.
  */
-
-/* Global lock for fsal list.
- * kept in fsal_manager.c
- * Special checkpatch case here.  This is private between the two files.
- */
-
-extern pthread_mutex_t fsal_lock;
 
 /* put_fsal
  * put the fsal back that we got with lookup_fsal.

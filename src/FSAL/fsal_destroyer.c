@@ -31,6 +31,7 @@
 #include "fsal_api.h"
 #include "nfs_exports.h"
 #include "nfs_core.h"
+#include "fsal_private.h"
 
 /**
  * @file fsal_destroyer.c
@@ -43,8 +44,6 @@
  *
  * @param[in] export Export to clean up
  */
-
-extern struct glist_head fsal_list;
 
 static void shutdown_handles(struct fsal_export *export)
 {

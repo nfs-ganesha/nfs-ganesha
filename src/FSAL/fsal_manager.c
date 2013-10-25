@@ -50,6 +50,7 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 #include "pnfs_utils.h"
+#include "fsal_private.h"
 
 /* List of loaded fsal modules
  * static to be private to the functions in this module
@@ -424,7 +425,6 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		  uint32_t major_version, uint32_t minor_version)
 {
 	pthread_mutexattr_t attrs;
-	extern struct fsal_ops def_fsal_ops;
 
 	if ((major_version != FSAL_MAJOR_VERSION)
 	    || (minor_version > FSAL_MINOR_VERSION)) {
