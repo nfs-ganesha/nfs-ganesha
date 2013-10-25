@@ -321,14 +321,6 @@ void dupreq2_pkginit(void)
 	init_shared_drc();
 }
 
-extern nfs_function_desc_t nfs3_func_desc[];
-extern nfs_function_desc_t nfs4_func_desc[];
-extern nfs_function_desc_t mnt1_func_desc[];
-extern nfs_function_desc_t mnt3_func_desc[];
-extern nfs_function_desc_t nlm4_func_desc[];
-extern nfs_function_desc_t rquota1_func_desc[];
-extern nfs_function_desc_t rquota2_func_desc[];
-
 /**
  * @brief Determine the protocol of the supplied TI-RPC SVCXPRT*
  *
@@ -725,9 +717,9 @@ void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
  *
  * @return The function vector if successful, else NULL.
  */
-static inline nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
+static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 {
-	nfs_function_desc_t *func = NULL;
+	const nfs_function_desc_t *func = NULL;
 
 	if (dv->hin.rq_prog == nfs_param.core_param.program[P_NFS]) {
 		switch (dv->hin.rq_vers) {
@@ -816,7 +808,7 @@ out:
  */
 static inline void nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
 {
-	nfs_function_desc_t *func;
+	const nfs_function_desc_t *func;
 
 	if (dv->res) {
 		func = nfs_dupreq_func(dv);
