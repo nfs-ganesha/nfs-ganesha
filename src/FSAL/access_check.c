@@ -426,102 +426,95 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 			     GET_FSAL_ACE_WHO(*pace));
 
 		/* Process Allow and Deny entries. */
-		if (IS_FSAL_ACE_ALLOW(*pace) || IS_FSAL_ACE_DENY(*pace)) {
-			LogFullDebug(COMPONENT_NFS_V4_ACL, "allow or deny");
+		if (!IS_FSAL_ACE_ALLOW(*pace) && !IS_FSAL_ACE_DENY(*pace)) {
+			LogFullDebug(COMPONENT_NFS_V4_ACL, "not allow or deny");
+			continue;
+		}
 
-			/* Check if this ACE is applicable. */
-			if (fsal_check_ace_applicable
-			    (pace, creds, is_dir, is_owner, is_group,
-			     is_root)) {
-				if (IS_FSAL_ACE_ALLOW(*pace)) {
-					/* Do not set bits which
-					 * are already denied */
-					if (denied)
-						tperm = pace->perm & ~*denied;
-					else
-						tperm = pace->perm;
+		LogFullDebug(COMPONENT_NFS_V4_ACL, "allow or deny");
 
-					LogFullDebug(COMPONENT_NFS_V4_ACL,
-						     "allow perm 0x%X remainingPerms 0x%X",
-						     tperm, missing_access);
+		/* Check if this ACE is applicable. */
+		if (fsal_check_ace_applicable(pace, creds, is_dir, is_owner,
+					      is_group, is_root)) {
+			if (IS_FSAL_ACE_ALLOW(*pace)) {
+				/* Do not set bits which are already denied */
+				if (denied)
+					tperm = pace->perm & ~*denied;
+				else
+					tperm = pace->perm;
 
-					if (allowed != NULL)
-						*allowed |= v4mask & tperm;
+				LogFullDebug(COMPONENT_NFS_V4_ACL,
+					     "allow perm 0x%X remainingPerms 0x%X",
+					     tperm, missing_access);
 
-					missing_access &=
-					    ~(tperm & missing_access);
+				if (allowed != NULL)
+					*allowed |= v4mask & tperm;
 
-					if (!missing_access) {
-						fsal_print_access_by_acl(pacl->
-									 naces,
-									 ace_number,
-									 pace,
-									 v4mask,
-									 ERR_FSAL_NO_ERROR,
-									 is_dir,
-									 creds);
-						break;
-					}
-				} else if ((pace->perm & missing_access)
-					   && !is_root) {
-					fsal_print_access_by_acl(pacl->naces,
-								 ace_number,
-								 pace, v4mask,
-								 (pace->
-								  perm &
-								  missing_access
-								  &
-								  (FSAL_ACE_PERM_WRITE_ATTR
-								   |
-								   FSAL_ACE_PERM_WRITE_ACL
-								   |
-								   FSAL_ACE_PERM_WRITE_OWNER))
-								 !=
-								 0 ?
-								 ERR_FSAL_PERM :
-								 ERR_FSAL_ACCESS,
-								 is_dir, creds);
+				missing_access &=
+				    ~(tperm & missing_access);
 
-					if (denied != NULL)
-						*denied |= v4mask & pace->perm;
-					if (denied == NULL ||
-					    (v4mask &
-					     FSAL_ACE4_PERM_CONTINUE) == 0) {
-						if ((pace->
-						     perm & missing_access &
-						     (FSAL_ACE_PERM_WRITE_ATTR |
-						      FSAL_ACE_PERM_WRITE_ACL |
-						      FSAL_ACE_PERM_WRITE_OWNER))
-						    != 0) {
-							LogDebug
-							    (COMPONENT_NFS_V4_ACL,
-							     "access denied (EPERM)");
-							return
-							    fsalstat
-							    (ERR_FSAL_PERM, 0);
-						} else {
-							LogDebug
-							    (COMPONENT_NFS_V4_ACL,
-							     "access denied (EACCESS)");
-							return
-							    fsalstat
-							    (ERR_FSAL_ACCESS,
-							     0);
-						}
-					}
-
-					missing_access &=
-					    ~(pace->perm & missing_access);
-
-					/* If this DENY ACE blocked the last
-					 * remaining requested access
-					 * bits, break out of the loop because
-					 * we're done and don't
-					 * want to evaluate any more ACEs.
-					 */
-					if (!missing_access)
-						break;
+				if (!missing_access) {
+					fsal_print_access_by_acl(
+							pacl->naces,
+							ace_number,
+							pace,
+							v4mask,
+							ERR_FSAL_NO_ERROR,
+							is_dir,
+							creds);
+					break;
 				}
+			} else if ((pace->perm & missing_access) && !is_root) {
+				fsal_print_access_by_acl(
+					pacl->naces,
+					ace_number,
+					pace,
+					v4mask,
+					(pace->perm & missing_access &
+					 (FSAL_ACE_PERM_WRITE_ATTR |
+					  FSAL_ACE_PERM_WRITE_ACL |
+					  FSAL_ACE_PERM_WRITE_OWNER))
+					    != 0 ?
+					    ERR_FSAL_PERM :
+					    ERR_FSAL_ACCESS,
+					is_dir,
+					creds);
+
+				if (denied != NULL)
+					*denied |= v4mask & pace->perm;
+				if (denied == NULL ||
+				    (v4mask &
+				     FSAL_ACE4_PERM_CONTINUE) == 0) {
+					if ((pace->perm & missing_access &
+					    (FSAL_ACE_PERM_WRITE_ATTR |
+					     FSAL_ACE_PERM_WRITE_ACL |
+					     FSAL_ACE_PERM_WRITE_OWNER))
+					    != 0) {
+						LogDebug(COMPONENT_NFS_V4_ACL,
+							 "access denied (EPERM)");
+						return
+						    fsalstat
+						    (ERR_FSAL_PERM, 0);
+					} else {
+						LogDebug(COMPONENT_NFS_V4_ACL,
+							 "access denied (EACCESS)");
+						return fsalstat(
+						     ERR_FSAL_ACCESS,
+						     0);
+					}
+				}
+
+				missing_access &=
+				    ~(pace->perm & missing_access);
+
+				/* If this DENY ACE blocked the last
+				 * remaining requested access
+				 * bits, break out of the loop because
+				 * we're done and don't
+				 * want to evaluate any more ACEs.
+				 */
+				if (!missing_access)
+					break;
 			}
 		}
 	}
@@ -556,12 +549,13 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
  * @return ERR_FSAL_NO_ERROR or ERR_FSAL_ACCESS
  */
 
-static fsal_status_t fsal_check_access_no_acl(struct user_cred *creds,
-					      struct req_op_context *req_ctx,
-					      fsal_accessflags_t access_type,
-					      fsal_accessflags_t *allowed,
-					      fsal_accessflags_t *denied,
-					      struct attrlist *p_object_attributes)
+static fsal_status_t
+fsal_check_access_no_acl(struct user_cred *creds,
+			 struct req_op_context *req_ctx,
+			 fsal_accessflags_t access_type,
+			 fsal_accessflags_t *allowed,
+			 fsal_accessflags_t *denied,
+			 struct attrlist *p_object_attributes)
 {
 	uid_t uid;
 	gid_t gid;

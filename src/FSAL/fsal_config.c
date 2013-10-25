@@ -286,8 +286,9 @@ static fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
 
 }
 
-fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
-						  struct fsal_fs_params *common_info)
+fsal_status_t
+load_FS_common_parameters_from_conf(config_file_t in_config,
+				    struct fsal_fs_params *common_info)
 {
 	int err;
 	int var_max, var_index;
