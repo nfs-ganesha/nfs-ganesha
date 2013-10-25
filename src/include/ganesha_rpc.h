@@ -290,7 +290,8 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 	return;
 }
 
-#define DISP_SLOCK(x) do {						\
+#define DISP_SLOCK(x)							\
+do {									\
 	if (!slocked) {							\
 		if ((x)->xp_type == XPRT_UDP) {				\
 			SVC_LOCK((x), XP_LOCK_SEND, __func__,		\
@@ -300,7 +301,8 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 	}								\
 } while (0)
 
-#define DISP_SUNLOCK(x) do {						\
+#define DISP_SUNLOCK(x)							\
+do {									\
 	if (slocked) {							\
 		SVC_UNLOCK((x), XP_LOCK_SEND, __func__, __LINE__);	\
 		slocked = false;					\
@@ -308,7 +310,8 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 } while (0)
 
 /* For the special case of SLOCK taken from a dispatcher thread */
-#define DISP_SLOCK2(x) do {			\
+#define DISP_SLOCK2(x)						\
+do {								\
 	if (!slocked) {						\
 		if (!(rlocked && ((x)->xp_type == XPRT_UDP))) {	\
 			SVC_LOCK((x), XP_LOCK_SEND, __func__,	\
@@ -318,8 +321,9 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 	}							\
 } while (0)
 
-#define DISP_SUNLOCK2(x) do {				   \
-	if (slocked) {					   \
+#define DISP_SUNLOCK2(x)						\
+do {									\
+	if (slocked) {							\
 		if (!(((x)->xp_type == XPRT_UDP) && !rlocked)) {	\
 			SVC_UNLOCK((x), XP_LOCK_SEND, __func__,		\
 				   __LINE__);				\
@@ -328,14 +332,16 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 	}								\
 } while (0)
 
-#define DISP_RLOCK(x) do {						\
+#define DISP_RLOCK(x)							\
+do {									\
 	if (!rlocked) {							\
 		SVC_LOCK((x), XP_LOCK_RECV, __func__, __LINE__);	\
 		rlocked = true;						\
 	}								\
 } while (0)
 
-#define DISP_RUNLOCK(x) do {						\
+#define DISP_RUNLOCK(x)							\
+do {									\
 	if (rlocked) {							\
 		SVC_UNLOCK((x), XP_LOCK_RECV, __func__, __LINE__);	\
 		rlocked = false;					\

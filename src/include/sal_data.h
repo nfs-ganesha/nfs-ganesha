@@ -89,6 +89,8 @@ typedef struct state_layout_segment state_layout_segment_t;
  *
  *****************************************************************************/
 
+extern pool_t *nfs41_session_pool;
+
 /**
  * @param Session ID hash
  */
@@ -209,6 +211,8 @@ typedef struct clid_entry {
  * NFSv4 State data
  *
  *****************************************************************************/
+
+extern hash_table_t *ht_state_id;
 
 /**
  * @brief Type of state
@@ -378,6 +382,7 @@ typedef enum care_t {
 } care_t;
 
 extern hash_table_t *ht_nsm_client;
+extern hash_table_t *ht_nlm_client;
 
 /**
  * @brief NSM (rpc.statd) state for a given client.
@@ -636,6 +641,9 @@ struct nfs_client_record_t {
 	char cr_client_val[];   /*< Suplied co_owner */
 };
 
+extern pool_t *client_id_pool;
+
+extern hash_table_t *ht_client_record;
 extern hash_table_t *ht_confirmed_client_id;
 extern hash_table_t *ht_unconfirmed_client_id;
 

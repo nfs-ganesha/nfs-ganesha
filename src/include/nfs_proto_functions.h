@@ -191,6 +191,14 @@ typedef struct nfs_function_desc__ {
 	unsigned int dispatch_behaviour;
 } nfs_function_desc_t;
 
+extern const nfs_function_desc_t nfs3_func_desc[];
+extern const nfs_function_desc_t nfs4_func_desc[];
+extern const nfs_function_desc_t mnt1_func_desc[];
+extern const nfs_function_desc_t mnt3_func_desc[];
+extern const nfs_function_desc_t nlm4_func_desc[];
+extern const nfs_function_desc_t rquota1_func_desc[];
+extern const nfs_function_desc_t rquota2_func_desc[];
+
 int mnt_Null(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 

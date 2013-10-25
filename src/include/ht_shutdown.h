@@ -49,7 +49,7 @@
 
 static inline int cache_offsetof(struct hash_table *ht, struct rbt_node *node)
 {
-	return (RBT_VALUE(node) % ht->parameter.cache_entry_count);
+	return RBT_VALUE(node) % ht->parameter.cache_entry_count;
 }
 
 static inline void ht_unsafe_zap(struct hash_table *ht,
@@ -65,9 +65,8 @@ static inline void ht_unsafe_zap(struct hash_table *ht,
 	if (partition->cache) {
 		uint32_t offset = cache_offsetof(ht, node);
 		struct rbt_node *cnode = partition->cache[offset];
-		if (cnode) {
+		if (cnode)
 			partition->cache[offset] = NULL;
-		}
 	}
 
 	/* Now remove the entry */
@@ -109,16 +108,15 @@ static inline void ht_unsafe_zap_by_key(struct hash_table *ht,
 	root = &(ht->partitions[index].rbt);
 
 	RBT_FIND_LEFT(root, cursor, rbt_hash);
-	if (cursor == NULL) {
+	if (cursor == NULL)
 		return;
-	}
 
 	while ((cursor != NULL) && (RBT_VALUE(cursor) == rbt_hash)) {
 		data = RBT_OPAQ(cursor);
 		if (ht->parameter.compare_key(key, &(data->key)) == 0) {
 			if (partition->cache) {
-				partition->cache[cache_offsetof(ht, cursor)]
-				    = NULL;
+				partition->cache[cache_offsetof(ht,
+								cursor)] = NULL;
 			}
 			found = true;
 			break;
@@ -126,9 +124,8 @@ static inline void ht_unsafe_zap_by_key(struct hash_table *ht,
 		RBT_INCREMENT(cursor);
 	}
 
-	if (!found) {
+	if (!found)
 		return;
-	}
 
 	ht_unsafe_zap(ht, partition, cursor);
 }

@@ -42,8 +42,6 @@
 #include "nfs_exports.h"
 #include "nfs_core.h"
 
-extern pool_t *nfs41_session_pool;
-
 /*****************************************************************************
  *
  * Misc functions
@@ -107,6 +105,8 @@ int Init_9p_hash(void);
  * NLM State functions
  *
  ******************************************************************************/
+
+void free_nsm_client(state_nsm_client_t *client);
 
 /* These refcount functions must not be called holding the ssc_mutex */
 void inc_nsm_client_ref(state_nsm_client_t *client);
@@ -246,6 +246,8 @@ int32_t inc_session_ref(nfs41_session_t *session);
 int32_t dec_session_ref(nfs41_session_t *session);
 
 int display_client_record(nfs_client_record_t *record, char *str);
+
+void free_client_record(nfs_client_record_t *record);
 
 int32_t inc_client_record_ref(nfs_client_record_t *record);
 int32_t dec_client_record_ref(nfs_client_record_t *record);
