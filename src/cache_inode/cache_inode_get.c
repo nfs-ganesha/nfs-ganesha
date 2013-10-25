@@ -220,7 +220,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}			/* ! cached only */
  out:
-	return (entry);
+	return entry;
 }
 
 /**

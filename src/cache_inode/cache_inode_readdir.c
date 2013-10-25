@@ -247,7 +247,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 	}
 
 out:
-	return (status);
+	return status;
 }				/* cache_inode_operate_cached_dirent */
 
 /**
@@ -393,7 +393,7 @@ populate_dirent(const struct req_op_context *opctx,
 	fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*state->status = cache_inode_error_convert(fsal_status);
-		return (false);
+		return false;
 	}
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
@@ -405,7 +405,7 @@ populate_dirent(const struct req_op_context *opctx,
 		*state->status = CACHE_INODE_NOT_FOUND;
 		/* we do not free entry_hdl because it is consumed by
 		   cache_inode_new_entry */
-		return (false);
+		return false;
 	}
 	*state->status =
 	    cache_inode_add_cached_dirent(state->directory, name, cache_entry,
@@ -415,9 +415,9 @@ populate_dirent(const struct req_op_context *opctx,
 
 	if ((*state->status != CACHE_INODE_SUCCESS) &&
 	    (*state->status != CACHE_INODE_ENTRY_EXISTS))
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 /**

@@ -185,12 +185,15 @@ cache_inode_key_dup(cache_inode_key_t *tgt,
 {
 	tgt->kv.len = src->kv.len;
 	tgt->kv.addr = gsh_malloc(src->kv.len);
+
 	if (!tgt->kv.addr)
-		return (ENOMEM);
+		return ENOMEM;
+
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
 	tgt->exportid = src->exportid;
-	return (0);
+
+	return 0;
 }
 
 /**

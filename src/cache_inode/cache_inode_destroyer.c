@@ -37,7 +37,7 @@
  * of the world.
  */
 
-#include "sal_data.h"
+#include "sal_functions.h"
 #include "ht_shutdown.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -46,25 +46,12 @@
 #include "cache_inode_hash.h"
 #include "nsm.h"
 
-void free_nsm_client(state_nsm_client_t *client);
-void free_client_record(nfs_client_record_t *record);
-void dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client);
-void dec_state_owner_ref_for_shutdown(state_owner_t *owner);
-void dec_client_id_ref_for_shutdown(nfs_client_id_t *clientid);
-void free_client_id_for_shutdown(nfs_client_id_t *clientid);
-void remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry);
-void state_del_for_shutdown(state_t *state, cache_entry_t *entry);
-
-/* XXX checkpatch.pl doesn't like these */
-extern hash_table_t *ht_nsm_client;
-extern hash_table_t *ht_client_record;
-extern hash_table_t *ht_session_id;
-extern hash_table_t *ht_nlm_client;
-extern hash_table_t *ht_nlm_owner;
-extern hash_table_t *ht_9p_owner;
-extern hash_table_t *ht_state_id;
-extern pool_t *nfs41_session_pool;
-extern pool_t *client_id_pool;
+static void dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client);
+static void dec_state_owner_ref_for_shutdown(state_owner_t *owner);
+static void dec_client_id_ref_for_shutdown(nfs_client_id_t *clientid);
+static void free_client_id_for_shutdown(nfs_client_id_t *clientid);
+static void remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry);
+static void state_del_for_shutdown(state_t *state, cache_entry_t *entry);
 
 /**
  * @brief Relinquish a reference on an NSM client without taking locks

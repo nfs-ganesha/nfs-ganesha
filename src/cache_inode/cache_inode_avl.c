@@ -194,7 +194,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 			 v->hk.k);
 		break;
 	}
-	return (code);
+	return code;
 }
 
 #define MIN_COOKIE_VAL 3
@@ -245,7 +245,7 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 
 		code = cache_inode_avl_insert_impl(entry, v, j, 0);
 		if (code >= 0)
-			return (code);
+			return code;
 	}
 
 	LogCrit(COMPONENT_CACHE_INODE,
@@ -260,7 +260,7 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 		v->hk.k = v->hk.k + j2;
 		code = cache_inode_avl_insert_impl(entry, v, j, j2);
 		if (code >= 0)
-			return (code);
+			return code;
 		j2++;
 	}
 
@@ -268,7 +268,7 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 		"cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)", j,
 		v->name);
 
-	return (-1);
+	return -1;
 }
 
 cache_inode_dir_entry_t *
@@ -312,7 +312,7 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 					 node_hk);
 
  out:
-	return (dirent);
+	return dirent;
 }
 
 cache_inode_dir_entry_t *
@@ -352,7 +352,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 						  node_hk);
 			if (strcmp(name, v2->name) == 0) {
 				assert(!(v2->flags & DIR_ENTRY_FLAG_DELETED));
-				return (v2);
+				return v2;
 			}
 		}
 	}
@@ -361,7 +361,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 		     "cache_inode_avl_qp_lookup_s: entry not found at j=%d (%s)",
 		     j, name);
 
-	return (NULL);
+	return NULL;
 }
 
 /** @} */

@@ -273,9 +273,15 @@ cache_inode_rename(cache_entry_t *dir_src,
 			status_ref_dst = CACHE_INODE_SUCCESS;
 	}
 
-	if (((status = status_ref_dir_src) != CACHE_INODE_SUCCESS)
-	    || ((status = status_ref_dir_dst) != CACHE_INODE_SUCCESS)
-	    || ((status = status_ref_dst) != CACHE_INODE_SUCCESS))
+	status = status_ref_dir_src;
+
+	if (status == CACHE_INODE_SUCCESS)
+		status = status_ref_dir_dst;
+
+	if (status == CACHE_INODE_SUCCESS)
+		status = status_ref_dst;
+
+	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
 	/* Must take locks on directories now,

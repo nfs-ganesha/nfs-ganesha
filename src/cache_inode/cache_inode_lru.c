@@ -292,7 +292,7 @@ lru_queue_of(cache_entry_t *entry)
 		break;
 	}			/* switch */
 
-	return (q);
+	return q;
 }
 
 /**
@@ -513,7 +513,7 @@ lru_reap_impl(enum lru_q_id qid)
 	/* ! reclaimable */
 	lru = NULL;
  out:
-	return (lru);
+	return lru;
 }
 
 static inline cache_inode_lru_t *
@@ -522,13 +522,13 @@ lru_try_reap_entry(void)
 	cache_inode_lru_t *lru;
 
 	if (lru_state.entries_used < lru_state.entries_hiwat)
-		return (NULL);
+		return NULL;
 
 	lru = lru_reap_impl(LRU_ENTRY_L2);
 	if (!lru)
 		lru = lru_reap_impl(LRU_ENTRY_L1);
 
-	return (lru);
+	return lru;
 }
 
 /**
@@ -803,10 +803,9 @@ lru_run(struct fridgethr_context *ctx)
 							    entry, CL_FLAGS);
 						if (cache_status !=
 						    CACHE_INODE_SUCCESS) {
-					LogCrit
-						(COMPONENT_CACHE_INODE_LRU,
-						 "Error closing file in "
-						 "LRU thread.");
+							LogCrit(
+						      COMPONENT_CACHE_INODE_LRU,
+							"Error closing file in LRU thread.");
 						} else {
 							++totalclosed;
 							++closed;
@@ -1075,9 +1074,15 @@ alloc_cache_entry(cache_entry_t **entry)
 	}
 
 	/* Initialize the entry locks */
-	if (((rc = pthread_rwlock_init(&nentry->attr_lock, NULL)) != 0)
-	    || ((rc = pthread_rwlock_init(&nentry->content_lock, NULL)) != 0)
-	    || ((rc = pthread_rwlock_init(&nentry->state_lock, NULL)) != 0)) {
+	rc = pthread_rwlock_init(&nentry->attr_lock, NULL);
+
+	if (rc == 0)
+		rc = pthread_rwlock_init(&nentry->content_lock, NULL);
+
+	if (rc == 0)
+		rc = pthread_rwlock_init(&nentry->state_lock, NULL);
+
+	if (rc != 0) {
 		/* Recycle */
 		LogCrit(COMPONENT_CACHE_INODE,
 			"pthread_rwlock_init returned %d (%s)", rc,
@@ -1093,7 +1098,7 @@ alloc_cache_entry(cache_entry_t **entry)
 
  out:
 	*entry = nentry;
-	return (status);
+	return status;
 }
 
 /**
@@ -1141,7 +1146,7 @@ cache_inode_lru_get(cache_entry_t **entry)
 
  out:
 	*entry = nentry;
-	return (status);
+	return status;
 }
 
 /**
@@ -1167,11 +1172,11 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 	QLOCK(qlane);
 	if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
 		QUNLOCK(qlane);
-		return (CACHE_INODE_DEAD_ENTRY);
+		return CACHE_INODE_DEAD_ENTRY;
 	}
 
 	/* Pin if not pinned already */
-	cond_pin_entry(entry, LRU_FLAG_NONE /* future */ );
+	cond_pin_entry(entry, LRU_FLAG_NONE /* future */);
 
 	/* take pin and ref counts */
 	atomic_inc_int32_t(&entry->lru.refcnt);
@@ -1179,7 +1184,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 
 	QUNLOCK(qlane);		/* !LOCKED (lane) */
 
-	return (CACHE_INODE_SUCCESS);
+	return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -1231,7 +1236,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry,
 	/* Also release an LRU reference */
 	atomic_dec_int32_t(&entry->lru.refcnt);
 
-	return (CACHE_INODE_SUCCESS);
+	return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -1254,7 +1259,7 @@ cache_inode_is_pinned(cache_entry_t *entry)
 	rc = (entry->lru.pin_refcnt > 0);
 	QUNLOCK(qlane);
 
-	return (rc);
+	return rc;
 }
 
 /**
