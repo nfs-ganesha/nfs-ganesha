@@ -62,7 +62,7 @@ struct pan_layoutget_ioctl {
 	struct fsal_layoutget_res *res;	/* IN/OUT */
 };
 #define PAN_FS_CLIENT_PNFS_LAYOUTGET    \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 100, struct pan_layoutget_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 100, struct pan_layoutget_ioctl)
 
 /**
  * @brief Get information about a pNFS device
@@ -85,7 +85,7 @@ struct pan_getdeviceinfo_ioctl {
 	const struct pnfs_deviceid deviceid;	/*   IN   */
 };
 #define PAN_FS_CLIENT_PNFS_DEVICEINFO   \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 101, struct pan_getdeviceinfo_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 101, struct pan_getdeviceinfo_ioctl)
 
 /**
  * @brief Potentially return one layout segment
@@ -117,7 +117,7 @@ struct pan_layoutreturn_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRETURN \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 102, struct pan_layoutreturn_ioctl)
 
 /**
  * @brief Commit on a writable layout
@@ -138,7 +138,7 @@ struct pan_layoutcommit_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTCOMMIT \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 103, struct pan_layoutcommit_ioctl)
 
 /**
  * @brief Retrieve next layout Recall
@@ -163,7 +163,7 @@ struct pan_cb_layoutrecall_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_LAYOUTRECALL \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 104, struct pan_cb_layoutrecall_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 104, struct pan_cb_layoutrecall_ioctl)
 
 /**
  * @brief Tell Kernel to release any callback threads
@@ -176,6 +176,6 @@ struct pan_cancel_recalls_ioctl {
 };
 
 #define PAN_FS_CLIENT_PNFS_CANCEL_RECALLS \
-  _IOWR(PAN_FS_CLIENT_SDK_IOCTL, 105, struct pan_cancel_recalls_ioctl)
+	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 105, struct pan_cancel_recalls_ioctl)
 
 #endif				/* __PAN_FS_PNFS_API_H__ */

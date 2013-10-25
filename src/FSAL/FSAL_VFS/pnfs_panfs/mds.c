@@ -224,8 +224,8 @@ nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 	struct pan_ioctl_xdr pixdr;
 	nfsstat4 ret;
 
-	DBG_PRNT2
-	    ("reclaim=%d return_type=%d fsal_seg_data=%p dispose=%d last_segment=%d ncookies=%zu\n",
+	DBG_PRNT2(
+	     "reclaim=%d return_type=%d fsal_seg_data=%p dispose=%d last_segment=%d ncookies=%zu\n",
 	     arg->circumstance, arg->return_type, arg->fsal_seg_data,
 	     arg->dispose, arg->last_segment, arg->ncookies);
 
@@ -306,8 +306,8 @@ static void *callback_thread(void *callback_info)
 			struct pnfs_segment seg = events[e].seg;
 			void *r_cookie = events[e].cookie;
 
-			DBG_PRNT
-			    ("%d] layout[0x%lx,0x%lx,0x%x] myself=%p r_cookie=%p\n",
+			DBG_PRNT(
+			     "%d] layout[0x%lx,0x%lx,0x%x] myself=%p r_cookie=%p\n",
 			     e, seg.offset, seg.length, seg.io_mode, myself,
 			     r_cookie);
 
