@@ -21,8 +21,7 @@ check_one_file()
 		mkdir -p $FDIR
 	fi
 
-	NO_SPACING_OPT=""
-	NO_COMPLEX_MACRO_OPT=""
+	EXTRA_OPT=""
 
 	if [ $NO_SPACING -eq 1 ]
 	then
@@ -34,7 +33,7 @@ check_one_file()
 
 		if [ $RC -eq 0 ]
 		then
-			NO_SPACING_OPT="--ignore SPACING"
+			EXTRA_OPT="$EXTRA_OPT --ignore SPACING"
 		fi
 
 		egrep $NO_COMPLEX_MACRO_FILES $OUTFILE 2>&1 >/dev/null
@@ -43,37 +42,55 @@ check_one_file()
 
 		if [ $RC -eq 0 ]
 		then
-			NO_COMPLEX_MACRO_OPT="--ignore COMPLEX_MACRO"
+			EXTRA_OPT="$EXTRA_OPT --ignore COMPLEX_MACRO"
+		fi
+
+		egrep $NO_DEEP_INDENTATION_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore DEEP_INDENTATION"
+		fi
+
+		egrep $NO_BRACKET_SPACE_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore BRACKET_SPACE"
 		fi
 	fi
 
-	checkpatch.pl $TYPEDEF \
-		      $NO_SPACING_OPT \
-		      $NO_COMPLEX_MACRO_OPT \
-		      --file $1 \
-		      2>&1 > $OUTFILE
+	checkpatch.pl $TYPEDEF $EXTRA_OPT  --file $1 > $OUTFILE 2> $ERROR_FILE
 
 	RESULT=`grep '^total:'  $OUTFILE`
 
 	if [ -n "$REPORT_FILT" ]
 	then
-		grep "$REPORT_FILT" $OUTFILE 2>&1 > /dev/null
+		grep "$REPORT_FILT" $OUTFILE > /dev/null 2>&1
 		RC=$?
 	else
 		RC=1
 	fi
 
-	if [ $RC -eq 1 ]
+	if [ $RC -eq 1 ] || [ -s $ERROR_FILE ]
 	then
 		if [ $ONEFILE -eq 1 ]
 		then
-			cat $TEMP >>$REPORT_FILE
+			cat $OUTFILE >>$REPORT_FILE
+			cat $ERROR_FILE >>$REPORT_FILE
 		else
 			echo $1 $RESULT >>$REPORT_FILE
+			cat $ERROR_FILE | sed -e "s@\(.*\)@$1 \1@" >>$REPORT_FILE
+			cat $ERROR_FILE >>$OUTFILE
 		fi
 		if [ $QUIET -eq 0 ]
 		then
 			echo $1 $RESULT
+			cat $ERROR_FILE | sed -e "s@\(.*\)@$1 \1@"
 		fi
 	fi
 }
@@ -82,14 +99,17 @@ check_files()
 {
 	while [ -n "$1" ]
 	do
-		check_one_file $1
+		if [ -s "$1" ]
+		then
+			check_one_file $1
+		fi
 		shift
 	done
 }
 
 check_find()
 {
-	check_files `find $DIR -name '*.[ch]' | egrep -v "$EXCLUDE"`
+	check_files `find $DIR -name '*.[ch]' | egrep -v "$EXCLUDE" | sort`
 }
 
 check_git_files()
@@ -103,7 +123,9 @@ check_git_files()
 
 check_git()
 {
-	check_git_files `git diff --name-only $COMMIT | egrep -v "$EXCLUDE"`
+	echo "diff --name-only $COMMIT | egrep -v $EXCLUDE"
+	git diff --name-only $COMMIT | egrep -v "$EXCLUDE"
+	check_git_files `git diff --name-only $COMMIT | egrep -v "$EXCLUDE" | sort`
 }
 
 show_help()
@@ -126,6 +148,8 @@ Options:
 -v       turn off:
          --ignore SPACING on RPC program header files (like nfs23.h) and
          --ignore COMPLEX_MACRO on certain files
+         --ignore BRACKET_SPACE in certain files
+         --ignore DEEP_INDENTATION in certain files
 -i       Include files agreed on to ignore (ConfigParsing|Protocols/XDR
 -e       Include files from external prohects (murmur3|cidr|atomic_x86|city)
 -g       Use git-diff --name-only instead of find (-d will be ignored)
@@ -142,7 +166,7 @@ DIR="."
 ALWAYS="libtirpc|libntirpc|CMakeFiles|tools/test_findlog.c|include/config.h"
 
 EXTERNAL="murmur3.h|cidr.h|cidr/|atomic_x86_64.h|include/city|avltree.h"
-EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c"
+EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/"
 
 NO_EXTERNAL=0
 
@@ -164,6 +188,10 @@ NO_SPACING_FILES="nfs23.h|nfsv41.h|nlm4.h|nsm.h|rquota.h"
 
 NO_COMPLEX_MACRO_FILES="include/ganesha_dbus.h|include/server_stats_private.h"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_intrinsic.h"
+
+NO_DEEP_INDENTATION_FILES="cache_inode/cache_inode_lru.c|include/rbt_tree.h"
+
+NO_BRACKET_SPACE_FILES="include/nfs_req_queue.h"
 
 NO_SPACING=1
 
@@ -226,6 +254,7 @@ fi
 
 REPORT_FILE=$ODIR/results.cp
 TEMP=$ODIR/results.temp
+ERROR_FILE=$ODIR/results.err
 
 date > $REPORT_FILE
 
@@ -238,31 +267,51 @@ fi
 
 echo "CLEAN=$CLEAN NOWARN=$NOWARN TYPEDEF=$TYPEDEF" >> $REPORT_FILE
 
-if [ -n =$EXCLUDE ]
-then
-	echo "EXCLUDE=$EXCLUDE" >> $REPORT_FILE
-fi
-
 if [ $NO_SPACING -eq 1 ]
 then
+	echo >> $REPORT_FILE
 	echo "NO_SPACING_FILES=$NO_SPACING_FILES" >> $REPORT_FILE
 	echo "NO_COMPLEX_MACRO_FILES=$NO_COMPLEX_MACRO_FILES" >> $REPORT_FILE
+	echo "NO_DEEP_INDENTATION_FILES=$NO_DEEP_INDENTATION_FILES" >> $REPORT_FILE
+	echo "NO_BRACKET_SPACE_FILES=$NO_BRACKET_SPACE_FILES" >> $REPORT_FILE
+fi
+
+if [ -n "$EXCLUDE" ]
+then
+	echo >> $REPORT_FILE
+	echo "EXCLUDE=$EXCLUDE" >> $REPORT_FILE
 fi
 
 if [ $NO_IGNORE -eq 0 ]
 then
-	EXCLUDE="$IGNORE|$EXCLUDE"
+	if [ -n "$EXCLUDE" ]
+	then
+		EXCLUDE="$IGNORE|$EXCLUDE"
+	else
+		EXCLUDE="$IGNORE"
+	fi
+
+	echo >> $REPORT_FILE
 	echo "IGNORE=$IGNORE" >> $REPORT_FILE
 fi
 
 if [ $NO_EXTERNAL -eq 0 ]
 then
-	EXCLUDE="$EXTERNAL|$EXCLUDE"
+	if [ -n "$EXCLUDE" ]
+	then
+		EXCLUDE="$EXTERNAL|$EXCLUDE"
+	else
+		EXCLUDE="$EXTERNAL"
+	fi
+
+	echo >> $REPORT_FILE
 	echo "EXTERNAL=$EXTERNAL" >> $REPORT_FILE
 fi
 
 EXCLUDE="$ALWAYS|$EXCLUDE"
-	
+
+echo >> $REPORT_FILE
+
 if [ $QUIET -eq 0 ]
 then
 	cat $REPORT_FILE
@@ -283,6 +332,7 @@ $FIND
 if [ -e $TEMP ]
 then
 	rm -f $TEMP
+	rm -f $ERROR_FILE
 fi
 
 if [ $REPORT -eq 1 ]
