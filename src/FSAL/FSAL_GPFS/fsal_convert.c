@@ -584,14 +584,6 @@ fsal_status_t fsal_mode_2_gpfs_mode(mode_t fsal_mode, fsal_accessflags_t v4mask,
 			}
 		}
 
-#if 0
-		if (v4mask & FSAL_ACE_PERM_READ_NAMED_ATTR)
-			gpfs_mode |= FSAL_R_OK;
-
-		if (v4mask & FSAL_ACE_PERM_WRITE_NAMED_ATTR)
-			gpfs_mode |= FSAL_W_OK;
-#endif
-
 		if (!is_dir) {
 			if (v4mask & FSAL_ACE_PERM_EXECUTE)
 				gpfs_mode |= FSAL_X_OK;
@@ -602,27 +594,8 @@ fsal_status_t fsal_mode_2_gpfs_mode(mode_t fsal_mode, fsal_accessflags_t v4mask,
 			}
 		}
 
-#if 0
-		if (v4mask & FSAL_ACE_PERM_READ_ATTR)
-			gpfs_mode |= FSAL_R_OK;
-
-		if (v4mask & FSAL_ACE_PERM_WRITE_ATTR)
-			gpfs_mode |= FSAL_W_OK;
-#endif
-
 		if (v4mask & FSAL_ACE_PERM_DELETE)
 			gpfs_mode |= FSAL_W_OK;
-
-#if 0
-		if (v4mask & FSAL_ACE_PERM_READ_ACL)
-			gpfs_mode |= FSAL_R_OK;
-
-		if (v4mask & FSAL_ACE_PERM_WRITE_ACL)
-			gpfs_mode |= FSAL_W_OK;
-
-		if (v4mask & FSAL_ACE_PERM_WRITE_OWNER)
-			gpfs_mode |= FSAL_W_OK;
-#endif
 
 		gpfs_mode = gpfs_mode >> 24;
 	} else {

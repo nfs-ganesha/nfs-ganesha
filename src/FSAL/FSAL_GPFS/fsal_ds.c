@@ -181,7 +181,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	warg.mountdirfd = gpfs_get_root_fd(ds_pub->export);
 	warg.handle = gpfs_handle;
-	warg.bufP = buffer;
+	warg.bufP = (char *)buffer;
 	warg.offset = offset;
 	warg.length = write_length;
 	warg.stability_wanted = stability_wanted;
