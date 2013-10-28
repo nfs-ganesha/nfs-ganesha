@@ -561,6 +561,14 @@ check_library_exists(
 	HAVE_LIBCAP 
 	)
 
+if(HAVE_LIBCAP)
+  set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBCAP})
+  set(USE_CAPS ON)
+else(HAVE_LIBCAP)
+  set(USE_CAPS OFF)
+  message(STATUS "Could not find capabilities library, disabling USE_CAPS")
+endif(HAVE_LIBCAP)
+
 # Roll up required libraries
 
 #Protocols we support
@@ -680,6 +688,7 @@ message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
+message(STATUS "USE_CAPS = ${USE_CAPS}")
 message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
 message(STATUS "DISTNAME_HAS_GIT_DATA = ${DISTNAME_HAS_GIT_DATA}" )
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")

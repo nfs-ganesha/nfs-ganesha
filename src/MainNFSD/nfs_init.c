@@ -1061,6 +1061,57 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 }				/* nfs_Init */
 
+#ifdef USE_CAPS
+/**
+ * @brief Lower my capabilities (privs) so quotas work right
+ *
+ * This will/should be moved to set_credentials where it belongs
+ * Deal with capabilities in order to remove CAP_SYS_RESOURCE (needed
+ * for proper management of data quotas)
+ */
+
+static void lower_my_caps(void) {
+	struct __user_cap_data_struct capdata;
+	struct __user_cap_header_struct caphdr;
+	ssize_t capstrlen = 0;
+	cap_t my_cap;
+	char *cap_text;
+
+	caphdr.version = _LINUX_CAPABILITY_VERSION_2;
+	caphdr.pid = getpid();
+
+	if (capget(&caphdr, &capdata) != 0)
+		LogFatal(COMPONENT_INIT,
+			 "Failed to query capabilities for process, errno=%u",
+			 errno);
+
+	/* Set the capability bitmask to remove CAP_SYS_RESOURCE */
+	if (capdata.effective & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata.effective &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+
+	if (capdata.permitted & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata.permitted &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+
+	if (capdata.inheritable & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata.inheritable &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+
+	if (capset(&caphdr, &capdata) != 0)
+		LogFatal(COMPONENT_INIT,
+			 "Failed to set capabilities for process, errno=%u",
+			 errno);
+	else
+		LogEvent(COMPONENT_INIT,
+			 "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL");
+
+	/* Print newly set capabilities (same as what CLI "getpcaps" displays */
+	my_cap = cap_get_proc();
+	cap_text = cap_to_text(my_cap, &capstrlen);
+	LogEvent(COMPONENT_INIT, "currenty set capabilities are: %s",
+		 cap_text);
+	cap_free(cap_text);
+	cap_free(my_cap);
+}
+#endif
 /**
  * @brief Start NFS service
  *
@@ -1072,12 +1123,6 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* store the start info so it is available for all layers */
 	nfs_start_info = *p_start_info;
-
-#ifdef LINUX
-	struct __user_cap_data_struct capdata;
-	struct __user_cap_header_struct caphdr;
-	ssize_t capstrlen = 0;
-#endif
 
 	if (p_start_info->dump_default_config == true) {
 		nfs_print_param_config();
@@ -1127,40 +1172,8 @@ void nfs_start(nfs_start_info_t *p_start_info)
 		       sizeof(NFS4_write_verifier));
 	}
 
-#ifdef LINUX
-	/* Deal with capabilities in order to remove CAP_SYS_RESOURCE (needed
-	 * for proper management of data quotas) */
-	/* kernel is newer than 2.6.25 */
-	caphdr.version = _LINUX_CAPABILITY_VERSION_2;
-	caphdr.pid = getpid();
-
-	if (capget(&caphdr, &capdata) != 0)
-		LogFatal(COMPONENT_INIT,
-			 "Failed to query capabilities for process, errno=%u",
-			 errno);
-
-	/* Set the capability bitmask to remove CAP_SYS_RESOURCE */
-	if (capdata.effective & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.effective &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capdata.permitted & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.permitted &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capdata.inheritable & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.inheritable &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capset(&caphdr, &capdata) != 0)
-		LogFatal(COMPONENT_INIT,
-			 "Failed to set capabilities for process, errno=%u",
-			 errno);
-	else
-		LogEvent(COMPONENT_INIT,
-			 "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL");
-
-	/* Print newly set capabilities (same as what CLI "getpcaps" displays */
-	cap_t my_cap = cap_get_proc();
-	LogEvent(COMPONENT_INIT, "currenty set capabilities are: %s",
-		 cap_to_text(my_cap, &capstrlen));
+#ifdef USE_CAPS
+	lower_my_caps();
 #endif
 
 	/* Initialize all layers and service threads */
