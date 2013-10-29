@@ -125,6 +125,7 @@ cache_inode_create(cache_entry_t *parent,
           *status = CACHE_INODE_ENTRY_EXISTS;
           if (entry->type != type) {
                /* Incompatible types, returns NULL */
+               *status = CACHE_INODE_SERVERFAULT;
                cache_inode_lru_unref(entry, LRU_FLAG_NONE);
                entry = NULL;
           }
@@ -208,6 +209,36 @@ cache_inode_create(cache_entry_t *parent,
                         type);
                cache_inode_kill_entry(parent);
           }
+          else if (fsal_status.major == ERR_FSAL_EXIST) {
+               /* Already exists. Check if type if correct */
+               entry = cache_inode_lookup(parent,
+                                name,
+                                attr,
+                                context,
+                                status);
+               if (entry != NULL) {
+                    *status = CACHE_INODE_ENTRY_EXISTS;
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "create failed because it already exists, created after the lookup");
+                    if (entry->type != type) {
+                         /* Incompatible types, returns NULL */
+                         *status = CACHE_INODE_SERVERFAULT;
+                         cache_inode_put(entry);
+                         entry = NULL;
+                    }
+                    goto out;
+               }
+
+               if (*status == CACHE_INODE_NOT_FOUND) {
+                    /* Too bad, FSAL insist the file exists when we try to
+                     * create it, but lookup couldn't find it, retry. */
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "lookup failed after create.");
+                    *status = CACHE_INODE_INCONSISTENT_ENTRY;
+                    goto out;
+               }
+          }
+
           *status = cache_inode_error_convert(fsal_status);
           entry = NULL;
           LogFullDebug(COMPONENT_CACHE_INODE,

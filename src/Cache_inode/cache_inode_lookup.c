@@ -266,6 +266,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                entry = NULL;
           }
      }
+     *status = cache_status;
 
 out:
 
