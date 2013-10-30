@@ -87,7 +87,8 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
         nfs_grace_start_t *gsp;
         fsal_op_context_t  context;
         int                secs = 0;
-        extern void        get_first_context(fsal_op_context_t *);
+        int                fsg;
+        extern int         get_first_context(fsal_op_context_t *);
 
         /*
          * grace should always be greater than or equal to lease time,
@@ -97,7 +98,7 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
          */
 
         duration = nfs_param.nfsv4_param.lease_lifetime;
-        get_first_context(&context);
+        fsg = get_first_context(&context);
 
         P(grace.g_mutex);
 
@@ -116,15 +117,17 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
                 }
         }
 
-        /*
-         * GPFS grace of 0 == Default (ie. 60 Secs)
-         * NB:  Revisit in 2.0 code (S1050331)
-         */
-        secs = 0;
-        FSAL_start_grace(&context, secs);
-        LogEvent(COMPONENT_STATE,
-                 "NFS Server Now IN GRACE: ganesha = %d, FSAL = %d",
-                 duration, secs);
+        if (fsg) {
+                /*
+                 * GPFS grace of 0 == Default (ie. 60 Secs)
+                 * NB:  Revisit in 2.0 code (S1050331)
+                 */
+                secs = 0;
+                FSAL_start_grace(&context, secs);
+                LogEvent(COMPONENT_STATE,
+                        "NFS Server Now IN GRACE: ganesha = %d, FSAL = %d",
+                        duration, secs);
+        }
 
         grace.g_start = time(NULL);
         grace.g_duration = duration;

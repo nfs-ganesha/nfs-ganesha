@@ -4146,7 +4146,7 @@ void set_mounted_on_fileid(cache_entry_t      * entry,
  *
  * Get rid of this monstrosity if/when GPFS ever supports per-FS grace
  */
-void
+int
 get_first_context(fsal_op_context_t *p_context)
 {
       exportlist_t              *pcurrent = NULL;
@@ -4155,13 +4155,19 @@ get_first_context(fsal_op_context_t *p_context)
       fsal_status_t              fsal_status;
       fsal_path_t                exportpath_fsal;
 
+      /*
+       * If no exports defined, punt
+       */
+      if (glist_empty(nfs_param.pexportlist))
+                return 0;
+
       /* Get the context for FSAL super user */
       memset(p_context, 0, sizeof(fsal_op_context_t));
       fsal_status = FSAL_InitClientContext(p_context);
       if (FSAL_IS_ERROR(fsal_status)) {
           LogCrit(COMPONENT_INIT,
                 "Couldn't get the context for FSAL super user");
-          return;
+          return 0;
       }
 
       /* loop the export list */
@@ -4207,6 +4213,12 @@ get_first_context(fsal_op_context_t *p_context)
           }
 
           /* We're done ! - p_context has the goods */
-          return;
+          return 1;
       }
+
+      /*
+       * NB: Getting here implies there are exports defined
+       *     for which we could not get even one context.
+       */
+      return 0;
 }
