@@ -38,6 +38,8 @@
 #include "log.h"
 #include "nfs23.h"
 #include "nlm4.h"
+#include "nfs_exports.h"
+#include "cache_inode.h"
 
 /*
  * Structure of the filehandle

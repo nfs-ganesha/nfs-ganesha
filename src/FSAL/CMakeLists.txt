@@ -44,3 +44,6 @@ if(USE_FSAL_GLUSTER)
   add_subdirectory(FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
 
+if(USE_FSAL_PSEUDO)
+  add_subdirectory(FSAL_PSEUDO)
+endif(USE_FSAL_PSEUDO)
