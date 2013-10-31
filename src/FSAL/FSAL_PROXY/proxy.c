@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "config.h"
@@ -56,12 +56,12 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
 
 /* defined the set of attributes supported with POSIX */
 #define SUPPORTED_ATTRIBUTES (                                       \
-          ATTR_TYPE     | ATTR_SIZE     |                  \
-          ATTR_FSID     | ATTR_FILEID   |                  \
-          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-          ATTR_CHGTIME  )
+		ATTR_TYPE     | ATTR_SIZE     |			     \
+		ATTR_FSID     | ATTR_FILEID   |			     \
+		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |     \
+		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |     \
+		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |     \
+		ATTR_CHGTIME)
 
 /* filesystem info for VFS */
 static struct fsal_staticfsinfo_t proxy_info = {
@@ -86,7 +86,7 @@ static struct fsal_staticfsinfo_t proxy_info = {
 };
 
 static int pxy_key_to_param(const char *key, const char *val,
-			    fsal_init_info_t * info, const char *name)
+			    fsal_init_info_t *info, const char *name)
 {
 	struct pxy_fsal_module *pxy =
 	    container_of(info, struct pxy_fsal_module, init);
@@ -97,7 +97,8 @@ static int pxy_key_to_param(const char *key, const char *val,
 			init_info->srv_addr = inet_addr(val);
 		} else {
 			struct hostent *hp;
-			if ((hp = gethostbyname(val)) == NULL) {
+			hp = gethostbyname(val);
+			if (hp == NULL) {
 				LogCrit(COMPONENT_CONFIG,
 					"Cannot resolve host name '%s'", val);
 				return 1;
@@ -242,7 +243,8 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 
 #ifdef _HANDLE_MAPPING
-	if ((rc = HandleMap_Init(&pxy->special.hdlmap)) < 0)
+	rc = HandleMap_Init(&pxy->special.hdlmap);
+	if (rc < 0)
 		return fsalstat(ERR_FSAL_INVAL, -rc);
 #endif
 

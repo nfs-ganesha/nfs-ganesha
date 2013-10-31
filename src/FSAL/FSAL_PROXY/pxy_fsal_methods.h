@@ -42,6 +42,8 @@ struct pxy_export {
 	const proxyfs_specific_initinfo_t *info;
 };
 
+void pxy_handle_ops_init(struct fsal_obj_ops *ops);
+
 int pxy_init_rpc(const struct pxy_fsal_module *);
 
 fsal_status_t pxy_list_ext_attrs(struct fsal_obj_handle *obj_hdl,

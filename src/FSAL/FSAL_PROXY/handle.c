@@ -117,7 +117,7 @@ struct pxy_obj_handle {
 };
 
 static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
-					       const nfs_fh4 * fh,
+					       const nfs_fh4 *fh,
 					       const struct attrlist *attr);
 
 static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
@@ -290,7 +290,7 @@ static struct bitmap4 empty_bitmap = {
 	.bitmap4_len = 2
 };
 
-static int pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 * data)
+static int pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 {
 	int i;
 	struct bitmap4 bmap = empty_bitmap;
@@ -316,7 +316,7 @@ static int pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 * data)
 	return nfs4_FSALattr_To_Fattr(&args, &bmap, data);
 }
 
-static GETATTR4resok *pxy_fill_getattr_reply(nfs_resop4 * resop, char *blob,
+static GETATTR4resok *pxy_fill_getattr_reply(nfs_resop4 *resop, char *blob,
 					     size_t blob_sz)
 {
 	GETATTR4resok *a = &resop->nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
@@ -444,17 +444,19 @@ static void pxy_new_socket_ready(void)
 	}
 }
 
-static int pxy_connect(const proxyfs_specific_initinfo_t * info,
+static int pxy_connect(const proxyfs_specific_initinfo_t *info,
 		       struct sockaddr_in *dest)
 {
 	int sock;
 	if (info->use_privileged_client_port) {
 		int priv_port = 0;
-		if ((sock = rresvport(&priv_port)) < 0)
+		sock = rresvport(&priv_port);
+		if (sock < 0)
 			LogCrit(COMPONENT_FSAL,
 				"Cannot create TCP socket on privileged port");
 	} else {
-		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+		sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (sock < 0)
 			LogCrit(COMPONENT_FSAL, "Cannot create TCP socket - %d",
 				errno);
 	}
@@ -472,7 +474,7 @@ static int pxy_connect(const proxyfs_specific_initinfo_t * info,
 
 /*
  * NB! rpc_sock can be closed by the sending thread but it will not be
- *     changing its value. Only this function will change rpc_sock which 
+ *     changing its value. Only this function will change rpc_sock which
  *     means that it can look at the value without holding the lock.
  */
 static void *pxy_rpc_recv(void *arg)
@@ -553,7 +555,7 @@ static void *pxy_rpc_recv(void *arg)
 }
 
 static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
-					COMPOUND4res * res)
+					COMPOUND4res *res)
 {
 	enum clnt_stat rc = RPC_CANTRECV;
 	struct timespec ts;
@@ -660,7 +662,7 @@ static int pxy_rpc_renewer_wait(int timeout)
 
 static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 			       const struct user_cred *cred,
-			       COMPOUND4args * args, COMPOUND4res * res)
+			       COMPOUND4args *args, COMPOUND4res *res)
 {
 	XDR x;
 	struct rpc_msg rmsg;
@@ -746,8 +748,8 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 }
 
 int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
-			   uint32_t cnt, nfs_argop4 * argoparray,
-			   nfs_resop4 * resoparray)
+			   uint32_t cnt, nfs_argop4 *argoparray,
+			   nfs_resop4 *resoparray)
 {
 	enum clnt_stat rc;
 	struct pxy_rpc_io_context *ctx;
@@ -790,16 +792,16 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 }
 
 #define pxy_nfsv4_call(exp, creds, cnt, args, resp) \
-        pxy_compoundv4_execute(__func__, creds, cnt, args, resp)
+	pxy_compoundv4_execute(__func__, creds, cnt, args, resp)
 
-void pxy_get_clientid(clientid4 * ret)
+void pxy_get_clientid(clientid4 *ret)
 {
 	pthread_mutex_lock(&pxy_clientid_mutex);
 	*ret = pxy_clientid;
 	pthread_mutex_unlock(&pxy_clientid_mutex);
 }
 
-static int pxy_setclientid(clientid4 * resultclientid, uint32_t * lease_time)
+static int pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
 {
 	int rc;
 	int opcnt = 0;
@@ -901,7 +903,7 @@ static void *pxy_clientid_renewer(void *Arg)
 			}
 		}
 
-		/* We've either failed to renew or rpc socket has been 
+		/* We've either failed to renew or rpc socket has been
 		 * reconnected and we need new client id */
 		LogDebug(COMPONENT_FSAL, "Need %d new client id", needed);
 		pxy_rpc_need_sock();
@@ -989,8 +991,8 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 }
 
 static fsal_status_t pxy_make_object(struct fsal_export *export,
-				     fattr4 * obj_attributes,
-				     const nfs_fh4 * fh,
+				     fattr4 *obj_attributes,
+				     const nfs_fh4 *fh,
 				     struct fsal_obj_handle **handle)
 {
 	struct attrlist attributes;
@@ -1010,7 +1012,7 @@ static fsal_status_t pxy_make_object(struct fsal_export *export,
 }
 
 /*
- * NULL parent pointer is only used by lookup_path when it starts 
+ * NULL parent pointer is only used by lookup_path when it starts
  * from the root handle and has its own export pointer, everybody
  * else is supposed to provide a real parent pointer and matching
  * export
@@ -1098,7 +1100,7 @@ static fsal_status_t pxy_lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t pxy_do_close(const struct user_cred *creds,
-				  const nfs_fh4 * fh4, stateid4 * sid,
+				  const nfs_fh4 *fh4, stateid4 *sid,
 				  struct fsal_export *exp)
 {
 	int rc;
@@ -1108,7 +1110,8 @@ static fsal_status_t pxy_do_close(const struct user_cred *creds,
 	nfs_resop4 resoparray[FSAL_CLOSE_NB_OP_ALLOC];
 	char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0";	/* 12 times \0 */
 
-	/* Check if this was a "stateless" open, then nothing is to be done at close */
+	/* Check if this was a "stateless" open,
+	 * then nothing is to be done at close */
 	if (!memcmp(sid->other, All_Zero, 12))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
@@ -1123,7 +1126,7 @@ static fsal_status_t pxy_do_close(const struct user_cred *creds,
 }
 
 static fsal_status_t pxy_open_confirm(const struct user_cred *cred,
-				      const nfs_fh4 * fh4, stateid4 * stateid,
+				      const nfs_fh4 *fh4, stateid4 *stateid,
 				      struct fsal_export *export)
 {
 	int rc;
@@ -1227,7 +1230,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 			return st;
 	}
 
-	/* The created file is still opened, to preserve the correct 
+	/* The created file is still opened, to preserve the correct
 	 * seqid for later use, we close it */
 	st = pxy_do_close(opctx->creds, &fhok->object, &opok->stateid,
 			  dir_hdl->export);
@@ -1305,7 +1308,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 			       const struct req_op_context *opctx,
 			       const char *name, object_file_type_t nodetype,
-			       fsal_dev_t * dev, struct attrlist *attrib,
+			       fsal_dev_t *dev, struct attrlist *attrib,
 			       struct fsal_obj_handle **handle)
 {
 	int rc;
@@ -1482,9 +1485,8 @@ static fsal_status_t pxy_readlink(struct fsal_obj_handle *obj_hdl,
 					    1) : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
-	if (link_content->addr == NULL) {
+	if (link_content->addr == NULL)
 		return fsalstat(ERR_FSAL_NOMEM, 0);
-	}
 
 	rlok = &resoparray[opcnt].nfs_resop4_u.opreadlink.READLINK4res_u.resok4;
 	rlok->link.utf8string_val = link_content->addr;
@@ -1539,7 +1541,7 @@ static fsal_status_t pxy_link(struct fsal_obj_handle *obj_hdl,
 	return nfsstat4_to_fsal(rc);
 }
 
-static bool xdr_readdirres(XDR * x, nfs_resop4 * rdres)
+static bool xdr_readdirres(XDR *x, nfs_resop4 *rdres)
 {
 	return xdr_nfs_resop4(x, rdres) && xdr_nfs_resop4(x, rdres + 1);
 }
@@ -1553,8 +1555,8 @@ static bool xdr_readdirres(XDR * x, nfs_resop4 * rdres)
  */
 static fsal_status_t pxy_do_readdir(const struct req_op_context *opctx,
 				    struct pxy_obj_handle *ph,
-				    nfs_cookie4 * cookie, fsal_readdir_cb cb,
-				    void *cbarg, bool * eof)
+				    nfs_cookie4 *cookie, fsal_readdir_cb cb,
+				    void *cbarg, bool *eof)
 {
 	uint32_t opcnt = 0;
 	int rc;
@@ -1593,9 +1595,8 @@ static fsal_status_t pxy_do_readdir(const struct req_op_context *opctx,
 
 		*cookie = e4->cookie;
 
-		if (!cb(opctx, name, cbarg, e4->cookie)) {
+		if (!cb(opctx, name, cbarg, e4->cookie))
 			break;
-		}
 	}
 	xdr_free((xdrproc_t) xdr_readdirres, resoparray);
 	return st;
@@ -1604,17 +1605,16 @@ static fsal_status_t pxy_do_readdir(const struct req_op_context *opctx,
 /* What to do about verifier if server needs one? */
 static fsal_status_t pxy_readdir(struct fsal_obj_handle *dir_hdl,
 				 const struct req_op_context *opctx,
-				 fsal_cookie_t * whence, void *cbarg,
-				 fsal_readdir_cb cb, bool * eof)
+				 fsal_cookie_t *whence, void *cbarg,
+				 fsal_readdir_cb cb, bool *eof)
 {
 	nfs_cookie4 cookie = 0;
 	struct pxy_obj_handle *ph;
 
 	if (!dir_hdl || !cb || !eof || !opctx)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	if (whence) {
-		cookie = (nfs_cookie4) * whence;
-	}
+	if (whence)
+		cookie = (nfs_cookie4) *whence;
 
 	ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
 
@@ -1622,9 +1622,8 @@ static fsal_status_t pxy_readdir(struct fsal_obj_handle *dir_hdl,
 		fsal_status_t st;
 
 		st = pxy_do_readdir(opctx, ph, &cookie, cb, cbarg, eof);
-		if (FSAL_IS_ERROR(st)) {
+		if (FSAL_IS_ERROR(st))
 			return st;
-		}
 	} while (*eof == false);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1662,7 +1661,7 @@ static fsal_status_t pxy_rename(struct fsal_obj_handle *olddir_hdl,
 
 static fsal_status_t pxy_getattrs_impl(const struct user_cred *creds,
 				       struct fsal_export *exp,
-				       nfs_fh4 * filehandle,
+				       nfs_fh4 *filehandle,
 				       struct attrlist *obj_attr)
 {
 	int rc;
@@ -1675,9 +1674,8 @@ static fsal_status_t pxy_getattrs_impl(const struct user_cred *creds,
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *filehandle);
 
-	atok =
-	    pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-				   sizeof(fattr_blob));
+	atok = pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+				      sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
 	rc = pxy_nfsv4_call(exp, creds, opcnt, argoparray, resoparray);
@@ -1704,9 +1702,8 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
 	st = pxy_getattrs_impl(opctx->creds, obj_hdl->export, &ph->fh4,
 			       &obj_attr);
-	if (!FSAL_IS_ERROR(st)) {
+	if (!FSAL_IS_ERROR(st))
 		obj_hdl->attributes = obj_attr;
-	}
 	return st;
 }
 
@@ -1904,7 +1901,7 @@ static fsal_status_t pxy_open(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 			      const struct req_op_context *opctx,
 			      uint64_t offset, size_t buffer_size, void *buffer,
-			      size_t * read_amount, bool * end_of_file)
+			      size_t *read_amount, bool *end_of_file)
 {
 	int rc;
 	int opcnt = 0;
@@ -1951,7 +1948,7 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 			       const struct req_op_context *opctx,
 			       uint64_t offset, size_t size, void *buffer,
-			       size_t * write_amount, bool * fsal_stable)
+			       size_t *write_amount, bool *fsal_stable)
 {
 	int rc;
 	int opcnt = 0;
@@ -2041,7 +2038,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 }
 
 #ifdef _HANDLE_MAPPING
-static unsigned int hash_nfs_fh4(const nfs_fh4 * fh, unsigned int cookie)
+static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 {
 	const char *cpt;
 	unsigned int sum = cookie;
@@ -2075,7 +2072,7 @@ static unsigned int hash_nfs_fh4(const nfs_fh4 * fh, unsigned int cookie)
 #endif
 
 static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
-					       const nfs_fh4 * fh,
+					       const nfs_fh4 *fh,
 					       const struct attrlist *attr)
 {
 	struct pxy_obj_handle *n = gsh_malloc(sizeof(*n) + fh->nfs_fh4_len);
@@ -2112,10 +2109,10 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 /* export methods that create object handles
  */
 
-fsal_status_t pxy_lookup_path(struct fsal_export * exp_hdl,
-			      const struct req_op_context * opctx,
+fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
+			      const struct req_op_context *opctx,
 			      const char *path,
-			      struct fsal_obj_handle ** handle)
+			      struct fsal_obj_handle **handle)
 {
 	struct fsal_obj_handle *next;
 	struct fsal_obj_handle *parent = NULL;
@@ -2156,10 +2153,10 @@ fsal_status_t pxy_lookup_path(struct fsal_export * exp_hdl,
  * to construct objects from a handle which has been
  * 'extracted' by .extract_handle.
  */
-fsal_status_t pxy_create_handle(struct fsal_export * exp_hdl,
-				const struct req_op_context * opctx,
-				struct gsh_buffdesc * hdl_desc,
-				struct fsal_obj_handle ** handle)
+fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
+				const struct req_op_context *opctx,
+				struct gsh_buffdesc *hdl_desc,
+				struct fsal_obj_handle **handle)
 {
 	fsal_status_t st;
 	nfs_fh4 fh4;
@@ -2190,9 +2187,9 @@ fsal_status_t pxy_create_handle(struct fsal_export * exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t pxy_get_dynamic_info(struct fsal_export * exp_hdl,
-				   const struct req_op_context * opctx,
-				   fsal_dynamicfsinfo_t * infop)
+fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
+				   const struct req_op_context *opctx,
+				   fsal_dynamicfsinfo_t *infop)
 {
 	int rc;
 	int opcnt = 0;
@@ -2230,9 +2227,9 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export * exp_hdl,
 
 /* Convert of-the-wire digest into unique 'handle' which
  * can be used to identify the object */
-fsal_status_t pxy_extract_handle(struct fsal_export * exp_hdl,
+fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
 				 fsal_digesttype_t in_type,
-				 struct gsh_buffdesc * fh_desc)
+				 struct gsh_buffdesc *fh_desc)
 {
 	struct pxy_handle_blob *pxyblob;
 	size_t fh_size;

@@ -144,8 +144,6 @@ static uint32_t pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
 	return fsal_xattr_access_rights(&pm->fsinfo);
 }
 
-void pxy_handle_ops_init(struct fsal_obj_ops *ops);
-
 void pxy_export_ops_init(struct export_ops *ops)
 {
 	ops->release = pxy_release;
