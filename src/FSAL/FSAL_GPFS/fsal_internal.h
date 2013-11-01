@@ -462,17 +462,6 @@ unsigned int GPFSFSAL_GetFileno(int *pfile);
 fsal_status_t GPFSFSAL_commit(int *p_file_descriptor, uint64_t offset,
 			      size_t size);
 
-#if 0				/* ??? not needed for now */
-fsal_status_t GPFSFSAL_UP_Init(fsal_up_event_bus_parameter_t *pebparam,	/* IN */
-			fsal_up_event_bus_context_t *pupebcontext);    /* OUT */
-fsal_status_t GPFSFSAL_UP_AddFilter(fsal_up_event_bus_filter_t *pupebfilter,
-			fsal_up_event_bus_context_t *pupebcontext); /* INOUT */
-fsal_status_t GPFSFSAL_UP_GetEvents(struct glist_head *pevent_head,
-				fsal_count_t *event_nb,	/* IN */
-				struct timespec timeout,	/* IN */
-				fsal_count_t *peventfound,	/* OUT */
-				fsal_up_event_bus_context_t *pupebcontext);
-#endif
 struct glist_head gpfs_fsal_up_ctx_list;
 
 void *GPFSFSAL_UP_Thread(void *Arg);
