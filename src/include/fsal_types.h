@@ -164,6 +164,7 @@ struct req_op_context {
 	struct gsh_export *export;	/*< current export */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
 	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
+	void *fsal_private;		/*< private for FSAL use */
 	/* add new context members here */
 };
 
