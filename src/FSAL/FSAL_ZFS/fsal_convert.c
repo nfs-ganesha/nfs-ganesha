@@ -6,7 +6,6 @@
  *
  * \file    fsal_convert.c
  * \date    $Date: 2006/02/08 12:46:59 $
- * \version $Revision: 1.32 $
  * \brief   FS-FSAL type translation functions.
  *
  */
@@ -17,38 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
-
-/* some ideas of conversion functions...
-
-int fs2fsal_error(int fs_errorcode);
-
-int fsal2fs_testperm(fsal_accessflags_t testperm);
-
-fsal_status_t fs2fsal_attributes(  <your fs attribute structure (input)>,
-                                   fsal_attrib_list_t * p_fsalattr_out );
-
-fsal_accessmode_t fs2fsal_mode( <your fs object permission (input)> );
-
-void fsal2fs_mode( fsal_accessmode_t fsal_mode, <your fs mode type (output)> );
-
-fsal_nodetype_t  fs2fsal_type( <your fs object type (input)> );
-
-fsal_u64_t fs2fsal_64( <your fs 64bits type> );
-
-<your fs 64bits type> fsal2fs_64( fsal_u64_t fsal_size_in );
-
-fsal_fsid_t fs2fsal_fsid( <you fs fsid type> );
-
-fsal_status_t fsal2fs_attribset( zfsfsal_handle_t  * p_fsal_handle,
-                                 fsal_attrib_list_t  * p_attrib_set ,
-                                <depends on your fs way of setting attributes> );
-
-fsal_time_t fs2fsal_time( <your fs time structure> );
-
-<your fs time structure> fsal2fs_time(fsal_time_t in_time);
-     
-*/
+#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
 
 /* THOSE FUNCTIONS CAN BE USED FROM OUTSIDE THE MODULE : */
 
@@ -182,8 +150,8 @@ int posix2fsal_error(int posix_errorcode)
 
 }
 
-fsal_status_t posix2fsal_attributes(const struct stat * buffstat,
-				    struct attrlist * fsalattr)
+fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
+				    struct attrlist *fsalattr)
 {
 	FSAL_CLEAR_MASK(fsalattr->mask);
 	/* sanity checks */

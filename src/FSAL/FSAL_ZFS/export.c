@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * -------------
  */
@@ -102,7 +102,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	struct zfs_fsal_export *myself;
 	struct statvfs statfs;
@@ -266,8 +266,6 @@ static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void zfs_handle_ops_init(struct fsal_obj_ops *ops);
-
 /* zfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -351,7 +349,8 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 
 	if (p_zhd == NULL) {
 		/* init libzfs library */
-		if ((p_zhd = libzfswrap_init()) == NULL) {
+		p_zhd = libzfswrap_init();
+		if (p_zhd == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "Could not init libzfswrap library");
 			return fsalstat(ERR_FSAL_INVAL, 0);
@@ -361,7 +360,8 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 
 	if (p_snapshots == NULL) {
 		/* Mount the libs */
-		if ((p_zfs = libzfswrap_mount(fs_options, "/tank", "")) == NULL) {
+		p_zfs = libzfswrap_mount(fs_options, "/tank", "");
+		if (p_zfs == NULL) {
 			LogMajor(COMPONENT_FSAL, "Could not mount libzfswrap");
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}

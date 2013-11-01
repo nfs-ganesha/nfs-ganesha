@@ -23,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* handle.c
@@ -55,10 +55,7 @@
  * allocate and fill in a handle
  * this uses malloc/free for the time being.
  */
-extern size_t i_snapshots;
-extern snapshot_t *p_snapshots;
-
-libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t * handle)
+libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 {
 	/* Check for the zpool (index == 0) */
 	if (handle->i_snap == 0)
@@ -87,9 +84,8 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	struct zfs_fsal_obj_handle *hdl;
 	fsal_status_t st;
 
-	hdl =
-	    gsh_malloc(sizeof(struct zfs_fsal_obj_handle) +
-		       sizeof(struct zfs_file_handle));
+	hdl = gsh_malloc(sizeof(struct zfs_fsal_obj_handle) +
+			 sizeof(struct zfs_file_handle));
 	if (hdl == NULL)
 		return NULL;
 	memset(hdl, 0,
@@ -100,14 +96,13 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 
-	if ((hdl->obj_handle.type == SYMBOLIC_LINK) && (link_content != NULL)) {
+	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
+	    (link_content != NULL)) {
 		size_t len = strlen(link_content) + 1;
 
 		hdl->u.symlink.link_content = gsh_malloc(len);
-		if (hdl->u.symlink.link_content == NULL) {
+		if (hdl->u.symlink.link_content == NULL)
 			goto spcerr;
-		}
-
 		memcpy(hdl->u.symlink.link_content, link_content, len);
 		hdl->u.symlink.link_size = len;
 	}
@@ -119,9 +114,10 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 
-	if (!fsal_obj_handle_init
-	    (&hdl->obj_handle, exp_hdl, posix2fsal_type(stat->st_mode))) ;
-	return hdl;
+	if (!fsal_obj_handle_init(&hdl->obj_handle,
+				  exp_hdl,
+				  posix2fsal_type(stat->st_mode)))
+		return hdl;
 
  spcerr:
 	hdl->obj_handle.ops = NULL;
@@ -175,7 +171,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 	p_vfs = ZFSFSAL_GetVFS(parent_hdl->handle);
 
-	/* Hook to add the hability to go inside a .zfs directory inside the root dir */
+	/* Hook to add the hability to go inside a .zfs directory
+	 * inside the root dir */
 	if (parent_hdl->handle->zfs_handle.inode == 3
 	    && !strcmp(path, ZFS_SNAP_DIR)) {
 
@@ -195,11 +192,9 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 		int i;
 		for (i = 1; i < i_snapshots + 1; i++)
-			if (!strcmp(p_snapshots[i].psz_name, path))
-
-				if (i == i_snapshots + 1) {
-					return fsalstat(ERR_FSAL_NOTDIR, 0);
-				}
+			if (!strcmp(p_snapshots[i].psz_name, path) &&
+			    (i == i_snapshots + 1))
+				return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 		libzfswrap_getroot(p_snapshots[i].p_vfs, &object);
 		p_vfs = p_snapshots[i].p_vfs;
@@ -226,7 +221,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 		}
 
-		//FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory
+/* FIXME!!! Hook to remove the i_snap bit when going up
+ * from the .zfs directory */
 		if (object.inode == 3)
 			i_snap = 0;
 	}
@@ -261,53 +257,47 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 /* lookup_path
  * should not be used for "/" only is exported */
 
-fsal_status_t tank_lookup_path(struct fsal_export * exp_hdl,
-			       const struct req_op_context * opctx,
+fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
+			       const struct req_op_context *opctx,
 			       const char *path,
-			       struct fsal_obj_handle ** handle)
+			       struct fsal_obj_handle **handle)
 {
+	inogen_t object;
+	int rc = 0;
+	struct zfs_fsal_obj_handle *hdl;
+	struct zfs_file_handle fh;
+	struct stat stat;
+	int type;
+	creden_t cred;
 
 	if (strcmp(path, "/"))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
-	else {
-		inogen_t object;
-		int rc = 0;
-		struct zfs_fsal_obj_handle *hdl;
-		struct zfs_file_handle fh;
-		struct stat stat;
-		int type;
-		creden_t cred;
-
-		if ((rc =
-		     libzfswrap_getroot(tank_get_root_pvfs(exp_hdl), &object)))
-			return fsalstat(posix2fsal_error(rc), rc);
-
-		if (opctx) {
-			cred.uid = opctx->creds->caller_uid;
-			cred.gid = opctx->creds->caller_gid;
-		} else {
-			cred.uid = 0;
-			cred.gid = 0;
-		}
-
-		if ((rc =
-		     libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
-					object, &stat, &type)))
-			return fsalstat(posix2fsal_error(rc), rc);
-
-		fh.zfs_handle = object;
-		fh.i_snap = 0;
-
-		hdl = alloc_handle(&fh, &stat, NULL, exp_hdl);
-		if (hdl != NULL) {
-			*handle = &hdl->obj_handle;
-		} else {
-			*handle = NULL;	/* poison it */
-			return fsalstat(ERR_FSAL_NOMEM, 0);
-		}
-
+	rc = libzfswrap_getroot(tank_get_root_pvfs(exp_hdl), &object);
+	if (rc != 0)
+		return fsalstat(posix2fsal_error(rc), rc);
+	if (opctx) {
+		cred.uid = opctx->creds->caller_uid;
+		cred.gid = opctx->creds->caller_gid;
+	} else {
+		cred.uid = 0;
+		cred.gid = 0;
 	}
 
+	rc = libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
+				object, &stat, &type);
+	if (rc != 0)
+		return fsalstat(posix2fsal_error(rc), rc);
+
+	fh.zfs_handle = object;
+	fh.i_snap = 0;
+
+	hdl = alloc_handle(&fh, &stat, NULL, exp_hdl);
+	if (hdl != NULL) {
+		*handle = &hdl->obj_handle;
+	} else {
+		*handle = NULL;	/* poison it */
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -342,22 +332,15 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 	cred.uid = attrib->owner;
 	cred.gid = attrib->group;
 
-	retval =
-	    libzfswrap_create(tank_get_root_pvfs(dir_hdl->export), &cred,
-			      myself->handle->zfs_handle, name,
-			      fsal2unix_mode(attrib->mode), &object);
-
-	if (retval) {
+	retval = libzfswrap_create(tank_get_root_pvfs(dir_hdl->export), &cred,
+				   myself->handle->zfs_handle, name,
+				   fsal2unix_mode(attrib->mode), &object);
+	if (retval)
 		goto fileerr;
-	}
-
-	retval =
-	    libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
-			       object, &stat, &type);
-
-	if (retval) {
+	retval = libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
+				    object, &stat, &type);
+	if (retval)
 		goto fileerr;
-	}
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, NULL, dir_hdl->export);
@@ -405,22 +388,15 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 	cred.uid = attrib->owner;
 	cred.gid = attrib->group;
 
-	retval =
-	    libzfswrap_mkdir(tank_get_root_pvfs(dir_hdl->export), &cred,
-			     myself->handle->zfs_handle, name,
-			     fsal2unix_mode(attrib->mode), &object);
-
-	if (retval) {
+	retval = libzfswrap_mkdir(tank_get_root_pvfs(dir_hdl->export), &cred,
+				  myself->handle->zfs_handle, name,
+				  fsal2unix_mode(attrib->mode), &object);
+	if (retval)
 		goto fileerr;
-	}
-
-	retval =
-	    libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
-			       object, &stat, &type);
-
-	if (retval) {
+	retval = libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
+				    object, &stat, &type);
+	if (retval)
 		goto fileerr;
-	}
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, NULL, dir_hdl->export);
@@ -441,8 +417,11 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
-static fsal_status_t tank_makenode(struct fsal_obj_handle *dir_hdl, const struct req_op_context *opctx, const char *name, object_file_type_t nodetype,	/* IN */
-				   fsal_dev_t * dev,	/* IN */
+static fsal_status_t tank_makenode(struct fsal_obj_handle *dir_hdl,
+				   const struct req_op_context *opctx,
+				   const char *name,
+				   object_file_type_t nodetype,	/* IN */
+				   fsal_dev_t *dev,	/* IN */
 				   struct attrlist *attrib,
 				   struct fsal_obj_handle **handle)
 {
@@ -483,16 +462,15 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 	cred.uid = attrib->owner;
 	cred.gid = attrib->group;
 
-	retval =
-	    libzfswrap_symlink(tank_get_root_pvfs(dir_hdl->export), &cred,
-			       myself->handle->zfs_handle, name, link_path,
-			       &object);
+	retval = libzfswrap_symlink(tank_get_root_pvfs(dir_hdl->export), &cred,
+				    myself->handle->zfs_handle, name, link_path,
+				    &object);
 	if (retval)
 		goto err;
 
-	if ((retval =
-	     libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
-				object, &stat, &type)))
+	retval = libzfswrap_getattr(tank_get_root_pvfs(dir_hdl->export), &cred,
+				    object, &stat, &type);
+	if (retval)
 		goto err;
 
 	/* allocate an obj_handle and fill it up */
@@ -542,14 +520,13 @@ static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
 					    1) : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
-	if (link_content->addr == NULL) {
+	if (link_content->addr == NULL)
 		return fsalstat(ERR_FSAL_NOMEM, 0);
-	}
-
-	retlink =
-	    libzfswrap_readlink(tank_get_root_pvfs(obj_hdl->export), &cred,
-				myself->handle->zfs_handle, link_content->addr,
-				link_content->len);
+	retlink = libzfswrap_readlink(tank_get_root_pvfs(obj_hdl->export),
+				      &cred,
+				      myself->handle->zfs_handle,
+				      link_content->addr,
+				      link_content->len);
 
 	if (retlink) {
 		fsal_error = posix2fsal_error(retlink);
@@ -587,14 +564,11 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
 	cred.uid = opctx->creds->caller_uid;
 	cred.gid = opctx->creds->caller_gid;
 
-	retval =
-	    libzfswrap_link(tank_get_root_pvfs(obj_hdl->export), &cred,
-			    destdir->handle->zfs_handle,
-			    myself->handle->zfs_handle, name);
-
-	if (retval) {
+	retval = libzfswrap_link(tank_get_root_pvfs(obj_hdl->export), &cred,
+				 destdir->handle->zfs_handle,
+				 myself->handle->zfs_handle, name);
+	if (retval)
 		fsal_error = posix2fsal_error(retval);
-	}
  out:
 	return fsalstat(fsal_error, retval);
 }
@@ -613,8 +587,8 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
  */
 static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof)
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, bool *eof)
 {
 	struct zfs_fsal_obj_handle *myself;
 	int retval = 0;
@@ -625,10 +599,8 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 	libzfswrap_entry_t dirents[MAX_ENTRIES];
 	unsigned int index = 0;
 
-	if (whence != NULL) {
-		seekloc = (off_t) * whence;
-	}
-
+	if (whence != NULL)
+		seekloc = (off_t) *whence;
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
 	cred.uid = opctx->creds->caller_uid;
@@ -641,20 +613,20 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* Open the directory */
-	if ((retval =
-	     libzfswrap_opendir(p_vfs, &cred, myself->handle->zfs_handle,
-				&pvnode)))
+	retval = libzfswrap_opendir(p_vfs, &cred,
+				    myself->handle->zfs_handle,
+				    &pvnode);
+	if (retval)
 		goto out;
-
 	*eof = FALSE;
 	do {
-		if ((retval =
-		     libzfswrap_readdir(p_vfs, &cred, pvnode, dirents,
-					MAX_ENTRIES, &seekloc)))
+		retval = libzfswrap_readdir(p_vfs, &cred, pvnode, dirents,
+					    MAX_ENTRIES, &seekloc);
+		if (retval)
 			goto out;
-
 		for (index = 0; index < MAX_ENTRIES; index++) {
-			/* If psz_filename is NULL, that's the end of the list */
+			/* If psz_filename is NULL,
+			 * that's the end of the list */
 			if (dirents[index].psz_filename[0] == '\0') {
 				*eof = TRUE;
 				break;
@@ -666,9 +638,9 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 				continue;
 
 			/* callback to cache inode */
-			if (!cb
-			    (opctx, dirents[index].psz_filename, dir_state,
-			     (fsal_cookie_t) index))
+			if (!cb(opctx, dirents[index].psz_filename,
+				dir_state,
+				(fsal_cookie_t) index))
 				goto done;
 		}
 
@@ -678,7 +650,8 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
  done:
 	/* Close the directory */
-	if ((retval = libzfswrap_closedir(p_vfs, &cred, pvnode)))
+	retval = libzfswrap_closedir(p_vfs, &cred, pvnode);
+	if (retval)
 		goto out;
 
 	/* read the directory */
@@ -707,14 +680,15 @@ static fsal_status_t tank_rename(struct fsal_obj_handle *olddir_hdl,
 	cred.uid = opctx->creds->caller_uid;
 	cred.gid = opctx->creds->caller_gid;
 
-	retval =
-	    libzfswrap_rename(tank_get_root_pvfs(olddir_hdl->export), &cred,
-			      olddir->handle->zfs_handle, old_name,
-			      newdir->handle->zfs_handle, new_name);
+	retval = libzfswrap_rename(tank_get_root_pvfs(olddir_hdl->export),
+				   &cred,
+				   olddir->handle->zfs_handle,
+				   old_name,
+				   newdir->handle->zfs_handle,
+				   new_name);
 
-	if (retval) {
+	if (retval)
 		fsal_error = posix2fsal_error(retval);
-	}
 	return fsalstat(fsal_error, retval);
 }
 
@@ -752,16 +726,20 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
 		stat.st_mtime = stat.st_ctime;
 		retval = 0;
 	} else {
-		retval =
-		    libzfswrap_getattr(tank_get_root_pvfs(obj_hdl->export),
-				       &cred, myself->handle->zfs_handle, &stat,
-				       &type);
+		retval = libzfswrap_getattr(tank_get_root_pvfs(obj_hdl->export),
+					    &cred,
+					    myself->handle->zfs_handle, &stat,
+					    &type);
 
-		/* An explanation is required here. This is an exception management.
-		 * when a file is opened, then deleted without being closed, FSAL_VFS can 
-		 * still getattr on it, because it uses fstat on a cached FD. This is not possible
-		 * to do this with ZFS, because you can't fstat on a vnode. To handle this, stat are 
-		 * cached as the file is opened and used here, to emulate a successful fstat */
+		/* An explanation is required here.
+		 * This is an exception management.
+		 * when a file is opened, then deleted without being closed,
+		 * FSAL_VFS can still getattr on it, because it uses fstat
+		 * on a cached FD. This is not possible
+		 * to do this with ZFS, because you can't fstat on a vnode.
+		 * To handle this, stat are
+		 * cached as the file is opened and used here,
+		 * to emulate a successful fstat */
 		if ((retval == ENOENT)
 		    && (myself->u.file.openflags != FSAL_O_CLOSED)
 		    && (S_ISREG(myself->u.file.saved_stat.st_mode))) {
@@ -797,7 +775,8 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
 }
 
 /*
- * NOTE: this is done under protection of the attributes rwlock in the cache entry.
+ * NOTE: this is done under protection of the attributes rwlock
+ * in the cache entry.
  */
 
 static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
@@ -813,9 +792,8 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 	struct stat new_stat = { 0 };
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
 		attrs->mode &= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
-	}
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
 	if (myself->handle->i_snap != 0) {
@@ -912,21 +890,22 @@ static fsal_status_t tank_unlink(struct fsal_obj_handle *dir_hdl,
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
 	/* check for presence of file and get its type */
-	if ((retval =
-	     libzfswrap_lookup(tank_get_root_pvfs(dir_hdl->export), &cred,
-			       myself->handle->zfs_handle, name, &object,
-			       &type)) == 0) {
+	retval = libzfswrap_lookup(tank_get_root_pvfs(dir_hdl->export),
+				   &cred,
+				   myself->handle->zfs_handle,
+				   name, &object,
+				   &type);
+	if (retval == 0) {
 		if (type == S_IFDIR)
-			retval =
-			    libzfswrap_rmdir(tank_get_root_pvfs
-					     (dir_hdl->export), &cred,
-					     myself->handle->zfs_handle, name);
-
+			retval = libzfswrap_rmdir(tank_get_root_pvfs
+						  (dir_hdl->export), &cred,
+						  myself->handle->zfs_handle,
+						  name);
 		else
-			retval =
-			    libzfswrap_unlink(tank_get_root_pvfs
-					      (dir_hdl->export), &cred,
-					      myself->handle->zfs_handle, name);
+			retval = libzfswrap_unlink(tank_get_root_pvfs
+						   (dir_hdl->export), &cred,
+						   myself->handle->zfs_handle,
+						   name);
 	}
 
 	if (retval)
@@ -1008,7 +987,8 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-	if (type == REGULAR_FILE && myself->u.file.openflags != FSAL_O_CLOSED) {
+	if (type == REGULAR_FILE &&
+	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		LogCrit(COMPONENT_FSAL,
 			"Tried to release busy handle, "
 			"hdl = 0x%p, openflags = 0x%x", obj_hdl,
@@ -1104,27 +1084,27 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 	if (hdl_desc->len > sizeof(struct zfs_file_handle))
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	memcpy(&fh, hdl_desc->addr, hdl_desc->len);	/* struct aligned copy */
+	memcpy(&fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
 
 	cred.uid = opctx->creds->caller_uid;
 	cred.gid = opctx->creds->caller_gid;
 
-	if ((retval =
-	     libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
-				fh.zfs_handle, &stat, &type)))
+	retval = libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
+				    fh.zfs_handle, &stat, &type);
+	if (retval)
 		return fsalstat(posix2fsal_error(retval), retval);
 
 	link_content = NULL;
 	if (S_ISLNK(stat.st_mode)) {
-		if ((retval =
-		     libzfswrap_readlink(tank_get_root_pvfs(exp_hdl), &cred,
-					 fh.zfs_handle, link_buff, PATH_MAX)))
+		retval = libzfswrap_readlink(tank_get_root_pvfs(exp_hdl),
+					     &cred,
+					     fh.zfs_handle,
+					     link_buff,
+					     PATH_MAX);
+		if (retval)
 			return fsalstat(posix2fsal_error(retval), retval);
-
 		link_content = link_buff;
-
 	}
-
 	hdl = alloc_handle(&fh, &stat, link_content, exp_hdl);
 	if (hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;

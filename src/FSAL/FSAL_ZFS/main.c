@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* main.c
@@ -77,10 +77,12 @@ static struct fsal_staticfsinfo_t default_zfs_info = {
 	0,			/* maxwrite size */
 	0,			/* default umask */
 	0,			/* don't allow cross fileset export path */
-	0400,			/* default access rights for xattrs: root=RW, owner=R */
+	0400,			/* default access rights for xattrs:
+				 * root=RW, owner=R */
 	0,			/* default access check support in FSAL */
 	0,			/* default share reservation support in FSAL */
-	0			/* default share reservation support with open owners in FSAL */
+	0			/* default share reservation support with
+				 * open owners in FSAL */
 };
 
 /* private helper for export object
@@ -137,12 +139,12 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal ZFS method linkage to export object
  */
 
-fsal_status_t zfs_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path, const char *fs_options,
-				struct exportlist * exp_entry,
-				struct fsal_module * next_fsal,
-				const struct fsal_up_vector * up_ops,
-				struct fsal_export ** export);
+				struct exportlist *exp_entry,
+				struct fsal_module *next_fsal,
+				const struct fsal_up_vector *up_ops,
+				struct fsal_export **export);
 
 /* Module initialization.
  * Called by dlopen() to register the module
@@ -154,20 +156,14 @@ fsal_status_t zfs_create_export(struct fsal_module * fsal_hdl,
 
 static struct zfs_fsal_module ZFS;
 
-/* linkage to the exports and handle ops initializers
- */
-
-void zfs_export_ops_init(struct export_ops *ops);
-void zfs_handle_ops_init(struct fsal_obj_ops *ops);
-
 MODULE_INIT void zfs_load(void)
 {
 	int retval;
 	struct fsal_module *myself = &ZFS.fsal;
 
-	retval =
-	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION);
+	retval = register_fsal(myself, myname,
+			       FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION);
 	if (retval != 0) {
 		fprintf(stderr, "ZFS module failed to register");
 		return;
