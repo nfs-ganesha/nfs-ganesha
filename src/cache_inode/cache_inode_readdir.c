@@ -396,7 +396,7 @@ populate_dirent(const struct req_op_context *opctx,
 		return false;
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
+	LogFullDebug(COMPONENT_NFS_READDIR, "Creating entry for %s", name);
 
 	*state->status =
 	    cache_inode_new_entry(entry_hdl, CACHE_INODE_FLAG_NONE,
@@ -473,12 +473,16 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
 						    &eod);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE) {
-			LogEvent(COMPONENT_CACHE_INODE,
+			LogEvent(COMPONENT_NFS_READDIR,
 				 "FSAL returned STALE from readdir.");
 			cache_inode_kill_entry(directory);
 		}
 
-		return cache_inode_error_convert(fsal_status);
+		status = cache_inode_error_convert(fsal_status);
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "FSAL readdir status=%s",
+			 cache_inode_err_str(status));
+		return status;
 	}
 
 	assert(eod);		/* we were supposed to read to the end.... */
@@ -546,14 +550,20 @@ cache_inode_readdir(cache_entry_t *directory,
 	if (directory->type != DIRECTORY) {
 		status = CACHE_INODE_NOT_A_DIRECTORY;
 		/* no lock acquired so far, just return status */
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Not a directory");
 		return status;
 	}
 
 	/* cache_inode_lock_trust_attrs can return an error, and no lock will
 	 * be acquired */
 	status = cache_inode_lock_trust_attrs(directory, req_ctx, false);
-	if (status != CACHE_INODE_SUCCESS)
+	if (status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "cache_inode_lock_trust_attrs status=%s",
+			 cache_inode_err_str(status));
 		return status;
+	}
 
 	/* Adjust access mask if ACL is asked for.
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
@@ -567,7 +577,7 @@ cache_inode_readdir(cache_entry_t *directory,
 	 * the directory or not */
 	status = cache_inode_access_no_mutex(directory, access_mask, req_ctx);
 	if (status != CACHE_INODE_SUCCESS) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for directory status=%s",
 			     cache_inode_err_str(status));
 		goto unlock_attrs;
@@ -579,7 +589,7 @@ cache_inode_readdir(cache_entry_t *directory,
 		    cache_inode_access_no_mutex(directory, access_mask_attr,
 						req_ctx);
 		if (attr_status != CACHE_INODE_SUCCESS) {
-			LogFullDebug(COMPONENT_CACHE_INODE,
+			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "permission check for attributes "
 				     "status=%s",
 				     cache_inode_err_str(attr_status));
@@ -597,6 +607,9 @@ cache_inode_readdir(cache_entry_t *directory,
 		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 		status = cache_inode_readdir_populate(req_ctx, directory);
 		if (status != CACHE_INODE_SUCCESS)
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "cache_inode_readdir_populate status=%s",
+				     cache_inode_err_str(status));
 			goto unlock_dir;
 	}
 
