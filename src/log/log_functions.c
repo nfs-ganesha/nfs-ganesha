@@ -852,6 +852,31 @@ static inline const char *Log_GetThreadFunction(int ok_errors)
 	return context->thread_name;
 }
 
+/**
+ * Log_FreeThreadContext
+ *
+ * Free context allocated whenever a log function is used in a thread.
+ * This function should be called before a thread exits if log functions
+ * have been used.
+ */
+void Log_FreeThreadContext()
+{
+	struct thread_log_context *context;
+
+	/* Init the key if first time.
+	 * Would if(once_key == PTHREAD_ONCE_INIT) be safe?
+	 * (no race for thread variables) */
+	if (pthread_once(&once_key, init_keys) != 0)
+		return;
+
+	context = (struct thread_log_context *) pthread_getspecific(thread_key);
+
+	if (context) {
+		pthread_setspecific(thread_key, NULL);
+		gsh_free(context);
+	}
+}
+
 /*
  * Convert a numeral log level in ascii to
  * the numeral value.

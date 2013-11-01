@@ -337,7 +337,8 @@ void *_9p_socket_thread(void *Arg)
 
 	_9p_cleanup_fids(&_9p_conn);
 
-	return NULL;
+	Log_FreeThreadContext();
+	pthread_exit(NULL);
 }				/* _9p_socket_thread */
 
 /**
@@ -454,7 +455,7 @@ void _9p_dispatcher_svc_run(long int sock)
 		LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's scope");
 
 	if (pthread_attr_setdetachstate(&attr_thr,
-					PTHREAD_CREATE_JOINABLE) != 0)
+					PTHREAD_CREATE_DETACHED) != 0)
 		LogDebug(COMPONENT_9P_DISPATCH,
 			 "can't set pthread's join state");
 

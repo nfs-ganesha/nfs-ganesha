@@ -103,6 +103,7 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 	}
 
 	msk_destroy_trans(&trans);
+	Log_FreeThreadContext();
 	pthread_exit(NULL);
 }
 
@@ -115,7 +116,7 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
 	if (pthread_attr_init(&attr_thr) ||
 	    pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) ||
-	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
+	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
 		return;
 
 	pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread, trans);
@@ -142,6 +143,7 @@ void *_9p_rdma_thread(void *Arg)
 	_9p_datalock_t *datalock = NULL;
 	unsigned int i = 0;
 	int rc = 0;
+	_9p_outqueue_t *outqueue = trans->private_data;
 
 	priv = gsh_malloc(sizeof(*priv));
 	if (priv == NULL) {
@@ -151,6 +153,9 @@ void *_9p_rdma_thread(void *Arg)
 	}
 	memset(priv, 0, sizeof(*priv));
 	trans->private_data = priv;
+
+	priv->outqueue = outqueue;
+	priv->outmr = msk_getpd(trans)->private;
 
 	p_9p_conn = gsh_malloc(sizeof(*p_9p_conn));
 	if (p_9p_conn == NULL) {
@@ -183,18 +188,18 @@ void *_9p_rdma_thread(void *Arg)
 		LogMajor(COMPONENT_9P, "Cannot get connection's time of birth");
 
 	/* Alloc rdmabuf */
-	rdmabuf = gsh_malloc((_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE);
+	rdmabuf = gsh_malloc((_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize);
 	if (rdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
 		goto error;
 	}
-	memset(rdmabuf, 0, (_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE);
+	memset(rdmabuf, 0, (_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize);
 	priv->rdmabuf = rdmabuf;
 
 	/* Register rdmabuf */
 	mr = msk_reg_mr(trans, rdmabuf,
-			(_9P_RDMA_BUFF_NUM) * _9P_RDMA_CHUNK_SIZE,
+			(_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
 		LogFatal(COMPONENT_9P,
@@ -223,19 +228,15 @@ void *_9p_rdma_thread(void *Arg)
 	priv->datalock = datalock;
 
 	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
-		rdata[i].data = rdmabuf + i * _9P_RDMA_CHUNK_SIZE;
-		rdata[i].max_size = _9P_RDMA_CHUNK_SIZE;
+		rdata[i].data = rdmabuf + i * nfs_param._9p_param._9p_rdma_msize;
+		rdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].mr = mr;
 		datalock[i].data = &rdata[i];
+		datalock[i].out = NULL;
 		pthread_mutex_init(&datalock[i].lock, NULL);
-
-		if (i < _9P_RDMA_OUT)
-			datalock[i].sender = &datalock[i + _9P_RDMA_OUT];
-		else
-			datalock[i].sender = NULL;
 	}
 
-	for (i = 0; i < _9P_RDMA_OUT; i++) {
+	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
 		rc = msk_post_recv(trans, &rdata[i], _9p_rdma_callback_recv,
 				   _9p_rdma_callback_recv_err,
 				   &(datalock[i]));
@@ -256,14 +257,80 @@ void *_9p_rdma_thread(void *Arg)
 		goto error;
 	}
 
+	Log_FreeThreadContext();
 	pthread_exit(NULL);
 
  error:
 
 	_9p_rdma_cleanup_conn_thread(trans);
 
+	Log_FreeThreadContext();
 	pthread_exit(NULL);
 }				/* _9p_rdma_handle_trans */
+
+static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
+{
+	struct ibv_mr *mr;
+
+	/* Do nothing if we already have stuff setup */
+	if (msk_getpd(trans)->private)
+		return;
+
+	mr = msk_reg_mr(trans, outrdmabuf,
+			_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize,
+			IBV_ACCESS_LOCAL_WRITE);
+	if (mr == NULL) {
+		LogFatal(COMPONENT_9P,
+			 "9P/RDMA: trans handler could not register rdmabuf");
+	}
+
+
+	msk_getpd(trans)->private = mr;
+}
+
+static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
+				   _9p_outqueue_t **poutqueue)
+{
+	uint8_t *outrdmabuf;
+	int i;
+	msk_data_t *wdata;
+	_9p_outqueue_t *outqueue;
+
+	outrdmabuf =
+	  gsh_malloc(_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize);
+	if (outrdmabuf == NULL) {
+		LogFatal(COMPONENT_9P,
+			 "9P/RDMA: trans handler could not malloc rdmabuf");
+		return;
+	}
+	*poutrdmabuf = outrdmabuf;
+
+	if ((wdata = gsh_malloc(_9P_RDMA_OUT * sizeof(*wdata))) == NULL) {
+		LogFatal(COMPONENT_9P,
+			 "9P/RDMA: trans handler could not malloc wdata");
+		return;
+	}
+
+	for (i = 0; i < _9P_RDMA_OUT; i++) {
+		wdata[i].data = outrdmabuf +
+				i * nfs_param._9p_param._9p_rdma_msize;
+		wdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
+		if (i != _9P_RDMA_OUT - 1)
+			wdata[i].next = &wdata[i+1];
+	}
+	*pwdata = wdata;
+
+	if ((outqueue = gsh_malloc(sizeof(*outqueue))) == NULL) {
+		LogFatal(COMPONENT_9P,
+			 "9P/RDMA: trans handler could not malloc outqueue");
+		return;
+	}
+	pthread_mutex_init(&outqueue->lock, NULL);
+	pthread_cond_init(&outqueue->cond, NULL);
+	outqueue->data = wdata;
+	*poutqueue = outqueue;
+}
+
 
 /**
  * _9p_rdma_dispatcher_thread: 9P/RDMA dispatcher
@@ -282,6 +349,10 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	pthread_attr_t attr_thr;
 	pthread_t thrid_handle_trans;
 
+	uint8_t *outrdmabuf;
+	msk_data_t *wdata;
+	_9p_outqueue_t *outqueue;
+
 #define PORT_MAX_LEN 6
 	char port[PORT_MAX_LEN];
 
@@ -296,7 +367,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	trans_attr.worker_count = -1;
 	/* if worker_count isn't -1: trans_attr.worker_queue_size = 256; */
 	trans_attr.debug = MSK_DEBUG_EVENT;
-	/* stats:  (what does this mean????
+	/* mooshika stats:
 	 * trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
 
 	SetNameFunction("_9p_rdma_dispatch_thr");
@@ -319,7 +390,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA dispatcher could not set pthread_attr_t:scope_system");
 
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
+	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA dispatcher could not set pthread_attr_t:create_joignable");
 
@@ -344,6 +415,20 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 			LogMajor(COMPONENT_9P,
 				 "9P/RDMA : dispatcher failed to accept a new client");
 		else {
+			/* Create output buffers on first connection.
+			 * need it here because we don't want multiple children to do this job.
+			 */
+			if (!outrdmabuf) {
+				_9p_rdma_setup_buffers(&outrdmabuf,
+						       &wdata,
+						       &outqueue);
+				/* this means ENOMEM - abort */
+				if (!outrdmabuf || !wdata || !outqueue)
+					break;
+			}
+			_9p_rdma_setup_mr(child_trans, outrdmabuf);
+			child_trans->private_data = outqueue;
+
 			if (pthread_create(&thrid_handle_trans,
 					   &attr_thr,
 					   _9p_rdma_thread,
@@ -358,5 +443,5 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 		}
 	}			/* for( ;; ) */
 
-	return NULL;
+	pthread_exit(NULL);
 }				/* _9p_rdma_dispatcher_thread */
