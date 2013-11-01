@@ -100,6 +100,8 @@ int nfs_Create(nfs_arg_t *parg,
   fsal_attrib_list_t attr_newfile;
   fsal_attrib_list_t attributes_create;
   fsal_attrib_list_t *ppre_attr;
+  fsal_attrib_list_t *post_op_attr;
+  int setattr_flag = FALSE;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
   cache_inode_file_type_t parent_filetype;
@@ -342,6 +344,8 @@ int nfs_Create(nfs_arg_t *parg,
                                                FALSE,
                                                &cache_status) != CACHE_INODE_SUCCESS)
                           goto out_failed;
+                      /* if setattr is successful, use new attribute */
+                        setattr_flag = TRUE;
                       }
 
                   switch (preq->rq_vers)
@@ -411,8 +415,13 @@ int nfs_Create(nfs_arg_t *parg,
                         }
 
                       /* Build entry attributes */
+                      if (setattr_flag == TRUE)
+                        post_op_attr = &attributes_create;
+                      else
+                        post_op_attr = &attr_newfile;
+
                       nfs_SetPostOpAttr(pexport,
-                                        &attributes_create,
+                                        post_op_attr,
                                         &(pres->res_create3.CREATE3res_u.resok.
                                           obj_attributes));
 
