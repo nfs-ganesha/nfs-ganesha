@@ -49,6 +49,76 @@ uint64_t inode_number;
 /* helpers
  */
 
+static inline int
+pseudofs_n_cmpf(const struct avltree_node *lhs,
+		const struct avltree_node *rhs)
+{
+	struct pseudo_fsal_obj_handle *lk, *rk;
+
+	lk = avltree_container_of(lhs, struct pseudo_fsal_obj_handle, avl_n);
+	rk = avltree_container_of(rhs, struct pseudo_fsal_obj_handle, avl_n);
+
+	return strcmp(lk->name, rk->name);
+}
+
+static inline int
+pseudofs_i_cmpf(const struct avltree_node *lhs,
+		const struct avltree_node *rhs)
+{
+	struct pseudo_fsal_obj_handle *lk, *rk;
+
+	lk = avltree_container_of(lhs, struct pseudo_fsal_obj_handle, avl_i);
+	rk = avltree_container_of(rhs, struct pseudo_fsal_obj_handle, avl_i);
+
+	if (lk->index < rk->index)
+		return -1;
+
+	if (lk->index == rk->index)
+		return 0;
+
+	return 1;
+}
+
+static inline struct avltree_node *
+avltree_inline_name_lookup(
+	const struct avltree_node *key,
+	const struct avltree *tree)
+{
+	struct avltree_node *node = tree->root;
+	int res = 0;
+
+	while (node) {
+		res = pseudofs_n_cmpf(node, key);
+		if (res == 0)
+			return node;
+		if (res > 0)
+			node = node->left;
+		else
+			node = node->right;
+	}
+	return NULL;
+}
+
+static inline struct avltree_node *
+avltree_inline_index_lookup(
+	const struct avltree_node *key,
+	const struct avltree *tree)
+{
+	struct avltree_node *node = tree->root;
+	int res = 0;
+
+	while (node) {
+		res = pseudofs_i_cmpf(node, key);
+		if (res == 0)
+			return node;
+		if (res > 0)
+			node = node->left;
+		else
+			node = node->right;
+	}
+	return NULL;
+}
+
 /**
  * @brief Construct the fs opaque part of a pseudofs nfsv4 handle
  *
@@ -238,11 +308,16 @@ static struct pseudo_fsal_obj_handle
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_RAWDEV);
 
 	if (!fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY)) {
-		glist_init(&hdl->contents);
+		avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
+		avltree_init(&hdl->avl_index, pseudofs_i_cmpf, 0 /* flags */);
+		hdl->next_i = 2;
 		if (parent != NULL) {
 			/* Attach myself to my parent */
 			pthread_mutex_lock(&parent->obj_handle.lock);
-			glist_add_tail(&parent->contents, &hdl->me);
+			avltree_insert(&hdl->avl_n, &parent->avl_name);
+			hdl->index = (parent->next_i)++;
+			avltree_insert(&hdl->avl_i, &parent->avl_index);
+			hdl->inavl = true;
 			pthread_mutex_unlock(&parent->obj_handle.lock);
 		}
 		return hdl;
@@ -277,7 +352,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    struct fsal_obj_handle **handle)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
-	struct glist_head *glist;
+	struct pseudo_fsal_obj_handle key[1];
+	struct avltree_node *node;
 	fsal_errors_t error = ERR_FSAL_NOENT;
 
 	myself = container_of(parent,
@@ -294,17 +370,16 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			     "Skipping lock for %s",
 			     myself->name);
 
-	glist_for_each(glist, &myself->contents) {
-		hdl = glist_entry(glist, struct pseudo_fsal_obj_handle, me);
-
-		if (strcmp(path, hdl->name) == 0) {
-			*handle = &hdl->obj_handle;
-			error = ERR_FSAL_NO_ERROR;
+	key->name = (char *) path;
+	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
+	if (node) {
+		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
+					   avl_n);
+		*handle = &hdl->obj_handle;
+		error = ERR_FSAL_NO_ERROR;
 			LogFullDebug(COMPONENT_FSAL,
 				     "Found %s/%s hdl=%p",
 				     myself->name, path, hdl);
-			break;
-		}
 	}
 
 	if (opctx->fsal_private != parent)
@@ -448,7 +523,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  bool *eof)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
-	struct glist_head *glist;
+	struct pseudo_fsal_obj_handle key[1];
+	struct avltree_node *node;
 	fsal_cookie_t seekloc = 2;
 	fsal_cookie_t index = 2;
 
@@ -472,12 +548,16 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	 */
 	((struct req_op_context *)opctx)->fsal_private = dir_hdl;
 
-	glist_for_each(glist, &myself->contents) {
-		if (index < seekloc)
-			continue;
+	/* seek to seekloc */
+	key->index = seekloc;
 
-		hdl = glist_entry(glist, struct pseudo_fsal_obj_handle, me);
-
+	for (node = avltree_inline_index_lookup(&key->avl_i,
+						&myself->avl_index);
+	     node != NULL;
+	     node = avltree_next(node)) {
+		hdl = avltree_container_of(node,
+					   struct pseudo_fsal_obj_handle,
+					   avl_i);
 		if (!cb(opctx, hdl->name, dir_state, index)) {
 			*eof = false;
 			break;
@@ -512,7 +592,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	if (myself->parent != NULL && myself->me.next == NULL) {
+	if (myself->parent != NULL && !myself->inavl) {
 		/* Removed entry - stale */
 		LogDebug(COMPONENT_FSAL,
 			 "Requesting attributes for removed entry %p, name=%s",
@@ -556,8 +636,9 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
-	struct glist_head *glist;
 	fsal_errors_t error = ERR_FSAL_NOENT;
+	struct pseudo_fsal_obj_handle key[1];
+	struct avltree_node *node;
 	uint32_t numlinks;
 
 	myself = container_of(dir_hdl,
@@ -566,36 +647,36 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 
 	pthread_mutex_lock(&dir_hdl->lock);
 
-	glist_for_each(glist, &myself->contents) {
-		hdl = glist_entry(glist, struct pseudo_fsal_obj_handle, me);
-
-		if (strcmp(name, hdl->name) == 0) {
-			/* Check if directory is empty */
-			numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
-
-			if (numlinks != 2) {
-				LogFullDebug(COMPONENT_FSAL,
-					     "%s numlinks %"PRIu32,
-					     hdl->name, numlinks);
-				error = ERR_FSAL_NOTEMPTY;
-				break;
-			}
-
-			/* We need to update the numlinks. */
-			numlinks = atomic_dec_uint32_t(&myself->numlinks);
-
+	key->name = (char *) name;
+	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
+	if (node) {
+		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
+					   avl_n);
+		/* Check if directory is empty */
+		numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
+		if (numlinks != 2) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "%s numlinks %"PRIu32,
-				     myself->name, numlinks);
-
-			/* Remove from directory's list */
-			glist_del(&hdl->me);
-
-			error = ERR_FSAL_NO_ERROR;
-			break;
+				     hdl->name, numlinks);
+			error = ERR_FSAL_NOTEMPTY;
+			goto unlock;
 		}
+
+		/* We need to update the numlinks. */
+		numlinks = atomic_dec_uint32_t(&myself->numlinks);
+		LogFullDebug(COMPONENT_FSAL,
+			     "%s numlinks %"PRIu32,
+			     myself->name, numlinks);
+
+		/* Remove from directory's name and index avls */
+		avltree_remove(&hdl->avl_n, &myself->avl_name);
+		avltree_remove(&hdl->avl_i, &myself->avl_index);
+		hdl->inavl = false;
+
+		error = ERR_FSAL_NO_ERROR;
 	}
 
+unlock:
 	pthread_mutex_unlock(&dir_hdl->lock);
 
 	return fsalstat(error, 0);
@@ -674,7 +755,7 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	if (myself->parent == NULL || myself->me.next != NULL) {
+	if (myself->parent == NULL || myself->inavl) {
 		/* Entry is still live */
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing live hdl=%p, name=%s, don't deconstruct it",

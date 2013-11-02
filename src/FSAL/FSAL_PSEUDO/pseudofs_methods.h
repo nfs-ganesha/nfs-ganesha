@@ -20,7 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -29,6 +30,7 @@
  */
 
 #include "fsal_handle_syscalls.h"
+#include "avltree.h"
 #include "nlm_list.h"
 
 struct pseudo_fsal_obj_handle;
@@ -64,10 +66,15 @@ struct pseudo_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	char *handle;
 	struct pseudo_fsal_obj_handle *parent;
-	struct glist_head contents;
-	struct glist_head me;
+	struct avltree avl_name;
+	struct avltree avl_index;
+	struct avltree_node avl_n;
+	struct avltree_node avl_i;
+	uint32_t index; /* index in parent */
+	uint32_t next_i; /* next child index */
 	uint32_t numlinks;
 	char *name;
+	bool inavl;
 };
 
 int pseudofs_fsal_open(struct pseudo_fsal_obj_handle *, int, fsal_errors_t *);
