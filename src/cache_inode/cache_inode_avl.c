@@ -229,8 +229,9 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 
 #ifdef _USE_9P
 	/* tmp hook : it seems like client running v9fs dislike "negative"
-	 * cookies v->hk.k &= ~(1L << 63); just kill the sign bit, making
+	 * cookies just kill the sign bit, making
 	 * cookies 63 bits... */
+	v->hk.k &= ~(1L << 63);
 #endif
 
 	/* XXX would we really wait for UINT64_MAX?  if not, how many
@@ -254,7 +255,8 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 
 #ifdef _USE_9P
 	/* tmp hook : it seems like client running v9fs dislike "negative"
-	 * cookies v->hk.k &= ~(1L << 63); */
+	 * cookies  */
+	v->hk.k &= ~(1L << 63);
 #endif
 	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
 		v->hk.k = v->hk.k + j2;
@@ -340,7 +342,8 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 
 #ifdef _USE_9P
 	/* tmp hook : it seems like client running v9fs dislike "negative"
-	 * cookies v.hk.k &= ~(1L << 63); */
+	 * cookies */
+	v.hk.k &= ~(1L << 63);
 #endif
 
 	for (j = 0; j < maxj; j++) {
