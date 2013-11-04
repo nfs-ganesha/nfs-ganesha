@@ -69,5 +69,10 @@ bool remove_gsh_export(int export_id);
 int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 		       void *state);
 
+static inline void get_gsh_export_ref(struct gsh_export *exp)
+{
+	atomic_inc_int64_t(&exp->refcnt);
+}
+
 #endif				/* !EXPORT_MGR_H */
 /** @} */

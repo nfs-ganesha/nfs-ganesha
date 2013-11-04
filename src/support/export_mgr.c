@@ -240,7 +240,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 	}
 
  out:
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -320,7 +320,7 @@ struct gsh_export *get_gsh_export_by_path(char *path)
 	return NULL;
 
  out:
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -355,7 +355,7 @@ struct gsh_export *get_gsh_export_by_pseudo(char *path)
 	return NULL;
 
  out:
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -390,7 +390,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 
  out:
 	exp = container_of(export, struct gsh_export, export);
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }

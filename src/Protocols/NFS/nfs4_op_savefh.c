@@ -107,8 +107,11 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	 * currentFH is still active.  Assert this just to be sure...
 	 */
 	if (data->req_ctx->export != NULL) {
-		data->saved_export =
-		    get_gsh_export(data->req_ctx->export->export.id, true);
+		data->saved_export = data->req_ctx->export;
+		/* Get a reference to the export for the new SavedFH
+		 * independent of CurrentFH if appropriate.
+		 */
+		get_gsh_export_ref(data->saved_export);
 	} else
 		data->saved_export = NULL;
 

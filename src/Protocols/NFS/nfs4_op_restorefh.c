@@ -116,7 +116,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		/* Get a reference to the export for the new CurrentFH
 		 * independent of SavedFH if appropriate.
 		 */
-		(void)get_gsh_export(data->req_ctx->export->export.id, true);
+		get_gsh_export_ref(data->req_ctx->export);
 	}
 
 	data->export_perms = data->saved_export_perms;
