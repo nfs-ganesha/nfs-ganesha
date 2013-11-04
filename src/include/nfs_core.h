@@ -156,7 +156,7 @@ typedef struct request_data {
 		rpc_call_t *call;
 		nfs_request_data_t *nfs;
 #ifdef _USE_9P
-		_9p_request_data_t _9p;
+		struct _9p_request_data _9p;
 #endif
 	} r_u;
 	struct timespec time_queued;	/*< The time at which a request was
@@ -284,16 +284,18 @@ void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
-void _9p_tcp_process_request(_9p_request_data_t *req9p,
+void _9p_tcp_process_request(struct _9p_request_data *req9p,
 			     nfs_worker_data_t *worker_data);
-int _9p_process_buffer(_9p_request_data_t *req9p,
+int _9p_process_buffer(struct _9p_request_data *req9p,
 		       nfs_worker_data_t *worker_data, char *replydata,
 		       u32 *poutlen);
+
+void DispatchWork9P(request_data_t *req);
 #endif
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(_9p_request_data_t *req9p,
+void _9p_rdma_process_request(struct _9p_request_data *req9p,
 			      nfs_worker_data_t *worker_data);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif

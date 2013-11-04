@@ -1,27 +1,27 @@
- /*
-  * vim:expandtab:shiftwidth=8:tabstop=8:
-  *
-  * Copyright CEA/DAM/DIF  (2011)
-  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
-  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
-  *
-  *
-  * This program is free software; you can redistribute it and/or
-  * modify it under the terms of the GNU Lesser General Public
-  * License as published by the Free Software Foundation; either
-  * version 3 of the License, or (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  * Lesser General Public License for more details.
-  *
-  * You should have received a copy of the GNU Lesser General Public
-  * License along with this library; if not, write to the Free Software
-  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-  *
-  * ---------------------------------------
-  */
+/*
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2011)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
+ * ---------------------------------------
+ */
 
 /**
  * \file    9p_version.c
@@ -42,10 +42,10 @@
 #include "fsal.h"
 #include "9p.h"
 
-static char version_9p200l[] = "9P2000.L";
+static const char version_9p200l[] = "9P2000.L";
 
-int _9p_version(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_version(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -59,7 +59,7 @@ int _9p_version(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getstr(cursor, version_len, version_str);
 
 	LogDebug(COMPONENT_9P, "TVERSION: tag=%u msize=%u version='%.*s'",
-		 (u32) * msgtag, *msize, (int)*version_len, version_str);
+		 (u32) *msgtag, *msize, (int)*version_len, version_str);
 
 	if (strncmp(version_str, version_9p200l, *version_len)) {
 		LogEvent(COMPONENT_9P, "RVERSION: BAD VERSION");
@@ -74,8 +74,8 @@ int _9p_version(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P, "Negotiated msize is %u", *msize);
 
-	/* A too small msize would result in buffer overflows on calls such as STAT. 
-	 * Make sure it is not ridiculously low. */
+	/* A too small msize would result in buffer overflows on calls
+	 * such as STAT. Make sure it is not ridiculously low. */
 	if (*msize < 512)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);

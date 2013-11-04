@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -40,7 +40,7 @@
 #include "9p.h"
 #include "config_parsing.h"
 
-int _9p_read_conf(config_file_t in_config, _9p_parameter_t * pparam)
+int _9p_read_conf(config_file_t in_config, _9p_parameter_t *pparam)
 {
 	int var_max;
 	int var_index;
@@ -54,7 +54,8 @@ int _9p_read_conf(config_file_t in_config, _9p_parameter_t * pparam)
 		return -1;
 
 	/* Get the config BLOCK */
-	if ((block = config_FindItemByName(in_config, CONF_LABEL_9P)) == NULL)
+	block = config_FindItemByName(in_config, CONF_LABEL_9P);
+	if (block == NULL)
 		return -2;	/* no 9P config, use default */
 	else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
 		return -1;
@@ -67,8 +68,8 @@ int _9p_read_conf(config_file_t in_config, _9p_parameter_t * pparam)
 		item = config_GetItemByIndex(block, var_index);
 
 		/* Get key's name */
-		if ((err =
-		     config_GetKeyValue(item, &key_name, &key_value)) != 0) {
+		err = config_GetKeyValue(item, &key_name, &key_value);
+		if (err != 0) {
 			fprintf(stderr,
 				"Error reading key[%d] from section \"%s\" of configuration file.\n",
 				var_index, CONF_LABEL_9P);

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -40,10 +40,8 @@
 #include "log.h"
 #include "9p.h"
 
-extern _9p_function_desc_t _9pfuncdesc[];
-
-int _9p_rerror(_9p_request_data_t *req9p, void *worker_data, u16 * msgtag,
-	       u32 err, u32 * plenout, char *preply)
+int _9p_rerror(struct _9p_request_data *req9p, void *worker_data, u16 *msgtag,
+	       u32 err, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u8 msgtype = *(req9p->_9pmsg + _9P_HDR_SIZE);

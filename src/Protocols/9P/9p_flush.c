@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -42,8 +42,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_flush(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_flush(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -53,8 +53,8 @@ int _9p_flush(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, oldtag, u16);
 
-	LogDebug(COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32) * msgtag,
-		 (u32) * oldtag);
+	LogDebug(COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32) *msgtag,
+		 (u32) *oldtag);
 
 	_9p_FlushFlushHook(req9p->pconn, (int)*oldtag,
 			   req9p->flush_hook.sequence);
@@ -66,8 +66,8 @@ int _9p_flush(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32) * msgtag,
-		 (u32) * oldtag);
+	LogDebug(COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32) *msgtag,
+		 (u32) *oldtag);
 
 	return 1;
 }

@@ -44,8 +44,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -56,8 +56,8 @@ int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	char *linkcontent_str = NULL;
 	u32 *gid = NULL;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_qid_t qid_symlink;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_symlink;
 
 	cache_entry_t *pentry_symlink = NULL;
 	char symlink_name[MAXNAMLEN];
@@ -78,7 +78,7 @@ int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TSYMLINK: tag=%u fid=%u name=%.*s linkcontent=%.*s gid=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str, *linkcontent_len,
+		 (u32) *msgtag, *fid, *name_len, name_str, *linkcontent_len,
 		 linkcontent_str, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -96,7 +96,8 @@ int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	snprintf(symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	if ((create_arg.link_content = gsh_malloc(MAXPATHLEN)) == NULL)
+	create_arg.link_content = gsh_malloc(MAXPATHLEN);
+	if (create_arg.link_content == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, EFAULT, plenout,
 				  preply);
 
@@ -104,7 +105,8 @@ int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		 linkcontent_str);
 
 	/* Let's do the job */
-	/* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
+	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
+	 * flags is not yet used */
 	cache_status =
 	    cache_inode_create(pfid->pentry, symlink_name, SYMBOLIC_LINK, mode,
 			       &create_arg, &pfid->op_context, &pentry_symlink);
@@ -145,7 +147,7 @@ int _9p_symlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RSYMLINK: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
-		 (u32) * msgtag, *fid, *name_len, name_str, qid_symlink.type,
+		 (u32) *msgtag, *fid, *name_len, name_str, qid_symlink.type,
 		 qid_symlink.version, (unsigned long long)qid_symlink.path);
 
 	return 1;

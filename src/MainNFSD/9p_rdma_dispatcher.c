@@ -63,7 +63,7 @@
 static void *_9p_rdma_cleanup_conn_thread(void *arg)
 {
 	msk_trans_t *trans = arg;
-	_9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
+	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 	int i;
 
 	if (priv) {
@@ -135,15 +135,15 @@ void *_9p_rdma_thread(void *Arg)
 {
 	msk_trans_t *trans = Arg;
 
-	_9p_rdma_priv *priv = NULL;
-	_9p_conn_t *p_9p_conn = NULL;
+	struct _9p_rdma_priv *priv = NULL;
+	struct _9p_conn *p_9p_conn = NULL;
 	uint8_t *rdmabuf = NULL;
 	struct ibv_mr *mr = NULL;
 	msk_data_t *rdata = NULL;
-	_9p_datalock_t *datalock = NULL;
+	struct _9p_datalock *datalock = NULL;
 	unsigned int i = 0;
 	int rc = 0;
-	_9p_outqueue_t *outqueue = trans->private_data;
+	struct _9p_outqueue *outqueue = trans->private_data;
 
 	priv = gsh_malloc(sizeof(*priv));
 	if (priv == NULL) {
@@ -178,7 +178,7 @@ void *_9p_rdma_thread(void *Arg)
 	       sizeof(p_9p_conn->addrpeer));
 
 	/* Init the fids pointers array */
-	memset(&p_9p_conn->fids, 0, _9P_FID_PER_CONN * sizeof(_9p_fid_t *));
+	memset(&p_9p_conn->fids, 0, _9P_FID_PER_CONN * sizeof(struct _9p_fid *));
 
 	/* Set initial msize.
 	 * Client may request a lower value during TVERSION */
@@ -188,18 +188,20 @@ void *_9p_rdma_thread(void *Arg)
 		LogMajor(COMPONENT_9P, "Cannot get connection's time of birth");
 
 	/* Alloc rdmabuf */
-	rdmabuf = gsh_malloc((_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize);
+	rdmabuf = gsh_malloc(_9P_RDMA_BUFF_NUM *
+			     nfs_param._9p_param._9p_rdma_msize);
 	if (rdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
 		goto error;
 	}
-	memset(rdmabuf, 0, (_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize);
+	memset(rdmabuf, 0,
+	       _9P_RDMA_BUFF_NUM * nfs_param._9p_param._9p_rdma_msize);
 	priv->rdmabuf = rdmabuf;
 
 	/* Register rdmabuf */
 	mr = msk_reg_mr(trans, rdmabuf,
-			(_9P_RDMA_BUFF_NUM) * nfs_param._9p_param._9p_rdma_msize,
+			_9P_RDMA_BUFF_NUM * nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
 		LogFatal(COMPONENT_9P,
@@ -228,7 +230,8 @@ void *_9p_rdma_thread(void *Arg)
 	priv->datalock = datalock;
 
 	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
-		rdata[i].data = rdmabuf + i * nfs_param._9p_param._9p_rdma_msize;
+		rdata[i].data = rdmabuf +
+				i * nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].mr = mr;
 		datalock[i].data = &rdata[i];
@@ -289,12 +292,12 @@ static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
 }
 
 static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
-				   _9p_outqueue_t **poutqueue)
+				   struct _9p_outqueue **poutqueue)
 {
 	uint8_t *outrdmabuf;
 	int i;
 	msk_data_t *wdata;
-	_9p_outqueue_t *outqueue;
+	struct _9p_outqueue *outqueue;
 
 	outrdmabuf =
 	  gsh_malloc(_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize);
@@ -305,7 +308,8 @@ static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	}
 	*poutrdmabuf = outrdmabuf;
 
-	if ((wdata = gsh_malloc(_9P_RDMA_OUT * sizeof(*wdata))) == NULL) {
+	wdata = gsh_malloc(_9P_RDMA_OUT * sizeof(*wdata));
+	if (wdata == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc wdata");
 		return;
@@ -320,7 +324,8 @@ static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	}
 	*pwdata = wdata;
 
-	if ((outqueue = gsh_malloc(sizeof(*outqueue))) == NULL) {
+	outqueue = gsh_malloc(sizeof(*outqueue));
+	if (outqueue == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc outqueue");
 		return;
@@ -351,7 +356,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 
 	uint8_t *outrdmabuf;
 	msk_data_t *wdata;
-	_9p_outqueue_t *outqueue;
+	struct _9p_outqueue *outqueue;
 
 #define PORT_MAX_LEN 6
 	char port[PORT_MAX_LEN];
@@ -416,7 +421,8 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 				 "9P/RDMA : dispatcher failed to accept a new client");
 		else {
 			/* Create output buffers on first connection.
-			 * need it here because we don't want multiple children to do this job.
+			 * need it here because we don't want multiple
+			 * children to do this job.
 			 */
 			if (!outrdmabuf) {
 				_9p_rdma_setup_buffers(&outrdmabuf,

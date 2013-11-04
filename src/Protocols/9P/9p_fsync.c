@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -42,21 +42,21 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_fsync(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_fsync(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -71,9 +71,12 @@ int _9p_fsync(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 				  preply);
 	}
 
-	cache_status = cache_inode_commit(pfid->pentry, 0LL,	// start at beginning of file
-					  0LL,	// Mimic sync_file_range's behavior : count=0 means "whole file"
-					  &pfid->op_context);
+	cache_status =
+	    cache_inode_commit(pfid->pentry,
+			       0LL,	/* start at beginning of file */
+			       0LL,	/* Mimic sync_file_range's behavior:
+					 * count=0 means "whole file" */
+			       &pfid->op_context);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
@@ -87,7 +90,7 @@ int _9p_fsync(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	return 1;
 }

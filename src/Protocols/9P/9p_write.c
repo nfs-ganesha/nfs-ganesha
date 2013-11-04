@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -45,8 +45,8 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
-int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_write(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -56,18 +56,18 @@ int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	u32 outcount = 0;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	size_t size;
 	size_t written_size = 0;
 	bool eof_met;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	//bool sync = true;
+	/* bool sync = true; */
 	bool sync = false;
 
 	char *databuffer = NULL;
 
-	// fsal_status_t fsal_status ;
+	/* fsal_status_t fsal_status; */
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -78,7 +78,7 @@ int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	databuffer = cursor;
 
 	LogDebug(COMPONENT_9P, "TWRITE: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -107,21 +107,14 @@ int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		pfid->specdata.xattr.xattr_offset += size;
 		pfid->specdata.xattr.xattr_write = TRUE;
 
-		// ADD CODE TO DETECT GAP 
+		/* ADD CODE TO DETECT GAP */
 #if 0
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->setextattr_value_by_id(pfid->
-									  pentry->
-									  obj_handle,
-									  &pfid->
-									  op_context,
-									  pfid->
-									  specdata.
-									  xattr.
-									  xattr_id,
-									  xattrval,
-									  size +
-									  1);
+		    pfid->pentry->obj_handle->ops->setextattr_value_by_id(
+			pfid->pentry->obj_handle,
+			&pfid->op_context,
+			pfid->specdata.xattr.xattr_id,
+			xattrval, size + 1);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, worker_data, msgtag,
@@ -139,7 +132,7 @@ int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 #ifdef USE_DBUS_STATS
 		/* Get the handle, for stats */
-		sockaddr_t *paddr = (sockaddr_t *) & req9p->pconn->addrpeer;
+		sockaddr_t *paddr = (sockaddr_t *) &req9p->pconn->addrpeer;
 		struct gsh_client *client = get_gsh_client(paddr, false);
 
 		if (client == NULL)
@@ -176,7 +169,7 @@ int _9p_write(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RWRITE: tag=%u fid=%u offset=%llu input count=%u output count=%u",
-		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count,
+		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count,
 		 outcount);
 
 /**

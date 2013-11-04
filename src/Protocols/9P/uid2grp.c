@@ -29,7 +29,7 @@
 
 /**
  * @file uid2grp.c
- * @brief Uid to group list conversion 
+ * @brief Uid to group list conversion
  */
 
 #include "config.h"
@@ -49,7 +49,7 @@
 #include "uid2grp.h"
 
 #define MAX_GRP 100
-bool pwentname2grp(char *namebuff, uid_t * puid, struct group_data * pgdata)
+bool pwentname2grp(char *namebuff, uid_t *puid, struct group_data *pgdata)
 {
 	char buff[1024];
 	struct passwd p;
@@ -61,9 +61,9 @@ bool pwentname2grp(char *namebuff, uid_t * puid, struct group_data * pgdata)
 		return false;
 	}
 
-  /** @todo Waste of memory here. To be fixed */
-	if ((pgdata->pgroups =
-	     (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t))) == NULL)
+	/** @todo Waste of memory here. To be fixed */
+	pgdata->pgroups = (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t));
+	if (pgdata->pgroups == NULL)
 		return false;
 
 	pgdata->nbgroups = MAX_GRP;
@@ -88,8 +88,8 @@ bool pwentname2grp(char *namebuff, uid_t * puid, struct group_data * pgdata)
 	return true;
 }
 
-bool pwentuid2grp(uid_t uid, struct gsh_buffdesc * name,
-		  struct group_data * pgdata)
+bool pwentuid2grp(uid_t uid, struct gsh_buffdesc *name,
+		  struct group_data *pgdata)
 {
 	char buff[1024];
 	struct passwd p;
@@ -100,9 +100,9 @@ bool pwentuid2grp(uid_t uid, struct gsh_buffdesc * name,
 		return false;
 	}
 
-  /** @todo Waste of memory here. To be fixed */
-	if ((pgdata->pgroups =
-	     (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t))) == NULL)
+	/** @todo Waste of memory here. To be fixed */
+	pgdata->pgroups = (gid_t *) gsh_malloc(MAX_GRP * sizeof(gid_t));
+	if (pgdata->pgroups == NULL)
 		return false;
 
 	pgdata->nbgroups = MAX_GRP;
@@ -140,7 +140,7 @@ bool pwentuid2grp(uid_t uid, struct gsh_buffdesc * name,
  * @return true if successful, false otherwise
  */
 
-bool name2grp(const struct gsh_buffdesc * name, struct group_data ** pgdata)
+bool name2grp(const struct gsh_buffdesc *name, struct group_data **pgdata)
 {
 	bool success;
 	uid_t uid = -1;
@@ -176,7 +176,7 @@ bool name2grp(const struct gsh_buffdesc * name, struct group_data ** pgdata)
 	}
 }
 
-bool uid2grp(uid_t uid, struct group_data ** pgdata)
+bool uid2grp(uid_t uid, struct group_data **pgdata)
 {
 	bool success;
 

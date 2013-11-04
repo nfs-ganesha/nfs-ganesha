@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,17 +43,19 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	       char *preply)
+int _9p_statfs(struct _9p_request_data *req9p, void *worker_data,
+	       u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
-	u32 type = 0x6969;	/* NFS_SUPER_MAGIC for wanting of better, FSAL do not return this information */
-	u32 bsize = 1;		// cache_inode_statfs and FSAL already care for blocksize 
+	u32 type = 0x6969;	/* NFS_SUPER_MAGIC for wanting of better,
+				 * FSAL do not return this information */
+	u32 bsize = 1;		/* cache_inode_statfs and
+				 * FSAL already care for blocksize */
 	u64 *blocks = NULL;
 	u64 *bfree = NULL;
 	u64 *bavail = NULL;
@@ -70,7 +72,7 @@ int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -82,18 +84,18 @@ int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 				  preply);
 
 	/* Get the FS's stats */
-	if ((cache_status =
-	     cache_inode_statfs(pfid->pentry, &dynamicinfo,
-				&pfid->op_context)) != CACHE_INODE_SUCCESS)
+	cache_status = cache_inode_statfs(pfid->pentry, &dynamicinfo,
+					  &pfid->op_context);
+	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
-	blocks = (u64 *) & dynamicinfo.total_bytes;
-	bfree = (u64 *) & dynamicinfo.free_bytes;
-	bavail = (u64 *) & dynamicinfo.avail_bytes;
-	files = (u64 *) & dynamicinfo.total_files;
-	ffree = (u64 *) & dynamicinfo.free_files;
+	blocks = (u64 *) &dynamicinfo.total_bytes;
+	bfree = (u64 *) &dynamicinfo.free_bytes;
+	bavail = (u64 *) &dynamicinfo.avail_bytes;
+	files = (u64 *) &dynamicinfo.total_files;
+	ffree = (u64 *) &dynamicinfo.free_files;
 	fsid = (u64) pfid->pentry->obj_handle->attributes.rawdev.major;
 
 	/* Build the reply */
@@ -113,7 +115,7 @@ int _9p_statfs(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RSTATFS: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RSTATFS: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	return 1;
 }

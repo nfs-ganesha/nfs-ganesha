@@ -128,7 +128,7 @@ void *_9p_socket_thread(void *Arg)
 	char *_9pmsg = NULL;
 	uint32_t *p_9pmsglen = NULL;
 
-	_9p_conn_t _9p_conn;
+	struct _9p_conn _9p_conn;
 
 	int readlen = 0;
 	int total_readlen = 0;
@@ -136,7 +136,7 @@ void *_9p_socket_thread(void *Arg)
 	snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
 	SetNameFunction(my_name);
 
-	/* Init the _9p_conn_t structure */
+	/* Init the struct _9p_conn structure */
 	_9p_conn.trans_type = _9P_TCP;
 	_9p_conn.trans_data.sockfd = tcp_sock;
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
@@ -146,7 +146,7 @@ void *_9p_socket_thread(void *Arg)
 	atomic_store_uint32_t(&_9p_conn.refcount, 0);
 
 	/* Init the fids pointers array */
-	memset(&_9p_conn.fids, 0, _9P_FID_PER_CONN * sizeof(_9p_fid_t *));
+	memset(&_9p_conn.fids, 0, _9P_FID_PER_CONN * sizeof(struct _9p_fid *));
 
 	/* Set initial msize.
 	 * Client may request a lower value during TVERSION */

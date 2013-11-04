@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -46,8 +46,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
-		  u32 * plenout, char *preply)
+int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
+		  u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -66,8 +66,8 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 	char *xattr_cursor = NULL;
 	unsigned int tmplen = 0;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_fid_t *pxattrfid = NULL;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_fid *pxattrfid = NULL;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -75,18 +75,18 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 	_9p_getptr(cursor, attrfid, u32);
 
 	LogDebug(COMPONENT_9P, "TXATTRWALK: tag=%u fid=%u attrfid=%u",
-		 (u32) * msgtag, *fid, *attrfid);
+		 (u32) *msgtag, *fid, *attrfid);
 
 	_9p_getstr(cursor, name_len, name_str);
 
 	if (*name_len == 0)
 		LogDebug(COMPONENT_9P,
 			 "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=(LIST XATTR)",
-			 (u32) * msgtag, *fid, *attrfid);
+			 (u32) *msgtag, *fid, *attrfid);
 	else
 		LogDebug(COMPONENT_9P,
 			 "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
-			 (u32) * msgtag, *fid, *attrfid, *name_len, name_str);
+			 (u32) *msgtag, *fid, *attrfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -104,28 +104,34 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 				  preply);
 	}
 
-	if ((pxattrfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
+	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	if (pxattrfid == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
 				  preply);
 
 	/* Initiate xattr's fid by copying file's fid in it */
-	memcpy((char *)pxattrfid, (char *)pfid, sizeof(_9p_fid_t));
+	memcpy((char *)pxattrfid, (char *)pfid, sizeof(struct _9p_fid));
 
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	if ((pxattrfid->specdata.xattr.xattr_content =
-	     gsh_malloc(XATTR_BUFFERSIZE)) == NULL) {
+	pxattrfid->specdata.xattr.xattr_content = gsh_malloc(XATTR_BUFFERSIZE);
+	if (pxattrfid->specdata.xattr.xattr_content == NULL) {
 		gsh_free(pxattrfid);
 		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
 				  preply);
 	}
 
 	if (*name_len == 0) {
-		/* xattrwalk is used with an empty name, this is a listxattr request */
-		fsal_status = pxattrfid->pentry->obj_handle->ops->list_ext_attrs(pxattrfid->pentry->obj_handle, &pfid->op_context, FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie, hiding RO ones */
-										 xattrs_tab, 100,	/* for wanting of something smarter */
-										 &nb_xattrs_read,
-										 &eod_met);
+		/* xattrwalk is used with an empty name,
+		 * this is a listxattr request */
+		fsal_status =
+		    pxattrfid->pentry->obj_handle->ops->list_ext_attrs(
+			pxattrfid->pentry->obj_handle, &pfid->op_context,
+			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
+						 * hiding RO ones */
+			 xattrs_tab, 100,	/* static array size for now */
+			 &nb_xattrs_read,
+			 &eod_met);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
@@ -136,7 +142,8 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 		}
 
-		/* if all xattrent are not read, returns ERANGE as listxattr does */
+		/* if all xattrent are not read,
+		 * returns ERANGE as listxattr does */
 		if (eod_met != TRUE) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
@@ -151,7 +158,8 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 			    snprintf(xattr_cursor, MAXNAMLEN, "%s",
 				     xattrs_tab[i].xattr_name);
 			xattr_cursor[tmplen] = '\0';	/* Just to be sure */
-			xattr_cursor += tmplen + 1;	/* Do not forget to take in account the '\0' at the end */
+			/* +1 for trailing '\0' */
+			xattr_cursor += tmplen + 1;
 			attrsize += tmplen + 1;
 
 			/* Make sure not to go beyond the buffer */
@@ -175,7 +183,8 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
 
-			if (fsal_status.major == ERR_FSAL_NOENT)	/* ENOENT for xattr is ENOATTR (set setxattr's manpage) */
+			/* ENOENT for xattr is ENOATTR (setxattr's manpage) */
+			if (fsal_status.major == ERR_FSAL_NOENT)
 				return _9p_rerror(req9p, worker_data, msgtag,
 						  ENOATTR, plenout, preply);
 			else
@@ -220,7 +229,7 @@ int _9p_xattrwalk(_9p_request_data_t *req9p, void *worker_data,
 
 	LogDebug(COMPONENT_9P,
 		 "RXATTRWALK: tag=%u fid=%u attrfid=%u name=%.*s size=%llu",
-		 (u32) * msgtag, *fid, *attrfid, *name_len, name_str,
+		 (u32) *msgtag, *fid, *attrfid, *name_len, name_str,
 		 (unsigned long long)attrsize);
 
 	return 1;

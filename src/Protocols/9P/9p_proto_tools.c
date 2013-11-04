@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -45,13 +45,13 @@
 #include "idmapper.h"
 #include "uid2grp.h"
 
-int _9p_init(_9p_parameter_t * pparam)
+int _9p_init(_9p_parameter_t *pparam)
 {
 	uid2grp_cache_init();
 	return 0;
 }				/* _9p_init */
 
-int _9p_tools_get_req_context_by_uid(u32 uid, _9p_fid_t * pfid)
+int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 {
 	struct group_data group_data;
 	struct group_data *pgrpdata = &group_data;
@@ -65,14 +65,15 @@ int _9p_tools_get_req_context_by_uid(u32 uid, _9p_fid_t * pfid)
 	pfid->ucred.caller_garray = pgrpdata->pgroups;
 
 	pfid->op_context.creds = &pfid->ucred;
-	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see if daemon crashes... */
+	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
+						 * if daemon crashes... */
 	pfid->op_context.req_type = _9P_REQUEST;
 
 	return 0;
 }				/* _9p_tools_get_fsal_cred */
 
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
-				      _9p_fid_t * pfid)
+				      struct _9p_fid *pfid)
 {
 	struct gsh_buffdesc name = {
 		.addr = uname_str,
@@ -90,7 +91,8 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	pfid->ucred.caller_garray = pgrpdata->pgroups;
 
 	pfid->op_context.creds = &pfid->ucred;
-	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see if daemon crashes... */
+	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
+						 * if daemon crashes... */
 	pfid->op_context.req_type = _9P_REQUEST;
 
 	return 0;
@@ -230,7 +232,7 @@ void _9p_tools_fsal_attr2stat(struct attrlist *pfsalattr, struct stat *pstat)
 
 }				/* _9p_tools_fsal_attr2stat */
 
-void _9p_tools_acess2fsal(u32 * paccessin, fsal_accessflags_t * pfsalaccess)
+void _9p_tools_acess2fsal(u32 *paccessin, fsal_accessflags_t *pfsalaccess)
 {
 	memset((char *)pfsalaccess, 0, sizeof(fsal_accessflags_t));
 
@@ -257,7 +259,7 @@ void _9p_chomp_attr_value(char *str, size_t size)
 		str[len - 1] = '\0';
 }
 
-void _9p_openflags2FSAL(u32 * inflags, fsal_openflags_t * outflags)
+void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 {
 	if (inflags == NULL || outflags == NULL)
 		return;
@@ -266,15 +268,15 @@ void _9p_openflags2FSAL(u32 * inflags, fsal_openflags_t * outflags)
 		*outflags |= FSAL_O_WRITE;
 	if (*inflags & O_RDWR)
 		*outflags |= FSAL_O_RDWR;
-	/* Exception : O_RDONLY has value 0, it can't be tested with a logical and */
-	/* We consider that a non( has O_WRONLY or has O_RDWR ) case is RD_ONLY */
+	/* Exception: O_RDONLY is 0, it can't be tested with a logical and */
+	/* We consider that non( has O_WRONLY or has O_RDWR ) is RD_ONLY */
 	if (!(*inflags & (O_WRONLY | O_RDWR)))
 		*outflags = FSAL_O_READ;
 
 	return;
 }				/* _9p_openflags2FSAL */
 
-void _9p_cleanup_fids(_9p_conn_t * conn)
+void _9p_cleanup_fids(struct _9p_conn *conn)
 {
 	int i;
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {

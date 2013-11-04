@@ -1377,7 +1377,7 @@ static void nfs_rpc_execute(request_data_t *req,
  */
 static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 {
-	_9p_request_data_t *req9p = &req->r_u._9p;
+	struct _9p_request_data *req9p = &req->r_u._9p;
 
 	if (req9p->pconn->trans_type == _9P_TCP)
 		_9p_tcp_process_request(req9p, worker_data);
@@ -1396,7 +1396,7 @@ static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
  *
  * @param[in] nfsreq 9p request
  */
-static void _9p_free_reqdata(_9p_request_data_t *req9p)
+static void _9p_free_reqdata(struct _9p_request_data *req9p)
 {
 	if (req9p->pconn->trans_type == _9P_TCP)
 		gsh_free(req9p->_9pmsg);

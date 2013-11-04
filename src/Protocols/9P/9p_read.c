@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -45,8 +45,8 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
-int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	     char *preply)
+int _9p_read(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	char *databuffer;
@@ -57,12 +57,12 @@ int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u32 *count = NULL;
 	u32 outcount = 0;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	size_t read_size = 0;
 	bool eof_met;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	// uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
+	/* uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS; */
 	bool sync = false;
 
 	/* Get data */
@@ -72,7 +72,7 @@ int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, count, u32);
 
 	LogDebug(COMPONENT_9P, "TREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -106,7 +106,7 @@ int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		       *count);
 		pfid->specdata.xattr.xattr_write = FALSE;
 
-		outcount = (u32) * count;
+		outcount = (u32) *count;
 	} else {
 		cache_status =
 		    cache_inode_rdwr(pfid->pentry, CACHE_INODE_READ, *offset,
@@ -145,7 +145,7 @@ int _9p_read(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
 /**
  * @todo read statistics accounting goes here

@@ -53,7 +53,8 @@
  * @param req9p [IN] pointer to request data
  */
 
-static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t *req9p)
+static void free_fid(struct _9p_fid *pfid, u32 *fid,
+		     struct _9p_request_data *req9p)
 {
 	struct gsh_export *exp;
 
@@ -66,14 +67,14 @@ static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t *req9p)
 	req9p->pconn->fids[*fid] = NULL;	/* poison the entry */
 }
 
-int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 	cache_inode_status_t cache_status;
 	fsal_status_t fsal_status;
 
@@ -81,7 +82,7 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -100,7 +101,8 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	if (pfid->specdata.xattr.xattr_content != NULL) {
 
 		if (pfid->specdata.xattr.xattr_write == TRUE) {
-			/* Check size give at TXATTRCREATE against the one resulting from the writes */
+			/* Check size give at TXATTRCREATE with
+			 * the one resulting from the writes */
 			if (pfid->specdata.xattr.xattr_size !=
 			    pfid->specdata.xattr.xattr_offset) {
 				free_fid(pfid, fid, req9p);
@@ -170,7 +172,7 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	return 1;
 }

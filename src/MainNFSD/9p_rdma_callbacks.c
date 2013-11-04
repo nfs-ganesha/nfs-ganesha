@@ -55,11 +55,9 @@
 
 #include <mooshika.h>
 
-void DispatchWork9P(request_data_t *req);
-
 void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
-	_9p_outqueue_t *outqueue =  (_9p_outqueue_t *) arg;
+	struct _9p_outqueue *outqueue =  (struct _9p_outqueue *) arg;
 
 	pthread_mutex_lock(&outqueue->lock);
 	data->next = outqueue->data;
@@ -71,8 +69,11 @@ void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 				void *arg)
 {
-	_9p_outqueue_t *outqueue =  (_9p_outqueue_t *) arg;
-	/** @todo: This should probably try to send again a few times before unlocking */
+	struct _9p_outqueue *outqueue =  (struct _9p_outqueue *) arg;
+	/**
+	 * @todo: This should probably try to send again a few times
+	 * before unlocking
+	 */
 
 	pthread_mutex_lock(&outqueue->lock);
 	data->next = outqueue->data;
@@ -98,19 +99,19 @@ void _9p_rdma_callback_disconnect(msk_trans_t *trans)
 	_9p_rdma_cleanup_conn(trans);
 }
 
-void _9p_rdma_process_request(_9p_request_data_t *req9p,
+void _9p_rdma_process_request(struct _9p_request_data *req9p,
 			      nfs_worker_data_t *worker_data)
 {
 	msk_trans_t *trans = req9p->pconn->trans_data.rdma_trans;
-	_9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
+	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 
-	_9p_datalock_t *datalock = req9p->datalock;
+	struct _9p_datalock *datalock = req9p->datalock;
 
 	/* get output buffer and move forward in queue */
 	pthread_mutex_lock(&priv->outqueue->lock);
-	while (priv->outqueue->data == NULL) {
+	while (priv->outqueue->data == NULL)
 		pthread_cond_wait(&priv->outqueue->cond, &priv->outqueue->lock);
-	}
+
 	datalock->out = priv->outqueue->data;
 	priv->outqueue->data = datalock->out->next;
 	pthread_mutex_unlock(&priv->outqueue->lock);
