@@ -1318,7 +1318,7 @@ static int BuildExportEntry(config_item_t block)
 		return -1;
 	}
 	if (!parse_int32_t(var_value,
-			   1,
+			   0,
 			   USHRT_MAX,
 			   &set_options,
 			   FLAG_EXPORT_ID,
@@ -1436,7 +1436,7 @@ static int BuildExportEntry(config_item_t block)
 			int32_t export_id;
 
 			if (!parse_int32_t(var_value,
-					   1,
+					   0,
 					   USHRT_MAX,
 					   &set_options,
 					   FLAG_EXPORT_ID,
@@ -1627,6 +1627,15 @@ static int BuildExportEntry(config_item_t block)
 				err_flag = true;
 				continue;
 			}
+
+			if (export_id == 0 && strcmp(var_value, "/") != 0) {
+				LogCrit(COMPONENT_CONFIG,
+					"NFS READ %s: %s: \"%s\" for export_id 0 must be \"/\"",
+					label, var_name, var_value);
+				err_flag = true;
+				continue;
+			}
+
 			p_entry->pseudopath = gsh_strdup(var_value);
 
 			p_perms->options |= EXPORT_OPTION_PSEUDO;

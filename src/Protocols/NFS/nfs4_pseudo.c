@@ -340,7 +340,8 @@ static bool export_to_pseudo(struct gsh_export *exp, void *arg)
 	/* skip exports that aren't for NFS v4 */
 	if ((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0
 	    || entry->pseudopath == NULL
-	    || (entry->export_perms.options & EXPORT_OPTION_PSEUDO) == 0)
+	    || (entry->export_perms.options & EXPORT_OPTION_PSEUDO) == 0
+	    || entry->id == 0)
 		return true;
 
 	LogDebug(COMPONENT_NFS_V4_PSEUDO,
