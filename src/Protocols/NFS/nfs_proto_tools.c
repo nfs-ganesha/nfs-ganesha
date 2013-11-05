@@ -302,6 +302,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_SHARE_DENIED:
 	case CACHE_INODE_SERVERFAULT:
 	case CACHE_INODE_BADNAME:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Non retryable error, return error to client */
 		return false;
 		break;
@@ -4280,6 +4281,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_INCONSISTENT_ENTRY:
 	case CACHE_INODE_HASH_TABLE_ERROR:
 	case CACHE_INODE_ASYNC_POST_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
 			 "Line %u should never be reached in nfs4_Errno"
@@ -4442,6 +4444,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_STATE_CONFLICT:
 	case CACHE_INODE_ASYNC_POST_ERROR:
 	case CACHE_INODE_STATE_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
 			 "Line %u should never be reached in nfs3_Errno"

@@ -147,6 +147,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_FSAL_SHARE_DENIED";
 	case CACHE_INODE_BADNAME:
 		return "CACHE_INODE_BADNAME";
+	case CACHE_INODE_CROSS_JUNCTION:
+		return "CACHE_INODE_CROSS_JUNCTION";
 	}
 	return "unknown";
 }

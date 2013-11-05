@@ -207,6 +207,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_NOT_FOUND;
 	case CACHE_INODE_BADNAME:
 	case CACHE_INODE_INVALID_ARGUMENT:
+	case CACHE_INODE_CROSS_JUNCTION:
 		return STATE_INVALID_ARGUMENT;
 	case CACHE_INODE_INSERT_ERROR:
 		return STATE_INSERT_ERROR;

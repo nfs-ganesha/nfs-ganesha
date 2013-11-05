@@ -375,6 +375,9 @@ struct cache_entry_t {
 				/** Heuristic. Expect 0. */
 				uint32_t collisions;
 			} avl;
+			/** If this is a junction, the export this node points
+			    to. Protected by the attr_lock. */
+			struct gsh_export *junction_export;
 		} dir;		/*< DIRECTORY data */
 	} object;
 };
@@ -486,6 +489,7 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_FSAL_SHARE_DENIED = 41,
 	CACHE_INODE_BADNAME = 42,
 	CACHE_INODE_UNION_NOTSUPP = 43,
+	CACHE_INODE_CROSS_JUNCTION = 44,
 } cache_inode_status_t;
 
 /**
