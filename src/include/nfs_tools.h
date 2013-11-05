@@ -51,7 +51,6 @@ int nfs_ParseConfLine(char *Argv[], int nbArgv, char *line, char separator);
 int ReadExports(config_file_t in_config);
 void free_export_resources(exportlist_t *export);
 void exports_pkginit(void);
-exportlist_t *BuildDefaultExport();
 
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
