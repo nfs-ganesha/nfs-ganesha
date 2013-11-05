@@ -55,7 +55,34 @@ struct nfs4_readdir_cb_data {
 	struct bitmap4 *req_attr;	/*< The requested attributes */
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
+	bool junction_cb;	/*< True if this is a callback for junction. */
+	export_perms_t save_export_perms;	/*< Saved export perms. */
+	struct gsh_export *saved_gsh_export;	/*< Saved export */
 };
+
+static void restore_data(struct nfs4_readdir_cb_data *tracker)
+{
+	/* Restore export stuff */
+	if (tracker->data->req_ctx->export)
+		put_gsh_export(tracker->data->req_ctx->export);
+
+	tracker->data->export_perms = tracker->save_export_perms;
+	tracker->data->req_ctx->export = tracker->saved_gsh_export;
+	tracker->data->export = &tracker->data->req_ctx->export->export;
+	tracker->saved_gsh_export = NULL;
+
+	/* Restore creds */
+	if (!get_req_uid_gid(tracker->data->req,
+			     tracker->data->req_ctx->creds,
+			     &tracker->data->export_perms)) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Failure to restore creds");
+	} else {
+		nfs_check_anon(&tracker->data->export_perms,
+			       tracker->data->export,
+			       tracker->data->req_ctx->creds);
+	}
+}
 
 /**
  * @brief Populate entry4s when called from cache_inode_readdir
@@ -93,9 +120,152 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	fsal_accessflags_t access_mask_attr = 0;
 	cache_entry_t *entry = cb_parms->entry;
 
-	if (tracker->total_entries == tracker->count)
-		goto failure;
+	/* If being called on error regarding junction, go cleanup. */
+	if (attr == NULL)
+		goto out;
 
+	if (tracker->total_entries == tracker->count)
+		goto not_inresult;
+
+	/* Test if this is a junction.
+	 *
+	 * NOTE: If there is a junction within a file system (perhaps setting
+	 *       up different permissions for part of the file system), the
+	 *       junction inode will ALSO be the root of the nested export.
+	 *       By testing junction_cb, we allow the call back to process
+	 *       that root inode to proceed rather than getting stuck in a
+	 *       junction crossing infinite loop.
+	 */
+	if (cb_parms->attr_allowed &&
+	    entry->type == DIRECTORY &&
+	    entry->object.dir.junction_export != NULL &&
+	    !tracker->junction_cb) {
+		/* This is a junction. Code used to not recognize this
+		 * which resulted in readdir giving different attributes
+		 * (including FH, FSid, etc...) to clients from a
+		 * lookup. AIX refused to list the directory because of
+		 * this. Now we go to the junction to get the
+		 * attributes.
+		 */
+		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+			    "Offspring DIR %s is a junction Export_id %d Path %s",
+			    cb_parms->name,
+			    entry->object.dir.junction_export->export.id,
+			    entry->object.dir.junction_export->export.fullpath);
+
+		/* Save the compound data context */
+		tracker->save_export_perms = data->export_perms;
+		tracker->saved_gsh_export = data->req_ctx->export;
+
+		/* Get a reference to the export and stash it in
+		 * compound data.
+		 */
+		get_gsh_export_ref(entry->object.dir.junction_export);
+
+		/* Cross the junction */
+		data->req_ctx->export =
+		    entry->object.dir.junction_export;
+
+		data->export = &data->req_ctx->export->export;
+
+		/* Build the credentials */
+		rdattr_error = nfs4_MakeCred(data);
+
+		if (rdattr_error == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client
+			 * doesn't have access to this export, quietly
+			 * skip the export.
+			 */
+			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
+				 data->export->id,
+				 data->export->fullpath);
+
+			/* Restore export and creds */
+			restore_data(tracker);
+
+			/* Indicate success without adding another entry */
+			cb_parms->in_result = true;
+			goto out;
+		}
+
+		if (rdattr_error == NFS4ERR_WRONGSEC) {
+			/* Client isn't using the right SecType for this export,
+			 * we will report NFS4ERR_WRONGSEC in
+			 * FATTR4_RDATTR_ERROR.
+			 *
+			 * If the ONLY attributes requested are
+			 * FATTR4_RDATTR_ERROR and FATTR4_MOUNTED_ON_FILEID we
+			 * will not return an error and instead will return
+			 * success with FATTR4_MOUNTED_ON_FILEID. AIX clients
+			 * make this request and expect it to succeed.
+			 */
+
+			if (check_for_wrongsec_ok_attr(tracker->req_attr)) {
+				/* Client is requesting attr that are allowed
+				 * when NFS4ERR_WRONGSEC occurs.
+				 */
+				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
+					 data->export->id,
+					 data->export->fullpath);
+
+				/* Because we are not asking for any attributes
+				 * which are a property of the exported file
+				 * system's root, really just asking for
+				 * MOUNTED_ON_FILEID, we can just get the attr
+				 * for this node since it will result in the
+				 * correct value for MOUNTED_ON_FILEID since
+				 * the fileid of the junction node is the
+				 * MOUNTED_ON_FILEID of the root across the
+				 * junction, and the mounted_on_filed passed
+				 * is the fileid of the junction (since the
+				 * node can't be the root of the current
+				 * export).
+				 *
+				 * Go ahead and proceed without an error.
+				 */
+				rdattr_error = NFS4_OK;
+			} else {
+				/* We really must report the NFS4ERR_WRONGSEC.
+				 * We will report it below, but we need to get
+				 * the name into the entry.
+				 */
+				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
+					 data->export->id,
+					 data->export->fullpath);
+			}
+		} else if (rdattr_error == NFS4_OK) {
+			/* Now we must traverse the junction to get the
+			 * attributes. We have already set up the compound data.
+			 *
+			 * Signal to cache_inode_getattr to call back with the
+			 * root node of the export across the junction. Also
+			 * signal to ourselves that the call back will be
+			 * across the junction.
+			 */
+			LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+				     "Need to cross junction to Export_Id %d Path %s",
+				     data->export->id,
+				     data->export->fullpath);
+			tracker->junction_cb = true;
+			return CACHE_INODE_CROSS_JUNCTION;
+		}
+
+		/* An error occured and we will report it, but we need to get
+		 * the name into the entry to proceed.
+		 *
+		 * Restore export and creds.
+		 */
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "Need to report error for junction to Export_Id %d Path %s",
+			     data->export->id,
+			     data->export->fullpath);
+		restore_data(tracker);
+	}
+
+	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);
 
 	/* Bits that don't require allocation */
@@ -140,8 +310,12 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	 * the name set up, go ahead and try and put error in
 	 * results.
 	 */
-	if (rdattr_error != NFS4_OK)
+	if (rdattr_error != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
 		goto skip;
+	}
 
 	if (cb_parms->attr_allowed
 	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
@@ -155,6 +329,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 * attributes, but must indicate NFS4ERR_ACCESS.
 		 */
 		rdattr_error = NFS4ERR_ACCESS;
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
 		goto skip;
 	}
 
@@ -176,6 +353,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			     cache_inode_err_str(attr_status));
 
 		rdattr_error = nfs4_Errno(attr_status);
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
 		goto skip;
 	}
 
@@ -243,9 +423,16 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		tracker_entry->name.utf8string_val = NULL;
 	}
 
+ not_inresult:
+
 	cb_parms->in_result = false;
 
  out:
+
+	if (tracker->junction_cb) {
+		tracker->junction_cb = false;
+		restore_data(tracker);
+	}
 
 	return CACHE_INODE_SUCCESS;
 }
@@ -319,7 +506,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	memset(&tracker, sizeof(tracker), 0);
+	memset(&tracker, 0, sizeof(tracker));
 
 	dir_entry = data->current_entry;
 
