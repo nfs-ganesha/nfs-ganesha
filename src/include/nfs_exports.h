@@ -189,6 +189,10 @@ typedef struct exportlist {
 						 */
 	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
 						    export  */
+	cache_entry_t *exp_junction_inode;	/*< entry for the junction of
+						    this export */
+	struct gsh_export *exp_parent_exp;	/*< The export this export
+						    sits on. */
 	cache_inode_expire_type_t expire_type_attr;
 } exportlist_t;
 
