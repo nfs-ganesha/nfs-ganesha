@@ -36,7 +36,7 @@ struct _generic_item_;
 
 typedef enum {
 	TYPE_BLOCK,
-	TYPE_AFFECT
+	TYPE_STMT
 } type_item;
 
 typedef struct _type_affect_ {

@@ -44,8 +44,8 @@
 %token END_BLOCK
 %token BEGIN_SUB_BLOCK
 %token END_SUB_BLOCK
-%token AFFECTATION
-%token END_AFFECT
+%token EQUAL_OP
+%token END_STMT
 %token <str_val> IDENTIFIER
 %token <str_val> KEYVALUE
 
@@ -54,7 +54,7 @@
 %type <item> block
 %type <item> definition
 %type <item> subblock
-%type <item> affect
+%type <item> statement
 
 
 %%
@@ -77,13 +77,13 @@ listitems:
     ;
 
 definition:
-    affect
+    statement
     | subblock
     ;
 
 
-affect:
-    IDENTIFIER AFFECTATION KEYVALUE END_AFFECT {$$=config_CreateAffect($1,$3);}
+statement:
+    IDENTIFIER EQUAL_OP KEYVALUE END_STMT {$$=config_CreateAffect($1,$3);}
     ;
 
 subblock:

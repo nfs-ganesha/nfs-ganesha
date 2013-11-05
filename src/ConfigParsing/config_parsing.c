@@ -266,7 +266,7 @@ config_item_type config_ItemType(config_item_t item)
 
 	if (the_item->type == TYPE_BLOCK)
 		return CONFIG_ITEM_BLOCK;
-	else if (the_item->type == TYPE_AFFECT)
+	else if (the_item->type == TYPE_STMT)
 		return CONFIG_ITEM_VAR;
 	else
 		return 0;
@@ -277,7 +277,7 @@ int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 {
 	generic_item *var = (generic_item *) item;
 
-	assert(var->type == TYPE_AFFECT);
+	assert(var->type == TYPE_STMT);
 
 	*var_name = var->item.affect.varname;
 	*var_value = var->item.affect.varvalue;
@@ -294,7 +294,7 @@ static generic_item *GetItemFromList(generic_item * list, const char *name)
 		if ((curr->type == TYPE_BLOCK)
 		    && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
 			return curr;
-		if ((curr->type == TYPE_AFFECT)
+		if ((curr->type == TYPE_STMT)
 		    && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
 			return curr;
 	}
@@ -316,7 +316,7 @@ static int CheckDuplicateEntry(generic_item * list, const char *name)
 		if ((curr->type == TYPE_BLOCK)
 		    && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
 			found++;
-		if ((curr->type == TYPE_AFFECT)
+		if ((curr->type == TYPE_STMT)
 		    && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
 			found++;
 		if (found > 1)
@@ -405,7 +405,7 @@ char *config_FindKeyValueByName(config_file_t config, const char *key_name)
 
 	var = (generic_item *) config_FindItemByName(config, key_name);
 
-	assert(var->type == TYPE_AFFECT);
+	assert(var->type == TYPE_STMT);
 	return var->item.affect.varvalue;
 
 }
@@ -470,6 +470,6 @@ char *config_GetKeyValueByName(config_item_t block, const char *key_name)
 
 	var = (generic_item *) config_GetItemByName(block, key_name);
 
-	assert(var->type == TYPE_AFFECT);
+	assert(var->type == TYPE_STMT);
 	return var->item.affect.varvalue;
 }

@@ -74,7 +74,7 @@ generic_item *config_CreateAffect(char *varname, char *varval)
 {
 	generic_item *new = gsh_malloc(sizeof(generic_item));
 
-	new->type = TYPE_AFFECT;
+	new->type = TYPE_STMT;
 	strncpy(new->item.affect.varname, varname, MAXSTRLEN);
 	strncpy(new->item.affect.varvalue, varval, MAXSTRLEN);
 
@@ -119,7 +119,7 @@ static void print_list_ident(FILE * output, list_items * list,
 			fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
 				curr_item->item.block.block_name);
 		} else {
-			/* affectation */
+			/* a statement */
 			fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent,
 				" ", curr_item->item.affect.varname,
 				curr_item->item.affect.varvalue);
