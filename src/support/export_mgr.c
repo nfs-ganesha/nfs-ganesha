@@ -461,24 +461,24 @@ bool remove_gsh_export(int export_id)
  * @param state [IN] param block to pass
  */
 
-int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-		       void *state)
+bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+			void *state)
 {
 	struct glist_head *glist;
 	struct gsh_export *exp;
 	exportlist_t *export;
-	int cnt = 0;
+	int rc = true;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, exportlist_t, exp_list);
 		exp = container_of(export, struct gsh_export, export);
-		if (!cb(exp, state))
+		rc = cb(exp, state);
+		if (!rc)
 			break;
-		cnt++;
 	}
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return cnt;
+	return rc;
 }
 
 #ifdef USE_DBUS_STATS

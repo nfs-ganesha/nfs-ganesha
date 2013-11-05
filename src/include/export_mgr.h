@@ -66,8 +66,8 @@ struct gsh_export *get_gsh_export_by_tag(char *tag);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
 bool remove_gsh_export(int export_id);
-int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-		       void *state);
+bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+			void *state);
 
 static inline void get_gsh_export_ref(struct gsh_export *exp)
 {
