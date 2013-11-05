@@ -2443,6 +2443,184 @@ static int BuildExportEntry(config_item_t block)
 }
 
 /**
+ * @brief builds an export entry for '/' with default parameters
+ *
+ * If export_id = 0 has not been specified, and not other export
+ * for Pseudo "/" has been specified, build an FSAL_PSEUDO export
+ * for the root of the Pseudo FS.
+ *
+ * @return true if error, false otherwise.
+ */
+
+static bool BuildRootExport()
+{
+	exportlist_t *p_entry = NULL;
+	struct gsh_export *exp;
+	struct fsal_module *fsal_hdl = NULL;
+	exportlist_client_t access_list;
+	exportlist_client_t *p_access_list;
+	bool err_flag = false;
+	struct glist_head *glist;
+
+	/* See if export_id = 0 has already been specified */
+	exp = get_gsh_export(0, true);
+
+	if (exp != NULL) {
+		/* export_id = 0 has already been specified */
+		put_gsh_export(exp);
+		return false;
+	}
+
+	/* See if another export with Pseudo = "/" has already been specified.
+	 */
+	exp = get_gsh_export_by_pseudo("/");
+
+	if (exp != NULL) {
+		/* export_id = 0 has already been specified */
+		put_gsh_export(exp);
+		return false;
+	}
+
+	/* Ok, we need to create export_id = 0 */
+	exp = get_gsh_export(0, false);
+
+	if (exp == NULL) {
+		/* gsh_calloc error */
+		LogCrit(COMPONENT_CONFIG,
+			"Unable to allocate space for export id 0");
+		return true;
+	}
+
+	/* initialize the exportlist part with the id */
+	p_entry = &exp->export;
+
+	if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
+		LogCrit(COMPONENT_CONFIG,
+			"Could not initialize exp_state_mutex for export id 0");
+		put_gsh_export(exp);
+		remove_gsh_export(0);
+		return -1;
+	}
+
+	p_entry->UseCookieVerifier = true;
+	p_entry->UseCookieVerifier = true;
+	p_entry->filesystem_id.major = 152;
+	p_entry->filesystem_id.minor = 152;
+	p_entry->MaxWrite = 16384;
+	p_entry->MaxRead = 16384;
+	p_entry->PrefWrite = 16384;
+	p_entry->PrefRead = 16384;
+	p_entry->PrefReaddir = 16384;
+	p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
+	glist_init(&p_entry->exp_state_list);
+	glist_init(&p_entry->exp_lock_list);
+	glist_init(&p_entry->clients.client_list);
+
+	/* Init the access list */
+	p_access_list = &access_list;
+	glist_init(&p_access_list->client_list);
+	p_access_list->num_clients = 0;
+
+	/* Default anonymous uid and gid */
+	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
+	p_entry->export_perms.anonymous_gid = (gid_t) ANON_GID;
+
+	/* Support only NFS v4 and both transports.
+	 * Pseudo is provided
+	 * Root is allowed
+	 * MD Read Access
+	 * All auth types
+	 */
+	p_entry->export_perms.options = EXPORT_OPTION_NFSV4 |
+					EXPORT_OPTION_TRANSPORTS |
+					EXPORT_OPTION_PSEUDO |
+					EXPORT_OPTION_MD_READ_ACCESS |
+					EXPORT_OPTION_ROOT |
+					EXPORT_OPTION_AUTH_TYPES;
+
+	/* Set the fullpath to "/" */
+	p_entry->fullpath = gsh_strdup("/");
+
+	/* Set MDONLY_RO_Access="*" */
+	parseAccessParam(CONF_EXPORT_ACCESS,
+			 "*",
+			 p_access_list,
+			 EXPORT_OPTION_ACCESS_OPT_LIST,
+			 CONF_LABEL_EXPORT);
+
+	/* Copy the permissions into the client
+	 * list entries.
+	 */
+	glist_for_each(glist, &p_access_list->client_list) {
+		exportlist_client_entry_t *client_entry;
+
+		client_entry =
+		    glist_entry(glist, exportlist_client_entry_t, cle_list);
+		client_entry->client_perms = p_entry->export_perms;
+		if (isFullDebug(COMPONENT_CONFIG))
+			LogClientListEntry(COMPONENT_CONFIG, client_entry);
+	}
+
+	/* Set Pseudo Path to "/" */
+	p_entry->pseudopath = gsh_strdup("/");
+
+	/* Assign FSAL_PSEUDO */
+	fsal_hdl = lookup_fsal("PSEUDO");
+
+	if (fsal_hdl == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"FSAL PSEUDO is not loaded!");
+		err_flag = true;
+	} else {
+		fsal_status_t rc;
+
+		rc = fsal_hdl->ops->create_export(fsal_hdl,
+						  p_entry->fullpath,
+						  p_entry->FS_specific,
+						  p_entry,
+						  NULL,
+						  &fsal_up_top,
+						  &p_entry->export_hdl);
+
+		if (FSAL_IS_ERROR(rc)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Could not create FSAL export for %s",
+				p_entry->fullpath);
+			err_flag = true;
+		}
+
+		fsal_hdl->ops->put(fsal_hdl);
+	}
+
+	/* Append the default Access list to the export so someone owns them */
+	glist_add_list_tail(&p_entry->clients.client_list,
+			    &p_access_list->client_list);
+	p_entry->clients.num_clients += p_access_list->num_clients;
+
+	/* check if there had any error.
+	 * if so, free the p_entry and return an error.
+	 */
+	if (err_flag) {
+		LogCrit(COMPONENT_CONFIG,
+			"NFS READ %s: Export 0 (/) had errors, ignoring entry",
+			CONF_LABEL_EXPORT);
+		put_gsh_export(exp);
+		remove_gsh_export(0);
+		return true;
+	}
+
+	set_gsh_export_state(exp, EXPORT_READY);
+
+	LogEvent(COMPONENT_CONFIG,
+		 "NFS READ %s: Export 0 (/) successfully created",
+		 CONF_LABEL_EXPORT);
+
+	put_gsh_export(exp);	/* all done, let go */
+
+	return false;
+}
+
+/**
  * @brief Free resources attached to an export
  *
  * @param export [IN] pointer to export
@@ -2536,6 +2714,9 @@ int ReadExports(config_file_t in_config)
 
 		}
 	}
+
+	if (!err_flag)
+		err_flag = BuildRootExport();
 
 	if (err_flag)
 		return -1;
