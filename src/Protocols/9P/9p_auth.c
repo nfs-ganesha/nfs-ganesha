@@ -89,7 +89,7 @@ int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
 	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
 	if (exppath[0] == '/')
-		exp = get_gsh_export_by_path(exppath);
+		exp = get_gsh_export_by_path(exppath, false);
 	else
 		exp = get_gsh_export_by_tag(exppath);
 

@@ -1494,28 +1494,27 @@ static int BuildExportEntry(config_item_t block)
 			}
 			ppath = var_value;
 
-			exp = get_gsh_export_by_path(ppath);
+			exp = get_gsh_export_by_path(ppath, true);
 
 			/* Pseudo, Tag, and Export_Id must be unique, Path may
 			 * be duplicated if at least Tag or Pseudo is specified
 			 * (and unique).
 			 */
-			if (exp != NULL && path_matches) {
-				LogCrit(COMPONENT_CONFIG,
-					"NFS READ %s: Duplicate Path: \"%s\"",
-					label, ppath);
-				err_flag = true;
+			if (exp != NULL) {
+				LogDebug(COMPONENT_CONFIG,
+					 "NFS READ %s: Duplicate Path: \"%s\", \"%s\"",
+					 label, ppath, exp->export.fullpath);
 				put_gsh_export(exp);
-				continue;
+
+				/* Remember the entry we found so we can verify
+				 * Tag and/or Pseudo is set by the time the
+				 * EXPORT stanza is complete.
+				 */
+				path_matches = true;
 			}
 
 			p_entry->fullpath = gsh_strdup(var_value);
 
-			/* Remember the entry we found so we can verify Tag
-			 * and/or Pseudo is set by the time the EXPORT stanza
-			 * is complete.
-			 */
-			path_matches = true;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ROOT)) {
 			/* Notice that as least one of the three options
 			 * Root_Access, R_Access, or RW_Access has been
@@ -1610,7 +1609,7 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			}
 
-			exp = get_gsh_export_by_pseudo(var_value);
+			exp = get_gsh_export_by_pseudo(var_value, true);
 			if (exp != NULL) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Duplicate Pseudo: \"%s\"",
@@ -2275,16 +2274,6 @@ static int BuildExportEntry(config_item_t block)
 				"NFS READ %s: Missing mandatory parameter %s",
 				label, CONF_EXPORT_PATH);
 
-		if ((set_options & FLAG_EXPORT_ACCESS_LIST) !=
-		    (FLAG_EXPORT_ACCESS_LIST & mandatory_options))
-			LogCrit(COMPONENT_CONFIG,
-				"NFS READ %s: Must have at least one of %s, %s, %s, %s, %s, or %s",
-				label, CONF_EXPORT_ACCESS, CONF_EXPORT_ROOT,
-				CONF_EXPORT_READ_ACCESS,
-				CONF_EXPORT_READWRITE_ACCESS,
-				CONF_EXPORT_MD_ACCESS,
-				CONF_EXPORT_MD_RO_ACCESS);
-
 		err_flag = true;
 	}
 
@@ -2354,8 +2343,14 @@ static int BuildExportEntry(config_item_t block)
 			 label);
 		/** @todo: should have a "Default_FSAL" param... */
 		fsal_hdl = lookup_fsal("VFS");
+		if (fsal_hdl == NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"HELP! even VFS FSAL is not resident!");
+			err_flag = true;
+		}
 	}
-	if (!err_flag && fsal_hdl != NULL) {
+
+	if (!err_flag) {
 		fsal_status_t expres = fsal_hdl->ops->create_export(
 					fsal_hdl,
 					p_entry->
@@ -2404,9 +2399,6 @@ static int BuildExportEntry(config_item_t block)
 		}
 
 		fsal_hdl->ops->put(fsal_hdl);
-	} else {
-		LogCrit(COMPONENT_CONFIG,
-			"HELP! even VFS FSAL is not resident!");
 	}
 
 	/* Append the default Access list to the export so someone owns them */
@@ -2473,7 +2465,7 @@ static bool BuildRootExport()
 
 	/* See if another export with Pseudo = "/" has already been specified.
 	 */
-	exp = get_gsh_export_by_pseudo("/");
+	exp = get_gsh_export_by_pseudo("/", true);
 
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */

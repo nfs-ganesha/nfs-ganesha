@@ -253,7 +253,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
  * We assert state transitions because errors here are BAD.
  *
  * @param export [IN] The export to change state
- * @param state  [IN} the state to set
+ * @param state  [IN] the state to set
  */
 
 void set_gsh_export_state(struct gsh_export *export, export_state_t state)
@@ -277,52 +277,198 @@ void set_gsh_export_state(struct gsh_export *export, export_state_t state)
  * @brief Lookup the export manager struct by export path
  *
  * Gets an export entry from its path using a substring match and
- * linear search of the export list.
- * If path has a trailing '/', ignor it.
+ * linear search of the export list, assumes being called with
+ * export manager lock held (such as from within foreach_gsh_export.
+ * If path has a trailing '/', ignore it.
  *
- * @param path       [IN] the path for the entry to be found.
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
  *
- * @return pointer to ref locked stats block
+ * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_path(char *path)
+struct gsh_export *get_gsh_export_by_path_locked(char *path,
+						 bool exact_match)
 {
 	struct gsh_export *exp;
 	exportlist_t *export = NULL;
 	struct glist_head *glist;
 	int len_path = strlen(path);
 	int len_export;
+	struct gsh_export *ret_exp = NULL;
+	int len_ret = 0;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	if (path[len_path - 1] == '/')
+	if (len_path > 1 && path[len_path - 1] == '/')
 		len_path--;
+
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, exportlist_t, exp_list);
 		exp = container_of(export, struct gsh_export, export);
+
 		if (exp->state != EXPORT_READY)
 			continue;
+
 		len_export = strlen(export->fullpath);
-		/* a path shorter than the full path cannot match
+
+		if (len_path == 0 && len_export == 1) {
+			/* Special case for root match */
+			ret_exp = exp;
+			len_ret = len_export;
+			break;
+		}
+
+		/* A path shorter than the full path cannot match.
+		 * Also skip if this export has a shorter path than
+		 * the previous match.
 		 */
-		if (len_path < len_export)
+		if (len_path < len_export ||
+		    len_export < len_ret)
 			continue;
+
+		/* If partial match is not allowed, lengths must be the same */
+		if (exact_match && len_path != len_export)
+			continue;
+
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if (path[len_export] != '/' && path[len_export] != '\0')
+		if (len_export > 1 &&
+		    path[len_export] != '/' &&
+		    path[len_export] != '\0')
 			continue;
+
 		/* we agree on size, now compare the leading substring
 		 */
-		if (!strncmp(export->fullpath, path, len_export))
-			goto out;
-	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return NULL;
+		if (strncmp(export->fullpath, path, len_export) == 0) {
+			ret_exp = exp;
+			len_ret = len_export;
 
- out:
-	get_gsh_export_ref(exp);
+			/* If we have found an exact match, exit loop. */
+			if (len_export == len_path)
+				break;
+		}
+	}
+
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
+
+	return ret_exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export path
+ *
+ * Gets an export entry from its path using a substring match and
+ * linear search of the export list.
+ * If path has a trailing '/', ignore it.
+ *
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
+ *
+ * @return pointer to ref counted export
+ */
+
+struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match)
+{
+	struct gsh_export *exp;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+
+	exp = get_gsh_export_by_path_locked(path, exact_match);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
 	return exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export pseudo path
+ *
+ * Gets an export entry from its pseudo (if it exists), assumes
+ * being called with export manager lock held (such as from within
+ * foreach_gsh_export.
+ *
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
+ *
+ * @return pointer to ref counted export
+ */
+
+struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
+						   bool exact_match)
+{
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	struct glist_head *glist;
+	int len_path = strlen(path);
+	int len_export;
+	struct gsh_export *ret_exp = NULL;
+	int len_ret = 0;
+
+	/* Ignore trailing slash in path */
+	if (len_path > 1 && path[len_path - 1] == '/')
+		len_path--;
+
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
+
+		if (exp->state != EXPORT_READY)
+			continue;
+
+		if (export->pseudopath == NULL)
+			continue;
+
+		len_export = strlen(export->pseudopath);
+
+		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			 "Comparing %s %d to %s %d",
+			 path, len_path,
+			 export->pseudopath, len_export);
+
+		if (len_path == 0 && len_export == 1) {
+			/* Special case for Pseudo root match */
+			ret_exp = exp;
+			len_ret = len_export;
+			break;
+		}
+
+		/* A path shorter than the full path cannot match.
+		 * Also skip if this export has a shorter path than
+		 * the previous match.
+		 */
+		if (len_path < len_export ||
+		    len_export < len_ret)
+			continue;
+
+		/* If partial match is not allowed, lengths must be the same */
+		if (exact_match && len_path != len_export)
+			continue;
+
+		/* if the char in pseudopath just after the end of path is not
+		 * '/' it is a name token longer, i.e. /mnt/foo != /mnt/foob/
+		 */
+		if (len_export > 1 &&
+		    path[len_export] != '/' &&
+		    path[len_export] != '\0')
+			continue;
+
+		/* we agree on size, now compare the leading substring
+		 */
+		if (strncmp(export->pseudopath, path, len_export) == 0) {
+			ret_exp = exp;
+			len_ret = len_export;
+
+			/* If we have found an exact match, exit loop. */
+			if (len_export == len_path)
+				break;
+		}
+	}
+
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
+
+	return ret_exp;
 }
 
 /**
@@ -330,33 +476,22 @@ struct gsh_export *get_gsh_export_by_path(char *path)
  *
  * Gets an export entry from its pseudo (if it exists)
  *
- * @param path       [IN] the path for the entry to be found.
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
  *
- * @return pointer to ref locked export
+ * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_pseudo(char *path)
+struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match)
 {
 	struct gsh_export *exp;
-	exportlist_t *export = NULL;
-	struct glist_head *glist;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
-		if (exp->state != EXPORT_READY)
-			continue;
-		if (export->pseudopath != NULL
-		    && !strcmp(export->pseudopath, path))
-			goto out;
-	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return NULL;
 
- out:
-	get_gsh_export_ref(exp);
+	exp = get_gsh_export_by_pseudo_locked(path, exact_match);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
 	return exp;
 }
 

@@ -60,8 +60,12 @@ void export_pkginit(void);
 void dbus_export_init(void);
 #endif
 struct gsh_export *get_gsh_export(int export_id, bool lookup_only);
-struct gsh_export *get_gsh_export_by_path(char *path);
-struct gsh_export *get_gsh_export_by_pseudo(char *path);
+struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
+struct gsh_export *get_gsh_export_by_path_locked(char *path,
+						 bool exact_match);
+struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match);
+struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
+						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);

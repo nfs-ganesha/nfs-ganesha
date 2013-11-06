@@ -91,7 +91,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	 * Find the export for the dirname (using as well Path or Tag )
 	 */
 	if (arg->arg_mnt[0] == '/')
-		exp = get_gsh_export_by_path(arg->arg_mnt);
+		exp = get_gsh_export_by_path(arg->arg_mnt, false);
 	else
 		exp = get_gsh_export_by_tag(arg->arg_mnt);
 
