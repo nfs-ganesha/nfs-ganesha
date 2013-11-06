@@ -164,7 +164,7 @@ nfs_in_grace()
 
         V(grace.g_mutex);
 
-        if (redo_locks) {
+        if (!in_grace && redo_locks) {
                 resub_all_nlm_blocked();
                 atomic_dec_uint64_t(&redo_locks);
         }
