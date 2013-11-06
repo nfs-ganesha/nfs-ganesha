@@ -101,7 +101,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
   /* operation is always permitted on pseudofs */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
-      res_NVERIFY4.status = NFS4_OK;
+      res_NVERIFY4.status = NFS4ERR_SAME;
       return res_NVERIFY4.status;
     }
 
