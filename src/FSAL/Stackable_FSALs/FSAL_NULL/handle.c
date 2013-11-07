@@ -20,10 +20,10 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * ------------- 
  */
 
 /* handle.c
@@ -43,7 +43,6 @@
 #include "nullfs_methods.h"
 #include <os/subr.h>
 
-extern struct next_ops next_ops;
 /* helpers
  */
 
@@ -77,8 +76,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	return next_ops.obj_ops->mkdir(dir_hdl, opctx, name, attrib, handle);
 }
 
-static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl, const struct req_op_context *opctx, const char *name, object_file_type_t nodetype,	/* IN */
-			      fsal_dev_t * dev,	/* IN */
+static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
+			      const struct req_op_context *opctx,
+			      const char *name, object_file_type_t nodetype,
+			      fsal_dev_t *dev,	/* IN */
 			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
 {
@@ -132,8 +133,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof)
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, bool *eof)
 {
 	return next_ops.obj_ops->readdir(dir_hdl, opctx, whence, dir_state, cb,
 					 eof);
@@ -156,7 +157,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 }
 
 /*
- * NOTE: this is done under protection of the attributes rwlock in the cache entry.
+ * NOTE: this is done under protection of the
+ * attributes rwlock in the cache entry.
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
@@ -283,10 +285,10 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
  * Ideas and/or clever hacks are welcome...
  */
 
-fsal_status_t nullfs_create_handle(struct fsal_export * exp_hdl,
-				   const struct req_op_context * opctx,
-				   struct gsh_buffdesc * hdl_desc,
-				   struct fsal_obj_handle ** handle)
+fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
+				   const struct req_op_context *opctx,
+				   struct gsh_buffdesc *hdl_desc,
+				   struct fsal_obj_handle **handle)
 {
 	return next_ops.exp_ops->create_handle(exp_hdl, opctx, hdl_desc,
 					       handle);
