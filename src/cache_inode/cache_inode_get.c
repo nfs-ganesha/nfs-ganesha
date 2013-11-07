@@ -181,17 +181,16 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 	if (!(flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
 		struct fsal_obj_handle *new_hdl;
 		struct fsal_export *exp_hdl;
-		struct gsh_export *exp;
 		fsal_status_t fsal_status;
 
-		exp = get_gsh_export(key->exportid, true);
-		if (exp == NULL)
-			goto out;
-		exp_hdl = exp->export.export_hdl;
+		/* Assert that we don't have to lookup export */
+		assert(key->exportid == req_ctx->export->export.id);
+
+		exp_hdl = req_ctx->export->export.export_hdl;
 		fsal_status =
 		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,
 						&new_hdl);
-		put_gsh_export(exp);
+
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
 			*status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
