@@ -74,10 +74,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_GETATTR4->status != NFS4_OK)
 		return res_GETATTR4->status;
 
-	/* Pseudo Fs management */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-		return nfs4_op_getattr_pseudo(op, data, resp);
-
 	/* Sanity check: if no attributes are wanted, nothing is to be
 	 * done.  In this case NFS4_OK is to be returned */
 	if (arg_GETATTR4->attr_request.bitmap4_len == 0) {

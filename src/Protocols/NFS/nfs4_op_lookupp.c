@@ -82,32 +82,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUPP4->status != NFS4_OK)
 		return res_LOOKUPP4->status;
 
-	/* looking up for parent directory from ROOTFH return NFS4ERR_NOENT
-	 * (RFC3530, page 166)
-	 */
-	if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
-	    && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-		      data->currentFH.nfs_fh4_len) == 0) {
-		/* Nothing to do, just reply with success */
-		res_LOOKUPP4->status = NFS4ERR_NOENT;
-		return res_LOOKUPP4->status;
-	}
-
-	/* If in pseudoFS, proceed with pseudoFS specific functions */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-		return nfs4_op_lookupp_pseudo(op, data, resp);
-
-	/* If Filehandle points to the root of the current export, then backup
-	 * through junction into the pseudo file system.
-	 *
-	 * @todo FSF: eventually we need to support junctions between exports
-	 *            and that will require different code here.
-	 */
-	if (data->current_entry->type == DIRECTORY
-	    && data->current_entry ==
-	    data->req_ctx->export->export.exp_root_cache_inode)
-		return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
-
 	/* Preparing for cache_inode_lookup ".." */
 	file_entry = NULL;
 	dir_entry = data->current_entry;

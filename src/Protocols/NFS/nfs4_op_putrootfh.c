@@ -34,13 +34,7 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
-#include "nfs_proto_tools.h"
+#include "export_mgr.h"
 
 /**
  * @brief Create the pseudo FS root filehandle
@@ -100,6 +94,8 @@ int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
 int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
+	cache_inode_status_t cache_status;
+
 	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
 	/* First of all, set the reply to zero to make sure
@@ -108,37 +104,93 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	memset(resp, 0, sizeof(struct nfs_resop4));
 	resp->resop = NFS4_OP_PUTROOTFH;
 
-	/* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-	res_PUTROOTFH4->status = CreateROOTFH4(&(data->rootFH), data);
-	if (res_PUTROOTFH4->status != NFS4_OK)
-		return res_PUTROOTFH4->status;
+	/* Release any old export reference */
+	if (data->req_ctx->export != NULL)
+		put_gsh_export(data->req_ctx->export);
 
-	/* I copy the root FH to the currentFH */
+	data->req_ctx->export = NULL;
+
+	/* Release data->current_entry */
+	if (data->current_entry)
+		cache_inode_put(data->current_entry);
+
+	data->current_entry = NULL;
+
+	if (data->current_ds)
+		data->current_ds->ops->put(data->current_ds);
+
+	data->current_ds = NULL;
+
+	/* Get the root export of the Pseudo FS */
+	data->req_ctx->export = get_gsh_export_by_pseudo("/", true);
+
+	if (data->req_ctx->export == NULL) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Could not get export for Pseudo Root");
+
+		res_PUTROOTFH4->status = NFS4ERR_NOENT;
+		return res_PUTROOTFH4->status;
+	}
+
+	data->export = &data->req_ctx->export->export;
+
+	/* Build credentials */
+	res_PUTROOTFH4->status = nfs4_MakeCred(data);
+
+	/* Test for access error (export should not be visible). */
+	if (res_PUTROOTFH4->status == NFS4ERR_ACCESS) {
+		/* Client has no access at all */
+		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			 "Client doesn't have access to Pseudo Root");
+		return res_PUTROOTFH4->status;
+	}
+
+	if (res_PUTROOTFH4->status != NFS4_OK) {
+		LogMajor(COMPONENT_NFS_V4_PSEUDO,
+			 "Failed to get FSAL credentials Pseudo Root");
+		return res_PUTROOTFH4->status;
+	}
+
+	/* Get the Pesudo Root inode of the mounted on export */
+	cache_status = nfs_export_get_root_entry(&data->req_ctx->export->export,
+						 &data->current_entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Could not get root inode for Pseudo Root");
+
+		res_PUTROOTFH4->status = nfs4_Errno(cache_status);
+		return res_PUTROOTFH4->status;
+	}
+
+	LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+		     "Root node %p", data->current_entry);
+
+	data->current_filetype = data->current_entry->type;
+
+	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL) {
 		res_PUTROOTFH4->status = nfs4_AllocateFH(&(data->currentFH));
 		if (res_PUTROOTFH4->status != NFS4_OK)
 			return res_PUTROOTFH4->status;
 	}
 
-	/* Copy the data where they are supposed to be */
-	memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-	       data->rootFH.nfs_fh4_len);
-	data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
+	/* Convert it to a file handle */
+	if (!nfs4_FSALToFhandle(&data->currentFH,
+				data->current_entry->obj_handle)) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Could not get handle for Pseudo Root");
+
+		res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;
+		return res_PUTROOTFH4->status;
+	}
 
 	/* Mark current_stateid as invalid */
 	data->current_stateid_valid = false;
 
-	/* Fill in compound data */
-	res_PUTROOTFH4->status = set_compound_data_for_pseudo(data);
-	if (res_PUTROOTFH4->status != NFS4_OK)
-		return res_PUTROOTFH4->status;
-
-	LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
 	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
-	LogFullDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: Ending on status %d",
-		     res_PUTROOTFH4->status);
-
+	res_PUTROOTFH4->status = NFS4_OK;
 	return res_PUTROOTFH4->status;
 }				/* nfs4_op_putrootfh */
 

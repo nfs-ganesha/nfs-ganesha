@@ -513,7 +513,6 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
 	data.worker = worker;
-	data.pseudofs = nfs4_GetPseudoFs();
 	data.req = req;
 
 	/* Building the client credential field */

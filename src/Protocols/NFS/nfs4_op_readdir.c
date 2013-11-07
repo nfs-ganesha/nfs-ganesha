@@ -500,12 +500,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_READDIR4->status != NFS4_OK)
 		goto out;
 
-	/* Pseudo Fs management */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_READDIR4->status = nfs4_op_readdir_pseudo(op, data, resp);
-		goto out;
-	}
-
 	memset(&tracker, 0, sizeof(tracker));
 
 	dir_entry = data->current_entry;

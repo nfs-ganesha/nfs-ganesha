@@ -82,11 +82,6 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_ACCESS4->status != NFS4_OK)
 		return res_ACCESS4->status;
 
-	/* If Filehandle points to a pseudo fs entry, manage it via
-	   pseudofs specific functions */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-		return nfs4_op_access_pseudo(op, data, resp);
-
 	/* Check for input parameter's sanity */
 	if (arg_ACCESS4->access > max_access) {
 		res_ACCESS4->status = NFS4ERR_INVAL;
