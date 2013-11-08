@@ -182,11 +182,6 @@ int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
 		goto out;
 	}
 
-	if ((export->use_commit) && (arg->arg_write3.stable == UNSTABLE))
-		sync = false;
-	else
-		sync = true;
-
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */

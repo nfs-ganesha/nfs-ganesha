@@ -164,7 +164,6 @@ typedef struct exportlist {
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	export_perms_t export_perms;	/*< available mount options */
 	unsigned char seckey[EXPORT_KEY_SIZE];	/*< Checksum for FH validity */
-	bool use_commit;
 	uint32_t MaxRead;	/*< Max Read for this entry */
 	uint32_t MaxWrite;	/*< Max Write for this entry */
 	uint32_t PrefRead;	/*< Preferred Read size */
