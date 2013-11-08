@@ -311,32 +311,6 @@ typedef struct exportlist {
 
 /* NFS4 specific structures */
 
-/*
- * PseudoFs Tree
- */
-typedef struct pseudofs_entry {
-	char name[MAXNAMLEN + 1];	/*< The entry name */
-	int8_t *fsopaque; /** do not garbage collect this, it points
-			      to an already gc'd file_handle_v4_t.
-			      this is used for convenience when
-			      converting from entry to handle. */
-	uint64_t pseudo_id;	/*< ID within the pseudoFS  */
-	exportlist_t *junction_export;	/*< Export list related to the
-					    junction, NULL if entry is no
-					    junction */
-	struct pseudofs_entry *sons;	/*< Pointer to a linked list of sons */
-	struct pseudofs_entry *parent;	/*< Reverse pointer (for LOOKUPP) */
-	struct pseudofs_entry *next;	/*< Next entry in a list of sons */
-	struct pseudofs_entry *last;	/*< Last entry in a list of sons */
-} pseudofs_entry_t;
-
-#define MAX_PSEUDO_ENTRY  2048
-typedef struct pseudofs {
-	pseudofs_entry_t root;
-	unsigned int last_pseudo_id;
-	pseudofs_entry_t *reverse_tab[MAX_PSEUDO_ENTRY];
-} pseudofs_t;
-
 typedef struct nfs_client_cred_gss {
 	unsigned int svc;
 	unsigned int qop;
@@ -375,7 +349,6 @@ typedef struct COMPOUND4res_extended COMPOUND4res_extended;
  */
 typedef struct compound_data {
 	nfs_fh4 currentFH;	/*< Current filehandle */
-	nfs_fh4 rootFH;		/*< Root filehandle */
 	nfs_fh4 savedFH;	/*< Saved filehandle */
 	stateid4 current_stateid;	/*< Current stateid */
 	bool current_stateid_valid;	/*< Current stateid is valid */
@@ -401,7 +374,6 @@ typedef struct compound_data {
 	export_perms_t export_perms; /*< Permissions for export for currentFH */
 	export_perms_t saved_export_perms; /*< Permissions for export for
 					       savedFH */
-	pseudofs_t *pseudofs;	/*< Pointer to the pseudo filesystem tree */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */

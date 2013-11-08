@@ -525,27 +525,6 @@ int nfs4_op_test_stateid(struct nfs_argop4 *, compound_data_t *,
 
 int nfs4_op_write(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
-/* Available operations on pseudo fs */
-int nfs4_op_getattr_pseudo(struct nfs_argop4 *, compound_data_t *,
-			   struct nfs_resop4 *);
-
-int nfs4_op_access_pseudo(struct nfs_argop4 *, compound_data_t *,
-			  struct nfs_resop4 *);
-
-int set_compound_data_for_pseudo(compound_data_t *);
-
-int nfs4_op_lookup_pseudo(struct nfs_argop4 *, compound_data_t *,
-			  struct nfs_resop4 *);
-
-int nfs4_op_lookupp_pseudo(struct nfs_argop4 *, compound_data_t *,
-			   struct nfs_resop4 *);
-
-int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4 *, compound_data_t *,
-				  struct nfs_resop4 *);
-
-int nfs4_op_readdir_pseudo(struct nfs_argop4 *, compound_data_t *,
-			   struct nfs_resop4 *);
-
 /* NFSv4.2 */
 int nfs4_op_write_plus(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
@@ -648,10 +627,6 @@ static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be
    used instead */
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
-#define MAX_HARD_LINK_VALUE (0xffff)
-#define NFS4_PSEUDOFS_MAX_READ_SIZE  1048576
-#define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1048576
-#define NFS4_ROOT_UID 0
 
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1
@@ -687,11 +662,9 @@ void rquota_setactivequota_Free(nfs_res_t *);
 void nfs_Null_Free(nfs_res_t *);
 void nfs_Getattr_Free(nfs_res_t *);
 void nfs_Setattr_Free(nfs_res_t *);
-void nfs2_Lookup_Free(nfs_res_t *);
 void nfs3_Lookup_Free(nfs_res_t *);
 void nfs3_Access_Free(nfs_res_t *);
 void nfs3_Readlink_Free(nfs_res_t *);
-void nfs2_Read_Free(nfs_res_t *);
 void nfs_Write_Free(nfs_res_t *);
 void nfs_Create_Free(nfs_res_t *);
 void nfs_Mkdir_Free(nfs_res_t *);
@@ -707,9 +680,7 @@ void nfs_Fsstat_Free(nfs_res_t *);
 void nfs3_Fsinfo_Free(nfs_res_t *);
 void nfs3_Pathconf_Free(nfs_res_t *);
 void nfs3_Commit_Free(nfs_res_t *);
-void nfs2_Readdir_Free(nfs_res_t *);
 void nfs3_Read_Free(nfs_res_t *);
-void nfs2_Readlink_Free(nfs_res_t *);
 void nfs4_Compound_FreeOne(nfs_resop4 *);
 void nfs4_Compound_Free(nfs_res_t *);
 void nfs4_Compound_CopyResOne(nfs_resop4 *, nfs_resop4 *);
@@ -792,8 +763,6 @@ void compound_data_Free(compound_data_t *);
 bool pseudo_mount_export(struct gsh_export *exp,
 			 struct req_op_context *req_ctx);
 void create_pseudofs(void);
-int nfs4_ExportToPseudoFS(void);
-pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_MakeCred(compound_data_t *);
 
@@ -818,11 +787,6 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *, struct req_op_context *,
 			       fattr3 *);
 
 bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
-
-int nfs4_PseudoToFattr(pseudofs_entry_t *, fattr4 *, compound_data_t *,
-		       nfs_fh4 *, struct bitmap4 *);
-
-void nfs4_PseudoToFhandle(nfs_fh4 *, pseudofs_entry_t *);
 
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
 

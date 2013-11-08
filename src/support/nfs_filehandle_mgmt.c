@@ -277,29 +277,6 @@ bool nfs2_FSALToFhandle(fhandle2 *fh2,
 
 /**
  *
- * nfs4_Is_Fh_Pseudo
- *
- * This routine is used to test if a fh refers to pseudo fs
- *
- * @param fh [IN] file handle to test.
- *
- * @return true if in pseudo fh, false otherwise
- *
- */
-int nfs4_Is_Fh_Pseudo(nfs_fh4 *fh)
-{
-	file_handle_v4_t *fhandle4;
-
-	if (fh == NULL || fh->nfs_fh4_val == NULL)
-		return 0;
-
-	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
-
-	return fhandle4->exportid == 0;
-}				/* nfs4_Is_Fh_Pseudo */
-
-/**
- *
  * nfs4_Is_Fh_DSHandle
  *
  * This routine is used to test if a fh is a DS fh
@@ -616,8 +593,5 @@ void LogCompoundFH(compound_data_t *data)
 
 		sprint_fhandle4(str, &data->savedFH);
 		LogFullDebug(COMPONENT_FILEHANDLE, "Saved FH    %s", str);
-
-		sprint_fhandle4(str, &data->rootFH);
-		LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
 	}
 }

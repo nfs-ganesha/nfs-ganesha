@@ -977,16 +977,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_OPEN4->status != NFS4_OK)
 		return res_OPEN4->status;
 
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_OPEN4->status = NFS4ERR_PERM;
-
-		LogDebug(COMPONENT_NFS_V4,
-			 "Status of OP_OPEN due to PseudoFS handle = %s",
-			 nfsstat4_to_str(res_OPEN4->status));
-
-		return res_OPEN4->status;
-	}
-
 	if (data->current_entry == NULL) {
 		/* This should be impossible, as PUTFH fills in the
 		 * current entry and previous checks weed out handles

@@ -902,9 +902,6 @@ void compound_data_Free(compound_data_t *data)
 	if (data->currentFH.nfs_fh4_val != NULL)
 		gsh_free(data->currentFH.nfs_fh4_val);
 
-	if (data->rootFH.nfs_fh4_val != NULL)
-		gsh_free(data->rootFH.nfs_fh4_val);
-
 	if (data->savedFH.nfs_fh4_val != NULL)
 		gsh_free(data->savedFH.nfs_fh4_val);
 

@@ -37,44 +37,6 @@
 #include "export_mgr.h"
 
 /**
- * @brief Create the pseudo FS root filehandle
- *
- * This function creates the pseudo FS root filehandle.
- *
- * @param[out]    fh   File handle to be built
- * @param[in,out] data Request compound data
- *
- * @retval NFS4_OK if successful.
- * @retval NFS4ERR_BADHANDLE otherwise.
- *
- * @see nfs4_op_putrootfh
- *
- */
-
-int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data)
-{
-	pseudofs_entry_t psfsentry;
-	int status = 0;
-
-	psfsentry = *(data->pseudofs->reverse_tab[0]);
-
-	/* If rootFH already set, return success */
-	if (data->rootFH.nfs_fh4_val != NULL)
-		return NFS4_OK;
-
-	status = nfs4_AllocateFH(&data->rootFH);
-
-	if (status != NFS4_OK)
-		return status;
-
-	nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry);
-
-	LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
-
-	return NFS4_OK;
-}				/* CreateROOTFH4 */
-
-/**
  *
  * @brief The NFS4_OP_PUTROOTFH operation.
  *

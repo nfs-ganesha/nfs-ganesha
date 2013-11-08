@@ -72,12 +72,6 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_NVERIFY4->status != NFS4_OK)
 		return res_NVERIFY4->status;
 
-	/* operation is always permitted on pseudofs */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_NVERIFY4->status = NFS4_OK;
-		return res_NVERIFY4->status;
-	}
-
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4->obj_attributes,
 				     FATTR4_ATTR_READ)) {

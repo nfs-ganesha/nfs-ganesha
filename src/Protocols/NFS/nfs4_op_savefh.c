@@ -115,9 +115,6 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	} else
 		data->saved_export = NULL;
 
-	assert((data->saved_export != NULL)
-	       || nfs4_Is_Fh_Pseudo(&data->currentFH));
-
 	data->saved_export_perms = data->export_perms;
 
 	/* If saved and current entry are equal, skip the following. */
