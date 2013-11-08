@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -20,10 +20,10 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * ------------- 
  */
 
 /* export.c
@@ -51,7 +51,6 @@
  */
 
 struct fsal_staticfsinfo_t *nullfs_staticinfo(struct fsal_module *hdl);
-extern struct next_ops next_ops;
 
 /* export object methods
  */
@@ -90,7 +89,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	return next_ops.exp_ops->get_fs_dynamic_info(exp_hdl, opctx, infop);
 }
@@ -168,7 +167,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+			       fsal_quota_t *pquota)
 {
 	return next_ops.exp_ops->get_quota(exp_hdl, filepath, quota_type,
 					   req_ctx, pquota);
@@ -181,7 +180,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	return next_ops.exp_ops->set_quota(exp_hdl, filepath, quota_type,
 					   req_ctx, pquota, presquota);
@@ -228,7 +227,6 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-void nullfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 /* create_export
  * Create an export point and return a handle to it to be kept
@@ -236,8 +234,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops);
  * First lookup the fsal, then create the export and then put the fsal back.
  * returns the export with one reference taken.
  */
-
-extern struct fsal_up_vector fsal_up_top;
 
 fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				   const char *export_path,
@@ -250,7 +246,8 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t expres;
 	struct fsal_module *fsal_stack;
 
-	/* We use the parameter passed as a string in fs_specific to know which FSAL is to be loaded */
+	/* We use the parameter passed as a string in fs_specific
+	 *  to know which FSAL is to be loaded */
 	fsal_stack = lookup_fsal(fs_specific);
 	if (fsal_stack == NULL) {
 		LogMajor(COMPONENT_FSAL,

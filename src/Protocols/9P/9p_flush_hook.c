@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -61,11 +62,12 @@ struct flush_condition {
 	int reply_sent;
 };
 
-void _9p_AddFlushHook(_9p_request_data_t * req, int tag, unsigned long sequence)
+void _9p_AddFlushHook(struct _9p_request_data *req, int tag,
+		      unsigned long sequence)
 {
 	int bucket = tag % FLUSH_BUCKETS;
-	_9p_flush_hook_t *hook = &req->flush_hook;
-	_9p_conn_t *conn = req->pconn;
+	struct _9p_flush_hook *hook = &req->flush_hook;
+	struct _9p_conn *conn = req->pconn;
 
 	hook->tag = tag;
 	hook->condition = NULL;
@@ -75,16 +77,16 @@ void _9p_AddFlushHook(_9p_request_data_t * req, int tag, unsigned long sequence)
 	pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-void _9p_FlushFlushHook(_9p_conn_t * conn, int tag, unsigned long sequence)
+void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 {
 	int bucket = tag % FLUSH_BUCKETS;
 	struct glist_head *node;
-	_9p_flush_hook_t *hook = NULL;
+	struct _9p_flush_hook *hook = NULL;
 	struct flush_condition fc;
 
 	pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
 	glist_for_each(node, &conn->flush_buckets[bucket].list) {
-		hook = glist_entry(node, _9p_flush_hook_t, list);
+		hook = glist_entry(node, struct _9p_flush_hook, list);
 		/* Cancel a request that has the right tag
 		 * --AND-- is older than the flush request.
 		 **/
@@ -95,7 +97,7 @@ void _9p_FlushFlushHook(_9p_conn_t * conn, int tag, unsigned long sequence)
 			glist_del(&hook->list);
 			LogFullDebug(COMPONENT_9P, "Found tag to flush %d\n",
 				     tag);
-			/* 
+			/*
 			 * Now, wait until the request is complete
 			 * so we can send the RFLUSH.
 			 * warning: this will unlock the bucket lock */
@@ -109,16 +111,16 @@ void _9p_FlushFlushHook(_9p_conn_t * conn, int tag, unsigned long sequence)
 	pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-void _9p_DiscardFlushHook(_9p_request_data_t * req)
+void _9p_DiscardFlushHook(struct _9p_request_data *req)
 {
-	_9p_flush_hook_t *hook = &req->flush_hook;
-	_9p_conn_t *conn = req->pconn;
+	struct _9p_flush_hook *hook = &req->flush_hook;
+	struct _9p_conn *conn = req->pconn;
 	int bucket = hook->tag % FLUSH_BUCKETS;
 
 	pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
 	/* If no flush request arrived, we have to
 	 * remove the hook from the list.
-	 * If a flush request arrived, signal the thread that is waiting 
+	 * If a flush request arrived, signal the thread that is waiting
 	 */
 	if (hook->condition == NULL)
 		glist_del(&hook->list);

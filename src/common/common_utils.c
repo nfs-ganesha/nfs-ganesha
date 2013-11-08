@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=8:
+ * vim:noexpandtab:shiftwidth=4:tabstop=8:
  */
 
 /**

@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -45,8 +45,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
-		    u32 * plenout, char *preply)
+int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
+		    u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	int create;
@@ -58,7 +58,7 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 	u16 *name_len;
 	char *name_str;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	fsal_status_t fsal_status;
 	char name[MAXNAMLEN];
@@ -72,7 +72,7 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 
 	LogDebug(COMPONENT_9P,
 		 "TXATTRCREATE: tag=%u fid=%u name=%.*s size=%llu flag=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str,
+		 (u32) *msgtag, *fid, *name_len, name_str,
 		 (unsigned long long)*size, *flag);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -94,15 +94,12 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 		/* Size == 0 : this is in fact a call to removexattr */
 		LogDebug(COMPONENT_9P,
 			 "TXATTRCREATE: tag=%u fid=%u : will remove xattr %s",
-			 (u32) * msgtag, *fid, name);
+			 (u32) *msgtag, *fid, name);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->remove_extattr_by_name(pfid->
-									  pentry->
-									  obj_handle,
-									  &pfid->
-									  op_context,
-									  name);
+		    pfid->pentry->obj_handle->ops->remove_extattr_by_name(
+			pfid->pentry->obj_handle,
+			&pfid->op_context, name);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, worker_data, msgtag,
@@ -111,41 +108,28 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 	} else if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN)) {
 		/* /!\  POSIX_ACL RELATED HOOK
-		 * Setting a POSIX ACL (using setfacl for example) means settings a xattr named system.posix_acl_access
-		 * BUT this attributes is to be used and should not be created (it exists already since acl feature is on) */
+		 * Setting a POSIX ACL (using setfacl for example) means
+		 * settings a xattr named system.posix_acl_access BUT this
+		 * attribute is to be used and should not be created
+		 * (it exists already since acl feature is on) */
 		fsal_status.major = ERR_FSAL_NO_ERROR;
 		fsal_status.minor = 0;
 
 		/* Create the xattr at the FSAL level and cache result */
-		if ((pfid->specdata.xattr.xattr_content =
-		     gsh_malloc(XATTR_BUFFERSIZE)) == NULL)
+		pfid->specdata.xattr.xattr_content =
+		     gsh_malloc(XATTR_BUFFERSIZE);
+		if (pfid->specdata.xattr.xattr_content == NULL)
 			return _9p_rerror(req9p, worker_data, msgtag, ENOMEM,
 					  plenout, preply);
-
-		fsal_status =
-		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(pfid->
-									 pentry->
-									 obj_handle,
-									 &pfid->
-									 op_context,
-									 name,
-									 &pfid->
-									 specdata.
-									 xattr.
-									 xattr_id);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
-
+		/* Special Value */
+		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
 	} else {
 		/* Size != 0 , this is a creation/replacement of xattr */
 
 		/* Create the xattr at the FSAL level and cache result */
-		if ((pfid->specdata.xattr.xattr_content =
-		     gsh_malloc(XATTR_BUFFERSIZE)) == NULL)
+		pfid->specdata.xattr.xattr_content =
+		     gsh_malloc(XATTR_BUFFERSIZE);
+		if (pfid->specdata.xattr.xattr_content == NULL)
 			return _9p_rerror(req9p, worker_data, msgtag, ENOMEM,
 					  plenout, preply);
 
@@ -156,20 +140,14 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 			create = FALSE;
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->setextattr_value(pfid->
-								    pentry->
-								    obj_handle,
-								    &pfid->
-								    op_context,
-								    name,
-								    pfid->
-								    specdata.
-								    xattr.
-								    xattr_content,
-								    *size,
-								    create);
+		    pfid->pentry->obj_handle->ops->setextattr_value(
+			pfid->pentry->obj_handle,
+			&pfid->op_context, name,
+			pfid->specdata.xattr.xattr_content,
+			*size, create);
 
-		/* Try again with create = false if flag was set to 0 and create failed because attribute already exists */
+		/* Try again with create = false if flag was set to 0
+		 * and create failed because attribute already exists */
 		if (FSAL_IS_ERROR(fsal_status)
 		    && fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
 			fsal_status =
@@ -187,16 +165,10 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(pfid->
-									 pentry->
-									 obj_handle,
-									 &pfid->
-									 op_context,
-									 name,
-									 &pfid->
-									 specdata.
-									 xattr.
-									 xattr_id);
+		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(
+			pfid->pentry->obj_handle,
+			&pfid->op_context, name,
+			&pfid->specdata.xattr.xattr_id);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, worker_data, msgtag,
@@ -205,7 +177,8 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 	}
 
-	/* Remember the size of the xattr to be written, in order to check at TCLUNK */
+	/* Remember the size of the xattr to be written,
+	 * in order to check at TCLUNK */
 	pfid->specdata.xattr.xattr_size = *size;
 	pfid->specdata.xattr.xattr_offset = 0LL;
 
@@ -218,7 +191,7 @@ int _9p_xattrcreate(_9p_request_data_t *req9p, void *worker_data,
 
 	LogDebug(COMPONENT_9P,
 		 "RXATTRCREATE: tag=%u fid=%u name=%.*s size=%llu flag=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str,
+		 (u32) *msgtag, *fid, *name_len, name_str,
 		 (unsigned long long)*size, *flag);
 
 	return 1;

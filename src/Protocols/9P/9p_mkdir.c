@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,8 +43,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -54,8 +54,8 @@ int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *name_len = NULL;
 	char *name_str = NULL;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_qid_t qid_newdir;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_newdir;
 
 	cache_entry_t *pentry_newdir = NULL;
 	char dir_name[MAXNAMLEN];
@@ -72,7 +72,7 @@ int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TMKDIR: tag=%u fid=%u name=%.*s mode=0%o gid=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str, *mode, *gid);
+		 (u32) *msgtag, *fid, *name_len, name_str, *mode, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -105,7 +105,8 @@ int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	cache_status =
 	    cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
 
-	/* put the entry: we don't want to remember it even if cache_inode_fileid fails. */
+	/* put the entry:
+	 * we don't want to remember it even if cache_inode_fileid fails. */
 	cache_inode_put(pentry_newdir);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
@@ -129,7 +130,7 @@ int _9p_mkdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
-		 (u32) * msgtag, *fid, *name_len, name_str, qid_newdir.type,
+		 (u32) *msgtag, *fid, *name_len, name_str, qid_newdir.type,
 		 qid_newdir.version, (unsigned long long)qid_newdir.path);
 
 	return 1;

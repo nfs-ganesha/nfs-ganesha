@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,8 +43,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -56,8 +56,8 @@ int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *name_len = NULL;
 	char *name_str = NULL;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_qid_t qid_newobj;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_newobj;
 
 	cache_entry_t *pentry_newobj = NULL;
 	char obj_name[MAXNAMLEN];
@@ -80,7 +80,7 @@ int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TMKNOD: tag=%u fid=%u name=%.*s mode=0%o major=%u minor=%u gid=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str, *mode, *major,
+		 (u32) *msgtag, *fid, *name_len, name_str, *mode, *major,
 		 *minor, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -129,7 +129,7 @@ int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	/* Build the qid */
 	qid_newobj.type = _9P_QTTMP;
-				   /** @todo BUGAZOMEU For wanting of something better */
+	/** @todo BUGAZOMEU For wanting of something better */
 	qid_newobj.version = 0;
 	qid_newobj.path = fileid;
 
@@ -144,7 +144,7 @@ int _9p_mknod(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TMKNOD: tag=%u fid=%u name=%.*s major=%u minor=%u qid=(type=%u,version=%u,path=%llu)",
-		 (u32) * msgtag, *fid, *name_len, name_str, *major, *minor,
+		 (u32) *msgtag, *fid, *name_len, name_str, *major, *minor,
 		 qid_newobj.type, qid_newobj.version,
 		 (unsigned long long)qid_newobj.path);
 

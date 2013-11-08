@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -42,31 +42,29 @@
 #include "fsal.h"
 #include "9p.h"
 
-#define FREE_FID(pfid, fid, req9p) do {	       \
-/* Tell the cache the fid that used this	\
- * entry is not used by this set of messages */ \
-  cache_inode_put( pfid->pentry ) ;		\
-						\
-  /* Free the fid */				\
-  gsh_free( pfid ) ;				\
-  req9p->pconn->fids[*fid] = NULL ;		\
+#define FREE_FID(pfid, fid, req9p) do {                                 \
+	/* Tell cache_inode that the entry is no longer reachable */    \
+	cache_inode_put(pfid->pentry);                                  \
+	/* Free the fid */                                              \
+	gsh_free(pfid);                                                 \
+	req9p->pconn->fids[*fid] = NULL;                                \
 } while (0)
 
-int _9p_remove(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	       char *preply)
+int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
+	       u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 	cache_inode_status_t cache_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -117,9 +115,9 @@ int _9p_remove(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) *msgtag, *fid);
 
-	// _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+	/* _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;
 
 }

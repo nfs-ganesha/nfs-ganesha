@@ -109,13 +109,12 @@ static inline int buffdesc_comparator(const struct gsh_buffdesc *buffa,
 	int mr = memcmp(buff1->addr, buffa->addr, MIN(buff1->len,
 						      buffa->len));
 	if (unlikely(mr == 0)) {
-		if (buff1->len < buffa->len) {
+		if (buff1->len < buffa->len)
 			return -1;
-		} else if (buff1->len > buffa->len) {
+		else if (buff1->len > buffa->len)
 			return 1;
-		} else {
+		else
 			return 0;
-		}
 	} else {
 		return mr;
 	}
@@ -166,13 +165,12 @@ static int uid_comparator(const struct avltree_node *node1,
 	    avltree_container_of(nodea, struct cache_info,
 				 uid_node);
 
-	if (user1->uid < usera->uid) {
+	if (user1->uid < usera->uid)
 		return -1;
-	} else if (user1->uid > usera->uid) {
+	else if (user1->uid > usera->uid)
 		return 1;
-	} else {
+	else
 		return 0;
-	}
 }
 
 /**
@@ -244,8 +242,7 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name, uid_t uid,
 			avltree_remove(found_name, &uname_tree);
 			if (coll_name != coll_id) {
 				uid_grplist_cache[coll_name->uid %
-						  id_cache_size]
-				    = NULL;
+						  id_cache_size] = NULL;
 				avltree_remove(&coll_name->uid_node, &uid_tree);
 			}
 		}
@@ -291,8 +288,8 @@ bool uid2grp_add_user(const struct gsh_buffdesc *name, uid_t uid,
  * @retval false if we need to try, try again.
  */
 
-bool uid2grp_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
-			     struct group_data ** pgdata)
+bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
+			     struct group_data **pgdata)
 {
 	struct cache_info prototype = {
 		.uname = *name
@@ -302,9 +299,9 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
 	struct cache_info *found_user;
 	struct avltree_node **cache_entry;
 
-	if (unlikely(!found_node)) {
+	if (unlikely(!found_node))
 		return false;
-	}
+
 	found_user =
 	    avltree_container_of(found_node, struct cache_info, uname_node);
 
@@ -314,7 +311,7 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
 
 	cache_entry = uid_grplist_cache + (found_user->uid % id_cache_size);
 	atomic_store_uint64_t((uint64_t *) cache_entry,
-			      (uint64_t) & found_user->uid_node);
+			      (uint64_t) &found_user->uid_node);
 
 	*uid = found_user->uid;
 	*pgdata = &found_user->group_data;
@@ -338,8 +335,8 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc * name, uid_t * uid,
  * @retval false if we weren't so successful.
  */
 
-bool uid2grp_lookup_by_uid(const uid_t uid, struct gsh_buffdesc ** name,
-			   struct group_data ** pgdata)
+bool uid2grp_lookup_by_uid(const uid_t uid, struct gsh_buffdesc **name,
+			   struct group_data **pgdata)
 {
 	struct cache_info prototype = {
 		.uid = uid
@@ -357,9 +354,9 @@ bool uid2grp_lookup_by_uid(const uid_t uid, struct gsh_buffdesc ** name,
 					 uid_node);
 	} else {
 		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
-		if (unlikely(!found_node)) {
+		if (unlikely(!found_node))
 			return false;
-		}
+
 		atomic_store_uint64_t((uintptr_t *) cache_entry,
 				      (uintptr_t) found_node);
 		found_user =

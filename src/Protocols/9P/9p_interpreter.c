@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -44,7 +44,7 @@
 #include "nfs_file_handle.h"
 
 /* opcode to function array */
-const _9p_function_desc_t _9pfuncdesc[] = {
+const struct _9p_function_desc _9pfuncdesc[] = {
 	[0] = {_9p_not_2000L, "no function"},	/* out of bounds */
 	[_9P_TSTATFS] = {_9p_statfs, "_9P_TSTATFS"},
 	[_9P_TLOPEN] = {_9p_lopen, "_9P_TLOPEN"},
@@ -80,8 +80,8 @@ const _9p_function_desc_t _9pfuncdesc[] = {
 	[_9P_TWSTAT] = {_9p_not_2000L, "_9P_TWSTAT"}
 };
 
-int _9p_not_2000L(_9p_request_data_t *req9p, void *worker_data,
-		  u32 * plenout, char *preply)
+int _9p_not_2000L(struct _9p_request_data *req9p, void *worker_data,
+		  u32 *plenout, char *preply)
 {
 	char *msgdata = req9p->_9pmsg + _9P_HDR_SIZE;
 	u8 *pmsgtype = NULL;
@@ -98,7 +98,7 @@ int _9p_not_2000L(_9p_request_data_t *req9p, void *worker_data,
 	return -1;
 }				/* _9p_not_2000L */
 
-static ssize_t tcp_conn_send(_9p_conn_t * conn, const void *buf, size_t len,
+static ssize_t tcp_conn_send(struct _9p_conn *conn, const void *buf, size_t len,
 			     int flags)
 {
 	ssize_t ret;
@@ -109,16 +109,15 @@ static ssize_t tcp_conn_send(_9p_conn_t * conn, const void *buf, size_t len,
 	return ret;
 }
 
-void _9p_tcp_process_request(_9p_request_data_t *req9p,
+void _9p_tcp_process_request(struct _9p_request_data *req9p,
 			     nfs_worker_data_t *worker_data)
 {
 	u32 outdatalen = 0;
 	int rc = 0;
 	char replydata[_9P_MSG_SIZE];
 
-	if ((rc =
-	     _9p_process_buffer(req9p, worker_data, replydata,
-				&outdatalen)) != 1) {
+	rc = _9p_process_buffer(req9p, worker_data, replydata, &outdatalen);
+	if (rc != 1) {
 		LogMajor(COMPONENT_9P,
 			 "Could not process 9P buffer on socket #%lu",
 			 req9p->pconn->trans_data.sockfd);
@@ -133,9 +132,9 @@ void _9p_tcp_process_request(_9p_request_data_t *req9p,
 	return;
 }				/* _9p_process_request */
 
-int _9p_process_buffer(_9p_request_data_t *req9p,
+int _9p_process_buffer(struct _9p_request_data *req9p,
 		       nfs_worker_data_t *worker_data, char *replydata,
-		       u32 * poutlen)
+		       u32 *poutlen)
 {
 	char *msgdata;
 	u32 msglen;
@@ -160,27 +159,28 @@ int _9p_process_buffer(_9p_request_data_t *req9p,
 	LogFullDebug(COMPONENT_9P, "9P msg: length=%u type (%u|%s)", msglen,
 		     (u32) msgtype, _9pfuncdesc[msgtype].funcname);
 
-	/* Temporarily set outlen to maximum message size. This value will be used
-	 * inside the protocol functions for additional bound checking,
+	/* Temporarily set outlen to maximum message size. This value will be
+	 * used inside the protocol functions for additional bound checking,
 	 * and then replaced by the actual message size, (see _9p_checkbound())
 	 */
 	*poutlen = req9p->pconn->msize;
 
 	/* Call the 9P service function */
-	if (((rc =
-	      _9pfuncdesc[msgtype].service_function(req9p,
-						    (void *)worker_data,
-						    poutlen, replydata)) < 0))
+	rc = _9pfuncdesc[msgtype].service_function(req9p,
+						   (void *)worker_data,
+						   poutlen, replydata);
+
+	if (rc < 0)
 		LogDebug(COMPONENT_9P, "%s: Error",
 			 _9pfuncdesc[msgtype].funcname);
 
 /**
  * @todo ops stats accounting goes here.
- * service function return codes need to be reworked to return error code properly
- * so that internal error code (currently -1) is distinguished from protocol op
- * error, currently partially handled in rerror, and success return here so we can
- * count errors and totals properly.  I/O stats handled in read and write as in
- * nfs.
+ * service function return codes need to be reworked to return error code
+ * properly so that internal error code (currently -1) is distinguished
+ * from protocol op error, currently partially handled in rerror, and
+ * success return here so we can count errors and totals properly.
+ * I/O stats handled in read and write as in nfs.
  */
 	return rc;
 }

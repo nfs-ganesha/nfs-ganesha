@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -42,8 +42,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		 char *preply)
+int _9p_renameat(struct _9p_request_data *req9p, void *worker_data,
+		 u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -54,8 +54,8 @@ int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *newname_len = NULL;
 	char *newname_str = NULL;
 
-	_9p_fid_t *poldfid = NULL;
-	_9p_fid_t *pnewfid = NULL;
+	struct _9p_fid *poldfid = NULL;
+	struct _9p_fid *pnewfid = NULL;
 
 	cache_inode_status_t cache_status;
 
@@ -72,7 +72,7 @@ int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-		 (u32) * msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		 (u32) *msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
 		 *newname_len, newname_str);
 
 	if (*oldfid >= _9P_FID_PER_CONN)
@@ -122,7 +122,7 @@ int _9p_renameat(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-		 (u32) * msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		 (u32) *msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
 		 *newname_len, newname_str);
 
 	return 1;

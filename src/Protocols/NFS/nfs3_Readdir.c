@@ -1,5 +1,5 @@
  /*
-  * vimf:expandtab:shiftwidth=8:tabstop=8:
+  * vimf:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2008)
   * contributeur : Philippe DENIEL   philippe.deniel@cea.fr

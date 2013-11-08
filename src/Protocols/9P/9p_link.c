@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,8 +43,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_link(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	     char *preply)
+int _9p_link(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -53,11 +53,11 @@ int _9p_link(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *name_len = NULL;
 	char *name_str = NULL;
 
-	_9p_fid_t *pdfid = NULL;
-	_9p_fid_t *ptargetfid = NULL;
+	struct _9p_fid *pdfid = NULL;
+	struct _9p_fid *ptargetfid = NULL;
 
 	cache_inode_status_t cache_status;
-	char link_name[MAXNAMLEN];;
+	char link_name[MAXNAMLEN];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -67,7 +67,7 @@ int _9p_link(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getstr(cursor, name_len, name_str);
 
 	LogDebug(COMPONENT_9P, "TLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
-		 (u32) * msgtag, *dfid, *targetfid, *name_len, name_str);
+		 (u32) *msgtag, *dfid, *targetfid, *name_len, name_str);
 
 	if (*dfid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -114,7 +114,7 @@ int _9p_link(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "TLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
-		 (u32) * msgtag, *dfid, *targetfid, *name_len, name_str);
+		 (u32) *msgtag, *dfid, *targetfid, *name_len, name_str);
 
 	return 1;
 }

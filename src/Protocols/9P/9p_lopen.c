@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -45,8 +45,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -56,7 +56,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	cache_inode_status_t cache_status;
 	fsal_openflags_t openflags = 0;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -64,7 +64,7 @@ int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, flags, u32);
 
 	LogDebug(COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x",
-		 (u32) * msgtag, *fid, *flags);
+		 (u32) *msgtag, *fid, *flags);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -82,7 +82,8 @@ int _9p_lopen(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_openflags2FSAL(flags, &openflags);
 
 	if (pfid->pentry->type == REGULAR_FILE) {
-/** @todo: Maybe other types (FIFO, SOCKET,...) may require to be opened too */
+		/** @todo: Maybe other types (FIFO, SOCKET,...) require
+		 * to be opened too */
 		if (!pfid->opens) {
 			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS)

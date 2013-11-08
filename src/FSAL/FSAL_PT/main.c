@@ -9,7 +9,7 @@
 // // ----------------------------------------------------------------------------
 //
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) IBM Inc., 2013
  *

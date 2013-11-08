@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -125,21 +125,6 @@ static int attr_is_read_only(unsigned int attr_index)
 	}
 	/* else : standard xattr */
 	return FALSE;
-}
-
-static void chomp_attr_value(char *str, size_t size)
-{
-	int len;
-
-	if (str == NULL)
-		return;
-
-	/* security: set last char to '\0' */
-	str[size - 1] = '\0';
-
-	len = strnlen(str, size);
-	if ((len > 0) && (str[len - 1] == '\n'))
-		str[len - 1] = '\0';
 }
 
 static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
@@ -597,24 +582,23 @@ fsal_status_t lustre_setextattr_value(struct fsal_obj_handle * obj_hdl,
 	struct lustre_fsal_obj_handle *obj_handle = NULL;
 	char mypath[MAXPATHLEN];
 	int rc = 0;
-	size_t len;
+        int flags = 0 ;
 
 	obj_handle =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 
-	/* remove final '\n', if any */
-	chomp_attr_value((char *)buffer_addr, buffer_size);
-
-	len = strnlen((char *)buffer_addr, buffer_size);
+        /* /!\ ACL HOOK. If name is "system.posix_acl_access", flags must remain unset */
+        if( strncmp( xattr_name, "system.posix_acl_access", MAXNAMLEN) )
+                flags = create ? XATTR_CREATE : XATTR_REPLACE ;
+        else
+                flags = 0 ;
 
 	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
 			      obj_handle->handle, mypath);
-	if (len == 0)
-		rc = lsetxattr(mypath, xattr_name, "", 1,
-			       create ? XATTR_CREATE : XATTR_REPLACE);
+	if (buffer_size == 0)
+		rc = lsetxattr(mypath, xattr_name, "", 1, flags ) ;
 	else
-		rc = lsetxattr(mypath, xattr_name, (char *)buffer_addr, len,
-			       create ? XATTR_CREATE : XATTR_REPLACE);
+		rc = lsetxattr(mypath, xattr_name, (char *)buffer_addr, buffer_size, flags ) ;
 
 	if (rc != 0)
 		return fsalstat(posix2fsal_error(errno), errno);

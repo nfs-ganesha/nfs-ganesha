@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -42,8 +42,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_rename(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	       char *preply)
+int _9p_rename(struct _9p_request_data *req9p, void *worker_data,
+	       u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 
@@ -52,8 +52,8 @@ int _9p_rename(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u32 *dfid = NULL;
 	u16 *name_len = NULL;
 	char *name_str = NULL;	/* for unused-but-set-variable */
-	_9p_fid_t *pfid = NULL;
-	_9p_fid_t *pdfid = NULL;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_fid *pdfid = NULL;
 
 	char newname[MAXNAMLEN];
 	cache_inode_status_t cache_status;
@@ -65,7 +65,7 @@ int _9p_rename(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getstr(cursor, name_len, name_str);
 
 	LogDebug(COMPONENT_9P, "TRENAME: tag=%u fid=%u dfid=%u name=%.*s",
-		 (u32) * msgtag, *fid, *dfid, *name_len, name_str);
+		 (u32) *msgtag, *fid, *dfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -111,8 +111,8 @@ int _9p_rename(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RRENAMEAT: tag=%u fid=%u dfid=%u newname=%.*s",
-		 (u32) * msgtag, *fid, *dfid, *name_len, name_str);
+		 (u32) *msgtag, *fid, *dfid, *name_len, name_str);
 
-	//  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+	/*  _9p_stat_update(*pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;
 }

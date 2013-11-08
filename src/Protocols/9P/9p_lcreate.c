@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -45,8 +45,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -57,9 +57,9 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *name_len = NULL;
 	char *name_str = NULL;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_qid_t qid_newfile;
-	u32 iounit = _9P_IOUNIT;;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_newfile;
+	u32 iounit = _9P_IOUNIT;
 
 	cache_entry_t *pentry_newfile = NULL;
 	char file_name[MAXNAMLEN];
@@ -78,7 +78,7 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TLCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
-		 (u32) * msgtag, *fid, *name_len, name_str, *flags, *mode,
+		 (u32) *msgtag, *fid, *name_len, name_str, *flags, *mode,
 		 *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -97,7 +97,8 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	/* Create the file */
 
-	/* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
+	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
+	 * flags is not yet used */
 	cache_status =
 	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
 			       NULL, &pfid->op_context, &pentry_newfile);
@@ -118,14 +119,18 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	cache_status =
 	    cache_inode_open(pentry_newfile, openflags, &pfid->op_context, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		/* Owner override.. deal with this stupid 04xy mode corner case */
+		/* Owner override..
+		 * deal with this stupid 04xy mode corner case */
 		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
 		    && (pfid->op_context.creds->caller_uid ==
 			pentry_newfile->obj_handle->attributes.owner)
 		    && ((*mode & 0400) == 0400)) {
-			/* If we reach this piece of code, this means that a user did open( O_CREAT, 04xy) on a file
-			 * the file was created in 04xy mode by the forme cache_inode code, but for the mode is 04xy
-			 * the user is not allowed to open it. Becoming root override this */
+			/* If we reach this piece of code, this means that
+			 * a user did open( O_CREAT, 04xy) on a file the
+			 * file was created in 04xy mode by the forme
+			 * cache_inode code, but for the mode is 04xy
+			 * the user is not allowed to open it.
+			 * Becoming root override this */
 			uid_t saved_uid = pfid->op_context.creds->caller_uid;
 
 			/* Become root */
@@ -152,7 +157,8 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	/* This is not a TATTACH fid */
 	pfid->from_attach = FALSE;
 
-	/* Pin as well. We probably want to close the file if this fails, but it won't happen - right?! */
+	/* Pin as well. We probably want to close the file if this fails,
+	 * but it won't happen - right?! */
 	cache_status = cache_inode_inc_pin_ref(pentry_newfile);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
@@ -188,7 +194,7 @@ int _9p_lcreate(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u pentry=%p",
-		 (u32) * msgtag, *fid, *name_len, name_str, qid_newfile.type,
+		 (u32) *msgtag, *fid, *name_len, name_str, qid_newfile.type,
 		 qid_newfile.version, (unsigned long long)qid_newfile.path,
 		 iounit, pfid->pentry);
 

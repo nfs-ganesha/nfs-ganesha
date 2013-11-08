@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -47,34 +47,35 @@
 char pathdot[] = ".";
 char pathdotdot[] = "..";
 
-typedef struct _9p_cb_entry {
+struct _9p_cb_entry {
 	u64 qid_path;
 	u8 *qid_type;
-	char d_type;		/* Attention, this is a VFS d_type, not a 9P type */
+	char d_type;	/* Attention, this is a VFS d_type, not a 9P type */
 	const char *name_str;
 	u16 name_len;
 	uint64_t cookie;
-} _9p_cb_entry_t;
+};
 
-typedef struct _9p_cb_data {
+struct _9p_cb_data {
 	u8 *cursor;
 	unsigned int count;
 	unsigned int max;
-} _9p_cb_data_t;
+};
 
-static inline u8 *fill_entry(u8 * cursor, u8 qid_type, u64 qid_path, u64 cookie,
+static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 			     u8 d_type, u16 name_len, const char *name_str)
 {
 	/* qid in 3 parts */
 	_9p_setvalue(cursor, qid_type, u8);	/* 9P entry type */
-	_9p_setvalue(cursor, 0, u32);	/* qid_version set to 0 to prevent the client from caching */
+	/* qid_version set to 0 to prevent the client from caching */
+	_9p_setvalue(cursor, 0, u32);
 	_9p_setvalue(cursor, qid_path, u64);
 
 	/* offset */
 	_9p_setvalue(cursor, cookie, u64);
 
-	/* Type (this time outside the qid)) */
-	_9p_setvalue(cursor, d_type, u8);	/* VFS d_type (like in getdents) */
+	/* Type (this time outside the qid) - VFS d_type (like in getdents) */
+	_9p_setvalue(cursor, d_type, u8);
 
 	/* name */
 	_9p_setstr(cursor, name_len, name_str);
@@ -87,7 +88,7 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 						 uint64_t mounted_on_fileid)
 {
 	struct cache_inode_readdir_cb_parms *cb_parms = opaque;
-	_9p_cb_data_t *tracker = cb_parms->opaque;
+	struct _9p_cb_data *tracker = cb_parms->opaque;
 	int name_len = strlen(cb_parms->name);
 	u8 qid_type, d_type;
 
@@ -143,7 +144,8 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 		return CACHE_INODE_SUCCESS;
 	}
 
-	/* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes */
+	/* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type
+	 * + 2 for strlen = 24 bytes */
 	tracker->count += 24 + name_len;
 
 	tracker->cursor =
@@ -154,11 +156,11 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 	return CACHE_INODE_SUCCESS;
 }
 
-int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
-	_9p_cb_data_t tracker;
+	struct _9p_cb_data tracker;
 
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
@@ -176,7 +178,7 @@ int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	uint64_t cookie = 0LL;
 	unsigned int num_entries = 0;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -185,7 +187,7 @@ int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, count, u32);
 
 	LogDebug(COMPONENT_9P, "TREADDIR: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) * msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -283,11 +285,15 @@ int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	tracker.count = dcount;
 	tracker.max = *count;
 
-	cache_status = cache_inode_readdir(pfid->pentry, cookie, &num_entries, &eod_met, &pfid->op_context, 0,	/* no attr */
+	cache_status = cache_inode_readdir(pfid->pentry, cookie, &num_entries,
+					   &eod_met, &pfid->op_context,
+					   0,	/* no attr */
 					   _9p_readdir_callback, &tracker);
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		/* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
-		/* In the 9P logic, this situation just mean "end of directory reached */
+		/* The avl lookup will try to get the next entry after 'cookie'.
+		 * If none is found CACHE_INODE_NOT_FOUND is returned
+		 * In the 9P logic, this situation just mean
+		 * "end of directory reached" */
 		if (cache_status != CACHE_INODE_NOT_FOUND)
 			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
@@ -303,7 +309,7 @@ int _9p_readdir(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREADDIR: tag=%u fid=%u dcount=%u",
-		 (u32) * msgtag, *fid, dcount);
+		 (u32) *msgtag, *fid, dcount);
 
 	return 1;
 }

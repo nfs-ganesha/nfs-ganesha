@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -43,8 +44,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
-	     char *preply)
+int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -59,7 +60,7 @@ int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 
 	u32 err = 0;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	struct gsh_export *exp;
 	exportlist_t *export = NULL;
@@ -75,15 +76,15 @@ int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
-		 (u32) * msgtag, *afid, (int)*uname_len, uname_str,
-		 (int)*aname_len, aname_str, *n_aname);
+		 (u32) *msgtag, *afid, (int) *uname_len, uname_str,
+		 (int) *aname_len, aname_str, *n_aname);
 
 	if (*afid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/*
-	 * Find the export for the aname (using as well Path or Tag ) 
+	 * Find the export for the aname (using as well Path or Tag)
 	 */
 	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
@@ -111,15 +112,15 @@ int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 	/* Is user name provided as a string or as an uid ? */
 	if (*uname_len != 0) {
 		/* Build the fid creds */
-		if ((err =
-		     _9p_tools_get_req_context_by_name(*uname_len, uname_str,
-						       pfid)) != 0)
+		err = _9p_tools_get_req_context_by_name(*uname_len, uname_str,
+							pfid);
+		if (err != 0)
 			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	} else {
 		/* Build the fid creds */
-		if ((err =
-		     _9p_tools_get_req_context_by_uid(*n_aname, pfid)) != 0)
+		err = _9p_tools_get_req_context_by_uid(*n_aname, pfid);
+		if (err != 0)
 			return _9p_rerror(req9p, worker_data, msgtag, -err,
 					  plenout, preply);
 	}
@@ -135,8 +136,7 @@ int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;
 
-	/* This fid is a special one : it comes from TATTACH and so generate a record
-	 * int the export manager 
+	/* This fid is a special one:
 	 * In this case TAUTH is managed the same way as TATTACH */
 	pfid->from_attach = TRUE;
 
@@ -149,7 +149,8 @@ int _9p_auth(_9p_request_data_t *req9p, void *worker_data, u32 *plenout,
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
-	pfid->qid.version = 0;	/* No cache, we want the client to stay synchronous with the server */
+	pfid->qid.version = 0;	/* No cache, we want the client
+				 * to stay synchronous with the server */
 	pfid->qid.path = fileid;
 
 	/* Build the reply */

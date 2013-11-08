@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -20,9 +20,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * ------------- 
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /* file.c
@@ -41,7 +40,6 @@
 #include "nullfs_methods.h"
 #include "fsal_handle_syscalls.h"
 
-extern struct next_ops next_ops;
 
 /** nullfs_open
  * called with appropriate locks taken at the cache inode level
@@ -58,7 +56,7 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
  * Let the caller peek into the file's open/close state.
  */
 
-fsal_openflags_t nullfs_status(struct fsal_obj_handle * obj_hdl)
+fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 {
 	return next_ops.obj_ops->status(obj_hdl);
 }
@@ -67,10 +65,12 @@ fsal_openflags_t nullfs_status(struct fsal_obj_handle * obj_hdl)
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t nullfs_read(struct fsal_obj_handle * obj_hdl,
-			  const struct req_op_context * opctx, uint64_t offset,
+fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *opctx,
+			  uint64_t offset,
 			  size_t buffer_size, void *buffer,
-			  size_t * read_amount, bool * end_of_file)
+			  size_t *read_amount,
+			  bool *end_of_file)
 {
 	return next_ops.obj_ops->read(obj_hdl, opctx, offset, buffer_size,
 				      buffer, read_amount, end_of_file);
@@ -80,10 +80,10 @@ fsal_status_t nullfs_read(struct fsal_obj_handle * obj_hdl,
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t nullfs_write(struct fsal_obj_handle * obj_hdl,
-			   const struct req_op_context * opctx, uint64_t offset,
+fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
+			   const struct req_op_context *opctx, uint64_t offset,
 			   size_t buffer_size, void *buffer,
-			   size_t * write_amount, bool * fsal_stable)
+			   size_t *write_amount, bool *fsal_stable)
 {
 	return next_ops.obj_ops->write(obj_hdl, opctx, offset, buffer_size,
 				       buffer, write_amount, fsal_stable);
@@ -94,7 +94,7 @@ fsal_status_t nullfs_write(struct fsal_obj_handle * obj_hdl,
  * for right now, fsync will have to do.
  */
 
-fsal_status_t nullfs_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
+fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len)
 {
 	return next_ops.obj_ops->commit(obj_hdl, offset, len);
@@ -106,11 +106,11 @@ fsal_status_t nullfs_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
  * check this.
  */
 
-fsal_status_t nullfs_lock_op(struct fsal_obj_handle * obj_hdl,
-			     const struct req_op_context * opctx, void *p_owner,
+fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
+			     const struct req_op_context *opctx, void *p_owner,
 			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t * request_lock,
-			     fsal_lock_param_t * conflicting_lock)
+			     fsal_lock_param_t *request_lock,
+			     fsal_lock_param_t *conflicting_lock)
 {
 	return next_ops.obj_ops->lock_op(obj_hdl, opctx, p_owner, lock_op,
 					 request_lock, conflicting_lock);
@@ -122,7 +122,7 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle * obj_hdl,
  * releases all locks but that is state and cache inode's problem.
  */
 
-fsal_status_t nullfs_close(struct fsal_obj_handle * obj_hdl)
+fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	return next_ops.obj_ops->close(obj_hdl);
 }
@@ -133,7 +133,7 @@ fsal_status_t nullfs_close(struct fsal_obj_handle * obj_hdl)
  * trimming.
  */
 
-fsal_status_t nullfs_lru_cleanup(struct fsal_obj_handle * obj_hdl,
+fsal_status_t nullfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 				 lru_actions_t requests)
 {
 	return next_ops.obj_ops->lru_cleanup(obj_hdl, requests);

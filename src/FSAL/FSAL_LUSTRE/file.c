@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -55,6 +55,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle * obj_hdl,
 	int fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
+        int posix_flags = 0 ;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -62,9 +63,13 @@ fsal_status_t lustre_open(struct fsal_obj_handle * obj_hdl,
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
+        fsal2posix_openflags(openflags, &posix_flags);
+        LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
+                     openflags, posix_flags);
+
 	fd = CRED_WRAP(opctx->creds, int, lustre_open_by_handle,
 		       lustre_get_root_path(obj_hdl->export), myself->handle,
-		       (O_RDWR));
+		       posix_flags);
 	if (fd < 0) {
 		if ((errno == EACCES)
 		    && (((obj_hdl->attributes.mode & 0700) == 0400)
@@ -79,7 +84,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle * obj_hdl,
 			 * we default on root superpower to open it */
 			fd = lustre_open_by_handle(lustre_get_root_path
 						   (obj_hdl->export),
-						   myself->handle, O_RDWR);
+						   myself->handle, posix_flags);
 			if (fd < 0) {
 				fsal_error = posix2fsal_error(errno);
 				retval = errno;

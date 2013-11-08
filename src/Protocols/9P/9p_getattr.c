@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -46,15 +47,15 @@
 u32 zero32 = 0;
 u64 zero64 = 0LL;
 
-int _9p_getattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u64 *request_mask = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	u64 valid = 0LL;	/* Not a pointer */
 	u32 mode = 0;		/* Not a pointer */
@@ -82,7 +83,7 @@ int _9p_getattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, request_mask, u64);
 
 	LogDebug(COMPONENT_9P, "TGETATTR: tag=%u fid=%u request_mask=0x%llx",
-		 (u32) * msgtag, *fid, (unsigned long long)*request_mask);
+		 (u32) *msgtag, *fid, (unsigned long long) *request_mask);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -121,21 +122,28 @@ int _9p_getattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		mode = 0;
 
 	uid =
-	    (*request_mask & _9P_GETATTR_UID) ? (u32 *) & pfid->pentry->
-	    obj_handle->attributes.owner : &zero32;
+	    (*request_mask & _9P_GETATTR_UID) ?
+		(u32 *) &pfid->pentry->obj_handle->attributes.owner :
+		&zero32;
 	gid =
-	    (*request_mask & _9P_GETATTR_GID) ? (u32 *) & pfid->pentry->
-	    obj_handle->attributes.group : &zero32;
+	    (*request_mask & _9P_GETATTR_GID) ?
+		(u32 *) &pfid->pentry->obj_handle->attributes.group :
+		&zero32;
 	nlink =
-	    (*request_mask & _9P_GETATTR_NLINK) ? (u64 *) & pfid->pentry->
-	    obj_handle->attributes.numlinks : &zero64;
-	//rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major:&zero64 ; 
+	    (*request_mask & _9P_GETATTR_NLINK) ?
+		(u64 *) &pfid->pentry->obj_handle->attributes.numlinks :
+		&zero64;
+	/* rdev = (*request_mask & _9P_GETATTR_RDEV) ?
+	 *     (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major :
+	 *     &zero64; */
 	rdev =
-	    (*request_mask & _9P_GETATTR_RDEV) ? (u64 *) & pfid->export->
-	    filesystem_id.major : &zero64;
+	    (*request_mask & _9P_GETATTR_RDEV) ?
+		(u64 *) &pfid->export->filesystem_id.major :
+		&zero64;
 	size =
-	    (*request_mask & _9P_GETATTR_SIZE) ? (u64 *) & pfid->pentry->
-	    obj_handle->attributes.filesize : &zero64;
+	    (*request_mask & _9P_GETATTR_SIZE) ?
+		(u64 *) &pfid->pentry->obj_handle->attributes.filesize :
+		&zero64;
 	blksize =
 	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) _9P_BLK_SIZE : 0LL;
 	blocks =
@@ -144,16 +152,19 @@ int _9p_getattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 							  attributes.filesize /
 							  DEV_BSIZE) : 0LL;
 	atime_sec =
-	    (*request_mask & _9P_GETATTR_ATIME) ? (u64 *) & pfid->pentry->
-	    obj_handle->attributes.atime.tv_sec : &zero64;
+	    (*request_mask & _9P_GETATTR_ATIME) ?
+		(u64 *) &pfid->pentry->obj_handle->attributes.atime.tv_sec :
+		&zero64;
 	atime_nsec = &zero64;
 	mtime_sec =
-	    (*request_mask & _9P_GETATTR_MTIME) ? (u64 *) & pfid->pentry->
-	    obj_handle->attributes.mtime.tv_sec : &zero64;
+	    (*request_mask & _9P_GETATTR_MTIME) ?
+		(u64 *) &pfid->pentry->obj_handle->attributes.mtime.tv_sec :
+		&zero64;
 	mtime_nsec = &zero64;
 	ctime_sec =
-	    (*request_mask & _9P_GETATTR_CTIME) ? (u64 *) & pfid->pentry->
-	    obj_handle->attributes.ctime.tv_sec : &zero64;
+	    (*request_mask & _9P_GETATTR_CTIME) ?
+		(u64 *) &pfid->pentry->obj_handle->attributes.ctime.tv_sec :
+		&zero64;
 	ctime_nsec = &zero64;
 
 	/* Not yet supported attributes */

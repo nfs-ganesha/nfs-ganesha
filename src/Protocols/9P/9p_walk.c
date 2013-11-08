@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -44,8 +44,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	     char *preply)
+int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	unsigned int i = 0;
@@ -63,8 +63,8 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	u16 *nwqid;
 
-	_9p_fid_t *pfid = NULL;
-	_9p_fid_t *pnewfid = NULL;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_fid *pnewfid = NULL;
 
 	/* Now Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -73,7 +73,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, nwname, u16);
 
 	LogDebug(COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
-		 (u32) * msgtag, *fid, *newfid, *nwname);
+		 (u32) *msgtag, *fid, *newfid, *nwname);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -91,14 +91,15 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 				  preply);
 	}
 
-	if ((pnewfid = gsh_calloc(1, sizeof(_9p_fid_t))) == NULL)
+	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	if (pnewfid == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
 	/* Is this a lookup or a fid cloning operation ? */
 	if (*nwname == 0) {
 		/* Cloning operation */
-		memcpy((char *)pnewfid, (char *)pfid, sizeof(_9p_fid_t));
+		memcpy((char *)pnewfid, (char *)pfid, sizeof(struct _9p_fid));
 
 		/* Set the new fid id */
 		pnewfid->fid = *newfid;
@@ -106,8 +107,8 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		/* This is not a TATTACH fid */
 		pnewfid->from_attach = FALSE;
 
-		/* Increments refcount so it won't fall below 0 when we clunk later */
-		cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL);
+		/* Increments refcount */
+		cache_inode_lru_ref(pnewfid->pentry, 0);
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;
@@ -119,7 +120,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 			LogDebug(COMPONENT_9P,
 				 "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
-				 (u32) * msgtag, *fid, *newfid, i + 1, *nwname,
+				 (u32) *msgtag, *fid, *newfid, i + 1, *nwname,
 				 name);
 
 			if (pnewfid->pentry == pentry)
@@ -163,7 +164,9 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		}
 
 		/* Build the qid */
-		pnewfid->qid.version = 0;	/* No cache, we want the client to stay synchronous with the server */
+		/* No cache, we want the client to stay synchronous
+		 * with the server */
+		pnewfid->qid.version = 0;
 		pnewfid->qid.path = fileid;
 
 		pnewfid->specdata.xattr.xattr_id = 0;
@@ -210,7 +213,8 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	_9p_setptr(cursor, nwqid, u16);
 	for (i = 0; i < *nwqid; i++) {
-      /** @todo: should be different qids for each directory walked through */
+		/** @todo: should be different qids
+		 * for each directory walked through */
 		_9p_setqid(cursor, pnewfid->qid);
 	}
 
@@ -219,7 +223,7 @@ int _9p_walk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p refcount=%i",
-		 (u32) * msgtag, *fid, *newfid, *nwqid,
+		 (u32) *msgtag, *fid, *newfid, *nwqid,
 		 (unsigned long long)pnewfid->qid.path, pnewfid->pentry,
 		 pnewfid->pentry->lru.refcnt);
 

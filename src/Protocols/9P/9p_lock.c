@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -46,8 +46,6 @@
 #include "fsal.h"
 #include "9p.h"
 
-extern int h_errno;
-
 /*
  * Reminder:
  * LOCK_TYPE_RDLCK = 0
@@ -65,8 +63,8 @@ char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
  */
 char *strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
 
-int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	     char *preply)
+int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -93,7 +91,7 @@ int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	struct hostent *hp;
 	struct sockaddr_storage client_addr;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -108,7 +106,7 @@ int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) * msgtag, *fid, *type, strtype[*type], *flags,
+		 (u32) *msgtag, *fid, *type, strtype[*type], *flags,
 		 (unsigned long long)*start, (unsigned long long)*length,
 		 *proc_id, *client_id_len, client_id_str);
 
@@ -125,17 +123,20 @@ int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 				  preply);
 	}
 
-	/* Tmp hook to avoid lock issue when compiling kernels. This should not impact ONE client only */
-	/* get the client's ip addr */
+	/* Tmp hook to avoid lock issue when compiling kernels.
+	 * This should not impact ONE client only
+	 * get the client's ip addr */
 	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
 
-	if ((hp = gethostbyname(name)) == NULL)
+	hp = gethostbyname(name);
+	if (hp == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
 	memcpy((char *)&client_addr, hp->h_addr, hp->h_length);
 
-	if ((powner = get_9p_owner(&client_addr, *proc_id)) == NULL)
+	powner = get_9p_owner(&client_addr, *proc_id);
+	if (powner == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
@@ -194,8 +195,8 @@ int _9p_lock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s status=%u|%s",
-		 (u32) * msgtag, *fid, *type, strtype[*type], *flags,
-		 (unsigned long long)*start, (unsigned long long)*length,
+		 (u32) *msgtag, *fid, *type, strtype[*type], *flags,
+		 (unsigned long long) *start, (unsigned long long) *length,
 		 *proc_id, *client_id_len, client_id_str, status,
 		 strstatus[status]);
 

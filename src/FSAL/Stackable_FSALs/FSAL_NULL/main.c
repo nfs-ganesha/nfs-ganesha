@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
  */
 
 /* main.c
@@ -45,13 +45,13 @@
  */
 
 /* defined the set of attributes supported with POSIX */
-#define NULLFS_SUPPORTED_ATTRIBUTES (                                       \
-          ATTR_TYPE     | ATTR_SIZE     |                  \
-          ATTR_FSID     | ATTR_FILEID   |                  \
-          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-          ATTR_CHGTIME  )
+#define NULLFS_SUPPORTED_ATTRIBUTES (                    \
+	ATTR_TYPE     | ATTR_SIZE     |                  \
+	ATTR_FSID     | ATTR_FILEID   |                  \
+	ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+	ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+	ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+	ATTR_CHGTIME)
 
 struct nullfs_fsal_module {
 	struct fsal_module fsal;
@@ -116,7 +116,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	    container_of(fsal_hdl, struct nullfs_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
-	nullfs_me->fs_info = default_posix_info;	/* get a copy of the defaults */
+	/* get a copy of the defaults */
+	nullfs_me->fs_info = default_posix_info;
 
 	fsal_status =
 	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
@@ -145,13 +146,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal NULLFS method linkage to export object
  */
 
-fsal_status_t nullfs_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				   const char *export_path,
 				   const char *fs_options,
-				   struct exportlist * exp_entry,
-				   struct fsal_module * next_fsal,
-				   const struct fsal_up_vector * up_ops,
-				   struct fsal_export ** export);
+				   struct exportlist *exp_entry,
+				   struct fsal_module *next_fsal,
+				   const struct fsal_up_vector *up_ops,
+				   struct fsal_export **export);
 
 /* Module initialization.
  * Called by dlopen() to register the module

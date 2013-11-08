@@ -8,7 +8,7 @@
 // Author:      FSI IPC dev team
 // ----------------------------------------------------------------------------
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:noexpandtab:shiftwidth=4:tabstop=4:
  */
 
 /**

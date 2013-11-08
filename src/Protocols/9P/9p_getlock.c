@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -45,8 +45,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_getlock(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -58,7 +58,7 @@ int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u16 *client_id_len = NULL;
 	char *client_id_str = NULL;
 
-/*   _9p_fid_t * pfid = NULL ; */
+/*   struct _9p_fid * pfid = NULL ; */
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -72,7 +72,7 @@ int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) * msgtag, *fid, *type, (unsigned long long)*start,
+		 (u32) *msgtag, *fid, *type, (unsigned long long) *start,
 		 (unsigned long long)*length, *proc_id, *client_id_len,
 		 client_id_str);
 
@@ -80,9 +80,10 @@ int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
-/*    pfid = req9p->pconn->fids[*fid] ; */
+	/* pfid = req9p->pconn->fids[*fid] ; */
 
-   /** @todo This function does nothing for the moment. Make it compliant with fcntl( F_GETLCK, ... */
+	/** @todo This function does nothing for the moment.
+	 * Make it compliant with fcntl( F_GETLCK, ... */
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RGETLOCK);
@@ -99,7 +100,7 @@ int _9p_getlock(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) * msgtag, *fid, *type, (unsigned long long)*start,
+		 (u32) *msgtag, *fid, *type, (unsigned long long) *start,
 		 (unsigned long long)*length, *proc_id, *client_id_len,
 		 client_id_str);
 

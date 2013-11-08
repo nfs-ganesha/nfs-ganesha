@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2012, The Linux Box Corporation
  * Contributor : Matt Benjamin <matt@linuxbox.com>

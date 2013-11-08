@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,14 +43,14 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_readlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		 char *preply)
+int _9p_readlink(struct _9p_request_data *req9p, void *worker_data,
+		 u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	cache_inode_status_t cache_status;
 	struct gsh_buffdesc link_buffer = {.addr = NULL,
@@ -61,7 +61,7 @@ int _9p_readlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TREADLINK: tag=%u fid=%u", (u32) * msgtag,
+	LogDebug(COMPONENT_9P, "TREADLINK: tag=%u fid=%u", (u32) *msgtag,
 		 *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -96,7 +96,7 @@ int _9p_readlink(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag,
-		 (u32) * fid, (char *)link_buffer.addr);
+		 (u32) *fid, (char *) link_buffer.addr);
 
 	gsh_free(link_buffer.addr);
 	return 1;

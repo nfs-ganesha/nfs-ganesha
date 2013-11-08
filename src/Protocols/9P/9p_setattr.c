@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -43,8 +43,8 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-		char *preply)
+int _9p_setattr(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -59,7 +59,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	u64 *mtime_sec = NULL;
 	u64 *mtime_nsec = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 
 	struct attrlist fsalattr;
 	cache_inode_status_t cache_status;
@@ -82,7 +82,7 @@ int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "TSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"
-		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) * msgtag,
+		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) *msgtag,
 		 *fid, *valid, *mode, *uid, *gid, *size,
 		 (unsigned long long)*atime_sec,
 		 (unsigned long long)*atime_nsec,
@@ -102,13 +102,14 @@ int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 				  preply);
 	}
 
-	/* If a "time" change is required, but not with the "_set" suffix, use gettimeofday */
+	/* If a "time" change is required, but not with the "_set" suffix,
+	 * use gettimeofday */
 	if (*valid &
 	    (_9P_SETATTR_ATIME | _9P_SETATTR_CTIME | _9P_SETATTR_MTIME)) {
 		if (gettimeofday(&t, NULL) == -1) {
 			LogMajor(COMPONENT_9P,
 				 "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
-				 (u32) * msgtag, *fid, errno);
+				 (u32) *msgtag, *fid, errno);
 			return _9p_rerror(req9p, worker_data, msgtag, errno,
 					  plenout, preply);
 		}
@@ -168,9 +169,8 @@ int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	}
 
 	/* Set size if needed */
-	if (*valid & _9P_SETATTR_SIZE) {
+	if (*valid & _9P_SETATTR_SIZE)
 		FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
-	}
 
 	/* Now set the attr */
 	cache_status =
@@ -190,13 +190,13 @@ int _9p_setattr(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 
 	LogDebug(COMPONENT_9P,
 		 "RSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"
-		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) * msgtag,
+		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) *msgtag,
 		 *fid, *valid, *mode, *uid, *gid, *size,
 		 (unsigned long long)*atime_sec,
 		 (unsigned long long)*atime_nsec,
 		 (unsigned long long)*mtime_sec,
 		 (unsigned long long)*mtime_nsec);
 
-	//_9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+	/* _9p_stat_update(*pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;
 }

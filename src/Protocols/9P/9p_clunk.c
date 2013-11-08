@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -53,7 +53,9 @@
  * @param req9p [IN] pointer to request data
  */
 
-static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t *req9p)
+
+static void free_fid(struct _9p_fid *pfid, u32 *fid,
+		     struct _9p_request_data *req9p)
 {
 	struct gsh_export *exp;
 
@@ -66,14 +68,14 @@ static void free_fid(_9p_fid_t * pfid, u32 * fid, _9p_request_data_t *req9p)
 	req9p->pconn->fids[*fid] = NULL;	/* poison the entry */
 }
 
-int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
-	      char *preply)
+int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 
-	_9p_fid_t *pfid = NULL;
+	struct _9p_fid *pfid = NULL;
 	cache_inode_status_t cache_status;
 	fsal_status_t fsal_status;
 
@@ -81,7 +83,7 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -100,7 +102,8 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	if (pfid->specdata.xattr.xattr_content != NULL) {
 
 		if (pfid->specdata.xattr.xattr_write == TRUE) {
-			/* Check size give at TXATTRCREATE against the one resulting from the writes */
+			/* Check size give at TXATTRCREATE with
+			 * the one resulting from the writes */
 			if (pfid->specdata.xattr.xattr_size !=
 			    pfid->specdata.xattr.xattr_offset) {
 				free_fid(pfid, fid, req9p);
@@ -108,25 +111,38 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 						  EINVAL, plenout, preply);
 			}
 
-			/* Write the xattr content */
-			fsal_status =
-			    pfid->pentry->obj_handle->ops->
-			    setextattr_value_by_id(pfid->pentry->obj_handle,
-						   &pfid->op_context,
-						   pfid->specdata.xattr.
-						   xattr_id,
-						   pfid->specdata.xattr.
-						   xattr_content,
-						   pfid->specdata.xattr.
-						   xattr_size);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				free_fid(pfid, fid, req9p);
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  _9p_tools_errno
-						  (cache_inode_error_convert
-						   (fsal_status)), plenout,
-						  preply);
-			}
+			/* Do we handle system.posix_acl_access */
+			if (pfid->specdata.xattr.xattr_id ==
+				ACL_ACCESS_XATTR_ID) {
+					fsal_status =
+					pfid->pentry->obj_handle->ops->
+                                                setextattr_value( pfid->pentry->obj_handle,
+                                                                  &pfid->op_context,
+                                                                  "system.posix_acl_access",
+                                                                  pfid->specdata.xattr.xattr_content,
+                                                                  pfid->specdata.xattr.xattr_size,
+                                                                  FALSE);
+			} else {
+				/* Write the xattr content */
+				fsal_status =
+	        		    pfid->pentry->obj_handle->ops->
+					setextattr_value_by_id(pfid->pentry->obj_handle,
+								&pfid->op_context,
+								pfid->specdata.xattr.
+								xattr_id,
+								pfid->specdata.xattr.
+								xattr_content,
+								pfid->specdata.xattr.
+								xattr_size);
+        			if (FSAL_IS_ERROR(fsal_status)) {
+	        			free_fid(pfid, fid, req9p);
+		        		return _9p_rerror(req9p, worker_data, msgtag,
+			        			  _9p_tools_errno
+				        		  (cache_inode_error_convert
+					        	   (fsal_status)), plenout,
+						          preply);
+			        }       
+                        }
 		}
 
 		gsh_free(pfid->specdata.xattr.xattr_content);
@@ -170,7 +186,7 @@ int _9p_clunk(_9p_request_data_t *req9p, void *worker_data, u32 * plenout,
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) * msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	return 1;
 }

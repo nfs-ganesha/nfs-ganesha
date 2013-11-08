@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:noexpandtab:shiftwidth=4:tabstop=4:
  */
 
 /**
@@ -13,9 +13,6 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
-
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
-#define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
 
 /**
  * posix2fsal_error :
