@@ -376,6 +376,10 @@ int main(int argc, char *argv[])
 			 config_path, config_GetErrorMsg());
 	}
 
+	if (read_log_config(config_struct) < 0)
+		LogFatal(COMPONENT_INIT,
+			 "Error while parsing log configuration");
+
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */
