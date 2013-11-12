@@ -40,6 +40,7 @@
 #include "nlm_list.h"
 #include "FSAL/fsal_init.h"
 #include "pseudofs_methods.h"
+#include "../fsal_private.h"
 
 /* PSEUDOFS FSAL module private storage
  */
@@ -119,7 +120,10 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	/* get a copy of the defaults */
 	pseudofs_me->fs_info = default_posix_info;
 
-	fsal_status = fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl),
+	/** @todo FSF passing NULL for name to clue fsal_load_config
+	 * not to look for FSAL config block for PSEUDO.
+	 */
+	fsal_status = fsal_load_config(NULL,
 				       config_struct,
 				       &pseudofs_me->fsal_info,
 				       &pseudofs_me->fs_info,
@@ -159,7 +163,18 @@ static struct pseudo_fsal_module PSEUDOFS;
 /* linkage to the exports and handle ops initializers
  */
 
-MODULE_INIT void pseudo_fsal_init(void)
+int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
+{
+	int retval;
+
+	retval = unregister_fsal(&PSEUDOFS.fsal);
+	if (retval != 0)
+		fprintf(stderr, "PSEUDO module failed to unregister");
+
+	return retval;
+}
+
+void pseudo_fsal_init(void)
 {
 	int retval;
 	struct fsal_module *myself = &PSEUDOFS.fsal;
@@ -168,21 +183,12 @@ MODULE_INIT void pseudo_fsal_init(void)
 	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION);
 	if (retval != 0) {
-		fprintf(stderr, "PSEUDOFS module failed to register");
+		fprintf(stderr, "PSEUDO module failed to register");
 		return;
 	}
 	myself->ops->create_export = pseudofs_create_export;
 	myself->ops->init_config = init_config;
+	myself->ops->unload = unload_pseudo_fsal;
+	myself->name = gsh_strdup("PSEUDO");
 	init_fsal_parameters(&PSEUDOFS.fsal_info);
-}
-
-MODULE_FINI void pseudo_fsal_unload(void)
-{
-	int retval;
-
-	retval = unregister_fsal(&PSEUDOFS.fsal);
-	if (retval != 0) {
-		fprintf(stderr, "PSEUDOFS module failed to unregister");
-		return;
-	}
 }

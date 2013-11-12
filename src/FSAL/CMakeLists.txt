@@ -5,6 +5,9 @@ include_directories(
 # Add the directory for stackable FSALs
 add_subdirectory(Stackable_FSALs)
 
+# Add the directory for Pseudo FSAL
+add_subdirectory(FSAL_PSEUDO)
+
 # All we need to do here is control the
 # build of chosen fsals
 
@@ -43,7 +46,3 @@ endif(USE_FSAL_VFS)
 if(USE_FSAL_GLUSTER)
   add_subdirectory(FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
-
-if(USE_FSAL_PSEUDO)
-  add_subdirectory(FSAL_PSEUDO)
-endif(USE_FSAL_PSEUDO)

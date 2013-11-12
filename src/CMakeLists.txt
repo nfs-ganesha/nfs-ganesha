@@ -155,7 +155,6 @@ option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
-option(USE_FSAL_PSEUDO "build PSEUDO FSAL shared library" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_PT "build PT FSAL" OFF)
@@ -691,6 +690,7 @@ set(GANESHA_CORE
   log
   common_utils
   uid2grp
+  fsalpseudo
   )
 
 if(USE_DBUS)

@@ -68,6 +68,7 @@ GLIST_HEAD(fsal_list);
 static char *dl_error;
 static int so_error;
 static struct fsal_module *new_fsal;
+static void load_fsal_psdeudo(void);
 
 static enum load_state {
 	init,		/* in server start state. .init sections can run */
@@ -90,6 +91,12 @@ int start_fsals(config_file_t config)
 	char *key, *value;
 	int fb, fsal_cnt, item_cnt;
 
+	/* .init was a long time ago... */
+	load_state = idle;
+
+	/* Load FSAL_PSEUDO */
+	load_fsal_psdeudo();
+
 	fsal_block = config_FindItemByName(config, CONF_LABEL_FSAL);
 	if (fsal_block == NULL) {
 		LogFatal(COMPONENT_INIT,
@@ -102,7 +109,6 @@ int start_fsals(config_file_t config)
 			 CONF_LABEL_FSAL);
 		return 1;
 	}
-	load_state = idle;	/* .init was a long time ago... */
 
 	fsal_cnt = config_GetNbItems(fsal_block);
 	for (fb = 0; fb < fsal_cnt; fb++) {
@@ -326,6 +332,70 @@ int load_fsal(const char *path, const char *name,
 		 strerror(retval));
 	gsh_free(dl_path);
 	return retval;
+}
+
+/* load_fsal
+ * Load the fsal's shared object and name it if the fsal
+ * has not already done so.
+ * The dlopen() will trigger a .init constructor which will
+ * do the actual registration.
+ * after a successful load, the returned handle needs to be "put"
+ * back after any other initialization is done.
+ *
+ * Return 0 on success and *fsal_hdl_p points to it.
+ *	When finished, put_fsal_handle() on the handle to free it.
+ *
+ * Errors:
+ *	EBUSY == the loader is busy (should not happen)
+ *	EEXIST == the module is already loaded
+ *	ENOLCK == register_fsal without load_fsal holding the lock.
+ *	EINVAL == wrong loading state for registration
+ *	ENOMEM == out of memory
+ *	ENOENT == could not find "module_init" function
+ *	EFAULT == module_init has a bad address
+ *	other general dlopen errors are possible, all of them bad
+ */
+
+static void load_fsal_psdeudo(void)
+{
+	char *dl_path;
+	struct fsal_module *fsal;
+
+	dl_path = gsh_strdup("Builtin-PseudoFS");
+	if (dl_path == NULL)
+		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
+
+	pthread_mutex_lock(&fsal_lock);
+
+	if (load_state != idle)
+		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
+
+	if (dl_error) {
+		gsh_free(dl_error);
+		dl_error = NULL;
+	}
+
+	load_state = loading;
+
+	pthread_mutex_unlock(&fsal_lock);
+
+	/* now it is the module's turn to register itself */
+	pseudo_fsal_init();
+
+	pthread_mutex_lock(&fsal_lock);
+
+	if (load_state != registered)
+		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
+
+	/* we now finish things up, doing things the module can't see */
+
+	fsal = new_fsal;	/* recover handle from .ctor and poison again */
+	new_fsal = NULL;
+	fsal->path = dl_path;
+	fsal->dl_handle = NULL;
+	so_error = 0;
+	load_state = idle;
+	pthread_mutex_unlock(&fsal_lock);
 }
 
 /* Initialize all the loaded FSALs now that the config file

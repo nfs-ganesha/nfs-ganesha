@@ -558,10 +558,17 @@ fsal_status_t fsal_load_config(const char *name, config_file_t config_struct,
 	fsal_status_t st;
 	struct fsal_fs_params common_info;
 
-	st = load_FSAL_parameters_from_conf(config_struct, name, fsal_init,
-					    extra);
-	if (FSAL_IS_ERROR(st))
-		return st;
+	/** @todo FSF if name is NULL, don't look for config block
+	 * hack for FSAL_PSEUDO built in that doesn't need a config block
+	 */
+	if (name != NULL) {
+		st = load_FSAL_parameters_from_conf(config_struct,
+						    name,
+						    fsal_init,
+						    extra);
+		if (FSAL_IS_ERROR(st))
+			return st;
+	}
 
 	/* Note - memset uses the fact that FSAL_FS_INIT_DEFAULT is 0 */
 	memset(&common_info, 0, sizeof(common_info));

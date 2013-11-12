@@ -17,14 +17,6 @@ SET(fsalpseudo_LIB_SRCS
    fsal_convert.c
 )
 
-add_library(fsalpseudo SHARED ${fsalpseudo_LIB_SRCS})
-
-target_link_libraries(fsalpseudo
-  gos
-)
-
-set_target_properties(fsalpseudo PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalpseudo COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
-
+add_library(fsalpseudo STATIC ${fsalpseudo_LIB_SRCS})
 
 ########### install files ###############
