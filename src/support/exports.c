@@ -3440,6 +3440,7 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 
 	cache_status =
 	    cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE, &entry);
+
 	if (entry != NULL) {
 		/* cache_inode_get returns a cache_entry with
 		 * reference count of 2, where 1 is the sentinel value of
@@ -3454,6 +3455,7 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 			"Added root entry for path %s on export_id=%d",
 			export->fullpath, export->id);
 		*entryp = export->exp_root_cache_inode;
+		return CACHE_INODE_SUCCESS;
 	} else {
 		LogCrit(COMPONENT_INIT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
