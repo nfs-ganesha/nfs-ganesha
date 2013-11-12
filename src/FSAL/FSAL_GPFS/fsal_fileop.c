@@ -226,6 +226,7 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 	warg.length = buffer_size;
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = (uint32_t *) fsal_stable;
+	warg.options = 0;
 	/* read operation */
 
 	fsal_set_credentials(p_context->creds);

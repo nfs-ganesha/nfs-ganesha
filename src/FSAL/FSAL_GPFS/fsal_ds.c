@@ -187,6 +187,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	warg.stability_wanted = stability_wanted;
 	warg.stability_got = stability_got;
 	warg.verifier4 = (int32_t *) writeverf;
+	warg.options = 0;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
