@@ -4559,10 +4559,13 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 	int fh_status;
 
 	/* If there is no FH */
-	fh_status = nfs4_Is_Fh_Empty(&(data->currentFH));
+	fh_status = nfs4_Is_Fh_Empty(&data->currentFH);
 
 	if (fh_status != NFS4_OK)
 		return fh_status;
+
+	assert(data->current_entry != NULL &&
+	       data->current_filetype != NO_FILE_TYPE);
 
 	/* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
@@ -4661,10 +4664,13 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 	int fh_status;
 
 	/* If there is no FH */
-	fh_status = nfs4_Is_Fh_Empty(&(data->savedFH));
+	fh_status = nfs4_Is_Fh_Empty(&data->savedFH);
 
 	if (fh_status != NFS4_OK)
 		return fh_status;
+
+	assert(data->saved_entry != NULL &&
+	       data->saved_filetype != NO_FILE_TYPE);
 
 	/* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
