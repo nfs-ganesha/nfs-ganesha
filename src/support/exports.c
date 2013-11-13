@@ -36,6 +36,7 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
 #include "nfs_tools.h"
@@ -2629,6 +2630,8 @@ static bool init_export(struct gsh_export *cl, void *state)
 	cache_entry_t *entry;
 
 	status = nfs_export_get_root_entry(&cl->export, &entry);
+	cache_inode_put(entry);
+
 	if (status != CACHE_INODE_SUCCESS || entry == NULL)
 		return false;
 	else
@@ -3406,6 +3409,13 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
  * which takes references.  This is fine for attaching it to an export but
  * other uses (psesudofs) should take their own references while holding it.
  *
+ * Must be called with either the caller holding a reference to the export OR
+ * the caller is holding the export_by_id.lock (which would prevent the last
+ * reference to the export from going away).
+ *
+ * Returns with an additional reference to the cache inode held for use by the
+ * caller.
+ *
  * @param export [IN] the aforementioned export
  * @param entryp [IN/OUT] call by ref pointer to store cache entry
  *
@@ -3422,6 +3432,8 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 
 	if (export->exp_root_cache_inode != NULL) {
 		*entryp = export->exp_root_cache_inode;
+		cache_inode_lru_ref(export->exp_root_cache_inode,
+				    LRU_REQ_INITIAL);
 		return CACHE_INODE_SUCCESS;
 	}
 	/* Lookup for the FSAL Path */
@@ -3455,6 +3467,8 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 			"Added root entry for path %s on export_id=%d",
 			export->fullpath, export->id);
 		*entryp = export->exp_root_cache_inode;
+		cache_inode_lru_ref(export->exp_root_cache_inode,
+				    LRU_REQ_INITIAL);
 		return CACHE_INODE_SUCCESS;
 	} else {
 		LogCrit(COMPONENT_INIT,
