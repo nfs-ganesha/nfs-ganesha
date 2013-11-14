@@ -6,71 +6,34 @@
 
 #include "config.h"
 #include "analyse.h"
+#include "abstract_mem.h"
 #include "conf_yacc.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include "log.h"
 
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
 
-/* Numero de la ligne courante */
-int ganesha_yylineno;
-
 /* block/subblock nesting level */
 int block_depth;
 
-/* Traitement des messages d'erreur */
-void set_error(char * s);
+/* Our versions of parser macros */
 
-#define ERRLEN 1024
-char err_str[ERRLEN]="";
+#define YY_USER_INIT \
+do { \
+	BEGIN YY_INIT; \
+} while (0);
 
-/* Stockage des chaines
-*/
-char YY_PARSED_STRING[MAXSTRLEN];
-
-void YY_BUFFER_APPEND(char * s){
-    strncat( YY_PARSED_STRING,s, MAXSTRLEN - strlen(s));
-}
-
-void YY_BUFFER_RESET(void){
-    int i;
-    for (i=0;i<MAXSTRLEN;i++){
-        YY_PARSED_STRING[i]='\0';
-    }
-}
-
-/* includes management */
-#define FILE_LEN 1024
-char current_file[FILE_LEN] = "";
-
-#define MAX_INCLUDE_DEPTH  10
-YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
-
-/* keep track of filenames and line numbers */
-unsigned int    lines_stack[MAX_INCLUDE_DEPTH];
-char            files_stack[MAX_INCLUDE_DEPTH][FILE_LEN];
-
-int include_stack_index = 0;
-
-
-/* initialisation du parser */
-
-#define YY_USER_INIT {          \
-    unsigned int i;             \
-    ganesha_yylineno = 1;               \
-    block_depth = 0;              \
-    include_stack_index = 0;    \
-    for ( i=0; i<MAX_INCLUDE_DEPTH; i++) {\
-        lines_stack[i]=0;       \
-        files_stack[i][0]='\0'; \
-    }\
-    BEGIN YY_INIT;\
-}
+#define YY_USER_ACTION \
+	yylloc->first_line = yylloc->last_line = yylineno; \
+	yylloc->first_column = yylloc->last_column = yycolumn + yyleng -1; \
+	yycolumn += yyleng; \
+	yylloc->filename = current_file;
 
 #ifdef _DEBUG_PARSING
 #define DEBUG_LEX   printf
@@ -78,10 +41,29 @@ int include_stack_index = 0;
 #define DEBUG_LEX(...) (void)0
 #endif
 
+struct bufstack {
+	struct bufstack *prev;
+	YY_BUFFER_STATE bs;
+	int lineno;
+	char *filename;
+	FILE *f;
+} *curbs = NULL;
+
+static char *filter_string(char *src, int esc);
+static int new_file(char *filename,
+	     struct parser_state *st);
+static int pop_file(struct parser_state *st);
+
+static char *current_file;
 
 %}
 
 %option nounput
+%option yylineno
+%option reentrant
+%option bison-bridge
+%option bison-locations
+%option extra-type="struct parser_state *"
 
 SPACE        [ \t\r\f]
 NL           [\n]
@@ -92,10 +74,12 @@ STRING_CHAR       [^\n]
 IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
-%START  YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK VALUE ENDVALUE  STRING1 STRING2 ESC1 INCLUDE INCL_STRING INCL_ESC
+%START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK VALUE ENDVALUE QUOTE_STR LIT_STRING INCLUDE
 
 %%
-
+%{
+	struct parser_state *stp = yyextra;
+%}
 
 <YY_INIT>"%include" { /* include file start */
 	DEBUG_LEX("INCLUDE\n");
@@ -103,145 +87,71 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	/* not a token, return nothing */
 }
 
-<INCLUDE>"\"" { /* filename start */
-	/* start include file name */
-	BEGIN INCL_STRING;
-	DEBUG_LEX("file:<");
-	YY_BUFFER_RESET();
-}
+<INCLUDE>{VAL_CHAR}+ {
+	{
+		int c;
 
-<INCL_STRING>\\  {
-	BEGIN INCL_ESC;
-}
-
-<INCL_STRING>"\""   { /* end of include file path */
-	/* include file read */
-	unsigned int i;
-	char new_file_path[FILE_LEN];
-	DEBUG_LEX(">");
-
-	if (include_stack_index >= MAX_INCLUDE_DEPTH) {
-		/* error */
-		snprintf(err_str,ERRLEN,
-			 "in \"%s\", line %d: includes nested too deeply",
-			 current_file, ganesha_yylineno);
-		set_error(err_str);
-		return _ERROR_;
-	}
-
-	include_stack[include_stack_index] = YY_CURRENT_BUFFER;
-	lines_stack[include_stack_index] = ganesha_yylineno;
-	strncpy(files_stack[include_stack_index], current_file, FILE_LEN);
-
-	/* relative path management */
-
-	/* 1) if the new path is absolute, nothing to do
-	 * 2) if there was no '/' in previous dir, the new path
-	 *  is relative to the current dir.
-	 */
-	if ((YY_PARSED_STRING[0] == '/' ) ||
-	    (strchr( current_file, '/') == NULL)) {
-		strncpy(new_file_path, YY_PARSED_STRING, FILE_LEN);
-	} else {
-		/* in any other case, path is relative to the current config file
-		 * directory */
-
-		char tmp_buf[FILE_LEN];
-		char *path;
-
-		strncpy(tmp_buf, current_file, FILE_LEN);
-		path = dirname(tmp_buf);
-		snprintf(new_file_path, FILE_LEN, "%s/%s", path, YY_PARSED_STRING);
-	}
-	/* loop detection */
-	for (i = 0; i <= include_stack_index; i++) {
-		if (!strncmp(files_stack[i], new_file_path, FILE_LEN)) {
-			snprintf(err_str,ERRLEN,
-				 "in \"%s\", line %d: include loop detected: \"%s\" already parsed",
-				 current_file, ganesha_yylineno, new_file_path );
-			set_error(err_str);
-			return _ERROR_;
+		DEBUG_LEX("Calling new_file with unquoted %s\n", yytext);
+		c = new_file(yytext, stp);
+		if (c != 0) {
+			if (c == EINVAL)
+				ganesha_yyerror(yylloc, yyscanner,
+						"config file already parsed, ignored");
+			else
+				ganesha_yyerror(yylloc, yyscanner,
+						"error opening file");
+			yyterminate();
 		}
+		BEGIN YY_INIT;
+		DEBUG_LEX("done new file\n");
 	}
-	include_stack_index ++;
-	ganesha_yyin = fopen( new_file_path, "r" );
-	if (ganesha_yyin == NULL) {
-		/* error */
-		snprintf(err_str,ERRLEN,
-			 "in \"%s\", line %d: error %d opening file \"%s\": %s",
-			 current_file,ganesha_yylineno,
-			 errno, new_file_path, strerror(errno));
-		set_error(err_str);
-		return _ERROR_;
+}
+
+<INCLUDE>\"{VAL_CHAR}+\" {
+	{
+		int c;
+
+		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
+		c = new_file(yytext, stp);
+		if (c != 0) {
+			if (c == EINVAL)
+				ganesha_yyerror(yylloc, yyscanner,
+						"config file already parsed, ignored");
+			else
+				ganesha_yyerror(yylloc, yyscanner,
+						"error opening file");
+			yyterminate();
+		}
+		BEGIN YY_INIT;
+		DEBUG_LEX("done new file\n");
 	}
-	ganesha_yylineno = 1;
-	strncpy(current_file, new_file_path, FILE_LEN);
-	/* change current buffer */
-	ganesha_yy_switch_to_buffer(ganesha_yy_create_buffer(ganesha_yyin, YY_BUF_SIZE));
-	/* start reading file from scratch */
-	BEGIN YY_INIT;
 }
 
-
-<INCL_STRING>\n  { /* ERROR: eol before close quote of filename */
-	snprintf(err_str,ERRLEN,
-		 "in \"%s\", line %d: missing closing quote.",
-		 current_file, ganesha_yylineno);
-	set_error(err_str);
-	ganesha_yylineno++;
-	return _ERROR_;
+<INCLUDE>[.\n]+ {
+	DEBUG_LEX("BAD include, line break\n");
+	/* error bad include */
+	yyterminate();
 }
-
-<INCL_STRING>. { /* chars of filename */
-	YY_BUFFER_APPEND(ganesha_yytext);
-	DEBUG_LEX("%c",*ganesha_yytext);
-}
-
-<INCL_ESC>\n { /* escaped eol within filename */
-	BEGIN INCL_STRING;
-	ganesha_yylineno++;
-}
-
-<INCL_ESC>. { /* escaped char within filename */
-	DEBUG_LEX("%c",*ganesha_yytext);
-	YY_BUFFER_APPEND(ganesha_yytext);
-	BEGIN INCL_STRING;/* caractere du fichier */
-}
-
 
 <<EOF>> { /* end of included file */
 	DEBUG_LEX("<EOF>\n");
-
-	include_stack_index --;
-
-	if (include_stack_index < 0) {
-		/* eof of all streams */
+	if (pop_file(stp) == 0)
 		yyterminate();
-	} else {
-		fclose(ganesha_yyin);
-                /*go down into stack */
-                ganesha_yy_delete_buffer( YY_CURRENT_BUFFER );
-
-                ganesha_yylineno = lines_stack[include_stack_index];
-                strncpy( current_file, files_stack[include_stack_index], FILE_LEN );
-
-                ganesha_yy_switch_to_buffer( include_stack[include_stack_index] );
-	}
 }
 
 
 
 <YY_INIT>{IDENTIFIER} { /* first block */
 	/* identifier */
-	DEBUG_LEX("[block:%s]\n",ganesha_yytext);
-	strncpy(ganesha_yylval.str_val,ganesha_yytext,MAXSTRLEN);
+	DEBUG_LEX("[block:%s]\n",yytext);
+	yylval->token = gsh_strdup(yytext);
 	BEGIN BLOCK;
 	return IDENTIFIER;
 }
 
 
 <BLOCK>"{"        {/* start of  block */
-	DEBUG_LEX("BEGIN_BLOCK\n",ganesha_yytext);
+	DEBUG_LEX("BEGIN_BLOCK\n");
 	BEGIN IN_BLOCK;
 	block_depth++;
 	return BEGIN_BLOCK;
@@ -249,20 +159,18 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 <IN_BLOCK>{IDENTIFIER} { /* name of block or keyword */
 	/* identifier */
-	DEBUG_LEX("[id:%s",ganesha_yytext);
-	strncpy(ganesha_yylval.str_val,ganesha_yytext,MAXSTRLEN);
+	DEBUG_LEX("[id:%s",yytext);
+	yylval->token = gsh_strdup(yytext);
 	BEGIN STMT_OR_SUB_BLOCK;
 	return IDENTIFIER;
 }
 
 <IN_BLOCK>"}"     {   /* end of block */
-	DEBUG_LEX("END_BLOCK\n",ganesha_yytext);
+	DEBUG_LEX("END_BLOCK\n");
 	if (block_depth <= 0) {
 		/* error */
-		snprintf(err_str,ERRLEN,
-			 "in \"%s\", line %d: '%c' closing bracket outside a block",
-			 current_file,ganesha_yylineno,*ganesha_yytext);
-		set_error(err_str);
+		ganesha_yyerror(yylloc, yyscanner,
+				"closing bracket outside a block");
 		return _ERROR_;
 	} else
 		block_depth --;
@@ -278,36 +186,33 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 <STMT_OR_SUB_BLOCK>"="  { /* A statement */
 	/* equal_op */
-	DEBUG_LEX(" , ",ganesha_yytext);
+	DEBUG_LEX(" , ");
 	BEGIN VALUE;
 	return EQUAL_OP;
 }
 
 <STMT_OR_SUB_BLOCK>"{" {
 	/* sub-block */
-	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n",ganesha_yytext);
+	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n");
 	BEGIN IN_BLOCK;
 	block_depth++;
 	return BEGIN_SUB_BLOCK;
 }
 
 <VALUE>"\""  {  /* start of a double quote string */
-	BEGIN STRING1;
-	DEBUG_LEX("value:<");
-	YY_BUFFER_RESET();
+	BEGIN QUOTE_STR;
+	DEBUG_LEX("quote value:<");
 }
 
 <VALUE>"'"   { /* start of a single quote string */
-	BEGIN STRING2;
-	DEBUG_LEX("value:<");
-	YY_BUFFER_RESET();
-} /* ouverture string 2 */
+	BEGIN LIT_STRING;
+	DEBUG_LEX("lit value:<");
+}
 
 <VALUE>({VAL_CHAR})+  { /* start of a number or label/tag */
-	/* valeur */
-	DEBUG_LEX("value:%s",ganesha_yytext);
+	DEBUG_LEX("token value:%s",yytext);
 	BEGIN ENDVALUE;
-	strncpy(ganesha_yylval.str_val,ganesha_yytext,MAXSTRLEN);
+	yylval->token = gsh_strdup(yytext);
 	return KEYVALUE;
 }
 
@@ -317,88 +222,246 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	return END_STMT;
 }
 
-<STRING1>\\  { /* escape a char in a double quote string */
-	BEGIN ESC1;
+<QUOTE_STR>[^\"]*\" {
+	if (yytext[yyleng - 2] == '\\') {
+		yyless(yyleng - 1);
+		yymore();
+	} else {
+		yylval->token = filter_string(yytext, 1);
+		if (yylval->token == NULL) {
+			ganesha_yyerror(yylloc, yyscanner, "Out of memory");
+			return _ERROR_;
+		} else if (yylval->token == (char *)-1) {
+			ganesha_yyerror(yylloc, yyscanner, "Bad literal string");
+			return _ERROR_;
+		}
+		DEBUG_LEX("%s>", yylval->token);
+		BEGIN ENDVALUE;
+		return KEYVALUE;
+	}
 }
 
-<STRING1>"\"" { /* end of double quote string */
-	DEBUG_LEX(">");
-	strncpy(ganesha_yylval.str_val,YY_PARSED_STRING,MAXSTRLEN);
+<LIT_STRING>[^\n]*\'  { /* end of single quote string */
+	yylval->token =	filter_string(yytext, 0);
+	if (yylval->token == NULL) {
+		ganesha_yyerror(yylloc, yyscanner, "Out of memory");
+		return _ERROR_;
+	} else if (yylval->token == (char *)-1) {
+		ganesha_yyerror(yylloc, yyscanner, "Bad literal string");
+		return _ERROR_;
+	}
+	DEBUG_LEX("%s>", yylval->token);
 	BEGIN ENDVALUE;
 	return KEYVALUE;
 }
 
-<STRING1>\n { /* ERROR: eol within double quote string */
-	snprintf(err_str,ERRLEN,
-		 "in \"%s\", line %d: missing closing quote.",
-		 current_file,ganesha_yylineno);
-	set_error(err_str);
-	ganesha_yylineno++;
+<LIT_STRING>\n { /* ERROR: eol within single quote string */
+	ganesha_yyerror(yylloc, yyscanner, "closing quote missing");
 	return _ERROR_;
-}
-
-<STRING1>. { /* chars of a double quote string */
-	YY_BUFFER_APPEND(ganesha_yytext);
-	DEBUG_LEX("%c",*ganesha_yytext);
-}
-
-<ESC1>\n { /* escaped eol in double quote string */
-	BEGIN STRING1;
-	ganesha_yylineno++;
-}
-
-<ESC1>. { /* escaped char in double quote string */
-	DEBUG_LEX("%c",*ganesha_yytext);
-	YY_BUFFER_APPEND(ganesha_yytext);
-	BEGIN STRING1;
-}
-
-<STRING2>"'"  { /* end of single quote string */
-	DEBUG_LEX(">");
-	strncpy(ganesha_yylval.str_val,
-		YY_PARSED_STRING,MAXSTRLEN);
-	BEGIN ENDVALUE;
-	return KEYVALUE;
-}
-
-<STRING2>\n { /* ERROR: eol within single quote string */
-	snprintf(err_str,ERRLEN,
-		 "in \"%s\", line %d: closing quote missing.",
-		 current_file,ganesha_yylineno);
-	set_error(err_str);
-	ganesha_yylineno++;
-	return _ERROR_;
-}
-
-<STRING2>. { /* chars within single quote string */
-	YY_BUFFER_APPEND(ganesha_yytext);
-	DEBUG_LEX("%c",*ganesha_yytext);
 }
 
 {COMMENTEXT}  ;/* ignore */
 {SPACE}        ;/* ignore */
-{NL}           ganesha_yylineno++;/* ignore */
+{NL}           ;/* ignore */
 
 . { /* ERROR: out of character character */
-	snprintf(err_str,ERRLEN,
-		 "in \"%s\", line %d: '%c' unexpected",
-		 current_file,ganesha_yylineno,*ganesha_yytext);
-	set_error(err_str);
+	DEBUG_LEX("unexpected stuff %s\n", yytext);
+	ganesha_yyerror(yylloc, yyscanner, "Unexpected character");
 	return _ERROR_;
 }
 
 %%
 
-int ganesha_yywrap(void){
+int ganesha_yywrap(void *yyscanner){
     return 1;
 }
 
-void ganesha_yyreset(void){
-    YY_FLUSH_BUFFER;
-    YY_USER_INIT;
+int ganesha_yy_init_parser(char *srcfile,
+			   struct parser_state *st) {
+	FILE *in_file;
+	void *yyscanner = st->scanner;
+	/* reentrant scanner macro magic requires this... */
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	struct file_list *flist;
+	struct config_root *confroot;
+	YY_BUFFER_STATE inbuf;
+	int rc = ENOMEM;
+
+	confroot = gsh_calloc(1, sizeof(struct config_root));
+	if (confroot == NULL)
+		goto nospc;
+	glist_init(&confroot->root.node);
+	confroot->root.type = TYPE_ROOT;
+	st->root_node = confroot;
+	ganesha_yylex_init_extra(st, &st->scanner);
+	return new_file(srcfile, st);
+
+nospc:
+	return rc;
 }
 
-void ganesha_yy_set_current_file( char * file )
+/**
+ * @brief filter a string for escaped chars
+ *
+ * You can escape anything in quoted strings. Literals
+ * can't and must be on one line.
+ *
+ * @param src yytext from the lexer
+ * @param esc do quoted string escapes
+ *
+ * @return allocated string or NULL for ENOMEM and -1 for esc errors
+ */
+
+static char *filter_string(char *src, int esc)
 {
-    strncpy( current_file, file, FILE_LEN );
+	int c;
+	char *sp, *dst, *dp;
+
+	dst = gsh_calloc(1, strlen(src) + 1);
+	if (dst == NULL)
+		return NULL;
+	sp = src;
+	dp = dst;
+	c = *sp++;
+	while (c != '\0') {
+		if (esc) { /* quoted strings */
+			if (c == '\\' && *sp != '\0') {
+				*dp++ = *sp++;
+			} else if (c == '\"' && *sp == '\0') {
+				*dp++ = '\0';
+				goto done;
+			} else if ((c == '\n' || c == '\"') &&
+				   *sp != '\0') {
+				gsh_free(dst);
+				return (char *)-1;
+			} else {
+				*dp++ = c;
+
+			}
+		} else { /* literal strings */
+			if (c == '\'' && *sp == '\0') {
+				*dp++ = '\0';
+				goto done;
+			} else if ((c == '\n' || c == '\'') &&
+				   *sp != '\0') {
+				gsh_free(dst);
+				return (char *)-1;
+			} else {
+				*dp++ = c;
+			}
+		}
+		c = *sp++;
+	}
+	*dp = *sp;
+
+done:
+	return dst;
+}
+
+static int new_file(char *name_tok,
+	     struct parser_state *st)
+{
+	struct bufstack *bs;
+	FILE *in_file;
+	YY_BUFFER_STATE inbuf;
+	struct file_list *flist, *fp;
+	void *yyscanner = st->scanner;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	struct config_root *confroot = st->root_node;
+	char *fullpath;
+	int rc = ENOMEM;
+	char *filename = alloca(strlen(name_tok + 1));
+
+	if (*name_tok == '\"') {
+		strcpy(filename, name_tok + 1);
+		filename[strlen(filename) - 1] = '\0';
+	} else {
+		filename = name_tok; /* alloca'd memory freed on exit */
+	}
+	if (confroot->files == NULL) {
+		if (filename[0] == '/') {
+			char *path = gsh_strdup(filename);
+
+			if (path == NULL)
+				return ENOMEM;
+			confroot->conf_dir = gsh_strdup(dirname(path));
+			gsh_free(path);
+		} else {
+			confroot->conf_dir = gsh_strdup(".");
+		}
+		if (confroot->conf_dir == NULL)
+			return ENOMEM;
+	}
+	if (filename[0] == '/') {
+		fullpath = gsh_strdup(filename);
+		if (fullpath == NULL)
+			return ENOMEM;
+	} else {
+		fullpath = gsh_calloc(1, (strlen(filename) +
+					  strlen(confroot->conf_dir) + 2));
+		if (fullpath == NULL)
+			return ENOMEM;
+		sprintf(fullpath, "%s/%s", confroot->conf_dir, filename);
+	}
+	/* loop detection */
+	for (fp = confroot->files; fp != NULL; fp = fp->next) {
+		if (!strcmp(fp->pathname, fullpath)) {
+			rc = EINVAL;
+			goto errout;
+		}
+	}
+	bs = gsh_calloc(1, sizeof(struct bufstack));
+	if (bs == NULL)
+		goto errout;
+	flist = gsh_calloc(1, sizeof(struct file_list));
+	if (flist == NULL) {
+		gsh_free(bs);
+		goto errout;
+	}
+	flist->next = confroot->files;
+	confroot->files = flist;
+	flist->pathname = fullpath;
+	in_file = fopen(flist->pathname, "r" );
+	if (in_file == NULL) {
+		/* error */
+		return errno;
+	}
+	bs->bs = ganesha_yy_create_buffer(in_file,
+					 YY_BUF_SIZE,
+					 yyscanner);
+	if (curbs)
+		curbs->lineno = yylineno;
+	bs->prev = curbs;
+	bs->f = in_file;
+	bs->filename = flist->pathname;
+	ganesha_yy_switch_to_buffer(bs->bs, yyscanner);
+	current_file = flist->pathname;
+	curbs = bs;
+	return 0;
+
+errout:
+	gsh_free(fullpath);
+	return rc;
+}
+
+static int pop_file(struct parser_state *st)
+{
+	struct bufstack *bs = curbs;
+	struct bufstack *prevbs;
+	void *yyscanner = st->scanner;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+
+	if (bs == NULL)
+		return 0;
+	fclose(bs->f);
+	ganesha_yy_delete_buffer(bs->bs, yyscanner);
+	prevbs = bs->prev;
+	gsh_free(bs);
+	if (prevbs == NULL)
+		return 0;
+	ganesha_yy_switch_to_buffer(prevbs->bs, yyscanner);
+	curbs = prevbs;
+	yylineno = curbs->lineno;
+	current_file = curbs->filename;
+	return 1;
 }

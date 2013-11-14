@@ -29,6 +29,7 @@
 #include <string.h>
 #endif
 #include "abstract_mem.h"
+#include "conf_yacc.h"
 
 /* case unsensitivity */
 #define STRNCMP   strncasecmp
@@ -62,6 +63,7 @@ extern list_items *program_result;
 
 /* message d'erreur */
 extern char extern_errormsg[1024];
+struct parser_state parser_state;
 
 /* config_ParseFile:
  * Reads the content of a configuration file and
@@ -70,53 +72,19 @@ extern char extern_errormsg[1024];
 config_file_t config_ParseFile(char *file_path)
 {
 
-	FILE *configuration_file;
-	config_struct_t *output_struct;
+	struct parser_state *st = &parser_state;
+	int rc;
 
-	/* Inits error message */
-
-	extern_errormsg[0] = '\0';
-
-	/* First, opens the file. */
-
-	configuration_file = fopen(file_path, "r");
-
-	if (!configuration_file) {
-		strcpy(extern_errormsg, strerror(errno));
+	memset(st, 0, sizeof(struct parser_state));
+	rc = ganesha_yy_init_parser(file_path, st);
+	if (rc) {
 		return NULL;
 	}
-
-	/* Then, parse the file. */
-	program_result = NULL;
-
-	ganesha_yyreset();
-
-	ganesha_yy_set_current_file(file_path);
-	ganesha_yyin = configuration_file;
-
-	if (ganesha_yyparse()) {
-		fclose(configuration_file);
-		return NULL;
-	}
-
-  /** @todo : ganesha_yyparse fait exit en cas d'erreur. Remedier au probleme. */
-
-	/* Finally, build the output struct. */
-
-	output_struct = gsh_malloc(sizeof(config_struct_t));
-
-	if (!output_struct) {
-		strcpy(extern_errormsg, strerror(errno));
-		fclose(configuration_file);
-		return NULL;
-	}
-
-	output_struct->syntax_tree = program_result;
+	rc = ganesha_yyparse(st);
+	ganesha_yylex_destroy(st->scanner);
 
 	/* converts pointer to pointer */
-	fclose(configuration_file);
-	return (config_file_t) output_struct;
-
+	return rc ? NULL : (config_file_t) st->root_node;
 }
 
 /* If config_ParseFile returns a NULL pointer,
@@ -126,7 +94,7 @@ config_file_t config_ParseFile(char *file_path)
 char *config_GetErrorMsg()
 {
 
-	return extern_errormsg;
+	return "Help! Help! We're all gonna die!!!";
 
 }
 
