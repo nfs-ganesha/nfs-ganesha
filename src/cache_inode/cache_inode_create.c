@@ -222,6 +222,12 @@ cache_inode_create(cache_entry_t *parent,
 		goto out;
 	}
 
+	if (type == DIRECTORY) {
+		/* Insert Parent's key */
+		cache_inode_key_dup(&(*entry)->object.dir.parent,
+				    &parent->fh_hk.key);
+	}
+
  out:
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Returning entry=%p status=%s for %s", entry,

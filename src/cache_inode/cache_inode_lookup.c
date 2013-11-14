@@ -41,6 +41,8 @@
 #include "cache_inode.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -171,6 +173,15 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 			cache_inode_kill_entry(parent);
 		}
 		status = cache_inode_error_convert(fsal_status);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "req_ctx export %d %s",
+			     (int) req_ctx->export->export.id,
+			     req_ctx->export->export.fullpath);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "FSAL %d %s returned %s",
+			     (int) dir_handle->export->exp_entry->id,
+			     dir_handle->export->exp_entry->fullpath,
+			     cache_inode_err_str(status));
 		*entry = NULL;
 		goto out;
 	}
@@ -189,6 +200,12 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);
 	if (status == CACHE_INODE_ENTRY_EXISTS)
 		status = CACHE_INODE_SUCCESS;
+
+	if ((*entry)->type == DIRECTORY) {
+		/* Insert Parent's key */
+		cache_inode_key_dup(&(*entry)->object.dir.parent,
+				    &parent->fh_hk.key);
+	}
 
  out:
 

@@ -407,6 +407,13 @@ populate_dirent(const struct req_op_context *opctx,
 		   cache_inode_new_entry */
 		return false;
 	}
+
+	if (cache_entry->type == DIRECTORY) {
+		/* Insert Parent's key */
+		cache_inode_key_dup(&cache_entry->object.dir.parent,
+				    &state->directory->fh_hk.key);
+	}
+
 	*state->status =
 	    cache_inode_add_cached_dirent(state->directory, name, cache_entry,
 					  &new_dir_entry);
