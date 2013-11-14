@@ -68,7 +68,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 {
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
 	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
-	size_t size = 0, check_size = 0;
+	uint64_t size = 0;
 	size_t read_size = 0;
 	uint64_t offset = 0;
 	bool eof_met = false;
@@ -268,26 +268,16 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	/* Do not read more than FATTR4_MAXREAD.  We should check
-	 * against the value we returned in getattr. This was not the
-	 * case before the following check_size code was added.
-	 */
-	if (((data->export->export_perms.options & EXPORT_OPTION_MAXREAD)
-	     == EXPORT_OPTION_MAXREAD))
-		check_size = data->export->MaxRead;
-	else
-		check_size = entry->obj_handle->export->ops->fs_maxread(
-			entry->obj_handle->export);
-
-	if (size > check_size) {
+	if (size > data->export->MaxRead) {
 		/* the client asked for too much data, this should normally
 		   not happen because client will get FATTR4_MAXREAD value
 		   at mount time */
 
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "NFS4_OP_READ: read requested size = %zu "
-			     " read allowed size = %" PRIu64, size, check_size);
-		size = check_size;
+			     "NFS4_OP_READ: read requested size = %"PRIu64
+			     " read allowed size = %" PRIu64,
+			     size, data->export->MaxRead);
+		size = data->export->MaxRead;
 	}
 
 	/* If size == 0, no I/O is to be made and everything is

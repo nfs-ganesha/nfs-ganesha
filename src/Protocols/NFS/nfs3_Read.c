@@ -197,8 +197,7 @@ int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should not exceed the FSINFO rtmax field for the size */
-	if (((export->export_perms.options & EXPORT_OPTION_MAXREAD))
-	    && size > export->MaxRead) {
+	if (size > export->MaxRead) {
 		/* The client asked for too much, normally this should
 		   not happen because the client is calling nfs_Fsinfo
 		   at mount time and so is aware of the server maximum

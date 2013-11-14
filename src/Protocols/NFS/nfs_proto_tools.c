@@ -1358,16 +1358,10 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	struct fsal_export *export;
 	uint64_t maxread;
 
 	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
-		if ((args->data->export->export_perms.
-		     options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD)
-			maxread = args->data->export->MaxRead;
-		else
-			maxread = export->ops->fs_maxread(export);
+		maxread = args->data->export->MaxRead;
 	} else {
 		maxread = NFS4_PSEUDOFS_MAX_READ_SIZE;
 	}
@@ -1387,17 +1381,10 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	struct fsal_export *export;
 	uint64_t maxwrite;
 
 	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
-		if ((args->data->export->export_perms.
-		     options & EXPORT_OPTION_MAXWRITE) ==
-		    EXPORT_OPTION_MAXWRITE)
-			maxwrite = args->data->export->MaxWrite;
-		else
-			maxwrite = export->ops->fs_maxwrite(export);
+		maxwrite = args->data->export->MaxWrite;
 	} else {
 		maxwrite = NFS4_PSEUDOFS_MAX_WRITE_SIZE;
 	}

@@ -216,8 +216,7 @@ int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should take care not to exceed FSINFO wtmax field for the size */
-	if ((export->export_perms.options & EXPORT_OPTION_MAXWRITE)
-	    && size > export->MaxWrite) {
+	if (size > export->MaxWrite) {
 		/* The client asked for too much data, we must restrict him */
 		size = export->MaxWrite;
 	}
