@@ -31,38 +31,6 @@
 #include "abstract_mem.h"
 #include "conf_yacc.h"
 
-/* case unsensitivity */
-#define STRNCMP   strncasecmp
-
-typedef struct config_struct_t {
-
-	/* Syntax tree */
-
-	list_items *syntax_tree;
-
-} config_struct_t;
-
-/***************************************
- * ACCES AUX VARIABLES EXTERNES
- ***************************************/
-
-/* fichier d'entree du lexer */
-extern FILE *ganesha_yyin;
-
-/* routine de parsing */
-int ganesha_yyparse();
-
-/* routine de reinitialization */
-void ganesha_yyreset(void);
-
-/* indique le fichier parse (pour la trace en cas d'erreur) */
-void ganesha_yy_set_current_file(char *file);
-
-/* variable renseignee lors du parsing */
-extern list_items *program_result;
-
-/* message d'erreur */
-extern char extern_errormsg[1024];
 struct parser_state parser_state;
 
 /* config_ParseFile:
@@ -126,43 +94,40 @@ void config_Free(config_file_t config)
  */
 int config_GetNbBlocks(config_file_t config)
 {
-	config_struct_t *config_struct = (config_struct_t *) config;
+	struct config_root *tree = (struct config_root *)config;
+	struct config_node *node;
+	int bcnt = 0, scnt = 0;
+	struct glist_head *nsi, *nsn;
 
-	/* on regarde si la liste est vide */
-	if (!(*config_struct->syntax_tree)) {
+	if (glist_empty(&tree->nodes))
 		return 0;
+	glist_for_each_safe(nsi, nsn, &tree->nodes) {
+		node = glist_entry(nsi, struct config_node, node);
+		if (node->type == TYPE_BLOCK)
+			bcnt++;
+		else
+			scnt++;
 	}
-	/* on compte le nombre d'elements */
-	else {
-		/* il y a au moins un element : le premier */
-		generic_item *curr_block = (*config_struct->syntax_tree);
-		int nb = 1;
-
-		while ((curr_block = curr_block->next) != NULL) {
-			nb++;
-		}
-
-		return nb;
-	}
+	return bcnt + scnt;
 }
 
 /* retrieves a given block from the config file, from its index */
 config_item_t config_GetBlockByIndex(config_file_t config,
 				     unsigned int block_no)
 {
-	config_struct_t *config_struct = (config_struct_t *) config;
-	generic_item *curr_block;
-	unsigned int i;
+	struct config_root *tree = (struct config_root *)config;
+	struct config_node *node;
+	int cnt = 0;
+	struct glist_head *nsi, *nsn;
 
-	if (!config_struct->syntax_tree || !(*config_struct->syntax_tree))
+	if (glist_empty(&tree->nodes))
 		return NULL;
-
-	for (i = 0, curr_block = (*config_struct->syntax_tree);
-	     curr_block != NULL; curr_block = curr_block->next, i++) {
-		if (i == block_no)
-			return (config_item_t) curr_block;
+	glist_for_each_safe(nsi, nsn, &tree->nodes) {
+		node = glist_entry(nsi, struct config_node, node);
+		if (/* node->type == TYPE_BLOCK && */ block_no == cnt)
+			return (config_item_t)node;
+		cnt++;
 	}
-
 	/* not found */
 	return NULL;
 }
@@ -170,54 +135,52 @@ config_item_t config_GetBlockByIndex(config_file_t config,
 /* Return the name of a block */
 char *config_GetBlockName(config_item_t block)
 {
-	generic_item *curr_block = (generic_item *) block;
+	struct config_node *curr_block = (struct config_node *) block;
 
 	assert(curr_block->type == TYPE_BLOCK);
 
-	return curr_block->item.block.block_name;
+	return curr_block->name;
 }
 
 /* Indicates how many items are defines in a block */
 int config_GetNbItems(config_item_t block)
 {
-	generic_item *the_block = (generic_item *) block;
+	struct config_node *node = (struct config_node *)block;
+	struct config_node *sub_node;
+	int bcnt = 0, scnt = 0;
+	struct glist_head *nsi, *nsn;
 
-	assert(the_block->type == TYPE_BLOCK);
-
-	/* on regarde si la liste est vide */
-	if (!(the_block->item.block.block_content)) {
+	assert(node->type == TYPE_BLOCK);
+	if (glist_empty(&node->u.sub_nodes))
 		return 0;
+	glist_for_each_safe(nsi, nsn, &node->u.sub_nodes) {
+		sub_node = glist_entry(nsi, struct config_node, node);
+		if (sub_node->type == TYPE_STMT)
+			scnt++;
+		else
+			bcnt++;
 	}
-	/* on compte le nombre d'elements */
-	else {
-		/* il y a au moins un element : le premier */
-		generic_item *curr_block = the_block->item.block.block_content;
-		int nb = 1;
-
-		while ((curr_block = curr_block->next) != NULL) {
-			nb++;
-		}
-
-		return nb;
-	}
-
+	return scnt + bcnt;
 }
 
-/* retrieves a given block from the config file, from its index */
-config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no)
+/* retrieves a given block from the config file, from its index
+ */
+config_item_t config_GetItemByIndex(config_item_t block,
+				    unsigned int item_no)
 {
-	generic_item *the_block = (generic_item *) block;
-	generic_item *curr_item;
-	unsigned int i;
+	struct config_node *node = (struct config_node *)block;
+	struct config_node *sub_node;
+	int cnt = 0;
+	struct glist_head *nsi, *nsn;
 
-	assert(the_block->type == TYPE_BLOCK);
-
-	for (i = 0, curr_item = the_block->item.block.block_content;
-	     curr_item != NULL; curr_item = curr_item->next, i++) {
-		if (i == item_no)
-			return (config_item_t) curr_item;
+	if (glist_empty(&node->u.sub_nodes))
+		return NULL;
+	glist_for_each_safe(nsi, nsn, &node->u.sub_nodes) {
+		sub_node = glist_entry(nsi, struct config_node, node);
+		if (/* sub_node->type == TYPE_STMT &&  */item_no == cnt)
+			return (config_item_t)sub_node;
+		cnt++;
 	}
-
 	/* not found */
 	return NULL;
 }
@@ -225,11 +188,11 @@ config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no)
 /* indicates which type of item it is */
 config_item_type config_ItemType(config_item_t item)
 {
-	generic_item *the_item = (generic_item *) item;
+	struct config_node *node = (struct config_node *)item;
 
-	if (the_item->type == TYPE_BLOCK)
+	if (node->type == TYPE_BLOCK)
 		return CONFIG_ITEM_BLOCK;
-	else if (the_item->type == TYPE_STMT)
+	else if (node->type == TYPE_STMT)
 		return CONFIG_ITEM_VAR;
 	else
 		return 0;
@@ -238,125 +201,71 @@ config_item_type config_ItemType(config_item_t item)
 /* Retrieves a key-value peer from a CONFIG_ITEM_VAR */
 int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 {
-	generic_item *var = (generic_item *) item;
+	struct config_node *node = (struct config_node *)item;
 
-	assert(var->type == TYPE_STMT);
+	assert(node->type == TYPE_STMT);
 
-	*var_name = var->item.affect.varname;
-	*var_value = var->item.affect.varvalue;
+	*var_name = node->name;
+	*var_value = node->u.varvalue;
 
 	return 0;
 }
 
-/* get an item from a list with the given name */
-static generic_item *GetItemFromList(generic_item * list, const char *name)
+static config_item_t find_by_name(struct config_node *node, char *name)
 {
-	generic_item *curr;
-
-	for (curr = list; curr != NULL; curr = curr->next) {
-		if ((curr->type == TYPE_BLOCK)
-		    && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
-			return curr;
-		if ((curr->type == TYPE_STMT)
-		    && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
-			return curr;
-	}
-	/* not found */
-	return NULL;
-
-}
-
-/**
- * \retval 0 if the entry is unique in the list
- * \retval != if there are several items with this name in the list
- */
-static int CheckDuplicateEntry(generic_item * list, const char *name)
-{
-	generic_item *curr;
-	unsigned int found = 0;
-
-	for (curr = list; curr != NULL; curr = curr->next) {
-		if ((curr->type == TYPE_BLOCK)
-		    && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
-			found++;
-		if ((curr->type == TYPE_STMT)
-		    && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
-			found++;
-		if (found > 1)
-			break;
-	}
-	return (found > 1);
-}
-
-/* Returns the block with the specified name. This name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
-config_item_t internal_FindItemByName(config_file_t config, const char *name,
-				      int *unique)
-{
-	config_struct_t *config_struct = (config_struct_t *) config;
-	generic_item *block;
-	generic_item *list;
+	struct glist_head *nsi, *nsn;
 	char *separ;
-	char *current;
-	char tmp_name[MAXSTRLEN];
+	config_item_t found_item = NULL;
 
-	/* connot be found if empty */
-	if (!config_struct->syntax_tree || !(*config_struct->syntax_tree))
+	if (node->type != TYPE_BLOCK || glist_empty(&node->u.sub_nodes))
 		return NULL;
-
-	list = *config_struct->syntax_tree;
-
-	strncpy(tmp_name, name, MAXSTRLEN);
-	tmp_name[MAXSTRLEN - 1] = '\0';
-	current = tmp_name;
-
-	while (current) {
-		/* first, split the name into BLOCK/SUBBLOC/SUBBLOC */
-		separ = strstr(current, "::");
-
-		/* it is a whole name */
-		if (!separ) {
-			if (unique) {
-				*unique = !CheckDuplicateEntry(list, current);
-				sprintf(extern_errormsg,
-					"Configuration item '%s' is not unique",
-					name);
-			}
-			return (config_item_t) GetItemFromList(list, current);
-		} else {
-			/* split the name */
-			*separ = '\0';
-
-			if ((separ - tmp_name) < MAXSTRLEN - 2)
-				separ += 2;
+	separ = strstr(name, "::");
+	if (separ != NULL) {
+		*separ++ = '\0';
+		*separ++ = '\0';
+	}
+	glist_for_each_safe(nsi, nsn, &node->u.sub_nodes) {
+		node = glist_entry(nsi, struct config_node, node);
+		if (strcasecmp(node->name, name) == 0) {
+			if (separ == NULL)
+				found_item = (config_item_t)node;
 			else
-				return NULL;	/* overflow */
-
-			block = GetItemFromList(list, current);
-
-			/* not found or not a block ? */
-			if (!block || (block->type != TYPE_BLOCK))
-				return NULL;
-
-			list = block->item.block.block_content;
-
-			/* "::" was found, must have something after */
-			current = separ;
+				found_item = find_by_name(node, separ);
+			break;
 		}
 	}
-
-	/* not found */
-	return NULL;
+	return found_item;
 }
 
 config_item_t config_FindItemByName(config_file_t config, const char *name)
 {
-	return internal_FindItemByName(config, name, NULL);
-}
+	struct config_root *tree = (struct config_root *)config;
+	struct config_node *node;
+	struct glist_head *nsi, *nsn;
+	char *separ, *tmpname, *current;
+	config_item_t found_item = NULL;
 
-config_item_t config_FindItemByName_CheckUnique(config_file_t config,
-						const char *name, int *unique)
-{
-	return internal_FindItemByName(config, name, unique);
+	if (glist_empty(&tree->nodes))
+		return NULL;
+	tmpname = gsh_strdup(name);
+	current = tmpname;
+	separ = strstr(current, "::");
+	if (separ != NULL) {
+		*separ++ = '\0';
+		*separ++ = '\0';
+	}
+	glist_for_each_safe(nsi, nsn, &tree->nodes) {
+		node = glist_entry(nsi, struct config_node, node);
+		if (strcasecmp(node->name, current) == 0) {
+			if (separ == NULL)
+				found_item = (config_item_t)node;
+			else
+				found_item = find_by_name(node, separ);
+			break;
+		}
+	}
+	gsh_free(tmpname);
+	return found_item;
 }
 
 /* Directly returns the value of the key with the specified name.
@@ -364,75 +273,28 @@ config_item_t config_FindItemByName_CheckUnique(config_file_t config,
  */
 char *config_FindKeyValueByName(config_file_t config, const char *key_name)
 {
-	generic_item *var;
+	struct config_node *node;
 
-	var = (generic_item *) config_FindItemByName(config, key_name);
+	node = (struct config_node *) config_FindItemByName(config, key_name);
 
-	assert(var->type == TYPE_STMT);
-	return var->item.affect.varvalue;
-
-}
-
-/* Returns a block or variable with the specified name from the given block" */
-config_item_t config_GetItemByName(config_item_t block, const char *name)
-{
-	generic_item *curr_block = (generic_item *) block;
-	generic_item *list;
-	char *separ;
-	char *current;
-	char tmp_name[MAXSTRLEN];
-
-	assert(curr_block->type == TYPE_BLOCK);
-
-	list = curr_block->item.block.block_content;
-
-	strncpy(tmp_name, name, MAXSTRLEN);
-	tmp_name[MAXSTRLEN - 1] = '\0';
-	current = tmp_name;
-
-	while (current) {
-		/* first, split the name into BLOCK/SUBBLOC/SUBBLOC */
-		separ = strstr(current, "::");
-
-		/* it is a whole name */
-		if (!separ)
-			return (config_item_t) GetItemFromList(list, current);
-		else {
-			/* split the name */
-			*separ = '\0';
-
-			if ((separ - tmp_name) < MAXSTRLEN - 2)
-				separ += 2;
-			else
-				return NULL;	/* overflow */
-
-			curr_block = GetItemFromList(list, current);
-
-			/* not found or not a block ? */
-			if (!curr_block || (curr_block->type != TYPE_BLOCK))
-				return NULL;
-
-			list = curr_block->item.block.block_content;
-
-			/* "::" was found, must have something after */
-			current = separ;
-		}
-	}
-
-	/* not found */
-	return NULL;
+	assert(node->type == TYPE_STMT);
+	return node->u.varvalue;
 
 }
 
 /* Directly returns the value of the key with the specified name
- * relative to the given block.
+ * relative to the given block.  this is bad.  will segv on no name...
  */
 char *config_GetKeyValueByName(config_item_t block, const char *key_name)
 {
-	generic_item *var;
+	struct config_node *node = (struct config_node *)block;
+	char *name;
 
-	var = (generic_item *) config_GetItemByName(block, key_name);
-
-	assert(var->type == TYPE_STMT);
-	return var->item.affect.varvalue;
+	name = gsh_strdup(key_name);
+	if (name == NULL)
+		return NULL;
+	node = (struct config_node *)find_by_name(node, name);
+	gsh_free(name);
+	assert(node->type == TYPE_STMT);
+	return node->u.varvalue;
 }
