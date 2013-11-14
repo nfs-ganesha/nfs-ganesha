@@ -165,6 +165,12 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 	cache_entry_t *entry = NULL;
 	cih_latch_t latch;
 
+	if (key->kv.addr == NULL) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Attempt to use NULL key");
+		return NULL;
+	}
+
 	/* Check if the entry already exists */
 	entry =
 	    cih_get_by_key_latched(key, &latch,
