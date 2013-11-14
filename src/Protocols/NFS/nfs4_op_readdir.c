@@ -348,7 +348,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	    cache_inode_access_no_mutex(entry, access_mask_attr, data->req_ctx);
 
 	if (attr_status != CACHE_INODE_SUCCESS) {
-		LogFullDebug(COMPONENT_NFS_V4,
+		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for attributes status=%s",
 			     cache_inode_err_str(attr_status));
 
@@ -368,7 +368,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	if (nfs4_FSALattr_To_Fattr(&args,
 				   tracker->req_attr,
 				   &tracker_entry->attrs) != 0) {
-		LogCrit(COMPONENT_NFS_V4,
+		LogCrit(COMPONENT_NFS_READDIR,
 			"nfs4_FSALattr_To_Fattr failed to convert attr");
 		goto server_fault;
 	}
@@ -518,7 +518,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	estimated_num_entries = 50;
 	tracker.total_entries = estimated_num_entries;
 
-	LogFullDebug(COMPONENT_NFS_V4,
+	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu "
 		     "cookie=%" PRIu64 " estimated_num_entries=%u",
 		     dircount, maxcount, cookie, estimated_num_entries);
@@ -528,6 +528,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (cookie == 1 || cookie == 2) {
 		res_READDIR4->status = NFS4ERR_BAD_COOKIE;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Bad cookie");
 		goto out;
 	}
 
@@ -535,6 +537,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs4_Fattr_Check_Access_Bitmap
 	    (&arg_READDIR4->attr_request, FATTR4_ATTR_READ)) {
 		res_READDIR4->status = NFS4ERR_INVAL;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Requested invalid attributes");
 		goto out;
 	}
 
@@ -543,6 +547,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (maxcount < 14 || estimated_num_entries == 0) {
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Response too small");
 		goto out;
 	}
 
@@ -569,6 +575,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
 			res_READDIR4->status = NFS4ERR_BAD_COOKIE;
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "Bad cookie");
 			goto out;
 		}
 	}
@@ -604,13 +612,23 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READDIR4->status = nfs4_Errno(cache_status);
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "cache_inode_readdir returned %s",
+			     cache_inode_err_str(cache_status));
 		goto out;
 	}
 
+	LogFullDebug(COMPONENT_NFS_READDIR,
+		     "cache_inode_readdir returned %s",
+		     cache_inode_err_str(cache_status));
+
 	res_READDIR4->status = tracker.error;
 
-	if (res_READDIR4->status != NFS4_OK)
+	if (res_READDIR4->status != NFS4_OK) {
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Tracker error");
 		goto out;
+	}
 
 	if (tracker.count != 0) {
 		/* Put the entry's list in the READDIR reply if
@@ -643,6 +661,10 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
  out:
 	if ((res_READDIR4->status != NFS4_OK) && (entries != NULL))
 		free_entries(entries);
+
+	LogFullDebug(COMPONENT_NFS_READDIR,
+		     "Returning %s",
+		     nfsstat4_to_str(res_READDIR4->status));
 
 	return res_READDIR4->status;
 }				/* nfs4_op_readdir */

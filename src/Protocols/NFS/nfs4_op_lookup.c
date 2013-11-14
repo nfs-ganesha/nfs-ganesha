@@ -104,6 +104,10 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;
 
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "name=%s",
+		     name);
+
 	/* Do the lookup in the FSAL */
 	file_entry = NULL;
 	dir_entry = data->current_entry;
@@ -176,6 +180,10 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOOKUP4->status = nfs4_Errno(cache_status);
 			goto out;
 		}
+
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			     data->export->fullpath, data->export->id, name);
 
 		/* Swap in the entry on the other side of the junction. */
 		if (file_entry)
