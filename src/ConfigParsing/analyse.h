@@ -154,14 +154,13 @@ int ganeshun_yy_init_parser(char *srcfile,
 int ganeshun_yylex_destroy (void *yyscanner);
 
 /**
- *  Displays the content of a list of blocks.
+ *  Displays the content of parse tree.
  */
-void config_print_list(FILE * output, list_items * list);
+void print_parse_tree(FILE * output, struct config_root *tree);
 
 /**
- * config_free_list:
- * Free ressources for a list
+ * Free resources of parse tree
  */
-void config_free_list(list_items * list);
+void free_parse_tree(struct config_root *tree);
 
 #endif

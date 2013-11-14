@@ -100,77 +100,81 @@ void config_AddItem(list_items * list, generic_item * item)
 /**
  *  Displays the content of a list of blocks.
  */
-static void print_list_ident(FILE * output, list_items * list,
-			     unsigned int indent)
+static void print_node(FILE *output,
+		       struct config_node *node,
+		       unsigned int indent)
 {
+	if (node->type == TYPE_BLOCK) {
+		struct config_node *sub_node;
+		struct glist_head *nsi, *nsn;
 
-	generic_item *curr_item;
-
-	curr_item = (*list);
-
-	while (curr_item) {
-
-		if (curr_item->type == TYPE_BLOCK) {
-			fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
-				curr_item->item.block.block_name);
-			print_list_ident(output,
-					 &curr_item->item.block.block_content,
-					 indent + 3);
-			fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
-				curr_item->item.block.block_name);
-		} else {
-			/* a statement */
-			fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent,
-				" ", curr_item->item.affect.varname,
-				curr_item->item.affect.varvalue);
+		fprintf(output, "%*s<BLOCK '%s' %s:%d>\n", indent, " ",
+			node->name, node->filename, node->linenumber);
+		glist_for_each_safe(nsi, nsn, &node->u.blk.sub_nodes) {
+			sub_node = glist_entry(nsi, struct config_node, node);
+			print_node(output, sub_node, indent + 3);
 		}
-
-		curr_item = curr_item->next;
+		fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
+			node->name);
+	} else {
+		/* a statement */
+		fprintf(output, "%*s%s:%d: '%s' = '%s'\n", indent, " ",
+			node->filename, node->linenumber,
+			node->name, node->u.varvalue);
 	}
-
 }
 
-/**
- *  Displays the content of a list of blocks.
- */
-void config_print_list(FILE * output, list_items * list)
+void print_parse_tree(FILE *output, struct config_root *tree)
 {
+	struct config_node *node;
+	struct glist_head *nsi, *nsn;
 
-	print_list_ident(output, list, 0);
-
-}
-
-static void free_list_items_recurse(list_items * list)
-{
-	generic_item *curr_item;
-	generic_item *next_item;
-
-	curr_item = (*list);
-
-	while (curr_item) {
-
-		next_item = curr_item->next;
-
-		if (curr_item->type == TYPE_BLOCK) {
-			free_list_items_recurse(&curr_item->item.block.
-						block_content);
-		}
-
-		gsh_free(curr_item);
-		curr_item = next_item;
-
+	glist_for_each_safe(nsi, nsn, &tree->root.node) {
+		node = glist_entry(nsi, struct config_node, node);
+		print_node(output, node, 0);
 	}
 	return;
 }
 
-/**
- * config_free_list:
- * Free ressources for a list
- */
-void config_free_list(list_items * list)
+static void free_node(struct config_node *node)
 {
+	gsh_free(node->name);
+	if (node->type == TYPE_BLOCK) {
+		struct config_node *sub_node;
+		struct glist_head *nsi, *nsn;
 
-	free_list_items_recurse(list);
-	gsh_free(list);
+		glist_for_each_safe(nsi, nsn, &node->u.blk.sub_nodes) {
+			sub_node = glist_entry(nsi, struct config_node, node);
+			glist_del(&sub_node->node);
+			free_node(sub_node);
+		}
+	} else {
+		gsh_free(node->u.varvalue);
+	}
+	gsh_free(node);
+	return;
+}
+
+void free_parse_tree(struct config_root *tree)
+{
+	struct file_list *file, *next_file;
+	struct config_node *node;
+	struct glist_head *nsi, *nsn;
+
+	glist_for_each_safe(nsi, nsn, &tree->root.node) {
+		node = glist_entry(nsi, struct config_node, node);
+		glist_del(&node->node);
+		free_node(node);
+	}
+	if(tree->conf_dir != NULL)
+		gsh_free(tree->conf_dir);
+	file = tree->files;
+	while (file != NULL) {
+		next_file = file->next;
+		gsh_free(file->pathname);
+		gsh_free(file);
+		file = next_file;
+	}
+	gsh_free(tree);
 	return;
 }

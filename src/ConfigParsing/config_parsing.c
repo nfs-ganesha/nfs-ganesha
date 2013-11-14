@@ -105,7 +105,7 @@ char *config_GetErrorMsg()
  */
 void config_Print(FILE * output, config_file_t config)
 {
-	config_print_list(output, ((config_struct_t *) config)->syntax_tree);
+	print_parse_tree(output, (struct config_root *)config);
 }
 
 /** 
@@ -115,12 +115,7 @@ void config_Print(FILE * output, config_file_t config)
 
 void config_Free(config_file_t config)
 {
-	config_struct_t *config_struct = (config_struct_t *) config;
-
-	config_free_list(config_struct->syntax_tree);
-
-	gsh_free(config_struct);
-
+	free_parse_tree((struct config_root *)config);
 	return;
 
 }
