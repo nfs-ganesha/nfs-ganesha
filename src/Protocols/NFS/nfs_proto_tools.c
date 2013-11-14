@@ -519,7 +519,7 @@ static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
 }
 
 /* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
-static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
+static int nfs4_encode_acl_group_name(int whotype, fsal_gid_t gid, char *attrvalsBuffer,
                                       u_int *LastOffset)
 {
   int rc = 0;
@@ -527,6 +527,14 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   u_int utf8len = 0;
   u_int stringlen = 0;
   u_int deltalen = 0;
+
+  /* Encode special user first. */
+  if (whotype != FSAL_ACE_NORMAL_WHO)
+    {
+      rc = nfs4_encode_acl_special_user(gid, attrvalsBuffer, LastOffset);
+      if(rc == 1)  /* Success. */
+        return rc;
+    }
 
   rc = gid2name(name, &gid, sizeof(name));
   LogFullDebug(COMPONENT_NFS_V4,
@@ -649,7 +657,15 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
           if(IS_FSAL_ACE_GROUP_ID(*pace))  /* Encode group name. */
             {
-              rc = nfs4_encode_acl_group_name(pace->who.gid, attrvalsBuffer, LastOffset);
+              if(!IS_FSAL_ACE_SPECIAL_ID(*pace))
+                {
+                  whotype = FSAL_ACE_NORMAL_WHO;
+                }
+              else
+                whotype = pace->who.gid;
+
+              /* Encode special or normal groupe name. */
+              rc = nfs4_encode_acl_group_name(whotype, pace->who.gid, attrvalsBuffer, LastOffset);
             }
           else
             {
