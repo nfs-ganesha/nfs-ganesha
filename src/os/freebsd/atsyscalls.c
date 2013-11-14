@@ -58,23 +58,23 @@ int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
  *   * These numbers match the modified FreeBSD 7.2 used by Panasas
  *    */
 
-#define SYS_faccessat   511
-#define SYS_fchmodat    512
-#define SYS_fchownat    513
-#define SYS_fstatat     514
-#define SYS_futimesat   515
-#define SYS_linkat      516
-#define SYS_mkdirat     517
-#define SYS_mkfifoat    518
-#define SYS_mknodat     519
-#define SYS_openat      520
-#define SYS_readlinkat  521
-#define SYS_renameat    522
-#define SYS_symlinkat   523
-#define SYS_unlinkat    524
-#define SYS_getfhat     525
-#define SYS_fhlink      526
-#define SYS_fhreadlink  527
+#define SYS_faccessat   512
+#define SYS_fchmodat    513
+#define SYS_fchownat    514
+#define SYS_fstatat     515
+#define SYS_futimesat   516
+#define SYS_linkat      517
+#define SYS_mkdirat     518
+#define SYS_mkfifoat    519
+#define SYS_mknodat     520
+#define SYS_openat      521
+#define SYS_readlinkat  522
+#define SYS_renameat    523
+#define SYS_symlinkat   524
+#define SYS_unlinkat    525
+#define SYS_getfhat     526
+#define SYS_fhlink      527
+#define SYS_fhreadlink  528
 
 int openat(int dir_fd, const char *file, int oflag, mode_t mode)
 {
