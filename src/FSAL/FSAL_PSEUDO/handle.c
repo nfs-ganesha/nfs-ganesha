@@ -370,6 +370,20 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			     "Skipping lock for %s",
 			     myself->name);
 
+	if (strcmp(path, "..") == 0) {
+		/* lookup parent - lookupp */
+		if (myself->parent != NULL) {
+			hdl = myself->parent;
+			*handle = &hdl->obj_handle;
+			error = ERR_FSAL_NO_ERROR;
+			LogFullDebug(COMPONENT_FSAL,
+				     "Found %s/%s hdl=%p",
+				     myself->name, path, hdl);
+		}
+
+		goto out;
+	}
+
 	key->name = (char *) path;
 	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
 	if (node) {
@@ -381,6 +395,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 				     "Found %s/%s hdl=%p",
 				     myself->name, path, hdl);
 	}
+
+out:
 
 	if (opctx->fsal_private != parent)
 		pthread_mutex_unlock(&parent->lock);
