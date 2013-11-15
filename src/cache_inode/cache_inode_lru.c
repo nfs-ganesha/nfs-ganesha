@@ -379,7 +379,7 @@ cond_pin_entry(cache_entry_t *entry, uint32_t flags)
 		glist_add(&q->q, &lru->q);
 		++(q->size);
 
-	}			/* ! PINNED or CLEANUP */
+	} /* ! PINNED  (&& !CLEANUP) */
 }
 
 /**
@@ -547,9 +547,6 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 
 	QLOCK(qlane);
-
-	/* if this happened, it would indicate misuse or damage */
-	assert(lru->qid != LRU_ENTRY_PINNED);
 
 	if (!(lru->qid == LRU_ENTRY_CLEANUP)) {
 		struct lru_q *q;
@@ -1212,23 +1209,26 @@ cache_inode_dec_pin_ref(cache_entry_t *entry,
 
 	entry->lru.pin_refcnt--;
 	if (unlikely(entry->lru.pin_refcnt == 0)) {
-		/* remove from pinned */
-		struct lru_q *q = &qlane->pinned;
-		/* XXX skip L1 iteration fixups */
-		glist_del(&lru->q);
-		--(q->size);
-		/* add to MRU of L1 */
-		lru->qid = LRU_ENTRY_L1;
-		q = &qlane->L1;
-		glist_add_tail(&q->q, &lru->q);
-		++(q->size);
+
+		/* entry could infrequently be on the cleanup queue */
+		if (lru->qid == LRU_ENTRY_PINNED) {
+			/* remove from pinned */
+			struct lru_q *q = &qlane->pinned;
+			/* XXX skip L1 iteration fixups */
+			glist_del(&lru->q);
+			--(q->size);
+			/* add to MRU of L1 */
+			lru->qid = LRU_ENTRY_L1;
+			q = &qlane->L1;
+			glist_add_tail(&q->q, &lru->q);
+			++(q->size);
+		}
 
 		if (closefile == TRUE) {
 			cache_inode_close(entry,
 					  CACHE_INODE_FLAG_REALLYCLOSE |
 					  CACHE_INODE_FLAG_NOT_PINNED);
 		}
-
 	}
 
 	QUNLOCK(qlane);

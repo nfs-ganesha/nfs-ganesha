@@ -100,7 +100,6 @@
 #define CONF_EXPORT_UQUOTA             "User_Quota"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_DELEG              "Use_Delegation"
-#define CONF_EXPORT_USE_COMMIT          "Use_NFS_Commit"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 #define CONF_EXPORT_CLIENT_DEF         "Client"
 
@@ -137,7 +136,6 @@
 #define FLAG_EXPORT_ANON_USER       0x040000000
 #define FLAG_EXPORT_CACHE_POLICY    0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
-#define FLAG_EXPORT_USE_COMMIT      0x200000000
 #define FLAG_EXPORT_USE_COOKIE_VERIFIER 0x400000000
 
 /* limites for nfs_ParseConfLine */
@@ -1353,7 +1351,6 @@ static int BuildExportEntry(config_item_t block)
 			remove_gsh_export(export_id);
 			return -1;
 		}
-		p_entry->use_commit = true;
 		p_entry->UseCookieVerifier = true;
 		p_entry->UseCookieVerifier = true;
 		p_entry->filesystem_id.major = 666;
@@ -2156,18 +2153,6 @@ static int BuildExportEntry(config_item_t block)
 
 			set_options |= FLAG_EXPORT_MAX_OFF_READ;
 
-		} else if (!STRCMP(var_name, CONF_EXPORT_USE_COMMIT)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_USE_COMMIT,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			p_entry->use_commit = on;
 		} else if (!STRCMP(var_name, CONF_EXPORT_USE_COOKIE_VERIFIER)) {
 			bool on;
 
