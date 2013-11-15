@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -7,53 +7,40 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_lookup.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/16 16:25:44 $
- * \version $Revision: 1.18 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_lookup.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_lookup.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -63,220 +50,121 @@
 #include "nfs_proto_tools.h"
 
 /**
- * nfs4_op_lookup: looks up into theFSAL.
+ * @brief NFS4_OP_LOOKUP
  *
- * looks up into the FSAL. If a junction is crossed, does what is necessary.
+ * This function implments the NFS4_OP_LOOKUP operation, which looks
+ * a filename up in the FSAL.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @return NFS4_OK if successfull, other values show an error.  
+ * @return per RFC5661, pp. 368-9
  *
  */
-#define arg_LOOKUP4 op->nfs_argop4_u.oplookup
-#define res_LOOKUP4 resp->nfs_resop4_u.oplookup
 
-int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
+		   struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
+	/* Convenient alias for the arguments */
+	LOOKUP4args * const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+	/* Convenient alias for the response  */
+	LOOKUP4res * const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
+	/* The name to look up */
+	char *name = NULL;
+	/* The directory in which to look up the name */
+	cache_entry_t *dir_entry = NULL;
+	/* The name found */
+	cache_entry_t *file_entry = NULL;
+	/* Status code from Cache inode */
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-  char strname[MAXNAMLEN];
-#ifndef _NO_XATTRD
-  char objname[MAXNAMLEN];
-#endif
-  fsal_name_t            name;
-  unsigned int           xattr_found = FALSE;
-  cache_entry_t        * dir_pentry = NULL;
-  cache_entry_t        * file_pentry = NULL;
-  fsal_attrib_list_t     attrlookup;
-  cache_inode_status_t   cache_status;
-  fsal_handle_t        * pfsal_handle = NULL;
+	resp->resop = NFS4_OP_LOOKUP;
+	res_LOOKUP4->status = NFS4_OK;
 
-  resp->resop = NFS4_OP_LOOKUP;
-  res_LOOKUP4.status = NFS4_OK;
+	/* Do basic checks on a filehandle */
+	res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+	if (res_LOOKUP4->status != NFS4_OK) {
+		/* for some reason lookup is picky.  Just not being
+		 * dir is not enough.  We want to know it is a symlink
+		 */
+		if (res_LOOKUP4->status == NFS4ERR_NOTDIR
+		    && data->current_filetype == SYMBOLIC_LINK)
+			res_LOOKUP4->status = NFS4ERR_SYMLINK;
+		goto out;
+	}
 
-  /* Do basic checks on a filehandle */
-  res_LOOKUP4.status = nfs4_sanity_check_FH(data, 0LL);
-  if(res_LOOKUP4.status != NFS4_OK)
-    return res_LOOKUP4.status;
+	/* Validate and convert the UFT8 objname to a regular string */
+	res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						      UTF8_SCAN_ALL,
+						      &name);
 
-  /* Check for empty name */
-  if(op->nfs_argop4_u.oplookup.objname.utf8string_len == 0 ||
-     op->nfs_argop4_u.oplookup.objname.utf8string_val == NULL)
-    {
-      res_LOOKUP4.status = NFS4ERR_INVAL;
-      return res_LOOKUP4.status;
-    }
+	if (res_LOOKUP4->status != NFS4_OK)
+		goto out;
 
-  /* Check for name too long */
-  if(op->nfs_argop4_u.oplookup.objname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_LOOKUP4.status = NFS4ERR_NAMETOOLONG;
-      return res_LOOKUP4.status;
-    }
+	/* If Filehandle points to a pseudo fs entry, manage it
+	 * via pseudofs specific functions
+	 */
+	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
+		res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
+		goto out;
+	}
 
-  /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    return nfs4_op_lookup_pseudo(op, data, resp);
+	/* Do the lookup in the FSAL */
+	file_entry = NULL;
+	dir_entry = data->current_entry;
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
-    {
-      res_LOOKUP4.status = NFS4ERR_PERM;
-      return res_LOOKUP4.status;
-    }
+	/* Sanity check: dir_entry should be ACTUALLY a directory */
 
-#ifndef _NO_XATTRD
-  /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
-    return nfs4_op_lookup_xattr(op, data, resp);
-#endif
+	cache_status =
+	    cache_inode_lookup(dir_entry, name, data->req_ctx, &file_entry);
 
-  /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_LOOKUP4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
 
-#ifndef _NO_XATTRD
-  /* Is this a .xattr.d.<object> name ? */
-  if(nfs_XattrD_Name(strname, objname))
-    {
-      strcpy(strname, objname);
-      xattr_found = TRUE;
-    }
-#endif
+	/* Convert it to a file handle */
+	if (!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle)) {
+		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
+		cache_inode_put(file_entry);
+		goto out;
+	}
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
 
-  if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-                                                             MAXNAMLEN,
-                                                             &name))) !=
-     CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
+	/* Release dir_entry, as it is not reachable from anywhere in
+	 * compound after this function returns.  Count on later
+	 * operations or nfs4_Compound to clean up current_entry.
+	 */
 
-  /* No 'cd .' is allowed return NFS4ERR_BADNAME in this case */
-  /* No 'cd .. is allowed, return EINVAL in this case. NFS4_OP_LOOKUPP should be use instead */
-  if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
-     || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
-    {
-      res_LOOKUP4.status = NFS4ERR_BADNAME;
-      return res_LOOKUP4.status;
-    }
+	if (dir_entry)
+		cache_inode_put(dir_entry);
 
-  /* Do the lookup in the HPSS Namespace */
-  file_pentry = NULL;
-  dir_pentry = data->current_entry;
+	/* Keep the pointer within the compound data */
+	data->current_entry = file_entry;
+	data->current_filetype = file_entry->type;
 
-  /* Sanity check: dir_pentry should be ACTUALLY a directory */
-  if(dir_pentry->type != DIRECTORY)
-    {
-      /* This is not a directory */
-      if(dir_pentry->type == SYMBOLIC_LINK)
-        res_LOOKUP4.status = NFS4ERR_SYMLINK;
-      else
-        res_LOOKUP4.status = NFS4ERR_NOTDIR;
+	/* Return successfully */
+	res_LOOKUP4->status = NFS4_OK;
 
-      /* Return failed status */
-      return res_LOOKUP4.status;
-    }
+ out:
+	if (name)
+		gsh_free(name);
 
-  /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-  if((file_pentry = cache_inode_lookup(dir_pentry,
-                                       &name,
-                                       &attrlookup,
-                                       data->pcontext, &cache_status)) != NULL)
-    {
-      /* Extract the fsal attributes from the cache inode pentry */
-      pfsal_handle = &file_pentry->handle;
-
-      /* Convert it to a file handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
-        {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(file_pentry);
-          return res_LOOKUP4.status;
-        }
-
-      /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-             (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
-#if 0
-      print_buff((char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-      print_buff((char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-#endif
-      if(isFullDebug(COMPONENT_NFS_V4))
-        {
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p",
-                       strname, dir_pentry, file_pentry);
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "----> FSAL handle parent and children in nfs4_op_lookup");
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&file_pentry->handle,
-                     sizeof(fsal_handle_t));
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&dir_pentry->handle,
-                     sizeof(fsal_handle_t));
-        }
-      LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
-
-      /* Release dir_pentry, as it is not reachable from anywhere in
-         compound after this function returns.  Count on later
-         operations or nfs4_Compound to clean up current_entry. */
-
-      if (dir_pentry)
-        cache_inode_put(dir_pentry);
-
-      /* Keep the pointer within the compound data */
-      data->current_entry = file_pentry;
-      data->current_filetype = file_pentry->type;
-
-      /* Return successfully */
-      res_LOOKUP4.status = NFS4_OK;
-
-#ifndef _NO_XATTRD
-      /* If this is a xattr ghost directory name, update the FH */
-      if(xattr_found == TRUE)
-        res_LOOKUP4.status = nfs4_fh_to_xattrfh(&(data->currentFH), &(data->currentFH));
-#endif
-
-      if((data->current_entry->type == DIRECTORY) &&
-         (data->current_entry->object.dir.referral != NULL))
-        {
-          if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
-            {
-              res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-              return res_LOOKUP4.status;
-            }
-        }
-
-      return NFS4_OK;
-
-    }
-
-  /* If the part of the code is reached, then something wrong occured in the lookup process, status is not HPSS_E_NOERROR 
-   * and contains the code for the error */
-
-  res_LOOKUP4.status = nfs4_Errno(cache_status);
-
-  return res_LOOKUP4.status;
-}                               /* nfs4_op_lookup */
+	return res_LOOKUP4->status;
+}				/* nfs4_op_lookup */
 
 /**
- * nfs4_op_lookup_Free: frees what was allocared to handle nfs4_op_lookup.
- * 
- * Frees what was allocared to handle nfs4_op_lookup.
+ * @brief Free memory allocated for LOOKUP result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_LOOKUP operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookup_Free(LOOKUP4res * resp)
+void nfs4_op_lookup_Free(nfs_resop4 *resp)
 {
-  /* Nothing to be done */
-  return;
-}                               /* nfs4_op_lookup_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_lookup_Free */

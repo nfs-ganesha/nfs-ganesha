@@ -1,0 +1,118 @@
+from PyQt4 import QtCore, QtDBus
+from collections import namedtuple
+
+Client = namedtuple('Client',
+                    ['ClientIP',
+                     'HasNFSv3',
+                     'HasMNT',
+                     'HasNLM4',
+                     'HasRQUOTA',
+                     'HasNFSv40',
+                     'HasNFSv41',
+                     'Has9P',
+                     'LastTime'])
+
+class ClientMgr(QtDBus.QDBusAbstractInterface):
+    '''
+    org.ganesha.nfsd.clientmgr
+    '''
+    show_clients = QtCore.pyqtSignal(tuple, list)
+    
+    def __init__(self, service, path, connection, show_status, parent=None):
+        super(ClientMgr, self).__init__(service,
+                                        path,
+                                        'org.ganesha.nfsd.clientmgr',
+                                        connection,
+                                        parent)
+        self.show_status = show_status
+
+    def AddClient(self, ipaddr):
+        async = self.asyncCall("AddClient", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.clientmgr_done)
+
+    def RemoveClient(self, ipaddr):
+        async = self.asyncCall("RemoveClient", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.clientmgr_done)
+
+    def ShowClients(self):
+        async = self.asyncCall("ShowClients")
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.clientshow_done)
+
+    # catch the reply and forward it to the UI
+    def clientmgr_done(self, call):
+        reply = QtDBus.QDBusPendingReply(call)
+        if reply.isError():
+            self.show_status.emit(False,
+                                  "DBUS error:" + str(reply.error().message()))
+        else:
+            status = reply.argumentAt(0).toPyObject()
+            msg = reply.argumentAt(1).toPyObject()
+            self.show_status.emit(status, msg)
+
+    def clientshow_done(self, call):
+        reply = QtDBus.QDBusPendingReply(call)
+        if reply.isError():
+            self.show_status.emit(False,
+                                  "DBUS error:" + str(reply.error().message()))
+        else:
+            ts = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
+                  reply.argumentAt(0).toPyObject()[1].toULongLong()[0])
+            interval_nsecs = ts[0] * 1000000000L + ts[1]
+            clients = []
+            for client in reply.argumentAt(1).toPyObject():
+                cl = client.toPyObject()
+                lasttime = cl[8].toPyObject()
+                clt = Client(ClientIP = str(cl[0].toString()),
+                             HasNFSv3 = cl[1].toBool(),
+                             HasMNT = cl[2].toBool(),
+                             HasNLM4 = cl[3].toBool(),
+                             HasRQUOTA = cl[4].toBool(),
+                             HasNFSv40 = cl[5].toBool(),
+                             HasNFSv41 = cl[6].toBool(),
+                             Has9P = cl[7].toBool(),
+                             LastTime = (lasttime[0].toPyObject(),
+                                         lasttime[1].toPyObject()))
+                clients.append(clt)
+            self.show_clients.emit(ts, clients)
+
+class ClientStats(QtDBus.QDBusAbstractInterface):
+    '''
+    org.ganesha.nfsd.clientstats
+    '''
+    def __init__(self, service, path, connection, status_handler, parent=None):
+        super(ClientStats, self).__init__(service,
+                                             path,
+                                             'org.ganesha.nfsd.clientstats',
+                                             connection,
+                                             parent)
+        self.status_handler = status_handler
+
+    def GetNFSv3IO(self, ipaddr):
+        async = self.asyncCall("GetNFSv3IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.io_done)
+
+    def GetNFSv40IO(self, ipaddr):
+        async = self.asyncCall("GetNFSv40IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.io_done)
+
+    def GetNFSv41IO(self, ipaddr):
+        async = self.asyncCall("GetNFSv41IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.io_done)
+
+    def GetNFSv41Layouts(self, ipaddr):
+        async = self.asyncCall("GetNFSv41Layouts", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.layout_done)
+
+    def io_done(self, call):
+        pass
+
+    def layout_done(self, call):
+        pass
+    

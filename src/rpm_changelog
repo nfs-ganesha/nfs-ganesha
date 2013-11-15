@@ -1,0 +1,19 @@
+* Thu Mar 15 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
+- Bug Fix: Memory leak fixed in RPC's DRC
+- Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
+- New FSAL_CEPH (dedicated to the ceph filesystem)
+- pNFS code refurbished with CEPH specific code and layout file support
+- All RPCs are now based on TIRPC	
+- Bug Fix: in nfs_Write, for clean handle of umask, the server should allow the owner of a file to write to it, even if the file is read-only
+- Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
+- Git HEAD for this version : 4f0f982a04d76dda5372aa27f9a4221aba41bac5
+- Git tag for this version: 1.4.0
+
+* Fri Dec 23 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.3.0-1
+- Lustre FSAL: exporting several Lustre filesystem with the same server instance
+- A bug was found and fix in OP4_READDIRPLUS (produced missing entries)
+- Directory content cached is now managed as a tree. 
+- Lock support for FSAL_LUSTRE
+- FSAL_LUSTRE/FSAL_XFS/FSAL_FUSELIKE/FSAL_ZFS: regression in readdir detected and fixed
+- export list now support IP ranges using the CIDR format
+

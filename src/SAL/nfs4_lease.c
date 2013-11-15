@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,152 +18,140 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_lease.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/20 07:39:22 $
- * \version $Revision: 1.43 $
- * \brief   Some tools very usefull in the nfs4 protocol implementation.
- *
- * nfs4_lease.c : Some functions to manage NFSv4 leases
- *
- * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/MainNFSD/nfs_tools.c,v 1.43 2006/01/20 07:39:22 leibovic Exp $
- *
- * $Log$
- *
+ * @defgroup SAL State abstraction layer
+ * @{
  */
-#ifdef HAVE_CONFIG_H
+
+/**
+ * @file  nfs4_lease.c
+ * @brief NFSv4 lease management
+ */
+
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 
-static unsigned int _valid_lease(nfs_client_id_t * pclientid)
+/**
+ * @brief Return the lifetime of a valid lease
+ *
+ * @param[in] clientid The client record to check
+ *
+ * @return The lease lifetime or 0 if expired.
+ */
+static unsigned int _valid_lease(nfs_client_id_t *clientid)
 {
-  time_t t;
+	time_t t;
 
-  if(pclientid->cid_confirmed == EXPIRED_CLIENT_ID)
-    return 0;
+	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID)
+		return 0;
 
-  if(pclientid->cid_lease_reservations != 0)
-    return nfs_param.nfsv4_param.lease_lifetime;
+	if (clientid->cid_lease_reservations != 0)
+		return nfs_param.nfsv4_param.lease_lifetime;
 
-  t = time(NULL);
+	t = time(NULL);
 
-  if(pclientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
-    return (pclientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime) - t;
+	if (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
+		return (clientid->cid_last_renew +
+			nfs_param.nfsv4_param.lease_lifetime) - t;
 
-  return 0;
+	return 0;
 }
 
 /**
+ * @brief Check if lease is valid
  *
- *  valid_lease: Check if lease is valid, caller holds cid_mutex.
+ * The caller must hold cid_mutex.
  *
- * Check if lease is valid, caller holds cid_mutex.
- *
- * @param pclientid [IN] clientid record to check lease for.
+ * @param[in] clientid Record to check lease for.
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int valid_lease(nfs_client_id_t * pclientid)
+bool valid_lease(nfs_client_id_t *clientid)
 {
-  unsigned int valid;
+	unsigned int valid;
 
-  valid = _valid_lease(pclientid);
+	valid = _valid_lease(clientid);
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pclientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Check Lease %s (Valid=%s %u seconds left)",
-                   str, valid ? "YES" : "NO", valid);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID,
+			     "Check Lease %s (Valid=%s %u seconds left)", str,
+			     valid ? "YES" : "NO", valid);
+	}
 
-  return valid != 0;
+	return valid != 0;
 }
 
 /**
- *
- *  reserve_lease_lock: Check if lease is valid and reserve it and retain cid_mutex.
- *
- * Check if lease is valid and reserve it and retain cid_mutex.
+ * @brief Check if lease is valid and reserve it and retain cid_mutex.
  *
  * Lease reservation prevents any other thread from expiring the lease. Caller
  * must call update lease to release the reservation.
  *
- * @param pclientid [IN] clientid record to check lease for.
+ * @param[in] clientid Client record to check lease for
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int reserve_lease(nfs_client_id_t * pclientid)
+int reserve_lease(nfs_client_id_t *clientid)
 {
-  unsigned int valid;
+	unsigned int valid;
 
-  valid = _valid_lease(pclientid);
+	valid = _valid_lease(clientid);
 
-  if(valid != 0)
-    pclientid->cid_lease_reservations++;
+	if (valid != 0)
+		clientid->cid_lease_reservations++;
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pclientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Reserve Lease %s (Valid=%s %u seconds left)",
-                   str, valid ? "YES" : "NO", valid);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID,
+			     "Reserve Lease %s (Valid=%s %u seconds left)", str,
+			     valid ? "YES" : "NO", valid);
+	}
 
-  return valid != 0;
+	return valid != 0;
 }
 
 /**
- *
- * update_lease: Release a lease reservation, and update lease.
- *
- * Release a lease reservation, and update lease. Caller must hold cid_mutex.
+ * @brief Release a lease reservation and update lease.
  *
  * Lease reservation prevents any other thread from expiring the lease. This
  * function releases the lease reservation. Before releasing the last
  * reservation, cid_last_renew will be updated.
  *
- * @param pclientid [IN] clientid record to check lease for.
+ * @param[in] clientid Clientid record to update
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-void update_lease(nfs_client_id_t * pclientid)
+void update_lease(nfs_client_id_t *clientid)
 {
-  pclientid->cid_lease_reservations--;
+	clientid->cid_lease_reservations--;
 
-  /* Renew lease when last reservation is released */
-  if(pclientid->cid_lease_reservations == 0)
-    pclientid->cid_last_renew = time(NULL);
+	/* Renew lease when last reservation is released */
+	if (clientid->cid_lease_reservations == 0)
+		clientid->cid_last_renew = time(NULL);
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pclientid, str);
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Update Lease %s",
-                   str);
-    }
+		display_client_id_rec(clientid, str);
+		LogFullDebug(COMPONENT_CLIENTID, "Update Lease %s", str);
+	}
 }
+
+/** @} */

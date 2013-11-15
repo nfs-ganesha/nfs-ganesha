@@ -1,0 +1,355 @@
+Request for Comments: New fsal api
+
+This README will be expanded as the work progresses.  It will/should
+be turned into a fsal writer's HOWTO at some point.  This is a work in
+progress and therefore still in flux at this point.
+
+State
+-----
+The server builds and runs to the point of processing exports.  Only the
+VFS fsal is functional at this point.  Debugging continues.
+
+This branch is based on the latest stable tag of the mainline 'next' branch.
+The first patch of the new api work is this file, titled:
+
+   "Add README.new_api"
+
+Contents
+--------
+The patch series comes in four parts. The "Revert USE_SHARED configuration
+option from code" is the second commit which prepares the code base for the new api.
+
+New infrastructure
+	These are new files in src/FSAL which implement common
+	fsal functions.
+
+	I have squashed all my incremental changes so that you have
+	a single file to look at for current state.  These are subject
+	to further change and squashing.
+
+VFS fsal
+	These are new files that implement the VFS fsal over the
+	new infrastructure.  The main.c file is the fsal object itself
+	followed by export.c which implements fsal_export for VFS.
+	handle.c implements fsal_obj_object. File management for handles
+	is in file.c and extended attributes, not implemented yet for VFS
+	are in xattr.c.
+
+FSAL initialization
+	This set of changes to the main server load and initialize
+	the fsals.  Once they are all loaded, fsal_export objects
+	are created as part of the export list initialization.
+
+Cache Inode changes
+	Starting with the commit titled  "Change cache_inode.h to use new api"
+	we invade the cache_inode_* code.  This series of patches replaces
+	fsal_handle_t with a pointer to an allocated fsal_obj_handle and
+	the various FSAL_* calls relevant to it.
+
+	The readdir operation has been changed to use a callback.  This
+	greatly simplifies the FSAL method and eliminates multiple loops,
+	fixed array storage, and a lot of extra work.
+
+	File descriptors are removed from the API and will will
+	be deprecated entirely from cache entries.  An fd is a property
+	of the FSAL and will be managed (cached) there.  The VFS fsal
+	and other POSIX based interfaces have an fd but library based
+	FSALs have other structures and apis so fileno and friends
+	are deprecated in the core.
+
+Protocol
+	These files manage the protocol on one side and access to the
+	cache entries in CacheInode on the other.  The biggest change is
+	to replace fsal_op_context in the compound structure with
+	struct user_cred user_credentials.  A large number of places where
+	pcontext was passed around and were (or are no longer) used.  These
+	have simply been removed from the parameter lists.
+
+State and Locking
+	fsal_op_context pcontext has been for the most part removed from
+	these files.  A few places require user credentials for looking 
+	up handles etc.  As with protocol, user_credentials takes its place.
+
+Configuration File Changes
+--------------------------
+In order to support multiple FSAL definitions in the configuration,
+the configuration file now accepts a new syntax for FSAL initialization.
+The following fragment defines the loading of the VFS fsal.
+
+###################################################
+#
+# FSAL parameters.
+#
+# To use the default value for a parameter,
+# just comment the associated line.
+#
+###################################################
+
+FSAL
+{
+  LogLevel = "Red Alert";
+  Foo = "baz";
+  VFS {
+	FSAL_Shared_Library = "/usr/local/lib/libfsalvfs.so";
+	# logging level (NIV_FULL_DEBUG, NIV_DEBUG,
+	# NIV_EVNMT, NIV_CRIT, NIV_MAJ, NIV_NULL)
+	  DebugLevel = "NIV_FULL_DEBUG" ;
+
+	# Logging file
+	#Options: "/var/log/nfs-ganesha.log" or some other file path
+	#         "SYSLOG" prints to syslog
+	#         "STDERR" prints stderr messages to the console that
+	#                  started the ganesha process
+	#         "STDOUT" prints stdout messages to the console that
+	#                  started the ganesha process
+	#LogFile = "SYSLOG";
+	LogFile = "/var/log/nfs-ganesha.log";
+
+	# maximum number of simultaneous calls
+	# to the filesystem.
+	# ( 0 = no limit ).  
+	max_FS_calls = 0;
+  }
+
+}
+
+The "FSAL" block has one sub-block, in this example "VFS", for each
+fsal it is to load.  There can be as many sub-blocks as make sense.
+This is the power of trhe new api, to support multiple fsals simultaneously.
+There is also provision for FSAL global parameters although none are
+actually defined at this point.
+
+The "name" of the FSAL is the tag at the beginning of the sub-block, in this
+case "VFS".  This name is used for fsal module lookups and diagnostics.
+
+The "FSAL_Shared_Library" value is the absolute path to the module itself.
+The path can be anywhere in the local filesystem.
+
+The rest of the parameters are the usual FSAL configuration parameters.
+
+Exports are connected to a specific FSAL in the following fragment:
+
+EXPORT
+{
+  # Export Id (mandatory)
+  Export_Id = 77 ;
+  
+  # Exported path (mandatory)
+  Path = "/home/tmp";
+
+  # Exporting FSAL
+  FSAL = "VFS";
+
+  # more export parameters...
+}
+
+The "FSAL" keyword defines which FSAL module to use for this export.  If
+This keyword is missing in an export, the VFS fsal is used.  This logic
+may change in future to have a server global definition within the
+configuration file.
+
+Things to look for
+------------------
+The new api uses an object oriented design pattern to implement a fsal.
+
+Structure definitions
+	The fsal_ops_context_t structure is deprecated and all of the
+	'pcontext' usage has either been replaced or removed.  It was
+	refactored some time back to be common across all FSALs and all
+	it contained was a pointer to the "export" and user credentials.
+
+	* struct compound_data now has 'user_credentials' in place of
+	  'pcontext'.  A pointer to these user credentials are passed
+	  through the call stack where access checking applies.
+
+	* The use of 'pcontext' in all other cases has been removed.
+	  Nearly all affected function prototypes also had a pointer to
+	  the applicable cache entry 'pentry'.  This can be dereferenced
+	  anywhere to get the export, i.e. pentry->handle->export.
+
+	The fsal_path_t and fsal_name_t typedefs are not used in the API.
+	In most instances, they are replaced by a 'const char *'.  These
+	arrays attempt to encapulate string management but they are of
+	fixed size (mostly too big but also a potential for truncation
+	or buffer overflows) and both waste space and cause extra structure
+	copying.  Existing core code dereferences the buffer and a NULL
+	terminated string.  They will eventually be deprecated and removed.
+	
+	The file include/fsal_api.h contains the full fsal api. The
+	only part visible to the server core is defined here.
+
+	Each file that implements an object has its version of the
+	object definition.  One element of this private definition is
+	the public structure defined in fsal_api.h.  The rest of the
+	elements are private to the fsal itself.  These two parts, the
+	public and private are managed as follows:
+
+	*	A pointer to the public structure is returned when
+		the object is created.
+
+	*	This pointer is used to access methods from it as in:
+
+		exp_hdl->ops->lookup(exp_hdl, name, ...);
+
+		Note that exp_hdl is used to dereference the method and
+		it is also *always* the first argument to the
+		method/function.  Think of it as the 'this' argument.
+
+	*	Inside the method function, the public pointer gets
+		dereferenced with the following sequence:
+
+		struct vfs_fsal_export *myself;
+
+		myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+
+		The 'container_of' is a macro that takes the public pointer/
+		handle 'exp_hdl' which is indicated as the element 'export'
+		of structure type 'vfs_fsal_export'.  Throughout the function
+		where private elements are dereferenced, the 'myself'
+		pointer is used. 'exp_hdl' is used in the public case.
+
+Object usage
+	Mutex locks and reference counts are used to manage both concurrent
+	usage and state.  The reference counts are use to determine when the
+	object is "free".  Current use is for managing ref counts and lists.
+	This will be expanded as more resources such as attributes and open
+	fds are added.
+
+	Since we cannot create objects out of thin air, there is an order
+	based on one object being the "context" in which the other is
+	created.  In other words, a 'fsal_export' is created from the
+	'fsal_module' that connects it to the backing store (filesystem).
+	The same applies to a 'fsal_obj_handle' that only makes sense for
+	a specific 'fsal_export'.
+
+	When an object is created, it is returned with a reference already
+	taken.  The callee of the creating method must then either keep
+	a persistent reference to it or 'put' it back.  For example, a
+	'fsal_export' gets created for each export in the configuration.
+	a pointer to it gets saved in exportlist__ and it has a reference
+	to reflect this.  It is now safe to use it to do a 'lookup' which
+	will return a 'fsal_obj_handle' which can then be kept in a
+	cache inode entry.  If we had done a 'put' on the export, it could
+	be freed at any point and make a 'lookup' using it unsafe.
+
+	In addition to a reference count, object that create other objects
+	have a list of all the objects they create.  This serves two purposes.
+	The obvious case is to keep the object "busy" until all of its
+	children are freed.  Second, it provides a means to visit all of
+	the objects it creates.
+
+	Every object has a pointer to its parent.  This is used for such
+	things as managing the object list and for calling methods on the
+	parent.
+
+Pointers vs. Structure copies
+	In order to manage multiple fsals which have different sized
+	private object storage, we only pass and save pointers.  This keeps
+	all of the referencing structures of constant size.  The
+	'container_of' manages both the differences in private structure
+	sizes and the actual layout of the private structures.  This also
+	saves the space and cpu overhead of expensive structure copies.
+
+Public FSAL Structure definitions
+	The 'ops' element is the most commonly used element of an object's
+	public structure.  Any other elements should be used with care.
+	Very little upper level code should directly reference
+	any other elements.  Common methods located in
+	src/FSAL/fsal_commonlib.c are used instead.  No size assumptions
+	should be made either because, other than the 'ops' element, all
+	other elements are subject to change.  Think of them as 'protected'.
+	The only reason they are declared in the public structure is
+	because they are used in all fsals i.e. every 'fsal_export' has
+	lock and reference count.
+
+FSAL structure
+--------------
+The VFS fsal is the first candidate, primarily because it is the most
+promising base for the new work our group is doing.  I have followed a
+simple pattern for this fsal.
+
+There is one file per object to be implemented.  'export.c' implements
+'fsal_export' for VFS and 'main.c' implements 'fsal_module'. This allows
+the declaration of the object methods as 'static'.  Only common methods
+are declared publicly in src/include/FSAL/fsal_commonlib.h and implemented
+in src/FSAL/fsal_commonlib.c.  Likewise common helper functions are in the
+these files.
+
+I have used new names for the public fsal structures on purpose.  All of the
+old api structures will be deprecated and removed from fsal_types.h and at
+that point, the compiler will find the usages that are still 'hiding'
+and complain.  Otherwise, we could have subtle bugs arise from the change
+in structure and especially the use of the 'old' structure.
+
+At one level, it looks like the VFS fsal is a complete rewrite which is
+partly true.  As with the structures and their names, I am forcing breakage
+at compile time.
+
+*	There is a significant amount of code re-use.  For example, a
+	'lookup' for a handle is still the same sequence of syscalls or
+	library calls.  That logic and the error paths have all been worked
+	out.
+
+*	Method functions now do only one thing.  The 'extra' bit that
+	acquires attributes, for example, is gone.  If the upper layers
+	want attributes, they should call the method to get them.  This
+	makes things smaller and smaller is good.
+
+*	Access checking and all the (see above) is also gone.  This is
+	now moved to the core.  The fsal can assume that if the method
+	is being called, it is ok to do the work.  If the action is not
+	allowed, the core should never make the method call.
+
+*	There is a 'test_access' method defined in the api and a common 
+	function is part of the library.  Most fsal implementations would
+	use the library supplied one.  However, some implementations may
+	want to supply their own.  There are two very important caveats
+	with this method:
+
+	- This method is only for the core to use.  It is *NEVER* called 
+	  from within a fsal.  Ever.
+
+	- If a fsal supplies its own, all that is required is to substitute
+	  the fsal function in the definition of the handle ops vector.
+	  If the fsal implementation would also make this configurable, it
+	  should manage it by doing the test within its own function and
+	  call the library function itself, returning its return values
+	  directly.
+
+*	Along with access checking in one place in the core server, the
+	fsal is responsible for managing the difference between what
+	NFS wants and the resource (filesystem) it manages provides.  For
+	example, the server assumes that every fsal supports ACLs.  If
+	the resource does not support them or supports them in a different
+	way, the fsal is responsible for managing the differences.
+
+*	There are some linkages between an object and its 'parent' object.
+	These are managed in two ways.  First, common functions are in
+	fsal_commonlib.c so every fsal implementation can use them.  The
+	second case is for functions that are fsal specific such as
+	'lookup' which is a 'fsal_export' method that must have intimate
+	knowledge of what a 'fsal_obj_handle' is.  In this case, a
+	function prototype is defined in export.c so it can be included
+	in the ops vector and the method is declared global (not static)
+	in handle.c.  Function prototypes are declared in headers only
+	if they are referenced by multiple modules.  The goal is to
+	break as much incorrect code at the compile level as we can.
+
+Use of _USE_FOO
+---------------
+There are a number of places where fsal enabling config parameters are used
+in the middle of the core.  All of this usage will be deprecated and removed.
+For example, some data structures have fsal specific elements defined.  If the
+fsal implementation needs these elements, they should be moved to the 
+private portion of the most relevant fsal object.  This restriction is
+necessary to make the core completely fsal implementation agnostic.
+
+There should be no #ifdef conditionals on public data structures.  If a feature
+is conditionally built, its data structures should be harmless if the feature
+is disabled.  These conditionals are clutter and can break ABI which is now
+important with the new api
+
+NOTE:
+	There are a few #ifdef conditionals in fsal_api.h.  These are temporary
+	and will be removed in the final version.  At that time, the contents
+	of fsal_api.h will be version controlled as a fixed ABI.

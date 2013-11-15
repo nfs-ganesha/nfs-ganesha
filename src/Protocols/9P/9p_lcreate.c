@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -32,14 +33,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -47,106 +41,162 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lcreate( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
+		u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
+	u32 *flags = NULL;
+	u32 *mode = NULL;
+	u32 *gid = NULL;
+	u16 *name_len = NULL;
+	char *name_str = NULL;
 
-  u16  * msgtag = NULL ;
-  u32  * fid    = NULL ;
-  u32  * flags  = NULL ;
-  u32  * mode   = NULL ;
-  u32  * gid    = NULL ;
-  u16  * name_len = NULL ;
-  char * name_str = NULL ;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_newfile;
+	u32 iounit = _9P_IOUNIT;
 
-  _9p_fid_t * pfid = NULL ;
-  _9p_qid_t qid_newfile ;
-  u32 iounit = 0 ;
+	cache_entry_t *pentry_newfile = NULL;
+	char file_name[MAXNAMLEN];
+	int64_t fileid;
+	cache_inode_status_t cache_status;
+	fsal_openflags_t openflags = 0;
 
-  cache_entry_t       * pentry_newfile = NULL ;
-  fsal_name_t           file_name ; 
-  fsal_attrib_list_t    fsalattr ;
-  cache_inode_status_t  cache_status ;
-  fsal_openflags_t      openflags = 0 ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
+	_9p_getptr(cursor, fid, u32);
+	_9p_getstr(cursor, name_len, name_str);
+	_9p_getptr(cursor, flags, u32);
+	_9p_getptr(cursor, mode, u32);
+	_9p_getptr(cursor, gid, u32);
 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getstr( cursor, name_len, name_str ) ;
-  _9p_getptr( cursor, flags,  u32 ) ;
-  _9p_getptr( cursor, mode,   u32 ) ;
-  _9p_getptr( cursor, gid,    u32 ) ;
+	LogDebug(COMPONENT_9P,
+		 "TLCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
+		 (u32) *msgtag, *fid, *name_len, name_str, *flags, *mode,
+		 *gid);
 
-  LogDebug( COMPONENT_9P, "TLCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
-            (u32)*msgtag, *fid, *name_len, name_str, *flags, *mode, *gid ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+	pfid = req9p->pconn->fids[*fid];
 
-   pfid = &preq9p->pconn->fids[*fid] ;
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
+				  preply);
+	}
+	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-   snprintf( file_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-   file_name.len = *name_len+1 ;
+	/* Create the file */
 
-   /* Create the file */
+	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
+	 * flags is not yet used */
+	cache_status =
+	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
+			       NULL, &pfid->op_context, &pentry_newfile);
+	if (pentry_newfile == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-   /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
-   if( ( pentry_newfile = cache_inode_create( pfid->pentry,
-                                              &file_name,
-                                              REGULAR_FILE,
-                                              *mode,
-                                              NULL,
-                                              &fsalattr,
-                                              &pfid->fsal_op_context, 
-     			 		      &cache_status)) == NULL)
-     return  _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
-      
-   _9p_openflags2FSAL( flags, &openflags ) ; 
+	cache_status =
+	    cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-   if(cache_inode_open( pentry_newfile, 
-                        openflags, 
-                        &pfid->fsal_op_context,
-                        0, 
-                        &cache_status) != CACHE_INODE_SUCCESS) 
-     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+	_9p_openflags2FSAL(flags, &openflags);
 
-   /* Build the qid */
-   qid_newfile.type    = _9P_QTFILE ;
-   qid_newfile.version = 0 ;
-   qid_newfile.path    = fsalattr.fileid ;
+	cache_status =
+	    cache_inode_open(pentry_newfile, openflags, &pfid->op_context, 0);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		/* Owner override..
+		 * deal with this stupid 04xy mode corner case */
+		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
+		    && (pfid->op_context.creds->caller_uid ==
+			pentry_newfile->obj_handle->attributes.owner)
+		    && ((*mode & 0400) == 0400)) {
+			/* If we reach this piece of code, this means that
+			 * a user did open( O_CREAT, 04xy) on a file the
+			 * file was created in 04xy mode by the forme
+			 * cache_inode code, but for the mode is 04xy
+			 * the user is not allowed to open it.
+			 * Becoming root override this */
+			uid_t saved_uid = pfid->op_context.creds->caller_uid;
 
-   iounit = 0 ; /* default value */
+			/* Become root */
+			pfid->op_context.creds->caller_uid = 0;
 
-   /* The fid will represent the new file now */
-   pfid->pentry = pentry_newfile ;
-   pfid->qid = qid_newfile ;
-   pfid->specdata.xattr.xattr_id = 0 ;
-   pfid->specdata.xattr.xattr_content = NULL ;
+			/* Do the job as root */
+			cache_status =
+			    cache_inode_open(pentry_newfile, openflags,
+					     &pfid->op_context, 0);
 
+			/* Back to standard user */
+			pfid->op_context.creds->caller_uid = saved_uid;
 
-   /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RLCREATE ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+			if (cache_status != CACHE_INODE_SUCCESS)
+				return _9p_rerror(req9p, worker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+		} else
+			return _9p_rerror(req9p, worker_data, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+	}
 
-  _9p_setqid( cursor, qid_newfile ) ;
-  _9p_setvalue( cursor, iounit, u32 ) ;
+	/* This is not a TATTACH fid */
+	pfid->from_attach = FALSE;
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	/* Pin as well. We probably want to close the file if this fails,
+	 * but it won't happen - right?! */
+	cache_status = cache_inode_inc_pin_ref(pentry_newfile);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  LogDebug( COMPONENT_9P, 
-            "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u",
-            (u32)*msgtag, *fid, *name_len, name_str, qid_newfile.type, qid_newfile.version, (unsigned long long)qid_newfile.path, iounit ) ;
+	/* put parent directory entry */
+	cache_inode_put(pfid->pentry);
 
-  return 1 ;
+	/* Build the qid */
+	qid_newfile.type = _9P_QTFILE;
+	qid_newfile.version = 0;
+	qid_newfile.path = fileid;
+
+	iounit = 0;		/* default value */
+
+	/* The fid will represent the new file now - we can't fail anymore */
+	pfid->pentry = pentry_newfile;
+	pfid->qid = qid_newfile;
+	pfid->specdata.xattr.xattr_id = 0;
+	pfid->specdata.xattr.xattr_content = NULL;
+	pfid->opens = 1;
+
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RLCREATE);
+	_9p_setptr(cursor, msgtag, u16);
+
+	_9p_setqid(cursor, qid_newfile);
+	_9p_setvalue(cursor, iounit, u32);
+
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u pentry=%p",
+		 (u32) *msgtag, *fid, *name_len, name_str, qid_newfile.type,
+		 qid_newfile.version, (unsigned long long)qid_newfile.path,
+		 iounit, pfid->pentry);
+
+	return 1;
 }
-

@@ -1,0 +1,201 @@
+A quick guide to Doxygen in Ganesha
+Adam C. Emerson <aemerson@linuxbox.com>
+
+Here are my suggestions for how to make better use of doxygen.  This
+is not a complete manual on doxygen, just a short guide for hacking on
+ganesha.  First and foremost, whenever you edit a function, please
+check the function comment to make sure that it accurately describes
+the function, that the parameters it lists are actually the parameters
+the function takes, and that the documented return matches the values
+the function may return.  Please do likewise for data structures,
+enumerations, and other types.
+
+Every file should have a file comment.  At minimum this should be of
+the form:
+
+/**
+ * @file filename.c
+ * @brief Do this, that, and the other thing
+ */
+
+Please do not prefix anything with the filename.  If you add a long
+description, just separate it with a blank line, like so.
+
+/**
+ * @file  filename.c
+ * @brief Functions for for this, that, and the other thing.
+ *
+ * This file contains functions that perform many important
+ * operations, among them processing arguments and returning values.
+ * They also allocate stack frames.
+ */
+
+There is no reason to copy the @brief description into the long
+description.  Doxygen (assuming I've configured it properly) already
+handles that.  If you don't have anything longer to say, don't include
+a long description at all.
+
+If you add an @author tag, please include your full name and email
+address, like so.
+
+/**
+ * @file  filename.c
+ * @author Adam C. Emerson <aemerson@linuxbox.com>
+ * @brief Functions for for this, that, and the other thing.
+ */
+
+The old tags with the $cvs stuff$ in them are really not very useful
+and should be removed.  My opinion is that the @author tag is best
+used to indicate the person to contact if one has questions about a
+file, rather than the first person to create a file with that name.
+Therefore, if you have made extensive changes to a file, you could add
+yourself as an @author.  (You may have more than one @author tag per
+file.)
+
+
+Every function should have a function comment.  At a minimum, this
+should contain @brief information, a description of the parameters,
+and a description of the return value.  If the function is void, do
+not include a @return tag.  As with files, if the @brief description
+conveys all information worth conveying about the function, do not
+include a long comment and skip directly from the @brief description
+to the paremters.  Here is an example:
+
+/**
+ * @brief Do some stuff
+ *
+ * This function does a large number of interesting things with bits.
+ * It ANDs them together.  it ORs them.  It shifts them left and
+ * shifts them right.  It even returns some.
+ *
+ * @param[in]     param1 Some bits to work on
+ * @param[out]    param2 Some bits that we output
+ * @param[in,out] param3 Some bits we read and output
+ *
+ * @return The result of doing things to the bits
+ */
+uint64_t do_some_stuff(uint64_t param1,
+                       uint64_t *param2,
+		       uint64_t *param3)
+
+
+If you wish to list possible return values and their meanings, please
+do so as follows:
+
+/**
+ * @brief Check a value
+ *
+ * @param[in] v The value to check
+ *
+ * @retval VALUE_OKAY if the value is passable.
+ * @retval VALUE_PU the value is not very nice.
+ * @retval VALUE_HORRIBLE the value is really quite dreadful.
+ * @retval VALUE_SUPERLATIVE the value is really quite good.
+ */
+
+Please do not prefix anything in the function comment with the
+function's name.  Doxygen gets the function's name from the function
+itself.
+
+
+Every data structure should also have a comment consisting of, at
+least, a @brief.  Members should be commented individually.  This may
+be done one of two ways.
+
+/**
+ * @brief A structure holding some state.
+ */
+ 
+struct state {
+        char *name; /*< The name of the state */
+        char abbrev[2]; /*< The two-letter abbreviation for the state */
+	struct person *governor; /*< The state's executive */
+};
+
+Please note that an inline comment following a data member should be
+prefixed with /*<.  Many structures have /**< which is incorrect.
+
+For readability, if the types or member names start to get long, you
+can also precede the data members with their comments, like so.
+
+struct city {
+        /** The name of the city */
+        char *name;
+        /** A linked list of officers responsible for city government */
+        struct glist_head city_council;
+        /** The head of city government */
+        struct person *lord_mayor;
+};
+
+Doxygen is happy with either one.  I recommend the second if you're
+starting to get seriously word-wrapped member comments.
+
+
+
+Modules and layers can be indicated with the group command.  We aren't
+doing this yet but should start.  Pick a name and description for the
+module, wrap every file that implements it like so:
+
+/**
+ * @defgroup Foolayer The Foo Layer
+ * @{
+ */
+
+/**
+ * @file foo.c
+ * @brief Functions for the foo layer
+ */
+ 
+/**
+ * @brief Foo Function
+ */
+
+void foo(void)
+{
+}
+
+/** @} */
+
+/**
+ * @defgroup Foolayer The Foo Layer
+ * @{
+ */
+
+/**
+ * @file foo.h
+ * @brief Structures for the foo layer
+ */
+ 
+/**
+ * @brief Foo structure
+ */
+
+struct foodata {
+        uint64_t blah;
+}
+
+/** @} */
+
+
+
+You may also define information pages.  These are ideal for describing
+the high level design or detailing behaviors of a module that are not
+bound to a specific function or structure.  Use the @page command like
+so:
+
+/**
+ * @page LockDisc Locking Discipline
+ *
+ * When using this layer, one should always take the A lock before the
+ * B lock, and the B lock before the C lock.  One must have both the B
+ * and C lock before modifying the Q area...
+ */
+
+The first token after @page is an arbitrary name for the page. Be
+unique.  Following the unique page name is the page title.  If you are
+describing the behavior of a subsystem, please make sure the @page
+comment is included within the grouping command for that subsystem.
+You can use markdown in any long description.
+
+For more information please see the doxygen manual, but this should be
+enough to get started.

@@ -1,0 +1,32 @@
+# Configuration file for the run_test.sh framework
+# 
+# Use this template to build your own test_variables.rc
+#
+
+##### Repo to get to build test
+GIT_PYNFS_URL=git://git.linux-nfs.org/projects/iisaman/newpynfs
+
+##### Root of test  #####
+TEST_DIR=/mnt/sigmund
+BUILD_TEST_DIR=/tmp/sigmund
+
+##### Variables to be used by module allfs #####
+# Path to cthon04 test's suite
+CTHON04_DIR=/opt/cthon04
+GIT_CLONE_URL=/opt/GANESHA/.git
+
+# Non-root user that will run part of the test
+TEST_USER=root
+
+# Primary group for the TEST_USER
+GROUP1=adm
+
+# One of the alternate group for TEST_USER
+GROUP2=sys
+
+##### Variables to be used by module nfsv41 #####
+# path to pynfs repo
+PYNFS_DIR=/opt/pynfs
+
+# Remote URL to be used by PYNFS
+PYNFS_URL="aury62:/vfs/pynfs40"

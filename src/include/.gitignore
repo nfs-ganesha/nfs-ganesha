@@ -1,2 +1,3 @@
 config.h*
+!config-h.in.cmake
 stamp-h1

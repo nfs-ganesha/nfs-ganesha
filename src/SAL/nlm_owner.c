@@ -1,5 +1,5 @@
-/**
- * vim:expandtab:shiftwidth=8:tabstop=8:
+/*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -7,1525 +7,1317 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
- *
- * nlm_owner.c : The management of the NLM owner cache.
- *
- * $Header$
- *
- * $Log$
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
-#include <string.h>
-#include <ctype.h>
-#include <pthread.h>
-#include "log.h"
-#include "HashData.h"
-#include "HashTable.h"
-#include "nfs_core.h"
-#include "nlm4.h"
-#include "sal_functions.h"
-#include "nsm.h"
-#include "ganesha_rpc.h"
-
-//TODO FSF: check if can optimize by using same reference as key and value
-
-hash_table_t *ht_nsm_client;
-hash_table_t *ht_nlm_client;
-hash_table_t *ht_nlm_owner;
-
-int display_nsm_client(state_nsm_client_t *pkey, char *str)
-{
-  char *strtmp = str;
-
-  if(pkey == NULL)
-    return sprintf(str, "<NULL>");
-
-  strtmp += sprintf(strtmp, "%p: ", pkey);
-
-  if(nfs_param.core_param.nsm_use_caller_name)
-    strtmp += sprintf(strtmp, "caller_name=");
-  else
-    strtmp += sprintf(strtmp, "addr=");
-
-  strncpy(strtmp, pkey->ssc_nlm_caller_name, pkey->ssc_nlm_caller_name_len);
-  strtmp += pkey->ssc_nlm_caller_name_len;
-
-  strtmp += sprintf(strtmp,
-                    " monitored=%d refcount=%d",
-                    pkey->ssc_monitored, pkey->ssc_refcount);
-
-  return strtmp - str;
-}
-
-int display_nsm_client_key(hash_buffer_t * pbuff, char *str)
-{
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
-}
-
-int display_nsm_client_val(hash_buffer_t * pbuff, char *str)
-{
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
-}
-
-int compare_nsm_client(state_nsm_client_t *pclient1,
-                       state_nsm_client_t *pclient2)
-{
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pclient1, str1);
-      display_nsm_client(pclient2, str2);
-      LogFullDebug(COMPONENT_STATE,
-                   "{%s} vs {%s}", str1, str2);
-    }
-
-  if(pclient1 == NULL || pclient2 == NULL)
-    return 1;
-
-  if(pclient1 == pclient2)
-    return 0;
-
-  if(!nfs_param.core_param.nsm_use_caller_name)
-    {
-      if(cmp_sockaddr(&pclient1->ssc_client_addr, &pclient2->ssc_client_addr, IGNORE_PORT) == 0)
-        return 1;
-      return 0;
-    }
-
-  if(pclient1->ssc_nlm_caller_name_len != pclient2->ssc_nlm_caller_name_len)
-    return 1;
-
-  return memcmp(pclient1->ssc_nlm_caller_name,
-                pclient2->ssc_nlm_caller_name,
-                pclient1->ssc_nlm_caller_name_len);
-}
-
-int compare_nsm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
-{
-  return compare_nsm_client((state_nsm_client_t *)buff1->pdata,
-                            (state_nsm_client_t *)buff2->pdata);
-
-}                               /* compare_nsm_client */
-
-uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
-{
-  unsigned long        res;
-  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->pdata;
-
-  if(nfs_param.core_param.nsm_use_caller_name)
-    {
-      unsigned int sum = 0;
-      unsigned int i;
-
-      /* Compute the sum of all the characters */
-      for(i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
-        sum +=(unsigned char) pkey->ssc_nlm_caller_name[i];
-
-      res = (unsigned long) sum +
-            (unsigned long) pkey->ssc_nlm_caller_name_len;
-    }
-  else
-    {
-      res = hash_sockaddr(&pkey->ssc_client_addr, IGNORE_PORT) % p_hparam->index_size;
-    }
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "value = %lu", res % p_hparam->index_size);
-
-  return (unsigned long)(res % p_hparam->index_size);
-}                               /* nsm_client_value_hash_func */
-
-uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t * buffclef)
-{
-  unsigned long        res;
-  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->pdata;
-
-  if(nfs_param.core_param.nsm_use_caller_name)
-    {
-      unsigned int sum = 0;
-      unsigned int i;
-
-      /* Compute the sum of all the characters */
-      for(i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
-        sum +=(unsigned char) pkey->ssc_nlm_caller_name[i];
-
-      res = (unsigned long) sum +
-            (unsigned long) pkey->ssc_nlm_caller_name_len;
-    }
-  else
-    {
-      res = hash_sockaddr(&pkey->ssc_client_addr, IGNORE_PORT);
-    }
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
-
-  return res;
-}                               /* nsm_client_rbt_hash_func */
-
-int display_nlm_client(state_nlm_client_t *pkey, char *str)
-{
-  char *strtmp = str;
-
-  if(pkey == NULL)
-    return sprintf(str, "<NULL>");
-
-  strtmp += sprintf(strtmp, "%p: NSM Client {", pkey);
-  strtmp += display_nsm_client(pkey->slc_nsm_client, strtmp);
-  strtmp += sprintf(strtmp, "} caller_name=");
-  strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
-  strtmp += pkey->slc_nlm_caller_name_len;
-  strtmp += sprintf(strtmp, " type=%s", xprt_type_to_str(pkey->slc_client_type));
-  strtmp += sprintf(strtmp, " refcount=%d", pkey->slc_refcount);
-
-  return strtmp - str;
-}
-
-int display_nlm_client_key(hash_buffer_t * pbuff, char *str)
-{
-  return display_nlm_client((state_nlm_client_t *)pbuff->pdata, str);
-}
-
-int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
-{
-  return display_nlm_client((state_nlm_client_t *)pbuff->pdata, str);
-}
-
-int compare_nlm_client(state_nlm_client_t *pclient1,
-                       state_nlm_client_t *pclient2)
-{
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_client(pclient1, str1);
-      display_nlm_client(pclient2, str2);
-      LogFullDebug(COMPONENT_STATE,
-                   "{%s} vs {%s}", str1, str2);
-    }
-
-  if(pclient1 == NULL || pclient2 == NULL)
-    return 1;
-
-  if(pclient1 == pclient2)
-    return 0;
-
-  if(compare_nsm_client(pclient1->slc_nsm_client, pclient2->slc_nsm_client) != 0)
-    return 1;
-
-  if(pclient1->slc_client_type != pclient2->slc_client_type)
-    return 1;
-
-  if(pclient1->slc_nlm_caller_name_len != pclient2->slc_nlm_caller_name_len)
-    return 1;
-
-  return memcmp(pclient1->slc_nlm_caller_name,
-                pclient2->slc_nlm_caller_name,
-                pclient1->slc_nlm_caller_name_len);
-}
-
-int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
-{
-  return compare_nlm_client((state_nlm_client_t *)buff1->pdata,
-                            (state_nlm_client_t *)buff2->pdata);
-
-}                               /* compare_nlm_client */
-
-uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
-{
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
-
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
-
-  res = (unsigned long) sum +
-        (unsigned long) pkey->slc_nlm_caller_name_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "value = %lu", res % p_hparam->index_size);
-
-  return (unsigned long)(res % p_hparam->index_size);
-}                               /* nlm_client_value_hash_func */
-
-uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef)
-{
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
-
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
-
-  res = (unsigned long) sum +
-        (unsigned long) pkey->slc_nlm_caller_name_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
-
-  return res;
-}                               /* nlm_client_rbt_hash_func */
- 
-int display_nlm_owner(state_owner_t *pkey, char *str)
-{
-  char *strtmp = str;
-
-  if(pkey == NULL)
-    return sprintf(str, "<NULL>");
-
-  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_NLM %p: NLM Client {", pkey);
-
-  strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, strtmp);
-
-  strtmp += sprintf(strtmp, "} oh=");
-
-  strtmp += DisplayOpaqueValue(pkey->so_owner_val, pkey->so_owner_len, strtmp);
-
-  strtmp += sprintf(strtmp, " svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
-  strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
-
-  return strtmp - str;
-}
-
-int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
-{
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
-}
-
-int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
-{
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
-}
-
-int compare_nlm_owner(state_owner_t *powner1,
-                      state_owner_t *powner2)
-{
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner(powner1, str1);
-      display_nlm_owner(powner2, str2);
-      LogFullDebug(COMPONENT_STATE,
-                   "{%s} vs {%s}", str1, str2);
-    }
-
-  if(powner1 == NULL || powner2 == NULL)
-    return 1;
-
-  if(powner1 == powner2)
-    return 0;
-
-  if(compare_nlm_client(powner1->so_owner.so_nlm_owner.so_client,
-                        powner2->so_owner.so_nlm_owner.so_client) != 0)
-    return 1;
-
-  if(powner1->so_owner.so_nlm_owner.so_nlm_svid !=
-     powner2->so_owner.so_nlm_owner.so_nlm_svid)
-    return 1;
-
-  if(powner1->so_owner_len !=
-     powner2->so_owner_len)
-    return 1;
-
-  return memcmp(powner1->so_owner_val,
-                powner2->so_owner_val,
-                powner1->so_owner_len);
-}
-
-int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
-{
-  return compare_nlm_owner((state_owner_t *)buff1->pdata,
-                           (state_owner_t *)buff2->pdata);
-
-}                               /* compare_nlm_owner */
-
-uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef)
-{
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
-
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner_len; i++)
-    sum += (unsigned char)pkey->so_owner_val[i];
-
-  res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
-        (unsigned long) sum +
-        (unsigned long) pkey->so_owner_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "value = %lu", res % p_hparam->index_size);
-
-  return (unsigned long)(res % p_hparam->index_size);
-
-}                               /* nlm_so_nlm_ohue_hash_func */
-
-uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t * buffclef)
-{
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
-
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner_len; i++)
-    sum += (unsigned char)pkey->so_owner_val[i];
-
-  res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
-        (unsigned long) sum +
-        (unsigned long) pkey->so_owner_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
-
-  return res;
-}                               /* state_id_rbt_hash_func */
 
 /**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+ /**
+  * @file nlm_owner.c
+  * @brief The management of the NLM owner cache.
+  */
+
+#include "config.h"
+#include <string.h>
+#include <ctype.h>
+#include "sal_functions.h"
+#include "nsm.h"
+
+/**
+ * @brief NSM clients
+ */
+hash_table_t *ht_nsm_client;
+
+/**
+ * @brief NLM Clients
+ */
+hash_table_t *ht_nlm_client;
+
+/**
+ * @brief NLM owners
+ */
+hash_table_t *ht_nlm_owner;
+
+/*******************************************************************************
  *
- * Init_nlm_hash: Init the hashtable for NLM Owner cache.
+ * NSM Client Routines
  *
- * Perform all the required initialization for hashtable State Id cache
- * 
- * @param param [IN] parameter used to init the duplicate request cache
+ ******************************************************************************/
+
+/**
+ * @brief Display an NSM client
+ *
+ * @param[in]  key The NSM client
+ * @param[out] str Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nsm_client(state_nsm_client_t *key, char *str)
+{
+	char *strtmp = str;
+
+	if (key == NULL)
+		return sprintf(str, "NSM Client <NULL>");
+
+	strtmp += sprintf(strtmp, "NSM Client %p: ", key);
+
+	if (nfs_param.core_param.nsm_use_caller_name)
+		strtmp += sprintf(strtmp, "caller_name=");
+	else
+		strtmp += sprintf(strtmp, "addr=");
+
+	memcpy(strtmp, key->ssc_nlm_caller_name, key->ssc_nlm_caller_name_len);
+	strtmp += key->ssc_nlm_caller_name_len;
+
+	strtmp +=
+	    sprintf(strtmp, " %s refcount=%d",
+		    atomic_fetch_int32_t(&key->
+					 ssc_monitored) ? "monitored" :
+		    "unmonitored", atomic_fetch_int32_t(&key->ssc_refcount));
+
+	return strtmp - str;
+}
+
+/**
+ * @brief Display an NSM client in the hash table
+ *
+ * @param[in]  buff The key
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nsm_client(buff->addr, str);
+}
+
+/**
+ * @brief Display an NSM client in the hash table
+ *
+ * @param[in]  buff The value
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nsm_client_val(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nsm_client(buff->addr, str);
+}
+
+/**
+ * @brief Compare NSM clients
+ *
+ * @param[in] client1 A client
+ * @param[in] client2 Another client
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nsm_client(state_nsm_client_t *client1,
+		       state_nsm_client_t *client2)
+{
+	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
+		char str1[HASHTABLE_DISPLAY_STRLEN];
+		char str2[HASHTABLE_DISPLAY_STRLEN];
+
+		display_nsm_client(client1, str1);
+		display_nsm_client(client2, str2);
+		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
+	}
+
+	if (client1 == NULL || client2 == NULL)
+		return 1;
+
+	if (client1 == client2)
+		return 0;
+
+	if (!nfs_param.core_param.nsm_use_caller_name) {
+		if (cmp_sockaddr(&client1->ssc_client_addr,
+				 &client2->ssc_client_addr,
+				 true) == 0)
+			return 1;
+		return 0;
+	}
+
+	if (client1->ssc_nlm_caller_name_len !=
+	    client2->ssc_nlm_caller_name_len)
+		return 1;
+
+	return memcmp(client1->ssc_nlm_caller_name,
+		      client2->ssc_nlm_caller_name,
+		      client1->ssc_nlm_caller_name_len);
+}
+
+/**
+ * @brief Compare NSM clients in the hash table
+ *
+ * @param[in] buff1 A key
+ * @param[in] buff2 Another key
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nsm_client_key(struct gsh_buffdesc *buff1,
+			   struct gsh_buffdesc *buff2)
+{
+	return compare_nsm_client(buff1->addr, buff2->addr);
+
+}
+
+/**
+ * @brief Calculate hash index for an NSM key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The hash index.
+ */
+uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
+				    struct gsh_buffdesc *key)
+{
+	unsigned long res;
+	state_nsm_client_t *pkey = key->addr;
+
+	if (nfs_param.core_param.nsm_use_caller_name) {
+		unsigned int sum = 0;
+		unsigned int i;
+
+		/* Compute the sum of all the characters */
+		for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
+			sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
+
+		res =
+		    (unsigned long)sum +
+		    (unsigned long)pkey->ssc_nlm_caller_name_len;
+	} else {
+		res =
+		    hash_sockaddr(&pkey->ssc_client_addr,
+				  true) % hparam->index_size;
+	}
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %lu",
+			     res % hparam->index_size);
+
+	return (unsigned long)(res % hparam->index_size);
+}
+
+/**
+ * @brief Calculate RBT hash for an NSM key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The RBT hash.
+ */
+uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
+				  struct gsh_buffdesc *key)
+{
+	unsigned long res;
+	state_nsm_client_t *pkey = key->addr;
+
+	if (nfs_param.core_param.nsm_use_caller_name) {
+		unsigned int sum = 0;
+		unsigned int i;
+
+		/* Compute the sum of all the characters */
+		for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
+			sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
+
+		res =
+		    (unsigned long)sum +
+		    (unsigned long)pkey->ssc_nlm_caller_name_len;
+	} else {
+		res = hash_sockaddr(&pkey->ssc_client_addr, true);
+	}
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+
+	return res;
+}				/* nsm_client_rbt_hash_func */
+
+/*******************************************************************************
+ *
+ * NLM Client Routines
+ *
+ ******************************************************************************/
+
+/**
+ * @brief Display an NLM client
+ *
+ * @param[in]  key The NLM client
+ * @param[out] str Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_client(state_nlm_client_t *key, char *str)
+{
+	char *strtmp = str;
+
+	if (key == NULL)
+		return sprintf(str, "NLM Client <NULL>");
+
+	strtmp += sprintf(strtmp, "NLM Client %p: {", key);
+	strtmp += display_nsm_client(key->slc_nsm_client, strtmp);
+	strtmp += sprintf(strtmp, "} caller_name=");
+	memcpy(strtmp, key->slc_nlm_caller_name, key->slc_nlm_caller_name_len);
+	strtmp += key->slc_nlm_caller_name_len;
+	strtmp +=
+	    sprintf(strtmp, " type=%s", xprt_type_to_str(key->slc_client_type));
+	strtmp +=
+	    sprintf(strtmp, " refcount=%d",
+		    atomic_fetch_int32_t(&key->slc_refcount));
+
+	return strtmp - str;
+}
+
+/**
+ * @brief Display an NLM client in the hash table
+ *
+ * @param[in]  buff The key
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nlm_client(buff->addr, str);
+}
+
+/**
+ * @brief Display an NLM client in the hash table
+ *
+ * @param[in]  buff The value
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_client_val(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nlm_client(buff->addr, str);
+}
+
+/**
+ * @brief Compare NLM clients
+ *
+ * @param[in] client1 A client
+ * @param[in] client2 Another client
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nlm_client(state_nlm_client_t *client1,
+		       state_nlm_client_t *client2)
+{
+	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
+		char str1[HASHTABLE_DISPLAY_STRLEN];
+		char str2[HASHTABLE_DISPLAY_STRLEN];
+
+		display_nlm_client(client1, str1);
+		display_nlm_client(client2, str2);
+		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
+	}
+
+	if (client1 == NULL || client2 == NULL)
+		return 1;
+
+	if (client1 == client2)
+		return 0;
+
+	if (compare_nsm_client(client1->slc_nsm_client, client2->slc_nsm_client)
+	    != 0)
+		return 1;
+
+	if (cmp_sockaddr
+	    (&client1->slc_server_addr, &client2->slc_server_addr,
+	     true) == 0)
+		return 1;
+
+	if (client1->slc_client_type != client2->slc_client_type)
+		return 1;
+
+	if (client1->slc_nlm_caller_name_len !=
+	    client2->slc_nlm_caller_name_len)
+		return 1;
+
+	return memcmp(client1->slc_nlm_caller_name,
+		      client2->slc_nlm_caller_name,
+		      client1->slc_nlm_caller_name_len);
+}
+
+/**
+ * @brief Compare NLM clients in the hash table
+ *
+ * @param[in] buff1 A key
+ * @param[in] buff2 Another key
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nlm_client_key(struct gsh_buffdesc *buff1,
+			   struct gsh_buffdesc *buff2)
+{
+	return compare_nlm_client(buff1->addr, buff2->addr);
+
+}
+
+/**
+ * @brief Calculate hash index for an NLM key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The hash index.
+ */
+uint32_t nlm_client_value_hash_func(hash_parameter_t *hparam,
+				    struct gsh_buffdesc *key)
+{
+	uint32_t sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_nlm_client_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->slc_nlm_caller_name_len; i++)
+		sum += (unsigned char)pkey->slc_nlm_caller_name[i];
+
+	res = (unsigned long)sum + (unsigned long)pkey->slc_nlm_caller_name_len;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %lu",
+			     res % hparam->index_size);
+
+	return (unsigned long)(res % hparam->index_size);
+}
+
+/**
+ * @brief Calculate RBT hash for an NLM key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The RBT hash.
+ */
+uint64_t nlm_client_rbt_hash_func(hash_parameter_t *hparam,
+				  struct gsh_buffdesc *key)
+{
+	unsigned int sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_nlm_client_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->slc_nlm_caller_name_len; i++)
+		sum += (unsigned char)pkey->slc_nlm_caller_name[i];
+
+	res = (unsigned long)sum + (unsigned long)pkey->slc_nlm_caller_name_len;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+
+	return res;
+}				/* nlm_client_rbt_hash_func */
+
+/*******************************************************************************
+ *
+ * NLM Owner Routines
+ *
+ ******************************************************************************/
+
+/**
+ * @brief Display an NLM cowner
+ *
+ * @param[in]  key The NLM owner
+ * @param[out] str Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_owner(state_owner_t *key, char *str)
+{
+	char *strtmp = str;
+
+	if (key == NULL)
+		return sprintf(str, "STATE_LOCK_OWNER_NLM <NULL>");
+
+	strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_NLM %p: {", key);
+
+	strtmp +=
+	    display_nlm_client(key->so_owner.so_nlm_owner.so_client, strtmp);
+
+	strtmp += sprintf(strtmp, "} oh=");
+
+	strtmp +=
+	    DisplayOpaqueValue(key->so_owner_val, key->so_owner_len, strtmp);
+
+	strtmp +=
+	    sprintf(strtmp, " svid=%d", key->so_owner.so_nlm_owner.so_nlm_svid);
+	strtmp +=
+	    sprintf(strtmp, " refcount=%d",
+		    atomic_fetch_int32_t(&key->so_refcount));
+
+	return strtmp - str;
+}
+
+/**
+ * @brief Display an NLM owner in the hash table
+ *
+ * @param[in]  buff The key
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nlm_owner(buff->addr, str);
+}
+
+/**
+ * @brief Display an NLM owner in the hash table
+ *
+ * @param[in]  buff The value
+ * @param[out] str  Output buffer
+ *
+ * @return Length of output string.
+ */
+int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
+{
+	return display_nlm_owner(buff->addr, str);
+}
+
+/**
+ * @brief Compare NLM owners
+ *
+ * @param[in] owner1 A client
+ * @param[in] owner2 Another client
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nlm_owner(state_owner_t *owner1, state_owner_t *owner2)
+{
+	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
+		char str1[HASHTABLE_DISPLAY_STRLEN];
+		char str2[HASHTABLE_DISPLAY_STRLEN];
+
+		display_nlm_owner(owner1, str1);
+		display_nlm_owner(owner2, str2);
+		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
+	}
+
+	if (owner1 == NULL || owner2 == NULL)
+		return 1;
+
+	if (owner1 == owner2)
+		return 0;
+
+	if (compare_nlm_client
+	    (owner1->so_owner.so_nlm_owner.so_client,
+	     owner2->so_owner.so_nlm_owner.so_client) != 0)
+		return 1;
+
+	if (owner1->so_owner.so_nlm_owner.so_nlm_svid !=
+	    owner2->so_owner.so_nlm_owner.so_nlm_svid)
+		return 1;
+
+	if (owner1->so_owner_len != owner2->so_owner_len)
+		return 1;
+
+	return memcmp(owner1->so_owner_val, owner2->so_owner_val,
+		      owner1->so_owner_len);
+}
+
+/**
+ * @brief Compare NLM owners in the hash table
+ *
+ * @param[in] buff1 A key
+ * @param[in] buff2 Another key
+ *
+ * @retval 0 on equality.
+ * @retval 1 on inequality.
+ */
+int compare_nlm_owner_key(struct gsh_buffdesc *buff1,
+			  struct gsh_buffdesc *buff2)
+{
+	return compare_nlm_owner(buff1->addr, buff2->addr);
+
+}
+
+/**
+ * @brief Calculate hash index for an NLM owner key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The hash index.
+ */
+uint32_t nlm_owner_value_hash_func(hash_parameter_t *hparam,
+				   struct gsh_buffdesc *key)
+{
+	unsigned int sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_owner_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->so_owner_len; i++)
+		sum += (unsigned char)pkey->so_owner_val[i];
+
+	res =
+	    (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
+	    (unsigned long)sum + (unsigned long)pkey->so_owner_len;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %lu",
+			     res % hparam->index_size);
+
+	return (unsigned long)(res % hparam->index_size);
+
+}
+
+/**
+ * @brief Calculate RBT hash for an NLM owner key
+ *
+ * @todo Replace with a good hash function.
+ *
+ * @param[in]  hparam Hash params
+ * @param[out] key    Key to hash
+ *
+ * @return The RBT hash.
+ */
+uint64_t nlm_owner_rbt_hash_func(hash_parameter_t *hparam,
+				 struct gsh_buffdesc *key)
+{
+	unsigned int sum = 0;
+	unsigned int i;
+	unsigned long res;
+	state_owner_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->so_owner_len; i++)
+		sum += (unsigned char)pkey->so_owner_val[i];
+
+	res =
+	    (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
+	    (unsigned long)sum + (unsigned long)pkey->so_owner_len;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+
+	return res;
+}				/* state_id_rbt_hash_func */
+
+/**
+ * @brief Init the hashtables for NLM support
  *
  * @return 0 if successful, -1 otherwise
- *
  */
 int Init_nlm_hash(void)
 {
+	ht_nsm_client = hashtable_init(&nfs_param.nsm_client_hash_param);
 
-  if((ht_nsm_client =
-      HashTable_Init(&nfs_param.nsm_client_hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_STATE,
-              "Cannot init NSM Client cache");
-      return -1;
-    }
+	if (ht_nsm_client == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init NSM Client cache");
+		return -1;
+	}
 
-  if((ht_nlm_client
-      = HashTable_Init(&nfs_param.nlm_client_hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_STATE,
-              "Cannot init NLM Client cache");
-      return -1;
-    }
+	ht_nlm_client = hashtable_init(&nfs_param.nlm_client_hash_param);
 
-  if((ht_nlm_owner = HashTable_Init(&nfs_param.nlm_owner_hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_STATE,
-              "Cannot init NLM Owner cache");
-      return -1;
-    }
+	if (ht_nlm_client == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
+		return -1;
+	}
 
-  return 0;
-}                               /* Init_nlm_hash */
+	ht_nlm_owner = hashtable_init(&nfs_param.nlm_owner_hash_param);
+
+	if (ht_nlm_owner == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init NLM Owner cache");
+		return -1;
+	}
+
+	return 0;
+}				/* Init_nlm_hash */
+
+/*******************************************************************************
+ *
+ * NSM Client Routines
+ *
+ ******************************************************************************/
 
 /**
- * nsm_client_Set
- * 
+ * @brief Take a reference on NSM client
  *
- * This routine sets a NSM client into the related hashtable
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @param[in] client The client to ref
  */
-int nsm_client_Set(state_nsm_client_t * pkey,
-                   state_nsm_client_t * pclient)
+void inc_nsm_client_ref(state_nsm_client_t *client)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(*pkey);
-
-      display_nsm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
-
-  buffval.pdata = (caddr_t) pclient;
-  buffval.len = sizeof(*pclient);
-
-  if(HashTable_Test_And_Set
-     (ht_nsm_client, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
-
-  return 1;
-}                               /* nsm_client_Set */
-
-static int Hash_dec_nsm_client_ref(hash_buffer_t *buffval)
-{
-  int rc;
-  state_nsm_client_t *pclient = (state_nsm_client_t *)(buffval->pdata);
-
-  P(pclient->ssc_mutex);
-
-  pclient->ssc_refcount--;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount NSM Client {%s}",
-                   str);
-    }
-
-  rc = pclient->ssc_refcount;
-
-  V(pclient->ssc_mutex);  
-
-  return rc;
-}
-
-static void Hash_inc_nsm_client_ref(hash_buffer_t *buffval)
-{
-  state_nsm_client_t *pclient = (state_nsm_client_t *)(buffval->pdata);
-
-  P(pclient->ssc_mutex);
-  pclient->ssc_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount NSM Client {%s}",
-                   str);
-    }
-
-  V(pclient->ssc_mutex);  
-}
-
-void inc_nsm_client_ref_locked(state_nsm_client_t *pclient)
-{
-  pclient->ssc_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount NSM Client {%s}",
-                   str);
-    }
-
-  V(pclient->ssc_mutex);
-}
-
-void inc_nsm_client_ref(state_nsm_client_t *pclient)
-{
-  P(pclient->ssc_mutex);
-
-  inc_nsm_client_ref_locked(pclient);
-}
-
-void free_nsm_client(state_nsm_client_t *pclient)
-{
-  if(pclient->ssc_nlm_caller_name != NULL)
-    gsh_free(pclient->ssc_nlm_caller_name);
-  if(isFullDebug(COMPONENT_MEMLEAKS))
-    memset(pclient, 0, sizeof(*pclient));
-  gsh_free(pclient);
-}
-
-void dec_nsm_client_ref_locked(state_nsm_client_t *pclient)
-{
-  bool_t remove = FALSE;
-  char   str[HASHTABLE_DISPLAY_STRLEN];
-
-  if(isFullDebug(COMPONENT_STATE))
-    display_nsm_client(pclient, str);
-
-  if(pclient->ssc_refcount > 1)
-    {
-      pclient->ssc_refcount--;
-
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount NSM Client {%s}",
-                   str);
-    }
-  else
-    remove = TRUE;
-
-  V(pclient->ssc_mutex);
-
-  if(remove)
-    {
-      hash_buffer_t buffkey, old_key, old_value;
-
-      buffkey.pdata = (caddr_t) pclient;
-      buffkey.len = sizeof(*pclient);
-
-      switch(HashTable_DelRef(ht_nsm_client, &buffkey, &old_key, &old_value, Hash_dec_nsm_client_ref))
-        {
-          case HASHTABLE_SUCCESS:
-            LogFullDebug(COMPONENT_STATE,
-                         "Free NSM Client {%s} size %llx",
-                         str, (unsigned long long) old_value.len);
-            nsm_unmonitor((state_nsm_client_t *) old_value.pdata);
-            free_nsm_client((state_nsm_client_t *) old_key.pdata);
-            free_nsm_client((state_nsm_client_t *) old_value.pdata);
-            break;
-
-          case HASHTABLE_NOT_DELETED:
-            /* ref count didn't end up at 0, don't free. */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef didn't reduce refcount to 0 for NSM Client {%s}",
-                     str);
-            break;
-
-          default:
-            /* some problem occurred */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef failed for NSM Client {%s}",
-                     str);
-            break;
-        }
-    }
-}
-
-void dec_nsm_client_ref(state_nsm_client_t *pclient)
-{
-  P(pclient->ssc_mutex);
-
-  dec_nsm_client_ref_locked(pclient);
+	atomic_inc_int32_t(&client->ssc_refcount);
 }
 
 /**
+ * @brief Free an NSM client
  *
- * nsm_client_Get_Pointer
- *
- * This routine gets a pointer to an NSM client from the nsm_client's hashtable.
- *
- * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @param[in] client Client to free
  */
-int nsm_client_Get_Pointer(state_nsm_client_t * pkey,
-                           state_nsm_client_t * *pclient)
+void free_nsm_client(state_nsm_client_t *client)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+	if (client->ssc_nlm_caller_name != NULL)
+		gsh_free(client->ssc_nlm_caller_name);
 
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+	pthread_mutex_destroy(&client->ssc_mutex);
 
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
-
-  if(HashTable_GetRef(ht_nsm_client, &buffkey, &buffval,
-                      Hash_inc_nsm_client_ref) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "NOTFOUND");
-      *pclient = NULL;
-      return 0;
-    }
-
-  *pclient = (state_nsm_client_t *) buffval.pdata;
-
-  LogFullDebug(COMPONENT_STATE,
-               "FOUND");
-
-  return 1;
-}                               /* nsm_client_Get_Pointer */
-
-/**
- * 
- *  nsm_client_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the NSM clients. 
- * 
- * @return nothing (void function)
- */
-
-void nsm_client_PrintAll(void)
-{
-  HashTable_Log(COMPONENT_STATE, ht_nsm_client);
-}                               /* nsm_client_PrintAll */
-
-state_nsm_client_t *get_nsm_client(care_t       care,
-                                   SVCXPRT    * xprt,
-                                   const char * caller_name)
-{
-  state_nsm_client_t *pkey, *pclient;
-
-  if(caller_name == NULL)
-    return NULL;
-
-  pkey = gsh_malloc(sizeof(*pkey));
-  if(pkey == NULL)
-    return NULL;
-
-  memset(pkey, 0, sizeof(*pkey));
-  pkey->ssc_refcount            = 1;
-
-  if(nfs_param.core_param.nsm_use_caller_name)
-    {
-      pkey->ssc_nlm_caller_name_len = strlen(caller_name);
-
-      if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      pkey->ssc_nlm_caller_name
-           = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
-      if(pkey->ssc_nlm_caller_name == NULL)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      memcpy(pkey->ssc_nlm_caller_name,
-             caller_name,
-             pkey->ssc_nlm_caller_name_len);
-      pkey->ssc_nlm_caller_name[pkey->ssc_nlm_caller_name_len] = '\0';
-    }
-  else if(xprt == NULL)
-    {
-      int rc = ipstring_to_sockaddr(caller_name, &pkey->ssc_client_addr);
-      if(rc != 0)
-        {
-          LogEvent(COMPONENT_STATE,
-                  "Error converting caller_name %s to an ipaddress %s",
-                  caller_name, gai_strerror(rc));
-
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-
-          return NULL;
-        }
-
-      pkey->ssc_nlm_caller_name_len = strlen(caller_name);
-
-      if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      pkey->ssc_nlm_caller_name
-           = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
-      if(pkey->ssc_nlm_caller_name == NULL)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      memcpy(pkey->ssc_nlm_caller_name,
-             caller_name,
-             pkey->ssc_nlm_caller_name_len);
-      pkey->ssc_nlm_caller_name[pkey->ssc_nlm_caller_name_len] = '\0';
-    }
-  else
-    {
-      pkey->ssc_nlm_caller_name_len = SOCK_NAME_MAX;
-      pkey->ssc_nlm_caller_name
-           = gsh_malloc(SOCK_NAME_MAX);
-      if(pkey->ssc_nlm_caller_name == NULL)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      if(copy_xprt_addr(&pkey->ssc_client_addr, xprt) == 0)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-
-      if(sprint_sockip(&pkey->ssc_client_addr, pkey->ssc_nlm_caller_name, SOCK_NAME_MAX) == 0)
-        {
-          /* Discard the key we created */
-          free_nsm_client(pkey);
-          return NULL;
-        }
-      pkey->ssc_nlm_caller_name_len = strlen(pkey->ssc_nlm_caller_name);
-    }
-
-  
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Find NSM Client pkey {%s}", str);
-    }
-
-  /* If we found it, return it, if we don't care, return NULL */
-  if(nsm_client_Get_Pointer(pkey, &pclient) == 1 || care == CARE_NOT)
-    {
-      /* Discard the key we created and return the found NSM Client */
-      free_nsm_client(pkey);
-
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nsm_client(pclient, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Found NSM Client {%s}",
-                       str);
-        }
-
-      if(care == CARE_MONITOR)
-        if(!nsm_monitor(pclient))
-          {
-            dec_nsm_client_ref(pclient);
-            return NULL;
-          }
-
-      return pclient;
-    }
-
-  pclient = gsh_malloc(sizeof(*pkey));
-  if(pclient == NULL)
-    {
-      free_nsm_client(pkey);
-      return NULL;
-    }
-
-  /* Copy everything over */
-  *pclient = *pkey;
-
-  pclient->ssc_nlm_caller_name = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
-  if(pclient->ssc_nlm_caller_name == NULL)
-    {
-      /* Discard the key and created client */
-      free_nsm_client(pkey);
-      free_nsm_client(pclient);
-      return NULL;
-    }
-
-  memcpy(pclient->ssc_nlm_caller_name,
-         pkey->ssc_nlm_caller_name,
-         pclient->ssc_nlm_caller_name_len);
-  pclient->ssc_nlm_caller_name[pclient->ssc_nlm_caller_name_len] = '\0';
-
-  init_glist(&pclient->ssc_lock_list);
-  init_glist(&pclient->ssc_share_list);
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nsm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "New NSM Client {%s}", str);
-    }
-
-  if(pthread_mutex_init(&pclient->ssc_mutex, NULL) == -1)
-    {
-      /* Mutex initialization failed, free the key and created client */
-      free_nsm_client(pkey);
-      free_nsm_client(pclient);
-      return NULL;
-    }
-
-  if(nsm_client_Set(pkey, pclient) == 1)
-    {
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nsm_client(pclient, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Set NSM Client {%s}",
-                       str);
-        }
-
-      if(care != CARE_MONITOR || nsm_monitor(pclient))
-        return pclient;
-
-      dec_nsm_client_ref(pclient);
-      return NULL;
-    }
-
-  free_nsm_client(pkey);
-  free_nsm_client(pclient);
-  return NULL;
+	gsh_free(client);
 }
 
 /**
- * nlm_client_Set
- * 
+ * @brief Relinquish a reference on an NSM client
  *
- * This routine sets a NLM client into the related hashtable
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @param[in] client The client to release
  */
-int nlm_client_Set(state_nlm_client_t * pkey,
-                   state_nlm_client_t * pclient)
+void dec_nsm_client_ref(state_nsm_client_t *client)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc old_value;
+	struct gsh_buffdesc old_key;
+	int32_t refcount;
 
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (isDebug(COMPONENT_STATE))
+		display_nsm_client(client, str);
 
-      buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(*pkey);
+	refcount = atomic_dec_int32_t(&client->ssc_refcount);
 
-      display_nlm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
+	if (refcount > 0) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Decrement refcount now=%" PRId32 " {%s}",
+			     refcount, str);
 
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+		return;
+	}
 
-  buffval.pdata = (caddr_t) pclient;
-  buffval.len = sizeof(*pclient);
+	LogFullDebug(COMPONENT_STATE, "Try to remove {%s}", str);
 
-  if(HashTable_Test_And_Set
-     (ht_nlm_client, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
+	buffkey.addr = client;
+	buffkey.len = sizeof(*client);
 
-  return 1;
-}                               /* nlm_client_Set */
+	/* Get the hash table entry and hold latch */
+	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &old_value, true,
+				&latch);
 
-static int Hash_dec_nlm_client_ref(hash_buffer_t *buffval)
-{
-  int rc;
-  state_nlm_client_t *pclient = (state_nlm_client_t *)(buffval->pdata);
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_nsm_client, &latch);
 
-  P(pclient->slc_mutex);
+		display_nsm_client(client, str);
 
-  pclient->slc_refcount--;
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+		return;
+	}
 
-      display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount NLM Client {%s}",
-                   str);
-    }
+	refcount = atomic_fetch_int32_t(&client->ssc_refcount);
 
-  rc = pclient->slc_refcount;
+	if (refcount > 0) {
+		LogDebug(COMPONENT_STATE,
+			 "Did not release refcount now=%" PRId32 " {%s}",
+			 refcount, str);
 
-  V(pclient->slc_mutex);  
+		hashtable_releaselatched(ht_nsm_client, &latch);
 
-  return rc;
-}
+		return;
+	}
 
-static void Hash_inc_nlm_client_ref(hash_buffer_t *buffval)
-{
-  state_nlm_client_t *pclient = (state_nlm_client_t *)(buffval->pdata);
+	/* use the key to delete the entry */
+	rc = hashtable_deletelatched(ht_nsm_client, &buffkey, &latch, &old_key,
+				     &old_value);
 
-  P(pclient->slc_mutex);
-  pclient->slc_refcount++;
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_nsm_client, &latch);
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+		display_nsm_client(client, str);
 
-      display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount NLM Client {%s}",
-                   str);
-    }
+		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
+			hash_table_err_to_str(rc), str);
 
-  V(pclient->slc_mutex);  
-}
+		return;
+	}
 
-void inc_nlm_client_ref_locked(state_nlm_client_t *pclient)
-{
-  pclient->slc_refcount++;
+	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount NLM Client {%s}",
-                   str);
-    }
-
-  V(pclient->slc_mutex);
-}
-
-void inc_nlm_client_ref(state_nlm_client_t *pclient)
-{
-  P(pclient->slc_mutex);
-
-  inc_nlm_client_ref_locked(pclient);
-}
-
-void dec_nlm_client_ref_locked(state_nlm_client_t *pclient)
-{
-  bool_t remove = FALSE;
-  char   str[HASHTABLE_DISPLAY_STRLEN];
-
-  if(isFullDebug(COMPONENT_STATE))
-    display_nlm_client(pclient, str);
-
-  if(pclient->slc_refcount > 1)
-    {
-      pclient->slc_refcount--;
-
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount NLM Client {%s}",
-                   str);
-    }
-  else
-    remove = TRUE;
-
-  V(pclient->slc_mutex);
-
-  if(remove)
-    {
-      hash_buffer_t buffkey, old_key, old_value;
-
-      buffkey.pdata = (caddr_t) pclient;
-      buffkey.len = sizeof(*pclient);
-
-      switch(HashTable_DelRef(ht_nlm_client, &buffkey, &old_key, &old_value, Hash_dec_nlm_client_ref))
-        {
-          case HASHTABLE_SUCCESS:
-            LogFullDebug(COMPONENT_STATE,
-                         "Free NLM Client {%s} size %llx",
-                         str, (unsigned long long) old_value.len);
-            if(pclient->slc_callback_clnt != NULL)
-              Clnt_destroy(pclient->slc_callback_clnt);
-            dec_nsm_client_ref(pclient->slc_nsm_client);
-            if(isFullDebug(COMPONENT_MEMLEAKS))
-              {
-                memset(old_key.pdata, 0, old_key.len);
-                memset(old_value.pdata, 0, old_value.len);
-              }
-            gsh_free(old_key.pdata);
-            gsh_free(old_value.pdata);
-            break;
-
-          case HASHTABLE_NOT_DELETED:
-            /* ref count didn't end up at 0, don't free. */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef didn't reduce refcount to 0 for NLM Client {%s}",
-                     str);
-            break;
-
-          default:
-            /* some problem occurred */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef failed for NLM Client {%s}",
-                     str);
-            break;
-        }
-    }
-}
-
-void dec_nlm_client_ref(state_nlm_client_t *pclient)
-{
-  P(pclient->slc_mutex);
-
-  dec_nlm_client_ref_locked(pclient);
+	nsm_unmonitor(old_value.addr);
+	free_nsm_client(old_value.addr);
 }
 
 /**
+ * @brief Get an NSM client
  *
- * nlm_client_Get_Pointer
+ * @param[in] care        Care status
+ * @param[in] xprt        RPC transport
+ * @param[in] caller_name Caller name
  *
- * This routine gets a pointer to an NLM client from the nlm_client's hashtable.
- *
- * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @return NSM client or NULL.
  */
-int nlm_client_Get_Pointer(state_nlm_client_t * pkey,
-                           state_nlm_client_t * *pclient)
+state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
+				   char *caller_name)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+	state_nsm_client_t key;
+	state_nsm_client_t *pclient;
+	char sock_name[SOCK_NAME_MAX + 1];
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc buffval;
 
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+	if (caller_name == NULL)
+		return NULL;
 
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	memset(&key, 0, sizeof(key));
 
-      display_nlm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
+	if (nfs_param.core_param.nsm_use_caller_name) {
+		key.ssc_nlm_caller_name_len = strlen(caller_name);
 
-  if(HashTable_GetRef(ht_nlm_client, &buffkey, &buffval,
-                      Hash_inc_nlm_client_ref) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "NOTFOUND");
-      *pclient = NULL;
-      return 0;
-    }
+		if (key.ssc_nlm_caller_name_len > LM_MAXSTRLEN)
+			return NULL;
 
-  *pclient = (state_nlm_client_t *) buffval.pdata;
+		key.ssc_nlm_caller_name = caller_name;
+	} else if (xprt == NULL) {
+		int rc =
+		    ipstring_to_sockaddr(caller_name, &key.ssc_client_addr);
+		if (rc != 0) {
+			LogEvent(COMPONENT_STATE,
+				 "Error %s, converting caller_name %s to an ipaddress",
+				 gai_strerror(rc), caller_name);
 
-  LogFullDebug(COMPONENT_STATE,
-               "FOUND");
+			return NULL;
+		}
 
-  return 1;
-}                               /* nlm_client_Get_Pointer */
+		key.ssc_nlm_caller_name_len = strlen(caller_name);
+
+		if (key.ssc_nlm_caller_name_len > LM_MAXSTRLEN)
+			return NULL;
+
+		key.ssc_nlm_caller_name = caller_name;
+	} else {
+		key.ssc_nlm_caller_name = sock_name;
+
+		if (copy_xprt_addr(&key.ssc_client_addr, xprt) == 0) {
+			LogCrit(COMPONENT_STATE,
+				"Error converting caller_name %s to an ipaddress",
+				caller_name);
+
+			return NULL;
+		}
+
+		if (sprint_sockip
+		    (&key.ssc_client_addr, key.ssc_nlm_caller_name,
+		     sizeof(sock_name)) == 0) {
+			LogCrit(COMPONENT_STATE,
+				"Error converting caller_name %s to an ipaddress",
+				caller_name);
+
+			return NULL;
+		}
+
+		key.ssc_nlm_caller_name_len = strlen(key.ssc_nlm_caller_name);
+	}
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_nsm_client(&key, str);
+		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+	}
+
+	buffkey.addr = &key;
+	buffkey.len = sizeof(key);
+
+	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &buffval, true,
+				&latch);
+
+	/* If we found it, return it */
+	if (rc == HASHTABLE_SUCCESS) {
+		pclient = buffval.addr;
+
+		/* Return the found NSM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			display_nsm_client(pclient, str);
+			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
+		}
+
+		/* Increment refcount under hash latch.
+		 * This prevents dec ref from removing this entry from hash
+		 * if a race occurs.
+		 */
+		inc_nsm_client_ref(pclient);
+
+		hashtable_releaselatched(ht_nsm_client, &latch);
+
+		if (care == CARE_MONITOR && !nsm_monitor(pclient)) {
+			dec_nsm_client_ref(pclient);
+			pclient = NULL;
+		}
+
+		return pclient;
+	}
+
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+		display_nsm_client(&key, str);
+
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
+
+		return NULL;
+	}
+
+	/* Not found, but we don't care, return NULL */
+	if (care == CARE_NOT) {
+		/* Return the found NSM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			display_nsm_client(&key, str);
+			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
+		}
+
+		hashtable_releaselatched(ht_nsm_client, &latch);
+
+		return NULL;
+	}
+
+	pclient = gsh_malloc(sizeof(*pclient));
+
+	if (pclient == NULL) {
+		display_nsm_client(&key, str);
+		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
+
+		return NULL;
+	}
+
+	/* Copy everything over */
+	memcpy(pclient, &key, sizeof(key));
+
+	if (pthread_mutex_init(&pclient->ssc_mutex, NULL) == -1) {
+		/* Mutex initialization failed, free the created client */
+		display_nsm_client(&key, str);
+		LogCrit(COMPONENT_STATE, "Could not init mutex for {%s}", str);
+
+		gsh_free(pclient);
+		return NULL;
+	}
+
+	pclient->ssc_nlm_caller_name = gsh_strdup(key.ssc_nlm_caller_name);
+
+	if (pclient->ssc_nlm_caller_name == NULL) {
+		/* Discard the created client */
+		free_nsm_client(pclient);
+		return NULL;
+	}
+
+	glist_init(&pclient->ssc_lock_list);
+	glist_init(&pclient->ssc_share_list);
+	pclient->ssc_refcount = 1;
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_nsm_client(pclient, str);
+		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
+	}
+
+	buffkey.addr = pclient;
+	buffkey.len = sizeof(*pclient);
+	buffval.addr = pclient;
+	buffval.len = sizeof(*pclient);
+
+	rc = hashtable_setlatched(ht_nsm_client, &buffval, &buffval, &latch,
+				  false, NULL, NULL);
+
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_SUCCESS) {
+		display_nsm_client(pclient, str);
+
+		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
+			hash_table_err_to_str(rc), str);
+
+		free_nsm_client(pclient);
+
+		return NULL;
+	}
+
+	if (care != CARE_MONITOR || nsm_monitor(pclient))
+		return pclient;
+
+	/* Failed to monitor, release client reference
+	 * and almost certainly remove it from the hash table.
+	 */
+	dec_nsm_client_ref(pclient);
+
+	return NULL;
+}
+
+/*******************************************************************************
+ *
+ * NLM Client Routines
+ *
+ ******************************************************************************/
 
 /**
- * 
- *  nlm_client_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the NLM clients. 
- * 
- * @return nothing (void function)
+ * @brief Free an NLM client
+ *
+ * @param[in] client The client to free
  */
-
-void nlm_client_PrintAll(void)
+void free_nlm_client(state_nlm_client_t *client)
 {
-  HashTable_Log(COMPONENT_STATE, ht_nlm_client);
-}                               /* nlm_client_PrintAll */
+	if (client->slc_nsm_client != NULL)
+		dec_nsm_client_ref(client->slc_nsm_client);
 
+	if (client->slc_nlm_caller_name != NULL)
+		gsh_free(client->slc_nlm_caller_name);
 
-state_nlm_client_t *get_nlm_client(care_t               care,
-                                   SVCXPRT            * xprt,
-                                   state_nsm_client_t * pnsm_client,
-                                   const char         * caller_name)
-{
-  state_nlm_client_t *pkey, *pclient;
-
-  if(caller_name == NULL)
-    return NULL;
-
-  pkey = gsh_malloc(sizeof(*pkey));
-  if(pkey == NULL)
-    return NULL;
-
-  memset(pkey, 0, sizeof(*pkey));
-  pkey->slc_refcount            = 1;
-  pkey->slc_nsm_client          = pnsm_client;
-  pkey->slc_nlm_caller_name_len = strlen(caller_name);
-  pkey->slc_client_type         = svc_get_xprt_type(xprt);
-
-  if(pkey->slc_nlm_caller_name_len > LM_MAXSTRLEN)
-    {
-      /* Discard the key we created */
-      gsh_free(pkey);
-      return NULL;
-    }
-
-  memcpy(pkey->slc_nlm_caller_name,
-         caller_name,
-         pkey->slc_nlm_caller_name_len);
-  pkey->slc_nlm_caller_name[pkey->slc_nlm_caller_name_len] = '\0';
-  
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_client(pkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Find NLM Client pkey {%s}", str);
-    }
-
-  /* If we found it, return it, if we don't care, return NULL */
-  if(nlm_client_Get_Pointer(pkey, &pclient) == 1 || care == CARE_NOT)
-    {
-      /* Discard the key we created and return the found NLM Client */
-      gsh_free(pkey);
-
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nlm_client(pclient, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Found NLM Client {%s}",
-                       str);
-        }
-
-      if(care == CARE_MONITOR)
-        if(!nsm_monitor(pnsm_client))
-          {
-            dec_nlm_client_ref(pclient);
-            return NULL;
-          }
-
-      return pclient;
-    }
-
-  pclient = gsh_malloc(sizeof(*pkey));
-  if(pclient == NULL)
-    {
-      gsh_free(pkey);
-      return NULL;
-    }
-
-  /* Copy everything over */
-  *pclient = *pkey;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "New NLM Client {%s}", str);
-    }
-
-  if(pthread_mutex_init(&pclient->slc_mutex, NULL) == -1)
-    {
-      /* Mutex initialization failed, free the key and created owner */
-      gsh_free(pkey);
-      gsh_free(pclient);
-      return NULL;
-    }
-
-  /* Ref count the NSM Client as being used by this NLM Client */
-  inc_nsm_client_ref(pnsm_client);
-
-  if(nlm_client_Set(pkey, pclient) == 1)
-    {
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nlm_client(pclient, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Set NLM Client {%s}",
-                       str);
-        }
-
-      if(care != CARE_MONITOR || nsm_monitor(pnsm_client))
-        return pclient;
-
-      dec_nlm_client_ref(pclient);
-      return NULL;
-    }
-
-  dec_nsm_client_ref(pnsm_client);
-  gsh_free(pkey);
-  gsh_free(pclient);
-  return NULL;
+	gsh_free(client);
 }
 
 /**
- * nlm_owner_Set
- * 
+ * @brief Take a reference on an NLM client
  *
- * This routine sets a NLM owner into the related hashtable
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @param[in] client Client to reference
  */
-int nlm_owner_Set(state_owner_t * pkey,
-                  state_owner_t * powner)
+void inc_nlm_client_ref(state_nlm_client_t *client)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(*pkey);
-
-      display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
-
-  buffval.pdata = (caddr_t) powner;
-  buffval.len = sizeof(*powner);
-
-  if(HashTable_Test_And_Set
-     (ht_nlm_owner, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
-
-  return 1;
-}                               /* nlm_owner_Set */
-
-void remove_nlm_owner(state_owner_t        * powner,
-                      const char           * str)
-{
-  hash_buffer_t buffkey, old_key, old_value;
-
-  buffkey.pdata = (caddr_t) powner;
-  buffkey.len = sizeof(*powner);
-
-  switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_dec_state_owner_ref))
-    {
-      case HASHTABLE_SUCCESS:
-        LogFullDebug(COMPONENT_STATE,
-                     "Free %s size %llx",
-                     str, (unsigned long long) old_value.len);
-        dec_nlm_client_ref(powner->so_owner.so_nlm_owner.so_client);
-        if(isFullDebug(COMPONENT_MEMLEAKS))
-          {
-            memset(old_key.pdata, 0, old_key.len);
-            memset(old_value.pdata, 0, old_value.len);
-          }
-        gsh_free(old_key.pdata);
-        gsh_free(old_value.pdata);
-        break;
-
-      case HASHTABLE_NOT_DELETED:
-        /* ref count didn't end up at 0, don't free. */
-        LogDebug(COMPONENT_STATE,
-                 "HashTable_DelRef didn't reduce refcount to 0 for %s",
-                  str);
-        break;
-
-      default:
-        /* some problem occurred */
-        LogDebug(COMPONENT_STATE,
-                 "HashTable_DelRef failed for %s",
-                  str);
-        break;
-    }
+	atomic_inc_int32_t(&client->slc_refcount);
 }
 
 /**
+ * @brief Relinquish a reference on an NLM client
  *
- * nlm_owner_Get_Pointer
- *
- * This routine gets a pointer to an NLM owner from the nlm_owner's hashtable.
- *
- * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @param[in] client Client to release
  */
-static int nlm_owner_Get_Pointer(state_owner_t  * pkey,
-                          state_owner_t ** powner)
+void dec_nlm_client_ref(state_nlm_client_t *client)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc old_value;
+	struct gsh_buffdesc old_key;
+	int32_t refcount;
 
-  *powner = NULL; // in case we dont find it, return NULL
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+	if (isDebug(COMPONENT_STATE))
+		display_nlm_client(client, str);
 
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	refcount = atomic_dec_int32_t(&client->slc_refcount);
 
-      display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
+	if (refcount > 0) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Decrement refcount now=%" PRId32 " {%s}",
+			     refcount, str);
 
-  if(HashTable_GetRef(ht_nlm_owner,
-                      &buffkey,
-                      &buffval,
-                      Hash_inc_state_owner_ref) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "NOTFOUND");
-      return 0;
-    }
+		return;
+	}
 
-  *powner = (state_owner_t *) buffval.pdata;
+	LogFullDebug(COMPONENT_STATE, "Try to remove {%s}", str);
 
-  LogFullDebug(COMPONENT_STATE,
-               "FOUND");
+	buffkey.addr = client;
+	buffkey.len = sizeof(*client);
 
-  return 1;
-}                               /* nlm_owner_Get_Pointer */
+	/* Get the hash table entry and hold latch */
+	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &old_value, true,
+				&latch);
+
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_nlm_client, &latch);
+
+		display_nlm_client(client, str);
+
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
+
+		return;
+	}
+
+	refcount = atomic_fetch_int32_t(&client->slc_refcount);
+
+	if (refcount > 0) {
+		LogDebug(COMPONENT_STATE,
+			 "Did not release refcount now=%" PRId32 " {%s}",
+			 refcount, str);
+
+		hashtable_releaselatched(ht_nlm_client, &latch);
+
+		return;
+	}
+
+	/* use the key to delete the entry */
+	rc = hashtable_deletelatched(ht_nlm_client, &buffkey, &latch, &old_key,
+				     &old_value);
+
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_nlm_client, &latch);
+
+		display_nlm_client(client, str);
+
+		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
+			hash_table_err_to_str(rc), str);
+
+		return;
+	}
+
+	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
+
+	free_nlm_client(old_value.addr);
+}
 
 /**
- * 
- *  nlm_owner_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the NLM owners. 
- * 
- * @return nothing (void function)
+ * @brief Get an NLM client
+ *
+ * @param[in] care        Care status
+ * @param[in] xprt        RPC transport
+ * @param[in] nsm_client  Related NSM client
+ * @param[in] caller_name Caller name
+ *
+ * @return NLM client or NULL.
  */
-
-void nlm_owner_PrintAll(void)
+state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
+				   state_nsm_client_t *nsm_client,
+				   char *caller_name)
 {
-  HashTable_Log(COMPONENT_STATE, ht_nlm_owner);
-}                               /* nlm_owner_PrintAll */
+	state_nlm_client_t key;
+	state_nlm_client_t *pclient;
+	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct hash_latch latch;
+	hash_error_t rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc buffval;
+	struct sockaddr_storage local_addr;
+	socklen_t addr_len;
 
-state_owner_t *get_nlm_owner(care_t               care,
-                             state_nlm_client_t * pclient, 
-                             netobj             * oh,
-                             uint32_t             svid)
-{
-  state_owner_t * pkey, *powner;
+	if (caller_name == NULL)
+		return NULL;
 
-  if(pclient == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
-    return NULL;
+	memset(&key, 0, sizeof(key));
 
-  pkey = gsh_malloc(sizeof(*pkey));
-  if(pkey == NULL)
-    return NULL;
+	key.slc_nsm_client = nsm_client;
+	key.slc_nlm_caller_name_len = strlen(caller_name);
+	key.slc_client_type = svc_get_xprt_type(xprt);
 
-  memset(pkey, 0, sizeof(*pkey));
-  pkey->so_type                             = STATE_LOCK_OWNER_NLM;
-  pkey->so_refcount                         = 1;
-  pkey->so_owner.so_nlm_owner.so_client     = pclient;
-  pkey->so_owner.so_nlm_owner.so_nlm_svid   = svid;
-  pkey->so_owner_len                        = oh->n_len;
-  memcpy(pkey->so_owner_val, oh->n_bytes, oh->n_len);
+	addr_len = sizeof(local_addr);
+	if (getsockname(xprt->xp_fd, (struct sockaddr *)&local_addr, &addr_len)
+	    == -1) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to get local addr.");
+	} else {
+		memcpy(&(key.slc_server_addr), &local_addr,
+		       sizeof(struct sockaddr_storage));
+	}
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+	if (key.slc_nlm_caller_name_len > LM_MAXSTRLEN)
+		return NULL;
 
-      display_nlm_owner(pkey, str);
+	key.slc_nlm_caller_name = caller_name;
 
-      LogFullDebug(COMPONENT_STATE,
-                   "Find NLM Owner KEY {%s}", str);
-    }
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_nlm_client(&key, str);
+		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+	}
 
-  /* If we found it, return it, if we don't care, return NULL */
-  if(nlm_owner_Get_Pointer(pkey, &powner) == 1 || care == CARE_NOT)
-    {
-      /* Discard the key we created and return the found NLM Owner */
-      gsh_free(pkey);
+	buffkey.addr = &key;
+	buffkey.len = sizeof(key);
 
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &buffval, true,
+				&latch);
 
-          display_nlm_owner(powner, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Found {%s}",
-                       str);
-        }
+	/* If we found it, return it */
+	if (rc == HASHTABLE_SUCCESS) {
+		pclient = buffval.addr;
 
-      return powner;
-    }
+		/* Return the found NLM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			display_nlm_client(pclient, str);
+			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
+		}
 
-  powner = gsh_malloc(sizeof(*pkey));
-  if(powner == NULL)
-    {
-      gsh_free(pkey);
-      return NULL;
-    }
+		/* Increment refcount under hash latch.
+		 * This prevents dec ref from removing this entry from hash
+		 * if a race occurs.
+		 */
+		inc_nlm_client_ref(pclient);
 
-  /* Copy everything over */
-  *powner = *pkey;
-  init_glist(&powner->so_lock_list);
-  init_glist(&powner->so_owner.so_nlm_owner.so_nlm_shares);
+		hashtable_releaselatched(ht_nlm_client, &latch);
 
-  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
-    {
-      /* Mutex initialization failed, free the key and created owner */
-      gsh_free(pkey);
-      gsh_free(powner);
-      return NULL;
-    }
+		if (care == CARE_MONITOR && !nsm_monitor(nsm_client)) {
+			dec_nlm_client_ref(pclient);
+			pclient = NULL;
+		}
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+		return pclient;
+	}
 
-      display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "New {%s}", str);
-    }
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+		display_nlm_client(&key, str);
 
-  /* Ref count the client as being used by this owner */
-  inc_nlm_client_ref(pclient);
-  if(nlm_owner_Set(pkey, powner) == 1)
-    {
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
+			hash_table_err_to_str(rc), str);
 
-          display_nlm_owner(powner, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Set NLM Owner {%s}",
-                       str);
-        }
+		return NULL;
+	}
 
-      return powner;
-    }
+	/* Not found, but we don't care, return NULL */
+	if (care == CARE_NOT) {
+		/* Return the found NLM Client */
+		if (isFullDebug(COMPONENT_STATE)) {
+			display_nlm_client(&key, str);
+			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
+		}
 
-  dec_nlm_client_ref(pclient);
-  gsh_free(pkey);
-  gsh_free(powner);
-  return NULL;
+		hashtable_releaselatched(ht_nlm_client, &latch);
+
+		return NULL;
+	}
+
+	pclient = gsh_malloc(sizeof(*pclient));
+
+	if (pclient == NULL) {
+		display_nlm_client(&key, str);
+		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
+
+		return NULL;
+	}
+
+	/* Copy everything over */
+	memcpy(pclient, &key, sizeof(key));
+
+	pclient->slc_nlm_caller_name = gsh_strdup(key.slc_nlm_caller_name);
+
+	/* Take a reference to the NSM Client */
+	inc_nsm_client_ref(nsm_client);
+
+	if (pclient->slc_nlm_caller_name == NULL) {
+		/* Discard the created client */
+		free_nlm_client(pclient);
+		return NULL;
+	}
+
+	pclient->slc_refcount = 1;
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_nlm_client(pclient, str);
+		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
+	}
+
+	buffkey.addr = pclient;
+	buffkey.len = sizeof(*pclient);
+	buffval.addr = pclient;
+	buffval.len = sizeof(*pclient);
+
+	rc = hashtable_setlatched(ht_nlm_client, &buffval, &buffval, &latch,
+				  false, NULL, NULL);
+
+	/* An error occurred, return NULL */
+	if (rc != HASHTABLE_SUCCESS) {
+		display_nlm_client(pclient, str);
+
+		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
+			hash_table_err_to_str(rc), str);
+
+		free_nlm_client(pclient);
+
+		return NULL;
+	}
+
+	if (care != CARE_MONITOR || nsm_monitor(nsm_client))
+		return pclient;
+
+	/* Failed to monitor, release client reference
+	 * and almost certainly remove it from the hash table.
+	 */
+	dec_nlm_client_ref(pclient);
+
+	return NULL;
 }
+
+/*******************************************************************************
+ *
+ * NLM Owner Routines
+ *
+ ******************************************************************************/
+
+/**
+ * @brief Free an NLM owner object
+ *
+ * @param[in] owner Stored owner
+ */
+void free_nlm_owner(state_owner_t *owner)
+{
+	if (owner->so_owner.so_nlm_owner.so_client != NULL)
+		dec_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
+}
+
+/**
+ * @brief Initialize an NLM owner object
+ *
+ * @param[in] owner Stored owner
+ */
+static void init_nlm_owner(state_owner_t *owner)
+{
+	inc_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
+
+	glist_init(&owner->so_owner.so_nlm_owner.so_nlm_shares);
+}
+
+/**
+ * @brief Get an NLM owner
+ *
+ * @param[in] care   Care status
+ * @param[in] client Related NLM client
+ * @param[in] oh     Object handle
+ * @param[in] svid   Owner ID
+ */
+state_owner_t *get_nlm_owner(care_t care, state_nlm_client_t *client,
+			     netobj *oh, uint32_t svid)
+{
+	state_owner_t key;
+
+	if (client == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
+		return NULL;
+
+	memset(&key, 0, sizeof(key));
+
+	key.so_type = STATE_LOCK_OWNER_NLM;
+	key.so_owner.so_nlm_owner.so_client = client;
+	key.so_owner.so_nlm_owner.so_nlm_svid = svid;
+	key.so_owner_len = oh->n_len;
+	key.so_owner_val = oh->n_bytes;
+
+	return get_state_owner(care, &key, init_nlm_owner, NULL);
+}
+
+/** @} */

@@ -1,3 +1,27 @@
+/*
+ * Copyright IBM Corporation, 2012
+ *  Contributor: Frank Filz <ffilz@us.ibm.com>
+ *
+ * --------------------------
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ *
+ */
+
 #ifndef _NFS4_ACLS_H
 #define _NFS4_ACLS_H
 
@@ -20,11 +44,11 @@ void nfs4_ace_free(fsal_ace_t *pace);
 
 void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl);
 
-fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pstatus);
+fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata,
+			       fsal_acl_status_t *pstatus);
 
 void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus);
 
 int nfs4_acls_init();
 
-#endif                          /* _NFS4_ACLS_H */
-
+#endif				/* _NFS4_ACLS_H */

@@ -28,7 +28,7 @@
 /* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF       */
 /* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   */
 /*                                                                              */
-/* @(#)42       1.1.9.1  src/avs/fs/mmfs/ts/util/gpfs.h, mmfs, avs_rhrz 4/26/12 10:33:43 */
+/* %Z%%M%       %I%  %W% %G% %U% */
 /*
  *  Library calls for GPFS interfaces
  */
@@ -278,7 +278,7 @@ typedef struct gpfs_ace_v4
 
 /* when GPFS_ACL_VERSION_NFS4, and GPFS_ACL_LEVEL_V4FLAGS */
 typedef struct v4Level1_ext /* ACL extension */
-{ 
+{
   gpfs_aclFlag_t acl_flags; /* per-ACL flags */
   gpfs_ace_v4_t ace_v4[1];
 } v4Level1_t;
@@ -374,6 +374,7 @@ gpfs_putacl(const char *pathname,
  *              EACCES  File not opened for writing
  *              EDQUOT  Quota exceeded
  *              ENOSPC  Not enough space on disk
+ *              EPERM   File is in a snapshot
  */
 int GPFS_API
 gpfs_prealloc(gpfs_file_t fileDesc,
@@ -579,7 +580,7 @@ gpfs_set_lease(gpfs_file_t fileDesc,
  *              GPFS_LEASE_NONE
  *
  * Returns:     0       Success
- *             -1       Failure   
+ *             -1       Failure
  *
  * Errno:       EINVAL
  */
@@ -595,7 +596,7 @@ gpfs_get_lease(gpfs_file_t fileDesc);
   * OUTPUT:      Real file name stored in filesystem
   *
   * Returns:     0       Success
-  *             -1       Failure   
+  *             -1       Failure
   *
   * Errno:       EBADF   Bad file handle
   *              EINVAL  Not a regular file
@@ -658,7 +659,7 @@ typedef struct cifsThreadData_t
   * FUNCTION:    Register a CIFS export process.
   *
   * INPUT:       implicit use of the process ids
-  *              
+  *
   * Returns:     0       Successful
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
@@ -667,21 +668,21 @@ typedef struct cifsThreadData_t
   *              EBADF   unable to allocate a file descriptor
   */
 int GPFS_API
-gpfs_register_cifs_export();
+gpfs_register_cifs_export(void);
 
  /* NAME:        gpfs_unregister_cifs_export()
   *
-  * FUNCTION:    remove a registration for a CIFS export 
+  * FUNCTION:    remove a registration for a CIFS export
   *
   * INPUT:       implicit use of the process ids
-  *              
+  *
   * Returns:     0       Successful
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
   *              ENOMEM  temporary shortage of memory
   */
 int GPFS_API
-gpfs_unregister_cifs_export();
+gpfs_unregister_cifs_export(void);
 
  /* NAME:        gpfs_register_cifs_buffer()
   *
@@ -689,14 +690,14 @@ gpfs_unregister_cifs_export();
   *
   * INPUT:       implicit use of the process and thread ids
   *              Address of a cifsThreadData_t structure that will include
-  *              a GPFS ACL (GPFS_ACL_VERSION_NFS4/GPFS_ACL_LEVEL_V4FLAGS)              
-  *              that can be applied at file/dir creation.              
-  *              
+  *              a GPFS ACL (GPFS_ACL_VERSION_NFS4/GPFS_ACL_LEVEL_V4FLAGS)
+  *              that can be applied at file/dir creation.
+  *
   * Returns:     0       Successful
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
   *              ENOMEM  unable to allocate required memory
-  *              EINVAL  no associated process registrion exists 
+  *              EINVAL  no associated process registrion exists
   *                      bad dataLength in buffer.
   */
 int GPFS_API
@@ -707,7 +708,7 @@ gpfs_register_cifs_buffer(cifsThreadData_t *bufP);
   * FUNCTION:    remove a CIFS thread/buffer registration
   *
   * INPUT:       implicit use of the process and thread ids
-  *              
+  *
   * Returns:     0       Successful
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
@@ -715,7 +716,7 @@ gpfs_register_cifs_buffer(cifsThreadData_t *bufP);
   *              EINVAL  no associated process registrion exists
   */
 int GPFS_API
-gpfs_unregister_cifs_buffer();
+gpfs_unregister_cifs_buffer(void);
 
 /* NAME:        gpfs_lib_init()
  *
@@ -799,7 +800,7 @@ typedef long long gpfs_nlink64_t;
     unsigned int       st_type;       /* file type */
     gpfs_gen64_t       st_gen;        /* inode generation number */
     gpfs_timestruc64_t st_createtime; /* time of creation */
-    unsigned int       st_attrs;      /* Window's flags */
+    unsigned int       st_attrs;      /* Windows flags */
   } gpfs_stat64_t;
 #else
   typedef struct stat64 gpfs_stat64_t;
@@ -883,7 +884,7 @@ typedef struct gpfs_direntx64
    for the size of the structure rather than sizeof, to allow some degree
    of forward compatibility */
 #define GPFS_IA_VERSION 1
-#define GPFS_IA64_VERSION 2
+#define GPFS_IA64_VERSION 3 /* ver 3 adds ia_repl_xxxx bytes instead of ia_pad2 */
 #define GPFS_IA64_RESERVED 4
 #define GPFS_IA64_UNUSED 10
 
@@ -913,7 +914,6 @@ typedef struct gpfs_iattr
   unsigned int     ia_filesetid;  /* fileset ID */
   unsigned int     ia_datapoolid; /* storage pool ID for data */
   unsigned int     ia_pad2;       /* reserved space */
-
 } gpfs_iattr_t;
 
 
@@ -935,7 +935,11 @@ typedef struct gpfs_iattr64
   unsigned int       ia_pad1;       /* reserved space */
   gpfs_timestruc64_t ia_mtime;      /* time of last data modification */
   unsigned int       ia_flags;      /* flags (defined below) */
-  int                ia_pad2;       /* reserved space */
+  /* next four bytes were ia_pad2 */
+  unsigned char      ia_repl_data;  /* data replication factor */
+  unsigned char      ia_repl_data_max; /* data replication max factor */
+  unsigned char      ia_repl_meta;  /* meta data replication factor */
+  unsigned char      ia_repl_meta_max; /* meta data replication max factor */
   gpfs_timestruc64_t ia_ctime;      /* time of last status change */
   int                ia_blocksize;  /* preferred block size for io */
   unsigned int       ia_pad3;       /* reserved space */
@@ -986,6 +990,7 @@ typedef struct gpfs_iattr64
 #define GPFS_IAFLAG_WRITEMANAGED    0x00200000 /* dmapi write event enabled */
 
 #define GPFS_IAFLAG_APPENDONLY      0x00400000 /* AppendOnly only */
+#define GPFS_IAFLAG_DELETED         0x00800000 /* inode has been deleted */
 
 /* Define flags for window's attributes */
 #define GPFS_IWINFLAG_ARCHIVE       0x0001 /* Archive */
@@ -1009,14 +1014,14 @@ typedef struct gpfs_iattr64
 #define GPFS_IAXPERM_RPATTR         0x0010 /* file has restore policy attrs */
 
 /* Define flags for pcache bits defined in the inode */
-#define GPFS_ICAFLAG_CACHED   0x0001  // "cached complete"
-#define GPFS_ICAFLAG_CREATE   0x0002  // "created"
-#define GPFS_ICAFLAG_DIRTY    0x0004  // "data dirty"
-#define GPFS_ICAFLAG_LINK     0x0008  // "hard linked"
-#define GPFS_ICAFLAG_SETATTR  0x0010  // "attr changed"
-#define GPFS_ICAFLAG_LOCAL    0x0020  // "local"
-#define GPFS_ICAFLAG_APPEND   0x0040  // "append"
-#define GPFS_ICAFLAG_STATE    0x0080  // "has remote state"
+#define GPFS_ICAFLAG_CACHED   0x0001  /* "cached complete"  */
+#define GPFS_ICAFLAG_CREATE   0x0002  /* "created"          */
+#define GPFS_ICAFLAG_DIRTY    0x0004  /* "data dirty"       */
+#define GPFS_ICAFLAG_LINK     0x0008  /* "hard linked"      */
+#define GPFS_ICAFLAG_SETATTR  0x0010  /* "attr changed"     */
+#define GPFS_ICAFLAG_LOCAL    0x0020  /* "local"            */
+#define GPFS_ICAFLAG_APPEND   0x0040  /* "append"           */
+#define GPFS_ICAFLAG_STATE    0x0080  /* "has remote state" */
 
 /* Define pointers to interface types */
 typedef struct gpfs_fssnap_handle gpfs_fssnap_handle_t;
@@ -1058,6 +1063,8 @@ typedef struct gpfs_fssnap_id
 #define GPFS_ATTRFLAG_INCL_DMAPI     0x0008  /* Include dmapi attributes */
 #define GPFS_ATTRFLAG_FINALIZE_ATTRS 0x0010  /* Finalize immutability attributes */
 #define GPFS_ATTRFLAG_SKIP_IMMUTABLE 0x0020  /* Skip immutable attributes */
+#define GPFS_ATTRFLAG_INCL_ENCR      0x0040  /* Include encryption attributes */
+#define GPFS_ATTRFLAG_SKIP_CLONE     0x0080  /* Skip clone attributes */
 
 /* Define structure used by gpfs_statfspool */
 typedef struct gpfs_statfspool_s
@@ -2160,6 +2167,8 @@ gpfs_igetattrs(gpfs_ifile_t *ifile,
  *                      are saved, but the current storage pool is not.
  *                GPFS_ATTRFLAG_INCL_DMAPI - file attributes for dmapi are
  *                      included in the returned buffer
+ *                GPFS_ATTRFLAG_INCL_ENCR - file attributes for encryption
+ *                      are included in the returned buffer
  *
  *              buffer:     pointer to buffer for returned attributes
  *              bufferSize: size of buffer
@@ -2257,6 +2266,12 @@ gpfs_iputattrs(gpfs_ifile_t *ifile,
  *                      after data is retored. If file is immutable/appendOnly
  *                      call without this flag before restoring data
  *                      then call with this flag after restoring data
+ *                GPFS_ATTRFLAG_INCL_ENCR - file attributes for encryption
+ *                      are restored. Note that this may result in the file's
+ *                      File Encryption Key (FEK) being changed, and in this
+ *                      case any prior content in the file is effectively lost.
+ *                      This option should only be used when the entire file
+ *                      content is restored after the attributes are restored.
  *
  *              buffer: pointer to buffer for returned attributes
  *              pathName: pointer to file path and file name for file
@@ -2722,9 +2737,14 @@ gpfs_getpoolname(const char *pathname,
 #endif
 #define Q_SETUSE        0x0500  /* set usage */
 #define Q_SYNC          0x0600  /* sync disk copy of a filesystems quotas */
-#define Q_SETGRACETIME  0x0700  /* set grace time */
+#define Q_SETGRACETIME  0x0900  /* set grace time */
 #define Q_SETGRACETIME_ENHANCE  0x0800  /* set grace time and update all
                                          * quota entries */
+#define Q_GETDQPFSET    0x0A00  /* get default quota per fileset */
+#define Q_SETDQPFSET    0x0B00  /* set default quota per fileset */
+#define Q_SETQUOTA_UPDATE_ET 0x0C00 /* this SETQUOTA needs to update entryType */
+#define Q_GETDQPFSYS    0x0D00  /* get default quota per file system */
+#define Q_SETDQPFSYS    0x0E00  /* set default quota per file system */
 
 /* gpfs quota types */
 #define GPFS_USRQUOTA     0
@@ -2837,6 +2857,12 @@ gpfs_getfilesetid(const char *pathname,
  *              ENOSPC  Not enough space on disk
  *              EISDIR  Destination is a directory
  *              EXDEV   Source and destination aren't in the same filesystem
+ *              EROFS   Destination is read-only
+ *              EPERM   Invalid source file
+ *              EEXIST  Destination file already exists
+ *              EBUSY   Source file is open
+ *              EFORMAT File system does not support clones
+ *              EMEDIUMTYPE File system does not support clones
  */
 int GPFS_API
 gpfs_clone_snap(const char *sourcePathP, const char *destPathP);
@@ -2860,6 +2886,11 @@ gpfs_clone_snap(const char *sourcePathP, const char *destPathP);
  *              ENOSPC  Not enough space on disk
  *              EISDIR  Destination is a directory
  *              EXDEV   Source and destination aren't in the same filesystem
+ *              EROFS   Destination is read-only
+ *              EPERM   Invalid source or destination file
+ *              EEXIST  Destination file already exists
+ *              EFORMAT File system does not support clones
+ *              EMEDIUMTYPE File system does not support clones
  */
 int GPFS_API
 gpfs_clone_copy(const char *sourcePathP, const char *destPathP);
@@ -2959,26 +2990,38 @@ gpfs_get_fset_masks(gpfs_fssnap_handle_t* fset_snapHandle,
 /*
    API functions for Light Weight Event
 */
-#include <gpfs_lweTypes.h>
+#include <include/gpfs_lweTypes.h>
 
 /* NAME:       gpfs_lweCreateSession()
  *
  * FUNCTION:   create a light weight event session
  *
- * Input:      oldsid: existing session id, 
-                       INVALID_SID for create a new session,
-                       valid sid for resume an existing session
-	       sessinfop: session string, unique for each session
- *	       
+ * Input:      oldsid: existing session id,
+ *                     Set to LWE_NO_SESSION to start new session
+ *                       - If a session with the same name exists, that session
+ *                         will be terminated. All pending/outstanding events
+ *                         for the old session will be redelivered on the new one.
+ *                         This is typically used to take over a session from a
+ *                         failed/hung process.
+ *                     Set to an existing session's id to resume that session
+ *                       - If a session with the same name and id already exists
+ *                         it is not terminated, nor will outstanding events
+ *                         be redelivered. This is typically used if a session
+ *                         is shared between multiple processes.
+ *             sessinfop: session string, unique for each session
+ *
  * Output:     newsidp: session id for new session
  *
  * Returns:    0       Success
  *            -1       Failure
  *
- * Errno:       EINVAL oldsid and sessinfop mismatch
- *              EEXIST session with the same name already exists, can not create.
+ * Errno:       EINVAL invalid parameters
+ *              ENFILE maximum number of sessions have already been created
+ *              ENOMEM insufficient memory to create new session
+ *              ENOENT session to resume does not exist
+ *              EEXIST session to resume exists with different id
  */
-int GPFS_API 
+int GPFS_API
 gpfs_lweCreateSession(lwe_sessid_t   oldsid,        /* IN */
                       char          *sessinfop,     /* IN */
                       lwe_sessid_t  *newsidp        /* OUT */
@@ -2993,9 +3036,9 @@ gpfs_lweCreateSession(lwe_sessid_t   oldsid,        /* IN */
  *
  * Returns:    0       Success
  *             EINVAL sid invalid
- *             EBUSY  session is busy 
+ *             EBUSY  session is busy
  */
-int GPFS_API 
+int GPFS_API
 gpfs_lweDestroySession(lwe_sessid_t sid);         /* IN */
 
 /* NAME:       gpfs_lweGetAllSessions()
@@ -3010,14 +3053,14 @@ gpfs_lweDestroySession(lwe_sessid_t sid);         /* IN */
  *             EINVAL pass in args invalid
  *             E2BIG  information is too large
  */
-int GPFS_API 
+int GPFS_API
 gpfs_lweGetAllSessions(unsigned int   nelem,      /* IN */
                        lwe_sessid_t  *sidbufp,    /* OUT */
-		       unsigned int  *nelemp);    /* OUT */
+                       unsigned int  *nelemp);    /* OUT */
 
 /* NAME:       gpfs_lweQuerySession()
  *
- * FUNCTION:   query session string by id 
+ * FUNCTION:   query session string by id
  *
  * Input:      sid:    id of session to be queryed
                buflen: length of buffer
@@ -3028,18 +3071,18 @@ gpfs_lweGetAllSessions(unsigned int   nelem,      /* IN */
  *             EINVAL  pass in args invalid
  *             E2BIG   information is too large
  */
-int GPFS_API 
+int GPFS_API
 gpfs_lweQuerySession(lwe_sessid_t   sid,     /* IN */
                      size_t         buflen,  /* IN */
-		     void          *bufp,    /* OUT */
-		     size_t        *rlenP);  /* OUT */
+                     void          *bufp,    /* OUT */
+                     size_t        *rlenP);  /* OUT */
 
 /* NAME:       gpfs_lweGetEvents()
  *
  * FUNCTION:   get events from a light weight session
  *
  * Input:      sid:     id of the session
- *             maxmsgs: max number of event to fetch, 
+ *             maxmsgs: max number of event to fetch,
  *                      0 to fetch all possible
  *             flags:   LWE_EV_WAIT: waiting for new events if event
  *                      queue is empty
@@ -3055,9 +3098,9 @@ int GPFS_API
 gpfs_lweGetEvents(lwe_sessid_t  sid,     /* IN  */
                   unsigned int  maxmsgs, /* IN  */
                   unsigned int  flags,   /* IN  */
-		  size_t        buflen,  /* IN  */
-		  void         *bufp,    /* OUT */
-		  size_t       *rlenp);  /* OUT */
+                  size_t        buflen,  /* IN  */
+                  void         *bufp,    /* OUT */
+                  size_t       *rlenp);  /* OUT */
 
 /* NAME:      gpfs_lweRespondEvent()
  *
@@ -3075,11 +3118,141 @@ gpfs_lweGetEvents(lwe_sessid_t  sid,     /* IN  */
 int GPFS_API
 gpfs_lweRespondEvent(lwe_sessid_t   sid,       /* IN */
                      lwe_token_t    token,     /* IN */
-		     lwe_resp_t     response,  /* IN */
-		     int            reterror); /* IN */
+                     lwe_resp_t     response,  /* IN */
+                     int            reterror); /* IN */
+
+const char* GPFS_API
+gpfs_get_fspathname_from_fsname(const char* fsname_or_path);
+/* Check that fsname_or_path refers to a GPFS filesystem and find the path to its root
+ Return a strdup()ed copy of the path -OR- NULL w/errno
+*/
+
+int GPFS_API
+/* experimental */
+gpfs_qos_getstats(
+                   const char *fspathname, /* in only: path to file system*/
+                   unsigned int options, /* in only: option flags: 0=begin at specified qip, 1=begin after qip */
+                   unsigned int qosid,   /* in only: 0 or a specific qosid at which to start or continue */
+                   gpfs_pool_t  poolid,  /* in only: -1 or a specific poolid at which to start or continue */
+                   unsigned int mqips,   /* in only: max number of qip=(qosid,poolid) histories to retrieve */
+                   unsigned int nslots,  /* in only: max number of time slots of history to retrieve */
+                   void *bufferP,        /* ptr to return stat structures */
+                   unsigned int bufferSize);  /* sizeof stat buffer or 0 */
+
+int GPFS_API
+/* experimental */
+gpfs_qos_control(
+                   const char *fspathname, /* in only: path to file system*/
+                   void *bufferP,        /* in/out control/get/set structs */
+                   unsigned int bufferSize);
+
+int GPFS_API
+gpfs_qos_set(
+             const char *fspathname,
+             const char *classname, /* "gold", "silver", or .. "1" or "2" .. */
+             int   id,        /* process id or  pgrp or userid */
+             int   which);    /* process, pgrp or user */
+/* if id==0 then getpid() or getpgrp() or getuid()
+   if which==0 or 1 then process, if 2 process then group, if 3 then userid */
+
+int GPFS_API
+gpfs_qos_lkupName(
+                  const char *fspathname,
+                  const char *classname);
+/* return numeric value of classname or 0 */
+
+int GPFS_API
+gpfs_ioprio_set(int,int,int); /* do not call directly */
+
+/* NAME:        gpfs_enc_file_rewrap_key()
+ *
+ * FUNCTION:    Re-wrap the File Encryption Key (FEK) for the file,
+ *              replacing the usage of the original (second parameter)
+ *              Master Encryption Key (MEK) with the new key provided as
+ *              the third parameter. The content of the file remains intact.
+ *
+ *              If the FEK is not currently being wrapped with the MEK
+ *              identified by the second parameter then no action is taken.
+ *
+ *              This function is normally invoked before the original MEK is
+ *              removed.
+ *
+ *              The file must be opened in read/write mode for this function
+ *              to perform the key rewrap.
+ *
+ * INPUT:       fileDesc: File descriptor for file whose key is to be rewrapped
+ *              orig_key_p: Key ID for the key (MEK) to be replaced
+ *              new_key_p: Key ID for the new key (MEK) to be used
+ *
+ * OUTPUT:      N/A
+ *
+ * Returns:     0 success
+ *              -1 failure
+ *
+ * Errno:
+ *              EACCESS    Existing or new key cannot be retrieved
+ *                         The new key is already being used to wrap the
+ *                         file's FEK
+ *              EBADF      Bad file descriptor
+ *              EINVAL     Arguments are invalid: key format is incorrect
+ *              EFAULT     An invalid pointer is supplied; the associated
+ *                         data could not be copied in or out of the kernel
+ *              E2BIG      Key IDs provided are too long
+ *              ENOSYS     Function not available (cluster or file system not
+ *                         enabled for encryption)
+ *              EPERM      File is in a snapshot
+ */
+
+/* The Key ID is a string comprised of the key ID and the remote key
+   server RKM ID, separated by ':' */
+typedef const char *gpfs_enc_key_id_t;    /* "<KEY ID> : <KMS ID>" */
+
+int GPFS_API
+gpfs_enc_file_rewrap_key(gpfs_file_t fileDesc,
+                         gpfs_enc_key_id_t orig_key_p,
+                         gpfs_enc_key_id_t new_key_p);
 
 
-/* 
+/* NAME:        gpfs_enc_get_algo()
+ *
+ * FUNCTION:    Retrieve a string describing the encryption algorithm, key
+ *              length, Master Encryption Key(s) ID, and wrapping and combining
+ *              mechanisms used for the file.
+ *
+ * INPUT:       fileDesc: File descriptor for file whose encryption
+ *                        algorithm is being retrieved
+ *              encryption_xattrP: content of the gpfs.Encryption
+ *                        extended attribute, retrieved by a call to
+ *                        gpfs_fcntl (with structure type GPFS_FCNTL_GET_XATTR)
+ *              xattr_len: length of the data in encryption_xattrP
+ *              algo_txt_size: space reserved by the caller for algo_txtP
+ *
+ * OUTPUT:      algo_txtP: NULL-terminated string describing the
+ *                        encryption for the file
+ *
+ * Returns:     0 success
+ *              -1 failure
+ *
+ * Errno:
+ *              ENOENT    File not found
+ *              EBADF     Bad file handle, not a GPFS file
+ *              EACCESS   Permission denied
+ *              EFAULT    Bad address provided
+ *              EINVAL    Not a regular file
+ *              EINVAL    Invalid values for xattr_len or algo_txt_size
+ *              EINVAL    Invalid content of encryption extended attribute
+ *              ENOSYS    Function not available
+ *              E2BIG     Output string does not fit in algo_txtP
+ */
+
+int GPFS_API
+gpfs_enc_get_algo(gpfs_file_t fileDesc,
+                  const char *encryption_xattrP,
+                  int xattr_len,
+                  char *algo_txtP,
+                  int algo_txt_size);
+
+/*
  * When GPFS_64BIT_INODES is defined, use the 64-bit interface definitions as
  * the default.
  */

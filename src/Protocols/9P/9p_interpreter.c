@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,32 +18,20 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    9p_interpretor.c
- * \brief   9P interpretor
- *
- * 9p_interpretor.c : _9P_interpretor.
- *
- *
+ * @file  9p_interpreter.c
+ * @brief 9P interpretor
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-
 
 #include "nfs_core.h"
 #include "9p.h"
@@ -54,126 +42,145 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
-#include "nfs_stat.h"
-#include "SemN.h"
 
-/* This array maps a 9P Tmessage type to the 
- * related position in _9pfuncdesc array 
- * position=32 is "unknown function" */
-const int _9ptabindex[] =
-    {32, 
-     32, 32, 32, 32, 32, 32, 32,
-      0, 32, 32, 32,  1, 32,  2,
-     32,  3, 32,  4, 32,  5, 32,
-      6, 32,  7, 32,  8, 32, 32,
-     32,  9, 32, 10, 32, 32, 32,
-     32, 32, 32, 32, 11, 32, 32,
-     32, 32, 32, 32, 32, 32, 32,
-     12, 32, 13, 32, 14, 32, 32,
-     32, 32, 32, 32, 32, 32, 32,
-     32, 32, 32, 32, 32, 32, 15,
-     32, 16, 32, 17, 32, 18, 32,
-     32, 32, 32, 32, 32, 32, 32,
-     32, 32, 32, 32, 32, 32, 32,
-     32, 32, 32, 32, 32, 32, 32,
-     32, 19, 32, 20, 32, 21, 32,
-     32, 32, 22, 32, 23, 32, 24,
-     32, 25, 32, 26, 32, 27, 32,
-     28, 32, 29, 32, 30, 32, 31  
+/* opcode to function array */
+const struct _9p_function_desc _9pfuncdesc[] = {
+	[0] = {_9p_not_2000L, "no function"},	/* out of bounds */
+	[_9P_TSTATFS] = {_9p_statfs, "_9P_TSTATFS"},
+	[_9P_TLOPEN] = {_9p_lopen, "_9P_TLOPEN"},
+	[_9P_TLCREATE] = {_9p_lcreate, "_9P_TLCREATE"},
+	[_9P_TSYMLINK] = {_9p_symlink, "_9P_TSYMLINK"},
+	[_9P_TMKNOD] = {_9p_mknod, "_9P_TMKNOD"},
+	[_9P_TRENAME] = {_9p_rename, "_9P_TRENAME"},
+	[_9P_TREADLINK] = {_9p_readlink, "_9P_TREADLINK"},
+	[_9P_TGETATTR] = {_9p_getattr, "_9P_TGETATTR"},
+	[_9P_TSETATTR] = {_9p_setattr, "_9P_TSETATTR"},
+	[_9P_TXATTRWALK] = {_9p_xattrwalk, "_9P_TXATTRWALK"},
+	[_9P_TXATTRCREATE] = {_9p_xattrcreate, "_9P_TXATTRCREATE"},
+	[_9P_TREADDIR] = {_9p_readdir, "_9P_TREADDIR"},
+	[_9P_TFSYNC] = {_9p_fsync, "_9P_TFSYNC"},
+	[_9P_TLOCK] = {_9p_lock, "_9P_TLOCK"},
+	[_9P_TGETLOCK] = {_9p_getlock, "_9P_TGETLOCK"},
+	[_9P_TLINK] = {_9p_link, "_9P_TLINK"},
+	[_9P_TMKDIR] = {_9p_mkdir, "_9P_TMKDIR"},
+	[_9P_TRENAMEAT] = {_9p_renameat, "_9P_TRENAMEAT"},
+	[_9P_TUNLINKAT] = {_9p_unlinkat, "_9P_TUNLINKAT"},
+	[_9P_TVERSION] = {_9p_version, "_9P_TVERSION"},
+	[_9P_TAUTH] = {_9p_auth, "_9P_TAUTH"},
+	[_9P_TATTACH] = {_9p_attach, "_9P_TATTACH"},
+	[_9P_TFLUSH] = {_9p_flush, "_9P_TFLUSH"},
+	[_9P_TWALK] = {_9p_walk, "_9P_TWALK"},
+	[_9P_TOPEN] = {_9p_not_2000L, "_9P_TOPEN"},
+	[_9P_TCREATE] = {_9p_not_2000L, "_9P_TCREATE"},
+	[_9P_TREAD] = {_9p_read, "_9P_TREAD"},
+	[_9P_TWRITE] = {_9p_write, "_9P_TWRITE"},
+	[_9P_TCLUNK] = {_9p_clunk, "_9P_TCLUNK"},
+	[_9P_TREMOVE] = {_9p_remove, "_9P_TREMOVE"},
+	[_9P_TSTAT] = {_9p_not_2000L, "_9P_TSTAT"},
+	[_9P_TWSTAT] = {_9p_not_2000L, "_9P_TWSTAT"}
 };
 
-const _9p_function_desc_t _9pfuncdesc[] = {
-        { _9p_statfs, "_9P_TSTATFS"  },
-        { _9p_lopen, "_9P_TLOPEN" },
-        { _9p_lcreate, "_9P_TLCREATE" },
-        { _9p_symlink, "_9P_TSYMLINK" },
-        { _9p_mknod, "_9P_TMKNOD" },
-        { _9p_rename, "_9P_TRENAME" },
-        { _9p_readlink, "_9P_TREADLINK" },
-        { _9p_getattr, "_9P_TGETATTR"},
-        { _9p_setattr, "_9P_TSETATTR" },
-        { _9p_xattrwalk, "_9P_TXATTRWALK" },
-        { _9p_xattrcreate, "_9P_TXATTRCREATE" },
-        { _9p_readdir, "_9P_TREADDIR" },
-        { _9p_fsync, "_9P_TFSYNC" },
-        { _9p_lock, "_9P_TLOCK" },
-        { _9p_getlock, "_9P_TGETLOCK" },
-        { _9p_link, "_9P_TLINK" },
-        { _9p_mkdir, "_9P_TMKDIR" },
-        { _9p_renameat, "_9P_TRENAMEAT" },
-        { _9p_unlinkat, "_9P_TUNLINKAT" },
-        { _9p_version, "_9P_TVERSION" },
-        { _9p_auth, "_9P_TAUTH" },
-        { _9p_attach, "_9P_TATTACH" },
-        { _9p_flush, "_9P_TFLUSH" },
-        { _9p_walk, "_9P_TWALK" },
-        { _9p_not_2000L, "_9P_TOPEN" },
-        { _9p_not_2000L, "_9P_TCREATE" },
-        { _9p_read, "_9P_TREAD" },
-        { _9p_write, "_9P_TWRITE" },
-        { _9p_clunk, "_9P_TCLUNK" },
-        { _9p_remove, "_9P_TREMOVE" },
-        { _9p_not_2000L, "_9P_TSTAT" },
-        { _9p_not_2000L, "_9P_TWSTAT" },
-        { _9p_not_2000L, "no function" }
-} ;
-
-int _9p_not_2000L( _9p_request_data_t * preq9p, 
-                   void * pworker_data,
-                   u32 * plenout, 
-                   char * preply)
+int _9p_not_2000L(struct _9p_request_data *req9p, void *worker_data,
+		  u32 *plenout, char *preply)
 {
-  char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
-  u8 * pmsgtype = NULL ;
-  u16 msgtag = 0 ;
+	char *msgdata = req9p->_9pmsg + _9P_HDR_SIZE;
+	u8 *pmsgtype = NULL;
+	u16 msgtag = 0;
 
-  /* Get message's type */
-  pmsgtype = (u8 *)msgdata ;
-  LogEvent( COMPONENT_9P,  "(%u|%s) is not a 9P2000.L message, returning ENOTSUP", 
-            *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
+	/* Get message's type */
+	pmsgtype = (u8 *) msgdata;
+	LogEvent(COMPONENT_9P,
+		 "(%u|%s) is not a 9P2000.L message, returning ENOTSUP",
+		 *pmsgtype, _9pfuncdesc[*pmsgtype].funcname);
 
-  _9p_rerror( preq9p, &msgtag, ENOTSUP, plenout, preply ) ;
+	_9p_rerror(req9p, worker_data, &msgtag, ENOTSUP, plenout, preply);
 
-  return -1 ;
-} /* _9p_not_2000L */
+	return -1;
+}				/* _9p_not_2000L */
 
-void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data)
+static ssize_t tcp_conn_send(struct _9p_conn *conn, const void *buf, size_t len,
+			     int flags)
 {
-  char * msgdata ;
-  u32 * pmsglen = NULL ;
-  u8 * pmsgtype = NULL ;
-  u32 outdatalen = 0 ;
-  int rc = 0 ; 
+	ssize_t ret;
 
-  char replydata[_9P_MSG_SIZE] ;
+	pthread_mutex_lock(&conn->sock_lock);
+	ret = send(conn->trans_data.sockfd, buf, len, flags);
+	pthread_mutex_unlock(&conn->sock_lock);
+	return ret;
+}
 
-  msgdata =  preq9p->_9pmsg;
+void _9p_tcp_process_request(struct _9p_request_data *req9p,
+			     nfs_worker_data_t *worker_data)
+{
+	u32 outdatalen = 0;
+	int rc = 0;
+	char replydata[_9P_MSG_SIZE];
 
-  /* Get message's length */
-  pmsglen = (u32 *)msgdata ;
-  msgdata += _9P_HDR_SIZE;
+	rc = _9p_process_buffer(req9p, worker_data, replydata, &outdatalen);
+	if (rc != 1) {
+		LogMajor(COMPONENT_9P,
+			 "Could not process 9P buffer on socket #%lu",
+			 req9p->pconn->trans_data.sockfd);
+	} else {
+		if (tcp_conn_send(req9p->pconn, replydata, outdatalen, 0) !=
+		    outdatalen)
+			LogMajor(COMPONENT_9P,
+				 "Could not send 9P/TCP reply correclty on socket #%lu",
+				 req9p->pconn->trans_data.sockfd);
+	}
+	_9p_DiscardFlushHook(req9p);
+	return;
+}				/* _9p_process_request */
 
-  /* Get message's type */
-  pmsgtype = (u8 *)msgdata ;
-  msgdata += _9P_TYPE_SIZE ;
+int _9p_process_buffer(struct _9p_request_data *req9p,
+		       nfs_worker_data_t *worker_data, char *replydata,
+		       u32 *poutlen)
+{
+	char *msgdata;
+	u32 msglen;
+	u8 msgtype;
+	int rc = 0;
 
-  /* Check boundaries */
-  if( *pmsgtype < _9P_TSTATFS || *pmsgtype > _9P_TWSTAT )
-   return ;
+	msgdata = req9p->_9pmsg;
 
-  outdatalen = _9P_MSG_SIZE  -  _9P_HDR_SIZE ;
+	/* Get message's length */
+	msglen = *(u32 *) msgdata;
+	msgdata += _9P_HDR_SIZE;
 
-  LogFullDebug( COMPONENT_9P, "9P msg: length=%u type (%u|%s)",  *pmsglen, (u32)*pmsgtype, _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname ) ;
+	/* Get message's type */
+	msgtype = *(u8 *) msgdata;
+	msgdata += _9P_TYPE_SIZE;
 
-  /* Call the 9P service function */  
-  if(  ( ( rc = _9pfuncdesc[_9ptabindex[*pmsgtype]].service_function( preq9p, 
-                                                                      (void *)pworker_data,
-                                                                      &outdatalen, 
-                                                                      replydata ) ) < 0 )  ||
+	/* Check boundaries. 0 is no_function fallback */
+	if (msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
+	    || _9pfuncdesc[msgtype].service_function == NULL)
+		msgtype = 0;
 
-             ( send( preq9p->pconn->sockfd, replydata, outdatalen, 0 ) != outdatalen ) )
-     LogDebug( COMPONENT_9P, "%s: Error", _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname ) ;
+	LogFullDebug(COMPONENT_9P, "9P msg: length=%u type (%u|%s)", msglen,
+		     (u32) msgtype, _9pfuncdesc[msgtype].funcname);
 
-  return ;
-} /* _9p_process_request */
+	/* Temporarily set outlen to maximum message size. This value will be
+	 * used inside the protocol functions for additional bound checking,
+	 * and then replaced by the actual message size, (see _9p_checkbound())
+	 */
+	*poutlen = req9p->pconn->msize;
 
+	/* Call the 9P service function */
+	rc = _9pfuncdesc[msgtype].service_function(req9p,
+						   (void *)worker_data,
+						   poutlen, replydata);
+
+	if (rc < 0)
+		LogDebug(COMPONENT_9P, "%s: Error",
+			 _9pfuncdesc[msgtype].funcname);
+
+/**
+ * @todo ops stats accounting goes here.
+ * service function return codes need to be reworked to return error code
+ * properly so that internal error code (currently -1) is distinguished
+ * from protocol op error, currently partially handled in rerror, and
+ * success return here so we can count errors and totals properly.
+ * I/O stats handled in read and write as in nfs.
+ */
+	return rc;
+}

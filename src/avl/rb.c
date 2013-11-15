@@ -28,9 +28,7 @@
  *     4. Path from a node to any leafs has the same number of BLACK nodes.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "avltree.h"
 
 /*
@@ -53,9 +51,10 @@ static inline struct rbtree_node *get_parent(const struct rbtree_node *node)
 	return (struct rbtree_node *)(node->parent & ~1UL);
 }
 
-static inline void set_parent(struct rbtree_node *parent, struct rbtree_node *node)
+static inline void set_parent(struct rbtree_node *parent,
+			      struct rbtree_node *node)
 {
-	node->parent = (uintptr_t)parent | (node->parent & 1);
+	node->parent = (uintptr_t) parent | (node->parent & 1);
 }
 
 #else
@@ -75,12 +74,13 @@ static inline struct rbtree_node *get_parent(const struct rbtree_node *node)
 	return node->parent;
 }
 
-static inline void set_parent(struct rbtree_node *parent, struct rbtree_node *node)
+static inline void set_parent(struct rbtree_node *parent,
+			      struct rbtree_node *node)
 {
 	node->parent = parent;
 }
 
-#endif	/* UINTPTR_MAX */
+#endif				/* UINTPTR_MAX */
 
 static inline int is_root(struct rbtree_node *node)
 {
@@ -182,7 +182,7 @@ static inline struct rbtree_node *do_lookup(const struct rbtree_node *key,
 static void rotate_left(struct rbtree_node *node, struct rbtree *tree)
 {
 	struct rbtree_node *p = node;
-	struct rbtree_node *q = node->right; /* can't be NULL */
+	struct rbtree_node *q = node->right;	/* can't be NULL */
 	struct rbtree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -204,7 +204,7 @@ static void rotate_left(struct rbtree_node *node, struct rbtree *tree)
 static void rotate_right(struct rbtree_node *node, struct rbtree *tree)
 {
 	struct rbtree_node *p = node;
-	struct rbtree_node *q = node->left; /* can't be NULL */
+	struct rbtree_node *q = node->left;	/* can't be NULL */
 	struct rbtree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -232,7 +232,8 @@ struct rbtree_node *rbtree_lookup(const struct rbtree_node *key,
 	return do_lookup(key, tree, &parent, &is_left);
 }
 
-static void set_child(struct rbtree_node *child, struct rbtree_node *node, int left)
+static void set_child(struct rbtree_node *child, struct rbtree_node *node,
+		      int left)
 {
 	if (left)
 		node->left = child;
@@ -399,8 +400,8 @@ void rbtree_remove(struct rbtree_node *node, struct rbtree *tree)
 				rotate_left(parent, tree);
 				sibling = parent->right;
 			}
-			if ((!sibling->left  || is_black(sibling->left)) &&
-			    (!sibling->right || is_black(sibling->right))) {
+			if ((!sibling->left || is_black(sibling->left))
+			    && (!sibling->right || is_black(sibling->right))) {
 				set_color(RB_RED, sibling);
 				node = parent;
 				parent = get_parent(parent);
@@ -427,8 +428,8 @@ void rbtree_remove(struct rbtree_node *node, struct rbtree *tree)
 				rotate_right(parent, tree);
 				sibling = parent->left;
 			}
-			if ((!sibling->left  || is_black(sibling->left)) &&
-			    (!sibling->right || is_black(sibling->right))) {
+			if ((!sibling->left || is_black(sibling->left))
+			    && (!sibling->right || is_black(sibling->right))) {
 				set_color(RB_RED, sibling);
 				node = parent;
 				parent = get_parent(parent);

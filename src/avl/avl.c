@@ -18,13 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
  * USA
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include <assert.h>
 
 #include "avltree.h"
-
 
 #if !defined UINTPTR_MAX || UINTPTR_MAX != UINT64_MAX
 
@@ -114,7 +111,7 @@ static inline struct avltree_node *get_parent(const struct avltree_node *node)
 static inline void set_parent(const struct avltree_node *parent,
 			      struct avltree_node *node)
 {
-	node->parent = (uintptr_t)parent | (node->parent & 7);
+	node->parent = (uintptr_t) parent | (node->parent & 7);
 }
 
 #endif
@@ -170,9 +167,9 @@ struct avltree_node *avltree_prev(const struct avltree_node *node)
 	return parent;
 }
 
-uint64_t avltree_size(const struct avltree *tree)
+uint64_t avltree_size(const struct avltree * tree)
 {
-    return tree->size;
+	return tree->size;
 }
 
 /*
@@ -184,7 +181,7 @@ uint64_t avltree_size(const struct avltree *tree)
 static void rotate_left(struct avltree_node *node, struct avltree *tree)
 {
 	struct avltree_node *p = node;
-	struct avltree_node *q = node->right; /* can't be NULL */
+	struct avltree_node *q = node->right;	/* can't be NULL */
 	struct avltree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -206,7 +203,7 @@ static void rotate_left(struct avltree_node *node, struct avltree *tree)
 static void rotate_right(struct avltree_node *node, struct avltree *tree)
 {
 	struct avltree_node *p = node;
-	struct avltree_node *q = node->left; /* can't be NULL */
+	struct avltree_node *q = node->left;	/* can't be NULL */
 	struct avltree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -265,83 +262,82 @@ struct avltree_node *avltree_lookup(const struct avltree_node *key,
 	struct avltree_node *parent, *unbalanced;
 	int is_left;
 
-        return do_lookup(key, tree, &parent, &unbalanced, &is_left);
+	return do_lookup(key, tree, &parent, &unbalanced, &is_left);
 }
 
 struct avltree_node *avltree_inf(const struct avltree_node *key,
-                                 const struct avltree *tree)
+				 const struct avltree *tree)
 {
-    struct avltree_node *parent __attribute__((unused));
-    struct avltree_node *lb;
-    struct avltree_node *unbalanced __attribute__((unused));
-    struct avltree_node *node = tree->root;
-    int is_left = 0;
-    int res = 0;
+	struct avltree_node *parent __attribute__ ((unused));
+	struct avltree_node *lb;
+	struct avltree_node *unbalanced __attribute__ ((unused));
+	struct avltree_node *node = tree->root;
+	int is_left = 0;
+	int res = 0;
 
-    lb = avltree_first(tree); /* at worst, the first entry */
-    unbalanced = node;
-    parent = NULL;
-    is_left = 0;
+	lb = avltree_first(tree);	/* at worst, the first entry */
+	unbalanced = node;
+	parent = NULL;
+	is_left = 0;
 
-    while (node) {
-        if (get_balance(node) != 0)
-            unbalanced = node;
-        res = tree->cmp_fn(node, key);
-        if (res == 0) {
-            /* node is the infimum */
-            return node;
-        }
-        else if (res < 1) /* lb is less than key */
-            lb = node;
-        parent = node;
-        if ((is_left = res > 0))
-            node = node->left;
-        else
-            node = node->right;
-    } /* while */
+	while (node) {
+		if (get_balance(node) != 0)
+			unbalanced = node;
+		res = tree->cmp_fn(node, key);
+		if (res == 0) {
+			/* node is the infimum */
+			return node;
+		} else if (res < 1)	/* lb is less than key */
+			lb = node;
+		parent = node;
+		if ((is_left = res > 0))
+			node = node->left;
+		else
+			node = node->right;
+	}			/* while */
 
-    return (lb);
+	return (lb);
 }
 
 struct avltree_node *avltree_sup(const struct avltree_node *key,
-                                 const struct avltree *tree)
+				 const struct avltree *tree)
 {
-    struct avltree_node *parent __attribute__((unused));
-    struct avltree_node *ub = NULL;
-    struct avltree_node *unbalanced __attribute__((unused));
-    struct avltree_node *node = tree->root;
-    int is_left = 0;
-    int res = 0;
+	struct avltree_node *parent __attribute__ ((unused));
+	struct avltree_node *ub = NULL;
+	struct avltree_node *unbalanced __attribute__ ((unused));
+	struct avltree_node *node = tree->root;
+	int is_left = 0;
+	int res = 0;
 
-    unbalanced = node;
-    parent = NULL;
-    is_left = 0;
-    ub = node;
-    while (node) {
-        if (get_balance(node) != 0)
-            unbalanced = node;
-        res = tree->cmp_fn(node, key);
-        if (res == 0) {
-            /* node is the supremum */
-            return (node);
-        }
-        parent = node;
-        if ((is_left = res > 0))
-            node = node->left;
-        else
-            node = node->right;
-        if (node) {
-            res = tree->cmp_fn(node, key);
-            if(res > 0) /* XXX do we need reciprocal test on ub? */
-                ub = node;
-        }
-    } /* while */
+	unbalanced = node;
+	parent = NULL;
+	is_left = 0;
+	ub = node;
+	while (node) {
+		if (get_balance(node) != 0)
+			unbalanced = node;
+		res = tree->cmp_fn(node, key);
+		if (res == 0) {
+			/* node is the supremum */
+			return (node);
+		}
+		parent = node;
+		if ((is_left = res > 0))
+			node = node->left;
+		else
+			node = node->right;
+		if (node) {
+			res = tree->cmp_fn(node, key);
+			if (res > 0)	/* XXX do we need reciprocal test on ub? */
+				ub = node;
+		}
+	}			/* while */
 
-    return (ub);
+	return (ub);
 }
 
-static void set_child(struct avltree_node *child,
-		      struct avltree_node *node, int left)
+static void set_child(struct avltree_node *child, struct avltree_node *node,
+		      int left)
 {
 	if (left)
 		node->left = child;
@@ -350,7 +346,8 @@ static void set_child(struct avltree_node *child,
 }
 
 /* Insertion never needs more than 2 rotations */
-struct avltree_node *avltree_insert(struct avltree_node *node, struct avltree *tree)
+struct avltree_node *avltree_insert(struct avltree_node *node,
+				    struct avltree *tree)
 {
 	struct avltree_node *key, *parent, *unbalanced;
 	int is_left;
@@ -394,67 +391,68 @@ struct avltree_node *avltree_insert(struct avltree_node *node, struct avltree *t
 	tree->size++;
 
 	switch (get_balance(unbalanced)) {
-	case  1: case -1:
+	case 1:
+	case -1:
 		tree->height++;
 		/* fall through */
 	case 0:
 		break;
-	case 2: {
-		struct avltree_node *right = unbalanced->right;
+	case 2:{
+			struct avltree_node *right = unbalanced->right;
 
-		if (get_balance(right) == 1) {
-			set_balance(0, unbalanced);
-			set_balance(0, right);
-		} else {
-			switch (get_balance(right->left)) {
-			case 1:
-				set_balance(-1, unbalanced);
-				set_balance( 0, right);
-				break;
-			case 0:
+			if (get_balance(right) == 1) {
 				set_balance(0, unbalanced);
 				set_balance(0, right);
-				break;
-			case -1:
-				set_balance(0, unbalanced);
-				set_balance(1, right);
-				break;
+			} else {
+				switch (get_balance(right->left)) {
+				case 1:
+					set_balance(-1, unbalanced);
+					set_balance(0, right);
+					break;
+				case 0:
+					set_balance(0, unbalanced);
+					set_balance(0, right);
+					break;
+				case -1:
+					set_balance(0, unbalanced);
+					set_balance(1, right);
+					break;
+				}
+				set_balance(0, right->left);
+
+				rotate_right(right, tree);
 			}
-			set_balance(0, right->left);
-
-			rotate_right(right, tree);
+			rotate_left(unbalanced, tree);
+			break;
 		}
-		rotate_left(unbalanced, tree);
-		break;
-	}
-	case -2: {
-		struct avltree_node *left = unbalanced->left;
+	case -2:{
+			struct avltree_node *left = unbalanced->left;
 
-		if (get_balance(left) == -1) {
-			set_balance(0, unbalanced);
-			set_balance(0, left);
-		} else {
-			switch (get_balance(left->right)) {
-			case 1:
-				set_balance( 0, unbalanced);
-				set_balance(-1, left);
-				break;
-			case 0:
+			if (get_balance(left) == -1) {
 				set_balance(0, unbalanced);
 				set_balance(0, left);
-				break;
-			case -1:
-				set_balance(1, unbalanced);
-				set_balance(0, left);
-				break;
-			}
-			set_balance(0, left->right);
+			} else {
+				switch (get_balance(left->right)) {
+				case 1:
+					set_balance(0, unbalanced);
+					set_balance(-1, left);
+					break;
+				case 0:
+					set_balance(0, unbalanced);
+					set_balance(0, left);
+					break;
+				case -1:
+					set_balance(1, unbalanced);
+					set_balance(0, left);
+					break;
+				}
+				set_balance(0, left->right);
 
-			rotate_left(left, tree);
+				rotate_left(left, tree);
+			}
+			rotate_right(unbalanced, tree);
+			break;
 		}
-		rotate_right(unbalanced, tree);
-		break;
-	}
 	}
 	return NULL;
 }
@@ -543,33 +541,33 @@ void avltree_remove(struct avltree_node *node, struct avltree *tree)
 	 */
 	while (parent) {
 		int balance;
-		node   = parent;
+		node = parent;
 		parent = get_parent(parent);
 
 		if (is_left) {
 			is_left = parent && parent->left == node;
 
 			balance = inc_balance(node);
-			if (balance == 0)		/* case 1 */
+			if (balance == 0)	/* case 1 */
 				continue;
-			if (balance == 1)		/* case 2 */
+			if (balance == 1)	/* case 2 */
 				return;
-			right = node->right;		/* case 3 */
+			right = node->right;	/* case 3 */
 			switch (get_balance(right)) {
-			case 0:				/* case 3.1 */
-				set_balance( 1, node);
+			case 0:	/* case 3.1 */
+				set_balance(1, node);
 				set_balance(-1, right);
 				rotate_left(node, tree);
 				return;
-			case 1:				/* case 3.2 */
+			case 1:	/* case 3.2 */
 				set_balance(0, node);
 				set_balance(0, right);
 				break;
-			case -1:			/* case 3.3 */
+			case -1:	/* case 3.3 */
 				switch (get_balance(right->left)) {
 				case 1:
 					set_balance(-1, node);
-					set_balance( 0, right);
+					set_balance(0, right);
 					break;
 				case 0:
 					set_balance(0, node);
@@ -637,11 +635,11 @@ void avltree_replace(struct avltree_node *old, struct avltree_node *new,
 	if (parent)
 		set_child(parent, new, parent->left == old);
 	else {
-	    /* I'm skeptical this case should be permitted--this
-	     * says that if old is not in the tree, just make new
-	     * the root of the tree */
-	      tree->root = new;
-	      tree->size++;
+		/* I'm skeptical this case should be permitted--this
+		 * says that if old is not in the tree, just make new
+		 * the root of the tree */
+		tree->root = new;
+		tree->size++;
 	}
 
 	if (old->left)
@@ -657,7 +655,8 @@ void avltree_replace(struct avltree_node *old, struct avltree_node *new,
 	*new = *old;
 }
 
-int avltree_init(struct avltree *tree, avltree_cmp_fn_t cmp, unsigned long flags)
+int avltree_init(struct avltree *tree, avltree_cmp_fn_t cmp,
+		 unsigned long flags)
 {
 	if (flags)
 		return -1;

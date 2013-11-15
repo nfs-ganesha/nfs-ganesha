@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -47,30 +40,27 @@
 #include "log.h"
 #include "9p.h"
 
-
-int _9p_rerror( _9p_request_data_t * preq9p,
-                u16 * msgtag,
-                u32   err, 
-	        u32 * plenout, 
-                char * preply)
+int _9p_rerror(struct _9p_request_data *req9p, void *worker_data, u16 *msgtag,
+	       u32 err, u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u8 msgtype = *(req9p->_9pmsg + _9P_HDR_SIZE);
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RERROR);
+	_9p_setptr(cursor, msgtag, u16);
 
-  if ( !preq9p || !plenout || !preply )
-   return -1 ;
+	_9p_setvalue(cursor, err, u32);
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RERROR ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
 
-  _9p_setvalue( cursor, err, u32 ) ;
+	/* Check boundaries. 0 is no_function fallback */
+	if (msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
+	    || _9pfuncdesc[msgtype].service_function == NULL)
+		msgtype = 0;
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	LogDebug(COMPONENT_9P, "RERROR(%s) tag=%u err=(%u|%s)",
+		 _9pfuncdesc[msgtype].funcname, *msgtag, err, strerror(err));
 
-  LogDebug( COMPONENT_9P, "RERROR: tag=%u err=(%u|%s)", *msgtag, err, strerror( err ) ) ;
- 
-  return 1 ;
+	return 1;
 }
-
-

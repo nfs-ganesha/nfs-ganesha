@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,42 +18,28 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_op_link.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.11 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_link.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
+#include "hashtable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -64,182 +50,96 @@
 #include "nfs_file_handle.h"
 
 /**
- * nfs4_op_link: The NFS4_OP_LINK operation.
- * 
- * This functions handles the NFS4_OP_LINK operation in NFSv4. This function can be called only from nfs4_Compound.
+ * @brief The NFS4_OP_LINK operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * This functions handles the NFS4_OP_LINK operation in NFSv4. This
+ * function can be called only from nfs4_Compound.
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
+ *
+ * @return per RFC5661, p. 367
  */
 
-#define arg_LINK4 op->nfs_argop4_u.oplink
-#define res_LINK4 resp->nfs_resop4_u.oplink
-
-int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
+		 struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_link";
+	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
+	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
+	cache_entry_t *dir_entry = NULL;
+	cache_entry_t *file_entry = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	char *newname = NULL;
 
-  cache_entry_t        * dir_pentry = NULL;
-  cache_entry_t        * file_pentry = NULL;
-  cache_inode_status_t   cache_status;
-  fsal_attrib_list_t     attr;
-  fsal_name_t            newname;
+	resp->resop = NFS4_OP_LINK;
+	res_LINK4->status = NFS4_OK;
 
-  resp->resop = NFS4_OP_LINK;
-  res_LINK4.status = NFS4_OK;
+	/* Do basic checks on a filehandle */
+	res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
 
-  /* Do basic checks on a filehandle */
-  res_LINK4.status = nfs4_sanity_check_FH(data, 0LL);
-  if(res_LINK4.status != NFS4_OK)
-    return res_LINK4.status;
+	if (res_LINK4->status != NFS4_OK)
+		goto out;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
-    {
-      res_LINK4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LINK4.status;
-    }
+	res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
 
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
-    {
-      res_LINK4.status = NFS4ERR_BADHANDLE;
-      return res_LINK4.status;
-    }
+	if (res_LINK4->status != NFS4_OK)
+		goto out;
 
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
-    {
-      res_LINK4.status = NFS4ERR_FHEXPIRED;
-      return res_LINK4.status;
-    }
+	/*
+	 * This operation creates a hard link, for the file
+	 * represented by the saved FH, in directory represented by
+	 * currentFH under the name arg_LINK4.target
+	 */
 
-  /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_LINK4.status = NFS4ERR_ROFS;
-      return res_LINK4.status;
-    }
+	/* Validate and convert the UFT8 objname to a regular string */
+	res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
+						    UTF8_SCAN_ALL,
+						    &newname);
 
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_LINK4.status = nfs4_SetCompoundExport(data);
-      if(res_LINK4.status != NFS4_OK)
-        return res_LINK4.status;
-    }
+	if (res_LINK4->status != NFS4_OK)
+		goto out;
 
-  /*
-   * This operation creates a hard link, for the file represented by the saved FH, in directory represented by currentFH under the 
-   * name arg_LINK4.target 
-   */
+	/* get info from compound data */
+	dir_entry = data->current_entry;
 
-  /* Crossing device is not allowed */
-  if(((file_handle_v4_t *) (data->currentFH.nfs_fh4_val))->exportid !=
-     ((file_handle_v4_t *) (data->savedFH.nfs_fh4_val))->exportid)
-    {
-      res_LINK4.status = NFS4ERR_XDEV;
-      return res_LINK4.status;
-    }
+	res_LINK4->LINK4res_u.resok4.cinfo.before =
+	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
 
-  /* If name is empty, return EINVAL */
-  if(arg_LINK4.newname.utf8string_len == 0)
-    {
-      res_LINK4.status = NFS4ERR_INVAL;
-      return res_LINK4.status;
-    }
+	file_entry = data->saved_entry;
 
-  /* Check for name to long */
-  if(arg_LINK4.newname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_LINK4.status = NFS4ERR_NAMETOOLONG;
-      return res_LINK4.status;
-    }
+	/* make the link */
+	cache_status =
+	    cache_inode_link(file_entry, dir_entry, newname, data->req_ctx);
 
-  /* Convert the UFT8 objname to a regular string */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_LINK4.newname,
-                                 &newname))) != CACHE_INODE_SUCCESS)
-    {
-      res_LINK4.status = nfs4_Errno(cache_status);
-      return res_LINK4.status;
-    }
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res_LINK4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
 
-  /* Sanity check: never create a link named '.' or '..' */
-  if(!FSAL_namecmp(&newname, (fsal_name_t *) & FSAL_DOT)
-     || !FSAL_namecmp(&newname, (fsal_name_t *) & FSAL_DOT_DOT))
-    {
-      res_LINK4.status = NFS4ERR_BADNAME;
-      return res_LINK4.status;
-    }
+	res_LINK4->LINK4res_u.resok4.cinfo.after =
+	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
+	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
-  /* get info from compound data */
-  dir_pentry = data->current_entry;
+	res_LINK4->status = NFS4_OK;
 
-  /* Destination FH (the currentFH) must be a directory */
-  if(data->current_filetype != DIRECTORY)
-    {
-      res_LINK4.status = NFS4ERR_NOTDIR;
-      return res_LINK4.status;
-    }
+ out:
 
-  /* Target object (the savedFH) must not be a directory */
-  if(data->saved_filetype == DIRECTORY)
-    {
-      res_LINK4.status = NFS4ERR_ISDIR;
-      return res_LINK4.status;
-    }
+	if (newname)
+		gsh_free(newname);
 
-  /* We have to keep track of the 'change' file attribute for reply structure */
-  if((cache_status = cache_inode_getattr(dir_pentry,
-                                         &attr,
-                                         data->pcontext,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
-    {
-      res_LINK4.status = nfs4_Errno(cache_status);
-      return res_LINK4.status;
-    }
-  res_LINK4.LINK4res_u.resok4.cinfo.before
-       = cache_inode_get_changeid4(dir_pentry);
-
-  /* Convert savedFH into a vnode */
-  file_pentry = data->saved_entry;
-
-  /* make the link */
-  if(cache_inode_link(file_pentry,
-                      dir_pentry,
-                      &newname,
-                      &attr,
-                      data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      res_LINK4.status = nfs4_Errno(cache_status);
-      return res_LINK4.status;
-    }
-
-  res_LINK4.LINK4res_u.resok4.cinfo.after
-       = cache_inode_get_changeid4(dir_pentry);
-  res_LINK4.LINK4res_u.resok4.cinfo.atomic = FALSE;
-
-  res_LINK4.status = NFS4_OK;
-  return NFS4_OK;
-}                               /* nfs4_op_link */
+	return res_LINK4->status;
+}				/* nfs4_op_link */
 
 /**
- * nfs4_op_link_Free: frees what was allocared to handle nfs4_op_link.
- * 
- * Frees what was allocared to handle nfs4_op_link.
+ * @brief Free memory allocated for LINK result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_LINK operation.
  *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_link_Free(LINK4res * resp)
+void nfs4_op_link_Free(nfs_resop4 *resp)
 {
-  return;
-}                               /* nfs4_op_link_Free */
+	return;
+}				/* nfs4_op_link_Free */

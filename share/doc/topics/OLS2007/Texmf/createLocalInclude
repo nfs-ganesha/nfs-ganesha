@@ -1,6 +1,0 @@
-#!/bin/bash
-
-au=$(basename $PWD)/;
-
-cat Makefile.inc | sed -e 's|'$au'||g' > Makefile.inc.local
-

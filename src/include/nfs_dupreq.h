@@ -25,92 +25,124 @@
  */
 
 /**
- * \file    nfs_dupreq.h
- * \brief   Prototypes for duplicate requsts cache management.
- *
- * Prototypes for duplicate requsts cache management.
- *
- *
+ * @file nfs_dupreq.h
+ * @brief Prototypes for duplicate requst cache
  */
 
-#ifndef _NFS_DUPREQ_H
-#define _NFS_DUPREQ_H
+#ifndef NFS_DUPREQ_H
+#define NFS_DUPREQ_H
 
-#ifdef _SOLARIS
-#ifndef _USE_SNMP
-typedef unsigned long u_long;
-#endif
-#endif                          /* _SOLARIS */
-
-#include "ganesha_rpc.h"
-#include "HashData.h"
-#include "HashTable.h"
+#include <stdbool.h>
+#include <string.h>
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
-#include "fsal.h"
-#include "nfs_tools.h"
+#include "nfs_core.h"
+#include <misc/rbtree_x.h>
+#include <misc/queue.h>
 
-typedef struct dupreq_key__
+enum drc_type {
+	DRC_TCP_V4, /*< safe to use an XID-based, per-connection DRC */
+	DRC_TCP_V3, /*< a shared, checksummed DRC per address */
+	DRC_UDP_V234 /*< UDP is strongly discouraged in RFC 3530bis */
+};
+
+#define DRC_FLAG_NONE 0x0000
+#define DRC_FLAG_HASH 0x0001
+#define DRC_FLAG_CKSUM 0x0002
+#define DRC_FLAG_ADDR 0x0004
+#define DRC_FLAG_PORT 0x0008
+#define DRC_FLAG_LOCKED 0x0010
+#define DRC_FLAG_RECYCLE 0x0020
+#define DRC_FLAG_RELEASE 0x0040
+
+typedef struct drc {
+	enum drc_type type;
+	struct rbtree_x xt;
+	TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
+	pthread_mutex_t mtx;
+	uint32_t npart;
+	uint32_t cachesz;
+	uint32_t size;
+	uint32_t maxsize;
+	uint32_t hiwat;
+	uint32_t flags;
+	uint32_t refcnt; /* call path refs */
+	uint32_t retwnd;
+	union {
+		struct {
+			sockaddr_t addr;
+			struct opr_rbtree_node recycle_k;
+			TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
+			time_t recycle_time;
+			uint64_t hk; /* hash key */
+		} tcp;
+	} d_u;
+} drc_t;
+
+typedef enum dupreq_state {
+	DUPREQ_START = 0,
+	DUPREQ_COMPLETE,
+	DUPREQ_DELETED
+} dupreq_state_t;
+
+struct dupreq_entry {
+	struct opr_rbtree_node rbt_k;
+	TAILQ_ENTRY(dupreq_entry) fifo_q;
+	pthread_mutex_t mtx;
+	struct {
+		drc_t *drc;
+		sockaddr_t addr;
+		struct {
+			uint32_t rq_xid;
+			uint64_t checksum;
+		} tcp;
+		uint32_t rq_prog;
+		uint32_t rq_vers;
+		uint32_t rq_proc;
+	} hin;
+	uint64_t hk;		/* hash key */
+	dupreq_state_t state;
+	uint32_t refcnt;
+	nfs_res_t *res;
+	time_t timestamp;
+};
+
+typedef struct dupreq_entry dupreq_entry_t;
+
+extern pool_t *nfs_res_pool;
+
+static inline nfs_res_t *alloc_nfs_res(void)
 {
-  /* Each NFS request is identified by the client by an xid.
-   * The same xids can be recycled by the same client or used
-   * by different clients ... it's too weak to make the dup req
-   * cache useful. */
-  long xid;
+	/* XXX can pool/ctor zero mem? */
+	nfs_res_t *res = pool_alloc(nfs_res_pool, NULL);
+	memset(res, 0, sizeof(nfs_res_t));
+	return res;
+}
 
-  /* The IP and port are also used to identify duplicate requests.
-   * This is much much stronger. */
-  sockaddr_t addr;
-
-  /* In very rare cases, ip/port/xid is not enough. In databases
-   * and other specific applications this may be a greater concern.
-   * In those cases a checksum of the first 200 bytes of the request
-   * should be used */
-  int checksum;
-} dupreq_key_t;
-
-typedef struct dupreq_entry__
+static inline void free_nfs_res(nfs_res_t *res)
 {
-  long xid;
-  sockaddr_t addr;
-  int checksum;
-  int ipproto ;
+	pool_free(nfs_res_pool, res);
+}
 
-  pthread_mutex_t dupreq_mutex;
-  int processing; /* if currently being processed, this should be = 1 */
-
-  nfs_res_t res_nfs;
-  u_long rq_prog;               /* service program number        */
-  u_long rq_vers;               /* service protocol version      */
-  u_long rq_proc;
-  time_t timestamp;
-} dupreq_entry_t;
-
-int compare_req(hash_buffer_t *buff1, hash_buffer_t *buff2);
-int print_entry_dupreq(LRU_data_t data, char *str);
-int clean_entry_dupreq(LRU_entry_t *pentry, void *addparam);
-int nfs_dupreq_gc_function(LRU_entry_t *pentry, void *addparam);
-
-nfs_res_t nfs_dupreq_get(struct svc_req *req, int *pstatus);
-int nfs_dupreq_delete(struct svc_req *req);
-int nfs_dupreq_add_not_finished(struct svc_req *req, nfs_res_t *res_nfs);
-
-int nfs_dupreq_finish(struct svc_req *req, nfs_res_t *p_res_nfs,
-                      LRU_list_t *lru_dupreq);
-
-uint32_t dupreq_value_hash_func(hash_parameter_t *p_hparam,
-                                     hash_buffer_t *buffclef);
-uint64_t dupreq_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef);
-void nfs_dupreq_get_stats(hash_stat_t *phstat_udp, hash_stat_t *phstat_tcp ) ;
-
-typedef enum dupreq_status
-{
-    DUPREQ_SUCCESS = 0,
-    DUPREQ_INSERT_MALLOC_ERROR,
-    DUPREQ_NOT_FOUND,
-    DUPREQ_BEING_PROCESSED,
-    DUPREQ_ALREADY_EXISTS,
+typedef enum dupreq_status {
+	DUPREQ_SUCCESS = 0,
+	DUPREQ_INSERT_MALLOC_ERROR,
+	DUPREQ_BEING_PROCESSED,
+	DUPREQ_EXISTS,
+	DUPREQ_ERROR,
 } dupreq_status_t;
 
-#endif                          /* _NFS_DUPREQ_H */
+void dupreq2_pkginit(void);
+void dupreq2_pkgshutdown(void);
+
+drc_t *drc_get_tcp_drc(struct svc_req *);
+void drc_release_tcp_drc(drc_t *);
+
+dupreq_status_t nfs_dupreq_start(nfs_request_data_t *,
+				 struct svc_req *);
+dupreq_status_t nfs_dupreq_finish(struct svc_req *, nfs_res_t *);
+dupreq_status_t nfs_dupreq_delete(struct svc_req *);
+void nfs_dupreq_rele(struct svc_req *, const nfs_function_desc_t *);
+
+#endif /* NFS_DUPREQ_H */

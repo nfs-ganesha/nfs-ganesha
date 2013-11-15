@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -50,81 +43,95 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mkdir( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
+	u32 *mode = NULL;
+	u32 *gid = NULL;
+	u16 *name_len = NULL;
+	char *name_str = NULL;
 
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
-  u32  * mode  = NULL ;
-  u32  * gid   = NULL ;
-  u16  * name_len = NULL ;
-  char * name_str = NULL ;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_qid qid_newdir;
 
-  _9p_fid_t * pfid = NULL ;
-  _9p_qid_t qid_newdir ;
+	cache_entry_t *pentry_newdir = NULL;
+	char dir_name[MAXNAMLEN];
+	uint64_t fileid;
+	cache_inode_status_t cache_status;
 
-  cache_entry_t       * pentry_newdir = NULL ;
-  fsal_name_t           dir_name ; 
-  fsal_attrib_list_t    fsalattr ;
-  cache_inode_status_t  cache_status ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	_9p_getptr(cursor, fid, u32);
+	_9p_getstr(cursor, name_len, name_str);
+	_9p_getptr(cursor, mode, u32);
+	_9p_getptr(cursor, gid, u32);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
+	LogDebug(COMPONENT_9P,
+		 "TMKDIR: tag=%u fid=%u name=%.*s mode=0%o gid=%u",
+		 (u32) *msgtag, *fid, *name_len, name_str, *mode, *gid);
 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getstr( cursor, name_len, name_str ) ;
-  _9p_getptr( cursor, mode,   u32 ) ;
-  _9p_getptr( cursor, gid,    u32 ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  LogDebug( COMPONENT_9P, "TMKDIR: tag=%u fid=%u name=%.*s mode=0%o gid=%u",
-            (u32)*msgtag, *fid, *name_len, name_str, *mode, *gid ) ;
+	pfid = req9p->pconn->fids[*fid];
 
-  if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-   pfid = &preq9p->pconn->fids[*fid] ;
+	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-  snprintf( dir_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  dir_name.len = *name_len + 1 ;
+	/* Create the directory */
+	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
+	cache_status =
+	    cache_inode_create(pfid->pentry, dir_name, DIRECTORY, *mode, NULL,
+			       &pfid->op_context, &pentry_newdir);
+	if (pentry_newdir == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-   /* Create the directory */
+	/* This is not a TATTACH fid */
+	pfid->from_attach = FALSE;
 
-   /* BUGAZOMEU: @todo : the gid parameter is not used yet */
-   if( ( pentry_newdir = cache_inode_create( pfid->pentry,
-                                             &dir_name,
-                                             DIRECTORY,
-                                             *mode,
-                                             NULL,
-                                             &fsalattr,
-                                             &pfid->fsal_op_context,
-                                             &cache_status)) == NULL)
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+	cache_status =
+	    cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
 
-   /* Build the qid */
-   qid_newdir.type    = _9P_QTDIR ;
-   qid_newdir.version = 0 ;
-   qid_newdir.path    = fsalattr.fileid ;
+	/* put the entry:
+	 * we don't want to remember it even if cache_inode_fileid fails. */
+	cache_inode_put(pentry_newdir);
 
-   /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RMKDIR ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  _9p_setqid( cursor, qid_newdir ) ;
+	/* Build the qid */
+	qid_newdir.type = _9P_QTDIR;
+	qid_newdir.version = 0;
+	qid_newdir.path = fileid;
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RMKDIR);
+	_9p_setptr(cursor, msgtag, u16);
 
-  LogDebug( COMPONENT_9P, 
-            "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
-            (u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type, qid_newdir.version, (unsigned long long)qid_newdir.path ) ;
+	_9p_setqid(cursor, qid_newdir);
 
-  return 1 ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
+		 (u32) *msgtag, *fid, *name_len, name_str, qid_newdir.type,
+		 qid_newdir.version, (unsigned long long)qid_newdir.path);
+
+	return 1;
 }
-

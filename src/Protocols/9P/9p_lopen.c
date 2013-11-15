@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -32,14 +33,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -47,70 +41,85 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_lopen( _9p_request_data_t * preq9p, 
-               void  * pworker_data,
-               u32 * plenout, 
-               char * preply)
+int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
+	u32 *flags = NULL;
 
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
-  u32 * flags  = NULL ;
+	cache_inode_status_t cache_status;
+	fsal_openflags_t openflags = 0;
 
-  cache_inode_status_t cache_status ;
-  fsal_openflags_t openflags = 0 ;
+	struct _9p_fid *pfid = NULL;
 
-  if( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
+	_9p_getptr(cursor, flags, u32);
 
-  _9p_fid_t * pfid = NULL ;
+	LogDebug(COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x",
+		 (u32) *msgtag, *fid, *flags);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getptr( cursor, flags,  u32 ) ; 
-  
-  LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x",
-            (u32)*msgtag, *fid, *flags  ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-   if( *fid >= _9P_FID_PER_CONN )
-     return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
- 
-   pfid =  &preq9p->pconn->fids[*fid] ;
+	pfid = req9p->pconn->fids[*fid];
 
-  _9p_openflags2FSAL( flags, &openflags ) ; 
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, sOCKET,...) may require to be opened too */
-   {
-      if(cache_inode_open( pfid->pentry, 
-                           openflags, 
-                           &pfid->fsal_op_context,
-                           0, 
-                           &cache_status) != CACHE_INODE_SUCCESS) 
-         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-   }
+	_9p_openflags2FSAL(flags, &openflags);
 
-   /* iounit = 0 by default */
-   pfid->specdata.iounit = 0 ;
+	if (pfid->pentry->type == REGULAR_FILE) {
+		/** @todo: Maybe other types (FIFO, SOCKET,...) require
+		 * to be opened too */
+		if (!pfid->opens) {
+			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
+			if (cache_status != CACHE_INODE_SUCCESS)
+				return _9p_rerror(req9p, worker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+		}
+		++pfid->opens;
 
-   /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RLOPEN ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+		cache_status =
+		    cache_inode_open(pfid->pentry, openflags, &pfid->op_context,
+				     0);
+		if (cache_status != CACHE_INODE_SUCCESS)
+			return _9p_rerror(req9p, worker_data, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
 
-  _9p_setqid( cursor, pfid->qid ) ;
-  _9p_setptr( cursor, &pfid->specdata.iounit, u32 ) ; 
-   
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	}
 
-  LogDebug( COMPONENT_9P, "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u", 
-            *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path, pfid->specdata.iounit ) ;
+	/* iounit = 0 by default */
+	pfid->specdata.iounit = _9P_IOUNIT;
 
-  return 1 ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RLOPEN);
+	_9p_setptr(cursor, msgtag, u16);
+
+	_9p_setqid(cursor, pfid->qid);
+	_9p_setptr(cursor, &pfid->specdata.iounit, u32);
+
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u",
+		 *msgtag, *fid, (u32) pfid->qid.type, pfid->qid.version,
+		 (unsigned long long)pfid->qid.path, pfid->specdata.iounit);
+
+	return 1;
 }
-

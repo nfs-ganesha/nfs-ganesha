@@ -1,0 +1,55 @@
+Here is a list of things that may be useful with Ganesha.
+
+ * bonnie++
+   A filesystem benchmarking tool.  It can be retrieved from
+   http://www.coker.com.au/bonnie++/
+
+ * libgssapi
+   A gssapi interface, available from CITI at
+   http://www.citi.umich.edu/projects/nfsv4/linux/libgssapi/   
+
+ * libgssglue
+   A gssapi interface, available from CITI at
+   http://www.citi.umich.edu/projects/nfsv4/linux/libgssglue/
+
+ * libnfsidmap
+   A library from CITI for mapping NFSv4 user/group IDs.
+   http://www.citi.umich.edu/projects/nfsv4/linux/libnfsidmap/
+
+ * librpcsecgss
+   An implementation of RPCSEC_GSS from CITI.
+   http://www.citi.umich.edu/projects/nfsv4/linux/librpcsecgss/
+
+ * locktests-net
+   An fcntl lock stress tester from Bull, targetting NFSv4 locks
+   http://nfsv4.bullopensource.org/tools/tests/page39.php
+
+ * PyNFS
+   Client and server libraries for NFSv4.0 and NFSv4.1 with a
+   collection of tests.  By CITI, available from
+   git://git.linux-nfs.org/projects/iisaman/newpynfs.git
+
+ * NFS Shell
+   A user-mode NFSv3 client and call exerciser, available from
+   ftp://ftp.cs.vu.nl/pub/leendert/nfsshell.tar.gz
+
+ * NFS Connectathon 04
+   Test NFS servers through POSIX calls.  Available from
+   git://fedorapeople.org/home/fedora/steved/public_git/cthon04.git
+
+ * NFS Utils
+   Linux NFS user space support utilities, available from
+   git://git.linux-nfs.org/projects/steved/nfs-utils.git
+
+ * NFSWatch
+   Monitor traffic to and from an NFS server.  Available from
+   http://nfswatch.sourceforge.net/
+
+ * RPCBind
+   Implements the RPC port mapping service, required for running an
+   NFSv3.  Available from
+   http://rpcbind.sourceforge.net/
+
+ * SGI NFS Test Tools
+   An NFS test suite available from SGI at
+   http://oss.sgi.com/projects/nfs/testtools/

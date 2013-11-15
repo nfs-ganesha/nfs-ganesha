@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -31,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -49,47 +43,55 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_fsync( _9p_request_data_t * preq9p, 
-               void  * pworker_data,
-               u32 * plenout, 
-               char * preply)
+int _9p_fsync(struct _9p_request_data *req9p, void *worker_data,
+	      u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
 
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
+	struct _9p_fid *pfid = NULL;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-  _9p_fid_t * pfid = NULL ;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  
-  LogDebug( COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
+	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
 
-  if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  pfid = &preq9p->pconn->fids[*fid] ;
+	pfid = req9p->pconn->fids[*fid];
 
-  if(cache_inode_commit( pfid->pentry,
-                         0LL, // start at beginning of file
-                         0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
-                         CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                         &pfid->fsal_op_context,
-                         &cache_status) != CACHE_INODE_SUCCESS )
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
+	/* Check that it is a valid open file */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RFSYNC ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	cache_status =
+	    cache_inode_commit(pfid->pentry,
+			       0LL,	/* start at beginning of file */
+			       0LL,	/* Mimic sync_file_range's behavior:
+					 * count=0 means "whole file" */
+			       &pfid->op_context);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  LogDebug( COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RFSYNC);
+	_9p_setptr(cursor, msgtag, u16);
 
-  return 1 ;
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
+
+	return 1;
 }
-

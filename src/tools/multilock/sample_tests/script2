@@ -1,0 +1,160 @@
+# Copyright IBM Corporation, 2012
+#  Contributor: Frank Filz  <ffilz@us.ibm.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# demonstrate issues on GPFS with Ganesha and async blocking locks
+#
+# script requires running ml_posix_client on two NFS clients and
+# two GPFS nodes. client1 should mount the GPFS file system via
+# node1 and client2 from node2.
+#
+CLIENTS client1 client2 node1 node2
+
+# open file on all clients and nodes
+OK client1 OPEN 1 rw create script2.file
+OK client2 OPEN 1 rw        script2.file
+OK node1   OPEN 1 rw        script2.file
+OK node2   OPEN 1 rw        script2.file
+
+# get some locks
+GRANTED client1 LOCK 1 read  100 10
+GRANTED client1 LOCK 1 write 150 10
+GRANTED client2 LOCK 1 read  200 10
+GRANTED client2 LOCK 1 write 250 10
+GRANTED node1   LOCK 1 read  300 10
+GRANTED node1   LOCK 1 write 350 10
+GRANTED node2   LOCK 1 read  400 10
+GRANTED node2   LOCK 1 write 450 10
+
+# now test the locks with TEST from client1
+client1 $ TEST 1 write 200 10 # test lock from client2
+EXPECT client1 $ TEST CONFLICT 1 * read 200 10
+client1 $ TEST 1 write 250 10 # test lock from client2
+EXPECT client1 $ TEST CONFLICT 1 * write 250 10
+client1 $ TEST 1 write 300 10 # test lock from node1
+EXPECT client1 $ TEST CONFLICT 1 * read 300 10
+client1 $ TEST 1 write 350 10 # test lock from node1
+EXPECT client1 $ TEST CONFLICT 1 * write 350 10
+client1 $ TEST 1 write 400 10 # test lock from node2
+EXPECT client1 $ TEST CONFLICT 1 * read 400 10
+client1 $ TEST 1 write 450 10 # test lock from node2
+EXPECT client1 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from client2
+client2 $ TEST 1 write 100 10 # test lock from client1
+EXPECT client2 $ TEST CONFLICT 1 * read 100 10
+client2 $ TEST 1 write 150 10 # test lock from client1
+EXPECT client2 $ TEST CONFLICT 1 * write 150 10
+client2 $ TEST 1 write 300 10 # test lock from node1
+EXPECT client2 $ TEST CONFLICT 1 * read 300 10
+client2 $ TEST 1 write 350 10 # test lock from node1
+EXPECT client2 $ TEST CONFLICT 1 * write 350 10
+client2 $ TEST 1 write 400 10 # test lock from node2
+EXPECT client2 $ TEST CONFLICT 1 * read 400 10
+client2 $ TEST 1 write 450 10 # test lock from node2
+EXPECT client2 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from node1
+node1 $ TEST 1 write 100 10 # test lock from client1
+EXPECT node1 $ TEST CONFLICT 1 * read 100 10
+node1 $ TEST 1 write 150 10 # test lock from client1
+EXPECT node1 $ TEST CONFLICT 1 * write 150 10
+node1 $ TEST 1 write 200 10 # test lock from client2
+EXPECT node1 $ TEST CONFLICT 1 * read 200 10
+node1 $ TEST 1 write 250 10 # test lock from client2
+EXPECT node1 $ TEST CONFLICT 1 * write 250 10
+node1 $ TEST 1 write 400 10 # test lock from node2
+EXPECT node1 $ TEST CONFLICT 1 * read 400 10
+node1 $ TEST 1 write 450 10 # test lock from node2
+EXPECT node1 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from node2
+node2 $ TEST 1 write 100 10 # test lock from client1
+EXPECT node2 $ TEST CONFLICT 1 * read 100 10
+node2 $ TEST 1 write 150 10 # test lock from client1
+EXPECT node2 $ TEST CONFLICT 1 * write 150 10
+node2 $ TEST 1 write 200 10 # test lock from client2
+EXPECT node2 $ TEST CONFLICT 1 * read 200 10
+node2 $ TEST 1 write 250 10 # test lock from client2
+EXPECT node2 $ TEST CONFLICT 1 * write 250 10
+node2 $ TEST 1 write 300 10 # test lock from node1
+EXPECT node2 $ TEST CONFLICT 1 * read 300 10
+node2 $ TEST 1 write 350 10 # test lock from node1
+EXPECT node2 $ TEST CONFLICT 1 * write 350 10
+
+# now test the locks with TEST from client1 (test larger lock)
+client1 $ TEST 1 write 200 12 # test lock from client2
+EXPECT client1 $ TEST CONFLICT 1 * read 200 10
+client1 $ TEST 1 write 250 12 # test lock from client2
+EXPECT client1 $ TEST CONFLICT 1 * write 250 10
+client1 $ TEST 1 write 300 12 # test lock from node1
+EXPECT client1 $ TEST CONFLICT 1 * read 300 10
+client1 $ TEST 1 write 350 12 # test lock from node1
+EXPECT client1 $ TEST CONFLICT 1 * write 350 10
+client1 $ TEST 1 write 400 12 # test lock from node2
+EXPECT client1 $ TEST CONFLICT 1 * read 400 10
+client1 $ TEST 1 write 450 12 # test lock from node2
+EXPECT client1 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from client2 (test larger lock)
+client2 $ TEST 1 write 100 12 # test lock from client1
+EXPECT client2 $ TEST CONFLICT 1 * read 100 10
+client2 $ TEST 1 write 150 12 # test lock from client1
+EXPECT client2 $ TEST CONFLICT 1 * write 150 10
+client2 $ TEST 1 write 300 12 # test lock from node1
+EXPECT client2 $ TEST CONFLICT 1 * read 300 10
+client2 $ TEST 1 write 350 12 # test lock from node1
+EXPECT client2 $ TEST CONFLICT 1 * write 350 10
+client2 $ TEST 1 write 400 12 # test lock from node2
+EXPECT client2 $ TEST CONFLICT 1 * read 400 10
+client2 $ TEST 1 write 450 12 # test lock from node2
+EXPECT client2 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from node1 (test larger lock)
+node1 $ TEST 1 write 100 12 # test lock from client1
+EXPECT node1 $ TEST CONFLICT 1 * read 100 10
+node1 $ TEST 1 write 150 12 # test lock from client1
+EXPECT node1 $ TEST CONFLICT 1 * write 150 10
+node1 $ TEST 1 write 200 12 # test lock from client2
+EXPECT node1 $ TEST CONFLICT 1 * read 200 10
+node1 $ TEST 1 write 250 12 # test lock from client2
+EXPECT node1 $ TEST CONFLICT 1 * write 250 10
+node1 $ TEST 1 write 400 12 # test lock from node2
+EXPECT node1 $ TEST CONFLICT 1 * read 400 10
+node1 $ TEST 1 write 450 12 # test lock from node2
+EXPECT node1 $ TEST CONFLICT 1 * write 450 10
+
+# now test the locks with TEST from node2 (test larger lock)
+node2 $ TEST 1 write 100 12 # test lock from client1
+EXPECT node2 $ TEST CONFLICT 1 * read 100 10
+node2 $ TEST 1 write 150 12 # test lock from client1
+EXPECT node2 $ TEST CONFLICT 1 * write 150 10
+node2 $ TEST 1 write 200 12 # test lock from client2
+EXPECT node2 $ TEST CONFLICT 1 * read 200 10
+node2 $ TEST 1 write 250 12 # test lock from client2
+EXPECT node2 $ TEST CONFLICT 1 * write 250 10
+node2 $ TEST 1 write 300 12 # test lock from node1
+EXPECT node2 $ TEST CONFLICT 1 * read 300 10
+node2 $ TEST 1 write 350 12 # test lock from node1
+EXPECT node2 $ TEST CONFLICT 1 * write 350 10
+
+# quit and exit (all clients, closing all files, releasing all locks)
+QUIT

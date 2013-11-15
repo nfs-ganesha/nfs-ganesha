@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  */
 
 /*
@@ -26,9 +26,9 @@
  */
 
 /**
- * \file   handle_mapping.h
+ * @file   handle_mapping.h
  *
- * \brief  This module is used for managing a persistent
+ * @brief  This module is used for managing a persistent
  *         map between PROXY FSAL handles (including NFSv4 handles from server)
  *         and nfsv2 and v3 handles digests (sent to client).
  */
@@ -38,40 +38,35 @@
 #include "fsal.h"
 
 /* parameters for Handle Map module */
-typedef struct handle_map_param__
-{
-  /* path where database files are located */
-  char databases_directory[MAXPATHLEN];
+typedef struct handle_map_param__ {
+	/* path where database files are located */
+	char databases_directory[MAXPATHLEN + 1];
 
-  /* temp dir for database work */
-  char temp_directory[MAXPATHLEN];
+	/* temp dir for database work */
+	char temp_directory[MAXPATHLEN + 1];
 
-  /* number of databases */
-  unsigned int database_count;
+	/* number of databases */
+	unsigned int database_count;
 
-  /* hash table size */
-  unsigned int hashtable_size;
+	/* hash table size */
+	unsigned int hashtable_size;
 
-  /* number of preallocated FSAL handles */
-  unsigned int nb_handles_prealloc;
-
-  /* number of preallocated DB operations */
-  unsigned int nb_db_op_prealloc;
-
-  /* synchronous insert mode */
-  int synchronous_insert;
+	/* synchronous insert mode */
+	int synchronous_insert;
 
 } handle_map_param_t;
 
 /* this describes a handle digest for nfsv2 and nfsv3 */
 
-typedef struct nfs23_map_handle__
-{
-  /* object id */
-  uint64_t object_id;
+#define PXY_HANDLE_MAPPED 0x23
 
-  /* to avoid reusing handles, when object_id is reused */
-  unsigned int handle_hash;
+typedef struct nfs23_map_handle__ {
+	uint8_t len;
+	uint8_t type;		/* Must be PXY_HANDLE_MAPPED */
+	/* to avoid reusing handles, when object_id is reused */
+	unsigned int handle_hash;
+	/* object id */
+	uint64_t object_id;
 
 } nfs23_map_handle_t;
 
@@ -86,41 +81,15 @@ typedef struct nfs23_map_handle__
 #define HANDLEMAP_HASHTABLE_ERROR 7
 #define HANDLEMAP_EXISTS         8
 
-/**
- * Init handle mapping module.
- * Reloads the content of the mapping files it they exist,
- * else it creates them.
- * \return 0 if OK, an error code else.
- */
 int HandleMap_Init(const handle_map_param_t * p_param);
 
-/**
- * Retrieves a full fsal_handle from a NFS2/3 digest.
- *
- * \param  p_nfs23_digest   [in] the NFS2/3 handle digest
- * \param  p_out_fsal_handle [out] the fsal handle to be retrieved
- *
- * \return HANDLEMAP_SUCCESS if the handle is available,
- *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
- */
-int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
-                    fsal_handle_t * p_out_fsal_handle);
+int HandleMap_GetFH(const nfs23_map_handle_t *, struct gsh_buffdesc *);
 
-/**
- * Save the handle association if it was unknown.
- */
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, fsal_handle_t * p_in_handle);
+int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest,
+		    const void *p_in_handle, uint32_t len);
 
-/**
- * Remove a handle from the map
- * when it was removed from the filesystem
- * or when it is stale.
- */
 int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest);
 
-/**
- * Flush pending database operations (before stopping the server).
- */
 int HandleMap_Flush();
 
 #endif

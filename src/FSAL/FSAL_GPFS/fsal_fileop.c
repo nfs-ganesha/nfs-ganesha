@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,94 +18,32 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
  */
 
 /**
  * \file    fsal_fileop.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 14:20:07 $
- * \version $Revision: 1.9 $
  * \brief   Files operations.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include <sys/fsuid.h>
-
-/**
- * FSAL_open_byname:
- * Open a regular file for reading/writing its data content.
- *
- * \param dirhandle (input):
- *        Handle of the directory that contain the file to be read/modified.
- * \param filename (input):
- *        Name of the file to be read/modified
- * \param cred (input):
- *        Authentication context for the operation (user,...).
- * \param openflags (input):
- *        Flags that indicates behavior for file opening and access.
- *        This is an inclusive OR of the following values
- *        ( such of them are not compatible) :
- *        - FSAL_O_RDONLY: opening file for reading only.
- *        - FSAL_O_RDWR: opening file for reading and writing.
- *        - FSAL_O_WRONLY: opening file for writting only.
- *        - FSAL_O_APPEND: always write at the end of the file.
- *        - FSAL_O_TRUNC: truncate the file to 0 on opening.
- * \param file_descriptor (output):
- *        The file descriptor to be used for FSAL_read/write operations.
- * \param file_attributes (optionnal input/output):
- *        Post operation attributes.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR     (no error)
- *      - ERR_FSAL_ACCESS       (user doesn't have the permissions for opening the file)
- *      - ERR_FSAL_STALE        (filehandle does not address an existing object)
- *      - ERR_FSAL_INVAL        (filehandle does not address a regular file,
- *                               or open flags are conflicting)
- *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
- *      - Other error codes can be returned :
- *        ERR_FSAL_IO, ...
- */
-
-fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
-                                fsal_name_t * filename, /* IN */
-                                fsal_op_context_t * p_context,  /* IN */
-                                fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
-{
-  fsal_status_t fsal_status;
-  fsal_handle_t filehandle;
-
-  if(!dirhandle || !filename || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
-
-  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if(FSAL_IS_ERROR(fsal_status))
-    return fsal_status;
-
-  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
-}
+#include "gpfs_methods.h"
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_open:
  * Open a regular file for reading/writing its data content.
  *
- * \param filehandle (input):
+ * \param noj_hdl (input):
  *        Handle of the file to be read/modified.
- * \param cred (input):
+ * \param p_context (input):
  *        Authentication context for the operation (user,...).
  * \param openflags (input):
  *        Flags that indicates behavior for file opening and access.
@@ -129,66 +67,61 @@ fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_desc,        /* OUT */
-                        fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
+			    const struct req_op_context *p_context,	/* IN */
+			    fsal_openflags_t openflags,	/* IN */
+			    int *file_desc,	/* OUT */
+			    struct attrlist *p_file_attributes) /* IN/OUT */
 {
 
-  int rc;
-  fsal_status_t status;
+	int rc;
+	fsal_status_t status;
+	int posix_flags = 0;
+	struct gpfs_fsal_obj_handle *myself;
+	int mntfd;
 
-  int fd;
-  int posix_flags = 0;
-  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
+	/* sanity checks.
+	 * note : file_attributes is optional.
+	 */
+	if (!obj_hdl || !file_desc)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /* sanity checks.
-   * note : file_attributes is optional.
-   */
-  if(!p_filehandle || !p_context || !p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	mntfd = gpfs_get_root_fd(obj_hdl->export);
 
-  /* convert fsal open flags to posix open flags */
-  rc = fsal2posix_openflags(openflags, &posix_flags);
+	/* convert fsal open flags to posix open flags */
+	rc = fsal2posix_openflags(openflags, &posix_flags);
+	/* flags conflicts. */
+	if (rc) {
+		LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X",
+			openflags);
+		return fsalstat(rc, 0);
+	}
 
-  /* flags conflicts. */
-  if(rc)
-    {
-      LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
-      Return(rc, 0, INDEX_FSAL_open);
-    }
+	status =
+	    fsal_internal_handle2fd(mntfd, myself->handle, file_desc,
+				    posix_flags);
 
-  TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, posix_flags);
-  p_file_descriptor->fd = fd;
-  ReleaseTokenFSCall();
+	if (FSAL_IS_ERROR(status)) {
+		*file_desc = 0;
+		return status;
+	}
 
-  if(FSAL_IS_ERROR(status))
-    {
-      p_file_descriptor->fd = 0;
-      ReturnStatus(status, INDEX_FSAL_open);
-    }
+	/* output attributes */
+	if (p_file_attributes) {
 
-  /* output attributes */
-  if(p_file_attributes)
-    {
+		p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
+		status =
+		    GPFSFSAL_getattrs(obj_hdl->export, p_context,
+				      myself->handle, p_file_attributes);
+		if (FSAL_IS_ERROR(status)) {
+			*file_desc = 0;
+			close(*file_desc);
+			return status;
+		}
+	}
 
-      p_file_attributes->asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-      status = GPFSFSAL_getattrs(p_filehandle, p_context, p_file_attributes);
-      if(FSAL_IS_ERROR(status))
-        {
-          p_file_descriptor->fd = 0;
-          close(fd);
-          ReturnStatus(status, INDEX_FSAL_open);
-        }
-    }
-
-  /* set the read-only flag of the file descriptor */
-  p_file_descriptor->ro = openflags & FSAL_O_RDONLY;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -198,9 +131,6 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
- * \param seek_descriptor (optional input):
- *        Specifies the position where data is to be read.
- *        If not specified, data will be read at the current position.
  * \param buffer_size (input):
  *        Amount (in bytes) of data to be read.
  * \param buffer (output):
@@ -216,96 +146,41 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
-                        fsal_seek_t * p_seek_descriptor,        /* [IN] */
-                        fsal_size_t buffer_size,        /* IN */
-                        caddr_t buffer, /* OUT */
-                        fsal_size_t * p_read_amount,    /* OUT */
-                        fsal_boolean_t * p_end_of_file  /* OUT */
-    )
+fsal_status_t GPFSFSAL_read(int fd,	/* IN */
+			    uint64_t offset,	/* IN */
+			    size_t buffer_size,	/* IN */
+			    caddr_t buffer,	/* OUT */
+			    size_t *p_read_amount,	/* OUT */
+			    bool *p_end_of_file)   /* OUT */
 {
+	struct read_arg rarg;
+	ssize_t nb_read;
+	int errsv = 0;
 
-  size_t i_size;
-  ssize_t nb_read;
-  int rc = 0, errsv = 0;
-  int pcall = FALSE;
-  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
+	/* sanity checks. */
 
-  /* sanity checks. */
+	if (!buffer || !p_read_amount || !p_end_of_file)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  if(!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
+	rarg.mountdirfd = fd;
+	rarg.fd = fd;
+	rarg.bufP = buffer;
+	rarg.offset = offset;
+	rarg.length = buffer_size;
 
-  /** @todo: manage fsal_size_t to size_t convertion */
-  i_size = (size_t) buffer_size;
+	/* read operation */
 
-  /* positioning */
+	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
+	errsv = errno;
 
-  if(p_seek_descriptor)
-    {
+	if (nb_read == -1)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	else if (nb_read == 0 || nb_read < buffer_size)
+		*p_end_of_file = TRUE;
 
-      switch (p_seek_descriptor->whence)
-        {
-        case FSAL_SEEK_CUR:
-          /* set position plus offset */
-          pcall = FALSE;
-          TakeTokenFSCall();
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
-          errsv = errno;
-          ReleaseTokenFSCall();
-          break;
+	*p_read_amount = nb_read;
 
-        case FSAL_SEEK_SET:
-          /* use pread/pwrite call */
-          pcall = TRUE;
-          rc = 0;
-          break;
-
-        case FSAL_SEEK_END:
-          /* set end of file plus offset */
-          pcall = FALSE;
-
-          TakeTokenFSCall();
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
-          errsv = errno;
-          ReleaseTokenFSCall();
-
-          break;
-        }
-
-      if(rc)
-        {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Error in posix fseek operation (whence=%s, offset=%lld)",
-		       format_seek_whence(p_seek_descriptor->whence),
-                       (long long) p_seek_descriptor->offset);
-
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
-        }
-
-    }
-
-  /* read operation */
-
-  TakeTokenFSCall();
-
-  if(pcall)
-    nb_read = pread(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
-  else
-    nb_read = read(p_file_descriptor->fd, buffer, i_size);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  /** @todo: manage ssize_t to fsal_size_t convertion */
-
-  if(nb_read == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
-  else if(nb_read == 0)
-    *p_end_of_file = 1;
-
-  *p_read_amount = nb_read;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -315,15 +190,10 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param seek_descriptor (optional input):
- *        Specifies the position where data is to be written.
- *        If not specified, data will be written at the current position.
  * \param buffer_size (input):
  *        Amount (in bytes) of data to be written.
- * \param buffer (input):
- *        Address in memory of the data to write to file.
+ * \param buffer (output):
+ *        Address where the data is in memory.
  * \param write_amount (output):
  *        Pointer to the amount of data (in bytes) that have been written
  *        during this call.
@@ -332,208 +202,45 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
-                         fsal_op_context_t * p_context,     /* IN */
-                         fsal_seek_t * p_seek_descriptor,       /* IN */
-                         fsal_size_t buffer_size,       /* IN */
-                         caddr_t buffer,        /* IN */
-                         fsal_size_t * p_write_amount   /* OUT */
-    )
+fsal_status_t GPFSFSAL_write(int fd,	/* IN */
+			     uint64_t offset,	/* IN */
+			     size_t buffer_size,	/* IN */
+			     caddr_t buffer,	/* IN */
+			     size_t *p_write_amount,	/* OUT */
+			     bool *fsal_stable,	/* IN/OUT */
+			     const struct req_op_context *p_context)
 {
+	struct write_arg warg;
+	ssize_t nb_write;
+	int errsv = 0;
 
-  ssize_t nb_written;
-  size_t i_size;
-  int rc = 0, errsv = 0;
-  int pcall = FALSE, fsuid, fsgid;
-  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
+	/* sanity checks. */
 
-  /* sanity checks. */
-  if(!p_file_descriptor || !buffer || !p_write_amount)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
+	if (!buffer || !p_write_amount)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
-  if(p_file_descriptor->ro)
-    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_write);
+	warg.mountdirfd = fd;
+	warg.fd = fd;
+	warg.bufP = buffer;
+	warg.offset = offset;
+	warg.length = buffer_size;
+	warg.stability_wanted = *fsal_stable;
+	warg.stability_got = (uint32_t *) fsal_stable;
+	warg.options = 0;
+	/* read operation */
 
-  /** @todo: manage fsal_size_t to size_t convertion */
-  i_size = (size_t) buffer_size;
+	fsal_set_credentials(p_context->creds);
 
-  *p_write_amount = 0;
+	nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
+	errsv = errno;
 
-  /* positioning */
+	fsal_restore_ganesha_credentials();
 
-  if(p_seek_descriptor)
-    {
+	if (nb_write == -1)
+		return fsalstat(posix2fsal_error(errsv), errsv);
 
-      switch (p_seek_descriptor->whence)
-        {
-        case FSAL_SEEK_CUR:
-          /* set position plus offset */
-          pcall = FALSE;
+	*p_write_amount = nb_write;
 
-          TakeTokenFSCall();
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
-          errsv = errno;
-          ReleaseTokenFSCall();
-          break;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-        case FSAL_SEEK_SET:
-          /* set absolute position to offset */
-          pcall = TRUE;
-          rc = 0;
-          break;
-
-        case FSAL_SEEK_END:
-          /* set end of file plus offset */
-          pcall = FALSE;
-
-          TakeTokenFSCall();
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
-          errsv = errno;
-          ReleaseTokenFSCall();
-
-          break;
-        }
-
-      if(rc)
-        {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Error in posix fseek operation (whence=%s, offset=%lld)",
-		       format_seek_whence(p_seek_descriptor->whence),
-                       (long long) p_seek_descriptor->offset);
-
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
-
-        }
-
-      LogFullDebug(COMPONENT_FSAL,
-                   "Write operation (whence=%s, offset=%lld, size=%zd)",
-                   format_seek_whence(p_seek_descriptor->whence),
-                   (long long) p_seek_descriptor->offset, buffer_size);
-
-    }
-
-  /* write operation */
-
-  TakeTokenFSCall();
-
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
-  if(pcall)
-    nb_written = pwrite(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
-  else
-    nb_written = write(p_file_descriptor->fd, buffer, i_size);
-  errsv = errno;
-
-  setfsuid(fsuid);
-  setfsgid(fsgid);
-  ReleaseTokenFSCall();
-
-  /** @todo: manage ssize_t to fsal_size_t convertion */
-  if(nb_written <= 0)
-    {
-      if (p_seek_descriptor)
-        LogDebug(COMPONENT_FSAL,
-                 "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                 (unsigned long long) i_size,
-                 (long long) p_seek_descriptor->offset,
-                 p_file_descriptor->fd,
-                 errsv);
-      else
-        LogDebug(COMPONENT_FSAL,
-                 "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
-                 (unsigned long long) i_size,
-                 p_file_descriptor->fd,
-                 errsv);
-
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
-    }
-
-  /* set output vars */
-
-  *p_write_amount = (fsal_size_t) nb_written;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
-
-}
-
-/**
- * FSAL_close:
- * Free the resources allocated by the FSAL_open call.
- *
- * \param file_descriptor (input):
- *        The file descriptor returned by FSAL_open.
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR: no error.
- *      - Another error code if an error occured during this call.
- */
-
-fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
-    )
-{
-
-  int rc, errsv;
-
-  /* sanity checks. */
-  if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
-
-  /* call to close */
-
-  TakeTokenFSCall();
-
-  rc = close(((gpfsfsal_file_t *)p_file_descriptor)->fd);
-  errsv = errno;
-
-  ReleaseTokenFSCall();
-
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
-
-}
-
-unsigned int GPFSFSAL_GetFileno(fsal_file_t * pfile)
-{
-	return ((gpfsfsal_file_t *)pfile)->fd;
-}
-
-/**
- * FSAL_commit:
- * This function is used for processing stable writes and COMMIT requests.
- * Calling this function makes sure the changes to a specific file are
- * written to disk rather than kept in memory.
- *
- * \param file_descriptor (input):
- *        The file descriptor returned by FSAL_open.
- * \param offset:
- *        The starting offset for the portion of file to be synced       
- * \param length:
- *        The length for the portion of file to be synced.
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR: no error.
- *      - Another error code if an error occured during this call.
- */
-fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor, 
-                             fsal_off_t    offset, 
-                             fsal_size_t   length )
-{
-  int rc, errsv;
-
-  /* sanity checks. */
-  if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
-
-  /* Flush data. */
-  TakeTokenFSCall();
-  rc = fsync(((gpfsfsal_file_t *)p_file_descriptor)->fd);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }

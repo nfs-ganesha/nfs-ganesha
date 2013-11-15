@@ -1,0 +1,409 @@
+#!/bin/bash
+# init file for ganesha
+#
+# chkconfig: - 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/ganesha.nfsd
+# config: /etc/ganesha/gpfs.ganesha.nfsd.conf
+# pidfile: /var/run/ganesha.nfsd.pid
+#
+### BEGIN INIT INFO
+# Provides: ganesha.gpfgpfs.s
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop ganesha daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/init.d/functions
+
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
+
+# Check for and source configuration file otherwise set defaults
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
+
+PATHPROG=/usr/bin/ganesha.nfsd
+PROGONLY=ganesha.nfsd
+#LOGFILE=/var/log/ganesha.gpfs.log
+LOGFILE=SYSLOG
+#LOGFILE=STDERR
+#LOGFILE=STDOUT
+EPOCHFILE=/var/lib/nfs/ganesha-epoch
+
+CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
+
+# Remote quota server
+[ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
+
+###########################################################
+# DEBUG LEVELS FOR SPECIFIC COMPONENTS
+# (uncomment #export to enable)
+
+# Possible debug levels (severity high to low):
+## NIV_NULL
+## NIV_MAJOR
+## NIV_CRIT
+## NIV_EVENT
+## NIV_INFO
+## NIV_DEBUG
+## NIV_MID_DEBUG
+## NIV_FULL_DEBUG
+
+#Some common useful log components:
+#export COMPONENT_INIT=NIV_INFO
+#export COMPONENT_CACHE_INODE=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_DEBUG
+#export COMPONENT_FSAL_UP=NIV_FULL_DEBUG
+#export COMPONENT_FSAL=NIV_FULL_DEBUG
+#export COMPONENT_NFSPROTO=NIV_FULL_DEBUG
+#export COMPONENT_NFS_V4=NIV_FULL_DEBUG
+#export COMPONENT_NFS_READDIR=NIV_FULL_DEBUG
+#export COMPONENT_MEMLEAKS=NIV_FULL_DEBUG
+
+#For Lock/State debugging:
+#export COMPONENT_NLM=NIV_FULL_DEBUG
+#export COMPONENT_NFS_V4_LOCK=NIV_FULL_DEBUG
+#export COMPONENT_STATE=NIV_FULL_DEBUG
+###########################################################
+
+OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
+RETVAL=0
+prog="ganesha.nfsd"
+CMD_LOGGER="/usr/bin/logger -i -t ganesha.gpfs-init "
+GANRECDIR="/var/lib/nfs/ganesha_local"
+
+which sm-notify &> /dev/null
+HAVE_SMNOTIFY=`echo $?`
+
+check_hang() {
+       PID=$1
+       MAXREDS=2
+       MAXSTALL=120
+       FORCECORE=0;
+
+       NUMREDS=$(ls $GANRECDIR | grep "red" | wc -l)
+       LASTONE=$(ls -t $GANRECDIR | sed 's/_/ /' | awk 'NR > 1 {next} {printf $1} ')
+       # Beware of startup
+       if [ -z $LASTONE ] ; then
+               LASTONE=$(date +"%s")
+       fi
+       TNOW=$(date +"%s")
+       TSTALL=$(($TNOW - $LASTONE))
+       if [ $NUMREDS -ge $MAXREDS ] ; then
+               $CMD_LOGGER "Deadlock detected: No replies to RPC requests"
+               FORCECORE=1;
+       fi
+       if [ $TSTALL -ge $MAXSTALL ] ; then
+               $CMD_LOGGER "Deadlock detected: stalled for $TSTALL"
+               FORCECORE=1;
+       fi
+       return $FORCECORE
+}
+
+
+start() {
+	# Start statd, rquotad and Ganesha daemon.
+	# If any of the three daemons are already running, then doesn't restart it.
+	start_statd=1
+	start_rquotad=0
+	start_ganesha=1
+
+	# Check if the user is root
+        if [ $UID -ne 0 ]; then
+	        echo "Ganesha must be started by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	if [ ! -x /sbin/rpc.statd ]; then
+		echo "statd is not available"
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Make sure the rpc.statd is not already running.
+	if status rpc.statd > /dev/null ; then
+		echo "statd already running."
+		start_statd=0
+	fi
+
+	# Make sure the rpc.rquotad is not already running.
+	if status rpc.rquotad > /dev/null ; then
+		echo "rquotad already running."
+		start_rquotad=0
+	fi
+
+	# Check if a Ganesha configuration file is available
+	if [ ! -f "$CONFFILE" ]; then
+	        echo "The following configuration file is required but does not exist: $CONFFILE"
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# Check if Ganesha is already running
+	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+           result=`pidof "$PROGONLY"`
+        fi
+	if [ $result ]; then
+	        echo "Ganesha is already running."
+		start_ganesha=0
+	fi
+
+	# start the statd daemon only if it is not running
+	if [ $start_statd -eq 1 ]; then
+		rm -f /var/lock/subsys/rpc.statd
+
+		# Make sure locks are recovered
+		if [ $HAVE_SMNOTIFY -eq 0 ]; then
+			rm -f /var/run/sm-notify.pid
+		fi
+
+		echo -n $"Starting NFS statd: "
+		# Set statd's local hostname if defined
+		[ -n "${STATD_HOSTNAME}" ] && STATDARG="$STATDARG -n ${STATD_HOSTNAME}"
+
+		# See if a statd's ports has been defined
+		[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
+		[ -n "$STATD_OUTGOING_PORT" ] \
+			&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
+
+		# See if we have an HA-callout program specified
+		[ -n "$STATD_HA_CALLOUT" ] \
+			&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
+		daemon rpc.statd "$STATDARG"
+		RETVAL=$?
+		echo
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rpc.statd
+		if [ $RETVAL -ne 0 ]; then
+			failure
+			return $RETVAL
+		fi
+	fi
+
+	# start the rquotad daemon only if it is not running
+	if [ $start_rquotad  -eq 1 ]; then
+		if [ -n "$RQUOTAD" ] ; then
+			echo -n $"Starting rquotad: "
+			[ -n "$RQUOTAD_PORT" ] \
+				&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
+			daemon rpc.rquotad $RPCRQUOTADOPTS
+			RETVAL=$?
+			echo
+			if [ $RETVAL -ne 0 ]; then
+				failure
+				echo " "
+				return $RETVAL
+			fi
+		fi
+	fi
+
+	# Start the Ganesha daemon only if it is not running
+	if [ $start_ganesha  -eq 1 ]; then
+		which ctdb &> /dev/null
+		if [ $? -eq 0 ]; then
+			prev_cntr=0
+			[ -f $EPOCHFILE ] && prev_cntr=$(cat $EPOCHFILE)
+			[ -z $prev_cntr ] && prev_cntr=0
+			new_cntr=$(( prev_cntr + 1 ))
+			#Epoch = (ctdb node number << 16) | (new_cntr & 0xFFFF)
+			ganesha_epoch=$(( `ctdb pnn | awk -F : '{print $2}'` << 16 | new_cntr & 0xFFFF ))
+			echo $new_cntr > $EPOCHFILE
+			OPTIONS="$OPTIONS -E $ganesha_epoch"
+		fi
+		echo  -n $"Starting $prog: "
+		ulimit -n 1048576          
+		#Remove the status tracking files
+		rm -rf /var/lib/nfs/ganesha_local/*
+ 
+		daemon numactl -i all $PATHPROG $OPTIONS
+		RETVAL=$?
+		if [ $HAVE_SMNOTIFY -eq 0 ]; then
+			sm-notify -f
+		fi
+
+		# Call CTDB's smnotify
+		[ -n "${STATD_HOSTNAME}" ] \
+			&& STATD_CALLOUT="`echo $STATD_HOSTNAME | xargs -n 3 -d " "| awk '{print $3}'`"
+		if [ -n "$STATD_CALLOUT" ]; then
+			$STATD_CALLOUT notify
+		fi
+
+		# Sleeping here gives Ganesha an adequate amount of time to
+		# initialize the server and fail if anything goes wrong.
+		# Without this sleep and the server will be in the midst of
+		# initializing. It may fail immediately after this script runs.
+		sleep 2
+
+		# Check if Ganesha is still running
+		result=`pidof "$PATHPROG"`
+		if [ ! $result ]; then
+                    result=`pidof "$PROGONLY"`
+                fi
+		if [ ! $result ]; then
+		    failure
+		    echo
+		    return $RETVAL
+		fi
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ganesha.nfsd
+	fi
+
+        echo
+        return $RETVAL
+}
+
+stop() {
+	# Check if user is root
+        if [ $UID -ne 0 ]; then
+	        echo "Ganesha must be stopped by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	echo -n $"Stopping rquotad: "
+	killproc rpc.rquotad
+	RETVAL=$?
+	echo
+
+	echo -n $"Stopping statd: "
+	killproc rpc.statd
+	RETVAL=$?
+	rm -f /var/lock/subsys/rpc.statd
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		rm -f /var/run/sm-notify.pid
+	fi
+	echo
+	# Kill the Ganesha process
+        # pidof on some systems use only the process's name
+        # pidof on other systems use the full pathname of the process binary
+	echo -n $"Stopping $prog: "
+	pid=`pidof "$PATHPROG"`
+	if [ ! $pid ]; then
+           PROCNAME=$PROGONLY
+           pid=`pidof "$PROGONLY"`
+        else
+           PROCNAME=$PATHPROG
+        fi
+	if [ $pid ]; then
+                # Ganesha is running. Stop it.
+                #check for deadlock and take a dump if required
+                check_hang $pid
+                if [ $? -eq 0 ]; then
+                        kill -TERM $pid >/dev/null 2>&1
+                else
+                        kill -ABRT $PID >/dev/null 2>&1
+                fi
+                usleep 100000
+
+                # Unconditionally delete this file.
+                rm -f  /var/lock/subsys/ganesha.nfsd
+
+        	#Sleep for 1 second before checking the status, If the process exists
+	        #even after 30 iterations, send Kill
+        	waitcnt=0
+
+	        while true; do
+        	    if checkpid $pid && sleep 1; then
+                	waitcnt=$(( waitcnt + 1 ))
+	                if [ $waitcnt -eq 30 ]; then
+        	            kill -KILL $pid >/dev/null 2>&1
+                	    break
+	                fi
+        	    else
+                	break
+	            fi
+        	done
+
+		# Give Ganesha time to quit
+		result=`pidof "$PROCNAME"`
+		while true; do
+			 if [ $result ] && [ $result -eq $pid ]; then
+                                 echo "Waiting for ganesha to stop ..."
+				 sleep .1
+				 result=`pidof "$PROCNAME"`
+			 else
+				 break
+			 fi
+		done
+        fi 
+        echo
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+        return $RETVAL
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/ganesha.nfsd ] && restart
+    return 0
+}
+
+reload() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Reloading Ganesha Exports"
+	    kill -HUP $result;
+    fi
+}
+
+ganesha_status() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Ganesha is running."
+	    RETVAL=0
+    else
+	    echo "Ganesha is stopped"
+	    RETVAL=1
+    fi
+    status rpc.statd
+    if [ -n "$RQUOTAD" ] ; then
+    	status rpc.rquotad
+    fi
+    return $RETVAL
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  reload)
+	reload
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        ganesha_status
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL

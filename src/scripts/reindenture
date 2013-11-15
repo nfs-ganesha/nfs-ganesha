@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]; then
+    echo usage: reindenture dir1 [dir2 ... dirn] 1>&2
+    exit 1
+fi;
+
+while [ $# -gt 0 ]; do
+    dir=$1
+    echo Reindenting files under $dir
+    env VERSION_CONTROL=simple \
+	find $dir -type f \( -name \*.c -o -name \*.h \) -print0 | \
+	xargs -0 indent -nbad -bap -nbc -bbo -hnl -br -brs -c33 -cd33 \
+	-ncdb -ce -ci4 -cli0 -d0 -di1 -nfc1 -i8 -ip0 -l80 -lp -npcs \
+	-nprs -npsl -sai -saf -saw -ncs -nsc -sob -nfca -cp33 -ss -ts8 \
+	-il1 --ignore-newlines
+    shift
+done

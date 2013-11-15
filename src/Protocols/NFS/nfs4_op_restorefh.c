@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -7,12 +7,12 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
@@ -25,176 +25,156 @@
  */
 
 /**
- * \file    nfs4_op_restorefh.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/05 15:14:52 $
- * \version $Revision: 1.10 $
- * \brief   Routines used for managing the NFS4_OP_RESTOREFH operation (number 31).
+ * @file    nfs4_op_restorefh.c
+ * @brief   The NFS4_OP_RESTOREFH operation.
  *
- * nfs4_op_restorefh.c : Routines used for managing the NFS4_OP_RESTOREFH operation.
- *
- *
+ * Routines used for managing the NFS4_OP_RESTOREFH operation.
  */
-#ifdef HAVE_CONFIG_H
+
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  *
- * \brief The NFS4_OP_RESTOREFH operation.
+ * @brief The NFS4_OP_RESTOREFH operation.
  *
  * This functions handles the NFS4_OP_RESTOREFH operation in
  * NFSv4. This function can be called only from nfs4_Compound.  This
  * operation replaces the current FH with the previously saved FH.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @return NFS4_OK if successfull, other values show an error.
+ * @return per RFC5661, p. 373
  *
- * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
  *
  */
 
-#define arg_RESTOREFH op->nfs_argop4_u.oprestorefh
-#define res_RESTOREFH resp->nfs_resop4_u.oprestorefh
-
-int nfs4_op_restorefh(struct nfs_argop4 *op,
-                      compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
+		      struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_restorefh";
+	RESTOREFH4res * const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
+	/* First of all, set the reply to zero to make sure it contains no
+	   parasite information */
+	memset(resp, 0, sizeof(struct nfs_resop4));
 
-  /* First of all, set the reply to zero to make sure it contains no
-     parasite information */
-  memset(resp, 0, sizeof(struct nfs_resop4));
+	resp->resop = NFS4_OP_RESTOREFH;
+	res_RESTOREFH->status = NFS4_OK;
 
-  resp->resop = NFS4_OP_RESTOREFH;
-  res_RESTOREFH.status = NFS4_OK;
+	LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+			   "Saved FH %s",
+			   LEN_FH_STR,
+			   data->savedFH.nfs_fh4_val,
+			   data->savedFH.nfs_fh4_len);
 
-  /* If there is no currentFH, teh return an error */
-  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
-    {
-      /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
-         page 202) */
-      res_RESTOREFH.status = NFS4ERR_RESTOREFH;
-      return res_RESTOREFH.status;
-    }
+	/* If there is no savedFH, then return an error */
+	if (nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE) {
+		/* There is no current FH, return NFS4ERR_RESTOREFH
+		 * (cg RFC3530, page 202)
+		 */
+		res_RESTOREFH->status = NFS4ERR_RESTOREFH;
+		return res_RESTOREFH->status;
+	}
 
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
-    {
-      res_RESTOREFH.status = NFS4ERR_BADHANDLE;
-      return res_RESTOREFH.status;
-    }
+	/* Do basic checks on saved filehandle */
+	res_RESTOREFH->status =
+	    nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
 
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
-    {
-      res_RESTOREFH.status = NFS4ERR_FHEXPIRED;
-      return res_RESTOREFH.status;
-    }
+	if (res_RESTOREFH->status != NFS4_OK)
+		return res_RESTOREFH->status;
 
-  /* If data->exportp is null, a junction from pseudo fs was
-     traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_RESTOREFH.status = nfs4_SetCompoundExport(data);
-      if(res_RESTOREFH.status != NFS4_OK)
-        {
-          LogCrit(COMPONENT_NFS_V4,
-                  "Error %d in nfs4_SetCompoundExport", res_RESTOREFH.status);
-          return res_RESTOREFH.status;
-        }
-    }
+	/* Copy the data from current FH to saved FH */
+	memcpy(data->currentFH.nfs_fh4_val, data->savedFH.nfs_fh4_val,
+	       data->savedFH.nfs_fh4_len);
 
-  /* Copy the data from current FH to saved FH */
-  memcpy(data->currentFH.nfs_fh4_val,
-         data->savedFH.nfs_fh4_val,
-         data->savedFH.nfs_fh4_len);
+	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-  data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
+	/* Restore the saved stateid */
+	data->current_stateid = data->saved_stateid;
+	data->current_stateid_valid = data->saved_stateid_valid;
 
-  /* If current and saved entry are identical, get no references and
-     make no changes. */
+	if (data->req_ctx->export != NULL)
+		put_gsh_export(data->req_ctx->export);
 
-  if (data->current_entry == data->saved_entry) {
-      goto out;
-  }
+	/* Restore the export information */
+	data->req_ctx->export = data->saved_export;
+	if (data->req_ctx->export != NULL) {
+		data->export = &data->req_ctx->export->export;
 
-  if (data->current_entry) {
-      cache_inode_put(data->current_entry);
-      data->current_entry = NULL;
-  }
+		/* Get a reference to the export for the new CurrentFH
+		 * independent of SavedFH if appropriate.
+		 */
+		(void)get_gsh_export(data->req_ctx->export->export.id, true);
+	}
 
-  data->current_entry = data->saved_entry;
-  data->current_filetype = data->saved_filetype;
+	data->export_perms = data->saved_export_perms;
 
-  /* Take another reference.  As of now the filehandle is both saved
-     and current and both must be counted.  Protect in case of
-     pseudofs handle. */
+	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
+	 * because we are restoring saved information, and the
+	 * credential checking may be skipped.
+	 */
 
-  if (data->current_entry) {
-       if (cache_inode_lru_ref(data->current_entry,
-                               LRU_FLAG_NONE) != CACHE_INODE_SUCCESS) {
-            resp->nfs_resop4_u.opgetfh.status = NFS4ERR_STALE;
-            data->current_entry = NULL;
-            return resp->nfs_resop4_u.opgetfh.status;
-       }
-  }
+	/* If current and saved entry are identical, get no references and
+	 * make no changes.
+	 */
+	if (data->current_entry == data->saved_entry)
+		goto out;
+
+	if (data->current_entry) {
+		cache_inode_put(data->current_entry);
+		data->current_entry = NULL;
+	}
+
+	if (data->current_ds) {
+		data->current_ds->ops->put(data->current_ds);
+		data->current_ds = NULL;
+	}
+
+	data->current_entry = data->saved_entry;
+	data->current_filetype = data->saved_filetype;
+
+	/* Take another reference.  As of now the filehandle is both saved
+	 * and current and both must be counted.  Protect in case of
+	 * pseudofs handle.
+	 */
+	if (data->current_entry)
+		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
 
  out:
 
-  if(isFullDebug(COMPONENT_NFS_V4))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle4(str, &data->currentFH);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "RESTORE FH: Current FH %s", str);
-    }
+	if (isFullDebug(COMPONENT_NFS_V4)) {
+		char str[LEN_FH_STR];
+		sprint_fhandle4(str, &data->currentFH);
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "RESTORE FH: Current FH %s",
+			     str);
+	}
 
-
-  return NFS4_OK;
-}                               /* nfs4_op_restorefh */
+	return NFS4_OK;
+}				/* nfs4_op_restorefh */
 
 /**
- * \brief frees what was allocared to handle nfs4_op_restorefh.
+ * @brief Free memory allocated for RESTOREFH result
  *
- * Frees what was allocared to handle nfs4_op_restorefh.
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_RESTOREFH operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_restorefh_Free(RESTOREFH4res * resp)
+void nfs4_op_restorefh_Free(nfs_resop4 *resp)
 {
-  /* Nothing to be done */
-  return;
-}                               /* nfs4_op_restorefh_Free */
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_restorefh_Free */

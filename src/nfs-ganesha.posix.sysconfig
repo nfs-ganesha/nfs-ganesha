@@ -1,2 +1,0 @@
-LOGFILE=/var/log/posix.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/posix.ganesha.nfsd.conf

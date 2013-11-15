@@ -1,0 +1,14 @@
+[Unit]
+Description=NFS-Ganesha file server
+Documentation=http://github.com/phdeniel/nfs-ganesha/wiki
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/nfs-ganesha
+ExecStart=/usr/bin/ganesha.nfsd $OPTIONS 
+ExecReload=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin  org.ganesha.nfsd.admin.reload
+ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin org.ganesha.nfsd.admin.shutdown
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

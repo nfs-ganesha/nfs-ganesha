@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,30 +18,23 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    state_share.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
- * \brief   This file contains functions used in share reservation management.
- *
- * state_share.c : This file contains functions used in share reservation management.
- *
- *
+ * @defgroup SAL State abstraction layer
+ * @{
  */
-#ifdef HAVE_CONFIG_H
+
+/**
+ * @file state_share.c
+ * @brief Share reservation management
+ */
+
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,914 +47,1006 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
-#ifdef _USE_NLM
 #include "nlm_util.h"
-#endif
 #include "cache_inode_lru.h"
 
-/* Update the ref counter of share state of given file. */
-static void state_share_update_counter(cache_entry_t * pentry,
-                                       int old_access,
-                                       int old_deny,
-                                       int new_access,
-                                       int new_deny,
-                                       bool_t v4);
+static void state_share_update_counter(cache_entry_t *entry, int old_access,
+				       int old_deny, int new_access,
+				       int new_deny, bool v4);
 
-/* Calculate the union of share access of given file. */
-static unsigned int state_share_get_share_access(cache_entry_t * pentry);
+static unsigned int state_share_get_share_access(cache_entry_t *entry);
 
-/* Calculate the union of share deny of given file. */
-static unsigned int state_share_get_share_deny(cache_entry_t * pentry);
+static unsigned int state_share_get_share_deny(cache_entry_t *entry);
 
-/* Push share state down to FSAL. Only the union of share states should be
- * passed to this function.
+/**
+ * @brief Push share state down to FSAL
+ *
+ * Only the union of share states should be passed to this function.
+ *
+ * @param[in] entry File to access
+ * @param[in] owner Open owner
+ * @param[in] share Share description
+ *
+ * @return State status.
  */
-static state_status_t do_share_op(cache_entry_t        * pentry,
-                                  fsal_op_context_t    * pcontext,
-                                  state_owner_t        * powner,
-                                  fsal_share_param_t   * pshare)
+static state_status_t do_share_op(cache_entry_t *entry, state_owner_t *owner,
+				  fsal_share_param_t *share)
 {
-  fsal_status_t fsal_status;
-  state_status_t status = STATE_SUCCESS;
-  fsal_staticfsinfo_t * pstatic = pcontext->export_context->fe_static_fs_info;
+	fsal_status_t fsal_status;
+	state_status_t status = STATE_SUCCESS;
+	struct fsal_obj_handle *obj_hdl = entry->obj_handle;
 
-  /* Quick exit if share reservation is not supported by FSAL */
-  if(!pstatic->share_support)
-    return STATE_SUCCESS;
+	/* Quick exit if share reservation is not supported by FSAL */
+	if (!obj_hdl->export->ops->
+	    fs_supports(obj_hdl->export, fso_share_support))
+		return STATE_SUCCESS;
 
-  fsal_status = FSAL_share_op(cache_inode_fd(pentry),
-                              &pentry->handle,
-                              pcontext,
-                              NULL,
-                              *pshare);
+	fsal_status =
+	    entry->obj_handle->ops->share_op(entry->obj_handle, NULL, *share);
 
-  status = state_error_convert(fsal_status);
+	status = state_error_convert(fsal_status);
 
-  LogFullDebug(COMPONENT_STATE,
-               "FSAL_share_op returned %s",
-               state_err_str(status));
+	LogFullDebug(COMPONENT_STATE, "FSAL_share_op returned %s",
+		     state_err_str(status));
 
-  return status;
+	return status;
 }
 
-/* This is called when new share state is added. The state lock MUST
-   be held. */
-state_status_t state_share_add(cache_entry_t         * pentry,
-                               fsal_op_context_t     * pcontext,
-                               state_owner_t         * powner,
-                               state_t               * pstate,  /* state that holds share bits to be added */
-                               state_status_t        * pstatus)
-{
-  state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
-  fsal_share_param_t      share_param;
-
-  /* Check if new share state has conflicts. */
-  status = state_share_check_conflict(pentry,
-                                      pstate->state_data.share.share_access,
-                                      pstate->state_data.share.share_deny,
-                                      pstatus);
-  if(status != STATE_SUCCESS)
-    {
-      LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
-      *pstatus = STATE_STATE_CONFLICT;
-      return *pstatus;
-    }
-
-  /* Get the current union of share states of this file. */
-  old_pentry_share_access = state_share_get_share_access(pentry);
-  old_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* Share state to be added. */
-  new_share_access = pstate->state_data.share.share_access;
-  new_share_deny = pstate->state_data.share.share_deny;
-
-  /* Update the ref counted share state of this file. */
-  state_share_update_counter(pentry,
-                             OPEN4_SHARE_ACCESS_NONE,
-                             OPEN4_SHARE_DENY_NONE,
-                             new_share_access,
-                             new_share_deny,
-                             TRUE);
-
-  /* Get the updated union of share states of this file. */
-  new_pentry_share_access = state_share_get_share_access(pentry);
-  new_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* If this file's share bits are different from the supposed value, update
-   * it.
-   */
-  if((new_pentry_share_access != old_pentry_share_access) ||
-     (new_pentry_share_deny != old_pentry_share_deny))
-    {
-      /* Try to push to FSAL. */
-      share_param.share_access = new_pentry_share_access;
-      share_param.share_deny = new_pentry_share_deny;
-
-      status = do_share_op(pentry, pcontext, powner, &share_param);
-      if(status != STATE_SUCCESS)
-        {
-          /* Revert the ref counted share state of this file. */
-          state_share_update_counter(pentry,
-                                     new_share_access,
-                                     new_share_deny,
-                                     OPEN4_SHARE_ACCESS_NONE,
-                                     OPEN4_SHARE_DENY_NONE,
-                                     TRUE);
-          LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
-        }
-    }
-
-  LogFullDebug(COMPONENT_STATE, "pstate %p: added share_access %u, "
-               "share_deny %u",
-               pstate, new_share_access, new_share_deny);
-
-  /* Update previously seen share state in the bitmap. */
-  state_share_set_prev(pstate, &(pstate->state_data));
-
-  return status;
-}
-
-/* This is called when a share state is removed.  The state lock MUST
-   be held. */
-state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  fsal_op_context_t     * pcontext,
-                                  state_owner_t         * powner,
-                                  state_t               * pstate,  /* state that holds share bits to be removed */
-                                  state_status_t        * pstatus)
-{
-  state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            removed_share_access = 0;
-  unsigned int            removed_share_deny = 0;
-  fsal_share_param_t      share_param;
-
-  /* Get the current union of share states of this file. */
-  old_pentry_share_access = state_share_get_share_access(pentry);
-  old_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* Share state to be removed. */
-  removed_share_access = pstate->state_data.share.share_access;
-  removed_share_deny = pstate->state_data.share.share_deny;
-
-  /* Update the ref counted share state of this file. */
-  state_share_update_counter(pentry,
-                             removed_share_access,
-                             removed_share_deny,
-                             OPEN4_SHARE_ACCESS_NONE,
-                             OPEN4_SHARE_DENY_NONE,
-                             TRUE);
-
-  /* Get the updated union of share states of this file. */
-  new_pentry_share_access = state_share_get_share_access(pentry);
-  new_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* If this file's share bits are different from the supposed value, update
-   * it.
-   */
-  if((new_pentry_share_access != old_pentry_share_access) ||
-     (new_pentry_share_deny != old_pentry_share_deny))
-    {
-      /* Try to push to FSAL. */
-      share_param.share_access = new_pentry_share_access;
-      share_param.share_deny = new_pentry_share_deny;
-
-      status = do_share_op(pentry, pcontext, powner, &share_param);
-      if(status != STATE_SUCCESS)
-        {
-          /* Revert the ref counted share state of this file. */
-          state_share_update_counter(pentry,
-                                     OPEN4_SHARE_ACCESS_NONE,
-                                     OPEN4_SHARE_DENY_NONE,
-                                     removed_share_access,
-                                     removed_share_deny,
-                                     TRUE);
-          LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
-        }
-    }
-
-  LogFullDebug(COMPONENT_STATE, "pstate %p: removed share_access %u, "
-               "share_deny %u",
-               pstate,
-               removed_share_access,
-               removed_share_deny);
-
-  return status;
-}
-
-/* This is called when share state is upgraded during open.  The
-   state ock MUST be held. */
-state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   fsal_op_context_t     * pcontext,
-                                   state_data_t          * pstate_data, /* new share bits */
-                                   state_owner_t         * powner,
-                                   state_t               * pstate,      /* state that holds current share bits */
-                                   state_status_t        * pstatus)
-{
-  state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            old_share_access = 0;
-  unsigned int            old_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
-  fsal_share_param_t share_param;
-
-  /* Check if new share state has conflicts. */
-  status = state_share_check_conflict(pentry,
-                                      pstate_data->share.share_access,
-                                      pstate_data->share.share_deny,
-                                      pstatus);
-  if(status != STATE_SUCCESS)
-    {
-      LogEvent(COMPONENT_STATE, "Share conflicts detected during upgrade");
-      *pstatus = STATE_STATE_CONFLICT;
-      return *pstatus;
-    }
-
-  /* Get the current union of share states of this file. */
-  old_pentry_share_access = state_share_get_share_access(pentry);
-  old_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* Old share state. */
-  old_share_access = pstate->state_data.share.share_access;
-  old_share_deny = pstate->state_data.share.share_deny;
-
-  /* New share state. */
-  new_share_access = pstate_data->share.share_access;
-  new_share_deny = pstate_data->share.share_deny;
-
-  /* Update the ref counted share state of this file. */
-  state_share_update_counter(pentry,
-                             old_share_access,
-                             old_share_deny,
-                             new_share_access,
-                             new_share_deny,
-                             TRUE);
-
-  /* Get the updated union of share states of this file. */
-  new_pentry_share_access = state_share_get_share_access(pentry);
-  new_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* If this file's share bits are different from the supposed value, update
-   * it.
-   */
-  if((new_pentry_share_access != old_pentry_share_access) ||
-     (new_pentry_share_deny != old_pentry_share_deny))
-    {
-      /* Try to push to FSAL. */
-      share_param.share_access = new_pentry_share_access;
-      share_param.share_deny = new_pentry_share_deny;
-
-      status = do_share_op(pentry, pcontext, powner, &share_param);
-      if(status != STATE_SUCCESS)
-        {
-          /* Revert the ref counted share state of this file. */
-          state_share_update_counter(pentry,
-                                     new_share_access,
-                                     new_share_deny,
-                                     old_share_access,
-                                     old_share_deny,
-                                     TRUE);
-          LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
-        }
-    }
-
-  /* Update share state. */
-  pstate->state_data.share.share_access = new_share_access;
-  pstate->state_data.share.share_deny = new_share_deny;
-  LogFullDebug(COMPONENT_STATE, "pstate %p: upgraded share_access %u, share_deny %u",
-               pstate,
-               pstate->state_data.share.share_access,
-               pstate->state_data.share.share_deny);
-
-  /* Update previously seen share state. */
-  state_share_set_prev(pstate, pstate_data);
-
-  return status;
-}
-
-/* This is called when share is downgraded via open_downgrade op.
-   The state lock MUST be held. */
-state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     fsal_op_context_t     * pcontext,
-                                     state_data_t          * pstate_data, /* new share bits */
-                                     state_owner_t         * powner,
-                                     state_t               * pstate,      /* state that holds current share bits */
-                                     state_status_t        * pstatus)
-{
-  state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            old_share_access = 0;
-  unsigned int            old_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
-  fsal_share_param_t      share_param;
-
-  /* Get the current union of share states of this file. */
-  old_pentry_share_access = state_share_get_share_access(pentry);
-  old_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* Old share state. */
-  old_share_access = pstate->state_data.share.share_access;
-  old_share_deny = pstate->state_data.share.share_deny;
-
-  /* New share state. */
-  new_share_access = pstate_data->share.share_access;
-  new_share_deny = pstate_data->share.share_deny;
-
-  /* Update the ref counted share state of this file. */
-  state_share_update_counter(pentry,
-                             old_share_access,
-                             old_share_deny,
-                             new_share_access,
-                             new_share_deny,
-                             TRUE);
-
-  /* Get the updated union of share states of this file. */
-  new_pentry_share_access = state_share_get_share_access(pentry);
-  new_pentry_share_deny = state_share_get_share_deny(pentry);
-
-  /* If this file's share bits are different from the supposed value, update
-   * it.
-   */
-  if((new_pentry_share_access != old_pentry_share_access) ||
-     (new_pentry_share_deny != old_pentry_share_deny))
-    {
-      /* Try to push to FSAL. */
-      share_param.share_access = new_pentry_share_access;
-      share_param.share_deny = new_pentry_share_deny;
-
-      status = do_share_op(pentry, pcontext, powner, &share_param);
-      if(status != STATE_SUCCESS)
-        {
-          /* Revert the ref counted share state of this file. */
-          state_share_update_counter(pentry,
-                                     new_share_access,
-                                     new_share_deny,
-                                     old_share_access,
-                                     old_share_deny,
-                                     TRUE);
-          LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
-        }
-    }
-
-  /* Update share state. */
-  pstate->state_data.share.share_access = new_share_access;
-  pstate->state_data.share.share_deny   = new_share_deny;
-  LogFullDebug(COMPONENT_STATE, "pstate %p: downgraded share_access %u, "
-               "share_deny %u",
-               pstate,
-               pstate->state_data.share.share_access,
-               pstate->state_data.share.share_deny);
-
-  return status;
-}
-
-/* Update the bitmap of previously seen share access and deny bits for the
- * given state.
+/**
+ * @brief Add new share state
+ *
+ * The state lock _must_ be held for this call.
+ *
+ * @param[in,out] entry File on which to operate
+ * @param[in]     owner Open owner
+ * @param[in]     state State that holds the share bits to be added
+ *
+ * @return State status.
  */
-state_status_t state_share_set_prev(state_t      * pstate,
-                                    state_data_t * pstate_data)
+state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
+			       state_t *state)
 {
-  state_status_t status = STATE_SUCCESS;
+	state_status_t status = STATE_SUCCESS;
+	unsigned int old_entry_share_access = 0;
+	unsigned int old_entry_share_deny = 0;
+	unsigned int new_entry_share_access = 0;
+	unsigned int new_entry_share_deny = 0;
+	unsigned int new_share_access = 0;
+	unsigned int new_share_deny = 0;
+	fsal_share_param_t share_param;
 
-  pstate->state_data.share.share_access_prev |=
-    (1 << pstate_data->share.share_access);
+	/* Check if new share state has conflicts. */
+	status =
+	    state_share_check_conflict(entry,
+				       state->state_data.share.share_access,
+				       state->state_data.share.share_deny);
+	if (status != STATE_SUCCESS) {
+		LogEvent(COMPONENT_STATE,
+			 "Share conflicts detected during add");
+		status = STATE_STATE_CONFLICT;
+		return status;
+	}
 
-  pstate->state_data.share.share_deny_prev |=
-    (1 << pstate_data->share.share_deny);
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
 
-  return status;
+	/* Share state to be added. */
+	new_share_access = state->state_data.share.share_access;
+	new_share_deny = state->state_data.share.share_deny;
+
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry, OPEN4_SHARE_ACCESS_NONE,
+				   OPEN4_SHARE_DENY_NONE, new_share_access,
+				   new_share_deny, true);
+
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+
+		status = do_share_op(entry, owner, &share_param);
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state of this file. */
+			state_share_update_counter(entry, new_share_access,
+						   new_share_deny,
+						   OPEN4_SHARE_ACCESS_NONE,
+						   OPEN4_SHARE_DENY_NONE, true);
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+			return status;
+		}
+	}
+
+	LogFullDebug(COMPONENT_STATE,
+		     "state %p: added share_access %u, " "share_deny %u", state,
+		     new_share_access, new_share_deny);
+
+	/* Update previously seen share state in the bitmap. */
+	state_share_set_prev(state, &(state->state_data));
+
+	return status;
 }
 
-/* Check if the given state has seen the given share access and deny bits
- * before. This is needed when we check validity of open downgrade.
+/**
+ * Remove a share state
+ *
+ * The state lock _must_ be held for this call.
+ *
+ * @param[in,out] entry File to modify
+ * @param[in]     owner Open owner
+ * @param[in]     state State that holds the share bits to be removed
+ *
+ * @return State status.
  */
-state_status_t state_share_check_prev(state_t      * pstate,
-                                    state_data_t * pstate_data)
+state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state)
 {
-  state_status_t status = STATE_SUCCESS;
+	state_status_t status = STATE_SUCCESS;
+	unsigned int old_entry_share_access = 0;
+	unsigned int old_entry_share_deny = 0;
+	unsigned int new_entry_share_access = 0;
+	unsigned int new_entry_share_deny = 0;
+	unsigned int removed_share_access = 0;
+	unsigned int removed_share_deny = 0;
+	fsal_share_param_t share_param;
 
-  if((pstate->state_data.share.share_access_prev &
-     (1 << pstate_data->share.share_access)) == 0)
-    return STATE_STATE_ERROR;
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
 
-  if((pstate->state_data.share.share_deny_prev &
-     (1 << pstate_data->share.share_deny)) == 0)
-    return STATE_STATE_ERROR;
+	/* Share state to be removed. */
+	removed_share_access = state->state_data.share.share_access;
+	removed_share_deny = state->state_data.share.share_deny;
 
-  return status;
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry, removed_share_access,
+				   removed_share_deny, OPEN4_SHARE_ACCESS_NONE,
+				   OPEN4_SHARE_DENY_NONE, true);
+
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+
+		status = do_share_op(entry, owner, &share_param);
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state of this file. */
+			state_share_update_counter(entry,
+						   OPEN4_SHARE_ACCESS_NONE,
+						   OPEN4_SHARE_DENY_NONE,
+						   removed_share_access,
+						   removed_share_deny, true);
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+			return status;
+		}
+	}
+
+	LogFullDebug(COMPONENT_STATE,
+		     "state %p: removed share_access %u, " "share_deny %u",
+		     state, removed_share_access, removed_share_deny);
+
+	return status;
 }
 
-/* Check if the given share access and deny bits have conflict.  The
-   state lock MUST be held. */
-state_status_t state_share_check_conflict(cache_entry_t  * pentry,
-                                          int              share_acccess,
-                                          int              share_deny,
-                                          state_status_t * pstatus)
-{
-  char * cause = "";
-
-  if((share_acccess & OPEN4_SHARE_ACCESS_READ) != 0 &&
-     pentry->object.file.share_state.share_deny_read > 0)
-    {
-      cause = "access read denied by existing deny read";
-      goto out_conflict;
-    }
-
-  if((share_acccess & OPEN4_SHARE_ACCESS_WRITE) != 0 &&
-     pentry->object.file.share_state.share_deny_write > 0)
-    {
-      cause = "access write denied by existing deny write";
-      goto out_conflict;
-    }
-
-  if((share_deny & OPEN4_SHARE_DENY_READ) != 0 &&
-     pentry->object.file.share_state.share_access_read > 0)
-    {
-      cause = "deny read denied by existing access read";
-      goto out_conflict;
-    }
-
-  if((share_deny & OPEN4_SHARE_DENY_WRITE) != 0 &&
-     pentry->object.file.share_state.share_access_write > 0)
-    {
-      cause = "deny write denied by existing access write";
-      goto out_conflict;
-    }
-
-  *pstatus = STATE_SUCCESS;
-  return *pstatus;
-
-out_conflict:
-
-  LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
-  *pstatus = STATE_STATE_CONFLICT;
-  return *pstatus;
-}
-
-/* Update the ref counter of share state. This function should be called with
- * the state lock held
+/**
+ * @brief Upgrade share modes
+ *
+ * The state lock _must_ be held for this call.
+ *
+ * @param[in,out] entry      File to modify
+ * @param[in]     state_data New share bits
+ * @param[in]     owner      Open owner
+ * @param[in,out] state      State that holds current share bits
+ *
+ * @return State status.
  */
-static void state_share_update_counter(cache_entry_t * pentry,
-                                       int old_access,
-                                       int old_deny,
-                                       int new_access,
-                                       int new_deny,
-                                       bool_t v4)
+state_status_t state_share_upgrade(cache_entry_t *entry,
+				   state_data_t *state_data,
+				   state_owner_t *owner, state_t *state)
 {
-  int access_read_inc  = ((new_access & OPEN4_SHARE_ACCESS_READ) != 0) - ((old_access & OPEN4_SHARE_ACCESS_READ) != 0);
-  int access_write_inc = ((new_access & OPEN4_SHARE_ACCESS_WRITE) != 0) - ((old_access & OPEN4_SHARE_ACCESS_WRITE) != 0);
-  int deny_read_inc    = ((new_deny   & OPEN4_SHARE_ACCESS_READ) != 0) - ((old_deny   & OPEN4_SHARE_ACCESS_READ) != 0);
-  int deny_write_inc   = ((new_deny   & OPEN4_SHARE_ACCESS_WRITE) != 0) - ((old_deny   & OPEN4_SHARE_ACCESS_WRITE) != 0);
+	state_status_t status = STATE_SUCCESS;
+	unsigned int old_entry_share_access = 0;
+	unsigned int old_entry_share_deny = 0;
+	unsigned int new_entry_share_access = 0;
+	unsigned int new_entry_share_deny = 0;
+	unsigned int old_share_access = 0;
+	unsigned int old_share_deny = 0;
+	unsigned int new_share_access = 0;
+	unsigned int new_share_deny = 0;
+	fsal_share_param_t share_param;
 
-  pentry->object.file.share_state.share_access_read  += access_read_inc;
-  pentry->object.file.share_state.share_access_write += access_write_inc;
-  pentry->object.file.share_state.share_deny_read    += deny_read_inc;
-  pentry->object.file.share_state.share_deny_write   += deny_write_inc;
-  if(v4)
-    pentry->object.file.share_state.share_deny_write_v4 += deny_write_inc;
+	/* Check if new share state has conflicts. */
+	status =
+	    state_share_check_conflict(entry, state_data->share.share_access,
+				       state_data->share.share_deny);
+	if (status != STATE_SUCCESS) {
+		LogEvent(COMPONENT_STATE,
+			 "Share conflicts detected during upgrade");
+		status = STATE_STATE_CONFLICT;
+		return status;
+	}
 
-  LogFullDebug(COMPONENT_STATE, "pentry %p: share counter: "
-               "access_read %u, access_write %u, "
-               "deny_read %u, deny_write %u, deny_write_v4 %u",
-               pentry,
-               pentry->object.file.share_state.share_access_read,
-               pentry->object.file.share_state.share_access_write,
-               pentry->object.file.share_state.share_deny_read,
-               pentry->object.file.share_state.share_deny_write,
-               pentry->object.file.share_state.share_deny_write_v4);
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* Old share state. */
+	old_share_access = state->state_data.share.share_access;
+	old_share_deny = state->state_data.share.share_deny;
+
+	/* New share state. */
+	new_share_access = state_data->share.share_access | old_share_access;
+	new_share_deny = state_data->share.share_deny | old_share_deny;
+
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry, old_share_access, old_share_deny,
+				   new_share_access, new_share_deny, true);
+
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+
+		status = do_share_op(entry, owner, &share_param);
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state of this file. */
+			state_share_update_counter(entry, new_share_access,
+						   new_share_deny,
+						   old_share_access,
+						   old_share_deny, true);
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+			return status;
+		}
+	}
+
+	/* Update share state. */
+	state->state_data.share.share_access = new_share_access;
+	state->state_data.share.share_deny = new_share_deny;
+	LogFullDebug(COMPONENT_STATE,
+		     "state %p: upgraded share_access %u, share_deny %u", state,
+		     state->state_data.share.share_access,
+		     state->state_data.share.share_deny);
+
+	/* Update previously seen share state. */
+	state_share_set_prev(state, state_data);
+
+	return status;
 }
 
-/* Utility function to calculate the union of share access of given file. */
-static unsigned int state_share_get_share_access(cache_entry_t * pentry)
+/**
+ * @brief Downgrade share mode
+ *
+ * The state lock _must_ be held for this call.
+ *
+ * @param[in,out] entry      File to modify
+ * @param[in]     state_data New share bits
+ * @param[in]     owner      Open owner
+ * @param[in]     state      State that holds current share bits
+ *
+ * @return State status.
+ */
+state_status_t state_share_downgrade(cache_entry_t *entry,
+				     state_data_t *state_data,
+				     state_owner_t *owner, state_t *state)
 {
-  unsigned int share_access = 0;
+	state_status_t status = STATE_SUCCESS;
+	unsigned int old_entry_share_access = 0;
+	unsigned int old_entry_share_deny = 0;
+	unsigned int new_entry_share_access = 0;
+	unsigned int new_entry_share_deny = 0;
+	unsigned int old_share_access = 0;
+	unsigned int old_share_deny = 0;
+	unsigned int new_share_access = 0;
+	unsigned int new_share_deny = 0;
+	fsal_share_param_t share_param;
 
-  if(pentry->object.file.share_state.share_access_read > 0)
-    share_access |= OPEN4_SHARE_ACCESS_READ;
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
 
-  if(pentry->object.file.share_state.share_access_write > 0)
-    share_access |= OPEN4_SHARE_ACCESS_WRITE;
+	/* Old share state. */
+	old_share_access = state->state_data.share.share_access;
+	old_share_deny = state->state_data.share.share_deny;
 
-  LogFullDebug(COMPONENT_STATE, "pentry %p: union share access = %u",
-               pentry, share_access);
+	/* New share state. */
+	new_share_access = state_data->share.share_access;
+	new_share_deny = state_data->share.share_deny;
 
-  return share_access;
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry, old_share_access, old_share_deny,
+				   new_share_access, new_share_deny, true);
+
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+
+		status = do_share_op(entry, owner, &share_param);
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state of this file. */
+			state_share_update_counter(entry, new_share_access,
+						   new_share_deny,
+						   old_share_access,
+						   old_share_deny, true);
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+			return status;
+		}
+	}
+
+	/* Update share state. */
+	state->state_data.share.share_access = new_share_access;
+	state->state_data.share.share_deny = new_share_deny;
+	LogFullDebug(COMPONENT_STATE,
+		     "state %p: downgraded share_access %u, " "share_deny %u",
+		     state, state->state_data.share.share_access,
+		     state->state_data.share.share_deny);
+
+	return status;
 }
 
-/* Utility function to calculate the union of share deny of given file. */
-static unsigned int state_share_get_share_deny(cache_entry_t * pentry)
+/**
+ * @brief Update the previously access and deny modes
+ *
+ * @param[in] state      State to update
+ * @param[in] state_data Previous modes to add
+ */
+state_status_t state_share_set_prev(state_t *state, state_data_t *state_data)
 {
-  unsigned int share_deny = 0;
+	state_status_t status = STATE_SUCCESS;
 
-  if(pentry->object.file.share_state.share_deny_read > 0)
-    share_deny |= OPEN4_SHARE_DENY_READ;
+	state->state_data.share.share_access_prev |=
+	    (1 << state_data->share.share_access);
 
-  if(pentry->object.file.share_state.share_deny_write > 0)
-    share_deny |= OPEN4_SHARE_DENY_WRITE;
+	state->state_data.share.share_deny_prev |=
+	    (1 << state_data->share.share_deny);
 
-  LogFullDebug(COMPONENT_STATE, "pentry %p: union share deny = %u",
-               pentry, share_deny);
-
-  return share_deny;
+	return status;
 }
 
-state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
-                                              int              share_access,
-                                              state_status_t * pstatus)
+/**
+ * @brief Check if the state has seen the share modes before
+ *
+ * This is needed when we check validity of open downgrade.
+ *
+ * @param[in] state      State to check
+ * @param[in] state_data Alleged previous mode
+ */
+state_status_t state_share_check_prev(state_t *state,
+				      state_data_t *state_data)
 {
-  pthread_rwlock_wrlock(&pentry->state_lock);
+	state_status_t status = STATE_SUCCESS;
 
-  if(state_share_check_conflict(pentry,
-                                share_access,
-                                0,
-                                pstatus) == STATE_SUCCESS)
-    {
-      /* Temporarily bump the access counters, v4 mode doesn't matter
-       * since there is no deny mode associated with anonymous I/O.
-       */
-      state_share_update_counter(pentry,
-                                 OPEN4_SHARE_ACCESS_NONE,
-                                 OPEN4_SHARE_DENY_NONE,
-                                 share_access,
-                                 OPEN4_SHARE_DENY_NONE,
-                                 FALSE);
-    }
+	if ((state->state_data.share.
+	     share_access_prev & (1 << state_data->share.share_access)) == 0)
+		return STATE_STATE_ERROR;
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+	if ((state->state_data.share.
+	     share_deny_prev & (1 << state_data->share.share_deny)) == 0)
+		return STATE_STATE_ERROR;
 
-  return *pstatus;
+	return status;
 }
 
-void state_share_anonymous_io_done(cache_entry_t  * pentry,
-                                   int              share_access)
+/**
+ * @brief Check for share conflict
+ *
+ * The state lock _must_ be held for this call.
+ *
+ * @param[in] entry        File to query
+ * @param[in] share_access Desired access mode
+ * @param[in] share_deny   Desired deny mode
+ *
+ * @return State status.
+ */
+state_status_t state_share_check_conflict(cache_entry_t *entry,
+					  int share_access, int share_deny)
 {
-  pthread_rwlock_wrlock(&pentry->state_lock);
+	char *cause = "";
 
-  /* Undo the temporary bump to the access counters, v4 mode doesn't
-   * matter since there is no deny mode associated with anonymous I/O.
-   */
-  state_share_update_counter(pentry,
-                             share_access,
-                             OPEN4_SHARE_DENY_NONE,
-                             OPEN4_SHARE_ACCESS_NONE,
-                             OPEN4_SHARE_DENY_NONE,
-                             FALSE);
+	if ((share_access & OPEN4_SHARE_ACCESS_READ) != 0
+	    && entry->object.file.share_state.share_deny_read > 0) {
+		cause = "access read denied by existing deny read";
+		goto out_conflict;
+	}
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+	if ((share_access & OPEN4_SHARE_ACCESS_WRITE) != 0
+	    && entry->object.file.share_state.share_deny_write > 0) {
+		cause = "access write denied by existing deny write";
+		goto out_conflict;
+	}
+
+	if ((share_deny & OPEN4_SHARE_DENY_READ) != 0
+	    && entry->object.file.share_state.share_access_read > 0) {
+		cause = "deny read denied by existing access read";
+		goto out_conflict;
+	}
+
+	if ((share_deny & OPEN4_SHARE_DENY_WRITE) != 0
+	    && entry->object.file.share_state.share_access_write > 0) {
+		cause = "deny write denied by existing access write";
+		goto out_conflict;
+	}
+
+	return STATE_SUCCESS;
+
+ out_conflict:
+
+	LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
+	return STATE_STATE_CONFLICT;
 }
 
-#ifdef _USE_NLM
-state_status_t state_nlm_share(cache_entry_t        * pentry,
-                               fsal_op_context_t    * pcontext,
-                               exportlist_t         * pexport,
-                               int                    share_access,
-                               int                    share_deny,
-                               state_owner_t        * powner,
-                               state_status_t       * pstatus)
+/**
+ * @brief Update the ref counter of share state
+ *
+ * This function should be called with the state lock held
+ *
+ * @param[in] entry      File to update
+ * @param[in] old_access Previous access mode
+ * @param[in] old_deny   Previous deny mode
+ * @param[in] new_access Current access mode
+ * @param[in] new_deny   Current deny mode
+ * @param[in] v4         True if this is a v4 share/open
+ */
+static void state_share_update_counter(cache_entry_t *entry, int old_access,
+				       int old_deny, int new_access,
+				       int new_deny, bool v4)
 {
-  unsigned int           old_pentry_share_access;
-  unsigned int           old_pentry_share_deny;
-  unsigned int           new_pentry_share_access;
-  unsigned int           new_pentry_share_deny;
-  fsal_share_param_t     share_param;
-  state_nlm_share_t    * nlm_share;
-  cache_inode_status_t   cache_status;
+	int access_read_inc =
+	    ((new_access & OPEN4_SHARE_ACCESS_READ) !=
+	     0) - ((old_access & OPEN4_SHARE_ACCESS_READ) != 0);
+	int access_write_inc =
+	    ((new_access & OPEN4_SHARE_ACCESS_WRITE) !=
+	     0) - ((old_access & OPEN4_SHARE_ACCESS_WRITE) != 0);
+	int deny_read_inc =
+	    ((new_deny & OPEN4_SHARE_ACCESS_READ) !=
+	     0) - ((old_deny & OPEN4_SHARE_ACCESS_READ) != 0);
+	int deny_write_inc =
+	    ((new_deny & OPEN4_SHARE_ACCESS_WRITE) !=
+	     0) - ((old_deny & OPEN4_SHARE_ACCESS_WRITE) != 0);
 
-  cache_status = cache_inode_inc_pin_ref(pentry);
+	entry->object.file.share_state.share_access_read += access_read_inc;
+	entry->object.file.share_state.share_access_write += access_write_inc;
+	entry->object.file.share_state.share_deny_read += deny_read_inc;
+	entry->object.file.share_state.share_deny_write += deny_write_inc;
+	if (v4)
+		entry->object.file.share_state.share_deny_write_v4 +=
+		    deny_write_inc;
 
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      *pstatus = cache_inode_status_to_state_status(cache_status);
-      LogDebug(COMPONENT_STATE,
-               "Could not pin file");
-      return *pstatus;
-    }
-
-  if(cache_inode_open(pentry,
-                      FSAL_O_RDWR,
-                      pcontext,
-                      0,
-                      &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      cache_inode_dec_pin_ref(pentry);
-
-      *pstatus = cache_inode_status_to_state_status(cache_status);
-
-      LogFullDebug(COMPONENT_STATE,
-                   "Could not open file");
-
-      return *pstatus;
-    }
-
-  pthread_rwlock_wrlock(&pentry->state_lock);
-
-  /* Check if new share state has conflicts. */
-  if(state_share_check_conflict(pentry,
-                                share_access,
-                                share_deny,
-                                pstatus) != STATE_SUCCESS)
-    {
-      pthread_rwlock_unlock(&pentry->state_lock);
-
-      cache_inode_dec_pin_ref(pentry);
-
-      LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
-
-      return *pstatus;
-    }
-
-  /* Create a new NLM Share object */
-  nlm_share = gsh_calloc(1, sizeof(state_nlm_share_t));
-
-  if(nlm_share == NULL)
-    {
-      pthread_rwlock_unlock(&pentry->state_lock);
-
-      cache_inode_dec_pin_ref(pentry);
-
-      LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
-
-      *pstatus = STATE_MALLOC_ERROR;
-
-      return *pstatus;
-    }
-
-  nlm_share->sns_powner  = powner;
-  nlm_share->sns_pentry  = pentry;
-  nlm_share->sns_access  = share_access;
-  nlm_share->sns_deny    = share_deny;
-  nlm_share->sns_pexport = pexport;
-
-  /* Add share to list for NLM Owner */
-  P(powner->so_mutex);
-
-  glist_add_tail(&powner->so_owner.so_nlm_owner.so_nlm_shares, &nlm_share->sns_share_per_owner);
-
-  inc_state_owner_ref_locked(powner);
-  /* implicit V(powner->so_mutex); */
-
-  /* Add share to list for NSM Client */
-  P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
-
-  glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_share_list,
-                 &nlm_share->sns_share_per_client);
-
-  inc_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-  /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
-
-  /* Add share to list for file, if list was empty take a pin ref to keep this
-   * file pinned in the inode cache.
-   */
-  if(glist_empty(&pentry->object.file.nlm_share_list))
-    cache_inode_inc_pin_ref(pentry);
-
-  glist_add_tail(&pentry->object.file.nlm_share_list, &nlm_share->sns_share_per_file);
-
-  /* Get the current union of share states of this file. */
-  old_pentry_share_access = state_share_get_share_access(pentry);
-  old_pentry_share_deny   = state_share_get_share_deny(pentry);
-
-  /* Update the ref counted share state of this file. */
-  state_share_update_counter(pentry,
-                             OPEN4_SHARE_ACCESS_NONE,
-                             OPEN4_SHARE_DENY_NONE,
-                             share_access,
-                             share_deny,
-                             TRUE);
-
-  /* Get the updated union of share states of this file. */
-  new_pentry_share_access = state_share_get_share_access(pentry);
-  new_pentry_share_deny   = state_share_get_share_deny(pentry);
-
-  /* If this file's share bits are different from the supposed value, update
-   * it.
-   */
-  if((new_pentry_share_access != old_pentry_share_access) ||
-     (new_pentry_share_deny   != old_pentry_share_deny))
-    {
-      /* Try to push to FSAL. */
-      share_param.share_access = new_pentry_share_access;
-      share_param.share_deny   = new_pentry_share_deny;
-
-      *pstatus = do_share_op(pentry, pcontext, powner, &share_param);
-
-      if(*pstatus != STATE_SUCCESS)
-        {
-          /* Revert the ref counted share state of this file. */
-          state_share_update_counter(pentry,
-                                     share_access,
-                                     share_deny,
-                                     OPEN4_SHARE_ACCESS_NONE,
-                                     OPEN4_SHARE_DENY_NONE,
-                                     TRUE);
-
-          /* Remove the share from the list for the file. If the list is now
-           * empty also remove the extra pin ref.
-           */
-          glist_del(&nlm_share->sns_share_per_file);
-
-          if(glist_empty(&pentry->object.file.nlm_share_list))
-            cache_inode_dec_pin_ref(pentry);
-
-          /* Remove the share from the NSM Client list */
-          P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
-
-          glist_del(&nlm_share->sns_share_per_client);
-
-          dec_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-          /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
-
-          /* Remove the share from the NLM Owner list */
-          P(powner->so_mutex);
-
-          glist_del(&nlm_share->sns_share_per_owner);
-
-          dec_state_owner_ref_locked(powner);
-          /* implicit V(powner->so_mutex); */
-
-          /* Free the NLM Share and exit */
-          gsh_free(nlm_share);
-
-          pthread_rwlock_unlock(&pentry->state_lock);
-
-          cache_inode_dec_pin_ref(pentry);
-
-          LogDebug(COMPONENT_STATE, "do_share_op failed");
-
-          return *pstatus;
-        }
-    }
-
-  LogFullDebug(COMPONENT_STATE, "added share_access %u, "
-               "share_deny %u",
-               share_access, share_deny);
-
-  pthread_rwlock_unlock(&pentry->state_lock);
-
-  cache_inode_dec_pin_ref(pentry);
-
-  return *pstatus;
+	LogFullDebug(COMPONENT_STATE,
+		     "entry %p: share counter: "
+		     "access_read %u, access_write %u, "
+		     "deny_read %u, deny_write %u, deny_write_v4 %u", entry,
+		     entry->object.file.share_state.share_access_read,
+		     entry->object.file.share_state.share_access_write,
+		     entry->object.file.share_state.share_deny_read,
+		     entry->object.file.share_state.share_deny_write,
+		     entry->object.file.share_state.share_deny_write_v4);
 }
 
-state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 fsal_op_context_t    * pcontext,
-                                 int                    share_access,
-                                 int                    share_deny,
-                                 state_owner_t        * powner,
-                                 state_status_t       * pstatus)
+/**
+ * @brief Calculate the union of share access of given file
+ *
+ * @param[in] entry File to check
+ *
+ * @return Calculated access.
+ */
+static unsigned int state_share_get_share_access(cache_entry_t *entry)
 {
-  struct glist_head      *glist, *glistn;
-  unsigned int           old_pentry_share_access;
-  unsigned int           old_pentry_share_deny;
-  unsigned int           new_pentry_share_access;
-  unsigned int           new_pentry_share_deny;
-  unsigned int           removed_share_access;
-  unsigned int           removed_share_deny;
-  fsal_share_param_t     share_param;
-  state_nlm_share_t    * nlm_share;
-  cache_inode_status_t   cache_status;
+	unsigned int share_access = 0;
 
-  cache_status = cache_inode_inc_pin_ref(pentry);
+	if (entry->object.file.share_state.share_access_read > 0)
+		share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      *pstatus = cache_inode_status_to_state_status(cache_status);
-      LogDebug(COMPONENT_STATE,
-               "Could not pin file");
-      return *pstatus;
-    }
+	if (entry->object.file.share_state.share_access_write > 0)
+		share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+	LogFullDebug(COMPONENT_STATE, "entry %p: union share access = %u",
+		     entry, share_access);
 
-  glist_for_each_safe(glist, glistn, &pentry->object.file.nlm_share_list)
-    {
-      nlm_share = glist_entry(glist, state_nlm_share_t, sns_share_per_file);
-
-      if(different_owners(powner, nlm_share->sns_powner))
-        continue;
-
-      /* share_access == OPEN4_SHARE_ACCESS_NONE indicates that any share
-       * should be matched for unshare.
-       */
-      if(share_access != OPEN4_SHARE_ACCESS_NONE &&
-         (nlm_share->sns_access != share_access ||
-          nlm_share->sns_deny   != share_deny))
-        continue;
-
-      /* Get the current union of share states of this file. */
-      old_pentry_share_access = state_share_get_share_access(pentry);
-      old_pentry_share_deny   = state_share_get_share_deny(pentry);
-
-      /* Share state to be removed. */
-      removed_share_access = nlm_share->sns_access;
-      removed_share_deny   = nlm_share->sns_deny;
-
-      /* Update the ref counted share state of this file. */
-      state_share_update_counter(pentry,
-                                 removed_share_access,
-                                 removed_share_deny,
-                                 OPEN4_SHARE_ACCESS_NONE,
-                                 OPEN4_SHARE_DENY_NONE,
-                                 TRUE);
-
-      /* Get the updated union of share states of this file. */
-      new_pentry_share_access = state_share_get_share_access(pentry);
-      new_pentry_share_deny   = state_share_get_share_deny(pentry);
-
-      /* If this file's share bits are different from the supposed value, update
-       * it.
-       */
-      if((new_pentry_share_access != old_pentry_share_access) ||
-         (new_pentry_share_deny   != old_pentry_share_deny))
-        {
-          /* Try to push to FSAL. */
-          share_param.share_access = new_pentry_share_access;
-          share_param.share_deny   = new_pentry_share_deny;
-
-          *pstatus = do_share_op(pentry, pcontext, powner, &share_param);
-
-          if(*pstatus != STATE_SUCCESS)
-            {
-              /* Revert the ref counted share state of this file. */
-              state_share_update_counter(pentry,
-                                         OPEN4_SHARE_ACCESS_NONE,
-                                         OPEN4_SHARE_DENY_NONE,
-                                         removed_share_access,
-                                         removed_share_deny,
-                                         TRUE);
-
-              pthread_rwlock_unlock(&pentry->state_lock);
-
-              cache_inode_dec_pin_ref(pentry);
-
-              LogDebug(COMPONENT_STATE, "do_share_op failed");
-
-              return *pstatus;
-            }
-        }
-
-      LogFullDebug(COMPONENT_STATE,
-                   "removed share_access %u, share_deny %u",
-                   removed_share_access,
-                   removed_share_deny);
-
-      /* Remove the share from the list for the file. If the list is now
-       * empty also remove the extra pin ref.
-       */
-      glist_del(&nlm_share->sns_share_per_file);
-
-      if(glist_empty(&pentry->object.file.nlm_share_list))
-        cache_inode_dec_pin_ref(pentry);
-
-      /* Remove the share from the NSM Client list */
-      P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
-
-      glist_del(&nlm_share->sns_share_per_client);
-
-      dec_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-      /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
-
-      /* Remove the share from the NLM Owner list */
-      P(powner->so_mutex);
-
-      glist_del(&nlm_share->sns_share_per_owner);
-
-      dec_state_owner_ref_locked(powner);
-      /* implicit V(powner->so_mutex); */
-
-      /* Free the NLM Share (and continue to look for more) */
-      gsh_free(nlm_share);
-    }
-
-  pthread_rwlock_unlock(&pentry->state_lock);
-
-  cache_inode_dec_pin_ref(pentry);
-
-  return *pstatus;
+	return share_access;
 }
 
-#endif /* _USE_NLM */
+/**
+ * @brief Calculate the union of share deny of given file
+ *
+ * @param[in] entry File to check
+ *
+ * @return Deny mode union.
+ */
+static unsigned int state_share_get_share_deny(cache_entry_t *entry)
+{
+	unsigned int share_deny = 0;
+
+	if (entry->object.file.share_state.share_deny_read > 0)
+		share_deny |= OPEN4_SHARE_DENY_READ;
+
+	if (entry->object.file.share_state.share_deny_write > 0)
+		share_deny |= OPEN4_SHARE_DENY_WRITE;
+
+	LogFullDebug(COMPONENT_STATE, "entry %p: union share deny = %u", entry,
+		     share_deny);
+
+	return share_deny;
+}
+
+/**
+ * @brief Start I/O by an anonymous stateid
+ *
+ * This function checks for conflicts with existing deny modes and
+ * marks the I/O as in process to conflicting shares won't be granted.
+ *
+ * @brief[in,out] entry        File on which to operate
+ * @brief[in]     share_access Access matching I/O done
+ *
+ * @return State status.
+ */
+state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
+					      int share_access)
+{
+	state_status_t status = 0;
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	status = state_share_check_conflict(entry, share_access, 0);
+	if (status == STATE_SUCCESS) {
+		/* Temporarily bump the access counters, v4 mode doesn't matter
+		 * since there is no deny mode associated with anonymous I/O.
+		 */
+		state_share_update_counter(entry, OPEN4_SHARE_ACCESS_NONE,
+					   OPEN4_SHARE_DENY_NONE, share_access,
+					   OPEN4_SHARE_DENY_NONE, false);
+	}
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	return status;
+}
+
+/**
+ * @brief Finish an anonymous I/O
+ *
+ * @param[in,out] entry        Entry on which to operate
+ * @param[in]     share_access Access bits indicating I/O type
+ */
+void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
+{
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	/* Undo the temporary bump to the access counters, v4 mode doesn't
+	 * matter since there is no deny mode associated with anonymous I/O.
+	 */
+	state_share_update_counter(entry, share_access, OPEN4_SHARE_DENY_NONE,
+				   OPEN4_SHARE_ACCESS_NONE,
+				   OPEN4_SHARE_DENY_NONE, false);
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+}
+
+/**
+ * @brief Implement NLM share call
+ *
+ * @param[in,out] entry        File on which to operate
+ * @param[in]     req_ctx      Request context
+ * @param[in]     export       Export through which file is accessed
+ * @param[in]     share_access Share mode requested
+ * @param[in]     share_deny   Deny mode requested
+ * @param[in]     owner        Share owner
+ *
+ * @return State status.
+ */
+state_status_t state_nlm_share(cache_entry_t *entry,
+			       struct req_op_context *req_ctx,
+			       exportlist_t *export, int share_access,
+			       int share_deny, state_owner_t *owner)
+{
+	unsigned int old_entry_share_access;
+	unsigned int old_entry_share_deny;
+	unsigned int new_entry_share_access;
+	unsigned int new_entry_share_deny;
+	fsal_share_param_t share_param;
+	state_nlm_share_t *nlm_share;
+	cache_inode_status_t cache_status;
+	state_status_t status = 0;
+
+	cache_status = cache_inode_inc_pin_ref(entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_STATE, "Could not pin file");
+		status = cache_inode_status_to_state_status(cache_status);
+		return status;
+	}
+
+	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		cache_inode_dec_pin_ref(entry, TRUE);
+
+		LogFullDebug(COMPONENT_STATE, "Could not open file");
+
+		status = cache_inode_status_to_state_status(cache_status);
+		return status;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	/* Check if new share state has conflicts. */
+	status = state_share_check_conflict(entry, share_access, share_deny);
+	if (status != STATE_SUCCESS) {
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		cache_inode_dec_pin_ref(entry, TRUE);
+
+		LogEvent(COMPONENT_STATE,
+			 "Share conflicts detected during add");
+
+		return status;
+	}
+
+	/* Create a new NLM Share object */
+	nlm_share = gsh_calloc(1, sizeof(state_nlm_share_t));
+
+	if (nlm_share == NULL) {
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		cache_inode_dec_pin_ref(entry, TRUE);
+
+		LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
+
+		status = STATE_MALLOC_ERROR;
+
+		return status;
+	}
+
+	nlm_share->sns_owner = owner;
+	nlm_share->sns_entry = entry;
+	nlm_share->sns_access = share_access;
+	nlm_share->sns_deny = share_deny;
+	nlm_share->sns_export = export;
+
+	/* Add share to list for NLM Owner */
+	inc_state_owner_ref(owner);
+
+	pthread_mutex_lock(&owner->so_mutex);
+
+	glist_add_tail(&owner->so_owner.so_nlm_owner.so_nlm_shares,
+		       &nlm_share->sns_share_per_owner);
+
+	pthread_mutex_unlock(&owner->so_mutex);
+
+	dec_state_owner_ref(owner);
+
+	/* Add share to list for NSM Client */
+	inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
+			   slc_nsm_client);
+
+	pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+			   ->slc_nsm_client->ssc_mutex);
+
+	glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
+		       ssc_share_list, &nlm_share->sns_share_per_client);
+
+	pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+			     ->slc_nsm_client->ssc_mutex);
+
+	/* Add share to list for file, if list was empty take a pin ref to
+	 * keep this file pinned in the inode cache.
+	 */
+	if (glist_empty(&entry->object.file.nlm_share_list))
+		cache_inode_inc_pin_ref(entry);
+
+	glist_add_tail(&entry->object.file.nlm_share_list,
+		       &nlm_share->sns_share_per_file);
+
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry, OPEN4_SHARE_ACCESS_NONE,
+				   OPEN4_SHARE_DENY_NONE, share_access,
+				   share_deny, true);
+
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
+
+	/* If this file's share bits are different from the supposed value,
+	 * update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+
+		status = do_share_op(entry, owner, &share_param);
+
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state of this file. */
+			state_share_update_counter(entry, share_access,
+						   share_deny,
+						   OPEN4_SHARE_ACCESS_NONE,
+						   OPEN4_SHARE_DENY_NONE, true);
+
+			/* Remove the share from the list for the file. If the
+			 * list is now empty also remove the extra pin ref.
+			 */
+			glist_del(&nlm_share->sns_share_per_file);
+
+			if (glist_empty(&entry->object.file.nlm_share_list))
+				cache_inode_dec_pin_ref(entry, TRUE);
+
+			/* Remove the share from the NSM Client list */
+			pthread_mutex_lock(&owner->so_owner.so_nlm_owner
+					   .so_client->slc_nsm_client
+					   ->ssc_mutex);
+
+			glist_del(&nlm_share->sns_share_per_client);
+
+			pthread_mutex_unlock(&owner->so_owner.so_nlm_owner
+					     .so_client->slc_nsm_client
+					     ->ssc_mutex);
+
+			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
+					   so_client->slc_nsm_client);
+
+			/* Remove the share from the NLM Owner list */
+			pthread_mutex_lock(&owner->so_mutex);
+
+			glist_del(&nlm_share->sns_share_per_owner);
+
+			pthread_mutex_unlock(&owner->so_mutex);
+
+			dec_state_owner_ref(owner);
+
+			/* Free the NLM Share and exit */
+			gsh_free(nlm_share);
+
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+			cache_inode_dec_pin_ref(entry, TRUE);
+
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+
+			return status;
+		}
+	}
+
+	LogFullDebug(COMPONENT_STATE, "added share_access %u, " "share_deny %u",
+		     share_access, share_deny);
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	cache_inode_dec_pin_ref(entry, TRUE);
+
+	return status;
+}
+
+/**
+ * @brief Implement NLM unshare procedure
+ *
+ * @param[in,out] entry        File on which to opwerate
+ * @param[in]     share_access Access mode to relinquish
+ * @param[in]     share_deny   Deny mode to relinquish
+ * @param[in]     owner        Share owner
+ *
+ * @return State status.
+ */
+state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
+				 int share_deny, state_owner_t *owner)
+{
+	struct glist_head *glist, *glistn;
+	unsigned int old_entry_share_access;
+	unsigned int old_entry_share_deny;
+	unsigned int new_entry_share_access;
+	unsigned int new_entry_share_deny;
+	unsigned int removed_share_access;
+	unsigned int removed_share_deny;
+	fsal_share_param_t share_param;
+	state_nlm_share_t *nlm_share;
+	cache_inode_status_t cache_status;
+	state_status_t status = 0;
+
+	cache_status = cache_inode_inc_pin_ref(entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		status = cache_inode_status_to_state_status(cache_status);
+		LogDebug(COMPONENT_STATE, "Could not pin file");
+		return status;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	glist_for_each_safe(glist, glistn, &entry->object.file.nlm_share_list) {
+		nlm_share =
+		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
+
+		if (different_owners(owner, nlm_share->sns_owner))
+			continue;
+
+		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that
+		 * any share should be matched for unshare.
+		 */
+		if (share_access != OPEN4_SHARE_ACCESS_NONE
+		    && (nlm_share->sns_access != share_access
+			|| nlm_share->sns_deny != share_deny))
+			continue;
+
+		/* Get the current union of share states of this file. */
+		old_entry_share_access = state_share_get_share_access(entry);
+		old_entry_share_deny = state_share_get_share_deny(entry);
+
+		/* Share state to be removed. */
+		removed_share_access = nlm_share->sns_access;
+		removed_share_deny = nlm_share->sns_deny;
+
+		/* Update the ref counted share state of this file. */
+		state_share_update_counter(entry, removed_share_access,
+					   removed_share_deny,
+					   OPEN4_SHARE_ACCESS_NONE,
+					   OPEN4_SHARE_DENY_NONE, true);
+
+		/* Get the updated union of share states of this file. */
+		new_entry_share_access = state_share_get_share_access(entry);
+		new_entry_share_deny = state_share_get_share_deny(entry);
+
+		/* If this file's share bits are different from the supposed
+		 * value, update it.
+		 */
+		if ((new_entry_share_access != old_entry_share_access)
+		    || (new_entry_share_deny != old_entry_share_deny)) {
+			/* Try to push to FSAL. */
+			share_param.share_access = new_entry_share_access;
+			share_param.share_deny = new_entry_share_deny;
+
+			status = do_share_op(entry, owner, &share_param);
+
+			if (status != STATE_SUCCESS) {
+				/* Revert the ref counted share state
+				 * of this file.
+				 */
+				state_share_update_counter(
+					entry,
+					OPEN4_SHARE_ACCESS_NONE,
+					OPEN4_SHARE_DENY_NONE,
+					removed_share_access,
+					removed_share_deny,
+					true);
+
+				PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+				cache_inode_dec_pin_ref(entry, TRUE);
+
+				LogDebug(COMPONENT_STATE, "do_share_op failed");
+
+				return status;
+			}
+		}
+
+		LogFullDebug(COMPONENT_STATE,
+			     "removed share_access %u, share_deny %u",
+			     removed_share_access, removed_share_deny);
+
+		/* Remove the share from the list for the file. If the list
+		 * is now empty also remove the extra pin ref.
+		 */
+		glist_del(&nlm_share->sns_share_per_file);
+
+		if (glist_empty(&entry->object.file.nlm_share_list))
+			cache_inode_dec_pin_ref(entry, TRUE);
+
+		/* Remove the share from the NSM Client list */
+		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+				   ->slc_nsm_client->ssc_mutex);
+
+		glist_del(&nlm_share->sns_share_per_client);
+
+		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+				     ->slc_nsm_client->ssc_mutex);
+
+		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
+				   slc_nsm_client);
+
+		/* Remove the share from the NLM Owner list */
+		pthread_mutex_lock(&owner->so_mutex);
+
+		glist_del(&nlm_share->sns_share_per_owner);
+
+		pthread_mutex_unlock(&owner->so_mutex);
+
+		dec_state_owner_ref(owner);
+
+		/* Free the NLM Share (and continue to look for more) */
+		gsh_free(nlm_share);
+	}
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	cache_inode_dec_pin_ref(entry, TRUE);
+
+	return status;
+}
+
+/**
+ * @brief Remove all share state from a file
+ *
+ * @param[in] entry File to wipe
+ */
+void state_share_wipe(cache_entry_t *entry)
+{
+	state_nlm_share_t *nlm_share;
+	struct glist_head *glist;
+	struct glist_head *glistn;
+	state_owner_t *owner;
+
+	glist_for_each_safe(glist, glistn, &entry->object.file.nlm_share_list) {
+		nlm_share =
+		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
+
+		owner = nlm_share->sns_owner;
+
+		/* Remove the share from the list for the file. If the list
+		 * is now empty also remove the extra pin ref.
+		 */
+		glist_del(&nlm_share->sns_share_per_file);
+
+		if (glist_empty(&entry->object.file.nlm_share_list))
+			cache_inode_dec_pin_ref(entry, FALSE);
+
+		/* Remove the share from the NSM Client list */
+		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+				   ->slc_nsm_client->ssc_mutex);
+
+		glist_del(&nlm_share->sns_share_per_client);
+
+		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+				     ->slc_nsm_client->ssc_mutex);
+
+		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
+				   slc_nsm_client);
+
+		/* Remove the share from the NLM Owner list */
+		pthread_mutex_lock(&owner->so_mutex);
+
+		glist_del(&nlm_share->sns_share_per_owner);
+
+		pthread_mutex_unlock(&owner->so_mutex);
+
+		dec_state_owner_ref(owner);
+
+		/* Free the NLM Share (and continue to look for more) */
+		gsh_free(nlm_share);
+	}
+}
+
+/** @} */

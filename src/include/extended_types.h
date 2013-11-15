@@ -7,55 +7,56 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    extended_types.h
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/16 16:26:30 $
- * \version $Revision: 1.3 $
- * \brief   Extended type, platform dependant.
- *
- * extended_types.h: defines some types, line longlong_t or u_longlong_t if not defined in the OS headers.
- *
+ * @file include/extended_types.h
+ * @brief Extended types, platform dependant.
  *
  */
 
 #ifndef _EXTENDED_TYPES_H
 #define _EXTENDED_TYPES_H
 
+#include "config.h"
 #include <sys/types.h>
+
+#ifdef LINUX
+#include <os/linux/extended_types.h>
+#elif FREEBSD
+#include <os/freebsd/extended_types.h>
+#endif
 
 /* Added extended types, often missing */
 typedef long long longlong_t;
 typedef unsigned long long u_longlong_t;
 
 typedef unsigned int uint_t;
-typedef unsigned int uint32_t;
 
-# ifndef __int8_t_defined
+/* conflict between sys/xattr.h and attr/xattr.h
+ * this comes from xfs/linux.h.  Very bad form but we are
+ * stuck with it.  If we didn't pick it up somewhere else
+ * make is so here.
+ * Danger Will Robinson!! this is an overlay of another errno...
+ */
 
-#if SIZEOF_LONG == 8
-typedef unsigned long int uint64_t;
-typedef long int int64_t;
-#else
-typedef unsigned long long int uint64_t;
-typedef long long int int64_t;
+#ifndef ENOATTR
+#define ENOATTR ENODATA		/* No such attribute */
 #endif
-#endif
 
-#endif                          /* _EXTENDED_TYPES_H */
+#endif				/* _EXTENDED_TYPES_H */

@@ -1,0 +1,197 @@
+
+Posix Support  -   Paul Sheer <paulsheer@gmail.com>   -   27 July 2012
+
+
+This is a technical description of what Posix support is and how it is
+implemented.
+
+
+Handles
+-------
+
+Within Ganesha, "Posix" means systems that do not have operating system
+specific handle-lookup system calls. They support *merely* the basic
+system calls of a posix system, like open(), mkdir(), etc.
+
+You see NFS refers to all files by handles, and hence the NFS server
+needs to look up a file by a handle. A handle is an arbitrary, say,
+64-byte binary string used by NFS protocols.
+
+In order to implement an NFS server without these OS-specific system
+calls, the NFS server has to store the handles persistantly as well as
+look-up the handles when the mounted NFS clients send these handles back
+to the server.
+
+
+Storing Handles Persistently
+----------------------------
+
+In my implementation I have chosen to store these handles in-memory
+within a small server I call "nodedb".  Nodedb is not an actual
+executable, but a fork()ed process of bin/ganesha.nfsd.  The fork()
+happens when the POSIX module is initialized. The code for the in-memory
+data structure is in src/FSAL/FSAL_POSIX/nodedb/. Nodedb also syncs
+sufficient data to a disk file so that handles are can be easily
+re-made if the system reboots. This syncing goes to a second-level
+database in the FastDB file format.
+
+Nodedb binds to 127.0.0.1 port 31337 and listens for connections. The
+parent process of bin/ganesha.nfsd creates a connection pool, and
+executes CORBA-interface-like commands to nodedb. Note I did not
+implement IIOP/BER or other encoding, just an extremely basic
+and minimal encode-decode schema.
+
+Hence nodedb is merely a loadable library that works via a socket
+instead of via dynamically linked methods. (It could just as well have
+used SysV-IPC.)
+
+You will notice a simple parser (nodedb/marshal.c) that turns the nodedb
+interface into encode-decode operations so that encoders/decoders for
+new methods need not be implemented by hand.
+
+The nodedb process logs to /tmp/nfs-ganesha-demarshaller.log
+
+
+The Data Structure
+------------------
+
+Nodedb encodes the device-ID, inode-number, and filesystem-ID as a
+3-tuple into a handle. The handle is thus 24-bytes which fits well
+within the 32-byte handle of NFS-v2. The filesystem-ID is not the
+real OS FSID, but a hash of the mount path.
+
+Nodedb stores the entire *known* file system as a tree-structure with
+nodes and multiple binary-tree indexes. It can, for instance,
+efficiently lookup inodes by handle, handle by inodes, and paths by
+handles. Files under each directory are stored in a binary-tree, and
+ordered by filename. Hence a directory can efficiently hold millions of
+files.
+
+If bin/ganesha.nfsd is restarted, it will again try to fork() and bind
+to the same port. This will silently fail because there is already a
+nodedb running. However bin/ganesha.nfsd will continue connect to the
+previous instance of nodedb and find all its previously stored handles
+intact and ready to use.
+
+The only time you need to kill nodedb is if you make code changes to it.
+
+
+Configuration
+-------------
+
+Nodedb requires no configuration. It works silently and stores handles
+until the system reboots.
+
+
+
+FastDB file contents
+--------------------
+
+Nodedb silently writes out parent-child information to the file,
+
+    /var/tmp/nfs-ganesha-posix.fdb
+
+This file is stored in the FastDB file format. The implementation of the
+format is in nodedb/fastdb.c. This database is an in-memory file-backed
+database that stores only the parent to child relationships of the
+filesystem.
+
+For instance if there exists a path /export/home/john/Crown and Crown
+has the (fsid,devid,inode) of (0x282F04E997EC4628, 0x7631, 455537), and
+john has the (fsid,devid,inode) of (0x282F04E997EC4628, 0x7631, 455601),
+then the following 4-tuple will be stored in the database:
+
+    (child=455537, parent=(0x282F04E997EC4628, 0x7631, 455601))
+
+The 4-typle is 32-bytes and hence each record in the database is 32-bytes.
+This means a file-system with 1,000,000 files open by clients will require
+result in /var/tmp/nfs-ganesha-posix.fdb growing to 32MB.
+
+If nodedb restarts and is required to re-find a handle. It follows the
+following algorithm.
+
+    1. It extracts the inode for the handle and searches in FastDB for
+    all parents matching this child inode. FastDB is indexed by child
+    inode so this search is fast.
+
+    2. For each parent it,
+
+        2a. builds the full path,
+        2b. readdir's each child
+        2c. stat's the child and inserts the (fsid,devid,inode) into
+            nodedb's in-memory data structure.
+
+    3. Check if any of the inserts match the handle we are trying to
+    re-find.
+
+Step 2a may require a further lookup into FastDB. So this algorithm is
+recursive.
+
+Because the number of directories that are scanned are mostly limited to
+those within the path of the file, and because they are scanned only
+once, this algorithm is extremely fast. The only caveat is if there is a
+directory with a very large number of files.
+
+
+FastDB performance
+------------------
+
+FastDB reads the entire database into memory on startup and only writes
+changed data. It never needs to access the disk to perform a lookup
+because it keeps the entire database in memory.
+
+FastDB has no journaling and no write-ahead logging; nor any other
+complex database features. It is just an unordered flat file with a 1024
+byte header and 32-bytes per record thereafter. Free records are filled
+with 32 zero bytes.
+
+FastDB writes out changed or inserted records trying to only do forward
+seeks with each batch of write operations. It flushes changed records
+once every second. Therefore there is no sync()/datasync() latency as
+with transactional databases.
+
+FastDB cannot become corrupted because any record is valid. You could
+fill everything after the header with random data and FastDB would
+still be a valid database and still work. (Try this.)
+
+
+
+Reading FastDB
+--------------
+
+You can dump what is in /var/tmp/nfs-ganesha-posix.fdb in plain-text
+format by running:
+
+    gcc -DUNIT_TEST -Wall -pthread -o nodedb \
+      interface.c sockbuf.c encoding.c nodedb.c redblack.c \
+      connection.c connectionpool.c scanmount.c fastdb.c -lpthread
+
+    ./nodedb --dump-to out.txt
+
+To clean out records explained under B below run,
+
+    ./nodedb --dump-to out.txt --clean
+
+
+The output of out.txt has lines of the format,
+
+    child=A del=B parent=(C,D,E) -- F[G]
+
+which may be interpreted as follows:
+
+    A - child inode. 8 bytes (unsigned long long), stored in the database.
+
+    B - number of child+records that could not be found through
+        readdir(), and will be deleted as soon as they are read by a
+        running nodedb with NFS client that passes this as a handle.
+
+    (C,D,E) - parent fsid, devid, inode. 24 bytes (unsigned long long x 3),
+        stored in the database.
+
+    F - readdir()-found parent directory path.
+
+    G - readdir()-found child directory path. only the first find is shown,
+        but there may be more than one with the same inode.
+
+
+

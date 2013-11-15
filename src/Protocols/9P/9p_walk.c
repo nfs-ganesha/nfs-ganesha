@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -32,14 +32,7 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -47,156 +40,192 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_walk( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	unsigned int i = 0;
 
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
-  u32 * newfid = NULL ;
-  u16 * nwname = NULL ;
-  u16 * wnames_len[_9P_MAXWELEM] ;
-  char * wnames_str[_9P_MAXWELEM] ;
+	u16 *msgtag = NULL;
+	u32 *fid = NULL;
+	u32 *newfid = NULL;
+	u16 *nwname = NULL;
+	u16 *wnames_len;
+	char *wnames_str;
+	uint64_t fileid;
+	cache_inode_status_t cache_status;
+	cache_entry_t *pentry = NULL;
+	char name[MAXNAMLEN];
 
-  u16 * nwqid ;
+	u16 *nwqid;
 
-  unsigned int i = 0 ;
+	struct _9p_fid *pfid = NULL;
+	struct _9p_fid *pnewfid = NULL;
 
-  fsal_name_t name ; 
-  fsal_attrib_list_t fsalattr ;
-  cache_inode_status_t cache_status ;
-  cache_entry_t * pentry = NULL ;
+	/* Now Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, fid, u32);
+	_9p_getptr(cursor, newfid, u32);
+	_9p_getptr(cursor, nwname, u16);
 
-  _9p_fid_t * pfid = NULL ;
-  _9p_fid_t * pnewfid = NULL ;
+	LogDebug(COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
+		 (u32) *msgtag, *fid, *newfid, *nwname);
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	if (*fid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getptr( cursor, newfid, u32 ) ; 
-  _9p_getptr( cursor, nwname, u16 ) ; 
+	if (*newfid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  LogDebug( COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
-            (u32)*msgtag, *fid, *newfid, *nwname ) ;
+	pfid = req9p->pconn->fids[*fid];
+	/* Check that it is a valid fid */
+	if (pfid == NULL || pfid->pentry == NULL) {
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
+				  preply);
+	}
 
-  for( i = 0 ; i < *nwname ; i++ )
-   {
-     _9p_getstr( cursor, wnames_len[i], wnames_str[i] ) ;
-      LogDebug( COMPONENT_9P, "TWALK (component): tag=%u fid=%u newfid=%u nwnames=%.*s",
-                (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
-   }
+	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	if (pnewfid == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  if( *fid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+	/* Is this a lookup or a fid cloning operation ? */
+	if (*nwname == 0) {
+		/* Cloning operation */
+		memcpy((char *)pnewfid, (char *)pfid, sizeof(struct _9p_fid));
 
-  if( *newfid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+		/* Set the new fid id */
+		pnewfid->fid = *newfid;
 
-  pfid = &preq9p->pconn->fids[*fid] ;
-  pnewfid = &preq9p->pconn->fids[*newfid] ;
+		/* This is not a TATTACH fid */
+		pnewfid->from_attach = FALSE;
 
-  /* Is this a lookup or a fid cloning operation ? */
-  if( *nwname == 0 )
-   {
-      /* Cloning operation */
-      memcpy( (char *)pnewfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
-  
-      /* Set the new fid id */
-      pnewfid->fid = *newfid ;
-   }
-  else 
-   {
-      pnewfid->fid = *newfid ;
-      pnewfid->fsal_op_context = pfid->fsal_op_context ;
-      pnewfid->pexport = pfid->pexport ;
+		/* Increments refcount */
+		cache_inode_lru_ref(pnewfid->pentry, 0);
+	} else {
+		/* the walk is in fact a lookup */
+		pentry = pfid->pentry;
 
-      /* the walk is in fact a lookup */
-      pentry = pfid->pentry ;
-      for( i = 0 ; i <  *nwname ; i ++ )
-        {
-           snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
-           name.len =  *(wnames_len[i]) + 1 ;
+		for (i = 0; i < *nwname; i++) {
+			_9p_getstr(cursor, wnames_len, wnames_str);
+			snprintf(name, MAXNAMLEN, "%.*s", *wnames_len,
+				 wnames_str);
 
-           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
-            (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
+			LogDebug(COMPONENT_9P,
+				 "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
+				 (u32) *msgtag, *fid, *newfid, i + 1, *nwname,
+				 name);
 
-           /* refcount +1 */
-           if( ( pnewfid->pentry = cache_inode_lookup( pentry,
-                                                       &name,
-                                                       &fsalattr,
-                                                       &pfid->fsal_op_context,
-                                                       &cache_status ) ) == NULL )
-              return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+			if (pnewfid->pentry == pentry)
+				pnewfid->pentry = NULL;
 
-           pentry =  pnewfid->pentry ;
-        }
+			/* refcount +1 */
+			cache_status =
+			    cache_inode_lookup(pentry, name, &pfid->op_context,
+					       &pnewfid->pentry);
 
-     /* Build the qid */
-     pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-     pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;
+			if (pnewfid->pentry == NULL) {
+				gsh_free(pnewfid);
+				return _9p_rerror(req9p, worker_data, msgtag,
+						  _9p_tools_errno(cache_status),
+						  plenout, preply);
+			}
 
-     pnewfid->specdata.xattr.xattr_id = 0 ;
-     pnewfid->specdata.xattr.xattr_content = NULL ;
+			if (pentry != pfid->pentry)
+				cache_inode_put(pentry);
 
-     switch( pfid->pentry->type )
-      {
-        case REGULAR_FILE:
-        case CHARACTER_FILE:
-        case BLOCK_FILE:
-        case SOCKET_FILE:
-        case FIFO_FILE:
-          pnewfid->qid.type = _9P_QTFILE ;
-	  break ;
+			pentry = pnewfid->pentry;
+		}
 
-        case SYMBOLIC_LINK:
-          pnewfid->qid.type = _9P_QTSYMLINK ;
-	  break ;
+		pnewfid->fid = *newfid;
+		pnewfid->op_context = pfid->op_context;
+		pnewfid->export = pfid->export;
+		pnewfid->ppentry = pfid->pentry;
+		strncpy(pnewfid->name, name, MAXNAMLEN);
 
-        case DIRECTORY:
-        case FS_JUNCTION:
-          pnewfid->qid.type = _9P_QTDIR ;
-	  break ;
+		/* This is not a TATTACH fid */
+		pnewfid->from_attach = FALSE;
 
-        case UNASSIGNED:
-        case RECYCLED:
-        default:
-          LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
-          return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
-          break ;
-      }
+		cache_status =
+		    cache_inode_fileid(pnewfid->pentry, &pfid->op_context,
+				       &fileid);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			gsh_free(pnewfid);
+			return _9p_rerror(req9p, worker_data, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+		}
 
-   }
+		/* Build the qid */
+		/* No cache, we want the client to stay synchronous
+		 * with the server */
+		pnewfid->qid.version = 0;
+		pnewfid->qid.path = fileid;
 
-  /* As much qid as requested fid */
-  nwqid = nwname ;
+		pnewfid->specdata.xattr.xattr_id = 0;
+		pnewfid->specdata.xattr.xattr_content = NULL;
 
-   /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RWALK ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+		switch (pnewfid->pentry->type) {
+		case REGULAR_FILE:
+		case CHARACTER_FILE:
+		case BLOCK_FILE:
+		case SOCKET_FILE:
+		case FIFO_FILE:
+			pnewfid->qid.type = _9P_QTFILE;
+			break;
 
-  
-  _9p_setptr( cursor, nwqid, u16 ) ;
-  for( i = 0 ; i < *nwqid ; i++ )
-    { 
-      _9p_setqid( cursor, pnewfid->qid ) ;
-    }
+		case SYMBOLIC_LINK:
+			pnewfid->qid.type = _9P_QTSYMLINK;
+			break;
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+		case DIRECTORY:
+		case FS_JUNCTION:
+			pnewfid->qid.type = _9P_QTDIR;
+			break;
 
-  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
-            (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry ) ;
+		default:
+			LogMajor(COMPONENT_9P,
+				 "implementation error, you should not see this message !!!!!!");
+			gsh_free(pnewfid);
+			return _9p_rerror(req9p, worker_data, msgtag, EINVAL,
+					  plenout, preply);
+			break;
+		}
 
-  return 1 ;
+	}
+
+	/* keep info on new fid */
+	req9p->pconn->fids[*newfid] = pnewfid;
+
+	/* As much qid as requested fid */
+	nwqid = nwname;
+
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RWALK);
+	_9p_setptr(cursor, msgtag, u16);
+
+	_9p_setptr(cursor, nwqid, u16);
+	for (i = 0; i < *nwqid; i++) {
+		/** @todo: should be different qids
+		 * for each directory walked through */
+		_9p_setqid(cursor, pnewfid->qid);
+	}
+
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p refcount=%i",
+		 (u32) *msgtag, *fid, *newfid, *nwqid,
+		 (unsigned long long)pnewfid->qid.path, pnewfid->pentry,
+		 pnewfid->pentry->lru.refcnt);
+
+	return 1;
 }
-

@@ -7,12 +7,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/*
- * file/object access checking
+/* fsal_test_access
+ * common (default) access check method for fsal_obj_handle objects.
  */
 
-fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
-				fsal_accessflags_t access_type,  /* IN */
-				struct stat *p_buffstat, /* IN */
-				fsal_attrib_list_t * p_object_attributes /* IN */ );
-#endif 
+fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
+			       struct req_op_context *req_ctx,
+			       fsal_accessflags_t access_type,
+			       fsal_accessflags_t *allowed,
+			       fsal_accessflags_t *denied);
+
+int display_fsal_v4mask(struct display_buffer *dspbuf, fsal_aceperm_t v4mask,
+			bool is_dir);
+
+void fsal_set_credentials(const struct user_cred *creds);
+void fsal_save_ganesha_credentials();
+void fsal_restore_ganesha_credentials();
+
+#endif

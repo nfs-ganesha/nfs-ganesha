@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2011)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -32,146 +33,139 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
+#include "export_mgr.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
-
-int _9p_auth( _9p_request_data_t * preq9p,
-              void  * pworker_data,
-              u32 * plenout,
-              char * preply)
+int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
+	     u32 *plenout, char *preply)
 {
-  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+	u16 *msgtag = NULL;
+	u32 *afid = NULL;
+	u16 *uname_len = NULL;
+	char *uname_str = NULL;
+	u16 *aname_len = NULL;
+	char *aname_str = NULL;
+	u32 *n_aname = NULL;
 
-  u16 * msgtag = NULL ;
-  u32 * afid = NULL ;
-  u16 * uname_len = NULL ;
-  char * uname_str = NULL ;
-  u16 * aname_len = NULL ;
-  char * aname_str = NULL ;
-  u32 * n_aname = NULL ;
+	uint64_t fileid;
 
-  fsal_attrib_list_t fsalattr ;
+	u32 err = 0;
 
-  u32 err = 0 ;
- 
-  _9p_fid_t * pfid = NULL ;
+	struct _9p_fid *pfid = NULL;
 
-  exportlist_t * pexport = NULL;
-  unsigned int found = FALSE;
-  cache_inode_status_t cache_status ;
-  cache_inode_fsal_data_t fsdata ;
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	cache_inode_status_t cache_status;
+	char exppath[MAXPATHLEN];
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
-   return -1 ;
+	/* Get data */
+	_9p_getptr(cursor, msgtag, u16);
+	_9p_getptr(cursor, afid, u32);
+	_9p_getstr(cursor, uname_len, uname_str);
+	_9p_getstr(cursor, aname_len, aname_str);
+	_9p_getptr(cursor, n_aname, u32);
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, afid,   u32 ) ; 
-  _9p_getstr( cursor, uname_len, uname_str ) ;
-  _9p_getstr( cursor, aname_len, aname_str ) ;
-  _9p_getptr( cursor, n_aname, u32 ) ; 
+	LogDebug(COMPONENT_9P,
+		 "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
+		 (u32) *msgtag, *afid, (int) *uname_len, uname_str,
+		 (int) *aname_len, aname_str, *n_aname);
 
-  LogDebug( COMPONENT_9P, "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
-            (u32)*msgtag, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
+	if (*afid >= _9P_FID_PER_CONN)
+		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
+				  preply);
 
-  /*
-   * Find the export for the aname (using as well Path or Tag ) 
-   */
-  for( pexport = nfs_param.pexportlist; pexport != NULL;
-       pexport = pexport->next)
-    {
-      if(aname_str[0] != '/')
-        {
-          /* The input value may be a "Tag" */
-          if(!strncmp(aname_str, pexport->FS_tag, strlen( pexport->FS_tag ) ) )
-            {
-	      found = TRUE ;
-              break;
-            }
-        }
-      else
-        {
-          if(!strncmp(aname_str, pexport->fullpath, strlen( pexport->fullpath ) ) )
-           {
-	      found = TRUE ;
-              break;
-           }
-        }
-    } /* for */
+	/*
+	 * Find the export for the aname (using as well Path or Tag)
+	 */
+	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
-  /* Did we find something ? */
-  if( found == FALSE )
-   return _9p_rerror( preq9p, msgtag, ENOENT, plenout, preply ) ;
+	if (exppath[0] == '/')
+		exp = get_gsh_export_by_path(exppath);
+	else
+		exp = get_gsh_export_by_tag(exppath);
 
-  if( *afid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
- 
-  /* Set pexport and fid id in fid */
-  pfid= &preq9p->pconn->fids[*afid] ;
-  pfid->pexport = pexport ;
-  pfid->fid = *afid ;
-  memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context, sizeof( fsal_op_context_t ) ) ;
+	/* Did we find something ? */
+	if (exp == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag, ENOENT, plenout,
+				  preply);
 
-  /* Is user name provided as a string or as an uid ? */
-  if( *uname_len != 0 )
-   {
-     /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
-       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
-   }
-  else
-   {
-    /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
-       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
-   }
+	/* Set export and fid id in fid */
+	export = &exp->export;
+	pfid = req9p->pconn->fids[*afid];
+	if (pfid->export != NULL && pfid->export != export) {
+		struct gsh_export *oldexp =
+		    container_of(export, struct gsh_export, export);
+		put_gsh_export(oldexp);
+	}
+	pfid->export = export;
+	pfid->fid = *afid;
 
-  /* Get the related pentry */
-  fsdata.fh_desc.start = (char *)pexport->proot_handle ;
-  fsdata.fh_desc.len = sizeof( fsal_handle_t ) ;
+	/* Is user name provided as a string or as an uid ? */
+	if (*uname_len != 0) {
+		/* Build the fid creds */
+		err = _9p_tools_get_req_context_by_name(*uname_len, uname_str,
+							pfid);
+		if (err != 0)
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
+					  plenout, preply);
+	} else {
+		/* Build the fid creds */
+		err = _9p_tools_get_req_context_by_uid(*n_aname, pfid);
+		if (err != 0)
+			return _9p_rerror(req9p, worker_data, msgtag, -err,
+					  plenout, preply);
+	}
 
-  pfid->pentry = cache_inode_get( &fsdata,
-                                  &fsalattr,
-                                  &pfid->fsal_op_context,
-                                  NULL,
-                                  &cache_status ) ;
+	/* Check if root cache entry is correctly set */
+	if (export->exp_root_cache_inode == NULL)
+		return _9p_rerror(req9p, worker_data, msgtag, err, plenout,
+				  preply);
 
-  if( pfid->pentry == NULL )
-    return _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;
+	/* get the export information for this fid */
+	pfid->pentry = export->exp_root_cache_inode;
 
-  /* Compute the qid */
-  pfid->qid.type = _9P_QTDIR ;
-  pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-  pfid->qid.path = fsalattr.fileid ;
+	/* Keep track of the export in the req_ctx */
+	pfid->op_context.export = exp;
 
-  /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
-  _9p_setptr( cursor, msgtag, u16 ) ;
+	/* This fid is a special one:
+	 * In this case TAUTH is managed the same way as TATTACH */
+	pfid->from_attach = TRUE;
 
-  _9p_setqid( cursor, pfid->qid ) ;
+	cache_status =
+	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
 
-  _9p_setendptr( cursor, preply ) ;
-  _9p_checkbound( cursor, preply, plenout ) ;
+	/* Compute the qid */
+	pfid->qid.type = _9P_QTDIR;
+	pfid->qid.version = 0;	/* No cache, we want the client
+				 * to stay synchronous with the server */
+	pfid->qid.path = fileid;
 
-  LogDebug( COMPONENT_9P, "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)", 
-            *msgtag, *afid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
+	/* Build the reply */
+	_9p_setinitptr(cursor, preply, _9P_RATTACH);
+	_9p_setptr(cursor, msgtag, u16);
 
-  return 1 ;
+	_9p_setqid(cursor, pfid->qid);
+
+	_9p_setendptr(cursor, preply);
+	_9p_checkbound(cursor, preply, plenout);
+
+	LogDebug(COMPONENT_9P,
+		 "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)",
+		 *msgtag, *afid, (u32) pfid->qid.type, pfid->qid.version,
+		 (unsigned long long)pfid->qid.path);
+
+	return 1;
 }
-

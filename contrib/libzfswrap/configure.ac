@@ -11,6 +11,7 @@ dnl Check for C and C++ compilers
 AC_PROG_CC
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
+AM_PROG_AR
 AC_C_INLINE
 AC_PROG_CXX
 AM_PROG_AS

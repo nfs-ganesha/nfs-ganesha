@@ -13,19 +13,6 @@ Group: Applications/System
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel
 %endif
-%if %{?_with_nfs4acl:1}%{!?_with_nfs4acl:0}
-Requires: openssl
-BuildRequires: openssl-devel
-%endif
-%if %{?_with_posix:1}%{!?_with_posix:0}
-%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
-BuildRequires:  postgresql-devel >= 7.1
-BuildRequires:  postgresql-libs >= 7.1
-%else
-BuildRequires:  mysql-devel >= 5.0
-BuildRequires:  mysql-libs >= 5.0
-%endif
-%endif
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module
@@ -130,11 +117,24 @@ It comes with various back-end modules to support different file systems and
 name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %endif
 
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%package pt
+Summary: The NFS-GANESHA server compiled for use with ProtecTIER
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description pt
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of GPFS/PT.
+%endif
+
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 %package vfs
 Summary: The NFS-GANESHA server compiled for use with GPFS
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release} libattr
+BuildRequires: libattr-devel
 
 %description vfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -148,12 +148,6 @@ This feature requires a kernel higher than 2.6.39
 %package posix
 Summary: The NFS-GANESHA server compiled for using the POSIX interface
 Group: Applications/System
-%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
-BuildRequires: libattr-devel
-Requires: postgresql >= 7.1  postgresql-server >= 7.1
-%else
-Requires: mysql >= 5.0  mysql-server >= 5.0
-%endif
 Requires: %{name}-common = %{version}-%{release} libattr
 
 %description posix
@@ -217,29 +211,6 @@ Requires: %{name}-common = %{version}-%{release}
 The NFS-GANESHA server compiled in a FSAL-les way.
 This requires the use of FSAL compiled as shared objects. FSALs are loaded
 dynamically at runtime using the dlopen() function.
-%endif
-
-%if %{?_with_fuse:1}%{!?_with_fuse:0}
-%package fuselike
-Summary: The ganeshaNFS library for FUSE-like bindings
-Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
-
-%description fuselike
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems and
-name-spaces. This package contains the components for FUSE-like bindings.
-
-%package fuselike-devel
-Summary: The NFS-GANESHA development files for FUSE-like bindings
-Group: Applications/System
-Requires: pkgconfig
-Requires: %{name}-fuselike = %{version}-%{release}
-
-%description fuselike-devel
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems and
-name-spaces. This package contains the development headers for FUSE-like
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
@@ -315,7 +286,9 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
+%if %{?_with_pt:0}%{!?_with_pt:1}
 install -m 644 config_samples/logrotate_ganesha                 $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
+%endif
 
 make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
@@ -324,11 +297,6 @@ install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{
 install -m 755 nfs-ganesha.@FS_NAME@.sysconfig                 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
 %endif
 
-%if %{?_with_posix:1}%{!?_with_posix:0}
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-%endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
@@ -362,7 +330,9 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
 %{_bindir}/ganesha_log_level
+%if %{?_with_pt:0}%{!?_with_pt:1}
 %{_sysconfdir}/logrotate.d/ganesha
+%endif
 
 %files doc
 %defattr(-,root,root,-)
@@ -389,51 +359,66 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %{_includedir}/rpc_ctx.h
 %ghost %{_includedir}/svc_internal.h
 %ghost %{_includedir}/svc_xprt.h
-%ghost %{_includedir}/tirpc/getpeereid.h
-%ghost %{_includedir}/tirpc/misc/event.h
-%ghost %{_includedir}/tirpc/misc/opr_queue.h
-%ghost %{_includedir}/tirpc/misc/queue.h
-%ghost %{_includedir}/tirpc/misc/rbtree.h
-%ghost %{_includedir}/tirpc/misc/rbtree_x.h
-%ghost %{_includedir}/tirpc/namespace.h
-%ghost %{_includedir}/tirpc/netconfig.h
-%ghost %{_includedir}/tirpc/reentrant.h
-%ghost %{_includedir}/tirpc/rpc/auth.h
-%ghost %{_includedir}/tirpc/rpc/auth_des.h
-%ghost %{_includedir}/tirpc/rpc/auth_gss.h
-%ghost %{_includedir}/tirpc/rpc/auth_inline.h
-%ghost %{_includedir}/tirpc/rpc/auth_kerb.h
-%ghost %{_includedir}/tirpc/rpc/auth_unix.h
-%ghost %{_includedir}/tirpc/rpc/clnt.h
-%ghost %{_includedir}/tirpc/rpc/clnt_soc.h
-%ghost %{_includedir}/tirpc/rpc/clnt_stat.h
-%ghost %{_includedir}/tirpc/rpc/des.h
-%ghost %{_includedir}/tirpc/rpc/des_crypt.h
-%ghost %{_includedir}/tirpc/rpc/nettype.h
-%ghost %{_includedir}/tirpc/rpc/pmap_clnt.h
-%ghost %{_includedir}/tirpc/rpc/pmap_prot.h
-%ghost %{_includedir}/tirpc/rpc/pmap_rmt.h
-%ghost %{_includedir}/tirpc/rpc/raw.h
-%ghost %{_includedir}/tirpc/rpc/rpc.h
-%ghost %{_includedir}/tirpc/rpc/rpc_com.h
-%ghost %{_includedir}/tirpc/rpc/rpc_msg.h
-%ghost %{_includedir}/tirpc/rpc/rpcb_clnt.h
-%ghost %{_includedir}/tirpc/rpc/rpcb_prot.h
-%ghost %{_includedir}/tirpc/rpc/rpcb_prot.x
-%ghost %{_includedir}/tirpc/rpc/rpcent.h
-%ghost %{_includedir}/tirpc/rpc/svc.h
-%ghost %{_includedir}/tirpc/rpc/svc_auth.h
-%ghost %{_includedir}/tirpc/rpc/svc_dg.h
-%ghost %{_includedir}/tirpc/rpc/svc_dplx.h
-%ghost %{_includedir}/tirpc/rpc/svc_rqst.h
-%ghost %{_includedir}/tirpc/rpc/svc_soc.h
-%ghost %{_includedir}/tirpc/rpc/types.h
-%ghost %{_includedir}/tirpc/rpc/xdr.h
-%ghost %{_includedir}/tirpc/rpc/xdr_inline.h
-%ghost %{_includedir}/tirpc/rpcsvc/crypt.h
-%ghost %{_includedir}/tirpc/rpcsvc/crypt.x
-%ghost %{_includedir}/tirpc/un-namespace.h
-%ghost %{_includedir}/vc_lock.h
+%ghost %{_includedir}/rpc_dplx_internal.h
+%ghost %{_includedir}/ntirpc/intrinsic.h
+%ghost %{_includedir}/ntirpc/getpeereid.h
+%ghost %{_includedir}/ntirpc/misc/city.h
+%ghost %{_includedir}/ntirpc/misc/citycrc.h
+%ghost %{_includedir}/ntirpc/misc/event.h
+%ghost %{_includedir}/ntirpc/misc/opr_queue.h
+%ghost %{_includedir}/ntirpc/misc/queue.h
+%ghost %{_includedir}/ntirpc/misc/rbtree.h
+%ghost %{_includedir}/ntirpc/misc/rbtree_x.h
+%ghost %{_includedir}/ntirpc/misc/abstract_atomic.h
+%ghost %{_includedir}/ntirpc/misc/epoll.h
+%ghost %{_includedir}/ntirpc/misc/os_epoll.h
+%ghost %{_includedir}/ntirpc/misc/portable.h
+%ghost %{_includedir}/ntirpc/misc/socket.h
+%ghost %{_includedir}/ntirpc/misc/stdio.h
+%ghost %{_includedir}/ntirpc/misc/timespec.h
+%ghost %{_includedir}/ntirpc/misc/thrdpool.h
+%ghost %{_includedir}/ntirpc/namespace.h
+%ghost %{_includedir}/ntirpc/netconfig.h
+%ghost %{_includedir}/ntirpc/reentrant.h
+%ghost %{_includedir}/ntirpc/rpc/auth.h
+%ghost %{_includedir}/ntirpc/rpc/auth_des.h
+%ghost %{_includedir}/ntirpc/rpc/auth_gss.h
+%ghost %{_includedir}/ntirpc/rpc/auth_inline.h
+%ghost %{_includedir}/ntirpc/rpc/auth_kerb.h
+%ghost %{_includedir}/ntirpc/rpc/auth_unix.h
+%ghost %{_includedir}/ntirpc/rpc/clnt.h
+%ghost %{_includedir}/ntirpc/rpc/clnt_soc.h
+%ghost %{_includedir}/ntirpc/rpc/clnt_stat.h
+%ghost %{_includedir}/ntirpc/rpc/des.h
+%ghost %{_includedir}/ntirpc/rpc/des_crypt.h
+%ghost %{_includedir}/ntirpc/rpc/nettype.h
+%ghost %{_includedir}/ntirpc/rpc/pmap_clnt.h
+%ghost %{_includedir}/ntirpc/rpc/pmap_prot.h
+%ghost %{_includedir}/ntirpc/rpc/pmap_rmt.h
+%ghost %{_includedir}/ntirpc/rpc/raw.h
+%ghost %{_includedir}/ntirpc/rpc/rpc.h
+%ghost %{_includedir}/ntirpc/rpc/rpc_com.h
+%ghost %{_includedir}/ntirpc/rpc/rpc_msg.h
+%ghost %{_includedir}/ntirpc/rpc/rpcb_clnt.h
+%ghost %{_includedir}/ntirpc/rpc/rpcb_prot.h
+%ghost %{_includedir}/ntirpc/rpc/rpcb_prot.x
+%ghost %{_includedir}/ntirpc/rpc/rpcent.h
+%ghost %{_includedir}/ntirpc/rpc/svc.h
+%ghost %{_includedir}/ntirpc/rpc/svc_auth.h
+%ghost %{_includedir}/ntirpc/rpc/svc_dg.h
+%ghost %{_includedir}/ntirpc/rpc/svc_rqst.h
+%ghost %{_includedir}/ntirpc/rpc/svc_soc.h
+%ghost %{_includedir}/ntirpc/rpc/types.h
+%ghost %{_includedir}/ntirpc/rpc/xdr.h
+%ghost %{_includedir}/ntirpc/rpc/xdr_inline.h
+%ghost %{_includedir}/ntirpc/rpc/gss_internal.h
+%ghost %{_includedir}/ntirpc/rpc/rpc_dplx.h
+%ghost %{_includedir}/ntirpc/rpc/tirpc_compat.h
+%ghost %{_includedir}/ntirpc/rpc/xdr_ioq.h
+%ghost %{_includedir}/ntirpc/rpc/xdr_inrec.h
+%ghost %{_includedir}/ntirpc/rpcsvc/crypt.h
+%ghost %{_includedir}/ntirpc/rpcsvc/crypt.x
+%ghost %{_includedir}/ntirpc/un-namespace.h
 %ghost %{_usrlibdir}/libntirpc.a
 %ghost %{_usrlibdir}/libntirpc.la
 %ghost %{_usrlibdir}/libntirpc.so
@@ -477,6 +462,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
+%endif
+
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%files pt
+%defattr(-,root,root,-)
+%{_bindir}/pt.ganesha.*
+%{_sysconfdir}/init.d/nfs-ganesha-pt
+%{_sysconfdir}/sysconfig/ganesha
+%config(noreplace) %{_sysconfdir}/ganesha/pt.ganesha*
 %endif
 
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
@@ -542,9 +536,6 @@ rm -rf $RPM_BUILD_ROOT
 #%{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
 %{_sysconfdir}/sysconfig/ganesha
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql
 %config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha*
 %endif
 
@@ -620,6 +611,14 @@ chkconfig --del nfs-ganesha-gpfs
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
+%endif
+
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%preun pt
+chkconfig --del nfs-ganesha-pt
+
+%post pt
+chkconfig --add nfs-ganesha-pt
 %endif
 
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
@@ -908,13 +907,11 @@ chkconfig --add nfs-ganesha-zfs
 
 * Thu Dec  4 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.47-1
 - Two unprecisions in NFSv3 coding were found with Spec NFS bench, they were fixed
-- Code cleanup : removed structure related to deprecated way of making datacache's GC
 - Added a new module name MFSL (will provide additionnal features like md writeback in later versions)
 
 * Thu Nov 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.46-1
 - Bug Fix in tcp dispatcher
 - use of RW_lock inside md cache
-- use external command to perform datacache gc
 
 * Mon Nov  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.45-1
 - Add IPv6 support via TIRPC

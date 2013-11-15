@@ -2,11 +2,11 @@
 #define _NODELIST_H
 
 /* define a macro that make an advanced free on pointer */
-#define xfree(a) \
-if(a!=NULL){ \
-  free(a); \
-  a=NULL; \
-}
+#define xfree(a)				\
+	if (a != NULL){				\
+		gsh_free(a);			\
+		a = NULL;			\
+	}
 
 /*! \addtogroup NODELIST_RANGE
  *  @{
@@ -15,14 +15,13 @@ if(a!=NULL){ \
  * \ingroup NODELIST_RANGE
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_range
-{
-  long int from;                /*!<
-                                 * start point of the range (included in the range)
-                                 */
-  long int to;                  /*!<
-                                 * end point of the range (included in the range)
-                                 */
+typedef struct nodelist_range {
+	long int from;		/*!<
+				 * start point of the range (included in the range)
+				 */
+	long int to;		/*!<
+				 * end point of the range (included in the range)
+				 */
 } nodelist_range_t;
 /*!
  * \ingroup NODELIST_RANGE
@@ -46,13 +45,14 @@ int nodelist_range_set(nodelist_range_t * r1, long int v1, long int v2);
  * \retval  0 if the range is not valid
 */
 int nodelist_range_check(nodelist_range_t * r1);
+
 /*!
- * \ingroup NODELIST_RANGE
- * \brief Indicate if the first range equals, is placed before
+ * @ingroup NODELIST_RANGE
+ * @brief Indicate if the first range equals, is placed before
  * or is placed after the second one
  *
- * \param a1 one of the two input ranges
- * \param a2 one of the two input ranges
+ * \param r1 one of the two input ranges
+ * \param r2 one of the two input ranges
  *
  * \retval  1 if the second one end before the start of the first one
  * \retval  0 if the two ranges are equals
@@ -82,9 +82,8 @@ int nodelist_range_intersects(nodelist_range_t * r1, nodelist_range_t * r2);
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_range_intersection(nodelist_range_t * r1, nodelist_range_t * r2,
-                            nodelist_range_t * r3);
+int nodelist_range_intersection(nodelist_range_t * r1, nodelist_range_t * r2,
+				nodelist_range_t * r3);
 /*!
  * \ingroup NODELIST_RANGE
  * \brief Indicate if the two input ranges are contiguous
@@ -110,22 +109,21 @@ int nodelist_range_contiguous(nodelist_range_t * r1, nodelist_range_t * r2);
  * \retval  2 if r1 is included in r2 (r2 is the bigger one)
 */
 int nodelist_range_includes(nodelist_range_t * r1, nodelist_range_t * r2);
-/*!
- * \ingroup NODELIST_RANGE
- * \brief Gives a nodelist_range that represent the union of the two nodelist_ranges
+/**
+ * *ingroup NODELIST_RANGE
+ * brief Gives a nodelist_range that represent the union of the two nodelist_ranges
  * given in input. The two ranges must intersect or be continuous otherwise
  * operation will failed
  *
- * \param r1 one of the two input ranges
- * \param r2 one of the two input ranges
- * \param r3 output range
+ * @param[in] r1 one of the two input ranges
+ * @param[in] r2 one of the two input ranges
+ * @param[out] rout output range
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
+ * @retval  0 operation successfully done
+ * @retval -1 operation failed
 */
-int
-nodelist_range_union(nodelist_range_t * r1, nodelist_range_t * r2,
-                     nodelist_range_t * rout);
+int nodelist_range_union(nodelist_range_t * r1, nodelist_range_t * r2,
+			 nodelist_range_t * rout);
 /*!
  * @}
 */
@@ -137,42 +135,23 @@ nodelist_range_union(nodelist_range_t * r1, nodelist_range_t * r2,
  * \ingroup NODELIST_RANGES_ARRAY
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_rangelist
-{
+typedef struct nodelist_rangelist {
 
-  long int ranges_nb;           /*!<
-                                 * quantity of ranges currently stored in array
-                                 */
-  nodelist_range_t *array;      /*!<
-                                 * array of ranges
-                                 */
+	long int ranges_nb;	/*!<
+				 * quantity of ranges currently stored in array
+				 */
+	nodelist_range_t *array;	/*!<
+					 * array of ranges
+					 */
 
-  size_t pre_allocated_ranges;  /*!<
-                                 * quantity of pre-allocated ranges of the array
-                                 */
+	size_t pre_allocated_ranges;	/*!<
+					 * quantity of pre-allocated ranges of the array
+					 */
 
 } nodelist_rangelist_t;
-/*!
- * \ingroup BATCH_MANAGER
- * \brief Initialize a bridge ranges array structure
- *
- * \param array pointer on a bridge ranges array structure to initialize
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_rangelist_init(nodelist_rangelist_t * array);
-/*!
- * \ingroup BATCH_MANAGER
- * \brief Initialize a bridge ranges array structure by duplicating an other one
- *
- * \param array pointer on a bridge ranges array structure to initialize
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_rangelist_init_by_copy(nodelist_rangelist_t * array,
-                                    nodelist_rangelist_t * a2c);
+				    nodelist_rangelist_t * a2c);
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Free a bridge ranges array structure contents
@@ -205,7 +184,8 @@ int nodelist_rangelist_incremente_size(nodelist_rangelist_t * array);
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_rangelist_add_range(nodelist_rangelist_t * array, nodelist_range_t * r);
+int nodelist_rangelist_add_range(nodelist_rangelist_t * array,
+				 nodelist_range_t * r);
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Add a list of values to a bridge ranges array
@@ -240,14 +220,13 @@ int nodelist_rangelist_sort(nodelist_rangelist_t * array);
  * \ingroup NODELIST_IDS_LIST
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_idlist
-{
+typedef struct nodelist_idlist {
 
-  long int id_nb;
+	long int id_nb;
 
-  nodelist_rangelist_t rangelist;       /*!<
-                                         * ranges array of this list
-                                         */
+	nodelist_rangelist_t rangelist;	/*!<
+					 * ranges array of this list
+					 */
 } nodelist_idlist_t;
 /*!
  * \ingroup NODELIST_IDLIST
@@ -260,7 +239,8 @@ typedef struct nodelist_idlist
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_idlist_init(nodelist_idlist_t * idlist, char **lists, int lists_nb);
+int nodelist_idlist_init(nodelist_idlist_t * idlist, char **lists,
+			 int lists_nb);
 /*!
  * \ingroup NODELIST_IDLIST
  * \brief Free a bridge ids list structure
@@ -301,7 +281,8 @@ long int nodelist_idlist_ids_quantity(nodelist_idlist_t * idlist);
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_idlist_get_extended_string(nodelist_idlist_t * idlist, char **p_string);
+int nodelist_idlist_get_extended_string(nodelist_idlist_t * idlist,
+					char **p_string);
 /*!
  * \ingroup NODELIST_IDLIST
  * \brief Get compacted ids string
@@ -312,7 +293,8 @@ int nodelist_idlist_get_extended_string(nodelist_idlist_t * idlist, char **p_str
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_idlist_get_compacted_string(nodelist_idlist_t * idlist, char **p_string);
+int nodelist_idlist_get_compacted_string(nodelist_idlist_t * idlist,
+					 char **p_string);
 /*!
  * @}
 */
@@ -325,12 +307,11 @@ int nodelist_idlist_get_compacted_string(nodelist_idlist_t * idlist, char **p_st
  *
  * can be use for basic node or enumartion node (prefixXXXsuffix pattern)
  */
-typedef struct nodelist_nodepattern
-{
-  int padding;                  /*!< padding length */
-  char *prefix;                 /*!< nodename prefix */
-  char *suffix;                 /*!< nodename suffix */
-  int basic;                    /*!< basic node flag 0=no 1=yes, basic node is not part of an node enumeration */
+typedef struct nodelist_nodepattern {
+	int padding;		/*!< padding length */
+	char *prefix;		/*!< nodename prefix */
+	char *suffix;		/*!< nodename suffix */
+	int basic;		/*!< basic node flag 0=no 1=yes, basic node is not part of an node enumeration */
 } nodelist_nodepattern_t;
 /*!
  * \brief Initialize a bridge node pattern structure
@@ -356,9 +337,8 @@ int nodelist_nodepattern_init(nodelist_nodepattern_t * np);
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_nodepattern_init_by_copy(nodelist_nodepattern_t * np,
-                                  nodelist_nodepattern_t * npin);
+int nodelist_nodepattern_init_by_copy(nodelist_nodepattern_t * np,
+				      nodelist_nodepattern_t * npin);
 /*!
  * \brief Clean a bridge node pattern structure
  *
@@ -378,55 +358,12 @@ int nodelist_nodepattern_free_contents(nodelist_nodepattern_t * np);
  * \retval -1 operation failed
 */
 int nodelist_nodepattern_set_padding(nodelist_nodepattern_t * np, int padding);
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix);
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix);
-/*!
- * \brief Set bridge node pattern basic flag
- *
- * \param np pointer on a bridge node pattern structure
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_set_basic(nodelist_nodepattern_t * np);
-/*!
- * \brief Unset bridge node pattern basic flag
- *
- * \param np pointer on a bridge node pattern structure
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
 int nodelist_nodepattern_unset_basic(nodelist_nodepattern_t * np);
-/*!
- * \brief Test if two bridge node patterns are identical
- *
- * \param np1 pointer on the first bridge node pattern structure
- * \param np2 pointer on the first bridge node pattern structure
- *
- * \retval  1 if the two pattern are identical
- * \retval  0 if they are not identical
-*/
-int
-nodelist_nodepattern_equals(nodelist_nodepattern_t * np1, nodelist_nodepattern_t * np2);
+int nodelist_nodepattern_equals(nodelist_nodepattern_t * np1,
+				nodelist_nodepattern_t * np2);
 /*!
  * @}
 */
@@ -438,18 +375,17 @@ nodelist_nodepattern_equals(nodelist_nodepattern_t * np1, nodelist_nodepattern_t
  * \ingroup NODELIST_NODELIST
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_nodelist
-{
-  nodelist_nodepattern_t pattern;       /*!<
-                                         * ranges array of this list
-                                         */
-  nodelist_rangelist_t rangelist;       /*!<
-                                         * ranges array of this list
-                                         */
-  struct nodelist_nodelist *next;       /*!<
-                                         * next node list or NULL 
-                                         * if no more node list aggregated
-                                         */
+typedef struct nodelist_nodelist {
+	nodelist_nodepattern_t pattern;	/*!<
+					 * ranges array of this list
+					 */
+	nodelist_rangelist_t rangelist;	/*!<
+					 * ranges array of this list
+					 */
+	struct nodelist_nodelist *next;	/*!<
+					 * next node list or NULL 
+					 * if no more node list aggregated
+					 */
 } nodelist_nodelist_t;
 /*!
  * \ingroup NODELIST_NODELIST
@@ -462,7 +398,8 @@ typedef struct nodelist_nodelist
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_nodelist_init(nodelist_nodelist_t * nodelist, char **lists, int lists_nb);
+int nodelist_nodelist_init(nodelist_nodelist_t * nodelist, char **lists,
+			   int lists_nb);
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Free a bridge nodes list structure
@@ -498,9 +435,9 @@ int nodelist_nodelist_add_nodes(nodelist_nodelist_t * nodelist, char *list);
 */
 #define VERSUS_OPERATION_INCLUDE         1
 #define VERSUS_OPERATION_INTERSECT       2
-int
-nodelist_nodelist_versus_second_list(nodelist_nodelist_t * nodelist,
-                                     nodelist_nodelist_t * second_list, int operation);
+int nodelist_nodelist_versus_second_list(nodelist_nodelist_t * nodelist,
+					 nodelist_nodelist_t * second_list,
+					 int operation);
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Get nodes quantity
@@ -520,8 +457,8 @@ long int nodelist_nodelist_nodes_quantity(nodelist_nodelist_t * nodelist);
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char **p_string);
+int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist,
+					  char **p_string);
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Get compacted nodes string
@@ -532,8 +469,8 @@ nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char **p_s
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist, char **p_string);
+int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
+					   char **p_string);
 
 /*!
  * \ingroup NODELIST_NODELIST
@@ -545,7 +482,8 @@ nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist, char **p_
  * \retval  n nodes quantity if operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_common_condensed2extended_nodelist(char *src_list, char **p_dst_list);
+int nodelist_common_condensed2extended_nodelist(char *src_list,
+						char **p_dst_list);
 
 /*!
  * \ingroup NODELIST_NODELIST
@@ -557,7 +495,8 @@ int nodelist_common_condensed2extended_nodelist(char *src_list, char **p_dst_lis
  * \retval  n nodes quantity if operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_common_extended2condensed_nodelist(char *src_list, char **p_dst_list);
+int nodelist_common_extended2condensed_nodelist(char *src_list,
+						char **p_dst_list);
 /*!
  * @}
 */
@@ -573,9 +512,9 @@ int nodelist_common_extended2condensed_nodelist(char *src_list, char **p_dst_lis
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_common_string_get_tokens_quantity(char *string, char *separators_list,
-                                           int *p_token_nb);
+int nodelist_common_string_get_tokens_quantity(char *string,
+					       char *separators_list,
+					       int *p_token_nb);
 
 /*!
  * \ingroup NODELIST_COMMON
@@ -589,8 +528,8 @@ nodelist_common_string_get_tokens_quantity(char *string, char *separators_list,
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int nodelist_common_string_get_token(char *string, char *separators_list, int token_id,
-                                     char **p_token);
+int nodelist_common_string_get_token(char *string, char *separators_list,
+				     int token_id, char **p_token);
 
 /*!
  * \ingroup NODELIST_COMMON
@@ -605,9 +544,10 @@ int nodelist_common_string_get_token(char *string, char *separators_list, int to
  * \retval  0 operation successfully done
  * \retval -1 operation failed
 */
-int
-nodelist_common_string_appends_and_extends(char **p_io_string, size_t * p_current_length,
-                                           size_t inc_length, char *string2append,
-                                           char *separator);
+int nodelist_common_string_appends_and_extends(char **p_io_string,
+					       size_t * p_current_length,
+					       size_t inc_length,
+					       char *string2append,
+					       char *separator);
 
 #endif

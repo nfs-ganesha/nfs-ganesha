@@ -1,0 +1,63 @@
+
+Contributing and Using Git  -   Paul Sheer <paulsheer@gmail.com>   -   18 October 2012
+
+
+
+If you would like to contribute to nfs-ganesha development:
+
+
+There is a process to dumping the source (using git), modifying the
+source, and pushing your changes back. This process is quite simple and
+requires only a few commands. These are as follows:
+
+Establish from the other developers which branch of whose repository is
+the best to work in. Create an account on github.com, login and view
+that developers repository. Click "Fork" on the top right to create a
+copy of that repository. Let's say your name is "Paul Sheer" (replace
+"paul", "p_sheer" and "paulsheer" with your own name below), and say the
+the developer who owns the repository is named Code Leader and his
+github.com login is "codeleader". Now let's say the code branch is
+"new-unstable-dev-project".
+
+First you need to fetch the code you wish to work on:
+
+    git clone git://github.com/codeleader/nfs-ganesha.git --branch new-unstable-dev-project
+    cd nfs-ganesha
+
+Now check what you have:
+
+    git status
+
+Now visit README.building for instructions on building and running.
+
+Now fetch the latest updates:
+
+    git remote update
+
+Now do your development work.
+
+When you are developing, testing etc.:
+
+    git commit -a
+
+There may be updates from other developers. Update to their new branch
+"more-stable-dev-project" to include other work other people may have
+done:
+
+    git rebase origin/more-stable-dev-project
+
+Then push your work up as follows:
+
+    ssh-keygen
+    cat ~/.ssh/id_rsa.pub
+
+Copy the output into your ssh keys in your github.com account.
+
+Then,
+
+    git remote add paul_github git@github.com:paulsheer/nfs-ganesha.git
+    git push paul_github new-unstable-dev-project:more-stable-dev-project
+
+
+
+

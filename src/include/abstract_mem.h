@@ -36,8 +36,8 @@
  * added.
  */
 
-#ifndef _ABSTRACT_MEM_H
-#define _ABSTRACT_MEM_H
+#ifndef ABSTRACT_MEM_H
+#define ABSTRACT_MEM_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,7 +69,7 @@
 static inline void *
 gsh_malloc(size_t n)
 {
-     return malloc(n);
+	return malloc(n);
 }
 
 /**
@@ -87,10 +87,14 @@ gsh_malloc(size_t n)
 static inline void *
 gsh_malloc_aligned(size_t a, size_t n)
 {
-    void *p;
-    if(posix_memalign(&p, a, n) != 0)
-        p = NULL;
-    return p;
+#ifdef __APPLE__
+	return valloc(n);
+#else
+	void *p;
+	if (posix_memalign(&p, a, n) != 0)
+		p = NULL;
+	return p;
+#endif
 }
 
 /**
@@ -108,7 +112,7 @@ gsh_malloc_aligned(size_t a, size_t n)
 static inline void *
 gsh_calloc(size_t s, size_t n)
 {
-     return calloc(s, n);
+	return calloc(s, n);
 }
 
 /**
@@ -127,7 +131,7 @@ gsh_calloc(size_t s, size_t n)
 static inline void *
 gsh_realloc(void *p, size_t n)
 {
-     return realloc(p, n);
+	return realloc(p, n);
 }
 
 /**
@@ -143,7 +147,7 @@ gsh_realloc(void *p, size_t n)
 static inline char *
 gsh_strdup(const char *s)
 {
-     return strdup(s);
+	return strdup(s);
 }
 
 /**
@@ -157,7 +161,7 @@ gsh_strdup(const char *s)
 static inline void
 gsh_free(void *p)
 {
-     free(p);
+	free(p);
 }
 
 /**
@@ -171,9 +175,9 @@ gsh_free(void *p)
  * @param[in] n  Size of block (unused)
  */
 static inline void
-gsh_free_size(void *p, size_t n __attribute__((unused)))
+gsh_free_size(void *p, size_t n __attribute__ ((unused)))
 {
-     free(p);
+	free(p);
 }
 
 /**
@@ -209,8 +213,7 @@ typedef struct pool pool_t;
  * @return the pointer to the pool_t or NULL on failure
  */
 
-typedef pool_t*(*pool_initializer_t)(size_t size,
-                                     void* param);
+typedef pool_t *(*pool_initializer_t)(size_t size, void *param);
 
 /**
  * @brief Abstract type of pool destroyer
@@ -250,9 +253,7 @@ typedef void *(*pool_allocator_t)(pool_t *pool);
  *
  */
 
-typedef void (*pool_freer_t)(pool_t *pool,
-                             void* object);
-
+typedef void (*pool_freer_t)(pool_t *pool, void *object);
 
 /**
  * @brief A function vector defining a pool substrate
@@ -262,10 +263,10 @@ typedef void (*pool_freer_t)(pool_t *pool,
  */
 
 struct pool_substrate_vector {
-     pool_initializer_t initializer; /*< Create an underlying pool */
-     pool_destroyer_t destroyer; /*< Destroy an underlying pool */
-     pool_allocator_t allocator; /*< Allocate an object */
-     pool_freer_t freer; /*< Free an object */
+	pool_initializer_t initializer;	/*< Create an underlying pool */
+	pool_destroyer_t destroyer; /*< Destroy an underlying pool */
+	pool_allocator_t allocator; /*< Allocate an object */
+	pool_freer_t freer; /*< Free an object */
 };
 
 /**
@@ -278,8 +279,7 @@ struct pool_substrate_vector {
  * @param[in]  parameters Parameters to be used in initialization
  */
 
-typedef void(*pool_constructor_t)(void *object,
-                                  void *parameters);
+typedef void (*pool_constructor_t)(void *object, void *parameters);
 
 /**
  * @brief Object destructor
@@ -290,7 +290,7 @@ typedef void(*pool_constructor_t)(void *object,
  * @param[in,out] object The object to be finalized
  */
 
-typedef void(*pool_destructor_t)(void *object);
+typedef void (*pool_destructor_t)(void *object);
 
 /**
  * @brief Type representing a pool
@@ -303,13 +303,13 @@ typedef void(*pool_destructor_t)(void *object);
  */
 
 struct pool {
-     char *name; /*< The name of the pool */
-     size_t object_size; /*< The size of the objects created */
-     pool_constructor_t constructor; /*< The object constructor */
-     pool_destructor_t destructor; /*< The object destructor */
-     struct pool_substrate_vector *substrate_vector; /*< Pool operations */
-     char substrate_data[]; /*< The beginning of any substrate-specific
-                                data */
+	char *name; /*< The name of the pool */
+	size_t object_size; /*< The size of the objects created */
+	pool_constructor_t constructor; /*< The object constructor */
+	pool_destructor_t destructor; /*< The object destructor */
+	struct pool_substrate_vector *substrate_vector;	/*< Pool operations */
+	char substrate_data[]; /*< The beginning of any substrate-specific
+				   data */
 };
 
 /**
@@ -340,28 +340,27 @@ struct pool {
  *         pool_destroy.  NULL is returned on error.
  */
 
-static inline pool_t*
-pool_init(const char* name,
-          size_t object_size,
-          const struct pool_substrate_vector *substrate,
-          void *substrate_params,
-          pool_constructor_t constructor,
-          pool_destructor_t destructor)
+static inline pool_t *
+pool_init(const char *name, size_t object_size,
+	  const struct pool_substrate_vector *substrate,
+	  void *substrate_params,
+	  pool_constructor_t constructor,
+	  pool_destructor_t destructor)
 {
-     pool_t *pool = substrate->initializer(object_size,
-                                           substrate_params);
-     if (pool) {
-          pool->substrate_vector = (struct pool_substrate_vector *)substrate;
-          pool->object_size = object_size;
-          pool->constructor = constructor;
-          pool->destructor = destructor;
-          if (name) {
-               pool->name = gsh_strdup(name);
-          } else {
-               pool->name = NULL;
-          }
-     }
-     return pool;
+	pool_t *pool = substrate->initializer(object_size,
+					      substrate_params);
+	if (pool) {
+		pool->substrate_vector =
+		    (struct pool_substrate_vector *)substrate;
+		pool->object_size = object_size;
+		pool->constructor = constructor;
+		pool->destructor = destructor;
+		if (name)
+			pool->name = gsh_strdup(name);
+		else
+			pool->name = NULL;
+	}
+	return pool;
 }
 
 /**
@@ -376,7 +375,7 @@ pool_init(const char* name,
 static inline void
 pool_destroy(pool_t *pool)
 {
-     pool->substrate_vector->destroyer(pool);
+	pool->substrate_vector->destroyer(pool);
 }
 
 /**
@@ -399,14 +398,14 @@ pool_destroy(pool_t *pool)
  *         type (and omitting the pool parameter).
  */
 
-static inline void*
+static inline void *
 pool_alloc(pool_t *pool, void *parameters)
 {
-     void *object = pool->substrate_vector->allocator(pool);
-     if (object && (pool->constructor)) {
-          (pool->constructor)(object, parameters);
-     }
-     return object;
+	void *object = pool->substrate_vector->allocator(pool);
+	if (object && (pool->constructor))
+		(pool->constructor) (object, parameters);
+
+	return object;
 }
 
 /**
@@ -426,12 +425,12 @@ pool_alloc(pool_t *pool, void *parameters)
  */
 
 static inline void
-pool_free(pool_t *pool, void* object)
+pool_free(pool_t *pool, void *object)
 {
-     if (pool->destructor) {
-          (pool->destructor)(object);
-     }
-     pool->substrate_vector->freer(pool, object);
+	if (pool->destructor)
+		(pool->destructor) (object);
+
+	pool->substrate_vector->freer(pool, object);
 }
 
 /**
@@ -457,12 +456,12 @@ pool_free(pool_t *pool, void* object)
  * @return the allocated pool_t structure.
  */
 
-static inline pool_t*
-pool_basic_initializer(size_t size __attribute__((unused)),
-                       void* param __attribute__((unused)))
+static inline pool_t *
+pool_basic_initializer(size_t size __attribute__ ((unused)),
+		       void *param __attribute__ ((unused)))
 {
-     assert(param == NULL); /* We take no parameters */
-     return gsh_malloc(sizeof(pool_t));
+	assert(param == NULL);	/* We take no parameters */
+	return (pool_t *) gsh_malloc(sizeof(pool_t));
 }
 
 /**
@@ -476,7 +475,7 @@ pool_basic_initializer(size_t size __attribute__((unused)),
 static inline void
 pool_basic_destroy(pool_t *pool)
 {
-     gsh_free(pool);
+	gsh_free(pool);
 }
 
 /**
@@ -490,14 +489,13 @@ pool_basic_destroy(pool_t *pool)
  * @return the allocated object or NULL.
  */
 
-static inline void*
+static inline void *
 pool_basic_alloc(pool_t *pool)
 {
-     if (pool->constructor) {
-          return gsh_malloc(pool->object_size);
-     } else {
-          return gsh_calloc(1, pool->object_size);
-     }
+	if (pool->constructor)
+		return gsh_malloc(pool->object_size);
+	else
+		return gsh_calloc(1, pool->object_size);
 }
 
 /**
@@ -510,17 +508,18 @@ pool_basic_alloc(pool_t *pool)
  */
 
 static inline void
-pool_basic_free(pool_t *pool,
-                void* object)
+pool_basic_free(pool_t *pool __attribute__ ((unused)), void *object)
 {
-     gsh_free(object);
+	gsh_free(object);
 }
 
-static const struct pool_substrate_vector pool_basic_substrate[]= {
-     {.initializer = pool_basic_initializer,
-      .destroyer = pool_basic_destroy,
-      .allocator = pool_basic_alloc,
-      .freer = pool_basic_free}
+static const struct pool_substrate_vector pool_basic_substrate[] = {
+	{
+		.initializer = pool_basic_initializer,
+		.destroyer = pool_basic_destroy,
+		.allocator = pool_basic_alloc,
+		.freer = pool_basic_free
+	}
 };
 
-#endif /* _ABSTRACT_MEM_H */
+#endif /* ABSTRACT_MEM_H */

@@ -1,0 +1,9 @@
+This code is imported from:
+
+ http://www.over-yonder.net/~fullermd/projects/libcidr
+
+It was inadvertently re-indented. I has been run through
+checkpatch.pl but the errors have not been fixed.  Since this
+is upstream code, it should be removed and replaced by build
+linkage to the library itself, built separately.  This is a
+V2.1+ task.
