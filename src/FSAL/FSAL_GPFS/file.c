@@ -162,7 +162,6 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	arg.verifier4 = (int32_t *) &writeverf;
 
 	retval = gpfs_ganesha(OPENHANDLE_FSYNC, &arg);
-	retval = fsync(myself->u.file.fd);
 	if (retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
