@@ -628,7 +628,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 				LogDebug(COMPONENT_STATE, "possible replay?");
 				*state = state2;
 				status = NFS4ERR_REPLAY;
-				goto failure;
+				goto replay;
 			}
 			/* OLD_STATEID */
 			LogDebug(COMPONENT_STATE,
@@ -650,7 +650,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			LogDebug(COMPONENT_STATE, "possible replay?");
 			*state = state2;
 			status = NFS4ERR_REPLAY;
-			goto failure;
+			goto replay;
 		} else if (diff > 0) {
 			/* BAD_STATEID */
 			LogDebug(COMPONENT_STATE,
@@ -710,6 +710,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
  failure:
 
 	*state = NULL;
+
+ replay:
+
 	data->current_stateid_valid = false;
 	return status;
 }

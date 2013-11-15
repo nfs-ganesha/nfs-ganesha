@@ -63,7 +63,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 {
 	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
 	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
-	uint32_t size, check_size;
+	uint64_t size;
 	size_t written_size;
 	uint64_t offset;
 	bool eof_met;
@@ -238,7 +238,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	size = arg_WRITE4->data.data_len;
 	stable_how = arg_WRITE4->stable;
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_WRITE: offset = %" PRIu64 "  length = %" PRIu32
+		     "NFS4_OP_WRITE: offset = %" PRIu64 "  length = %" PRIu64
 		     "  stable = %d",
 		     offset, size, stable_how);
 
@@ -251,38 +251,25 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 			return res_WRITE4->status;
 		}
 
-	/* The size to be written should not be greater than
-	 * FATTR4_MAXWRITESIZE because this value is asked by the client at
-	 * mount time, but we check this by security
-	 *
-	 * We should check against the value we returned in getattr. This was
-	 * not the case before the following check_size code was added.
-	 */
-	if (((data->export->export_perms.options & EXPORT_OPTION_MAXWRITE) ==
-	     EXPORT_OPTION_MAXWRITE))
-		check_size = data->export->MaxWrite;
-	else
-		check_size = entry->obj_handle->export->ops->fs_maxwrite(
-					entry->obj_handle->export);
-	if (size > check_size) {
+	if (size > data->export->MaxWrite) {
 		/*
 		 * The client asked for too much data, we
 		 * must restrict him
 		 */
 
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "NFS4_OP_WRITE: write requested size = %" PRIu32
-			     " write allowed size = %" PRIu32,
-			     size, check_size);
+			     "NFS4_OP_WRITE: write requested size = %" PRIu64
+			     " write allowed size = %" PRIu64,
+			     size, data->export->MaxWrite);
 
-		size = check_size;
+		size = data->export->MaxWrite;
 	}
 
 	/* Where are the data ? */
 	bufferdata = arg_WRITE4->data.data_val;
 
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_WRITE: offset = %" PRIu64 " length = %" PRIu32,
+		     "NFS4_OP_WRITE: offset = %" PRIu64 " length = %" PRIu64,
 		     offset, size);
 
 	/* if size == 0 , no I/O) are actually made and everything is alright */

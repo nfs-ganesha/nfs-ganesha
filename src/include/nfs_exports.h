@@ -165,11 +165,11 @@ typedef struct exportlist {
 	export_perms_t export_perms;	/*< available mount options */
 	unsigned char seckey[EXPORT_KEY_SIZE];	/*< Checksum for FH validity */
 	bool use_commit;
-	uint32_t MaxRead;	/*< Max Read for this entry */
-	uint32_t MaxWrite;	/*< Max Write for this entry */
-	uint32_t PrefRead;	/*< Preferred Read size */
-	uint32_t PrefWrite;	/*< Preferred Write size */
-	uint32_t PrefReaddir;	/*< Preferred Readdir size */
+	uint64_t MaxRead;	/*< Max Read for this entry */
+	uint64_t MaxWrite;	/*< Max Write for this entry */
+	uint64_t PrefRead;	/*< Preferred Read size */
+	uint64_t PrefWrite;	/*< Preferred Write size */
+	uint64_t PrefReaddir;	/*< Preferred Readdir size */
 	uint64_t MaxOffsetWrite;	/*< Maximum Offset allowed for write */
 	uint64_t MaxOffsetRead;	/*< Maximum Offset allowed for read */
 	uint64_t MaxCacheSize;	/*< Maximum Cache Size allowed */

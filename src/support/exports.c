@@ -1891,7 +1891,7 @@ static int BuildExportEntry(config_item_t block)
 					   &err_flag,
 					   &size))
 				continue;
-			p_entry->MaxRead = (uint32_t) size;
+			p_entry->MaxRead = size;
 			if (p_entry->MaxRead >
 			    nfs_param.core_param.rpc.max_send_buffer_size) {
 				LogMajor(COMPONENT_CONFIG,
@@ -1913,7 +1913,7 @@ static int BuildExportEntry(config_item_t block)
 					   &err_flag,
 					   &size))
 				continue;
-			p_entry->MaxWrite = (uint32_t) size;
+			p_entry->MaxWrite = size;
 			if (p_entry->MaxWrite >
 			    nfs_param.core_param.rpc.max_recv_buffer_size) {
 				LogMajor(COMPONENT_CONFIG,
