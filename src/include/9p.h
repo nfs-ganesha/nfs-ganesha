@@ -371,17 +371,10 @@ struct _9p_outqueue {
 	pthread_cond_t cond;
 };
 
-struct _9p_datalock {
-	msk_data_t *data;
-	msk_data_t *out;
-	pthread_mutex_t lock;
-};
-
 struct _9p_rdma_priv {
 	struct _9p_conn *pconn;
 	uint8_t *rdmabuf;
 	msk_data_t *rdata;
-	struct _9p_datalock *datalock;
 	struct _9p_outqueue *outqueue;
 	struct ibv_mr *outmr;
 };
@@ -392,7 +385,7 @@ struct _9p_request_data {
 	char *_9pmsg;
 	struct _9p_conn *pconn;
 #ifdef _USE_9P_RDMA
-	struct _9p_datalock *datalock;
+	msk_data_t *data;
 #endif
 	struct _9p_flush_hook flush_hook;
 };
