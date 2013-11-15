@@ -84,19 +84,10 @@ int config_GetKeyValue(config_item_t item, char **var_name, char **var_value);
  */
 config_item_t config_FindItemByName(config_file_t config, const char *name);
 
-/* Returns a block or variable with the specified name, and ensure it is unique.
- * The name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
-config_item_t config_FindItemByName_CheckUnique(config_file_t config,
-						const char *name,
-						int *is_unique);
-
 /* Directly returns the value of the key with the specified name.
  * This name can be "BLOCK::SUBBLOCK::SUBBLOCK::VARNAME"
  */
 char *config_FindKeyValueByName(config_file_t config, const char *key_name);
-
-/* Returns a block or variable with the specified name from the given block" */
-config_item_t config_GetItemByName(config_item_t block, const char *name);
 
 /* Directly returns the value of the key with the specified name
  * relative to the given block.

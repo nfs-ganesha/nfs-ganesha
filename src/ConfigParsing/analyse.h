@@ -25,48 +25,6 @@
 #include <stdio.h>
 #include "nlm_list.h"
 
-#define MAXSTRLEN   1024
-
-/* A program consists of several blocks,
- * each block consists of variables definitions
- * and subblocks.
- */
-
-/* forward declaration of generic item */
-struct _generic_item_;
-
-typedef enum {
-	TYPE_BLOCK,
-	TYPE_STMT
-} type_item;
-
-typedef struct _type_affect_ {
-
-	char varname[MAXSTRLEN];
-	char varvalue[MAXSTRLEN];
-
-} type_affect;
-
-typedef struct _type_block_ {
-
-	char block_name[MAXSTRLEN];
-	struct _generic_item_ *block_content;
-
-} type_block;
-
-typedef struct _generic_item_ {
-
-	type_item type;
-	union {
-		type_block block;
-		type_affect affect;
-	} item;
-
-	/* next item in the list */
-	struct _generic_item_ *next;
-
-} generic_item;
-
 /**
  * @brief Configuration parser data structures
  * and linkage betweek the parser, analyse.c and config_parsing.c
@@ -83,7 +41,7 @@ struct config_node {
 	char *name;		/* block or parameter name */
 	char *filename;		/* pointer to filename in file list */
 	int linenumber;
-	type_item type;		/* switches union contents */
+	enum node_type type;	/* switches union contents */
 	union {			/* sub_nodes are always struct config_node */
 		char *varvalue;			/* TYPE_STMT */
 		struct {				/* TYPE_BLOCK */
@@ -92,18 +50,6 @@ struct config_node {
 		} blk;
 	}u;
 };
-
-typedef generic_item *list_items;
-
-/**
- *  create a list of items
- */
-list_items *config_CreateItemsList();
-
-/**
- *  Create a block item with the given content
- */
-generic_item *config_CreateBlock(char *blockname, list_items * list);
 
 /*
  * File list
@@ -137,16 +83,6 @@ struct parser_state {
 	struct config_root *root_node;
 	void *scanner;
 };
-
-/**
- *  Create a key=value peer (assignment)
- */
-generic_item *config_CreateAffect(char *varname, char *varval);
-
-/**
- *  Add an item to a list
- */
-void config_AddItem(list_items * list, generic_item * item);
 
 int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile,
