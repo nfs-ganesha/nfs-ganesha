@@ -85,6 +85,7 @@ struct flock
 #define OPENHANDLE_WRITE_BY_FD    136
 #define OPENHANDLE_CREATE_BY_NAME_ATTR 137
 #define OPENHANDLE_GRACE_PERIOD   138
+#define OPENHANDLE_CLEAR_BY_FD    139
 #define OPENHANDLE_TRACE_ME       150
 
 struct trace_arg
@@ -434,6 +435,7 @@ struct dswrite_arg
   uint32_t stability_wanted;
   uint32_t *stability_got;
   uint32_t *verifier4;
+  int options;
 };
 
 struct read_arg
@@ -459,6 +461,7 @@ struct write_arg
   uint32_t stability_wanted;
   uint32_t *stability_got;
   uint32_t *verifier4;
+  int options;
 };
 
 struct layoutcommit_arg
