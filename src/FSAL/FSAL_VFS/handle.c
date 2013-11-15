@@ -423,6 +423,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 	*handle = &hdl->obj_handle;
 
+	close(dir_fd);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
  fileerr:
 	unlinkat(dir_fd, name, 0);
  direrr:
@@ -593,8 +596,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		retval = ENOMEM;
 		goto linkerr;
 	}
-	fsal_restore_ganesha_credentials();
 	*handle = &hdl->obj_handle;
+
+	close(dir_fd);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  linkerr:

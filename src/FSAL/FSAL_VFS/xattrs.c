@@ -453,16 +453,13 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(-rc, errno);
 		} else {
 			index = rc;
-			found = TRUE;
 		}
 		close(fd);
 	}
 
-	if (found) {
-		*pxattr_id = index;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else
-		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+	/* If we're here, we got it (early return on error) */
+	*pxattr_id = index;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -513,17 +510,17 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		*p_output_size = rc;
 
 		close(fd);
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+		rc = ERR_FSAL_NO_ERROR;
 	} else {		/* built-in attr */
 
 		/* get the value */
 		rc = xattr_list[xattr_id].get_func(obj_hdl, buffer_addr,
 						   buffer_size, p_output_size,
 						   xattr_list[xattr_id].arg);
-		return fsalstat(rc, 0);
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(rc, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
