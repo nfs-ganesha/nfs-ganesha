@@ -1069,33 +1069,47 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
  * Deal with capabilities in order to remove CAP_SYS_RESOURCE (needed
  * for proper management of data quotas)
  */
-
 static void lower_my_caps(void) {
-	struct __user_cap_data_struct capdata;
+
 	struct __user_cap_header_struct caphdr;
+	cap_user_data_t capdata;
 	ssize_t capstrlen = 0;
 	cap_t my_cap;
 	char *cap_text;
+	int capsz;
 
-	caphdr.version = _LINUX_CAPABILITY_VERSION_2;
+	caphdr.version = _LINUX_CAPABILITY_VERSION;
+	(void) capget(&caphdr, NULL);
+	switch (caphdr.version) {
+	case _LINUX_CAPABILITY_VERSION_1:
+		capsz = _LINUX_CAPABILITY_U32S_1;
+		break;
+	case _LINUX_CAPABILITY_VERSION_2:
+		capsz = _LINUX_CAPABILITY_U32S_2;
+		break;
+	default:
+		abort(); /* can't happen */
+	}
+
+	capdata = gsh_calloc(capsz, sizeof(struct __user_cap_data_struct));
 	caphdr.pid = getpid();
 
-	if (capget(&caphdr, &capdata) != 0)
+	if (capget(&caphdr, capdata) != 0)
 		LogFatal(COMPONENT_INIT,
 			 "Failed to query capabilities for process, errno=%u",
 			 errno);
 
 	/* Set the capability bitmask to remove CAP_SYS_RESOURCE */
-	if (capdata.effective & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.effective &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+	if (capdata->effective & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata->effective &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
 
-	if (capdata.permitted & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.permitted &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+	if (capdata->permitted & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata->permitted &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
 
-	if (capdata.inheritable & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata.inheritable &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
+	if (capdata->inheritable & CAP_TO_MASK(CAP_SYS_RESOURCE))
+		capdata->inheritable &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
 
-	if (capset(&caphdr, &capdata) != 0)
+	if (capset(&caphdr, capdata) != 0)
 		LogFatal(COMPONENT_INIT,
 			 "Failed to set capabilities for process, errno=%u",
 			 errno);
@@ -1110,8 +1124,10 @@ static void lower_my_caps(void) {
 		 cap_text);
 	cap_free(cap_text);
 	cap_free(my_cap);
+	gsh_free(capdata);
 }
 #endif
+
 /**
  * @brief Start NFS service
  *
