@@ -1627,14 +1627,14 @@ int display_LogError(struct display_buffer *dspbuf, int num_family,
 		char tempstr[1024];
 		char *errstr;
 #ifndef FREEBSD
-                errstr = strerror_r(status, tempstr, sizeof(tempstr));
+		errstr = strerror_r(status, tempstr, sizeof(tempstr));
 #else
-                if (strerror_r(status, tempstr, sizeof(tempstr)) == 0) {
-                    errstr = tempstr;
-                } else {
-                    sprintf(tempstr, "Unknown error %3d", errno);
-                    errstr = tempstr;
-                }
+		if (strerror_r(status, tempstr, sizeof(tempstr)) == 0) {
+			errstr = tempstr;
+		} else {
+			sprintf(tempstr, "Unknown error %3d", errno);
+			errstr = tempstr;
+		}
 #endif
 		return display_printf(dspbuf, "Error %s : %s : status %d : %s",
 				      the_error.label, the_error.msg, status,

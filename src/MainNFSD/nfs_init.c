@@ -1070,7 +1070,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
  * for proper management of data quotas)
  */
 
-static void lower_my_caps(void) {
+static void lower_my_caps(void)
+{
 	struct __user_cap_data_struct capdata;
 	struct __user_cap_header_struct caphdr;
 	ssize_t capstrlen = 0;

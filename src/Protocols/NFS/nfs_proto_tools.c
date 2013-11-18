@@ -1360,11 +1360,11 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint64_t maxread;
 
-	if (args->data != NULL && args->data->export != NULL) {
+	if (args->data != NULL && args->data->export != NULL)
 		maxread = args->data->export->MaxRead;
-	} else {
+	else
 		maxread = NFS4_PSEUDOFS_MAX_READ_SIZE;
-	}
+
 	if (!inline_xdr_u_int64_t(xdr, &maxread))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
@@ -1383,11 +1383,11 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
 	uint64_t maxwrite;
 
-	if (args->data != NULL && args->data->export != NULL) {
+	if (args->data != NULL && args->data->export != NULL)
 		maxwrite = args->data->export->MaxWrite;
-	} else {
+	else
 		maxwrite = NFS4_PSEUDOFS_MAX_WRITE_SIZE;
-	}
+
 	if (!inline_xdr_u_int64_t(xdr, &maxwrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
