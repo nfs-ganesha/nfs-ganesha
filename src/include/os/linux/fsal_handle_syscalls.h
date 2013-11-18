@@ -27,7 +27,7 @@
 #define HANDLE_LINUX_H
 
 #ifndef AT_EMPTY_PATH
-#define AT_EMPTY_PATH		0x1000
+#define AT_EMPTY_PATH           0x1000
 #endif
 
 /*
@@ -88,13 +88,11 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle *handle,
 #define O_NOACCESS O_ACCMODE
 #endif
 
-static inline size_t vfs_file_handle_size(vfs_file_handle_t *fh)
+static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 {
-	return offsetof(vfs_file_handle_t, handle) + fh->handle_bytes;
+	struct file_handle *hdl = (struct file_handle *)fh;
+	return offsetof(struct file_handle, f_handle)+hdl->handle_bytes;
 }
-
-#define VFS_FILE_HANDLE_MIN \
-	(offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL)
 
 #define vfs_alloc_handle(fh)						\
 	do {								\

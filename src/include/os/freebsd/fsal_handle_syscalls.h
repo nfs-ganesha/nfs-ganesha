@@ -87,19 +87,15 @@ struct v_fhandle {
  */
 #define VFS_BSD_HANDLE_INIT(_fh, _handle)				\
 	do {								\
-		_fh->handle_bytes = vfs_file_handle_size(_fh);		\
+		_fh->handle_bytes = vfs_sizeof_handle(_fh);		\
 		_fh->handle_type = 0;					\
 		memcpy(&_fh->handle[0], &_handle, _fh->handle_bytes);	\
 	} while (0)
 
-static inline size_t vfs_file_handle_size(vfs_file_handle_t *)
+static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 {
 	return offsetof(struct fhandle, fh_fid)+PANFS_HANDLE_SIZE;
 }
-
-#define VFS_FILE_HANDLE_MIN \
-	(offsetof(struct fhandle, fh_fid)+PANFS_HANDLE_SIZE)
-
 
 #define vfs_alloc_handle(fh)						\
 	do {								\
