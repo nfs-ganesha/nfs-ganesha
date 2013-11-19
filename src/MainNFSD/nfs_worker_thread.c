@@ -1567,7 +1567,7 @@ int worker_init(void)
 		return rc;
 	}
 
-	rc = frigethr_populate(worker_fridge, worker_run, NULL);
+	rc = fridgethr_populate(worker_fridge, worker_run, NULL);
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_DISPATCH,

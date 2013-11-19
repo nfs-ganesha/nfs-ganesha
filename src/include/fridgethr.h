@@ -244,7 +244,7 @@ int fridgethr_start(struct fridgethr *, pthread_mutex_t *, pthread_cond_t *,
 		    void (*)(void *), void *);
 int fridgethr_sync_command(struct fridgethr *, fridgethr_comm_t, time_t);
 bool fridgethr_you_should_break(struct fridgethr_context *);
-int frigethr_populate(struct fridgethr *, void (*)(struct fridgethr_context *),
+int fridgethr_populate(struct fridgethr *, void (*)(struct fridgethr_context *),
 		      void *);
 
 void fridgethr_setwait(struct fridgethr_context *ctx, time_t thread_delay);
