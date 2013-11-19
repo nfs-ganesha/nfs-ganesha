@@ -87,15 +87,6 @@ typedef struct exportlist_client_gss__ {
 	char princname[GSS_DEFINE_LEN_TEMP + 1];
 } exportlist_client_gss_t;
 
-typedef enum exportlist_access_type__ {
-	ACCESSTYPE_RW = 1,	/*< All operations are allowed */
-	ACCESSTYPE_RO = 2,	/*< Filesystem is readonly */
-	ACCESSTYPE_MDONLY = 3,	/*< Data operations are forbidden */
-	ACCESSTYPE_MDONLY_RO = 4	/*< Data operations are forbidden,
-					   and the filesystem is
-					   read-only. */
-} exportlist_access_type_t;
-
 typedef enum exportlist_client_type__ {
 	HOSTIF_CLIENT = 1,
 	NETWORK_CLIENT = 2,
@@ -145,25 +136,8 @@ typedef struct exportlist {
 	char *FS_specific;	/*< Filesystem specific option string */
 	char *FS_tag;		/*< Filesystem "tag" string */
 
-	exportlist_access_type_t access_type;	/*< Allowed operations
-						   for this
-						   export. Used by the
-						   older Access list
-						   Access_Type export
-						   permissions scheme
-						   as well as the newer
-						   R_Access, RW_Access,
-						   MDONLY_Access,
-						   MDONLY_R_Access
-						   lists. */
-	bool new_access_list_version;	/*< The new access list version
-					   (true) is the *_Access
-					   lists.  The old (false) is
-					   Access and Access_Type. */
-
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	export_perms_t export_perms;	/*< available mount options */
-	unsigned char seckey[EXPORT_KEY_SIZE];	/*< Checksum for FH validity */
 	uint64_t MaxRead;	/*< Max Read for this entry */
 	uint64_t MaxWrite;	/*< Max Write for this entry */
 	uint64_t PrefRead;	/*< Preferred Read size */

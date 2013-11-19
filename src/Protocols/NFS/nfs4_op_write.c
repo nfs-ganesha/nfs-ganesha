@@ -202,22 +202,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		else
 			return op_dswrite_plus(op, data, resp, info);
 	}
-	/* Manage access type */
-	switch (data->export->access_type) {
-	case ACCESSTYPE_MDONLY:
-	case ACCESSTYPE_MDONLY_RO:
-		res_WRITE4->status = NFS4ERR_DQUOT;
-		return res_WRITE4->status;
-		break;
-
-	case ACCESSTYPE_RO:
-		res_WRITE4->status = NFS4ERR_ROFS;
-		return res_WRITE4->status;
-		break;
-
-	default:
-		break;
-	}			/* switch( data->export->access_type ) */
 
 	/* vnode to manage is the current one */
 	entry = data->current_entry;

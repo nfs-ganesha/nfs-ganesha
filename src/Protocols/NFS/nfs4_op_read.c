@@ -248,13 +248,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			return op_dsread_plus(op, data, resp, info);
 	}
 
-	/* Manage access type MDONLY */
-	if ((data->export->access_type == ACCESSTYPE_MDONLY)
-	    || (data->export->access_type == ACCESSTYPE_MDONLY_RO)) {
-		res_READ4->status = NFS4ERR_DQUOT;
-		return res_READ4->status;
-	}
-
 	entry = data->current_entry;
 	/* Check stateid correctness and get pointer to state (also
 	   checks for special stateids) */
