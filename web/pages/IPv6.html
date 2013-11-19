@@ -1,5 +1,0 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head></head>
-<body><h2 class="Welcome">Using IPv6 with NFS-GANESHA</h2>NFS-GANESHA
-supports IPv6 via the use of the TI-RPC library. This feature has to be
-enabled at "./configure" time, using these options<br><div style="margin-left: 40px;"># ./configure --with-fsal=&lt;desired fsal&gt; --enable-tirpc --enable-ipv6 </div><br>The old fashioned <span style="font-style: italic;">portmap</span> daemon is not IPv6 compliant, if you want to use IPv6 you'll have to use <span style="font-style: italic;">rpcbind</span> instead. Make sure that you run the correct service before starting NFS-GANESHA as IPv6 server.<br>The NFS_GANESHA IPv6 server will support both IPv4 and IPv6 clients.<br><br></body></html>
