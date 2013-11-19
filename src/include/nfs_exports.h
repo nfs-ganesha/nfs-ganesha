@@ -197,8 +197,6 @@ typedef struct exportlist {
 } exportlist_t;
 
 /* Constant for options masks */
-#define EXPORT_OPTION_NOSUID 0x00000001	/*< Mask off setuid mode bit */
-#define EXPORT_OPTION_NOSGID 0x00000002	/*< Mask off setgid mode bit */
 #define EXPORT_OPTION_ROOT 0x00000004	/*< Allow root access as root uid */
 #define EXPORT_OPTION_ALL_ANONYMOUS 0x00000008	/*< all users are squashed to
 						    anonymous */

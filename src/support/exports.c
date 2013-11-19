@@ -89,8 +89,6 @@
 #define CONF_EXPORT_PREF_WRITE         "PrefWrite"
 #define CONF_EXPORT_PREF_READDIR       "PrefReaddir"
 #define CONF_EXPORT_FSID               "Filesystem_id"
-#define CONF_EXPORT_NOSUID             "NOSUID"
-#define CONF_EXPORT_NOSGID             "NOSGID"
 #define CONF_EXPORT_PRIVILEGED_PORT    "PrivilegedPort"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
@@ -121,8 +119,6 @@
 #define FLAG_EXPORT_PREF_WRITE      0x000002000
 #define FLAG_EXPORT_PREF_READDIR    0x000004000
 #define FLAG_EXPORT_FSID            0x000008000
-#define FLAG_EXPORT_NOSUID          0x000010000
-#define FLAG_EXPORT_NOSGID          0x000020000
 #define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
 #define FLAG_EXPORT_FS_SPECIFIC     0x000100000
 #define FLAG_EXPORT_FS_TAG          0x000200000
@@ -308,11 +304,6 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 			    p_perms->options & EXPORT_OPTION_ACCESS_TYPE);
 	else
 		buf += sprintf(buf, "NONE");
-
-	if ((p_perms->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID)
-		buf += sprintf(buf, ", NOSUID");
-	if ((p_perms->options & EXPORT_OPTION_NOSGID) == EXPORT_OPTION_NOSGID)
-		buf += sprintf(buf, ", NOSUID");
 
 	if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) ==
 	    EXPORT_OPTION_AUTH_NONE)
@@ -1144,32 +1135,6 @@ static int BuildExportClient(config_item_t block,
 			if ((perms->options & EXPORT_OPTION_AUTH_TYPES) == 0)
 				LogWarn(COMPONENT_CONFIG,
 					"NFS READ %s: Empty SecType", label);
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSUID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				perms->options |= EXPORT_OPTION_NOSUID;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSGID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 
@@ -2022,32 +1987,6 @@ static int BuildExportEntry(config_item_t block)
 
 			p_entry->filesystem_id.major = (uint64_t) major;
 			p_entry->filesystem_id.minor = (uint64_t) minor;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSUID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				p_perms->options |= EXPORT_OPTION_NOSUID;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSGID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				p_perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 

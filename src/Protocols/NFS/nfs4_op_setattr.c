@@ -184,35 +184,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	/* Now, we set the mode */
-	if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_OWNER)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_GROUP)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR4_SPACE_RESERVED)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_ACL)
-	    || FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) {
-		/* Check for root access when using chmod */
-		if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE)) {
-			if ((sattr.mode & S_ISUID)
-			    && ((data->export->export_perms.
-			      options & EXPORT_OPTION_NOSUID)
-			     || ((sattr.mode & S_ISGID)
-				 && ((data->export->export_perms.
-				   options & EXPORT_OPTION_NOSGID))))) {
-				LogInfo(COMPONENT_NFS_V4,
-					"Setattr denied because setuid or setgid bit is disabled in configuration file. setuid=%d, setgid=%d",
-					sattr.mode & S_ISUID ? 1 : 0,
-					sattr.mode & S_ISGID ? 1 : 0);
-				res_SETATTR4->status = NFS4ERR_PERM;
-				return res_SETATTR4->status;
-			}
-		}
-	}
-
 	const time_t S_NSECS = 1000000000UL;
 	/* Set the atime and mtime (ctime is not setable) */
 
