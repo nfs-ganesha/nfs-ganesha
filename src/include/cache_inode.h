@@ -335,6 +335,10 @@ struct cache_entry_t {
 	time_t attr_time;
 	/** New style LRU link */
 	cache_inode_lru_t lru;
+	/** There is one export root reference counted for each export
+	    for which this entry is a root for. This field is used
+	    with the atomic inc/dec/fetch routines. */
+	int32_t exp_root_refcount;
 	/** This is separated out from the content lock, since there
 	    are state oerations that don't affect anything guarded by
 	    content (for example, a layout return or request has no

@@ -3496,12 +3496,16 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 		 * if functionality is added to dynamically add and remove
 		 * export entries, then the function to remove an export
 		 * entry MUST put the extra reference.
+		 *
+		 * Also refcount the entry to prevent removal unless all
+		 * exports are no longer referencing this entry as a root.
 		 */
 		export->exp_root_cache_inode = entry;
 		LogInfo(COMPONENT_INIT,
 			"Added root entry for path %s on export_id=%d",
 			export->fullpath, export->id);
 		*entryp = export->exp_root_cache_inode;
+		atomic_inc_int32_t(&entry->exp_root_refcount);
 		cache_inode_lru_ref(export->exp_root_cache_inode,
 				    LRU_REQ_INITIAL);
 		return CACHE_INODE_SUCCESS;
