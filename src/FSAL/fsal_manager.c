@@ -90,9 +90,6 @@ int start_fsals(config_file_t config)
 	char *key, *value;
 	int fb, fsal_cnt, item_cnt;
 
-	/* Call something in common_pnfs.c */
-	pnfs_common_dummy();
-
 	fsal_block = config_FindItemByName(config, CONF_LABEL_FSAL);
 	if (fsal_block == NULL) {
 		LogFatal(COMPONENT_INIT,

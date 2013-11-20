@@ -427,28 +427,5 @@ nfsstat4 posix2nfs4_error(const int posix_errorcode)
 	}
 }
 
-/**
- * @brief Dummy function
- *
- * This function exists so there can be something in common_pnfs.c to
- * be called from Ganesha core.
- *
- * @todo The existence of this function is a hack to work around a
- * bug.  Remove it when the linkage issue is fixed.
- *
- * @return A garbage value of no use whatsoever.
- */
-
-uint64_t pnfs_common_dummy(void)
-{
-	uint64_t accumulator = (uint64_t) xdr_fsal_deviceid;
-
-	accumulator += (uint64_t) FSAL_encode_ipv4_netaddr;
-	accumulator += (uint64_t) FSAL_encode_file_layout;
-	accumulator += (uint64_t) FSAL_encode_v4_multipath;
-	accumulator += (uint64_t) posix2nfs4_error;
-
-	return accumulator;
-}
 
 /** @} */
