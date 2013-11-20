@@ -134,6 +134,12 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	data->saved_entry = data->current_entry;
 	data->saved_filetype = data->current_filetype;
 
+	/* Make SAVEFH work right for DS handle */
+	if (data->current_ds != NULL) {
+		data->saved_ds = data->current_ds;
+		data->saved_ds->ops->get(data->saved_ds);
+	}
+
 	/* Take another reference.  As of now the filehandle is both saved
 	 * and current and both must be counted.  Guard this, in case we
 	 * have a pseudofs handle.

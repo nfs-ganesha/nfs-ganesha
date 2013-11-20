@@ -4669,13 +4669,15 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 	if (fh_status != NFS4_OK)
 		return fh_status;
 
-	assert(data->saved_entry != NULL &&
-	       data->saved_filetype != NO_FILE_TYPE);
-
 	/* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
 	if (fh_status != NFS4_OK)
 		return fh_status;
+
+	if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+		LogDebug(COMPONENT_NFS_V4, "DS Handle");
+		return NFS4ERR_INVAL;
+	}
 
 	/* Check for the correct file type */
 	if (required_type < 0) {
@@ -4715,11 +4717,6 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 				return NFS4ERR_INVAL;
 			}
 		}
-	}
-
-	if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
-		LogDebug(COMPONENT_NFS_V4, "DS Handle");
-		return NFS4ERR_INVAL;
 	}
 
 	return NFS4_OK;

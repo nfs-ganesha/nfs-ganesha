@@ -129,6 +129,13 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	data->current_stateid = data->saved_stateid;
 	data->current_stateid_valid = data->saved_stateid_valid;
 
+	/* Make RESTOREFH work right for DS handle */
+	if (data->current_ds != NULL) {
+		data->current_ds = data->saved_ds;
+		data->current_filetype = data->saved_filetype;
+		data->current_ds->ops->get(data->current_ds);
+	}
+
 	if (isFullDebug(COMPONENT_NFS_V4)) {
 		char str[LEN_FH_STR];
 		sprint_fhandle4(str, &data->currentFH);
