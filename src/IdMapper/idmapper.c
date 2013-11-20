@@ -150,7 +150,7 @@ int uid2name(char *name, uid_t * puid, size_t namesize)
           LogCrit(COMPONENT_IDMAPPER,
                    "uid2name: nfs4_uid_to_name %u returned %d (%s)",
                    *puid, -rc, strerror(-rc));
-          return 0;
+          goto v3compat;
         }
 
       strmaxcpy(fqname, name, sizeof(fqname));
@@ -174,7 +174,17 @@ int uid2name(char *name, uid_t * puid, size_t namesize)
                   fqname, *puid);
           return 0;
         }
+      return 1;
     }
+
+v3compat:
+  /* return the int value as string no leading zeros and with no '@'
+   */ 
+  snprintf(name, NFS4_MAX_DOMAIN_LEN, "%u", *puid);
+  LogFullDebug(COMPONENT_IDMAPPER,
+               "uid2name: v3compat: Converting uid %u to name string %s",
+               *puid, name);
+
   return 1;
 
 #else
@@ -578,7 +588,7 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
           LogInfo(COMPONENT_IDMAPPER,
                    "gid2name: nfs4_gid_to_name %u returned %d (%s)",
                    *pgid, -rc, strerror(-rc));
-          return 0;
+          goto v3compat;
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -592,7 +602,16 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
                   name, *pgid);
           return 0;
         }
+      return 1;
     }
+
+v3compat:
+  /* return the int value as string no leading zeros and with no '@'
+   */ 
+  snprintf(name, NFS4_MAX_DOMAIN_LEN, "%u", *pgid);
+  LogFullDebug(COMPONENT_IDMAPPER,
+               "gid2name: v3compat: Converting gid %u to name string %s",
+               *pgid, name);
 
   return 1;
 
