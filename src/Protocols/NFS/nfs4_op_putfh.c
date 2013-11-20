@@ -66,6 +66,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 {
 	struct fsal_export *export;
 	struct file_handle_v4 *v4_handle;
+	cache_entry_t *file_entry;
 
 	/* Convenience alias for args */
 	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
@@ -94,19 +95,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4->object.nfs_fh4_val,
 	       arg_PUTFH4->object.nfs_fh4_len);
 
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
 	/* If old CurrentFH had a related export, release reference. */
 	if (data->req_ctx->export != NULL)
 		put_gsh_export(data->req_ctx->export);
 
-	/* As usual, protect existing refcounts */
-	if (data->current_entry) {
-		cache_inode_put(data->current_entry);
-		data->current_entry = NULL;
-		data->current_filetype = NO_FILE_TYPE;
-	}
+	/* Clear out current entry for now */
+	set_current_entry(data, NULL, false);
 
 	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
@@ -134,11 +128,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			return res_PUTFH4->status;
 	}
 
-	if (data->current_ds)
-		data->current_ds->ops->put(data->current_ds);
-
-	data->current_ds = NULL;
-	data->current_filetype = NO_FILE_TYPE;
 	export = data->req_ctx->export->export.export_hdl;
 
 	/* The export and fsalid should be updated, but DS handles
@@ -150,8 +139,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 
 		fh_desc.addr = v4_handle->fsopaque;
 		fh_desc.len = v4_handle->fs_len;
-		data->current_entry = NULL;
+
+		/* Leave the current_entry as NULL, but indicate a
+		 * regular file.
+		 */
 		data->current_filetype = REGULAR_FILE;
+
 		res_PUTFH4->status =
 		    export->ops->create_ds_handle(export,
 						  &fh_desc,
@@ -182,7 +175,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			cache_status =
 			    cache_inode_get(&fsal_data,
 					    data->req_ctx,
-					    &data->current_entry);
+					    &file_entry);
 		}
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -190,8 +183,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			return res_PUTFH4->status;
 		}
 
-		/* Extract the filetype */
-		data->current_filetype = data->current_entry->type;
+		/* Set the current entry using the ref from get */
+		set_current_entry(data, file_entry, false);
 
 		LogFullDebug(COMPONENT_FILEHANDLE,
 			     "File handle is of type %s(%d)",

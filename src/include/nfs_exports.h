@@ -51,6 +51,7 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_ip_stats.h"
 #include "nlm_list.h"
 
@@ -364,6 +365,38 @@ typedef struct compound_data {
 	slotid4 slot;		/*< Slot ID of the current compound (if
 				   applicable) */
 } compound_data_t;
+
+static inline void set_current_entry(compound_data_t *data,
+				     cache_entry_t *entry,
+				     bool need_ref)
+{
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
+
+	/* Release the reference to the old entry */
+	if (data->current_entry)
+		cache_inode_put(data->current_entry);
+
+	/* Clear out the current_ds */
+	if (data->current_ds) {
+		data->current_ds->ops->put(data->current_ds);
+		data->current_ds = NULL;
+	}
+
+	data->current_entry = entry;
+
+	if (entry == NULL) {
+		data->current_filetype = NO_FILE_TYPE;
+		return;
+	}
+
+	/* Set the current file type */
+	data->current_filetype = entry->type;
+
+	/* Take reference for the entry. */
+	if (data->current_entry && need_ref)
+		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
+}
 
 /* Export list related functions */
 sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);

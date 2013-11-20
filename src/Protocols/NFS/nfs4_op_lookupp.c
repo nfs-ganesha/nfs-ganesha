@@ -107,11 +107,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			return res_LOOKUPP4->status;
 		}
 
-		/* Release the current entry */
-		data->current_entry = NULL;
-		data->current_filetype = NO_FILE_TYPE;
-		cache_inode_put(dir_entry);
-
 		/* Remember the dir_entry representing the junction and
 		 * set it as the current entry with a reference for proper
 		 * cleanup if there is an error.
@@ -121,9 +116,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 * itself.
 		 */
 		dir_entry = data->export->exp_junction_inode;
-		data->current_entry = dir_entry;
-		data->current_filetype = dir_entry->type;
-		cache_inode_lru_ref(dir_entry, LRU_REQ_INITIAL);
+		set_current_entry(data, dir_entry, true);
 
 		/* Release any old export reference */
 		if (data->req_ctx->export != NULL)
@@ -166,12 +159,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			return res_LOOKUPP4->status;
 		}
 
-		/* Mark current_stateid as invalid */
-		data->current_stateid_valid = false;
-
 		/* Keep the pointer within the compound data */
-		data->current_entry = file_entry;
-		data->current_filetype = file_entry->type;
+		set_current_entry(data, file_entry, true);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;
@@ -179,16 +168,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Unable to look up parent for some reason.
 		 * Return error.
 		 */
-		data->current_entry = NULL;
-		data->current_filetype = NO_FILE_TYPE;
+		set_current_entry(data, NULL, false);
 		res_LOOKUPP4->status = nfs4_Errno(cache_status);
 	}
-
-	/* Release dir_pentry, as it is not reachable from anywhere in
-	 * compound after this function returns.  Count on later
-	 * operations or nfs4_Compound to clean up current_entry.
-	 */
-	cache_inode_put(dir_entry);
 
 	return res_LOOKUPP4->status;
 }				/* nfs4_op_lookupp */

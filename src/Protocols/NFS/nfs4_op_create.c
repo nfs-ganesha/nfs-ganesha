@@ -443,16 +443,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 
 	/* Keep the vnode entry for the file in the compound data */
-
-	if (data->current_entry)
-		cache_inode_put(data->current_entry);
-
-	if (data->current_ds)
-		data->current_ds->ops->put(data->current_ds);
-
-	data->current_ds = NULL;
-	data->current_entry = entry_new;
-	data->current_filetype = entry_new->type;
+	set_current_entry(data, entry_new, true);
 
 	/* If you reach this point, then no error occured */
 	res_CREATE4->status = NFS4_OK;

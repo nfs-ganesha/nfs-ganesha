@@ -340,11 +340,8 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	       newfh4.nfs_fh4_val,
 	       newfh4.nfs_fh4_len);
 
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	data->current_entry = entry;
-	data->current_filetype = entry->type;
+	/* Update the current entry */
+	set_current_entry(data, entry, true);
 
 	return NFS4_OK;
 }
@@ -1096,8 +1093,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				/* Decrement the current entry here, because
 				 * nfs4_create_fh replaces the current fh.
 				 */
-				cache_inode_put(data->current_entry);
-				data->current_entry = NULL;
+				set_current_entry(data, NULL, false);
 				res_OPEN4->status =
 				    open4_create_fh(data, entry);
 			}

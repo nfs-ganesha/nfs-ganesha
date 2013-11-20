@@ -201,20 +201,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	/* Release dir_entry, as it is not reachable from anywhere in
-	 * compound after this function returns.  Count on later
-	 * operations or nfs4_Compound to clean up current_entry.
-	 */
-
-	if (dir_entry)
-		cache_inode_put(dir_entry);
-
 	/* Keep the pointer within the compound data */
-	data->current_entry = file_entry;
-	data->current_filetype = file_entry->type;
+	set_current_entry(data, file_entry, false);
 	file_entry = NULL;
 
 	/* Return successfully */

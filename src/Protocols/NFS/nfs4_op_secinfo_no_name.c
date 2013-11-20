@@ -172,13 +172,9 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 		cache_inode_put(entry_src);
 
 	/* Need to clear out CurrentFH */
-	if (data->current_entry) {
-		cache_inode_put(data->current_entry);
-		data->current_entry = NULL;
-	}
+	set_current_entry(data, NULL, false);
 
 	data->currentFH.nfs_fh4_len = 0;
-	data->current_filetype = NO_FILE_TYPE;
 
 	/* Release CurrentFH reference to export. */
 	if (data->req_ctx->export) {

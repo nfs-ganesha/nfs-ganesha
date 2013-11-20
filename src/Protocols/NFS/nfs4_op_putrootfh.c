@@ -57,6 +57,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
 	cache_inode_status_t cache_status;
+	cache_entry_t *file_entry;
 
 	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
@@ -72,16 +73,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->req_ctx->export = NULL;
 
-	/* Release data->current_entry */
-	if (data->current_entry)
-		cache_inode_put(data->current_entry);
-
-	data->current_entry = NULL;
-
-	if (data->current_ds)
-		data->current_ds->ops->put(data->current_ds);
-
-	data->current_ds = NULL;
+	/* Clear out current entry for now */
+	set_current_entry(data, NULL, false);
 
 	/* Get the root export of the Pseudo FS */
 	data->req_ctx->export = get_gsh_export_by_pseudo("/", true);
@@ -115,7 +108,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Get the Pesudo Root inode of the mounted on export */
 	cache_status = nfs_export_get_root_entry(&data->req_ctx->export->export,
-						 &data->current_entry);
+						 &file_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_NFS_V4_PSEUDO,
@@ -128,7 +121,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
 		     "Root node %p", data->current_entry);
 
-	data->current_filetype = data->current_entry->type;
+	/* Set the current entry using the ref from get */
+	set_current_entry(data, file_entry, false);
 
 	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL) {
@@ -146,9 +140,6 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;
 		return res_PUTROOTFH4->status;
 	}
-
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
 
 	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 

@@ -101,10 +101,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-	/* Restore the saved stateid */
-	data->current_stateid = data->saved_stateid;
-	data->current_stateid_valid = data->saved_stateid_valid;
-
 	if (data->req_ctx->export != NULL)
 		put_gsh_export(data->req_ctx->export);
 
@@ -126,33 +122,12 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	 * credential checking may be skipped.
 	 */
 
-	/* If current and saved entry are identical, get no references and
-	 * make no changes.
-	 */
-	if (data->current_entry == data->saved_entry)
-		goto out;
+	/* Update the current entry */
+	set_current_entry(data, data->saved_entry, true);
 
-	if (data->current_entry) {
-		cache_inode_put(data->current_entry);
-		data->current_entry = NULL;
-	}
-
-	if (data->current_ds) {
-		data->current_ds->ops->put(data->current_ds);
-		data->current_ds = NULL;
-	}
-
-	data->current_entry = data->saved_entry;
-	data->current_filetype = data->saved_filetype;
-
-	/* Take another reference.  As of now the filehandle is both saved
-	 * and current and both must be counted.  Protect in case of
-	 * pseudofs handle.
-	 */
-	if (data->current_entry)
-		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
-
- out:
+	/* Restore the saved stateid */
+	data->current_stateid = data->saved_stateid;
+	data->current_stateid_valid = data->saved_stateid_valid;
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {
 		char str[LEN_FH_STR];
