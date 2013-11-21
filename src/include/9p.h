@@ -200,7 +200,7 @@ enum _9p_msg_t {
 };
 
 /**
- * This constant is used to use system.posix_acl_access pseudo xattr 
+ * This constant is used to use system.posix_acl_access pseudo xattr
  */
 #define ACL_ACCESS_XATTR_ID 0xFFFFFFFF
 

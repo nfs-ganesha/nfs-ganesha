@@ -178,7 +178,9 @@ void *_9p_rdma_thread(void *Arg)
 	       sizeof(p_9p_conn->addrpeer));
 
 	/* Init the fids pointers array */
-	memset(&p_9p_conn->fids, 0, _9P_FID_PER_CONN * sizeof(struct _9p_fid *));
+	memset(&p_9p_conn->fids,
+	       0,
+	       _9P_FID_PER_CONN * sizeof(struct _9p_fid *));
 
 	/* Set initial msize.
 	 * Client may request a lower value during TVERSION */

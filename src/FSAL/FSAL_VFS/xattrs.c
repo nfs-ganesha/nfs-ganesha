@@ -587,17 +587,17 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 	int fd = -1;
 	fsal_errors_t fe;
 	int rc = 0;
-/* 	int flags = 0; */
+/*	int flags = 0; */
 
 	obj_handle =
 	    container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	/* /!\ ACL HOOK. If name is "system.posix_acl_access",
 	 *  flags must remain unset */
-/* 	if (strncmp(xattr_name, "system.posix_acl_access", MAXNAMLEN)) */
-/* 		flags = create ? XATTR_CREATE : XATTR_REPLACE; */
-/* 	else */
-/* 		flags = 0; */
+/*	if (strncmp(xattr_name, "system.posix_acl_access", MAXNAMLEN)) */
+/*		flags = create ? XATTR_CREATE : XATTR_REPLACE; */
+/*	else */
+/*		flags = 0; */
 
 	fd = (obj_hdl->type == DIRECTORY) ? vfs_fsal_open(obj_handle,
 							  O_DIRECTORY,
