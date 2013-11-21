@@ -347,6 +347,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 		nentry->object.dir.avl.collisions = 0;
 		nentry->object.dir.nbactive = 0;
+		glist_init(&nentry->object.dir.export_roots);
 		/* init avl tree */
 		cache_inode_avl_init(nentry);
 		break;

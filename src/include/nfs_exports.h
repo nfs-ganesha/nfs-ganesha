@@ -160,6 +160,8 @@ typedef struct exportlist {
 						   this list if NLM,
 						   otherwise state list is
 						   sufficient */
+	struct glist_head exp_root_list;	/*< List of exports rooted
+						    on the same inode */
 	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
 						 */
 	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this

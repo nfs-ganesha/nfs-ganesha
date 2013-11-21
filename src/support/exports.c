@@ -3501,6 +3501,10 @@ cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
 		 * exports are no longer referencing this entry as a root.
 		 */
 		export->exp_root_cache_inode = entry;
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		glist_add_tail(&entry->object.dir.export_roots,
+			       &export->exp_root_list);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		LogInfo(COMPONENT_INIT,
 			"Added root entry for path %s on export_id=%d",
 			export->fullpath, export->id);

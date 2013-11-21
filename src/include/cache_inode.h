@@ -382,6 +382,9 @@ struct cache_entry_t {
 			/** If this is a junction, the export this node points
 			    to. Protected by the attr_lock. */
 			struct gsh_export *junction_export;
+			/** List of exports that have this cache inode
+			    as their root. Protected by the attr_lock. */
+			struct glist_head export_roots;
 		} dir;		/*< DIRECTORY data */
 	} object;
 };
