@@ -1361,7 +1361,7 @@ bool fridgethr_you_should_break(struct fridgethr_context *ctx)
  * @retval Other codes from thread creation.
  */
 
-int frigethr_populate(struct fridgethr *fr,
+int fridgethr_populate(struct fridgethr *fr,
 		      void (*func) (struct fridgethr_context *), void *arg)
 {
 	int threads_to_run;

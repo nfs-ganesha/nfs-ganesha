@@ -84,14 +84,11 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 		if (priv->pconn)
 			_9p_cleanup_fids(priv->pconn);
 
-		if (priv->datalock) {
-			if (priv->datalock->data && priv->datalock->data->mr)
-				msk_dereg_mr(priv->datalock->data->mr);
-			gsh_free(priv->datalock);
-		}
-
-		if (priv->rdata)
+		if (priv->rdata) {
+			if (priv->rdata->mr)
+				msk_dereg_mr(priv->rdata->mr);
 			gsh_free(priv->rdata);
+		}
 
 		if (priv->rdmabuf)
 			gsh_free(priv->rdmabuf);
@@ -140,7 +137,6 @@ void *_9p_rdma_thread(void *Arg)
 	uint8_t *rdmabuf = NULL;
 	struct ibv_mr *mr = NULL;
 	msk_data_t *rdata = NULL;
-	struct _9p_datalock *datalock = NULL;
 	unsigned int i = 0;
 	int rc = 0;
 	struct _9p_outqueue *outqueue = trans->private_data;
@@ -222,32 +218,20 @@ void *_9p_rdma_thread(void *Arg)
 	memset(rdata, 0, (_9P_RDMA_BUFF_NUM * sizeof(*rdata)));
 	priv->rdata = rdata;
 
-	datalock = gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*datalock));
-	if (datalock == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc datalock");
-		goto error;
-	}
-	memset(datalock, 0, (_9P_RDMA_BUFF_NUM * sizeof(*datalock)));
-	priv->datalock = datalock;
-
 	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
 		rdata[i].data = rdmabuf +
 				i * nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].mr = mr;
-		datalock[i].data = &rdata[i];
-		datalock[i].out = NULL;
-		pthread_mutex_init(&datalock[i].lock, NULL);
 	}
 
 	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
 		rc = msk_post_recv(trans, &rdata[i], _9p_rdma_callback_recv,
 				   _9p_rdma_callback_recv_err,
-				   &(datalock[i]));
+				   NULL);
 		if (rc != 0) {
 			LogEvent(COMPONENT_9P,
-				 "9P/RDMA: trans handler could recv first byte of datalock[%u], rc=%u",
+				 "9P/RDMA: trans handler could post_recv first byte of data[%u], rc=%u",
 				 i, rc);
 			goto error;
 		}
@@ -323,6 +307,8 @@ static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 		wdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
 		if (i != _9P_RDMA_OUT - 1)
 			wdata[i].next = &wdata[i+1];
+		else
+			wdata[i].next = NULL;
 	}
 	*pwdata = wdata;
 
