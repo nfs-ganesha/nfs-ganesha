@@ -321,7 +321,6 @@ void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 
 		/* No alternate groups for "nobody" */
 		user_credentials->caller_glen = 0;
-		user_credentials->caller_garray = NULL;
 	} else if ((user_credentials->caller_gid == 0)
 		   && !(export_perms->options & EXPORT_OPTION_ROOT)) {
 		LogFullDebug(COMPONENT_DISPATCH,
