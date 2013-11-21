@@ -341,12 +341,15 @@ if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
 find_package(Krb5 REQUIRED gssapi)
+check_include_files(gssapi.h HAVE_GSSAPI_H)
 
-if(KRB5_FOUND)
+if(KRB5_FOUND AND HAVE_GSSAPI_H)
   set(HAVE_KRB5 ON)
   set(KRB5_VERSION 194)  # hand code until we do krb5-config --version magic
   set(_HAVE_GSSAPI ON)
-endif(KRB5_FOUND)
+else(KRB5_FOUND AND HAVE_GSSAPI_H)
+  message(ERROR "Cannot find kerberos or GSS libraries")
+endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 
 # Validate fsal dependencies
 
