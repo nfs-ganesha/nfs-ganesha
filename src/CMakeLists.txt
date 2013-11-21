@@ -96,27 +96,21 @@ ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
 # Using git related information, build PACKNAME
-IF(DISTNAME_HAS_GIT_DATA)
-	set( PACKNAME "_git${_GIT_HEAD_COMMIT}_desc_${_GIT_DESCRIBE}" )
-ELSE(DISTNAME_HAS_GIT_DATA)
-	set( PACKNAME "" ) 
-ENDIF(DISTNAME_HAS_GIT_DATA)
+set( PACKNAME "${GANESHA_VERSION}" ) 
 
 # Define CPACK component (to deal with sub packages)
 set(CPACK_COMPONENTS_ALL daemon fsal headers )
 set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
-set(CPACK_COMPONENT_FSAL_DISPLAY_NAME "FSAL Libraries")
-set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
 
 # Include custom config and cpack module
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
-include(${CMAKE_SOURCE_DIR}/cmake/rpmtools_config.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/modules/UseRPMTools.cmake)
-IF(RPMTools_FOUND)
-     RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME})
-ENDIF(RPMTools_FOUND)
+# Now create a useable specfile²
+configure_file(
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
+)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -863,25 +857,6 @@ configure_file(
 
 ########### add a "make dist"  ###############
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-
-########### add a "make srpm" and a "make rpm" ###############
-IF( RPMTools_RPMBUILD_FOUND ) 
-  IF( DISTNAME_HAS_GIT_DATA )
-    add_custom_target(rpm COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm )
-    add_custom_target(srpm COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm)
-  ELSE( DISTNAME_HAS_GIT_DATA )
-    # I need DISTNAME_HAS_GIT_DATA set to ON to carry git data, so I set it, build rpm and set the option back to OFF
-    add_custom_target(rpm COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
-  			  COMMAND ${CMAKE_MAKE_PROGRAM}  ${PROJECT_NAME}_rpm 
-			  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF  ${CMAKE_SOURCE_DIR} )
-
-    add_custom_target(srpm  COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=ON  ${CMAKE_SOURCE_DIR} 
-                            COMMAND ${CMAKE_MAKE_PROGRAM} ${PROJECT_NAME}_srpm
-			    COMMAND ${CMAKE_COMMAND} -DDISTNAME_HAS_GIT_DATA=OFF ${CMAKE_SOURCE_DIR}  )
-  ENDIF( DISTNAME_HAS_GIT_DATA )
-ELSE( RPMTools_RPMBUILD_FOUND ) 
-	message( WARNING "no rpmbuild executable found. Makefiles will not have the rpm and srpm targets" )
-ENDIF( RPMTools_RPMBUILD_FOUND ) 
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
