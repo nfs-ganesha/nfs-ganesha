@@ -2564,9 +2564,6 @@ void free_export_resources(exportlist_t *export)
 	fsal_status_t fsal_status;
 
 	FreeClientList(&export->clients);
-	if (export->exp_root_cache_inode)
-		cache_inode_put(export->exp_root_cache_inode);
-	export->exp_root_cache_inode = NULL;
 	if (export->export_hdl != NULL) {
 		if (export->export_hdl->ops->put(export->export_hdl) == 0) {
 			fsal_status =
@@ -2657,20 +2654,13 @@ int ReadExports(config_file_t in_config)
 
 /**
  * @brief pkginit callback to initialize exports from nfs_init
+ *
+ * Assumes being called with the export_by_id.lock held.
  */
 
-static bool init_export(struct gsh_export *cl, void *state)
+static bool init_export_cb(struct gsh_export *exp, void *state)
 {
-	cache_inode_status_t status;
-	cache_entry_t *entry;
-
-	status = nfs_export_get_root_entry(&cl->export, &entry);
-	cache_inode_put(entry);
-
-	if (status != CACHE_INODE_SUCCESS || entry == NULL)
-		return false;
-	else
-		return true;
+	return init_export_root(exp);
 }
 
 /**
@@ -2679,7 +2669,129 @@ static bool init_export(struct gsh_export *cl, void *state)
 
 void exports_pkginit(void)
 {
-	foreach_gsh_export(init_export, NULL);
+	foreach_gsh_export(init_export_cb, NULL);
+}
+
+/**
+ * @brief Lookup and associate a cache inode entry with the root of the export
+ *
+ * Fetch the cache entry of the export's root.
+ *
+ * Must be called with either the caller holding a reference to the export.
+ *
+ * Returns with an additional reference to the cache inode held for use by the
+ * caller.
+ *
+ * @param export [IN] the aforementioned export
+ * @param entryp [IN/OUT] call by ref pointer to store cache entry
+ *
+ * @return status cache inode status code
+ */
+
+cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
+					       cache_entry_t **entry)
+{
+	exportlist_t *export = &exp->export;
+	cache_inode_status_t status = CACHE_INODE_FSAL_ESTALE;
+
+	pthread_mutex_lock(&exp->lock);
+
+	*entry = export->exp_root_cache_inode;
+
+	if (*entry != NULL) {
+		cache_inode_lru_ref(*entry,
+				    LRU_REQ_INITIAL);
+		status = CACHE_INODE_SUCCESS;
+	}
+
+	pthread_mutex_unlock(&exp->lock);
+
+	return status;
+}
+
+/**
+ * @brief Initialize the root cache inode for an export.
+ *
+ * Assumes being called with the export_by_id.lock held.
+ *
+ * @param exp [IN] the export
+ *
+ * @return true if successful.
+ */
+
+bool init_export_root(struct gsh_export *exp)
+{
+	exportlist_t *export = &exp->export;
+	fsal_status_t fsal_status;
+	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *root_handle;
+	cache_entry_t *entry = NULL;
+
+	/* Lookup for the FSAL Path */
+	fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
+							   NULL,
+							   export->fullpath,
+							   &root_handle);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogCrit(COMPONENT_INIT,
+			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
+			export->id, export->fullpath,
+			msg_fsal_err(fsal_status.major), fsal_status.minor);
+		return false;
+	}
+
+	/* Add this entry to the Cache Inode as a "root" entry */
+
+	/* Get the cache inode entry (and an LRU reference */
+	cache_status =
+	    cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE, &entry);
+
+	if (entry == NULL) {
+		LogCrit(COMPONENT_INIT,
+			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
+			export->fullpath,
+			export->id,
+			cache_inode_err_str(cache_status));
+		return false;
+	}
+
+	/* Instead of an LRU reference, we must hold a pin reference */
+	cache_status = cache_inode_inc_pin_ref(entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
+			export->fullpath,
+			export->id,
+			cache_inode_err_str(cache_status));
+
+		/* Release the LRU reference and return failure. */
+		cache_inode_put(entry);
+		return false;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	pthread_mutex_lock(&exp->lock);
+
+	export->exp_root_cache_inode = entry;
+
+	glist_add_tail(&entry->object.dir.export_roots,
+		       &export->exp_root_list);
+
+	/* Protect this entry from removal (unlink) */
+	atomic_inc_int32_t(&entry->exp_root_refcount);
+
+	pthread_mutex_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	LogInfo(COMPONENT_INIT,
+		"Added root entry for path %s on export_id=%d",
+		export->fullpath, export->id);
+
+	/* Release the LRU reference and return success. */
+	cache_inode_put(entry);
+	return true;
 }
 
 /**
@@ -3436,88 +3548,3 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 
 	return;
 }				/* nfs_export_check_access */
-
-/**
- * @brief Lookup and associate a cache inode entry with the root of the export
- *
- * Fetch the cache entry of the export's root.  If not there yet, look it up
- * which takes references.  This is fine for attaching it to an export but
- * other uses (psesudofs) should take their own references while holding it.
- *
- * Must be called with either the caller holding a reference to the export OR
- * the caller is holding the export_by_id.lock (which would prevent the last
- * reference to the export from going away).
- *
- * Returns with an additional reference to the cache inode held for use by the
- * caller.
- *
- * @param export [IN] the aforementioned export
- * @param entryp [IN/OUT] call by ref pointer to store cache entry
- *
- * @return status cache inode status code
- */
-
-cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
-					       cache_entry_t **entryp)
-{
-	fsal_status_t fsal_status;
-	cache_inode_status_t cache_status;
-	struct fsal_obj_handle *root_handle;
-	cache_entry_t *entry = NULL;
-
-	if (export->exp_root_cache_inode != NULL) {
-		*entryp = export->exp_root_cache_inode;
-		cache_inode_lru_ref(export->exp_root_cache_inode,
-				    LRU_REQ_INITIAL);
-		return CACHE_INODE_SUCCESS;
-	}
-	/* Lookup for the FSAL Path */
-	fsal_status =
-	    export->export_hdl->ops->lookup_path(export->export_hdl, NULL,
-						 export->fullpath,
-						 &root_handle);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_INIT,
-			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
-			export->id, export->fullpath,
-			msg_fsal_err(fsal_status.major), fsal_status.minor);
-		return cache_inode_error_convert(fsal_status);
-	}
-	/* Add this entry to the Cache Inode as a "root" entry */
-
-	cache_status =
-	    cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE, &entry);
-
-	if (entry != NULL) {
-		/* cache_inode_get returns a cache_entry with
-		 * reference count of 2, where 1 is the sentinel value of
-		 * a cache entry in the hash table.  The export list in
-		 * this case owns the extra reference.  In the future
-		 * if functionality is added to dynamically add and remove
-		 * export entries, then the function to remove an export
-		 * entry MUST put the extra reference.
-		 *
-		 * Also refcount the entry to prevent removal unless all
-		 * exports are no longer referencing this entry as a root.
-		 */
-		export->exp_root_cache_inode = entry;
-		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-		glist_add_tail(&entry->object.dir.export_roots,
-			       &export->exp_root_list);
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		LogInfo(COMPONENT_INIT,
-			"Added root entry for path %s on export_id=%d",
-			export->fullpath, export->id);
-		*entryp = export->exp_root_cache_inode;
-		atomic_inc_int32_t(&entry->exp_root_refcount);
-		cache_inode_lru_ref(export->exp_root_cache_inode,
-				    LRU_REQ_INITIAL);
-		return CACHE_INODE_SUCCESS;
-	} else {
-		LogCrit(COMPONENT_INIT,
-			"Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
-			export->fullpath, export->id, cache_status);
-		*entryp = NULL;
-	}
-	return cache_status;
-}

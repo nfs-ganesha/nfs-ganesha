@@ -107,7 +107,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Get the Pesudo Root inode of the mounted on export */
-	cache_status = nfs_export_get_root_entry(&data->req_ctx->export->export,
+	cache_status = nfs_export_get_root_entry(data->req_ctx->export,
 						 &file_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {

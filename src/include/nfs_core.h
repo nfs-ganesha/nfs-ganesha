@@ -322,8 +322,6 @@ int nfs_read_version4_conf(config_file_t in_config,
 #ifdef _HAVE_GSSAPI
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
 #endif
-cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
-					       cache_entry_t **entryp);
 
 /* Admin thread control */
 

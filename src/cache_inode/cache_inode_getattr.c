@@ -100,7 +100,7 @@ cache_inode_getattr(cache_entry_t *entry,
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		/* Get the root of the export across the junction. */
-		status = nfs_export_get_root_entry(&junction_export->export,
+		status = nfs_export_get_root_entry(junction_export,
 						   &junction_entry);
 
 		if (status != CACHE_INODE_SUCCESS) {

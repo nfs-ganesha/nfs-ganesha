@@ -269,7 +269,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 		 export->id, export->fullpath, export->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
-	cache_status = nfs_export_get_root_entry(&state.req_ctx->export->export,
+	cache_status = nfs_export_get_root_entry(state.req_ctx->export,
 						 &state.dirent);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
@@ -316,6 +316,27 @@ bool pseudo_mount_export(struct gsh_export *exp,
 		return false;
 	}
 
+	/* Instead of an LRU reference, we must hold a pin reference.
+	 * We hold the LRU reference until we are done here to prevent
+	 * premature cleanup. Once we are done here, if the entry has
+	 * already gone bad, cleanup will happen on our unref and
+	 * and will be correct.
+	 */
+	cache_status = cache_inode_inc_pin_ref(state.dirent);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final pin failed with %s",
+			exp->export.id,
+			exp->export.fullpath,
+			exp->export.pseudopath,
+			cache_inode_err_str(cache_status));
+
+		/* Release the LRU reference and return failure. */
+		cache_inode_put(state.dirent);
+		return false;
+	}
+
 	/* Now that all entries are added to pseudofs tree, and we are pointing
 	 * to the final node, make it a proper junction.
 	 */
@@ -329,10 +350,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
 
-	/* Keep reference on mount point inode (to prevent it from being
-	 * reclaimed and keep the reference to mounted on export (keep that
-	 * reference to manage the references to mounted on exports).
-	 */
+	/* Release the LRU reference and return success. */
+	cache_inode_put(state.dirent);
 
 	return true;
 }

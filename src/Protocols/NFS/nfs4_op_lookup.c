@@ -168,7 +168,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 
-		cache_status = nfs_export_get_root_entry(data->export, &entry);
+		cache_status =
+		    nfs_export_get_root_entry(data->req_ctx->export, &entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_NFS_V4_PSEUDO,

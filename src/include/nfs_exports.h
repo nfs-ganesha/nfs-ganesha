@@ -434,4 +434,9 @@ void LogClientListEntry(log_components_t component,
 void squash_setattr(export_perms_t *export_perms,
 		    struct user_cred *user_credentials, struct attrlist *attr);
 
+bool init_export_root(struct gsh_export *exp);
+
+cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
+					       cache_entry_t **entry);
+
 #endif				/* !NFS_EXPORTS_H */
