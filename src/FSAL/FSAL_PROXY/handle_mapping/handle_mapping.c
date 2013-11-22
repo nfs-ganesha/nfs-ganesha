@@ -12,16 +12,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -39,7 +39,7 @@
 #include "handle_mapping_db.h"
 #include "handle_mapping_internal.h"
 
-static hash_table_t *handle_map_hash = NULL;
+static hash_table_t *handle_map_hash;
 
 /* memory pool definitions */
 
@@ -73,7 +73,7 @@ static digest_pool_entry_t *digest_alloc()
 	return p_new;
 }
 
-static void digest_free(digest_pool_entry_t * p_digest)
+static void digest_free(digest_pool_entry_t *p_digest)
 {
 	memset(p_digest, 0, sizeof(digest_pool_entry_t));
 
@@ -95,7 +95,7 @@ static handle_pool_entry_t *handle_alloc()
 	return p_new;
 }
 
-static void handle_free(handle_pool_entry_t * p_handle)
+static void handle_free(handle_pool_entry_t *p_handle)
 {
 	memset(p_handle, 0, sizeof(handle_pool_entry_t));
 
@@ -106,7 +106,7 @@ static void handle_free(handle_pool_entry_t * p_handle)
 
 /* hash table functions */
 
-static uint32_t hash_digest_idx(hash_parameter_t * p_conf,
+static uint32_t hash_digest_idx(hash_parameter_t *p_conf,
 				struct gsh_buffdesc *p_key)
 {
 	uint32_t hash;
@@ -122,7 +122,7 @@ static uint32_t hash_digest_idx(hash_parameter_t * p_conf,
 
 }
 
-static unsigned long hash_digest_rbt(hash_parameter_t * p_conf,
+static unsigned long hash_digest_rbt(hash_parameter_t *p_conf,
 				     struct gsh_buffdesc *p_key)
 {
 	unsigned long hash;
@@ -169,7 +169,7 @@ static int print_handle(struct gsh_buffdesc *p_val, char *outbuff)
 			  p_handle->fh_len);
 }
 
-int handle_mapping_hash_add(hash_table_t * p_hash, uint64_t object_id,
+int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
 			    unsigned int handle_hash, const void *data,
 			    uint32_t datalen)
 {
@@ -236,7 +236,7 @@ static hash_parameter_t handle_hash_config = {
  * else it creates them.
  * \return 0 if OK, a posix error code else.
  */
-int HandleMap_Init(const handle_map_param_t * p_param)
+int HandleMap_Init(const handle_map_param_t *p_param)
 {
 	int rc;
 
@@ -311,7 +311,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
  * @retval HANDLEMAP_SUCCESS if the handle is available
  * @retval HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
-int HandleMap_GetFH(const nfs23_map_handle_t * nfs23_digest,
+int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 		    struct gsh_buffdesc *fsal_handle)
 {
 
@@ -323,7 +323,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t * nfs23_digest,
 
 	digest.nfs23_digest = *p_in_nfs23_digest;
 
-	buffkey.addr = (caddr_t) & digest;
+	buffkey.addr = (caddr_t) &digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
 	rc = hashtable_getlatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
@@ -349,7 +349,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t * nfs23_digest,
 /**
  * Save the handle association if it was unknown.
  */
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const void *data,
+int HandleMap_SetFH(nfs23_map_handle_t *p_in_nfs23_digest, const void *data,
 		    uint32_t len)
 {
 	int rc;
@@ -377,7 +377,7 @@ int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const void *data,
  * when it was removed from the filesystem
  * or when it is stale.
  */
-int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest)
+int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest)
 {
 	int rc;
 	struct gsh_buffdesc buffkey, stored_buffkey;
@@ -392,15 +392,14 @@ int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest)
 
 	digest.nfs23_digest = *p_in_nfs23_digest;
 
-	buffkey.addr = (caddr_t) & digest;
+	buffkey.addr = (caddr_t) &digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
 	rc = HashTable_Del(handle_map_hash, &buffkey, &stored_buffkey,
 			   &stored_buffval);
 
-	if (rc != HASHTABLE_SUCCESS) {
+	if (rc != HASHTABLE_SUCCESS)
 		return HANDLEMAP_STALE;
-	}
 
 	p_stored_digest = (digest_pool_entry_t *) stored_buffkey.addr;
 	p_stored_handle = (handle_pool_entry_t *) stored_buffval.addr;

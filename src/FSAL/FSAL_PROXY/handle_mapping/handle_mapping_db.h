@@ -35,13 +35,13 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
  * to the hash table.
  * The function blocks until all threads have loaded their data.
  */
-int handlemap_db_reaload_all(hash_table_t * target_hash);
+int handlemap_db_reaload_all(hash_table_t *target_hash);
 
 /**
  * Submit a db 'insert' request.
  * The request is inserted in the appropriate db queue.
  */
-int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
+int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest,
 			const void *data, uint32_t len);
 
 /**
@@ -49,7 +49,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
  * The request is inserted in the appropriate db queue.
  * (always asynchronous)
  */
-int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest);
+int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest);
 
 /**
  * Wait for all queues to be empty

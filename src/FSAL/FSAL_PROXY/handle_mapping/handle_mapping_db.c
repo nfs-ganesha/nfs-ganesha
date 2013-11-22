@@ -11,55 +11,82 @@
 
 /* sqlite check macros */
 
-#define CheckTable( _p_conn_, _code_, _msg_str_, _result_ ) do { \
- if ( (_code_) != SQLITE_OK ) \
-    {                                                                             \
-        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-        LogCrit(COMPONENT_FSAL, "%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
-        if (_msg_str_) { sqlite3_free( _msg_str_); _msg_str_ = NULL; }     \
-        if (_result_) { sqlite3_free_table( _result_ ); _result_ = NULL; } \
-        return HANDLEMAP_DB_ERROR;  \
-    } \
-  } while (0)
+#define CheckTable(_p_conn_, _code_, _msg_str_, _result_) \
+do { \
+	if ((_code_) != SQLITE_OK) { \
+		LogCrit(COMPONENT_FSAL, \
+			"SQLite command failed in %s line %i", \
+			__funct__, __LINE__);		\
+		LogCrit(COMPONENT_FSAL, "%s (%d)", \
+			(_msg_str_ ? _msg_str_ : sqlite3_errmsg(_p_conn_)), \
+			_code_);					\
+		if (_msg_str_) {					\
+			sqlite3_free(_msg_str_);			\
+			_msg_str_ = NULL;				\
+		}							\
+		if (_result_) {						\
+			sqlite3_free_table(_result_);			\
+			_result_ = NULL;				\
+		}							\
+		return HANDLEMAP_DB_ERROR;				\
+	}								\
+} while (0)
 
-#define CheckCommand( _p_conn_, _code_, _msg_str_ ) do { \
-  if ( (_code_) != SQLITE_OK ) \
-    {                                                                             \
-        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-        LogCrit(COMPONENT_FSAL, "%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
-        if (_msg_str_) {sqlite3_free( _msg_str_); _msg_str_ = NULL ; } \
-        return HANDLEMAP_DB_ERROR;  \
-    } \
-  } while (0)
+#define CheckCommand(_p_conn_, _code_, _msg_str_) \
+do { \
+	if ((_code_) != SQLITE_OK) { \
+		LogCrit(COMPONENT_FSAL, \
+			"SQLite command failed in %s line %i", \
+			__funct__, __LINE__);			\
+		LogCrit(COMPONENT_FSAL, "%s (%d)", \
+			(_msg_str_ ? _msg_str_ : sqlite3_errmsg(_p_conn_)), \
+			_code_);					\
+		if (_msg_str_) { \
+			sqlite3_free(_msg_str_); \
+			_msg_str_ = NULL; \
+		} \			  \
+		return HANDLEMAP_DB_ERROR;	\
+	}					\
+} while (0)
 
-#define CheckPrepare( _p_conn_, _code_ ) do { \
-  if ( (_code_) != SQLITE_OK)                        \
-    {                                                                             \
-        LogCrit(COMPONENT_FSAL, "SQLite prepare statement failed in %s line %i", __FUNCTION__, __LINE__); \
-        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-        return HANDLEMAP_DB_ERROR;  \
-    } \
-  } while (0)
+#define CheckPrepare(_p_conn_, _code_) \
+do { \
+	if ((_code_) != SQLITE_OK) {	\
+		LogCrit(COMPONENT_FSAL,					\
+			"SQLite prepare statement failed in %s line %i", \
+			__funct__, __LINE__);				\
+		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
+			sqlite3_errmsg(_p_conn_), _code_);		\
+		return HANDLEMAP_DB_ERROR;				\
+	}								\
+} while (0)
 
-#define CheckBind( _p_conn_, _code_, _stmt_ ) do { \
-  if ( (_code_) != SQLITE_OK)                                                        \
-    {                                                                                \
-        LogCrit(COMPONENT_FSAL, "SQLite parameter binding failed in %s line %i", __FUNCTION__, __LINE__); \
-        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-        sqlite3_clear_bindings( _stmt_ ); \
-        return HANDLEMAP_DB_ERROR;  \
-    }  \
-  } while (0)
+#define CheckBind(_p_conn_, _code_, _stmt_) \
+do { \
+	if ((_code_) != SQLITE_OK) { \
+		LogCrit(COMPONENT_FSAL,				 \
+			"SQLite parameter binding failed in %s line %i", \
+			__funct__, __LINE__);				\
+		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
+			sqlite3_errmsg(_p_conn_), _code_);		\
+		sqlite3_clear_bindings(_stmt_);				\
+		return HANDLEMAP_DB_ERROR;				\
+	}								\
+} while (0)
 
-#define CheckStep( _p_conn_, _code_, _stmt_ ) do { \
-  if ( (_code_) != SQLITE_OK  && (_code_) != SQLITE_ROW && (_code_) != SQLITE_DONE ) \
-    {                                                                                \
-        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-        sqlite3_reset( _stmt_ );    \
-        return HANDLEMAP_DB_ERROR;  \
-    }  \
-  } while (0)
+#define CheckStep(_p_conn_, _code_, _stmt_) \
+do { \
+	if ((_code_) != SQLITE_OK  && (_code_) != \
+	    SQLITE_ROW && (_code_) != SQLITE_DONE) {			\
+		LogCrit(COMPONENT_FSAL,					\
+			"SQLite command failed in %s line %i",		\
+			__funct__, __LINE__);			\
+		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
+			sqlite3_errmsg(_p_conn_), _code_);		\
+		sqlite3_reset(_stmt_);					\
+		return HANDLEMAP_DB_ERROR;				\
+	}								\
+} while (0)
 
 /* Type of DB operations */
 typedef enum {
@@ -129,7 +156,7 @@ typedef struct db_thread_info__ {
 	sqlite3 *db_conn;
 
 	/* prepared statement table */
-	sqlite3_stmt *prep_stmt[STATEMENT_COUNT];
+	sqlite3_stmt * prep_stmt[STATEMENT_COUNT];
 
 	/* this pool is accessed by submitter
 	 * and by the db thread */
@@ -144,13 +171,13 @@ static unsigned int nb_db_threads;
 static int synchronous;
 
 /* used for clean shutdown */
-static int do_terminate = false;
+static int do_terminate;
 
 /* all information and context for threads */
 static db_thread_info_t db_thread[MAX_DB];
 
 /* Initialize basic structures for a thread */
-static int init_db_thread_info(db_thread_info_t * p_thr_info,
+static int init_db_thread_info(db_thread_info_t *p_thr_info,
 			       unsigned int nb_dbop_prealloc)
 {
 	unsigned int i;
@@ -204,7 +231,7 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info,
  *  - schema is created
  *  - prepared statements are ready to be used
  */
-static int init_database_access(db_thread_info_t * p_thr_info)
+static int init_database_access(db_thread_info_t *p_thr_info)
 {
 	char db_file[MAXPATHLEN + 1];
 	int rc;
@@ -289,7 +316,7 @@ static int init_database_access(db_thread_info_t * p_thr_info)
 
 }				/* init_database_access */
 
-static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
+static int db_load_operation(db_thread_info_t *p_info, hash_table_t *p_hash)
 {
 	/* the object id to be inserted to hash table */
 	uint64_t object_id;
@@ -327,7 +354,8 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
 					 "Bogus handle '%s' - wrong number of symbols",
 					 fsal_handle_str);
 			} else {
-				/* convert hexa string representation to binary data */
+				/* convert hexa string representation
+				 * to binary data */
 				if (sscanmem(fh4_data, len / 2, fsal_handle_str)
 				    != len) {
 					LogEvent(COMPONENT_FSAL,
@@ -379,7 +407,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
 
 }				/* db_load_operation */
 
-static int db_insert_operation(db_thread_info_t * p_info,
+static int db_insert_operation(db_thread_info_t *p_info,
 			       struct hdlmap_tuple *data)
 {
 	int rc;
@@ -410,8 +438,8 @@ static int db_insert_operation(db_thread_info_t * p_info,
 
 }				/* db_insert_operation */
 
-static int db_delete_operation(db_thread_info_t * p_info,
-			       nfs23_map_handle_t * p_nfs23_digest)
+static int db_delete_operation(db_thread_info_t *p_info,
+			       nfs23_map_handle_t *p_nfs23_digest)
 {
 	int rc;
 
@@ -434,7 +462,7 @@ static int db_delete_operation(db_thread_info_t * p_info,
 }				/* db_delete_operation */
 
 /* push a task to the queue */
-static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
+static int dbop_push(flusher_queue_t *p_queue, db_op_item_t *p_op)
 {
 	pthread_mutex_lock(&p_queue->queues_mutex);
 
@@ -545,7 +573,8 @@ static void *database_worker_thread(void *arg)
 
 		}
 
-		/* there is something to do : first check the highest priority list,
+		/* there is something to do:
+		 * first check the highest priority list,
 		 * then the lower priority.
 		 */
 
@@ -677,8 +706,7 @@ int handlemap_db_count(const char *dir)
 			end_of_dir = true;
 		}
 
-	}
-	while (!end_of_dir);
+	} while (!end_of_dir);
 
 	closedir(dir_hdl);
 
@@ -686,7 +714,7 @@ int handlemap_db_count(const char *dir)
 
 }				/* handlemap_db_count */
 
-unsigned int select_db_queue(const nfs23_map_handle_t * p_nfs23_digest)
+unsigned int select_db_queue(const nfs23_map_handle_t *p_nfs23_digest)
 {
 	unsigned int h =
 	    ((p_nfs23_digest->object_id * 1049) ^ p_nfs23_digest->handle_hash) %
@@ -727,7 +755,6 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
 	/* initialize structures for each thread and launch it */
 
 	for (i = 0; i < nb_db_threads; i++) {
-      /** @todo ici coller  out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc */
 		rc = init_db_thread_info(&db_thread[i], 100);
 		if (rc)
 			return rc;
@@ -745,7 +772,7 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
 }
 
 /* wait that a thread has done all its jobs */
-static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
+static void wait_thread_jobs_finished(db_thread_info_t *p_thr_info)
 {
 
 	pthread_mutex_lock(&p_thr_info->work_queue.queues_mutex);
@@ -769,7 +796,7 @@ static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
  * to the hash table.
  * The function blocks until all threads have loaded their data.
  */
-int handlemap_db_reaload_all(hash_table_t * target_hash)
+int handlemap_db_reaload_all(hash_table_t *target_hash)
 {
 	unsigned int i;
 	db_op_item_t *new_task;
@@ -799,9 +826,8 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
 
 	/* wait for all threads to finish their job */
 
-	for (i = 0; i < nb_db_threads; i++) {
+	for (i = 0; i < nb_db_threads; i++)
 		wait_thread_jobs_finished(&db_thread[i]);
-	}
 
 	return HANDLEMAP_SUCCESS;
 
@@ -811,7 +837,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
  * Submit a db 'insert' request.
  * The request is inserted in the appropriate db queue.
  */
-int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
+int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest,
 			const void *data, uint32_t len)
 {
 	unsigned int i;
@@ -855,7 +881,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
  * The request is inserted in the appropriate db queue.
  * (always asynchronous)
  */
-int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
+int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest)
 {
 	unsigned int i;
 	db_op_item_t *new_task;
@@ -900,9 +926,8 @@ int handlemap_db_flush()
 	struct timeval tdiff;
 	unsigned int to_sync = 0;
 
-	for (i = 0; i < nb_db_threads; i++) {
+	for (i = 0; i < nb_db_threads; i++)
 		to_sync += db_thread[i].work_queue.nb_waiting;
-	}
 
 	LogEvent(COMPONENT_FSAL,
 		 "Waiting for database synchronization (%u operations pending)",
@@ -912,9 +937,8 @@ int handlemap_db_flush()
 
 	/* wait for all threads to finish their job */
 
-	for (i = 0; i < nb_db_threads; i++) {
+	for (i = 0; i < nb_db_threads; i++)
 		wait_thread_jobs_finished(&db_thread[i]);
-	}
 
 	gettimeofday(&t2, NULL);
 

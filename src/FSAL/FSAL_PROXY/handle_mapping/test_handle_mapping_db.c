@@ -30,9 +30,8 @@ int main(int argc, char **argv)
 	LogTest("handlemap_db_count(%s)=%d", dir, rc);
 
 	if (rc != 0 && count != rc) {
-		LogTest
-		    ("Warning: incompatible thread count %d <> database count %d",
-		     count, rc);
+		LogTest("Warning: incompatible thread count %d <> database count %d",
+			count, rc);
 	}
 
 	rc = handlemap_db_init(dir, "/tmp", count, 1024, false);

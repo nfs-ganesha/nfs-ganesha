@@ -12,16 +12,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-130  USA
+ *
  * ---------------------------------------
  */
 
@@ -81,14 +81,14 @@ typedef struct nfs23_map_handle__ {
 #define HANDLEMAP_HASHTABLE_ERROR 7
 #define HANDLEMAP_EXISTS         8
 
-int HandleMap_Init(const handle_map_param_t * p_param);
+int HandleMap_Init(const handle_map_param_t *p_param);
 
 int HandleMap_GetFH(const nfs23_map_handle_t *, struct gsh_buffdesc *);
 
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest,
+int HandleMap_SetFH(nfs23_map_handle_t *p_in_nfs23_digest,
 		    const void *p_in_handle, uint32_t len);
 
-int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest);
+int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest);
 
 int HandleMap_Flush();
 
