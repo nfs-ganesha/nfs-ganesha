@@ -23,7 +23,7 @@ set(GANESHA_PATCH_LEVEL )
 
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
-set(GANESHA_EXTRA_VERSION -RC5)
+set(GANESHA_EXTRA_VERSION -RC-final)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
 
