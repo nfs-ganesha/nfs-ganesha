@@ -772,9 +772,6 @@ cache_inode_status_t cache_inode_invalidate(cache_entry_t *entry,
 cache_inode_status_t cache_inode_read_conf_parameter(
 	config_file_t in_config, cache_inode_parameter_t *param);
 
-cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry,
-					     bool closefile);
-
 inline int cache_inode_set_time_current(struct timespec *time);
 
 void cache_inode_destroyer(void);

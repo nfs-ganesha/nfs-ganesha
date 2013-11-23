@@ -1191,13 +1191,11 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
  * partition for its lane.  If the entry is not pinned, it is a
  * no-op.
  *
- * @param[in] entry  The entry to be moved
+ * @param[in] entry      The entry to be moved
+ * @param[in] closefile  Indicates if file should be closed
  *
- * @retval CACHE_INODE_SUCCESS if the entry was moved.
  */
-cache_inode_status_t
-cache_inode_dec_pin_ref(cache_entry_t *entry,
-			bool closefile)
+void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 {
 	uint32_t lane = entry->lru.lane;
 	cache_inode_lru_t *lru = &entry->lru;
@@ -1235,8 +1233,6 @@ cache_inode_dec_pin_ref(cache_entry_t *entry,
 
 	/* Also release an LRU reference */
 	atomic_dec_int32_t(&entry->lru.refcnt);
-
-	return CACHE_INODE_SUCCESS;
 }
 
 /**
