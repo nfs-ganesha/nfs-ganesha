@@ -89,7 +89,7 @@ int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
 		if (pfid->opens) {
-			cache_inode_dec_pin_ref(pfid->pentry, FALSE);
+			cache_inode_dec_pin_ref(pfid->pentry, false);
 			pfid->opens = 0;	/* dead */
 
 			/* Under this flag, pin ref is still checked */

@@ -156,7 +156,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		status = STATE_MALLOC_ERROR;
 
 		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -176,7 +176,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			status = STATE_STATE_CONFLICT;
 
 			if (got_pinned)
-				cache_inode_dec_pin_ref(entry, FALSE);
+				cache_inode_dec_pin_ref(entry, false);
 
 			return status;
 		}
@@ -220,7 +220,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		status = STATE_MALLOC_ERROR;
 
 		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -361,7 +361,7 @@ state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
 	LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
 	if (glist_empty(&entry->state_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	return STATE_SUCCESS;
 }

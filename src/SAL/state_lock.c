@@ -1691,7 +1691,7 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
@@ -1773,7 +1773,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
@@ -2041,7 +2041,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -2361,7 +2361,7 @@ state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
 		status = cache_inode_status_to_state_status(cache_status);
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -2399,7 +2399,7 @@ state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -2450,7 +2450,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		status = cache_inode_status_to_state_status(cache_status);
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
 		return status;
@@ -2478,7 +2478,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 			if (found_entry->sle_export != export) {
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-				cache_inode_dec_pin_ref(entry, FALSE);
+				cache_inode_dec_pin_ref(entry, false);
 
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
@@ -2500,7 +2500,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 			/* We have matched all atribute of the existing lock.
 			 * Just return with blocked status. Client may be
@@ -2522,7 +2522,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		    && !different_owners(found_entry->sle_owner, owner)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
@@ -2597,7 +2597,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-				cache_inode_dec_pin_ref(entry, FALSE);
+				cache_inode_dec_pin_ref(entry, false);
 
 				LogEntry("Found existing", found_entry);
 
@@ -2633,7 +2633,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		 */
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_LOCK_CONFLICT;
 		return status;
@@ -2692,7 +2692,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	if (!found_entry) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_MALLOC_ERROR;
 		return status;
@@ -2758,7 +2758,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		pthread_mutex_lock(&blocked_locks_mutex);
 
@@ -2777,7 +2777,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -2828,7 +2828,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	if (glist_empty(&entry->object.file.lock_list)) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		LogDebug(COMPONENT_STATE,
 			 "Unlock success on file with no locks");
 
@@ -2858,7 +2858,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 * list empty even if it failed.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	if (status != STATE_SUCCESS) {
 		/* The unlock has not taken affect (other than canceling any
@@ -2870,7 +2870,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -2909,7 +2909,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)
 	    && lock->lock_start == 0 && lock->lock_length == 0 && empty)
@@ -2962,7 +2962,7 @@ state_status_t state_cancel(cache_entry_t *entry, exportlist_t *export,
 	if (glist_empty(&entry->object.file.lock_list)) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		LogDebug(COMPONENT_STATE,
 			 "Cancel success on file with no locks");
 
@@ -2996,11 +2996,11 @@ state_status_t state_cancel(cache_entry_t *entry, exportlist_t *export,
 	 * the pin ref count pt placed
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -3406,7 +3406,7 @@ void state_lock_wipe(cache_entry_t *entry)
 
 	free_list(&entry->object.file.lock_list);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 }
 
 void cancel_all_nlm_blocked()
