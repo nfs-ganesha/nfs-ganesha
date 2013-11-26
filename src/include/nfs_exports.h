@@ -163,13 +163,20 @@ typedef struct exportlist {
 	struct glist_head exp_root_list;	/*< List of exports rooted
 						    on the same inode */
 	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
+						    Protected by gsh_export lock
 						 */
 	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
-						    export  */
+						    export
+						    Protected by gsh_export lock
+						 */
 	cache_entry_t *exp_junction_inode;	/*< entry for the junction of
-						    this export */
+						    this export
+						    Protected by gsh_export lock
+						 */
 	struct gsh_export *exp_parent_exp;	/*< The export this export
-						    sits on. */
+						    sits on.
+						    Protected by gsh_export lock
+						 */
 	cache_inode_expire_type_t expire_type_attr;
 } exportlist_t;
 

@@ -39,6 +39,7 @@
 #include "fsal_nfsv4_macros.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#include "export_mgr.h"
 
 #define FSAL_PROXY_NFS_V4 4
 
@@ -2201,14 +2202,22 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
 	char fattr_blob[48];	/* 6 values, 8 bytes each */
 	struct fsal_obj_handle *obj;
 	struct pxy_obj_handle *ph;
+	struct gsh_export *exp;
 
 	if (!exp_hdl || !infop || !opctx)
 		return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
+	exp = container_of(exp_hdl->exp_entry, struct gsh_export, export);
+	PTHREAD_RWLOCK_rdlock(&exp->lock);
+	if (exp_hdl->exp_entry->exp_root_cache_inode == NULL) {
+		PTHREAD_RWLOCK_unlock(&exp->lock);
+		return fsalstat(ERR_FSAL_STALE, ESTALE);
+	}
 	obj = exp_hdl->exp_entry->exp_root_cache_inode->obj_handle;
 	ph = container_of(obj, struct pxy_obj_handle, obj);
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+	PTHREAD_RWLOCK_unlock(&exp->lock);
 	atok =
 	    pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
 				   sizeof(fattr_blob));

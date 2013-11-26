@@ -75,6 +75,7 @@ cache_inode_getattr(cache_entry_t *entry,
 	cache_inode_status_t status;
 	struct gsh_export *junction_export;
 	cache_entry_t *junction_entry;
+	uint64_t mounted_on_fileid;
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
@@ -85,23 +86,38 @@ cache_inode_getattr(cache_entry_t *entry,
 		return status;
 	}
 
-	status = cb(opaque,
-		    &entry->obj_handle->attributes,
-		    entry == req_ctx->export->export.exp_root_cache_inode ?
-			req_ctx->export->export.exp_mounted_on_file_id :
-			entry->obj_handle->attributes.fileid);
+	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+
+	if (entry == req_ctx->export->export.exp_root_cache_inode)
+		mounted_on_fileid =
+		    req_ctx->export->export.exp_mounted_on_file_id;
+	else
+		mounted_on_fileid = entry->obj_handle->attributes.fileid;
+
+	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+
+	status = cb(opaque, &entry->obj_handle->attributes, mounted_on_fileid);
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
-		get_gsh_export_ref(entry->object.dir.junction_export);
+		PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+
 		junction_export = entry->object.dir.junction_export;
+
+		if (junction_export != NULL)
+			get_gsh_export_ref(entry->object.dir.junction_export);
+
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		/* Get the root of the export across the junction. */
-		status = nfs_export_get_root_entry(junction_export,
-						   &junction_entry);
+		if (junction_export != NULL)
+			status = nfs_export_get_root_entry(junction_export,
+							   &junction_entry);
+		else
+			status = CACHE_INODE_FSAL_ESTALE;
 
 		if (status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_CACHE_INODE,
@@ -142,26 +158,29 @@ cache_inode_fileid(cache_entry_t *entry,
 		   const struct req_op_context *req_ctx,
 		   uint64_t *fileid)
 {
-	cache_inode_status_t status = 0;
+	cache_inode_status_t status;
 
-	/* Set the return default to CACHE_INODE_SUCCESS */
-	status = CACHE_INODE_SUCCESS;
+	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
 
-	/* Lock (and refresh if necessary) the attributes, copy them
-	   out, and unlock. */
-	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
-	if (status != CACHE_INODE_SUCCESS)
-		goto out;
+	if (entry == req_ctx->export->export.exp_root_cache_inode) {
 
-	*fileid =
-	    (entry ==
-	     req_ctx->export->export.exp_root_cache_inode) ? req_ctx->export->
-	    export.exp_mounted_on_file_id : entry->obj_handle->attributes.
-	    fileid;
+		*fileid = req_ctx->export->export.exp_mounted_on_file_id;
+		status = CACHE_INODE_SUCCESS;
 
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+	} else {
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 
- out:
+		/* Lock (and refresh if necessary) the attributes, copy them
+		   out, and unlock. */
+		status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+
+		if (status == CACHE_INODE_SUCCESS) {
+			*fileid = entry->obj_handle->attributes.fileid;
+
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		}
+	}
 
 	return status;
 }

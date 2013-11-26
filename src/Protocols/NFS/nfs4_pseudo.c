@@ -343,10 +343,14 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	state.dirent->object.dir.junction_export = exp;
 
 	/* And fill in the mounted on information for the export. */
+	PTHREAD_RWLOCK_wrlock(&exp->lock);
+
 	exp->export.exp_mounted_on_file_id =
 	    state.dirent->obj_handle->attributes.fileid;
 	exp->export.exp_junction_inode = state.dirent;
 	exp->export.exp_parent_exp = state.req_ctx->export;
+
+	PTHREAD_RWLOCK_unlock(&exp->lock);
 
 	PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
 
@@ -355,7 +359,6 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	return true;
 }
-
 
 struct root_context {
 	struct req_op_context req_ctx;

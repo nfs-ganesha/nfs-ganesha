@@ -132,12 +132,17 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	}
 
 	/* Check if root cache entry is correctly set */
-	if (export->exp_root_cache_inode == NULL)
+	/** @todo this needs more than just locking... */
+	PTHREAD_RWLOCK_rdlock(&exp->lock);
+	if (export->exp_root_cache_inode == NULL) {
+		PTHREAD_RWLOCK_unlock(&exp->lock);
 		return _9p_rerror(req9p, worker_data, msgtag, err, plenout,
 				  preply);
+	}
 
 	/* get the export information for this fid */
 	pfid->pentry = export->exp_root_cache_inode;
+	PTHREAD_RWLOCK_unlock(&exp->lock);
 
 	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;

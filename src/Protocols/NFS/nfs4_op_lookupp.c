@@ -72,6 +72,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *dir_entry;
 	cache_entry_t *file_entry;
 	cache_inode_status_t cache_status;
+	struct gsh_export *original_export = data->req_ctx->export;
 
 	resp->resop = NFS4_OP_LOOKUPP;
 	res_LOOKUPP4->status = NFS4_OK;
@@ -89,9 +90,15 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	/* If Filehandle points to the root of the current export, then backup
 	 * through junction into the containing export.
 	 */
-	if (data->current_entry->type == DIRECTORY
-	    && data->current_entry ==
-	    data->req_ctx->export->export.exp_root_cache_inode) {
+	if (data->current_entry->type != DIRECTORY)
+		goto not_junction;
+
+	PTHREAD_RWLOCK_rdlock(&original_export->lock);
+
+	if (data->current_entry ==
+	    original_export->export.exp_root_cache_inode) {
+		struct gsh_export *parent_exp;
+
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_NFS_V4_PSEUDO,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
@@ -103,32 +110,67 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			/* lookupp on the root on the pseudofs should return
 			 * NFS4ERR_NOENT (RFC3530, page 166)
 			 */
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}
 
-		/* Remember the dir_entry representing the junction and
-		 * set it as the current entry with a reference for proper
-		 * cleanup if there is an error.
-		 *
-		 * Note that we will actually lookup the junction's
-		 * parent. We NEVER return a handle to the junction inode
-		 * itself.
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
+
+		/* Clear out data->current entry outside lock
+		 * so if it cascades into cleanup, we aren't holding
+		 * an export lock that would cause trouble.
+		 */
+		set_current_entry(data, NULL, false);
+
+		/* We need to protect accessing the parent information
+		 * with the export lock. We use the current export's lock
+		 * which is plenty, the parent can't go away without
+		 * grabbing the current export's lock to clean out the
+		 * parent information.
+		 */
+		PTHREAD_RWLOCK_rdlock(&original_export->lock);
+
+		/* Get the junction inode into dir_entry and parent_exp
+		 * for reference.
 		 */
 		dir_entry = data->export->exp_junction_inode;
+		parent_exp = data->export->exp_parent_exp;
+
+		/* Check if there is a problem with the export. */
+		if (dir_entry == NULL || parent_exp == NULL) {
+			/* Export is in the process of dying */
+			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
+				data->export->id,
+				data->export->fullpath,
+				data->export->exp_parent_exp);
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			res_LOOKUPP4->status = NFS4ERR_STALE;
+			return res_LOOKUPP4->status;
+		}
+
+		/* Set up dir_entry as current entry with an LRU reference
+		 * while still holding the lock.
+		 */
 		set_current_entry(data, dir_entry, true);
 
-		/* Release any old export reference */
-		if (data->req_ctx->export != NULL)
-			put_gsh_export(data->req_ctx->export);
-
 		/* Get a reference to the export and stash it in
-		 * compound data.
+		 * compound data while still holding the lock.
 		 */
-		get_gsh_export_ref(data->export->exp_parent_exp);
+		get_gsh_export_ref(parent_exp);
 
-		data->req_ctx->export = data->export->exp_parent_exp;
+		data->req_ctx->export = parent_exp;
 		data->export = &data->req_ctx->export->export;
+
+		/* Now we are safely transitioned to the parent export and can
+		 * release the lock.
+		 */
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
+
+		/* Release any old export reference */
+		if (original_export != NULL)
+			put_gsh_export(original_export);
 
 		/* Build credentials */
 		res_LOOKUPP4->status = nfs4_MakeCred(data);
@@ -145,7 +187,12 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}
+	} else {
+		/* Release the lock taken above */
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
 	}
+
+not_junction:
 
 	cache_status =
 	    cache_inode_lookupp(dir_entry, data->req_ctx, &file_entry);
