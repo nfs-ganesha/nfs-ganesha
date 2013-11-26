@@ -233,7 +233,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		gsh_free(export_st);	/* somebody beat us to it */
 		exp = avltree_container_of(node, struct gsh_export, node_k);
 	} else {
-		pthread_mutex_init(&exp->lock, NULL);
+		pthread_rwlock_init(&exp->lock, NULL);
 		/* update cache */
 		atomic_store_voidptr(cache_slot, &exp->node_k);
 		glist_add_tail(&exportlist, &exp->export.exp_list);
