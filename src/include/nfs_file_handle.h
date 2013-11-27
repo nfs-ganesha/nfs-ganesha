@@ -164,7 +164,9 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, const struct req_op_context *,
 				   exportlist_t *, nfsstat3 *, int *);
 
-bool nfs4_FSALToFhandle(nfs_fh4 *, const struct fsal_obj_handle *);
+bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
 
 bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 			const struct fsal_obj_handle *fsalhandle,

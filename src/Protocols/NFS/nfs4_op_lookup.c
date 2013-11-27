@@ -197,7 +197,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Convert it to a file handle */
-	if (!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle)) {
+	if (!nfs4_FSALToFhandle(&data->currentFH,
+				file_entry->obj_handle,
+				data->req_ctx->export)) {
 		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}

@@ -319,7 +319,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 
 	if (cb_parms->attr_allowed
 	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
-		if (!nfs4_FSALToFhandle(&entryFH, entry->obj_handle))
+		if (!nfs4_FSALToFhandle(&entryFH,
+					entry->obj_handle,
+					data->req_ctx->export))
 			goto server_fault;
 	}
 

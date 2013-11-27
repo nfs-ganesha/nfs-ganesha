@@ -46,6 +46,7 @@
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_tools.h"
 #include "delayed_exec.h"
+#include "export_mgr.h"
 
 /**
  * @brief Fake root credentials
@@ -895,9 +896,12 @@ state_status_t layoutrecall(struct fsal_export *export,
 							  link);
 		struct state_t *s = g->state;
 		struct layoutrecall_cb_data *cb_data;
+		struct gsh_export *exp;
 		cache_entry_t *entry = s->state_entry;
 		nfs_cb_argop4 *arg;
 		CB_LAYOUTRECALL4args *cb_layoutrec;
+
+		exp = container_of(s->state_export, struct gsh_export, export);
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
 		arg = &cb_data->arg;
@@ -917,8 +921,10 @@ state_status_t layoutrecall(struct fsal_export *export,
 		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
 		    nfs_fh4_val =
 		    gsh_malloc(sizeof(struct alloc_file_handle_v4));
-		nfs4_FSALToFhandle(&cb_layoutrec->clora_recall.layoutrecall4_u.
-				   lor_layout.lor_fh, entry->obj_handle);
+		nfs4_FSALToFhandle(&cb_layoutrec->clora_recall.layoutrecall4_u
+				   .lor_layout.lor_fh,
+				   entry->obj_handle,
+				   exp);
 		update_stateid(s,
 			       &cb_layoutrec->clora_recall.layoutrecall4_u.
 			       lor_layout.lor_stateid, NULL, "LAYOUTRECALL");
@@ -1371,6 +1377,11 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	rpc_call_t *call;
 	nfs_client_id_t *clid = NULL;
 	nfs_cb_argop4 argop[1];
+	struct gsh_export *exp;
+
+	exp = container_of(found_entry->sle_state->state_export,
+			   struct gsh_export,
+			   export);
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
 	if (maxfh == NULL) {
@@ -1420,8 +1431,9 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
 
 	/* Building a new fh */
-	if (!nfs4_FSALToFhandle
-	    (&argop->nfs_cb_argop4_u.opcbrecall.fh, entry->obj_handle)) {
+	if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
+				entry->obj_handle,
+				exp)) {
 		gsh_free(call);
 		return;
 	}

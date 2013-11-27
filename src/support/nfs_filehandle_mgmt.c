@@ -139,7 +139,8 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
  * @return true if successful, false otherwise
  */
 bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
-			const struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp)
 {
 	fsal_status_t fsal_status;
 	file_handle_v4_t *file_handle;
@@ -165,7 +166,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = fsalhandle->export->exp_entry->id;
+	file_handle->exportid = exp->export.id;
 
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);

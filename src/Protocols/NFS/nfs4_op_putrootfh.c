@@ -133,7 +133,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(&data->currentFH,
-				data->current_entry->obj_handle)) {
+				data->current_entry->obj_handle,
+				data->req_ctx->export)) {
 		LogCrit(COMPONENT_NFS_V4_PSEUDO,
 			"Could not get handle for Pseudo Root");
 
