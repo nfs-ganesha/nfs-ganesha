@@ -165,8 +165,14 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, const struct req_op_context *,
 				   exportlist_t *, nfsstat3 *, int *);
 
 bool nfs4_FSALToFhandle(nfs_fh4 *, const struct fsal_obj_handle *);
-bool nfs3_FSALToFhandle(nfs_fh3 *, const struct fsal_obj_handle *);
-bool nfs2_FSALToFhandle(fhandle2 *, const struct fsal_obj_handle *);
+
+bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
+
+bool nfs2_FSALToFhandle(fhandle2 *fh2,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
 
 /* nfs3 validation */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *);

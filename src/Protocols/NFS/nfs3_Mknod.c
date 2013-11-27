@@ -237,7 +237,8 @@ int nfs3_Mknod(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	if (nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
-			       node_entry->obj_handle) == 0) {
+			       node_entry->obj_handle,
+			       req_ctx->export) == 0) {
 		gsh_free(rok->obj.post_op_fh3_u.handle.data.data_val);
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;

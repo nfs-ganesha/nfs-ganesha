@@ -245,7 +245,8 @@ int nfs_Create(nfs_arg_t *arg, exportlist_t *export,
 	/* Set Post Op Fh3 structure */
 	if (!nfs3_FSALToFhandle(
 	     &(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle),
-	     file_entry->obj_handle)) {
+	     file_entry->obj_handle,
+	     req_ctx->export)) {
 		gsh_free(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
 			 handle.data.data_val);
 

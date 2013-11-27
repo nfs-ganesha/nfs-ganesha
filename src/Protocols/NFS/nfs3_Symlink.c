@@ -206,7 +206,8 @@ int nfs_Symlink(nfs_arg_t *arg, exportlist_t *export,
 
 	if (!nfs3_FSALToFhandle(
 	     &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
-	     symlink_entry->obj_handle)) {
+	     symlink_entry->obj_handle,
+	     req_ctx->export)) {
 		gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.
 			 post_op_fh3_u.handle.data.data_val);
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
