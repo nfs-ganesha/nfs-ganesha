@@ -3611,8 +3611,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 	bool rc = false;
 	if (entry && (cache_inode_lock_trust_attrs(entry, ctx, false)
 		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(entry->obj_handle->export->
-					    exp_entry,
+		rc = nfs3_FSALattr_To_Fattr(&ctx->export->export,
 					    &entry->obj_handle->attributes,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);

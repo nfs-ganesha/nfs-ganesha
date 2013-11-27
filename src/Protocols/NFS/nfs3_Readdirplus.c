@@ -43,6 +43,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
@@ -474,8 +475,8 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(cb_parms->entry->obj_handle->export->
-					   exp_entry, attr,
+		    nfs3_FSALattr_To_Fattr(&tracker->req_ctx->export->export,
+					   attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));
 	} else {

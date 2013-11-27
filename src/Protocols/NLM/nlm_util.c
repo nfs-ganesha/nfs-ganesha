@@ -415,7 +415,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
 				       req_ctx,
-				       exp_hdl->exp_entry,
+				       &req_ctx->export->export,
 				       &nfsstat3,
 				       &rc);
 

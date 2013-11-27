@@ -9,6 +9,7 @@
 // ----------------------------------------------------------------------------
 #include "pt_ganesha.h"
 #include "fsal_types.h"
+#include "export_mgr.h"
 //#include "pt_util_cache.h"
 int g_ptfsal_context_flag = 1;	// global context caching
 						 // flag. Allows turning off
@@ -1173,8 +1174,7 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
 	uint64_t max_readahead_offset = UINT64_MAX;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id =
-	    p_file_descriptor->obj_handle.export->exp_entry->id;
+	ccl_context.export_id = opctx->export->export.id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1228,8 +1228,7 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
 	ccl_context_t ccl_context;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id =
-	    p_file_descriptor->obj_handle.export->exp_entry->id;
+	ccl_context.export_id = opctx->export->export.id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1487,7 +1486,7 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 	ccl_context->export_id = myself->pt_export_id;;
 	ccl_context->uid = 0;	//(p_context == NULL?0: p_context->creds->caller_uid);
 	ccl_context->gid = 0;	//(p_context == NULL?0:p_context->creds->caller_gid);
-	ccl_context->export_path = exp_hdl->exp_entry->fullpath;
+	ccl_context->export_path = p_context->export->export.fullpath;
 	memset(ccl_context->client_address, 0,
 	       sizeof(ccl_context->client_address));
 	if (p_context == NULL) {
@@ -1504,10 +1503,11 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 	}
 	FSI_TRACE(FSI_DEBUG,
 		  "Export ID = %u, uid = %u, gid = %u, Export Path = "
-		  "%s, client ip = %s\n", exp_hdl->exp_entry->id,
+		  "%s, client ip = %s\n", p_context->export->export.id,
 		  (p_context == NULL ? 0 : p_context->creds->caller_uid),
 		  (p_context == NULL ? 0 : p_context->creds->caller_gid),
-		  exp_hdl->exp_entry->fullpath, ccl_context->client_address);
+		  p_context->export->export.fullpath,
+		  ccl_context->client_address);
 }
 
 // ----------------------------------------------------------------------------

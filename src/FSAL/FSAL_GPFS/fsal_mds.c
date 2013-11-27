@@ -29,6 +29,7 @@
 #include "gpfs_methods.h"
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
+#include "export_mgr.h"
 
 /**
  * @brief Get layout types supported by export
@@ -319,7 +320,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 	nfs_status =
 	     FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-				     obj_hdl->export->exp_entry->id, 1,
+				     req_ctx->export->export.id, 1,
 				     &ds_desc);
 	if (nfs_status) {
 		LogCrit(COMPONENT_PNFS,
