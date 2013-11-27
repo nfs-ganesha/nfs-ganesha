@@ -647,8 +647,7 @@ void grant_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 void available_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 				   fsal_lock_param_t *lock);
 
-void process_blocked_lock_upcall(state_block_data_t *block_data,
-				 struct req_op_context *req_ctx);
+void process_blocked_lock_upcall(state_block_data_t *block_data);
 
 /******************************************************************************
  *

@@ -179,8 +179,7 @@ void free_grant_arg(state_async_queue_t *arg)
  *
  * This runs in the nlm_asyn_thread context.
  */
-static void nlm4_send_grant_msg(state_async_queue_t *arg,
-				struct req_op_context *req_ctx_ignore)
+static void nlm4_send_grant_msg(state_async_queue_t *arg)
 {
 	int retval;
 	char buffer[1024];

@@ -892,8 +892,7 @@ struct state_cookie_entry_t {
 /**
  * @brief Asynchronous state function
  */
-typedef void (state_async_func_t) (state_async_queue_t *arg,
-				   struct req_op_context *req_ctx);
+typedef void (state_async_func_t) (state_async_queue_t *arg);
 
 /**
  * @brief Data for asynchronous NLM calls

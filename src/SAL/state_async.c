@@ -62,14 +62,8 @@ static struct fridgethr *state_async_fridge;
 static void state_blocked_lock_caller(struct fridgethr_context *ctx)
 {
 	state_block_data_t *block = ctx->arg;
-	struct req_op_context req_ctx;
 
-  /**
-   * @todo this is obviously wrong.  we need to fill in the context
-   * from somewhere!
-   */
-	memset(&req_ctx, 0, sizeof(req_ctx));
-	process_blocked_lock_upcall(block, &req_ctx);
+	process_blocked_lock_upcall(block);
 }
 
 /**
@@ -83,14 +77,8 @@ static void state_blocked_lock_caller(struct fridgethr_context *ctx)
 static void state_async_func_caller(struct fridgethr_context *ctx)
 {
 	state_async_queue_t *entry = ctx->arg;
-	struct req_op_context req_ctx;
 
-  /**
-   * @todo this is obviously wrong.  we need to fill in the context
-   * from somewhere!
-   */
-	memset(&req_ctx, 0, sizeof(req_ctx));
-	entry->state_async_func(entry, &req_ctx);
+	entry->state_async_func(entry);
 }
 
 /**

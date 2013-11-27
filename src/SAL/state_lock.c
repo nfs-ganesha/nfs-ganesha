@@ -1754,8 +1754,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry,
  * @param[in] req_ctx  Request context
  */
 
-void process_blocked_lock_upcall(state_block_data_t *block_data,
-				 struct req_op_context *req_ctx_ignore)
+void process_blocked_lock_upcall(state_block_data_t *block_data)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 	cache_entry_t *entry = lock_entry->sle_entry;
