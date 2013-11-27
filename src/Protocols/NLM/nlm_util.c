@@ -180,7 +180,7 @@ void free_grant_arg(state_async_queue_t *arg)
  * This runs in the nlm_asyn_thread context.
  */
 static void nlm4_send_grant_msg(state_async_queue_t *arg,
-				struct req_op_context *req_ctx)
+				struct req_op_context *req_ctx_ignore)
 {
 	int retval;
 	char buffer[1024];
@@ -188,6 +188,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg,
 	state_cookie_entry_t *cookie_entry;
 	state_nlm_async_data_t *nlm_arg =
 	    &arg->state_async_data.state_nlm_async_data;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
 
 	if (isDebug(COMPONENT_NLM)) {
 		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_grant.
@@ -250,7 +252,15 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg,
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	state_status = state_release_grant(cookie_entry, req_ctx);
+	/* We need a real context. Use root creds. */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = container_of(cookie_entry->sce_lock_entry->sle_export,
+				      struct gsh_export,
+				      export);
+
+	state_status = state_release_grant(cookie_entry, &req_ctx);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Huh? */

@@ -2736,10 +2736,20 @@ bool init_export_root(struct gsh_export *exp)
 	cache_inode_status_t cache_status;
 	struct fsal_obj_handle *root_handle;
 	cache_entry_t *entry = NULL;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+
+	/* Initialize req_ctx.
+	 * Note that a zeroed creds works just fine as root creds.
+	 */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = exp;
 
 	/* Lookup for the FSAL Path */
 	fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
-							   NULL,
+							   &req_ctx,
 							   export->fullpath,
 							   &root_handle);
 

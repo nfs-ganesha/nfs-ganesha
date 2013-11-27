@@ -55,8 +55,10 @@ static int reap_hash_table(hash_table_t *ht_reap)
 	struct user_cred creds;
 
 	/* We need a real context.  Make all reaping done
-	 * by root,root
+	 * by root,root. Export will need to be filled in
+	 * later.
 	 */
+	memset(&req_ctx, 0, sizeof(req_ctx));
 	memset(&creds, 0, sizeof(creds));
 	req_ctx.creds = &creds;
 
@@ -101,11 +103,7 @@ static int reap_hash_table(hash_table_t *ht_reap)
 
 				/* Take cr_mutex and expire clientid */
 				pthread_mutex_lock(&precord->cr_mutex);
-/**
- * @TODO This is incomplete! the context has to be filled in from
- * somewhere
- */
-				memset(&req_ctx, 0, sizeof(req_ctx));
+
 				rc = nfs_client_id_expire(pclientid, &req_ctx);
 
 				pthread_mutex_unlock(&precord->cr_mutex);

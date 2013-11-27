@@ -50,6 +50,7 @@
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
+#include "export_mgr.h"
 
 /* Forward declaration */
 static state_status_t do_lock_op(cache_entry_t *entry,
@@ -1754,10 +1755,20 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry,
  */
 
 void process_blocked_lock_upcall(state_block_data_t *block_data,
-				 struct req_op_context *req_ctx)
+				 struct req_op_context *req_ctx_ignore)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 	cache_entry_t *entry = lock_entry->sle_entry;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = container_of(lock_entry->sle_export,
+				      struct gsh_export,
+				      export);
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
 	 * MUST be at least one lock present for there to be a block_data to
@@ -1767,7 +1778,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data,
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	try_to_grant_lock(lock_entry, req_ctx);
+	try_to_grant_lock(lock_entry, &req_ctx);
 
 	/* In case all locks have wound up free,
 	 * we must release the pin reference.
@@ -3029,6 +3040,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct glist_head newlocks;
 	state_nlm_share_t *found_share;
 	state_status_t status = 0;
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char client[HASHTABLE_DISPLAY_STRLEN];
@@ -3095,6 +3113,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		entry = found_entry->sle_entry;
 		owner = found_entry->sle_owner;
 		export = found_entry->sle_export;
+		opctx.export = container_of(export, struct gsh_export, export);
+		get_gsh_export_ref(opctx.export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3111,9 +3131,11 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this NLM Client on the file */
-		status =
-		    state_unlock(entry, export, req_ctx, owner, state, &lock,
-				 found_entry->sle_type);
+		status = state_unlock(entry, export, &opctx, owner, state,
+				      &lock, found_entry->sle_type);
+
+		put_gsh_export(opctx.export);
+
 		if (status != STATE_SUCCESS) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
@@ -3209,6 +3231,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 	cache_entry_t *entry;
 	int errcnt = 0;
 	state_status_t status = 0;
+	struct gsh_export *saved_export = req_ctx->export;
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -3244,6 +3267,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		 */
 		entry = found_entry->sle_entry;
 		export = found_entry->sle_export;
+		req_ctx->export =
+		    container_of(export, struct gsh_export, export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3284,6 +3309,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		 */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
+
+	req_ctx->export = saved_export;
 	return status;
 }
 
