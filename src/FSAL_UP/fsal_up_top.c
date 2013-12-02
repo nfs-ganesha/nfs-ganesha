@@ -1070,7 +1070,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 				       NFS4ERR_NOMATCHING_LAYOUT) ?
 				      circumstance_client : circumstance_revoke,
 				      state, cb_data->segment, 0, NULL,
-				      &deleted, false);
+				      &deleted, true);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 	}
 	gsh_free(cb_data);
@@ -1109,7 +1109,8 @@ static void return_one_async(void *arg)
 		nfs4_return_one_state(s->state_entry, &return_context,
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
 				      s, cb_data->segment, 0, NULL, &deleted,
-				      false);
+				      true);
+		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
 	}
 	gsh_free(cb_data);
 }
@@ -1182,7 +1183,7 @@ static void layoutrecall_one_call(void *arg)
 						      LAYOUTRETURN4_FILE,
 						      circumstance_revoke, s,
 						      cb_data->segment, 0, NULL,
-						      &deleted, false);
+						      &deleted, true);
 				gsh_free(cb_data);
 			}
 		} else {
