@@ -1993,7 +1993,9 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 }
 
 /* We send all out writes as DATA_SYNC, commit becomes a NO-OP */
-static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
+static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				off_t offset,
 				size_t len)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

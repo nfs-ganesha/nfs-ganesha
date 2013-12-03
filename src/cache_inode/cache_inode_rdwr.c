@@ -171,8 +171,8 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 
 		if (*sync && !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)
 		    && !fsal_sync) {
-			fsal_status =
-			    obj_hdl->ops->commit(obj_hdl, offset, io_size);
+			fsal_status = obj_hdl->ops->commit(obj_hdl, req_ctx,
+							   offset, io_size);
 		} else {
 			*sync = fsal_sync;
 		}

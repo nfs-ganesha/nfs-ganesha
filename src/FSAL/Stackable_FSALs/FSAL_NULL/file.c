@@ -95,9 +95,10 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
-	return next_ops.obj_ops->commit(obj_hdl, offset, len);
+	return next_ops.obj_ops->commit(obj_hdl, opctx, offset, len);
 }
 
 /* nullfs_lock_op

@@ -104,6 +104,7 @@ fsal_status_t pseudofs_write(struct fsal_obj_handle *obj_hdl,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable);
 fsal_status_t pseudofs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    const struct req_op_context *opctx,
 			    off_t offset, size_t len);
 fsal_status_t pseudofs_lock_op(struct fsal_obj_handle *obj_hdl,
 			     const struct req_op_context *opctx, void *p_owner,

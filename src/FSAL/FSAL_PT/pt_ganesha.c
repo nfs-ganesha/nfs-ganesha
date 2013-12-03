@@ -10,6 +10,7 @@
 #include "pt_ganesha.h"
 #include "fsal_types.h"
 #include "export_mgr.h"
+#include "nfs_exports.h"
 //#include "pt_util_cache.h"
 int g_ptfsal_context_flag = 1;	// global context caching
 						 // flag. Allows turning off
@@ -736,7 +737,8 @@ int ptfsal_closedir_fd(const struct req_op_context *p_context,
 }
 
 // -----------------------------------------------------------------------------
-int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor)
+int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
+		 const struct req_op_context *opctx)
 {
 	int handle_index;
 	int fsync_rc;
@@ -749,10 +751,9 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor)
 	}
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id =
-	    p_file_descriptor->obj_handle.export->exp_entry->id;
-	ccl_context.uid = 0;	//opctx->creds->caller_uid;
-	ccl_context.gid = 0;	//opctx->creds->caller_gid;
+	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.uid = opctx->creds->caller_uid;
+	ccl_context.gid = opctx->creds->caller_gid;
 
 	fsync_rc = CCL_FSYNC(&ccl_context, handle_index);
 

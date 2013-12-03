@@ -360,6 +360,7 @@ unsigned int PTFSAL_GetFileno(int pfile)
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle * p_file_descriptor,
+			    const struct req_op_context *opctx,
 			    uint64_t offset, size_t length)
 {
 	int rc, errsv;
@@ -370,7 +371,7 @@ fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle * p_file_descriptor,
 	if (!p_file_descriptor)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	rc = ptfsal_fsync(p_file_descriptor);
+	rc = ptfsal_fsync(p_file_descriptor, opctx);
 
 	if (rc) {
 		errsv = errno;

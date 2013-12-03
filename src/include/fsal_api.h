@@ -275,7 +275,7 @@
  * e.g.  the argument list changed or a method is removed.
  */
 
-#define FSAL_MAJOR_VERSION 1
+#define FSAL_MAJOR_VERSION 2
 
 /**
  * @brief Minor Version
@@ -1703,6 +1703,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*commit) (struct fsal_obj_handle *obj_hdl,  /* sync */
+				 const struct req_op_context *opctx,
 				 off_t offset, size_t len);
 
 /**
