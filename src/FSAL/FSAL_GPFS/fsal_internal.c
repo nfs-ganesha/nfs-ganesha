@@ -1213,11 +1213,15 @@ GPFSFSAL_start_grace(fsal_op_context_t *p_context,      /* IN */
         if (!p_context || grace_period < -1)
                 Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_start_grace);
 
+        grace_period /= 2;
+        if(!grace_period)
+          LogCrit(COMPONENT_FSAL, "Grace period %d too short, changing to 1", grace_period);
+        
         gpa.mountdirfd =
             ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
-        gpa.grace_sec = grace_period;
+        gpa.grace_sec = grace_period ? grace_period : 1;
 
-        LogFullDebug(COMPONENT_FSAL, "mountdirfd = %d, grace_period = %d",
+        LogFullDebug(COMPONENT_FSAL, "mountdirfd = %d, grace period = %d",
                 gpa.mountdirfd, gpa.grace_sec);
 
         rc = gpfs_ganesha(OPENHANDLE_GRACE_PERIOD, &gpa);

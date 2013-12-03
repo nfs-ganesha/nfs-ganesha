@@ -86,7 +86,6 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
         int i, iend;
         nfs_grace_start_t *gsp;
         fsal_op_context_t  context;
-        int                secs = 0;
         int                fsg;
         extern int         get_first_context(fsal_op_context_t *);
 
@@ -119,15 +118,15 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
 
         if (fsg) {
                 /*
-                 * GPFS grace of 0 == Default (ie. 60 Secs)
-                 * NB:  Revisit in 2.0 code (S1050331)
+                 * Put the FS in grace. 
+                 * Let the FSAL decide for how much time it goes in grace, 
+                 * based on the ganesha grace duration.
                  */
-                secs = 0;
-                FSAL_start_grace(&context, secs);
-                LogEvent(COMPONENT_STATE,
-                        "NFS Server Now IN GRACE: ganesha = %d, FSAL = %d",
-                        duration, secs);
+                FSAL_start_grace(&context, duration);
         }
+        LogEvent(COMPONENT_STATE,
+                "NFS Server Now IN GRACE: duration = %d seconds",
+                duration);
 
         grace.g_start = time(NULL);
         grace.g_duration = duration;
