@@ -3166,7 +3166,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
         }
       else
         {
-          if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
+          if(IS_FSAL_ACE_GROUP_ID(*pace))  /* Decode group. */
             {
               utf82gid(&utf8buffer, &(pace->who.gid), anon_gid);
               LogFullDebug(COMPONENT_NFS_V4,
@@ -3184,7 +3184,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
 
       /* Check if we can map a name string to uid or gid. If we can't, do cleanup
        * and bubble up NFS4ERR_BADOWNER. */
-      if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
+      if((IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid) == -1)
         {
           LogFullDebug(COMPONENT_NFS_V4,
                        "SATTR: bad owner");
