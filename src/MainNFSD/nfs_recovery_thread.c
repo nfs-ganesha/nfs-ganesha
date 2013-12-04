@@ -151,7 +151,7 @@ nfs_release_v4_client(char *ip)
 
                                 P(recp->cr_mutex);
 
-                                (void) nfs_client_id_expire(cp);
+                                (void) nfs_client_id_expire(cp, 1);
 
                                 V(recp->cr_mutex);
 

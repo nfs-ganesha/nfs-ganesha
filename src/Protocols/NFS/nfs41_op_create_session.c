@@ -383,7 +383,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
         }
 
       /* Expire clientid and release our reference. */
-      nfs_client_id_expire(pconf);
+      nfs_client_id_expire(pconf, 0);
 
       dec_client_id_ref(pconf);
 

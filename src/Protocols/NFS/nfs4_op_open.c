@@ -352,7 +352,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
        goto out;
     }
   if (nfs_in_grace() && claim == CLAIM_PREVIOUS &&
-     pclientid->cid_allow_reclaim != 1)
+      pclientid->cid_allow_reclaim != 1)
     {
        cause2 = " (client cannot reclaim)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;

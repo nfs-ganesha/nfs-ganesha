@@ -103,6 +103,7 @@ const char * cid_confirm_state_to_str(nfs_clientid_confirm_state_t confirmed)
       case CONFIRMED_CLIENT_ID:       return "CONFIRMED";
       case UNCONFIRMED_CLIENT_ID:     return "UNCONFIRMED";
       case EXPIRED_CLIENT_ID:         return "EXPIRED";
+      case STALE_CLIENT_ID:           return "STALE";
     }
   return "UNKNOWN STATE";
 }
@@ -622,7 +623,7 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
  * @param pclientid [IN]    the client id used to expire
  *
  */
-int nfs_client_id_expire(nfs_client_id_t * pclientid)
+int nfs_client_id_expire(nfs_client_id_t * pclientid, int release)
 {
   struct glist_head    * glist, * glistn;
   struct glist_head    * glist2, * glistn2;
@@ -632,7 +633,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   hash_buffer_t          old_key;
   hash_buffer_t          old_value;
   hash_table_t         * ht_expire;
-  nfs_client_record_t  * precord;
+  nfs_client_record_t  * precord = NULL;
   char                   str[LOG_BUFF_LEN];
   struct display_buffer  dspbuf = {sizeof(str), str, str};
 
@@ -665,37 +666,46 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   else
     ht_expire = ht_unconfirmed_client_id;
 
-  pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
-  /* Need to clean up the client record. */
-  precord = pclientid->cid_client_record;
+  if(release)
+    {
+      pclientid->cid_confirmed = STALE_CLIENT_ID;
+    }
+    else
+    {
+      pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+      /* Need to clean up the client record. */
+      precord = pclientid->cid_client_record;
+    }
 
   V(pclientid->cid_mutex);
 
-  /* Detach the clientid record from the client record */
-  if(precord->cr_pconfirmed_id == pclientid)
-    precord->cr_pconfirmed_id = NULL;
+  if (!release && precord != NULL)
+  {
+    /* Detach the clientid record from the client record */
+    if(precord->cr_pconfirmed_id == pclientid)
+      precord->cr_pconfirmed_id = NULL;
 
-  if(precord->cr_punconfirmed_id == pclientid)
-    precord->cr_punconfirmed_id = NULL;
+    if(precord->cr_punconfirmed_id == pclientid)
+      precord->cr_punconfirmed_id = NULL;
 
-  buffkey.pdata = (caddr_t) &pclientid->cid_clientid;
-  buffkey.len   = sizeof(pclientid->cid_clientid);
+    buffkey.pdata = (caddr_t) &pclientid->cid_clientid;
+    buffkey.len   = sizeof(pclientid->cid_clientid);
 
-  rc = HashTable_Del(ht_expire,
-                     &buffkey,
-                     &old_key,
-                     &old_value);
+    rc = HashTable_Del(ht_expire,
+                       &buffkey,
+                       &old_key,
+                       &old_value);
 
-  if(rc != HASHTABLE_SUCCESS)
-    {
-      LogCrit(COMPONENT_CLIENTID,
-              "Could not remove expired clientid %"PRIx64" error=%s",
-              pclientid->cid_clientid,
-              hash_table_err_to_str(rc));
-      assert(rc == HASHTABLE_SUCCESS);
-    }
-
+    if(rc != HASHTABLE_SUCCESS)
+      {
+        LogCrit(COMPONENT_CLIENTID,
+                "Could not remove expired clientid %"PRIx64" error=%s",
+                pclientid->cid_clientid,
+                hash_table_err_to_str(rc));
+        assert(rc == HASHTABLE_SUCCESS);
+      }
+  }
   /* traverse the client's lock owners, and release all locks */
   glist_for_each_safe(glist, glistn, &pclientid->cid_lockowners)
     {
@@ -824,7 +834,8 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
     }
 
   /* Release the hash table reference to the clientid. */
-  dec_client_id_ref(pclientid);
+  if (!release)
+    dec_client_id_ref(pclientid);
 
   return TRUE;
 }
@@ -838,6 +849,7 @@ int nfs_client_id_get(hash_table_t     * ht,
   int           status;
   uint64_t      epoch_low = ServerEpoch & 0xFFFFFFFF;
   uint64_t      cid_epoch = (uint64_t) (clientid >>  (clientid4) 32);
+  nfs_client_id_t *pclientid;
 
   if(p_pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
@@ -878,8 +890,19 @@ int nfs_client_id_get(hash_table_t     * ht,
         LogFullDebug(COMPONENT_CLIENTID,
                      "%s FOUND", ht->parameter.ht_name);
       *p_pclientid = buffval.pdata;
+      pclientid = *p_pclientid;
 
       status = CLIENT_ID_SUCCESS;
+
+      if(pclientid->cid_confirmed == STALE_CLIENT_ID)
+        {
+          /* Stale client becuse of ip detach and attach to same node */
+          status = CLIENT_ID_STALE;
+          dec_client_id_ref(pclientid);
+          pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+          HashTable_Del(ht, &buffkey, NULL, NULL);
+          dec_client_id_ref(pclientid);
+        }
     }
   else
     {

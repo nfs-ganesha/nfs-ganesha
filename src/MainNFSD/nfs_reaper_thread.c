@@ -109,7 +109,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
               /* Take cr_mutex and expire clientid */
               P(precord->cr_mutex);
 
-              rc = nfs_client_id_expire(pclientid);
+              rc = nfs_client_id_expire(pclientid, 0);
 
               V(precord->cr_mutex);
 

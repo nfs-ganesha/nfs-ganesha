@@ -236,7 +236,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t * pclientid);
 int nfs_client_id_confirm(nfs_client_id_t * pclientid,
                           log_components_t  component);
 
-int nfs_client_id_expire(nfs_client_id_t * pclientid);
+int nfs_client_id_expire(nfs_client_id_t * pclientid, int release);
 
 clientid4 new_clientid(void);
 void new_clientid_verifier(char * pverf);
