@@ -1341,7 +1341,8 @@ static void nfs_release_v4_client(char *ip)
 
 			cp = (nfs_client_id_t *) pdata->val.addr;
 			pthread_mutex_lock(&cp->cid_mutex);
-			if (ip_match(ip, cp)) {
+			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID)
+			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
 				/* Take a reference to the client record */
@@ -1354,7 +1355,7 @@ static void nfs_release_v4_client(char *ip)
 
 				pthread_mutex_lock(&recp->cr_mutex);
 
-				nfs_client_id_expire(cp);
+				nfs_client_id_expire(cp, true);
 
 				pthread_mutex_unlock(&recp->cr_mutex);
 

@@ -611,7 +611,8 @@ extern state_owner_t unknown_owner;
 typedef enum nfs_clientid_confirm_state__ {
 	UNCONFIRMED_CLIENT_ID,
 	CONFIRMED_CLIENT_ID,
-	EXPIRED_CLIENT_ID
+	EXPIRED_CLIENT_ID,
+	STALE_CLIENT_ID
 } nfs_clientid_confirm_state_t;
 
 /**
