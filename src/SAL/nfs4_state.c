@@ -304,10 +304,9 @@ state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
  * @param[in]     state The state to remove
  * @param[in,out] entry The cache entry to modify
  *
- * @return State status.
  */
 
-state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
+void state_del_locked(state_t *state, cache_entry_t *entry)
 {
 	char debug_str[OTHERSIZE * 2 + 1];
 
@@ -316,15 +315,8 @@ state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
 
 	LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
 
-	/* Remove the entry from the HashTable */
-	if (!nfs4_State_Del(state->stateid_other)) {
-		sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
-
-		LogCrit(COMPONENT_STATE, "Could not delete state %s",
-			debug_str);
-
-		return STATE_STATE_ERROR;
-	}
+	/* Remove the entry from the HashTable, which can't fail */
+	nfs4_State_Del(state->stateid_other);
 
 	/* Remove from list of states owned by owner */
 
@@ -362,8 +354,6 @@ state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
 
 	if (glist_empty(&entry->state_list))
 		cache_inode_dec_pin_ref(entry, false);
-
-	return STATE_SUCCESS;
 }
 
 /**
@@ -372,23 +362,18 @@ state_status_t state_del_locked(state_t *state, cache_entry_t *entry)
  * @param[in] state     State to delete
  * @param[in] hold_lock If we already hold the lock
  *
- * @return Status of operation
- *
  */
-state_status_t state_del(state_t *state, bool hold_lock)
+void state_del(state_t *state, bool hold_lock)
 {
 	cache_entry_t *entry = state->state_entry;
-	state_status_t status = 0;
 
 	if (!hold_lock)
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	status = state_del_locked(state, state->state_entry);
+	state_del_locked(state, state->state_entry);
 
 	if (!hold_lock)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-	return status;
 }
 
 /**
@@ -422,7 +407,6 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
  */
 void release_lockstate(state_owner_t *lock_owner)
 {
-	state_status_t state_status;
 	struct glist_head *glist, *glistn;
 
 	glist_for_each_safe(glist, glistn,
@@ -437,12 +421,7 @@ void release_lockstate(state_owner_t *lock_owner)
 		 * state_del */
 		cache_inode_lru_ref(state_found->state_entry, LRU_FLAG_NONE);
 
-		state_status = state_del(state_found, false);
-		if (state_status != STATE_SUCCESS) {
-			LogDebug(COMPONENT_CLIENTID,
-				 "release_lockstate failed to release stateid error %s",
-				 state_err_str(state_status));
-		}
+		state_del(state_found, false);
 
 		/* Release the lru ref to the cache inode we held while
 		 * calling state_del
@@ -486,13 +465,7 @@ void release_openstate(state_owner_t *open_owner)
 			}
 		}
 
-		state_status = state_del_locked(state_found, entry);
-
-		if (state_status != STATE_SUCCESS) {
-			LogDebug(COMPONENT_CLIENTID,
-				 "EXPIRY failed to release stateid error %s",
-				 state_err_str(state_status));
-		}
+		state_del_locked(state_found, entry);
 
 		/* Close the file in FSAL through the cache inode */
 		cache_inode_close(entry, 0);

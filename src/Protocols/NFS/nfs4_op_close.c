@@ -247,14 +247,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 						  state_data.lock.
 						  state_sharelist);
 
-		state_status =
-			state_del_locked(lock_state, data->current_entry);
-
-		if (state_status != STATE_SUCCESS) {
-			LogEvent(COMPONENT_STATE,
-				 "CLOSE failed to release lock stateid "
-				 "error %s", state_err_str(state_status));
-		}
+		state_del_locked(lock_state, data->current_entry);
 	}
 
 	/* File is closed, release the share state */
@@ -271,14 +264,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* File is closed, release the corresponding state */
-	state_status = state_del_locked(state_found,
-					data->current_entry);
-
-	if (state_status != STATE_SUCCESS) {
-		LogEvent(COMPONENT_STATE,
-			 "CLOSE failed to release stateid error %s",
-			 state_err_str(state_status));
-	}
+	state_del_locked(state_found, data->current_entry);
 
 	/* Poison the current stateid */
 	data->current_stateid_valid = false;

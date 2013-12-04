@@ -319,18 +319,19 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data)
  *
  * @param[in] other stateid4.other
  *
- * @retval 1 if ok.
- * @retval 0 if not ok.
+ * This really can't fail.
  */
-int nfs4_State_Del(char other[OTHERSIZE])
+void nfs4_State_Del(char other[OTHERSIZE])
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
+	hash_error_t err;
 
 	buffkey.addr = other;
 	buffkey.len = OTHERSIZE;
 
-	if (HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value) ==
-	    HASHTABLE_SUCCESS) {
+	err = HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value);
+
+	if (err == HASHTABLE_SUCCESS) {
 		/* free the key that was stored in hash table */
 		LogFullDebug(COMPONENT_STATE, "Freeing stateid key %p",
 			     old_key.addr);
@@ -339,10 +340,11 @@ int nfs4_State_Del(char other[OTHERSIZE])
 		/* State is managed in stuff alloc, no free is needed for
 		 * old_value.addr
 		 */
-
-		return 1;
-	} else
-		return 0;
+	} else {
+		LogCrit(COMPONENT_STATE,
+			"Failure to delete state %s",
+			hash_table_err_to_str(err));
+	}
 }
 
 /**

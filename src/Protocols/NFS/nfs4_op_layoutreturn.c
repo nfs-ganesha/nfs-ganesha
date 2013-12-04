@@ -502,7 +502,8 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 				goto out;
 
 			if (arg->dispose) {
-				if (state_delete_segment(g) != STATE_SUCCESS) {
+				state_status = state_delete_segment(g);
+				if (state_status != STATE_SUCCESS) {
 					nfs_status =
 					    nfs4_Errno_state(state_status);
 					goto out;
@@ -525,7 +526,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 		if (glist_empty
 		    (&layout_state->state_data.layout.state_segments)) {
-			state_status = state_del(layout_state, hold_lock);
+			state_del(layout_state, hold_lock);
 			*deleted = true;
 		} else
 			*deleted = false;

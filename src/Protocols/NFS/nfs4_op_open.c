@@ -911,8 +911,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_change = NULL;
 	/* Open flags to be passed to the FSAL */
 	fsal_openflags_t openflags = 0;
-	/* Return code from state oeprations */
-	state_status_t state_status = STATE_SUCCESS;
 	/* The found client record */
 	nfs_client_id_t *clientid = NULL;
 	/* The found or created state owner for this open */
@@ -1364,11 +1362,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if ((file_state != NULL) && new_state &&
 	    (res_OPEN4->status != NFS4_OK)) {
 		/* Need to destroy open owner and state */
-		state_status = state_del(file_state, false);
-		if (state_status != STATE_SUCCESS)
-			LogDebug(COMPONENT_STATE,
-				 "state_del failed with status %s",
-				 state_err_str(state_status));
+		state_del(file_state, false);
 	}
 
 	if (entry_change)
