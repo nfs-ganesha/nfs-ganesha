@@ -37,6 +37,8 @@ LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 EPOCHFILE=/var/lib/nfs/ganesha-epoch
+RESTARTLOCKFILE=/var/lib/nfs/ganesha-restart
+GANESHA_RESTART_LOCKED=0
 
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 
@@ -83,6 +85,33 @@ GANRECDIR="/var/lib/nfs/ganesha_local"
 
 which sm-notify &> /dev/null
 HAVE_SMNOTIFY=`echo $?`
+
+function remove_restart_lock {
+        if [[ -d $RESTARTLOCKFILE && $GANESHA_RESTART_LOCKED == 1 ]]; then
+            rmdir $RESTARTLOCKFILE
+        fi
+}
+
+function signal_exit {
+    remove_restart_lock
+}
+
+function signal_int {
+    remove_restart_lock
+}
+
+function signal_quit {
+    remove_restart_lock
+}
+
+function signal_term {
+    remove_restart_lock
+}
+
+trap signal_exit EXIT
+trap signal_int INT
+trap signal_quit QUIT
+trap signal_term TERM
 
 check_hang() {
 	PID=$1
@@ -222,49 +251,55 @@ start() {
 
 	# Start the Ganesha daemon only if it is not running
 	if [ $start_ganesha  -eq 1 ]; then
-		which ctdb &> /dev/null
-		if [ $? -eq 0 ]; then
-			prev_cntr=0
-			[ -f $EPOCHFILE ] && prev_cntr=$(cat $EPOCHFILE)
-			[ -z $prev_cntr ] && prev_cntr=0
-			new_cntr=$(( prev_cntr + 1 ))
-			#Epoch = (ctdb node number << 16) | (new_cntr & 0xFFFF)
-			ganesha_epoch=$(( `ctdb pnn | awk -F : '{print $2}'` << 16 | new_cntr & 0xFFFF ))
-			echo $new_cntr > $EPOCHFILE
-			OPTIONS="$OPTIONS -E $ganesha_epoch"
-		fi
-		echo  -n $"Starting $prog: "
-		ulimit -n 1048576          
-		#Remove the status tracking files
-		rm -rf $GANRECDIR/*
+                if $(mkdir $RESTARTLOCKFILE)
+                then
+                        GANESHA_RESTART_LOCKED=1
+		        which ctdb &> /dev/null
+		        if [ $? -eq 0 ]; then
+		        	prev_cntr=0
+        			[ -f $EPOCHFILE ] && prev_cntr=$(cat $EPOCHFILE)
+        			[ -z $prev_cntr ] && prev_cntr=0
+        			new_cntr=$(( prev_cntr + 1 ))
+        			#Epoch = (ctdb node number << 16) | (new_cntr & 0xFFFF)
+        			ganesha_epoch=$(( `ctdb pnn | awk -F : '{print $2}'` << 16 | new_cntr & 0xFFFF ))
+        			echo $new_cntr > $EPOCHFILE
+        			OPTIONS="$OPTIONS -E $ganesha_epoch"
+        		fi
+        		echo  -n $"Starting $prog: "
+        		ulimit -n 1048576          
+        		#Remove the status tracking files
+        		rm -rf $GANRECDIR/*
+        
+        		daemon numactl -i all $PATHPROG $OPTIONS
+        		RETVAL=$?
+        		if [ $HAVE_SMNOTIFY -eq 0 ]; then
+        			sm-notify -f
+        		fi
 
-		daemon numactl -i all $PATHPROG $OPTIONS
-		RETVAL=$?
-		if [ $HAVE_SMNOTIFY -eq 0 ]; then
-			sm-notify -f
-		fi
+                        # Call CTDB's smnotify
+                        [ -n "${STATD_HOSTNAME}" ] \
+                                && STATD_CALLOUT="`echo $STATD_HOSTNAME | xargs -n 3 -d " "| awk '{print $3}'`"
+                        if [ -n "$STATD_CALLOUT" ]; then
+                                $STATD_CALLOUT notify
+                        fi
 
-                # Call CTDB's smnotify
-                [ -n "${STATD_HOSTNAME}" ] \
-                        && STATD_CALLOUT="`echo $STATD_HOSTNAME | xargs -n 3 -d " "| awk '{print $3}'`"
-                if [ -n "$STATD_CALLOUT" ]; then
-                        $STATD_CALLOUT notify
+        		# Sleeping here gives Ganesha an adequate amount of time to
+        		# initialize the server and fail if anything goes wrong.
+        		# Without this sleep and the server will be in the midst of
+        		# initializing. It may fail immediately after this script runs.
+        		sleep 2
+
+        		# Check if Ganesha is still running
+        		result=`pidof "$PROG"`
+        		if [ ! $result ]; then
+        		    failure
+        		    echo
+        		    return $RETVAL
+        		fi
+        		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
+                else
+                        echo "GPFS Ganesha init is already running."
                 fi
-
-		# Sleeping here gives Ganesha an adequate amount of time to
-		# initialize the server and fail if anything goes wrong.
-		# Without this sleep and the server will be in the midst of
-		# initializing. It may fail immediately after this script runs.
-		sleep 2
-
-		# Check if Ganesha is still running
-		result=`pidof "$PROG"`
-		if [ ! $result ]; then
-		    failure
-		    echo
-		    return $RETVAL
-		fi
-		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
 	fi
 
         echo
