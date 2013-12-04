@@ -58,6 +58,13 @@
 %global with_fsal_pt 0
 %endif
 
+%if %{?_with_rdma:1}%{!?_with_rdma:0}
+%global with_rdma 1
+%else
+%global with_rdma 0
+%endif
+
+
 #%define sourcename nfs-ganesha-2.0-RC5-0.1.1-Source
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
@@ -79,6 +86,10 @@ Requires:	libnfsidmap
 %else
 BuildRequires:	nfs-utils-lib-devel
 Requires:	nfs-utils-lib
+%endif
+%if %{with_rdma}
+BuildRequires:	libmooshika >= 0.4-15
+Requires:	libmooshika-devel >= 0.4-15
 %endif
 
 # Use CMake variables
@@ -189,7 +200,7 @@ be used with NFS-Ganesha to support LUSTRE
 %package shook
 Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
 Group: Applications/System
-Requires: libattr lustre shook
+Requires: libattr lustre shook-client
 BuildRequires: libattr-devel lustre shook-devel
 
 %description shook
@@ -267,6 +278,11 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %else
 	-DUSE_FSAL_ZFS=OFF				\
 %endif
+%if %{with_fsal_xfs} 
+	-DUSE_FSAL_XFS=ON				\
+%else
+	-DUSE_FSAL_XFS=OFF				\
+%endif
 %if %{with_fsal_ceph} 
 	-DUSE_FSAL_CEPH=ON				\
 %else
@@ -297,10 +313,14 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %else
 	-DUSE_FSAL_PT=OFF				\
 %endif
+%if %{with_rdma}
+	-DUSE_9P_RDMA=ON				\
+%endif
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
-	-DUSE_DBUS_STAT=ON				\
+	-DUSE_DBUS_STATS=ON				\
 	-DUSE_DBUS=ON					\
+	-DUSE_9P=ON					\
 	-DDISTNAME_HAS_GIT_DATA=OFF
 
 make %{?_smp_mflags} || make %{?_smp_mflags} || make
@@ -330,6 +350,11 @@ mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %endif 
 
+%if 0%{?bl6}
+mkdir -p %{buildroot}%{_sysconfdir}/init.d
+install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
+%endif 
+
 
 make install
 
@@ -338,7 +363,7 @@ make install
 %defattr(-,root,root,-)
 %{_bindir}/*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
-%config %{_sysconfdir}/sysconfig/ganesha
+%config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
@@ -348,6 +373,10 @@ make install
 %endif
  
 %if 0%{?rhel}
+%config %{_sysconfdir}/init.d/nfs-ganesha
+%endif
+
+%if 0%{?bl6}
 %config %{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
@@ -386,7 +415,7 @@ make install
 %if %{with_fsal_xfs}
 %files xfs
 %defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalxfs*
+%{_libdir}/ganesha/libxfsfdhdl*
 %endif
 
 %if %{with_fsal_ceph}
