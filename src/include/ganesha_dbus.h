@@ -58,6 +58,17 @@
  * Each interface has NULL terminated arrays of properties, methods,
  * and signals.
  */
+#define HEARTBEAT_NAME "heartbeat"
+
+#define DBUS_PATH "/org/ganesha/nfsd/"
+#define DBUS_ADMIN_IFACE "org.ganesha.nfsd.admin"
+
+#define HEARTBEAT_ARG        \
+{                            \
+	.name = "isHealthy", \
+	.type = "b",         \
+	.direction = "out"   \
+}
 
 #define STATUS_REPLY      \
 {                         \
@@ -159,6 +170,10 @@ struct gsh_dbus_interface {
 
 struct gsh_dbus_interface log_interface;
 
+/**
+  * @brief Default value for heartbeat frequency in ms
+  */
+#define HEARTBEAT_FREQ_DEFAULT 1000
 
 #define BCAST_FOREVER       -1
 
@@ -181,6 +196,10 @@ struct dbus_bcast_item *add_dbus_broadcast(
 					uint32_t bcast_interval,
 					int count);
 void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
+
+/* heartbeat function call back */
+int dbus_heartbeat_cb(void *arg);
+void init_heartbeat();
 
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);
