@@ -34,6 +34,12 @@
 #include <pthread.h>
 #include <assert.h>
 #include "ganesha_list.h"
+
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
+#include <errno.h>
+#include <dbus/dbus.h>
+
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
@@ -63,6 +69,12 @@
 #define GSH_DBUS_SHUTDOWN  0x0001
 #define GSH_DBUS_SLEEPING  0x0002
 
+/*
+ * List and mutex used by the dbus broadcast service
+ */
+struct glist_head dbus_broadcast_list;
+pthread_mutex_t dbus_bcast_lock;
+
 struct ganesha_dbus_handler {
 	char *name;
 	struct avltree_node node_k;
@@ -91,6 +103,106 @@ static inline int dbus_callout_cmpf(const struct avltree_node *lhs,
 	rk = avltree_container_of(rhs, struct ganesha_dbus_handler, node_k);
 
 	return strcmp(lk->name, rk->name);
+}
+
+/*
+ * @brief compare routine used to sort broadcast items
+ *
+ * Function used to sort the broadcast items according
+ * to time expirey.  Conforms to the glist_compare
+ * function signature so it can be used with glist_insert_sorted
+ *
+ * @param a: Pointer to the glist of a dbus_bcast_item
+ * @param b: Pointer to the glist of another dbus_bcast_item
+ *           to compare the first to
+ */
+int dbus_bcast_item_compare(struct glist_head *a,
+			    struct glist_head *b)
+{
+	struct dbus_bcast_item *bcast_item_a;
+	struct dbus_bcast_item *bcast_item_b;
+
+	bcast_item_a = glist_entry(a,
+				   struct dbus_bcast_item,
+				   dbus_bcast_q);
+	bcast_item_b = glist_entry(b,
+				   struct dbus_bcast_item,
+				   dbus_bcast_q);
+	return gsh_time_cmp(&bcast_item_a->next_bcast_time,
+			    &bcast_item_b->next_bcast_time);
+}
+
+/*
+ * @brief del_dbus_broadcast: Delete a broadcast item from the
+ *                            broadcast service
+ *
+ * Function to be called by any thread wanting to remove a broadcast item
+ * from the dbus broadcast service
+ *
+ * @param to_remove: The pointer to the dbus_bcast_item
+ *                   returned from add_dbus_broadcast
+ */
+void del_dbus_broadcast(struct dbus_bcast_item *to_remove)
+{
+	pthread_mutex_lock(&dbus_bcast_lock);
+	glist_del(&to_remove->dbus_bcast_q);
+	pthread_mutex_lock(&dbus_bcast_lock);
+
+	gsh_free(to_remove);
+}
+
+/*
+ * @brief add_dbus_broadcast: Add a callback to the broadcast service
+ *
+ * Function to be called by any thread that wants to add a callback
+ * to the dbus broadcast service
+ *
+ * @param bcast_callback: Function pointer to be called
+ * @param arg: Arg that will be passed to the callback
+ * @param bcast_interval: The time in nsec between calls
+ * @param count: The number of times to invoke the callback
+ *               Pass BCAST_FOREVER to call indefinitely
+ *
+ * @return: The pointer to the dbus_bcast_item created
+ */
+struct dbus_bcast_item *add_dbus_broadcast(
+					dbus_bcast_callback bcast_callback,
+					void *bcast_arg,
+					uint32_t bcast_interval,
+					int count)
+{
+	struct dbus_bcast_item *new_bcast = NULL;
+	new_bcast = (struct dbus_bcast_item *)
+		gsh_malloc(sizeof(struct dbus_bcast_item));
+	if (!new_bcast) {
+		LogCrit(COMPONENT_DBUS,
+			"Failed to allocate broadcast entry: %s",
+			strerror(errno));
+		goto out;
+	}
+
+	now(&new_bcast->next_bcast_time);
+	new_bcast->bcast_interval = bcast_interval;
+	new_bcast->count = count;
+	new_bcast->bcast_arg = bcast_arg;
+	new_bcast->bcast_callback = bcast_callback;
+
+	pthread_mutex_lock(&dbus_bcast_lock);
+	glist_insert_sorted(&dbus_broadcast_list,
+			    &(new_bcast->dbus_bcast_q),
+			    &dbus_bcast_item_compare);
+	pthread_mutex_unlock(&dbus_bcast_lock);
+out:
+	return new_bcast;
+}
+
+/*
+ * @brief init_dbus_broadcast: Initializes broadcast list and mutex
+ */
+void init_dbus_broadcast()
+{
+	pthread_mutex_init(&dbus_bcast_lock, NULL);
+	glist_init(&dbus_broadcast_list);
 }
 
 void gsh_dbus_pkginit(void)
@@ -132,6 +244,8 @@ void gsh_dbus_pkginit(void)
 			regbuf, code);
 		goto out;
 	}
+
+	init_dbus_broadcast();
 
 	thread_state.initialized = true;
 
@@ -542,10 +656,15 @@ void gsh_dbus_pkgshutdown(void)
 
 void *gsh_dbus_thread(void *arg)
 {
+	struct glist_head *glist = NULL;
+	struct glist_head *glistn = NULL;
+	struct timespec current_time;
+	int time_expired;
+	int rc = 0;
 
 	SetNameFunction("dbus");
 
-	if (!thread_state.dbus_conn) {
+	if (!thread_state.initialized) {
 		LogCrit(COMPONENT_DBUS,
 			"DBUS not initialized, service thread " "exiting");
 		goto out;
@@ -557,9 +676,63 @@ void *gsh_dbus_thread(void *arg)
 
 		LogFullDebug(COMPONENT_DBUS, "top of poll loop");
 
+		pthread_mutex_lock(&dbus_bcast_lock);
+		glist_for_each_safe(glist, glistn, &dbus_broadcast_list) {
+			struct dbus_bcast_item *bcast_item = glist_entry(glist,
+							struct dbus_bcast_item,
+							dbus_bcast_q);
+			now(&current_time);
+			time_expired = gsh_time_cmp(&current_time,
+						    &bcast_item->
+						    next_bcast_time);
+
+			/*
+			 * list is sorted by soonest to latest
+			 * Break now if the next is not ready
+			 */
+			if (time_expired < 0)
+				break;
+
+			bcast_item->next_bcast_time = current_time;
+			timespec_add_nsecs(bcast_item->bcast_interval,
+					   &bcast_item->next_bcast_time);
+			rc = bcast_item->bcast_callback(bcast_item->bcast_arg);
+			if (rc == BCAST_STATUS_WARN) {
+				LogWarn(COMPONENT_DBUS,
+					"Broadcast callback %p"
+					"returned BCAST_STATUS_WARN\n",
+					bcast_item);
+			} else if (rc == BCAST_STATUS_FATAL) {
+				LogWarn(COMPONENT_DBUS,
+					"Broadcast callback %p"
+					"returned BCAST_STATUS_FATAL\n",
+					bcast_item);
+				glist_del(&bcast_item->dbus_bcast_q);
+				continue;
+			}
+
+			if (bcast_item->count > 0)
+				bcast_item->count--;
+
+			glist_del(&bcast_item->dbus_bcast_q);
+
+			/*
+			 * If the callback should be called again, put it
+			 * back in the list sorted by soonest to longest
+			 */
+			if (bcast_item->count > 0 ||
+			    bcast_item->count == BCAST_FOREVER) {
+				glist_insert_sorted(&dbus_broadcast_list,
+						    &(bcast_item->
+						      dbus_bcast_q),
+						    &dbus_bcast_item_compare);
+			}
+		}
+		pthread_mutex_unlock(&dbus_bcast_lock);
+
 		/* do stuff */
 		if (!dbus_connection_read_write_dispatch
-		    (thread_state.dbus_conn, 30 * 1000)) {
+		    (thread_state.dbus_conn, 100)) {
 			LogCrit(COMPONENT_DBUS,
 				"read_write_dispatch, got disconnected signal");
 			break;
@@ -577,4 +750,54 @@ void gsh_dbus_wake_thread(uint32_t flags)
 {
 	if (thread_state.flags & GSH_DBUS_SLEEPING)
 		pthread_cond_signal(&thread_state.we.cv);
+}
+
+/*
+ * @brief gsh_dbus_broadcast: Broadcast a dbus message
+ *
+ * Function to be called by a thread's callback routine
+ * in order to broadcast a message over dbus
+ *
+ * @param obj_name: The path to the object emitting the signal
+ *                  Ex: "/org/ganesha/nfsd/heartbeat"
+ *
+ * @param int_name: The interface the signal is emitted from
+ *                  Ex: "org.ganesha.nfsd.heartbeat"
+ *
+ * @param sig_name: The name of the signal
+ *                  Ex: "heartbeat"
+ *
+ * @param first_arg_type: The type of the first argument passed
+ *                  Ex: DBUS_TYPE_STRING, DBUS_TYPE_UINT32, etc...
+ *
+ * @param ... :     An alternating list of types and data
+ *                  All data args must be passed by refrence
+ *                  Ex: &my_int,
+ *                      DBUS_TYPE_STRING, &charPtr,
+ *                      DBUS_TYPE_BOOLEAN, &my_bool
+ *
+ * @return 0 on sucess or errno on failure
+ */
+int gsh_dbus_broadcast(char *obj_name, char *int_name,
+		       char *sig_name, int first_arg_type, ...)
+{
+	static dbus_uint32_t serial;
+	DBusMessage *msg;
+	va_list arguments;
+	int rc = 0;
+
+	msg = dbus_message_new_signal(obj_name, int_name, sig_name);
+	if (msg == NULL)
+		return -EINVAL;
+
+	va_start(arguments, first_arg_type);
+	dbus_message_append_args_valist(msg, first_arg_type, arguments);
+	va_end(arguments);
+
+	if (!dbus_connection_send(thread_state.dbus_conn, msg, &serial))
+		rc = -ENOMEM;
+
+	dbus_message_unref(msg);
+
+	return rc;
 }

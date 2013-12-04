@@ -159,6 +159,29 @@ struct gsh_dbus_interface {
 
 struct gsh_dbus_interface log_interface;
 
+
+#define BCAST_FOREVER       -1
+
+#define BCAST_STATUS_OK    0x00
+#define BCAST_STATUS_WARN  0x01
+#define BCAST_STATUS_FATAL 0x02
+
+typedef int (*dbus_bcast_callback)(void *);
+struct dbus_bcast_item {
+	struct timespec next_bcast_time;
+	uint32_t bcast_interval;
+	uint32_t count;
+	void *bcast_arg;
+	dbus_bcast_callback bcast_callback;
+	struct glist_head dbus_bcast_q;
+};
+struct dbus_bcast_item *add_dbus_broadcast(
+					dbus_bcast_callback bcast_callback,
+					void *bcast_arg,
+					uint32_t bcast_interval,
+					int count);
+void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
+
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);
 void *gsh_dbus_thread(void *arg);
@@ -168,7 +191,8 @@ void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
 void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
 			       struct gsh_dbus_interface **interfaces);
-
+int gsh_dbus_broadcast(char *obj_name, char *int_name,
+		       char *sig_name, int type, ...);
 /* more to come */
 
 #endif				/* _GANESHA_DBUS_H */
