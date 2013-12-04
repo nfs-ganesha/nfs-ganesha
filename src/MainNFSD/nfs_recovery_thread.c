@@ -110,26 +110,6 @@ ip_match(char *ip, char *cid_server_ip)
         return 1; /* they match */
 }
 
-static void
-recov_clid_handler(nfs_client_record_t *rp, nfs_client_id_t *cp)
-{
-        P(rp->cr_mutex);
-
-        if (nfs_in_grace()) {
-                /*
-                 * Force current time for clientid if in grace
-                 */
-                LogMajor(COMPONENT_THREAD, "Old Serv Epoch = %"PRIx64,
-                        ServerEpoch);
-                ServerEpoch = time(NULL);
-                LogMajor(COMPONENT_THREAD, "New Serv Epoch = %"PRIx64,
-                        ServerEpoch);
-        } else
-                (void) nfs_client_id_expire(cp);
-
-        V(rp->cr_mutex);
-}
-
 /*
  * try to find a V4 client that matches the IP we are releasing.
  * only search the confirmed clients, unconfirmed clients won't
@@ -169,7 +149,11 @@ nfs_release_v4_client(char *ip)
 
                                 PTHREAD_RWLOCK_UNLOCK(&ht->partitions[i].lock);
 
-                                recov_clid_handler(recp, cp);
+                                P(recp->cr_mutex);
+
+                                (void) nfs_client_id_expire(cp);
+
+                                V(recp->cr_mutex);
 
                                 dec_client_id_ref(cp);
                                 dec_client_record_ref(recp);
