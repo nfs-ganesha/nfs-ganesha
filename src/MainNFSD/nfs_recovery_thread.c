@@ -579,6 +579,7 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                          * If we reach here then we have either "takeip"
                          * or "releaseip" records 
                          */
+                        nfs4_start_grace(NULL);
 
                         if ((ipcount = check_for_id( n, namelist, g_nodeid))) { 
 
