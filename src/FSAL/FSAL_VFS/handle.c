@@ -875,12 +875,12 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
-static int vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
-				  struct stat *stat, int open_flags,
-				  fsal_errors_t *fsal_error)
+static struct closefd vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
+					     struct stat *stat, int open_flags,
+					     fsal_errors_t *fsal_error)
 {
 	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
-	int fd = -1;
+	struct closefd cfd  = { .fd = -1, .close_fd = false };
 	int retval = 0;
 	struct vfs_fsal_export *ve = NULL;
 	vfs_file_handle_t *fh = NULL;
@@ -893,17 +893,17 @@ static int vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 	case BLOCK_FILE:
 		ve = container_of(obj_hdl->export, struct vfs_fsal_export,
 				  export);
-		fd = ve->vex_ops.vex_open_by_handle(obj_hdl->export,
+		cfd.fd = ve->vex_ops.vex_open_by_handle(obj_hdl->export,
 						    myself->u.unopenable.dir,
 						    O_PATH | O_NOACCESS,
 						    fsal_error);
-		if (fd < 0) {
+		if (cfd.fd < 0) {
 			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-fd));
-			return fd;
+				 strerror(-cfd.fd));
+			return cfd;
 		}
 		retval =
-		    fstatat(fd, myself->u.unopenable.name, stat,
+		    fstatat(cfd.fd, myself->u.unopenable.name, stat,
 			    AT_SYMLINK_NOFOLLOW);
 
 		func = "fstatat";
@@ -911,27 +911,29 @@ static int vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 	case REGULAR_FILE:
 		if (myself->u.file.openflags == FSAL_O_CLOSED) {
 			/* no file open at the moment */
-			fd = vfs_fsal_open(myself, open_flags, fsal_error);
-			if (fd < 0) {
+			cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
+			if (cfd.fd < 0) {
 				LogDebug(COMPONENT_FSAL, "Failed with %s",
-					 strerror(-fd));
-				return fd;
+					 strerror(-cfd.fd));
+				return cfd;
 			}
+			cfd.close_fd = true;
 		} else {
-			fd = myself->u.file.fd;
+			cfd.fd = myself->u.file.fd;
 		}
-		retval = fstat(fd, stat);
+		retval = fstat(cfd.fd, stat);
 		func = "fstat";
 		break;
 	case DIRECTORY:
-		fd = vfs_fsal_open(myself, open_flags, fsal_error);
-		if (fd < 0) {
+		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
+		if (cfd.fd < 0) {
 			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-fd));
-			return fd;
+				 strerror(-cfd.fd));
+			return cfd;
 		}
 		retval =
-		    vfs_stat_by_handle(fd, myself->handle, stat, open_flags);
+		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
+				       open_flags);
 		func = "vfs_stat_by_handle (1)";
 		break;
 	case SYMBOLIC_LINK:
@@ -942,49 +944,59 @@ static int vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 		/* fall through */
 	default:
  vfos_open:
-		fd = vfs_fsal_open(myself, open_flags, fsal_error);
-		if (fd < 0) {
+		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
+		if (cfd.fd < 0) {
 			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-fd));
-			return fd;
+				 strerror(-cfd.fd));
+			return cfd;
 		}
 		retval =
-		    vfs_stat_by_handle(fd, myself->handle, stat, open_flags);
+		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
+				       open_flags);
 		func = "vfs_stat_by_handle (2)";
 		break;
 	}
 
 	if (retval < 0) {
+		if (obj_hdl->type != REGULAR_FILE
+		    || cfd.close_fd) {
+			cfd.close_fd = close(cfd.fd);
+			if (cfd.close_fd < 0) {
+				cfd.close_fd = errno;
+				LogDebug(COMPONENT_FSAL, "close failed with %s",
+					 strerror(cfd.close_fd));
+			}
+		}
 		retval = errno;
 		if (retval == ENOENT)
 			retval = ESTALE;
 		*fsal_error = posix2fsal_error(retval);
-		if (obj_hdl->type != REGULAR_FILE
-		    || myself->u.file.openflags == FSAL_O_CLOSED)
-			close(fd);
 		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
 			 strerror(retval));
-		return -retval;
+		cfd.fd = -retval;
+		cfd.close_fd = false;
+		return cfd;
 	}
-	return fd;
+	return cfd;
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      const struct req_op_context *opctx)
 {
 	struct vfs_fsal_obj_handle *myself;
-	int fd = -1;
+	struct closefd cfd;
+	int close_fd;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t st;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	fd = vfs_fsal_open_and_stat(myself, &stat, O_RDONLY, &fsal_error);
-	if (fd >= 0) {
-		if (obj_hdl->type != REGULAR_FILE || myself->u.file.fd < 0)
-			close(fd);
+	cfd = vfs_fsal_open_and_stat(myself, &stat, O_RDONLY, &fsal_error);
+	if (cfd.fd >= 0) {
 		st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
+		if (obj_hdl->type != REGULAR_FILE || cfd.close_fd)
+			close(cfd.fd);
 		if (FSAL_IS_ERROR(st)) {
 			FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
 			FSAL_SET_MASK(obj_hdl->attributes.mask,
@@ -994,10 +1006,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		}
 	} else {
 		LogDebug(COMPONENT_FSAL, "Failed with %s, fsal_error %s",
-			 strerror(-fd),
+			 strerror(-cfd.fd),
 			 fsal_error ==
 			 ERR_FSAL_STALE ? "ERR_FSAL_STALE" : "other");
-		if (obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
+		if (obj_hdl->type == SYMBOLIC_LINK
+		    && cfd.fd == -ERR_FSAL_PERM) {
 			/* You cannot open_by_handle (XFS on linux) a symlink
 			 * and it throws an EPERM error for it.
 			 * open_by_handle_at does not throw that error for
@@ -1011,7 +1024,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			fsal_error = ERR_FSAL_NO_ERROR;
 			goto out;
 		}
-		retval = -fd;
+		retval = -cfd.fd;
 	}
 
  out:
@@ -1028,6 +1041,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct closefd cfd;
 	int fd = -1;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -1055,7 +1069,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE))
 		open_flags = O_RDWR;
 
-	fd = vfs_fsal_open_and_stat(myself, &stat, open_flags, &fsal_error);
+	cfd = vfs_fsal_open_and_stat(myself, &stat, open_flags, &fsal_error);
+	fd = cfd.fd;
 	if (fd < 0) {
 		if (obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
 			/* You cannot open_by_handle (XFS) a symlink and it
@@ -1087,9 +1102,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			 * I don't see a prior failed op in wireshark. */
 			if (retval == -1 /* bad fd */) {
 				vfs_close(obj_hdl);
-				fd = vfs_fsal_open_and_stat(myself, &stat,
+				cfd = vfs_fsal_open_and_stat(myself, &stat,
 							    open_flags,
 							    &fsal_error);
+				fd = cfd.fd;
 				retval = ftruncate(fd, attrs->filesize);
 				if (retval != 0)
 					goto fileerr;

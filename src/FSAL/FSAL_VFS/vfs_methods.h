@@ -81,6 +81,17 @@ struct vfs_fsal_obj_handle {
 	} u;
 };
 
+
+/*
+ * VFS structure to tell subfunctions wether they should close the
+ * returned fd or not
+ */
+struct closefd {
+	int fd;
+	int close_fd;
+};
+
+
 int vfs_fsal_open(struct vfs_fsal_obj_handle *, int, fsal_errors_t *);
 int vfs_fsal_readlink(struct vfs_fsal_obj_handle *, fsal_errors_t *);
 
