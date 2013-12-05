@@ -2438,7 +2438,6 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	struct fsal_export *fsal_export = entry->obj_handle->export;
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
-	fsal_openflags_t openflags = FSAL_O_READ;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2448,10 +2447,8 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		return status;
 	}
 
-	if (lock->lock_type == FSAL_LOCK_W)
-		openflags = FSAL_O_RDWR;
+	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
 
-	cache_status = cache_inode_open(entry, openflags, req_ctx, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, FALSE);
 		status = cache_inode_status_to_state_status(cache_status);
