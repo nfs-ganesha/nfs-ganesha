@@ -127,6 +127,9 @@ static inline void glist_splice_tail(struct glist_head *tgt,
 #define glist_for_each(node, head) \
 	for (node = (head)->next; node != head; node = node->next)
 
+#define glist_for_each_next(start, node, head)				\
+	for (node = (start)->next; node != head; node = node->next)
+
 static inline size_t glist_length(struct glist_head *head)
 {
 	size_t length = 0;
@@ -150,6 +153,11 @@ static inline size_t glist_length(struct glist_head *head)
 
 #define glist_for_each_safe(node, noden, head)		\
 	for (node = (head)->next, noden = node->next;	\
+	     node != (head);				\
+	     node = noden, noden = node->next)
+
+#define glist_for_each_next_safe(start, node, noden, head)	\
+	for (node = (start)->next, noden = node->next;	\
 	     node != (head);				\
 	     node = noden, noden = node->next)
 
