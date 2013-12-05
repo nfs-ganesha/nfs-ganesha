@@ -22,6 +22,9 @@
 #ifndef CONFPARSER_H
 #define CONFPARSER_H
 
+#include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include "nlm_list.h"
 
@@ -41,6 +44,7 @@ struct config_node {
 	char *name;		/* block or parameter name */
 	char *filename;		/* pointer to filename in file list */
 	int linenumber;
+	bool found;		/* use accounting private in do_block_load */
 	enum node_type type;	/* switches union contents */
 	union {			/* sub_nodes are always struct config_node */
 		char *varvalue;			/* TYPE_STMT */
