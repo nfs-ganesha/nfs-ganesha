@@ -985,7 +985,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 {
 	struct vfs_fsal_obj_handle *myself;
 	struct closefd cfd;
-	int close_fd;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t st;
