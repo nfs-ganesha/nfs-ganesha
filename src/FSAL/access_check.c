@@ -559,7 +559,8 @@ fsal_check_access_no_acl(struct user_cred *creds,
 {
 	uid_t uid;
 	gid_t gid;
-	mode_t mode, mask;
+	mode_t mode;
+	fsal_accessflags_t mask;
 	bool rc;
 
 	if (allowed != NULL)
@@ -605,9 +606,15 @@ fsal_check_access_no_acl(struct user_cred *creds,
 	/* If the uid of the file matches the uid of the user,
 	 * then the uid mode bits take precedence. */
 	if (creds->caller_uid == uid) {
+		LogFullDebug(COMPONENT_NFS_V4_ACL,
+			     "Using owner mode %#o",
+			     mode & S_IRWXU);
 		mode >>= 6;
 	} else {		/* followed by group(s) */
 		if (creds->caller_gid == gid) {
+			LogFullDebug(COMPONENT_NFS_V4_ACL,
+				     "Using group mode %#o",
+				     mode & S_IRWXG);
 			mode >>= 3;
 		} else {
 			/* Test if file belongs to alt user's groups */
@@ -615,6 +622,9 @@ fsal_check_access_no_acl(struct user_cred *creds,
 
 			for (i = 0; i < creds->caller_glen; i++) {
 				if (creds->caller_garray[i] == gid) {
+					LogFullDebug(COMPONENT_NFS_V4_ACL,
+						     "Using group mode %#o for alt group #%d",
+						     mode & S_IRWXG, i);
 					mode >>= 3;
 					break;
 				}
@@ -629,6 +639,13 @@ fsal_check_access_no_acl(struct user_cred *creds,
 	    ((mode & S_IROTH) ? FSAL_R_OK : 0) | ((mode & S_IWOTH) ? FSAL_W_OK :
 						  0) | ((mode & S_IXOTH) ?
 							FSAL_X_OK : 0);
+	LogFullDebug(COMPONENT_NFS_V4_ACL,
+		     "Mask=0X%x, Access Type=0X%x Allowed=0X%x Denied=0X%x %s",
+		     mask, access_type,
+		     mask & access_type,
+		     ~mask & access_type,
+		     (mask & access_type) == access_type ?
+			"ALLOWED" : "DENIED");
 
 	if (allowed != NULL)
 		*allowed = mask & access_type;
