@@ -522,3 +522,30 @@
 	unused build time configuration options.  These include:
        - FSAL_SNMP is now officially deprecated
 
+2.0.0 - Fri 6 Dec 2013
+      - FSALs (filesystem backends) are now loadable shared objects.  The
+	server can support multiple backends at runtime.  Most of the 1.5.0
+	FSALs have been rewritten to support this new API.
+      - NFSv4.1 pNFS is supported.  Most of the FSALs for clustered
+	filesystems also support pNFS.  The server can be both an MDS and DS.
+      - DBus is now the administration tool.  The SNMP MIB and stats thread are
+	deprecated.  Reference implementations of DBus client(s) for all of
+	the DBus interfaces are supplied.  These clients use the PyQt4 class
+	libraries and Python 2.7.  There are both command line scripts and
+	a Qt based GUI admin tool.
+      - All the significant bugfixes from the 1.5.x branch have been
+	forward ported or re-implemented in the new codebase.
+      - The server passes all of the cthonv4 and pynfs 4.0 tests.  All of
+	the significant (non-delegation) pynfs 4.1 tests also pass.  This is
+	significant protocol correctness improvement over the previous version.
+      - Most subsystems/modules have had refactor/rewrite work to improve
+	stability, scalability, and correctness.  Memory and system resource
+	usage has also been improved.
+      - NFSv2 support has been deprecated.  NFSv3 still supports the older
+	version of the MNT protocol for compatibility with some clients.
+      - The build process has been converted to Cmake and autotools has been
+	removed.
+      - The codebase has been reformatted to conform to Linux kernel coding
+	style.  Changes are checked and validated with the kernel's
+	checkpatch.pl script.  The script and our configuration file for it
+	are supplied in the source.
