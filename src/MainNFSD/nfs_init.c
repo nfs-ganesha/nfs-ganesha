@@ -78,27 +78,6 @@
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param = {
 	/* Core parameters */
-	.core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
-	.core_param.drc.disabled = false,
-	.core_param.drc.tcp.npart = DRC_TCP_NPART,
-	.core_param.drc.tcp.size = DRC_TCP_SIZE,
-	.core_param.drc.tcp.cachesz = DRC_TCP_CACHESZ,
-	.core_param.drc.tcp.hiwat = DRC_TCP_HIWAT,
-	.core_param.drc.tcp.recycle_npart = DRC_TCP_RECYCLE_NPART,
-	.core_param.drc.tcp.checksum = DRC_TCP_CHECKSUM,
-	.core_param.drc.udp.npart = DRC_UDP_NPART,
-	.core_param.drc.udp.size = DRC_UDP_SIZE,
-	.core_param.drc.udp.cachesz = DRC_UDP_CACHESZ,
-	.core_param.drc.udp.hiwat = DRC_UDP_HIWAT,
-	.core_param.drc.udp.checksum = DRC_UDP_CHECKSUM,
-	.core_param.rpc.debug_flags = TIRPC_DEBUG_FLAGS,
-	.core_param.rpc.max_connections = 1024,
-	.core_param.rpc.idle_timeout_s = 300,
-	.core_param.port[P_NFS] = NFS_PORT,
-	.core_param.bind_addr.sin_family = AF_INET, /* IPv4 only right now */
-	.core_param.program[P_NFS] = NFS_PROGRAM,
-	.core_param.program[P_MNT] = MOUNTPROG,
-	.core_param.program[P_NLM] = NLMPROG,
 #ifdef _USE_9P
 	._9p_param._9p_tcp_port = _9P_TCP_PORT,
 	._9p_param._9p_tcp_msize = _9P_TCP_MSIZE,
@@ -108,22 +87,6 @@ nfs_parameter_t nfs_param = {
 	._9p_param._9p_rdma_msize = _9P_RDMA_MSIZE,
 	._9p_param._9p_rdma_backlog = _9P_RDMA_BACKLOG,
 #endif
-	.core_param.program[P_RQUOTA] = RQUOTAPROG,
-	.core_param.port[P_RQUOTA] = RQUOTA_PORT,
-	.core_param.drop_io_errors = true,
-	.core_param.drop_delay_errors = true,
-	.core_param.core_dump_size = -1,
-	.core_param.long_processing_threshold = 10,	/* seconds */
-	.core_param.decoder_fridge_expiration_delay = -1,
-	.core_param.decoder_fridge_block_timeout = -1,
-	.core_param.manage_gids_expiration = 30*60, /* seconds */
-	.core_param.dispatch_max_reqs = 5000,
-	.core_param.dispatch_max_reqs_xprt = 512,
-	.core_param.core_options = CORE_OPTION_ALL_VERS,
-	.core_param.rpc.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
-	.core_param.rpc.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
-	.core_param.enable_NLM = true,
-	.core_param.enable_RQUOTA = true,
 
 	/* Workers parameters : IP/Name values pool prealloc */
 
