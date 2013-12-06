@@ -84,14 +84,13 @@ int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */
-		if (!pfid->opens) {
+		if (!atomic_postinc_uint32_t(&pfid->opens)) {
 			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS)
 				return _9p_rerror(req9p, worker_data, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 		}
-		++pfid->opens;
 
 		cache_status =
 		    cache_inode_open(pfid->pentry, openflags, &pfid->op_context,

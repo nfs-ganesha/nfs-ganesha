@@ -44,6 +44,7 @@
 #include "9p.h"
 #include "idmapper.h"
 #include "uid2grp.h"
+#include "export_mgr.h"
 
 int _9p_init(_9p_parameter_t *pparam)
 {
@@ -276,13 +277,110 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 	return;
 }				/* _9p_openflags2FSAL */
 
+/**
+ * @brief Free this fid after releasing its resources.
+ *
+ * @param pfid   [IN] pointer to fid entry
+ * @param fid    [IN] pointer to fid acquired from message
+ * @param req9p [IN] pointer to request data
+ */
+static void free_fid(struct _9p_fid *pfid)
+{
+	struct gsh_export *exp;
+
+	cache_inode_put(pfid->pentry);
+	if (pfid->from_attach) {
+		exp = container_of(pfid->export, struct gsh_export, export);
+		put_gsh_export(exp);
+	}
+	gsh_free(pfid);
+}
+
+int _9p_tools_clunk(struct _9p_fid *pfid)
+{
+	fsal_status_t fsal_status;
+	cache_inode_status_t cache_status;
+
+	/* If the fid is related to a xattr, free the related memory */
+	if (pfid->specdata.xattr.xattr_content != NULL &&
+	    pfid->specdata.xattr.xattr_write == TRUE) {
+		/* Check size give at TXATTRCREATE with
+		 * the one resulting from the writes */
+		if (pfid->specdata.xattr.xattr_size !=
+		    pfid->specdata.xattr.xattr_offset) {
+			free_fid(pfid);
+			return EINVAL;
+		}
+
+		/* Do we handle system.posix_acl_access */
+		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
+			fsal_status =
+			    pfid->pentry->obj_handle->ops->setextattr_value(
+				    pfid->pentry->obj_handle,
+				    &pfid->op_context,
+				    "system.posix_acl_access",
+				    pfid->specdata.xattr.xattr_content,
+				    pfid->specdata.xattr.xattr_size,
+				    FALSE);
+		} else {
+			/* Write the xattr content */
+			fsal_status =
+			    pfid->pentry->obj_handle->ops->
+				setextattr_value_by_id(pfid->pentry->obj_handle,
+						       &pfid->op_context,
+						       pfid->specdata.xattr.
+						       xattr_id,
+						       pfid->specdata.xattr.
+						       xattr_content,
+						       pfid->specdata.xattr.
+						       xattr_size);
+			if (FSAL_IS_ERROR(fsal_status)) {
+				free_fid(pfid);
+				gsh_free(pfid->specdata.xattr.xattr_content);
+				return _9p_tools_errno(
+					   cache_inode_error_convert(
+					       fsal_status));
+			}
+		}
+	}
+	gsh_free(pfid->specdata.xattr.xattr_content);
+
+	/* If object is an opened file, close it */
+	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
+		if (pfid->opens) {
+			cache_inode_dec_pin_ref(pfid->pentry, FALSE);
+			pfid->opens = 0;	/* dead */
+
+			/* Under this flag, pin ref is still checked */
+			cache_status =
+			    cache_inode_close(pfid->pentry,
+					      CACHE_INODE_FLAG_REALLYCLOSE);
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				free_fid(pfid);
+				return _9p_tools_errno(cache_status);
+			}
+			cache_status =
+			    cache_inode_refresh_attrs_locked(pfid->pentry,
+							     &pfid->op_context);
+			if (cache_status != CACHE_INODE_SUCCESS
+			    && cache_status != CACHE_INODE_FSAL_ESTALE) {
+				free_fid(pfid);
+				return _9p_tools_errno(cache_status);
+			}
+		}
+	}
+
+	free_fid(pfid);
+	return 0;
+}
+
 void _9p_cleanup_fids(struct _9p_conn *conn)
 {
 	int i;
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {
 		if (conn->fids[i]) {
-			LogDebug(COMPONENT_9P, "cleanup: freeing fid %u", i);
-			cache_inode_put(conn->fids[i]->pentry);
+			_9p_tools_clunk(conn->fids[i]);
+			conn->fids[i] = NULL;	/* poison the entry */
 		}
 	}
 }
