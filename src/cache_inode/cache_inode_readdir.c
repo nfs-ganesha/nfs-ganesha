@@ -223,12 +223,12 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 			/* Size (including terminating NUL) of the filename */
 			size_t newnamesize = strlen(newname) + 1;
 			/* try to rename--no longer in-place */
-			avl_dirent_set_deleted(directory, dirent);
 			dirent3 = gsh_malloc(sizeof(cache_inode_dir_entry_t)
 					     + newnamesize);
 			memcpy(dirent3->name, newname, newnamesize);
 			dirent3->flags = DIR_ENTRY_FLAG_NONE;
 			cache_inode_key_dup(&dirent3->ckey, &dirent->ckey);
+			avl_dirent_set_deleted(directory, dirent);
 			code = cache_inode_avl_qp_insert(directory, dirent3);
 			if (code < 0) {
 				/* collision, tree state unchanged (unlikely) */
