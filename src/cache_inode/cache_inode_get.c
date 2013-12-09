@@ -189,9 +189,6 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		struct fsal_export *exp_hdl;
 		fsal_status_t fsal_status;
 
-		/* Assert that we don't have to lookup export */
-		assert(key->exportid == req_ctx->export->export.id);
-
 		exp_hdl = req_ctx->export->export.export_hdl;
 		fsal_status =
 		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,

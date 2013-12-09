@@ -166,7 +166,6 @@ typedef struct cache_inode_share__ {
 typedef struct cache_inode_key {
 	uint64_t hk;		/* hash key */
 	struct gsh_buffdesc kv;
-	uint32_t exportid;	/* NOT HASHED OR COMPARED! */
 } cache_inode_key_t;
 
 /**
@@ -193,7 +192,6 @@ cache_inode_key_dup(cache_inode_key_t *tgt,
 
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
-	tgt->exportid = src->exportid;
 
 	return 0;
 }

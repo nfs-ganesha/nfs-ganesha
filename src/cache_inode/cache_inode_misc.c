@@ -307,9 +307,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	/* Set cache key */
 	cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
 
-	/* Set export id (unhashed, uncompared key component) */
-	nentry->fh_hk.key.exportid = new_obj->export->exp_entry->id;
-
 	/* Initialize common fields */
 	nentry->type = new_obj->type;
 	nentry->flags = 0;
