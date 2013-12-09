@@ -1200,7 +1200,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_error = posix2fsal_error(retval);
  out:
 	if (obj_hdl->type != REGULAR_FILE
-	    || myself->u.file.openflags == FSAL_O_CLOSED)
+	    || cfd.close_fd)
 		close(fd);
 	return fsalstat(fsal_error, retval);
 }
