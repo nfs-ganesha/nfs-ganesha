@@ -231,7 +231,8 @@ cache_inode_set_time_current(struct timespec *time)
 cache_inode_status_t
 cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		      uint32_t flags,
-		      cache_entry_t **entry)
+		      cache_entry_t **entry,
+		      const struct req_op_context *opctx)
 {
 	cache_inode_status_t status;
 	fsal_status_t fsal_status;

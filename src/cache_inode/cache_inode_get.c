@@ -135,7 +135,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
-	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
+	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
+				       entry, req_ctx);
+
 	if (*entry == NULL)
 		return status;
 
@@ -207,7 +209,8 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		/* if all else fails, create a new entry */
 		*status =
 		    cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					  &entry);
+					  &entry, req_ctx);
+
 		if (unlikely(!entry))
 			goto out;
 

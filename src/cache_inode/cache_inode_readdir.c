@@ -400,7 +400,8 @@ populate_dirent(const struct req_op_context *opctx,
 
 	*state->status =
 	    cache_inode_new_entry(entry_hdl, CACHE_INODE_FLAG_NONE,
-				  &cache_entry);
+				  &cache_entry, opctx);
+
 	if (cache_entry == NULL) {
 		*state->status = CACHE_INODE_NOT_FOUND;
 		/* we do not free entry_hdl because it is consumed by

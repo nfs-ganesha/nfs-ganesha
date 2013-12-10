@@ -185,8 +185,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
 
 	/* Allocation of a new entry in the cache */
-	status =
-	    cache_inode_new_entry(object_handle, CACHE_INODE_FLAG_NONE, entry);
+	status = cache_inode_new_entry(object_handle, CACHE_INODE_FLAG_NONE,
+				       entry, req_ctx);
 
 	if (unlikely(!*entry))
 		goto out;

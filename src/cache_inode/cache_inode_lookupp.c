@@ -139,7 +139,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 		/* Allocation of a new entry in the cache */
 		status =
 		    cache_inode_new_entry(parent_handle, CACHE_INODE_FLAG_NONE,
-					  parent);
+					  parent, req_ctx);
 		if (*parent == NULL)
 			return status;
 
