@@ -89,35 +89,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
 
-		/* This is the replacement for cache_inode_renew_entry.
-		   Rather than calling that function at the start of
-		   every cache_inode call with the inode locked, we call
-		   cache_inode_check trust to perform 'heavyweight'
-		   (timed expiration of cached attributes, getattr-based
-		   directory trust) checks the first time after getting
-		   an inode.  It does all of the checks read-locked and
-		   only acquires a write lock if there's something
-		   requiring a change.
-
-		   There is a second light-weight check done before use
-		   of cached data that checks whether the bits saying
-		   that inode attributes or inode content are trustworthy
-		   have been cleared by, for example, FSAL_CB.
-
-		   To summarize, the current implementation is that
-		   policy-based trust of validity is checked once per
-		   logical series of operations at cache_inode_get, and
-		   asynchronous trust is checked with use (when the
-		   attributes are locked for reading, for example.) */
-
-		status = cache_inode_lock_trust_attrs(*entry, req_ctx, false);
-		if (status != CACHE_INODE_SUCCESS) {
-			cache_inode_put(*entry);
-			*entry = NULL;
-		} else
-			PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
-
-		return status;
+		return CACHE_INODE_SUCCESS;
 	}
 
 	/* Cache miss, allocate a new entry */
