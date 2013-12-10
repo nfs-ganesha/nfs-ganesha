@@ -141,10 +141,16 @@ cache_inode_remove(cache_entry_t *entry, const char *name,
 
 	fsal_status =
 	    entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx, name);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
+		if (fsal_status.major == ERR_FSAL_STALE)
+			cache_inode_kill_entry(entry);
+
 		status = cache_inode_error_convert(fsal_status);
+
 		LogFullDebug(COMPONENT_CACHE_INODE, "unlink %s failure %s",
 			     name, cache_inode_err_str(status));
+
 		if (to_remove_entry->type == DIRECTORY
 		    && status == CACHE_INODE_DIR_NOT_EMPTY) {
 			/* its dirent tree is probably stale, flush it
