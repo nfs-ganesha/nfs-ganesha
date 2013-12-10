@@ -136,6 +136,9 @@ int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
 
 	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
 
+	/** @todo this is racy, use cache_inode_lock_trust_attrs and
+	 *        cache_inode_access_no_mutex
+	 */
 	if (entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid) {
 		cache_status =
 		    cache_inode_access(entry, FSAL_READ_ACCESS, req_ctx);

@@ -118,6 +118,7 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	} else
 		mode = 0;
 
+	/** @todo this is racy, use cache_inode_lock_trust_attrs */
 	uid =
 	    (*request_mask & _9P_GETATTR_UID) ?
 		(u32) pfid->pentry->obj_handle->attributes.owner :
