@@ -236,12 +236,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 {
 	cache_inode_status_t status;
 	fsal_status_t fsal_status;
-	cache_entry_t *oentry, *nentry;
+	cache_entry_t *oentry, *nentry = NULL;
 	struct gsh_buffdesc fh_desc;
 	cih_latch_t latch;
-	bool lrurefed = false;
-	bool locksinited = false;
+	bool has_hashkey = false;
 	int rc = 0;
+
+	*entry = NULL;
 
 	/* Get FSAL-specific key */
 	new_obj->ops->handle_to_key(new_obj, &fh_desc);
@@ -270,13 +271,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* We did not find the object.  Pull an entry off the LRU. */
 	status = cache_inode_lru_get(&nentry);
-	if (!nentry) {
+
+	if (nentry == NULL) {
+		/* Release the subtree hash table lock */
+		cih_latch_rele(&latch);
 		LogCrit(COMPONENT_CACHE_INODE, "cache_inode_lru_get failed");
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
 	}
-
-	locksinited = true;
 
 	/* See if someone raced us. */
 	oentry =
@@ -292,21 +294,23 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		/* Release the new entry we acquired. */
-		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
 		*entry = oentry;
 		goto out;
 	}
 
 	/* We won the race. */
-	*entry = nentry;
-
-	/* This should be the sentinel, plus one to use the entry we
-	   just returned. */
-	lrurefed = true;
 
 	/* Set cache key */
-	cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
+
+	has_hashkey = cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
+
+	if (!has_hashkey) {
+		cih_latch_rele(&latch);
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Could not hash new entry");
+		status = CACHE_INODE_MALLOC_ERROR;
+		goto out;
+	}
 
 	/* Initialize common fields */
 	nentry->type = new_obj->type;
@@ -367,16 +371,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	default:
 		/* Should never happen */
+		cih_latch_rele(&latch);
 		status = CACHE_INODE_INCONSISTENT_ENTRY;
 		LogMajor(COMPONENT_CACHE_INODE, "unknown type %u provided",
 			 nentry->type);
-		cih_latch_rele(&latch);
-		*entry = NULL;
 		goto out;
 	}
 
 	nentry->obj_handle = new_obj;
-	new_obj = NULL;		/* mark it as having a home */
 	cache_inode_fixup_md(nentry);
 
 	/* Everything ready and we are reaty to insert into hash table.
@@ -390,27 +392,30 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	if (unlikely(rc)) {
 		LogCrit(COMPONENT_CACHE_INODE,
 			"entry could not be added to hash, rc=%d", rc);
-		new_obj = nentry->obj_handle;
 		nentry->obj_handle = NULL; /* give it back and poison the
 					    * entry */
 		status = CACHE_INODE_HASH_SET_ERROR;
-		*entry = NULL;
 		goto out;
 	}
 
 	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
-	status = CACHE_INODE_SUCCESS;
+	*entry = nentry;
+	return CACHE_INODE_SUCCESS;
 
  out:
-	if (status != CACHE_INODE_SUCCESS) {
+	if (nentry != NULL) {
 		/* Deconstruct the object */
-		if (locksinited) {
-			pthread_rwlock_destroy(&nentry->attr_lock);
-			pthread_rwlock_destroy(&nentry->content_lock);
-			pthread_rwlock_destroy(&nentry->state_lock);
-		}
-		if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS)
-			cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
+
+		/* Destroy the locks */
+		pthread_rwlock_destroy(&nentry->attr_lock);
+		pthread_rwlock_destroy(&nentry->content_lock);
+		pthread_rwlock_destroy(&nentry->state_lock);
+
+		if (has_hashkey)
+			cache_inode_key_delete(&nentry->fh_hk.key);
+
+		/* Release the new entry we acquired. */
+		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
