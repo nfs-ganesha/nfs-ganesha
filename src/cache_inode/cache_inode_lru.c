@@ -1055,12 +1055,52 @@ cache_inode_lru_pkgshutdown(void)
 	return rc;
 }
 
+static inline bool init_rw_locks(cache_entry_t *entry)
+{
+	int rc;
+	bool attr_lock_init = false;
+	bool content_lock_init = false;
+
+	/* Initialize the entry locks */
+	rc = pthread_rwlock_init(&entry->attr_lock, NULL);
+
+	if (rc != 0)
+		goto fail;
+
+	attr_lock_init = true;
+
+	rc = pthread_rwlock_init(&entry->content_lock, NULL);
+
+	if (rc != 0)
+		goto fail;
+
+	content_lock_init = true;
+
+	rc = pthread_rwlock_init(&entry->state_lock, NULL);
+
+	if (rc == 0)
+		return true;
+
+fail:
+
+	LogCrit(COMPONENT_CACHE_INODE,
+		"pthread_rwlock_init returned %d (%s)",
+		rc, strerror(rc));
+
+	if (attr_lock_init)
+		pthread_rwlock_destroy(&entry->attr_lock);
+
+	if (content_lock_init)
+		pthread_rwlock_destroy(&entry->content_lock);
+
+	return false;
+}
+
 static cache_inode_status_t
 alloc_cache_entry(cache_entry_t **entry)
 {
 	cache_inode_status_t status;
 	cache_entry_t *nentry;
-	int rc;
 
 	nentry = pool_alloc(cache_inode_entry_pool, NULL);
 	if (!nentry) {
@@ -1071,19 +1111,8 @@ alloc_cache_entry(cache_entry_t **entry)
 	}
 
 	/* Initialize the entry locks */
-	rc = pthread_rwlock_init(&nentry->attr_lock, NULL);
-
-	if (rc == 0)
-		rc = pthread_rwlock_init(&nentry->content_lock, NULL);
-
-	if (rc == 0)
-		rc = pthread_rwlock_init(&nentry->state_lock, NULL);
-
-	if (rc != 0) {
+	if (!init_rw_locks(nentry)) {
 		/* Recycle */
-		LogCrit(COMPONENT_CACHE_INODE,
-			"pthread_rwlock_init returned %d (%s)", rc,
-			strerror(rc));
 		status = CACHE_INODE_INIT_ENTRY_FAILED;
 		pool_free(cache_inode_entry_pool, nentry);
 		nentry = NULL;
@@ -1125,6 +1154,13 @@ cache_inode_lru_get(cache_entry_t **entry)
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Recycling entry at %p.", nentry);
 		cache_inode_lru_clean(nentry);
+		if (!init_rw_locks(nentry)) {
+			/* Recycle */
+			status = CACHE_INODE_INIT_ENTRY_FAILED;
+			pool_free(cache_inode_entry_pool, nentry);
+			nentry = NULL;
+			goto out;
+		}
 	} else {
 		/* alloc entry */
 		status = alloc_cache_entry(&nentry);
