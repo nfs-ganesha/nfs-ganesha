@@ -458,7 +458,7 @@ void release_openstate(state_owner_t *open_owner)
 			state_status =
 			    state_share_remove(state_found->state_entry,
 					       open_owner, state_found);
-			if (state_status != STATE_SUCCESS) {
+			if (!state_unlock_err_ok(state_status)) {
 				LogEvent(COMPONENT_CLIENTID,
 					 "EXPIRY failed to release share stateid error %s",
 					 state_err_str(state_status));

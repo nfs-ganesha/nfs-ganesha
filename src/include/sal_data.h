@@ -63,6 +63,14 @@
 #include "fsal_pnfs.h"
 
 /**
+ * @brief Number of errors before giving up on recovery
+ *
+ * We set a maximum because the recovery routines need to terminate at
+ * some point.
+ */
+#define STATE_ERR_MAX 100
+
+/**
  * @brief Indicate that lock extends to the entire range of the file
  *
  * This is true no matter what the beginning of the lock range is.

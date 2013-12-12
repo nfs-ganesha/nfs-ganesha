@@ -74,6 +74,8 @@ void state_wipe_file(cache_entry_t *entry);
 void dump_all_owners(void);
 #endif
 
+bool state_unlock_err_ok(state_status_t status);
+
 /*****************************************************************************
  *
  * 9P State functions

@@ -710,6 +710,13 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	return nfserror;
 }
 
+bool state_unlock_err_ok(state_status_t status)
+{
+	return status == STATE_SUCCESS ||
+	       status == STATE_FSAL_ESTALE ||
+	       status == STATE_DEAD_ENTRY;
+}
+
 /** String for undefined state owner types */
 const char *invalid_state_owner_type = "INVALID STATE OWNER TYPE";
 

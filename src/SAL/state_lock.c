@@ -85,14 +85,6 @@ static state_status_t do_lock_op(cache_entry_t *entry,
  * last release on the data structure ensure that it is freed.
  */
 
-/**
- * @brief Number of errors before giving up on recovery
- *
- * We set a maximum because the recovery routines need to terminate at
- * some point.
- */
-#define STATE_ERR_MAX 100
-
 #ifdef DEBUG_SAL
 /**
  * @brief All locks.
@@ -3136,7 +3128,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		put_gsh_export(opctx.export);
 
-		if (status != STATE_SUCCESS) {
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
@@ -3189,7 +3181,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		    state_nlm_unshare(entry, OPEN4_SHARE_ACCESS_NONE,
 				      OPEN4_SHARE_DENY_NONE, owner);
 
-		if (status != STATE_SUCCESS) {
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
@@ -3289,7 +3281,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		    state_unlock(entry, export, req_ctx, owner, state, &lock,
 				 found_entry->sle_type);
 
-		if (status != STATE_SUCCESS) {
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
