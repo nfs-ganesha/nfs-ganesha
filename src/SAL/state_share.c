@@ -84,6 +84,9 @@ static state_status_t do_share_op(cache_entry_t *entry, state_owner_t *owner,
 	fsal_status =
 	    entry->obj_handle->ops->share_op(entry->obj_handle, NULL, *share);
 
+	if (fsal_status.major == ERR_FSAL_STALE)
+		cache_inode_kill_entry(entry);
+
 	status = state_error_convert(fsal_status);
 
 	LogFullDebug(COMPONENT_STATE, "FSAL_share_op returned %s",

@@ -2167,6 +2167,9 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry, exportlist_t *export,
 						    NULL, FSAL_OP_UNLOCK,
 						    punlock, NULL);
 
+		if (fsal_status.major == ERR_FSAL_STALE)
+			cache_inode_kill_entry(entry);
+
 		t_status = state_error_convert(fsal_status);
 
 		LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
