@@ -98,7 +98,8 @@ if (PKG_CONFIG_EXECUTABLE)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif ()
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+get_filename_component(INCLUDED_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+include(${INCLUDED_DIR}/FindPackageHandleStandardArgs.cmake)
 find_package_handle_standard_args(PkgConfig
                                   REQUIRED_VARS PKG_CONFIG_EXECUTABLE
                                   VERSION_VAR PKG_CONFIG_VERSION_STRING)

@@ -99,8 +99,9 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageMessage.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/CMakeParseArguments.cmake)
+get_filename_component(INCLUDED_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+include(${INCLUDED_DIR}/FindPackageMessage.cmake)
+include(${INCLUDED_DIR}/CMakeParseArguments.cmake)
 
 # internal helper macro
 macro(_FPHSA_FAILURE_MESSAGE _msg)
@@ -144,7 +145,8 @@ macro(_FPHSA_HANDLE_FAILURE_CONFIG_MODE)
 endmacro()
 
 
-function(FIND_PACKAGE_HANDLE_STANDARD_ARGS _NAME _FIRST_ARG)
+#function(FIND_PACKAGE_HANDLE_STANDARD_ARGS _NAME _FIRST_ARG)
+function(find_package_handle_standard_args _NAME _FIRST_ARG)
 
 # set up the arguments for CMAKE_PARSE_ARGUMENTS and check whether we are in
 # new extended or in the "old" mode:
