@@ -786,7 +786,7 @@ typedef enum lock_type_t {
 } lock_type_t;
 
 struct state_lock_entry_t {
-	struct glist_head sle_list;	/*< Ranges on this lock */
+	struct glist_head sle_list;	/*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
 	struct glist_head sle_locks;	/*< Locks on this state/client */
 #ifdef DEBUG_SAL
@@ -978,6 +978,7 @@ struct state_nlm_share_t {
 	struct glist_head sns_share_per_file;	/*< Shares on this file */
 	struct glist_head sns_share_per_owner;	/*< Shares for this owner */
 	struct glist_head sns_share_per_client;	/*< Shares for this client */
+	struct glist_head sns_share_per_export;	/*< Shares for this export */
 	state_owner_t *sns_owner;	/*< State owner */
 	cache_entry_t *sns_entry;	/*< File */
 	exportlist_t *sns_export;	/*< Export */

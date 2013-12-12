@@ -156,10 +156,9 @@ typedef struct exportlist {
 	struct glist_head exp_state_list;	/*< List of NFS v4 state
 						    belonging to this export */
 	struct glist_head exp_lock_list;	/*< List of locks belonging
-						   to this export Only need
-						   this list if NLM,
-						   otherwise state list is
-						   sufficient */
+						   to this export */
+	struct glist_head exp_nlm_share_list;	/*< List of NLM shares
+						   belonging to this export */
 	struct glist_head exp_root_list;	/*< List of exports rooted
 						    on the same inode */
 	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on

@@ -3175,11 +3175,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		pthread_mutex_unlock(&nsmclient->ssc_mutex);
 
 		/* Remove all shares held by this NSM Client and
-		 * Owner on the file
+		 * Owner on the file (on all exports)
 		 */
-		status =
-		    state_nlm_unshare(entry, OPEN4_SHARE_ACCESS_NONE,
-				      OPEN4_SHARE_DENY_NONE, owner);
+		status = state_nlm_unshare(entry,
+					   NULL,
+					   OPEN4_SHARE_ACCESS_NONE,
+					   OPEN4_SHARE_DENY_NONE,
+					   owner);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,

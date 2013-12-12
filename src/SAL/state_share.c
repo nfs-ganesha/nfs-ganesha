@@ -770,6 +770,12 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	glist_add_tail(&entry->object.file.nlm_share_list,
 		       &nlm_share->sns_share_per_file);
 
+	/* Add to share list for export */
+	pthread_mutex_lock(&export->exp_state_mutex);
+	glist_add_tail(&export->exp_nlm_share_list,
+		       &nlm_share->sns_share_per_export);
+	pthread_mutex_unlock(&export->exp_state_mutex);
+
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
 	old_entry_share_deny = state_share_get_share_deny(entry);
@@ -800,6 +806,11 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 						   share_deny,
 						   OPEN4_SHARE_ACCESS_NONE,
 						   OPEN4_SHARE_DENY_NONE, true);
+
+			/* Remove from share list for export */
+			pthread_mutex_lock(&export->exp_state_mutex);
+			glist_del(&nlm_share->sns_share_per_export);
+			pthread_mutex_unlock(&export->exp_state_mutex);
 
 			/* Remove the share from the list for the file. If the
 			 * list is now empty also remove the extra pin ref.
@@ -859,14 +870,19 @@ state_status_t state_nlm_share(cache_entry_t *entry,
  * @brief Implement NLM unshare procedure
  *
  * @param[in,out] entry        File on which to opwerate
+ * @param[in]     export       Export share is associated with
+ *                             NULL matches any export
  * @param[in]     share_access Access mode to relinquish
  * @param[in]     share_deny   Deny mode to relinquish
  * @param[in]     owner        Share owner
  *
  * @return State status.
  */
-state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
-				 int share_deny, state_owner_t *owner)
+state_status_t state_nlm_unshare(cache_entry_t *entry,
+				 exportlist_t *export,
+				 int share_access,
+				 int share_deny,
+				 state_owner_t *owner)
 {
 	struct glist_head *glist, *glistn;
 	unsigned int old_entry_share_access;
@@ -895,6 +911,9 @@ state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
 		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
 
 		if (different_owners(owner, nlm_share->sns_owner))
+			continue;
+
+		if ((export != NULL) && (export != nlm_share->sns_export))
 			continue;
 
 		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that
@@ -960,6 +979,11 @@ state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
 			     "removed share_access %u, share_deny %u",
 			     removed_share_access, removed_share_deny);
 
+		/* Remove from share list for export */
+		pthread_mutex_lock(&nlm_share->sns_export->exp_state_mutex);
+		glist_del(&nlm_share->sns_share_per_export);
+		pthread_mutex_unlock(&nlm_share->sns_export->exp_state_mutex);
+
 		/* Remove the share from the list for the file. If the list
 		 * is now empty also remove the extra pin ref.
 		 */
@@ -1017,6 +1041,11 @@ void state_share_wipe(cache_entry_t *entry)
 		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
 
 		owner = nlm_share->sns_owner;
+
+		/* Remove from share list for export */
+		pthread_mutex_lock(&nlm_share->sns_export->exp_state_mutex);
+		glist_del(&nlm_share->sns_share_per_export);
+		pthread_mutex_unlock(&nlm_share->sns_export->exp_state_mutex);
 
 		/* Remove the share from the list for the file. If the list
 		 * is now empty also remove the extra pin ref.

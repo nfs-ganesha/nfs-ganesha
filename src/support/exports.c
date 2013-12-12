@@ -1330,6 +1330,7 @@ static int BuildExportEntry(config_item_t block)
 		    nfs_param.cache_param.expire_type_attr;
 		glist_init(&p_entry->exp_state_list);
 		glist_init(&p_entry->exp_lock_list);
+		glist_init(&p_entry->exp_nlm_share_list);
 		glist_init(&p_entry->clients.client_list);
 	}
 
@@ -2445,6 +2446,7 @@ static bool BuildRootExport()
 	p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
 	glist_init(&p_entry->exp_state_list);
 	glist_init(&p_entry->exp_lock_list);
+	glist_init(&p_entry->exp_nlm_share_list);
 	glist_init(&p_entry->clients.client_list);
 
 	/* Init the access list */

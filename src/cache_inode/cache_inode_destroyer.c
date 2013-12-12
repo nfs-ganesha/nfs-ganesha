@@ -574,6 +574,7 @@ destroy_nlm_shares(cache_entry_t *entry)
 		if (glist_empty(&entry->object.file.nlm_share_list))
 			cache_inode_dec_pin_ref(entry, false);
 		glist_del(&nlm_share->sns_share_per_client);
+		glist_del(&nlm_share->sns_share_per_export);
 		dec_nsm_client_ref_for_shutdown(owner->so_owner.so_nlm_owner.
 						so_client->slc_nsm_client);
 		glist_del(&nlm_share->sns_share_per_owner);
