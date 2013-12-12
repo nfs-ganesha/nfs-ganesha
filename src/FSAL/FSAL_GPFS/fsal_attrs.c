@@ -305,7 +305,7 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Asking to set atime to NOW */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_ATIME_SERVER))
     {
-      attr_changed |= XATTR_ATIME_NOW;
+      attr_changed |= (XATTR_ATIME_NOW|XATTR_ATIME);
       LogDebug(COMPONENT_FSAL,
                "current atime = %lu, new atime = NOW",
                (unsigned long)current_attrs.atime.seconds);
@@ -314,7 +314,7 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Asking to set mtime to NOW */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME_SERVER))
     {
-      attr_changed |= XATTR_MTIME_NOW;
+      attr_changed |= (XATTR_MTIME_NOW|XATTR_MTIME);
       LogDebug(COMPONENT_FSAL,
                "current mtime = %lu, new mtime = NOW",
                (unsigned long)current_attrs.mtime.seconds);
