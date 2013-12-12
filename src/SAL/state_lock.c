@@ -565,13 +565,13 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
 				     ->slc_nsm_client->ssc_mutex);
-
-		/* Add to list of locks owned by export */
-		pthread_mutex_lock(&export->exp_state_mutex);
-		glist_add_tail(&export->exp_lock_list,
-			       &new_entry->sle_export_locks);
-		pthread_mutex_unlock(&export->exp_state_mutex);
 	}
+
+	/* Add to list of locks owned by export */
+	pthread_mutex_lock(&export->exp_state_mutex);
+	glist_add_tail(&export->exp_lock_list,
+		       &new_entry->sle_export_locks);
+	pthread_mutex_unlock(&export->exp_state_mutex);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -706,14 +706,12 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 
 			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
 					   so_client->slc_nsm_client);
-
-			/* Remove from list of locks owned by export */
-			pthread_mutex_lock(&lock_entry->sle_export
-					   ->exp_state_mutex);
-			glist_del(&lock_entry->sle_export_locks);
-			pthread_mutex_unlock(&lock_entry->sle_export
-					     ->exp_state_mutex);
 		}
+
+		/* Remove from list of locks owned by export */
+		pthread_mutex_lock(&lock_entry->sle_export->exp_state_mutex);
+		glist_del(&lock_entry->sle_export_locks);
+		pthread_mutex_unlock(&lock_entry->sle_export->exp_state_mutex);
 
 		/* Remove from list of locks owned by owner */
 		pthread_mutex_lock(&owner->so_mutex);

@@ -394,8 +394,8 @@ remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry)
 			dec_nsm_client_ref_for_shutdown(owner->so_owner.
 							so_nlm_owner.so_client->
 							slc_nsm_client);
-			glist_del(&lock_entry->sle_export_locks);
 		}
+		glist_del(&lock_entry->sle_export_locks);
 		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
 			glist_del(&lock_entry->sle_state_locks);
 		glist_del(&lock_entry->sle_owner_locks);
@@ -556,7 +556,7 @@ clear_fsal_shares(cache_entry_t *entry)
  */
 
 static bool
-destroy_nsm_shares(cache_entry_t *entry)
+destroy_nlm_shares(cache_entry_t *entry)
 {
 	/* Iterator for NSM shares */
 	struct glist_head *nsi;
@@ -771,7 +771,7 @@ destroy_file_state(cache_entry_t *entry)
 	bool nsm_shares = false;
 	/* If nfs4 shares were found */
 	bool nfs4_shares = false;
-	nsm_shares = destroy_nsm_shares(entry);
+	nsm_shares = destroy_nlm_shares(entry);
 	destroy_locks(entry);
 	nfs4_shares = destroy_nfs4_state(entry);
 	if (nsm_shares || nfs4_shares)
