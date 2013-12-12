@@ -74,7 +74,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *v3_handle;
-	struct gsh_export *exp = NULL;
 	struct fsal_export *export;
 	cache_entry_t *entry = NULL;
 	cache_inode_fsal_data_t fsal_data;
@@ -92,16 +91,9 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	if (v3_handle->exportid == req_ctx->export->export.id) {
-		export = req_ctx->export->export.export_hdl;
-	} else {
-		exp = get_gsh_export(v3_handle->exportid, true);
-		if (exp == NULL) {
-			*status = NFS3ERR_STALE;
-			goto badhdl;
-		}
-		export = exp->export.export_hdl;
-	}
+	assert(v3_handle->exportid == req_ctx->export->export.id);
+
+	export = req_ctx->export->export.export_hdl;
 
 	/* Give the export a crack at it */
 	fsal_data.export = export;
@@ -112,8 +104,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	fsal_status =
 	    export->ops->extract_handle(export, FSAL_DIGEST_NFSV3,
 					&fsal_data.fh_desc);
-	if (exp != NULL)
-		put_gsh_export(exp);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		cache_status = cache_inode_error_convert(fsal_status);
