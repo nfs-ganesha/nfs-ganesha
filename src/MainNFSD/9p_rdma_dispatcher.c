@@ -64,7 +64,6 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 {
 	msk_trans_t *trans = arg;
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
-	int i;
 
 	if (priv) {
 		if (priv->pconn) {
@@ -202,8 +201,10 @@ void *_9p_rdma_thread(void *Arg)
 			_9P_RDMA_BUFF_NUM * nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
+		rc = errno;
 		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not register rdmabuf");
+			 "9P/RDMA: trans handler could not register rdmabuf, errno: %s (%d)",
+			 strerror(rc), rc);
 		goto error;
 	}
 
@@ -260,6 +261,7 @@ void *_9p_rdma_thread(void *Arg)
 static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
 {
 	struct ibv_mr *mr;
+	int rc;
 
 	/* Do nothing if we already have stuff setup */
 	if (msk_getpd(trans)->private)
@@ -269,8 +271,10 @@ static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
 			_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
+		rc = errno;
 		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not register rdmabuf");
+			 "9P/RDMA: trans handler could not register outrdmabuf, errno: %s (%d)",
+			 strerror(rc), rc);
 	}
 
 
@@ -342,7 +346,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	pthread_attr_t attr_thr;
 	pthread_t thrid_handle_trans;
 
-	uint8_t *outrdmabuf;
+	uint8_t *outrdmabuf = NULL;
 	msk_data_t *wdata;
 	struct _9p_outqueue *outqueue;
 
