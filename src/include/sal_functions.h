@@ -74,6 +74,8 @@ void state_wipe_file(cache_entry_t *entry);
 void dump_all_owners(void);
 #endif
 
+void state_release_export(struct gsh_export *exp);
+
 bool state_unlock_err_ok(state_status_t status);
 
 /*****************************************************************************
@@ -518,6 +520,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 				      struct req_op_context *req_ctx,
 				      state_t *state);
 
+void state_export_unlock_all(struct req_op_context *req_ctx);
+
 void state_lock_wipe(cache_entry_t *entry);
 
 void cancel_all_nlm_blocked();
@@ -566,6 +570,7 @@ void state_nfs4_state_wipe(cache_entry_t *entry);
 
 void release_lockstate(state_owner_t *lock_owner);
 void release_openstate(state_owner_t *open_owner);
+void state_export_release_nfs4_state(exportlist_t *export);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);
@@ -625,6 +630,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 				 state_owner_t *owner);
 
 void state_share_wipe(cache_entry_t *entry);
+void state_export_unshare_all(struct req_op_context *req_ctx);
 
 /******************************************************************************
  *

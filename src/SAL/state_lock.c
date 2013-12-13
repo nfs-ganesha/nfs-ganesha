@@ -3304,6 +3304,93 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 }
 
 /**
+ * @brief Release all locks held on an export
+ *
+ * @param[in] req_ctx Request context (use the export in the context)
+ *
+ */
+void state_export_unlock_all(struct req_op_context *req_ctx)
+{
+	exportlist_t *export = &req_ctx->export->export;
+	state_lock_entry_t *found_entry;
+	fsal_lock_param_t lock;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	state_status_t status = 0;
+	state_owner_t *owner;
+	state_t *state;
+
+	/* Only accept so many errors before giving up. */
+	while (errcnt < STATE_ERR_MAX) {
+		pthread_mutex_lock(&export->exp_state_mutex);
+
+		/* We just need to find any file this owner has locks on.
+		 * We pick the first lock the owner holds, and use it's file.
+		 */
+		found_entry = glist_first_entry(&export->exp_lock_list,
+						state_lock_entry_t,
+						sle_export_locks);
+
+		/* If we don't find any entries, then we are done. */
+		if (found_entry == NULL) {
+			pthread_mutex_unlock(&export->exp_state_mutex);
+			break;
+		}
+
+		lock_entry_inc_ref(found_entry);
+
+		/* Move this entry to the end of the list
+		 * (this will help if errors occur)
+		 */
+		glist_del(&found_entry->sle_export_locks);
+		glist_add_tail(&export->exp_lock_list,
+			       &found_entry->sle_export_locks);
+
+		pthread_mutex_unlock(&export->exp_state_mutex);
+
+		/* Extract the cache inode entry from the lock entry and
+		 * release the lock entry
+		 */
+		entry = found_entry->sle_entry;
+		owner = found_entry->sle_owner;
+		state = found_entry->sle_state;
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		lock_entry_dec_ref(found_entry);
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		/* Make lock that covers the whole file.
+		 * type doesn't matter for unlock
+		 */
+		lock.lock_type = FSAL_LOCK_R;
+		lock.lock_start = 0;
+		lock.lock_length = 0;
+
+		/* Remove all locks held by this owner on the file */
+		status = state_unlock(entry, export, req_ctx, owner, state,
+				      &lock, found_entry->sle_type);
+
+		if (!state_unlock_err_ok(status)) {
+			/* Increment the error count and try the next lock,
+			 * with any luck the memory pressure which is causing
+			 * the problem will resolve itself.
+			 */
+			LogDebug(COMPONENT_STATE, "state_unlock failed %s",
+				 state_err_str(status));
+			errcnt++;
+		}
+
+		/* Release the lru ref to the cache inode we held while
+		 * calling unlock
+		 */
+		cache_inode_put(entry);
+	}
+}
+
+/**
  * @brief Find a lock and add to grant list
  *
  * @param[in] entry      File to search

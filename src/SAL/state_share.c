@@ -49,6 +49,7 @@
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
+#include "export_mgr.h"
 
 static void state_share_update_counter(cache_entry_t *entry, int old_access,
 				       int old_deny, int new_access,
@@ -157,6 +158,7 @@ state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
 		share_param.share_deny = new_entry_share_deny;
 
 		status = do_share_op(entry, owner, &share_param);
+
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
 			state_share_update_counter(entry, new_share_access,
@@ -228,6 +230,7 @@ state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
 		share_param.share_deny = new_entry_share_deny;
 
 		status = do_share_op(entry, owner, &share_param);
+
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
 			state_share_update_counter(entry,
@@ -315,6 +318,7 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
 		share_param.share_deny = new_entry_share_deny;
 
 		status = do_share_op(entry, owner, &share_param);
+
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
 			state_share_update_counter(entry, new_share_access,
@@ -397,6 +401,7 @@ state_status_t state_share_downgrade(cache_entry_t *entry,
 		share_param.share_deny = new_entry_share_deny;
 
 		status = do_share_op(entry, owner, &share_param);
+
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
 			state_share_update_counter(entry, new_share_access,
@@ -1078,6 +1083,61 @@ void state_share_wipe(cache_entry_t *entry)
 
 		/* Free the NLM Share (and continue to look for more) */
 		gsh_free(nlm_share);
+	}
+}
+
+void state_export_unshare_all(struct req_op_context *req_ctx)
+{
+	exportlist_t *export = &req_ctx->export->export;
+	int errcnt = 0;
+	state_nlm_share_t *nlm_share;
+	state_owner_t *owner;
+	cache_entry_t *entry;
+	state_status_t status;
+
+	while (errcnt < STATE_ERR_MAX) {
+		pthread_mutex_lock(&export->exp_state_mutex);
+
+		nlm_share = glist_first_entry(&export->exp_nlm_share_list,
+					      state_nlm_share_t,
+					      sns_share_per_export);
+
+		if (nlm_share == NULL) {
+			pthread_mutex_unlock(&export->exp_state_mutex);
+			break;
+		}
+
+		entry = nlm_share->sns_entry;
+		owner = nlm_share->sns_owner;
+
+		/* get a reference to the owner */
+		inc_state_owner_ref(owner);
+
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		/* Drop the export mutex to call unshare */
+		pthread_mutex_unlock(&export->exp_state_mutex);
+
+		/* Remove all shares held by this Owner on this export */
+		status = state_nlm_unshare(entry,
+					   export,
+					   OPEN4_SHARE_ACCESS_NONE,
+					   OPEN4_SHARE_DENY_NONE,
+					   owner);
+
+		dec_state_owner_ref(owner);
+		cache_inode_put(entry);
+
+		if (!state_unlock_err_ok(status)) {
+			/* Increment the error count and try the next share,
+			 * with any luck the memory pressure which is causing
+			 * the problem will resolve itself.
+			 */
+			LogFullDebug(COMPONENT_STATE,
+				     "state_unlock returned %s",
+				     state_err_str(status));
+			errcnt++;
+		}
 	}
 }
 

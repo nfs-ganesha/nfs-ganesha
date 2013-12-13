@@ -479,6 +479,44 @@ void release_openstate(state_owner_t *open_owner)
 	}
 }
 
+/**
+ * @brief Remove all state belonging to an export.
+ *
+ * @param[in] export The export to release state for
+ */
+void state_export_release_nfs4_state(exportlist_t *export)
+{
+	state_t *state;
+	state_status_t state_status;
+
+	while (1) {
+		pthread_mutex_lock(&export->exp_state_mutex);
+
+		state = glist_first_entry(&export->exp_state_list,
+					  state_t,
+					  state_export_list);
+
+		pthread_mutex_unlock(&export->exp_state_mutex);
+
+		if (state == NULL)
+			break;
+
+		if (state->state_type == STATE_TYPE_SHARE) {
+			state_status = state_share_remove(state->state_entry,
+							  state->state_owner,
+							  state);
+
+			if (!state_unlock_err_ok(state_status)) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "EXPIRY failed to release share stateid error %s",
+					 state_err_str(state_status));
+			}
+		}
+
+		state_del(state, false);
+	}
+}
+
 #ifdef DEBUG_SAL
 void dump_all_states(void)
 {
