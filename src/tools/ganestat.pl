@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin perl
 #
 ################## Doxygen header ##################
 #*

@@ -109,7 +109,7 @@ static inline int lustre_name_to_handle_at(char *mntpath,
 					   struct lustre_file_handle
 					   *out_handle, int flags)
 {
-	char path[MAXPATHLEN];
+	char path[MAXPATHLEN + 2];
 
 	if (!mntpath || !at_handle || !name || !out_handle)
 		return -1;
