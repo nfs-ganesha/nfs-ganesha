@@ -293,6 +293,7 @@ static void free_fid(struct _9p_fid *pfid)
 		exp = container_of(pfid->export, struct gsh_export, export);
 		put_gsh_export(exp);
 	}
+	gsh_free(pfid->specdata.xattr.xattr_content);
 	gsh_free(pfid);
 }
 
@@ -336,14 +337,12 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 						       xattr_size);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
-				gsh_free(pfid->specdata.xattr.xattr_content);
 				return _9p_tools_errno(
 					   cache_inode_error_convert(
 					       fsal_status));
 			}
 		}
 	}
-	gsh_free(pfid->specdata.xattr.xattr_content);
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
