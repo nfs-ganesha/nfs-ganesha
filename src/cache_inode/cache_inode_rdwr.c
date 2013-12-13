@@ -170,7 +170,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		   drive. */
 
 		if (*sync && !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)
-		    && !fsal_sync) {
+		    && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
 			fsal_status = obj_hdl->ops->commit(obj_hdl, req_ctx,
 							   offset, io_size);
 		} else {
