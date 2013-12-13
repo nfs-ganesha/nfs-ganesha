@@ -237,12 +237,14 @@ void _9p_tools_acess2fsal(u32 *paccessin, fsal_accessflags_t *pfsalaccess)
 {
 	memset((char *)pfsalaccess, 0, sizeof(fsal_accessflags_t));
 
-	if (*paccessin & O_WRONLY)
-		*pfsalaccess |= FSAL_W_OK;
-	if (*paccessin & O_RDONLY)
-		*pfsalaccess |= FSAL_R_OK;
 	if (*paccessin & O_RDWR)
 		*pfsalaccess |= FSAL_R_OK | FSAL_W_OK;
+	else if (*paccessin & O_WRONLY)
+		*pfsalaccess |= FSAL_W_OK;
+	else /* O_RDONLY == 0, so *paccessin has it */
+		*pfsalaccess |= FSAL_R_OK;
+
+
 }				/* _9p_tools_acess2fsal */
 
 void _9p_chomp_attr_value(char *str, size_t size)
