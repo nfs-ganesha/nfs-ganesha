@@ -43,6 +43,7 @@
 #include "sal_functions.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
+#include "export_mgr.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -316,6 +317,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	nentry->type = new_obj->type;
 	nentry->flags = 0;
 	glist_init(&nentry->state_list);
+	glist_init(&nentry->export_list);
 	glist_init(&nentry->layoutrecall_list);
 
 	switch (nentry->type) {
@@ -398,13 +400,40 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		goto out;
 	}
 
+	/* Map this new entry and the active export */
+	if (!check_mapping(nentry, opctx->export)) {
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Unable to create export mapping on new entry");
+		/* Release the LRU reference and return error.
+		 * This could leave a dangling cache entry belonging
+		 * to no export, however, such an entry definitely has
+		 * no open files, unless another cache_inode_get is
+		 * successful, so is safe to allow LRU to eventually
+		 * clean up this entry.
+		 */
+		cache_inode_put(nentry);
+		return CACHE_INODE_MALLOC_ERROR;
+	}
+
 	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
 	*entry = nentry;
 	return CACHE_INODE_SUCCESS;
 
  out:
+
+	if (status == CACHE_INODE_ENTRY_EXISTS) {
+		if (!check_mapping(*entry, opctx->export)) {
+			LogCrit(COMPONENT_CACHE_INODE,
+				"Unable to create export mapping on existing entry");
+			status = CACHE_INODE_MALLOC_ERROR;
+		}
+	}
+
 	if (nentry != NULL) {
 		/* Deconstruct the object */
+
+		/* Destroy the export mapping if any */
+		clean_mapping(nentry);
 
 		/* Destroy the locks */
 		pthread_rwlock_destroy(&nentry->attr_lock);

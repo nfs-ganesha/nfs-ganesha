@@ -56,6 +56,124 @@
 
 /**
  *
+ * @brief Check the active export mapping for this entry and update if
+ *        necessary.
+ *
+ * If the entry does not have a mapping for the active export, add one.
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ * @retval true if successful
+ * @retval false if new mapping was necessary and memory alloc failed
+ *
+ */
+
+bool check_mapping(cache_entry_t *entry,
+		   struct gsh_export *export)
+{
+	struct glist_head *glist;
+	struct entry_export_map *expmap;
+	bool try_write = false;
+
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+
+again:
+
+	glist_for_each(glist, &entry->export_list) {
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		/* Found active export on list */
+		if (expmap->export == export) {
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			return true;
+		}
+	}
+
+	if (!try_write) {
+		/* Now take write lock and try again in
+		 * case another thread has raced with us.
+		 */
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		try_write = true;
+		goto again;
+	}
+
+	/* We have the write lock and did not find
+	 * this export on the list, add it.
+	 */
+
+	expmap = gsh_calloc(1, sizeof(*expmap));
+
+	if (expmap == NULL) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		LogCrit(COMPONENT_CACHE_INODE,
+			 "Out of memory");
+		return false;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&export->lock);
+
+	expmap->export = export;
+	expmap->entry = entry;
+
+	glist_add_tail(&entry->export_list,
+		       &expmap->export_per_entry);
+	glist_add_tail(&export->entry_list,
+		       &expmap->entry_per_export);
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	return true;
+}
+
+/**
+ *
+ * @brief Cleans up the export mappings for this entry.
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ */
+
+void clean_mapping(cache_entry_t *entry)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	/* Entry is unreachable and not referenced so no need to hold attr_lock
+	 * to cleanup the export map.
+	 */
+	glist_for_each_safe(glist, glistn, &entry->export_list) {
+		struct entry_export_map *expmap;
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		PTHREAD_RWLOCK_wrlock(&expmap->export->lock);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&expmap->entry_per_export);
+
+		PTHREAD_RWLOCK_unlock(&expmap->export->lock);
+
+		gsh_free(expmap);
+	}
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+}
+
+/**
+ *
  * @brief Gets an entry by using its fsdata as a key and caches it if needed.
  *
  * Gets an entry by using its fsdata as a key and caches it if needed.
@@ -88,6 +206,13 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		/* take an extra reference within the critical section */
 		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
+
+		if (!check_mapping(*entry, req_ctx->export)) {
+			/* Return error instead of entry */
+			cache_inode_put(*entry);
+			*entry = NULL;
+			return CACHE_INODE_MALLOC_ERROR;
+		}
 
 		return CACHE_INODE_SUCCESS;
 	}
@@ -155,6 +280,13 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
+
+		if (!check_mapping(entry, req_ctx->export)) {
+			/* Return error instead of entry */
+			cache_inode_put(entry);
+			return NULL;
+		}
+
 		goto out;
 	}
 	/* Cache miss, allocate a new entry */

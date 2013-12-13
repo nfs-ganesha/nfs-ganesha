@@ -789,6 +789,39 @@ destroy_file_state(cache_entry_t *entry)
 }
 
 /**
+ *
+ * @brief Cleans up the export mappings for this entry without locks
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ */
+
+static void destroy_mapping(cache_entry_t *entry)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	/* Entry is unreachable and not referenced so no need to hold attr_lock
+	 * to cleanup the export map.
+	 */
+	glist_for_each_safe(glist, glistn, &entry->export_list) {
+		struct entry_export_map *expmap;
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&expmap->entry_per_export);
+
+		gsh_free(expmap);
+	}
+}
+
+/**
  * @brief Destroy a single cache entry
  *
  * @note This function is intended to be called only at shutdown.  It
@@ -821,6 +854,8 @@ destroy_entry(cache_entry_t *entry)
 		}
 	}
 	entry->obj_handle = NULL;
+
+	destroy_mapping(entry);
 }
 
 /**

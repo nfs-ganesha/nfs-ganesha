@@ -36,6 +36,8 @@
  * @brief Export manager
  */
 
+#include "nlm_list.h"
+
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
@@ -46,12 +48,25 @@ typedef enum export_state {
 	EXPORT_RELEASE		/*< No references, ready for reaping */
 } export_state_t;
 
+/**
+ * @brief Represents an export.
+ *
+ */
+
 struct gsh_export {
+	/** gsh_exports are kept in an AVL tree by export_id */
 	struct avltree_node node_k;
+	/** The list of cache inode entries belonging to this export */
+	struct glist_head entry_list;
+	/** Read/Write lock protecting export */
 	pthread_rwlock_t lock;
+	/** References to this export */
 	int64_t refcnt;
+	/** The NFS server definition of the export */
 	exportlist_t export;
+	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
+	/** The condition the export is in */
 	export_state_t state;
 };
 

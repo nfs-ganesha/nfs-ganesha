@@ -424,6 +424,9 @@ cache_inode_lru_clean(cache_entry_t *entry)
 		entry->obj_handle = NULL;
 	}
 
+	/* Clean out the export mapping before deconstruction */
+	clean_mapping(entry);
+
 	/* Finalize last bits of the cache entry */
 	cache_inode_key_delete(&entry->fh_hk.key);
 	pthread_rwlock_destroy(&entry->content_lock);

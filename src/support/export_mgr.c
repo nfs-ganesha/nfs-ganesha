@@ -237,6 +237,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		/* update cache */
 		atomic_store_voidptr(cache_slot, &exp->node_k);
 		glist_add_tail(&exportlist, &exp->export.exp_list);
+		glist_init(&exp->entry_list);
 	}
 
  out:

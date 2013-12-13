@@ -57,6 +57,7 @@
 
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
+struct gsh_export;
 
 /** Maximum size of NFSv2 handle */
 static const size_t FILEHANDLE_MAX_LEN_V2 = 32;
@@ -252,6 +253,22 @@ cache_inode_free_dirent(cache_inode_dir_entry_t *dirent)
 }
 
 /**
+ * @brief Represents one of the many-many links between inodes and exports.
+ *
+ */
+
+struct entry_export_map {
+	/** The relevant cache inode entry */
+	cache_entry_t *entry;
+	/** The export the entry belongs to */
+	struct gsh_export *export;
+	/** List of entries per export */
+	struct glist_head entry_per_export;
+	/** List of exports per entry */
+	struct glist_head export_per_entry;
+};
+
+/**
  * @brief Represents a cached inode
  *
  * Information representing a cached file (inode) including metadata,
@@ -346,6 +363,8 @@ struct cache_entry_t {
 	pthread_rwlock_t state_lock;
 	/** States on this cache entry */
 	struct glist_head state_list;
+	/** Exports per entry (protected by attr_lock) */
+	struct glist_head export_list;
 	/** Layout recalls on this entry */
 	struct glist_head layoutrecall_list;
 	/** Lock on type-specific cached content.  See locking
@@ -544,6 +563,9 @@ cache_inode_status_t cache_inode_init(void);
 #define CIG_KEYED_FLAG_NONE         0x0000
 #define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
 
+bool check_mapping(cache_entry_t *entry,
+		   struct gsh_export *export);
+void clean_mapping(cache_entry_t *entry);
 cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				     const struct req_op_context *opctx,
 				     cache_entry_t **entry);
