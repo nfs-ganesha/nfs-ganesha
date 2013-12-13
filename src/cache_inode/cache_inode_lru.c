@@ -569,6 +569,56 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 }
 
 /**
+ * @brief Push an entry to the cleanup queue that may be unexported
+ * for out-of-line cleanup
+ *
+ * This routine is used to try pushing a cache inode into the cleanup
+ * queue. If the entry ends up with another LRU reference before this
+ * is accomplished, then don't push it to cleanup.
+ *
+ * This will be used when unexporting an export. Any cache inode entry
+ * that only belonged to that export is a candidate for cleanup.
+ * However, it is possible the entry is still accessible via another
+ * export, and an LRU reference might be gained before we can lock the
+ * AVL tree. In that case, the entry must be left alone (thus
+ * cache_inode_kill_entry is NOT suitable for this purpose).
+ *
+ * @param[in] entry  The entry to clean
+ */
+void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
+{
+	cache_inode_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	cih_latch_t latch;
+
+	QLOCK(qlane);
+
+	if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
+			    __func__, __LINE__)) {
+		uint32_t refcnt;
+		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+		/* there are two cases which permit reclaim,
+		 * entry is:
+		 * 1. reachable but unref'd (refcnt==2)
+		 * 2. unreachable, being removed (plus refcnt==0)
+		 *    for safety, take only the former
+		 */
+		if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
+			/* it worked */
+			struct lru_q *q = lru_queue_of(entry);
+			cih_remove_latched(entry, &latch,
+					   CIH_REMOVE_QLOCKED);
+			LRU_DQ_SAFE(lru, q);
+			entry->lru.qid = LRU_ENTRY_CLEANUP;
+		}
+
+		cih_latch_rele(&latch);
+	}
+
+	QUNLOCK(qlane);
+}
+
+/**
  * @brief Function that executes in the lru thread
  *
  * This function performs long-term reorganization, compaction, and

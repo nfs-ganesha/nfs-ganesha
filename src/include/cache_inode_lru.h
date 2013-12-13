@@ -136,6 +136,7 @@ void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 /* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);
 void cache_inode_lru_cleanup_push(cache_entry_t *entry);
+void cache_inode_lru_cleanup_try_push(cache_entry_t *entry);
 
 void cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags);
 void cache_inode_lru_putback(cache_entry_t *entry, uint32_t flags);
