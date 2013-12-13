@@ -46,3 +46,4 @@ libfsal*.so*
 Doxyfile
 *~
 *.swp
+.project
