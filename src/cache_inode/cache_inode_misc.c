@@ -119,6 +119,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_ASYNC_POST_ERROR";
 	case CACHE_INODE_NOT_SUPPORTED:
 		return "CACHE_INODE_NOT_SUPPORTED";
+	case CACHE_INODE_UNION_NOTSUPP:
+		return "CACHE_INODE_UNION_NOTSUPP";
 	case CACHE_INODE_STATE_ERROR:
 		return "CACHE_INODE_STATE_ERROR";
 	case CACHE_INODE_DELAY:
@@ -490,6 +492,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_NOTSUPP:
 	case ERR_FSAL_ATTRNOTSUPP:
 		return CACHE_INODE_NOT_SUPPORTED;
+
+	case ERR_FSAL_UNION_NOTSUPP:
+		return CACHE_INODE_UNION_NOTSUPP;
 
 	case ERR_FSAL_DELAY:
 		return CACHE_INODE_DELAY;

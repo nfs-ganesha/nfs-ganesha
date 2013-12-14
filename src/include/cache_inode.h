@@ -107,8 +107,10 @@ typedef struct cache_inode_lru__ {
  */
 
 typedef enum io_direction__ {
-	CACHE_INODE_READ = 1,	/*< Reading */
-	CACHE_INODE_WRITE = 2	/*< Writing */
+	CACHE_INODE_READ = 1,		/*< Reading */
+	CACHE_INODE_WRITE = 2,		/*< Writing */
+	CACHE_INODE_READ_PLUS = 3,	/*< Reading plus */
+	CACHE_INODE_WRITE_PLUS = 4	/*< Writing plus */
 } cache_inode_io_direction_t;
 
 /**
@@ -483,6 +485,7 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_TOOSMALL = 40,
 	CACHE_INODE_FSAL_SHARE_DENIED = 41,
 	CACHE_INODE_BADNAME = 42,
+	CACHE_INODE_UNION_NOTSUPP = 43,
 } cache_inode_status_t;
 
 /**
@@ -709,6 +712,14 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      bool *eof,
 				      struct req_op_context *req_ctx,
 				      bool *sync);
+
+cache_inode_status_t cache_inode_rdwr_plus(cache_entry_t *entry,
+				      cache_inode_io_direction_t io_direction,
+				      uint64_t offset, size_t io_size,
+				      size_t *bytes_moved, void *buffer,
+				      bool *eof,
+				      struct req_op_context *req_ctx,
+				      bool *sync, struct io_info *info);
 
 cache_inode_status_t cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 					size_t count,

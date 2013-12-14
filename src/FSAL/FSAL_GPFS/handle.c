@@ -777,7 +777,11 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->open = gpfs_open;
 	ops->status = gpfs_status;
 	ops->read = gpfs_read;
+	ops->read_plus = gpfs_read_plus;
 	ops->write = gpfs_write;
+	ops->write_plus = gpfs_write_plus;
+	ops->seek = gpfs_seek;
+	ops->io_advise = gpfs_io_advise;
 	ops->commit = gpfs_commit;
 	ops->lock_op = gpfs_lock_op;
 	ops->share_op = share_op;

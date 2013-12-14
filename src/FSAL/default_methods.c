@@ -801,6 +801,19 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
+/* file_read_plus
+ * default case not supported
+ */
+
+static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
+			       const struct req_op_context *opctx,
+			       uint64_t seek_descriptor, size_t buffer_size,
+			       void *buffer, size_t *read_amount,
+			       bool *end_of_file, struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
 /* file_write
  * default case not supported
  */
@@ -812,6 +825,43 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 				bool *fsal_stable)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* file_write_plus
+ * default case not supported
+ */
+
+static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				uint64_t seek_descriptor, size_t buffer_size,
+				void *buffer, size_t *write_amount,
+				bool *fsal_stable, struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* seek
+ * default case not supported
+ */
+
+static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* io advise
+ * default case not supported
+ */
+
+static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_hints *hints)
+{
+	hints->hints = 0;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* commit
@@ -1092,7 +1142,11 @@ struct fsal_obj_ops def_handle_ops = {
 	.open = file_open,
 	.status = file_status,
 	.read = file_read,
+	.read_plus = file_read_plus,
 	.write = file_write,
+	.write_plus = file_write_plus,
+	.seek = file_seek,
+	.io_advise = file_io_advise,
 	.commit = commit,
 	.lock_op = lock_op,
 	.share_op = share_op,
@@ -1203,6 +1257,17 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
+static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
+			struct req_op_context *const req_ctx,
+			const stateid4 *stateid, const offset4 offset,
+			const count4 requested_length, void *const buffer,
+			const count4 supplied_length,
+			bool * const end_of_file,
+			struct io_info *info)
+{
+	return NFS4ERR_NOTSUPP;
+}
+
 /**
  * @brief Fail to write to a data-server handle.
  *
@@ -1233,6 +1298,19 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
+static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_hdl,
+			 struct req_op_context *const req_ctx,
+			 const stateid4 *stateid, const offset4 offset,
+			 const count4 write_length, const void *buffer,
+			 const stable_how4 stability_wanted,
+			 count4 * const written_length,
+			 verifier4 * const writeverf,
+			 stable_how4 * const stability_got,
+			 struct io_info *info)
+{
+	return NFS4ERR_NOTSUPP;
+}
+
 /**
  * @brief Fail to commit a byte range on a DS handle.
  *
@@ -1257,7 +1335,9 @@ struct fsal_ds_ops def_ds_ops = {
 	.put = ds_put,
 	.release = ds_release,
 	.read = ds_read,
+	.read_plus = ds_read_plus,
 	.write = ds_write,
+	.write_plus = ds_write_plus,
 	.commit = ds_commit
 };
 

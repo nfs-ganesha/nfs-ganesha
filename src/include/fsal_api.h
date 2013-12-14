@@ -306,6 +306,34 @@ struct fsal_ds_ops;
 struct fsal_up_vector;		/* From fsal_up.h */
 struct fsal_xattrent;
 
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+#ifndef SEEK_CUR
+#define SEEK_CUR 1
+#endif
+#ifndef SEEK_END
+#define SEEK_END 2
+#endif
+#ifndef SEEK_DATA
+#define SEEK_DATA 3
+#endif
+#ifndef SEEK_HOLE
+#define SEEK_HOLE 4
+#endif
+
+struct io_info {
+	contents io_content;
+	uint32_t io_advise;
+	bool_t   io_eof;
+};
+
+struct io_hints {
+	offset4  offset;
+	length4  count;
+	uint32_t hints;
+};
+
 /**
  * @brief FSAL object definition
  *
@@ -1519,6 +1547,36 @@ struct fsal_obj_ops {
 			       bool *end_of_file);	/* needed? */
 
 /**
+ * @brief Read data from a file plus
+ *
+ * This function reads data from the given file.
+ *
+ * @note We probably want to keep end_of_file.  There may be reasons
+ * other than end of file while less data are returned than requested
+ * (FSAL_PROXY, for example, might do this depending on the will of
+ * the remote server.) -- ACE
+ *
+ * @param[in]  obj_hdl     File to read
+ * @param[in]  opctx       Request context, includes credentials
+ * @param[in]  offset      Position from which to read
+ * @param[in]  buffer_size Amount of data to read
+ * @param[out] buffer      Buffer to which data are to be copied
+ * @param[out] read_amount Amount of data read
+ * @param[out] end_of_file true if the end of file has been reached
+ * @param[in,out] info     more information about the data
+ *
+ * @return FSAL status.
+ */
+	fsal_status_t(*read_plus) (struct fsal_obj_handle *obj_hdl,
+				   const struct req_op_context *opctx,
+				   uint64_t offset,
+				   size_t buffer_size,
+				   void *buffer,
+				   size_t *read_amount,
+				   bool *end_of_file,
+				   struct io_info *info);
+
+/**
  * @brief Write data to a file
  *
  * This function writes data to a file.
@@ -1542,6 +1600,60 @@ struct fsal_obj_ops {
 				void *buffer,
 				size_t *wrote_amount,
 				bool *fsal_stable);
+/**
+ * @brief Write data to a file plus
+ *
+ * This function writes data to a file.
+ *
+ * @note Should buffer be const? -- ACE
+ *
+ * @param[in]  obj_hdl      File to be written
+ * @param[in]  opctx        Request context, includes credentials
+ * @param[in]  offset       Position at which to write
+ * @param[in]  buffer       Data to be written
+ * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
+ *                            to stable store. Out, the fsal reports what
+ *                            it did.
+ * @param[in,out] info     more information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t(*write_plus) (struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				uint64_t offset,
+				size_t buffer_size,
+				void *buffer,
+				size_t *wrote_amount,
+				bool *fsal_stable,
+				struct io_info *info);
+/**
+ * @brief Seek to data or hole
+ *
+ * This function seek to data or hole in a file.
+ *
+ * @param[in]  obj_hdl      File to be written
+ * @param[in]  opctx        Request context, includes credentials
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t(*seek) (struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_info *info);
+/**
+ * @brief IO Advise
+ *
+ * This function give hints to fs.
+ *
+ * @param[in]  obj_hdl      File to be written
+ * @param[in]  opctx        Request context, includes credentials
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t(*io_advise) (struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_hints *hints);
 /**
  * @brief Commit written data
  *
@@ -2040,6 +2152,37 @@ struct fsal_ds_ops {
 			  bool *const end_of_file);
 
 /**
+ * @brief Read plus from a data-server handle.
+ *
+ * NFSv4.2 data server handles are disjount from normal
+ * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
+ * structure) and do not get loaded into cache_inode or processed the
+ * normal way.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  requested_length Length of read requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[out] supplied_length  Length of data read
+ * @param[out] eof              true on end of file
+ * @param[out] info             IO info
+ *
+ * @return An NFSv4.2 status code.
+ */
+	 nfsstat4(*read_plus) (struct fsal_ds_handle *const ds_hdl,
+			  struct req_op_context *const req_ctx,
+			  const stateid4 *stateid,
+			  const offset4 offset,
+			  const count4 requested_length,
+			  void *const buffer,
+			  const count4 supplied_length,
+			  bool *const end_of_file,
+			  struct io_info *info);
+
+/**
  *
  * @brief Write to a data-server handle.
  *
@@ -2073,6 +2216,43 @@ struct fsal_ds_ops {
 			   count4 * const written_length,
 			   verifier4 * const writeverf,
 			   stable_how4 * const stability_got);
+
+/**
+ *
+ * @brief Write plus to a data-server handle.
+ *
+ * NFSv4.2 data server filehandles are disjount from normal
+ * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
+ * structure) and do not get loaded into cache_inode or processed the
+ * normal way.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  write_length     Length of write requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[in]  stability wanted Stability of write
+ * @param[out] written_length   Length of data written
+ * @param[out] writeverf        Write verifier
+ * @param[out] stability_got    Stability used for write (must be as
+ *                              or more stable than request)
+ * @param[in/out] info          IO info
+ *
+ * @return An NFSv4.2 status code.
+ */
+	 nfsstat4(*write_plus) (struct fsal_ds_handle *const ds_hdl,
+			   struct req_op_context *const req_ctx,
+			   const stateid4 *stateid,
+			   const offset4 offset,
+			   const count4 write_length,
+			   const void *buffer,
+			   const stable_how4 stability_wanted,
+			   count4 * const written_length,
+			   verifier4 * const writeverf,
+			   stable_how4 * const stability_got,
+			   struct io_info *info);
 
 /**
  * @brief Commit a byte range to a DS handle.

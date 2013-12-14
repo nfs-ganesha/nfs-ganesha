@@ -251,13 +251,13 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ATIME_SERVER)) {
-		attr_changed |= XATTR_ATIME_NOW;
+		attr_changed |= XATTR_ATIME | XATTR_ATIME_NOW;
 		LogDebug(COMPONENT_FSAL, "current atime = %lu, new atime = NOW",
 			 (unsigned long)dir_hdl->attributes.atime.tv_sec);
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MTIME_SERVER)) {
-		attr_changed |= XATTR_MTIME_NOW;
+		attr_changed |= XATTR_MTIME | XATTR_MTIME_NOW;
 		LogDebug(COMPONENT_FSAL, "current mtime = %lu, new mtime = NOW",
 			 (unsigned long)dir_hdl->attributes.atime.tv_sec);
 	}

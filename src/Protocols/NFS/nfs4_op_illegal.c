@@ -79,3 +79,38 @@ void nfs4_op_illegal_Free(nfs_resop4 *resp)
 	/* Nothing to be done */
 	return;
 }				/* nfs4_op_illegal_Free */
+
+/**
+ * @brief Always fail
+ *
+ * This function is the designated NOTSUPP operation.
+ *
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op results
+ *
+ * @retval NFS4ERR_NOTSUPP always.
+ *
+ */
+int nfs4_op_notsupp(struct nfs_argop4 *op, compound_data_t *data,
+		    struct nfs_resop4 *resp)
+{
+	resp->resop = op->argop;
+	resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
+
+	return NFS4ERR_NOTSUPP;
+}				/* nfs4_op_notsupp */
+
+/**
+ * @brief Free memory allocated for NOTSUPP result
+ *
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_NOTSUPP operation.
+ *
+ * @param[in,out] resp nfs4_op results
+ */
+void nfs4_op_notsupp_Free(nfs_resop4 *resp)
+{
+	/* Nothing to be done */
+	return;
+}				/* nfs4_op_notsupp_Free */

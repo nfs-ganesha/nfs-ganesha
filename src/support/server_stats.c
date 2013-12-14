@@ -397,7 +397,7 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
 				if (sp == NULL)
 					return;
 				iop = is_write ? &sp->write : &sp->read;
-			} else if (req_ctx->nfs_minorvers == 1) {
+			} else if (req_ctx->nfs_minorvers > 0) {
 				struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
 				if (sp == NULL)

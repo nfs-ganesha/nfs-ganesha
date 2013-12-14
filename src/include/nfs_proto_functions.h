@@ -467,6 +467,9 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *, compound_data_t *,
 int nfs4_op_illegal(struct nfs_argop4 *, compound_data_t *data,
 		    struct nfs_resop4 *);
 
+int nfs4_op_notsupp(struct nfs_argop4 *, compound_data_t *data,
+		    struct nfs_resop4 *);
+
 int nfs4_op_exchange_id(struct nfs_argop4 *, compound_data_t *,
 			struct nfs_resop4 *);
 
@@ -542,6 +545,27 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4 *, compound_data_t *,
 
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *, compound_data_t *,
 			   struct nfs_resop4 *);
+
+/* NFSv4.2 */
+int nfs4_op_write_plus(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_write_plus_Free(nfs_resop4 *resp);
+
+int nfs4_op_read_plus(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_read_plus_Free(nfs_resop4 *resp);
+
+int nfs4_op_seek(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_seek_Free(nfs_resop4 *resp);
+
+int nfs4_op_io_advise(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_io_advise_Free(nfs_resop4 *resp);
 
 /* @}
  * -- End of NFS protocols functions. --
@@ -700,6 +724,7 @@ void nfs4_op_delegpurge_Free(nfs_resop4 *);
 void nfs4_op_getattr_Free(nfs_resop4 *);
 void nfs4_op_getfh_Free(nfs_resop4 *);
 void nfs4_op_illegal_Free(nfs_resop4 *);
+void nfs4_op_notsupp_Free(nfs_resop4 *);
 void nfs4_op_link_Free(nfs_resop4 *);
 void nfs4_op_lock_Free(nfs_resop4 *);
 void nfs4_op_lockt_Free(nfs_resop4 *);

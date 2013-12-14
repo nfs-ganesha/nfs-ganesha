@@ -329,6 +329,14 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 			     bool *fsal_stable,	/* IN/OUT */
 			     const struct req_op_context *p_context);
 
+fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
+			     uint64_t offset,	/* IN */
+			     size_t buffer_size,	/* IN */
+			     caddr_t buffer,	/* IN */
+			     size_t *p_write_amount,	/* OUT */
+			     bool *fsal_stable,	/* IN/OUT */
+			     const struct req_op_context *p_context);
+
 fsal_status_t GPFSFSAL_close(int *p_file_descriptor);	/* IN */
 
 fsal_status_t GPFSFSAL_dynamic_fsinfo(struct gpfs_file_handle *p_handle,

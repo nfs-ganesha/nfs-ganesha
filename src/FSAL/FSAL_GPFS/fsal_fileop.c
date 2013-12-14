@@ -244,3 +244,63 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
+
+/**
+ * FSAL_clear:
+ * Perform a write operation on an opened file.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ * \param buffer_size (input):
+ *        Amount (in bytes) of data to be written.
+ * \param buffer (output):
+ *        Address where the data is in memory.
+ * \param write_amount (output):
+ *        Pointer to the amount of data (in bytes) that have been written
+ *        during this call.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
+			     uint64_t offset,	/* IN */
+			     size_t buffer_size,	/* IN */
+			     caddr_t buffer,	/* IN */
+			     size_t *p_write_amount,	/* OUT */
+			     bool *fsal_stable,	/* IN/OUT */
+			     const struct req_op_context *p_context)
+{
+	struct write_arg warg;
+	ssize_t nb_write;
+	int errsv = 0;
+
+	/* sanity checks. */
+
+	if (!buffer || !p_write_amount)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	warg.mountdirfd = fd;
+	warg.fd = fd;
+	warg.bufP = buffer;
+	warg.offset = offset;
+	warg.length = buffer_size;
+	warg.stability_wanted = *fsal_stable;
+	warg.stability_got = (uint32_t *) fsal_stable;
+	/* read operation */
+
+	fsal_set_credentials(p_context->creds);
+
+	nb_write = gpfs_ganesha(OPENHANDLE_CLEAR_BY_FD, &warg);
+	errsv = errno;
+
+	fsal_restore_ganesha_credentials();
+
+	if (nb_write == -1)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+
+	*p_write_amount = buffer_size;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+}

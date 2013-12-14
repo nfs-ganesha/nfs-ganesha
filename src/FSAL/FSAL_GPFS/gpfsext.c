@@ -18,7 +18,6 @@
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "include/gpfs.h"
 #include "include/gpfs_nfs.h"
 
 struct kxArgs {
