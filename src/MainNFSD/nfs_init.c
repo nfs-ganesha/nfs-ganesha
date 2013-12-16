@@ -623,9 +623,9 @@ static bool is_prime(int v)
 #ifdef LINK_LIBM
 	m = (int)sqrt(v);
 #else
-	m = v;
+	m = v - 1;
 #endif
-	for (i = 2; i <= m; i += 2) {
+	for (i = 3; i <= m; i += 2) {
 		if (v % i == 0)
 			return false;
 	}
