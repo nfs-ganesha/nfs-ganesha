@@ -239,7 +239,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	const char *sock_name = NULL;
 	ssize_t retlink;
 	char fidpath[MAXPATHLEN];
-	char link_buff[1024];
+	char link_buff[PATH_MAX];
 	struct lustre_file_handle *fh =
 	    alloca(sizeof(struct lustre_file_handle));
 
@@ -277,10 +277,10 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 		goto errout;
 	}
 	if (S_ISLNK(stat.st_mode)) {	/* I could lazy eval this... */
-		retlink = readlink(fidpath, link_buff, 1024);
-		if (retlink < 0 || retlink == 1024) {
+		retlink = readlink(fidpath, link_buff, PATH_MAX-1);
+		if (retlink < 0 || retlink == PATH_MAX-1) {
 			retval = errno;
-			if (retlink == 1024)
+			if (retlink == PATH_MAX-1)
 				retval = ENAMETOOLONG;
 			fsal_error = posix2fsal_error(retval);
 			goto errout;
@@ -707,7 +707,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	if (refresh) {		/* lazy load or LRU'd storage */
 		ssize_t retlink;
-		char link_buff[1024];
+		char link_buff[PATH_MAX];
 
 		if (myself->u.symlink.link_content != NULL) {
 			gsh_free(myself->u.symlink.link_content);
@@ -716,7 +716,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 		}
 		lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
 				      myself->handle, mypath);
-		retlink = readlink(mypath, link_buff, 1024);
+		retlink = readlink(mypath, link_buff, PATH_MAX-1);
 		if (retlink < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -1415,10 +1415,11 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	if (S_ISLNK(stat.st_mode)) {
 		link_content = gsh_malloc(PATH_MAX);
-		retlink = readlinkat(dir_fd, basepart, link_content, PATH_MAX);
-		if (retlink < 0 || retlink == PATH_MAX) {
+		retlink = readlinkat(dir_fd, basepart, link_content,
+				     PATH_MAX-1);
+		if (retlink < 0 || retlink == PATH_MAX-1) {
 			retval = errno;
-			if (retlink == PATH_MAX)
+			if (retlink == PATH_MAX-1)
 				retval = ENAMETOOLONG;
 			goto linkerr;
 		}
@@ -1504,8 +1505,8 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 		goto errout;
 	}
 	if (S_ISLNK(stat.st_mode)) {	/* I could lazy eval this... */
-		retlink = readlink(objpath, link_buff, PATH_MAX);
-		if (retlink < 0 || retlink == PATH_MAX) {
+		retlink = readlink(objpath, link_buff, PATH_MAX-1);
+		if (retlink < 0 || retlink == PATH_MAX-1) {
 			retval = errno;
 			if (retlink == PATH_MAX)
 				retval = ENAMETOOLONG;
