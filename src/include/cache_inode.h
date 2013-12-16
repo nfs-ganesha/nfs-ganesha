@@ -553,6 +553,12 @@ cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
 				     const struct req_op_context *req_ctx,
 				     uint32_t flags,
 				     cache_inode_status_t *status);
+cache_inode_status_t
+cache_inode_get_protected(cache_entry_t **entry,
+			  pthread_rwlock_t *lock,
+			  cache_inode_status_t get_entry(cache_entry_t **,
+							 void *),
+			  void *source);
 void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
