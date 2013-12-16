@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
 	char localmachine[MAXHOSTNAMELEN + 1];
 	int c;
 	int pidfile;
+	int dev_null_fd = 0;
 #ifndef HAVE_DAEMON
 	pid_t son_pid;
 #endif
@@ -258,8 +259,48 @@ int main(int argc, char *argv[])
 					 "Could not start nfs daemon (setsid error %d (%s)",
 					 errno, strerror(errno));
 			}
-			break;
 
+			/* stdin, stdout and stderr should not refer to a tty
+			 * I close 0, 1 & 2  and redirect them to /dev/null */
+			dev_null_fd = open("/dev/null", O_RDWR);
+			if (dev_null_fd < 0)
+				LogFatal(COMPONENT_MAIN,
+					 "Could not open /dev/null: %d (%s)",
+					 errno, strerror(errno));
+
+			if (close(STDIN_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stdin: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stdin closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(STDOUT_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stdout: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stdout closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(STDERR_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stderr: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stderr closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(dev_null_fd) == -1)
+				LogFatal(COMPONENT_MAIN,
+					 "Could not close tmp fd to /dev/null: %d (%s)",
+					 errno, strerror(errno));
+
+			break;
 		default:
 			/* This code is within the parent process,
 			 * it is useless, it must die */
