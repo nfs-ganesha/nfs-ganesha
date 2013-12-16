@@ -462,6 +462,123 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	return status;
 }				/* cache_inode_new_entry */
 
+struct export_get_first_entry_parms {
+	struct gsh_export *export;
+	struct entry_export_map *expmap;
+};
+
+/**
+ * @brief Function to be called from cache_inode_get_protected to get the
+ * first cache inode entry associated with an export.
+ *
+ * Also returns the expmap in the source parms for use by cache_inode_unexport.
+ * This is safe due to the assumptions made by cache_inode_unexport.
+ *
+ * @param entry  [IN/OUT] call by ref pointer to store cache entry
+ * @param source [IN/OUT] void pointer to parms structure
+ *
+ * @return cache inode status code
+ @ @retval CACHE_INODE_NOT_FOUND indicates there are associated entries
+ */
+
+cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
+{
+	struct export_get_first_entry_parms *parms = source;
+
+	*entry = NULL;
+
+	parms->expmap = glist_first_entry(&parms->export->entry_list,
+					  struct entry_export_map,
+					  entry_per_export);
+
+	if (unlikely(parms->expmap == NULL))
+		return CACHE_INODE_NOT_FOUND;
+
+	*entry = parms->expmap->entry;
+
+	return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @brief Cleans up cache inode entries on unexport.
+ *
+ * Assumptions:
+ * - export has been made unreachable
+ * - export refcount == 0
+ * - export root inode and junction have been cleaned up
+ * - state associated with the export has been released
+ *
+ * @param[in] export The export being unexported
+ *
+ * @return the result of the conversion.
+ *
+ */
+
+void cache_inode_unexport(struct gsh_export *export)
+{
+	struct export_get_first_entry_parms parms;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	cache_inode_status_t status;
+
+	parms.export = export;
+
+	while (errcnt < 10) {
+		status = cache_inode_get_protected(&entry,
+						   &export->lock,
+						   export_get_first_entry,
+						   &parms);
+
+		/* If we ran out of entries, we are done. */
+		if (status == CACHE_INODE_NOT_FOUND)
+			break;
+
+		/* For any other failure skip, we might busy wait.
+		 * For out of memory errors, we will limit our
+		 * retries. CACHE_INODE_FSAL_ESTALE should eventually
+		 * result in CACHE_INODE_NOT_FOUND as the mapping for
+		 * the stale inode gets cleaned up.
+		 */
+		if (status != CACHE_INODE_SUCCESS) {
+			if (status == CACHE_INODE_MALLOC_ERROR)
+				errcnt++;
+			continue;
+		}
+
+		/*
+		 * Now with the appropriate locks, remove this entry from the
+		 * export and if appropriate, dispose of it.
+		 */
+
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&export->lock);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&parms.expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&parms.expmap->entry_per_export);
+
+		if (glist_empty(&entry->export_list)) {
+			/* If there are no exports referencing this
+			 * entry, attempt to push it to cleanup queue.
+			 */
+			cache_inode_lru_cleanup_try_push(entry);
+		}
+
+		PTHREAD_RWLOCK_unlock(&export->lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+		gsh_free(parms.expmap);
+
+		/* Done with entry, it may be cleaned up at this point.
+		 * If other exports reference this entry then the entry
+		 * will still be alive.
+		 */
+		cache_inode_put(entry);
+	}
+}
+
 /**
  * @brief Converts an FSAL error to the corresponding cache_inode error
  *
