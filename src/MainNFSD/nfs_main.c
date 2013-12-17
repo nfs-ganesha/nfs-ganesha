@@ -241,6 +241,10 @@ int main(int argc, char *argv[])
 			LogFatal(COMPONENT_MAIN,
 				 "Error detaching process from parent: %s",
 				 strerror(errno));
+
+		/* In the child process, change the log header
+		 * if not, the header will contain the parent's pid */
+		set_const_log_str();
 #else
 		/* Step 1: forking a service process */
 		switch (son_pid = fork()) {
@@ -300,7 +304,11 @@ int main(int argc, char *argv[])
 					 "Could not close tmp fd to /dev/null: %d (%s)",
 					 errno, strerror(errno));
 
+			/* In the child process, change the log header
+			 * if not, the header will contain the parent's pid */
+			set_const_log_str();
 			break;
+
 		default:
 			/* This code is within the parent process,
 			 * it is useless, it must die */
