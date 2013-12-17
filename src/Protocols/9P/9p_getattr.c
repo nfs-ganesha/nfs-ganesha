@@ -44,9 +44,6 @@
 #include "fsal.h"
 #include "9p.h"
 
-u32 zero32 = 0;
-u64 zero64 = 0LL;
-
 int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 		u32 *plenout, char *preply)
 {
@@ -59,23 +56,23 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 
 	u64 valid = 0LL;	/* Not a pointer */
 	u32 mode = 0;		/* Not a pointer */
-	u32 *uid = NULL;
-	u32 *gid = NULL;
-	u64 *nlink = NULL;
-	u64 *rdev = NULL;
-	u64 *size = NULL;
+	u32 uid = 0;
+	u32 gid = 0;
+	u64 nlink = 0LL;
+	u64 rdev = 0LL;
+	u64 size = 0LL;
 	u64 blksize = 0LL;	/* Be careful, this one is no pointer */
 	u64 blocks = 0LL;	/* And so does this one...            */
-	u64 *atime_sec = NULL;
-	u64 *atime_nsec = NULL;
-	u64 *mtime_sec = NULL;
-	u64 *mtime_nsec = NULL;
-	u64 *ctime_sec = NULL;
-	u64 *ctime_nsec = NULL;
-	u64 *btime_sec = NULL;
-	u64 *btime_nsec = NULL;
-	u64 *gen = NULL;
-	u64 *data_version = NULL;
+	u64 atime_sec = 0LL;
+	u64 atime_nsec = 0LL;
+	u64 mtime_sec = 0LL;
+	u64 mtime_nsec = 0LL;
+	u64 ctime_sec = 0LL;
+	u64 ctime_nsec = 0LL;
+	u64 btime_sec = 0LL;
+	u64 btime_nsec = 0LL;
+	u64 gen = 0LL;
+	u64 data_version = 0LL;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -123,27 +120,27 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 
 	uid =
 	    (*request_mask & _9P_GETATTR_UID) ?
-		(u32 *) &pfid->pentry->obj_handle->attributes.owner :
-		&zero32;
+		(u32) pfid->pentry->obj_handle->attributes.owner :
+		0;
 	gid =
 	    (*request_mask & _9P_GETATTR_GID) ?
-		(u32 *) &pfid->pentry->obj_handle->attributes.group :
-		&zero32;
+		(u32) pfid->pentry->obj_handle->attributes.group :
+		0;
 	nlink =
 	    (*request_mask & _9P_GETATTR_NLINK) ?
-		(u64 *) &pfid->pentry->obj_handle->attributes.numlinks :
-		&zero64;
+		(u64) pfid->pentry->obj_handle->attributes.numlinks :
+		0LL;
 	/* rdev = (*request_mask & _9P_GETATTR_RDEV) ?
-	 *     (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major :
-	 *     &zero64; */
+	 *     (u64) pfid->pentry->obj_handle->attributes.rawdev.major :
+	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
-		(u64 *) &pfid->export->filesystem_id.major :
-		&zero64;
+		(u64) pfid->export->filesystem_id.major :
+		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?
-		(u64 *) &pfid->pentry->obj_handle->attributes.filesize :
-		&zero64;
+		(u64) pfid->pentry->obj_handle->attributes.filesize :
+		0LL;
 	blksize =
 	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) _9P_BLK_SIZE : 0LL;
 	blocks =
@@ -153,25 +150,25 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 							  DEV_BSIZE) : 0LL;
 	atime_sec =
 	    (*request_mask & _9P_GETATTR_ATIME) ?
-		(u64 *) &pfid->pentry->obj_handle->attributes.atime.tv_sec :
-		&zero64;
-	atime_nsec = &zero64;
+		(u64) pfid->pentry->obj_handle->attributes.atime.tv_sec :
+		0LL;
+	atime_nsec = 0LL;
 	mtime_sec =
 	    (*request_mask & _9P_GETATTR_MTIME) ?
-		(u64 *) &pfid->pentry->obj_handle->attributes.mtime.tv_sec :
-		&zero64;
-	mtime_nsec = &zero64;
+		(u64) pfid->pentry->obj_handle->attributes.mtime.tv_sec :
+		0LL;
+	mtime_nsec = 0LL;
 	ctime_sec =
 	    (*request_mask & _9P_GETATTR_CTIME) ?
-		(u64 *) &pfid->pentry->obj_handle->attributes.ctime.tv_sec :
-		&zero64;
-	ctime_nsec = &zero64;
+		(u64) pfid->pentry->obj_handle->attributes.ctime.tv_sec :
+		0LL;
+	ctime_nsec = 0LL;
 
 	/* Not yet supported attributes */
-	btime_sec = &zero64;
-	btime_nsec = &zero64;
-	gen = &zero64;
-	data_version = &zero64;
+	btime_sec = 0LL;
+	btime_nsec = 0LL;
+	gen = 0LL;
+	data_version = 0LL;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RGETATTR);
@@ -180,45 +177,38 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	_9p_setvalue(cursor, valid, u64);
 	_9p_setqid(cursor, pfid->qid);
 	_9p_setvalue(cursor, mode, u32);
-	_9p_setptr(cursor, uid, u32);
-	_9p_setptr(cursor, gid, u32);
-	_9p_setptr(cursor, nlink, u64);
-	_9p_setptr(cursor, rdev, u64);
-	_9p_setptr(cursor, size, u64);
+	_9p_setvalue(cursor, uid, u32);
+	_9p_setvalue(cursor, gid, u32);
+	_9p_setvalue(cursor, nlink, u64);
+	_9p_setvalue(cursor, rdev, u64);
+	_9p_setvalue(cursor, size, u64);
 	_9p_setvalue(cursor, blksize, u64);
 	_9p_setvalue(cursor, blocks, u64);
-	_9p_setptr(cursor, atime_sec, u64);
-	_9p_setptr(cursor, atime_nsec, u64);
-	_9p_setptr(cursor, mtime_sec, u64);
-	_9p_setptr(cursor, mtime_nsec, u64);
-	_9p_setptr(cursor, ctime_sec, u64);
-	_9p_setptr(cursor, ctime_nsec, u64);
-	_9p_setptr(cursor, btime_sec, u64);
-	_9p_setptr(cursor, btime_nsec, u64);
-	_9p_setptr(cursor, gen, u64);
-	_9p_setptr(cursor, data_version, u64);
+	_9p_setvalue(cursor, atime_sec, u64);
+	_9p_setvalue(cursor, atime_nsec, u64);
+	_9p_setvalue(cursor, mtime_sec, u64);
+	_9p_setvalue(cursor, mtime_nsec, u64);
+	_9p_setvalue(cursor, ctime_sec, u64);
+	_9p_setvalue(cursor, ctime_nsec, u64);
+	_9p_setvalue(cursor, btime_sec, u64);
+	_9p_setvalue(cursor, btime_nsec, u64);
+	_9p_setvalue(cursor, gen, u64);
+	_9p_setvalue(cursor, data_version, u64);
 
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P,
-		 "RGETATTR: tag=%u valid=0x%llx qid=(type=%u,version=%u,path=%llu) mode=0%o uid=%u gid=%u nlink=%llu"
-		 " rdev=%llu size=%llu blksize=%llu blocks=%llu atime=(%llu,%llu) mtime=(%llu,%llu) ctime=(%llu,%llu)"
-		 " btime=(%llu,%llu) gen=%llu, data_version=%llu", *msgtag,
-		 (unsigned long long)valid, (u32) pfid->qid.type,
-		 pfid->qid.version, (unsigned long long)pfid->qid.path, mode,
-		 *uid, *gid, (unsigned long long)*nlink,
-		 (unsigned long long)*rdev, (unsigned long long)*size,
-		 (unsigned long long)blksize, (unsigned long long)blocks,
-		 (unsigned long long)*atime_sec,
-		 (unsigned long long)*atime_nsec,
-		 (unsigned long long)*mtime_sec,
-		 (unsigned long long)*mtime_nsec,
-		 (unsigned long long)*ctime_sec,
-		 (unsigned long long)*ctime_nsec,
-		 (unsigned long long)*btime_sec,
-		 (unsigned long long)*btime_nsec, (unsigned long long)*gen,
-		 (unsigned long long)*data_version);
+		 "RGETATTR: tag=%u valid=0x%"PRIx64" qid=(type=%u,version=%u,"
+		 "path=%"PRIu64") mode=0%o uid=%u gid=%u nlink=%"PRIu64
+		 " rdev=%"PRIu64" size=%"PRIu64" blksize=%"PRIu64
+		 " blocks=%"PRIu64" atime=(%"PRIu64",%"PRIu64") mtime=(%"PRIu64
+		 ",%"PRIu64") ctime=(%"PRIu64",%"PRIu64") btime=(%"PRIu64
+		 ",%"PRIu64") gen=%"PRIu64", data_version=%"PRIu64, *msgtag,
+		 valid, pfid->qid.type, pfid->qid.version, pfid->qid.path, mode,
+		 uid, gid, nlink, rdev, size, blksize, blocks, atime_sec,
+		 atime_nsec, mtime_sec, mtime_nsec, ctime_sec, ctime_nsec,
+		 btime_sec, btime_nsec, gen, data_version);
 
 	return 1;
 }
