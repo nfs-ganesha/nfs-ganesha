@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
 	char localmachine[MAXHOSTNAMELEN + 1];
 	int c;
 	int pidfile;
-	int dev_null_fd = 0;
 #ifndef HAVE_DAEMON
+	int dev_null_fd = 0;
 	pid_t son_pid;
 #endif
 	sigset_t signals_to_block;

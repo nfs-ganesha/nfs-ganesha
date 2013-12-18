@@ -628,6 +628,15 @@ else(HAVE_LIBCAP)
   message(STATUS "Could not find capabilities library, disabling USE_CAPS")
 endif(HAVE_LIBCAP)
 
+# check is daemon exists
+# I use check_library_exists there to be portab;e
+check_library_exists( 
+	c
+	daemon
+	""
+	HAVE_DAEMON
+	)
+
 # Roll up required libraries
 
 #Protocols we support

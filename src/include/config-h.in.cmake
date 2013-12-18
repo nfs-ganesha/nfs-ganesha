@@ -44,6 +44,7 @@
 #cmakedefine HAVE_XATTR_H 1
 #cmakedefine HAVE_INCLUDE_LUSTREAPI_H 1
 #cmakedefine HAVE_INCLUDE_LIBLUSTREAPI_H 1
+#cmakedefine HAVE_DAEMON 1
 
 #define NFS_GANESHA 1
 
