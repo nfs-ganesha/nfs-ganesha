@@ -92,7 +92,6 @@ ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/githead_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE  _GIT_HEAD_COMMIT)
 
-   
   EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/gitdesc_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE  _GIT_DESCRIBE)
 
@@ -101,7 +100,7 @@ ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
 # Using git related information, build PACKNAME
-set( PACKNAME "${GANESHA_VERSION}" ) 
+set( PACKNAME "${GANESHA_VERSION}" )
 
 # Define CPACK component (to deal with sub packages)
 set(CPACK_COMPONENTS_ALL daemon fsal headers )
@@ -124,7 +123,7 @@ if (FREEBSD)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
     set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
-    find_library(LIBDL c)  # libc suffices on freebsd 
+    find_library(LIBDL c)  # libc suffices on freebsd
 endif(FREEBSD)
 
 if (LINUX)
@@ -189,7 +188,7 @@ option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids
 option(USE_NODELIST "enable NodeList support" OFF)
 option(_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
 
-# Debug symbols (-g) build flag 
+# Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 
 # enable code profiling [-g -pg]
@@ -401,7 +400,7 @@ if(USE_FSAL_GLUSTER)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
 endif(USE_FSAL_GLUSTER)
- 
+
 if(USE_FSAL_CEPH)
   find_library(CEPH_FS cephfs)
   check_library_exists(
@@ -617,7 +616,7 @@ check_library_exists(
 	cap
 	cap_set_proc
 	""
-	HAVE_LIBCAP 
+	HAVE_LIBCAP
 	)
 
 if(HAVE_LIBCAP)
@@ -630,7 +629,7 @@ endif(HAVE_LIBCAP)
 
 # check is daemon exists
 # I use check_library_exists there to be portab;e
-check_library_exists( 
+check_library_exists(
 	c
 	daemon
 	""
@@ -699,7 +698,7 @@ set(SYSTEM_LIBRARIES
 )
 
 IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
-message( FATAL_ERROR 
+message( FATAL_ERROR
 "No CMakeLists.txt found in libntirpc
 This probably means that the directory was not properly populated.
 Please run the following command to do that and use cmake again:
@@ -891,9 +890,9 @@ set(STRICT_PACKAGE ${STRICT_PACKAGE}
    "enable strict packaging behavior"
    FORCE)
 
-set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA} 
+set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
   CACHE BOOL
-  "Distribution package's name carries git data" 
+  "Distribution package's name carries git data"
   FORCE)
 
 
