@@ -90,19 +90,6 @@ nfs_parameter_t nfs_param = {
 
 	/* Workers parameters : IP/Name values pool prealloc */
 
-	/* NFSv4 parameter */
-	.nfsv4_param.graceless = false,
-	.nfsv4_param.lease_lifetime = LEASE_LIFETIME_DEFAULT,
-	.nfsv4_param.grace_period = GRACE_PERIOD_DEFAULT,
-	.nfsv4_param.domainname = DOMAINNAME_DEFAULT,
-	.nfsv4_param.idmapconf = IDMAPCONF_DEFAULT,
-	.nfsv4_param.allow_numeric_owners = true,
-#ifdef USE_NFSIDMAP
-	.nfsv4_param.use_getpwnam = false,
-#else
-	.nfsv4_param.use_getpwnam = true,
-#endif
-
 	/*  Worker parameters : IP/name hash table */
 	.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func,
 	.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
