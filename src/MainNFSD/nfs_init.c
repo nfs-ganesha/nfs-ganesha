@@ -104,14 +104,12 @@ nfs_parameter_t nfs_param = {
 #endif
 
 	/*  Worker parameters : IP/name hash table */
-	.ip_name_param.hash_param.index_size = PRIME_IP_NAME,
 	.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func,
 	.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
 	.ip_name_param.hash_param.compare_key = compare_ip_name,
 	.ip_name_param.hash_param.key_to_str = display_ip_name_key,
 	.ip_name_param.hash_param.val_to_str = display_ip_name_val,
 	.ip_name_param.hash_param.flags = HT_FLAG_NONE,
-	.ip_name_param.expiration_time = IP_NAME_EXPIRATION,
 
 	/*  Worker parameters : NFSv4 Unconfirmed Client id table */
 	.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_STATE,
