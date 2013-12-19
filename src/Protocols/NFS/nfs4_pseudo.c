@@ -395,3 +395,47 @@ void create_pseudofs(void)
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 pseudo file system");
 }
+
+/**
+ * @brief  Unmount an export from the Pseudo FS.
+ *
+ * @param exp     [IN] export in question
+ * @param req_ctx [IN] req_op_context to operate in
+ */
+void pseudo_unmount_export(struct gsh_export *exp,
+			   struct req_op_context *req_ctx)
+{
+	exportlist_t *export = &exp->export;
+	struct gsh_export *mounted_on_export;
+	cache_entry_t *junction_inode;
+
+	/* Take the lock to clean out the junction information. */
+	PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+	mounted_on_export = export->exp_parent_exp;
+	junction_inode = export->exp_junction_inode;
+
+	/* If the node is not mounted in the Pseudo FS, bail out. */
+	if (junction_inode == NULL)
+		goto out;
+
+	/* Detach the export from the inode */
+	export->exp_junction_inode = NULL;
+	/* Detach the export from the export it's mounted on */
+	export->exp_parent_exp = NULL;
+
+	/* Release the pin reference */
+	cache_inode_dec_pin_ref(junction_inode, false);
+
+	/* Release our reference to the export we are mounted on. */
+	if (mounted_on_export != NULL)
+		put_gsh_export(mounted_on_export);
+
+	/** @todo if junction is in FSAL_PSEUDO, remove all the directories
+	 *        leading to it that are otherwise unecessary.
+	 */
+
+out:
+
+	PTHREAD_RWLOCK_unlock(&exp->lock);
+}
