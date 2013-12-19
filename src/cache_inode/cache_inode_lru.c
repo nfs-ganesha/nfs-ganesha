@@ -1480,8 +1480,13 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 			QUNLOCK(qlane);
 
 		/* inline cleanup */
-		if (qid == LRU_ENTRY_CLEANUP)
+		if (qid == LRU_ENTRY_CLEANUP) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "LRU_ENTRY_CLEANUP of entry %p",
+				 entry);
 			state_wipe_file(entry);
+			kill_export_root_entry(entry);
+		}
 
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);

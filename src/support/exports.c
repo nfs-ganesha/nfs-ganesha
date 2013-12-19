@@ -2817,6 +2817,143 @@ bool init_export_root(struct gsh_export *exp)
 }
 
 /**
+ * @brief Release the root cache inode for an export.
+ *
+ * @param exp [IN] the export
+ */
+
+void release_export_root_locked(struct gsh_export *exp)
+{
+	exportlist_t *export = &exp->export;
+	cache_entry_t *entry = NULL;
+
+	glist_del(&export->exp_root_list);
+	entry = export->exp_root_cache_inode;
+	export->exp_root_cache_inode = NULL;
+
+	if (entry != NULL) {
+		/* Allow this entry to be removed (unlink) */
+		atomic_dec_int32_t(&entry->exp_root_refcount);
+
+		/* Release the pin reference */
+		cache_inode_dec_pin_ref(entry, false);
+	}
+
+	LogDebug(COMPONENT_INIT,
+		 "Released root entry %p for path %s on export_id=%d",
+		 entry, export->fullpath, export->id);
+}
+
+/**
+ * @brief Release the root cache inode for an export.
+ *
+ * @param exp [IN] the export
+ */
+
+void release_export_root(struct gsh_export *exp)
+{
+	cache_entry_t *entry = NULL;
+	cache_inode_status_t status;
+
+	/* Get a reference to the root entry */
+	status = nfs_export_get_root_entry(exp, &entry);
+
+	if (status != CACHE_INODE_SUCCESS) {
+		/* No more root entry, bail out, this export is
+		 * probably about to be destroyed.
+		 */
+		LogInfo(COMPONENT_CACHE_INODE,
+			"Export root for export id %d status %s",
+			exp->export.id, cache_inode_err_str(status));
+		return;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+	/* Make the export unreachable as a root cache inode */
+	release_export_root_locked(exp);
+
+	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	cache_inode_put(entry);
+}
+
+void unexport(struct gsh_export *export)
+{
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
+	opctx.export = export;
+
+	/* Make the export unreachable */
+	pseudo_unmount_export(export, &opctx);
+	remove_gsh_export(export->export.id);
+	release_export_root(export);
+}
+
+/**
+ * @brief Handle killing a cache inode entry that might be an export root.
+ *
+ * @param entry [IN] the cache inode entry
+ */
+
+void kill_export_root_entry(cache_entry_t *entry)
+{
+	exportlist_t *export;
+	struct gsh_export *exp;
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
+
+	if (entry->type != DIRECTORY)
+		return;
+
+	while (true) {
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+		export = glist_first_entry(&entry->object.dir.export_roots,
+					   exportlist_t,
+					   exp_root_list);
+
+		if (export == NULL) {
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			return;
+		}
+
+		exp = container_of(export, struct gsh_export, export);
+		get_gsh_export_ref(exp);
+		LogInfo(COMPONENT_CONFIG,
+			"Killing export_id %d because root entry went bad",
+			export->id);
+
+		PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+		/* Make the export unreachable as a root cache inode */
+		release_export_root_locked(exp);
+
+		PTHREAD_RWLOCK_unlock(&exp->lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+		/* Make the export otherwise unreachable */
+		opctx.export = exp;
+		pseudo_unmount_export(exp, &opctx);
+		remove_gsh_export(exp->export.id);
+
+		put_gsh_export(exp);
+	}
+}
+
+/**
  * @brief Match a specific option in the client export list
  *
  * @param[in]  hostaddr      Host to search for

@@ -444,5 +444,7 @@ bool init_export_root(struct gsh_export *exp);
 
 cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
 					       cache_entry_t **entry);
+void unexport(struct gsh_export *export);
+void kill_export_root_entry(cache_entry_t *entry);
 
 #endif				/* !NFS_EXPORTS_H */
