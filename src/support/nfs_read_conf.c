@@ -260,11 +260,38 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 }
 #endif
 
-
-
-	return 0;
-}
+#ifdef USE_NFS_IDMAP
+#define GETPWNAMDEF false
+#else
+#define GETPWNAMDEF true
 #endif
+
+static struct config_item version4_params[] = {
+	CONF_ITEM_BOOL("Graceless", false,
+		       nfs_version4_parameter, graceless),
+	CONF_ITEM_UI32("Lease_Lifetime", 0, 120, LEASE_LIFETIME_DEFAULT,
+		       nfs_version4_parameter, lease_lifetime),
+	CONF_ITEM_UI32("Grace_Period", 0, 180, GRACE_PERIOD_DEFAULT,
+		       nfs_version4_parameter, grace_period),
+	CONF_ITEM_STR("DomainName", 1, MAXPATHLEN, DOMAINNAME_DEFAULT,
+		      nfs_version4_parameter, domainname),
+	CONF_ITEM_PATH("IdmapConf", 1, MAXPATHLEN, "/etc/idmapd.conf",
+		       nfs_version4_parameter, idmapconf),
+	CONF_ITEM_BOOL("UseGetpwnam", GETPWNAMDEF,
+		       nfs_version4_parameter, idmapconf),
+	CONF_ITEM_BOOL("Allow_Numeric_Owners", true,
+		       nfs_version4_parameter, allow_numeric_owners),
+	CONFIG_EOL
+};
+
+struct config_block version4_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.nfsv4",
+	.blk_desc.name = "NFSv4",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = version4_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
 
 /**
  * @brief Read the configuration for NFSv4 stuff
@@ -277,75 +304,11 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 int nfs_read_version4_conf(config_file_t in_config,
 			   nfs_version4_parameter_t *pparam)
 {
-	int var_max;
-	int var_index;
-	int err;
-	char *key_name;
-	char *key_value;
-	config_item_t block;
+	int rc;
 
-	/* Get the config BLOCK */
-	block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4);
-
-	if (block == NULL) {
-		LogDebug(COMPONENT_CONFIG,
-			 "Cannot read item \"%s\" from configuration file",
-			 CONF_LABEL_NFS_VERSION4);
-		return 1;
-	} else if (config_ItemType(block) != CONFIG_ITEM_BLOCK) {
-		/* Expected to be a block */
-		LogDebug(COMPONENT_CONFIG,
-			 "Item \"%s\" is expected to be a block",
-			 CONF_LABEL_NFS_VERSION4);
-		return 1;
-	}
-
-	var_max = config_GetNbItems(block);
-
-	for (var_index = 0; var_index < var_max; var_index++) {
-		config_item_t item;
-
-		item = config_GetItemByIndex(block, var_index);
-
-		/* Get key's name */
-		err = config_GetKeyValue(item, &key_name, &key_value);
-
-		if (err != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Error reading key[%d] from section \"%s\" of configuration file.",
-				var_index, CONF_LABEL_NFS_VERSION4);
-			return -1;
-		}
-
-		if (!strcasecmp(key_name, "Graceless")) {
-			pparam->graceless = str_to_bool(key_value);
-		} else if (!strcasecmp(key_name, "Lease_Lifetime")) {
-			pparam->lease_lifetime = atoi(key_value);
-		} else if (!strcasecmp(key_name, "Grace_Period")) {
-			pparam->grace_period = atoi(key_value);
-		} else if (!strcasecmp(key_name, "DomainName")) {
-			pparam->domainname = gsh_strdup(pparam->domainname);
-			if (!pparam->domainname) {
-				LogFatal(COMPONENT_CONFIG,
-					 "Unable to allocate memory for domain name.");
-			}
-		} else if (!strcasecmp(key_name, "IdmapConf")) {
-			pparam->idmapconf = gsh_strdup(key_value);
-
-			if (!pparam->idmapconf) {
-				LogFatal(COMPONENT_CONFIG,
-					 "Unable to allocate space for idmap conffile path.");
-			}
-		} else if (!strcasecmp(key_name, "UseGetpwnam")) {
-			pparam->use_getpwnam = str_to_bool(key_value);
-		} else if (!strcasecmp(key_name, "Allow_Numeric_Owners")) {
-			pparam->allow_numeric_owners = str_to_bool(key_value);
-		} else {
-			LogWarn(COMPONENT_CONFIG,
-				"Unknown or unsettable key: %s (item %s)",
-				key_name, CONF_LABEL_NFS_VERSION4);
-		}
-	}
-
-	return 0;
+	rc = load_config_from_parse(in_config,
+				    &version4_param,
+				    pparam,
+				    true);
+	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }				/* nfs_read_version4_conf */
