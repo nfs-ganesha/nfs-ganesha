@@ -90,14 +90,6 @@ nfs_parameter_t nfs_param = {
 
 	/* Workers parameters : IP/Name values pool prealloc */
 
-#ifdef _HAVE_GSSAPI
-	/* krb5 parameter */
-	.krb5_param.svc.principal = DEFAULT_NFS_PRINCIPAL,
-	.krb5_param.keytab = DEFAULT_NFS_KEYTAB,
-	.krb5_param.ccache_dir = DEFAULT_NFS_CCACHE_DIR,
-	.krb5_param.active_krb5 = true,
-#endif
-
 	/* NFSv4 parameter */
 	.nfsv4_param.graceless = false,
 	.nfsv4_param.lease_lifetime = LEASE_LIFETIME_DEFAULT,
