@@ -177,7 +177,7 @@ void release_ip(char *ip, int notdone)
 }
 
 /* try to find this node's id in an event */
-int check_for_id( int inum, struct dirent **namelist, ushort id)
+int check_for_id( int inum, struct dirent **namelist, int id)
 {
 char *cp, *cp2;
 int icnt = 0;
@@ -242,7 +242,7 @@ char workpath[PATH_MAX];
                                 cp2++;
                         *cp2 = '\0';
                         i = atoi(cp);
-                        if ( ((ushort) i == id )) {
+                        if ( i == id ) {
                                 icnt++;
                                 t_after = t_this_entry + 1;
                                 if (rel) {
@@ -375,7 +375,7 @@ char workpath[PATH_MAX];
         }
         return;
 }
-int match_to_releaseip( int num, struct dirent **namelist, ushort id, nfs_grace_start_array_t *array)
+int match_to_releaseip( int num, struct dirent **namelist, int id, nfs_grace_start_array_t *array)
 {
 
 char *cp, *cp2;
@@ -419,7 +419,7 @@ time_t t_time, r_time, t_done;
                         cp2++;
                 *cp2 = '\0';
                 i = atoi(cp);
-                if ( ((ushort) i != id )) {
+                if ( i != id ) {
                         ientry--;
                         continue;
                 }
@@ -498,7 +498,7 @@ time_t t_time, r_time, t_done;
                 while(*cp != DELIMIT)
                         cp--;
                 cp++;
-                working->nodeid = (ushort) atoi(cp);
+                working->nodeid = atoi(cp);
                 working->event = TAKEIP;
                 if(strmaxcpy(working->ipaddr,
                              workaddr,

@@ -97,7 +97,7 @@ verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
 /* node ID used to identify an individual node in a cluster */
-ushort g_nodeid = 0;
+int g_nodeid = 0;
 
 hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 nfs_start_info_t nfs_start_info;

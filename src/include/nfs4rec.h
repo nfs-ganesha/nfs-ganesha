@@ -19,7 +19,7 @@
 typedef struct nfs_grace_start
 {
   int      event;
-  ushort   nodeid;
+  int      nodeid;
   char     ipaddr[IPADDR_STRSZ];
 } nfs_grace_start_t;
 

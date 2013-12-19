@@ -26,6 +26,8 @@
 #include <libgen.h>             /* for dirname */
 #include <sys/vfs.h>            /* for fsid */
 
+extern int g_nodeid;
+
 /**
  * build the export entry
  */
@@ -41,6 +43,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   struct statfs        stat_buf;
   gpfs_fsal_up_ctx_t * gpfs_fsal_up_ctx;
   bool_t               start_fsal_up_thread = FALSE;
+  int                  nodeid;
+  struct grace_period_arg gpa;
 
   fsal_status_t status;
   fsal_op_context_t op_context;
@@ -138,6 +142,20 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   LogFullDebug(COMPONENT_FSAL,
                "GPFSFSAL_BuildExportContext: %d",
                p_export_context->mount_root_fd);
+
+  /* if the nodeid has not been obtained, get it now */
+  if (!g_nodeid)
+  {
+    gpa.mountdirfd = fd;
+
+    nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, &gpa);
+    if (nodeid >= 0)
+    {
+      /* GPFS starts with 0, we want node ids to be > 0 */
+      g_nodeid = nodeid + 1;
+      LogFullDebug(COMPONENT_FSAL, "nodeid = (%d)", g_nodeid);
+    }
+  }
 
   /* Save pointer to fsal_staticfsinfo_t in export context */
   p_export_context->fe_static_fs_info = &global_fs_info;

@@ -64,7 +64,7 @@ typedef struct clid_entry
         char cl_name[256];
 } clid_entry_t;
 
-static void nfs4_load_recov_clids_nolock(ushort);
+static void nfs4_load_recov_clids_nolock(int);
 
 void
 nfs4_init_grace()
@@ -388,7 +388,7 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
 
         return 0;
 }
-void nfs4_load_recov_clids_cluster_nolock(ushort nodeid)
+void nfs4_load_recov_clids_cluster_nolock(int nodeid)
 {
         DIR *dp;
         int rc;
@@ -424,14 +424,14 @@ void nfs4_load_recov_clids_cluster_nolock(ushort nodeid)
 
 
 static void
-nfs4_load_recov_clids_nolock(ushort nodeid)
+nfs4_load_recov_clids_nolock(int nodeid)
 {
         DIR *dp;
         struct dirent **namelist;
         struct glist_head *node;
         clid_entry_t *clid_entry;
         int rc, n;
-        ushort u_nodeid;
+        int  u_nodeid;
         char path[PATH_MAX];
         char *cp;
 
@@ -512,7 +512,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
         while ( n > 2 ) {
                 cp = namelist[n-1]->d_name;
                 cp += 4; /* skip over the "node" */
-                u_nodeid = (ushort) atoi(cp);
+                u_nodeid = atoi(cp);
                 nfs4_load_recov_clids_cluster_nolock(u_nodeid);
                 free(namelist[n-1]);
                 n--;
@@ -524,7 +524,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
 }
 
 void
-nfs4_load_recov_clids(ushort nodeid)
+nfs4_load_recov_clids(int nodeid)
 {
         P(grace.g_mutex);
 
@@ -607,16 +607,6 @@ nfs4_create_recov_dir()
                     v4_old_dir, errno);
         }
         if (nfs_param.core_param.clustered) {
-#ifdef SONAS
-                short nodeid;
-
-                /* HACK - get the node ID */
-                nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, NULL);
-                /* GPFS starts with 0, we want node ids to be > 0 */
-                g_nodeid = nodeid + 1;
-                LogDebug(COMPONENT_NFS_V4, "nodeid = (%d)", g_nodeid);
-#endif
-
                 snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s/node%d",
                     NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
 
