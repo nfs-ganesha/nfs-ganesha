@@ -108,10 +108,10 @@ void freenetconfigent(struct netconfig *);
 typedef struct nfs_krb5_param {
 	/** Kerberos keytab.  Defaults to DEFAULT_NFS_KEYTAB, settable
 	    with KeytabPath. */
-	char keytab[MAXPATHLEN + 1];
+	char *keytab;
 	/** The ganesha credential cache.  Defautls to
 	    DEFAULT_NFS_CCACHE_DIR, unsettable by user. */
-	char ccache_dir[MAXPATHLEN + 1];
+	char *ccache_dir;
 	/**
 	 * @note representation of GSSAPI service, independent of GSSRPC or
 	 * TI-RPC global variables.  Initially, use it just for
@@ -120,7 +120,7 @@ typedef struct nfs_krb5_param {
 	struct {
 		/** Principal used in callbacks, set to
 		    DEFAULT_NFS_PRINCIPAL and unsettable by user. */
-		char principal[MAXPATHLEN + 1];
+		char *principal;
 		/** Expanded gss name from principal, equal to
 		    principal/host\@domain.  Unsettable by user. */
 		gss_name_t gss_name;
