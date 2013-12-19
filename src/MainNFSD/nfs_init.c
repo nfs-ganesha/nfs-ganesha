@@ -211,23 +211,6 @@ nfs_parameter_t nfs_param = {
 	.cache_param.cookie_param.key_to_str = display_lock_cookie_key,
 	.cache_param.cookie_param.val_to_str = display_lock_cookie_val,
 	.cache_param.cookie_param.flags = HT_FLAG_NONE,
-
-	.cache_param.nparts = 7,
-	.cache_param.expire_type_attr = CACHE_INODE_EXPIRE_NEVER,
-	.cache_param.getattr_dir_invalidation = false,
-
-	/* Cache inode parameters : Garbage collection policy */
-	.cache_param.entries_hwmark = 100000,
-	.cache_param.use_fd_cache = true,
-	.cache_param.lru_run_interval = 600,
-	.cache_param.fd_limit_percent = 99,
-	.cache_param.fd_hwmark_percent = 90,
-	.cache_param.fd_lwmark_percent = 50,
-	.cache_param.reaper_work = 1000,
-	.cache_param.biggest_window = 40,
-	.cache_param.required_progress = 5,
-	.cache_param.futility_count = 8,
-
 };
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
