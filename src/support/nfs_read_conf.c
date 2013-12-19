@@ -177,6 +177,23 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }
 
+static struct config_item ip_name_params[] = {
+	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME,
+		       nfs_ip_name_param, hash_param.index_size),
+	CONF_ITEM_UI32("Expiration_Time", 1, 60*60*24, IP_NAME_EXPIRATION,
+		       nfs_ip_name_param, expiration_time),
+	CONFIG_EOL
+};
+
+struct config_block nfs_ip_name = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
+	.blk_desc.name = "NFS_IP_Name",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = ip_name_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /**
  * @brief Reads the configuration for the IP/name.
  *
@@ -188,65 +205,13 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 int nfs_read_ip_name_conf(config_file_t in_config,
 			  nfs_ip_name_parameter_t *pparam)
 {
-	int var_max;
-	int var_index;
-	int err;
-	char *key_name;
-	char *key_value;
-	config_item_t block;
+	int rc;
 
-	/* Get the config BLOCK */
-	block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME);
-
-	if (block == NULL) {
-		LogDebug(COMPONENT_CONFIG,
-			 "Cannot read item \"%s\" from configuration file",
-			 CONF_LABEL_NFS_IP_NAME);
-		return 1;
-	} else if (config_ItemType(block) != CONFIG_ITEM_BLOCK) {
-		/* Expected to be a block */
-		LogDebug(COMPONENT_CONFIG,
-			 "Item \"%s\" is expected to be a block",
-			 CONF_LABEL_NFS_IP_NAME);
-		return 1;
-	}
-
-	var_max = config_GetNbItems(block);
-
-	for (var_index = 0; var_index < var_max; var_index++) {
-		config_item_t item;
-
-		item = config_GetItemByIndex(block, var_index);
-
-		/* Get key's name */
-		err = config_GetKeyValue(item, &key_name, &key_value);
-
-		if (err != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Error reading key[%d] from section \"%s\" of configuration file.",
-				var_index, CONF_LABEL_NFS_IP_NAME);
-			return -1;
-		}
-
-		if (!strcasecmp(key_name, "Index_Size")) {
-			pparam->hash_param.index_size = atoi(key_value);
-		} else if (!strcasecmp(key_name, "Expiration_Time")) {
-			pparam->expiration_time = atoi(key_value);
-		} else if (!strcasecmp(key_name, "Map")) {
-			pparam->mapfile = gsh_strdup(key_value);
-			if (!pparam->mapfile) {
-				LogFatal(COMPONENT_CONFIG,
-					 "Unable to allocate memory for mapfile path.");
-			}
-		} else {
-			LogCrit(COMPONENT_CONFIG,
-				"Unknown or unsettable key: %s (item %s)",
-				key_name, CONF_LABEL_NFS_IP_NAME);
-			return -1;
-		}
-	}
-
-	return 0;
+	rc = load_config_from_parse(in_config,
+				    &nfs_ip_name,
+				    pparam,
+				    true);
+	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }
 
 #ifdef _HAVE_GSSAPI
