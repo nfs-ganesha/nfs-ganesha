@@ -63,6 +63,7 @@
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 #include "nfs_tools.h"
+#include "sal_functions.h"
 
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
@@ -192,7 +193,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		if (export_id_cmpf(&v.node_k, node) == 0) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
-				 "export_mgr cache hit slot %d\n",
+				 "export_mgr cache hit slot %d",
 				 eid_cache_offsetof(&export_by_id, export_id));
 			exp =
 			    avltree_container_of(node, struct gsh_export,
@@ -225,7 +226,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 
 	exp = &export_st->export;
 	exp->export.id = export_id;
-	exp->refcnt = 0;	/* we will hold a ref starting out... */
+	exp->refcnt = 1;	/* we will hold a ref starting out... */
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&exp->node_k, &export_by_id.t);
@@ -531,16 +532,45 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	return exp;
 }
 
+pthread_mutex_t release_export_serializer = PTHREAD_MUTEX_INITIALIZER;
+
 /**
  * @brief Release the export management struct
  *
  * We are done with it, let it go.
  */
 
-void put_gsh_export(struct gsh_export *export)
+void put_gsh_export(struct gsh_export *exp)
 {
-	assert(export->refcnt > 0);
-	atomic_dec_int64_t(&export->refcnt);
+	int64_t refcount;
+	exportlist_t *export = &exp->export;
+	struct export_stats *export_st;
+
+	assert(exp->refcnt > 0);
+
+	refcount = atomic_dec_int64_t(&exp->refcnt);
+
+	if (refcount != 0)
+		return;
+
+	/* Make sure only one thread is in here at a time. */
+	pthread_mutex_lock(&release_export_serializer);
+
+	/* Releasing last reference */
+
+	/* Release state belonging to this export */
+	state_release_export(exp);
+
+	/* Flush cache inodes belonging to this export */
+	cache_inode_unexport(exp);
+
+	/* free resources */
+	free_export_resources(export);
+	export_st = container_of(exp, struct export_stats, export);
+	server_stats_free(&export_st->st);
+	gsh_free(export_st);
+
+	pthread_mutex_unlock(&release_export_serializer);
 }
 
 /**
@@ -549,16 +579,14 @@ void put_gsh_export(struct gsh_export *export)
  * Remove it from the AVL tree.
  */
 
-bool remove_gsh_export(int export_id)
+void remove_gsh_export(int export_id)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
 	struct gsh_export *exp = NULL;
 	exportlist_t *export = NULL;
-	struct export_stats *export_st;
 	struct gsh_export v;
 	void **cache_slot;
-	bool removed = true;
 
 	v.export.id = export_id;
 
@@ -566,10 +594,8 @@ bool remove_gsh_export(int export_id)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if (exp->state != EXPORT_RELEASE || exp->refcnt > 0) {
-			removed = false;
-			goto out;
-		}
+
+		/* Remove the export from the AVL tree */
 		cache_slot = (void **)
 		    &(export_by_id.
 		      cache[eid_cache_offsetof(&export_by_id, export_id)]);
@@ -577,17 +603,21 @@ bool remove_gsh_export(int export_id)
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
 		avltree_remove(node, &export_by_id.t);
+
+		/* Remove the export from the export list */
 		export = &exp->export;
 		glist_del(&export->exp_list);
 	}
- out:
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	if (removed && node) {
-		free_export_resources(export);
-		export_st = container_of(exp, struct export_stats, export);
-		server_stats_free(&export_st->st);
+
+	if (exp != NULL) {
+		/* Release table reference to the export.
+		 * Release of resources will occur on last reference.
+		 * Which may or may not be from this call.
+		 */
+		put_gsh_export(exp);
 	}
-	return removed;
 }
 
 /**
