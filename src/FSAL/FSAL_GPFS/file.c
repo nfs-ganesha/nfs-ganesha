@@ -317,7 +317,7 @@ fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		hints->hints = 0;
 	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(fsal_error, 0);
 }
 
 /* gpfs_commit
