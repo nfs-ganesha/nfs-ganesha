@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
  */
 
 /* export.c
@@ -39,6 +39,7 @@
 #include <mntent.h>
 #include <sys/statvfs.h>
 #include "nlm_list.h"
+#include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -46,9 +47,16 @@
 #include "fsal_handle.h"
 #include "lustre_methods.h"
 
+#ifdef HAVE_INCLUDE_LUSTREAPI_H
+#include <lustre/lustreapi.h>
+#include <lustre/lustre_user.h>
+#else
+#ifdef HAVE_INCLUDE_LIBLUSTREAPI_H
 #include <lustre/liblustreapi.h>
 #include <lustre/lustre_user.h>
 #include <linux/quota.h>
+#endif
+#endif
 
 /*
  * VFS internal export
@@ -62,6 +70,7 @@ struct lustre_fsal_export {
 	int root_fd;
 	dev_t root_dev;
 	struct file_handle *root_handle;
+	bool  pnfs_enabled;
 };
 
 char *lustre_get_root_path(struct fsal_export *exp_hdl)
@@ -88,7 +97,7 @@ int lustre_get_root_fd(struct fsal_export *exp_hdl)
 /* export object methods
  */
 
-static fsal_status_t release(struct fsal_export *exp_hdl)
+static fsal_status_t lustre_release(struct fsal_export *exp_hdl)
 {
 	struct lustre_fsal_export *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -128,9 +137,9 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	return fsalstat(fsal_error, retval);
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+static fsal_status_t lustre_get_dynamic_info(struct fsal_export *exp_hdl,
+					     const struct req_op_context *opctx,
+					     fsal_dynamicfsinfo_t *infop)
 {
 	struct lustre_fsal_export *myself;
 	struct statvfs buffstatvfs;
@@ -161,8 +170,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
-static bool fs_supports(struct fsal_export *exp_hdl,
-			fsal_fsinfo_options_t option)
+static bool lustre_fs_supports(struct fsal_export *exp_hdl,
+			       fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -170,7 +179,7 @@ static bool fs_supports(struct fsal_export *exp_hdl,
 	return fsal_supports(info, option);
 }
 
-static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
+static uint64_t lustre_fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -178,7 +187,7 @@ static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 	return fsal_maxfilesize(info);
 }
 
-static uint32_t fs_maxread(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_maxread(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -186,7 +195,7 @@ static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 	return fsal_maxread(info);
 }
 
-static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -194,7 +203,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 	return fsal_maxwrite(info);
 }
 
-static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_maxlink(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -202,7 +211,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 	return fsal_maxlink(info);
 }
 
-static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_maxnamelen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -210,7 +219,7 @@ static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 	return fsal_maxnamelen(info);
 }
 
-static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_maxpathlen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -218,7 +227,7 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 	return fsal_maxpathlen(info);
 }
 
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec lustre_fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -226,7 +235,7 @@ static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 	return fsal_lease_time(info);
 }
 
-static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
+static fsal_aclsupp_t lustre_fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -234,7 +243,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 	return fsal_acl_support(info);
 }
 
-static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
+static attrmask_t lustre_fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -242,7 +251,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 	return fsal_supported_attrs(info);
 }
 
-static uint32_t fs_umask(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_umask(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -250,7 +259,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(info);
 }
 
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
+static uint32_t lustre_fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -267,10 +276,11 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  * on linux, can map st_dev -> /proc/partitions name -> /dev/<name>
  */
 
-static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
+				      const char *filepath,
+				      int quota_type,
+				      struct req_op_context *req_ctx,
+				      fsal_quota_t *pquota)
 {
 	struct lustre_fsal_export *myself;
 	struct if_quotactl dataquota;
@@ -315,7 +325,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		retval = errno;
 		goto out;
 	}
-	pquota->bsize = 1024;	// LUSTRE has block of 1024 bytes
+	pquota->bsize = 1024;	/* LUSTRE has block of 1024 bytes */
 	pquota->bhardlimit = dataquota.qc_dqblk.dqb_bhardlimit;
 	pquota->bsoftlimit = dataquota.qc_dqblk.dqb_bsoftlimit;
 	pquota->curblocks = dataquota.qc_dqblk.dqb_curspace / pquota->bsize;
@@ -324,7 +334,8 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	pquota->fsoftlimit = dataquota.qc_dqblk.dqb_isoftlimit;
 	pquota->curfiles = dataquota.qc_dqblk.dqb_isoftlimit;
 
-	/* Times left are set only if used resource is in-between soft and hard limits */
+	/* Times left are set only if used resource
+	 * is in-between soft and hard limits */
 	if ((pquota->curfiles > pquota->fsoftlimit)
 	    && (pquota->curfiles < pquota->fhardlimit))
 		pquota->ftimeleft = dataquota.qc_dqblk.dqb_itime;
@@ -345,10 +356,11 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
  * same lower mount restriction applies
  */
 
-static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
+static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
+			       const char *filepath,
+			       int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct lustre_fsal_export *myself;
 	struct stat path_stat;
@@ -417,10 +429,9 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		retval = errno;
 		goto err;
 	}
-	if (presquota != NULL) {
-		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
-				 presquota);
-	}
+	if (presquota != NULL)
+		return lustre_get_quota(exp_hdl, filepath, quota_type,
+				 req_ctx, presquota);
  err:
 	return fsalstat(fsal_error, retval);
 }
@@ -432,7 +443,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
  * is the option to also adjust the start pointer.
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
+static fsal_status_t lustre_extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
@@ -455,7 +466,53 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void lustre_handle_ops_init(struct fsal_obj_ops *ops);
+/**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.  This is also where validation gets done,
+ * since PUTFH is the only operation that can return
+ * NFS4ERR_BADHANDLE.
+ *
+ * @param[in]  export_pub The export in which to create the handle
+ * @param[in]  desc       Buffer from which to create the file
+ * @param[out] ds_pub     FSAL data server handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
+				 const struct gsh_buffdesc *const desc,
+				 struct fsal_ds_handle **const ds_pub)
+{
+	/* Handle to be created */
+	struct lustre_ds *ds = NULL;
+
+	*ds_pub = NULL;
+
+	if (desc->len != sizeof(struct lustre_file_handle))
+		return NFS4ERR_BADHANDLE;
+	ds = gsh_calloc(1, sizeof(struct lustre_ds));
+
+	if (ds == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
+	 *            here. */
+
+	ds->connected = false;
+
+	memcpy(&ds->wire, desc->addr, desc->len);
+
+	if (fsal_ds_handle_init(&ds->ds,
+				export_pub->ds_ops,
+				export_pub)) {
+		gsh_free(ds);
+		return NFS4ERR_SERVERFAULT;
+	}
+	*ds_pub = &ds->ds;
+
+	return NFS4_OK;
+}
 
 /* lustre_export_ops_init
  * overwrite vector entries with the methods that we support
@@ -463,25 +520,26 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops);
 
 void lustre_export_ops_init(struct export_ops *ops)
 {
-	ops->release = release;
+	ops->release = lustre_release;
 	ops->lookup_path = lustre_lookup_path;
-	ops->extract_handle = extract_handle;
+	ops->extract_handle = lustre_extract_handle;
 	ops->create_handle = lustre_create_handle;
-	ops->get_fs_dynamic_info = get_dynamic_info;
-	ops->fs_supports = fs_supports;
-	ops->fs_maxfilesize = fs_maxfilesize;
-	ops->fs_maxread = fs_maxread;
-	ops->fs_maxwrite = fs_maxwrite;
-	ops->fs_maxlink = fs_maxlink;
-	ops->fs_maxnamelen = fs_maxnamelen;
-	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
-	ops->fs_acl_support = fs_acl_support;
-	ops->fs_supported_attrs = fs_supported_attrs;
-	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
-	ops->get_quota = get_quota;
-	ops->set_quota = set_quota;
+	ops->create_ds_handle = lustre_create_ds_handle;
+	ops->get_fs_dynamic_info = lustre_get_dynamic_info;
+	ops->fs_supports = lustre_fs_supports;
+	ops->fs_maxfilesize = lustre_fs_maxfilesize;
+	ops->fs_maxread = lustre_fs_maxread;
+	ops->fs_maxwrite = lustre_fs_maxwrite;
+	ops->fs_maxlink = lustre_fs_maxlink;
+	ops->fs_maxnamelen = lustre_fs_maxnamelen;
+	ops->fs_maxpathlen = lustre_fs_maxpathlen;
+	ops->fs_lease_time = lustre_fs_lease_time;
+	ops->fs_acl_support = lustre_fs_acl_support;
+	ops->fs_supported_attrs = lustre_fs_supported_attrs;
+	ops->fs_umask = lustre_fs_umask;
+	ops->fs_xattr_access_rights = lustre_fs_xattr_access_rights;
+	ops->get_quota = lustre_get_quota;
+	ops->set_quota = lustre_set_quota;
 }
 
 /* create_export
@@ -503,7 +561,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN];	/* there has got to be a better way... */
+	char mntdir[MAXPATHLEN];
 	char fs_spec[MAXPATHLEN];
 	char type[MAXNAMLEN];
 	int retval = 0;
@@ -660,6 +718,14 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	myself->mntdir = gsh_strdup(mntdir);
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
+
+	LogInfo(COMPONENT_FSAL,
+		"lustre_fsal_create: pnfs was enabled for [%s]",
+		export_path);
+	export_ops_pnfs(myself->export.ops);
+	handle_ops_pnfs(myself->export.obj_ops);
+	ds_ops_init(myself->export.ds_ops);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:

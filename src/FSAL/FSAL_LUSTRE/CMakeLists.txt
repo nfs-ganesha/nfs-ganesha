@@ -10,6 +10,8 @@ SET(fsallustre_LIB_SRCS
    handle.c
    file.c
    xattrs.c
+   mds.c
+   ds.c
 )
 
 add_library(fsallustre SHARED ${fsallustre_LIB_SRCS})
@@ -27,11 +29,14 @@ if(USE_FSAL_SHOOK)
     fsal_convert.c
     fsal_internal.c
     fsal_internal.h
+    lustre_extended_types.h
     main.c
     export.c
     handle.c
     file.c
     xattrs.c
+   mds.c
+   ds.c
     )
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})

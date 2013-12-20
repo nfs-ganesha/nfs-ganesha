@@ -20,9 +20,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
  */
 
 /* main.c
@@ -37,6 +37,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include "nlm_list.h"
+#include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 
@@ -53,8 +54,8 @@ struct lustre_fsal_module {
 const char myname[] = "LUSTRE";
 
 /* filesystem info for LUSTRE */
-static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
+static struct fsal_staticfsinfo_t lustre_info = {
+	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -74,11 +75,12 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = LUSTRE_SUPPORTED_ATTRIBUTES,
-	.maxread = 0,
-	.maxwrite = 0,
+	.maxread = 1048576,
+	.maxwrite = 1048576,
 	.umask = 0,
 	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
+	.xattr_access_rights = 0400, /* root=RW, owner=R */
+	.pnfs_file = true,
 };
 
 /* private helper for export object
@@ -86,10 +88,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 
 struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
 {
-	struct lustre_fsal_module *myself;
-
-	myself = container_of(hdl, struct lustre_fsal_module, fsal);
-	return &myself->fs_info;
+	return &lustre_info;
 }
 
 /* Module methods
@@ -98,15 +97,17 @@ struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
 /* init_config
  * must be called with a reference taken (via lookup_fsal)
  */
+bool pnfs_enabled;
+struct lustre_pnfs_parameter pnfs_param;
 
-static fsal_status_t init_config(struct fsal_module *fsal_hdl,
+static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
 	struct lustre_fsal_module *lustre_me =
 	    container_of(fsal_hdl, struct lustre_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
-	lustre_me->fs_info = default_posix_info;	/* get a copy of the defaults */
+	lustre_me->fs_info = lustre_info; /* get a copy of the defaults */
 
 	fsal_status =
 	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
@@ -119,13 +120,22 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	 * params.
 	 */
 
+	memset(&pnfs_param, 0, sizeof(pnfs_param));
+	pnfs_enabled = FALSE;
+	if (!lustre_pnfs_read_conf(config_struct, &pnfs_param))
+		pnfs_enabled = TRUE;
+	else
+		LogMajor(COMPONENT_FSAL,
+			 "Could not find valid pNFS configuration in config file. Disabling pNFS");
+
 	display_fsinfo(&lustre_me->fs_info);
+
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     (uint64_t) LUSTRE_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_posix_info.supported_attrs);
+		     "Supported attributes default = 0x%"PRIx64,
+		     lustre_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 lustre_me->fs_info.supported_attrs);
@@ -135,13 +145,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal LUSTRE method linkage to export object
  */
 
-fsal_status_t lustre_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   const char *export_path,
 				   const char *fs_options,
-				   struct exportlist * exp_entry,
-				   struct fsal_module * next_fsal,
-				   const struct fsal_up_vector * up_ops,
-				   struct fsal_export ** export);
+				   struct exportlist *exp_entry,
+				   struct fsal_module *next_fsal,
+				   const struct fsal_up_vector *up_ops,
+				   struct fsal_export **export);
 
 /* Module initialization.
  * Called by dlopen() to register the module
@@ -156,8 +166,6 @@ static struct lustre_fsal_module LUSTRE;
 /* linkage to the exports and handle ops initializers
  */
 
-void lustre_export_ops_init(struct export_ops *ops);
-void lustre_handle_ops_init(struct fsal_obj_ops *ops);
 
 MODULE_INIT void lustre_init(void)
 {
@@ -172,7 +180,7 @@ MODULE_INIT void lustre_init(void)
 		return;
 	}
 	myself->ops->create_export = lustre_create_export;
-	myself->ops->init_config = init_config;
+	myself->ops->init_config = lustre_init_config;
 	init_fsal_parameters(&LUSTRE.fsal_info);
 }
 

@@ -114,7 +114,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 	pthread_mutex_lock(&priv->outqueue->lock);
 	while (priv->outqueue->data == NULL) {
 		LogDebug(COMPONENT_9P,
-			 "Waiting for outqueue buffer on trans %#lp\n", trans);
+			 "Waiting for outqueue buffer on trans %p\n", trans);
 		pthread_cond_wait(&priv->outqueue->cond, &priv->outqueue->lock);
 	}
 
@@ -146,7 +146,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 					&dataout->size);
 		if (rc != 1) {
 			LogMajor(COMPONENT_9P,
-				 "Could not process 9P buffer on trans #%lp",
+				 "Could not process 9P buffer on trans %p",
 				 req9p->pconn->trans_data.rdma_trans);
 		}
 
@@ -165,7 +165,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 
 		if (rc != 1) {
 			LogMajor(COMPONENT_9P,
-				 "Could not send buffer on trans #%lp",
+				 "Could not send buffer on trans %p",
 				 req9p->pconn->trans_data.rdma_trans);
 			/* Give the buffer back right away
 			 * since no buffer is being sent */

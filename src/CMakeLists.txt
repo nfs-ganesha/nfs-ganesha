@@ -92,7 +92,6 @@ ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/githead_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE  _GIT_HEAD_COMMIT)
 
-   
   EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/gitdesc_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE  _GIT_DESCRIBE)
 
@@ -101,7 +100,7 @@ ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
 # Using git related information, build PACKNAME
-set( PACKNAME "${GANESHA_VERSION}" ) 
+set( PACKNAME "${GANESHA_VERSION}" )
 
 # Define CPACK component (to deal with sub packages)
 set(CPACK_COMPONENTS_ALL daemon fsal headers )
@@ -124,7 +123,7 @@ if (FREEBSD)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
     set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
-    find_library(LIBDL c)  # libc suffices on freebsd 
+    find_library(LIBDL c)  # libc suffices on freebsd
 endif(FREEBSD)
 
 if (LINUX)
@@ -189,7 +188,7 @@ option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids
 option(USE_NODELIST "enable NodeList support" OFF)
 option(_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
 
-# Debug symbols (-g) build flag 
+# Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 
 # enable code profiling [-g -pg]
@@ -249,6 +248,21 @@ IF(USE_FSAL_GLUSTER)
   ENDIF()
 ENDIF()
 
+IF(USE_FSAL_LUSTRE)
+  IF(LUSTRE_PREFIX)
+    set(LUSTRE_PREFIX ${LUSTRE_PREFIX} CACHE PATH "Path to Lustre installation")
+    LIST(APPEND CMAKE_PREFIX_PATH "${LUSTRE_PREFIX}")
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        LIST(APPEND CMAKE_LIBRARY_PATH "${LUSTRE_PREFIX}/lib64")
+    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        LIST(APPEND CMAKE_LIBRARY_PATH "${LUSTRE_PREFIX}/lib")
+    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LUSTRE_PREFIX}/include")
+  ELSE()
+    set(LUSTRE_PREFIX "/usr" CACHE PATH "Path to Lustre installation")
+  ENDIF()
+ENDIF()
+
 IF(USE_FSAL_HPSS)
   IF(HPSS_PREFIX)
     set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
@@ -281,6 +295,23 @@ if(SAMBA4_PREFIX)
   LIST(APPEND CMAKE_LIBRARY_PATH "${SAMBA4_PREFIX}/lib")
 endif()
 
+IF(USE_9P_RDMA)
+  IF(MOOSHIKA_PREFIX)
+    set(MOOSHIKA_PREFIX ${MOOSHIKA_PREFIX} CACHE PATH "Path to Mooshika installation")
+    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
+  ENDIF()
+  IF(LIBIBVERBS_PREFIX)
+    set(LIBIBVERBS_PREFIX ${LIBIBVERBS_PREFIX} CACHE PATH "Path to libibverbs installation")
+    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LIBIBVERBS_PREFIX}/include")
+    include_directories("${LIBIBVERBS_PREFIX}/usr/include")
+  ENDIF()
+  IF(LIBRDMACM_PREFIX)
+    set(LIBRDMACM_PREFIX ${LIBRDMACM_PREFIX} CACHE PATH "Path to librdmacm installation")
+    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LIBRDMACM_PREFIX}/include")
+    include_directories("${LIBRDMACM_PREFIX}/include")
+  ENDIF()
+ENDIF()
+
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
@@ -307,7 +338,6 @@ else("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
   set(ALLOCATOR "libc" CACHE STRING
     "specify the memory allocator to use: jemalloc|tcmalloc|libc")
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
@@ -370,7 +400,7 @@ if(USE_FSAL_GLUSTER)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
 endif(USE_FSAL_GLUSTER)
- 
+
 if(USE_FSAL_CEPH)
   find_library(CEPH_FS cephfs)
   check_library_exists(
@@ -390,6 +420,7 @@ if(STRICT_PACKAGE)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_LUSTRE)
+  find_library(HAVE_LUSTREAPI lustreapi)
   check_library_exists(
     lustreapi
     llapi_is_lustre_mnt
@@ -405,7 +436,22 @@ if(USE_FSAL_LUSTRE)
       set(USE_FSAL_LUSTRE OFF)
       set(USE_FSAL_SHOOK OFF)
     endif(STRICT_PACKAGE)
+  else((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
+    include_directories("${LUSTRE_PREFIX}/include")
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        link_directories("${LUSTRE_PREFIX}/lib64")
+    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        link_directories("${LUSTRE_PREFIX}/lib")
+    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
+
+  check_include_files("lustre/lustreapi.h" HAVE_INCLUDE_LUSTREAPI_H)
+  check_include_files("lustre/liblustreapi.h" HAVE_INCLUDE_LIBLUSTREAPI_H)
+
+  if( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
+    message( ERROR "Cannot find lustre header files, aborting" )
+  endif( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
+
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
@@ -570,7 +616,7 @@ check_library_exists(
 	cap
 	cap_set_proc
 	""
-	HAVE_LIBCAP 
+	HAVE_LIBCAP
 	)
 
 if(HAVE_LIBCAP)
@@ -580,6 +626,15 @@ else(HAVE_LIBCAP)
   set(USE_CAPS OFF)
   message(STATUS "Could not find capabilities library, disabling USE_CAPS")
 endif(HAVE_LIBCAP)
+
+# check is daemon exists
+# I use check_library_exists there to be portab;e
+check_library_exists(
+	c
+	daemon
+	""
+	HAVE_DAEMON
+	)
 
 # Roll up required libraries
 
@@ -628,6 +683,8 @@ if(USE_9P_RDMA)
   find_package(PkgConfig)
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.4)
   set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
+  include_directories(${MOOSHIKA_INCLUDE_DIRS})
+  link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
 
 # All the plumbing in the basement
@@ -641,7 +698,7 @@ set(SYSTEM_LIBRARIES
 )
 
 IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
-message( FATAL_ERROR 
+message( FATAL_ERROR
 "No CMakeLists.txt found in libntirpc
 This probably means that the directory was not properly populated.
 Please run the following command to do that and use cmake again:
@@ -724,6 +781,7 @@ message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
 message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
+message(STATUS "LUSTRE_PREFIX = ${LUSTRE_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
 message(STATUS "_GIT_HEAD_COMMIT_ABBREV = ${_GIT_HEAD_COMMIT_ABBREV}")
@@ -832,9 +890,9 @@ set(STRICT_PACKAGE ${STRICT_PACKAGE}
    "enable strict packaging behavior"
    FORCE)
 
-set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA} 
+set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
   CACHE BOOL
-  "Distribution package's name carries git data" 
+  "Distribution package's name carries git data"
   FORCE)
 
 
@@ -870,7 +928,6 @@ if(DOXYGEN_FOUND)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-E
     )
 endif(DOXYGEN_FOUND)
 

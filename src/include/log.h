@@ -418,6 +418,7 @@ void activate_log_facility(struct log_facility *facility);
 int register_log_facility(struct log_facility *facility);
 int unregister_log_facility(struct log_facility *facility);
 int activate_custom_log_facility(struct log_facility *facility);
+void set_const_log_str();
 
 typedef struct log_component_info {
 	log_components_t comp_value;

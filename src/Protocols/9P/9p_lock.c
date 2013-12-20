@@ -155,16 +155,17 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 			break;
 		}
 
-		if (state_lock
-		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
-		     &state, STATE_NON_BLOCKING, NULL, &lock, &holder,
-		     &conflict, POSIX_LOCK) != STATE_SUCCESS) {
-			if (state_status == STATE_LOCK_BLOCKED)
-				status = _9P_LOCK_BLOCKED;
-			else
-				status = _9P_LOCK_ERROR;
-		} else
+		state_status = state_lock(pfid->pentry, pfid->export,
+					  &pfid->op_context, powner, &state,
+					  STATE_NON_BLOCKING, NULL, &lock,
+					  &holder, &conflict, POSIX_LOCK);
+
+		if (state_status == STATE_SUCCESS)
 			status = _9P_LOCK_SUCCESS;
+		else if (state_status == STATE_LOCK_BLOCKED)
+			status = _9P_LOCK_BLOCKED;
+		else
+			status = _9P_LOCK_ERROR;
 
 		break;
 

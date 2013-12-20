@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 	int c;
 	int pidfile;
 #ifndef HAVE_DAEMON
+	int dev_null_fd = 0;
 	pid_t son_pid;
 #endif
 	sigset_t signals_to_block;
@@ -240,6 +241,10 @@ int main(int argc, char *argv[])
 			LogFatal(COMPONENT_MAIN,
 				 "Error detaching process from parent: %s",
 				 strerror(errno));
+
+		/* In the child process, change the log header
+		 * if not, the header will contain the parent's pid */
+		set_const_log_str();
 #else
 		/* Step 1: forking a service process */
 		switch (son_pid = fork()) {
@@ -258,6 +263,50 @@ int main(int argc, char *argv[])
 					 "Could not start nfs daemon (setsid error %d (%s)",
 					 errno, strerror(errno));
 			}
+
+			/* stdin, stdout and stderr should not refer to a tty
+			 * I close 0, 1 & 2  and redirect them to /dev/null */
+			dev_null_fd = open("/dev/null", O_RDWR);
+			if (dev_null_fd < 0)
+				LogFatal(COMPONENT_MAIN,
+					 "Could not open /dev/null: %d (%s)",
+					 errno, strerror(errno));
+
+			if (close(STDIN_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stdin: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stdin closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(STDOUT_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stdout: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stdout closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(STDERR_FILENO) == -1)
+				LogEvent(COMPONENT_MAIN,
+					 "Error while closing stderr: %d (%s)",
+					  errno, strerror(errno));
+			else {
+				LogEvent(COMPONENT_MAIN, "stderr closed");
+				dup(dev_null_fd);
+			}
+
+			if (close(dev_null_fd) == -1)
+				LogFatal(COMPONENT_MAIN,
+					 "Could not close tmp fd to /dev/null: %d (%s)",
+					 errno, strerror(errno));
+
+			/* In the child process, change the log header
+			 * if not, the header will contain the parent's pid */
+			set_const_log_str();
 			break;
 
 		default:

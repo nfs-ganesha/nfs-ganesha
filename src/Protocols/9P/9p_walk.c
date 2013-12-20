@@ -148,7 +148,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		pnewfid->op_context = pfid->op_context;
 		pnewfid->export = pfid->export;
 		pnewfid->ppentry = pfid->pentry;
-		strncpy(pnewfid->name, name, MAXNAMLEN);
+		strncpy(pnewfid->name, name, MAXNAMLEN-1);
 
 		/* This is not a TATTACH fid */
 		pnewfid->from_attach = FALSE;

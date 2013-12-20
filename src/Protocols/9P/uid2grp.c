@@ -51,7 +51,7 @@
 #define MAX_GRP 100
 bool pwentname2grp(char *namebuff, uid_t *puid, struct group_data *pgdata)
 {
-	char buff[1024];
+	char buff[MAXPATHLEN];
 	struct passwd p;
 	struct passwd *pp;
 
@@ -91,7 +91,7 @@ bool pwentname2grp(char *namebuff, uid_t *puid, struct group_data *pgdata)
 bool pwentuid2grp(uid_t uid, struct gsh_buffdesc *name,
 		  struct group_data *pgdata)
 {
-	char buff[1024];
+	char buff[MAXPATHLEN];
 	struct passwd p;
 	struct passwd *pp;
 

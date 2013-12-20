@@ -14,7 +14,6 @@
 #define _GIT_HEAD_COMMIT "@_GIT_HEAD_COMMIT@"
 #define _GIT_DESCRIBE "@_GIT_DESCRIBE@"
 #define BUILD_HOST "@BUILD_HOST_NAME@"
-
 /* Build controls */
 
 #cmakedefine _MSPAC_SUPPORT 1
@@ -43,6 +42,9 @@
 #cmakedefine LITTLEEND 1
 #cmakedefine BIGEND 1
 #cmakedefine HAVE_XATTR_H 1
+#cmakedefine HAVE_INCLUDE_LUSTREAPI_H 1
+#cmakedefine HAVE_INCLUDE_LIBLUSTREAPI_H 1
+#cmakedefine HAVE_DAEMON 1
 
 #define NFS_GANESHA 1
 
