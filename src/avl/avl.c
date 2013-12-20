@@ -633,7 +633,8 @@ void avltree_replace(struct avltree_node *old, struct avltree_node *new,
 	struct avltree_node *parent = get_parent(old);
 
 	if (parent)
-		set_child(parent, new, parent->left == old);
+		set_child(new, parent, parent->left == old);
+
 	else {
 		/* I'm skeptical this case should be permitted--this
 		 * says that if old is not in the tree, just make new
