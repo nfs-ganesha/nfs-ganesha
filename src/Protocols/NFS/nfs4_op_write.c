@@ -42,8 +42,95 @@
 #include "fsal_pnfs.h"
 #include "server_stats.h"
 
+/**
+ * @brief Write for a data server
+ *
+ * This function bypasses cache_inode and calls directly into the FSAL
+ * to perform a pNFS data server write.
+ *
+ * @param[in]     op    Arguments for nfs41_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs41_op
+ *
+ * @return per RFC5661, p. 376
+ *
+ */
+
 static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp);
+		      struct nfs_resop4 *resp)
+{
+	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
+	/* NFSv4 return code */
+	nfsstat4 nfs_status = 0;
+
+	nfs_status = data->current_ds->ops->write(
+				data->current_ds,
+				data->req_ctx,
+				&arg_WRITE4->stateid,
+				arg_WRITE4->offset,
+				arg_WRITE4->data.data_len,
+				arg_WRITE4->data.data_val,
+				arg_WRITE4->stable,
+				&res_WRITE4->WRITE4res_u.resok4.count,
+				&res_WRITE4->WRITE4res_u.resok4.writeverf,
+				&res_WRITE4->WRITE4res_u.resok4.committed);
+
+	res_WRITE4->status = nfs_status;
+	return res_WRITE4->status;
+}
+
+/**
+ * @brief Write plus for a data server
+ *
+ * This function bypasses cache_inode and calls directly into the FSAL
+ * to perform a pNFS data server write.
+ *
+ * @param[in]     op    Arguments for nfs41_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs41_op
+ *
+ * @return per RFC5661, p. 376
+ *
+ */
+
+static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
+			  struct nfs_resop4 *resp, struct io_info *info)
+{
+	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
+	/* NFSv4 return code */
+	nfsstat4 nfs_status = 0;
+
+	if (info->io_content.what == NFS4_CONTENT_DATA)
+		nfs_status = data->current_ds->ops->write(
+				data->current_ds,
+				data->req_ctx,
+				&arg_WRITE4->stateid,
+				arg_WRITE4->offset,
+				arg_WRITE4->data.data_len,
+				arg_WRITE4->data.data_val,
+				arg_WRITE4->stable,
+				&res_WRITE4->WRITE4res_u.resok4.count,
+				&res_WRITE4->WRITE4res_u.resok4.writeverf,
+				&res_WRITE4->WRITE4res_u.resok4.committed);
+	else
+		nfs_status = data->current_ds->ops->write_plus(
+				data->current_ds,
+				data->req_ctx,
+				&arg_WRITE4->stateid,
+				arg_WRITE4->offset,
+				arg_WRITE4->data.data_len,
+				arg_WRITE4->data.data_val,
+				arg_WRITE4->stable,
+				&res_WRITE4->WRITE4res_u.resok4.count,
+				&res_WRITE4->WRITE4res_u.resok4.writeverf,
+				&res_WRITE4->WRITE4res_u.resok4.committed,
+				info);
+
+	res_WRITE4->status = nfs_status;
+	return res_WRITE4->status;
+}
 
 /**
  * @brief The NFS4_OP_WRITE operation
@@ -58,8 +145,9 @@ static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
  * @return per RFC5661, p. 376
  */
 
-int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
+		     struct nfs_resop4 *resp, cache_inode_io_direction_t io,
+		     struct io_info *info)
 {
 	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
 	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
@@ -107,11 +195,13 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		return res_WRITE4->status;
 	}
 
-	if ((data->minorversion == 1)
-	    && (nfs4_Is_Fh_DSHandle(&data->currentFH)))
-		return op_dswrite(op, data, resp);
-
-
+	if ((data->minorversion > 0)
+	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
+		if (io == CACHE_INODE_WRITE)
+			return op_dswrite(op, data, resp);
+		else
+			return op_dswrite_plus(op, data, resp, info);
+	}
 	/* Manage access type */
 	switch (data->export->access_type) {
 	case ACCESSTYPE_MDONLY:
@@ -151,6 +241,8 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	 * the stateid is all-0 or all-1
 	 */
 	if (state_found != NULL) {
+		if (info)
+			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
 			state_open = state_found;
@@ -298,15 +390,16 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		    so_clientid;
 	}
 
-	cache_status = cache_inode_rdwr(entry,
-					CACHE_INODE_WRITE,
+	cache_status = cache_inode_rdwr_plus(entry,
+					io,
 					offset,
 					size,
 					&written_size,
 					bufferdata,
 					&eof_met,
 					data->req_ctx,
-					&sync);
+					&sync,
+					info);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4,
@@ -348,6 +441,29 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 }				/* nfs4_op_write */
 
 /**
+ * @brief The NFS4_OP_WRITE operation
+ *
+ * This functions handles the NFS4_OP_WRITE operation in NFSv4. This
+ * function can be called only from nfs4_Compound.
+ *
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
+ *
+ * @return per RFC5661, p. 376
+ */
+
+int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
+{
+	int err;
+
+	err = nfs4_write(op, data, resp, CACHE_INODE_WRITE, NULL);
+
+	return err;
+}
+
+/**
  * @brief Free memory allocated for WRITE result
  *
  * This function frees any memory allocated for the result of the
@@ -363,39 +479,56 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 }				/* nfs4_op_write_Free */
 
 /**
- * @brief Write for a data server
+ * @brief The NFS4_OP_WRITE_PLUS operation
  *
- * This function bypasses cache_inode and calls directly into the FSAL
- * to perform a pNFS data server write.
+ * This functions handles the NFS4_OP_WRITE_PLUS operation in NFSv4.2. This
+ * function can be called only from nfs4_Compound.
  *
- * @param[in]     op    Arguments for nfs41_op
+ * @param[in]     op    Arguments for nfs4_op
  * @param[in,out] data  Compound request's data
- * @param[out]    resp  Results for nfs41_op
+ * @param[out]    resp  Results for nfs4_op
  *
  * @return per RFC5661, p. 376
- *
  */
 
-static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
 {
-	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
-	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
-	/* NFSv4 return code */
-	nfsstat4 nfs_status = 0;
+	int err;
+	struct nfs_resop4 res;
+	struct nfs_argop4 arg;
+	struct io_info info;
+	WRITE_PLUS4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
+	WRITE_PLUS4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
 
-	nfs_status = data->current_ds->ops->write(
-				data->current_ds,
-				data->req_ctx,
-				&arg_WRITE4->stateid,
-				arg_WRITE4->offset,
-				arg_WRITE4->data.data_len,
-				arg_WRITE4->data.data_val,
-				arg_WRITE4->stable,
-				&res_WRITE4->WRITE4res_u.resok4.count,
-				&res_WRITE4->WRITE4res_u.resok4.writeverf,
-				&res_WRITE4->WRITE4res_u.resok4.committed);
+	info.io_content.what = arg_WPLUS->wp_what;
+	if (info.io_content.what == NFS4_CONTENT_DATA)
+		info.io_content.data = arg_WPLUS->wp_data;
+	else if (info.io_content.what == NFS4_CONTENT_APP_DATA_HOLE)
+		info.io_content.adh = arg_WPLUS->wp_adh;
+	else
+		info.io_content.hole = arg_WPLUS->wp_hole;
+	info.io_advise = 0;
 
-	res_WRITE4->status = nfs_status;
-	return res_WRITE4->status;
+	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
+	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
+	arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len =
+					arg_WPLUS->wp_data.d_data.data_len;
+	arg.nfs_argop4_u.opwrite.data.data_val =
+					arg_WPLUS->wp_data.d_data.data_val;
+
+	err = nfs4_write(&arg, data, &res, CACHE_INODE_WRITE_PLUS, &info);
+	res_WPLUS->wpr_status = res.nfs_resop4_u.opwrite.status;
+	if (res_WPLUS->wpr_status == NFS4_OK) {
+		res_WPLUS->wpr_resok4.wr_ids = 0;
+		res_WPLUS->wpr_resok4.wr_committed =
+			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.committed;
+		res_WPLUS->wpr_resok4.wr_count =
+			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.count;
+		memcpy(res_WPLUS->wpr_resok4.wr_writeverf,
+		       res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.writeverf,
+		       sizeof(NFS4_VERIFIER_SIZE));
+	}
+	return res_WPLUS->wpr_status;
 }

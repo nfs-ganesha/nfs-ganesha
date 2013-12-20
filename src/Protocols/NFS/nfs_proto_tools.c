@@ -287,6 +287,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_ERR_SEC:
 	case CACHE_INODE_QUOTA_EXCEEDED:
 	case CACHE_INODE_NOT_SUPPORTED:
+	case CACHE_INODE_UNION_NOTSUPP:
 	case CACHE_INODE_NAME_TOO_LONG:
 	case CACHE_INODE_STATE_CONFLICT:
 	case CACHE_INODE_DEAD_ENTRY:
@@ -4218,6 +4219,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_NOTSUPP;
 		break;
 
+	case CACHE_INODE_UNION_NOTSUPP:
+		nfserror = NFS4ERR_UNION_NOTSUPP;
+		break;
+
 	case CACHE_INODE_DELAY:
 		nfserror = NFS4ERR_DELAY;
 		break;
@@ -4374,6 +4379,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 		break;
 
 	case CACHE_INODE_NOT_SUPPORTED:
+	case CACHE_INODE_UNION_NOTSUPP:
 		nfserror = NFS3ERR_NOTSUPP;
 		break;
 

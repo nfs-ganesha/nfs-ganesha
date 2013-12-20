@@ -86,6 +86,9 @@ struct flock
 #define OPENHANDLE_CREATE_BY_NAME_ATTR 137
 #define OPENHANDLE_GRACE_PERIOD   138
 #define OPENHANDLE_CLEAR_BY_FD    139
+#define OPENHANDLE_REOPEN_BY_FD   140
+#define OPENHANDLE_FADVISE_BY_FD  141
+#define OPENHANDLE_SEEK_BY_FD     142
 #define OPENHANDLE_TRACE_ME       150
 
 struct trace_arg
@@ -203,6 +206,30 @@ struct share_reserve_arg
   int openfd;
   int share_access;
   int share_deny;
+};
+
+struct fadvise_arg
+{
+  int mountdirfd;
+  int openfd;
+  uint64_t offset;
+  uint64_t length;
+  uint32_t *hints;
+};
+
+struct gpfs_io_info {
+  uint32_t io_what;
+  uint64_t io_offset;
+  uint64_t io_len;
+  uint32_t io_eof;
+  uint32_t io_alloc;
+};
+
+struct fseek_arg
+{
+  int mountdirfd;
+  int openfd;
+  struct gpfs_io_info *info;
 };
 
 struct close_file_arg

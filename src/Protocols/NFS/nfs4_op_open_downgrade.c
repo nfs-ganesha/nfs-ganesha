@@ -127,7 +127,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		     arg_OPEN_DOWNGRADE4->share_deny,
 		     arg_OPEN_DOWNGRADE4->share_access);
 
-	if (data->minorversion == 1) {
+	if (data->minorversion > 0) {	/* NFSv4.1 or NFSv4.2 */
 		/* NFSv4.1 */
 		if ((state_found->state_data.share.share_access &
 		     arg_OPEN_DOWNGRADE4->share_access) !=

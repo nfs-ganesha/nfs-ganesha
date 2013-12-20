@@ -346,7 +346,54 @@ static const struct nfs4_op_desc optabv4[] = {
 		.name = "OP_RECLAIM_COMPLETE",
 		.funct = nfs4_op_reclaim_complete,
 		.free_res = nfs4_op_reclaim_complete_Free,
-		.exp_perm_flags = 0}
+		.exp_perm_flags = 0},
+
+	/* NFSv4.2 */
+	[NFS4_OP_COPY] = {
+				.name = "OP_COPY",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_OFFLOAD_ABORT] = {
+				.name = "OP_OFFLOAD_ABORT",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_COPY_NOTIFY] = {
+				.name = "OP_COPY_NOTIFY",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_OFFLOAD_REVOKE] = {
+				.name = "OP_OFFLOAD_REVOKE",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_OFFLOAD_STATUS] = {
+				.name = "OP_OFFLOAD_STATUS",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_WRITE_PLUS] = {
+				.name = "OP_WRITE_PLUS",
+				.funct = nfs4_op_write_plus,
+				.free_res = nfs4_op_write_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_READ_PLUS] = {
+				.name = "OP_READ_PLUS",
+				.funct = nfs4_op_read_plus,
+				.free_res = nfs4_op_read_plus_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_SEEK] = {
+				.name = "OP_SEEK",
+				.funct = nfs4_op_seek,
+				.free_res = nfs4_op_write_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_IO_ADVISE] = {
+				.name = "OP_IO_ADVISE",
+				.funct = nfs4_op_io_advise,
+				.free_res = nfs4_op_io_advise_Free,
+				.exp_perm_flags = 0}
 };
 
 /**
@@ -392,7 +439,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	int perm_flags;
 	char *tagname = NULL;
 
-	if (compound4_minor > 1) {
+	if (compound4_minor > 2) {
 		LogCrit(COMPONENT_NFS_V4, "Bad Minor Version %d",
 			compound4_minor);
 
@@ -982,6 +1029,17 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	case NFS4_OP_WANT_DELEGATION:
 	case NFS4_OP_DESTROY_CLIENTID:
 	case NFS4_OP_RECLAIM_COMPLETE:
+
+	/* NFSv4.2 */
+	case NFS4_OP_COPY:
+	case NFS4_OP_OFFLOAD_ABORT:
+	case NFS4_OP_COPY_NOTIFY:
+	case NFS4_OP_OFFLOAD_REVOKE:
+	case NFS4_OP_OFFLOAD_STATUS:
+	case NFS4_OP_WRITE_PLUS:
+	case NFS4_OP_READ_PLUS:
+	case NFS4_OP_SEEK:
+	case NFS4_OP_IO_ADVISE:
 		break;
 
 	case NFS4_OP_ILLEGAL:

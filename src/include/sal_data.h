@@ -284,6 +284,7 @@ typedef union state_data_t {
 	state_lock_t lock;
 	state_deleg_t deleg;
 	state_layout_t layout;
+	uint32_t io_advise;
 } state_data_t;
 
 /**

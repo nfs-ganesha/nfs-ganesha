@@ -237,6 +237,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 	case CACHE_INODE_ASYNC_POST_ERROR:
 		return STATE_ASYNC_POST_ERROR;
 	case CACHE_INODE_NOT_SUPPORTED:
+	case CACHE_INODE_UNION_NOTSUPP:
 		return STATE_NOT_SUPPORTED;
 	case CACHE_INODE_STATE_ERROR:
 		return STATE_STATE_ERROR;
@@ -316,6 +317,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_NOTSUPP:
 	case ERR_FSAL_ATTRNOTSUPP:
+	case ERR_FSAL_UNION_NOTSUPP:
 		return STATE_NOT_SUPPORTED;
 
 	case ERR_FSAL_NOMEM:

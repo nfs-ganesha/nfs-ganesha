@@ -73,13 +73,13 @@
  */
 
 cache_inode_status_t
-cache_inode_rdwr(cache_entry_t *entry,
-		 cache_inode_io_direction_t io_direction,
-		 uint64_t offset, size_t io_size,
-		 size_t *bytes_moved, void *buffer,
-		 bool *eof,
-		 struct req_op_context *req_ctx,
-		 bool *sync)
+cache_inode_rdwr_plus(cache_entry_t *entry,
+		      cache_inode_io_direction_t io_direction,
+		      uint64_t offset, size_t io_size,
+		      size_t *bytes_moved, void *buffer,
+		      bool *eof,
+		      struct req_op_context *req_ctx,
+		      bool *sync, struct io_info *info)
 {
 	/* Error return from FSAL calls */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -97,7 +97,8 @@ cache_inode_rdwr(cache_entry_t *entry,
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
 	/* Set flags for a read or write, as appropriate */
-	if (io_direction == CACHE_INODE_READ) {
+	if (io_direction == CACHE_INODE_READ ||
+	    io_direction == CACHE_INODE_READ_PLUS) {
 		openflags = FSAL_O_READ;
 	} else {
 		openflags = FSAL_O_WRITE;
@@ -147,12 +148,23 @@ cache_inode_rdwr(cache_entry_t *entry,
 		fsal_status =
 		    obj_hdl->ops->read(obj_hdl, req_ctx, offset, io_size,
 				       buffer, bytes_moved, eof);
+	} else if (io_direction == CACHE_INODE_READ_PLUS) {
+		fsal_status =
+		    obj_hdl->ops->read_plus(obj_hdl, req_ctx, offset, io_size,
+					    buffer, bytes_moved, eof, info);
 	} else {
 		bool fsal_sync = *sync;
-		fsal_status =
-		    obj_hdl->ops->write(obj_hdl, req_ctx, offset, io_size,
-					buffer, bytes_moved, &fsal_sync);
-
+		if (io_direction == CACHE_INODE_WRITE)
+			fsal_status =
+			  obj_hdl->ops->write(obj_hdl, req_ctx, offset,
+					      io_size, buffer, bytes_moved,
+					      &fsal_sync);
+		else
+			fsal_status =
+			  obj_hdl->ops->write_plus(obj_hdl, req_ctx, offset,
+						   io_size, buffer,
+						   bytes_moved, &fsal_sync,
+						   info);
 		/* Alright, the unstable write is complete. Now if it was
 		   supposed to be a stable write we can sync to the hard
 		   drive. */
@@ -243,7 +255,8 @@ cache_inode_rdwr(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 	attributes_locked = true;
-	if (io_direction == CACHE_INODE_WRITE) {
+	if (io_direction == CACHE_INODE_WRITE ||
+	    io_direction == CACHE_INODE_WRITE_PLUS) {
 		status = cache_inode_refresh_attrs(entry, req_ctx);
 		if (status != CACHE_INODE_SUCCESS)
 			goto out;
@@ -267,6 +280,20 @@ cache_inode_rdwr(cache_entry_t *entry,
 	}
 
 	return status;
+}
+
+cache_inode_status_t
+cache_inode_rdwr(cache_entry_t *entry,
+		 cache_inode_io_direction_t io_direction,
+		 uint64_t offset, size_t io_size,
+		 size_t *bytes_moved, void *buffer,
+		 bool *eof,
+		 struct req_op_context *req_ctx,
+		 bool *sync)
+{
+	return cache_inode_rdwr_plus(entry, io_direction, offset, io_size,
+				bytes_moved, buffer, eof, req_ctx,
+				sync, NULL);
 }
 
 /** @} */

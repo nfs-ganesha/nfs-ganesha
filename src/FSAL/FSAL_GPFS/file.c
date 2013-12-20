@@ -113,6 +113,62 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
+fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
+			const struct req_op_context *opctx, uint64_t offset,
+			size_t buffer_size, void *buffer, size_t *read_amount,
+			bool *end_of_file, struct io_info *info)
+{
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct read_arg rarg;
+	ssize_t nb_read;
+	int errsv = 0;
+
+	if (!buffer || !read_amount || !end_of_file || !info)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	rarg.mountdirfd = myself->u.file.fd;
+	rarg.fd = myself->u.file.fd;
+	rarg.bufP = buffer;
+	rarg.offset = offset;
+	rarg.length = buffer_size;
+	rarg.options = SKIP_HOLE;
+
+	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
+	errsv = errno;
+
+	if (nb_read == -1 && errsv != ENODATA)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+
+	if (errsv == ENODATA) {
+		info->io_content.what = NFS4_CONTENT_HOLE;
+		info->io_content.hole.di_offset = offset;     /*offset of hole*/
+		info->io_content.hole.di_length = buffer_size;/*length of hole*/
+		info->io_content.hole.di_allocated = TRUE;    /*maybe ??? */
+		*read_amount = buffer_size;
+	} else {
+		info->io_content.what = NFS4_CONTENT_DATA;
+		info->io_content.data.d_offset = offset + nb_read;
+		info->io_content.data.d_allocated = TRUE;   /* ??? */
+		info->io_content.data.d_data.data_len = nb_read;
+		info->io_content.data.d_data.data_val = buffer;
+		*read_amount = nb_read;
+	}
+	if (nb_read != -1 &&
+		(nb_read == 0 || nb_read < buffer_size ||
+		((offset + nb_read) >= obj_hdl->attributes.filesize)))
+		*end_of_file = TRUE;
+	else
+		*end_of_file = FALSE;
+
+	return status;
+}
+
 /* gpfs_write
  * concurrency (locks) is managed in cache_inode_*
  */
@@ -134,6 +190,134 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 	    GPFSFSAL_write(myself->u.file.fd, offset, buffer_size, buffer,
 			   write_amount, fsal_stable, opctx);
 	return status;
+}
+
+/* gpfs_clear
+ * concurrency (locks) is managed in cache_inode_*
+ */
+
+static
+fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
+			 const struct req_op_context *opctx, uint64_t offset,
+			 size_t buffer_size, void *buffer,
+			 size_t *write_amount, bool *fsal_stable)
+{
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	status =
+	    GPFSFSAL_clear(myself->u.file.fd, offset, buffer_size, buffer,
+			   write_amount, fsal_stable, opctx);
+	return status;
+}
+
+/* file_write_plus
+ * default case not supported
+ */
+
+fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				uint64_t seek_descriptor, size_t buffer_size,
+				void *buffer, size_t *write_amount,
+				bool *fsal_stable, struct io_info *info)
+{
+	if (info->io_content.what == NFS4_CONTENT_DATA) {
+		return gpfs_write(obj_hdl, opctx, seek_descriptor, buffer_size,
+				buffer, write_amount, fsal_stable);
+	}
+	if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		return gpfs_clear(obj_hdl, opctx, seek_descriptor, buffer_size,
+				buffer, write_amount, fsal_stable);
+	}
+	return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
+}
+
+/* seek
+ * default case not supported
+ */
+
+fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_info *info)
+{
+	struct fseek_arg arg;
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	struct gpfs_io_info io_info;
+	int retval = 0;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	arg.mountdirfd = myself->u.file.fd;
+	arg.openfd = myself->u.file.fd;
+	arg.info = &io_info;
+	if (info->io_content.what == NFS4_CONTENT_DATA) {
+		io_info.io_offset = info->io_content.data.d_offset;
+		io_info.io_what = SEEK_DATA;
+	} else if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		io_info.io_offset = info->io_content.hole.di_offset;
+		io_info.io_what = SEEK_HOLE;
+	} else
+		return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
+
+	retval = gpfs_ganesha(OPENHANDLE_SEEK_BY_FD, &arg);
+	if (retval == -1) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+	} else {
+		info->io_eof = io_info.io_eof;
+		if (info->io_content.what == NFS4_CONTENT_DATA) {
+			info->io_content.data.d_offset = io_info.io_offset;
+			info->io_content.data.d_allocated = io_info.io_alloc;
+			info->io_content.data.d_data.data_len = io_info.io_len;
+			info->io_content.data.d_data.data_val = NULL;
+		} else {   /* NFS4_CONTENT_HOLE */
+			info->io_content.hole.di_offset = io_info.io_offset;
+			info->io_content.hole.di_allocated = io_info.io_alloc;
+			info->io_content.hole.di_length = io_info.io_len;
+		}
+	}
+	return fsalstat(fsal_error, 0);
+}
+
+/* io_advise
+ */
+
+fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *opctx,
+				struct io_hints *hints)
+{
+	struct fadvise_arg arg;
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int retval = 0;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	arg.mountdirfd = myself->u.file.fd;
+	arg.openfd = myself->u.file.fd;
+	arg.offset = hints->offset;
+	arg.length = hints->count;
+	arg.hints = &hints->hints;
+
+	retval = gpfs_ganesha(OPENHANDLE_FADVISE_BY_FD, &arg);
+	if (retval == -1) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		hints->hints = 0;
+	}
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* gpfs_commit
