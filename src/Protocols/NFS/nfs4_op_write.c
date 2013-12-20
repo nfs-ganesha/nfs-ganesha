@@ -494,7 +494,6 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	int err;
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
@@ -518,8 +517,8 @@ int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 	arg.nfs_argop4_u.opwrite.data.data_val =
 					arg_WPLUS->wp_data.d_data.data_val;
 
-	err = nfs4_write(&arg, data, &res, CACHE_INODE_WRITE_PLUS, &info);
-	res_WPLUS->wpr_status = res.nfs_resop4_u.opwrite.status;
+	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,
+					   CACHE_INODE_WRITE_PLUS, &info);
 	if (res_WPLUS->wpr_status == NFS4_OK) {
 		res_WPLUS->wpr_resok4.wr_ids = 0;
 		res_WPLUS->wpr_resok4.wr_committed =
