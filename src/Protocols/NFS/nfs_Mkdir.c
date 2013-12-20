@@ -277,7 +277,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                     case NFS_V2:
 
                       if(nfs2_Sattr_To_FSALattr(&sattr,
-                                                &parg->arg_create2.attributes) == 0)
+                                                &parg->arg_mkdir2.attributes) == 0)
                         {
                           pres->res_dirop2.status = NFSERR_IO;
                           rc = NFS_REQ_OK;
@@ -288,8 +288,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
 
                     case NFS_V3:
                       if(nfs3_Sattr_To_FSALattr(&sattr,
-                                                &parg->arg_create3.how.createhow3_u.
-                                                obj_attributes) == 0)
+                                                &parg->arg_mkdir3.attributes) == 0)
                         {
                           pres->res_create3.status = NFS3ERR_INVAL;
                           rc = NFS_REQ_OK;
