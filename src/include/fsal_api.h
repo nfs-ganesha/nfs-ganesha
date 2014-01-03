@@ -501,6 +501,43 @@ struct fsal_ops {
 					struct fsal_module *next_fsal,
 					const struct fsal_up_vector *up_ops,
 					struct fsal_export **export);
+
+/**
+ * @brief Minimal emergency cleanup on error
+ *
+ * This method is called only in the event of a catastrophic
+ * failure. Currently, it will be called if some detail of the orderly
+ * shutdown fails, so that FSALs will have the opportunity to leave
+ * their underlying filesystems in a consistent state. It may at some
+ * later time be called in the event of a crash. The majority of FSALs
+ * will have no need to implement this call and should not do so.
+ *
+ * This function should, if implemented:
+ *
+ * 1. Do the bare minimum necessary to allow access to the each
+ * underlying filesystem it serves. (the equivalent of a clean
+ * unmount, so that a future instance of Ganesha or other tool can
+ * mount the filesystem without difficulty.) How the FSAL defines
+ * 'underlying filesystem' is FSAL specific. The FSAL handle itself
+ * has a list of attached exports and that can be traversed if
+ * suitable.
+ *
+ * 2. It /must not/ take any mutices, reader-writer locks, spinlocks,
+ * sleep on any condition variables, or similar. Since other threads
+ * may have crashed or been cancelled, locks may be left held,
+ * overwritten with random garbage, or be similarly awful. The point
+ * is to shut down cleanly, and you can't shut down cleanly if you're
+ * hung. This does not create a race condition, since other threads in
+ * Ganesha will have been cancelled by this point.
+ *
+ * 3. If it is at all possible to avoid, do not allocate memory on the
+ * heap or use other services that require the user space to be in a
+ * consistent state. If this is called from a crash handler, the Arena
+ * may be corrupt. If you know that your FSAL *will* require memory,
+ * you should either allocate it statically, or dynamically at
+ * initialization time.
+ */
+	void (*emergency_cleanup) (void);
 /*@}*/
 };
 
@@ -577,7 +614,7 @@ struct fsal_export {
 				   manipulating the list of handles. */
 	int refs;			/*< Reference count */
 	struct glist_head handles;	/*< Head of list of object handles */
-	struct glist_head ds_handles;	/*< Head of lsit of DS handles */
+	struct glist_head ds_handles;	/*< Head of list of DS handles */
 	struct glist_head exports;	/*< Link in list of exports from
 					   the same FSAL. */
 	struct exportlist *exp_entry;	/*< Pointer to the export

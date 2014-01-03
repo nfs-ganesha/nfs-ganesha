@@ -199,6 +199,17 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
+/**
+ * @brief Default emergency cleanup method
+ *
+ * Do nothing.
+ */
+
+static void emergency_cleanup(void)
+{
+	return;
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -210,7 +221,8 @@ struct fsal_ops def_fsal_ops = {
 	.put = put_fsal,
 	.init_config = init_config,
 	.dump_config = dump_config,
-	.create_export = create_export
+	.create_export = create_export,
+	.emergency_cleanup = emergency_cleanup
 };
 
 /* fsal_export common methods
