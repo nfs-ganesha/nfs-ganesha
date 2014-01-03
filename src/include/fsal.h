@@ -163,6 +163,7 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info);
 static const size_t fsal_default_linksize = 4096;
 
 void destroy_fsals(void);
+void emergency_cleanup_fsals(void);
 
 #endif				/* !FSAL_H */
 /** @} */
