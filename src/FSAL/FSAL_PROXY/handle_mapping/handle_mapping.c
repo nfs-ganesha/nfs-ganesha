@@ -112,10 +112,8 @@ static uint32_t hash_digest_idx(hash_parameter_t *p_conf,
 	uint32_t hash;
 	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->addr;
 
-	hash =
-	    (p_conf->alphabet_length +
-	     ((unsigned long)p_digest->nfs23_digest.
-	      object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
+	hash = ((unsigned long)p_digest->nfs23_digest.object_id ^
+		(unsigned int)p_digest->nfs23_digest.handle_hash);
 	hash = (743 * hash + 1999) % p_conf->index_size;
 
 	return hash;
@@ -321,7 +319,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 	digest_pool_entry_t digest;
 	struct hash_latch hl;
 
-	digest.nfs23_digest = *p_in_nfs23_digest;
+	digest.nfs23_digest = *nfs23_digest;
 
 	buffkey.addr = (caddr_t) &digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
@@ -330,9 +328,9 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 
 	if (rc == HASHTABLE_SUCCESS) {
 		handle_pool_entry_t *h = (handle_pool_entry_t *) buffval.addr;
-		if (h->fh_len < p_out_fsal_handle->maxlen) {
-			p_out_fsal_handle->len = h->fh_len;
-			memcpy(p_out_fsal_handle->addr, h->fh_data, h->fh_len);
+		if (h->fh_len < fsal_handle->len) {
+			fsal_handle->len = h->fh_len;
+			memcpy(fsal_handle->addr, h->fh_data, h->fh_len);
 			rc = HANDLEMAP_SUCCESS;
 		} else {
 			rc = HANDLEMAP_INTERNAL_ERROR;

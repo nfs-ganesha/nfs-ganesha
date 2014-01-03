@@ -7,7 +7,6 @@
 #include <dirent.h>
 #include <fnmatch.h>
 #include <pthread.h>
-#include <nfsv40.h>
 
 /* sqlite check macros */
 
@@ -16,7 +15,7 @@ do { \
 	if ((_code_) != SQLITE_OK) { \
 		LogCrit(COMPONENT_FSAL, \
 			"SQLite command failed in %s line %i", \
-			__funct__, __LINE__);		\
+			__func__, __LINE__);		\
 		LogCrit(COMPONENT_FSAL, "%s (%d)", \
 			(_msg_str_ ? _msg_str_ : sqlite3_errmsg(_p_conn_)), \
 			_code_);					\
@@ -37,14 +36,14 @@ do { \
 	if ((_code_) != SQLITE_OK) { \
 		LogCrit(COMPONENT_FSAL, \
 			"SQLite command failed in %s line %i", \
-			__funct__, __LINE__);			\
+			__func__, __LINE__);			\
 		LogCrit(COMPONENT_FSAL, "%s (%d)", \
 			(_msg_str_ ? _msg_str_ : sqlite3_errmsg(_p_conn_)), \
 			_code_);					\
 		if (_msg_str_) { \
 			sqlite3_free(_msg_str_); \
 			_msg_str_ = NULL; \
-		} \			  \
+		} 			  \
 		return HANDLEMAP_DB_ERROR;	\
 	}					\
 } while (0)
@@ -54,7 +53,7 @@ do { \
 	if ((_code_) != SQLITE_OK) {	\
 		LogCrit(COMPONENT_FSAL,					\
 			"SQLite prepare statement failed in %s line %i", \
-			__funct__, __LINE__);				\
+			__func__, __LINE__);				\
 		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
 			sqlite3_errmsg(_p_conn_), _code_);		\
 		return HANDLEMAP_DB_ERROR;				\
@@ -66,7 +65,7 @@ do { \
 	if ((_code_) != SQLITE_OK) { \
 		LogCrit(COMPONENT_FSAL,				 \
 			"SQLite parameter binding failed in %s line %i", \
-			__funct__, __LINE__);				\
+			__func__, __LINE__);				\
 		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
 			sqlite3_errmsg(_p_conn_), _code_);		\
 		sqlite3_clear_bindings(_stmt_);				\
@@ -80,7 +79,7 @@ do { \
 	    SQLITE_ROW && (_code_) != SQLITE_DONE) {			\
 		LogCrit(COMPONENT_FSAL,					\
 			"SQLite command failed in %s line %i",		\
-			__funct__, __LINE__);			\
+			__func__, __LINE__);			\
 		LogCrit(COMPONENT_FSAL, "%s (%d)",			\
 			sqlite3_errmsg(_p_conn_), _code_);		\
 		sqlite3_reset(_stmt_);					\
