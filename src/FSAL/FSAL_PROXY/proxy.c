@@ -46,7 +46,7 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
 	.srv_recvsize = 32768,	/* Default Buffer Send Size    */
 	.keytab = "etc/krb5.keytab",	/* Path to krb5 keytab file */
 	.cred_lifetime = 86400,	/* 24h is a good default    */
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	.hdlmap.databases_directory = "/var/ganesha/handlemap",
 	.hdlmap.temp_directory = "/var/ganesha/tmp",
 	.hdlmap.database_count = 8,
@@ -157,7 +157,7 @@ static int pxy_key_to_param(const char *key, const char *val,
 				val, key);
 			return 1;
 		}
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	} else if (!strcasecmp(key, "HandleMap_DB_Dir")) {
 		strncpy(init_info->hdlmap.databases_directory, val, MAXPATHLEN);
 	} else if (!strcasecmp(key, "HandleMap_Tmp_Dir")) {
@@ -242,7 +242,7 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 	if (load_pxy_config("NFSv4_Proxy", config_struct, pxy))
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	rc = HandleMap_Init(&pxy->special.hdlmap);
 	if (rc < 0)
 		return fsalstat(ERR_FSAL_INVAL, -rc);

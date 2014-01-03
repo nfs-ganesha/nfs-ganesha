@@ -1,7 +1,7 @@
 #ifndef _PXY_FSAL_METHODS_H
 #define _PXY_FSAL_METHODS_H
 
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 #include "handle_mapping/handle_mapping.h"
 #endif
 
@@ -24,7 +24,7 @@ typedef struct {
 	/* initialization info for handle mapping */
 	int enable_handle_mapping;
 
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	handle_map_param_t hdlmap;
 #endif
 } proxyfs_specific_initinfo_t;

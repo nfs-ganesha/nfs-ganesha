@@ -109,7 +109,7 @@ struct pxy_handle_blob {
 struct pxy_obj_handle {
 	struct fsal_obj_handle obj;
 	nfs_fh4 fh4;
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	nfs23_map_handle_t h23;
 #endif
 	fsal_openflags_t openflags;
@@ -1829,7 +1829,7 @@ static fsal_status_t pxy_handle_digest(const struct fsal_obj_handle *obj_hdl,
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 		fhs = sizeof(ph->h23);
 		data = &ph->h23;
 		break;
@@ -2037,7 +2037,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_to_key = pxy_handle_to_key;
 }
 
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 {
 	const char *cpt;
@@ -2084,7 +2084,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		n->obj.attributes = *attr;
 		n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
 		n->blob.type = attr->type;
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 		int rc;
 		memset(&n->h23, 0, sizeof(n->h23));
 		n->h23.len = sizeof(n->h23);
@@ -2239,7 +2239,7 @@ fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
 
 	pxyblob = (struct pxy_handle_blob *)fh_desc->addr;
 	fh_size = pxyblob->len;
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	if ((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3))
 		fh_size = sizeof(nfs23_map_handle_t);
 #endif
@@ -2256,7 +2256,7 @@ fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-#ifdef _HANDLE_MAPPING
+#ifdef PROXY_HANDLE_MAPPING
 	if ((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3)) {
 		nfs23_map_handle_t *h23 = (nfs23_map_handle_t *) fh_desc->addr;
 
