@@ -143,7 +143,7 @@ static nfsstat4 lustre_getdeviceinfo(struct fsal_export *export_pub,
 				     const struct pnfs_deviceid *deviceid)
 {
 	/* The number of OSSs  */
-	unsigned num_osds = 1; /** @todo To be set via a call to llapi */
+	unsigned num_osds = 0; /** @todo To be set via a call to llapi */
 
 	/* Currently, all layouts have the same number of stripes */
 	uint32_t stripes = 1;
@@ -151,11 +151,11 @@ static nfsstat4 lustre_getdeviceinfo(struct fsal_export *export_pub,
 	/* Index for iterating over stripes */
 	size_t stripe  = 0;
 
-	/* Index for iterating over OSDs */
-	size_t osd = 0;
-
 	/* NFSv4 status code */
 	nfsstat4 nfs_status = 0;
+	/* ds list iterator */
+	struct glist_head *entry;
+	struct lustre_pnfs_ds_parameter *ds;
 
 	/* Sanity check on type */
 	if (type != LAYOUT4_NFSV4_1_FILES) {
@@ -207,9 +207,8 @@ static nfsstat4 lustre_getdeviceinfo(struct fsal_export *export_pub,
 	}
 
 	/* The number of OSDs in our cluster is the length of our
-	 * array of multipath_lists */
-	num_osds = pnfs_param.ds_count;
-
+	 * multipath_lists */
+	num_osds = glist_length(&pnfs_param.ds_list);
 	if (!inline_xdr_u_int32_t(da_addr_body, &num_osds)) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode length of multipath_ds_list array: %u",
@@ -220,12 +219,20 @@ static nfsstat4 lustre_getdeviceinfo(struct fsal_export *export_pub,
 	/* Since our index is the OSD number itself, we have only one
 	 * host per multipath_list. */
 
-	for (osd = 0; osd < num_osds; osd++) {
+	glist_for_each(entry, &pnfs_param.ds_list) {
 		fsal_multipath_member_t host;
+		struct sockaddr_in *sock;
+
+		ds = glist_entry(entry,
+				 struct lustre_pnfs_ds_parameter,
+				 ds_list);
 		memset(&host, 0, sizeof(fsal_multipath_member_t));
 		host.proto = 6;
-		host.addr = pnfs_param.ds_param[osd].ipaddr;
-		host.port = pnfs_param.ds_param[osd].ipport;
+		sock = (struct sockaddr_in *)&ds->ipaddr;
+		memcpy(&host.addr,
+		       &sock->sin_addr,
+		       sizeof(struct in_addr));
+		host.port = ds->ipport;
 		nfs_status = FSAL_encode_v4_multipath(
 				da_addr_body,
 				1,
@@ -314,6 +321,7 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 nfs_status = 0;
 	/* Descriptor for DS handle */
 	struct gsh_buffdesc ds_desc;
+	struct lustre_pnfs_ds_parameter *ds;
 
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle,
 			      obj_handle);
@@ -351,7 +359,11 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 
 	deviceid.export_id = arg->export_id;
 	/* @todo: several DSs not handled yet */
-	deviceid.devid =  pnfs_param.ds_param[0].id;
+/* 	deviceid.devid =  pnfs_param.ds_param[0].id; */
+	ds = glist_first_entry(&pnfs_param.ds_list,
+			       struct lustre_pnfs_ds_parameter,
+			       ds_list);
+	deviceid.devid = ds->id;
 
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
