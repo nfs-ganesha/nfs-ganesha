@@ -62,8 +62,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.chown_restricted = false,
 	.case_insensitive = false,
 	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
 	.lock_support = true,
 	.lock_support_owner = true,
 	.lock_support_async_block = true,
@@ -74,16 +72,40 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
-	.maxread = 1048576,
-	.maxwrite = 1048576,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
 	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
 	.delegations = false,	/* not working with pNFS */
 	.pnfs_file = true,
+};
+
+static struct config_item gpfs_params[] = {
+	CONF_ITEM_BOOL("link_support", true,
+		       fsal_staticfsinfo_t, link_support),
+	CONF_ITEM_BOOL("symlink_support", true,
+		       fsal_staticfsinfo_t, symlink_support),
+	CONF_ITEM_BOOL("cansettime", true,
+		       fsal_staticfsinfo_t, cansettime),
+	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
+		       fsal_staticfsinfo_t, maxread),
+	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
+		       fsal_staticfsinfo_t, maxwrite),
+	CONF_ITEM_MODE("umask", 0, 0777, 0,
+		       fsal_staticfsinfo_t, umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false,
+		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
+		       fsal_staticfsinfo_t, xattr_access_rights),
+	CONFIG_EOL
+};
+
+struct config_block gpfs_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gpfs",
+	.blk_desc.name = "GPFS",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = gpfs_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
 /* private helper for export object
@@ -128,21 +150,16 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct gpfs_fsal_module *gpfs_me =
 	    container_of(fsal_hdl, struct gpfs_fsal_module, fsal);
-	fsal_status_t fsal_status;
+	int rc;
 
-	gpfs_me->fs_info = default_posix_info;	/* get a copy of the defaults */
+	gpfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
 
-	fsal_status =
-	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
-			     &gpfs_me->fsal_info, &gpfs_me->fs_info, NULL);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
-	/* if we have fsal specific params, do them here
-	 * fsal_hdl->name is used to find the block containing the
-	 * params.
-	 */
-
+	rc = load_config_from_parse(config_struct,
+				    &gpfs_param,
+				    &gpfs_me->fs_info,
+				    true);
+	if (rc < 0)
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&gpfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
