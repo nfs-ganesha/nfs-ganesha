@@ -114,20 +114,20 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct nullfs_fsal_module *nullfs_me =
 	    container_of(fsal_hdl, struct nullfs_fsal_module, fsal);
-	fsal_status_t fsal_status;
 
 	/* get a copy of the defaults */
 	nullfs_me->fs_info = default_posix_info;
 
-	fsal_status =
-	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
-			     &nullfs_me->fsal_info, &nullfs_me->fs_info, NULL);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
-	/* if we have fsal specific params, do them here
-	 * fsal_hdl->name is used to find the block containing the
-	 * params.
+	/* Configuration setting options:
+	 * 1. there are none that are changable. (this case)
+	 *
+	 * 2. we set some here.  These must be independent of whatever
+	 *    may be set by lower level fsals.
+	 *
+	 * If there is any filtering or change of parameters in the stack,
+	 * this must be done in export data structures, not fsal params because
+	 * a stackable could be configured above multiple fsals for multiple
+	 * diverse exports.
 	 */
 
 	display_fsinfo(&nullfs_me->fs_info);
