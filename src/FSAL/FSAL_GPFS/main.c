@@ -106,14 +106,15 @@ static int log_to_gpfs(struct log_facility *facility, log_levels_t level,
 		       char *message)
 {
 	struct trace_arg targ;
+	int retval = 0;
 
 	if (level > 0) {
 		targ.level = level;
 		targ.len = strlen(compstr);
 		targ.str = compstr;
-		gpfs_ganesha(OPENHANDLE_TRACE_ME, &targ);
+		retval = gpfs_ganesha(OPENHANDLE_TRACE_ME, &targ);
 	}
-	return 0;
+	return retval;
 }
 
 struct log_facility facility = {

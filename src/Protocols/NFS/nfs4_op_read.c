@@ -632,6 +632,10 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 	resp->resop = NFS4_OP_IO_ADVISE;
 	res_IO_ADVISE->iar_status = NFS4_OK;
 
+	hints.hints = 0;
+	hints.offset = 0;
+	hints.count = 0;
+
 	if (data->minorversion < 2) {
 		res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
 		goto done;
