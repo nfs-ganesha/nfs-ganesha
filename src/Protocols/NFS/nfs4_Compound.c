@@ -696,7 +696,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 		resarray[i].nfs_resop4_u.opaccess.status = status;
 
 #ifdef USE_DBUS_STATS
-		server_stats_nfsv4_op_done(data.req_ctx, argarray[i].argop,
+		server_stats_nfsv4_op_done(data.req_ctx, opcode,
 					   op_start_time, status == NFS4_OK);
 #endif				/* USE_DBUS_STATS */
 
