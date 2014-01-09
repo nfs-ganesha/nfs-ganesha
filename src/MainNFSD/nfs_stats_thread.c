@@ -293,6 +293,7 @@ void *stats_thread(void *UnusedArg)
   char strbootdate[1024];
   unsigned int j = 0;
   int reopen_stats = FALSE;
+  int stats_fd;
 
   ganesha_stats_t        ganesha_stats;
   nfs_worker_stat_t      *global_worker_stat = &ganesha_stats.global_worker_stat;
@@ -306,6 +307,16 @@ void *stats_thread(void *UnusedArg)
 
   SetNameFunction("stat_thr");
 
+  /* Create the stats file */
+  stats_fd = open(nfs_param.core_param.stats_file_path, O_CREAT, 00660);
+  if(stats_fd < 0)
+    {
+      LogCrit(COMPONENT_MAIN,
+              "NFS STATS : Could not creat stats file %s, no stats will be made...",
+              nfs_param.core_param.stats_file_path);
+      return NULL;
+    }
+  close(stats_fd);
   /* Open the stats file, in append mode */
   if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
     {
@@ -362,6 +373,17 @@ void *stats_thread(void *UnusedArg)
                    "NFS STATS : stats file has changed or was removed, close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
+          /* Create(if needed) the stats file */
+          stats_fd = open(nfs_param.core_param.stats_file_path, O_CREAT, 00660);
+          if(stats_fd < 0)
+            {
+              LogCrit(COMPONENT_MAIN,
+                      "NFS STATS : Could not creat stats file %s, no stats will be made...",
+                      nfs_param.core_param.stats_file_path);
+              return NULL;
+            }
+          close(stats_fd);
+          /* Open the stats file, in append mode */
           if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
             {
               LogCrit(COMPONENT_MAIN,
