@@ -662,13 +662,13 @@ set(GANESHA_CORE
   avltree
   hashtable
   rpcal
-  common_utils
   support
   nfs4callbacks
   cidr
   string_utils
   hash
   log
+  common_utils
   )
 
 if(USE_DBUS)
