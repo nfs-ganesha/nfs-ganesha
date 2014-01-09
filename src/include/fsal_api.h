@@ -2211,7 +2211,7 @@ struct fsal_ds_ops {
  */
 	 nfsstat4(*read_plus) (struct fsal_ds_handle *const ds_hdl,
 			  struct req_op_context *const req_ctx,
-			  const stateid4 *stateid,
+			  const stateid4 * stateid,
 			  const offset4 offset,
 			  const count4 requested_length,
 			  void *const buffer,
@@ -2281,7 +2281,7 @@ struct fsal_ds_ops {
  */
 	 nfsstat4(*write_plus) (struct fsal_ds_handle *const ds_hdl,
 			   struct req_op_context *const req_ctx,
-			   const stateid4 *stateid,
+			   const stateid4 * stateid,
 			   const offset4 offset,
 			   const count4 write_length,
 			   const void *buffer,
