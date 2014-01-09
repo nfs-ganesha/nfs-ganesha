@@ -482,6 +482,7 @@ static void *pxy_rpc_recv(void *arg)
 {
 	const proxyfs_specific_initinfo_t *info = arg;
 	struct sockaddr_in addr_rpc;
+	struct sockaddr_in *info_sock = (struct sockaddr_in *)&info->srv_addr;
 	char addr[INET_ADDRSTRLEN];
 	struct pollfd pfd;
 	int millisec = info->srv_timeout * 1000;
@@ -489,7 +490,8 @@ static void *pxy_rpc_recv(void *arg)
 	memset(&addr_rpc, 0, sizeof(addr_rpc));
 	addr_rpc.sin_family = AF_INET;
 	addr_rpc.sin_port = info->srv_port;
-	addr_rpc.sin_addr.s_addr = info->srv_addr;
+	memcpy(&addr_rpc.sin_addr, &info_sock->sin_addr,
+	       sizeof(struct in_addr));
 
 	for (;;) {
 		int nsleeps = 0;
@@ -501,7 +503,8 @@ static void *pxy_rpc_recv(void *arg)
 					LogCrit(COMPONENT_FSAL,
 						"Cannot connect to server %s:%u",
 						inet_ntop(AF_INET,
-							  &info->srv_addr, addr,
+							  &addr_rpc.sin_addr,
+							  addr,
 							  sizeof(addr)),
 						ntohs(info->srv_port));
 				pthread_mutex_unlock(&listlock);
@@ -933,14 +936,6 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 {
 	int rc;
 	int i = 16;
-
-	/* TCP is the only protocol supported at the moment */
-	if (strcmp(pm->special.srv_proto, "tcp")) {
-		LogCrit(COMPONENT_FSAL,
-			"Protocol '%s' is not supported, consider using TCP",
-			pm->special.srv_proto);
-		return ENOTSUP;
-	}
 
 	glist_init(&rpc_calls);
 	glist_init(&free_contexts);
