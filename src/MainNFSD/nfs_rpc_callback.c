@@ -1342,3 +1342,46 @@ void nfs41_complete_single(rpc_call_t *call, rpc_call_hook hook, void *arg,
 			.nfs_cb_argop4_u.opcbsequence.csa_slotid, true);
 	free_single_call(call);
 }
+
+/**
+ * @brief test the state of callback channel for a clientid using NULL.
+ * @return  enum clnt_stat
+ */
+
+enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *pclientid)
+{
+	int32_t tries;
+	struct timeval CB_TIMEOUT = {15, 0};
+	rpc_call_channel_t *chan;
+	enum clnt_stat stat = RPC_SUCCESS;
+	assert(pclientid);
+	/* create (fix?) channel */
+	for (tries = 0; tries < 2; ++tries) {
+
+		chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
+		if (!chan) {
+			LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+			goto out;
+		}
+
+		if (!chan->clnt) {
+			LogCrit(COMPONENT_NFS_CB,
+				"nfs_rpc_get_chan failed (no clnt)");
+			goto out;
+		}
+
+		/* try the CB_NULL proc -- inline here, should be ok-ish */
+		stat = rpc_cb_null(chan, CB_TIMEOUT, false);
+		LogDebug(COMPONENT_NFS_CB,
+			"rpc_cb_null on client %p returns %d",
+			pclientid, stat);
+
+		/* RPC_INTR indicates that we should refresh the
+		 *      * channel and retry */
+		if (stat != RPC_INTR)
+			break;
+	}
+
+	out:
+	return stat;
+}

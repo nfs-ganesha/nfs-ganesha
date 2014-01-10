@@ -605,6 +605,7 @@ struct nfs_client_id_t {
 			struct glist_head cb_session_list;
 		} v41;		/*< v4.1 callback information */
 	} cid_cb;		/*< Version specific callback information */
+	bool_t cb_chan_down;
 	char cid_server_owner[MAXNAMLEN + 1];	/*< Server owner.
 						 * @note Why is this
 						 * stored per-client? */

@@ -145,5 +145,6 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       void (*free_op)(nfs_cb_argop4 *op));
 void nfs41_complete_single(rpc_call_t *call, rpc_call_hook hook, void *arg,
 			   uint32_t flags);
+enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *);
 
 #endif /* !NFS_RPC_CALLBACK_H */

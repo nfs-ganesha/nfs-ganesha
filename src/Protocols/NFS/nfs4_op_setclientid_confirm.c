@@ -37,6 +37,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_rpc_callback.h"
 
 /**
  *
@@ -365,6 +366,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			display_client_id_rec(conf, str);
 			LogDebug(COMPONENT_CLIENTID, "Updated %s", str);
 		}
+		/* Check and update call back channel state */
+		if(nfs_test_cb_chan(conf) != RPC_SUCCESS)
+			conf->cb_chan_down = TRUE;
+		else
+			conf->cb_chan_down = FALSE;
 
 		/* Release our reference to the confirmed clientid. */
 		dec_client_id_ref(conf);
@@ -407,6 +413,12 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 			LogDebug(COMPONENT_CLIENTID, "Confirmed %s", str);
 		}
+
+		/* Check and update call back channel state */
+		if(nfs_test_cb_chan(unconf) != RPC_SUCCESS)
+			unconf->cb_chan_down = TRUE;
+		else
+			unconf->cb_chan_down = FALSE;
 
 		/* Release our reference to the now confirmed record */
 		dec_client_id_ref(unconf);
