@@ -186,7 +186,7 @@ option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(USE_NODELIST "enable NodeList support" OFF)
-option(PROXY_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
+option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
@@ -348,6 +348,21 @@ include(TestBigEndian)
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
+
+# PROXY handle mapping needs sqlite3
+IF(PROXY_HANDLE_MAPPING)
+  check_include_files(sqlite3.h, HAVE_SQLITE3_H)
+  check_library_exists(
+    sqlite3
+    sqlite3_open
+    ""
+    HAVE_SQLITE3
+    )
+  if(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
+    message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
+    set(PROXY_HANDLE_MAPPING OFF)
+  endif(NOT SQLITE3_FOUND OR HAVE_SQLITE3_H)
+ENDIF(PROXY_HANDLE_MAPPING)
 
 # X_ATTRD requires the kernel to have xattrs...DBUS_STATS
 if(NOT _NO_XATTRD)
