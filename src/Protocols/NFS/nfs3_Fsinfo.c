@@ -130,13 +130,13 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
    */
 
 #define FSINFO_FIELD pres->res_fsinfo3.FSINFO3res_u.resok
-  FSINFO_FIELD.rtmax = pexport->MaxRead;
+  FSINFO_FIELD.rtmax = pexport->MaxRead < nfs_param.core_param.max_send_buffer_size ? pexport->MaxRead : nfs_param.core_param.max_send_buffer_size;
   FSINFO_FIELD.rtpref = pexport->PrefRead;
 
   /* This field is generally unused, it will be removed in V4 */
   FSINFO_FIELD.rtmult = DEV_BSIZE;
 
-  FSINFO_FIELD.wtmax = pexport->MaxWrite;
+  FSINFO_FIELD.wtmax = pexport->MaxWrite < nfs_param.core_param.max_recv_buffer_size ? pexport->MaxWrite : nfs_param.core_param.max_recv_buffer_size;
   FSINFO_FIELD.wtpref = pexport->PrefWrite;
 
   /* This field is generally unused, it will be removed in V4 */

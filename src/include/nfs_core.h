@@ -136,8 +136,8 @@
 #define NFS_PORT             2049
 #define RQUOTA_PORT           875
 #define RQCRED_SIZE           400        /* this size is excessive */
-#define NFS_DEFAULT_SEND_BUFFER_SIZE 32768
-#define NFS_DEFAULT_RECV_BUFFER_SIZE 32768
+#define NFS_DEFAULT_SEND_BUFFER_SIZE 1048576
+#define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
 
 /* Default 'Raw Dev' values */
 #define GANESHA_RAW_DEV_MAJOR 168

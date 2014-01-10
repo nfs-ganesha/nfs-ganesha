@@ -966,6 +966,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
   uint32_t attribute_to_set = 0;
 
+  fsal_size_t lmaxwrite;
+  fsal_size_t lmaxread;
+
   u_int fhandle_len = 0;
   u_int LastOffset;
   u_int len = 0, off = 0;       /* Use for XDR alignment */
@@ -1426,15 +1429,18 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
            *  c. If no settings are present in the export file or the main.conf
            *  file then the defaults values in the FSAL apply. 
            */
-
-          maxread = nfs_htonl64((fattr4_maxread) pexport->MaxRead );
+          lmaxread = (fattr4_maxread) pexport->MaxRead;
+          lmaxread =  lmaxread < nfs_param.core_param.max_send_buffer_size ? lmaxread : nfs_param.core_param.max_send_buffer_size;
+          maxread = nfs_htonl64(lmaxread);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXWRITE:
-          maxwrite = nfs_htonl64((fattr4_maxwrite) pexport->MaxWrite );
+          lmaxwrite = (fattr4_maxwrite) pexport->MaxWrite;
+          lmaxwrite = lmaxwrite < nfs_param.core_param.max_recv_buffer_size ? lmaxwrite : nfs_param.core_param.max_recv_buffer_size;
+          maxwrite = nfs_htonl64(lmaxwrite);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
                  sizeof(fattr4_maxwrite));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;

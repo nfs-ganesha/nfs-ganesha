@@ -283,9 +283,10 @@ void Create_tcp(protos prot)
     rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 #endif
 
+    /* add 8k to allow space for compound data in case of max read is reached */
     tcp_xprt[prot] = svc_vc_create2(tcp_socket[prot],
-                                    nfs_param.core_param.max_send_buffer_size,
-                                    nfs_param.core_param.max_recv_buffer_size,
+                                    nfs_param.core_param.max_send_buffer_size+8192,
+                                    nfs_param.core_param.max_recv_buffer_size+8192,
                                     SVC_VC_CREATE_LISTEN);
     if(tcp_xprt[prot] == NULL)
         LogFatal(COMPONENT_DISPATCH,
