@@ -103,10 +103,13 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 			break;
 		case NETGROUP_CLIENT:
 			grp_name = client->client.netgroup.netgroupname;
+			break;
 		case GSSPRINCIPAL_CLIENT:
 			grp_name = client->client.gssprinc.princname;
+			break;
 		case MATCH_ANY_CLIENT:
 			grp_name = "*";
+			break;
 		default:
 			grp_name = "<unknown>";
 		}
