@@ -199,4 +199,24 @@ void destroy_fsals(void)
 	}
 }
 
+/**
+ * @brief Emergency Halt FSALs
+ */
+
+void emergency_cleanup_fsals(void)
+{
+	/* Module iterator */
+	struct glist_head *mi = NULL;
+	/* Next module */
+	struct glist_head *mn = NULL;
+
+	glist_for_each_safe(mi, mn, &fsal_list) {
+		/* The module to destroy */
+		struct fsal_module *m = glist_entry(mi,
+						    struct fsal_module,
+						    fsals);
+		m->ops->emergency_cleanup();
+	}
+}
+
 /** @} */

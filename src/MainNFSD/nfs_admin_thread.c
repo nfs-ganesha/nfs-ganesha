@@ -441,6 +441,7 @@ static void redo_exports(void)
 static void do_shutdown(void)
 {
 	int rc = 0;
+	bool disorderly = false;
 
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
 
@@ -454,6 +455,7 @@ static void do_shutdown(void)
 		LogMajor(COMPONENT_THREAD,
 			 "Error shutting down state asynchronous request system: %d",
 			 rc);
+		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD,
 			 "State asynchronous request system shut down.");
@@ -469,10 +471,12 @@ static void do_shutdown(void)
 		LogMajor(COMPONENT_THREAD,
 			 "Shutdown timed out, cancelling threads!");
 		fridgethr_cancel(req_fridge);
+		disorderly = true;
 	} else if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
 			 "Failed to shut down the request thread fridge: %d!",
 			 rc);
+		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD, "Request threads shut down.");
 	}
@@ -481,20 +485,23 @@ static void do_shutdown(void)
 
 	rc = worker_shutdown();
 
-	if (rc != 0)
+	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
 			 "Unable to shut down worker threads: %d", rc);
-	else
+		disorderly = true;
+	} else {
 		LogEvent(COMPONENT_THREAD,
 			 "Worker threads successfully shut down.");
+	}
 
 	/* finalize RPC package */
-	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
+	svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
 	rc = general_fridge_shutdown();
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
 			 "Error shutting down general fridge: %d", rc);
+		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD, "General fridge shut down.");
 	}
@@ -503,6 +510,7 @@ static void do_shutdown(void)
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
 			 "Error shutting down reaper thread: %d", rc);
+		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD, "Reaper thread shut down.");
 	}
@@ -510,19 +518,31 @@ static void do_shutdown(void)
 	LogEvent(COMPONENT_MAIN, "Stopping LRU thread.");
 	rc = cache_inode_lru_pkgshutdown();
 	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD, "Error shutting down LRU thread: %d",
+		LogMajor(COMPONENT_THREAD,
+			 "Error shutting down LRU thread: %d",
 			 rc);
+		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD, "LRU thread system shut down.");
 	}
 
-	LogEvent(COMPONENT_MAIN, "Destroying the inode cache.");
-	cache_inode_destroyer();
-	LogEvent(COMPONENT_MAIN, "Inode cache destroyed.");
+	if (disorderly) {
+		LogMajor(COMPONENT_MAIN,
+			 "Error in shutdown, taking emergency cleanup.");
+		/* We don't attempt to free state, clean the cache,
+		   or unload the FSALs more cleanly, since doing
+		   anything more than this risks hanging up on
+		   potentially invalid locks. */
+		emergency_cleanup_fsals();
+	} else {
+		LogEvent(COMPONENT_MAIN, "Destroying the inode cache.");
+		cache_inode_destroyer();
+		LogEvent(COMPONENT_MAIN, "Inode cache destroyed.");
 
-	LogEvent(COMPONENT_MAIN, "Destroying the FSAL system.");
-	destroy_fsals();
-	LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
+		LogEvent(COMPONENT_MAIN, "Destroying the FSAL system.");
+		destroy_fsals();
+		LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
+	}
 
 	unlink(pidfile_path);
 }
