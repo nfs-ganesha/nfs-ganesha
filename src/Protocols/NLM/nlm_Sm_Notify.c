@@ -74,7 +74,8 @@ int nlm4_Sm_Notify(nfs_arg_t *parg,
        */
       if(state_nlm_notify(nsm_client,
                           (void *) (ptrdiff_t) arg->state,
-                          &state_status) != STATE_SUCCESS)
+                          &state_status,
+                          FALSE) != STATE_SUCCESS)
         {
           /* TODO FSF: Deal with error */
         }

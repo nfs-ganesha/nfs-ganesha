@@ -77,7 +77,7 @@ nfs_release_nlm_state()
                         nsm_cp = (state_nsm_client_t *)pdata->buffval.pdata;
                         inc_nsm_client_ref(nsm_cp);
                         PTHREAD_RWLOCK_UNLOCK(&ht->partitions[i].lock);
-                        err = state_nlm_notify(nsm_cp, NULL, &status);
+                        err = state_nlm_notify(nsm_cp, NULL, &status, TRUE);
                         if (err != STATE_SUCCESS)
                                 LogDebug(COMPONENT_THREAD,
                                     "state_nlm_notify failed with %d",

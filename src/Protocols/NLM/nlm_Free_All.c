@@ -77,7 +77,8 @@ int nlm4_Free_All(nfs_arg_t *parg,
        */
       if(state_nlm_notify(nsm_client,
                           (void *) (ptrdiff_t) arg->state,
-                          &state_status) != STATE_SUCCESS)
+                          &state_status,
+                          FALSE) != STATE_SUCCESS)
         {
           /* NLM_FREE_ALL has void result so all we can do is log error */
           LogWarn(COMPONENT_NLM,

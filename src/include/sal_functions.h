@@ -595,7 +595,8 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
-                                state_status_t       * pstatus);
+                                state_status_t       * pstatus,
+                                bool_t                 release_all);
 #endif
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
