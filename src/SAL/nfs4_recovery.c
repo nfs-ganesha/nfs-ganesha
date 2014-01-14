@@ -40,6 +40,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define MAXNAMEL 255
+
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
 
@@ -61,7 +63,7 @@ static grace_t grace;
 typedef struct clid_entry
 {
         struct glist_head cl_list;
-        char cl_name[256];
+        char cl_name[PATH_MAX];
 } clid_entry_t;
 
 static void nfs4_load_recov_clids_nolock(int);
@@ -181,25 +183,22 @@ nfs4_create_clid_name(nfs_client_record_t * cl_recp,
                       nfs_client_id_t     * pclientid,
                       compound_data_t     * data)
 {
-        int i;
-        longlong_t cl_val = 0;
         char localaddr_str[SOCK_NAME_MAX];
+        char cidstr[PATH_MAX];
         struct sockaddr             *local_addr_ptr;
         sockaddr_t                   local_addr;
         socklen_t                    addr_len;
+        struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
 
-
-        pclientid->cid_recov_dir = gsh_malloc(256);
+        /* hold both long form clientid and IP */
+        pclientid->cid_recov_dir = gsh_malloc(PATH_MAX);
         if (pclientid->cid_recov_dir == NULL) {
                 LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                 return;
         }
-
-        for (i = 0; i < cl_recp->cr_client_val_len; i++)
-                cl_val += cl_recp->cr_client_val[i];
-
-        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx",
-                        data->pworker->hostaddr_str, cl_val);
+        if (convert_opaque_value_max_for_dir(&dspbuf, cl_recp->cr_client_val, cl_recp->cr_client_val_len, PATH_MAX) > 0)
+                (void) snprintf(pclientid->cid_recov_dir, PATH_MAX, "%s-%s",
+                        data->pworker->hostaddr_str, cidstr);
 
         local_addr_ptr = (struct sockaddr *)&local_addr;
         addr_len = sizeof(struct sockaddr);
@@ -227,8 +226,9 @@ nfs4_create_clid_name(nfs_client_record_t * cl_recp,
 void
 nfs4_add_clid(nfs_client_id_t *pclientid)
 {
-        int err;
-        char path[PATH_MAX];
+        int err=0;
+        char path[PATH_MAX]={0}, segment[257]={0};
+        int length,position=0;
 
         /*
          * A little trickery here.  This client is now talking to the server
@@ -248,10 +248,33 @@ nfs4_add_clid(nfs_client_id_t *pclientid)
                 return;
         }
 
-        snprintf(path, sizeof(path), "%s/%s", v4_recov_dir,
-            pclientid->cid_recov_dir);
+        /* break clientid down if it is greater than max dir name */
+        /* and create a directory hierachy to represent the clientid. */
+        snprintf(path, sizeof(path), "%s", v4_recov_dir);
 
-        err = mkdir(path, 0700);
+        length = strlen(pclientid->cid_recov_dir);
+        while (position < length)
+        {
+                /* if the (remaining) clientid is shorter than 255 */
+                /* create the last level of dir and break out */
+                int len = strlen(&pclientid->cid_recov_dir[position]);
+                if (len <= MAXNAMEL) {
+                        strcat(path, "/");
+                        strncat(path, &pclientid->cid_recov_dir[position], len);
+                        err = mkdir(path, 0700);
+                        break;
+                }
+                /* if (remaining) clientid is longer than 255, */
+                /* get the next 255 bytes and create a subdir */
+                strncpy(segment, &pclientid->cid_recov_dir[position], MAXNAMEL);
+                strcat(path, "/");
+                strncat(path, segment, MAXNAMEL);
+                err = mkdir(path, 0700);
+                if (err == -1 && errno != EEXIST)
+                        break;
+                position += MAXNAMEL;
+        }
+
         if (err == -1 && errno != EEXIST) {
                 LogEvent(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir (%s), errno=%d",
@@ -266,15 +289,28 @@ nfs4_add_clid(nfs_client_id_t *pclientid)
  * when a client expires.
  */
 void
-nfs4_rm_clid(char *recov_dir)
+nfs4_rm_clid(char *recov_dir, char *parent_path, int position)
 {
         int err;
-        char path[PATH_MAX];
+        char path[PATH_MAX]={0}, segment[256]={0};
+        int len, segment_len;
 
         if (recov_dir == NULL)
                 return;
 
-        snprintf(path, sizeof(path), "%s/%s", v4_recov_dir, recov_dir);
+        len = strlen(recov_dir); 
+        if (position == len)
+                return;
+
+        strncpy(segment, &recov_dir[position], MAXNAMEL); 
+        segment_len = strlen(segment);
+
+        (void) snprintf(path, sizeof(path), "%s/%s",
+                    parent_path, segment);
+
+
+        /* recursively remove the directory hirerchy which represent the clientid */
+        nfs4_rm_clid(recov_dir, path, position+segment_len);
 
         err = rmdir(path);
         if (err == -1) {
@@ -346,47 +382,108 @@ nfs4_chk_clid(nfs_client_id_t *pclientid)
  * entries into the old state directory.
  */
 static int
-nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
+nfs4_read_recov_clids(DIR *dp, char *parent_path, char *clid_str, char *tgtdir, int takeover)
 {
         struct dirent *dentp;
+        DIR *subdp;
         clid_entry_t *new_ent;
-        char src[PATH_MAX], dest[PATH_MAX];
-        int rc;
+        char path[PATH_MAX]={0};
+        char new_path[PATH_MAX]={0};
+        char build_clid[PATH_MAX]={0};
+        int rc=0;
+        int num=0;
+        char *ptr, *ptr2;
+        char temp[10]; 
+        int cid_len,len; 
 
         dentp = readdir(dp);
         while (dentp != NULL) {
                 /* don't add '.' and '..', or any '.*' entry */
                 if (dentp->d_name[0] != '.') {
-                        new_ent = gsh_malloc(sizeof(clid_entry_t));
-                        if (new_ent == NULL) {
-                                LogEvent(COMPONENT_CLIENTID,
-                                         "Unable to allocate memory.");
-                                return -1;
+                        num++;
+                        if (clid_str)
+                                strcpy(build_clid, clid_str);
+                        else
+                                build_clid[0] = 0;
+
+                        /* construct the path by appending the subdir for the next */
+                        /* readdir. This recursion keeps reading the subdirectory */
+                        /* until reaching the end. */
+                        strcpy(path, parent_path);
+                        strcat(path, "/");
+                        strncat(path, dentp->d_name, strlen(dentp->d_name));
+                        /* if tgtdir is not NULL, we need to build nfs4old/currentnode */
+                        if (tgtdir)
+                        {
+                                strcpy(new_path, tgtdir);
+                                strcat(new_path, "/");
+                                strncat(new_path, dentp->d_name, strlen(dentp->d_name));
+                                rc = mkdir(new_path, 0700);
+                                if ((rc == -1) && (errno != EEXIST))
+                                {
+                                        LogEvent(COMPONENT_CLIENTID, "mkdir %s faied errno=%d", new_path, errno);
+                                        return rc;
+                                }
                         }
-                        strncpy(new_ent->cl_name, dentp->d_name, 256);
-                        glist_add(&grace.g_clid_list, &new_ent->cl_list);
-                        LogDebug(COMPONENT_CLIENTID, "added %s to clid list",
-                            new_ent->cl_name);
-                        if (srcdir != NULL) {
-                                (void) snprintf(src, sizeof(src), "%s/%s",
-                                    srcdir, dentp->d_name);
-                                (void) snprintf(dest, sizeof(dest), "%s/%s",
-                                    v4_old_dir, dentp->d_name);
-                                if (takeover)
-                                        rc = mkdir(dest, 0700);
-                                else
-                                        rc = rename(src, dest);
+                        /* keep building the clientid str by cursively */
+                        /* reading the directory structure */
+                        strncat(build_clid, dentp->d_name, strlen(dentp->d_name));
+                        subdp = opendir(path);
+                        if (subdp == NULL)
+                        {
+                                LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d", dentp->d_name, errno);
+                        }
+                        if (tgtdir)
+                                rc = nfs4_read_recov_clids(subdp, path, build_clid, new_path, takeover);
+                        else
+                                rc = nfs4_read_recov_clids(subdp, path, build_clid, NULL, takeover);
+
+                        /* after recursion, if the subdir has no non-hidden directory */
+                        /* this is the end of this clientid str. Add the clientstr to the list. */
+                        if (rc == 0)
+                        {
+                                ptr = strchr(build_clid, '(');               
+                                if (ptr == NULL)
+                                        return -1; 
+                                ptr2 = strchr(ptr, ':');
+                                if (ptr2 == NULL)
+                                        return -1; 
+                                len = ptr2-ptr-1;
+                                if (len >= 9)
+                                        return -1;
+                                strncpy(temp, ptr+1, len);
+                                temp[len] = 0;
+                                cid_len = atoi(temp);
+                                len = strlen(ptr2);
+                                if ((len == (cid_len+2)) && (ptr2[len-1] == ')'))
+                                {
+                                	new_ent = gsh_malloc(sizeof(clid_entry_t));
+                                	if (new_ent == NULL) {
+                                        	LogEvent(COMPONENT_CLIENTID,
+                                                	"Unable to allocate memory.");
+                                                	return -1;
+                                	}
+                                	strncpy(new_ent->cl_name, build_clid, PATH_MAX);
+                                	glist_add(&grace.g_clid_list, &new_ent->cl_list);
+                                	LogDebug(COMPONENT_CLIENTID, "added %s to clid list",
+                                        	new_ent->cl_name);
+				}
+                        }
+                        /* If this is not for takeover, remove the directory hierarchy */
+                        /* that represent the current clientid */
+                        if (!takeover) {
+                                rc = rmdir(path);
                                 if (rc == -1) {
                                         LogEvent(COMPONENT_CLIENTID,
-                                          "Failed to make dir (%s), errno=%d",
-                                          dest, errno);
+                                                 "Failed to rmdir (%s), errno=%d",
+                                                 path, errno);
                                 }
                         }
                 }
                 dentp = readdir(dp);
         }
 
-        return 0;
+        return num;
 }
 void nfs4_load_recov_clids_cluster_nolock(int nodeid)
 {
@@ -405,7 +502,7 @@ void nfs4_load_recov_clids_cluster_nolock(int nodeid)
                  return;
         }
 
-        rc = nfs4_read_recov_clids(dp, path, 1);
+        rc = nfs4_read_recov_clids(dp, path, NULL, v4_old_dir, 1);
         if (rc == -1) {
                  (void) closedir(dp);
                  LogEvent(COMPONENT_CLIENTID,
@@ -420,7 +517,7 @@ void nfs4_load_recov_clids_cluster_nolock(int nodeid)
                   path, errno);
         }
         return;
- }
+}
 
 
 static void
@@ -453,7 +550,7 @@ nfs4_load_recov_clids_nolock(int nodeid)
                             v4_old_dir, errno);
                         return;
                 }
-                rc = nfs4_read_recov_clids(dp, NULL, 0);
+                rc = nfs4_read_recov_clids(dp, v4_old_dir, NULL, NULL, 0);
                 if (rc == -1) {
                         (void) closedir(dp);
                         LogEvent(COMPONENT_CLIENTID,
@@ -470,7 +567,7 @@ nfs4_load_recov_clids_nolock(int nodeid)
                         return;
                 }
 
-                rc = nfs4_read_recov_clids(dp, v4_recov_dir, 0);
+                rc = nfs4_read_recov_clids(dp, v4_recov_dir, NULL, v4_old_dir, 0);
                 if (rc == -1) {
                         (void) closedir(dp);
                         LogEvent(COMPONENT_CLIENTID,
@@ -534,14 +631,14 @@ nfs4_load_recov_clids(int nodeid)
 }
 
 void
-nfs4_clean_old_recov_dir()
+nfs4_clean_old_recov_dir(char *parent_path)
 {
         DIR *dp;
         struct dirent *dentp;
         char path[PATH_MAX];
         int rc;
 
-        dp = opendir(v4_old_dir);
+        dp = opendir(parent_path);
         if (dp == NULL) {
                 LogEvent(COMPONENT_CLIENTID,
                     "Failed to open old v4 recovery dir (%s), errno=%d",
@@ -555,8 +652,9 @@ nfs4_clean_old_recov_dir()
                         continue;
 
                 (void) snprintf(path, sizeof(path), "%s/%s",
-                    v4_old_dir, dentp->d_name);
+                    parent_path, dentp->d_name);
 
+		nfs4_clean_old_recov_dir(path);	
                 rc = rmdir(path);
                 if (rc == -1) {
                         LogEvent(COMPONENT_CLIENTID,

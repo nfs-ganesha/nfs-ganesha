@@ -42,6 +42,7 @@
 #define REAPER_DELAY 10
 
 unsigned int reaper_delay = REAPER_DELAY;
+extern char v4_old_dir[PATH_MAX];
 
 static int reap_hash_table(hash_table_t * ht_reap)
 {
@@ -158,7 +159,7 @@ void *reaper_thread(void *UnusedArg)
           /* if not in grace period, clean up the old state */
           if(!in_grace)
             {
-              nfs4_clean_old_recov_dir();
+              nfs4_clean_old_recov_dir(v4_old_dir);
               old_state_cleaned = 1;
             }
         }

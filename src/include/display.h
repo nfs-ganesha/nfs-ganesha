@@ -169,6 +169,10 @@ static inline int display_printf(struct display_buffer * dspbuf,
 
 int display_opaque_bytes(struct display_buffer * dspbuf, void * value, int len);
 
+int convert_opaque_value_max_for_dir(struct display_buffer * dspbuf,
+                             void                  * value,
+                             int                     len,
+                             int                     max);
 int display_opaque_value_max(struct display_buffer * dspbuf,
                              void                  * value,
                              int                     len,

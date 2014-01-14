@@ -135,6 +135,8 @@ char config_path[MAXPATHLEN];
 
 char pidfile_path[MAXPATHLEN] ;
 
+extern char v4_old_dir[PATH_MAX];
+
 /**
  *
  * This thread is in charge of signal management 
@@ -2129,7 +2131,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
   /* if not in grace period, clean up the old state directory */
   if(!nfs_in_grace())
-    nfs4_clean_old_recov_dir();
+    nfs4_clean_old_recov_dir(v4_old_dir);
 
   Cleanup();
 

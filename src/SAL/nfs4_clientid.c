@@ -61,6 +61,7 @@ uint32_t          clientid_counter;
 uint64_t          clientid_verifier;
 pool_t          * client_id_pool;
 pool_t          * client_record_pool;
+extern char     v4_recov_dir[PATH_MAX];
 
 nfsstat4 clientid_error_to_nfsstat(nfs_clientid_error_t err)
 {
@@ -820,7 +821,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid, int release)
 
   if (pclientid->cid_recov_dir != NULL)
     {
-      nfs4_rm_clid(pclientid->cid_recov_dir);
+      nfs4_rm_clid(pclientid->cid_recov_dir, v4_recov_dir, 0);
       gsh_free(pclientid->cid_recov_dir);
       pclientid->cid_recov_dir = NULL;
     }
