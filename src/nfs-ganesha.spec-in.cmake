@@ -111,6 +111,7 @@ This is a 9p mount help
 Summary: The NFS-GANESHA's VFS FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
+Requires: nfs-ganesha
 
 %description vfs
 This package contains a FSAL shared object to 
@@ -128,6 +129,7 @@ be used with NFS-Ganesha. This is mostly a template for future (more sophisticat
 Summary: The NFS-GANESHA'snfs-ganesha-2.0-0.1.1-Source. PROXY FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
+Requires: nfs-ganesha
 
 %description proxy
 This package contains a FSAL shared object to 
@@ -152,7 +154,7 @@ be used with NFS-Ganesha to support GPFS backend
 %package zfs
 Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
-Requires: libzfswrap
+Requires: libzfswrap nfs-ganesha
 BuildRequires: libzfswrap-devel
 
 %description zfs
@@ -187,7 +189,7 @@ be used with NFS-Ganesha to support CEPH
 %package lustre
 Summary: The NFS-GANESHA's LUSTRE FSAL
 Group: Applications/System
-Requires: libattr lustre
+Requires: libattr lustre nfs-ganesha
 BuildRequires: libattr-devel lustre
 
 %description lustre
@@ -200,7 +202,7 @@ be used with NFS-Ganesha to support LUSTRE
 %package shook
 Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
 Group: Applications/System
-Requires: libattr lustre shook-client
+Requires: libattr lustre shook-client nfs-ganesha
 BuildRequires: libattr-devel lustre shook-devel
 
 %description shook
@@ -213,7 +215,7 @@ be used with NFS-Ganesha to support LUSTRE via SHOOK
 %package xfs
 Summary: The NFS-GANESHA's XFS FSAL
 Group: Applications/System
-Requires: libattr xfsprogs 
+Requires: libattr xfsprogs nfs-ganesha
 BuildRequires: libattr-devel xfsprogs-devel
 
 %description xfs
@@ -226,7 +228,7 @@ to support XFS correctly
 %package hpss
 Summary: The NFS-GANESHA's HPSS FSAL
 Group: Applications/System
-Requires: 
+Requires: nfs-ganesha
 BuildRequires:
 
 %description hpss
@@ -239,7 +241,7 @@ be used with NFS-Ganesha to support HPSS
 %package hpss
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
-Requires: 
+Requires: nfs-ganesha
 BuildRequires:
 
 %description pt
@@ -252,7 +254,7 @@ be used with NFS-Ganesha to support PT
 %package hpss
 Summary: The NFS-GANESHA's GLSUTER FSAL
 Group: Applications/System
-Requires: 
+Requires: nfs-ganesha
 BuildRequires:
 
 %description gluster
