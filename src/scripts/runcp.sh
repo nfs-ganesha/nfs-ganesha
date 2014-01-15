@@ -166,7 +166,7 @@ DIR="."
 ALWAYS="libtirpc|libntirpc|CMakeFiles|tools/test_findlog.c|include/config.h"
 
 EXTERNAL="murmur3.h|cidr.h|cidr/|atomic_x86_64.h|include/city|avltree.h"
-EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/"
+EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
 
 NO_EXTERNAL=0
 
