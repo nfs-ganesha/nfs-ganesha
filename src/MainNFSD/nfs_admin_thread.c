@@ -495,7 +495,8 @@ static void do_shutdown(void)
 	}
 
 	/* finalize RPC package */
-	svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
+	Clean_RPC(); /* we MUST do this first */
+	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
 	rc = general_fridge_shutdown();
 	if (rc != 0) {

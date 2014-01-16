@@ -352,6 +352,8 @@ void Bind_sockets(void)
 		}
 }
 
+/* The following routine must ONLY be called from the shutdown
+ * thread */
 void Clean_RPC(void)
 {
   /**
@@ -361,8 +363,6 @@ void Clean_RPC(void)
 	unregister_rpc();
 	close_rpc_fd();
 }
-
-cleanup_list_element clean_rpc = { NULL, Clean_RPC };
 
 #define UDP_REGISTER(prot, vers, netconfig) \
 	svc_reg(udp_xprt[prot], nfs_param.core_param.program[prot], \
@@ -594,7 +594,6 @@ void nfs_Init_svc()
 
 	/* Unregister from portmapper/rpcbind */
 	unregister_rpc();
-	RegisterCleanup(&clean_rpc);
 
 	/* Set up well-known xprt handles */
 	Create_SVCXPRTs();
