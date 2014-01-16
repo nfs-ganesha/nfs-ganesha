@@ -45,6 +45,7 @@
 struct proc_state {
 	exports head;
 	exports tail;
+	sockaddr_t req_client;
 	int retval;
 };
 
@@ -58,8 +59,25 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 	struct groupnode *group, *grp_tail = NULL;
 	const char *grp_name;
 	char addr_buf[INET6_ADDRSTRLEN + 1];
+	export_perms_t pexport_perms;
 
 	state->retval = 0;
+
+        /* If client does not have any access to the export,
+         * don't add it to the list
+         */
+        nfs_export_check_access(&state->req_client,
+                                export,
+                                &pexport_perms);
+        if(pexport_perms.options == 0)
+        {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "Client is not allowed to access Export_Id %d %s",
+                             export->id, export->fullpath);
+
+                return true;
+        }
+
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	if (new_expnode == NULL)
 		goto nomem;
@@ -154,6 +172,7 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
 	/* init everything of interest to good state. */
 	memset(res, 0, sizeof(nfs_res_t));
 	memset(&proc_state, 0, sizeof(proc_state));
+	proc_state.req_client = worker->hostaddr;
 
 	(void)foreach_gsh_export(proc_export, &proc_state);
 	if (proc_state.retval != 0) {
