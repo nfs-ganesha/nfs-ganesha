@@ -112,7 +112,7 @@ void nfs4_op_readlink_Free(nfs_resop4 *res)
 	READLINK4res *resp = &res->nfs_resop4_u.opreadlink;
 
 	if (resp->status == NFS4_OK
-	    && resp->READLINK4res_u.resok4.link.utf8string_len > 0)
+	    && resp->READLINK4res_u.resok4.link.utf8string_val)
 		gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
 	return;
 }				/* nfs4_op_readlink_Free */
