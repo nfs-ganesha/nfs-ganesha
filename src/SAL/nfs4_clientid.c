@@ -1528,7 +1528,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 
 	/* Use same record for record and key */
 	buffval.addr = record;
-	buffval.len = sizeof(sizeof(nfs_client_record_t) + len);
+	buffval.len = sizeof(nfs_client_record_t) + len;
 
 	rc = hashtable_setlatched(ht_client_record, &buffkey, &buffval, &latch,
 				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE, NULL,
