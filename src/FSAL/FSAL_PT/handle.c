@@ -382,7 +382,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct pt_fsal_obj_handle *myself;
 	int dirfd, mntfd;
 	off_t seekloc = 0;
-	fsal_cookie_t *entry_cookie;
+	ptfsal_cookie_t *entry_cookie;
 	char fsi_parent_dir_path[PATH_MAX];
 	char fsi_dname[PATH_MAX];
 	char fsi_name[PATH_MAX];
@@ -638,7 +638,6 @@ fsal_status_t handle_digest(const struct fsal_obj_handle * obj_hdl,
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
-	case FSAL_DIGEST_NFSV4:
 		fh_size = pt_sizeof_handle(fh);
 		if (fh_desc->len < fh_size)
 			goto errout;

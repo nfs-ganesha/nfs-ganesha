@@ -91,7 +91,7 @@ fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
 	int rc = 0, errsv;
 	int fd = -1;
 	fsal_status_t st;
-	fsal_file_t file_desc;
+	ptfsal_file_t file_desc;
 	int mount_fd;
 
 	FSI_TRACE(FSI_DEBUG, "Truncate called, length=%ld", length);

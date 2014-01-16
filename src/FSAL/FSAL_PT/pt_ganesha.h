@@ -332,11 +332,11 @@ int ptfsal_opendir(const struct req_op_context *p_context,
 		   const char *mask, uint32_t attr);
 
 int ptfsal_readdir(const struct req_op_context *p_context,
-		   struct fsal_export *export, fsal_dir_t * dir_desc,
+		   struct fsal_export *export, ptfsal_dir_t * dir_desc,
 		   fsi_stat_struct * sbuf, char *fsi_dname);
 
 int ptfsal_closedir(const struct req_op_context *p_context,
-		    struct fsal_export *export, fsal_dir_t * dir_desc);
+		    struct fsal_export *export, ptfsal_dir_t * dir_desc);
 
 int ptfsal_closedir_fd(const struct req_op_context *p_context,
 		       struct fsal_export *export, int fd);
@@ -350,8 +350,6 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		const char *p_filename, const struct req_op_context *p_context,
 		mode_t mode, ptfsal_handle_t * p_object_handle);
-
-int ptfsal_close_mount_root(fsal_export_context_t * p_export_context);
 
 int ptfsal_ftruncate(const struct req_op_context *p_context,
 		     struct fsal_export *export, int handle_index,

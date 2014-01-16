@@ -40,7 +40,6 @@
 #include  "fsal.h"
 #include <sys/stat.h>
 #include "fsal_up.h"
-#include "FSAL/FSAL_PT/fsal_types.h"
 #include "fsal_types.h"
 #include "fcntl.h"
 #include "pt_methods.h"
@@ -325,7 +324,5 @@ fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle *p_file_descriptor,
 
 fsal_status_t PTFSAL_GetExportEntry(char *path,	/* IN */
 				    exportlist_t ** p_exportlist) /* OUT */ ;
-
-fsal_status_t PTFSAL_GetMountRootFD(fsal_op_context_t * p_context);
 
 #endif				// FSAL_INTERNAL_H
