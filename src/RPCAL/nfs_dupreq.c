@@ -900,6 +900,7 @@ static inline bool nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
 	     (NFS_LOOKAHEAD_OPEN | /* all logical OPEN */
 	      NFS_LOOKAHEAD_CLOSE | NFS_LOOKAHEAD_LOCK | /* includes LOCKU */
 	      NFS_LOOKAHEAD_READ | /* because large, though idempotent */
+	      NFS_LOOKAHEAD_READLINK |
 	      NFS_LOOKAHEAD_READDIR)))
 		return false;
 	return true;

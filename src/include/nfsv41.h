@@ -7882,6 +7882,7 @@ extern "C" {
 			lkhd->flags |= NFS_LOOKAHEAD_READDIR;
 			break;
 		case NFS4_OP_READLINK:
+			lkhd->flags |= NFS_LOOKAHEAD_READLINK;
 			break;
 		case NFS4_OP_REMOVE:
 			if (!xdr_REMOVE4args
