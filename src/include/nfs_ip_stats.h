@@ -27,8 +27,6 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size);
 int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size);
 int nfs_ip_name_remove(sockaddr_t *ipaddr);
 
-int nfs_ip_name_populate(char *path);
-
 int display_ip_name_key(struct gsh_buffdesc *pbuff, char *str);
 int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str);
 int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);

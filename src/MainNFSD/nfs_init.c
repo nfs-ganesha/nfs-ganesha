@@ -1142,16 +1142,6 @@ void nfs_start(nfs_start_info_t *p_start_info)
 		nsm_unmonitor_all();
 	}
 
-	if (nfs_param.ip_name_param.mapfile == NULL) {
-		LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
-	} else {
-		LogEvent(COMPONENT_INIT, "Populating IP_NAME with file %s",
-			 nfs_param.ip_name_param.mapfile);
-		if (nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) !=
-		    IP_NAME_SUCCESS)
-			LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
-	}
-
 	LogEvent(COMPONENT_INIT,
 		 "-------------------------------------------------");
 	LogEvent(COMPONENT_INIT, "             NFS SERVER INITIALIZED");

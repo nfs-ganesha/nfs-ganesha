@@ -608,9 +608,6 @@ typedef struct nfs_ip_name_param {
 	/** Expiration time for ip-name mappings.  Defautls to
 	    IP_NAME_Expiration, and settable with Expiration_Time. */
 	uint32_t expiration_time;
-	/** File holding mappings to preload.  Defautls to NULL,
-	    settable with Map. */
-	char *mapfile;
 } nfs_ip_name_parameter_t;
 
 /** @} */
