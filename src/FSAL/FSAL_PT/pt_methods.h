@@ -4,11 +4,6 @@
 #ifndef PT_METHODS_H
 #define PT_METHODS_H
 
-/* private helpers from export
- */
-
-int pt_get_root_fd(struct fsal_export *exp_hdl);
-
 /* method proto linkage to handle.c for export
  */
 

@@ -72,7 +72,6 @@ fsal_status_t PTFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 
 	int rc, errsv;
 	struct stat st;
-	int mount_fd;
 	struct pt_fsal_obj_handle *old_pt_hdl, *new_pt_hdl;
 	int stat_rc;
 
@@ -89,7 +88,6 @@ fsal_status_t PTFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 	    container_of(old_hdl, struct pt_fsal_obj_handle, obj_handle);
 	new_pt_hdl =
 	    container_of(new_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mount_fd = pt_get_root_fd(old_hdl->export);
 
 	/* build file paths */
 	memset(&st, 0, sizeof(st));

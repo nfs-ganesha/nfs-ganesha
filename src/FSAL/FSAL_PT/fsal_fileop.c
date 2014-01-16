@@ -179,11 +179,8 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
     )
 {
 
-	size_t i_size;
 	ssize_t nb_read;
 	int errsv = 0;
-	unsigned long location;	// FSI current location
-	unsigned long file_size;	// FSI end of file
 	int handle_index;	// FSI handle index
 
 	FSI_TRACE(FSI_DEBUG, "Read Begin================================\n");
@@ -199,11 +196,7 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
 	if (fsi_check_handle_index(handle_index) < 0) {
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
-	location = g_fsi_handles_fsal->m_handle[handle_index].m_file_loc;
-	file_size = g_fsi_handles_fsal->m_handle[handle_index].m_stat.st_size;
 	FSI_TRACE(FSI_DEBUG, "FSI - read from handle %d\n", handle_index);
-
-	i_size = (size_t) buffer_size;
 
 	/* read operation */
 	nb_read =
@@ -253,8 +246,6 @@ fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle * p_file_descriptor, const 
 	size_t nb_written;
 	size_t i_size;
 	int errsv = 0;
-	unsigned long location;	// FSI current location
-	unsigned long file_size;	// FSI end of file
 	int handle_index;	// FSI handle index
 
 	FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL write-----------------\n");
@@ -268,8 +259,6 @@ fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle * p_file_descriptor, const 
 	if (fsi_check_handle_index(handle_index) < 0) {
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
-	location = g_fsi_handles_fsal->m_handle[handle_index].m_file_loc;
-	file_size = g_fsi_handles_fsal->m_handle[handle_index].m_stat.st_size;
 	FSI_TRACE(FSI_DEBUG, "FSI - write to handle %d\n", handle_index);
 
   /** @todo: manage size_t to size_t convertion */

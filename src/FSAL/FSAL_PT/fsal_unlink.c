@@ -86,7 +86,6 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	fsal_status_t status;
 	int rc, errsv;
 	fsi_stat_struct buffstat;
-	int mount_fd;
 	struct pt_fsal_obj_handle *pt_hdl;
 
 	/* sanity checks. */
@@ -94,7 +93,6 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	pt_hdl = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mount_fd = pt_get_root_fd(dir_hdl->export);
 
 	FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink [%s] entry\n", p_object_name);
 

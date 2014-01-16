@@ -73,7 +73,6 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 {				/* IN/OUT */
 
 	int errsv;
-	int mount_fd;
 	fsal_status_t status;
 	struct pt_fsal_obj_handle *pt_hdl;
 	mode_t unix_mode;
@@ -89,7 +88,6 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	pt_hdl = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mount_fd = pt_get_root_fd(dir_hdl->export);
 
 	/* convert fsal mode to unix mode. */
 	unix_mode = fsal2unix_mode(accessmode);
@@ -176,7 +174,6 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 	fsal_status_t status;
 	struct attrlist parent_dir_attrs;
 	char newPath[PATH_MAX];
-	int mount_fd;
 	struct pt_fsal_obj_handle *pt_hdl;
 
 	FSI_TRACE(FSI_INFO, "MKDIR BEGIN-------------------------\n");
@@ -188,8 +185,6 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	pt_hdl = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
-
-	mount_fd = pt_get_root_fd(dir_hdl->export);
 
 	/* convert FSAL mode to unix mode. */
 	unix_mode = fsal2unix_mode(accessmode);

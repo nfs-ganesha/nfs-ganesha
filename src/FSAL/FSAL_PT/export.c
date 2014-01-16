@@ -51,14 +51,6 @@
 
 struct fsal_staticfsinfo_t *pt_staticinfo(struct fsal_module *hdl);
 
-int pt_get_root_fd(struct fsal_export *exp_hdl)
-{
-	struct pt_fsal_export *myself;
-
-	myself = container_of(exp_hdl, struct pt_fsal_export, export);
-	return myself->root_fd;
-}
-
 /* export object methods
  */
 

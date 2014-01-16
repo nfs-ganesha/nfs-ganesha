@@ -56,8 +56,6 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 	int stat_rc, err = 0;
 	struct stat buffstat;
 
-	int mntfd;
-
 	FSI_TRACE(FSI_DEBUG, "Begin-------------------\n");
 
 	/* sanity checks.
@@ -66,7 +64,6 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 	if (!p_filehandle || !export || !p_object_attributes)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	mntfd = pt_get_root_fd(export);
 	stat_rc =
 	    ptfsal_stat_by_handle(p_context, export, p_filehandle, &buffstat);
 
@@ -128,7 +125,6 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 			      struct attrlist * p_attrib_set,	/* IN */
 			      struct attrlist * p_object_attributes)
 {				/* IN/OUT */
-	unsigned int mntfd;
 	fsal_status_t status;
 
 	struct pt_fsal_obj_handle *myself;
@@ -151,7 +147,6 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 	}
 
 	myself = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mntfd = pt_get_root_fd(dir_hdl->export);
 
 	/* local copy of attributes */
 	wanted_attrs = *p_attrib_set;

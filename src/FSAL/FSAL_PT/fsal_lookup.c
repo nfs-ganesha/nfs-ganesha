@@ -88,7 +88,6 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 {
 	fsal_status_t status;
 	int parent_fd;
-	int mnt_fd;
 	struct attrlist *parent_dir_attrs;
 	fsi_stat_struct buffstat;
 	int rc;
@@ -106,7 +105,6 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
 
-	mnt_fd = pt_get_root_fd(parent->export);
 	parent_hdl =
 	    container_of(parent, struct pt_fsal_obj_handle, obj_handle);
 

@@ -86,11 +86,9 @@ fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      struct attrlist *p_link_attributes)
 {				/* IN/OUT */
 
-	int errsv;
 	fsal_status_t status;
 	struct pt_fsal_obj_handle *pt_hdl;
 	char link_content_out[PATH_MAX];
-	int mount_fd;
 
 	/* sanity checks.
 	 * note : link_attributes is optional.
@@ -99,15 +97,12 @@ fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	pt_hdl = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mount_fd = pt_get_root_fd(dir_hdl->export);
 
 	memset(link_content_out, 0, sizeof(link_content_out));
 
 	/* Read the link on the filesystem */
 	fsal_readlink_by_handle(p_context, dir_hdl->export, pt_hdl->handle,
 				p_link_content, *link_len);
-
-	errsv = errno;
 
 	if (FSAL_IS_ERROR(status))
 		return status;

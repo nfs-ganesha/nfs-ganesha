@@ -91,8 +91,6 @@ fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
 	int rc = 0, errsv;
 	int fd = -1;
 	fsal_status_t st;
-	ptfsal_file_t file_desc;
-	int mount_fd;
 
 	FSI_TRACE(FSI_DEBUG, "Truncate called, length=%ld", length);
 	/* sanity checks.
@@ -102,7 +100,6 @@ fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	ptfsal_print_handle(p_filehandle->handle->data.handle.f_handle);
-	mount_fd = pt_get_root_fd(export);
 
 	/* Check to see if we already have fd */
 	if (p_filehandle && p_filehandle->u.file.fd > 0) {
@@ -131,10 +128,6 @@ fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
 		errsv = errno;
 
 		/* Before checking for truncate error, close the fd we opened */
-		file_desc.fd = fd;
-		file_desc.export_id = export->exp_entry->id;
-		file_desc.uid = p_context->creds->caller_uid;
-		file_desc.gid = p_context->creds->caller_gid;
 		PTFSAL_close(fd);
 
 		/* Now check ftruncate and convert return code */
