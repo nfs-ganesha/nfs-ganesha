@@ -44,6 +44,7 @@
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
+#include "nfs_exports.h"
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
 #include <strings.h>
@@ -57,6 +58,11 @@
 #include <wbclient.h>
 #endif
 
+#define ID_SEPARATOR '\\'
+void drop_at_domain(char * buff);
+void drop_slash_domain(char * buff);
+int strip_netbios_name(exportlist_t *pexport,
+                       struct nfs_worker_data__ *pworker);
 #ifdef _USE_NFSIDMAP
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
@@ -245,10 +251,15 @@ v3compat:
  * return 1 if successful, 0 otherwise
  *
  */
-int name2uid(char *name, uid_t * puid)
+int name2uid(char *full_name, uid_t * puid)
 {
   char *end = NULL, *at = NULL;
   uid_t uid;
+  char *name;
+  struct passwd passwd;
+  struct passwd *res;
+  char buff[NFS4_MAX_DOMAIN_LEN];
+
 #ifdef _USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
@@ -256,10 +267,13 @@ int name2uid(char *name, uid_t * puid)
 #endif
   char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
+  name = full_name;
 #else  /* !_USE_NFSIDMAP */
-  struct passwd passwd;
-  struct passwd *res;
-  char buff[NFS4_MAX_DOMAIN_LEN];
+  char short_name[2 * NFS4_MAX_DOMAIN_LEN];
+  strncpy(short_name, full_name, sizeof(name));
+  /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
+  drop_at_domain(short_name);
+  name = short_name;
 #endif /* _USE_NFSIDMAP */
 
   if(uidmap_get(name, &uid) == ID_MAPPER_SUCCESS)
@@ -284,7 +298,22 @@ int name2uid(char *name, uid_t * puid)
                        name);
           goto v3compat;
         }
-      else if (res != NULL)
+      else if (res == NULL && strcmp(name, full_name) != 0) {
+        LogInfo(COMPONENT_IDMAPPER, "retry with %s", full_name);
+#ifdef _SOLARIS
+        if((res = getpwnam_r(full_name, &passwd, buff, sizeof(buff))) == NULL)
+#else
+        if(getpwnam_r(full_name, &passwd, buff, sizeof(buff), &res) != 0)
+#endif                          /* _SOLARIS */
+           {
+              LogCrit(COMPONENT_IDMAPPER,
+                   "name2uid: getpwnam_r %s failed",
+                   full_name);
+              goto v3compat;
+          }
+      }
+
+      if (res != NULL)
         {
           *puid = res->pw_uid;
 #ifdef _HAVE_GSSAPI
@@ -324,7 +353,30 @@ int name2uid(char *name, uid_t * puid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_name_to_uid %s failed %d (%s)",
                        fqname, -rc, strerror(-rc));
-          goto v3compat;
+
+#ifdef _SOLARIS
+        if((res = getpwnam_r(fqname, &passwd, buff, sizeof(buff))) == NULL)
+#else
+        if(getpwnam_r(fqname, &passwd, buff, sizeof(buff), &res) != 0)
+#endif       
+          {
+             LogInfo(COMPONENT_IDMAPPER,
+                          "name2uid: getpwnam_r %s returned failed %d (%s)",
+                          fqname, -rc, strerror(-rc));
+             goto v3compat;
+          }
+        if(res != NULL)
+          {
+            *puid = res->pw_uid;
+          }
+        else
+          {
+             LogInfo(COMPONENT_IDMAPPER,
+                          "name2uid: getpwnam_r %s failed %d (%s)",
+                          fqname, -rc, strerror(-rc));
+             goto v3compat;             
+          }
+        
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -669,10 +721,25 @@ v3compat:
  * return 1 if successful, 0 otherwise
  *
  */
-int name2gid(char *name, gid_t * pgid)
+int name2gid(char *full_name, gid_t * pgid)
 {
   gid_t gid;
   char *at = NULL, *end = NULL;
+  char *name;
+  struct group g;
+  struct group *pg = NULL;
+  static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
+
+
+#ifndef _USE_NFSIDMAP
+  char short_name[2 * NFS4_MAX_DOMAIN_LEN];
+  /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */
+  strncpy(short_name, full_name, sizeof(name));
+  drop_at_domain(short_name);
+  name = short_name;
+#else
+  name = full_name;
+#endif
 
   if(gidmap_get(name, &gid) == ID_MAPPER_SUCCESS)
     {
@@ -699,7 +766,30 @@ int name2gid(char *name, gid_t * pgid)
           LogInfo(COMPONENT_IDMAPPER,
                        "name2gid: nfs4_name_to_gid %s failed %d (%s)",
                        name, -rc, strerror(-rc));
-          goto v3compat;
+#ifdef _SOLARIS
+        if((pg = getgrnam_r(name, &g, buff, sizeof(buff))) == NULL)
+#else
+        if(getgrnam_r(name, &g, buff, sizeof(buff), &pg) != 0)
+#endif
+
+          {
+             LogInfo(COMPONENT_IDMAPPER,
+                          "name2gid: getgrnam_r %s returned failed %d (%s)",
+                          name, -rc, strerror(-rc));
+             goto v3compat;
+          }
+        if(pg != NULL)
+          {
+            *pgid = pg->gr_gid;
+          }
+        else
+          {
+             LogInfo(COMPONENT_IDMAPPER,
+                          "name2uid: getpwnam_r %s failed %d (%s)",
+                          name, -rc, strerror(-rc));
+             goto v3compat;
+          }
+
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -715,9 +805,6 @@ int name2gid(char *name, gid_t * pgid)
       goto success;
 
 #else
-      struct group g;
-      struct group *pg = NULL;
-      static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 
 #ifdef _SOLARIS
       if((pg = getgrnam_r(name, &g, buff, sizeof(buff))) == NULL)
@@ -730,7 +817,23 @@ int name2gid(char *name, gid_t * pgid)
                        name);
           goto v3compat;
         }
-      else if (pg != NULL)
+      else if (pg == NULL && strcmp(name, full_name) != 0) {
+        LogDebug(COMPONENT_IDMAPPER, "retry with %s", full_name);
+#ifdef _SOLARIS
+        if((pg = getgrnam_r(full_name, &g, buff, sizeof(buff))) == NULL)
+#else
+        if(getgrnam_r(full_name, &g, buff, sizeof(buff), &pg) != 0)
+#endif
+          {
+              LogInfo(COMPONENT_IDMAPPER,
+                   "name2gid: getgrnam_r %s failed",
+                   full_name);
+              goto v3compat;
+          }
+      }
+
+
+      if (pg != NULL)
         {
           *pgid = pg->gr_gid;
 
@@ -770,6 +873,38 @@ success:
   return 1;
 }                               /* name2gid */
 
+/*
+ * strip_netbios_name: Helper function for uid2str and gid2str
+ *                     Determines if the client needs to have the netbios 
+ *                     name stripped from the uid/gid for this export
+ *
+ * @param pexport [IN]  the export in question
+ * @param pworker [IN]  the worker data containing the client IP
+ *
+ * @return 1: the netbios name should be stripped
+ *         0: the id should be left as it is
+ */
+int strip_netbios_name(exportlist_t *pexport,
+                       struct nfs_worker_data__ *pworker){
+
+  int rc = 0;
+
+  if (pexport != NULL && pworker != NULL) {
+    sockaddr_t alt_hostaddr;
+    sockaddr_t * puse_hostaddr;
+    exportlist_client_entry_t client_found;
+
+    memset(&client_found, 0, sizeof(exportlist_client_entry_t));
+    puse_hostaddr = 
+       check_convert_ipv6_to_ipv4(&pworker->hostaddr, &alt_hostaddr);
+    rc = export_client_match_any(puse_hostaddr,
+                                 &(pexport->clients),
+                                 &client_found,
+                                 EXPORT_OPTION_NETBIOS_NAME);
+  }
+  return rc;
+}
+
 /**
  *
  * uid2ustr: convert a uid to a string.
@@ -782,7 +917,8 @@ success:
  * @return the length of the utf8 buffer if succesfull, -1 if failed
  *
  */
-int uid2str(uid_t uid, char *str, size_t bufsize)
+int uid2str(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+            uid_t uid, char *str, size_t bufsize)
 {
   char buffer[NFS4_MAX_DOMAIN_LEN];
   uid_t local_uid = uid;
@@ -796,6 +932,10 @@ int uid2str(uid_t uid, char *str, size_t bufsize)
 #else
   rc = snprintf(str, bufsize, "%s", buffer);
 #endif
+
+  if (strip_netbios_name(pexport, pworker) && strchr(str, ID_SEPARATOR) != NULL) {
+     drop_slash_domain(str);
+  }
 
   LogDebug(COMPONENT_IDMAPPER,
            "uid2str %u returning %s",
@@ -816,7 +956,8 @@ int uid2str(uid_t uid, char *str, size_t bufsize)
  * @return the length of the utf8 buffer if succesfull, -1 if failed
  *
  */
-int gid2str(gid_t gid, char *str, size_t bufsize)
+int gid2str(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+            gid_t gid, char *str, size_t bufsize)
 {
   char buffer[NFS4_MAX_DOMAIN_LEN];
   gid_t local_gid = gid;
@@ -830,6 +971,9 @@ int gid2str(gid_t gid, char *str, size_t bufsize)
 #else
   rc = snprintf(str, bufsize, "%s", buffer);
 #endif
+
+  if (strip_netbios_name(pexport, pworker) && strchr(str, ID_SEPARATOR) != NULL)
+     drop_slash_domain(str);
 
   LogDebug(COMPONENT_IDMAPPER,
            "gid2str %u returning %s",
@@ -850,12 +994,13 @@ int gid2str(gid_t gid, char *str, size_t bufsize)
  * @return the length of the utf8 buffer if succesfull, -1 if failed
  *
  */
-int uid2utf8(uid_t uid, utf8string * utf8str)
+int uid2utf8(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+             uid_t uid, utf8string * utf8str)
 {
   char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
 
-  if(uid2str(uid, buff, sizeof(buff)) == -1)
+  if(uid2str(pexport, pworker, uid, buff, sizeof(buff)) == -1)
     return -1;
 
   len = strlen(buff);
@@ -882,12 +1027,13 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
  * @return the length of the utf8 buffer if succesfull, -1 if failed
  *
  */
-int gid2utf8(gid_t gid, utf8string * utf8str)
+int gid2utf8(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+             gid_t gid, utf8string * utf8str)
 {
   char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
 
-  if(gid2str(gid, buff, sizeof(buff)) == -1)
+  if(gid2str(pexport, pworker, gid, buff, sizeof(buff)) == -1)
     return -1;
 
   len = strlen(buff);
@@ -912,6 +1058,23 @@ void drop_at_domain(char * buff)
 
   /* Whether there was an @ or not, string ends at current position. */
   *c = '\0';
+}
+
+void drop_slash_domain(char * buff)
+{    
+  char * c = buff;
+  int len = strlen(buff) + 1;
+
+  /* Look for '\' in string */
+  c = strchr(buff, ID_SEPARATOR);
+
+  if (c != NULL && c < buff + len)
+    c++;
+  else
+     return;   
+         
+  memmove(buff, c, buff + len - c);
+           
 }
 
 /**
@@ -946,10 +1109,6 @@ void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid)
       return;
     }
 
-#ifndef _USE_NFSIDMAP
-  /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
-  drop_at_domain(buff);
-#endif
 
   rc = name2uid(buff, Uid);
 
@@ -1000,11 +1159,6 @@ void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid)
               "utf82uid: invalid UTF8 group name mapped to uid %u", anon_gid);
       return;
     }
-
-#ifndef _USE_NFSIDMAP
-  /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */
-  drop_at_domain(buff);
-#endif
 
   rc = name2gid(buff, Gid);
 

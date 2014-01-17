@@ -1482,7 +1482,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_OWNER:
           /* Return the uid as a human readable utf8 string */
-          if(uid2utf8(pattr->owner, &file_owner) == 0)
+          if(uid2utf8(pexport, data->pworker, pattr->owner, &file_owner) == 0)
             {
               LastOffset += nfs_tools_xdr_utf8(&file_owner,
                                                (char *)(attrvalsBuffer + LastOffset));
@@ -1494,7 +1494,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_OWNER_GROUP:
           /* Return the gid as a human-readable utf8 string */
-          if(gid2utf8(pattr->group, &file_owner_group) == 0)
+          if(gid2utf8(pexport, data->pworker,
+             pattr->group, &file_owner_group) == 0)
             {
               LastOffset += nfs_tools_xdr_utf8(&file_owner_group,
                                                (char *)(attrvalsBuffer + LastOffset));

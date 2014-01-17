@@ -624,7 +624,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                        "-----> Wanting FATTR4_OWNER");
 
           /* Return the uid as a human readable utf8 string */
-          if(uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
+          if(uid2utf8(NULL, NULL, NFS4_ROOT_UID, &file_owner) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
@@ -664,7 +664,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                        "-----> Wanting FATTR4_OWNER_GROUP");
 
           /* Return the uid as a human readable utf8 string */
-          if(gid2utf8(2, &file_owner_group) == 0)
+          if(gid2utf8(NULL, NULL, 2, &file_owner_group) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;

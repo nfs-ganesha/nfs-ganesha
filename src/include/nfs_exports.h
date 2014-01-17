@@ -242,6 +242,7 @@ struct exportlist__
 #define EXPORT_OPTION_PREFWRITE       0x00001000        /* Pref write is provided              */
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
+#define EXPORT_OPTION_NETBIOS_NAME    0x00008000        /* Strip_NETBIOS_Name= option specified*/
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 

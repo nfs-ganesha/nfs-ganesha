@@ -81,6 +81,7 @@ char * CONF_LABEL_EXPORT_CLIENT = "EXPORT_CLIENT";
 #define CONF_EXPORT_ACCESS             "Access"
 #define CONF_EXPORT_READ_ACCESS        "R_Access"
 #define CONF_EXPORT_READWRITE_ACCESS   "RW_Access"
+#define CONF_EXPORT_NETBIOS_NAME       "Strip_NETBIOS_Name"
 #define CONF_EXPORT_MD_ACCESS          "MDONLY_Access"
 #define CONF_EXPORT_MD_RO_ACCESS       "MDONLY_RO_Access"
 #define CONF_EXPORT_PSEUDO             "Pseudo"
@@ -150,6 +151,8 @@ char * CONF_LABEL_EXPORT_CLIENT = "EXPORT_CLIENT";
 #define FLAG_EXPORT_USE_PNFS        0x002000000
 #define FLAG_EXPORT_ACCESS_LIST     0x004000000
 #define FLAG_EXPORT_USE_UQUOTA      0x008000000
+#define FLAG_EXPORT_NETBIOS_NAME    0x010000000
+
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -1329,6 +1332,25 @@ static int BuildExportEntry(config_item_t        block,
 	  parseAccessParam(var_name, var_value, p_access_list,
 			   EXPORT_OPTION_RW_ACCESS,
 			   label);
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_NETBIOS_NAME))
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_NETBIOS_NAME) == FLAG_EXPORT_NETBIOS_NAME)
+            {
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_NETBIOS_NAME);
+              continue;
+            }
+
+          set_options |= FLAG_EXPORT_NETBIOS_NAME;
+
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+          parseAccessParam(var_name, var_value, p_access_list,
+                           EXPORT_OPTION_NETBIOS_NAME,
+                           label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {

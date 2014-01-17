@@ -1441,10 +1441,12 @@ int utf8dup(utf8string * newstr, utf8string * oldstr);
 int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
-int uid2utf8(uid_t uid, utf8string * utf8str);
+int uid2utf8(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+             uid_t uid, utf8string * utf8str);
 void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid);
 
-int gid2utf8(gid_t gid, utf8string * utf8str);
+int gid2utf8(exportlist_t *pexport, struct nfs_worker_data__ *pworker,
+             gid_t gid, utf8string * utf8str);
 void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid);
 
 static inline cache_inode_status_t utf8_to_name(utf8string * buff, fsal_name_t * name)
