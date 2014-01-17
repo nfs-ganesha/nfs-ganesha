@@ -831,6 +831,12 @@ int fridgethr_submit(struct fridgethr *fr,
 	/* Return code */
 	int rc = 0;
 
+	if (fr == NULL) {
+		LogMajor(COMPONENT_THREAD,
+			 "Attempt to schedule job with no fridge thread");
+		return EPIPE;
+	}
+
 	PTHREAD_MUTEX_lock(&fr->mtx);
 	if (fr->command == fridgethr_comm_stop) {
 		LogMajor(COMPONENT_THREAD,
