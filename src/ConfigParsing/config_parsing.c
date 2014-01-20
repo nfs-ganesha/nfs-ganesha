@@ -76,12 +76,12 @@ config_file_t config_ParseFile(char *file_path)
 	int rc;
 
 	memset(st, 0, sizeof(struct parser_state));
-	rc = ganesha_yy_init_parser(file_path, st);
+	rc = ganeshun_yy_init_parser(file_path, st);
 	if (rc) {
 		return NULL;
 	}
 	rc = ganesha_yyparse(st);
-	ganesha_yylex_destroy(st->scanner);
+	ganeshun_yylex_destroy(st->scanner);
 
 	/* converts pointer to pointer */
 	return rc ? NULL : (config_file_t) st->root_node;

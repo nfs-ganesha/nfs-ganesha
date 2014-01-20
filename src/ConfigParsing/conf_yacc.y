@@ -18,13 +18,11 @@
 
 /* Options and variants */
 %pure-parser
-%lex-param {void *scanner}
+%lex-param {struct parser_state *st}
 %parse-param {struct parser_state *st}
 %locations
 
 %code requires {
-#define YYLEX_PARAM st->scanner
-
 /* alert the parser that we have our own definition */
 # define YYLTYPE_IS_DECLARED 1
 
@@ -65,9 +63,13 @@ typedef struct YYLTYPE {
 	}							       \
     while (0)
 
+int ganeshun_yylex(YYSTYPE *yylval_param,
+		   YYLTYPE *yylloc_param,
+		   void *scanner);
+
 int ganesha_yylex(YYSTYPE *yylval_param,
 		  YYLTYPE *yylloc_param,
-		  void *yyscanner);
+		  struct parser_state *st);
 
 void ganesha_yyerror(YYLTYPE *yylloc_param,
 		     void *yyscanner,
@@ -268,3 +270,13 @@ struct config_node *config_stmt(char *varname,
 	return node;
 }
 
+
+int ganesha_yylex(YYSTYPE *yylval_param,
+		  YYLTYPE *yylloc_param,
+		  struct parser_state *st)
+{
+	return ganeshun_yylex(yylval_param,
+			      yylloc_param,
+			      st->scanner);
+
+}

@@ -19,6 +19,10 @@
 #   include <string.h>
 #endif
 
+/* Alias for the dirty wrap */
+
+#define ganeshun_yyerror ganesha_yyerror
+
 /* block/subblock nesting level */
 int block_depth;
 
@@ -95,10 +99,10 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 		c = new_file(yytext, stp);
 		if (c != 0) {
 			if (c == EINVAL)
-				ganesha_yyerror(yylloc, yyscanner,
+				ganeshun_yyerror(yylloc, yyscanner,
 						"config file already parsed, ignored");
 			else
-				ganesha_yyerror(yylloc, yyscanner,
+				ganeshun_yyerror(yylloc, yyscanner,
 						"error opening file");
 			yyterminate();
 		}
@@ -115,10 +119,10 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 		c = new_file(yytext, stp);
 		if (c != 0) {
 			if (c == EINVAL)
-				ganesha_yyerror(yylloc, yyscanner,
+				ganeshun_yyerror(yylloc, yyscanner,
 						"config file already parsed, ignored");
 			else
-				ganesha_yyerror(yylloc, yyscanner,
+				ganeshun_yyerror(yylloc, yyscanner,
 						"error opening file");
 			yyterminate();
 		}
@@ -169,7 +173,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	DEBUG_LEX("END_BLOCK\n");
 	if (block_depth <= 0) {
 		/* error */
-		ganesha_yyerror(yylloc, yyscanner,
+		ganeshun_yyerror(yylloc, yyscanner,
 				"closing bracket outside a block");
 		return _ERROR_;
 	} else
@@ -229,10 +233,10 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	} else {
 		yylval->token = filter_string(yytext, 1);
 		if (yylval->token == NULL) {
-			ganesha_yyerror(yylloc, yyscanner, "Out of memory");
+			ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
 			return _ERROR_;
 		} else if (yylval->token == (char *)-1) {
-			ganesha_yyerror(yylloc, yyscanner, "Bad literal string");
+			ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
 			return _ERROR_;
 		}
 		DEBUG_LEX("%s>", yylval->token);
@@ -244,10 +248,10 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 <LIT_STRING>[^\n]*\'  { /* end of single quote string */
 	yylval->token =	filter_string(yytext, 0);
 	if (yylval->token == NULL) {
-		ganesha_yyerror(yylloc, yyscanner, "Out of memory");
+		ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
 		return _ERROR_;
 	} else if (yylval->token == (char *)-1) {
-		ganesha_yyerror(yylloc, yyscanner, "Bad literal string");
+		ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
 		return _ERROR_;
 	}
 	DEBUG_LEX("%s>", yylval->token);
@@ -256,7 +260,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 }
 
 <LIT_STRING>\n { /* ERROR: eol within single quote string */
-	ganesha_yyerror(yylloc, yyscanner, "closing quote missing");
+	ganeshun_yyerror(yylloc, yyscanner, "closing quote missing");
 	return _ERROR_;
 }
 
@@ -266,17 +270,17 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 . { /* ERROR: out of character character */
 	DEBUG_LEX("unexpected stuff %s\n", yytext);
-	ganesha_yyerror(yylloc, yyscanner, "Unexpected character");
+	ganeshun_yyerror(yylloc, yyscanner, "Unexpected character");
 	return _ERROR_;
 }
 
 %%
 
-int ganesha_yywrap(void *yyscanner){
+int ganeshun_yywrap(void *yyscanner){
     return 1;
 }
 
-int ganesha_yy_init_parser(char *srcfile,
+int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st) {
 	FILE *in_file;
 	void *yyscanner = st->scanner;
@@ -293,7 +297,7 @@ int ganesha_yy_init_parser(char *srcfile,
 	glist_init(&confroot->root.node);
 	confroot->root.type = TYPE_ROOT;
 	st->root_node = confroot;
-	ganesha_yylex_init_extra(st, &st->scanner);
+	ganeshun_yylex_init_extra(st, &st->scanner);
 	return new_file(srcfile, st);
 
 nospc:
@@ -426,7 +430,7 @@ static int new_file(char *name_tok,
 		/* error */
 		return errno;
 	}
-	bs->bs = ganesha_yy_create_buffer(in_file,
+	bs->bs = ganeshun_yy_create_buffer(in_file,
 					 YY_BUF_SIZE,
 					 yyscanner);
 	if (curbs)
@@ -434,7 +438,7 @@ static int new_file(char *name_tok,
 	bs->prev = curbs;
 	bs->f = in_file;
 	bs->filename = flist->pathname;
-	ganesha_yy_switch_to_buffer(bs->bs, yyscanner);
+	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
 	current_file = flist->pathname;
 	curbs = bs;
 	return 0;
@@ -454,12 +458,12 @@ static int pop_file(struct parser_state *st)
 	if (bs == NULL)
 		return 0;
 	fclose(bs->f);
-	ganesha_yy_delete_buffer(bs->bs, yyscanner);
+	ganeshun_yy_delete_buffer(bs->bs, yyscanner);
 	prevbs = bs->prev;
 	gsh_free(bs);
 	if (prevbs == NULL)
 		return 0;
-	ganesha_yy_switch_to_buffer(prevbs->bs, yyscanner);
+	ganeshun_yy_switch_to_buffer(prevbs->bs, yyscanner);
 	curbs = prevbs;
 	yylineno = curbs->lineno;
 	current_file = curbs->filename;

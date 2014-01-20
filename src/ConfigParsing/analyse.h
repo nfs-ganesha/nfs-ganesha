@@ -149,9 +149,9 @@ generic_item *config_CreateAffect(char *varname, char *varval);
 void config_AddItem(list_items * list, generic_item * item);
 
 int ganesha_yyparse(struct parser_state *st);
-int ganesha_yy_init_parser(char *srcfile,
+int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st);
-int ganesha_yylex_destroy (void *yyscanner);
+int ganeshun_yylex_destroy (void *yyscanner);
 
 /**
  *  Displays the content of a list of blocks.
