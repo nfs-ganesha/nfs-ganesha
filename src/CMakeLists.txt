@@ -45,6 +45,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
  EXECUTE_PROCESS(
       COMMAND cat /etc/system-release
       OUTPUT_VARIABLE SYS_RELEASE
+      ERROR_QUIET
    )
   if( ${SYS_RELEASE} MATCHES "Red Hat" )
      message( STATUS "Detected a Linux Red Hat machine" )
