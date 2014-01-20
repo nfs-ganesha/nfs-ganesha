@@ -362,7 +362,7 @@ IF(PROXY_HANDLE_MAPPING)
   if(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
     message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
     set(PROXY_HANDLE_MAPPING OFF)
-  endif(NOT SQLITE3_FOUND OR HAVE_SQLITE3_H)
+  endif(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
 ENDIF(PROXY_HANDLE_MAPPING)
 
 # X_ATTRD requires the kernel to have xattrs...DBUS_STATS
