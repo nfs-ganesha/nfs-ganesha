@@ -109,7 +109,7 @@ struct gpfs_ds {
 		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
 		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
 		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-		ATTR_CHGTIME | ATTR_ACL)
+		ATTR_CHGTIME | ATTR_ACL| ATTR4_SPACE_RESERVED)
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C

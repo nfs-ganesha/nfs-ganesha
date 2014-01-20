@@ -70,7 +70,8 @@ cache_inode_setattr(cache_entry_t *entry,
 	/* True if we have taken the content lock on 'entry' */
 	bool content_locked = false;
 
-	if ((attr->mask & ATTR_SIZE) && (entry->type != REGULAR_FILE)) {
+	if ((attr->mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
+	     && (entry->type != REGULAR_FILE)) {
 		LogWarn(COMPONENT_CACHE_INODE,
 			"Attempt to truncate non-regular file: type=%d",
 			entry->type);
@@ -100,7 +101,7 @@ cache_inode_setattr(cache_entry_t *entry,
 	if (status != CACHE_INODE_SUCCESS)
 		goto unlock;
 
-	if (attr->mask & ATTR_SIZE) {
+	if (attr->mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED)) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		content_locked = true;
 	}
