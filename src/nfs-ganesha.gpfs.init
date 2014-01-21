@@ -265,6 +265,7 @@ start() {
         			echo $new_cntr > $EPOCHFILE
         			OPTIONS="$OPTIONS -E $ganesha_epoch"
         		fi
+        		remove_restart_lock 
         		echo  -n $"Starting $prog: "
         		ulimit -n 1048576          
         		#Remove the status tracking files
