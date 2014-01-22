@@ -162,6 +162,81 @@ static int export_id_cmpf(const struct avltree_node *lhs,
 }
 
 /**
+ * @brief Allocate an exportlist entry.
+ *
+ * This is the ONLY function that should allocate exportlists
+ *
+ * @return pointer to export list to be used by insert_gsh_export.
+ * NULL on allocation errors.
+ */
+
+struct exportlist *alloc_exportlist(void)
+{
+	struct export_stats *export_st;
+
+	export_st = gsh_calloc(sizeof(struct export_stats), 1);
+	if (export_st == NULL)
+		return NULL;
+
+	return &export_st->export.export;
+}
+
+/**
+ * @brief Free an exportlist entry.
+ *
+ * This is for returning exportlists not yet in the export manager.
+ * Once they get inserted into the export manager, it will release it.
+ */
+
+void free_exportlist(struct exportlist *exp)
+{
+	struct export_stats *export_st;
+
+	free_export_resources(exp);
+	export_st = container_of(exp, struct export_stats, export.export);
+	gsh_free(export_st);
+}
+
+
+/**
+ * @brief Insert an export list entry into the export manager
+ *
+ * WARNING! This takes a pointer to the container of the exportlist.
+ * The struct exports_stats is the container lots of stuff besides
+ * the exportlist so only pass an object you got from alloc_exportlist.
+ *
+ * @param exp [IN] the exportlist entry to insert
+ *
+ * @return pointer to ref locked export.  Return NULL on error
+ */
+
+struct gsh_export *insert_gsh_export(struct exportlist *explist)
+{
+	struct gsh_export *exp;
+	struct avltree_node *node = NULL;
+	void **cache_slot;
+
+	exp = container_of(explist, struct gsh_export, export);
+	exp->refcnt = 1;	/* we will hold a ref starting out... */
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	node = avltree_insert(&exp->node_k, &export_by_id.t);
+	if (node)
+		return NULL;	/* somebody beat us to it */
+	pthread_rwlock_init(&exp->lock, NULL);
+	/* update cache */
+	cache_slot = (void **)
+		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
+							explist->id)]);
+	atomic_store_voidptr(cache_slot, &exp->node_k);
+	glist_add_tail(&exportlist, &exp->export.exp_list);
+	get_gsh_export_ref(exp);
+	glist_init(&exp->entry_list);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	return exp;
+}
+
+/**
  * @brief Lookup the export manager struct for this export id
  *
  * Lookup the export manager struct by export id.
@@ -182,7 +257,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 	void **cache_slot;
 
 	v.export.id = export_id;
-
+	assert(lookup_only);
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 
 	/* check cache */
