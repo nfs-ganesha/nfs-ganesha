@@ -60,6 +60,7 @@
 
 #define LASTDEFAULT 1048576
 
+#if 0
 #define STRCMP strcasecmp
 
 #define CONF_LABEL_EXPORT "EXPORT"
@@ -138,6 +139,7 @@
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
 #define EXPORT_MAX_CLIENTS   128	/* number of clients */
+#endif
 
 /**
  * @brief Parse a line with a settable separator and end of line
@@ -237,6 +239,7 @@ int nfs_ParseConfLine(char *Argv[], int nbArgv, char *line, char separator)
  * @see inet_addr
  * @see gethostbyname
  * @see gethostbyaddr
+ * leaks memory allocated into pcidr. only called at :492 deprecate
  */
 int nfs_LookupNetworkAddr(char *host, unsigned long *netAddr,
 			  unsigned long *netMask)
@@ -410,6 +413,7 @@ void LogClientListEntry(log_components_t component,
 			     perms);
 		return;
 
+	case RAW_CLIENT_LIST:
 	case BAD_CLIENT:
 		LogCrit(component, "  %p BAD_CLIENT: <unknown>(%s)", entry,
 			perms);
@@ -437,6 +441,7 @@ struct client_args {
 	const char *var_name;
 };
 
+#if 0
 static bool add_export_client(char *client_hostname, void *arg)
 {
 	struct client_args *argp = (struct client_args *)arg;
@@ -650,6 +655,7 @@ static int parseAccessParam(char *var_name, char *var_value,
 
 	return rc;
 }
+#endif
 
 static void FreeClientList(exportlist_client_t *clients)
 {
@@ -665,6 +671,7 @@ static void FreeClientList(exportlist_client_t *clients)
 	}
 }
 
+#if 0
 static bool parse_int32_t(char *var_value, int32_t min, int32_t max,
 			  uint64_t *set_opts, uint64_t option,
 			  const char *blk_name, const char *var_name,
@@ -840,7 +847,95 @@ static bool proto_sectype(char *tok, void *void_arg)
 	}
 	return true;
 }
+#endif
 
+static struct config_item_list access_types[] = {
+	CONFIG_LIST_TOK("NONE", 0),
+	CONFIG_LIST_TOK("RW", (EXPORT_OPTION_RW_ACCESS |
+			       EXPORT_OPTION_MD_ACCESS )),
+	CONFIG_LIST_TOK("RO", (EXPORT_OPTION_READ_ACCESS |
+			       EXPORT_OPTION_MD_READ_ACCESS)),
+	CONFIG_LIST_TOK("MDONLY", EXPORT_OPTION_MD_ACCESS),
+	CONFIG_LIST_TOK("MDONLY_RO", EXPORT_OPTION_MD_READ_ACCESS),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list nfs_protocols[] = {
+	CONFIG_LIST_TOK("3", EXPORT_OPTION_NFSV3),
+	CONFIG_LIST_TOK("4", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list transports[] = {
+	CONFIG_LIST_TOK("UDP", EXPORT_OPTION_UDP),
+	CONFIG_LIST_TOK("TCP", EXPORT_OPTION_TCP),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list sec_types[] = {
+	CONFIG_LIST_TOK("none", EXPORT_OPTION_AUTH_NONE),
+	CONFIG_LIST_TOK("sys", EXPORT_OPTION_AUTH_UNIX),
+	CONFIG_LIST_TOK("krb5", EXPORT_OPTION_RPCSEC_GSS_NONE),
+	CONFIG_LIST_TOK("krb5i", EXPORT_OPTION_RPCSEC_GSS_INTG),
+	CONFIG_LIST_TOK("krb5p", EXPORT_OPTION_RPCSEC_GSS_PRIV),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list squash_types[] = {
+	CONFIG_LIST_TOK("Root", 0),
+	CONFIG_LIST_TOK("Root_Squash", 0),
+	CONFIG_LIST_TOK("RootSquash", 0),
+	CONFIG_LIST_TOK("All", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("All_Squash", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("AllSquash", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("No_Root_Squash", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_TOK("None", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_TOK("NoIdSquash", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Table of client block parameters
+ *
+ * NOTE: node discovery is ordered by this table!
+ * "Access" is last because we must have all other params processed
+ * before we walk the list of accessing clients!
+ */
+
+static struct config_item client_params[] = {
+	CONF_ITEM_ENUM("Access_Type", 0, access_types,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_BOOLBIT("Allow_Root_Access", false,
+			  EXPORT_OPTION_ROOT,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("NFS_Protocols", 0, nfs_protocols,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("Transport_Protocols", 0, transports,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_BOOLBIT("Make_All_Users_Anonymous", false,
+			  EXPORT_OPTION_ALL_ANONYMOUS,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_I32("Anonymous_root_uid", -10, 0x7fffffff, ANON_UID,
+		      exportlist_client_entry__, client_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_uid", -10, 0x7fffffff, ANON_UID,
+		      exportlist_client_entry__, client_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_gid", -10, 0x7fffffff, ANON_GID,
+		      exportlist_client_entry__, client_perms.anonymous_gid),
+	CONF_ITEM_ENUM("SecType", 0, sec_types,
+		       exportlist_client_entry__, client_perms.options),
+/* 	CONF_ITEM_BOOL("NOSUID"), */
+/* 	CONF_ITEM_BOOL("NOSGID"), */
+	CONF_ITEM_BOOLBIT("PrivilegedPort", false,
+			  EXPORT_OPTION_PRIVILEGED_PORT,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("Squash", 0, squash_types,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
+		      exportlist_client_entry__, client.raw_client_str),
+	CONFIG_EOL
+};
+
+#if 0
 static int BuildExportClient(config_item_t block,
 			     exportlist_client_t *client_list)
 {
@@ -1235,7 +1330,563 @@ static int BuildExportClient(config_item_t block,
 	client_list->num_clients += p_access_list->num_clients;
 	return 0;
 }
+#endif
 
+/**
+ * @brief Expand the client name token into one or more client entries
+ *
+ * @param exp        [IN] the export this gets linked to (in tail order)
+ * @param client_tok [IN] the name string.  We modify it.
+ * @param perms      [IN] pointer to the permissions to copy into each
+ *
+ * @returns 0 on success, error count on failure
+ */
+
+static int add_client(struct exportlist *exp,
+		      char *client_tok,
+		      struct export_perms__ *perms)
+{
+	struct exportlist_client_entry__ *cli;
+	int errcnt = 0;
+	struct addrinfo *info;
+
+	cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
+	if (cli == NULL) {
+		LogMajor(COMPONENT_CONFIG,
+			 "Allocate of client space failed");
+		goto out;
+	}
+#ifdef USE_NODELIST
+#error "Node list expansion goes here but not yet"
+#endif
+	glist_init(&cli->cle_list);
+	if (client_tok[0] == '*' && client_tok[1] == '\0') {
+		cli->type = MATCH_ANY_CLIENT;
+	} else if (client_tok[0] == '@') {
+		if (strlen(client_tok) > MAXHOSTNAMELEN) {
+			LogMajor(COMPONENT_CONFIG,
+				 "netgroup (%s) name too long",
+				 client_tok);
+			errcnt++;
+			goto out;
+		}
+		strcpy(cli->client.netgroup.netgroupname,
+		       client_tok + 1);
+		cli->type = NETGROUP_CLIENT;
+		goto done;
+	} else if (index(client_tok, '/') != NULL) {
+		CIDR *cidr;
+		uint32_t addr;
+
+		cidr = cidr_from_str(client_tok);
+		if (cidr == NULL) {
+			LogMajor(COMPONENT_CONFIG,
+				 "Expected a CIDR address, got (%s)",
+				 client_tok);
+			errcnt++;
+			goto done;
+		}
+		memcpy(&addr, &cidr->addr[12], 4);
+		cli->client.network.netaddr = ntohl(addr);
+		memcpy(&addr, &cidr->mask[12], 4);
+		cli->client.network.netmask = ntohl(addr);
+		cli->type = NETWORK_CLIENT;
+		cidr_free(cidr);
+	} else if (index(client_tok, '*') != NULL ||
+		   index(client_tok, '?') != NULL) {
+		if (strlen(client_tok) > MAXHOSTNAMELEN) {
+			LogMajor(COMPONENT_CONFIG,
+				 "Wildcard client (%s) name too long",
+				 client_tok);
+			errcnt++;
+			goto done;
+		}
+		strcpy(cli->client.wildcard.wildcard, client_tok);
+		cli->type = WILDCARDHOST_CLIENT;
+	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
+		struct addrinfo *ap;
+
+		for (ap = info; ap != NULL; ap = ap->ai_next) {
+			if (cli == NULL) {
+				cli = gsh_calloc(sizeof(struct
+							exportlist_client_entry__),
+						 1);
+				if (cli == NULL) {
+					LogMajor(COMPONENT_CONFIG,
+						 "Allocate of client space failed");
+					goto out;
+				}
+				glist_init(&cli->cle_list);
+			}
+			if (ap->ai_family == AF_INET) {
+				struct in_addr infoaddr =
+					((struct sockaddr_in *)ap->ai_addr)->
+					sin_addr;
+
+				memcpy(&(cli->client.hostif.clientaddr),
+				       &infoaddr, sizeof(struct in_addr));
+				cli->type = HOSTIF_CLIENT;
+
+			} else if (ap->ai_family == AF_INET6) {
+				struct in6_addr infoaddr =
+				    ((struct sockaddr_in6 *)ap->ai_addr)->
+				    sin6_addr;
+
+				/* IPv6 address */
+				memcpy(&(cli->client.hostif.clientaddr6),
+				       &infoaddr, sizeof(struct in6_addr));
+				cli->type = HOSTIF_CLIENT_V6;
+			} else
+				continue;
+			cli->client_perms = *perms;
+			glist_add_tail(&exp->clients.client_list,
+				       &cli->cle_list);
+			exp->clients.num_clients++;
+		}
+		goto out;
+	} else {  /* does gsspric decode go here? */
+		LogMajor(COMPONENT_CONFIG,
+			 "Unknown client token (%s)",
+			 client_tok);
+		errcnt++;
+	}
+
+done:
+	cli->client_perms = *perms;
+	glist_add_tail(&exp->clients.client_list,
+		       &cli->cle_list);
+	exp->clients.num_clients++;
+out:
+	return errcnt;
+}
+
+/**
+ * @brief Init and commit for CLIENT sub-block of an export.
+ */
+
+static void *client_init(void *link_mem, void *self_struct)
+{
+	struct exportlist_client_entry__ *cli;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL) {
+		struct exportlist_client__ *cli_list;
+		struct exportlist *exp;
+
+		cli_list = (struct exportlist_client__ *)self_struct;
+		exp = container_of(cli_list, struct exportlist,
+				   clients);
+		exp->expire_type_attr =
+			nfs_param.cache_param.expire_type_attr;
+		exp->clients.num_clients = 0;
+		glist_init(&exp->clients.client_list);
+		return self_struct;
+	} else if (self_struct == NULL) {
+		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
+		if (cli == NULL)
+			return NULL;
+		glist_init(&cli->cle_list);
+		cli->type = RAW_CLIENT_LIST;
+		return cli;
+	} else { /* free resources case */
+		cli = (struct exportlist_client_entry__ *)self_struct;
+
+		assert(glist_empty(&cli->cle_list));
+		if (cli->type == RAW_CLIENT_LIST &&
+		    cli->client.raw_client_str != NULL)
+			gsh_free(cli->client.raw_client_str);
+		gsh_free(cli);
+		return NULL;
+	}
+}
+
+/**
+ * @brief Commit this client block
+ *
+ * Validate "clients" token(s) and perms.  We enter with a client entry
+ * allocated by proc_block.  Since we expand the clients token both
+ * here and in add_client, we allocate new client entries and free
+ * what was passed to us rather than try and link it in.
+ *
+ * @param link_mem [IN] the exportlist entry. add_client adds to its glist.
+ * @param self_struct  [IN] the filled out client entry with a RAW_CLIENT_LIST
+ *
+ * @return 0 on success, error count for failure.
+ */
+
+static int client_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct exportlist_client_entry__ *cli;
+	struct exportlist *exp;
+	struct exportlist_client__ *cli_list;
+	char *client_list, *tok, *endptr;
+	int errcnt = 0;
+
+	cli_list = (struct exportlist_client__ *)link_mem;
+	exp = container_of(cli_list, struct exportlist,
+			   clients);
+	cli = (struct exportlist_client_entry__ *)self_struct;
+	if ((cli->client_perms.options & EXPORT_OPTION_CUR_ACCESS) == 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"No access type for this client set");
+		errcnt++;
+	}
+	assert(cli->type == RAW_CLIENT_LIST);
+
+	client_list = cli->client.raw_client_str;
+	cli->client.raw_client_str = NULL;
+	if (client_list == NULL || client_list[0] == '\0') {
+		LogCrit(COMPONENT_CONFIG,
+			"No clients specified");
+		errcnt++;
+	}
+	/* take the first token for ourselves.  it may expand!
+	 * loop thru the rest and use our options as theirs (copy)
+	 */
+	tok = client_list;
+	while (errcnt == 0 && tok != NULL) {
+		endptr = index(tok, ',');
+		if (endptr != NULL)
+			*endptr++ = '\0';
+		errcnt += add_client(exp, tok, &cli->client_perms);
+		tok = endptr;
+	}
+	if (errcnt == 0)
+		client_init(link_mem, self_struct);
+	return errcnt;
+}
+
+/**
+ * @brief Init and commit for FSAL sub-block of an export
+ */
+
+struct fsal_params {
+	char *name;
+	void *node;
+};
+
+static void *fsal_init(void *link_mem, void *self_struct)
+{
+	struct fsal_params *fp;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL) {
+		return self_struct; /* NOP */
+	} else if (self_struct == NULL) {
+		fp = gsh_calloc(sizeof(struct fsal_params), 1);
+		if (fp == NULL)
+			return NULL;
+		return fp;
+	} else {
+		fp = (struct fsal_params *)self_struct;
+		if (fp->name != NULL)
+			gsh_free(fp->name);
+		gsh_free(fp->name);
+		return NULL;
+	}
+}
+
+static int fsal_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct fsal_export **exp_hdl = (struct fsal_export **)link_mem;
+	struct exportlist *exp;
+	struct fsal_params *fp = (struct fsal_params *)self_struct;
+	struct fsal_module *fsal;
+	struct fsal_export *fsal_exp;
+	fsal_status_t status;
+	int errcnt = 0;
+
+	if (fp->name == NULL || strlen(fp->name) == 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"Name of FSAL is empty");
+		errcnt++;
+		goto err;
+	}
+	exp = container_of(exp_hdl, struct exportlist, export_hdl);
+	fsal = lookup_fsal(fp->name);
+	if (fsal == NULL) {
+		int retval;
+		config_file_t myconfig;
+
+		retval = load_fsal(fp->name, &fsal);
+		if (retval != 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to load FSAL (%s)"
+				" because: %s", fp->name,
+				strerror(retval));
+			goto err;
+		}
+		myconfig = get_parse_root(node);
+		status = fsal->ops->init_config(fsal, myconfig);
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to initialize FSAL (%s)",
+				fp->name);
+			fsal->ops->put(fsal);
+			goto err;
+		}
+	}
+	status = fsal->ops->create_export(fsal,
+					  exp->fullpath,
+					  node,
+					  exp,
+					  NULL,
+					  &fsal_up_top,
+					  &fsal_exp);
+	if (FSAL_IS_ERROR(status)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Could not create export for (%s) to (%s)",
+			exp->pseudopath,
+			exp->fullpath);
+		errcnt++;
+	} else {
+		/* We are connected up to the fsal side.  Now
+		 * validate maxread/write etc with fsal params */
+		if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp)) {
+			LogEvent(COMPONENT_CONFIG,
+				 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
+				 exp->MaxRead,
+				 fsal_exp->ops->fs_maxread(fsal_exp));
+			exp->MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
+		}
+		if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp)) {
+			LogEvent(COMPONENT_CONFIG,
+				 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
+				 exp->MaxWrite,
+				 fsal_exp->ops->fs_maxwrite(fsal_exp));
+			exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
+		}
+		exp->export_hdl = fsal_exp;
+	}
+	fsal->ops->put(fsal);
+err:
+	return errcnt;
+}
+
+static struct config_item fsal_params[] = {
+	CONF_ITEM_STR("Name", 1, 10, NULL,
+		      fsal_params, name), /* cheater union */
+	CONFIG_EOL
+};
+
+/**
+ * @brief Initialize an export block
+ *
+ */
+
+static void *export_init(void *link_mem, void *self_struct)
+{
+	struct exportlist *exp;
+
+	if (self_struct == NULL) {
+		exp = alloc_exportlist();
+		if (exp == NULL)
+			return NULL;
+		glist_init(&exp->exp_list);
+		return exp;
+	} else { /* free resources case */
+		exp = (struct exportlist *)self_struct;
+
+		assert(glist_empty(&exp->exp_list));
+		free_exportlist(exp);
+		return NULL;
+	}
+}
+
+/* init state and lock lists and mutex here */
+
+static int export_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct exportlist *exp;
+	struct gsh_export *export, *probe_exp;
+	int errcnt = 0;
+
+	exp = (struct exportlist *)self_struct;
+	
+	/* validate the export now */
+	if ((exp->export_perms.options & EXPORT_OPTION_CUR_ACCESS) == 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"No default access type for this export set");
+		errcnt++;
+	}
+	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4) &&
+	    exp->pseudopath == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Exporting to NFSv4 but not Pseudo path defined");
+		errcnt++;
+	}
+	if (exp->id == 0 && strcmp(exp->pseudopath, "/") != 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"Export id 0 can only export \"/\" not (%s)",
+			exp->pseudopath);
+		errcnt++;
+	}
+	if (exp->FS_tag != NULL) {
+		probe_exp = get_gsh_export_by_tag(exp->FS_tag);
+		if (probe_exp != NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Tag (%s) is a duplicate",
+				exp->FS_tag);
+			errcnt++;
+			put_gsh_export(probe_exp);
+		}
+	}
+	if (exp->pseudopath != NULL) {
+		if (exp->pseudopath[0] != '/') {
+			LogCrit(COMPONENT_CONFIG,
+				"A Pseudo path must be an absolute path");
+			errcnt++;
+		}
+		probe_exp = get_gsh_export_by_pseudo(exp->pseudopath, true);
+		if (probe_exp != NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Pseudo path (%s) is a duplicate",
+				exp->pseudopath);
+			errcnt++;
+			put_gsh_export(probe_exp);
+		}
+	}
+	probe_exp = get_gsh_export_by_path(exp->fullpath, true);
+	if (probe_exp != NULL &&
+	    exp->pseudopath == NULL &&
+	    exp->FS_tag == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Duplicate path (%s) without unique tag or Pseudo path",
+			exp->fullpath);
+		errcnt++;
+		put_gsh_export(probe_exp);
+	}
+	if (errcnt)
+		goto err_out;  /* have errors. don't init or load a fsal */
+	if (exp->pseudopath != NULL) /* redundant?? */
+		exp->export_perms.options |= EXPORT_OPTION_PSEUDO;
+	glist_init(&exp->exp_state_list);
+	glist_init(&exp->exp_lock_list);
+	glist_init(&exp->exp_nlm_share_list);
+	glist_init(&exp->exp_root_list);
+	if (pthread_mutex_init(&exp->exp_state_mutex, NULL) == -1) {
+		LogCrit(COMPONENT_CONFIG,
+			"Cannot initialize state mutex for export %d",
+			exp->id);
+		errcnt++;
+		goto err_out;
+	}
+	/* now probe the fsal and init it */
+	/* pass along the block that is/was the FS_Specific */
+	export = insert_gsh_export(exp);
+	if (export == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Export id %d already in use.",
+			exp->id);
+		errcnt++;
+		goto err_fsal;
+	}
+	LogEvent(COMPONENT_CONFIG,
+		 "Export %d created at pseudo (%s) with path (%s) and tag (%s)",
+		 exp->id, exp->pseudopath, exp->fullpath, exp->FS_tag);
+	set_gsh_export_state(export, EXPORT_READY);
+	put_gsh_export(export);
+	return 0;
+
+err_fsal:
+	pthread_mutex_destroy(&exp->exp_state_mutex);
+	
+err_out:
+	return errcnt;
+}
+
+static struct config_item export_params[] = {
+	CONF_MAND_UI32("Export_id", 0, 0xffff, 1,
+		       exportlist, id),
+	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,
+		       exportlist, fullpath), /* must chomp '/' */
+/* 	CONF_ITEM_PROC("Root_Access", EXPORT_OPTION_ROOT, NULL, */
+/* 		       parse_access_param), */
+	CONF_ITEM_BOOLBIT("Allow_Root_Access", false,
+			  EXPORT_OPTION_ROOT,
+			  exportlist, export_perms.options),
+/* 	CONF_ITEM_PROC("Access", EXPORT_OPTION_ACCESS_LIST, NULL,  */
+/* 		       parse_access_param), */
+/* 	CONF_ITEM_PROC("MDONLY_Access", EXPORT_OPTION_MD_ACCESS, NULL, */
+/* 		       parse_access_param), */
+/* 	CONF_ITEM_PROC("MDONLY_RO_Access", EXPORT_OPTION_MD_READ_ACCESS, NULL, */
+/* 		       parse_access_param), */
+/* 	CONF_ITEM_PROC("R_Access", EXPORT_OPTION_READ_ACCESS, NULL, */
+/* 		       parse_access_param), */
+/* 	CONF_ITEM_PROC("RW_Access", EXPORT_OPTION_RW_ACCESS, NULL, */
+/* 		       parse_access_param), */
+	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
+		       exportlist, pseudopath),
+	CONF_ITEM_LIST("Access_Type", 0, access_types, /* client too */
+		       exportlist, export_perms.options),
+	CONF_MAND_LIST("NFS_Protocols", 0, nfs_protocols, /* client too */
+		       exportlist, export_perms.options),
+	CONF_ITEM_LIST("Transport_Protocols", 0, transports, /* client too */
+		       exportlist, export_perms.options), /* set all default */
+	CONF_ITEM_BOOLBIT("Make_All_Users_Anonymous", false, /* client too */
+			  EXPORT_OPTION_ALL_ANONYMOUS,
+			  exportlist, export_perms.options),
+	CONF_ITEM_I32("Anonymous_root_uid", -10, 0x7fffffff, ANON_UID, /* client too */
+		      exportlist, export_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_uid", -10, 0x7fffffff, ANON_UID, /* also sets flags */ /* client too */
+		      exportlist, export_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_gid", -10, 0x7fffffff, ANON_GID, /* client too */
+		      exportlist, export_perms.anonymous_gid),
+	CONF_ITEM_LIST("SecType", 0, sec_types, /* client too */
+		       exportlist, export_perms.options),
+	CONF_ITEM_UI64("MaxRead", 512, 4*1024*1024, 16384,
+		       exportlist, MaxRead),
+	CONF_ITEM_UI64("MaxWrite", 512, 4*1024*1024, 16384,
+		       exportlist, MaxWrite),
+	CONF_ITEM_UI64("PrefRead", 512, 4*1024*1024, 16384,
+		       exportlist, PrefRead),
+	CONF_ITEM_UI64("PrefWrite", 512, 4*1024*1024, 16384,
+		       exportlist, PrefWrite),
+	CONF_ITEM_UI64("PrefReaddir", 512, 4*1024*1024, 16384,
+		       exportlist, PrefReaddir),
+	CONF_ITEM_FSID("Filesystem_id", 666, 666,
+		       exportlist, filesystem_id), /* major.minor */
+/* 	CONF_ITEM_BOOL("NOSUID"), */
+/* 	CONF_ITEM_BOOL("NOSGID"), */
+	CONF_ITEM_BOOLBIT("PrivilegedPort", false, /* client too */
+			  EXPORT_OPTION_PRIVILEGED_PORT,
+			  exportlist, export_perms.options),
+	CONF_ITEM_BOOLBIT("User_Quota", false,
+			  EXPORT_OPTION_USE_UQUOTA,
+			  exportlist, export_perms.options),
+/* 	CONF_ITEM_STR("FS_Specific", 1, MAXPATHLEN, NULL, */
+/* 		      exportlist, FS_specific), */
+	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
+		      exportlist, FS_tag),
+	CONF_ITEM_UI64("MaxOffsetWrite", 512, (4*1024*1024), (1024*1024),
+		       exportlist, MaxOffsetWrite),
+	CONF_ITEM_UI64("MaxOffsetRead", 512, 4*1024*1024, 1024*1024,
+		       exportlist, MaxOffsetRead),
+	CONF_ITEM_BOOL("UseCookieVerifier", true,
+		       exportlist, UseCookieVerifier),
+	CONF_ITEM_LIST("Squash", 0, squash_types, /* client too */
+		       exportlist, export_perms.options),
+	CONF_ITEM_BLOCK("Client", client_params,
+			client_init, client_commit,
+			exportlist, clients),
+	CONF_RELAX_BLOCK("FSAL", fsal_params,
+			 fsal_init, fsal_commit,
+			 exportlist, export_hdl),
+	CONFIG_EOL
+};
+
+struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.export.%d",
+	.blk_desc.name = "EXPORT",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = export_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = export_commit
+};
+
+#if 0
 /**
  * @brief Builds an export entry from configuration file
  *
@@ -2373,6 +3024,7 @@ static int BuildExportEntry(config_item_t block)
 	return 0;
 
 }
+#endif
 
 /**
  * @brief builds an export entry for '/' with default parameters
@@ -2381,18 +3033,14 @@ static int BuildExportEntry(config_item_t block)
  * for Pseudo "/" has been specified, build an FSAL_PSEUDO export
  * for the root of the Pseudo FS.
  *
- * @return true if error, false otherwise.
+ * @return -1 on error, 0 if we already have one, 1 if created one
  */
 
-static bool BuildRootExport()
+static int build_default_root(void)
 {
 	exportlist_t *p_entry = NULL;
 	struct gsh_export *exp;
 	struct fsal_module *fsal_hdl = NULL;
-	exportlist_client_t access_list;
-	exportlist_client_t *p_access_list;
-	bool err_flag = false;
-	struct glist_head *glist;
 
 	/* See if export_id = 0 has already been specified */
 	exp = get_gsh_export(0, true);
@@ -2400,7 +3048,7 @@ static bool BuildRootExport()
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */
 		put_gsh_export(exp);
-		return false;
+		return 0;
 	}
 
 	/* See if another export with Pseudo = "/" has already been specified.
@@ -2410,31 +3058,22 @@ static bool BuildRootExport()
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */
 		put_gsh_export(exp);
-		return false;
+		return 0;
 	}
 
-	/* Ok, we need to create export_id = 0 */
-	exp = get_gsh_export(0, false);
-
-	if (exp == NULL) {
-		/* gsh_calloc error */
+	/* allocate and initialize the exportlist part with the id */
+	p_entry = alloc_exportlist();
+	if (p_entry == NULL) {
 		LogCrit(COMPONENT_CONFIG,
-			"Unable to allocate space for export id 0");
-		return true;
+			"Could not allocate space for pseudoroot export");
+		return -1;
 	}
-
-	/* initialize the exportlist part with the id */
-	p_entry = &exp->export;
-
 	if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
 		LogCrit(COMPONENT_CONFIG,
 			"Could not initialize exp_state_mutex for export id 0");
-		put_gsh_export(exp);
-		remove_gsh_export(0);
-		return -1;
+		goto err_out;
 	}
 
-	p_entry->UseCookieVerifier = true;
 	p_entry->UseCookieVerifier = true;
 	p_entry->filesystem_id.major = 152;
 	p_entry->filesystem_id.minor = 152;
@@ -2447,12 +3086,8 @@ static bool BuildRootExport()
 	glist_init(&p_entry->exp_state_list);
 	glist_init(&p_entry->exp_lock_list);
 	glist_init(&p_entry->exp_nlm_share_list);
+	glist_init(&p_entry->exp_root_list);
 	glist_init(&p_entry->clients.client_list);
-
-	/* Init the access list */
-	p_access_list = &access_list;
-	glist_init(&p_access_list->client_list);
-	p_access_list->num_clients = 0;
 
 	/* Default anonymous uid and gid */
 	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
@@ -2474,26 +3109,6 @@ static bool BuildRootExport()
 	/* Set the fullpath to "/" */
 	p_entry->fullpath = gsh_strdup("/");
 
-	/* Set MDONLY_RO_Access="*" */
-	parseAccessParam(CONF_EXPORT_ACCESS,
-			 "*",
-			 p_access_list,
-			 EXPORT_OPTION_ACCESS_OPT_LIST,
-			 CONF_LABEL_EXPORT);
-
-	/* Copy the permissions into the client
-	 * list entries.
-	 */
-	glist_for_each(glist, &p_access_list->client_list) {
-		exportlist_client_entry_t *client_entry;
-
-		client_entry =
-		    glist_entry(glist, exportlist_client_entry_t, cle_list);
-		client_entry->client_perms = p_entry->export_perms;
-		if (isFullDebug(COMPONENT_CONFIG))
-			LogClientListEntry(COMPONENT_CONFIG, client_entry);
-	}
-
 	/* Set Pseudo Path to "/" */
 	p_entry->pseudopath = gsh_strdup("/");
 
@@ -2503,7 +3118,7 @@ static bool BuildRootExport()
 	if (fsal_hdl == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"FSAL PSEUDO is not loaded!");
-		err_flag = true;
+		goto err_out;
 	} else {
 		fsal_status_t rc;
 
@@ -2515,42 +3130,34 @@ static bool BuildRootExport()
 						  &fsal_up_top,
 						  &p_entry->export_hdl);
 
+		fsal_hdl->ops->put(fsal_hdl);
 		if (FSAL_IS_ERROR(rc)) {
 			LogCrit(COMPONENT_CONFIG,
 				"Could not create FSAL export for %s",
 				p_entry->fullpath);
-			err_flag = true;
+			goto err_out;
 		}
 
-		fsal_hdl->ops->put(fsal_hdl);
 	}
 
-	/* Append the default Access list to the export so someone owns them */
-	glist_add_list_tail(&p_entry->clients.client_list,
-			    &p_access_list->client_list);
-	p_entry->clients.num_clients += p_access_list->num_clients;
-
-	/* check if there had any error.
-	 * if so, free the p_entry and return an error.
-	 */
-	if (err_flag) {
+	exp = insert_gsh_export(p_entry);
+	if (exp == NULL) {
 		LogCrit(COMPONENT_CONFIG,
-			"NFS READ %s: Export 0 (/) had errors, ignoring entry",
-			CONF_LABEL_EXPORT);
-		put_gsh_export(exp);
-		remove_gsh_export(0);
-		return true;
+			"Failed to insert pseudo root export.  In use??");
+		goto err_out;
 	}
-
 	set_gsh_export_state(exp, EXPORT_READY);
 
 	LogEvent(COMPONENT_CONFIG,
-		 "NFS READ %s: Export 0 (/) successfully created",
-		 CONF_LABEL_EXPORT);
+		 "Export 0 (/) successfully created");
 
 	put_gsh_export(exp);	/* all done, let go */
 
-	return false;
+	return 1;
+
+err_out:
+	free_exportlist(p_entry);
+	return -1;
 }
 
 /**
@@ -2602,7 +3209,22 @@ void free_export_resources(exportlist_t *export)
  */
 int ReadExports(config_file_t in_config)
 {
+	int rc, ret = 0;
 
+	rc = load_config_from_parse(in_config,
+				      &export_param,
+				      NULL,
+				      false);
+	if (rc >= 0) {
+		ret = build_default_root();
+		if (ret < 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"No pseudo root!");
+			return -1;
+		}
+	}
+	return rc + ret;				
+#if 0	
 	int nb_blk, rc, i;
 	char *blk_name;
 	int err_flag = false;
@@ -2652,6 +3274,7 @@ int ReadExports(config_file_t in_config)
 		return -1;
 	else
 		return nb_entries;
+#endif
 }
 
 /**
