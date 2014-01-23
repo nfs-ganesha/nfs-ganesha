@@ -305,12 +305,12 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %else
 	-DUSE_FSAL_GPFS=OFF				\
 %endif
-%if %{with_fsal_gpfs} 
+%if %{with_fsal_hpss} 
 	-DUSE_FSAL_HPSS=ON				\
 %else
 	-DUSE_FSAL_HPSS=OFF				\
 %endif
-%if %{with_fsal_gpfs} 
+%if %{with_fsal_pt} 
 	-DUSE_FSAL_PT=ON				\
 %else
 	-DUSE_FSAL_PT=OFF				\
