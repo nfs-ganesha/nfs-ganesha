@@ -179,6 +179,19 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 			 (unsigned long long)buffxstat.buffstat.st_size);
 	}
 
+  /*******************
+   *  SPACE RESERVED *
+   ************)******/
+
+	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR4_SPACE_RESERVED)) {
+		attr_changed |= XATTR_SPACE_RESERVED;
+		/* Fill wanted mode. */
+		buffxstat.buffstat.st_size = p_object_attributes->filesize;
+		LogDebug(COMPONENT_FSAL, "current size = %llu, new size = %llu",
+			 (unsigned long long)dir_hdl->attributes.filesize,
+			 (unsigned long long)buffxstat.buffstat.st_size);
+	}
+
   /***********
    *  CHMOD  *
    ***********/

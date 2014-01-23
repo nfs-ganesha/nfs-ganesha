@@ -399,6 +399,8 @@ typedef uint64_t attrmask_t;
 #define ATTR_SIZE 0x0000000000000004
 /* filesystem id */
 #define ATTR_FSID 0x0000000000000008
+/* file space reserve */
+#define ATTR4_SPACE_RESERVED 0x0000000000000010
 /* ACL */
 #define ATTR_ACL 0x0000000000000020
 /* file id */

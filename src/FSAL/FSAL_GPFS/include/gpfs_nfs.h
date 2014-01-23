@@ -90,6 +90,7 @@ struct flock
 #define OPENHANDLE_FADVISE_BY_FD  141
 #define OPENHANDLE_SEEK_BY_FD     142
 #define OPENHANDLE_TRACE_ME       150
+#define OPENHANDLE_QUOTA          151
 
 struct trace_arg
 {
@@ -600,17 +601,18 @@ struct callback_arg
 #define XATTR_EXPIRE    (1 << 3)
 
 /* define flags for attr_chaged */
-#define XATTR_MODE      (1 << 0) //  01
-#define XATTR_UID       (1 << 1) //  02
-#define XATTR_GID       (1 << 2) //  04
-#define XATTR_SIZE      (1 << 3) //  08
-#define XATTR_ATIME     (1 << 4) //  10
-#define XATTR_MTIME     (1 << 5) //  20
-#define XATTR_CTIME     (1 << 6) //  40
-#define XATTR_ATIME_SET (1 << 7) //  80
-#define XATTR_MTIME_SET (1 << 8) // 100
-#define XATTR_ATIME_NOW (1 << 9) // 200
-#define XATTR_MTIME_NOW (1 << 10)// 400
+#define XATTR_MODE           (1 << 0) //  01
+#define XATTR_UID            (1 << 1) //  02
+#define XATTR_GID            (1 << 2) //  04
+#define XATTR_SIZE           (1 << 3) //  08
+#define XATTR_ATIME          (1 << 4) //  10
+#define XATTR_MTIME          (1 << 5) //  20
+#define XATTR_CTIME          (1 << 6) //  40
+#define XATTR_ATIME_SET      (1 << 7) //  80
+#define XATTR_MTIME_SET      (1 << 8) // 100
+#define XATTR_ATIME_NOW      (1 << 9) // 200
+#define XATTR_MTIME_NOW      (1 << 10)// 400
+#define XATTR_SPACE_RESERVED (1 << 11)// 800
 
 struct xstat_arg
 {
@@ -632,6 +634,14 @@ struct xstat_access_arg
     unsigned int posix_mode;
     unsigned int access;       /* v4maske */
     unsigned int *supported;	
+};
+
+struct quotactl_arg
+{
+    const char *pathname;
+    int cmd;
+    int qid;
+    void *bufferP;
 };
 
 #ifdef __cplusplus

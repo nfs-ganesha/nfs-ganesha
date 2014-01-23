@@ -2407,7 +2407,7 @@ static fattr_xdr_result decode_fs_charset_cap(XDR *xdr,
  * indexed by attribute number
  */
 
-const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
+const struct fattr4_dent fattr4tab[FATTR4_SPACE_RESERVED + 1] = {
 	[FATTR4_SUPPORTED_ATTRS] = {
 		.name = "FATTR4_SUPPORTED_ATTRS",
 		.supported = 1,
@@ -3049,6 +3049,15 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.encode = encode_fs_charset_cap,
 		.decode = decode_fs_charset_cap,
 		.access = FATTR4_ATTR_READ}
+	,
+	[FATTR4_SPACE_RESERVED] = {
+		.name = "FATTR4_SPACE_RESERVED",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_size),
+		.attrmask = ATTR4_SPACE_RESERVED,
+		.encode = encode_filesize,
+		.decode = decode_filesize,
+		.access = FATTR4_ATTR_READ_WRITE}
 };
 
 /* goes in a more global header?
@@ -3917,6 +3926,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 		case FATTR4_FH_EXPIRE_TYPE:
 		case FATTR4_CHANGE:
 		case FATTR4_SIZE:
+		case FATTR4_SPACE_RESERVED:
 		case FATTR4_LINK_SUPPORT:
 		case FATTR4_SYMLINK_SUPPORT:
 		case FATTR4_NAMED_ATTR:

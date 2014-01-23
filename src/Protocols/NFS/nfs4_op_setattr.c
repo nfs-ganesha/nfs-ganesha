@@ -102,7 +102,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	/* Trunc may change Xtime so we have to start with trunc and
 	 * finish by the mtime and atime
 	 */
-	if (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)) {
+	if ((FSAL_TEST_MASK(sattr.mask, ATTR_SIZE))
+	     || (FSAL_TEST_MASK(sattr.mask, ATTR4_SPACE_RESERVED))) {
 		/* Setting the size of a directory is prohibited */
 		if (data->current_filetype == DIRECTORY) {
 			res_SETATTR4->status = NFS4ERR_ISDIR;
@@ -188,6 +189,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_OWNER)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_GROUP)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)
+	    || FSAL_TEST_MASK(sattr.mask, ATTR4_SPACE_RESERVED)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER)
 	    || FSAL_TEST_MASK(sattr.mask, ATTR_MTIME)
