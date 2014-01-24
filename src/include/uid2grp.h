@@ -50,12 +50,15 @@
  *
  * @{
  */
-
 typedef struct group_data {
 	uid_t uid;
 	gid_t gid;
+	time_t epoch;
 	int nbgroups;
-	gid_t *pgroups;
+	unsigned int refcount;
+	pthread_mutex_t lock;
+	gid_t *groups;
+	gid_t *new_groups;
 } group_data_t;
 
 extern pthread_rwlock_t uid2grp_user_lock;
@@ -71,8 +74,10 @@ bool uid2grp_lookup_by_uid(const uid_t, struct gsh_buffdesc **,
 bool uid2grp_init(void);
 void uid2grp_clear_cache(void);
 
-bool name2grp(const struct gsh_buffdesc *, struct group_data **);
 bool uid2grp(uid_t uid, struct group_data **);
+void uid2grp_unref(uid_t uid);
+
+bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata);
 
 #endif				/* UID2GRP_H */
 /** @} */

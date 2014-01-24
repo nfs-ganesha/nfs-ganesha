@@ -4527,7 +4527,9 @@ int nfs4_MakeCred(compound_data_t *data)
 	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	if (!get_req_uid_gid(data->req, data->req_ctx->creds))
+	if (!get_req_uid_gid(data->req,
+			     data->req_ctx->creds,
+			     &data->export_perms))
 		return NFS4ERR_ACCESS;
 
 	LogFullDebug(COMPONENT_DISPATCH,

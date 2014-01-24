@@ -27,6 +27,14 @@ set(hash_SRCS
 
 add_library(hash STATIC ${hash_SRCS})
 
+# uid2grp mapper
+set( uid2grp_SRCS
+     uid2grp.c
+     uid2grp_cache.c
+)
+
+add_library( uid2grp ${uid2grp_SRCS} )
+
 ########### next target ###############
 
 SET(support_STAT_SRCS

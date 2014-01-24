@@ -101,7 +101,7 @@
 #define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 #define CONF_EXPORT_CLIENT_DEF         "Client"
-
+#define CONF_EXPORT_MANAGE_GIDS        "Manage_Gids"
 /** @todo : add encrypt handles option */
 
 /* Internal identifiers */
@@ -136,6 +136,7 @@
 #define FLAG_EXPORT_CACHE_POLICY    0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
 #define FLAG_EXPORT_USE_COOKIE_VERIFIER 0x400000000
+#define FLAG_EXPORT_MANAGE_GIDS     0x800000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -349,6 +350,9 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	if ((p_perms->options & EXPORT_OPTION_USE_UQUOTA) ==
 	    EXPORT_OPTION_USE_UQUOTA)
 		buf += sprintf(buf, ", UQUOTA");
+	if ((p_perms->options & EXPORT_OPTION_MANAGE_GIDS) ==
+	    EXPORT_OPTION_MANAGE_GIDS)
+		buf += sprintf(buf, ", Manage_Gids");
 
 	buf += sprintf(buf, ", anon_uid=%d", (int)p_perms->anonymous_uid);
 	buf += sprintf(buf, ", anon_gid=%d", (int)p_perms->anonymous_gid);
@@ -2062,6 +2066,21 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			if (on)
 				p_perms->options |= EXPORT_OPTION_USE_UQUOTA;
+		} else if (!STRCMP(var_name,
+				   CONF_EXPORT_MANAGE_GIDS)) {
+			bool on;
+
+			if (!parse_bool(var_value,
+					&set_options,
+					FLAG_EXPORT_MANAGE_GIDS,
+					label,
+					var_name,
+					&err_flag,
+					&on))
+				continue;
+			if (on)
+				p_perms->options |=
+					EXPORT_OPTION_MANAGE_GIDS;
 		} else if (!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC)) {
 			/* check if it has not already been set */
 			if ((set_options & FLAG_EXPORT_FS_SPECIFIC) ==
@@ -3238,6 +3257,10 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	export_perms->anonymous_gid = export->export_perms.anonymous_gid;
 	export_perms->options =
 	    export->export_perms.options & EXPORT_OPTION_BASE_ACCESS;
+
+	/* If manage uid is used, set it */
+	if (export->export_perms.options & EXPORT_OPTION_MANAGE_GIDS)
+		export_perms->options |= EXPORT_OPTION_MANAGE_GIDS;
 
 	/* Test if client is in Root_Access list */
 	if (export_client_match_any

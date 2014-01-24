@@ -197,7 +197,6 @@ void uid2grp_cache_init(void)
  * @retval true on success.
  * @retval false if our reach exceeds our grasp.
  */
-
 bool uid2grp_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		      struct group_data *pgdata)
 {

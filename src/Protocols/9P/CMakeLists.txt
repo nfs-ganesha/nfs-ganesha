@@ -35,8 +35,6 @@ SET(9p_STAT_SRCS
    9p_xattrwalk.c
    9p_write.c
    9p_rerror.c
-   uid2grp.c
-   uid2grp_cache.c
 )
 
 add_library(9p STATIC ${9p_STAT_SRCS})

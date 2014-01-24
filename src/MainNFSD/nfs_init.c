@@ -73,6 +73,8 @@
 #ifdef LINUX
 #include <sys/capability.h>	/* For capget/capset */
 #endif
+#include "uid2grp.h"
+
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param = {
@@ -115,6 +117,7 @@ nfs_parameter_t nfs_param = {
 	.core_param.long_processing_threshold = 10,	/* seconds */
 	.core_param.decoder_fridge_expiration_delay = -1,
 	.core_param.decoder_fridge_block_timeout = -1,
+	.core_param.manage_gids_expiration = 30*60, /* seconds */
 	.core_param.dispatch_max_reqs = 5000,
 	.core_param.dispatch_max_reqs_xprt = 512,
 	.core_param.core_options = CORE_OPTION_ALL_VERS,
@@ -438,6 +441,9 @@ void nfs_print_param_config()
 	       nfs_param.core_param.decoder_fridge_expiration_delay);
 	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
 	       nfs_param.core_param.decoder_fridge_block_timeout);
+
+	printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
+	       nfs_param.core_param.manage_gids_expiration);
 
 	if (nfs_param.core_param.drop_io_errors)
 		printf("\tDrop_IO_Errors = true ;\n");
@@ -795,6 +801,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dbus_client_init();
 #endif
 #endif
+	/* init uid2grp cache */
+	uid2grp_cache_init();
 
 	/* Cache Inode Initialisation */
 	cache_status = cache_inode_init();

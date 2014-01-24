@@ -1,4 +1,5 @@
 /*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -347,6 +348,10 @@ typedef struct nfs_core_param {
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+	/** How long the server will trust information it got by
+	    calling getgroups() when "Manage_Gids = TRUE" is
+	    used in a export entry. */
+	time_t manage_gids_expiration;
 } nfs_core_parameter_t;
 
 /** @} */

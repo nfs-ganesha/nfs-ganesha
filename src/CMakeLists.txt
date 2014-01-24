@@ -685,6 +685,7 @@ set(GANESHA_CORE
   hash
   log
   common_utils
+  uid2grp
   )
 
 if(USE_DBUS)

@@ -1133,7 +1133,9 @@ static void nfs_rpc_execute(request_data_t *req,
 
 	/* Get user credentials */
 	if (reqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED) {
-		if (get_req_uid_gid(svcreq, &user_credentials) == false) {
+		if (get_req_uid_gid(svcreq,
+				    &user_credentials,
+				    &export_perms) == false) {
 			LogInfo(COMPONENT_DISPATCH,
 				"could not get uid and gid, rejecting client %s",
 				req_ctx.client->hostaddr_str);
@@ -1254,6 +1256,9 @@ static void nfs_rpc_execute(request_data_t *req,
 							res_nfs);
 	}
 
+	/* If Manage_gids is used, unref the group list */
+	if (export_perms.options & EXPORT_OPTION_MANAGE_GIDS)
+		uid2grp_unref(user_credentials.caller_uid);
  req_error:
 
 #ifdef USE_DBUS_STATS

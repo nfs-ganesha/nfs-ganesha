@@ -300,6 +300,8 @@ typedef struct exportlist {
 						    export */
 #define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this
 						    export */
+#define EXPORT_OPTION_MANAGE_GIDS 0x20000000 /*< Do not trust
+						    altgrp in AUTH_SYS creds */
 #define EXPORT_OPTION_ACCESS_LIST 0x00008000	/*< Flags access list entry as
 						    Access=  */
 
@@ -421,7 +423,8 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
 void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 		    struct user_cred *user_credentials);
 bool get_req_uid_gid(struct svc_req *req,
-		     struct user_cred *user_credentials);
+		     struct user_cred *user_credentials,
+		     export_perms_t *export_perms);
 
 void init_credentials(struct user_cred *user_credentials);
 void clean_credentials(struct user_cred *user_credentials);

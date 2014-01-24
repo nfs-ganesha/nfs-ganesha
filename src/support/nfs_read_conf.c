@@ -1,4 +1,5 @@
 /*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -193,6 +194,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 		} else
 		    if (!strcasecmp(key_name, "Decoder_Fridge_Block_Timeout")) {
 			pparam->decoder_fridge_block_timeout = atoi(key_value);
+		} else
+		    if (!strcasecmp(key_name, "Manage_Gids_Expiration")) {
+			pparam->manage_gids_expiration = atoi(key_value);
 		} else if (!strcasecmp(key_name, "NFS_Protocols")) {
 
 #define MAX_NFSPROTO      10	/* large enough !!! */

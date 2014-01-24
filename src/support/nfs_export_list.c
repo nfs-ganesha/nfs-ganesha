@@ -55,6 +55,7 @@
 #include "nfs_file_handle.h"
 #include "idmapper.h"
 #include "export_mgr.h"
+#include "uid2grp.h"
 
 const char *Rpc_gss_svc_name[] = {
 	"no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
@@ -73,7 +74,9 @@ const char *Rpc_gss_svc_name[] = {
  * @return true if successful, false otherwise
  *
  */
-bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
+bool get_req_uid_gid(struct svc_req *req,
+		     struct user_cred *user_credentials,
+		     export_perms_t *export_perms)
 {
 	struct authunix_parms *punix_creds = NULL;
 #ifdef _HAVE_GSSAPI
@@ -88,30 +91,54 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 	case AUTH_NONE:
 		/* Nothing to be done here... */
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u has authentication AUTH_NONE",
-			     req->rq_xid);
+		  "Request xid=%u has authentication AUTH_NONE",
+		  req->rq_xid);
 		user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
 		break;
 
 	case AUTH_UNIX:
 		/* We map the rq_cred to Authunix_parms */
-		punix_creds = (struct authunix_parms *)req->rq_clntcred;
+		punix_creds = (struct authunix_parms *) req->rq_clntcred;
 
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u has authentication AUTH_UNIX, uid=%d, gid=%d",
-			     req->rq_xid, (int)punix_creds->aup_uid,
+		/* Do we trust AUTH_SYS creds for groups or not ? */
+		if (export_perms->options &
+		    EXPORT_OPTION_MANAGE_GIDS) {
+			struct group_data group_data;
+			struct group_data *grpdata = &group_data;
+
+			LogFullDebug(COMPONENT_DISPATCH,
+			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d won't trust altgrp",
+			     req->rq_xid,
+			     (int)punix_creds->aup_uid,
 			     (int)punix_creds->aup_gid);
 
-		/* Get the uid/gid couple */
-		user_credentials->caller_uid = punix_creds->aup_uid;
-		user_credentials->caller_gid = punix_creds->aup_gid;
-		user_credentials->caller_glen = punix_creds->aup_len;
-		user_credentials->caller_garray = punix_creds->aup_gids;
+			if (!uid2grp(punix_creds->aup_uid, &grpdata))
+				return false;
 
-		LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-			     (unsigned int)user_credentials->caller_uid,
-			     (unsigned int)user_credentials->caller_gid);
+			user_credentials->caller_uid = grpdata->uid;
+			user_credentials->caller_gid = grpdata->gid;
+			user_credentials->caller_glen = grpdata->nbgroups;
+			user_credentials->caller_garray = grpdata->groups;
 
+			LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+				   (unsigned int)user_credentials->caller_uid,
+				   (unsigned int)user_credentials->caller_gid);
+		} else {
+			LogFullDebug(COMPONENT_DISPATCH,
+			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d",
+			     req->rq_xid,
+			     (int)punix_creds->aup_uid,
+			     (int)punix_creds->aup_gid);
+
+			user_credentials->caller_uid = punix_creds->aup_uid;
+			user_credentials->caller_gid = punix_creds->aup_gid;
+			user_credentials->caller_glen = punix_creds->aup_len;
+			user_credentials->caller_garray = punix_creds->aup_gids;
+
+			LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+				    (unsigned int)user_credentials->caller_uid,
+				    (unsigned int)user_credentials->caller_gid);
+		}
 		break;
 
 #ifdef _HAVE_GSSAPI
@@ -207,8 +234,28 @@ bool get_req_uid_gid(struct svc_req *req, struct user_cred *user_credentials)
 		LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
 			     (unsigned int)user_credentials->caller_uid,
 			     (unsigned int)user_credentials->caller_gid);
-		user_credentials->caller_glen = 0;
-		user_credentials->caller_garray = 0;
+
+		if (export_perms->options &
+		    EXPORT_OPTION_MANAGE_GIDS) {
+			struct group_data group_data;
+			struct group_data *grpdata = &group_data;
+
+			LogFullDebug(COMPONENT_DISPATCH,
+			     "Request xid=%u uses RPCSEC_GSS, uid=%u,gid=%u won't trust altgrp",
+			     req->rq_xid,
+			     (unsigned int)user_credentials->caller_uid,
+			     (unsigned int)user_credentials->caller_gid);
+
+			if (!uid2grp(user_credentials->caller_uid, &grpdata))
+				return false;
+
+			user_credentials->caller_glen = grpdata->nbgroups;
+			user_credentials->caller_garray = grpdata->groups;
+		} else {
+			/* Gids are not managed, use no altrgroups */
+			user_credentials->caller_glen = 0;
+			user_credentials->caller_garray = 0;
+		}
 
 		break;
 #endif				/* _USE_GSSRPC */
@@ -393,7 +440,6 @@ void clean_credentials(struct user_cred *user_credentials)
 		gsh_free(user_credentials->caller_garray);
 	}
 #endif
-
 	init_credentials(user_credentials);
 }
 
