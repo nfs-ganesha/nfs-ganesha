@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <mntent.h>
 #include <sys/statvfs.h>
+#include <linux/quota.h>
 #include "nlm_list.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
@@ -54,7 +55,6 @@
 #ifdef HAVE_INCLUDE_LIBLUSTREAPI_H
 #include <lustre/liblustreapi.h>
 #include <lustre/lustre_user.h>
-#include <linux/quota.h>
 #endif
 #endif
 
