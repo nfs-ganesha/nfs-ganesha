@@ -951,28 +951,23 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl,
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	if (obj_hdl->type == REGULAR_FILE) {
-		if (myself->u.file.fd < 0)
-			goto open_file;	/* no file open at the moment */
-		fstat(myself->u.file.fd, &stat);
-	} else if (obj_hdl->type == SOCKET_FILE) {
+
+	if (obj_hdl->type == SOCKET_FILE) {
 		lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
 				      myself->u.sock.sock_dir, mypath);
-		retval = lstat(mypath, &stat);
-		if (retval < 0)
-			goto errout;
 	} else {
 		if (obj_hdl->type == SYMBOLIC_LINK)
 			open_flags |= O_PATH;
 		else if (obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
- open_file:
+
 		lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
 				      myself->handle, mypath);
-		retval = lstat(mypath, &stat);
-		if (retval < 0)
-			goto errout;
 	}
+
+	retval = lstat(mypath, &stat);
+	if (retval < 0)
+		goto errout;
 
 	/* convert attributes */
 	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
