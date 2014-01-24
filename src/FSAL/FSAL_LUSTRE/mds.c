@@ -405,7 +405,7 @@ lustre_layoutreturn(struct fsal_obj_handle *obj_hdl,
 {
 	struct lustre_fsal_obj_handle *myself;
 	/* The private 'full' object handle */
-	struct lustre_file_handle *lustre_handle;
+	struct lustre_file_handle *lustre_handle __attribute__((unused));
 
 	/* Sanity check on type */
 	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
@@ -448,7 +448,7 @@ lustre_layoutcommit(struct fsal_obj_handle *obj_hdl,
 {
 	struct lustre_fsal_obj_handle *myself;
 	/* The private 'full' object handle */
-	struct lustre_file_handle *lustre_handle;
+	struct lustre_file_handle *lustre_handle __attribute__((unused));
 
 	/* Sanity check on type */
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
