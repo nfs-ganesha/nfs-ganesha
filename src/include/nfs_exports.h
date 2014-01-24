@@ -296,8 +296,6 @@ typedef struct exportlist {
 						   set */
 #define EXPORT_OPTION_ACCESS_OPT_LIST 0x10000000 /*< Access list from CLIENT
 						     sub-block */
-#define EXPORT_OPTION_USE_PNFS   0x20000000	/*< Using pNFS or not using
-						    pNFS? */
 #define EXPORT_OPTION_USE_UQUOTA 0x40000000	/*< Using user quota for this
 						    export */
 #define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this

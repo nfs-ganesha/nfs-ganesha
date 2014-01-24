@@ -98,7 +98,6 @@
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_FSAL               "FSAL"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
-#define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 #define CONF_EXPORT_CLIENT_DEF         "Client"
@@ -347,9 +346,6 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	if ((p_perms->options & EXPORT_OPTION_TCP) == EXPORT_OPTION_TCP)
 		buf += sprintf(buf, ", TCP");
 
-	if ((p_perms->options & EXPORT_OPTION_USE_PNFS) ==
-	    EXPORT_OPTION_USE_PNFS)
-		buf += sprintf(buf, ", PNFS");
 	if ((p_perms->options & EXPORT_OPTION_USE_UQUOTA) ==
 	    EXPORT_OPTION_USE_UQUOTA)
 		buf += sprintf(buf, ", UQUOTA");
