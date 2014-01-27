@@ -1318,15 +1318,20 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		       &res_OPEN4->OPEN4res_u.resok4.stateid,
 		       data,
 		       open_tag);
-
+	pthread_mutex_lock(&clientid->cid_mutex);
 	if (data->export->export_hdl->ops->
 	    fs_supports(data->export->export_hdl, fso_delegations)
 	    && (data->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
-	    && claim != CLAIM_DELEGATE_CUR)
-
+	    && clientid->cb_chan_down == FALSE
+	    && claim != CLAIM_DELEGATE_CUR) {
+		pthread_mutex_unlock(&clientid->cid_mutex);
 		get_delegation(data, file_state, owner,
 			       &res_OPEN4->OPEN4res_u.resok4);
+	}
+	else {
+		pthread_mutex_unlock(&clientid->cid_mutex);
+	}
 
  out:
 

@@ -1072,16 +1072,25 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 					   uint32_t flags)
 {
 	char *fh;
+	nfs_client_id_t *clid;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook ==
 		  RPC_CALL_ABORT) ? "RPC_CALL_ABORT" : "RPC_CALL_COMPLETE");
+	clid = (nfs_client_id_t *)arg;
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
 		/* potentially, do something more interesting here */
 		LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 		    nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
+		/* Mark the channel down if the rpc call failed
+		* TODO: what to do about server issues which made the RPC call fail ? */
+		if (call->stat != RPC_SUCCESS) {
+			pthread_mutex_lock(&clid->cid_mutex);
+			clid->cb_chan_down = TRUE;
+			pthread_mutex_unlock(&clid->cid_mutex);
+		}
 		gsh_free(fh);
 		cb_compound_free(&call->cbt);
 		break;
@@ -1129,14 +1138,31 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 		gsh_free(maxfh);
 		return;
 	}
+	/* Attempt a recall only if channel state is UP */
+	pthread_mutex_lock(&clid->cid_mutex);
+	if (clid->cb_chan_down == TRUE) {
+		pthread_mutex_unlock(&clid->cid_mutex);
+		LogCrit(COMPONENT_NFS_CB, "Call back channel down, not issuing a recall");
+		gsh_free(maxfh);
+		return;
+	}
+	pthread_mutex_unlock(&clid->cid_mutex);
+
 	chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+		/* TODO: move this to nfs_rpc_get_chan ? */
+		pthread_mutex_lock(&clid->cid_mutex);
+		clid->cb_chan_down = TRUE;
+		pthread_mutex_unlock(&clid->cid_mutex);
 		gsh_free(maxfh);
 		return;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
+		pthread_mutex_lock(&clid->cid_mutex);
+		clid->cb_chan_down = TRUE;
+		pthread_mutex_unlock(&clid->cid_mutex);
 		gsh_free(maxfh);
 		return;
 	}
@@ -1176,7 +1202,7 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 	call->call_hook = delegrecall_completion_func;
 
 	/* call it (here, in current thread context) */
-	code = nfs_rpc_submit_call(call, NULL, NFS_RPC_FLAG_NONE);
+	code = nfs_rpc_submit_call(call, clid, NFS_RPC_FLAG_NONE);
 
 	return;
 };

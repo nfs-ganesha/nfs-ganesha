@@ -91,7 +91,13 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		res_RENEW4->status = NFS4ERR_EXPIRED;
 	} else {
 		update_lease(clientid);
-		res_RENEW4->status = NFS4_OK;
+		//update the lease, check the state of callback path and return correct error
+		if(clientid->cb_chan_down) {
+			res_RENEW4->status =  NFS4ERR_CB_PATH_DOWN;
+		}
+		else {
+			res_RENEW4->status = NFS4_OK;
+		}
 	}
 
 	pthread_mutex_unlock(&clientid->cid_mutex);

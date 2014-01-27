@@ -1361,12 +1361,14 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *pclientid)
 		chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
 		if (!chan) {
 			LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+			stat = RPC_SYSTEMERROR;
 			goto out;
 		}
 
 		if (!chan->clnt) {
 			LogCrit(COMPONENT_NFS_CB,
 				"nfs_rpc_get_chan failed (no clnt)");
+			stat = RPC_SYSTEMERROR;
 			goto out;
 		}
 
@@ -1382,6 +1384,6 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *pclientid)
 			break;
 	}
 
-	out:
+out:
 	return stat;
 }
