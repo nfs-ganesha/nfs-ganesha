@@ -332,13 +332,17 @@ if(USE_9P_RDMA AND NOT USE_9P)
   set(USE_9P ON)
 endif(USE_9P_RDMA AND NOT USE_9P)
 
-if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  set(ALLOCATOR "jemalloc" CACHE STRING
-    "specify the memory allocator to use: jemalloc|tcmalloc|libc")
-else("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  set(ALLOCATOR "libc" CACHE STRING
-    "specify the memory allocator to use: jemalloc|tcmalloc|libc")
-endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+IF(ALLOCATOR)
+  set(ALLOCATOR ${ALLOCATOR} CACHE STRING "memory allocator: jemalloc|tcmalloc|libc")
+ELSE()
+  if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+    set(ALLOCATOR "jemalloc" CACHE STRING
+      "specify the memory allocator to use: jemalloc|tcmalloc|libc")
+  else("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+    set(ALLOCATOR "libc" CACHE STRING
+      "specify the memory allocator to use: jemalloc|tcmalloc|libc")
+  endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+ENDIF()
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
@@ -543,7 +547,7 @@ elseif(${ALLOCATOR} STREQUAL "tcmalloc")
   endif(TCMALLOC_FOUND)
 else()
   if(NOT ${ALLOCATOR} STREQUAL "libc")
-    message(SEND_ERROR "${ALLOCATOR}  is not a valid allocator option.")
+    message(SEND_ERROR "${ALLOCATOR} is not a valid option. Valid allocators are: jemalloc|tcmalloc|libc")
   endif()
 endif()
 
