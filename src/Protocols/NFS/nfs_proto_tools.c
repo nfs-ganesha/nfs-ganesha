@@ -4527,15 +4527,15 @@ int nfs4_MakeCred(compound_data_t *data)
 	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	if (!get_req_uid_gid(data->req,
-			     data->req_ctx->creds,
-			     &data->export_perms))
-		return NFS4ERR_ACCESS;
-
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "nfs4_MakeCred about to call nfs_export_check_access");
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
+
+	if (!get_req_uid_gid(data->req,
+			     data->req_ctx->creds,
+			     &data->export_perms))
+		return NFS4ERR_ACCESS;
 
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
