@@ -352,6 +352,9 @@ typedef struct nfs_core_param {
 	    calling getgroups() when "Manage_Gids = TRUE" is
 	    used in a export entry. */
 	time_t manage_gids_expiration;
+	/** Path to the directory containing server specific
+	    modules.  In particular, this is where FSALs live. */
+	char *ganesha_modules_loc;
 } nfs_core_parameter_t;
 
 /** @} */

@@ -146,6 +146,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_NLM),
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
+	CONF_ITEM_PATH("Plugins_Dir", 1, MAXPATHLEN, FSAL_MODULE_LOC,
+		       nfs_core_param, ganesha_modules_loc),
 	CONFIG_EOL
 };
 
