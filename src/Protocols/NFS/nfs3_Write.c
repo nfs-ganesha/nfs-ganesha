@@ -99,9 +99,11 @@ int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
 			break;
 		case DATA_SYNC:
 			stables = "DATA_SYNC";
+			sync = true;
 			break;
 		case FILE_SYNC:
 			stables = "FILE_SYNC";
+			sync = true;
 			break;
 		}
 
