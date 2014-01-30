@@ -547,7 +547,7 @@ struct fsal_ops {
  */
 
 int start_fsals(config_file_t config);
-int load_fsal(const char *path, const char *name,
+int load_fsal(const char *name,
 	      struct fsal_module **fsal_hdl);
 int init_fsals(config_file_t config);
 

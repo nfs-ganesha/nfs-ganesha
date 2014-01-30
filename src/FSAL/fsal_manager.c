@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include <pthread.h>
 #include <dlfcn.h>
 #include "log.h"
@@ -138,7 +139,7 @@ int start_fsals(config_file_t config)
 						 "Loading module w/ name=%s"
 						 " and library=%s", fsal_name,
 						 value);
-					rc = load_fsal(value, fsal_name,
+					rc = load_fsal(fsal_name,
 						       &fsal_hdl);
 					if (rc < 0) {
 						LogCrit(COMPONENT_INIT,
@@ -172,9 +173,9 @@ int start_fsals(config_file_t config)
 	return 1;
 }
 
-/* load_fsal
- * Load the fsal's shared object and name it if the fsal
- * has not already done so.
+/**
+ * @brief Load the fsal's shared object.
+ *
  * The dlopen() will trigger a .init constructor which will
  * do the actual registration.
  * after a successful load, the returned handle needs to be "put"
@@ -194,18 +195,38 @@ int start_fsals(config_file_t config)
  *	other general dlopen errors are possible, all of them bad
  */
 
-int load_fsal(const char *path, const char *name,
+static const char *pathfmt = "%s/libfsal%s.so";
+
+int load_fsal(const char *name,
 	      struct fsal_module **fsal_hdl_p)
 {
 	void *dl;
 	int retval = EBUSY;	/* already loaded */
 	char *dl_path;
 	struct fsal_module *fsal;
+	char *bp;
+	char *path = alloca(strlen(nfs_param.core_param.ganesha_modules_loc)
+			    + strlen(name)
+			    + strlen(pathfmt));
 
+	sprintf(path, pathfmt,
+		nfs_param.core_param.ganesha_modules_loc,
+		name);
+	bp = rindex(path, '/');
+	bp++; /* now it is the basename, lcase it */
+	while (*bp != '\0') {
+		if (isupper(*bp))
+			*bp = tolower(*bp);
+		bp++;
+	}
 	dl_path = gsh_strdup(path);
 	if (dl_path == NULL)
 		return ENOMEM;
 	pthread_mutex_lock(&fsal_lock);
+	if (load_state == init) {
+		assert(glist_empty(&fsal_list));
+		load_state = idle;
+	}
 	if (load_state != idle)
 		goto errout;
 	if (dl_error) {
@@ -295,31 +316,12 @@ int load_fsal(const char *path, const char *name,
 
 /* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;	/* recover handle from .ctor and poison again */
+	fsal = new_fsal;   /* recover handle from .ctor and poison again */
 	new_fsal = NULL;
+	fsal->refs++; /* take initial ref so we can pass it back... */
 	fsal->path = dl_path;
 	fsal->dl_handle = dl;
 	so_error = 0;
-	if (name != NULL) {	/* does config want to set name? */
-		char *oldname = NULL;
-
-		if (fsal->name != NULL) {
-			if (strlen(fsal->name) >= strlen(name)) {
-				strcpy(fsal->name, name);
-			} else {
-				oldname = fsal->name;
-				fsal->name = gsh_strdup(name);
-			}
-		} else {
-			fsal->name = gsh_strdup(name);
-		}
-		if (fsal->name == NULL) {
-			fsal->name = oldname;
-			oldname = NULL;
-		}
-		if (oldname != NULL)
-			gsh_free(oldname);
-	}
 	*fsal_hdl_p = fsal;
 	load_state = idle;
 	pthread_mutex_unlock(&fsal_lock);
@@ -328,7 +330,8 @@ int load_fsal(const char *path, const char *name,
  errout:
 	load_state = idle;
 	pthread_mutex_unlock(&fsal_lock);
-	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s", path,
+	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",
+		 path,
 		 strerror(retval));
 	gsh_free(dl_path);
 	return retval;
@@ -414,13 +417,13 @@ int init_fsals(config_file_t config_struct)
 		fsal = glist_entry(entry, struct fsal_module, fsals);
 
 		pthread_mutex_lock(&fsal->lock);
-		fsal->refs++;	/* reference it */
+		fsal->refs++;	/* reference it by faking a lookup_fsal */
 		pthread_mutex_unlock(&fsal->lock);
 
 		fsal_status = fsal->ops->init_config(fsal, config_struct);
 
 		pthread_mutex_lock(&fsal->lock);
-		fsal->refs--;	/* now 'put_fsal' on it */
+		fsal->ops->put(fsal);
 		pthread_mutex_unlock(&fsal->lock);
 
 		if (!FSAL_IS_ERROR(fsal_status)) {
