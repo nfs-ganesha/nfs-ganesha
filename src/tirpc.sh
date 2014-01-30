@@ -3,7 +3,7 @@
 OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/nfs-ganesha/ntirpc.git'
-TIRPC_COMMIT='2f10e28a739f2d561c70c18a666fcc55da260864'
+TIRPC_COMMIT='c9e2f88f6551019ba881ee949d8044861ccd4c4c'
 
 if [ -d libtirpc/.git ]; then
     cd libtirpc
