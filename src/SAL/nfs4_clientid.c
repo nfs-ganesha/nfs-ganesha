@@ -661,7 +661,8 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid, int release)
                "Expiring {%s}", str);
     }
 
-  if(pclientid->cid_confirmed == CONFIRMED_CLIENT_ID)
+  if((pclientid->cid_confirmed == CONFIRMED_CLIENT_ID) ||
+     (pclientid->cid_confirmed == STALE_CLIENT_ID))
     ht_expire = ht_confirmed_client_id;
   else
     ht_expire = ht_unconfirmed_client_id;
@@ -696,6 +697,15 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid, int release)
                        &buffkey,
                        &old_key,
                        &old_value);
+
+    if((rc != HASHTABLE_SUCCESS) &&
+       (pclientid->cid_confirmed == STALE_CLIENT_ID))
+      { /* Try in the unconfirmed hash table */
+        rc = HashTable_Del(ht_unconfirmed_client_id,
+                           &buffkey,
+                           &old_key,
+                           &old_value);
+      }
 
     if(rc != HASHTABLE_SUCCESS)
       {
