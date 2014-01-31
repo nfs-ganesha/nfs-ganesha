@@ -992,6 +992,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 {
 	int code = 0;
 	struct timeval CB_TIMEOUT = { 15, 0 };	/* XXX */
+	rpc_call_hook hook_status = RPC_CALL_COMPLETE;
 
 	/* send the call, set states, wake waiters, etc */
 	pthread_mutex_lock(&call->we.mtx);
@@ -1024,8 +1025,10 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
-	if (call->stat != RPC_SUCCESS)
+	if (call->stat != RPC_SUCCESS) {
 		_nfs_rpc_destroy_chan(call->chan);
+		hook_status = RPC_CALL_ABORT;
+	}
 
  unlock:
 	pthread_mutex_unlock(&call->chan->mtx);
@@ -1040,7 +1043,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	pthread_mutex_unlock(&call->we.mtx);
 
 	/* call completion hook */
-	RPC_CALL_HOOK(call, RPC_CALL_COMPLETE, call->completion_arg,
+	RPC_CALL_HOOK(call, hook_status, call->completion_arg,
 		      NFS_RPC_CALL_NONE);
 
 	return code;
