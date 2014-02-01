@@ -370,7 +370,7 @@ fsal_status_t fsal_internal_access(int mntfd,	/* IN */
 				   struct attrlist * p_object_attributes)
 {				/* IN */
 	fsal_status_t status;
-	mode_t mode = 0;
+/* 	mode_t mode = 0; */
 
 	FSI_TRACE(FSI_DEBUG, "FSI - access\n");
 
@@ -378,8 +378,8 @@ fsal_status_t fsal_internal_access(int mntfd,	/* IN */
 	if (!p_context || !p_handle)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	if (IS_FSAL_MODE_MASK_VALID(access_type))
-		mode = FSAL_MODE_MASK(access_type);
+/* 	if (IS_FSAL_MODE_MASK_VALID(access_type)) */
+/* 		mode = FSAL_MODE_MASK(access_type); */
 
 	status =
 	    fsal_internal_testAccess(p_context, access_type,
