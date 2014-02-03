@@ -2532,7 +2532,8 @@ state_status_t state_lock(cache_entry_t *entry,
 		/* Don't skip blocked locks for fairness */
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
-		if ((found_entry_end >= lock->lock_start)
+		if (!(lock->lock_reclaim)
+		    && (found_entry_end >= lock->lock_start)
 		    && (found_entry->sle_lock.lock_start <= range_end)) {
 			/* lock overlaps see if we can allow:
 			 * allow if neither lock is exclusive or
