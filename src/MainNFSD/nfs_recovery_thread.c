@@ -43,7 +43,6 @@
 
 #ifdef SONAS
 #define DELIMIT '_'
-time_t t_after; /* Careful here. */
 
 extern hash_table_t *ht_nlm_client;
 extern hash_table_t *ht_nsm_client;
@@ -188,15 +187,19 @@ void release_ip(char *ip, int notdone)
         nfs_release_v4_client(ip);
 }
 
-/* try to find this node's id in an event */
-int check_for_id( int inum, struct dirent **namelist, int id)
+/* If node_id is zero, do nothing.
+* For (node_id > 0):
+*       Check if there are any myrelease events for node_id
+*       If there are any myrelease_ip event, release nlm locks and V4 state.
+*       Remove the myrelease_* file(s) for node_id 
+*/
+void check_for_id( int inum, struct dirent **namelist, int id)
 {
 char *cp, *cp2;
-int icnt = 0;
 int i, ientry, notdone;
-int take, rel;
-time_t t_this_entry;
 char workpath[PATH_MAX];
+
+        assert(id != 0);
 
         /*
          * if there are releaseip events, we need to expire the v4
@@ -210,29 +213,21 @@ char workpath[PATH_MAX];
 
         /* stop at 2 to skip '.' and '..' */
         for (ientry = (inum - 1); ientry >= 2; ientry--) {
-                take = rel = 0;
-                switch (namelist[ientry]->d_name[0]) {
-                        case 'r':
-                                rel = 1; /* releaseip event */
-                                break;
-                        case 't':
-                                take = 1; /* takeip event */
-                                break;
-                }
-                /*
-                 * if not a takeip event nor a releaseip event skip.
-                 * if id is 0 we only care about takeip events.
-                 */
-                if ((!take && !rel) || (id == 0 && rel))
+                // We are only interested into myrelease_* files
+                if( namelist[ientry]->d_name[0] != 'm')
                         continue;
 
                 if(strmaxcpy(workpath,
                              namelist[ientry]->d_name,
-                             sizeof(workpath)) == -1)
+                             sizeof(workpath)) == -1){
+                        assert(0);
                         break;
+                }
+
                 cp = workpath;
-                LogDebug(COMPONENT_THREAD, "recovery event file: [%s], t_after = [%ld]", workpath, t_after);
-                i = 1; /* time is the second entry */
+
+                LogDebug(COMPONENT_THREAD, "recovery event file: [%s]", workpath);
+                i = 2; /* id is the 3rd entry */
                 while(i--) {
                         while(*cp != DELIMIT)
                                 cp++;
@@ -242,40 +237,75 @@ char workpath[PATH_MAX];
                 while(*cp2 != DELIMIT)
                         cp2++;
                 *cp2 = '\0';
-                t_this_entry = (time_t) atol(cp);
-                if (t_this_entry < t_after) {
-                        continue;
-                }
-                if ( id > 0 ) {
-                        /* id is the 3rd entry */
+
+                i = atoi(cp);
+                if ( i == id ) {
+                        /* IP is the 4th entry */
                         cp2++;
-                        cp = cp2;
-                        while(*cp2 != DELIMIT)
-                                cp2++;
-                        *cp2 = '\0';
-                        i = atoi(cp);
-                        if ( i == id ) {
-                                icnt++;
-                                t_after = t_this_entry + 1;
-                                if (rel) {
-                                        /* IP is the 4th entry */
-                                        cp2++;
-                                        release_ip(cp2, notdone);
-                                        /* we are done with v3 */
-                                        notdone = 0;
-                                }
-                        }
-                } else {
-                        t_after = t_this_entry + 1;
-                        icnt = 1;
-                        break;
+                        release_ip(cp2, notdone);
+
+                        // done processing the entry. Delete the file.
+                        sprintf(workpath,"%s/%s",NFS_RECOV_EVENTS,namelist[ientry]->d_name);
+                        remove(workpath);
+                        LogEvent(COMPONENT_THREAD, "Deleted myrelease file :%s ", workpath);
+
+                        /* we are done with v3 */
+                        notdone = 0;
                 }
         }
-        LogDebug(COMPONENT_THREAD, "ipcount %d for node %d after %ld",
-            icnt, id, t_after);
+
+        return;
+}
+
+
+int get_takeip_count( int inum, struct dirent **namelist, int id)
+{
+char *cp, *cp2;
+int i, ientry, icnt=0;
+char workpath[PATH_MAX];
+
+        assert(id != 0);
+
+        /* stop at 2 to skip '.' and '..' */
+        for (ientry = (inum - 1); ientry >= 2; ientry--) {
+                // We are only interested into take_* files
+                if( namelist[ientry]->d_name[0] != 't')
+                        continue;
+
+                if(strmaxcpy(workpath,
+                             namelist[ientry]->d_name,
+                             sizeof(workpath)) == -1){
+                        assert(0);
+                        break;
+                }
+
+                cp = workpath;
+
+                LogDebug(COMPONENT_THREAD, "recovery event file: [%s]", workpath);
+                i = 2; /* id is the 3rd entry */
+                while(i--) {
+                        while(*cp != DELIMIT)
+                                cp++;
+                        cp++;
+                }
+                cp2 = cp;
+                while(*cp2 != DELIMIT)
+                        cp2++;
+                *cp2 = '\0';
+
+                i = atoi(cp);
+                if ( i == id ) {
+                        icnt++;        
+                }
+        }
+
+        LogDebug(COMPONENT_THREAD, "take_ip count %d for node %d", icnt, id);
 
         return(icnt);
 }
+
+
+
 time_t parse_time( char *the_target)
 {
 char *cp, *cp2;
@@ -373,7 +403,7 @@ int ientry;
 time_t t_this_entry, t_dead, sticky_time;
 char workpath[PATH_MAX];
 
-        sticky_time = ( NFS_RECOV_CYCLE * NFS_RECOV_GC );
+        sticky_time = ( NFS_RECOV_CYCLE * NFS_RECOV_GC * 10 );
         t_dead = time(NULL);
         t_dead -= sticky_time;
         ientry = inum - 1;
@@ -395,30 +425,28 @@ int ifound, iend;
 int i, ientry, ientry_r, ientry_rstart;
 char workpath[PATH_MAX];
 char workaddr[IPADDR_STRSZ];
+char remove_file[PATH_MAX];
 nfs_grace_start_t *working;
-time_t t_time, r_time, t_done;
 
         working = array->nfs_grace_start;
         ientry = num - 1;
         ifound = ientry_rstart = 0;
-        t_time = t_done = 0;
         iend = array->num_elements;
         while (1) {
-                /* locate the eligible takeip records. There should be exactly
-                 * num_elements of them.
+                /* locate the eligible takeip records. 
+                 * Ideally there should be exactly num_elements of them.
                  */
                 if ((namelist[ientry]->d_name[0] != 't')) {
                         break;
                 }
-                t_time = parse_time(namelist[ientry]->d_name);
-                if (t_time < t_after) {
-                        ientry--;
-                        continue;
-                }
+
                 if(strmaxcpy(workpath,
                              namelist[ientry]->d_name,
                              sizeof(workpath)) == -1)
+                {
+                        assert(0);
                         break;
+                }
                 cp = workpath;
                 i = 2; /* id is the third entry */
                 while(i--) {
@@ -435,11 +463,7 @@ time_t t_time, r_time, t_done;
                         ientry--;
                         continue;
                 }
-                /* We start from the most recent record what ever
-                 * action we take here clears them all
-                 */
-                if ( ifound == 0 )
-                        t_done = (time_t) (t_time + 1);
+
                 /* Save the ip address entry four and five */
                 cp2++;
                 cp = cp2;
@@ -453,17 +477,15 @@ time_t t_time, r_time, t_done;
                 if((cp2 - cp) >= sizeof(workaddr))
                         break;
                 strcpy(workaddr, cp); /* can't overflow */
-                /* Don't match it again */
-                ientry--;
+
                 if ( !ientry_rstart )
-                        ientry_r = ientry;
+                        ientry_r = ientry -1;
                 else
                         ientry_r = ientry_rstart;
                 while (1) {
                         if (ientry_r <= 1) {
-                                if ( t_done )
-                                        t_after = t_done;
-                                return(-1);
+                                // Skip . and .. entries
+                                goto done;
                         }
                         if (namelist[ientry_r]->d_name[0] != 'r') {
                                 ientry_r--;
@@ -474,7 +496,10 @@ time_t t_time, r_time, t_done;
                         if(strmaxcpy(workpath,
                                      namelist[ientry_r]->d_name,
                                      sizeof(workpath)) == -1)
+                        {
+                                assert(0);
                                 break;
+                        }
                         cp = workpath;
                         i = 3; /* address is entry  four and five */
                         while(i--) {
@@ -493,15 +518,25 @@ time_t t_time, r_time, t_done;
                         if ( strcmp(cp, workaddr ) ) 
                                 ientry_r--;
                         else {
-                                /* We require the matched release to be earlier than the takeip */
-                                r_time = parse_time(namelist[ientry_r]->d_name);
-                                if (t_time < r_time) {
-                                        ientry_r--;
-                                        continue;
-                                } else
-                                        break;
+                                LogEvent(COMPONENT_THREAD, "matching release:%s and take: %s",
+                                                           cp, workaddr);
+
+                                // Delete the processed release_ip file.
+                                sprintf(remove_file, "%s/%s",NFS_RECOV_EVENTS, namelist[ientry_r]->d_name);
+                                remove(remove_file);
+
+                                LogEvent(COMPONENT_THREAD, "Deleted release file :%s ", remove_file);
+
+                                break;
                         }
                 }
+
+                // Delete the processed take_ip file.
+                sprintf(remove_file, "%s/%s",NFS_RECOV_EVENTS, namelist[ientry]->d_name);
+                remove(remove_file);
+
+                LogEvent(COMPONENT_THREAD, "Deleted take file :%s ", remove_file);
+
                 /* Found one */
                 /* backup and get the node id */
                 cp--;
@@ -517,19 +552,31 @@ time_t t_time, r_time, t_done;
                              sizeof(working->ipaddr)) == -1)
                         break;
                 ifound++;
-                LogDebug(COMPONENT_THREAD, "found %d address %s at release entry %d from node %d", ifound, working->ipaddr, ientry_r, working->nodeid );
+                LogDebug(COMPONENT_THREAD, "found %d address %s at release entry %d from node %d",
+                                           ifound, working->ipaddr, ientry_r, working->nodeid );
                 if ( ifound < iend )
                         working++;
                 else
                         break;
+
+                /* Don't match it again */
+                ientry--;
         }
-        if ( t_done )
-                t_after = t_done;
+
+done:
+        assert(ifound <= array->num_elements);
         if ( ifound == array->num_elements ) {
                 return(0);
         } else {
-                /* Shouldn't happen */
-                LogEvent(COMPONENT_THREAD, "code should not be reached found = %d searching for %d addresses", ifound, array->num_elements);
+                /** Found fewer matching release_ip entries. 
+                *  This can happen if the failing node has crashed,
+                *  and has failed to create the release_ip event file
+                *  OR - take_ip is happening much later,
+                *       and we have garbage collected the release_ip event file.
+                */
+                LogEvent(COMPONENT_THREAD, "Found = %d searching for %d addresses", 
+                         ifound, array->num_elements);
+
                 return(-1);
         }
 }
@@ -540,14 +587,13 @@ void *recovery_thread(void *UnusedArg)
 {
 #ifdef SONAS
 struct dirent **namelist = NULL;
-int n, ipcount;
+int n, takeip_count;
 uint32_t uerr=0;
 uint32_t ucnt=0;
 size_t size;
 nfs_grace_start_array_t *nfs_grace_start_array;
 
         SetNameFunction("recov");
-        t_after = 0;
 
         uerr = mkdir(NFS_V4_RECOV_LOCAL, 0755);
         if (uerr == -1 && errno != EEXIST) {
@@ -565,7 +611,7 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                 }
           
                 if ( ucnt == 0 ) { /* We are just coming up. Should be in grace for us. */
-                        sleep(NFS_RECOV_STATE_CNT * NFS_RECOV_GC); /* let things clear out */
+                        sleep(NFS_RECOV_GC); /* let things clear out */
                         ucnt += NFS_RECOV_STATE_CNT;
                 } else    
                         ucnt++;
@@ -593,26 +639,34 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                          */
                         nfs4_start_grace(NULL);
 
-                        if ((ipcount = check_for_id( n, namelist, g_nodeid))) { 
+                        /* If there is any releas_ip event for this node,
+                         * release nlm locks and V4 state.
+                         * The associated myrelease_ip_* file(s) will be deleted.
+                         */ 
+                        check_for_id( n, namelist, g_nodeid);
 
-                        /* Clients are coming to this node for reclaims */
-                        /* See if we can find from where, if so we will
-                         * read only the from nodes clids. If not we will read 
-                         * all nodes.
-                         */
+                         /* find number of take_ip events we have for g_nodeid.
+                         */                       
+                        if ((takeip_count = get_takeip_count( n, namelist, g_nodeid))) {
+
+                                /* Clients are coming to this node for reclaims */
+                                /* See if we can find from where, if so we will
+                                 * read only the from nodes clids. If not we will read 
+                                 * all nodes.
+                                 */
                                 nfs_grace_start_array = gsh_malloc(sizeof(nfs_grace_start_array_t));
                                 if (nfs_grace_start_array == NULL) {
                                         LogCrit(COMPONENT_THREAD, "ENOMEM");
                                         break;
                                 }
-                                size = sizeof(nfs_grace_start_t) * ipcount;
+                                size = sizeof(nfs_grace_start_t) * takeip_count;
                                 nfs_grace_start_array->nfs_grace_start = gsh_malloc(size);
                                 if (nfs_grace_start_array->nfs_grace_start == NULL) {
                                         LogCrit(COMPONENT_THREAD, "ENOMEM");
                                         gsh_free( nfs_grace_start_array );
                                         break;
                                 }
-                                nfs_grace_start_array->num_elements = ipcount;
+                                nfs_grace_start_array->num_elements = takeip_count;
                                 if (( match_to_releaseip( n, namelist, g_nodeid, nfs_grace_start_array))) {
                                 /* Couldn't match them all need to read all nodes */
                                         nfs_grace_start_array->num_elements = 1;
@@ -630,10 +684,13 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                                 }
                                 break;
                         } else {
-                                if ((check_for_id( n, namelist, 0))) {
-                                        nfs4_start_grace(NULL);
-                                        LogEvent(COMPONENT_THREAD, "Grace started with NULL node id %d", g_nodeid);
-                                }
+                                /* No take_ip event for this node
+                                 * No need to recover any state.
+                                 * No clients are expected to reclaim from this node.
+                                 * We just need to start Grace period which we already did.
+                                 */
+                                LogEvent(COMPONENT_THREAD, "Grace started with NULL node id %d", g_nodeid);
+
                                 break;
                         }
                 }
