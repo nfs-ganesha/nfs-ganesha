@@ -2110,6 +2110,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           fsal_lock_param_t     * plock,
+                          bool_t                  is_reclaim,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
                           state_status_t        * pstatus)
@@ -2232,27 +2233,29 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
       found_entry_end = lock_end(&found_entry->sle_lock);
 
-      if((found_entry_end >= plock->lock_start) &&
-         (found_entry->sle_lock.lock_start <= plock_end))
-        {
-          /* lock overlaps see if we can allow
-           * allow if neither lock is exclusive or the owner is the same
-           */
-          if((found_entry->sle_lock.lock_type == FSAL_LOCK_W ||
-              plock->lock_type == FSAL_LOCK_W) &&
-             different_owners(found_entry->sle_owner, powner))
-            {
-              /* Found a conflicting lock, break out of loop.
-               * Also indicate overlap hint.
-               */
-              LogEntry("Conflicts with", found_entry);
-              LogList("Locks", pentry, &pentry->object.file.lock_list);
-              copy_conflict(found_entry, holder, conflict);
-              allow   = FALSE;
-              overlap = TRUE;
+      if (!is_reclaim) {
+        if((found_entry_end >= plock->lock_start) &&
+           (found_entry->sle_lock.lock_start <= plock_end))
+          {
+            /* lock overlaps see if we can allow
+             * allow if neither lock is exclusive or the owner is the same
+             */
+            if((found_entry->sle_lock.lock_type == FSAL_LOCK_W ||
+                plock->lock_type == FSAL_LOCK_W) &&
+               different_owners(found_entry->sle_owner, powner))
+              {
+                /* Found a conflicting lock, break out of loop.
+                 * Also indicate overlap hint.
+                 */
+                LogEntry("Conflicts with", found_entry);
+                LogList("Locks", pentry, &pentry->object.file.lock_list);
+                copy_conflict(found_entry, holder, conflict);
+                allow   = FALSE;
+                overlap = TRUE;
               break;
-            }
-        }
+              }
+          }
+      }
 
       if(found_entry_end >= plock_end &&
          found_entry->sle_lock.lock_start <= plock->lock_start &&

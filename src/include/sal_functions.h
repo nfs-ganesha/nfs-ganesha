@@ -571,6 +571,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           fsal_lock_param_t     * plock,
+                          bool_t                  is_reclaim,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
                           state_status_t        * pstatus);

@@ -144,6 +144,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
                         STATE_NON_BLOCKING,
                         NULL,
                         &lock,
+                        FALSE,
                         &holder,
                         &conflict,
                         &state_status) != STATE_SUCCESS)

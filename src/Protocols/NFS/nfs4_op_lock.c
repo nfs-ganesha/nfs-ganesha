@@ -550,6 +550,7 @@ check_seqid:
                 blocking,
                 NULL,     /* No block data for now */
                 &lock_desc,
+                arg_LOCK4.reclaim,
                 &conflict_owner,
                 &conflict_desc,
                 &state_status) != STATE_SUCCESS)

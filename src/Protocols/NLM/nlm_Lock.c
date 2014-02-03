@@ -154,6 +154,7 @@ int nlm4_Lock(nfs_arg_t            * parg,
                 arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
                 pblock_data,
                 &lock,
+                arg->reclaim,
                 &holder,
                 &conflict,
                 &state_status) != STATE_SUCCESS)

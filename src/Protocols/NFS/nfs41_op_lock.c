@@ -411,6 +411,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 blocking,
                 NULL,     /* No block data for now */
                 &lock_desc,
+                arg_LOCK4.reclaim,
                 &conflict_owner,
                 &conflict_desc,
                 &state_status) != STATE_SUCCESS)
