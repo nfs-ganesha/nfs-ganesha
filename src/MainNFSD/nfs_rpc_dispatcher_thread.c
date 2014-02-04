@@ -433,6 +433,8 @@ void nfs_Init_svc()
 
 	LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
 
+	memset(&svc_params, 0, sizeof(svc_params));
+
 	/* New TI-RPC package init function */
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */
 	svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
