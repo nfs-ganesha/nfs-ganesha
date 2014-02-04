@@ -677,12 +677,6 @@ typedef enum fsal_digesttype_t {
 	FSAL_DIGEST_NFSV4,
 } fsal_digesttype_t;
 
-/* output digest sizes */
-
-static const size_t FSAL_DIGEST_SIZE_HDLV2 = 29;
-static const size_t FSAL_DIGEST_SIZE_HDLV3 = 61;
-static const size_t FSAL_DIGEST_SIZE_HDLV4 = 108;
-
 typedef enum {
 	FSAL_OP_LOCKT,		/*< test if this lock may be applied      */
 	FSAL_OP_LOCK,		/*< request a non-blocking lock           */
