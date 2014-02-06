@@ -142,7 +142,7 @@ static cache_inode_status_t update(struct fsal_export *export,
 	    ~(fsal_up_update_filesize_inc | fsal_up_update_atime_inc |
 	      fsal_up_update_creation_inc | fsal_up_update_ctime_inc |
 	      fsal_up_update_mtime_inc | fsal_up_update_chgtime_inc |
-	      fsal_up_update_spaceused_inc)) {
+	      fsal_up_update_spaceused_inc | fsal_up_nlink)) {
 		return CACHE_INODE_INVALID_ARGUMENT;
 	}
 
