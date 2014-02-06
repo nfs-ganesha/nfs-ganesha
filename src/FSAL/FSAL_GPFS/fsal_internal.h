@@ -60,7 +60,6 @@ struct gpfs_fsal_up_ctx {
 	int gf_fd;		/* GPFS File System Directory fd */
 	unsigned int gf_fsid[2];
 	pthread_t gf_thread;
-	int gf_exp_id;
 };
 /**
  * The full, 'private' DS (data server) handle

@@ -240,6 +240,7 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 		return fsalstat(posix2fsal_error(errsv), errsv);
 
 	*p_write_amount = nb_write;
+	*fsal_stable = warg.stability_wanted;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

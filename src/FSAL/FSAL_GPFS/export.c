@@ -535,11 +535,13 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	char fs_spec[MAXPATHLEN + 1];
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
+	int node_id = 0;
 	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	struct gpfs_fsal_up_ctx *gpfs_fsal_up_ctx;
 	struct gpfs_fsal_up_ctx up_ctx;
 	bool_t start_fsal_up_thread = FALSE;
+	struct grace_period_arg id_args;
 
 	*export = NULL;		/* poison it first */
 	if (export_path == NULL || strlen(export_path) == 0
@@ -719,7 +721,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		    myself->root_handle->handle_fsid[0];
 		gpfs_fsal_up_ctx->gf_fsid[1] =
 		    myself->root_handle->handle_fsid[1];
-		gpfs_fsal_up_ctx->gf_exp_id = exp_entry->id;
 
 		/* Add it to the list of contexts */
 		glist_add_tail(&gpfs_fsal_up_ctx_list,
@@ -764,6 +765,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	pthread_mutex_unlock(&myself->export.lock);
+
+	id_args.mountdirfd = myself->root_fd;
+	node_id = gpfs_ganesha(OPENHANDLE_GET_NODEID, &id_args);
 
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 

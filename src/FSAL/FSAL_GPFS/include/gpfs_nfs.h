@@ -264,8 +264,8 @@ struct readlink_fh_arg
 };
 
 struct nfsd4_pnfs_deviceid {
-	unsigned long	sbid;		/* per-superblock unique ID */
-	unsigned long	devid;		/* filesystem-wide unique device ID */
+	uint64_t sbid;      /* per-superblock unique ID */
+	uint64_t devid;     /* filesystem-wide unique device ID */
 };
 
 struct gpfs_exp_xdr_stream {

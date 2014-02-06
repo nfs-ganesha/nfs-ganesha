@@ -259,7 +259,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			break;
 
 		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
-			dev_id.sbid = gpfs_fsal_up_ctx->gf_exp_id;
 			LogDebug(COMPONENT_FSAL_UP,
 				 "layout device update: flags:%x ino %ld devid %ld-%016lx",
 				 flags, callback.buf->st_ino, dev_id.sbid,

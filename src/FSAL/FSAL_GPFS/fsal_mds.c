@@ -244,7 +244,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	/* Utility parameter */
 	nfl_util4 util = 0;
 	/* The last byte that can be accessed through pNFS */
-/*         uint64_t last_possible_byte = 0; strict. set but unused */
+	/* uint64_t last_possible_byte = 0; strict. set but unused */
 	/* The deviceid for this layout */
 	struct pnfs_deviceid deviceid = { 0, 0 };
 	/* NFS Status */
