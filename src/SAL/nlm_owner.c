@@ -42,6 +42,8 @@
 #include "sal_functions.h"
 #include "nsm.h"
 
+extern pthread_t recovery_thrid;
+
 hash_table_t *ht_nsm_client;
 hash_table_t *ht_nlm_client;
 hash_table_t *ht_nlm_owner;
@@ -658,7 +660,8 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
                "Free {%s}",
                str);
 
-  nsm_unmonitor(old_value.pdata);
+  if (! pthread_equal(pthread_self(), recovery_thrid))
+      nsm_unmonitor(old_value.pdata);
   free_nsm_client(old_value.pdata);
 }
 
