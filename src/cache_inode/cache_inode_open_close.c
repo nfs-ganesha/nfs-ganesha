@@ -280,8 +280,10 @@ cache_inode_close(cache_entry_t *entry, uint32_t flags)
 		goto unlock;
 	}
 
+
 	if (!cache_inode_lru_caching_fds()
-	    || (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
+	    || (flags & CACHE_INODE_FLAG_REALLYCLOSE)
+	    || (entry->obj_handle->attributes.numlinks == 0)) {
 		LogFullDebug(COMPONENT_CACHE_INODE, "Closing entry %p", entry);
 		fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
 		if (FSAL_IS_ERROR(fsal_status)
