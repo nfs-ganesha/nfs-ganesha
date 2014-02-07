@@ -1022,8 +1022,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		else
 			delay = 1 * NS_PER_SEC;
 
-		free_layoutrec(&call->cbt.v_u.v4.args
-			       .argarray.argarray_val[1]);
+		/* We don't free the argument here, because we'll be
+		   re-using that to make the queued call. */
 		nfs41_complete_single(call, hook, arg, flags);
 		delayed_submit(layoutrecall_one_call, cb_data, delay);
 		return 0;
