@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include "export_mgr.h"
 
 extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
 					gpfsfsal_xstat_t *p_buffxstat,
@@ -77,7 +78,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 
 	mntfd = gpfs_get_root_fd(export);
 
-	if (export->exp_entry->expire_type_attr == CACHE_INODE_EXPIRE)
+	if (p_context->export->export.expire_type_attr == CACHE_INODE_EXPIRE)
 		expire = TRUE;
 
 	st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat,

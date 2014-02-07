@@ -881,6 +881,7 @@ static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

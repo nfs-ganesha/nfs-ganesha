@@ -302,6 +302,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_SHARE_DENIED:
 	case CACHE_INODE_SERVERFAULT:
 	case CACHE_INODE_BADNAME:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Non retryable error, return error to client */
 		return false;
 		break;
@@ -510,8 +511,6 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 		export = args->data->export->export_hdl;
 		linksupport =
 		    export->ops->fs_supports(export, fso_link_support);
-	} else {
-		linksupport = TRUE;
 	}
 	if (!xdr_bool(xdr, &linksupport))
 		return FATTR_XDR_FAILED;
@@ -538,8 +537,6 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 		export = args->data->export->export_hdl;
 		symlinksupport =
 		    export->ops->fs_supports(export, fso_symlink_support);
-	} else {
-		symlinksupport = TRUE;
 	}
 	if (!xdr_bool(xdr, &symlinksupport))
 		return FATTR_XDR_FAILED;
@@ -568,8 +565,6 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 		export = args->data->export->export_hdl;
 		namedattrsupport =
 		    export->ops->fs_supports(export, fso_named_attr);
-	} else {
-		namedattrsupport = FALSE;
 	}
 	if (!xdr_bool(xdr, &namedattrsupport))
 		return FATTR_XDR_FAILED;
@@ -593,9 +588,6 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 	if (args->data != NULL && args->data->export != NULL) {
 		fsid.major = args->data->export->filesystem_id.major;
 		fsid.minor = args->data->export->filesystem_id.minor;
-	} else {
-		fsid.major = 152LL;	/* 153,153 for junctions in pseudos */
-		fsid.minor = 152LL;
 	}
 	if (!xdr_u_int64_t(xdr, &fsid.major))
 		return FATTR_XDR_FAILED;
@@ -627,8 +619,6 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 		export = args->data->export->export_hdl;
 		uniquehandles =
 		    export->ops->fs_supports(export, fso_unique_handles);
-	} else {
-		uniquehandles = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &uniquehandles))
 		return FATTR_XDR_FAILED;
@@ -875,8 +865,6 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr,
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		aclsupport = export->ops->fs_acl_support(export);
-	} else {
-		aclsupport = FALSE;
 	}
 	if (!inline_xdr_u_int32_t(xdr, &aclsupport))
 		return FATTR_XDR_FAILED;
@@ -923,8 +911,6 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		cansettime = export->ops->fs_supports(export, fso_cansettime);
-	} else {
-		cansettime = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &cansettime))
 		return FATTR_XDR_FAILED;
@@ -952,8 +938,6 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 		export = args->data->export->export_hdl;
 		caseinsensitive =
 		    export->ops->fs_supports(export, fso_case_insensitive);
-	} else {
-		caseinsensitive = FALSE;
 	}
 	if (!inline_xdr_bool(xdr, &caseinsensitive))
 		return FATTR_XDR_FAILED;
@@ -981,8 +965,6 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 		export = args->data->export->export_hdl;
 		casepreserving =
 		    export->ops->fs_supports(export, fso_case_preserving);
-	} else {
-		casepreserving = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &casepreserving))
 		return FATTR_XDR_FAILED;
@@ -1010,8 +992,6 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 		export = args->data->export->export_hdl;
 		chownrestricted =
 		    export->ops->fs_supports(export, fso_chown_restricted);
-	} else {
-		chownrestricted = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &chownrestricted))
 		return FATTR_XDR_FAILED;
@@ -1249,8 +1229,6 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		homogeneous = export->ops->fs_supports(export, fso_homogenous);
-	} else {
-		homogeneous = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &homogeneous))
 		return FATTR_XDR_FAILED;
@@ -1276,8 +1254,6 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr,
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		maxfilesize = export->ops->fs_maxfilesize(export);
-	} else {
-		maxfilesize = FSINFO_MAX_FILESIZE;
 	}
 	if (!inline_xdr_u_int64_t(xdr, &maxfilesize))
 		return FATTR_XDR_FAILED;
@@ -1302,8 +1278,6 @@ static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		maxlink = export->ops->fs_maxlink(export);
-	} else {
-		maxlink = MAX_HARD_LINK_VALUE;
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxlink))
 		return FATTR_XDR_FAILED;
@@ -1327,8 +1301,6 @@ static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		maxname = export->ops->fs_maxnamelen(export);
-	} else {
-		maxname = MAXNAMLEN;
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxname))
 		return FATTR_XDR_FAILED;
@@ -1359,14 +1331,7 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t maxread;
-
-	if (args->data != NULL && args->data->export != NULL)
-		maxread = args->data->export->MaxRead;
-	else
-		maxread = NFS4_PSEUDOFS_MAX_READ_SIZE;
-
-	if (!inline_xdr_u_int64_t(xdr, &maxread))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxRead))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1382,14 +1347,7 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t maxwrite;
-
-	if (args->data != NULL && args->data->export != NULL)
-		maxwrite = args->data->export->MaxWrite;
-	else
-		maxwrite = NFS4_PSEUDOFS_MAX_WRITE_SIZE;
-
-	if (!inline_xdr_u_int64_t(xdr, &maxwrite))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxWrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1452,8 +1410,6 @@ static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
 		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
-	} else {
-		no_trunc = TRUE;
 	}
 	if (!inline_xdr_bool(xdr, &no_trunc))
 		return FATTR_XDR_FAILED;
@@ -3655,8 +3611,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 	bool rc = false;
 	if (entry && (cache_inode_lock_trust_attrs(entry, ctx, false)
 		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(entry->obj_handle->export->
-					    exp_entry,
+		rc = nfs3_FSALattr_To_Fattr(&ctx->export->export,
 					    &entry->obj_handle->attributes,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -4280,6 +4235,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_INCONSISTENT_ENTRY:
 	case CACHE_INODE_HASH_TABLE_ERROR:
 	case CACHE_INODE_ASYNC_POST_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
 			 "Line %u should never be reached in nfs4_Errno"
@@ -4442,6 +4398,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_STATE_CONFLICT:
 	case CACHE_INODE_ASYNC_POST_ERROR:
 	case CACHE_INODE_STATE_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
 			 "Line %u should never be reached in nfs3_Errno"
@@ -4601,10 +4558,13 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 	int fh_status;
 
 	/* If there is no FH */
-	fh_status = nfs4_Is_Fh_Empty(&(data->currentFH));
+	fh_status = nfs4_Is_Fh_Empty(&data->currentFH);
 
 	if (fh_status != NFS4_OK)
 		return fh_status;
+
+	assert(data->current_entry != NULL &&
+	       data->current_filetype != NO_FILE_TYPE);
 
 	/* If the filehandle is invalid */
 	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
@@ -4703,7 +4663,7 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 	int fh_status;
 
 	/* If there is no FH */
-	fh_status = nfs4_Is_Fh_Empty(&(data->savedFH));
+	fh_status = nfs4_Is_Fh_Empty(&data->savedFH);
 
 	if (fh_status != NFS4_OK)
 		return fh_status;
@@ -4712,6 +4672,11 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
 	if (fh_status != NFS4_OK)
 		return fh_status;
+
+	if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+		LogDebug(COMPONENT_NFS_V4, "DS Handle");
+		return NFS4ERR_INVAL;
+	}
 
 	/* Check for the correct file type */
 	if (required_type < 0) {
@@ -4751,11 +4716,6 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 				return NFS4ERR_INVAL;
 			}
 		}
-	}
-
-	if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
-		LogDebug(COMPONENT_NFS_V4, "DS Handle");
-		return NFS4ERR_INVAL;
 	}
 
 	return NFS4_OK;

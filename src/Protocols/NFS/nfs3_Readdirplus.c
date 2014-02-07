@@ -43,6 +43,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
@@ -73,6 +74,7 @@ struct nfs3_readdirplus_cb_data {
 				   the array. */
 	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
 				   callback function finds a fatal error. */
+	struct req_op_context *req_ctx;	/*< The req_ctx */
 };
 
 static
@@ -133,7 +135,8 @@ int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
 		.entries = NULL,
 		.mem_left = 0,
 		.count = 0,
-		.error = NFS3_OK
+		.error = NFS3_OK,
+		.req_ctx = req_ctx
 	};
 
 	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
@@ -457,7 +460,8 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		}
 
 		if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-					cb_parms->entry->obj_handle)) {
+					cb_parms->entry->obj_handle,
+					tracker->req_ctx->export)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);
 			gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.
@@ -471,8 +475,8 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(cb_parms->entry->obj_handle->export->
-					   exp_entry, attr,
+		    nfs3_FSALattr_To_Fattr(&tracker->req_ctx->export->export,
+					   attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));
 	} else {

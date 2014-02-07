@@ -36,6 +36,7 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
 #include "nfs_tools.h"
@@ -88,8 +89,6 @@
 #define CONF_EXPORT_PREF_WRITE         "PrefWrite"
 #define CONF_EXPORT_PREF_READDIR       "PrefReaddir"
 #define CONF_EXPORT_FSID               "Filesystem_id"
-#define CONF_EXPORT_NOSUID             "NOSUID"
-#define CONF_EXPORT_NOSGID             "NOSGID"
 #define CONF_EXPORT_PRIVILEGED_PORT    "PrivilegedPort"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
@@ -120,8 +119,6 @@
 #define FLAG_EXPORT_PREF_WRITE      0x000002000
 #define FLAG_EXPORT_PREF_READDIR    0x000004000
 #define FLAG_EXPORT_FSID            0x000008000
-#define FLAG_EXPORT_NOSUID          0x000010000
-#define FLAG_EXPORT_NOSGID          0x000020000
 #define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
 #define FLAG_EXPORT_FS_SPECIFIC     0x000100000
 #define FLAG_EXPORT_FS_TAG          0x000200000
@@ -307,11 +304,6 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 			    p_perms->options & EXPORT_OPTION_ACCESS_TYPE);
 	else
 		buf += sprintf(buf, "NONE");
-
-	if ((p_perms->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID)
-		buf += sprintf(buf, ", NOSUID");
-	if ((p_perms->options & EXPORT_OPTION_NOSGID) == EXPORT_OPTION_NOSGID)
-		buf += sprintf(buf, ", NOSUID");
 
 	if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) ==
 	    EXPORT_OPTION_AUTH_NONE)
@@ -1143,32 +1135,6 @@ static int BuildExportClient(config_item_t block,
 			if ((perms->options & EXPORT_OPTION_AUTH_TYPES) == 0)
 				LogWarn(COMPONENT_CONFIG,
 					"NFS READ %s: Empty SecType", label);
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSUID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				perms->options |= EXPORT_OPTION_NOSUID;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSGID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 
@@ -1317,7 +1283,7 @@ static int BuildExportEntry(config_item_t block)
 		return -1;
 	}
 	if (!parse_int32_t(var_value,
-			   1,
+			   0,
 			   USHRT_MAX,
 			   &set_options,
 			   FLAG_EXPORT_ID,
@@ -1364,6 +1330,7 @@ static int BuildExportEntry(config_item_t block)
 		    nfs_param.cache_param.expire_type_attr;
 		glist_init(&p_entry->exp_state_list);
 		glist_init(&p_entry->exp_lock_list);
+		glist_init(&p_entry->exp_nlm_share_list);
 		glist_init(&p_entry->clients.client_list);
 	}
 
@@ -1435,7 +1402,7 @@ static int BuildExportEntry(config_item_t block)
 			int32_t export_id;
 
 			if (!parse_int32_t(var_value,
-					   1,
+					   0,
 					   USHRT_MAX,
 					   &set_options,
 					   FLAG_EXPORT_ID,
@@ -1493,28 +1460,27 @@ static int BuildExportEntry(config_item_t block)
 			}
 			ppath = var_value;
 
-			exp = get_gsh_export_by_path(ppath);
+			exp = get_gsh_export_by_path(ppath, true);
 
 			/* Pseudo, Tag, and Export_Id must be unique, Path may
 			 * be duplicated if at least Tag or Pseudo is specified
 			 * (and unique).
 			 */
-			if (exp != NULL && path_matches) {
-				LogCrit(COMPONENT_CONFIG,
-					"NFS READ %s: Duplicate Path: \"%s\"",
-					label, ppath);
-				err_flag = true;
+			if (exp != NULL) {
+				LogDebug(COMPONENT_CONFIG,
+					 "NFS READ %s: Duplicate Path: \"%s\", \"%s\"",
+					 label, ppath, exp->export.fullpath);
 				put_gsh_export(exp);
-				continue;
+
+				/* Remember the entry we found so we can verify
+				 * Tag and/or Pseudo is set by the time the
+				 * EXPORT stanza is complete.
+				 */
+				path_matches = true;
 			}
 
 			p_entry->fullpath = gsh_strdup(var_value);
 
-			/* Remember the entry we found so we can verify Tag
-			 * and/or Pseudo is set by the time the EXPORT stanza
-			 * is complete.
-			 */
-			path_matches = true;
 		} else if (!STRCMP(var_name, CONF_EXPORT_ROOT)) {
 			/* Notice that as least one of the three options
 			 * Root_Access, R_Access, or RW_Access has been
@@ -1609,7 +1575,7 @@ static int BuildExportEntry(config_item_t block)
 				continue;
 			}
 
-			exp = get_gsh_export_by_pseudo(var_value);
+			exp = get_gsh_export_by_pseudo(var_value, true);
 			if (exp != NULL) {
 				LogCrit(COMPONENT_CONFIG,
 					"NFS READ %s: Duplicate Pseudo: \"%s\"",
@@ -1626,6 +1592,15 @@ static int BuildExportEntry(config_item_t block)
 				err_flag = true;
 				continue;
 			}
+
+			if (export_id == 0 && strcmp(var_value, "/") != 0) {
+				LogCrit(COMPONENT_CONFIG,
+					"NFS READ %s: %s: \"%s\" for export_id 0 must be \"/\"",
+					label, var_name, var_value);
+				err_flag = true;
+				continue;
+			}
+
 			p_entry->pseudopath = gsh_strdup(var_value);
 
 			p_perms->options |= EXPORT_OPTION_PSEUDO;
@@ -2013,32 +1988,6 @@ static int BuildExportEntry(config_item_t block)
 
 			p_entry->filesystem_id.major = (uint64_t) major;
 			p_entry->filesystem_id.minor = (uint64_t) minor;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSUID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSUID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				p_perms->options |= EXPORT_OPTION_NOSUID;
-		} else if (!STRCMP(var_name, CONF_EXPORT_NOSGID)) {
-			bool on;
-
-			if (!parse_bool(var_value,
-					&set_options,
-					FLAG_EXPORT_NOSGID,
-					label,
-					var_name,
-					&err_flag,
-					&on))
-				continue;
-			if (on)
-				p_perms->options |= EXPORT_OPTION_NOSGID;
 		} else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT)) {
 			bool on;
 
@@ -2265,16 +2214,6 @@ static int BuildExportEntry(config_item_t block)
 				"NFS READ %s: Missing mandatory parameter %s",
 				label, CONF_EXPORT_PATH);
 
-		if ((set_options & FLAG_EXPORT_ACCESS_LIST) !=
-		    (FLAG_EXPORT_ACCESS_LIST & mandatory_options))
-			LogCrit(COMPONENT_CONFIG,
-				"NFS READ %s: Must have at least one of %s, %s, %s, %s, %s, or %s",
-				label, CONF_EXPORT_ACCESS, CONF_EXPORT_ROOT,
-				CONF_EXPORT_READ_ACCESS,
-				CONF_EXPORT_READWRITE_ACCESS,
-				CONF_EXPORT_MD_ACCESS,
-				CONF_EXPORT_MD_RO_ACCESS);
-
 		err_flag = true;
 	}
 
@@ -2344,8 +2283,14 @@ static int BuildExportEntry(config_item_t block)
 			 label);
 		/** @todo: should have a "Default_FSAL" param... */
 		fsal_hdl = lookup_fsal("VFS");
+		if (fsal_hdl == NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"HELP! even VFS FSAL is not resident!");
+			err_flag = true;
+		}
 	}
-	if (!err_flag && fsal_hdl != NULL) {
+
+	if (!err_flag) {
 		fsal_status_t expres = fsal_hdl->ops->create_export(
 					fsal_hdl,
 					p_entry->
@@ -2394,9 +2339,6 @@ static int BuildExportEntry(config_item_t block)
 		}
 
 		fsal_hdl->ops->put(fsal_hdl);
-	} else {
-		LogCrit(COMPONENT_CONFIG,
-			"HELP! even VFS FSAL is not resident!");
 	}
 
 	/* Append the default Access list to the export so someone owns them */
@@ -2433,6 +2375,185 @@ static int BuildExportEntry(config_item_t block)
 }
 
 /**
+ * @brief builds an export entry for '/' with default parameters
+ *
+ * If export_id = 0 has not been specified, and not other export
+ * for Pseudo "/" has been specified, build an FSAL_PSEUDO export
+ * for the root of the Pseudo FS.
+ *
+ * @return true if error, false otherwise.
+ */
+
+static bool BuildRootExport()
+{
+	exportlist_t *p_entry = NULL;
+	struct gsh_export *exp;
+	struct fsal_module *fsal_hdl = NULL;
+	exportlist_client_t access_list;
+	exportlist_client_t *p_access_list;
+	bool err_flag = false;
+	struct glist_head *glist;
+
+	/* See if export_id = 0 has already been specified */
+	exp = get_gsh_export(0, true);
+
+	if (exp != NULL) {
+		/* export_id = 0 has already been specified */
+		put_gsh_export(exp);
+		return false;
+	}
+
+	/* See if another export with Pseudo = "/" has already been specified.
+	 */
+	exp = get_gsh_export_by_pseudo("/", true);
+
+	if (exp != NULL) {
+		/* export_id = 0 has already been specified */
+		put_gsh_export(exp);
+		return false;
+	}
+
+	/* Ok, we need to create export_id = 0 */
+	exp = get_gsh_export(0, false);
+
+	if (exp == NULL) {
+		/* gsh_calloc error */
+		LogCrit(COMPONENT_CONFIG,
+			"Unable to allocate space for export id 0");
+		return true;
+	}
+
+	/* initialize the exportlist part with the id */
+	p_entry = &exp->export;
+
+	if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
+		LogCrit(COMPONENT_CONFIG,
+			"Could not initialize exp_state_mutex for export id 0");
+		put_gsh_export(exp);
+		remove_gsh_export(0);
+		return -1;
+	}
+
+	p_entry->UseCookieVerifier = true;
+	p_entry->UseCookieVerifier = true;
+	p_entry->filesystem_id.major = 152;
+	p_entry->filesystem_id.minor = 152;
+	p_entry->MaxWrite = 16384;
+	p_entry->MaxRead = 16384;
+	p_entry->PrefWrite = 16384;
+	p_entry->PrefRead = 16384;
+	p_entry->PrefReaddir = 16384;
+	p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
+	glist_init(&p_entry->exp_state_list);
+	glist_init(&p_entry->exp_lock_list);
+	glist_init(&p_entry->exp_nlm_share_list);
+	glist_init(&p_entry->clients.client_list);
+
+	/* Init the access list */
+	p_access_list = &access_list;
+	glist_init(&p_access_list->client_list);
+	p_access_list->num_clients = 0;
+
+	/* Default anonymous uid and gid */
+	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
+	p_entry->export_perms.anonymous_gid = (gid_t) ANON_GID;
+
+	/* Support only NFS v4 and both transports.
+	 * Pseudo is provided
+	 * Root is allowed
+	 * MD Read Access
+	 * All auth types
+	 */
+	p_entry->export_perms.options = EXPORT_OPTION_NFSV4 |
+					EXPORT_OPTION_TRANSPORTS |
+					EXPORT_OPTION_PSEUDO |
+					EXPORT_OPTION_MD_READ_ACCESS |
+					EXPORT_OPTION_ROOT |
+					EXPORT_OPTION_AUTH_TYPES;
+
+	/* Set the fullpath to "/" */
+	p_entry->fullpath = gsh_strdup("/");
+
+	/* Set MDONLY_RO_Access="*" */
+	parseAccessParam(CONF_EXPORT_ACCESS,
+			 "*",
+			 p_access_list,
+			 EXPORT_OPTION_ACCESS_OPT_LIST,
+			 CONF_LABEL_EXPORT);
+
+	/* Copy the permissions into the client
+	 * list entries.
+	 */
+	glist_for_each(glist, &p_access_list->client_list) {
+		exportlist_client_entry_t *client_entry;
+
+		client_entry =
+		    glist_entry(glist, exportlist_client_entry_t, cle_list);
+		client_entry->client_perms = p_entry->export_perms;
+		if (isFullDebug(COMPONENT_CONFIG))
+			LogClientListEntry(COMPONENT_CONFIG, client_entry);
+	}
+
+	/* Set Pseudo Path to "/" */
+	p_entry->pseudopath = gsh_strdup("/");
+
+	/* Assign FSAL_PSEUDO */
+	fsal_hdl = lookup_fsal("PSEUDO");
+
+	if (fsal_hdl == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"FSAL PSEUDO is not loaded!");
+		err_flag = true;
+	} else {
+		fsal_status_t rc;
+
+		rc = fsal_hdl->ops->create_export(fsal_hdl,
+						  p_entry->fullpath,
+						  p_entry->FS_specific,
+						  p_entry,
+						  NULL,
+						  &fsal_up_top,
+						  &p_entry->export_hdl);
+
+		if (FSAL_IS_ERROR(rc)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Could not create FSAL export for %s",
+				p_entry->fullpath);
+			err_flag = true;
+		}
+
+		fsal_hdl->ops->put(fsal_hdl);
+	}
+
+	/* Append the default Access list to the export so someone owns them */
+	glist_add_list_tail(&p_entry->clients.client_list,
+			    &p_access_list->client_list);
+	p_entry->clients.num_clients += p_access_list->num_clients;
+
+	/* check if there had any error.
+	 * if so, free the p_entry and return an error.
+	 */
+	if (err_flag) {
+		LogCrit(COMPONENT_CONFIG,
+			"NFS READ %s: Export 0 (/) had errors, ignoring entry",
+			CONF_LABEL_EXPORT);
+		put_gsh_export(exp);
+		remove_gsh_export(0);
+		return true;
+	}
+
+	set_gsh_export_state(exp, EXPORT_READY);
+
+	LogEvent(COMPONENT_CONFIG,
+		 "NFS READ %s: Export 0 (/) successfully created",
+		 CONF_LABEL_EXPORT);
+
+	put_gsh_export(exp);	/* all done, let go */
+
+	return false;
+}
+
+/**
  * @brief Free resources attached to an export
  *
  * @param export [IN] pointer to export
@@ -2445,9 +2566,6 @@ void free_export_resources(exportlist_t *export)
 	fsal_status_t fsal_status;
 
 	FreeClientList(&export->clients);
-	if (export->exp_root_cache_inode)
-		cache_inode_put(export->exp_root_cache_inode);
-	export->exp_root_cache_inode = NULL;
 	if (export->export_hdl != NULL) {
 		if (export->export_hdl->ops->put(export->export_hdl) == 0) {
 			fsal_status =
@@ -2472,92 +2590,6 @@ void free_export_resources(exportlist_t *export)
 		gsh_free(export->FS_specific);
 	if (export->FS_tag != NULL)
 		gsh_free(export->FS_tag);
-}
-
-/**
- * @brief builds an export entry for '/' with default parameters
- *
- * @note This is only referenced by MainNFSD/fuse_binding.c which is
- * not operational at this point.  When that happens, this will have
- * to be reworked into export manager.
- *
- * @return Root export.
- */
-
-exportlist_t *BuildDefaultExport()
-{
-	exportlist_t *p_entry;
-	bool rc;
-	struct client_args args;
-
-	/* allocates new export entry */
-	p_entry = gsh_calloc(1, sizeof(exportlist_t));
-
-	if (p_entry == NULL)
-		return NULL;
-
-  /** @todo set default values here */
-
-	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
-
-	/* By default, export is RW */
-	p_entry->export_perms.options |= EXPORT_OPTION_RW_ACCESS;
-
-	/* by default, we support auth_none and auth_sys */
-	p_entry->export_perms.options |=
-	    EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
-
-	/* by default, we support all NFS versions supported
-	 * by the core and both transport protocols
-	 */
-	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
-		p_entry->export_perms.options |= EXPORT_OPTION_NFSV3;
-	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
-		p_entry->export_perms.options |= EXPORT_OPTION_NFSV4;
-	p_entry->export_perms.options |= EXPORT_OPTION_TRANSPORTS;
-
-	p_entry->filesystem_id.major = 101;
-	p_entry->filesystem_id.minor = 101;
-
-	p_entry->MaxWrite = 0x100000;
-	p_entry->MaxRead = 0x100000;
-	p_entry->PrefWrite = 0x100000;
-	p_entry->PrefRead = 0x100000;
-	p_entry->PrefReaddir = 0x100000;
-
-	p_entry->FS_tag = gsh_strdup("ganesha");
-
-	p_entry->id = 1;
-
-	p_entry->fullpath = gsh_strdup("/");
-	p_entry->pseudopath = gsh_strdup("/");
-
-	p_entry->UseCookieVerifier = true;
-
-	glist_init(&p_entry->clients.client_list);
-	glist_init(&p_entry->exp_state_list);
-	glist_init(&p_entry->exp_lock_list);
-
-  /**
-   * Grant root access to all clients
-   */
-	args.client = &p_entry->clients;
-	args.option = EXPORT_OPTION_ROOT;
-	args.var_name = CONF_EXPORT_ROOT;
-	rc = add_export_client("*", &args);
-	if (!rc) {
-		LogCrit(COMPONENT_CONFIG,
-			"NFS READ EXPORT: Invalid client \"*\"");
-		gsh_free(p_entry);
-		return NULL;
-	}
-
-	LogEvent(COMPONENT_CONFIG,
-		 "NFS READ_EXPORT: Export %d (%s) successfully parsed",
-		 p_entry->id, p_entry->fullpath);
-
-	return p_entry;
-
 }
 
 /**
@@ -2613,6 +2645,9 @@ int ReadExports(config_file_t in_config)
 		}
 	}
 
+	if (!err_flag)
+		err_flag = BuildRootExport();
+
 	if (err_flag)
 		return -1;
 	else
@@ -2621,18 +2656,13 @@ int ReadExports(config_file_t in_config)
 
 /**
  * @brief pkginit callback to initialize exports from nfs_init
+ *
+ * Assumes being called with the export_by_id.lock held.
  */
 
-static bool init_export(struct gsh_export *cl, void *state)
+static bool init_export_cb(struct gsh_export *exp, void *state)
 {
-	cache_inode_status_t status;
-	cache_entry_t *entry;
-
-	status = nfs_export_get_root_entry(&cl->export, &entry);
-	if (status != CACHE_INODE_SUCCESS || entry == NULL)
-		return false;
-	else
-		return true;
+	return init_export_root(exp);
 }
 
 /**
@@ -2641,7 +2671,286 @@ static bool init_export(struct gsh_export *cl, void *state)
 
 void exports_pkginit(void)
 {
-	foreach_gsh_export(init_export, NULL);
+	foreach_gsh_export(init_export_cb, NULL);
+}
+
+/**
+ * @brief Function to be called from cache_inode_get_protected to get an
+ * export's root entry.
+ *
+ * @param entry  [IN/OUT] call by ref pointer to store cache entry
+ * @param source [IN] void pointer to the export
+ *
+ * @return cache inode status code
+ * @retval CACHE_INODE_FSAL_ESTALE indicates this export no longer has a root
+ * entry
+ */
+
+cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
+{
+	exportlist_t *export = source;
+
+	*entry = export->exp_root_cache_inode;
+
+	if (unlikely((*entry) == NULL))
+		return CACHE_INODE_FSAL_ESTALE;
+	else
+		return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @brief Return a reference to the root cache inode entry of the export
+ *
+ * Must be called with the caller holding a reference to the export.
+ *
+ * Returns with an additional reference to the cache inode held for use by the
+ * caller.
+ *
+ * @param export [IN] the aforementioned export
+ * @param entry  [IN/OUT] call by ref pointer to store cache entry
+ *
+ * @return cache inode status code
+ */
+
+cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
+					       cache_entry_t **entry)
+{
+	return cache_inode_get_protected(entry,
+					 &exp->lock,
+					 export_get_root_entry,
+					 &exp->export);
+}
+
+/**
+ * @brief Initialize the root cache inode for an export.
+ *
+ * Assumes being called with the export_by_id.lock held.
+ *
+ * @param exp [IN] the export
+ *
+ * @return true if successful.
+ */
+
+bool init_export_root(struct gsh_export *exp)
+{
+	exportlist_t *export = &exp->export;
+	fsal_status_t fsal_status;
+	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *root_handle;
+	cache_entry_t *entry = NULL;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+
+	/* Initialize req_ctx.
+	 * Note that a zeroed creds works just fine as root creds.
+	 */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = exp;
+
+	/* Lookup for the FSAL Path */
+	fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
+							   &req_ctx,
+							   export->fullpath,
+							   &root_handle);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogCrit(COMPONENT_INIT,
+			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
+			export->id, export->fullpath,
+			msg_fsal_err(fsal_status.major), fsal_status.minor);
+		return false;
+	}
+
+	/* Add this entry to the Cache Inode as a "root" entry */
+
+	/* Get the cache inode entry (and an LRU reference */
+	cache_status = cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE,
+					     &entry, &req_ctx);
+
+	if (entry == NULL) {
+		LogCrit(COMPONENT_INIT,
+			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
+			export->fullpath,
+			export->id,
+			cache_inode_err_str(cache_status));
+		return false;
+	}
+
+	/* Instead of an LRU reference, we must hold a pin reference */
+	cache_status = cache_inode_inc_pin_ref(entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
+			export->fullpath,
+			export->id,
+			cache_inode_err_str(cache_status));
+
+		/* Release the LRU reference and return failure. */
+		cache_inode_put(entry);
+		return false;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+	export->exp_root_cache_inode = entry;
+
+	glist_add_tail(&entry->object.dir.export_roots,
+		       &export->exp_root_list);
+
+	/* Protect this entry from removal (unlink) */
+	atomic_inc_int32_t(&entry->exp_root_refcount);
+
+	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	LogInfo(COMPONENT_INIT,
+		"Added root entry for path %s on export_id=%d",
+		export->fullpath, export->id);
+
+	/* Release the LRU reference and return success. */
+	cache_inode_put(entry);
+	return true;
+}
+
+/**
+ * @brief Release the root cache inode for an export.
+ *
+ * @param exp [IN] the export
+ */
+
+void release_export_root_locked(struct gsh_export *exp)
+{
+	exportlist_t *export = &exp->export;
+	cache_entry_t *entry = NULL;
+
+	glist_del(&export->exp_root_list);
+	entry = export->exp_root_cache_inode;
+	export->exp_root_cache_inode = NULL;
+
+	if (entry != NULL) {
+		/* Allow this entry to be removed (unlink) */
+		atomic_dec_int32_t(&entry->exp_root_refcount);
+
+		/* Release the pin reference */
+		cache_inode_dec_pin_ref(entry, false);
+	}
+
+	LogDebug(COMPONENT_INIT,
+		 "Released root entry %p for path %s on export_id=%d",
+		 entry, export->fullpath, export->id);
+}
+
+/**
+ * @brief Release the root cache inode for an export.
+ *
+ * @param exp [IN] the export
+ */
+
+void release_export_root(struct gsh_export *exp)
+{
+	cache_entry_t *entry = NULL;
+	cache_inode_status_t status;
+
+	/* Get a reference to the root entry */
+	status = nfs_export_get_root_entry(exp, &entry);
+
+	if (status != CACHE_INODE_SUCCESS) {
+		/* No more root entry, bail out, this export is
+		 * probably about to be destroyed.
+		 */
+		LogInfo(COMPONENT_CACHE_INODE,
+			"Export root for export id %d status %s",
+			exp->export.id, cache_inode_err_str(status));
+		return;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+	/* Make the export unreachable as a root cache inode */
+	release_export_root_locked(exp);
+
+	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	cache_inode_put(entry);
+}
+
+void unexport(struct gsh_export *export)
+{
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
+	opctx.export = export;
+
+	/* Make the export unreachable */
+	pseudo_unmount_export(export, &opctx);
+	remove_gsh_export(export->export.id);
+	release_export_root(export);
+}
+
+/**
+ * @brief Handle killing a cache inode entry that might be an export root.
+ *
+ * @param entry [IN] the cache inode entry
+ */
+
+void kill_export_root_entry(cache_entry_t *entry)
+{
+	exportlist_t *export;
+	struct gsh_export *exp;
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
+
+	if (entry->type != DIRECTORY)
+		return;
+
+	while (true) {
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+		export = glist_first_entry(&entry->object.dir.export_roots,
+					   exportlist_t,
+					   exp_root_list);
+
+		if (export == NULL) {
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			return;
+		}
+
+		exp = container_of(export, struct gsh_export, export);
+		get_gsh_export_ref(exp);
+		LogInfo(COMPONENT_CONFIG,
+			"Killing export_id %d because root entry went bad",
+			export->id);
+
+		PTHREAD_RWLOCK_wrlock(&exp->lock);
+
+		/* Make the export unreachable as a root cache inode */
+		release_export_root_locked(exp);
+
+		PTHREAD_RWLOCK_unlock(&exp->lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+		/* Make the export otherwise unreachable */
+		opctx.export = exp;
+		pseudo_unmount_export(exp, &opctx);
+		remove_gsh_export(exp->export.id);
+
+		put_gsh_export(exp);
+	}
 }
 
 /**
@@ -3398,67 +3707,3 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 
 	return;
 }				/* nfs_export_check_access */
-
-/**
- * @brief Lookup and associate a cache inode entry with the root of the export
- *
- * Fetch the cache entry of the export's root.  If not there yet, look it up
- * which takes references.  This is fine for attaching it to an export but
- * other uses (psesudofs) should take their own references while holding it.
- *
- * @param export [IN] the aforementioned export
- * @param entryp [IN/OUT] call by ref pointer to store cache entry
- *
- * @return status cache inode status code
- */
-
-cache_inode_status_t nfs_export_get_root_entry(exportlist_t *export,
-					       cache_entry_t **entryp)
-{
-	fsal_status_t fsal_status;
-	cache_inode_status_t cache_status;
-	struct fsal_obj_handle *root_handle;
-	cache_entry_t *entry = NULL;
-
-	if (export->exp_root_cache_inode != NULL) {
-		*entryp = export->exp_root_cache_inode;
-		return CACHE_INODE_SUCCESS;
-	}
-	/* Lookup for the FSAL Path */
-	fsal_status =
-	    export->export_hdl->ops->lookup_path(export->export_hdl, NULL,
-						 export->fullpath,
-						 &root_handle);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_INIT,
-			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
-			export->id, export->fullpath,
-			msg_fsal_err(fsal_status.major), fsal_status.minor);
-		return cache_inode_error_convert(fsal_status);
-	}
-	/* Add this entry to the Cache Inode as a "root" entry */
-
-	cache_status =
-	    cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE, &entry);
-	if (entry != NULL) {
-		/* cache_inode_get returns a cache_entry with
-		 * reference count of 2, where 1 is the sentinel value of
-		 * a cache entry in the hash table.  The export list in
-		 * this case owns the extra reference.  In the future
-		 * if functionality is added to dynamically add and remove
-		 * export entries, then the function to remove an export
-		 * entry MUST put the extra reference.
-		 */
-		export->exp_root_cache_inode = entry;
-		LogInfo(COMPONENT_INIT,
-			"Added root entry for path %s on export_id=%d",
-			export->fullpath, export->id);
-		*entryp = export->exp_root_cache_inode;
-	} else {
-		LogCrit(COMPONENT_INIT,
-			"Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
-			export->fullpath, export->id, cache_status);
-		*entryp = NULL;
-	}
-	return cache_status;
-}

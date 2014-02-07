@@ -424,6 +424,9 @@ cache_inode_lru_clean(cache_entry_t *entry)
 		entry->obj_handle = NULL;
 	}
 
+	/* Clean out the export mapping before deconstruction */
+	clean_mapping(entry);
+
 	/* Finalize last bits of the cache entry */
 	cache_inode_key_delete(&entry->fh_hk.key);
 	pthread_rwlock_destroy(&entry->content_lock);
@@ -560,6 +563,56 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 		q = &qlane->cleanup;
 		glist_add(&q->q, &lru->q);
 		++(q->size);
+	}
+
+	QUNLOCK(qlane);
+}
+
+/**
+ * @brief Push an entry to the cleanup queue that may be unexported
+ * for out-of-line cleanup
+ *
+ * This routine is used to try pushing a cache inode into the cleanup
+ * queue. If the entry ends up with another LRU reference before this
+ * is accomplished, then don't push it to cleanup.
+ *
+ * This will be used when unexporting an export. Any cache inode entry
+ * that only belonged to that export is a candidate for cleanup.
+ * However, it is possible the entry is still accessible via another
+ * export, and an LRU reference might be gained before we can lock the
+ * AVL tree. In that case, the entry must be left alone (thus
+ * cache_inode_kill_entry is NOT suitable for this purpose).
+ *
+ * @param[in] entry  The entry to clean
+ */
+void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
+{
+	cache_inode_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	cih_latch_t latch;
+
+	QLOCK(qlane);
+
+	if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
+			    __func__, __LINE__)) {
+		uint32_t refcnt;
+		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+		/* there are two cases which permit reclaim,
+		 * entry is:
+		 * 1. reachable but unref'd (refcnt==2)
+		 * 2. unreachable, being removed (plus refcnt==0)
+		 *    for safety, take only the former
+		 */
+		if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
+			/* it worked */
+			struct lru_q *q = lru_queue_of(entry);
+			cih_remove_latched(entry, &latch,
+					   CIH_REMOVE_QLOCKED);
+			LRU_DQ_SAFE(lru, q);
+			entry->lru.qid = LRU_ENTRY_CLEANUP;
+		}
+
+		cih_latch_rele(&latch);
 	}
 
 	QUNLOCK(qlane);
@@ -1055,12 +1108,52 @@ cache_inode_lru_pkgshutdown(void)
 	return rc;
 }
 
+static inline bool init_rw_locks(cache_entry_t *entry)
+{
+	int rc;
+	bool attr_lock_init = false;
+	bool content_lock_init = false;
+
+	/* Initialize the entry locks */
+	rc = pthread_rwlock_init(&entry->attr_lock, NULL);
+
+	if (rc != 0)
+		goto fail;
+
+	attr_lock_init = true;
+
+	rc = pthread_rwlock_init(&entry->content_lock, NULL);
+
+	if (rc != 0)
+		goto fail;
+
+	content_lock_init = true;
+
+	rc = pthread_rwlock_init(&entry->state_lock, NULL);
+
+	if (rc == 0)
+		return true;
+
+fail:
+
+	LogCrit(COMPONENT_CACHE_INODE,
+		"pthread_rwlock_init returned %d (%s)",
+		rc, strerror(rc));
+
+	if (attr_lock_init)
+		pthread_rwlock_destroy(&entry->attr_lock);
+
+	if (content_lock_init)
+		pthread_rwlock_destroy(&entry->content_lock);
+
+	return false;
+}
+
 static cache_inode_status_t
 alloc_cache_entry(cache_entry_t **entry)
 {
 	cache_inode_status_t status;
 	cache_entry_t *nentry;
-	int rc;
 
 	nentry = pool_alloc(cache_inode_entry_pool, NULL);
 	if (!nentry) {
@@ -1071,19 +1164,8 @@ alloc_cache_entry(cache_entry_t **entry)
 	}
 
 	/* Initialize the entry locks */
-	rc = pthread_rwlock_init(&nentry->attr_lock, NULL);
-
-	if (rc == 0)
-		rc = pthread_rwlock_init(&nentry->content_lock, NULL);
-
-	if (rc == 0)
-		rc = pthread_rwlock_init(&nentry->state_lock, NULL);
-
-	if (rc != 0) {
+	if (!init_rw_locks(nentry)) {
 		/* Recycle */
-		LogCrit(COMPONENT_CACHE_INODE,
-			"pthread_rwlock_init returned %d (%s)", rc,
-			strerror(rc));
 		status = CACHE_INODE_INIT_ENTRY_FAILED;
 		pool_free(cache_inode_entry_pool, nentry);
 		nentry = NULL;
@@ -1125,6 +1207,13 @@ cache_inode_lru_get(cache_entry_t **entry)
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Recycling entry at %p.", nentry);
 		cache_inode_lru_clean(nentry);
+		if (!init_rw_locks(nentry)) {
+			/* Recycle */
+			status = CACHE_INODE_INIT_ENTRY_FAILED;
+			pool_free(cache_inode_entry_pool, nentry);
+			nentry = NULL;
+			goto out;
+		}
 	} else {
 		/* alloc entry */
 		status = alloc_cache_entry(&nentry);
@@ -1175,8 +1264,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 	/* Pin if not pinned already */
 	cond_pin_entry(entry, LRU_FLAG_NONE /* future */);
 
-	/* take pin and ref counts */
-	atomic_inc_int32_t(&entry->lru.refcnt);
+	/* take pin ref count */
 	entry->lru.pin_refcnt++;
 
 	QUNLOCK(qlane);		/* !LOCKED (lane) */
@@ -1191,13 +1279,11 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
  * partition for its lane.  If the entry is not pinned, it is a
  * no-op.
  *
- * @param[in] entry  The entry to be moved
+ * @param[in] entry      The entry to be moved
+ * @param[in] closefile  Indicates if file should be closed
  *
- * @retval CACHE_INODE_SUCCESS if the entry was moved.
  */
-cache_inode_status_t
-cache_inode_dec_pin_ref(cache_entry_t *entry,
-			bool closefile)
+void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 {
 	uint32_t lane = entry->lru.lane;
 	cache_inode_lru_t *lru = &entry->lru;
@@ -1232,11 +1318,6 @@ cache_inode_dec_pin_ref(cache_entry_t *entry,
 	}
 
 	QUNLOCK(qlane);
-
-	/* Also release an LRU reference */
-	atomic_dec_int32_t(&entry->lru.refcnt);
-
-	return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -1361,10 +1442,11 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 void
 cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 {
-	uint64_t refcnt;
+	int32_t refcnt;
 	enum lru_q_id qid;
 
 	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+
 	if (unlikely(refcnt == 0)) {
 
 		uint32_t lane = entry->lru.lane;
@@ -1398,8 +1480,13 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 			QUNLOCK(qlane);
 
 		/* inline cleanup */
-		if (qid == LRU_ENTRY_CLEANUP)
+		if (qid == LRU_ENTRY_CLEANUP) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "LRU_ENTRY_CLEANUP of entry %p",
+				 entry);
 			state_wipe_file(entry);
+			kill_export_root_entry(entry);
+		}
 
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);

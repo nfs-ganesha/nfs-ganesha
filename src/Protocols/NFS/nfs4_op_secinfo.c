@@ -65,6 +65,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_src = NULL;
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 	int num_entry = 0;
+	export_perms_t save_export_perms;
+	struct gsh_export *saved_gsh_export = NULL;
 
 	resp->resop = NFS4_OP_SECINFO;
 	res_SECINFO4->status = NFS4_OK;
@@ -86,32 +88,88 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_SECINFO4->status != NFS4_OK)
 		goto out;
 
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		/* Cheat and pretend we are a LOOKUP, this will
-		 * set up the currentFH and related fields in the
-		 * compound data. This includes calling nfs4_MakeCred.
+
+	cache_status = cache_inode_lookup(data->current_entry,
+					  secinfo_fh_name,
+					  data->req_ctx,
+					  &entry_src);
+
+	if (entry_src == NULL) {
+		res_SECINFO4->status = nfs4_Errno(cache_status);
+		goto out;
+	}
+
+	/* Get attr_lock for looking at junction_export */
+	PTHREAD_RWLOCK_rdlock(&entry_src->attr_lock);
+
+	if (entry_src->type == DIRECTORY &&
+	    entry_src->object.dir.junction_export != NULL) {
+		/* Handle junction */
+		cache_entry_t *entry = NULL;
+
+		/* Save the compound data context */
+		save_export_perms = data->export_perms;
+		saved_gsh_export = data->req_ctx->export;
+
+		/* Get a reference to the export and stash it in
+		 * compound data.
 		 */
-		if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK)
-		    && (res_SECINFO4->status != NFS4ERR_WRONGSEC)) {
-			/* reuse lookup result, need to set the correct OP */
-			resp->resop = NFS4_OP_SECINFO;
-			if (secinfo_fh_name)
-				gsh_free(secinfo_fh_name);
+		get_gsh_export_ref(entry_src->object.dir.junction_export);
 
-			return res_SECINFO4->status;
+		data->req_ctx->export = entry_src->object.dir.junction_export;
+		data->export = &data->req_ctx->export->export;
+
+		/* Release attr_lock */
+		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
+
+		/* Build credentials */
+		res_SECINFO4->status = nfs4_MakeCred(data);
+
+		/* Test for access error (export should not be visible). */
+		if (res_SECINFO4->status == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client doesn't
+			 * have access to this export, return NFS4ERR_NOENT to
+			 * hide it. It was not visible in READDIR response.
+			 */
+			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+				 data->export->id, data->export->fullpath);
+			res_SECINFO4->status = NFS4ERR_NOENT;
+			goto out;
 		}
-		/* reuse lookup result, need to set the correct OP */
-		resp->resop = NFS4_OP_SECINFO;
-	} else {
-		cache_status = cache_inode_lookup(data->current_entry,
-						  secinfo_fh_name,
-						  data->req_ctx,
-						  &entry_src);
 
-		if (entry_src == NULL) {
+		/* Only other error is NFS4ERR_WRONGSEC which is actually
+		 * what we expect here. Finish crossing the junction.
+		 */
+
+		cache_status =
+		    nfs_export_get_root_entry(data->req_ctx->export, &entry);
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			LogMajor(COMPONENT_NFS_V4_PSEUDO,
+				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+				 data->export->fullpath,
+				 data->export->id,
+				 cache_inode_err_str(cache_status));
+
 			res_SECINFO4->status = nfs4_Errno(cache_status);
 			goto out;
 		}
+
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			     data->export->fullpath,
+			     data->export->id,
+			     secinfo_fh_name);
+
+		/* Swap in the entry on the other side of the junction. */
+		if (entry_src)
+			cache_inode_put(entry_src);
+
+		entry_src = entry;
+	} else {
+		/* Release attr_lock since it wasn't a junction. */
+		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
 	}
 
 	/* Get the number of entries */
@@ -135,9 +193,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val == NULL) {
 		res_SECINFO4->status = NFS4ERR_SERVERFAULT;
-
-		if (entry_src != NULL)
-			cache_inode_put(entry_src);
 		goto out;
 	}
 
@@ -191,18 +246,11 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-	if (entry_src != NULL)
-		cache_inode_put(entry_src);
-
 	if (data->minorversion != 0) {
 		/* Need to clear out CurrentFH */
-		if (data->current_entry) {
-			cache_inode_put(data->current_entry);
-			data->current_entry = NULL;
-		}
+		set_current_entry(data, NULL, false);
 
 		data->currentFH.nfs_fh4_len = 0;
-		data->current_filetype = NO_FILE_TYPE;
 
 		/* Release CurrentFH reference to export. */
 		if (data->req_ctx->export) {
@@ -210,11 +258,42 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			data->req_ctx->export = NULL;
 			data->export = NULL;
 		}
+
+		if (saved_gsh_export != NULL) {
+			/* Don't need saved export */
+			put_gsh_export(saved_gsh_export);
+			saved_gsh_export = NULL;
+		}
 	}
 
 	res_SECINFO4->status = NFS4_OK;
 
  out:
+
+	if (saved_gsh_export != NULL) {
+		/* Restore export stuff */
+		if (data->req_ctx->export)
+			put_gsh_export(data->req_ctx->export);
+
+		data->export_perms = save_export_perms;
+		data->req_ctx->export = saved_gsh_export;
+		data->export = &data->req_ctx->export->export;
+
+		/* Restore creds */
+		if (!get_req_uid_gid(data->req,
+				     data->req_ctx->creds,
+				     &data->export_perms)) {
+			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+				"Failure to restore creds");
+		} else {
+			nfs_check_anon(&data->export_perms,
+				       data->export,
+				       data->req_ctx->creds);
+		}
+	}
+
+	if (entry_src != NULL)
+		cache_inode_put(entry_src);
 
 	if (secinfo_fh_name)
 		gsh_free(secinfo_fh_name);

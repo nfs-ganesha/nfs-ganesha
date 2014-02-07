@@ -824,7 +824,9 @@ static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t commit(struct fsal_obj_handle *handle_pub, off_t offset,
+static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
+			    const struct req_op_context *opctx,
+			    off_t offset,
 			    size_t len)
 {
 	/* Generic status return */

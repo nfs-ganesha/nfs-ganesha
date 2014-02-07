@@ -166,7 +166,7 @@ key_locate(struct hash_table *ht, const struct gsh_buffdesc *key,
 		    &(partition->cache[cache_offsetof(ht, rbthash)]);
 		cursor = atomic_fetch_voidptr(cache_slot);
 		LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-			     "hash %s index %" PRIu32 " slot %d\n",
+			     "hash %s index %" PRIu32 " slot %d",
 			     (cursor) ? "hit" : "miss", index,
 			     cache_offsetof(ht, rbthash));
 		if (cursor) {
@@ -784,12 +784,12 @@ hashtable_deletelatched(struct hash_table *ht,
 			    == 0) {
 				LogFullDebug(COMPONENT_HASHTABLE_CACHE,
 					     "hash clear index %d slot %" PRIu64
-					     "\n", latch->index, offset);
+					     latch->index, offset);
 				partition->cache[offset] = NULL;
 			}
 #else
 			LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-				     "hash clear slot %d\n", offset);
+				     "hash clear slot %d", offset);
 			partition->cache[offset] = NULL;
 #endif
 		}

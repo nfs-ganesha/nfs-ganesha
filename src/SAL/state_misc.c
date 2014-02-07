@@ -48,6 +48,7 @@
 #include "hashtable.h"
 #include "fsal.h"
 #include "sal_functions.h"
+#include "export_mgr.h"
 
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
@@ -207,6 +208,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_NOT_FOUND;
 	case CACHE_INODE_BADNAME:
 	case CACHE_INODE_INVALID_ARGUMENT:
+	case CACHE_INODE_CROSS_JUNCTION:
 		return STATE_INVALID_ARGUMENT;
 	case CACHE_INODE_INSERT_ERROR:
 		return STATE_INSERT_ERROR;
@@ -707,6 +709,13 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	}
 
 	return nfserror;
+}
+
+bool state_unlock_err_ok(state_status_t status)
+{
+	return status == STATE_SUCCESS ||
+	       status == STATE_FSAL_ESTALE ||
+	       status == STATE_DEAD_ENTRY;
 }
 
 /** String for undefined state owner types */
@@ -1288,5 +1297,30 @@ void dump_all_owners(void)
 	pthread_mutex_unlock(&all_state_owners_mutex);
 }
 #endif
+
+/**
+ * @brief Release all the state belonging to an export.
+ *
+ * @param[in]  exp   The export to release state for.
+ *
+ */
+
+void state_release_export(struct gsh_export *exp)
+{
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+
+	/* Initialize req_ctx.
+	 * Note that a zeroed creds works just fine as root creds.
+	 */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = exp;
+
+	state_export_unlock_all(&req_ctx);
+	state_export_release_nfs4_state(&exp->export);
+	state_export_unshare_all(&req_ctx);
+}
 
 /** @} */

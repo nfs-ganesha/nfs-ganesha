@@ -57,6 +57,7 @@
 
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
+struct gsh_export;
 
 /** Maximum size of NFSv2 handle */
 static const size_t FILEHANDLE_MAX_LEN_V2 = 32;
@@ -166,7 +167,6 @@ typedef struct cache_inode_share__ {
 typedef struct cache_inode_key {
 	uint64_t hk;		/* hash key */
 	struct gsh_buffdesc kv;
-	uint32_t exportid;	/* NOT HASHED OR COMPARED! */
 } cache_inode_key_t;
 
 /**
@@ -193,7 +193,6 @@ cache_inode_key_dup(cache_inode_key_t *tgt,
 
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
-	tgt->exportid = src->exportid;
 
 	return 0;
 }
@@ -252,6 +251,22 @@ cache_inode_free_dirent(cache_inode_dir_entry_t *dirent)
 		gsh_free(dirent->ckey.kv.addr);
 	gsh_free(dirent);
 }
+
+/**
+ * @brief Represents one of the many-many links between inodes and exports.
+ *
+ */
+
+struct entry_export_map {
+	/** The relevant cache inode entry */
+	cache_entry_t *entry;
+	/** The export the entry belongs to */
+	struct gsh_export *export;
+	/** List of entries per export */
+	struct glist_head entry_per_export;
+	/** List of exports per entry */
+	struct glist_head export_per_entry;
+};
 
 /**
  * @brief Represents a cached inode
@@ -335,6 +350,10 @@ struct cache_entry_t {
 	time_t attr_time;
 	/** New style LRU link */
 	cache_inode_lru_t lru;
+	/** There is one export root reference counted for each export
+	    for which this entry is a root for. This field is used
+	    with the atomic inc/dec/fetch routines. */
+	int32_t exp_root_refcount;
 	/** This is separated out from the content lock, since there
 	    are state oerations that don't affect anything guarded by
 	    content (for example, a layout return or request has no
@@ -344,6 +363,8 @@ struct cache_entry_t {
 	pthread_rwlock_t state_lock;
 	/** States on this cache entry */
 	struct glist_head state_list;
+	/** Exports per entry (protected by attr_lock) */
+	struct glist_head export_list;
 	/** Layout recalls on this entry */
 	struct glist_head layoutrecall_list;
 	/** Lock on type-specific cached content.  See locking
@@ -375,6 +396,12 @@ struct cache_entry_t {
 				/** Heuristic. Expect 0. */
 				uint32_t collisions;
 			} avl;
+			/** If this is a junction, the export this node points
+			    to. Protected by the attr_lock. */
+			struct gsh_export *junction_export;
+			/** List of exports that have this cache inode
+			    as their root. Protected by the attr_lock. */
+			struct glist_head export_roots;
 		} dir;		/*< DIRECTORY data */
 	} object;
 };
@@ -486,6 +513,7 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_FSAL_SHARE_DENIED = 41,
 	CACHE_INODE_BADNAME = 42,
 	CACHE_INODE_UNION_NOTSUPP = 43,
+	CACHE_INODE_CROSS_JUNCTION = 44,
 } cache_inode_status_t;
 
 /**
@@ -535,6 +563,9 @@ cache_inode_status_t cache_inode_init(void);
 #define CIG_KEYED_FLAG_NONE         0x0000
 #define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
 
+bool check_mapping(cache_entry_t *entry,
+		   struct gsh_export *export);
+void clean_mapping(cache_entry_t *entry);
 cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				     const struct req_op_context *opctx,
 				     cache_entry_t **entry);
@@ -542,7 +573,14 @@ cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
 				     const struct req_op_context *req_ctx,
 				     uint32_t flags,
 				     cache_inode_status_t *status);
+cache_inode_status_t
+cache_inode_get_protected(cache_entry_t **entry,
+			  pthread_rwlock_t *lock,
+			  cache_inode_status_t get_entry(cache_entry_t **,
+							 void *),
+			  void *source);
 void cache_inode_put(cache_entry_t *entry);
+void cache_inode_unexport(struct gsh_export *export);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
 					   fsal_accessflags_t access_type,
@@ -703,7 +741,8 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
 cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 					   uint32_t flags,
-					   cache_entry_t **entry);
+					   cache_entry_t **entry,
+					   const struct req_op_context *opctx);
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      cache_inode_io_direction_t io_direction,
@@ -760,9 +799,6 @@ cache_inode_status_t cache_inode_invalidate(cache_entry_t *entry,
 
 cache_inode_status_t cache_inode_read_conf_parameter(
 	config_file_t in_config, cache_inode_parameter_t *param);
-
-cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry,
-					     bool closefile);
 
 inline int cache_inode_set_time_current(struct timespec *time);
 

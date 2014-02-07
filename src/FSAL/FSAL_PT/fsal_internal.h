@@ -320,6 +320,7 @@ fsal_status_t PTFSAL_RemoveXAttrByName(ptfsal_handle_t * objhdl,	/* IN */
 unsigned int PTFSAL_GetFileno(int pfile);
 
 fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle *p_file_descriptor,
+			    const struct req_op_context *opctx,
 			    uint64_t offset, size_t size);
 
 fsal_status_t PTFSAL_GetExportEntry(char *path,	/* IN */

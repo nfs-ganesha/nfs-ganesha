@@ -121,6 +121,11 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* Owner override..
 		 * deal with this stupid 04xy mode corner case */
+		/** @todo this is racy, use cache_inode_lock_trust_attrs
+		 *        also, this owner override check is not
+		 *        strictly true, this is not the only mode
+		 *        that could be in play.
+		 */
 		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
 		    && (pfid->op_context.creds->caller_uid ==
 			pentry_newfile->obj_handle->attributes.owner)

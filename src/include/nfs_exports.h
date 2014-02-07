@@ -51,6 +51,7 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_ip_stats.h"
 #include "nlm_list.h"
 
@@ -86,15 +87,6 @@ typedef struct exportlist_client_wildcard_host__ {
 typedef struct exportlist_client_gss__ {
 	char princname[GSS_DEFINE_LEN_TEMP + 1];
 } exportlist_client_gss_t;
-
-typedef enum exportlist_access_type__ {
-	ACCESSTYPE_RW = 1,	/*< All operations are allowed */
-	ACCESSTYPE_RO = 2,	/*< Filesystem is readonly */
-	ACCESSTYPE_MDONLY = 3,	/*< Data operations are forbidden */
-	ACCESSTYPE_MDONLY_RO = 4	/*< Data operations are forbidden,
-					   and the filesystem is
-					   read-only. */
-} exportlist_access_type_t;
 
 typedef enum exportlist_client_type__ {
 	HOSTIF_CLIENT = 1,
@@ -145,25 +137,8 @@ typedef struct exportlist {
 	char *FS_specific;	/*< Filesystem specific option string */
 	char *FS_tag;		/*< Filesystem "tag" string */
 
-	exportlist_access_type_t access_type;	/*< Allowed operations
-						   for this
-						   export. Used by the
-						   older Access list
-						   Access_Type export
-						   permissions scheme
-						   as well as the newer
-						   R_Access, RW_Access,
-						   MDONLY_Access,
-						   MDONLY_R_Access
-						   lists. */
-	bool new_access_list_version;	/*< The new access list version
-					   (true) is the *_Access
-					   lists.  The old (false) is
-					   Access and Access_Type. */
-
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	export_perms_t export_perms;	/*< available mount options */
-	unsigned char seckey[EXPORT_KEY_SIZE];	/*< Checksum for FH validity */
 	uint64_t MaxRead;	/*< Max Read for this entry */
 	uint64_t MaxWrite;	/*< Max Write for this entry */
 	uint64_t PrefRead;	/*< Preferred Read size */
@@ -181,20 +156,30 @@ typedef struct exportlist {
 	struct glist_head exp_state_list;	/*< List of NFS v4 state
 						    belonging to this export */
 	struct glist_head exp_lock_list;	/*< List of locks belonging
-						   to this export Only need
-						   this list if NLM,
-						   otherwise state list is
-						   sufficient */
+						   to this export */
+	struct glist_head exp_nlm_share_list;	/*< List of NLM shares
+						   belonging to this export */
+	struct glist_head exp_root_list;	/*< List of exports rooted
+						    on the same inode */
 	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
+						    Protected by gsh_export lock
 						 */
 	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
-						    export  */
+						    export
+						    Protected by gsh_export lock
+						 */
+	cache_entry_t *exp_junction_inode;	/*< entry for the junction of
+						    this export
+						    Protected by gsh_export lock
+						 */
+	struct gsh_export *exp_parent_exp;	/*< The export this export
+						    sits on.
+						    Protected by gsh_export lock
+						 */
 	cache_inode_expire_type_t expire_type_attr;
 } exportlist_t;
 
 /* Constant for options masks */
-#define EXPORT_OPTION_NOSUID 0x00000001	/*< Mask off setuid mode bit */
-#define EXPORT_OPTION_NOSGID 0x00000002	/*< Mask off setgid mode bit */
 #define EXPORT_OPTION_ROOT 0x00000004	/*< Allow root access as root uid */
 #define EXPORT_OPTION_ALL_ANONYMOUS 0x00000008	/*< all users are squashed to
 						    anonymous */
@@ -307,32 +292,6 @@ typedef struct exportlist {
 
 /* NFS4 specific structures */
 
-/*
- * PseudoFs Tree
- */
-typedef struct pseudofs_entry {
-	char name[MAXNAMLEN + 1];	/*< The entry name */
-	int8_t *fsopaque; /** do not garbage collect this, it points
-			      to an already gc'd file_handle_v4_t.
-			      this is used for convenience when
-			      converting from entry to handle. */
-	uint64_t pseudo_id;	/*< ID within the pseudoFS  */
-	exportlist_t *junction_export;	/*< Export list related to the
-					    junction, NULL if entry is no
-					    junction */
-	struct pseudofs_entry *sons;	/*< Pointer to a linked list of sons */
-	struct pseudofs_entry *parent;	/*< Reverse pointer (for LOOKUPP) */
-	struct pseudofs_entry *next;	/*< Next entry in a list of sons */
-	struct pseudofs_entry *last;	/*< Last entry in a list of sons */
-} pseudofs_entry_t;
-
-#define MAX_PSEUDO_ENTRY  2048
-typedef struct pseudofs {
-	pseudofs_entry_t root;
-	unsigned int last_pseudo_id;
-	pseudofs_entry_t *reverse_tab[MAX_PSEUDO_ENTRY];
-} pseudofs_t;
-
 typedef struct nfs_client_cred_gss {
 	unsigned int svc;
 	unsigned int qop;
@@ -371,7 +330,6 @@ typedef struct COMPOUND4res_extended COMPOUND4res_extended;
  */
 typedef struct compound_data {
 	nfs_fh4 currentFH;	/*< Current filehandle */
-	nfs_fh4 rootFH;		/*< Root filehandle */
 	nfs_fh4 savedFH;	/*< Saved filehandle */
 	stateid4 current_stateid;	/*< Current stateid */
 	bool current_stateid_valid;	/*< Current stateid is valid */
@@ -397,7 +355,6 @@ typedef struct compound_data {
 	export_perms_t export_perms; /*< Permissions for export for currentFH */
 	export_perms_t saved_export_perms; /*< Permissions for export for
 					       savedFH */
-	pseudofs_t *pseudofs;	/*< Pointer to the pseudo filesystem tree */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
@@ -416,6 +373,38 @@ typedef struct compound_data {
 	slotid4 slot;		/*< Slot ID of the current compound (if
 				   applicable) */
 } compound_data_t;
+
+static inline void set_current_entry(compound_data_t *data,
+				     cache_entry_t *entry,
+				     bool need_ref)
+{
+	/* Mark current_stateid as invalid */
+	data->current_stateid_valid = false;
+
+	/* Release the reference to the old entry */
+	if (data->current_entry)
+		cache_inode_put(data->current_entry);
+
+	/* Clear out the current_ds */
+	if (data->current_ds) {
+		data->current_ds->ops->put(data->current_ds);
+		data->current_ds = NULL;
+	}
+
+	data->current_entry = entry;
+
+	if (entry == NULL) {
+		data->current_filetype = NO_FILE_TYPE;
+		return;
+	}
+
+	/* Set the current file type */
+	data->current_filetype = entry->type;
+
+	/* Take reference for the entry. */
+	if (data->current_entry && need_ref)
+		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
+}
 
 /* Export list related functions */
 sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
@@ -450,5 +439,12 @@ void LogClientListEntry(log_components_t component,
 
 void squash_setattr(export_perms_t *export_perms,
 		    struct user_cred *user_credentials, struct attrlist *attr);
+
+bool init_export_root(struct gsh_export *exp);
+
+cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
+					       cache_entry_t **entry);
+void unexport(struct gsh_export *export);
+void kill_export_root_entry(cache_entry_t *entry);
 
 #endif				/* !NFS_EXPORTS_H */

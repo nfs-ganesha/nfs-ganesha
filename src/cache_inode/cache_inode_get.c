@@ -56,6 +56,124 @@
 
 /**
  *
+ * @brief Check the active export mapping for this entry and update if
+ *        necessary.
+ *
+ * If the entry does not have a mapping for the active export, add one.
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ * @retval true if successful
+ * @retval false if new mapping was necessary and memory alloc failed
+ *
+ */
+
+bool check_mapping(cache_entry_t *entry,
+		   struct gsh_export *export)
+{
+	struct glist_head *glist;
+	struct entry_export_map *expmap;
+	bool try_write = false;
+
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+
+again:
+
+	glist_for_each(glist, &entry->export_list) {
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		/* Found active export on list */
+		if (expmap->export == export) {
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			return true;
+		}
+	}
+
+	if (!try_write) {
+		/* Now take write lock and try again in
+		 * case another thread has raced with us.
+		 */
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		try_write = true;
+		goto again;
+	}
+
+	/* We have the write lock and did not find
+	 * this export on the list, add it.
+	 */
+
+	expmap = gsh_calloc(1, sizeof(*expmap));
+
+	if (expmap == NULL) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		LogCrit(COMPONENT_CACHE_INODE,
+			 "Out of memory");
+		return false;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&export->lock);
+
+	expmap->export = export;
+	expmap->entry = entry;
+
+	glist_add_tail(&entry->export_list,
+		       &expmap->export_per_entry);
+	glist_add_tail(&export->entry_list,
+		       &expmap->entry_per_export);
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	return true;
+}
+
+/**
+ *
+ * @brief Cleans up the export mappings for this entry.
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ */
+
+void clean_mapping(cache_entry_t *entry)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	/* Entry is unreachable and not referenced so no need to hold attr_lock
+	 * to cleanup the export map.
+	 */
+	glist_for_each_safe(glist, glistn, &entry->export_list) {
+		struct entry_export_map *expmap;
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		PTHREAD_RWLOCK_wrlock(&expmap->export->lock);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&expmap->entry_per_export);
+
+		PTHREAD_RWLOCK_unlock(&expmap->export->lock);
+
+		gsh_free(expmap);
+	}
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+}
+
+/**
+ *
  * @brief Gets an entry by using its fsdata as a key and caches it if needed.
  *
  * Gets an entry by using its fsdata as a key and caches it if needed.
@@ -89,35 +207,14 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
 
-		/* This is the replacement for cache_inode_renew_entry.
-		   Rather than calling that function at the start of
-		   every cache_inode call with the inode locked, we call
-		   cache_inode_check trust to perform 'heavyweight'
-		   (timed expiration of cached attributes, getattr-based
-		   directory trust) checks the first time after getting
-		   an inode.  It does all of the checks read-locked and
-		   only acquires a write lock if there's something
-		   requiring a change.
-
-		   There is a second light-weight check done before use
-		   of cached data that checks whether the bits saying
-		   that inode attributes or inode content are trustworthy
-		   have been cleared by, for example, FSAL_CB.
-
-		   To summarize, the current implementation is that
-		   policy-based trust of validity is checked once per
-		   logical series of operations at cache_inode_get, and
-		   asynchronous trust is checked with use (when the
-		   attributes are locked for reading, for example.) */
-
-		status = cache_inode_lock_trust_attrs(*entry, req_ctx, false);
-		if (status != CACHE_INODE_SUCCESS) {
+		if (!check_mapping(*entry, req_ctx->export)) {
+			/* Return error instead of entry */
 			cache_inode_put(*entry);
 			*entry = NULL;
-		} else
-			PTHREAD_RWLOCK_unlock(&((*entry)->attr_lock));
+			return CACHE_INODE_MALLOC_ERROR;
+		}
 
-		return status;
+		return CACHE_INODE_SUCCESS;
 	}
 
 	/* Cache miss, allocate a new entry */
@@ -135,7 +232,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
-	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE, entry);
+	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
+				       entry, req_ctx);
+
 	if (*entry == NULL)
 		return status;
 
@@ -165,6 +264,12 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 	cache_entry_t *entry = NULL;
 	cih_latch_t latch;
 
+	if (key->kv.addr == NULL) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Attempt to use NULL key");
+		return NULL;
+	}
+
 	/* Check if the entry already exists */
 	entry =
 	    cih_get_by_key_latched(key, &latch,
@@ -175,23 +280,26 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
+
+		if (!check_mapping(entry, req_ctx->export)) {
+			/* Return error instead of entry */
+			cache_inode_put(entry);
+			return NULL;
+		}
+
 		goto out;
 	}
 	/* Cache miss, allocate a new entry */
 	if (!(flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
 		struct fsal_obj_handle *new_hdl;
 		struct fsal_export *exp_hdl;
-		struct gsh_export *exp;
 		fsal_status_t fsal_status;
 
-		exp = get_gsh_export(key->exportid, true);
-		if (exp == NULL)
-			goto out;
-		exp_hdl = exp->export.export_hdl;
+		exp_hdl = req_ctx->export->export.export_hdl;
 		fsal_status =
 		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,
 						&new_hdl);
-		put_gsh_export(exp);
+
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
 			*status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
@@ -205,7 +313,8 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		/* if all else fails, create a new entry */
 		*status =
 		    cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					  &entry);
+					  &entry, req_ctx);
+
 		if (unlikely(!entry))
 			goto out;
 
@@ -221,6 +330,84 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 	}			/* ! cached only */
  out:
 	return entry;
+}
+
+/**
+ * @brief Get a reference to a cache inode via some source pointer, verifying
+ * that the inode is still reachable.
+ *
+ * Uses get_entry to fetch a cache inode entry pointer while holding the passed
+ * lock, and then while under the lock, copies the key, then outside the lock,
+ * looks up the entry by key.
+ *
+ * The lock and the source MUST be involved somehow in cleaning a cache inode
+ * entry that is being killed or recycled to insure the source is valid long
+ * enough to copy the key. I.e. cache inode entry cleanup MUST take the lock,
+ * and under that lock, remove the pointer to the entry from the source.
+ *
+ * @param entry     [IN/OUT] call by ref pointer to store cache entry
+ * @param lock      [IN] rwlock that protects the source of the inode pointer
+ * @param get_entry [IN] routine that gets the inode pointer from the source
+ * @param source    [IN] opaque param to pass to get_entry
+ *
+ * @return status cache inode status code
+ */
+
+cache_inode_status_t
+cache_inode_get_protected(cache_entry_t **entry,
+			  pthread_rwlock_t *lock,
+			  cache_inode_status_t get_entry(cache_entry_t **,
+							 void *),
+			  void *source)
+{
+	cih_latch_t latch;
+	cache_inode_key_t key;
+	cache_inode_status_t status;
+
+	PTHREAD_RWLOCK_rdlock(lock);
+
+	status = get_entry(entry, source);
+
+	if (unlikely(status != CACHE_INODE_SUCCESS)) {
+		PTHREAD_RWLOCK_unlock(lock);
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "get_entry failed with %s",
+			 cache_inode_err_str(status));
+		return status;
+	}
+
+	/* Duplicate the entry's key so we can get by key to make
+	 * sure this is not a killed entry.
+	 */
+	if (unlikely(cache_inode_key_dup(&key, &(*entry)->fh_hk.key) != 0)) {
+		PTHREAD_RWLOCK_unlock(lock);
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cache_inode_key_dup failed with CACHE_INODE_MALLOC_ERROR");
+		return CACHE_INODE_MALLOC_ERROR;
+	}
+
+	PTHREAD_RWLOCK_unlock(lock);
+
+	*entry = cih_get_by_key_latched(&key, &latch,
+					CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+					__func__, __LINE__);
+
+	/* Done with the key */
+	cache_inode_key_delete(&key);
+
+	if (unlikely((*entry) == NULL)) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cih_get_by_key_latched failed returning CACHE_INODE_FSAL_ESTALE");
+		return CACHE_INODE_FSAL_ESTALE;
+	}
+
+	/* Ref entry */
+	cache_inode_lru_ref(*entry, LRU_FLAG_NONE);
+
+	/* Release the subtree hash table lock */
+	cih_latch_rele(&latch);
+
+	return CACHE_INODE_SUCCESS;
 }
 
 /**

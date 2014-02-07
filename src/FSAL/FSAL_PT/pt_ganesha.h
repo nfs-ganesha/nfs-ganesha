@@ -341,7 +341,8 @@ int ptfsal_closedir(const struct req_op_context *p_context,
 int ptfsal_closedir_fd(const struct req_op_context *p_context,
 		       struct fsal_export *export, int fd);
 
-int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor);
+int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
+		 const struct req_op_context *opctx);
 
 int ptfsal_open_by_handle(const struct req_op_context *p_context,
 			  struct pt_fsal_obj_handle *p_object_handle,

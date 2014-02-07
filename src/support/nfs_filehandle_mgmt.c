@@ -74,7 +74,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *v3_handle;
-	struct gsh_export *exp = NULL;
 	struct fsal_export *export;
 	cache_entry_t *entry = NULL;
 	cache_inode_fsal_data_t fsal_data;
@@ -92,16 +91,9 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	if (v3_handle->exportid == req_ctx->export->export.id) {
-		export = req_ctx->export->export.export_hdl;
-	} else {
-		exp = get_gsh_export(v3_handle->exportid, true);
-		if (exp == NULL) {
-			*status = NFS3ERR_STALE;
-			goto badhdl;
-		}
-		export = exp->export.export_hdl;
-	}
+	assert(v3_handle->exportid == req_ctx->export->export.id);
+
+	export = req_ctx->export->export.export_hdl;
 
 	/* Give the export a crack at it */
 	fsal_data.export = export;
@@ -112,8 +104,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	fsal_status =
 	    export->ops->extract_handle(export, FSAL_DIGEST_NFSV3,
 					&fsal_data.fh_desc);
-	if (exp != NULL)
-		put_gsh_export(exp);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		cache_status = cache_inode_error_convert(fsal_status);
@@ -139,7 +129,8 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
  * @return true if successful, false otherwise
  */
 bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
-			const struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp)
 {
 	fsal_status_t fsal_status;
 	file_handle_v4_t *file_handle;
@@ -165,7 +156,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = fsalhandle->export->exp_entry->id;
+	file_handle->exportid = exp->export.id;
 
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
@@ -181,6 +172,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
  *
  * @param[out] fh3        The extracted file handle
  * @param[in]  fsalhandle The FSAL handle to be converted
+ * @param[in]  exp        The gsh_export that this handle belongs to
  *
  * @return true if successful, false otherwise
  *
@@ -188,7 +180,8 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
  * compensate??
  */
 bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
-			const struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp)
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *file_handle;
@@ -214,7 +207,7 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = fsalhandle->export->exp_entry->id;
+	file_handle->exportid = exp->export.id;
 
 	/* Set the len */
 	/* re-adjust to as built */
@@ -231,11 +224,13 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
  *
  * @param[out] fh2        The extracted file handle
  * @param[in]  fsalhandle The FSAL handle to be converted
+ * @param[in]  exp        The gsh_export that this handle belongs to
  *
  * @return true if successful, false otherwise
  */
 bool nfs2_FSALToFhandle(fhandle2 *fh2,
-			const struct fsal_obj_handle *fsalhandle)
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp)
 {
 	fsal_status_t fsal_status;
 	file_handle_v2_t *file_handle;
@@ -264,7 +259,7 @@ bool nfs2_FSALToFhandle(fhandle2 *fh2,
 
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	/* keep track of the export id */
-	file_handle->exportid = fsalhandle->export->exp_entry->id;
+	file_handle->exportid = exp->export.id;
 
 	/*   /\* Set the data *\/ */
 	/*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
@@ -274,29 +269,6 @@ bool nfs2_FSALToFhandle(fhandle2 *fh2,
 
 	return true;
 }
-
-/**
- *
- * nfs4_Is_Fh_Pseudo
- *
- * This routine is used to test if a fh refers to pseudo fs
- *
- * @param fh [IN] file handle to test.
- *
- * @return true if in pseudo fh, false otherwise
- *
- */
-int nfs4_Is_Fh_Pseudo(nfs_fh4 *fh)
-{
-	file_handle_v4_t *fhandle4;
-
-	if (fh == NULL || fh->nfs_fh4_val == NULL)
-		return 0;
-
-	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
-
-	return fhandle4->exportid == 0;
-}				/* nfs4_Is_Fh_Pseudo */
 
 /**
  *
@@ -616,8 +588,5 @@ void LogCompoundFH(compound_data_t *data)
 
 		sprint_fhandle4(str, &data->savedFH);
 		LogFullDebug(COMPONENT_FILEHANDLE, "Saved FH    %s", str);
-
-		sprint_fhandle4(str, &data->rootFH);
-		LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
 	}
 }

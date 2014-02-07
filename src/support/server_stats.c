@@ -216,89 +216,89 @@ struct _9p_stats {
  */
 
 static struct nfsv3_stats *get_v3(struct gsh_stats *stats,
-				  pthread_mutex_t *lock)
+				  pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->nfsv3 == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv3 == NULL)
 			stats->nfsv3 =
 			    gsh_calloc(sizeof(struct nfsv3_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv3;
 }
 
 static struct mnt_stats *get_mnt(struct gsh_stats *stats,
-				 pthread_mutex_t *lock)
+				 pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->mnt == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->mnt == NULL)
 			stats->mnt = gsh_calloc(sizeof(struct mnt_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->mnt;
 }
 
 static struct nlmv4_stats *get_nlm4(struct gsh_stats *stats,
-				    pthread_mutex_t *lock)
+				    pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->nlm4 == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nlm4 == NULL)
 			stats->nlm4 = gsh_calloc(sizeof(struct nlmv4_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nlm4;
 }
 
 static struct rquota_stats *get_rquota(struct gsh_stats *stats,
-				       pthread_mutex_t *lock)
+				       pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->rquota == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->rquota == NULL)
 			stats->rquota =
 			    gsh_calloc(sizeof(struct rquota_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->rquota;
 }
 
 static struct nfsv40_stats *get_v40(struct gsh_stats *stats,
-				    pthread_mutex_t *lock)
+				    pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->nfsv40 == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv40 == NULL)
 			stats->nfsv40 =
 			    gsh_calloc(sizeof(struct nfsv40_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv40;
 }
 
 static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
-				    pthread_mutex_t *lock)
+				    pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->nfsv41 == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv41 == NULL)
 			stats->nfsv41 =
 			    gsh_calloc(sizeof(struct nfsv41_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv41;
 }
 
 #ifdef _USE_9P
-static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_mutex_t *lock)
+static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_rwlock_t *lock)
 {
 	if (unlikely(stats->_9p == NULL)) {
-		pthread_mutex_lock(lock);
+		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->_9p == NULL)
 			stats->_9p = gsh_calloc(sizeof(struct _9p_stats), 1);
-		pthread_mutex_unlock(lock);
+		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->_9p;
 }
@@ -377,7 +377,7 @@ static void record_io(struct xfer_op *iop, size_t requested, size_t transferred,
  * @brief record i/o stats by protocol
  */
 
-static void record_io_stats(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
+static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			    struct req_op_context *req_ctx, size_t requested,
 			    size_t transferred, bool success, bool is_write)
 {
@@ -484,7 +484,7 @@ static void record_layout(struct nfsv41_stats *sp, int proto_op, int status)
  * @brief Record NFS V4 compound stats
  */
 
-static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
+static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			    int proto_op, int minorversion,
 			    nsecs_elapsed_t request_time,
 			    nsecs_elapsed_t qwait_time, int status)
@@ -538,7 +538,7 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
  * @brief Record NFS V4 compound stats
  */
 
-static void record_compound(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
+static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			    int minorversion, uint64_t num_ops,
 			    nsecs_elapsed_t request_time,
 			    nsecs_elapsed_t qwait_time, bool success)
@@ -581,7 +581,7 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
  * @param dup          [IN] detected this was a dup request
  */
 
-static void record_stats(struct gsh_stats *gsh_st, pthread_mutex_t *lock,
+static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			 request_data_t *reqdata, bool success,
 			 nsecs_elapsed_t request_time,
 			 nsecs_elapsed_t qwait_time, bool dup)

@@ -394,8 +394,8 @@ remove_from_locklist_for_shutdown(state_lock_entry_t *lock_entry)
 			dec_nsm_client_ref_for_shutdown(owner->so_owner.
 							so_nlm_owner.so_client->
 							slc_nsm_client);
-			glist_del(&lock_entry->sle_export_locks);
 		}
+		glist_del(&lock_entry->sle_export_locks);
 		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
 			glist_del(&lock_entry->sle_state_locks);
 		glist_del(&lock_entry->sle_owner_locks);
@@ -556,7 +556,7 @@ clear_fsal_shares(cache_entry_t *entry)
  */
 
 static bool
-destroy_nsm_shares(cache_entry_t *entry)
+destroy_nlm_shares(cache_entry_t *entry)
 {
 	/* Iterator for NSM shares */
 	struct glist_head *nsi;
@@ -572,8 +572,9 @@ destroy_nsm_shares(cache_entry_t *entry)
 		state_owner_t *owner = nlm_share->sns_owner;
 		glist_del(&nlm_share->sns_share_per_file);
 		if (glist_empty(&entry->object.file.nlm_share_list))
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 		glist_del(&nlm_share->sns_share_per_client);
+		glist_del(&nlm_share->sns_share_per_export);
 		dec_nsm_client_ref_for_shutdown(owner->so_owner.so_nlm_owner.
 						so_client->slc_nsm_client);
 		glist_del(&nlm_share->sns_share_per_owner);
@@ -614,7 +615,7 @@ destroy_locks(cache_entry_t *entry)
 		    glist_entry(lei, state_lock_entry_t, sle_list);
 		remove_from_locklist_for_shutdown(found_entry);
 	}
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	clear_fsal_locks(entry);
 }
@@ -747,7 +748,7 @@ destroy_nfs4_state(cache_entry_t *entry)
 	}
 
 	if (glist_empty(&opens)) {
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		return false;
 	}
 
@@ -759,7 +760,7 @@ destroy_nfs4_state(cache_entry_t *entry)
 		state_del_for_shutdown(state, entry);
 	}
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return true;
 }
@@ -771,7 +772,7 @@ destroy_file_state(cache_entry_t *entry)
 	bool nsm_shares = false;
 	/* If nfs4 shares were found */
 	bool nfs4_shares = false;
-	nsm_shares = destroy_nsm_shares(entry);
+	nsm_shares = destroy_nlm_shares(entry);
 	destroy_locks(entry);
 	nfs4_shares = destroy_nfs4_state(entry);
 	if (nsm_shares || nfs4_shares)
@@ -784,6 +785,39 @@ destroy_file_state(cache_entry_t *entry)
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Couldn't close file: major=%u",
 				 fsal_status.major);
+	}
+}
+
+/**
+ *
+ * @brief Cleans up the export mappings for this entry without locks
+ *
+ * @param[in]  entry     The cache inode
+ * @param[in]  export    The active export
+ *
+ */
+
+static void destroy_mapping(cache_entry_t *entry)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	/* Entry is unreachable and not referenced so no need to hold attr_lock
+	 * to cleanup the export map.
+	 */
+	glist_for_each_safe(glist, glistn, &entry->export_list) {
+		struct entry_export_map *expmap;
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&expmap->entry_per_export);
+
+		gsh_free(expmap);
 	}
 }
 
@@ -820,6 +854,8 @@ destroy_entry(cache_entry_t *entry)
 		}
 	}
 	entry->obj_handle = NULL;
+
+	destroy_mapping(entry);
 }
 
 /**

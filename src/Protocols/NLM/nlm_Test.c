@@ -157,8 +157,7 @@ int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
 	return NFS_REQ_OK;
 }
 
-static void nlm4_test_message_resp(state_async_queue_t *arg,
-				   struct req_op_context *req_ctx)
+static void nlm4_test_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
 	    &arg->state_async_data.state_nlm_async_data;

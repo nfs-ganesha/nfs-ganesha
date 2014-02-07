@@ -63,6 +63,7 @@
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 #include "nfs_tools.h"
+#include "sal_functions.h"
 
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
@@ -192,7 +193,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		if (export_id_cmpf(&v.node_k, node) == 0) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
-				 "export_mgr cache hit slot %d\n",
+				 "export_mgr cache hit slot %d",
 				 eid_cache_offsetof(&export_by_id, export_id));
 			exp =
 			    avltree_container_of(node, struct gsh_export,
@@ -225,7 +226,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 
 	exp = &export_st->export;
 	exp->export.id = export_id;
-	exp->refcnt = 0;	/* we will hold a ref starting out... */
+	exp->refcnt = 1;	/* we will hold a ref starting out... */
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&exp->node_k, &export_by_id.t);
@@ -233,14 +234,15 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		gsh_free(export_st);	/* somebody beat us to it */
 		exp = avltree_container_of(node, struct gsh_export, node_k);
 	} else {
-		pthread_mutex_init(&exp->lock, NULL);
+		pthread_rwlock_init(&exp->lock, NULL);
 		/* update cache */
 		atomic_store_voidptr(cache_slot, &exp->node_k);
 		glist_add_tail(&exportlist, &exp->export.exp_list);
+		glist_init(&exp->entry_list);
 	}
 
  out:
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -253,7 +255,7 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
  * We assert state transitions because errors here are BAD.
  *
  * @param export [IN] The export to change state
- * @param state  [IN} the state to set
+ * @param state  [IN] the state to set
  */
 
 void set_gsh_export_state(struct gsh_export *export, export_state_t state)
@@ -277,52 +279,198 @@ void set_gsh_export_state(struct gsh_export *export, export_state_t state)
  * @brief Lookup the export manager struct by export path
  *
  * Gets an export entry from its path using a substring match and
- * linear search of the export list.
- * If path has a trailing '/', ignor it.
+ * linear search of the export list, assumes being called with
+ * export manager lock held (such as from within foreach_gsh_export.
+ * If path has a trailing '/', ignore it.
  *
- * @param path       [IN] the path for the entry to be found.
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
  *
- * @return pointer to ref locked stats block
+ * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_path(char *path)
+struct gsh_export *get_gsh_export_by_path_locked(char *path,
+						 bool exact_match)
 {
 	struct gsh_export *exp;
 	exportlist_t *export = NULL;
 	struct glist_head *glist;
 	int len_path = strlen(path);
 	int len_export;
+	struct gsh_export *ret_exp = NULL;
+	int len_ret = 0;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	if (path[len_path - 1] == '/')
+	if (len_path > 1 && path[len_path - 1] == '/')
 		len_path--;
+
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, exportlist_t, exp_list);
 		exp = container_of(export, struct gsh_export, export);
+
 		if (exp->state != EXPORT_READY)
 			continue;
+
 		len_export = strlen(export->fullpath);
-		/* a path shorter than the full path cannot match
+
+		if (len_path == 0 && len_export == 1) {
+			/* Special case for root match */
+			ret_exp = exp;
+			len_ret = len_export;
+			break;
+		}
+
+		/* A path shorter than the full path cannot match.
+		 * Also skip if this export has a shorter path than
+		 * the previous match.
 		 */
-		if (len_path < len_export)
+		if (len_path < len_export ||
+		    len_export < len_ret)
 			continue;
+
+		/* If partial match is not allowed, lengths must be the same */
+		if (exact_match && len_path != len_export)
+			continue;
+
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if (path[len_export] != '/' && path[len_export] != '\0')
+		if (len_export > 1 &&
+		    path[len_export] != '/' &&
+		    path[len_export] != '\0')
 			continue;
+
 		/* we agree on size, now compare the leading substring
 		 */
-		if (!strncmp(export->fullpath, path, len_export))
-			goto out;
-	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return NULL;
+		if (strncmp(export->fullpath, path, len_export) == 0) {
+			ret_exp = exp;
+			len_ret = len_export;
 
- out:
-	atomic_inc_int64_t(&exp->refcnt);
+			/* If we have found an exact match, exit loop. */
+			if (len_export == len_path)
+				break;
+		}
+	}
+
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
+
+	return ret_exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export path
+ *
+ * Gets an export entry from its path using a substring match and
+ * linear search of the export list.
+ * If path has a trailing '/', ignore it.
+ *
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
+ *
+ * @return pointer to ref counted export
+ */
+
+struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match)
+{
+	struct gsh_export *exp;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+
+	exp = get_gsh_export_by_path_locked(path, exact_match);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
 	return exp;
+}
+
+/**
+ * @brief Lookup the export manager struct by export pseudo path
+ *
+ * Gets an export entry from its pseudo (if it exists), assumes
+ * being called with export manager lock held (such as from within
+ * foreach_gsh_export.
+ *
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
+ *
+ * @return pointer to ref counted export
+ */
+
+struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
+						   bool exact_match)
+{
+	struct gsh_export *exp;
+	exportlist_t *export = NULL;
+	struct glist_head *glist;
+	int len_path = strlen(path);
+	int len_export;
+	struct gsh_export *ret_exp = NULL;
+	int len_ret = 0;
+
+	/* Ignore trailing slash in path */
+	if (len_path > 1 && path[len_path - 1] == '/')
+		len_path--;
+
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, exportlist_t, exp_list);
+		exp = container_of(export, struct gsh_export, export);
+
+		if (exp->state != EXPORT_READY)
+			continue;
+
+		if (export->pseudopath == NULL)
+			continue;
+
+		len_export = strlen(export->pseudopath);
+
+		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			 "Comparing %s %d to %s %d",
+			 path, len_path,
+			 export->pseudopath, len_export);
+
+		if (len_path == 0 && len_export == 1) {
+			/* Special case for Pseudo root match */
+			ret_exp = exp;
+			len_ret = len_export;
+			break;
+		}
+
+		/* A path shorter than the full path cannot match.
+		 * Also skip if this export has a shorter path than
+		 * the previous match.
+		 */
+		if (len_path < len_export ||
+		    len_export < len_ret)
+			continue;
+
+		/* If partial match is not allowed, lengths must be the same */
+		if (exact_match && len_path != len_export)
+			continue;
+
+		/* if the char in pseudopath just after the end of path is not
+		 * '/' it is a name token longer, i.e. /mnt/foo != /mnt/foob/
+		 */
+		if (len_export > 1 &&
+		    path[len_export] != '/' &&
+		    path[len_export] != '\0')
+			continue;
+
+		/* we agree on size, now compare the leading substring
+		 */
+		if (strncmp(export->pseudopath, path, len_export) == 0) {
+			ret_exp = exp;
+			len_ret = len_export;
+
+			/* If we have found an exact match, exit loop. */
+			if (len_export == len_path)
+				break;
+		}
+	}
+
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
+
+	return ret_exp;
 }
 
 /**
@@ -330,33 +478,22 @@ struct gsh_export *get_gsh_export_by_path(char *path)
  *
  * Gets an export entry from its pseudo (if it exists)
  *
- * @param path       [IN] the path for the entry to be found.
+ * @param path        [IN] the path for the entry to be found.
+ * @param exact_match [IN] the path must match exactly
  *
- * @return pointer to ref locked export
+ * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_pseudo(char *path)
+struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match)
 {
 	struct gsh_export *exp;
-	exportlist_t *export = NULL;
-	struct glist_head *glist;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
-		if (exp->state != EXPORT_READY)
-			continue;
-		if (export->pseudopath != NULL
-		    && !strcmp(export->pseudopath, path))
-			goto out;
-	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return NULL;
 
- out:
-	atomic_inc_int64_t(&exp->refcnt);
+	exp = get_gsh_export_by_pseudo_locked(path, exact_match);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
 	return exp;
 }
 
@@ -390,10 +527,12 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 
  out:
 	exp = container_of(export, struct gsh_export, export);
-	atomic_inc_int64_t(&exp->refcnt);
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
+
+pthread_mutex_t release_export_serializer = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief Release the export management struct
@@ -401,10 +540,37 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
  * We are done with it, let it go.
  */
 
-void put_gsh_export(struct gsh_export *export)
+void put_gsh_export(struct gsh_export *exp)
 {
-	assert(export->refcnt > 0);
-	atomic_dec_int64_t(&export->refcnt);
+	int64_t refcount;
+	exportlist_t *export = &exp->export;
+	struct export_stats *export_st;
+
+	assert(exp->refcnt > 0);
+
+	refcount = atomic_dec_int64_t(&exp->refcnt);
+
+	if (refcount != 0)
+		return;
+
+	/* Make sure only one thread is in here at a time. */
+	pthread_mutex_lock(&release_export_serializer);
+
+	/* Releasing last reference */
+
+	/* Release state belonging to this export */
+	state_release_export(exp);
+
+	/* Flush cache inodes belonging to this export */
+	cache_inode_unexport(exp);
+
+	/* free resources */
+	free_export_resources(export);
+	export_st = container_of(exp, struct export_stats, export);
+	server_stats_free(&export_st->st);
+	gsh_free(export_st);
+
+	pthread_mutex_unlock(&release_export_serializer);
 }
 
 /**
@@ -413,16 +579,14 @@ void put_gsh_export(struct gsh_export *export)
  * Remove it from the AVL tree.
  */
 
-bool remove_gsh_export(int export_id)
+void remove_gsh_export(int export_id)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
 	struct gsh_export *exp = NULL;
 	exportlist_t *export = NULL;
-	struct export_stats *export_st;
 	struct gsh_export v;
 	void **cache_slot;
-	bool removed = true;
 
 	v.export.id = export_id;
 
@@ -430,10 +594,8 @@ bool remove_gsh_export(int export_id)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if (exp->state != EXPORT_RELEASE || exp->refcnt > 0) {
-			removed = false;
-			goto out;
-		}
+
+		/* Remove the export from the AVL tree */
 		cache_slot = (void **)
 		    &(export_by_id.
 		      cache[eid_cache_offsetof(&export_by_id, export_id)]);
@@ -441,17 +603,21 @@ bool remove_gsh_export(int export_id)
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
 		avltree_remove(node, &export_by_id.t);
+
+		/* Remove the export from the export list */
 		export = &exp->export;
 		glist_del(&export->exp_list);
 	}
- out:
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	if (removed && node) {
-		free_export_resources(export);
-		export_st = container_of(exp, struct export_stats, export);
-		server_stats_free(&export_st->st);
+
+	if (exp != NULL) {
+		/* Release table reference to the export.
+		 * Release of resources will occur on last reference.
+		 * Which may or may not be from this call.
+		 */
+		put_gsh_export(exp);
 	}
-	return removed;
 }
 
 /**
@@ -461,24 +627,24 @@ bool remove_gsh_export(int export_id)
  * @param state [IN] param block to pass
  */
 
-int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-		       void *state)
+bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+			void *state)
 {
 	struct glist_head *glist;
 	struct gsh_export *exp;
 	exportlist_t *export;
-	int cnt = 0;
+	int rc = true;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, exportlist_t, exp_list);
 		exp = container_of(export, struct gsh_export, export);
-		if (!cb(exp, state))
+		rc = cb(exp, state);
+		if (!rc)
 			break;
-		cnt++;
 	}
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return cnt;
+	return rc;
 }
 
 #ifdef USE_DBUS_STATS

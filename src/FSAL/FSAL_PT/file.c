@@ -137,6 +137,7 @@ fsal_status_t pt_write(struct fsal_obj_handle * obj_hdl,
  * for right now, fsync will have to do.
  */
 fsal_status_t pt_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
+			const struct req_op_context *opctx,
 			off_t offset, size_t len)
 {
 	struct pt_fsal_obj_handle *myself;
@@ -147,7 +148,7 @@ fsal_status_t pt_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	fsal_error = PTFSAL_commit(myself, offset, len);
+	fsal_error = PTFSAL_commit(myself, opctx, offset, len);
 
 	return fsal_error;
 }

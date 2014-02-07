@@ -513,7 +513,6 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
 	data.worker = worker;
-	data.pseudofs = nfs4_GetPseudoFs();
 	data.req = req;
 
 	/* Building the client credential field */
@@ -902,9 +901,6 @@ void compound_data_Free(compound_data_t *data)
 
 	if (data->currentFH.nfs_fh4_val != NULL)
 		gsh_free(data->currentFH.nfs_fh4_val);
-
-	if (data->rootFH.nfs_fh4_val != NULL)
-		gsh_free(data->rootFH.nfs_fh4_val);
 
 	if (data->savedFH.nfs_fh4_val != NULL)
 		gsh_free(data->savedFH.nfs_fh4_val);

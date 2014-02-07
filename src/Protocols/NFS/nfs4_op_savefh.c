@@ -107,13 +107,13 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	 * currentFH is still active.  Assert this just to be sure...
 	 */
 	if (data->req_ctx->export != NULL) {
-		data->saved_export =
-		    get_gsh_export(data->req_ctx->export->export.id, true);
+		data->saved_export = data->req_ctx->export;
+		/* Get a reference to the export for the new SavedFH
+		 * independent of CurrentFH if appropriate.
+		 */
+		get_gsh_export_ref(data->saved_export);
 	} else
 		data->saved_export = NULL;
-
-	assert((data->saved_export != NULL)
-	       || nfs4_Is_Fh_Pseudo(&data->currentFH));
 
 	data->saved_export_perms = data->export_perms;
 
@@ -133,6 +133,12 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->saved_entry = data->current_entry;
 	data->saved_filetype = data->current_filetype;
+
+	/* Make SAVEFH work right for DS handle */
+	if (data->current_ds != NULL) {
+		data->saved_ds = data->current_ds;
+		data->saved_ds->ops->get(data->saved_ds);
+	}
 
 	/* Take another reference.  As of now the filehandle is both saved
 	 * and current and both must be counted.  Guard this, in case we

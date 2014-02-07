@@ -145,17 +145,22 @@ static inline int cih_fh_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, cache_entry_t, fh_hk.node_k);
 	rk = avltree_container_of(rhs, cache_entry_t, fh_hk.node_k);
 
-	if (lk->fh_hk.key.hk < rk->fh_hk.key.hk)
+	if (likely(lk->fh_hk.key.hk < rk->fh_hk.key.hk))
 		return -1;
 
-	if (unlikely(lk->fh_hk.key.hk == rk->fh_hk.key.hk)) {
-		/* deep compare */
-		return memcmp(lk->fh_hk.key.kv.addr,
-			      lk->fh_hk.key.kv.addr,
-			      MIN(lk->fh_hk.key.kv.len, rk->fh_hk.key.kv.len));
-	}
+	if (likely(lk->fh_hk.key.hk > rk->fh_hk.key.hk))
+		return 1;
 
-	return 1;
+	if (unlikely(lk->fh_hk.key.kv.len < rk->fh_hk.key.kv.len))
+		return -1;
+
+	if (unlikely(lk->fh_hk.key.kv.len > rk->fh_hk.key.kv.len))
+		return 1;
+
+	/* deep compare */
+	return memcmp(lk->fh_hk.key.kv.addr,
+		      rk->fh_hk.key.kv.addr,
+		      lk->fh_hk.key.kv.len);
 }
 
 /**
@@ -201,24 +206,28 @@ cih_fhcache_inline_lookup(const struct avltree *tree,
  *
  * @return (void)
  */
-static inline void
+static inline bool
 cih_hash_entry(cache_entry_t *entry,
 	       const struct gsh_buffdesc *fh_desc,
 	       uint32_t flags)
 {
 	/* fh prototype fixup */
-	if (flags & CIH_HASH_KEY_PROTOTYPE)
+	if (flags & CIH_HASH_KEY_PROTOTYPE) {
 		entry->fh_hk.key.kv = *(struct gsh_buffdesc *)fh_desc;
-	else {
+	} else {
 		/* XXX dups fh_desc */
 		entry->fh_hk.key.kv.len = fh_desc->len;
 		entry->fh_hk.key.kv.addr = gsh_malloc(fh_desc->len);
+		if (entry->fh_hk.key.kv.addr == NULL)
+			return false;
 		memcpy(entry->fh_hk.key.kv.addr, fh_desc->addr, fh_desc->len);
 	}
 
 	/* hash it */
 	entry->fh_hk.key.hk =
 	    CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
+
+	return true;
 }
 
 #define CIH_GET_NONE           0x0000
@@ -263,7 +272,7 @@ cih_get_by_fh_latched(const struct gsh_buffdesc *fh_desc, cih_latch_t *latch,
 	struct avltree_node *node;
 	cih_partition_t *cp;
 
-	cih_hash_entry(&k_entry, fh_desc, CIH_HASH_KEY_PROTOTYPE);
+	(void) cih_hash_entry(&k_entry, fh_desc, CIH_HASH_KEY_PROTOTYPE);
 	latch->cp = cp =
 	    cih_partition_of_scalar(&cih_fhcache, k_entry.fh_hk.key.hk);
 
@@ -383,7 +392,7 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 		if (cih_fh_cmpf(&k_entry.fh_hk.node_k, node) == 0) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
-				 "cih cache hit slot %d\n",
+				 "cih cache hit slot %d",
 				 cih_cache_offsetof(&cih_fhcache, key->hk));
 			goto found;
 		}
@@ -394,14 +403,14 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 	if (!node) {
 		if (flags & CIH_GET_UNLOCK_ON_MISS)
 			PTHREAD_RWLOCK_unlock(&cp->lock);
-		LogDebug(COMPONENT_HASHTABLE_CACHE, "fdcache MISS\n");
+		LogDebug(COMPONENT_HASHTABLE_CACHE, "fdcache MISS");
 		goto out;
 	}
 
 	/* update cache */
 	atomic_store_voidptr(cache_slot, node);
 
-	LogDebug(COMPONENT_HASHTABLE_CACHE, "cih AVL hit slot %d\n",
+	LogDebug(COMPONENT_HASHTABLE_CACHE, "cih AVL hit slot %d",
 		 cih_cache_offsetof(&cih_fhcache, key->hk));
 
  found:
@@ -466,7 +475,8 @@ cih_set_latched(cache_entry_t *entry, cih_latch_t *latch,
 	/* Omit hash if you are SURE we hashed it, and that the
 	 * hash remains valid */
 	if (unlikely(!(flags & CIH_SET_HASHED)))
-		cih_hash_entry(entry, fh_desc, CIH_HASH_NONE);
+		if (!cih_hash_entry(entry, fh_desc, CIH_HASH_NONE))
+			return 1;
 
 	(void)avltree_insert(&entry->fh_hk.node_k, &cp->t);
 	entry->fh_hk.inavl = true;

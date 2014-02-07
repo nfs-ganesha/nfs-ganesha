@@ -41,7 +41,7 @@
 
 struct gsh_client {
 	struct avltree_node node_k;
-	pthread_mutex_t lock;
+	pthread_rwlock_t lock;
 	struct gsh_buffdesc addr;
 	int64_t refcnt;
 	nsecs_elapsed_t last_update;

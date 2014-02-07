@@ -97,6 +97,30 @@ cache_inode_remove(cache_entry_t *entry, const char *name,
 		goto out;
 	}
 
+	/* Do not remove a junction node or an export root. */
+	if (to_remove_entry->type == DIRECTORY) {
+		/* Get attr_lock for looking at junction_export */
+		PTHREAD_RWLOCK_rdlock(&to_remove_entry->attr_lock);
+
+		if (to_remove_entry->object.dir.junction_export != NULL ||
+		    atomic_fetch_int32_t(&to_remove_entry->exp_root_refcount)
+		    != 0) {
+			/* Trying to remove an export mount point */
+			LogCrit(COMPONENT_CACHE_INODE,
+				 "Attempt to remove export %s",
+				 name);
+
+			/* Release attr_lock */
+			PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
+
+			status = CACHE_INODE_DIR_NOT_EMPTY;
+			goto out;
+		}
+
+		/* Release attr_lock */
+		PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
+	}
+
 	LogDebug(COMPONENT_CACHE_INODE, "%s", name);
 
 	if (is_open(to_remove_entry)) {
@@ -117,10 +141,16 @@ cache_inode_remove(cache_entry_t *entry, const char *name,
 
 	fsal_status =
 	    entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx, name);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
+		if (fsal_status.major == ERR_FSAL_STALE)
+			cache_inode_kill_entry(entry);
+
 		status = cache_inode_error_convert(fsal_status);
+
 		LogFullDebug(COMPONENT_CACHE_INODE, "unlink %s failure %s",
 			     name, cache_inode_err_str(status));
+
 		if (to_remove_entry->type == DIRECTORY
 		    && status == CACHE_INODE_DIR_NOT_EMPTY) {
 			/* its dirent tree is probably stale, flush it

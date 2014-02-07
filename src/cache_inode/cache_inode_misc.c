@@ -43,6 +43,7 @@
 #include "sal_functions.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
+#include "export_mgr.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -147,6 +148,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_FSAL_SHARE_DENIED";
 	case CACHE_INODE_BADNAME:
 		return "CACHE_INODE_BADNAME";
+	case CACHE_INODE_CROSS_JUNCTION:
+		return "CACHE_INODE_CROSS_JUNCTION";
 	}
 	return "unknown";
 }
@@ -229,16 +232,18 @@ cache_inode_set_time_current(struct timespec *time)
 cache_inode_status_t
 cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		      uint32_t flags,
-		      cache_entry_t **entry)
+		      cache_entry_t **entry,
+		      const struct req_op_context *opctx)
 {
 	cache_inode_status_t status;
 	fsal_status_t fsal_status;
-	cache_entry_t *oentry, *nentry;
+	cache_entry_t *oentry, *nentry = NULL;
 	struct gsh_buffdesc fh_desc;
 	cih_latch_t latch;
-	bool lrurefed = false;
-	bool locksinited = false;
+	bool has_hashkey = false;
 	int rc = 0;
+
+	*entry = NULL;
 
 	/* Get FSAL-specific key */
 	new_obj->ops->handle_to_key(new_obj, &fh_desc);
@@ -267,13 +272,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* We did not find the object.  Pull an entry off the LRU. */
 	status = cache_inode_lru_get(&nentry);
-	if (!nentry) {
+
+	if (nentry == NULL) {
+		/* Release the subtree hash table lock */
+		cih_latch_rele(&latch);
 		LogCrit(COMPONENT_CACHE_INODE, "cache_inode_lru_get failed");
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
 	}
-
-	locksinited = true;
 
 	/* See if someone raced us. */
 	oentry =
@@ -289,29 +295,29 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		/* Release the new entry we acquired. */
-		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
 		*entry = oentry;
 		goto out;
 	}
 
 	/* We won the race. */
-	*entry = nentry;
-
-	/* This should be the sentinel, plus one to use the entry we
-	   just returned. */
-	lrurefed = true;
 
 	/* Set cache key */
-	cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
 
-	/* Set export id (unhashed, uncompared key component) */
-	nentry->fh_hk.key.exportid = new_obj->export->exp_entry->id;
+	has_hashkey = cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
+
+	if (!has_hashkey) {
+		cih_latch_rele(&latch);
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Could not hash new entry");
+		status = CACHE_INODE_MALLOC_ERROR;
+		goto out;
+	}
 
 	/* Initialize common fields */
 	nentry->type = new_obj->type;
 	nentry->flags = 0;
 	glist_init(&nentry->state_list);
+	glist_init(&nentry->export_list);
 	glist_init(&nentry->layoutrecall_list);
 
 	switch (nentry->type) {
@@ -345,6 +351,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 		nentry->object.dir.avl.collisions = 0;
 		nentry->object.dir.nbactive = 0;
+		glist_init(&nentry->object.dir.export_roots);
 		/* init avl tree */
 		cache_inode_avl_init(nentry);
 		break;
@@ -366,16 +373,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	default:
 		/* Should never happen */
+		cih_latch_rele(&latch);
 		status = CACHE_INODE_INCONSISTENT_ENTRY;
 		LogMajor(COMPONENT_CACHE_INODE, "unknown type %u provided",
 			 nentry->type);
-		cih_latch_rele(&latch);
-		*entry = NULL;
 		goto out;
 	}
 
 	nentry->obj_handle = new_obj;
-	new_obj = NULL;		/* mark it as having a home */
 	cache_inode_fixup_md(nentry);
 
 	/* Everything ready and we are reaty to insert into hash table.
@@ -389,27 +394,57 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	if (unlikely(rc)) {
 		LogCrit(COMPONENT_CACHE_INODE,
 			"entry could not be added to hash, rc=%d", rc);
-		new_obj = nentry->obj_handle;
 		nentry->obj_handle = NULL; /* give it back and poison the
 					    * entry */
 		status = CACHE_INODE_HASH_SET_ERROR;
-		*entry = NULL;
 		goto out;
 	}
 
+	/* Map this new entry and the active export */
+	if (!check_mapping(nentry, opctx->export)) {
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Unable to create export mapping on new entry");
+		/* Release the LRU reference and return error.
+		 * This could leave a dangling cache entry belonging
+		 * to no export, however, such an entry definitely has
+		 * no open files, unless another cache_inode_get is
+		 * successful, so is safe to allow LRU to eventually
+		 * clean up this entry.
+		 */
+		cache_inode_put(nentry);
+		return CACHE_INODE_MALLOC_ERROR;
+	}
+
 	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
-	status = CACHE_INODE_SUCCESS;
+	*entry = nentry;
+	return CACHE_INODE_SUCCESS;
 
  out:
-	if (status != CACHE_INODE_SUCCESS) {
-		/* Deconstruct the object */
-		if (locksinited) {
-			pthread_rwlock_destroy(&nentry->attr_lock);
-			pthread_rwlock_destroy(&nentry->content_lock);
-			pthread_rwlock_destroy(&nentry->state_lock);
+
+	if (status == CACHE_INODE_ENTRY_EXISTS) {
+		if (!check_mapping(*entry, opctx->export)) {
+			LogCrit(COMPONENT_CACHE_INODE,
+				"Unable to create export mapping on existing entry");
+			status = CACHE_INODE_MALLOC_ERROR;
 		}
-		if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS)
-			cache_inode_lru_unref(nentry, LRU_FLAG_NONE);
+	}
+
+	if (nentry != NULL) {
+		/* Deconstruct the object */
+
+		/* Destroy the export mapping if any */
+		clean_mapping(nentry);
+
+		/* Destroy the locks */
+		pthread_rwlock_destroy(&nentry->attr_lock);
+		pthread_rwlock_destroy(&nentry->content_lock);
+		pthread_rwlock_destroy(&nentry->state_lock);
+
+		if (has_hashkey)
+			cache_inode_key_delete(&nentry->fh_hk.key);
+
+		/* Release the new entry we acquired. */
+		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
@@ -426,6 +461,123 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	return status;
 }				/* cache_inode_new_entry */
+
+struct export_get_first_entry_parms {
+	struct gsh_export *export;
+	struct entry_export_map *expmap;
+};
+
+/**
+ * @brief Function to be called from cache_inode_get_protected to get the
+ * first cache inode entry associated with an export.
+ *
+ * Also returns the expmap in the source parms for use by cache_inode_unexport.
+ * This is safe due to the assumptions made by cache_inode_unexport.
+ *
+ * @param entry  [IN/OUT] call by ref pointer to store cache entry
+ * @param source [IN/OUT] void pointer to parms structure
+ *
+ * @return cache inode status code
+ @ @retval CACHE_INODE_NOT_FOUND indicates there are associated entries
+ */
+
+cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
+{
+	struct export_get_first_entry_parms *parms = source;
+
+	*entry = NULL;
+
+	parms->expmap = glist_first_entry(&parms->export->entry_list,
+					  struct entry_export_map,
+					  entry_per_export);
+
+	if (unlikely(parms->expmap == NULL))
+		return CACHE_INODE_NOT_FOUND;
+
+	*entry = parms->expmap->entry;
+
+	return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @brief Cleans up cache inode entries on unexport.
+ *
+ * Assumptions:
+ * - export has been made unreachable
+ * - export refcount == 0
+ * - export root inode and junction have been cleaned up
+ * - state associated with the export has been released
+ *
+ * @param[in] export The export being unexported
+ *
+ * @return the result of the conversion.
+ *
+ */
+
+void cache_inode_unexport(struct gsh_export *export)
+{
+	struct export_get_first_entry_parms parms;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	cache_inode_status_t status;
+
+	parms.export = export;
+
+	while (errcnt < 10) {
+		status = cache_inode_get_protected(&entry,
+						   &export->lock,
+						   export_get_first_entry,
+						   &parms);
+
+		/* If we ran out of entries, we are done. */
+		if (status == CACHE_INODE_NOT_FOUND)
+			break;
+
+		/* For any other failure skip, we might busy wait.
+		 * For out of memory errors, we will limit our
+		 * retries. CACHE_INODE_FSAL_ESTALE should eventually
+		 * result in CACHE_INODE_NOT_FOUND as the mapping for
+		 * the stale inode gets cleaned up.
+		 */
+		if (status != CACHE_INODE_SUCCESS) {
+			if (status == CACHE_INODE_MALLOC_ERROR)
+				errcnt++;
+			continue;
+		}
+
+		/*
+		 * Now with the appropriate locks, remove this entry from the
+		 * export and if appropriate, dispose of it.
+		 */
+
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&export->lock);
+
+		/* Remove from list of exports for this entry */
+		glist_del(&parms.expmap->export_per_entry);
+
+		/* Remove from list of entries for this export */
+		glist_del(&parms.expmap->entry_per_export);
+
+		if (glist_empty(&entry->export_list)) {
+			/* If there are no exports referencing this
+			 * entry, attempt to push it to cleanup queue.
+			 */
+			cache_inode_lru_cleanup_try_push(entry);
+		}
+
+		PTHREAD_RWLOCK_unlock(&export->lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+		gsh_free(parms.expmap);
+
+		/* Done with entry, it may be cleaned up at this point.
+		 * If other exports reference this entry then the entry
+		 * will still be alive.
+		 */
+		cache_inode_put(entry);
+	}
+}
 
 /**
  * @brief Converts an FSAL error to the corresponding cache_inode error

@@ -43,6 +43,7 @@
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -68,9 +69,10 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
 	LOOKUPP4res * const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
-	cache_entry_t *dir_entry = NULL;
-	cache_entry_t *file_entry = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	cache_entry_t *dir_entry;
+	cache_entry_t *file_entry;
+	cache_inode_status_t cache_status;
+	struct gsh_export *original_export = data->req_ctx->export;
 
 	resp->resop = NFS4_OP_LOOKUPP;
 	res_LOOKUPP4->status = NFS4_OK;
@@ -81,35 +83,116 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUPP4->status != NFS4_OK)
 		return res_LOOKUPP4->status;
 
-	/* looking up for parent directory from ROOTFH return NFS4ERR_NOENT
-	 * (RFC3530, page 166)
-	 */
-	if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
-	    && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-		      data->currentFH.nfs_fh4_len) == 0) {
-		/* Nothing to do, just reply with success */
-		res_LOOKUPP4->status = NFS4ERR_NOENT;
-		return res_LOOKUPP4->status;
-	}
-
-	/* If in pseudoFS, proceed with pseudoFS specific functions */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-		return nfs4_op_lookupp_pseudo(op, data, resp);
-
-	/* If Filehandle points to the root of the current export, then backup
-	 * through junction into the pseudo file system.
-	 *
-	 * @todo FSF: eventually we need to support junctions between exports
-	 *            and that will require different code here.
-	 */
-	if (data->current_entry->type == DIRECTORY
-	    && data->current_entry ==
-	    data->req_ctx->export->export.exp_root_cache_inode)
-		return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
-
 	/* Preparing for cache_inode_lookup ".." */
 	file_entry = NULL;
 	dir_entry = data->current_entry;
+
+	/* If Filehandle points to the root of the current export, then backup
+	 * through junction into the containing export.
+	 */
+	if (data->current_entry->type != DIRECTORY)
+		goto not_junction;
+
+	PTHREAD_RWLOCK_rdlock(&original_export->lock);
+
+	if (data->current_entry ==
+	    original_export->export.exp_root_cache_inode) {
+		struct gsh_export *parent_exp;
+
+		/* Handle reverse junction */
+		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
+			 data->export->id,
+			 data->export->fullpath,
+			 data->export->exp_parent_exp);
+
+		if (data->export->exp_parent_exp == NULL) {
+			/* lookupp on the root on the pseudofs should return
+			 * NFS4ERR_NOENT (RFC3530, page 166)
+			 */
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			res_LOOKUPP4->status = NFS4ERR_NOENT;
+			return res_LOOKUPP4->status;
+		}
+
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
+
+		/* Clear out data->current entry outside lock
+		 * so if it cascades into cleanup, we aren't holding
+		 * an export lock that would cause trouble.
+		 */
+		set_current_entry(data, NULL, false);
+
+		/* We need to protect accessing the parent information
+		 * with the export lock. We use the current export's lock
+		 * which is plenty, the parent can't go away without
+		 * grabbing the current export's lock to clean out the
+		 * parent information.
+		 */
+		PTHREAD_RWLOCK_rdlock(&original_export->lock);
+
+		/* Get the junction inode into dir_entry and parent_exp
+		 * for reference.
+		 */
+		dir_entry = data->export->exp_junction_inode;
+		parent_exp = data->export->exp_parent_exp;
+
+		/* Check if there is a problem with the export. */
+		if (dir_entry == NULL || parent_exp == NULL) {
+			/* Export is in the process of dying */
+			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
+				data->export->id,
+				data->export->fullpath,
+				data->export->exp_parent_exp);
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			res_LOOKUPP4->status = NFS4ERR_STALE;
+			return res_LOOKUPP4->status;
+		}
+
+		/* Set up dir_entry as current entry with an LRU reference
+		 * while still holding the lock.
+		 */
+		set_current_entry(data, dir_entry, true);
+
+		/* Get a reference to the export and stash it in
+		 * compound data while still holding the lock.
+		 */
+		get_gsh_export_ref(parent_exp);
+
+		data->req_ctx->export = parent_exp;
+		data->export = &data->req_ctx->export->export;
+
+		/* Now we are safely transitioned to the parent export and can
+		 * release the lock.
+		 */
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
+
+		/* Release any old export reference */
+		if (original_export != NULL)
+			put_gsh_export(original_export);
+
+		/* Build credentials */
+		res_LOOKUPP4->status = nfs4_MakeCred(data);
+
+		/* Test for access error (export should not be visible). */
+		if (res_LOOKUPP4->status == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client doesn't
+			 * have access to this export, return NFS4ERR_NOENT to
+			 * hide it. It was not visible in READDIR response.
+			 */
+			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+				 data->export->id, data->export->fullpath);
+			res_LOOKUPP4->status = NFS4ERR_NOENT;
+			return res_LOOKUPP4->status;
+		}
+	} else {
+		/* Release the lock taken above */
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
+	}
+
+not_junction:
 
 	cache_status =
 	    cache_inode_lookupp(dir_entry, data->req_ctx, &file_entry);
@@ -117,39 +200,25 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	if (file_entry != NULL) {
 		/* Convert it to a file handle */
 		if (!nfs4_FSALToFhandle(&data->currentFH,
-					file_entry->obj_handle)) {
+					file_entry->obj_handle,
+					data->req_ctx->export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			cache_inode_put(file_entry);
 			return res_LOOKUPP4->status;
 		}
 
-		/* Mark current_stateid as invalid */
-		data->current_stateid_valid = false;
-
-		/* Release dir_pentry, as it is not reachable from anywhere in
-		 * compound after this function returns.  Count on later
-		 * operations or nfs4_Compound to clean up current_entry.
-		 */
-		if (dir_entry)
-			cache_inode_put(dir_entry);
-
 		/* Keep the pointer within the compound data */
-		data->current_entry = file_entry;
-		data->current_filetype = file_entry->type;
+		set_current_entry(data, file_entry, true);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;
-		return NFS4_OK;
-
+	} else {
+		/* Unable to look up parent for some reason.
+		 * Return error.
+		 */
+		set_current_entry(data, NULL, false);
+		res_LOOKUPP4->status = nfs4_Errno(cache_status);
 	}
-
-	/* If the part of the code is reached, then something wrong occured
-	 * in the lookup process, status is not HPSS_E_NOERROR and contains
-	 * the code for the error
-	 */
-
-	/* For any wrong file type LOOKUPP should return NFS4ERR_NOTDIR */
-	res_LOOKUPP4->status = nfs4_Errno(cache_status);
 
 	return res_LOOKUPP4->status;
 }				/* nfs4_op_lookupp */

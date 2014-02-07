@@ -74,6 +74,10 @@ void state_wipe_file(cache_entry_t *entry);
 void dump_all_owners(void);
 #endif
 
+void state_release_export(struct gsh_export *exp);
+
+bool state_unlock_err_ok(state_status_t status);
+
 /*****************************************************************************
  *
  * 9P State functions
@@ -340,7 +344,7 @@ nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry, const char *tag,
 int nfs4_Init_state_id(hash_parameter_t *param);
 int nfs4_State_Set(char other[OTHERSIZE], state_t *state_data);
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data);
-int nfs4_State_Del(char other[OTHERSIZE]);
+void nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
 int display_state_id_val(struct gsh_buffdesc *buff, char *str);
@@ -516,6 +520,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 				      struct req_op_context *req_ctx,
 				      state_t *state);
 
+void state_export_unlock_all(struct req_op_context *req_ctx);
+
 void state_lock_wipe(cache_entry_t *entry);
 
 void cancel_all_nlm_blocked();
@@ -540,9 +546,9 @@ state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
 
 state_status_t state_set(state_t *state);
 
-state_status_t state_del_locked(state_t *state, cache_entry_t *entry);
+void state_del_locked(state_t *state, cache_entry_t *entry);
 
-state_status_t state_del(state_t *state, bool hold_lock);
+void state_del(state_t *state, bool hold_lock);
 
 int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str);
 int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str);
@@ -564,6 +570,7 @@ void state_nfs4_state_wipe(cache_entry_t *entry);
 
 void release_lockstate(state_owner_t *lock_owner);
 void release_openstate(state_owner_t *open_owner);
+void state_export_release_nfs4_state(exportlist_t *export);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);
@@ -616,10 +623,14 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
 			       exportlist_t *, int, int, state_owner_t *);
 
-state_status_t state_nlm_unshare(cache_entry_t *entry, int share_access,
-				 int share_deny, state_owner_t *owner);
+state_status_t state_nlm_unshare(cache_entry_t *entry,
+				 exportlist_t *export,
+				 int share_access,
+				 int share_deny,
+				 state_owner_t *owner);
 
 void state_share_wipe(cache_entry_t *entry);
+void state_export_unshare_all(struct req_op_context *req_ctx);
 
 /******************************************************************************
  *
@@ -647,8 +658,7 @@ void grant_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 void available_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 				   fsal_lock_param_t *lock);
 
-void process_blocked_lock_upcall(state_block_data_t *block_data,
-				 struct req_op_context *req_ctx);
+void process_blocked_lock_upcall(state_block_data_t *block_data);
 
 /******************************************************************************
  *

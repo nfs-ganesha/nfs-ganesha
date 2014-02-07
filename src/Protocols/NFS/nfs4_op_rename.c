@@ -97,12 +97,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
 
-	/* Pseudo Fs is explictely a Read-Only File system */
-	if (nfs4_Is_Fh_Pseudo(&(data->savedFH))) {
-		res_RENAME4->status = NFS4ERR_ROFS;
-		goto out;
-	}
-
 	if (nfs_in_grace()) {
 		res_RENAME4->status = NFS4ERR_GRACE;
 		goto out;

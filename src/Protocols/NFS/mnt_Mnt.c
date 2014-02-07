@@ -60,7 +60,8 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 	exportlist_t *p_current_item = NULL;
 	struct gsh_export *exp = NULL;
-	struct fsal_obj_handle *pfsal_handle;
+	struct fsal_obj_handle *pfsal_handle = NULL;
+	bool release_handle = false;
 	struct fsal_export *exp_hdl;
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
@@ -91,7 +92,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	 * Find the export for the dirname (using as well Path or Tag )
 	 */
 	if (arg->arg_mnt[0] == '/')
-		exp = get_gsh_export_by_path(arg->arg_mnt);
+		exp = get_gsh_export_by_path(arg->arg_mnt, false);
 	else
 		exp = get_gsh_export_by_tag(arg->arg_mnt);
 
@@ -147,7 +148,26 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	 */
 	if (arg->arg_mnt[0] != '/'
 	    || !strcmp(arg->arg_mnt, p_current_item->fullpath)) {
-		pfsal_handle = p_current_item->exp_root_cache_inode->obj_handle;
+		PTHREAD_RWLOCK_rdlock(&exp->lock);
+		if (p_current_item->exp_root_cache_inode != NULL) {
+			pfsal_handle =
+			    p_current_item->exp_root_cache_inode->obj_handle;
+			PTHREAD_RWLOCK_unlock(&exp->lock);
+		} else {
+			PTHREAD_RWLOCK_unlock(&exp->lock);
+
+			switch (req->rq_vers) {
+			case MOUNT_V1:
+				res->res_mnt1.status = NFSERR_ACCES;
+				break;
+
+			case MOUNT_V3:
+				res->res_mnt3.fhs_status = MNT3ERR_ACCES;
+				break;
+			}
+
+			goto out;
+		}
 	} else {
 		exp_hdl = p_current_item->export_hdl;
 		LogEvent(COMPONENT_NFSPROTO,
@@ -166,13 +186,15 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 				break;
 			}
 			goto out;
+
+		release_handle = true;
 		}
 	}
 	/* convert the fsal_handle to a file handle */
 	switch (req->rq_vers) {
 	case MOUNT_V1:
-		if (!nfs2_FSALToFhandle
-		    (&(res->res_mnt1.fhstatus2_u.directory), pfsal_handle)) {
+		if (!nfs2_FSALToFhandle(&res->res_mnt1.fhstatus2_u.directory,
+					pfsal_handle, exp)) {
 			res->res_mnt1.status = NFSERR_IO;
 		} else {
 			res->res_mnt1.status = NFS_OK;
@@ -190,7 +212,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 			if (!nfs3_FSALToFhandle
 			    ((nfs_fh3 *) &
 			     (res->res_mnt3.mountres3_u.mountinfo.fhandle),
-			     pfsal_handle)) {
+			     pfsal_handle, exp)) {
 				res->res_mnt3.fhs_status = MNT3ERR_INVAL;
 			} else {
 				if (isDebug(COMPONENT_NFSPROTO))
@@ -204,6 +226,9 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 		break;
 	}
+
+	if (release_handle)
+		pfsal_handle->ops->release(pfsal_handle);
 
 	/* Return the supported authentication flavor in V3 based
 	 * on the client's export permissions.

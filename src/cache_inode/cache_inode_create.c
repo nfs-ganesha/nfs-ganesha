@@ -203,7 +203,7 @@ cache_inode_create(cache_entry_t *parent,
 	}
 	status =
 	    cache_inode_new_entry(object_handle, CACHE_INODE_FLAG_CREATE,
-				  entry);
+				  entry, req_ctx);
 	if (*entry == NULL) {
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "create failed because insert new entry failed");
@@ -220,6 +220,12 @@ cache_inode_create(cache_entry_t *parent,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "create failed because add dirent failed");
 		goto out;
+	}
+
+	if (type == DIRECTORY) {
+		/* Insert Parent's key */
+		cache_inode_key_dup(&(*entry)->object.dir.parent,
+				    &parent->fh_hk.key);
 	}
 
  out:

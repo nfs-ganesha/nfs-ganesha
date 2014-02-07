@@ -331,7 +331,9 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
 
 	/* Building a new fh */
-	if (!nfs4_FSALToFhandle(&newfh4, entry->obj_handle))
+	if (!nfs4_FSALToFhandle(&newfh4,
+				entry->obj_handle,
+				data->req_ctx->export))
 		return NFS4ERR_SERVERFAULT;
 
 	/* This new fh replaces the current FH */
@@ -340,11 +342,8 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	       newfh4.nfs_fh4_val,
 	       newfh4.nfs_fh4_len);
 
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	data->current_entry = entry;
-	data->current_filetype = entry->type;
+	/* Update the current entry */
+	set_current_entry(data, entry, true);
 
 	return NFS4_OK;
 }
@@ -912,8 +911,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_change = NULL;
 	/* Open flags to be passed to the FSAL */
 	fsal_openflags_t openflags = 0;
-	/* Return code from state oeprations */
-	state_status_t state_status = STATE_SUCCESS;
 	/* The found client record */
 	nfs_client_id_t *clientid = NULL;
 	/* The found or created state owner for this open */
@@ -976,16 +973,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (res_OPEN4->status != NFS4_OK)
 		return res_OPEN4->status;
-
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_OPEN4->status = NFS4ERR_PERM;
-
-		LogDebug(COMPONENT_NFS_V4,
-			 "Status of OP_OPEN due to PseudoFS handle = %s",
-			 nfsstat4_to_str(res_OPEN4->status));
-
-		return res_OPEN4->status;
-	}
 
 	if (data->current_entry == NULL) {
 		/* This should be impossible, as PUTFH fills in the
@@ -1106,8 +1093,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				/* Decrement the current entry here, because
 				 * nfs4_create_fh replaces the current fh.
 				 */
-				cache_inode_put(data->current_entry);
-				data->current_entry = NULL;
+				set_current_entry(data, NULL, false);
 				res_OPEN4->status =
 				    open4_create_fh(data, entry);
 			}
@@ -1376,11 +1362,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if ((file_state != NULL) && new_state &&
 	    (res_OPEN4->status != NFS4_OK)) {
 		/* Need to destroy open owner and state */
-		state_status = state_del(file_state, false);
-		if (state_status != STATE_SUCCESS)
-			LogDebug(COMPONENT_STATE,
-				 "state_del failed with status %s",
-				 state_err_str(state_status));
+		state_del(file_state, false);
 	}
 
 	if (entry_change)

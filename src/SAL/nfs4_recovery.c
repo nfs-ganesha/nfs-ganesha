@@ -269,6 +269,8 @@ void nfs4_rm_clid(char *recov_dir)
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to remove client in recovery dir (%s), errno=%d",
 			 path, errno);
+	} else {
+		LogDebug(COMPONENT_CLIENTID, "Removed client dir [%s]", path);
 	}
 }
 

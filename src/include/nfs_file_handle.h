@@ -38,6 +38,8 @@
 #include "log.h"
 #include "nfs23.h"
 #include "nlm4.h"
+#include "nfs_exports.h"
+#include "cache_inode.h"
 
 /*
  * Structure of the filehandle
@@ -162,9 +164,17 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, const struct req_op_context *,
 				   exportlist_t *, nfsstat3 *, int *);
 
-bool nfs4_FSALToFhandle(nfs_fh4 *, const struct fsal_obj_handle *);
-bool nfs3_FSALToFhandle(nfs_fh3 *, const struct fsal_obj_handle *);
-bool nfs2_FSALToFhandle(fhandle2 *, const struct fsal_obj_handle *);
+bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
+
+bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
+
+bool nfs2_FSALToFhandle(fhandle2 *fh2,
+			const struct fsal_obj_handle *fsalhandle,
+			struct gsh_export *exp);
 
 /* nfs3 validation */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *);
@@ -229,10 +239,8 @@ static inline int nfs4_Is_Fh_Empty(nfs_fh4 *pfh)
 }				/* nfs4_Is_Fh_Empty */
 
 /* NFSv4 specific FH related functions */
-int nfs4_Is_Fh_Pseudo(nfs_fh4 *);
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
-int CreateROOTFH4(nfs_fh4 *fh, compound_data_t *data);
 
 /* File handle print function (mostly used for debugging) */
 void print_fhandle2(log_components_t, fhandle2 *);

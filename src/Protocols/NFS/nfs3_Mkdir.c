@@ -187,7 +187,8 @@ int nfs_Mkdir(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	if (!nfs3_FSALToFhandle(&d3ok->obj.post_op_fh3_u.handle,
-				dir_entry->obj_handle)) {
+				dir_entry->obj_handle,
+				 req_ctx->export)) {
 		gsh_free(d3ok->obj.post_op_fh3_u.handle.data.data_val);
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;

@@ -136,13 +136,14 @@ void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 /* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);
 void cache_inode_lru_cleanup_push(cache_entry_t *entry);
+void cache_inode_lru_cleanup_try_push(cache_entry_t *entry);
 
 void cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags);
 void cache_inode_lru_putback(cache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
 cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 void cache_inode_unpinnable(cache_entry_t *entry);
-cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry, bool c);
+void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile);
 bool cache_inode_is_pinned(cache_entry_t *entry);
 void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
 

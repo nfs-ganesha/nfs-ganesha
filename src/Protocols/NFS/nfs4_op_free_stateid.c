@@ -70,7 +70,6 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	FREE_STATEID4res * const res_FREE_STATEID4 =
 	    &resp->nfs_resop4_u.opfree_stateid;
 	state_t *state;
-	state_status_t state_status;
 
 	resp->resop = NFS4_OP_FREE_STATEID;
 	res_FREE_STATEID4->fsr_status = NFS4_OK;
@@ -91,15 +90,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return res_FREE_STATEID4->fsr_status;
 
-	state_status = state_del(state, false);
-
-	if (state_status != STATE_SUCCESS) {
-		LogEvent(COMPONENT_STATE,
-			 "state_del failed with status %s",
-			 state_err_str(state_status));
-	}
-
-	res_FREE_STATEID4->fsr_status = nfs4_Errno_state(state_status);
+	state_del(state, false);
 
 	return res_FREE_STATEID4->fsr_status;
 

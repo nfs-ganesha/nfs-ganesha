@@ -72,8 +72,8 @@ int rquota_getquota(nfs_arg_t *arg, exportlist_t *export,
 	qres->status = Q_EPERM;
 
 	if (arg->arg_rquota_getquota.gqa_pathp[0] == '/') {
-		exp =
-		    get_gsh_export_by_path(arg->arg_rquota_getquota.gqa_pathp);
+		exp = get_gsh_export_by_path(arg->arg_rquota_getquota.gqa_pathp,
+					     false);
 		if (exp == NULL)
 			goto out;
 		quota_path = arg->arg_rquota_getquota.gqa_pathp;

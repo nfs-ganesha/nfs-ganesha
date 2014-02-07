@@ -248,13 +248,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			return op_dsread_plus(op, data, resp, info);
 	}
 
-	/* Manage access type MDONLY */
-	if ((data->export->access_type == ACCESSTYPE_MDONLY)
-	    || (data->export->access_type == ACCESSTYPE_MDONLY_RO)) {
-		res_READ4->status = NFS4ERR_DQUOT;
-		return res_READ4->status;
-	}
-
 	entry = data->current_entry;
 	/* Check stateid correctness and get pointer to state (also
 	   checks for special stateids) */
@@ -377,6 +370,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
+	/** @todo this is racy, use cache_inode_lock_trust_attrs and
+	 *        cache_inode_access_no_mutex
+	 */
 	if (state_open == NULL
 	    && entry->obj_handle->attributes.owner !=
 	    data->req_ctx->creds->caller_uid) {

@@ -215,7 +215,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 		if (client_ip_cmpf(&v.node_k, node) == 0) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
-				 "client_mgr cache hit slot %d\n",
+				 "client_mgr cache hit slot %d",
 				 eip_cache_offsetof(&client_by_ip, ipaddr));
 			cl = avltree_container_of(node, struct gsh_client,
 						  node_k);
@@ -255,7 +255,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 		gsh_free(server_st);	/* somebody beat us to it */
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
-		pthread_mutex_init(&cl->lock, NULL);
+		pthread_rwlock_init(&cl->lock, NULL);
 	}
 
  out:

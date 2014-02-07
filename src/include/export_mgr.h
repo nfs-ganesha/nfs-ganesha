@@ -36,6 +36,8 @@
  * @brief Export manager
  */
 
+#include "nlm_list.h"
+
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
@@ -46,12 +48,25 @@ typedef enum export_state {
 	EXPORT_RELEASE		/*< No references, ready for reaping */
 } export_state_t;
 
+/**
+ * @brief Represents an export.
+ *
+ */
+
 struct gsh_export {
+	/** gsh_exports are kept in an AVL tree by export_id */
 	struct avltree_node node_k;
-	pthread_mutex_t lock;
+	/** The list of cache inode entries belonging to this export */
+	struct glist_head entry_list;
+	/** Read/Write lock protecting export */
+	pthread_rwlock_t lock;
+	/** References to this export */
 	int64_t refcnt;
+	/** The NFS server definition of the export */
 	exportlist_t export;
+	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
+	/** The condition the export is in */
 	export_state_t state;
 };
 
@@ -60,14 +75,23 @@ void export_pkginit(void);
 void dbus_export_init(void);
 #endif
 struct gsh_export *get_gsh_export(int export_id, bool lookup_only);
-struct gsh_export *get_gsh_export_by_path(char *path);
-struct gsh_export *get_gsh_export_by_pseudo(char *path);
+struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
+struct gsh_export *get_gsh_export_by_path_locked(char *path,
+						 bool exact_match);
+struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match);
+struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
+						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
-bool remove_gsh_export(int export_id);
-int foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-		       void *state);
+void remove_gsh_export(int export_id);
+bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+			void *state);
+
+static inline void get_gsh_export_ref(struct gsh_export *exp)
+{
+	atomic_inc_int64_t(&exp->refcnt);
+}
 
 #endif				/* !EXPORT_MGR_H */
 /** @} */

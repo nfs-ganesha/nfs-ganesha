@@ -42,4 +42,7 @@ extern pthread_mutex_t fsal_lock;
 
 extern struct glist_head fsal_list;
 
+/* Definitions for Pseudo FSAL */
+void pseudo_fsal_init(void);
+
 #endif /* FSAL_PRIVATE_H */

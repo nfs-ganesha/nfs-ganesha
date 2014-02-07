@@ -487,13 +487,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 	client_pkginit();
 	export_pkginit();
 
-	rc = read_log_config(config_struct);
-	if (rc < 0) {
-		LogCrit(COMPONENT_INIT,
-			"Error while parsing log configuration");
-		return -1;
-	}
-
 	/* Core parameters */
 	rc = nfs_read_core_conf(config_struct, &nfs_param.core_param);
 	if (rc < 0) {
@@ -1037,11 +1030,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Creates the pseudo fs */
 	LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-	rc = nfs4_ExportToPseudoFS();
-	if (rc != 0)
-		LogFatal(COMPONENT_INIT,
-			 "Error %d while initializing NFSv4 pseudo file system",
-			 rc);
+
+	create_pseudofs();
 
 	LogInfo(COMPONENT_INIT,
 		"NFSv4 pseudo file system successfully initialized");

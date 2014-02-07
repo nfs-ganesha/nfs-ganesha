@@ -91,6 +91,7 @@ fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 			 const struct req_op_context *opctx,
 			 struct io_hints *hints);
 fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			  const struct req_op_context *opctx,
 			  off_t offset, size_t len);
 fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			   const struct req_op_context *opctx, void *p_owner,

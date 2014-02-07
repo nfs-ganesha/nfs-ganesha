@@ -275,7 +275,7 @@
  * e.g.  the argument list changed or a method is removed.
  */
 
-#define FSAL_MAJOR_VERSION 1
+#define FSAL_MAJOR_VERSION 2
 
 /**
  * @brief Minor Version
@@ -1703,6 +1703,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*commit) (struct fsal_obj_handle *obj_hdl,  /* sync */
+				 const struct req_op_context *opctx,
 				 off_t offset, size_t len);
 
 /**
@@ -2211,7 +2212,7 @@ struct fsal_ds_ops {
  */
 	 nfsstat4(*read_plus) (struct fsal_ds_handle *const ds_hdl,
 			  struct req_op_context *const req_ctx,
-			  const stateid4 *stateid,
+			  const stateid4 * stateid,
 			  const offset4 offset,
 			  const count4 requested_length,
 			  void *const buffer,
@@ -2281,7 +2282,7 @@ struct fsal_ds_ops {
  */
 	 nfsstat4(*write_plus) (struct fsal_ds_handle *const ds_hdl,
 			   struct req_op_context *const req_ctx,
-			   const stateid4 *stateid,
+			   const stateid4 * stateid,
 			   const offset4 offset,
 			   const count4 write_length,
 			   const void *buffer,

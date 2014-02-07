@@ -33,6 +33,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  * @brief Opaque bookkeeping structure for NFSv4 readdir
@@ -54,7 +55,34 @@ struct nfs4_readdir_cb_data {
 	struct bitmap4 *req_attr;	/*< The requested attributes */
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
+	bool junction_cb;	/*< True if this is a callback for junction. */
+	export_perms_t save_export_perms;	/*< Saved export perms. */
+	struct gsh_export *saved_gsh_export;	/*< Saved export */
 };
+
+static void restore_data(struct nfs4_readdir_cb_data *tracker)
+{
+	/* Restore export stuff */
+	if (tracker->data->req_ctx->export)
+		put_gsh_export(tracker->data->req_ctx->export);
+
+	tracker->data->export_perms = tracker->save_export_perms;
+	tracker->data->req_ctx->export = tracker->saved_gsh_export;
+	tracker->data->export = &tracker->data->req_ctx->export->export;
+	tracker->saved_gsh_export = NULL;
+
+	/* Restore creds */
+	if (!get_req_uid_gid(tracker->data->req,
+			     tracker->data->req_ctx->creds,
+			     &tracker->data->export_perms)) {
+		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			"Failure to restore creds");
+	} else {
+		nfs_check_anon(&tracker->data->export_perms,
+			       tracker->data->export,
+			       tracker->data->req_ctx->creds);
+	}
+}
 
 /**
  * @brief Populate entry4s when called from cache_inode_readdir
@@ -85,12 +113,159 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		.nfs_fh4_val = val_fh
 	};
 	struct xdr_attrs_args args;
+	compound_data_t *data = tracker->data;
+	nfsstat4 rdattr_error = NFS4_OK;
+	entry4 *tracker_entry = tracker->entries + tracker->count;
+	cache_inode_status_t attr_status;
+	fsal_accessflags_t access_mask_attr = 0;
+	cache_entry_t *entry = cb_parms->entry;
 
-	if (tracker->total_entries == tracker->count) {
-		cb_parms->in_result = false;
-		return CACHE_INODE_SUCCESS;
+	/* If being called on error regarding junction, go cleanup. */
+	if (attr == NULL)
+		goto out;
+
+	if (tracker->total_entries == tracker->count)
+		goto not_inresult;
+
+	/* Test if this is a junction.
+	 *
+	 * NOTE: If there is a junction within a file system (perhaps setting
+	 *       up different permissions for part of the file system), the
+	 *       junction inode will ALSO be the root of the nested export.
+	 *       By testing junction_cb, we allow the call back to process
+	 *       that root inode to proceed rather than getting stuck in a
+	 *       junction crossing infinite loop.
+	 */
+	if (cb_parms->attr_allowed &&
+	    entry->type == DIRECTORY &&
+	    entry->object.dir.junction_export != NULL &&
+	    !tracker->junction_cb) {
+		/* This is a junction. Code used to not recognize this
+		 * which resulted in readdir giving different attributes
+		 * (including FH, FSid, etc...) to clients from a
+		 * lookup. AIX refused to list the directory because of
+		 * this. Now we go to the junction to get the
+		 * attributes.
+		 */
+		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+			    "Offspring DIR %s is a junction Export_id %d Path %s",
+			    cb_parms->name,
+			    entry->object.dir.junction_export->export.id,
+			    entry->object.dir.junction_export->export.fullpath);
+
+		/* Save the compound data context */
+		tracker->save_export_perms = data->export_perms;
+		tracker->saved_gsh_export = data->req_ctx->export;
+
+		/* Get a reference to the export and stash it in
+		 * compound data.
+		 */
+		get_gsh_export_ref(entry->object.dir.junction_export);
+
+		/* Cross the junction */
+		data->req_ctx->export =
+		    entry->object.dir.junction_export;
+
+		data->export = &data->req_ctx->export->export;
+
+		/* Build the credentials */
+		rdattr_error = nfs4_MakeCred(data);
+
+		if (rdattr_error == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client
+			 * doesn't have access to this export, quietly
+			 * skip the export.
+			 */
+			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
+				 data->export->id,
+				 data->export->fullpath);
+
+			/* Restore export and creds */
+			restore_data(tracker);
+
+			/* Indicate success without adding another entry */
+			cb_parms->in_result = true;
+			goto out;
+		}
+
+		if (rdattr_error == NFS4ERR_WRONGSEC) {
+			/* Client isn't using the right SecType for this export,
+			 * we will report NFS4ERR_WRONGSEC in
+			 * FATTR4_RDATTR_ERROR.
+			 *
+			 * If the ONLY attributes requested are
+			 * FATTR4_RDATTR_ERROR and FATTR4_MOUNTED_ON_FILEID we
+			 * will not return an error and instead will return
+			 * success with FATTR4_MOUNTED_ON_FILEID. AIX clients
+			 * make this request and expect it to succeed.
+			 */
+
+			if (check_for_wrongsec_ok_attr(tracker->req_attr)) {
+				/* Client is requesting attr that are allowed
+				 * when NFS4ERR_WRONGSEC occurs.
+				 */
+				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
+					 data->export->id,
+					 data->export->fullpath);
+
+				/* Because we are not asking for any attributes
+				 * which are a property of the exported file
+				 * system's root, really just asking for
+				 * MOUNTED_ON_FILEID, we can just get the attr
+				 * for this node since it will result in the
+				 * correct value for MOUNTED_ON_FILEID since
+				 * the fileid of the junction node is the
+				 * MOUNTED_ON_FILEID of the root across the
+				 * junction, and the mounted_on_filed passed
+				 * is the fileid of the junction (since the
+				 * node can't be the root of the current
+				 * export).
+				 *
+				 * Go ahead and proceed without an error.
+				 */
+				rdattr_error = NFS4_OK;
+			} else {
+				/* We really must report the NFS4ERR_WRONGSEC.
+				 * We will report it below, but we need to get
+				 * the name into the entry.
+				 */
+				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
+					 data->export->id,
+					 data->export->fullpath);
+			}
+		} else if (rdattr_error == NFS4_OK) {
+			/* Now we must traverse the junction to get the
+			 * attributes. We have already set up the compound data.
+			 *
+			 * Signal to cache_inode_getattr to call back with the
+			 * root node of the export across the junction. Also
+			 * signal to ourselves that the call back will be
+			 * across the junction.
+			 */
+			LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+				     "Need to cross junction to Export_Id %d Path %s",
+				     data->export->id,
+				     data->export->fullpath);
+			tracker->junction_cb = true;
+			return CACHE_INODE_CROSS_JUNCTION;
+		}
+
+		/* An error occured and we will report it, but we need to get
+		 * the name into the entry to proceed.
+		 *
+		 * Restore export and creds.
+		 */
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "Need to report error for junction to Export_Id %d Path %s",
+			     data->export->id,
+			     data->export->fullpath);
+		restore_data(tracker);
 	}
 
+	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);
 
 	/* Bits that don't require allocation */
@@ -98,46 +273,56 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
 
-		cb_parms->in_result = false;
-		return CACHE_INODE_SUCCESS;
+		goto failure;
 	}
 
 	tracker->mem_left -= sizeof(entry4);
-	tracker->entries[tracker->count].cookie = cb_parms->cookie;
-	tracker->entries[tracker->count].nextentry = NULL;
+	tracker_entry->cookie = cb_parms->cookie;
+	tracker_entry->nextentry = NULL;
 
 	/* The filename.  We don't use str2utf8 because that has an
 	 * additional copy into a buffer before copying into the
 	 * destination.
 	 */
 	namelen = strlen(cb_parms->name);
+
 	if (tracker->mem_left < (namelen + 1)) {
 		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
 
-		cb_parms->in_result = false;
-		return CACHE_INODE_SUCCESS;
+		goto failure;
 	}
 
 	tracker->mem_left -= (namelen);
-	tracker->entries[tracker->count].name.utf8string_len = namelen;
-	tracker->entries[tracker->count].name.utf8string_val =
-	    gsh_malloc(namelen);
-	memcpy(tracker->entries[tracker->count].name.utf8string_val,
-	       cb_parms->name, namelen);
+	tracker_entry->name.utf8string_len = namelen;
+	tracker_entry->name.utf8string_val = gsh_malloc(namelen);
+
+	if (tracker_entry->name.utf8string_val == NULL) {
+		/* Could not allocate name */
+		goto server_fault;
+	}
+
+	memcpy(tracker_entry->name.utf8string_val,
+	       cb_parms->name,
+	       namelen);
+
+	/* If we carried an error from above, now that we have
+	 * the name set up, go ahead and try and put error in
+	 * results.
+	 */
+	if (rdattr_error != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
+		goto skip;
+	}
 
 	if (cb_parms->attr_allowed
 	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
 		if (!nfs4_FSALToFhandle(&entryFH,
-					cb_parms->entry->obj_handle)) {
-			tracker->error = NFS4ERR_SERVERFAULT;
-			gsh_free(tracker->entries[tracker->count].name.
-				 utf8string_val);
-			tracker->entries[tracker->count].name.utf8string_val =
-			    NULL;
-			cb_parms->in_result = false;
-			return CACHE_INODE_SUCCESS;
-		}
+					entry->obj_handle,
+					data->req_ctx->export))
+			goto server_fault;
 	}
 
 	if (!cb_parms->attr_allowed) {
@@ -145,98 +330,112 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 * search permission in this directory, so we can't return any
 		 * attributes, but must indicate NFS4ERR_ACCESS.
 		 */
-		if (nfs4_Fattr_Fill_Error(
-				 &tracker->entries[tracker->count].attrs,
-				 NFS4ERR_ACCESS) == -1) {
-			tracker->error = NFS4ERR_SERVERFAULT;
-			gsh_free(tracker->entries[tracker->count].name.
-				 utf8string_val);
-			tracker->entries[tracker->count].name.utf8string_val =
-			    NULL;
-			cb_parms->in_result = false;
-			return CACHE_INODE_SUCCESS;
-		}
-	} else {
-		cache_inode_status_t attr_status;
-		fsal_accessflags_t access_mask_attr = 0;
+		rdattr_error = NFS4ERR_ACCESS;
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
+		goto skip;
+	}
 
-		/* Adjust access mask if ACL is asked for.
-		 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
-		 */
-		if (attribute_is_set(tracker->req_attr, FATTR4_ACL)) {
-			access_mask_attr |=
-			    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+	/* Adjust access mask if ACL is asked for.
+	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+	 */
+	if (attribute_is_set(tracker->req_attr, FATTR4_ACL))
+		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+
+	/* cache_inode_readdir holds attr_lock while making callback,
+	 * so we need to do access check with no mutex.
+	 */
+	attr_status =
+	    cache_inode_access_no_mutex(entry, access_mask_attr, data->req_ctx);
+
+	if (attr_status != CACHE_INODE_SUCCESS) {
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "permission check for attributes status=%s",
+			     cache_inode_err_str(attr_status));
+
+		rdattr_error = nfs4_Errno(attr_status);
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
+		goto skip;
+	}
+
+	memset(&args, 0, sizeof(args));
+	args.attrs = (struct attrlist *)attr;
+	args.data = data;
+	args.hdl4 = &entryFH;
+	args.mounted_on_fileid = mounted_on_fileid;
+
+	if (nfs4_FSALattr_To_Fattr(&args,
+				   tracker->req_attr,
+				   &tracker_entry->attrs) != 0) {
+		LogCrit(COMPONENT_NFS_READDIR,
+			"nfs4_FSALattr_To_Fattr failed to convert attr");
+		goto server_fault;
+	}
+
+ skip:
+
+	if (rdattr_error != NFS4_OK) {
+		if (!attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR)) {
+			tracker->error = rdattr_error;
+			goto failure;
 		}
 
-		/* cache_inode_readdir holds attr_lock while making callback,
-		 * so we need to do access check with no mutex.
-		 */
-		attr_status =
-		    cache_inode_access_no_mutex(cb_parms->entry,
-						access_mask_attr,
-						tracker->data->req_ctx);
-		if (attr_status != CACHE_INODE_SUCCESS) {
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "permission check for attributes status=%s",
-				     cache_inode_err_str(attr_status));
-
-			if (nfs4_Fattr_Fill_Error(
-				     &tracker->entries[tracker->count].attrs,
-				     nfs4_Errno(attr_status)) == -1) {
-				tracker->error = NFS4ERR_SERVERFAULT;
-				gsh_free(tracker->entries[tracker->count].name.
-					 utf8string_val);
-				tracker->entries[tracker->count].name.
-				    utf8string_val = NULL;
-				cb_parms->in_result = false;
-				return CACHE_INODE_SUCCESS;
-			}
-		} else {
-			memset(&args, 0, sizeof(args));
-			args.attrs = (struct attrlist *)attr;
-			args.data = tracker->data;
-			args.hdl4 = &entryFH;
-			args.mounted_on_fileid = mounted_on_fileid;
-			if (nfs4_FSALattr_To_Fattr(
-			     &args, tracker->req_attr,
-			     &tracker->entries[tracker->count].attrs) != 0) {
-				LogFatal(COMPONENT_NFS_V4,
-					 "nfs4_FSALattr_To_Fattr failed to convert attr");
-			}
-		}
+		if (nfs4_Fattr_Fill_Error(&tracker_entry->attrs,
+					  rdattr_error) == -1)
+			goto server_fault;
 	}
 
 	if (tracker->mem_left <
-	    ((tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
-	      sizeof(uint32_t)) + (tracker->entries[tracker->count]
-				   .attrs.attr_vals.attrlist4_len))) {
-		gsh_free(tracker->entries[tracker->count]
-			 .attrs.attr_vals.attrlist4_val);
-		tracker->entries[tracker->count].attrs.attr_vals.attrlist4_val =
-		    NULL;
-		gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-		tracker->entries[tracker->count].name.utf8string_val = NULL;
-
+	    ((tracker_entry->attrs.attrmask.bitmap4_len * sizeof(uint32_t))
+	     + (tracker_entry->attrs.attr_vals.attrlist4_len))) {
 		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
 
-		cb_parms->in_result = false;
-		return CACHE_INODE_SUCCESS;
+		goto failure;
 	}
 
-	tracker->mem_left -=
-	    (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
-	     sizeof(uint32_t));
-	tracker->mem_left -=
-	    (tracker->entries[tracker->count].attrs.attr_vals.attrlist4_len);
+	tracker->mem_left -= tracker_entry->attrs.attrmask.bitmap4_len *
+			     sizeof(uint32_t);
 
-	if (tracker->count != 0) {
-		tracker->entries[tracker->count - 1].nextentry =
-		    &tracker->entries[tracker->count];
-	}
+	tracker->mem_left -= tracker_entry->attrs.attr_vals.attrlist4_len;
+
+	if (tracker->count != 0)
+		tracker->entries[tracker->count - 1].nextentry = tracker_entry;
 
 	++(tracker->count);
 	cb_parms->in_result = true;
+	goto out;
+
+ server_fault:
+
+	tracker->error = NFS4ERR_SERVERFAULT;
+
+ failure:
+
+	if (tracker_entry->attrs.attr_vals.attrlist4_val != NULL) {
+		gsh_free(tracker_entry->attrs.attr_vals.attrlist4_val);
+		tracker_entry->attrs.attr_vals.attrlist4_val = NULL;
+	}
+
+	if (tracker_entry->name.utf8string_val != NULL) {
+		gsh_free(tracker_entry->name.utf8string_val);
+		tracker_entry->name.utf8string_val = NULL;
+	}
+
+ not_inresult:
+
+	cb_parms->in_result = false;
+
+ out:
+
+	if (tracker->junction_cb) {
+		tracker->junction_cb = false;
+		restore_data(tracker);
+	}
+
 	return CACHE_INODE_SUCCESS;
 }
 
@@ -303,11 +502,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_READDIR4->status != NFS4_OK)
 		goto out;
 
-	/* Pseudo Fs management */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_READDIR4->status = nfs4_op_readdir_pseudo(op, data, resp);
-		goto out;
-	}
+	memset(&tracker, 0, sizeof(tracker));
 
 	dir_entry = data->current_entry;
 
@@ -325,7 +520,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	estimated_num_entries = 50;
 	tracker.total_entries = estimated_num_entries;
 
-	LogFullDebug(COMPONENT_NFS_V4,
+	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu "
 		     "cookie=%" PRIu64 " estimated_num_entries=%u",
 		     dircount, maxcount, cookie, estimated_num_entries);
@@ -335,6 +530,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (cookie == 1 || cookie == 2) {
 		res_READDIR4->status = NFS4ERR_BAD_COOKIE;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Bad cookie");
 		goto out;
 	}
 
@@ -342,6 +539,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs4_Fattr_Check_Access_Bitmap
 	    (&arg_READDIR4->attr_request, FATTR4_ATTR_READ)) {
 		res_READDIR4->status = NFS4ERR_INVAL;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Requested invalid attributes");
 		goto out;
 	}
 
@@ -350,6 +549,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (maxcount < 14 || estimated_num_entries == 0) {
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Response too small");
 		goto out;
 	}
 
@@ -376,6 +577,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
 			res_READDIR4->status = NFS4ERR_BAD_COOKIE;
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "Bad cookie");
 			goto out;
 		}
 	}
@@ -411,13 +614,23 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READDIR4->status = nfs4_Errno(cache_status);
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "cache_inode_readdir returned %s",
+			     cache_inode_err_str(cache_status));
 		goto out;
 	}
 
+	LogFullDebug(COMPONENT_NFS_READDIR,
+		     "cache_inode_readdir returned %s",
+		     cache_inode_err_str(cache_status));
+
 	res_READDIR4->status = tracker.error;
 
-	if (res_READDIR4->status != NFS4_OK)
+	if (res_READDIR4->status != NFS4_OK) {
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Tracker error");
 		goto out;
+	}
 
 	if (tracker.count != 0) {
 		/* Put the entry's list in the READDIR reply if
@@ -450,6 +663,10 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
  out:
 	if ((res_READDIR4->status != NFS4_OK) && (entries != NULL))
 		free_entries(entries);
+
+	LogFullDebug(COMPONENT_NFS_READDIR,
+		     "Returning %s",
+		     nfsstat4_to_str(res_READDIR4->status));
 
 	return res_READDIR4->status;
 }				/* nfs4_op_readdir */

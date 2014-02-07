@@ -75,6 +75,7 @@ fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
 		       bool * fsal_stable);
 
 fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			const struct req_op_context *opctx,
 			off_t offset, size_t len);
 
 fsal_status_t pt_lock_op(struct fsal_obj_handle *obj_hdl,

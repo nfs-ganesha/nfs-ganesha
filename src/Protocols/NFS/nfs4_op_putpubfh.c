@@ -35,13 +35,6 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
-#include "nfs_proto_tools.h"
 
 /**
  * @brief The NFS4_OP_PUTFH operation
@@ -64,43 +57,11 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t *data,
 {
 	PUTPUBFH4res * const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
 
-	/* First of all, set the reply to zero to make sure
-	 * it contains no parasite information
+	/* PUTPUBFH really isn't used, just make PUTROOTFH do our work and
+	 * call it our own...
 	 */
-	memset(resp, 0, sizeof(struct nfs_resop4));
+	res_PUTPUBFH4->status = nfs4_op_putrootfh(op, data, resp);
 	resp->resop = NFS4_OP_PUTPUBFH;
-
-	/* For now, GANESHA makes no difference between PUBLICFH and ROOTFH */
-	res_PUTPUBFH4->status = CreateROOTFH4(&(data->rootFH), data);
-	if (res_PUTPUBFH4->status != NFS4_OK)
-		return res_PUTPUBFH4->status;
-
-	/* I copy the root FH to the currentFH */
-	if (data->currentFH.nfs_fh4_val == NULL) {
-		res_PUTPUBFH4->status = nfs4_AllocateFH(&(data->currentFH));
-		if (res_PUTPUBFH4->status != NFS4_OK)
-			return res_PUTPUBFH4->status;
-	}
-
-	/* Copy the data where they are supposed to be */
-	memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-	       data->rootFH.nfs_fh4_len);
-	data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
-
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	/* Fill in compound data */
-	res_PUTPUBFH4->status = set_compound_data_for_pseudo(data);
-	if (res_PUTPUBFH4->status != NFS4_OK)
-		return res_PUTPUBFH4->status;
-
-	LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->rootFH);
-	LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
-
-	LogFullDebug(COMPONENT_NFS_V4, "NFS4 PUTPUBFH: Ending on status %d",
-		     res_PUTPUBFH4->status);
-
 	return res_PUTPUBFH4->status;
 }
 

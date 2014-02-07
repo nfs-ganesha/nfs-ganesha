@@ -68,24 +68,16 @@ static uint64_t pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 
 static uint32_t pxy_get_maxread(struct fsal_export *exp_hdl)
 {
-	uint32_t sz;
 	struct pxy_fsal_module *pm =
 	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	sz = fsal_maxread(&pm->fsinfo);
-	if (sz)
-		return MIN(sz, exp_hdl->exp_entry->MaxRead);
-	return exp_hdl->exp_entry->MaxRead;
+	return fsal_maxread(&pm->fsinfo);
 }
 
 static uint32_t pxy_get_maxwrite(struct fsal_export *exp_hdl)
 {
-	uint32_t sz;
 	struct pxy_fsal_module *pm =
 	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	sz = fsal_maxwrite(&pm->fsinfo);
-	if (sz)
-		return MIN(sz, exp_hdl->exp_entry->MaxWrite);
-	return exp_hdl->exp_entry->MaxWrite;
+	return fsal_maxwrite(&pm->fsinfo);
 }
 
 static uint32_t pxy_get_maxlink(struct fsal_export *exp_hdl)

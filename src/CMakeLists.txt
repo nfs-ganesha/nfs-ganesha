@@ -690,6 +690,7 @@ set(GANESHA_CORE
   log
   common_utils
   uid2grp
+  fsalpseudo
   )
 
 if(USE_DBUS)

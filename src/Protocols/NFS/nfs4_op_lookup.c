@@ -43,11 +43,13 @@
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "export_mgr.h"
 
 /**
  * @brief NFS4_OP_LOOKUP
@@ -102,13 +104,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;
 
-	/* If Filehandle points to a pseudo fs entry, manage it
-	 * via pseudofs specific functions
-	 */
-	if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
-		res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
-		goto out;
-	}
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "name=%s",
+		     name);
 
 	/* Do the lookup in the FSAL */
 	file_entry = NULL;
@@ -124,31 +122,101 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
+	/* Get attr_lock for looking at junction_export */
+	PTHREAD_RWLOCK_rdlock(&file_entry->attr_lock);
+
+	if (file_entry->type == DIRECTORY &&
+	    file_entry->object.dir.junction_export != NULL) {
+		/* Handle junction */
+		cache_entry_t *entry = NULL;
+
+		/* Release any old export reference */
+		if (data->req_ctx->export != NULL)
+			put_gsh_export(data->req_ctx->export);
+
+		/* Get a reference to the export and stash it in
+		 * compound data.
+		 */
+		get_gsh_export_ref(file_entry->object.dir.junction_export);
+
+		data->req_ctx->export = file_entry->object.dir.junction_export;
+		data->export = &data->req_ctx->export->export;
+
+		/* Release attr_lock */
+		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
+
+		/* Build credentials */
+		res_LOOKUP4->status = nfs4_MakeCred(data);
+
+		/* Test for access error (export should not be visible). */
+		if (res_LOOKUP4->status == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client doesn't
+			 * have access to this export, return NFS4ERR_NOENT to
+			 * hide it. It was not visible in READDIR response.
+			 */
+			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+				 data->export->id, data->export->fullpath);
+			res_LOOKUP4->status = NFS4ERR_NOENT;
+			goto out;
+		}
+
+		if (res_LOOKUP4->status != NFS4_OK) {
+			LogMajor(COMPONENT_NFS_V4_PSEUDO,
+				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
+				 data->export->fullpath, data->export->id);
+			goto out;
+		}
+
+		cache_status =
+		    nfs_export_get_root_entry(data->req_ctx->export, &entry);
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			LogMajor(COMPONENT_NFS_V4_PSEUDO,
+				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+				 data->export->fullpath,
+				 data->export->id,
+				 cache_inode_err_str(cache_status));
+
+			res_LOOKUP4->status = nfs4_Errno(cache_status);
+			goto out;
+		}
+
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			     data->export->fullpath, data->export->id, name);
+
+		/* Swap in the entry on the other side of the junction. */
+		if (file_entry)
+			cache_inode_put(file_entry);
+
+		file_entry = entry;
+	} else {
+		/* Release attr_lock since it wasn't a junction. */
+		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
+	}
+
 	/* Convert it to a file handle */
-	if (!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle)) {
+	if (!nfs4_FSALToFhandle(&data->currentFH,
+				file_entry->obj_handle,
+				data->req_ctx->export)) {
 		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
-		cache_inode_put(file_entry);
 		goto out;
 	}
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	/* Release dir_entry, as it is not reachable from anywhere in
-	 * compound after this function returns.  Count on later
-	 * operations or nfs4_Compound to clean up current_entry.
-	 */
-
-	if (dir_entry)
-		cache_inode_put(dir_entry);
 
 	/* Keep the pointer within the compound data */
-	data->current_entry = file_entry;
-	data->current_filetype = file_entry->type;
+	set_current_entry(data, file_entry, false);
+	file_entry = NULL;
 
 	/* Return successfully */
 	res_LOOKUP4->status = NFS4_OK;
 
  out:
+
+	/* Release reference on file_entry if we didn't utilze it. */
+	if (file_entry)
+		cache_inode_put(file_entry);
+
 	if (name)
 		gsh_free(name);
 

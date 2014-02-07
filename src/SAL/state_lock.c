@@ -50,6 +50,7 @@
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
+#include "export_mgr.h"
 
 /* Forward declaration */
 static state_status_t do_lock_op(cache_entry_t *entry,
@@ -83,14 +84,6 @@ static state_status_t do_lock_op(cache_entry_t *entry,
  * a parallel cancel/unlock won't endup freeing the datastructure. The
  * last release on the data structure ensure that it is freed.
  */
-
-/**
- * @brief Number of errors before giving up on recovery
- *
- * We set a maximum because the recovery routines need to terminate at
- * some point.
- */
-#define STATE_ERR_MAX 100
 
 #ifdef DEBUG_SAL
 /**
@@ -564,13 +557,13 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
 				     ->slc_nsm_client->ssc_mutex);
-
-		/* Add to list of locks owned by export */
-		pthread_mutex_lock(&export->exp_state_mutex);
-		glist_add_tail(&export->exp_lock_list,
-			       &new_entry->sle_export_locks);
-		pthread_mutex_unlock(&export->exp_state_mutex);
 	}
+
+	/* Add to list of locks owned by export */
+	pthread_mutex_lock(&export->exp_state_mutex);
+	glist_add_tail(&export->exp_lock_list,
+		       &new_entry->sle_export_locks);
+	pthread_mutex_unlock(&export->exp_state_mutex);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -705,14 +698,12 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 
 			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
 					   so_client->slc_nsm_client);
-
-			/* Remove from list of locks owned by export */
-			pthread_mutex_lock(&lock_entry->sle_export
-					   ->exp_state_mutex);
-			glist_del(&lock_entry->sle_export_locks);
-			pthread_mutex_unlock(&lock_entry->sle_export
-					     ->exp_state_mutex);
 		}
+
+		/* Remove from list of locks owned by export */
+		pthread_mutex_lock(&lock_entry->sle_export->exp_state_mutex);
+		glist_del(&lock_entry->sle_export_locks);
+		pthread_mutex_unlock(&lock_entry->sle_export->exp_state_mutex);
 
 		/* Remove from list of locks owned by owner */
 		pthread_mutex_lock(&owner->so_mutex);
@@ -1691,7 +1682,7 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
@@ -1753,11 +1744,20 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry,
  * @param[in] req_ctx  Request context
  */
 
-void process_blocked_lock_upcall(state_block_data_t *block_data,
-				 struct req_op_context *req_ctx)
+void process_blocked_lock_upcall(state_block_data_t *block_data)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 	cache_entry_t *entry = lock_entry->sle_entry;
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&req_ctx, 0, sizeof(req_ctx));
+	memset(&creds, 0, sizeof(creds));
+	req_ctx.creds = &creds;
+	req_ctx.export = container_of(lock_entry->sle_export,
+				      struct gsh_export,
+				      export);
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
 	 * MUST be at least one lock present for there to be a block_data to
@@ -1767,13 +1767,13 @@ void process_blocked_lock_upcall(state_block_data_t *block_data,
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	try_to_grant_lock(lock_entry, req_ctx);
+	try_to_grant_lock(lock_entry, &req_ctx);
 
 	/* In case all locks have wound up free,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
@@ -2041,7 +2041,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
 	 * we must release the pin reference.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -2158,6 +2158,9 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry, exportlist_t *export,
 		    entry->obj_handle->ops->lock_op(entry->obj_handle, req_ctx,
 						    NULL, FSAL_OP_UNLOCK,
 						    punlock, NULL);
+
+		if (fsal_status.major == ERR_FSAL_STALE)
+			cache_inode_kill_entry(entry);
 
 		t_status = state_error_convert(fsal_status);
 
@@ -2361,7 +2364,7 @@ state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
 		status = cache_inode_status_to_state_status(cache_status);
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -2399,7 +2402,7 @@ state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -2450,7 +2453,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		status = cache_inode_status_to_state_status(cache_status);
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
 		return status;
@@ -2478,7 +2481,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 			if (found_entry->sle_export != export) {
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-				cache_inode_dec_pin_ref(entry, FALSE);
+				cache_inode_dec_pin_ref(entry, false);
 
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
@@ -2500,7 +2503,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 			/* We have matched all atribute of the existing lock.
 			 * Just return with blocked status. Client may be
@@ -2522,7 +2525,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		    && !different_owners(found_entry->sle_owner, owner)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-			cache_inode_dec_pin_ref(entry, FALSE);
+			cache_inode_dec_pin_ref(entry, false);
 
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
@@ -2597,7 +2600,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-				cache_inode_dec_pin_ref(entry, FALSE);
+				cache_inode_dec_pin_ref(entry, false);
 
 				LogEntry("Found existing", found_entry);
 
@@ -2633,7 +2636,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		 */
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_LOCK_CONFLICT;
 		return status;
@@ -2692,7 +2695,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	if (!found_entry) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_MALLOC_ERROR;
 		return status;
@@ -2758,7 +2761,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		pthread_mutex_lock(&blocked_locks_mutex);
 
@@ -2777,7 +2780,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -2828,7 +2831,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	if (glist_empty(&entry->object.file.lock_list)) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		LogDebug(COMPONENT_STATE,
 			 "Unlock success on file with no locks");
 
@@ -2858,7 +2861,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 * list empty even if it failed.
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	if (status != STATE_SUCCESS) {
 		/* The unlock has not taken affect (other than canceling any
@@ -2870,7 +2873,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 		return status;
 	}
@@ -2909,7 +2912,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)
 	    && lock->lock_start == 0 && lock->lock_length == 0 && empty)
@@ -2962,7 +2965,7 @@ state_status_t state_cancel(cache_entry_t *entry, exportlist_t *export,
 	if (glist_empty(&entry->object.file.lock_list)) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		LogDebug(COMPONENT_STATE,
 			 "Cancel success on file with no locks");
 
@@ -2996,11 +2999,11 @@ state_status_t state_cancel(cache_entry_t *entry, exportlist_t *export,
 	 * the pin ref count pt placed
 	 */
 	if (glist_empty(&entry->object.file.lock_list))
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
 }
@@ -3029,6 +3032,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct glist_head newlocks;
 	state_nlm_share_t *found_share;
 	state_status_t status = 0;
+	struct req_op_context opctx;
+	struct user_cred creds;
+
+	/* We need a real context. Use root creds. */
+	memset(&opctx, 0, sizeof(opctx));
+	memset(&creds, 0, sizeof(creds));
+	opctx.creds = &creds;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char client[HASHTABLE_DISPLAY_STRLEN];
@@ -3095,6 +3105,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		entry = found_entry->sle_entry;
 		owner = found_entry->sle_owner;
 		export = found_entry->sle_export;
+		opctx.export = container_of(export, struct gsh_export, export);
+		get_gsh_export_ref(opctx.export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3111,10 +3123,12 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this NLM Client on the file */
-		status =
-		    state_unlock(entry, export, req_ctx, owner, state, &lock,
-				 found_entry->sle_type);
-		if (status != STATE_SUCCESS) {
+		status = state_unlock(entry, export, &opctx, owner, state,
+				      &lock, found_entry->sle_type);
+
+		put_gsh_export(opctx.export);
+
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
@@ -3161,13 +3175,15 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		pthread_mutex_unlock(&nsmclient->ssc_mutex);
 
 		/* Remove all shares held by this NSM Client and
-		 * Owner on the file
+		 * Owner on the file (on all exports)
 		 */
-		status =
-		    state_nlm_unshare(entry, OPEN4_SHARE_ACCESS_NONE,
-				      OPEN4_SHARE_DENY_NONE, owner);
+		status = state_nlm_unshare(entry,
+					   NULL,
+					   OPEN4_SHARE_ACCESS_NONE,
+					   OPEN4_SHARE_DENY_NONE,
+					   owner);
 
-		if (status != STATE_SUCCESS) {
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
@@ -3209,6 +3225,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 	cache_entry_t *entry;
 	int errcnt = 0;
 	state_status_t status = 0;
+	struct gsh_export *saved_export = req_ctx->export;
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -3244,6 +3261,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		 */
 		entry = found_entry->sle_entry;
 		export = found_entry->sle_export;
+		req_ctx->export =
+		    container_of(export, struct gsh_export, export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3259,17 +3278,12 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		lock.lock_start = 0;
 		lock.lock_length = 0;
 
-		/* Make sure we hold an lru ref to the cache inode while
-		 * calling unlock
-		 */
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
-
 		/* Remove all locks held by this owner on the file */
 		status =
 		    state_unlock(entry, export, req_ctx, owner, state, &lock,
 				 found_entry->sle_type);
 
-		if (status != STATE_SUCCESS) {
+		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
@@ -3284,7 +3298,96 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		 */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
+
+	req_ctx->export = saved_export;
 	return status;
+}
+
+/**
+ * @brief Release all locks held on an export
+ *
+ * @param[in] req_ctx Request context (use the export in the context)
+ *
+ */
+void state_export_unlock_all(struct req_op_context *req_ctx)
+{
+	exportlist_t *export = &req_ctx->export->export;
+	state_lock_entry_t *found_entry;
+	fsal_lock_param_t lock;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	state_status_t status = 0;
+	state_owner_t *owner;
+	state_t *state;
+
+	/* Only accept so many errors before giving up. */
+	while (errcnt < STATE_ERR_MAX) {
+		pthread_mutex_lock(&export->exp_state_mutex);
+
+		/* We just need to find any file this owner has locks on.
+		 * We pick the first lock the owner holds, and use it's file.
+		 */
+		found_entry = glist_first_entry(&export->exp_lock_list,
+						state_lock_entry_t,
+						sle_export_locks);
+
+		/* If we don't find any entries, then we are done. */
+		if (found_entry == NULL) {
+			pthread_mutex_unlock(&export->exp_state_mutex);
+			break;
+		}
+
+		lock_entry_inc_ref(found_entry);
+
+		/* Move this entry to the end of the list
+		 * (this will help if errors occur)
+		 */
+		glist_del(&found_entry->sle_export_locks);
+		glist_add_tail(&export->exp_lock_list,
+			       &found_entry->sle_export_locks);
+
+		pthread_mutex_unlock(&export->exp_state_mutex);
+
+		/* Extract the cache inode entry from the lock entry and
+		 * release the lock entry
+		 */
+		entry = found_entry->sle_entry;
+		owner = found_entry->sle_owner;
+		state = found_entry->sle_state;
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		lock_entry_dec_ref(found_entry);
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		/* Make lock that covers the whole file.
+		 * type doesn't matter for unlock
+		 */
+		lock.lock_type = FSAL_LOCK_R;
+		lock.lock_start = 0;
+		lock.lock_length = 0;
+
+		/* Remove all locks held by this owner on the file */
+		status = state_unlock(entry, export, req_ctx, owner, state,
+				      &lock, found_entry->sle_type);
+
+		if (!state_unlock_err_ok(status)) {
+			/* Increment the error count and try the next lock,
+			 * with any luck the memory pressure which is causing
+			 * the problem will resolve itself.
+			 */
+			LogDebug(COMPONENT_STATE, "state_unlock failed %s",
+				 state_err_str(status));
+			errcnt++;
+		}
+
+		/* Release the lru ref to the cache inode we held while
+		 * calling unlock
+		 */
+		cache_inode_put(entry);
+	}
 }
 
 /**
@@ -3406,7 +3509,7 @@ void state_lock_wipe(cache_entry_t *entry)
 
 	free_list(&entry->object.file.lock_list);
 
-	cache_inode_dec_pin_ref(entry, FALSE);
+	cache_inode_dec_pin_ref(entry, false);
 }
 
 void cancel_all_nlm_blocked()

@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include "pt_methods.h"
 #include "pt_ganesha.h"
+#include "export_mgr.h"
 
 extern fsal_status_t ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t *
 						    p_buffxstat, struct attrlist
@@ -245,8 +246,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 				     fsal_type2unix(current_attrs.type));
 				fsi_update_cache_stat(fsi_name,
 						      st_mode_in_cache,
-						      dir_hdl->export->
-						      exp_entry->id);
+						      p_context->export->export
+						      .id);
 				FSI_TRACE(FSI_INFO,
 					  "Chmod SUCCEED with st_mode in cache being %o",
 					  st_mode_in_cache);

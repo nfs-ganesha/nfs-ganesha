@@ -195,6 +195,7 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t lustre_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	struct lustre_fsal_obj_handle *myself;
