@@ -379,11 +379,10 @@ int main(int argc, char *argv[])
 	if (read_log_config(config_struct) < 0)
 		LogFatal(COMPONENT_INIT,
 			 "Error while parsing log configuration");
-
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */
-	start_fsals(config_struct);
+	start_fsals();
 
 	/* parse configuration file */
 
@@ -395,10 +394,6 @@ int main(int argc, char *argv[])
 	if (nfs_check_param_consistency()) {
 		LogFatal(COMPONENT_INIT,
 			 "Inconsistent parameters found. Exiting...");
-	}
-	if (init_fsals(config_struct)) { /* init the FSALs from the config */
-		LogFatal(COMPONENT_INIT,
-			 "FSALs could not initialize. Exiting...");
 	}
 
 	/* freeing syntax tree : */
