@@ -273,6 +273,13 @@ start() {
         
         		daemon numactl -i all $PATHPROG $OPTIONS
         		RETVAL=$?
+
+        		# Sleeping here gives Ganesha an adequate amount of time to
+        		# initialize the server and fail if anything goes wrong.
+        		# Without this sleep and the server will be in the midst of
+        		# initializing. It may fail immediately after this script runs.
+        		sleep 2
+
         		if [ $HAVE_SMNOTIFY -eq 0 ]; then
         			sm-notify -f
         		fi
@@ -283,12 +290,6 @@ start() {
                         if [ -n "$STATD_CALLOUT" ]; then
                                 $STATD_CALLOUT notify
                         fi
-
-        		# Sleeping here gives Ganesha an adequate amount of time to
-        		# initialize the server and fail if anything goes wrong.
-        		# Without this sleep and the server will be in the midst of
-        		# initializing. It may fail immediately after this script runs.
-        		sleep 2
 
         		# Check if Ganesha is still running
         		result=`pidof "$PROG"`
