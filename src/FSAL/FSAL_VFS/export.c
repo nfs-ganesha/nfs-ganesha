@@ -43,6 +43,7 @@
 #include <dlfcn.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"
+#include "config_parsing.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "fsal_handle_syscalls.h"
@@ -126,6 +127,8 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		gsh_free(myself->mntdir);
 	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
+	if (myself->handle_lib != NULL)
+		gsh_free(myself->handle_lib);
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
@@ -476,49 +479,23 @@ void vfs_export_ops_init(struct export_ops *ops)
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
-/* fs_specific_has() parses the fs_specific string for a particular key,
-   returns true if found, and optionally returns a val if the string is
-   of the form key=val.
- *
- * The fs_specific string is a comma (,) separated options where each option
- * can be of the form key=value or just key. Example:
- *	FS_specific = "foo=baz,enable_A";
- */
-static bool fs_specific_has(const char *fs_specific, const char *key, char *val,
-			    int max_val_bytes)
-{
-	char *next_comma, *option;
-	bool ret;
-	char *fso_dup = NULL;
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_BOOL("pnfs_panfs", false,
+		       vfs_fsal_export, pnfs_panfs_enabled),
+	CONF_ITEM_PATH("handle_lib", 1, MAXPATHLEN, NULL,
+		       vfs_fsal_export, handle_lib),
+	CONFIG_EOL
+};
 
-	if (!fs_specific || !fs_specific[0])
-		return false;
-
-	fso_dup = gsh_strdup(fs_specific);
-	if (!fso_dup) {
-		LogCrit(COMPONENT_FSAL, "strdup(%s) failed", fs_specific);
-		return false;
-	}
-
-	for (option = strtok_r(fso_dup, ",", &next_comma); option;
-	     option = strtok_r(NULL, ",", &next_comma)) {
-		char *k = option;
-		char *v = k;
-
-		strsep(&v, "=");
-		if (0 == strcmp(k, key)) {
-			if (val)
-				strncpy(val, v, max_val_bytes);
-			ret = true;
-			goto cleanup;
-		}
-	}
-
-	ret = false;
- cleanup:
-	gsh_free(fso_dup);
-	return ret;
-}
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.vfs-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
 
 /* create_export
  * Create an export point and return a handle to it to be kept
@@ -541,9 +518,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	size_t pathlen, outlen = 0;
 	char mntdir[MAXPATHLEN + 1]; /* there has got to be a better way... */
 	char fs_spec[MAXPATHLEN + 1];
-#ifdef LINUX
-	char hdllib[MAXPATHLEN + 1];
-#endif
 	struct vfs_exp_handle_ops *hops = &defops;
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
@@ -580,8 +554,12 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	vfs_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
 
-	myself->pnfs_panfs_enabled =
-	    fs_specific_has(fs_specific, "pnfs_panfs", NULL, 0);
+	retval = load_config_from_node((void *)fs_specific,
+				       &export_param,
+				       myself,
+				       true);
+	if (retval != 0)
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	if (myself->pnfs_panfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"vfs_fsal_create: pnfs_panfs was enabled for [%s]",
@@ -647,18 +625,15 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 #ifdef LINUX
-	if (fs_specific_has(fs_specific,
-			    "handle_lib",
-			    hdllib,
-			    sizeof(hdllib))) {
+	if (myself->handle_lib != NULL) {
 		void *dl;
 		void *sym;
 
-		dl = dlopen(hdllib, RTLD_NOW | RTLD_LOCAL);
+		dl = dlopen(myself->handle_lib, RTLD_NOW | RTLD_LOCAL);
 		if (dl == NULL) {
 			LogCrit(COMPONENT_FSAL,
-				"Could not load handle module '%s' for "
-				"export '%s' - %s", hdllib, export_path,
+				"Could not load handle module '%s' for export '%s' - %s",
+				myself->handle_lib, export_path,
 				dlerror());
 			fsal_error = ERR_FSAL_NOENT;
 			goto errout;
@@ -668,7 +643,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		if (sym == NULL) {
 			LogCrit(COMPONENT_FSAL,
 				"No bootstrap entry in handle module '%s'",
-				hdllib);
+				myself->handle_lib);
 			dlclose(dl);
 			fsal_error = ERR_FSAL_NOENT;
 			goto errout;
@@ -676,8 +651,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		hops = ((struct vfs_exp_handle_ops * (*)(char *))sym) (mntdir);
 		if (hops == NULL) {
 			LogCrit(COMPONENT_FSAL,
-				"%s - cannot bootstrap handle module '%s' "
-				"with %s", export_path, hdllib, mntdir);
+				"%s - cannot bootstrap handle module '%s' with %s",
+				export_path, myself->handle_lib, mntdir);
 			dlclose(dl);
 			fsal_error = ERR_FSAL_NOENT;
 			goto errout;
@@ -758,6 +733,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself->mntdir);
 	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
+	if (myself->handle_lib != NULL)
+		gsh_free(myself->handle_lib);
 	free_export_ops(&myself->export);
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);

@@ -27,6 +27,7 @@ struct vfs_fsal_export {
 	vfs_file_handle_t *root_handle;
 	bool pnfs_panfs_enabled;
 	struct vfs_exp_handle_ops vex_ops;
+	char *handle_lib;
 	void *pnfs_data;
 };
 
