@@ -94,6 +94,7 @@ bool nsm_monitor(state_nsm_client_t *host)
   struct mon         nsm_mon;
   struct sm_stat_res res;
   struct timeval     tout = { 25, 0 };
+  bool   tmp_mon = FALSE;
 
   if(host == NULL)
     return TRUE;
@@ -102,8 +103,7 @@ bool nsm_monitor(state_nsm_client_t *host)
 
   if(atomic_fetch_int32_t(&host->ssc_monitored))
     {
-      V(host->ssc_mutex);
-      return TRUE;
+      tmp_mon = TRUE;
     }
 
   nsm_mon.mon_id.mon_name      = host->ssc_nlm_caller_name;
@@ -162,7 +162,9 @@ bool nsm_monitor(state_nsm_client_t *host)
       return FALSE;
     }
 
-  nsm_count++;
+  if (!tmp_mon)
+    nsm_count++;
+
   atomic_store_int32_t(&host->ssc_monitored, TRUE);
   LogDebug(COMPONENT_NLM,
            "Monitored %s for nodename %s", nsm_mon.mon_id.mon_name, nodename);
