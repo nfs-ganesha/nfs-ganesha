@@ -174,6 +174,14 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	resp->resop = NFS4_OP_WRITE;
 	res_WRITE4->status = NFS4_OK;
 
+	if ((data->minorversion > 0)
+	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
+		if (io == CACHE_INODE_WRITE)
+			return op_dswrite(op, data, resp);
+		else
+			return op_dswrite_plus(op, data, resp, info);
+	}
+
 	/*
 	 * Do basic checks on a filehandle
 	 * Only files can be written
@@ -195,13 +203,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		return res_WRITE4->status;
 	}
 
-	if ((data->minorversion > 0)
-	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
-		if (io == CACHE_INODE_WRITE)
-			return op_dswrite(op, data, resp);
-		else
-			return op_dswrite_plus(op, data, resp, info);
-	}
 
 	/* vnode to manage is the current one */
 	entry = data->current_entry;
