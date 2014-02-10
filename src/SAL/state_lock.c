@@ -174,6 +174,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           exportlist_t         * pexport,
                           fsal_lock_op_t         lock_op,
+                          bool_t                 is_reclaim,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -1255,6 +1256,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                               pcontext,
                               lock_entry->sle_pexport,
                               FSAL_OP_LOCKB,
+                              0, /* Not a reclaim */
                               lock_entry->sle_owner,
                               &lock_entry->sle_lock,
                               NULL,
@@ -1269,6 +1271,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                               pcontext,
                               lock_entry->sle_pexport,
                               FSAL_OP_LOCK,
+                              0, /* Not a reclaim */
                               lock_entry->sle_owner,
                               &lock_entry->sle_lock,
                               NULL,
@@ -1321,6 +1324,7 @@ state_status_t state_cancel_grant(fsal_op_context_t    * pcontext,
                         pcontext,
                         cookie_entry->sce_lock_entry->sle_pexport,
                         FSAL_OP_UNLOCK,
+                        0, /* Not a reclaim */
                         cookie_entry->sce_lock_entry->sle_owner,
                         &cookie_entry->sce_lock_entry->sle_lock,
                         NULL,   /* no conflict expected */
@@ -1621,6 +1625,7 @@ state_status_t cancel_blocked_lock(cache_entry_t        * pentry,
                                 pcontext,
                                 lock_entry->sle_pexport,
                                 FSAL_OP_CANCEL,
+                                0, /*Not a reclaim */
                                 lock_entry->sle_owner,
                                 &lock_entry->sle_lock,
                                 NULL,   /* no conflict expected */
@@ -1739,6 +1744,7 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
                             pcontext,
                             lock_entry->sle_pexport,
                             FSAL_OP_UNLOCK,
+                            0, /*Not a reclaim */
                             lock_entry->sle_owner,
                             &lock_entry->sle_lock,
                             NULL,   /* no conflict expected */
@@ -1900,6 +1906,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           exportlist_t         * pexport,
                           fsal_lock_op_t         lock_op,
+                          bool_t                 is_reclaim,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -1934,15 +1941,27 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
       if(lock_op == FSAL_OP_LOCKB && !pstatic->lock_support_async_block)
         lock_op = FSAL_OP_LOCK;
 
-      fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
-                                 &pentry->handle,
-                                 pcontext,
-                                 pstatic->lock_support_owner ? powner : NULL,
-                                 lock_op,
-                                 *plock,
-                                 &conflicting_lock);
+      /* In the case of ip move the source node may be still releasing
+       * the state that we need to acquire. So let us be little patient
+       * to STATE_LOCK_CONFLICT errors if the lock is a reclaim and we are
+       * in grace.
+       */
+      do
+        {
+          if (status == STATE_LOCK_CONFLICT)
+            sleep(1); /* We looped back so let us not bombard the filesystem. */
 
-      status = state_error_convert(fsal_status);
+          fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
+                                     &pentry->handle,
+                                     pcontext,
+                                     pstatic->lock_support_owner ? powner : NULL,
+                                     lock_op,
+                                     *plock,
+                                     &conflicting_lock);
+
+          status = state_error_convert(fsal_status);
+        }
+      while(is_reclaim && status == STATE_LOCK_CONFLICT && nfs_in_grace());
 
       LogFullDebug(COMPONENT_STATE,
                    "FSAL_lock_op returned %s",
@@ -2063,6 +2082,7 @@ state_status_t state_test(cache_entry_t        * pentry,
                             pcontext,
                             pexport,
                             FSAL_OP_LOCKT,
+                            0, /*Not a reclaim */
                             powner,
                             plock,
                             holder,
@@ -2407,6 +2427,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                             pcontext,
                             pexport,
                             lock_op,
+                            is_reclaim,
                             powner,
                             plock,
                             allow ? holder : NULL,
@@ -2605,6 +2626,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                         pcontext,
                         pexport,
                         FSAL_OP_UNLOCK,
+                        0, /*Not a reclaim */
                         powner,
                         plock,
                         NULL,   /* no conflict expected */
@@ -3284,6 +3306,7 @@ resub_all_nlm_blocked()
                                           pcontext,
                                           pexport,
                                           FSAL_OP_LOCKB,
+                                          0, /*Not a reclaim */
                                           nlm_owner,
                                           plock,
                                           NULL,
