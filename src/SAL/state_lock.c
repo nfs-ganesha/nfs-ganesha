@@ -2224,16 +2224,28 @@ state_status_t do_lock_op(cache_entry_t *entry,
 				fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
 
-		fsal_status = entry->obj_handle->ops->lock_op(
-			entry->obj_handle,
-			fsal_export->ops->fs_supports(
-				fsal_export,
-				fso_lock_support_owner)
-				? owner : NULL, lock_op,
-			lock,
-			&conflicting_lock);
+		/* In the case of ip move the source node may be still
+		 * releasing the state that we need to acquire.
+		 * So let us be little patient to STATE_LOCK_CONFLICT errors
+		 * if the lock is a reclaim and we are in grace.
+		 */
+		do {
+			if (status == STATE_LOCK_CONFLICT)
+				sleep(1); /* Don't bombard the filesystem. */
 
-		status = state_error_convert(fsal_status);
+			fsal_status = entry->obj_handle->ops->lock_op(
+					entry->obj_handle,
+					fsal_export->ops->fs_supports(
+						fsal_export,
+						fso_lock_support_owner)
+					? owner : NULL, lock_op,
+					lock,
+					&conflicting_lock);
+
+			status = state_error_convert(fsal_status);
+
+		} while (lock->lock_reclaim &&
+			 status == STATE_LOCK_CONFLICT && nfs_in_grace());
 
 		LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
 			     state_err_str(status));
