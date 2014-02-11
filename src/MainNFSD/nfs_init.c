@@ -70,7 +70,7 @@
 #include "delayed_exec.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
-#ifdef LINUX
+#ifdef USE_CAPS
 #include <sys/capability.h>	/* For capget/capset */
 #endif
 #include "uid2grp.h"
