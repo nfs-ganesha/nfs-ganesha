@@ -136,7 +136,7 @@ int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 		goto errout;
 	memcpy(exp->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 
-	exp->ds_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
+	exp->ds_ops = gsh_malloc(sizeof(struct fsal_ds_ops));
 	if (exp->ds_ops == NULL)
 		goto errout;
 	memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
