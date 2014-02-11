@@ -115,22 +115,9 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct pseudo_fsal_module *pseudofs_me =
 	    container_of(fsal_hdl, struct pseudo_fsal_module, fsal);
-	fsal_status_t fsal_status;
 
 	/* get a copy of the defaults */
 	pseudofs_me->fs_info = default_posix_info;
-
-	/** @todo FSF passing NULL for name to clue fsal_load_config
-	 * not to look for FSAL config block for PSEUDO.
-	 */
-	fsal_status = fsal_load_config(NULL,
-				       config_struct,
-				       &pseudofs_me->fsal_info,
-				       &pseudofs_me->fs_info,
-				       NULL);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
 
 	/* if we have fsal specific params, do them here
 	 * fsal_hdl->name is used to find the block containing the
