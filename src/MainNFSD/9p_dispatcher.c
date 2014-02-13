@@ -137,6 +137,8 @@ void *_9p_socket_thread(void *Arg)
 	SetNameFunction(my_name);
 
 	/* Init the struct _9p_conn structure */
+	memset(&_9p_conn, 0, sizeof(_9p_conn));
+	pthread_mutex_init(&_9p_conn.sock_lock, NULL);
 	_9p_conn.trans_type = _9P_TCP;
 	_9p_conn.trans_data.sockfd = tcp_sock;
 	for (i = 0; i < FLUSH_BUCKETS; i++) {

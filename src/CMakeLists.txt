@@ -397,7 +397,7 @@ if(KRB5_FOUND AND HAVE_GSSAPI_H)
   set(KRB5_VERSION 194)  # hand code until we do krb5-config --version magic
   set(_HAVE_GSSAPI ON)
 else(KRB5_FOUND AND HAVE_GSSAPI_H)
-  message(ERROR "Cannot find kerberos or GSS libraries")
+  message(FATAL_ERROR "Cannot find kerberos or GSS libraries")
 endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 
 # Validate fsal dependencies

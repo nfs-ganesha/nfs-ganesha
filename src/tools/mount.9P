@@ -1,4 +1,4 @@
-#! /bin/bash 
+#! /bin/bash
 #
 # Usage:
 # /sbin/mount.9P spec dir [-sfnv] [-o options]
@@ -43,22 +43,22 @@ MNT=$2
 SERVERID=`echo $1 | awk -F ':' '{print $1}'`
 REMOTEPATH=`echo $1 | awk -F ':' '{print $2}'`
 
-# check for correctness of argument 
+# check for correctness of argument
 if ! echo  $SERVERID | egrep -q $HOSTNAME_PATTERN ; then
   if ! echo $SERVERID | egrep -q $IP_ADDR_PATTERN ; then
      echo "Bad server id"
      exit 1
   else
-    IPADDR=$SERVERID 
+    IPADDR=$SERVERID
   fi
 else
   if ! IPADDR=`getent ahostsv4 $SERVERID  2>&1  | grep STREAM | cut -f1 -d " " | head -1` ; then
-    echo "Hostname could not be resolved" 
+    echo "Hostname could not be resolved"
     exit 1
   fi
 fi
 
-#Default value 
+#Default value
 aname=$REMOTEPATH
 version="9p2000.L"
 debug="0x0"
@@ -75,8 +75,8 @@ port=564
 IN_OPTIONS=`echo $4 | tr "," "\n"`
 
 for OPT in $IN_OPTIONS; do
-  opt_ok=0 
-  for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" "rq=" "sq=" "port="; do
+  opt_ok=0
+  for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" "rq=" "sq=" "port=" "cache=" "context="; do
     if echo $OPT | grep -q $OPT_TYPE ; then
       eval $OPT
       opt_ok=1
@@ -84,12 +84,12 @@ for OPT in $IN_OPTIONS; do
   done
 
   if echo $OPT | egrep -q "^ro$" ; then
-    misc="ro" 
+    misc="ro"
     opt_ok=1
   fi
 
   if echo $OPT  | egrep -q "^rw$" ; then
-    misc="rw" 
+    misc="rw"
     opt_ok=1
   fi
 
@@ -102,12 +102,21 @@ for OPT in $IN_OPTIONS; do
     misc="$misc,posixacl"
     opt_ok=1
   fi
-  
-  if [ $opt_ok -eq 0 ] ; then 
-      echo "Invalid option $OPT"
-      exit 1 
+
+  if echo $OPT | egrep -q "^cache=mmap$" ; then
+    misc="$misc,cache=mmap"
+    opt_ok=1
   fi
-      
+
+  if echo $OPT | egrep -q "^context=" ; then
+    misc="$misc,context=$context"
+    opt_ok=1
+  fi
+
+  if [ $opt_ok -eq 0 ] ; then
+      echo "Invalid option $OPT"
+      exit 1
+  fi
 done
 
 # the "-i" is mandatory to avoid looping on this helper

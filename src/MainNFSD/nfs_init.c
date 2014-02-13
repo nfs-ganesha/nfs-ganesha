@@ -70,7 +70,7 @@
 #include "delayed_exec.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
-#ifdef LINUX
+#ifdef USE_CAPS
 #include <sys/capability.h>	/* For capget/capset */
 #endif
 #include "uid2grp.h"
@@ -1070,14 +1070,15 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 static void lower_my_caps(void)
 {
-	struct __user_cap_header_struct caphdr;
+	struct __user_cap_header_struct caphdr = {
+		.version = _LINUX_CAPABILITY_VERSION
+	};
 	cap_user_data_t capdata;
 	ssize_t capstrlen = 0;
 	cap_t my_cap;
 	char *cap_text;
 	int capsz;
 
-	caphdr.version = _LINUX_CAPABILITY_VERSION;
 	(void) capget(&caphdr, NULL);
 	switch (caphdr.version) {
 	case _LINUX_CAPABILITY_VERSION_1:
