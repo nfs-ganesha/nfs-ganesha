@@ -236,10 +236,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Do basic checks on a filehandle Only files can be read */
 
-	res_READ4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
-	if (res_READ4->status != NFS4_OK)
-		return res_READ4->status;
-
 	if ((data->minorversion > 0)
 	    && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
 		if (io == CACHE_INODE_READ)
@@ -247,6 +243,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		else
 			return op_dsread_plus(op, data, resp, info);
 	}
+
+	res_READ4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
+	if (res_READ4->status != NFS4_OK)
+		return res_READ4->status;
 
 	entry = data->current_entry;
 	/* Check stateid correctness and get pointer to state (also

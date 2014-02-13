@@ -84,6 +84,9 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 		     arg_COMMIT4->offset,
 		     arg_COMMIT4->count);
 
+	if ((nfs4_Is_Fh_DSHandle(&data->currentFH)))
+		return op_dscommit(op, data, resp);
+
 	/*
 	 * Do basic checks on a filehandle Commit is done only on a file
 	 */
@@ -92,13 +95,6 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_COMMIT4->status != NFS4_OK)
 		return res_COMMIT4->status;
 
-	if ((nfs4_Is_Fh_DSHandle(&data->currentFH)))
-		return op_dscommit(op, data, resp);
-
-	/** @todo:  FIX ME!! At the moment we just assume the user is _not_
-	  * using the ganesha unsafe buffer. In the future, a check based on
-	  * export config params (similar to nfs3_Commit.c) should be made.
-	  */
 	cache_status = cache_inode_commit(data->current_entry,
 					  arg_COMMIT4->offset,
 					  arg_COMMIT4->count,

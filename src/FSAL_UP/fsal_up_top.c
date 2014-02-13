@@ -1047,6 +1047,15 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 			.creds = &synthetic_creds,
 			.caller_addr = NULL
 		};
+		enum fsal_layoutreturn_circumstance circumstance;
+
+		if (hook == RPC_CALL_COMPLETE &&
+		    call->cbt.v_u.v4.res.status ==
+		    NFS4ERR_NOMATCHING_LAYOUT)
+			circumstance = circumstance_client;
+		else
+			circumstance = circumstance_revoke;
+
 		/**
 		 * @todo This is where you would record that a
 		 * recall was completed, one way or the other.
@@ -1065,10 +1074,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		return_context.clientid =
 		    (&state->state_owner->so_owner.so_nfs4_owner.so_clientid);
 		nfs4_return_one_state(state->state_entry, &return_context,
-				      LAYOUTRETURN4_FILE,
-				      (call->cbt.v_u.v4.res.status ==
-				       NFS4ERR_NOMATCHING_LAYOUT) ?
-				      circumstance_client : circumstance_revoke,
+				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted, true);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
