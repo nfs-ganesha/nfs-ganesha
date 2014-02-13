@@ -58,48 +58,6 @@
 #include "export_mgr.h"
 #include "fsal_up.h"
 
-#define LASTDEFAULT 1048576
-
-
-/**
- * @brief Parse a line with a settable separator and end of line
- *
- * Loop through the tokens and call proc to process them.
- * Proc also takes a void * arg for state/output
- *
- * @param[in] line      Input line
- * @param[in] separator Character used to identify a separator
- * @param[in] proc      function pointer.
- *
- * @note int proc(token, arg)
- *  token null terminated string
- *  arg points to state or other args
- *  returns true if successful, false on errors
- *
- * @return the number of fields found or -1 if error.
- */
-int token_to_proc(char *line, char separator,
-		  bool(*proc) (char *token, void *arg), void *arg)
-{
-	int tok_cnt = 0;
-	char *p1 = line;
-	char *p2 = line;
-	bool rc = true;
-
-	while (rc && p2 != NULL) {
-		while (isspace(*p1))
-			p1++;
-		if (*p1 == '\0')
-			break;
-		p2 = index(p1, separator);
-		if (p2 != NULL)
-			*p2++ = '\0';
-		rc = proc(p1, arg);
-		p1 = p2;
-		tok_cnt++;
-	}
-	return (rc && p2 == NULL) ? (tok_cnt) : -1;
-}
 
 static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 {
