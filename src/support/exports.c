@@ -215,105 +215,6 @@ void LogClientListEntry(log_components_t component,
 		entry->type, perms);
 }
 
-static void FreeClientList(exportlist_client_t *clients)
-{
-	struct glist_head *glist;
-	struct glist_head *glistn;
-
-	glist_for_each_safe(glist, glistn, &clients->client_list) {
-		exportlist_client_entry_t *client;
-		client =
-		    glist_entry(glist, exportlist_client_entry_t, cle_list);
-		glist_del(&client->cle_list);
-		gsh_free(client);
-	}
-}
-
-
-static struct config_item_list access_types[] = {
-	CONFIG_LIST_TOK("NONE", 0),
-	CONFIG_LIST_TOK("RW", (EXPORT_OPTION_RW_ACCESS |
-			       EXPORT_OPTION_MD_ACCESS )),
-	CONFIG_LIST_TOK("RO", (EXPORT_OPTION_READ_ACCESS |
-			       EXPORT_OPTION_MD_READ_ACCESS)),
-	CONFIG_LIST_TOK("MDONLY", EXPORT_OPTION_MD_ACCESS),
-	CONFIG_LIST_TOK("MDONLY_RO", EXPORT_OPTION_MD_READ_ACCESS),
-	CONFIG_LIST_EOL
-};
-
-static struct config_item_list nfs_protocols[] = {
-	CONFIG_LIST_TOK("3", EXPORT_OPTION_NFSV3),
-	CONFIG_LIST_TOK("4", EXPORT_OPTION_NFSV4),
-	CONFIG_LIST_EOL
-};
-
-static struct config_item_list transports[] = {
-	CONFIG_LIST_TOK("UDP", EXPORT_OPTION_UDP),
-	CONFIG_LIST_TOK("TCP", EXPORT_OPTION_TCP),
-	CONFIG_LIST_EOL
-};
-
-static struct config_item_list sec_types[] = {
-	CONFIG_LIST_TOK("none", EXPORT_OPTION_AUTH_NONE),
-	CONFIG_LIST_TOK("sys", EXPORT_OPTION_AUTH_UNIX),
-	CONFIG_LIST_TOK("krb5", EXPORT_OPTION_RPCSEC_GSS_NONE),
-	CONFIG_LIST_TOK("krb5i", EXPORT_OPTION_RPCSEC_GSS_INTG),
-	CONFIG_LIST_TOK("krb5p", EXPORT_OPTION_RPCSEC_GSS_PRIV),
-	CONFIG_LIST_EOL
-};
-
-static struct config_item_list squash_types[] = {
-	CONFIG_LIST_TOK("Root", 0),
-	CONFIG_LIST_TOK("Root_Squash", 0),
-	CONFIG_LIST_TOK("RootSquash", 0),
-	CONFIG_LIST_TOK("All", EXPORT_OPTION_ALL_ANONYMOUS),
-	CONFIG_LIST_TOK("All_Squash", EXPORT_OPTION_ALL_ANONYMOUS),
-	CONFIG_LIST_TOK("AllSquash", EXPORT_OPTION_ALL_ANONYMOUS),
-	CONFIG_LIST_TOK("No_Root_Squash", EXPORT_OPTION_ROOT),
-	CONFIG_LIST_TOK("None", EXPORT_OPTION_ROOT),
-	CONFIG_LIST_TOK("NoIdSquash", EXPORT_OPTION_ROOT),
-	CONFIG_LIST_EOL
-};
-
-/**
- * @brief Table of client block parameters
- *
- * NOTE: node discovery is ordered by this table!
- * "Access" is last because we must have all other params processed
- * before we walk the list of accessing clients!
- */
-
-static struct config_item client_params[] = {
-	CONF_ITEM_ENUM("Access_Type", 0, access_types,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_BOOLBIT("Allow_Root_Access", false,
-			  EXPORT_OPTION_ROOT,
-			  exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST("NFS_Protocols", 0, nfs_protocols,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST("Transport_Protocols", 0, transports,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_BOOLBIT("Make_All_Users_Anonymous", false,
-			  EXPORT_OPTION_ALL_ANONYMOUS,
-			  exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_I32("Anonymous_root_uid", -10, 0x7fffffff, ANON_UID,
-		      exportlist_client_entry__, client_perms.anonymous_uid),
-	CONF_ITEM_I32("Anonymous_uid", -10, 0x7fffffff, ANON_UID,
-		      exportlist_client_entry__, client_perms.anonymous_uid),
-	CONF_ITEM_I32("Anonymous_gid", -10, 0x7fffffff, ANON_GID,
-		      exportlist_client_entry__, client_perms.anonymous_gid),
-	CONF_ITEM_ENUM("SecType", 0, sec_types,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_BOOLBIT("PrivilegedPort", false,
-			  EXPORT_OPTION_PRIVILEGED_PORT,
-			  exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST("Squash", 0, squash_types,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
-		      exportlist_client_entry__, client.raw_client_str),
-	CONFIG_EOL
-};
-
 
 /**
  * @brief Expand the client name token into one or more client entries
@@ -444,7 +345,17 @@ out:
 }
 
 /**
- * @brief Init and commit for CLIENT sub-block of an export.
+ * @brief Commit and FSAL sub-block init/commit helpers
+ */
+
+/**
+ * @brief Init for CLIENT sub-block of an export.
+ *
+ * Allocate one exportlist_client structure for parameter
+ * processing. The client_commit will allocate additional
+ * exportlist_client__ storage for each of its enumerated
+ * clients and free the initial block.  We only free that
+ * resource here on errors.
  */
 
 static void *client_init(void *link_mem, void *self_struct)
@@ -548,6 +459,13 @@ struct fsal_params {
 	char *name;
 };
 
+/**
+ * @brief Initialize space for an FSAL sub-block.
+ *
+ * We allocate space to hold the name parameter so that
+ * is available in the commit phase.
+ */
+
 static void *fsal_init(void *link_mem, void *self_struct)
 {
 	struct fsal_params *fp;
@@ -569,6 +487,19 @@ static void *fsal_init(void *link_mem, void *self_struct)
 		return NULL;
 	}
 }
+
+/**
+ * @brief Commit a FSAL sub-block
+ *
+ * Use the Name parameter passed in via the link_mem to lookup the
+ * fsal.  If the fsal is not loaded (yet), load it and call its init.
+ * This will trigger the processing of a top level block of the same
+ * name as the fsal, i.e. the VFS fsal will look for a VFS block
+ * and process it (if found).
+ *
+ * Create an export and pass it the FSAL sub-block to it so that the
+ * fsal method can process the rest of the parameters in the block
+ */
 
 static int fsal_commit(void *node, void *link_mem, void *self_struct)
 {
@@ -647,15 +578,19 @@ err:
 	return errcnt;
 }
 
-static struct config_item fsal_params[] = {
-	CONF_ITEM_STR("Name", 1, 10, NULL,
-		      fsal_params, name), /* cheater union */
-	CONFIG_EOL
-};
+/**
+ * @brief EXPORT block handlers
+ */
 
 /**
  * @brief Initialize an export block
  *
+ * There is no link_mem init required because we are allocating
+ * here and doing an insert_gsh_export at the end of export_commit
+ * to attach it to the export manager.
+ *
+ * Use free_exportlist here because in this case, we have not
+ * gotten far enough to hand it over to the export manager.
  */
 
 static void *export_init(void *link_mem, void *self_struct)
@@ -677,7 +612,12 @@ static void *export_init(void *link_mem, void *self_struct)
 	}
 }
 
-/* init state and lock lists and mutex here */
+/**
+ * @brief Commit an export block
+ *
+ * Validate the export level parameters.  fsal and client
+ * parameters are already done.
+ */
 
 static int export_commit(void *node, void *link_mem, void *self_struct)
 {
@@ -779,6 +719,136 @@ err_out:
 	return errcnt;
 }
 
+/**
+ * @brief Configuration processing tables for EXPORT blocks
+ */
+
+/**
+ * @brief Access types list for the Access_type parameter
+ */
+
+static struct config_item_list access_types[] = {
+	CONFIG_LIST_TOK("NONE", 0),
+	CONFIG_LIST_TOK("RW", (EXPORT_OPTION_RW_ACCESS |
+			       EXPORT_OPTION_MD_ACCESS )),
+	CONFIG_LIST_TOK("RO", (EXPORT_OPTION_READ_ACCESS |
+			       EXPORT_OPTION_MD_READ_ACCESS)),
+	CONFIG_LIST_TOK("MDONLY", EXPORT_OPTION_MD_ACCESS),
+	CONFIG_LIST_TOK("MDONLY_RO", EXPORT_OPTION_MD_READ_ACCESS),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Protocols options list for NFS_Protocols parameter
+ */
+
+static struct config_item_list nfs_protocols[] = {
+	CONFIG_LIST_TOK("3", EXPORT_OPTION_NFSV3),
+	CONFIG_LIST_TOK("4", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Transport type options list for Transport_Protocols parameter
+ */
+
+static struct config_item_list transports[] = {
+	CONFIG_LIST_TOK("UDP", EXPORT_OPTION_UDP),
+	CONFIG_LIST_TOK("TCP", EXPORT_OPTION_TCP),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Security options list for SecType parameter
+ */
+
+static struct config_item_list sec_types[] = {
+	CONFIG_LIST_TOK("none", EXPORT_OPTION_AUTH_NONE),
+	CONFIG_LIST_TOK("sys", EXPORT_OPTION_AUTH_UNIX),
+	CONFIG_LIST_TOK("krb5", EXPORT_OPTION_RPCSEC_GSS_NONE),
+	CONFIG_LIST_TOK("krb5i", EXPORT_OPTION_RPCSEC_GSS_INTG),
+	CONFIG_LIST_TOK("krb5p", EXPORT_OPTION_RPCSEC_GSS_PRIV),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Client UID squash item list for Squash parameter
+ */
+
+static struct config_item_list squash_types[] = {
+	CONFIG_LIST_TOK("Root", 0),
+	CONFIG_LIST_TOK("Root_Squash", 0),
+	CONFIG_LIST_TOK("RootSquash", 0),
+	CONFIG_LIST_TOK("All", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("All_Squash", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("AllSquash", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("No_Root_Squash", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_TOK("None", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_TOK("NoIdSquash", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Table of client sub-block parameters
+ *
+ * NOTE: node discovery is ordered by this table!
+ * "Access" is last because we must have all other params processed
+ * before we walk the list of accessing clients!
+ */
+
+static struct config_item client_params[] = {
+	CONF_ITEM_ENUM("Access_Type", 0, access_types,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_BOOLBIT("Allow_Root_Access", false,
+			  EXPORT_OPTION_ROOT,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("NFS_Protocols", 0, nfs_protocols,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("Transport_Protocols", 0, transports,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_BOOLBIT("Make_All_Users_Anonymous", false,
+			  EXPORT_OPTION_ALL_ANONYMOUS,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_I32("Anonymous_root_uid", -10, 0x7fffffff, ANON_UID,
+		      exportlist_client_entry__, client_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_uid", -10, 0x7fffffff, ANON_UID,
+		      exportlist_client_entry__, client_perms.anonymous_uid),
+	CONF_ITEM_I32("Anonymous_gid", -10, 0x7fffffff, ANON_GID,
+		      exportlist_client_entry__, client_perms.anonymous_gid),
+	CONF_ITEM_ENUM("SecType", 0, sec_types,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_BOOLBIT("PrivilegedPort", false,
+			  EXPORT_OPTION_PRIVILEGED_PORT,
+			  exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_LIST("Squash", 0, squash_types,
+		       exportlist_client_entry__, client_perms.options),
+	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
+		      exportlist_client_entry__, client.raw_client_str),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Table of FSAL sub-block parameters
+ *
+ * NOTE: this points to a struct that is private to
+ * fsal_commit.
+ */
+
+static struct config_item fsal_params[] = {
+	CONF_ITEM_STR("Name", 1, 10, NULL,
+		      fsal_params, name), /* cheater union */
+	CONFIG_EOL
+};
+
+/**
+ * @brief Table of EXPORT block parameters
+ *
+ * NOTE: the Client and FSAL sub-blocks must be the *last*
+ * two entries in the list.  This is so all other export
+ * parameters have been processed before these sub-blocks
+ * are processed.
+ */
+
 static struct config_item export_params[] = {
 	CONF_MAND_UI32("Export_id", 0, 0xffff, 1,
 		       exportlist, id),
@@ -842,6 +912,10 @@ static struct config_item export_params[] = {
 			 exportlist, export_hdl),
 	CONFIG_EOL
 };
+
+/**
+ * @brief Top level definition for an EXPORT block
+ */
 
 struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.export.%d",
@@ -988,6 +1062,47 @@ err_out:
 }
 
 /**
+ * @brief Read the export entries from the parsed configuration file.
+ *
+ * @param[in]  in_config    The file that contains the export list
+ *
+ * @return A negative value on error,
+ *         the number of export entries else.
+ */
+int ReadExports(config_file_t in_config)
+{
+	int rc, ret = 0;
+
+	rc = load_config_from_parse(in_config,
+				      &export_param,
+				      NULL,
+				      false);
+	if (rc >= 0) {
+		ret = build_default_root();
+		if (ret < 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"No pseudo root!");
+			return -1;
+		}
+	}
+	return rc + ret;				
+}
+
+static void FreeClientList(exportlist_client_t *clients)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	glist_for_each_safe(glist, glistn, &clients->client_list) {
+		exportlist_client_entry_t *client;
+		client =
+		    glist_entry(glist, exportlist_client_entry_t, cle_list);
+		glist_del(&client->cle_list);
+		gsh_free(client);
+	}
+}
+
+/**
  * @brief Free resources attached to an export
  *
  * @param export [IN] pointer to export
@@ -1024,33 +1139,6 @@ void free_export_resources(exportlist_t *export)
 		gsh_free(export->FS_specific);
 	if (export->FS_tag != NULL)
 		gsh_free(export->FS_tag);
-}
-
-/**
- * @brief Read the export entries from the parsed configuration file.
- *
- * @param[in]  in_config    The file that contains the export list
- *
- * @return A negative value on error,
- *         the number of export entries else.
- */
-int ReadExports(config_file_t in_config)
-{
-	int rc, ret = 0;
-
-	rc = load_config_from_parse(in_config,
-				      &export_param,
-				      NULL,
-				      false);
-	if (rc >= 0) {
-		ret = build_default_root();
-		if (ret < 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"No pseudo root!");
-			return -1;
-		}
-	}
-	return rc + ret;				
 }
 
 /**
