@@ -251,8 +251,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
-	/* Increments refcount so it won't fall below 0 when we clunk later */
-	cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);
+	/* Increments refcount as we're manually making a new copy */
+	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);

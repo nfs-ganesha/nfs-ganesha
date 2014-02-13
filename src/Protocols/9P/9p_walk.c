@@ -108,7 +108,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		pnewfid->from_attach = FALSE;
 
 		/* Increments refcount */
-		cache_inode_lru_ref(pnewfid->pentry, 0);
+		cache_inode_lru_ref(pnewfid->pentry, LRU_FLAG_NONE);
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;

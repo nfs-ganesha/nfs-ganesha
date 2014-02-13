@@ -158,7 +158,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 
 	/* Do not forget to count the refs */
-	cache_inode_lru_ref(pfid->pentry, LRU_REQ_INITIAL);
+	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
