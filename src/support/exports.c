@@ -398,7 +398,6 @@ static int add_client(struct exportlist *exp,
 		strcpy(cli->client.netgroup.netgroupname,
 		       client_tok + 1);
 		cli->type = NETGROUP_CLIENT;
-		goto done;
 	} else if (index(client_tok, '/') != NULL) {
 		CIDR *cidr;
 		uint32_t addr;
@@ -415,8 +414,8 @@ static int add_client(struct exportlist *exp,
 		cli->client.network.netaddr = ntohl(addr);
 		memcpy(&addr, &cidr->mask[12], 4);
 		cli->client.network.netmask = ntohl(addr);
-		cli->type = NETWORK_CLIENT;
 		cidr_free(cidr);
+		cli->type = NETWORK_CLIENT;
 	} else if (index(client_tok, '*') != NULL ||
 		   index(client_tok, '?') != NULL) {
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
@@ -467,6 +466,7 @@ static int add_client(struct exportlist *exp,
 			glist_add_tail(&exp->clients.client_list,
 				       &cli->cle_list);
 			exp->clients.num_clients++;
+			cli = NULL; /* let go of it */
 		}
 		goto out;
 	} else {  /* does gsspric decode go here? */
