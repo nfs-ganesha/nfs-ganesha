@@ -201,6 +201,7 @@ typedef struct exportlist {
 				       EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS  | \
 				       EXPORT_OPTION_MD_ACCESS)
+/* option_pseudo redundant?? why not test pseudopath == NULL? */
 #define EXPORT_OPTION_PSEUDO 0x00000100	/*< Pseudopath is provided */
 #define EXPORT_OPTION_MAXREAD 0x00000200	/*< Max read is provided */
 #define EXPORT_OPTION_MAXWRITE 0x00000400	/*< Max write is provided */
@@ -414,11 +415,6 @@ void clean_credentials(struct user_cred *user_credentials);
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
-
-int export_client_match_any(sockaddr_t *hostaddr,
-			    exportlist_client_t *clients,
-			    exportlist_client_entry_t *pclient_found,
-			    unsigned int export_option);
 
 void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 			     export_perms_t *export_perms);
