@@ -2176,8 +2176,11 @@ static int BuildExportEntry(config_item_t block)
 		} else if (!STRCMP(var_name, CONF_EXPORT_FSAL)) {
 			if (fsal_hdl != NULL) {
 				LogCrit(COMPONENT_CONFIG,
-					"NFS READ %s: FSAL is already defined, new attempt = (%s)",
+					"NFS READ %s: FSAL is already defined as (%s), new attempt = (%s)",
 					label,
+					fsal_hdl->ops->get_name(p_entry->
+								export_hdl->
+								fsal),
 					var_value);
 				continue;
 			}
