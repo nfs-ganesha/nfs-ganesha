@@ -143,12 +143,9 @@ int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 
 	glist_init(&exp->handles);
 	glist_init(&exp->ds_handles);
-	glist_init(&exp->exports);
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-	pthread_mutex_init(&exp->lock, &attrs);
+	glist_init(&exp->exports
+	
+	mutex_init(&exp->lock, &attrs);
 
 	exp->refs = 1;		/* we exit with a reference held */
 	exp->exp_entry = exp_entry;
@@ -198,11 +195,8 @@ int fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	obj->export = exp;
 	obj->type = type;
 	glist_init(&obj->handles);
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-	pthread_mutex_init(&obj->lock, &attrs);
+	
+	mutex_init(&obj->lock, &attrs);
 
 	/* lock myself before attaching to the export.
 	 * keep myself locked until done with creating myself.
@@ -266,11 +260,8 @@ int fsal_ds_handle_init(struct fsal_ds_handle *ds, struct fsal_ds_ops *ops,
 	ds->ops = ops;
 	ds->export = exp;
 	glist_init(&ds->ds_handles);
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-	pthread_mutex_init(&ds->lock, &attrs);
+	mutex_init(&ds->lock, &attrs);
+	
 
 	/* lock myself before attaching to the export.
 	 * keep myself locked until done with creating myself.
