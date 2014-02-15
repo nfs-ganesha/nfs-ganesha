@@ -306,7 +306,7 @@ void pseudofs_export_ops_init(struct export_ops *ops)
 
 fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 				     const char *export_path,
-				     const char *fs_specific,
+				     void *parse_node,
 				     struct exportlist *exp_entry,
 				     struct fsal_module *next_fsal,
 				     const struct fsal_up_vector *up_ops,

@@ -487,7 +487,8 @@ struct fsal_ops {
  *
  * @param[in]     fsal_hdl    FSAL module
  * @param[in]     export_path Path to the root of the export
- * @param[in]     fs_options  String buffer of export options (unparsed)
+ * @param[in]     parse_node  opaque pointer to parse tree node for
+ *                export options to be passed to load_config_from_node
  * @param[in,out] exp_entry   Entry in the Ganesha export list
  * @param[in]     next_fsal   Next FSAL in list, for stacking
  * @param[out]    export      Public export handle
@@ -496,7 +497,7 @@ struct fsal_ops {
  */
 	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
 					const char *export_path,
-					const char *fs_options,
+					void *parse_node,
 					struct exportlist *exp_entry,
 					struct fsal_module *next_fsal,
 					const struct fsal_up_vector *up_ops,

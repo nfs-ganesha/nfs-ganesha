@@ -73,8 +73,9 @@ static const char *module_name = "Ceph";
  * @return FSAL status.
  */
 
-static fsal_status_t create_export(struct fsal_module *module, const char *path,
-				   const char *options,
+static fsal_status_t create_export(struct fsal_module *module,
+				   const char *path,
+				   void *parse_node,
 				   struct exportlist *list_entry,
 				   struct fsal_module *next_fsal,
 				   const struct fsal_up_vector *up_ops,

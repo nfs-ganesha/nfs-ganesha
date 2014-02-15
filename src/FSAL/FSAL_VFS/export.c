@@ -506,7 +506,7 @@ static struct config_block export_param = {
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path,
-				const char *fs_specific,
+				void *parse_node,
 				struct exportlist *exp_entry,
 				struct fsal_module *next_fsal,
 				const struct fsal_up_vector *up_ops,
@@ -554,7 +554,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	vfs_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
 
-	retval = load_config_from_node((void *)fs_specific,
+	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,
 				       true);
