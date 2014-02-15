@@ -39,6 +39,7 @@
 #include <sys/statvfs.h>
 #include <sys/quota.h>
 #include "nlm_list.h"
+#include "config_parsing.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -428,6 +429,22 @@ void pt_export_ops_init(struct export_ops *ops)
 
 void pt_handle_ops_init(struct fsal_obj_ops *ops);
 
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_I64("pt_export_id", LLONG_MIN, LLONG_MAX, 1,
+		       pt_fsal_export, pt_export_id),
+	CONFIG_EOL
+};
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.pt-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -436,7 +453,8 @@ void pt_handle_ops_init(struct fsal_obj_ops *ops);
  */
 
 fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
-			       const char *export_path, const char *fs_options,
+			       const char *export_path,
+			       void *parse_node,
 			       struct exportlist *exp_entry,
 			       struct fsal_module *next_fsal,
 			       const struct fsal_up_vector *up_ops,
@@ -450,7 +468,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	char fs_spec[MAXPATHLEN + 1];
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
-	char *endptr = NULL;
 	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -600,15 +617,14 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	myself->fstype = gsh_strdup(type);
 	myself->fs_spec = gsh_strdup(fs_spec);
 	myself->mntdir = gsh_strdup(mntdir);
-	myself->pt_export_id = strtoll(fs_options, &endptr, 10);
-	if (myself->pt_export_id == LLONG_MIN
-	    || myself->pt_export_id == LLONG_MAX || errno != 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "FSAL BUILD EXPORT CONTEXT: ERROR: "
-			 "Get Export ID failed : %d", errno);
-		return fsalstat(ERR_FSAL_INVAL, 0);
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       myself,
+				       true);
+	if (retval != 0) {
+		retval = EINVAL;
+		goto errout;
 	}
-
 	*export = &myself->export;
 
 	pthread_mutex_unlock(&myself->export.lock);
