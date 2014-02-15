@@ -37,6 +37,7 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops);
  */
 struct nullfs_fsal_export {
 	struct fsal_export export;
+	struct fsal_export *sub_fsal;
 };
 
 fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,

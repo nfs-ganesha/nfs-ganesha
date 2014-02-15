@@ -41,6 +41,7 @@
 #include <os/quota.h>
 #include <dlfcn.h>
 #include "nlm_list.h"
+#include "config_parsing.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
@@ -227,6 +228,33 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
+struct subfsal_args {
+	char *name;
+	void *fsal_node;
+};
+
+static struct config_item sub_fsal_params[] = {
+	CONF_ITEM_STR("name", 1, 10, NULL,
+		      subfsal_args, name),
+	CONFIG_EOL
+};
+
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_RELAX_BLOCK("FSAL", sub_fsal_params,
+			 noop_conf_init, noop_conf_commit,
+			 subfsal_args, fsal_node),
+	CONFIG_EOL
+};
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.nullfs-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
 
 /* create_export
  * Create an export point and return a handle to it to be kept
@@ -237,7 +265,7 @@ void nullfs_export_ops_init(struct export_ops *ops)
 
 fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				   const char *export_path,
-				   const char *fs_specific,
+				   void *parse_node,
 				   struct exportlist *exp_entry,
 				   struct fsal_module *next_fsal,
 				   struct fsal_up_vector *up_ops,
@@ -245,28 +273,52 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 {
 	fsal_status_t expres;
 	struct fsal_module *fsal_stack;
+	struct nullfs_fsal_export *myself;
+	struct fsal_export *sub_export;
+	struct subfsal_args subfsal;
+	int retval;
 
-	/* We use the parameter passed as a string in fs_specific
-	 *  to know which FSAL is to be loaded */
-	fsal_stack = lookup_fsal(fs_specific);
+	/* process our FSAL block to get the name of the fsal
+	 * underneath us.
+	 */
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       &subfsal,
+				       true);
+	if (retval != 0)
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	fsal_stack = lookup_fsal(subfsal.name);
 	if (fsal_stack == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "nullfs_create_export: failed to lookup for FSAL %s",
-			 fs_specific);
+			 subfsal.name);
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
-	expres =
-	    fsal_stack->ops->create_export(fsal_stack, export_path, fs_specific,
-					   exp_entry, NULL, up_ops, export);
-
+	expres = fsal_stack->ops->create_export(fsal_stack,
+						export_path,
+						subfsal.fsal_node,
+						exp_entry,
+						NULL,
+						up_ops,
+						&sub_export);
+	fsal_stack->ops->put(fsal_stack);
 	if (FSAL_IS_ERROR(expres)) {
 		LogMajor(COMPONENT_FSAL,
-			 "nullfs_create_export: failed to call create_export on underlying FSAL %s",
-			 fs_specific);
+			 "Failed to call create_export on underlying FSAL %s",
+			 subfsal.name);
 		return expres;
 	}
-
+	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
+	if (myself == NULL) {
+		expres = sub_export->ops->release(sub_export);
+		if (FSAL_IS_ERROR(expres)) {
+			LogMajor(COMPONENT_FSAL,
+				 "Could not release FSAL %s",
+			 subfsal.name);
+		return expres;
+		}
+	}
 	/* Init next_ops structure */
 	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
 	next_ops.obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
@@ -278,7 +330,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	memcpy(next_ops.ds_ops, (*export)->ds_ops, sizeof(struct fsal_ds_ops));
 	next_ops.up_ops = up_ops;
 
-	/* End of tmp code */
+/* 	End of tmp code */
 
 	nullfs_export_ops_init((*export)->ops);
 	nullfs_handle_ops_init((*export)->obj_ops);
@@ -286,6 +338,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
-
+	*export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
