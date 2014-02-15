@@ -155,7 +155,7 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	*write_amount = nb_written;
 
 	/* attempt stability */
-	if (*fsal_stable) {
+	if (fsal_stable != NULL && *fsal_stable) {
 		retval = fsync(myself->u.file.fd);
 		if (retval == -1) {
 			retval = errno;
