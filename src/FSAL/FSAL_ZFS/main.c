@@ -151,7 +151,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path, const char *fs_options,
+				const char *export_path,
+				void *parse_node,
 				struct exportlist *exp_entry,
 				struct fsal_module *next_fsal,
 				const struct fsal_up_vector *up_ops,

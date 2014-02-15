@@ -291,6 +291,26 @@ void zfs_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 }
 
+struct zfs_export_args {
+	char *pool_path;
+};
+
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_PATH("pool_path", 1, MAXPATHLEN, NULL,
+		       zfs_export_args, pool_path),
+	CONFIG_EOL
+};
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.vfs-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -299,7 +319,8 @@ void zfs_export_ops_init(struct export_ops *ops)
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path, const char *fs_options,
+				const char *export_path,
+				void *parse_node,
 				struct exportlist *exp_entry,
 				struct fsal_module *next_fsal,
 				const struct fsal_up_vector *up_ops,
@@ -307,8 +328,9 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 {
 	struct zfs_fsal_export *myself;
 	int retval = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
 	libzfswrap_vfs_t *p_zfs = NULL;
+	struct zfs_export_args libargs;
 
 	*export = NULL;		/* poison it first */
 	if (export_path == NULL || strlen(export_path) == 0
@@ -322,13 +344,12 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	myself = gsh_malloc(sizeof(struct zfs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "zfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
-	memset(myself, 0, sizeof(struct zfs_fsal_export));
 
 	retval = fsal_export_init(&myself->export, exp_entry);
 	if (retval != 0)
@@ -340,6 +361,14 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       &libargs,
+				       true);
+	if (retval != 0) {
+		fsal_error = ERR_FSAL_INVAL;
+		goto errout;
+	}
 
 	pthread_mutex_lock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
@@ -353,17 +382,17 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		if (p_zhd == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "Could not init libzfswrap library");
-			return fsalstat(ERR_FSAL_INVAL, 0);
+			goto errout;
 		}
 
 	}
 
 	if (p_snapshots == NULL) {
 		/* Mount the libs */
-		p_zfs = libzfswrap_mount(fs_options, "/tank", "");
+		p_zfs = libzfswrap_mount(libargs.pool_path, "/tank", "");
 		if (p_zfs == NULL) {
 			LogMajor(COMPONENT_FSAL, "Could not mount libzfswrap");
-			return fsalstat(ERR_FSAL_INVAL, 0);
+			goto errout;
 		}
 
 	  /** @todo: Place snapshot management here */
@@ -371,14 +400,18 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		p_snapshots[0].p_vfs = p_zfs;
 		i_snapshots = 0;
 	}
-
+	
+	if (libargs.pool_path)
+		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
-
+	
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
+	if (libargs.pool_path)
+		gsh_free(libargs.pool_path);
 	myself->export.ops = NULL;	/* poison myself */
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
