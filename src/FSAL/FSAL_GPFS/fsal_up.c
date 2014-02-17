@@ -137,7 +137,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 callback.interface_version, rc);
 				return NULL;
 			}
-			if (retry < 100) {
+			if (retry < 1000) {
 				retry++;
 				continue;
 			}
