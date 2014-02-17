@@ -1382,9 +1382,6 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		QLOCK(qlane);
 
 		switch (lru->qid) {
-		case LRU_ENTRY_PINNED:
-			/* do nothing */
-			break;
 		case LRU_ENTRY_L1:
 			q = lru_queue_of(entry);
 			if (flags & LRU_REQ_INITIAL) {
@@ -1414,8 +1411,7 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 			}
 			break;
 		default:
-			/* can't happen */
-			abort();
+			/* do nothing */
 			break;
 		}		/* switch qid */
 		QUNLOCK(qlane);
