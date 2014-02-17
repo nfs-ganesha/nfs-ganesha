@@ -206,13 +206,13 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 
-			if (fsal_status.minor == ENODATA) {
 			/* Hook dedicated to ACL management. When attributes
 			 * system.posix_acl_access is used, it can't be
 			 * created, but can be written anyway.
 			 * To do this, return ENODATA instead of ENOATTR
 			 * In this case, we do created what's needed to
 			 * setxattr() into the special xattr */
+			if (fsal_status.minor == ENODATA) {
 				if (!strncmp(name,
 					     "system.posix_acl_access",
 					     MAXNAMLEN))

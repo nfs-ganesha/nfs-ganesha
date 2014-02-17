@@ -75,13 +75,16 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 	 * before unlocking
 	 */
 
-	LogMajor(COMPONENT_9P, "send error on trans %p!!!\n", trans);
+	if (trans->state == MSK_CONNECTED && priv && priv->outqueue) {
+		LogMajor(COMPONENT_9P, "send error on trans %p!!!\n",
+			 trans);
 
-	pthread_mutex_lock(&priv->outqueue->lock);
-	data->next = priv->outqueue->data;
-	priv->outqueue->data = data;
-	pthread_cond_signal(&priv->outqueue->cond);
-	pthread_mutex_unlock(&priv->outqueue->lock);
+		pthread_mutex_lock(&priv->outqueue->lock);
+		data->next = priv->outqueue->data;
+		priv->outqueue->data = data;
+		pthread_cond_signal(&priv->outqueue->cond);
+		pthread_mutex_unlock(&priv->outqueue->lock);
+	}
 }
 
 void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *data,
