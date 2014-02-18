@@ -211,7 +211,7 @@ typedef struct grace {
  */
 typedef struct clid_entry {
 	struct glist_head cl_list;	/*< Link in the list */
-	char cl_name[256];	/*< Client name */
+	char cl_name[PATH_MAX];	/*< Client name */
 } clid_entry_t;
 
 /******************************************************************************
