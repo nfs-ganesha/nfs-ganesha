@@ -184,17 +184,6 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
 
-			/* Hook dedicated to ACL management. When attributes
-			 * system.posix_acl_access is used, it can't be
-			 * created, but can be written anyway.
-			 * To do this, return ENODATA instead of ENOATTR
-			 * In this case, we do created what's needed to
-			 * setxattr() into the special xattr */
-			if (!strncmp(name,
-				     "system.posix_acl_access",
-				     MAXNAMLEN))
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENODATA, plenout, preply);
 			/* ENOENT for xattr is ENOATTR */
 			if (fsal_status.major == ERR_FSAL_NOENT)
 				return _9p_rerror(req9p, worker_data, msgtag,
@@ -216,18 +205,47 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 					     &attrsize);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
-			gsh_free(pxattrfid);
 
 			if (fsal_status.minor == ENODATA) {
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENODATA, plenout, preply);
-			}
+			/* Hook dedicated to ACL management. When attributes
+			 * system.posix_acl_access is used, it can't be
+			 * created, but can be written anyway.
+			 * To do this, return ENODATA instead of ENOATTR
+			 * In this case, we do created what's needed to
+			 * setxattr() into the special xattr */
+				if (!strncmp(name,
+					     "system.posix_acl_access",
+					     MAXNAMLEN))
+					attrsize = 0LL;
+				else if (!strncmp(name,
+						  "security.selinux",
+						  MAXNAMLEN))
+					attrsize = 0LL;
+				else {
+					gsh_free(pxattrfid->specdata.
+						xattr.xattr_content);
+					gsh_free(pxattrfid);
+					return _9p_rerror(req9p,
+							  worker_data,
+							  msgtag,
+							  ENODATA,
+							  plenout,
+							  preply);
+				}
+			} else {
+				gsh_free(pxattrfid->specdata.
+					 xattr.xattr_content);
+				gsh_free(pxattrfid);
 
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+				return _9p_rerror(req9p,
+						  worker_data,
+						  msgtag,
+						  _9p_tools_errno
+						  (cache_inode_error_convert
+						   (fsal_status)),
+						  plenout,
+						  preply);
+			}
 		}
 	}
 
