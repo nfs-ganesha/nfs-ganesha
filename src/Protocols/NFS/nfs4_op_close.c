@@ -319,7 +319,10 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		nfs4_owner_PrintAll();
 	}
 
- out:
+	/* For pNFS (coherency in-between DS and MDS: invalidate cache */
+	cache_inode_invalidate(data->current_entry,
+			       CACHE_INODE_INVALIDATE_ATTRS);
+out:
 
 	/* Save the response in the open owner */
 	if (data->minorversion == 0) {
