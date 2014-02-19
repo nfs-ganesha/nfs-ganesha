@@ -285,7 +285,6 @@ static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 	struct if_quotactl dataquota;
 
 	struct stat path_stat;
-	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
@@ -312,7 +311,7 @@ static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 
 	dataquota.qc_cmd = LUSTRE_Q_GETQUOTA;
 	dataquota.qc_type = quota_type;
-	dataquota.qc_id = id =
+	dataquota.qc_id =
 	    (quota_type ==
 	     USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
 	    caller_gid;
