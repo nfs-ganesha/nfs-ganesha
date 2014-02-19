@@ -41,7 +41,6 @@
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "err_cache_inode.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
 #include "nfs_tools.h"
@@ -385,22 +384,7 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
 	SetNameFunction("main");
 	SetNameHost(host_name);
 
-	InitLogging();
-	if (log_path)
-		SetDefaultLogging(log_path);
-
-	if (debug_level >= 0)
-		SetLevelDebug(debug_level);
-
-	ReadLogEnvironment();
-
-	/* Register error families */
-	AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-	AddFamilyError(ERR_HASHTABLE, "HashTable related Errors",
-		       tab_errctx_hash);
-	AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
-	AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",
-		       tab_errstatus_cache_inode);
+	init_logging(log_path, debug_level);
 }
 
 /**

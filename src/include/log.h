@@ -264,48 +264,6 @@ typedef struct {
 
 #define ERR_POSIX 1
 
-static status_t __attribute__ ((__unused__)) tab_systeme_status[] = {
-	{
-	0, "NO_ERROR", "No errors"}, {
-	EPERM, "EPERM", "Reserved to root"}, {
-	ENOENT, "ENOENT", "No such file or directory"}, {
-	ESRCH, "ESRCH", "No such process"}, {
-	EINTR, "EINTR", "interrupted system call"}, {
-	EIO, "EIO", "I/O error"}, {
-	ENXIO, "ENXIO", "No such device or address"}, {
-	E2BIG, "E2BIG", "Arg list too long"}, {
-	ENOEXEC, "ENOEXEC", "Exec format error"}, {
-	EBADF, "EBADF", "Bad file number"}, {
-	ECHILD, "ECHILD", "No children"}, {
-	EAGAIN, "EAGAIN", "Resource temporarily unavailable"}, {
-	ENOMEM, "ENOMEM", "Not enough core"}, {
-	EACCES, "ENOMEM", "Permission denied"}, {
-	EFAULT, "EFAULT", "Bad address"}, {
-	ENOTBLK, "ENOTBLK", "Block device required"}, {
-	EBUSY, "EBUSY", "Mount device busy"}, {
-	EEXIST, "EEXIST", "File exists"}, {
-	EXDEV, "EXDEV", "Cross-device link"}, {
-	ENODEV, "ENODEV", "No such device"}, {
-	ENOTDIR, "ENOTDIR", "Not a directory"}, {
-	EISDIR, "EISDIR", "Is a directory"}, {
-	EINVAL, "EINVAL", "Invalid argument"}, {
-	ENFILE, "ENFILE", "File table overflow"}, {
-	EMFILE, "EMFILE", "Too many open files"}, {
-	ENOTTY, "ENOTTY", "Inappropriate ioctl for device"}, {
-	ETXTBSY, "ETXTBSY", "Text file busy"}, {
-	EFBIG, "EFBIG", "File too large"}, {
-	ENOSPC, "ENOSPC", "No space left on device"}, {
-	ESPIPE, "ESPIPE", "Illegal seek"}, {
-	EROFS, "EROFS", "Read only file system"}, {
-	EMLINK, "EMLINK", "Too many links"}, {
-	EPIPE, "EPIPE", "Broken pipe"}, {
-	EDOM, "EDOM", "Math arg out of domain of func"}, {
-	ERANGE, "ERANGE", "Math result not representable"}, {
-	ENOMSG, "ENOMSG", "No message of desired type"}, {
-	EIDRM, "EIDRM", "Identifier removed"}, {
-	ERR_NULL, "ERR_NULL", ""}
-};
-
 /* other codes families */
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
@@ -332,14 +290,7 @@ void SetNameHost(const char *nom);
 void SetDefaultLogging(const char *name);
 void SetNameFunction(const char *nom);	/* thread safe */
 
-/* AddFamilyError : not thread safe */
-int AddFamilyError(int num_family, char *nom_family, family_error_t *tab_err);
-
-char *ReturnNameFamilyError(int num_family);
-
-void InitLogging();
-void ReadLogEnvironment();
-void SetLevelDebug(int level_to_set);
+void init_logging(const char *log_path, const int debug_level);
 void Log_FreeThreadContext();
 
 int ReturnLevelAscii(const char *LevelInAscii);
@@ -420,18 +371,16 @@ int unregister_log_facility(struct log_facility *facility);
 int activate_custom_log_facility(struct log_facility *facility);
 void set_const_log_str();
 
-typedef struct log_component_info {
-	log_components_t comp_value;
-	const char *comp_name;
-	const char *comp_str;
+struct log_component_info {
+	const char *comp_name;	/* component name */
+	const char *comp_str;	/* shorter, more useful name */
 	log_levels_t comp_log_level;
-	int comp_env_set;
-} log_component_info;
+	bool comp_env_set;	/* level was set by env(), now RO */
+};
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level
 
-extern log_component_info
-	__attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
+extern struct log_component_info LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
 	do { \

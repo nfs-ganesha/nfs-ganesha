@@ -46,7 +46,6 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"
-#include "err_hashtable.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
 

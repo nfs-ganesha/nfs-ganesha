@@ -54,6 +54,8 @@
 #endif
 
 #include "nfs_core.h"
+#include "err_cache_inode.h"
+#include "err_hashtable.h"
 
 pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -597,8 +599,50 @@ log_level_t tabLogLevel[] = {
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+static status_t tab_systeme_status[] = {
+	{
+	0, "NO_ERROR", "No errors"}, {
+	EPERM, "EPERM", "Reserved to root"}, {
+	ENOENT, "ENOENT", "No such file or directory"}, {
+	ESRCH, "ESRCH", "No such process"}, {
+	EINTR, "EINTR", "interrupted system call"}, {
+	EIO, "EIO", "I/O error"}, {
+	ENXIO, "ENXIO", "No such device or address"}, {
+	E2BIG, "E2BIG", "Arg list too long"}, {
+	ENOEXEC, "ENOEXEC", "Exec format error"}, {
+	EBADF, "EBADF", "Bad file number"}, {
+	ECHILD, "ECHILD", "No children"}, {
+	EAGAIN, "EAGAIN", "Resource temporarily unavailable"}, {
+	ENOMEM, "ENOMEM", "Not enough core"}, {
+	EACCES, "ENOMEM", "Permission denied"}, {
+	EFAULT, "EFAULT", "Bad address"}, {
+	ENOTBLK, "ENOTBLK", "Block device required"}, {
+	EBUSY, "EBUSY", "Mount device busy"}, {
+	EEXIST, "EEXIST", "File exists"}, {
+	EXDEV, "EXDEV", "Cross-device link"}, {
+	ENODEV, "ENODEV", "No such device"}, {
+	ENOTDIR, "ENOTDIR", "Not a directory"}, {
+	EISDIR, "EISDIR", "Is a directory"}, {
+	EINVAL, "EINVAL", "Invalid argument"}, {
+	ENFILE, "ENFILE", "File table overflow"}, {
+	EMFILE, "EMFILE", "Too many open files"}, {
+	ENOTTY, "ENOTTY", "Inappropriate ioctl for device"}, {
+	ETXTBSY, "ETXTBSY", "Text file busy"}, {
+	EFBIG, "EFBIG", "File too large"}, {
+	ENOSPC, "ENOSPC", "No space left on device"}, {
+	ESPIPE, "ESPIPE", "Illegal seek"}, {
+	EROFS, "EROFS", "Read only file system"}, {
+	EMLINK, "EMLINK", "Too many links"}, {
+	EPIPE, "EPIPE", "Broken pipe"}, {
+	EDOM, "EDOM", "Math arg out of domain of func"}, {
+	ERANGE, "ERANGE", "Math result not representable"}, {
+	ENOMSG, "ENOMSG", "No message of desired type"}, {
+	EIDRM, "EIDRM", "Identifier removed"}, {
+	ERR_NULL, "ERR_NULL", ""}
+};
+
 /* Error codes */
-errctx_t __attribute__ ((__unused__)) tab_system_err[] = {
+static errctx_t tab_system_err[] = {
 	{
 	SUCCES, "SUCCES", "No Error"}, {
 	ERR_FAILURE, "FAILURE", "Error occurred"}, {
@@ -895,7 +939,7 @@ int ReturnLevelAscii(const char *LevelInAscii)
 	return -1;
 }				/* ReturnLevelAscii */
 
-int ReturnComponentAscii(const char *ComponentInAscii)
+static int ReturnComponentAscii(const char *ComponentInAscii)
 {
 	log_components_t component;
 
@@ -982,6 +1026,28 @@ static void ArmSignal(int signal, void (*action) ())
  * ReturnLevelDebug
  */
 
+static void _SetLevelDebug(int level_to_set)
+{
+	int i;
+
+	if (level_to_set < NIV_NULL)
+		level_to_set = NIV_NULL;
+
+	if (level_to_set >= NB_LOG_LEVEL)
+		level_to_set = NB_LOG_LEVEL - 1;
+
+	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
+		LogComponents[i].comp_log_level = level_to_set;
+}				/* _SetLevelDebug */
+
+static void SetLevelDebug(int level_to_set)
+{
+	_SetLevelDebug(level_to_set);
+
+	LogChanges("Setting log level for all components to %s",
+		   ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+}
+
 void SetComponentLogLevel(log_components_t component, int level_to_set)
 {
 	if (component == COMPONENT_ALL) {
@@ -1020,28 +1086,6 @@ inline int ReturnLevelDebug()
 {
 	return LogComponents[COMPONENT_ALL].comp_log_level;
 }				/* ReturnLevelDebug */
-
-void _SetLevelDebug(int level_to_set)
-{
-	int i;
-
-	if (level_to_set < NIV_NULL)
-		level_to_set = NIV_NULL;
-
-	if (level_to_set >= NB_LOG_LEVEL)
-		level_to_set = NB_LOG_LEVEL - 1;
-
-	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
-		LogComponents[i].comp_log_level = level_to_set;
-}				/* _SetLevelDebug */
-
-void SetLevelDebug(int level_to_set)
-{
-	_SetLevelDebug(level_to_set);
-
-	LogChanges("Setting log level for all components to %s",
-		   ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
-}
 
 static void IncrementLevelDebug()
 {
@@ -1163,7 +1207,126 @@ void set_const_log_str()
 	}
 }
 
-void InitLogging()
+
+/**
+ *
+ * @brief Add a family of errors
+ *
+ * @param[in]  num_family  The family index
+ * @param[in]  name_family The name of the family
+ * @param[in]  tab_err     The table of errors
+ *
+ * @return -1 for failure, or num_family
+ *
+ */
+static int add_error_family(int num_family,
+			    char *name_family,
+			    family_error_t *tab_err)
+{
+	int i = 0;
+
+	/* The number of the family is between -1 and MAX_NUM_FAMILY */
+	if ((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
+		return -1;
+
+	/* System errors can't be 0 */
+	if (num_family == 0)
+		return -1;
+
+	/* Look for a vacant entry. */
+	for (i = 0; i < MAX_NUM_FAMILY; i++)
+		if (tab_family[i].num_family == UNUSED_SLOT)
+			break;
+
+	/* Check if the table is full. */
+	if (i == MAX_NUM_FAMILY)
+		return -1;
+
+	tab_family[i].num_family = (num_family != -1) ? num_family : i;
+	tab_family[i].tab_err = tab_err;
+	if (strmaxcpy
+	    (tab_family[i].name_family, name_family,
+	     sizeof(tab_family[i].name_family)) == -1)
+		LogFatal(COMPONENT_LOG, "family name %s too long", name_family);
+
+	return tab_family[i].num_family;
+}				/* add_error_family */
+
+#if 0
+static char *ReturnNameFamilyError(int num_family)
+{
+	int i = 0;
+
+	for (i = 0; i < MAX_NUM_FAMILY; i++)
+		if (tab_family[i].num_family == num_family)
+			return tab_family[i].name_family;
+
+	return NULL;
+}				/* ReturnFamilyError */
+#endif
+
+/* Finds a family in the table of family errors. */
+static family_error_t *FindTabErr(int num_family)
+{
+	int i = 0;
+
+	for (i = 0; i < MAX_NUM_FAMILY; i++) {
+		if (tab_family[i].num_family == num_family)
+			return tab_family[i].tab_err;
+	}
+
+	return NULL;
+}				/* FindTabErr */
+
+static family_error_t FindErr(family_error_t *tab_err, int num)
+{
+	int i = 0;
+	family_error_t returned_err;
+
+	do {
+
+		if (tab_err[i].numero == num || tab_err[i].numero == ERR_NULL) {
+			returned_err = tab_err[i];
+			break;
+		}
+
+		i += 1;
+	} while (1);
+
+	return returned_err;
+}				/* FindErr */
+
+static void set_logging_from_env(void)
+{
+	char *env_value;
+	int newlevel, component, oldlevel;
+
+	for (component = COMPONENT_ALL; component < COMPONENT_COUNT;
+	     component++) {
+		env_value = getenv(LogComponents[component].comp_name);
+		if (env_value == NULL)
+			continue;
+		newlevel = ReturnLevelAscii(env_value);
+		if (newlevel == -1) {
+			LogCrit(COMPONENT_LOG,
+				"Environment variable %s exists, but the value %s is not a valid log level.",
+				LogComponents[component].comp_name,
+				env_value);
+			continue;
+		}
+		oldlevel = LogComponents[component].comp_log_level;
+		LogComponents[component].comp_log_level = newlevel;
+		LogComponents[component].comp_env_set = true;
+		LogChanges(
+		     "Using environment variable to switch log level for %s from %s to %s",
+		     LogComponents[component].comp_name,
+		     ReturnLevelInt(oldlevel),
+		     ReturnLevelInt(newlevel));
+	}
+
+}				/* InitLogging */
+
+void init_logging(const char *log_path, const int debug_level)
 {
 	int i;
 	log_type_t ltyp;
@@ -1200,128 +1363,29 @@ void InitLogging()
 	for (i = 1; i < MAX_NUM_FAMILY; i++)
 		tab_family[i].num_family = UNUSED_SLOT;
 
+	if (log_path)
+		SetDefaultLogging(log_path);
+
+	if (debug_level >= 0)
+		SetLevelDebug(debug_level);
+
+	set_logging_from_env();
+
+	/* Register error families */
+	add_error_family(ERR_POSIX, "POSIX Errors", tab_systeme_status);
+	add_error_family(ERR_HASHTABLE, "HashTable related Errors",
+		       tab_errctx_hash);
+	add_error_family(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
+	add_error_family(ERR_CACHE_INODE, "Cache Inode related Errors",
+		       tab_errstatus_cache_inode);
+
 	ArmSignal(SIGUSR1, IncrementLevelDebug);
 	ArmSignal(SIGUSR2, DecrementLevelDebug);
 }
 
-void ReadLogEnvironment()
-{
-	char *env_value;
-	int newlevel, component, oldlevel;
-
-	for (component = COMPONENT_ALL; component < COMPONENT_COUNT;
-	     component++) {
-		env_value = getenv(LogComponents[component].comp_name);
-		if (env_value == NULL)
-			continue;
-		newlevel = ReturnLevelAscii(env_value);
-		if (newlevel == -1) {
-			LogCrit(COMPONENT_LOG,
-				"Environment variable %s exists, but the value %s is not a valid log level.",
-				LogComponents[component].comp_name,
-				env_value);
-			continue;
-		}
-		oldlevel = LogComponents[component].comp_log_level;
-		LogComponents[component].comp_log_level = newlevel;
-		LogComponents[component].comp_env_set = TRUE;
-		LogChanges(
-		     "Using environment variable to switch log level for %s from %s to %s",
-		     LogComponents[component].comp_name,
-		     ReturnLevelInt(oldlevel),
-		     ReturnLevelInt(newlevel));
-	}
-
-}				/* InitLogging */
-
 /*
  * Routines for managing error messages
  */
-
-/**
- *
- * @brief Add a family of errors
- *
- * @param[in]  num_family  The family index
- * @param[in]  name_family The name of the family
- * @param[in]  tab_err     The table of errors
- *
- * @return -1 for failure, or num_family
- *
- */
-int AddFamilyError(int num_family, char *name_family, family_error_t *tab_err)
-{
-	int i = 0;
-
-	/* The number of the family is between -1 and MAX_NUM_FAMILY */
-	if ((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
-		return -1;
-
-	/* System errors can't be 0 */
-	if (num_family == 0)
-		return -1;
-
-	/* Look for a vacant entry. */
-	for (i = 0; i < MAX_NUM_FAMILY; i++)
-		if (tab_family[i].num_family == UNUSED_SLOT)
-			break;
-
-	/* Check if the table is full. */
-	if (i == MAX_NUM_FAMILY)
-		return -1;
-
-	tab_family[i].num_family = (num_family != -1) ? num_family : i;
-	tab_family[i].tab_err = tab_err;
-	if (strmaxcpy
-	    (tab_family[i].name_family, name_family,
-	     sizeof(tab_family[i].name_family)) == -1)
-		LogFatal(COMPONENT_LOG, "family name %s too long", name_family);
-
-	return tab_family[i].num_family;
-}				/* AddFamilyError */
-
-char *ReturnNameFamilyError(int num_family)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_NUM_FAMILY; i++)
-		if (tab_family[i].num_family == num_family)
-			return tab_family[i].name_family;
-
-	return NULL;
-}				/* ReturnFamilyError */
-
-/* Finds a family in the table of family errors. */
-static family_error_t *FindTabErr(int num_family)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_NUM_FAMILY; i++) {
-		if (tab_family[i].num_family == num_family)
-			return tab_family[i].tab_err;
-	}
-
-	return NULL;
-}				/* FindTabErr */
-
-static family_error_t FindErr(family_error_t *tab_err, int num)
-{
-	int i = 0;
-	family_error_t returned_err;
-
-	do {
-
-		if (tab_err[i].numero == num || tab_err[i].numero == ERR_NULL) {
-			returned_err = tab_err[i];
-			break;
-		}
-
-		i += 1;
-	} while (1);
-
-	return returned_err;
-}				/* FindErr */
-
 static int log_to_syslog(struct log_facility *facility, log_levels_t level,
 			 struct display_buffer *buffer, char *compstr,
 			 char *message)
@@ -1642,62 +1706,187 @@ int display_LogError(struct display_buffer *dspbuf, int num_family,
 	}
 }				/* display_LogError */
 
-log_component_info LogComponents[COMPONENT_COUNT] = {
-	{COMPONENT_ALL, "COMPONENT_ALL", "", NIV_EVENT,},
-	{COMPONENT_LOG, "COMPONENT_LOG", "LOG", NIV_EVENT,},
-	{COMPONENT_LOG_EMERG, "COMPONENT_LOG_EMERG", "LOG_EMERG", NIV_EVENT,},
-	{COMPONENT_MEMALLOC, "COMPONENT_MEMALLOC", "ALLOC", NIV_EVENT,},
-	{COMPONENT_MEMLEAKS, "COMPONENT_MEMLEAKS", "LEAKS", NIV_EVENT,},
-	{COMPONENT_FSAL, "COMPONENT_FSAL", "FSAL", NIV_EVENT,},
-	{COMPONENT_NFSPROTO, "COMPONENT_NFSPROTO", "NFS3", NIV_EVENT,},
-	{COMPONENT_NFS_V4, "COMPONENT_NFS_V4", "NFS4", NIV_EVENT,},
-	{COMPONENT_NFS_V4_PSEUDO, "COMPONENT_NFS_V4_PSEUDO",
-		"NFS4 PSEUDO", NIV_EVENT,},
-	{COMPONENT_FILEHANDLE, "COMPONENT_FILEHANDLE", "FH", NIV_EVENT,},
-	{COMPONENT_NFS_SHELL, "COMPONENT_NFS_SHELL", "NFS SHELL", NIV_EVENT,},
-	{COMPONENT_DISPATCH, "COMPONENT_DISPATCH", "DISP", NIV_EVENT,},
-	{COMPONENT_CACHE_INODE, "COMPONENT_CACHE_INODE", "INODE", NIV_EVENT,},
-	{COMPONENT_CACHE_INODE_GC, "COMPONENT_CACHE_INODE_GC",
-		"INODE GC", NIV_EVENT,},
-	{COMPONENT_CACHE_INODE_LRU, "COMPONENT_CACHE_INODE_LRU",
-		"INODE LRU", NIV_EVENT,},
-	{COMPONENT_HASHTABLE, "COMPONENT_HASHTABLE", "HT", NIV_EVENT,},
-	{COMPONENT_HASHTABLE_CACHE, "COMPONENT_HASHTABLE_CACHE",
-		"HT CACHE", NIV_EVENT,},
-	{COMPONENT_LRU, "COMPONENT_LRU", "LRU", NIV_EVENT,},
-	{COMPONENT_DUPREQ, "COMPONENT_DUPREQ", "DUPREQ", NIV_EVENT,},
-	{COMPONENT_RPCSEC_GSS, "COMPONENT_RPCSEC_GSS", "RPCSEC GSS",
+struct log_component_info LogComponents[COMPONENT_COUNT] = {
+	[COMPONENT_ALL] = {
+		.comp_name = "COMPONENT_ALL",
+		.comp_str = "",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_LOG] = {
+		.comp_name = "COMPONENT_LOG",
+		.comp_str = "LOG",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_LOG_EMERG] = {
+		.comp_name = "COMPONENT_LOG_EMERG",
+		.comp_str = "LOG_EMERG",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_MEMALLOC] = {
+		.comp_name = "COMPONENT_MEMALLOC",
+		.comp_str = "ALLOC",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_MEMLEAKS] = {
+		.comp_name = "COMPONENT_MEMLEAKS",
+		.comp_str = "LEAKS",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_FSAL] = {
+		.comp_name = "COMPONENT_FSAL",
+		.comp_str = "FSAL",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFSPROTO] = {
+		.comp_name = "COMPONENT_NFSPROTO",
+		.comp_str = "NFS3",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_V4] = {
+		.comp_name = "COMPONENT_NFS_V4",
+		.comp_str = "NFS4",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_V4_PSEUDO] = {
+		.comp_name = "COMPONENT_NFS_V4_PSEUDO",
+		.comp_str = "NFS4 PSEUDO",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_FILEHANDLE] = {
+		.comp_name = "COMPONENT_FILEHANDLE",
+		.comp_str = "FH",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_SHELL] = {
+		.comp_name = "COMPONENT_NFS_SHELL",
+		.comp_str = "NFS SHELL",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_DISPATCH] = {
+		.comp_name = "COMPONENT_DISPATCH",
+		.comp_str = "DISP",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_CACHE_INODE] = {
+		.comp_name = "COMPONENT_CACHE_INODE",
+		.comp_str = "INODE",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_CACHE_INODE_GC] = {
+		.comp_name = "COMPONENT_CACHE_INODE_GC",
+		.comp_str = "INODE GC",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_CACHE_INODE_LRU] = {
+		.comp_name = "COMPONENT_CACHE_INODE_LRU",
+		.comp_str = "INODE LRU",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_HASHTABLE] = {
+		.comp_name = "COMPONENT_HASHTABLE",
+		.comp_str = "HT",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_HASHTABLE_CACHE] = {
+		.comp_name = "COMPONENT_HASHTABLE_CACHE",
+		"HT CACHE",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_LRU] = {
+		.comp_name = "COMPONENT_LRU",
+		.comp_str = "LRU",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_DUPREQ] = {
+		.comp_name = "COMPONENT_DUPREQ",
+		.comp_str = "DUPREQ",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_RPCSEC_GSS] = {
+		.comp_name = "COMPONENT_RPCSEC_GSS",
+		.comp_str = "RPCSEC GSS",
 		NIV_EVENT,},
-	{COMPONENT_INIT, "COMPONENT_INIT", "NFS STARTUP", NIV_EVENT,},
-	{COMPONENT_MAIN, "COMPONENT_MAIN", "MAIN", NIV_EVENT,},
-	{COMPONENT_IDMAPPER, "COMPONENT_IDMAPPER", "ID MAPPER", NIV_EVENT,},
-	{COMPONENT_NFS_READDIR, "COMPONENT_NFS_READDIR", "NFS READDIR",
+	[COMPONENT_INIT] = {
+		.comp_name = "COMPONENT_INIT",
+		.comp_str = "NFS STARTUP",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_MAIN] = {
+		.comp_name = "COMPONENT_MAIN",
+		.comp_str = "MAIN",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_IDMAPPER] = {
+		.comp_name = "COMPONENT_IDMAPPER",
+		.comp_str = "ID MAPPER",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_READDIR] = {
+		.comp_name = "COMPONENT_NFS_READDIR",
+		.comp_str = "NFS READDIR",
 		NIV_EVENT,},
-	{COMPONENT_NFS_V4_LOCK, "COMPONENT_NFS_V4_LOCK", "NFS4 LOCK",
+	[COMPONENT_NFS_V4_LOCK] = {
+		.comp_name = "COMPONENT_NFS_V4_LOCK",
+		.comp_str = "NFS4 LOCK",
 		NIV_EVENT,},
-	{COMPONENT_NFS_V4_XATTR, "COMPONENT_NFS_V4_XATTR", "NFS4 XATTR",
+	[COMPONENT_NFS_V4_XATTR] = {
+		.comp_name = "COMPONENT_NFS_V4_XATTR",
+		.comp_str = "NFS4 XATTR",
 		NIV_EVENT,},
-	{COMPONENT_NFS_V4_REFERRAL, "COMPONENT_NFS_V4_REFERRAL",
-		"NFS4 REFERRAL", NIV_EVENT,},
-	{COMPONENT_MEMCORRUPT, "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
+	[COMPONENT_NFS_V4_REFERRAL] = {
+		.comp_name = "COMPONENT_NFS_V4_REFERRAL",
+		.comp_str = "NFS4 REFERRAL",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_MEMCORRUPT] = {
+		.comp_name = "COMPONENT_MEMCORRUPT",
+		.comp_str = "MEM CORRUPT",
 		NIV_EVENT,},
-	{COMPONENT_CONFIG, "COMPONENT_CONFIG", "CONFIG", NIV_EVENT,},
-	{COMPONENT_CLIENTID, "COMPONENT_CLIENTID", "CLIENT ID", NIV_EVENT,},
-	{COMPONENT_STDOUT, "COMPONENT_STDOUT", "STDOUT", NIV_EVENT,},
-	{COMPONENT_SESSIONS, "COMPONENT_SESSIONS", "SESSIONS", NIV_EVENT,},
-	{COMPONENT_PNFS, "COMPONENT_PNFS", "PNFS", NIV_EVENT,},
-	{COMPONENT_RPC_CACHE, "COMPONENT_RPC_CACHE", "RPC CACHE", NIV_EVENT,},
-	{COMPONENT_RW_LOCK, "COMPONENT_RW_LOCK", "RW LOCK", NIV_EVENT,},
-	{COMPONENT_NLM, "COMPONENT_NLM", "NLM", NIV_EVENT,},
-	{COMPONENT_RPC, "COMPONENT_RPC", "RPC", NIV_EVENT,},
-	{COMPONENT_NFS_CB, "COMPONENT_NFS_CB", "NFS CB", NIV_EVENT,},
-	{COMPONENT_THREAD, "COMPONENT_THREAD", "THREAD", NIV_EVENT,},
-	{COMPONENT_NFS_V4_ACL, "COMPONENT_NFS_V4_ACL", "NFS4 ACL", NIV_EVENT,},
-	{COMPONENT_STATE, "COMPONENT_STATE", "STATE", NIV_EVENT,},
-	{COMPONENT_9P, "COMPONENT_9P", "9P", NIV_EVENT,},
-	{COMPONENT_9P_DISPATCH, "COMPONENT_9P_DISPATCH", "9P DISP", NIV_EVENT,},
-	{COMPONENT_FSAL_UP, "COMPONENT_FSAL_UP", "FSAL_UP", NIV_EVENT,},
-	{COMPONENT_DBUS, "COMPONENT_DBUS", "DBUS", NIV_EVENT,},
+	[COMPONENT_CONFIG] = {
+		.comp_name = "COMPONENT_CONFIG",
+		.comp_str = "CONFIG",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_CLIENTID] = {
+		.comp_name = "COMPONENT_CLIENTID",
+		.comp_str = "CLIENT ID",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_STDOUT] = {
+		.comp_name = "COMPONENT_STDOUT",
+		.comp_str = "STDOUT",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_SESSIONS] = {
+		.comp_name = "COMPONENT_SESSIONS",
+		.comp_str = "SESSIONS",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_PNFS] = {
+		.comp_name = "COMPONENT_PNFS",
+		.comp_str = "PNFS",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_RPC_CACHE] = {
+		.comp_name = "COMPONENT_RPC_CACHE",
+		.comp_str = "RPC CACHE",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_RW_LOCK] = {
+		.comp_name = "COMPONENT_RW_LOCK",
+		.comp_str = "RW LOCK",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NLM] = {
+		.comp_name = "COMPONENT_NLM",
+		.comp_str = "NLM",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_RPC] = {
+		.comp_name = "COMPONENT_RPC",
+		.comp_str = "RPC",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_CB] = {
+		.comp_name = "COMPONENT_NFS_CB",
+		.comp_str = "NFS CB",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_THREAD] = {
+		.comp_name = "COMPONENT_THREAD",
+		.comp_str = "THREAD",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_NFS_V4_ACL] = {
+		.comp_name = "COMPONENT_NFS_V4_ACL",
+		.comp_str = "NFS4 ACL",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_STATE] = {
+		.comp_name = "COMPONENT_STATE",
+		.comp_str = "STATE",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_9P] = {
+		.comp_name = "COMPONENT_9P",
+		.comp_str = "9P",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_9P_DISPATCH] = {
+		.comp_name = "COMPONENT_9P_DISPATCH",
+		.comp_str = "9P DISP",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_FSAL_UP] = {
+		.comp_name = "COMPONENT_FSAL_UP",
+		.comp_str = "FSAL_UP",
+		.comp_log_level = NIV_EVENT,},
+	[COMPONENT_DBUS] = {
+		.comp_name = "COMPONENT_DBUS",
+		.comp_str = "DBUS",
+		.comp_log_level = NIV_EVENT,},
 };
 
 void DisplayLogComponentLevel(log_components_t component, char *file, int line,
@@ -2348,7 +2537,7 @@ void reread_log_config()
 
 	/* Clear out the flag indicating component was set from environment. */
 	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
-		LogComponents[i].comp_env_set = FALSE;
+		LogComponents[i].comp_env_set = false;
 
 	/* If no configuration file is given, then the caller must want to
 	 * reparse the configuration file from startup.
