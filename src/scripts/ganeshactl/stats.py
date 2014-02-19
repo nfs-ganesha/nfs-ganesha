@@ -21,7 +21,7 @@ try:
                        "/org/ganesha/nfsd/ExportMgr")
 except: # catch *all* exceptions
       print "Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down"
-      exit(1) 
+      sys.exit(1)
 
 
 
@@ -65,4 +65,4 @@ for exports in export_list[1]:
 		print
 
 
-exit(0)
+sys.exit(0)
