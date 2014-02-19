@@ -281,6 +281,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		goto out;
 	}
 
+	/* Initialize common fields */
+	nentry->type = new_obj->type;
+	nentry->flags = 0;
+	glist_init(&nentry->state_list);
+	glist_init(&nentry->export_list);
+	glist_init(&nentry->layoutrecall_list);
+
 	/* See if someone raced us. */
 	oentry =
 	    cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK, __func__,
@@ -312,13 +319,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
 	}
-
-	/* Initialize common fields */
-	nentry->type = new_obj->type;
-	nentry->flags = 0;
-	glist_init(&nentry->state_list);
-	glist_init(&nentry->export_list);
-	glist_init(&nentry->layoutrecall_list);
 
 	switch (nentry->type) {
 	case REGULAR_FILE:
