@@ -365,6 +365,8 @@ struct cache_entry_t {
 	struct glist_head state_list;
 	/** Exports per entry (protected by attr_lock) */
 	struct glist_head export_list;
+	/** Atomic pointer to the first mapped export for fast path */
+	void *first_export;
 	/** Layout recalls on this entry */
 	struct glist_head layoutrecall_list;
 	/** Lock on type-specific cached content.  See locking

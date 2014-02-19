@@ -76,6 +76,10 @@ bool check_mapping(cache_entry_t *entry,
 	struct entry_export_map *expmap;
 	bool try_write = false;
 
+	/* Fast path check to see if this export is already mapped */
+	if (atomic_fetch_voidptr(&entry->first_export) == export)
+		return true;
+
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
 again:
@@ -116,6 +120,10 @@ again:
 	}
 
 	PTHREAD_RWLOCK_wrlock(&export->lock);
+
+	/* If export_list is empty, store this export as first */
+	if (glist_empty(&entry->export_list))
+		atomic_store_voidptr(&entry->first_export, export);
 
 	expmap->export = export;
 	expmap->entry = entry;
