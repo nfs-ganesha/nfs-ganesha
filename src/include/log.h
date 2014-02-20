@@ -41,33 +41,12 @@
 #include <pthread.h>
 #endif
 
+#include "gsh_intrinsic.h"
 #include "config_parsing.h"
 #include "display.h"
 
 #include "display.h"
 #include "nlm_list.h"
-
-/* these macros gain a few percent of speed on gcc, especially with so many log
- * entries
- */
-#if (__GNUC__ >= 3)
-/* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as
- * its first argument
- */
-#ifndef likely
-#define likely(x)   __builtin_expect(!!(x), 1)
-#endif
-#ifndef unlikely
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#endif
-#else
-#ifndef likely
-#define likely(x) (x)
-#endif
-#ifndef unlikely
-#define unlikely(x) (x)
-#endif
-#endif
 
 /* The maximum size of a log buffer */
 #define LOG_BUFF_LEN 2048
