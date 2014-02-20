@@ -7,18 +7,18 @@
 
 #include "nodelist.h"
 
-int nodelist_nodelist_non_recursive_intersects(nodelist_nodelist_t * first_list,
-					       nodelist_nodelist_t *
-					       second_list);
-int nodelist_rangelist_includes(nodelist_rangelist_t * a1,
-				nodelist_rangelist_t * a2);
-int nodelist_range_intersects(nodelist_range_t * r1, nodelist_range_t * r2);
-int nodelist_rangelist_intersects(nodelist_rangelist_t * a1,
-				  nodelist_rangelist_t * a2);
-int nodelist_nodelist_remove_nodes(nodelist_nodelist_t * nodelist, char *list);
-int nodelist_rangelist_add_rangelist(nodelist_rangelist_t * array,
-				     nodelist_rangelist_t * rlin);
-int nodelist_rangelist_remove_rangelist(nodelist_rangelist_t * array,
-					nodelist_rangelist_t * rlin);
+int nl_nl_non_recursive_intersects(nl_nl_t *first_list,
+				   nl_nl_t *
+				   second_list);
+int nl_rangelist_includes(nl_rangelist_t *a1,
+			  nl_rangelist_t *a2);
+int nl_range_intersects(nl_range_t *r1, nl_range_t *r2);
+int nl_rangelist_intersects(nl_rangelist_t *a1,
+			    nl_rangelist_t *a2);
+int nl_nl_remove_nodes(nl_nl_t *nodelist, char *list);
+int nl_rangelist_add_rangelist(nl_rangelist_t *array,
+			       nl_rangelist_t *rlin);
+int nl_rangelist_remove_rangelist(nl_rangelist_t *array,
+				  nl_rangelist_t *rlin);
 
 #endif

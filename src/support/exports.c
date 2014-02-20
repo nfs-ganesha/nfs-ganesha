@@ -44,9 +44,7 @@
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
 #include "common_utils.h"
-#ifdef USE_NODELIST
 #include "nodelist.h"
-#endif				/* USE_NODELIST */
 #include <stdlib.h>
 #include <fnmatch.h>
 #include <sys/socket.h>
