@@ -7,6 +7,7 @@
  * @file  FSAL/fsal_convert.c
  * @brief FSAL type translation functions.
  */
+
 #include "config.h"
 #include "fsal_convert.h"
 #include <sys/types.h>
@@ -159,15 +160,11 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
  * @param[out] p_posix_flags POSIX open flags.
  *
  * @retval ERR_FSAL_NO_ERROR, no error.
- * @retval ERR_FSAL_FAULT, p_posix_flags is a NULL pointer.
  * @retval ERR_FSAL_INVAL, invalid or incompatible input flags.
  */
 
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-	if (!p_posix_flags)
-		return ERR_FSAL_FAULT;
-
 	/* check that all used flags exist */
 	if (fsal_flags &
 	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
