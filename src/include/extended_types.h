@@ -56,6 +56,7 @@ typedef unsigned int uint_t;
  */
 
 #ifndef ENOATTR
+/* ENOATTR is a BSD-ism, it does not exist on Linux. ENODATA is used instead */
 #define ENOATTR ENODATA		/* No such attribute */
 #endif
 

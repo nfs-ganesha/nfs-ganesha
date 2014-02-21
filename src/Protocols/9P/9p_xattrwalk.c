@@ -46,6 +46,8 @@
 #include "fsal.h"
 #include "9p.h"
 
+#define XATTRS_ARRAY_LEN 100
+
 int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		  u32 *plenout, char *preply)
 {
@@ -59,7 +61,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 	fsal_status_t fsal_status;
 	char name[MAXNAMLEN];
-	fsal_xattrent_t xattrs_tab[255];
+	fsal_xattrent_t xattrs_arr[XATTRS_ARRAY_LEN];
 	int eod_met = false;
 	unsigned int nb_xattrs_read = 0;
 	unsigned int i = 0;
@@ -129,7 +131,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			pxattrfid->pentry->obj_handle, &pfid->op_context,
 			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
 						 * hiding RO ones */
-			 xattrs_tab, 100,	/* static array size for now */
+			 xattrs_arr,
+			 XATTRS_ARRAY_LEN, /** @todo fix static length */
 			 &nb_xattrs_read,
 			 &eod_met);
 
@@ -156,7 +159,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		for (i = 0; i < nb_xattrs_read; i++) {
 			tmplen =
 			    snprintf(xattr_cursor, MAXNAMLEN, "%s",
-				     xattrs_tab[i].xattr_name);
+				     xattrs_arr[i].xattr_name);
 			xattr_cursor[tmplen] = '\0';	/* Just to be sure */
 			/* +1 for trailing '\0' */
 			xattr_cursor += tmplen + 1;
@@ -184,17 +187,6 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
 
-			/* Hook dedicated to ACL management. When attributes
-			 * system.posix_acl_access is used, it can't be
-			 * created, but can be written anyway.
-			 * To do this, return ENODATA instead of ENOATTR
-			 * In this case, we do created what's needed to
-			 * setxattr() into the special xattr */
-			if (!strncmp(name,
-				     "system.posix_acl_access",
-				     MAXNAMLEN))
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENODATA, plenout, preply);
 			/* ENOENT for xattr is ENOATTR */
 			if (fsal_status.major == ERR_FSAL_NOENT)
 				return _9p_rerror(req9p, worker_data, msgtag,
@@ -216,25 +208,54 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 					     &attrsize);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
-			gsh_free(pxattrfid);
 
+			/* Hook dedicated to ACL management. When attributes
+			 * system.posix_acl_access is used, it can't be
+			 * created, but can be written anyway.
+			 * To do this, return ENODATA instead of ENOATTR
+			 * In this case, we do created what's needed to
+			 * setxattr() into the special xattr */
 			if (fsal_status.minor == ENODATA) {
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENODATA, plenout, preply);
-			}
+				if (!strncmp(name,
+					     "system.posix_acl_access",
+					     MAXNAMLEN))
+					attrsize = 0LL;
+				else if (!strncmp(name,
+						  "security.selinux",
+						  MAXNAMLEN))
+					attrsize = 0LL;
+				else {
+					gsh_free(pxattrfid->specdata.
+						xattr.xattr_content);
+					gsh_free(pxattrfid);
+					return _9p_rerror(req9p,
+							  worker_data,
+							  msgtag,
+							  ENODATA,
+							  plenout,
+							  preply);
+				}
+			} else {
+				gsh_free(pxattrfid->specdata.
+					 xattr.xattr_content);
+				gsh_free(pxattrfid);
 
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+				return _9p_rerror(req9p,
+						  worker_data,
+						  msgtag,
+						  _9p_tools_errno
+						  (cache_inode_error_convert
+						   (fsal_status)),
+						  plenout,
+						  preply);
+			}
 		}
 	}
 
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
-	/* Increments refcount so it won't fall below 0 when we clunk later */
-	cache_inode_lru_ref(pxattrfid->pentry, LRU_REQ_INITIAL);
+	/* Increments refcount as we're manually making a new copy */
+	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);
