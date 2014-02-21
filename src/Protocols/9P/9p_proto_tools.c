@@ -54,12 +54,12 @@ int _9p_init(_9p_parameter_t *pparam)
 
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 {
-	struct group_data group_data;
-	struct group_data *grpdata = &group_data;
+	struct group_data *grpdata;
 
 	if (!uid2grp(uid, &grpdata))
 		return -ENOENT;
 
+	pfid->gdata = grpdata;
 	pfid->ucred.caller_uid = grpdata->uid;
 	pfid->ucred.caller_gid = grpdata->gid;
 	pfid->ucred.caller_glen = grpdata->nbgroups;
@@ -80,12 +80,12 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 		.addr = uname_str,
 		.len = uname_len
 	};
-	struct group_data group_data;
-	struct group_data *grpdata = &group_data;
+	struct group_data *grpdata;
 
 	if (!name2grp(&name, &grpdata))
 		return -ENOENT;
 
+	pfid->gdata = grpdata;
 	pfid->ucred.caller_uid = grpdata->uid;
 	pfid->ucred.caller_gid = grpdata->gid;
 	pfid->ucred.caller_glen = grpdata->nbgroups;
@@ -236,7 +236,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	cache_inode_status_t cache_status;
 
 	/* unref the related group list */
-	uid2grp_unref(pfid->ucred.caller_uid);
+	uid2grp_unref(pfid->gdata);
 
 	/* If the fid is related to a xattr, free the related memory */
 	if (pfid->specdata.xattr.xattr_content != NULL &&

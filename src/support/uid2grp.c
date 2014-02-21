@@ -48,10 +48,47 @@
 #include "common_utils.h"
 #include "uid2grp.h"
 
+/* group_data has a reference counter. If it goes to zero, it implies
+ * that it is out of the cache (AVL trees) and should be freed. The
+ * reference count is 1 when we put it into AVL trees. We decrement when
+ * we take it out of AVL trees. Also incremented when we pass this to
+ * out siders (uid2grp and friends) and decremented when they are done
+ * (in uid2grp_unref()).
+ *
+ * When a group_data needs to be removed or expired after a certain
+ * timeout, we take it out of the cache (AVL trees). When everyone using
+ * the group_data are done, the refcount will go to zero at which point
+ * we free group_data as well as the buffer holding supplementary
+ * groups.
+ */
+void uid2grp_hold_group_data(struct group_data *gdata)
+{
+	pthread_mutex_lock(&gdata->lock);
+	gdata->refcount++;
+	pthread_mutex_unlock(&gdata->lock);
+}
+
+void uid2grp_release_group_data(struct group_data *gdata)
+{
+	unsigned int refcount;
+
+	pthread_mutex_lock(&gdata->lock);
+	refcount = --gdata->refcount;
+	pthread_mutex_unlock(&gdata->lock);
+
+	if (refcount == 0) {
+		gsh_free(gdata->groups);
+		gsh_free(gdata);
+	} else if (refcount == (unsigned int)-1) {
+		LogAlways(COMPONENT_IDMAPPER, "negative refcount on gdata: %p",
+			  gdata);
+	}
+}
+
+/* Allocate supplementary groups buffer */
 static bool my_getgrouplist_alloc(char *user,
 				  gid_t gid,
-				  struct group_data *gdata,
-				  bool renew)
+				  struct group_data *gdata)
 {
 	int nbgrp = 0;
 	gid_t *groups = NULL;
@@ -78,248 +115,202 @@ static bool my_getgrouplist_alloc(char *user,
 	if (getgrouplist
 	    (user, gid, groups, &gdata->nbgroups) == -1) {
 		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed", user);
-		gsh_free(gdata->groups);
+		gsh_free(groups);
 		return false;
 	}
 
-	if (renew) {
-		pthread_mutex_lock(&gdata->lock);
-		/* If refcount==1, I am the only one who use this group list
-		 * so I can refresh it immediatly. Otherwise, keep it for
-		 * later use */
-		if (gdata->refcount == 1) {
-			gsh_free(gdata->groups);
-			gdata->groups = groups;
-		} else
-			gdata->new_groups = groups; /* will be used later */
-		pthread_mutex_unlock(&gdata->lock);
-	} else {
-		gdata->groups = groups;
-		gdata->new_groups = NULL;
-		/* first refcount is 1: entry is created "in use" */
-		gdata->refcount = 1;
-		pthread_mutex_init(&gdata->lock, NULL);
-	}
-
-	gdata->epoch = time(NULL);
+	gdata->groups = groups;
 
 	return true;
 }
 
-
-bool pwentname2grp(char *namebuff,
-		   uid_t *puid,
-		   struct group_data *gdata,
-		   bool renew)
+/* Allocate and fill in group_data structure */
+static struct group_data *uid2grp_allocate_by_name(
+		const struct gsh_buffdesc *name)
 {
-	char *buff;
 	struct passwd p;
 	struct passwd *pp;
+	char *buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
+	char *namebuff = alloca(name->len + 1);
+	struct group_data *gdata = NULL;
+
+	if (namebuff == NULL) {
+		LogMajor(COMPONENT_IDMAPPER,
+			 "Can't allocate memory for namebuff");
+		return gdata;
+	}
+
+	memcpy(namebuff, name->addr, name->len);
+	*(namebuff + name->len) = '\0';
 
 	buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
 	if (buff == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
 			 "Can't allocate memory for getpwnam_r");
-		return false;
+		return gdata;
 	}
 
 	if ((getpwnam_r(namebuff, &p, buff, MAXPATHLEN, &pp) != 0)
 	    || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff);
-		return false;
+		return gdata;
 	}
 
-	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata, renew))
-		return false;
+	gdata = gsh_malloc(sizeof(struct group_data) + strlen(p.pw_name));
+	if (gdata == NULL) {
+		LogEvent(COMPONENT_IDMAPPER, "failed to allocate group data");
+		return gdata;
+	}
 
-	/* Set puid */
-	*puid = p.pw_uid;
-
-	/* Set uid/gid */
+	gdata->uname.len = strlen(p.pw_name);
+	gdata->uname.addr = (char *)gdata + sizeof(struct group_data);
+	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
 	gdata->uid = p.pw_uid;
 	gdata->gid = p.pw_gid;
+	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
+		gsh_free(gdata);
+		return NULL;
+	}
 
-	return true;
+	pthread_mutex_init(&gdata->lock, NULL);
+	gdata->epoch = time(NULL);
+	gdata->refcount = 0;
+	return gdata;
 }
 
-bool pwentuid2grp(uid_t uid, struct gsh_buffdesc *name,
-		  struct group_data *gdata,
-		  bool renew)
+/* Allocate and fill in group_data structure */
+static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 {
-	char *buff;
 	struct passwd p;
 	struct passwd *pp;
+	char *buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
+	struct group_data *gdata = NULL;
 
-	buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
 	if (buff == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
 			 "Can't allocate memory for getpwuid_r");
-		return false;
+		return gdata;
 	}
 
 	if ((getpwuid_r(uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwuid_r %u failed", uid);
-		return false;
+		return gdata;
 	}
 
-	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata, renew))
-		return false;
+	gdata = gsh_malloc(sizeof(struct group_data) + strlen(p.pw_name));
+	if (gdata == NULL) {
+		LogEvent(COMPONENT_IDMAPPER, "failed to allocate group data");
+		return gdata;
+	}
 
-	/* Set puid */
-	name->addr = p.pw_name;
-	name->len = strlen(p.pw_name);
-
-	/* Set uid/gid */
+	gdata->uname.len = strlen(p.pw_name);
+	gdata->uname.addr = (char *)gdata + sizeof(struct group_data);
+	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
 	gdata->uid = p.pw_uid;
 	gdata->gid = p.pw_gid;
+	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
+		gsh_free(gdata);
+		return NULL;
+	}
 
-	return true;
+	pthread_mutex_init(&gdata->lock, NULL);
+	gdata->epoch = time(NULL);
+	gdata->refcount = 0;
+	return gdata;
 }
 
 /**
- * @brief Convert a name to an ID
+ * @brief Get supplementary groups given uname
  *
  * @param[in]  name  The name of the user
- * @param[out] id    The resulting id
- * @param[in]  group True if this is a group name
- * @param[in]  anon  ID to return if look up fails
+ * @param[out]  group_data
  *
  * @return true if successful, false otherwise
  */
+#define uid2grp_expired(gdata) (time(NULL) - (gdata)->epoch > \
+		nfs_param.core_param.manage_gids_expiration)
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 {
 	bool success = false;
-	bool renew = false;
 	uid_t uid = -1;
 
 	pthread_rwlock_rdlock(&uid2grp_user_lock);
-
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
 
+	/* Handle common case first */
+	if (success && !uid2grp_expired(*gdata)) {
+		uid2grp_hold_group_data(*gdata);
+		pthread_rwlock_unlock(&uid2grp_user_lock);
+		return success;
+	}
 	pthread_rwlock_unlock(&uid2grp_user_lock);
 
 	if (success) {
-		/* Check for expiration */
-		if ((time(NULL) - (*gdata)->epoch) >
-			nfs_param.core_param.manage_gids_expiration)
-			renew = true;
-
-		pthread_mutex_lock(&(*gdata)->lock);
-		if (((*gdata)->refcount != 0) &&
-		    ((*gdata)->new_groups != NULL)) {
-			free((*gdata)->groups);
-			(*gdata)->groups = (*gdata)->new_groups;
-			(*gdata)->new_groups = NULL;
-		}
-		pthread_mutex_unlock(&(*gdata)->lock);
-
-		/* increment refcount */
-		(*gdata)->refcount = (*gdata)->refcount+1;
+		/* Cache entry is expired */
+		pthread_rwlock_wrlock(&uid2grp_user_lock);
+		uid2grp_remove_by_uname(name);
+		pthread_rwlock_unlock(&uid2grp_user_lock);
 	}
 
-	if (!success || renew) {
-		/* Something we can mutate and count on as terminated */
-		char *namebuff = alloca(name->len + 1);
+	*gdata = uid2grp_allocate_by_name(name);
+	pthread_rwlock_wrlock(&uid2grp_user_lock);
+	uid2grp_add_user(*gdata);
+	success = uid2grp_lookup_by_uname(name, &uid, gdata);
+	if (success)
+		uid2grp_hold_group_data(*gdata);
+	pthread_rwlock_unlock(&uid2grp_user_lock);
 
-		memcpy(namebuff, name->addr, name->len);
-		*(namebuff + name->len) = '\0';
-
-		if (pwentname2grp(namebuff, &uid, *gdata, renew)) {
-			/* if entry is renewed, do not add it to the cache
-			 * we just refreshed them "in place" */
-			if (!renew) {
-				pthread_rwlock_wrlock(&uid2grp_user_lock);
-				success = uid2grp_add_user(name, uid, *gdata);
-				pthread_rwlock_unlock(&uid2grp_user_lock);
-
-				if (!success) {
-					LogMajor(COMPONENT_IDMAPPER,
-						"name2grp %s failed",
-						 namebuff);
-					return false;
-				}
-			}
-		}
-	}
-
-	return true;
+	return success;
 }
 
+/**
+ * @brief Get supplementary groups given uid
+ *
+ * @param[in]  uid  The uid of the user
+ * @param[out]  group_data
+ *
+ * @return true if successful, false otherwise
+ */
 bool uid2grp(uid_t uid, struct group_data **gdata)
 {
 	bool success = false;
-	bool renew = false;
-
-	struct gsh_buffdesc name;
-	struct gsh_buffdesc *pname = &name;
 
 	pthread_rwlock_rdlock(&uid2grp_user_lock);
+	success = uid2grp_lookup_by_uid(uid, gdata);
 
-	success = uid2grp_lookup_by_uid(uid, &pname, gdata);
-
+	/* Handle common case first */
+	if (success && !uid2grp_expired(*gdata)) {
+		uid2grp_hold_group_data(*gdata);
+		pthread_rwlock_unlock(&uid2grp_user_lock);
+		return success;
+	}
 	pthread_rwlock_unlock(&uid2grp_user_lock);
 
-
 	if (success) {
-
-		/* Check for expiration */
-		if ((time(NULL) - (*gdata)->epoch) >
-			nfs_param.core_param.manage_gids_expiration)
-			renew = true;
-
-		pthread_mutex_lock(&(*gdata)->lock);
-		if (((*gdata)->refcount != 0) &&
-		    ((*gdata)->new_groups != NULL)) {
-			free((*gdata)->groups);
-			(*gdata)->groups = (*gdata)->new_groups;
-			(*gdata)->new_groups = NULL;
-		}
-		pthread_mutex_unlock(&(*gdata)->lock);
-
-		/* increment refcount */
-		(*gdata)->refcount = (*gdata)->refcount + 1;
+		/* Cache entry is expired */
+		pthread_rwlock_wrlock(&uid2grp_user_lock);
+		uid2grp_remove_by_uid(uid);
+		pthread_rwlock_unlock(&uid2grp_user_lock);
 	}
 
-	if (!success || renew) {
-		if (pwentuid2grp(uid, &name, *gdata, renew)) {
-			/* if entry is renewed, do not add it to the cache
-			 * we just refreshed them "in place" */
-			if (!renew) {
-				pthread_rwlock_wrlock(&uid2grp_user_lock);
-				success = uid2grp_add_user(&name, uid, *gdata);
-				pthread_rwlock_unlock(&uid2grp_user_lock);
+	*gdata = uid2grp_allocate_by_uid(uid);
+	pthread_rwlock_wrlock(&uid2grp_user_lock);
+	uid2grp_add_user(*gdata);
+	success = uid2grp_lookup_by_uid(uid, gdata);
+	if (success)
+		uid2grp_hold_group_data(*gdata);
+	pthread_rwlock_unlock(&uid2grp_user_lock);
 
-				if (!success) {
-					LogMajor(COMPONENT_IDMAPPER,
-					"uid2grp %u failed", uid);
-					return false;
-				}
-			}
-		}
-	}
-
-	return true;
+	return success;
 }
 
-void uid2grp_unref(uid_t uid)
+/*
+ * All callers of uid2grp() and uname2grp must call this
+ * when they are done accessing supplementary groups
+ */
+void uid2grp_unref(struct group_data *gdata)
 {
-	bool success = false;
-
-	struct gsh_buffdesc name;
-	struct gsh_buffdesc *pname = &name;
-
-	struct group_data *gdata = NULL;
-
-
-	pthread_rwlock_rdlock(&uid2grp_user_lock);
-	success = uid2grp_lookup_by_uid(uid, &pname, &gdata);
-	pthread_rwlock_unlock(&uid2grp_user_lock);
-
-	if (success) {
-		pthread_mutex_lock(&gdata->lock);
-		if (gdata->refcount > 0)
-			gdata->refcount = gdata->refcount - 1;
-		pthread_mutex_unlock(&gdata->lock);
-	}
+	uid2grp_release_group_data(gdata);
 }
+
 /** @} */

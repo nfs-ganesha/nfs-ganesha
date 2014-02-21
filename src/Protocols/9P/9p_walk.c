@@ -109,6 +109,10 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 		/* Increments refcount */
 		cache_inode_lru_ref(pnewfid->pentry, LRU_FLAG_NONE);
+
+		/* gdata ref is not hold : the pfid, which use same gdata */
+		/*  will be clunked after pnewfid */
+		/* This clunk release the gdata */
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;
@@ -148,6 +152,11 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		pnewfid->op_context = pfid->op_context;
 		pnewfid->ppentry = pfid->pentry;
 		strncpy(pnewfid->name, name, MAXNAMLEN-1);
+
+		/* gdata ref is not hold : the pfid, which use same gdata */
+		/*  will be clunked after pnewfid */
+		/* This clunk release the gdata */
+		pnewfid->gdata = pfid->gdata;
 
 		/* This is not a TATTACH fid */
 		pnewfid->from_attach = FALSE;

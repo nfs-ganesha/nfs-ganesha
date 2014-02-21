@@ -63,6 +63,7 @@
 #include "client_mgr.h"
 #include "export_mgr.h"
 #include "server_stats.h"
+#include "uid2grp.h"
 
 pool_t *request_pool;
 pool_t *request_data_pool;
@@ -1257,8 +1258,10 @@ static void nfs_rpc_execute(request_data_t *req,
 	}
 
 	/* If Manage_gids is used, unref the group list */
-	if (export_perms.options & EXPORT_OPTION_MANAGE_GIDS)
-		uid2grp_unref(user_credentials.caller_uid);
+	if (export_perms.options & EXPORT_OPTION_MANAGE_GIDS &&
+			user_credentials.caller_gdata) {
+		uid2grp_unref(user_credentials.caller_gdata);
+	}
  req_error:
 
 #ifdef USE_DBUS_STATS

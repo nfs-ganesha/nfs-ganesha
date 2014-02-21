@@ -117,6 +117,7 @@ struct user_cred {
 	unsigned int caller_gpos_root;
 	unsigned int caller_glen;
 	gid_t *caller_garray;
+	struct group_data *caller_gdata;
 };
 
 /**

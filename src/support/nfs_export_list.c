@@ -103,8 +103,7 @@ bool get_req_uid_gid(struct svc_req *req,
 		/* Do we trust AUTH_SYS creds for groups or not ? */
 		if (export_perms->options &
 		    EXPORT_OPTION_MANAGE_GIDS) {
-			struct group_data group_data;
-			struct group_data *grpdata = &group_data;
+			struct group_data *grpdata;
 
 			LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d won't trust altgrp",
@@ -112,9 +111,11 @@ bool get_req_uid_gid(struct svc_req *req,
 			     (int)punix_creds->aup_uid,
 			     (int)punix_creds->aup_gid);
 
-			if (!uid2grp(punix_creds->aup_uid, &grpdata))
+			if (!uid2grp(punix_creds->aup_uid,
+				     &user_credentials->caller_gdata))
 				return false;
 
+			grpdata = user_credentials->caller_gdata;
 			user_credentials->caller_uid = grpdata->uid;
 			user_credentials->caller_gid = grpdata->gid;
 			user_credentials->caller_glen = grpdata->nbgroups;
@@ -237,8 +238,7 @@ bool get_req_uid_gid(struct svc_req *req,
 
 		if (export_perms->options &
 		    EXPORT_OPTION_MANAGE_GIDS) {
-			struct group_data group_data;
-			struct group_data *grpdata = &group_data;
+			struct group_data *grpdata;
 
 			LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u uses RPCSEC_GSS, uid=%u,gid=%u won't trust altgrp",
@@ -246,9 +246,11 @@ bool get_req_uid_gid(struct svc_req *req,
 			     (unsigned int)user_credentials->caller_uid,
 			     (unsigned int)user_credentials->caller_gid);
 
-			if (!uid2grp(user_credentials->caller_uid, &grpdata))
+			if (!uid2grp(user_credentials->caller_uid,
+				     &user_credentials->caller_gdata))
 				return false;
 
+			grpdata = user_credentials->caller_gdata;
 			user_credentials->caller_glen = grpdata->nbgroups;
 			user_credentials->caller_garray = grpdata->groups;
 		} else {
