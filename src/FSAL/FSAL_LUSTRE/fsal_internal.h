@@ -41,7 +41,6 @@
 #include "fsal_pnfs.h"
 #include "lustre_extended_types.h"
 
-#define MAX_PNFS_DS 50
 #define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
 #define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
 
@@ -50,18 +49,18 @@
 	typeof(b) _b = (b);        \
 	_a < _b ? _a : _b; })
 
+/* this needs to be refactored to put ipport inside sockaddr_in */
 struct lustre_pnfs_ds_parameter {
-	unsigned int ipaddr; /* sockaddr_storage would be better */
+	struct glist_head ds_list;
+	struct sockaddr_storage ipaddr; /* sockaddr_storage would be better */
 	unsigned short ipport;
-	char ipaddr_ascii[MAXNAMLEN];
 	unsigned int id;
 };
 
 struct lustre_pnfs_parameter {
 	unsigned int stripe_size; /* unused */
 	unsigned int stripe_width;
-	unsigned int ds_count;
-	struct lustre_pnfs_ds_parameter ds_param[MAX_PNFS_DS];
+	struct glist_head ds_list;
 };
 
 /* defined the set of attributes supported with POSIX */

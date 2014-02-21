@@ -190,7 +190,7 @@ static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
 
 static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 				   const char *export_path,
-				   const char *fs_options,
+				   void *parse_node,
 				   struct exportlist *exp_entry,
 				   struct fsal_module *next_fsal,
 				   const struct fsal_up_vector *upops,

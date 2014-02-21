@@ -113,8 +113,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.chown_restricted = true,
 	.case_insensitive = false,
 	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
 	.lock_support = true,
 	.lock_support_owner = true,
 	.lock_support_async_block = true,
@@ -125,14 +123,38 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = PT_SUPPORTED_ATTRIBUTES,
-	.maxread = 1048576,
-	.maxwrite = 1048576,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
 	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
+};
+
+static struct config_item pt_params[] = {
+	CONF_ITEM_BOOL("link_support", true,
+		       fsal_staticfsinfo_t, link_support),
+	CONF_ITEM_BOOL("symlink_support", true,
+		       fsal_staticfsinfo_t, symlink_support),
+	CONF_ITEM_BOOL("cansettime", true,
+		       fsal_staticfsinfo_t, cansettime),
+	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
+		       fsal_staticfsinfo_t, maxread),
+	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
+		       fsal_staticfsinfo_t, maxwrite),
+	CONF_ITEM_MODE("umask", 0, 0777, 0,
+		       fsal_staticfsinfo_t, umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false,
+		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
+		       fsal_staticfsinfo_t, xattr_access_rights),
+	CONFIG_EOL
+};
+
+struct config_block pt_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.pt",
+	.blk_desc.name = "PT",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = pt_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
 /* private helper for export object
@@ -158,21 +180,16 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct pt_fsal_module *pt_me =
 	    container_of(fsal_hdl, struct pt_fsal_module, fsal);
-	fsal_status_t fsal_status;
+	int rc;
 
-	pt_me->fs_info = default_posix_info;	/* get a copy of the defaults */
+	pt_me->fs_info = default_posix_info;	/* copy of the defaults */
 
-	fsal_status =
-	    fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl), config_struct,
-			     &pt_me->fsal_info, &pt_me->fs_info, NULL);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
-	/* if we have fsal specific params, do them here
-	 * fsal_hdl->name is used to find the block containing the
-	 * params.
-	 */
-
+	rc = load_config_from_parse(config_struct,
+				    &pt_param,
+				    &pt_me->fs_info,
+				    true);
+	if (rc < 0)
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&pt_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
@@ -190,7 +207,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
  */
 
 fsal_status_t pt_create_export(struct fsal_module * fsal_hdl,
-			       const char *export_path, const char *fs_options,
+			       const char *export_path,
+			       void *parse_node,
 			       struct exportlist * exp_entry,
 			       struct fsal_module * next_fsal,
 			       const struct fsal_up_vector * up_ops,

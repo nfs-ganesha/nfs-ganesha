@@ -52,6 +52,7 @@
 #include "config_parsing.h"
 #include "lustre_extended_types.h"
 
+#if 0
 #define CONF_LUSTRE_PNFS "LUSTRE_pNFS"
 
 struct lustre_pnfs_parameter pnfs_param;
@@ -237,6 +238,7 @@ int lustre_pnfs_read_conf(config_file_t in_config,
 
 	return 0;
 }                               /* pnfs_read_ds_conf */
+#endif
 
 /** get (name+parent_id) for an entry
  * \param linkno hardlink index

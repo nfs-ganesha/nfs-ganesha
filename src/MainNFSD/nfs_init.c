@@ -77,86 +77,14 @@
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param = {
-	/* Core parameters */
-	.core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
-	.core_param.drc.disabled = false,
-	.core_param.drc.tcp.npart = DRC_TCP_NPART,
-	.core_param.drc.tcp.size = DRC_TCP_SIZE,
-	.core_param.drc.tcp.cachesz = DRC_TCP_CACHESZ,
-	.core_param.drc.tcp.hiwat = DRC_TCP_HIWAT,
-	.core_param.drc.tcp.recycle_npart = DRC_TCP_RECYCLE_NPART,
-	.core_param.drc.tcp.checksum = DRC_TCP_CHECKSUM,
-	.core_param.drc.udp.npart = DRC_UDP_NPART,
-	.core_param.drc.udp.size = DRC_UDP_SIZE,
-	.core_param.drc.udp.cachesz = DRC_UDP_CACHESZ,
-	.core_param.drc.udp.hiwat = DRC_UDP_HIWAT,
-	.core_param.drc.udp.checksum = DRC_UDP_CHECKSUM,
-	.core_param.rpc.debug_flags = TIRPC_DEBUG_FLAGS,
-	.core_param.rpc.max_connections = 1024,
-	.core_param.rpc.idle_timeout_s = 300,
-	.core_param.port[P_NFS] = NFS_PORT,
-	.core_param.bind_addr.sin_family = AF_INET, /* IPv4 only right now */
-	.core_param.program[P_NFS] = NFS_PROGRAM,
-	.core_param.program[P_MNT] = MOUNTPROG,
-	.core_param.program[P_NLM] = NLMPROG,
-#ifdef _USE_9P
-	._9p_param._9p_tcp_port = _9P_TCP_PORT,
-	._9p_param._9p_tcp_msize = _9P_TCP_MSIZE,
-#endif
-#ifdef _USE_9P_RDMA
-	._9p_param._9p_rdma_port = _9P_RDMA_PORT,
-	._9p_param._9p_rdma_msize = _9P_RDMA_MSIZE,
-	._9p_param._9p_rdma_backlog = _9P_RDMA_BACKLOG,
-#endif
-	.core_param.program[P_RQUOTA] = RQUOTAPROG,
-	.core_param.port[P_RQUOTA] = RQUOTA_PORT,
-	.core_param.drop_io_errors = true,
-	.core_param.drop_delay_errors = true,
-	.core_param.core_dump_size = -1,
-	.core_param.long_processing_threshold = 10,	/* seconds */
-	.core_param.decoder_fridge_expiration_delay = -1,
-	.core_param.decoder_fridge_block_timeout = -1,
-	.core_param.manage_gids_expiration = 30*60, /* seconds */
-	.core_param.dispatch_max_reqs = 5000,
-	.core_param.dispatch_max_reqs_xprt = 512,
-	.core_param.core_options = CORE_OPTION_ALL_VERS,
-	.core_param.rpc.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
-	.core_param.rpc.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
-	.core_param.enable_NLM = true,
-	.core_param.enable_RQUOTA = true,
-
-	/* Workers parameters : IP/Name values pool prealloc */
-
-#ifdef _HAVE_GSSAPI
-	/* krb5 parameter */
-	.krb5_param.svc.principal = DEFAULT_NFS_PRINCIPAL,
-	.krb5_param.keytab = DEFAULT_NFS_KEYTAB,
-	.krb5_param.ccache_dir = DEFAULT_NFS_CCACHE_DIR,
-	.krb5_param.active_krb5 = true,
-#endif
-
-	/* NFSv4 parameter */
-	.nfsv4_param.graceless = false,
-	.nfsv4_param.lease_lifetime = LEASE_LIFETIME_DEFAULT,
-	.nfsv4_param.grace_period = GRACE_PERIOD_DEFAULT,
-	.nfsv4_param.domainname = DOMAINNAME_DEFAULT,
-	.nfsv4_param.idmapconf = IDMAPCONF_DEFAULT,
-	.nfsv4_param.allow_numeric_owners = true,
-#ifdef USE_NFSIDMAP
-	.nfsv4_param.use_getpwnam = false,
-#else
-	.nfsv4_param.use_getpwnam = true,
-#endif
 
 	/*  Worker parameters : IP/name hash table */
-	.ip_name_param.hash_param.index_size = PRIME_IP_NAME,
 	.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func,
 	.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
 	.ip_name_param.hash_param.compare_key = compare_ip_name,
 	.ip_name_param.hash_param.key_to_str = display_ip_name_key,
 	.ip_name_param.hash_param.val_to_str = display_ip_name_val,
 	.ip_name_param.hash_param.flags = HT_FLAG_NONE,
-	.ip_name_param.expiration_time = IP_NAME_EXPIRATION,
 
 	/*  Worker parameters : NFSv4 Unconfirmed Client id table */
 	.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_STATE,
@@ -283,23 +211,6 @@ nfs_parameter_t nfs_param = {
 	.cache_param.cookie_param.key_to_str = display_lock_cookie_key,
 	.cache_param.cookie_param.val_to_str = display_lock_cookie_val,
 	.cache_param.cookie_param.flags = HT_FLAG_NONE,
-
-	.cache_param.nparts = 7,
-	.cache_param.expire_type_attr = CACHE_INODE_EXPIRE_NEVER,
-	.cache_param.getattr_dir_invalidation = false,
-
-	/* Cache inode parameters : Garbage collection policy */
-	.cache_param.entries_hwmark = 100000,
-	.cache_param.use_fd_cache = true,
-	.cache_param.lru_run_interval = 600,
-	.cache_param.fd_limit_percent = 99,
-	.cache_param.fd_hwmark_percent = 90,
-	.cache_param.fd_lwmark_percent = 50,
-	.cache_param.reaper_work = 1000,
-	.cache_param.biggest_window = 40,
-	.cache_param.required_progress = 5,
-	.cache_param.futility_count = 8,
-
 };
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
@@ -857,7 +768,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	if (nfs_param.krb5_param.active_krb5) {
 		OM_uint32 gss_status = GSS_S_COMPLETE;
 
-		if (nfs_param.krb5_param.keytab[0] != '\0')
+		if (*nfs_param.krb5_param.keytab != '\0')
 			gss_status =
 			    krb5_gss_register_acceptor_identity(nfs_param.
 								krb5_param.
@@ -1185,16 +1096,6 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	if (nfs_param.core_param.enable_NLM) {
 		/* NSM Unmonitor all */
 		nsm_unmonitor_all();
-	}
-
-	if (nfs_param.ip_name_param.mapfile == NULL) {
-		LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
-	} else {
-		LogEvent(COMPONENT_INIT, "Populating IP_NAME with file %s",
-			 nfs_param.ip_name_param.mapfile);
-		if (nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) !=
-		    IP_NAME_SUCCESS)
-			LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
 	}
 
 	LogEvent(COMPONENT_INIT,

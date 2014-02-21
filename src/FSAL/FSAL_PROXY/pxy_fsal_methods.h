@@ -5,18 +5,17 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
-typedef struct {
+typedef struct pxy_client_params {
 	unsigned int retry_sleeptime;
-	unsigned int srv_addr;
+	struct sockaddr srv_addr;
 	unsigned int srv_prognum;
 	unsigned int srv_sendsize;
 	unsigned int srv_recvsize;
 	unsigned int srv_timeout;
 	unsigned short srv_port;
 	unsigned int use_privileged_client_port;
-	char srv_proto[MAXNAMLEN + 1];
-	char remote_principal[MAXNAMLEN + 1];
-	char keytab[MAXPATHLEN + 1];
+	char *remote_principal;
+	char *keytab;
 	unsigned int cred_lifetime;
 	unsigned int sec_type;
 	bool active_krb5;
@@ -103,7 +102,8 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 				struct fsal_obj_handle **handle);
 
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path, const char *fs_options,
+				const char *export_path,
+				void *parse_node,
 				struct exportlist *exp_entry,
 				struct fsal_module *next_fsal,
 				const struct fsal_up_vector *up_ops,

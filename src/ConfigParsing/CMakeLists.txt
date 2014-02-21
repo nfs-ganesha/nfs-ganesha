@@ -12,7 +12,7 @@ FLEX_TARGET(
   ConfigScanner
   ${CMAKE_CURRENT_SOURCE_DIR}/conf_lex.l
   ${CMAKE_CURRENT_BINARY_DIR}/conf_lex.c
-  COMPILE_FLAGS "-Pganesha_yy -olex.yy.c"
+  COMPILE_FLAGS "-Pganeshun_yy -olex.yy.c"
 )
 
 ADD_FLEX_BISON_DEPENDENCY(ConfigScanner ConfigParser)

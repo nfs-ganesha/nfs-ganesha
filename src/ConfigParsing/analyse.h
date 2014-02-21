@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  * 
  * ---------------------------------------
  */
@@ -22,81 +22,85 @@
 #ifndef CONFPARSER_H
 #define CONFPARSER_H
 
+#include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include "nlm_list.h"
 
-#define MAXSTRLEN   1024
+/**
+ * @brief Configuration parser data structures
+ * and linkage betweek the parser, analyse.c and config_parsing.c
+ */
 
-/* A program consists of several blocks,
+/*
+ * Parse tree node.
+ */
+
+enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT};
+
+struct config_node {
+	struct glist_head node;
+	char *name;		/* block or parameter name */
+	char *filename;		/* pointer to filename in file list */
+	int linenumber;
+	bool found;		/* use accounting private in do_block_load */
+	enum node_type type;	/* switches union contents */
+	union {			/* sub_nodes are always struct config_node */
+		char *varvalue;			/* TYPE_STMT */
+		struct {				/* TYPE_BLOCK */
+			struct config_node *parent;
+			struct glist_head sub_nodes;
+		} blk;
+	}u;
+};
+
+/*
+ * File list
+ * Every config_node points to a pathname in this list
+ */
+
+struct file_list {
+	struct file_list *next;
+	char *pathname;
+};
+
+/*
+ * Parse tree root
+ * A parse tree consists of several blocks,
  * each block consists of variables definitions
  * and subblocks.
+ * All storage allocated into the parse tree is here
  */
 
-/* forward declaration of generic item */
-struct _generic_item_;
+struct config_root {
+	struct config_node root;
+	char *conf_dir;
+	struct file_list *files;
+};
 
-typedef enum {
-	TYPE_BLOCK,
-	TYPE_STMT
-} type_item;
+/*
+ * parser/lexer linkage
+ */
 
-typedef struct _type_affect_ {
+struct parser_state {
+	struct config_root *root_node;
+	void *scanner;
+};
 
-	char varname[MAXSTRLEN];
-	char varvalue[MAXSTRLEN];
-
-} type_affect;
-
-typedef struct _type_block_ {
-
-	char block_name[MAXSTRLEN];
-	struct _generic_item_ *block_content;
-
-} type_block;
-
-typedef struct _generic_item_ {
-
-	type_item type;
-	union {
-		type_block block;
-		type_affect affect;
-	} item;
-
-	/* next item in the list */
-	struct _generic_item_ *next;
-
-} generic_item;
-
-typedef generic_item *list_items;
+int ganesha_yyparse(struct parser_state *st);
+int ganeshun_yy_init_parser(char *srcfile,
+			   struct parser_state *st);
+int ganeshun_yylex_destroy (void *yyscanner);
 
 /**
- *  create a list of items
+ *  Displays the content of parse tree.
  */
-list_items *config_CreateItemsList();
+void print_parse_tree(FILE * output, struct config_root *tree);
 
 /**
- *  Create a block item with the given content
+ * Free resources of parse tree
  */
-generic_item *config_CreateBlock(char *blockname, list_items * list);
-
-/**
- *  Create a key=value peer (assignment)
- */
-generic_item *config_CreateAffect(char *varname, char *varval);
-
-/**
- *  Add an item to a list
- */
-void config_AddItem(list_items * list, generic_item * item);
-
-/**
- *  Displays the content of a list of blocks.
- */
-void config_print_list(FILE * output, list_items * list);
-
-/**
- * config_free_list:
- * Free ressources for a list
- */
-void config_free_list(list_items * list);
+void free_parse_tree(struct config_root *tree);
 
 #endif

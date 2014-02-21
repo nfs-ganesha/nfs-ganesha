@@ -36,6 +36,7 @@
 #include "fsal.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
+#include "config_parsing.h"
 #include "gluster_internal.h"
 
 /**
@@ -482,13 +483,43 @@ void export_ops_init(struct export_ops *ops)
 
 void handle_ops_init(struct fsal_obj_ops *ops);
 
+struct glexport_params {
+	char *glvolname;
+	char *glhostname;
+	char *glvolpath;
+	char *glfs_log;
+};
+
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_MAND_STR("volume", 1, MAXPATHLEN, NULL,
+		      glexport_params, glvolname),
+	CONF_MAND_STR("hostname", 1, MAXPATHLEN, NULL,
+		      glexport_params, glhostname),
+	CONF_ITEM_PATH("volpath", 1, MAXPATHLEN, "/",
+		      glexport_params, glvolpath),
+	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, "/tmp/gfapi.log",
+		       glexport_params, glfs_log),
+	CONFIG_EOL
+};
+
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gluster-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /**
  * @brief Implements GLUSTER FSAL moduleoperation create_export
  */
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      const char *export_path,
-				      const char *fs_options,
+				      void *parse_node,
 				      struct exportlist *exp_entry,
 				      struct fsal_module *next_fsal,
 				      const struct fsal_up_vector *up_ops,
@@ -498,11 +529,11 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
 	glfs_t *fs = NULL;
-	char *glvolname = NULL, *glhostname = NULL, *glvolpath = NULL;
-	int oplen = 0, export_inited = 0;
+	struct glexport_params params;
+	int/*  oplen = 0, */ export_inited = 0;
 
-	LogDebug(COMPONENT_FSAL, "In args: export path = %s, fs options = %s",
-		 export_path, fs_options);
+	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
+		 export_path);
 
 	if ((NULL == export_path) || (strlen(export_path) == 0)) {
 		status.major = ERR_FSAL_INVAL;
@@ -510,85 +541,27 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		goto out;
 	}
 
-	if ((NULL == fs_options) || (strlen(fs_options) == 0)) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"Missing FS specific information. Export: %s",
-			export_path);
-		goto out;
-	}
-
 	if (next_fsal != NULL) {
 		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL, "Stacked FSALs unsupported. Export: %s",
+		LogCrit(COMPONENT_FSAL,
+			"Stacked FSALs unsupported. Export: %s",
 			export_path);
 		goto out;
 	}
 
-	/* Process FSSpecific Gluster volume name */
-	if (!(fs_specific_has(fs_options, GLUSTER_VOLNAME_KEY, NULL, &oplen))) {
+	rc = load_config_from_node(parse_node,
+				   &export_param,
+				   &params,
+				   true);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Incorrect or missing parameters for export %s",
+			export_path);
 		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"FS specific missing gluster volume name. Export: %s",
-			export_path);
 		goto out;
 	}
-	glvolname = gsh_calloc(oplen, sizeof(char));
-	if (glvolname == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate volume name bytes %d.  Export: %s",
-			oplen, export_path);
-		goto out;
-	}
-	fs_specific_has(fs_options, GLUSTER_VOLNAME_KEY, glvolname, &oplen);
-
-	/* Process FSSpecific Gluster host name */
-	if (!(fs_specific_has(fs_options, GLUSTER_HOSTNAME_KEY, NULL, &oplen))) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"FS specific missing gluster hostname or IP address. Export: %s",
-			export_path);
-		goto out;
-	}
-	glhostname = gsh_calloc(oplen, sizeof(char));
-	if (glhostname == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate host name bytes %d.  Export: %s",
-			oplen, export_path);
-		goto out;
-	}
-	fs_specific_has(fs_options, GLUSTER_HOSTNAME_KEY, glhostname, &oplen);
-
-	/* Process FSSpecific Gluster volume path (optional) */
-	if (!(fs_specific_has(fs_options, GLUSTER_VOLPATH_KEY, NULL, &oplen))) {
-		LogEvent(COMPONENT_FSAL, "Volume %s exported at : '/'",
-			 glvolname);
-
-		glvolpath = gsh_calloc(2, sizeof(char));
-		if (glvolpath == NULL) {
-			status.major = ERR_FSAL_NOMEM;
-			LogCrit(COMPONENT_FSAL,
-				"Unable to allocate volume path bytes 2.  Export: %s",
-				export_path);
-			goto out;
-		}
-		strcpy(glvolpath, "/");
-	} else {
-		glvolpath = gsh_calloc(oplen, sizeof(char));
-		if (glvolpath == NULL) {
-			status.major = ERR_FSAL_NOMEM;
-			LogCrit(COMPONENT_FSAL,
-				"Unable to allocate host name bytes %d.  Export: %s",
-				oplen, export_path);
-			goto out;
-		}
-		fs_specific_has(fs_options, GLUSTER_VOLPATH_KEY, glvolpath,
-				&oplen);
-		LogEvent(COMPONENT_FSAL, "Volume %s exported at : '%s'",
-			 glvolname, glvolpath);
-	}
+	LogEvent(COMPONENT_FSAL, "Volume %s exported at : '%s'",
+		 params.glvolname, params.glvolpath);
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 	if (glfsexport == NULL) {
@@ -612,26 +585,29 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->export.up_ops = up_ops;
 	export_inited = 1;
 
-	fs = glfs_new(glvolname);
+	fs = glfs_new(params.glvolname);
 	if (!fs) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to create new glfs. Export: %s",
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create new glfs. Export: %s",
 			export_path);
 		goto out;
 	}
 
-	rc = glfs_set_volfile_server(fs, "tcp", glhostname, 24007);
+	rc = glfs_set_volfile_server(fs, "tcp", params.glhostname, 24007);
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to set volume file. Export: %s",
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set volume file. Export: %s",
 			export_path);
 		goto out;
 	}
 
-	rc = glfs_set_logging(fs, "/tmp/gfapi.log", 7);
+	rc = glfs_set_logging(fs, params.glfs_log, 7);
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to set logging. Export: %s",
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set logging. Export: %s",
 			export_path);
 		goto out;
 	}
@@ -640,7 +616,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
-			"Unable to initialize volume. Export: %s", export_path);
+			"Unable to initialize volume. Export: %s",
+			export_path);
 		goto out;
 	}
 
@@ -652,7 +629,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		goto out;
 	}
 
-	glfsexport->export_path = glvolpath;
+	glfsexport->export_path = params.glvolpath;
 	glfsexport->gl_fs = fs;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
@@ -661,14 +638,16 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	*pub_export = &glfsexport->export;
 
  out:
-	if (glvolname)
-		gsh_free(glvolname);
-	if (glhostname)
-		gsh_free(glhostname);
-
+	if (params.glvolname)
+		gsh_free(params.glvolname);
+	if (params.glhostname)
+		gsh_free(params.glhostname);
+	if (params.glfs_log)
+		gsh_free(params.glfs_log);
+	
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		if (glvolpath)
-			gsh_free(glvolpath);
+		if (params.glvolpath)
+			gsh_free(params.glvolpath);
 
 		if (export_inited)
 			pthread_mutex_destroy(&glfsexport->export.lock);

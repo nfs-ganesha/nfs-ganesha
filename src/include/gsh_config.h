@@ -352,6 +352,9 @@ typedef struct nfs_core_param {
 	    calling getgroups() when "Manage_Gids = TRUE" is
 	    used in a export entry. */
 	time_t manage_gids_expiration;
+	/** Path to the directory containing server specific
+	    modules.  In particular, this is where FSALs live. */
+	char *ganesha_modules_loc;
 } nfs_core_parameter_t;
 
 /** @} */
@@ -608,9 +611,6 @@ typedef struct nfs_ip_name_param {
 	/** Expiration time for ip-name mappings.  Defautls to
 	    IP_NAME_Expiration, and settable with Expiration_Time. */
 	uint32_t expiration_time;
-	/** File holding mappings to preload.  Defautls to NULL,
-	    settable with Map. */
-	char *mapfile;
 } nfs_ip_name_parameter_t;
 
 /** @} */

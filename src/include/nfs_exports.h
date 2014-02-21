@@ -65,30 +65,9 @@
 #define EXPORT_LINESIZE 1024
 #define INPUT_SIZE 1024
 
-typedef struct exportlist_client_hostif__ {
-	unsigned int clientaddr;
-	struct in6_addr clientaddr6;
-} exportlist_client_hostif_t;
-
-typedef struct exportlist_client_net__ {
-	unsigned int netaddr;
-	unsigned int netmask;
-} exportlist_client_net_t;
-
-typedef struct exportlist_client_netgrp__ {
-	char netgroupname[MAXHOSTNAMELEN + 1];
-} exportlist_client_netgrp_t;
-
-typedef struct exportlist_client_wildcard_host__ {
-	char wildcard[MAXHOSTNAMELEN + 1];
-} exportlist_client_wildcard_host_t;
-
-#define GSS_DEFINE_LEN_TEMP 255
-typedef struct exportlist_client_gss__ {
-	char princname[GSS_DEFINE_LEN_TEMP + 1];
-} exportlist_client_gss_t;
 
 typedef enum exportlist_client_type__ {
+	RAW_CLIENT_LIST = 0,
 	HOSTIF_CLIENT = 1,
 	NETWORK_CLIENT = 2,
 	NETGROUP_CLIENT = 3,
@@ -99,13 +78,6 @@ typedef enum exportlist_client_type__ {
 	BAD_CLIENT = 8
 } exportlist_client_type_t;
 
-typedef union exportlist_client_union__ {
-	exportlist_client_hostif_t hostif;
-	exportlist_client_net_t network;
-	exportlist_client_netgrp_t netgroup;
-	exportlist_client_wildcard_host_t wildcard;
-	exportlist_client_gss_t gssprinc;
-} exportlist_client_union_t;
 
 typedef struct export_perms__ {
 	uid_t anonymous_uid;	/* root uid when no root access is available
@@ -117,10 +89,31 @@ typedef struct export_perms__ {
 	unsigned int options;	/* avail. mnt options */
 } export_perms_t;
 
+#define GSS_DEFINE_LEN_TEMP 255
+
 typedef struct exportlist_client_entry__ {
 	struct glist_head cle_list;
 	exportlist_client_type_t type;
-	exportlist_client_union_t client;
+	union {
+		char *raw_client_str;
+		union {
+			uint32_t clientaddr; /* wrong! fix to be struct */
+			struct in6_addr clientaddr6;
+		} hostif;
+		struct {
+			unsigned int netaddr;
+			unsigned int netmask;
+		} network;
+		struct {
+			char netgroupname[MAXHOSTNAMELEN + 1];
+		} netgroup;
+		struct {
+			char wildcard[MAXHOSTNAMELEN + 1];
+		} wildcard;
+		struct {
+			char princname[GSS_DEFINE_LEN_TEMP + 1];
+		} gssprinc;
+	} client;
 	export_perms_t client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
@@ -176,7 +169,7 @@ typedef struct exportlist {
 						    sits on.
 						    Protected by gsh_export lock
 						 */
-	cache_inode_expire_type_t expire_type_attr;
+	cache_inode_expire_type_t expire_type_attr; /* not really used */
 } exportlist_t;
 
 /* Constant for options masks */
@@ -208,6 +201,7 @@ typedef struct exportlist {
 				       EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS  | \
 				       EXPORT_OPTION_MD_ACCESS)
+/* option_pseudo redundant?? why not test pseudopath == NULL? */
 #define EXPORT_OPTION_PSEUDO 0x00000100	/*< Pseudopath is provided */
 #define EXPORT_OPTION_MAXREAD 0x00000200	/*< Max read is provided */
 #define EXPORT_OPTION_MAXWRITE 0x00000400	/*< Max write is provided */
@@ -421,11 +415,6 @@ void clean_credentials(struct user_cred *user_credentials);
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
-
-int export_client_match_any(sockaddr_t *hostaddr,
-			    exportlist_client_t *clients,
-			    exportlist_client_entry_t *pclient_found,
-			    unsigned int export_option);
 
 void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 			     export_perms_t *export_perms);
