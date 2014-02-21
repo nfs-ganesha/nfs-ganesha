@@ -20,13 +20,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
 
 /**
- * @defgroup FSAL File-System Abstraction Layer
+ * @addtogroup FSAL
  * @{
  */
 
@@ -53,30 +54,43 @@
 #include "pnfs_utils.h"
 #include "fsal_private.h"
 
-/* List of loaded fsal modules
- * static to be private to the functions in this module
+/**
+ * @brief List of loaded fsal modules
+ *
+ * Static to be private to the functions in this module
  * fsal_lock is taken whenever the list is walked.
  */
 
 pthread_mutex_t fsal_lock = PTHREAD_MUTEX_INITIALIZER;
 GLIST_HEAD(fsal_list);
 
-/*
- * vars for passing status/errors between shared object
- * and this module.  Only accessed under lock
+/**
+ * @{
+ *
+ * Variables for passing status/errors between shared object
+ * and this module. They must be accessed under lock.
  */
 
 static char *dl_error;
 static int so_error;
 static struct fsal_module *new_fsal;
 
+/**
+ * @}
+ */
+
+/**
+ * @brief FSAL load state
+ */
+
 static enum load_state {
-	init,		/* in server start state. .init sections can run */
-	idle,		/* switch from init->idle early in main() */
-	loading,	/* in dlopen(). set by load_fsal() just prior */
-	registered,	/* signal by registration that all is well */
-	error		/* signal by registration that all is not well */
+	init,		/*< In server start state. .init sections can run */
+	idle,		/*< Switch from init->idle early in main() */
+	loading,	/*< In dlopen(). set by load_fsal() just prior */
+	registered,	/*< signal by registration that all is well */
+	error		/*< signal by registration that all is not well */
 } load_state = init;
+
 
 /**
  * @brief Start the PSEUDOFS FSAL
@@ -146,28 +160,31 @@ void start_fsals(void)
 }
 
 /**
- * @brief Load the fsal's shared object.
- *
- * The dlopen() will trigger a .init constructor which will
- * do the actual registration.
- * after a successful load, the returned handle needs to be "put"
- * back after any other initialization is done.
- *
- * Return 0 on success and *fsal_hdl_p points to it.
- *	When finished, put_fsal_handle() on the handle to free it.
- *
- * Errors:
- *	EBUSY == the loader is busy (should not happen)
- *	EEXIST == the module is already loaded
- *	ENOLCK == register_fsal without load_fsal holding the lock.
- *	EINVAL == wrong loading state for registration
- *	ENOMEM == out of memory
- *	ENOENT == could not find "module_init" function
- *	EFAULT == module_init has a bad address
- *	other general dlopen errors are possible, all of them bad
+ * Enforced filename for FSAL library objects.
  */
 
 static const char *pathfmt = "%s/libfsal%s.so";
+
+/**
+ * @brief Load the fsal's shared object.
+ *
+ * The dlopen() will trigger a .init constructor which will do the
+ * actual registration.  after a successful load, the returned handle
+ * needs to be "put" back after any other initialization is done.
+ *
+ * @param[in]  name       Name of the FSAL to load
+ * @param[out] fsal_hdl_p Newly allocated FSAL handle
+ *
+ * @retval 0 Success, when finished, put_fsal_handle() to free
+ * @retval EBUSY the loader is busy (should not happen)
+ * @retval EEXIST the module is already loaded
+ * @retval ENOLCK register_fsal without load_fsal holding the lock.
+ * @retval EINVAL wrong loading state for registration
+ * @retval ENOMEM out of memory
+ * @retval ENOENT could not find "module_init" function
+ * @retval EFAULT module_init has a bad address
+ * @retval other general dlopen errors are possible, all of them bad
+ */
 
 int load_fsal(const char *name,
 	      struct fsal_module **fsal_hdl_p)
@@ -305,13 +322,16 @@ int load_fsal(const char *name,
 	return retval;
 }
 
-/* lookup_fsal
- * Acquire a handle to the named fsal and take a reference to it.
- * this must be done before using any methods.
- * once done, release it with put_fsal
- * point.
- * Return NULL if not found.
- * don't forget to 'put' it back
+/**
+ * @brief Look up an FSAL
+ *
+ * Acquire a handle to the named FSAL and take a reference to it. This
+ * must be done before using any methods.  Once done, release it with
+ * @c put_fsal.
+ *
+ * @param[in] name Name to look up
+ *
+ * @return Module pointer or NULL if not found.
  */
 
 struct fsal_module *lookup_fsal(const char *name)
@@ -338,19 +358,28 @@ struct fsal_module *lookup_fsal(const char *name)
 /* functions only called by modules at ctor/dtor time
  */
 
-/* register_fsal
- * Register the fsal in the system.  This can be called from three places:
+/**
+ * @brief Register the fsal in the system
+ *
+ * This can be called from three places:
  *
  *  + the server program's .init section if the fsal was statically linked
  *  + the shared object's .init section when load_fsal() dynamically loads it.
  *  + from the shared object's 'fsal_init' function if dlopen does not support
  *    .init/.fini sections.
  *
- * We use an ADAPTIVE_NP mutex because the initial spinlock is low impact
- * for protecting the list add/del atomicity.  Does FBSD have this?
- *
  * Any other case is an error.
  * Change load_state only for dynamically loaded modules.
+ *
+ * @note We use an ADAPTIVE_NP mutex because the initial spinlock is low
+ * impact for protecting the list add/del atomicity.  Does FBSD have this?
+ *
+ * @param[in] fsal_hdl      FSAL module handle
+ * @param[in] name          FSAL name
+ * @param[in] major_version Major version
+ * @param[in] minor_version Minor version
+ *
+ * @return 0 on success, otherwise POSIX errors.
  */
 
 /** @todo implement api versioning and pass the major,minor here
@@ -424,10 +453,17 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	return so_error;
 }
 
-/* unregister_fsal
- * verify that the fsal is not busy
- * release all its resources owned at this level.  Mutex is already freed.
- * Called from the module's MODULE_FINI
+/**
+ * @brief Unregisterx an FSAL
+ *
+ * Verify that the fsal is not busy and release all its resources
+ * owned at this level.  Mutex is already freed.  Called from the
+ * module's MODULE_FINI
+ *
+ * @param[in] fsal_hdl FSAL handle
+ *
+ * @retval 0 on success.
+ * @retval EBUSY if FSAL is in use.
  */
 
 int unregister_fsal(struct fsal_module *fsal_hdl)
