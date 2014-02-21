@@ -155,6 +155,10 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
       g_nodeid = nodeid + 1;
       LogFullDebug(COMPONENT_FSAL, "nodeid = (%d)", g_nodeid);
     }
+    else
+    {
+      LogCrit(COMPONENT_FSAL, "OPENHANDLE_GET_NODEID failed nodeid = %d", nodeid);
+    }
   }
 
   /* Save pointer to fsal_staticfsinfo_t in export context */

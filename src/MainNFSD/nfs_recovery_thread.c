@@ -199,8 +199,6 @@ char *cp, *cp2;
 int i, ientry, notdone;
 char workpath[PATH_MAX];
 
-        assert(id != 0);
-
         /*
          * if there are releaseip events, we need to expire the v4
          * client for each IP being released.  however, we also need
@@ -264,8 +262,6 @@ char *cp, *cp2;
 int i, ientry, icnt=0;
 char workpath[PATH_MAX];
 
-        assert(id != 0);
-
         /* stop at 2 to skip '.' and '..' */
         for (ientry = (inum - 1); ientry >= 2; ientry--) {
                 // We are only interested into take_* files
@@ -294,7 +290,7 @@ char workpath[PATH_MAX];
                 *cp2 = '\0';
 
                 i = atoi(cp);
-                if ( i == id ) {
+                if ( i == id || id == 0) {
                         icnt++;        
                 }
         }
@@ -638,6 +634,11 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                          * or "releaseip" records 
                          */
                         nfs4_start_grace(NULL);
+
+                        if ( !g_nodeid ) {
+                                /* If node id is not set (No exports defined or the FSAL call did not set it) */
+                                LogDebug(COMPONENT_THREAD, "Node ID is zero, will takeover state for all IPs");
+                        }
 
                         /* If there is any releas_ip event for this node,
                          * release nlm locks and V4 state.
