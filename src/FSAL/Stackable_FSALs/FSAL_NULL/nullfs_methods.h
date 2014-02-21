@@ -8,16 +8,6 @@ struct nullfs_file_handle {
 	int nothing;
 };
 
-struct nullfs_exp_handle_ops {
-	int (*vex_open_by_handle) (struct fsal_export *exp,
-				   struct nullfs_file_handle *fh, int openflags,
-				   fsal_errors_t *fsal_error);
-	int (*vex_name_to_handle) (int fd, const char *name,
-				   struct nullfs_file_handle *fh);
-	int (*vex_fd_to_handle) (int fd, struct nullfs_file_handle *fh);
-	int (*vex_readlink) (struct nullfs_fsal_obj_handle *, fsal_errors_t *);
-};
-
 struct next_ops {
 	struct export_ops *exp_ops;	/*< Vector of operations */
 	struct fsal_obj_ops *obj_ops;	/*< Shared handle methods vector */
