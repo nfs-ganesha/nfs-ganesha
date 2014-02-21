@@ -2095,10 +2095,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 			return NULL;
 		}
 #endif
-		if (fsal_obj_handle_init(&n->obj, exp, attr->type)) {
-			gsh_free(n);
-			n = NULL;
-		}
+		fsal_obj_handle_init(&n->obj, exp, attr->type);
 	}
 	return n;
 }

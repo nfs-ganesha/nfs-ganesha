@@ -123,13 +123,10 @@ static struct lustre_fsal_obj_handle *alloc_handle(struct lustre_file_handle
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
-	if (!fsal_obj_handle_init
-	    (&hdl->obj_handle, exp_hdl, posix2fsal_type(stat->st_mode)))
-		return hdl;
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
+			     posix2fsal_type(stat->st_mode));
+	return hdl;
 
-	hdl->obj_handle.ops = NULL;
-	pthread_mutex_unlock(&hdl->obj_handle.lock);
-	pthread_mutex_destroy(&hdl->obj_handle.lock);
  spcerr:
 	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if (hdl->u.symlink.link_content != NULL)

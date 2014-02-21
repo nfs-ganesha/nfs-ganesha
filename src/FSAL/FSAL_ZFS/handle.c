@@ -114,10 +114,10 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 
-	if (!fsal_obj_handle_init(&hdl->obj_handle,
-				  exp_hdl,
-				  posix2fsal_type(stat->st_mode)))
-		return hdl;
+	fsal_obj_handle_init(&hdl->obj_handle,
+			     exp_hdl,
+			     posix2fsal_type(stat->st_mode));
+	return hdl;
 
  spcerr:
 	hdl->obj_handle.ops = NULL;

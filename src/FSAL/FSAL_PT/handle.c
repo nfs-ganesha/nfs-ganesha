@@ -103,12 +103,9 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t * fh,
 	memcpy(&hdl->obj_handle.attributes, attributes,
 	       sizeof(struct attrlist));
 
-	if (!fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type))
-		return hdl;
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
+	return hdl;
 
-	hdl->obj_handle.ops = NULL;
-	pthread_mutex_unlock(&hdl->obj_handle.lock);
-	pthread_mutex_destroy(&hdl->obj_handle.lock);
  spcerr:
 	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if (hdl->u.symlink.link_content != NULL)

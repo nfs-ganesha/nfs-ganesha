@@ -63,7 +63,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pthread_mutex_lock(&exp_hdl->lock);
 
-	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "export %p - %s busy",
 			 exp_hdl, myself->export_path);

@@ -294,14 +294,8 @@ int construct_handle(const struct stat *st, struct Inode *i,
 
 	ceph2fsal_attributes(st, &constructing->handle.attributes);
 
-	rc = -(fsal_obj_handle_init
-	       (&constructing->handle, &export->export,
-		constructing->handle.attributes.type));
-
-	if (rc < 0) {
-		gsh_free(constructing);
-		return rc;
-	}
+	fsal_obj_handle_init(&constructing->handle, &export->export,
+			     constructing->handle.attributes.type);
 
 	*obj = constructing;
 

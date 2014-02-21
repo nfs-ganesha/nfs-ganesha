@@ -87,7 +87,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 
 	pthread_mutex_lock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL, "GPFS release: export (0x%p)busy",
 			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);
@@ -455,10 +455,8 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 
-	if (fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub)) {
-		gsh_free(ds);
-		return NFS4ERR_SERVERFAULT;
-	}
+	fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub);
+
 	*ds_pub = &ds->ds;
 
 	return NFS4_OK;

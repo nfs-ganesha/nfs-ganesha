@@ -431,7 +431,8 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
 #endif
 	pthread_mutex_init(&fsal_hdl->lock, &attrs);
-	glist_init(&fsal_hdl->fsals);
+	glist_init(&fsal_hdl->ds_handles);
+	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);
 	glist_add_tail(&fsal_list, &fsal_hdl->fsals);
 	if (load_state == loading)

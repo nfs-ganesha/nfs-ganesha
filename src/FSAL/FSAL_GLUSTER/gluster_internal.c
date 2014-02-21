@@ -245,7 +245,6 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		     struct glfs_object *glhandle, unsigned char *globjhdl,
 		     int len, struct glusterfs_handle **obj)
 {
-	int rc = 0;
 	struct glusterfs_handle *constructing = NULL;
 
 	*obj = NULL;
@@ -261,13 +260,8 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	memcpy(constructing->globjhdl, globjhdl, len);
 	constructing->glfd = NULL;
 
-	rc = (fsal_obj_handle_init
-	      (&constructing->handle, &glexport->export,
-	       constructing->handle.attributes.type));
-	if (rc != 0) {
-		gsh_free(constructing);
-		return rc;
-	}
+	fsal_obj_handle_init(&constructing->handle, &glexport->export,
+			     constructing->handle.attributes.type);
 
 	*obj = constructing;
 

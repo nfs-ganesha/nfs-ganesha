@@ -108,7 +108,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pnfs_panfs_fini(myself->pnfs_data);
 	pthread_mutex_lock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
 			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);

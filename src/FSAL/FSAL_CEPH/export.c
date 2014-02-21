@@ -65,8 +65,7 @@ static fsal_status_t release(struct fsal_export *export_pub)
 	export->root = 0;
 
 	pthread_mutex_lock(&export->export.lock);
-	if ((export->export.refs > 0)
-	    || (!glist_empty(&export->export.handles))) {
+	if (export->export.refs > 0) {
 		pthread_mutex_lock(&export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;
@@ -239,11 +238,7 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 		return NFS4ERR_BADHANDLE;
 	}
 
-	if (fsal_ds_handle_init
-	    (&ds->ds, export->export.ds_ops, &export->export)) {
-		gsh_free(ds);
-		return NFS4ERR_SERVERFAULT;
-	}
+	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, &export->export);
 
 	*ds_pub = &ds->ds;
 

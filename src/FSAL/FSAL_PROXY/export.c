@@ -38,7 +38,7 @@ static fsal_status_t pxy_release(struct fsal_export *exp_hdl)
 	    container_of(exp_hdl, struct pxy_export, exp);
 
 	pthread_mutex_lock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+	if (exp_hdl->refs > 0) {
 		pthread_mutex_unlock(&exp_hdl->lock);
 		return fsalstat(ERR_FSAL_INVAL, EBUSY);
 	}

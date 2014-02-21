@@ -51,8 +51,7 @@ static fsal_status_t export_release(struct fsal_export *exp_hdl)
 
 	/* check activity on the export */
 	pthread_mutex_lock(&glfs_export->export.lock);
-	if ((glfs_export->export.refs > 0)
-	    || (!glist_empty(&glfs_export->export.handles))) {
+	if (glfs_export->export.refs > 0) {
 		pthread_mutex_unlock(&glfs_export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;

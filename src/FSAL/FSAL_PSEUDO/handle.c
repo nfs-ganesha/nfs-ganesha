@@ -307,28 +307,20 @@ static struct pseudo_fsal_obj_handle
 	hdl->obj_handle.attributes.rawdev.minor = 0;
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_RAWDEV);
 
-	if (!fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY)) {
-		avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
-		avltree_init(&hdl->avl_index, pseudofs_i_cmpf, 0 /* flags */);
-		hdl->next_i = 2;
-		if (parent != NULL) {
-			/* Attach myself to my parent */
-			pthread_mutex_lock(&parent->obj_handle.lock);
-			avltree_insert(&hdl->avl_n, &parent->avl_name);
-			hdl->index = (parent->next_i)++;
-			avltree_insert(&hdl->avl_i, &parent->avl_index);
-			hdl->inavl = true;
-			pthread_mutex_unlock(&parent->obj_handle.lock);
-		}
-		return hdl;
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
+	avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
+	avltree_init(&hdl->avl_index, pseudofs_i_cmpf, 0 /* flags */);
+	hdl->next_i = 2;
+	if (parent != NULL) {
+		/* Attach myself to my parent */
+		pthread_mutex_lock(&parent->obj_handle.lock);
+		avltree_insert(&hdl->avl_n, &parent->avl_name);
+		hdl->index = (parent->next_i)++;
+		avltree_insert(&hdl->avl_i, &parent->avl_index);
+		hdl->inavl = true;
+		pthread_mutex_unlock(&parent->obj_handle.lock);
 	}
-
-	LogDebug(COMPONENT_FSAL,
-		 "Could not initialize handle");
-
-	hdl->obj_handle.ops = NULL;
-	pthread_mutex_unlock(&hdl->obj_handle.lock);
-	pthread_mutex_destroy(&hdl->obj_handle.lock);
+	return hdl;
 
  spcerr:
 
@@ -915,9 +907,9 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
-	pthread_mutex_lock(&exp_hdl->lock);
+	pthread_mutex_lock(&exp_hdl->fsal->lock);
 
-	glist_for_each(glist, &exp_hdl->handles) {
+	glist_for_each(glist, &exp_hdl->fsal->handles) {
 		hdl = glist_entry(glist, struct fsal_obj_handle, handles);
 
 		my_hdl = container_of(hdl,
@@ -933,7 +925,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 			*handle = hdl;
 
-			pthread_mutex_unlock(&exp_hdl->lock);
+			pthread_mutex_unlock(&exp_hdl->fsal->lock);
 
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
@@ -942,7 +934,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 	LogDebug(COMPONENT_FSAL,
 		"Could not find handle");
 
-	pthread_mutex_unlock(&exp_hdl->lock);
+	pthread_mutex_unlock(&exp_hdl->fsal->lock);
 
 	return fsalstat(ERR_FSAL_STALE, ESTALE);
 }

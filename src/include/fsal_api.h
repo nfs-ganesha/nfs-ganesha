@@ -350,6 +350,8 @@ struct fsal_module {
 	int refs;		/*< Reference count */
 	struct glist_head exports;	/*< Head of list of exports from
 					   this FSAL */
+	struct glist_head handles;	/*< Head of list of object handles */
+	struct glist_head ds_handles;	/*< Head of list of DS handles */
 	char *name;		/*< Name set from .so and/or config */
 	char *path;		/*< Path to .so file */
 	void *dl_handle;	/*< Handle to the dlopen()d shared
@@ -613,8 +615,6 @@ struct fsal_export {
 				   taking/yielding references and
 				   manipulating the list of handles. */
 	int refs;			/*< Reference count */
-	struct glist_head handles;	/*< Head of list of object handles */
-	struct glist_head ds_handles;	/*< Head of list of DS handles */
 	struct glist_head exports;	/*< Link in list of exports from
 					   the same FSAL. */
 	struct exportlist *exp_entry;	/*< Pointer to the export
@@ -1166,10 +1166,11 @@ struct export_ops {
 struct fsal_obj_handle {
 	pthread_mutex_t lock;	/*< Lock on handle */
 	struct glist_head handles;	/*< Link in list of handles under
-					   an export */
+					   an fsal */
 	int refs;		/*< Reference count */
 	object_file_type_t type;	/*< Object file type */
 	struct fsal_export *export;	/*< Link back to export */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct attrlist attributes;	/*< Cached attributes */
 	struct fsal_obj_ops *ops;	/*< Operations vector */
 };
@@ -2102,7 +2103,7 @@ struct fsal_obj_ops {
 struct fsal_ds_handle {
 	pthread_mutex_t lock;	/*< Lock on handle */
 	struct glist_head ds_handles;	/*< Link in list of DS handles under
-					   an export */
+					   an fsal */
 	int refs;		/*< Reference count */
 	struct fsal_export *export;	/*< Link back to export */
 	struct fsal_ds_ops *ops;	/*< Operations vector */
