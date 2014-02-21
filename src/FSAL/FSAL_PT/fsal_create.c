@@ -93,8 +93,8 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode =
-	    unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+			fs_umask(p_context->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
@@ -111,9 +111,9 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	/* retrieve file attributes */
 	if (p_object_attributes) {
-		status =
-		    PTFSAL_getattrs(dir_hdl->export, p_context, p_object_handle,
-				    p_object_attributes);
+		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
+					 p_object_handle,
+					 p_object_attributes);
 
 		/* on error, we set a special bit in the mask. */
 		if (FSAL_IS_ERROR(status)) {
@@ -190,14 +190,14 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode =
-	    unix_mode & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+			fs_umask(p_context->fsal_export);
 
 	/* get directory metadata */
-	parent_dir_attrs.mask =
-	    dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
+	parent_dir_attrs.mask = p_context->fsal_export->ops->
+				fs_supported_attrs(p_context->fsal_export);
 	status =
-	    PTFSAL_getattrs(dir_hdl->export, p_context, pt_hdl->handle,
+	    PTFSAL_getattrs(p_context->fsal_export, p_context, pt_hdl->handle,
 			    &parent_dir_attrs);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -234,7 +234,7 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 		 */
 
 		if (fsi_get_name_from_handle
-		    (p_context, pt_hdl->obj_handle.export, pt_hdl->handle,
+		    (p_context, p_context->fsal_export, pt_hdl->handle,
 		     (char *)newPath, NULL) < 0) {
 			FSI_TRACE(FSI_DEBUG,
 				  "Failed to get name from handle %s",
@@ -242,7 +242,7 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 				  f_handle);
 			return fsalstat(posix2fsal_error(errsv), errsv);
 		}
-		rc = ptfsal_chown(p_context, dir_hdl->export, newPath,
+		rc = ptfsal_chown(p_context, p_context->fsal_export, newPath,
 				  p_context->creds->caller_uid,
 				  setgid_bit ? -1 : (int)p_context->creds->
 				  caller_gid);
@@ -255,9 +255,9 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle * dir_hdl,	/* IN */
 	/* retrieve file attributes */
 	if (p_object_attributes) {
 		FSI_TRACE(FSI_DEBUG, "MKDIR %d", __LINE__);
-		status =
-		    PTFSAL_getattrs(dir_hdl->export, p_context, p_object_handle,
-				    p_object_attributes);
+		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
+					 p_object_handle,
+					 p_object_attributes);
 
 		/* on error, we set a special bit in the mask. */
 		if (FSAL_IS_ERROR(status)) {

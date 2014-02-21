@@ -132,7 +132,7 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 	if (p_file_attributes) {
 		p_file_attributes->mask = PT_SUPPORTED_ATTRIBUTES;
 		status =
-		    PTFSAL_getattrs(obj_hdl->export, NULL /*p_context??? */ ,
+		    PTFSAL_getattrs(p_context->fsal_export, NULL /*p_context??? */ ,
 				    myself->handle, p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			*file_desc = 0;

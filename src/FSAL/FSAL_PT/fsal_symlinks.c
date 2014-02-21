@@ -101,8 +101,8 @@ fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	memset(link_content_out, 0, sizeof(link_content_out));
 
 	/* Read the link on the filesystem */
-	fsal_readlink_by_handle(p_context, dir_hdl->export, pt_hdl->handle,
-				p_link_content, *link_len);
+	fsal_readlink_by_handle(p_context, p_context->fsal_export,
+				pt_hdl->handle, p_link_content, *link_len);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -111,9 +111,8 @@ fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	if (p_link_attributes) {
 
-		status =
-		    PTFSAL_getattrs(dir_hdl->export, p_context, pt_hdl->handle,
-				    p_link_attributes);
+		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
+		    			 pt_hdl->handle, p_link_attributes);
 
 		/* On error, we set a flag in the returned attributes */
 

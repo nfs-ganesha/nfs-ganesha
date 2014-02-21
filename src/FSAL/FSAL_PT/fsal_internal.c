@@ -150,7 +150,7 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 	} else {
 		stat_rc =
 		    fsi_get_name_from_handle(p_context,
-					     myself->obj_handle.export,
+					     p_context->fsal_export,
 					     myself->handle, fsi_name, NULL);
 		if (stat_rc < 0) {
 			err = errno;
@@ -160,7 +160,7 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 		}
 		FSI_TRACE(FSI_DEBUG, "NAME: %s", fsi_name);
 		open_rc =
-		    ptfsal_opendir(p_context, myself->obj_handle.export,
+		    ptfsal_opendir(p_context, p_context->fsal_export,
 				   fsi_name, NULL, 0);
 		if (open_rc < 0) {
 			err = errno;

@@ -92,7 +92,7 @@ fsal_status_t PTFSAL_rename(struct fsal_obj_handle * old_hdl,	/* IN */
 	/* build file paths */
 	memset(&st, 0, sizeof(st));
 	stat_rc =
-	    ptfsal_stat_by_handle(p_context, old_pt_hdl->obj_handle.export,
+	    ptfsal_stat_by_handle(p_context, p_context->fsal_export,
 				  old_pt_hdl->handle, &st);
 
 	errsv = errno;

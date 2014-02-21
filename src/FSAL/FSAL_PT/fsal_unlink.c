@@ -135,9 +135,8 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
    ***********************/
 
 	if (p_parent_attributes) {
-		status =
-		    PTFSAL_getattrs(dir_hdl->export, p_context, pt_hdl->handle,
-				    p_parent_attributes);
+		status =PTFSAL_getattrs(p_context->fsal_export, p_context,
+		    			pt_hdl->handle, p_parent_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			FSAL_CLEAR_MASK(p_parent_attributes->mask);
 			FSAL_SET_MASK(p_parent_attributes->mask,
