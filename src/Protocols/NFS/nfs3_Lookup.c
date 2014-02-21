@@ -180,14 +180,3 @@ void nfs3_Lookup_Free(nfs_res_t *res)
 	}
 }				/* nfs3_Lookup_Free */
 
-/**
- * @brief Free the result structure allocated for nfs_Lookup.
- *
- * This function frees the result structure allocated for nfs_Lookup.
- *
- * @param[in,out] res Result structure
- */
-void nfs2_Lookup_Free(nfs_res_t *res)
-{
-	return;
-}				/* nfs2_Lookup_Free */
