@@ -322,7 +322,8 @@ static int vfs_xfs_name_to_handle(int fd, const char *name,
 	return retval;
 }
 
-static int vfs_xfs_readlink(struct vfs_fsal_obj_handle *hdl,
+static int vfs_xfs_readlink(struct fsal_export *exp,
+			    struct vfs_fsal_obj_handle *hdl,
 			    fsal_errors_t *ferr)
 {
 	char ldata[MAXPATHLEN + 1];

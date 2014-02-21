@@ -11,7 +11,9 @@ struct vfs_exp_handle_ops {
 	int (*vex_name_to_handle) (int fd, const char *name,
 				   vfs_file_handle_t *fh);
 	int (*vex_fd_to_handle) (int fd, vfs_file_handle_t *fh);
-	int (*vex_readlink) (struct vfs_fsal_obj_handle *, fsal_errors_t *);
+	int (*vex_readlink) (struct fsal_export *exp,
+			     struct vfs_fsal_obj_handle *,
+			     fsal_errors_t *);
 };
 
 /*
@@ -93,8 +95,12 @@ struct closefd {
 };
 
 
-int vfs_fsal_open(struct vfs_fsal_obj_handle *, int, fsal_errors_t *);
-int vfs_fsal_readlink(struct vfs_fsal_obj_handle *, fsal_errors_t *);
+int vfs_fsal_open(struct fsal_export *exp,
+		  struct vfs_fsal_obj_handle *,
+		  int, fsal_errors_t *);
+int vfs_fsal_readlink(struct fsal_export *exp,
+		      struct vfs_fsal_obj_handle *,
+		      fsal_errors_t *);
 
 static inline bool vfs_unopenable_type(object_file_type_t type)
 {

@@ -64,7 +64,8 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	fsal2posix_openflags(openflags, &posix_flags);
 	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
 		     openflags, posix_flags);
-	fd = vfs_fsal_open(myself, posix_flags, &fsal_error);
+	fd = vfs_fsal_open(opctx->fsal_export, myself,
+			   posix_flags, &fsal_error);
 	if (fd < 0) {
 		retval = -fd;
 	} else {
