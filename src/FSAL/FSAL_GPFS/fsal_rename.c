@@ -79,7 +79,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
 	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	new_gpfs_hdl =
 	    container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mount_fd = gpfs_get_root_fd(old_hdl->export);
+	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
 
 	/* build file paths */
 	status =

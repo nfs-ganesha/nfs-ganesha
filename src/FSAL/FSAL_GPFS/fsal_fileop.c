@@ -87,7 +87,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mntfd = gpfs_get_root_fd(obj_hdl->export);
+	mntfd = gpfs_get_root_fd(p_context->fsal_export);
 
 	/* convert fsal open flags to posix open flags */
 	rc = fsal2posix_openflags(openflags, &posix_flags);
@@ -111,9 +111,9 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 	if (p_file_attributes) {
 
 		p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
-		status =
-		    GPFSFSAL_getattrs(obj_hdl->export, p_context,
-				      myself->handle, p_file_attributes);
+		status = GPFSFSAL_getattrs(p_context->fsal_export,
+					   p_context, myself->handle,
+					   p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			*file_desc = 0;
 			close(*file_desc);

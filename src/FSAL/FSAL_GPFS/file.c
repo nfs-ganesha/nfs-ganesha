@@ -394,9 +394,9 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		     lock_op, request_lock->lock_type, request_lock->lock_start,
 		     request_lock->lock_length);
 
-	status =
-	    GPFSFSAL_lock_op(obj_hdl, p_owner, lock_op, *request_lock,
-			     conflicting_lock);
+	status = GPFSFSAL_lock_op(opctx->fsal_export, obj_hdl,
+				  p_owner, lock_op, *request_lock,
+				  conflicting_lock);
 	return status;
 
  out:

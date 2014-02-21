@@ -329,7 +329,8 @@ fsal_status_t GPFSFSAL_lookupJunction(struct gpfs_file_handle *p_handle,
 				struct gpfs_file_handle *fsoot_hdl,/* OUT */
 				struct attrlist *p_fsroot_attributes); /* IO */
 
-fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,	/* IN */
+fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
+			       struct fsal_obj_handle *obj_hdl,	/* IN */
 			       void *p_owner,	/* IN */
 			       fsal_lock_op_t lock_op,	/* IN */
 			       fsal_lock_param_t request_lock,	/* IN */

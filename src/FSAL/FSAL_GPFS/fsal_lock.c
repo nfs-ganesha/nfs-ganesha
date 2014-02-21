@@ -52,7 +52,8 @@
  *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the
  *                       operation would not be possible.
  */
-fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,	/* IN */
+fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
+			       struct fsal_obj_handle *obj_hdl,	/* IN */
 			       void *p_owner,	/* IN */
 			       fsal_lock_op_t lock_op,	/* IN */
 			       fsal_lock_param_t request_lock,	/* IN */
@@ -121,7 +122,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,	/* IN */
 
 	glock_args.lfd = myself->u.file.fd;
 	glock_args.lock_owner = p_owner;
-	gpfs_sg_arg.mountdirfd = gpfs_get_root_fd(obj_hdl->export);
+	gpfs_sg_arg.mountdirfd = gpfs_get_root_fd(export);
 	gpfs_sg_arg.lock = &glock_args;
 
 	errno = 0;

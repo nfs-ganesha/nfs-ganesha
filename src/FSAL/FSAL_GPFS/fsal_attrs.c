@@ -145,14 +145,15 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mntfd = gpfs_get_root_fd(dir_hdl->export);
+	mntfd = gpfs_get_root_fd(p_context->fsal_export);
 
 	/* First, check that FSAL attributes changes are allowed. */
 
 	/* Is it allowed to change times ? */
 
-	if (!dir_hdl->export->ops->fs_supports(dir_hdl->export,
-							fso_cansettime)) {
+	if (!p_context->fsal_export->ops->
+			fs_supports(p_context->fsal_export,
+				    fso_cansettime)) {
 		if (p_object_attributes->
 		    mask & (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME
 			    | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)) {
@@ -164,7 +165,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MODE)) {
 		p_object_attributes->mode &=
-		    ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+		    ~p_context->fsal_export->ops->
+			fs_umask(p_context->fsal_export);
 	}
 
   /**************

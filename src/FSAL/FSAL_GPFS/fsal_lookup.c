@@ -78,7 +78,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	if (!parent || !p_filename)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	mnt_fd = gpfs_get_root_fd(parent->export);
+	mnt_fd = gpfs_get_root_fd(p_context->fsal_export);
 	parent_hdl =
 	    container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -118,10 +118,10 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	/* get object attributes */
 	if (p_object_attr) {
 		p_object_attr->mask =
-		    parent->export->ops->fs_supported_attrs(parent->export);
-		status =
-		    GPFSFSAL_getattrs(parent->export, p_context, fh,
-				      p_object_attr);
+		    p_context->fsal_export->ops->
+		    fs_supported_attrs(p_context->fsal_export);
+		status = GPFSFSAL_getattrs(p_context->fsal_export,
+					   p_context, fh, p_object_attr);
 		if (FSAL_IS_ERROR(status)) {
 			FSAL_CLEAR_MASK(p_object_attr->mask);
 			FSAL_SET_MASK(p_object_attr->mask, ATTR_RDATTR_ERR);

@@ -83,7 +83,7 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mount_fd = gpfs_get_root_fd(dir_hdl->export);
+	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
 
 	/* build the child path */
 
