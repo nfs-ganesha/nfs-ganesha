@@ -1422,6 +1422,7 @@ bool init_export_root(struct gsh_export *exp)
 	memset(&creds, 0, sizeof(creds));
 	req_ctx.creds = &creds;
 	req_ctx.export = exp;
+	req_ctx.fsal_export = exp->export.export_hdl;
 
 	/* Lookup for the FSAL Path */
 	fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
@@ -1564,6 +1565,7 @@ void unexport(struct gsh_export *export)
 	memset(&creds, 0, sizeof(creds));
 	opctx.creds = &creds;
 	opctx.export = export;
+	opctx.fsal_export = opctx.export->export.export_hdl;
 
 	/* Make the export unreachable */
 	pseudo_unmount_export(export, &opctx);
@@ -1620,6 +1622,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 
 		/* Make the export otherwise unreachable */
 		opctx.export = exp;
+		opctx.fsal_export = exp->export.export_hdl;
 		pseudo_unmount_export(exp, &opctx);
 		remove_gsh_export(exp->export.id);
 

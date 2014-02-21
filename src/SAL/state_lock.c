@@ -1758,6 +1758,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 	req_ctx.export = container_of(lock_entry->sle_export,
 				      struct gsh_export,
 				      export);
+	req_ctx.fsal_export = req_ctx.export->export.export_hdl;
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
 	 * MUST be at least one lock present for there to be a block_data to
@@ -3106,6 +3107,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		owner = found_entry->sle_owner;
 		export = found_entry->sle_export;
 		opctx.export = container_of(export, struct gsh_export, export);
+		opctx.fsal_export = opctx.export->export.export_hdl;
 		get_gsh_export_ref(opctx.export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -3263,6 +3265,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		export = found_entry->sle_export;
 		req_ctx->export =
 		    container_of(export, struct gsh_export, export);
+		req_ctx->fsal_export = req_ctx->export->export.export_hdl;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3300,6 +3303,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 	}
 
 	req_ctx->export = saved_export;
+	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
 	return status;
 }
 

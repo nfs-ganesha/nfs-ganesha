@@ -72,6 +72,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		put_gsh_export(data->req_ctx->export);
 
 	data->req_ctx->export = NULL;
+	data->req_ctx->fsal_export = NULL;
 
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL, false);
@@ -88,6 +89,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	data->export = &data->req_ctx->export->export;
+	data->req_ctx->fsal_export = data->req_ctx->export->export.export_hdl;
 
 	/* Build credentials */
 	res_PUTROOTFH4->status = nfs4_MakeCred(data);

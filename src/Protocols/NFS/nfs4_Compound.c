@@ -890,6 +890,7 @@ void compound_data_Free(compound_data_t *data)
 	if (data->req_ctx->export) {
 		put_gsh_export(data->req_ctx->export);
 		data->req_ctx->export = NULL;
+		data->req_ctx->fsal_export = NULL;
 		data->export = NULL;
 	}
 

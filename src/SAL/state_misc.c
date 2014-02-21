@@ -1317,6 +1317,7 @@ void state_release_export(struct gsh_export *exp)
 	memset(&creds, 0, sizeof(creds));
 	req_ctx.creds = &creds;
 	req_ctx.export = exp;
+	req_ctx.fsal_export = exp->export.export_hdl;
 
 	state_export_unlock_all(&req_ctx);
 	state_export_release_nfs4_state(&exp->export);

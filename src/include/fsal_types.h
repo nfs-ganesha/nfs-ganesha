@@ -55,6 +55,7 @@ static const char *CONF_LABEL_FS_COMMON __attribute__ ((unused)) = "FileSystem";
 
 /* Forward declarations */
 struct fsal_staticfsinfo_t;
+struct fsal_export;
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
 static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
@@ -166,6 +167,7 @@ struct req_op_context {
 	uint32_t req_type;	/*< request_type NFS | 9P */
 	struct gsh_client *client;	/*< client host info including stats */
 	struct gsh_export *export;	/*< current export */
+	struct fsal_export *fsal_export;	/*< current fsal export */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
 	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
 	void *fsal_private;		/*< private for FSAL use */

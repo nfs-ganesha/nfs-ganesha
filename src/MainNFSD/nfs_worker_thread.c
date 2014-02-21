@@ -921,6 +921,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
+			req_ctx.fsal_export = req_ctx.export->export.export_hdl;
 			if ((req_ctx.export->export.export_perms.
 			     options & EXPORT_OPTION_NFSV3) == 0)
 				goto handle_err;
@@ -997,6 +998,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					"NLM4 Request from client %s has badly formed handle",
 					req_ctx.client->hostaddr_str);
 				req_ctx.export = NULL;
+				req_ctx.fsal_export = NULL;
 
 				/* We need to send a NLM4_STALE_FH response
 				 * (NLM doesn't have an error code for
@@ -1021,10 +1023,15 @@ static void nfs_rpc_execute(request_data_t *req,
 					 * to let it know what to do since it
 					 * can respond to ASYNC calls.
 					 */
-				} else
-				    if ((req_ctx.export->export.export_perms.
-					 options & EXPORT_OPTION_NFSV3) == 0)
-					goto handle_err;
+					req_ctx.fsal_export = NULL;
+				} else {
+					if ((req_ctx.export->export.export_perms
+					     .options & EXPORT_OPTION_NFSV3)
+					    == 0)
+						goto handle_err;
+					req_ctx.fsal_export =
+					    req_ctx.export->export.export_hdl;
+				}
 
 				LogMidDebug(COMPONENT_DISPATCH,
 					    "Found export entry for dirname=%s as exportid=%d",

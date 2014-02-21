@@ -118,6 +118,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_PUTFH4->status;
 	}
 
+	data->req_ctx->fsal_export = data->req_ctx->export->export.export_hdl;
+
 	if (&data->req_ctx->export->export != data->export) {
 		data->export = &data->req_ctx->export->export;
 
@@ -127,7 +129,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			return res_PUTFH4->status;
 	}
 
-	export = data->req_ctx->export->export.export_hdl;
+	export = data->req_ctx->fsal_export;
 
 	/* The export and fsalid should be updated, but DS handles
 	 * don't support metdata operations.  Thus, we can't call into

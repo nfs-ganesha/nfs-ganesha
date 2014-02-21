@@ -258,6 +258,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	req_ctx.export = container_of(cookie_entry->sce_lock_entry->sle_export,
 				      struct gsh_export,
 				      export);
+	req_ctx.fsal_export = req_ctx.export->export.export_hdl;
 
 	state_status = state_release_grant(cookie_entry, &req_ctx);
 

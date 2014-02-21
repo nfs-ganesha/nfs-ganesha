@@ -145,6 +145,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 
 	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = exp;
+	pfid->op_context.fsal_export = exp->export.export_hdl;
 
 	/* This fid is a special one: it comes from TATTACH */
 	pfid->from_attach = TRUE;

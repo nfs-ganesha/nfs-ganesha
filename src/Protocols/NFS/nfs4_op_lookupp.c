@@ -160,6 +160,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		get_gsh_export_ref(parent_exp);
 
 		data->req_ctx->export = parent_exp;
+		data->req_ctx->fsal_export =
+			data->req_ctx->export->export.export_hdl;
 		data->export = &data->req_ctx->export->export;
 
 		/* Now we are safely transitioned to the parent export and can

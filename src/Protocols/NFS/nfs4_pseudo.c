@@ -251,6 +251,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 			 export->pseudopath, tmp_pseudopath);
 	}
 
+	state.req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+
 	/* Put the slash back in */
 	*last_slash = '/';
 
