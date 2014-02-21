@@ -252,8 +252,6 @@ static struct pseudo_fsal_obj_handle
 
 	hdl->obj_handle.type = DIRECTORY;
 
-	hdl->obj_handle.export = exp_hdl;
-
 	/* Fills the output struct */
 	hdl->obj_handle.attributes.type = DIRECTORY;
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_TYPE);
@@ -434,12 +432,12 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      obj_handle);
 
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
+	    & ~opctx->fsal_export->ops->fs_umask(opctx->fsal_export);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_directory_handle(myself,
 				     name,
-				     myself->obj_handle.export,
+				     opctx->fsal_export,
 				     unix_mode,
 				     opctx);
 
