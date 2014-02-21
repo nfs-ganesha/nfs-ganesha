@@ -567,10 +567,7 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid);
 int _9p_tools_errno(cache_inode_status_t cache_status);
-void _9p_tools_fsal_attr2stat(struct attrlist *pfsalattr, struct stat *pstat);
-void _9p_tools_acess2fsal(u32 *paccessin, fsal_accessflags_t *pfsalaccess);
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags);
-void _9p_chomp_attr_value(char *str, size_t size);
 int _9p_tools_clunk(struct _9p_fid *pfid);
 void _9p_cleanup_fids(struct _9p_conn *conn);
 
