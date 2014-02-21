@@ -2008,7 +2008,7 @@ static inline void *atomic_fetch_voidptr(void **var)
 /**
  * @brief Atomically store a void *
  *
- * This function atomically fetches the value indicated by the
+ * This function atomically stores the value indicated by the
  * supplied pointer.
  *
  * @param[in,out] var Pointer to the variable to modify

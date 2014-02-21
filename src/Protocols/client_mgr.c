@@ -116,7 +116,7 @@ static inline void *atomic_fetch_voidptr(void **var)
 /**
  * @brief Atomically store a void *
  *
- * This function atomically fetches the value indicated by the
+ * This function atomically stores the value indicated by the
  * supplied pointer.
  *
  * @param[in,out] var Pointer to the variable to modify
@@ -131,7 +131,7 @@ static inline void atomic_store_voidptr(void **var, void *val)
 #elif defined(GCC_SYNC_FUNCTIONS)
 static inline void atomic_store_voidptr(void **var, void *val)
 {
-	(void)__sync_lock_test_and_set(var, 0);
+	(void)__sync_lock_test_and_set(var, val);
 }
 #endif
 

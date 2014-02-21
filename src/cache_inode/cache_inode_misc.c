@@ -281,6 +281,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		goto out;
 	}
 
+	/* Initialize common fields */
+	nentry->type = new_obj->type;
+	nentry->flags = 0;
+	glist_init(&nentry->state_list);
+	glist_init(&nentry->export_list);
+	glist_init(&nentry->layoutrecall_list);
+
 	/* See if someone raced us. */
 	oentry =
 	    cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK, __func__,
@@ -312,13 +319,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
 	}
-
-	/* Initialize common fields */
-	nentry->type = new_obj->type;
-	nentry->flags = 0;
-	glist_init(&nentry->state_list);
-	glist_init(&nentry->export_list);
-	glist_init(&nentry->layoutrecall_list);
 
 	switch (nentry->type) {
 	case REGULAR_FILE:
@@ -520,6 +520,7 @@ void cache_inode_unexport(struct gsh_export *export)
 	cache_entry_t *entry;
 	int errcnt = 0;
 	cache_inode_status_t status;
+	struct entry_export_map *expmap;
 
 	parms.export = export;
 
@@ -559,11 +560,22 @@ void cache_inode_unexport(struct gsh_export *export)
 		/* Remove from list of entries for this export */
 		glist_del(&parms.expmap->entry_per_export);
 
-		if (glist_empty(&entry->export_list)) {
+		expmap = glist_first_entry(&entry->export_list, 
+					   struct entry_export_map,
+					   export_per_entry);
+
+		if (expmap == NULL) {
+			/* Clear out first export pointer */
+			atomic_store_voidptr(&entry->first_export, NULL);
+
 			/* If there are no exports referencing this
 			 * entry, attempt to push it to cleanup queue.
 			 */
 			cache_inode_lru_cleanup_try_push(entry);
+		} else {
+			/* Make sure first export pointer is still valid */
+			atomic_store_voidptr(&entry->first_export,
+					     expmap->export);
 		}
 
 		PTHREAD_RWLOCK_unlock(&export->lock);
