@@ -41,6 +41,8 @@
 #include "cache_inode.h"
 #include "nfs4_acls.h"
 #include "FSAL/access_check.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 /**
  * @brief Set the attributes for a file.
@@ -79,8 +81,9 @@ cache_inode_setattr(cache_entry_t *entry,
 	}
 
 	/* Is it allowed to change times ? */
-	if (!obj_handle->export->ops->
-	    fs_supports(obj_handle->export, fso_cansettime)
+	if (!req_ctx->export->export.export_hdl->ops->
+	    fs_supports(req_ctx->export->export.export_hdl,
+			fso_cansettime)
 	    &&
 	    (FSAL_TEST_MASK
 	     (attr->mask,

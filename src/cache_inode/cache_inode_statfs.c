@@ -51,6 +51,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 cache_inode_status_t
 cache_inode_statfs(cache_entry_t *entry,
@@ -61,7 +63,7 @@ cache_inode_statfs(cache_entry_t *entry,
 	struct fsal_export *export;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-	export = entry->obj_handle->export;
+	export = req_ctx->export->export.export_hdl;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
 	    export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);
