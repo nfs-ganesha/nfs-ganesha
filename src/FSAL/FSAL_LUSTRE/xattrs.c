@@ -376,7 +376,7 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* get the path of the file in Lustre */
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 
 	/* get xattrs */
@@ -457,8 +457,9 @@ fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 	/* search in xattrs */
 	if (!found) {
-		lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
-				      obj_handle->handle, mypath);
+		lustre_handle_to_path(
+			lustre_get_root_path(opctx->fsal_export),
+					     obj_handle->handle, mypath);
 
 		errno = 0;
 		rc = xattr_name_to_id(mypath, xattr_name);
@@ -504,8 +505,9 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		char attr_name[MAXPATHLEN];
 
 		/* get the name for this attr */
-		lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
-				      obj_handle->handle, mypath);
+		lustre_handle_to_path(
+			lustre_get_root_path(opctx->fsal_export),
+					     obj_handle->handle, mypath);
 		rc = xattr_id_to_name(mypath, xattr_id, attr_name);
 		if (rc)
 			return fsalstat(rc, errno);
@@ -564,7 +566,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* is it an xattr? */
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 	rc = lgetxattr(mypath, xattr_name, buffer_addr, buffer_size);
 	if (rc < 0)
@@ -599,7 +601,7 @@ fsal_status_t lustre_setextattr_value(struct fsal_obj_handle *obj_hdl,
 	else
 		flags = 0;
 
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 	if (buffer_size == 0)
 		rc = lsetxattr(mypath, xattr_name, "", 1, flags);
@@ -634,7 +636,7 @@ fsal_status_t lustre_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_PERM, 0);
 
 	/* build fid path in lustre */
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 
 	rc = xattr_id_to_name(mypath, xattr_id, name);
@@ -688,7 +690,7 @@ fsal_status_t lustre_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 	obj_handle =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 	rc = xattr_id_to_name(mypath, xattr_id, name);
 	if (rc)
@@ -712,7 +714,7 @@ fsal_status_t lustre_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 	obj_handle =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 
-	lustre_handle_to_path(lustre_get_root_path(obj_hdl->export),
+	lustre_handle_to_path(lustre_get_root_path(opctx->fsal_export),
 			      obj_handle->handle, mypath);
 
 	rc = lremovexattr(mypath, xattr_name);

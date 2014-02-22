@@ -69,7 +69,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 		     openflags, posix_flags);
 
 	fd = CRED_WRAP(opctx->creds, int, lustre_open_by_handle,
-		       lustre_get_root_path(obj_hdl->export), myself->handle,
+		       lustre_get_root_path(opctx->fsal_export), myself->handle,
 		       posix_flags);
 	if (fd < 0) {
 		if ((errno == EACCES)
@@ -86,8 +86,8 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 			/* File has been created with 04XY, POSIX said
 			 * it is writable so we default on root's
 			 * superpower to open it */
-			fd = lustre_open_by_handle(lustre_get_root_path
-						   (obj_hdl->export),
+			fd = lustre_open_by_handle(lustre_get_root_path(
+							   opctx->fsal_export),
 						   myself->handle, posix_flags);
 			if (fd < 0) {
 				fsal_error = posix2fsal_error(errno);

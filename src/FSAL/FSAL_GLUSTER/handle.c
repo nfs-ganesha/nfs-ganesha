@@ -831,7 +831,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	int rc = 0, credrc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-	    container_of(oldopctx->fsal_export, struct glusterfs_export,
+	    container_of(opctx->fsal_export, struct glusterfs_export,
 			 export);
 	struct glusterfs_handle *srcparenthandle =
 	    container_of(olddir_hdl, struct glusterfs_handle, handle);
