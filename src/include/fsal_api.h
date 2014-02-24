@@ -362,7 +362,7 @@ struct fsal_module {
  */
 
 struct fsal_ops {
-/*@{*/
+/**@{*/
 /**
  * Base methods for loading and lifetime.
  */
@@ -421,9 +421,9 @@ struct fsal_ops {
  */
 	int (*put) (struct fsal_module *fsal_hdl);
 
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 /**
  * Subclass/instance methods in each fsal
  */
@@ -539,7 +539,7 @@ struct fsal_ops {
  * initialization time.
  */
 	void (*emergency_cleanup) (void);
-/*@}*/
+/**@}*/
 };
 
 /**
@@ -630,7 +630,7 @@ struct fsal_export {
  */
 
 struct export_ops {
-/*@{*/
+/**@{*/
 
 /**
 * Export lifecycle management.
@@ -673,9 +673,9 @@ struct export_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*release) (struct fsal_export *exp_hdl);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 /**
  * Create an object handles within this export
  */
@@ -779,7 +779,7 @@ struct export_ops {
 				      const struct gsh_buffdesc *
 				      const hdl_desc,
 				      struct fsal_ds_handle **const handle);
-/*@}*/
+/**@}*/
 
 /**
  * Statistics and configuration for this filesystem
@@ -940,9 +940,9 @@ struct export_ops {
  * @return permissions on named attributes.
  */
 	 uint32_t(*fs_xattr_access_rights) (struct fsal_export *exp_hdl);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * Quotas are managed at the file system (export) level.  Someone who
@@ -1004,9 +1004,9 @@ struct export_ops {
 				    struct req_op_context *req_ctx,
 				    fsal_quota_t *quota,
 				    fsal_quota_t *resquota);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 /**
  * pNFS functions
  */
@@ -1141,7 +1141,7 @@ struct export_ops {
  */
 	void (*get_write_verifier) (struct gsh_buffdesc *verf_desc);
 
-/*@}*/
+/**@}*/
 };
 
 /**
@@ -1188,7 +1188,7 @@ typedef bool(*fsal_readdir_cb) (const struct req_op_context *opctx,
  */
 
 struct fsal_obj_ops {
-/*@{*/
+/**@{*/
 
 /**
  * Lifecycle management
@@ -1231,9 +1231,9 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*release) (struct fsal_obj_handle *obj_hdl);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * Directory operations
@@ -1285,9 +1285,9 @@ struct fsal_obj_ops {
 				  void *dir_state,
 				  fsal_readdir_cb cb,
 				  bool *eof);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * Creation operations
@@ -1377,9 +1377,9 @@ struct fsal_obj_ops {
 				  const char *link_path,
 				  struct attrlist *attrib,
 				  struct fsal_obj_handle **new_obj);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * File object operations
@@ -1518,9 +1518,9 @@ struct fsal_obj_ops {
 				 const struct req_op_context *opctx,
 				 const char *name);
 
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 /**
  * I/O management
  */
@@ -1754,9 +1754,9 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*close) (struct fsal_obj_handle *obj_hdl);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * Extended attribute management
@@ -1931,7 +1931,7 @@ struct fsal_obj_ops {
 						 const struct req_op_context *
 						 opctx,
 						 const char *xattr_name);
-/*@}*/
+/**@}*/
 
 /**
  * Handle operations
@@ -1992,9 +1992,9 @@ struct fsal_obj_ops {
  */
 	void (*handle_to_key) (struct fsal_obj_handle *obj_hdl,
 			       struct gsh_buffdesc *fh_desc);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * pNFS functions
@@ -2086,7 +2086,7 @@ struct fsal_obj_ops {
 				  XDR * lou_body,
 				  const struct fsal_layoutcommit_arg *arg,
 				  struct fsal_layoutcommit_res *res);
-/*@}*/
+/**@}*/
 };
 
 /**
@@ -2109,9 +2109,9 @@ struct fsal_ds_handle {
 };
 
 struct fsal_ds_ops {
-/*@{*/
+/**@{*/
 
-/*
+/**
  * Lifecycle management.
  */
 
@@ -2152,9 +2152,9 @@ struct fsal_ds_ops {
  * @return NFSv4.1 status codes.
  */
 	 nfsstat4(*release) (struct fsal_ds_handle *const ds_hdl);
-/*@}*/
+/**@}*/
 
-/*@{*/
+/**@{*/
 
 /**
  * I/O Functions
