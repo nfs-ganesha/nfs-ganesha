@@ -57,6 +57,8 @@
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
+#include "client_mgr.h"
+#include "server_stats.h"
 #include "9p.h"
 #include <stdbool.h>
 
@@ -120,6 +122,7 @@ void *_9p_socket_thread(void *Arg)
 	int fdcount = 1;
 	static char my_name[MAXNAMLEN + 1];
 	socklen_t addrpeerlen = 0;
+	struct sockaddr_storage addrpeer;
 	char strcaller[INET6_ADDRSTRLEN];
 	request_data_t *req = NULL;
 	int tag;
@@ -157,8 +160,8 @@ void *_9p_socket_thread(void *Arg)
 	if (gettimeofday(&_9p_conn.birth, NULL) == -1)
 		LogFatal(COMPONENT_9P, "Cannot get connection's time of birth");
 
-	addrpeerlen = sizeof(_9p_conn.addrpeer);
-	rc = getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
+	addrpeerlen = sizeof(addrpeer);
+	rc = getpeername(tcp_sock, (struct sockaddr *)&addrpeer,
 			 &addrpeerlen);
 	if (rc == -1) {
 		LogMajor(COMPONENT_9P,
@@ -168,15 +171,15 @@ void *_9p_socket_thread(void *Arg)
 		strncpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
 		strcaller[12] = '\0';
 	} else {
-		switch (_9p_conn.addrpeer.ss_family) {
+		switch (addrpeer.ss_family) {
 		case AF_INET:
-			inet_ntop(_9p_conn.addrpeer.ss_family,
-				  &((struct sockaddr_in *)&_9p_conn.addrpeer)->
+			inet_ntop(addrpeer.ss_family,
+				  &((struct sockaddr_in *)&addrpeer)->
 				  sin_addr, strcaller, INET6_ADDRSTRLEN);
 			break;
 		case AF_INET6:
-			inet_ntop(_9p_conn.addrpeer.ss_family,
-				  &((struct sockaddr_in6 *)&_9p_conn.addrpeer)->
+			inet_ntop(addrpeer.ss_family,
+				  &((struct sockaddr_in6 *)&addrpeer)->
 				  sin6_addr, strcaller, INET6_ADDRSTRLEN);
 			break;
 		default:
@@ -189,6 +192,7 @@ void *_9p_socket_thread(void *Arg)
 		printf("9p socket #%ld is connected to %s\n", tcp_sock,
 		       strcaller);
 	}
+	_9p_conn.client = get_gsh_client(&addrpeer, false);
 
 	/* Set up the structure used by poll */
 	memset((char *)fds, 0, sizeof(struct pollfd));
@@ -280,6 +284,10 @@ void *_9p_socket_thread(void *Arg)
 					total_readlen += readlen;
 				}	/* while */
 
+				server_stats_transport_done(_9p_conn.client,
+							    total_readlen, 1, 0,
+							    0, 0, 0);
+
 				/* Message is good. */
 				req = pool_alloc(request_pool, NULL);
 
@@ -338,6 +346,10 @@ void *_9p_socket_thread(void *Arg)
 	}
 
 	_9p_cleanup_fids(&_9p_conn);
+
+	if (_9p_conn.client != NULL)
+		put_gsh_client(_9p_conn.client);
+
 
 	Log_FreeThreadContext();
 	pthread_exit(NULL);

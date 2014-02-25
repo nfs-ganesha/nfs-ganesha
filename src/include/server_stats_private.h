@@ -129,6 +129,38 @@ struct export_stats {
 	.direction = "out" \
 }
 
+#define TRANSPORT_REPLY    \
+{                          \
+	.name = "rx_bytes",\
+	.type = "(t)",     \
+	.direction = "out" \
+},                         \
+{                          \
+	.name = "rx_pkt",  \
+	.type = "(t)",     \
+	.direction = "out" \
+},                         \
+{                          \
+	.name = "rx_err",  \
+	.type = "(t)",     \
+	.direction = "out" \
+},                         \
+{                          \
+	.name = "tx_bytes",\
+	.type = "(t)",     \
+	.direction = "out" \
+},                         \
+{                          \
+	.name = "tx_pkt",  \
+	.type = "(t)",     \
+	.direction = "out" \
+},                         \
+{                          \
+	.name = "tx_err",  \
+	.type = "(t)",     \
+	.direction = "out" \
+}
+
 #define LAYOUTS_REPLY		\
 {				\
 	.name = "getdevinfo",	\
@@ -163,6 +195,8 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
+void server_dbus_9p_tcpstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
+void server_dbus_9p_rdmastats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 #endif				/* USE_DBUS_STATS */
 
 void server_stats_free(struct gsh_stats *statsp);

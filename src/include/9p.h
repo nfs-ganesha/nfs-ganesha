@@ -353,7 +353,7 @@ struct _9p_conn {
 	} trans_data;
 	enum _9p_trans_type trans_type;
 	uint32_t refcount;
-	struct sockaddr_storage addrpeer;
+	struct gsh_client *client;
 	struct timeval birth;	/* This is useful if same sockfd is
 				   reused on socket's close/open */
 	struct _9p_fid *fids[_9P_FID_PER_CONN];
