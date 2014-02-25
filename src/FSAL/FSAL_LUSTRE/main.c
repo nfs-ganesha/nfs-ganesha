@@ -142,9 +142,9 @@ static void *pnfs_init(void *parent, void *child)
 {
 	assert(parent != NULL || child != NULL);
 
-	if (parent == NULL) {
+	if (parent == NULL)
 		return child; /* NOP */
-	} else if (child == NULL)
+	else if (child == NULL)
 		return &pnfs_param;
 	else
 		return NULL;
@@ -165,9 +165,9 @@ static void *lustre_config_init(void *parent, void *child)
 {
 	assert(parent != NULL || child != NULL);
 
-	if (parent == NULL) {
+	if (parent == NULL)
 		return child; /* NOP */
-	} else if (child == NULL)
+	else if (child == NULL)
 		return &pnfs_param;
 	else
 		return NULL;
@@ -210,7 +210,10 @@ struct config_block lustre_param = {
 
 struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
 {
-	return &lustre_info;
+	struct lustre_fsal_module *myself;
+
+	myself = container_of(hdl, struct lustre_fsal_module, fsal);
+	return &myself->fs_info;
 }
 
 /* Module methods
