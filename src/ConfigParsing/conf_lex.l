@@ -374,13 +374,13 @@ static int new_file(char *name_tok,
 	struct config_root *confroot = st->root_node;
 	char *fullpath;
 	int rc = ENOMEM;
-	char *filename = alloca(strlen(name_tok + 1));
+	char *filename = alloca(strlen(name_tok) + 1);
 
 	if (*name_tok == '\"') {
 		strcpy(filename, name_tok + 1);
 		filename[strlen(filename) - 1] = '\0';
 	} else {
-		filename = name_tok; /* alloca'd memory freed on exit */
+		strcpy(filename, name_tok); /* alloca'd memory freed on exit */
 	}
 	if (confroot->files == NULL) {
 		if (filename[0] == '/') {
@@ -423,8 +423,8 @@ static int new_file(char *name_tok,
 		goto errout;
 	}
 	flist->next = confroot->files;
-	confroot->files = flist;
 	flist->pathname = fullpath;
+	confroot->files = flist;
 	in_file = fopen(flist->pathname, "r" );
 	if (in_file == NULL) {
 		/* error */

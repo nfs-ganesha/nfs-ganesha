@@ -105,13 +105,13 @@ typedef struct exportlist_client_entry__ {
 			unsigned int netmask;
 		} network;
 		struct {
-			char netgroupname[MAXHOSTNAMELEN + 1];
+			char *netgroupname;
 		} netgroup;
 		struct {
-			char wildcard[MAXHOSTNAMELEN + 1];
+			char *wildcard;
 		} wildcard;
 		struct {
-			char princname[GSS_DEFINE_LEN_TEMP + 1];
+			char *princname;
 		} gssprinc;
 	} client;
 	export_perms_t client_perms;	/*< Available mount options */

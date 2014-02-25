@@ -179,7 +179,7 @@ int load_fsal(const char *name,
 	char *bp;
 	char *path = alloca(strlen(nfs_param.core_param.ganesha_modules_loc)
 			    + strlen(name)
-			    + strlen(pathfmt));
+			    + strlen(pathfmt) + 1);
 
 	sprintf(path, pathfmt,
 		nfs_param.core_param.ganesha_modules_loc,

@@ -319,6 +319,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return expres;
 		}
 	}
+	myself->sub_export = sub_export;
 	/* Init next_ops structure */
 	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
 	next_ops.obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));

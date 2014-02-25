@@ -221,8 +221,10 @@ struct gsh_export *insert_gsh_export(struct exportlist *explist)
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&exp->node_k, &export_by_id.t);
-	if (node)
+	if (node) {
+		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return NULL;	/* somebody beat us to it */
+	}
 	pthread_rwlock_init(&exp->lock, NULL);
 	/* update cache */
 	cache_slot = (void **)

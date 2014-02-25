@@ -254,8 +254,7 @@ static int add_client(struct exportlist *exp,
 			errcnt++;
 			goto out;
 		}
-		strcpy(cli->client.netgroup.netgroupname,
-		       client_tok + 1);
+		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
 		cli->type = NETGROUP_CLIENT;
 	} else if (index(client_tok, '/') != NULL) {
 		CIDR *cidr;
@@ -267,7 +266,7 @@ static int add_client(struct exportlist *exp,
 				 "Expected a CIDR address, got (%s)",
 				 client_tok);
 			errcnt++;
-			goto done;
+			goto out;
 		}
 		memcpy(&addr, &cidr->addr[12], 4);
 		cli->client.network.netaddr = ntohl(addr);
@@ -282,9 +281,9 @@ static int add_client(struct exportlist *exp,
 				 "Wildcard client (%s) name too long",
 				 client_tok);
 			errcnt++;
-			goto done;
+			goto out;
 		}
-		strcpy(cli->client.wildcard.wildcard, client_tok);
+		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
 	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
 		struct addrinfo *ap;
@@ -333,14 +332,16 @@ static int add_client(struct exportlist *exp,
 			 "Unknown client token (%s)",
 			 client_tok);
 		errcnt++;
+		goto out;
 	}
-
-done:
 	cli->client_perms = *perms;
 	glist_add_tail(&exp->clients.client_list,
 		       &cli->cle_list);
 	exp->clients.num_clients++;
+	cli = NULL;
 out:
+	if (cli != NULL)
+		gsh_free(cli);
 	return errcnt;
 }
 
@@ -483,7 +484,7 @@ static void *fsal_init(void *link_mem, void *self_struct)
 		fp = (struct fsal_params *)self_struct;
 		if (fp->name != NULL)
 			gsh_free(fp->name);
-		gsh_free(fp->name);
+		gsh_free(fp);
 		return NULL;
 	}
 }
@@ -548,32 +549,32 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 					  NULL,
 					  &fsal_up_top,
 					  &fsal_exp);
+	fsal->ops->put(fsal);
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create export for (%s) to (%s)",
 			exp->pseudopath,
 			exp->fullpath);
 		errcnt++;
-	} else {
-		/* We are connected up to the fsal side.  Now
-		 * validate maxread/write etc with fsal params */
-		if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp)) {
-			LogEvent(COMPONENT_CONFIG,
-				 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
-				 exp->MaxRead,
-				 fsal_exp->ops->fs_maxread(fsal_exp));
-			exp->MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
-		}
-		if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp)) {
-			LogEvent(COMPONENT_CONFIG,
-				 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
-				 exp->MaxWrite,
-				 fsal_exp->ops->fs_maxwrite(fsal_exp));
-			exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
-		}
-		exp->export_hdl = fsal_exp;
 	}
-	fsal->ops->put(fsal);
+	/* We are connected up to the fsal side.  Now
+	 * validate maxread/write etc with fsal params */
+	if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp)) {
+		LogEvent(COMPONENT_CONFIG,
+			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
+			 exp->MaxRead,
+			 fsal_exp->ops->fs_maxread(fsal_exp));
+		exp->MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
+	}
+	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp)) {
+		LogEvent(COMPONENT_CONFIG,
+			 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
+			 exp->MaxWrite,
+			 fsal_exp->ops->fs_maxwrite(fsal_exp));
+		exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
+	}
+	exp->export_hdl = fsal_exp;
+
 err:
 	return errcnt;
 }
@@ -633,17 +634,17 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 			"No default access type for this export set");
 		errcnt++;
 	}
-	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4) &&
-	    exp->pseudopath == NULL) {
-		LogCrit(COMPONENT_CONFIG,
-			"Exporting to NFSv4 but not Pseudo path defined");
-		errcnt++;
-	}
-	if (exp->id == 0 && strcmp(exp->pseudopath, "/") != 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Export id 0 can only export \"/\" not (%s)",
-			exp->pseudopath);
-		errcnt++;
+	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
+		if (exp->pseudopath == NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Exporting to NFSv4 but not Pseudo path defined");
+			errcnt++;
+		} else if (exp->id == 0 && strcmp(exp->pseudopath, "/") != 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"Export id 0 can only export \"/\" not (%s)",
+				exp->pseudopath);
+			errcnt++;
+		}
 	}
 	if (exp->FS_tag != NULL) {
 		probe_exp = get_gsh_export_by_tag(exp->FS_tag);
@@ -1047,6 +1048,7 @@ static int build_default_root(void)
 			"Failed to insert pseudo root export.  In use??");
 		goto err_out;
 	}
+	p_entry = NULL;  /* so coverity thinks we are done with this */
 	set_gsh_export_state(exp, EXPORT_READY);
 
 	LogEvent(COMPONENT_CONFIG,
@@ -1098,6 +1100,15 @@ static void FreeClientList(exportlist_client_t *clients)
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		glist_del(&client->cle_list);
+		if (client->type == NETGROUP_CLIENT &&
+		    client->client.netgroup.netgroupname != NULL)
+			gsh_free(client->client.netgroup.netgroupname);
+		if (client->type == WILDCARDHOST_CLIENT &&
+		    client->client.wildcard.wildcard != NULL)
+			gsh_free(client->client.wildcard.wildcard);
+		if (client->type == GSSPRINCIPAL_CLIENT &&
+		    client->client.gssprinc.princname != NULL)
+			gsh_free(client->client.gssprinc.princname);
 		gsh_free(client);
 	}
 }

@@ -264,7 +264,7 @@ static int convert_list(struct config_node *node,
 	strcpy(csv_list, node->u.varvalue);
 	sp = csv_list;
 	ep = sp + strlen(sp);
-	while (cp < ep) {
+	while (sp < ep) {
 		cp = index(sp, ',');
 		if (cp != NULL)
 			*cp++ = '\0';
@@ -929,7 +929,7 @@ int load_config_from_node(void *tree_node,
 		char *file;
 		int lineno;
 
-		if (node != NULL) {
+		if (node->filename != NULL) {
 			file = node->filename;
 			lineno = node->linenumber;
 		} else {
