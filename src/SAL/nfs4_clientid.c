@@ -887,7 +887,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(plock_owner);
-		release_lockstate(plock_owner);
+		release_lockstate(req_ctx, plock_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
@@ -913,7 +913,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(popen_owner);
-		release_openstate(popen_owner);
+		release_openstate(req_ctx, popen_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =

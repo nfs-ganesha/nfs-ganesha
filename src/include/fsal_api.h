@@ -1742,6 +1742,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*share_op) (struct fsal_obj_handle *obj_hdl,
+				   const struct req_op_context *opctx,
 				   void *owner,
 				   fsal_share_param_t request_share);
 /**

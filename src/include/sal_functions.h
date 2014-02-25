@@ -568,9 +568,12 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 					 layouttype4 type, state_t **state);
 void state_nfs4_state_wipe(cache_entry_t *entry);
 
-void release_lockstate(state_owner_t *lock_owner);
-void release_openstate(state_owner_t *open_owner);
-void state_export_release_nfs4_state(exportlist_t *export);
+void release_lockstate(struct req_op_context *req_ctx,
+		       state_owner_t *lock_owner);
+void release_openstate(struct req_op_context *req_ctx,
+		       state_owner_t *open_owner);
+void state_export_release_nfs4_state(struct req_op_context *req_ctx,
+				     exportlist_t *export);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);
@@ -584,23 +587,29 @@ void dump_all_states(void);
 
 #define OPEN4_SHARE_ACCESS_NONE 0
 
-state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
+state_status_t state_share_add(cache_entry_t *entry,
+			       struct req_op_context *req_ctx,
+			       state_owner_t *owner,
 			       /* state that holds share bits to be added */
 			       state_t *state);
 
-state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
+state_status_t state_share_remove(cache_entry_t *entry,
+				  struct req_op_context *req_ctx,
+				  state_owner_t *owner,
 				  /* state that holds share bits to be removed
 				   */
 				  state_t *state);
 
-state_status_t state_share_upgrade(cache_entry_t *entry,
+state_status_t state_share_upgrade(struct req_op_context *req_ctx,
+				   cache_entry_t *entry,
 				   /* new share bits */
 				   state_data_t *state_data,
 				   state_owner_t *owner,
 				   /* state that holds current share bits */
 				   state_t *state);
 
-state_status_t state_share_downgrade(cache_entry_t *entry,
+state_status_t state_share_downgrade(struct req_op_context *req_ctx,
+				     cache_entry_t *entry,
 				     /* new share bits */
 				     state_data_t *state_data,
 				     state_owner_t *owner,
@@ -624,6 +633,7 @@ state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
 			       exportlist_t *, int, int, state_owner_t *);
 
 state_status_t state_nlm_unshare(cache_entry_t *entry,
+				 struct req_op_context *req_ctx,
 				 exportlist_t *export,
 				 int share_access,
 				 int share_deny,

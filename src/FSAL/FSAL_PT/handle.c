@@ -706,25 +706,6 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* pt_share_op
- */
-#if 0
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
-			      fsal_share_param_t request_share)
-{
-	fsal_status_t status;
-	int fd, mntfd;
-	struct pt_fsal_obj_handle *myself;
-
-	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
-	mntfd = fd = myself->u.file.fd;
-
-	status = PTFSAL_share_op(mntfd, fd, p_owner, request_share);
-
-	return (status);
-}
-#endif
-
 void pt_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;

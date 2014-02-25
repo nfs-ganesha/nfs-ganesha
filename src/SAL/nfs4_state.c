@@ -48,6 +48,7 @@
 #include "fsal.h"
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
+#include "export_mgr.h"
 
 pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
 
@@ -405,7 +406,8 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
  *
  * @param[in] lock_owner Lock owner to release
  */
-void release_lockstate(state_owner_t *lock_owner)
+void release_lockstate(struct req_op_context *req_ctx,
+		       state_owner_t *lock_owner)
 {
 	struct glist_head *glist, *glistn;
 
@@ -435,7 +437,8 @@ void release_lockstate(state_owner_t *lock_owner)
  *
  * @param[in,out] open_owner Open owner
  */
-void release_openstate(state_owner_t *open_owner)
+void release_openstate(struct req_op_context *req_ctx,
+		       state_owner_t *open_owner)
 {
 	state_status_t state_status;
 	struct glist_head *glist, *glistn;
@@ -455,8 +458,17 @@ void release_openstate(state_owner_t *open_owner)
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		if (state_found->state_type == STATE_TYPE_SHARE) {
+			req_ctx->export =
+				container_of(state_found->state_export,
+					     struct gsh_export,
+					     export);
+
+			req_ctx->fsal_export =
+				state_found->state_export->export_hdl;
+
 			state_status =
 			    state_share_remove(state_found->state_entry,
+					       req_ctx,
 					       open_owner, state_found);
 			if (!state_unlock_err_ok(state_status)) {
 				LogEvent(COMPONENT_CLIENTID,
@@ -484,7 +496,8 @@ void release_openstate(state_owner_t *open_owner)
  *
  * @param[in] export The export to release state for
  */
-void state_export_release_nfs4_state(exportlist_t *export)
+void state_export_release_nfs4_state(struct req_op_context *req_ctx,
+				     exportlist_t *export)
 {
 	state_t *state;
 	state_status_t state_status;
@@ -503,6 +516,7 @@ void state_export_release_nfs4_state(exportlist_t *export)
 
 		if (state->state_type == STATE_TYPE_SHARE) {
 			state_status = state_share_remove(state->state_entry,
+							  req_ctx,
 							  state->state_owner,
 							  state);
 

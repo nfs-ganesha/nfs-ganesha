@@ -70,20 +70,23 @@ static unsigned int state_share_get_share_deny(cache_entry_t *entry);
  *
  * @return State status.
  */
-static state_status_t do_share_op(cache_entry_t *entry, state_owner_t *owner,
+static state_status_t do_share_op(cache_entry_t *entry,
+				  struct req_op_context *req_ctx,
+				  state_owner_t *owner,
 				  fsal_share_param_t *share)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
-	struct fsal_obj_handle *obj_hdl = entry->obj_handle;
 
 	/* Quick exit if share reservation is not supported by FSAL */
-	if (!obj_hdl->export->ops->
-	    fs_supports(obj_hdl->export, fso_share_support))
+	if (!req_ctx->fsal_export->ops->
+	    fs_supports(req_ctx->fsal_export, fso_share_support))
 		return STATE_SUCCESS;
 
-	fsal_status =
-	    entry->obj_handle->ops->share_op(entry->obj_handle, NULL, *share);
+	fsal_status = entry->obj_handle->ops->share_op(entry->obj_handle,
+						       req_ctx,
+						       NULL,
+						       *share);
 
 	if (fsal_status.major == ERR_FSAL_STALE)
 		cache_inode_kill_entry(entry);
@@ -107,7 +110,9 @@ static state_status_t do_share_op(cache_entry_t *entry, state_owner_t *owner,
  *
  * @return State status.
  */
-state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
+state_status_t state_share_add(cache_entry_t *entry,
+			       struct req_op_context *req_ctx,
+			       state_owner_t *owner,
 			       state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
@@ -157,7 +162,7 @@ state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
 
-		status = do_share_op(entry, owner, &share_param);
+		status = do_share_op(entry, req_ctx, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -191,7 +196,9 @@ state_status_t state_share_add(cache_entry_t *entry, state_owner_t *owner,
  *
  * @return State status.
  */
-state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
+state_status_t state_share_remove(cache_entry_t *entry,
+				  struct req_op_context *req_ctx,
+				  state_owner_t *owner,
 				  state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
@@ -229,7 +236,7 @@ state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
 
-		status = do_share_op(entry, owner, &share_param);
+		status = do_share_op(entry, req_ctx, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -262,7 +269,8 @@ state_status_t state_share_remove(cache_entry_t *entry, state_owner_t *owner,
  *
  * @return State status.
  */
-state_status_t state_share_upgrade(cache_entry_t *entry,
+state_status_t state_share_upgrade(struct req_op_context *req_ctx,
+				   cache_entry_t *entry,
 				   state_data_t *state_data,
 				   state_owner_t *owner, state_t *state)
 {
@@ -317,7 +325,7 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
 
-		status = do_share_op(entry, owner, &share_param);
+		status = do_share_op(entry, req_ctx, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -356,7 +364,8 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
  *
  * @return State status.
  */
-state_status_t state_share_downgrade(cache_entry_t *entry,
+state_status_t state_share_downgrade(struct req_op_context *req_ctx,
+				     cache_entry_t *entry,
 				     state_data_t *state_data,
 				     state_owner_t *owner, state_t *state)
 {
@@ -400,7 +409,7 @@ state_status_t state_share_downgrade(cache_entry_t *entry,
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
 
-		status = do_share_op(entry, owner, &share_param);
+		status = do_share_op(entry, req_ctx, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -803,7 +812,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
 
-		status = do_share_op(entry, owner, &share_param);
+		status = do_share_op(entry, req_ctx, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -884,6 +893,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_nlm_unshare(cache_entry_t *entry,
+				 struct req_op_context *req_ctx,
 				 exportlist_t *export,
 				 int share_access,
 				 int share_deny,
@@ -956,7 +966,8 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 			share_param.share_access = new_entry_share_access;
 			share_param.share_deny = new_entry_share_deny;
 
-			status = do_share_op(entry, owner, &share_param);
+			status = do_share_op(entry, req_ctx, owner,
+					     &share_param);
 
 			if (status != STATE_SUCCESS) {
 				/* Revert the ref counted share state
@@ -1120,6 +1131,7 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_unshare(entry,
+					   req_ctx,
 					   export,
 					   OPEN4_SHARE_ACCESS_NONE,
 					   OPEN4_SHARE_DENY_NONE,

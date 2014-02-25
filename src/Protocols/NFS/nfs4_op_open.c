@@ -262,8 +262,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	   file share state. */
 
 	if (*new_state) {
-		state_status =
-		    state_share_add(data->current_entry, owner, file_state);
+		state_status = state_share_add(data->current_entry,
+					       data->req_ctx,
+					       owner,
+					       file_state);
 
 		if (state_status != STATE_SUCCESS) {
 			cache_status =
@@ -284,7 +286,8 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		    && (file_state->state_type == STATE_TYPE_SHARE)) {
 			LogFullDebug(COMPONENT_STATE,
 				     "Update existing share state");
-			state_status = state_share_upgrade(data->current_entry,
+			state_status = state_share_upgrade(data->req_ctx,
+							   data->current_entry,
 							   &candidate_data,
 							   owner,
 							   file_state);

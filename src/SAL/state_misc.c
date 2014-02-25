@@ -1320,7 +1320,7 @@ void state_release_export(struct gsh_export *exp)
 	req_ctx.fsal_export = exp->export.export_hdl;
 
 	state_export_unlock_all(&req_ctx);
-	state_export_release_nfs4_state(&exp->export);
+	state_export_release_nfs4_state(&req_ctx, &exp->export);
 	state_export_unshare_all(&req_ctx);
 }
 

@@ -904,7 +904,9 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
+static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
+			      const struct req_op_context *opctx,
+			      void *p_owner,
 			      fsal_share_param_t request_share)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

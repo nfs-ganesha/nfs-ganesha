@@ -529,9 +529,23 @@ clear_fsal_shares(cache_entry_t *entry)
 			.share_access = 0,
 			.share_deny = 0
 		};
+		/* Fake root credentials for caching lookup */
+		struct user_cred synthetic_creds = {
+			.caller_uid = 0,
+			.caller_gid = 0,
+			.caller_glen = 0,
+			.caller_garray = NULL
+		};
+		/* Synthetic request context */
+		struct req_op_context synthetic_context = {
+			.creds = &synthetic_creds,
+			.caller_addr = NULL,
+			.clientid = NULL
+		};
 		/* FSAL return status */
 		fsal_status_t fsal_status =
 		    handle->ops->share_op(entry->obj_handle,
+					  &synthetic_context,
 					  NULL,
 					  releaser);
 		if (FSAL_IS_ERROR(fsal_status))
