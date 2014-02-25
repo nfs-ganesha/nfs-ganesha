@@ -516,7 +516,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 
 		retval = load_fsal(fp->name, &fsal);
 		if (retval != 0) {
-			LogCrit(COMPONENT_CONFIG,
+			LogFatal(COMPONENT_CONFIG,
 				"Failed to load FSAL (%s)"
 				" because: %s", fp->name,
 				strerror(retval));
