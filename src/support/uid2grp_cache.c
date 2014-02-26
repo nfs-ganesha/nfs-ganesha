@@ -428,9 +428,6 @@ void uid2grp_clear_cache(void)
 
 	pthread_rwlock_wrlock(&uid2grp_user_lock);
 
-	memset(uid_grplist_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node *));
-
 	while ((node = avltree_first(&uname_tree))) {
 		struct cache_info *info = avltree_container_of(node,
 							       struct
