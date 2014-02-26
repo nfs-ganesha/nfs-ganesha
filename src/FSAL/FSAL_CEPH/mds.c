@@ -49,9 +49,6 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 {
 	/* The private 'full' object handle */
 	struct handle *handle = (struct handle *)opaque;
-	/* The private 'full' export */
-	struct export *export =
-	    container_of(handle->handle.export, struct export, export);
 	/* Return code from upcall operation */
 	state_status_t status = STATE_SUCCESS;
 	struct gsh_buffdesc key = {
@@ -64,10 +61,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 		.io_mode = (write ? LAYOUTIOMODE4_RW : LAYOUTIOMODE4_READ)
 	};
 
-	status =
-	    export->export.up_ops->layoutrecall(&export->export, &key,
-						LAYOUT4_NFSV4_1_FILES, false,
-						&segment, NULL, NULL);
+	status = handle->up_ops->layoutrecall(&key, LAYOUT4_NFSV4_1_FILES,
+					      false, &segment, NULL, NULL);
 
 	if (status != STATE_SUCCESS)
 		return false;

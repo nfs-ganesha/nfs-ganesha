@@ -68,6 +68,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	vfs_file_handle_t *handle;
+	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	union {
 		struct {
 			int fd;

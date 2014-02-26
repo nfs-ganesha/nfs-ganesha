@@ -144,14 +144,12 @@ struct layoutrecall_spec {
 struct fsal_up_vector {
 	/** Invalidate some or all of a cache entry */
 	cache_inode_status_t(*invalidate)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *obj,	/*< The file to invalidate */
 		uint32_t flags /*< Flags governing invalidation */
 		);
 
 	/** Update cached attributes */
 	cache_inode_status_t(*update)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *obj,	/*< The file to update */
 		struct attrlist *attr, /*< List of attributes to
 					   update.  Note that the @c
@@ -166,7 +164,6 @@ struct fsal_up_vector {
 
 	/** Grant a lock to a client */
 	state_status_t(*lock_grant)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *file, /*< The file in question */
 		void *owner, /*< The lock owner */
 		fsal_lock_param_t *lock_param /*< A description of the lock */
@@ -174,7 +171,6 @@ struct fsal_up_vector {
 
 	/** Signal lock availability */
 	state_status_t(*lock_avail)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *file, /*< The file in question */
 		void *owner, /*< The lock owner */
 		fsal_lock_param_t *lock_param /*< A description of the lock */
@@ -182,7 +178,6 @@ struct fsal_up_vector {
 
 	/** Perform a layoutrecall on a single file */
 	state_status_t(*layoutrecall)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *handle, /*< Handle on which the
 						       layout is held */
 		layouttype4 layout_type, /*< The type of layout to recall */
@@ -198,10 +193,10 @@ struct fsal_up_vector {
 
 	/** Remove or change a deviceid */
 	state_status_t(*notify_device)(
-		struct fsal_export *export, /*< Export responsible for the
-						device ID */
 		notify_deviceid_type4 notify_type, /*< Change or remove */
 		layouttype4 layout_type, /*< The layout type affected */
+		uint64_t dev_exportid, /*< Export responsible for the device
+					   ID */
 		uint64_t devid,	 /*< The lower quad of the device id, unique
 				     within this export. */
 		bool immediate /*< Whether the change is immediate
@@ -210,7 +205,6 @@ struct fsal_up_vector {
 
 	/** Recall a delegation */
 	state_status_t(*delegrecall)(
-		struct fsal_export *export, /*< FSAL export */
 		const struct gsh_buffdesc *handle /*< Handle on which the
 						    delegation is held */
 		);
@@ -223,34 +217,47 @@ extern struct fsal_up_vector fsal_up_top;
  * @brief Asynchronous upcall wrappers
  */
 
-int up_async_invalidate(struct fridgethr *, struct fsal_export *,
-			const struct gsh_buffdesc *, uint32_t,
-			void (*)(void *, cache_inode_status_t),
-			void *);
-int up_async_update(struct fridgethr *, struct fsal_export *,
-		    const struct gsh_buffdesc *, struct attrlist *, uint32_t,
-		    void (*)(void *, cache_inode_status_t), void *);
-int up_async_lock_grant(struct fridgethr *, struct fsal_export *,
-			const struct gsh_buffdesc *, void *,
-			fsal_lock_param_t *, void (*)(void *, state_status_t),
-			void *);
-int up_async_lock_avail(struct fridgethr *, struct fsal_export *,
-			const struct gsh_buffdesc *, void *,
-			fsal_lock_param_t *, void (*)(void *, state_status_t),
-			void *);
-int up_async_layoutrecall(struct fridgethr *, struct fsal_export *,
-			  const struct gsh_buffdesc *, layouttype4, bool,
-			  const struct pnfs_segment *, void *,
-			  struct layoutrecall_spec *,
-			  void (*)(void *, state_status_t),
-			  void *);
-int up_async_notify_device(struct fridgethr *, struct fsal_export *,
-			   notify_deviceid_type4, layouttype4, uint64_t, bool,
-			   void (*)(void *, state_status_t), void *);
-int up_async_delegrecall(struct fridgethr *, struct fsal_export *,
-			 const struct gsh_buffdesc *, void (*)(void *,
-							       state_status_t),
-			 void *);
+int up_async_invalidate(struct fridgethr *fr,
+			const struct fsal_up_vector *up_ops,
+			const struct gsh_buffdesc *obj, uint32_t flags,
+			void (*cb) (void *, cache_inode_status_t), void *cb_arg);
+int up_async_update(struct fridgethr *fr,
+		    const struct fsal_up_vector *up_ops,
+		    const struct gsh_buffdesc *obj, struct attrlist *attr,
+		    uint32_t flags, void (*cb) (void *, cache_inode_status_t),
+		    void *cb_arg);
+int up_async_lock_grant(struct fridgethr *fr,
+			const struct fsal_up_vector *up_ops,
+			const struct gsh_buffdesc *file, void *owner,
+			fsal_lock_param_t *lock_param,
+			void (*cb)(void *, state_status_t),
+			void *cb_arg);
+int up_async_lock_avail(struct fridgethr *fr,
+			const struct fsal_up_vector *up_ops,
+			const struct gsh_buffdesc *file, void *owner,
+			fsal_lock_param_t *lock_param,
+			void (*cb) (void *, state_status_t),
+			void *cb_arg);
+int up_async_layoutrecall(struct fridgethr *fr,
+			  const struct fsal_up_vector *up_ops,
+			  const struct gsh_buffdesc *handle,
+			  layouttype4 layout_type, bool changed,
+			  const struct pnfs_segment *segment, void *cookie,
+			  struct layoutrecall_spec *spec,
+			  void (*cb) (void *, state_status_t),
+			  void *cb_arg);
+int up_async_notify_device(struct fridgethr *fr,
+			   const struct fsal_up_vector *up_ops,
+			   notify_deviceid_type4 notify_type,
+			   layouttype4 layout_type,
+			   uint64_t dev_exportid, uint64_t devid,
+			   bool immediate, void (*cb) (void *, state_status_t),
+			   void *cb_arg);
+int up_async_delegrecall(struct fridgethr *fr,
+			 const struct fsal_up_vector *up_ops,
+			 const struct gsh_buffdesc *handle,
+			 void (*cb)(void *, state_status_t),
+			 void *cb_arg);
 
 /** @} */
 

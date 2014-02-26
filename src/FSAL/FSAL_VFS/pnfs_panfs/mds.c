@@ -257,7 +257,6 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 			    struct pnfs_segment *seg, void *r_cookie)
 {
-	struct fsal_export *export = myself->obj_handle.export;
 	struct pnfs_segment up_segment = *seg;
 	struct gsh_buffdesc handle = {
 		.addr = myself->handle,
@@ -268,7 +267,7 @@ static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 	/* For layoutrecall up_ops are probably set to default recieved at
 	 * vfs_create_export
 	 */
-	export->up_ops->layoutrecall(export, &handle, LAYOUT4_OSD2_OBJECTS,
+	myself->up_ops->layoutrecall(&handle, LAYOUT4_OSD2_OBJECTS,
 				     false, &up_segment, r_cookie, NULL);
 
 }

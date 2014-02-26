@@ -64,7 +64,7 @@ static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
 		.addr = &ds->wire.wire.vi,
 		.len = sizeof(ds->wire.wire.vi)
 	};
-	up_async_invalidate(general_fridge, export, &key,
+	up_async_invalidate(general_fridge, export->up_ops, &key,
 			    CACHE_INODE_INVALIDATE_ATTRS, NULL, NULL);
 	return;
 }

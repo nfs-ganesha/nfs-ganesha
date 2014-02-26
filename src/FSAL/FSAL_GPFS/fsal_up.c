@@ -206,8 +206,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					.lock_length = fl.flock.l_len
 				};
 				rc = up_async_lock_grant(general_fridge,
-							 gpfs_fsal_up_ctx->
-							 gf_export, &key,
+							 event_func, &key,
 							 fl.lock_owner,
 							 &lockdesc, NULL, NULL);
 			}
@@ -217,8 +216,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogDebug(COMPONENT_FSAL_UP,
 				 "delegation recall: flags:%x ino %ld", flags,
 				 callback.buf->st_ino);
-			rc = up_async_delegrecall(general_fridge,
-						  gpfs_fsal_up_ctx->gf_export,
+			rc = up_async_delegrecall(general_fridge, event_func,
 						  &key, NULL, NULL);
 			break;
 
@@ -234,8 +232,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 flags, callback.buf->st_ino);
 
 				rc = up_async_layoutrecall(general_fridge,
-							gpfs_fsal_up_ctx->
-							gf_export, &key,
+							event_func, &key,
 							LAYOUT4_NFSV4_1_FILES,
 							false, &segment,
 							NULL, NULL, NULL,
@@ -265,10 +262,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 dev_id.devid);
 
 			rc = up_async_notify_device(general_fridge,
-						gpfs_fsal_up_ctx->gf_export,
+						event_func,
 						NOTIFY_DEVICEID4_DELETE_MASK,
 						LAYOUT4_NFSV4_1_FILES,
-						dev_id.devid, true, NULL,
+						dev_id.sbid,
+						dev_id.devid,
+						true, NULL,
 						NULL);
 			break;
 
@@ -323,8 +322,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    grace_period_attr;
 
 					rc = event_func->
-					    update(gpfs_fsal_up_ctx->gf_export,
-						   &key, &attr, upflags);
+					    update(&key, &attr, upflags);
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {
@@ -332,14 +330,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						attr.mask = 0;
 						rc = up_async_update
 						    (general_fridge,
-						     gpfs_fsal_up_ctx->
-						     gf_export, &key, &attr,
+						     event_func,
+						     &key, &attr,
 						     upflags, NULL, NULL);
 					}
 				} else {
 					rc = event_func->
-					    invalidate(gpfs_fsal_up_ctx->
-						gf_export, &key,
+					    invalidate(&key,
 						CACHE_INODE_INVALIDATE_ATTRS
 						|
 						CACHE_INODE_INVALIDATE_CONTENT);
@@ -358,7 +355,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogMidDebug(COMPONENT_FSAL_UP,
 				    "inode invalidate: flags:%x update ino %ld",
 				    flags, callback.buf->st_ino);
-			rc = event_func->invalidate(gpfs_fsal_up_ctx->gf_export,
+			rc = event_func->invalidate(
 						&key,
 						CACHE_INODE_INVALIDATE_ATTRS
 						|

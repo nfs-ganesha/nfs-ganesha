@@ -98,6 +98,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->handle = (vfs_file_handle_t *) &hdl[1];
 	memcpy(hdl->handle, fh, sizeof(vfs_file_handle_t));
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
+	hdl->up_ops = exp_hdl->up_ops;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd = -1;	/* no open on this yet */
 		hdl->u.file.openflags = FSAL_O_CLOSED;

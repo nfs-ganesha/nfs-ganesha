@@ -286,6 +286,7 @@ int construct_handle(const struct stat *st, struct Inode *i,
 	constructing->vi.ino.val = st->st_ino;
 	constructing->vi.snapid.val = st->st_dev;
 	constructing->i = i;
+	constructing->up_ops = export->export.up_ops;
 
 	if (rc < 0) {
 		gsh_free(constructing);

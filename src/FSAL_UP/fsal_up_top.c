@@ -61,28 +61,11 @@ static struct user_cred synthetic_creds = {
 /**
  * @brief Invalidate a cached entry
  *
- * @param[in] export FSAL export
  * @param[in] key    Key to specify object
  * @param[in] flags  Flags to pass to cache_inode_invalidate
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
-
-static cache_inode_status_t invalidate(struct fsal_export *export,
-				       const struct gsh_buffdesc *key,
-				       uint32_t flags)
-{
-	cache_entry_t *entry = NULL;
-	cache_inode_status_t rc = 0;
-
-	rc = up_get(key, &entry);
-	if (rc == 0) {
-		rc = cache_inode_invalidate(entry, flags);
-		cache_inode_put(entry);
-	}
-
-	return rc;
-}
 
 cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
 				     uint32_t flags)
@@ -102,7 +85,6 @@ cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
 /**
  * @brief Update cached attributes
  *
- * @param[in] export FSAL export
  * @param[in] obj    Key to specify object
  * @param[in] attr   New attributes
  * @param[in] flags  Flags to govern update
@@ -110,8 +92,7 @@ cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-static cache_inode_status_t update(struct fsal_export *export,
-				   const struct gsh_buffdesc *obj,
+static cache_inode_status_t update(const struct gsh_buffdesc *obj,
 				   struct attrlist *attr, uint32_t flags)
 {
 	cache_entry_t *entry = NULL;
@@ -298,7 +279,6 @@ static cache_inode_status_t update(struct fsal_export *export,
 /**
  * @brief Initiate a lock grant
  *
- * @param[in] export     The export in question
  * @param[in] file       The file in question
  * @param[in] owner      The lock owner
  * @param[in] lock_param description of the lock
@@ -306,8 +286,7 @@ static cache_inode_status_t update(struct fsal_export *export,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_grant(struct fsal_export *export,
-				 const struct gsh_buffdesc *file, void *owner,
+static state_status_t lock_grant(const struct gsh_buffdesc *file, void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	cache_entry_t *entry = NULL;
@@ -330,7 +309,6 @@ static state_status_t lock_grant(struct fsal_export *export,
 /**
  * @brief Signal lock availability
  *
- * @param[in] export     The export in question
  * @param[in] file       The file in question
  * @param[in] owner      The lock owner
  * @param[in] lock_param description of the lock
@@ -338,8 +316,7 @@ static state_status_t lock_grant(struct fsal_export *export,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_avail(struct fsal_export *export,
-				 const struct gsh_buffdesc *file, void *owner,
+static state_status_t lock_avail(const struct gsh_buffdesc *file, void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	cache_entry_t *entry = NULL;
@@ -540,7 +517,6 @@ struct layoutrecall_cb_data {
  * This function validates the recall, creates the recall object, and
  * sends out CB_LAYOUTRECALL messages.
  *
- * @param[in] export      FSAL export
  * @param[in] handle      Handle on which the layout is held
  * @param[in] layout_type The type of layout to recall
  * @param[in] changed     Whether the layout has changed and the
@@ -558,8 +534,7 @@ struct layoutrecall_cb_data {
  * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
  *         recall state.
  */
-state_status_t layoutrecall(struct fsal_export *export,
-			    const struct gsh_buffdesc *handle,
+state_status_t layoutrecall(const struct gsh_buffdesc *handle,
 			    layouttype4 layout_type, bool changed,
 			    const struct pnfs_segment *segment, void *cookie,
 			    struct layoutrecall_spec *spec)
@@ -939,7 +914,7 @@ static int32_t notifydev_completion(rpc_call_t *call, rpc_call_hook hook,
  */
 
 struct devnotify_cb_data {
-	uint64_t exportid;
+	uint64_t dev_exportid;
 	notify_deviceid_type4 notify_type;
 	layouttype4 layout_type;
 	uint64_t devid;
@@ -991,7 +966,7 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	arg->notify.notify_vals.notifylist4_val = (char *)&arg->notify_del;
 	arg->notify_del.ndd_layouttype = devicenotify->layout_type;
 	quad = (uint64_t *) &arg->notify_del.ndd_deviceid;
-	*quad = nfs_htonl64(devicenotify->exportid);
+	*quad = nfs_htonl64(devicenotify->dev_exportid);
 	++quad;
 	*quad = nfs_htonl64(devicenotify->devid);
 	code =
@@ -1006,7 +981,7 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 /**
  * @brief Remove or change a deviceid
  *
- * @param[in] export      Export responsible for the device ID
+ * @param[in] dev_exportid Export responsible for the device ID
  * @param[in] notify_type Change or remove
  * @param[in] layout_type The layout type affected
  * @param[in] devid       The lower quad of the device id, unique
@@ -1017,13 +992,13 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
  * @return STATE_SUCCESS or errors.
  */
 
-state_status_t notify_device(struct fsal_export *export,
-			     notify_deviceid_type4 notify_type,
-			     layouttype4 layout_type, uint64_t devid,
+state_status_t notify_device(notify_deviceid_type4 notify_type,
+			     layouttype4 layout_type,
+			     uint64_t dev_exportid, uint64_t devid,
 			     bool immediate)
 {
 	struct devnotify_cb_data cb_data = {
-		.exportid = export->exp_entry->id,
+		.dev_exportid = dev_exportid,
 		.notify_type = notify_type,
 		.layout_type = layout_type,
 		.devid = devid
@@ -1162,14 +1137,12 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
 /**
  * @brief Recall a delegation
  *
- * @param[in] export FSAL export
  * @param[in] handle Handle on which the delegation is held
  *
  * @return STATE_SUCCESS or errors.
  */
 
-state_status_t delegrecall(struct fsal_export *export,
-			   const struct gsh_buffdesc *handle)
+state_status_t delegrecall(const struct gsh_buffdesc *handle)
 {
 	cache_entry_t *entry = NULL;
 	struct glist_head *glist;
@@ -1214,7 +1187,7 @@ state_status_t delegrecall(struct fsal_export *export,
 struct fsal_up_vector fsal_up_top = {
 	.lock_grant = lock_grant,
 	.lock_avail = lock_avail,
-	.invalidate = invalidate,
+	.invalidate = fsal_invalidate,
 	.update = update,
 	.layoutrecall = layoutrecall,
 	.notify_device = notify_device,
