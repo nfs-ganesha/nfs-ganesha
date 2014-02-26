@@ -1412,23 +1412,18 @@ bool init_export_root(struct gsh_export *exp)
 	cache_inode_status_t cache_status;
 	struct fsal_obj_handle *root_handle;
 	cache_entry_t *entry = NULL;
-	struct req_op_context req_ctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
 
-	/* Initialize req_ctx.
-	 * Note that a zeroed creds works just fine as root creds.
-	 */
-	memset(&req_ctx, 0, sizeof(req_ctx));
-	memset(&creds, 0, sizeof(creds));
-	req_ctx.creds = &creds;
-	req_ctx.export = exp;
-	req_ctx.fsal_export = exp->export.export_hdl;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, exp, export->export_hdl,
+			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
-	fsal_status = export->export_hdl->ops->lookup_path(export->export_hdl,
-							   &req_ctx,
-							   export->fullpath,
-							   &root_handle);
+	fsal_status =
+	    export->export_hdl->ops->lookup_path(export->export_hdl,
+						 &root_op_context.req_ctx,
+						 export->fullpath,
+						 &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_INIT,
@@ -1442,7 +1437,7 @@ bool init_export_root(struct gsh_export *exp)
 
 	/* Get the cache inode entry (and an LRU reference */
 	cache_status = cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE,
-					     &entry, &req_ctx);
+					     &entry, &root_op_context.req_ctx);
 
 	if (entry == NULL) {
 		LogCrit(COMPONENT_INIT,
@@ -1557,18 +1552,17 @@ void release_export_root(struct gsh_export *exp)
 
 void unexport(struct gsh_export *export)
 {
-	struct req_op_context opctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
 
-	/* We need a real context. Use root creds. */
-	memset(&opctx, 0, sizeof(opctx));
-	memset(&creds, 0, sizeof(creds));
-	opctx.creds = &creds;
-	opctx.export = export;
-	opctx.fsal_export = opctx.export->export.export_hdl;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
+
+	root_op_context.req_ctx.export = export;
+	root_op_context.req_ctx.fsal_export = export->export.export_hdl;
 
 	/* Make the export unreachable */
-	pseudo_unmount_export(export, &opctx);
+	pseudo_unmount_export(export, &root_op_context.req_ctx);
 	remove_gsh_export(export->export.id);
 	release_export_root(export);
 }
@@ -1583,13 +1577,11 @@ void kill_export_root_entry(cache_entry_t *entry)
 {
 	exportlist_t *export;
 	struct gsh_export *exp;
-	struct req_op_context opctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
 
-	/* We need a real context. Use root creds. */
-	memset(&opctx, 0, sizeof(opctx));
-	memset(&creds, 0, sizeof(creds));
-	opctx.creds = &creds;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	if (entry->type != DIRECTORY)
 		return;
@@ -1621,9 +1613,9 @@ void kill_export_root_entry(cache_entry_t *entry)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 		/* Make the export otherwise unreachable */
-		opctx.export = exp;
-		opctx.fsal_export = exp->export.export_hdl;
-		pseudo_unmount_export(exp, &opctx);
+		root_op_context.req_ctx.export = exp;
+		root_op_context.req_ctx.fsal_export = exp->export.export_hdl;
+		pseudo_unmount_export(exp, &root_op_context.req_ctx);
 		remove_gsh_export(exp->export.id);
 
 		put_gsh_export(exp);

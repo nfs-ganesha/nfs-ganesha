@@ -1307,21 +1307,16 @@ void dump_all_owners(void)
 
 void state_release_export(struct gsh_export *exp)
 {
-	struct req_op_context req_ctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
 
-	/* Initialize req_ctx.
-	 * Note that a zeroed creds works just fine as root creds.
-	 */
-	memset(&req_ctx, 0, sizeof(req_ctx));
-	memset(&creds, 0, sizeof(creds));
-	req_ctx.creds = &creds;
-	req_ctx.export = exp;
-	req_ctx.fsal_export = exp->export.export_hdl;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, exp, exp->export.export_hdl,
+			     0, 0, UNKNOWN_REQUEST);
 
-	state_export_unlock_all(&req_ctx);
-	state_export_release_nfs4_state(&req_ctx, &exp->export);
-	state_export_unshare_all(&req_ctx);
+	state_export_unlock_all(&root_op_context.req_ctx);
+	state_export_release_nfs4_state(&root_op_context.req_ctx,
+					&exp->export);
+	state_export_unshare_all(&root_op_context.req_ctx);
 }
 
 /** @} */

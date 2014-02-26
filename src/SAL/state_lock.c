@@ -1748,17 +1748,14 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 	cache_entry_t *entry = lock_entry->sle_entry;
-	struct req_op_context req_ctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
+	struct gsh_export *exp = container_of(lock_entry->sle_export,
+					      struct gsh_export,
+					      export);
 
-	/* We need a real context. Use root creds. */
-	memset(&req_ctx, 0, sizeof(req_ctx));
-	memset(&creds, 0, sizeof(creds));
-	req_ctx.creds = &creds;
-	req_ctx.export = container_of(lock_entry->sle_export,
-				      struct gsh_export,
-				      export);
-	req_ctx.fsal_export = req_ctx.export->export.export_hdl;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, exp, exp->export.export_hdl,
+			     0, 0, UNKNOWN_REQUEST);
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
 	 * MUST be at least one lock present for there to be a block_data to
@@ -1768,7 +1765,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	try_to_grant_lock(lock_entry, &req_ctx);
+	try_to_grant_lock(lock_entry, &root_op_context.req_ctx);
 
 	/* In case all locks have wound up free,
 	 * we must release the pin reference.
@@ -3033,13 +3030,11 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct glist_head newlocks;
 	state_nlm_share_t *found_share;
 	state_status_t status = 0;
-	struct req_op_context opctx;
-	struct user_cred creds;
+	struct root_op_context root_op_context;
 
-	/* We need a real context. Use root creds. */
-	memset(&opctx, 0, sizeof(opctx));
-	memset(&creds, 0, sizeof(creds));
-	opctx.creds = &creds;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char client[HASHTABLE_DISPLAY_STRLEN];
@@ -3106,9 +3101,11 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		entry = found_entry->sle_entry;
 		owner = found_entry->sle_owner;
 		export = found_entry->sle_export;
-		opctx.export = container_of(export, struct gsh_export, export);
-		opctx.fsal_export = opctx.export->export.export_hdl;
-		get_gsh_export_ref(opctx.export);
+		root_op_context.req_ctx.export = container_of(export,
+							      struct gsh_export,
+							      export);
+		root_op_context.req_ctx.fsal_export = export->export_hdl;
+		get_gsh_export_ref(root_op_context.req_ctx.export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3125,10 +3122,11 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this NLM Client on the file */
-		status = state_unlock(entry, export, &opctx, owner, state,
+		status = state_unlock(entry, export, &root_op_context.req_ctx,
+				      owner, state,
 				      &lock, found_entry->sle_type);
 
-		put_gsh_export(opctx.export);
+		put_gsh_export(root_op_context.req_ctx.export);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
