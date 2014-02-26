@@ -69,6 +69,16 @@
 
 #define EXPORT_LINESIZE 1024
 #define INPUT_SIZE      1024
+#define EXPORT_BY_ID_HASHSIZE 1024
+
+typedef struct eid_cache_ {
+  struct eid_cache_ *eidc_next;
+  exportlist_t *eidc_cache_entry;
+} eid_cache_t;
+
+typedef struct export_by_id_ {
+  eid_cache_t *eid_cache;
+} export_by_id_t;
 
 typedef struct exportlist_client_hostif__
 {
@@ -403,6 +413,9 @@ typedef struct compoud_data
   nfs41_session_t *psession; /*< Related session (found by OP_SEQUENCE) */
 #endif                          /* USE_NFS4_1 */
 } compound_data_t;
+
+/* Exports by id cache */
+extern export_by_id_t export_by_id;
 
 /* Export list data */
 extern struct glist_head exportlist;

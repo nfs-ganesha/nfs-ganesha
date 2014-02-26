@@ -1118,6 +1118,16 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
                "STAT_EXPORTER configuration read from config file");
 #endif                          /* _USE_STAT_EXPORTER */
 
+  export_by_id.eid_cache =
+    gsh_calloc(EXPORT_BY_ID_HASHSIZE, sizeof(eid_cache_t));
+  if (export_by_id.eid_cache == NULL)
+     {
+       LogCrit(COMPONENT_INIT,
+               "No memory for export_by_id cache");
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      Fatal();
+     }
+
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
@@ -1636,6 +1646,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       Fatal();
     }
+
 
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */

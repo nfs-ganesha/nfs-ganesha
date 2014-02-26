@@ -129,7 +129,25 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head * pexportlist, unsigned sho
 {
   exportlist_t *piter;
   struct glist_head * glist;
+  eid_cache_t * cache_slot;
   int found = 0;
+
+  /* Get it from cache */
+  cache_slot = (eid_cache_t *) &export_by_id.eid_cache[(exportid % EXPORT_BY_ID_HASHSIZE)];
+
+  while(cache_slot->eidc_cache_entry != NULL)
+    {
+      if(cache_slot->eidc_cache_entry->id == exportid)
+        return cache_slot->eidc_cache_entry;
+
+      cache_slot = cache_slot->eidc_next;
+      if(cache_slot == NULL)
+        break;
+    }
+
+  /* Something not right; we had cache miss */
+  LogCrit(COMPONENT_CONFIG,
+          "Cache miss, it should never happen");
 
   glist_for_each(glist, pexportlist)
     {

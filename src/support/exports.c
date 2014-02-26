@@ -158,6 +158,9 @@ char * CONF_LABEL_EXPORT_CLIENT = "EXPORT_CLIENT";
 /* Used in BuildExportEntry() */
 #define EXPORT_MAX_CLIENTS   128        /* number of clients */
 
+/* exports by id cache */
+export_by_id_t export_by_id;
+
 struct glist_head exportlist;
 
 /**
@@ -3058,6 +3061,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   int nb_blk, rc, i;
   char *blk_name;
   int err_flag = FALSE;
+  eid_cache_t *cache_slot;
 
   exportlist_t *p_export_item = NULL;
 
@@ -3106,11 +3110,39 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
             }
 
           glist_add_tail(pexportlist, &p_export_item->exp_list);
+          /* Add to cache */
+          cache_slot = (eid_cache_t *) &(export_by_id.eid_cache[p_export_item->id % EXPORT_BY_ID_HASHSIZE]);   
+          if (cache_slot->eidc_cache_entry == NULL)
+             {
+               /* First entry in the bucket */
+               cache_slot->eidc_cache_entry = p_export_item;
+             }
+           else
+             {
+               /* We have a hash collision; allocate a new one and add
+                * it to the end of the list.
+                */
+               while (cache_slot->eidc_next != NULL)
+                 cache_slot = cache_slot->eidc_next;
 
+               /* reached end of this hash bucket */
+               cache_slot->eidc_next = gsh_calloc(1, sizeof(eid_cache_t));
+               if (cache_slot->eidc_next == NULL)
+                  {
+                    LogCrit(COMPONENT_CONFIG,
+                            "No memory for export_by_id cache entry");
+                    /* It is unlikely to come here, but if we do, still
+                     * dont want fail because it is just treated like
+                     * a cache miss.
+                     */
+                    nb_entries++;
+                    continue;
+                  }
+                cache_slot = cache_slot->eidc_next;
+                cache_slot->eidc_cache_entry = p_export_item;
+             }
           nb_entries++;
-
         }
-
     }
 
   /* Iteration on config file blocks for EXPORT_CLIENTs. */
