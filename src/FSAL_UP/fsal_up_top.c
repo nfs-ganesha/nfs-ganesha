@@ -49,16 +49,6 @@
 #include "export_mgr.h"
 
 /**
- * @brief Fake root credentials
- */
-static struct user_cred synthetic_creds = {
-	.caller_uid = 0,
-	.caller_gid = 0,
-	.caller_glen = 0,
-	.caller_garray = NULL
-};
-
-/**
  * @brief Invalidate a cached entry
  *
  * @param[in] key    Key to specify object
@@ -659,6 +649,11 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	struct layoutrecall_cb_data *cb_data = arg;
 	bool deleted = false;
 	state_t *state = NULL;
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
 		     call->cbt.v_u.v4.res.status, arg);
@@ -720,10 +715,6 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
  revoke:
 	/* If we don't find the state, there's nothing to return. */
 	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &state)) {
-		struct req_op_context return_context = {
-			.creds = &synthetic_creds,
-			.caller_addr = NULL
-		};
 		enum fsal_layoutreturn_circumstance circumstance;
 
 		if (hook == RPC_CALL_COMPLETE &&
@@ -748,9 +739,18 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 */
 
 		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
-		return_context.clientid =
-		    (&state->state_owner->so_owner.so_nfs4_owner.so_clientid);
-		nfs4_return_one_state(state->state_entry, &return_context,
+
+		root_op_context.req_ctx.clientid = &state->state_owner
+			->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export =
+			container_of(state->state_export,
+				     struct gsh_export,
+				     export);
+		root_op_context.req_ctx.fsal_export =
+			state->state_export->export_hdl;
+
+		nfs4_return_one_state(state->state_entry,
+				      &root_op_context.req_ctx,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted, true);
@@ -779,17 +779,26 @@ static void return_one_async(void *arg)
 	struct layoutrecall_cb_data *cb_data = arg;
 	state_t *s;
 	bool deleted = false;
-	struct req_op_context return_context = {
-		.creds = &synthetic_creds,
-		.caller_addr = NULL
-	};
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &s)) {
 		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
-		return_context.clientid =
-		    &s->state_owner->so_owner.so_nfs4_owner.so_clientid;
 
-		nfs4_return_one_state(s->state_entry, &return_context,
+		root_op_context.req_ctx.clientid = &s->state_owner
+			->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export =
+			container_of(s->state_export,
+				     struct gsh_export,
+				     export);
+		root_op_context.req_ctx.fsal_export =
+			s->state_export->export_hdl;
+
+		nfs4_return_one_state(s->state_entry,
+				      &root_op_context.req_ctx,
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
 				      s, cb_data->segment, 0, NULL, &deleted,
 				      true);
@@ -810,6 +819,11 @@ static void layoutrecall_one_call(void *arg)
 	struct layoutrecall_cb_data *cb_data = arg;
 	state_t *s;
 	int code;
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	if (cb_data->attempts == 0)
 		now(&cb_data->first_recall);
@@ -854,15 +868,18 @@ static void layoutrecall_one_call(void *arg)
 			} else {
 				bool deleted = false;
 
-				struct req_op_context return_context = {
-					.creds = &synthetic_creds,
-					.caller_addr = NULL,
-					.clientid =
-					    (&s->state_owner->
-					     so_owner.so_nfs4_owner.so_clientid)
-				};
+				root_op_context.req_ctx.clientid =
+					&s->state_owner->so_owner.so_nfs4_owner
+					.so_clientid;
+				root_op_context.req_ctx.export =
+					container_of(s->state_export,
+						     struct gsh_export,
+						     export);
+				root_op_context.req_ctx.fsal_export =
+					s->state_export->export_hdl;
+
 				nfs4_return_one_state(s->state_entry,
-						      &return_context,
+						      &root_op_context.req_ctx,
 						      LAYOUTRETURN4_FILE,
 						      circumstance_revoke, s,
 						      cb_data->segment, 0, NULL,
