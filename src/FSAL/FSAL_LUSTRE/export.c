@@ -502,7 +502,7 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 
-	fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub);
+	fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub->fsal);
 
 	*ds_pub = &ds->ds;
 

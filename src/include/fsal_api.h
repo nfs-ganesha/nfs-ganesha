@@ -2106,7 +2106,7 @@ struct fsal_ds_handle {
 	struct glist_head ds_handles;	/*< Link in list of DS handles under
 					   an fsal */
 	int refs;		/*< Reference count */
-	struct fsal_export *export;	/*< Link back to export */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_ds_ops *ops;	/*< Operations vector */
 };
 

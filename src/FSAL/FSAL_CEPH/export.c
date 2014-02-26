@@ -238,7 +238,7 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 		return NFS4ERR_BADHANDLE;
 	}
 
-	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, &export->export);
+	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, export->fsal);
 
 	*ds_pub = &ds->ds;
 

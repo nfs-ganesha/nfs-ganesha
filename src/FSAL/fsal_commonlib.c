@@ -229,20 +229,20 @@ void fsal_detach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 }
 
 void fsal_ds_handle_init(struct fsal_ds_handle *ds, struct fsal_ds_ops *ops,
-			 struct fsal_export *exp)
+			 struct fsal_module *fsal)
 {
 	pthread_mutexattr_t attrs;
 
 	ds->refs = 1;		/* we start out with a reference */
 	ds->ops = ops;
-	ds->export = exp;
+	ds->fsal = fsal;
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
 #endif
 	pthread_mutex_init(&ds->lock, &attrs);
 
-	fsal_attach_ds(exp->fsal, &ds->ds_handles);
+	fsal_attach_ds(fsal, &ds->ds_handles);
 }
 
 int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
@@ -256,10 +256,10 @@ int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
 	pthread_mutex_unlock(&ds->lock);
 	pthread_mutex_destroy(&ds->lock);
 
-	fsal_detach_ds(ds->export->fsal, &ds->ds_handles);
+	fsal_detach_ds(ds->fsal, &ds->ds_handles);
 
 	ds->ops = NULL;		/*poison myself */
-	ds->export = NULL;
+	ds->fsal = NULL;
 
 	return 0;
 }

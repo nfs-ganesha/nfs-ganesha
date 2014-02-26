@@ -32,5 +32,5 @@ int fsal_obj_handle_uninit(struct fsal_obj_handle *obj);
  */
 
 void fsal_ds_handle_init(struct fsal_ds_handle *, struct fsal_ds_ops *,
-			 struct fsal_export *);
+			 struct fsal_module *);
 int fsal_ds_handle_uninit(struct fsal_ds_handle *ds);

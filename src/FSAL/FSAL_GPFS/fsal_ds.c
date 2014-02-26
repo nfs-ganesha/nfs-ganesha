@@ -110,7 +110,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
-	rarg.mountdirfd = gpfs_get_root_fd(ds_pub->export);
+	rarg.mountdirfd = gpfs_get_root_fd(req_ctx->fsal_export);
 	rarg.handle = gpfs_handle;
 	rarg.bufP = buffer;
 	rarg.offset = offset;
@@ -177,7 +177,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
-	rarg.mountdirfd = gpfs_get_root_fd(ds_pub->export);
+	rarg.mountdirfd = gpfs_get_root_fd(req_ctx->fsal_export);
 	rarg.handle = gpfs_handle;
 	rarg.bufP = buffer;
 	rarg.offset = offset;
@@ -259,7 +259,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	warg.mountdirfd = gpfs_get_root_fd(ds_pub->export);
+	warg.mountdirfd = gpfs_get_root_fd(req_ctx->fsal_export);
 	warg.handle = gpfs_handle;
 	warg.bufP = (char *)buffer;
 	warg.offset = offset;
@@ -343,7 +343,7 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	warg.mountdirfd = gpfs_get_root_fd(ds_pub->export);
+	warg.mountdirfd = gpfs_get_root_fd(req_ctx->fsal_export);
 	warg.handle = gpfs_handle;
 	warg.bufP = (char *)buffer;
 	warg.offset = offset;
