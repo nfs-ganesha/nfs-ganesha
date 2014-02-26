@@ -180,53 +180,6 @@ struct fsal_up_vector {
 		fsal_lock_param_t *lock_param /*< A description of the lock */
 		);
 
-	/** Add a new link to an existing file */
-	cache_inode_status_t(*link)(
-		struct fsal_export *export, /*< FSAL export */
-		const struct gsh_buffdesc *dir, /*< The directory holding the
-						    new link */
-		const char *name, /*< The name of the newly created link */
-		const struct gsh_buffdesc *target /*< The target of the link,
-						      may be NULL if unknown */
-		);
-
-	/** Remove a name from a directory*/
-	cache_inode_status_t(*unlink)(
-		struct fsal_export *export, /*< FSAL export */
-		const struct gsh_buffdesc *dir, /*< Directory holding the
-						    link */
-		const char *name /*< The name to be removed */
-		);
-
-	/** Move of a name out of a directory. (This does not
-	    decrement the target link count.) */
-	cache_inode_status_t(*move_from)(
-		struct fsal_export *export, /*< FSAL export */
-		const struct gsh_buffdesc *dir, /*< Directory holding the
-						    link */
-		const char *name /*< The name to be moved */
-		);
-
-	/** Move a link into a directory (this does not increment the
-	    target link count.) */
-	cache_inode_status_t(*move_to)(
-		struct fsal_export *export, /*< FSAL export */
-		const struct gsh_buffdesc *dir, /*< Directory receiving the
-						    link */
-		const char *name, /*< The name of the link */
-		const struct gsh_buffdesc *target /*< The target of the link,
-						      may be NULL if unknown */
-		);
-
-	/** Rename a file within a directory */
-	cache_inode_status_t(*rename)(
-		struct fsal_export *export, /*< FSAL export */
-		const struct gsh_buffdesc *dir, /*< Directory holding the
-						    name */
-		const char *old, /*< The original name */
-		const char *new	/*< The new name */
-		);
-
 	/** Perform a layoutrecall on a single file */
 	state_status_t(*layoutrecall)(
 		struct fsal_export *export, /*< FSAL export */
@@ -285,26 +238,6 @@ int up_async_lock_avail(struct fridgethr *, struct fsal_export *,
 			const struct gsh_buffdesc *, void *,
 			fsal_lock_param_t *, void (*)(void *, state_status_t),
 			void *);
-int up_async_link(struct fridgethr *, struct fsal_export *,
-		  const struct gsh_buffdesc *, const char *,
-		  const struct gsh_buffdesc *, void (*)(void *,
-							cache_inode_status_t),
-		  void *);
-int up_async_unlink(struct fridgethr *, struct fsal_export *,
-		    const struct gsh_buffdesc *, const char *,
-		    void (*)(void *, cache_inode_status_t),
-		    void *);
-int up_async_move_from(struct fridgethr *, struct fsal_export *,
-		       const struct gsh_buffdesc *, const char *,
-		       void (*)(void *, cache_inode_status_t), void *);
-int up_async_move_to(struct fridgethr *, struct fsal_export *,
-		     const struct gsh_buffdesc *, const char *,
-		     const struct gsh_buffdesc *,
-		     void (*)(void *, cache_inode_status_t),
-		     void *);
-int up_async_rename(struct fridgethr *, struct fsal_export *,
-		    const struct gsh_buffdesc *, const char *, const char *,
-		    void (*)(void *, cache_inode_status_t), void *);
 int up_async_layoutrecall(struct fridgethr *, struct fsal_export *,
 			  const struct gsh_buffdesc *, layouttype4, bool,
 			  const struct pnfs_segment *, void *,
