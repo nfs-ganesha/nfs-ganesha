@@ -361,15 +361,10 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	return true;
 }
 
-struct root_context {
-	struct req_op_context req_ctx;
-	struct user_cred creds;
-};
-
 bool pseudo_mount_export_wrapper(struct gsh_export *exp, void *arg)
 {
-	struct root_context *root_context = arg;
-	return pseudo_mount_export(exp, &root_context->req_ctx);
+	struct root_op_context *root_op_context = arg;
+	return pseudo_mount_export(exp, &root_op_context->req_ctx);
 }
 
 /**
@@ -382,17 +377,13 @@ bool pseudo_mount_export_wrapper(struct gsh_export *exp, void *arg)
 
 void create_pseudofs(void)
 {
-	struct root_context root_context;
+	struct root_op_context root_op_context;
 
-	/* Initialize req_ctx.
-	 * Note that a zeroed creds works just fine as root creds.
-	 */
-	memset(&root_context, 0, sizeof(root_context));
-	root_context.req_ctx.creds = &root_context.creds;
-	root_context.req_ctx.nfs_vers = NFS_V4;
-	root_context.req_ctx.req_type = NFS_REQUEST;
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     NFS_V4, 0, NFS_REQUEST);
 
-	if (!foreach_gsh_export(pseudo_mount_export_wrapper, &root_context))
+	if (!foreach_gsh_export(pseudo_mount_export_wrapper, &root_op_context))
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 pseudo file system");
 }

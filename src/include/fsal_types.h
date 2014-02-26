@@ -174,6 +174,30 @@ struct req_op_context {
 	/* add new context members here */
 };
 
+struct root_op_context {
+	struct req_op_context req_ctx;
+	struct user_cred creds;
+};
+
+static inline void init_root_op_context(struct root_op_context *ctx,
+					struct gsh_export *exp,
+					struct fsal_export *fsal_exp,
+					uint32_t nfs_vers,
+					uint32_t nfs_minorvers,
+					uint32_t req_type)
+{
+	/* Initialize req_ctx.
+	 * Note that a zeroed creds works just fine as root creds.
+	 */
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->req_ctx.creds = &ctx->creds;
+	ctx->req_ctx.nfs_vers = nfs_vers;
+	ctx->req_ctx.nfs_minorvers = nfs_minorvers;
+	ctx->req_ctx.req_type = req_type;
+	ctx->req_ctx.export = exp;
+	ctx->req_ctx.fsal_export = fsal_exp;
+}
+
 /** filesystem identifier */
 
 typedef struct fsal_fsid__ {
