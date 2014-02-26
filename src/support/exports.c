@@ -321,9 +321,8 @@ static int add_client(struct exportlist *exp,
 			} else
 				continue;
 			cli->client_perms = *perms;
-			glist_add_tail(&exp->clients.client_list,
+			glist_add_tail(&exp->clients,
 				       &cli->cle_list);
-			exp->clients.num_clients++;
 			cli = NULL; /* let go of it */
 		}
 		goto out;
@@ -335,9 +334,8 @@ static int add_client(struct exportlist *exp,
 		goto out;
 	}
 	cli->client_perms = *perms;
-	glist_add_tail(&exp->clients.client_list,
+	glist_add_tail(&exp->clients,
 		       &cli->cle_list);
-	exp->clients.num_clients++;
 	cli = NULL;
 out:
 	if (cli != NULL)
@@ -366,16 +364,15 @@ static void *client_init(void *link_mem, void *self_struct)
 	assert(link_mem != NULL || self_struct != NULL);
 
 	if (link_mem == NULL) {
-		struct exportlist_client__ *cli_list;
+		struct glist_head *cli_list;
 		struct exportlist *exp;
 
-		cli_list = (struct exportlist_client__ *)self_struct;
+		cli_list = (struct glist_head *)self_struct;
 		exp = container_of(cli_list, struct exportlist,
 				   clients);
 		exp->expire_type_attr =
 			nfs_param.cache_param.expire_type_attr;
-		exp->clients.num_clients = 0;
-		glist_init(&exp->clients.client_list);
+		glist_init(&exp->clients);
 		return self_struct;
 	} else if (self_struct == NULL) {
 		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
@@ -414,11 +411,11 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 {
 	struct exportlist_client_entry__ *cli;
 	struct exportlist *exp;
-	struct exportlist_client__ *cli_list;
+	struct glist_head *cli_list;
 	char *client_list, *tok, *endptr;
 	int errcnt = 0;
 
-	cli_list = (struct exportlist_client__ *)link_mem;
+	cli_list = (struct glist_head *)link_mem;
 	exp = container_of(cli_list, struct exportlist,
 			   clients);
 	cli = (struct exportlist_client_entry__ *)self_struct;
@@ -989,7 +986,7 @@ static int build_default_root(void)
 	glist_init(&p_entry->exp_lock_list);
 	glist_init(&p_entry->exp_nlm_share_list);
 	glist_init(&p_entry->exp_root_list);
-	glist_init(&p_entry->clients.client_list);
+	glist_init(&p_entry->clients);
 
 	/* Default anonymous uid and gid */
 	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
@@ -1090,12 +1087,12 @@ int ReadExports(config_file_t in_config)
 	return rc + ret;				
 }
 
-static void FreeClientList(exportlist_client_t *clients)
+static void FreeClientList(struct glist_head *clients)
 {
 	struct glist_head *glist;
 	struct glist_head *glistn;
 
-	glist_for_each_safe(glist, glistn, &clients->client_list) {
+	glist_for_each_safe(glist, glistn, clients) {
 		exportlist_client_entry_t *client;
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
@@ -1474,7 +1471,7 @@ static char *client_types[] = {
  * @return true if found, false otherwise.
  */
 static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
-				exportlist_client_t *clients)
+				struct exportlist *exp)
 {
 	struct glist_head *glist;
 	in_addr_t addr = get_in_addr(hostaddr);
@@ -1483,7 +1480,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	char hostname[MAXHOSTNAMELEN + 1];
 	char ipstring[SOCK_NAME_MAX + 1];
 
-	glist_for_each(glist, &clients->client_list) {
+	glist_for_each(glist, &exp->clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -1619,11 +1616,11 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
  * @return true if found, false otherwise.
  */
 static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
-				  exportlist_client_t *clients)
+				  struct exportlist *exp)
 {
 	struct glist_head *glist;
 
-	glist_for_each(glist, &clients->client_list) {
+	glist_for_each(glist, &exp->clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -1665,15 +1662,15 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 }
 
 static exportlist_client_entry_t * client_match_any(sockaddr_t *hostaddr,
-				   exportlist_client_t *clients)
+				   struct exportlist *exp)
 {
 	if (hostaddr->ss_family == AF_INET6) {
 		struct sockaddr_in6 *psockaddr_in6 =
 		    (struct sockaddr_in6 *)hostaddr;
 		return client_matchv6(&(psockaddr_in6->sin6_addr),
-					     clients);
+					     exp);
 	} else {
-		return client_match(hostaddr, clients);
+		return client_match(hostaddr, exp);
 	}
 }
 
@@ -1865,7 +1862,7 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	}
 
 	/* Does the client match anyone on the client list? */
-	client = client_match_any(puse_hostaddr, &export->clients);
+	client = client_match_any(puse_hostaddr, export);
 	if (client != NULL) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Matched client as %s, options = 0x%X",

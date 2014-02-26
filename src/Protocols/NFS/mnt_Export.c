@@ -84,7 +84,7 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 	new_expnode->ex_dir = gsh_strdup(export->fullpath);
 	if (new_expnode->ex_dir == NULL)
 		goto nomem;
-	glist_for_each(glist_item, &export->clients.client_list) {
+	glist_for_each(glist_item, &export->clients) {
 		client =
 		    glist_entry(glist_item, exportlist_client_entry_t,
 				cle_list);

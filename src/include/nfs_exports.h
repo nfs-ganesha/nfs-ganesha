@@ -117,11 +117,6 @@ typedef struct exportlist_client_entry__ {
 	export_perms_t client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
-typedef struct exportlist_client__ {
-	unsigned int num_clients;	/*< Number of clients */
-	struct glist_head client_list;	/*< Allowed clients */
-} exportlist_client_t;
-
 typedef struct exportlist {
 	struct glist_head exp_list;
 	uint32_t id;		/*< Entry identifier */
@@ -141,7 +136,7 @@ typedef struct exportlist {
 	uint64_t MaxOffsetRead;	/*< Maximum Offset allowed for read */
 	uint64_t MaxCacheSize;	/*< Maximum Cache Size allowed */
 	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
-	exportlist_client_t clients;	/*< Allowed clients */
+	struct glist_head clients;	/*< Allowed clients */
 	struct fsal_export *export_hdl;	/*< Handle into our FSAL */
 
 	pthread_mutex_t exp_state_mutex;	/*< Mutex to protect per-export
