@@ -38,7 +38,6 @@
 #include "log.h"
 #include "sal_functions.h"
 #include "sal_data.h"
-#include "fsal_up.h"
 #include "cache_inode_lru.h"
 #include "idmapper.h"
 #include "delayed_exec.h"

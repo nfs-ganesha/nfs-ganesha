@@ -39,7 +39,6 @@
 #include "nfs_exports.h"
 #include  "fsal.h"
 #include <sys/stat.h>
-#include "fsal_up.h"
 #include "fsal_types.h"
 #include "fcntl.h"
 #include "pt_methods.h"
