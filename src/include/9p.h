@@ -293,7 +293,6 @@ struct _9p_fid {
 	u32 fid;
 	struct req_op_context op_context;
 	struct user_cred ucred;
-	exportlist_t *export;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
 	cache_entry_t *ppentry;

@@ -107,7 +107,6 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
 				  preply);
 	export = &exp->export;
-	pfid->export = export;
 	pfid->fid = *fid;
 	req9p->pconn->fids[*fid] = pfid;
 

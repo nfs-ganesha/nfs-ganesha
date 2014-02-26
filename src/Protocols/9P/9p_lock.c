@@ -42,6 +42,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "export_mgr.h"
 #include "sal_functions.h"
 #include "fsal.h"
 #include "9p.h"
@@ -155,7 +156,8 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 			break;
 		}
 
-		state_status = state_lock(pfid->pentry, pfid->export,
+		state_status = state_lock(pfid->pentry,
+					  &pfid->op_context.export->export,
 					  &pfid->op_context, powner, &state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  &holder, &conflict, POSIX_LOCK);
@@ -170,9 +172,10 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	case _9P_LOCK_TYPE_UNLCK:
-		if (state_unlock
-		    (pfid->pentry, pfid->export, &pfid->op_context, powner,
-		     NULL, &lock, POSIX_LOCK) != STATE_SUCCESS)
+		if (state_unlock(pfid->pentry, &pfid->op_context.export->export,
+				 &pfid->op_context, powner, NULL, &lock,
+				 POSIX_LOCK)
+			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else
 			status = _9P_LOCK_SUCCESS;

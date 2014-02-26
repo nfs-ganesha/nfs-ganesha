@@ -222,12 +222,9 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
  */
 static void free_fid(struct _9p_fid *pfid)
 {
-	struct gsh_export *exp;
-
 	cache_inode_put(pfid->pentry);
 	if (pfid->from_attach) {
-		exp = container_of(pfid->export, struct gsh_export, export);
-		put_gsh_export(exp);
+		put_gsh_export(pfid->op_context.export);
 	}
 	gsh_free(pfid->specdata.xattr.xattr_content);
 	gsh_free(pfid);
