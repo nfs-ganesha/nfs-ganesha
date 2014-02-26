@@ -313,12 +313,20 @@ static bool lookup_by_uid(const uid_t uid, struct cache_info **info)
 					   atomic_fetch_uint64_t((uint64_t *)
 								 cache_entry));
 	struct cache_info *found_info;
+	bool found = false;
 
+	/* Verify that the node found in the cache array is in fact what we
+	 * want.
+	 */
 	if (likely(found_node)) {
 		found_info =
 		    avltree_container_of(found_node, struct cache_info,
 					 uid_node);
-	} else {
+		if (found_info->uid == uid)
+			found = true;
+	}
+
+	if (unlikely(!found)) {
 		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
 		if (unlikely(!found_node))
 			return false;
