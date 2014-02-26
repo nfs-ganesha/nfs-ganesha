@@ -45,6 +45,7 @@
 #include "abstract_atomic.h"
 #include "cache_inode_hash.h"
 #include "nsm.h"
+#include "export_mgr.h"
 
 static void dec_nsm_client_ref_for_shutdown(state_nsm_client_t *client);
 static void dec_state_owner_ref_for_shutdown(state_owner_t *owner);
@@ -458,13 +459,13 @@ state_del_for_shutdown(state_t *state, cache_entry_t *entry)
  */
 
 static void
-clear_fsal_locks(cache_entry_t *entry)
+clear_fsal_locks(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* FSAL object handle */
 	struct fsal_obj_handle *handle = entry->obj_handle;
 
-	if (handle->export->ops->fs_supports(handle->export,
-					     fso_lock_support)) {
+	if (req_ctx->fsal_export->ops->fs_supports(req_ctx->fsal_export,
+						   fso_lock_support)) {
 		/* Lock that covers the whole file - type doesn't
 		   matter for unlock */
 		fsal_lock_param_t lock = {
@@ -477,24 +478,10 @@ clear_fsal_locks(cache_entry_t *entry)
 		fsal_status_t fsal_status;
 		/* Conflicting lock */
 		fsal_lock_param_t conflicting_lock;
-		/* Fake root credentials for caching lookup */
-		struct user_cred synthetic_creds = {
-			.caller_uid = 0,
-			.caller_gid = 0,
-			.caller_glen = 0,
-			.caller_garray = NULL
-		};
-
-		/* Synthetic request context */
-		struct req_op_context synthetic_context = {
-			.creds = &synthetic_creds,
-			.caller_addr = NULL,
-			.clientid = NULL
-		};
 
 		memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 		fsal_status =
-		    handle->ops->lock_op(handle, &synthetic_context, NULL,
+		    handle->ops->lock_op(handle, req_ctx, NULL,
 					 FSAL_OP_UNLOCK, &lock,
 					 &conflicting_lock);
 		if (FSAL_IS_ERROR(fsal_status)) {
@@ -517,35 +504,23 @@ clear_fsal_locks(cache_entry_t *entry)
  */
 
 static void
-clear_fsal_shares(cache_entry_t *entry)
+clear_fsal_shares(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* FSAL object handle */
 	struct fsal_obj_handle *handle = entry->obj_handle;
 
-	if (handle->export->ops->fs_supports(handle->export,
-					     fso_share_support)) {
+	if (req_ctx->fsal_export->ops->fs_supports(req_ctx->fsal_export,
+						   fso_share_support)) {
 		/* Fully released shares */
 		fsal_share_param_t releaser = {
 			.share_access = 0,
 			.share_deny = 0
 		};
-		/* Fake root credentials for caching lookup */
-		struct user_cred synthetic_creds = {
-			.caller_uid = 0,
-			.caller_gid = 0,
-			.caller_glen = 0,
-			.caller_garray = NULL
-		};
-		/* Synthetic request context */
-		struct req_op_context synthetic_context = {
-			.creds = &synthetic_creds,
-			.caller_addr = NULL,
-			.clientid = NULL
-		};
+
 		/* FSAL return status */
 		fsal_status_t fsal_status =
 		    handle->ops->share_op(entry->obj_handle,
-					  &synthetic_context,
+					  req_ctx,
 					  NULL,
 					  releaser);
 		if (FSAL_IS_ERROR(fsal_status))
@@ -570,7 +545,7 @@ clear_fsal_shares(cache_entry_t *entry)
  */
 
 static bool
-destroy_nlm_shares(cache_entry_t *entry)
+destroy_nlm_shares(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* Iterator for NSM shares */
 	struct glist_head *nsi;
@@ -614,7 +589,7 @@ destroy_nlm_shares(cache_entry_t *entry)
  */
 
 static void
-destroy_locks(cache_entry_t *entry)
+destroy_locks(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* Lock entry iterator */
 	struct glist_head *lei = NULL;
@@ -631,7 +606,7 @@ destroy_locks(cache_entry_t *entry)
 	}
 	cache_inode_dec_pin_ref(entry, false);
 
-	clear_fsal_locks(entry);
+	clear_fsal_locks(entry, req_ctx);
 }
 
 /**
@@ -647,7 +622,7 @@ destroy_locks(cache_entry_t *entry)
  */
 
 static bool
-destroy_nfs4_state(cache_entry_t *entry)
+destroy_nfs4_state(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* NFSv4 state iterator */
 	struct glist_head *si = NULL;
@@ -689,18 +664,6 @@ destroy_nfs4_state(cache_entry_t *entry)
 			break;
 
 		case STATE_TYPE_LAYOUT:{
-				struct user_cred synthetic_creds = {
-					.caller_uid = 0,
-					.caller_gid = 0,
-					.caller_glen = 0,
-					.caller_garray = NULL
-				};
-				/* Synthetic request context */
-				struct req_op_context synthetic_context = {
-					.creds = &synthetic_creds,
-					.caller_addr = NULL,
-					.clientid = NULL
-				};
 				/* Iterator along segment list */
 				struct glist_head *seg_iter = NULL;
 				/* Saved 'next' pointer for iterating over
@@ -749,7 +712,7 @@ destroy_nfs4_state(cache_entry_t *entry)
 						       &g->sls_segment);
 					entry->obj_handle->ops->
 					    layoutreturn(entry->obj_handle,
-							 &synthetic_context,
+							 req_ctx,
 							 NULL, arg);
 
 					glist_del(&g->sls_state_segments);
@@ -780,17 +743,17 @@ destroy_nfs4_state(cache_entry_t *entry)
 }
 
 static void
-destroy_file_state(cache_entry_t *entry)
+destroy_file_state(cache_entry_t *entry, struct req_op_context *req_ctx)
 {
 	/* If NSM shares were found */
 	bool nsm_shares = false;
 	/* If nfs4 shares were found */
 	bool nfs4_shares = false;
-	nsm_shares = destroy_nlm_shares(entry);
-	destroy_locks(entry);
-	nfs4_shares = destroy_nfs4_state(entry);
+	nsm_shares = destroy_nlm_shares(entry, req_ctx);
+	destroy_locks(entry, req_ctx);
+	nfs4_shares = destroy_nfs4_state(entry, req_ctx);
 	if (nsm_shares || nfs4_shares)
-		clear_fsal_shares(entry);
+		clear_fsal_shares(entry, req_ctx);
 	if (entry->obj_handle->ops->status(entry->obj_handle)
 	    != FSAL_O_CLOSED) {
 		fsal_status_t fsal_status =
@@ -851,9 +814,19 @@ destroy_entry(cache_entry_t *entry)
 {
 	/* FSAL Error Code */
 	fsal_status_t fsal_status = { 0, 0 };
+	struct root_op_context root_op_context;
+	struct gsh_export *export = entry->first_export;
+	struct fsal_export *fsal_export = NULL;
+
+	if (export != NULL)
+		fsal_export = export->export.export_hdl;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, export, fsal_export,
+			     0, 0, UNKNOWN_REQUEST);
 
 	if (entry->type == REGULAR_FILE)
-		destroy_file_state(entry);
+		destroy_file_state(entry, &root_op_context.req_ctx);
 
 	if (entry->type == DIRECTORY)
 		cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
