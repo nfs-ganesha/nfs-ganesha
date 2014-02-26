@@ -139,6 +139,7 @@ struct _rpc_call {
 };
 
 typedef enum request_type {
+	UNKNOWN_REQUEST,
 	NFS_CALL,
 	NFS_REQUEST,
 #ifdef _USE_9P

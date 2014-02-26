@@ -1482,6 +1482,10 @@ static void worker_run(struct fridgethr_context *ctx)
  */
 
 		switch (nfsreq->rtype) {
+		case UNKNOWN_REQUEST:
+			LogCrit(COMPONENT_DISPATCH,
+				"Unexpected unknown request");
+			break;
 		case NFS_REQUEST:
 			/* check for destroyed xprts */
 			xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->
