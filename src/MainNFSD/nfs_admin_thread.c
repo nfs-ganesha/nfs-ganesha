@@ -221,10 +221,45 @@ static struct gsh_dbus_method method_shutdown = {
 		 END_ARG_LIST}
 };
 
+/**
+ * @brief Dbus method for flushing manage gids cache
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_purge_gids(DBusMessageIter *args, DBusMessage *reply)
+{
+	char *errormsg = "Purge gids cache";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "Purge gids takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
+	}
+
+	uid2grp_clear_cache();
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_purge_gids = {
+	.name = "purge_gids",
+	.method = admin_dbus_purge_gids,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
 	&method_reload,
 	&method_grace_period,
+	&method_purge_gids,
 	NULL
 };
 
