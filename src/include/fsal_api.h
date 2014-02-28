@@ -617,8 +617,6 @@ struct fsal_export {
 	int refs;			/*< Reference count */
 	struct glist_head exports;	/*< Link in list of exports from
 					   the same FSAL. */
-	struct exportlist *exp_entry;	/*< Pointer to the export
-					   list. */
 	struct export_ops *ops;	/*< Vector of operations */
 	struct fsal_obj_ops *obj_ops;	/*< Shared handle methods vector */
 	struct fsal_ds_ops *ds_ops;	/*< Shared handle methods vector */
@@ -1169,7 +1167,6 @@ struct fsal_obj_handle {
 					   an fsal */
 	int refs;		/*< Reference count */
 	object_file_type_t type;	/*< Object file type */
-	struct fsal_export *export;	/*< Link back to export */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct attrlist attributes;	/*< Cached attributes */
 	struct fsal_obj_ops *ops;	/*< Operations vector */

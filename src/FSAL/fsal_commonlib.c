@@ -138,7 +138,6 @@ int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 	pthread_mutex_init(&exp->lock, &attrs);
 
 	exp->refs = 1;		/* we exit with a reference held */
-	exp->exp_entry = exp_entry;
 	return 0;
 
  errout:
@@ -181,7 +180,6 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 
 	obj->refs = 1;		/* we start out with a reference */
 	obj->ops = exp->obj_ops;
-	obj->export = exp;
 	obj->fsal = exp->fsal;
 	obj->type = type;
 	pthread_mutexattr_init(&attrs);
@@ -208,7 +206,6 @@ int fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
 	fsal_detach_handle(obj->fsal, &obj->handles);
 
 	obj->ops = NULL;	/*poison myself */
-	obj->export = NULL;
 	obj->fsal = NULL;
 
 	return 0;
