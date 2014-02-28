@@ -54,10 +54,8 @@ static fsal_status_t release(struct fsal_obj_handle *obj_pub)
 {
 	/* The private 'full' handle */
 	struct handle *obj = container_of(obj_pub, struct handle, handle);
-	struct export *export =
-	    container_of(obj_pub->export, struct export, export);
 
-	if (obj == export->root)
+	if (obj == obj->export->root)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	else
 		return ceph2fsal_error(deconstruct_handle(obj));
@@ -85,7 +83,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	struct stat st;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	struct handle *obj = NULL;
 	struct Inode *i = NULL;
@@ -134,7 +132,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* The director descriptor */
@@ -214,7 +212,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Newly opened file descriptor */
@@ -266,7 +264,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Stat result */
@@ -319,7 +317,7 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Stat result */
@@ -370,7 +368,7 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(link_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *link = container_of(link_pub, struct handle, handle);
 	/* Pointer to the Ceph link content */
@@ -411,7 +409,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Stat buffer */
@@ -447,7 +445,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Stat buffer */
@@ -548,7 +546,7 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* The private 'full' destination directory handle */
@@ -590,7 +588,7 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(olddir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *olddir = container_of(olddir_pub, struct handle, handle);
 	/* The private 'full' destination directory handle */
@@ -628,7 +626,7 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(dir_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 
@@ -667,7 +665,7 @@ static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Posix open flags */
@@ -744,7 +742,7 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -791,7 +789,7 @@ static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -833,7 +831,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
+	    container_of(opctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 
@@ -860,13 +858,10 @@ static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
 {
 	/* Generic status return */
 	int rc = 0;
-	/* The private 'full' export */
-	struct export *export =
-	    container_of(handle_pub->export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 
-	rc = ceph_ll_close(export->cmount, handle->fd);
+	rc = ceph_ll_close(handle->export->cmount, handle->fd);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);

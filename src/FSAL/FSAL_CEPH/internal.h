@@ -63,6 +63,7 @@ struct handle {
 	struct Inode *i;	/*< The Ceph inode */
 	fsal_openflags_t openflags;
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
+	struct export *export;	/*< The first export this handle belongs to */
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
 	uint64_t rd_serial;

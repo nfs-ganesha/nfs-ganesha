@@ -324,7 +324,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(obj_pub->export, struct export, export);
+	    container_of(req_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(obj_pub, struct handle, handle);
 	/* Structure containing the storage parameters of the file within
@@ -538,7 +538,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(obj_pub->export, struct export, export);
+	    container_of(req_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(obj_pub, struct handle, handle);
 
@@ -597,7 +597,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(obj_pub->export, struct export, export);
+	    container_of(req_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(obj_pub, struct handle, handle);
 	/* Old stat, so we don't truncate file or reverse time */

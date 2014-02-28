@@ -298,6 +298,8 @@ int construct_handle(const struct stat *st, struct Inode *i,
 	fsal_obj_handle_init(&constructing->handle, &export->export,
 			     constructing->handle.attributes.type);
 
+	constructing->export = export;
+
 	*obj = constructing;
 
 	return 0;
@@ -314,11 +316,9 @@ int construct_handle(const struct stat *st, struct Inode *i,
 
 int deconstruct_handle(struct handle *obj)
 {
-	struct export *export =
-	    container_of(obj->handle.export, struct export, export);
 	int retval;
 
-	ceph_ll_put(export->cmount, obj->i);
+	ceph_ll_put(obj->export->cmount, obj->i);
 	retval = fsal_obj_handle_uninit(&obj->handle);
 	if (retval != 0)
 		return -retval;
