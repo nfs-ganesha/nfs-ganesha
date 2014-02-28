@@ -122,7 +122,6 @@ typedef struct exportlist {
 	uint32_t id;		/*< Entry identifier */
 	char *fullpath;		/*< The path from the root */
 	char *pseudopath;	/*< NFSv4 pseudo-filesystem 'virtual' path */
-	char *FS_specific;	/*< Filesystem specific option string */
 	char *FS_tag;		/*< Filesystem "tag" string */
 
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */

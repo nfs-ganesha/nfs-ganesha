@@ -1023,7 +1023,7 @@ static int build_default_root(void)
 
 		rc = fsal_hdl->ops->create_export(fsal_hdl,
 						  p_entry->fullpath,
-						  p_entry->FS_specific,
+						  NULL,
 						  p_entry,
 						  NULL,
 						  &fsal_up_top,
@@ -1143,8 +1143,6 @@ void free_export_resources(exportlist_t *export)
 		gsh_free(export->fullpath);
 	if (export->pseudopath != NULL)
 		gsh_free(export->pseudopath);
-	if (export->FS_specific != NULL)
-		gsh_free(export->FS_specific);
 	if (export->FS_tag != NULL)
 		gsh_free(export->FS_tag);
 }
