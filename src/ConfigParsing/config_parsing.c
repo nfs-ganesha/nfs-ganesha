@@ -1192,12 +1192,14 @@ static config_item_t find_by_name(struct config_node *node, char *name)
 config_item_t config_FindItemByName(config_file_t config, const char *name)
 {
 	struct config_root *tree = (struct config_root *)config;
-	struct config_node *node;
+	struct config_node *node, *top_node;
 	struct glist_head *nsi, *nsn;
 	char *separ, *tmpname, *current;
 	config_item_t found_item = NULL;
 
-	if (glist_empty(&tree->root.node))
+	assert(tree->root.type == TYPE_ROOT || tree->root.type == TYPE_BLOCK);
+	top_node = &tree->root;
+	if (glist_empty(&top_node->u.blk.sub_nodes))
 		return NULL;
 	tmpname = gsh_strdup(name);
 	current = tmpname;
@@ -1206,7 +1208,7 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
 		*separ++ = '\0';
 		*separ++ = '\0';
 	}
-	glist_for_each_safe(nsi, nsn, &tree->root.node) {
+	glist_for_each_safe(nsi, nsn, &top_node->u.blk.sub_nodes) {
 		node = glist_entry(nsi, struct config_node, node);
 		if (strcasecmp(node->name, current) == 0) {
 			if (separ == NULL)
