@@ -23,7 +23,7 @@
  */
 
 /**
- * @defgroup FSAL File-System Abstraction Layer
+ * @addtogroup FSAL
  * @{
  */
 

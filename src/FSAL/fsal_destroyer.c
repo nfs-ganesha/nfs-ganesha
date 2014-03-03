@@ -78,7 +78,7 @@ static void shutdown_handles(struct fsal_export *export)
 /**
  * @brief Dispose of lingering DS handles
  *
- * @paramp[in] export Export to clean up
+ * @param[in] export Export to clean up
  */
 static void shutdown_ds_handles(struct fsal_export *export)
 {

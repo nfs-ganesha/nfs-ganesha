@@ -1,5 +1,5 @@
 /**
- * @defgroup FSAL File-System Abstraction Layer
+ * @addtogroup FSAL
  * @{
  */
 
@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-#include  "fsal.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include <sys/stat.h>
 #include "FSAL/access_check.h"

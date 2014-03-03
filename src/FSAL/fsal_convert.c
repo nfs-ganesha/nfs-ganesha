@@ -1,5 +1,5 @@
 /**
- * @defgroup FSAL File-System Abstraction Layer
+ * @addtogroup FSAL
  * @{
  */
 
@@ -7,6 +7,7 @@
  * @file  FSAL/fsal_convert.c
  * @brief FSAL type translation functions.
  */
+
 #include "config.h"
 #include "fsal_convert.h"
 #include <sys/types.h>
@@ -19,13 +20,11 @@
 #define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
 
 /**
- * fsal2posix_testperm:
- * Convert FSAL permission flags to Posix permission flags.
+ * @brief Convert FSAL permission flags to Posix permission flags.
  *
- * \param testperm (input):
- *        The FSAL permission flags to be tested.
+ * @param[in] testperm FSAL permission flags to be tested
  *
- * \return The POSIX permission flags to be tested.
+ * @return POSIX permission flags to be tested.
  */
 int fsal2posix_testperm(fsal_accessflags_t testperm)
 {
@@ -43,18 +42,16 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 
 }
 
-/* mode bits are a uint16_t and chmod masks off type
- */
+/* mode bits are a uint16_t and chmod masks off type */
 
 #define S_IALLUGO (~S_IFMT & 0xFFFF)
+
 /**
- * fsal2unix_mode:
- * Convert FSAL mode to posix mode.
+ * @brief Convert FSAL mode to POSIX mode
  *
- * \param fsal_mode (input):
- *        The FSAL mode to be translated.
+ * @param[in] fsal_mode FSAL mode to be translated
  *
- * \return The posix mode associated to fsal_mode.
+ * @return The POSIX mode associated to fsal_mode.
  */
 mode_t fsal2unix_mode(uint32_t fsal_mode)
 {
@@ -62,29 +59,27 @@ mode_t fsal2unix_mode(uint32_t fsal_mode)
 }
 
 /**
- * unix2fsal_mode:
- * Convert posix mode to FSAL mode.
+ * @brief Convert POSIX mode to FSAL mode
  *
- * \param unix_mode (input):
- *        The posix mode to be translated.
+ * @param[in] unix_mode POSIX mode to be translated
  *
- * \return The FSAL mode associated to unix_mode.
+ * @return FSAL mode associated with @c unix_mode
  */
+
 uint32_t unix2fsal_mode(mode_t unix_mode)
 {
 	return unix_mode & S_IALLUGO;
 }
 
 /**
- * posix2fsal_type:
- * Convert posix object type to an object type.
+ * @brief Convert POSIX object type to an FSAL object type
  *
- * \param posix_type_in (input):
- *        The POSIX object type.
+ * @param[in] posix_type_in POSIX object type
  *
- * \return - The FSAL node type associated to posix_type_in.
- *         - -1 if the input type is unknown.
+ * @retval The FSAL node type associated to @c posix_type_in.
+ * @retval -1 if the input type is unknown.
  */
+
 object_file_type_t posix2fsal_type(mode_t posix_type_in)
 {
 
@@ -119,6 +114,14 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
 
 }
 
+/**
+ * @brief Convert a stat(2) style dev_t to an FSAL fsid
+ *
+ * @param[in] posix_devid The device id
+ *
+ * @return The FSAL fsid.
+ */
+
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 {
 
@@ -130,6 +133,14 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 	return fsid;
 
 }
+
+/**
+ * @brief Convert a stat(2) style dev_t to an fsal_dev_t
+ *
+ * @param[in] posix_devid The device id
+ *
+ * @return The FSAL device.
+ */
 
 fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 {
@@ -143,23 +154,17 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 }
 
 /**
- * fsal2posix_openflags:
- * Convert FSAL open flags to Posix open flags.
+ * @brief Convert FSAL open flags to POSIX open flags
  *
- * \param fsal_flags (input):
- *        The FSAL open flags to be translated.
- * \param p_posix_flags (output):
- *        Pointer to the POSIX open flags.
+ * @param[in]  fsal_flags    FSAL open flags to be translated
+ * @param[out] p_posix_flags POSIX open flags.
  *
- * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_posix_flags is a NULL pointer).
- *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
+ * @retval ERR_FSAL_NO_ERROR, no error.
+ * @retval ERR_FSAL_INVAL, invalid or incompatible input flags.
  */
+
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-	if (!p_posix_flags)
-		return ERR_FSAL_FAULT;
-
 	/* check that all used flags exist */
 	if (fsal_flags &
 	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
@@ -180,6 +185,14 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 	return ERR_FSAL_NO_ERROR;
 }
+
+/**
+ * @brief Return string for object type
+ *
+ * @param[in] type The FSAL object type
+ *
+ * @return A string naming the type or "unexpected type".
+ */
 
 const char *object_file_type_to_str(object_file_type_t type)
 {

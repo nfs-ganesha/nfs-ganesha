@@ -1,5 +1,5 @@
 /**
- * @defgroup FSAL File-System Abstraction Layer
+ * @addtogroup FSAL
  * @{
  */
 
@@ -11,7 +11,9 @@
 #include "config.h"
 #include "fsal.h"
 
-/* Function names for logging and SNMP stats etc. */
+/**
+ * @brief Function names for logging, etc.
+ */
 
 family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] = {
 	{
@@ -74,6 +76,14 @@ family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] = {
 	ERR_NULL, "ERR_NULL", ""}
 };
 
+/**
+ * @brief FSAL error code to error message
+ *
+ * @param[in] fsal_err Error code
+ *
+ * @return Error message, empty string if not found.
+ */
+
 const char *msg_fsal_err(fsal_errors_t fsal_err)
 {
 	int i;
@@ -85,6 +95,14 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 
 	return tab_errstatus_FSAL[i].msg;
 }
+
+/**
+ * @brief FSAL error code to error label
+ *
+ * @param[in] fsal_err Error code
+ *
+ * @return Error label, "ERR_NULL" if not found.
+ */
 
 const char *label_fsal_err(fsal_errors_t fsal_err)
 {
