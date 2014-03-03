@@ -49,13 +49,13 @@
 
 #ifdef HAVE_INCLUDE_LUSTREAPI_H
 #include <lustre/lustreapi.h>
-#include <lustre/lustre_user.h>
 #else
 #ifdef HAVE_INCLUDE_LIBLUSTREAPI_H
 #include <lustre/liblustreapi.h>
+#endif
+#endif
 #include <lustre/lustre_user.h>
-#endif
-#endif
+#include <linux/quota.h>
 
 /*
  * VFS internal export
