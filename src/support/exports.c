@@ -419,11 +419,6 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 	exp = container_of(cli_list, struct exportlist,
 			   clients);
 	cli = (struct exportlist_client_entry__ *)self_struct;
-	if ((cli->client_perms.options & EXPORT_OPTION_CUR_ACCESS) == 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"No access type for this client set");
-		errcnt++;
-	}
 	assert(cli->type == RAW_CLIENT_LIST);
 
 	client_list = cli->client.raw_client_str;
@@ -626,11 +621,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 	exp = (struct exportlist *)self_struct;
 	
 	/* validate the export now */
-	if ((exp->export_perms.options & EXPORT_OPTION_CUR_ACCESS) == 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"No default access type for this export set");
-		errcnt++;
-	}
 	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
 		if (exp->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
@@ -874,15 +864,15 @@ static struct config_item export_params[] = {
 		      exportlist, export_perms.anonymous_gid),
 	CONF_ITEM_LIST("SecType", 0, sec_types,
 		       exportlist, export_perms.options),
-	CONF_ITEM_UI64("MaxRead", 512, 4*1024*1024, 16384,
+	CONF_ITEM_UI64("MaxRead", 512, 9*1024*1024, 16384,
 		       exportlist, MaxRead),
-	CONF_ITEM_UI64("MaxWrite", 512, 4*1024*1024, 16384,
+	CONF_ITEM_UI64("MaxWrite", 512, 9*1024*1024, 16384,
 		       exportlist, MaxWrite),
-	CONF_ITEM_UI64("PrefRead", 512, 4*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefRead", 512, 9*1024*1024, 16384,
 		       exportlist, PrefRead),
-	CONF_ITEM_UI64("PrefWrite", 512, 4*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefWrite", 512, 9*1024*1024, 16384,
 		       exportlist, PrefWrite),
-	CONF_ITEM_UI64("PrefReaddir", 512, 4*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefReaddir", 512, 9*1024*1024, 16384,
 		       exportlist, PrefReaddir),
 	CONF_ITEM_FSID("Filesystem_id", 666, 666,
 		       exportlist, filesystem_id), /* major.minor */
@@ -894,9 +884,9 @@ static struct config_item export_params[] = {
 			  exportlist, export_perms.options),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      exportlist, FS_tag),
-	CONF_ITEM_UI64("MaxOffsetWrite", 512, (4*1024*1024), (1024*1024),
+	CONF_ITEM_UI64("MaxOffsetWrite", 512, (9*1024*1024), (1024*1024),
 		       exportlist, MaxOffsetWrite),
-	CONF_ITEM_UI64("MaxOffsetRead", 512, 4*1024*1024, 1024*1024,
+	CONF_ITEM_UI64("MaxOffsetRead", 512, 9*1024*1024, 1024*1024,
 		       exportlist, MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
 		       exportlist, UseCookieVerifier),
