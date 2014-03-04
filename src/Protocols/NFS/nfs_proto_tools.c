@@ -3019,9 +3019,6 @@ const struct fattr4_dent fattr4tab[FATTR4_SPACE_RESERVED + 1] = {
 /* goes in a more global header?
  */
 
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
-
 /** path_filter
  * scan the path we are given for bad filenames.
  *
