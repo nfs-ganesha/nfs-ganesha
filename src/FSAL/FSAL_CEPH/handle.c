@@ -374,12 +374,12 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	/* The private 'full' directory handle */
 	struct handle *link = container_of(link_pub, struct handle, handle);
 	/* Pointer to the Ceph link content */
-	char *content = NULL;
+	char content[PATH_MAX];
 
 	/* Content points into a static buffer in the Ceph client's
 	   cache, so we don't have to free it. */
 
-	rc = ceph_ll_readlink(export->cmount, link->i, &content, 0, 0);
+	rc = ceph_ll_readlink(export->cmount, link->i, content, sizeof(content), 0, 0);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
