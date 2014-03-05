@@ -90,7 +90,7 @@ bool get_req_uid_gid(struct svc_req *req,
 	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
 		/* Nothing to be done here... */
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 		  "Request xid=%u has authentication AUTH_NONE",
 		  req->rq_xid);
 		user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
@@ -106,7 +106,7 @@ bool get_req_uid_gid(struct svc_req *req,
 			struct group_data group_data;
 			struct group_data *grpdata = &group_data;
 
-			LogFullDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d won't trust altgrp",
 			     req->rq_xid,
 			     (int)punix_creds->aup_uid,
@@ -120,11 +120,11 @@ bool get_req_uid_gid(struct svc_req *req,
 			user_credentials->caller_glen = grpdata->nbgroups;
 			user_credentials->caller_garray = grpdata->groups;
 
-			LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+			LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
 				   (unsigned int)user_credentials->caller_uid,
 				   (unsigned int)user_credentials->caller_gid);
 		} else {
-			LogFullDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d",
 			     req->rq_xid,
 			     (int)punix_creds->aup_uid,
@@ -135,7 +135,7 @@ bool get_req_uid_gid(struct svc_req *req,
 			user_credentials->caller_glen = punix_creds->aup_len;
 			user_credentials->caller_garray = punix_creds->aup_gids;
 
-			LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+			LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
 				    (unsigned int)user_credentials->caller_uid,
 				    (unsigned int)user_credentials->caller_gid);
 		}
@@ -145,7 +145,7 @@ bool get_req_uid_gid(struct svc_req *req,
 	case RPCSEC_GSS:
 		if (user_credentials->caller_flags & USER_CRED_GSS_PROCESSED) {
 			/* Only process credentials once. */
-			LogFullDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_DISPATCH,
 				     "Request xid=%u has authentication RPCSEC_GSS, uid=%d, gid=%d",
 				     req->rq_xid, user_credentials->caller_uid,
 				     user_credentials->caller_gid);
@@ -153,7 +153,7 @@ bool get_req_uid_gid(struct svc_req *req,
 		}
 
 		user_credentials->caller_flags |= USER_CRED_GSS_PROCESSED;
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u has authentication RPCSEC_GSS",
 			     req->rq_xid);
 		/* Get the gss data to process them */
@@ -166,7 +166,7 @@ bool get_req_uid_gid(struct svc_req *req,
 
 			gss_buffer_desc oidbuff;
 
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogMidDebug(COMPONENT_RPCSEC_GSS,
 				     "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u "
 				     "RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
 				     gd->sec.svc, RPCSEC_GSS_SVC_NONE,
@@ -174,7 +174,7 @@ bool get_req_uid_gid(struct svc_req *req,
 				     RPCSEC_GSS_SVC_PRIVACY);
 
 			memcpy(&ptr, (void *)gd->ctx + 4, 4);
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogMidDebug(COMPONENT_RPCSEC_GSS,
 				     "----> Client=%s length=%lu  Qop=%u established=%u "
 				     "gss_ctx_id=%p|%p",
 				     (char *)gd->cname.value, gd->cname.length,
@@ -186,11 +186,11 @@ bool get_req_uid_gid(struct svc_req *req,
 						  &oidbuff);
 
 			if (maj_stat != GSS_S_COMPLETE) {
-				LogFullDebug(COMPONENT_DISPATCH,
+				LogMidDebug(COMPONENT_DISPATCH,
 					     "Error in gss_oid_to_str: %u|%u",
 					     maj_stat, min_stat);
 			} else {
-				LogFullDebug(COMPONENT_RPCSEC_GSS,
+				LogMidDebug(COMPONENT_RPCSEC_GSS,
 					     "----> Client mech=%s len=%lu",
 					     (char *)oidbuff.value,
 					     oidbuff.length);
@@ -200,7 +200,7 @@ bool get_req_uid_gid(struct svc_req *req,
 			}
 		}
 
-		LogFullDebug(COMPONENT_RPCSEC_GSS,
+		LogMidDebug(COMPONENT_RPCSEC_GSS,
 			     "Mapping principal %s to uid/gid",
 			     (char *)gd->cname.value);
 
@@ -231,7 +231,7 @@ bool get_req_uid_gid(struct svc_req *req,
 			return true;
 		}
 
-		LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+		LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
 			     (unsigned int)user_credentials->caller_uid,
 			     (unsigned int)user_credentials->caller_gid);
 
@@ -240,7 +240,7 @@ bool get_req_uid_gid(struct svc_req *req,
 			struct group_data group_data;
 			struct group_data *grpdata = &group_data;
 
-			LogFullDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_DISPATCH,
 			     "Request xid=%u uses RPCSEC_GSS, uid=%u,gid=%u won't trust altgrp",
 			     req->rq_xid,
 			     (unsigned int)user_credentials->caller_uid,
@@ -261,7 +261,7 @@ bool get_req_uid_gid(struct svc_req *req,
 #endif				/* _USE_GSSRPC */
 
 	default:
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 			     "FAILURE: Request xid=%u, has unsupported authentication %d",
 			     req->rq_xid, req->rq_cred.oa_flavor);
 		/* Reject the request for weak authentication and
@@ -297,7 +297,7 @@ void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 	     && !(export_perms->options & EXPORT_OPTION_ROOT))
 	    || export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
 	    || ((user_credentials->caller_flags & USER_CRED_ANONYMOUS) != 0)) {
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
 			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid,
@@ -323,7 +323,7 @@ void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 		user_credentials->caller_glen = 0;
 	} else if ((user_credentials->caller_gid == 0)
 		   && !(export_perms->options & EXPORT_OPTION_ROOT)) {
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
 			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid,
@@ -346,7 +346,7 @@ void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 
 		/* Keep alternate groups, we may squash them below */
 	} else {
-		LogFullDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_DISPATCH,
 			     "Accepting credentials for export %d caller uid=%d gid=%d",
 			     export->id, user_credentials->caller_uid,
 			     user_credentials->caller_gid);
@@ -376,7 +376,7 @@ void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
 				/* Save the position of the first instance
 				 * of root in the garray
 				 */
-				LogFullDebug(COMPONENT_DISPATCH,
+				LogMidDebug(COMPONENT_DISPATCH,
 					     "Squashing alternate group #%d to %d",
 					     i, export_perms->anonymous_gid);
 				if (user_credentials->caller_gpos_root >=

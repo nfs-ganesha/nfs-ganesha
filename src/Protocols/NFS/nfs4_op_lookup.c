@@ -182,9 +182,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 
-		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-			     "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			     data->export->fullpath, data->export->id, name);
+		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			 data->export->fullpath, data->export->id, name);
 
 		/* Swap in the entry on the other side of the junction. */
 		if (file_entry)

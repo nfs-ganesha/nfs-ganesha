@@ -751,10 +751,10 @@ static void nfs_rpc_execute(request_data_t *req,
  * the xprt is valid for the lifetime here
  */
 	if (copy_xprt_addr(req_ctx.caller_addr, xprt) == 0) {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "copy_xprt_addr failed for Program %d, Version %d, "
-			     "Function %d", (int)svcreq->rq_prog,
-			     (int)svcreq->rq_vers, (int)svcreq->rq_proc);
+		LogDebug(COMPONENT_DISPATCH,
+			 "copy_xprt_addr failed for Program %d, Version %d, "
+			 "Function %d", (int)svcreq->rq_prog,
+			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
 		/* XXX move lock wrapper into RPC API */
 		DISP_SLOCK(xprt);
 		svcerr_systemerr(xprt, svcreq);
@@ -936,10 +936,10 @@ static void nfs_rpc_execute(request_data_t *req,
 				goto auth_failure;
 			}
 
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "Found export entry for path=%s as exportid=%d",
-				     req_ctx.export->export.fullpath,
-				     req_ctx.export->export.id);
+			LogMidDebug(COMPONENT_DISPATCH,
+				    "Found export entry for path=%s as exportid=%d",
+				    req_ctx.export->export.fullpath,
+				    req_ctx.export->export.id);
 		} else {	/* NFS V4 gets its own export id from the ops
 				 * in the compound */
 			protocol_options |= EXPORT_OPTION_NFSV4;
@@ -1025,10 +1025,10 @@ static void nfs_rpc_execute(request_data_t *req,
 					 options & EXPORT_OPTION_NFSV3) == 0)
 					goto handle_err;
 
-				LogFullDebug(COMPONENT_DISPATCH,
-					     "Found export entry for dirname=%s as exportid=%d",
-					     req_ctx.export->export.fullpath,
-					     req_ctx.export->export.id);
+				LogMidDebug(COMPONENT_DISPATCH,
+					    "Found export entry for dirname=%s as exportid=%d",
+					    req_ctx.export->export.fullpath,
+					    req_ctx.export->export.id);
 			}
 		}
 	} else if (svcreq->rq_prog == nfs_param.core_param.program[P_MNT]) {
@@ -1039,9 +1039,9 @@ static void nfs_rpc_execute(request_data_t *req,
 	if (req_ctx.export != NULL) {
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "nfs_rpc_execute about to call nfs_export_check_access for client %s",
-			     req_ctx.client->hostaddr_str);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
+			    req_ctx.client->hostaddr_str);
 
 		nfs_export_check_access(req_ctx.caller_addr,
 					&req_ctx.export->export, &export_perms);

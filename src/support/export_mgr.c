@@ -500,10 +500,10 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		len_export = strlen(export->pseudopath);
 
-		LogDebug(COMPONENT_NFS_V4_PSEUDO,
-			 "Comparing %s %d to %s %d",
-			 path, len_path,
-			 export->pseudopath, len_export);
+		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+			     "Comparing %s %d to %s %d",
+			     path, len_path,
+			     export->pseudopath, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */

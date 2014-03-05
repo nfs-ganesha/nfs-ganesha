@@ -245,10 +245,10 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 * signal to ourselves that the call back will be
 			 * across the junction.
 			 */
-			LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-				     "Need to cross junction to Export_Id %d Path %s",
-				     data->export->id,
-				     data->export->fullpath);
+			LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+				    "Need to cross junction to Export_Id %d Path %s",
+				    data->export->id,
+				    data->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
@@ -258,10 +258,10 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 *
 		 * Restore export and creds.
 		 */
-		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-			     "Need to report error for junction to Export_Id %d Path %s",
-			     data->export->id,
-			     data->export->fullpath);
+		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+			    "Need to report error for junction to Export_Id %d Path %s",
+			    data->export->id,
+			    data->export->fullpath);
 		restore_data(tracker);
 	}
 

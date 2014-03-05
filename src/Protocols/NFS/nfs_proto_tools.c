@@ -4483,8 +4483,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "nfs4_MakeCred about to call nfs_export_check_access");
+	LogMidDebug(COMPONENT_DISPATCH,
+		    "nfs4_MakeCred about to call nfs_export_check_access");
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
 
