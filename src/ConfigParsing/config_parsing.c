@@ -411,6 +411,53 @@ static struct config_node *lookup_next_node(struct glist_head *list,
 	return NULL;
 }
 
+static const char *config_type_str(enum config_type type)
+{
+	switch(type) {
+	case CONFIG_NULL:
+		return "CONFIG_NULL";
+	case CONFIG_INT16:
+		return "CONFIG_INT16";
+	case CONFIG_UINT16:
+		return "CONFIG_UINT16";
+	case CONFIG_INT32:
+		return "CONFIG_INT32";
+	case CONFIG_UINT32:
+		return "CONFIG_UINT32";
+	case CONFIG_INT64:
+		return "CONFIG_INT64";
+	case CONFIG_UINT64:
+		return "CONFIG_UINT64";
+	case CONFIG_FSID:
+		return "CONFIG_FSID";
+	case CONFIG_STRING:
+		return "CONFIG_STRING";
+	case CONFIG_PATH:
+		return "CONFIG_PATH";
+	case CONFIG_LIST:
+		return "CONFIG_LIST";
+	case CONFIG_ENUM:
+		return "CONFIG_ENUM";
+	case CONFIG_TOKEN:
+		return "CONFIG_TOKEN";
+	case CONFIG_BOOL:
+		return "CONFIG_BOOL";
+	case CONFIG_BOOLBIT:
+		return "CONFIG_BOOLBIT";
+	case CONFIG_IPV4_ADDR:
+		return "CONFIG_IPV4_ADDR";
+	case CONFIG_IPV6_ADDR:
+		return "CONFIG_IPV6_ADDR";
+	case CONFIG_INET_PORT:
+		return "CONFIG_INET_PORT";
+	case CONFIG_BLOCK:
+		return "CONFIG_BLOCK";
+	case CONFIG_PROC:
+		return "CONFIG_PROC";
+	}
+	return "unknown";
+}
+
 static int do_block_init(struct config_item *params,
 			 void *param_struct)
 {
@@ -423,6 +470,9 @@ static int do_block_init(struct config_item *params,
 
 	for (item = params; item->name != NULL; item++) {
 		param_addr = (caddr_t *)((uint64_t)param_struct + item->off);
+		LogFullDebug(COMPONENT_CONFIG,
+			     "%p name=%s type=%s",
+			     param_addr, item->name, config_type_str(item->type));
 		switch (item->type) {
 		case CONFIG_NULL:
 			break;
@@ -468,8 +518,24 @@ static int do_block_init(struct config_item *params,
 				*(uint32_t *)param_addr &= ~item->u.bit.bit;
 			break;
 		case CONFIG_LIST:
+			*(uint32_t *)param_addr |= item->u.lst.def;
+			LogFullDebug(COMPONENT_CONFIG,
+				     "%p CONFIG_LIST %s mask=%08x def=%08x"
+				     " value=%08"PRIx32,
+				     param_addr,
+				     item->name,
+				     item->u.lst.mask, item->u.lst.def,
+				     *(uint32_t *)param_addr);
+			break;
 		case CONFIG_ENUM:
-			*(uint32_t *)param_addr = item->u.lst.def;
+			*(uint32_t *)param_addr |= item->u.lst.def;
+			LogFullDebug(COMPONENT_CONFIG,
+				     "%p CONFIG_ENUM %s mask=%08x def=%08x"
+				     " value=%08"PRIx32,
+				     param_addr,
+				     item->name,
+				     item->u.lst.mask, item->u.lst.def,
+				     *(uint32_t *)param_addr);
 			break;
 		case CONFIG_IPV4_ADDR:
 			sock = (struct sockaddr_in *)param_addr;
@@ -595,6 +661,9 @@ static int do_block_load(struct config_node *blk,
 			}
 			param_addr = (caddr_t *)((uint64_t)param_struct
 						 + item->off);
+			LogFullDebug(COMPONENT_CONFIG,
+				     "%p name=%s type=%s",
+				     param_addr, item->name, config_type_str(item->type));
 			switch (item->type) {
 			case CONFIG_NULL:
 				break;
@@ -686,22 +755,40 @@ static int do_block_load(struct config_node *blk,
 					errors++;
 				break;
 			case CONFIG_LIST:
-				if (item->u.lst.def == *(uint32_t *)param_addr)
-					*(uint32_t *)param_addr = 0;
+				if (item->u.lst.def ==
+				   (*(uint32_t *)param_addr & item->u.lst.mask))
+					*(uint32_t *)param_addr &=
+							~item->u.lst.mask;
 				rc = convert_list(node, item, &flags);
 				if (rc == 0)
 					*(uint32_t *)param_addr |= flags;
 				else
 					errors += rc;
+				LogFullDebug(COMPONENT_CONFIG,
+					     "%p CONFIG_LIST %s mask=%08x flags=%08x"
+					     " value=%08"PRIx32,
+					     param_addr,
+					     item->name,
+					     item->u.lst.mask, flags,
+					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_ENUM:
-				if (item->u.lst.def == *(uint32_t *)param_addr)
-					*(uint32_t *)param_addr = 0;
+				if (item->u.lst.def ==
+				   (*(uint32_t *)param_addr & item->u.lst.mask))
+					*(uint32_t *)param_addr &=
+							~item->u.lst.mask;
 				rc = convert_enum(node, item, &flags);
 				if (rc == 0)
-					*(uint32_t *)param_addr = flags;
+					*(uint32_t *)param_addr |= flags;
 				else
 					errors += rc;
+				LogFullDebug(COMPONENT_CONFIG,
+					     "%p CONFIG_ENUM %s mask=%08x flags=%08x"
+					     " value=%08"PRIx32,
+					     param_addr,
+					     item->name,
+					     item->u.lst.mask, flags,
+					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_IPV4_ADDR:
 				sock = (struct sockaddr *)param_addr;
@@ -824,6 +911,11 @@ static int proc_block(struct config_node *node,
 			item->name);
 		return 1;
 	}
+	LogFullDebug(COMPONENT_CONFIG,
+		     "------ At (%s:%d): do_block_init %s",
+		     node->filename,
+		     node->linenumber,
+		     item->name);
 	rc = do_block_init(item->u.blk.params, param_struct);
 	if (rc != 0) {
 		LogCrit(COMPONENT_CONFIG,
@@ -833,6 +925,13 @@ static int proc_block(struct config_node *node,
 			item->name);
 		goto err_out;
 	}
+	if (item->u.blk.display != NULL)
+		item->u.blk.display("DEFAULTS", node, link_mem, param_struct);
+	LogFullDebug(COMPONENT_CONFIG,
+		     "------ At (%s:%d): do_block_load %s",
+		     node->filename,
+		     node->linenumber,
+		     item->name);
 	rc = do_block_load(node,
 			   item->u.blk.params,
 			   (item->flags & CONFIG_RELAX) ? true : false,
@@ -845,6 +944,11 @@ static int proc_block(struct config_node *node,
 			item->name);
 		goto err_out;
 	}
+	LogFullDebug(COMPONENT_CONFIG,
+		     "------ At (%s:%d): commit %s",
+		     node->filename,
+		     node->linenumber,
+		     item->name);
 	rc = item->u.blk.commit(node, link_mem, param_struct);
 	if (rc != 0) {
 		LogCrit(COMPONENT_CONFIG,
@@ -854,6 +958,8 @@ static int proc_block(struct config_node *node,
 			item->name);
 		goto err_out;
 	}
+	if (item->u.blk.display != NULL)
+		item->u.blk.display("RESULT", node, link_mem, param_struct);
 	return 0;
 
 err_out:

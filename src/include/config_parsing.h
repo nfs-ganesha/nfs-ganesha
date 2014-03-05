@@ -212,8 +212,10 @@ struct config_item {
 			int64_t def_maj;
 			int64_t def_min;
 		} fsid;
-		struct { /* CONFIG_LIST | CONFIG_ENUM */
+		struct { /* CONFIG_LIST | CONFIG_ENUM |
+			    CONFIG_LIST_BITS | CONFIG_ENUM_BITS */
 			uint32_t def;
+			uint32_t mask;
 			struct config_item_list *tokens;
 		} lst;
 		struct { /* CONFIG_BOOLBIT */
@@ -225,6 +227,9 @@ struct config_item {
 			struct config_item *params;
 			int (*commit)(void *node, void *link_mem,
 				      void *self_struct);
+			void (*display)(const char *step,
+					void *node, void *link_mem,
+					void *self_struct);
 		} blk;
 		struct { /* CONFIG_PROC */
 			struct conf_item_list *tokens;
@@ -338,8 +343,18 @@ struct config_item {
 
 #define CONF_ITEM_LIST(_name_, _def_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_LIST,		    \
+	  .type = CONFIG_LIST,			    \
 	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = UINT32_MAX,		    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_LIST_BITS(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_LIST,		  	    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = _mask_,			    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -363,8 +378,18 @@ struct config_item {
 
 #define CONF_ITEM_ENUM(_name_, _def_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_ENUM,		    \
+	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = UINT32_MAX,		    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_ENUM_BITS(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_ENUM,			    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = _mask_,			    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
