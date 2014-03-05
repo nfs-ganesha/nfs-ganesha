@@ -62,11 +62,17 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	char *buf = buffer;
 
 	if ((p_perms->options & EXPORT_OPTION_ROOT) == EXPORT_OPTION_ROOT)
-		buf += sprintf(buf, "ROOT ");
+		buf += sprintf(buf, "NO_ROOT_SQUASH");
 
 	if ((p_perms->options & EXPORT_OPTION_ALL_ANONYMOUS) ==
 	    EXPORT_OPTION_ALL_ANONYMOUS)
-		buf += sprintf(buf, "ALL SQUASH ");
+		buf += sprintf(buf, "ALL_SQUASH ");
+
+	if ((p_perms->options &
+	     (EXPORT_OPTION_ROOT | EXPORT_OPTION_ALL_ANONYMOUS)) == 0)
+		buf += sprintf(buf, "ROOT_SQUASH");
+
+	buf += sprintf(buf, ", ");
 
 	if ((p_perms->options & EXPORT_OPTION_RW_ACCESS) ==
 	    EXPORT_OPTION_RW_ACCESS)
@@ -79,13 +85,13 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 		buf += sprintf(buf, "WO");
 	else if ((p_perms->options & EXPORT_OPTION_MD_ACCESS) ==
 		 EXPORT_OPTION_MD_ACCESS)
-		buf += sprintf(buf, "MD RW");
+		buf += sprintf(buf, "MD_RW");
 	else if ((p_perms->options & EXPORT_OPTION_MD_READ_ACCESS) ==
 		 EXPORT_OPTION_MD_READ_ACCESS)
-		buf += sprintf(buf, "MD RO");
+		buf += sprintf(buf, "MD_RO");
 	else if ((p_perms->options & EXPORT_OPTION_MD_WRITE_ACCESS) ==
 		 EXPORT_OPTION_MD_WRITE_ACCESS)
-		buf += sprintf(buf, "MD WO");
+		buf += sprintf(buf, "MD_WO");
 	else if ((p_perms->options & EXPORT_OPTION_ACCESS_TYPE) != 0)
 		buf +=
 		    sprintf(buf, "%08x",
@@ -120,7 +126,7 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	if ((p_perms->
 	     options & (EXPORT_OPTION_NFSV2 | EXPORT_OPTION_NFSV3 |
 			EXPORT_OPTION_NFSV4)) == 0)
-		buf += sprintf(buf, "NONE");
+		buf += sprintf(buf, "0");
 
 	if ((p_perms->options & EXPORT_OPTION_UDP) == EXPORT_OPTION_UDP)
 		buf += sprintf(buf, ", UDP");
@@ -129,10 +135,13 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 
 	if ((p_perms->options & EXPORT_OPTION_USE_UQUOTA) ==
 	    EXPORT_OPTION_USE_UQUOTA)
-		buf += sprintf(buf, ", UQUOTA");
+		buf += sprintf(buf, ", User_Quota");
 	if ((p_perms->options & EXPORT_OPTION_MANAGE_GIDS) ==
 	    EXPORT_OPTION_MANAGE_GIDS)
 		buf += sprintf(buf, ", Manage_Gids");
+	if ((p_perms->options & EXPORT_OPTION_USE_DELEG) ==
+	    EXPORT_OPTION_USE_DELEG)
+		buf += sprintf(buf, ", Use_Deleg");
 
 	buf += sprintf(buf, ", anon_uid=%d", (int)p_perms->anonymous_uid);
 	buf += sprintf(buf, ", anon_gid=%d", (int)p_perms->anonymous_gid);
@@ -154,8 +163,8 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogFullDebug(component, "  %p HOSTIF_CLIENT: %s(%s)", entry,
-			     paddr, perms);
+		LogMidDebug(component, "  %p HOSTIF_CLIENT: %s(%s)", entry,
+			    paddr, perms);
 		return;
 
 	case NETWORK_CLIENT:
@@ -164,23 +173,23 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Network address";
 		}
-		LogFullDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
-			     paddr, perms);
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+			    paddr, perms);
 		return;
 
 	case NETGROUP_CLIENT:
-		LogFullDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
-			     entry->client.netgroup.netgroupname, perms);
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+			    entry->client.netgroup.netgroupname, perms);
 		return;
 
 	case WILDCARDHOST_CLIENT:
-		LogFullDebug(component, "  %p WILDCARDHOST_CLIENT: %s(%s)",
-			     entry, entry->client.wildcard.wildcard, perms);
+		LogMidDebug(component, "  %p WILDCARDHOST_CLIENT: %s(%s)",
+			    entry, entry->client.wildcard.wildcard, perms);
 		return;
 
 	case GSSPRINCIPAL_CLIENT:
-		LogFullDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
-			     entry->client.gssprinc.princname, perms);
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+			    entry->client.gssprinc.princname, perms);
 		return;
 
 	case HOSTIF_CLIENT_V6:
@@ -189,16 +198,19 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogFullDebug(component, "  %p HOSTIF_CLIENT_V6: %s(%s)", entry,
-			     paddr, perms);
+		LogMidDebug(component, "  %p HOSTIF_CLIENT_V6: %s(%s)", entry,
+			    paddr, perms);
 		return;
 
 	case MATCH_ANY_CLIENT:
-		LogFullDebug(component, "  %p MATCH_ANY_CLIENT: *(%s)", entry,
-			     perms);
+		LogMidDebug(component, "  %p MATCH_ANY_CLIENT: *(%s)", entry,
+			    perms);
 		return;
 
 	case RAW_CLIENT_LIST:
+		LogCrit(component, "  %p RAW_CLIENT_LIST: <unknown>(%s)", entry,
+			perms);
+		return;
 	case BAD_CLIENT:
 		LogCrit(component, "  %p BAD_CLIENT: <unknown>(%s)", entry,
 			perms);
@@ -283,6 +295,14 @@ static int add_client(struct exportlist *exp,
 		struct addrinfo *ap;
 
 		for (ap = info; ap != NULL; ap = ap->ai_next) {
+			LogFullDebug(COMPONENT_CONFIG,
+				     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
+				     ap->ai_flags,
+				     ap->ai_family,
+				     ap->ai_socktype,
+				     ap->ai_protocol,
+				     (int) ap->ai_addrlen,
+				     ap->ai_canonname);
 			if (cli == NULL) {
 				cli = gsh_calloc(sizeof(struct
 							exportlist_client_entry__),
@@ -315,6 +335,7 @@ static int add_client(struct exportlist *exp,
 			} else
 				continue;
 			cli->client_perms = *perms;
+			LogClientListEntry(COMPONENT_CONFIG, cli);
 			glist_add_tail(&exp->clients,
 				       &cli->cle_list);
 			cli = NULL; /* let go of it */
@@ -328,6 +349,7 @@ static int add_client(struct exportlist *exp,
 		goto out;
 	}
 	cli->client_perms = *perms;
+	LogClientListEntry(COMPONENT_CONFIG, cli);
 	glist_add_tail(&exp->clients,
 		       &cli->cle_list);
 	cli = NULL;
@@ -430,6 +452,8 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 		endptr = index(tok, ',');
 		if (endptr != NULL)
 			*endptr++ = '\0';
+		LogMidDebug(COMPONENT_CONFIG,
+			    "Adding client %s", tok);
 		errcnt += add_client(exp, tok, &cli->client_perms);
 		tok = endptr;
 	}
@@ -611,6 +635,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 	struct exportlist *exp;
 	struct gsh_export *export, *probe_exp;
 	int errcnt = 0;
+	char perms[1024];
 
 	exp = (struct exportlist *)self_struct;
 	
@@ -652,6 +677,23 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 			put_gsh_export(probe_exp);
 		}
 	}
+	if (exp->id == 0) {
+		if (exp->pseudopath == NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Pseudo path must be \"/\" for export id 0");
+			errcnt++;
+		} else if (exp->pseudopath[1] != '\0') {
+			LogCrit(COMPONENT_CONFIG,
+				"Pseudo path must be \"/\" for export id 0");
+			errcnt++;
+		}
+		if ((exp->export_perms.options & EXPORT_OPTION_PROTOCOLS)
+		    != EXPORT_OPTION_NFSV4) {
+			LogCrit(COMPONENT_CONFIG,
+				"Export id 0 must indicate Protocols=4");
+			errcnt++;
+		}
+	}
 	probe_exp = get_gsh_export_by_path(exp->fullpath, true);
 	if (probe_exp != NULL &&
 	    exp->pseudopath == NULL &&
@@ -686,9 +728,11 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		goto err_fsal;
 	}
 
+	StrExportOptions(&exp->export_perms, perms);
+
 	LogEvent(COMPONENT_CONFIG,
-		 "Export %d created at pseudo (%s) with path (%s) and tag (%s)",
-		 exp->id, exp->pseudopath, exp->fullpath, exp->FS_tag);
+		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		 exp->id, exp->pseudopath, exp->fullpath, exp->FS_tag, perms);
 	set_gsh_export_state(export, EXPORT_READY);
 	put_gsh_export(export);
 	return 0;
@@ -698,6 +742,27 @@ err_fsal:
 	
 err_out:
 	return errcnt;
+}
+
+/**
+ * @brief Display an export block
+ *
+ * Validate the export level parameters.  fsal and client
+ * parameters are already done.
+ */
+
+static void export_display(const char *step, void *node,
+			   void *link_mem, void *self_struct)
+{
+	struct exportlist *exp = self_struct;
+	char perms[1024];
+	
+	StrExportOptions(&exp->export_perms, perms);
+
+	LogEvent(COMPONENT_CONFIG,
+		 "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		 step, exp, exp->id, exp->pseudopath,
+		 exp->fullpath, exp->FS_tag, perms);
 }
 
 /**
@@ -904,7 +969,8 @@ struct config_block export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = export_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = export_commit
+	.blk_desc.u.blk.commit = export_commit,
+	.blk_desc.u.blk.display = export_display
 };
 
 
@@ -929,6 +995,8 @@ static int build_default_root(void)
 
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */
+		LogDebug(COMPONENT_CONFIG,
+			 "Export 0 already exists");
 		put_gsh_export(exp);
 		return 0;
 	}
@@ -938,7 +1006,9 @@ static int build_default_root(void)
 	exp = get_gsh_export_by_pseudo("/", true);
 
 	if (exp != NULL) {
-		/* export_id = 0 has already been specified */
+		/* Pseudo = / has already been specified */
+		LogDebug(COMPONENT_CONFIG,
+			 "Pseudo root already exists");
 		put_gsh_export(exp);
 		return 0;
 	}
@@ -1465,11 +1535,12 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Match %p, type = %s, options 0x%X",
-			     client,
-			     client_types[client->type],
-			     client->client_perms.options);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "Match %p, type = %s, options 0x%X",
+			    client,
+			    client_types[client->type],
+			    client->client_perms.options);
+		LogClientListEntry(COMPONENT_DISPATCH, client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -1565,8 +1636,8 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		case GSSPRINCIPAL_CLIENT:
 	  /** @todo BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "----------> Unsupported type GSS_PRINCIPAL_CLIENT");
+			LogCrit(COMPONENT_DISPATCH,
+				"Unsupported type GSS_PRINCIPAL_CLIENT");
 			break;
 
 		case HOSTIF_CLIENT_V6:
@@ -1606,11 +1677,12 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Matchv6 %p, type = %s, options 0x%X",
-			     client,
-			     client_types[client->type],
-			     client->client_perms.options);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "Matchv6 %p, type = %s, options 0x%X",
+			    client,
+			    client_types[client->type],
+			    client->client_perms.options);
+		LogClientListEntry(COMPONENT_DISPATCH, client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -1794,9 +1866,9 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 
 			sprint_sockaddr(ipv6, ipstring6, sizeof(ipstring6));
 			sprint_sockaddr(ipv4, ipstring4, sizeof(ipstring4));
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
-				     ipstring6, ipstring4);
+			LogMidDebug(COMPONENT_DISPATCH,
+				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
+				    ipstring6, ipstring4);
 		}
 
 		return ipv4;
@@ -1839,24 +1911,35 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 		ipstring[0] = '\0';
 		(void) sprint_sockip(puse_hostaddr,
 				     ipstring, sizeof(ipstring));
-		LogFullDebug(COMPONENT_DISPATCH, "Check for address %s",
-			     ipstring);
+		LogMidDebug(COMPONENT_DISPATCH, "Check for address %s",
+			    ipstring);
 	}
 
 	/* Does the client match anyone on the client list? */
 	client = client_match_any(puse_hostaddr, export);
 	if (client != NULL) {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Matched client as %s, options = 0x%X",
-			     client_types[client->type],
-			     client->client_perms.options);
+		if (isFullDebug(COMPONENT_DISPATCH)) {
+			char perms[1024];
+			StrExportOptions(&client->client_perms, perms);
+			LogMidDebug(COMPONENT_DISPATCH,
+				    "Matched client as %s, options = 0x%X (%s)",
+				    client_types[client->type],
+				    client->client_perms.options,
+				    perms);
+		}
 		/* we may have to fill in some export carryovers here */
 		*export_perms = client->client_perms;
 	} else {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Fallback to export %d, options = 0x%X",
-			     export->id,
-			     export->export_perms.options);
+		if (isFullDebug(COMPONENT_DISPATCH)) {
+			char perms[1024];
+			StrExportOptions(&export->export_perms, perms);
+			LogMidDebug(COMPONENT_DISPATCH,
+				    "Fallback to export %d, options = 0x%X (%s)",
+				    export->id,
+				    export->export_perms.options,
+				    perms);
+		}
+
 		/* No, fall back to the export itself */
 		/* we may have to fill in some global carryovers here */
 		*export_perms = export->export_perms;
