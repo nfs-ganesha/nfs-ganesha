@@ -207,7 +207,6 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	 */
 	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0
 	    || export->pseudopath == NULL
-	    || (export->export_perms.options & EXPORT_OPTION_PSEUDO) == 0
 	    || export->id == 0
 	    || export->pseudopath[1] == '\0')
 		return true;

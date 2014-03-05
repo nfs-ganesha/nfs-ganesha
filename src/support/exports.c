@@ -668,8 +668,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 	}
 	if (errcnt)
 		goto err_out;  /* have errors. don't init or load a fsal */
-	if (exp->pseudopath != NULL) /* redundant?? */
-		exp->export_perms.options |= EXPORT_OPTION_PSEUDO;
 	glist_init(&exp->exp_state_list);
 	glist_init(&exp->exp_lock_list);
 	glist_init(&exp->exp_nlm_share_list);
@@ -691,6 +689,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		errcnt++;
 		goto err_fsal;
 	}
+
 	LogEvent(COMPONENT_CONFIG,
 		 "Export %d created at pseudo (%s) with path (%s) and tag (%s)",
 		 exp->id, exp->pseudopath, exp->fullpath, exp->FS_tag);
@@ -988,7 +987,6 @@ static int build_default_root(void)
 	 */
 	p_entry->export_perms.options = EXPORT_OPTION_NFSV4 |
 					EXPORT_OPTION_TRANSPORTS |
-					EXPORT_OPTION_PSEUDO |
 					EXPORT_OPTION_MD_READ_ACCESS |
 					EXPORT_OPTION_ROOT |
 					EXPORT_OPTION_AUTH_TYPES;
@@ -1476,6 +1474,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 			     client,
 			     client_types[client->type],
 			     client->client_perms.options);
+
 		switch (client->type) {
 		case HOSTIF_CLIENT:
 			if (client->client.hostif.clientaddr == addr) {
@@ -1616,6 +1615,7 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 			     client,
 			     client_types[client->type],
 			     client->client_perms.options);
+
 		switch (client->type) {
 		case HOSTIF_CLIENT:
 		case NETWORK_CLIENT:
