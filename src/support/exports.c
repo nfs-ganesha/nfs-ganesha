@@ -68,10 +68,6 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	    EXPORT_OPTION_ALL_ANONYMOUS)
 		buf += sprintf(buf, "ALL SQUASH ");
 
-	if ((p_perms->options & EXPORT_OPTION_ACCESS_LIST) ==
-	    EXPORT_OPTION_ACCESS_LIST)
-		buf += sprintf(buf, "ACCESS LIST ");
-
 	if ((p_perms->options & EXPORT_OPTION_RW_ACCESS) ==
 	    EXPORT_OPTION_RW_ACCESS)
 		buf += sprintf(buf, "RW");

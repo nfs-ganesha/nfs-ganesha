@@ -188,21 +188,7 @@ typedef struct exportlist {
 				       EXPORT_OPTION_WRITE_ACCESS    | \
 				       EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS)
-#define EXPORT_OPTION_CUR_ACCESS      (EXPORT_OPTION_ROOT	     | \
-				       EXPORT_OPTION_READ_ACCESS     | \
-				       EXPORT_OPTION_WRITE_ACCESS    | \
-				       EXPORT_OPTION_RW_ACCESS	     | \
-				       EXPORT_OPTION_MD_WRITE_ACCESS | \
-				       EXPORT_OPTION_MD_READ_ACCESS  | \
-				       EXPORT_OPTION_MD_ACCESS)
-/* option_pseudo redundant?? why not test pseudopath == NULL? */
-#define EXPORT_OPTION_PSEUDO 0x00000100	/*< Pseudopath is provided */
-#define EXPORT_OPTION_MAXREAD 0x00000200	/*< Max read is provided */
-#define EXPORT_OPTION_MAXWRITE 0x00000400	/*< Max write is provided */
-#define EXPORT_OPTION_PREFREAD 0x00000800	/*< Pref read is provided */
-#define EXPORT_OPTION_PREFWRITE 0x00001000	/*< Pref write is provided */
-#define EXPORT_OPTION_PREFRDDIR 0x00002000	/*< Pref readdir size is
-						    provided */
+
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000	/*< Clients use only
 							   privileged port */
 
@@ -237,46 +223,14 @@ typedef struct exportlist {
 				       EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_TRANSPORTS      (EXPORT_OPTION_UDP	     | \
 				       EXPORT_OPTION_TCP)
-#define EXPORT_OPTION_ALL_ACCESS      (EXPORT_OPTION_ROOT	     | \
-				       EXPORT_OPTION_ALL_ANONYMOUS   | \
-				       EXPORT_OPTION_READ_ACCESS     | \
-				       EXPORT_OPTION_WRITE_ACCESS    | \
-				       EXPORT_OPTION_RW_ACCESS	     | \
-				       EXPORT_OPTION_MD_WRITE_ACCESS | \
-				       EXPORT_OPTION_MD_READ_ACCESS  | \
-				       EXPORT_OPTION_MD_ACCESS	     | \
-				       EXPORT_OPTION_PRIVILEGED_PORT | \
-				       EXPORT_OPTION_AUTH_NONE	     | \
-				       EXPORT_OPTION_AUTH_UNIX	     | \
-				       EXPORT_OPTION_RPCSEC_GSS_NONE | \
-				       EXPORT_OPTION_RPCSEC_GSS_INTG | \
-				       EXPORT_OPTION_RPCSEC_GSS_PRIV | \
-				       EXPORT_OPTION_NFSV2	     | \
-				       EXPORT_OPTION_NFSV3	     | \
-				       EXPORT_OPTION_NFSV4	     | \
-				       EXPORT_OPTION_UDP	     | \
-				       EXPORT_OPTION_TCP)
-#define EXPORT_OPTION_BASE_ACCESS     (EXPORT_OPTION_PROTOCOLS	     | \
-				       EXPORT_OPTION_TRANSPORTS	     | \
-				       EXPORT_OPTION_AUTH_TYPES	     | \
-				       EXPORT_OPTION_ALL_ANONYMOUS   | \
-				       EXPORT_OPTION_PRIVILEGED_PORT)
 
 /* Maximum offset set for R/W */
-#define EXPORT_OPTION_MAXOFFSETWRITE 0x04000000	/*< Maximum Offset for write
-						   is set */
-#define EXPORT_OPTION_MAXOFFSETREAD 0x08000000	/*< Maximum Offset for read is
-						   set */
-#define EXPORT_OPTION_ACCESS_OPT_LIST 0x10000000 /*< Access list from CLIENT
-						     sub-block */
 #define EXPORT_OPTION_USE_UQUOTA 0x40000000	/*< Using user quota for this
 						    export */
 #define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this
 						    export */
 #define EXPORT_OPTION_MANAGE_GIDS 0x20000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
-#define EXPORT_OPTION_ACCESS_LIST 0x00008000	/*< Flags access list entry as
-						    Access=  */
 
 /* NFS4 specific structures */
 
