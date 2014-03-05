@@ -135,34 +135,6 @@ extern log_level_t tabLogLevel[NB_LOG_LEVEL];
 
 #define NIV_MAJOR NIV_MAJ
 
-/* Limits on log messages */
-#define LOG_MAX_STRLEN 2048
-#define LOG_LABEL_LEN 50
-#define LOG_MSG_LEN   255
-
-typedef struct {
-	int numero;
-	char label[LOG_LABEL_LEN];
-	char msg[LOG_MSG_LEN];
-} family_error_t;
-
-/* Error family type */
-typedef struct {
-	int num_family;
-	char name_family[STR_LEN];
-	family_error_t *tab_err;
-} family_t;
-
-typedef family_error_t status_t;
-typedef family_error_t errctx_t;
-
-typedef struct {
-	int err_family;
-	int ctx_family;
-	errctx_t contexte;
-	status_t status;
-} log_error_t;
-
 #define ERR_NULL -1
 
 /* Error codes */
@@ -241,14 +213,6 @@ typedef struct {
 #define ERR_PTHREAD_COND_INIT    70
 #define ERR_FCNTL                71
 
-#define ERR_POSIX 1
-
-/* other codes families */
-#define ERR_LRU           10
-#define ERR_HASHTABLE     11
-#define ERR_FSAL          13
-#define ERR_CACHE_INODE   16
-
 /* previously at log_macros.h */
 typedef void (*cleanup_function) (void);
 typedef struct cleanup_list_element {
@@ -275,16 +239,6 @@ void Log_FreeThreadContext();
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
-int display_LogError(struct display_buffer *dspbuf, int num_family,
-		     int num_error, int status);
-
-static inline void MakeLogError(char *buffer, size_t size, int num_family,
-				int num_error, int status, int line)
-{
-	struct display_buffer dspbuf = { size, buffer, buffer };
-	(void)display_LogError(&dspbuf, num_family, num_error, status);
-}
-
 /* previously at log_macros.h */
 void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);
@@ -300,10 +254,6 @@ void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 			      ...)
 			      __attribute__ ((format(printf, 6, 7)));
 			      /* 6=format 7=params */
-
-void DisplayErrorComponentLogLine(log_components_t component, char *file,
-				  int line, char *function, int num_family,
-				  int num_error, int status);
 
 int read_log_config(config_file_t in_config);
 void reread_log_config();
@@ -511,17 +461,6 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 (char *) __func__, \
 						 level, format, ## args); \
-	} while (0)
-
-#define LogError(component, a, b, c) \
-	do { \
-		if (unlikely(LogComponents[component].comp_log_level \
-		    >= NIV_CRIT)) \
-			DisplayErrorComponentLogLine(component, \
-						     (char *) __FILE__, \
-						     __LINE__, \
-						     (char *) __func__, \
-						     a, b, c); \
 	} while (0)
 
 #define isLevel(component, level) \

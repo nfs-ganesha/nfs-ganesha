@@ -54,8 +54,6 @@
 #endif
 
 #include "nfs_core.h"
-#include "err_cache_inode.h"
-#include "err_hashtable.h"
 
 pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -599,136 +597,8 @@ log_level_t tabLogLevel[] = {
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
-static status_t tab_systeme_status[] = {
-	{
-	0, "NO_ERROR", "No errors"}, {
-	EPERM, "EPERM", "Reserved to root"}, {
-	ENOENT, "ENOENT", "No such file or directory"}, {
-	ESRCH, "ESRCH", "No such process"}, {
-	EINTR, "EINTR", "interrupted system call"}, {
-	EIO, "EIO", "I/O error"}, {
-	ENXIO, "ENXIO", "No such device or address"}, {
-	E2BIG, "E2BIG", "Arg list too long"}, {
-	ENOEXEC, "ENOEXEC", "Exec format error"}, {
-	EBADF, "EBADF", "Bad file number"}, {
-	ECHILD, "ECHILD", "No children"}, {
-	EAGAIN, "EAGAIN", "Resource temporarily unavailable"}, {
-	ENOMEM, "ENOMEM", "Not enough core"}, {
-	EACCES, "ENOMEM", "Permission denied"}, {
-	EFAULT, "EFAULT", "Bad address"}, {
-	ENOTBLK, "ENOTBLK", "Block device required"}, {
-	EBUSY, "EBUSY", "Mount device busy"}, {
-	EEXIST, "EEXIST", "File exists"}, {
-	EXDEV, "EXDEV", "Cross-device link"}, {
-	ENODEV, "ENODEV", "No such device"}, {
-	ENOTDIR, "ENOTDIR", "Not a directory"}, {
-	EISDIR, "EISDIR", "Is a directory"}, {
-	EINVAL, "EINVAL", "Invalid argument"}, {
-	ENFILE, "ENFILE", "File table overflow"}, {
-	EMFILE, "EMFILE", "Too many open files"}, {
-	ENOTTY, "ENOTTY", "Inappropriate ioctl for device"}, {
-	ETXTBSY, "ETXTBSY", "Text file busy"}, {
-	EFBIG, "EFBIG", "File too large"}, {
-	ENOSPC, "ENOSPC", "No space left on device"}, {
-	ESPIPE, "ESPIPE", "Illegal seek"}, {
-	EROFS, "EROFS", "Read only file system"}, {
-	EMLINK, "EMLINK", "Too many links"}, {
-	EPIPE, "EPIPE", "Broken pipe"}, {
-	EDOM, "EDOM", "Math arg out of domain of func"}, {
-	ERANGE, "ERANGE", "Math result not representable"}, {
-	ENOMSG, "ENOMSG", "No message of desired type"}, {
-	EIDRM, "EIDRM", "Identifier removed"}, {
-	ERR_NULL, "ERR_NULL", ""}
-};
-
-/* Error codes */
-static errctx_t tab_system_err[] = {
-	{
-	SUCCES, "SUCCES", "No Error"}, {
-	ERR_FAILURE, "FAILURE", "Error occurred"}, {
-	ERR_EVNT, "EVNT", "Event occurred"}, {
-	ERR_PTHREAD_KEY_CREATE, "ERR_PTHREAD_KEY_CREATE",
-		    "Error in creation of pthread_keys"}, {
-	ERR_MALLOC, "ERR_MALLOC", "malloc failed"}, {
-	ERR_SIGACTION, "ERR_SIGACTION", "sigaction failed"}, {
-	ERR_PTHREAD_ONCE, "ERR_PTHREAD_ONCE", "pthread_once failed"}, {
-	ERR_FILE_LOG, "ERR_FILE_LOG", "failed to access the log"}, {
-	ERR_GETHOSTBYNAME, "ERR_GETHOSTBYNAME", "gethostbyname failed"}, {
-	ERR_MMAP, "ERR_MMAP", "mmap failed"}, {
-	ERR_SOCKET, "ERR_SOCKET", "socket failed"}, {
-	ERR_BIND, "ERR_BIND", "bind failed"}, {
-	ERR_CONNECT, "ERR_CONNECT", "connect failed"}, {
-	ERR_LISTEN, "ERR_LISTEN", "listen failed"}, {
-	ERR_ACCEPT, "ERR_ACCEPT", "accept failed"}, {
-	ERR_RRESVPORT, "ERR_RRESVPORT", "rresvport failed"}, {
-	ERR_GETHOSTNAME, "ERR_GETHOSTNAME", "gethostname failed"}, {
-	ERR_GETSOCKNAME, "ERR_GETSOCKNAME", "getsockname failed"}, {
-	ERR_IOCTL, "ERR_IOCTL", "ioctl failed"}, {
-	ERR_UTIME, "ERR_UTIME", "utime failed"}, {
-	ERR_XDR, "ERR_XDR", "An XDR call failed"}, {
-	ERR_CHMOD, "ERR_CHMOD", "chmod failed"}, {
-	ERR_SEND, "ERR_SEND", "send failed"}, {
-	ERR_GETHOSTBYADDR, "ERR_GETHOSTBYADDR", "gethostbyaddr failed"}, {
-	ERR_PREAD, "ERR_PREAD", "pread failed"}, {
-	ERR_PWRITE, "ERR_PWRITE", "pwrite failed"}, {
-	ERR_STAT, "ERR_STAT", "stat failed"}, {
-	ERR_GETPEERNAME, "ERR_GETPEERNAME", "getpeername failed"}, {
-	ERR_FORK, "ERR_FORK", "fork failed"}, {
-	ERR_GETSERVBYNAME, "ERR_GETSERVBYNAME", "getservbyname failed"}, {
-	ERR_MUNMAP, "ERR_MUNMAP", "munmap failed"}, {
-	ERR_STATVFS, "ERR_STATVFS", "statvfs failed"}, {
-	ERR_OPENDIR, "ERR_OPENDIR", "opendir failed"}, {
-	ERR_READDIR, "ERR_READDIR", "readdir failed"}, {
-	ERR_CLOSEDIR, "ERR_CLOSEDIR", "closedir failed"}, {
-	ERR_LSTAT, "ERR_LSTAT", "lstat failed"}, {
-	ERR_GETWD, "ERR_GETWD", "getwd failed"}, {
-	ERR_CHDIR, "ERR_CHDIR", "chdir failed"}, {
-	ERR_CHOWN, "ERR_CHOWN", "chown failed"}, {
-	ERR_MKDIR, "ERR_MKDIR", "mkdir failed"}, {
-	ERR_OPEN, "ERR_OPEN", "open failed"}, {
-	ERR_READ, "ERR_READ", "read failed"}, {
-	ERR_WRITE, "ERR_WRITE", "write failed"}, {
-	ERR_UTIMES, "ERR_UTIMES", "utimes failed"}, {
-	ERR_READLINK, "ERR_READLINK", "readlink failed"}, {
-	ERR_SYMLINK, "ERR_SYMLINK", "symlink failed"}, {
-	ERR_SYSTEM, "ERR_SYSTEM", "system failed"}, {
-	ERR_POPEN, "ERR_POPEN", "popen failed"}, {
-	ERR_LSEEK, "ERR_LSEEK", "lseek failed"}, {
-	ERR_PTHREAD_CREATE, "ERR_PTHREAD_CREATE", "pthread_create failed"},
-	{
-	ERR_RECV, "ERR_RECV", "recv failed"}, {
-	ERR_FOPEN, "ERR_FOPEN", "fopen failed"}, {
-	ERR_GETCWD, "ERR_GETCWD", "getcwd failed"}, {
-	ERR_SETUID, "ERR_SETUID", "setuid failed"}, {
-	ERR_RENAME, "ERR_RENAME", "rename failed"}, {
-	ERR_UNLINK, "ERR_UNLINK", "unlink failed"}, {
-	ERR_SELECT, "ERR_SELECT", "select failed"}, {
-	ERR_WAIT, "ERR_WAIT", "wait failed"}, {
-	ERR_SETSID, "ERR_SETSID", "setsid failed"}, {
-	ERR_SETGID, "ERR_SETGID", "setgid failed"}, {
-	ERR_GETGROUPS, "ERR_GETGROUPS", "getgroups failed"}, {
-	ERR_SETGROUPS, "ERR_SETGROUPS", "setgroups failed"}, {
-	ERR_UMASK, "ERR_UMASK", "umask failed"}, {
-	ERR_CREAT, "ERR_CREAT", "creat failed"}, {
-	ERR_SETSOCKOPT, "ERR_SETSOCKOPT", "setsockopt failed"}, {
-	ERR_DIRECTIO, "ERR_DIRECTIO", "directio failed"}, {
-	ERR_GETRLIMIT, "ERR_GETRLIMIT", "getrlimit failed"}, {
-	ERR_SETRLIMIT, "ERR_SETRLIMIT", "setrlimit"}, {
-	ERR_TRUNCATE, "ERR_TRUNCATE", "truncate failed"}, {
-	ERR_PTHREAD_MUTEX_INIT, "ERR_PTHREAD_MUTEX_INIT",
-		    "pthread mutex initialization failed."}, {
-	ERR_PTHREAD_COND_INIT, "ERR_PTHREAD_COND_INIT",
-		    "pthread condition initialization failed."}, {
-	ERR_FCNTL, "ERR_FCNTL", "call to fcntl is failed"}, {
-	ERR_NULL, "ERR_NULL", ""}
-};
-
 /* constants */
 static int log_mask = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-
-/* Array of error families */
-
-static family_t tab_family[MAX_NUM_FAMILY];
 
 /* Global variables */
 
@@ -1207,95 +1077,6 @@ void set_const_log_str()
 	}
 }
 
-
-/**
- *
- * @brief Add a family of errors
- *
- * @param[in]  num_family  The family index
- * @param[in]  name_family The name of the family
- * @param[in]  tab_err     The table of errors
- *
- * @return -1 for failure, or num_family
- *
- */
-static int add_error_family(int num_family,
-			    char *name_family,
-			    family_error_t *tab_err)
-{
-	int i = 0;
-
-	/* The number of the family is between -1 and MAX_NUM_FAMILY */
-	if ((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
-		return -1;
-
-	/* System errors can't be 0 */
-	if (num_family == 0)
-		return -1;
-
-	/* Look for a vacant entry. */
-	for (i = 0; i < MAX_NUM_FAMILY; i++)
-		if (tab_family[i].num_family == UNUSED_SLOT)
-			break;
-
-	/* Check if the table is full. */
-	if (i == MAX_NUM_FAMILY)
-		return -1;
-
-	tab_family[i].num_family = (num_family != -1) ? num_family : i;
-	tab_family[i].tab_err = tab_err;
-	if (strmaxcpy
-	    (tab_family[i].name_family, name_family,
-	     sizeof(tab_family[i].name_family)) == -1)
-		LogFatal(COMPONENT_LOG, "family name %s too long", name_family);
-
-	return tab_family[i].num_family;
-}				/* add_error_family */
-
-#if 0
-static char *ReturnNameFamilyError(int num_family)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_NUM_FAMILY; i++)
-		if (tab_family[i].num_family == num_family)
-			return tab_family[i].name_family;
-
-	return NULL;
-}				/* ReturnFamilyError */
-#endif
-
-/* Finds a family in the table of family errors. */
-static family_error_t *FindTabErr(int num_family)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_NUM_FAMILY; i++) {
-		if (tab_family[i].num_family == num_family)
-			return tab_family[i].tab_err;
-	}
-
-	return NULL;
-}				/* FindTabErr */
-
-static family_error_t FindErr(family_error_t *tab_err, int num)
-{
-	int i = 0;
-	family_error_t returned_err;
-
-	do {
-
-		if (tab_err[i].numero == num || tab_err[i].numero == ERR_NULL) {
-			returned_err = tab_err[i];
-			break;
-		}
-
-		i += 1;
-	} while (1);
-
-	return returned_err;
-}				/* FindErr */
-
 static void set_logging_from_env(void)
 {
 	char *env_value;
@@ -1328,7 +1109,6 @@ static void set_logging_from_env(void)
 
 void init_logging(const char *log_path, const int debug_level)
 {
-	int i;
 	log_type_t ltyp;
 
 	/* Finish initialization of and register log facilities. */
@@ -1352,17 +1132,6 @@ void init_logging(const char *log_path, const int debug_level)
 	 */
 	set_const_log_str();
 
-	/* Initialisation of tables of families */
-	tab_family[ERR_SYS].num_family = 0;
-	tab_family[ERR_SYS].tab_err = (family_error_t *) tab_system_err;
-	if (strmaxcpy
-	    (tab_family[ERR_SYS].name_family, "Errors Systeme UNIX",
-	     sizeof(tab_family[ERR_SYS].name_family)) == 01)
-		LogFatal(COMPONENT_LOG, "System Family name too long");
-
-	for (i = 1; i < MAX_NUM_FAMILY; i++)
-		tab_family[i].num_family = UNUSED_SLOT;
-
 	if (log_path)
 		SetDefaultLogging(log_path);
 
@@ -1370,14 +1139,6 @@ void init_logging(const char *log_path, const int debug_level)
 		SetLevelDebug(debug_level);
 
 	set_logging_from_env();
-
-	/* Register error families */
-	add_error_family(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-	add_error_family(ERR_HASHTABLE, "HashTable related Errors",
-		       tab_errctx_hash);
-	add_error_family(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
-	add_error_family(ERR_CACHE_INODE, "Cache Inode related Errors",
-		       tab_errstatus_cache_inode);
 
 	ArmSignal(SIGUSR1, IncrementLevelDebug);
 	ArmSignal(SIGUSR2, DecrementLevelDebug);
@@ -1668,44 +1429,6 @@ void display_log_component_level(log_components_t component, char *file,
 		Fatal();
 }
 
-int display_LogError(struct display_buffer *dspbuf, int num_family,
-		     int num_error, int status)
-{
-	family_error_t *tab_err = NULL;
-	family_error_t the_error;
-
-	/* Find the family */
-	tab_err = FindTabErr(num_family);
-
-	if (tab_err == NULL)
-		return display_printf(dspbuf, "Could not find famiily %d",
-				      num_family);
-
-	/* find the error */
-	the_error = FindErr(tab_err, num_error);
-
-	if (status == 0) {
-		return display_printf(dspbuf, "Error %s : %s : status %d",
-				      the_error.label, the_error.msg, status);
-	} else {
-		char tempstr[1024];
-		char *errstr;
-#ifndef FREEBSD
-		errstr = strerror_r(status, tempstr, sizeof(tempstr));
-#else
-		if (strerror_r(status, tempstr, sizeof(tempstr)) == 0) {
-			errstr = tempstr;
-		} else {
-			sprintf(tempstr, "Unknown error %3d", errno);
-			errstr = tempstr;
-		}
-#endif
-		return display_printf(dspbuf, "Error %s : %s : status %d : %s",
-				      the_error.label, the_error.msg, status,
-				      errstr);
-	}
-}				/* display_LogError */
-
 struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_ALL] = {
 		.comp_name = "COMPONENT_ALL",
@@ -1902,20 +1625,6 @@ void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 
 	va_end(arguments);
 }
-
-void DisplayErrorComponentLogLine(log_components_t component, char *file,
-				  int line, char *function, int num_family,
-				  int num_error, int status)
-{
-	char buffer[LOG_BUFF_LEN];
-	struct display_buffer dspbuf = { sizeof(buffer), buffer, buffer };
-
-	(void)display_LogError(&dspbuf, num_family, num_error, status);
-
-	DisplayLogComponentLevel(component, file, line, function, NIV_CRIT,
-				 "%s: %s", LogComponents[component].comp_str,
-				 buffer);
-}				/* DisplayErrorLogLine */
 
 static int isValidLogPath(const char *pathname)
 {

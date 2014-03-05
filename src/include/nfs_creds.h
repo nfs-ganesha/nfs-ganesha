@@ -46,7 +46,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
-#include "err_hashtable.h"
 
 typedef enum CredType__ { CRED_NONE = 1, CRED_UNIX = 2, CRED_GSS =
 	    3 } CredType_t;
