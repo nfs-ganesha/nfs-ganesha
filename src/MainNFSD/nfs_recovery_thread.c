@@ -149,7 +149,8 @@ nfs_release_v4_client(char *ip)
 
                         cp = (nfs_client_id_t *)pdata->buffval.pdata;
                         P(cp->cid_mutex);
-                        if (ip_match(ip, cp->cid_server_ip)) {
+                        /* only checking clientid that are not stale */
+                        if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID) && ip_match(ip, cp->cid_server_ip)) {
                                 inc_client_id_ref(cp);
 
                                 /* Take a reference to the client record */
