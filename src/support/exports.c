@@ -314,7 +314,9 @@ static int add_client(struct exportlist *exp,
 				}
 				glist_init(&cli->cle_list);
 			}
-			if (ap->ai_family == AF_INET) {
+			if (ap->ai_family == AF_INET &&
+			    (ap->ai_socktype == SOCK_STREAM ||
+			     ap->ai_socktype == SOCK_DGRAM)) {
 				struct in_addr infoaddr =
 					((struct sockaddr_in *)ap->ai_addr)->
 					sin_addr;
@@ -323,7 +325,9 @@ static int add_client(struct exportlist *exp,
 				       &infoaddr, sizeof(struct in_addr));
 				cli->type = HOSTIF_CLIENT;
 
-			} else if (ap->ai_family == AF_INET6) {
+			} else if (ap->ai_family == AF_INET6 &&
+				   (ap->ai_socktype == SOCK_STREAM ||
+				    ap->ai_socktype == SOCK_DGRAM)) {
 				struct in6_addr infoaddr =
 				    ((struct sockaddr_in6 *)ap->ai_addr)->
 				    sin6_addr;
