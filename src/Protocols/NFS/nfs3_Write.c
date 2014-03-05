@@ -190,15 +190,15 @@ int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */
-	if ((export->export_perms.options & EXPORT_OPTION_MAXOFFSETWRITE)) {
+	if (export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "-----> Write offset=%" PRIu64 " count=%" PRIu64
+			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
 			     export->MaxOffsetWrite);
 
 		if ((offset + size) > export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "NFS WRITE: A client tryed to violate max "
+				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
 				 export->MaxOffsetWrite, export->id);
 

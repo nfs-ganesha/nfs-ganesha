@@ -322,14 +322,25 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     "  stable = %d",
 		     offset, size, stable_how);
 
-	if ((data->export->export_perms.options &
-	     EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
+	if (data->export->MaxOffsetWrite < UINT64_MAX) {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Write offset=%" PRIu64 " count=%" PRIu64
+			     " MaxOffSet=%" PRIu64, offset, size,
+			     data->export->MaxOffsetWrite);
+
 		if ((offset + size) > data->export->MaxOffsetWrite) {
+			LogEvent(COMPONENT_NFS_V4,
+				 "A client tryed to violate max "
+				 "file size %" PRIu64 " for exportid #%hu",
+				 data->export->MaxOffsetWrite,
+				 data->export->id);
+
 			res_WRITE4->status = NFS4ERR_DQUOT;
 			if (anonymous)
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			return res_WRITE4->status;
 		}
+	}
 
 	if (size > data->export->MaxWrite) {
 		/*

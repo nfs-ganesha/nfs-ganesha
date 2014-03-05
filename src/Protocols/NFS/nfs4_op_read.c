@@ -400,11 +400,22 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	offset = arg_READ4->offset;
 	size = arg_READ4->count;
 
-	if (((data->export->export_perms.options &
-	      EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
-	    && ((offset + size) > data->export->MaxOffsetRead)) {
-		res_READ4->status = NFS4ERR_DQUOT;
-		goto done;
+	if (data->export->MaxOffsetRead < UINT64_MAX) {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Read offset=%" PRIu64 " count=%zd "
+			     "MaxOffSet=%" PRIu64, offset, size,
+			     data->export->MaxOffsetRead);
+
+		if ((offset + size) > data->export->MaxOffsetRead) {
+			LogEvent(COMPONENT_NFS_V4,
+				 "A client tryed to violate max "
+				 "file size %" PRIu64 " for exportid #%hu",
+				 data->export->MaxOffsetRead,
+				 data->export->id);
+
+			res_READ4->status = NFS4ERR_DQUOT;
+			goto done;
+		}
 	}
 
 	if (size > data->export->MaxRead) {

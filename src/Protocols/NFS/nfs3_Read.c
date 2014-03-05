@@ -176,15 +176,15 @@ int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
 	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
-	if (export->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD) {
+	if (export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "-----> Read offset=%" PRIu64 " count=%zd "
+			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
 			     export->MaxOffsetRead);
 
 		if ((offset + size) > export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "NFS READ: A client tryed to violate max "
+				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
 				 export->MaxOffsetRead, export->id);
 
