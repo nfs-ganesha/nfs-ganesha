@@ -104,12 +104,9 @@ void nfs_rpc_cb_pkginit(void)
 	rpc_call_pool = pool_init("RPC Call Pool",
 				  sizeof(rpc_call_t), pool_basic_substrate,
 				  NULL, nfs_rpc_init_call, NULL);
-	if (!(rpc_call_pool)) {
-		LogCrit(COMPONENT_INIT,
+	if (!(rpc_call_pool))
+		LogFatal(COMPONENT_INIT,
 			"Error while allocating rpc call pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
 
 	/* ccache */
 	nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);

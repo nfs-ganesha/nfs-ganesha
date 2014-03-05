@@ -269,35 +269,26 @@ void dupreq2_pkginit(void)
 {
 	int code __attribute__ ((unused)) = 0;
 
-	dupreq_pool =
-	    pool_init("Duplicate Request Pool", sizeof(dupreq_entry_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
-	if (unlikely(!(dupreq_pool))) {
-		LogCrit(COMPONENT_INIT,
-			"Error while allocating duplicate request pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
+	dupreq_pool = pool_init("Duplicate Request Pool",
+				sizeof(dupreq_entry_t),
+				pool_basic_substrate, NULL, NULL, NULL);
+	if (unlikely(!(dupreq_pool)))
+		LogFatal(COMPONENT_INIT,
+			 "Error while allocating duplicate request pool");
 
-	nfs_res_pool =
-	    pool_init("nfs_res_t pool", sizeof(nfs_res_t), pool_basic_substrate,
-		      NULL, NULL, NULL);
-	if (unlikely(!(nfs_res_pool))) {
-		LogCrit(COMPONENT_INIT,
-			"Error while allocating nfs_res_t pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
+	nfs_res_pool = pool_init("nfs_res_t pool", sizeof(nfs_res_t),
+				 pool_basic_substrate,
+				 NULL, NULL, NULL);
+	if (unlikely(!(nfs_res_pool)))
+		LogFatal(COMPONENT_INIT,
+			 "Error while allocating nfs_res_t pool");
 
-	tcp_drc_pool =
-	    pool_init("TCP DRC Pool", sizeof(drc_t), pool_basic_substrate, NULL,
-		      NULL, NULL);
-	if (!(dupreq_pool)) {
-		LogCrit(COMPONENT_INIT,
-			"Error while allocating duplicate request pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
+	tcp_drc_pool = pool_init("TCP DRC Pool", sizeof(drc_t),
+				 pool_basic_substrate,
+				 NULL, NULL, NULL);
+	if (!(dupreq_pool))
+		LogFatal(COMPONENT_INIT,
+			 "Error while allocating duplicate request pool");
 
 	drc_st = gsh_calloc(1, sizeof(struct drc_st));
 

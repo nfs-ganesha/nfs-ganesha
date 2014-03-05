@@ -723,39 +723,34 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	nfs41_session_pool =
 	    pool_init("NFSv4.1 session pool", sizeof(nfs41_session_t),
 		      pool_basic_substrate, NULL, NULL, NULL);
+	if (!nfs41_session_pool)
+		LogFatal(COMPONENT_INIT,
+			 "Error while allocating NFSv4.1 session pool");
 
 	request_pool =
 	    pool_init("Request pool", sizeof(request_data_t),
 		      pool_basic_substrate, NULL,
 		      NULL /* FASTER constructor_request_data_t */ ,
 		      NULL);
-	if (!request_pool) {
-		LogCrit(COMPONENT_INIT, "Error while allocating request pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
+	if (!request_pool)
+		LogFatal(COMPONENT_INIT,
+			 "Error while allocating request pool");
 
 	request_data_pool =
 	    pool_init("Request Data Pool", sizeof(nfs_request_data_t),
 		      pool_basic_substrate, NULL,
 		      NULL /* FASTER constructor_nfs_request_data_t */ ,
 		      NULL);
-	if (!request_data_pool) {
-		LogCrit(COMPONENT_INIT,
+	if (!request_data_pool)
+		LogFatal(COMPONENT_INIT,
 			"Error while allocating request data pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
 
 	dupreq_pool =
 	    pool_init("Duplicate Request Pool", sizeof(dupreq_entry_t),
 		      pool_basic_substrate, NULL, NULL, NULL);
-	if (!(dupreq_pool)) {
-		LogCrit(COMPONENT_INIT,
+	if (!(dupreq_pool))
+		LogFatal(COMPONENT_INIT,
 			"Error while allocating duplicate request pool");
-		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-		Fatal();
-	}
 #ifdef _USE_ASYNC_CACHE_INODE
 	/* Start the TAD and synclets for writeback cache inode */
 	cache_inode_async_init(nfs_param.cache_layers_param.
