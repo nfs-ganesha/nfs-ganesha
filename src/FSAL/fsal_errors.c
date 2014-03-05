@@ -15,7 +15,13 @@
  * @brief Function names for logging, etc.
  */
 
-family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] = {
+typedef struct {
+	int numero;
+	char *label;
+	char *msg;
+} family_error_t;
+
+const family_error_t tab_errstatus_FSAL[] = {
 	{
 	ERR_FSAL_NO_ERROR, "ERR_FSAL_NO_ERROR", "No error"}, {
 	ERR_FSAL_PERM, "ERR_FSAL_PERM", "Forbidden action"}, {
@@ -94,26 +100,6 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		;
 
 	return tab_errstatus_FSAL[i].msg;
-}
-
-/**
- * @brief FSAL error code to error label
- *
- * @param[in] fsal_err Error code
- *
- * @return Error label, "ERR_NULL" if not found.
- */
-
-const char *label_fsal_err(fsal_errors_t fsal_err)
-{
-	int i;
-
-	for (i = 0;
-	     tab_errstatus_FSAL[i].numero != fsal_err
-	     && tab_errstatus_FSAL[i].numero != ERR_NULL; i++)
-		;
-
-	return tab_errstatus_FSAL[i].label;
 }
 
 /** @} */

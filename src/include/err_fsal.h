@@ -85,10 +85,7 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_UNION_NOTSUPP = 10094,
 } fsal_errors_t;
 
-extern family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[];
-
 const char *msg_fsal_err(fsal_errors_t fsal_err);
-const char *label_fsal_err(fsal_errors_t fsal_err);
 
 #endif				/* !ERR_FSAL_H */
 /** @} */

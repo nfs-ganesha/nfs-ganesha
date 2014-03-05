@@ -71,35 +71,6 @@ struct gpfs_ds {
 	bool connected;		/*< True if the handle has been connected */
 };
 
-#undef Return
-#define Return(_code_, _minor_, _f_) do {                                      \
-	fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR;                  \
-	(_struct_status_).major = (_code_);                                    \
-	(_struct_status_).minor = (_minor_);                                   \
-	if (fsal_error_is_event(_struct_status_)) {                            \
-		LogEvent(COMPONENT_FSAL,                                       \
-		  "%s returns (%s, %s, %d)", fsal_function_names[_f_],         \
-		  label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);      \
-		return _struct_status_;                                        \
-	}                                                                      \
-	if (fsal_error_is_info(_struct_status_)) {                             \
-		LogInfo(COMPONENT_FSAL,                                        \
-		  "%s returns (%s, %s, %d)", fsal_function_names[_f_],         \
-		  label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);      \
-		return _struct_status_;                                        \
-	}                                                                      \
-	if (isDebug(COMPONENT_FSAL)) {                                         \
-		if ((_struct_status_).major != ERR_FSAL_NO_ERROR)              \
-			LogDebug(COMPONENT_FSAL,                               \
-			"%s returns (%s, %s, %d)", fsal_function_names[_f_],   \
-			label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);\
-		else                                                           \
-			LogFullDebug(COMPONENT_FSAL,                           \
-			"%s returns (%s, %s, %d)", fsal_function_names[_f_],   \
-			label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);\
-	}                                                                      \
-	return _struct_status_;                                                \
-	} while (0)
 
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES (                              \
