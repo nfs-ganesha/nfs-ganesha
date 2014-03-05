@@ -167,9 +167,13 @@ typedef struct exportlist {
 } exportlist_t;
 
 /* Constant for options masks */
-#define EXPORT_OPTION_ROOT 0x00000004	/*< Allow root access as root uid */
-#define EXPORT_OPTION_ALL_ANONYMOUS 0x00000008	/*< all users are squashed to
+#define EXPORT_OPTION_ROOT 0x00000001	/*< Allow root access as root uid */
+#define EXPORT_OPTION_ROOT_SQUASH 0	/*< Disallow root access as root uid */
+#define EXPORT_OPTION_ALL_ANONYMOUS 0x00000002	/*< all users are squashed to
 						    anonymous */
+#define EXPORT_OPTION_SQUASH_TYPES (EXPORT_OPTION_ROOT | \
+				    EXPORT_OPTION_ALL_ANONYMOUS) /*< All squash
+								   types */
 #define EXPORT_OPTION_READ_ACCESS 0x00000010	/*< R_Access= option specified
 						 */
 #define EXPORT_OPTION_WRITE_ACCESS 0x00000020	/*< RW_Access= option specified
@@ -189,22 +193,22 @@ typedef struct exportlist {
 				       EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS)
 
-#define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000	/*< Clients use only
+#define EXPORT_OPTION_PRIVILEGED_PORT 0x00000100	/*< Clients use only
 							   privileged port */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
-#define EXPORT_OPTION_AUTH_NONE 0x00010000	/*< Auth None authentication
+#define EXPORT_OPTION_AUTH_NONE 0x00001000	/*< Auth None authentication
 						   supported  */
-#define EXPORT_OPTION_AUTH_UNIX 0x00020000	/*< Auth Unix authentication
+#define EXPORT_OPTION_AUTH_UNIX 0x00002000	/*< Auth Unix authentication
 						   supported  */
 
-#define EXPORT_OPTION_RPCSEC_GSS_NONE 0x00040000	/*< RPCSEC_GSS_NONE
+#define EXPORT_OPTION_RPCSEC_GSS_NONE 0x00004000	/*< RPCSEC_GSS_NONE
 							    supported */
-#define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00080000	/*< RPCSEC_GSS
+#define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00008000	/*< RPCSEC_GSS
 							    INTEGRITY supported
 							 */
-#define EXPORT_OPTION_RPCSEC_GSS_PRIV 0x00100000	/*< RPCSEC_GSS PRIVACY
+#define EXPORT_OPTION_RPCSEC_GSS_PRIV 0x00010000	/*< RPCSEC_GSS PRIVACY
 							    supported	    */
 #define EXPORT_OPTION_AUTH_TYPES      (EXPORT_OPTION_AUTH_NONE	     | \
 				       EXPORT_OPTION_AUTH_UNIX	     | \
@@ -213,9 +217,9 @@ typedef struct exportlist {
 				       EXPORT_OPTION_RPCSEC_GSS_PRIV)
 
 /* Protocol flags */
-#define EXPORT_OPTION_NFSV2 0x00200000	/*< NFSv2 operations are supported */
-#define EXPORT_OPTION_NFSV3 0x00400000	/*< NFSv3 operations are supported */
-#define EXPORT_OPTION_NFSV4 0x00800000	/*< NFSv4 operations are supported */
+#define EXPORT_OPTION_NFSV2 0x00100000	/*< NFSv2 operations are supported */
+#define EXPORT_OPTION_NFSV3 0x00200000	/*< NFSv3 operations are supported */
+#define EXPORT_OPTION_NFSV4 0x00400000	/*< NFSv4 operations are supported */
 #define EXPORT_OPTION_UDP 0x01000000	/*< UDP protocol is supported */
 #define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV2	     | \
@@ -225,11 +229,11 @@ typedef struct exportlist {
 				       EXPORT_OPTION_TCP)
 
 /* Maximum offset set for R/W */
-#define EXPORT_OPTION_USE_UQUOTA 0x40000000	/*< Using user quota for this
+#define EXPORT_OPTION_USE_UQUOTA 0x10000000	/*< Using user quota for this
 						    export */
-#define EXPORT_OPTION_USE_DELEG  0x80000000	/*< Using delegations for this
+#define EXPORT_OPTION_USE_DELEG  0x20000000	/*< Using delegations for this
 						    export */
-#define EXPORT_OPTION_MANAGE_GIDS 0x20000000 /*< Do not trust
+#define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
 
 /* NFS4 specific structures */
