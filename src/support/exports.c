@@ -383,7 +383,7 @@ static void *client_init(void *link_mem, void *self_struct)
 		struct glist_head *cli_list;
 		struct exportlist *exp;
 
-		cli_list = (struct glist_head *)self_struct;
+		cli_list = self_struct;
 		exp = container_of(cli_list, struct exportlist,
 				   clients);
 		exp->expire_type_attr =
@@ -398,7 +398,7 @@ static void *client_init(void *link_mem, void *self_struct)
 		cli->type = RAW_CLIENT_LIST;
 		return cli;
 	} else { /* free resources case */
-		cli = (struct exportlist_client_entry__ *)self_struct;
+		cli = self_struct;
 
 		assert(glist_empty(&cli->cle_list));
 		if (cli->type == RAW_CLIENT_LIST &&
@@ -431,10 +431,10 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 	char *client_list, *tok, *endptr;
 	int errcnt = 0;
 
-	cli_list = (struct glist_head *)link_mem;
+	cli_list = link_mem;
 	exp = container_of(cli_list, struct exportlist,
 			   clients);
-	cli = (struct exportlist_client_entry__ *)self_struct;
+	cli = self_struct;
 	assert(cli->type == RAW_CLIENT_LIST);
 
 	client_list = cli->client.raw_client_str;
@@ -491,7 +491,7 @@ static void *fsal_init(void *link_mem, void *self_struct)
 			return NULL;
 		return fp;
 	} else {
-		fp = (struct fsal_params *)self_struct;
+		fp = self_struct;
 		if (fp->name != NULL)
 			gsh_free(fp->name);
 		gsh_free(fp);
@@ -514,9 +514,9 @@ static void *fsal_init(void *link_mem, void *self_struct)
 
 static int fsal_commit(void *node, void *link_mem, void *self_struct)
 {
-	struct fsal_export **exp_hdl = (struct fsal_export **)link_mem;
+	struct fsal_export **exp_hdl = link_mem;
 	struct exportlist *exp;
-	struct fsal_params *fp = (struct fsal_params *)self_struct;
+	struct fsal_params *fp = self_struct;
 	struct fsal_module *fsal;
 	struct fsal_export *fsal_exp;
 	fsal_status_t status;
@@ -615,7 +615,7 @@ static void *export_init(void *link_mem, void *self_struct)
 		glist_init(&exp->exp_list);
 		return exp;
 	} else { /* free resources case */
-		exp = (struct exportlist *)self_struct;
+		exp = self_struct;
 
 		assert(glist_empty(&exp->exp_list));
 		free_exportlist(exp);
@@ -637,7 +637,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 	int errcnt = 0;
 	char perms[1024];
 
-	exp = (struct exportlist *)self_struct;
+	exp = self_struct;
 	
 	/* validate the export now */
 	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
