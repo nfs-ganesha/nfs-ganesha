@@ -189,20 +189,21 @@ void *_9p_rdma_thread(void *Arg)
 		LogMajor(COMPONENT_9P, "Cannot get connection's time of birth");
 
 	/* Alloc rdmabuf */
-	rdmabuf = gsh_malloc(_9P_RDMA_BUFF_NUM *
+	rdmabuf = gsh_malloc(nfs_param._9p_param._9p_rdma_inpool_size *
 			     nfs_param._9p_param._9p_rdma_msize);
 	if (rdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
 		goto error;
 	}
-	memset(rdmabuf, 0,
-	       _9P_RDMA_BUFF_NUM * nfs_param._9p_param._9p_rdma_msize);
+	memset(rdmabuf, 0, nfs_param._9p_param._9p_rdma_inpool_size
+				* nfs_param._9p_param._9p_rdma_msize);
 	priv->rdmabuf = rdmabuf;
 
 	/* Register rdmabuf */
 	mr = msk_reg_mr(trans, rdmabuf,
-			_9P_RDMA_BUFF_NUM * nfs_param._9p_param._9p_rdma_msize,
+			nfs_param._9p_param._9p_rdma_inpool_size
+			    * nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
 		rc = errno;
@@ -214,23 +215,25 @@ void *_9p_rdma_thread(void *Arg)
 
 	/* Get prepared to recv data */
 
-	rdata = gsh_malloc(_9P_RDMA_BUFF_NUM * sizeof(*rdata));
+	rdata = gsh_malloc(nfs_param._9p_param._9p_rdma_inpool_size
+				* sizeof(*rdata));
 	if (rdata == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdata");
 		goto error;
 	}
-	memset(rdata, 0, (_9P_RDMA_BUFF_NUM * sizeof(*rdata)));
+	memset(rdata, 0, (nfs_param._9p_param._9p_rdma_inpool_size
+				* sizeof(*rdata)));
 	priv->rdata = rdata;
 
-	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
+	for (i = 0; i < nfs_param._9p_param._9p_rdma_inpool_size; i++) {
 		rdata[i].data = rdmabuf +
 				i * nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
 		rdata[i].mr = mr;
 	}
 
-	for (i = 0; i < _9P_RDMA_BUFF_NUM; i++) {
+	for (i = 0; i < nfs_param._9p_param._9p_rdma_inpool_size; i++) {
 		rc = msk_post_recv(trans, &rdata[i], _9p_rdma_callback_recv,
 				   _9p_rdma_callback_recv_err,
 				   NULL);
@@ -272,7 +275,8 @@ static void _9p_rdma_setup_mr(msk_trans_t *trans, uint8_t *outrdmabuf)
 		return;
 
 	mr = msk_reg_mr(trans, outrdmabuf,
-			_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize,
+			nfs_param._9p_param._9p_rdma_outpool_size
+			* nfs_param._9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (mr == NULL) {
 		rc = errno;
@@ -293,8 +297,8 @@ static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	msk_data_t *wdata;
 	struct _9p_outqueue *outqueue;
 
-	outrdmabuf =
-	  gsh_malloc(_9P_RDMA_OUT * nfs_param._9p_param._9p_rdma_msize);
+	outrdmabuf = gsh_malloc(nfs_param._9p_param._9p_rdma_outpool_size
+				* nfs_param._9p_param._9p_rdma_msize);
 	if (outrdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
@@ -302,18 +306,19 @@ static void _9p_rdma_setup_buffers(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	}
 	*poutrdmabuf = outrdmabuf;
 
-	wdata = gsh_malloc(_9P_RDMA_OUT * sizeof(*wdata));
+	wdata = gsh_malloc(nfs_param._9p_param._9p_rdma_outpool_size
+			   * sizeof(*wdata));
 	if (wdata == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc wdata");
 		return;
 	}
 
-	for (i = 0; i < _9P_RDMA_OUT; i++) {
+	for (i = 0; i < nfs_param._9p_param._9p_rdma_outpool_size; i++) {
 		wdata[i].data = outrdmabuf +
 				i * nfs_param._9p_param._9p_rdma_msize;
 		wdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
-		if (i != _9P_RDMA_OUT - 1)
+		if (i != nfs_param._9p_param._9p_rdma_outpool_size - 1)
 			wdata[i].next = &wdata[i+1];
 		else
 			wdata[i].next = NULL;
@@ -360,7 +365,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
 
 	trans_attr.server = nfs_param._9p_param._9p_rdma_backlog;
-	trans_attr.rq_depth = _9P_RDMA_OUT + 1;
+	trans_attr.rq_depth = nfs_param._9p_param._9p_rdma_outpool_size + 1;
 	snprintf(port, PORT_MAX_LEN, "%d", nfs_param._9p_param._9p_rdma_port);
 	trans_attr.port = port;
 	trans_attr.node = "::";

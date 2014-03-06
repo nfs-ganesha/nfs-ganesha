@@ -454,6 +454,26 @@ typedef struct nfs_version4_parameter {
 #define _9P_RDMA_MSIZE 1048576
 
 /**
+ * @brief Default number of receive buffer per nic
+ */
+#define _9P_RDMA_INPOOL_SIZE 64
+
+/**
+ * @brief Default number of send buffer (total, not per nic)
+ *
+ * shared pool for sends - optimal when set to number of workers
+ * (todo: use conf value)
+ */
+#define _9P_RDMA_OUTPOOL_SIZE 32
+
+/**
+ * @brief Default rdma connection backlog
+ * (number of pending connection requests)
+ */
+#define _9P_RDMA_BACKLOG 10
+
+
+/**
  * @brief 9p configuration
  */
 
@@ -470,9 +490,18 @@ typedef struct _9p_param {
 	/** Msize for 9P operation on rdma.  Defaults to _9P_RDMA_MSIZE,
 	    settable by _9P_RDMA_Msize */
 	uint32_t _9p_rdma_msize;
-	/** Backlog for 9P operation on rdma.  Defaults to _9P_RDMA_BACKLOG,
+	/** Backlog for 9P rdma connections.  Defaults to _9P_RDMA_BACKLOG,
 	    settable by _9P_RDMA_Backlog */
-	uint32_t _9p_rdma_backlog;
+	uint16_t _9p_rdma_backlog;
+	/** Input buffer pool size for 9P rdma connections.
+	    Defaults to _9P_RDMA_INPOOL_SIZE,
+	    settable by _9P_RDMA_Inpool_Size */
+	uint16_t _9p_rdma_inpool_size;
+	/** Output buffer pool size for 9P rdma connections.
+	    Defaults to _9P_RDMA_OUTPOOL_SIZE,
+	    settable by _9P_RDMA_OutPool_Size */
+	uint16_t _9p_rdma_outpool_size;
+
 } _9p_parameter_t;
 #endif				/* _USE_9P */
 

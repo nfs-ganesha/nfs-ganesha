@@ -55,7 +55,6 @@
 
 #include <mooshika.h>
 
-
 void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);

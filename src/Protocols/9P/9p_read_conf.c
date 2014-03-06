@@ -45,12 +45,17 @@ static struct config_item _9p_params[] = {
 		       _9p_param, _9p_tcp_port),
 	CONF_ITEM_UI16("_9P_RDMA_Port", 1, 0xFFFF, _9P_RDMA_PORT,
 		       _9p_param, _9p_rdma_port),
-	CONF_ITEM_UI32("_9P_TCP_Msize", 1024, 1024*128, _9P_TCP_MSIZE,
+	CONF_ITEM_UI32("_9P_TCP_Msize", 1024, 0xFFFFFFFF, _9P_TCP_MSIZE,
 		       _9p_param, _9p_tcp_msize),
-	CONF_ITEM_UI32("_9P_RDMA_Msize", 1024, 1048576*2, _9P_RDMA_MSIZE,
+	CONF_ITEM_UI32("_9P_RDMA_Msize", 1024, 0xFFFFFFFF, _9P_RDMA_MSIZE,
 		       _9p_param, _9p_rdma_msize),
-	CONF_ITEM_UI32("_9P_RDMA_Backlog", 1, 20, _9P_RDMA_BACKLOG,
+	CONF_ITEM_UI16("_9P_RDMA_Backlog", 1, 0xFFFF, _9P_RDMA_BACKLOG,
 		       _9p_param, _9p_rdma_backlog),
+	CONF_ITEM_UI16("_9P_RDMA_Inpool_size", 1, 0xFFFF, _9P_RDMA_INPOOL_SIZE,
+		       _9p_param, _9p_rdma_inpool_size),
+	CONF_ITEM_UI16("_9P_RDMA_Outpool_Size", 1, 0xFFFF,
+		       _9P_RDMA_OUTPOOL_SIZE,
+		       _9p_param, _9p_rdma_outpool_size),
 	CONFIG_EOL
 };
 
