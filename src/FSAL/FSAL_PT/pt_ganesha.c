@@ -1,20 +1,22 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2010, 2011
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    pt_ganesha.c
-// Description: Main layer for PT's Ganesha FSAL
-// Author:      FSI IPC Team
-// ----------------------------------------------------------------------------
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2010, 2011
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    pt_ganesha.c
+ * Description: Main layer for PT's Ganesha FSAL
+ * Author:      FSI IPC Team
+ * ----------------------------------------------------------------------------
+ */
 #include "pt_ganesha.h"
 #include "fsal_types.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
-//#include "pt_util_cache.h"
-int g_ptfsal_context_flag = 1;	// global context caching
-						 // flag. Allows turning off
-						 // caching for debugging
+/*#include "pt_util_cache.h" */
+
+/* global context caching flag. Allows turning off aching for debugging*/
+int g_ptfsal_context_flag = 1;
 
 struct fsi_handle_cache_t g_fsi_name_handle_cache;
 pthread_rwlock_t g_fsi_cache_handle_rw_lock;
@@ -26,13 +28,15 @@ typedef struct ptfsal_threadcontext_t {
 	int cur_fsi_handle_index;
 } ptfsal_threadcontext_t;
 
-// the function mapping that will be used in the FSAL layer, externed in 
-// pt_ganesha.h and instantiated here
+/*
+ * the function mapping that will be used in the FSAL layer, externed in
+ * pt_ganesha.h and instantiated here
+ */
 struct vfs_fn_pointers g_ccl_function_map;
 void *g_ccl_lib_handle;
 struct file_handles_struct_t *g_fsal_fsi_handles;
 
-// ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int handle_index_is_valid(int handle_index)
 {
 	if (handle_index < 0)
@@ -42,7 +46,7 @@ int handle_index_is_valid(int handle_index)
 	return 1;
 }
 
-// ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 static void ptfsal_create_key()
 {
 	if (pthread_key_create(&ptfsal_thread_key, NULL) < 0) {
@@ -51,15 +55,14 @@ static void ptfsal_create_key()
 	}
 }
 
-// ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 ptfsal_threadcontext_t *ptfsal_get_thread_context()
 {
 	ptfsal_threadcontext_t *p_cur_context;
 
-	// init keys if first time
-	if (pthread_once(&ptfsal_once_key, &ptfsal_create_key) < 0) {
+	/* init keys if first time */
+	if (pthread_once(&ptfsal_once_key, &ptfsal_create_key) < 0)
 		FSI_TRACE(FSI_FATAL, "cannot init fsal pthread specific vars");
-	}
 
 	p_cur_context =
 	    (ptfsal_threadcontext_t *) pthread_getspecific(ptfsal_thread_key);
@@ -69,10 +72,10 @@ ptfsal_threadcontext_t *ptfsal_get_thread_context()
 		FSI_TRACE(FSI_NOTICE, "malloc %lu bytes fsal specific data",
 			  sizeof(ptfsal_threadcontext_t));
 		if (p_cur_context != NULL) {
-			// we init our stuff for the first time
+			/* we init our stuff for the first time */
 			p_cur_context->cur_namecache_handle_index = -1;
 			p_cur_context->cur_fsi_handle_index = -1;
-			// now set the thread context
+			/* now set the thread context */
 			pthread_setspecific(ptfsal_thread_key,
 					    (void *)p_cur_context);
 		} else {
@@ -84,7 +87,7 @@ ptfsal_threadcontext_t *ptfsal_get_thread_context()
 	return p_cur_context;
 }
 
-// ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 void fsi_get_whole_path(const char *parentPath, const char *name, char *path)
 {
 	FSI_TRACE(FSI_DEBUG, "parentPath=%s, name=%s\n", parentPath, name);
@@ -92,16 +95,15 @@ void fsi_get_whole_path(const char *parentPath, const char *name, char *path)
 		snprintf(path, PATH_MAX, "%s", name);
 	} else {
 		size_t export_len = strnlen(parentPath, PATH_MAX);
-		if (parentPath[export_len - 1] == '/') {
+		if (parentPath[export_len - 1] == '/')
 			snprintf(path, PATH_MAX, "%s%s", parentPath, name);
-		} else {
+		else
 			snprintf(path, PATH_MAX, "%s/%s", parentPath, name);
-		}
 	}
 	FSI_TRACE(FSI_DEBUG, "Full Path: %s", path);
 }
 
-// ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int fsi_cache_name_and_handle(const struct req_op_context *p_context,
 			      char *handle, char *name)
 {
@@ -133,11 +135,12 @@ int fsi_cache_name_and_handle(const struct req_op_context *p_context,
 	return 0;
 }
 
-// -----------------------------------------------------------------------------
-int fsi_get_name_from_handle(const struct req_op_context *p_context,
-			     /*IN*/ struct fsal_export *export,
-			     ptfsal_handle_t * pt_handle, /*IN*/ char *name,
-			     /*OUT*/ int *handle_index) /*OUT*/
+/* -------------------------------------------------------------------------- */
+int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
+			     struct fsal_export *export,
+			     ptfsal_handle_t *pt_handle, /* IN */
+			     char *name, /* OUT */
+			     int *handle_index) /* OUT */
 {
 	int index;
 	int rc;
@@ -149,21 +152,21 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 	ptfsal_threadcontext_t *p_cur_context;
 	CACHE_TABLE_ENTRY_T cacheLookupEntry;
 	CACHE_ENTRY_DATA_HANDLE_TO_NAME_T *handleToNameEntryPtr;
-	FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
+	FSI_TRACE(FSI_DEBUG, "Get name from handle:\n");
 	ptfsal_print_handle(pt_handle->data.handle.f_handle);
 
-	if (handle_index != NULL) {
+	if (handle_index != NULL)
 		*handle_index = -1;
-	}
-	// Get name from cache by index cached.
+	/* Get name from cache by index cached. */
 	if (g_ptfsal_context_flag) {
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL
 		    && p_cur_context->cur_namecache_handle_index != -1) {
-			// look for context cache match
+			/* look for context cache match */
 			FSI_TRACE(FSI_DEBUG, "cur namecache index %d",
 				  p_cur_context->cur_namecache_handle_index);
-			// try and get a direct hit, else drop through code as exists now
+			/* try and get a direct hit, else drop
+			 * through code as exists now */
 			index = p_cur_context->cur_namecache_handle_index;
 			pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
 			if (memcmp
@@ -177,7 +180,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 				FSI_TRACE(FSI_DEBUG,
 					  "FSI - name = %s cache index %d DIRECT HIT\n",
 					  name, index);
-				// Check whether the name from cache is empty
+				/* Check whether the name from cache is empty */
 				if (strnlen(name, 1) == 0) {
 					FSI_TRACE(FSI_NOTICE,
 						  "The name is empty string from cache by index:"
@@ -185,14 +188,15 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 						  handlePtr, handlePtr[0],
 						  handlePtr[1], handlePtr[2],
 						  handlePtr[3]);
-					// Need get name from PT side, so will not return and clear cache.
+					/* Need get name from PT side, so will
+					 * not return and clear cache. */
 					memset(g_fsi_name_handle_cache.
-					       m_entry[index].m_handle, 0,
-					       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
+					     m_entry[index].m_handle, 0,
+					     FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 					g_fsi_name_handle_cache.m_entry[index].
 					    m_name[0] = '\0';
 				} else {
-					// Return.
+					/* Return. */
 					pthread_rwlock_unlock
 					    (&g_fsi_cache_handle_rw_lock);
 					return 0;
@@ -206,7 +210,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
-	// Look up our front end opened handle cache
+	/* Look up our front end opened handle cache */
 
 	pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
 	cacheLookupEntry.key = &handlePtr[0];
@@ -222,7 +226,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 		name[sizeof(handle_entry.m_name) - 1] = '\0';
 		FSI_TRACE(FSI_DEBUG, "FSI - name = %s opened file cache HIT\n",
 			  name);
-		// Check whether the name from cache is empty
+		/* Check whether the name from cache is empty */
 		if (strnlen(name, 1) == 0) {
 			FSI_TRACE(FSI_NOTICE,
 				  "The name is empty string from opened file cache:"
@@ -230,7 +234,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 				  handlePtr, handlePtr[0], handlePtr[1],
 				  handlePtr[2], handlePtr[3]);
 		} else {
-			// Return.
+			/* Return. */
 			if (handle_index != NULL) {
 				*handle_index =
 				    handleToNameEntryPtr->handle_index;
@@ -244,7 +248,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 	}
 	pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
-	// Get name from cache by iterate all cache entries.
+	/* Get name from cache by iterate all cache entries. */
 	pthread_rwlock_rdlock(&g_fsi_cache_handle_rw_lock);
 	for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
 		if (memcmp
@@ -257,7 +261,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 			name[sizeof(handle_entry.m_name) - 1] = '\0';
 
 			if (g_ptfsal_context_flag) {
-				// store current index in context cache
+				/* store current index in context cache */
 				FSI_TRACE(FSI_DEBUG,
 					  "FSI - name = %s cache index %d\n",
 					  name, index);
@@ -265,16 +269,17 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 				    index;
 			}
 
-			FSI_TRACE(FSI_DEBUG, "FSI - name = %s \n", name);
+			FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", name);
 
-			// Check whether the name from cache is empty 
+			/* Check whether the name from cache is empty */
 			if (strnlen(name, 1) == 0) {
 				FSI_TRACE(FSI_NOTICE,
 					  "The name is empty string from cache by loop: "
 					  "%p->0x%lx %lx %lx %lx", handlePtr,
 					  handlePtr[0], handlePtr[1],
 					  handlePtr[2], handlePtr[3]);
-				// Need get name from PT side, so will not return, 
+				/* Need get name from PT side,
+				 * so will not return,  */
 				memset(g_fsi_name_handle_cache.m_entry[index].
 				       m_handle, 0,
 				       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
@@ -282,7 +287,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 				    m_name[0] = '\0';
 				break;
 			} else {
-				// Return, find the non-empty name.
+				/* Return, find the non-empty name. */
 				pthread_rwlock_unlock
 				    (&g_fsi_cache_handle_rw_lock);
 				return 0;
@@ -291,17 +296,16 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 	}
 	pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
-	// Not in cache, so send request to PT. 
+	/* Not in cache, so send request to PT.  */
 	memset(&pt_handler.handle, 0, FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
 	memcpy(&pt_handler.handle, handlePtr,
 	       FSI_CCL_PERSISTENT_HANDLE_N_BYTES);
-	FSI_TRACE(FSI_DEBUG, "Handle: \n");
+	FSI_TRACE(FSI_DEBUG, "Handle:\n");
 	ptfsal_print_handle((char *)handlePtr);
 	err = 0;
 	rc = CCL_HANDLE_TO_NAME(&ccl_context, &pt_handler, name);
-	if (rc != 0) {
+	if (rc != 0)
 		err = errno;
-	}
 	FSI_TRACE(FSI_DEBUG, "The rc %d, handle 0x%lx %lx %lx %lx, name %s", rc,
 		  handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3], name);
 
@@ -332,7 +336,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 				  "FSI - added %s to name cache entry %d\n",
 				  name, g_fsi_name_handle_cache.m_count);
 			if (g_ptfsal_context_flag) {
-				// store current index in context cache
+				/* store current index in context cache */
 				p_cur_context->cur_namecache_handle_index =
 				    g_fsi_name_handle_cache.m_count;
 			}
@@ -346,7 +350,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int fsi_update_cache_name(char *oldname, char *newname)
 {
 	int index;
@@ -367,7 +371,7 @@ int fsi_update_cache_name(char *oldname, char *newname)
 			    PATH_MAX)
 		    == 0) {
 			FSI_TRACE(FSI_DEBUG,
-				  "FSI - Updating cache old name[%s]-> new name[%s] \n",
+				  "FSI - Updating cache old name[%s]-> new name[%s]\n",
 				  g_fsi_name_handle_cache.m_entry[index].m_name,
 				  newname);
 			strncpy(g_fsi_name_handle_cache.m_entry[index].m_name,
@@ -432,10 +436,10 @@ void fsi_remove_cache_by_fullpath(char *path)
 	pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int fsi_check_handle_index(int handle_index)
 {
-	// check handle
+	/* check handle */
 	if ((handle_index >= 0)
 	    && (handle_index <
 		(FSI_CCL_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS))) {
@@ -445,7 +449,7 @@ int fsi_check_handle_index(int handle_index)
 	}
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int ptfsal_rename(const struct req_op_context *p_context,
 		  struct pt_fsal_obj_handle *p_old_parentdir_handle,
 		  const char *p_old_name,
@@ -491,17 +495,16 @@ int ptfsal_rename(const struct req_op_context *p_context,
 		return -1;
 	}
 	rc = CCL_RENAME(&ccl_context, fsi_old_fullpath, fsi_new_fullpath);
-	if (rc == 0) {
+	if (rc == 0)
 		fsi_update_cache_name(fsi_old_fullpath, fsi_new_fullpath);
-	}
 
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 			       struct pt_fsal_obj_handle *p_parentdir_handle,
-			       const char *p_filename, fsi_stat_struct * p_stat)
+			       const char *p_filename, fsi_stat_struct *p_stat)
 {
 	int stat_rc;
 
@@ -531,10 +534,10 @@ int ptfsal_stat_by_parent_name(const struct req_op_context *p_context,
 	return stat_rc;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_stat_by_name(const struct req_op_context *p_context,
 			struct fsal_export *export, const char *p_fsalpath,
-			fsi_stat_struct * p_stat)
+			fsi_stat_struct *p_stat)
 {
 	int stat_rc;
 
@@ -551,8 +554,8 @@ int ptfsal_stat_by_name(const struct req_op_context *p_context,
 	return stat_rc;
 }
 
-// -----------------------------------------------------------------------------
-void fsi_stat2stat(fsi_stat_struct * fsi_stat, struct stat *p_stat)
+/* ------------------------------------------------------------------------- */
+void fsi_stat2stat(fsi_stat_struct *fsi_stat, struct stat *p_stat)
 {
 	p_stat->st_mode = fsi_stat->st_mode;
 	p_stat->st_size = fsi_stat->st_size;
@@ -570,7 +573,7 @@ void fsi_stat2stat(fsi_stat_struct * fsi_stat, struct stat *p_stat)
 
 int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 			  struct fsal_export *export,
-			  ptfsal_handle_t * p_filehandle, struct stat *p_stat)
+			  ptfsal_handle_t *p_filehandle, struct stat *p_stat)
 {
 	int stat_rc;
 	char fsi_name[PATH_MAX];
@@ -579,7 +582,7 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 	struct CCLPersistentHandle pt_handler;
 	ptfsal_handle_t *p_fsi_handle = p_filehandle;
 
-	FSI_TRACE(FSI_DEBUG, "FSI - handle: \n");
+	FSI_TRACE(FSI_DEBUG, "FSI - handle:\n");
 	memset(&fsi_stat, 0, sizeof(fsi_stat));
 	ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
 
@@ -602,8 +605,10 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL
 		    && p_cur_context->cur_fsi_handle_index != -1) {
-			// attempt a direct stat based on the stored index,
-			// if it fails, get stat by calling normal ccl routines
+			/*
+			 * attempt a direct stat based on the stored index,
+			 * if it fails, get stat by calling normal ccl routines
+			 */
 
 			FSI_TRACE(FSI_DEBUG,
 				  "FSI - faststat handle [%d] name [%s]\n",
@@ -624,7 +629,10 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 	    CCL_FIND_HANDLE_BY_NAME_AND_EXPORT(fsi_name, &ccl_context);
 
 	if (fsihandle != -1) {
-		// If we have cached stat information, then we call regular stat
+		/*
+		 * If we have cached stat information,
+		 * then we call regular stat
+		 */
 		stat_rc = CCL_STAT(&ccl_context, fsi_name, &fsi_stat);
 		fsi_stat2stat(&fsi_stat, p_stat);
 	} else {
@@ -637,16 +645,15 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 
 	}
 
-	if (stat_rc == -1) {
+	if (stat_rc == -1)
 		FSI_TRACE(FSI_ERR, "FSI - stat failed. fsi_name[%s]", fsi_name);
-	}
 
 	ptfsal_print_handle(fsi_stat.st_persistentHandle.handle);
 
 	return stat_rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int ptfsal_opendir(const struct req_op_context *p_context,
 		   struct fsal_export *export, const char *filename,
 		   const char *mask, uint32_t attr)
@@ -660,22 +667,20 @@ int ptfsal_opendir(const struct req_op_context *p_context,
 
 	FSI_TRACE(FSI_DEBUG, "This will be full path: %s\n", filename);
 	dir_handle = CCL_OPENDIR(&ccl_context, filename, mask, attr);
-	if (dir_handle < 0) {
+	if (dir_handle < 0)
 		err = errno;
-	}
 	FSI_TRACE(FSI_DEBUG, "ptfsal_opendir index %d\n", dir_handle);
 
-	if (dir_handle < 0) {
+	if (dir_handle < 0)
 		errno = err;
-	}
 
 	return dir_handle;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_readdir(const struct req_op_context *p_context,
-		   struct fsal_export *export, ptfsal_dir_t * dir_desc,
-		   fsi_stat_struct * sbuf, char *fsi_dname)
+		   struct fsal_export *export, ptfsal_dir_t *dir_desc,
+		   fsi_stat_struct *sbuf, char *fsi_dname)
 {
 
 	int readdir_rc;
@@ -702,9 +707,9 @@ int ptfsal_readdir(const struct req_op_context *p_context,
 	return readdir_rc;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_closedir(const struct req_op_context *p_context,
-		    struct fsal_export *export, ptfsal_dir_t * dir_desc)
+		    struct fsal_export *export, ptfsal_dir_t *dir_desc)
 {
 	int dir_hnd_index;
 	ccl_context_t ccl_context;
@@ -736,7 +741,7 @@ int ptfsal_closedir_fd(const struct req_op_context *p_context,
 	return CCL_CLOSEDIR(&ccl_context, dirp);
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
 		 const struct req_op_context *opctx)
 {
@@ -746,9 +751,8 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
 	ccl_context_t ccl_context;
 
 	handle_index = p_file_descriptor->u.file.fd;
-	if (fsi_check_handle_index(handle_index) < 0) {
+	if (fsi_check_handle_index(handle_index) < 0)
 		return -1;
-	}
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
 	ccl_context.export_id = opctx->export->export.id;
@@ -761,7 +765,7 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
 
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_open_by_handle(const struct req_op_context *p_context,
 			  struct pt_fsal_obj_handle *p_object_handle,
 			  int oflags, mode_t mode)
@@ -787,14 +791,12 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 				      p_object_handle->handle, fsi_filename,
 				      &handle_index);
 	err = 0;
-	if (rc > 0) {
+	if (rc > 0)
 		err = rc;
-	} else if (rc < 0) {
+	else if (rc < 0)
 		err = errno;
-	}
-	if (err == ENOENT) {
+	if (err == ENOENT)
 		err = ESTALE;
-	}
 
 	if (err != 0) {
 		FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d", rc);
@@ -803,8 +805,10 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 	}
 	FSI_TRACE(FSI_DEBUG, "handle to name %s for handle:", fsi_filename);
 
-	// The file name should not be empty "". In case it is empty, we
-	// return error.
+	/*
+	 * The file name should not be empty "". In case it is empty, we
+	 * return error.
+	 */
 	if (strnlen(fsi_filename, 1) == 0) {
 		FSI_TRACE(FSI_ERR,
 			  "The file name is empty string for handle: "
@@ -812,27 +816,32 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 			  handlePtr[2], handlePtr[3]);
 		return -1;
 	}
-	// If we found the handle index in the opened file handle cache, we 
-	// call fastopen right away.
+	/*
+	 * If we found the handle index in the opened file handle cache, we
+	 * call fastopen right away.
+	 */
 	if (handle_index != -1) {
 		int handle_index_return = -1;
 		FSI_TRACE(FSI_DEBUG, "cur handle index %d", handle_index);
 		handle_index_return =
 		    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context, handle_index,
 						   fsi_filename);
-		if (handle_index_return >= 0) {
+		if (handle_index_return >= 0)
 			return handle_index_return;
-		}
 	}
-	// since we called fsi_get_name_from_handle, we know the pthread specific
-	// is initialized, so we can just check it
+	/*
+	 * since we called fsi_get_name_from_handle, we know the pthread
+	 * specific is initialized, so we can just check it
+	 */
 	ptfsal_threadcontext_t *p_cur_context;
 	if (g_ptfsal_context_flag) {
 		int existing_handle_index;
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL) {
-			// try and get a direct hit from context cache,
-			// else drop through to normal search code
+			/*
+			 * try and get a direct hit from context cache,
+			 * else drop through to normal search code
+			 */
 			FSI_TRACE(FSI_DEBUG, "cur handle index %d",
 				  p_cur_context->cur_fsi_handle_index);
 			existing_handle_index =
@@ -840,9 +849,8 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 							   p_cur_context->
 							   cur_fsi_handle_index,
 							   fsi_filename);
-			if (existing_handle_index >= 0) {
+			if (existing_handle_index >= 0)
 				return existing_handle_index;
-			}
 		} else {
 			FSI_TRACE(FSI_DEBUG, "context is null");
 		}
@@ -866,17 +874,16 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 
 	if (g_ptfsal_context_flag && open_rc != -1) {
 		if (p_cur_context != NULL) {
-			// update our context
-			if (p_cur_context->cur_fsi_handle_index != open_rc) {
+			/* update our context */
+			if (p_cur_context->cur_fsi_handle_index != open_rc)
 				p_cur_context->cur_fsi_handle_index = open_rc;
-			}
 		}
 	}
 
 	return open_rc;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 void ptfsal_close(int handle_index)
 {
 
@@ -884,18 +891,18 @@ void ptfsal_close(int handle_index)
 		ptfsal_threadcontext_t *p_cur_context;
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL) {
-			// update context cache
+			/* update context cache */
 			p_cur_context->cur_fsi_handle_index = handle_index;
 		}
 	}
 
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 
 int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		const char *p_filename, const struct req_op_context *p_context,
-		mode_t mode, ptfsal_handle_t * p_object_handle)
+		mode_t mode, ptfsal_handle_t *p_object_handle)
 {
 	int rc;
 	char fsi_name[PATH_MAX];
@@ -925,13 +932,15 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	memset(&fsi_name, 0, sizeof(fsi_name));
 	fsi_get_whole_path(fsi_parent_dir_name, p_filename, fsi_name);
 
-	// The file name should not be empty "". In case it is empty, we
-	// return error.
+	/*
+	 * The file name should not be empty "". In case it is empty, we
+	 * return error.
+	 */
 	if (strnlen(fsi_name, 1) == 0) {
 		FSI_TRACE(FSI_ERR, "The file name is empty string.");
 		return -1;
 	}
-	// Will create a new file in backend.
+	/* Will create a new file in backend. */
 	handleOpened = CCL_OPEN(&ccl_context, fsi_name, O_CREAT, mode);
 
 	if (handleOpened >= 0) {
@@ -960,7 +969,7 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	return handleOpened;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_ftruncate(const struct req_op_context *p_context,
 		     struct fsal_export *export, int handle_index,
 		     uint64_t offset)
@@ -976,7 +985,7 @@ int ptfsal_ftruncate(const struct req_op_context *p_context,
 
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_unlink(const struct req_op_context *p_context,
 		  struct pt_fsal_obj_handle *p_parent_directory_handle,
 		  const char *p_filename)
@@ -989,7 +998,7 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 	char key[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
 	int cacheDeleteRC;
 	int handle_index_to_close;
-	rc = fsi_get_name_from_handle(p_context,	
+	rc = fsi_get_name_from_handle(p_context,
 				      p_context->fsal_export,
 				      p_parent_directory_handle->handle,
 				      fsi_parent_dir_name, NULL);
@@ -1035,7 +1044,7 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_chmod(const struct req_op_context *p_context,
 		 struct fsal_export *export, const char *path, mode_t mode)
 {
@@ -1046,7 +1055,7 @@ int ptfsal_chmod(const struct req_op_context *p_context,
 	return CCL_CHMOD(&ccl_context, path, mode);
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_chown(const struct req_op_context *p_context,
 		 struct fsal_export *export, const char *path, uid_t uid,
 		 gid_t gid)
@@ -1058,7 +1067,7 @@ int ptfsal_chown(const struct req_op_context *p_context,
 	return CCL_CHOWN(&ccl_context, path, uid, gid);
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_ntimes(const struct req_op_context *p_context,
 		  struct fsal_export *export, const char *filename,
 		  uint64_t atime, uint64_t mtime)
@@ -1067,14 +1076,14 @@ int ptfsal_ntimes(const struct req_op_context *p_context,
 
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
-	// not changing create time in NFS
+	/* not changing create time in NFS */
 	return CCL_NTIMES(&ccl_context, filename, atime, mtime, 0);
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		 const char *p_dirname, const struct req_op_context *p_context,
-		 mode_t mode, ptfsal_handle_t * p_object_handle)
+		 mode_t mode, ptfsal_handle_t *p_object_handle)
 {
 	int rc;
 	char fsi_parent_dir_name[PATH_MAX];
@@ -1103,8 +1112,10 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	memset(fsi_name, 0, sizeof(fsi_name));
 	fsi_get_whole_path(fsi_parent_dir_name, p_dirname, fsi_name);
 
-	// The dir name should not be empty "". In case it is empty, we
-	// return error.
+	/*
+	 * The dir name should not be empty "". In case it is empty, we
+	 * return error.
+	 */
 	if (strnlen(fsi_name, 1) == 0) {
 		FSI_TRACE(FSI_ERR, "The directory name is empty string.");
 		return -1;
@@ -1113,7 +1124,7 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	rc = CCL_MKDIR(&ccl_context, fsi_name, mode);
 
 	if (rc == 0) {
-		// get handle
+		/* get handle */
 		char fsal_path[PATH_MAX];
 		memset(fsal_path, 0, PATH_MAX);
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
@@ -1129,7 +1140,7 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_rmdir(const struct req_op_context *p_context,
 		 struct pt_fsal_obj_handle *p_parent_directory_handle,
 		 const char *p_object_name)
@@ -1158,9 +1169,9 @@ int ptfsal_rmdir(const struct req_op_context *p_context,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
-uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
-		     const struct req_op_context * opctx, char *buf,
+/* ------------------------------------------------------------------------- */
+uint64_t ptfsal_read(struct pt_fsal_obj_handle *p_file_descriptor,
+		     const struct req_op_context *opctx, char *buf,
 		     size_t size, off_t offset, int in_handle)
 {
 	off_t cur_offset = offset;
@@ -1179,13 +1190,15 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
-	// we will use 256K i/o with vtl but allow larger i/o from NFS
+	/* we will use 256K i/o with vtl but allow larger i/o from NFS */
 	FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_read off %ld size %ld\n",
 		  in_handle, offset, size);
 
 	if (size > PTFSAL_USE_READSIZE_THRESHOLD) {
-		// this is an optimized linux mount
-		// probably 1M rsize
+		/*
+		 * this is an optimized linux mount
+		 * probably 1M rsize
+		 */
 		max_readahead_offset = offset + size;
 	}
 	while (cur_size > 0) {
@@ -1200,9 +1213,8 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
 		rc = CCL_PREAD(&ccl_context, &buf[buf_offset], read_amount,
 			       cur_offset, max_readahead_offset);
 
-		if (rc == -1) {
+		if (rc == -1)
 			return rc;
-		}
 		cur_size -= read_amount;
 		cur_offset += read_amount;
 		buf_offset += read_amount;
@@ -1213,9 +1225,9 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle * p_file_descriptor,
 	return total_read;
 }
 
-// -----------------------------------------------------------------------------
-uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
-		      const struct req_op_context * opctx, const char *buf,
+/* ------------------------------------------------------------------------- */
+uint64_t ptfsal_write(struct pt_fsal_obj_handle *p_file_descriptor,
+		      const struct req_op_context *opctx, const char *buf,
 		      size_t size, off_t offset, int in_handle)
 {
 	off_t cur_offset = offset;
@@ -1233,7 +1245,7 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
-	// we will use 256K i/o with vtl but allow larger i/o from NFS
+	/* we will use 256K i/o with vtl but allow larger i/o from NFS */
 	FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_write off %ld size %ld\n",
 		  in_handle, offset, size);
 	while (cur_size > 0) {
@@ -1248,9 +1260,8 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
 		bytes_written =
 		    CCL_PWRITE(&ccl_context, in_handle, &buf[buf_offset],
 			       write_amount, cur_offset);
-		if (bytes_written < 0) {
+		if (bytes_written < 0)
 			return bytes_written;
-		}
 		total_written += bytes_written;
 		cur_size -= bytes_written;
 		cur_offset += bytes_written;
@@ -1261,10 +1272,10 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle * p_file_descriptor,
 	return total_written;
 }
 
-// -----------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
 int ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
 			  const struct req_op_context *p_context,
-			  fsal_dynamicfsinfo_t * p_dynamicinfo)
+			  fsal_dynamicfsinfo_t *p_dynamicinfo)
 {
 	int rc;
 	char fsi_name[PATH_MAX];
@@ -1274,18 +1285,16 @@ int ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
 
 	rc = ptfsal_handle_to_name(p_filehandle->handle, p_context,
 				   p_context->fsal_export, fsi_name);
-	if (rc) {
+	if (rc)
 		return rc;
-	}
 
 	FSI_TRACE(FSI_DEBUG, "Name = %s", fsi_name);
 
 	ptfsal_set_fsi_handle_data(p_context->fsal_export, p_context,
 				   &ccl_context);
 	rc = CCL_DYNAMIC_FSINFO(&ccl_context, fsi_name, &fs_info);
-	if (rc) {
+	if (rc)
 		return rc;
-	}
 
 	p_dynamicinfo->total_bytes = fs_info.totalBytes;
 	p_dynamicinfo->free_bytes = fs_info.freeBytes;
@@ -1301,8 +1310,8 @@ int ptfsal_dynamic_fsinfo(struct pt_fsal_obj_handle *p_filehandle,
 	return 0;
 }
 
-// -----------------------------------------------------------------------------
-int ptfsal_readlink(ptfsal_handle_t * p_linkhandle, struct fsal_export *export,
+/* ------------------------------------------------------------------------- */
+int ptfsal_readlink(ptfsal_handle_t *p_linkhandle, struct fsal_export *export,
 		    const struct req_op_context *p_context, char *p_buf)
 {
 	int rc;
@@ -1321,19 +1330,18 @@ int ptfsal_readlink(ptfsal_handle_t * p_linkhandle, struct fsal_export *export,
 
 	memset(fsi_name, 0, sizeof(fsi_name));
 	rc = ptfsal_handle_to_name(p_linkhandle, p_context, export, fsi_name);
-	if (rc) {
+	if (rc)
 		return rc;
-	}
 
 	rc = CCL_READLINK(&ccl_context, fsi_name, p_buf);
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
 		   const char *p_linkname, const char *p_linkcontent,
 		   const struct req_op_context *p_context, mode_t accessmode,
-		   ptfsal_handle_t * p_link_handle)
+		   ptfsal_handle_t *p_link_handle)
 {
 	int rc;
 
@@ -1344,9 +1352,8 @@ int ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				   p_context, &ccl_context);
 
 	rc = CCL_SYMLINK(&ccl_context, p_linkname, p_linkcontent);
-	if (rc) {
+	if (rc)
 		return rc;
-	}
 
 	memset(pt_path, 0, PATH_MAX);
 	memcpy(pt_path, p_linkname, PATH_MAX);
@@ -1358,10 +1365,10 @@ int ptfsal_symlink(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int ptfsal_name_to_handle(const struct req_op_context *p_context,
 			  struct fsal_export *export, const char *p_fsalpath,
-			  ptfsal_handle_t * p_handle)
+			  ptfsal_handle_t *p_handle)
 {
 	int rc;
 
@@ -1398,14 +1405,14 @@ int ptfsal_name_to_handle(const struct req_op_context *p_context,
 	p_fsi_handle->data.handle.handle_type =
 	    posix2fsal_type(fsi_stat.st_mode);
 
-	FSI_TRACE(FSI_DEBUG, "Name to Handle: \n");
+	FSI_TRACE(FSI_DEBUG, "Name to Handle:\n");
 	ptfsal_print_handle(pt_handler.handle);
 	ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
 	return 0;
 }
 
-// -----------------------------------------------------------------------------
-int ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
+/* -------------------------------------------------------------------------- */
+int ptfsal_handle_to_name(ptfsal_handle_t *p_filehandle,
 			  const struct req_op_context *p_context,
 			  struct fsal_export *export, char *path)
 {
@@ -1425,7 +1432,7 @@ int ptfsal_handle_to_name(ptfsal_handle_t * p_filehandle,
 	return rc;
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 void ptfsal_print_handle(char *handle)
 {
 	uint64_t *handlePtr = (uint64_t *) handle;
@@ -1433,15 +1440,17 @@ void ptfsal_print_handle(char *handle)
 		  handlePtr[1], handlePtr[2], handlePtr[3]);
 }
 
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 int fsi_update_cache_stat(const char *p_filename, uint64_t newMode,
 			  uint64_t export_id)
 {
 	return CCL_UPDATE_CACHE_STAT(p_filename, newMode, export_id);
 }
 
-// This function will convert Ganesha FSAL type to the upper
-// bits for unix stat structure
+/*
+ * This function will convert Ganesha FSAL type to the upper
+ * bits for unix stat structure
+ */
 mode_t fsal_type2unix(int fsal_type)
 {
 	mode_t outMode = 0;
@@ -1475,18 +1484,20 @@ mode_t fsal_type2unix(int fsal_type)
 	return outMode;
 }
 
-// This function will fill in ccl_context_t
+/* This function will fill in ccl_context_t */
 void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 				const struct req_op_context *p_context,
-				ccl_context_t * ccl_context)
+				ccl_context_t *ccl_context)
 {
 	unsigned char *bytes;
 	struct pt_fsal_export *myself;
 	myself = container_of(exp_hdl, struct pt_fsal_export, export);
 
-	ccl_context->export_id = myself->pt_export_id;;
-	ccl_context->uid = 0;	//(p_context == NULL?0: p_context->creds->caller_uid);
-	ccl_context->gid = 0;	//(p_context == NULL?0:p_context->creds->caller_gid);
+	ccl_context->export_id = myself->pt_export_id;
+	/* (p_context == NULL?0: p_context->creds->caller_uid); */
+	ccl_context->uid = 0;
+	/* (p_context == NULL?0:p_context->creds->caller_gid); */
+	ccl_context->gid = 0;
 	ccl_context->export_path = p_context->export->export.fullpath;
 	memset(ccl_context->client_address, 0,
 	       sizeof(ccl_context->client_address));
@@ -1511,15 +1522,17 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 		  ccl_context->client_address);
 }
 
-// ----------------------------------------------------------------------------
-// Initialize the cache table and setup memory
-//
-// Return: FSI_IPC_OK = success
-//         otherwise  = failure
-int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
-			 CACHE_TABLE_INIT_PARAM * cacheTableInitParam)
+/*
+ * ----------------------------------------------------------------------------
+ * Initialize the cache table and setup memory
+ *
+ * Return: FSI_IPC_OK = success
+ *         otherwise  = failure
+ */
+int fsi_cache_table_init(CACHE_TABLE_T *cacheTableToInit,
+			 CACHE_TABLE_INIT_PARAM *cacheTableInitParam)
 {
-	// Validate the input parameters.
+	/* Validate the input parameters. */
 	if ((cacheTableToInit == NULL) || (cacheTableInitParam == NULL)
 	    || (cacheTableInitParam->keyLengthInBytes == 0)
 	    || (cacheTableInitParam->dataSizeInBytes == 0)
@@ -1529,7 +1542,7 @@ int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
 		FSI_TRACE(FSI_ERR, "Failed to initialize ");
 		return -1;
 	}
-	// Populate the cache table meta data
+	/* Populate the cache table meta data */
 	memset(cacheTableToInit, 0x00, sizeof(CACHE_TABLE_T));
 	cacheTableToInit->cacheEntries =
 	    gsh_malloc(sizeof(CACHE_TABLE_ENTRY_T) *
@@ -1555,31 +1568,32 @@ int fsi_cache_table_init(CACHE_TABLE_T * cacheTableToInit,
 
 	return FSI_CCL_IPC_EOK;
 }
-
-// ----------------------------------------------------------------------------
-// Compare two key entry and indicates the order of those two entries
-// This is intended for the use of binary search and binary insertion routine
-// used in this cache utilities
-//
-// Return:  1 if string1 >  string2
-//          0 if string1 == string2
-//         -1 if string1 <  string2
-//
-// Sample:
-//    int fsi_cache_keyCompare(const void *cacheEntry1, const void *cacheEntry2)
-//    {
-//      CACHE_TABLE_ENTRY_T *entry1 = (CACHE_TABLE_ENTRY_T *) cacheEntry1;
-//      CACHE_TABLE_ENTRY_T *entry2 = (CACHE_TABLE_ENTRY_T *) cacheEntry2;
-//      uint64_t num1 = *((uint64_t *) entry1->key);
-//      uint64_t num2 = *((uint64_t *) entry2->key);
-//
-//      if (num1 < num2)
-//        return -1;
-//      else if (num1 > num2)
-//        return 1;
-//      else
-//        return 0;
-//    }
+/*
+ * ----------------------------------------------------------------------------
+ * Compare two key entry and indicates the order of those two entries
+ * This is intended for the use of binary search and binary insertion routine
+ * used in this cache utilities
+ *
+ * Return:  1 if string1 >  string2
+ *          0 if string1 == string2
+ *         -1 if string1 <  string2
+ *
+ * Sample:
+ *    int fsi_cache_keyCompare(const void *cacheEntry1, const void *cacheEntry2)
+ *    {
+ *      CACHE_TABLE_ENTRY_T *entry1 = (CACHE_TABLE_ENTRY_T *) cacheEntry1;
+ *      CACHE_TABLE_ENTRY_T *entry2 = (CACHE_TABLE_ENTRY_T *) cacheEntry2;
+ *      uint64_t num1 = *((uint64_t *) entry1->key);
+ *      uint64_t num2 = *((uint64_t *) entry2->key);
+ *
+ *      if (num1 < num2)
+ *        return -1;
+ *      else if (num1 > num2)
+ *        return 1;
+ *      else
+ *        return 0;
+ *    }
+ */
 int fsi_cache_handle2name_keyCompare(const void *cacheEntry1,
 				     const void *cacheEntry2)
 {
@@ -1611,15 +1625,17 @@ int fsi_cache_handle2name_keyCompare(const void *cacheEntry1,
 	return 0;
 }
 
-// ----------------------------------------------------------------------------
-// This routine will perform a binary search and identify where an cache should
-// be placed in the cache table such that the resulting will still remain in
-// proper sorted order.
-//
-// Return 0 if existing entry
-// Return 1 if insertion point found
-int fsi_cache_getInsertionPoint(CACHE_TABLE_T * cacheTable,
-				CACHE_TABLE_ENTRY_T * whatToInsert,
+/*
+ * ----------------------------------------------------------------------------
+ * This routine will perform a binary search and identify where an cache should
+ * be placed in the cache table such that the resulting will still remain in
+ * proper sorted order.
+ *
+ * Return 0 if existing entry
+ * Return 1 if insertion point found
+ */
+int fsi_cache_getInsertionPoint(CACHE_TABLE_T *cacheTable,
+				CACHE_TABLE_ENTRY_T *whatToInsert,
 				int *whereToInsert)
 {
 	int first, last, mid = 0;
@@ -1640,7 +1656,7 @@ int fsi_cache_getInsertionPoint(CACHE_TABLE_T * cacheTable,
 			  "compareRC = %d, first %d mid %d, last %d\n",
 			  compareRC, first, mid, last);
 		if (compareRC == 0) {
-			return 0;	// existing entry
+			return 0;	/* existing entry */
 		} else if (compareRC < 0) {
 			*whereToInsert = mid;
 			last = mid - 1;
@@ -1652,14 +1668,16 @@ int fsi_cache_getInsertionPoint(CACHE_TABLE_T * cacheTable,
 	return 1;
 }
 
-// ----------------------------------------------------------------------------
-// Insert and entry to the array at the correct location in order
-// to keep the correct order.
-//
-// Return: FSI_IPC_OK = success
-//         otherwise  = failure
-int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
-			  CACHE_TABLE_ENTRY_T * whatToInsert)
+/*
+ * ----------------------------------------------------------------------------
+ * Insert and entry to the array at the correct location in order
+ * to keep the correct order.
+ *
+ * Return: FSI_IPC_OK = success
+ *         otherwise  = failure
+ */
+int fsi_cache_insertEntry(CACHE_TABLE_T *cacheTable,
+			  CACHE_TABLE_ENTRY_T *whatToInsert)
 {
 	int rc;
 	int whereToInsert;
@@ -1669,7 +1687,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 		FSI_TRACE(FSI_ERR, "param check");
 		return -1;
 	}
-	// Log result of the insert
+	/* Log result of the insert */
 	FSI_TRACE(FSI_INFO, "Inserting the following handle:");
 	ptfsal_print_handle(whatToInsert->key);
 
@@ -1688,7 +1706,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 
 	if (rc == 0) {
 		FSI_TRACE(FSI_INFO, "** Duplicated entry **");
-		// Log result of the insert
+		/* Log result of the insert */
 		FSI_TRACE(FSI_INFO,
 			  "Attempted to insert the following handle:");
 		fsi_cache_32Bytes_rawDump(FSI_INFO, whatToInsert->key, 0);
@@ -1696,7 +1714,7 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 						    "Dumping cache table keys currently:");
 		return -1;
 	}
-	// Insert the element to the array
+	/* Insert the element to the array */
 	memmove(&cacheTable->cacheEntries[whereToInsert + 1],
 		&cacheTable->cacheEntries[whereToInsert],
 		(cacheTable->cacheMetaData.numElementsOccupied -
@@ -1729,24 +1747,26 @@ int fsi_cache_insertEntry(CACHE_TABLE_T * cacheTable,
 	return FSI_CCL_IPC_EOK;
 }
 
-// ----------------------------------------------------------------------------
-// Delete an entry in the array at the correct location in order
-// to keep the correct order.
-//
-// Return: FSI_IPC_OK = success
-//         otherwise  = failure
-int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
-			  CACHE_TABLE_ENTRY_T * whatToDelete)
+/*
+ * ----------------------------------------------------------------------------
+ * Delete an entry in the array at the correct location in order
+ * to keep the correct order.
+ *
+ * Return: FSI_IPC_OK = success
+ *         otherwise  = failure
+ */
+int fsi_cache_deleteEntry(CACHE_TABLE_T *cacheTable,
+			  CACHE_TABLE_ENTRY_T *whatToDelete)
 {
 	CACHE_TABLE_ENTRY_T *entryMatched = NULL;
 	int whereToDeleteIdx = 0;
 
-	// Validate parameter
+	/* Validate parameter */
 	if ((cacheTable == NULL) || (whatToDelete == NULL)) {
 		FSI_TRACE(FSI_ERR, "Param check");
 		return -1;
 	}
-	// Log result of the delete
+	/* Log result of the delete */
 	FSI_TRACE(FSI_INFO, "Deleting the following handle:");
 	ptfsal_print_handle(whatToDelete->key);
 
@@ -1772,17 +1792,19 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 	whereToDeleteIdx = entryMatched - cacheTable->cacheEntries;
 	FSI_TRACE(FSI_INFO, "whereToDeleteIdx = %d", whereToDeleteIdx);
 
-	// Now we have a match
-	// Deleting the cache entry
+	/* Now we have a match. Deleting the cache entry */
 
-	// Free the current entry and set the current entry pointers to NULL
+	/* Free the current entry and set the current entry pointers to NULL */
 	gsh_free(cacheTable->cacheEntries[whereToDeleteIdx].key);
 	gsh_free(cacheTable->cacheEntries[whereToDeleteIdx].data);
 	cacheTable->cacheEntries[whereToDeleteIdx].key = NULL;
 	cacheTable->cacheEntries[whereToDeleteIdx].data = NULL;
 
-	// If what we are deleting now is the not the last element in the cache table,
-	// we need to "shift" the cache entry up so that they are still continous
+	/* If what we are deleting now is the not
+	 * the last element in the cache table,
+	 * we need to "shift" the cache entry up
+	 * so that they are still continous
+	 */
 	if (whereToDeleteIdx !=
 	    (cacheTable->cacheMetaData.numElementsOccupied - 1)) {
 		memmove(&cacheTable->cacheEntries[whereToDeleteIdx],
@@ -1801,21 +1823,23 @@ int fsi_cache_deleteEntry(CACHE_TABLE_T * cacheTable,
 	return FSI_CCL_IPC_EOK;
 }
 
-// ----------------------------------------------------------------------------
-// Search and return an entry that matches the key pointed by *buffer.key
-// The matching data will be pointed by *buffer.data
-//
-// buffer (IN/OUT) = 'key' contains pointer to key to search on in the cache table
-//                   'data' contains pointer to data retrieved
-//
-// Return: FSI_IPC_OK = success
-//         otherwise  = failure
-
-int fsi_cache_getEntry(CACHE_TABLE_T * cacheTable, CACHE_TABLE_ENTRY_T * buffer)
+/*
+ * ----------------------------------------------------------------------------
+ * Search and return an entry that matches the key pointed by *buffer.key
+ * The matching data will be pointed by *buffer.data
+ *
+ * buffer (IN/OUT) = 'key' contains pointer to key to
+ *                   search on in the cache table
+ *                   'data' contains pointer to data retrieved
+ *
+ * Return: FSI_IPC_OK = success
+ *         otherwise  = failure
+ */
+int fsi_cache_getEntry(CACHE_TABLE_T *cacheTable, CACHE_TABLE_ENTRY_T *buffer)
 {
 	CACHE_TABLE_ENTRY_T *entryMatched = NULL;
 	int i;
-	// Validate parameter
+	/* Validate parameter */
 	if ((cacheTable == NULL) || (buffer == NULL)) {
 		FSI_TRACE(FSI_ERR, "Param check");
 		return -1;
@@ -1830,9 +1854,8 @@ int fsi_cache_getEntry(CACHE_TABLE_T * cacheTable, CACHE_TABLE_ENTRY_T * buffer)
 	}
 
 	FSI_TRACE(FSI_INFO, "Dumping current cache table keys:");
-	for (i = 0; i < cacheTable->cacheMetaData.numElementsOccupied; i++) {
+	for (i = 0; i < cacheTable->cacheMetaData.numElementsOccupied; i++)
 		ptfsal_print_handle(cacheTable->cacheEntries[i].key);
-	}
 
 	entryMatched =
 	    bsearch(buffer, &cacheTable->cacheEntries[0],
@@ -1849,12 +1872,14 @@ int fsi_cache_getEntry(CACHE_TABLE_T * cacheTable, CACHE_TABLE_ENTRY_T * buffer)
 	return FSI_CCL_IPC_EOK;
 }
 
-// ----------------------------------------------------------------------------
-// This function is used to dump first 32 bytes of data pointed by *data
-//
-// Input: data = data to be dumped.
-//        index = indicate the index of this particular piece of data within
-//                an whole array of similar data
+/*
+ * ----------------------------------------------------------------------------
+ * This function is used to dump first 32 bytes of data pointed by *data
+ *
+ * Input: data = data to be dumped.
+ *        index = indicate the index of this particular piece of data within
+ *                an whole array of similar data
+ */
 void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data,
 			       int index)
 {
@@ -1867,23 +1892,24 @@ void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data,
 	}
 }
 
-// ----------------------------------------------------------------------------
-// This function is used to dump all keys in the
-// g_fsi_name_handle_cache_opened_files to the log.
-//
-// Input: cacheTable = cacheTable holding the keys to be printed.
-//        titleString = Description the purpose of this print.  It's for
-//                      logging purpose only. (NOTE: this can be NULL)
+/*
+ * ----------------------------------------------------------------------------
+ * This function is used to dump all keys in the
+ * g_fsi_name_handle_cache_opened_files to the log.
+ *
+ * Input: cacheTable = cacheTable holding the keys to be printed.
+ *        titleString = Description the purpose of this print.  It's for
+ *                      logging purpose only. (NOTE: this can be NULL)
+ */
 void fsi_cache_handle2name_dumpTableKeys(fsi_ipc_trace_level logLevel,
-					 CACHE_TABLE_T * cacheTable,
+					 CACHE_TABLE_T *cacheTable,
 					 char *titleString)
 {
 #ifdef PRINT_CACHE_KEY
 	int i;
 
-	if (titleString != NULL) {
+	if (titleString != NULL)
 		FSI_TRACE(logLevel, titleString);
-	}
 
 	for (i = 0; i < cacheTable->cacheMetaData.numElementsOccupied; i++) {
 		fsi_cache_32Bytes_rawDump(logLevel,

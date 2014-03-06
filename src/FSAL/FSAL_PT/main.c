@@ -1,13 +1,14 @@
-// ----------------------------------------------------------------------------
-// // Copyright IBM Corp. 2012, 2012
-// // All Rights Reserved
-// // ----------------------------------------------------------------------------
-// // ----------------------------------------------------------------------------
-// // Filename:    fsal_init.c
-// // Description: FSAL initialization operations implementation
-// // Author:      FSI IPC dev team
-// // ----------------------------------------------------------------------------
-//
+/*
+ *--------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_init.c
+ * Description: FSAL initialization operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -28,9 +29,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* main.c
@@ -61,13 +62,13 @@ pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
 
-// FSAL analogs to CCL variables and structures
+/* FSAL analogs to CCL variables and structures */
 char *g_shm_at_fsal;
 struct file_handles_struct_t *g_fsi_handles_fsal;
 struct dir_handles_struct_t *g_fsi_dir_handles_fsal;
 struct acl_handles_struct_t *g_fsi_acl_handles_fsal;
 
-#define COMPONENT_FSAL_PT  5	// COMPONENT_FSAL
+#define COMPONENT_FSAL_PT  5	/* COMPONENT_FSAL */
 
 #define CCL_SO_PATH "/usr/lib64/libfsi_ipc_ccl.so"
 
@@ -85,7 +86,6 @@ int PTFSAL_log_level_check(int level)
 		(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level));
 }
 
-int pt_ganesha_fsal_ccl_init();
 static int ptfsal_closeHandle_listener_thread_init(void);
 static int ptfsal_polling_closeHandler_thread_init(void);
 void *ptfsal_parallel_close_thread(void *args);
@@ -205,13 +205,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 /* Internal PT method linkage to export object
  */
 
-fsal_status_t pt_create_export(struct fsal_module * fsal_hdl,
+fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 			       const char *export_path,
 			       void *parse_node,
-			       struct exportlist * exp_entry,
-			       struct fsal_module * next_fsal,
-			       const struct fsal_up_vector * up_ops,
-			       struct fsal_export ** export);
+			       struct exportlist *exp_entry,
+			       struct fsal_module *next_fsal,
+			       const struct fsal_up_vector *up_ops,
+			       struct fsal_export **export);
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -233,11 +233,12 @@ MODULE_INIT void pt_init(void)
 
 	/* load CCL module */
 	int rc = pt_ganesha_fsal_ccl_init();
-	if (rc) {
+	if (rc)
 		return;
-	}
-	// Check the CCL version from the header we got with the version
-	// in the CCL library itself before CCL initialization.
+	/*
+	 * Check the CCL version from the header we got with the version
+	 * in the CCL library itself before CCL initialization.
+	 */
 	rc = CCL_CHECK_VERSION(PT_FSI_CCL_VERSION);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -250,9 +251,11 @@ MODULE_INIT void pt_init(void)
 	pthread_rwlock_init(&g_fsi_cache_handle_rw_lock, NULL);
 	g_fsi_name_handle_cache.m_count = 0;
 
-	// fsi_ipc_trace_level allows using the level settings differently than
-	// Ganesha proper.
-	// We map FSI Trace Level to Ganesha debug levels through this array.
+	/*
+	 * fsi_ipc_trace_level allows using the level settings differently than
+	 * Ganesha proper.
+	 * We map FSI Trace Level to Ganesha debug levels through this array.
+	 */
 	int ipc_ccl_to_component_trc_level_map[FSI_NUM_TRACE_LEVELS];
 	ipc_ccl_to_component_trc_level_map[FSI_NO_LEVEL] = NIV_NULL;
 	ipc_ccl_to_component_trc_level_map[FSI_FATAL] = NIV_MAJ;
@@ -338,9 +341,8 @@ char *check_dl_error(const char *func_name)
 	char *error = dlerror();
 
 	if (error != NULL) {
-		if (!func_name) {
+		if (!func_name)
 			func_name = "UNKNOWN";
-		}
 
 		LogCrit(COMPONENT_FSAL,
 			"Failed to dynamically load function: %s, error: %s",
@@ -354,9 +356,8 @@ char *check_dl_error(const char *func_name)
 char *load_dynamic_function(void *fn_map_ptr, const char *func_name)
 {
 	/* sanity checks */
-	if (!func_name) {
+	if (!func_name)
 		LogCrit(COMPONENT_FSAL, "NULL func_name");
-	}
 
 	/* load function pointers */
 	*(void **)(fn_map_ptr) = dlsym(g_ccl_lib_handle, func_name);
@@ -382,130 +383,135 @@ int pt_ganesha_fsal_ccl_init()
 
 	/* load all CCL function pointers */
 #define DL_LOAD(func_ptr, func_name)                                   \
-  ((load_return = load_dynamic_function(func_ptr, func_name)) == NULL)
+	((load_return = load_dynamic_function(func_ptr, func_name)) == NULL)
 
 	char *load_return = NULL;
 
 	if (DL_LOAD(&g_ccl_function_map.init_fn, "ccl_init")
-	    && DL_LOAD(&g_ccl_function_map.check_handle_index_fn,
-		       "ccl_check_handle_index")
-	    && DL_LOAD(&g_ccl_function_map.find_handle_by_name_and_export_fn,
-		       "ccl_find_handle_by_name_and_export")
-	    && DL_LOAD(&g_ccl_function_map.stat_fn, "ccl_stat")
-	    && DL_LOAD(&g_ccl_function_map.fstat_fn, "ccl_fstat")
-	    && DL_LOAD(&g_ccl_function_map.stat_by_handle_fn,
-		       "ccl_stat_by_handle")
-	    && DL_LOAD(&g_ccl_function_map.rcv_msg_nowait_fn, "rcv_msg_nowait")
-	    && DL_LOAD(&g_ccl_function_map.rcv_msg_wait_fn, "rcv_msg_wait")
-	    && DL_LOAD(&g_ccl_function_map.rcv_msg_wait_block_fn,
-		       "rcv_msg_wait_block")
-	    && DL_LOAD(&g_ccl_function_map.send_msg_fn, "send_msg")
-	    && DL_LOAD(&g_ccl_function_map.chmod_fn, "ccl_chmod")
-	    && DL_LOAD(&g_ccl_function_map.chown_fn, "ccl_chown")
-	    && DL_LOAD(&g_ccl_function_map.ntimes_fn, "ccl_ntimes")
-	    && DL_LOAD(&g_ccl_function_map.mkdir_fn, "ccl_mkdir")
-	    && DL_LOAD(&g_ccl_function_map.rmdir_fn, "ccl_rmdir")
-	    && DL_LOAD(&g_ccl_function_map.get_real_filename_fn,
-		       "ccl_get_real_filename")
-	    && DL_LOAD(&g_ccl_function_map.disk_free_fn, "ccl_disk_free")
-	    && DL_LOAD(&g_ccl_function_map.unlink_fn, "ccl_unlink")
-	    && DL_LOAD(&g_ccl_function_map.rename_fn, "ccl_rename")
-	    && DL_LOAD(&g_ccl_function_map.opendir_fn, "ccl_opendir")
-	    && DL_LOAD(&g_ccl_function_map.closedir_fn, "ccl_closedir")
-	    && DL_LOAD(&g_ccl_function_map.readdir_fn, "ccl_readdir")
-	    && DL_LOAD(&g_ccl_function_map.seekdir_fn, "ccl_seekdir")
-	    && DL_LOAD(&g_ccl_function_map.telldir_fn, "ccl_telldir")
-	    && DL_LOAD(&g_ccl_function_map.chdir_fn, "ccl_chdir")
-	    && DL_LOAD(&g_ccl_function_map.fsync_fn, "ccl_fsync")
-	    && DL_LOAD(&g_ccl_function_map.ftruncate_fn, "ccl_ftruncate")
-	    && DL_LOAD(&g_ccl_function_map.pread_fn, "ccl_pread")
-	    && DL_LOAD(&g_ccl_function_map.pwrite_fn, "ccl_pwrite")
-	    && DL_LOAD(&g_ccl_function_map.open_fn, "ccl_open")
-	    && DL_LOAD(&g_ccl_function_map.close_fn, "ccl_close")
-	    && DL_LOAD(&g_ccl_function_map.get_any_io_responses_fn,
-		       "get_any_io_responses")
-	    && DL_LOAD(&g_ccl_function_map.ipc_stats_logger_fn,
-		       "ccl_ipc_stats_logger")
-	    && DL_LOAD(&g_ccl_function_map.update_stats_fn, "update_stats")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_entry_fn,
-		       "ccl_sys_acl_get_entry")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_tag_type_fn,
-		       "ccl_sys_acl_get_tag_type")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_permset_fn,
-		       "ccl_sys_acl_get_permset")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_qualifier_fn,
-		       "ccl_sys_acl_get_qualifier")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_file_fn,
-		       "ccl_sys_acl_get_file")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_clear_perms_fn,
-		       "ccl_sys_acl_clear_perms")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_add_perm_fn,
-		       "ccl_sys_acl_add_perm")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_init_fn, "ccl_sys_acl_init")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_create_entry_fn,
-		       "ccl_sys_acl_create_entry")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_set_tag_type_fn,
-		       "ccl_sys_acl_set_tag_type")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_set_qualifier_fn,
-		       "ccl_sys_acl_set_qualifier")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_set_permset_fn,
-		       "ccl_sys_acl_set_permset")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_set_file_fn,
-		       "ccl_sys_acl_set_file")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_delete_def_file_fn,
-		       "ccl_sys_acl_delete_def_file")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_get_perm_fn,
-		       "ccl_sys_acl_get_perm")
-	    && DL_LOAD(&g_ccl_function_map.sys_acl_free_acl_fn,
-		       "ccl_sys_acl_free_acl")
-	    && DL_LOAD(&g_ccl_function_map.name_to_handle_fn,
-		       "ccl_name_to_handle")
-	    && DL_LOAD(&g_ccl_function_map.handle_to_name_fn,
-		       "ccl_handle_to_name")
-	    && DL_LOAD(&g_ccl_function_map.dynamic_fsinfo_fn,
-		       "ccl_dynamic_fsinfo")
-	    && DL_LOAD(&g_ccl_function_map.readlink_fn, "ccl_readlink")
-	    && DL_LOAD(&g_ccl_function_map.symlink_fn, "ccl_symlink")
-	    && DL_LOAD(&g_ccl_function_map.update_handle_nfs_state_fn,
-		       "ccl_update_handle_nfs_state")
-	    && DL_LOAD(&g_ccl_function_map.safe_update_handle_nfs_state_fn,
-		       "ccl_safe_update_handle_nfs_state")
-	    && DL_LOAD(&g_ccl_function_map.fsal_try_stat_by_index_fn,
-		       "ccl_fsal_try_stat_by_index")
-	    && DL_LOAD(&g_ccl_function_map.fsal_try_fastopen_by_index_fn,
-		       "ccl_fsal_try_fastopen_by_index")
-	    && DL_LOAD(&g_ccl_function_map.find_oldest_handle_fn,
-		       "ccl_find_oldest_handle")
-	    && DL_LOAD(&g_ccl_function_map.can_close_handle_fn,
-		       "ccl_can_close_handle")
-	    && DL_LOAD(&g_ccl_function_map.up_mutex_lock_fn,
-		       "ccl_up_mutex_lock")
-	    && DL_LOAD(&g_ccl_function_map.up_mutex_unlock_fn,
-		       "ccl_up_mutex_unlock")
-	    && DL_LOAD(&g_ccl_function_map.log_fn, "ccl_log")
-	    && DL_LOAD(&g_fsal_fsi_handles, "g_fsi_handles")
-	    && DL_LOAD(&g_ccl_function_map.implicit_close_for_nfs_fn,
-		       "ccl_implicit_close_for_nfs")
-	    && DL_LOAD(&g_ccl_function_map.update_cache_stat_fn,
-		       "ccl_update_cache_stat")
-	    && DL_LOAD(&g_ccl_function_map.get_version_fn, "ccl_get_version")
-	    && DL_LOAD(&g_ccl_function_map.check_version_fn,
-		       "ccl_check_version")
-	    && DL_LOAD(&g_ccl_function_map.close_listener_fn,
-		       "ccl_close_listener")
-	    && DL_LOAD(&g_ccl_function_map.ccl_lock_io_operation_mutex_fn,
-		       "ccl_lock_io_operation_mutex")
-	    && DL_LOAD(&g_ccl_function_map.ccl_unlock_io_operation_mutex_fn,
-		       "ccl_unlock_io_operation_mutex")
-	    && DL_LOAD(&g_ccl_function_map.ccl_lock_io_handle_mutex_fn,
-		       "ccl_lock_io_handle_mutex")
-	    && DL_LOAD(&g_ccl_function_map.ccl_unlock_io_handle_mutex_fn,
-		       "ccl_unlock_io_handle_mutex")
-	    && DL_LOAD(&g_ccl_function_map.ccl_lock_file_mutex_fn,
-		       "ccl_lock_file_mutex")
-	    && DL_LOAD(&g_ccl_function_map.ccl_unlock_file_mutex_fn,
-		       "ccl_unlock_file_mutex")
-	    ) {
+		&& DL_LOAD(&g_ccl_function_map.check_handle_index_fn,
+			"ccl_check_handle_index")
+		&& DL_LOAD(
+			&g_ccl_function_map.find_handle_by_name_and_export_fn,
+			"ccl_find_handle_by_name_and_export")
+		&& DL_LOAD(&g_ccl_function_map.stat_fn, "ccl_stat")
+		&& DL_LOAD(&g_ccl_function_map.fstat_fn, "ccl_fstat")
+		&& DL_LOAD(&g_ccl_function_map.stat_by_handle_fn,
+			"ccl_stat_by_handle")
+		&& DL_LOAD(
+		  &g_ccl_function_map.rcv_msg_nowait_fn, "rcv_msg_nowait")
+		&& DL_LOAD(&g_ccl_function_map.rcv_msg_wait_fn, "rcv_msg_wait")
+		&& DL_LOAD(&g_ccl_function_map.rcv_msg_wait_block_fn,
+			"rcv_msg_wait_block")
+		&& DL_LOAD(&g_ccl_function_map.send_msg_fn, "send_msg")
+		&& DL_LOAD(&g_ccl_function_map.chmod_fn, "ccl_chmod")
+		&& DL_LOAD(&g_ccl_function_map.chown_fn, "ccl_chown")
+		&& DL_LOAD(&g_ccl_function_map.ntimes_fn, "ccl_ntimes")
+		&& DL_LOAD(&g_ccl_function_map.mkdir_fn, "ccl_mkdir")
+		&& DL_LOAD(&g_ccl_function_map.rmdir_fn, "ccl_rmdir")
+		&& DL_LOAD(&g_ccl_function_map.get_real_filename_fn,
+			"ccl_get_real_filename")
+		&& DL_LOAD(&g_ccl_function_map.disk_free_fn, "ccl_disk_free")
+		&& DL_LOAD(&g_ccl_function_map.unlink_fn, "ccl_unlink")
+		&& DL_LOAD(&g_ccl_function_map.rename_fn, "ccl_rename")
+		&& DL_LOAD(&g_ccl_function_map.opendir_fn, "ccl_opendir")
+		&& DL_LOAD(&g_ccl_function_map.closedir_fn, "ccl_closedir")
+		&& DL_LOAD(&g_ccl_function_map.readdir_fn, "ccl_readdir")
+		&& DL_LOAD(&g_ccl_function_map.seekdir_fn, "ccl_seekdir")
+		&& DL_LOAD(&g_ccl_function_map.telldir_fn, "ccl_telldir")
+		&& DL_LOAD(&g_ccl_function_map.chdir_fn, "ccl_chdir")
+		&& DL_LOAD(&g_ccl_function_map.fsync_fn, "ccl_fsync")
+		&& DL_LOAD(&g_ccl_function_map.ftruncate_fn, "ccl_ftruncate")
+		&& DL_LOAD(&g_ccl_function_map.pread_fn, "ccl_pread")
+		&& DL_LOAD(&g_ccl_function_map.pwrite_fn, "ccl_pwrite")
+		&& DL_LOAD(&g_ccl_function_map.open_fn, "ccl_open")
+		&& DL_LOAD(&g_ccl_function_map.close_fn, "ccl_close")
+		&& DL_LOAD(&g_ccl_function_map.get_any_io_responses_fn,
+			"get_any_io_responses")
+		&& DL_LOAD(&g_ccl_function_map.ipc_stats_logger_fn,
+			"ccl_ipc_stats_logger")
+		&& DL_LOAD(&g_ccl_function_map.update_stats_fn, "update_stats")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_entry_fn,
+			"ccl_sys_acl_get_entry")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_tag_type_fn,
+			"ccl_sys_acl_get_tag_type")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_permset_fn,
+			"ccl_sys_acl_get_permset")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_qualifier_fn,
+			"ccl_sys_acl_get_qualifier")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_file_fn,
+			"ccl_sys_acl_get_file")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_clear_perms_fn,
+			"ccl_sys_acl_clear_perms")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_add_perm_fn,
+			"ccl_sys_acl_add_perm")
+		&& DL_LOAD(
+		   &g_ccl_function_map.sys_acl_init_fn, "ccl_sys_acl_init")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_create_entry_fn,
+			"ccl_sys_acl_create_entry")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_set_tag_type_fn,
+			"ccl_sys_acl_set_tag_type")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_set_qualifier_fn,
+			"ccl_sys_acl_set_qualifier")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_set_permset_fn,
+			"ccl_sys_acl_set_permset")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_set_file_fn,
+			"ccl_sys_acl_set_file")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_delete_def_file_fn,
+			"ccl_sys_acl_delete_def_file")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_get_perm_fn,
+			"ccl_sys_acl_get_perm")
+		&& DL_LOAD(&g_ccl_function_map.sys_acl_free_acl_fn,
+			"ccl_sys_acl_free_acl")
+		&& DL_LOAD(&g_ccl_function_map.name_to_handle_fn,
+			"ccl_name_to_handle")
+		&& DL_LOAD(&g_ccl_function_map.handle_to_name_fn,
+			"ccl_handle_to_name")
+		&& DL_LOAD(&g_ccl_function_map.dynamic_fsinfo_fn,
+			"ccl_dynamic_fsinfo")
+		&& DL_LOAD(&g_ccl_function_map.readlink_fn, "ccl_readlink")
+		&& DL_LOAD(&g_ccl_function_map.symlink_fn, "ccl_symlink")
+		&& DL_LOAD(&g_ccl_function_map.update_handle_nfs_state_fn,
+			"ccl_update_handle_nfs_state")
+		&& DL_LOAD(&g_ccl_function_map.safe_update_handle_nfs_state_fn,
+			"ccl_safe_update_handle_nfs_state")
+		&& DL_LOAD(&g_ccl_function_map.fsal_try_stat_by_index_fn,
+			"ccl_fsal_try_stat_by_index")
+		&& DL_LOAD(&g_ccl_function_map.fsal_try_fastopen_by_index_fn,
+			"ccl_fsal_try_fastopen_by_index")
+		&& DL_LOAD(&g_ccl_function_map.find_oldest_handle_fn,
+			"ccl_find_oldest_handle")
+		&& DL_LOAD(&g_ccl_function_map.can_close_handle_fn,
+			"ccl_can_close_handle")
+		&& DL_LOAD(&g_ccl_function_map.up_mutex_lock_fn,
+			"ccl_up_mutex_lock")
+		&& DL_LOAD(&g_ccl_function_map.up_mutex_unlock_fn,
+			"ccl_up_mutex_unlock")
+		&& DL_LOAD(&g_ccl_function_map.log_fn, "ccl_log")
+		&& DL_LOAD(&g_fsal_fsi_handles, "g_fsi_handles")
+		&& DL_LOAD(&g_ccl_function_map.implicit_close_for_nfs_fn,
+			"ccl_implicit_close_for_nfs")
+		&& DL_LOAD(&g_ccl_function_map.update_cache_stat_fn,
+			"ccl_update_cache_stat")
+		&& DL_LOAD(&g_ccl_function_map.get_version_fn,
+			"ccl_get_version")
+		&& DL_LOAD(&g_ccl_function_map.check_version_fn,
+			"ccl_check_version")
+		&& DL_LOAD(&g_ccl_function_map.close_listener_fn,
+			"ccl_close_listener")
+		&& DL_LOAD(&g_ccl_function_map.ccl_lock_io_operation_mutex_fn,
+			"ccl_lock_io_operation_mutex")
+		&& DL_LOAD(&g_ccl_function_map.ccl_unlock_io_operation_mutex_fn,
+			"ccl_unlock_io_operation_mutex")
+		&& DL_LOAD(&g_ccl_function_map.ccl_lock_io_handle_mutex_fn,
+			"ccl_lock_io_handle_mutex")
+		&& DL_LOAD(&g_ccl_function_map.ccl_unlock_io_handle_mutex_fn,
+			"ccl_unlock_io_handle_mutex")
+		&& DL_LOAD(&g_ccl_function_map.ccl_lock_file_mutex_fn,
+			"ccl_lock_file_mutex")
+		&& DL_LOAD(&g_ccl_function_map.ccl_unlock_file_mutex_fn,
+			"ccl_unlock_file_mutex")
+		) {
+		LogInfo(COMPONENT_FSAL, "Functions loaded");
 	} else {
 		LogCrit(COMPONENT_FSAL, "Failed to load function: %s",
 			load_return);
@@ -617,7 +623,7 @@ fsal_status_t PTFSAL_terminate()
 
 	FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
 
-	// Set terminate flag to seop ptfsal threads.
+	/* Set terminate flag to seop ptfsal threads. */
 	ptfsal_terminate_ptfsal_threads();
 
 	pthread_attr_init(&attr_thr);
@@ -637,18 +643,22 @@ fsal_status_t PTFSAL_terminate()
 			    || (g_fsi_handles_fsal->m_handle[index].
 				m_nfs_state == NFS_OPEN)) {
 
-				// ignore error code, just trying to clean up while going down
-				// and want to continue trying to close out other open files
+				/*
+				 * ignore error code, just trying to clean
+				 * up while going down and want to continue
+				 * trying to close out other open files
+				 */
 				rc = pthread_create(&parallelCloseThreadMap
-						    [index].threadContext,
-						    &attr_thr,
-						    ptfsal_parallel_close_thread,
-						    &parallelCloseThreadMap
-						    [index].handleIdx);
+						   [index].threadContext,
+						   &attr_thr,
+						   ptfsal_parallel_close_thread,
+						   &parallelCloseThreadMap
+						   [index].handleIdx);
 
 				if (rc != 0) {
 					FSI_TRACE(FSI_ERR,
-						  "Failed to create parallel close thread for handle[%d] rc[%d]",
+						  "Failed to create parallel close"
+						  "thread for handle[%d] rc[%d]",
 						  index, rc);
 				} else {
 					FSI_TRACE(FSI_NOTICE,

@@ -18,9 +18,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* export.c
@@ -96,7 +96,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
-				      fsal_dynamicfsinfo_t * infop)
+				      fsal_dynamicfsinfo_t *infop)
 {
 	struct pt_fsal_export *myself;
 	struct statvfs buffstatpt;
@@ -236,7 +236,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota)
+			       fsal_quota_t *pquota)
 {
 	struct pt_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -270,7 +270,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval =
 	    quotactl(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -296,7 +296,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota, fsal_quota_t * presquota)
+			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct pt_fsal_export *myself;
 	struct dqblk fs_quota;
@@ -350,7 +350,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	}
 	retval =
 	    quotactl(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) & fs_quota);
+		     (caddr_t) &fs_quota);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -420,8 +420,6 @@ void pt_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-void pt_handle_ops_init(struct fsal_obj_ops *ops);
-
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_I64("pt_export_id", LLONG_MIN, LLONG_MAX, 1,
@@ -457,7 +455,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way... */
+	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way */
 	char fs_spec[MAXPATHLEN + 1];
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
@@ -531,8 +529,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 					 (export_path, p_mnt->mnt_dir,
 					  pathlen) == 0)
 					&& ((export_path[pathlen] == '/')
-					    || (export_path[pathlen] == '\0')))
-					{
+					|| (export_path[pathlen] == '\0'))) {
 					if (strcasecmp(p_mnt->mnt_type, "xfs")
 					    == 0) {
 						LogDebug(COMPONENT_FSAL,

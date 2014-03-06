@@ -1,12 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_fileop.c
-// Description: FSAL file operation implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_fileop.c
+ * Description: FSAL file operation implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -27,20 +29,12 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  * USA
  *
  * -------------
  */
 
-/**
- * \file    fsal_fileop.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/17 14:20:07 $
- * \version $Revision: 1.9 $
- * \brief   Files operations.
- *
- */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -50,7 +44,7 @@
 #include "fsal_convert.h"
 #include "pt_methods.h"
 
-// PTFSAL
+/* PTFSAL */
 #include "pt_ganesha.h"
 
 /**
@@ -88,7 +82,7 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 			  fsal_openflags_t openflags,	/* IN */
 			  int *file_desc,	/* OUT */
 			  struct attrlist *p_file_attributes	/* IN/OUT */
-    )
+			)
 {
 
 	int rc;
@@ -125,19 +119,19 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 
 	if (FSAL_IS_ERROR(status)) {
 		*file_desc = 0;
-		return (status);
+		return status;
 	}
 
 	/* output attributes */
 	if (p_file_attributes) {
 		p_file_attributes->mask = PT_SUPPORTED_ATTRIBUTES;
 		status =
-		    PTFSAL_getattrs(p_context->fsal_export, NULL /*p_context??? */ ,
+		    PTFSAL_getattrs(p_context->fsal_export, NULL,
 				    myself->handle, p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			*file_desc = 0;
 			PTFSAL_close(*file_desc);
-			return (status);
+			return status;
 		}
 	}
 
@@ -170,18 +164,19 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
-			  const struct req_op_context * opctx, uint64_t offset,	/* [IN] */
+fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *myself,	/* IN */
+			  const struct req_op_context *opctx,
+			  uint64_t offset,	/* [IN] */
 			  size_t buffer_size,	/* IN */
 			  caddr_t buffer,	/* OUT */
-			  size_t * p_read_amount,	/* OUT */
-			  bool * p_end_of_file	/* OUT */
-    )
+			  size_t *p_read_amount,	/* OUT */
+			  bool *p_end_of_file	/* OUT */
+			)
 {
 
 	ssize_t nb_read;
 	int errsv = 0;
-	int handle_index;	// FSI handle index
+	int handle_index;	/* FSI handle index */
 
 	FSI_TRACE(FSI_DEBUG, "Read Begin================================\n");
 
@@ -191,11 +186,10 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
 
 	*p_end_of_file = 0;
 
-	// get FSI location
+	/* get FSI location */
 	handle_index = myself->u.file.fd;
-	if (fsi_check_handle_index(handle_index) < 0) {
+	if (fsi_check_handle_index(handle_index) < 0)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
 	FSI_TRACE(FSI_DEBUG, "FSI - read from handle %d\n", handle_index);
 
 	/* read operation */
@@ -236,29 +230,29 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle * myself,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle * p_file_descriptor, const struct req_op_context * opctx, uint64_t offset,	/* IN */
+fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle *p_file_descriptor,
+			   const struct req_op_context *opctx,
+			   uint64_t offset,	/* IN */
 			   size_t buffer_size,	/* IN */
 			   caddr_t buffer,	/* IN */
-			   size_t * p_write_amount,	/* OUT */
-			   bool * fsal_stable)
+			   size_t *p_write_amount,	/* OUT */
+			   bool *fsal_stable)
 {				/* IN/OUT */
 
 	size_t nb_written;
 	size_t i_size;
 	int errsv = 0;
-	int handle_index;	// FSI handle index
+	int handle_index;	/* FSI handle index */
 
 	FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL write-----------------\n");
 
 	/* sanity checks. */
-	if (!buffer || !p_write_amount) {
+	if (!buffer || !p_write_amount)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
-	// get FSI location
+	/* get FSI location */
 	handle_index = p_file_descriptor->u.file.fd;
-	if (fsi_check_handle_index(handle_index) < 0) {
+	if (fsi_check_handle_index(handle_index) < 0)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
 	FSI_TRACE(FSI_DEBUG, "FSI - write to handle %d\n", handle_index);
 
   /** @todo: manage size_t to size_t convertion */
@@ -317,9 +311,11 @@ fsal_status_t PTFSAL_close(int p_file_descriptor)
 
 	FSI_TRACE(FSI_DEBUG, "FSI - Begin PTFSAL close---------------\n");
 
-	/* call to close */
-	// Change to NFS_CLOSE only if it is NFS_OPEN. The calling function will ignore 
-	// other nfs state.
+	/*
+	 * call to close
+	 * Change to NFS_CLOSE only if it is NFS_OPEN. The calling
+	 * function will ignore other nfs state.
+	 */
 	int state_rc =
 	    CCL_SAFE_UPDATE_HANDLE_NFS_STATE(p_file_descriptor, NFS_CLOSE,
 					     NFS_OPEN);
@@ -359,7 +355,7 @@ unsigned int PTFSAL_GetFileno(int pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle * p_file_descriptor,
+fsal_status_t PTFSAL_commit(struct pt_fsal_obj_handle *p_file_descriptor,
 			    const struct req_op_context *opctx,
 			    uint64_t offset, size_t length)
 {

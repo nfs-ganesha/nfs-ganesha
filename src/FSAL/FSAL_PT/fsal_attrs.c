@@ -1,26 +1,17 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_attrs.c
-// Description: FSAL attributes operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
+/** ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_attrs.c
+ * Description: FSAL attributes operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=4:tabstop=4:
  */
 
-/**
- *
- * \file    fsal_attrs.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/17 15:53:39 $
- * \version $Revision: 1.31 $
- * \brief   HPSS-FSAL type translation functions.
- *
- *
- */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -50,7 +41,7 @@ extern fsal_status_t ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t *
  */
 fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 			      const struct req_op_context *p_context,
-			      ptfsal_handle_t * p_filehandle,
+			      ptfsal_handle_t *p_filehandle,
 			      struct attrlist *p_object_attributes)
 {
 	fsal_status_t st;
@@ -76,9 +67,8 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 	if (err == ENOENT)
 		err = ESTALE;
 
-	if (err) {
+	if (err)
 		return fsalstat(posix2fsal_error(err), err);
-	}
 
 	/* convert attributes */
 
@@ -101,7 +91,7 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
  * PTFSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *
- * \param dir_hdl (input): 
+ * \param dir_hdl (input):
  *        The handle of the object to get parameters.
  * \param p_context (input):
  *        Authentication context for the operation (user,...).
@@ -121,10 +111,10 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
-			      const struct req_op_context * p_context,	/* IN */
-			      struct attrlist * p_attrib_set,	/* IN */
-			      struct attrlist * p_object_attributes)
+fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
+			      const struct req_op_context *p_context,	/* IN */
+			      struct attrlist *p_attrib_set,	/* IN */
+			      struct attrlist *p_object_attributes)
 {				/* IN/OUT */
 	fsal_status_t status;
 
@@ -143,9 +133,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 	/* sanity checks.
 	 * note : object_attributes is optional.
 	 */
-	if (!dir_hdl || !p_context || !p_attrib_set) {
+	if (!dir_hdl || !p_context || !p_attrib_set)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
 
 	myself = container_of(dir_hdl, struct pt_fsal_obj_handle, obj_handle);
 
@@ -187,17 +176,15 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 		status =
 		    fsal_internal_handle2fd(p_context, myself, &fd, O_RDONLY);
 
-		if (FSAL_IS_ERROR(status)) {
+		if (FSAL_IS_ERROR(status))
 			return status;
-		}
 
 		status =
 		    PTFSAL_truncate(p_context->fsal_export, myself, p_context,
 				    wanted_attrs.filesize, p_object_attributes);
 
-		if (FSAL_IS_ERROR(status)) {
+		if (FSAL_IS_ERROR(status))
 			return status;
-		}
 
 	}
 
@@ -267,20 +254,20 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 	if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER | ATTR_GROUP)) {
 
 		/* Fill wanted owner. */
-		if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER)) {
+		if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_OWNER))
 			buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
-		} else {
+		else
 			buffxstat.buffstat.st_uid = (int)current_attrs.owner;
-		}
+
 		FSI_TRACE(FSI_DEBUG, "current owner = %ld, new uid = %d",
 			  current_attrs.owner, buffxstat.buffstat.st_uid);
 
 		/* Fill wanted group. */
-		if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_GROUP)) {
+		if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_GROUP))
 			buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
-		} else {
+		else
 			buffxstat.buffstat.st_gid = (int)current_attrs.group;
-		}
+
 		FSI_TRACE(FSI_DEBUG, "current gid = %ld, new gid = %d",
 			  current_attrs.group, buffxstat.buffstat.st_gid);
 
@@ -381,7 +368,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle * dir_hdl,	/* IN */
 	if (p_object_attributes) {
 		status =
 		    PTFSAL_getattrs(p_context->fsal_export, p_context,
-		    		    myself->handle,
+				    myself->handle,
 				    p_object_attributes);
 
 		/* on error, we set a special bit in the mask. */

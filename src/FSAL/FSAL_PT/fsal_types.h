@@ -1,13 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_types.h
-// Description: FSAL common types declarations
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
-
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_types.h
+ * Description: FSAL common types declarations
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  *
  *
@@ -28,20 +29,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * ---------------------------------------
- */
-
-/**
- * \file    fsal_types.h
- * \author  $Author: leibovic $
- * \date    $Date: 2006/02/08 12:45:27 $
- * \version $Revision: 1.19 $
- * \brief   File System Abstraction Layer types and constants.
- *
- *
- *
  */
 
 #ifndef _FSAL_TYPES_SPECIFIC_H
@@ -106,13 +96,13 @@ typedef struct {
 
 /** Authentification context.    */
 
-static inline size_t pt_sizeof_handle(ptfsal_handle_t * fh)
+static inline size_t pt_sizeof_handle(ptfsal_handle_t *fh)
 {
 	return sizeof(ptfsal_handle_t);
 }
 
-/*                              
- * PT internal export     
+/*
+ * PT internal export
  */
 
 struct pt_fsal_export {
@@ -140,18 +130,19 @@ typedef union {
 
 typedef struct {
 	int fd;
-	const struct req_op_context *context;	/* credential for accessing the directory */
+	/* credential for accessing the directory */
+	const struct req_op_context *context;
 	char path[1024];
 	unsigned int dir_offset;
 	ptfsal_handle_t *handle;
 } ptfsal_dir_t;
 
 typedef struct {
-       int fd;
-       int ro;                 /* read only file ? */
-       uint64_t export_id;     // export id
-       uint64_t uid;           // user id of the connecting user
-       uint64_t gid;           // group id of the connecting user 
+	int fd;
+	int ro;                 /* read only file ? */
+	uint64_t export_id;     /*  export id */
+	uint64_t uid;           /* user id of the connecting user */
+	uint64_t gid;           /* group id of the connecting user */
 } ptfsal_file_t;
 
 /* A set of buffers to retrieve multiple attributes at the same time. */

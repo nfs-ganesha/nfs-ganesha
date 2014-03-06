@@ -1,12 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_internal.c
-// Description: FSAL internal operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_internal.c
+ * Description: FSAL internal operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -27,22 +29,12 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  * USA
  *
  * -------------
  */
 
-/**
- *
- * \file    fsal_internal.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/17 14:20:07 $
- * \version $Revision: 1.24 $
- * \brief   Defines the datas that are to be
- *          accessed as extern by the fsal modules
- *
- */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -69,9 +61,10 @@ uint32_t CredentialLifetime = 3600;
  */
 struct fsal_staticfsinfo_t global_fs_info;
 
-static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context *p_context,	/* IN */
-						     fsal_accessflags_t access_type,	/* IN */
-						     struct attrlist *p_object_attributes);	/* IN */
+static fsal_status_t fsal_internal_testAccess_no_acl(
+		const struct req_op_context *p_context,	/* IN */
+		fsal_accessflags_t access_type,	/* IN */
+		struct attrlist *p_object_attributes);	/* IN */
 
 /**
  * fsal_internal_handle2fd:
@@ -122,7 +115,7 @@ fsal_status_t fsal_internal_handle2fd(const struct req_op_context *p_context,
  */
 fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 					 p_context,
-					 struct pt_fsal_obj_handle * myself,
+					 struct pt_fsal_obj_handle *myself,
 					 int *pfd, int oflags)
 {
 	int open_rc = 0;
@@ -144,9 +137,8 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 			  "FSI - handle2fdat - opening regular file\n");
 		open_rc =
 		    ptfsal_open_by_handle(p_context, myself, oflags, 0777);
-		if (open_rc < 0) {
+		if (open_rc < 0)
 			err = errno;
-		}
 	} else {
 		stat_rc =
 		    fsi_get_name_from_handle(p_context,
@@ -162,21 +154,18 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 		open_rc =
 		    ptfsal_opendir(p_context, p_context->fsal_export,
 				   fsi_name, NULL, 0);
-		if (open_rc < 0) {
+		if (open_rc < 0)
 			err = errno;
-		}
 	}
 
 	FSI_TRACE(FSI_DEBUG, "File Descriptor = %d\n", open_rc);
 	if (err == ENOENT)
 		err = ESTALE;
-	if (err != 0) {
+	if (err != 0)
 		errno = err;
-	}
 
-	if (open_rc < 0) {
+	if (open_rc < 0)
 		return fsalstat(posix2fsal_error(err), err);
-	}
 
 	*pfd = open_rc;
 
@@ -196,8 +185,10 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_get_handle(const struct req_op_context * p_context, struct fsal_export * export, const char *p_fsalpath,	/* IN */
-				       ptfsal_handle_t * p_handle)
+fsal_status_t fsal_internal_get_handle(const struct req_op_context *p_context,
+				       struct fsal_export *export,
+				       const char *p_fsalpath,	/* IN */
+				       ptfsal_handle_t *p_handle)
 {				/* OUT */
 	int rc;
 	fsi_stat_struct buffstat;
@@ -212,9 +203,8 @@ fsal_status_t fsal_internal_get_handle(const struct req_op_context * p_context, 
 	rc = ptfsal_stat_by_name(p_context, export, p_fsalpath, &buffstat);
 
 	FSI_TRACE(FSI_DEBUG, "Stat call return %d", rc);
-	if (rc) {
+	if (rc)
 		return fsalstat(ERR_FSAL_NOENT, errno);
-	}
 	memset(p_handle, 0, sizeof(ptfsal_handle_t));
 	memcpy(p_handle->data.handle.f_handle,
 	       &buffstat.st_persistentHandle.handle,
@@ -246,14 +236,17 @@ fsal_status_t fsal_internal_get_handle(const struct req_op_context * p_context, 
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_get_handle_at(const struct req_op_context * p_context, struct fsal_export * export, int dfd, const char *p_fsalname,	/* IN */
-					  ptfsal_handle_t * p_handle)
+fsal_status_t
+fsal_internal_get_handle_at(const struct req_op_context *p_context,
+					  struct fsal_export *export,
+					  int dfd, const char *p_fsalname,
+					  ptfsal_handle_t *p_handle)
 {				/* OUT */
 	fsi_stat_struct buffstat;
 	int stat_rc;
 	char fsal_path[PATH_MAX];
 
-	FSI_TRACE(FSI_DEBUG, "FSI - get_handle_at for %s \n", p_fsalname);
+	FSI_TRACE(FSI_DEBUG, "FSI - get_handle_at for %s\n", p_fsalname);
 
 	if (!p_handle)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -300,7 +293,7 @@ fsal_status_t fsal_internal_get_handle_at(const struct req_op_context * p_contex
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_fd2handle(int fd, ptfsal_handle_t * p_handle)
+fsal_status_t fsal_internal_fd2handle(int fd, ptfsal_handle_t *p_handle)
 {
 
 	FSI_TRACE(FSI_DEBUG, "FSI - fd2handle\n");
@@ -318,9 +311,9 @@ fsal_status_t fsal_internal_fd2handle(int fd, ptfsal_handle_t * p_handle)
  *
  * \return status of operation
  */
-fsal_status_t fsal_readlink_by_handle(const struct req_op_context * p_context,
-				      struct fsal_export * export,
-				      ptfsal_handle_t * p_handle, char *__buf,
+fsal_status_t fsal_readlink_by_handle(const struct req_op_context *p_context,
+				      struct fsal_export *export,
+				      ptfsal_handle_t *p_handle, char *__buf,
 				      size_t maxlen)
 {
 	int rc;
@@ -338,10 +331,10 @@ fsal_status_t fsal_readlink_by_handle(const struct req_op_context * p_context,
 }
 
 /* Check the access by using NFS4 ACL if it exists. Otherwise, use mode. */
-fsal_status_t fsal_internal_testAccess(const struct req_op_context * p_context,	/* IN */
+fsal_status_t fsal_internal_testAccess(const struct req_op_context *p_context,
 				       fsal_accessflags_t access_type,	/* IN */
 				       struct attrlist *
-				       p_object_attributes /* IN */ )
+				       p_object_attributes/* IN */)
 {
 	if (!p_object_attributes)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -360,17 +353,17 @@ fsal_status_t fsal_internal_testAccess(const struct req_op_context * p_context,	
 	return fsalstat(ERR_FSAL_ACCESS, 0);
 }
 
-/* Check the access at the file system. It is called when Use_Test_Access 
- * = 0. 
+/* Check the access at the file system. It is called when Use_Test_Access
+ * = 0.
  */
 fsal_status_t fsal_internal_access(int mntfd,	/* IN */
-				   const struct req_op_context * p_context,	/* IN */
-				   ptfsal_handle_t * p_handle,	/* IN */
+				   const struct req_op_context *p_context,
+				   ptfsal_handle_t *p_handle,	/* IN */
 				   fsal_accessflags_t access_type,	/* IN */
-				   struct attrlist * p_object_attributes)
+				   struct attrlist *p_object_attributes)
 {				/* IN */
 	fsal_status_t status;
-/* 	mode_t mode = 0; */
+/*	mode_t mode = 0; */
 
 	FSI_TRACE(FSI_DEBUG, "FSI - access\n");
 
@@ -378,8 +371,8 @@ fsal_status_t fsal_internal_access(int mntfd,	/* IN */
 	if (!p_context || !p_handle)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-/* 	if (IS_FSAL_MODE_MASK_VALID(access_type)) */
-/* 		mode = FSAL_MODE_MASK(access_type); */
+/*	if (IS_FSAL_MODE_MASK_VALID(access_type)) */
+/*		mode = FSAL_MODE_MASK(access_type); */
 
 	status =
 	    fsal_internal_testAccess(p_context, access_type,
@@ -391,8 +384,8 @@ fsal_status_t fsal_internal_access(int mntfd,	/* IN */
 /* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
-				       struct pt_file_handle * p_handle,
-				       ptfsal_xstat_t * p_buffxstat)
+				       struct pt_file_handle *p_handle,
+				       ptfsal_xstat_t *p_buffxstat)
 {
 
 	FSI_TRACE(FSI_DEBUG, "FSI - get_xstat_by_handle\n");
@@ -402,17 +395,17 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 
 	memset(p_buffxstat, 0, sizeof(ptfsal_xstat_t));
 
-	// figure out what to return
+	/* figure out what to return */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,
-				       const struct req_op_context * p_context,
-				       struct pt_file_handle * p_handle,
+				       const struct req_op_context *p_context,
+				       struct pt_file_handle *p_handle,
 				       int attr_valid, int attr_changed,
-				       ptfsal_xstat_t * p_buffxstat)
+				       ptfsal_xstat_t *p_buffxstat)
 {
 	FSI_TRACE(FSI_DEBUG, "FSI - set_xstat_by_handle\n");
 
@@ -422,10 +415,11 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t fsal_internal_testAccess_no_acl(const struct req_op_context *p_context,	/* IN */
-						     fsal_accessflags_t access_type,	/* IN */
-						     struct attrlist
-						     *p_object_attributes)
+static fsal_status_t
+fsal_internal_testAccess_no_acl(const struct req_op_context *p_context,
+				fsal_accessflags_t access_type,	/* IN */
+				struct attrlist
+				*p_object_attributes)
 {				/* IN */
 	fsal_accessflags_t missing_access;
 	unsigned int is_grp, i;
@@ -586,7 +580,7 @@ bool_t fsal_error_is_info(fsal_status_t status)
  *  \param status(input): The fsal status whom event is to be tested.
  *  \return - TRUE if the error event is to be posted.
  *          - FALSE if the error event is NOT to be posted.
- *            
+ *
  */
 bool_t fsal_error_is_event(fsal_status_t status)
 {
