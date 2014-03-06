@@ -3322,7 +3322,6 @@ resub_all_nlm_blocked()
                         (void) nlm_granted_callback(pentry, found_entry,
                             &state_status);
                         LogEntry("Lock successfully acquired", found_entry);
-                        remove_from_locklist(found_entry);
                         break;
 
                 case STATE_LOCK_BLOCKED:
