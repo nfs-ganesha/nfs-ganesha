@@ -56,16 +56,6 @@ int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
 	char *aname_str = NULL;
 	u32 *n_aname = NULL;
 
-	uint64_t fileid;
-
-	u32 err = 0;
-
-	struct _9p_fid *pfid = NULL;
-
-	struct gsh_export *exp;
-	exportlist_t *export = NULL;
-	cache_inode_status_t cache_status;
-	char exppath[MAXPATHLEN];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
