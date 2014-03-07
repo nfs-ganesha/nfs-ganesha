@@ -10,6 +10,7 @@ SET(sal_STAT_SRCS
    state_share.c
    state_misc.c
    state_layout.c
+   state_deleg.c
    nfs4_clientid.c
    nfs4_state.c
    nfs4_state_id.c
