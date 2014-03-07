@@ -47,6 +47,7 @@ enum config_type {
 	CONFIG_INT64,
 	CONFIG_UINT64,
 	CONFIG_FSID,
+	CONFIG_ANONID,
 	CONFIG_STRING,
 	CONFIG_PATH,
 	CONFIG_LIST,
@@ -214,6 +215,11 @@ struct config_item {
 			uint32_t bit;
 			size_t set_off;
 		} fsid;
+		struct { /* CONFIG_ANONID */
+			uint32_t def;
+			uint32_t bit;
+			size_t set_off;
+		} anonid;
 		struct { /* CONFIG_LIST | CONFIG_ENUM |
 			    CONFIG_LIST_BITS | CONFIG_ENUM_BITS */
 			uint32_t def;
@@ -327,6 +333,14 @@ struct config_item {
 	  .u.fsid.def_min = _def_min_,		    \
 	  .u.fsid.bit = _bit_,		   	    \
 	  .u.fsid.set_off = offsetof(struct _struct_, _set_),   \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+#define CONF_ITEM_ANONID(_name_, _def_, _struct_, _mem_, _bit_, _set_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_ANONID,		    \
+	  .u.anonid.def = _def_,		    \
+	  .u.anonid.bit = _bit_,		    \
+	  .u.anonid.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 #define CONF_ITEM_BLOCK(_name_, _params_, _init_, _commit_, _struct_, _mem_) \

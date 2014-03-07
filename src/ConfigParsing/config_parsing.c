@@ -182,6 +182,37 @@ static bool convert_uint(struct config_node *node,
 	return true;
 }
 
+static bool convert_anonid(struct config_node *node,
+			   uint64_t *id)
+{
+	int64_t val;
+	char *endptr;
+
+	errno = 0;
+	val = strtoll(node->u.varvalue, &endptr, 10);
+	if (*node->u.varvalue != '\0' && *endptr == '\0') {
+		if (errno != 0 || val < INT32_MIN || val > UINT32_MAX) {
+			LogMajor(COMPONENT_CONFIG,
+				 "At (%s:%d): %s (%s) is out of range",
+				 node->filename,
+				 node->linenumber,
+				 node->name,
+				 node->u.varvalue);
+			return false;
+		}
+	} else {
+		LogMajor(COMPONENT_CONFIG,
+			 "At (%s:%d): %s (%s) is not an integer",
+			 node->filename,
+			 node->linenumber,
+			 node->name,
+			 node->u.varvalue);
+		return false;
+	}
+	*id = val;
+	return true;
+}
+
 /**
  * @brief convert an fsid which is a "<64bit num>.<64bit num"
  */
@@ -430,6 +461,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_UINT64";
 	case CONFIG_FSID:
 		return "CONFIG_FSID";
+	case CONFIG_ANONID:
+		return "CONFIG_ANONID";
 	case CONFIG_STRING:
 		return "CONFIG_STRING";
 	case CONFIG_PATH:
@@ -493,6 +526,9 @@ static int do_block_init(struct config_item *params,
 			break;
 		case CONFIG_UINT64:
 			*(uint64_t *)param_addr = item->u.ui64.def;
+			break;
+		case CONFIG_ANONID:
+			*(uint32_t *)param_addr = item->u.anonid.def;
 			break;
 		case CONFIG_FSID:
 			((struct fsal_fsid__ *)param_addr)->major
@@ -732,6 +768,20 @@ static int do_block_load(struct config_node *blk,
 					}
 				} else
 					errors += rc;
+				break;
+			case CONFIG_ANONID:
+				rc = convert_anonid(node, &uval);
+				if (rc != 0) {
+					caddr_t *mask_addr;
+					mask_addr = (caddr_t *)
+						((uint64_t)param_struct
+						+ item->u.anonid.set_off);
+					*(uint32_t *)mask_addr
+						|= item->u.anonid.bit;
+					*(uint32_t *)param_addr
+						= (uint32_t)uval;
+				} else
+					errors++;
 				break;
 			case CONFIG_STRING:
 				if (*(char **)param_addr != NULL)
