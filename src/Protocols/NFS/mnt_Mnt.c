@@ -69,12 +69,19 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	char dumpfh[1024];
 	export_perms_t export_perms;
 	int retval = NFS_REQ_OK;
+	nfs_fh3 *fh3 = (nfs_fh3 *) &res->res_mnt3.mountres3_u.mountinfo.fhandle;
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "REQUEST PROCESSING: Calling mnt_Mnt path=%s", arg->arg_mnt);
 
 	/* Paranoid command to clean the result struct. */
 	memset(res, 0, sizeof(nfs_res_t));
+
+	/* Quick escape if an unsupported MOUNT version */
+	if (req->rq_vers != MOUNT_V3) {
+		res->res_mnt1.status = NFSERR_ACCES;
+		goto out;
+	}
 
 	if (arg->arg_mnt == NULL) {
 		LogCrit(COMPONENT_NFSPROTO,
@@ -83,14 +90,12 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		goto out;
 	}
 
-	/* If the path ends with a '/', get rid if it should it be a while()??
-	 */
+	/* If the path ends with a '/', get rid of it */
+	/** @todo: should it be a while()?? */
 	if (arg->arg_mnt[strlen(arg->arg_mnt) - 1] == '/')
 		arg->arg_mnt[strlen(arg->arg_mnt) - 1] = '\0';
 
-	/*
-	 * Find the export for the dirname (using as well Path or Tag )
-	 */
+	/*  Find the export for the dirname (using as well Path or Tag) */
 	if (arg->arg_mnt[0] == '/')
 		exp = get_gsh_export_by_path(arg->arg_mnt, false);
 	else
@@ -103,38 +108,19 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 		/* entry not found. */
 		/* @todo : not MNT3ERR_NOENT => ok */
-		switch (req->rq_vers) {
-		case MOUNT_V1:
-			res->res_mnt1.status = NFSERR_ACCES;
-			break;
-
-		case MOUNT_V3:
-			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
-			break;
-		}
+		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
+
 	p_current_item = &exp->export;
+
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
 	nfs_export_check_access(req_ctx->caller_addr, p_current_item,
 				&export_perms);
 
-	switch (req->rq_vers) {
-	case MOUNT_V1:
-		if ((export_perms.options & EXPORT_OPTION_NFSV2) != 0)
-			break;
-		LogInfo(COMPONENT_NFSPROTO,
-			"MOUNT: Export entry %s does not support NFS v2 for client %s",
-			p_current_item->fullpath,
-			req_ctx->client->hostaddr_str);
-		res->res_mnt1.status = NFSERR_ACCES;
-		goto out;
-
-	case MOUNT_V3:
-		if ((export_perms.options & EXPORT_OPTION_NFSV3) != 0)
-			break;
+	if ((export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			p_current_item->fullpath,
@@ -143,11 +129,9 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		goto out;
 	}
 
-	/*
-	 * retrieve the associated NFS handle
-	 */
-	if (arg->arg_mnt[0] != '/'
-	    || !strcmp(arg->arg_mnt, p_current_item->fullpath)) {
+	/* retrieve the associated NFS handle */
+	if (arg->arg_mnt[0] != '/' || !strcmp(arg->arg_mnt,
+					      p_current_item->fullpath)) {
 		PTHREAD_RWLOCK_rdlock(&exp->lock);
 		if (p_current_item->exp_root_cache_inode != NULL) {
 			pfsal_handle =
@@ -155,76 +139,39 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 			PTHREAD_RWLOCK_unlock(&exp->lock);
 		} else {
 			PTHREAD_RWLOCK_unlock(&exp->lock);
-
-			switch (req->rq_vers) {
-			case MOUNT_V1:
-				res->res_mnt1.status = NFSERR_ACCES;
-				break;
-
-			case MOUNT_V3:
-				res->res_mnt3.fhs_status = MNT3ERR_ACCES;
-				break;
-			}
-
+			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
 	} else {
 		exp_hdl = p_current_item->export_hdl;
 		LogEvent(COMPONENT_NFSPROTO,
 			 "MOUNT: Performance warning: Export entry is not cached");
-		if (FSAL_IS_ERROR
-		    (exp_hdl->ops->
-		     lookup_path(exp_hdl, req_ctx, arg->arg_mnt,
-				 &pfsal_handle))) {
-			switch (req->rq_vers) {
-			case MOUNT_V1:
-				res->res_mnt1.status = NFSERR_ACCES;
-				break;
 
-			case MOUNT_V3:
-				res->res_mnt3.fhs_status = MNT3ERR_ACCES;
-				break;
-			}
+		if (FSAL_IS_ERROR(exp_hdl->ops->lookup_path(exp_hdl, req_ctx,
+							    arg->arg_mnt,
+							    &pfsal_handle))) {
+			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 
 		release_handle = true;
 		}
 	}
+
 	/* convert the fsal_handle to a file handle */
-	switch (req->rq_vers) {
-	case MOUNT_V1:
-		if (!nfs2_FSALToFhandle(&res->res_mnt1.fhstatus2_u.directory,
-					pfsal_handle, exp)) {
-			res->res_mnt1.status = NFSERR_IO;
+	/** @todo:
+	 * The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
+	 * redefine and eliminate one or the other.
+	 */
+	res->res_mnt3.fhs_status = nfs3_AllocateFH(fh3);
+
+	if (res->res_mnt3.fhs_status == MNT3_OK) {
+		if (!nfs3_FSALToFhandle(fh3, pfsal_handle, exp)) {
+			res->res_mnt3.fhs_status = MNT3ERR_INVAL;
 		} else {
-			res->res_mnt1.status = NFS_OK;
+			if (isDebug(COMPONENT_NFSPROTO))
+				sprint_fhandle3(dumpfh, fh3);
+			res->res_mnt3.fhs_status = MNT3_OK;
 		}
-		break;
-
-	case MOUNT_V3:
-		/** @todo:
-		 * The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
-		 * redefine and eliminate one or the other.
-		 */
-		res->res_mnt3.fhs_status = nfs3_AllocateFH((nfs_fh3 *)
-			&res->res_mnt3.mountres3_u.mountinfo.fhandle);
-		if (res->res_mnt3.fhs_status == MNT3_OK) {
-			if (!nfs3_FSALToFhandle
-			    ((nfs_fh3 *) &
-			     (res->res_mnt3.mountres3_u.mountinfo.fhandle),
-			     pfsal_handle, exp)) {
-				res->res_mnt3.fhs_status = MNT3ERR_INVAL;
-			} else {
-				if (isDebug(COMPONENT_NFSPROTO))
-					sprint_fhandle3(
-					    dumpfh,
-					    (nfs_fh3 *) &res->res_mnt3.
-						mountres3_u.mountinfo.fhandle);
-				res->res_mnt3.fhs_status = MNT3_OK;
-			}
-		}
-
-		break;
 	}
 
 	if (release_handle)
@@ -233,46 +180,40 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	/* Return the supported authentication flavor in V3 based
 	 * on the client's export permissions.
 	 */
-	if (req->rq_vers == MOUNT_V3) {
-		if (export_perms.options & EXPORT_OPTION_AUTH_NONE)
-			auth_flavor[index_auth++] = AUTH_NONE;
-		if (export_perms.options & EXPORT_OPTION_AUTH_UNIX)
-			auth_flavor[index_auth++] = AUTH_UNIX;
+	if (export_perms.options & EXPORT_OPTION_AUTH_NONE)
+		auth_flavor[index_auth++] = AUTH_NONE;
+	if (export_perms.options & EXPORT_OPTION_AUTH_UNIX)
+		auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
-		if (nfs_param.krb5_param.active_krb5 == TRUE) {
-			if (export_perms.
-			    options & EXPORT_OPTION_RPCSEC_GSS_NONE)
-				auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-			if (export_perms.
-			    options & EXPORT_OPTION_RPCSEC_GSS_INTG)
-				auth_flavor[index_auth++] =
-				    MNT_RPC_GSS_INTEGRITY;
-			if (export_perms.
-			    options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
-				auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
-		}
+	if (nfs_param.krb5_param.active_krb5 == TRUE) {
+		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
+		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
+		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
+	}
 #endif
 
-		LogDebug(COMPONENT_NFSPROTO,
-			 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
-			 index_auth, dumpfh, req_ctx->client->hostaddr_str);
+	LogDebug(COMPONENT_NFSPROTO,
+		 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
+		 index_auth, dumpfh, req_ctx->client->hostaddr_str);
 
-		mountres3_ok * const RES_MOUNTINFO =
-		    &res->res_mnt3.mountres3_u.mountinfo;
+	mountres3_ok * const RES_MOUNTINFO =
+	    &res->res_mnt3.mountres3_u.mountinfo;
 
-		RES_MOUNTINFO->auth_flavors.auth_flavors_val =
-			gsh_calloc(index_auth, sizeof(int));
+	RES_MOUNTINFO->auth_flavors.auth_flavors_val =
+		gsh_calloc(index_auth, sizeof(int));
 
-		if (RES_MOUNTINFO->auth_flavors.auth_flavors_val == NULL)
-			return NFS_REQ_DROP;
-
-		RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
-		for (i = 0; i < index_auth; i++)
-			RES_MOUNTINFO->auth_flavors.auth_flavors_val[i] =
-			    auth_flavor[i];
+	if (RES_MOUNTINFO->auth_flavors.auth_flavors_val == NULL) {
+		retval = NFS_REQ_DROP;
+		goto out;
 	}
 
-	/* Ganesha does not support the mount list so ignore this part */
+	RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
+	for (i = 0; i < index_auth; i++)
+		RES_MOUNTINFO->auth_flavors.auth_flavors_val[i] =
+		    auth_flavor[i];
 
  out:
 	if (exp != NULL)
