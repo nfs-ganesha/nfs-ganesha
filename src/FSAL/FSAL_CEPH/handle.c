@@ -901,7 +901,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
 
 	switch (output_type) {
 		/* Digested Handles */
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < sizeof(handle->vi)) {

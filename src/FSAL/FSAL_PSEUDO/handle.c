@@ -716,7 +716,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 			      obj_handle);
 
 	switch (output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < V4_FH_OPAQUE_SIZE) {

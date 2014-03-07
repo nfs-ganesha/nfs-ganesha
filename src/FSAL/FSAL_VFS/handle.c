@@ -1272,7 +1272,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 	fh_size = vfs_file_handle_size(fh);
 
 	switch (output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < fh_size)

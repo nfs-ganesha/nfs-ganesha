@@ -178,7 +178,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 {
 	switch (in_type) {
 		/* Digested Handles */
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */

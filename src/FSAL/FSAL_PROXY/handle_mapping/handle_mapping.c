@@ -30,7 +30,7 @@
  *
  * \brief  This module is used for managing a persistent
  *         map between PROXY FSAL handles (including NFSv4 handles from server)
- *         and nfsv2 and v3 handles digests (sent to client).
+ *         and nfsv3 handles digests (sent to client).
  */
 #include "config.h"
 #include "fsal.h"
@@ -299,9 +299,9 @@ int HandleMap_Init(const handle_map_param_t *p_param)
 }
 
 /**
- * @brief Retrieves a full fsal_handle from a NFS2/3 digest.
+ * @brief Retrieves a full fsal_handle from a NFS3 digest.
  *
- * @param[in]  nfs23_digest The NFS2/3 handle digest
+ * @param[in]  nfs23_digest The NFS3 handle digest
  * @param[out] fsal_handle  The fsal handle to be retrieved
  *
  * @note The caller must provide storage for nfs_fh4_val.

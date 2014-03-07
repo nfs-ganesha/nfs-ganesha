@@ -1424,7 +1424,6 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 	objhandle = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	switch (output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		fh_size = GLAPI_HANDLE_LENGTH;

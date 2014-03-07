@@ -30,7 +30,7 @@
  *
  * @brief  This module is used for managing a persistent
  *         map between PROXY FSAL handles (including NFSv4 handles from server)
- *         and nfsv2 and v3 handles digests (sent to client).
+ *         and nfsv3 handles digests (sent to client).
  */
 #ifndef _HANDLE_MAPPING_H
 #define _HANDLE_MAPPING_H
@@ -56,7 +56,7 @@ typedef struct handle_map_param__ {
 
 } handle_map_param_t;
 
-/* this describes a handle digest for nfsv2 and nfsv3 */
+/* this describes a handle digest for nfsv3 */
 
 #define PXY_HANDLE_MAPPED 0x23
 

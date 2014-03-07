@@ -253,14 +253,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	fh_min = 1;
 
-	if (in_type == FSAL_DIGEST_NFSV2) {
-		if (fh_desc->len < fh_min) {
-			LogMajor(COMPONENT_FSAL,
-				 "V2 size too small for handle.  should be >= %lu, got %lu",
-				 fh_min, fh_desc->len);
-			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-		}
-	} else if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
+	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be >= %lu, got %lu",
 			 fh_min, fh_desc->len);

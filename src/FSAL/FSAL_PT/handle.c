@@ -622,7 +622,6 @@ fsal_status_t handle_digest(const struct fsal_obj_handle * obj_hdl,
 	fh = myself->handle;
 
 	switch (output_type) {
-	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 		fh_size = pt_sizeof_handle(fh);
 		if (fh_desc->len < fh_size)
