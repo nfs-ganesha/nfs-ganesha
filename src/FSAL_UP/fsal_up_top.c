@@ -1208,7 +1208,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 	return call->states;
 };
 
-state_status_t delegrecall(cache_entry_t *entry)
+state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 {
 	struct glist_head *glist, *glist_n;
 	state_lock_entry_t *found_entry = NULL;
@@ -1220,7 +1220,8 @@ state_status_t delegrecall(cache_entry_t *entry)
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
 		 entry, entry->type);
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	if (!rwlocked)
+	  PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
@@ -1261,9 +1262,11 @@ state_status_t delegrecall(cache_entry_t *entry)
 			break;
 		}
 	}
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_put(entry);
+	if (!rwlocked)
+	  PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	/* cache_inode_put(entry); why are we doing this? */
 
 	return rc;
 }
@@ -1289,7 +1292,7 @@ state_status_t delegrecall_upcall(struct fsal_module *fsal,
 		 * in cache in a cluster. */
 		return rc;
 	}
-	return delegrecall(entry);
+	return delegrecall(entry, false);
 }
 
 

@@ -71,7 +71,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	state_owner_t *plock_owner;
 	fsal_lock_param_t lock_desc;
 	unsigned int rc = 0;
-	struct glist_head *glist;
+	struct glist_head *glist, *glistn;
 	cache_entry_t *pentry = NULL;
 	state_lock_entry_t *found_entry = NULL;
 	const char *tag = "DELEGRETURN";
@@ -133,7 +133,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_RWLOCK_wrlock(&pentry->state_lock);
 
-	glist_for_each(glist, &pentry->object.file.lock_list) {
+	glist_for_each_safe(glist, glistn, &pentry->object.file.deleg_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		if (found_entry != NULL) {
@@ -195,6 +195,11 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		return res_DELEGRETURN4->status;
 	}
+
+	/* Remove state entry and update stats */
+	deleg_heuristics_recall(data->current_entry,
+				pstate_found->state_data.deleg.clfile_stats.clientid);
+	state_del(pstate_found, data->current_entry);
 
 	/* Successful exit */
 	res_DELEGRETURN4->status = NFS4_OK;
