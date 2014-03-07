@@ -50,14 +50,6 @@
 #include "nfs_file_handle.h"
 #include "sal_data.h"
 
-/* type flag into mode field */
-#define NFS2_MODE_NFDIR 0040000
-#define NFS2_MODE_NFCHR 0020000
-#define NFS2_MODE_NFBLK 0060000
-#define NFS2_MODE_NFREG 0100000
-#define NFS2_MODE_NFLNK 0120000
-#define NFS2_MODE_NFNON 0140000
-
 /**
  *
  * Attribute bitmap decoders

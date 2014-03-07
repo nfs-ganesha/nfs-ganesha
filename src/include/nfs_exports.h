@@ -229,7 +229,6 @@ typedef struct exportlist {
 				       EXPORT_OPTION_RPCSEC_GSS_PRIV)
 
 /* Protocol flags */
-#define EXPORT_OPTION_NFSV2 0x00100000	/*< NFSv2 operations are supported */
 #define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */
 #define EXPORT_OPTION_NFSV4 0x00200000	/*< NFSv4 operations are supported */
 #define EXPORT_OPTION_9P 0x00400000	/*< 9P operations are supported */

@@ -59,8 +59,6 @@
 typedef struct cache_entry_t cache_entry_t;
 struct gsh_export;
 
-/** Maximum size of NFSv2 handle */
-static const size_t FILEHANDLE_MAX_LEN_V2 = 32;
 /** Maximum size of NFSv3 handle */
 static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
 /** Maximum size of NFSv4 handle */
