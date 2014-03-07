@@ -86,8 +86,14 @@ typedef struct export_perms__ {
 	gid_t anonymous_gid;	/* root gid when no root access is available
 				 * gid when access is available but all users
 				 * are being squashed. */
-	unsigned int options;	/* avail. mnt options */
+	uint32_t options;	/* avail. mnt options */
+	uint32_t set;		/* Options that have been set */
 } export_perms_t;
+
+struct global_export_perms {
+	struct export_perms__ def;
+	struct export_perms__ conf;
+};
 
 #define GSS_DEFINE_LEN_TEMP 255
 
@@ -174,16 +180,20 @@ typedef struct exportlist {
 #define EXPORT_OPTION_SQUASH_TYPES (EXPORT_OPTION_ROOT | \
 				    EXPORT_OPTION_ALL_ANONYMOUS) /*< All squash
 								   types */
+#define EXPORT_OPTION_ANON_UID_SET 0x00000004	/*< Indicates Anon_uid was set
+						 */
+#define EXPORT_OPTION_ANON_GID_SET 0x00000008	/*< Indicates Anon_gid was set
+						 */
 #define EXPORT_OPTION_READ_ACCESS 0x00000010	/*< R_Access= option specified
 						 */
 #define EXPORT_OPTION_WRITE_ACCESS 0x00000020	/*< RW_Access= option specified
 						 */
 #define EXPORT_OPTION_RW_ACCESS       (EXPORT_OPTION_READ_ACCESS     | \
 				       EXPORT_OPTION_WRITE_ACCESS)
-#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000040 /*< MDONLY_Access= option
-						     specified */
-#define EXPORT_OPTION_MD_READ_ACCESS 0x00000080	/*< MDONLY_RO_Access= option
+#define EXPORT_OPTION_MD_READ_ACCESS 0x00000040	/*< MDONLY_RO_Access= option
 						    specified */
+#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000080 /*< MDONLY_Access= option
+						     specified */
 #define EXPORT_OPTION_MD_ACCESS       (EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS)
 #define EXPORT_OPTION_MODIFY_ACCESS   (EXPORT_OPTION_WRITE_ACCESS | \
@@ -192,6 +202,8 @@ typedef struct exportlist {
 				       EXPORT_OPTION_WRITE_ACCESS    | \
 				       EXPORT_OPTION_MD_WRITE_ACCESS | \
 				       EXPORT_OPTION_MD_READ_ACCESS)
+
+#define EXPORT_OPTION_NO_ACCESS 0	/*< Access_Type = None */
 
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00000100	/*< Clients use only
 							   privileged port */
@@ -218,23 +230,24 @@ typedef struct exportlist {
 
 /* Protocol flags */
 #define EXPORT_OPTION_NFSV2 0x00100000	/*< NFSv2 operations are supported */
-#define EXPORT_OPTION_NFSV3 0x00200000	/*< NFSv3 operations are supported */
-#define EXPORT_OPTION_NFSV4 0x00400000	/*< NFSv4 operations are supported */
-#define EXPORT_OPTION_UDP 0x01000000	/*< UDP protocol is supported */
-#define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
-#define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV2	     | \
-				       EXPORT_OPTION_NFSV3	     | \
+#define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */
+#define EXPORT_OPTION_NFSV4 0x00200000	/*< NFSv4 operations are supported */
+#define EXPORT_OPTION_UDP 0x00400000	/*< UDP protocol is supported */
+#define EXPORT_OPTION_TCP 0x00800000	/*< TCP protocol is supported */
+#define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
 				       EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_TRANSPORTS      (EXPORT_OPTION_UDP	     | \
 				       EXPORT_OPTION_TCP)
 
-/* Maximum offset set for R/W */
-#define EXPORT_OPTION_USE_UQUOTA 0x10000000	/*< Using user quota for this
-						    export */
-#define EXPORT_OPTION_USE_DELEG  0x20000000	/*< Using delegations for this
-						    export */
+#define EXPORT_OPTION_READ_DELEG 0x10000000	/*< Enable read delegations */
+#define EXPORT_OPTION_WRITE_DELEG 0x20000000	/*< Using write delegations */
+#define EXPORT_OPTION_DELEGATIONS (EXPORT_OPTION_READ_DELEG | \
+				   EXPORT_OPTION_WRITE_DELEG)
+#define EXPORT_OPTION_NO_DELEGATIONS 0
+
 #define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
+#define EXPORT_OPTION_FSID_SET 0x80000000 /* Set if Filesystem_id is set */
 
 /* NFS4 specific structures */
 

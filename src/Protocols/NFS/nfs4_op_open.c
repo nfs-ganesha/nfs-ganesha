@@ -1316,7 +1316,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->export->export_hdl->ops->
 	    fs_supports(data->export->export_hdl, fso_delegations)
-	    && (data->export->export_perms.options & EXPORT_OPTION_USE_DELEG)
+	    && (data->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
 	    && claim != CLAIM_DELEGATE_CUR)
 

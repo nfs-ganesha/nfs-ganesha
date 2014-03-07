@@ -56,95 +56,123 @@
 #include "export_mgr.h"
 #include "fsal_up.h"
 
+struct global_export_perms export_opt = {
+	.def.anonymous_uid = ANON_UID,
+	.def.anonymous_gid = ANON_GID,
+	/* Note: Access_Type defaults to None on purpose */
+	.def.options = EXPORT_OPTION_ROOT_SQUASH |
+		   EXPORT_OPTION_NO_ACCESS |
+		   EXPORT_OPTION_AUTH_NONE |
+		   EXPORT_OPTION_AUTH_UNIX |
+		   EXPORT_OPTION_PROTOCOLS |
+		   EXPORT_OPTION_TRANSPORTS,
+	.def.set = UINT32_MAX
+};
 
 static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 {
 	char *buf = buffer;
 
-	if ((p_perms->options & EXPORT_OPTION_ROOT) == EXPORT_OPTION_ROOT)
-		buf += sprintf(buf, "NO_ROOT_SQUASH");
+	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
+			buf += sprintf(buf, "no_root_squash");
 
-	if ((p_perms->options & EXPORT_OPTION_ALL_ANONYMOUS) ==
-	    EXPORT_OPTION_ALL_ANONYMOUS)
-		buf += sprintf(buf, "ALL_SQUASH ");
+		if ((p_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)  != 0)
+			buf += sprintf(buf, "all_squash    ");
 
-	if ((p_perms->options &
-	     (EXPORT_OPTION_ROOT | EXPORT_OPTION_ALL_ANONYMOUS)) == 0)
-		buf += sprintf(buf, "ROOT_SQUASH");
+		if ((p_perms->options &
+		     (EXPORT_OPTION_ROOT | EXPORT_OPTION_ALL_ANONYMOUS)) == 0)
+			buf += sprintf(buf, "root_squash   ");
+	} else
+		buf += sprintf(buf, "              ");
 
-	buf += sprintf(buf, ", ");
+	if ((p_perms->set & EXPORT_OPTION_ACCESS_TYPE) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_READ_ACCESS) != 0)
+			buf += sprintf(buf, ", R");
+		else
+			buf += sprintf(buf, ", -");
+		if ((p_perms->options & EXPORT_OPTION_WRITE_ACCESS) != 0)
+			buf += sprintf(buf, "W");
+		else
+			buf += sprintf(buf, "-");
+		if ((p_perms->options & EXPORT_OPTION_MD_READ_ACCESS) != 0)
+			buf += sprintf(buf, "r");
+		else
+			buf += sprintf(buf, "-");
+		if ((p_perms->options & EXPORT_OPTION_MD_WRITE_ACCESS) != 0)
+			buf += sprintf(buf, "w");
+		else
+			buf += sprintf(buf, "-");
+	} else
+		buf += sprintf(buf, ",     ");
 
-	if ((p_perms->options & EXPORT_OPTION_RW_ACCESS) ==
-	    EXPORT_OPTION_RW_ACCESS)
-		buf += sprintf(buf, "RW");
-	else if ((p_perms->options & EXPORT_OPTION_READ_ACCESS) ==
-		 EXPORT_OPTION_READ_ACCESS)
-		buf += sprintf(buf, "RO");
-	else if ((p_perms->options & EXPORT_OPTION_WRITE_ACCESS) ==
-		 EXPORT_OPTION_WRITE_ACCESS)
-		buf += sprintf(buf, "WO");
-	else if ((p_perms->options & EXPORT_OPTION_MD_ACCESS) ==
-		 EXPORT_OPTION_MD_ACCESS)
-		buf += sprintf(buf, "MD_RW");
-	else if ((p_perms->options & EXPORT_OPTION_MD_READ_ACCESS) ==
-		 EXPORT_OPTION_MD_READ_ACCESS)
-		buf += sprintf(buf, "MD_RO");
-	else if ((p_perms->options & EXPORT_OPTION_MD_WRITE_ACCESS) ==
-		 EXPORT_OPTION_MD_WRITE_ACCESS)
-		buf += sprintf(buf, "MD_WO");
-	else if ((p_perms->options & EXPORT_OPTION_ACCESS_TYPE) != 0)
-		buf +=
-		    sprintf(buf, "%08x",
-			    p_perms->options & EXPORT_OPTION_ACCESS_TYPE);
+	if ((p_perms->set & EXPORT_OPTION_PROTOCOLS) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_NFSV3) != 0)
+			buf += sprintf(buf, ", 3");
+		else
+			buf += sprintf(buf, ", -");
+		if ((p_perms->options & EXPORT_OPTION_NFSV4) != 0)
+			buf += sprintf(buf, "4");
+		else
+			buf += sprintf(buf, "-");
+	} else
+		buf += sprintf(buf, ",   ");
+
+	if ((p_perms->set & EXPORT_OPTION_TRANSPORTS) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_UDP) != 0)
+			buf += sprintf(buf, ", UDP");
+		else
+			buf += sprintf(buf, ", ---");
+		if ((p_perms->options & EXPORT_OPTION_TCP) != 0)
+			buf += sprintf(buf, ", TCP");
+		else
+			buf += sprintf(buf, ", ---");
+	} else
+		buf += sprintf(buf, ",         ");
+
+	if ((p_perms->set & EXPORT_OPTION_MANAGE_GIDS) == 0)
+		buf += sprintf(buf, ",               ");
+	else if ((p_perms->options & EXPORT_OPTION_MANAGE_GIDS) != 0)
+		buf += sprintf(buf, ", Manage_Gids   ");
 	else
-		buf += sprintf(buf, "NONE");
+		buf += sprintf(buf, ", No Manage_Gids");
 
-	if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) ==
-	    EXPORT_OPTION_AUTH_NONE)
-		buf += sprintf(buf, ", AUTH_NONE");
-	if ((p_perms->options & EXPORT_OPTION_AUTH_UNIX) ==
-	    EXPORT_OPTION_AUTH_UNIX)
-		buf += sprintf(buf, ", AUTH_SYS");
-	if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE) ==
-	    EXPORT_OPTION_RPCSEC_GSS_NONE)
-		buf += sprintf(buf, ", RPCSEC_GSS_NONE");
-	if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG) ==
-	    EXPORT_OPTION_RPCSEC_GSS_INTG)
-		buf += sprintf(buf, ", RPCSEC_GSS_INTG");
-	if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) ==
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
-		buf += sprintf(buf, ", RPCSEC_GSS_PRIV");
+	if ((p_perms->set & EXPORT_OPTION_DELEGATIONS) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_READ_DELEG) != 0)
+			buf += sprintf(buf, ", R");
+		else
+			buf += sprintf(buf, ", -");
+		if ((p_perms->options & EXPORT_OPTION_WRITE_DELEG) != 0)
+			buf += sprintf(buf, "W Deleg");
+		else
+			buf += sprintf(buf, "- Deleg");
+	} else
+		buf += sprintf(buf, ",         ");
 
-	buf += sprintf(buf, ", ");
+	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
+		buf += sprintf(buf, ", anon_uid=%6d",
+			       (int)p_perms->anonymous_uid);
+	else
+		buf += sprintf(buf, ", no anon_uid    ");
 
-	if ((p_perms->options & EXPORT_OPTION_NFSV2) == EXPORT_OPTION_NFSV2)
-		buf += sprintf(buf, "2");
-	if ((p_perms->options & EXPORT_OPTION_NFSV3) == EXPORT_OPTION_NFSV3)
-		buf += sprintf(buf, "3");
-	if ((p_perms->options & EXPORT_OPTION_NFSV4) == EXPORT_OPTION_NFSV4)
-		buf += sprintf(buf, "4");
-	if ((p_perms->
-	     options & (EXPORT_OPTION_NFSV2 | EXPORT_OPTION_NFSV3 |
-			EXPORT_OPTION_NFSV4)) == 0)
-		buf += sprintf(buf, "0");
+	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
+		buf += sprintf(buf, ", anon_gid=%6d",
+			       (int)p_perms->anonymous_gid);
+	else
+		buf += sprintf(buf, ", no anon_gid    ");
 
-	if ((p_perms->options & EXPORT_OPTION_UDP) == EXPORT_OPTION_UDP)
-		buf += sprintf(buf, ", UDP");
-	if ((p_perms->options & EXPORT_OPTION_TCP) == EXPORT_OPTION_TCP)
-		buf += sprintf(buf, ", TCP");
-
-	if ((p_perms->options & EXPORT_OPTION_USE_UQUOTA) ==
-	    EXPORT_OPTION_USE_UQUOTA)
-		buf += sprintf(buf, ", User_Quota");
-	if ((p_perms->options & EXPORT_OPTION_MANAGE_GIDS) ==
-	    EXPORT_OPTION_MANAGE_GIDS)
-		buf += sprintf(buf, ", Manage_Gids");
-	if ((p_perms->options & EXPORT_OPTION_USE_DELEG) ==
-	    EXPORT_OPTION_USE_DELEG)
-		buf += sprintf(buf, ", Use_Deleg");
-
-	buf += sprintf(buf, ", anon_uid=%d", (int)p_perms->anonymous_uid);
-	buf += sprintf(buf, ", anon_gid=%d", (int)p_perms->anonymous_gid);
+	if ((p_perms->set & EXPORT_OPTION_AUTH_TYPES) != 0) {
+		if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) != 0)
+			buf += sprintf(buf, ", none");
+		if ((p_perms->options & EXPORT_OPTION_AUTH_UNIX) != 0)
+			buf += sprintf(buf, ", sys");
+		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE) != 0)
+			buf += sprintf(buf, ", krb5");
+		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG) != 0)
+			buf += sprintf(buf, ", krb5i");
+		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) != 0)
+			buf += sprintf(buf, ", krb5p");
+	}
 }
 
 void LogClientListEntry(log_components_t component,
@@ -763,10 +791,55 @@ static void export_display(const char *step, void *node,
 	
 	StrExportOptions(&exp->export_perms, perms);
 
+	LogMidDebug(COMPONENT_CONFIG,
+		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		    step, exp, exp->id, exp->pseudopath,
+		    exp->fullpath, exp->FS_tag, perms);
+}
+
+/**
+ * @brief Initialize an EXPORT_DEFAULTS block
+ *
+ */
+
+static void *export_defaults_init(void *link_mem, void *self_struct)
+{
+	if (self_struct == NULL)
+		return &export_opt;
+	else
+		return NULL;
+}
+
+/**
+ * @brief Commit an EXPORT_DEFAULTS block
+ *
+ * Validate the export level parameters.  fsal and client
+ * parameters are already done.
+ */
+
+static int export_defaults_commit(void *node, void *link_mem, void *self_struct)
+{
+	return 0;
+}
+
+/**
+ * @brief Display an EXPORT_DEFAULTS block
+ *
+ * Validate the export level parameters.  fsal and client
+ * parameters are already done.
+ */
+
+static void export_defaults_display(const char *step, void *node,
+			   void *link_mem, void *self_struct)
+{
+	struct export_perms__ *defaults = self_struct;
+	char perms[1024];
+	
+	StrExportOptions(defaults, perms);
+
 	LogEvent(COMPONENT_CONFIG,
-		 "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		 step, exp, exp->id, exp->pseudopath,
-		 exp->fullpath, exp->FS_tag, perms);
+		 "%s Export Deafults (%s)",
+		 step, perms);
 }
 
 /**
@@ -839,6 +912,56 @@ static struct config_item_list squash_types[] = {
 };
 
 /**
+ * @brief Delegations types list for the Delegations parameter
+ */
+
+static struct config_item_list delegations[] = {
+	CONFIG_LIST_TOK("NONE", EXPORT_OPTION_NO_DELEGATIONS),
+	CONFIG_LIST_TOK("Read", EXPORT_OPTION_READ_DELEG),
+	CONFIG_LIST_TOK("Write", EXPORT_OPTION_WRITE_DELEG),
+	CONFIG_LIST_TOK("Readwrite", EXPORT_OPTION_DELEGATIONS),
+	CONFIG_LIST_TOK("R", EXPORT_OPTION_READ_DELEG),
+	CONFIG_LIST_TOK("W", EXPORT_OPTION_WRITE_DELEG),
+	CONFIG_LIST_TOK("RW", EXPORT_OPTION_DELEGATIONS),
+	CONFIG_LIST_EOL
+};
+
+#define CONF_EXPORT_PERMS(_struct_, _perms_)				\
+	/* Note: Access_Type defaults to None on purpose */		\
+	CONF_ITEM_ENUM_BITS_SET("Access_Type",				\
+		EXPORT_OPTION_NO_ACCESS,				\
+		EXPORT_OPTION_ACCESS_TYPE,				\
+		access_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_LIST_BITS_SET("NFS_Protocols",			\
+		EXPORT_OPTION_PROTOCOLS, EXPORT_OPTION_PROTOCOLS,	\
+		nfs_protocols, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_LIST_BITS_SET("Transport_Protocols",			\
+		EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,	\
+		transports, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_ANONID("Anonymous_uid",				\
+		ANON_UID, _struct_, _perms_.anonymous_uid,		\
+		EXPORT_OPTION_ANON_UID_SET, _perms_.set),		\
+	CONF_ITEM_ANONID("Anonymous_gid",				\
+		ANON_GID, _struct_, _perms_.anonymous_gid,		\
+		EXPORT_OPTION_ANON_GID_SET, _perms_.set),		\
+	CONF_ITEM_LIST_BITS_SET("SecType",				\
+		EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX,	\
+		EXPORT_OPTION_AUTH_TYPES,				\
+		sec_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_BOOLBIT_SET("PrivilegedPort",				\
+		false, EXPORT_OPTION_PRIVILEGED_PORT,			\
+		_struct_, _perms_.options, _perms_.set),		\
+	CONF_ITEM_BOOLBIT_SET("Manage_Gids",				\
+		false, EXPORT_OPTION_MANAGE_GIDS,			\
+		_struct_, _perms_.options, _perms_.set),		\
+	CONF_ITEM_LIST_BITS_SET("Squash",				\
+		EXPORT_OPTION_ROOT_SQUASH, EXPORT_OPTION_SQUASH_TYPES,	\
+		squash_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_ENUM_BITS_SET("Delegations",				\
+		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,				\
+		delegations, _struct_, _perms_.options, _perms_.set)
+
+/**
  * @brief Table of client sub-block parameters
  *
  * NOTE: node discovery is ordered by this table!
@@ -847,40 +970,20 @@ static struct config_item_list squash_types[] = {
  */
 
 static struct config_item client_params[] = {
-	CONF_ITEM_ENUM_BITS("Access_Type",
-		       EXPORT_OPTION_RW_ACCESS | EXPORT_OPTION_MD_ACCESS,
-		       EXPORT_OPTION_ACCESS_TYPE,
-		       access_types,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST_BITS("NFS_Protocols",
-		       EXPORT_OPTION_PROTOCOLS, EXPORT_OPTION_PROTOCOLS,
-		       nfs_protocols,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST_BITS("Transport_Protocols",
-		       EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,
-		       transports,
-		       exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_UI32("Anonymous_uid", -10, UINT32_MAX, ANON_UID,
-		       exportlist_client_entry__, client_perms.anonymous_uid),
-	CONF_ITEM_UI32("Anonymous_gid", -10, UINT32_MAX, ANON_GID,
-		       exportlist_client_entry__, client_perms.anonymous_gid),
-	CONF_ITEM_LIST_BITS("SecType",
-		       EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX,
-		       EXPORT_OPTION_AUTH_TYPES,
-		       sec_types,
-		       exportlist, export_perms.options),
-	CONF_ITEM_BOOLBIT("PrivilegedPort", false,
-			  EXPORT_OPTION_PRIVILEGED_PORT,
-			  exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_BOOLBIT("Manage_Gids", false,
-			  EXPORT_OPTION_MANAGE_GIDS,
-			  exportlist_client_entry__, client_perms.options),
-	CONF_ITEM_LIST_BITS("Squash",
-		       EXPORT_OPTION_ROOT_SQUASH, EXPORT_OPTION_SQUASH_TYPES,
-		       squash_types,
-		       exportlist_client_entry__, client_perms.options),
+	CONF_EXPORT_PERMS(exportlist_client_entry__, client_perms),
 	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
 		      exportlist_client_entry__, client.raw_client_str),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Table of DEXPORT_DEFAULTS block parameters
+ *
+ * NOTE: node discovery is ordered by this table!
+ */
+
+static struct config_item export_defaults_params[] = {
+	CONF_EXPORT_PERMS(global_export_perms, conf),
 	CONFIG_EOL
 };
 
@@ -913,51 +1016,19 @@ static struct config_item export_params[] = {
 		       exportlist, fullpath), /* must chomp '/' */
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
 		       exportlist, pseudopath),
-	CONF_ITEM_ENUM_BITS("Access_Type",
-		       EXPORT_OPTION_RW_ACCESS | EXPORT_OPTION_MD_ACCESS,
-		       EXPORT_OPTION_ACCESS_TYPE,
-		       access_types, exportlist, export_perms.options),
-	CONF_ITEM_LIST_BITS("NFS_Protocols",
-		       EXPORT_OPTION_PROTOCOLS, EXPORT_OPTION_PROTOCOLS,
-		       nfs_protocols,
-		       exportlist, export_perms.options),
-	CONF_ITEM_LIST_BITS("Transport_Protocols",
-		       EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,
-		       transports,
-		       exportlist, export_perms.options), /* set all default */
-	CONF_ITEM_UI32("Anonymous_uid", -10, UINT32_MAX, ANON_UID,
-		       exportlist, export_perms.anonymous_uid),
-	CONF_ITEM_UI32("Anonymous_gid", -10, UINT32_MAX, ANON_GID,
-		       exportlist, export_perms.anonymous_gid),
-	CONF_ITEM_LIST_BITS("SecType",
-		       EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX,
-		       EXPORT_OPTION_AUTH_TYPES,
-		       sec_types,
-		       exportlist, export_perms.options),
-	CONF_ITEM_UI64("MaxRead", 512, 9*1024*1024, 16384,
+	CONF_ITEM_UI64("MaxRead", 512, 9*1024*1024, 4*1024*1024,
 		       exportlist, MaxRead),
-	CONF_ITEM_UI64("MaxWrite", 512, 9*1024*1024, 16384,
+	CONF_ITEM_UI64("MaxWrite", 512, 9*1024*1024, 4*1024*1024,
 		       exportlist, MaxWrite),
-	CONF_ITEM_UI64("PrefRead", 512, 9*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefRead", 512, 9*1024*1024, 4*1024*1024,
 		       exportlist, PrefRead),
-	CONF_ITEM_UI64("PrefWrite", 512, 9*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefWrite", 512, 9*1024*1024, 4*1024*1024,
 		       exportlist, PrefWrite),
 	CONF_ITEM_UI64("PrefReaddir", 512, 9*1024*1024, 16384,
 		       exportlist, PrefReaddir),
-	CONF_ITEM_FSID("Filesystem_id", 666, 666,
-		       exportlist, filesystem_id), /* major.minor */
-	CONF_ITEM_BOOLBIT("PrivilegedPort", false, /* client too */
-			  EXPORT_OPTION_PRIVILEGED_PORT,
-			  exportlist, export_perms.options),
-	CONF_ITEM_BOOLBIT("User_Quota", false,
-			  EXPORT_OPTION_USE_UQUOTA,
-			  exportlist, export_perms.options),
-	CONF_ITEM_BOOLBIT("Use_Deleg", false,
-			  EXPORT_OPTION_USE_DELEG,
-			  exportlist, export_perms.options),
-	CONF_ITEM_BOOLBIT("Manage_Gids", false,
-			  EXPORT_OPTION_MANAGE_GIDS,
-			  exportlist, export_perms.options),
+	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
+		       exportlist, filesystem_id, /* major.minor */
+		       EXPORT_OPTION_FSID_SET, export_perms.set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      exportlist, FS_tag),
 	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,
@@ -966,9 +1037,7 @@ static struct config_item export_params[] = {
 		       exportlist, MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
 		       exportlist, UseCookieVerifier),
-	CONF_ITEM_LIST_BITS("Squash",
-		       EXPORT_OPTION_ROOT_SQUASH, EXPORT_OPTION_SQUASH_TYPES,
-		       squash_types, exportlist, export_perms.options),
+	CONF_EXPORT_PERMS(exportlist, export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
 			exportlist, clients),
@@ -992,6 +1061,19 @@ struct config_block export_param = {
 	.blk_desc.u.blk.display = export_display
 };
 
+/**
+ * @brief Top level definition for an EXPORT_DEFAULTS block
+ */
+
+struct config_block export_defaults_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.export.defaults",
+	.blk_desc.name = "EXPORT_DEFAULTS",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = export_defaults_init,
+	.blk_desc.u.blk.params = export_defaults_params,
+	.blk_desc.u.blk.commit = export_defaults_commit,
+	.blk_desc.u.blk.display = export_defaults_display
+};
 
 /**
  * @brief builds an export entry for '/' with default parameters
@@ -1064,17 +1146,21 @@ static int build_default_root(void)
 	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
 	p_entry->export_perms.anonymous_gid = (gid_t) ANON_GID;
 
-	/* Support only NFS v4 and both transports.
-	 * Pseudo is provided
+	/* Support only NFS v4 and TCP.
 	 * Root is allowed
 	 * MD Read Access
-	 * All auth types
+	 * Allow use of default auth types
 	 */
-	p_entry->export_perms.options = EXPORT_OPTION_NFSV4 |
-					EXPORT_OPTION_TRANSPORTS |
+	p_entry->export_perms.options = EXPORT_OPTION_ROOT |
 					EXPORT_OPTION_MD_READ_ACCESS |
-					EXPORT_OPTION_ROOT |
-					EXPORT_OPTION_AUTH_TYPES;
+					EXPORT_OPTION_NFSV4 |
+					EXPORT_OPTION_TCP;
+
+	p_entry->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
+				    EXPORT_OPTION_ACCESS_TYPE |
+				    EXPORT_OPTION_PROTOCOLS |
+				    EXPORT_OPTION_TRANSPORTS |
+				    EXPORT_OPTION_FSID_SET;
 
 	/* Set the fullpath to "/" */
 	p_entry->fullpath = gsh_strdup("/");
@@ -1142,6 +1228,13 @@ err_out:
 int ReadExports(config_file_t in_config)
 {
 	int rc, ret = 0;
+
+	rc = load_config_from_parse(in_config,
+				      &export_defaults_param,
+				      NULL,
+				      false);
+	if (rc < 0)
+		return rc;
 
 	rc = load_config_from_parse(in_config,
 				      &export_param,
@@ -1912,13 +2005,15 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	sockaddr_t alt_hostaddr;
 	sockaddr_t *puse_hostaddr;
 
+	/* Initialize permissions to allow nothing */
+	export_perms->options = 0;
+	export_perms->set = 0;
+	export_perms->anonymous_uid = (uid_t) ANON_UID;
+	export_perms->anonymous_gid = (gid_t) ANON_GID;
+
 	if (export == NULL) {
 		LogCrit(COMPONENT_DISPATCH,
 			"No export to check permission against");
-		/* Initialize permissions to allow nothing */
-		export_perms->options = 0;
-		export_perms->anonymous_uid = (uid_t) ANON_UID;
-		export_perms->anonymous_gid = (gid_t) ANON_GID;
 		return;
 	}
 
@@ -1937,31 +2032,90 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	/* Does the client match anyone on the client list? */
 	client = client_match_any(puse_hostaddr, export);
 	if (client != NULL) {
-		if (isFullDebug(COMPONENT_DISPATCH)) {
-			char perms[1024];
+		/* Take client options */
+		export_perms->options = client->client_perms.options &
+					client->client_perms.set;
+
+		if (client->client_perms.set & EXPORT_OPTION_ANON_UID_SET)
+			export_perms->anonymous_uid =
+					client->client_perms.anonymous_uid;
+
+		if (client->client_perms.set & EXPORT_OPTION_ANON_GID_SET)
+			export_perms->anonymous_gid =
+					client->client_perms.anonymous_gid;
+
+		export_perms->set = client->client_perms.set;
+	}
+
+	/* Any options not set by the client, take from the export */
+	export_perms->options |= export->export_perms.options &
+				 export->export_perms.set &
+				 ~export_perms->set;
+
+	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	    (export->export_perms.set & EXPORT_OPTION_ANON_UID_SET) != 0)
+		export_perms->anonymous_uid =
+					export->export_perms.anonymous_uid;
+	
+	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	    (export->export_perms.set & EXPORT_OPTION_ANON_GID_SET) != 0)
+		export_perms->anonymous_gid =
+					export->export_perms.anonymous_gid;
+
+	export_perms->set |= export->export_perms.set;
+
+	/* Any options not set by the client or export, take from the
+	 *  EXPORT_DEFAULTS block.
+	 */
+	export_perms->options |= export_opt.conf.options &
+				 export_opt.conf.set &
+				 ~export_perms->set;
+
+	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	    (export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET) != 0)
+		export_perms->anonymous_uid = export_opt.conf.anonymous_uid;
+	
+	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	    (export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET) != 0)
+		export_perms->anonymous_gid = export_opt.conf.anonymous_gid;
+
+	export_perms->set |= export_opt.conf.set;
+
+	/* And finally take any options not yet set from global defaults */
+	export_perms->options |= export_opt.def.options &
+				 ~export_perms->set;
+
+	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
+		export_perms->anonymous_uid = export_opt.def.anonymous_uid;
+	
+	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
+		export_perms->anonymous_gid = export_opt.def.anonymous_gid;
+
+	export_perms->set |= export_opt.def.set;
+	
+	if (isMidDebug(COMPONENT_DISPATCH)) {
+		char perms[1024];
+		if (client != NULL) {
 			StrExportOptions(&client->client_perms, perms);
 			LogMidDebug(COMPONENT_DISPATCH,
-				    "Matched client as %s, options = 0x%X (%s)",
-				    client_types[client->type],
-				    client->client_perms.options,
+				    "CLIENT          (%s)",
 				    perms);
 		}
-		/* we may have to fill in some export carryovers here */
-		*export_perms = client->client_perms;
-	} else {
-		if (isFullDebug(COMPONENT_DISPATCH)) {
-			char perms[1024];
-			StrExportOptions(&export->export_perms, perms);
-			LogMidDebug(COMPONENT_DISPATCH,
-				    "Fallback to export %d, options = 0x%X (%s)",
-				    export->id,
-				    export->export_perms.options,
-				    perms);
-		}
-
-		/* No, fall back to the export itself */
-		/* we may have to fill in some global carryovers here */
-		*export_perms = export->export_perms;
+		StrExportOptions(&export->export_perms, perms);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "EXPORT          (%s)",
+			    perms);
+		StrExportOptions(&export_opt.conf, perms);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "EXPORT_DEFAULTS (%s)",
+			    perms);
+		StrExportOptions(&export_opt.def, perms);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "default options (%s)",
+			    perms);
+		StrExportOptions(export_perms, perms);
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "Final options   (%s)",
+			    perms);
 	}
-	return;
 }				/* nfs_export_check_access */
