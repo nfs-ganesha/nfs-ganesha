@@ -80,6 +80,8 @@ uint64_t clientid_verifier;
  */
 pool_t *client_id_pool;
 
+extern char     v4_recov_dir[PATH_MAX + 1];
+
 /**
  * @brief Return the NFSv4 status for the client id error code
  *
@@ -989,7 +991,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	}
 
 	if (clientid->cid_recov_dir != NULL) {
-		nfs4_rm_clid(clientid->cid_recov_dir);
+		nfs4_rm_clid(clientid->cid_recov_dir, v4_recov_dir, 0);
 		gsh_free(clientid->cid_recov_dir);
 		clientid->cid_recov_dir = NULL;
 	}

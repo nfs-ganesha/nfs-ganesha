@@ -279,7 +279,7 @@ int display_force_overflow(struct display_buffer *dspbuf)
  * @brief Format a string into the buffer.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     fmt    The format string
+ * @param[in]     fmt    The format string
  * @param[in]     args   The va_list args
  *
  * @return the bytes remaining in the buffer.
@@ -320,7 +320,7 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @brief Display a number of opaque bytes as a hex string.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     value  The bytes to display
+ * @param[in]     value  The bytes to display
  * @param[in]     len    The number of bytes to display
  *
  * @return the bytes remaining in the buffer.
@@ -359,11 +359,75 @@ int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
 }
 
 /**
+ * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     value  The bytes to display
+ * @param[in]     len    The number of bytes to display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
+int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
+					void                  *value,
+					int                     len,
+					int                     max)
+{
+	unsigned int i = 0;
+	int          b_left = display_start(dspbuf);
+	int          cpy = len;
+
+	if (b_left <= 0)
+		return 0;
+
+	/* Check that the length is ok */
+	if (len < 0)
+		return 0;
+
+	/* If the value is NULL, display NULL value. */
+	if (value == NULL)
+		return 0;
+
+	/* If the value is empty, display EMPTY value. */
+	if (len == 0)
+		return 0;
+
+	/* Display the length of the value. */
+	b_left = display_printf(dspbuf, "(%d:", len);
+
+	if (b_left <= 0)
+		return 0;
+
+	if (len > max)
+		return 0;
+
+	/* Determine if the value is entirely printable characters, */
+	/* and it contains no slash character (reserved for filename) */
+	for (i = 0; i < len; i++)
+		if ((!isprint(((char *)value)[i])) || (((char *)value)[i] == '/'))
+			break;
+
+	if (i == len) {
+		/* Entirely printable character, so we will just copy the characters into
+		 * the buffer (to the extent there is room for them).
+		 */
+		b_left = display_len_cat(dspbuf, value, cpy);
+	} else {
+		b_left = display_opaque_bytes(dspbuf, value, cpy);
+	}
+
+	if (b_left <= 0)
+		return 0;
+
+	return display_cat(dspbuf, ")");
+}
+
+/**
  * @brief Display a number of opaque bytes as a hex string, limiting the number
  *        of bytes used from the opaque value.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     value  The bytes to display
+ * @param[in]     value  The bytes to display
  * @param[in]     len    The number of bytes to display
  * @param[in]     max    Max number of bytes from the opaque value to display
  *
@@ -433,7 +497,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
  * @brief Append a length delimited string to the buffer.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     str    The string
+ * @param[in]     str    The string
  * @param[in]     len    The length of the string
  *
  * @return the bytes remaining in the buffer.
@@ -475,7 +539,7 @@ int display_len_cat(struct display_buffer *dspbuf, char *str, int len)
  * @brief Append a null delimited string to the buffer, truncating it.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     str    The string
+ * @param[in]     str    The string
  * @param[in]     max    Truncate the string to this maximum length
  *
  * @return the bytes remaining in the buffer.

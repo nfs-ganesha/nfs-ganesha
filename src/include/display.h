@@ -143,7 +143,7 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @brief Format a string into the buffer.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     fmt    the format string
+ * @param[in]     fmt    the format string
  * @param[in] ... the    args
  *
  * @return the bytes remaining in the buffer.
@@ -166,6 +166,11 @@ static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 
 int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len);
 
+int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
+					void                   *value,
+					int                     len,
+					int                     max);
+
 int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 			     int len, int max);
 
@@ -173,7 +178,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
  * @brief Display a number of opaque bytes as a hex string.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     value  The bytes to display
+ * @param[in]     value  The bytes to display
  * @param[in]     len    The number of bytes in the opaque value
  *
  * @return the bytes remaining in the buffer.
@@ -193,7 +198,7 @@ int display_len_cat(struct display_buffer *dspbuf, char *str, int len);
  * @brief Append a null delimited string to the buffer.
  *
  * @param[in,out] dspbuf The buffer.
- * @oaram[in]     str    The string
+ * @param[in]     str    The string
  *
  * @return the bytes remaining in the buffer.
  *
