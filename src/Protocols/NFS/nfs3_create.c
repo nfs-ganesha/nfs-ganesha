@@ -24,7 +24,7 @@
  */
 
 /**
- * @file  nfs3_Create.c
+ * @file  nfs3_create.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
@@ -50,9 +50,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 CREATE
+ * @brief The NFSPROC3_CREATE
  *
- * Implements the NFS PROC CREATE function (for V2 and V3).
+ * Implements the NFSPROC3_CREATE function.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Create(nfs_arg_t *arg, exportlist_t *export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_create(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
 	uint32_t mode = 0;
@@ -91,7 +91,7 @@ int nfs_Create(nfs_arg_t *arg, exportlist_t *export,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_create3.where.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Create handle: "
+			 "REQUEST PROCESSING: Calling nfs3_create handle: "
 			 "%s name: %s", str, file_name ? file_name : "");
 	}
 
@@ -289,17 +289,17 @@ int nfs_Create(nfs_arg_t *arg, exportlist_t *export,
 			       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 	}
 	goto out;
-}				/* nfs_Create */
+}				/* nfs3_create */
 
 /**
- * @brief Free the result structure allocated for nfs_Create.
+ * @brief Free the result structure allocated for nfs3_create.
  *
- * Thsi function frees the result structure allocated for nfs_Create.
+ * Thsi function frees the result structure allocated for nfs3_create.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Create_Free(nfs_res_t *res)
+void nfs3_create_free(nfs_res_t *res)
 {
 	if ((res->res_create3.status == NFS3_OK)
 	    && (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {

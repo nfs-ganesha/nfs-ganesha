@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Fsstat.c
+ * @file  nfs3_fsstat.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
@@ -50,9 +50,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 FSSTAT
+ * @brief The NFSPROC3_FSSTAT
  *
- * Implements the NFS PROC2 and PROC3 FSSTAT.
+ * Implements the NFSPROC3_FSSTAT.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Fsstat(nfs_arg_t *arg, exportlist_t *export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_fsstat(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	fsal_dynamicfsinfo_t dynamicinfo;
 	cache_inode_status_t cache_status;
@@ -81,7 +81,7 @@ int nfs_Fsstat(nfs_arg_t *arg, exportlist_t *export,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_fsstat3.fsroot), NULL,
 				 str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Fsstat handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_fsstat handle: %s",
 			 str);
 	}
 
@@ -173,18 +173,18 @@ int nfs_Fsstat(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs_Fsstat */
+}				/* nfs3_fsstat */
 
 /**
- * @brief Free the result structure allocated for nfs_Fsstat
+ * @brief Free the result structure allocated for nfs3_fsstat
  *
- * This function frees the result structure allocated for nfs_Fsstat.
+ * This function frees the result structure allocated for nfs3_fsstat.
  *
  * @param[in] res Result structure
  *
  */
-void nfs_Fsstat_Free(nfs_res_t *res)
+void nfs3_fsstat_free(nfs_res_t *res)
 {
 	/* Nothing to do here */
 	return;
-}				/* nfs_Fsstat_Free */
+}

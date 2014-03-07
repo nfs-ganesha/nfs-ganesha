@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Lookup.c
+ * @file  nfs3_lookup.c
  * @brief everything that is needed to handle NFS PROC3 LINK.
  */
 #include "config.h"
@@ -50,9 +50,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 LOOKUP
+ * @brief The NFS3_LOOKUP
  *
- * Implements the NFS PROC LOOKUP function (for V2 and V3).
+ * Implements the NFS3_LOOKUP function.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
@@ -67,9 +67,9 @@
  *
  */
 
-int nfs_Lookup(nfs_arg_t *arg, exportlist_t *export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_lookup(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry_dir = NULL;
 	cache_entry_t *entry_file = NULL;
@@ -162,21 +162,20 @@ int nfs_Lookup(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(entry_file);
 
 	return rc;
-}				/* nfs_Lookup */
+}				/* nfs3_lookup */
 
 /**
- * @brief Free the result structure allocated for nfs_Lookup.
+ * @brief Free the result structure allocated for nfs3_lookup.
  *
- * This function frees the result structure allocated for nfs_Lookup.
+ * This function frees the result structure allocated for nfs3_lookup.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Lookup_Free(nfs_res_t *res)
+void nfs3_lookup_free(nfs_res_t *res)
 {
 	if (res->res_lookup3.status == NFS3_OK) {
 		gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data.
 			 data_val);
 	}
-}				/* nfs3_Lookup_Free */
-
+}

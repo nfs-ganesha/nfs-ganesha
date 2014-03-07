@@ -25,7 +25,7 @@
  */
 
 /**
- * @file    nfs3_Pathconf.c
+ * @file    nfs3_pathconf.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
@@ -66,7 +66,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Pathconf(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_pathconf(nfs_arg_t *arg, exportlist_t *export,
 		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
@@ -78,7 +78,7 @@ int nfs3_Pathconf(nfs_arg_t *arg, exportlist_t *export,
 		char str[LEN_FH_STR];
 		sprint_fhandle3(str, &(arg->arg_pathconf3.object));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_Pathconf handle: "
+			 "REQUEST PROCESSING: Calling nfs3_pathconf handle: "
 			 "%s", str);
 	}
 
@@ -122,17 +122,17 @@ int nfs3_Pathconf(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs3_Pathconf */
+}				/* nfs3_pathconf */
 
 /**
- * @brief Free the result structure allocated for nfs3_Pathconf.
+ * @brief Free the result structure allocated for nfs3_pathconf.
  *
- * This function free the result structure allocated for nfs3_Pathconf.
+ * This function free the result structure allocated for nfs3_pathconf.
  *
  * @param[in,out] res Result structure.
  *
  */
-void nfs3_Pathconf_Free(nfs_res_t *res)
+void nfs3_pathconf_free(nfs_res_t *res)
 {
 	return;
-}				/* nfs3_Pathconf_Free */
+}

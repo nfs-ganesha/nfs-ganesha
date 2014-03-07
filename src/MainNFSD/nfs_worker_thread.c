@@ -71,8 +71,8 @@ pool_t *dupreq_pool;
 static struct fridgethr *worker_fridge;
 
 const nfs_function_desc_t invalid_funcdesc = {
-	.service_function = nfs_Null,
-	.free_function = nfs_Null_Free,
+	.service_function = nfs_null,
+	.free_function = nfs_null_free,
 	.xdr_decode_func = (xdrproc_t) xdr_void,
 	.xdr_encode_func = (xdrproc_t) xdr_void,
 	.funcname = "invalid_function",
@@ -83,185 +83,185 @@ const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
 
 const nfs_function_desc_t nfs3_func_desc[] = {
 	{
-	 .service_function = nfs_Null,
-	 .free_function = nfs_Null_Free,
+	 .service_function = nfs_null,
+	 .free_function = nfs_null_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_void,
 	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "nfs_Null",
+	 .funcname = "nfs3_null",
 	 .dispatch_behaviour = NOTHING_SPECIAL},
 	{
-	 .service_function = nfs_Getattr,
-	 .free_function = nfs_Getattr_Free,
+	 .service_function = nfs3_getattr,
+	 .free_function = nfs3_getattr_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_GETATTR3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_GETATTR3res,
-	 .funcname = "nfs_Getattr",
+	 .funcname = "nfs3_getattr",
 	 .dispatch_behaviour = NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
 	{
-	 .service_function = nfs_Setattr,
-	 .free_function = nfs_Setattr_Free,
+	 .service_function = nfs3_setattr,
+	 .free_function = nfs3_setattr_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_SETATTR3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_SETATTR3res,
-	 .funcname = "nfs_Setattr",
+	 .funcname = "nfs3_setattr",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Lookup,
-	 .free_function = nfs3_Lookup_Free,
+	 .service_function = nfs3_lookup,
+	 .free_function = nfs3_lookup_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_LOOKUP3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_LOOKUP3res,
-	 .funcname = "nfs_Lookup",
+	 .funcname = "nfs3_lookup",
 	 .dispatch_behaviour = NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
 	{
-	 .service_function = nfs3_Access,
-	 .free_function = nfs3_Access_Free,
+	 .service_function = nfs3_access,
+	 .free_function = nfs3_access_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_ACCESS3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_ACCESS3res,
-	 .funcname = "nfs3_Access",
+	 .funcname = "nfs3_access",
 	 .dispatch_behaviour = NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
 	{
-	 .service_function = nfs_Readlink,
-	 .free_function = nfs3_Readlink_Free,
+	 .service_function = nfs3_readlink,
+	 .free_function = nfs3_readlink_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_READLINK3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_READLINK3res,
-	 .funcname = "nfs_Readlink",
+	 .funcname = "nfs3_readlink",
 	 .dispatch_behaviour = NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
 	{
-	 .service_function = nfs_Read,
-	 .free_function = nfs3_Read_Free,
+	 .service_function = nfs3_read,
+	 .free_function = nfs3_read_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_READ3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_READ3res,
-	 .funcname = "nfs_Read",
+	 .funcname = "nfs3_read",
 	 .dispatch_behaviour =
 	 NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS | MAKES_IO},
 	{
-	 .service_function = nfs_Write,
-	 .free_function = nfs_Write_Free,
+	 .service_function = nfs3_write,
+	 .free_function = nfs3_write_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_WRITE3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_WRITE3res,
-	 .funcname = "nfs_Write",
+	 .funcname = "nfs3_write",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS |
 	  MAKES_IO)
 	 },
 	{
-	 .service_function = nfs_Create,
-	 .free_function = nfs_Create_Free,
+	 .service_function = nfs3_create,
+	 .free_function = nfs3_create_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_CREATE3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_CREATE3res,
-	 .funcname = "nfs_Create",
+	 .funcname = "nfs3_create",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Mkdir,
-	 .free_function = nfs_Mkdir_Free,
+	 .service_function = nfs3_mkdir,
+	 .free_function = nfs3_mkdir_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_MKDIR3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_MKDIR3res,
-	 .funcname = "nfs_Mkdir",
+	 .funcname = "nfs3_mkdir",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Symlink,
-	 .free_function = nfs_Symlink_Free,
+	 .service_function = nfs3_symlink,
+	 .free_function = nfs3_symlink_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_SYMLINK3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_SYMLINK3res,
-	 .funcname = "nfs_Symlink",
+	 .funcname = "nfs3_symlink",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs3_Mknod,
-	 .free_function = nfs3_Mknod_Free,
+	 .service_function = nfs3_mknod,
+	 .free_function = nfs3_mknod_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_MKNOD3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_MKNOD3res,
-	 .funcname = "nfs3_Mknod",
+	 .funcname = "nfs3_mknod",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Remove,
-	 .free_function = nfs_Remove_Free,
+	 .service_function = nfs3_remove,
+	 .free_function = nfs3_remove_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_REMOVE3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_REMOVE3res,
-	 .funcname = "nfs_Remove",
+	 .funcname = "nfs3_remove",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Rmdir,
-	 .free_function = nfs_Rmdir_Free,
+	 .service_function = nfs3_rmdir,
+	 .free_function = nfs3_rmdir_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_RMDIR3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_RMDIR3res,
-	 .funcname = "nfs_Rmdir",
+	 .funcname = "nfs3_rmdir",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Rename,
-	 .free_function = nfs_Rename_Free,
+	 .service_function = nfs3_rename,
+	 .free_function = nfs3_rename_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_RENAME3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_RENAME3res,
-	 .funcname = "nfs_Rename",
+	 .funcname = "nfs3_rename",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Link,
-	 .free_function = nfs_Link_Free,
+	 .service_function = nfs3_link,
+	 .free_function = nfs3_link_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_LINK3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_LINK3res,
-	 .funcname = "nfs_Link",
+	 .funcname = "nfs3_link",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Readdir,
-	 .free_function = nfs3_Readdir_Free,
+	 .service_function = nfs3_readdir,
+	 .free_function = nfs3_readdir_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_READDIR3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_READDIR3res,
-	 .funcname = "nfs_Readdir",
+	 .funcname = "nfs3_readdir",
 	 .dispatch_behaviour = (NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs3_Readdirplus,
-	 .free_function = nfs3_Readdirplus_Free,
+	 .service_function = nfs3_readdirplus,
+	 .free_function = nfs3_readdirplus_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_READDIRPLUS3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_READDIRPLUS3res,
-	 .funcname = "nfs3_Readdirplus",
+	 .funcname = "nfs3_readdirplus",
 	 .dispatch_behaviour = (NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs_Fsstat,
-	 .free_function = nfs_Fsstat_Free,
+	 .service_function = nfs3_fsstat,
+	 .free_function = nfs3_fsstat_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_FSSTAT3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_FSSTAT3res,
-	 .funcname = "nfs_Fsstat",
+	 .funcname = "nfs3_fsstat",
 	 .dispatch_behaviour = (NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs3_Fsinfo,
-	 .free_function = nfs3_Fsinfo_Free,
+	 .service_function = nfs3_fsinfo,
+	 .free_function = nfs3_fsinfo_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_FSINFO3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_FSINFO3res,
-	 .funcname = "nfs3_Fsinfo",
+	 .funcname = "nfs3_fsinfo",
 	 .dispatch_behaviour = (NEEDS_CRED | NEEDS_EXPORT)
 	 },
 	{
-	 .service_function = nfs3_Pathconf,
-	 .free_function = nfs3_Pathconf_Free,
+	 .service_function = nfs3_pathconf,
+	 .free_function = nfs3_pathconf_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_PATHCONF3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_PATHCONF3res,
-	 .funcname = "nfs3_Pathconf",
+	 .funcname = "nfs3_pathconf",
 	 .dispatch_behaviour = (NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS)
 	 },
 	{
-	 .service_function = nfs3_Commit,
-	 .free_function = nfs3_Commit_Free,
+	 .service_function = nfs3_commit,
+	 .free_function = nfs3_commit_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_COMMIT3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_COMMIT3res,
-	 .funcname = "nfs3_Commit",
+	 .funcname = "nfs3_commit",
 	 .dispatch_behaviour =
 	 (MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS)
 	 }
@@ -271,11 +271,11 @@ const nfs_function_desc_t nfs3_func_desc[] = {
  * so does it for RO FS management (for each operation) */
 const nfs_function_desc_t nfs4_func_desc[] = {
 	{
-	 .service_function = nfs_Null,
-	 .free_function = nfs_Null_Free,
+	 .service_function = nfs_null,
+	 .free_function = nfs_null_free,
 	 .xdr_decode_func = (xdrproc_t) xdr_void,
 	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "nfs_Null",
+	 .funcname = "nfs_null",
 	 .dispatch_behaviour = NOTHING_SPECIAL},
 	{
 	 .service_function = nfs4_Compound,

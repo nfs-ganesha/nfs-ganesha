@@ -24,7 +24,7 @@
  */
 
 /**
- * @file    nfs3_Mknod.c
+ * @file    nfs3_mknod.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
@@ -67,7 +67,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Mknod(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_mknod(nfs_arg_t *arg, exportlist_t *export,
 	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
@@ -90,7 +90,7 @@ int nfs3_Mknod(nfs_arg_t *arg, exportlist_t *export,
 		char str[LEN_FH_STR];
 		sprint_fhandle3(str, &(arg->arg_mknod3.where.dir));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_Mknod handle: %s "
+			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s "
 			 "name: %s", str, file_name);
 	}
 
@@ -293,21 +293,21 @@ int nfs3_Mknod(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(node_entry);
 
 	return rc;
-}				/* nfs3_Mknod */
+}				/* nfs3_mknod */
 
 /**
- * @brief Free the result structure allocated for nfs3_Mknod.
+ * @brief Free the result structure allocated for nfs3_mknod.
  *
- * This function frees the result structure allocated for nfs3_Mknod.
+ * This function frees the result structure allocated for nfs3_mknod.
  *
  * @param[in,out] res The result structure.
  *
  */
-void nfs3_Mknod_Free(nfs_res_t *res)
+void nfs3_mknod_free(nfs_res_t *res)
 {
 	if ((res->res_mknod3.status == NFS3_OK)
 	    && (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {
 		gsh_free(res->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.
 			 handle.data.data_val);
 	}
-}				/* nfs3_Mknod_Free */
+}

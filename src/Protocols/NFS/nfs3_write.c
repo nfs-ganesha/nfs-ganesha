@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Write.c
+ * @file  nfs3_write.c
  * @brief Everything you need for NFSv3 WRITE.
  */
 #include "config.h"
@@ -52,9 +52,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 WRITE
+ * @brief The NFSPROC3_WRITE
  *
- * Implements the NFS PROC WRITE function (for V2 and V3).
+ * Implements the NFSPROC3_WRITE function.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -69,9 +69,9 @@
  *
  */
 
-int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	      struct svc_req *req, nfs_res_t *res)
+int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr = {
@@ -288,17 +288,17 @@ int nfs_Write(nfs_arg_t *arg, exportlist_t *export,
 
 	return rc;
 
-}				/* nfs_Write.c */
+}				/* nfs3_write */
 
 /**
- * @brief Frees the result structure allocated for nfs_Write.
+ * @brief Frees the result structure allocated for nfs3_write.
  *
- * Frees the result structure allocated for nfs_Write.
+ * Frees the result structure allocated for nfs3_write.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Write_Free(nfs_res_t *res)
+void nfs3_write_free(nfs_res_t *res)
 {
 	return;
-}				/* nfs_Write_Free */
+}

@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Rename.c
+ * @file  nfs3_rename.c
  * @brief Everything you need for NFSv3 RENAME
  */
 #include "config.h"
@@ -51,9 +51,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 RENAME
+ * @brief The NFSPROC3_RENAME
  *
- * Implements the NFS PROC RENAME function (for V2 and V3).
+ * Implements the NFSPROC3_RENAME function.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Rename(nfs_arg_t *arg, exportlist_t *export,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_rename(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
 	const char *entry_name = arg->arg_rename3.from.name;
 	const char *new_entry_name = arg->arg_rename3.to.name;
@@ -217,14 +217,14 @@ int nfs_Rename(nfs_arg_t *arg, exportlist_t *export,
 }
 
 /**
- * @brief Free the result structure allocated for nfs_Rename.
+ * @brief Free the result structure allocated for nfs3_rename.
  *
- * This function frees the result structure allocated for nfs_Rename.
+ * This function frees the result structure allocated for nfs3_rename.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Rename_Free(nfs_res_t *res)
+void nfs3_rename_free(nfs_res_t *res)
 {
 	return;
 }

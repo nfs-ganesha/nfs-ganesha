@@ -24,8 +24,11 @@
  */
 
 /**
- * @file  nfs3_Readlink.c
- * @brief Everything you need for NFSv3 READLINK.
+ * file    nfs3_commit.c
+ * brief   Routines used for managing the NFS4 COMPOUND functions.
+ *
+ * nfs3_commit.c : Routines used for managing the NFS4 COMPOUND functions.
+ *
  */
 #include "config.h"
 #include <stdio.h>
@@ -35,7 +38,6 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -44,61 +46,53 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "nfs_tools.h"
 
 /**
+ * @brief Implements NFSPROC3_COMMIT
  *
- * @brief The NFS PROC2 and PROC3 READLINK.
+ * Implements NFSPROC3_COMMIT.
  *
- * This function implements the NFS PROC2-3 READLINK function.
- *
- * @param[in]  arg     NFS argument union
+ * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Requestcontext
- * @param[in]  worker  Client resource to be used
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @see cache_inode_readlink
- *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
+ *
  */
 
-int nfs_Readlink(nfs_arg_t *arg, exportlist_t *export,
-		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-		 struct svc_req *req, nfs_res_t *res)
+int nfs3_commit(nfs_arg_t *arg, exportlist_t *export,
+		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry = NULL;
 	cache_inode_status_t cache_status;
-	struct gsh_buffdesc link_buffer = {
-		.addr = NULL,
-		.len = 0
-	};
+	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_vers,
-				 &(arg->arg_readlink3.symlink),
-				 NULL, str);
-
+		sprint_fhandle3(str, &(arg->arg_commit3.file));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Readlink handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_commit handle: %s",
 			 str);
 	}
 
-	/* to avoid setting it on each error case */
-	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes.
-	    attributes_follow = false;
+	/* To avoid setting it on each error case */
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
+	    attributes_follow = FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
+	    FALSE;
 
-	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
+	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
 				    req_ctx,
 				    export,
-				    &res->res_readlink3.status,
+				    &res->res_commit3.status,
 				    &rc);
 
 	if (entry == NULL) {
@@ -106,56 +100,47 @@ int nfs_Readlink(nfs_arg_t *arg, exportlist_t *export,
 		goto out;
 	}
 
-	/* Sanity Check: the entry must be a link */
-	if (entry->type != SYMBOLIC_LINK) {
-		res->res_readlink3.status = NFS3ERR_INVAL;
+	cache_status = cache_inode_commit(entry,
+					  arg->arg_commit3.offset,
+					  arg->arg_commit3.count,
+					  req_ctx);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res->res_commit3.status = nfs3_Errno(cache_status);
+
+		nfs_SetWccData(NULL, entry, req_ctx,
+			       &(res->res_commit3.COMMIT3res_u.resfail.
+				 file_wcc));
+
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	cache_status = cache_inode_readlink(entry, &link_buffer, req_ctx);
+	nfs_SetWccData(NULL, entry, req_ctx,
+		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res->res_readlink3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry, req_ctx,
-				  &res->res_readlink3.READLINK3res_u.resfail.
-				  symlink_attributes);
-
-		if (nfs_RetryableError(cache_status))
-			rc = NFS_REQ_DROP;
-
-		goto out;
-	}
-
-	/* Reply to the client */
-	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
-
-	nfs_SetPostOpAttr(entry, req_ctx,
-			  &res->res_readlink3.READLINK3res_u.
-			  resok.symlink_attributes);
-	res->res_readlink3.status = NFS3_OK;
-
-	rc = NFS_REQ_OK;
+	/* Set the write verifier */
+	memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
+	       sizeof(writeverf3));
+	res->res_commit3.status = NFS3_OK;
 
  out:
-	/* return references */
+
 	if (entry)
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs_Readlink */
+}				/* nfs3_commit */
 
 /**
- * @brief Free the result structure allocated for nfs3_Readlink.
+ * @brief Free the result structure allocated for nfs3_commit.
  *
- * This function frees the result structure allocated for
- * nfs3_Readlink.
+ * This function frees the result structure allocated for nfs3_commit.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs3_Readlink_Free(nfs_res_t *res)
+void nfs3_commit_free(nfs_res_t *res)
 {
-	if (res->res_readlink3.status == NFS3_OK)
-		gsh_free(res->res_readlink3.READLINK3res_u.resok.data);
-}				/* nfs3_Readlink_Free */
+	return;
+}

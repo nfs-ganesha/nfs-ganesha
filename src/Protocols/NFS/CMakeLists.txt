@@ -8,28 +8,28 @@ SET(nfsproto_STAT_SRCS
    mnt_Null.c
    mnt_Umnt.c
    mnt_UmntAll.c
-   nfs3_Access.c
-   nfs3_Commit.c
-   nfs3_Create.c
-   nfs3_Fsinfo.c
-   nfs3_Fsstat.c
-   nfs3_Getattr.c
-   nfs3_Link.c
-   nfs3_Lookup.c
-   nfs3_Mkdir.c
-   nfs3_Mknod.c
-   nfs3_Pathconf.c
-   nfs3_Null.c
-   nfs3_Read.c
-   nfs3_Readdir.c
-   nfs3_Readdirplus.c
-   nfs3_Readlink.c
-   nfs3_Remove.c
-   nfs3_Rename.c
-   nfs3_Rmdir.c
-   nfs3_Setattr.c
-   nfs3_Symlink.c
-   nfs3_Write.c
+   nfs_null.c
+   nfs3_access.c
+   nfs3_commit.c
+   nfs3_create.c
+   nfs3_fsinfo.c
+   nfs3_fsstat.c
+   nfs3_getattr.c
+   nfs3_link.c
+   nfs3_lookup.c
+   nfs3_mkdir.c
+   nfs3_mknod.c
+   nfs3_pathconf.c
+   nfs3_read.c
+   nfs3_readdir.c
+   nfs3_readdirplus.c
+   nfs3_readlink.c
+   nfs3_remove.c
+   nfs3_rename.c
+   nfs3_rmdir.c
+   nfs3_setattr.c
+   nfs3_symlink.c
+   nfs3_write.c
    nfs4_Compound.c
    nfs4_op_access.c
    nfs4_op_close.c

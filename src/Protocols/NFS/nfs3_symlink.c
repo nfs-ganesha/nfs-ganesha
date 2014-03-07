@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Symlink.c
+ * @file  nfs3_symlink.c
  * @brief Everything you need for NFSv3 SYMLINK
  */
 #include "config.h"
@@ -51,9 +51,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 SYMLINK
+ * @brief The NFSPROC3_SYMLINK
  *
- * Implements the NFS PROC SYMLINK function (for V2 and V3).
+ * Implements the NFSPROC3_SYMLINK function.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Symlink(nfs_arg_t *arg, exportlist_t *export,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_symlink(nfs_arg_t *arg, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
 	const char *symlink_name = arg->arg_symlink3.where.name;
 	char *target_path = arg->arg_symlink3.symlink.symlink_data;
@@ -249,20 +249,20 @@ int nfs_Symlink(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(symlink_entry);
 
 	return rc;
-}				/* nfs_Symlink */
+}				/* nfs3_symlink */
 
 /**
- * @brief Free the result structure allocated for nfs_Symlink.
+ * @brief Free the result structure allocated for nfs3_symlink.
  *
- * This function frees the result structure allocated for nfs_Symlink.
+ * This function frees the result structure allocated for nfs3_symlink.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Symlink_Free(nfs_res_t *res)
+void nfs3_symlink_free(nfs_res_t *res)
 {
 	if ((res->res_symlink3.status == NFS3_OK)
 	    && (res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows))
 		gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.
 			 post_op_fh3_u.handle.data.data_val);
-}				/* nfs_Symlink_Free */
+}

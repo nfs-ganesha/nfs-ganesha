@@ -25,8 +25,8 @@
  */
 
 /**
- * @file  nfs3_Null.c
- * @brief NFSv3 NULL procedure.
+ * @file  nfs_null.c
+ * @brief NFS NULL procedure for all versions
  */
 #include "config.h"
 #include <stdio.h>
@@ -56,25 +56,25 @@
  * @param[out] res     ignored
  */
 
-int nfs_Null(nfs_arg_t *arg, exportlist_t *export,
+int nfs_null(nfs_arg_t *arg, exportlist_t *export,
 	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	     struct svc_req *req, nfs_res_t *res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
+	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_null");
 	return NFS3_OK;
-}				/* nfs_cb_Null */
+}
 
-/**
- * @brief Free memory allocated for the nfs4_cb_Null result
+/**n
+ * @brief Free memory allocated for the nfs_null result
  *
  * This function frees any memory allocated for the result of the
- * nfs4_cb_Null operation.
+ * nfs_null operation.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Null_Free(nfs_res_t *res)
+void nfs_null_free(nfs_res_t *res)
 {
 	/* Nothing to do here */
 	return;
-}				/* nfs4_cb_Null_Free */
+}

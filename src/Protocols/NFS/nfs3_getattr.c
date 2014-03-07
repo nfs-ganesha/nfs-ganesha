@@ -24,11 +24,8 @@
  */
 
 /**
- * file    nfs3_Commit.c
- * brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * nfs3_Commit.c : Routines used for managing the NFS4 COMPOUND functions.
- *
+ * @file  nfs3_getattr.c
+ * @brief Implements the NFSv3 GETATTR proc
  */
 #include "config.h"
 #include <stdio.h>
@@ -38,6 +35,7 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -46,101 +44,93 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 /**
- * @brief Implements NFSPROC3_COMMIT
  *
- * Implements NFSPROC3_COMMIT.
+ * @brief Get attributes for a file
+ *
+ * Get attributes for a file. Implements NFSPROC3_GETATTR.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
  * @param[in]  req_ctx Request context
- * @param[in]  worker  Worker thread data
+ * @param[in]  worker  Data belonging to the worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_OK if successfull
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
- *
  */
 
-int nfs3_Commit(nfs_arg_t *arg, exportlist_t *export,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_getattr(nfs_arg_t *arg, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
-	cache_inode_status_t cache_status;
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-		sprint_fhandle3(str, &(arg->arg_commit3.file));
+		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
+				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_Commit handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_getattr handle: %s",
 			 str);
 	}
 
-	/* To avoid setting it on each error case */
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
-	    FALSE;
-
-	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
+	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
 				    req_ctx,
 				    export,
-				    &res->res_commit3.status,
+				    &res->res_getattr3.status,
 				    &rc);
 
 	if (entry == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs_Getattr returning %d",
+			     rc);
 		goto out;
 	}
 
-	cache_status = cache_inode_commit(entry,
-					  arg->arg_commit3.offset,
-					  arg->arg_commit3.count,
-					  req_ctx);
+	if (!cache_entry_to_nfs3_Fattr(
+		       entry,
+		       req_ctx,
+		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
+		res->res_getattr3.status =
+		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res->res_commit3.status = nfs3_Errno(cache_status);
-
-		nfs_SetWccData(NULL, entry, req_ctx,
-			       &(res->res_commit3.COMMIT3res_u.resfail.
-				 file_wcc));
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs_Getattr set failed status v3");
 
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	nfs_SetWccData(NULL, entry, req_ctx,
-		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
+	res->res_getattr3.status = NFS3_OK;
 
-	/* Set the write verifier */
-	memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-	       sizeof(writeverf3));
-	res->res_commit3.status = NFS3_OK;
+	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
+	rc = NFS_REQ_OK;
 
  out:
-
+	/* return references */
 	if (entry)
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs3_Commit */
+
+}
 
 /**
- * @brief Free the result structure allocated for nfs3_Commit.
+ * @brief Free the result structure allocated for nfs3_getattr.
  *
- * This function frees the result structure allocated for nfs3_Commit.
- *
- * @param[in,out] res Result structure
+ * @param[in,out] resp Result structure
  *
  */
-void nfs3_Commit_Free(nfs_res_t *res)
+void nfs3_getattr_free(nfs_res_t *resp)
 {
+	/* Nothing to do here */
 	return;
 }

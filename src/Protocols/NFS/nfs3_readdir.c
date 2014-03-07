@@ -25,7 +25,7 @@
   */
 
 /**
- * @file  nfs3_Readdir.c
+ * @file  nfs3_readdir.c
  * @brief Everything you need for a simple READDIR
  *
  */
@@ -49,10 +49,6 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include <assert.h>
-
-/* This has a tremendous amount of code duplication, but it's very
-   difficult to refactor since the differences between NFSv2 and NFSv3
-   are more a matter of data types than functionality. */
 
 cache_inode_status_t nfs3_readdir_callback(void *opaque,
 					   const struct attrlist *attr,
@@ -103,9 +99,9 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 READDIR
+ * @brief The NFSPROC3_READDIR
  *
- * Implements the NFS PROC READDIR function (for V2 and V3).
+ * Implements the NFSPROC3_READDIR function.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -120,9 +116,9 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  *
  */
 
-int nfs_Readdir(nfs_arg_t *arg, exportlist_t *export,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *dir_entry = NULL;
 	unsigned long count = 0;
@@ -195,7 +191,7 @@ int nfs_Readdir(nfs_arg_t *arg, exportlist_t *export,
 	estimated_num_entries =
 	    MIN(count / (sizeof(entry3) - sizeof(char *)), 120);
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "---> nfs3_Readdir: count=%lu  cookie=%" PRIu64 "  "
+		     "---> nfs3_readdir: count=%lu  cookie=%" PRIu64 "  "
 		     "estimated_num_entries=%lu", count, cookie,
 		     estimated_num_entries);
 	if (estimated_num_entries == 0) {
@@ -361,15 +357,15 @@ int nfs_Readdir(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	return rc;
-}				/* nfs_Readdir */
+}				/* nfs3_readdir */
 
 /**
- * @brief Free the result structure allocated for nfs3_Readdir
+ * @brief Free the result structure allocated for nfs3_readdir
  *
  * @param[in,out] resp Result structure
  *
  */
-void nfs3_Readdir_Free(nfs_res_t *resp)
+void nfs3_readdir_free(nfs_res_t *resp)
 {
 	if ((resp->res_readdir3.status == NFS3_OK)
 	    && (resp->res_readdir3.READDIR3res_u.resok.reply.entries != NULL)) {

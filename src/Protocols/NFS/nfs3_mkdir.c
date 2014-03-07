@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Mkdir.c
+ * @file  nfs3_mkdir.c
  * @brief Evrythinhg you need to handle NFSv3 MKDIR
  */
 #include "config.h"
@@ -51,9 +51,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 MKDIR
+ * @brief The NFSPROC3_MKDIR
  *
- * Implements the NFS PROC MKDIR function (for V2 and V3).
+ * Implements the NFSPROC3_MKDIR.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Mkdir(nfs_arg_t *arg, exportlist_t *export,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	      struct svc_req *req, nfs_res_t *res)
+int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
+	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       struct svc_req *req, nfs_res_t *res)
 {
 	const char *dir_name = arg->arg_mkdir3.where.name;
 	uint32_t mode = 0;
@@ -91,7 +91,7 @@ int nfs_Mkdir(nfs_arg_t *arg, exportlist_t *export,
 				 NULL, str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s "
+			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s "
 			 "name: %s", str, dir_name);
 	}
 
@@ -229,18 +229,18 @@ int nfs_Mkdir(nfs_arg_t *arg, exportlist_t *export,
 }
 
 /**
- * @brief Free the result structure allocated for nfs_Mkdir.
+ * @brief Free the result structure allocated for nfs3_mkdir.
  *
- * This function frees the result structure allocated for nfs_Mkdir.
+ * This function frees the result structure allocated for nfs3_mkdir.
  *
  * @param[in,out] res Result structure
  *
  */
-void nfs_Mkdir_Free(nfs_res_t *res)
+void nfs3_mkdir_free(nfs_res_t *res)
 {
 	if ((res->res_mkdir3.status == NFS3_OK)
 	    && (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
 		gsh_free(res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
 			 handle.data.data_val);
 	}
-}				/* nfs_Mkdir_Free */
+}

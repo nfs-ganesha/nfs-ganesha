@@ -25,7 +25,7 @@
  */
 
 /**
- * @file  nfs3_Setattr.c
+ * @file  nfs3_setattr.c
  * @brief Everything you need for NFSv3 SETATTR
  */
 #include "config.h"
@@ -49,9 +49,9 @@
 #include "nfs_proto_tools.h"
 
 /**
- * @brief The NFS PROC2 and PROC3 SETATTR
+ * @brief The NFSPROC3_SETATTR
  *
- * Implements the NFS PROC SETATTR function (for V2 and V3).
+ * Implements the NFSPROC3_SETATTR function.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
@@ -66,9 +66,9 @@
  *
  */
 
-int nfs_Setattr(nfs_arg_t *arg, exportlist_t *export,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
+		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 struct svc_req *req, nfs_res_t *res)
 {
 	struct attrlist setattr;
 	cache_entry_t *entry = NULL;
@@ -199,17 +199,17 @@ int nfs_Setattr(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs_Setattr */
+}				/* nfs3_setattr */
 
 /**
- * @brief Free the result structure allocated for nfs_Setattr.
+ * @brief Free the result structure allocated for nfs3_setattr.
  *
- * This function frees the result structure allocated for nfs_Setattr.
+ * This function frees the result structure allocated for nfs3_setattr.
  *
  * @param[in,out] res Result structure
  */
 
-void nfs_Setattr_Free(nfs_res_t *res)
+void nfs3_setattr_free(nfs_res_t *res)
 {
 	return;
-}				/* nfs_Setattr_Free */
+}

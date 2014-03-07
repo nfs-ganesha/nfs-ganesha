@@ -24,7 +24,7 @@
  */
 
 /**
- * @file  nfs3_Read.c
+ * @file  nfs3_read.c
  * @brief Everything you need to read.
  */
 #include "config.h"
@@ -72,9 +72,9 @@ static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
 
 /**
  *
- * @brief The NFS PROC3 READ
+ * @brief The NFSPROC3_READ
  *
- * Implements the NFS PROC READ function (for V2 and V3).
+ * Implements the NFSPROC3_READ function.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
@@ -89,9 +89,9 @@ static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
  *
  */
 
-int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
-	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
+	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr;
@@ -261,19 +261,19 @@ int nfs_Read(nfs_arg_t *arg, exportlist_t *export,
 			     (rc == NFS_REQ_OK) ? true : false, false);
 #endif
 	return rc;
-}				/* nfs_Read */
+}				/* nfs3_read */
 
 /**
- * @brief Free the result structure allocated for nfs3_Read.
+ * @brief Free the result structure allocated for nfs3_read.
  *
- * This function frees the result structure allocated for nfs3_Read.
+ * This function frees the result structure allocated for nfs3_read.
  *
  * @param[in,out] res Result structure
  */
-void nfs3_Read_Free(nfs_res_t *res)
+void nfs3_read_free(nfs_res_t *res)
 {
 	if ((res->res_read3.status == NFS3_OK)
 	    && (res->res_read3.READ3res_u.resok.data.data_len != 0)) {
 		gsh_free(res->res_read3.READ3res_u.resok.data.data_val);
 	}
-}				/* nfs3_Read_Free */
+}

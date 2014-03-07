@@ -25,7 +25,7 @@
  */
 
 /**
- * @file    nfs3_Fsinfo.c
+ * @file    nfs3_fsinfo.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
@@ -67,7 +67,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Fsinfo(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_fsinfo(nfs_arg_t *arg, exportlist_t *export,
 		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
@@ -78,7 +78,7 @@ int nfs3_Fsinfo(nfs_arg_t *arg, exportlist_t *export,
 		char str[LEN_FH_STR];
 		sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_Fsinfo handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_fsinfo handle: %s",
 			 str);
 	}
 
@@ -146,17 +146,17 @@ int nfs3_Fsinfo(nfs_arg_t *arg, exportlist_t *export,
 		cache_inode_put(entry);
 
 	return rc;
-}				/* nfs3_Fsinfo */
+}				/* nfs3_fsinfo */
 
 /**
- * @brief Free the result structure allocated for nfs3_Fsinfo.
+ * @brief Free the result structure allocated for nfs3_fsinfo.
  *
- * This function frees the result structure allocated for nfs3_Fsinfo.
+ * This function frees the result structure allocated for nfs3_fsinfo.
  *
  * @param[in,out] res The result structure
  *
  */
-void nfs3_Fsinfo_Free(nfs_res_t *res)
+void nfs3_fsinfo_free(nfs_res_t *res)
 {
 	return;
-}				/* nfs3_Fsinfo_Free */
+}

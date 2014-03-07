@@ -24,8 +24,10 @@
  */
 
 /**
- * @file  nfs3_Getattr.c
- * @brief Implements the NFSv3 GETATTR proc
+ * @file  nfs3_access.c
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
+ *
+ * Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
 #include <stdio.h>
@@ -35,7 +37,6 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -44,94 +45,105 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
 #include "nfs_proto_tools.h"
+#include "nfs_tools.h"
 
 /**
+ * Implements NFSPROC3_ACCESS.
  *
- * @brief Get attributes for a file
- *
- * Get attributes for a file. Implements NFS PROC2 GETATTR and NFS
- * PROC3 GETATTR.
+ * This function implements NFSPROC3_ACCESS.
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
  * @param[in]  req_ctx Request context
- * @param[in]  worker  Data belonging to the worker thread
+ * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
+ *
  */
 
-int nfs_Getattr(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_access(nfs_arg_t *arg, exportlist_t *export,
 		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
+	cache_inode_status_t cache_status;
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
-				 NULL, str);
+		sprint_fhandle3(str, &(arg->arg_access3.object));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Getattr handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_access handle: %s",
 			 str);
 	}
 
-	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
+	/* to avoid setting it on each error case */
+	res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow =
+	    FALSE;
+
+	/* Convert file handle into a vnode */
+	entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
 				    req_ctx,
 				    export,
-				    &res->res_getattr3.status,
+				    &(res->res_access3.status),
 				    &rc);
 
 	if (entry == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Getattr returning %d",
-			     rc);
 		goto out;
 	}
 
-	if (!cache_entry_to_nfs3_Fattr(
-		       entry,
-		       req_ctx,
-		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
-		res->res_getattr3.status =
-		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
+	/* Perform the 'access' call */
+	cache_status =
+	    nfs_access_op(entry, arg->arg_access3.access,
+			  &res->res_access3.ACCESS3res_u.resok.access, NULL,
+			  req_ctx);
 
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Getattr set failed status v3");
+	if (cache_status == CACHE_INODE_SUCCESS
+	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
+		/* Build Post Op Attributes */
+		nfs_SetPostOpAttr(entry, req_ctx,
+				  &(res->res_access3.ACCESS3res_u.resok.
+				    obj_attributes));
 
+		res->res_access3.status = NFS3_OK;
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	res->res_getattr3.status = NFS3_OK;
+	/* If we are here, there was an error */
+	if (nfs_RetryableError(cache_status)) {
+		rc = NFS_REQ_DROP;
+		goto out;
+	}
 
-	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
-	rc = NFS_REQ_OK;
-
+	res->res_access3.status = nfs3_Errno(cache_status);
+	nfs_SetPostOpAttr(entry, req_ctx,
+			  &(res->res_access3.ACCESS3res_u.resfail.
+			    obj_attributes));
  out:
-	/* return references */
+
 	if (entry)
 		cache_inode_put(entry);
 
 	return rc;
-
-}
+}				/* nfs3_access */
 
 /**
- * @brief Free the result structure allocated for nfs_Getattr.
+ * @brief Free the result structure allocated for nfs3_access.
  *
- * @param[in,out] resp Result structure
+ * this function frees the result structure allocated for nfs3_access.
+ *
+ * @param[in,out] res Result structure.
  *
  */
-void nfs_Getattr_Free(nfs_res_t *resp)
+void nfs3_access_free(nfs_res_t *res)
 {
-	/* Nothing to do here */
+	/* Nothing to do */
 	return;
-}				/* nfs_Getattr_Free */
+}

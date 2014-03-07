@@ -24,7 +24,7 @@
  */
 
 /**
- * @file  nfs3_Link.c
+ * @file  nfs3_link.c
  * @brief everything that is needed to handle NFS PROC3 LINK.
  */
 #include "config.h"
@@ -51,9 +51,9 @@
 
 /**
  *
- * @brief The NFS PROC2 and PROC3 LINK
+ * @brief The NFSPROC3_LINK
  *
- * The NFS PROC2 and PROC3 LINK.
+ * The NFSPROC3_LINK.
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -68,9 +68,9 @@
  *
  */
 
-int nfs_Link(nfs_arg_t *arg, exportlist_t *export,
-	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int nfs3_link(nfs_arg_t *arg, exportlist_t *export,
+	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      struct svc_req *req, nfs_res_t *res)
 {
 	const char *link_name = arg->arg_link3.link.name;
 	cache_entry_t *target_entry = NULL;
@@ -97,7 +97,7 @@ int nfs_Link(nfs_arg_t *arg, exportlist_t *export,
 				 strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Link handle: %s to "
+			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to "
 			 "handle: %s name: %s", strfrom, strto, link_name);
 	}
 
@@ -217,17 +217,17 @@ int nfs_Link(nfs_arg_t *arg, exportlist_t *export,
 
 	return rc;
 
-}				/* nfs_Link */
+}				/* nfs3_link */
 
 /**
- * @brief Free the result structure allocated for nfs_Link
+ * @brief Free the result structure allocated for nfs3_link
  *
- * This function frees the result structure allocated for nfs_Link.
+ * This function frees the result structure allocated for nfs3_link.
  *
  * @param[in,out] resp Result structure
  *
  */
-void nfs_Link_Free(nfs_res_t *resp)
+void nfs3_link_free(nfs_res_t *resp)
 {
 	return;
-}				/* nfs_Link_Free */
+}

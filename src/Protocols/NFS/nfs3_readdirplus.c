@@ -25,7 +25,7 @@
  */
 
 /**
- * @file nfs3_Readdirplus.c
+ * @file nfs3_readdirplus.c
  * @brief Everything you need for the NFSv3 readdirplus operation
  */
 
@@ -58,7 +58,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 static void free_entryplus3s(entryplus3 *entryplus3s);
 
 /**
- * @brief Opaque bookkeeping structure for NFSv3 READDIRPLUS
+ * @brief Opaque bookkeeping structure for NFSPROC3_READDIRPLUS
  *
  * This structure keeps track of the process of writing out an NFSv3
  * READDIRPLUS response between calls to nfs3_readdirplus_callback.
@@ -100,9 +100,9 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 }
 
 /**
- * @brief The NFS PROC3 READDIRPLUS
+ * @brief The NFSPROC3_READDIRPLUS
  *
- * Implements the NFSv3 PROC READDIRPLUS function
+ * Implements the NFSPROC3_READDIRPLUS function
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
@@ -116,7 +116,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_readdirplus(nfs_arg_t *arg, exportlist_t *export,
 		     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		     struct svc_req *req, nfs_res_t *res)
 {
@@ -151,7 +151,7 @@ int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
 			component = COMPONENT_NFS_READDIR;
 
 		LogDebug(component,
-			 "REQUEST PROCESSING: Calling nfs3_Readdirplus handle: %s",
+			 "REQUEST PROCESSING: Calling nfs3_readdirplus handle: %s",
 			 str);
 	}
 
@@ -175,7 +175,7 @@ int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
 	tracker.total_entries = estimated_num_entries;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "nfs3_Readdirplus: dircount=%u " "begin_cookie=%" PRIu64
+		     "nfs3_readdirplus: dircount=%u " "begin_cookie=%" PRIu64
 		     " " "estimated_num_entries=%lu, mem_left=%zd",
 		     arg->arg_readdirplus3.dircount, begin_cookie,
 		     estimated_num_entries, tracker.mem_left);
@@ -371,23 +371,23 @@ int nfs3_Readdirplus(nfs_arg_t *arg, exportlist_t *export,
 		free_entryplus3s(tracker.entries);
 
 	return rc;
-}				/* nfs3_Readdirplus */
+}				/* nfs3_readdirplus */
 
 /**
- * @brief Frees the result structure allocated for nfs3_Readdirplus.
+ * @brief Frees the result structure allocated for nfs3_readdirplus.
  *
- * Frees the result structure allocated for nfs3_Readdirplus.
+ * Frees the result structure allocated for nfs3_readdirplus.
  *
  * @param resp [in,out] Pointer to the result structure
  *
  */
-void nfs3_Readdirplus_Free(nfs_res_t *resp)
+void nfs3_readdirplus_free(nfs_res_t *resp)
 {
 #define RESREADDIRPLUSREPLY resp->res_readdirplus3.READDIRPLUS3res_u.resok.reply
 	if ((resp->res_readdirplus3.status == NFS3_OK)
 	    && (RESREADDIRPLUSREPLY.entries != NULL))
 		free_entryplus3s(RESREADDIRPLUSREPLY.entries);
-}				/*  nfs3_Readdirplus_Free */
+}
 
 /**
  * @brief Populate entryplus3s when called from cache_inode_readdir

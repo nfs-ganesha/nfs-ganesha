@@ -285,70 +285,70 @@ int rquota_setactivequota(nfs_arg_t *, exportlist_t *, struct req_op_context *,
  *  * -- End of RQUOTA protocol functions. --
  *   */
 
-int nfs_Null(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs_null(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs_Getattr(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Setattr(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Lookup(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Readlink(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs3_getattr(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs_Read(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_setattr(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs_Write(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Create(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Remove(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Rename(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Link(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Symlink(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs3_lookup(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs_Mkdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Rmdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Readdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs_Fsstat(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs3_Access(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs3_Readdirplus(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs3_Fsinfo(nfs_arg_t *, exportlist_t *, struct req_op_context *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-int nfs3_Pathconf(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs3_readlink(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_Commit(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs3_read(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_write(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_create(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_Mknod(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+int nfs3_remove(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_rename(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_link(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_symlink(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_mkdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_rmdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_readdir(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_fsstat(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_access(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_readdirplus(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_fsinfo(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_pathconf(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_commit(nfs_arg_t *, exportlist_t *, struct req_op_context *,
+		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+
+int nfs3_mknod(nfs_arg_t *, exportlist_t *, struct req_op_context *,
 	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
 
 /* Functions needed for nfs v4 */
@@ -658,28 +658,30 @@ void rquota_getactivequota_Free(nfs_res_t *);
 void rquota_setquota_Free(nfs_res_t *);
 void rquota_setactivequota_Free(nfs_res_t *);
 
-void nfs_Null_Free(nfs_res_t *);
-void nfs_Getattr_Free(nfs_res_t *);
-void nfs_Setattr_Free(nfs_res_t *);
-void nfs3_Lookup_Free(nfs_res_t *);
-void nfs3_Access_Free(nfs_res_t *);
-void nfs3_Readlink_Free(nfs_res_t *);
-void nfs_Write_Free(nfs_res_t *);
-void nfs_Create_Free(nfs_res_t *);
-void nfs_Mkdir_Free(nfs_res_t *);
-void nfs_Symlink_Free(nfs_res_t *);
-void nfs3_Mknod_Free(nfs_res_t *);
-void nfs_Remove_Free(nfs_res_t *);
-void nfs_Rmdir_Free(nfs_res_t *);
-void nfs_Rename_Free(nfs_res_t *);
-void nfs_Link_Free(nfs_res_t *);
-void nfs3_Readdir_Free(nfs_res_t *);
-void nfs3_Readdirplus_Free(nfs_res_t *);
-void nfs_Fsstat_Free(nfs_res_t *);
-void nfs3_Fsinfo_Free(nfs_res_t *);
-void nfs3_Pathconf_Free(nfs_res_t *);
-void nfs3_Commit_Free(nfs_res_t *);
-void nfs3_Read_Free(nfs_res_t *);
+void nfs_null_free(nfs_res_t *);
+
+void nfs3_getattr_free(nfs_res_t *);
+void nfs3_setattr_free(nfs_res_t *);
+void nfs3_lookup_free(nfs_res_t *);
+void nfs3_access_free(nfs_res_t *);
+void nfs3_readlink_free(nfs_res_t *);
+void nfs3_write_free(nfs_res_t *);
+void nfs3_create_free(nfs_res_t *);
+void nfs3_mkdir_free(nfs_res_t *);
+void nfs3_symlink_free(nfs_res_t *);
+void nfs3_mknod_free(nfs_res_t *);
+void nfs3_remove_free(nfs_res_t *);
+void nfs3_rmdir_free(nfs_res_t *);
+void nfs3_rename_free(nfs_res_t *);
+void nfs3_link_free(nfs_res_t *);
+void nfs3_readdir_free(nfs_res_t *);
+void nfs3_readdirplus_free(nfs_res_t *);
+void nfs3_fsstat_free(nfs_res_t *);
+void nfs3_fsinfo_free(nfs_res_t *);
+void nfs3_pathconf_free(nfs_res_t *);
+void nfs3_commit_free(nfs_res_t *);
+void nfs3_read_free(nfs_res_t *);
+
 void nfs4_Compound_FreeOne(nfs_resop4 *);
 void nfs4_Compound_Free(nfs_res_t *);
 void nfs4_Compound_CopyResOne(nfs_resop4 *, nfs_resop4 *);
