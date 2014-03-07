@@ -211,16 +211,20 @@ struct config_item {
 		struct { /* CONFIG_FSID */
 			int64_t def_maj;
 			int64_t def_min;
+			uint32_t bit;
+			size_t set_off;
 		} fsid;
 		struct { /* CONFIG_LIST | CONFIG_ENUM |
 			    CONFIG_LIST_BITS | CONFIG_ENUM_BITS */
 			uint32_t def;
 			uint32_t mask;
 			struct config_item_list *tokens;
+			size_t set_off;
 		} lst;
 		struct { /* CONFIG_BOOLBIT */
 			bool def;
 			uint32_t bit;
+			size_t set_off;
 		} bit;
 		struct { /* CONFIG_BLOCK */
 			void *(*init)(void *link_mem, void *self_struct);
@@ -312,6 +316,17 @@ struct config_item {
 	  .type = CONFIG_FSID,		   	    \
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
+	  .u.fsid.set_off = UINT32_MAX,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+#define CONF_ITEM_FSID_SET(_name_, _def_maj_, _def_min_, _struct_, \
+			   _mem_, _bit_, _set_)     \
+	{ .name = _name_,			    \
+	  .type = CONFIG_FSID,		   	    \
+	  .u.fsid.def_maj = _def_maj_,		    \
+	  .u.fsid.def_min = _def_min_,		    \
+	  .u.fsid.bit = _bit_,		   	    \
+	  .u.fsid.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 #define CONF_ITEM_BLOCK(_name_, _params_, _init_, _commit_, _struct_, _mem_) \
@@ -346,6 +361,7 @@ struct config_item {
 	  .type = CONFIG_LIST,			    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
+	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -355,6 +371,18 @@ struct config_item {
 	  .type = CONFIG_LIST,		  	    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
+	  .u.lst.set_off = UINT32_MAX,		    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_LIST_BITS_SET(_name_, _def_, _mask_, _tokens_, _struct_, \
+				_mem_, _set_)	    \
+	{ .name = _name_,			    \
+	  .type = CONFIG_LIST,		  	    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = _mask_,			    \
+	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -364,6 +392,16 @@ struct config_item {
 	  .type = CONFIG_BOOLBIT,		    \
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
+	  .u.lst.set_off = UINT32_MAX,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_BOOLBIT_SET(_name_, _def_, _bit_, _struct_, _mem_, _set_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_BOOLBIT,		    \
+	  .u.bit.def = _def_,			    \
+	  .u.bit.bit = _bit_,			    \
+	  .u.bit.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -381,6 +419,7 @@ struct config_item {
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
+	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -390,6 +429,18 @@ struct config_item {
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
+	  .u.lst.set_off = UINT32_MAX,		    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_ENUM_BITS_SET(_name_, _def_, _mask_, _tokens_, _struct_, \
+				_mem_, _set_)	    \
+	{ .name = _name_,			    \
+	  .type = CONFIG_ENUM,			    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = _mask_,			    \
+	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}

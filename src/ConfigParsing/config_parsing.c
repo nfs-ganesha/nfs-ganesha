@@ -196,7 +196,7 @@ static int convert_fsid(struct config_node *node, void *param)
 	errno = 0;
 	major = strtoull(node->u.varvalue, &endptr, 10);
 	if (*node->u.varvalue != '\0' && *endptr == '.') {
-		if (errno != 0 || major < 0 || major >= ULLONG_MAX) {
+		if (errno != 0 || major < 0 || major >= UINT64_MAX) {
 			LogMajor(COMPONENT_CONFIG,
 				 "At (%s:%d): %s (%s) major is out of range",
 				 node->filename,
@@ -218,7 +218,7 @@ static int convert_fsid(struct config_node *node, void *param)
 		sp = endptr + 1;
 		minor = strtoull(sp, &endptr, 10);
 		if (*sp != '\0' && *endptr == '\0') {
-			if (errno != 0 || minor < 0 || minor >= ULLONG_MAX) {
+			if (errno != 0 || minor < 0 || minor >= UINT64_MAX) {
 				LogMajor(COMPONENT_CONFIG,
 					 "At (%s:%d): %s (%s) minor is out of range",
 					 node->filename,
@@ -721,7 +721,16 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_FSID:
 				rc = convert_fsid(node, param_addr);
-				if (rc != 0)
+				if (rc == 0) {
+					if (item->u.fsid.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.fsid.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.fsid.bit;
+					}
+				} else
 					errors += rc;
 				break;
 			case CONFIG_STRING:
@@ -751,6 +760,14 @@ static int do_block_load(struct config_node *blk,
 					else
 						*(uint32_t *)param_addr
 							&= ~item->u.bit.bit;
+					if (item->u.bit.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.bit.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.bit.bit;
+					}	
 				} else
 					errors++;
 				break;
@@ -760,9 +777,17 @@ static int do_block_load(struct config_node *blk,
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
 				rc = convert_list(node, item, &flags);
-				if (rc == 0)
+				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
-				else
+					if (item->u.lst.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.lst.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.lst.mask;
+					}	
+				} else
 					errors += rc;
 				LogFullDebug(COMPONENT_CONFIG,
 					     "%p CONFIG_LIST %s mask=%08x flags=%08x"
@@ -778,9 +803,17 @@ static int do_block_load(struct config_node *blk,
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
 				rc = convert_enum(node, item, &flags);
-				if (rc == 0)
+				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
-				else
+					if (item->u.lst.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.lst.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.lst.mask;
+					}	
+				} else
 					errors += rc;
 				LogFullDebug(COMPONENT_CONFIG,
 					     "%p CONFIG_ENUM %s mask=%08x flags=%08x"
