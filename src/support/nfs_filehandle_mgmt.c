@@ -220,57 +220,6 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 }
 
 /**
- * @brief Convert an FSAL object to an NFSv2 file handle
- *
- * @param[out] fh2        The extracted file handle
- * @param[in]  fsalhandle The FSAL handle to be converted
- * @param[in]  exp        The gsh_export that this handle belongs to
- *
- * @return true if successful, false otherwise
- */
-bool nfs2_FSALToFhandle(fhandle2 *fh2,
-			const struct fsal_obj_handle *fsalhandle,
-			struct gsh_export *exp)
-{
-	fsal_status_t fsal_status;
-	file_handle_v2_t *file_handle;
-	struct gsh_buffdesc fh_desc;
-
-	/* zero-ification of the buffer to be used as handle */
-	memset(fh2, 0, sizeof(struct alloc_file_handle_v2));
-	file_handle = (file_handle_v2_t *) fh2;
-
-	/* Fill in the fs opaque part */
-	fh_desc.addr = &file_handle->fsopaque;
-	fh_desc.len = sizeof(file_handle->fsopaque);
-	fsal_status =
-	    fsalhandle->ops->handle_digest(fsalhandle, FSAL_DIGEST_NFSV2,
-					   &fh_desc);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		if (fsal_status.major == ERR_FSAL_TOOSMALL)
-			LogCrit(COMPONENT_FILEHANDLE,
-				"NFSv2 File handle is too small to manage this FSAL");
-		else
-			LogCrit(COMPONENT_FILEHANDLE,
-				"FSAL_DigestHandle return (%u,%u) when called from %s",
-				fsal_status.major, fsal_status.minor, __func__);
-		return false;
-	}
-
-	file_handle->fhversion = GANESHA_FH_VERSION;
-	/* keep track of the export id */
-	file_handle->exportid = exp->export.id;
-
-	/*   /\* Set the data *\/ */
-	/*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
-
-	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS2 Handle %s", LEN_FH_STR,
-			   fh2, sizeof(*fh2));
-
-	return true;
-}
-
-/**
  *
  * nfs4_Is_Fh_DSHandle
  *
@@ -439,29 +388,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 
 	return NFS3_OK;
 }				/* nfs3_Is_Fh_Invalid */
-
-/**
- * @brief Print an NFSv2 file handle (for debugging purpose)
- *
- * @param[in] component Subsystem component ID
- * @param[in] fh        File handle to print
- */
-void print_fhandle2(log_components_t component, fhandle2 *fh)
-{
-	if (isFullDebug(component)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle2(str, fh);
-		LogFullDebug(component, "%s", str);
-	}
-}
-
-void sprint_fhandle2(char *str, fhandle2 *fh)
-{
-	char *tmp = str + sprintf(str, "File Handle V2: ");
-
-	sprint_mem(tmp, (char *)fh, 32);
-}				/* sprint_fhandle2 */
 
 /**
  * @brief Print an NFSv3 file handle

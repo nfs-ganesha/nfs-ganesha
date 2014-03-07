@@ -26,7 +26,7 @@
 
 /**
  * @file nfs_file_handle.h
- * @brief Prototypes for the file handle in v2, v3, v4
+ * @brief Prototypes for the file handle in v3 and v4
  */
 
 #ifndef NFS_FILE_HANDLE_H
@@ -48,27 +48,6 @@
  */
 
 #define GANESHA_FH_VERSION 0x41
-
-/**
- * @brief An NFSv2 filehandle (only used for (un)mount?)
- * This must be exactly 32 bytes long, and aligned on 32 bits
- */
-typedef struct file_handle_v2 {
-	uint8_t fhversion;	/*< set to 0x41 to separate from Linux knfsd */
-	uint8_t xattr_pos;	/*< Used for xattr management */
-	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
-	uint8_t fsopaque[28];	/*< Persistent part of FSAL handle */
-} file_handle_v2_t;
-
-/**
- * @brief Used for allocations of v2 handles
- *
- * There is no padding because v2 handles must be fixed size.
- */
-
-struct alloc_file_handle_v2 {
-	struct file_handle_v2 handle;	/* the real handle */
-};
 
 /**
  * @brief An NFSv3 handle
@@ -172,10 +151,6 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp);
 
-bool nfs2_FSALToFhandle(fhandle2 *fh2,
-			const struct fsal_obj_handle *fsalhandle,
-			struct gsh_export *exp);
-
 /* nfs3 validation */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *);
 
@@ -243,14 +218,12 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
 
 /* File handle print function (mostly used for debugging) */
-void print_fhandle2(log_components_t, fhandle2 *);
 void print_fhandle3(log_components_t, nfs_fh3 *);
 void print_fhandle4(log_components_t, nfs_fh4 *);
 void print_fhandle_nlm(log_components_t, netobj *);
 void print_buff(log_components_t, char *, int);
 void LogCompoundFH(compound_data_t *);
 
-void sprint_fhandle2(char *str, fhandle2 *fh);
 void sprint_fhandle3(char *str, nfs_fh3 *fh);
 void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_fhandle_nlm(char *str, netobj *fh);
