@@ -41,6 +41,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "export_mgr.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -136,7 +137,7 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
-		(u64) pfid->export->filesystem_id.major :
+		(u64) pfid->op_context.export->export.filesystem_id.major :
 		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?

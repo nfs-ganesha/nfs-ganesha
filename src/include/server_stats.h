@@ -50,6 +50,11 @@ void server_stats_compound_done(struct req_op_context *req_ctx, int num_ops,
 				int status);
 void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 				nsecs_elapsed_t start_time, int status);
+void server_stats_transport_done(struct gsh_client *client,
+				uint64_t rx_bytes, uint64_t rx_pkt,
+				uint64_t rx_err, uint64_t tx_bytes,
+				uint64_t tx_pkt, uint64_t tx_err);
+
 
 #endif				/* !SERVER_STATS_H */
 /** @} */

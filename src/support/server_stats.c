@@ -195,6 +195,14 @@ struct _9p_stats {
 	struct proto_op cmds;	/* non-I/O ops */
 	struct xfer_op read;
 	struct xfer_op write;
+	struct transport_stats {
+		uint64_t rx_bytes;
+		uint64_t rx_pkt;
+		uint64_t rx_err;
+		uint64_t tx_bytes;
+		uint64_t tx_pkt;
+		uint64_t tx_err;
+	} trans;
 };
 
 /* include the top level server_stats struct definition
@@ -650,6 +658,48 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 }
 
 /**
+ * @brief Record transport stats
+ *
+ */
+static void record_transport_stats(struct transport_stats *t_st,
+				   uint64_t rx_bytes, uint64_t rx_pkt,
+				   uint64_t rx_err, uint64_t tx_bytes,
+				   uint64_t tx_pkt, uint64_t tx_err)
+{
+	if (rx_bytes)
+		atomic_add_uint64_t(&t_st->rx_bytes, rx_bytes);
+	if (rx_pkt)
+		atomic_add_uint64_t(&t_st->rx_pkt, rx_pkt);
+	if (rx_err)
+		atomic_add_uint64_t(&t_st->rx_err, rx_err);
+	if (tx_bytes)
+		atomic_add_uint64_t(&t_st->tx_bytes, tx_bytes);
+	if (tx_pkt)
+		atomic_add_uint64_t(&t_st->tx_pkt, tx_pkt);
+	if (tx_err)
+		atomic_add_uint64_t(&t_st->tx_err, tx_err);
+}
+
+/**
+ * @brief record 9P tcp transport stats
+ *
+ * Called from 9P functions doing send/recv
+ */
+void server_stats_transport_done(struct gsh_client *client,
+				uint64_t rx_bytes, uint64_t rx_pkt,
+				uint64_t rx_err, uint64_t tx_bytes,
+				uint64_t tx_pkt, uint64_t tx_err)
+{
+	struct server_stats *server_st =
+		container_of(client, struct server_stats, client);
+	struct _9p_stats *sp = get_9p(&server_st->st, &client->lock);
+
+	if (sp != NULL)
+		record_transport_stats(&sp->trans, rx_bytes, rx_pkt, rx_err,
+				       tx_bytes, tx_pkt, tx_err);
+}
+
+/**
  * @brief record NFS op finished
  *
  * Called from nfs_rpc_execute at operation/command completion
@@ -875,6 +925,28 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+static void server_dbus_transportstats(struct transport_stats *tstats,
+				       DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->rx_bytes);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->rx_pkt);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->rx_err);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->tx_bytes);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->tx_pkt);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &tstats->tx_err);
+	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
@@ -913,6 +985,15 @@ void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 	dbus_append_timestamp(iter, &timestamp);
 	server_dbus_iostats(&_9pp->read, iter);
 	server_dbus_iostats(&_9pp->write, iter);
+}
+
+void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_transportstats(&_9pp->trans, iter);
 }
 
 /**

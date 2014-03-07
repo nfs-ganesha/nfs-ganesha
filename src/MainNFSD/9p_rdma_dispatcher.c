@@ -56,6 +56,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
+#include "client_mgr.h"
 #include "9p.h"
 
 #include <mooshika.h>
@@ -80,8 +81,12 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 			 "9P/RDMA: Freeing data associated with trans [%p]",
 			 trans);
 
-		if (priv->pconn)
+		if (priv->pconn) {
+			if (priv->pconn->client != NULL)
+				put_gsh_client(priv->pconn->client);
+
 			_9p_cleanup_fids(priv->pconn);
+		}
 
 		if (priv->rdata) {
 			if (priv->rdata->mr)
@@ -169,8 +174,8 @@ void *_9p_rdma_thread(void *Arg)
 	atomic_store_uint32_t(&p_9p_conn->refcount, 0);
 	p_9p_conn->trans_type = _9P_RDMA;
 	p_9p_conn->trans_data.rdma_trans = trans;
-	memcpy(&p_9p_conn->addrpeer, msk_get_dst_addr(trans),
-	       sizeof(p_9p_conn->addrpeer));
+	p_9p_conn->client =
+		get_gsh_client((sockaddr_t *)msk_get_dst_addr(trans), false);
 
 	/* Init the fids pointers array */
 	memset(&p_9p_conn->fids,

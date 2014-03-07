@@ -42,6 +42,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
+#include "server_stats.h"
 
 /* opcode to function array */
 const struct _9p_function_desc _9pfuncdesc[] = {
@@ -106,6 +107,15 @@ static ssize_t tcp_conn_send(struct _9p_conn *conn, const void *buf, size_t len,
 	pthread_mutex_lock(&conn->sock_lock);
 	ret = send(conn->trans_data.sockfd, buf, len, flags);
 	pthread_mutex_unlock(&conn->sock_lock);
+
+	if (ret < 0)
+		server_stats_transport_done(conn->client,
+					    0, 0, 0,
+					    0, 0, 1);
+	else
+		server_stats_transport_done(conn->client,
+					    0, 0, 0,
+					    ret, 1, 0);
 	return ret;
 }
 

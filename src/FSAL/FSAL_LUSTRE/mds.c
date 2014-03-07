@@ -359,7 +359,7 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 
 	deviceid.export_id = arg->export_id;
 	/* @todo: several DSs not handled yet */
-/* 	deviceid.devid =  pnfs_param.ds_param[0].id; */
+	/* deviceid.devid =  pnfs_param.ds_param[0].id; */
 	ds = glist_first_entry(&pnfs_param.ds_list,
 			       struct lustre_pnfs_ds_parameter,
 			       ds_list);

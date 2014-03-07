@@ -293,7 +293,6 @@ struct _9p_fid {
 	u32 fid;
 	struct req_op_context op_context;
 	struct user_cred ucred;
-	exportlist_t *export;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
 	cache_entry_t *ppentry;
@@ -354,7 +353,7 @@ struct _9p_conn {
 	} trans_data;
 	enum _9p_trans_type trans_type;
 	uint32_t refcount;
-	struct sockaddr_storage addrpeer;
+	struct gsh_client *client;
 	struct timeval birth;	/* This is useful if same sockfd is
 				   reused on socket's close/open */
 	struct _9p_fid *fids[_9P_FID_PER_CONN];
@@ -567,10 +566,7 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid);
 int _9p_tools_errno(cache_inode_status_t cache_status);
-void _9p_tools_fsal_attr2stat(struct attrlist *pfsalattr, struct stat *pstat);
-void _9p_tools_acess2fsal(u32 *paccessin, fsal_accessflags_t *pfsalaccess);
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags);
-void _9p_chomp_attr_value(char *str, size_t size);
 int _9p_tools_clunk(struct _9p_fid *pfid);
 void _9p_cleanup_fids(struct _9p_conn *conn);
 

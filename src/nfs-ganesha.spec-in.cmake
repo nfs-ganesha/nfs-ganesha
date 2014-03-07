@@ -1,3 +1,5 @@
+%define __arch_install_post   /usr/lib/rpm/check-rpaths   /usr/lib/rpm/check-buildroot
+
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %global with_nfsidmap 1
 %else
