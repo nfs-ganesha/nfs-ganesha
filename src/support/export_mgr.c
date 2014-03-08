@@ -1008,6 +1008,70 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
 	return true;
 }
 
+/**
+ * DBUS method to report total ops statistics
+ *
+ */
+
+static bool get_nfsv_export_total_ops(DBusMessageIter *args,
+				      DBusMessage *reply)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if (export == NULL) {
+		success = false;
+	} else {
+		export_st = container_of(export, struct export_stats, export);
+		if (export_st == NULL) {
+			success = false;
+			errormsg = "Export does not have any activity";
+		}
+	}
+	dbus_status_reply(&iter, success, errormsg);
+	if (success)
+		server_dbus_total_ops(export_st, &iter);
+
+	if (export != NULL)
+		put_gsh_export(export);
+	return true;
+}
+
+static bool get_nfsv_global_total_ops(DBusMessageIter *args,
+				      DBusMessage *reply)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_status_reply(&iter, success, errormsg);
+
+	global_dbus_total_ops(&iter);
+
+	return true;
+}
+
+static bool show_cache_inode_stats(DBusMessageIter *args,
+				  DBusMessage *reply)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_status_reply(&iter, success, errormsg);
+
+	cache_inode_dbus_show(&iter);
+
+	return true;
+}
+
 static struct gsh_dbus_method export_show_v41_layouts = {
 	.name = "GetNFSv41Layouts",
 	.method = get_nfsv41_export_layouts,
@@ -1060,12 +1124,45 @@ static struct gsh_dbus_method export_show_9p_io = {
 		 END_ARG_LIST}
 };
 
+static struct gsh_dbus_method export_show_total_ops = {
+	.name = "GetTotalOPS",
+	.method = get_nfsv_export_total_ops,
+	.args = {EXPORT_ID_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 TOTAL_OPS_REPLY,
+		 END_ARG_LIST}
+};
+
+static struct gsh_dbus_method global_show_total_ops = {
+	.name = "GetGlobalOPS",
+	.method = get_nfsv_global_total_ops,
+	.args = {EXPORT_ID_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 TOTAL_OPS_REPLY,
+		 END_ARG_LIST}
+};
+
+static struct gsh_dbus_method cache_inode_show = {
+	.name = "ShowCacheInode",
+	.method = show_cache_inode_stats,
+	.args = {EXPORT_ID_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 TOTAL_OPS_REPLY,
+		 END_ARG_LIST}
+};
+
 static struct gsh_dbus_method *export_stats_methods[] = {
 	&export_show_v3_io,
 	&export_show_v40_io,
 	&export_show_v41_io,
 	&export_show_v41_layouts,
+	&export_show_total_ops,
 	&export_show_9p_io,
+	&global_show_total_ops,
+	&cache_inode_show,
 	NULL
 };
 

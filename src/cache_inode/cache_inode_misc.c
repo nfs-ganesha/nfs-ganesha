@@ -56,6 +56,10 @@
 
 pool_t *cache_inode_entry_pool;
 
+#ifdef USE_DBUS
+extern struct cache_stats *cache_stp;
+#endif
+
 const char *
 cache_inode_err_str(cache_inode_status_t err)
 {
@@ -266,6 +270,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
 		*entry = oentry;
+#ifdef USE_DBUS
+		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+#endif
 		goto out;
 	}
 	/* !LATCHED */
@@ -303,6 +310,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
 		*entry = oentry;
+#ifdef USE_DBUS
+		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+#endif
 		goto out;
 	}
 
@@ -417,6 +427,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
 	*entry = nentry;
+#ifdef USE_DBUS
+	(void)atomic_inc_uint64_t(&cache_stp->inode_added);
+#endif
 	return CACHE_INODE_SUCCESS;
 
  out:

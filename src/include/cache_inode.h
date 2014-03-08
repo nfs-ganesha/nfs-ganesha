@@ -101,6 +101,18 @@ typedef struct cache_inode_lru__ {
 } cache_inode_lru_t;
 
 /**
+ * cache inode statistics.
+ */
+struct cache_stats {
+	uint64_t inode_req;
+	uint64_t inode_hit;
+	uint64_t inode_miss;
+	uint64_t inode_conf;
+	uint64_t inode_added;
+	uint64_t inode_mapping;
+};
+
+/**
  * Indicate whether this is a read or write operation, for
  * cache_inode_rdwr.
  */

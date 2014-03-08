@@ -54,6 +54,11 @@
 #include <assert.h>
 #include "export_mgr.h"
 
+#ifdef USE_DBUS
+extern struct cache_stats *cache_stp;
+#endif
+
+
 /**
  *
  * @brief Check the active export mapping for this entry and update if
@@ -83,6 +88,9 @@ bool check_mapping(cache_entry_t *entry,
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
 again:
+#ifdef USE_DBUS
+	(void)atomic_inc_uint64_t(&cache_stp->inode_mapping);
+#endif
 
 	glist_for_each(glist, &entry->export_list) {
 		expmap = glist_entry(glist,
@@ -205,6 +213,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cih_latch_t latch;
 
+#ifdef USE_DBUS
+	(void)atomic_inc_uint64_t(&cache_stp->inode_req);
+#endif
 	/* Do lookup */
 	*entry =
 	    cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
@@ -221,7 +232,10 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 			*entry = NULL;
 			return CACHE_INODE_MALLOC_ERROR;
 		}
-
+#ifdef USE_DBUS
+		(void)atomic_inc_uint64_t(&cache_stp->inode_hit);
+#endif
+		
 		return CACHE_INODE_SUCCESS;
 	}
 
