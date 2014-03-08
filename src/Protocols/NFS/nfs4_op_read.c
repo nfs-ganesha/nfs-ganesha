@@ -737,9 +737,8 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 		info.io_advise = state_found->state_data.io_advise;
 		info.io_content.what = arg_SEEK->sa_what;
 
-		if (arg_SEEK->sa_what == NFS4_CONTENT_DATA)
-			info.io_content.data.d_offset = arg_SEEK->sa_offset;
-		else if (arg_SEEK->sa_what == NFS4_CONTENT_HOLE)
+		if (arg_SEEK->sa_what == NFS4_CONTENT_DATA ||
+				arg_SEEK->sa_what == NFS4_CONTENT_HOLE)
 			info.io_content.hole.di_offset = arg_SEEK->sa_offset;
 		else
 			info.io_content.adh.adh_offset = arg_SEEK->sa_offset;

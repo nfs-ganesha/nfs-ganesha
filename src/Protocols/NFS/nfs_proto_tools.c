@@ -338,7 +338,7 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 	int attr, offset;
 
 	memset(&bits, 0, sizeof(bits));
-	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_FS_CHARSET_CAP;
+	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_CHANGE_SEC_LABEL;
 	     attr++) {
 		if (fattr4tab[attr].supported) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
@@ -2315,7 +2315,7 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr,
 	int attr, offset;
 
 	memset(&bits, 0, sizeof(bits));
-	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_FS_CHARSET_CAP;
+	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_CHANGE_SEC_LABEL;
 	     attr++) {
 		if (fattr4tab[attr].supported) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
@@ -3325,7 +3325,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	     attribute_to_set != -1;
 	     attribute_to_set =
 	     next_attr_from_bitmap(Bitmap, attribute_to_set)) {
-		if (attribute_to_set > FATTR4_FS_CHARSET_CAP)
+		if (attribute_to_set > FATTR4_CHANGE_SEC_LABEL)
 			break;	/* skip out of bounds */
 
 		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, args);
@@ -3681,7 +3681,7 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *bitmap, int access)
 
 	for (attribute = next_attr_from_bitmap(bitmap, -1); attribute != -1;
 	     attribute = next_attr_from_bitmap(bitmap, attribute)) {
-		if (attribute > FATTR4_FS_CHARSET_CAP) {
+		if (attribute > FATTR4_CHANGE_SEC_LABEL) {
 			/* Erroneous value... skip */
 			continue;
 		}
@@ -3723,7 +3723,7 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap)
 {
 	int attribute;
 
-	for (attribute = 0; attribute <= FATTR4_FS_CHARSET_CAP; attribute++) {
+	for (attribute = 0; attribute <= FATTR4_CHANGE_SEC_LABEL; attribute++) {
 		if (!fattr4tab[attribute].supported) {
 			if (!clear_attribute_in_bitmap(bitmap, attribute))
 				break;
@@ -3816,7 +3816,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 	     attribute_to_set != -1;
 	     attribute_to_set =
 	     next_attr_from_bitmap(&Fattr1->attrmask, attribute_to_set)) {
-		if (attribute_to_set > FATTR4_FS_CHARSET_CAP) {
+		if (attribute_to_set > FATTR4_CHANGE_SEC_LABEL) {
 			/* Erroneous value... skip */
 			continue;
 		}
@@ -3997,7 +3997,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 	     next_attr_from_bitmap(&Fattr->attrmask, attribute_to_set)) {
 		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
 
-		if (attribute_to_set > FATTR4_FS_CHARSET_CAP) {
+		if (attribute_to_set > FATTR4_CHANGE_SEC_LABEL) {
 			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
 			break;
 		}
